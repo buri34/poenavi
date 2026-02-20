@@ -102,7 +102,7 @@ python main.py
    - Steam版: `C:\Program Files (x86)\Steam\steamapps\common\Path of Exile\logs\Client.txt`
 4. Save → PoEでプレイ開始！
 
-### ホットキー（デフォルト）
+### ホットキー（デフォルト） — タイマー操作用
 | キー | 機能 |
 |------|------|
 | F7 | Start / Stop |
