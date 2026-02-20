@@ -1,6 +1,6 @@
-# PoENavi
+# ぽえなび（PoENavi）
 
-Path of Exile 1 向けの軽量レベリングガイド＆タイマーツール。  
+Path of Exile 1 の軽量なレベリングガイド＆タイマーツール。  
 **Client.txtログ監視による自動エリア検知**＋**攻略ガイド**＋**マップ画像表示**＋**RTAタイマー**を表示。
 
 <!-- ![screenshot](docs/screenshot.png) -->
