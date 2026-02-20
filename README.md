@@ -1,9 +1,11 @@
-# ぽえなび（PoENavi）
+# PoENavi
 
-Path of Exile 1 の軽量なレベリングガイド＆タイマーツール。  
+Path of Exile 1 向けの軽量レベリングガイド＆タイマーツール。  
 **Client.txtログ監視による自動エリア検知**＋**攻略ガイド**＋**マップ画像表示**＋**RTAタイマー**を表示。
 
-<!-- ![screenshot](docs/screenshot.png) -->
+![screenshot1](docs/screenshot1.png)
+![screenshot2](docs/screenshot2.png)
+![screenshot3](docs/screenshot3.png)
 
 ---
 
@@ -15,9 +17,6 @@ Path of Exile 1 の軽量なレベリングガイド＆タイマーツール。
 - **基本方向矢印** — そのエリアで進むべき方向を大きな矢印で表示
 - **経験値効率表示** — 🌟マーク付きで稼ぎポイントがひと目でわかる
 - ガイドデータはSetting画面からユーザでも自由に編集可能
-
-※ひな型のガイド情報は、私が過去に作った攻略チャートの内容です。全体の流れを見たい場合などはこちらをご確認ください。
-  https://docs.google.com/spreadsheets/d/1fVbL4CPHUw-5IlHoL0ol--_d-YqYSI3uwbmPLignZ8k/edit?gid=1939686731#gid=1939686731
 
 ### 📍 自動エリア検知 & XPペナルティ判定
 - **PoEのClient.txtログをリアルタイム監視** — エリア移動・レベルアップを自動検知
@@ -162,16 +161,6 @@ PoE1ではAct 6-10の一部エリアがAct 1-5と同名で登場します。
 | `maps/` | マップ画像 | ✓（同梱） |
 
 初回起動時、`config.json` と `guide_data.json` はデフォルト値で自動生成されます。
-
----
-
-## 📝 今後の対応予定
-
-リーグ3.28が開始するまでに以下を実施予定です。
-- タイマー機能の自動化（ログファイルをウォッチして自動で各Act終了時などのタイミングを判定して記録）
-- マップレイアウト画像の充実化
-- Act3で図書館へ行かない場合を考慮したつくり
-- Act8で「穀物倉庫」から地下を通るルートを考慮したつくり
 
 ---
 
