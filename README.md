@@ -3,10 +3,6 @@
 Path of Exile 1 の軽量なレベリングガイド＆タイマーツール。  
 **Client.txtログ監視による自動エリア検知**＋**攻略ガイド**＋**マップ画像表示**＋**RTAタイマー**を表示。
 
-![screenshot1](docs/screenshot1.png)
-![screenshot2](docs/screenshot2.png)
-![screenshot3](docs/screenshot3.png)
-
 ---
 
 ## ✨ このツールで出来ること
@@ -21,6 +17,10 @@ Path of Exile 1 の軽量なレベリングガイド＆タイマーツール。
 ※ひな型のガイド情報は、私が過去に作った攻略チャートの内容です。全体の流れを見たい場合などはこちらをご確認ください。
   https://docs.google.com/spreadsheets/d/1fVbL4CPHUw-5IlHoL0ol--_d-YqYSI3uwbmPLignZ8k/edit?gid=1939686731#gid=1939686731
 
+※**マップ画像サムネイル一覧**の画面イメージはこちら。画像１枚目の赤枠部分がサムネイル表示。画像２枚目がそのうちの１枚をクリックして拡大した状態
+![screenshot1](docs/screenshot1.png)
+![screenshot2](docs/screenshot2.png)
+
 ### 📍 自動エリア検知 & XPペナルティ判定
 - **PoEのClient.txtログをリアルタイム監視** — エリア移動・レベルアップを自動検知
 - 各エリアのモンスターレベルをもとに、XPペナルティを3段階で判定
@@ -30,6 +30,9 @@ Path of Exile 1 の軽量なレベリングガイド＆タイマーツール。
 | 🟢 最適レベル | 余裕あり | キャラLv ≤ エリアLv かつ差が余裕ライン以内 |
 | 🟡 ペナルティなし | ペナルティは未発生 | 差がペナルティ範囲内だが最適ではない |
 | 🔴 ペナルティ | 経験値が減少中 | 差がペナルティ範囲を超過 |
+
+※画像イメージ　Act3の船着き場（Dock）で、エリアレベル29に対して、キャラレベルが24で赤信号が点滅している様子
+![screenshot3](docs/screenshot3.png)
 
 #### 計算式（PoE公式準拠）
 
