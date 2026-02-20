@@ -14,6 +14,8 @@ class LogWatcher(QObject):
     # シグナル定義
     zone_entered = Signal(str)      # エリア名 (例: "地下墓地")
     level_up = Signal(str, int)     # キャラ名, レベル
+    kitava_defeated = Signal()      # Act5キタヴァ討伐検知
+    act10_cleared = Signal()        # Act10キタヴァ討伐検知
     
     # ログ行のパターン（日本語クライアント）
     # "あなたは地下墓地に入場しました。"
@@ -159,6 +161,16 @@ class LogWatcher(QObject):
         if m:
             zone_name = m.group(1).strip()
             self.zone_entered.emit(zone_name)
+            return
+        
+        # Act10キタヴァ討伐チェック（無慈悲 = Act10）
+        if "プレイヤーはキタヴァの無慈悲な苦悩により永続的に弱体化した" in line:
+            self.act10_cleared.emit()
+            return
+        
+        # Act5キタヴァ討伐チェック（残酷 = Act5）
+        if "プレイヤーはキタヴァの残酷な苦悩により永続的に弱体化した" in line:
+            self.kitava_defeated.emit()
             return
         
         # レベルアップチェック（日本語）

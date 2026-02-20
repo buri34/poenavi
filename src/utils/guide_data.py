@@ -6,6 +6,7 @@
 
 import json
 import os
+import sys
 
 # デフォルトガイド（guide_data.json がない場合のフォールバック）
 DEFAULT_GUIDE = {
@@ -23,8 +24,14 @@ GUIDE_FILE = "guide_data.json"
 
 
 def get_guide_dir():
-    """ガイドデータファイルのディレクトリ（exeと同じ場所）"""
-    # main.pyの場所を基準にする
+    """ガイドデータファイルのディレクトリ（exeフォルダ優先 → _MEIPASS）"""
+    if getattr(sys, 'frozen', False):
+        # exeフォルダにあればそちら（ユーザー編集版）
+        exe_dir = os.path.dirname(sys.executable)
+        if os.path.exists(os.path.join(exe_dir, GUIDE_FILE)):
+            return exe_dir
+        # なければPyInstaller同梱版
+        return getattr(sys, '_MEIPASS', exe_dir)
     return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -63,15 +70,16 @@ def get_zone_guide(guide_data: dict, zone_id: str, visit: int = 1) -> dict | Non
     # 1回目のガイドを取得（フォールバック用）
     base_guide = guide_data.get(zone_id)
     
-    # 2回目以降は @N キーを優先
+    # 2回目以降は @N キーを優先、なければ@2にフォールバック
     if visit >= 2:
-        v_key = f"{zone_id}@{visit}"
-        v_guide = guide_data.get(v_key)
-        if v_guide:
-            # directionが@Nに無ければ1回目から引き継ぐ
-            if "direction" not in v_guide and base_guide and "direction" in base_guide:
-                v_guide = {**v_guide, "direction": base_guide["direction"]}
-            return v_guide
+        # @N → @2 → 1回目 の順で探す
+        for v in [visit, 2]:
+            v_key = f"{zone_id}@{v}"
+            v_guide = guide_data.get(v_key)
+            if v_guide:
+                if "direction" not in v_guide and base_guide and "direction" in base_guide:
+                    v_guide = {**v_guide, "direction": base_guide["direction"]}
+                return v_guide
     
     return base_guide
 
@@ -116,7 +124,7 @@ def format_guide_html(guide: dict, font_size: int = 12) -> str:
         obj_html = objective.replace("\n", "<br>")
         obj_html = obj_html.replace("　", "&nbsp;&nbsp;")
         obj_html = obj_html.replace("  ", "&nbsp;&nbsp;")
-        parts.append(f"<b style='color:#b0ff7b; font-size:{font_size}px;'>📋 {obj_html}</b>")
+        parts.append(f"<b style='color:#b0ff7b; font-size:{font_size}px;'>📋 目標</b><br><span style='color:#b0ff7b;'>{obj_html}</span>")
     
     # 目標の後に基本方向を挿入
     if direction_html:
@@ -135,6 +143,6 @@ def format_guide_html(guide: dict, font_size: int = 12) -> str:
         tips_html = tips.replace("\n", "<br>")
         tips_html = tips_html.replace("　", "&nbsp;&nbsp;")
         tips_html = tips_html.replace("  ", "&nbsp;&nbsp;")
-        parts.append(f"<div style='margin-top:5px; color:#aaaaaa;'>{tips_html}</div>")
+        parts.append(f"<div style='margin-top:5px;'><b style='color:#b0ff7b;'>💡 Tips / 注意点</b><br><span style='color:#ffffff;'>{tips_html}</span></div>")
     
     return "<br>".join(parts)

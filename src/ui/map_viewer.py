@@ -4,6 +4,7 @@ maps/<ゾーン名>/ フォルダ内の画像を自動読み込み
 """
 
 import os
+import sys
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QLabel, QDialog
 )
@@ -20,9 +21,16 @@ THUMB_HEIGHT = 75
 
 
 def get_maps_dir():
-    """mapsフォルダのパス（exeと同じ階層）"""
-    base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    return os.path.join(base, "maps")
+    """mapsフォルダのパス（exeフォルダ優先 → _MEIPASS）"""
+    if getattr(sys, 'frozen', False):
+        exe_dir = os.path.dirname(sys.executable)
+        if os.path.isdir(os.path.join(exe_dir, "maps")):
+            return os.path.join(exe_dir, "maps")
+        return os.path.join(getattr(sys, '_MEIPASS', exe_dir), "maps")
+    return os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        "maps"
+    )
 
 
 def load_zone_maps(zone_name: str, part2: bool = False) -> list[str]:

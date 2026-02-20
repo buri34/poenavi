@@ -8,7 +8,6 @@ build/
 *.spec
 
 # User data (generated at runtime)
-config.json
 runs/
 
 # IDE
@@ -16,6 +15,9 @@ runs/
 .idea/
 *.swp
 *.swo
+
+# Work files
+area_level_mapping.txt
 
 # OS
 .DS_Store

@@ -715,6 +715,7 @@ class SettingsDialog(QDialog):
         """)
         town_layout.addWidget(self.town_zones_edit)
         
+        town_group.setVisible(False)  # 一般ユーザーには非表示（機能は残す）
         general_layout.addWidget(town_group)
         general_layout.addStretch()
         
@@ -775,12 +776,15 @@ class SettingsDialog(QDialog):
             act_widgets = []
             
             for z in zones:
+                if z.get("hidden", False):
+                    continue  # 欠番エリアはスキップ
                 zone_id = z.get("id", "")
                 row = QHBoxLayout()
                 row.setSpacing(5)
                 
                 name_edit = QLineEdit(z.get("zone", ""))
                 name_edit.setFixedWidth(200)
+                name_edit.setReadOnly(True)  # 一般ユーザーには編集不可
                 name_edit.setStyleSheet(f"""
                     QLineEdit {{ 
                         background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
@@ -823,6 +827,8 @@ class SettingsDialog(QDialog):
             """)
             add_btn.clicked.connect(lambda checked, an=act_name, al=act_layout, aw=act_widgets: 
                                     self._add_zone_row(an, al, aw))
+            add_btn.setEnabled(False)  # 一般ユーザーには無効
+            add_btn.setVisible(False)
             act_layout.addWidget(add_btn)
             
             scroll_inner.addWidget(act_group)
@@ -836,6 +842,7 @@ class SettingsDialog(QDialog):
         reset_zones_btn = QPushButton("デフォルトに戻す")
         reset_zones_btn.setStyleSheet(Styles.BUTTON)
         reset_zones_btn.clicked.connect(self._reset_zone_defaults)
+        reset_zones_btn.setEnabled(False)  # 一般ユーザーには無効（機能は残す）
         zone_layout.addWidget(reset_zones_btn)
         
         tabs.addTab(zone_tab, "エリア情報")

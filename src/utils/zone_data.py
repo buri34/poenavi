@@ -237,7 +237,10 @@ def get_level_advice(player_level: int, zone_level: int) -> tuple:
     diff = player_level - zone_level  # 正=キャラ高い、負=キャラ低い
     
     if abs(diff) > safe_range:
-        return f"🔴 ペナルティ ({diff:+d}) — 経験値減少中！", "#ff4444"
+        if diff > 0:
+            return f"🔴 ペナルティ (+{diff}) — レベル超過！経験値減少中", "#ff4444"
+        else:
+            return f"🔴 ペナルティ ({diff:+d}) — レベル不足！経験値減少中", "#ff4444"
     
     # ペナルティなし範囲内
     if diff <= 0 and abs(diff) <= optimal_margin:
@@ -246,8 +249,8 @@ def get_level_advice(player_level: int, zone_level: int) -> tuple:
             return "🟢 最適レベル (±0)", "#b0ff7b"
         return f"🟢 最適レベル ({diff:+d})", "#b0ff7b"
     
-    # 許容範囲（ペナルティなしだけど最適ではない）
+    # ペナルティなし（最適ではない）
     if diff > 0:
-        return f"🟡 許容範囲 (+{diff}) — 先に進んでOK", "#ffff66"
+        return f"🟡 ペナルティなし (+{diff}) — ややレベル上がり気味", "#ffff66"
     else:
-        return f"🟡 許容範囲 ({diff:+d}) — もう少し上げたい", "#ffff66"
+        return f"🟡 ペナルティなし ({diff:+d}) — ややレベル不足気味", "#ffff66"

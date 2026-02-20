@@ -55,7 +55,7 @@
     "en": "The Cavern of Wrath",
     "lv": 12
   },
-  "act1_area18": {
+  "act1_area19": {
     "en": "The Ship Graveyard Cave",
     "lv": 12
   },
@@ -203,73 +203,6 @@
   "act3_area25": {
     "en": "The Sceptre of God",
     "lv": 32
-  },
-  "act4_area1": {
-    "en": "The Aqueduct",
-    "lv": 33
-  },
-  "act4_area2": {
-    "en": "The Dried Lake",
-    "lv": 34
-  },
-  "act4_area3": {
-    "en": "Highgate",
-    "lv": 0,
-    "exclude": "town"
-  },
-  "act4_area4": {
-    "en": "The Mines Level 1",
-    "lv": 34
-  },
-  "act4_area5": {
-    "en": "The Mines Level 2",
-    "lv": 35
-  },
-  "act4_area6": {
-    "en": "The Crystal Veins",
-    "lv": 36
-  },
-  "act4_area7": {
-    "en": "Daresso's Dream",
-    "lv": 37
-  },
-  "act4_area8": {
-    "en": "The Grand Arena",
-    "lv": 38
-  },
-  "act4_area10": {
-    "en": "Kaom's Dream",
-    "lv": 37
-  },
-  "act4_area11": {
-    "en": "Kaom's Stronghold",
-    "lv": 38
-  },
-  "act4_area12": {
-    "en": "Belly of the Beast Level 1",
-    "lv": 38
-  },
-  "act4_area13": {
-    "en": "Belly of the Beast Level 2",
-    "lv": 39
-  },
-  "act4_area14": {
-    "en": "The Bowels",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act4_area15": {
-    "en": "The Harvest",
-    "lv": 40
-  },
-  "act4_area16": {
-    "en": "The Black Core",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act4_area17": {
-    "en": "The Ascent",
-    "lv": 40
   },
   "act5_area1": {
     "en": "The Slave Pens",
@@ -697,5 +630,80 @@
     "en": "The Altar of Hunger",
     "lv": 0,
     "exclude": "boss"
+  },
+  "act1_area18": {
+    "en": "The Cavern of Anger",
+    "lv": 13
+  },
+  "act4_area1": {
+    "en": "The Aqueduct",
+    "lv": 33
+  },
+  "act4_area2": {
+    "en": "The Dried Lake",
+    "lv": 34
+  },
+  "act4_area3": {
+    "en": "The Aspirant's Plaza",
+    "lv": 0,
+    "exclude": "non_combat"
+  },
+  "act4_area4": {
+    "en": "The Mines Level 1",
+    "lv": 34
+  },
+  "act4_area5": {
+    "en": "The Mines Level 2",
+    "lv": 35
+  },
+  "act4_area6": {
+    "en": "The Crystal Veins",
+    "lv": 36
+  },
+  "act4_area7": {
+    "en": "Daresso's Dream",
+    "lv": 37
+  },
+  "act4_area8": {
+    "en": "The Grand Arena",
+    "lv": 38
+  },
+  "act4_area10": {
+    "en": "Kaom's Dream",
+    "lv": 37
+  },
+  "act4_area11": {
+    "en": "Kaom's Stronghold",
+    "lv": 38
+  },
+  "act4_area12": {
+    "en": "Belly of the Beast Level 1",
+    "lv": 38
+  },
+  "act4_area13": {
+    "en": "Belly of the Beast Level 2",
+    "lv": 39
+  },
+  "act4_area14": {
+    "en": "The Bowels",
+    "lv": 0,
+    "exclude": "boss"
+  },
+  "act4_area15": {
+    "en": "The Harvest",
+    "lv": 40
+  },
+  "act4_area16": {
+    "en": "The Black Core",
+    "lv": 0,
+    "exclude": "boss"
+  },
+  "act4_area17": {
+    "en": "The Ascent",
+    "lv": 40
+  },
+  "act3_area26": {
+    "en": "The Sceptre of God (Upper)",
+    "lv": 32
   }
 }

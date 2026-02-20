@@ -54,7 +54,7 @@ class MainWindow(QMainWindow):
         self.part2_mode = self.config.get("part2_mode", False)
         self.part2_level_threshold = self.config.get("part2_level_threshold", 39)
         self.part2_only_zones = self.config.get("part2_only_zones", [
-            "奴隷の囲い地", "支配地域", "瓦礫の広場", "大聖堂の屋上", "トーメントの間",
+            "奴隷の囲い地", "支配地域", "瓦礫の広場", "トーメントの間",
             "採血の回廊", "降下路", "大いなる腐敗", "腐敗の中核",
             "空の支配領域", "空の荒廃地帯",
             "毒の貯蔵庫", "穀物の王", "帝王の広間", "因果の間",
@@ -82,10 +82,14 @@ class MainWindow(QMainWindow):
         self.guide_data = load_guide_data()
         
         # monster_levels.json 読み込み
-        monster_levels_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-            "monster_levels.json"
-        )
+        if getattr(sys, 'frozen', False):
+            exe_dir = os.path.dirname(sys.executable)
+            base_dir = exe_dir
+            if not os.path.exists(os.path.join(exe_dir, "monster_levels.json")):
+                base_dir = getattr(sys, '_MEIPASS', exe_dir)
+        else:
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        monster_levels_path = os.path.join(base_dir, "monster_levels.json")
         self.monster_levels = {}
         if os.path.exists(monster_levels_path):
             try:
@@ -102,6 +106,8 @@ class MainWindow(QMainWindow):
         )
         self.log_watcher.zone_entered.connect(self.on_zone_entered)
         self.log_watcher.level_up.connect(self.on_level_up)
+        self.log_watcher.kitava_defeated.connect(self.on_kitava_defeated)
+        self.log_watcher.act10_cleared.connect(self.on_act10_cleared)
         
         # ホットキー初期化
         self.hotkey_signal.connect(self.handle_hotkey)
@@ -792,6 +798,12 @@ class MainWindow(QMainWindow):
     
     def _get_zone_id(self, zone_name: str) -> str | None:
         """zone_dataからエリア名でIDを検索。part2_modeに応じてAct6-10/Act1-5を優先"""
+        # Act10フラグが立っている場合、志す者の広場はAct10を優先
+        if getattr(self, '_in_act10', False) and zone_name == "志す者の広場":
+            for z in self.zone_data.get("Act 10", []):
+                if z["zone"] == zone_name:
+                    return z.get("id")
+        
         if self.part2_mode:
             search_order = [k for k in self.zone_data if k in ("Act 6","Act 7","Act 8","Act 9","Act 10")]
             search_order += [k for k in self.zone_data if k not in search_order]
@@ -814,6 +826,10 @@ class MainWindow(QMainWindow):
             self.advice_label.setText("（街エリア — ガイドは前のエリアを表示中）")
             self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
             return
+        
+        # 荒廃した広場(Act10固有)入場 → Act10フラグON
+        if zone_name == "荒廃した広場" and not self._restoring:
+            self._in_act10 = True
         
         # 黄昏の岸辺入場 → 新キャラ判定フラグON（Lv2検知でリセット確定）
         if zone_name == "黄昏の岸辺" and not self._restoring:
@@ -864,13 +880,15 @@ class MainWindow(QMainWindow):
         # 訪問回数カウント（zone_id基準）
         visit_key = zone_id if zone_id else zone_name
         last_visit_key = getattr(self, '_last_visit_key', None)
+        # 街を挟んでも常にカウントするエリア（ポータルで街に戻って再入場するパターン）
+        always_count_zones = {"act10_area4"}  # 荒廃した広場
         if self._restoring:
             # 復元時はカウントしないが、last_visit_keyは設定（重複防止）
             self._last_visit_key = visit_key
             visit_num = 1
         else:
-            # 同じエリアに連続入場はカウントしない（ログ重複対策）
-            if visit_key != last_visit_key:
+            # 同じエリアに連続入場はカウントしない（ログ重複対策）— 特殊エリアは常にカウント
+            if visit_key != last_visit_key or visit_key in always_count_zones:
                 self.zone_visit_counts[visit_key] = self.zone_visit_counts.get(visit_key, 0) + 1
             self._last_visit_key = visit_key
             visit_num = self.zone_visit_counts.get(visit_key, 1)
@@ -928,6 +946,31 @@ class MainWindow(QMainWindow):
         
         self.map_thumbnail.load_maps(zone_name, part2=self.part2_mode)
     
+    def on_kitava_defeated(self):
+        """Act5キタヴァ討伐 → Act6-10に切替"""
+        if not self.part2_mode:
+            print("[INFO] キタヴァ討伐を検知 — Act 6-10に切替")
+            self._set_part2(True)
+    
+    def on_act10_cleared(self):
+        """Act10キタヴァ討伐 → クリアメッセージ表示"""
+        print("[INFO] Act10キタヴァ討伐を検知 — クリアメッセージ表示")
+        clear_html = (
+            '<div style="text-align: center; padding: 20px;">'
+            '<span style="font-size: 24px; color: #ffd700;">🎉</span><br>'
+            '<span style="font-size: 18px; color: #ffd700; font-weight: bold;">'
+            'Act10クリア！</span><br><br>'
+            '<span style="font-size: 16px; color: #e0e0e0;">'
+            'お疲れ様でした！</span>'
+            '</div>'
+        )
+        self.guide_text_label.setText(clear_html)
+        self.guide_text_label.setStyleSheet(
+            f"color: #e0e0e0; font-size: {self.guide_font_size}px; background: transparent;"
+        )
+        # マップサムネイルをクリア
+        self.map_thumbnail.load_maps("", part2=False)
+
     def on_level_up(self, char_name: str, level: int):
         """レベルアップ検知"""
         self.player_level = level
@@ -939,12 +982,7 @@ class MainWindow(QMainWindow):
             self.zone_visit_counts = {}
             self._last_visit_key = None
             self._twilight_strand_entered = False
-        
-        # A: レベルでPart自動切替（双方向）
-        if not self.part2_mode and level >= self.part2_level_threshold:
-            self._set_part2(True)
-        elif self.part2_mode and level < self.part2_level_threshold:
-            self._set_part2(False)
+            self._in_act10 = False
         
         # 現在のゾーン情報があれば再評価
         if self.current_zone:
@@ -1069,12 +1107,14 @@ class MainWindow(QMainWindow):
             
             # ゾーンデータ・ガイドデータ更新
             self.zone_data = self.config.get("zone_data", DEFAULT_ZONE_DATA)
-            self.guide_data = load_guide_data()
             
             # ガイドフォントサイズ更新
             self.guide_font_size = self.config.get("guide_font_size", 14)
             
             self.update_level_guide_display()
+        
+        # ガイドデータは常にリロード（ガイド編集Saveで即保存されるため、Cancelでも反映する）
+        self.guide_data = load_guide_data()
             
     def closeEvent(self, event):
         if self.keyboard_listener:
