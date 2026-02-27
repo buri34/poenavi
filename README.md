@@ -129,21 +129,21 @@ python main.py
 ## 🚀 使い方
 
 1. アプリを起動
-2. ⚙ボタン（または右クリック → Settings）を開く
-3. **基本設定** タブ → 「PoE Log File」に `Client.txt` のパスを設定
+2. ⚙ボタン（または右クリック →「設定」）を開く
+3. **基本設定** タブ → 「PoE ログファイル」に `Client.txt` のパスを設定
    - 通常: `C:\Program Files (x86)\Grinding Gear Games\Path of Exile\logs\Client.txt`
    - Steam版: `C:\Program Files (x86)\Steam\steamapps\common\Path of Exile\logs\Client.txt`
-4. Save → PoEでプレイ開始！
+4. 「保存」→ PoEでプレイ開始！
 
 ### ホットキー（デフォルト）
 | キー | 機能 |
 |------|------|
-| F7 | Start / Stop |
-| F8 | Reset |
-| F9 | Lap（次のActへ） |
-| F10 | Undo Lap |
+| F7 | 開始 / 停止 |
+| F8 | リセット |
+| F9 | ラップ（次のActへ） |
+| F10 | ラップ取消 |
 
-※ Settingsから変更可能
+※ 設定画面から変更可能
 
 ---
 
@@ -172,7 +172,7 @@ maps/
 
 ## ⚙️ ガイド編集
 
-Settings → **エリア情報** タブで、Act 1〜10の各エリアのガイドデータを編集できます。
+設定画面 → **エリア情報** タブで、Act 1〜10の各エリアのガイドデータを編集できます。
 
 - **📝 ガイド編集**: 目標・レイアウト情報・Tips・基本方向を編集
 
