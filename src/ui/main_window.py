@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QLabel, QPushButton, QMenu, QFrame, QScrollArea,
                                QSizeGrip)
 from PySide6.QtCore import Qt, QTimer, Signal, QRect, QEvent, QPoint
-from PySide6.QtGui import QCursor, QMouseEvent
+from PySide6.QtGui import QCursor, QMouseEvent, QIcon
 from src.ui.styles import Styles
 from src.ui.settings_dialog import SettingsDialog
 from src.ui.map_viewer import MapThumbnailWidget
@@ -26,6 +26,15 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("PoE RTA Timer")
         self.resize(420, 1200)
+        
+        # アプリアイコン設定
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "icon.ico")
+        if not os.path.exists(icon_path):
+            # PyInstaller _MEIPASS対応
+            base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(sys.argv[0])))
+            icon_path = os.path.join(base, "icon.ico")
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
         
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -45,6 +54,11 @@ class MainWindow(QMainWindow):
         self.zone_visit_counts = {}
         # 起動時の復元中はvisitカウントしない
         self._restoring = False
+        # 訪問回数の手動オーバーライド（None=自動, 1 or 2=固定）— ゾーン移動でリセット
+        self.visit_override = None
+        # Lab中フラグ（志す者の広場→Lab内エリア→街帰還を追跡）
+        self._in_lab = False
+        self._lab_zone_id = None  # Lab入口の志す者の広場のzone_id
         
         # ガイド折りたたみ状態（初回はTrue、以降はconfig保持）
         self.guide_expanded = self.config.get("guide_expanded", True)
@@ -336,8 +350,28 @@ class MainWindow(QMainWindow):
         self.lbl_secs.setStyleSheet(base_style)
         self.lbl_ms.setStyleSheet(ms_style)
         
-        # ラップタイムリスト
-        timer_content_layout.addSpacing(15)
+        # === ラップタイム折りたたみトグル ===
+        self.lap_expanded = self.config.get("lap_expanded", True)
+        
+        self.lap_toggle_btn = QPushButton("▼ ラップタイム" if self.lap_expanded else "▶ ラップタイム")
+        self.lap_toggle_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; color: {Styles.TEXT_COLOR};
+                border: none; font-size: 11px; font-weight: bold;
+                text-align: left; padding: 2px 5px;
+            }}
+            QPushButton:hover {{ color: #ffffff; }}
+        """)
+        self.lap_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.lap_toggle_btn.clicked.connect(self.toggle_lap)
+        timer_content_layout.addSpacing(10)
+        timer_content_layout.addWidget(self.lap_toggle_btn)
+        
+        # ラップタイムリスト（折りたたみ対象）
+        self.lap_content = QWidget()
+        lap_content_layout = QVBoxLayout(self.lap_content)
+        lap_content_layout.setContentsMargins(0, 0, 0, 0)
+        lap_content_layout.setSpacing(0)
         
         self.lap_labels = []
         for i in range(10):
@@ -356,8 +390,11 @@ class MainWindow(QMainWindow):
             lap_layout.addWidget(split_label)
             lap_layout.addStretch()
             
-            timer_content_layout.addLayout(lap_layout)
+            lap_content_layout.addLayout(lap_layout)
             self.lap_labels.append((act_label, time_label, split_label))
+        
+        timer_content_layout.addWidget(self.lap_content)
+        self.lap_content.setVisible(self.lap_expanded)
         
         self.update_lap_display()
         
@@ -455,6 +492,13 @@ class MainWindow(QMainWindow):
         self.part2_btn.clicked.connect(self.toggle_part2)
         zone_info_layout.addWidget(self.part2_btn)
         
+        # 訪問回数 手動切替ボタン（1回目 / 2回目）
+        self.visit_btn = QPushButton("自動")
+        self.visit_btn.setStyleSheet(self._visit_btn_style())
+        self.visit_btn.setFixedHeight(22)
+        self.visit_btn.clicked.connect(self.toggle_visit_override)
+        zone_info_layout.addWidget(self.visit_btn)
+        
         self.level_label = QLabel("Lv. 1")
         self.level_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px; font-weight: bold;")
         zone_info_layout.addWidget(self.level_label)
@@ -531,6 +575,63 @@ class MainWindow(QMainWindow):
                 QPushButton:hover {{ color: {Styles.TEXT_COLOR}; border-color: {Styles.TEXT_COLOR}; }}
             """
     
+    def _visit_btn_style(self):
+        if self.visit_override is not None:
+            return f"""
+                QPushButton {{
+                    background: rgba(255,200,50,0.25); color: #ffc832;
+                    border: 1px solid #ffc832; border-radius: 3px;
+                    padding: 2px 6px; font-size: 10px; font-weight: bold;
+                }}
+                QPushButton:hover {{ background: rgba(255,200,50,0.4); }}
+            """
+        else:
+            return f"""
+                QPushButton {{
+                    background: transparent; color: #888888;
+                    border: 1px solid #555555; border-radius: 3px;
+                    padding: 2px 6px; font-size: 10px;
+                }}
+                QPushButton:hover {{ color: {Styles.TEXT_COLOR}; border-color: {Styles.TEXT_COLOR}; }}
+            """
+
+    def toggle_visit_override(self):
+        """訪問回数の表示を一時的に切り替え（自動→1回目→2回目→自動）"""
+        if self.visit_override is None:
+            self.visit_override = 1
+        elif self.visit_override == 1:
+            self.visit_override = 2
+        else:
+            self.visit_override = None
+        self._update_visit_btn()
+        # 現在のゾーンのガイドを再表示
+        if self.current_zone:
+            zone_id = self._current_zone_id()
+            visit_num = self.visit_override if self.visit_override else self.zone_visit_counts.get(zone_id or self.current_zone, 1)
+            self._update_guide_and_map(self.current_zone, zone_id, visit_num)
+
+    def _update_visit_btn(self):
+        if self.visit_override is None:
+            self.visit_btn.setText("自動")
+        elif self.visit_override == 1:
+            self.visit_btn.setText("1回目")
+        else:
+            self.visit_btn.setText("2回目")
+        self.visit_btn.setStyleSheet(self._visit_btn_style())
+
+    def _current_zone_id(self):
+        """現在のゾーンのzone_idを返す"""
+        if not self.current_zone:
+            return None
+        zone_name = self.current_zone
+        for zid, zinfo in self.zone_data.items():
+            if isinstance(zinfo, dict) and zinfo.get("name") == zone_name:
+                return zid
+            # part2対応
+            if isinstance(zinfo, dict) and zinfo.get("name2") == zone_name:
+                return zid
+        return None
+
     def toggle_part2(self):
         """Part 1/2を手動トグル"""
         self._set_part2(not self.part2_mode)
@@ -554,6 +655,14 @@ class MainWindow(QMainWindow):
         self.timer_content.setVisible(self.timer_expanded)
         self.timer_toggle_btn.setText("▼ タイマー" if self.timer_expanded else "▶ タイマー")
         self.config["timer_expanded"] = self.timer_expanded
+        ConfigManager.save_config(self.config)
+    
+    def toggle_lap(self):
+        """ラップタイム表示の折りたたみ/展開"""
+        self.lap_expanded = not self.lap_expanded
+        self.lap_content.setVisible(self.lap_expanded)
+        self.lap_toggle_btn.setText("▼ ラップタイム" if self.lap_expanded else "▶ ラップタイム")
+        self.config["lap_expanded"] = self.lap_expanded
         ConfigManager.save_config(self.config)
     
     def toggle_guide(self):
@@ -612,6 +721,8 @@ class MainWindow(QMainWindow):
         self._set_part2(False)
         # 訪問回数リセット
         self.zone_visit_counts = {}
+        self.visit_override = None
+        self._update_visit_btn()
         # マップクリア
         self.map_thumbnail.clear()
     
@@ -820,12 +931,30 @@ class MainWindow(QMainWindow):
     def on_zone_entered(self, zone_name: str):
         """エリア入場検知"""
         # 街エリアの場合はゾーン名表示のみ更新、ガイド・マップは前のまま維持
+        # （visit_overrideもリセットしない — 街を挟んでも手動切替を維持）
         if self._is_town_zone(zone_name):
             act_range = "Act 6-10" if self.part2_mode else "Act 1-5"
             self.zone_label.setText(f"🏠 {zone_name} [{act_range}]")
-            self.advice_label.setText("（街エリア — ガイドは前のエリアを表示中）")
-            self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
+            # Labクリア後の街帰還 → 志す者の広場の2回目ガイドを表示
+            if self._in_lab and self._lab_zone_id:
+                self._in_lab = False
+                self.advice_label.setText("🏛️ Labクリア — 次のガイドを表示中")
+                self.advice_label.setStyleSheet("color: #ffc832; font-size: 12px;")
+                # 志す者の広場のvisitカウントを増やす
+                self.zone_visit_counts[self._lab_zone_id] = self.zone_visit_counts.get(self._lab_zone_id, 1) + 1
+                visit_num = self.zone_visit_counts[self._lab_zone_id]
+                lab_zone_name = "志す者の広場"
+                self._update_guide_and_map(lab_zone_name, self._lab_zone_id, visit_num)
+                self._lab_zone_id = None
+            else:
+                self.advice_label.setText("（街エリア — ガイドは前のエリアを表示中）")
+                self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
             return
+        
+        # 訪問回数オーバーライドをリセット（街以外のゾーン移動で自動に戻る）
+        if self.visit_override is not None:
+            self.visit_override = None
+            self._update_visit_btn()
         
         # 荒廃した広場(Act10固有)入場 → Act10フラグON
         if zone_name == "荒廃した広場" and not self._restoring:
@@ -841,6 +970,22 @@ class MainWindow(QMainWindow):
         
         # zone_id検索
         zone_id = self._get_zone_id(zone_name)
+        
+        # Lab処理: 志す者の広場に入場 → Labフラグ設定
+        _lab_zone_ids = {"act4_area3", "act8_area2", "act10_area8"}
+        if zone_id in _lab_zone_ids and not self._restoring:
+            self._in_lab = True
+            self._lab_zone_id = zone_id
+        elif self._in_lab and zone_id and zone_id not in _lab_zone_ids:
+            # Lab中に既知の別エリアに入った → Labフラグ解除
+            self._in_lab = False
+            self._lab_zone_id = None
+        elif self._in_lab and not zone_id:
+            # Lab中に未知のエリア（Lab内部）→ ガイド更新スキップ
+            self.zone_label.setText(f"📍 {zone_name}")
+            self.advice_label.setText("🏛️ Lab — ガイドは前のエリアを表示中")
+            self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
+            return
         
         # monster_levels.jsonからデータ取得
         monster_info = self.monster_levels.get(zone_id) if zone_id else None
@@ -881,7 +1026,7 @@ class MainWindow(QMainWindow):
         visit_key = zone_id if zone_id else zone_name
         last_visit_key = getattr(self, '_last_visit_key', None)
         # 街を挟んでも常にカウントするエリア（ポータルで街に戻って再入場するパターン）
-        always_count_zones = {"act10_area4"}  # 荒廃した広場
+        always_count_zones = {"act5_area5", "act10_area3"}  # イノセンスの間, 荒廃した広場
         if self._restoring:
             # 復元時はカウントしないが、last_visit_keyは設定（重複防止）
             self._last_visit_key = visit_key
@@ -931,8 +1076,10 @@ class MainWindow(QMainWindow):
     
     def _update_guide_and_map(self, zone_name: str, zone_id: str | None, visit_num: int):
         """攻略ガイドとマップ画像を更新"""
+        # 訪問回数オーバーライド適用
+        effective_visit = self.visit_override if self.visit_override is not None else visit_num
         if zone_id:
-            guide = get_zone_guide(self.guide_data, zone_id, visit=visit_num)
+            guide = get_zone_guide(self.guide_data, zone_id, visit=effective_visit)
         else:
             guide = None
         
@@ -961,7 +1108,10 @@ class MainWindow(QMainWindow):
             '<span style="font-size: 18px; color: #ffd700; font-weight: bold;">'
             'Act10クリア！</span><br><br>'
             '<span style="font-size: 16px; color: #e0e0e0;">'
-            'お疲れ様でした！</span>'
+            'お疲れ様でした！</span><br><br>'
+            '<span style="font-size: 13px; color: #b0ffb0;">'
+            'チャットコマンドに「/passives」を入力して、パッシブポイントの取り忘れがないかチェックしましょう。<br>'
+            'Act2のバンディットクエストで全員倒していれば24pt、それ以外は23ptになっていればOK</span>'
             '</div>'
         )
         self.guide_text_label.setText(clear_html)
@@ -982,6 +1132,8 @@ class MainWindow(QMainWindow):
             self.zone_visit_counts = {}
             self._last_visit_key = None
             self._twilight_strand_entered = False
+            self.visit_override = None
+            self._update_visit_btn()
             self._in_act10 = False
         
         # 現在のゾーン情報があれば再評価

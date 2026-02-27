@@ -15,47 +15,43 @@
     "en": "The Submerged Passage",
     "lv": 5
   },
-  "act1_area6": {
+  "act1_area5": {
     "en": "The Tidal Island",
     "lv": 3
   },
-  "act1_area8": {
+  "act1_area6": {
     "en": "The Ledge",
     "lv": 6
   },
-  "act1_area9": {
+  "act1_area7": {
     "en": "The Climb",
     "lv": 7
   },
-  "act1_area10": {
+  "act1_area8": {
     "en": "The Lower Prison",
     "lv": 8
   },
-  "act1_area11": {
+  "act1_area9": {
     "en": "The Flooded Depths",
     "lv": 6
   },
-  "act1_area13": {
+  "act1_area10": {
     "en": "The Upper Prison",
     "lv": 9
   },
-  "act1_area14": {
-    "en": "The Warden's Quarters",
-    "lv": 9
-  },
-  "act1_area15": {
+  "act1_area11": {
     "en": "Prisoner's Gate",
     "lv": 10
   },
-  "act1_area16": {
+  "act1_area12": {
     "en": "The Ship Graveyard",
     "lv": 11
   },
-  "act1_area17": {
+  "act1_area14": {
     "en": "The Cavern of Wrath",
     "lv": 12
   },
-  "act1_area19": {
+  "act1_area13": {
     "en": "The Ship Graveyard Cave",
     "lv": 12
   },
@@ -71,63 +67,63 @@
     "en": "The Crossroads",
     "lv": 15
   },
-  "act2_area5": {
+  "act2_area4": {
     "en": "The Den",
     "lv": 15
   },
-  "act2_area7": {
+  "act2_area5": {
     "en": "Chamber of Sins Level 1",
     "lv": 15
   },
-  "act2_area8": {
+  "act2_area6": {
     "en": "Chamber of Sins Level 2",
     "lv": 16
   },
-  "act2_area9": {
+  "act2_area7": {
     "en": "The Riverways",
     "lv": 15
   },
-  "act2_area10": {
+  "act2_area8": {
     "en": "The Western Forest",
     "lv": 17
   },
-  "act2_area11": {
+  "act2_area9": {
     "en": "Weaver's Chambers",
     "lv": 18
   },
-  "act2_area12": {
+  "act2_area10": {
     "en": "The Broken Bridge",
     "lv": 16
   },
-  "act2_area13": {
+  "act2_area11": {
     "en": "The Fellshrine Ruins",
     "lv": 16
   },
-  "act2_area14": {
+  "act2_area12": {
     "en": "The Crypt Level 1",
     "lv": 17
   },
-  "act2_area15": {
+  "act2_area13": {
     "en": "The Crypt Level 2",
     "lv": 18
   },
-  "act2_area17": {
+  "act2_area14": {
     "en": "The Wetlands",
     "lv": 19
   },
-  "act2_area20": {
+  "act2_area15": {
     "en": "Vaal Ruins",
     "lv": 20
   },
-  "act2_area21": {
+  "act2_area16": {
     "en": "Northern Forest",
     "lv": 21
   },
-  "act2_area22": {
+  "act2_area17": {
     "en": "The Caverns",
     "lv": 22
   },
-  "act2_area23": {
+  "act2_area18": {
     "en": "Ancient Pyramid",
     "lv": 23
   },
@@ -143,64 +139,59 @@
     "en": "The Crematorium",
     "lv": 25
   },
-  "act3_area5": {
+  "act3_area4": {
     "en": "The Sewers",
     "lv": 26
   },
-  "act3_area6": {
+  "act3_area5": {
     "en": "The Marketplace",
     "lv": 26
   },
-  "act3_area7": {
+  "act3_area6": {
     "en": "The Catacombs",
     "lv": 27
   },
-  "act3_area9": {
+  "act3_area7": {
     "en": "The Battlefront",
     "lv": 27
   },
-  "act3_area10": {
+  "act3_area8": {
     "en": "The Docks",
     "lv": 29
   },
-  "act3_area12": {
+  "act3_area9": {
     "en": "Solaris Temple Level 1",
     "lv": 27
   },
-  "act3_area13": {
+  "act3_area10": {
     "en": "Solaris Temple Level 2",
     "lv": 28
   },
-  "act3_area14": {
-    "en": "Eternal Laboratory",
-    "lv": 0,
-    "exclude": "non_combat"
-  },
-  "act3_area16": {
+  "act3_area11": {
     "en": "The Ebony Barracks",
     "lv": 29
   },
-  "act3_area17": {
+  "act3_area12": {
     "en": "Lunaris Temple Level 1",
     "lv": 29
   },
-  "act3_area18": {
+  "act3_area13": {
     "en": "Lunaris Temple Level 2",
     "lv": 30
   },
-  "act3_area20": {
+  "act3_area14": {
     "en": "The Imperial Gardens",
     "lv": 30
   },
-  "act3_area21": {
+  "act3_area15": {
     "en": "The Library",
     "lv": 30
   },
-  "act3_area22": {
+  "act3_area16": {
     "en": "The Archives",
     "lv": 31
   },
-  "act3_area25": {
+  "act3_area17": {
     "en": "The Sceptre of God",
     "lv": 32
   },
@@ -225,27 +216,22 @@
     "lv": 43
   },
   "act5_area6": {
-    "en": "Innocence's Sanctum",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act5_area8": {
     "en": "The Torched Courts",
     "lv": 44
   },
-  "act5_area9": {
+  "act5_area7": {
     "en": "The Ruined Square",
     "lv": 44
   },
-  "act5_area10": {
+  "act5_area8": {
     "en": "The Ossuary",
     "lv": 44
   },
-  "act5_area12": {
+  "act5_area9": {
     "en": "The Reliquary",
     "lv": 44
   },
-  "act5_area13": {
+  "act5_area10": {
     "en": "The Cathedral Rooftop",
     "lv": 45
   },
@@ -266,68 +252,48 @@
     "lv": 46
   },
   "act6_area5": {
-    "en": "Tukohama's Fortress",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act6_area7": {
     "en": "The Ridge",
     "lv": 46
   },
-  "act6_area8": {
+  "act6_area6": {
     "en": "The Lower Prison",
     "lv": 47
   },
-  "act6_area9": {
+  "act6_area7": {
     "en": "Shavronne's Tower",
     "lv": 47
   },
-  "act6_area10": {
-    "en": "Warden's Torture Chamber",
-    "lv": 0,
-    "exclude": "non_combat"
-  },
-  "act6_area11": {
+  "act6_area8": {
     "en": "Prisoner's Gate",
     "lv": 47
   },
-  "act6_area12": {
+  "act6_area9": {
     "en": "The Western Forest",
     "lv": 48
   },
-  "act6_area13": {
+  "act6_area10": {
     "en": "The Riverways",
     "lv": 48
   },
-  "act6_area14": {
+  "act6_area11": {
     "en": "The Wetlands",
     "lv": 48
   },
-  "act6_area15": {
-    "en": "The Spawning Ground",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act6_area17": {
+  "act6_area12": {
     "en": "The Southern Forest",
     "lv": 49
   },
-  "act6_area18": {
+  "act6_area13": {
     "en": "The Cavern of Anger",
     "lv": 49
   },
-  "act6_area19": {
+  "act6_area14": {
     "en": "The Beacon",
     "lv": 49
   },
-  "act6_area20": {
+  "act6_area15": {
     "en": "The Brine King's Reef",
     "lv": 50
-  },
-  "act6_area21": {
-    "en": "The Brine King's Throne",
-    "lv": 0,
-    "exclude": "boss"
   },
   "act7_area1": {
     "en": "The Broken Bridge",
@@ -346,76 +312,52 @@
     "lv": 51
   },
   "act7_area5": {
-    "en": "The Crypt",
-    "lv": 51
-  },
-  "act7_area7": {
     "en": "Chamber of Sins Level 1",
     "lv": 52
   },
-  "act7_area8": {
+  "act7_area6": {
     "en": "Maligaro's Sanctum",
     "lv": 52
   },
-  "act7_area10": {
+  "act7_area7": {
     "en": "Chamber of Sins Level 2",
     "lv": 52
   },
-  "act7_area11": {
+  "act7_area8": {
     "en": "The Den",
     "lv": 53
   },
-  "act7_area12": {
+  "act7_area9": {
     "en": "The Ashen Fields",
     "lv": 53
   },
-  "act7_area13": {
-    "en": "The Fortress Encampment",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act7_area14": {
+  "act7_area10": {
     "en": "The Northern Forest",
     "lv": 53
   },
-  "act7_area15": {
+  "act7_area11": {
     "en": "Prisoner's Gate",
     "lv": 47
   },
-  "act7_area16": {
-    "en": "Valley of the Fire Drinker",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act7_area18": {
+  "act7_area12": {
     "en": "The Dread Thicket",
     "lv": 53
   },
-  "act7_area19": {
-    "en": "The Den",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act7_area20": {
+  "act7_area13": {
     "en": "The Causeway",
     "lv": 54
   },
-  "act7_area21": {
+  "act7_area14": {
     "en": "The Vaal City",
     "lv": 54
   },
-  "act7_area23": {
+  "act7_area15": {
     "en": "The Temple of Decay Level 1",
     "lv": 54
   },
-  "act7_area24": {
+  "act7_area16": {
     "en": "The Temple of Decay Level 2",
     "lv": 55
-  },
-  "act7_area25": {
-    "en": "Arakaali's Web",
-    "lv": 0,
-    "exclude": "boss"
   },
   "act8_area1": {
     "en": "The Sarn Ramparts",
@@ -439,71 +381,62 @@
     "lv": 0,
     "exclude": "boss"
   },
-  "act8_area7": {
+  "act8_area6": {
     "en": "The Quay",
     "lv": 57
   },
-  "act8_area8": {
+  "act8_area7": {
     "en": "The Resurrection Site",
     "lv": 0,
     "exclude": "boss"
   },
-  "act8_area10": {
+  "act8_area8": {
     "en": "The Grain Gate",
     "lv": 57
   },
-  "act8_area11": {
+  "act8_area9": {
     "en": "The Imperial Fields",
     "lv": 58
   },
-  "act8_area12": {
+  "act8_area10": {
     "en": "Solaris Temple Level 1",
     "lv": 59
   },
-  "act8_area13": {
+  "act8_area11": {
     "en": "Solaris Temple Level 2",
     "lv": 59
   },
-  "act8_area15": {
+  "act8_area12": {
     "en": "The Solaris Concourse",
     "lv": 58
   },
-  "act8_area16": {
+  "act8_area13": {
     "en": "The Harbour Bridge",
     "lv": 60
   },
-  "act8_area17": {
+  "act8_area14": {
     "en": "The Lunaris Concourse",
     "lv": 58
   },
-  "act8_area18": {
+  "act8_area15": {
     "en": "Lunaris Temple Level 1",
     "lv": 59
   },
-  "act8_area19": {
+  "act8_area16": {
     "en": "Lunaris Temple Level 2",
     "lv": 59
   },
-  "act8_area22": {
-    "en": "The High Gardens",
-    "lv": 58
-  },
-  "act8_area23": {
+  "act8_area17": {
     "en": "The Blood Aqueduct",
     "lv": 61
   },
-  "act8_area25": {
+  "act8_area18": {
     "en": "The Bath House",
     "lv": 57
   },
-  "act8_area26": {
+  "act8_area19": {
     "en": "The High Gardens",
     "lv": 58
-  },
-  "act8_area27": {
-    "en": "The Terror Pool",
-    "lv": 0,
-    "exclude": "boss"
   },
   "act9_area1": {
     "en": "The Descent",
@@ -513,57 +446,37 @@
     "en": "The Vastiri Desert",
     "lv": 61
   },
-  "act9_area4": {
+  "act9_area3": {
     "en": "The Oasis",
     "lv": 61
   },
-  "act9_area5": {
-    "en": "The Sand Pit",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act9_area6": {
+  "act9_area4": {
     "en": "The Foothills",
     "lv": 62
   },
-  "act9_area7": {
+  "act9_area5": {
     "en": "The Boiling Lake",
     "lv": 62
   },
-  "act9_area9": {
+  "act9_area6": {
     "en": "The Tunnel",
     "lv": 62
   },
-  "act9_area10": {
+  "act9_area7": {
     "en": "The Quarry",
     "lv": 63
   },
-  "act9_area11": {
+  "act9_area8": {
     "en": "The Refinery",
     "lv": 63
   },
-  "act9_area13": {
-    "en": "The Wind Shrine",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act9_area14": {
+  "act9_area9": {
     "en": "The Belly of the Beast",
     "lv": 63
   },
-  "act9_area15": {
+  "act9_area10": {
     "en": "The Rotting Core",
     "lv": 64
-  },
-  "act9_area16": {
-    "en": "The Black Core",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act9_area17": {
-    "en": "The Black Heart",
-    "lv": 0,
-    "exclude": "boss"
   },
   "act10_area1": {
     "en": "The Cathedral Rooftop",
@@ -574,64 +487,45 @@
     "lv": 0,
     "exclude": "boss"
   },
-  "act10_area4": {
+  "act10_area3": {
     "en": "The Ravaged Square",
     "lv": 64
   },
-  "act10_area6": {
+  "act10_area4": {
     "en": "The Control Blocks",
     "lv": 66
   },
-  "act10_area7": {
-    "en": "The Arena",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act10_area9": {
+  "act10_area5": {
     "en": "The Ossuary",
     "lv": 67
   },
-  "act10_area10": {
-    "en": "The Bone Pit",
-    "lv": 67
-  },
-  "act10_area12": {
+  "act10_area6": {
     "en": "The Torched Courts",
     "lv": 65
   },
-  "act10_area13": {
+  "act10_area7": {
     "en": "The Desecrated Chambers",
     "lv": 65
   },
-  "act10_area14": {
-    "en": "Innocence's Sanctum",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act10_area15": {
+  "act10_area8": {
     "en": "Oriath Docks (town)",
     "lv": 0,
     "exclude": "non_combat"
   },
-  "act10_area16": {
-    "en": "Oriath Docks",
-    "lv": 0,
-    "exclude": "town"
-  },
-  "act10_area18": {
+  "act10_area9": {
     "en": "The Canals",
     "lv": 66
   },
-  "act10_area19": {
+  "act10_area10": {
     "en": "The Feeding Trough",
     "lv": 67
   },
-  "act10_area20": {
+  "act10_area11": {
     "en": "The Altar of Hunger",
     "lv": 0,
     "exclude": "boss"
   },
-  "act1_area18": {
+  "act1_area15": {
     "en": "The Cavern of Anger",
     "lv": 13
   },
@@ -668,41 +562,36 @@
     "en": "The Grand Arena",
     "lv": 38
   },
-  "act4_area10": {
+  "act4_area9": {
     "en": "Kaom's Dream",
     "lv": 37
   },
-  "act4_area11": {
+  "act4_area10": {
     "en": "Kaom's Stronghold",
     "lv": 38
   },
-  "act4_area12": {
+  "act4_area11": {
     "en": "Belly of the Beast Level 1",
     "lv": 38
   },
-  "act4_area13": {
+  "act4_area12": {
     "en": "Belly of the Beast Level 2",
     "lv": 39
   },
-  "act4_area14": {
+  "act4_area13": {
     "en": "The Bowels",
     "lv": 0,
     "exclude": "boss"
   },
-  "act4_area15": {
+  "act4_area14": {
     "en": "The Harvest",
     "lv": 40
   },
-  "act4_area16": {
-    "en": "The Black Core",
-    "lv": 0,
-    "exclude": "boss"
-  },
-  "act4_area17": {
+  "act4_area15": {
     "en": "The Ascent",
     "lv": 40
   },
-  "act3_area26": {
+  "act3_area18": {
     "en": "The Sceptre of God (Upper)",
     "lv": 32
   }

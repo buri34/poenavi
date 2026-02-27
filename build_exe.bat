@@ -11,6 +11,8 @@ pip install pyinstaller 2>nul
 REM Build
 pyinstaller --noconfirm --onedir --windowed ^
     --name "PoENavi" ^
+    --icon "icon.ico" ^
+    --add-data "icon.ico;." ^
     --add-data "config.json;." ^
     --add-data "guide_data.json;." ^
     --add-data "monster_levels.json;." ^
