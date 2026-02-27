@@ -469,10 +469,10 @@ class GuideEditorDialog(QDialog):
         
         # OK/Cancel
         btn_layout = QHBoxLayout()
-        ok_btn = QPushButton("Save")
+        ok_btn = QPushButton("保存")
         ok_btn.setStyleSheet(Styles.BUTTON)
         ok_btn.clicked.connect(self.accept)
-        cancel_btn = QPushButton("Cancel")
+        cancel_btn = QPushButton("キャンセル")
         cancel_btn.setStyleSheet(Styles.BUTTON)
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(ok_btn)
@@ -572,7 +572,7 @@ class GuideEditorDialog(QDialog):
 class SettingsDialog(QDialog):
     def __init__(self, parent=None, current_config=None):
         super().__init__(parent)
-        self.setWindowTitle("Settings")
+        self.setWindowTitle("設定")
         self.resize(500, 600)
         self.setStyleSheet(Styles.MAIN_WINDOW)
         
@@ -608,30 +608,30 @@ class SettingsDialog(QDialog):
         general_layout = QVBoxLayout(general_tab)
         
         # ホットキー設定グループ
-        group = QGroupBox("Hotkeys")
+        group = QGroupBox("ホットキー")
         group.setStyleSheet(f"QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid {Styles.TEXT_COLOR}; border-radius: 5px; margin-top: 10px; }} QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }}")
         group_layout = QVBoxLayout(group)
         
         h_layout1 = QHBoxLayout()
-        h_layout1.addWidget(QLabel("Start/Stop:"))
+        h_layout1.addWidget(QLabel("開始/停止:"))
         self.start_stop_btn = HotkeyButton(self.hotkeys.get("start_stop", "F1"))
         h_layout1.addWidget(self.start_stop_btn)
         group_layout.addLayout(h_layout1)
         
         h_layout2 = QHBoxLayout()
-        h_layout2.addWidget(QLabel("Reset:"))
+        h_layout2.addWidget(QLabel("リセット:"))
         self.reset_btn = HotkeyButton(self.hotkeys.get("reset", "F2"))
         h_layout2.addWidget(self.reset_btn)
         group_layout.addLayout(h_layout2)
         
         h_layout3 = QHBoxLayout()
-        h_layout3.addWidget(QLabel("Lap (Next Act):"))
+        h_layout3.addWidget(QLabel("ラップ（次のAct）:"))
         self.lap_btn = HotkeyButton(self.hotkeys.get("lap", "F3"))
         h_layout3.addWidget(self.lap_btn)
         group_layout.addLayout(h_layout3)
         
         h_layout4 = QHBoxLayout()
-        h_layout4.addWidget(QLabel("Undo Lap:"))
+        h_layout4.addWidget(QLabel("ラップ取消:"))
         self.undo_lap_btn = HotkeyButton(self.hotkeys.get("undo_lap", "F4"))
         h_layout4.addWidget(self.undo_lap_btn)
         group_layout.addLayout(h_layout4)
@@ -639,7 +639,7 @@ class SettingsDialog(QDialog):
         general_layout.addWidget(group)
         
         # Client.txt パス設定
-        log_group = QGroupBox("PoE Log File")
+        log_group = QGroupBox("PoE ログファイル")
         log_group.setStyleSheet(group.styleSheet())
         log_layout = QHBoxLayout(log_group)
         
@@ -653,7 +653,7 @@ class SettingsDialog(QDialog):
         """)
         log_layout.addWidget(self.log_path_edit)
         
-        browse_btn = QPushButton("Browse")
+        browse_btn = QPushButton("参照")
         browse_btn.setStyleSheet(Styles.BUTTON)
         browse_btn.clicked.connect(self.browse_log_file)
         log_layout.addWidget(browse_btn)
@@ -679,6 +679,43 @@ class SettingsDialog(QDialog):
         font_layout.addStretch()
         
         general_layout.addWidget(font_group)
+
+        # タイマーサイズ設定
+        timer_size_group = QGroupBox("タイマー表示")
+        timer_size_group.setStyleSheet(group.styleSheet())
+        timer_size_layout = QHBoxLayout(timer_size_group)
+        
+        timer_size_label = QLabel("タイマーサイズ:")
+        timer_size_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        timer_size_layout.addWidget(timer_size_label)
+        
+        from PySide6.QtWidgets import QComboBox
+        self.timer_size_combo = QComboBox()
+        self.timer_size_combo.addItem("大", "large")
+        self.timer_size_combo.addItem("中", "medium")
+        self.timer_size_combo.addItem("小", "small")
+        self.timer_size_combo.setFixedWidth(100)
+        self.timer_size_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: #2a2a2a; color: {Styles.TEXT_COLOR};
+                border: 1px solid #555; border-radius: 4px;
+                padding: 4px 8px; font-size: 12px;
+            }}
+            QComboBox::drop-down {{ border: none; }}
+            QComboBox QAbstractItemView {{
+                background-color: #2a2a2a; color: {Styles.TEXT_COLOR};
+                selection-background-color: #444;
+            }}
+        """)
+        # 現在の設定値をセット
+        current_timer_size = self.current_config.get("timer_size", "large")
+        idx = self.timer_size_combo.findData(current_timer_size)
+        if idx >= 0:
+            self.timer_size_combo.setCurrentIndex(idx)
+        timer_size_layout.addWidget(self.timer_size_combo)
+        timer_size_layout.addStretch()
+        
+        general_layout.addWidget(timer_size_group)
         
         # 街エリア設定
         town_group = QGroupBox("街エリア（ガイド更新スキップ）")
@@ -851,11 +888,11 @@ class SettingsDialog(QDialog):
         
         # OK/Cancel
         btn_layout = QHBoxLayout()
-        self.ok_btn = QPushButton("Save")
+        self.ok_btn = QPushButton("保存")
         self.ok_btn.setStyleSheet(Styles.BUTTON)
         self.ok_btn.clicked.connect(self.accept)
         
-        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn = QPushButton("キャンセル")
         self.cancel_btn.setStyleSheet(Styles.BUTTON)
         self.cancel_btn.clicked.connect(self.reject)
         
@@ -979,5 +1016,6 @@ class SettingsDialog(QDialog):
             "client_log_path": self.log_path_edit.text().strip(),
             "zone_data": zone_data,
             "guide_font_size": self.guide_font_spin.value(),
+            "timer_size": self.timer_size_combo.currentData(),
             "town_zones": [z.strip() for z in self.town_zones_edit.toPlainText().split("\n") if z.strip()],
         }

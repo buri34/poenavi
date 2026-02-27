@@ -6,7 +6,7 @@ import time
 from pynput import keyboard as pynput_keyboard
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QPushButton, QMenu, QFrame, QScrollArea,
-                               QSizeGrip)
+                               QSizeGrip, QMessageBox)
 from PySide6.QtCore import Qt, QTimer, Signal, QRect, QEvent, QPoint
 from PySide6.QtGui import QCursor, QMouseEvent, QIcon
 from src.ui.styles import Styles
@@ -63,7 +63,14 @@ class MainWindow(QMainWindow):
         # ガイド折りたたみ状態（初回はTrue、以降はconfig保持）
         self.guide_expanded = self.config.get("guide_expanded", True)
         # ガイドフォントサイズ
-        self.guide_font_size = self.config.get("guide_font_size", 14)
+        self.guide_font_size = self.config.get("guide_font_size", 18)
+        # タイマーサイズ
+        self.timer_size = self.config.get("timer_size", "large")
+        self.TIMER_SIZES = {
+            "large":  {"main": 96, "ms": 32, "container_pad": 20},
+            "medium": {"main": 64, "ms": 22, "container_pad": 14},
+            "small":  {"main": 42, "ms": 16, "container_pad": 8},
+        }
         # Part 2モード
         self.part2_mode = self.config.get("part2_mode", False)
         self.part2_level_threshold = self.config.get("part2_level_threshold", 39)
@@ -134,6 +141,9 @@ class MainWindow(QMainWindow):
             self.log_watcher.start()
             self._restoring = False
         
+        # 初回起動チェック（ポップアップ + ガイドエリア案内）
+        self._check_first_run()
+        
         # 全ウィジェットのマウスイベントを横取りしてリサイズ処理
         from PySide6.QtWidgets import QApplication
         QApplication.instance().installEventFilter(self)
@@ -142,6 +152,50 @@ class MainWindow(QMainWindow):
         self._ef_resize_start_geo = None
         self._ef_resize_start_pos = None
         
+    def _check_first_run(self):
+        """初回起動時のセットアップ案内"""
+        log_path = self.config.get("client_log_path", "")
+        is_first_run = not self.config.get("setup_completed", False)
+        
+        if is_first_run and not log_path:
+            # ポップアップ表示
+            msg = QMessageBox(self)
+            msg.setStyleSheet("QMessageBox { font-size: 14px; } QMessageBox QLabel { font-size: 14px; }")
+            msg.setWindowTitle("⚙️ 初回セットアップ")
+            msg.setIcon(QMessageBox.Icon.Information)
+            msg.setText(
+                "ぽえなびをご利用いただきありがとうございます！\n\n"
+                "このアプリはPoEのログファイル（Client.txt）を監視して、"
+                "エリア移動やレベルアップを自動検知します。\n\n"
+                "最初にログファイルのパスを設定してください：\n\n"
+                "1. 右クリックメニューの「設定」、または右側中央の ⚙️ ボタンから設定画面を開く\n"
+                "2. 「基本設定」タブの「Client.txt パス」を設定\n"
+                "3. 通常のパス例（Steam版）：\n"
+                "    C:\\Program Files (x86)\\Steam\\steamapps\n"
+                "    \\common\\Path of Exile\\logs\\Client.txt\n\n"
+                "⚠️ パスが正しく設定されないと、エリア検知が動作しません。"
+            )
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+            msg.exec()
+            # setup_completedフラグはログパス設定時に立てる
+        
+        # ログファイル未設定の場合、ガイドエリアに案内表示
+        if not log_path:
+            self.guide_text_label.setText(
+                '<div style="padding: 15px;">'
+                '<span style="font-size: 20px;">⚙️</span>'
+                '<span style="font-size: 15px; color: #ffc832; font-weight: bold;">'
+                ' ログファイル（Client.txt）が未設定です</span><br><br>'
+                '<span style="font-size: 13px; color: #cccccc;">'
+                '右クリック →「設定」→「基本設定」タブから<br>'
+                'Client.txt のパスを設定してください</span><br><br>'
+                '<span style="font-size: 12px; color: #999999;">'
+                '通常のパス例（Steam版）：<br>'
+                '<span style="color: #b0ffb0;">C:\\Program Files (x86)\\Steam\\steamapps<br>'
+                '\\common\\Path of Exile\\logs\\Client.txt</span></span>'
+                '</div>'
+            )
+
     def eventFilter(self, obj, event):
         """アプリ全体のマウスイベントを監視して端のリサイズを処理"""
         if event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.MouseMove, QEvent.Type.MouseButtonRelease):
@@ -215,7 +269,35 @@ class MainWindow(QMainWindow):
                 if families:
                     return families[0]
         return None
+
+    def _apply_timer_size(self):
+        """タイマーの表示サイズを適用する"""
+        sizes = self.TIMER_SIZES.get(self.timer_size, self.TIMER_SIZES["large"])
+        main_px = sizes["main"]
+        ms_px = sizes["ms"]
+        pad = sizes["container_pad"]
         
+        base_style = Styles.TIMER_LABEL
+        # フォントサイズを差し替え
+        base_style = re.sub(r"font-size:.*?;", f"font-size: {main_px}px;", base_style)
+        if self._custom_font_family:
+            base_style = re.sub(r"font-family:.*?;", f"font-family: '{self._custom_font_family}';", base_style)
+        
+        ms_style = Styles.TIMER_LABEL
+        ms_style = re.sub(r"font-size:.*?;", f"font-size: {ms_px}px;", ms_style)
+        if self._custom_font_family:
+            ms_style = re.sub(r"font-family:.*?;", f"font-family: '{self._custom_font_family}';", ms_style)
+        
+        self.lbl_hours.setStyleSheet(base_style)
+        self.lbl_c1.setStyleSheet(base_style)
+        self.lbl_mins.setStyleSheet(base_style)
+        self.lbl_c2.setStyleSheet(base_style)
+        self.lbl_secs.setStyleSheet(base_style)
+        self.lbl_ms.setStyleSheet(ms_style)
+        
+        # コンテナのパディング調整
+        self.timer_container.layout().setContentsMargins(pad, pad, pad, pad // 2)
+
     def setup_ui(self):
         from PySide6.QtWidgets import QSizePolicy
         
@@ -329,26 +411,11 @@ class MainWindow(QMainWindow):
         timer_content_layout.addLayout(timer_layout)
 
         # フォント読み込みと適用
-        custom_font_family = self.load_custom_font()
-        print(f"Loaded font family: {custom_font_family}")
+        self._custom_font_family = self.load_custom_font()
+        print(f"Loaded font family: {self._custom_font_family}")
         
-        # スタイル生成
-        # 基本スタイル
-        base_style = Styles.TIMER_LABEL
-        if custom_font_family:
-             base_style = re.sub(r"font-family:.*?;", f"font-family: '{custom_font_family}';", base_style)
-        
-        # 各パーツに適用
-        # ms部分はフォントサイズ変更
-        ms_style = base_style
-        ms_style = re.sub(r"font-size:.*?;", "font-size: 32px;", ms_style)
-        
-        self.lbl_hours.setStyleSheet(base_style)
-        self.lbl_c1.setStyleSheet(base_style)
-        self.lbl_mins.setStyleSheet(base_style)
-        self.lbl_c2.setStyleSheet(base_style)
-        self.lbl_secs.setStyleSheet(base_style)
-        self.lbl_ms.setStyleSheet(ms_style)
+        # タイマーサイズ適用
+        self._apply_timer_size()
         
         # === ラップタイム折りたたみトグル ===
         self.lap_expanded = self.config.get("lap_expanded", True)
@@ -1230,12 +1297,12 @@ class MainWindow(QMainWindow):
     def contextMenuEvent(self, event):
         menu = QMenu(self)
         
-        settings_action = menu.addAction("Settings")
+        settings_action = menu.addAction("設定")
         settings_action.triggered.connect(self.open_settings)
         
         menu.addSeparator()
         
-        quit_action = menu.addAction("Quit")
+        quit_action = menu.addAction("終了")
         quit_action.triggered.connect(self.close)
         
         menu.exec(event.globalPos())
@@ -1256,12 +1323,22 @@ class MainWindow(QMainWindow):
             if log_path:
                 self.log_watcher.set_log_path(log_path)
                 self.log_watcher.start()
+                # 初回セットアップ完了フラグ
+                if not self.config.get("setup_completed"):
+                    self.config["setup_completed"] = True
+                    ConfigManager.save_config(self.config)
             
             # ゾーンデータ・ガイドデータ更新
             self.zone_data = self.config.get("zone_data", DEFAULT_ZONE_DATA)
             
             # ガイドフォントサイズ更新
-            self.guide_font_size = self.config.get("guide_font_size", 14)
+            self.guide_font_size = self.config.get("guide_font_size", 18)
+            
+            # タイマーサイズ更新
+            new_timer_size = self.config.get("timer_size", "large")
+            if new_timer_size != self.timer_size:
+                self.timer_size = new_timer_size
+                self._apply_timer_size()
             
             self.update_level_guide_display()
         
