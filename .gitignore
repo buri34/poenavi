@@ -23,3 +23,7 @@ area_level_mapping.txt
 .DS_Store
 Thumbs.db
 zone_en_mapping.csv
+
+# App icons (generated)
+icon.ico
+icon.png

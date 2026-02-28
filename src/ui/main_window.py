@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
         self.resize_start_geo = None
         self.resize_start_pos = None
         self.window_locked = self.config.get("window_locked", False)
-        self.EDGE_MARGIN = 8
+        self.EDGE_MARGIN = 14
         
         # エリア訪問回数カウンター（街エリアはカウントしない）— zone_id基準
         self.zone_visit_counts = {}
@@ -76,11 +76,20 @@ class MainWindow(QMainWindow):
         self.part2_mode = self.config.get("part2_mode", False)
         self.part2_level_threshold = self.config.get("part2_level_threshold", 39)
         self.part2_only_zones = self.config.get("part2_only_zones", [
-            "奴隷の囲い地", "支配地域", "瓦礫の広場", "トーメントの間",
-            "採血の回廊", "降下路", "大いなる腐敗", "腐敗の中核",
-            "空の支配領域", "空の荒廃地帯",
-            "毒の貯蔵庫", "穀物の王", "帝王の広間", "因果の間",
-            "ルナリスの集会所", "ソラリスの集会所",
+            "奴隷管理区画", "The Control Blocks",
+            "焼けた裁判所", "The Torched Courts",
+            "冒涜された広間", "The Desecrated Chambers",
+            "谷底への道", "The Descent",
+            "腐った核", "The Rotting Core",
+            "有毒な排水路", "The Toxic Conduits",
+            "穀物倉庫", "The Grain Gate",
+            "帝国の穀倉地帯", "The Imperial Fields",
+            "ルナリスの中央広場", "The Lunaris Concourse",
+            "ソラリスの中央広場", "The Solaris Concourse",
+            "大聖堂の屋上", "The Cathedral Rooftop",
+            "荒廃した広場", "The Ravaged Square",
+            "運河", "The Canals",
+            "餌場", "The Feeding Trough",
         ])
         
         self.timer = QTimer(self)
@@ -96,6 +105,7 @@ class MainWindow(QMainWindow):
         self.setup_ui()
         self.setMouseTracking(True)
         self.centralWidget().setMouseTracking(True)
+        self._apply_bg_opacity(self.config.get("window_opacity", 100))
         
         # レベルガイド状態
         self.player_level = 1
@@ -273,6 +283,30 @@ class MainWindow(QMainWindow):
                     return families[0]
         return None
 
+    def _apply_bg_opacity(self, opacity_pct: int):
+        """背景の透過率を適用（テキストは変えず背景のアルファ値のみ変更）"""
+        alpha = int(opacity_pct / 100.0 * 255)
+        # メイン背景
+        self.centralWidget().setStyleSheet(
+            f"#centralWidget {{ background-color: rgba(0, 0, 0, {alpha}); border-radius: 10px; }}"
+        )
+        # ガイドテキストフレーム
+        guide_alpha = int(alpha * 0.63)  # 元: 160/255 ≈ 63%の比率を維持
+        if hasattr(self, 'guide_text_frame'):
+            self.guide_text_frame.setStyleSheet(f"""
+                QFrame {{
+                    background-color: rgba(0, 0, 0, {guide_alpha});
+                    border: 1px solid rgba(176, 255, 123, 0.2);
+                    border-radius: 6px;
+                }}
+            """)
+        # ガイドコンテナ
+        container_alpha = int(alpha * 0.55)  # 元: 140/255
+        if hasattr(self, 'guide_container'):
+            self.guide_container.setStyleSheet(
+                f"#guideContainer {{ background-color: rgba(20, 30, 20, {container_alpha}); border-radius: 6px; }}"
+            )
+
     def _apply_timer_size(self):
         """タイマーの表示サイズを適用する"""
         sizes = self.TIMER_SIZES.get(self.timer_size, self.TIMER_SIZES["large"])
@@ -305,7 +339,8 @@ class MainWindow(QMainWindow):
         from PySide6.QtWidgets import QSizePolicy
         
         central_widget = QWidget()
-        central_widget.setStyleSheet(f"background-color: {Styles.BACKGROUND_COLOR}; border-radius: 10px;")
+        central_widget.setObjectName("centralWidget")
+        central_widget.setStyleSheet(f"#centralWidget {{ background-color: {Styles.BACKGROUND_COLOR}; border-radius: 10px; }}")
         self.setCentralWidget(central_widget)
         
         layout = QVBoxLayout(central_widget)
@@ -364,6 +399,7 @@ class MainWindow(QMainWindow):
         """)
         self.timer_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.timer_toggle_btn.clicked.connect(self.toggle_timer)
+        self.timer_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         layout.addWidget(self.timer_toggle_btn)
         
         # === タイマー部分（固定高さコンテナ） ===
@@ -435,6 +471,7 @@ class MainWindow(QMainWindow):
         """)
         self.lap_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.lap_toggle_btn.clicked.connect(self.toggle_lap)
+        self.lap_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         timer_content_layout.addSpacing(10)
         timer_content_layout.addWidget(self.lap_toggle_btn)
         
@@ -533,6 +570,7 @@ class MainWindow(QMainWindow):
         """)
         self.guide_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.guide_toggle_btn.clicked.connect(self.toggle_guide)
+        self.guide_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         # トグルボタンはguide_containerの外（タイマーとガイドの間）に配置
         layout.addWidget(self.guide_toggle_btn)
         
@@ -609,6 +647,8 @@ class MainWindow(QMainWindow):
         self.guide_text_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.guide_text_label.setWordWrap(True)
         self.guide_text_label.setTextFormat(Qt.RichText)
+        self.guide_text_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.guide_text_label.setOpenExternalLinks(False)
         
         scroll.setWidget(self.guide_text_label)
         guide_text_layout.addWidget(scroll)
@@ -625,6 +665,22 @@ class MainWindow(QMainWindow):
         
         # 初期状態の反映
         self._apply_guide_visibility()
+
+        # リサイズグリップ（右下）
+        from PySide6.QtWidgets import QSizeGrip
+        self.size_grip = QSizeGrip(self)
+        self.size_grip.setFixedSize(20, 20)
+        self.size_grip.setStyleSheet("""
+            QSizeGrip {
+                background: transparent;
+                border: none;
+            }
+        """)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, 'size_grip'):
+            self.size_grip.move(self.width() - 18, self.height() - 18)
 
     def _part2_btn_style(self):
         if self.part2_mode:
@@ -1025,7 +1081,7 @@ class MainWindow(QMainWindow):
             self._in_act10 = True
         
         # 黄昏の岸辺入場 → 新キャラ判定フラグON（Lv2検知でリセット確定）
-        if zone_name == "黄昏の岸辺" and not self._restoring:
+        if zone_name in ("黄昏の岸辺", "The Twilight Strand") and not self._restoring:
             self._twilight_strand_entered = True
         
         # C: Part2固有エリアに入場 → 自動切替
@@ -1155,7 +1211,15 @@ class MainWindow(QMainWindow):
             self.guide_text_label.setText(f"「{zone_name}」のガイドデータはありません")
             self.guide_text_label.setStyleSheet(f"color: #666666; font-size: {self.guide_font_size}px; background: transparent;")
         
-        self.map_thumbnail.load_maps(zone_name, part2=self.part2_mode)
+        # マップ画像は日本語フォルダ名で検索（英語クライアント対応）
+        map_zone_name = zone_name
+        if zone_id:
+            for act_zones in self.zone_data.values():
+                for z in act_zones:
+                    if z.get("id") == zone_id:
+                        map_zone_name = z["zone"]  # 日本語名
+                        break
+        self.map_thumbnail.load_maps(map_zone_name, part2=self.part2_mode)
     
     def on_kitava_defeated(self):
         """Act5キタヴァ討伐 → Act6-10に切替"""
@@ -1343,11 +1407,18 @@ class MainWindow(QMainWindow):
             
             # ウィンドウロック更新
             self.window_locked = self.config.get("window_locked", False)
+            # 透過率更新
+            self._apply_bg_opacity(self.config.get("window_opacity", 100))
             
             self.update_level_guide_display()
         
         # ガイドデータは常にリロード（ガイド編集Saveで即保存されるため、Cancelでも反映する）
         self.guide_data = load_guide_data()
+        # 現在表示中のガイドを再描画
+        if self.current_zone:
+            zone_id = self._get_zone_id(self.current_zone)
+            visit_num = self.zone_visit_counts.get(self.current_zone, 1)
+            self._update_guide_and_map(self.current_zone, zone_id, visit_num)
             
     def closeEvent(self, event):
         if self.keyboard_listener:

@@ -11,323 +11,386 @@
             {
                 "id": "act1_area1",
                 "zone": "黄昏の岸辺",
-                "level": 1
+                "level": 1,
+                "zone_en": "The Twilight Strand"
             },
             {
                 "id": "act1_area2",
                 "zone": "海岸",
-                "level": 2
+                "level": 2,
+                "zone_en": "The Coast"
             },
             {
                 "id": "act1_area3",
                 "zone": "ぬかるみの干潟",
-                "level": 3
+                "level": 3,
+                "zone_en": "The Mud Flats"
             },
             {
                 "id": "act1_area4",
                 "zone": "海底通路",
-                "level": 3
+                "level": 3,
+                "zone_en": "The Submerged Passage"
             },
             {
                 "id": "act1_area5",
                 "zone": "陸続きの島",
-                "level": 5
+                "level": 5,
+                "zone_en": "The Tidal Island"
             },
             {
                 "id": "act1_area6",
                 "zone": "岩棚",
-                "level": 6
+                "level": 6,
+                "zone_en": "The Ledge"
             },
             {
                 "id": "act1_area7",
                 "zone": "険しい山道",
-                "level": 6
+                "level": 6,
+                "zone_en": "The Climb"
             },
             {
                 "id": "act1_area8",
                 "zone": "牢獄 -下層-",
-                "level": 7
+                "level": 7,
+                "zone_en": "The Lower Prison"
             },
             {
                 "id": "act1_area9",
                 "zone": "水没した海底洞窟",
-                "level": 6
+                "level": 6,
+                "zone_en": "The Flooded Depths"
             },
             {
                 "id": "act1_area10",
                 "zone": "牢獄 -上層-",
-                "level": 8
+                "level": 8,
+                "zone_en": "The Upper Prison"
             },
             {
                 "id": "act1_area11",
                 "zone": "囚人の門",
-                "level": 8
+                "level": 8,
+                "zone_en": "Prisoner's Gate"
             },
             {
                 "id": "act1_area12",
                 "zone": "船の墓場",
-                "level": 6
+                "level": 6,
+                "zone_en": "The Ship Graveyard"
             },
             {
                 "id": "act1_area14",
                 "zone": "憤怒の洞窟",
-                "level": 6
+                "level": 6,
+                "zone_en": "The Cavern of Wrath"
             },
             {
                 "id": "act1_area15",
                 "zone": "怒りの洞窟",
-                "level": 6
+                "level": 6,
+                "zone_en": "The Cavern of Anger"
             },
             {
                 "id": "act1_area13",
                 "zone": "船の墓場の洞窟",
-                "level": 6
+                "level": 6,
+                "zone_en": "The Ship Graveyard Cave"
             }
         ],
         "Act 2": [
             {
                 "id": "act2_area1",
                 "zone": "南の森",
-                "level": 10
+                "level": 10,
+                "zone_en": "The Southern Forest"
             },
             {
                 "id": "act2_area2",
                 "zone": "荒廃農地",
-                "level": 10
+                "level": 10,
+                "zone_en": "The Old Fields"
             },
             {
                 "id": "act2_area3",
                 "zone": "十字路",
-                "level": 11
+                "level": 11,
+                "zone_en": "The Crossroads"
             },
             {
                 "id": "act2_area4",
                 "zone": "獣の巣",
-                "level": 12
+                "level": 12,
+                "zone_en": "The Den"
             },
             {
                 "id": "act2_area5",
                 "zone": "罪の間 -第一層-",
-                "level": 12
+                "level": 12,
+                "zone_en": "The Chamber of Sins Level 1"
             },
             {
                 "id": "act2_area6",
                 "zone": "罪の間 -第二層-",
-                "level": 13
+                "level": 13,
+                "zone_en": "The Chamber of Sins Level 2"
             },
             {
                 "id": "act2_area7",
                 "zone": "川沿いの道",
-                "level": 13
+                "level": 13,
+                "zone_en": "The Riverways"
             },
             {
                 "id": "act2_area8",
                 "zone": "西の森",
-                "level": 13
+                "level": 13,
+                "zone_en": "The Western Forest"
             },
             {
                 "id": "act2_area9",
                 "zone": "編む者の巣穴",
-                "level": 13
+                "level": 13,
+                "zone_en": "The Weaver's Chambers"
             },
             {
                 "id": "act2_area10",
                 "zone": "壊れた橋",
-                "level": 14
+                "level": 14,
+                "zone_en": "The Broken Bridge"
             },
             {
                 "id": "act2_area11",
                 "zone": "フェルシュラインの遺跡",
-                "level": 14
+                "level": 14,
+                "zone_en": "The Fellshrine Ruins"
             },
             {
                 "id": "act2_area12",
                 "zone": "地下聖堂 -第一層-",
-                "level": 14
+                "level": 14,
+                "zone_en": "The Crypt Level 1"
             },
             {
                 "id": "act2_area13",
                 "zone": "地下聖堂 -第二層-",
-                "level": 15
+                "level": 15,
+                "zone_en": "The Crypt Level 2"
             },
             {
                 "id": "act2_area14",
                 "zone": "湿地",
-                "level": 15
+                "level": 15,
+                "zone_en": "The Wetlands"
             },
             {
                 "id": "act2_area15",
                 "zone": "ヴァールの遺跡",
-                "level": 12
+                "level": 12,
+                "zone_en": "The Vaal Ruins"
             },
             {
                 "id": "act2_area16",
                 "zone": "北の森",
-                "level": 12
+                "level": 12,
+                "zone_en": "The Northern Forest"
             },
             {
                 "id": "act2_area17",
                 "zone": "大洞窟",
-                "level": 12
+                "level": 12,
+                "zone_en": "The Caverns"
             },
             {
                 "id": "act2_area18",
                 "zone": "古代のピラミッド",
-                "level": 12
+                "level": 12,
+                "zone_en": "The Ancient Pyramid"
             }
         ],
         "Act 3": [
             {
                 "id": "act3_area1",
                 "zone": "サーン市街",
-                "level": 16
+                "level": 16,
+                "zone_en": "The City of Sarn"
             },
             {
                 "id": "act3_area2",
                 "zone": "スラム",
-                "level": 16
+                "level": 16,
+                "zone_en": "The Slums"
             },
             {
                 "id": "act3_area3",
                 "zone": "火葬場",
-                "level": 17
+                "level": 17,
+                "zone_en": "The Crematorium"
             },
             {
                 "id": "act3_area4",
                 "zone": "下水道",
-                "level": 18
+                "level": 18,
+                "zone_en": "The Sewers"
             },
             {
                 "id": "act3_area5",
                 "zone": "市場",
-                "level": 18
+                "level": 18,
+                "zone_en": "The Marketplace"
             },
             {
                 "id": "act3_area6",
                 "zone": "地下墓地",
-                "level": 19
+                "level": 19,
+                "zone_en": "The Catacombs"
             },
             {
                 "id": "act3_area7",
                 "zone": "戦場",
-                "level": 19
+                "level": 19,
+                "zone_en": "The Battlefront"
             },
             {
                 "id": "act3_area8",
                 "zone": "船着場",
-                "level": 20
+                "level": 20,
+                "zone_en": "The Docks"
             },
             {
                 "id": "act3_area9",
                 "zone": "ソラリス寺院 -第一層-",
-                "level": 21
+                "level": 21,
+                "zone_en": "The Solaris Temple Level 1"
             },
             {
                 "id": "act3_area10",
                 "zone": "ソラリス寺院 -第二層-",
-                "level": 21
+                "level": 21,
+                "zone_en": "The Solaris Temple Level 2"
             },
             {
                 "id": "act3_area11",
                 "zone": "黒檀の兵舎",
-                "level": 22
+                "level": 22,
+                "zone_en": "The Ebony Barracks"
             },
             {
                 "id": "act3_area12",
                 "zone": "ルナリス寺院 -第一層-",
-                "level": 22
+                "level": 22,
+                "zone_en": "The Lunaris Temple Level 1"
             },
             {
                 "id": "act3_area13",
                 "zone": "ルナリス寺院 -第二層-",
-                "level": 23
+                "level": 23,
+                "zone_en": "The Lunaris Temple Level 2"
             },
             {
                 "id": "act3_area14",
                 "zone": "帝国の庭園",
-                "level": 18
+                "level": 18,
+                "zone_en": "The Imperial Gardens"
             },
             {
                 "id": "act3_area15",
                 "zone": "図書館",
-                "level": 18
+                "level": 18,
+                "zone_en": "The Library"
             },
             {
                 "id": "act3_area16",
                 "zone": "公文書館",
-                "level": 18
+                "level": 18,
+                "zone_en": "The Archives"
             },
             {
                 "id": "act3_area17",
                 "zone": "神の杖",
-                "level": 18
+                "level": 18,
+                "zone_en": "The Sceptre of God"
             },
             {
                 "id": "act3_area18",
                 "zone": "神の杖 -上層-",
-                "level": 1
+                "level": 1,
+                "zone_en": "The Upper Sceptre of God"
             }
         ],
         "Act 4": [
             {
                 "id": "act4_area1",
                 "zone": "水道橋",
-                "level": 24
+                "level": 24,
+                "zone_en": "The Aqueduct"
             },
             {
                 "id": "act4_area2",
                 "zone": "干上がった湖",
-                "level": 24
+                "level": 24,
+                "zone_en": "The Dried Lake"
             },
             {
                 "id": "act4_area3",
                 "zone": "志す者の広場",
-                "level": 24
+                "level": 24,
+                "zone_en": "Aspirants' Plaza"
             },
             {
                 "id": "act4_area4",
                 "zone": "鉱山 -第一層-",
-                "level": 25
+                "level": 25,
+                "zone_en": "The Mines Level 1"
             },
             {
                 "id": "act4_area5",
                 "zone": "鉱山 -第二層-",
-                "level": 25
+                "level": 25,
+                "zone_en": "The Mines Level 2"
             },
             {
                 "id": "act4_area6",
                 "zone": "水晶鉱脈",
-                "level": 26
+                "level": 26,
+                "zone_en": "The Crystal Veins"
             },
             {
                 "id": "act4_area7",
                 "zone": "ダレッソの夢",
-                "level": 26
+                "level": 26,
+                "zone_en": "Daresso's Dream"
             },
             {
                 "id": "act4_area8",
                 "zone": "大闘技場",
-                "level": 26
+                "level": 26,
+                "zone_en": "The Grand Arena"
             },
             {
                 "id": "act4_area9",
                 "zone": "カオムの夢",
-                "level": 27
+                "level": 27,
+                "zone_en": "Kaom's Dream"
             },
             {
                 "id": "act4_area10",
                 "zone": "カオムの要塞",
-                "level": 27
+                "level": 27,
+                "zone_en": "Kaom's Stronghold"
             },
             {
                 "id": "act4_area11",
                 "zone": "魔獣の内部 -第一層-",
-                "level": 27
+                "level": 27,
+                "zone_en": "The Belly of the Beast Level 1"
             },
             {
                 "id": "act4_area12",
                 "zone": "魔獣の内部 -第二層-",
-                "level": 27
+                "level": 27,
+                "zone_en": "The Belly of the Beast Level 2"
             },
             {
                 "id": "act4_area13",
@@ -337,245 +400,292 @@
             {
                 "id": "act4_area14",
                 "zone": "摘出",
-                "level": 28
+                "level": 28,
+                "zone_en": "The Harvest"
             },
             {
                 "id": "act4_area15",
                 "zone": "頂への道",
-                "level": 24
+                "level": 24,
+                "zone_en": "The Ascent"
             }
         ],
         "Act 5": [
             {
                 "id": "act5_area1",
                 "zone": "奴隷収容所",
-                "level": 29
+                "level": 29,
+                "zone_en": "The Slave Pens"
             },
             {
                 "id": "act5_area2",
                 "zone": "奴隷管理区画",
-                "level": 30
+                "level": 30,
+                "zone_en": "The Control Blocks"
             },
             {
                 "id": "act5_area3",
                 "zone": "オリアス広場",
-                "level": 30
+                "level": 30,
+                "zone_en": "Oriath Square"
             },
             {
                 "id": "act5_area4",
                 "zone": "テンプラーの裁判所",
-                "level": 31
+                "level": 31,
+                "zone_en": "The Templar Courts"
             },
             {
                 "id": "act5_area5",
                 "zone": "イノセンスの間",
-                "level": 31
+                "level": 31,
+                "zone_en": "The Chamber of Innocence"
             },
             {
                 "id": "act5_area6",
                 "zone": "焼けた裁判所",
-                "level": 32
+                "level": 32,
+                "zone_en": "The Torched Courts"
             },
             {
                 "id": "act5_area7",
                 "zone": "破壊された広場",
-                "level": 32
+                "level": 32,
+                "zone_en": "The Ruined Square"
             },
             {
                 "id": "act5_area8",
                 "zone": "納骨堂",
-                "level": 33
+                "level": 33,
+                "zone_en": "The Ossuary"
             },
             {
                 "id": "act5_area9",
                 "zone": "聖廟",
-                "level": 30
+                "level": 30,
+                "zone_en": "The Reliquary"
             },
             {
                 "id": "act5_area10",
                 "zone": "大聖堂の屋上",
-                "level": 30
+                "level": 30,
+                "zone_en": "The Cathedral Rooftop"
             }
         ],
         "Act 6": [
             {
                 "id": "act6_area1",
                 "zone": "黄昏の岸辺",
-                "level": 34
+                "level": 34,
+                "zone_en": "The Twilight Strand"
             },
             {
                 "id": "act6_area2",
                 "zone": "海岸",
-                "level": 35
+                "level": 35,
+                "zone_en": "The Coast"
             },
             {
                 "id": "act6_area3",
                 "zone": "ぬかるみの干潟",
-                "level": 35
+                "level": 35,
+                "zone_en": "The Mud Flats"
             },
             {
                 "id": "act6_area4",
                 "zone": "カルイの要塞",
-                "level": 35
+                "level": 35,
+                "zone_en": "The Karui Fortress"
             },
             {
                 "id": "act6_area5",
                 "zone": "尾根",
-                "level": 37
+                "level": 37,
+                "zone_en": "The Ridge"
             },
             {
                 "id": "act6_area6",
                 "zone": "牢獄 -下層-",
-                "level": 37
+                "level": 37,
+                "zone_en": "The Lower Prison"
             },
             {
                 "id": "act6_area7",
                 "zone": "シャヴロンの塔",
-                "level": 37
+                "level": 37,
+                "zone_en": "Shavronne's Tower"
             },
             {
                 "id": "act6_area8",
                 "zone": "囚人の門",
-                "level": 38
+                "level": 38,
+                "zone_en": "Prisoner's Gate"
             },
             {
                 "id": "act6_area9",
                 "zone": "西の森",
-                "level": 38
+                "level": 38,
+                "zone_en": "The Western Forest"
             },
             {
                 "id": "act6_area10",
                 "zone": "川沿いの道",
-                "level": 39
+                "level": 39,
+                "zone_en": "The Riverways"
             },
             {
                 "id": "act6_area11",
                 "zone": "湿地",
-                "level": 39
+                "level": 39,
+                "zone_en": "The Wetlands"
             },
             {
                 "id": "act6_area12",
                 "zone": "南の森",
-                "level": 40
+                "level": 40,
+                "zone_en": "The Southern Forest"
             },
             {
                 "id": "act6_area13",
                 "zone": "怒りの洞窟",
-                "level": 40
+                "level": 40,
+                "zone_en": "The Cavern of Anger"
             },
             {
                 "id": "act6_area14",
                 "zone": "ビーコン",
-                "level": 40
+                "level": 40,
+                "zone_en": "The Beacon"
             },
             {
                 "id": "act6_area15",
                 "zone": "海水の王の岩礁",
-                "level": 36
+                "level": 36,
+                "zone_en": "The Brine King's Reef"
             }
         ],
         "Act 7": [
             {
                 "id": "act7_area1",
                 "zone": "壊れた橋",
-                "level": 41
+                "level": 41,
+                "zone_en": "The Broken Bridge"
             },
             {
                 "id": "act7_area2",
                 "zone": "十字路",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Crossroads"
             },
             {
                 "id": "act7_area3",
                 "zone": "フェルシュラインの遺跡",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Fellshrine Ruins"
             },
             {
                 "id": "act7_area4",
                 "zone": "地下聖堂",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Crypt"
             },
             {
                 "id": "act7_area5",
                 "zone": "罪の間 -第一層-",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Chamber of Sins Level 1"
             },
             {
                 "id": "act7_area6",
                 "zone": "マリガロの聖域",
-                "level": 42
+                "level": 42,
+                "zone_en": "Maligaro's Sanctum"
             },
             {
                 "id": "act7_area7",
                 "zone": "罪の間 -第二層-",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Chamber of Sins Level 2"
             },
             {
                 "id": "act7_area8",
                 "zone": "獣の巣",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Den"
             },
             {
                 "id": "act7_area9",
                 "zone": "焼け野原",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Ashen Fields"
             },
             {
                 "id": "act7_area10",
                 "zone": "北の森",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Northern Forest"
             },
             {
                 "id": "act7_area11",
                 "zone": "囚人の門",
-                "level": 42
+                "level": 42,
+                "zone_en": "Prisoner's Gate"
             },
             {
                 "id": "act7_area12",
                 "zone": "恐怖の密林",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Dread Thicket"
             },
             {
                 "id": "act7_area13",
                 "zone": "土手道",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Causeway"
             },
             {
                 "id": "act7_area14",
                 "zone": "ヴァールの街",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Vaal City"
             },
             {
                 "id": "act7_area15",
                 "zone": "堕落の寺院 -第一層-",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Temple of Decay Level 1"
             },
             {
                 "id": "act7_area16",
                 "zone": "堕落の寺院 -第二層-",
-                "level": 42
+                "level": 42,
+                "zone_en": "The Temple of Decay Level 2"
             }
         ],
         "Act 8": [
             {
                 "id": "act8_area1",
                 "zone": "サーンの城壁",
-                "level": 46
+                "level": 46,
+                "zone_en": "The Sarn Ramparts"
             },
             {
                 "id": "act8_area2",
                 "zone": "志す者の広場",
-                "level": 46
+                "level": 46,
+                "zone_en": "Aspirants' Plaza"
             },
             {
                 "id": "act8_area3",
                 "zone": "有毒な排水路",
-                "level": 47
+                "level": 47,
+                "zone_en": "The Toxic Conduits"
             },
             {
                 "id": "act8_area4",
                 "zone": "ドードリの汚水槽",
-                "level": 47
+                "level": 47,
+                "zone_en": "Doedre's Cesspool"
             },
             {
                 "id": "act8_area5",
@@ -585,7 +695,8 @@
             {
                 "id": "act8_area6",
                 "zone": "波止場",
-                "level": 48
+                "level": 48,
+                "zone_en": "The Quay"
             },
             {
                 "id": "act8_area7",
@@ -595,121 +706,144 @@
             {
                 "id": "act8_area8",
                 "zone": "穀物倉庫",
-                "level": 49
+                "level": 49,
+                "zone_en": "The Grain Gate"
             },
             {
                 "id": "act8_area9",
                 "zone": "帝国の穀倉地帯",
-                "level": 50
+                "level": 50,
+                "zone_en": "The Imperial Fields"
             },
             {
                 "id": "act8_area10",
                 "zone": "ソラリス寺院 -第一層-",
-                "level": 50
+                "level": 50,
+                "zone_en": "The Solaris Temple Level 1"
             },
             {
                 "id": "act8_area11",
                 "zone": "ソラリス寺院 -第二層-",
-                "level": 50
+                "level": 50,
+                "zone_en": "The Solaris Temple Level 2"
             },
             {
                 "id": "act8_area12",
                 "zone": "ソラリスの中央広場",
-                "level": 50
+                "level": 50,
+                "zone_en": "The Solaris Concourse"
             },
             {
                 "id": "act8_area13",
                 "zone": "港の橋",
-                "level": 51
+                "level": 51,
+                "zone_en": "The Harbour Bridge"
             },
             {
                 "id": "act8_area14",
                 "zone": "ルナリスの中央広場",
-                "level": 51
+                "level": 51,
+                "zone_en": "The Lunaris Concourse"
             },
             {
                 "id": "act8_area15",
                 "zone": "ルナリス寺院 -第一層-",
-                "level": 51
+                "level": 51,
+                "zone_en": "The Lunaris Temple Level 1"
             },
             {
                 "id": "act8_area16",
                 "zone": "ルナリス寺院 -第二層-",
-                "level": 52
+                "level": 52,
+                "zone_en": "The Lunaris Temple Level 2"
             },
             {
                 "id": "act8_area17",
                 "zone": "血の水道橋",
-                "level": 48
+                "level": 48,
+                "zone_en": "The Blood Aqueduct"
             },
             {
                 "id": "act8_area18",
                 "zone": "浴場",
-                "level": 48
+                "level": 48,
+                "zone_en": "The Bath House"
             },
             {
                 "id": "act8_area19",
                 "zone": "空中庭園",
-                "level": 48
+                "level": 48,
+                "zone_en": "The High Gardens"
             }
         ],
         "Act 9": [
             {
                 "id": "act9_area1",
                 "zone": "谷底への道",
-                "level": 53
+                "level": 53,
+                "zone_en": "The Descent"
             },
             {
                 "id": "act9_area2",
                 "zone": "ヴァスティリ砂漠",
-                "level": 53
+                "level": 53,
+                "zone_en": "The Vastiri Desert"
             },
             {
                 "id": "act9_area3",
                 "zone": "オアシス",
-                "level": 54
+                "level": 54,
+                "zone_en": "The Oasis"
             },
             {
                 "id": "act9_area4",
                 "zone": "山麓",
-                "level": 54
+                "level": 54,
+                "zone_en": "The Foothills"
             },
             {
                 "id": "act9_area5",
                 "zone": "沸き立つ湖",
-                "level": 54
+                "level": 54,
+                "zone_en": "The Boiling Lake"
             },
             {
                 "id": "act9_area6",
                 "zone": "坑道",
-                "level": 54
+                "level": 54,
+                "zone_en": "The Tunnel"
             },
             {
                 "id": "act9_area7",
                 "zone": "採石場",
-                "level": 54
+                "level": 54,
+                "zone_en": "The Quarry"
             },
             {
                 "id": "act9_area8",
                 "zone": "精錬所",
-                "level": 54
+                "level": 54,
+                "zone_en": "The Refinery"
             },
             {
                 "id": "act9_area9",
                 "zone": "魔獣の内部",
-                "level": 54
+                "level": 54,
+                "zone_en": "The Belly of the Beast"
             },
             {
                 "id": "act9_area10",
                 "zone": "腐った核",
-                "level": 54
+                "level": 54,
+                "zone_en": "The Rotting Core"
             }
         ],
         "Act 10": [
             {
                 "id": "act10_area1",
                 "zone": "大聖堂の屋上",
-                "level": 58
+                "level": 58,
+                "zone_en": "The Cathedral Rooftop"
             },
             {
                 "id": "act10_area2",
@@ -719,42 +853,50 @@
             {
                 "id": "act10_area3",
                 "zone": "荒廃した広場",
-                "level": 59
+                "level": 59,
+                "zone_en": "The Ravaged Square"
             },
             {
                 "id": "act10_area4",
                 "zone": "奴隷管理区画",
-                "level": 60
+                "level": 60,
+                "zone_en": "The Control Blocks"
             },
             {
                 "id": "act10_area5",
                 "zone": "納骨堂",
-                "level": 61
+                "level": 61,
+                "zone_en": "The Ossuary"
             },
             {
                 "id": "act10_area6",
                 "zone": "焼けた裁判所",
-                "level": 62
+                "level": 62,
+                "zone_en": "The Torched Courts"
             },
             {
                 "id": "act10_area7",
                 "zone": "冒涜された広間",
-                "level": 63
+                "level": 63,
+                "zone_en": "The Desecrated Chambers"
             },
             {
                 "id": "act10_area8",
                 "zone": "志す者の広場",
-                "level": 67
+                "level": 67,
+                "zone_en": "Aspirants' Plaza"
             },
             {
                 "id": "act10_area9",
                 "zone": "運河",
-                "level": 60
+                "level": 60,
+                "zone_en": "The Canals"
             },
             {
                 "id": "act10_area10",
                 "zone": "餌場",
-                "level": 60
+                "level": 60,
+                "zone_en": "The Feeding Trough"
             },
             {
                 "id": "act10_area11",
@@ -791,5 +933,6 @@
     "client_log_path": "",
     "timer_size": "large",
     "setup_completed": false,
-    "window_locked": false
+    "window_locked": false,
+    "window_opacity": 50
 }

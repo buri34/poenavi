@@ -717,6 +717,35 @@ class SettingsDialog(QDialog):
         
         general_layout.addWidget(timer_size_group)
 
+        # ウィンドウ透過率設定
+        opacity_group = QGroupBox("ウィンドウ透過率")
+        opacity_group.setStyleSheet(group.styleSheet())
+        opacity_layout = QHBoxLayout(opacity_group)
+
+        opacity_label = QLabel("透過率:")
+        opacity_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        opacity_layout.addWidget(opacity_label)
+
+        from PySide6.QtWidgets import QSlider
+        self.opacity_slider = QSlider(Qt.Horizontal)
+        self.opacity_slider.setRange(5, 100)  # 5%〜100%
+        self.opacity_slider.setValue(self.current_config.get("window_opacity", 100))
+        self.opacity_slider.setFixedWidth(200)
+        self.opacity_slider.setStyleSheet(f"""
+            QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
+            QSlider::handle:horizontal {{ background: {Styles.TEXT_COLOR}; width: 16px; margin: -5px 0; border-radius: 8px; }}
+        """)
+        opacity_layout.addWidget(self.opacity_slider)
+
+        self.opacity_value_label = QLabel(f"{self.opacity_slider.value()}%")
+        self.opacity_value_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        self.opacity_value_label.setFixedWidth(40)
+        opacity_layout.addWidget(self.opacity_value_label)
+        self.opacity_slider.valueChanged.connect(lambda v: self.opacity_value_label.setText(f"{v}%"))
+
+        opacity_layout.addStretch()
+        general_layout.addWidget(opacity_group)
+
         # ウィンドウロック設定
         lock_group = QGroupBox("ウィンドウ操作")
         lock_group.setStyleSheet(group.styleSheet())
@@ -724,7 +753,11 @@ class SettingsDialog(QDialog):
         
         from PySide6.QtWidgets import QCheckBox
         self.window_lock_check = QCheckBox("ウィンドウの移動・リサイズを禁止する")
-        self.window_lock_check.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        self.window_lock_check.setStyleSheet(f"""
+            QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: 12px; spacing: 8px; }}
+            QCheckBox::indicator {{ width: 18px; height: 18px; border: 2px solid {Styles.TEXT_COLOR}; border-radius: 3px; background: transparent; }}
+            QCheckBox::indicator:checked {{ background: {Styles.TEXT_COLOR}; }}
+        """)
         self.window_lock_check.setChecked(self.current_config.get("window_locked", False))
         lock_layout.addWidget(self.window_lock_check)
         lock_layout.addStretch()
@@ -1008,13 +1041,16 @@ class SettingsDialog(QDialog):
             for name_edit, zone_id in widgets:
                 zone_name = name_edit.text().strip()
                 if zone_name:  # Skip empty rows
-                    # Preserve existing level from config
-                    existing_level = 1
+                    # Preserve existing fields from config
+                    entry = {"id": zone_id, "zone": zone_name, "level": 1}
                     for z in self.zone_data.get(act_name, []):
                         if z.get("id") == zone_id:
-                            existing_level = z.get("level", 1)
+                            entry["level"] = z.get("level", 1)
+                            # Preserve zone_en and any other extra fields
+                            if z.get("zone_en"):
+                                entry["zone_en"] = z["zone_en"]
                             break
-                    zones.append({"id": zone_id, "zone": zone_name, "level": existing_level})
+                    zones.append(entry)
             zone_data[act_name] = zones
         
         # ガイドデータも保存
@@ -1031,6 +1067,7 @@ class SettingsDialog(QDialog):
             "zone_data": zone_data,
             "guide_font_size": self.guide_font_spin.value(),
             "timer_size": self.timer_size_combo.currentData(),
+            "window_opacity": self.opacity_slider.value(),
             "window_locked": self.window_lock_check.isChecked(),
             "town_zones": [z.strip() for z in self.town_zones_edit.toPlainText().split("\n") if z.strip()],
         }

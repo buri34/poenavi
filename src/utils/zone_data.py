@@ -189,7 +189,7 @@ def get_zone_info(zone_data: dict, zone_name: str, part2: bool = False) -> tuple
     
     for act_name in search_order:
         for z in zone_data.get(act_name, []):
-            if z["zone"] == zone_name:
+            if z["zone"] == zone_name or z.get("zone_en") == zone_name:
                 return act_name, z["level"]
     return None, None
 
