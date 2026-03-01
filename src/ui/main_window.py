@@ -177,6 +177,9 @@ class MainWindow(QMainWindow):
             self.log_watcher.start()
             self._restoring = False
         
+        # タイマー状態復元
+        self._restore_timer_state()
+        
         # 初回起動チェック（ポップアップ + ガイドエリア案内）
         self._check_first_run()
         
@@ -931,8 +934,23 @@ class MainWindow(QMainWindow):
             self.timer.stop()
             self.accumulated_time += time.time() - self.start_time
             self.is_running = False
+            self._save_timer_state()
             
     def reset_timer(self):
+        # 確認ダイアログ（設定ON かつ タイマーが動いているか記録がある場合）
+        if self.config.get("confirm_reset", True):
+            has_data = self.accumulated_time > 0 or self.is_running or any(t is not None for t in self.lap_times)
+            if has_data:
+                msg = QMessageBox(self)
+                msg.setStyleSheet("QMessageBox { font-size: 14px; } QMessageBox QLabel { font-size: 14px; }")
+                msg.setWindowTitle("リセット確認")
+                msg.setIcon(QMessageBox.Icon.Warning)
+                msg.setText("タイマーとラップをリセットしますか？")
+                msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                msg.setDefaultButton(QMessageBox.StandardButton.No)
+                if msg.exec() != QMessageBox.StandardButton.Yes:
+                    return
+        
         # ラップ記録があれば保存
         if any(t is not None for t in self.lap_times):
             total = self.get_elapsed_time()
@@ -942,6 +960,7 @@ class MainWindow(QMainWindow):
         self.accumulated_time = 0.0
         self.update_text(0.0)
         self.reset_laps()
+        self._clear_saved_timer()
     
     def reset_laps(self):
         """全ラップをリセット"""
@@ -962,6 +981,38 @@ class MainWindow(QMainWindow):
         if self.is_running:
             return self.accumulated_time + (time.time() - self.start_time)
         return self.accumulated_time
+    
+    def _save_timer_state(self):
+        """タイマー状態をconfig.jsonに保存"""
+        self.config["saved_timer"] = {
+            "accumulated_time": self.accumulated_time,
+            "lap_times": self.lap_times,
+            "current_act": self.current_act,
+        }
+        ConfigManager.save_config(self.config)
+        print(f"[INFO] タイマー状態を保存しました (経過: {self.accumulated_time:.1f}秒, Act{self.current_act})")
+    
+    def _clear_saved_timer(self):
+        """保存済みタイマー状態をクリア"""
+        if "saved_timer" in self.config:
+            del self.config["saved_timer"]
+            ConfigManager.save_config(self.config)
+    
+    def _restore_timer_state(self):
+        """起動時に保存済みタイマー状態を復元"""
+        saved = self.config.get("saved_timer")
+        if not saved:
+            return
+        self.accumulated_time = saved.get("accumulated_time", 0.0)
+        self.lap_times = saved.get("lap_times", [None] * 10)
+        self.current_act = saved.get("current_act", 1)
+        if self.accumulated_time > 0:
+            self.update_text(self.accumulated_time)
+            self.update_lap_display()
+            # part2_modeも復元（Act6以降ならpart2）
+            if self.current_act > 5:
+                self._set_part2(True)
+            print(f"[INFO] タイマー状態を復元しました (経過: {self.accumulated_time:.1f}秒, Act{self.current_act})")
     
     def record_lap(self):
         """現在のActのラップを記録"""

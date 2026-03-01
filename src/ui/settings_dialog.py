@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                QPushButton, QGroupBox, QLineEdit, QFileDialog,
                                QTabWidget, QWidget, QScrollArea, QSpinBox,
                                QFormLayout, QTextEdit, QFrame, QRadioButton,
-                               QButtonGroup, QGridLayout)
+                               QButtonGroup, QGridLayout, QCheckBox)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QKeySequence
 from src.ui.styles import Styles
@@ -607,9 +607,51 @@ class SettingsDialog(QDialog):
         general_tab = QWidget()
         general_layout = QVBoxLayout(general_tab)
         
-        # ホットキー設定グループ
+        # 共通スタイル
+        group_style = f"QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid {Styles.TEXT_COLOR}; border-radius: 5px; margin-top: 10px; }} QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }}"
+        checkbox_style = f"""
+            QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: 12px; spacing: 8px; }}
+            QCheckBox::indicator {{ width: 18px; height: 18px; border: 2px solid {Styles.TEXT_COLOR}; border-radius: 3px; background: transparent; }}
+            QCheckBox::indicator:checked {{ background: {Styles.TEXT_COLOR}; }}
+        """
+        combo_style = f"""
+            QComboBox {{
+                background-color: #2a2a2a; color: {Styles.TEXT_COLOR};
+                border: 1px solid #555; border-radius: 4px;
+                padding: 4px 8px; font-size: 12px;
+            }}
+            QComboBox::drop-down {{ border: none; }}
+            QComboBox QAbstractItemView {{
+                background-color: #2a2a2a; color: {Styles.TEXT_COLOR};
+                selection-background-color: #444;
+            }}
+        """
+        
+        # ━━━━━ 1. PoE ログファイル ━━━━━
+        log_group = QGroupBox("PoE ログファイル")
+        log_group.setStyleSheet(group_style)
+        log_layout = QHBoxLayout(log_group)
+        
+        self.log_path_edit = QLineEdit(self.current_config.get("client_log_path", ""))
+        self.log_path_edit.setPlaceholderText("C:\\Program Files (x86)\\...\\logs\\Client.txt")
+        self.log_path_edit.setStyleSheet(f"""
+            QLineEdit {{ 
+                background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
+                border: 1px solid {Styles.TEXT_COLOR}; border-radius: 4px; padding: 5px;
+            }}
+        """)
+        log_layout.addWidget(self.log_path_edit)
+        
+        browse_btn = QPushButton("参照")
+        browse_btn.setStyleSheet(Styles.BUTTON)
+        browse_btn.clicked.connect(self.browse_log_file)
+        log_layout.addWidget(browse_btn)
+        
+        general_layout.addWidget(log_group)
+        
+        # ━━━━━ 2. ホットキー ━━━━━
         group = QGroupBox("ホットキー")
-        group.setStyleSheet(f"QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid {Styles.TEXT_COLOR}; border-radius: 5px; margin-top: 10px; }} QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }}")
+        group.setStyleSheet(group_style)
         group_layout = QVBoxLayout(group)
         
         h_layout1 = QHBoxLayout()
@@ -644,31 +686,43 @@ class SettingsDialog(QDialog):
         
         general_layout.addWidget(group)
         
-        # Client.txt パス設定
-        log_group = QGroupBox("PoE ログファイル")
-        log_group.setStyleSheet(group.styleSheet())
-        log_layout = QHBoxLayout(log_group)
+        # ━━━━━ 3. タイマー表示 ━━━━━
+        timer_group = QGroupBox("タイマー表示")
+        timer_group.setStyleSheet(group_style)
+        timer_layout = QVBoxLayout(timer_group)
         
-        self.log_path_edit = QLineEdit(self.current_config.get("client_log_path", ""))
-        self.log_path_edit.setPlaceholderText("C:\\Program Files (x86)\\...\\logs\\Client.txt")
-        self.log_path_edit.setStyleSheet(f"""
-            QLineEdit {{ 
-                background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
-                border: 1px solid {Styles.TEXT_COLOR}; border-radius: 4px; padding: 5px;
-            }}
-        """)
-        log_layout.addWidget(self.log_path_edit)
+        # タイマーサイズ
+        timer_size_row = QHBoxLayout()
+        timer_size_label = QLabel("タイマーサイズ:")
+        timer_size_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        timer_size_row.addWidget(timer_size_label)
         
-        browse_btn = QPushButton("参照")
-        browse_btn.setStyleSheet(Styles.BUTTON)
-        browse_btn.clicked.connect(self.browse_log_file)
-        log_layout.addWidget(browse_btn)
+        from PySide6.QtWidgets import QComboBox
+        self.timer_size_combo = QComboBox()
+        self.timer_size_combo.addItem("大", "large")
+        self.timer_size_combo.addItem("中", "medium")
+        self.timer_size_combo.addItem("小", "small")
+        self.timer_size_combo.setFixedWidth(100)
+        self.timer_size_combo.setStyleSheet(combo_style)
+        current_timer_size = self.current_config.get("timer_size", "large")
+        idx = self.timer_size_combo.findData(current_timer_size)
+        if idx >= 0:
+            self.timer_size_combo.setCurrentIndex(idx)
+        timer_size_row.addWidget(self.timer_size_combo)
+        timer_size_row.addStretch()
+        timer_layout.addLayout(timer_size_row)
         
-        general_layout.addWidget(log_group)
+        # リセット確認ダイアログ
+        self.confirm_reset_cb = QCheckBox("タイマーリセット時に確認ダイアログを表示する")
+        self.confirm_reset_cb.setChecked(self.current_config.get("confirm_reset", True))
+        self.confirm_reset_cb.setStyleSheet(checkbox_style)
+        timer_layout.addWidget(self.confirm_reset_cb)
         
-        # ガイドフォントサイズ設定
+        general_layout.addWidget(timer_group)
+        
+        # ━━━━━ 4. ガイド表示 ━━━━━
         font_group = QGroupBox("ガイド表示")
-        font_group.setStyleSheet(group.styleSheet())
+        font_group.setStyleSheet(group_style)
         font_layout = QHBoxLayout(font_group)
         
         font_label = QLabel("フォントサイズ:")
@@ -684,120 +738,69 @@ class SettingsDialog(QDialog):
         font_layout.addWidget(self.guide_font_spin)
         font_layout.addStretch()
         
-        # タイマーサイズ設定
-        timer_size_group = QGroupBox("タイマー表示")
-        timer_size_group.setStyleSheet(group.styleSheet())
-        timer_size_layout = QHBoxLayout(timer_size_group)
-        
-        timer_size_label = QLabel("タイマーサイズ:")
-        timer_size_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
-        timer_size_layout.addWidget(timer_size_label)
-        
-        from PySide6.QtWidgets import QComboBox
-        self.timer_size_combo = QComboBox()
-        self.timer_size_combo.addItem("大", "large")
-        self.timer_size_combo.addItem("中", "medium")
-        self.timer_size_combo.addItem("小", "small")
-        self.timer_size_combo.setFixedWidth(100)
-        self.timer_size_combo.setStyleSheet(f"""
-            QComboBox {{
-                background-color: #2a2a2a; color: {Styles.TEXT_COLOR};
-                border: 1px solid #555; border-radius: 4px;
-                padding: 4px 8px; font-size: 12px;
-            }}
-            QComboBox::drop-down {{ border: none; }}
-            QComboBox QAbstractItemView {{
-                background-color: #2a2a2a; color: {Styles.TEXT_COLOR};
-                selection-background-color: #444;
-            }}
-        """)
-        # 現在の設定値をセット
-        current_timer_size = self.current_config.get("timer_size", "large")
-        idx = self.timer_size_combo.findData(current_timer_size)
-        if idx >= 0:
-            self.timer_size_combo.setCurrentIndex(idx)
-        timer_size_layout.addWidget(self.timer_size_combo)
-        timer_size_layout.addStretch()
-        general_layout.addWidget(timer_size_group)
-
         general_layout.addWidget(font_group)
         
-        # ウィンドウ透過率設定
-        opacity_group = QGroupBox("ウィンドウ透過率")
-        opacity_group.setStyleSheet(group.styleSheet())
-        opacity_layout = QHBoxLayout(opacity_group)
+        # ━━━━━ 5. マップ表示 ━━━━━
+        map_group = QGroupBox("マップ表示")
+        map_group.setStyleSheet(group_style)
+        map_layout = QVBoxLayout(map_group)
 
+        self.auto_open_map_check = QCheckBox("エリア移動時にマップレイアウトの拡大画像を自動で開く")
+        self.auto_open_map_check.setStyleSheet(checkbox_style)
+        self.auto_open_map_check.setChecked(self.current_config.get("auto_open_map", False))
+        map_layout.addWidget(self.auto_open_map_check)
+
+        self.auto_position_map_check = QCheckBox("マップレイアウトの拡大画像を開く際、ぽえなびの隣に自動配置する")
+        self.auto_position_map_check.setStyleSheet(checkbox_style)
+        self.auto_position_map_check.setChecked(self.current_config.get("auto_position_map", True))
+        map_layout.addWidget(self.auto_position_map_check)
+
+        general_layout.addWidget(map_group)
+        
+        # ━━━━━ 6. ウィンドウ設定 ━━━━━
+        window_group = QGroupBox("ウィンドウ設定")
+        window_group.setStyleSheet(group_style)
+        window_layout = QVBoxLayout(window_group)
+        window_layout.setSpacing(10)
+        
+        # 透過率
+        opacity_row = QHBoxLayout()
         opacity_label = QLabel("透過率:")
         opacity_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
-        opacity_layout.addWidget(opacity_label)
+        opacity_row.addWidget(opacity_label)
 
         from PySide6.QtWidgets import QSlider
         self.opacity_slider = QSlider(Qt.Horizontal)
-        self.opacity_slider.setRange(5, 100)  # 5%〜100%
+        self.opacity_slider.setRange(5, 100)
         self.opacity_slider.setValue(self.current_config.get("window_opacity", 100))
         self.opacity_slider.setFixedWidth(200)
         self.opacity_slider.setStyleSheet(f"""
             QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
             QSlider::handle:horizontal {{ background: {Styles.TEXT_COLOR}; width: 16px; margin: -5px 0; border-radius: 8px; }}
         """)
-        opacity_layout.addWidget(self.opacity_slider)
+        opacity_row.addWidget(self.opacity_slider)
 
         self.opacity_value_label = QLabel(f"{self.opacity_slider.value()}%")
         self.opacity_value_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
         self.opacity_value_label.setFixedWidth(40)
-        opacity_layout.addWidget(self.opacity_value_label)
+        opacity_row.addWidget(self.opacity_value_label)
         self.opacity_slider.valueChanged.connect(lambda v: self.opacity_value_label.setText(f"{v}%"))
-
-        opacity_layout.addStretch()
-        general_layout.addWidget(opacity_group)
-
-        # ウィンドウロック設定
-        lock_group = QGroupBox("ウィンドウ操作")
-        lock_group.setStyleSheet(group.styleSheet())
-        lock_layout = QHBoxLayout(lock_group)
+        opacity_row.addStretch()
+        window_layout.addLayout(opacity_row)
         
-        from PySide6.QtWidgets import QCheckBox
+        # ウィンドウロック
         self.window_lock_check = QCheckBox("ウィンドウの移動・リサイズを禁止する")
-        self.window_lock_check.setStyleSheet(f"""
-            QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: 12px; spacing: 8px; }}
-            QCheckBox::indicator {{ width: 18px; height: 18px; border: 2px solid {Styles.TEXT_COLOR}; border-radius: 3px; background: transparent; }}
-            QCheckBox::indicator:checked {{ background: {Styles.TEXT_COLOR}; }}
-        """)
+        self.window_lock_check.setStyleSheet(checkbox_style)
         self.window_lock_check.setChecked(self.current_config.get("window_locked", False))
-        lock_layout.addWidget(self.window_lock_check)
-        lock_layout.addStretch()
-
-        general_layout.addWidget(lock_group)
-
-        # マップ表示設定
-        map_group = QGroupBox("マップ表示")
-        map_group.setStyleSheet(group.styleSheet())
-        map_layout = QVBoxLayout(map_group)
-
-        self.auto_open_map_check = QCheckBox("エリア移動時にマップレイアウトの拡大画像を自動で開く")
-        self.auto_open_map_check.setStyleSheet(self.window_lock_check.styleSheet())
-        self.auto_open_map_check.setChecked(self.current_config.get("auto_open_map", False))
-        map_layout.addWidget(self.auto_open_map_check)
-
-        self.auto_position_map_check = QCheckBox("マップレイアウトの拡大画像を開く際、ぽえなびの隣に自動配置する")
-        self.auto_position_map_check.setStyleSheet(self.window_lock_check.styleSheet())
-        self.auto_position_map_check.setChecked(self.current_config.get("auto_position_map", True))
-        map_layout.addWidget(self.auto_position_map_check)
-
-        general_layout.addWidget(map_group)
-
-        # マルチモニター設定
-        monitor_group = QGroupBox("マルチモニター設定")
-        monitor_group.setStyleSheet(group.styleSheet())
-        monitor_layout = QHBoxLayout(monitor_group)
-        monitor_layout.addWidget(QLabel("ぽえなび起動時のウィンドウ配置先:"))
+        window_layout.addWidget(self.window_lock_check)
+        
+        # モニター選択
+        monitor_row = QHBoxLayout()
+        monitor_label = QLabel("起動時の配置先:")
+        monitor_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        monitor_row.addWidget(monitor_label)
         self.monitor_combo = QComboBox()
-        self.monitor_combo.setStyleSheet(f"""
-            QComboBox {{ background: rgba(40,40,40,200); color: {Styles.TEXT_COLOR}; 
-                border: 1px solid {Styles.TEXT_COLOR}; border-radius: 3px; padding: 4px 8px; }}
-            QComboBox::drop-down {{ border: none; }}
-            QComboBox QAbstractItemView {{ background: rgba(40,40,40,240); color: {Styles.TEXT_COLOR}; }}
-        """)
+        self.monitor_combo.setStyleSheet(combo_style)
         from PySide6.QtWidgets import QApplication
         screens = QApplication.screens()
         current_monitor = self.current_config.get("display_monitor", 0)
@@ -809,8 +812,11 @@ class SettingsDialog(QDialog):
             self.monitor_combo.addItem(name, i)
         if 0 <= current_monitor < len(screens):
             self.monitor_combo.setCurrentIndex(current_monitor)
-        monitor_layout.addWidget(self.monitor_combo)
-        general_layout.addWidget(monitor_group)
+        monitor_row.addWidget(self.monitor_combo)
+        monitor_row.addStretch()
+        window_layout.addLayout(monitor_row)
+        
+        general_layout.addWidget(window_group)
         
         # 街エリア設定
         town_group = QGroupBox("街エリア（ガイド更新スキップ）")
@@ -1116,6 +1122,7 @@ class SettingsDialog(QDialog):
             "zone_data": zone_data,
             "guide_font_size": self.guide_font_spin.value(),
             "timer_size": self.timer_size_combo.currentData(),
+            "confirm_reset": self.confirm_reset_cb.isChecked(),
             "window_opacity": self.opacity_slider.value(),
             "window_locked": self.window_lock_check.isChecked(),
             "display_monitor": self.monitor_combo.currentData(),
