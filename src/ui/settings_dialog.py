@@ -684,8 +684,6 @@ class SettingsDialog(QDialog):
         font_layout.addWidget(self.guide_font_spin)
         font_layout.addStretch()
         
-        general_layout.addWidget(font_group)
-
         # タイマーサイズ設定
         timer_size_group = QGroupBox("タイマー表示")
         timer_size_group.setStyleSheet(group.styleSheet())
@@ -720,9 +718,10 @@ class SettingsDialog(QDialog):
             self.timer_size_combo.setCurrentIndex(idx)
         timer_size_layout.addWidget(self.timer_size_combo)
         timer_size_layout.addStretch()
-        
         general_layout.addWidget(timer_size_group)
 
+        general_layout.addWidget(font_group)
+        
         # ウィンドウ透過率設定
         opacity_group = QGroupBox("ウィンドウ透過率")
         opacity_group.setStyleSheet(group.styleSheet())
@@ -775,17 +774,43 @@ class SettingsDialog(QDialog):
         map_group.setStyleSheet(group.styleSheet())
         map_layout = QVBoxLayout(map_group)
 
-        self.auto_open_map_check = QCheckBox("エリア移動時にマップレイアウトを自動で開く")
+        self.auto_open_map_check = QCheckBox("エリア移動時にマップレイアウトの拡大画像を自動で開く")
         self.auto_open_map_check.setStyleSheet(self.window_lock_check.styleSheet())
         self.auto_open_map_check.setChecked(self.current_config.get("auto_open_map", False))
         map_layout.addWidget(self.auto_open_map_check)
 
-        self.auto_position_map_check = QCheckBox("マップウィンドウをメインウィンドウの隣に自動配置する")
+        self.auto_position_map_check = QCheckBox("マップレイアウトの拡大画像を開く際、ぽえなびの隣に自動配置する")
         self.auto_position_map_check.setStyleSheet(self.window_lock_check.styleSheet())
         self.auto_position_map_check.setChecked(self.current_config.get("auto_position_map", True))
         map_layout.addWidget(self.auto_position_map_check)
 
         general_layout.addWidget(map_group)
+
+        # マルチモニター設定
+        monitor_group = QGroupBox("マルチモニター設定")
+        monitor_group.setStyleSheet(group.styleSheet())
+        monitor_layout = QHBoxLayout(monitor_group)
+        monitor_layout.addWidget(QLabel("ぽえなび起動時のウィンドウ配置先:"))
+        self.monitor_combo = QComboBox()
+        self.monitor_combo.setStyleSheet(f"""
+            QComboBox {{ background: rgba(40,40,40,200); color: {Styles.TEXT_COLOR}; 
+                border: 1px solid {Styles.TEXT_COLOR}; border-radius: 3px; padding: 4px 8px; }}
+            QComboBox::drop-down {{ border: none; }}
+            QComboBox QAbstractItemView {{ background: rgba(40,40,40,240); color: {Styles.TEXT_COLOR}; }}
+        """)
+        from PySide6.QtWidgets import QApplication
+        screens = QApplication.screens()
+        current_monitor = self.current_config.get("display_monitor", 0)
+        for i, screen in enumerate(screens):
+            geo = screen.geometry()
+            name = f"モニター {i + 1}（{geo.width()}x{geo.height()}）"
+            if screen == QApplication.primaryScreen():
+                name += " [メイン]"
+            self.monitor_combo.addItem(name, i)
+        if 0 <= current_monitor < len(screens):
+            self.monitor_combo.setCurrentIndex(current_monitor)
+        monitor_layout.addWidget(self.monitor_combo)
+        general_layout.addWidget(monitor_group)
         
         # 街エリア設定
         town_group = QGroupBox("街エリア（ガイド更新スキップ）")
@@ -1093,6 +1118,7 @@ class SettingsDialog(QDialog):
             "timer_size": self.timer_size_combo.currentData(),
             "window_opacity": self.opacity_slider.value(),
             "window_locked": self.window_lock_check.isChecked(),
+            "display_monitor": self.monitor_combo.currentData(),
             "auto_open_map": self.auto_open_map_check.isChecked(),
             "auto_position_map": self.auto_position_map_check.isChecked(),
             "town_zones": [z.strip() for z in self.town_zones_edit.toPlainText().split("\n") if z.strip()],

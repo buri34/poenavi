@@ -1529,6 +1529,8 @@ class MainWindow(QMainWindow):
                 if not self.config.get("setup_completed"):
                     self.config["setup_completed"] = True
                     ConfigManager.save_config(self.config)
+                # ログファイル未設定メッセージをクリア
+                self.guide_text_label.setText("")
             
             # ゾーンデータ・ガイドデータ更新
             self.zone_data = self.config.get("zone_data", DEFAULT_ZONE_DATA)

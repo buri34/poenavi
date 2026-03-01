@@ -126,7 +126,7 @@ class MapImageDialog(QDialog):
         # ファイル名 + ナビ表示
         self.info_label = QLabel()
         self.info_label.setAlignment(Qt.AlignCenter)
-        self.info_label.setStyleSheet("color: #888888; font-size: 11px; margin-top: 5px;")
+        self.info_label.setStyleSheet("color: #888888; font-size: 13px; margin-top: 5px;")
         layout.addWidget(self.info_label)
         
         # 保存されたサイズを復元
@@ -172,7 +172,7 @@ class MapImageDialog(QDialog):
         fname = os.path.basename(path)
         total = len(self.all_paths)
         idx = self.current_index + 1
-        nav_hint = "← → キーで切替 / ESC で閉じる" if total > 1 else "ESC で閉じる"
+        nav_hint = "画像の左右いずれかを左クリック、または←→キーで切替 / ESCで閉じる" if total > 1 else "ESCで閉じる"
         self.info_label.setText(f"{fname}  ({idx}/{total})   {nav_hint}")
         self.setWindowTitle(f"{fname} ({idx}/{total})")
     
@@ -347,6 +347,22 @@ class MapThumbnailWidget(QWidget):
                         y = max(sg.top(), sg.top() + sg.height() - dialog_h)
 
                     dialog._target_pos = QPoint(x, y)
+
+        # auto_positionがOFFの場合、サムネイルのすぐ上・中央揃えで表示
+        if dialog._target_pos is None:
+            main_win = self.window()
+            if main_win:
+                main_geo = main_win.frameGeometry()
+                dialog_w = dialog.width()
+                dialog_h = dialog.height()
+                # X: メインウィンドウの中央にダイアログの中央を合わせる
+                x = main_geo.left() + (main_geo.width() - dialog_w) // 2
+                # Y: サムネイル領域の画面上端のすぐ上にダイアログ下端を合わせる
+                thumb_global_y = self.mapToGlobal(QPoint(0, 0)).y()
+                y = thumb_global_y - dialog_h - 5
+                if y < 0:
+                    y = 0
+                dialog._target_pos = QPoint(x, y)
 
         self._open_dialog = dialog
         dialog.finished.connect(self._on_dialog_closed)
