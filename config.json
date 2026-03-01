@@ -3,7 +3,8 @@
     "start_stop": "F7",
     "reset": "F8",
     "lap": "F9",
-    "undo_lap": "F10"
+    "undo_lap": "F10",
+    "click_through": "F6"
   },
   "text_color": "#e9ffbd",
   "zone_data": {
@@ -920,7 +921,7 @@
     "監督官の塔",
     "The Bridge Encampment",
     "橋の野営地",
-    "Oriath",
+    "Oriath Docks",
     "オリアスの船着場",
     "Karui Shores",
     "カルイの海岸"
@@ -934,6 +935,6 @@
   "timer_size": "large",
   "setup_completed": false,
   "window_locked": false,
-  "window_opacity": 50,
+  "window_opacity": 55,
   "auto_lap": true
 }

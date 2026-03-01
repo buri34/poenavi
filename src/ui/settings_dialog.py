@@ -636,6 +636,12 @@ class SettingsDialog(QDialog):
         h_layout4.addWidget(self.undo_lap_btn)
         group_layout.addLayout(h_layout4)
         
+        h_layout5 = QHBoxLayout()
+        h_layout5.addWidget(QLabel("クリックスルー:"))
+        self.click_through_btn = HotkeyButton(self.hotkeys.get("click_through", "F6"))
+        h_layout5.addWidget(self.click_through_btn)
+        group_layout.addLayout(h_layout5)
+        
         general_layout.addWidget(group)
         
         # Client.txt パス設定
@@ -1061,7 +1067,8 @@ class SettingsDialog(QDialog):
                 "start_stop": self.start_stop_btn.key_text,
                 "reset": self.reset_btn.key_text,
                 "lap": self.lap_btn.key_text,
-                "undo_lap": self.undo_lap_btn.key_text
+                "undo_lap": self.undo_lap_btn.key_text,
+                "click_through": self.click_through_btn.key_text
             },
             "client_log_path": self.log_path_edit.text().strip(),
             "zone_data": zone_data,

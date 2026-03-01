@@ -350,6 +350,12 @@ class MainWindow(QMainWindow):
         # === タイトルバー（最小化・閉じる） ===
         title_bar = QHBoxLayout()
         title_bar.setContentsMargins(5, 2, 5, 0)
+        
+        # クリックスルー状態表示
+        self.click_through_label = QLabel("")
+        self.click_through_label.setStyleSheet("color: #ff9944; font-size: 14px; font-weight: bold;")
+        self.click_through_label.setVisible(False)
+        title_bar.addWidget(self.click_through_label)
         title_bar.addStretch()
         
         btn_style = f"""
@@ -1051,6 +1057,7 @@ class MainWindow(QMainWindow):
                 hotkeys.get("reset", "F2").lower(): "reset",
                 hotkeys.get("lap", "F3").lower(): "lap",
                 hotkeys.get("undo_lap", "F4").lower(): "undo_lap",
+                hotkeys.get("click_through", "F6").lower(): "click_through",
             }
             
             print(f"Registering hotkeys: {self.hotkey_map}")
@@ -1090,6 +1097,43 @@ class MainWindow(QMainWindow):
             self.record_lap()
         elif command == "undo_lap":
             self.undo_lap()
+        elif command == "click_through":
+            self.toggle_click_through()
+
+    # --- クリックスルー ---
+    def toggle_click_through(self):
+        """クリックスルーのON/OFF切替"""
+        self.click_through = not getattr(self, 'click_through', False)
+        if sys.platform == 'win32':
+            import ctypes
+            hwnd = int(self.winId())
+            GWL_EXSTYLE = -20
+            WS_EX_TRANSPARENT = 0x00000020
+            WS_EX_LAYERED = 0x00080000
+            SWP_NOMOVE = 0x0002
+            SWP_NOSIZE = 0x0001
+            SWP_NOZORDER = 0x0004
+            SWP_FRAMECHANGED = 0x0020
+            user32 = ctypes.windll.user32
+            style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            if self.click_through:
+                style |= WS_EX_TRANSPARENT | WS_EX_LAYERED
+            else:
+                style &= ~WS_EX_TRANSPARENT
+            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+            # フラグ変更を即座に反映
+            user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED)
+        
+        # 視覚的フィードバック
+        hotkey = self.config.get('hotkeys', {}).get('click_through', 'F6')
+        if self.click_through:
+            self.click_through_label.setText(f"🔓 クリックスルーON（{hotkey}で解除）")
+            self.click_through_label.setVisible(True)
+            print(f"[INFO] クリックスルー ON（{hotkey}で解除）")
+        else:
+            self.click_through_label.setVisible(False)
+            print("[INFO] クリックスルー OFF")
 
     # --- レベルガイド ---
     def _is_town_zone(self, zone_name: str) -> bool:
