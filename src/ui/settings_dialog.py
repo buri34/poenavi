@@ -786,6 +786,17 @@ class SettingsDialog(QDialog):
         h_layout5.addWidget(self.click_through_btn)
         group_layout.addLayout(h_layout5)
         
+        h_layout6 = QHBoxLayout()
+        h_layout6.addWidget(QLabel("ログアウト:"))
+        self.logout_btn = HotkeyButton(self.hotkeys.get("logout", "F5"))
+        h_layout6.addWidget(self.logout_btn)
+        group_layout.addLayout(h_layout6)
+        
+        self.logout_enabled_cb = QCheckBox("ログアウト機能を有効にする（TCP切断）")
+        self.logout_enabled_cb.setChecked(self.current_config.get("logout_enabled", True))
+        self.logout_enabled_cb.setStyleSheet(checkbox_style)
+        group_layout.addWidget(self.logout_enabled_cb)
+        
         general_layout.addWidget(group)
         
         # ━━━━━ 3. タイマー表示 ━━━━━
@@ -1304,8 +1315,10 @@ class SettingsDialog(QDialog):
                 "reset": self.reset_btn.key_text,
                 "lap": self.lap_btn.key_text,
                 "undo_lap": self.undo_lap_btn.key_text,
-                "click_through": self.click_through_btn.key_text
+                "click_through": self.click_through_btn.key_text,
+                "logout": self.logout_btn.key_text,
             },
+            "logout_enabled": self.logout_enabled_cb.isChecked(),
             "client_log_path": self.log_path_edit.text().strip(),
             "zone_data": zone_data,
             "guide_font_size": self.guide_font_spin.value(),

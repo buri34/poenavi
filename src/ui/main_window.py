@@ -1548,6 +1548,7 @@ class MainWindow(QMainWindow):
                 hotkeys.get("lap", "F3").lower(): "lap",
                 hotkeys.get("undo_lap", "F4").lower(): "undo_lap",
                 hotkeys.get("click_through", "F6").lower(): "click_through",
+                hotkeys.get("logout", "F5").lower(): "logout",
             }
             
             print(f"Registering hotkeys: {self.hotkey_map}")
@@ -1589,6 +1590,20 @@ class MainWindow(QMainWindow):
             self.undo_lap()
         elif command == "click_through":
             self.toggle_click_through()
+        elif command == "logout":
+            self.execute_logout()
+
+    # --- ログアウト（TCP切断） ---
+    def execute_logout(self):
+        """TCP切断によるログアウト"""
+        if not self.config.get("logout_enabled", True):
+            return
+        from src.utils.tcp_disconnect import disconnect_poe
+        success, msg = disconnect_poe()
+        if success:
+            print(f"[LOGOUT] {msg}")
+        else:
+            print(f"[LOGOUT] Failed: {msg}")
 
     # --- クリックスルー ---
     def toggle_click_through(self):
