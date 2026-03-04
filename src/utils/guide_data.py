@@ -58,30 +58,55 @@ def save_guide_data(data: dict):
         print(f"[GuideData] Failed to save: {e}")
 
 
-def get_zone_guide(guide_data: dict, zone_id: str, visit: int = 1) -> dict | None:
+def _get_route_for_zone(zone_id: str, config: dict | None) -> str:
+    """zone_idからAct判定してルート設定を取得。"standard"なら空文字を返す"""
+    if not config or not zone_id:
+        return ""
+    if zone_id.startswith("act3_"):
+        route = config.get("route_act3", "standard")
+    elif zone_id.startswith("act8_"):
+        route = config.get("route_act8", "standard")
+    else:
+        return ""
+    return "" if route == "standard" else route
+
+
+def get_zone_guide(guide_data: dict, zone_id: str, visit: int = 1, config: dict | None = None) -> dict | None:
     """
-    ゾーンIDからガイドを検索
-    visit>=2 の場合、"{zone_id}@2" を優先検索（再訪問対策）
-    なければ {zone_id} にフォールバック
+    ゾーンIDからガイドを検索（ルート対応版）
+    
+    検索優先順位:
+    1. {zone_id}~{route}@{visit} (ルート指定+訪問回数)
+    2. {zone_id}~{route}         (ルート指定+1回目)
+    3. {zone_id}@{visit}         (デフォルト+訪問回数)
+    4. {zone_id}                 (デフォルト)
     
     Returns:
         {"objective": str, "layout": str, "tips": str, "direction": str?} or None
     """
-    # 1回目のガイドを取得（フォールバック用）
     base_guide = guide_data.get(zone_id)
+    route = _get_route_for_zone(zone_id, config)
     
-    # 2回目以降は @N キーを優先、なければ@2にフォールバック
+    candidates = []
+    if route and visit >= 2:
+        candidates.append(f"{zone_id}~{route}@{visit}")
+        candidates.append(f"{zone_id}~{route}@2")
+    if route:
+        candidates.append(f"{zone_id}~{route}")
     if visit >= 2:
-        # @N → @2 → 1回目 の順で探す
         for v in [visit, 2]:
-            v_key = f"{zone_id}@{v}"
-            v_guide = guide_data.get(v_key)
-            if v_guide:
-                if "direction" not in v_guide and base_guide and "direction" in base_guide:
-                    v_guide = {**v_guide, "direction": base_guide["direction"]}
-                return v_guide
+            candidates.append(f"{zone_id}@{v}")
+    candidates.append(zone_id)
     
-    return base_guide
+    for key in candidates:
+        guide = guide_data.get(key)
+        if guide:
+            # directionが未設定ならbase_guideから継承
+            if "direction" not in guide and base_guide and "direction" in base_guide:
+                guide = {**guide, "direction": base_guide["direction"]}
+            return guide
+    
+    return None
 
 
 DIRECTION_ARROWS = {

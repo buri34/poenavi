@@ -153,6 +153,7 @@ class LogWatcher(QObject):
         m = self.ZONE_PATTERN_JA.search(line)
         if m:
             zone_name = m.group(1).strip()
+            print(f"[LogWatcher] Zone detected: {zone_name} (pos={self._file_pos}, line={line.strip()[:80]})")
             self.zone_entered.emit(zone_name)
             return
         
@@ -160,6 +161,7 @@ class LogWatcher(QObject):
         m = self.ZONE_PATTERN_EN.search(line)
         if m:
             zone_name = m.group(1).strip()
+            print(f"[LogWatcher] Zone detected: {zone_name} (pos={self._file_pos}, line={line.strip()[:80]})")
             self.zone_entered.emit(zone_name)
             return
         

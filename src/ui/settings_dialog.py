@@ -179,13 +179,14 @@ class GuideEditorDialog(QDialog):
         ("#ffffff", "白"),
     ]
     
-    def __init__(self, parent, zone_name: str, guide: dict, guide_v2: dict = None, zone_id: str = ""):
+    def __init__(self, parent, zone_name: str, guide: dict, guide_v2: dict = None, zone_id: str = "", route_guides: dict = None):
         super().__init__(parent)
         self.setWindowTitle(f"ガイド編集 — {zone_name}")
         self.resize(550, 620)
         self.setStyleSheet(Styles.MAIN_WINDOW)
         self.guide_v2 = guide_v2 or {}
         self.zone_id = zone_id
+        self.route_guides = route_guides or {}  # {"~library_detour": {...}, "~library_detour@2": {...}}
         
         main_layout = QVBoxLayout(self)
         
@@ -463,6 +464,87 @@ class GuideEditorDialog(QDialog):
         layout.addWidget(self.v2_frame)
         self.v2_frame.setVisible(bool(self.guide_v2))
         
+        # ── ルート別ガイド ──
+        self.route_editors = {}  # {suffix: {"objective": QTextEdit, "layout": RichTextEdit, "tips": QTextEdit, "direction": QButtonGroup}}
+        if self.route_guides:
+            route_separator = QFrame()
+            route_separator.setFrameShape(QFrame.HLine)
+            route_separator.setStyleSheet("color: rgba(176,255,123,0.5);")
+            layout.addWidget(route_separator)
+            
+            route_header = QLabel("📍 ルート別ガイド")
+            route_header.setStyleSheet(f"color: #ffc832; font-size: 13px; font-weight: bold;")
+            layout.addWidget(route_header)
+            
+            # ルート名の表示マッピング
+            route_display = {
+                "~library_detour": "図書館ルート 1回目",
+                "~library_detour@2": "図書館ルート 2回目",
+                "~underbelly": "裏道ルート 1回目",
+                "~underbelly@2": "裏道ルート 2回目",
+            }
+            
+            for suffix, rguide in sorted(self.route_guides.items()):
+                display = route_display.get(suffix, suffix)
+                rg_box = QGroupBox(display)
+                rg_box.setStyleSheet(f"""
+                    QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid rgba(176,255,123,0.3); 
+                        border-radius: 4px; margin-top: 8px; font-size: 11px; font-weight: bold; }}
+                    QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top left; padding: 0 5px; }}
+                """)
+                rg_layout = QVBoxLayout(rg_box)
+                rg_layout.setSpacing(5)
+                
+                rg_layout.addWidget(QLabel("📋 目標"))
+                rg_layout.itemAt(rg_layout.count()-1).widget().setStyleSheet(label_style)
+                r_obj = QTextEdit()
+                r_obj.setPlainText(rguide.get("objective", ""))
+                r_obj.setFixedHeight(50)
+                r_obj.setStyleSheet(text_style)
+                rg_layout.addWidget(r_obj)
+                
+                rg_layout.addWidget(QLabel("🗺️ レイアウト"))
+                rg_layout.itemAt(rg_layout.count()-1).widget().setStyleSheet(label_style)
+                r_lay = RichTextEdit()
+                r_lay.set_from_html(rguide.get("layout", ""))
+                r_lay.setFixedHeight(120)
+                r_lay.setStyleSheet(text_style)
+                rg_layout.addWidget(r_lay)
+                
+                rg_layout.addWidget(QLabel("💡 Tips"))
+                rg_layout.itemAt(rg_layout.count()-1).widget().setStyleSheet(label_style)
+                r_tips = QTextEdit()
+                r_tips.setPlainText(rguide.get("tips", ""))
+                r_tips.setFixedHeight(50)
+                r_tips.setStyleSheet(text_style)
+                rg_layout.addWidget(r_tips)
+                
+                # 基本方向（9方向ラジオボタン）
+                r_dir_label = QLabel("🧭 基本方向")
+                r_dir_label.setStyleSheet(label_style)
+                rg_layout.addWidget(r_dir_label)
+                r_dir_grid = QGridLayout()
+                r_dir_grid.setSpacing(2)
+                r_dir_group = QButtonGroup(self)
+                r_directions = [
+                    (0, 0, "↖", "nw"), (0, 1, "↑", "n"), (0, 2, "↗", "ne"),
+                    (1, 0, "←", "w"),  (1, 1, "—", "none"), (1, 2, "→", "e"),
+                    (2, 0, "↙", "sw"), (2, 1, "↓", "s"), (2, 2, "↘", "se"),
+                ]
+                r_current_dir = rguide.get("direction", "none")
+                for r_row, r_col, r_label, r_value in r_directions:
+                    r_rb = QRadioButton(r_label)
+                    r_rb.setStyleSheet(radio_style)
+                    r_rb.setProperty("dir_value", r_value)
+                    if r_value == r_current_dir:
+                        r_rb.setChecked(True)
+                    r_dir_group.addButton(r_rb)
+                    r_dir_grid.addWidget(r_rb, r_row, r_col, Qt.AlignCenter)
+                rg_layout.addLayout(r_dir_grid)
+                
+                layout.addWidget(rg_box)
+                self.route_editors[suffix] = {"objective": r_obj, "layout": r_lay, "tips": r_tips, "direction": r_dir_group}
+        
         layout.addStretch()
         scroll.setWidget(scroll_widget)
         main_layout.addWidget(scroll)
@@ -567,6 +649,26 @@ class GuideEditorDialog(QDialog):
         if "direction" in result:
             return result
         return {}
+
+    def get_route_guides(self) -> dict:
+        """ルート別ガイドデータを取得 {suffix: {objective, layout, tips, direction}}"""
+        result = {}
+        for suffix, editors in self.route_editors.items():
+            r_direction = "none"
+            checked = editors["direction"].checkedButton()
+            if checked:
+                r_direction = checked.property("dir_value")
+            g = {
+                "objective": editors["objective"].toPlainText().strip(),
+                "layout": editors["layout"].to_storage_html(),
+                "tips": editors["tips"].toPlainText().strip(),
+                "direction": r_direction,
+            }
+            if any(v for v in g.values()):
+                result[suffix] = g
+            else:
+                result[suffix] = g  # 空でも保持（キーは残す）
+        return result
 
 
 class SettingsDialog(QDialog):
@@ -723,11 +825,12 @@ class SettingsDialog(QDialog):
         # ━━━━━ 4. ガイド表示 ━━━━━
         font_group = QGroupBox("ガイド表示")
         font_group.setStyleSheet(group_style)
-        font_layout = QHBoxLayout(font_group)
+        font_group_layout = QVBoxLayout(font_group)
         
+        font_row = QHBoxLayout()
         font_label = QLabel("フォントサイズ:")
         font_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
-        font_layout.addWidget(font_label)
+        font_row.addWidget(font_label)
         
         self.guide_font_spin = QSpinBox()
         self.guide_font_spin.setRange(8, 20)
@@ -735,8 +838,43 @@ class SettingsDialog(QDialog):
         self.guide_font_spin.setSuffix(" px")
         self.guide_font_spin.setFixedWidth(100)
         self.guide_font_spin.setStyleSheet(_spinbox_style(width=80, height=30))
-        font_layout.addWidget(self.guide_font_spin)
-        font_layout.addStretch()
+        font_row.addWidget(self.guide_font_spin)
+        font_row.addStretch()
+        font_group_layout.addLayout(font_row)
+        
+        # ルート選択
+        from PySide6.QtWidgets import QComboBox as _QComboBox
+        route_act3_row = QHBoxLayout()
+        route_act3_label = QLabel("Act3 ルート:")
+        route_act3_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        route_act3_row.addWidget(route_act3_label)
+        self.route_act3_combo = _QComboBox()
+        self.route_act3_combo.addItem("通常ルート（図書館スキップ）", "standard")
+        self.route_act3_combo.addItem("図書館寄り道ルート", "library_detour")
+        self.route_act3_combo.setStyleSheet(combo_style)
+        cur3 = self.current_config.get("route_act3", "standard")
+        idx3 = self.route_act3_combo.findData(cur3)
+        if idx3 >= 0:
+            self.route_act3_combo.setCurrentIndex(idx3)
+        route_act3_row.addWidget(self.route_act3_combo)
+        route_act3_row.addStretch()
+        font_group_layout.addLayout(route_act3_row)
+        
+        route_act8_row = QHBoxLayout()
+        route_act8_label = QLabel("Act8 ルート:")
+        route_act8_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        route_act8_row.addWidget(route_act8_label)
+        self.route_act8_combo = _QComboBox()
+        self.route_act8_combo.addItem("通常ルート", "standard")
+        self.route_act8_combo.addItem("隠れた裏道（The Hidden Underbelly）ルート", "underbelly")
+        self.route_act8_combo.setStyleSheet(combo_style)
+        cur8 = self.current_config.get("route_act8", "standard")
+        idx8 = self.route_act8_combo.findData(cur8)
+        if idx8 >= 0:
+            self.route_act8_combo.setCurrentIndex(idx8)
+        route_act8_row.addWidget(self.route_act8_combo)
+        route_act8_row.addStretch()
+        font_group_layout.addLayout(route_act8_row)
         
         general_layout.addWidget(font_group)
         
@@ -787,6 +925,31 @@ class SettingsDialog(QDialog):
         self.opacity_slider.valueChanged.connect(lambda v: self.opacity_value_label.setText(f"{v}%"))
         opacity_row.addStretch()
         window_layout.addLayout(opacity_row)
+        
+        # 文字透過率
+        text_opacity_row = QHBoxLayout()
+        text_opacity_label = QLabel("文字透過率:")
+        text_opacity_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        text_opacity_row.addWidget(text_opacity_label)
+
+        from PySide6.QtWidgets import QSlider as _QSlider
+        self.text_opacity_slider = _QSlider(Qt.Horizontal)
+        self.text_opacity_slider.setRange(0, 100)
+        self.text_opacity_slider.setValue(self.current_config.get("text_opacity", 100))
+        self.text_opacity_slider.setFixedWidth(200)
+        self.text_opacity_slider.setStyleSheet(f"""
+            QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
+            QSlider::handle:horizontal {{ background: {Styles.TEXT_COLOR}; width: 16px; margin: -5px 0; border-radius: 8px; }}
+        """)
+        text_opacity_row.addWidget(self.text_opacity_slider)
+
+        self.text_opacity_value_label = QLabel(f"{self.text_opacity_slider.value()}%")
+        self.text_opacity_value_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        self.text_opacity_value_label.setFixedWidth(40)
+        text_opacity_row.addWidget(self.text_opacity_value_label)
+        self.text_opacity_slider.valueChanged.connect(lambda v: self.text_opacity_value_label.setText(f"{v}%"))
+        text_opacity_row.addStretch()
+        window_layout.addLayout(text_opacity_row)
         
         # ウィンドウロック
         self.window_lock_check = QCheckBox("ウィンドウの移動・リサイズを禁止する")
@@ -1059,7 +1222,23 @@ class SettingsDialog(QDialog):
         display_name = f"{zone_name} ({zone_id})"
         
         v2_key = f"{guide_key}@2"
-        dialog = GuideEditorDialog(self, display_name, self.guide_data.get(guide_key, {}), self.guide_data.get(v2_key, {}), zone_id=zone_id)
+        
+        # ルート別ガイドの収集
+        route_guides = {}
+        route_suffixes = []
+        # Act3: 帝国の庭園のみルート別
+        if zone_id == "act3_area14":
+            route_suffixes = ["~library_detour", "~library_detour@2"]
+        # Act8: 裏道ルートで異なるガイドが必要な全エリア
+        elif zone_id in ("act8_area8", "act8_area10", "act8_area11", "act8_area12",
+                          "act8_area13", "act8_area14", "act8_area15", "act8_area16",
+                          "act8_area17", "act8_area18", "act8_area19", "act8_area20"):
+            route_suffixes = ["~underbelly", "~underbelly@2"]
+        for suffix in route_suffixes:
+            rkey = f"{guide_key}{suffix}"
+            route_guides[suffix] = self.guide_data.get(rkey, {})
+        
+        dialog = GuideEditorDialog(self, display_name, self.guide_data.get(guide_key, {}), self.guide_data.get(v2_key, {}), zone_id=zone_id, route_guides=route_guides)
         if dialog.exec():
             guide = dialog.get_guide()
             if any(v for v in guide.values()):
@@ -1072,6 +1251,15 @@ class SettingsDialog(QDialog):
                 self.guide_data[v2_key] = guide_v2
             elif v2_key in self.guide_data:
                 del self.guide_data[v2_key]
+            
+            # ルート別ガイド保存
+            for suffix, rguide in dialog.get_route_guides().items():
+                rkey = f"{guide_key}{suffix}"
+                if any(v for v in rguide.values()):
+                    self.guide_data[rkey] = rguide
+                elif rkey in self.guide_data:
+                    # 空でもキーは残す（guide_data.jsonに空エントリとして）
+                    self.guide_data[rkey] = {"objective": "", "layout": "", "tips": "", "direction": ""}
             
             # ガイド編集のSaveで即座にファイル保存（Settings画面のSaveを待たない）
             from src.utils.guide_data import save_guide_data
@@ -1124,9 +1312,12 @@ class SettingsDialog(QDialog):
             "timer_size": self.timer_size_combo.currentData(),
             "confirm_reset": self.confirm_reset_cb.isChecked(),
             "window_opacity": self.opacity_slider.value(),
+            "text_opacity": self.text_opacity_slider.value(),
             "window_locked": self.window_lock_check.isChecked(),
             "display_monitor": self.monitor_combo.currentData(),
             "auto_open_map": self.auto_open_map_check.isChecked(),
             "auto_position_map": self.auto_position_map_check.isChecked(),
             "town_zones": [z.strip() for z in self.town_zones_edit.toPlainText().split("\n") if z.strip()],
+            "route_act3": self.route_act3_combo.currentData(),
+            "route_act8": self.route_act8_combo.currentData(),
         }

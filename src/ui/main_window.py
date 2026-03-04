@@ -17,6 +17,288 @@ from src.utils.lap_recorder import LapRecorder
 from src.utils.log_watcher import LogWatcher
 from src.utils.zone_data import get_zone_info, get_level_advice, DEFAULT_ZONE_DATA
 from src.utils.guide_data import load_guide_data, get_zone_guide, format_guide_html
+from PySide6.QtWidgets import QComboBox, QDialog, QFormLayout
+
+class RouteSelectionDialog(QDialog):
+    """ルート選択ダイアログ（初回セットアップ用）"""
+    def __init__(self, parent=None, config=None):
+        super().__init__(parent)
+        self.setWindowTitle("ルート設定")
+        self.setFixedSize(400, 270)
+        self.setStyleSheet(Styles.MAIN_WINDOW)
+        config = config or {}
+        
+        layout = QVBoxLayout(self)
+        layout.setSpacing(12)
+        
+        desc = QLabel("攻略ルートを選択してください。後から設定画面で変更できます。")
+        desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px;")
+        desc.setWordWrap(True)
+        layout.addWidget(desc)
+        
+        combo_style = f"""
+            QComboBox {{
+                background-color: #2a2a2a; color: {Styles.TEXT_COLOR};
+                border: 1px solid #555; border-radius: 4px;
+                padding: 4px 8px; font-size: 12px;
+            }}
+            QComboBox::drop-down {{ border: none; }}
+            QComboBox QAbstractItemView {{
+                background-color: #2a2a2a; color: {Styles.TEXT_COLOR};
+                selection-background-color: #444;
+            }}
+        """
+        label_style = f"color: {Styles.TEXT_COLOR}; font-size: 12px;"
+        
+        form = QFormLayout()
+        
+        self.act3_combo = QComboBox()
+        self.act3_combo.addItem("通常ルート（図書館スキップ）", "standard")
+        self.act3_combo.addItem("図書館寄り道ルート", "library_detour")
+        self.act3_combo.setStyleSheet(combo_style)
+        cur3 = config.get("route_act3", "standard")
+        idx3 = self.act3_combo.findData(cur3)
+        if idx3 >= 0:
+            self.act3_combo.setCurrentIndex(idx3)
+        lbl3 = QLabel("Act3 ルート:")
+        lbl3.setStyleSheet(label_style)
+        form.addRow(lbl3, self.act3_combo)
+        
+        self.act8_combo = QComboBox()
+        self.act8_combo.addItem("通常ルート", "standard")
+        self.act8_combo.addItem("隠れた裏道（The Hidden Underbelly）ルート", "underbelly")
+        self.act8_combo.setStyleSheet(combo_style)
+        cur8 = config.get("route_act8", "standard")
+        idx8 = self.act8_combo.findData(cur8)
+        if idx8 >= 0:
+            self.act8_combo.setCurrentIndex(idx8)
+        lbl8 = QLabel("Act8 ルート:")
+        lbl8.setStyleSheet(label_style)
+        form.addRow(lbl8, self.act8_combo)
+        
+        layout.addLayout(form)
+        layout.addStretch()
+        
+        tip = QLabel("あまり経験のない方は、Act3ルートは「図書館寄り道ルート」、\nAct8ルートは「通常ルート」を選択するのがおすすめです。")
+        tip.setStyleSheet(f"color: #aaaaaa; font-size: 13px;")
+        tip.setWordWrap(True)
+        layout.addWidget(tip)
+        
+        ok_btn = QPushButton("OK")
+        ok_btn.setStyleSheet(Styles.BUTTON)
+        ok_btn.clicked.connect(self.accept)
+        layout.addWidget(ok_btn)
+    
+    def get_routes(self) -> dict:
+        return {
+            "route_act3": self.act3_combo.currentData(),
+            "route_act8": self.act8_combo.currentData(),
+        }
+
+
+class MemoDialog(QDialog):
+    """ゲーム中メモ帳ダイアログ（フレームレス・色付きテキスト対応）"""
+    
+    COLORS = [
+        ("#ff6666", "赤"), ("#4488ff", "青"), ("#ff8800", "オレンジ"),
+        ("#44cc44", "緑"), ("#dddd44", "黄"), ("#dd66ff", "紫"), ("#ffffff", "白"),
+    ]
+    
+    def __init__(self, parent=None, notes_path: str = ""):
+        super().__init__(parent)
+        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.resize(350, 300)
+        self.notes_path = notes_path
+        self._drag_pos = None
+        self._resize_edge = None
+        self._EDGE_MARGIN = 8
+        self.setMinimumSize(200, 150)
+        self.setMouseTracking(True)
+        
+        # メインコンテナ（角丸背景）
+        container = QWidget(self)
+        container.setStyleSheet(f"""
+            QWidget {{
+                background: rgba(20, 20, 20, 230);
+                border: 1px solid rgba(176,255,123,0.4);
+                border-radius: 6px;
+            }}
+        """)
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(8, 4, 8, 8)
+        container_layout.setSpacing(4)
+        
+        # タイトルバー（ドラッグ用）
+        title_bar = QWidget()
+        title_bar.setFixedHeight(28)
+        title_bar.setStyleSheet("background: transparent; border: none;")
+        title_layout = QHBoxLayout(title_bar)
+        title_layout.setContentsMargins(4, 0, 4, 0)
+        
+        title_label = QLabel("📝 メモ")
+        title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px; font-weight: bold; border: none;")
+        title_layout.addWidget(title_label)
+        title_layout.addStretch()
+        
+        close_btn = QPushButton("✕")
+        close_btn.setFixedSize(22, 22)
+        close_btn.setStyleSheet(f"""
+            QPushButton {{ background: transparent; color: #888; border: none; font-size: 14px; }}
+            QPushButton:hover {{ color: #ff6666; }}
+        """)
+        close_btn.clicked.connect(self._save_and_close)
+        title_layout.addWidget(close_btn)
+        container_layout.addWidget(title_bar)
+        
+        text_style = f"""
+            QTextEdit {{ 
+                background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
+                border: 1px solid rgba(176,255,123,0.3); border-radius: 4px; 
+                padding: 5px; font-size: 13px;
+                font-family: "MS Gothic", "Yu Gothic", "Meiryo", monospace;
+            }}
+        """
+        
+        # カラーツールバー
+        toolbar = QHBoxLayout()
+        toolbar.setSpacing(4)
+        for color_code, color_name in self.COLORS:
+            cbtn = QPushButton()
+            cbtn.setFixedSize(18, 18)
+            cbtn.setToolTip(f"{color_name}")
+            cbtn.setStyleSheet(f"""
+                QPushButton {{ background: {color_code}; border: 1px solid rgba(255,255,255,0.3); border-radius: 2px; }}
+                QPushButton:hover {{ border: 2px solid #ffffff; }}
+            """)
+            cbtn.clicked.connect(lambda checked, c=color_code: self._set_color(c))
+            toolbar.addWidget(cbtn)
+        
+        reset_btn = QPushButton("✕")
+        reset_btn.setFixedSize(18, 18)
+        reset_btn.setToolTip("色をリセット")
+        reset_btn.setStyleSheet(f"""
+            QPushButton {{ background: rgba(40,40,40,200); color: #888; 
+                border: 1px solid rgba(176,255,123,0.3); border-radius: 2px; font-size: 10px; }}
+            QPushButton:hover {{ background: rgba(80,80,80,200); }}
+        """)
+        reset_btn.clicked.connect(self._reset_color)
+        toolbar.addWidget(reset_btn)
+        toolbar.addStretch()
+        container_layout.addLayout(toolbar)
+        
+        # テキストエディタ
+        from src.ui.settings_dialog import RichTextEdit
+        self.text_edit = RichTextEdit()
+        self.text_edit.setStyleSheet(text_style)
+        self._load_notes()
+        container_layout.addWidget(self.text_edit)
+        
+        # ダイアログ全体のレイアウト
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(container)
+    
+    def _get_edge(self, pos):
+        """マウス位置からリサイズ方向を判定"""
+        m = self._EDGE_MARGIN
+        x, y = pos.x(), pos.y()
+        w, h = self.width(), self.height()
+        edge = ""
+        if y < m: edge += "t"
+        elif y > h - m: edge += "b"
+        if x < m: edge += "l"
+        elif x > w - m: edge += "r"
+        return edge
+    
+    def _edge_cursor(self, edge):
+        if edge in ("t", "b"): return Qt.SizeVerCursor
+        if edge in ("l", "r"): return Qt.SizeHorCursor
+        if edge in ("tl", "br"): return Qt.SizeFDiagCursor
+        if edge in ("tr", "bl"): return Qt.SizeBDiagCursor
+        return Qt.ArrowCursor
+    
+    def mousePressEvent(self, event):
+        if event.button() != Qt.LeftButton:
+            return
+        edge = self._get_edge(event.position().toPoint())
+        if edge:
+            self._resize_edge = edge
+            self._resize_start = event.globalPosition().toPoint()
+            self._resize_geo = self.geometry()
+            event.accept()
+        elif event.position().y() < 32:
+            self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            event.accept()
+    
+    def mouseMoveEvent(self, event):
+        if self._resize_edge and event.buttons() & Qt.LeftButton:
+            delta = event.globalPosition().toPoint() - self._resize_start
+            geo = QRect(self._resize_geo)
+            if "r" in self._resize_edge: geo.setRight(geo.right() + delta.x())
+            if "b" in self._resize_edge: geo.setBottom(geo.bottom() + delta.y())
+            if "l" in self._resize_edge: geo.setLeft(geo.left() + delta.x())
+            if "t" in self._resize_edge: geo.setTop(geo.top() + delta.y())
+            if geo.width() >= self.minimumWidth() and geo.height() >= self.minimumHeight():
+                self.setGeometry(geo)
+            event.accept()
+        elif self._drag_pos and event.buttons() & Qt.LeftButton:
+            self.move(event.globalPosition().toPoint() - self._drag_pos)
+            event.accept()
+        else:
+            edge = self._get_edge(event.position().toPoint())
+            self.setCursor(self._edge_cursor(edge))
+    
+    def mouseReleaseEvent(self, event):
+        self._drag_pos = None
+        self._resize_edge = None
+        self.setCursor(Qt.ArrowCursor)
+    
+    def _set_color(self, color: str):
+        cursor = self.text_edit.textCursor()
+        fmt = cursor.charFormat()
+        from PySide6.QtGui import QColor
+        fmt.setForeground(QColor(color))
+        cursor.mergeCharFormat(fmt)
+        self.text_edit.mergeCurrentCharFormat(fmt)
+    
+    def _reset_color(self):
+        cursor = self.text_edit.textCursor()
+        fmt = cursor.charFormat()
+        from PySide6.QtGui import QColor
+        fmt.setForeground(QColor(Styles.TEXT_COLOR))
+        cursor.mergeCharFormat(fmt)
+        self.text_edit.mergeCurrentCharFormat(fmt)
+    
+    def _load_notes(self):
+        if self.notes_path and os.path.exists(self.notes_path):
+            try:
+                with open(self.notes_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                html = data.get("content", "")
+                if html:
+                    self.text_edit.set_from_html(html)
+            except Exception as e:
+                print(f"[MemoDialog] Failed to load notes: {e}")
+    
+    def _save_notes(self):
+        try:
+            html = self.text_edit.to_storage_html()
+            data = {"content": html}
+            with open(self.notes_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            print(f"[MemoDialog] Notes saved to {self.notes_path}")
+        except Exception as e:
+            print(f"[MemoDialog] Failed to save notes: {e}")
+    
+    def _save_and_close(self):
+        self._save_notes()
+        self.hide()
+    
+    def closeEvent(self, event):
+        self._save_notes()
+        event.accept()
+
 
 class MainWindow(QMainWindow):
     # ホットキーイベントをメインスレッドで処理するためのシグナル
@@ -69,6 +351,10 @@ class MainWindow(QMainWindow):
         
         # ガイド折りたたみ状態（初回はTrue、以降はconfig保持）
         self.guide_expanded = self.config.get("guide_expanded", True)
+        # セクション個別折りたたみ状態（保存しない — 毎回展開）
+        self.zone_header_expanded = True
+        self.guide_text_expanded = True
+        self.map_section_expanded = True
         # ガイドフォントサイズ
         self.guide_font_size = self.config.get("guide_font_size", 18)
         # タイマーサイズ
@@ -95,7 +381,7 @@ class MainWindow(QMainWindow):
             "餌場", "The Feeding Trough",
             "カルイの要塞", "The Karui Fortress",
             "シャヴロンの塔", "Shavronne's Tower",
-            "海水の王の岩礁", "The Brine King's Reef",
+            "大海の王の岩礁", "The Brine King's Reef",
             "マリガロの聖域", "Maligaro's Sanctum",
             "焼け野原", "The Ashen Fields",
             "土手道", "The Causeway",
@@ -131,6 +417,7 @@ class MainWindow(QMainWindow):
         self.setMouseTracking(True)
         self.centralWidget().setMouseTracking(True)
         self._apply_bg_opacity(self.config.get("window_opacity", 100))
+        self._apply_text_opacity(self.config.get("text_opacity", 100))
         
         # レベルガイド状態
         self.player_level = 1
@@ -235,6 +522,14 @@ class MainWindow(QMainWindow):
                 '</div>'
             )
 
+    def _show_route_selection_dialog(self):
+        """ルート選択ダイアログを表示して設定を保存"""
+        dialog = RouteSelectionDialog(self, self.config)
+        if dialog.exec():
+            routes = dialog.get_routes()
+            self.config.update(routes)
+            ConfigManager.save_config(self.config)
+
     def eventFilter(self, obj, event):
         """アプリ全体のマウスイベントを監視して端のリサイズを処理"""
         if event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.MouseMove, QEvent.Type.MouseButtonRelease):
@@ -334,6 +629,17 @@ class MainWindow(QMainWindow):
             self.guide_container.setStyleSheet(
                 f"#guideContainer {{ background-color: rgba(20, 30, 20, {container_alpha}); border-radius: 6px; }}"
             )
+
+    def _apply_text_opacity(self, opacity_pct: int):
+        """ガイドテキストエリア全体の透過率を適用（QGraphicsOpacityEffect）"""
+        from PySide6.QtWidgets import QGraphicsOpacityEffect
+        opacity = opacity_pct / 100.0
+        for attr in ('guide_container', 'timer_container', 'timer_toggle_btn', 'guide_toggle_btn'):
+            w = getattr(self, attr, None)
+            if w:
+                effect = QGraphicsOpacityEffect(w)
+                effect.setOpacity(opacity)
+                w.setGraphicsEffect(effect)
 
     def _apply_timer_size(self):
         """タイマーの表示サイズを適用する"""
@@ -559,7 +865,7 @@ class MainWindow(QMainWindow):
         timer_container_layout.addWidget(self.timer_content)
         self.timer_content.setVisible(self.timer_expanded)
         
-        # 操作ボタン（レベルガイドより上に配置）— 常に表示
+        # 操作ボタン（レベルガイドより上に配置）
         timer_container_layout.addSpacing(10)
 
         # 操作ボタン
@@ -582,7 +888,34 @@ class MainWindow(QMainWindow):
         self.reset_btn.clicked.connect(self.reset_timer)
         button_layout.addWidget(self.reset_btn)
         
+        # タイマー折りたたみ時はボタンも隠す
+        if not self.timer_expanded:
+            self.start_btn.setVisible(False)
+            self.stop_btn.setVisible(False)
+            self.reset_btn.setVisible(False)
+        
         button_layout.addStretch()
+        
+        # Act 1-5 / Act 6-10 切替ボタン（ボタン行に配置）
+        self.part2_btn = QPushButton("Act 6-10" if self.part2_mode else "Act 1-5")
+        self.part2_btn.setStyleSheet(self._part2_btn_style())
+        self.part2_btn.setFixedHeight(22)
+        self.part2_btn.clicked.connect(self.toggle_part2)
+        button_layout.addWidget(self.part2_btn)
+        
+        # 訪問回数 手動切替ボタン（ボタン行に配置）
+        self.visit_btn = QPushButton("自動")
+        self.visit_btn.setStyleSheet(self._visit_btn_style())
+        self.visit_btn.setFixedHeight(22)
+        self.visit_btn.clicked.connect(self.toggle_visit_override)
+        button_layout.addWidget(self.visit_btn)
+        
+        self.memo_btn = QPushButton("📝")
+        self.memo_btn.setStyleSheet(Styles.BUTTON)
+        self.memo_btn.setFixedSize(35, 35)
+        self.memo_btn.setToolTip("メモ")
+        self.memo_btn.clicked.connect(self.open_memo)
+        button_layout.addWidget(self.memo_btn)
         
         self.settings_btn = QPushButton("⚙")
         self.settings_btn.setStyleSheet(Styles.BUTTON)
@@ -643,21 +976,7 @@ class MainWindow(QMainWindow):
         
         zone_info_layout.addStretch()
         
-        # Act 1-5 / Act 6-10 切替ボタン
-        self.part2_btn = QPushButton("Act 6-10" if self.part2_mode else "Act 1-5")
-        self.part2_btn.setStyleSheet(self._part2_btn_style())
-        self.part2_btn.setFixedHeight(22)
-        self.part2_btn.clicked.connect(self.toggle_part2)
-        zone_info_layout.addWidget(self.part2_btn)
-        
-        # 訪問回数 手動切替ボタン（1回目 / 2回目）
-        self.visit_btn = QPushButton("自動")
-        self.visit_btn.setStyleSheet(self._visit_btn_style())
-        self.visit_btn.setFixedHeight(22)
-        self.visit_btn.clicked.connect(self.toggle_visit_override)
-        zone_info_layout.addWidget(self.visit_btn)
-        
-        self.level_label = QLabel("Lv. 1")
+        self.level_label = QLabel("キャラLv. 1")
         self.level_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px; font-weight: bold;")
         zone_info_layout.addWidget(self.level_label)
         guide_layout.addLayout(zone_info_layout)
@@ -669,9 +988,40 @@ class MainWindow(QMainWindow):
         guide_layout.addWidget(self.advice_label)
         
         self.guide_info_frame = guide_frame
+        
+        # ゾーンヘッダー折りたたみトグル
+        self.zone_header_toggle_btn = QPushButton("▼ ゾーン情報")
+        self.zone_header_toggle_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; color: {Styles.TEXT_COLOR};
+                border: none; font-size: 11px; font-weight: bold;
+                text-align: left; padding: 2px 5px;
+            }}
+            QPushButton:hover {{ color: #ffffff; }}
+        """)
+        self.zone_header_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.zone_header_toggle_btn.clicked.connect(self.toggle_zone_header)
+        self.zone_header_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        guide_container_layout.addWidget(self.zone_header_toggle_btn)
         guide_container_layout.addWidget(self.guide_info_frame)
         
         # ── 攻略ガイド表示エリア ──
+        # ガイドテキスト折りたたみトグル
+        self.guide_text_toggle_btn = QPushButton("▼ ガイドテキスト")
+        self.guide_text_toggle_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; color: {Styles.TEXT_COLOR};
+                border: none; font-size: 11px; font-weight: bold;
+                text-align: left; padding: 2px 5px;
+            }}
+            QPushButton:hover {{ color: #ffffff; }}
+        """)
+        self.guide_text_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.guide_text_toggle_btn.clicked.connect(self.toggle_guide_text)
+        self.guide_text_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        guide_container_layout.addWidget(self.guide_text_toggle_btn)
+        
+        # ── 攻略ガイド表示エリア（本体） ──
         guide_text_frame = QFrame()
         guide_text_frame.setStyleSheet("""
             QFrame {
@@ -706,6 +1056,22 @@ class MainWindow(QMainWindow):
         guide_container_layout.addWidget(self.guide_text_frame, stretch=3)
         
         # ── マップサムネイル一覧 ──
+        # マップ折りたたみトグル
+        self.map_toggle_btn = QPushButton("▼ マップ")
+        self.map_toggle_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; color: {Styles.TEXT_COLOR};
+                border: none; font-size: 11px; font-weight: bold;
+                text-align: left; padding: 2px 5px;
+            }}
+            QPushButton:hover {{ color: #ffffff; }}
+        """)
+        self.map_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.map_toggle_btn.clicked.connect(self.toggle_map_section)
+        self.map_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.map_toggle_btn.setMinimumHeight(30)
+        guide_container_layout.addWidget(self.map_toggle_btn)
+        
         self.map_thumbnail = MapThumbnailWidget()
         self.map_thumbnail.setVisible(False)
         guide_container_layout.addWidget(self.map_thumbnail, stretch=0)
@@ -870,7 +1236,7 @@ class MainWindow(QMainWindow):
         """Part 1/2を手動トグル"""
         self._set_part2(not self.part2_mode)
     
-    def _set_part2(self, enabled: bool):
+    def _set_part2(self, enabled: bool, update_guide: bool = True):
         """Part 2モードの切り替え"""
         if self.part2_mode == enabled:
             return
@@ -879,17 +1245,23 @@ class MainWindow(QMainWindow):
         ConfigManager.save_config(self.config)
         self.part2_btn.setText("Act 6-10" if enabled else "Act 1-5")
         self.part2_btn.setStyleSheet(self._part2_btn_style())
-        # 現在のゾーンを再評価
-        if self.current_zone:
-            self.on_zone_entered(self.current_zone)
+        # 現在のゾーンを再評価（カウントアップせずガイド表示だけ更新）
+        if update_guide and self.current_zone:
+            zone_id = self._get_zone_id(self.current_zone)
+            act_name, zone_level = get_zone_info(self.zone_data, self.current_zone, part2=self.part2_mode)
+            self._update_guide_and_map(self.current_zone, zone_id, 1)
     
     def toggle_timer(self):
         """タイマー+ラップ表示の折りたたみ/展開"""
         self.timer_expanded = not self.timer_expanded
         self.timer_content.setVisible(self.timer_expanded)
+        self.start_btn.setVisible(self.timer_expanded)
+        self.stop_btn.setVisible(self.timer_expanded)
+        self.reset_btn.setVisible(self.timer_expanded)
         self.timer_toggle_btn.setText("▼ タイマー" if self.timer_expanded else "▶ タイマー")
         self.config["timer_expanded"] = self.timer_expanded
         ConfigManager.save_config(self.config)
+        self.adjustSize()
     
     def toggle_lap(self):
         """ラップタイム表示の折りたたみ/展開"""
@@ -898,6 +1270,7 @@ class MainWindow(QMainWindow):
         self.lap_toggle_btn.setText("▼ ラップタイム" if self.lap_expanded else "▶ ラップタイム")
         self.config["lap_expanded"] = self.lap_expanded
         ConfigManager.save_config(self.config)
+        self.adjustSize()
     
     def toggle_guide(self):
         """ガイドエリアの折りたたみ/展開をトグル"""
@@ -906,12 +1279,53 @@ class MainWindow(QMainWindow):
         # config保存
         self.config["guide_expanded"] = self.guide_expanded
         ConfigManager.save_config(self.config)
+        self.adjustSize()
+    
+    def toggle_zone_header(self):
+        """ゾーンヘッダーの折りたたみ/展開"""
+        self.zone_header_expanded = not self.zone_header_expanded
+        self.guide_info_frame.setVisible(self.zone_header_expanded)
+        self.zone_header_toggle_btn.setText("▼ ゾーン情報" if self.zone_header_expanded else "▶ ゾーン情報")
+        self.adjustSize()
+    
+    def toggle_guide_text(self):
+        """ガイドテキストの折りたたみ/展開"""
+        self.guide_text_expanded = not self.guide_text_expanded
+        self.guide_text_frame.setVisible(self.guide_text_expanded)
+        self.guide_text_toggle_btn.setText("▼ ガイドテキスト" if self.guide_text_expanded else "▶ ガイドテキスト")
+        self.adjustSize()
+    
+    def toggle_map_section(self):
+        """マップセクションの折りたたみ/展開"""
+        self.map_section_expanded = not self.map_section_expanded
+        if self.map_section_expanded:
+            self.map_thumbnail.setVisible(len(self.map_thumbnail.current_paths) > 0)
+        else:
+            self.map_thumbnail.setVisible(False)
+        self.map_toggle_btn.setText("▼ マップ" if self.map_section_expanded else "▶ マップ")
+        self.adjustSize()
     
     def _apply_guide_visibility(self):
         """ガイドの表示/非表示を適用"""
-        self.guide_info_frame.setVisible(self.guide_expanded)
-        self.guide_text_frame.setVisible(self.guide_expanded)
-        self.map_thumbnail.setVisible(self.guide_expanded and len(self.map_thumbnail.current_paths) > 0)
+        if self.guide_expanded:
+            # 全体展開時は各セクションの個別状態に従う
+            self.guide_info_frame.setVisible(self.zone_header_expanded)
+            self.guide_text_frame.setVisible(self.guide_text_expanded)
+            has_maps = len(self.map_thumbnail.current_paths) > 0
+            self.map_thumbnail.setVisible(self.map_section_expanded and has_maps)
+            # サブトグルボタンも表示
+            self.zone_header_toggle_btn.setVisible(True)
+            self.guide_text_toggle_btn.setVisible(True)
+            self.map_toggle_btn.setVisible(True)
+        else:
+            # 全体折りたたみ時は3セクションすべて非表示
+            self.guide_info_frame.setVisible(False)
+            self.guide_text_frame.setVisible(False)
+            self.map_thumbnail.setVisible(False)
+            # サブトグルボタンも非表示
+            self.zone_header_toggle_btn.setVisible(False)
+            self.guide_text_toggle_btn.setVisible(False)
+            self.map_toggle_btn.setVisible(False)
         # 背景も連動
         if self.guide_expanded:
             self.guide_container.setStyleSheet("""
@@ -1253,6 +1667,8 @@ class MainWindow(QMainWindow):
         # 街エリアの場合はゾーン名表示のみ更新、ガイド・マップは前のまま維持
         # （visit_overrideもリセットしない — 街を挟んでも手動切替を維持）
         if self._is_town_zone(zone_name):
+            self._visited_town = True  # 街通過フラグ（always_count_zones用）
+            print(f"[DEBUG] TOWN zone={zone_name}, visited_town=True, last_visit_key={getattr(self, '_last_visit_key', None)}")
             act_range = "Act 6-10" if self.part2_mode else "Act 1-5"
             self.zone_label.setText(f"🏠 {zone_name} [{act_range}]")
             # Labクリア後の街帰還 → 志す者の広場の2回目ガイドを表示
@@ -1346,15 +1762,34 @@ class MainWindow(QMainWindow):
         visit_key = zone_id if zone_id else zone_name
         last_visit_key = getattr(self, '_last_visit_key', None)
         # 街を挟んでも常にカウントするエリア（ポータルで街に戻って再入場するパターン）
-        always_count_zones = {"act5_area5", "act10_area3"}  # イノセンスの間, 荒廃した広場
+        always_count_zones = {"act5_area5", "act10_area3", "act8_area20"}  # イノセンスの間, 荒廃した広場, 隠れた裏道
         if self._restoring:
-            # 復元時はカウントしないが、last_visit_keyは設定（重複防止）
+            # 復元時はカウントアップしないが、1回目として記録（次回訪問で2回目になるように）
             self._last_visit_key = visit_key
+            if visit_key not in self.zone_visit_counts:
+                self.zone_visit_counts[visit_key] = 1
             visit_num = 1
         else:
-            # 同じエリアに連続入場はカウントしない（ログ重複対策）— 特殊エリアは常にカウント
-            if visit_key != last_visit_key or visit_key in always_count_zones:
+            # カウントアップ判定:
+            # 1. 別ゾーンから来た場合 → カウントアップ（通常の訪問）
+            # 2. 同一ゾーン連続の場合 → always_count_zones かつ街経由のみカウントアップ
+            #    （ログ重複や街経由の回復戻りではカウントしない）
+            should_count = False
+            visited_town = getattr(self, '_visited_town', False)
+            if visit_key != last_visit_key:
+                # 別ゾーンからの入場 → カウントアップ
+                should_count = True
+            else:
+                # 同一ゾーン再入場 → always_count_zones かつ街を経由した場合のみ
+                if visit_key in always_count_zones and visited_town:
+                    should_count = True
+            print(f"[DEBUG] COUNT: visit_key={visit_key}, last_visit_key={last_visit_key}, visited_town={visited_town}, should_count={should_count}")
+            
+            if should_count:
                 self.zone_visit_counts[visit_key] = self.zone_visit_counts.get(visit_key, 0) + 1
+            
+            # 街通過フラグをリセット（街以外のゾーンに入ったらクリア）
+            self._visited_town = False
             self._last_visit_key = visit_key
             visit_num = self.zone_visit_counts.get(visit_key, 1)
         print(f"[DEBUG] zone={zone_name}, id={zone_id}, visit_num={visit_num}, restoring={self._restoring}, counts={self.zone_visit_counts}")
@@ -1402,7 +1837,7 @@ class MainWindow(QMainWindow):
         # 訪問回数オーバーライド適用
         effective_visit = self.visit_override if self.visit_override is not None else visit_num
         if zone_id:
-            guide = get_zone_guide(self.guide_data, zone_id, visit=effective_visit)
+            guide = get_zone_guide(self.guide_data, zone_id, visit=effective_visit, config=self.config)
         else:
             guide = None
         
@@ -1422,13 +1857,22 @@ class MainWindow(QMainWindow):
                     if z.get("id") == zone_id:
                         map_zone_name = z["zone"]  # 日本語名
                         break
-        self.map_thumbnail.load_maps(map_zone_name, part2=self.part2_mode, zone_changed=zone_changed)
+        # ルート設定を取得してマップ画像にも反映
+        map_route = ""
+        if zone_id:
+            if zone_id.startswith("act3_"):
+                r = self.config.get("route_act3", "standard")
+                if r != "standard": map_route = r
+            elif zone_id.startswith("act8_"):
+                r = self.config.get("route_act8", "standard")
+                if r != "standard": map_route = r
+        self.map_thumbnail.load_maps(map_zone_name, part2=self.part2_mode, zone_changed=zone_changed, route=map_route)
     
     def on_kitava_defeated(self):
         """Act5キタヴァ討伐 → Act6-10に切替 + 自動ラップ"""
         if not self.part2_mode:
             print("[INFO] キタヴァ討伐を検知 — Act 6-10に切替")
-            self._set_part2(True)
+            self._set_part2(True, update_guide=False)
         self._auto_lap_kitava(5)
     
     def on_act10_cleared(self):
@@ -1457,7 +1901,7 @@ class MainWindow(QMainWindow):
     def on_level_up(self, char_name: str, level: int):
         """レベルアップ検知"""
         self.player_level = level
-        self.level_label.setText(f"Lv. {level}")
+        self.level_label.setText(f"キャラLv. {level}")
         
         # 新キャラ判定: 黄昏の岸辺入場済み + Lv2 = ヒロック討伐 → visitカウントリセット
         if level == 2 and getattr(self, '_twilight_strand_entered', False):
@@ -1578,6 +2022,22 @@ class MainWindow(QMainWindow):
         
         menu.exec(event.globalPos())
 
+    def open_memo(self):
+        """メモダイアログをトグル表示"""
+        if hasattr(self, '_memo_dialog') and self._memo_dialog is not None:
+            if self._memo_dialog.isVisible():
+                self._memo_dialog._save_and_close()
+                return
+            else:
+                self._memo_dialog.show()
+                self._memo_dialog.raise_()
+                return
+        # 初回: ダイアログ生成
+        base_dir = ConfigManager._get_base_dir()
+        notes_path = os.path.join(base_dir, "notes.json")
+        self._memo_dialog = MemoDialog(self, notes_path=notes_path)
+        self._memo_dialog.show()
+    
     def open_settings(self):
         dialog = SettingsDialog(self, self.config)
         if dialog.exec():
@@ -1596,6 +2056,8 @@ class MainWindow(QMainWindow):
                 self.log_watcher.start()
                 # 初回セットアップ完了フラグ
                 if not self.config.get("setup_completed"):
+                    # 初回ログパス設定完了 → ルート選択ダイアログを表示
+                    self._show_route_selection_dialog()
                     self.config["setup_completed"] = True
                     ConfigManager.save_config(self.config)
                 # ログファイル未設定メッセージをクリア
@@ -1620,6 +2082,7 @@ class MainWindow(QMainWindow):
             self.map_thumbnail.auto_position = self.config.get("auto_position_map", True)
             # 透過率更新
             self._apply_bg_opacity(self.config.get("window_opacity", 100))
+            self._apply_text_opacity(self.config.get("text_opacity", 100))
             
             self.update_level_guide_display()
         

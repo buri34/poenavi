@@ -33,15 +33,28 @@ def get_maps_dir():
     )
 
 
-def load_zone_maps(zone_name: str, part2: bool = False) -> list[str]:
+def load_zone_maps(zone_name: str, part2: bool = False, route: str = "") -> list[str]:
     """
     ゾーン名に対応するマップ画像パスのリストを返す
-    Part2の場合 "ゾーン名#2" フォルダを優先検索
+    検索優先順位:
+      1. ゾーン名~ルート#2 (Part2 + ルート指定)
+      2. ゾーン名~ルート    (ルート指定)
+      3. ゾーン名#2         (Part2)
+      4. ゾーン名            (デフォルト)
     """
     maps_dir = get_maps_dir()
     
+    if route and part2:
+        rd = os.path.join(maps_dir, f"{zone_name}~{route}#2")
+        if os.path.isdir(rd):
+            return _list_images(rd)
+    
+    if route:
+        rd = os.path.join(maps_dir, f"{zone_name}~{route}")
+        if os.path.isdir(rd):
+            return _list_images(rd)
+    
     if part2:
-        # Part2専用フォルダを優先
         p2_dir = os.path.join(maps_dir, f"{zone_name}#2")
         if os.path.isdir(p2_dir):
             return _list_images(p2_dir)
@@ -268,7 +281,7 @@ class MapThumbnailWidget(QWidget):
         
         main_layout.addWidget(self.thumb_container)
     
-    def load_maps(self, zone_name: str, part2: bool = False, zone_changed: bool = False):
+    def load_maps(self, zone_name: str, part2: bool = False, zone_changed: bool = False, route: str = ""):
         """ゾーンのマップ画像を読み込んで表示"""
         # 開いているマップダイアログを閉じる
         if self._open_dialog is not None:
@@ -276,7 +289,7 @@ class MapThumbnailWidget(QWidget):
             self._open_dialog = None
         self._clear_thumbs()
         
-        paths = load_zone_maps(zone_name, part2=part2)
+        paths = load_zone_maps(zone_name, part2=part2, route=route)
         self.current_paths = paths
         
         if not paths:

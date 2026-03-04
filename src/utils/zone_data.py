@@ -102,7 +102,7 @@ DEFAULT_ZONE_DATA = {
         {"id": "act6_area12", "zone": "南の森", "level": 40},
         {"id": "act6_area13", "zone": "怒りの洞窟", "level": 40},
         {"id": "act6_area14", "zone": "ビーコン", "level": 40},
-        {"id": "act6_area15", "zone": "海水の王の岩礁", "level": 36},
+        {"id": "act6_area15", "zone": "大海の王の岩礁", "level": 36},
     ],
     "Act 7": [
         {"id": "act7_area1", "zone": "壊れた橋", "level": 41},
@@ -142,6 +142,7 @@ DEFAULT_ZONE_DATA = {
         {"id": "act8_area17", "zone": "血の水道橋", "level": 48},
         {"id": "act8_area18", "zone": "浴場", "level": 48},
         {"id": "act8_area19", "zone": "空中庭園", "level": 48},
+        {"id": "act8_area20", "zone": "隠れた裏道", "level": 58},
     ],
     "Act 9": [
         {"id": "act9_area1", "zone": "谷底への道", "level": 53},
