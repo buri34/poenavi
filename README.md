@@ -328,12 +328,3 @@ MIT License — 詳細は [LICENSE](LICENSE) を参照
 
 - [Path of Exile](https://www.pathofexile.com/) by Grinding Gear Games
 - Built with ❤️ by [Buri_Isono](https://github.com/buri34)
-
----
-
-## ☕ サポート
-
-ぽえなびを気に入っていただけたら、応援いただけると嬉しいです。  
-いただいたサポートは、開発環境の維持・改善に充てさせていただきます。
-
-- [OFUSE（おふせ）で応援する](https://ofuse.me/48eca107)

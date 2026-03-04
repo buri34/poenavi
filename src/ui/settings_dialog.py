@@ -706,8 +706,12 @@ class SettingsDialog(QDialog):
         """)
         
         # ── Tab 1: General ──
-        general_tab = QWidget()
-        general_layout = QVBoxLayout(general_tab)
+        general_tab = QScrollArea()
+        general_tab.setWidgetResizable(True)
+        general_tab.setStyleSheet("QScrollArea { border: none; }")
+        general_content = QWidget()
+        general_layout = QVBoxLayout(general_content)
+        general_tab.setWidget(general_content)
         
         # 共通スタイル
         group_style = f"QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid {Styles.TEXT_COLOR}; border-radius: 5px; margin-top: 10px; }} QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }}"
@@ -1158,7 +1162,47 @@ class SettingsDialog(QDialog):
         zone_layout.addWidget(reset_zones_btn)
         
         tabs.addTab(zone_tab, "エリア情報")
-        
+
+        # === サポートタブ ===
+        support_tab = QWidget()
+        support_layout = QVBoxLayout(support_tab)
+        support_layout.setContentsMargins(20, 20, 20, 20)
+        support_layout.setSpacing(15)
+
+        support_title = QLabel("☕ ぽえなびを応援する")
+        support_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 16px; font-weight: bold;")
+        support_layout.addWidget(support_title)
+
+        support_desc = QLabel(
+            "ぽえなびを気に入っていただけたら、応援いただけると嬉しいです。\n"
+            "いただいたサポートは、開発環境の維持・改善に充てさせていただきます。"
+        )
+        support_desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px;")
+        support_desc.setWordWrap(True)
+        support_layout.addWidget(support_desc)
+
+        # OFUSEボタン
+        ofuse_btn = QPushButton("OFUSE（おふせ）で応援する")
+        ofuse_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: rgba(255, 147, 69, 200); color: white;
+                border: none; border-radius: 6px;
+                padding: 12px 20px; font-size: 14px; font-weight: bold;
+            }}
+            QPushButton:hover {{ background: rgba(255, 167, 99, 220); }}
+        """)
+        ofuse_btn.setCursor(Qt.PointingHandCursor)
+        ofuse_btn.clicked.connect(lambda: __import__('webbrowser').open("https://ofuse.me/48eca107"))
+        support_layout.addWidget(ofuse_btn)
+
+        support_note = QLabel("※ ブラウザが開きます")
+        support_note.setStyleSheet(f"color: rgba(200,200,200,150); font-size: 11px;")
+        support_layout.addWidget(support_note)
+
+        support_layout.addStretch()
+
+        tabs.addTab(support_tab, "サポート")
+
         layout.addWidget(tabs)
         
         # OK/Cancel

@@ -118,6 +118,8 @@ class MemoDialog(QDialog):
         
         # メインコンテナ（角丸背景）
         container = QWidget(self)
+        self._container = container
+        self._default_bg_alpha = 230
         container.setStyleSheet(f"""
             QWidget {{
                 background: rgba(20, 20, 20, 230);
@@ -131,6 +133,7 @@ class MemoDialog(QDialog):
         
         # タイトルバー（ドラッグ用）
         title_bar = QWidget()
+        self._title_bar = title_bar
         title_bar.setFixedHeight(28)
         title_bar.setStyleSheet("background: transparent; border: none;")
         title_layout = QHBoxLayout(title_bar)
@@ -161,7 +164,11 @@ class MemoDialog(QDialog):
         """
         
         # カラーツールバー
-        toolbar = QHBoxLayout()
+        toolbar_widget = QWidget()
+        toolbar_widget.setStyleSheet("background: transparent; border: none;")
+        self._toolbar_widget = toolbar_widget
+        toolbar = QHBoxLayout(toolbar_widget)
+        toolbar.setContentsMargins(0, 0, 0, 0)
         toolbar.setSpacing(4)
         for color_code, color_name in self.COLORS:
             cbtn = QPushButton()
@@ -185,7 +192,7 @@ class MemoDialog(QDialog):
         reset_btn.clicked.connect(self._reset_color)
         toolbar.addWidget(reset_btn)
         toolbar.addStretch()
-        container_layout.addLayout(toolbar)
+        container_layout.addWidget(toolbar_widget)
         
         # テキストエディタ
         from src.ui.settings_dialog import RichTextEdit
@@ -199,6 +206,34 @@ class MemoDialog(QDialog):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(container)
     
+    def apply_opacity(self, bg_opacity_pct: int, text_opacity_pct: int):
+        """本体ウィンドウの透過率設定をメモにも反映"""
+        # 背景透過率
+        alpha = int(bg_opacity_pct / 100.0 * self._default_bg_alpha)
+        te_alpha = int(bg_opacity_pct / 100.0 * 200)  # テキストエディタ背景(元: rgba(26,26,26,200))
+        self._container.setStyleSheet(f"""
+            QWidget {{
+                background: rgba(20, 20, 20, {alpha});
+                border: 1px solid rgba(176,255,123,0.4);
+                border-radius: 6px;
+            }}
+        """)
+        self.text_edit.setStyleSheet(f"""
+            QTextEdit {{ 
+                background: rgba(26, 26, 26, {te_alpha}); color: {Styles.TEXT_COLOR}; 
+                border: 1px solid rgba(176,255,123,0.3); border-radius: 4px; 
+                padding: 5px; font-size: 13px;
+                font-family: "MS Gothic", "Yu Gothic", "Meiryo", monospace;
+            }}
+        """)
+        # 文字透過率（テキストエディタ・タイトル・ツールバーに適用）
+        from PySide6.QtWidgets import QGraphicsOpacityEffect
+        opacity = text_opacity_pct / 100.0
+        for w in (self.text_edit, self._title_bar, self._toolbar_widget):
+            effect = QGraphicsOpacityEffect(w)
+            effect.setOpacity(opacity)
+            w.setGraphicsEffect(effect)
+
     def _get_edge(self, pos):
         """マウス位置からリサイズ方向を判定"""
         m = self._EDGE_MARGIN
@@ -2056,6 +2091,10 @@ class MainWindow(QMainWindow):
         base_dir = ConfigManager._get_base_dir()
         notes_path = os.path.join(base_dir, "notes.json")
         self._memo_dialog = MemoDialog(self, notes_path=notes_path)
+        self._memo_dialog.apply_opacity(
+            self.config.get("window_opacity", 100),
+            self.config.get("text_opacity", 100)
+        )
         self._memo_dialog.show()
     
     def open_settings(self):
@@ -2103,6 +2142,12 @@ class MainWindow(QMainWindow):
             # 透過率更新
             self._apply_bg_opacity(self.config.get("window_opacity", 100))
             self._apply_text_opacity(self.config.get("text_opacity", 100))
+            # メモダイアログにも透過率を反映
+            if hasattr(self, '_memo_dialog') and self._memo_dialog is not None and self._memo_dialog.isVisible():
+                self._memo_dialog.apply_opacity(
+                    self.config.get("window_opacity", 100),
+                    self.config.get("text_opacity", 100)
+                )
             
             self.update_level_guide_display()
         
