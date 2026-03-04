@@ -1604,6 +1604,11 @@ class MainWindow(QMainWindow):
             print(f"[LOGOUT] {msg}")
         else:
             print(f"[LOGOUT] Failed: {msg}")
+            if "管理者権限" in msg:
+                QMessageBox.warning(
+                    self, "ログアウトマクロ",
+                    "ログアウト機能を使用するためには、ぽえなびを「管理者として実行」する必要があります"
+                )
 
     # --- クリックスルー ---
     def toggle_click_through(self):
