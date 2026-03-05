@@ -8,6 +8,7 @@ from PySide6.QtGui import QFont, QKeySequence
 from src.ui.styles import Styles
 from src.utils.zone_data import DEFAULT_ZONE_DATA
 from src.utils.guide_data import load_guide_data, save_guide_data
+import webbrowser
 
 def _spinbox_style(width=55, height=28):
     """SpinBox共通スタイル（ボタン押しやすい版）"""
@@ -1163,15 +1164,46 @@ class SettingsDialog(QDialog):
         
         tabs.addTab(zone_tab, "エリア情報")
 
-        # === サポートタブ ===
-        support_tab = QWidget()
-        support_layout = QVBoxLayout(support_tab)
-        support_layout.setContentsMargins(20, 20, 20, 20)
-        support_layout.setSpacing(15)
+        # === アプリ情報タブ ===
+        about_tab = QWidget()
+        about_layout = QVBoxLayout(about_tab)
+        about_layout.setContentsMargins(20, 20, 20, 20)
+        about_layout.setSpacing(15)
 
+        # バージョン情報
+        try:
+            from main import __version__
+        except ImportError:
+            __version__ = "不明"
+        
+        version_label = QLabel(f"ぽえなび v{__version__}")
+        version_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 18px; font-weight: bold;")
+        about_layout.addWidget(version_label)
+
+        # GitHubリンク
+        github_btn = QPushButton("GitHub（最新版のダウンロード）")
+        github_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: rgba(45, 45, 45, 200); color: {Styles.TEXT_COLOR};
+                border: 1px solid rgba(176,255,123,0.4); border-radius: 6px;
+                padding: 10px 20px; font-size: 13px;
+            }}
+            QPushButton:hover {{ background: rgba(65, 65, 65, 220); }}
+        """)
+        github_btn.setCursor(Qt.PointingHandCursor)
+        github_btn.clicked.connect(lambda: webbrowser.open("https://github.com/buri34/poenavi/releases"))
+        about_layout.addWidget(github_btn)
+
+        # 区切り線
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)
+        separator.setStyleSheet(f"color: rgba(176,255,123,0.3);")
+        about_layout.addWidget(separator)
+
+        # サポートセクション
         support_title = QLabel("☕ ぽえなびを応援する")
         support_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 16px; font-weight: bold;")
-        support_layout.addWidget(support_title)
+        about_layout.addWidget(support_title)
 
         support_desc = QLabel(
             "ぽえなびを気に入っていただけたら、応援いただけると嬉しいです。\n"
@@ -1179,7 +1211,7 @@ class SettingsDialog(QDialog):
         )
         support_desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px;")
         support_desc.setWordWrap(True)
-        support_layout.addWidget(support_desc)
+        about_layout.addWidget(support_desc)
 
         # OFUSEボタン
         ofuse_btn = QPushButton("OFUSE（おふせ）で応援する")
@@ -1192,8 +1224,8 @@ class SettingsDialog(QDialog):
             QPushButton:hover {{ background: rgba(255, 167, 99, 220); }}
         """)
         ofuse_btn.setCursor(Qt.PointingHandCursor)
-        ofuse_btn.clicked.connect(lambda: __import__('webbrowser').open("https://ofuse.me/48eca107"))
-        support_layout.addWidget(ofuse_btn)
+        ofuse_btn.clicked.connect(lambda: webbrowser.open("https://ofuse.me/48eca107"))
+        about_layout.addWidget(ofuse_btn)
 
         # Ko-fiボタン
         kofi_btn = QPushButton("Ko-fi で応援する")
@@ -1206,16 +1238,16 @@ class SettingsDialog(QDialog):
             QPushButton:hover {{ background: rgba(61, 191, 244, 220); }}
         """)
         kofi_btn.setCursor(Qt.PointingHandCursor)
-        kofi_btn.clicked.connect(lambda: __import__('webbrowser').open("https://ko-fi.com/buri8857"))
-        support_layout.addWidget(kofi_btn)
+        kofi_btn.clicked.connect(lambda: webbrowser.open("https://ko-fi.com/buri8857"))
+        about_layout.addWidget(kofi_btn)
 
         support_note = QLabel("※ ブラウザが開きます")
         support_note.setStyleSheet(f"color: rgba(200,200,200,150); font-size: 11px;")
-        support_layout.addWidget(support_note)
+        about_layout.addWidget(support_note)
 
-        support_layout.addStretch()
+        about_layout.addStretch()
 
-        tabs.addTab(support_tab, "サポート")
+        tabs.addTab(about_tab, "アプリ情報")
 
         layout.addWidget(tabs)
         

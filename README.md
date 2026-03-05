@@ -307,8 +307,6 @@ PoE1ではAct 6-10の一部エリアがAct 1-5と同名で登場します。
 現時点で想定している改良予定内容は以下のとおりです。
 みなさんから改善要望をいただいた場合に、優先順位の高いものがあれば、そちらから対応します。
 - マップレイアウト画像の充実化
-- PoB読込でクエスト報酬や図書館で選択すべきジェムのガイド表示機能
-- PoB読込でパッシブツリーの表示機能
 
 ---
 
@@ -330,13 +328,3 @@ MIT License — 詳細は [LICENSE](LICENSE) を参照
 
 - [Path of Exile](https://www.pathofexile.com/) by Grinding Gear Games
 - Built with ❤️ by [Buri_Isono](https://github.com/buri34)
-
----
-
-## ☕ サポート
-
-ぽえなびを気に入っていただけたら、応援いただけると嬉しいです。  
-いただいたサポートは、開発環境の維持・改善に充てさせていただきます。
-
-- [OFUSE（おふせ）で応援する](https://ofuse.me/48eca107)
-- [Ko-fi で応援する](https://ko-fi.com/buri8857)
