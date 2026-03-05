@@ -27,6 +27,10 @@ class LogWatcher(QObject):
     ZONE_PATTERN_EN = re.compile(r": You have entered (.+?)\.")
     LEVEL_PATTERN_EN = re.compile(r"(.+?) \(.+?\) is now level (\d+)")
     
+    # Set Source pattern (works regardless of chat tab settings)
+    # e.g. "[SCENE] Set Source [ハイゲート]" or "[SCENE] Set Source [The Coast]"
+    SET_SOURCE_PATTERN = re.compile(r"\[SCENE\] Set Source \[(.+?)\]")
+    
     def __init__(self, log_path: str = "", poll_interval_ms: int = 500, parent=None):
         super().__init__(parent)
         self.log_path = log_path
@@ -100,6 +104,8 @@ class LogWatcher(QObject):
                     m = self.ZONE_PATTERN_JA.search(line)
                     if not m:
                         m = self.ZONE_PATTERN_EN.search(line)
+                    if not m:
+                        m = self.SET_SOURCE_PATTERN.search(line)
                     if m:
                         zone_name = m.group(1).strip()
                         self.zone_entered.emit(zone_name)
@@ -162,6 +168,16 @@ class LogWatcher(QObject):
         if m:
             zone_name = m.group(1).strip()
             print(f"[LogWatcher] Zone detected: {zone_name} (pos={self._file_pos}, line={line.strip()[:80]})")
+            self.zone_entered.emit(zone_name)
+            return
+        
+        # Set Source検知（Local chat tab無効時のフォールバック）
+        m = self.SET_SOURCE_PATTERN.search(line)
+        if m:
+            zone_name = m.group(1).strip()
+            if zone_name == "(null)":
+                return  # 街エリア遷移時に出る無効なエントリを無視
+            print(f"[LogWatcher] Zone detected (Set Source): {zone_name} (pos={self._file_pos}, line={line.strip()[:80]})")
             self.zone_entered.emit(zone_name)
             return
         
