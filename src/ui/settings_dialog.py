@@ -1195,6 +1195,20 @@ class SettingsDialog(QDialog):
         ofuse_btn.clicked.connect(lambda: __import__('webbrowser').open("https://ofuse.me/48eca107"))
         support_layout.addWidget(ofuse_btn)
 
+        # Ko-fiボタン
+        kofi_btn = QPushButton("Ko-fi で応援する")
+        kofi_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: rgba(41, 171, 224, 200); color: white;
+                border: none; border-radius: 6px;
+                padding: 12px 20px; font-size: 14px; font-weight: bold;
+            }}
+            QPushButton:hover {{ background: rgba(61, 191, 244, 220); }}
+        """)
+        kofi_btn.setCursor(Qt.PointingHandCursor)
+        kofi_btn.clicked.connect(lambda: __import__('webbrowser').open("https://ko-fi.com/buri8857"))
+        support_layout.addWidget(kofi_btn)
+
         support_note = QLabel("※ ブラウザが開きます")
         support_note.setStyleSheet(f"color: rgba(200,200,200,150); font-size: 11px;")
         support_layout.addWidget(support_note)
