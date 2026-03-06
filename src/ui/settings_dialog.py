@@ -164,6 +164,10 @@ class RichTextEdit(QTextEdit):
         
         # 連続改行を整理
         body = re.sub(r'\n{3,}', '\n\n', body)
+        # QtのtoHtml()が生成するHTMLエンティティを戻す（guide_data.jsonにはプレーンテキスト+許可タグで保存）
+        body = body.replace("&quot;", '"')
+        body = body.replace("&#x27;", "'")
+        body = body.replace("&amp;", "&")
         return body.strip()
 
 

@@ -3,6 +3,8 @@ import os
 import re
 import sys
 import time
+import threading
+import urllib.request
 from pynput import keyboard as pynput_keyboard
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QPushButton, QMenu, QFrame, QScrollArea,
@@ -338,6 +340,7 @@ class MemoDialog(QDialog):
 class MainWindow(QMainWindow):
     # ホットキーイベントをメインスレッドで処理するためのシグナル
     hotkey_signal = Signal(str)
+    _update_signal = Signal(str, str)  # 更新通知用シグナル (version, url)
 
     def __init__(self):
         super().__init__()
@@ -502,6 +505,9 @@ class MainWindow(QMainWindow):
         # タイマー状態復元
         self._restore_timer_state()
         
+        # 更新チェック（バックグラウンド）
+        self._check_for_updates()
+        
         # 初回起動チェック（ポップアップ + ガイドエリア案内）
         self._check_first_run()
         
@@ -513,6 +519,79 @@ class MainWindow(QMainWindow):
         self._ef_resize_start_geo = None
         self._ef_resize_start_pos = None
         
+    def _check_for_updates(self):
+        """GitHub Releasesから最新バージョンをチェック（バックグラウンド）"""
+        self._update_signal.connect(self._show_update_dialog)
+        
+        def check():
+            try:
+                from main import __version__
+            except ImportError:
+                return
+            try:
+                api_url = "https://api.github.com/repos/buri34/poenavi/releases/latest"
+                req = urllib.request.Request(api_url, headers={"User-Agent": "PoENavi"})
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    data = json.loads(resp.read().decode())
+                tag = data.get("tag_name", "").lstrip("v")
+                if not tag:
+                    return
+                def ver_tuple(v):
+                    return tuple(int(x) for x in v.split(".") if x.isdigit())
+                if ver_tuple(tag) > ver_tuple(__version__):
+                    release_url = data.get("html_url", "https://github.com/buri34/poenavi/releases/latest")
+                    self._update_signal.emit(tag, release_url)
+            except Exception:
+                pass
+        
+        threading.Thread(target=check, daemon=True).start()
+    
+    def _show_update_dialog(self, version: str, release_url: str):
+        """更新通知ポップアップを表示"""
+        from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton
+        from PySide6.QtGui import QDesktopServices
+        from PySide6.QtCore import QUrl
+        
+        dialog = QDialog(self)
+        dialog.setWindowTitle("🔔 アップデートのお知らせ")
+        dialog.setFixedSize(360, 150)
+        dialog.setStyleSheet("background: #1a1a2e; color: #dddddd;")
+        
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(20, 15, 20, 15)
+        
+        msg = QLabel(f"新しいバージョン v{version} が公開されています！")
+        msg.setStyleSheet("font-size: 14px; font-weight: bold; color: #ffc832;")
+        msg.setWordWrap(True)
+        layout.addWidget(msg)
+        
+        link = QPushButton(f"📥 リリースページを開く")
+        link.setStyleSheet("""
+            QPushButton {
+                background: #4488ff; color: #ffffff;
+                border: none; border-radius: 4px;
+                font-size: 13px; padding: 8px 16px;
+            }
+            QPushButton:hover { background: #5599ff; }
+        """)
+        link.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(release_url)))
+        link.clicked.connect(dialog.accept)
+        layout.addWidget(link)
+        
+        close_btn = QPushButton("閉じる")
+        close_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; color: #888888;
+                border: 1px solid #555555; border-radius: 4px;
+                font-size: 12px; padding: 5px 12px;
+            }}
+            QPushButton:hover {{ background: rgba(255,255,255,0.1); }}
+        """)
+        close_btn.clicked.connect(dialog.reject)
+        layout.addWidget(close_btn)
+        
+        dialog.exec()
+    
     def _check_first_run(self):
         """初回起動時のセットアップ案内"""
         log_path = self.config.get("client_log_path", "")

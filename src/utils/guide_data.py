@@ -4,8 +4,10 @@
 データは guide_data.json から読み込み。ユーザー編集可能。
 """
 
+import html
 import json
 import os
+import re
 import sys
 
 # デフォルトガイド（guide_data.json がない場合のフォールバック）
@@ -116,6 +118,22 @@ DIRECTION_ARROWS = {
 }
 
 
+def _safe_html(text: str) -> str:
+    """HTMLエスケープしつつ、<span style='color:...'> と </span> だけ許可"""
+    escaped = html.escape(text)
+    # エスケープされた color span タグを復元
+    escaped = re.sub(
+        r"&lt;span style=(?:&#x27;|&quot;)color:\s*(#[0-9a-fA-F]{3,8})(?:&#x27;|&quot;)&gt;",
+        r"<span style='color:\1'>",
+        escaped
+    )
+    escaped = escaped.replace("&lt;/span&gt;", "</span>")
+    # ダブルクォートはHTMLコンテンツ内では無害なので戻す
+    escaped = escaped.replace("&quot;", '"')
+    escaped = escaped.replace("&#x27;", "'")
+    return escaped
+
+
 def format_guide_html(guide: dict, font_size: int = 12) -> str:
     """ガイドデータをHTML形式にフォーマット"""
     if not guide:
@@ -146,7 +164,7 @@ def format_guide_html(guide: dict, font_size: int = 12) -> str:
     
     objective = guide.get("objective", "")
     if objective:
-        obj_html = objective.replace("\n", "<br>")
+        obj_html = _safe_html(objective).replace("\n", "<br>")
         obj_html = obj_html.replace("　", "&nbsp;&nbsp;")
         obj_html = obj_html.replace("  ", "&nbsp;&nbsp;")
         parts.append(f"<b style='color:#b0ff7b; font-size:{font_size}px;'>📋 目標</b><br><span style='color:#b0ff7b;'>{obj_html}</span>")
@@ -158,14 +176,14 @@ def format_guide_html(guide: dict, font_size: int = 12) -> str:
     layout = guide.get("layout", "")
     if layout:
         # 改行をbrに変換、全角スペースのインデントを保持
-        layout_html = layout.replace("\n", "<br>")
+        layout_html = _safe_html(layout).replace("\n", "<br>")
         layout_html = layout_html.replace("　", "&nbsp;&nbsp;")  # 全角スペース→2つのnbsp
         layout_html = layout_html.replace("  ", "&nbsp;&nbsp;")  # 半角2連続スペースも保持
         parts.append(f"<div style='margin-top:5px;'><b style='color:#b0ff7b;'>🗺️ レイアウト情報</b><br>{layout_html}</div>")
     
     tips = guide.get("tips", "")
     if tips:
-        tips_html = tips.replace("\n", "<br>")
+        tips_html = _safe_html(tips).replace("\n", "<br>")
         tips_html = tips_html.replace("　", "&nbsp;&nbsp;")
         tips_html = tips_html.replace("  ", "&nbsp;&nbsp;")
         parts.append(f"<div style='margin-top:5px;'><b style='color:#b0ff7b;'>💡 Tips / 注意点</b><br><span style='color:#ffffff;'>{tips_html}</span></div>")

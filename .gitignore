@@ -28,3 +28,4 @@ zone_en_mapping.csv
 icon.ico
 icon.png
 run_admin.bat
+prepare_release.py

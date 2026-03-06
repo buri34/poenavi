@@ -108,7 +108,7 @@ class LogWatcher(QObject):
                         m = self.SET_SOURCE_PATTERN.search(line)
                     if m:
                         zone_name = m.group(1).strip()
-                        if zone_name == "(null)":
+                        if zone_name in ("(null)", "(unknown)"):
                             continue  # 無効エントリをスキップ
                         self.zone_entered.emit(zone_name)
                         found_zone = True
@@ -177,8 +177,8 @@ class LogWatcher(QObject):
         m = self.SET_SOURCE_PATTERN.search(line)
         if m:
             zone_name = m.group(1).strip()
-            if zone_name == "(null)":
-                return  # 街エリア遷移時に出る無効なエントリを無視
+            if zone_name in ("(null)", "(unknown)"):
+                return  # 遷移時に出る無効なエントリを無視
             print(f"[LogWatcher] Zone detected (Set Source): {zone_name} (pos={self._file_pos}, line={line.strip()[:80]})")
             self.zone_entered.emit(zone_name)
             return
