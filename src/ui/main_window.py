@@ -1656,14 +1656,12 @@ class MainWindow(QMainWindow):
             
             hotkeys = self.config.get("hotkeys", {})
             
-            self.hotkey_map = {
-                hotkeys.get("start_stop", "F1").lower(): "start_stop",
-                hotkeys.get("reset", "F2").lower(): "reset",
-                hotkeys.get("lap", "F3").lower(): "lap",
-                hotkeys.get("undo_lap", "F4").lower(): "undo_lap",
-                hotkeys.get("click_through", "F6").lower(): "click_through",
-                hotkeys.get("logout", "F5").lower(): "logout",
-            }
+            self.hotkey_map = {}
+            for action, default in [("start_stop", "F1"), ("reset", "F2"), ("lap", "F3"),
+                                     ("undo_lap", "F4"), ("click_through", "F6"), ("logout", "F5")]:
+                key = hotkeys.get(action, default)
+                if key and key != "none":
+                    self.hotkey_map[key.lower()] = action
             
             print(f"Registering hotkeys: {self.hotkey_map}")
             
@@ -2243,23 +2241,77 @@ class MainWindow(QMainWindow):
         if not self._initial_positioned:
             self._initial_positioned = True
             from PySide6.QtWidgets import QApplication
-            screens = QApplication.screens()
-            idx = self._display_monitor_index
-            if screens and 0 <= idx < len(screens):
-                target_screen = screens[idx]
-            elif screens:
-                target_screen = screens[0]
+            
+            snap_to_right = self.config.get("snap_to_right_edge", False)
+            saved_geo = self.config.get("window_geometry")
+            
+            if snap_to_right:
+                # モニター右端にフル高さ配置（従来の挙動）
+                screens = QApplication.screens()
+                idx = self._display_monitor_index
+                if screens and 0 <= idx < len(screens):
+                    target_screen = screens[idx]
+                elif screens:
+                    target_screen = screens[0]
+                else:
+                    return
+                geo = target_screen.availableGeometry()
+                actual_w = self.frameGeometry().width()
+                win_h = geo.height()
+                self.resize(self.width(), win_h)
+                x = geo.left() + geo.width() - actual_w
+                y = geo.top()
+                self.move(x, y)
+            elif saved_geo:
+                # 保存済みジオメトリを復元
+                x = saved_geo.get("x", 0)
+                y = saved_geo.get("y", 0)
+                w = saved_geo.get("width", 420)
+                h = saved_geo.get("height", 1200)
+                # 画面外チェック: 全スクリーンのunionに収まるか
+                screens = QApplication.screens()
+                if screens:
+                    union = screens[0].availableGeometry()
+                    for s in screens[1:]:
+                        union = union.united(s.availableGeometry())
+                    window_rect = QRect(x, y, w, h)
+                    if union.intersects(window_rect):
+                        self.setGeometry(x, y, w, h)
+                    else:
+                        # 画面外 → デフォルト（右端配置）
+                        self._position_right_edge()
+                else:
+                    self.setGeometry(x, y, w, h)
             else:
-                return
-            geo = target_screen.availableGeometry()
-            actual_w = self.frameGeometry().width()
-            win_h = geo.height()
-            self.resize(self.width(), win_h)
-            x = geo.left() + geo.width() - actual_w
-            y = geo.top()
-            self.move(x, y)
+                # デフォルト: 右端配置
+                self._position_right_edge()
+    
+    def _position_right_edge(self):
+        """デフォルトの右端配置"""
+        from PySide6.QtWidgets import QApplication
+        screens = QApplication.screens()
+        if not screens:
+            return
+        target_screen = screens[0]
+        geo = target_screen.availableGeometry()
+        actual_w = self.frameGeometry().width()
+        win_h = geo.height()
+        self.resize(self.width(), win_h)
+        x = geo.left() + geo.width() - actual_w
+        y = geo.top()
+        self.move(x, y)
 
     def closeEvent(self, event):
+        # ウィンドウ位置・サイズを保存
+        geo = self.geometry()
+        self.config["window_geometry"] = {
+            "x": geo.x(),
+            "y": geo.y(),
+            "width": geo.width(),
+            "height": geo.height(),
+        }
+        ConfigManager.save_config(self.config)
+        
         if self.keyboard_listener:
             self.keyboard_listener.stop()
         self.log_watcher.stop()

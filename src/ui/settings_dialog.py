@@ -47,7 +47,7 @@ def _spinbox_style(width=55, height=28):
 
 class HotkeyButton(QPushButton):
     def __init__(self, key_text):
-        super().__init__(key_text)
+        super().__init__(key_text if key_text != "none" else "なし")
         self.key_text = key_text
         self.setCheckable(True)
         self.setStyleSheet(Styles.BUTTON)
@@ -58,7 +58,7 @@ class HotkeyButton(QPushButton):
             self.setText("Press any key...")
             self.grabKeyboard() # Qtの入力独占
         else:
-            self.setText(self.key_text)
+            self.setText(self.key_text if self.key_text != "none" else "なし")
             self.releaseKeyboard()
 
     def keyPressEvent(self, event):
@@ -70,6 +70,12 @@ class HotkeyButton(QPushButton):
         modifiers = event.modifiers()
         
         if key == Qt.Key_Escape:
+            self.setChecked(False)
+            return
+
+        # Delete/Backspaceでバインド解除
+        if key in (Qt.Key_Delete, Qt.Key_Backspace):
+            self.key_text = "none"
             self.setChecked(False)
             return
 
@@ -765,6 +771,10 @@ class SettingsDialog(QDialog):
         group.setStyleSheet(group_style)
         group_layout = QVBoxLayout(group)
         
+        hotkey_hint = QLabel("※ DeleteまたはBackspaceで解除できます")
+        hotkey_hint.setStyleSheet("color: #888888; font-size: 10px;")
+        group_layout.addWidget(hotkey_hint)
+        
         h_layout1 = QHBoxLayout()
         h_layout1.addWidget(QLabel("開始/停止:"))
         self.start_stop_btn = HotkeyButton(self.hotkeys.get("start_stop", "F1"))
@@ -803,7 +813,7 @@ class SettingsDialog(QDialog):
         
         self.logout_enabled_cb = QCheckBox("ログアウト機能を有効にする（TCP切断）")
         self.logout_enabled_cb.setChecked(self.current_config.get("logout_enabled", True))
-        self.logout_enabled_cb.setStyleSheet(checkbox_style)
+        Styles.apply_checkbox_style(self.logout_enabled_cb)
         group_layout.addWidget(self.logout_enabled_cb)
         
         general_layout.addWidget(group)
@@ -837,7 +847,7 @@ class SettingsDialog(QDialog):
         # リセット確認ダイアログ
         self.confirm_reset_cb = QCheckBox("タイマーリセット時に確認ダイアログを表示する")
         self.confirm_reset_cb.setChecked(self.current_config.get("confirm_reset", True))
-        self.confirm_reset_cb.setStyleSheet(checkbox_style)
+        Styles.apply_checkbox_style(self.confirm_reset_cb)
         timer_layout.addWidget(self.confirm_reset_cb)
         
         general_layout.addWidget(timer_group)
@@ -904,12 +914,12 @@ class SettingsDialog(QDialog):
         map_layout = QVBoxLayout(map_group)
 
         self.auto_open_map_check = QCheckBox("エリア移動時にマップレイアウトの拡大画像を自動で開く")
-        self.auto_open_map_check.setStyleSheet(checkbox_style)
+        Styles.apply_checkbox_style(self.auto_open_map_check)
         self.auto_open_map_check.setChecked(self.current_config.get("auto_open_map", False))
         map_layout.addWidget(self.auto_open_map_check)
 
         self.auto_position_map_check = QCheckBox("マップレイアウトの拡大画像を開く際、ぽえなびの隣に自動配置する")
-        self.auto_position_map_check.setStyleSheet(checkbox_style)
+        Styles.apply_checkbox_style(self.auto_position_map_check)
         self.auto_position_map_check.setChecked(self.current_config.get("auto_position_map", True))
         map_layout.addWidget(self.auto_position_map_check)
 
@@ -973,9 +983,15 @@ class SettingsDialog(QDialog):
         
         # ウィンドウロック
         self.window_lock_check = QCheckBox("ウィンドウの移動・リサイズを禁止する")
-        self.window_lock_check.setStyleSheet(checkbox_style)
+        Styles.apply_checkbox_style(self.window_lock_check)
         self.window_lock_check.setChecked(self.current_config.get("window_locked", False))
         window_layout.addWidget(self.window_lock_check)
+        
+        # 右端配置チェックボックス
+        self.snap_right_edge_cb = QCheckBox("起動時にモニター右端に配置")
+        self.snap_right_edge_cb.setChecked(self.current_config.get("snap_to_right_edge", False))
+        Styles.apply_checkbox_style(self.snap_right_edge_cb)
+        window_layout.addWidget(self.snap_right_edge_cb)
         
         # モニター選択
         monitor_row = QHBoxLayout()
@@ -998,6 +1014,17 @@ class SettingsDialog(QDialog):
         monitor_row.addWidget(self.monitor_combo)
         monitor_row.addStretch()
         window_layout.addLayout(monitor_row)
+        
+        # チェックボックスとモニター選択の連動
+        self._monitor_label = monitor_label
+        def _update_monitor_enabled(checked):
+            self.monitor_combo.setEnabled(checked)
+            self._monitor_label.setStyleSheet(
+                f"color: {Styles.TEXT_COLOR}; font-size: 12px;" if checked
+                else "color: #555555; font-size: 12px;"
+            )
+        _update_monitor_enabled(self.snap_right_edge_cb.isChecked())
+        self.snap_right_edge_cb.toggled.connect(_update_monitor_enabled)
         
         general_layout.addWidget(window_group)
         
@@ -1422,6 +1449,7 @@ class SettingsDialog(QDialog):
             "text_opacity": self.text_opacity_slider.value(),
             "window_locked": self.window_lock_check.isChecked(),
             "display_monitor": self.monitor_combo.currentData(),
+            "snap_to_right_edge": self.snap_right_edge_cb.isChecked(),
             "auto_open_map": self.auto_open_map_check.isChecked(),
             "auto_position_map": self.auto_position_map_check.isChecked(),
             "town_zones": [z.strip() for z in self.town_zones_edit.toPlainText().split("\n") if z.strip()],
