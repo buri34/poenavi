@@ -102,7 +102,7 @@ DEFAULT_ZONE_DATA = {
         {"id": "act6_area12", "zone": "南の森", "level": 40},
         {"id": "act6_area13", "zone": "怒りの洞窟", "level": 40},
         {"id": "act6_area14", "zone": "ビーコン", "level": 40},
-        {"id": "act6_area15", "zone": "大海の王の岩礁", "level": 36},
+        {"id": "act6_area15", "zone": "ブラインキングの岩礁", "level": 36},
     ],
     "Act 7": [
         {"id": "act7_area1", "zone": "壊れた橋", "level": 41},
