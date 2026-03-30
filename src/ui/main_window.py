@@ -419,7 +419,7 @@ class MainWindow(QMainWindow):
             "餌場", "The Feeding Trough",
             "カルイの要塞", "The Karui Fortress",
             "シャヴロンの塔", "Shavronne's Tower",
-            "大海の王の岩礁", "The Brine King's Reef",
+            "ブラインキングの岩礁", "The Brine King's Reef",
             "マリガロの聖域", "Maligaro's Sanctum",
             "焼け野原", "The Ashen Fields",
             "土手道", "The Causeway",
