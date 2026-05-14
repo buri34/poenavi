@@ -34,10 +34,10 @@
     "text_opacity": 100,
     "logout_enabled": true,
     "window_geometry": {
-        "x": 2641,
-        "y": 194,
-        "width": 643,
-        "height": 935
+        "x": 2740,
+        "y": 448,
+        "width": 670,
+        "height": 1024
     },
     "snap_to_right_edge": false,
     "gem_tracker_expanded": true,

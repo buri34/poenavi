@@ -1,7 +1,7 @@
 import sys
 import os
 
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 
 # srcディレクトリへのパスを通す (VSCodeなどで実行した際のパスずれ対策)
 current_dir = os.path.dirname(os.path.abspath(__file__))

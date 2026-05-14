@@ -75,12 +75,14 @@ class SearchStringPasteTestDialog(QDialog):
     def _select(self, text):
         self.hide()
         QApplication.clipboard().setText(text)
+        QApplication.processEvents()
+        time.sleep(0.05)
 
         if not self.target_hwnd:
             QMessageBox.warning(self.parent(), "検索文字列の貼り付け", "復帰先ウィンドウを取得できませんでした。")
             return
 
-        if not focus_window(self.target_hwnd):
+        if not focus_window(self.target_hwnd, wait_seconds=0.45):
             QMessageBox.warning(
                 self.parent(),
                 "検索文字列の貼り付け",
@@ -88,7 +90,7 @@ class SearchStringPasteTestDialog(QDialog):
             )
             return
 
-        QTimer.singleShot(120, lambda: self._paste_to_search(text))
+        QTimer.singleShot(450, lambda: self._paste_to_search(text))
 
     def _paste_to_search(self, text):
         try:
@@ -101,15 +103,15 @@ class SearchStringPasteTestDialog(QDialog):
 
             with controller.pressed(ctrl):
                 tap('f')
-            time.sleep(0.08)
+            time.sleep(0.15)
             with controller.pressed(ctrl):
                 tap('a')
-            time.sleep(0.03)
+            time.sleep(0.08)
             tap(pynput_keyboard.Key.backspace)
-            time.sleep(0.03)
+            time.sleep(0.08)
             with controller.pressed(ctrl):
                 tap('v')
-            time.sleep(0.03)
+            time.sleep(0.08)
             tap(pynput_keyboard.Key.enter)
             print(f"[SEARCH TEST] pasted: {text}")
         except Exception as exc:

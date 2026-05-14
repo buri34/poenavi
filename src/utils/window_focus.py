@@ -10,6 +10,8 @@ def get_foreground_window():
         return None
     try:
         import ctypes
+        from ctypes import wintypes
+        ctypes.windll.user32.GetForegroundWindow.restype = wintypes.HWND
         hwnd = ctypes.windll.user32.GetForegroundWindow()
         return int(hwnd) if hwnd else None
     except Exception as exc:
@@ -28,6 +30,17 @@ def focus_window(hwnd, wait_seconds=0.12):
 
         user32 = ctypes.windll.user32
         kernel32 = ctypes.windll.kernel32
+
+        user32.GetForegroundWindow.restype = wintypes.HWND
+        user32.IsWindow.argtypes = [wintypes.HWND]
+        user32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
+        user32.BringWindowToTop.argtypes = [wintypes.HWND]
+        user32.SetForegroundWindow.argtypes = [wintypes.HWND]
+        user32.SetFocus.argtypes = [wintypes.HWND]
+        user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.c_void_p]
+        user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+        user32.AttachThreadInput.argtypes = [wintypes.DWORD, wintypes.DWORD, wintypes.BOOL]
+        kernel32.GetCurrentThreadId.restype = wintypes.DWORD
 
         hwnd = wintypes.HWND(hwnd)
         if not user32.IsWindow(hwnd):
@@ -49,18 +62,37 @@ def focus_window(hwnd, wait_seconds=0.12):
         if foreground_thread and foreground_thread != current_thread:
             attached_foreground = bool(user32.AttachThreadInput(current_thread, foreground_thread, True))
 
-        try:
+        def hwnd_value(value):
+            return int(getattr(value, "value", value) or 0)
+
+        def request_foreground():
             user32.BringWindowToTop(hwnd)
             user32.SetForegroundWindow(hwnd)
             user32.SetFocus(hwnd)
+
+        try:
+            request_foreground()
         finally:
             if attached_foreground:
                 user32.AttachThreadInput(current_thread, foreground_thread, False)
             if attached_target:
                 user32.AttachThreadInput(current_thread, target_thread, False)
 
+        target_value = hwnd_value(hwnd)
+        deadline = time.time() + max(wait_seconds, 0.5)
+        while time.time() < deadline:
+            if hwnd_value(user32.GetForegroundWindow()) == target_value:
+                return True
+            time.sleep(0.05)
+
+        # Windows のフォアグラウンド制限で失敗することがあるため、Alt入力で解除して再試行する。
+        VK_MENU = 0x12
+        KEYEVENTF_KEYUP = 0x0002
+        user32.keybd_event(VK_MENU, 0, 0, 0)
+        user32.keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0)
+        request_foreground()
         time.sleep(wait_seconds)
-        return user32.GetForegroundWindow() == hwnd.value
+        return hwnd_value(user32.GetForegroundWindow()) == target_value
     except Exception as exc:
         print(f"[WINDOW] focus_window failed: {exc}")
         return False
