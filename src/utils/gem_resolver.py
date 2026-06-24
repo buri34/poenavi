@@ -12,12 +12,14 @@ import sys
 
 
 def _get_data_dir():
-    """dataディレクトリのパスを返す"""
+    """dataディレクトリのパスを返す（exeフォルダ優先 → PyInstaller _MEIPASS）。"""
     if getattr(sys, 'frozen', False):
-        base = os.path.dirname(sys.executable)
-    else:
-        base = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    return os.path.join(base, "data")
+        exe_dir = os.path.dirname(sys.executable)
+        exe_data_dir = os.path.join(exe_dir, "data")
+        if os.path.isdir(exe_data_dir):
+            return exe_data_dir
+        return os.path.join(getattr(sys, '_MEIPASS', exe_dir), "data")
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data")
 
 
 def load_gems_db() -> dict:
@@ -61,8 +63,8 @@ def load_npc_names_ja() -> dict:
 QUEST_ORDER = [
     "enemy at the gate",
     "mercy mission",
-    "breaking some eggs1",
     "breaking some eggs2",
+    "breaking some eggs1",
     "the caged brute1",
     "the caged brute2",
     "the siren's cadence",

@@ -7,7 +7,7 @@ import threading
 import urllib.request
 from pynput import keyboard as pynput_keyboard
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-                               QLabel, QPushButton, QMenu, QFrame, QScrollArea,
+                               QLabel, QPushButton, QMenu, QFrame, QScrollArea, QSplitter,
                                QSizeGrip, QMessageBox, QRadioButton, QButtonGroup, QApplication)
 from PySide6.QtCore import Qt, QTimer, Signal, QRect, QEvent, QPoint, QSize, QMimeData
 from PySide6.QtGui import QCursor, QMouseEvent, QIcon
@@ -17,9 +17,9 @@ from src.ui.map_viewer import MapThumbnailWidget
 from src.utils.config_manager import ConfigManager
 from src.utils.lap_recorder import LapRecorder
 from src.utils.log_watcher import LogWatcher
-from src.utils.window_focus import get_foreground_window, focus_window
+from src.utils.window_focus import get_foreground_window, focus_window, get_next_visible_window_after
 from src.utils.zone_data import get_zone_info, get_level_advice, DEFAULT_ZONE_DATA
-from src.utils.guide_data import load_guide_data, get_zone_guide, format_guide_html
+from src.utils.guide_data import load_guide_data, get_zone_guide, get_zone_guide_level, format_guide_html
 from src.utils.poe_version_data import POE1, POE2, get_lap_labels, get_poe_label, get_timer_filename, get_progress_flags_filename
 from src.utils.zone_master_data import load_zone_master_data
 from src.utils.poe_progress_data import get_auto_lap_triggers, get_clear_message, get_special_lap_event
@@ -43,6 +43,36 @@ def _with_optional_always_on_top(flags, parent=None):
     if _is_always_on_top_enabled(parent):
         return flags | Qt.WindowStaysOnTopHint
     return flags & ~Qt.WindowStaysOnTopHint
+
+
+class GemTrackerPopupDialog(QDialog):
+    """ジェム取得リストを大きく表示するポップアウトウィンドウ。"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("ジェム取得")
+        self.resize(520, 720)
+        self.setStyleSheet(Styles.MAIN_WINDOW)
+        self.setWindowFlags(_with_optional_always_on_top(Qt.Tool | Qt.Window, parent))
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(8)
+
+        header = QHBoxLayout()
+        title = QLabel("💎 ジェム取得")
+        title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 14px; font-weight: bold;")
+        header.addWidget(title)
+        header.addStretch()
+
+        close_btn = QPushButton("閉じる")
+        close_btn.setStyleSheet(Styles.BUTTON)
+        close_btn.clicked.connect(self.close)
+        header.addWidget(close_btn)
+        layout.addLayout(header)
+
+        self.gem_tracker = GemTrackerWidget()
+        layout.addWidget(self.gem_tracker, stretch=1)
 
 
 class SearchStringPasteTestDialog(QDialog):
@@ -411,7 +441,7 @@ class RouteSelectionDialog(QDialog):
         self.act3_combo.addItem("通常ルート（図書館スキップ）", "standard")
         self.act3_combo.addItem("図書館寄り道ルート", "library_detour")
         self.act3_combo.setStyleSheet(combo_style)
-        cur3 = config.get("poe1_route_act3", "standard")
+        cur3 = ConfigManager.effective_poe1_route_act3(config)
         idx3 = self.act3_combo.findData(cur3)
         if idx3 >= 0:
             self.act3_combo.setCurrentIndex(idx3)
@@ -423,7 +453,7 @@ class RouteSelectionDialog(QDialog):
         self.act8_combo.addItem("通常ルート", "standard")
         self.act8_combo.addItem("隠れた裏道（The Hidden Underbelly）ルート", "underbelly")
         self.act8_combo.setStyleSheet(combo_style)
-        cur8 = config.get("poe1_route_act8", "standard")
+        cur8 = ConfigManager.effective_poe1_route_act8(config)
         idx8 = self.act8_combo.findData(cur8)
         if idx8 >= 0:
             self.act8_combo.setCurrentIndex(idx8)
@@ -698,21 +728,30 @@ class VendorSearchPresetDialog(QDialog):
     DEFAULT_PRESETS = [
         {"name": "新規プリセット", "query": "", "enabled": True},
     ]
+    POE1_DEFAULT_PRESETS = [
+        {"name": "3リンク（色問わず）", "query": r"-\w-", "enabled": True},
+    ]
     MAX_SEARCH_QUERY_LENGTH = 250
 
-    def __init__(self, parent=None, presets_path: str = ""):
+    def __init__(self, parent=None, presets_path: str = "", poe_version: str = POE2):
         super().__init__(parent)
         from PySide6.QtWidgets import (
             QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
-            QLineEdit, QTextEdit, QCheckBox, QGridLayout,
+            QLineEdit, QTextEdit, QCheckBox, QGridLayout, QSpinBox,
         )
 
         self.QTableWidgetItem = QTableWidgetItem
         self.presets_path = presets_path
+        self.poe_version = poe_version
         self._syncing = False
         self._dirty = False
         self.option_checkboxes = []
         self.helper_categories = {}
+        self._poe1_other_links_checkbox = None
+        self._poe1_other_link_spins = {}
+        self._last_poe1_other_links_pattern = ""
+        self._last_poe1_generated_patterns = set()
+        self._last_poe1_selected_labels = set()
         self._saved_snapshot = []
         self.setWindowFlags(_with_optional_always_on_top(Qt.Window | Qt.FramelessWindowHint, parent))
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -744,7 +783,9 @@ class VendorSearchPresetDialog(QDialog):
         title_bar.setStyleSheet("background: transparent; border: none;")
         title_layout = QHBoxLayout(title_bar)
         title_layout.setContentsMargins(4, 0, 4, 0)
-        title_label = QLabel("🔍 店売り・スタッシュ検索プリセット")
+        title_label = QLabel(
+            "🔍 PoE1 店売り検索プリセット" if self.poe_version == POE1 else "🔍 PoE2 店売り・スタッシュ検索プリセット"
+        )
         title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none;")
         title_layout.addWidget(title_label)
         title_layout.addStretch()
@@ -758,7 +799,10 @@ class VendorSearchPresetDialog(QDialog):
         title_layout.addWidget(close_btn)
         container_layout.addWidget(title_bar)
 
-        hint = QLabel("左は一覧表示です。表示名・検索文字列は右側の編集枠で調整します。有効にチェックをつけたプリセットだけが検索ホットキー時のメニューに表示されます。")
+        hint_text = "左は一覧表示です。表示名・検索文字列は右側の編集枠で調整します。有効にチェックをつけたプリセットだけが検索ホットキー時のメニューに表示されます。"
+        if self.poe_version == POE1:
+            hint_text += " PoE1ではAct中の3リンク装備購入など、ベンダー検索向けのプリセットを管理します。"
+        hint = QLabel(hint_text)
         hint.setStyleSheet("color: #aaaaaa; font-size: 13px; border: none;")
         hint.setWordWrap(True)
         container_layout.addWidget(hint)
@@ -876,11 +920,13 @@ class VendorSearchPresetDialog(QDialog):
         self.query_edit.textChanged.connect(self._editor_changed)
         right_layout.addWidget(self.query_edit)
 
-        self.query_limit_note = QLabel("PoE2の検索窓は250文字が上限です。超過すると貼り付けができません。なお、5/30からの新リーグの仕様であり、それまでは50文字が上限")
-        self.query_limit_note.setStyleSheet("color: #aaaaaa; font-size: 12px; border: none;")
-        right_layout.addWidget(self.query_limit_note)
+        if self.poe_version != POE1:
+            limit_note = "PoE2の検索窓は250文字が上限です。超過すると貼り付けができません。"
+            self.query_limit_note = QLabel(limit_note)
+            self.query_limit_note.setStyleSheet("color: #aaaaaa; font-size: 12px; border: none;")
+            right_layout.addWidget(self.query_limit_note)
 
-        helper_title = QLabel("正規表現の作成支援（チェックすると検索文字列に追加）")
+        helper_title = QLabel("PoE1検索作成支援（チェックすると検索文字列に追加）" if self.poe_version == POE1 else "正規表現の作成支援（チェックすると検索文字列に追加）")
         helper_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none; margin-top: 4px;")
         right_layout.addWidget(helper_title)
 
@@ -925,7 +971,7 @@ class VendorSearchPresetDialog(QDialog):
         helper_layout = QVBoxLayout(helper_content)
         helper_layout.setContentsMargins(4, 4, 8, 4)
         helper_layout.setSpacing(8)
-        self._build_regex_helper(helper_layout, QCheckBox, QGridLayout)
+        self._build_regex_helper(helper_layout, QCheckBox, QGridLayout, QSpinBox)
         helper_layout.addStretch()
         helper_scroll.setWidget(helper_content)
         right_layout.addWidget(helper_scroll, stretch=1)
@@ -1052,11 +1098,161 @@ class VendorSearchPresetDialog(QDialog):
         (WEAPON_BASE_OR_CATEGORY, WEAPON_BASE_OPTIONS),
     ]
 
+    POE1_REGEX_HELPER_GROUPS = [
+        (
+            'Link colors (3L)',
+            [
+                ('rrr', 'r-r-r'),
+                ('ggg', 'g-g-g'),
+                ('bbb', 'b-b-b'),
+                ('rrg', 'r-r-g|r-g-r|g-r-r'),
+                ('rrb', 'r-r-b|r-b-r|b-r-r'),
+                ('ggb', 'g-g-b|g-b-g|b-g-g'),
+                ('ggr', 'g-g-r|g-r-g|r-g-g'),
+                ('bbr', 'b-b-r|b-r-b|r-b-b'),
+                ('bbg', 'b-b-g|b-g-b|g-b-b'),
+                ('rgb', ':.*(?=\\S*r)(?=\\S*g)(?=\\S*b)'),
+                ('rr*', 'r-r-|-r-r|r-.-r'),
+                ('gg*', 'g-g-|-g-g|g-.-g'),
+                ('bb*', 'b-b-|-b-b|b-.-b'),
+                ('r**', '.-.-r|.-r-.|r-.-.'),
+                ('g**', '.-.-g|.-g-.|g-.-.'),
+                ('b**', '.-.-b|.-b-.|b-.-.'),
+            ],
+        ),
+        (
+            'Link colors (2L)',
+            [
+                ('rr', 'r-r'),
+                ('gg', 'g-g'),
+                ('bb', 'b-b'),
+                ('rb', 'r-b|b-r'),
+                ('gr', 'g-r|r-g'),
+                ('bg', 'b-g|g-b'),
+            ],
+        ),
+        (
+            'Any links',
+            [
+                ('Any 3 link', '-\\w-'),
+                ('Any 4 link', '-\\w-.-'),
+                ('Any 5 link', '(-\\w){4}'),
+                ('Any 6 link', '(-\\w){5}'),
+                ('Any 6 socket', '(\\w\\W){5}'),
+            ],
+        ),
+        (
+            'Movement Speed',
+            [
+                ('Movement speed (10%)', 'Runn'),
+                ('Movement speed (15%)', 'rint'),
+            ],
+        ),
+        (
+            'Misc',
+            [
+                ('+1 wand (any)', '全てのスペ'),
+                ('+1 lightning wand', 'derha'),
+                ('+1 fire wand', '"me Sh"'),
+                ('+1 cold wand', 'singe'),
+                ('+1 phys wand', 'Litho'),
+                ('+1 chaos wand', 'Lord'),
+                ('Physical damage', 'Glint|Heav'),
+                ('フラット元素ダメージ', 'Heat|roste|Humm'),
+                ('Fire DOT multi', 'Earn'),
+                ('Cold DOT multi', 'Incl'),
+                ('Chaos DOT multi', 'Wani'),
+            ],
+        ),
+        (
+            'Weapon Bases',
+            [
+                ('Axe', '斧$'),
+                ('Mace', 'メイス$'),
+                ('Sword', '剣$'),
+                ('Staff', 'スタッフ$'),
+                ('Sceptre', 'セプター$'),
+                ('Claw', '鉤爪$'),
+                ('Bow', '弓$'),
+                ('Wand', 'ワンド$'),
+                ('Dagger', '短剣$'),
+                ('Shield', 'ック率:'),
+            ],
+        ),
+    ]
+
+    POE1_REGEX_HELPER_CATEGORY_LABELS = {
+        'Any links': '任意リンク・任意ソケット',
+        'Link colors (2L)': 'リンク色（2リンク）',
+        'Link colors (3L)': 'リンク色（3リンク）',
+        'Misc': 'その他',
+        'Movement Speed': '移動速度',
+        'Other Links': 'その他リンク',
+        'Weapon Bases': '武器ベース（上記の条件とOR条件で絞り込み。チェックした武器は条件に依らず、すべてハイライトされます）',
+    }
+
+    POE1_REGEX_HELPER_LABELS = {
+        'フラット元素ダメージ': 'フラット元素ダメージ',
+        '+1 chaos wand': '全ての混沌スペルスキル+1',
+        '+1 cold wand': '全ての冷気スペルスキル+1',
+        '+1 fire wand': '全ての火スペルスキル+1',
+        '+1 lightning wand': '全ての雷スペルスキル+1',
+        '+1 phys wand': '全ての物理スペルスキル+1',
+        '+1 wand (any)': '全てのスペルスキル+1',
+        'Any 3 link': '3リンク',
+        'Any 4 link': '4リンク',
+        'Any 5 link': '5リンク',
+        'Any 6 link': '6リンク',
+        'Any 6 socket': '6ソケット',
+        'Axe': '斧',
+        'Bow': '弓',
+        'Chaos DOT multi': '混沌継続ダメージ',
+        'Claw': '鉤爪',
+        'Cold DOT multi': '冷気継続ダメージ',
+        'Dagger': '短剣',
+        'Fire DOT multi': '火継続ダメージ',
+        'Mace': 'メイス',
+        'Movement speed (10%)': '移動スピード10%',
+        'Movement speed (15%)': '移動スピード15%',
+        'Physical damage': '物理ダメージ',
+        'Sceptre': 'セプター',
+        'Shield': '盾',
+        'Staff': 'スタッフ',
+        'Sword': '剣',
+        'Wand': 'ワンド',
+        'b**': 'B●-＊-＊',
+        'bb': 'B●-B●',
+        'bb*': 'B●-B●-＊',
+        'bbb': 'B●-B●-B●',
+        'bbg': 'B●-B●-G●',
+        'bbr': 'B●-B●-R●',
+        'bg': 'B●-G●',
+        'g**': 'G●-＊-＊',
+        'gg': 'G●-G●',
+        'gg*': 'G●-G●-＊',
+        'ggb': 'G●-G●-B●',
+        'ggg': 'G●-G●-G●',
+        'ggr': 'G●-G●-R●',
+        'gr': 'G●-R●',
+        'r**': 'R●-＊-＊',
+        'rb': 'R●-B●',
+        'rgb': 'R●-G●-B●',
+        'rr': 'R●-R●',
+        'rr*': 'R●-R●-＊',
+        'rrb': 'R●-R●-B●',
+        'rrg': 'R●-R●-G●',
+        'rrr': 'R●-R●-R●',
+    }
+
+    def _default_presets(self):
+        return self.POE1_DEFAULT_PRESETS if self.poe_version == POE1 else self.DEFAULT_PRESETS
+
     def _load_regex_helper_groups(self):
         """REGEX支援チェックボックス候補を返す。tasks配下の作業CSVには依存しない。"""
-        return [(category, list(options)) for category, options in self.REGEX_HELPER_GROUPS]
+        groups = self.POE1_REGEX_HELPER_GROUPS if self.poe_version == POE1 else self.REGEX_HELPER_GROUPS
+        return [(category, list(options)) for category, options in groups]
 
-    def _build_regex_helper(self, parent_layout, QCheckBox, QGridLayout):
+    def _build_regex_helper(self, parent_layout, QCheckBox, QGridLayout, QSpinBox=None):
         assets_dir = os.path.join(ConfigManager._get_base_dir(), "assets")
         if not os.path.exists(os.path.join(assets_dir, "checkmark_lime.svg")):
             assets_dir = os.path.join(getattr(sys, "_MEIPASS", ConfigManager._get_base_dir()), "assets")
@@ -1082,6 +1278,9 @@ class VendorSearchPresetDialog(QDialog):
         section_style = "color: #44cc66; font-size: 16px; font-weight: bold; border: none; margin-top: 6px;"
         self.option_checkboxes = []
         self.helper_categories = {}
+        if self.poe_version == POE1:
+            self._build_poe1_regex_helper(parent_layout, QCheckBox, QGridLayout, QSpinBox, checkbox_style, section_style)
+            return
         groups = self._load_regex_helper_groups()
         if not groups:
             note = QLabel("REGEX支援候補が空です。")
@@ -1135,6 +1334,233 @@ class VendorSearchPresetDialog(QDialog):
                 grid.addWidget(cb, position // columns, position % columns)
             parent_layout.addLayout(grid)
 
+
+    def _poe1_category_display_name(self, category):
+        return self.POE1_REGEX_HELPER_CATEGORY_LABELS.get(category, category)
+
+    def _poe1_label_display_name(self, label):
+        return self.POE1_REGEX_HELPER_LABELS.get(label, label)
+
+    def _poe1_checkbox_label_key(self, checkbox):
+        return checkbox.property("poe1_label_key") or checkbox.text()
+
+    def _poe1_icon_path(self, color):
+        filename = {"r": "red.png", "g": "green.png", "b": "blue.png"}.get(color)
+        if not filename:
+            return ""
+        candidates = [
+            os.path.join(ConfigManager._get_base_dir(), "assets", "icons", filename),
+            os.path.join(getattr(sys, "_MEIPASS", ConfigManager._get_base_dir()), "assets", "icons", filename),
+        ]
+        for path in candidates:
+            if os.path.exists(path):
+                return path.replace("\\", "/")
+        return ""
+
+    def _poe1_link_icon_html(self, label):
+        label = (label or "").strip().lower()
+        if not re.fullmatch(r"[rgb*]{2,3}", label):
+            return ""
+        parts = []
+        for ch in label:
+            if ch == "*":
+                parts.append('<span style="font-size:16px; color:#dddddd;">＊</span>')
+                continue
+            icon_path = self._poe1_icon_path(ch)
+            if not icon_path:
+                return ""
+            parts.append(f'<img src="{icon_path}" width="20" height="18" style="vertical-align:middle;"/>')
+        return '<span style="white-space:nowrap;">' + '<span style="color:#aaaaaa; padding:0 2px;">-</span>'.join(parts) + '</span>'
+
+    def _toggle_checkbox_from_label(self, checkbox):
+        checkbox.setChecked(not checkbox.isChecked())
+
+    def _build_poe1_regex_helper(self, parent_layout, QCheckBox, QGridLayout, QSpinBox, checkbox_style, section_style):
+        """PoE1用REGEX作成支援UI。よく使われるPoE1 regexサイトのカテゴリ構成に寄せる。"""
+        groups = self._load_regex_helper_groups()
+        for group_title, options in groups:
+            section = QLabel(self._poe1_category_display_name(group_title))
+            section.setStyleSheet(section_style)
+            parent_layout.addWidget(section)
+
+            if group_title == "Other Links":
+                self._build_poe1_other_links(parent_layout, QCheckBox, QSpinBox, checkbox_style)
+                continue
+
+            grid = QGridLayout()
+            grid.setContentsMargins(0, 0, 0, 0)
+            grid.setHorizontalSpacing(24)
+            grid.setVerticalSpacing(8)
+            columns = 3 if group_title in ("Movement Speed", "Misc", "Weapon Bases") else 2
+            for index, (label, token) in enumerate(options):
+                icon_html = self._poe1_link_icon_html(label) if group_title in ("Link colors (3L)", "Link colors (2L)") else ""
+                cb = QCheckBox("" if icon_html else self._poe1_label_display_name(label))
+                cb.setProperty("poe1_label_key", label)
+                cb.setToolTip(token)
+                cb.setStyleSheet(checkbox_style)
+                cb.toggled.connect(lambda checked, t=token: self._regex_option_toggled(t, checked))
+                self.option_checkboxes.append((cb, token, group_title))
+                self.helper_categories[token] = group_title
+                if group_title == "Link colors (3L)":
+                    if index < 6:
+                        row, col = index, 0
+                    elif index < 12:
+                        row, col = index - 6, 1
+                    else:
+                        row, col = index - 12, 2
+                elif group_title == "Link colors (2L)":
+                    row, col = index % 2, index // 2
+                elif group_title == "Any links":
+                    if index < 2:
+                        row, col = index, 0
+                    elif index < 4:
+                        row, col = index - 2, 1
+                    else:
+                        row, col = index - 4, 2
+                elif group_title == "Weapon Bases":
+                    if index < 3:
+                        row, col = index, 0
+                    elif index < 6:
+                        row, col = index - 3, 1
+                    elif index < 9:
+                        row, col = index - 6, 2
+                    else:
+                        row, col = index - 9, 3
+                else:
+                    row, col = index // columns, index % columns
+                if icon_html:
+                    item = QWidget()
+                    item_layout = QHBoxLayout(item)
+                    item_layout.setContentsMargins(0, 0, 0, 0)
+                    item_layout.setSpacing(6)
+                    item_layout.addWidget(cb)
+                    label_widget = QLabel(icon_html)
+                    label_widget.setTextFormat(Qt.RichText)
+                    label_widget.setToolTip(token)
+                    label_widget.setCursor(QCursor(Qt.PointingHandCursor))
+                    label_widget.setStyleSheet("border: none; padding: 1px 2px;")
+                    label_widget.mousePressEvent = lambda _event, c=cb: self._toggle_checkbox_from_label(c)
+                    item_layout.addWidget(label_widget)
+                    item_layout.addStretch()
+                    grid.addWidget(item, row, col)
+                else:
+                    grid.addWidget(cb, row, col)
+            parent_layout.addLayout(grid)
+
+            if group_title == "Any links":
+                other_section = QLabel(self._poe1_category_display_name("Other Links"))
+                other_section.setStyleSheet(section_style)
+                parent_layout.addWidget(other_section)
+                self._build_poe1_other_links(parent_layout, QCheckBox, QSpinBox, checkbox_style)
+
+    def _build_poe1_other_links(self, parent_layout, QCheckBox, QSpinBox, checkbox_style):
+        if QSpinBox is None:
+            return
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(8)
+
+        enable_cb = QCheckBox("有効化")
+        enable_cb.setMinimumHeight(28)
+        enable_cb.setStyleSheet(checkbox_style + """
+            QCheckBox { padding: 4px 8px; }
+            QCheckBox::indicator { width: 20px; height: 20px; }
+        """)
+        enable_cb.toggled.connect(lambda _checked: self._poe1_other_links_changed())
+        self._poe1_other_links_checkbox = enable_cb
+        row.addWidget(enable_cb)
+        row.addStretch()
+        parent_layout.addLayout(row)
+
+        spin_style = f"""
+            QSpinBox {{
+                background: rgba(245,245,245,230); color: #111;
+                border: 1px solid rgba(176,255,123,0.45); border-radius: 3px;
+                padding: 4px 20px 4px 6px; font-size: 14px;
+            }}
+            QSpinBox::up-button {{
+                subcontrol-origin: border;
+                subcontrol-position: top right;
+                width: 16px;
+                height: 14px;
+                border-left: 1px solid rgba(0,0,0,0.35);
+                border-bottom: 1px solid rgba(0,0,0,0.25);
+                background: rgba(235,235,235,245);
+            }}
+            QSpinBox::down-button {{
+                subcontrol-origin: border;
+                subcontrol-position: bottom right;
+                width: 16px;
+                height: 14px;
+                border-left: 1px solid rgba(0,0,0,0.35);
+                background: rgba(225,225,225,245);
+            }}
+            QSpinBox::up-arrow {{
+                width: 0px; height: 0px;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-bottom: 5px solid #111;
+            }}
+            QSpinBox::down-arrow {{
+                width: 0px; height: 0px;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-top: 5px solid #111;
+            }}
+        """
+        color_row = QHBoxLayout()
+        color_row.setContentsMargins(24, 0, 0, 0)
+        color_row.setSpacing(8)
+        color_defs = [("R", "#c76a46"), ("G", "#b9c85a"), ("B", "#7f8fcf")]
+        self._poe1_other_link_spins = {}
+        for key, color in color_defs:
+            spin = QSpinBox()
+            spin.setRange(0, 6)
+            spin.setValue(0)
+            spin.setFixedSize(70, 32)
+            spin.setStyleSheet(spin_style)
+            spin.valueChanged.connect(lambda _value: self._poe1_other_links_changed())
+            self._poe1_other_link_spins[key] = spin
+            color_row.addWidget(spin)
+            label = QLabel(key.lower())
+            label.setStyleSheet(f"color: {color}; font-size: 16px; font-weight: bold; border: none;")
+            color_row.addWidget(label)
+        color_row.addStretch()
+        parent_layout.addLayout(color_row)
+
+    def _poe1_other_links_pattern(self):
+        if self.poe_version != POE1:
+            return ""
+        cb = getattr(self, "_poe1_other_links_checkbox", None)
+        spins = getattr(self, "_poe1_other_link_spins", {})
+        if cb is None or not cb.isChecked() or not spins:
+            return ""
+        counts = {key: spin.value() for key, spin in spins.items()}
+        total = sum(counts.values())
+        if total < 2 or total > 6:
+            return ""
+        # 参考サイト式: 全順列列挙ではなく、ソケット色数lookahead + 最低リンク条件で短く表現する。
+        # 例 G=4 → ts:.+(?=(\S*g){4})
+        # 例 R=1, G=4 → ts:.+(?=(\S*r){1})(?=(\S*g){4})
+        parts = ["ts:.+"]
+        color_counts = [
+            (color, counts.get(key, 0))
+            for key, color in (("R", "r"), ("G", "g"), ("B", "b"))
+            if counts.get(key, 0)
+        ]
+        for index, (color, count) in enumerate(color_counts):
+            is_last_of_three_colors = len(color_counts) == 3 and index == len(color_counts) - 1
+            if is_last_of_three_colors:
+                parts.append(f"(\\S*{color}){{{count}}}")
+            else:
+                parts.append(f"(?=(\\S*{color}){{{count}}})")
+        return "".join(parts)
+
+    def _poe1_other_links_changed(self):
+        if getattr(self, "_syncing", False):
+            return
+        self._regex_option_toggled("", True)
+
     def _clear_query(self):
         if getattr(self, "_syncing", False):
             return
@@ -1145,6 +1571,17 @@ class VendorSearchPresetDialog(QDialog):
                 cb.blockSignals(True)
                 cb.setChecked(False)
                 cb.blockSignals(False)
+            if self._poe1_other_links_checkbox is not None:
+                self._poe1_other_links_checkbox.blockSignals(True)
+                self._poe1_other_links_checkbox.setChecked(False)
+                self._poe1_other_links_checkbox.blockSignals(False)
+            for spin in getattr(self, "_poe1_other_link_spins", {}).values():
+                spin.blockSignals(True)
+                spin.setValue(0)
+                spin.blockSignals(False)
+            self._last_poe1_other_links_pattern = ""
+            self._last_poe1_generated_patterns = set()
+            self._last_poe1_selected_labels = set()
         finally:
             self._syncing = False
         self._editor_changed()
@@ -1479,11 +1916,241 @@ class VendorSearchPresetDialog(QDialog):
             return parts[0]
         return f"({'|'.join(parts)})"
 
+    def _poe1_helper_tokens(self):
+        if self.poe_version != POE1:
+            return []
+        return [token for _cb, token, _category in getattr(self, "option_checkboxes", []) if token]
+
+    def _poe1_token_alternatives(self, token):
+        token = (token or "").strip()
+        if not token:
+            return []
+        # PoE1の既存REGEXサイトに合わせ、OR式は括らずフラットな候補列として扱う。
+        return self._split_query_patterns(token) if "|" in token else [token]
+
+    def _poe1_pattern_matches_token(self, pattern, token):
+        pattern = (pattern or "").strip()
+        token = (token or "").strip()
+        if not pattern or not token:
+            return False
+        if pattern == token:
+            return True
+        if pattern.startswith("(") and pattern.endswith(")") and pattern[1:-1] == token:
+            return True
+        return pattern in self._poe1_token_alternatives(token)
+
+    def _expand_poe1_link_pattern(self, pattern):
+        """r-r-[gb] のような圧縮リンク表現を個別候補へ展開する。"""
+        pattern = (pattern or "").strip()
+        parts = pattern.split("-")
+        if len(parts) < 2:
+            return [pattern] if pattern else []
+        expanded = [""]
+        for part in parts:
+            if re.fullmatch(r"\[[rgb.]+\]", part):
+                choices = list(part[1:-1])
+            else:
+                choices = [part]
+            expanded = [f"{prefix}-{choice}" if prefix else choice for prefix in expanded for choice in choices]
+        return expanded
+
+    def _expanded_poe1_query_patterns(self):
+        expanded = []
+        for pattern in self._split_query_patterns(self._query_text()):
+            expanded.extend(self._expand_poe1_link_pattern(pattern))
+        return expanded
+
+    def _poe1_query_has_token(self, token):
+        query_patterns = set(self._expanded_poe1_query_patterns())
+        alternatives = set(self._poe1_token_alternatives(token))
+        if not alternatives:
+            return False
+        # 圧縮後の [gb] なども展開して、候補の全パターンが揃っていたらチェックONに戻す。
+        return alternatives.issubset(query_patterns)
+
+    def _poe1_any_link_level(self, label):
+        match = re.fullmatch(r"Any (\d+) link", (label or "").strip())
+        return int(match.group(1)) if match else 0
+
+    def _compress_poe1_any_link_entries(self, entries):
+        """Any 3/4/5/6 link は大きいリンク数が小さいリンク数を包含する。"""
+        if not entries:
+            return []
+        level, token = max(entries, key=lambda item: item[0])
+        return self._poe1_token_alternatives(token)
+
+    def _poe1_color_sort_key(self, value):
+        # 参考サイトの出力に寄せる（例: [gr], [gb]）。
+        order = {"g": 0, "r": 1, "b": 2, ".": 3}
+        return order.get(value, 99)
+
+    def _poe1_color_class(self, values):
+        return "[" + "".join(sorted(set(values), key=self._poe1_color_sort_key)) + "]"
+
+    def _poe1_simple_3link_label(self, label):
+        label = (label or "").strip().lower()
+        return label if re.fullmatch(r"[rgb]{3}", label) else ""
+
+    def _poe1_majority_and_minority_color(self, label):
+        label = self._poe1_simple_3link_label(label)
+        if not label:
+            return "", ""
+        counts = {color: label.count(color) for color in "rgb"}
+        majority = next((color for color, count in counts.items() if count == 2), "")
+        minority = next((color for color, count in counts.items() if count == 1), "")
+        return majority, minority
+
+    def _compress_poe1_link_color_entries(self, entries):
+        """Link colors (3L) の選択を参考サイト風に圧縮する。"""
+        labels = [(label, token) for label, token in entries if self._poe1_simple_3link_label(label)]
+        if len(labels) == 2:
+            (label1, token1), (label2, token2) = labels
+            maj1, min1 = self._poe1_majority_and_minority_color(label1)
+            maj2, min2 = self._poe1_majority_and_minority_color(label2)
+            if maj1 and maj2:
+                # rrb + rrg → r-r-[gb]|r-[gb]-r|[gb]-r-r
+                if maj1 == maj2 and min1 != min2:
+                    cls = self._poe1_color_class([min1, min2])
+                    return [f"{maj1}-{maj1}-{cls}", f"{maj1}-{cls}-{maj1}", f"{cls}-{maj1}-{maj1}"]
+                # rrg + ggr → g-[gr]-r|r-[gr]-g|g-r-g|r-g-r
+                if {maj1, min1} == {maj2, min2} and maj1 != maj2:
+                    a = maj1
+                    b = maj2
+                    cls = self._poe1_color_class([a, b])
+                    return [f"{b}-{cls}-{a}", f"{a}-{cls}-{b}", f"{b}-{a}-{b}", f"{a}-{b}-{a}"]
+        flat = []
+        for _label, token in entries:
+            flat.extend(self._poe1_token_alternatives(token))
+        return self._compress_poe1_link_patterns(flat)
+
+    def _dedupe_poe1_covered_link_patterns(self, patterns):
+        """ワイルドカード系リンク表現が包含する具体候補を削る。
+
+        例: rr* の `r-r-|-r-r|r-.-r` は r-r-r を含むので、rrrを同時選択しても追加しない。
+        """
+        patterns = [p for p in patterns if p]
+        covered_by_wildcards = set()
+        for pattern in patterns:
+            parts = pattern.split("-")
+            if len(parts) < 2:
+                continue
+            wildcard_positions = [i for i, part in enumerate(parts) if part in ("", ".")]
+            if not wildcard_positions:
+                continue
+            concrete_parts = [part for part in parts if part not in ("", ".")]
+            if not concrete_parts:
+                continue
+            for wildcard_color in "rgb":
+                expanded = [wildcard_color if part in ("", ".") else part for part in parts]
+                covered_by_wildcards.add("-".join(expanded))
+        return [pattern for pattern in patterns if pattern not in covered_by_wildcards]
+
+    def _compress_poe1_link_patterns(self, patterns):
+        """r-r-b + r-r-g のような同形リンク候補を r-r-[gb] に圧縮する。"""
+        remaining = list(patterns)
+        compressed = []
+        changed = True
+        color_re = re.compile(r"^[rgb.]$")
+
+        while changed:
+            changed = False
+            used = set()
+            best_group = None
+
+            for length in sorted({len(p.split("-")) for p in remaining if "-" in p}, reverse=True):
+                length_patterns = [(i, p, p.split("-")) for i, p in enumerate(remaining) if len(p.split("-")) == length]
+                for pos in reversed(range(length)):
+                    groups = {}
+                    for i, pattern, parts in length_patterns:
+                        if i in used or not all(color_re.fullmatch(part) for part in parts):
+                            continue
+                        key = tuple(part if idx != pos else "*" for idx, part in enumerate(parts))
+                        groups.setdefault(key, []).append((i, parts[pos], parts))
+                    for key, entries in groups.items():
+                        values = {value for _i, value, _parts in entries}
+                        if len(values) >= 2 and len(entries) > 1:
+                            best_group = (pos, key, entries)
+                            break
+                    if best_group:
+                        break
+                if best_group:
+                    break
+
+            if not best_group:
+                break
+
+            pos, _key, entries = best_group
+            indexes = {i for i, _value, _parts in entries}
+            base_parts = list(entries[0][2])
+            values = sorted({value for _i, value, _parts in entries}, key=self._poe1_color_sort_key)
+            base_parts[pos] = f"[{''.join(values)}]"
+            compressed.append("-".join(base_parts))
+            remaining = [p for i, p in enumerate(remaining) if i not in indexes]
+            changed = True
+
+        return remaining + compressed
+
+    def _regenerate_poe1_query_from_helper_checkboxes(self):
+        manual_patterns = [
+            pattern for pattern in self._split_query_patterns(self._query_text())
+            if not self._is_helper_generated_pattern(pattern)
+        ]
+        helper_patterns = []
+        link_color_entries = []
+        any_link_entries = []
+        selected_labels = set()
+        selected_options = []
+        for cb, token, category in getattr(self, "option_checkboxes", []):
+            if not cb.isChecked():
+                continue
+            label = self._poe1_checkbox_label_key(cb)
+            selected_labels.add((category, label))
+            selected_options.append((label, token, category))
+            any_link_level = self._poe1_any_link_level(label) if category == "Any links" else 0
+            if any_link_level:
+                any_link_entries.append((any_link_level, token))
+
+        max_any_link_level = max((level for level, _token in any_link_entries), default=0)
+        any_link_covers_color_links = max_any_link_level >= 3
+        for label, token, category in selected_options:
+            if category == "Any links" and self._poe1_any_link_level(label):
+                continue
+            # Any 3+ link は 2L/3L の具体色指定も包含するので、出力には足さない。
+            if any_link_covers_color_links and category in ("Link colors (3L)", "Link colors (2L)"):
+                continue
+            if category == "Link colors (3L)" and self._poe1_simple_3link_label(label):
+                link_color_entries.append((label, token))
+                continue
+            helper_patterns.extend(self._poe1_token_alternatives(token))
+        if link_color_entries:
+            helper_patterns.extend(self._compress_poe1_link_color_entries(link_color_entries))
+        if any_link_entries:
+            helper_patterns.extend(self._compress_poe1_any_link_entries(any_link_entries))
+        other_links_pattern = self._poe1_other_links_pattern()
+        if other_links_pattern:
+            helper_patterns.extend(self._poe1_token_alternatives(other_links_pattern))
+        helper_patterns = self._dedupe_poe1_covered_link_patterns(helper_patterns)
+        helper_patterns = self._compress_poe1_link_patterns(helper_patterns)
+        self._last_poe1_other_links_pattern = other_links_pattern
+        self._last_poe1_generated_patterns = set(helper_patterns)
+        self._last_poe1_selected_labels = selected_labels
+        self.query_edit.setPlainText(self._join_query_patterns(manual_patterns + helper_patterns))
+
     def _is_helper_generated_pattern(self, pattern):
         if not pattern:
             return False
+        if pattern in getattr(self, "_last_poe1_generated_patterns", set()):
+            return True
         helper_tokens = {token for _cb, token, _category in getattr(self, "option_checkboxes", [])}
+        if self.poe_version == POE1:
+            if any(self._poe1_pattern_matches_token(pattern, token) for token in helper_tokens):
+                return True
+            last_other = getattr(self, "_last_poe1_other_links_pattern", "")
+            if last_other and self._poe1_pattern_matches_token(pattern, last_other):
+                return True
         if pattern in helper_tokens:
+            return True
+        if pattern == getattr(self, "_last_poe1_other_links_pattern", ""):
             return True
         if pattern in self._all_combined_damage_patterns():
             return True
@@ -1514,6 +2181,9 @@ class VendorSearchPresetDialog(QDialog):
         return selected
 
     def _regenerate_query_from_helper_checkboxes(self):
+        if self.poe_version == POE1:
+            self._regenerate_poe1_query_from_helper_checkboxes()
+            return
         manual_query = self._strip_helper_generated_patterns(self._query_text())
         patterns = self._split_query_patterns(manual_query)
         selected = self._selected_helper_tokens_from_checkboxes()
@@ -1530,6 +2200,10 @@ class VendorSearchPresetDialog(QDialog):
             if mod_or_expr:
                 patterns.append(mod_or_expr)
         patterns.extend(selected["other"])
+        other_links_pattern = self._poe1_other_links_pattern() if self.poe_version == POE1 else ""
+        if other_links_pattern:
+            patterns.append(other_links_pattern)
+        self._last_poe1_other_links_pattern = other_links_pattern
         self.query_edit.setPlainText(self._join_query_patterns(patterns))
 
     def _regex_option_toggled(self, token, checked):
@@ -1545,6 +2219,24 @@ class VendorSearchPresetDialog(QDialog):
 
     def _refresh_regex_checkboxes(self):
         query = self._query_text()
+        if self.poe_version == POE1:
+            selected_labels = getattr(self, "_last_poe1_selected_labels", set())
+            generated_patterns = getattr(self, "_last_poe1_generated_patterns", set())
+            current_patterns = set(self._split_query_patterns(self._query_text()))
+            use_label_state = bool(current_patterns) and bool(selected_labels) and generated_patterns.issubset(current_patterns)
+            for cb, token, category in getattr(self, "option_checkboxes", []):
+                cb.blockSignals(True)
+                if use_label_state:
+                    cb.setChecked((category, self._poe1_checkbox_label_key(cb)) in selected_labels)
+                else:
+                    cb.setChecked(self._poe1_query_has_token(token))
+                cb.blockSignals(False)
+            other_cb = getattr(self, "_poe1_other_links_checkbox", None)
+            if other_cb is not None:
+                other_cb.blockSignals(True)
+                other_cb.setChecked(bool(getattr(self, "_last_poe1_other_links_pattern", "") and self._poe1_query_has_token(self._last_poe1_other_links_pattern)))
+                other_cb.blockSignals(False)
+            return
         and_base_tokens = self._and_base_tokens_from_query()
         or_base_tokens = self._or_base_tokens_from_query()
         for cb, token, category in getattr(self, "option_checkboxes", []):
@@ -1584,7 +2276,7 @@ class VendorSearchPresetDialog(QDialog):
             except Exception as e:
                 print(f"[VendorSearchPresetDialog] Failed to load presets: {e}")
         if not presets:
-            presets = self.DEFAULT_PRESETS
+            presets = self._default_presets()
         self.table.setRowCount(0)
         for preset in presets:
             self._append_preset(preset)
@@ -1886,6 +2578,9 @@ class MainWindow(QMainWindow):
         self.lap_times = [None] * len(self.lap_labels)
         self.lap_record_order = []
         self.current_act = 1
+        self.current_zone_act = 1  # 現在エリアから判定したAct（ジェム取得表示の自動追従用）
+        self.gem_tracker_popup = None
+        self._last_search_target_hwnd = None
         
         self.setup_ui()
         self.map_thumbnail.auto_open = self.config.get("auto_open_map", False)
@@ -2121,6 +2816,7 @@ class MainWindow(QMainWindow):
         if dialog.exec():
             routes = dialog.get_routes()
             self.config.update(routes)
+            self.config["poe1_route_selected"] = True
             ConfigManager.save_config(self.config)
 
     def eventFilter(self, obj, event):
@@ -2669,8 +3365,20 @@ class MainWindow(QMainWindow):
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet("""
             QScrollArea { border: none; background: transparent; }
-            QScrollBar:vertical { width: 6px; background: transparent; }
-            QScrollBar::handle:vertical { background: rgba(176,255,123,0.3); border-radius: 3px; }
+            QScrollBar:vertical {
+                width: 16px;
+                background: rgba(176,255,123,0.08);
+                border-radius: 7px;
+                margin: 0 2px;
+            }
+            QScrollBar::handle:vertical {
+                min-height: 36px;
+                background: rgba(176,255,123,0.55);
+                border-radius: 7px;
+            }
+            QScrollBar::handle:vertical:hover { background: rgba(176,255,123,0.85); }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { width: 0; height: 0; }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
         """)
         
         self.guide_text_label = QLabel("エリアに入場すると攻略ガイドが表示されます")
@@ -2685,7 +3393,54 @@ class MainWindow(QMainWindow):
         guide_text_layout.addWidget(scroll)
         
         self.guide_text_frame = guide_text_frame
-        guide_container_layout.addWidget(self.guide_text_frame, stretch=3)
+
+        # ガイドテキストと下部セクション（マップ/ジェム取得）の高さをドラッグで調整
+        self.guide_body_splitter = QSplitter(Qt.Vertical)
+        self.guide_body_splitter.setChildrenCollapsible(False)
+        self.guide_body_splitter.setHandleWidth(8)
+        self.guide_body_splitter.setStyleSheet(f"""
+            QSplitter::handle:vertical {{
+                background: rgba(176, 255, 123, 0.12);
+                border-top: 1px solid rgba(176, 255, 123, 0.28);
+                border-bottom: 1px solid rgba(176, 255, 123, 0.28);
+                margin: 1px 0;
+            }}
+            QSplitter::handle:vertical:hover {{
+                background: rgba(176, 255, 123, 0.30);
+            }}
+        """)
+        self.guide_body_splitter.addWidget(self.guide_text_frame)
+
+        self.guide_lower_widget = QWidget()
+        guide_lower_layout = QVBoxLayout(self.guide_lower_widget)
+        guide_lower_layout.setContentsMargins(0, 0, 0, 0)
+        guide_lower_layout.setSpacing(5)
+        self.guide_body_splitter.addWidget(self.guide_lower_widget)
+        self.guide_body_splitter.setStretchFactor(0, 3)
+        self.guide_body_splitter.setStretchFactor(1, 1)
+        self.guide_body_splitter.splitterMoved.connect(self._on_guide_body_splitter_moved)
+        guide_container_layout.addWidget(self.guide_body_splitter, stretch=1)
+        
+        # ── マップサムネイル一覧 ──
+        # マップ折りたたみトグル
+        self.map_toggle_btn = QPushButton("▼ マップ")
+        self.map_toggle_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; color: {Styles.TEXT_COLOR};
+                border: none; font-size: 11px; font-weight: bold;
+                text-align: left; padding: 2px 5px;
+            }}
+            QPushButton:hover {{ color: #ffffff; }}
+        """)
+        self.map_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.map_toggle_btn.clicked.connect(self.toggle_map_section)
+        self.map_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.map_toggle_btn.setMinimumHeight(30)
+        guide_lower_layout.addWidget(self.map_toggle_btn)
+        
+        self.map_thumbnail = MapThumbnailWidget()
+        self.map_thumbnail.setVisible(False)
+        guide_lower_layout.addWidget(self.map_thumbnail, stretch=0)
         
         # ── ジェム取得タイミング表示 ──
         # ジェムトラッカー折りたたみトグル
@@ -2702,7 +3457,7 @@ class MainWindow(QMainWindow):
         self.gem_tracker_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.gem_tracker_toggle_btn.clicked.connect(self.toggle_gem_tracker)
         self.gem_tracker_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        guide_container_layout.addWidget(self.gem_tracker_toggle_btn)
+        guide_lower_layout.addWidget(self.gem_tracker_toggle_btn)
         
         # ジェムトラッカーコンテナ
         self.gem_tracker_frame = QFrame()
@@ -2735,15 +3490,34 @@ class MainWindow(QMainWindow):
         pob_btn_layout.addWidget(self.pob_import_btn)
         
         # PoBクリアボタン
-        self.pob_clear_btn = QPushButton("✕")
-        self.pob_clear_btn.setFixedSize(22, 22)
+        self.pob_clear_btn = QPushButton("データクリア")
+        self.pob_clear_btn.setMinimumHeight(22)
         self.pob_clear_btn.setStyleSheet(f"""
-            QPushButton {{ background: transparent; color: #888; border: none; font-size: 12px; }}
-            QPushButton:hover {{ color: #ff6666; }}
+            QPushButton {{
+                background: rgba(255,102,102,0.10); color: #ff8888;
+                border: 1px solid rgba(255,102,102,0.45); border-radius: 3px;
+                padding: 3px 8px; font-size: 11px; font-weight: bold;
+            }}
+            QPushButton:hover {{ background: rgba(255,102,102,0.22); color: #ffaaaa; }}
         """)
         self.pob_clear_btn.setToolTip("PoBデータをクリア")
         self.pob_clear_btn.clicked.connect(self._on_pob_clear)
         pob_btn_layout.addWidget(self.pob_clear_btn)
+
+        self.gem_popout_btn = QPushButton("↗ ポップアウト")
+        self.gem_popout_btn.setMinimumHeight(22)
+        self.gem_popout_btn.setToolTip("ジェム取得リストを別ウィンドウで開く")
+        self.gem_popout_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: rgba(176,255,123,0.12); color: {Styles.TEXT_COLOR};
+                border: 1px solid rgba(176,255,123,0.45); border-radius: 3px;
+                padding: 3px 8px; font-size: 11px; font-weight: bold;
+            }}
+            QPushButton:hover {{ background: rgba(176,255,123,0.25); }}
+        """)
+        self.gem_popout_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.gem_popout_btn.clicked.connect(self.open_gem_tracker_popup)
+        pob_btn_layout.addWidget(self.gem_popout_btn)
         
         pob_btn_layout.addStretch()
         gem_tracker_layout.addLayout(pob_btn_layout)
@@ -2751,36 +3525,24 @@ class MainWindow(QMainWindow):
         # ジェムトラッカーウィジェット
         self.gem_tracker = GemTrackerWidget()
         self.gem_tracker.gem_checked.connect(self._on_gem_checked)
+        self.gem_tracker.gem_search_requested.connect(self.search_gem_in_poe)
         gem_tracker_layout.addWidget(self.gem_tracker)
         
         # 保存済みPoBデータがあれば復元
-        if self.config.get("pob_data"):
+        if self._has_pob_import_data():
             self._update_gem_tracker()
         
         self.gem_tracker_frame.setVisible(self.gem_tracker_expanded and self.poe_version == POE1)
         self.gem_tracker_toggle_btn.setVisible(self.poe_version == POE1)
-        guide_container_layout.addWidget(self.gem_tracker_frame, stretch=1)
-        
-        # ── マップサムネイル一覧 ──
-        # マップ折りたたみトグル
-        self.map_toggle_btn = QPushButton("▼ マップ")
-        self.map_toggle_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: transparent; color: {Styles.TEXT_COLOR};
-                border: none; font-size: 11px; font-weight: bold;
-                text-align: left; padding: 2px 5px;
-            }}
-            QPushButton:hover {{ color: #ffffff; }}
-        """)
-        self.map_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.map_toggle_btn.clicked.connect(self.toggle_map_section)
-        self.map_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self.map_toggle_btn.setMinimumHeight(30)
-        guide_container_layout.addWidget(self.map_toggle_btn)
-        
-        self.map_thumbnail = MapThumbnailWidget()
-        self.map_thumbnail.setVisible(False)
-        guide_container_layout.addWidget(self.map_thumbnail, stretch=0)
+        guide_lower_layout.addWidget(self.gem_tracker_frame, stretch=1)
+
+        saved_splitter_sizes = self.config.get("guide_body_splitter_sizes")
+        if (
+            isinstance(saved_splitter_sizes, list)
+            and len(saved_splitter_sizes) == 2
+            and all(isinstance(v, int) and v > 0 for v in saved_splitter_sizes)
+        ):
+            QTimer.singleShot(0, lambda sizes=saved_splitter_sizes: self.guide_body_splitter.setSizes(sizes))
         
         layout.addWidget(self.guide_container, stretch=1)
         
@@ -2802,6 +3564,20 @@ class MainWindow(QMainWindow):
         super().resizeEvent(event)
         if hasattr(self, 'size_grip'):
             self.size_grip.move(self.width() - 18, self.height() - 18)
+
+    def _adjust_height_keep_width(self):
+        """折りたたみ操作時に、現在の横幅を維持したまま高さだけ再調整する。"""
+        current_width = self.width()
+        self.adjustSize()
+        if self.width() != current_width:
+            self.resize(current_width, self.height())
+
+    def _on_guide_body_splitter_moved(self, _pos: int, _index: int):
+        """ガイドテキスト欄のドラッグ調整位置を保存する。"""
+        if not hasattr(self, "guide_body_splitter"):
+            return
+        self.config["guide_body_splitter_sizes"] = self.guide_body_splitter.sizes()
+        ConfigManager.save_config(self.config)
 
     def _part2_btn_style(self):
         if self.part2_mode:
@@ -3018,7 +3794,7 @@ class MainWindow(QMainWindow):
             self.timer_size = restored_size
             self._apply_timer_size()
         ConfigManager.save_config(self.config)
-        self.adjustSize()
+        self._adjust_height_keep_width()
     
     def toggle_lap(self):
         """ラップタイム表示の折りたたみ/展開"""
@@ -3027,7 +3803,7 @@ class MainWindow(QMainWindow):
         self.lap_toggle_btn.setText("▼ ラップタイム" if self.lap_expanded else "▶ ラップタイム")
         self.config["lap_expanded"] = self.lap_expanded
         ConfigManager.save_config(self.config)
-        self.adjustSize()
+        self._adjust_height_keep_width()
     
     def toggle_gem_tracker(self):
         """ジェム取得リストの折りたたみ/展開"""
@@ -3038,7 +3814,16 @@ class MainWindow(QMainWindow):
         self.gem_tracker_toggle_btn.setText("▼ ジェム取得" if self.gem_tracker_expanded else "▶ ジェム取得")
         self.config["gem_tracker_expanded"] = self.gem_tracker_expanded
         ConfigManager.save_config(self.config)
-        self.adjustSize()
+        self._adjust_height_keep_width()
+
+    def _load_pob_import_state(self):
+        return ConfigManager.load_pob_import_data()
+
+    def _current_pob_data(self):
+        return self._load_pob_import_state().get("pob_data")
+
+    def _has_pob_import_data(self):
+        return bool(self._current_pob_data())
 
     def _on_pob_import(self):
         """PoBインポートボタンのクリックハンドラ"""
@@ -3053,9 +3838,11 @@ class MainWindow(QMainWindow):
                     QMessageBox.warning(self, "インポートエラー", "PoBコードからジェム情報を取得できませんでした。")
                     return
 
-                # config に保存
-                self.config["pob_data"] = result
-                self.config["pob_code"] = pob_code
+                # PoBインポート結果は設定ではなく専用JSONへ保存
+                ConfigManager.save_pob_import_data({"pob_data": result, "pob_code": pob_code})
+                # 旧バージョンでconfig.jsonに入っていた場合は掃除する
+                self.config.pop("pob_data", None)
+                self.config.pop("pob_code", None)
                 ConfigManager.save_config(self.config)
 
                 # ジェム取得リストを更新
@@ -3069,12 +3856,12 @@ class MainWindow(QMainWindow):
 
     def _update_gem_tracker(self):
         """ジェム取得リストを現在のActに基づいて更新"""
-        pob_data = self.config.get("pob_data")
+        pob_data = self._current_pob_data()
         if not pob_data:
             return
 
-        use_library = self.config.get("poe1_route_act3", "standard") == "library_detour"
-        checked_gems = self.config.get("gem_tracker_checked", [])
+        use_library = ConfigManager.effective_poe1_route_act3(self.config) == "library_detour"
+        checked_gems = self._load_pob_import_state().get("gem_tracker_checked", [])
 
         # PoBデータからジェム名リストを抽出
         gem_names = []
@@ -3090,32 +3877,66 @@ class MainWindow(QMainWindow):
             library_route=use_library,
         )
 
-        self.gem_tracker.set_library_route(use_library)
-        self.gem_tracker._checked_gems = set(checked_gems)
-        self.gem_tracker.set_acquisition_plan(
+        self._apply_gem_tracker_data(self.gem_tracker, plan, pob_data, use_library, checked_gems)
+        if self.gem_tracker_popup is not None:
+            self._apply_gem_tracker_data(self.gem_tracker_popup.gem_tracker, plan, pob_data, use_library, checked_gems)
+
+    def _apply_gem_tracker_data(self, widget: GemTrackerWidget, plan: list, pob_data: dict, use_library: bool, checked_gems: list):
+        """GemTrackerWidgetへ現在のPoB/チェック/Act状態を反映する。"""
+        widget.set_library_route(use_library)
+        widget._checked_gems = set(checked_gems)
+        widget.set_acquisition_plan(
             plan=plan,
             char_class=pob_data.get("class", ""),
             ascendancy=pob_data.get("ascendancy", ""),
         )
-        self.gem_tracker.set_current_act(self.current_act)
+        widget.set_current_act(getattr(self, "current_zone_act", self.current_act))
+
+    def _sync_gem_tracker_checked_state(self):
+        """本体/ポップアウト間でチェック状態を同期する。"""
+        checked = set(self._load_pob_import_state().get("gem_tracker_checked", []))
+        if hasattr(self, "gem_tracker"):
+            self.gem_tracker.set_checked_gems(checked)
+        if self.gem_tracker_popup is not None:
+            self.gem_tracker_popup.gem_tracker.set_checked_gems(checked)
+
+    def open_gem_tracker_popup(self):
+        """ジェム取得リストを別ウィンドウで開く。"""
+        if self.gem_tracker_popup is None:
+            self.gem_tracker_popup = GemTrackerPopupDialog(self)
+            self.gem_tracker_popup.gem_tracker.gem_checked.connect(self._on_gem_checked)
+            self.gem_tracker_popup.gem_tracker.gem_search_requested.connect(self.search_gem_in_poe)
+            self.gem_tracker_popup.destroyed.connect(lambda _obj=None: setattr(self, "gem_tracker_popup", None))
+            if self._has_pob_import_data():
+                self._update_gem_tracker()
+        self.gem_tracker_popup.show()
+        self.gem_tracker_popup.raise_()
+        self.gem_tracker_popup.activateWindow()
 
     def _on_pob_clear(self):
         """PoBデータをクリア"""
+        ConfigManager.clear_pob_import_data()
         self.config.pop("pob_data", None)
         self.config.pop("pob_code", None)
         self.config.pop("gem_tracker_checked", None)
         ConfigManager.save_config(self.config)
         self.gem_tracker.clear()
+        if self.gem_tracker_popup is not None:
+            self.gem_tracker_popup.gem_tracker.clear()
 
     def _on_gem_checked(self, gem_name: str, checked: bool):
         """ジェムチェックボックスの状態変更ハンドラ"""
-        checked_gems = self.config.get("gem_tracker_checked", [])
+        pob_state = self._load_pob_import_state()
+        checked_gems = list(pob_state.get("gem_tracker_checked", []))
         if checked and gem_name not in checked_gems:
             checked_gems.append(gem_name)
         elif not checked and gem_name in checked_gems:
             checked_gems.remove(gem_name)
-        self.config["gem_tracker_checked"] = checked_gems
+        pob_state["gem_tracker_checked"] = checked_gems
+        ConfigManager.save_pob_import_data(pob_state)
+        self.config.pop("gem_tracker_checked", None)
         ConfigManager.save_config(self.config)
+        self._sync_gem_tracker_checked_state()
 
     def toggle_guide(self):
         """ガイドエリアの折りたたみ/展開をトグル"""
@@ -3124,21 +3945,21 @@ class MainWindow(QMainWindow):
         # config保存
         self.config["guide_expanded"] = self.guide_expanded
         ConfigManager.save_config(self.config)
-        self.adjustSize()
+        self._adjust_height_keep_width()
     
     def toggle_zone_header(self):
         """ゾーンヘッダーの折りたたみ/展開"""
         self.zone_header_expanded = not self.zone_header_expanded
         self.guide_info_frame.setVisible(self.zone_header_expanded)
         self.zone_header_toggle_btn.setText("▼ ゾーン情報" if self.zone_header_expanded else "▶ ゾーン情報")
-        self.adjustSize()
+        self._adjust_height_keep_width()
     
     def toggle_guide_text(self):
         """ガイドテキストの折りたたみ/展開"""
         self.guide_text_expanded = not self.guide_text_expanded
         self.guide_text_frame.setVisible(self.guide_text_expanded)
         self.guide_text_toggle_btn.setText("▼ ガイドテキスト" if self.guide_text_expanded else "▶ ガイドテキスト")
-        self.adjustSize()
+        self._adjust_height_keep_width()
     
     def _guide_detail_level_toggle_text(self):
         """現在のガイド表示レベルからトグルボタン文言を返す。"""
@@ -3177,7 +3998,7 @@ class MainWindow(QMainWindow):
         else:
             self.map_thumbnail.setVisible(False)
         self.map_toggle_btn.setText("▼ マップ" if self.map_section_expanded else "▶ マップ")
-        self.adjustSize()
+        self._adjust_height_keep_width()
     
     def _apply_guide_visibility(self):
         """ガイドの表示/非表示を適用"""
@@ -3415,7 +4236,7 @@ class MainWindow(QMainWindow):
         
         self.update_lap_display()
         # ジェムトラッカーをAct変更に連動
-        if self.config.get("pob_data"):
+        if self._has_pob_import_data():
             self._update_gem_tracker()
 
     def record_lap_at(self, lap_num: int):
@@ -3433,7 +4254,7 @@ class MainWindow(QMainWindow):
         else:
             self._refresh_current_lap_index()
         self.update_lap_display()
-        if self.config.get("pob_data"):
+        if self._has_pob_import_data():
             self._update_gem_tracker()
     
     def undo_lap(self):
@@ -3628,6 +4449,8 @@ class MainWindow(QMainWindow):
         # 既存メニュー表示中にもう一度ホットキーを押した場合、前面ウィンドウは旧メニューに
         # なりやすい。旧メニューが持っていたPoEウィンドウを復帰先として引き継ぐ。
         target_hwnd = previous_target_hwnd or get_foreground_window()
+        if target_hwnd:
+            self._last_search_target_hwnd = target_hwnd
         choices = self._load_vendor_search_presets(enabled_only=True)
         if not choices:
             QMessageBox.information(self, "ベンダー検索", "有効なベンダー検索プリセットがありません。")
@@ -3645,11 +4468,18 @@ class MainWindow(QMainWindow):
         self._search_string_test_dialog.raise_()
         self._search_string_test_dialog.activateWindow()
 
-    def _vendor_search_presets_path(self):
-        return str(ConfigManager.get_user_data_path("vendor_search_presets.json"))
+    def _vendor_search_presets_path(self, poe_version: str | None = None):
+        version = poe_version or getattr(self, "poe_version", POE2)
+        if version == POE1:
+            return str(ConfigManager.get_user_data_path("vendor_search_presets_poe1.json"))
+        # PoE2は旧 vendor_search_presets.json から新ファイルへ一度だけ移行し、以後は新名で入出力する。
+        return str(ConfigManager.migrate_renamed_user_file(
+            "vendor_search_presets.json",
+            "vendor_search_presets_poe2.json",
+        ))
 
     def _load_vendor_search_presets(self, enabled_only=False):
-        path = self._vendor_search_presets_path()
+        path = self._vendor_search_presets_path(self.poe_version)
         presets = []
         if os.path.exists(path):
             try:
@@ -3659,7 +4489,7 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 print(f"[VENDOR SEARCH] Failed to load presets: {e}")
         if not presets:
-            presets = VendorSearchPresetDialog.DEFAULT_PRESETS
+            presets = VendorSearchPresetDialog.POE1_DEFAULT_PRESETS if self.poe_version == POE1 else VendorSearchPresetDialog.DEFAULT_PRESETS
         normalized = []
         for preset in presets:
             name = str(preset.get("name", "")).strip()
@@ -3681,8 +4511,81 @@ class MainWindow(QMainWindow):
             self._vendor_search_dialog.show()
             self._vendor_search_dialog.raise_()
             return
-        self._vendor_search_dialog = VendorSearchPresetDialog(self, presets_path=self._vendor_search_presets_path())
+        self._vendor_search_dialog = VendorSearchPresetDialog(
+            self,
+            presets_path=self._vendor_search_presets_path(self.poe_version),
+            poe_version=self.poe_version,
+        )
         self._vendor_search_dialog.show()
+
+    # --- PoE検索欄貼り付け ---
+    def paste_text_to_poe_search(self, text: str, target_hwnd=None):
+        """対象ウィンドウへ戻して Ctrl+F → 検索文字列貼り付けを行う。"""
+        if not text:
+            return
+        target_hwnd = target_hwnd or getattr(self, "_last_search_target_hwnd", None)
+        if not target_hwnd:
+            foreground = get_foreground_window()
+            app = QApplication.instance()
+            own_hwnds = set()
+            if app is not None:
+                for widget in app.topLevelWidgets():
+                    try:
+                        own_hwnds.add(int(widget.winId()))
+                    except RuntimeError:
+                        pass
+            if foreground and int(foreground) in own_hwnds:
+                target_hwnd = get_next_visible_window_after(foreground, skip_current_process=True)
+            else:
+                target_hwnd = foreground
+        clipboard = QApplication.clipboard()
+        clipboard.setText(text)
+        QApplication.processEvents()
+        time.sleep(0.05)
+
+        if not target_hwnd:
+            QMessageBox.warning(self, "検索文字列の貼り付け", "復帰先ウィンドウを取得できませんでした。文字列はクリップボードへコピー済みです。")
+            return
+
+        if not focus_window(target_hwnd, wait_seconds=0.45):
+            QMessageBox.warning(
+                self,
+                "検索文字列の貼り付け",
+                "元のウィンドウを前面化できませんでした。文字列はクリップボードへコピー済みです。",
+            )
+            return
+
+        self._last_search_target_hwnd = target_hwnd
+        QTimer.singleShot(450, lambda: self._paste_to_poe_search_field(text))
+
+    def _paste_to_poe_search_field(self, text: str):
+        try:
+            controller = pynput_keyboard.Controller()
+            ctrl = pynput_keyboard.Key.ctrl
+
+            def tap(key):
+                controller.press(key)
+                controller.release(key)
+
+            with controller.pressed(ctrl):
+                tap('f')
+            time.sleep(0.15)
+            with controller.pressed(ctrl):
+                tap('a')
+            time.sleep(0.08)
+            tap(pynput_keyboard.Key.backspace)
+            time.sleep(0.08)
+            with controller.pressed(ctrl):
+                tap('v')
+            time.sleep(0.08)
+            tap(pynput_keyboard.Key.enter)
+            print(f"[POE SEARCH] pasted: {text}")
+        except Exception as exc:
+            print(f"[POE SEARCH] paste failed: {exc}")
+
+    def search_gem_in_poe(self, gem_name: str):
+        """ジェム取得リストのジェム名クリックからPoE検索欄へ貼り付ける。"""
+        self.paste_text_to_poe_search(gem_name)
 
     # --- チャットコマンド ---
     def execute_chat_command(self, command: str):
@@ -3826,6 +4729,22 @@ class MainWindow(QMainWindow):
         """表示用のエリア名表記を整える"""
         return re.sub(r"^アクト\s*([0-9０-９]+)$", r"Act \1", zone_name)
 
+    def _sync_gem_tracker_act_from_zone_act(self, act_name: str | None):
+        """現在エリアのActにジェム取得リストを自動追従させる。"""
+        if self.poe_version != POE1 or not act_name:
+            return
+        m = re.search(r"Act\s*(\d+)", act_name)
+        if not m:
+            return
+        act = int(m.group(1))
+        if not 1 <= act <= 10:
+            return
+        self.current_zone_act = act
+        if hasattr(self, "gem_tracker"):
+            self.gem_tracker.set_current_act(act)
+        if self.gem_tracker_popup is not None:
+            self.gem_tracker_popup.gem_tracker.set_current_act(act)
+
     def on_zone_entered(self, zone_name: str, actual_entry: bool = True):
         """エリア入場検知
 
@@ -3833,6 +4752,12 @@ class MainWindow(QMainWindow):
         訪問回数・自動ラップ・マップ自動表示など、実際のエリア移動時だけの副作用を抑止する。
         """
         display_zone_name = self._format_zone_display_name(zone_name)
+        print(
+            f"[DEBUG] ENTER start: zone={zone_name}, actual_entry={actual_entry}, "
+            f"poe={self.poe_version}, restoring={self._restoring}, "
+            f"last_before={getattr(self, '_last_visit_key', None)}, "
+            f"visited_town_before={getattr(self, '_visited_town', False)}"
+        )
         if actual_entry and self.poe_version == POE2 and zone_name in ("川岸", "The Riverbank") and not self._restoring:
             self.clear_progress_flags()
             self.player_level = 1
@@ -3857,7 +4782,13 @@ class MainWindow(QMainWindow):
         if self._is_town_zone(zone_name):
             if actual_entry:
                 self._visited_town = True  # 街通過フラグ（always_count_zones用）
-            print(f"[DEBUG] TOWN zone={zone_name}, visited_town=True, last_visit_key={getattr(self, '_last_visit_key', None)}")
+            print(
+                f"[DEBUG] TOWN: zone={zone_name}, actual_entry={actual_entry}, "
+                f"set_visited_town={actual_entry}, last_kept={getattr(self, '_last_visit_key', None)}, "
+                f"counts={self.zone_visit_counts}"
+            )
+            if actual_entry and self.poe_version == POE1:
+                self._save_progress_flags()
             self.zone_label.setText(f"🏠 {display_zone_name}")
             # Labクリア後の街帰還 → 志す者の広場の2回目ガイドを表示
             if actual_entry and self._in_lab and self._lab_zone_id:
@@ -3951,11 +4882,13 @@ class MainWindow(QMainWindow):
         # 街を挟んでも常にカウントするエリア（ポータルで街に戻って再入場するパターン）
         always_count_zones = {"act5_area5", "act10_area3", "act8_area20"}  # イノセンスの間, 荒廃した広場, 隠れた裏道
         if self._restoring:
-            # 復元時はカウントアップしないが、1回目として記録（次回訪問で2回目になるように）
+            # 復元時はカウントアップしないが、未記録なら1回目として記録（次回訪問で2回目になるように）
             self._last_visit_key = visit_key
             if visit_key not in self.zone_visit_counts:
                 self.zone_visit_counts[visit_key] = 1
-            visit_num = 1
+            visit_num = self.zone_visit_counts.get(visit_key, 1)
+            if self.poe_version == POE1:
+                self._save_progress_flags()
         elif not actual_entry:
             # レベルアップ等の表示再評価では、訪問回数や街通過フラグを変更しない
             visit_num = self.zone_visit_counts.get(visit_key, 1)
@@ -3973,7 +4906,11 @@ class MainWindow(QMainWindow):
                 # 同一ゾーン再入場 → always_count_zones かつ街を経由した場合のみ
                 if visit_key in always_count_zones and visited_town:
                     should_count = True
-            print(f"[DEBUG] COUNT: visit_key={visit_key}, last_visit_key={last_visit_key}, visited_town={visited_town}, should_count={should_count}")
+            print(
+                f"[DEBUG] COUNT before: zone={zone_name}, zone_id={zone_id}, visit_key={visit_key}, "
+                f"last_visit_key={last_visit_key}, visited_town={visited_town}, "
+                f"should_count={should_count}, counts_before={self.zone_visit_counts}"
+            )
             
             if should_count:
                 self.zone_visit_counts[visit_key] = self.zone_visit_counts.get(visit_key, 0) + 1
@@ -3982,18 +4919,31 @@ class MainWindow(QMainWindow):
             self._visited_town = False
             self._last_visit_key = visit_key
             visit_num = self.zone_visit_counts.get(visit_key, 1)
-        if actual_entry and self.poe_version == POE2 and visit_num == 1:
-            if zone_name in ("裏切り者の通路", "Traitor's Passage"):
-                self.set_progress_flag("act2_traitor_clear")
-            if zone_name in ("ジクアニの聖所", "Jiquani's Sanctum"):
-                self.set_progress_flag("act3_zicoatl_dead")
-            if zone_name in ("吠える洞窟", "Howling Caves"):
-                self.set_progress_flag("interlude3_yeti_dead")
+            print(
+                f"[DEBUG] COUNT after: zone={zone_name}, visit_key={visit_key}, "
+                f"last_after={self._last_visit_key}, visited_town_after={self._visited_town}, "
+                f"visit_num={visit_num}, counts_after={self.zone_visit_counts}"
+            )
+            if self.poe_version == POE1:
+                self._save_progress_flags()
+        if actual_entry and self.poe_version == POE1:
+            # Act1 牢獄 -下層- / The Lower Prison 到達フラグ。
+            if zone_id == "act1_area8":
+                self.set_progress_flag("act1_lowerprison_enter")
+        if actual_entry and visit_num == 1:
+            if self.poe_version == POE2:
+                if zone_name in ("裏切り者の通路", "Traitor's Passage"):
+                    self.set_progress_flag("act2_traitor_clear")
+                if zone_name in ("ジクアニの聖所", "Jiquani's Sanctum"):
+                    self.set_progress_flag("act3_zicoatl_dead")
+                if zone_name in ("吠える洞窟", "Howling Caves"):
+                    self.set_progress_flag("interlude3_yeti_dead")
         print(f"[DEBUG] zone={zone_name}, id={zone_id}, visit_num={visit_num}, restoring={self._restoring}, counts={self.zone_visit_counts}")
         
         self.current_zone = zone_name
         # 自動ラップ判定は on_zone_entered() 冒頭で実行済み
         act_name, zone_level = get_zone_info(self.zone_data, zone_name, part2=self.part2_mode)
+        self._sync_gem_tracker_act_from_zone_act(act_name)
         
         # monster_levels.jsonからモンスターレベルを取得（優先）
         monster_lv = None
@@ -4002,12 +4952,11 @@ class MainWindow(QMainWindow):
         
         # 2回目以降はガイドデータ内の適正レベル上書きをチェック
         if visit_num >= 2 and zone_id:
-            v_key = f"{zone_id}@{visit_num}"
-            v_guide = self.guide_data.get(v_key, {})
-            if v_guide.get("level"):
-                zone_level = v_guide["level"]
+            guide_level = get_zone_guide_level(self.guide_data, zone_id, visit=visit_num, config=self.config)
+            if guide_level:
+                zone_level = guide_level
                 # ガイドデータにレベル上書きがある場合はそちらを優先
-                monster_lv = v_guide["level"]
+                monster_lv = guide_level
         
         # 表示用レベル決定: monster_levels優先、なければzone_data
         display_lv = monster_lv if monster_lv else zone_level
@@ -4069,10 +5018,10 @@ class MainWindow(QMainWindow):
         map_route = ""
         if zone_id:
             if zone_id.startswith("act3_"):
-                r = self.config.get("poe1_route_act3", "standard")
+                r = ConfigManager.effective_poe1_route_act3(self.config)
                 if r != "standard": map_route = r
             elif zone_id.startswith("act8_"):
-                r = self.config.get("poe1_route_act8", "standard")
+                r = ConfigManager.effective_poe1_route_act8(self.config)
                 if r != "standard": map_route = r
         defer_initial_auto_open = bool(self._restoring and zone_changed and self.map_thumbnail.auto_open)
         self.map_thumbnail.load_maps(
@@ -4126,16 +5075,30 @@ class MainWindow(QMainWindow):
         if not path:
             return
         data = {"active_flags": sorted(self.progress_flags)}
+        if self.poe_version == POE1:
+            data.update({
+                "zone_visit_counts": self.zone_visit_counts,
+                "last_visit_key": getattr(self, "_last_visit_key", None),
+                "visited_town": getattr(self, "_visited_town", False),
+            })
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     def clear_progress_flags(self):
         self.progress_flags = set()
         self.interlude_ready = set()
+        if self.poe_version == POE1:
+            self.zone_visit_counts = {}
+            self._last_visit_key = None
+            self._visited_town = False
         self._save_progress_flags()
 
     def _restore_progress_flags(self):
         self.progress_flags = set()
+        if self.poe_version == POE1:
+            self.zone_visit_counts = {}
+            self._last_visit_key = None
+            self._visited_town = False
         path = self._progress_flags_path()
         if not path or not os.path.exists(path):
             return
@@ -4143,12 +5106,21 @@ class MainWindow(QMainWindow):
             with open(path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             self.progress_flags = set(data.get('active_flags', []))
+            if self.poe_version == POE1:
+                counts = data.get('zone_visit_counts', {})
+                self.zone_visit_counts = counts if isinstance(counts, dict) else {}
+                self._last_visit_key = data.get('last_visit_key')
+                self._visited_town = bool(data.get('visited_town', False))
         except Exception as e:
             print(f"[WARN] progress flags load failed [{self.poe_version}]: {e}")
             self.progress_flags = set()
+            if self.poe_version == POE1:
+                self.zone_visit_counts = {}
+                self._last_visit_key = None
+                self._visited_town = False
 
     def set_progress_flag(self, flag_name: str, enabled: bool = True):
-        """PoE2進行フラグを更新し、必要ならガイド再評価する"""
+        """進行フラグを更新し、必要ならガイド再評価する"""
         changed = False
         if enabled:
             if flag_name not in self.progress_flags:
@@ -4172,9 +5144,8 @@ class MainWindow(QMainWindow):
         
         # 新キャラ判定: 黄昏の岸辺入場済み + Lv2 = ヒロック討伐 → visitカウントリセット
         if level == 2 and getattr(self, '_twilight_strand_entered', False):
-            print("[INFO] 新キャラ確定（黄昏の岸辺 + Lv2）— visitカウントをリセット")
-            self.zone_visit_counts = {}
-            self._last_visit_key = None
+            print("[INFO] 新キャラ確定（黄昏の岸辺 + Lv2）— visitカウント/進行フラグをリセット")
+            self.clear_progress_flags()
             self._twilight_strand_entered = False
             self.visit_override = None
             self._update_visit_btn()
@@ -4281,6 +5252,7 @@ class MainWindow(QMainWindow):
         
         settings_action = menu.addAction("設定")
         settings_action.triggered.connect(self.open_settings)
+
         
         menu.addSeparator()
         
@@ -4326,16 +5298,16 @@ class MainWindow(QMainWindow):
             self._update_click_through_label()
             
             # ログ監視の再設定
+            active_version = self.config.get("poe_version", self.poe_version)
             client_log_paths = self.config.get("client_log_paths", {})
-            log_path = client_log_paths.get(self.poe_version, "")
+            log_path = client_log_paths.get(active_version, "")
             if log_path:
                 self.log_watcher.set_log_path(log_path)
                 self.log_watcher.start()
-                # 初回セットアップ完了フラグ
+                # PoE1ルート未選択なら、初回セットアップ完了済みでもPoE1ログ設定時に表示する
+                if active_version == POE1 and not self.config.get("poe1_route_selected", False):
+                    self._show_route_selection_dialog()
                 if not self.config.get("setup_completed"):
-                    # 初回ログパス設定完了 → PoE1のみルート選択ダイアログを表示
-                    if self.poe_version == POE1:
-                        self._show_route_selection_dialog()
                     self.config["setup_completed"] = True
                     ConfigManager.save_config(self.config)
                 # ログファイル未設定メッセージをクリア

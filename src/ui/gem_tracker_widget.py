@@ -34,6 +34,12 @@ TYPE_LABELS = {
 }
 
 
+def format_quest_english_name(quest_key: str) -> str:
+    """内部クエストキーを表示用の英語名に整形する。"""
+    name = quest_key.rstrip("0123456789")
+    return " ".join(word[:1].upper() + word[1:].lower() for word in name.split())
+
+
 class PoBImportDialog(QDialog):
     """PoBコードインポートダイアログ"""
     
@@ -118,6 +124,7 @@ class GemTrackerWidget(QWidget):
     act_changed = Signal(int)
     # ジェムチェック状態変更を外部に通知
     gem_checked = Signal(str, bool)  # (gem_name, checked)
+    gem_search_requested = Signal(str)  # gem_name
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -139,12 +146,6 @@ class GemTrackerWidget(QWidget):
         # ヘッダー行
         header = QHBoxLayout()
         header.setSpacing(6)
-        
-        self._title_label = QLabel("💎 ジェム取得")
-        self._title_label.setStyleSheet(f"""
-            color: {Styles.TEXT_COLOR}; font-size: 12px; font-weight: bold;
-        """)
-        header.addWidget(self._title_label)
         
         header.addStretch()
         
@@ -179,8 +180,20 @@ class GemTrackerWidget(QWidget):
         self._scroll.setWidgetResizable(True)
         self._scroll.setStyleSheet("""
             QScrollArea { border: none; background: transparent; }
-            QScrollBar:vertical { width: 5px; background: transparent; }
-            QScrollBar::handle:vertical { background: rgba(176,255,123,0.3); border-radius: 2px; }
+            QScrollBar:vertical {
+                width: 16px;
+                background: rgba(176,255,123,0.08);
+                border-radius: 7px;
+                margin: 0 2px;
+            }
+            QScrollBar::handle:vertical {
+                min-height: 36px;
+                background: rgba(176,255,123,0.55);
+                border-radius: 7px;
+            }
+            QScrollBar::handle:vertical:hover { background: rgba(176,255,123,0.85); }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { width: 0; height: 0; }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
         """)
         
         self._gem_list_widget = QWidget()
@@ -216,6 +229,7 @@ class GemTrackerWidget(QWidget):
             QPushButton:hover {{ background: rgba(176,255,123,0.2); border-color: {Styles.TEXT_COLOR}; }}
         """
     
+
     def set_acquisition_plan(self, plan: list, char_class: str = "", ascendancy: str = ""):
         """ジェム取得計画をセット"""
         self._acquisition_plan = plan
@@ -304,7 +318,11 @@ class GemTrackerWidget(QWidget):
         
         for entry in act_entries:
             # クエストヘッダー
-            quest_ja = entry.get("quest_ja", entry["quest"])
+            quest_key = entry["quest"]
+            quest_ja = entry.get("quest_ja", quest_key)
+            # 内部的に breaking some eggs1/2 のような枝番を付けているクエストは、表示では枝番を外す
+            quest_en = format_quest_english_name(quest_key)
+            quest_display = f"{quest_ja}（{quest_en}）" if quest_ja != quest_en else quest_ja
             npc_ja = entry.get("npc_ja", entry["npc"])
             
             type_label = TYPE_LABELS.get(entry["gems"][0]["type"] if entry["gems"] else "vendor", "")
@@ -323,7 +341,7 @@ class GemTrackerWidget(QWidget):
             header_layout.setContentsMargins(6, 2, 6, 2)
             header_layout.setSpacing(4)
             
-            quest_label = QLabel(f"📜 {quest_ja}")
+            quest_label = QLabel(f"📜 {quest_display}")
             quest_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 11px; font-weight: bold;")
             header_layout.addWidget(quest_label)
             
@@ -370,32 +388,23 @@ class GemTrackerWidget(QWidget):
                 # ジェム名（色分け）
                 name_label = QLabel(display_name)
                 checked_style = "text-decoration: line-through; " if gem_name in self._checked_gems else ""
+                name_label.setToolTip("クリックでPoE検索欄へ入力")
+                name_label.setCursor(Qt.PointingHandCursor)
                 name_label.setStyleSheet(
                     f"color: {attr_color}; font-size: 12px; {checked_style}"
                 )
+                name_label.mousePressEvent = lambda _event, text=gem_name.title(): self.gem_search_requested.emit(text)
                 row_layout.addWidget(name_label)
-                
-                # サポートジェムバッジ
-                if gem["is_support"]:
-                    badge = QLabel("S")
-                    badge.setFixedSize(14, 14)
-                    badge.setAlignment(Qt.AlignCenter)
-                    badge.setStyleSheet("""
-                        background: rgba(100,136,255,0.3);
-                        color: #6688ff;
-                        border-radius: 7px;
-                        font-size: 9px;
-                        font-weight: bold;
-                    """)
-                    badge.setToolTip("サポートジェム")
-                    row_layout.addWidget(badge)
                 
                 row_layout.addStretch()
                 
                 # 英語名表示（日本語名がある場合のみ）
                 if gem_name_ja:
                     en_label = QLabel(gem_name.title())
+                    en_label.setToolTip("クリックでPoE検索欄へ入力")
+                    en_label.setCursor(Qt.PointingHandCursor)
                     en_label.setStyleSheet("color: #666; font-size: 9px;")
+                    en_label.mousePressEvent = lambda _event, text=gem_name.title(): self.gem_search_requested.emit(text)
                     row_layout.addWidget(en_label)
                 
                 self._gem_list_layout.addWidget(gem_row)

@@ -5,14 +5,13 @@ POE2 = "poe2"
 
 POE1_TOWN_ZONES = [
     "Lioneye's Watch", "ライオンアイの見張り場",
-    "The Forest Encampment", "森のキャンプ地",
-    "The Sarn Encampment", "サーンのキャンプ地",
+    "The Forest Encampment", "森の野営地",
+    "The Sarn Encampment", "サーンの野営地",
     "Highgate", "ハイゲート",
     "Overseer's Tower", "監督官の塔",
-    "The Bridge Encampment", "橋のたもとのキャンプ地",
-    "The Harbour Bridge", "港の橋",
-    "Oriath", "オリアス",
-    "Karui Shores", "カルイの浜辺",
+    "The Bridge Encampment", "橋の野営地",
+    "Oriath Docks", "オリアスの船着場",
+    "Karui Shores", "カルイの海岸",
 ]
 
 POE2_TOWN_ZONES = [
@@ -46,6 +45,7 @@ POE_VERSION_DEFINITIONS = {
         ],
         "guide_file": "guide_data.json",
         "timer_file": "timer_poe1.json",
+        "progress_flags_file": "progress_flags_poe1.json",
         "town_zones": POE1_TOWN_ZONES,
     },
     POE2: {

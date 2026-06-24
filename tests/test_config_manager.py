@@ -161,7 +161,7 @@ class ConfigManagerTest(unittest.TestCase):
             legacy_files = {
                 "notes_poe1.json": "[]",
                 "notes_extra.json": "[\"extra\"]",
-                "vendor_search_presets.json": "{\"presets\": []}",
+                "vendor_search_presets.json": "{\"presets\": [{\"name\": \"legacy-poe2\", \"query\": \"abc\"}]}",
                 "progress_flags_poe2.json": "{\"active_flags\": []}",
                 "timer_poe1.json": "{\"elapsed_ms\": 123}",
             }
@@ -173,8 +173,34 @@ class ConfigManagerTest(unittest.TestCase):
                 ConfigManager.load_config()
 
                 for filename, content in legacy_files.items():
-                    self.assertEqual((user_dir / filename).read_text(encoding="utf-8"), content)
+                    if filename == "vendor_search_presets.json":
+                        migrated = user_dir / "vendor_search_presets_poe2.json"
+                        self.assertEqual(migrated.read_text(encoding="utf-8"), content)
+                        self.assertFalse((user_dir / filename).exists())
+                    else:
+                        self.assertEqual((user_dir / filename).read_text(encoding="utf-8"), content)
                     self.assertFalse((app_dir / filename).exists())
+
+
+    def test_renamed_vendor_presets_migration_does_not_overwrite_existing_poe2_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            user_dir = Path(tmp) / "user-data"
+            user_dir.mkdir()
+            old_path = user_dir / "vendor_search_presets.json"
+            new_path = user_dir / "vendor_search_presets_poe2.json"
+            old_path.write_text("old", encoding="utf-8")
+            new_path.write_text("new", encoding="utf-8")
+
+            with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}):
+                migrated_path = ConfigManager.migrate_renamed_user_file(
+                    "vendor_search_presets.json",
+                    "vendor_search_presets_poe2.json",
+                )
+
+                self.assertEqual(migrated_path, new_path.resolve())
+                self.assertEqual(new_path.read_text(encoding="utf-8"), "new")
+                self.assertFalse(old_path.exists())
+                self.assertEqual(len(list(user_dir.glob("vendor_search_presets.backup-renamed-to-vendor_search_presets_poe2-*.json"))), 1)
 
     def test_legacy_user_file_is_copied_to_user_data_dir_and_removed(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -221,6 +247,120 @@ class ConfigManagerTest(unittest.TestCase):
                  patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
                 with self.assertRaises(FileNotFoundError):
                     ConfigManager.load_config()
+    def test_pob_import_data_is_migrated_out_of_config(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp) / "app"
+            user_dir = Path(tmp) / "user-data"
+            app_dir.mkdir()
+            write_default_config(app_dir)
+            legacy_config = {
+                "pob_data": {"class": "witch", "gem_groups": [{"gems": []}]},
+                "pob_code": "abc123",
+                "gem_tracker_checked": ["raise zombie"],
+                "text_color": "#abcdef",
+            }
+            user_dir.mkdir()
+            (user_dir / ConfigManager.CONFIG_FILE).write_text(
+                json.dumps(legacy_config), encoding="utf-8"
+            )
+
+            with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}), \
+                 patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
+                loaded = ConfigManager.load_config()
+
+                self.assertNotIn("pob_data", loaded)
+                self.assertNotIn("pob_code", loaded)
+                self.assertNotIn("gem_tracker_checked", loaded)
+                saved_config = json.loads((user_dir / ConfigManager.CONFIG_FILE).read_text(encoding="utf-8"))
+                self.assertNotIn("pob_data", saved_config)
+                self.assertNotIn("pob_code", saved_config)
+                self.assertNotIn("gem_tracker_checked", saved_config)
+                pob_file = user_dir / "pob_import_data.json"
+                self.assertTrue(pob_file.exists())
+                pob_state = json.loads(pob_file.read_text(encoding="utf-8"))
+                self.assertEqual(pob_state["pob_data"]["class"], "witch")
+                self.assertEqual(pob_state["pob_code"], "abc123")
+                self.assertEqual(pob_state["gem_tracker_checked"], ["raise zombie"])
+
+
+    def test_poe1_route_selected_migration_keeps_poe2_only_users_unselected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp) / "app"
+            user_dir = Path(tmp) / "user-data"
+            app_dir.mkdir()
+            write_default_config(app_dir, {
+                "poe1_route_act3": "",
+                "poe1_route_act8": "",
+                "poe1_route_selected": False,
+                "client_log_paths": {"poe1": "", "poe2": ""},
+            })
+            user_dir.mkdir()
+            # 旧default由来のルート値だけが入っていて、PoE1ログは未設定のPoE2-only想定。
+            (user_dir / ConfigManager.CONFIG_FILE).write_text(json.dumps({
+                "setup_completed": True,
+                "poe_version": "poe2",
+                "poe1_route_act3": "library_detour",
+                "poe1_route_act8": "underbelly",
+                "client_log_paths": {"poe1": "", "poe2": "C:/poe2/Client.txt"},
+            }), encoding="utf-8")
+
+            with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}), \
+                 patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
+                loaded = ConfigManager.load_config()
+
+                self.assertFalse(loaded["poe1_route_selected"])
+
+    def test_poe1_route_selected_migration_marks_existing_poe1_log_users_selected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp) / "app"
+            user_dir = Path(tmp) / "user-data"
+            app_dir.mkdir()
+            write_default_config(app_dir, {
+                "poe1_route_act3": "",
+                "poe1_route_act8": "",
+                "poe1_route_selected": False,
+                "client_log_paths": {"poe1": "", "poe2": ""},
+            })
+            user_dir.mkdir()
+            (user_dir / ConfigManager.CONFIG_FILE).write_text(json.dumps({
+                "setup_completed": True,
+                "poe_version": "poe1",
+                "poe1_route_act3": "library_detour",
+                "poe1_route_act8": "underbelly",
+                "client_log_paths": {"poe1": "C:/poe1/Client.txt", "poe2": ""},
+            }), encoding="utf-8")
+
+            with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}), \
+                 patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
+                loaded = ConfigManager.load_config()
+
+                self.assertTrue(loaded["poe1_route_selected"])
+
+    def test_poe1_route_selected_migration_marks_changed_routes_selected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp) / "app"
+            user_dir = Path(tmp) / "user-data"
+            app_dir.mkdir()
+            write_default_config(app_dir, {
+                "poe1_route_act3": "",
+                "poe1_route_act8": "",
+                "poe1_route_selected": False,
+                "client_log_paths": {"poe1": "", "poe2": ""},
+            })
+            user_dir.mkdir()
+            (user_dir / ConfigManager.CONFIG_FILE).write_text(json.dumps({
+                "poe1_route_act3": "standard",
+                "poe1_route_act8": "standard",
+                "client_log_paths": {"poe1": "", "poe2": ""},
+            }), encoding="utf-8")
+
+            with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}), \
+                 patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
+                loaded = ConfigManager.load_config()
+
+                self.assertTrue(loaded["poe1_route_selected"])
+                self.assertEqual(ConfigManager.effective_poe1_route_act3(loaded), "standard")
+                self.assertEqual(ConfigManager.effective_poe1_route_act8(loaded), "standard")
 
 
 if __name__ == "__main__":

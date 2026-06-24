@@ -96,3 +96,50 @@ def focus_window(hwnd, wait_seconds=0.12):
     except Exception as exc:
         print(f"[WINDOW] focus_window failed: {exc}")
         return False
+
+
+def get_next_visible_window_after(hwnd, skip_current_process=False):
+    """Return the next visible top-level window behind hwnd in Z-order on Windows.
+
+    When skip_current_process is True, skip windows owned by this process. This is useful
+    when a PoENavi popout/tool window is foreground and the target should be the game
+    window behind all PoENavi windows.
+    """
+    if sys.platform != "win32" or not hwnd:
+        return None
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
+        GW_HWNDNEXT = 2
+        user32.GetWindow.argtypes = [wintypes.HWND, ctypes.c_uint]
+        user32.GetWindow.restype = wintypes.HWND
+        user32.IsWindowVisible.argtypes = [wintypes.HWND]
+        user32.IsWindowVisible.restype = wintypes.BOOL
+        user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
+        user32.GetWindowTextLengthW.restype = ctypes.c_int
+        user32.GetParent.argtypes = [wintypes.HWND]
+        user32.GetParent.restype = wintypes.HWND
+        user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+        user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+        kernel32.GetCurrentProcessId.restype = wintypes.DWORD
+        current_pid = int(kernel32.GetCurrentProcessId())
+
+        def window_pid(window):
+            pid = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(window, ctypes.byref(pid))
+            return int(pid.value or 0)
+
+        current = user32.GetWindow(wintypes.HWND(hwnd), GW_HWNDNEXT)
+        while current:
+            if user32.IsWindowVisible(current) and not user32.GetParent(current):
+                # タイトルなしの補助ウィンドウは候補から外す。
+                if user32.GetWindowTextLengthW(current) > 0:
+                    if not skip_current_process or window_pid(current) != current_pid:
+                        return int(current)
+            current = user32.GetWindow(current, GW_HWNDNEXT)
+    except Exception as exc:
+        print(f"[WINDOW] get_next_visible_window_after failed: {exc}")
+    return None

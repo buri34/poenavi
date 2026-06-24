@@ -15,14 +15,22 @@ class ConfigManager:
     APP_NAME = "PoENavi"
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
     CURRENT_SCHEMA_VERSION = 1
+    POE1_ROUTE_ACT3_DEFAULT = "library_detour"
+    POE1_ROUTE_ACT8_DEFAULT = "standard"
+    POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
+    POE1_ROUTE_ACT8_OLD_DEFAULT = "underbelly"
     STARTUP_LEGACY_USER_FILES = [
         "notes.json",
         "notes_poe1.json",
         "notes_poe2.json",
         "vendor_search_presets.json",
+        "vendor_search_presets_poe1.json",
+        "vendor_search_presets_poe2.json",
+        "progress_flags_poe1.json",
         "progress_flags_poe2.json",
         "timer_poe1.json",
         "timer_poe2.json",
+        "pob_import_data.json",
     ]
 
     @classmethod
@@ -97,6 +105,96 @@ class ConfigManager:
         destination.parent.mkdir(parents=True, exist_ok=True)
         return destination
 
+
+    @classmethod
+    def migrate_renamed_user_file(cls, old_filename, new_filename):
+        """ユーザーデータのファイル名変更を安全に移行する。
+
+        new側が無ければ old→new にコピーして old を削除する。
+        new側が既にある場合は上書きせず、oldはバックアップして削除する。
+        旧アプリ本体フォルダ直下にold/newが残っている場合も同じ方針で片付ける。
+        """
+        old_filename = Path(old_filename).name
+        new_filename = Path(new_filename).name
+        user_dir = cls.get_user_data_dir()
+        user_dir.mkdir(parents=True, exist_ok=True)
+        old_user = cls.get_user_data_path(old_filename)
+        new_user = cls.get_user_data_path(new_filename)
+
+        if not new_user.exists() and old_user.exists():
+            shutil.copy2(old_user, new_user)
+            cls._remove_file_if_safe(old_user)
+        elif new_user.exists() and old_user.exists():
+            cls._backup_user_file(old_user, reason=f"renamed-to-{Path(new_filename).stem}")
+            cls._remove_file_if_safe(old_user)
+
+        app_dir = cls.get_app_dir()
+        for legacy in (app_dir / new_filename, app_dir / old_filename):
+            if not legacy.exists() or legacy.resolve() == new_user.resolve():
+                continue
+            if not new_user.exists():
+                shutil.copy2(legacy, new_user)
+                cls._remove_file_if_safe(legacy)
+            else:
+                cls._backup_user_file(legacy, reason="ignored-legacy")
+                cls._remove_file_if_safe(legacy)
+
+        return new_user
+
+    @classmethod
+    def pob_import_data_path(cls):
+        """PoBインポート結果の保存先。config.jsonとは分離する。"""
+        return cls.get_user_data_path("pob_import_data.json")
+
+    @classmethod
+    def load_pob_import_data(cls):
+        path = cls.pob_import_data_path()
+        if not path.exists():
+            return {}
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
+        except Exception as exc:
+            print(f"[ConfigManager] Failed to load PoB import data: {exc}")
+            cls._backup_user_file(path, reason="broken")
+            cls._remove_file_if_safe(path)
+            return {}
+
+    @classmethod
+    def save_pob_import_data(cls, data):
+        cls._write_json(cls.pob_import_data_path(), data or {})
+
+    @classmethod
+    def clear_pob_import_data(cls):
+        cls._remove_file_if_safe(cls.pob_import_data_path())
+
+    @classmethod
+    def migrate_pob_import_data_from_config(cls, config):
+        """旧config.json内のPoBインポート内容を専用JSONへ移す。"""
+        if not isinstance(config, dict):
+            return config
+        pob_data = config.pop("pob_data", None)
+        pob_code = config.pop("pob_code", None)
+        gem_tracker_checked = config.pop("gem_tracker_checked", None)
+        if pob_data is not None or pob_code is not None or gem_tracker_checked is not None:
+            path = cls.pob_import_data_path()
+            if not path.exists():
+                payload = {"pob_data": pob_data, "pob_code": pob_code}
+                if gem_tracker_checked is not None:
+                    payload["gem_tracker_checked"] = gem_tracker_checked
+                cls.save_pob_import_data(payload)
+            else:
+                existing = cls.load_pob_import_data()
+                changed = False
+                if gem_tracker_checked is not None and "gem_tracker_checked" not in existing:
+                    existing["gem_tracker_checked"] = gem_tracker_checked
+                    changed = True
+                if changed:
+                    cls.save_pob_import_data(existing)
+                print("[ConfigManager] pob_import_data.json already exists; keeping existing file and removing legacy config PoB fields")
+        return config
+
     @classmethod
     def _get_startup_legacy_user_filenames(cls):
         """起動時にまとめて移行する旧ユーザーデータファイル名を取得する。"""
@@ -122,6 +220,12 @@ class ConfigManager:
         for filename in cls._get_startup_legacy_user_filenames():
             destination = cls.migrate_legacy_user_file(filename)
             migrated_paths.append(destination)
+        migrated_paths.append(
+            cls.migrate_renamed_user_file(
+                "vendor_search_presets.json",
+                "vendor_search_presets_poe2.json",
+            )
+        )
         return migrated_paths
 
     @classmethod
@@ -237,6 +341,31 @@ class ConfigManager:
         return False
 
     @classmethod
+    def effective_poe1_route_act3(cls, config):
+        return (config or {}).get("poe1_route_act3") or cls.POE1_ROUTE_ACT3_DEFAULT
+
+    @classmethod
+    def effective_poe1_route_act8(cls, config):
+        return (config or {}).get("poe1_route_act8") or cls.POE1_ROUTE_ACT8_DEFAULT
+
+    @classmethod
+    def _infer_poe1_route_selected(cls, config):
+        if "poe1_route_selected" in config:
+            return bool(config.get("poe1_route_selected"))
+        act3 = config.get("poe1_route_act3")
+        act8 = config.get("poe1_route_act8")
+        # 旧デフォルト値と違う値なら、ユーザーが一度選択/変更した可能性が高い。
+        if act3 and act3 != cls.POE1_ROUTE_ACT3_OLD_DEFAULT:
+            return True
+        if act8 and act8 != cls.POE1_ROUTE_ACT8_OLD_DEFAULT:
+            return True
+        # 既にPoE1ログパスが設定済みなら、既存PoE1ユーザーとして再表示を避ける。
+        client_log_paths = config.get("client_log_paths") or {}
+        if client_log_paths.get(POE1):
+            return True
+        return False
+
+    @classmethod
     def _migrate_config(cls, config):
         """configのスキーマ差分を吸収する。
 
@@ -252,6 +381,9 @@ class ConfigManager:
 
         if schema_version < 1:
             migrated["schemaVersion"] = 1
+
+        if "poe1_route_selected" not in migrated:
+            migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)
 
         migrated["schemaVersion"] = cls.CURRENT_SCHEMA_VERSION
         return migrated
@@ -275,9 +407,12 @@ class ConfigManager:
 
     @classmethod
     def _load_from_path(cls, config_path):
-        config = cls._read_json(config_path)
+        raw_config = cls._read_json(config_path)
         default_config = cls._load_default_config_template()
-        return cls._migrate_config(cls._deep_merge(default_config, config))
+        migrated = cls._migrate_config(cls._deep_merge(default_config, raw_config))
+        if isinstance(raw_config, dict) and "poe1_route_selected" not in raw_config:
+            migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(raw_config)
+        return migrated
 
     @classmethod
     def _migrate_legacy_config_if_needed(cls):
@@ -296,6 +431,7 @@ class ConfigManager:
                 continue
 
             config = cls._load_from_path(legacy_path)
+            config = cls.migrate_pob_import_data_from_config(config)
             cls._backup_config(legacy_path, reason="legacy")
             cls._write_json(config_path, config)
 
@@ -314,12 +450,14 @@ class ConfigManager:
 
         if not config_path.exists():
             config = cls._load_default_config_template()
+            config = cls.migrate_pob_import_data_from_config(config)
             cls._write_json(config_path, config)
             cls.migrate_startup_legacy_user_files()
             return config
 
         try:
             config = cls._load_from_path(config_path)
+            config = cls.migrate_pob_import_data_from_config(config)
             # schemaVersion付与や新規キー補完が入った場合は正式保存先へ反映する。
             cls._write_json(config_path, config)
             cls.migrate_startup_legacy_user_files()
@@ -335,4 +473,5 @@ class ConfigManager:
     def save_config(cls, config):
         default_config = cls._load_default_config_template()
         config = cls._migrate_config(cls._deep_merge(default_config, config))
+        config = cls.migrate_pob_import_data_from_config(config)
         cls._write_json(cls._get_config_path(), config)

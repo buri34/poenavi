@@ -8,9 +8,10 @@ from PySide6.QtGui import QFont, QKeySequence
 from src.ui.styles import Styles
 from src.utils.zone_data import DEFAULT_ZONE_DATA
 from src.utils.zone_data_poe2 import DEFAULT_ZONE_DATA_POE2
-from src.utils.guide_data import load_guide_data, save_guide_data
+from src.utils.guide_data import load_guide_data, save_guide_data, get_visit_guide_for_edit, set_visit_guide_for_edit
 from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_act_list, get_poe_label, get_town_zones
 from src.utils.zone_master_data import load_zone_master_data, save_zone_master_data
+from src.utils.config_manager import ConfigManager
 import webbrowser
 
 def _spinbox_style(width=55, height=28):
@@ -202,10 +203,11 @@ class GuideEditorDialog(QDialog):
         self._existing_summary = guide.get("summary", "") if isinstance(guide, dict) else ""
         self._existing_v2_summary = self.guide_v2.get("summary", "") if isinstance(self.guide_v2, dict) else ""
         self.zone_id = zone_id
+        self.is_poe2_zone = self.zone_id.startswith("poe2_") if self.zone_id else False
         self.route_guides = route_guides or {}  # {"~library_detour": {...}, "~library_detour@2": {...}}
         self.flag_guides = flag_guides or {}
         self.primary_flag_key = next(iter(self.flag_guides.keys()), "")
-        if self.primary_flag_key and not guide_v2:
+        if self.is_poe2_zone and self.primary_flag_key and not guide_v2:
             self.guide_v2 = self.flag_guides.get(self.primary_flag_key, {})
         
         main_layout = QVBoxLayout(self)
@@ -249,7 +251,7 @@ class GuideEditorDialog(QDialog):
             QRadioButton::indicator {{ width: 0; height: 0; }}
         """
         
-        is_poe2_zone = self.zone_id.startswith("poe2_") if self.zone_id else False
+        is_poe2_zone = self.is_poe2_zone
         self.direction_group = None
         if not is_poe2_zone:
             # ── 基本方向 ──
@@ -553,6 +555,89 @@ class GuideEditorDialog(QDialog):
         layout.addWidget(self.v2_frame)
         self.v2_frame.setVisible(bool(self.guide_v2))
         
+        # ── フラグ別ガイド（PoE1用） ──
+        self.flag_editors = {}  # {flag_key: {"objective": QTextEdit, "layout": RichTextEdit, "tips": QTextEdit, "direction": QButtonGroup}}
+        if self.flag_guides and not self.is_poe2_zone:
+            flag_separator = QFrame()
+            flag_separator.setFrameShape(QFrame.HLine)
+            flag_separator.setStyleSheet("color: rgba(176,255,123,0.5);")
+            layout.addWidget(flag_separator)
+
+            flag_header = QLabel("🚩 フラグ別ガイド")
+            flag_header.setStyleSheet(f"color: #ffc832; font-size: 13px; font-weight: bold;")
+            layout.addWidget(flag_header)
+
+            for flag_key, fguide in sorted(self.flag_guides.items()):
+                fg_box = QGroupBox(flag_key)
+                fg_box.setStyleSheet(f"""
+                    QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid rgba(176,255,123,0.3);
+                        border-radius: 4px; margin-top: 8px; font-size: 11px; font-weight: bold; }}
+                    QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top left; padding: 0 5px; }}
+                """)
+                fg_layout = QVBoxLayout(fg_box)
+                fg_layout.setSpacing(5)
+
+                f_dir_label = QLabel("🧭 基本方向")
+                f_dir_label.setStyleSheet(label_style)
+                fg_layout.addWidget(f_dir_label)
+                f_dir_grid = QGridLayout()
+                f_dir_grid.setSpacing(2)
+                f_dir_group = QButtonGroup(self)
+                f_directions = [
+                    (0, 0, "↖", "nw"), (0, 1, "↑", "n"), (0, 2, "↗", "ne"),
+                    (1, 0, "←", "w"),  (1, 1, "—", "none"), (1, 2, "→", "e"),
+                    (2, 0, "↙", "sw"), (2, 1, "↓", "s"), (2, 2, "↘", "se"),
+                    (1, 3, "同上", "inherit"),
+                ]
+                f_current_dir = fguide.get("direction", "inherit")
+                for f_row, f_col, f_label, f_value in f_directions:
+                    f_rb = QRadioButton(f_label)
+                    f_rb.setStyleSheet(radio_style if f_label != "同上" else f"""
+                        QRadioButton {{
+                            color: {Styles.TEXT_COLOR}; font-size: 11px;
+                            padding: 6px 8px; background: rgba(40,40,40,180);
+                            border: 1px solid rgba(176,255,123,0.2); border-radius: 4px;
+                            min-width: 36px; min-height: 28px;
+                        }}
+                        QRadioButton:checked {{ background: rgba(176,255,123,0.2); border: 2px solid {Styles.TEXT_COLOR}; }}
+                        QRadioButton:hover {{ background: rgba(80,80,80,200); }}
+                        QRadioButton::indicator {{ width: 0; height: 0; }}
+                    """)
+                    f_rb.setProperty("dir_value", f_value)
+                    if f_value == f_current_dir:
+                        f_rb.setChecked(True)
+                    f_dir_group.addButton(f_rb)
+                    f_dir_grid.addWidget(f_rb, f_row, f_col, Qt.AlignCenter)
+                fg_layout.addLayout(f_dir_grid)
+
+
+                fg_layout.addWidget(QLabel("📋 目標 / やること"))
+                fg_layout.itemAt(fg_layout.count()-1).widget().setStyleSheet(label_style)
+                f_obj = QTextEdit()
+                f_obj.setPlainText(fguide.get("objective", ""))
+                f_obj.setFixedHeight(50)
+                f_obj.setStyleSheet(text_style)
+                fg_layout.addWidget(f_obj)
+
+                fg_layout.addWidget(QLabel("🗺️ レイアウト"))
+                fg_layout.itemAt(fg_layout.count()-1).widget().setStyleSheet(label_style)
+                f_lay = RichTextEdit()
+                f_lay.set_from_html(fguide.get("layout", ""))
+                f_lay.setFixedHeight(120)
+                f_lay.setStyleSheet(text_style)
+                fg_layout.addWidget(f_lay)
+
+                fg_layout.addWidget(QLabel("💡 Tips / 注意点"))
+                fg_layout.itemAt(fg_layout.count()-1).widget().setStyleSheet(label_style)
+                f_tips = RichTextEdit()
+                f_tips.set_from_html(fguide.get("tips", ""))
+                f_tips.setFixedHeight(50)
+                f_tips.setStyleSheet(text_style)
+                fg_layout.addWidget(f_tips)
+
+                layout.addWidget(fg_box)
+                self.flag_editors[flag_key] = {"objective": f_obj, "layout": f_lay, "tips": f_tips, "direction": f_dir_group}
+
         # ── ルート別ガイド ──
         self.route_editors = {}  # {suffix: {"objective": QTextEdit, "layout": RichTextEdit, "tips": QTextEdit, "direction": QButtonGroup}}
         if self.route_guides:
@@ -771,6 +856,27 @@ class GuideEditorDialog(QDialog):
                 result[suffix] = g
             else:
                 result[suffix] = g  # 空でも保持（キーは残す）
+        return result
+
+    def get_flag_guides(self) -> dict:
+        """フラグ別ガイドデータを取得 {flag_key: {objective, layout, tips, direction}}"""
+        result = {}
+        for flag_key, editors in self.flag_editors.items():
+            direction = "inherit"
+            checked = editors["direction"].checkedButton()
+            if checked:
+                direction = checked.property("dir_value")
+            g = {
+                "objective": editors["objective"].toPlainText().strip(),
+                "layout": editors["layout"].to_storage_html(),
+                "tips": editors["tips"].to_storage_html(),
+            }
+            if direction != "inherit":
+                g["direction"] = direction
+            if any(v for v in g.values()):
+                result[flag_key] = g
+            else:
+                result[flag_key] = g  # 空でも枠を保持
         return result
 
 
@@ -1279,7 +1385,7 @@ class SettingsDialog(QDialog):
         self.poe1_route_act3_combo.addItem("通常ルート（図書館スキップ）", "standard")
         self.poe1_route_act3_combo.addItem("図書館寄り道ルート", "library_detour")
         self.poe1_route_act3_combo.setStyleSheet(combo_style)
-        cur3 = self.current_config.get("poe1_route_act3", "standard")
+        cur3 = ConfigManager.effective_poe1_route_act3(self.current_config)
         idx3 = self.poe1_route_act3_combo.findData(cur3)
         if idx3 >= 0:
             self.poe1_route_act3_combo.setCurrentIndex(idx3)
@@ -1298,7 +1404,7 @@ class SettingsDialog(QDialog):
         self.poe1_route_act8_combo.addItem("通常ルート", "standard")
         self.poe1_route_act8_combo.addItem("隠れた裏道（The Hidden Underbelly）ルート", "underbelly")
         self.poe1_route_act8_combo.setStyleSheet(combo_style)
-        cur8 = self.current_config.get("poe1_route_act8", "standard")
+        cur8 = ConfigManager.effective_poe1_route_act8(self.current_config)
         idx8 = self.poe1_route_act8_combo.findData(cur8)
         if idx8 >= 0:
             self.poe1_route_act8_combo.setCurrentIndex(idx8)
@@ -1696,8 +1802,9 @@ class SettingsDialog(QDialog):
                           "act8_area17", "act8_area18", "act8_area19", "act8_area20"):
             route_suffixes = ["~underbelly", "~underbelly@2"]
         for suffix in route_suffixes:
-            rkey = f"{guide_key}{suffix}"
-            route_guides[suffix] = self.guide_data.get(rkey, {})
+            route_name = suffix[1:].split("@")[0]
+            visit = 2 if suffix.endswith("@2") else 1
+            route_guides[suffix] = get_visit_guide_for_edit(self.guide_data, guide_key, visit=visit, route=route_name)
         
         raw_entry = self.guide_data.get(guide_key, {})
         flag_guides = {}
@@ -1705,9 +1812,13 @@ class SettingsDialog(QDialog):
             base_guide = raw_entry.get("default", {})
             flag_guides = raw_entry.get("flags", {}) if isinstance(raw_entry.get("flags", {}), dict) else {}
             flag_guide = next(iter(flag_guides.values()), {}) if flag_guides else {}
-        else:
+        elif is_poe2_zone:
             base_guide = raw_entry
             flag_guide = self.guide_data.get(v2_key, {})
+        else:
+            base_guide = get_visit_guide_for_edit(self.guide_data, guide_key, visit=1)
+            flag_guides = base_guide.get("flags", {}) if isinstance(base_guide.get("flags", {}), dict) else {}
+            flag_guide = get_visit_guide_for_edit(self.guide_data, guide_key, visit=2)
 
         dialog = GuideEditorDialog(self, display_name, base_guide, flag_guide, zone_id=zone_id, route_guides=route_guides, flag_guides=flag_guides)
         if dialog.exec():
@@ -1729,24 +1840,26 @@ class SettingsDialog(QDialog):
                 if v2_key in self.guide_data:
                     del self.guide_data[v2_key]
             else:
-                if any(v for v in guide.values()):
-                    self.guide_data[guide_key] = guide
-                elif guide_key in self.guide_data:
-                    del self.guide_data[guide_key]
-                
-                if guide_v2:
-                    self.guide_data[v2_key] = guide_v2
-                elif v2_key in self.guide_data:
+                new_flag_guides = dialog.get_flag_guides()
+                if new_flag_guides:
+                    guide["flags"] = new_flag_guides
+                elif "flags" in guide:
+                    guide.pop("flags", None)
+                set_visit_guide_for_edit(self.guide_data, guide_key, guide, visit=1)
+                set_visit_guide_for_edit(self.guide_data, guide_key, guide_v2, visit=2)
+                # 旧フラットキーが残っている場合は削除して、新visits構造を正とする
+                if v2_key in self.guide_data:
                     del self.guide_data[v2_key]
             
             # ルート別ガイド保存
             for suffix, rguide in dialog.get_route_guides().items():
+                route_name = suffix[1:].split("@")[0]
+                visit = 2 if suffix.endswith("@2") else 1
+                set_visit_guide_for_edit(self.guide_data, guide_key, rguide, visit=visit, route=route_name)
+                # 旧フラットキーが残っている場合は削除して、新visits構造を正とする
                 rkey = f"{guide_key}{suffix}"
-                if any(v for v in rguide.values()):
-                    self.guide_data[rkey] = rguide
-                elif rkey in self.guide_data:
-                    # 空でもキーは残す（guide_data.jsonに空エントリとして）
-                    self.guide_data[rkey] = {"objective": "", "layout": "", "tips": "", "direction": ""}
+                if rkey in self.guide_data:
+                    del self.guide_data[rkey]
             
             # ガイド編集のSaveで即座にファイル保存（Settings画面のSaveを待たない）
             from src.utils.guide_data import save_guide_data

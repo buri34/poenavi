@@ -16,6 +16,8 @@ notes_poe1.json
 notes_poe2.json
 progress_flags_poe2.json
 vendor_search_presets.json
+vendor_search_presets_poe1.json
+vendor_search_presets_poe2.json
 .dev-user-data/
 
 # IDE

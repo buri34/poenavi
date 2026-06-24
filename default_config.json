@@ -33,8 +33,8 @@
     "auto_open_map": false,
     "auto_position_map": false,
     "confirm_reset": true,
-    "poe1_route_act3": "library_detour",
-    "poe1_route_act8": "underbelly",
+    "poe1_route_act3": "",
+    "poe1_route_act8": "",
     "text_opacity": 100,
     "logout_enabled": true,
     "window_geometry": {
@@ -48,5 +48,6 @@
     "client_log_paths": {
         "poe1": "",
         "poe2": ""
-    }
+    },
+    "poe1_route_selected": false
 }

@@ -6,7 +6,7 @@ maps/PoE1/<ゾーン名>/ または maps/PoE2/<ゾーン名>/ フォルダ内の
 import os
 import sys
 from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QVBoxLayout, QLabel, QDialog
+    QWidget, QHBoxLayout, QVBoxLayout, QLabel, QDialog, QScrollArea, QSizePolicy
 )
 from PySide6.QtCore import Qt, QSize, Signal, QPoint, QTimer
 from PySide6.QtGui import QPixmap, QCursor, QPainter
@@ -288,14 +288,41 @@ class MapThumbnailWidget(QWidget):
         )
         main_layout.addWidget(self.header_label)
         
-        # サムネイルコンテナ（行を動的に追加）
+        # サムネイルコンテナ（横幅でメインウィンドウを拘束しないようスクロール内に置く）
+        self.thumb_scroll = QScrollArea()
+        self.thumb_scroll.setWidgetResizable(False)
+        self.thumb_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.thumb_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.thumb_scroll.setFrameShape(QScrollArea.NoFrame)
+        self.thumb_scroll.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
+        self.thumb_scroll.setMinimumWidth(0)
+        self.thumb_scroll.setStyleSheet("""
+            QScrollArea { border: none; background: transparent; }
+            QScrollBar:horizontal {
+                height: 16px;
+                background: rgba(176,255,123,0.08);
+                border-radius: 7px;
+                margin: 2px 0;
+            }
+            QScrollBar::handle:horizontal {
+                min-width: 36px;
+                background: rgba(176,255,123,0.55);
+                border-radius: 7px;
+            }
+            QScrollBar::handle:horizontal:hover { background: rgba(176,255,123,0.85); }
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; height: 0; }
+            QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: transparent; }
+        """)
+
         self.thumb_container = QWidget()
         self.thumb_container.setStyleSheet("background: transparent;")
+        self.thumb_container.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.thumb_container_layout = QVBoxLayout(self.thumb_container)
         self.thumb_container_layout.setContentsMargins(0, 2, 0, 2)
         self.thumb_container_layout.setSpacing(4)
-        
-        main_layout.addWidget(self.thumb_container)
+
+        self.thumb_scroll.setWidget(self.thumb_container)
+        main_layout.addWidget(self.thumb_scroll)
     
     def load_maps(self, zone_name: str, part2: bool = False, zone_changed: bool = False, route: str = "", poe_version: str = "PoE1"):
         """ゾーンのマップ画像を読み込んで表示"""
@@ -319,27 +346,38 @@ class MapThumbnailWidget(QWidget):
         self.setVisible(True)
         self.header_label.setText(f"🗺 マップレイアウト ({len(paths)}パターン)")
         
-        # 親ウィジェットの幅からサムネイル列数を計算
-        available_width = max(self.width(), 380) - 10  # マージン考慮
-        cols = max(1, available_width // (THUMB_WIDTH + 6))
-        
-        row_layout = None
-        for i, p in enumerate(paths):
-            if i % cols == 0:
-                row_layout = QHBoxLayout()
-                row_layout.setContentsMargins(0, 0, 0, 0)
-                row_layout.setSpacing(6)
-                row_layout.setAlignment(Qt.AlignLeft)
-                self.thumb_container_layout.addLayout(row_layout)
-            
+        row_layout = QHBoxLayout()
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(6)
+        row_layout.setAlignment(Qt.AlignLeft)
+        self.thumb_container_layout.addLayout(row_layout)
+
+        for p in paths:
             thumb = ClickableThumb(p, self.thumb_container)
             thumb.clicked.connect(self._on_thumb_clicked)
             self._thumbs.append(thumb)
             row_layout.addWidget(thumb)
 
+        total_width = len(paths) * THUMB_WIDTH + max(0, len(paths) - 1) * 6
+        self.thumb_container.setFixedSize(total_width, THUMB_HEIGHT + 8)
+        self.thumb_scroll.setFixedHeight(THUMB_HEIGHT + 28)
+
         # auto_open が有効 かつ エリア移動時のみ自動的にダイアログを開く
         if self.auto_open and zone_changed and paths:
             self.open_first_map()
+
+
+    def wheelEvent(self, event):
+        """マップ上でホイールした時は横スクロールとして扱う。"""
+        if self.current_paths and hasattr(self, "thumb_scroll"):
+            bar = self.thumb_scroll.horizontalScrollBar()
+            if bar.maximum() > 0:
+                delta = event.angleDelta().y() or event.angleDelta().x()
+                if delta:
+                    bar.setValue(bar.value() - delta)
+                    event.accept()
+                    return
+        super().wheelEvent(event)
 
     def open_first_map(self):
         """現在読み込んでいるマップの先頭画像を開く"""
@@ -430,5 +468,6 @@ class MapThumbnailWidget(QWidget):
             self._open_dialog.close()
             self._open_dialog = None
         self._clear_thumbs()
+        self.thumb_container.setFixedSize(0, 0)
         self.current_paths = []
         self.setVisible(False)
