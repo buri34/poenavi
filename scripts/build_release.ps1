@@ -32,21 +32,21 @@ from pathlib import Path
 from PIL import Image, ImageOps
 source = Image.open(Path('assets/icons/green.png')).convert('RGBA')
 icon = ImageOps.fit(source, (256, 256), method=Image.Resampling.LANCZOS)
-icon.save(Path('build/generated/icon.ico'), sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+icon.save(Path('build/generated/updater.ico'), sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
 "@
 & $Python -c $iconCode
 if ($LASTEXITCODE -ne 0) {
-    throw "Failed to generate icon.ico"
+    throw "Failed to generate updater.ico"
 }
 
 $appArgs = @(
     "-m", "PyInstaller",
     "--noconfirm", "--clean", "--noupx", "--onedir", "--windowed",
     "--name", "PoENavi",
-    "--icon", "build\generated\icon.ico",
+    "--icon", "assets\app\icon.ico",
     "--distpath", "dist",
     "--workpath", "build\app",
-    "--add-data", "build\generated\icon.ico;.",
+    "--add-data", "assets\app\icon.ico;.",
     "--add-data", "default_config.json;.",
     "--add-data", "guide_data.json;.",
     "--add-data", "guide_data_poe2.json;.",
@@ -69,7 +69,7 @@ $updaterArgs = @(
     "-m", "PyInstaller",
     "--noconfirm", "--clean", "--noupx", "--onefile", "--windowed",
     "--name", "PoENaviUpdater",
-    "--icon", "build\generated\icon.ico",
+    "--icon", "build\generated\updater.ico",
     "--distpath", "dist\PoENavi",
     "--workpath", "build\updater",
     "--hidden-import", "PySide6.QtWidgets",

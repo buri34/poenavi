@@ -42,6 +42,7 @@ zone_en_mapping.csv
 
 # App icons (generated)
 icon.ico
+!assets/app/icon.ico
 icon.png
 run_admin.bat
 prepare_release.py
