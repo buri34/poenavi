@@ -1,9 +1,10 @@
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 
 pytest.importorskip("PySide6")
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 from src.ui.main_window import MainWindow
 from src.update.release_client import ReleaseInfo
@@ -49,3 +50,32 @@ def test_manual_check_without_release_reports_latest():
     with patch("src.ui.main_window.QMessageBox.information") as information:
         window._on_update_check_finished(None, True)
     information.assert_called_once()
+
+
+def test_declining_apply_keeps_verified_download():
+    window = MainWindow.__new__(MainWindow)
+    window._update_progress_dialog = None
+    window.update_controller = Mock()
+
+    with patch(
+        "src.ui.main_window.QMessageBox.question",
+        return_value=QMessageBox.No,
+    ):
+        window._on_update_download_ready(Path("PoENavi.zip"), release_info())
+
+    window.update_controller.discard_download.assert_not_called()
+    window.update_controller.launch_updater.assert_not_called()
+
+
+def test_start_update_reuses_verified_download():
+    window = MainWindow.__new__(MainWindow)
+    window.update_controller = Mock()
+    window._on_update_download_ready = Mock()
+    archive = Path("cached-PoENavi.zip")
+    window.update_controller.ready_archive.return_value = archive
+    release = release_info()
+
+    window._start_update_download(release)
+
+    window._on_update_download_ready.assert_called_once_with(archive, release)
+    window.update_controller.download.assert_not_called()

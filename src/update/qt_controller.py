@@ -6,7 +6,7 @@ import sys
 import tempfile
 import threading
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QCoreApplication, QObject, Signal
 
 from src.update.artifacts import (
     DownloadCancelled,
@@ -36,6 +36,11 @@ class UpdateController(QObject):
         self._downloading = False
         self._cancel = threading.Event()
         self._work_dir: Path | None = None
+        self._ready_archive: Path | None = None
+        self._ready_version: str | None = None
+        app = QCoreApplication.instance()
+        if app is not None:
+            app.aboutToQuit.connect(self.discard_download)
         if getattr(sys, "frozen", False) and sys.platform == "win32":
             cleanup_timer = threading.Timer(10, self._cleanup_stale_update_dirs)
             cleanup_timer.daemon = True
@@ -69,6 +74,12 @@ class UpdateController(QObject):
     def download(self, release: ReleaseInfo) -> None:
         if self._downloading:
             return
+        cached = self.ready_archive(release.version)
+        if cached is not None:
+            self.download_ready.emit(cached, release)
+            return
+        if self._work_dir is not None:
+            self.discard_download()
         self._downloading = True
         self._cancel.clear()
         self._work_dir = Path(
@@ -98,6 +109,8 @@ class UpdateController(QObject):
                         "ダウンロードした ZIP の SHA-256 が一致しません。"
                     )
                 validate_update_archive(archive)
+                self._ready_archive = archive
+                self._ready_version = release.version
                 ready = True
                 self.download_ready.emit(archive, release)
             except DownloadCancelled:
@@ -115,10 +128,22 @@ class UpdateController(QObject):
     def cancel_download(self) -> None:
         self._cancel.set()
 
+    def ready_archive(self, version: str) -> Path | None:
+        if self._ready_version != version:
+            if self._ready_archive is not None:
+                self.discard_download()
+            return None
+        if self._ready_archive is None or not self._ready_archive.is_file():
+            self.discard_download()
+            return None
+        return self._ready_archive
+
     def discard_download(self) -> None:
         if self._work_dir is not None:
             shutil.rmtree(self._work_dir, ignore_errors=True)
             self._work_dir = None
+        self._ready_archive = None
+        self._ready_version = None
 
     def launch_updater(self, archive: Path) -> None:
         if not getattr(sys, "frozen", False) or sys.platform != "win32":
@@ -156,6 +181,4 @@ class UpdateController(QObject):
             shutil.rmtree(updater_work, ignore_errors=True)
             raise
 
-        if self._work_dir is not None:
-            shutil.rmtree(self._work_dir, ignore_errors=True)
-            self._work_dir = None
+        self.discard_download()

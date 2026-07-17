@@ -2729,6 +2729,10 @@ class MainWindow(QMainWindow):
         self._start_update_download(release)
 
     def _start_update_download(self, release):
+        cached = self.update_controller.ready_archive(release.version)
+        if cached is not None:
+            self._on_update_download_ready(cached, release)
+            return
         self._update_progress_dialog = UpdateProgressDialog(release.version, self)
         self._update_progress_dialog.cancel_requested.connect(
             self.update_controller.cancel_download
@@ -2766,7 +2770,6 @@ class MainWindow(QMainWindow):
             QMessageBox.Yes,
         )
         if answer != QMessageBox.Yes:
-            self.update_controller.discard_download()
             return
         try:
             self.update_controller.launch_updater(archive)

@@ -101,3 +101,46 @@ def test_cleanup_stale_update_directories(tmp_path, monkeypatch):
 
     assert not stale.exists()
     assert unrelated.exists()
+
+
+def test_download_reuses_verified_archive(tmp_path):
+    release = ReleaseInfo(
+        "2.5.0",
+        "notes",
+        "https://github.com/page",
+        "https://github.com/a.zip",
+        "https://github.com/a.sha256",
+    )
+    work_dir = tmp_path / "download"
+    work_dir.mkdir()
+    archive = work_dir / "PoENavi.zip"
+    archive.write_bytes(b"verified")
+    controller = UpdateController(thread_factory=ImmediateThread)
+    controller._work_dir = work_dir
+    controller._ready_archive = archive
+    controller._ready_version = release.version
+    received = []
+    controller.download_ready.connect(
+        lambda ready_archive, ready_release: received.append(
+            (ready_archive, ready_release)
+        )
+    )
+
+    controller.download(release)
+
+    assert received == [(archive, release)]
+    assert archive.is_file()
+
+
+def test_ready_archive_discards_different_version(tmp_path):
+    work_dir = tmp_path / "download"
+    work_dir.mkdir()
+    archive = work_dir / "PoENavi.zip"
+    archive.write_bytes(b"old")
+    controller = UpdateController()
+    controller._work_dir = work_dir
+    controller._ready_archive = archive
+    controller._ready_version = "2.5.0"
+
+    assert controller.ready_archive("2.6.0") is None
+    assert not work_dir.exists()
