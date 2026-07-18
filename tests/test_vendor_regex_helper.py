@@ -8,6 +8,8 @@ except ModuleNotFoundError as exc:  # pragma: no cover - local dev without GUI d
 else:
     IMPORT_ERROR = None
 
+from src.utils.poe_version_data import POE2
+
 
 class DummyQueryEdit:
     def __init__(self, text=""):
@@ -32,6 +34,7 @@ class DummyCheckBox:
 class VendorRegexHelperTest(unittest.TestCase):
     def make_dialog(self, query=""):
         dialog = VendorSearchPresetDialog.__new__(VendorSearchPresetDialog)
+        dialog.poe_version = POE2
         dialog.query_edit = DummyQueryEdit(query)
         dialog.option_checkboxes = []
         return dialog

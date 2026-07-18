@@ -3,8 +3,11 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.egg-info/
+.venv*/
 dist/
 build/
+PoENavi.zip
+PoENavi.zip.sha256
 *.spec
 
 # User data (generated at runtime)
@@ -19,6 +22,7 @@ vendor_search_presets.json
 vendor_search_presets_poe1.json
 vendor_search_presets_poe2.json
 .dev-user-data/
+.prerelease-test-user-data/
 
 # IDE
 .vscode/
@@ -42,6 +46,7 @@ zone_en_mapping.csv
 
 # App icons (generated)
 icon.ico
+!assets/app/icon.ico
 icon.png
 run_admin.bat
 prepare_release.py

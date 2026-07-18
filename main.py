@@ -1,11 +1,13 @@
 import sys
 import os
 
-__version__ = "2.4.0"
-
 # srcディレクトリへのパスを通す (VSCodeなどで実行した際のパスずれ対策)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
+
+from src.version import APP_VERSION
+
+__version__ = APP_VERSION
 
 from PySide6.QtWidgets import QApplication
 from src.ui.main_window import MainWindow

@@ -4,16 +4,14 @@ import os
 import re
 import sys
 import time
-import threading
-import urllib.request
 from pynput import keyboard as pynput_keyboard
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QPushButton, QMenu, QFrame, QScrollArea, QSplitter,
                                QSizeGrip, QMessageBox, QRadioButton, QButtonGroup, QApplication)
-from PySide6.QtCore import Qt, QTimer, Signal, QRect, QEvent, QPoint, QSize, QMimeData, QUrl
+from PySide6.QtCore import Qt, QTimer, Signal, QRect, QEvent, QEventLoop, QPoint, QSize, QMimeData, QUrl
 from PySide6.QtGui import QCursor, QMouseEvent, QIcon, QDesktopServices
 from src.ui.styles import Styles
-from src.ui.settings_dialog import SettingsDialog
+from src.ui.settings_dialog import AreaNoteDialog, SettingsDialog
 from src.ui.map_viewer import MapThumbnailWidget
 from src.utils.config_manager import ConfigManager
 from src.utils.lap_recorder import LapRecorder
@@ -27,7 +25,10 @@ from src.utils.poe_progress_data import get_auto_lap_triggers, get_clear_message
 from src.utils.pob_importer import import_pob, get_pob_skill_sets
 from src.utils.gem_resolver import resolve_gem_acquisition
 from src.utils.poelab_links import POELAB_HOME, find_daily_notes_url
+from src.utils.area_notes import get_area_note, set_area_note
 from src.ui.gem_tracker_widget import GemTrackerWidget, PoBImportDialog, PoBSkillSetSelectionDialog
+from src.ui.update_dialogs import UpdateAvailableDialog, UpdateProgressDialog
+from src.update.qt_controller import UpdateController
 from PySide6.QtWidgets import QComboBox, QDialog, QFormLayout
 
 
@@ -143,6 +144,7 @@ class MiniNaviOverlay(QWidget):
         self._current_content = None
         self._current_exp_guide = None
         self._current_zone_id = None
+        self._current_has_area_note = False
         self._muted_content = False
         self._lock_button_hidden_for_drag = False
         self._fade_timer = QTimer(self)
@@ -181,6 +183,16 @@ class MiniNaviOverlay(QWidget):
         right_column = QVBoxLayout()
         right_column.setContentsMargins(0, 0, 0, 0)
         right_column.setSpacing(5)
+
+        self.area_note_badge = QLabel("エリアメモあり")
+        self.area_note_badge.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.area_note_badge.setStyleSheet(
+            "color: #f0c674; font-size: 12px; font-weight: bold; "
+            "padding-right: 24px; background: transparent;"
+        )
+        self.area_note_badge.installEventFilter(self)
+        self.area_note_badge.hide()
+        right_column.addWidget(self.area_note_badge, stretch=0, alignment=Qt.AlignRight)
 
         self.text_label = QLabel("")
         self.text_label.setTextFormat(Qt.RichText)
@@ -244,16 +256,24 @@ class MiniNaviOverlay(QWidget):
         """みになび本文・矢印・経験値表示の文字透過率を適用。"""
         from PySide6.QtWidgets import QGraphicsOpacityEffect
         opacity = max(0.0, min(int(opacity_pct) / 100.0, 1.0))
-        for widget in (self.arrow_label, self.exp_label, self.text_label):
+        for widget in (self.arrow_label, self.exp_label, self.text_label, self.area_note_badge):
             effect = QGraphicsOpacityEffect(widget)
             effect.setOpacity(opacity)
             widget.setGraphicsEffect(effect)
 
-    def update_content(self, mini_navi: dict | None, exp_guide: dict | None = None, muted: bool = False, zone_id: str | None = None):
+    def update_content(
+        self,
+        mini_navi: dict | None,
+        exp_guide: dict | None = None,
+        muted: bool = False,
+        zone_id: str | None = None,
+        has_area_note: bool = False,
+    ):
         self._current_content = mini_navi
         self._current_exp_guide = exp_guide
         self._muted_content = muted
         self._current_zone_id = zone_id
+        self._current_has_area_note = bool(has_area_note)
         cfg = self.config()
         if not cfg.get("enabled", False):
             self.hide()
@@ -280,6 +300,7 @@ class MiniNaviOverlay(QWidget):
         self.exp_label.setVisible(bool(exp_guide))
         self.text_label.setAlignment(Qt.AlignCenter if muted else Qt.AlignVCenter | Qt.AlignLeft)
         self.text_label.setText("<br>".join(self._render_line(line) for line in lines))
+        self.area_note_badge.setVisible(bool(has_area_note) and not muted)
         self.apply_settings(refresh_window_flags=False)
         self._fit_height_to_content()
         self.show()
@@ -303,6 +324,7 @@ class MiniNaviOverlay(QWidget):
                 self._current_exp_guide,
                 muted=self._muted_content,
                 zone_id=getattr(self, "_current_zone_id", None),
+                has_area_note=getattr(self, "_current_has_area_note", False),
             )
             return
         self.show_waiting_for_area()
@@ -315,6 +337,7 @@ class MiniNaviOverlay(QWidget):
             self._current_content,
             self._current_exp_guide,
             zone_id=getattr(self, "_current_zone_id", None),
+            has_area_note=getattr(self, "_current_has_area_note", False),
         )
 
     def toggle_locked(self):
@@ -1110,7 +1133,7 @@ class RouteSelectionDialog(QDialog):
         self.setFixedSize(400, 270)
         self.setStyleSheet(Styles.MAIN_WINDOW)
         config = config or {}
-        
+
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
         
@@ -1222,7 +1245,7 @@ class MemoDialog(QDialog):
         title_layout = QHBoxLayout(title_bar)
         title_layout.setContentsMargins(4, 0, 4, 0)
         
-        title_label = QLabel("📝 メモ")
+        title_label = QLabel("📝 共通メモ")
         title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none;")
         title_layout.addWidget(title_label)
         title_layout.addStretch()
@@ -3149,6 +3172,12 @@ class VendorSearchPresetDialog(QDialog):
 
 
 class MainWindow(QMainWindow):
+    # Qt may call an overridden showEvent from QMainWindow.__init__ before
+    # this class' __init__ body can initialize instance attributes.
+    _initial_positioned = False
+    _pending_initial_map_auto_open = False
+    _main_window_initialized = False
+
     POELAB_ZONE_TYPES = {
         "act4_area3": "normal",
         "act8_area2": "cruel",
@@ -3157,12 +3186,15 @@ class MainWindow(QMainWindow):
 
     # ホットキーイベントをメインスレッドで処理するためのシグナル
     hotkey_signal = Signal(str)
-    _update_signal = Signal(str, str)  # 更新通知用シグナル (version, url)
     poelab_url_resolved = Signal(str)
     poelab_url_failed = Signal(str)
 
     def __init__(self):
         super().__init__()
+
+        # Qt can deliver showEvent while startup dialogs are running.  Keep
+        # showEvent side-effect free until every widget/state it uses exists.
+        self._main_window_initialized = False
 
         # 設定読み込み
         self.config = ConfigManager.load_config()
@@ -3173,6 +3205,10 @@ class MainWindow(QMainWindow):
         _config = self.config
         self._display_monitor_index = _config.get("display_monitor", 0)
         self._initial_positioned = False
+        # Startup update dialogs can cause Qt to deliver showEvent while
+        # __init__ is still running.  Initialize every flag read by
+        # showEvent before the update gate can display a dialog.
+        self._pending_initial_map_auto_open = False
         self.resize(420, 1200)  # 仮サイズ、showEvent で実際に配置
 
         # アプリアイコン設定
@@ -3191,6 +3227,12 @@ class MainWindow(QMainWindow):
         
         # 設定読み込み
         self.config = ConfigManager.load_config()
+        self.update_controller = UpdateController(self)
+        self._update_progress_dialog = None
+        if not self._run_startup_update_gate():
+            QTimer.singleShot(0, QApplication.instance().quit)
+            return
+        self._connect_update_controller()
         if not self._ensure_poe_version_selected():
             from PySide6.QtWidgets import QApplication
             QTimer.singleShot(0, QApplication.instance().quit)
@@ -3213,7 +3255,6 @@ class MainWindow(QMainWindow):
         # 起動時の復元中はvisitカウントしない
         self._restoring = False
         # 起動時復元で自動表示されるマップは、メインウィンドウ配置完了後に開く
-        self._pending_initial_map_auto_open = False
         # 訪問回数の手動オーバーライド（None=自動, 1 or 2=固定）— ゾーン移動でリセット
         self.visit_override = None
         # Lab中フラグ（志す者の広場→Lab内エリア→街帰還を追跡）
@@ -3300,6 +3341,9 @@ class MainWindow(QMainWindow):
         # レベルガイド状態
         self.player_level = 1
         self.current_zone = ""
+        self._current_zone_id = None
+        self._current_zone_name = ""
+        self._current_area_note = ""
         self._current_poelab_type = None
         zone_master_data = load_zone_master_data()
         self.zone_data_by_version = zone_master_data["zone_data_by_version"]
@@ -3357,9 +3401,9 @@ class MainWindow(QMainWindow):
         # タイマー状態復元
         self._restore_timer_state()
         
-        # 更新チェック（バックグラウンド）
-        self._check_for_updates()
-        
+        # エリアメモ導入案内（全モード共通で一度だけ）
+        self._show_area_note_migration_notice_once()
+
         # 初回起動チェック（ポップアップ + ガイドエリア案内）
         self._check_first_run()
         
@@ -3370,6 +3414,112 @@ class MainWindow(QMainWindow):
         self._ef_resize_edge = None
         self._ef_resize_start_geo = None
         self._ef_resize_start_pos = None
+        self._main_window_initialized = True
+
+    def _connect_update_controller(self):
+        """Connect handlers used after the startup update gate."""
+        self.update_controller.check_finished.connect(self._on_update_check_finished)
+        self.update_controller.check_failed.connect(self._on_update_check_failed)
+        self.update_controller.download_progress.connect(self._on_update_download_progress)
+        self.update_controller.download_ready.connect(self._on_update_download_ready)
+        self.update_controller.download_failed.connect(self._on_update_download_failed)
+        self.update_controller.download_cancelled.connect(self._on_update_download_cancelled)
+
+    def _run_startup_update_gate(self):
+        """Finish the startup update decision before showing setup dialogs."""
+        check_loop = QEventLoop()
+        result = {"release": None, "error": None}
+
+        def on_finished(release, _manual):
+            result["release"] = release
+            check_loop.quit()
+
+        def on_failed(message, _manual):
+            result["error"] = message
+            check_loop.quit()
+
+        self.update_controller.check_finished.connect(on_finished)
+        self.update_controller.check_failed.connect(on_failed)
+        QTimer.singleShot(0, lambda: self.update_controller.check(False))
+        check_loop.exec()
+        self.update_controller.check_finished.disconnect(on_finished)
+        self.update_controller.check_failed.disconnect(on_failed)
+
+        release = result["release"]
+        if release is None:
+            return True
+        if self.config.get("notified_update_version") == release.version:
+            return True
+
+        self.config["notified_update_version"] = release.version
+        ConfigManager.save_config(self.config)
+        supported = getattr(sys, "frozen", False) and sys.platform == "win32"
+        dialog = UpdateAvailableDialog(release, supported, self)
+        if not dialog.exec():
+            return True
+        if not supported:
+            QDesktopServices.openUrl(QUrl(release.page_url))
+            return True
+
+        progress = UpdateProgressDialog(release.version, self)
+        progress.cancel_requested.connect(self.update_controller.cancel_download)
+        download_loop = QEventLoop()
+        download_result = {"archive": None, "error": None, "cancelled": False}
+
+        def on_progress(done, total):
+            progress.set_progress(done, total)
+
+        def on_ready(archive, _release):
+            download_result["archive"] = archive
+            download_loop.quit()
+
+        def on_download_failed(message):
+            download_result["error"] = message
+            download_loop.quit()
+
+        def on_cancelled():
+            download_result["cancelled"] = True
+            download_loop.quit()
+
+        self.update_controller.download_progress.connect(on_progress)
+        self.update_controller.download_ready.connect(on_ready)
+        self.update_controller.download_failed.connect(on_download_failed)
+        self.update_controller.download_cancelled.connect(on_cancelled)
+        progress.show()
+        QTimer.singleShot(0, lambda: self.update_controller.download(release))
+        download_loop.exec()
+        progress.close()
+        self.update_controller.download_progress.disconnect(on_progress)
+        self.update_controller.download_ready.disconnect(on_ready)
+        self.update_controller.download_failed.disconnect(on_download_failed)
+        self.update_controller.download_cancelled.disconnect(on_cancelled)
+
+        if download_result["cancelled"]:
+            return True
+        if download_result["error"]:
+            QMessageBox.warning(
+                self,
+                "アップデート",
+                f"更新をダウンロードできませんでした。\n{download_result['error']}",
+            )
+            return True
+
+        answer = QMessageBox.question(
+            self,
+            "アップデートを適用",
+            f"v{release.version} の検証が完了しました。\n"
+            "ぽえなびを終了して更新しますか？",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
+        if answer != QMessageBox.Yes:
+            return True
+        try:
+            self.update_controller.launch_updater(download_result["archive"])
+        except Exception as exc:
+            QMessageBox.critical(self, "アップデート", str(exc))
+            return True
+        return False
         
     def _ensure_poe_version_selected(self):
         mode = self.config.get("poe_version_mode", "ask")
@@ -3399,85 +3549,88 @@ class MainWindow(QMainWindow):
             return True
         return False
 
-    def _check_for_updates(self):
-        """GitHub Releasesから最新バージョンをチェック（バックグラウンド）"""
-        self._update_signal.connect(self._show_update_dialog)
-        
-        def check():
-            try:
-                from main import __version__
-            except ImportError:
-                return
-            try:
-                api_url = "https://api.github.com/repos/buri34/poenavi/releases/latest"
-                req = urllib.request.Request(api_url, headers={"User-Agent": "PoENavi"})
-                with urllib.request.urlopen(req, timeout=5) as resp:
-                    data = json.loads(resp.read().decode())
-                tag = data.get("tag_name", "").lstrip("v")
-                if not tag:
-                    return
-                def ver_tuple(v):
-                    return tuple(int(x) for x in v.split(".") if x.isdigit())
-                if ver_tuple(tag) > ver_tuple(__version__):
-                    notified_version = ConfigManager.load_config().get("notified_update_version", "")
-                    if notified_version == tag:
-                        return
-                    release_url = data.get("html_url", "https://github.com/buri34/poenavi/releases/latest")
-                    self._update_signal.emit(tag, release_url)
-            except Exception:
-                pass
-        
-        threading.Thread(target=check, daemon=True).start()
-    
-    def _show_update_dialog(self, version: str, release_url: str):
-        """更新通知ポップアップを表示"""
-        from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton
-        from PySide6.QtGui import QDesktopServices
-        from PySide6.QtCore import QUrl
-        
-        if self.config.get("notified_update_version") != version:
-            self.config["notified_update_version"] = version
-            ConfigManager.save_config(self.config)
+    def _check_for_updates(self, manual=False):
+        """GitHub Releasesから最新バージョンを確認する。"""
+        self.update_controller.check(manual)
 
-        dialog = QDialog(self)
-        dialog.setWindowTitle("🔔 アップデートのお知らせ")
-        dialog.setFixedSize(360, 150)
-        dialog.setStyleSheet("background: #1a1a2e; color: #dddddd;")
-        
-        layout = QVBoxLayout(dialog)
-        layout.setContentsMargins(20, 15, 20, 15)
-        
-        msg = QLabel(f"新しいバージョン v{version} が公開されています！")
-        msg.setStyleSheet("font-size: 14px; font-weight: bold; color: #ffc832;")
-        msg.setWordWrap(True)
-        layout.addWidget(msg)
-        
-        link = QPushButton(f"📥 リリースページを開く")
-        link.setStyleSheet("""
-            QPushButton {
-                background: #4488ff; color: #ffffff;
-                border: none; border-radius: 4px;
-                font-size: 13px; padding: 8px 16px;
-            }
-            QPushButton:hover { background: #5599ff; }
-        """)
-        link.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(release_url)))
-        link.clicked.connect(dialog.accept)
-        layout.addWidget(link)
-        
-        close_btn = QPushButton("閉じる")
-        close_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: transparent; color: #888888;
-                border: 1px solid #555555; border-radius: 4px;
-                font-size: 12px; padding: 5px 12px;
-            }}
-            QPushButton:hover {{ background: rgba(255,255,255,0.1); }}
-        """)
-        close_btn.clicked.connect(dialog.reject)
-        layout.addWidget(close_btn)
-        
-        dialog.exec()
+    def _on_update_check_finished(self, release, manual):
+        if release is None:
+            if manual:
+                QMessageBox.information(self, "アップデート", "最新バージョンです。")
+            return
+        if not manual and self.config.get("notified_update_version") == release.version:
+            return
+        self._show_update_available(release)
+
+    def _on_update_check_failed(self, message, manual):
+        if manual:
+            QMessageBox.warning(
+                self,
+                "アップデート",
+                f"更新を確認できませんでした。\n{message}",
+            )
+
+    def _show_update_available(self, release):
+        self.config["notified_update_version"] = release.version
+        ConfigManager.save_config(self.config)
+        supported = getattr(sys, "frozen", False) and sys.platform == "win32"
+        dialog = UpdateAvailableDialog(release, supported, self)
+        if not dialog.exec():
+            return
+        if not supported:
+            QDesktopServices.openUrl(QUrl(release.page_url))
+            return
+        self._start_update_download(release)
+
+    def _start_update_download(self, release):
+        cached = self.update_controller.ready_archive(release.version)
+        if cached is not None:
+            self._on_update_download_ready(cached, release)
+            return
+        self._update_progress_dialog = UpdateProgressDialog(release.version, self)
+        self._update_progress_dialog.cancel_requested.connect(
+            self.update_controller.cancel_download
+        )
+        self.update_controller.download(release)
+        self._update_progress_dialog.show()
+
+    def _on_update_download_progress(self, done, total):
+        if self._update_progress_dialog:
+            self._update_progress_dialog.set_progress(done, total)
+
+    def _on_update_download_cancelled(self):
+        if self._update_progress_dialog:
+            self._update_progress_dialog.reject()
+            self._update_progress_dialog = None
+
+    def _on_update_download_failed(self, message):
+        self._on_update_download_cancelled()
+        QMessageBox.warning(
+            self,
+            "アップデート",
+            f"更新をダウンロードできませんでした。\n{message}",
+        )
+
+    def _on_update_download_ready(self, archive, release):
+        if self._update_progress_dialog:
+            self._update_progress_dialog.accept()
+            self._update_progress_dialog = None
+        answer = QMessageBox.question(
+            self,
+            "アップデートを適用",
+            f"v{release.version} の検証が完了しました。\n"
+            "ぽえなびを終了して更新しますか？",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
+        if answer != QMessageBox.Yes:
+            return
+        try:
+            self.update_controller.launch_updater(archive)
+        except Exception as exc:
+            QMessageBox.critical(self, "アップデート", str(exc))
+            return
+        QApplication.instance().quit()
     
     def _check_first_run(self):
         """現在のPoEバージョンに対応するログファイル設定案内"""
@@ -3520,6 +3673,34 @@ class MainWindow(QMainWindow):
                 '\\common\\Path of Exile\\logs\\Client.txt</span></span>'
                 '</div>'
             )
+
+    def _show_area_note_migration_notice_once(self):
+        """公式ガイド編集からエリアメモへの移行案内を一度だけ表示する。"""
+        flag = "area_note_migration_notice_shown"
+        if self.config.get(flag, False):
+            return
+
+        msg = QMessageBox(self)
+        msg.setStyleSheet("QMessageBox { font-size: 14px; } QMessageBox QLabel { font-size: 14px; }")
+        msg.setWindowTitle("📝 エリアメモ機能について")
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.setText(
+            "今回のバージョンから、各エリアのガイドデータは\n"
+            "編集できない仕様に変更しました。\n"
+            "（PoENaviの自動アップデート機能を正しく動作させるためです）\n"
+            "その代わり、各エリアにエリアメモを追加できる\n"
+            "「エリアメモ」機能を実装しました。\n\n"
+            "大変お手数ですが、以前のガイドを編集していた方は、\n"
+            "旧PoENaviフォルダのJSONファイルから、\n"
+            "必要な内容を各エリアのエリアメモへコピーしてください。\n\n"
+            "今後は公式ガイドとエリアメモを分けて保存するため、\n"
+            "次回以降のアップデートでエリアメモが失われることはありません。"
+        )
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg.exec()
+
+        self.config[flag] = True
+        ConfigManager.save_config(self.config)
 
     def _show_route_selection_dialog(self):
         """ルート選択ダイアログを表示して設定を保存"""
@@ -3916,7 +4097,7 @@ class MainWindow(QMainWindow):
         self.memo_btn = QPushButton("📝")
         self.memo_btn.setStyleSheet(Styles.BUTTON)
         self.memo_btn.setFixedSize(35, 35)
-        self.memo_btn.setToolTip("メモ")
+        self.memo_btn.setToolTip("共通メモ")
         self.memo_btn.clicked.connect(self.open_memo)
         button_layout.addWidget(self.memo_btn)
 
@@ -4036,6 +4217,27 @@ class MainWindow(QMainWindow):
         guide_text_header_layout.addWidget(self.guide_text_toggle_btn)
         guide_text_header_layout.addStretch()
 
+        self.area_note_edit_button = QPushButton("📝 エリアメモ")
+        self.area_note_edit_button.setCursor(QCursor(Qt.PointingHandCursor))
+        self.area_note_edit_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.area_note_edit_button.setToolTip("現在のエリアのエリアメモを編集します")
+        self.area_note_edit_button.setStyleSheet(f"""
+            QPushButton {{
+                background: rgba(20, 30, 20, 160);
+                color: {Styles.TEXT_COLOR};
+                border: 1px solid rgba(176, 255, 123, 0.75);
+                border-radius: 5px;
+                padding: 3px 9px;
+                font-size: 11px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{ background: rgba(73, 110, 50, 180); color: #ffffff; }}
+            QPushButton:disabled {{ color: #666666; border-color: #555555; }}
+        """)
+        self.area_note_edit_button.clicked.connect(self.open_area_note_editor)
+        self.area_note_edit_button.setEnabled(False)
+        guide_text_header_layout.addWidget(self.area_note_edit_button)
+
         self.guide_detail_level_toggle_btn = QPushButton()
         self.guide_detail_level_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.guide_detail_level_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
@@ -4094,6 +4296,33 @@ class MainWindow(QMainWindow):
         """)
         guide_text_layout = QVBoxLayout(guide_text_frame)
         guide_text_layout.setContentsMargins(10, 8, 10, 8)
+
+        self.area_note_frame = QFrame()
+        self.area_note_frame.setStyleSheet("""
+            QFrame {
+                background: rgba(55, 45, 15, 190);
+                border: 1px solid rgba(255, 210, 80, 150);
+                border-radius: 5px;
+            }
+        """)
+        area_note_layout = QVBoxLayout(self.area_note_frame)
+        area_note_layout.setContentsMargins(9, 6, 9, 6)
+        area_note_layout.setSpacing(3)
+        area_note_title = QLabel("📝 エリアメモ")
+        area_note_title.setStyleSheet(
+            "color: #ffd86b; font-size: 11px; font-weight: bold; border: none; background: transparent;"
+        )
+        area_note_layout.addWidget(area_note_title)
+        self.area_note_label = QLabel()
+        self.area_note_label.setTextFormat(Qt.RichText)
+        self.area_note_label.setWordWrap(True)
+        self.area_note_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.area_note_label.setStyleSheet(
+            f"color: {Styles.TEXT_COLOR}; font-size: {self.guide_font_size}px; border: none; background: transparent;"
+        )
+        area_note_layout.addWidget(self.area_note_label)
+        self.area_note_frame.hide()
+        guide_text_layout.addWidget(self.area_note_frame)
 
         poelab_button_layout = QHBoxLayout()
         poelab_button_layout.setContentsMargins(0, 0, 0, 0)
@@ -4752,6 +4981,42 @@ class MainWindow(QMainWindow):
         self.poelab_link_button.setVisible(self._current_poelab_type is not None)
         if self._current_poelab_type is None:
             self._reset_poelab_link_button()
+
+    def _update_area_note(self, zone_name: str, zone_id: str | None):
+        self._current_zone_id = zone_id
+        self._current_zone_name = zone_name
+        self.area_note_edit_button.setEnabled(bool(zone_id))
+        if not zone_id:
+            self._current_area_note = ""
+            self.area_note_label.clear()
+            self.area_note_frame.hide()
+            return
+        try:
+            content = get_area_note(self.poe_version, zone_id)
+        except ValueError as exc:
+            self._current_area_note = ""
+            self.area_note_label.clear()
+            self.area_note_frame.hide()
+            self.area_note_edit_button.setEnabled(False)
+            QMessageBox.warning(self, "エリアメモ読込エラー", str(exc))
+            return
+        self._current_area_note = content
+        self.area_note_label.setText(content.replace("\n", "<br>"))
+        self.area_note_frame.setVisible(bool(content.strip()))
+
+    def open_area_note_editor(self):
+        zone_id = self._current_zone_id
+        if not zone_id:
+            return
+        dialog = AreaNoteDialog(self, self._current_zone_name or zone_id, self._current_area_note)
+        if dialog.exec() != QDialog.Accepted:
+            return
+        try:
+            set_area_note(self.poe_version, zone_id, dialog.content())
+        except (OSError, ValueError) as exc:
+            QMessageBox.warning(self, "エリアメモ保存エラー", str(exc))
+            return
+        self._update_area_note(self._current_zone_name, zone_id)
 
     def open_daily_poelab(self):
         """当日のDaily Notes URLだけを取得し、標準ブラウザで開く。"""
@@ -5972,6 +6237,7 @@ class MainWindow(QMainWindow):
 
     def _update_guide_and_map(self, zone_name: str, zone_id: str | None, visit_num: int, zone_changed: bool = False, exp_level: int | None = None):
         """攻略ガイドとマップ画像を更新"""
+        self._update_area_note(zone_name, zone_id)
         self._update_poelab_link_visibility(zone_id)
         # 訪問回数オーバーライド適用
         effective_visit = self.visit_override if self.visit_override is not None else visit_num
@@ -6004,6 +6270,7 @@ class MainWindow(QMainWindow):
                         get_mini_navi_content(guide, max_lines=max_lines),
                         self._mini_navi_exp_guide(exp_level, zone_id=zone_id),
                         zone_id=zone_id,
+                        has_area_note=bool(self._current_area_note.strip()),
                     )
                 else:
                     self.mini_navi_overlay.hide()
@@ -6261,6 +6528,10 @@ class MainWindow(QMainWindow):
         settings_action = menu.addAction("設定")
         settings_action.triggered.connect(self.open_settings)
 
+        update_action = menu.addAction("アップデートを確認")
+        update_action.triggered.connect(
+            lambda: self._check_for_updates(manual=True)
+        )
         
         menu.addSeparator()
         
@@ -6416,7 +6687,9 @@ class MainWindow(QMainWindow):
             
     def showEvent(self, event):
         super().showEvent(event)
-        if not self._initial_positioned:
+        if not getattr(self, "_main_window_initialized", False):
+            return
+        if not getattr(self, "_initial_positioned", False):
             self._initial_positioned = True
             from PySide6.QtWidgets import QApplication
             
@@ -6474,7 +6747,7 @@ class MainWindow(QMainWindow):
                 # デフォルト: 右端配置
                 self._position_right_edge()
 
-            if self._pending_initial_map_auto_open:
+            if getattr(self, "_pending_initial_map_auto_open", False):
                 self._pending_initial_map_auto_open = False
                 QTimer.singleShot(50, self.map_thumbnail.open_first_map)
     

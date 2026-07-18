@@ -137,6 +137,7 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
         overlay._current_content = {"text": "前エリアのガイド", "direction": "ne"}
         overlay._current_exp_guide = {"player_level": 10, "enemy_level": 12}
         overlay._current_zone_id = "act3_area1"
+        overlay._current_has_area_note = True
         overlay._muted_content = False
         overlay.update_content = Mock()
         overlay.show_waiting_for_area = Mock()
@@ -148,6 +149,7 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
             {"player_level": 10, "enemy_level": 12},
             muted=False,
             zone_id="act3_area1",
+            has_area_note=True,
         )
         overlay.show_waiting_for_area.assert_not_called()
 

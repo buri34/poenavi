@@ -1,0 +1,49 @@
+name: Release Windows App
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install test dependencies
+        run: python -m pip install -r requirements.txt pytest
+
+      - name: Verify tag matches app version
+        shell: pwsh
+        run: |
+          $version = python -c "from src.version import APP_VERSION; print(APP_VERSION)"
+          if ($env:GITHUB_REF_NAME -ne "v$version") {
+            throw "Tag $env:GITHUB_REF_NAME does not match APP_VERSION $version"
+          }
+
+      - name: Run tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -m pytest -q
+
+      - name: Build release assets
+        shell: pwsh
+        run: .\scripts\build_release.ps1 -Python python
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create $env:GITHUB_REF_NAME
+          PoENavi.zip PoENavi.zip.sha256
+          --verify-tag --generate-notes
+          --title "PoENavi $env:GITHUB_REF_NAME"

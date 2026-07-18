@@ -11,6 +11,7 @@ from src.utils.guide_data import load_guide_data, save_guide_data, get_visit_gui
 from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_act_list, get_poe_label, get_town_zones
 from src.utils.zone_master_data import load_zone_master_data, save_zone_master_data
 from src.utils.config_manager import ConfigManager
+from src.utils.area_notes import get_area_note, set_area_note
 import webbrowser
 
 
@@ -151,46 +152,86 @@ class RichTextEdit(QTextEdit):
     
     def to_storage_html(self) -> str:
         """保存用HTML文字列を生成（Qtの冗長なHTMLをクリーンアップ）"""
-        html = self.toHtml()
-        
-        import re
-        # body内のコンテンツだけ取り出す
-        m = re.search(r"<body[^>]*>(.*)</body>", html, re.DOTALL)
-        if m:
-            body = m.group(1).strip()
-        else:
-            body = html
-        
-        # Qtが生成する余計な属性を整理
-        # <p> → 改行に変換
-        body = re.sub(r'<p[^>]*>', '', body)
-        body = body.replace('</p>', '\n')
-        # <br> → 改行
-        body = re.sub(r'<br\s*/?>', '\n', body)
-        # <span style="...font-weight:700...">text</span> → <b>text</b>
-        def span_to_tags(m):
-            style = m.group(1)
-            text = m.group(2)
-            is_bold = 'font-weight' in style and ('700' in style or 'bold' in style)
-            color_m = re.search(r'color:(#[0-9a-fA-F]{6})', style)
-            
-            if is_bold and color_m:
-                return f"<b style='color:{color_m.group(1)}'>{text}</b>"
-            elif is_bold:
-                return f"<b>{text}</b>"
-            elif color_m:
-                return f"<span style='color:{color_m.group(1)}'>{text}</span>"
-            return text
-        
-        body = re.sub(r'<span style="([^"]*)">(.*?)</span>', span_to_tags, body)
-        
-        # 連続改行を整理
-        body = re.sub(r'\n{3,}', '\n\n', body)
-        # QtのtoHtml()が生成するHTMLエンティティを戻す（guide_data.jsonにはプレーンテキスト+許可タグで保存）
-        body = body.replace("&quot;", '"')
-        body = body.replace("&#x27;", "'")
-        body = body.replace("&amp;", "&")
-        return body.strip()
+        from src.utils.area_notes import qt_html_to_storage_html
+
+        return qt_html_to_storage_html(self.toHtml())
+
+
+class AreaNoteDialog(QDialog):
+    """エリアに紐づく色付きエリアメモ編集画面。"""
+
+    COLORS = [
+        ("#ff6666", "赤"),
+        ("#4488ff", "青"),
+        ("#ff8800", "オレンジ"),
+        ("#44cc44", "緑"),
+        ("#dddd44", "黄"),
+        ("#dd66ff", "紫"),
+        ("#ffffff", "白"),
+    ]
+
+    def __init__(self, parent, zone_name: str, content: str):
+        super().__init__(parent)
+        self.setWindowTitle(f"エリアメモ — {zone_name}")
+        self.resize(520, 360)
+        self.setStyleSheet(Styles.MAIN_WINDOW)
+
+        layout = QVBoxLayout(self)
+        description = QLabel(f"📝 {zone_name} のエリアメモ")
+        description.setStyleSheet(
+            f"color: {Styles.TEXT_COLOR}; font-size: 14px; font-weight: bold;"
+        )
+        layout.addWidget(description)
+
+        toolbar = QHBoxLayout()
+        toolbar.setSpacing(5)
+        for color_code, color_name in self.COLORS:
+            button = QPushButton()
+            button.setFixedSize(22, 22)
+            button.setToolTip(color_name)
+            button.setStyleSheet(
+                f"QPushButton {{ background: {color_code}; border: 1px solid #777; "
+                "border-radius: 3px; } QPushButton:hover { border: 2px solid white; }"
+            )
+            button.clicked.connect(lambda checked=False, color=color_code: self._set_color(color))
+            toolbar.addWidget(button)
+        reset_button = QPushButton("標準色")
+        reset_button.setToolTip("選択範囲の文字色を標準色へ戻します")
+        reset_button.clicked.connect(lambda: self._set_color(Styles.TEXT_COLOR))
+        toolbar.addWidget(reset_button)
+        toolbar.addStretch()
+        layout.addLayout(toolbar)
+
+        self.text_edit = RichTextEdit()
+        self.text_edit.setStyleSheet(
+            f"QTextEdit {{ background: #1a1a1a; color: {Styles.TEXT_COLOR}; "
+            "border: 1px solid #4b6b3b; padding: 7px; font-size: 13px; }"
+        )
+        self.text_edit.set_from_html(content)
+        layout.addWidget(self.text_edit)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        cancel_button = QPushButton("キャンセル")
+        cancel_button.clicked.connect(self.reject)
+        save_button = QPushButton("保存")
+        save_button.setDefault(True)
+        save_button.clicked.connect(self.accept)
+        buttons.addWidget(cancel_button)
+        buttons.addWidget(save_button)
+        layout.addLayout(buttons)
+
+    def _set_color(self, color: str):
+        from PySide6.QtGui import QColor
+
+        cursor = self.text_edit.textCursor()
+        char_format = cursor.charFormat()
+        char_format.setForeground(QColor(color))
+        cursor.mergeCharFormat(char_format)
+        self.text_edit.mergeCurrentCharFormat(char_format)
+
+    def content(self) -> str:
+        return self.text_edit.to_storage_html()
 
 
 class GuideEditorDialog(QDialog):
@@ -2289,39 +2330,6 @@ class SettingsDialog(QDialog):
         """)
         row.addWidget(name_edit)
         
-        guide_btn = QPushButton("📝")
-        guide_btn.setFixedSize(30, 26)
-        guide_btn.setToolTip("ガイドデータを編集")
-        guide_btn.setStyleSheet(f"""
-            QPushButton {{ 
-                background: rgba(40,40,40,200); color: {Styles.TEXT_COLOR}; 
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; font-size: 12px;
-            }}
-            QPushButton:hover {{ background: rgba(80,80,80,200); }}
-        """)
-        guide_btn.clicked.connect(lambda checked, ne=name_edit, zid=zone_id: self._open_guide_editor(ne, zid))
-        row.addWidget(guide_btn)
-
-        if self.poe_version == POE1:
-            mini_btn = self._create_small_action_button("み", "みになびを編集")
-            mini_btn.clicked.connect(lambda checked, ne=name_edit, zid=zone_id: self._open_mini_navi_editor(ne, zid))
-            row.addWidget(mini_btn)
-        
-        if self.poe_version == POE2:
-            summary_btn = QPushButton("要")
-            summary_btn.setFixedSize(30, 26)
-            summary_btn.setToolTip("中級者向けサマリーを編集")
-            summary_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: rgba(40,40,40,200); color: {Styles.TEXT_COLOR};
-                    border: 1px solid rgba(176,255,123,0.3); border-radius: 3px;
-                    font-size: 11px; font-weight: bold;
-                }}
-                QPushButton:hover {{ background: rgba(80,80,80,200); }}
-            """)
-            summary_btn.clicked.connect(lambda checked, ne=name_edit, zid=zone_id: self._open_summary_editor(ne, zid))
-            row.addWidget(summary_btn)
-        
         row.addStretch()
         
         # Insert before the "+" button (last widget)
@@ -2517,25 +2525,6 @@ class SettingsDialog(QDialog):
             act_layout = QVBoxLayout(act_group)
             act_layout.setSpacing(2)
 
-            header_row = QHBoxLayout()
-            header_row.setSpacing(5)
-            spacer_label = QLabel("")
-            spacer_label.setFixedWidth(250)
-            header_row.addWidget(spacer_label)
-            guide_header = QLabel("ガイド設定")
-            guide_header.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 10px; font-weight: bold;")
-            header_row.addWidget(guide_header)
-            if self.poe_version == POE1:
-                mini_header = QLabel("みになび")
-                mini_header.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 10px; font-weight: bold;")
-                header_row.addWidget(mini_header)
-            if self.poe_version == POE2:
-                summary_header = QLabel("要約")
-                summary_header.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 10px; font-weight: bold;")
-                header_row.addWidget(summary_header)
-            header_row.addStretch()
-            act_layout.addLayout(header_row)
-
             zones = self.zone_data.get(act_name, [])
             act_widgets = []
 
@@ -2561,39 +2550,15 @@ class SettingsDialog(QDialog):
                 """)
                 row.addWidget(name_edit)
 
-                guide_btn = QPushButton("📝")
-                guide_btn.setFixedSize(30, 26)
-                guide_btn.setToolTip("ガイドデータを編集")
-                guide_btn.setStyleSheet(f"""
-                    QPushButton {{ 
-                        background: rgba(40,40,40,200); color: {Styles.TEXT_COLOR}; 
-                        border: 1px solid rgba(176,255,123,0.3); border-radius: 3px;
-                        font-size: 12px;
-                    }}
-                    QPushButton:hover {{ background: rgba(80,80,80,200); }}
-                """)
-                guide_btn.clicked.connect(lambda checked, ne=name_edit, zid=zone_id: self._open_guide_editor(ne, zid))
-                row.addWidget(guide_btn)
-
-                if self.poe_version == POE1:
-                    mini_btn = self._create_small_action_button("み", "みになびを編集")
-                    mini_btn.clicked.connect(lambda checked, ne=name_edit, zid=zone_id: self._open_mini_navi_editor(ne, zid))
-                    row.addWidget(mini_btn)
-
-                if self.poe_version == POE2:
-                    summary_btn = QPushButton("要")
-                    summary_btn.setFixedSize(30, 26)
-                    summary_btn.setToolTip("中級者向けサマリーを編集")
-                    summary_btn.setStyleSheet(f"""
-                        QPushButton {{
-                            background: rgba(40,40,40,200); color: {Styles.TEXT_COLOR};
-                            border: 1px solid rgba(176,255,123,0.3); border-radius: 3px;
-                            font-size: 11px; font-weight: bold;
-                        }}
-                        QPushButton:hover {{ background: rgba(80,80,80,200); }}
-                    """)
-                    summary_btn.clicked.connect(lambda checked, ne=name_edit, zid=zone_id: self._open_summary_editor(ne, zid))
-                    row.addWidget(summary_btn)
+                memo_button = QPushButton("📝 エリアメモ")
+                memo_button.setToolTip(f"{z.get('zone', '')} のエリアメモを編集します")
+                memo_button.setFixedWidth(105)
+                memo_button.setStyleSheet(Styles.BUTTON)
+                memo_button.clicked.connect(
+                    lambda checked=False, zid=zone_id, zname=z.get("zone", ""):
+                    self._open_area_note_editor(zid, zname)
+                )
+                row.addWidget(memo_button)
 
                 row.addStretch()
                 act_layout.addLayout(row)
@@ -2619,6 +2584,14 @@ class SettingsDialog(QDialog):
 
         self.zone_scroll_inner.addStretch()
 
+    def _open_area_note_editor(self, zone_id: str, zone_name: str):
+        """設定画面から任意エリアのエリアメモを編集して即時保存する。"""
+        if not zone_id:
+            return
+        dialog = AreaNoteDialog(self, zone_name or zone_id, get_area_note(self.poe_version, zone_id))
+        if dialog.exec():
+            set_area_note(self.poe_version, zone_id, dialog.content())
+
     def _on_poe_version_changed(self, poe_version: str, checked: bool):
         if not checked or self.poe_version == poe_version:
             return
@@ -2633,9 +2606,8 @@ class SettingsDialog(QDialog):
         self._save_current_zone_ui_to_memory()
         self.town_zones_by_version[self.poe_version] = [z.strip() for z in self.town_zones_edit.toPlainText().split("\n") if z.strip()]
 
-        # マスタデータ・ガイドデータを保存
+        # エリア一覧のみ保存する。公式ガイドはユーザー編集対象外。
         save_zone_master_data(self.zone_data_by_version, self.town_zones_by_version)
-        save_guide_data(self.guide_data, self.poe_version)
         
         def normalize_log_path(text: str) -> str:
             # Explorerの「パスのコピー」は前後に引用符を付けるため、保存時に外側だけ除去する
