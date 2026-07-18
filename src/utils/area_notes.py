@@ -2,12 +2,48 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import re
 
 from src.utils.config_manager import ConfigManager
 from src.utils.poe_version_data import POE1, POE2
 
 
 SCHEMA_VERSION = 1
+
+
+def qt_html_to_storage_html(html: str) -> str:
+    """QTextEditのHTMLを、色タグと意図した改行だけの保存形式へ変換する。"""
+    match = re.search(r"<body[^>]*>(.*)</body>", html, re.DOTALL)
+    body = match.group(1).strip() if match else html
+
+    # Qtは段落タグ間に整形用の改行を挿入する。先に取り除かないと、
+    # </p>由来の改行と重なり、1回のEnterが空行として保存される。
+    body = re.sub(r"</p>\s*<p", "</p><p", body, flags=re.IGNORECASE)
+    body = re.sub(r"<p[^>]*>", "", body, flags=re.IGNORECASE)
+    body = re.sub(r"</p>", "\n", body, flags=re.IGNORECASE)
+    body = re.sub(r"<br\s*/?>", "\n", body, flags=re.IGNORECASE)
+
+    def span_to_tags(span_match):
+        style = span_match.group(1)
+        text = span_match.group(2)
+        is_bold = "font-weight" in style and ("700" in style or "bold" in style)
+        color_match = re.search(r"color:(#[0-9a-fA-F]{6})", style)
+        if is_bold and color_match:
+            return f"<b style='color:{color_match.group(1)}'>{text}</b>"
+        if is_bold:
+            return f"<b>{text}</b>"
+        if color_match:
+            return f"<span style='color:{color_match.group(1)}'>{text}</span>"
+        return text
+
+    body = re.sub(r'<span style="([^"]*)">(.*?)</span>', span_to_tags, body)
+    body = re.sub(r"\n{3,}", "\n\n", body)
+    return (
+        body.replace("&quot;", '"')
+        .replace("&#x27;", "'")
+        .replace("&amp;", "&")
+        .strip()
+    )
 
 
 def notes_filename(poe_version: str) -> str:

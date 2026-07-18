@@ -152,46 +152,9 @@ class RichTextEdit(QTextEdit):
     
     def to_storage_html(self) -> str:
         """保存用HTML文字列を生成（Qtの冗長なHTMLをクリーンアップ）"""
-        html = self.toHtml()
-        
-        import re
-        # body内のコンテンツだけ取り出す
-        m = re.search(r"<body[^>]*>(.*)</body>", html, re.DOTALL)
-        if m:
-            body = m.group(1).strip()
-        else:
-            body = html
-        
-        # Qtが生成する余計な属性を整理
-        # <p> → 改行に変換
-        body = re.sub(r'<p[^>]*>', '', body)
-        body = body.replace('</p>', '\n')
-        # <br> → 改行
-        body = re.sub(r'<br\s*/?>', '\n', body)
-        # <span style="...font-weight:700...">text</span> → <b>text</b>
-        def span_to_tags(m):
-            style = m.group(1)
-            text = m.group(2)
-            is_bold = 'font-weight' in style and ('700' in style or 'bold' in style)
-            color_m = re.search(r'color:(#[0-9a-fA-F]{6})', style)
-            
-            if is_bold and color_m:
-                return f"<b style='color:{color_m.group(1)}'>{text}</b>"
-            elif is_bold:
-                return f"<b>{text}</b>"
-            elif color_m:
-                return f"<span style='color:{color_m.group(1)}'>{text}</span>"
-            return text
-        
-        body = re.sub(r'<span style="([^"]*)">(.*?)</span>', span_to_tags, body)
-        
-        # 連続改行を整理
-        body = re.sub(r'\n{3,}', '\n\n', body)
-        # QtのtoHtml()が生成するHTMLエンティティを戻す（guide_data.jsonにはプレーンテキスト+許可タグで保存）
-        body = body.replace("&quot;", '"')
-        body = body.replace("&#x27;", "'")
-        body = body.replace("&amp;", "&")
-        return body.strip()
+        from src.utils.area_notes import qt_html_to_storage_html
+
+        return qt_html_to_storage_html(self.toHtml())
 
 
 class AreaNoteDialog(QDialog):
