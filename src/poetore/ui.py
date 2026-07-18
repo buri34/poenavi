@@ -181,7 +181,8 @@ class PoetoreWindow(QWidget):
         def run():
             try:
                 initial_filters = resolve_trade_stat_filters(item) if needs_initial_filters else ()
-                result = search_prices(item, self._trade_base_type, stat_filters=filters)
+                effective_filters = initial_filters if needs_initial_filters else filters
+                result = search_prices(item, self._trade_base_type, stat_filters=effective_filters)
             except TradeApiError as exc:
                 self._trade_signals.failed.emit(str(exc))
             else:

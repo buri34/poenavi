@@ -13,6 +13,17 @@ from .models import ParsedItem
 API_ROOT = "https://www.pathofexile.com/api/trade"
 JP_API_ROOT = "https://jp.pathofexile.com/api/trade"
 USER_AGENT = "PoENavi/poetore-local-spike (github.com/buri34/poenavi)"
+DEFAULT_SEARCH_RANGE = 0.10
+
+_PROPERTY_FILTERS = {
+    "property.total_dps": ("weapon_filters", "dps"),
+    "property.elemental_dps": ("weapon_filters", "edps"),
+    "property.physical_dps": ("weapon_filters", "pdps"),
+    "property.armour": ("armour_filters", "ar"),
+    "property.evasion": ("armour_filters", "ev"),
+    "property.energy_shield": ("armour_filters", "es"),
+    "property.ward": ("armour_filters", "ward"),
+}
 
 
 class TradeApiError(RuntimeError):
@@ -88,6 +99,113 @@ def physical_dps(item: ParsedItem) -> float | None:
     return ((float(damage_values[0]) + float(damage_values[1])) / 2) * float(speed_values[0])
 
 
+def elemental_dps(item: ParsedItem) -> float | None:
+    damage = item.properties.get("元素ダメージ") or item.properties.get("Elemental Damage")
+    speed = item.properties.get("秒間アタック回数") or item.properties.get("Attacks per Second")
+    if not damage or not speed:
+        return None
+    damage_values = [float(value) for value in re.findall(r"\d+(?:\.\d+)?", damage)]
+    speed_values = re.findall(r"\d+(?:\.\d+)?", speed)
+    if len(damage_values) < 2 or not speed_values:
+        return None
+    average_damage = sum(
+        (damage_values[index] + damage_values[index + 1]) / 2
+        for index in range(0, len(damage_values) - 1, 2)
+    )
+    return average_damage * float(speed_values[0])
+
+
+def _relaxed(value: float) -> float:
+    return round(value * (1 - DEFAULT_SEARCH_RANGE), 1)
+
+
+def _physical_dps_is_important(item: ParsedItem) -> bool:
+    important = (
+        "axe", "斧", "sword", "剣", "bow", "弓", "warstaff", "ウォースタッフ",
+    )
+    lowered = item.item_class.lower()
+    return any(word in lowered for word in important)
+
+
+def _property_value(item: ParsedItem, *labels: str) -> float | None:
+    for label in labels:
+        value = item.properties.get(label)
+        if value:
+            match = re.search(r"\d+(?:\.\d+)?", value.replace(",", ""))
+            if match:
+                return float(match.group())
+    return None
+
+
+def _initial_property_filters(item: ParsedItem) -> list[TradeStatFilter]:
+    filters: list[TradeStatFilter] = []
+    if item.category == "weapon":
+        pdps = physical_dps(item) or 0
+        edps = elemental_dps(item) or 0
+        total = pdps + edps
+        if pdps and edps:
+            filters.append(TradeStatFilter(
+                "property.total_dps", "合計DPS", _relaxed(total), "property", True,
+            ))
+        if edps and (not total or edps / total >= 0.67):
+            filters.append(TradeStatFilter(
+                "property.elemental_dps", "元素DPS", _relaxed(edps), "property", True,
+            ))
+        if pdps and _physical_dps_is_important(item) and (not total or pdps / total >= 0.67):
+            filters.append(TradeStatFilter(
+                "property.physical_dps", "物理DPS", _relaxed(pdps), "property", True,
+            ))
+    elif item.category == "armour":
+        defenses = [
+            ("property.armour", "防具", _property_value(item, "防具", "Armour")),
+            ("property.evasion", "回避力", _property_value(item, "回避力", "Evasion Rating")),
+            ("property.energy_shield", "エナジーシールド", _property_value(item, "エナジーシールド", "Energy Shield")),
+            ("property.ward", "Ward", _property_value(item, "Ward")),
+        ]
+        present = [(stat_id, text, value) for stat_id, text, value in defenses if value]
+        if len(present) == 1:
+            stat_id, text, value = present[0]
+            filters.append(TradeStatFilter(stat_id, text, _relaxed(value), "property", True))
+    return filters
+
+
+def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
+    if item.category not in {"weapon", "armour", "accessory"}:
+        return []
+    life = elemental = chaos = 0.0
+    for modifier in item.modifiers:
+        text = modifier.text.lower()
+        value = modifier.values[0] if modifier.values else 0
+        if ("最大ライフ" in text or "maximum life" in text) and "minion" not in text and "ミニオン" not in text:
+            life += value
+        if ("筋力" in text or "strength" in text) and "require" not in text and "装備要求" not in text:
+            life += value * 0.5
+        if "混沌耐性" in text or "chaos resistance" in text:
+            chaos += value
+        element_count = 0
+        if "耐性" in text:
+            element_count += sum(word in text for word in ("火", "冷気", "雷"))
+        if "resist" in text:
+            element_count += sum(word in text for word in ("fire", "cold", "lightning"))
+        if "全ての元素耐性" in text or "all elemental resistances" in text:
+            element_count = max(element_count, 3)
+        elemental += value * element_count
+    filters = []
+    if life:
+        filters.append(TradeStatFilter(
+            "pseudo.pseudo_total_life", "最大ライフ合計", _relaxed(life), "pseudo", True,
+        ))
+    if elemental:
+        filters.append(TradeStatFilter(
+            "pseudo.pseudo_total_elemental_resistance", "元素耐性合計", _relaxed(elemental), "pseudo", True,
+        ))
+    if chaos:
+        filters.append(TradeStatFilter(
+            "pseudo.pseudo_total_chaos_resistance", "混沌耐性合計", _relaxed(chaos), "pseudo", True,
+        ))
+    return filters
+
+
 _stat_entries_cache: tuple[dict, ...] | None = None
 
 
@@ -159,7 +277,7 @@ def resolve_trade_stat_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         combined[stat_filter.stat_id] = TradeStatFilter(
             stat_filter.stat_id, previous.text, total, previous.kind, False,
         )
-    return tuple(
+    individual = tuple(
         TradeStatFilter(
             row.stat_id,
             f"{row.text} ({counts[row.stat_id]}行合計)" if counts[row.stat_id] > 1 else row.text,
@@ -167,6 +285,7 @@ def resolve_trade_stat_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         )
         for row in combined.values()
     )
+    return tuple(_initial_property_filters(item) + _gear_pseudo_filters(item)) + individual
 
 
 def build_search_query(
@@ -184,11 +303,14 @@ def build_search_query(
     rarity_option = {"レア": "rare", "rare": "rare", "ユニーク": "unique", "unique": "unique"}.get(rarity)
     if rarity_option:
         query["filters"]["type_filters"] = {"filters": {"rarity": {"option": rarity_option}}}
-    pdps = physical_dps(item)
-    if item.category == "weapon" and pdps is not None:
-        query["filters"]["weapon_filters"] = {"filters": {"pdps": {"min": round(pdps * 0.8, 1)}}}
     for stat_filter in stat_filters:
         if not stat_filter.enabled:
+            continue
+        property_target = _PROPERTY_FILTERS.get(stat_filter.stat_id)
+        if property_target:
+            group, name = property_target
+            value = {"min": stat_filter.min_value} if stat_filter.min_value is not None else {}
+            query["filters"].setdefault(group, {"filters": {}})["filters"][name] = value
             continue
         value = {}
         if stat_filter.min_value is not None:

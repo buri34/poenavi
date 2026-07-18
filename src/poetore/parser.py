@@ -35,8 +35,11 @@ _FLAG_LINES = {
     "分割": "split", "Split": "split",
 }
 _CATEGORY_WORDS = (
-    (("武器", "Weapon", "弓", "Bow", "ワンド", "Wand", "剣", "Sword"), "weapon"),
-    (("防具", "Armour", "ヘルメット", "Helmet", "グローブ", "Gloves", "ブーツ", "Boots"), "armour"),
+    (("武器", "Weapon", "弓", "Bow", "ワンド", "Wand", "剣", "Sword", "斧", "Axe",
+      "メイス", "Mace", "セプター", "Sceptre", "スタッフ", "Staff", "ダガー", "Dagger",
+      "クロー", "Claw", "釣り竿", "Fishing Rod"), "weapon"),
+    (("防具", "Armour", "ヘルメット", "Helmet", "グローブ", "Gloves", "ブーツ", "Boots",
+      "鎧", "Body Armour", "盾", "Shield"), "armour"),
     (("アクセサリー", "Accessory", "指輪", "Ring", "アミュレット", "Amulet", "ベルト", "Belt"), "accessory"),
     (("ジェム", "Gem"), "gem"),
     (("マップ", "Map"), "map"),
