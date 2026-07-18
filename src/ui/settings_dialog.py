@@ -158,7 +158,7 @@ class RichTextEdit(QTextEdit):
 
 
 class AreaNoteDialog(QDialog):
-    """エリアに紐づく色付きユーザーメモ編集画面。"""
+    """エリアに紐づく色付きエリアメモ編集画面。"""
 
     COLORS = [
         ("#ff6666", "赤"),
@@ -172,12 +172,12 @@ class AreaNoteDialog(QDialog):
 
     def __init__(self, parent, zone_name: str, content: str):
         super().__init__(parent)
-        self.setWindowTitle(f"ユーザーメモ — {zone_name}")
+        self.setWindowTitle(f"エリアメモ — {zone_name}")
         self.resize(520, 360)
         self.setStyleSheet(Styles.MAIN_WINDOW)
 
         layout = QVBoxLayout(self)
-        description = QLabel(f"📝 {zone_name} のユーザーメモ")
+        description = QLabel(f"📝 {zone_name} のエリアメモ")
         description.setStyleSheet(
             f"color: {Styles.TEXT_COLOR}; font-size: 14px; font-weight: bold;"
         )
@@ -2551,7 +2551,7 @@ class SettingsDialog(QDialog):
                 row.addWidget(name_edit)
 
                 memo_button = QPushButton("📝 エリアメモ")
-                memo_button.setToolTip(f"{z.get('zone', '')} のユーザーメモを編集します")
+                memo_button.setToolTip(f"{z.get('zone', '')} のエリアメモを編集します")
                 memo_button.setFixedWidth(105)
                 memo_button.setStyleSheet(Styles.BUTTON)
                 memo_button.clicked.connect(
@@ -2585,7 +2585,7 @@ class SettingsDialog(QDialog):
         self.zone_scroll_inner.addStretch()
 
     def _open_area_note_editor(self, zone_id: str, zone_name: str):
-        """設定画面から任意エリアのユーザーメモを編集して即時保存する。"""
+        """設定画面から任意エリアのエリアメモを編集して即時保存する。"""
         if not zone_id:
             return
         dialog = AreaNoteDialog(self, zone_name or zone_id, get_area_note(self.poe_version, zone_id))

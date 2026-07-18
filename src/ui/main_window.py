@@ -184,7 +184,7 @@ class MiniNaviOverlay(QWidget):
         right_column.setContentsMargins(0, 0, 0, 0)
         right_column.setSpacing(5)
 
-        self.area_note_badge = QLabel("ユーザーメモあり")
+        self.area_note_badge = QLabel("エリアメモあり")
         self.area_note_badge.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.area_note_badge.setStyleSheet(
             "color: #f0c674; font-size: 12px; font-weight: bold; "
@@ -3682,19 +3682,19 @@ class MainWindow(QMainWindow):
 
         msg = QMessageBox(self)
         msg.setStyleSheet("QMessageBox { font-size: 14px; } QMessageBox QLabel { font-size: 14px; }")
-        msg.setWindowTitle("📝 ユーザーメモ機能について")
+        msg.setWindowTitle("📝 エリアメモ機能について")
         msg.setIcon(QMessageBox.Icon.Information)
         msg.setText(
             "今回のバージョンから、各エリアのガイドデータは\n"
             "編集できない仕様に変更しました。\n"
             "（PoENaviの自動アップデート機能を正しく動作させるためです）\n"
-            "その代わり、各エリアにユーザーメモを追加できる\n"
+            "その代わり、各エリアにエリアメモを追加できる\n"
             "「エリアメモ」機能を実装しました。\n\n"
             "大変お手数ですが、以前のガイドを編集していた方は、\n"
             "旧PoENaviフォルダのJSONファイルから、\n"
-            "必要な内容を各エリアのユーザーメモへコピーしてください。\n\n"
-            "今後は公式ガイドとユーザーメモを分けて保存するため、\n"
-            "次回以降のアップデートでユーザーメモが失われることはありません。"
+            "必要な内容を各エリアのエリアメモへコピーしてください。\n\n"
+            "今後は公式ガイドとエリアメモを分けて保存するため、\n"
+            "次回以降のアップデートでエリアメモが失われることはありません。"
         )
         msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg.exec()
@@ -4220,7 +4220,7 @@ class MainWindow(QMainWindow):
         self.area_note_edit_button = QPushButton("📝 エリアメモ")
         self.area_note_edit_button.setCursor(QCursor(Qt.PointingHandCursor))
         self.area_note_edit_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self.area_note_edit_button.setToolTip("現在のエリアのユーザーメモを編集します")
+        self.area_note_edit_button.setToolTip("現在のエリアのエリアメモを編集します")
         self.area_note_edit_button.setStyleSheet(f"""
             QPushButton {{
                 background: rgba(20, 30, 20, 160);
@@ -4308,7 +4308,7 @@ class MainWindow(QMainWindow):
         area_note_layout = QVBoxLayout(self.area_note_frame)
         area_note_layout.setContentsMargins(9, 6, 9, 6)
         area_note_layout.setSpacing(3)
-        area_note_title = QLabel("📝 ユーザーメモ")
+        area_note_title = QLabel("📝 エリアメモ")
         area_note_title.setStyleSheet(
             "color: #ffd86b; font-size: 11px; font-weight: bold; border: none; background: transparent;"
         )
@@ -4998,7 +4998,7 @@ class MainWindow(QMainWindow):
             self.area_note_label.clear()
             self.area_note_frame.hide()
             self.area_note_edit_button.setEnabled(False)
-            QMessageBox.warning(self, "ユーザーメモ読込エラー", str(exc))
+            QMessageBox.warning(self, "エリアメモ読込エラー", str(exc))
             return
         self._current_area_note = content
         self.area_note_label.setText(content.replace("\n", "<br>"))
@@ -5014,7 +5014,7 @@ class MainWindow(QMainWindow):
         try:
             set_area_note(self.poe_version, zone_id, dialog.content())
         except (OSError, ValueError) as exc:
-            QMessageBox.warning(self, "ユーザーメモ保存エラー", str(exc))
+            QMessageBox.warning(self, "エリアメモ保存エラー", str(exc))
             return
         self._update_area_note(self._current_zone_name, zone_id)
 
