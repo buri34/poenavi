@@ -11,6 +11,7 @@ from src.utils.guide_data import load_guide_data, save_guide_data, get_visit_gui
 from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_act_list, get_poe_label, get_town_zones
 from src.utils.zone_master_data import load_zone_master_data, save_zone_master_data
 from src.utils.config_manager import ConfigManager
+from src.utils.area_notes import get_area_note, set_area_note
 import webbrowser
 
 
@@ -191,6 +192,83 @@ class RichTextEdit(QTextEdit):
         body = body.replace("&#x27;", "'")
         body = body.replace("&amp;", "&")
         return body.strip()
+
+
+class AreaNoteDialog(QDialog):
+    """エリアに紐づく色付きユーザーメモ編集画面。"""
+
+    COLORS = [
+        ("#ff6666", "赤"),
+        ("#4488ff", "青"),
+        ("#ff8800", "オレンジ"),
+        ("#44cc44", "緑"),
+        ("#dddd44", "黄"),
+        ("#dd66ff", "紫"),
+        ("#ffffff", "白"),
+    ]
+
+    def __init__(self, parent, zone_name: str, content: str):
+        super().__init__(parent)
+        self.setWindowTitle(f"ユーザーメモ — {zone_name}")
+        self.resize(520, 360)
+        self.setStyleSheet(Styles.MAIN_WINDOW)
+
+        layout = QVBoxLayout(self)
+        description = QLabel(f"📝 {zone_name} のユーザーメモ")
+        description.setStyleSheet(
+            f"color: {Styles.TEXT_COLOR}; font-size: 14px; font-weight: bold;"
+        )
+        layout.addWidget(description)
+
+        toolbar = QHBoxLayout()
+        toolbar.setSpacing(5)
+        for color_code, color_name in self.COLORS:
+            button = QPushButton()
+            button.setFixedSize(22, 22)
+            button.setToolTip(color_name)
+            button.setStyleSheet(
+                f"QPushButton {{ background: {color_code}; border: 1px solid #777; "
+                "border-radius: 3px; }} QPushButton:hover { border: 2px solid white; }"
+            )
+            button.clicked.connect(lambda checked=False, color=color_code: self._set_color(color))
+            toolbar.addWidget(button)
+        reset_button = QPushButton("標準色")
+        reset_button.setToolTip("選択範囲の文字色を標準色へ戻します")
+        reset_button.clicked.connect(lambda: self._set_color(Styles.TEXT_COLOR))
+        toolbar.addWidget(reset_button)
+        toolbar.addStretch()
+        layout.addLayout(toolbar)
+
+        self.text_edit = RichTextEdit()
+        self.text_edit.setStyleSheet(
+            f"QTextEdit {{ background: #1a1a1a; color: {Styles.TEXT_COLOR}; "
+            "border: 1px solid #4b6b3b; padding: 7px; font-size: 13px; }}"
+        )
+        self.text_edit.set_from_html(content)
+        layout.addWidget(self.text_edit)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        cancel_button = QPushButton("キャンセル")
+        cancel_button.clicked.connect(self.reject)
+        save_button = QPushButton("保存")
+        save_button.setDefault(True)
+        save_button.clicked.connect(self.accept)
+        buttons.addWidget(cancel_button)
+        buttons.addWidget(save_button)
+        layout.addLayout(buttons)
+
+    def _set_color(self, color: str):
+        from PySide6.QtGui import QColor
+
+        cursor = self.text_edit.textCursor()
+        char_format = cursor.charFormat()
+        char_format.setForeground(QColor(color))
+        cursor.mergeCharFormat(char_format)
+        self.text_edit.mergeCurrentCharFormat(char_format)
+
+    def content(self) -> str:
+        return self.text_edit.to_storage_html()
 
 
 class GuideEditorDialog(QDialog):
@@ -2484,25 +2562,6 @@ class SettingsDialog(QDialog):
             act_layout = QVBoxLayout(act_group)
             act_layout.setSpacing(2)
 
-            header_row = QHBoxLayout()
-            header_row.setSpacing(5)
-            spacer_label = QLabel("")
-            spacer_label.setFixedWidth(250)
-            header_row.addWidget(spacer_label)
-            guide_header = QLabel("ガイド設定")
-            guide_header.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 10px; font-weight: bold;")
-            header_row.addWidget(guide_header)
-            if self.poe_version == POE1:
-                mini_header = QLabel("みになび")
-                mini_header.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 10px; font-weight: bold;")
-                header_row.addWidget(mini_header)
-            if self.poe_version == POE2:
-                summary_header = QLabel("要約")
-                summary_header.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 10px; font-weight: bold;")
-                header_row.addWidget(summary_header)
-            header_row.addStretch()
-            act_layout.addLayout(header_row)
-
             zones = self.zone_data.get(act_name, [])
             act_widgets = []
 
@@ -2528,6 +2587,16 @@ class SettingsDialog(QDialog):
                 """)
                 row.addWidget(name_edit)
 
+                memo_button = QPushButton("📝 エリアメモ")
+                memo_button.setToolTip(f"{z.get('zone', '')} のユーザーメモを編集します")
+                memo_button.setFixedWidth(105)
+                memo_button.setStyleSheet(Styles.BUTTON)
+                memo_button.clicked.connect(
+                    lambda checked=False, zid=zone_id, zname=z.get("zone", ""):
+                    self._open_area_note_editor(zid, zname)
+                )
+                row.addWidget(memo_button)
+
                 row.addStretch()
                 act_layout.addLayout(row)
                 act_widgets.append((name_edit, zone_id))
@@ -2551,6 +2620,14 @@ class SettingsDialog(QDialog):
             self.zone_spinboxes[act_name] = act_widgets
 
         self.zone_scroll_inner.addStretch()
+
+    def _open_area_note_editor(self, zone_id: str, zone_name: str):
+        """設定画面から任意エリアのユーザーメモを編集して即時保存する。"""
+        if not zone_id:
+            return
+        dialog = AreaNoteDialog(self, zone_name or zone_id, get_area_note(self.poe_version, zone_id))
+        if dialog.exec():
+            set_area_note(self.poe_version, zone_id, dialog.content())
 
     def _on_poe_version_changed(self, poe_version: str, checked: bool):
         if not checked or self.poe_version == poe_version:

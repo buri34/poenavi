@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
 from PySide6.QtCore import Qt, QTimer, Signal, QRect, QEvent, QPoint, QSize, QMimeData, QUrl
 from PySide6.QtGui import QCursor, QMouseEvent, QIcon, QDesktopServices
 from src.ui.styles import Styles
-from src.ui.settings_dialog import SettingsDialog
+from src.ui.settings_dialog import AreaNoteDialog, SettingsDialog
 from src.ui.map_viewer import MapThumbnailWidget
 from src.utils.config_manager import ConfigManager
 from src.utils.lap_recorder import LapRecorder
@@ -1441,76 +1441,6 @@ class MemoDialog(QDialog):
     def closeEvent(self, event):
         self._save_notes()
         event.accept()
-
-
-class AreaNoteDialog(QDialog):
-    """現在のエリアに紐づく色付きユーザーメモ編集画面。"""
-
-    COLORS = MemoDialog.COLORS
-
-    def __init__(self, parent, zone_name: str, content: str):
-        super().__init__(parent)
-        self.setWindowTitle(f"ユーザーメモ — {zone_name}")
-        self.resize(520, 360)
-        self.setStyleSheet(Styles.MAIN_WINDOW)
-
-        layout = QVBoxLayout(self)
-        description = QLabel(f"📝 {zone_name} のユーザーメモ")
-        description.setStyleSheet(
-            f"color: {Styles.TEXT_COLOR}; font-size: 14px; font-weight: bold;"
-        )
-        layout.addWidget(description)
-
-        toolbar = QHBoxLayout()
-        toolbar.setSpacing(5)
-        for color_code, color_name in self.COLORS:
-            button = QPushButton()
-            button.setFixedSize(22, 22)
-            button.setToolTip(color_name)
-            button.setStyleSheet(
-                f"QPushButton {{ background: {color_code}; border: 1px solid #777; "
-                "border-radius: 3px; }} QPushButton:hover { border: 2px solid white; }"
-            )
-            button.clicked.connect(lambda checked=False, color=color_code: self._set_color(color))
-            toolbar.addWidget(button)
-        reset_button = QPushButton("標準色")
-        reset_button.setToolTip("選択範囲の文字色を標準色へ戻します")
-        reset_button.clicked.connect(lambda: self._set_color(Styles.TEXT_COLOR))
-        toolbar.addWidget(reset_button)
-        toolbar.addStretch()
-        layout.addLayout(toolbar)
-
-        from src.ui.settings_dialog import RichTextEdit
-        self.text_edit = RichTextEdit()
-        self.text_edit.setStyleSheet(
-            f"QTextEdit {{ background: #1a1a1a; color: {Styles.TEXT_COLOR}; "
-            "border: 1px solid #4b6b3b; padding: 7px; font-size: 13px; }}"
-        )
-        self.text_edit.set_from_html(content)
-        layout.addWidget(self.text_edit)
-
-        buttons = QHBoxLayout()
-        buttons.addStretch()
-        cancel_button = QPushButton("キャンセル")
-        cancel_button.clicked.connect(self.reject)
-        save_button = QPushButton("保存")
-        save_button.setDefault(True)
-        save_button.clicked.connect(self.accept)
-        buttons.addWidget(cancel_button)
-        buttons.addWidget(save_button)
-        layout.addLayout(buttons)
-
-    def _set_color(self, color: str):
-        from PySide6.QtGui import QColor
-
-        cursor = self.text_edit.textCursor()
-        char_format = cursor.charFormat()
-        char_format.setForeground(QColor(color))
-        cursor.mergeCharFormat(char_format)
-        self.text_edit.mergeCurrentCharFormat(char_format)
-
-    def content(self) -> str:
-        return self.text_edit.to_storage_html()
 
 
 class VendorSearchPresetDialog(QDialog):
