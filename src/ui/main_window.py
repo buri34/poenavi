@@ -4157,7 +4157,7 @@ class MainWindow(QMainWindow):
         self.poetore_btn = QPushButton("💰")
         self.poetore_btn.setStyleSheet(Styles.BUTTON)
         self.poetore_btn.setFixedSize(35, 35)
-        self.poetore_btn.setToolTip("ぽえとれ（アイテム解析・ローカル試作）")
+        self.poetore_btn.setToolTip("ぽえとれ（Alt+Dで日本語名＋詳細Modを取得）")
         self.poetore_btn.clicked.connect(self.open_poetore)
         button_layout.addWidget(self.poetore_btn)
         
@@ -5539,13 +5539,16 @@ class MainWindow(QMainWindow):
             for action, default in [("start_stop", "F1"), ("reset", "F2"), ("lap", "F3"),
                                      ("undo_lap", "F4"), ("click_through", DEFAULT_CLICK_THROUGH_HOTKEY), ("logout", "F5"),
                                      ("hideout", "F11"), ("monastery", "F12"),
-                                     ("search_string_test", "none")]:
+                                     ("search_string_test", "none"), ("poetore_capture", "alt+d")]:
                 key = hotkeys.get(action, default)
                 if key and key != "none":
                     self.hotkey_map[key.lower()] = action
             
             print(f"Registering hotkeys: {self.hotkey_map}")
             
+            pressed_modifiers = set()
+            triggered_combos = set()
+
             def on_press(key):
                 try:
                     # キー名を取得
@@ -5556,15 +5559,43 @@ class MainWindow(QMainWindow):
                     else:
                         return
                     
-                    # ホットキーマップをチェック
+                    if key_name in {"alt", "alt_l", "alt_r", "alt_gr"}:
+                        pressed_modifiers.add("alt")
+                    elif key_name in {"ctrl", "ctrl_l", "ctrl_r"}:
+                        pressed_modifiers.add("ctrl")
+                    elif key_name in {"shift", "shift_l", "shift_r"}:
+                        pressed_modifiers.add("shift")
+
+                    combo = "+".join([modifier for modifier in ("ctrl", "alt", "shift") if modifier in pressed_modifiers] + [key_name])
+                    if combo in self.hotkey_map and combo not in triggered_combos:
+                        triggered_combos.add(combo)
+                        self.hotkey_signal.emit(self.hotkey_map[combo])
+                        return
+
+                    # 単独ホットキーマップをチェック
                     if key_name in self.hotkey_map:
                         command = self.hotkey_map[key_name]
                         print(f"[HOTKEY DEBUG] key={key_name} command={command} search_in_progress={getattr(self, '_search_paste_in_progress', False)}")
                         self.hotkey_signal.emit(command)
                 except Exception as e:
                     print(f"Hotkey error: {e}")
+
+            def on_release(key):
+                if hasattr(key, 'name'):
+                    key_name = key.name.lower()
+                elif hasattr(key, 'char') and key.char:
+                    key_name = key.char.lower()
+                else:
+                    return
+                if key_name in {"alt", "alt_l", "alt_r", "alt_gr"}:
+                    pressed_modifiers.discard("alt")
+                elif key_name in {"ctrl", "ctrl_l", "ctrl_r"}:
+                    pressed_modifiers.discard("ctrl")
+                elif key_name in {"shift", "shift_l", "shift_r"}:
+                    pressed_modifiers.discard("shift")
+                triggered_combos.clear()
             
-            self.keyboard_listener = pynput_keyboard.Listener(on_press=on_press)
+            self.keyboard_listener = pynput_keyboard.Listener(on_press=on_press, on_release=on_release)
             self.keyboard_listener.start()
             
         except Exception as e:
@@ -5593,6 +5624,8 @@ class MainWindow(QMainWindow):
             self.execute_chat_command("/monastery")
         elif command == "search_string_test":
             self.open_search_string_paste_test()
+        elif command == "poetore_capture":
+            self.capture_poetore_item()
 
     def open_search_string_paste_test(self):
         """ベンダー検索プリセット→元ウィンドウ復帰→検索欄貼り付け。"""
@@ -6618,6 +6651,13 @@ class MainWindow(QMainWindow):
         from src.poetore.ui import show_poetore_window
 
         show_poetore_window(self)
+
+    def capture_poetore_item(self):
+        """Alt+Dからぽえとれを開き、PoE上のアイテムを自動取得する。"""
+        from src.poetore.ui import show_poetore_window
+
+        # コピーが終わるまでPoEからフォーカスを奪わない。
+        show_poetore_window(self, activate=False).capture_from_poe()
     
     def open_settings(self):
         dialog = SettingsDialog(self, self.config)

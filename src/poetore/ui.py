@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication, QHBoxLayout, QLabel, QMessageBox, QPushButton, QSplitter,
@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 
 from .parser import ItemParseError, parse_item_text
 from .clipboard import read_item_clipboard
+from .merge import merge_normal_and_detailed_copy
 
 
 class PoetoreWindow(QWidget):
@@ -21,10 +22,10 @@ class PoetoreWindow(QWidget):
         self.setWindowFlag(Qt.WindowTransparentForInput, False)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, False)
         self.setEnabled(True)
-        self.setWindowTitle("ぽえとれ（ローカル試作・入力修正版）")
+        self.setWindowTitle("ぽえとれ（ローカル試作・Alt+D対応版）")
         self.resize(860, 620)
         layout = QVBoxLayout(self)
-        note = QLabel("PoEで詳細コピーしたアイテム文章を貼り付けて解析します。価格検索APIは未接続です。")
+        note = QLabel("PoEでアイテムにカーソルを合わせて Alt+D。日本語名と詳細Modを自動で合成します。価格検索APIは未接続です。")
         note.setWordWrap(True)
         layout.addWidget(note)
 
@@ -59,6 +60,38 @@ class PoetoreWindow(QWidget):
         self.input_edit.setPlainText(read_item_clipboard(QApplication.clipboard()))
         self.parse_current_text()
 
+    def capture_from_poe(self):
+        """通常コピーと詳細コピーを順番に取得し、日本語名を保って解析する。"""
+        from pynput.keyboard import Controller, Key
+
+        self._capture_keyboard = Controller()
+        QTimer.singleShot(250, lambda: self._send_copy((Key.ctrl, "c"), self._capture_normal_copy))
+
+    def _send_copy(self, keys, callback):
+        for key in keys:
+            self._capture_keyboard.press(key)
+        for key in reversed(keys):
+            self._capture_keyboard.release(key)
+        QTimer.singleShot(300, callback)
+
+    def _capture_normal_copy(self):
+        self._normal_copy_text = read_item_clipboard(QApplication.clipboard())
+        from pynput.keyboard import Key
+        self._send_copy((Key.ctrl, Key.alt, "c"), self._capture_detailed_copy)
+
+    def _capture_detailed_copy(self):
+        detailed_text = read_item_clipboard(QApplication.clipboard())
+        try:
+            merged_text = merge_normal_and_detailed_copy(self._normal_copy_text, detailed_text)
+        except ItemParseError as exc:
+            QMessageBox.warning(self, "取り込めませんでした", f"PoEのアイテムコピーを取得できませんでした。\n{exc}")
+            return
+        self.input_edit.setPlainText(merged_text)
+        self.parse_current_text()
+        self.show()
+        self.raise_()
+        self.activateWindow()
+
     def parse_current_text(self):
         try:
             item = parse_item_text(self.input_edit.toPlainText())
@@ -84,7 +117,7 @@ class PoetoreWindow(QWidget):
         self.result_tree.scrollToTop()
 
 
-def show_poetore_window(owner):
+def show_poetore_window(owner, activate=True):
     """ownerが参照を保持し、二重起動せず独立表示できる公開エントリ。"""
     window = getattr(owner, "_poetore_window", None)
     if window is None:
@@ -92,7 +125,8 @@ def show_poetore_window(owner):
         # 別ウィンドウへ波及し得る。寿命はownerの参照で管理し、UIは独立させる。
         window = PoetoreWindow()
         owner._poetore_window = window
-    window.show()
-    window.raise_()
-    window.activateWindow()
+    if activate:
+        window.show()
+        window.raise_()
+        window.activateWindow()
     return window

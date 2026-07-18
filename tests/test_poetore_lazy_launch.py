@@ -23,6 +23,14 @@ class PoetoreLazyLaunchTest(unittest.TestCase):
             MainWindow.open_poetore(window)
         show_window.assert_called_once_with(window)
 
+    def test_capture_poetore_item_starts_capture(self):
+        window = MainWindow.__new__(MainWindow)
+        poetore_window = Mock()
+        with patch("src.poetore.ui.show_poetore_window", return_value=poetore_window) as show_window:
+            MainWindow.capture_poetore_item(window)
+        show_window.assert_called_once_with(window, activate=False)
+        poetore_window.capture_from_poe.assert_called_once_with()
+
 
 if __name__ == "__main__":
     unittest.main()

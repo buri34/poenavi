@@ -8,7 +8,8 @@
         "click_through": "F6",
         "hideout": "F11",
         "monastery": "F12",
-        "search_string_test": "F4"
+        "search_string_test": "F4",
+        "poetore_capture": "alt+d"
     },
     "poe_version": "",
     "poe_version_mode": "",
