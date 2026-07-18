@@ -161,6 +161,28 @@ Item Level: 70
         )
         self.assertNotIn("モディファイア", [mod.text for mod in item.modifiers])
 
+    def test_multiline_hybrid_prefix_keeps_kind_until_next_header(self):
+        item = parse_item_text("""アイテムクラス: 両手剣
+レアリティ: レア
+地獄の破滅
+略奪者の剣
+--------
+アイテムレベル: 67
+--------
+{ プレフィックスモッド「引き裂く者」(ティア: 6) }
+物理ダメージが30(25-34)%増加する
+命中力 +55(47-72)
+{ プレフィックスモッド「重い」(ティア: 8) }
+物理ダメージが44(40-49)%増加する
+{ サフィックスモッド「吸収の」(ティア: 6) }
+倒した敵1体ごとに4のマナを獲得する
+""")
+        self.assertEqual(
+            [mod.kind for mod in item.modifiers],
+            ["prefix", "prefix", "prefix", "suffix"],
+        )
+        self.assertEqual(item.modifiers[1].text, "命中力 +55(47-72)")
+
 
 if __name__ == "__main__":
     unittest.main()

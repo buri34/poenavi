@@ -148,7 +148,7 @@ def parse_item_text(text: str) -> ParsedItem:
     item_level = None
 
     reached_item_level = False
-    pending_kind: str | None = None
+    current_header_kind: str | None = None
     for section in sections[1:]:
         # 装備性能・装備条件など、item levelより前の区画は検索Modではない。
         metadata_section = not reached_item_level
@@ -174,7 +174,9 @@ def parse_item_text(text: str) -> ParsedItem:
                 continue
             header_kind = _modifier_header_kind(line)
             if header_kind:
-                pending_kind = header_kind
+                # 1つのModが複数行の効果を持つ場合がある。
+                # 次の見出しまで同じPrefix/Suffix種別を維持する。
+                current_header_kind = header_kind
                 continue
             lowered = line.lower()
             if "(implicit)" in lowered or "（暗黙）" in line:
@@ -184,9 +186,8 @@ def parse_item_text(text: str) -> ParsedItem:
             elif "(crafted)" in lowered or "（クラフト）" in line:
                 kind = "crafted"
             else:
-                kind = pending_kind or "explicit"
+                kind = current_header_kind or "explicit"
             modifiers.append(ItemModifier(text=line, values=_numbers(line), kind=kind))
-            pending_kind = None
 
     return ParsedItem(
         item_class=header.get("item_class", ""), rarity=rarity, name=name,
