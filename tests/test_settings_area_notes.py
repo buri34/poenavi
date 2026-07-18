@@ -5,12 +5,26 @@ from PySide6.QtCore import qInstallMessageHandler
 from PySide6.QtWidgets import QApplication, QDialog
 
 from src.ui.settings_dialog import AreaNoteDialog, SettingsDialog
+from src.utils.i18n import EN, JA, set_locale
 from src.utils.poe_version_data import POE1, POE2
 
 
 @pytest.fixture(scope="module")
 def qapp():
     return QApplication.instance() or QApplication([])
+
+
+@pytest.mark.parametrize("locale", [JA, EN])
+def test_settings_dialog_constructs_in_each_locale(qapp, locale):
+    set_locale(locale)
+    dialog = SettingsDialog(None, {"language": locale})
+    try:
+        assert dialog.windowTitle()
+        assert dialog.language_combo.currentData() == locale
+    finally:
+        dialog.close()
+        dialog.deleteLater()
+        qapp.processEvents()
 
 
 def test_settings_area_note_editor_loads_and_saves_current_version(monkeypatch, qapp):

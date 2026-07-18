@@ -17,7 +17,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QCursor
 
 from src.ui.styles import Styles
-from src.utils.i18n import EN, get_locale, tr, ui_text
+from src.utils.i18n import EN, get_locale, tr, tr_ui
 
 
 # attribute別の色
@@ -47,7 +47,7 @@ class PoBImportDialog(QDialog):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(ui_text("PoBコードインポート"))
+        self.setWindowTitle(tr_ui("PoBコードインポート"))
         self.setFixedSize(500, 350)
         self.setStyleSheet(f"""
             QDialog {{
@@ -62,7 +62,7 @@ class PoBImportDialog(QDialog):
         
         # 説明
         desc = QLabel(
-            ui_text("Path of Building のエクスポートコードを貼り付けてください。\n"
+            tr_ui("Path of Building のエクスポートコードを貼り付けてください。\n"
             "PoBで「Export」→「Copy」でクリップボードにコピーできます。")
         )
         desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px;")
@@ -71,7 +71,7 @@ class PoBImportDialog(QDialog):
         
         # テキスト入力
         self.text_edit = QTextEdit()
-        self.text_edit.setPlaceholderText(ui_text("PoBコード（Base64）をここに貼り付け..."))
+        self.text_edit.setPlaceholderText(tr_ui("PoBコード（Base64）をここに貼り付け..."))
         self.text_edit.setStyleSheet(f"""
             QTextEdit {{
                 background: #2a2a2a;
@@ -89,7 +89,7 @@ class PoBImportDialog(QDialog):
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
         
-        cancel_btn = QPushButton(ui_text("キャンセル"))
+        cancel_btn = QPushButton(tr_ui("キャンセル"))
         cancel_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: #888;
@@ -101,7 +101,7 @@ class PoBImportDialog(QDialog):
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(cancel_btn)
         
-        import_btn = QPushButton(ui_text("インポート"))
+        import_btn = QPushButton(tr_ui("インポート"))
         import_btn.setStyleSheet(f"""
             QPushButton {{
                 background: #4488ff; color: #ffffff;
@@ -124,7 +124,7 @@ class PoBSkillSetSelectionDialog(QDialog):
 
     def __init__(self, skill_sets: list[dict], parent=None):
         super().__init__(parent)
-        self.setWindowTitle(ui_text("Skill set選択"))
+        self.setWindowTitle(tr_ui("Skill set選択"))
         self.setFixedSize(420, 420)
         self._checkboxes = []
         self.setStyleSheet(f"""
@@ -139,7 +139,7 @@ class PoBSkillSetSelectionDialog(QDialog):
         layout.setSpacing(10)
 
         desc = QLabel(
-            ui_text("ジェム取得支援に取り込むSkill setを選んでください。\n"
+            tr_ui("ジェム取得支援に取り込むSkill setを選んでください。\n"
             "Act中に不要なEndgame用セットなどはチェックを外せます。")
         )
         desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px;")
@@ -158,7 +158,7 @@ class PoBSkillSetSelectionDialog(QDialog):
             title = skill_set.get("title", "") or f"Skill set {skill_set.get('index', 0) + 1}"
             label = f"{title}"
             if skill_set.get("active"):
-                label += "  （現在選択中）"
+                label += tr_ui("  （現在選択中）")
             cb = QCheckBox(label)
             cb.setChecked(True)
             cb.setProperty("skill_set_id", str(skill_set.get("id", "")))
@@ -174,9 +174,9 @@ class PoBSkillSetSelectionDialog(QDialog):
         layout.addWidget(scroll, stretch=1)
 
         quick_layout = QHBoxLayout()
-        all_btn = QPushButton(ui_text("すべて選択"))
-        act_btn = QPushButton(ui_text("Actっぽいもの"))
-        clear_btn = QPushButton(ui_text("すべて解除"))
+        all_btn = QPushButton(tr_ui("すべて選択"))
+        act_btn = QPushButton(tr_ui("Actっぽいもの"))
+        clear_btn = QPushButton(tr_ui("すべて解除"))
         for btn in (all_btn, act_btn, clear_btn):
             btn.setStyleSheet(self._small_btn_style())
             quick_layout.addWidget(btn)
@@ -188,12 +188,12 @@ class PoBSkillSetSelectionDialog(QDialog):
 
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
-        cancel_btn = QPushButton(ui_text("キャンセル"))
+        cancel_btn = QPushButton(tr_ui("キャンセル"))
         cancel_btn.setStyleSheet(self._cancel_btn_style())
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(cancel_btn)
 
-        import_btn = QPushButton(ui_text("選択してインポート"))
+        import_btn = QPushButton(tr_ui("選択してインポート"))
         import_btn.setStyleSheet(self._primary_btn_style())
         import_btn.clicked.connect(self._accept_if_any_selected)
         btn_layout.addWidget(import_btn)
@@ -232,7 +232,7 @@ class PoBSkillSetSelectionDialog(QDialog):
 
     def _accept_if_any_selected(self):
         if not self.selected_skill_set_ids():
-            QMessageBox.warning(self, ui_text("Skill set未選択"), ui_text("少なくとも1つSkill setを選択してください。"))
+            QMessageBox.warning(self, tr_ui("Skill set未選択"), tr_ui("少なくとも1つSkill setを選択してください。"))
             return
         self.accept()
 
@@ -357,7 +357,7 @@ class GemTrackerWidget(QWidget):
         
         # 未インポート時の案内
         self._empty_label = QLabel(
-            ui_text("PoBコードをインポートすると\nジェム取得タイミングが表示されます")
+            tr_ui("PoBコードをインポートすると\nジェム取得タイミングが表示されます")
         )
         self._empty_label.setStyleSheet("color: #666; font-size: 11px;")
         self._empty_label.setAlignment(Qt.AlignCenter)

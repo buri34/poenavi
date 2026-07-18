@@ -28,6 +28,16 @@ UI_LITERAL_METHODS = {
     "addButton",
 }
 MESSAGE_BOX_METHODS = {"information", "question", "warning", "critical"}
+BANNED_ENGLISH_FILLERS = (
+    "the relevant item",
+    "the relevant guide step",
+    "please provide the japanese text",
+)
+BANNED_WAYPOINT_MISTRANSLATIONS = re.compile(
+    r"(?<!\[)\bWP\b(?!\])|Wiki page|Wikipedia|WordPress|website|Work Package|"
+    r"work permit|World Points|World Wide Web|World of Warcraft",
+    re.IGNORECASE,
+)
 
 
 def _load_json(path: Path) -> Any:
@@ -62,6 +72,88 @@ def validate_catalogs(root: Path = ROOT) -> list[str]:
     for key in sorted(set(ja) & set(en)):
         if _placeholders(ja[key]) != _placeholders(en[key]):
             errors.append(f"placeholder mismatch for catalog key {key}")
+    return errors
+
+
+def _ui_template(node: ast.AST) -> str | None:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.JoinedStr):
+        parts: list[str] = []
+        value_index = 0
+        for part in node.values:
+            if isinstance(part, ast.Constant) and isinstance(part.value, str):
+                parts.append(part.value)
+            elif isinstance(part, ast.FormattedValue):
+                parts.append(f"{{value_{value_index}}}")
+                value_index += 1
+            else:
+                return None
+        return "".join(parts)
+    return None
+
+
+def _static_ui_templates(root: Path) -> tuple[set[str], list[str]]:
+    templates: set[str] = set()
+    errors: list[str] = []
+    for path in (root / "src").rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and any(
+                alias.name == "ui_text" for alias in node.names
+            ):
+                errors.append(f"legacy ui_text import: {path}:{node.lineno}")
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "ui_text":
+                errors.append(f"legacy ui_text definition: {path}:{node.lineno}")
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+                continue
+            if node.func.id == "ui_text":
+                errors.append(f"legacy ui_text call: {path}:{node.lineno}")
+            if node.func.id != "tr_ui":
+                continue
+            if not node.args:
+                errors.append(f"tr_ui call without source: {path}:{node.lineno}")
+                continue
+            template = _ui_template(node.args[0])
+            if template is None:
+                errors.append(f"unsupported tr_ui expression: {path}:{node.lineno}")
+            else:
+                templates.add(template)
+    return templates, errors
+
+
+def validate_ui_catalogs(root: Path = ROOT) -> list[str]:
+    templates, errors = _static_ui_templates(root)
+    ja = _load_json(root / "data" / "i18n" / "ui_ja.json")
+    en = _load_json(root / "data" / "i18n" / "ui_en.json")
+    if not isinstance(ja, dict) or not isinstance(en, dict):
+        return errors + ["UI catalogs must contain JSON objects"]
+    if set(ja) != templates:
+        errors.append(
+            "Japanese UI catalog/source templates differ: "
+            f"catalog-only={sorted(set(ja) - templates)!r}, "
+            f"source-only={sorted(templates - set(ja))!r}"
+        )
+    if set(en) != templates:
+        errors.append(
+            "English UI catalog/source templates differ: "
+            f"catalog-only={sorted(set(en) - templates)!r}, "
+            f"source-only={sorted(templates - set(en))!r}"
+        )
+    for source in sorted(templates & set(ja) & set(en)):
+        if ja[source] != source:
+            errors.append(f"Japanese UI value must equal its source: {source!r}")
+        if not isinstance(en[source], str) or not en[source]:
+            errors.append(f"empty English UI translation: {source!r}")
+            continue
+        if _placeholders(source) != _placeholders(en[source]):
+            errors.append(f"UI placeholder mismatch: {source!r}")
+        if _contains_japanese(en[source]):
+            errors.append(f"Japanese text remains in English UI translation: {source!r}")
+        lowered = en[source].lower()
+        for filler in BANNED_ENGLISH_FILLERS:
+            if filler in lowered:
+                errors.append(f"banned filler text in English UI translation: {source!r}")
     return errors
 
 
@@ -126,6 +218,12 @@ def validate_guides(root: Path = ROOT) -> list[str]:
                 errors.append(f"empty English guide leaf: {en_name}{path}")
             if _contains_japanese(matching):
                 errors.append(f"Japanese text remains in English guide leaf: {en_name}{path}")
+            lowered = matching.lower()
+            for filler in BANNED_ENGLISH_FILLERS:
+                if filler in lowered:
+                    errors.append(f"banned filler text in English guide leaf: {en_name}{path}")
+            if BANNED_WAYPOINT_MISTRANSLATIONS.search(matching):
+                errors.append(f"waypoint mistranslation in English guide leaf: {en_name}{path}")
             if collections.Counter(TOKEN_RE.findall(ja_value)) != collections.Counter(TOKEN_RE.findall(matching)):
                 errors.append(f"mini-navi token mismatch: {en_name}{path}")
             for tag in _tags(matching):
@@ -177,6 +275,69 @@ def validate_static_translation_keys(root: Path = ROOT) -> list[str]:
     return errors
 
 
+def _function_nodes(function: ast.FunctionDef | ast.AsyncFunctionDef) -> Iterable[ast.AST]:
+    """Walk one function body without mixing in nested function scopes."""
+    stack = list(reversed(function.body))
+    while stack:
+        node = stack.pop()
+        yield node
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)):
+            continue
+        stack.extend(reversed(list(ast.iter_child_nodes(node))))
+
+
+def validate_local_import_scoping(root: Path = ROOT) -> list[str]:
+    """Reject local imports that shadow a name already used in that function.
+
+    Python treats an imported name as local throughout the whole function, so
+    using a module-level import before a same-name local import raises
+    ``UnboundLocalError`` at runtime.
+    """
+    errors: list[str] = []
+    paths = list((root / "src").rglob("*.py"))
+    for entrypoint in (root / "main.py", root / "updater_main.py"):
+        if entrypoint.is_file():
+            paths.append(entrypoint)
+    for path in paths:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for function in (
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        ):
+            nodes = list(_function_nodes(function))
+            imports: dict[str, list[int]] = {}
+            for node in nodes:
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        imports.setdefault(
+                            alias.asname or alias.name.split(".", 1)[0], []
+                        ).append(node.lineno)
+                elif isinstance(node, ast.ImportFrom):
+                    for alias in node.names:
+                        imports.setdefault(alias.asname or alias.name, []).append(
+                            node.lineno
+                        )
+            for name, lines in imports.items():
+                first_import = min(lines)
+                early_loads = sorted(
+                    {
+                        node.lineno
+                        for node in nodes
+                        if isinstance(node, ast.Name)
+                        and isinstance(node.ctx, ast.Load)
+                        and node.id == name
+                        and node.lineno < first_import
+                    }
+                )
+                if early_loads:
+                    errors.append(
+                        f"local import shadows earlier use of {name!r}: "
+                        f"{path}:{early_loads[0]} (import at line {first_import})"
+                    )
+    return errors
+
+
 def _contains_japanese(value: str) -> bool:
     return any(
         ("\u3040" <= character <= "\u30ff")
@@ -194,7 +355,7 @@ def _literal_text(node: ast.AST) -> str | None:
 
 
 def validate_raw_ui_literals(root: Path = ROOT) -> list[str]:
-    """Ensure user-facing Japanese literals are explicitly passed through ui_text.
+    """Ensure user-facing Japanese literals are explicitly passed through tr_ui.
 
     The language picker is intentionally bilingual and is the sole UI exemption.
     Domain data and comments are outside this check; only arguments to common
@@ -243,9 +404,11 @@ def validate_all(root: Path = ROOT) -> list[str]:
     errors: list[str] = []
     for validator in (
         validate_catalogs,
+        validate_ui_catalogs,
         validate_guides,
         validate_zone_english,
         validate_static_translation_keys,
+        validate_local_import_scoping,
         validate_raw_ui_literals,
         validate_resources,
     ):
@@ -262,4 +425,4 @@ if __name__ == "__main__":
         for failure in failures:
             print(f"ERROR: {failure}")
         raise SystemExit(1)
-    print("Locale validation passed: ja/en catalogs, English guides, zone names, static keys, UI literals, and resources are valid.")
+    print("Locale validation passed: keyed/UI catalogs, English guides, zone names, static keys, UI literals, and resources are valid.")

@@ -25,6 +25,8 @@ SUPPORTED_LOCALES = (JA, EN)
 _logger = logging.getLogger(__name__)
 _locale = DEFAULT_LOCALE
 _catalog_cache: dict[str, dict[str, Any]] = {}
+_ui_catalog_cache: dict[str, dict[str, str]] = {}
+_ui_pattern_cache: dict[str, list[tuple[re.Pattern[str], str]]] = {}
 _missing_keys: set[tuple[str, str]] = set()
 
 
@@ -68,6 +70,8 @@ def get_supported_locales() -> tuple[str, ...]:
 def clear_cache() -> None:
     """Clear catalog and missing-key state (primarily useful for tests)."""
     _catalog_cache.clear()
+    _ui_catalog_cache.clear()
+    _ui_pattern_cache.clear()
     _missing_keys.clear()
 
 
@@ -150,99 +154,82 @@ def named_placeholders(value: str) -> set[str]:
     return fields
 
 
-_UI_REPLACEMENTS = {
-    "設定": "Settings",
-    "保存": "Save",
-    "キャンセル": "Cancel",
-    "閉じる": "Close",
-    "削除": "Delete",
-    "確認": "Confirm",
-    "開始": "Start",
-    "停止": "Stop",
-    "リセット": "Reset",
-    "ラップ": "Lap",
-    "取消": "Undo",
-    "ログアウト": "Log out",
-    "参照": "Browse",
-    "自動": "Automatic",
-    "毎回確認": "Ask every time",
-    "固定": "Fixed",
-    "タイマー": "Timer",
-    "ガイド": "Guide",
-    "表示": "Display",
-    "詳細": "Details",
-    "初心者向け": "Beginner",
-    "中級者向け": "Intermediate",
-    "言語": "Language",
-    "日本語": "Japanese",
-    "エリア": "Area",
-    "メモ": "Note",
-    "編集": "Edit",
-    "要約": "Summary",
-    "保存済み": "Saved",
-    "読み込み": "Load",
-    "取得": "Acquire",
-    "購入": "Buy",
-    "報酬": "Reward",
-    "クエスト": "Quest",
-    "ジェム": "Gem",
-    "ありません": "None",
-    "見つかりません": "Not found",
-    "アップデート": "Update",
-    "ダウンロード": "Download",
-    "後で": "Later",
-    "今すぐ": "Now",
-    "はい": "Yes",
-    "いいえ": "No",
-    "有効": "Enabled",
-    "無効": "Disabled",
-    "オン": "ON",
-    "オフ": "OFF",
-    "クリック": "Click",
-    "検索": "Search",
-    "文字列": "String",
-    "入力": "Input",
-    "貼り付け": "Paste",
-    "レベル": "Level",
-    "キャラ": "Character",
-    "モンスター": "Monster",
-    "注意": "Note",
-    "不明": "Unknown",
-    "エラー": "Error",
-    "失敗": "Failed",
-    "完了": "Complete",
-    "表示中": "Showing",
-    "次の": "Next ",
-    "すべて": "All",
-    "解除": "Clear",
-    "選択": "Select",
-    "全選択": "Select all",
-    "適用": "Apply",
-    "方向": "Direction",
-    "ルート": "Route",
-    "通常": "Standard",
-    "図書館": "Library",
-    "隠れた裏道": "Hidden Underbelly",
-}
-_JAPANESE_RUN = re.compile(r"[一-龯々〆ヵヶぁ-んァ-ヶー]+")
+_UI_TEMPLATE_FIELD = re.compile(r"\{value_(\d+)\}")
 
 
-def ui_text(source: str) -> str:
-    """Translate a legacy UI literal while a screen is being migrated.
+def _load_ui_catalog(locale: str) -> dict[str, str]:
+    locale = normalize_locale(locale)
+    if locale in _ui_catalog_cache:
+        return _ui_catalog_cache[locale]
+    path = _catalog_dir() / f"ui_{locale}.json"
+    catalog: dict[str, str] = {}
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            loaded = json.load(handle)
+        if not isinstance(loaded, dict) or not all(
+            isinstance(key, str) and isinstance(value, str)
+            for key, value in loaded.items()
+        ):
+            raise ValueError("UI catalog must be a string-to-string object")
+        catalog = loaded
+    except Exception as exc:
+        _logger.warning("Failed to load UI locale catalog %s: %s", path, exc)
+    _ui_catalog_cache[locale] = catalog
+    return catalog
 
-    New UI uses semantic :func:`tr` keys.  This adapter keeps the large legacy
-    widgets safe during the incremental migration: Japanese installations
-    receive the original text, while English installations get readable
-    English for every remaining hard-coded widget literal instead of a mixed
-    interface.  It intentionally leaves commands, IDs, and user content
-    untouched.
+
+def _ui_patterns(locale: str) -> list[tuple[re.Pattern[str], str]]:
+    locale = normalize_locale(locale)
+    if locale in _ui_pattern_cache:
+        return _ui_pattern_cache[locale]
+    patterns: list[tuple[re.Pattern[str], str]] = []
+    for source, translated in _load_ui_catalog(locale).items():
+        if not _UI_TEMPLATE_FIELD.search(source):
+            continue
+        cursor = 0
+        regex_parts = ["^"]
+        seen: set[str] = set()
+        for match in _UI_TEMPLATE_FIELD.finditer(source):
+            regex_parts.append(re.escape(source[cursor : match.start()]))
+            field = f"value_{match.group(1)}"
+            if field in seen:
+                regex_parts.append(f"(?P={field})")
+            else:
+                regex_parts.append(f"(?P<{field}>.*?)")
+                seen.add(field)
+            cursor = match.end()
+        regex_parts.extend((re.escape(source[cursor:]), "$"))
+        patterns.append((re.compile("".join(regex_parts), re.DOTALL), translated))
+    patterns.sort(key=lambda item: len(item[0].pattern), reverse=True)
+    _ui_pattern_cache[locale] = patterns
+    return patterns
+
+
+def tr_ui(source: str) -> str:
+    """Translate an application-owned UI source string exactly.
+
+    The source-string catalogs are gettext-style: Japanese is both the stable
+    message identity and the Japanese display value. Dynamic f-string values
+    are matched only against catalogued templates and copied into the
+    corresponding English placeholders. No word replacement or generated
+    fallback is performed.
     """
     if get_locale() == JA or not isinstance(source, str):
         return source
-    value = source
-    for old, new in sorted(_UI_REPLACEMENTS.items(), key=lambda item: len(item[0]), reverse=True):
-        value = value.replace(old, new)
-    value = value.replace("（", "(").replace("）", ")")
-    value = value.replace("・", "- ").replace("※", "Note: ")
-    value = _JAPANESE_RUN.sub("the relevant item", value)
-    return value
+    locale = get_locale()
+    direct = _load_ui_catalog(locale).get(source)
+    if direct is not None:
+        return direct
+    for pattern, translated in _ui_patterns(locale):
+        match = pattern.fullmatch(source)
+        if match:
+            try:
+                return translated.format_map(match.groupdict())
+            except (KeyError, ValueError) as exc:
+                _logger.warning("Invalid dynamic UI translation for %r: %s", source, exc)
+                return source
+    marker = (locale, f"ui:{source}")
+    if marker not in _missing_keys:
+        _missing_keys.add(marker)
+        _logger.warning("Missing exact UI translation: %r (%s)", source, locale)
+    return source
