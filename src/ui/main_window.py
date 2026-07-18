@@ -3195,6 +3195,10 @@ class MainWindow(QMainWindow):
         _config = self.config
         self._display_monitor_index = _config.get("display_monitor", 0)
         self._initial_positioned = False
+        # Startup update dialogs can cause Qt to deliver showEvent while
+        # __init__ is still running.  Initialize every flag read by
+        # showEvent before the update gate can display a dialog.
+        self._pending_initial_map_auto_open = False
         self.resize(420, 1200)  # 仮サイズ、showEvent で実際に配置
 
         # アプリアイコン設定
@@ -3241,7 +3245,6 @@ class MainWindow(QMainWindow):
         # 起動時の復元中はvisitカウントしない
         self._restoring = False
         # 起動時復元で自動表示されるマップは、メインウィンドウ配置完了後に開く
-        self._pending_initial_map_auto_open = False
         # 訪問回数の手動オーバーライド（None=自動, 1 or 2=固定）— ゾーン移動でリセット
         self.visit_override = None
         # Lab中フラグ（志す者の広場→Lab内エリア→街帰還を追跡）

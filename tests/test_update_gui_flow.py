@@ -45,6 +45,22 @@ def test_startup_gate_finishes_before_setup_when_no_update():
         assert window._run_startup_update_gate() is True
 
 
+def test_show_event_state_exists_before_startup_update_gate():
+    """Update dialogs may trigger showEvent before MainWindow.__init__ finishes."""
+    observed = {}
+
+    def stop_after_observation(window):
+        observed["pending_map"] = window._pending_initial_map_auto_open
+        observed["positioned"] = window._initial_positioned
+        return False
+
+    with patch("src.ui.main_window.ConfigManager.load_config", return_value={}), \
+         patch.object(MainWindow, "_run_startup_update_gate", stop_after_observation):
+        MainWindow()
+
+    assert observed == {"pending_map": False, "positioned": False}
+
+
 def test_startup_check_skips_already_notified_release():
     window = MainWindow.__new__(MainWindow)
     window.config = {"notified_update_version": "2.5.0"}
