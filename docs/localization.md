@@ -202,10 +202,11 @@ Useful reference tables include `WorldAreas`, `NPCs`, and
 so this is a terminology cross-check rather than a build dependency. Never
 commit a contributor's installation path or copied proprietary game data.
 
-Confirmed PoE 2 names used by PoENavi are recorded in
-`data/poe2_authoritative_terms.json`. Each entry contains only the originating
-table, stable game identifier, and paired Japanese and English terms needed
-for review. When updating it:
+Confirmed names for both games are recorded in
+`data/authoritative_guide_terms.json`. Each entry contains only the game,
+originating table, stable game identifier, and paired Japanese and English
+terms needed for review. The same fixture retains the reviewed PoE 2 zone
+pairs and known incorrect English forms that must not return. When updating it:
 
 1. Pair languages through the same internal game identifier; do not match
    translated strings heuristically.
@@ -251,7 +252,7 @@ It checks:
 - exact UI catalog coverage and dynamic placeholders;
 - guide structure, protected values, tokens, HTML, and translated leaves;
 - `zone_en` coverage;
-- authoritative PoE 2 zone parity and guide terminology;
+- authoritative guide terminology for both games and PoE 2 zone parity;
 - statically referenced semantic keys;
 - function-local import shadowing;
 - raw Japanese literals passed to common Qt display APIs;
@@ -282,8 +283,8 @@ both locales, Settings access, and the release validator.
 | Configuration and first run | `src/utils/config_manager.py`, `src/ui/language_dialog.py` |
 | UI integration | `src/ui/`, `src/update/`, other `tr(...)` and `tr_ui(...)` call sites |
 | Catalog data | `data/i18n/*.json` |
-| Guide and zone data | `guide_data*.json`, `data/zone_data.json`, `data/poe2_authoritative_terms.json`, `src/utils/guide_data.py`, `src/utils/zone_lookup.py` |
-| Validation and tests | `scripts/validate_locales.py`, `tests/test_i18n.py`, `tests/test_language_startup_flow.py`, `tests/test_locale_validation.py`, `tests/test_localized_resources.py`, `tests/test_localized_ui.py`, `tests/test_settings_area_notes.py` |
+| Guide and zone data | `guide_data*.json`, `data/zone_data.json`, `data/authoritative_guide_terms.json`, `src/utils/guide_data.py`, `src/utils/zone_lookup.py` |
+| Validation and tests | `scripts/validate_locales.py`, `tests/test_authoritative_guide_terminology.py`, `tests/test_poe2_authoritative_terminology.py`, `tests/test_i18n.py`, `tests/test_language_startup_flow.py`, `tests/test_locale_validation.py`, `tests/test_localized_resources.py`, `tests/test_localized_ui.py`, `tests/test_settings_area_notes.py` |
 | Packaging | `poenavi.spec`, `scripts/build_release.ps1` |
 | User documentation | `README.md`, `README.en.md`, this guide |
 

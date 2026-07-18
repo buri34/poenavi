@@ -96,8 +96,8 @@ def test_short_risu_name_is_corrected_at_its_known_guide_path():
     assert "the rat" not in step["summary"].lower()
 
 
-def test_release_validator_includes_authoritative_poe2_check():
-    validator = getattr(validate_locales, "validate_authoritative_poe2_terms", None)
+def test_release_validator_includes_shared_authoritative_check():
+    validator = getattr(validate_locales, "validate_authoritative_guide_terms", None)
 
     assert validator is not None
     failures = validator(ROOT)
@@ -110,9 +110,11 @@ def test_release_validator_rejects_stale_runtime_zone_name():
         (root / "data").mkdir()
         (root / "src" / "utils").mkdir(parents=True)
         for relative_path in (
-            "data/poe2_authoritative_terms.json",
+            "data/authoritative_guide_terms.json",
             "data/zone_data.json",
             "src/utils/zone_data_poe2.py",
+            "guide_data.json",
+            "guide_data_en.json",
             "guide_data_poe2.json",
             "guide_data_poe2_en.json",
         ):
@@ -129,7 +131,7 @@ def test_release_validator_rejects_stale_runtime_zone_name():
             encoding="utf-8",
         )
 
-        failures = validate_locales.validate_authoritative_poe2_terms(root)
+        failures = validate_locales.validate_authoritative_guide_terms(root)
 
     assert any(
         "authoritative PoE2 zone mismatch in data/zone_data.json" in failure

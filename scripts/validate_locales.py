@@ -271,8 +271,69 @@ def _zones_by_id(acts: Any) -> dict[str, dict[str, Any]]:
     }
 
 
-def validate_authoritative_poe2_terms(root: Path = ROOT) -> list[str]:
-    fixture = _load_json(root / "data" / "poe2_authoritative_terms.json")
+def validate_authoritative_guide_terms(root: Path = ROOT) -> list[str]:
+    fixture = _load_json(root / "data" / "authoritative_guide_terms.json")
+    games = fixture.get("games", {})
+    errors: list[str] = []
+
+    identities: set[tuple[str, str, str]] = set()
+    for game, config in games.items():
+        for term in config.get("guide_terms", []):
+            identity = (game, term["table"], term["game_id"])
+            if identity in identities:
+                errors.append(
+                    "duplicate authoritative identity: "
+                    f"{game}/{term['table']}/{term['game_id']}"
+                )
+            identities.add(identity)
+
+    guide_paths = {
+        "poe1": ("guide_data.json", "guide_data_en.json"),
+        "poe2": ("guide_data_poe2.json", "guide_data_poe2_en.json"),
+    }
+    for game, config in games.items():
+        paths = guide_paths.get(game)
+        if paths is None:
+            errors.append(f"unsupported authoritative guide game: {game}")
+            continue
+        japanese_name, english_name = paths
+        japanese_guide = _load_json(root / japanese_name)
+        english_guide = _load_json(root / english_name)
+        japanese_leaves = {
+            path: value for path, _field, value in _guide_walk(japanese_guide)
+        }
+        english_leaves = {
+            path: value for path, _field, value in _guide_walk(english_guide)
+        }
+
+        for term in config.get("guide_terms", []):
+            japanese_term = term["ja"]
+            english_term = term["en"]
+            matching_paths = [
+                path
+                for path, value in japanese_leaves.items()
+                if japanese_term in value
+            ]
+            if not matching_paths:
+                errors.append(
+                    f"unused authoritative guide term for {game}: {japanese_term!r}"
+                )
+                continue
+            for path in matching_paths:
+                if english_term not in english_leaves.get(path, ""):
+                    errors.append(
+                        f"authoritative guide term mismatch for {game}: "
+                        f"{english_name}{path} expected {english_term!r}"
+                    )
+
+        all_english = "\n".join(english_leaves.values()).casefold()
+        for forbidden in config.get("forbidden_english", []):
+            if forbidden.casefold() in all_english:
+                errors.append(
+                    f"forbidden English guide translation for {game}: {forbidden!r}"
+                )
+
+    poe2 = games.get("poe2", {})
     zone_master = _load_json(root / "data" / "zone_data.json")
     runtime_zones = _zones_by_id(
         zone_master.get("zone_data_by_version", zone_master).get("poe2", {})
@@ -284,8 +345,7 @@ def validate_authoritative_poe2_terms(root: Path = ROOT) -> list[str]:
         )
     )
 
-    errors: list[str] = []
-    for expected in fixture.get("zones", []):
+    for expected in poe2.get("zones", []):
         zone_id = expected["poenavi_id"]
         expected_names = (expected["ja"], expected["en"])
         for source, zones in (
@@ -303,36 +363,7 @@ def validate_authoritative_poe2_terms(root: Path = ROOT) -> list[str]:
                     f"expected ja={expected_names[0]!r}, en={expected_names[1]!r}"
                 )
 
-    japanese_guide = _load_json(root / "guide_data_poe2.json")
-    english_guide = _load_json(root / "guide_data_poe2_en.json")
-    japanese_leaves = {
-        path: value for path, _field, value in _guide_walk(japanese_guide)
-    }
-    english_leaves = {
-        path: value for path, _field, value in _guide_walk(english_guide)
-    }
-    for term in fixture.get("guide_terms", []):
-        japanese_term = term["ja"]
-        english_term = term["en"]
-        matching_paths = [
-            path
-            for path, value in japanese_leaves.items()
-            if japanese_term in value
-        ]
-        if not matching_paths:
-            errors.append(
-                f"authoritative PoE2 guide term is unused: {japanese_term!r}"
-            )
-            continue
-        for path in matching_paths:
-            if english_term not in english_leaves.get(path, ""):
-                errors.append(
-                    f"authoritative PoE2 guide term mismatch: "
-                    f"guide_data_poe2_en.json{path} expected {english_term!r}"
-                )
     return errors
-
-
 def _static_tr_keys(root: Path) -> tuple[set[str], list[str]]:
     keys: set[str] = set()
     errors: list[str] = []
@@ -493,7 +524,7 @@ def validate_all(root: Path = ROOT) -> list[str]:
         validate_ui_catalogs,
         validate_guides,
         validate_zone_english,
-        validate_authoritative_poe2_terms,
+        validate_authoritative_guide_terms,
         validate_static_translation_keys,
         validate_local_import_scoping,
         validate_raw_ui_literals,
