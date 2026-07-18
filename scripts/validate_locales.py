@@ -248,6 +248,91 @@ def validate_zone_english(root: Path = ROOT) -> list[str]:
     return errors
 
 
+def _python_literal_assignment(path: Path, name: str) -> Any:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    for node in tree.body:
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+        if any(isinstance(target, ast.Name) and target.id == name for target in targets):
+            return ast.literal_eval(node.value)
+    raise ValueError(f"{name} is not assigned in {path}")
+
+
+def _zones_by_id(acts: Any) -> dict[str, dict[str, Any]]:
+    if not isinstance(acts, dict):
+        return {}
+    return {
+        zone["id"]: zone
+        for zones in acts.values()
+        if isinstance(zones, list)
+        for zone in zones
+        if isinstance(zone, dict) and isinstance(zone.get("id"), str)
+    }
+
+
+def validate_authoritative_poe2_terms(root: Path = ROOT) -> list[str]:
+    fixture = _load_json(root / "data" / "poe2_authoritative_terms.json")
+    zone_master = _load_json(root / "data" / "zone_data.json")
+    runtime_zones = _zones_by_id(
+        zone_master.get("zone_data_by_version", zone_master).get("poe2", {})
+    )
+    fallback_zones = _zones_by_id(
+        _python_literal_assignment(
+            root / "src" / "utils" / "zone_data_poe2.py",
+            "DEFAULT_ZONE_DATA_POE2",
+        )
+    )
+
+    errors: list[str] = []
+    for expected in fixture.get("zones", []):
+        zone_id = expected["poenavi_id"]
+        expected_names = (expected["ja"], expected["en"])
+        for source, zones in (
+            ("data/zone_data.json", runtime_zones),
+            ("src/utils/zone_data_poe2.py", fallback_zones),
+        ):
+            zone = zones.get(zone_id)
+            if zone is None:
+                errors.append(f"authoritative PoE2 zone missing from {source}: {zone_id}")
+                continue
+            actual_names = (zone.get("zone"), zone.get("zone_en"))
+            if actual_names != expected_names:
+                errors.append(
+                    f"authoritative PoE2 zone mismatch in {source}: {zone_id} "
+                    f"expected ja={expected_names[0]!r}, en={expected_names[1]!r}"
+                )
+
+    japanese_guide = _load_json(root / "guide_data_poe2.json")
+    english_guide = _load_json(root / "guide_data_poe2_en.json")
+    japanese_leaves = {
+        path: value for path, _field, value in _guide_walk(japanese_guide)
+    }
+    english_leaves = {
+        path: value for path, _field, value in _guide_walk(english_guide)
+    }
+    for term in fixture.get("guide_terms", []):
+        japanese_term = term["ja"]
+        english_term = term["en"]
+        matching_paths = [
+            path
+            for path, value in japanese_leaves.items()
+            if japanese_term in value
+        ]
+        if not matching_paths:
+            errors.append(
+                f"authoritative PoE2 guide term is unused: {japanese_term!r}"
+            )
+            continue
+        for path in matching_paths:
+            if english_term not in english_leaves.get(path, ""):
+                errors.append(
+                    f"authoritative PoE2 guide term mismatch: "
+                    f"guide_data_poe2_en.json{path} expected {english_term!r}"
+                )
+    return errors
+
+
 def _static_tr_keys(root: Path) -> tuple[set[str], list[str]]:
     keys: set[str] = set()
     errors: list[str] = []
@@ -408,6 +493,7 @@ def validate_all(root: Path = ROOT) -> list[str]:
         validate_ui_catalogs,
         validate_guides,
         validate_zone_english,
+        validate_authoritative_poe2_terms,
         validate_static_translation_keys,
         validate_local_import_scoping,
         validate_raw_ui_literals,

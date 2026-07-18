@@ -26,11 +26,11 @@ class Poe2ZoneIdTest(unittest.TestCase):
         duplicates = sorted(zone_id for zone_id, count in Counter(ids).items() if count > 1)
         self.assertEqual(duplicates, [])
 
-    def test_trial_of_the_sekhemas_has_separate_id_from_dreadnought_vanguard(self):
+    def test_trial_of_the_sekhemas_has_separate_id_from_dreadnoughts_wake(self):
         act2 = DEFAULT_ZONE_DATA_POE2["Act 2"]
         by_name = {zone["zone_en"]: zone["id"] for zone in act2}
 
-        self.assertEqual(by_name["Dreadnought Vanguard"], "poe2_act2_area19")
+        self.assertEqual(by_name["The Dreadnought's Wake"], "poe2_act2_area19")
         self.assertEqual(by_name["Trial of the Sekhemas"], "poe2_act2_area20")
 
 

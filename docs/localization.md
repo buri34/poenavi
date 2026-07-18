@@ -179,8 +179,9 @@ notes, or other content that is not owned UI copy.
 
 ### Add or correct a zone name
 
-1. Keep the stable `id` and Japanese `zone` value unchanged.
-2. Add or update `zone_en`.
+1. Keep the stable `id` unchanged.
+2. Add or update `zone_en`. Change the Japanese `zone` value only when
+   current game data confirms that the in-game Japanese name changed.
 3. Confirm code uses `get_zone_display_name(...)` or otherwise separates
    lookup from display.
 4. Do not rename the matching Japanese map folder.
@@ -200,6 +201,22 @@ Useful reference tables include `WorldAreas`, `NPCs`, and
 `MonsterVarieties`. Installation layouts and extracted data formats can vary,
 so this is a terminology cross-check rather than a build dependency. Never
 commit a contributor's installation path or copied proprietary game data.
+
+Confirmed PoE 2 names used by PoENavi are recorded in
+`data/poe2_authoritative_terms.json`. Each entry contains only the originating
+table, stable game identifier, and paired Japanese and English terms needed
+for review. When updating it:
+
+1. Pair languages through the same internal game identifier; do not match
+   translated strings heuristically.
+2. Include only terms that occur in PoENavi resources.
+3. Update both `data/zone_data.json` and `src/utils/zone_data_poe2.py` for a
+   confirmed zone change.
+4. Correct every corresponding guide leaf while preserving its structure,
+   line count, tokens, and markup.
+5. Do not add short or ambiguous terms to global substring validation. Cover
+   those with a path-specific regression test instead.
+6. Run the locale validator without requiring the local game installation.
 
 ## Constraints and common failure modes
 
@@ -234,6 +251,7 @@ It checks:
 - exact UI catalog coverage and dynamic placeholders;
 - guide structure, protected values, tokens, HTML, and translated leaves;
 - `zone_en` coverage;
+- authoritative PoE 2 zone parity and guide terminology;
 - statically referenced semantic keys;
 - function-local import shadowing;
 - raw Japanese literals passed to common Qt display APIs;
@@ -264,7 +282,7 @@ both locales, Settings access, and the release validator.
 | Configuration and first run | `src/utils/config_manager.py`, `src/ui/language_dialog.py` |
 | UI integration | `src/ui/`, `src/update/`, other `tr(...)` and `tr_ui(...)` call sites |
 | Catalog data | `data/i18n/*.json` |
-| Guide and zone data | `guide_data*.json`, `data/zone_data.json`, `src/utils/guide_data.py`, `src/utils/zone_lookup.py` |
+| Guide and zone data | `guide_data*.json`, `data/zone_data.json`, `data/poe2_authoritative_terms.json`, `src/utils/guide_data.py`, `src/utils/zone_lookup.py` |
 | Validation and tests | `scripts/validate_locales.py`, `tests/test_i18n.py`, `tests/test_language_startup_flow.py`, `tests/test_locale_validation.py`, `tests/test_localized_resources.py`, `tests/test_localized_ui.py`, `tests/test_settings_area_notes.py` |
 | Packaging | `poenavi.spec`, `scripts/build_release.ps1` |
 | User documentation | `README.md`, `README.en.md`, this guide |
