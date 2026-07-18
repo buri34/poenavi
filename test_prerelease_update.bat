@@ -2,12 +2,12 @@
 chcp 65001 >nul
 setlocal
 
-set "TEST_CLIENT=%~dp0dist\PoENaviold\PoENavi.exe"
+set "TEST_CLIENT=%~dp0dist\PoENavi-v2.4-test\PoENavi.exe"
 set "POENAVI_USER_DATA_DIR=%~dp0.prerelease-test-user-data"
 
 if not exist "%TEST_CLIENT%" (
-    echo ERROR: dist\PoENaviold\PoENavi.exe was not found.
-    echo Put the v2.4.0 test client in dist\PoENaviold.
+    echo ERROR: dist\PoENavi-v2.4-test\PoENavi.exe was not found.
+    echo Restore the v2.4.0 test client before running this test.
     pause
     exit /b 1
 )
