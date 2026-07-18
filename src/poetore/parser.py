@@ -46,9 +46,15 @@ _CATEGORY_WORDS = (
 )
 _NUMBER = re.compile(r"(?<![A-Za-z])[-+]?\d+(?:\.\d+)?")
 _JAPANESE_TEXT = re.compile(r"[\u3040-\u30ff\u3400-\u9fff]")
-_MODIFIER_HEADER = re.compile(
-    r"^\{.*?\b(?P<kind>Prefix|Suffix|Implicit|Enchant|Crafted|Fractured|Desecrated)\b.*\}$",
-    re.IGNORECASE,
+_MODIFIER_HEADER = re.compile(r"^\{(?P<body>.*)\}$")
+_MODIFIER_KINDS = (
+    (("Crafted", "クラフト"), "crafted"),
+    (("Fractured", "フラクチャー"), "fractured"),
+    (("Desecrated", "冒涜"), "desecrated"),
+    (("Prefix", "プレフィックス"), "prefix"),
+    (("Suffix", "サフィックス"), "suffix"),
+    (("Implicit", "暗黙"), "implicit"),
+    (("Enchant", "エンチャント"), "enchant"),
 )
 
 
@@ -87,6 +93,18 @@ def _numbers(text: str) -> tuple[float, ...]:
     for match in _NUMBER.findall(text.replace(",", "")):
         values.append(float(match))
     return tuple(values)
+
+
+def _modifier_header_kind(line: str) -> str | None:
+    """詳細コピーの波括弧付きMod見出しを日英両方で分類する。"""
+    match = _MODIFIER_HEADER.match(line)
+    if not match:
+        return None
+    body = match.group("body").lower()
+    for labels, kind in _MODIFIER_KINDS:
+        if any(label.lower() in body for label in labels):
+            return kind
+    return None
 
 
 def _localized_name_lines(name_lines: list[str], rarity: str) -> tuple[str, str]:
@@ -154,9 +172,9 @@ def parse_item_text(text: str) -> ParsedItem:
                 # 「Bow」「両手剣」のような値を持たない性能区画の見出しも保持する。
                 properties.setdefault(line, "")
                 continue
-            header_match = _MODIFIER_HEADER.match(line)
-            if header_match:
-                pending_kind = header_match.group("kind").lower()
+            header_kind = _modifier_header_kind(line)
+            if header_kind:
+                pending_kind = header_kind
                 continue
             lowered = line.lower()
             if "(implicit)" in lowered or "（暗黙）" in line:

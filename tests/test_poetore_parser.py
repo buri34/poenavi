@@ -139,6 +139,28 @@ Item Level: 70
         self.assertEqual(len(item.modifiers), 1)
         self.assertEqual(item.modifiers[0].kind, "crafted")
 
+    def test_japanese_modifier_headers_are_classified_and_not_counted(self):
+        item = parse_item_text("""アイテムクラス: 両手剣
+レアリティ: レア
+地獄の破滅
+略奪者の剣
+--------
+アイテムレベル: 67
+--------
+{ プレフィックス モディファイア "残忍な" (ティア: 3) }
+物理ダメージが74%増加する
+{ サフィックス モディファイア "祝福の" (ティア: 4) }
+アタックスピードが16%増加する
+{ クラフトされたプレフィックス モディファイア }
+命中力 +55 (crafted)
+""")
+        self.assertEqual(len(item.modifiers), 3)
+        self.assertEqual(
+            [mod.kind for mod in item.modifiers],
+            ["prefix", "suffix", "crafted"],
+        )
+        self.assertNotIn("モディファイア", [mod.text for mod in item.modifiers])
+
 
 if __name__ == "__main__":
     unittest.main()
