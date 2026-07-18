@@ -88,7 +88,8 @@ if (-not (Test-Path dist\PoENavi\PoENaviUpdater.exe)) {
 
 Remove-Item PoENavi.zip, PoENavi.zip.sha256 -ErrorAction SilentlyContinue
 $zipCreated = $false
-for ($attempt = 1; $attempt -le 10; $attempt++) {
+$zipAttempts = 60
+for ($attempt = 1; $attempt -le $zipAttempts; $attempt++) {
     try {
         Compress-Archive -Path dist\PoENavi -DestinationPath PoENavi.zip -ErrorAction Stop
         $zipCreated = $true
@@ -96,11 +97,11 @@ for ($attempt = 1; $attempt -le 10; $attempt++) {
     }
     catch {
         Remove-Item PoENavi.zip -ErrorAction SilentlyContinue
-        if ($attempt -eq 10) {
-            throw
+        if ($attempt -eq $zipAttempts) {
+            throw "PoENaviUpdater.exe remained locked for 3 minutes. Close PoENavi/PoENaviUpdater if running, then check Windows Security protection history or add the PoENavi build folder as a temporary exclusion before retrying. Original error: $($_.Exception.Message)"
         }
 
-        Write-Warning "ZIP creation failed (attempt $attempt/10). Waiting for file scanning to finish..."
+        Write-Warning "ZIP creation failed (attempt $attempt/$zipAttempts). PoENaviUpdater.exe may still be scanned or locked; waiting 3 seconds..."
         Start-Sleep -Seconds 3
     }
 }
