@@ -429,6 +429,13 @@ PoE1ではAct 6-10の一部エリアがAct 1-5と同名で登場します。
 
 ---
 
+## 🌐 ローカライズ開発
+
+翻訳の構成、メンテナンス手順、検証方法については
+[Localization Development](docs/localization.md) を参照してください。
+
+---
+
 ## 🧑‍💻 開発者向けリリース手順
 
 1. `src/version.py` の `APP_VERSION` を次の `X.Y.Z` に更新する

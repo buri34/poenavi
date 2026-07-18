@@ -73,6 +73,9 @@ python -m pytest -q
 python scripts/validate_locales.py
 ```
 
+For localization architecture, translation maintenance, validation, and
+upstream review guidance, see [Localization Development](docs/localization.md).
+
 Build a Windows release with:
 
 ```powershell
