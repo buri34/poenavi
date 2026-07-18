@@ -3176,6 +3176,7 @@ class MainWindow(QMainWindow):
     # this class' __init__ body can initialize instance attributes.
     _initial_positioned = False
     _pending_initial_map_auto_open = False
+    _main_window_initialized = False
 
     POELAB_ZONE_TYPES = {
         "act4_area3": "normal",
@@ -3190,6 +3191,10 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+
+        # Qt can deliver showEvent while startup dialogs are running.  Keep
+        # showEvent side-effect free until every widget/state it uses exists.
+        self._main_window_initialized = False
 
         # 設定読み込み
         self.config = ConfigManager.load_config()
@@ -3409,6 +3414,7 @@ class MainWindow(QMainWindow):
         self._ef_resize_edge = None
         self._ef_resize_start_geo = None
         self._ef_resize_start_pos = None
+        self._main_window_initialized = True
 
     def _connect_update_controller(self):
         """Connect handlers used after the startup update gate."""
@@ -6681,6 +6687,8 @@ class MainWindow(QMainWindow):
             
     def showEvent(self, event):
         super().showEvent(event)
+        if not getattr(self, "_main_window_initialized", False):
+            return
         if not getattr(self, "_initial_positioned", False):
             self._initial_positioned = True
             from PySide6.QtWidgets import QApplication

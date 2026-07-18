@@ -117,4 +117,8 @@ $hash = (Get-FileHash PoENavi.zip -Algorithm SHA256).Hash.ToLower()
 Set-Content -Path PoENavi.zip.sha256 -Value "$hash  PoENavi.zip" -Encoding ascii
 
 Write-Output "Built PoENavi"
-Write-Output "Artifacts: PoENavi.zip, PoENavi.zip.sha256"
+$zipPath = (Resolve-Path PoENavi.zip).Path
+$shaPath = (Resolve-Path PoENavi.zip.sha256).Path
+Write-Output "Release artifacts (do not move or re-zip dist\\PoENavi):"
+Write-Output "  ZIP: $zipPath"
+Write-Output "  SHA256: $shaPath"
