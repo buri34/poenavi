@@ -49,6 +49,9 @@ _PROPERTY_FILTERS = {
     "property.energy_shield": ("armour_filters", "es"),
     "property.ward": ("armour_filters", "ward"),
     "property.item_level": ("misc_filters", "ilvl"),
+    "property.quality": ("misc_filters", "quality"),
+    "property.sockets": ("socket_filters", "sockets"),
+    "property.links": ("socket_filters", "links"),
 }
 
 
@@ -99,7 +102,7 @@ def _request_json(url: str, payload: dict | None = None) -> tuple[dict, object]:
         with urlopen(request, timeout=15) as response:
             return json.loads(response.read().decode("utf-8")), response.headers
     except Exception as exc:
-        _trade_log(f"request failed: {request.method} {url} error={exc!r}")
+        _trade_log(f"request failed: {request.get_method()} {url} error={exc!r}")
         raise TradeApiError(f"PoE Trade APIへの接続に失敗しました: {exc}") from exc
 
 
@@ -232,7 +235,40 @@ def _base_item_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
             str(entry["id"]), modifier.text, value,
             "fractured" if modifier.kind == "fractured" else f"T{modifier.tier}", True,
         ))
-    return tuple(filters) + _empty_affix_filters(item)
+    return tuple(filters) + _item_detail_filters(item) + _empty_affix_filters(item)
+
+
+def _socket_summary(item: ParsedItem) -> tuple[int, int, int]:
+    text = item.properties.get("ソケット") or item.properties.get("Sockets") or ""
+    groups = re.findall(r"[RGBW](?:-[RGBW])*", text.upper())
+    sizes = [len(group.split("-")) for group in groups]
+    total = sum(sizes)
+    linked = max(sizes, default=0)
+    white = len(re.findall(r"W", text.upper()))
+    return total, linked, white
+
+
+def _item_detail_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
+    filters: list[TradeStatFilter] = []
+    quality = _property_value(item, "品質", "Quality")
+    if quality is not None and quality >= 20:
+        filters.append(TradeStatFilter(
+            "property.quality", "品質", quality, "property", quality > 20,
+        ))
+    sockets, links, white = _socket_summary(item)
+    if sockets:
+        filters.append(TradeStatFilter(
+            "property.sockets", "ソケット数", float(sockets), "socket", sockets >= 6,
+        ))
+    if links > 1:
+        filters.append(TradeStatFilter(
+            "property.links", "最大リンク数", float(links), "socket", True,
+        ))
+    if white:
+        filters.append(TradeStatFilter(
+            "property.white_sockets", "白ソケット数", float(white), "socket", True,
+        ))
+    return tuple(filters)
 
 
 def _empty_affix_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
@@ -463,10 +499,10 @@ def resolve_trade_stat_filters(
         for row in combined.values()
     )
     if unique_item:
-        return individual
+        return individual + _item_detail_filters(item)
     return (
         tuple(_initial_property_filters(item) + _gear_pseudo_filters(item))
-        + individual + _empty_affix_filters(item)
+        + individual + _item_detail_filters(item) + _empty_affix_filters(item)
     )
 
 
@@ -510,13 +546,30 @@ def build_search_query(
         misc["synthesised_item"] = {
             "option": "true" if "synthesised" in item.flags else "false"
         }
+        misc["split"] = {"option": "true" if "split" in item.flags else "false"}
+    elif item.category in {"weapon", "armour", "accessory"}:
+        misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
+        misc["corrupted"] = {"option": "true" if "corrupted" in item.flags else "false"}
+        if "mirrored" in item.flags:
+            misc["mirrored"] = {"option": "true"}
+        misc["split"] = {"option": "true" if "split" in item.flags else "false"}
     for stat_filter in stat_filters:
         if not stat_filter.enabled:
+            continue
+        if stat_filter.stat_id == "property.white_sockets":
+            sockets = query["filters"].setdefault(
+                "socket_filters", {"filters": {}}
+            )["filters"].setdefault("sockets", {})
+            if stat_filter.min_value is not None:
+                sockets["w"] = int(stat_filter.min_value)
             continue
         property_target = _PROPERTY_FILTERS.get(stat_filter.stat_id)
         if property_target:
             group, name = property_target
-            value = {"min": stat_filter.min_value} if stat_filter.min_value is not None else {}
+            minimum = stat_filter.min_value
+            if minimum is not None and group == "socket_filters":
+                minimum = int(minimum)
+            value = {"min": minimum} if minimum is not None else {}
             query["filters"].setdefault(group, {"filters": {}})["filters"][name] = value
             continue
         value = {}

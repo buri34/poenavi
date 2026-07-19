@@ -241,8 +241,58 @@ Sacred Chainmail
     assert enabled == {
         "property.armour": 2646.0,
         "property.energy_shield": 577.8,
+        "property.quality": 30.0,
     }
     assert item.flags == ("split", "influence:crusader", "influence:warlord")
+
+
+def test_quality_sockets_and_item_states_are_added_to_finished_search():
+    item = parse_item_text("""アイテムクラス: 鎧
+レアリティ: レア
+Kraken Pelt
+Sacred Chainmail
+--------
+品質: +30% (augmented)
+アーマー: 2940 (augmented)
+ソケット: W-W-W-R-B-B
+--------
+アイテムレベル: 94
+--------
+コラプト状態
+ミラー品
+スプリット
+""")
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        filters = resolve_trade_stat_filters(item)
+    details = {row.stat_id: (row.min_value, row.enabled) for row in filters}
+    assert details["property.quality"] == (30.0, True)
+    assert details["property.sockets"] == (6.0, True)
+    assert details["property.links"] == (6.0, True)
+    assert details["property.white_sockets"] == (3.0, True)
+    query = build_search_query(item, "Sacred Chainmail", filters)["query"]
+    misc = query["filters"]["misc_filters"]["filters"]
+    assert misc["quality"] == {"min": 30.0}
+    assert misc["corrupted"] == {"option": "true"}
+    assert misc["mirrored"] == {"option": "true"}
+    assert misc["split"] == {"option": "true"}
+    sockets = query["filters"]["socket_filters"]["filters"]
+    assert sockets == {"sockets": {"min": 6, "w": 3}, "links": {"min": 6}}
+    assert query["stats"][0]["filters"] == []
+
+
+def test_quality_20_and_non_six_socket_count_are_visible_but_not_preselected():
+    item = parse_item_text(ITEM.replace(
+        "Physical Damage: 108-181 (augmented)",
+        "Quality: +20% (augmented)\nSockets: R-G B\nPhysical Damage: 108-181 (augmented)",
+    ))
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        filters = resolve_trade_stat_filters(item)
+    details = {row.stat_id: row for row in filters}
+    assert details["property.quality"].enabled is False
+    assert details["property.sockets"].min_value == 3.0
+    assert details["property.sockets"].enabled is False
+    assert details["property.links"].min_value == 2.0
+    assert details["property.links"].enabled is True
 
 
 def test_armour_also_enables_general_life_pseudo():
