@@ -18,7 +18,7 @@ _LABELS = {
     "Item Level": "item_level",
 }
 _PROPERTY_LABELS = {
-    "品質", "Quality", "防具", "Armour", "回避力", "Evasion Rating",
+    "品質", "Quality", "防具", "アーマー", "Armour", "回避力", "Evasion Rating",
     "エナジーシールド", "Energy Shield", "物理ダメージ", "Physical Damage",
     "元素ダメージ", "Elemental Damage", "クリティカル率", "Critical Strike Chance",
     "秒間アタック回数", "Attacks per Second", "装備条件", "Requirements",
@@ -32,7 +32,7 @@ _FLAG_LINES = {
     "未鑑定": "unidentified", "Unidentified": "unidentified",
     "コラプト状態": "corrupted", "Corrupted": "corrupted",
     "ミラー品": "mirrored", "Mirrored": "mirrored",
-    "分割": "split", "Split": "split",
+    "分割": "split", "スプリット": "split", "Split": "split",
     "Synthesised Item": "synthesised", "Synthesised": "synthesised",
     "シンセサイズアイテム": "synthesised", "シンセサイズ済みアイテム": "synthesised",
     "Shaper Item": "influence:shaper", "シェイパーアイテム": "influence:shaper",

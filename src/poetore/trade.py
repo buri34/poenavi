@@ -245,14 +245,13 @@ def _initial_property_filters(item: ParsedItem) -> list[TradeStatFilter]:
             ))
     elif item.category == "armour":
         defenses = [
-            ("property.armour", "防具", _property_value(item, "防具", "Armour")),
+            ("property.armour", "アーマー", _property_value(item, "アーマー", "防具", "Armour")),
             ("property.evasion", "回避力", _property_value(item, "回避力", "Evasion Rating")),
             ("property.energy_shield", "エナジーシールド", _property_value(item, "エナジーシールド", "Energy Shield")),
             ("property.ward", "Ward", _property_value(item, "Ward")),
         ]
         present = [(stat_id, text, value) for stat_id, text, value in defenses if value]
-        if len(present) == 1:
-            stat_id, text, value = present[0]
+        for stat_id, text, value in present:
             filters.append(TradeStatFilter(stat_id, text, _relaxed(value), "property", True))
     return filters
 

@@ -155,7 +155,7 @@ def test_non_physical_weapon_does_not_enable_pdps():
     assert not any(row.stat_id == "property.physical_dps" and row.enabled for row in filters)
 
 
-def test_single_defence_armour_is_enabled_but_hybrid_is_not():
+def test_single_and_hybrid_armour_enable_every_present_defence():
     single = parse_item_text(ITEM.replace("Two Hand Swords", "Body Armours").replace(
         "Physical Damage: 108-181 (augmented)\nAttacks per Second: 1.74 (augmented)",
         "Armour: 1000",
@@ -165,7 +165,40 @@ def test_single_defence_armour_is_enabled_but_hybrid_is_not():
         assert [(row.stat_id, row.min_value) for row in resolve_trade_stat_filters(single) if row.enabled] == [
             ("property.armour", 900.0),
         ]
-        assert not any(row.enabled for row in resolve_trade_stat_filters(hybrid))
+        assert [(row.stat_id, row.min_value) for row in resolve_trade_stat_filters(hybrid) if row.enabled] == [
+            ("property.armour", 900.0),
+            ("property.evasion", 450.0),
+        ]
+
+
+def test_japanese_armour_energy_shield_hybrid_enables_both_properties():
+    item = parse_item_text("""アイテムクラス: 鎧
+レアリティ: レア
+Kraken Pelt
+Sacred Chainmail
+--------
+品質: +30% (augmented)
+アーマー: 2940 (augmented)
+エナジーシールド: 642 (augmented)
+--------
+アイテムレベル: 94
+--------
+{プレフィックスモッド「神々しい」}
+アーマー +306(301-375)
+最大エナジーシールド +80(73-80)
+--------
+スプリット
+--------
+クルセイダーアイテム
+ウォーロードアイテム
+""")
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        enabled = {row.stat_id: row.min_value for row in resolve_trade_stat_filters(item) if row.enabled}
+    assert enabled == {
+        "property.armour": 2646.0,
+        "property.energy_shield": 577.8,
+    }
+    assert item.flags == ("split", "influence:crusader", "influence:warlord")
 
 
 def test_armour_also_enables_general_life_pseudo():
