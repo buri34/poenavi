@@ -120,6 +120,22 @@ def _modifier_header_kind(line: str) -> str | None:
     return None
 
 
+def _modifier_header_details(line: str) -> tuple[str, int | None, str | None] | None:
+    kind = _modifier_header_kind(line)
+    if kind is None:
+        return None
+    body = _MODIFIER_HEADER.match(line).group("body")
+    tier_match = re.search(r"(?:Tier|ティア)\s*:\s*(\d+)", body, re.IGNORECASE)
+    lowered = body.lower()
+    if "prefix" in lowered or "プレフィックス" in body:
+        affix = "prefix"
+    elif "suffix" in lowered or "サフィックス" in body:
+        affix = "suffix"
+    else:
+        affix = kind if kind in {"prefix", "suffix"} else None
+    return kind, int(tier_match.group(1)) if tier_match else None, affix
+
+
 def _localized_name_lines(name_lines: list[str], rarity: str) -> tuple[str, str]:
     """日英両方の名前がある場合は、日本語表示用の組を優先する。"""
     separate_base = rarity.lower() in {"rare", "unique", "レア", "ユニーク"}
@@ -165,6 +181,9 @@ def parse_item_text(text: str) -> ParsedItem:
 
     reached_item_level = False
     current_header_kind: str | None = None
+    current_header_tier: int | None = None
+    current_header_affix: str | None = None
+    current_modifier_group = 0
     for section in sections[1:]:
         # 装備性能・装備条件など、item levelより前の区画は検索Modではない。
         metadata_section = not reached_item_level
@@ -188,11 +207,12 @@ def parse_item_text(text: str) -> ParsedItem:
                 # 「Bow」「両手剣」のような値を持たない性能区画の見出しも保持する。
                 properties.setdefault(line, "")
                 continue
-            header_kind = _modifier_header_kind(line)
-            if header_kind:
+            header_details = _modifier_header_details(line)
+            if header_details:
                 # 1つのModが複数行の効果を持つ場合がある。
                 # 次の見出しまで同じPrefix/Suffix種別を維持する。
-                current_header_kind = header_kind
+                current_header_kind, current_header_tier, current_header_affix = header_details
+                current_modifier_group += 1
                 continue
             lowered = line.lower()
             if "(implicit)" in lowered or "（暗黙）" in line:
@@ -203,7 +223,15 @@ def parse_item_text(text: str) -> ParsedItem:
                 kind = "crafted"
             else:
                 kind = current_header_kind or "explicit"
-            modifiers.append(ItemModifier(text=line, values=_numbers(line), kind=kind))
+            from_header = kind == current_header_kind
+            modifiers.append(ItemModifier(
+                text=line, values=_numbers(line), kind=kind,
+                tier=current_header_tier if from_header else None,
+                affix=current_header_affix if from_header else (
+                    kind if kind in {"prefix", "suffix"} else None
+                ),
+                group=current_modifier_group if from_header else None,
+            ))
 
     return ParsedItem(
         item_class=header.get("item_class", ""), rarity=rarity, name=name,

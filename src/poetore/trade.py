@@ -204,24 +204,58 @@ def _base_item_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         stat = _INFLUENCE_STATS.get(influence)
         if stat:
             filters.append(TradeStatFilter(stat[0], stat[1], None, "influence", True))
-    fractured_modifiers = [modifier for modifier in item.modifiers if modifier.kind == "fractured"]
-    entries = _trade_stat_entries() if fractured_modifiers else ()
-    for modifier in fractured_modifiers:
+    exact_modifiers = [
+        modifier for modifier in item.modifiers
+        if modifier.kind == "fractured"
+        or (modifier.kind in {"prefix", "suffix"} and modifier.tier in {1, 2})
+    ]
+    entries = _trade_stat_entries() if exact_modifiers else ()
+    for modifier in exact_modifiers:
+        api_kind = "fractured" if modifier.kind == "fractured" else "explicit"
         source = _normalized_stat_text(modifier.text)
         candidates = [
             entry for entry in entries
-            if entry.get("type") == "fractured"
+            if entry.get("type") == api_kind
             and _normalized_stat_text(str(entry.get("text", ""))) == source
         ]
         if not candidates:
             continue
+        if item.category == "weapon" and len(candidates) > 1:
+            local = [entry for entry in candidates if "(ローカル)" in str(entry.get("text", ""))]
+            if local:
+                candidates = local
         entry = candidates[0]
         value = _value_for_template(modifier.text, str(entry.get("text", "")))
         if value is None:
             value = modifier.values[0] if modifier.values else None
         filters.append(TradeStatFilter(
-            str(entry["id"]), modifier.text, value, "fractured", True,
+            str(entry["id"]), modifier.text, value,
+            "fractured" if modifier.kind == "fractured" else f"T{modifier.tier}", True,
         ))
+    return tuple(filters) + _empty_affix_filters(item)
+
+
+def _empty_affix_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
+    if item.rarity.casefold() not in {"rare", "レア"}:
+        return ()
+    groups: dict[str, set[object]] = {"prefix": set(), "suffix": set()}
+    for index, modifier in enumerate(item.modifiers):
+        if modifier.affix not in groups:
+            continue
+        groups[modifier.affix].add(modifier.group if modifier.group is not None else ("line", index))
+    if not groups["prefix"] and not groups["suffix"]:
+        # 通常コピーなどでPrefix/Suffix情報がない場合は推測しない。
+        return ()
+    filters: list[TradeStatFilter] = []
+    for affix, stat_id, label in (
+        ("prefix", "pseudo.pseudo_number_of_empty_prefix_mods", "空きPrefix枠"),
+        ("suffix", "pseudo.pseudo_number_of_empty_suffix_mods", "空きSuffix枠"),
+    ):
+        empty = max(0, 3 - len(groups[affix]))
+        if empty:
+            filters.append(TradeStatFilter(
+                stat_id, f"{label}（現在{empty}枠）", 1.0, "craft", False,
+            ))
     return tuple(filters)
 
 
@@ -430,7 +464,10 @@ def resolve_trade_stat_filters(
     )
     if unique_item:
         return individual
-    return tuple(_initial_property_filters(item) + _gear_pseudo_filters(item)) + individual
+    return (
+        tuple(_initial_property_filters(item) + _gear_pseudo_filters(item))
+        + individual + _empty_affix_filters(item)
+    )
 
 
 def build_search_query(

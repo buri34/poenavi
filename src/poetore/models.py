@@ -8,6 +8,9 @@ class ItemModifier:
     text: str
     values: tuple[float, ...] = ()
     kind: str = "explicit"
+    tier: int | None = None
+    affix: str | None = None
+    group: int | None = None
 
 
 @dataclass(frozen=True)

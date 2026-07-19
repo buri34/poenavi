@@ -87,6 +87,14 @@ def test_fractured_item_can_offer_base_preset_below_ilvl_82():
     assert filters == (
         TradeStatFilter("property.item_level", "アイテムレベル", 67.0, "base", True),
         TradeStatFilter("fractured.phys", "74% increased Physical Damage", 74.0, "fractured", True),
+        TradeStatFilter(
+            "pseudo.pseudo_number_of_empty_prefix_mods", "空きPrefix枠（現在2枠）",
+            1.0, "craft", False,
+        ),
+        TradeStatFilter(
+            "pseudo.pseudo_number_of_empty_suffix_mods", "空きSuffix枠（現在3枠）",
+            1.0, "craft", False,
+        ),
     )
     query = build_search_query(item, "Reaver Sword", filters, preset=PRESET_BASE)["query"]
     misc = query["filters"]["misc_filters"]["filters"]
@@ -116,6 +124,42 @@ def test_influenced_and_synthesised_items_add_strict_base_conditions():
         {"id": "pseudo.pseudo_has_shaper_influence", "value": {}},
         {"id": "pseudo.pseudo_has_elder_influence", "value": {}},
     ]
+
+
+def test_base_preset_preselects_t1_t2_but_not_lower_tiers():
+    item = parse_item_text("""アイテムクラス: 指輪
+レアリティ: レア
+試作品
+ルビーの指輪
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「健康な」 (ティア: 1) }
+最大ライフ +100(90-100)
+{ プレフィックスモッド「普通の」 (ティア: 3) }
+最大マナ +50(45-55)
+{ サフィックスモッド「火炎の」 (ティア: 2) }
+火耐性 +40(36-41)%
+""")
+    entries = (
+        {"id": "explicit.life", "text": "最大ライフ +#", "type": "explicit"},
+        {"id": "explicit.mana", "text": "最大マナ +#", "type": "explicit"},
+        {"id": "explicit.fire", "text": "火耐性 +#%", "type": "explicit"},
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item, PRESET_BASE)
+    enabled = [(row.stat_id, row.min_value) for row in filters if row.enabled]
+    assert enabled == [
+        ("property.item_level", 85.0),
+        ("explicit.life", 100.0),
+        ("explicit.fire", 40.0),
+    ]
+    assert not any(row.stat_id == "explicit.mana" for row in filters)
+    empty = {row.stat_id: row.text for row in filters if row.kind == "craft"}
+    assert empty == {
+        "pseudo.pseudo_number_of_empty_prefix_mods": "空きPrefix枠（現在1枠）",
+        "pseudo.pseudo_number_of_empty_suffix_mods": "空きSuffix枠（現在2枠）",
+    }
 
 
 def test_finished_preset_does_not_force_special_base_state():
@@ -374,7 +418,7 @@ def test_hybrid_and_duplicate_stats_resolve_with_correct_values_and_sum():
     )
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         filters = resolve_trade_stat_filters(item)
-    assert [(row.stat_id, row.min_value) for row in filters] == [
+    assert [(row.stat_id, row.min_value) for row in filters if row.kind != "craft"] == [
         ("explicit.phys", 74), ("explicit.accuracy", 55), ("explicit.mana", 4),
     ]
     assert filters[0].text.endswith("(2行合計)")

@@ -118,6 +118,9 @@ Item Level: 84
 """)
         self.assertEqual(len(item.modifiers), 3)
         self.assertEqual([mod.kind for mod in item.modifiers], ["implicit", "prefix", "suffix"])
+        self.assertEqual([mod.tier for mod in item.modifiers], [None, 3, 2])
+        self.assertEqual([mod.affix for mod in item.modifiers], [None, "prefix", "suffix"])
+        self.assertEqual([mod.group for mod in item.modifiers], [None, 1, 2])
         self.assertIn("Physical Damage", item.properties)
         self.assertIn("Requirements", item.properties)
         self.assertNotIn("Bow", [mod.text for mod in item.modifiers])
@@ -182,6 +185,8 @@ Item Level: 70
             ["prefix", "prefix", "prefix", "suffix"],
         )
         self.assertEqual(item.modifiers[1].text, "命中力 +55(47-72)")
+        self.assertEqual([mod.tier for mod in item.modifiers], [6, 6, 8, 6])
+        self.assertEqual([mod.group for mod in item.modifiers], [1, 1, 2, 3])
 
     def test_parses_synthesised_and_dual_influence_flags_in_both_languages(self):
         english = parse_item_text("""Item Class: Body Armours
