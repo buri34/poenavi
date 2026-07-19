@@ -83,6 +83,20 @@ class PoetoreWindow(QWidget):
         search_options.addStretch()
         layout.addLayout(search_options)
 
+        item_state_options = QHBoxLayout()
+        item_state_options.addWidget(QLabel("コラプト条件:"))
+        self.corrupted_combo = QComboBox()
+        self.corrupted_combo.addItem("未コラプトのみ", False)
+        self.corrupted_combo.addItem("コラプト品含む", True)
+        item_state_options.addWidget(self.corrupted_combo)
+        item_state_options.addWidget(QLabel("スプリット条件:"))
+        self.split_combo = QComboBox()
+        self.split_combo.addItem("非スプリットのみ", False)
+        self.split_combo.addItem("スプリット品含む", True)
+        item_state_options.addWidget(self.split_combo)
+        item_state_options.addStretch()
+        layout.addLayout(item_state_options)
+
         splitter = QSplitter(Qt.Horizontal)
         self.input_edit = QPlainTextEdit()
         self.input_edit.setPlaceholderText("ここにアイテムの詳細コピー文を貼り付けます")
@@ -135,6 +149,7 @@ class PoetoreWindow(QWidget):
         self._trade_item_name = None
         self._preset_item_key = None
         self._currency_item_key = None
+        self._state_item_key = None
 
     def paste_from_clipboard(self):
         self._trade_base_type = None
@@ -193,6 +208,7 @@ class PoetoreWindow(QWidget):
             return
         self._configure_trade_presets(item)
         self._configure_trade_currency(item)
+        self._configure_item_state_filters(item)
         self.result_tree.clear()
         for label, value in (
             ("アイテムクラス", item.item_class), ("レアリティ", item.rarity),
@@ -225,6 +241,8 @@ class PoetoreWindow(QWidget):
         trade_currency_label = self.trade_currency_combo.currentText()
         preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
         preset_label = self.trade_preset_combo.currentText()
+        include_corrupted = bool(self.corrupted_combo.currentData())
+        include_split = bool(self.split_combo.currentData())
         self.price_status.setText(
             f"現在のPCリーグで「{preset_label} / {trade_status_label} / {trade_currency_label}」を検索中…"
         )
@@ -252,6 +270,8 @@ class PoetoreWindow(QWidget):
                     trade_status=trade_status, trade_name=resolved_trade_name,
                     preset=preset,
                     trade_currency=trade_currency,
+                    include_corrupted=include_corrupted,
+                    include_split=include_split,
                 )
             except (TradeApiError, ValueError) as exc:
                 self._trade_signals.failed.emit(str(exc))
@@ -292,6 +312,18 @@ class PoetoreWindow(QWidget):
         default_currency = default_trade_currency(item)
         index = self.trade_currency_combo.findData(default_currency)
         self.trade_currency_combo.setCurrentIndex(max(index, 0))
+
+    def _configure_item_state_filters(self, item):
+        """元アイテムが変わった時だけ推奨状態へ戻し、再検索時は選択を保持する。"""
+        key = item.raw_text
+        if key == self._state_item_key:
+            return
+        self._state_item_key = key
+        self.corrupted_combo.setCurrentIndex(1 if "corrupted" in item.flags else 0)
+        self.split_combo.setCurrentIndex(1 if "split" in item.flags else 0)
+        is_equipment = item.category in {"weapon", "armour", "accessory"}
+        self.corrupted_combo.setEnabled(is_equipment)
+        self.split_combo.setEnabled(is_equipment)
 
     def _trade_preset_changed(self):
         if not hasattr(self, "mod_filter_tree"):

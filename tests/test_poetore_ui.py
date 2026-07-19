@@ -151,3 +151,32 @@ Item Level: 83
         assert window.trade_currency_combo.currentData() == "chaos_divine"
     finally:
         window.close()
+
+
+def test_item_state_filters_use_clear_labels_defaults_and_keep_selection(qapp):
+    window = PoetoreWindow()
+    try:
+        item = parse_item_text("""Item Class: Body Armours
+Rarity: Rare
+Test Armour
+Sacred Chainmail
+--------
+Item Level: 94
+--------
+Split
+""")
+        window._configure_item_state_filters(item)
+        assert window.corrupted_combo.itemText(0) == "未コラプトのみ"
+        assert window.corrupted_combo.itemText(1) == "コラプト品含む"
+        assert window.corrupted_combo.currentData() is False
+        assert window.split_combo.itemText(0) == "非スプリットのみ"
+        assert window.split_combo.itemText(1) == "スプリット品含む"
+        assert window.split_combo.currentData() is True
+
+        window.corrupted_combo.setCurrentIndex(1)
+        window.split_combo.setCurrentIndex(0)
+        window._configure_item_state_filters(item)
+        assert window.corrupted_combo.currentData() is True
+        assert window.split_combo.currentData() is False
+    finally:
+        window.close()

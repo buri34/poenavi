@@ -387,12 +387,34 @@ Sacred Chainmail
     query = build_search_query(item, "Sacred Chainmail", filters)["query"]
     misc = query["filters"]["misc_filters"]["filters"]
     assert misc["quality"] == {"min": 30.0}
-    assert misc["corrupted"] == {"option": "true"}
     assert misc["mirrored"] == {"option": "true"}
-    assert misc["split"] == {"option": "true"}
+    assert "corrupted" not in misc
+    assert "split" not in misc
     sockets = query["filters"]["socket_filters"]["filters"]
     assert sockets == {"sockets": {"min": 6, "w": 3}, "links": {"min": 6}}
     assert query["stats"][0]["filters"] == []
+
+
+def test_finished_search_state_filters_can_exclude_or_include_items():
+    item = parse_item_text(ITEM)
+    excluded = build_search_query(
+        item, include_corrupted=False, include_split=False,
+    )["query"]["filters"]["misc_filters"]["filters"]
+    assert excluded["corrupted"] == {"option": "false"}
+    assert excluded["split"] == {"option": "false"}
+
+    included = build_search_query(
+        item, include_corrupted=True, include_split=True,
+    )["query"]["filters"]["misc_filters"]["filters"]
+    assert "corrupted" not in included
+    assert "split" not in included
+
+
+def test_split_uncorrupted_item_defaults_to_uncorrupted_and_includes_split():
+    item = parse_item_text(ITEM + "--------\nSplit\n")
+    misc = build_search_query(item)["query"]["filters"]["misc_filters"]["filters"]
+    assert misc["corrupted"] == {"option": "false"}
+    assert "split" not in misc
 
 
 def test_quality_20_and_non_six_socket_count_are_visible_but_not_preselected():

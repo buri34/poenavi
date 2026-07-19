@@ -613,6 +613,8 @@ def build_search_query(
     trade_name: str | None = None,
     preset: str = PRESET_FINISHED,
     trade_currency: str = "any",
+    include_corrupted: bool | None = None,
+    include_split: bool | None = None,
 ) -> dict:
     if trade_status not in TRADE_STATUS_OPTIONS:
         raise ValueError(f"未対応の取引方式です: {trade_status}")
@@ -622,6 +624,10 @@ def build_search_query(
         raise ValueError(f"未対応の価格通貨です: {trade_currency}")
     if preset == PRESET_BASE and PRESET_BASE not in available_trade_presets(item):
         raise ValueError("このアイテムはクラフトベース検索の対象外です。")
+    if include_corrupted is None:
+        include_corrupted = "corrupted" in item.flags
+    if include_split is None:
+        include_split = "split" in item.flags
     base_type = (trade_base_type or item.base_type).strip()
     query: dict = {
         "status": {"option": TRADE_STATUS_OPTIONS[trade_status]},
@@ -646,7 +652,8 @@ def build_search_query(
         query["filters"]["type_filters"] = {"filters": {"rarity": {"option": rarity_option}}}
     if preset == PRESET_BASE:
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
-        misc["corrupted"] = {"option": "false"}
+        if not include_corrupted:
+            misc["corrupted"] = {"option": "false"}
         misc["mirrored"] = {"option": "false"}
         misc["fractured_item"] = {"option": "true" if any(
             modifier.kind == "fractured" for modifier in item.modifiers
@@ -654,13 +661,16 @@ def build_search_query(
         misc["synthesised_item"] = {
             "option": "true" if "synthesised" in item.flags else "false"
         }
-        misc["split"] = {"option": "true" if "split" in item.flags else "false"}
+        if not include_split:
+            misc["split"] = {"option": "false"}
     elif item.category in {"weapon", "armour", "accessory"}:
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
-        misc["corrupted"] = {"option": "true" if "corrupted" in item.flags else "false"}
+        if not include_corrupted:
+            misc["corrupted"] = {"option": "false"}
         if "mirrored" in item.flags:
             misc["mirrored"] = {"option": "true"}
-        misc["split"] = {"option": "true" if "split" in item.flags else "false"}
+        if not include_split:
+            misc["split"] = {"option": "false"}
     for stat_filter in stat_filters:
         if not stat_filter.enabled:
             continue
@@ -702,11 +712,13 @@ def search_prices(
     trade_name: str | None = None,
     preset: str = PRESET_FINISHED,
     trade_currency: str = "any",
+    include_corrupted: bool | None = None,
+    include_split: bool | None = None,
 ) -> PriceResult:
     league = league or active_pc_league()
     payload = build_search_query(
         item, trade_base_type, stat_filters, trade_status, trade_name, preset,
-        trade_currency,
+        trade_currency, include_corrupted, include_split,
     )
     search_url = f"{API_ROOT}/search/{quote(league, safe='')}"
     _trade_log(
