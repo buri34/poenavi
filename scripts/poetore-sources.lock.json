@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-20T14:53:10.592292+00:00",
+  "sources": {
+    "awakened_poe_trade": {
+      "url": "https://raw.githubusercontent.com/SnosMe/awakened-poe-trade/fa31bfb/renderer/public/data/en/stats.ndjson",
+      "revision": "fa31bfb",
+      "sha256": "5c66af4484d5db6ab56079b243f54ecd0bee5e733f7b39bfaf5afc309640011d"
+    },
+    "jp_trade_api": {
+      "url": "https://jp.pathofexile.com/api/trade/data/stats",
+      "version": "snapshot-2026-07-20",
+      "sha256": "696e2ad88af3f18ca92f10b02adb939372caa8834437c1182889daa339b71f6a"
+    },
+    "repoe_stats": {
+      "url": "https://repoe-fork.github.io/stats.min.json",
+      "version": "snapshot-2026-07-20",
+      "sha256": "9a495c7d7307ce60980d67192b744f81197345edbe3c082c8137a9100cb792fb"
+    },
+    "repoe_mods": {
+      "url": "https://repoe-fork.github.io/mods.min.json",
+      "version": "snapshot-2026-07-20",
+      "sha256": "c34b1a810d4440c054aeb7090b53e38c9421ab542667d25d4303fa09e41cdd11"
+    }
+  }
+}

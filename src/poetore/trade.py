@@ -4,6 +4,8 @@ from dataclasses import dataclass, replace
 import json
 import re
 from statistics import median
+import time
+from urllib.error import HTTPError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
@@ -189,12 +191,26 @@ def _request_json(url: str, payload: dict | None = None) -> tuple[dict, object]:
     if data is not None:
         headers["Content-Type"] = "application/json"
     request = Request(url, data=data, headers=headers)
-    try:
-        with urlopen(request, timeout=15) as response:
-            return json.loads(response.read().decode("utf-8")), response.headers
-    except Exception as exc:
-        _trade_log(f"request failed: {request.get_method()} {url} error={exc!r}")
-        raise TradeApiError(f"PoE Trade APIへの接続に失敗しました: {exc}") from exc
+    for attempt in range(2):
+        try:
+            with urlopen(request, timeout=15) as response:
+                return json.loads(response.read().decode("utf-8")), response.headers
+        except HTTPError as exc:
+            if exc.code == 429 and attempt == 0:
+                try:
+                    retry_after = float(exc.headers.get("Retry-After", "1"))
+                except (TypeError, ValueError):
+                    retry_after = 1.0
+                delay = min(30.0, max(0.2, retry_after))
+                _trade_log(f"rate limited; retrying once after {delay:g}s")
+                time.sleep(delay)
+                continue
+            _trade_log(f"request failed: {request.get_method()} {url} error={exc!r}")
+            raise TradeApiError(f"PoE Trade APIへの接続に失敗しました: {exc}") from exc
+        except Exception as exc:
+            _trade_log(f"request failed: {request.get_method()} {url} error={exc!r}")
+            raise TradeApiError(f"PoE Trade APIへの接続に失敗しました: {exc}") from exc
+    raise TradeApiError("PoE Trade APIへの再接続に失敗しました。")
 
 
 def active_pc_league() -> str:

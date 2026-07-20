@@ -25,6 +25,8 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
         assert window.trade_status_combo.count() == 3
         assert window.trade_currency_combo.currentData() == "any"
         assert window.trade_currency_combo.count() == 4
+        assert "非公式ツール" in window.disclaimer_label.text()
+        assert "提携・承認関係はありません" in window.disclaimer_label.text()
     finally:
         window.close()
 

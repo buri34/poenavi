@@ -1,4 +1,6 @@
-from unittest.mock import patch
+from io import BytesIO
+from unittest.mock import MagicMock, patch
+from urllib.error import HTTPError
 
 from src.poetore.parser import parse_item_text
 from src.poetore.trade import (
@@ -7,6 +9,7 @@ from src.poetore.trade import (
     default_trade_currency, physical_dps, physical_dps_at_20_quality,
     resolve_trade_stat_filters, search_prices, unique_candidates, unique_variants,
 )
+from src.poetore.trade import _request_json
 
 
 ITEM = """Item Class: Two Hand Swords
@@ -22,6 +25,24 @@ Item Level: 67
 --------
 74% increased Physical Damage
 """
+
+
+def test_trade_api_retries_429_once_using_retry_after():
+    error = HTTPError(
+        "https://example.invalid", 429, "rate limited", {"Retry-After": "2"},
+        BytesIO(b'{}'),
+    )
+    response = MagicMock()
+    response.__enter__.return_value = response
+    response.read.return_value = b'{"ok": true}'
+    response.headers = {"X-Rate-Limit-Ip-State": "1:10:0"}
+    with patch("src.poetore.trade.urlopen", side_effect=[error, response]), patch(
+        "src.poetore.trade.time.sleep"
+    ) as sleep:
+        payload, headers = _request_json("https://example.invalid")
+    assert payload == {"ok": True}
+    assert headers["X-Rate-Limit-Ip-State"] == "1:10:0"
+    sleep.assert_called_once_with(2.0)
 
 
 def test_weapon_search_uses_english_base_rarity_and_comparable_pdps():

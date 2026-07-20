@@ -456,6 +456,7 @@ MIT License — 詳細は [LICENSE](LICENSE) を参照
 ## 🙏 Credits
 
 - [Path of Exile](https://www.pathofexile.com/) by Grinding Gear Games
+- ぽえとれのデータ出典・第三者ライセンスは [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) を参照
 - Built with ❤️ by [Buri](https://github.com/buri34)
 
 ---

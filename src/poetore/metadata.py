@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
 import re
 from typing import Iterable
@@ -98,5 +99,6 @@ _DEFAULT_INDEX: MetadataIndex | None = None
 def default_metadata_index() -> MetadataIndex:
     global _DEFAULT_INDEX
     if _DEFAULT_INDEX is None:
-        _DEFAULT_INDEX = MetadataIndex.load()
+        override = os.environ.get("POETORE_METADATA_PATH")
+        _DEFAULT_INDEX = MetadataIndex.load(Path(override) if override else INDEX_PATH)
     return _DEFAULT_INDEX

@@ -157,6 +157,12 @@ class PoetoreWindow(QWidget):
         price_header.setSectionResizeMode(2, QHeaderView.Stretch)
         price_header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
         layout.addWidget(self.price_list)
+        self.disclaimer_label = QLabel(
+            "ぽえとれは無料の非公式ツールです。Grinding Gear Gamesとの提携・承認関係はありません。"
+        )
+        self.disclaimer_label.setWordWrap(True)
+        self.disclaimer_label.setStyleSheet("color: #888;")
+        layout.addWidget(self.disclaimer_label)
         self._trade_signals = _TradeSignals(self)
         self._trade_signals.completed.connect(self._search_completed)
         self._trade_signals.failed.connect(self._show_price_error)

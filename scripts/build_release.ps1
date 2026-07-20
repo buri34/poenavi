@@ -38,6 +38,9 @@ $appArgs = @(
     "--add-data", "guide_data.json;.",
     "--add-data", "guide_data_poe2.json;.",
     "--add-data", "monster_levels.json;.",
+    "--add-data", "LICENSE;.",
+    "--add-data", "README.md;.",
+    "--add-data", "THIRD_PARTY_NOTICES.md;.",
     "--add-data", "data;data",
     "--add-data", "assets;assets",
     "--add-data", "maps;maps",
@@ -100,6 +103,32 @@ for ($attempt = 1; $attempt -le $zipAttempts; $attempt++) {
 if (-not $zipCreated) {
     throw "PoENavi.zip was not created"
 }
+
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path PoENavi.zip))
+try {
+    $entryNames = @($archive.Entries | ForEach-Object { $_.FullName.Replace("\", "/") })
+    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "mod_metadata.json")) {
+        if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {
+            throw "Release audit failed: missing $requiredName"
+        }
+    }
+    $forbidden = @($entryNames | Where-Object {
+        $_ -match "(^|/)(tests|build|__pycache__)/" -or
+        $_ -match "(poetore-sources\.lock\.json|\.candidate|stats\.min\.json|mods\.min\.json)$"
+    })
+    if ($forbidden.Count -gt 0) {
+        throw "Release audit failed: development/raw data found: $($forbidden -join ', ')"
+    }
+    $metadataEntry = $archive.Entries | Where-Object { $_.FullName -match "(^|[\\/])mod_metadata\.json$" } | Select-Object -First 1
+    if ($null -eq $metadataEntry -or $metadataEntry.Length -gt 8MB) {
+        throw "Release audit failed: mod_metadata.json is missing or exceeds 8 MiB"
+    }
+}
+finally {
+    $archive.Dispose()
+}
+
 $hash = (Get-FileHash PoENavi.zip -Algorithm SHA256).Hash.ToLower()
 Set-Content -Path PoENavi.zip.sha256 -Value "$hash  PoENavi.zip" -Encoding ascii
 

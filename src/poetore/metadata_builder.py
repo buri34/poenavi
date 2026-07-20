@@ -8,6 +8,7 @@ from .metadata import normalize_stat_text
 
 
 SUPPORTED_KINDS = {"explicit", "implicit", "crafted", "fractured", "enchant"}
+INDEX_FIELDS = ("ref", "stat_id", "kind", "japanese", "better", "inverted", "exact", "local", "tiers")
 
 
 def _awakened_stats(lines: Iterable[str]) -> list[dict]:
@@ -53,7 +54,8 @@ def _repoe_by_ref(stats: dict, mods: dict) -> dict[str, dict]:
 def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
                         repoe_stats: dict | None = None,
                         repoe_mods: dict | None = None,
-                        sources: dict | None = None) -> dict:
+                        sources: dict | None = None,
+                        generated_at: str | None = None) -> dict:
     """必要な照合・検索項目だけに縮小した派生インデックスを生成する。"""
     jp = _trade_entries(jp_trade)
     repoe = _repoe_by_ref(repoe_stats or {}, repoe_mods or {})
@@ -84,8 +86,90 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
     records.sort(key=lambda row: (row["kind"], row["stat_id"]))
     return {
         "schema_version": 1,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": generated_at or datetime.now(timezone.utc).isoformat(),
         "sources": sources or {},
         "scope": "PoE1 trade stat matching for weapons, armour and accessories",
         "mods": records,
     }
+
+
+def validate_minimal_index(payload: dict) -> dict:
+    """更新前に、壊れた・曖昧な派生インデックスを検出する。"""
+    mods = payload.get("mods", ())
+    errors: list[str] = []
+    keys: set[tuple[str, str]] = set()
+    matchers: dict[tuple[str, str], list[str]] = {}
+    for index, row in enumerate(mods):
+        missing = [field for field in INDEX_FIELDS if field not in row]
+        if missing:
+            errors.append(f"mods[{index}] missing fields: {', '.join(missing)}")
+            continue
+        key = (str(row["kind"]), str(row["stat_id"]))
+        if key in keys:
+            errors.append(f"duplicate stat ID: {key[0]}:{key[1]}")
+        keys.add(key)
+        japanese = row.get("japanese") or []
+        if not japanese or any(not str(value).strip() for value in japanese):
+            errors.append(f"empty Japanese matcher: {key[0]}:{key[1]}")
+        for matcher in japanese:
+            normalized = normalize_stat_text(str(matcher))
+            matchers.setdefault((key[0], normalized), []).append(key[1])
+    ambiguous = [
+        {"kind": kind, "matcher": matcher, "stat_ids": sorted(set(stat_ids))}
+        for (kind, matcher), stat_ids in sorted(matchers.items())
+        if len(set(stat_ids)) > 1
+    ]
+    return {
+        "record_count": len(mods),
+        "errors": errors,
+        "ambiguous_matchers": ambiguous,
+    }
+
+
+def diff_minimal_indexes(previous: dict, candidate: dict) -> dict:
+    """レビュー可能なMod単位の新旧差分を返す。時刻など非解析項目は比較しない。"""
+    def keyed(payload: dict) -> dict[tuple[str, str], dict]:
+        return {
+            (str(row.get("kind", "")), str(row.get("stat_id", ""))): row
+            for row in payload.get("mods", ())
+        }
+
+    old, new = keyed(previous), keyed(candidate)
+    added = sorted(set(new) - set(old))
+    removed = sorted(set(old) - set(new))
+    changed = []
+    for key in sorted(set(old) & set(new)):
+        fields = [
+            field for field in INDEX_FIELDS
+            if json.dumps(old[key].get(field), sort_keys=True)
+            != json.dumps(new[key].get(field), sort_keys=True)
+        ]
+        if fields:
+            changed.append({"kind": key[0], "stat_id": key[1], "fields": fields})
+    return {
+        "previous_count": len(old),
+        "candidate_count": len(new),
+        "added": [{"kind": kind, "stat_id": stat_id} for kind, stat_id in added],
+        "removed": [{"kind": kind, "stat_id": stat_id} for kind, stat_id in removed],
+        "changed": changed,
+    }
+
+
+def unresolved_trade_entries(payload: dict, jp_trade: dict) -> list[dict]:
+    """公式日本語statのうち、派生インデックスへ結合できなかった対象を列挙する。"""
+    resolved = {
+        (str(row.get("kind", "")), str(row.get("stat_id", "")))
+        for row in payload.get("mods", ())
+    }
+    rows = []
+    for (kind, stat_id), entry in sorted(_trade_entries(jp_trade).items()):
+        if kind not in SUPPORTED_KINDS or (kind, stat_id) in resolved:
+            continue
+        rows.append({"kind": kind, "stat_id": stat_id, "japanese": str(entry.get("text", ""))})
+    return rows
+
+
+def excessive_removal(diff: dict) -> tuple[bool, int]:
+    """小規模インデックスは100件、大規模は10%を超える削除を危険とする。"""
+    limit = max(100, int(int(diff.get("previous_count", 0)) * 0.10))
+    return len(diff.get("removed", ())) > limit, limit
