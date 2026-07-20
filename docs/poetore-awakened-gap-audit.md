@@ -73,6 +73,8 @@ Magic JewelのAdorned向けrarity／corrupted厳密条件まで対応済み。
 - Awakenedのgroup/replaces規則を完全再現した相互排他
 - crafted chaos resistanceを価値なしとして隠す等の個別表示規則
 
+詳細な実装タスクは `docs/poetore-pseudo-mod-tasks.md` を参照。
+
 ### 5. ユニーク・Variant・特殊状態 — 実装済み
 
 - 未鑑定ユニーク候補解決、Legacy discriminator選択
