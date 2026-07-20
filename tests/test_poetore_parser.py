@@ -216,6 +216,21 @@ Synthesised Item
 """)
         self.assertEqual(japanese.flags, ("influence:hunter", "synthesised"))
 
+    def test_parses_modifier_generation_for_ui_details(self):
+        item = parse_item_text("""アイテムクラス: 鎧
+レアリティ: レア
+試作品
+セイクリッドチェインメイル
+--------
+アイテムレベル: 94
+--------
+{ プレフィックスモッド「高位のクルセーダーの」 — ダメージ, 物理 }
+効果範囲が11(8-12)%増加する
+""")
+        modifier = item.modifiers[0]
+        self.assertEqual(modifier.affix, "prefix")
+        self.assertEqual(modifier.generation, "crusader")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+from dataclasses import replace
 
 from PySide6.QtCore import QObject, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
@@ -16,7 +17,7 @@ from .trade import (
     PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
     available_trade_presets, default_trade_currency, resolve_trade_stat_filters, search_prices,
     unique_candidates,
-    unique_variants,
+    unique_variants, unresolved_modifier_warnings,
 )
 
 
@@ -124,7 +125,7 @@ class PoetoreWindow(QWidget):
         mod_label = QLabel("検索に使うMod（チェックした条件だけ再検索に使用）")
         layout.addWidget(mod_label)
         self.mod_filter_tree = QTreeWidget()
-        self.mod_filter_tree.setHeaderLabels(["使用", "種別", "Mod", "最小値", "最大値"])
+        self.mod_filter_tree.setHeaderLabels(["使用", "種別", "Mod", "最小値", "最大値", "判断・詳細"])
         self.mod_filter_tree.setRootIsDecorated(False)
         self.mod_filter_tree.setAlternatingRowColors(True)
         self.mod_filter_tree.setMinimumHeight(145)
@@ -133,7 +134,14 @@ class PoetoreWindow(QWidget):
         mod_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
         mod_header.setSectionResizeMode(2, QHeaderView.Stretch)
         mod_header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        mod_header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        mod_header.setSectionResizeMode(5, QHeaderView.Stretch)
         layout.addWidget(self.mod_filter_tree)
+        self.mod_warning = QLabel("")
+        self.mod_warning.setWordWrap(True)
+        self.mod_warning.setStyleSheet("color: #d6a84b;")
+        self.mod_warning.hide()
+        layout.addWidget(self.mod_warning)
         self.price_status = QLabel("価格検索はPoE公式Trade APIを使います。初期設定はインスタントバイアウトのみです。")
         self.price_status.setWordWrap(True)
         layout.addWidget(self.price_status)
@@ -240,6 +248,17 @@ class PoetoreWindow(QWidget):
         self.result_tree.expandAll()
         self.result_tree.scrollToTop()
         self._parsed_item = item
+        warnings = unresolved_modifier_warnings(item)
+        if warnings:
+            preview = " / ".join(warnings[:3])
+            suffix = f" ほか{len(warnings) - 3}件" if len(warnings) > 3 else ""
+            self.mod_warning.setText(
+                f"⚠ メタデータ未解決 {len(warnings)}件（検索時に公式API照合を試行）: {preview}{suffix}"
+            )
+            self.mod_warning.show()
+        else:
+            self.mod_warning.clear()
+            self.mod_warning.hide()
 
     def search_current_item(self):
         self.parse_current_text()
@@ -406,12 +425,19 @@ class PoetoreWindow(QWidget):
                 maximum = float(max_text) if max_text else None
             except ValueError:
                 maximum = None
-            filters.append(TradeStatFilter(
-                row.data(0, Qt.UserRole), row.text(2), value, row.text(1),
-                row.checkState(0) == Qt.Checked,
-                maximum, row.data(0, Qt.UserRole + 1), row.data(0, Qt.UserRole + 2) or 0.0,
-                bool(row.data(0, Qt.UserRole + 3)),
-            ))
+            original = row.data(0, Qt.UserRole + 4)
+            if isinstance(original, TradeStatFilter):
+                filters.append(replace(
+                    original, min_value=value, max_value=maximum,
+                    enabled=row.checkState(0) == Qt.Checked,
+                ))
+            else:
+                filters.append(TradeStatFilter(
+                    row.data(0, Qt.UserRole), row.text(2), value, row.text(1),
+                    row.checkState(0) == Qt.Checked,
+                    maximum, row.data(0, Qt.UserRole + 1), row.data(0, Qt.UserRole + 2) or 0.0,
+                    bool(row.data(0, Qt.UserRole + 3)),
+                ))
         return tuple(filters)
 
     def _populate_stat_filters(self, filters: tuple[TradeStatFilter, ...]):
@@ -419,11 +445,43 @@ class PoetoreWindow(QWidget):
         for stat_filter in filters:
             value = "" if stat_filter.min_value is None else f"{stat_filter.min_value:g}"
             maximum = "" if stat_filter.max_value is None else f"{stat_filter.max_value:g}"
-            row = QTreeWidgetItem(["", stat_filter.kind, stat_filter.text, "", ""])
+            details = []
+            if stat_filter.read_value is not None:
+                details.append(f"読取 {stat_filter.read_value:g}")
+            if stat_filter.tier is not None:
+                details.append(f"T{stat_filter.tier}")
+            if stat_filter.roll_min is not None and stat_filter.roll_max is not None:
+                details.append(f"範囲 {stat_filter.roll_min:g}–{stat_filter.roll_max:g}")
+            if stat_filter.affix:
+                details.append(stat_filter.affix.capitalize())
+            if stat_filter.generation and stat_filter.generation != stat_filter.kind:
+                details.append(stat_filter.generation)
+            if stat_filter.exact:
+                details.append("完全一致")
+            elif stat_filter.better == -1:
+                details.append("低いほど良い")
+            if stat_filter.inverted:
+                details.append("API符号反転")
+            is_mod = stat_filter.kind in {
+                "explicit", "prefix", "suffix", "crafted", "fractured", "implicit", "enchant"
+            }
+            if is_mod and stat_filter.confidence:
+                confidence = f"一致 {stat_filter.confidence:.0%}"
+                if stat_filter.confidence < 1:
+                    confidence = f"⚠ {confidence}"
+            elif is_mod:
+                confidence = "⚠ 一致未確認"
+            else:
+                confidence = ""
+            summary = " / ".join(filter(None, [stat_filter.selection_reason, *details, confidence]))
+            row = QTreeWidgetItem(["", stat_filter.kind, stat_filter.text, "", "", summary])
             row.setData(0, Qt.UserRole, stat_filter.stat_id)
             row.setData(0, Qt.UserRole + 1, stat_filter.ref)
             row.setData(0, Qt.UserRole + 2, stat_filter.confidence)
             row.setData(0, Qt.UserRole + 3, stat_filter.inverted)
+            row.setData(0, Qt.UserRole + 4, stat_filter)
+            row.setToolTip(2, summary)
+            row.setToolTip(5, summary)
             row.setCheckState(0, Qt.Checked if stat_filter.enabled else Qt.Unchecked)
             row.setFlags(row.flags() | Qt.ItemIsUserCheckable)
             self.mod_filter_tree.addTopLevelItem(row)

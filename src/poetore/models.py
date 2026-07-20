@@ -18,6 +18,7 @@ class ItemModifier:
     roll_max: float | None = None
     better: int | None = None
     inverted: bool = False
+    generation: str | None = None
 
 
 @dataclass(frozen=True)

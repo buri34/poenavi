@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
 import re
 from statistics import median
@@ -157,6 +157,15 @@ class TradeStatFilter:
     ref: str | None = None
     confidence: float = 0.0
     inverted: bool = False
+    read_value: float | None = None
+    tier: int | None = None
+    roll_min: float | None = None
+    roll_max: float | None = None
+    affix: str | None = None
+    generation: str | None = None
+    selection_reason: str = ""
+    exact: bool = False
+    better: int | None = None
 
 
 @dataclass(frozen=True)
@@ -621,6 +630,122 @@ def _unique_minimum(value: float | None, bounds: tuple[float, float]) -> float |
     return round(value - abs(high - low) * DEFAULT_SEARCH_RANGE, 1)
 
 
+def unresolved_modifier_warnings(item: ParsedItem) -> tuple[str, ...]:
+    """新メタデータで未解決のMod。検索時は従来の公式API照合を試す。"""
+    return tuple(
+        modifier.text for modifier in item.modifiers
+        if modifier.stat_id is None and modifier.kind not in {"desecrated"}
+    )
+
+
+def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
+                      unique_item: bool = False) -> tuple[TradeStatFilter, ...]:
+    by_stat: dict[str, list] = {}
+    for modifier in item.modifiers:
+        if modifier.stat_id:
+            by_stat.setdefault(modifier.stat_id, []).append(modifier)
+    decorated = []
+    property_reasons = {
+        "property.total_dps": "物理・元素を含む主要な合計DPS",
+        "property.elemental_dps": "元素ダメージ主体の武器性能",
+        "property.physical_dps": "物理ダメージ主体の武器性能",
+        "property.armour": "防具の主要アーマー値", "property.evasion": "防具の主要回避力",
+        "property.energy_shield": "防具の主要エナジーシールド値", "property.ward": "防具の主要Ward値",
+        "property.links": "リンク数は価格への影響が大きい", "property.white_sockets": "白ソケットを保持",
+        "property.quality": "品質20%超を保持", "property.item_level": "クラフト価値のあるアイテムレベル",
+    }
+    sockets, links, white = _socket_summary(item)
+    property_values = {
+        "property.total_dps": (physical_dps_at_20_quality(item) or 0) + (elemental_dps(item) or 0),
+        "property.elemental_dps": elemental_dps(item),
+        "property.physical_dps": physical_dps_at_20_quality(item),
+        "property.aps": _property_value(item, "秒間アタック回数", "Attacks per Second"),
+        "property.crit": _property_value(item, "クリティカル率", "Critical Strike Chance"),
+        "property.armour": _property_value(item, "アーマー", "防具", "Armour"),
+        "property.evasion": _property_value(item, "回避力", "Evasion Rating"),
+        "property.energy_shield": _property_value(item, "エナジーシールド", "Energy Shield"),
+        "property.ward": _property_value(item, "Ward"),
+        "property.item_level": float(item.item_level) if item.item_level is not None else None,
+        "property.quality": _property_value(item, "品質", "Quality"),
+        "property.sockets": float(sockets) if sockets else None,
+        "property.links": float(links) if links else None,
+        "property.white_sockets": float(white) if white else None,
+    }
+    simple_sources = {stat_id: source_ref for source_ref, stat_id, _ in _SIMPLE_PSEUDOS}
+    pseudo_refs: dict[str, set[str]] = {
+        "pseudo.pseudo_total_life": {"+# to maximum Life", *(
+            ref for ref, attrs in _ATTRIBUTE_REFS.items() if "str" in attrs
+        )},
+        "pseudo.pseudo_total_mana": {"+# to maximum Mana", *(
+            ref for ref, attrs in _ATTRIBUTE_REFS.items() if "int" in attrs
+        )},
+        "pseudo.pseudo_total_energy_shield": {"+# to maximum Energy Shield"},
+        "pseudo.pseudo_total_elemental_resistance": {
+            ref for ref, (elements, _) in _RESISTANCE_REFS.items() if elements
+        },
+        "pseudo.pseudo_total_chaos_resistance": {
+            ref for ref, (_, chaos) in _RESISTANCE_REFS.items() if chaos
+        },
+        "pseudo.pseudo_total_fire_resistance": {
+            ref for ref, (elements, _) in _RESISTANCE_REFS.items() if "fire" in elements
+        },
+        "pseudo.pseudo_total_cold_resistance": {
+            ref for ref, (elements, _) in _RESISTANCE_REFS.items() if "cold" in elements
+        },
+        "pseudo.pseudo_total_lightning_resistance": {
+            ref for ref, (elements, _) in _RESISTANCE_REFS.items() if "lightning" in elements
+        },
+        "pseudo.pseudo_total_all_attributes": {"+# to all Attributes"},
+        "pseudo.pseudo_total_strength": {ref for ref, attrs in _ATTRIBUTE_REFS.items() if "str" in attrs},
+        "pseudo.pseudo_total_dexterity": {ref for ref, attrs in _ATTRIBUTE_REFS.items() if "dex" in attrs},
+        "pseudo.pseudo_total_intelligence": {ref for ref, attrs in _ATTRIBUTE_REFS.items() if "int" in attrs},
+    }
+    pseudo_refs.update({stat_id: {ref} for stat_id, ref in simple_sources.items()})
+    for row in filters:
+        sources = by_stat.get(row.stat_id, ())
+        source = sources[0] if sources else None
+        pseudo_sources = [modifier for modifier in item.modifiers
+                          if modifier.ref in pseudo_refs.get(row.stat_id, set())]
+        if source is None and len(pseudo_sources) == 1:
+            source = pseudo_sources[0]
+        reason = row.selection_reason
+        if not reason:
+            if row.enabled and row.stat_id in property_reasons:
+                reason = property_reasons[row.stat_id]
+            elif row.enabled and row.kind == "pseudo":
+                reason = "複数Modを集約した主要pseudo条件"
+            elif row.enabled and unique_item:
+                reason = "ユニークの可変Modが3個以下のため自動選択"
+            elif row.enabled and source and source.tier in {1, 2}:
+                reason = f"クラフトベース向けT{source.tier} Mod"
+            elif row.enabled:
+                reason = "アイテム種別に応じた主要条件"
+            else:
+                reason = "候補として表示（初期未選択）"
+        exact = row.exact or (
+            row.min_value is not None and row.max_value is not None and row.min_value == row.max_value
+        )
+        read_value = source.values[0] if source and source.values else row.read_value
+        if read_value is None:
+            read_value = property_values.get(row.stat_id)
+        if read_value is None and row.kind == "pseudo" and row.min_value is not None:
+            read_value = round(row.min_value / (1 - DEFAULT_SEARCH_RANGE), 2)
+        decorated.append(replace(
+            row,
+            read_value=read_value,
+            tier=source.tier if source else row.tier,
+            roll_min=source.roll_min if source else row.roll_min,
+            roll_max=source.roll_max if source else row.roll_max,
+            affix=source.affix if source else row.affix,
+            generation=("複数Mod集約" if len(pseudo_sources) > 1 else
+                        ((source.generation or source.kind) if source else row.generation)),
+            selection_reason=reason,
+            exact=exact,
+            better=source.better if source else row.better,
+        ))
+    return tuple(decorated)
+
+
 def resolve_trade_stat_filters(
     item: ParsedItem, preset: str = PRESET_FINISHED,
 ) -> tuple[TradeStatFilter, ...]:
@@ -629,7 +754,7 @@ def resolve_trade_stat_filters(
     if preset == PRESET_BASE:
         if PRESET_BASE not in available_trade_presets(item):
             raise ValueError("このアイテムはクラフトベース検索の対象外です。")
-        return _base_item_filters(item)
+        return _decorate_filters(item, _base_item_filters(item))
     entries = _trade_stat_entries()
     resolved: list[TradeStatFilter] = []
     unique_item = _is_unique(item)
@@ -706,11 +831,12 @@ def resolve_trade_stat_filters(
         for row in combined.values() if row.stat_id not in consumed_stat_ids
     )
     if unique_item:
-        return individual + _item_detail_filters(item)
-    return (
+        return _decorate_filters(item, individual + _item_detail_filters(item), True)
+    filters = (
         tuple(_initial_property_filters(item) + _gear_pseudo_filters(item))
         + individual + _item_detail_filters(item) + _empty_affix_filters(item)
     )
+    return _decorate_filters(item, filters)
 
 
 def build_search_query(

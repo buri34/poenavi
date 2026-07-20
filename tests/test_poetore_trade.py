@@ -99,7 +99,11 @@ def test_high_item_level_unfinished_rare_has_finished_and_base_presets():
     item = parse_item_text(ITEM.replace("Item Level: 67", "Item Level: 85"))
     assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BASE)
     assert resolve_trade_stat_filters(item, PRESET_BASE) == (
-        TradeStatFilter("property.item_level", "アイテムレベル", 85.0, "base", True),
+        TradeStatFilter(
+            "property.item_level", "アイテムレベル", 85.0, "base", True,
+            read_value=85.0,
+            selection_reason="クラフト価値のあるアイテムレベル",
+        ),
     )
 
 
@@ -146,15 +150,22 @@ def test_fractured_item_can_offer_base_preset_below_ilvl_82():
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         filters = resolve_trade_stat_filters(item, PRESET_BASE)
     assert filters == (
-        TradeStatFilter("property.item_level", "アイテムレベル", 67.0, "base", True),
-        TradeStatFilter("fractured.phys", "74% increased Physical Damage", 74.0, "fractured", True),
+        TradeStatFilter(
+            "property.item_level", "アイテムレベル", 67.0, "base", True,
+            read_value=67.0,
+            selection_reason="クラフト価値のあるアイテムレベル",
+        ),
+        TradeStatFilter(
+            "fractured.phys", "74% increased Physical Damage", 74.0, "fractured", True,
+            selection_reason="アイテム種別に応じた主要条件",
+        ),
         TradeStatFilter(
             "pseudo.pseudo_number_of_empty_prefix_mods", "空きPrefix枠（現在2枠）",
-            1.0, "craft", False,
+            1.0, "craft", False, selection_reason="候補として表示（初期未選択）",
         ),
         TradeStatFilter(
             "pseudo.pseudo_number_of_empty_suffix_mods", "空きSuffix枠（現在3枠）",
-            1.0, "craft", False,
+            1.0, "craft", False, selection_reason="候補として表示（初期未選択）",
         ),
     )
     query = build_search_query(item, "Reaver Sword", filters, preset=PRESET_BASE)["query"]
@@ -533,6 +544,7 @@ Item Level: 70
         filters = resolve_trade_stat_filters(item)
     assert filters == (TradeStatFilter(
         "explicit.life", "+40(30-50) to maximum Life", 38.0, "explicit", True,
+        selection_reason="ユニークの可変Modが3個以下のため自動選択",
     ),)
     query = build_search_query(item, "Gold Amulet", filters, trade_name="The Example")["query"]
     assert query["name"] == "The Example"

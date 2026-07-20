@@ -78,6 +78,55 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
     window.close()
 
 
+def test_mod_filter_ui_shows_reason_tier_range_generation_and_matching(qapp):
+    window = PoetoreWindow()
+    try:
+        source = TradeStatFilter(
+            "explicit.stat_1", "最大ライフ +100", 90, "prefix", True,
+            ref="+# to maximum Life", confidence=1.0, read_value=100,
+            tier=1, roll_min=90, roll_max=100, affix="prefix",
+            generation="fractured", selection_reason="クラフトベース向けT1 Mod",
+        )
+        window._populate_stat_filters((source,))
+        row = window.mod_filter_tree.topLevelItem(0)
+        detail = row.text(5)
+        assert "クラフトベース向けT1 Mod" in detail
+        assert "読取 100" in detail
+        assert "T1" in detail
+        assert "範囲 90–100" in detail
+        assert "Fractured" in detail or "fractured" in detail
+        assert "一致 100%" in detail
+
+        editor = window.mod_filter_tree.itemWidget(row, 3)
+        editor.setText("95")
+        selected = window._selected_stat_filters()[0]
+        assert selected.min_value == 95
+        assert selected.selection_reason == source.selection_reason
+        assert selected.tier == 1
+    finally:
+        window.close()
+
+
+def test_unresolved_modifiers_are_shown_as_warning(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""Item Class: Rings
+Rarity: Rare
+Test Ring
+Ruby Ring
+--------
+Item Level: 85
+--------
+Unknown Experimental Modifier 123
+""")
+        window.parse_current_text()
+        assert not window.mod_warning.isHidden()
+        assert "メタデータ未解決 1件" in window.mod_warning.text()
+        assert "Unknown Experimental Modifier 123" in window.mod_warning.text()
+    finally:
+        window.close()
+
+
 def test_unidentified_unique_candidates_can_be_selected(qapp):
     window = PoetoreWindow()
     try:

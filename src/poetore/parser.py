@@ -135,7 +135,7 @@ def _modifier_header_kind(line: str) -> str | None:
     return None
 
 
-def _modifier_header_details(line: str) -> tuple[str, int | None, str | None] | None:
+def _modifier_header_details(line: str) -> tuple[str, int | None, str | None, str | None] | None:
     kind = _modifier_header_kind(line)
     if kind is None:
         return None
@@ -148,7 +148,14 @@ def _modifier_header_details(line: str) -> tuple[str, int | None, str | None] | 
         affix = "suffix"
     else:
         affix = kind if kind in {"prefix", "suffix"} else None
-    return kind, int(tier_match.group(1)) if tier_match else None, affix
+    generation = next((value for labels, value in (
+        (("crusader", "クルセーダー"), "crusader"), (("warlord", "ウォーロード"), "warlord"),
+        (("hunter", "ハンター"), "hunter"), (("redeemer", "リディーマー"), "redeemer"),
+        (("shaper", "シェイパー"), "shaper"), (("elder", "エルダー"), "elder"),
+        (("fractured", "フラクチャー"), "fractured"), (("crafted", "クラフト", "製作"), "crafted"),
+        (("enchant", "エンチャント"), "enchant"),
+    ) if any(label in lowered or label in body for label in labels)), None)
+    return kind, int(tier_match.group(1)) if tier_match else None, affix, generation
 
 
 def _localized_name_lines(name_lines: list[str], rarity: str) -> tuple[str, str]:
@@ -198,6 +205,7 @@ def parse_item_text(text: str) -> ParsedItem:
     current_header_kind: str | None = None
     current_header_tier: int | None = None
     current_header_affix: str | None = None
+    current_header_generation: str | None = None
     current_modifier_group = 0
     for section in sections[1:]:
         # 装備性能・装備条件など、item levelより前の区画は検索Modではない。
@@ -226,7 +234,8 @@ def parse_item_text(text: str) -> ParsedItem:
             if header_details:
                 # 1つのModが複数行の効果を持つ場合がある。
                 # 次の見出しまで同じPrefix/Suffix種別を維持する。
-                current_header_kind, current_header_tier, current_header_affix = header_details
+                (current_header_kind, current_header_tier, current_header_affix,
+                 current_header_generation) = header_details
                 current_modifier_group += 1
                 continue
             lowered = line.lower()
@@ -261,6 +270,7 @@ def parse_item_text(text: str) -> ParsedItem:
                 roll_max=roll_max,
                 better=metadata.better if metadata else None,
                 inverted=metadata.inverted if metadata else False,
+                generation=current_header_generation if from_header else kind,
             ))
 
     return ParsedItem(
