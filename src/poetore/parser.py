@@ -103,6 +103,13 @@ _MODIFIER_KINDS = (
     (("Enchant", "エンチャント"), "enchant"),
     (("Veiled", "ヴェール"), "veiled"),
 )
+_UNSCALABLE_VALUE_SUFFIX = re.compile(
+    r"\s*(?:[-—–]\s*)?(?:スケールできない値|Unscalable Value)\s*$",
+    re.IGNORECASE,
+)
+_GLOSSARY_HELP_LINE = re.compile(
+    r"^[（(]\s*[^()（）:：\r\n]{1,80}\s*[:：].*[）)]$",
+)
 
 
 def _sections(text: str) -> list[list[str]]:
@@ -151,6 +158,14 @@ def _numbers(text: str) -> tuple[float, ...]:
     for match in _NUMBER.findall(text.replace(",", "")):
         values.append(float(match))
     return tuple(values)
+
+
+def _normalized_modifier_line(line: str) -> str | None:
+    """詳細コピー固有の注釈を除き、検索対象となるMod本文だけを返す。"""
+    if _GLOSSARY_HELP_LINE.fullmatch(line):
+        return None
+    normalized = _UNSCALABLE_VALUE_SUFFIX.sub("", line).rstrip()
+    return normalized or None
 
 
 def _roll_bounds(text: str) -> tuple[float | None, float | None]:
@@ -280,6 +295,9 @@ def parse_item_text(text: str) -> ParsedItem:
                 (current_header_kind, current_header_tier, current_header_affix,
                  current_header_generation) = header_details
                 current_modifier_group += 1
+                continue
+            line = _normalized_modifier_line(line)
+            if line is None:
                 continue
             lowered = line.lower()
             if "(implicit)" in lowered or "（暗黙）" in line:

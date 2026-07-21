@@ -160,6 +160,58 @@ Item Level: 70
         self.assertEqual(len(item.modifiers), 1)
         self.assertEqual(item.modifiers[0].kind, "crafted")
 
+    def test_strips_unscalable_value_and_ignores_recently_glossary_in_japanese(self):
+        item = parse_item_text("""アイテムクラス: 胴体防具
+レアリティ: レア
+試作品
+ヴァールレガリア
+--------
+アイテムレベル: 85
+--------
+{ サフィックスモッド「永続の」 }
+直近ヒットを受けていれば毎秒エンデュランスチャージを1個獲得する — スケールできない値
+(Recently: 直近とは過去4秒間を指す)
+""")
+        self.assertEqual(len(item.modifiers), 1)
+        self.assertEqual(
+            item.modifiers[0].text,
+            "直近ヒットを受けていれば毎秒エンデュランスチャージを1個獲得する",
+        )
+        self.assertNotIn("スケールできない値", item.modifiers[0].text)
+
+    def test_strips_unscalable_value_and_ignores_recently_glossary_in_english(self):
+        item = parse_item_text("""Item Class: Body Armours
+Rarity: Rare
+Test Shell
+Vaal Regalia
+--------
+Item Level: 85
+--------
+{ Suffix Modifier }
+Gain 1 Endurance Charge every second if you've been Hit Recently — Unscalable Value
+(Recently: refers to the past 4 seconds)
+""")
+        self.assertEqual(len(item.modifiers), 1)
+        self.assertEqual(
+            item.modifiers[0].text,
+            "Gain 1 Endurance Charge every second if you've been Hit Recently",
+        )
+
+    def test_ignores_other_parenthesized_glossary_definitions(self):
+        item = parse_item_text("""Item Class: Rings
+Rarity: Rare
+Test Ring
+Ruby Ring
+--------
+Item Level: 85
+--------
++30% to Fire Resistance
+(Nearby: the distance at which this effect applies depends on the source)
+""")
+        self.assertEqual([modifier.text for modifier in item.modifiers], [
+            "+30% to Fire Resistance",
+        ])
+
     def test_japanese_modifier_headers_are_classified_and_not_counted(self):
         item = parse_item_text("""アイテムクラス: 両手剣
 レアリティ: レア
