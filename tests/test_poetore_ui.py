@@ -1,7 +1,8 @@
 from unittest.mock import Mock, patch
 
 from PySide6.QtCore import QPoint, QRect, Qt
-from PySide6.QtWidgets import QApplication, QLabel
+from PySide6.QtTest import QTest
+from PySide6.QtWidgets import QApplication, QLabel, QPushButton
 import pytest
 
 from src.poetore.ui import PoetoreWindow, show_poetore_window
@@ -75,6 +76,49 @@ def test_show_at_context_places_window_inward_from_cursor_side(qapp):
         ):
             window.show_at_context(context)
         assert window.pos() == QPoint(494, 50)
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize("key,modifiers", [
+    (Qt.Key_Escape, Qt.NoModifier),
+    (Qt.Key_W, Qt.AltModifier),
+])
+def test_poetore_close_shortcuts_apply_to_child_widgets(qapp, key, modifiers):
+    window = PoetoreWindow()
+    try:
+        window.show()
+        window.input_edit.setFocus()
+        QTest.keyClick(window.input_edit, key, modifiers)
+        qapp.processEvents()
+        assert not window.isVisible()
+    finally:
+        window.close()
+
+
+def test_poetore_closes_when_window_loses_focus(qapp):
+    window = PoetoreWindow()
+    outside = QPushButton()
+    try:
+        window.show()
+        window._close_when_focus_leaves_panel(window.input_edit, outside)
+        assert not window.isVisible()
+    finally:
+        window.close()
+        outside.close()
+
+
+def test_poetore_title_bar_keeps_close_button(qapp):
+    window = PoetoreWindow()
+    try:
+        close_buttons = [
+            button for button in window.findChildren(QPushButton)
+            if button.toolTip() == "閉じる" and button.text() == "×"
+        ]
+        assert len(close_buttons) == 1
+        window.show()
+        close_buttons[0].click()
+        assert not window.isVisible()
     finally:
         window.close()
 

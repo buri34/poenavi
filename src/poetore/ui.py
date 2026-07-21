@@ -3,7 +3,7 @@ from __future__ import annotations
 import threading
 from dataclasses import replace
 
-from PySide6.QtCore import QObject, QPoint, Qt, QTimer, Signal, QUrl
+from PySide6.QtCore import QEvent, QObject, QPoint, Qt, QTimer, Signal, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -82,6 +82,7 @@ class PoetoreWindow(QWidget):
         self.setWindowTitle("ぽえとれ（ローカル試作・価格検索版）")
         self.resize(860, 720)
         self._placement_context: PlacementContext | None = None
+        self._focus_signal_connected = False
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 4, 8, 8)
         layout.addWidget(_PoetoreTitleBar(self))
@@ -232,6 +233,41 @@ class PoetoreWindow(QWidget):
         self._state_item_key = None
         self._unique_selector_item_key = None
         self._last_trade_url = ""
+        self.installEventFilter(self)
+        for child in self.findChildren(QWidget):
+            child.installEventFilter(self)
+
+    def eventFilter(self, watched, event):
+        if event.type() == QEvent.KeyPress and self.isVisible():
+            is_escape = event.key() == Qt.Key_Escape
+            is_alt_w = event.key() == Qt.Key_W and event.modifiers() == Qt.AltModifier
+            if is_escape or is_alt_w:
+                event.accept()
+                self.close()
+                return True
+        return super().eventFilter(watched, event)
+
+    def _close_when_focus_leaves_panel(self, old, new):
+        old_belongs = old is self or (
+            isinstance(old, QWidget) and self.isAncestorOf(old)
+        )
+        new_belongs = new is self or (
+            isinstance(new, QWidget) and self.isAncestorOf(new)
+        )
+        if self.isVisible() and old_belongs and not new_belongs:
+            self.close()
+
+    def showEvent(self, event):
+        if not self._focus_signal_connected:
+            QApplication.instance().focusChanged.connect(self._close_when_focus_leaves_panel)
+            self._focus_signal_connected = True
+        super().showEvent(event)
+
+    def closeEvent(self, event):
+        if self._focus_signal_connected:
+            QApplication.instance().focusChanged.disconnect(self._close_when_focus_leaves_panel)
+            self._focus_signal_connected = False
+        super().closeEvent(event)
 
     def paste_from_clipboard(self):
         self._trade_base_type = None
@@ -581,16 +617,19 @@ class PoetoreWindow(QWidget):
             row.setFlags(row.flags() | Qt.ItemIsUserCheckable)
             self.mod_filter_tree.addTopLevelItem(row)
             editor = QLineEdit(value)
+            editor.installEventFilter(self)
             editor.setPlaceholderText("最小")
             editor.setFixedWidth(80)
             editor.setEnabled(stat_filter.option_value is None)
             self.mod_filter_tree.setItemWidget(row, 3, editor)
             max_editor = QLineEdit(maximum)
+            max_editor.installEventFilter(self)
             max_editor.setPlaceholderText("最大")
             max_editor.setFixedWidth(80)
             max_editor.setEnabled(stat_filter.option_value is None)
             self.mod_filter_tree.setItemWidget(row, 4, max_editor)
             logic = QComboBox()
+            logic.installEventFilter(self)
             for label, value_name in (("AND", "and"), ("NOT", "not"), ("COUNT", "count")):
                 logic.addItem(label, value_name)
             logic.setCurrentIndex(max(0, logic.findData(stat_filter.group_type)))
