@@ -1210,6 +1210,30 @@ def test_gem_filters_use_awakened_max_level_quality_and_corruption_rules():
     assert all(not row.enabled for row in resolve_trade_stat_filters(low, trade_base_type="Arc"))
 
 
+def test_gem_filter_uses_gem_level_instead_of_requirement_level():
+    item = parse_item_text("""アイテムクラス: サポートジェム
+レアリティ: ジェム
+範囲ダメージ集中サポート
+--------
+レベル: 3
+--------
+装備条件:
+レベル: 26
+知性: 45
+--------
+次のレベル:
+レベル: 29
+知性: 49
+""")
+    level_filter = next(
+        row for row in resolve_trade_stat_filters(
+            item, trade_base_type="Concentrated Effect Support",
+        ) if row.stat_id == "property.gem_level"
+    )
+    assert level_filter.read_value == 3
+    assert level_filter.min_value == 3
+
+
 def test_transfigured_vaal_awakened_and_exceptional_gem_identity():
     transfigured = _gem_item("サージングのアーク", 20, 16)
     filters = resolve_trade_stat_filters(transfigured, trade_base_type="Arc of Surging")

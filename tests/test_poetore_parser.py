@@ -249,6 +249,28 @@ Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to r
             ["パッシブツリーで割り当てられたジュエルソケットにはめる。右クリックしてソケットから取り外すことができる。"],
         )
 
+    def test_gem_level_is_not_overwritten_by_requirements_or_next_level(self):
+        item = parse_item_text("""アイテムクラス: サポートジェム
+レアリティ: ジェム
+範囲ダメージ集中サポート
+--------
+レベル: 3
+コスト・リザーブ倍率: 140%
+--------
+装備条件:
+レベル: 26
+知性: 45
+--------
+経験値: 154553/154553
+--------
+次のレベル:
+レベル: 29
+知性: 49
+""")
+        self.assertEqual(item.category, "gem")
+        self.assertEqual(item.properties["ジェムレベル"], "3")
+        self.assertEqual(item.properties["レベル"], "29")
+
     def test_japanese_modifier_headers_are_classified_and_not_counted(self):
         item = parse_item_text("""アイテムクラス: 両手剣
 レアリティ: レア

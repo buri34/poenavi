@@ -25,7 +25,7 @@ _PROPERTY_LABELS = {
     "秒間アタック回数", "Attacks per Second", "装備条件", "Requirements",
     "ソケット", "Sockets", "スタックサイズ", "Stack Size", "マップティア", "Map Tier",
     "メモリーの糸", "記憶の糸", "メモリーストランド", "Memory Strands",
-    "ジェムレベル", "レベル", "Level", "経験値", "Experience", "筋力", "Strength",
+    "ジェムレベル", "Gem Level", "レベル", "Level", "経験値", "Experience", "筋力", "Strength",
     "器用さ", "Dexterity", "知性", "Intelligence", "Spirit", "スピリット",
     "ブロック率", "Chance to Block", "移動速度", "Movement Speed",
     "ルーンソケット", "Rune Sockets",
@@ -299,6 +299,11 @@ def parse_item_text(text: str) -> ParsedItem:
                     item_level = int(level_match.group()) if level_match else None
                     reached_item_level = True
                     continue
+                if (item_category == "gem"
+                        and label in {"ジェムレベル", "Gem Level", "レベル", "Level"}):
+                    # Gemコピーには本体Levelの後に、装備条件と次Level条件の
+                    # `Level`が再登場する。最初の値だけを検索用に固定する。
+                    properties.setdefault("ジェムレベル", value)
                 if label in _PROPERTY_LABELS or metadata_section:
                     properties[label] = value
                     if (label in {"エリアレベル", "Area Level"}
