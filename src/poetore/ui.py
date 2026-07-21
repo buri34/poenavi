@@ -32,6 +32,64 @@ class _TradeSignals(QObject):
     leagues_ready = Signal(object)
 
 
+class _BinaryToggle(QWidget):
+    """2つの状態をプルダウンなしで切り替えるセグメント型トグル。"""
+
+    currentIndexChanged = Signal(int)
+
+    def __init__(self, first: tuple[str, object], second: tuple[str, object], parent=None):
+        super().__init__(parent)
+        self._options = (first, second)
+        self._current_index = 0
+        self._second_available = True
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self._buttons = []
+        for index, (label, _) in enumerate(self._options):
+            button = QPushButton(label)
+            button.setObjectName("binaryToggle")
+            button.setCheckable(True)
+            button.clicked.connect(lambda checked=False, value=index: self.setCurrentIndex(value))
+            layout.addWidget(button)
+            self._buttons.append(button)
+        self._sync_buttons()
+
+    def _sync_buttons(self):
+        for index, button in enumerate(self._buttons):
+            button.setChecked(index == self._current_index)
+
+    def setCurrentIndex(self, index: int):
+        index = 1 if index == 1 and self._second_available else 0
+        if index == self._current_index:
+            self._sync_buttons()
+            return
+        self._current_index = index
+        self._sync_buttons()
+        self.currentIndexChanged.emit(index)
+
+    def currentData(self):
+        return self._options[self._current_index][1]
+
+    def currentText(self) -> str:
+        return self._options[self._current_index][0]
+
+    def itemData(self, index: int):
+        return self._options[index][1]
+
+    def itemText(self, index: int) -> str:
+        return self._options[index][0]
+
+    def count(self) -> int:
+        return 2 if self._second_available else 1
+
+    def setSecondAvailable(self, available: bool):
+        self._second_available = available
+        self._buttons[1].setVisible(available)
+        if not available and self._current_index == 1:
+            self.setCurrentIndex(0)
+
+
 class _PoetoreTitleBar(QWidget):
     """Small draggable title bar for the frameless price-check panel."""
 
@@ -128,8 +186,9 @@ class PoetoreWindow(QWidget):
         self.trade_league_combo.currentIndexChanged.connect(self._persist_trade_league)
         self.trade_league_combo.lineEdit().editingFinished.connect(self._persist_trade_league)
         top_options.addWidget(self.trade_league_combo, stretch=2)
-        self.trade_preset_combo = QComboBox()
-        self.trade_preset_combo.addItem("完成品", PRESET_FINISHED)
+        self.trade_preset_combo = _BinaryToggle(
+            ("完成品", PRESET_FINISHED), ("クラフトベース", PRESET_BASE),
+        )
         self.trade_preset_combo.currentIndexChanged.connect(self._trade_preset_changed)
         top_options.addWidget(self.trade_preset_combo, stretch=1)
         panel_layout.addLayout(top_options)
@@ -176,13 +235,13 @@ class PoetoreWindow(QWidget):
 
         item_state_options = QHBoxLayout()
         item_state_options.setSpacing(6)
-        self.corrupted_combo = QComboBox()
-        self.corrupted_combo.addItem("未コラプトのみ", False)
-        self.corrupted_combo.addItem("コラプト品含む", True)
+        self.corrupted_combo = _BinaryToggle(
+            ("未コラプト", False), ("コラプト品含む", True),
+        )
         item_state_options.addWidget(self.corrupted_combo)
-        self.split_combo = QComboBox()
-        self.split_combo.addItem("非スプリットのみ", False)
-        self.split_combo.addItem("スプリット品含む", True)
+        self.split_combo = _BinaryToggle(
+            ("非スプリット", False), ("スプリット品含む", True),
+        )
         item_state_options.addWidget(self.split_combo)
         item_state_options.addStretch()
         panel_layout.addLayout(item_state_options)
@@ -322,6 +381,18 @@ class PoetoreWindow(QWidget):
             QPushButton:hover { background: rgba(55, 72, 46, 230); border-color: #d8ffbd; }
             QPushButton:pressed { background: #111; }
             QPushButton:disabled { color: #52604c; border-color: #394136; }
+            QPushButton#binaryToggle {
+                border-radius: 0;
+                padding: 4px 7px;
+            }
+            QPushButton#binaryToggle:first-child { border-radius: 3px 0 0 3px; }
+            QPushButton#binaryToggle:last-child { border-radius: 0 3px 3px 0; }
+            QPushButton#binaryToggle:checked {
+                background: rgba(93, 145, 66, 225);
+                color: #f4ffed;
+                border-color: #d8ffbd;
+                font-weight: 700;
+            }
             QPushButton#primaryButton {
                 background: rgba(93, 145, 66, 225);
                 color: #f4ffed;
@@ -690,10 +761,7 @@ class PoetoreWindow(QWidget):
         self._preset_item_key = key
         presets = available_trade_presets(item)
         self.trade_preset_combo.blockSignals(True)
-        self.trade_preset_combo.clear()
-        self.trade_preset_combo.addItem("完成品", PRESET_FINISHED)
-        if PRESET_BASE in presets:
-            self.trade_preset_combo.addItem("クラフトベース", PRESET_BASE)
+        self.trade_preset_combo.setSecondAvailable(PRESET_BASE in presets)
         self.trade_preset_combo.setCurrentIndex(0)
         self.trade_preset_combo.setEnabled(len(presets) > 1)
         self.trade_preset_combo.setToolTip(

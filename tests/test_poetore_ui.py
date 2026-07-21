@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 from PySide6.QtCore import QPoint, QRect, Qt
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QLabel, QPushButton
+from PySide6.QtWidgets import QApplication, QComboBox, QLabel, QPushButton
 import pytest
 
 from src.poetore.ui import PoetoreWindow, show_poetore_window
@@ -113,11 +113,8 @@ def test_poetore_closes_when_window_loses_focus(qapp):
 
 @pytest.mark.parametrize("combo_name", [
     "trade_league_combo",
-    "trade_preset_combo",
     "trade_status_combo",
     "trade_currency_combo",
-    "corrupted_combo",
-    "split_combo",
     "listed_within_combo",
 ])
 def test_poetore_combo_popups_are_treated_as_inside_panel(qapp, combo_name):
@@ -379,6 +376,23 @@ Item Level: 70
         window.close()
 
 
+@pytest.mark.parametrize("toggle_name", [
+    "trade_preset_combo", "corrupted_combo", "split_combo",
+])
+def test_binary_filters_are_two_segment_toggles_without_popups(qapp, toggle_name):
+    window = PoetoreWindow()
+    try:
+        toggle = getattr(window, toggle_name)
+        assert not isinstance(toggle, QComboBox)
+        assert toggle.currentData() == toggle.itemData(0)
+        toggle._buttons[1].click()
+        assert toggle.currentData() == toggle.itemData(1)
+        assert toggle._buttons[1].isChecked()
+        assert not toggle._buttons[0].isChecked()
+    finally:
+        window.close()
+
+
 def test_trade_preset_selector_only_offers_base_for_crafting_candidate(qapp):
     window = PoetoreWindow()
     try:
@@ -396,6 +410,7 @@ Item Level: 85
         assert window.trade_preset_combo.itemData(0) == "finished"
         assert window.trade_preset_combo.itemData(1) == "base"
         assert window.trade_preset_combo.isEnabled()
+        assert not isinstance(window.trade_preset_combo, QComboBox)
 
         window.trade_preset_combo.setCurrentIndex(1)
         assert "クラフトベース" in window.price_status.text()
@@ -455,12 +470,14 @@ Item Level: 94
 Split
 """)
         window._configure_item_state_filters(item)
-        assert window.corrupted_combo.itemText(0) == "未コラプトのみ"
+        assert window.corrupted_combo.itemText(0) == "未コラプト"
         assert window.corrupted_combo.itemText(1) == "コラプト品含む"
         assert window.corrupted_combo.currentData() is False
-        assert window.split_combo.itemText(0) == "非スプリットのみ"
+        assert window.split_combo.itemText(0) == "非スプリット"
         assert window.split_combo.itemText(1) == "スプリット品含む"
         assert window.split_combo.currentData() is True
+        assert not isinstance(window.corrupted_combo, QComboBox)
+        assert not isinstance(window.split_combo, QComboBox)
 
         window.corrupted_combo.setCurrentIndex(1)
         window.split_combo.setCurrentIndex(0)
