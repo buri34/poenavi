@@ -9,6 +9,7 @@ from src.poetore.ui import PoetoreWindow, show_poetore_window
 from src.poetore.window_position import PlacementContext
 from src.poetore.trade import PriceListing, PriceResult, TradeLeague, TradeStatFilter
 from src.poetore.parser import parse_item_text
+from src.poetore.models import ParsedItem
 from src.ui.settings_dialog import SettingsDialog
 
 
@@ -419,6 +420,40 @@ Item Level: 85
         window._configure_trade_presets(low_level)
         assert window.trade_preset_combo.count() == 1
         assert not window.trade_preset_combo.isEnabled()
+    finally:
+        window.close()
+
+
+def test_dedicated_exact_preset_is_labeled_as_dedicated_search_and_restores_finished(qapp):
+    window = PoetoreWindow()
+    try:
+        exact_item = ParsedItem(
+            item_class="Maps", rarity="Rare", name="Test Map",
+            base_type="Test Map", category="map", raw_text="exact-map",
+        )
+        window._parsed_item = exact_item
+        window._configure_trade_presets(exact_item)
+        assert window.trade_preset_combo.count() == 1
+        assert window.trade_preset_combo.currentData() == "finished"
+        assert window.trade_preset_combo.currentText() == "専用検索"
+        assert window.trade_preset_combo._buttons[0].text() == "専用検索"
+        window._trade_preset_changed()
+        assert "専用条件" in window.price_status.text()
+
+        craftable_item = parse_item_text("""Item Class: Rings
+Rarity: Rare
+Test Ring
+Ruby Ring
+--------
+Item Level: 85
+--------
++70 to maximum Life
+""")
+        window._parsed_item = craftable_item
+        window._configure_trade_presets(craftable_item)
+        assert window.trade_preset_combo.currentText() == "完成品"
+        assert window.trade_preset_combo.itemText(1) == "クラフトベース"
+        assert window.trade_preset_combo.count() == 2
     finally:
         window.close()
 

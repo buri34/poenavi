@@ -20,7 +20,7 @@ from .trade import (
     PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
     available_pc_leagues, available_trade_presets, default_pc_league, default_trade_currency,
     resolve_trade_stat_filters, search_prices, unique_candidates,
-    unique_variants, unresolved_modifier_warnings,
+    unique_variants, unresolved_modifier_warnings, uses_dedicated_exact_preset,
 )
 
 
@@ -79,6 +79,14 @@ class _BinaryToggle(QWidget):
 
     def itemText(self, index: int) -> str:
         return self._options[index][0]
+
+    def setItemText(self, index: int, text: str):
+        if index not in (0, 1):
+            raise IndexError(index)
+        options = list(self._options)
+        options[index] = (str(text), options[index][1])
+        self._options = tuple(options)
+        self._buttons[index].setText(str(text))
 
     def count(self) -> int:
         return 2 if self._second_available else 1
@@ -772,13 +780,20 @@ class PoetoreWindow(QWidget):
             return
         self._preset_item_key = key
         presets = available_trade_presets(item)
+        dedicated_exact = uses_dedicated_exact_preset(item)
         self.trade_preset_combo.blockSignals(True)
+        self.trade_preset_combo.setItemText(0, "専用検索" if dedicated_exact else "完成品")
         self.trade_preset_combo.setSecondAvailable(PRESET_BASE in presets)
         self.trade_preset_combo.setCurrentIndex(0)
         self.trade_preset_combo.setEnabled(len(presets) > 1)
-        self.trade_preset_combo.setToolTip(
-            "未完成でクラフト価値がある装備は、完成品とクラフトベースを切り替えて検索できます。"
-        )
+        if dedicated_exact:
+            self.trade_preset_combo.setToolTip(
+                "このアイテム種別に必要な条件だけを使う専用検索です。"
+            )
+        else:
+            self.trade_preset_combo.setToolTip(
+                "未完成でクラフト価値がある装備は、完成品とクラフトベースを切り替えて検索できます。"
+            )
         self.trade_preset_combo.blockSignals(False)
         self._configure_magic_rarity_toggle(item)
         self.mod_filter_tree.clear()
@@ -838,6 +853,10 @@ class PoetoreWindow(QWidget):
         if preset == PRESET_BASE:
             self.price_status.setText(
                 "クラフトベースとして、ベースタイプとアイテムレベルを中心に検索します。"
+            )
+        elif item is not None and uses_dedicated_exact_preset(item):
+            self.price_status.setText(
+                "アイテム種別に合わせた専用条件で検索します。"
             )
         else:
             self.price_status.setText("完成品として、実際の性能を中心に検索します。")
