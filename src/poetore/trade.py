@@ -1641,6 +1641,28 @@ def _normalize_trade_base_type(value: str) -> str:
     return normalized.strip()
 
 
+def _contains_japanese_text(value: object) -> bool:
+    return bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", str(value)))
+
+
+def _require_english_search_identity(payload: dict) -> None:
+    """通常検索へ表示用の日本語名が混入するのをAPI送信前に防ぐ。"""
+    query = payload.get("query") or {}
+    query_type = query.get("type", "")
+    query_type_text = (
+        query_type.get("option", "") if isinstance(query_type, dict) else query_type
+    )
+    query_name = query.get("name", "")
+    query_name_text = (
+        query_name.get("option", "") if isinstance(query_name, dict) else query_name
+    )
+    if _contains_japanese_text(query_type_text) or _contains_japanese_text(query_name_text):
+        raise TradeApiError(
+            "英語のアイテム名またはベースタイプを取得できませんでした。"
+            "アイテムへカーソルを合わせ、Alt+Dでもう一度読み取ってください。"
+        )
+
+
 def search_prices(
     item: ParsedItem, trade_base_type: str | None = None, league: str | None = None,
     stat_filters: tuple[TradeStatFilter, ...] = (),
@@ -1658,10 +1680,8 @@ def search_prices(
         item, trade_base_type, stat_filters, trade_status, trade_name, preset,
         trade_currency, include_corrupted, include_split, trade_discriminator, listed_within,
     )
-    query_type = payload["query"].get("type", "")
-    query_type_text = str(query_type.get("option", "")) if isinstance(query_type, dict) else str(query_type)
-    api_root = JP_API_ROOT if re.search(r"[\u3040-\u30ff\u3400-\u9fff]", query_type_text) else API_ROOT
-    search_url = f"{api_root}/search/{quote(league, safe='')}"
+    _require_english_search_identity(payload)
+    search_url = f"{API_ROOT}/search/{quote(league, safe='')}"
     _trade_log(
         f"search: league={league!r} preset={preset!r} trade_status={trade_status!r} "
         f"api_status={TRADE_STATUS_OPTIONS[trade_status]!r} "
@@ -1683,7 +1703,7 @@ def search_prices(
     fetch_cached = False
     if ids:
         fetch_ids = ",".join(ids[:10])
-        fetch_url = f"{api_root}/fetch/{fetch_ids}?query={quote(query_id)}"
+        fetch_url = f"{API_ROOT}/fetch/{fetch_ids}?query={quote(query_id)}"
         _trade_log(f"request: GET {fetch_url} (first {min(len(ids), 10)} candidates)")
         fetched, _, fetch_cached = _cached_request_json(fetch_url)
         for row in fetched.get("result", ()):
@@ -1707,7 +1727,7 @@ def search_prices(
     # 日本語Trade画面自身に検索状態を読み込ませる。
     web_payload = json.loads(json.dumps(payload))
     web_query = web_payload["query"]
-    localized_type = item.base_type.strip()
+    localized_type = _normalize_trade_base_type(item.base_type)
     if localized_type:
         if isinstance(web_query.get("type"), dict):
             web_query["type"]["option"] = localized_type

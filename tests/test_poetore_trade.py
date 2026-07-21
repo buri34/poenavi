@@ -9,7 +9,7 @@ from urllib.parse import parse_qs, urlsplit
 from src.poetore.parser import parse_item_text
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.trade import (
-    PRESET_BASE, PRESET_FINISHED, PriceListing, PriceResult, TradeStatFilter,
+    PRESET_BASE, PRESET_FINISHED, PriceListing, PriceResult, TradeApiError, TradeStatFilter,
     active_pc_league, available_pc_leagues, available_trade_presets, build_search_query,
     default_pc_league, elemental_dps,
     default_trade_currency, physical_dps, physical_dps_at_20_quality,
@@ -83,20 +83,17 @@ def test_weapon_search_strips_superior_display_prefix_from_base_type():
     assert build_search_query(item, "上質な エゾマイトの刃")["query"]["type"] == "エゾマイトの刃"
 
 
-def test_search_uses_japanese_api_for_japanese_base_type():
+def test_normal_search_rejects_japanese_identity_before_api_request():
     item = parse_item_text(ITEM)
     with patch("src.poetore.trade._cached_request_json") as request_json:
-        request_json.return_value = ({"id": "query-ja", "result": []}, {}, False)
-        result = search_prices(
-            item, "上質な エゾマイトの刃", league="Standard",
-            stat_filters=(TradeStatFilter(
-                "property.physical_dps", "物理DPS", 139.9, "property", True,
-            ),),
-        )
-    assert result.query_id == "query-ja"
-    assert request_json.call_args.args[0].startswith(
-        "https://jp.pathofexile.com/api/trade/search/Standard"
-    )
+        with pytest.raises(TradeApiError, match="英語のアイテム名またはベースタイプ"):
+            search_prices(
+                item, "上質な エゾマイトの刃", league="Standard",
+                stat_filters=(TradeStatFilter(
+                    "property.physical_dps", "物理DPS", 139.9, "property", True,
+                ),),
+            )
+    request_json.assert_not_called()
 
 
 def test_normal_equipment_defaults_to_any_currency():
@@ -1062,7 +1059,7 @@ def test_search_prices_logs_request_payload_and_response_summary(capsys):
 def test_search_result_exposes_japanese_trade_url_and_reuses_cache():
     _trade_response_cache.clear()
     response = ({"id": "qid", "result": [], "total": 0}, {})
-    item = replace(parse_item_text(ITEM), name="破滅の切断", base_type="略奪者の剣")
+    item = replace(parse_item_text(ITEM), name="破滅の切断", base_type="上質な 略奪者の剣")
     with patch("src.poetore.trade._request_json", return_value=response) as request:
         first = search_prices(item, "Reaver Sword", "Standard")
         second = search_prices(item, "Reaver Sword", "Standard")
