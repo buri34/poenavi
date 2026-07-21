@@ -20,6 +20,7 @@ from .metadata import (
 
 API_ROOT = "https://www.pathofexile.com/api/trade"
 JP_API_ROOT = "https://jp.pathofexile.com/api/trade"
+LEAGUES_API_URL = "https://www.pathofexile.com/api/leagues?type=main&realm=pc"
 USER_AGENT = "PoENavi/poetore-local-spike (github.com/buri34/poenavi)"
 DEFAULT_SEARCH_RANGE = 0.10
 TRADE_STATUS_OPTIONS = {
@@ -219,6 +220,12 @@ class TradeStatFilter:
 
 
 @dataclass(frozen=True)
+class TradeLeague:
+    id: str
+    hardcore: bool = False
+
+
+@dataclass(frozen=True)
 class PriceResult:
     league: str
     query_id: str
@@ -320,6 +327,34 @@ def active_pc_league() -> str:
             _trade_log(f"active PC league: {name}")
             return name
     _trade_log("active PC league: Standard (fallback)")
+    return "Standard"
+
+
+def available_pc_leagues() -> tuple[TradeLeague, ...]:
+    """Awakened相当の、取引可能なPCリーグ一覧。"""
+    _trade_log(f"request: GET {LEAGUES_API_URL}")
+    data, _ = _request_json(LEAGUES_API_URL)
+    if not isinstance(data, list):
+        raise TradeApiError("リーグ一覧の形式を認識できませんでした。")
+
+    leagues = []
+    for row in data:
+        league_id = str(row.get("id", "")).strip()
+        rule_ids = {str(rule.get("id", "")) for rule in row.get("rules", ())}
+        if not league_id or str(row.get("realm", "pc")) != "pc":
+            continue
+        if league_id == "Hardcore" or "NoParties" in rule_ids:
+            continue
+        if "HardMode" in rule_ids and not row.get("event"):
+            continue
+        leagues.append(TradeLeague(league_id, "Hardcore" in rule_ids))
+    return tuple(leagues)
+
+
+def default_pc_league(leagues: tuple[TradeLeague, ...]) -> str:
+    for league in leagues:
+        if league.id != "Standard" and not league.hardcore:
+            return league.id
     return "Standard"
 
 

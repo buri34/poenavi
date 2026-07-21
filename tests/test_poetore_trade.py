@@ -9,7 +9,8 @@ from src.poetore.parser import parse_item_text
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.trade import (
     PRESET_BASE, PRESET_FINISHED, PriceListing, PriceResult, TradeStatFilter,
-    active_pc_league, available_trade_presets, build_search_query, elemental_dps,
+    active_pc_league, available_pc_leagues, available_trade_presets, build_search_query,
+    default_pc_league, elemental_dps,
     default_trade_currency, physical_dps, physical_dps_at_20_quality,
     resolve_trade_stat_filters, search_prices, unique_candidates, unique_variants,
 )
@@ -960,6 +961,23 @@ def test_active_pc_league_skips_permanent_and_hard_modes():
     ]}
     with patch("src.poetore.trade._request_json", return_value=(payload, {})):
         assert active_pc_league() == "Mirage"
+
+
+def test_available_pc_leagues_matches_awakened_filters():
+    payload = [
+        {"id": "Standard", "realm": "pc", "rules": []},
+        {"id": "Hardcore", "realm": "pc", "rules": [{"id": "Hardcore"}]},
+        {"id": "Mirage", "realm": "pc", "rules": []},
+        {"id": "Hardcore Mirage", "realm": "pc", "rules": [{"id": "Hardcore"}]},
+        {"id": "SSF Mirage", "realm": "pc", "rules": [{"id": "NoParties"}]},
+        {"id": "Ruthless", "realm": "pc", "rules": [{"id": "HardMode"}]},
+    ]
+    with patch("src.poetore.trade._request_json", return_value=(payload, {})):
+        leagues = available_pc_leagues()
+    assert [(league.id, league.hardcore) for league in leagues] == [
+        ("Standard", False), ("Mirage", False), ("Hardcore Mirage", True),
+    ]
+    assert default_pc_league(leagues) == "Mirage"
 
 
 def test_price_result_calculates_median_per_currency():

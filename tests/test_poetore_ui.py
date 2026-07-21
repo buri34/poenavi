@@ -7,7 +7,7 @@ import pytest
 
 from src.poetore.ui import PoetoreWindow, show_poetore_window
 from src.poetore.window_position import PlacementContext
-from src.poetore.trade import PriceListing, PriceResult, TradeStatFilter
+from src.poetore.trade import PriceListing, PriceResult, TradeLeague, TradeStatFilter
 from src.poetore.parser import parse_item_text
 from src.ui.settings_dialog import SettingsDialog
 
@@ -35,6 +35,8 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
         assert window.trade_currency_combo.currentData() == "any"
         assert window.trade_currency_combo.count() == 4
         assert not hasattr(window, "disclaimer_label")
+        assert window.trade_league_combo.currentData() == "auto"
+        assert window._selected_trade_league() is None
     finally:
         window.close()
 
@@ -121,6 +123,49 @@ def test_poetore_title_bar_keeps_close_button(qapp):
         assert not window.isVisible()
     finally:
         window.close()
+
+
+def test_poetore_league_choices_include_sc_hc_and_persist(qapp):
+    config = {"poetore": {"league": "Hardcore Mirage"}}
+    saved = Mock()
+    window = PoetoreWindow(app_config=config, save_config=saved)
+    try:
+        window._show_trade_leagues((
+            TradeLeague("Standard"),
+            TradeLeague("Mirage"),
+            TradeLeague("Hardcore Mirage", hardcore=True),
+        ))
+        assert window.trade_league_combo.itemText(0) == "自動（現行SC: Mirage）"
+        assert window.trade_league_combo.currentData() == "Hardcore Mirage"
+        assert "（HC）" in window.trade_league_combo.currentText()
+
+        window.trade_league_combo.setCurrentIndex(0)
+        assert config["poetore"]["league"] == "auto"
+        assert window._selected_trade_league() == "Mirage"
+        assert saved.called
+
+        window.trade_league_combo.setEditText("My League (PL99999)")
+        window._persist_trade_league()
+        assert config["poetore"]["league"] == "My League (PL99999)"
+        assert window._selected_trade_league() == "My League (PL99999)"
+    finally:
+        window.close()
+
+
+def test_poetore_private_league_is_kept_and_ended_public_league_falls_back(qapp):
+    private = PoetoreWindow(app_config={"poetore": {"league": "My League (PL12345)"}})
+    ended = PoetoreWindow(app_config={"poetore": {"league": "Old Challenge"}})
+    leagues = (TradeLeague("Standard"), TradeLeague("Mirage"))
+    try:
+        private._show_trade_leagues(leagues)
+        assert private._selected_trade_league() == "My League (PL12345)"
+
+        ended._show_trade_leagues(leagues)
+        assert ended.trade_league_combo.currentData() == "auto"
+        assert ended._selected_trade_league() == "Mirage"
+    finally:
+        private.close()
+        ended.close()
 
 
 def test_price_result_is_rendered_in_japanese(qapp):

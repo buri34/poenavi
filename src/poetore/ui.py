@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+import re
 from dataclasses import replace
 
 from PySide6.QtCore import QEvent, QObject, QPoint, Qt, QTimer, Signal, QUrl
@@ -17,8 +18,8 @@ from .merge import merge_normal_and_detailed_copy
 from .window_position import PlacementContext, capture_placement_context, position_for_context
 from .trade import (
     PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
-    available_trade_presets, default_trade_currency, resolve_trade_stat_filters, search_prices,
-    unique_candidates,
+    available_pc_leagues, available_trade_presets, default_pc_league, default_trade_currency,
+    resolve_trade_stat_filters, search_prices, unique_candidates,
     unique_variants, unresolved_modifier_warnings,
 )
 
@@ -28,6 +29,7 @@ class _TradeSignals(QObject):
     failed = Signal(str)
     unique_candidates_ready = Signal(object)
     unique_variants_ready = Signal(object)
+    leagues_ready = Signal(object)
 
 
 class _PoetoreTitleBar(QWidget):
@@ -71,8 +73,12 @@ class _PoetoreTitleBar(QWidget):
 class PoetoreWindow(QWidget):
     """貼り付け解析だけを行う、Trade API未接続のローカル試作画面。"""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, app_config=None, save_config=None):
         super().__init__(parent)
+        self._app_config = app_config if isinstance(app_config, dict) else {}
+        self._save_app_config = save_config
+        self._league_refresh_started = False
+        self._auto_league: str | None = None
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         # PoENavi本体には入力透過（クリックスルー）機能があるため、
         # ぽえとれ側では常にマウス入力を受け取れる状態を明示する。
@@ -106,6 +112,26 @@ class PoetoreWindow(QWidget):
         buttons.addWidget(self.trade_url_button)
         buttons.addStretch()
         layout.addLayout(buttons)
+
+        league_options = QHBoxLayout()
+        league_options.addWidget(QLabel("リーグ:"))
+        self.trade_league_combo = QComboBox()
+        self.trade_league_combo.setEditable(True)
+        self.trade_league_combo.setMinimumContentsLength(16)
+        self.trade_league_combo.setToolTip("一覧から選択、またはPrivate League IDを直接入力")
+        self.trade_league_combo.addItem("自動（現行SCを取得中）", "auto")
+        saved_league = str(self._app_config.get("poetore", {}).get("league", "auto"))
+        if saved_league != "auto":
+            self.trade_league_combo.addItem(saved_league, saved_league)
+            self.trade_league_combo.setCurrentIndex(1)
+        self.trade_league_combo.currentIndexChanged.connect(self._persist_trade_league)
+        self.trade_league_combo.lineEdit().editingFinished.connect(self._persist_trade_league)
+        league_options.addWidget(self.trade_league_combo)
+        league_hint = QLabel("Private LeagueはIDを直接入力")
+        league_hint.setStyleSheet("color: #888;")
+        league_options.addWidget(league_hint)
+        league_options.addStretch()
+        layout.addLayout(league_options)
 
         search_options = QHBoxLayout()
         search_options.addWidget(QLabel("検索用途:"))
@@ -226,6 +252,7 @@ class PoetoreWindow(QWidget):
         self._trade_signals.failed.connect(self._show_price_error)
         self._trade_signals.unique_candidates_ready.connect(self._show_unique_candidates)
         self._trade_signals.unique_variants_ready.connect(self._show_unique_variants)
+        self._trade_signals.leagues_ready.connect(self._show_trade_leagues)
         self._trade_base_type = None
         self._trade_item_name = None
         self._preset_item_key = None
@@ -256,6 +283,65 @@ class PoetoreWindow(QWidget):
         )
         if self.isVisible() and old_belongs and not new_belongs:
             self.close()
+
+    def refresh_trade_leagues(self):
+        if self._league_refresh_started:
+            return
+        self._league_refresh_started = True
+
+        def run():
+            try:
+                leagues = available_pc_leagues()
+            except TradeApiError:
+                leagues = ()
+            self._trade_signals.leagues_ready.emit(leagues)
+
+        threading.Thread(target=run, daemon=True).start()
+
+    def _show_trade_leagues(self, leagues):
+        saved = str(self._app_config.get("poetore", {}).get("league", "auto"))
+        self._auto_league = default_pc_league(tuple(leagues))
+        listed_ids = {league.id for league in leagues}
+        is_private = bool(re.search(r"\(PL\d+\)$", saved))
+        if saved != "auto" and saved not in listed_ids and not is_private:
+            saved = "auto"
+
+        self.trade_league_combo.blockSignals(True)
+        self.trade_league_combo.clear()
+        self.trade_league_combo.addItem(f"自動（現行SC: {self._auto_league}）", "auto")
+        for league in leagues:
+            label = f"{league.id}（HC）" if league.hardcore else league.id
+            self.trade_league_combo.addItem(label, league.id)
+        if is_private and self.trade_league_combo.findData(saved) < 0:
+            self.trade_league_combo.addItem(saved, saved)
+        index = self.trade_league_combo.findData(saved)
+        self.trade_league_combo.setCurrentIndex(max(0, index))
+        self.trade_league_combo.blockSignals(False)
+        if saved == "auto":
+            self._persist_trade_league()
+
+    def _selected_trade_league(self) -> str | None:
+        selected = self._league_selection_value()
+        if selected == "auto":
+            return self._auto_league
+        return selected or self._auto_league
+
+    def _persist_trade_league(self):
+        value = self._league_selection_value()
+        if not value:
+            value = "auto"
+        self._app_config.setdefault("poetore", {})["league"] = value
+        if self._save_app_config is not None:
+            self._save_app_config(self._app_config)
+
+    def _league_selection_value(self) -> str:
+        index = self.trade_league_combo.currentIndex()
+        text = self.trade_league_combo.currentText().strip()
+        if index >= 0 and text == self.trade_league_combo.itemText(index):
+            selected = self.trade_league_combo.itemData(index)
+            if selected:
+                return str(selected)
+        return text
 
     def showEvent(self, event):
         if not self._focus_signal_connected:
@@ -387,8 +473,10 @@ class PoetoreWindow(QWidget):
         preset_label = self.trade_preset_combo.currentText()
         include_corrupted = bool(self.corrupted_combo.currentData())
         include_split = bool(self.split_combo.currentData())
+        league = self._selected_trade_league()
+        league_label = league or "現行SC（自動）"
         self.price_status.setText(
-            f"現在のPCリーグで「{preset_label} / {trade_status_label} / "
+            f"{league_label}で「{preset_label} / {trade_status_label} / "
             f"{trade_currency_label} / {listed_within_label}」を検索中…"
         )
         filters = self._selected_stat_filters()
@@ -421,7 +509,7 @@ class PoetoreWindow(QWidget):
                         self._trade_signals.unique_variants_ready.emit(variants)
                         return
                 result = search_prices(
-                    item, self._trade_base_type, stat_filters=effective_filters,
+                    item, self._trade_base_type, league=league, stat_filters=effective_filters,
                     trade_status=trade_status, trade_name=resolved_trade_name,
                     preset=preset,
                     trade_currency=trade_currency,
@@ -684,8 +772,16 @@ def show_poetore_window(owner, activate=True):
     if window is None:
         # QWidgetの親子関係を持たせると、本体のdisabled/入力透過状態が
         # 別ウィンドウへ波及し得る。寿命はownerの参照で管理し、UIは独立させる。
-        window = PoetoreWindow()
+        from src.utils.config_manager import ConfigManager
+
+        app_config = getattr(owner, "config", None)
+        window = PoetoreWindow(
+            app_config=app_config,
+            save_config=ConfigManager.save_config if isinstance(app_config, dict) else None,
+        )
         owner._poetore_window = window
+    if isinstance(getattr(owner, "config", None), dict):
+        window.refresh_trade_leagues()
     if activate:
         window.show_at_context()
     return window
