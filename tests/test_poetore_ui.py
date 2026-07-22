@@ -146,6 +146,8 @@ def test_poetore_combo_popups_are_treated_as_inside_panel(qapp, combo_name):
 def test_poetore_title_bar_keeps_close_button(qapp):
     window = PoetoreWindow()
     try:
+        assert window.trade_league_combo.parentWidget().objectName() == "poetoreTitleBar"
+        assert window.trade_league_combo.width() == 290
         close_buttons = [
             button for button in window.findChildren(QPushButton)
             if button.toolTip() == "閉じる" and button.text() == "×"

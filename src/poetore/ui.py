@@ -357,6 +357,7 @@ class _PoetoreTitleBar(QWidget):
 
     def __init__(self, window: "PoetoreWindow"):
         super().__init__(window)
+        self.setObjectName("poetoreTitleBar")
         self._window = window
         self._drag_offset: QPoint | None = None
         layout = QHBoxLayout(self)
@@ -364,6 +365,8 @@ class _PoetoreTitleBar(QWidget):
         title = QLabel("ぽえとれ")
         title.setStyleSheet("font-weight: bold;")
         layout.addWidget(title)
+        layout.addStretch()
+        layout.addWidget(window.trade_league_combo)
         layout.addStretch()
         close_button = QPushButton("×")
         close_button.setToolTip("閉じる")
@@ -408,6 +411,18 @@ class PoetoreWindow(QWidget):
         self.setWindowTitle("ぽえとれ")
         self.resize(720, 860)
         self.setMinimumSize(680, 620)
+        self.trade_league_combo = QComboBox()
+        self.trade_league_combo.setEditable(True)
+        self.trade_league_combo.setFixedWidth(290)
+        self.trade_league_combo.setMinimumContentsLength(12)
+        self.trade_league_combo.setToolTip("一覧から選択、またはPrivate League IDを直接入力")
+        self.trade_league_combo.addItem("自動（現行SCを取得中）", "auto")
+        saved_league = str(self._app_config.get("poetore", {}).get("league", "auto"))
+        if saved_league != "auto":
+            self.trade_league_combo.addItem(saved_league, saved_league)
+            self.trade_league_combo.setCurrentIndex(1)
+        self.trade_league_combo.currentIndexChanged.connect(self._persist_trade_league)
+        self.trade_league_combo.lineEdit().editingFinished.connect(self._persist_trade_league)
         self._placement_context: PlacementContext | None = None
         self._focus_signal_connected = False
         layout = QVBoxLayout(self)
@@ -480,23 +495,11 @@ class PoetoreWindow(QWidget):
 
         top_options = QHBoxLayout()
         top_options.setSpacing(6)
-        self.trade_league_combo = QComboBox()
-        self.trade_league_combo.setEditable(True)
-        self.trade_league_combo.setMinimumContentsLength(12)
-        self.trade_league_combo.setToolTip("一覧から選択、またはPrivate League IDを直接入力")
-        self.trade_league_combo.addItem("自動（現行SCを取得中）", "auto")
-        saved_league = str(self._app_config.get("poetore", {}).get("league", "auto"))
-        if saved_league != "auto":
-            self.trade_league_combo.addItem(saved_league, saved_league)
-            self.trade_league_combo.setCurrentIndex(1)
-        self.trade_league_combo.currentIndexChanged.connect(self._persist_trade_league)
-        self.trade_league_combo.lineEdit().editingFinished.connect(self._persist_trade_league)
-        top_options.addWidget(self.trade_league_combo, stretch=2)
         self.trade_preset_combo = _BinaryToggle(
             ("完成品", PRESET_FINISHED), ("クラフトベース", PRESET_BASE),
         )
         self.trade_preset_combo.currentIndexChanged.connect(self._trade_preset_changed)
-        top_options.addWidget(self.trade_preset_combo, stretch=1)
+        top_options.addWidget(self.trade_preset_combo)
         self.magic_rarity_toggle = _BinaryToggle(
             ("ユニーク以外", False), ("マジック完全一致", True),
         )
