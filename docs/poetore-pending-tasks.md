@@ -92,6 +92,11 @@
   - 白ソケットを読み取ったアイテムだけ表示する
   - 読み取った個数を最小値として初期ONにし、編集・ON/OFFを可能にする
   - Awakened準拠候補だが、現時点では実装を見送る
+- [ ] ジェムVariantの読み取り専用チップ
+  - Transfigured／Vaal／Awakened等のVariant判定結果を上段へ表示する
+  - Trade API用discriminator・通常版との対応付けは実装済み
+  - 検索条件のON/OFFではなく、現在適用中のVariantを明示する用途とする
+  - 現時点では専用チップUIの実装を見送る
 
 ## 統合・公開前に必要な作業
 
