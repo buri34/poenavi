@@ -682,6 +682,42 @@ def test_gem_level_chip_uses_read_level_and_can_be_toggled_and_edited(qapp):
         window.close()
 
 
+def test_gem_quality_chip_uses_read_quality_and_can_be_toggled_and_edited(qapp):
+    window = PoetoreWindow()
+    try:
+        item = parse_item_text("""アイテムクラス: スキルジェム
+レアリティ: ジェム
+アーク
+--------
+レベル: 20
+品質: +16%
+""")
+        window._parsed_item = item
+        window._configure_gem_quality(item)
+
+        assert not window.gem_quality_tag.isHidden()
+        assert window.gem_quality_edit.text() == "16"
+        assert window._selected_gem_quality() == 16
+        assert window.gem_quality_toggle.text() == "☑ 品質："
+
+        window.gem_quality_toggle.click()
+        assert window._selected_gem_quality() is None
+        assert window.gem_quality_edit.font().strikeOut()
+
+        window.gem_quality_edit.setFocus()
+        window.gem_quality_edit.selectAll()
+        QTest.keyClicks(window.gem_quality_edit, "20")
+        assert window._selected_gem_quality() == 20
+        assert not window.gem_quality_edit.font().strikeOut()
+
+        window._populate_stat_filters((TradeStatFilter(
+            "property.quality", "品質", 20.0, "gem", True,
+        ),))
+        assert window.mod_filter_tree.topLevelItemCount() == 0
+    finally:
+        window.close()
+
+
 def test_corrupted_item_defaults_to_corrupted_only(qapp):
     window = PoetoreWindow()
     try:
