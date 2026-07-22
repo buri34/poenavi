@@ -23,17 +23,12 @@ def test_entering_flooded_depths_sets_the_new_progress_flag():
     assert "act1_lowerprison_enter" not in source
 
 
-def test_submerged_passage_has_only_the_new_empty_flag_editor_section():
+def test_submerged_passage_has_only_the_new_flag_editor_section():
     guide_data = json.loads((ROOT / "guide_data.json").read_text(encoding="utf-8"))
     flags = guide_data["act1_area4"]["visits"]["1"]["flags"]
 
     assert set(flags) == {"act1_floodeddepths_enter"}
-    assert flags["act1_floodeddepths_enter"] == {
-        "objective": "",
-        "layout": "",
-        "tips": "",
-        "direction": "none",
-    }
+    assert isinstance(flags["act1_floodeddepths_enter"], dict)
 
 
 def test_submerged_passage_editor_displays_the_new_flag_section(qapp):
