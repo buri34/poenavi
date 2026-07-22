@@ -239,13 +239,15 @@ def test_stat_filter_supports_maximum_exact_and_trade_inversion():
 def test_high_item_level_unfinished_rare_has_finished_and_base_presets():
     item = parse_item_text(ITEM.replace("Item Level: 67", "Item Level: 85"))
     assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BASE)
-    assert resolve_trade_stat_filters(item, PRESET_BASE) == (
-        TradeStatFilter(
-            "property.item_level", "アイテムレベル", 85.0, "base", True,
-            read_value=85.0,
-            selection_reason="クラフト価値のあるアイテムレベル",
-        ),
+    rows = resolve_trade_stat_filters(item, PRESET_BASE)
+    by_id = {row.stat_id: row for row in rows}
+    assert by_id["property.item_level"] == TradeStatFilter(
+        "property.item_level", "アイテムレベル", 85.0, "base", True,
+        read_value=85.0,
+        selection_reason="クラフト価値のあるアイテムレベル",
     )
+    assert not by_id["property.physical_dps"].enabled
+    assert not by_id["property.aps"].enabled
 
 
 def test_base_preset_uses_exact_base_nonunique_ilvl_and_craftable_state():
@@ -290,17 +292,11 @@ def test_fractured_item_can_offer_base_preset_below_ilvl_82():
     assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BASE)
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         filters = resolve_trade_stat_filters(item, PRESET_BASE)
-    assert filters == (
-        TradeStatFilter(
-            "property.item_level", "アイテムレベル", 67.0, "base", True,
-            read_value=67.0,
-            selection_reason="クラフト価値のあるアイテムレベル",
-        ),
-        TradeStatFilter(
-            "fractured.phys", "74% increased Physical Damage", 74.0, "fractured", True,
-            selection_reason="アイテム種別に応じた主要条件",
-        ),
-    )
+    by_id = {row.stat_id: row for row in filters}
+    assert by_id["property.item_level"].enabled
+    assert by_id["fractured.phys"].enabled
+    assert not by_id["property.physical_dps"].enabled
+    assert not by_id["property.aps"].enabled
     query = build_search_query(item, "Reaver Sword", filters, preset=PRESET_BASE)["query"]
     misc = query["filters"]["misc_filters"]["filters"]
     assert misc["fractured_item"] == {"option": "true"}
@@ -317,7 +313,7 @@ def test_influenced_and_synthesised_items_add_strict_base_conditions():
     ))
     assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BASE)
     filters = resolve_trade_stat_filters(item, PRESET_BASE)
-    assert [(row.stat_id, row.enabled) for row in filters] == [
+    assert [(row.stat_id, row.enabled) for row in filters if row.enabled] == [
         ("property.item_level", True),
         ("pseudo.pseudo_has_shaper_influence", True),
         ("pseudo.pseudo_has_elder_influence", True),
@@ -483,6 +479,77 @@ def test_mixed_weapon_selects_total_dps_and_dominant_component_only():
     assert "property.physical_dps" in enabled
     assert "property.elemental_dps" not in enabled
     assert round(elemental_dps(item), 2) == 69.6
+
+
+def test_attack_weapon_property_order_and_defaults_match_awakened():
+    item = parse_item_text(ITEM.replace(
+        "Physical Damage: 108-181 (augmented)",
+        "Physical Damage: 108-181 (augmented)\nElemental Damage: 10-20, 20-30",
+    ).replace(
+        "Attacks per Second: 1.74 (augmented)",
+        "Attacks per Second: 1.74 (augmented)\nCritical Strike Chance: 6.00%",
+    ))
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = resolve_trade_stat_filters(item)
+    property_rows = [row for row in rows if row.stat_id in {
+        "property.total_dps", "property.physical_dps", "property.elemental_dps",
+        "property.aps", "property.crit",
+    }]
+    assert [row.stat_id for row in property_rows] == [
+        "property.total_dps", "property.physical_dps", "property.aps", "property.crit",
+    ]
+    assert [row.enabled for row in property_rows] == [True, True, False, False]
+
+
+def test_spell_weapon_order_and_gem_level_default_match_recommendation():
+    item = parse_item_text("""Item Class: Wands
+Rarity: Rare
+Test Wand
+Imbued Wand
+--------
+Critical Strike Chance: 7.00%
+Attacks per Second: 1.50
+--------
+Item Level: 86
+--------
++1 to Level of all Spell Skill Gems
+80% increased Spell Damage
+12% increased Cast Speed
+20% increased Spell Critical Strike Chance
++60 to maximum Mana
+""")
+    entries = ({
+        "id": "explicit.gem_level", "text": "+# to Level of all Spell Skill Gems",
+        "type": "explicit",
+    },)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        rows = resolve_trade_stat_filters(item)
+    ids = [row.stat_id for row in rows]
+    expected = [
+        "explicit.gem_level",
+        "pseudo.pseudo_increased_spell_damage",
+        "pseudo.pseudo_total_cast_speed",
+        "pseudo.pseudo_critical_strike_chance_for_spells",
+        "pseudo.pseudo_total_mana",
+    ]
+    assert [stat_id for stat_id in ids if stat_id in expected] == expected
+    assert next(row for row in rows if row.stat_id == "explicit.gem_level").enabled
+    assert not any(
+        row.enabled for row in rows
+        if row.stat_id in set(expected) - {"explicit.gem_level"}
+    )
+
+
+def test_weapon_base_preset_shows_performance_properties_but_keeps_them_off():
+    item = parse_item_text(ITEM.replace("Item Level: 67", "Item Level: 85"))
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = resolve_trade_stat_filters(item, PRESET_BASE)
+    properties = [row for row in rows if row.stat_id in {
+        "property.total_dps", "property.physical_dps", "property.elemental_dps",
+        "property.aps", "property.crit",
+    }]
+    assert [row.stat_id for row in properties] == ["property.physical_dps", "property.aps"]
+    assert not any(row.enabled for row in properties)
 
 
 def test_non_physical_weapon_does_not_enable_pdps():

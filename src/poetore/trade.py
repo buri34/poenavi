@@ -742,6 +742,8 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
              else f"T{modifier.tier}" if modifier.tier else "explicit"), enabled,
         ))
     base_property_ids = {
+        "property.total_dps", "property.physical_dps", "property.elemental_dps",
+        "property.aps", "property.crit",
         "property.armour", "property.evasion", "property.energy_shield",
         "property.ward", "property.block", "property.base_percentile",
         "property.memory_strands",
@@ -1014,13 +1016,13 @@ def _initial_property_filters(item: ParsedItem, trade_base_type: str | None = No
             filters.append(TradeStatFilter(
                 "property.total_dps", "合計DPS", _relaxed(total), "property", True,
             ))
-        if edps and (not total or edps / total >= 0.67):
-            filters.append(TradeStatFilter(
-                "property.elemental_dps", "元素DPS", _relaxed(edps), "property", True,
-            ))
         if pdps and _physical_dps_is_important(item) and (not total or pdps / total >= 0.67):
             filters.append(TradeStatFilter(
                 "property.physical_dps", "物理DPS", _relaxed(pdps), "property", True,
+            ))
+        if edps and (not total or edps / total >= 0.67):
+            filters.append(TradeStatFilter(
+                "property.elemental_dps", "元素DPS", _relaxed(edps), "property", True,
             ))
         aps = _property_value(item, "秒間アタック回数", "Attacks per Second")
         if aps is not None:
@@ -1700,6 +1702,70 @@ def resolve_trade_stat_filters(
         + _special_content_filters(item)
     )
     decorated = list(_decorate_filters(item, filters))
+    if item.category == "weapon":
+        gem_level_markers = (
+            "level of all", "level of socketed", "skill gems", "gemのレベル",
+            "ジェムのレベル", "ソケットされたジェム",
+        )
+
+        def is_gem_level(row: TradeStatFilter) -> bool:
+            source = f"{row.ref or ''} {row.text}".casefold()
+            return any(marker.casefold() in source for marker in gem_level_markers)
+
+        spell_markers = (
+            "spell", "スペル", "cast speed", "キャストスピード",
+            "skill gems", "ジェムのレベル",
+        )
+        spell_weapon = any(
+            any(marker.casefold() in f"{row.stat_id} {row.ref or ''} {row.text}".casefold()
+                for marker in spell_markers)
+            for row in decorated
+        )
+        decorated = [
+            replace(row, enabled=True, selection_reason="スペル武器の主要ジェムレベルMod")
+            if is_gem_level(row) else row
+            for row in decorated
+        ]
+        attack_priority = {
+            "property.total_dps": 0,
+            "property.physical_dps": 1,
+            "property.elemental_dps": 2,
+            "property.aps": 3,
+            "property.crit": 4,
+        }
+
+        def spell_priority(row: TradeStatFilter) -> int:
+            source = f"{row.stat_id} {row.ref or ''} {row.text}".casefold()
+            if is_gem_level(row):
+                return 0
+            if "spell_damage" in source or "スペルダメージ" in source:
+                return 1
+            if any(word in source for word in (
+                "elemental_damage", "fire_damage", "cold_damage", "lightning_damage",
+                "元素ダメージ", "火ダメージ", "冷気ダメージ", "雷ダメージ",
+            )):
+                return 2
+            if "cast_speed" in source or "キャストスピード" in source:
+                return 3
+            if ("critical_strike_chance_for_spells" in source
+                    or "スペルクリティカル" in source):
+                return 4
+            if "critical_strike_multiplier" in source or "クリティカル倍率" in source:
+                return 5
+            if "mana" in source or "マナ" in source:
+                return 6
+            if row.stat_id in attack_priority:
+                return 30 + attack_priority[row.stat_id]
+            return 20 if row.kind == "pseudo" else 40
+
+        decorated = [row for _, row in sorted(
+            enumerate(decorated),
+            key=lambda pair: (
+                spell_priority(pair[1]) if spell_weapon
+                else attack_priority.get(pair[1].stat_id, 20 if pair[1].kind == "pseudo" else 40),
+                pair[0],
+            ),
+        )]
     if item.category == "accessory":
         # Awakenedのpseudo優先順を土台に、利用頻度の高いLifeとESを先頭へ出す。
         # Anointmentは後段、未分類の個別Modは読み取り順を維持する。
