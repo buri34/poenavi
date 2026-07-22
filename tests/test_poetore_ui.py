@@ -1229,6 +1229,22 @@ Item Level: 86
         assert not window.gem_quality_tag.isHidden()
         assert window._selected_quality() == 30
 
+        accessory = parse_item_text("""Item Class: Rings
+Rarity: Rare
+Test Ring
+Ruby Ring
+--------
+Quality: +20%
+Item Level: 86
+""")
+        window._parsed_item = accessory
+        window._configure_trade_presets(accessory)
+        window._configure_quality(accessory)
+        assert window.gem_quality_tag.isHidden()
+        window.trade_preset_combo.setCurrentIndex(1)
+        assert not window.gem_quality_tag.isHidden()
+        assert window._selected_quality() is None
+
         flask20 = parse_item_text("""Item Class: Utility Flasks
 Rarity: Magic
 Test Flask

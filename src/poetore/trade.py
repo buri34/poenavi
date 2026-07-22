@@ -66,6 +66,7 @@ _ITEM_CLASS_TRADE_CATEGORIES = {
     "Rings": "accessory.ring", "指輪": "accessory.ring",
     "Amulets": "accessory.amulet", "アミュレット": "accessory.amulet",
     "Belts": "accessory.belt", "ベルト": "accessory.belt",
+    "Quivers": "accessory.quiver", "矢筒": "accessory.quiver",
     "Jewels": "jewel.base", "ジュエル": "jewel.base",
     "Abyss Jewels": "jewel.abyss", "アビスジュエル": "jewel.abyss",
 }
@@ -536,7 +537,8 @@ def available_trade_presets(item: ParsedItem) -> tuple[str, ...]:
     quality = _property_value(item, "品質", "Quality")
     likely_finished = (
         any(modifier.kind == "crafted" for modifier in item.modifiers)
-        or (quality == 20 and _memory_strands(item) is None)
+        or (quality == 20 and item.category in {"weapon", "armour"}
+            and _memory_strands(item) is None)
         or "corrupted" in item.flags
         or "mirrored" in item.flags
     )
@@ -1698,6 +1700,34 @@ def resolve_trade_stat_filters(
         + _special_content_filters(item)
     )
     decorated = list(_decorate_filters(item, filters))
+    if item.category == "accessory":
+        # Awakenedのpseudo優先順を土台に、利用頻度の高いLifeとESを先頭へ出す。
+        # Anointmentは後段、未分類の個別Modは読み取り順を維持する。
+        accessory_priority = {
+            "pseudo.pseudo_total_life": 0,
+            "pseudo.pseudo_total_energy_shield": 1,
+            "pseudo.pseudo_total_elemental_resistance": 2,
+            "pseudo.pseudo_total_chaos_resistance": 3,
+            "pseudo.pseudo_total_all_attributes": 4,
+            "pseudo.pseudo_total_strength": 5,
+            "pseudo.pseudo_total_dexterity": 6,
+            "pseudo.pseudo_total_intelligence": 7,
+            "pseudo.pseudo_total_mana": 8,
+        }
+
+        def accessory_sort_key(pair):
+            index, row = pair
+            if row.stat_id in accessory_priority:
+                return (accessory_priority[row.stat_id], index)
+            if row.ref == "Allocates #" or row.oils:
+                return (90, index)
+            if row.kind == "pseudo":
+                return (20, index)
+            return (100, index)
+
+        decorated = [row for _, row in sorted(
+            enumerate(decorated), key=accessory_sort_key,
+        )]
     if item.category in {"flask", "tincture"}:
         used_enkindling = any(
             modifier.ref == "Gains no Charges during Flask Effect" for modifier in item.modifiers

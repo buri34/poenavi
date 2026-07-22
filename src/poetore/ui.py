@@ -1836,7 +1836,7 @@ class PoetoreWindow(QWidget):
         visible = False
         if item.category == "gem":
             visible = quality is not None and quality > 0
-        elif item.category in {"weapon", "armour"}:
+        elif item.category in {"weapon", "armour", "accessory"}:
             visible = preset == PRESET_BASE and quality is not None and quality >= 20
         elif item.category in {"flask", "tincture"}:
             visible = quality is not None and quality >= 20

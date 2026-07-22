@@ -968,6 +968,55 @@ Item Level: 85
     }
 
 
+def test_accessory_finished_filters_use_requested_awakened_based_order():
+    item = parse_item_text("""Item Class: Amulets
+Rarity: Rare
+Test Amulet
+Onyx Amulet
+--------
+Item Level: 85
+--------
++70 to maximum Life
++40 to maximum Energy Shield
++30% to Fire Resistance
++10% to Chaos Resistance
++20 to all Attributes
++60 to maximum Mana
+12% increased Cast Speed
+""")
+    filters = resolve_trade_stat_filters(item)
+    ids = [row.stat_id for row in filters]
+    expected = [
+        "pseudo.pseudo_total_life",
+        "pseudo.pseudo_total_energy_shield",
+        "pseudo.pseudo_total_elemental_resistance",
+        "pseudo.pseudo_total_chaos_resistance",
+        "pseudo.pseudo_total_all_attributes",
+        "pseudo.pseudo_total_mana",
+        "pseudo.pseudo_total_cast_speed",
+    ]
+    assert [stat_id for stat_id in ids if stat_id in expected] == expected
+    enabled = {row.stat_id for row in filters if row.enabled}
+    assert enabled & set(expected) == {
+        "pseudo.pseudo_total_life",
+        "pseudo.pseudo_total_elemental_resistance",
+        "pseudo.pseudo_total_chaos_resistance",
+    }
+
+
+def test_quiver_category_search_uses_all_quivers():
+    item = ParsedItem(
+        item_class="Quivers", rarity="Rare", name="Test Quiver",
+        base_type="Broadhead Arrow Quiver", category="accessory", item_level=86,
+    )
+    query = build_search_query(
+        item, item.base_type, (), preset=PRESET_FINISHED, exact_base_type=False,
+    )["query"]
+    assert query["filters"]["type_filters"]["filters"]["category"] == {
+        "option": "accessory.quiver",
+    }
+
+
 def test_pseudo_mods_cover_attributes_resources_speed_damage_crit_and_recovery():
     item = parse_item_text("""アイテムクラス: アミュレット
 レアリティ: レア

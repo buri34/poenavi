@@ -62,6 +62,16 @@ Right-click to add this to your bestiary.
         self.assertEqual(item.category, "currency")
         self.assertEqual(item.properties["Stack Size"], "4/20")
 
+    def test_parses_quiver_as_accessory(self):
+        item = parse_item_text("""Item Class: Quivers
+Rarity: Rare
+Test Quiver
+Broadhead Arrow Quiver
+--------
+Item Level: 86
+""")
+        self.assertEqual(item.category, "accessory")
+
     def test_prefers_japanese_name_and_base_when_both_languages_are_present(self):
         item = parse_item_text("""アイテムクラス: 片手剣
 レアリティ: レア
