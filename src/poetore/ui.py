@@ -466,17 +466,21 @@ class PoetoreWindow(QWidget):
         self.mod_filter_tree.setColumnHidden(5, True)
 
     def _update_item_header(self, item):
-        display_name = item.name or item.base_type or "名称不明"
-        self.item_name_label.setText(display_name)
-        is_nonunique_gear = (
-            item.category in {"weapon", "armour"}
+        is_nonunique_equipment = (
+            item.category in {"weapon", "armour", "accessory"}
             and item.rarity.casefold() not in {"unique", "ユニーク"}
         )
-        self.item_name_label.setVisible(not is_nonunique_gear)
-        self.base_scope_toggle.setVisible(is_nonunique_gear)
-        if is_nonunique_gear:
+        display_name = (
+            self._display_base_type(item)
+            if is_nonunique_equipment
+            else item.name or item.base_type or "名称不明"
+        )
+        self.item_name_label.setText(display_name)
+        self.item_name_label.setVisible(not is_nonunique_equipment)
+        self.base_scope_toggle.setVisible(is_nonunique_equipment)
+        if is_nonunique_equipment:
             key = item.raw_text
-            self.base_scope_toggle.setItemText(0, item.base_type or "ベース名")
+            self.base_scope_toggle.setItemText(0, display_name)
             self.base_scope_toggle.setItemText(1, f"すべての{self._item_class_label(item.item_class)}")
             if key != self._base_scope_item_key:
                 self._base_scope_item_key = key
@@ -484,6 +488,21 @@ class PoetoreWindow(QWidget):
         self.weapon_property_label.setText(
             "武器性能・検索Mod" if item.category == "weapon" else "検索条件"
         )
+
+    def _display_base_type(self, item) -> str:
+        """日本語Magicの1行名から表示用ベース名を取り出す。
+
+        詳細コピー側で復元した英語ベースは検索用に保持し、
+        表示は通常コピーの日本語名を優先する。
+        """
+        candidate = str(item.base_type or item.name or "").strip()
+        if not candidate:
+            return "ベース名"
+        if re.search(r"[\u3040-\u30ff\u3400-\u9fff]", candidate):
+            return candidate.split()[-1]
+        if item.name == item.base_type and self._trade_base_type:
+            return self._trade_base_type
+        return candidate
 
     @staticmethod
     def _item_class_label(item_class: str) -> str:
@@ -496,7 +515,9 @@ class PoetoreWindow(QWidget):
             "One Hand Swords": "片手剣", "Staves": "スタッフ",
             "Warstaves": "ウォースタッフ", "Two Hand Axes": "両手斧",
             "Two Hand Maces": "両手メイス", "Two Hand Swords": "両手剣",
-            "Wands": "ワンド",
+            "Wands": "ワンド", "Rings": "指輪", "Amulets": "アミュレット",
+            "Belts": "ベルト", "指輪": "指輪", "アミュレット": "アミュレット",
+            "ベルト": "ベルト",
         }
         return labels.get(item_class.strip(), item_class.strip() or "同一クラス")
 

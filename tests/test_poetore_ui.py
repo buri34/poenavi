@@ -180,7 +180,7 @@ Attacks per Second: 1.50
 Item Level: 83
 """)
         window.parse_current_text()
-        assert window.item_name_label.text() == "Storm Branch"
+        assert window.item_name_label.text() == "Spine Bow"
         assert window.item_name_label.isHidden()
         assert window.base_scope_toggle.itemText(0) == "Spine Bow"
         assert window.base_scope_toggle.itemText(1) == "すべての弓"
@@ -549,7 +549,7 @@ Split
         window.close()
 
 
-def test_header_shows_only_name_except_nonunique_weapon_and_armour_scope_toggle(qapp):
+def test_header_shows_scope_toggle_for_nonunique_weapon_armour_and_accessory(qapp):
     window = PoetoreWindow()
     try:
         armour = parse_item_text("""Item Class: Body Armours
@@ -575,5 +575,53 @@ Item Level: 94
         assert window.item_name_label.text() == "Test Unique"
         assert window.base_scope_toggle.isHidden()
         assert not hasattr(window, "item_base_label")
+    finally:
+        window.close()
+
+
+def test_header_removes_affixes_only_for_nonunique_equipment(qapp):
+    window = PoetoreWindow()
+    try:
+        wand = parse_item_text("""アイテムクラス: ワンド
+レアリティ: マジック
+酹薬の 痛憤の 浸潤のワンド
+--------
+アイテムレベル: 84
+""")
+        window._trade_base_type = "Imbued Wand"
+        window._update_item_header(wand)
+        assert window.base_scope_toggle.itemText(0) == "浸潤のワンド"
+
+        ring = parse_item_text("""アイテムクラス: 指輪
+レアリティ: マジック
+火炎の アメジストの指輪
+--------
+アイテムレベル: 84
+""")
+        window._update_item_header(ring)
+        assert window.item_name_label.isHidden()
+        assert not window.base_scope_toggle.isHidden()
+        assert window.base_scope_toggle.itemText(0) == "アメジストの指輪"
+        assert window.base_scope_toggle.itemText(1) == "すべての指輪"
+
+        for item_class, base_type, expected in (
+            ("Amulets", "Gold Amulet", "すべてのアミュレット"),
+            ("Belts", "Leather Belt", "すべてのベルト"),
+        ):
+            accessory = replace(
+                ring, item_class=item_class, name=base_type, base_type=base_type,
+                raw_text=f"{item_class}:{base_type}",
+            )
+            window._trade_base_type = base_type
+            window._update_item_header(accessory)
+            assert window.base_scope_toggle.itemText(1) == expected
+
+        flask = replace(ring, category="flask", item_class="Utility Flasks")
+        window._update_item_header(flask)
+        assert window.item_name_label.text() == "火炎の アメジストの指輪"
+
+        unique = replace(wand, rarity="ユニーク")
+        window._update_item_header(unique)
+        assert window.item_name_label.text() == "酹薬の 痛憤の 浸潤のワンド"
     finally:
         window.close()
