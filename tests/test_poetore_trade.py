@@ -113,6 +113,33 @@ Item Level: 94
     }
 
 
+@pytest.mark.parametrize(("item_text", "base_type", "category"), [
+    ("""Item Class: Jewels
+Rarity: Rare
+Test Jewel
+Crimson Jewel
+--------
+Item Level: 84
+""", "Crimson Jewel", "jewel.base"),
+    ("""Item Class: Abyss Jewels
+Rarity: Rare
+Test Jewel
+Ghastly Eye Jewel
+--------
+Item Level: 84
+""", "Ghastly Eye Jewel", "jewel.abyss"),
+])
+def test_nonunique_jewels_can_search_their_whole_jewel_category(
+    item_text, base_type, category,
+):
+    item = parse_item_text(item_text)
+    query = build_search_query(item, base_type, exact_base_type=False)["query"]
+    assert "type" not in query
+    assert query["filters"]["type_filters"]["filters"]["category"] == {
+        "option": category
+    }
+
+
 def test_magic_single_line_affixed_name_resolves_longest_official_base():
     entries = (
         {"type": "Wand", "flags": {}},

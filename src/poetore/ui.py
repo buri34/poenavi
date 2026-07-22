@@ -592,6 +592,15 @@ class PoetoreWindow(QWidget):
             else "同じアイテムクラスの全ベースを対象に検索します。"
         )
 
+    def _searches_exact_base_type(self, item) -> bool:
+        if self.base_scope_toggle.isVisible():
+            return bool(self.base_scope_toggle.currentData())
+        nonunique_jewel_group = (
+            item.category in {"jewel", "abyss_jewel"}
+            and item.rarity.casefold() not in {"unique", "ユニーク"}
+        )
+        return not nonunique_jewel_group
+
     def eventFilter(self, watched, event):
         if event.type() == QEvent.KeyPress and self.isVisible():
             is_escape = event.key() == Qt.Key_Escape
@@ -879,10 +888,7 @@ class PoetoreWindow(QWidget):
                     trade_discriminator=str(selected_discriminator) if selected_discriminator else None,
                     listed_within=listed_within,
                     magic_exact=magic_exact,
-                    exact_base_type=(
-                        bool(self.base_scope_toggle.currentData())
-                        if self.base_scope_toggle.isVisible() else True
-                    ),
+                    exact_base_type=self._searches_exact_base_type(item),
                 )
             except (TradeApiError, ValueError) as exc:
                 self._trade_signals.failed.emit(str(exc))

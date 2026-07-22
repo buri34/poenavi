@@ -732,3 +732,27 @@ def test_header_removes_affixes_only_for_nonunique_equipment(qapp):
         assert window.item_name_label.text() == "酹薬の 痛憤の 浸潤のワンド"
     finally:
         window.close()
+
+
+def test_nonunique_jewels_use_category_search_but_cluster_and_unique_stay_exact(qapp):
+    window = PoetoreWindow()
+    try:
+        jewel = ParsedItem(
+            item_class="Jewels", rarity="Rare", name="Test Jewel",
+            base_type="Crimson Jewel", category="jewel", raw_text="jewel",
+        )
+        abyss = replace(
+            jewel, item_class="Abyss Jewels", base_type="Ghastly Eye Jewel",
+            category="abyss_jewel", raw_text="abyss",
+        )
+        cluster = replace(
+            jewel, item_class="Cluster Jewels", base_type="Large Cluster Jewel",
+            category="cluster_jewel", raw_text="cluster",
+        )
+        unique = replace(jewel, rarity="Unique", raw_text="unique")
+        assert window._searches_exact_base_type(jewel) is False
+        assert window._searches_exact_base_type(abyss) is False
+        assert window._searches_exact_base_type(cluster) is True
+        assert window._searches_exact_base_type(unique) is True
+    finally:
+        window.close()

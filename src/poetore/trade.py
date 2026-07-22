@@ -66,6 +66,8 @@ _ITEM_CLASS_TRADE_CATEGORIES = {
     "Rings": "accessory.ring", "指輪": "accessory.ring",
     "Amulets": "accessory.amulet", "アミュレット": "accessory.amulet",
     "Belts": "accessory.belt", "ベルト": "accessory.belt",
+    "Jewels": "jewel.base", "ジュエル": "jewel.base",
+    "Abyss Jewels": "jewel.abyss", "アビスジュエル": "jewel.abyss",
 }
 
 
