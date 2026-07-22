@@ -61,28 +61,32 @@
         "layout": "",
         "tips": "",
         "direction": "none",
-        "flags": {
-          "act1_floodeddepths_enter": {
-            "objective": "",
-            "layout": "",
-            "tips": "",
-            "direction": "none"
-          }
-        },
         "mini_navi": {
           "text": "▸[wp]WPを確保したら、一旦、[move]<span style='color:#dddd44'>海岸</span>へ戻る",
           "direction": "none"
+        },
+        "flags": {
+          "act1_floodeddepths_enter": {
+            "objective": "・奥へ進み「岩棚」へ入る",
+            "layout": "",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸奥へ進み[move]<span style='color:#dddd44'>岩棚</span>へ入る",
+              "direction": "none"
+            }
+          }
         }
       },
       "2": {
-        "objective": "橋の手前に、ポータルをだしておいて、先へ進む。\n（牢獄到達後、ここにすぐ戻れるようにして、近くの水没した海底洞窟へ行くようにする）",
-        "layout": "・<span style='color:#4488ff'>ウェイポイントが入口の下に</span>ある場合\n    －<span style='color:#dddd44'>右下に進めるなら右下が</span>正解\n    －<span style='color:#44cc44'>右下が無理なら、左上が</span>正解\n      ※このパターンだけ、後からクリアする「水没した海底洞窟」の入口が橋手前から上方向なので覚えておく\n  ・<span style='color:#ff6666'>ウェイポイントが入口の上に</span>ある場合\n    －<span style='color:#dddd44'>左上に進めるなら、左上が</span>正解\n    －<span style='color:#44cc44'>左上が無理なら、上の壁に沿いつつ、右下に</span>いけばいい。",
-        "tips": "・ここからはかなり意識的にトラベルスキル（フロストブリンク、ダッシュ等）を多用する\n・橋の近くのポータルは、後で戻ってきて「水没した海底洞窟」を効率的にクリアするため\n  以降、/exitやログアウトをするとポータルが消えてしまうため注意する",
+        "objective": "・中腹にある「水没した海底洞窟」へ入る",
+        "layout": "・<span style='color:#4488ff'>ウェイポイントが入口の下に</span>ある場合\n    －<span style='color:#dddd44'>右下に進めるなら右下が</span>正解\n    －<span style='color:#44cc44'>右下が無理なら、左上が</span>正解\n      ※このパターンだけ、後からクリアする「水没した海底洞窟」の入口が橋手前から上方向なので覚えておく\n  ・<span style='color:#ff6666'>ウェイポイントが入口の上に</span>ある場合\n    －<span style='color:#dddd44'>左上に進めるなら、左上が</span>正解\n    －<span style='color:#44cc44'>左上が無理なら、上の壁に沿いつつ、右下に</span>いけばいい。\n\n・「水没した海底洞窟」は必ず橋の手前のエリアにあり、橋から下方向に存在する",
+        "tips": "・ここからはかなり意識的にトラベルスキル（フロストブリンク、ダッシュ等）を多用する",
+        "direction": "none",
         "mini_navi": {
-          "text": "▸橋の手前に、[portal]ポータルをだしておいて、[move]岩棚へ進む。\n▸<span style='color:#4488ff'>WPが入口の下に</span>ある⇒<span style='color:#dddd44'>右下へ。</span><span style='color:#44cc44'>無理なら左上</span>\n▸<span style='color:#ff6666'>WPが入口の上に</span>ある⇒<span style='color:#dddd44'>左上へ。</span><span style='color:#44cc44'>無理なら上の壁沿いに右下に</span>。",
+          "text": "▸中腹にある[move]<span style='color:#dddd44'>水没した海底洞窟</span>へ入る\n▸<span style='color:#4488ff'>WPが入口の下に</span>ある⇒<span style='color:#dddd44'>右下へ。</span><span style='color:#44cc44'>無理なら左上</span>\n▸<span style='color:#ff6666'>WPが入口の上に</span>ある⇒<span style='color:#dddd44'>左上へ。</span><span style='color:#44cc44'>無理なら上の壁沿いに右下に</span>。",
           "direction": "none"
-        },
-        "direction": "none"
+        }
       }
     }
   },
@@ -140,40 +144,39 @@
   "act1_area8": {
     "visits": {
       "1": {
-        "objective": "WPを確保したら、一旦、WPを使って街へ戻る\n\n（街）\n・自分で作ったポータルに入って、「海底通路」へ行く",
-        "layout": "",
-        "tips": "・街に戻る際は、必ずウェイポータルを使って戻る\n　（海底通路に自分のポータルを出している状態が消えないように）",
-        "direction": "none",
-        "mini_navi": {
-          "text": "▸[wp]WPを確保したら、一旦、WPを使って[town]<span style='color:#dddd44'>街</span>へ戻る\n▸【街】自分で作ったポータルに入って[move]<span style='color:#dddd44'>海底通路</span>へ",
-          "direction": "none"
-        }
-      },
-      "2": {
         "objective": "・アセンダンシーの試練をクリアする\n・牢獄 -上層-へ入る",
         "layout": "・<span style='color:#ff6666'>ウェイポイントから右下の空間に特に何も見えない場合</span>、アセンダンシーの試練は左側にある\n  －アセンダンシーの試練は、ウェイポイントから左に入った後、左上\n  －出口はそこからさらに左\n・<span style='color:#dddd44'>ウェイポイントから右下の空間が見えたら</span>、アセンダンシーの試練は右側にある\n  －この場合、アセンダンシーの試練の位置で、出口の位置のあてをつけることができる\n  －まず、ウェイポイントから右側に入る\n    ＞アセンダンシーの試練が、結構歩いたところの左上にある場合\n      ・出口は右上\n    ＞アセンダンシーの試練がすぐ見つかる、または少しだけ歩いたところの右上にある場合\n      ・出口はウェイポイントの左側方向にあるので、試練が終わったら戻る。\n      ・ウェイポイントから左側に入って、右下に進むと出口\n    ＞アセンダンシーの試練が部屋２マス以上歩いた後、右下→右上の位置にある場合\n      ・出口は、試練の位置から見て、右下\n    ＞アセンダンシーの試練が、結構歩いたところの右上にある場合\n      ・出口は、試練の位置から見て、左上",
-        "tips": "🌟 経験値効率 良\n\n・アセンダンシーの試練の近くには本のマークが置かれている\n\n・アセンダンシーの試練の針タイルの部屋は、フロストブリンクでスキップできるし、\n　最後のオブジェクトをクリックしたら、ポータルから出て良い",
+        "tips": "🌟 経験値効率 良\n\n・アセンダンシーの試練の近くには本のマークが置かれている\n\n・アセンダンシーの試練の針タイルの部屋は、フロストブリンクでスキップできるし、\n  最後のオブジェクトをクリックしたら、ポータルから出て良い",
         "direction": "none",
         "mini_navi": {
           "text": "▸[trial]<span style='color:#4488ff'>アセンダンシーの試練</span>をクリアする\n▸[move]<span style='color:#dddd44'>牢獄 -上層-</span>へ入る",
           "direction": "none"
         }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
       }
     }
   },
   "act1_area9": {
     "visits": {
       "1": {
-        "objective": "・奥へ進んでボスを倒す\n・倒したら、街へ戻る\n\n（街）\n・クエスト報酬でジェムを入手する\n・WPから、「牢獄 -下層-」へ",
+        "objective": "・奥へ進んでボスを倒す\n・倒したら、奥に船がでてくるので、そこから「海底通路」へ戻る",
         "layout": "・水路が見えるまで太い道を進めば大体合ってる（細い道・トンネル・橋は基本的に外れ）",
         "tips": "",
         "direction": "none",
         "mini_navi": {
-          "text": "▸奥へ進んで[boss]ボスを倒す\n▸倒したら、[town]<span style='color:#dddd44'>街</span>へ戻る\n▸【街】[quest]クエスト報酬でジェムを入手する\n▸【街】WPから、[move]<span style='color:#dddd44'>牢獄 -下層-</span>へ",
+          "text": "▸奥へ進んで[boss]ボスを倒す\n▸倒したら、奥に出てくる船から[move]<span style='color:#dddd44'>海底通路</span>へ戻る",
           "direction": "none"
         }
       },
       "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
         "direction": "none"
       }
     }
