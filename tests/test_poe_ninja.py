@@ -1,6 +1,6 @@
 from src.poetore.models import ParsedItem
 from src.poetore.poe_ninja import (
-    CACHE_TTL_SECONDS, PoeNinjaPriceService, match_poe_ninja_price,
+    CACHE_TTL_SECONDS, PoeNinjaPrice, PoeNinjaPriceService, match_poe_ninja_price,
 )
 
 
@@ -48,6 +48,20 @@ def test_unique_price_uses_name_and_formats_divines():
     assert price.display_price() == "200 div"
     assert price.graph_points() == (0, 1, 2, 3, 4, 5, 6)
     assert "/unique-accessories/mageblood-4-flasks-heavy-belt" in price.url
+    assert price.source_type == "UniqueAccessory"
+
+
+def test_trend_summary_uses_signed_total_change_instead_of_graph_deviation():
+    falling = PoeNinjaPrice(
+        "Test", None, 8, (0, 0, 0, 0, 0, 0, -20), "https://example.com",
+        total_change=-20,
+    )
+    rising = PoeNinjaPrice(
+        "Test", None, 8, (0, 0, 0, 0, 0, 0, 12), "https://example.com",
+        total_change=12,
+    )
+    assert falling.trend_summary() == ("↘", "-20%")
+    assert rising.trend_summary() == ("↗", "+12%")
 
 
 def test_gem_price_uses_level_quality_and_corruption_variant():
@@ -99,7 +113,10 @@ def test_service_caches_each_league_for_31_minutes():
         calls.append(league)
         return _payload()
 
-    service = PoeNinjaPriceService(fetcher=fetcher, clock=lambda: now[0])
+    service = PoeNinjaPriceService(
+        fetcher=fetcher, stash_fetcher=lambda _league, _type: {"lines": []},
+        clock=lambda: now[0],
+    )
     item = ParsedItem("Divination Cards", "Normal", "The Doctor", "The Doctor", "divination_card")
     assert service.lookup(item, "Standard") is not None
     assert service.lookup(item, "Standard") is not None
@@ -113,3 +130,26 @@ def test_private_league_is_not_fetched():
     service = PoeNinjaPriceService(fetcher=lambda _league: (_ for _ in ()).throw(AssertionError()))
     item = ParsedItem("Divination Cards", "Normal", "The Doctor", "The Doctor", "divination_card")
     assert service.lookup(item, "My League (PL12345)") is None
+
+
+def test_service_refreshes_item_price_and_trend_from_current_stash_overview():
+    stash_calls = []
+
+    def stash_fetcher(league, type_name):
+        stash_calls.append((league, type_name))
+        return {"lines": [{
+            "detailsId": "mageblood-4-flasks-heavy-belt",
+            "chaosValue": 42000,
+            "sparkLine": {"totalChange": -20, "data": [0, 0, 0, 0, 0, 0, -20]},
+        }]}
+
+    service = PoeNinjaPriceService(fetcher=lambda _league: _payload(), stash_fetcher=stash_fetcher)
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Heavy Belt", "accessory")
+    price = service.lookup(
+        item, "Standard", trade_name="Mageblood", trade_base_type="Heavy Belt",
+    )
+    assert price is not None
+    assert price.chaos == 42000
+    assert price.graph_points() == (0, 0, 0, 0, 0, 0, -20)
+    assert price.trend_summary() == ("↘", "-20%")
+    assert stash_calls == [("Standard", "UniqueAccessory")]

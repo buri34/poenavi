@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import math
 import re
 import threading
 import time
@@ -15,6 +14,7 @@ from .models import ParsedItem
 
 
 API_URL = "https://poe.ninja/poe1/api/economy/current/dense/overviews"
+STASH_OVERVIEW_URL = "https://poe.ninja/poe1/api/economy/stash/current/item/overview"
 CACHE_TTL_SECONDS = 31 * 60
 
 _UNIQUE_TYPES = {
@@ -41,6 +41,8 @@ class PoeNinjaPrice:
     graph: tuple[float | None, ...]
     url: str
     divine_chaos: float | None = None
+    total_change: float | None = None
+    source_type: str | None = None
 
     def display_price(self) -> str:
         if self.divine_chaos and self.chaos >= self.divine_chaos * 0.94:
@@ -52,18 +54,18 @@ class PoeNinjaPrice:
         return tuple(float(value) for value in self.graph if value is not None)
 
     def trend_summary(self) -> tuple[str, str] | None:
-        points = self.graph_points()
-        if len(points) < 2:
+        change = self.total_change
+        if change is None:
+            points = self.graph_points()
+            change = points[-1] if points else None
+        if change is None:
             return None
-        direction = "±"
-        if len(points) == 7:
-            if sum(value > 0 for value in points) >= 4 or all(value > 0 for value in points[4:]):
-                direction = "↗"
-            elif sum(value < 0 for value in points) >= 4 or all(value < 0 for value in points[4:]):
-                direction = "↘"
-        mean = sum(points) / len(points)
-        deviation = math.sqrt(sum((value - mean) ** 2 for value in points) / (len(points) - 1))
-        return direction, f"{round(deviation * 2)}%"
+        rounded = round(change)
+        if rounded > 0:
+            return "↗", f"+{rounded}%"
+        if rounded < 0:
+            return "↘", f"{rounded}%"
+        return "→", "0%"
 
 
 def _display_number(value: float) -> str:
@@ -74,6 +76,16 @@ def _display_number(value: float) -> str:
 
 def _default_fetcher(league: str) -> dict:
     url = f"{API_URL}?league={quote(league, safe='')}&language=en"
+    request = Request(url, headers={"User-Agent": "PoENavi/poetore"})
+    with urlopen(request, timeout=30) as response:
+        return json.load(response)
+
+
+def _default_stash_fetcher(league: str, type_name: str) -> dict:
+    url = (
+        f"{STASH_OVERVIEW_URL}?league={quote(league, safe='')}"
+        f"&type={quote(type_name, safe='')}"
+    )
     request = Request(url, headers={"User-Agent": "PoENavi/poetore"})
     with urlopen(request, timeout=30) as response:
         return json.load(response)
@@ -126,16 +138,20 @@ class PoeNinjaPriceService:
     def __init__(
         self,
         fetcher: Callable[[str], dict] = _default_fetcher,
+        stash_fetcher: Callable[[str, str], dict] = _default_stash_fetcher,
         clock: Callable[[], float] = time.monotonic,
     ):
         self._fetcher = fetcher
+        self._stash_fetcher = stash_fetcher
         self._clock = clock
         self._cache: dict[str, tuple[float, dict]] = {}
+        self._stash_cache: dict[tuple[str, str], tuple[float, dict]] = {}
         self._lock = threading.Lock()
 
     def clear(self):
         with self._lock:
             self._cache.clear()
+            self._stash_cache.clear()
 
     def lookup(
         self,
@@ -148,9 +164,17 @@ class PoeNinjaPriceService:
         if not league or re.search(r"\(PL\d+\)$", league):
             return None
         payload = self._payload(league)
-        return match_poe_ninja_price(
+        price = match_poe_ninja_price(
             payload, item, league, trade_name=trade_name, trade_base_type=trade_base_type,
         )
+        if price is None or not price.source_type or price.source_type in {"Currency", "Fragment"}:
+            return price
+        try:
+            current = self._stash_payload(league, price.source_type)
+            return _refresh_from_stash_overview(price, current)
+        except Exception:
+            # 参考価格の補助取得失敗で通常検索を妨げず、dense API値へフォールバックする。
+            return price
 
     def _payload(self, league: str) -> dict:
         with self._lock:
@@ -163,6 +187,40 @@ class PoeNinjaPriceService:
                 raise ValueError("poe.ninjaの応答形式を認識できませんでした。")
             self._cache[league] = (now, payload)
             return payload
+
+    def _stash_payload(self, league: str, type_name: str) -> dict:
+        key = (league, type_name)
+        with self._lock:
+            cached = self._stash_cache.get(key)
+            now = self._clock()
+            if cached and now - cached[0] < CACHE_TTL_SECONDS:
+                return cached[1]
+            payload = self._stash_fetcher(league, type_name)
+            if not isinstance(payload, dict):
+                raise ValueError("poe.ninjaの現行価格応答を認識できませんでした。")
+            self._stash_cache[key] = (now, payload)
+            return payload
+
+
+def _refresh_from_stash_overview(price: PoeNinjaPrice, payload: dict) -> PoeNinjaPrice:
+    details = price.name
+    if price.variant:
+        details += f", {price.variant}"
+    details_id = _slug(details)
+    lines = payload.get("lines", ())
+    line = next((row for row in lines if str(row.get("detailsId", "")) == details_id), None)
+    if line is None:
+        return price
+    chaos = float(line.get("chaosValue", 0))
+    if chaos <= 0:
+        return price
+    sparkline = line.get("sparkLine") or {}
+    graph = tuple(sparkline.get("data", ()))
+    total_change = sparkline.get("totalChange")
+    return PoeNinjaPrice(
+        price.name, price.variant, chaos, graph, price.url, price.divine_chaos,
+        float(total_change) if total_change is not None else None, price.source_type,
+    )
 
 
 def _overview_lines(payload: dict) -> dict[str, list[dict]]:
@@ -330,6 +388,10 @@ def match_poe_ninja_price(
         str(line.get("name", "")), str(line["variant"]) if line.get("variant") else None,
         chaos, tuple(line.get("graph", ())),
         _line_url(league, _URL_BY_TYPE[type_name], line), divine_chaos,
+        float(line["sparkLine"]["totalChange"])
+        if isinstance(line.get("sparkLine"), dict) and line["sparkLine"].get("totalChange") is not None
+        else None,
+        type_name,
     )
 
 
