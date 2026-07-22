@@ -1490,7 +1490,7 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
             elif row.enabled and unique_item:
                 reason = "ユニークの可変Modが3個以下のため自動選択"
             elif row.enabled and source and source.tier in {1, 2}:
-                reason = f"クラフトベース向けT{source.tier} Mod"
+                reason = f"ベースアイテム向けT{source.tier} Mod"
             elif row.enabled:
                 reason = "アイテム種別に応じた主要条件"
             else:
@@ -1531,7 +1531,7 @@ def resolve_trade_stat_filters(
         raise ValueError(f"未対応の検索プリセットです: {preset}")
     if preset == PRESET_BASE:
         if PRESET_BASE not in available_trade_presets(item):
-            raise ValueError("このアイテムはクラフトベース検索の対象外です。")
+            raise ValueError("このアイテムはベースアイテム検索の対象外です。")
         return _decorate_filters(item, _base_item_filters(item, trade_base_type))
     if item.category == "gem":
         return _gem_filters(item, trade_base_type)
@@ -1783,7 +1783,7 @@ def build_search_query(
     if links_min is not None and not 1 <= links_min <= 6:
         raise ValueError("リンク数は1～6で指定してください。")
     if preset == PRESET_BASE and PRESET_BASE not in available_trade_presets(item):
-        raise ValueError("このアイテムはクラフトベース検索の対象外です。")
+        raise ValueError("このアイテムはベースアイテム検索の対象外です。")
     corruption_mode_explicit = include_corrupted is not None
     if include_corrupted is None:
         include_corrupted = "corrupted" in item.flags

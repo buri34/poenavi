@@ -405,13 +405,13 @@ def test_mod_filter_ui_shows_reason_tier_range_generation_and_matching(qapp):
             "explicit.stat_1", "最大ライフ +100", 90, "prefix", True,
             ref="+# to maximum Life", confidence=1.0, read_value=100,
             tier=1, roll_min=90, roll_max=100, affix="prefix",
-            generation="fractured", selection_reason="クラフトベース向けT1 Mod",
+            generation="fractured", selection_reason="ベースアイテム向けT1 Mod",
         )
         window._populate_stat_filters((source,))
         row = window.mod_filter_tree.topLevelItem(0)
         assert row.text(2) == "T1"
         detail = row.text(6)
-        assert "クラフトベース向けT1 Mod" in detail
+        assert "ベースアイテム向けT1 Mod" in detail
         assert "読取 100" in detail
         assert "T1" in detail
         assert "範囲 90–100" in detail
@@ -609,7 +609,7 @@ Item Level: 85
         assert not isinstance(window.trade_preset_combo, QComboBox)
 
         window.trade_preset_combo.setCurrentIndex(1)
-        assert "クラフトベース" in window.price_status.text()
+        assert "ベースアイテム" in window.price_status.text()
 
         low_level = parse_item_text(high_level.raw_text.replace("Item Level: 85", "Item Level: 70"))
         window._configure_trade_presets(low_level)
@@ -647,7 +647,7 @@ Item Level: 85
         window._parsed_item = craftable_item
         window._configure_trade_presets(craftable_item)
         assert window.trade_preset_combo.currentText() == "完成品"
-        assert window.trade_preset_combo.itemText(1) == "クラフトベース"
+        assert window.trade_preset_combo.itemText(1) == "ベースアイテム"
         assert window.trade_preset_combo.count() == 2
     finally:
         window.close()

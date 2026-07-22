@@ -559,7 +559,7 @@ class PoetoreWindow(QWidget):
         top_options = QHBoxLayout()
         top_options.setSpacing(6)
         self.trade_preset_combo = _BinaryToggle(
-            ("完成品", PRESET_FINISHED), ("クラフトベース", PRESET_BASE),
+            ("完成品", PRESET_FINISHED), ("ベースアイテム", PRESET_BASE),
         )
         self.trade_preset_combo.currentIndexChanged.connect(self._trade_preset_changed)
         top_options.addWidget(self.trade_preset_combo)
@@ -567,7 +567,7 @@ class PoetoreWindow(QWidget):
             ("ユニーク以外", False), ("マジック完全一致", True),
         )
         self.magic_rarity_toggle.setToolTip(
-            "マジックのクラフトベースだけに絞る場合は「マジック完全一致」を選択"
+            "マジックのベースアイテムだけに絞る場合は「マジック完全一致」を選択"
         )
         self.magic_rarity_toggle.hide()
 
@@ -1629,7 +1629,7 @@ class PoetoreWindow(QWidget):
             )
         else:
             self.trade_preset_combo.setToolTip(
-                "未完成でクラフト価値がある装備は、完成品とクラフトベースを切り替えて検索できます。"
+                "未完成でクラフト価値がある装備は、完成品とベースアイテムを切り替えて検索できます。"
             )
         self.trade_preset_combo.blockSignals(False)
         self._configure_magic_rarity_toggle(item)
@@ -2021,7 +2021,7 @@ class PoetoreWindow(QWidget):
             ))
         if preset == PRESET_BASE:
             self.price_status.setText(
-                "クラフトベースとして、ベースタイプとアイテムレベルを中心に検索します。"
+                "ベースアイテムとして、ベースタイプとアイテムレベルを中心に検索します。"
             )
         elif item is not None and uses_dedicated_exact_preset(item):
             self.price_status.setText(
