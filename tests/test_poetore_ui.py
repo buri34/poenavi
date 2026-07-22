@@ -693,21 +693,21 @@ def test_gem_quality_chip_uses_read_quality_and_can_be_toggled_and_edited(qapp):
 品質: +16%
 """)
         window._parsed_item = item
-        window._configure_gem_quality(item)
+        window._configure_quality(item)
 
         assert not window.gem_quality_tag.isHidden()
         assert window.gem_quality_edit.text() == "16"
-        assert window._selected_gem_quality() == 16
+        assert window._selected_quality() == 16
         assert window.gem_quality_toggle.text() == "☑ 品質："
 
         window.gem_quality_toggle.click()
-        assert window._selected_gem_quality() is None
+        assert window._selected_quality() is None
         assert window.gem_quality_edit.font().strikeOut()
 
         window.gem_quality_edit.setFocus()
         window.gem_quality_edit.selectAll()
         QTest.keyClicks(window.gem_quality_edit, "20")
-        assert window._selected_gem_quality() == 20
+        assert window._selected_quality() == 20
         assert not window.gem_quality_edit.font().strikeOut()
 
         window._populate_stat_filters((TradeStatFilter(
@@ -739,11 +739,55 @@ def test_gem_quality_chip_initial_state_matches_awakened(
 品質: +{quality}%
 """)
         with patch("src.poetore.ui.gem_metadata", return_value=metadata):
-            window._configure_gem_quality(item)
+            window._configure_quality(item)
 
         assert window.gem_quality_tag.isHidden() is (not visible)
-        assert window._selected_gem_quality() == (quality if enabled else None)
+        assert window._selected_quality() == (quality if enabled else None)
         assert window.gem_quality_tag.property("active") is enabled
+    finally:
+        window.close()
+
+
+def test_non_gem_quality_chip_matches_awakened_exact_rules(qapp):
+    window = PoetoreWindow()
+    try:
+        armour = parse_item_text("""Item Class: Body Armours
+Rarity: Rare
+Test Armour
+Sacred Chainmail
+--------
+Quality: +30%
+Item Level: 86
+""")
+        window._parsed_item = armour
+        window._configure_trade_presets(armour)
+        window._configure_quality(armour)
+        assert window.gem_quality_tag.isHidden()
+
+        window.trade_preset_combo.setCurrentIndex(1)
+        assert not window.gem_quality_tag.isHidden()
+        assert window._selected_quality() == 30
+
+        flask20 = parse_item_text("""Item Class: Utility Flasks
+Rarity: Magic
+Test Flask
+Granite Flask
+--------
+Quality: +20%
+Item Level: 84
+""")
+        window._parsed_item = flask20
+        window._configure_quality(flask20)
+        assert not window.gem_quality_tag.isHidden()
+        assert window.gem_quality_edit.text() == "20"
+        assert window._selected_quality() is None
+
+        flask21 = replace(flask20, raw_text=flask20.raw_text + "\n21", properties={
+            **flask20.properties, "品質": "+21%",
+        })
+        window._parsed_item = flask21
+        window._configure_quality(flask21)
+        assert window._selected_quality() == 21
     finally:
         window.close()
 

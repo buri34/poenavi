@@ -920,7 +920,7 @@ class PoetoreWindow(QWidget):
         self._configure_item_state_filters(item)
         self._configure_item_level(item)
         self._configure_gem_level(item)
-        self._configure_gem_quality(item)
+        self._configure_quality(item)
         self._update_item_header(item)
         self.result_tree.clear()
         for label, value in (
@@ -980,7 +980,7 @@ class PoetoreWindow(QWidget):
         include_split = bool(self.split_combo.currentData())
         item_level_min, item_level_max = self._selected_item_level_range()
         gem_level_min = self._selected_gem_level()
-        gem_quality_min = self._selected_gem_quality()
+        quality_min = self._selected_quality()
         magic_exact = bool(
             self.magic_rarity_toggle.isVisible() and self.magic_rarity_toggle.currentData()
         )
@@ -1004,7 +1004,7 @@ class PoetoreWindow(QWidget):
                     item, preset, self._trade_base_type,
                 ) if needs_initial_filters else ()
                 effective_filters = initial_filters if needs_initial_filters else filters
-                if item.category == "gem":
+                if item.category in {"gem", "weapon", "armour", "flask", "tincture"}:
                     effective_filters = tuple(
                         row for row in effective_filters
                         if row.stat_id not in {"property.gem_level", "property.quality"}
@@ -1038,7 +1038,7 @@ class PoetoreWindow(QWidget):
                     item_level_min=item_level_min,
                     item_level_max=item_level_max,
                     gem_level_min=gem_level_min,
-                    gem_quality_min=gem_quality_min,
+                    quality_min=quality_min,
                 )
             except (TradeApiError, ValueError) as exc:
                 self._trade_signals.failed.emit(str(exc))
@@ -1216,18 +1216,26 @@ class PoetoreWindow(QWidget):
         text = self.gem_level_edit.text().strip()
         return int(text) if text else None
 
-    def _configure_gem_quality(self, item):
-        key = item.raw_text
+    def _configure_quality(self, item):
+        preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
+        key = (item.raw_text, preset)
         if key == getattr(self, "_gem_quality_item_key", None):
             return
         self._gem_quality_item_key = key
-        raw_quality = item.properties.get("品質") if item.category == "gem" else None
+        raw_quality = item.properties.get("品質") or item.properties.get("Quality")
         match = re.search(r"\d+", str(raw_quality or ""))
-        quality = int(match.group()) if match and int(match.group()) > 0 else None
-        self.gem_quality_tag.setVisible(quality is not None)
+        quality = int(match.group()) if match else None
+        visible = False
+        if item.category == "gem":
+            visible = quality is not None and quality > 0
+        elif item.category in {"weapon", "armour"}:
+            visible = preset == PRESET_BASE and quality is not None and quality >= 20
+        elif item.category in {"flask", "tincture"}:
+            visible = quality is not None and quality >= 20
+        self.gem_quality_tag.setVisible(visible)
         self.gem_quality_edit.setText(str(quality) if quality is not None else "")
         enabled = False
-        if quality is not None:
+        if visible and item.category == "gem":
             info = gem_metadata(self._trade_base_type or item.base_type)
             maximum = int(info.get("max_level", 20))
             enabled = (
@@ -1235,6 +1243,8 @@ class PoetoreWindow(QWidget):
                 or (maximum == 20 and not info.get("transfigured") and quality >= 16)
                 or ((maximum != 20 or info.get("transfigured")) and quality >= 20)
             )
+        elif visible:
+            enabled = quality > 20
         self._set_gem_quality_filter_enabled(enabled)
 
     def _toggle_gem_quality_filter(self):
@@ -1260,7 +1270,7 @@ class PoetoreWindow(QWidget):
             "クリックして品質条件を有効にします"
         )
 
-    def _selected_gem_quality(self) -> int | None:
+    def _selected_quality(self) -> int | None:
         if self.gem_quality_tag.isHidden() or not getattr(self, "_gem_quality_filter_enabled", False):
             return None
         text = self.gem_quality_edit.text().strip()
@@ -1275,6 +1285,7 @@ class PoetoreWindow(QWidget):
         item = getattr(self, "_parsed_item", None)
         self._configure_magic_rarity_toggle(item)
         if item is not None:
+            self._configure_quality(item)
             self._populate_stat_filters(resolve_trade_stat_filters(
                 item, preset, self._trade_base_type,
             ))
@@ -1358,7 +1369,9 @@ class PoetoreWindow(QWidget):
         for stat_filter in filters:
             if stat_filter.stat_id in {"property.item_level", "property.gem_level"}:
                 continue
-            if stat_filter.stat_id == "property.quality" and getattr(self, "_parsed_item", None) is not None and self._parsed_item.category == "gem":
+            if (stat_filter.stat_id == "property.quality"
+                    and getattr(self, "_parsed_item", None) is not None
+                    and self._parsed_item.category in {"gem", "weapon", "armour", "flask", "tincture"}):
                 continue
             value = "" if stat_filter.min_value is None else f"{stat_filter.min_value:g}"
             maximum = "" if stat_filter.max_value is None else f"{stat_filter.max_value:g}"

@@ -1670,7 +1670,7 @@ def build_search_query(
     item_level_min: int | None = None,
     item_level_max: int | None = None,
     gem_level_min: int | None = None,
-    gem_quality_min: int | None = None,
+    quality_min: int | None = None,
 ) -> dict:
     if trade_status not in TRADE_STATUS_OPTIONS:
         raise ValueError(f"未対応の取引方式です: {trade_status}")
@@ -1688,7 +1688,7 @@ def build_search_query(
         raise ValueError("アイテムレベルの最小値は最大値以下にしてください。")
     if gem_level_min is not None and not 1 <= gem_level_min <= 40:
         raise ValueError("ジェムレベルは1～40で指定してください。")
-    if gem_quality_min is not None and not 0 <= gem_quality_min <= 100:
+    if quality_min is not None and not 0 <= quality_min <= 100:
         raise ValueError("品質は0～100で指定してください。")
     if preset == PRESET_BASE and PRESET_BASE not in available_trade_presets(item):
         raise ValueError("このアイテムはクラフトベース検索の対象外です。")
@@ -1891,9 +1891,9 @@ def build_search_query(
         query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]["gem_level"] = {
             "min": gem_level_min
         }
-    if gem_quality_min is not None:
+    if quality_min is not None:
         query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]["quality"] = {
-            "min": gem_quality_min
+            "min": quality_min
         }
     return {"query": query, "sort": {"price": "asc"}}
 
@@ -1944,7 +1944,7 @@ def search_prices(
     item_level_min: int | None = None,
     item_level_max: int | None = None,
     gem_level_min: int | None = None,
-    gem_quality_min: int | None = None,
+    quality_min: int | None = None,
 ) -> PriceResult:
     league = league or active_pc_league()
     if (item.rarity.casefold() in {"magic", "マジック"}
@@ -1954,7 +1954,7 @@ def search_prices(
         item, trade_base_type, stat_filters, trade_status, trade_name, preset,
         trade_currency, include_corrupted, include_split, trade_discriminator, listed_within,
         magic_exact, exact_base_type, item_level_min, item_level_max, gem_level_min,
-        gem_quality_min,
+        quality_min,
     )
     _require_english_search_identity(payload)
     search_url = f"{API_ROOT}/search/{quote(league, safe='')}"

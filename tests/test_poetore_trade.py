@@ -1433,7 +1433,7 @@ def test_explicit_gem_quality_minimum_overrides_stat_filter():
         "property.quality", "品質", 16.0, "gem", True,
     )
     query = build_search_query(
-        item, "Arc", stat_filters=(legacy,), gem_quality_min=20,
+        item, "Arc", stat_filters=(legacy,), quality_min=20,
     )["query"]
     assert query["filters"]["misc_filters"]["filters"]["quality"] == {"min": 20}
 
