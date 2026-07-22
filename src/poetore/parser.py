@@ -273,6 +273,32 @@ def _modifier_header_details(
     return kind, int(tier_match.group(1)) if tier_match else None, affix, generation, name
 
 
+def _is_unique_flavour_section(
+    section: list[str], rarity: str, item_category: str, has_modifiers: bool,
+) -> bool:
+    """Unique末尾のフレーバーテキスト区画を検索Modから除外する。"""
+    if rarity.casefold() not in {"unique", "ユニーク"} or not has_modifiers:
+        return False
+    if any(_modifier_header_details(line) for line in section):
+        return False
+    if any(line in _FLAG_LINES for line in section):
+        return False
+    candidates = [
+        normalized
+        for line in section
+        if not _split_label(line)
+        for normalized in [_normalized_modifier_line(line, item_category)]
+        if normalized is not None
+    ]
+    if not candidates:
+        return False
+    # 通常コピーでは波括弧付き見出しがないため、公式Modへ解決できる区画は残す。
+    return not any(
+        default_metadata_index().match_with_option(text, "explicit")[0]
+        for text in candidates
+    )
+
+
 def _localized_name_lines(name_lines: list[str], rarity: str) -> tuple[str, str]:
     """日英両方の名前がある場合は、日本語表示用の組を優先する。"""
     separate_base = rarity.lower() in {"rare", "unique", "レア", "ユニーク"}
@@ -327,6 +353,16 @@ def parse_item_text(text: str) -> ParsedItem:
         header.get("item_class", ""), name, base_type, text,
     )
     for section_index, section in enumerate(sections[1:], start=1):
+        # Mod見出しの効果範囲は同一区画内だけ。次の区切り以降へ持ち越さない。
+        current_header_kind = None
+        current_header_tier = None
+        current_header_affix = None
+        current_header_generation = None
+        current_header_name = None
+        if reached_item_level and _is_unique_flavour_section(
+            section, rarity, item_category, bool(modifiers),
+        ):
+            continue
         # 装備性能・装備条件など、item levelより前の区画は検索Modではない。
         metadata_section = not reached_item_level
         for line in section:

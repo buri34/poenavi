@@ -14,7 +14,7 @@ from src.poetore.trade import (
     default_pc_league, elemental_dps,
     default_trade_currency, physical_dps, physical_dps_at_20_quality,
     resolve_trade_stat_filters, search_prices, unique_candidates, unique_variants,
-    uses_dedicated_exact_preset, resolve_official_base_type,
+    unresolved_modifier_warnings, uses_dedicated_exact_preset, resolve_official_base_type,
 )
 from src.poetore.trade import _request_json
 from src.poetore.trade import _base_defence_percentile
@@ -1239,6 +1239,28 @@ Onyx Amulet
     by_query_id = {row["id"]: row["value"] for row in stat_filters}
     assert by_query_id["explicit.stat_2587176568"] == {"min": 5.5}
     assert by_query_id["explicit.stat_752930724"] == {"max": -7.5}
+
+
+def test_replica_dragonfang_flavour_text_is_not_an_unresolved_modifier():
+    item = parse_item_text("""アイテムクラス: アミュレット
+レアリティ: ユニーク
+Replica Dragonfang's Flight
+Onyx Amulet
+--------
+アイテムレベル: 83
+--------
+{ ユニークモッド }
+全てのブライト(ファイヤーボール-ディバインブラスト)ジェムのレベル +3
+{ ユニークモッド }
+スキルのリザーブ効率が6(5-10)%増加する
+--------
+「私たちがこれを作ったのですか？何故記録がないのでしょう？
+何かが起こると警告はされていましたが……」
+―管理者クォトラ
+""")
+    assert unresolved_modifier_warnings(item) == (
+        "全てのブライト(ファイヤーボール-ディバインブラスト)ジェムのレベル +3",
+    )
 
 
 def test_crafted_affix_header_is_counted_for_exact_empty_slots():

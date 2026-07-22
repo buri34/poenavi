@@ -381,6 +381,38 @@ Onyx Amulet
         self.assertTrue(requirements.inverted)
         self.assertEqual((requirements.roll_min, requirements.roll_max), (5.0, 10.0))
 
+    def test_unique_flavour_text_after_separator_is_not_parsed_as_modifiers(self):
+        item = parse_item_text("""アイテムクラス: アミュレット
+レアリティ: ユニーク
+Replica Dragonfang's Flight
+Onyx Amulet
+--------
+装備要求:
+レベル: 56
+--------
+アイテムレベル: 83
+--------
+{ 暗黙モッド — 能力値 }
+全ての能力値 +15(10-16)
+(Attribute: 能力値は筋力、器用さ、知性)
+--------
+{ ユニークモッド }
+全てのブライト(ファイヤーボール-ディバインブラスト)ジェムのレベル +3
+{ ユニークモッド — 元素, 耐性 }
+全ての元素耐性 +6(5-10)%
+{ ユニークモッド }
+スキルのリザーブ効率が6(5-10)%増加する
+{ ユニークモッド }
+アイテムおよびジェムの要求能力値が8(10-5)%減少する
+(Attribute: 能力値は筋力、器用さ、知性)
+--------
+「私たちがこれを作ったのですか？何故記録がないのでしょう？
+何かが起こると警告はされていましたが……」
+―管理者クォトラ
+""")
+        self.assertEqual(len(item.modifiers), 5)
+        self.assertFalse(any("管理者クォトラ" in mod.text for mod in item.modifiers))
+
     def test_parses_synthesised_and_dual_influence_flags_in_both_languages(self):
         english = parse_item_text("""Item Class: Body Armours
 Rarity: Rare
