@@ -31,6 +31,24 @@ EXPECTED = {
     "HEI": ("heist_blueprint", 1, 1),
     "LOG": ("expedition_logbook", 6, 6),
     "ENG": ("armour", 10, 10),
+    "MIR": ("accessory", 5, 5),
+    "SYN": ("weapon", 7, 7),
+    "UID": ("weapon", 1, 1),
+    "FOU": ("accessory", 5, 5),
+    "ABY": ("abyss_jewel", 4, 4),
+    "TIN": ("tincture", 4, 4),
+    "VAL": ("map", 9, 9),
+    "CUR": ("currency", 0, 0),
+    "BST": ("captured_beast", 6, 6),
+    "ULT": ("map", 0, 0),
+}
+
+EXPECTED_FLAGS = {
+    "MIR": {"mirrored"},
+    "SYN": {"synthesised"},
+    "UID": {"unidentified"},
+    "FOU": {"foulborn"},
+    "VAL": {"unmodifiable", "foil"},
 }
 
 FORBIDDEN_HELP_TEXT = (
@@ -44,6 +62,11 @@ FORBIDDEN_HELP_TEXT = (
     "アタックダメージブロック率の最大値は",
     "テンポラルチェーンは呪術の一種",
     "Recently refers to the past",
+    "右クリックで活性化する",
+    "怪獣園に追加",
+    "全モンスターの90%を倒すことで報酬",
+    "このアイテムを右クリックした後",
+    "トライアルマスターの領域",
 )
 
 
@@ -58,10 +81,9 @@ def _filled_samples():
 
 def test_all_collected_samples_parse_with_expected_category_and_mod_count():
     rows = _samples()
-    assert len(rows) == 50
+    assert len(rows) == 54
     rows = _filled_samples()
-    # 新規サンプル入力後は、期待値を監査・追加するまでここで止める。
-    assert len(rows) == 34
+    assert len(rows) == 54
 
     for row in rows:
         item = parse_item_text(row["貼り付け本文"])
@@ -70,6 +92,17 @@ def test_all_collected_samples_parse_with_expected_category_and_mod_count():
         expected_count = detailed_count if row["ID"].endswith("-D") else normal_count
         assert item.category == expected_category, row["ID"]
         assert len(item.modifiers) == expected_count, row["ID"]
+
+
+def test_collected_samples_detect_expected_item_flags():
+    parsed = {
+        row["ID"]: parse_item_text(row["貼り付け本文"])
+        for row in _filled_samples()
+    }
+    for family, expected_flags in EXPECTED_FLAGS.items():
+        for suffix in ("N", "D"):
+            item = parsed[f"{family}-01-{suffix}"]
+            assert expected_flags <= set(item.flags), f"{family}-01-{suffix}"
 
 
 def test_collected_samples_never_expose_help_or_flavour_text_as_modifiers():

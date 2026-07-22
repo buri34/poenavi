@@ -42,10 +42,11 @@ _PROPERTY_LABELS = {
 _FLAG_LINES = {
     "未鑑定": "unidentified", "Unidentified": "unidentified",
     "コラプト状態": "corrupted", "Corrupted": "corrupted",
-    "ミラー品": "mirrored", "Mirrored": "mirrored",
+    "ミラー品": "mirrored", "ミラー状態": "mirrored", "Mirrored": "mirrored",
     "分割": "split", "スプリット": "split", "Split": "split",
     "Synthesised Item": "synthesised", "Synthesised": "synthesised",
     "シンセサイズアイテム": "synthesised", "シンセサイズ済みアイテム": "synthesised",
+    "シンセシスアイテム": "synthesised",
     "Foil": "foil", "Foil Unique": "foil", "フォイル": "foil", "フォイルユニーク": "foil",
     "Foulborn": "foulborn", "Foulborn Item": "foulborn", "穢れしアイテム": "foulborn",
     "Shaper Item": "influence:shaper", "シェイパーアイテム": "influence:shaper",
@@ -60,6 +61,7 @@ _FLAG_LINES = {
     "Eater of Worlds Item": "tangled_item", "イーター・オブ・ワールズアイテム": "tangled_item",
     "Veiled": "veiled", "ヴェール状態": "veiled", "ヴェール済み": "veiled",
     "Fractured Item": "fractured", "フラクチャーアイテム": "fractured",
+    "Unmodifiable": "unmodifiable", "変更不可": "unmodifiable",
 }
 _CATEGORY_WORDS = (
     (("Captured Beast", "捕獲したビースト", "捕獲済みビースト"), "captured_beast"),
@@ -80,7 +82,7 @@ _CATEGORY_WORDS = (
     (("メモリー", "Memory Line", "Atlas Memory"), "memory_line"),
     (("ログブック", "Logbook"), "expedition_logbook"),
     (("フラスコ", "Flask"), "flask"),
-    (("ティンクチャー", "Tincture"), "tincture"),
+    (("ティンクチャー", "チンキ", "Tincture"), "tincture"),
     (("強盗団装備", "Heist Equipment", "ブローチ", "Brooch", "道具", "Heist Tool",
       "クローク", "Heist Cloak", "トリンケット", "Trinket"), "heist_equipment"),
     (("インカージョンアイテム", "Incursion Item"), "incursion_item"),
@@ -105,11 +107,13 @@ _MODIFIER_KINDS = (
     (("Enchant", "エンチャント"), "enchant"),
     (("Veiled", "ヴェール"), "veiled"),
     (("Unique Mod", "Unique Modifier", "ユニークモッド", "ユニーク モディファイア"), "explicit"),
+    (("Monster Mod", "モンスターモッド"), "explicit"),
 )
 _UNSCALABLE_VALUE_SUFFIX = re.compile(
     r"\s*(?:[-—–]\s*)?(?:スケールできない値|Unscalable Value)\s*$",
     re.IGNORECASE,
 )
+_MUTATED_SUFFIX = re.compile(r"\s*[（(]mutated[）)]\s*$", re.IGNORECASE)
 _GLOSSARY_HELP_LINE = re.compile(
     r"^[（(]\s*[^()（）:：\r\n]{1,80}\s*[:：].*[）)]$",
 )
@@ -117,6 +121,7 @@ _JEWEL_HELP_LINES = {
     "パッシブツリーで割り当てられたジュエルソケットにはめる。右クリックしてソケットから取り外すことができる。",
     "パッシブツリーで割り当てられたジュエルソケット(大)または(中)にはめる。追加されたパッシブは他の半径を持つジュエルと相互作用しない。右クリックしてソケットから取り外すことができる。",
     "Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.",
+    "アイテムのアビスソケットまたはパッシブツリーで割り当てられたジュエルソケットにはめる。右クリックしてソケットから取り外すことができる。",
 }
 _MODIFIER_HELP_LINES = {
     "(アーマー、回避力、エナジーシールドは標準的な防御力である)",
@@ -127,6 +132,7 @@ _INLINE_MODIFIER_MARKER = re.compile(
     re.IGNORECASE,
 )
 _PARENTHETICAL_LINE = re.compile(r"^[（(].*[）)]$")
+_FOIL_VARIANT_LINE = re.compile(r"^(?:Foil|フォイル)\s*[（(].+[）)]$")
 _CATEGORY_HELP_LINES = {
     "flask": {
         "右クリックして飲む。腰につけているときだけチャージを貯めることができる。モンスターを倒すことで充填される。",
@@ -135,6 +141,7 @@ _CATEGORY_HELP_LINES = {
     "map": {
         "自身のマップデバイスで使用することでこのティアまたはそれよりティアの低いマップに移動する。マップは一度のみ使用できる。",
         "Travel to this Map by using it in a personal Map Device. Maps can only be used once.",
+        "自身のマップデバイスでこのアイテムを使用してこのマップに移動する。一度のみ使用できる。マップ内のすべてレアおよびユニークモンスターを含む全モンスターの90%を倒すことで報酬を獲得できる。生成されるエリアはアトラス パッシブ ツリーの影響を受けず、マップ デバイスを介して強化されない。",
     },
     "heist_blueprint": {
         "ローグハーバーにいる特定のNPCに話しかけ、諜報を使って追加の区画や部屋の情報を聞くことができます。この計画書をアーディアに渡して、グランドハイストに着手してください。",
@@ -142,6 +149,13 @@ _CATEGORY_HELP_LINES = {
     "expedition_logbook": {
         "このアイテムをダニグに渡し、自身の隠れ家でエクスペディションへのポータルを開く。",
         "Take this item to Dannig in your Hideout to open portals to an Expedition.",
+    },
+    "tincture": {
+        "右クリックで活性化する。ベルトある一度に適用できるチンキは1個のみ。マナ燃焼によりスタックごとに毎秒最大マナの1%が失われる。手動で不活性化することができ、マナが0に達すると自動的に不活性化される。",
+    },
+    "captured_beast": {
+        "右クリックしてこのモンスターを怪獣園に追加する。",
+        "Right-click to add this to your bestiary.",
     },
 }
 
@@ -201,14 +215,11 @@ def _category(item_class: str) -> str:
 
 
 def _category_with_help_text(item_class: str, text: str) -> str:
-    category = _category(item_class)
-    if category != "unknown":
-        return category
     lowered = text.casefold()
     if ("right-click to add this to your bestiary" in lowered or
-            "ビースト図鑑に追加" in text):
+            "ビースト図鑑に追加" in text or "怪獣園に追加" in text):
         return "captured_beast"
-    return category
+    return _category(item_class)
 
 
 def _category_with_item_identity(
@@ -240,7 +251,8 @@ def _normalized_modifier_line(line: str, item_category: str | None = None) -> st
         return None
     if line.strip() in _CATEGORY_HELP_LINES.get(item_category or "", set()):
         return None
-    normalized = _UNSCALABLE_VALUE_SUFFIX.sub("", line).rstrip()
+    normalized = _MUTATED_SUFFIX.sub("", line)
+    normalized = _UNSCALABLE_VALUE_SUFFIX.sub("", normalized).rstrip()
     return normalized or None
 
 
@@ -290,6 +302,7 @@ def _modifier_header_details(
         affix = kind if kind in {"prefix", "suffix"} else None
     generation = next((value for labels, value in (
         (("foulborn", "ファウルボーン"), "foulborn"),
+        (("monster mod", "モンスターモッド"), "monster"),
         (("crusader", "クルセーダー"), "crusader"), (("warlord", "ウォーロード"), "warlord"),
         (("hunter", "ハンター"), "hunter"), (("redeemer", "リディーマー"), "redeemer"),
         (("shaper", "シェイパー"), "shaper"), (("elder", "エルダー"), "elder"),
@@ -416,6 +429,10 @@ def parse_item_text(text: str) -> ParsedItem:
             if line in _FLAG_LINES:
                 flags.append(_FLAG_LINES[line])
                 continue
+            if _FOIL_VARIANT_LINE.fullmatch(line):
+                flags.append("foil")
+                properties["Foil Variant"] = line
+                continue
             pair = _split_label(line)
             if pair:
                 label, value = pair
@@ -452,6 +469,7 @@ def parse_item_text(text: str) -> ParsedItem:
             # 通常コピーはMod見出しがないため、従来のメタデータ照合経路を維持する。
             if detailed_copy and not section_has_modifier_evidence:
                 continue
+            is_mutated = _MUTATED_SUFFIX.search(line) is not None
             line = _normalized_modifier_line(line, item_category)
             if line is None:
                 continue
@@ -533,7 +551,7 @@ def parse_item_text(text: str) -> ParsedItem:
                 better=metadata.better if metadata else None,
                 inverted=(metadata.inverted ^ direction_inverted) if metadata else False,
                 generation=(kind if kind == "veiled" else current_header_generation)
-                if from_header else kind,
+                if from_header else ("foulborn" if is_mutated else kind),
                 option_value=option.value if option else None,
                 option_text=option.japanese if option else None,
                 oils=option.oils if option else (),
@@ -550,6 +568,7 @@ def parse_item_text(text: str) -> ParsedItem:
 
     if (
         "foulborn" in f"{name}\n{base_type}".casefold()
+        or "ファウルボーン" in f"{name}\n{base_type}"
         or "ファウルボーンユニークモッド" in text
         or "Foulborn Unique Mod" in text
     ):
