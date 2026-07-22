@@ -354,6 +354,23 @@ def test_unidentified_unique_candidates_can_be_selected(qapp):
         window.close()
 
 
+def test_unidentified_unique_base_name_is_not_used_as_trade_name(qapp):
+    item = parse_item_text("""アイテムクラス: スタッフ
+レアリティ: ユニーク
+Gnarled Branch
+--------
+スタッフ
+物理ダメージ: 9-19
+--------
+アイテムレベル: 77
+--------
+未鑑定
+""")
+
+    assert item.name == item.base_type == "Gnarled Branch"
+    assert PoetoreWindow._captured_unique_name(item) is None
+
+
 def test_unique_variant_discriminator_can_be_selected(qapp):
     window = PoetoreWindow()
     try:

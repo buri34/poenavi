@@ -1077,7 +1077,7 @@ class PoetoreWindow(QWidget):
             QMessageBox.warning(self, "取り込めませんでした", f"PoEのアイテムコピーを取得できませんでした。\n{exc}")
             return
         self._trade_base_type = detailed_item.base_type
-        self._trade_item_name = detailed_item.name if detailed_item.rarity.casefold() in {"unique", "ユニーク"} else None
+        self._trade_item_name = self._captured_unique_name(detailed_item)
         self._preset_item_key = None
         self._reset_unique_candidates()
         self.mod_filter_tree.clear()
@@ -1085,6 +1085,16 @@ class PoetoreWindow(QWidget):
         self.parse_current_text()
         self.show_at_context(self._placement_context)
         self.search_current_item()
+
+    @staticmethod
+    def _captured_unique_name(item) -> str | None:
+        """未鑑定Uniqueの1行名（ベース名）を固有名として扱わない。"""
+        if item.rarity.casefold() not in {"unique", "ユニーク"}:
+            return None
+        if ("unidentified" in item.flags
+                and item.name.strip().casefold() == item.base_type.strip().casefold()):
+            return None
+        return item.name
 
     def show_at_context(self, context: PlacementContext | None = None, activate: bool = True):
         context = context or capture_placement_context()
