@@ -1523,6 +1523,15 @@ def resolve_trade_stat_filters(
                 candidates.append(entry)
         if not candidates:
             continue
+        if modifier.stat_id:
+            exact_candidates = [
+                entry for entry in candidates
+                if str(entry.get("id")) == modifier.stat_id
+            ]
+            if exact_candidates:
+                # 日本語Trade APIには同じ表示テンプレートを持つ別statがある。
+                # メタデータでIDを確定できた場合は曖昧候補を増やさない。
+                candidates = exact_candidates
         if item.category == "weapon" and len(candidates) > 1:
             local = [entry for entry in candidates if "(ローカル)" in str(entry.get("text", ""))]
             if local:
@@ -1539,6 +1548,10 @@ def resolve_trade_stat_filters(
             maximum = None
             if modifier.stat_id == str(entry["id"]):
                 metadata, _ = default_metadata_index().match(modifier.text, modifier.kind)
+                if metadata is None and modifier.ref:
+                    metadata, _ = default_metadata_index().match_ref(
+                        modifier.ref, modifier.kind,
+                    )
                 if metadata:
                     value, maximum = metadata.search_bounds(
                         value,

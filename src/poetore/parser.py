@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 
 from .models import ItemModifier, ParsedItem
-from .metadata import default_metadata_index
+from .metadata import default_metadata_index, normalize_stat_text
 
 
 class ItemParseError(ValueError):
@@ -119,6 +119,14 @@ _MODIFIER_HELP_LINES = {
     "(アーマー、回避力、エナジーシールドは標準的な防御力である)",
     "(Armour, Evasion Rating and Energy Shield are the standard Defences)",
 }
+
+# Replica固有Modなど、公式Trade statは「増加」を正方向として持つ一方、
+# 詳細コピーでは同じstatが「減少」として出るものを明示的に正規化する。
+# 広範な語句置換は別statの誤照合を招くため、確認済みテンプレートだけを扱う。
+_DIRECTIONAL_STAT_ALIASES = {
+    normalize_stat_text("アイテムおよびジェムの要求能力値が#%減少する"):
+        "アイテムおよびジェムの要求能力値が#%増加する",
+}
 _JEWEL_CATEGORIES = {"jewel", "abyss_jewel", "cluster_jewel"}
 _MAP_TIER_IN_NAME = re.compile(
     r"(?:\bMap|マップ)\s*[（(]\s*(?:Tier|ティア)\s*[:：]?\s*(\d+)\s*[）)]",
@@ -212,7 +220,8 @@ def _roll_bounds(text: str) -> tuple[float | None, float | None]:
     matches = re.findall(r"\(\s*(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)\s*\)", text)
     if not matches:
         return None, None
-    return min(float(low) for low, _ in matches), max(float(high) for _, high in matches)
+    endpoints = [float(value) for bounds in matches for value in bounds]
+    return min(endpoints), max(endpoints)
 
 
 def _modifier_header_kind(line: str) -> str | None:
@@ -396,6 +405,14 @@ def parse_item_text(text: str) -> ParsedItem:
             metadata, option, confidence = default_metadata_index().match_with_option(
                 metadata_text, kind,
             )
+            direction_inverted = False
+            if metadata is None:
+                alias = _DIRECTIONAL_STAT_ALIASES.get(normalize_stat_text(metadata_text))
+                if alias:
+                    metadata, option, confidence = default_metadata_index().match_with_option(
+                        alias, kind,
+                    )
+                    direction_inverted = metadata is not None
             if metadata is None and kind == "veiled" and current_header_name:
                 metadata, confidence = default_metadata_index().match_ref(
                     current_header_name, kind,
@@ -421,7 +438,7 @@ def parse_item_text(text: str) -> ParsedItem:
                 roll_min=roll_min,
                 roll_max=roll_max,
                 better=metadata.better if metadata else None,
-                inverted=metadata.inverted if metadata else False,
+                inverted=(metadata.inverted ^ direction_inverted) if metadata else False,
                 generation=(kind if kind == "veiled" else current_header_generation)
                 if from_header else kind,
                 option_value=option.value if option else None,

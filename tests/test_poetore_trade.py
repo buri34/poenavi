@@ -1193,6 +1193,54 @@ Iron Ring
     assert "foulborn_item" not in query["filters"]["misc_filters"]["filters"]
 
 
+def test_replica_dragonfang_uses_distinct_reservation_and_requirements_filters():
+    item = parse_item_text("""アイテムクラス: アミュレット
+レアリティ: ユニーク
+Replica Dragonfang's Flight
+Onyx Amulet
+--------
+アイテムレベル: 83
+--------
+{ 暗黙モッド — 能力値 }
+全ての能力値 +15(10-16)
+--------
+{ ユニークモッド — 元素, 耐性 }
+全ての元素耐性 +6(5-10)%
+{ ユニークモッド }
+スキルのリザーブ効率が6(5-10)%増加する
+{ ユニークモッド }
+アイテムおよびジェムの要求能力値が8(10-5)%減少する
+""")
+    filters = resolve_trade_stat_filters(item)
+    by_id = {row.stat_id: row for row in filters}
+    assert set(by_id) == {
+        "implicit.stat_1379411836",
+        "explicit.stat_2901986750",
+        "explicit.stat_2587176568",
+        "explicit.stat_752930724",
+    }
+    assert by_id["explicit.stat_2587176568"].text.startswith("スキルのリザーブ効率")
+    requirements = by_id["explicit.stat_752930724"]
+    assert requirements.text.startswith("アイテムおよびジェムの要求能力値")
+    assert requirements.min_value == 7.5
+    assert requirements.inverted is True
+
+    query = build_search_query(
+        item, "Onyx Amulet", trade_name="Replica Dragonfang's Flight",
+        stat_filters=tuple(replace(
+            row, enabled=row.stat_id in {
+                "explicit.stat_2587176568", "explicit.stat_752930724",
+            },
+        ) for row in filters),
+    )["query"]
+    stat_filters = [
+        row for group in query["stats"] for row in group["filters"]
+    ]
+    by_query_id = {row["id"]: row["value"] for row in stat_filters}
+    assert by_query_id["explicit.stat_2587176568"] == {"min": 5.5}
+    assert by_query_id["explicit.stat_752930724"] == {"max": -7.5}
+
+
 def test_crafted_affix_header_is_counted_for_exact_empty_slots():
     item = parse_item_text("""アイテムクラス: 指輪
 レアリティ: レア

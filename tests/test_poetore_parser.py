@@ -362,6 +362,25 @@ Iron Ring
         self.assertEqual(item.modifiers[-1].generation, "foulborn")
         self.assertTrue(all(modifier.stat_id for modifier in item.modifiers))
 
+    def test_replica_dragonfang_reduced_requirements_resolves_signed_stat(self):
+        item = parse_item_text("""アイテムクラス: アミュレット
+レアリティ: ユニーク
+Replica Dragonfang's Flight
+Onyx Amulet
+--------
+アイテムレベル: 83
+--------
+{ ユニークモッド }
+スキルのリザーブ効率が6(5-10)%増加する
+{ ユニークモッド }
+アイテムおよびジェムの要求能力値が8(10-5)%減少する
+""")
+        reservation, requirements = item.modifiers
+        self.assertEqual(reservation.stat_id, "explicit.stat_2587176568")
+        self.assertEqual(requirements.stat_id, "explicit.stat_752930724")
+        self.assertTrue(requirements.inverted)
+        self.assertEqual((requirements.roll_min, requirements.roll_max), (5.0, 10.0))
+
     def test_parses_synthesised_and_dual_influence_flags_in_both_languages(self):
         english = parse_item_text("""Item Class: Body Armours
 Rarity: Rare
