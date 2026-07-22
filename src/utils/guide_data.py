@@ -8,7 +8,9 @@ import html
 import json
 import os
 import re
+import shutil
 import sys
+from datetime import datetime
 
 from src.utils.poe_version_data import POE1, get_guide_filename
 from src.utils.i18n import DEFAULT_LOCALE, get_locale, tr
@@ -74,6 +76,18 @@ def save_guide_data(data: dict, poe_version: str = POE1, language: str = DEFAULT
     """ガイドデータを保存"""
     path = get_guide_path(poe_version, language)
     try:
+        if (
+            poe_version == POE1
+            and os.environ.get("POENAVI_ACT1_GUIDE_DEV") == "1"
+            and os.path.exists(path)
+        ):
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+            backup_path = os.path.join(
+                os.path.dirname(path),
+                f"guide_data.backup-before-act1-guide-edit-{timestamp}.json",
+            )
+            shutil.copy2(path, backup_path)
+            print(f"[GuideData] Backup: {backup_path}")
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         print(f"[GuideData] Saved ({poe_version}): {path}")

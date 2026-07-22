@@ -1,5 +1,5 @@
 {
-    "schemaVersion": 2,
+    "schemaVersion": 3,
     "language": "ja",
     "language_selected": false,
     "hotkeys": {
@@ -58,14 +58,14 @@
         "locked": true,
         "click_through_when_locked": true,
         "opacity": 0.72,
-        "font_size": 15,
+        "font_size": 18,
         "max_lines": 4,
         "position": {
             "x": 80,
             "y": 160
         },
-        "width": 360,
-        "height": 100,
+        "width": 800,
+        "height": 130,
         "show_lock_button": true,
         "faded_opacity": 0.38,
         "fade_enabled": true,

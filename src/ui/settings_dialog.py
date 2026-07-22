@@ -13,6 +13,7 @@ from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_act_li
 from src.utils.zone_master_data import load_zone_master_data, save_zone_master_data
 from src.utils.config_manager import ConfigManager
 from src.utils.area_notes import get_area_note, set_area_note
+import os
 from src.utils.zone_lookup import get_zone_display_name
 from src.utils.i18n import EN, JA, get_locale, tr, tr_ui
 from src.update.release_channel import releases_page_url
@@ -43,6 +44,15 @@ def _mini_navi_flag_section_title(zone_id: str, flag_key: str) -> str:
     if zone_id in ("act8_area13", "act8_area14"):
         return f"通常ルート、かつフラグ成立時: {flag_key}"
     return f"フラグ別: {flag_key}"
+
+
+def _act1_guide_dev_editor_enabled(poe_version: str, zone_id: str) -> bool:
+    """開発用起動時だけPoE1 Act 1の公式ガイド編集を許可する。"""
+    return (
+        os.environ.get("POENAVI_ACT1_GUIDE_DEV") == "1"
+        and poe_version == POE1
+        and zone_id.startswith("act1_")
+    )
 
 def _spinbox_style(width=55, height=28):
     """SpinBox共通スタイル（ボタン押しやすい版）"""
@@ -2165,6 +2175,20 @@ class SettingsDialog(QDialog):
         kofi_btn.clicked.connect(lambda: webbrowser.open("https://ko-fi.com/buri8857"))
         about_layout.addWidget(kofi_btn)
 
+        # Patreonボタン
+        patreon_btn = QPushButton(tr_ui("Patreon で応援する"))
+        patreon_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: rgba(255, 66, 77, 200); color: white;
+                border: none; border-radius: 6px;
+                padding: 12px 20px; font-size: 14px; font-weight: bold;
+            }}
+            QPushButton:hover {{ background: rgba(255, 86, 97, 220); }}
+        """)
+        patreon_btn.setCursor(Qt.PointingHandCursor)
+        patreon_btn.clicked.connect(lambda: webbrowser.open("https://www.patreon.com/cw/Buri8857"))
+        about_layout.addWidget(patreon_btn)
+
         support_note = QLabel(tr_ui("※ ブラウザが開きます"))
         support_note.setStyleSheet(f"color: rgba(200,200,200,150); font-size: 11px;")
         about_layout.addWidget(support_note)
@@ -2596,6 +2620,25 @@ class SettingsDialog(QDialog):
                     self._open_area_note_editor(zid, zname)
                 )
                 row.addWidget(memo_button)
+
+                if _act1_guide_dev_editor_enabled(self.poe_version, zone_id):
+                    guide_button = self._create_small_action_button(
+                        "📝", tr_ui("Act 1公式ガイドを編集")
+                    )
+                    guide_button.clicked.connect(
+                        lambda checked=False, ne=name_edit, zid=zone_id:
+                        self._open_guide_editor(ne, zid)
+                    )
+                    row.addWidget(guide_button)
+
+                    mini_button = self._create_small_action_button(
+                        "み", tr_ui("Act 1みになびを編集")
+                    )
+                    mini_button.clicked.connect(
+                        lambda checked=False, ne=name_edit, zid=zone_id:
+                        self._open_mini_navi_editor(ne, zid)
+                    )
+                    row.addWidget(mini_button)
 
                 row.addStretch()
                 act_layout.addLayout(row)

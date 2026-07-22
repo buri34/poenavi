@@ -133,3 +133,42 @@ def test_start_update_reuses_verified_download():
 
     window._on_update_download_ready.assert_called_once_with(archive, release)
     window.update_controller.download.assert_not_called()
+
+
+def test_close_before_initial_position_does_not_overwrite_saved_geometry():
+    """Startup update exit must preserve the user's saved window geometry."""
+    window = MainWindow.__new__(MainWindow)
+    QMainWindow.__init__(window)
+    window._main_window_initialized = False
+    window._initial_positioned = False
+    window.setGeometry(0, 0, 420, 1200)
+
+    with patch("src.ui.main_window.ConfigManager.load_config") as load_config, \
+         patch("src.ui.main_window.ConfigManager.save_config") as save_config, \
+         patch.object(QMainWindow, "closeEvent"):
+        window.closeEvent(Mock())
+
+    load_config.assert_not_called()
+    save_config.assert_not_called()
+
+
+def test_close_after_initial_position_saves_current_geometry():
+    window = MainWindow.__new__(MainWindow)
+    QMainWindow.__init__(window)
+    window._main_window_initialized = True
+    window._initial_positioned = True
+    window.setGeometry(12, 34, 800, 900)
+    config = {"window_geometry": {"x": 1, "y": 2, "width": 3, "height": 4}}
+
+    with patch("src.ui.main_window.ConfigManager.load_config", return_value=config), \
+         patch("src.ui.main_window.ConfigManager.save_config") as save_config, \
+         patch.object(QMainWindow, "closeEvent"):
+        window.closeEvent(Mock())
+
+    assert config["window_geometry"] == {
+        "x": 12,
+        "y": 34,
+        "width": 800,
+        "height": 900,
+    }
+    save_config.assert_called_once_with(config)

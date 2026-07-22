@@ -481,3 +481,4 @@ MIT License — 詳細は [LICENSE](LICENSE) を参照
 
 - [OFUSE（おふせ）で応援する](https://ofuse.me/48eca107)
 - [Ko-fi で応援する](https://ko-fi.com/buri8857)
+- [Patreon で応援する](https://www.patreon.com/cw/Buri8857)

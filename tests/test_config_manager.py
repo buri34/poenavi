@@ -43,6 +43,97 @@ def write_default_config(app_dir: Path, overrides=None):
 
 
 class ConfigManagerTest(unittest.TestCase):
+    def test_schema_v3_migrates_only_old_mini_navi_defaults(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 1,
+            "mini_guide_overlay": {
+                "width": 360,
+                "height": 100,
+                "font_size": 16,
+            },
+        })
+
+        self.assertEqual(migrated["schemaVersion"], 3)
+        self.assertEqual(migrated["mini_guide_overlay"]["width"], 800)
+        self.assertEqual(migrated["mini_guide_overlay"]["height"], 130)
+        self.assertEqual(migrated["mini_guide_overlay"]["font_size"], 18)
+
+    def test_schema_v3_preserves_custom_mini_navi_values(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 1,
+            "mini_guide_overlay": {
+                "width": 795,
+                "height": 126,
+                "font_size": 17,
+            },
+        })
+
+        self.assertEqual(migrated["mini_guide_overlay"]["width"], 795)
+        self.assertEqual(migrated["mini_guide_overlay"]["height"], 126)
+        self.assertEqual(migrated["mini_guide_overlay"]["font_size"], 17)
+
+    def test_schema_v3_size_and_font_migrations_are_independent(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 1,
+            "mini_guide_overlay": {
+                "width": 600,
+                "height": 150,
+                "font_size": 16,
+            },
+        })
+
+        self.assertEqual(migrated["mini_guide_overlay"]["width"], 600)
+        self.assertEqual(migrated["mini_guide_overlay"]["height"], 150)
+        self.assertEqual(migrated["mini_guide_overlay"]["font_size"], 18)
+
+    def test_schema_v3_migration_runs_only_once(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 3,
+            "mini_guide_overlay": {
+                "width": 360,
+                "height": 100,
+                "font_size": 16,
+            },
+        })
+
+        self.assertEqual(migrated["mini_guide_overlay"]["width"], 360)
+        self.assertEqual(migrated["mini_guide_overlay"]["height"], 100)
+        self.assertEqual(migrated["mini_guide_overlay"]["font_size"], 16)
+
+    def test_load_config_persists_localized_schema_v2_mini_navi_migration(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp) / "app"
+            user_dir = Path(tmp) / "user-data"
+            app_dir.mkdir()
+            user_dir.mkdir()
+            write_default_config(app_dir, {
+                "mini_guide_overlay": {
+                    "width": 800,
+                    "height": 130,
+                    "font_size": 18,
+                },
+            })
+            config_path = user_dir / ConfigManager.CONFIG_FILE
+            config_path.write_text(json.dumps({
+                "schemaVersion": 2,
+                "mini_guide_overlay": {
+                    "width": 360,
+                    "height": 100,
+                    "font_size": 15,
+                },
+            }), encoding="utf-8")
+
+            with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}), \
+                 patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
+                loaded = ConfigManager.load_config()
+                persisted = json.loads(config_path.read_text(encoding="utf-8"))
+
+            self.assertEqual(loaded["mini_guide_overlay"]["width"], 800)
+            self.assertEqual(loaded["mini_guide_overlay"]["height"], 130)
+            self.assertEqual(loaded["mini_guide_overlay"]["font_size"], 18)
+            self.assertEqual(persisted["mini_guide_overlay"], loaded["mini_guide_overlay"])
+            self.assertEqual(persisted["schemaVersion"], 3)
+
     def test_save_and_load_uses_user_data_dir_override(self):
         with tempfile.TemporaryDirectory() as tmp:
             app_dir = Path(tmp) / "app"

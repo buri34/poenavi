@@ -205,11 +205,11 @@ class MiniNaviOverlay(QWidget):
         "fade_delay_ms": 5000,
         "window_opacity": 100,
         "text_opacity": 100,
-        "font_size": 15,
+        "font_size": 18,
         "max_lines": 3,
         "position": {"x": 80, "y": 160},
-        "width": 360,
-        "height": 100,
+        "width": 800,
+        "height": 130,
         "show_lock_button": True,
         "always_on_top": True,
     }
@@ -316,11 +316,11 @@ class MiniNaviOverlay(QWidget):
         cfg = self.config()
         if refresh_window_flags:
             self._apply_window_flags()
-        self.resize(int(cfg.get("width", 360)), int(cfg.get("height", 100)))
+        self.resize(int(cfg.get("width", 800)), int(cfg.get("height", 130)))
         pos = cfg.get("position", {}) if isinstance(cfg.get("position"), dict) else {}
         self.move(int(pos.get("x", 80)), int(pos.get("y", 160)))
         self._show_strong_opacity(restart_fade=False)
-        font_size = int(cfg.get("font_size", 15))
+        font_size = int(cfg.get("font_size", 18))
         window_opacity_pct = max(5, min(int(cfg.get("window_opacity", 100)), 100))
         bg_alpha = int(window_opacity_pct / 100.0 * 255)
         border_alpha = int(window_opacity_pct / 100.0 * 140)
@@ -1236,7 +1236,6 @@ class RouteSelectionDialog(QDialog):
 
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
-        
         desc = QLabel(tr_ui("攻略ルートを選択してください。後から設定画面で変更できます。"))
         desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px;")
         desc.setWordWrap(True)
@@ -3819,11 +3818,11 @@ class MainWindow(QMainWindow):
             ConfigManager.save_config(self.config)
 
     def eventFilter(self, obj, event):
-        """アプリ全体のマウスイベントを監視して端のリサイズを処理"""
+        """本体ウィンドウ内のマウスイベントだけで端のリサイズを処理する。"""
         if event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.MouseMove, QEvent.Type.MouseButtonRelease):
             # グローバル座標 → ウィンドウ座標
             if event.type() == QEvent.Type.MouseButtonPress and event.button() == Qt.LeftButton:
-                if self.window_locked:
+                if self.window_locked or not self._is_main_window_widget(obj):
                     return False
                 gpos = event.globalPosition().toPoint()
                 edges = self._global_detect_edge(gpos)
@@ -3864,10 +3863,21 @@ class MainWindow(QMainWindow):
                 return True
         
         return super().eventFilter(obj, event)
+
+    def _is_main_window_widget(self, obj):
+        """イベント元が本体または本体配下のウィジェットか判定する。"""
+        widget = obj if isinstance(obj, QWidget) else None
+        while widget is not None:
+            if widget is self:
+                return True
+            widget = widget.parentWidget()
+        return False
     
     def _global_detect_edge(self, gpos):
         """グローバル座標からリサイズ方向を検出"""
         geo = self.frameGeometry()
+        if not geo.contains(gpos):
+            return None
         m = self.EDGE_MARGIN
         edges = []
         if abs(gpos.x() - geo.left()) <= m:
@@ -6230,9 +6240,12 @@ class MainWindow(QMainWindow):
             if self.poe_version == POE1:
                 self._save_progress_flags()
         if actual_entry and self.poe_version == POE1:
-            # Act1 牢獄 -下層- / The Lower Prison 到達フラグ。
-            if zone_id == "act1_area8":
-                self.set_progress_flag("act1_lowerprison_enter")
+            # Act1 海底通路 到達フラグ。海岸へ戻った後のガイド切替に使う。
+            if zone_id == "act1_area4":
+                self.set_progress_flag("act1_submergedpassage_enter")
+            # Act1 水没した海底洞窟 到達フラグ。海底通路の復帰後ガイド切替に使う。
+            if zone_id == "act1_area9":
+                self.set_progress_flag("act1_floodeddepths_enter")
             # Act1 船の墓場の洞窟 到達フラグ。船の墓場の復帰後ガイド切替に使う。
             if zone_id == "act1_area13":
                 self.set_progress_flag("act1_shipgraveyardcave_enter")
@@ -6930,26 +6943,36 @@ class MainWindow(QMainWindow):
         self.move(x, y)
 
     def closeEvent(self, event):
-        # ウィンドウ位置・サイズを保存
-        # 他のウィンドウが終了直前に保存した設定（例: map_viewer_width/height）を
-        # 古い self.config で上書きしないよう、最新configを読み直して必要キーだけ更新する。
-        geo = self.geometry()
-        config = ConfigManager.load_config()
-        config["window_geometry"] = {
-            "x": geo.x(),
-            "y": geo.y(),
-            "width": geo.width(),
-            "height": geo.height(),
-        }
-        ConfigManager.save_config(config)
-        self.config = config
+        # 起動時アップデートでは、保存済みジオメトリを復元する前の仮サイズ
+        # (420x1200) のまま終了する。初期化・初期配置が完了した通常終了時だけ
+        # 位置とサイズを保存し、ユーザー設定を仮サイズで上書きしない。
+        if (
+            getattr(self, "_main_window_initialized", False)
+            and getattr(self, "_initial_positioned", False)
+        ):
+            # 他のウィンドウが終了直前に保存した設定（例: map_viewer_width/height）を
+            # 古い self.config で上書きしないよう、最新configを読み直して必要キーだけ更新する。
+            geo = self.geometry()
+            config = ConfigManager.load_config()
+            config["window_geometry"] = {
+                "x": geo.x(),
+                "y": geo.y(),
+                "width": geo.width(),
+                "height": geo.height(),
+            }
+            ConfigManager.save_config(config)
+            self.config = config
 
         # みになびは本体と独立したトップレベルウィンドウなので、アプリ終了時は
         # 明示的に一緒に閉じる。
-        if hasattr(self, "mini_navi_overlay"):
-            self.mini_navi_overlay.close()
-        
-        if self.keyboard_listener:
-            self.keyboard_listener.stop()
-        self.log_watcher.stop()
+        overlay = getattr(self, "mini_navi_overlay", None)
+        if overlay is not None:
+            overlay.close()
+
+        keyboard_listener = getattr(self, "keyboard_listener", None)
+        if keyboard_listener:
+            keyboard_listener.stop()
+        log_watcher = getattr(self, "log_watcher", None)
+        if log_watcher is not None:
+            log_watcher.stop()
         super().closeEvent(event)

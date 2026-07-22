@@ -23,17 +23,23 @@
         "mini_navi": {
           "text": "▸[wp]Activate the waypoint[move]<span style='color:#dddd44'>The Mud Flats</span> \n▸<span style='color:#ff6666'>If the entrance faces the lower right, then go up.</span> Proceed (if there is a wall, go to the bottom right of it)\n▸<span style='color:#dd66ff'>If the entrance faces left and downwards, then the direction would be either downwards or further to the right and downwards.</span> Proceed",
           "direction": "none"
+        },
+        "flags": {
+          "act1_submergedpassage_enter": {
+            "objective": "Enter The Tidal Island",
+            "layout": "",
+            "tips": "",
+            "mini_navi": {
+              "text": "[move]<span style='color:#dddd44'>Enter The Tidal Island</span>"
+            }
+          }
         }
       },
       "2": {
-        "objective": "Enter \"The Tidal Island\"",
+        "objective": "",
         "layout": "",
         "tips": "",
-        "direction": "none",
-        "mini_navi": {
-          "text": "[move]<span style='color:#dddd44'>The Tidal Island</span>",
-          "direction": "none"
-        }
+        "direction": "none"
       }
     }
   },
@@ -61,32 +67,32 @@
         "layout": "",
         "tips": "",
         "direction": "none",
-        "flags": {
-          "act1_lowerprison_enter": {
-            "objective": "Explore the area near the bridge and enter \"The Flooded Depths\".",
-            "layout": "\"The Flooded Depths\" must always be located in the area immediately before the bridge, and is typically found below the bridge.\n(However, please note that there is one exception: the layout can also be oriented upwards.)",
-            "tips": "",
-            "mini_navi": {
-              "text": "▸ Explore the area near the bridge,[move]<span style='color:#dddd44'>The Flooded Depths</span>\n(The entrance must be located in the area directly before the bridge, and while the entrance is typically located on the lower side of the bridge,\nHowever, there is also a layout where the elements are arranged vertically.",
-              "direction": "none"
-            },
-            "direction": "none"
-          }
-        },
         "mini_navi": {
-          "text": "▸[wp]Activate the waypoint, then,[move]<span style='color:#dddd44'>The Coast</span> Return",
+          "text": "▸[wp]Activate the waypoint, then return to [move]<span style='color:#dddd44'>The Coast</span>",
           "direction": "none"
+        },
+        "flags": {
+          "act1_floodeddepths_enter": {
+            "objective": "• Continue onward and enter The Ledge",
+            "layout": "",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸ Continue onward and enter [move]<span style='color:#dddd44'>The Ledge</span>",
+              "direction": "none"
+            }
+          }
         }
       },
       "2": {
-        "objective": "Open a portal in front of the bridge, then continue onward.\n(To ensure that you can return to this location immediately after reaching the prison, please proceed to the nearby The Flooded Depths.)",
-        "layout": "• <span style='color:#4488ff'>If the waypoint is below the entrance:</span>\n    – <span style='color:#dddd44'>Go to the lower right if that route is open.</span>\n    – <span style='color:#44cc44'>Otherwise, go to the upper left.</span>\n      Note: Only in this layout, the entrance to The Flooded Depths is above the approach to the bridge.\n  • <span style='color:#ff6666'>If the waypoint is above the entrance:</span>\n    – <span style='color:#dddd44'>Go to the upper left if that route is open.</span>\n    – <span style='color:#44cc44'>Otherwise, follow the upper wall to the lower right.</span>",
-        "tips": "• From this point on, use travel skills such as Frostblink and Dash more frequently.\n• The \"portal\" near the bridge will be revisited later to efficiently clear \"The Flooded Depths\".\nPlease note that if you use \"/exit\" or \"log out\", the portal will disappear.",
+        "objective": "• Enter The Flooded Depths midway through the area",
+        "layout": "• <span style='color:#4488ff'>If the waypoint is below the entrance:</span>\n    – <span style='color:#dddd44'>Go to the lower right if that route is open.</span>\n    – <span style='color:#44cc44'>Otherwise, go to the upper left.</span>\n      Note: Only in this layout, the entrance to The Flooded Depths is above the approach to the bridge.\n  • <span style='color:#ff6666'>If the waypoint is above the entrance:</span>\n    – <span style='color:#dddd44'>Go to the upper left if that route is open.</span>\n    – <span style='color:#44cc44'>Otherwise, follow the upper wall to the lower right.</span>\n\n• The Flooded Depths is always in the section before the bridge, below the bridge.",
+        "tips": "• From this point on, use travel skills such as Frostblink and Dash more frequently.",
+        "direction": "none",
         "mini_navi": {
-          "text": "▸In front of the bridge,[portal]Open a portal,[move]Proceed to The Ledge.\n▸<span style='color:#4488ff'>The waypoint is located at the bottom of the entrance.</span> One ⇒<span style='color:#dddd44'>Move to the lower right.</span> <span style='color:#44cc44'>If it's not possible, go to the top left.</span>\n▸<span style='color:#ff6666'>The waypoint is located at the top.</span> One ⇒<span style='color:#dddd44'>Move to the upper left.</span> <span style='color:#44cc44'>If you can't reach the top, go to the right and down along the wall.</span>",
+          "text": "▸Enter [move]<span style='color:#dddd44'>The Flooded Depths</span> midway through the area\n▸<span style='color:#4488ff'>The waypoint is below the entrance</span> ⇒ <span style='color:#dddd44'>Go to the lower right.</span> <span style='color:#44cc44'>If blocked, go to the upper left.</span>\n▸<span style='color:#ff6666'>The waypoint is above the entrance</span> ⇒ <span style='color:#dddd44'>Go to the upper left.</span> <span style='color:#44cc44'>If blocked, follow the upper wall to the lower right.</span>",
           "direction": "none"
-        },
-        "direction": "none"
+        }
       }
     }
   },
@@ -144,40 +150,39 @@
   "act1_area8": {
     "visits": {
       "1": {
-        "objective": "Activate the waypoint, return to the city using the waypoint.\n\n(City)\n• Take the portal to The Submerged Passage.",
-        "layout": "",
-        "tips": "• When returning to the city, be sure to use the Portal Scroll.\n(This preserves the portal to The Submerged Passage)",
+        "objective": "• Complete the Trial of Ascendancy.\n• Enter The Upper Prison",
+        "layout": "•<span style='color:#ff6666'>If there is nothing particularly visible in the lower space, starting from the waypoint</span> The challenge for Ascendancy lies on the left side.\n- The Trial of Ascendancy begins after entering from the waypoint to the left, and then moving to the upper left.\n– The exit is further to the left from there.\n•<span style='color:#dddd44'>If you see the space below when you see waypoint</span> The challenge for Ascendancy lies to the right.\n- In this case, it is possible to determine the location of the exit by identifying the position of the \"Ascendancy's Trial\" within the game.\n- First, enter from the right, starting with waypoint.\n> If the \"Ascendancy\" challenge requires you to reach a specific location, it's located on the upper left side of the map.\n• The exit is on the upper right.\n\"If the challenge from Ascendancy is immediately apparent, or if it's located just a short distance away, perhaps on the upper right side of the map.\"\n• The exit is on the left side of waypoint, so return when you finish the challenge.\n• From the left side, enter through waypoint and proceed to the lower right to exit.\n\"If the player has moved at least 2 spaces and is now in the position to the right and below the central square, then.\"\n• The exit is located to the lower right, as viewed from the location of the challenge.\n> If the \"Ascendancy\" challenge requires you to reach a specific location, it's likely located in the upper right corner of the map.\n• The exit is located to the upper left, relative to the position of the challenge.",
+        "tips": "🌟 Excellent area for experience\n\n• There are book icons near the Trial of Ascendancy.\n\n• The spike-tile room in the Trial of Ascendancy can be skipped with Frostblink.\n  After clicking the final object, you can leave through a portal.",
         "direction": "none",
         "mini_navi": {
-          "text": "▸[wp]Activate the waypoint, then use it to return to town.[town]<span style='color:#dddd44'>Town</span>\n▸【City】Take the portal to[move]<span style='color:#dddd44'>The Submerged Passage</span>",
+          "text": "▸[trial]<span style='color:#4488ff'>Complete the Trial of Ascendancy</span>\n▸ Enter [move]<span style='color:#dddd44'>The Upper Prison</span>",
           "direction": "none"
         }
       },
       "2": {
-        "objective": "• Complete the Trial of Ascendancy.\n• Enter The Upper Prison",
-        "layout": "•<span style='color:#ff6666'>If there is nothing particularly visible in the lower space, starting from the waypoint</span> The challenge for Ascendancy lies on the left side.\n- The Trial of Ascendancy begins after entering from the waypoint to the left, and then moving to the upper left.\n– The exit is further to the left from there.\n•<span style='color:#dddd44'>If you see the space below when you see waypoint</span> The challenge for Ascendancy lies to the right.\n- In this case, it is possible to determine the location of the exit by identifying the position of the \"Ascendancy's Trial\" within the game.\n- First, enter from the right, starting with waypoint.\n> If the \"Ascendancy\" challenge requires you to reach a specific location, it's located on the upper left side of the map.\n• The exit is on the upper right.\n\"If the challenge from Ascendancy is immediately apparent, or if it's located just a short distance away, perhaps on the upper right side of the map.\"\n• The exit is on the left side of waypoint, so return when you finish the challenge.\n• From the left side, enter through waypoint and proceed to the lower right to exit.\n\"If the player has moved at least 2 spaces and is now in the position to the right and below the central square, then.\"\n• The exit is located to the lower right, as viewed from the location of the challenge.\n> If the \"Ascendancy\" challenge requires you to reach a specific location, it's likely located in the upper right corner of the map.\n• The exit is located to the upper left, relative to the position of the challenge.",
-        "tips": "🌟 Excellent area for experience\n\n• There are book icons near the \"Ascendancy\" challenge.\n\n• The \"Trial of Ascendancy\" room, with its tiles that can be crossed with Frostblink, can be bypassed.\nOnce you click the last object, you can exit safely from portal.",
-        "direction": "none",
-        "mini_navi": {
-          "text": "▸[trial]<span style='color:#4488ff'>The Trial of Ascendancy</span>\n▸[move]<span style='color:#dddd44'>The Upper Prison</span>",
-          "direction": "none"
-        }
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
       }
     }
   },
   "act1_area9": {
     "visits": {
       "1": {
-        "objective": "• Continue and defeat the boss.\n• Return to town.\n\n(City)\n• Take the gem as a quest reward.\n• From the waypoint, \"The Lower Prison\"",
+        "objective": "• Continue onward and defeat the boss.\n• After the boss dies, take the boat that appears farther ahead back to The Submerged Passage.",
         "layout": "• If you continue on the main road until you see the waterway, you will generally be on the right path (smaller roads, tunnels, and bridges are usually incorrect).",
         "tips": "",
         "direction": "none",
         "mini_navi": {
-          "text": "▸Proceed further into the area[boss]Defeat the boss.\n▸ After defeating the boss,[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Take the gem as a quest reward.\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Lower Prison</span>",
+          "text": "▸ Continue onward and [boss]defeat the boss\n▸ After the boss dies, take the boat that appears farther ahead back to [move]<span style='color:#dddd44'>The Submerged Passage</span>",
           "direction": "none"
         }
       },
       "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
         "direction": "none"
       }
     }
