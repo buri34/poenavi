@@ -97,6 +97,9 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
             def _mutable_config(self):
                 return self.parent_config["mini_guide_overlay"]
 
+            def _geometry_config(self):
+                return self._mutable_config()
+
             def x(self):
                 return 123
 

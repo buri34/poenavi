@@ -16,9 +16,12 @@ class MiniNaviStandaloneTest(unittest.TestCase):
         cls.app = QApplication.instance() or QApplication([])
         cls.save_config_patch = patch.object(ConfigManager, "save_config")
         cls.save_config_patch.start()
+        cls.click_through_patch = patch.object(MiniNaviOverlay, "_apply_click_through")
+        cls.click_through_patch.start()
 
     @classmethod
     def tearDownClass(cls):
+        cls.click_through_patch.stop()
         cls.save_config_patch.stop()
 
     def test_overlay_is_top_level_but_keeps_logical_main_window(self):
