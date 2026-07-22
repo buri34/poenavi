@@ -25,18 +25,21 @@
           "direction": "none"
         },
         "flags": {
-          "act1_submergedpassage_enter": {}
+          "act1_submergedpassage_enter": {
+            "objective": "「陸続きの島」へ入る",
+            "layout": "",
+            "tips": "",
+            "mini_navi": {
+              "text": "[move]<span style='color:#dddd44'>陸続きの島</span>へ入る"
+            }
+          }
         }
       },
       "2": {
-        "objective": "「陸続きの島」へ入る",
+        "objective": "",
         "layout": "",
         "tips": "",
-        "direction": "none",
-        "mini_navi": {
-          "text": "[move]<span style='color:#dddd44'>陸続きの島</span>へ入る",
-          "direction": "none"
-        }
+        "direction": "none"
       }
     }
   },
