@@ -6,7 +6,9 @@ from dataclasses import replace
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRect, QSize, Qt, QTimer, Signal, QUrl
-from PySide6.QtGui import QColor, QDesktopServices, QIcon, QIntValidator, QPainter, QPen, QPolygonF
+from PySide6.QtGui import (
+    QColor, QDesktopServices, QIcon, QIntValidator, QPainter, QPen, QPixmap, QPolygonF,
+)
 from PySide6.QtWidgets import (
     QAbstractItemView, QLayout,
     QApplication, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton,
@@ -45,6 +47,22 @@ _INFLUENCE_CHIPS = {
     "redeemer": ("Redeemer", "pseudo.pseudo_has_redeemer_influence"),
     "warlord": ("Warlord", "pseudo.pseudo_has_warlord_influence"),
 }
+
+
+def _influence_chip_icon(label: str, active: bool) -> QIcon:
+    """チェック、Influence画像の順で1つのボタンアイコンへ合成する。"""
+    result = QPixmap(38, 20)
+    result.fill(Qt.transparent)
+    painter = QPainter(result)
+    painter.setRenderHint(QPainter.Antialiasing)
+    painter.setPen(QColor("#f4ffed" if active else "#687064"))
+    painter.drawText(QRect(0, 0, 16, 20), Qt.AlignCenter, "☑" if active else "☐")
+    icon_path = Path(__file__).resolve().parents[2] / "assets" / "icons" / f"{label}.png"
+    influence = QPixmap(str(icon_path))
+    if not influence.isNull():
+        painter.drawPixmap(18, 0, 20, 20, influence)
+    painter.end()
+    return QIcon(result)
 
 
 class _FlowLayout(QLayout):
@@ -613,12 +631,10 @@ class PoetoreWindow(QWidget):
         self.influence_chips = {}
         self._influence_chip_enabled = {}
         for influence, (label, _stat_id) in _INFLUENCE_CHIPS.items():
-            button = QPushButton(f"☐ {label}")
+            button = QPushButton(label)
             button.setObjectName("influenceChip")
-            icon_path = Path(__file__).resolve().parents[2] / "assets" / "icons" / f"{label}.png"
-            if icon_path.is_file():
-                button.setIcon(QIcon(str(icon_path)))
-                button.setIconSize(QSize(20, 20))
+            button.setIcon(_influence_chip_icon(label, False))
+            button.setIconSize(QSize(38, 20))
             button.clicked.connect(
                 lambda checked=False, value=influence: self._toggle_influence_filter(value)
             )
@@ -1818,7 +1834,8 @@ class PoetoreWindow(QWidget):
         self._influence_chip_enabled[influence] = bool(enabled)
         button = self.influence_chips[influence]
         label = _INFLUENCE_CHIPS[influence][0]
-        button.setText(f"{'☑' if enabled else '☐'} {label}")
+        button.setText(label)
+        button.setIcon(_influence_chip_icon(label, bool(enabled)))
         button.setProperty("active", bool(enabled))
         button.style().unpolish(button)
         button.style().polish(button)
