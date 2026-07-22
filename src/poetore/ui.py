@@ -798,7 +798,7 @@ class PoetoreWindow(QWidget):
         mod_header.setSectionResizeMode(_MOD_COLUMN_MAX, QHeaderView.ResizeToContents)
         mod_header.setSectionResizeMode(_MOD_COLUMN_DETAILS, QHeaderView.Stretch)
         panel_layout.addWidget(self.mod_filter_tree, stretch=3)
-        self.mod_conditions_toggle = QPushButton("mod条件をたたむ")
+        self.mod_conditions_toggle = QPushButton("mod条件をたたむ∧")
         self.mod_conditions_toggle.setObjectName("modConditionsToggle")
         self.mod_conditions_toggle.setToolTip("Mod検索条件の一覧を折りたたむ")
         self.mod_conditions_toggle.clicked.connect(self._toggle_mod_conditions)
@@ -1110,7 +1110,7 @@ class PoetoreWindow(QWidget):
         collapsed = self.mod_filter_tree.isVisible()
         self.mod_filter_tree.setVisible(not collapsed)
         self.mod_conditions_toggle.setText(
-            "mod条件をひらく" if collapsed else "mod条件をたたむ"
+            "mod条件をひらく∨" if collapsed else "mod条件をたたむ∧"
         )
         self.mod_conditions_toggle.setToolTip(
             "Mod検索条件の一覧を展開する" if collapsed

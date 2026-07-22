@@ -461,15 +461,15 @@ def test_mod_conditions_can_be_collapsed_without_losing_values(qapp):
         editor.setText("95")
 
         window.show()
-        assert window.mod_conditions_toggle.text() == "mod条件をたたむ"
+        assert window.mod_conditions_toggle.text() == "mod条件をたたむ∧"
         window.mod_conditions_toggle.click()
         assert window.mod_filter_tree.isHidden()
-        assert window.mod_conditions_toggle.text() == "mod条件をひらく"
+        assert window.mod_conditions_toggle.text() == "mod条件をひらく∨"
         assert window._selected_stat_filters()[0].min_value == 95
 
         window.mod_conditions_toggle.click()
         assert not window.mod_filter_tree.isHidden()
-        assert window.mod_conditions_toggle.text() == "mod条件をたたむ"
+        assert window.mod_conditions_toggle.text() == "mod条件をたたむ∧"
     finally:
         window.close()
 
