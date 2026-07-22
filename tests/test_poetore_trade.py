@@ -1367,11 +1367,58 @@ def test_query_supports_option_not_count_and_special_item_states():
     count = next(group for group in query["stats"] if group["type"] == "count")
     assert count["value"] == {"min": 1}
     misc = query["filters"]["misc_filters"]["filters"]
-    assert misc["searing_item"] == misc["tangled_item"] == misc["veiled"] == {"option": "true"}
+    assert misc["searing_item"] == misc["tangled_item"] == {"option": "true"}
+    assert "veiled" not in misc
     without_veiled = build_search_query(
         item, stat_filters=filters, include_veiled=False,
     )["query"]
     assert "veiled" not in without_veiled["filters"]["misc_filters"]["filters"]
+
+
+def test_veiled_chip_uses_matching_veiled_stat_ids_like_awakened():
+    item = parse_item_text("""Item Class: Body Armours
+Rarity: Rare
+Test Mantle
+Vaal Regalia
+--------
+Item Level: 86
+--------
+{ Prefix Modifier "Catarina's Veiled" }
+Veiled Prefix
+{ Suffix Modifier "of Aisling's Veil" }
+Veiled Suffix
+""")
+    veiled = [modifier for modifier in item.modifiers if modifier.kind == "veiled"]
+    assert [(modifier.ref, modifier.stat_id) for modifier in veiled] == [
+        ("Catarina's Veiled", "veiled.mod_63772"),
+        ("of Aisling's Veil", "veiled.mod_48007"),
+    ]
+
+    enabled = build_search_query(item, include_veiled=True)["query"]
+    assert enabled["stats"][0]["filters"] == [
+        {"id": "veiled.mod_63772", "value": {}},
+        {"id": "veiled.mod_48007", "value": {}},
+    ]
+    assert "veiled" not in enabled["filters"]["misc_filters"]["filters"]
+
+    disabled = build_search_query(item, include_veiled=False)["query"]
+    assert disabled["stats"][0]["filters"] == []
+
+
+def test_japanese_veiled_header_resolves_its_specific_stat_id():
+    item = parse_item_text("""アイテムクラス: 鎧
+レアリティ: レア
+試験の衣
+ヴァールレガリア
+--------
+アイテムレベル: 86
+--------
+{ プレフィックスモッド「ヴェールされた」 }
+ヴェールされたプレフィックス
+""")
+    veiled = next(modifier for modifier in item.modifiers if modifier.kind == "veiled")
+    assert veiled.ref == "Veiled"
+    assert veiled.stat_id == "veiled.mod_65000"
 
 
 def _gem_item(name="アーク", level=20, quality=20, corrupted=False):

@@ -1769,6 +1769,8 @@ def build_search_query(
         include_unidentified = _is_unique(item) and "unidentified" in item.flags
     if include_unidentified:
         query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]["identified"] = {"option": "false"}
+    if include_veiled is None:
+        include_veiled = "veiled" in item.flags
     if item.category == "gem" and include_corrupted != True:
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
         misc["corrupted"] = {
@@ -1846,10 +1848,6 @@ def build_search_query(
             misc["searing_item"] = {"option": "true"}
         if "tangled_item" in item.flags:
             misc["tangled_item"] = {"option": "true"}
-        if include_veiled is None:
-            include_veiled = "veiled" in item.flags
-        if include_veiled:
-            misc["veiled"] = {"option": "true"}
         if (not corruption_mode_explicit
                 and item.category in {"jewel", "abyss_jewel"}
                 and rarity in {"magic", "マジック"}):
@@ -1866,6 +1864,25 @@ def build_search_query(
         misc.pop("mirrored", None)
     else:
         misc["mirrored"] = {"option": "false"}
+    # Awakened準拠: Veiled全般のmisc条件ではなく、詳細コピーで読み取った
+    # Veiled Mod名に対応するstat IDをAND条件として検索する。
+    stat_filters = tuple(row for row in stat_filters if row.kind != "veiled")
+    if include_veiled:
+        seen_veiled_ids: set[str] = set()
+        veiled_filters = []
+        for modifier in item.modifiers:
+            if (modifier.kind != "veiled" and modifier.generation != "veiled"):
+                continue
+            if not modifier.stat_id or modifier.stat_id in seen_veiled_ids:
+                continue
+            seen_veiled_ids.add(modifier.stat_id)
+            veiled_filters.append(TradeStatFilter(
+                modifier.stat_id, modifier.ref or modifier.text, None,
+                "veiled", True, ref=modifier.ref,
+                confidence=modifier.confidence,
+                selection_reason="読み取ったVeiled Mod種別と一致",
+            ))
+        stat_filters += tuple(veiled_filters)
     stat_groups: dict[tuple[str, str], dict] = {("and", ""): query["stats"][0]}
     for stat_filter in stat_filters:
         if not stat_filter.enabled:

@@ -108,8 +108,10 @@ class ModMetadata:
 class MetadataIndex:
     def __init__(self, records: Iterable[ModMetadata] = ()):
         self.records = tuple(records)
+        self._by_ref: dict[tuple[str, str], list[ModMetadata]] = {}
         self._by_match: dict[tuple[str, str], list[ModMetadata]] = {}
         for record in self.records:
+            self._by_ref.setdefault((record.kind, record.ref.strip().casefold()), []).append(record)
             for matcher in record.japanese:
                 self._by_match.setdefault((record.kind, normalize_stat_text(matcher)), []).append(record)
         self._by_option: dict[tuple[str, str], list[tuple[ModMetadata, OptionValue]]] = {}
@@ -122,6 +124,14 @@ class MetadataIndex:
     def match(self, text: str, kind: str) -> tuple[ModMetadata | None, float]:
         record, _, confidence = self.match_with_option(text, kind)
         return record, confidence
+
+    def match_ref(self, ref: str, kind: str) -> tuple[ModMetadata | None, float]:
+        matches = self._by_ref.get((kind, ref.strip().casefold()), ())
+        if len(matches) == 1:
+            return matches[0], 1.0
+        if matches:
+            return matches[0], 0.75
+        return None, 0.0
 
     def match_with_option(
         self, text: str, kind: str,

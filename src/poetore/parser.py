@@ -220,7 +220,9 @@ def _modifier_header_kind(line: str) -> str | None:
     return None
 
 
-def _modifier_header_details(line: str) -> tuple[str, int | None, str | None, str | None] | None:
+def _modifier_header_details(
+    line: str,
+) -> tuple[str, int | None, str | None, str | None, str | None] | None:
     kind = _modifier_header_kind(line)
     if kind is None:
         return None
@@ -246,7 +248,12 @@ def _modifier_header_details(line: str) -> tuple[str, int | None, str | None, st
         (("incursion", "インカージョン"), "incursion"),
         (("delve", "デルヴ"), "delve"),
     ) if any(label in lowered or label in body for label in labels)), None)
-    return kind, int(tier_match.group(1)) if tier_match else None, affix, generation
+    name_match = re.search(r'"([^"]*)"|「([^」]*)」', body)
+    name = (
+        next((value for value in name_match.groups() if value is not None), None)
+        if name_match else None
+    )
+    return kind, int(tier_match.group(1)) if tier_match else None, affix, generation, name
 
 
 def _localized_name_lines(name_lines: list[str], rarity: str) -> tuple[str, str]:
@@ -297,6 +304,7 @@ def parse_item_text(text: str) -> ParsedItem:
     current_header_tier: int | None = None
     current_header_affix: str | None = None
     current_header_generation: str | None = None
+    current_header_name: str | None = None
     current_modifier_group = 0
     item_category = _category_with_item_identity(
         header.get("item_class", ""), name, base_type, text,
@@ -337,7 +345,7 @@ def parse_item_text(text: str) -> ParsedItem:
                 # 1つのModが複数行の効果を持つ場合がある。
                 # 次の見出しまで同じPrefix/Suffix種別を維持する。
                 (current_header_kind, current_header_tier, current_header_affix,
-                 current_header_generation) = header_details
+                 current_header_generation, current_header_name) = header_details
                 current_modifier_group += 1
                 continue
             line = _normalized_modifier_line(line, item_category)
@@ -351,18 +359,39 @@ def parse_item_text(text: str) -> ParsedItem:
                 ))
                 continue
             lowered = line.lower()
+            is_veiled_placeholder = (
+                lowered in {"veiled prefix", "veiled suffix"}
+                or (
+                    "ヴェール" in line
+                    and ("プレフィックス" in line or "サフィックス" in line)
+                )
+            )
             if "(implicit)" in lowered or "（暗黙）" in line:
                 kind = "implicit"
             elif "(enchant)" in lowered or "（エンチャント）" in line:
                 kind = "enchant"
             elif "(crafted)" in lowered or "（クラフト）" in line:
                 kind = "crafted"
-            elif "(veiled)" in lowered or "（ヴェール）" in line:
+            elif ("(veiled)" in lowered or "（ヴェール）" in line
+                  or is_veiled_placeholder):
+                kind = "veiled"
+            elif current_header_generation == "veiled":
                 kind = "veiled"
             else:
                 kind = current_header_kind or "explicit"
-            from_header = kind == current_header_kind
-            metadata, option, confidence = default_metadata_index().match_with_option(line, kind)
+            from_header = kind == current_header_kind or (
+                kind == "veiled" and current_header_kind in {"prefix", "suffix", "veiled"}
+            )
+            metadata_text = (
+                current_header_name if kind == "veiled" and current_header_name else line
+            )
+            metadata, option, confidence = default_metadata_index().match_with_option(
+                metadata_text, kind,
+            )
+            if metadata is None and kind == "veiled" and current_header_name:
+                metadata, confidence = default_metadata_index().match_ref(
+                    current_header_name, kind,
+                )
             roll_min, roll_max = _roll_bounds(line)
             inferred_affix = None
             if metadata and kind == "crafted":
@@ -385,7 +414,8 @@ def parse_item_text(text: str) -> ParsedItem:
                 roll_max=roll_max,
                 better=metadata.better if metadata else None,
                 inverted=metadata.inverted if metadata else False,
-                generation=current_header_generation if from_header else kind,
+                generation=(kind if kind == "veiled" else current_header_generation)
+                if from_header else kind,
                 option_value=option.value if option else None,
                 option_text=option.japanese if option else None,
                 oils=option.oils if option else (),
