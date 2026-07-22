@@ -122,6 +122,8 @@ class MiniNaviOverlay(QWidget):
     """みになび表示ウィンドウ。"""
 
     WAITING_FOR_AREA_TEXT = "エリアに入場すると攻略ガイドが表示されます"
+    COMPACT_DEFAULT_WIDTH = 390
+    COMPACT_DEFAULT_HEIGHT = 100
 
     DIRECTION_ARROWS = {
         "n": "⬆", "s": "⬇", "e": "➡", "w": "⬅",
@@ -145,6 +147,7 @@ class MiniNaviOverlay(QWidget):
 
     DEFAULT_CONFIG = {
         "enabled": False,
+        "display_mode": "standard",
         "locked": True,
         "click_through_when_locked": True,
         "opacity": 0.72,
@@ -264,9 +267,18 @@ class MiniNaviOverlay(QWidget):
         cfg = self.config()
         if refresh_window_flags:
             self._apply_window_flags()
-        self.resize(int(cfg.get("width", 800)), int(cfg.get("height", 130)))
-        pos = cfg.get("position", {}) if isinstance(cfg.get("position"), dict) else {}
-        self.move(int(pos.get("x", 80)), int(pos.get("y", 160)))
+        geometry = self._geometry_config()
+        if self.is_compact_mode() and not geometry:
+            default_geometry = self._compact_default_geometry()
+            self.resize(default_geometry.width(), default_geometry.height())
+            self.move(default_geometry.topLeft())
+        else:
+            self.resize(
+                int(geometry.get("width", cfg.get("width", 800))),
+                int(geometry.get("height", cfg.get("height", 130))),
+            )
+            pos = geometry.get("position", {}) if isinstance(geometry.get("position"), dict) else {}
+            self.move(int(pos.get("x", cfg.get("position", {}).get("x", 80))), int(pos.get("y", cfg.get("position", {}).get("y", 160))))
         self._show_strong_opacity(restart_fade=False)
         font_size = int(cfg.get("font_size", 18))
         window_opacity_pct = max(5, min(int(cfg.get("window_opacity", 100)), 100))
@@ -279,8 +291,20 @@ class MiniNaviOverlay(QWidget):
                 border-radius: 8px;
             }}
         """)
-        self.arrow_label.setStyleSheet("color: #FF69B4; font-size: 36px; font-weight: bold; line-height: 100%; background: transparent;")
-        self.exp_label.setStyleSheet("color: #ffffff; font-size: 15px; line-height: 110%; background: transparent;")
+        if self.is_compact_mode():
+            self.outer.layout().setContentsMargins(6, 5, 6, 5)
+            self.outer.layout().setSpacing(4)
+            self.arrow_label.setFixedSize(40, 24)
+            self.exp_label.setFixedWidth(40)
+            self.arrow_label.setStyleSheet("color: #FF69B4; font-size: 24px; font-weight: bold; line-height: 100%; background: transparent;")
+            self.exp_label.setStyleSheet("color: #ffffff; font-size: 10px; line-height: 110%; background: transparent;")
+        else:
+            self.outer.layout().setContentsMargins(10, 8, 12, 8)
+            self.outer.layout().setSpacing(8)
+            self.arrow_label.setFixedSize(118, 30)
+            self.exp_label.setFixedWidth(118)
+            self.arrow_label.setStyleSheet("color: #FF69B4; font-size: 36px; font-weight: bold; line-height: 100%; background: transparent;")
+            self.exp_label.setStyleSheet("color: #ffffff; font-size: 15px; line-height: 110%; background: transparent;")
         text_color = "#999999" if self._muted_content else "#ffffff"
         self.text_label.setStyleSheet(f"color: {text_color}; font-size: {font_size}px; line-height: 120%; background: transparent;")
         self._apply_text_opacity(int(cfg.get("text_opacity", 100)))
@@ -322,8 +346,10 @@ class MiniNaviOverlay(QWidget):
         text = mini_navi.get("text", "") or ""
         direction = mini_navi.get("direction", "none") or "none"
         # 既存configに max_lines=3 が保存されていても、みになび本文が欠けないよう最低4行は表示する。
-        max_lines = max(4, min(int(cfg.get("max_lines", 4)), 6))
-        lines = [line for line in text.splitlines() if line.strip()][:max_lines]
+        lines = [line for line in text.splitlines() if line.strip()]
+        if not self.is_compact_mode():
+            max_lines = max(4, min(int(cfg.get("max_lines", 4)), 6))
+            lines = lines[:max_lines]
         if not lines and direction not in self.DIRECTION_ARROWS:
             self.hide()
             self.lock_button_window.hide()
@@ -390,6 +416,29 @@ class MiniNaviOverlay(QWidget):
         parent_config = getattr(self.main_window, "config", {}) if self.main_window else {}
         return parent_config.setdefault("mini_guide_overlay", {})
 
+    def is_compact_mode(self) -> bool:
+        return self.config().get("display_mode", "standard") == "compact"
+
+    def _geometry_config(self) -> dict:
+        config = self._mutable_config()
+        if self.is_compact_mode():
+            return config.setdefault("compact_geometry", {})
+        return config
+
+    def _available_screen_geometry(self) -> QRect:
+        screen = self.screen() or QApplication.primaryScreen()
+        if screen is not None:
+            return screen.availableGeometry()
+        return QRect(0, 0, self.COMPACT_DEFAULT_WIDTH, self.COMPACT_DEFAULT_HEIGHT)
+
+    def _compact_default_geometry(self) -> QRect:
+        available = self._available_screen_geometry()
+        width = min(self.COMPACT_DEFAULT_WIDTH, available.width())
+        height = min(self.COMPACT_DEFAULT_HEIGHT, available.height())
+        x = available.x() + (available.width() - width) // 2
+        y = available.bottom() - height + 1
+        return QRect(x, y, width, height)
+
     def _save_parent_config(self):
         if self.main_window and hasattr(self.main_window, "config"):
             ConfigManager.save_config(self.main_window.config)
@@ -409,7 +458,7 @@ class MiniNaviOverlay(QWidget):
             self.main_window.hide_for_mini_navi()
 
     def _remember_current_geometry_to_config(self):
-        cfg = self._mutable_config()
+        cfg = self._geometry_config()
         cfg["position"] = {"x": self.x(), "y": self.y()}
         cfg["width"] = self.width()
         cfg["height"] = self.height()
@@ -605,7 +654,22 @@ class MiniNaviOverlay(QWidget):
         """ウィンドウ幅に合わせて本文ラベル幅を更新する。"""
         if not hasattr(self, "text_label") or not hasattr(self, "arrow_label"):
             return
-        self.text_label.setFixedWidth(max(150, self.width() - self.arrow_label.width() - 72))
+        if not self.is_compact_mode():
+            self.text_label.setFixedWidth(max(150, self.width() - self.arrow_label.width() - 72))
+            return
+
+        left_width = max(
+            self.arrow_label.width() if self.arrow_label.isVisible() else 0,
+            self.exp_label.width() if self.exp_label.isVisible() else 0,
+        )
+        grip_width = self.size_grip.width() if self.size_grip.isVisible() else 0
+        visible_columns = int(left_width > 0) + int(grip_width > 0)
+        layout = self.outer.layout()
+        available_width = layout.contentsRect().width()
+        if available_width <= 0:
+            return
+        text_width = available_width - left_width - grip_width - layout.spacing() * visible_columns
+        self.text_label.setFixedWidth(max(1, text_width))
 
     def _fit_height_to_content(self):
         """フォントサイズ変更時に本文が切れない高さまで自動拡張する。"""
@@ -617,7 +681,14 @@ class MiniNaviOverlay(QWidget):
             self.text_label.sizeHint().height() + margins.top() + margins.bottom() + 14,
             self.arrow_label.sizeHint().height() + self.exp_label.sizeHint().height() + margins.top() + margins.bottom() + 4,
         )
-        if needed_height > self.height():
+        if self.is_compact_mode():
+            available = self._available_screen_geometry()
+            self.resize(self.width(), min(needed_height, available.height()))
+            x = min(max(self.x(), available.left()), available.right() - self.width() + 1)
+            y = min(max(self.y(), available.top()), available.bottom() - self.height() + 1)
+            self.move(x, y)
+            self._sync_lock_button()
+        elif needed_height > self.height():
             self.resize(self.width(), needed_height)
             self._sync_lock_button()
 
