@@ -117,7 +117,7 @@
   - Awakened準拠ではCompletion Reward完全一致、Foil、実Modを検索し、元アイテムにVoid死亡Modがない場合は同ModをNOT条件で除外する
 - [x] Inscribed UltimatumはAwakened準拠の名前完全一致検索に留める
   - 供物・報酬・クリア条件・試練Mod・Area Levelは検索条件へ変換しない
-  - UIへ「詳細条件は反映されません」と明示し、個体相場ではなく同名品全体の検索であることを伝える
+  - UIへチャレンジタイプ・報酬種類・必要なアイテム・報酬などの条件検索が非対応であることを明示する
 - [ ] pseudo定義本体を`trade.py`内の個別定義からレビュー可能な派生データへ移す
   - `group/replaces`の19関係とSHA-256固定は実装済み
   - `_SIMPLE_PSEUDOS`等の寄与ref・対象カテゴリを同じ生成物へ統合する

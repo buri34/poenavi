@@ -494,7 +494,7 @@ Unknown Experimental Modifier 123
         window.close()
 
 
-def test_inscribed_ultimatum_shows_name_only_search_notice(qapp):
+def test_inscribed_ultimatum_shows_unsupported_condition_notice(qapp):
     window = PoetoreWindow()
     try:
         window.input_edit.setPlainText("""アイテムクラス: その他マップアイテム
@@ -510,8 +510,9 @@ def test_inscribed_ultimatum_shows_name_only_search_notice(qapp):
 """)
         window.parse_current_text()
         assert not window.search_scope_notice.isHidden()
-        assert "名前完全一致" in window.search_scope_notice.text()
-        assert "詳細条件は反映されません" in window.search_scope_notice.text()
+        assert window.search_scope_notice.text() == (
+            "⚠ チャレンジタイプ・報酬種類・必要なアイテム・報酬などの条件を使った検索には対応しておりません。"
+        )
         assert window.mod_filter_tree.topLevelItemCount() == 0
 
         window.input_edit.setPlainText("""Item Class: Currency

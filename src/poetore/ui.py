@@ -1580,7 +1580,7 @@ class PoetoreWindow(QWidget):
             self.mod_warning.hide()
         if is_inscribed_ultimatum(item):
             self.search_scope_notice.setText(
-                "⚠ 名前完全一致で検索します。供物・報酬・クリア条件・試練Modなどの詳細条件は反映されません。"
+                "⚠ チャレンジタイプ・報酬種類・必要なアイテム・報酬などの条件を使った検索には対応しておりません。"
             )
             self.search_scope_notice.show()
         else:
