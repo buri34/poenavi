@@ -2144,6 +2144,20 @@ class SettingsDialog(QDialog):
         kofi_btn.clicked.connect(lambda: webbrowser.open("https://ko-fi.com/buri8857"))
         about_layout.addWidget(kofi_btn)
 
+        # Patreonボタン
+        patreon_btn = QPushButton("Patreon で応援する")
+        patreon_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: rgba(255, 66, 77, 200); color: white;
+                border: none; border-radius: 6px;
+                padding: 12px 20px; font-size: 14px; font-weight: bold;
+            }}
+            QPushButton:hover {{ background: rgba(255, 86, 97, 220); }}
+        """)
+        patreon_btn.setCursor(Qt.PointingHandCursor)
+        patreon_btn.clicked.connect(lambda: webbrowser.open("https://www.patreon.com/cw/Buri8857"))
+        about_layout.addWidget(patreon_btn)
+
         support_note = QLabel("※ ブラウザが開きます")
         support_note.setStyleSheet(f"color: rgba(200,200,200,150); font-size: 11px;")
         about_layout.addWidget(support_note)
