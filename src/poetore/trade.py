@@ -81,7 +81,7 @@ CONSUMABLE_CRAFTABLE_CATEGORIES = {
 NON_CRAFTABLE_CATEGORIES = {"gem", "flask", "currency", "divination_card"}
 DEDICATED_EXACT_CATEGORIES = {
     "gem", "captured_beast", "map", "memory_line", "invitation",
-    "heist_contract", "heist_blueprint", "charm",
+    "heist_contract", "heist_blueprint", "charm", "cluster_jewel",
 }
 PRESET_FINISHED = "finished"
 PRESET_BASE = "base"
@@ -584,13 +584,15 @@ def _apply_dedicated_exact_rules(
     rarity = item.rarity.casefold()
     if (rarity in {"magic", "マジック"}
             and item.category not in {
-                "cluster_jewel", "map", "heist_contract", "heist_blueprint", "sentinel",
+                "map", "heist_contract", "heist_blueprint", "sentinel",
             }):
         keep_modifier_kinds.update({"prefix", "suffix", "explicit"})
     elif rarity in {"rare", "レア"} and item.category == "idol":
         keep_modifier_kinds.update({"prefix", "suffix", "explicit"})
     if item.category == "flask":
         keep_modifier_kinds.add("crafted")
+    if item.category in {"map", "invitation"}:
+        keep_modifier_kinds.update({"prefix", "suffix", "explicit"})
 
     property_ids = {
         "property.armour", "property.evasion", "property.energy_shield",
@@ -604,6 +606,8 @@ def _apply_dedicated_exact_rules(
     }
     result = []
     logbook_faction_seen = False
+    logbook_groups = sorted({mod.group for mod in item.modifiers if mod.group is not None})
+    first_logbook_group = logbook_groups[0] if logbook_groups else None
     enable_all = item.category in {"memory_line", "sanctum_relic", "charm"}
     blighted_map = _map_blight_state(item) is not None
     for row in filters:
@@ -614,7 +618,10 @@ def _apply_dedicated_exact_rules(
             continue
         if row.kind in keep_modifier_kinds or row.kind in special_kinds:
             enabled = row.enabled
-            if enable_all or item.category == "map" or row.kind not in {"prefix", "suffix", "explicit"}:
+            if enable_all or (
+                item.category != "map"
+                and row.kind not in {"prefix", "suffix", "explicit"}
+            ):
                 enabled = True
             elif row.kind in {"prefix", "suffix", "explicit"}:
                 enabled = row.tier in {1, 2}
@@ -626,11 +633,27 @@ def _apply_dedicated_exact_rules(
                     if row.better == -1:
                         goodness = 1 - goodness
                     enabled = goodness >= 0.66
+            if item.category == "map" and row.kind in {
+                "prefix", "suffix", "explicit", "map pseudo",
+            }:
+                enabled = False
+            if item.category == "invitation" and row.kind in {
+                "prefix", "suffix", "explicit", "map", "map pseudo",
+            }:
+                enabled = False
+            if item.category == "cluster_jewel":
+                source = f"{row.ref or ''} {row.text}".casefold()
+                if "added passive skill is" in source or "追加されたパッシブスキル" in source:
+                    enabled = True
             if item.category == "expedition_logbook" and row.stat_id.startswith(
                 "pseudo.pseudo_logbook_faction_"
             ):
                 enabled = not logbook_faction_seen
                 logbook_faction_seen = True
+            if item.category == "expedition_logbook" and row.selection_reason.startswith(
+                "logbook-area:"
+            ):
+                enabled = row.selection_reason == f"logbook-area:{first_logbook_group}"
             result.append(replace(row, enabled=enabled))
         elif row.stat_id in property_ids:
             if item.category == "armour" and row.stat_id in {
@@ -664,7 +687,7 @@ def _dedicated_exact_identity_filters(item: ParsedItem) -> tuple[TradeStatFilter
         else:
             filters.append(TradeStatFilter(
                 "property.item_level", "アイテムレベル", float(min(item.item_level, 86)),
-                "base", item.category not in {"flask", "tincture"},
+                "base", True,
             ))
     for flag in item.flags:
         if not flag.startswith("influence:"):
@@ -867,7 +890,9 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
             ("property.map_pack_size", "モンスターパックサイズ", _property_value(item, "モンスターパックサイズ", "Monster Pack Size")),
         ):
             if value is not None:
-                filters.append(TradeStatFilter(stat_id, label, value, "map", True))
+                filters.append(TradeStatFilter(
+                    stat_id, label, value, "map", stat_id == "property.map_tier",
+                ))
         for stat_id, label, labels in (
             ("pseudo.pseudo_map_more_map_drops", "追加マップ", ("追加マップ", "More Maps")),
             ("pseudo.pseudo_map_more_scarab_drops", "追加スカラベ", ("追加スカラベ", "More Scarabs")),
@@ -876,7 +901,7 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         ):
             value = _property_value(item, *labels)
             if value is not None:
-                filters.append(TradeStatFilter(stat_id, label, value, "map pseudo", True))
+                filters.append(TradeStatFilter(stat_id, label, value, "map pseudo", False))
         blight_state = _map_blight_state(item)
         if blight_state == "ravaged":
             filters.append(TradeStatFilter("property.map_uberblighted", "ブライトに破壊されたマップ", None, "map", True))
@@ -1558,8 +1583,6 @@ def resolve_trade_stat_filters(
         return _decorate_filters(item, _base_item_filters(item, trade_base_type))
     if item.category == "gem":
         return _gem_filters(item, trade_base_type)
-    if item.category == "invitation":
-        return ()
     entries = _trade_stat_entries()
     resolved: list[TradeStatFilter] = []
     unique_item = _is_unique(item)
@@ -1638,34 +1661,47 @@ def resolve_trade_stat_filters(
                 maximum, modifier.ref, modifier.confidence, modifier.inverted,
                 option_value=modifier.option_value, option_text=modifier.option_text,
                 oils=modifier.oils,
+                selection_reason=(
+                    f"logbook-area:{modifier.group}"
+                    if item.category == "expedition_logbook" and modifier.group is not None else ""
+                ),
                 group_type="count" if alternatives else "and",
                 group_key=group_key, group_min=1 if alternatives else None,
             ))
     combined: dict[str, TradeStatFilter] = {}
     counts: dict[str, int] = {}
     for stat_filter in resolved:
-        previous = combined.get(stat_filter.stat_id)
+        combine_key = (
+            f"{stat_filter.stat_id}@{stat_filter.selection_reason}"
+            if item.category == "expedition_logbook" and stat_filter.selection_reason
+            else stat_filter.stat_id
+        )
+        previous = combined.get(combine_key)
         if previous is None:
-            combined[stat_filter.stat_id] = stat_filter
-            counts[stat_filter.stat_id] = 1
+            combined[combine_key] = stat_filter
+            counts[combine_key] = 1
             continue
-        counts[stat_filter.stat_id] += 1
+        counts[combine_key] += 1
         total = None
         if previous.min_value is not None and stat_filter.min_value is not None:
             total = previous.min_value + stat_filter.min_value
-        combined[stat_filter.stat_id] = TradeStatFilter(
+        combined[combine_key] = TradeStatFilter(
             stat_filter.stat_id, previous.text, total, previous.kind, False,
             stat_filter.max_value, stat_filter.ref, min(previous.confidence, stat_filter.confidence),
             stat_filter.inverted,
             option_value=stat_filter.option_value, option_text=stat_filter.option_text,
             oils=stat_filter.oils,
+            selection_reason=previous.selection_reason or stat_filter.selection_reason,
             group_type=stat_filter.group_type, group_key=stat_filter.group_key,
             group_min=stat_filter.group_min,
         )
     enable_unique_rolls = unique_item and len(combined) <= 3
     # ユニーク品はpseudo集約を表示しないため、元の可変Modを消費扱いにしない。
     # 非ユニーク品だけ、pseudoと個別Modの二重表示を避ける。
-    consumed_stat_ids = set() if unique_item else _pseudo_consumed_stat_ids(item)
+    consumed_stat_ids = (
+        set() if unique_item or item.category in {"jewel", "abyss_jewel"}
+        else _pseudo_consumed_stat_ids(item)
+    )
     consumed_refs = {
         modifier.ref for modifier in item.modifiers
         if modifier.stat_id in consumed_stat_ids and modifier.ref
@@ -1673,13 +1709,14 @@ def resolve_trade_stat_filters(
     individual = tuple(
         TradeStatFilter(
             row.stat_id,
-            f"{row.text} ({counts[row.stat_id]}行合計)" if counts[row.stat_id] > 1 else row.text,
+            f"{row.text} ({counts[combine_key]}行合計)" if counts[combine_key] > 1 else row.text,
             row.min_value, row.kind, enable_unique_rolls or row.enabled,
             row.max_value, row.ref, row.confidence, row.inverted,
             option_value=row.option_value, option_text=row.option_text, oils=row.oils,
+            selection_reason=row.selection_reason,
             group_type=row.group_type, group_key=row.group_key, group_min=row.group_min,
         )
-        for row in combined.values()
+        for combine_key, row in combined.items()
         if row.stat_id not in consumed_stat_ids and not (not unique_item and row.ref in consumed_refs)
     )
     if unique_item:
@@ -1697,7 +1734,10 @@ def resolve_trade_stat_filters(
             or uses_dedicated_exact_preset(item))
     ]
     filters = (
-        tuple(initial_properties + _gear_pseudo_filters(item))
+        tuple(initial_properties + (
+            [] if item.category in {"jewel", "abyss_jewel"}
+            else list(_gear_pseudo_filters(item))
+        ))
         + individual + _item_detail_filters(item) + _empty_affix_filters(item)
         + _special_content_filters(item)
     )
@@ -1794,6 +1834,40 @@ def resolve_trade_stat_filters(
         decorated = [row for _, row in sorted(
             enumerate(decorated), key=accessory_sort_key,
         )]
+    if item.category in {"jewel", "abyss_jewel"}:
+        rarity = item.rarity.casefold()
+        magic = rarity in {"magic", "マジック"}
+        rare = rarity in {"rare", "レア"}
+
+        def jewel_priority(pair):
+            index, row = pair
+            source = f"{row.stat_id} {row.ref or ''} {row.text}".casefold()
+            if "life" in source or "ライフ" in source:
+                return (0, index)
+            if "energy_shield" in source or "エナジーシールド" in source:
+                return (1, index)
+            if "critical" in source or "クリティカル" in source:
+                return (2, index)
+            if "speed" in source or "スピード" in source:
+                return (3, index)
+            if "damage" in source or "ダメージ" in source:
+                return (4, index)
+            if any(word in source for word in (
+                "armour", "evasion", "resistance", "attribute",
+                "アーマー", "回避", "耐性", "能力値", "筋力", "器用さ", "知性",
+            )):
+                return (5, index)
+            return (10, index)
+
+        adjusted = []
+        for row in decorated:
+            enabled = row.enabled
+            if rare and row.kind in {"prefix", "suffix", "explicit", "pseudo"}:
+                enabled = False
+            elif magic and row.kind in {"prefix", "suffix", "explicit"}:
+                enabled = True
+            adjusted.append(replace(row, enabled=enabled))
+        decorated = [row for _, row in sorted(enumerate(adjusted), key=jewel_priority)]
     if item.category in {"flask", "tincture"}:
         used_enkindling = any(
             modifier.ref == "Gains no Charges during Flask Effect" for modifier in item.modifiers

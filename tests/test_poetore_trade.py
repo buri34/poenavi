@@ -1992,7 +1992,7 @@ def test_dedicated_exact_magic_flask_keeps_t1_t2_and_crafted_only():
     assert rows["explicit.t1"].enabled is True
     assert rows["explicit.t3"].enabled is False
     assert rows["crafted.one"].enabled is True
-    assert rows["property.item_level"].enabled is False
+    assert rows["property.item_level"].enabled is True
 
 
 def test_forbidden_tome_below_83_uses_exact_area_level_range():
@@ -2120,3 +2120,53 @@ Item Level: 72
     with patch("src.poetore.trade._trade_stat_entries", return_value=()):
         filters = resolve_trade_stat_filters(chronicle)
     assert next(row for row in filters if row.stat_id == "property.area_level").min_value == 78
+
+
+def test_cluster_is_dedicated_and_flask_tincture_ilvl_is_initially_enabled():
+    cluster = ParsedItem("Cluster Jewels", "Rare", "Test", "Large Cluster Jewel",
+                         "cluster_jewel", item_level=84)
+    assert uses_dedicated_exact_preset(cluster)
+    for category, item_class, base in (
+        ("flask", "Utility Flasks", "Granite Flask"),
+        ("tincture", "Tinctures", "Prismatic Tincture"),
+    ):
+        item = ParsedItem(item_class, "Magic", "Test", base, category, item_level=84)
+        with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+            rows = resolve_trade_stat_filters(item)
+        ilvl = next(row for row in rows if row.stat_id == "property.item_level")
+        assert ilvl.enabled is True
+
+
+def test_rare_jewel_mods_start_off_and_magic_affixes_start_on():
+    entries = (
+        {"id": "explicit.life", "text": "+# to maximum Life", "type": "explicit"},
+    )
+    modifier = ItemModifier(
+        "+20 to maximum Life", (20,), kind="prefix", ref="+# to maximum Life",
+        stat_id="explicit.life",
+    )
+    for rarity, expected in (("Rare", False), ("Magic", True)):
+        item = ParsedItem("Jewels", rarity, "Test", "Crimson Jewel", "jewel",
+                          modifiers=(modifier,))
+        with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+            rows = resolve_trade_stat_filters(item)
+        assert next(row for row in rows if row.stat_id == "explicit.life").enabled is expected
+
+
+def test_map_tier_starts_on_but_quantity_and_map_mods_start_off():
+    item = ParsedItem(
+        "Maps", "Rare", "Test", "Cemetery Map", "map",
+        properties={"Map Tier": "16", "Item Quantity": "+100%"},
+        modifiers=(ItemModifier(
+            "Monsters deal 100% extra Damage", (100,), kind="explicit",
+            stat_id="explicit.map_damage",
+        ),),
+    )
+    entries = ({"id": "explicit.map_damage", "text": "Monsters deal #% extra Damage",
+                "type": "explicit"},)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        rows = resolve_trade_stat_filters(item)
+    by_id = {row.stat_id: row for row in rows}
+    assert by_id["property.map_tier"].enabled is True
+    assert by_id["property.map_quantity"].enabled is False
+    assert by_id["explicit.map_damage"].enabled is False

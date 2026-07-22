@@ -314,6 +314,49 @@ class _CycleButton(QPushButton):
         return len(self._options)
 
 
+class _AreaSegmentedControl(QWidget):
+    """Logbookの最大5エリアを横並びで選ぶ小型セグメント。"""
+
+    currentIndexChanged = Signal(int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._layout = QHBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(0)
+        self._buttons = []
+        self._current = 0
+        self.hide()
+
+    def setLabels(self, labels):
+        while self._buttons:
+            self._buttons.pop().deleteLater()
+        for index, label in enumerate(tuple(labels)[:5]):
+            button = QPushButton(str(label))
+            button.setObjectName("binaryToggle")
+            button.setCheckable(True)
+            button.clicked.connect(lambda checked=False, value=index: self.setCurrentIndex(value))
+            self._layout.addWidget(button)
+            self._buttons.append(button)
+        self._current = 0
+        self._sync()
+        self.setVisible(bool(self._buttons))
+
+    def setCurrentIndex(self, index):
+        if not self._buttons:
+            return
+        index = max(0, min(int(index), len(self._buttons) - 1))
+        changed = index != self._current
+        self._current = index
+        self._sync()
+        if changed:
+            self.currentIndexChanged.emit(index)
+
+    def _sync(self):
+        for index, button in enumerate(self._buttons):
+            button.setChecked(index == self._current)
+
+
 class _NumericFilterChip(QFrame):
     """ON/OFFと最小値（必要なら最大値）を持つ共通検索チップ。"""
 
@@ -740,9 +783,12 @@ class PoetoreWindow(QWidget):
         self.base_percentile_chip.setFixedWidth(174)
         self.area_level_chip = _NumericFilterChip("Area Lv", 1, 100)
         self.heist_wings_chip = _NumericFilterChip("公開Wing", 1, 4)
+        self.heist_job_chip = _NumericFilterChip("Job Lv", 1, 5)
+        self.cluster_passives_chip = _NumericFilterChip("パッシブ数", 1, 35)
         for chip in (
             self.map_tier_chip, self.base_percentile_chip,
-            self.area_level_chip, self.heist_wings_chip,
+            self.area_level_chip, self.heist_wings_chip, self.heist_job_chip,
+            self.cluster_passives_chip,
         ):
             chip.hide()
         self.blighted_chip = QPushButton()
@@ -751,6 +797,24 @@ class PoetoreWindow(QWidget):
         self.completion_reward_chip = QPushButton()
         self.completion_reward_chip.setObjectName("readonlyFilterChip")
         self.completion_reward_chip.hide()
+        self.gem_variant_chip = QPushButton()
+        self.gem_variant_chip.setObjectName("readonlyFilterChip")
+        self.gem_variant_chip.setEnabled(False)
+        self.gem_variant_chip.hide()
+        self.heist_target_chip = QPushButton()
+        self.heist_target_chip.setObjectName("readonlyFilterChip")
+        self.heist_target_chip.setEnabled(False)
+        self.heist_target_chip.hide()
+        self.cluster_enchant_chip = QPushButton()
+        self.cluster_enchant_chip.setObjectName("readonlyFilterChip")
+        self.cluster_enchant_chip.setEnabled(False)
+        self.cluster_enchant_chip.hide()
+        self.cluster_socket_chip = QPushButton()
+        self.cluster_socket_chip.setObjectName("readonlyFilterChip")
+        self.cluster_socket_chip.setEnabled(False)
+        self.cluster_socket_chip.hide()
+        self.logbook_area_selector = _AreaSegmentedControl()
+        self.logbook_area_selector.currentIndexChanged.connect(self._logbook_area_changed)
         self.split_combo = _CycleButton(
             (("スプリット", True, False), ("非スプリット", False, False)),
         )
@@ -764,10 +828,17 @@ class PoetoreWindow(QWidget):
             ("map_tier", self.map_tier_chip),
             ("completion_reward", self.completion_reward_chip),
             ("area_level", self.area_level_chip),
+            ("logbook_area", self.logbook_area_selector),
             ("heist_wings", self.heist_wings_chip),
+            ("heist_job", self.heist_job_chip),
+            ("heist_target", self.heist_target_chip),
+            ("cluster_enchant", self.cluster_enchant_chip),
+            ("cluster_passives", self.cluster_passives_chip),
+            ("cluster_sockets", self.cluster_socket_chip),
             ("blighted", self.blighted_chip),
             ("item_level", self.item_level_tag),
             ("base_percentile", self.base_percentile_chip),
+            ("gem_variant", self.gem_variant_chip),
             ("gem_level", self.gem_level_tag),
             ("quality", self.gem_quality_tag),
             *((f"influence_{name}", self.influence_chips[name]) for name in _INFLUENCE_CHIPS),
@@ -1671,7 +1742,9 @@ class PoetoreWindow(QWidget):
             item is not None
             and self.trade_preset_combo.currentData() == PRESET_BASE
             and item.rarity.casefold() in {"magic", "マジック"}
-            and item.category in {"weapon", "armour", "accessory", "cluster_jewel"}
+            and item.category in {
+                "weapon", "armour", "accessory", "cluster_jewel", "jewel", "abyss_jewel",
+            }
         )
         self.magic_rarity_toggle.setVisible(show)
         if show:
@@ -1988,6 +2061,22 @@ class PoetoreWindow(QWidget):
         self.foil_chip.setVisible("foil" in item.flags)
         self.foil_chip.setCurrentIndex(0)
 
+        self.gem_variant_chip.setVisible(item.category == "gem")
+        if item.category == "gem":
+            info = gem_metadata(self._trade_base_type or item.base_type)
+            identity = f"{item.name} {item.base_type}".casefold()
+            if info.get("transfigured"):
+                variant = "変容ジェム"
+            elif info.get("vaal") or "vaal " in identity or "ヴァール" in identity:
+                variant = "ヴァールジェム"
+            elif "awakened " in identity or "覚醒" in identity:
+                variant = "覚醒ジェム"
+            else:
+                variant = "通常ジェム"
+            self.gem_variant_chip.setText(f"Variant：{variant}")
+
+        self._configure_logbook_areas(item)
+
         numeric = (
             (self.map_tier_chip, "property.map_tier", True),
             (self.base_percentile_chip, "property.base_percentile", False),
@@ -2003,6 +2092,39 @@ class PoetoreWindow(QWidget):
                 maximum = None if exact else row.max_value
                 chip.setValues(row.min_value, maximum)
                 chip.setActive(row.enabled)
+
+        job = next((row for row in rows if row.stat_id.startswith("property.heist_")
+                    and row.stat_id not in {
+                        "property.heist_wings", "property.heist_objective_value",
+                    }), None)
+        self._heist_job_row = job
+        self.heist_job_chip.setVisible(job is not None)
+        if job is not None:
+            self.heist_job_chip.setValues(job.min_value, job.max_value)
+            self.heist_job_chip.setActive(job.enabled)
+        target = by_id.get("property.heist_objective_value")
+        self.heist_target_chip.setVisible(target is not None)
+        self.heist_target_chip.setText(target.text if target else "")
+
+        passive = next((row for row in rows if row.ref == "Adds # Passive Skills"), None)
+        self._cluster_passive_row = passive
+        self.cluster_passives_chip.setVisible(passive is not None)
+        if passive is not None:
+            self.cluster_passives_chip.setValues(passive.min_value, passive.max_value)
+            self.cluster_passives_chip.setActive(passive.enabled)
+        enchants = tuple(row for row in rows if row.kind == "enchant")
+        self._cluster_enchant_rows = enchants if item.category == "cluster_jewel" else ()
+        self.cluster_enchant_chip.setVisible(bool(self._cluster_enchant_rows))
+        self.cluster_enchant_chip.setText(
+            "Enchant効果：" + " / ".join(row.text for row in self._cluster_enchant_rows)
+            if self._cluster_enchant_rows else ""
+        )
+        socket_mod = next((mod for mod in item.modifiers
+                           if mod.ref == "# Added Passive Skills are Jewel Sockets"), None)
+        self.cluster_socket_chip.setVisible(socket_mod is not None)
+        if socket_mod is not None:
+            count = int(socket_mod.values[0]) if socket_mod.values else 0
+            self.cluster_socket_chip.setText(f"ジュエルソケット：{count}")
 
         blight = by_id.get("property.map_uberblighted") or by_id.get("property.map_blighted")
         self.blighted_chip.setVisible(blight is not None)
@@ -2034,7 +2156,55 @@ class PoetoreWindow(QWidget):
             row = rows.get(stat_id)
             if row is not None:
                 selected.append(replace(row, enabled=True))
+        job = getattr(self, "_heist_job_row", None)
+        if job is not None and not self.heist_job_chip.isHidden() and self.heist_job_chip.isActive():
+            minimum, maximum = self.heist_job_chip.values()
+            selected.append(replace(job, min_value=minimum, max_value=maximum, enabled=True))
+        target = rows.get("property.heist_objective_value")
+        if target is not None and not self.heist_target_chip.isHidden():
+            selected.append(replace(target, enabled=True))
+        passive = getattr(self, "_cluster_passive_row", None)
+        if passive is not None and not self.cluster_passives_chip.isHidden() \
+                and self.cluster_passives_chip.isActive():
+            minimum, maximum = self.cluster_passives_chip.values()
+            selected.append(replace(passive, min_value=minimum, max_value=maximum, enabled=True))
+        selected.extend(replace(row, enabled=True) for row in getattr(
+            self, "_cluster_enchant_rows", (),
+        ))
         return tuple(selected)
+
+    def _configure_logbook_areas(self, item):
+        if item.category != "expedition_logbook":
+            self._logbook_area_groups = ()
+            self.logbook_area_selector.setLabels(())
+            return
+        groups = []
+        for group in sorted({mod.group for mod in item.modifiers if mod.group is not None}):
+            mods = tuple(mod for mod in item.modifiers if mod.group == group)
+            if not mods:
+                continue
+            faction = next((mod.text for mod in mods if mod.stat_id and
+                            mod.stat_id.startswith("pseudo.pseudo_logbook_faction_")), None)
+            groups.append((group, faction or f"エリア{len(groups) + 1}"))
+        self._logbook_area_groups = tuple(groups[:5])
+        self.logbook_area_selector.setLabels(
+            tuple(f"エリア{index + 1}：{label}" for index, (_group, label)
+                  in enumerate(self._logbook_area_groups))
+        )
+
+    def _logbook_area_changed(self, index):
+        groups = getattr(self, "_logbook_area_groups", ())
+        if not groups or index >= len(groups):
+            return
+        selected_group = groups[index][0]
+        for row_index in range(self.mod_filter_tree.topLevelItemCount()):
+            row = self.mod_filter_tree.topLevelItem(row_index)
+            original = row.data(0, Qt.UserRole + 4)
+            reason = original.selection_reason if isinstance(original, TradeStatFilter) else ""
+            if reason.startswith("logbook-area:"):
+                row.setCheckState(
+                    0, Qt.Checked if reason == f"logbook-area:{selected_group}" else Qt.Unchecked,
+                )
 
     def _trade_preset_changed(self):
         if not hasattr(self, "mod_filter_tree"):
@@ -2149,6 +2319,17 @@ class PoetoreWindow(QWidget):
                 "property.map_blighted", "property.map_uberblighted",
                 "property.map_completion_reward",
             }:
+                continue
+            if stat_filter.stat_id == "property.heist_objective_value" or (
+                stat_filter.stat_id.startswith("property.heist_")
+                and stat_filter.stat_id != "property.heist_wings"
+            ):
+                continue
+            if stat_filter.ref == "Adds # Passive Skills" or (
+                getattr(self, "_parsed_item", None) is not None
+                and self._parsed_item.category == "cluster_jewel"
+                and stat_filter.kind == "enchant"
+            ):
                 continue
             value = "" if stat_filter.min_value is None else f"{stat_filter.min_value:g}"
             maximum = "" if stat_filter.max_value is None else f"{stat_filter.max_value:g}"

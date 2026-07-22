@@ -1020,8 +1020,10 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
     window = PoetoreWindow()
     try:
         assert tuple(name for name, _widget in window._filter_chips) == (
-            "links", "map_tier", "completion_reward", "area_level", "heist_wings",
-            "blighted", "item_level", "base_percentile", "gem_level", "quality",
+            "links", "map_tier", "completion_reward", "area_level", "logbook_area",
+            "heist_wings", "heist_job", "heist_target", "cluster_enchant",
+            "cluster_passives", "cluster_sockets", "blighted", "item_level",
+            "base_percentile", "gem_variant", "gem_level", "quality",
             "influence_shaper", "influence_elder", "influence_crusader",
             "influence_hunter", "influence_redeemer", "influence_warlord",
             "magic_rarity", "unidentified", "veiled", "foil", "mirrored", "split",
@@ -1576,5 +1578,25 @@ def test_nonunique_jewels_use_category_search_but_cluster_and_unique_stay_exact(
         assert window._searches_exact_base_type(abyss) is False
         assert window._searches_exact_base_type(cluster) is True
         assert window._searches_exact_base_type(unique) is True
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize("metadata,name,expected", [
+    ({}, "Fireball", "Variant：通常ジェム"),
+    ({"vaal": True}, "Vaal Fireball", "Variant：ヴァールジェム"),
+    ({}, "Awakened Added Fire Damage Support", "Variant：覚醒ジェム"),
+    ({"transfigured": True}, "Fireball of Pelting", "Variant：変容ジェム"),
+])
+def test_gem_variant_is_shown_as_japanese_readonly_chip(qapp, metadata, name, expected):
+    window = PoetoreWindow()
+    try:
+        item = ParsedItem("Skill Gems", "Gem", name, name, "gem", raw_text=name)
+        window._trade_base_type = name
+        with patch("src.poetore.ui.gem_metadata", return_value=metadata), \
+             patch("src.poetore.ui.resolve_trade_stat_filters", return_value=()):
+            window._configure_special_filter_chips(item)
+        assert window.gem_variant_chip.text() == expected
+        assert window.gem_variant_chip.isEnabled() is False
     finally:
         window.close()
