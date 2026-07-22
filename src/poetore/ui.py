@@ -345,6 +345,25 @@ class PoetoreWindow(QWidget):
         item_level_layout.addWidget(self.item_level_max_edit)
         self.item_level_tag.hide()
         item_state_options.addWidget(self.item_level_tag)
+        self.gem_level_tag = QFrame()
+        self.gem_level_tag.setObjectName("gemLevelTag")
+        self.gem_level_tag.setFixedWidth(132)
+        gem_level_layout = QHBoxLayout(self.gem_level_tag)
+        gem_level_layout.setContentsMargins(8, 2, 6, 2)
+        gem_level_layout.setSpacing(1)
+        self.gem_level_toggle = QPushButton("☑ ジェムLv：")
+        self.gem_level_toggle.setObjectName("gemLevelToggle")
+        self.gem_level_toggle.clicked.connect(self._toggle_gem_level_filter)
+        gem_level_layout.addWidget(self.gem_level_toggle)
+        self.gem_level_edit = QLineEdit()
+        self.gem_level_edit.setObjectName("gemLevelEdit")
+        self.gem_level_edit.setValidator(QIntValidator(1, 40, self.gem_level_edit))
+        self.gem_level_edit.setAlignment(Qt.AlignCenter)
+        self.gem_level_edit.setFixedWidth(30)
+        self.gem_level_edit.textEdited.connect(self._enable_gem_level_filter)
+        gem_level_layout.addWidget(self.gem_level_edit)
+        self.gem_level_tag.hide()
+        item_state_options.addWidget(self.gem_level_tag)
         self.split_combo = _BinaryToggle(
             ("非スプリット", False), ("スプリット品含む", True),
         )
@@ -512,18 +531,23 @@ class PoetoreWindow(QWidget):
                 border: 1px solid #b0ff7b;
                 border-radius: 3px;
             }
+            QFrame#gemLevelTag {
+                background: rgba(70, 105, 52, 210);
+                border: 1px solid #b0ff7b;
+                border-radius: 3px;
+            }
             QFrame#itemLevelTag QLabel {
                 color: #f4ffed;
                 font-weight: 700;
             }
-            QPushButton#itemLevelToggle {
+            QPushButton#itemLevelToggle, QPushButton#gemLevelToggle {
                 background: transparent;
                 color: #f4ffed;
                 border: none;
                 padding: 0;
                 font-weight: 700;
             }
-            QLineEdit#itemLevelEdit, QLineEdit#itemLevelMaxEdit {
+            QLineEdit#itemLevelEdit, QLineEdit#itemLevelMaxEdit, QLineEdit#gemLevelEdit {
                 background: transparent;
                 color: #f4ffed;
                 border: none;
@@ -531,7 +555,7 @@ class PoetoreWindow(QWidget):
                 min-height: 20px;
                 font-weight: 700;
             }
-            QLineEdit#itemLevelEdit:focus, QLineEdit#itemLevelMaxEdit:focus {
+            QLineEdit#itemLevelEdit:focus, QLineEdit#itemLevelMaxEdit:focus, QLineEdit#gemLevelEdit:focus {
                 border: none;
                 color: #d8ffbd;
             }
@@ -539,9 +563,17 @@ class PoetoreWindow(QWidget):
                 border: 1px dashed rgba(145, 155, 140, 150);
                 background: rgba(20, 20, 20, 180);
             }
+            QFrame#gemLevelTag[active="false"] {
+                border: 1px dashed rgba(145, 155, 140, 150);
+                background: rgba(20, 20, 20, 180);
+            }
             QFrame#itemLevelTag[active="false"] QPushButton,
             QFrame#itemLevelTag[active="false"] QLineEdit,
             QFrame#itemLevelTag[active="false"] QLabel {
+                color: #687064;
+            }
+            QFrame#gemLevelTag[active="false"] QPushButton,
+            QFrame#gemLevelTag[active="false"] QLineEdit {
                 color: #687064;
             }
             QPushButton#primaryButton {
@@ -854,6 +886,7 @@ class PoetoreWindow(QWidget):
         self._configure_trade_currency(item)
         self._configure_item_state_filters(item)
         self._configure_item_level(item)
+        self._configure_gem_level(item)
         self._update_item_header(item)
         self.result_tree.clear()
         for label, value in (
@@ -912,6 +945,7 @@ class PoetoreWindow(QWidget):
         )
         include_split = bool(self.split_combo.currentData())
         item_level_min, item_level_max = self._selected_item_level_range()
+        gem_level_min = self._selected_gem_level()
         magic_exact = bool(
             self.magic_rarity_toggle.isVisible() and self.magic_rarity_toggle.currentData()
         )
@@ -935,6 +969,9 @@ class PoetoreWindow(QWidget):
                     item, preset, self._trade_base_type,
                 ) if needs_initial_filters else ()
                 effective_filters = initial_filters if needs_initial_filters else filters
+                effective_filters = tuple(
+                    row for row in effective_filters if row.stat_id != "property.gem_level"
+                )
                 if item.rarity.casefold() in {"unique", "ユニーク"} and "unidentified" in item.flags and not trade_name:
                     candidates = unique_candidates(self._trade_base_type or item.base_type)
                     if len(candidates) > 1:
@@ -963,6 +1000,7 @@ class PoetoreWindow(QWidget):
                     exact_base_type=self._searches_exact_base_type(item),
                     item_level_min=item_level_min,
                     item_level_max=item_level_max,
+                    gem_level_min=gem_level_min,
                 )
             except (TradeApiError, ValueError) as exc:
                 self._trade_signals.failed.emit(str(exc))
@@ -1099,6 +1137,47 @@ class PoetoreWindow(QWidget):
             int(maximum_text) if maximum_text else None,
         )
 
+    def _configure_gem_level(self, item):
+        key = item.raw_text
+        if key == getattr(self, "_gem_level_item_key", None):
+            return
+        self._gem_level_item_key = key
+        raw_level = item.properties.get("ジェムレベル") if item.category == "gem" else None
+        match = re.search(r"\d+", str(raw_level or ""))
+        level = int(match.group()) if match else None
+        self.gem_level_tag.setVisible(level is not None)
+        self.gem_level_edit.setText(str(level) if level is not None else "")
+        self._set_gem_level_filter_enabled(level is not None)
+
+    def _toggle_gem_level_filter(self):
+        self._set_gem_level_filter_enabled(not getattr(self, "_gem_level_filter_enabled", False))
+
+    def _enable_gem_level_filter(self, _text: str = ""):
+        self._set_gem_level_filter_enabled(True)
+
+    def _set_gem_level_filter_enabled(self, enabled: bool):
+        self._gem_level_filter_enabled = bool(enabled)
+        self.gem_level_tag.setProperty("active", self._gem_level_filter_enabled)
+        self.gem_level_toggle.setText(
+            "☑ ジェムLv：" if self._gem_level_filter_enabled else "☐ ジェムLv："
+        )
+        font = self.gem_level_edit.font()
+        font.setStrikeOut(not self._gem_level_filter_enabled)
+        self.gem_level_edit.setFont(font)
+        self.gem_level_tag.style().unpolish(self.gem_level_tag)
+        self.gem_level_tag.style().polish(self.gem_level_tag)
+        self.gem_level_toggle.setToolTip(
+            "クリックしてジェムレベル条件を無効にします"
+            if self._gem_level_filter_enabled else
+            "クリックしてジェムレベル条件を有効にします"
+        )
+
+    def _selected_gem_level(self) -> int | None:
+        if self.gem_level_tag.isHidden() or not getattr(self, "_gem_level_filter_enabled", False):
+            return None
+        text = self.gem_level_edit.text().strip()
+        return int(text) if text else None
+
     def _trade_preset_changed(self):
         if not hasattr(self, "mod_filter_tree"):
             return
@@ -1189,7 +1268,7 @@ class PoetoreWindow(QWidget):
     def _populate_stat_filters(self, filters: tuple[TradeStatFilter, ...]):
         self.mod_filter_tree.clear()
         for stat_filter in filters:
-            if stat_filter.stat_id == "property.item_level":
+            if stat_filter.stat_id in {"property.item_level", "property.gem_level"}:
                 continue
             value = "" if stat_filter.min_value is None else f"{stat_filter.min_value:g}"
             maximum = "" if stat_filter.max_value is None else f"{stat_filter.max_value:g}"

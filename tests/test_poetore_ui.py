@@ -653,6 +653,35 @@ Item Level: {item_level}
         window.close()
 
 
+def test_gem_level_chip_uses_read_level_and_can_be_toggled_and_edited(qapp):
+    window = PoetoreWindow()
+    try:
+        item = parse_item_text("""アイテムクラス: サポートジェム
+レアリティ: ジェム
+範囲ダメージ集中サポート
+--------
+レベル: 3
+""")
+        window._configure_gem_level(item)
+
+        assert not window.gem_level_tag.isHidden()
+        assert window.gem_level_edit.text() == "3"
+        assert window._selected_gem_level() == 3
+        assert window.gem_level_toggle.text() == "☑ ジェムLv："
+
+        window.gem_level_toggle.click()
+        assert window._selected_gem_level() is None
+        assert window.gem_level_edit.font().strikeOut()
+
+        window.gem_level_edit.setFocus()
+        window.gem_level_edit.selectAll()
+        QTest.keyClicks(window.gem_level_edit, "5")
+        assert window._selected_gem_level() == 5
+        assert not window.gem_level_edit.font().strikeOut()
+    finally:
+        window.close()
+
+
 def test_corrupted_item_defaults_to_corrupted_only(qapp):
     window = PoetoreWindow()
     try:
