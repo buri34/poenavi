@@ -9,6 +9,16 @@ PREFERRED_SEARCH_TERMS = {
 }
 
 
+MINI_NAVI_GEM_SHOP_PROMPT = "💎 ショップでジェム購入可 — クリックでRegexをコピー"
+
+
+def get_mini_navi_gem_shop_prompt(poe_version: str, is_town: bool, query: str) -> str:
+    """町で購入対象がある時だけ、みになび用の案内を返す。"""
+    if poe_version != "poe1" or not is_town or not query:
+        return ""
+    return MINI_NAVI_GEM_SHOP_PROMPT
+
+
 class HoldTrigger:
     """長押しタイマーの古い発火と連続実行を防ぐ状態。"""
 

@@ -39,6 +39,7 @@ from src.utils.gem_shop_search import (
     build_act_vendor_gem_query,
     format_gem_shop_search_preview,
     get_gem_shop_search_feedback,
+    get_mini_navi_gem_shop_prompt,
 )
 from src.utils.poelab_links import POELAB_HOME, find_daily_notes_url
 from src.utils.area_notes import get_area_note, set_area_note
@@ -137,6 +138,17 @@ class MiniNaviLockButtonWindow(QWidget):
         super().leaveEvent(event)
 
 
+class ClickableLabel(QLabel):
+    clicked = Signal()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.clicked.emit()
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
+
+
 class MiniNaviOverlay(QWidget):
     """みになび表示ウィンドウ。"""
 
@@ -163,6 +175,7 @@ class MiniNaviOverlay(QWidget):
         "wp": "wp.png",
         "portal": "portal.png",
     }
+    gem_shop_prompt_clicked = Signal()
 
     DEFAULT_CONFIG = {
         "enabled": False,
@@ -204,6 +217,7 @@ class MiniNaviOverlay(QWidget):
         self._current_zone_id = None
         self._current_has_area_note = False
         self._muted_content = False
+        self._gem_shop_prompt = ""
         self._lock_button_hidden_for_drag = False
         self._fade_timer = QTimer(self)
         self._fade_timer.setSingleShot(True)
@@ -259,6 +273,17 @@ class MiniNaviOverlay(QWidget):
         self.text_label.setMinimumWidth(150)
         self.text_label.installEventFilter(self)
         right_column.addWidget(self.text_label, stretch=1)
+
+        self.gem_shop_prompt_label = ClickableLabel("")
+        self.gem_shop_prompt_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.gem_shop_prompt_label.setCursor(QCursor(Qt.PointingHandCursor))
+        self.gem_shop_prompt_label.setStyleSheet(
+            "color: #f0c674; font-size: 12px; font-weight: bold; background: transparent; padding-top: 2px;"
+        )
+        self.gem_shop_prompt_label.setToolTip("クリックしてショップ検索Regexをコピー")
+        self.gem_shop_prompt_label.clicked.connect(self.gem_shop_prompt_clicked)
+        self.gem_shop_prompt_label.hide()
+        right_column.addWidget(self.gem_shop_prompt_label, stretch=0)
 
         layout.addLayout(right_column, stretch=1)
 
@@ -396,6 +421,18 @@ class MiniNaviOverlay(QWidget):
             {"text": self.WAITING_FOR_AREA_TEXT, "direction": "none"},
             muted=True,
         )
+
+    def set_gem_shop_prompt(self, prompt: str):
+        self._gem_shop_prompt = prompt
+        self.gem_shop_prompt_label.setText(prompt)
+        self.gem_shop_prompt_label.setVisible(bool(prompt))
+        self._fit_height_to_content()
+
+    def show_gem_shop_copy_feedback(self):
+        if not self._gem_shop_prompt:
+            return
+        self.gem_shop_prompt_label.setText("💎 Regexをコピーしました")
+        QTimer.singleShot(1200, lambda: self.gem_shop_prompt_label.setText(self._gem_shop_prompt))
 
     def show_last_content_or_waiting(self):
         """街では前エリアの表示を維持し、履歴がない時だけ待機表示する。"""
@@ -3688,10 +3725,11 @@ class MainWindow(QMainWindow):
         with measure("startup data load"):
             zone_master_data = load_zone_master_data()
             self.zone_data_by_version = zone_master_data["zone_data_by_version"]
-            self.town_zones_by_version = zone_master_data["town_zones_by_version"]
-            self.zone_data = self.zone_data_by_version.get(self.poe_version, {})
-            self.guide_data = load_guide_data(self.poe_version)
+        self.town_zones_by_version = zone_master_data["town_zones_by_version"]
+        self.zone_data = self.zone_data_by_version.get(self.poe_version, {})
+        self.guide_data = load_guide_data(self.poe_version)
         self.mini_navi_overlay = MiniNaviOverlay(self)
+        self.mini_navi_overlay.gem_shop_prompt_clicked.connect(self.copy_gem_shop_search_query)
         self.poelab_url_resolved.connect(self._open_resolved_poelab_url)
         self.poelab_url_failed.connect(self._handle_poelab_url_error)
         
@@ -6213,6 +6251,17 @@ class MainWindow(QMainWindow):
         query = self._gem_shop_search_query()
         self.gem_shop_search_preview_label.setText(format_gem_shop_search_preview(query))
         self.gem_shop_search_copy_btn.setEnabled(bool(query))
+        self._refresh_mini_navi_gem_shop_prompt()
+
+    def _refresh_mini_navi_gem_shop_prompt(self):
+        overlay = getattr(self, "mini_navi_overlay", None)
+        if overlay is None:
+            return
+        zone_name = getattr(self, "current_zone", "")
+        is_town = bool(zone_name and self._is_town_zone(zone_name))
+        overlay.set_gem_shop_prompt(
+            get_mini_navi_gem_shop_prompt(self.poe_version, is_town, self._gem_shop_search_query())
+        )
 
     def copy_gem_shop_search_query(self):
         """現在ActのRegexだけをクリップボードへコピーする。"""
@@ -6223,6 +6272,9 @@ class MainWindow(QMainWindow):
         QApplication.clipboard().setText(query)
         self.gem_shop_search_copy_btn.setText("コピー済み")
         QTimer.singleShot(1200, lambda: self.gem_shop_search_copy_btn.setText("Regexをコピー"))
+        overlay = getattr(self, "mini_navi_overlay", None)
+        if overlay is not None:
+            overlay.show_gem_shop_copy_feedback()
 
     def _show_gem_shop_search_status(self, message: str):
         QToolTip.showText(QCursor.pos(), message, self, QRect(), 2500)
@@ -6633,6 +6685,7 @@ class MainWindow(QMainWindow):
             f"visited_town_before={getattr(self, '_visited_town', False)}"
         )
         self.current_zone = zone_name
+        self._refresh_mini_navi_gem_shop_prompt()
         if actual_entry and self.is_running and not self._restoring:
             self.segment_recorder.record_entry(
                 self._get_zone_id(zone_name) or zone_name,
@@ -6673,6 +6726,7 @@ class MainWindow(QMainWindow):
                 self._save_progress_flags()
             self.zone_label.setText(f"🏠 {display_zone_name}")
             if hasattr(self, "mini_navi_overlay") and self._is_mini_navi_available():
+                self._refresh_mini_navi_gem_shop_prompt()
                 self.mini_navi_overlay.show_last_content_or_waiting()
             # Labクリア後の街帰還 → 志す者の広場の2回目ガイドを表示
             if actual_entry and self._in_lab and self._lab_zone_id:
