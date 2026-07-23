@@ -2489,7 +2489,10 @@ def search_prices(
     web_payload = json.loads(json.dumps(payload))
     web_query = web_payload["query"]
     localized_type = _normalize_trade_base_type(item.base_type)
-    if localized_type:
+    # ベース全体検索ではAPIクエリにtypeが存在しない。Magic品の通常コピーは
+    # Affix込みの1行名になるため、ここでtypeを新規追加すると公式Tradeが
+    # 「存在しないベースタイプ」として検索状態の読込を拒否する。
+    if localized_type and "type" in web_query:
         if isinstance(web_query.get("type"), dict):
             web_query["type"]["option"] = localized_type
         else:

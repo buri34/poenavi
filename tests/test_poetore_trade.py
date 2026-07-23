@@ -1840,6 +1840,53 @@ def test_search_result_exposes_japanese_trade_url_and_reuses_cache():
     assert "qid" not in first.web_url
 
 
+def test_magic_base_jewel_web_url_does_not_add_affixed_name_as_type():
+    _trade_response_cache.clear()
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: マジック
+凶悪な 避難所の ビリジアンジュエル
+--------
+アイテムレベル: 82
+--------
+{ プレフィックスモッド「凶悪な」 (ティア: 1) — ダメージ, アタック }
+剣によるダメージが14(14-16)%増加する
+{ サフィックスモッド 「避難所の」 (ティア: 1) — 元素, 冷気, 雷, 耐性 }
+冷気および雷耐性 +12(10-12)%
+--------
+パッシブツリーで割り当てられたジュエルソケットにはめる。
+""")
+    filters = (
+        TradeStatFilter(
+            "explicit.stat_83050999",
+            "剣によるダメージが14(14-16)%増加する",
+            12.6, "prefix", True,
+        ),
+        TradeStatFilter(
+            "explicit.stat_4277795662",
+            "冷気および雷耐性 +12(10-12)%",
+            10.8, "suffix", True,
+        ),
+    )
+    response = ({"id": "qid", "result": [], "total": 0}, {})
+    with patch("src.poetore.trade._request_json", return_value=response):
+        result = search_prices(
+            item, "Viridian Jewel", "Standard", stat_filters=filters,
+            exact_base_type=False,
+        )
+
+    web_payload = json.loads(parse_qs(urlsplit(result.web_url).query)["q"][0])
+    web_query = web_payload["query"]
+    assert "type" not in web_query
+    assert web_query["filters"]["type_filters"]["filters"] == {
+        "rarity": {"option": "magic"},
+        "category": {"option": "jewel.base"},
+    }
+    assert [row["id"] for row in web_query["stats"][0]["filters"]] == [
+        "explicit.stat_83050999",
+        "explicit.stat_4277795662",
+    ]
+
+
 def test_query_supports_option_not_count_and_special_item_states():
     item = parse_item_text(ITEM)
     item = replace(item, flags=item.flags + ("searing_item", "tangled_item", "veiled"))
