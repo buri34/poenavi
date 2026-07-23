@@ -13,8 +13,9 @@
 
 1. **高優先度: 未鑑定ユニークの画像付き候補カード**
 2. Windows実機確認
-3. Filled Coffin・公式Tradeデータ更新手順の確認
-4. README・配布ビルド・公開準備
+3. Valdo Mapの報酬検索を実物で再調査・修正
+4. Filled Coffin・公式Tradeデータ更新手順の確認
+5. README・配布ビルド・公開準備
 
 共通UI、検索チップ、Trade結果表、poe.ninja参考価格欄は初版が完成しているため、
 次回は共通部分を作り直さずカテゴリ専用UIへ進む。
@@ -114,6 +115,11 @@
   - 公式Tradeデータに存在するValdo固有Mod全体について、日英表記からstat IDへ汎用的に解決できる派生データと回帰テストを整備する
   - 未知のValdo Modは誤ったstatへ寄せず未解決として扱い、公式データ更新時に差分を検出できるようにする
   - Awakened準拠ではCompletion Reward完全一致、Foil、実Modを検索し、元アイテムにVoid死亡Modがない場合は同ModをNOT条件で除外する
+- [ ] **Valdo Mapの報酬検索を実物で再調査・修正する**
+  - 現状、報酬名・Foil条件・日英Trade名の変換処理はあるが、Windows実機では報酬条件を使った検索がまだ正常に成立しない
+  - 対応が複雑なため、ほかの検索テストを優先して一旦保留する
+  - 再開時は実際のValdo Map詳細コピー、ぽえとれ内部クエリ、日本語公式Tradeへ渡すクエリを比較し、報酬option ID・type・discriminator・Foil条件を再確認する
+  - 自動テストのAPI受理だけで完了とせず、Windows実機で報酬条件がTrade画面へ正しく復元されるところまで確認する
 - [x] Inscribed UltimatumはAwakened準拠の名前完全一致検索に留める
   - 供物・報酬・クリア条件・試練Mod・Area Levelは検索条件へ変換しない
   - UIへチャレンジタイプ・報酬種類・必要なアイテム・報酬などの条件検索が非対応であることを明示する
