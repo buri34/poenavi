@@ -34,6 +34,7 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
     try:
         assert window.isEnabled()
         assert not window.testAttribute(Qt.WA_TransparentForMouseEvents)
+        assert window.testAttribute(Qt.WA_ShowWithoutActivating)
         assert not bool(window.windowFlags() & Qt.WindowTransparentForInput)
         assert bool(window.windowFlags() & Qt.FramelessWindowHint)
         assert bool(window.windowFlags() & Qt.WindowStaysOnTopHint)
@@ -112,6 +113,21 @@ def test_show_at_context_does_not_focus_editable_league_field(qapp):
 
         QTest.mouseClick(window.trade_league_combo.lineEdit(), Qt.LeftButton)
         assert window.trade_league_combo.lineEdit().hasFocus()
+    finally:
+        window.close()
+
+
+def test_show_at_context_can_display_without_activating(qapp):
+    window = PoetoreWindow()
+    try:
+        context = PlacementContext(QRect(0, 0, 1920, 1080), QPoint(500, 400))
+        with patch.object(window, "show"), patch.object(window, "raise_"), patch.object(
+            window, "activateWindow"
+        ) as activate, patch.object(window, "setFocus") as set_focus:
+            window.show_at_context(context, activate=False)
+
+        activate.assert_not_called()
+        set_focus.assert_not_called()
     finally:
         window.close()
 

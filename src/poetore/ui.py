@@ -568,6 +568,9 @@ class PoetoreWindow(QWidget):
         # ぽえとれ側では常にマウス入力を受け取れる状態を明示する。
         self.setWindowFlag(Qt.WindowTransparentForInput, False)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, False)
+        # Alt+Dの検索結果表示だけでPoEからフォーカスを奪わない。
+        # 明示的なactivateWindow()やユーザーのクリックによる操作は許可する。
+        self.setAttribute(Qt.WA_ShowWithoutActivating, True)
         self.setEnabled(True)
         # Alt+Dで表示した直後に編集欄へ文字が入らないよう、ウィンドウ自身を
         # 安全なフォーカス先にする。各入力欄は必要な時だけ個別にフォーカスする。
@@ -1569,7 +1572,7 @@ class PoetoreWindow(QWidget):
         self.mod_filter_tree.clear()
         self.input_edit.setPlainText(merged_text)
         self.parse_current_text()
-        self.show_at_context(self._placement_context)
+        self.show_at_context(self._placement_context, activate=False)
         self.search_current_item()
 
     def show_at_context(self, context: PlacementContext | None = None, activate: bool = True):
