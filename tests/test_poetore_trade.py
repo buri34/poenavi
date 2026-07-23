@@ -20,6 +20,7 @@ from src.poetore.trade import (
 from src.poetore.trade import _request_json
 from src.poetore.trade import _base_defence_percentile
 from src.poetore.trade import _trade_response_cache
+from src.poetore.trade import _awakened_tier_tags
 
 
 ITEM = """Item Class: Two Hand Swords
@@ -35,6 +36,20 @@ Item Level: 67
 --------
 74% increased Physical Damage
 """
+
+
+def test_awakened_tier_tags_preserve_each_aggregated_mod():
+    modifiers = (
+        ItemModifier("命中力 +100", (100,), tier=2),
+        ItemModifier("命中力 +200", (200,), tier=2),
+    )
+    assert _awakened_tier_tags(modifiers) == (2, 2)
+
+    mixed = (
+        ItemModifier("命中力 +100", (100,), tier=2),
+        ItemModifier("命中力 +300", (300,), tier=1),
+    )
+    assert _awakened_tier_tags(mixed) == (1, 2)
 
 
 def test_trade_api_retries_429_once_using_retry_after():

@@ -1415,7 +1415,9 @@ def _property_tier_sources(item: ParsedItem, stat_id: str) -> tuple:
 
 def _awakened_tier_tags(modifiers) -> tuple[int, ...]:
     """通常のproperty/pseudo/explicit行でAwakenedが強調するT1/T2だけ返す。"""
-    return tuple(sorted({modifier.tier for modifier in modifiers if modifier.tier in {1, 2}}))
+    return tuple(sorted(
+        modifier.tier for modifier in modifiers if modifier.tier in {1, 2}
+    ))
 
 
 def _unique_roll_bounds(text: str) -> tuple[float, float] | None:

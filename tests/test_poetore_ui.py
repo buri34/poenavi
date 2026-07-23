@@ -499,7 +499,7 @@ Imbued Wand
         assert window.mod_filter_tree.columnWidth(2) == 94
         assert accuracy_row.text(2) == ""
         assert tier_widget is not None
-        assert [label.text() for label in tier_widget.findChildren(QLabel)] == ["T2"]
+        assert [label.text() for label in tier_widget.findChildren(QLabel)] == ["T2", "T2"]
         assert tier_widget.sizeHint().width() <= window.mod_filter_tree.columnWidth(2)
     finally:
         window.close()
