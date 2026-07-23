@@ -341,3 +341,23 @@ def test_main_window_can_shrink_to_control_row_when_all_visible_panels_are_detac
     window.detached_panel_windows.pop("guide")
 
     assert window._main_window_min_height() == window.MIN_HEIGHT
+
+
+def test_main_window_automatically_shrinks_when_all_visible_panels_are_detached():
+    _app()
+    window = MainWindow.__new__(MainWindow)
+    QMainWindow.__init__(window)
+    window.resize(640, 720)
+    window.panel_registry = {
+        "timer": {"content": QWidget()},
+        "guide": {"content": QWidget()},
+    }
+    window.detached_panel_windows = {
+        "timer": QWidget(),
+        "guide": QWidget(),
+    }
+
+    window._adjust_main_window_after_panel_change()
+
+    assert window.width() == 640
+    assert window.height() == window.DETACHED_ONLY_MIN_HEIGHT

@@ -3371,7 +3371,7 @@ class MainWindow(QMainWindow):
         panel_window.apply_window_settings(self.config)
         panel_window.show()
         self._save_detached_panel_state(panel_id)
-        self._adjust_height_keep_width()
+        self._adjust_main_window_after_panel_change()
 
     def restore_panel(self, panel_id: str):
         panel_window = self.detached_panel_windows.pop(panel_id, None)
@@ -3395,7 +3395,7 @@ class MainWindow(QMainWindow):
         panel_window.close()
         panel_window.deleteLater()
         self._save_detached_panel_state(panel_id)
-        self._adjust_height_keep_width()
+        self._adjust_main_window_after_panel_change()
 
     def _register_detachable_panel(
         self, panel_id: str, title: str, widgets: list[QWidget], layout, expand_widgets=(),
@@ -4898,6 +4898,13 @@ class MainWindow(QMainWindow):
         self.adjustSize()
         if self.width() != current_width:
             self.resize(current_width, self.height())
+
+    def _adjust_main_window_after_panel_change(self):
+        """パネル移動後に、本体の横幅を保ったまま適切な高さへ調整する。"""
+        if self._are_all_visible_panels_detached():
+            self.resize(self.width(), self.DETACHED_ONLY_MIN_HEIGHT)
+            return
+        self._adjust_height_keep_width()
 
     def _adjust_detached_panel_height(self, panel_id: str):
         """切り離しパネルの展開内容を収めつつ、ユーザー指定サイズは維持する。"""
@@ -6843,8 +6850,8 @@ class MainWindow(QMainWindow):
     MIN_HEIGHT = 400
     DETACHED_ONLY_MIN_HEIGHT = 90
 
-    def _main_window_min_height(self) -> int:
-        """表示対象の全パネルを切り離した本体だけ、操作列相当まで縮小可能にする。"""
+    def _are_all_visible_panels_detached(self) -> bool:
+        """現在のPoEバージョンで表示対象の全パネルが切り離されているか。"""
         registry = getattr(self, "panel_registry", {})
         relevant_panels = {
             panel_id
@@ -6852,7 +6859,11 @@ class MainWindow(QMainWindow):
             if panel_id != "gem" or getattr(self, "poe_version", POE1) == POE1
         }
         detached_panels = set(getattr(self, "detached_panel_windows", {}))
-        if relevant_panels and relevant_panels.issubset(detached_panels):
+        return bool(relevant_panels and relevant_panels.issubset(detached_panels))
+
+    def _main_window_min_height(self) -> int:
+        """表示対象の全パネルを切り離した本体だけ、操作列相当まで縮小可能にする。"""
+        if self._are_all_visible_panels_detached():
             return self.DETACHED_ONLY_MIN_HEIGHT
         return self.MIN_HEIGHT
     
