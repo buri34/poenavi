@@ -33,7 +33,7 @@ from src.utils.zone_master_data import load_zone_master_data
 from src.utils.poe_progress_data import get_auto_lap_triggers, get_clear_message, get_special_lap_event
 from src.utils.pob_importer import import_pob, get_pob_skill_sets
 from src.utils.gem_resolver import load_gem_names_ja, resolve_gem_acquisition
-from src.utils.gem_shop_search import HoldTrigger, build_act_vendor_gem_query
+from src.utils.gem_shop_search import HoldTrigger, build_act_vendor_gem_query, format_gem_shop_search_preview
 from src.utils.poelab_links import POELAB_HOME, find_daily_notes_url
 from src.utils.area_notes import get_area_note, set_area_note
 from src.ui.gem_tracker_widget import GemTrackerWidget, PoBImportDialog, PoBSkillSetSelectionDialog
@@ -4886,6 +4886,22 @@ class MainWindow(QMainWindow):
 
         pob_btn_layout.addStretch()
         gem_tracker_layout.addLayout(pob_btn_layout)
+
+        gem_search_preview_layout = QHBoxLayout()
+        gem_search_preview_layout.setSpacing(6)
+        self.gem_shop_search_preview_label = QLabel()
+        self.gem_shop_search_preview_label.setStyleSheet("color: #88aacc; font-size: 10px;")
+        self.gem_shop_search_preview_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.gem_shop_search_preview_label.setWordWrap(True)
+        gem_search_preview_layout.addWidget(self.gem_shop_search_preview_label, stretch=1)
+
+        self.gem_shop_search_copy_btn = QPushButton("Regexをコピー")
+        self.gem_shop_search_copy_btn.setMinimumHeight(22)
+        self.gem_shop_search_copy_btn.setToolTip("現在Actのショップ検索Regexをクリップボードへコピー（ゲームには入力しません）")
+        self.gem_shop_search_copy_btn.setStyleSheet(Styles.BUTTON)
+        self.gem_shop_search_copy_btn.clicked.connect(self.copy_gem_shop_search_query)
+        gem_search_preview_layout.addWidget(self.gem_shop_search_copy_btn)
+        gem_tracker_layout.addLayout(gem_search_preview_layout)
         
         # ジェムトラッカーウィジェット
         self.gem_tracker = GemTrackerWidget()
@@ -4896,6 +4912,7 @@ class MainWindow(QMainWindow):
         # 保存済みPoBデータがあれば復元
         if self._has_pob_import_data():
             self._update_gem_tracker()
+        self._refresh_gem_shop_search_preview()
         
         self.gem_tracker_frame.setVisible(self.gem_tracker_expanded and self.poe_version == POE1)
         self.gem_tracker_toggle_btn.setVisible(self.poe_version == POE1)
@@ -5321,6 +5338,7 @@ class MainWindow(QMainWindow):
         """ジェム取得リストを現在のActに基づいて更新"""
         pob_data = self._current_pob_data()
         if not pob_data:
+            self._refresh_gem_shop_search_preview()
             return
 
         use_library = ConfigManager.effective_poe1_route_act3(self.config) == "library_detour"
@@ -5341,6 +5359,7 @@ class MainWindow(QMainWindow):
         )
 
         self._apply_gem_tracker_data(self.gem_tracker, plan, pob_data, use_library, checked_gems)
+        self._refresh_gem_shop_search_preview()
 
     def _apply_gem_tracker_data(self, widget: GemTrackerWidget, plan: list, pob_data: dict, use_library: bool, checked_gems: list):
         """GemTrackerWidgetへ現在のPoB/チェック/Act状態を反映する。"""
@@ -5367,6 +5386,7 @@ class MainWindow(QMainWindow):
         self.config.pop("gem_tracker_checked", None)
         ConfigManager.save_config(self.config)
         self.gem_tracker.clear()
+        self._refresh_gem_shop_search_preview()
 
     def _on_gem_checked(self, gem_name: str, checked: bool):
         """ジェムチェックボックスの状態変更ハンドラ"""
@@ -6160,17 +6180,37 @@ class MainWindow(QMainWindow):
     def _finish_gem_shop_search_hold(self):
         self._gem_shop_search_hold.release()
 
-    def _run_gem_shop_search_hold(self, generation: int):
-        if not self._gem_shop_search_hold.consume_if_current(generation):
-            return
+    def _gem_shop_search_query(self) -> str:
         if self.poe_version != POE1 or not hasattr(self, "gem_tracker"):
-            return
-        query = build_act_vendor_gem_query(
+            return ""
+        return build_act_vendor_gem_query(
             self.gem_tracker._acquisition_plan,
             self.gem_tracker._current_act,
             load_gem_names_ja(),
             self.config.get("gem_shop_search_exclude_quest_rewards", True),
         )
+
+    def _refresh_gem_shop_search_preview(self):
+        if not hasattr(self, "gem_shop_search_preview_label"):
+            return
+        query = self._gem_shop_search_query()
+        self.gem_shop_search_preview_label.setText(format_gem_shop_search_preview(query))
+        self.gem_shop_search_copy_btn.setEnabled(bool(query))
+
+    def copy_gem_shop_search_query(self):
+        """現在ActのRegexだけをクリップボードへコピーする。"""
+        query = self._gem_shop_search_query()
+        if not query:
+            self._refresh_gem_shop_search_preview()
+            return
+        QApplication.clipboard().setText(query)
+        self.gem_shop_search_copy_btn.setText("コピー済み")
+        QTimer.singleShot(1200, lambda: self.gem_shop_search_copy_btn.setText("Regexをコピー"))
+
+    def _run_gem_shop_search_hold(self, generation: int):
+        if not self._gem_shop_search_hold.consume_if_current(generation):
+            return
+        query = self._gem_shop_search_query()
         target_hwnd = get_foreground_window()
         if not query or not is_path_of_exile_window(target_hwnd):
             return
@@ -6548,6 +6588,7 @@ class MainWindow(QMainWindow):
         self.current_zone_act = act
         if hasattr(self, "gem_tracker"):
             self.gem_tracker.set_current_act(act)
+        self._refresh_gem_shop_search_preview()
 
     def on_zone_entered(self, zone_name: str, actual_entry: bool = True):
         with measure("zone update"):
@@ -7259,6 +7300,7 @@ class MainWindow(QMainWindow):
             new_settings = dialog.get_settings()
             self.config.update(new_settings)
             ConfigManager.save_config(self.config)
+            self._refresh_gem_shop_search_preview()
             if self.config.get("always_on_top", True) != previous_always_on_top:
                 self._apply_window_flags()
             

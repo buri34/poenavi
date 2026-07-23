@@ -6,6 +6,7 @@ from src.utils.gem_shop_search import (
     HoldTrigger,
     build_act_vendor_gem_query,
     build_unique_gem_search_terms,
+    format_gem_shop_search_preview,
 )
 from src.utils.gem_resolver import load_gem_names_ja
 from src.utils.window_focus import is_path_of_exile_process_name
@@ -105,6 +106,16 @@ class GemShopSearchTest(unittest.TestCase):
                 1,
                 key,
             )
+
+    def test_preview_text_describes_the_current_regex_or_empty_target(self):
+        self.assertEqual(
+            format_gem_shop_search_preview("モーメン|プレシジ"),
+            "ショップRegex: モーメン|プレシジ",
+        )
+        self.assertEqual(
+            format_gem_shop_search_preview(""),
+            "ショップRegex: 対象ジェムなし",
+        )
 
     def test_released_hold_never_triggers(self):
         trigger = HoldTrigger()
