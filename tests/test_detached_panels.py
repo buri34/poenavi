@@ -5,7 +5,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "minimal")
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QSizePolicy, QSplitter, QVBoxLayout, QWidget
 
-from src.ui.main_window import DetachedPanelWindow, MainWindow
+from src.ui.detached_panel import DetachedPanelWindow
+from src.ui.main_window import MainWindow
 from src.utils.config_manager import ConfigManager
 
 
@@ -88,7 +89,7 @@ def test_restore_detached_panels_uses_saved_geometry(monkeypatch):
 
 def test_detached_panel_moves_from_its_header_drag_area():
     _app()
-    panel_window = DetachedPanelWindow("timer", "タイマー", QWidget(), lambda _panel_id: None, lambda _panel_id: None)
+    panel_window = DetachedPanelWindow("timer", "タイマー", QWidget(), lambda *_args: None, lambda *_args: None)
     panel_window._drag_offset = QPoint(8, 9)
 
     panel_window._move_from_global_position(QPoint(108, 209))
@@ -99,7 +100,7 @@ def test_detached_panel_moves_from_its_header_drag_area():
 
 def test_detached_panel_exposes_a_bottom_right_resize_grip():
     _app()
-    panel_window = DetachedPanelWindow("timer", "タイマー", QWidget(), lambda _panel_id: None, lambda _panel_id: None)
+    panel_window = DetachedPanelWindow("timer", "タイマー", QWidget(), lambda *_args: None, lambda *_args: None)
 
     assert panel_window.resize_grip.parent() is panel_window
     assert panel_window.resize_grip.width() == 18
@@ -109,7 +110,7 @@ def test_detached_panel_exposes_a_bottom_right_resize_grip():
 
 def test_resizing_detached_panel_keeps_header_at_its_original_height():
     _app()
-    panel_window = DetachedPanelWindow("timer", "タイマー", QWidget(), lambda _panel_id: None, lambda _panel_id: None)
+    panel_window = DetachedPanelWindow("timer", "タイマー", QWidget(), lambda *_args: None, lambda *_args: None)
     panel_window.show()
     _app().processEvents()
     header_height = panel_window.header.height()
@@ -125,7 +126,7 @@ def test_resizing_detached_panel_expands_its_fixed_content_area():
     _app()
     content = QWidget()
     content.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-    panel_window = DetachedPanelWindow("timer", "タイマー", content, lambda _panel_id: None, lambda _panel_id: None)
+    panel_window = DetachedPanelWindow("timer", "タイマー", content, lambda *_args: None, lambda *_args: None)
     panel_window.show()
     _app().processEvents()
     content_height = content.height()
@@ -186,7 +187,7 @@ def test_expanding_lap_content_grows_the_detached_timer_without_shrinking_it():
     lap_content.setFixedHeight(300)
     lap_content.hide()
     content_layout.addWidget(lap_content)
-    panel_window = DetachedPanelWindow("timer", "タイマー", content, lambda _panel_id: None, lambda _panel_id: None)
+    panel_window = DetachedPanelWindow("timer", "タイマー", content, lambda *_args: None, lambda *_args: None)
     panel_window.show()
     _app().processEvents()
     initial_height = panel_window.height()
