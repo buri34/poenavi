@@ -1,0 +1,175 @@
+{
+  "games": {
+    "poe1": {
+      "guide_terms": [
+        {
+          "table": "BaseItemTypes",
+          "game_id": "Metadata/Items/Flasks/FlaskUtility1",
+          "ja": "水銀のフラスコ",
+          "en": "Quicksilver Flask"
+        },
+        {
+          "table": "BaseItemTypes",
+          "game_id": "Metadata/Items/Currency/CurrencyPortal",
+          "ja": "ポータルの巻物",
+          "en": "Portal Scroll"
+        },
+        {
+          "table": "BaseItemTypes",
+          "game_id": "Metadata/Items/Gems/SkillGemFrostblink",
+          "ja": "フロストブリンク",
+          "en": "Frostblink"
+        },
+        {
+          "table": "BaseItemTypes",
+          "game_id": "Metadata/Items/Currency/CurrencyRerollMagic",
+          "ja": "改変のオーブ",
+          "en": "Orb of Alteration"
+        },
+        {
+          "table": "BaseItemTypes",
+          "game_id": "Metadata/Items/Currency/CurrencyUpgradeRandomly",
+          "ja": "可能性のオーブ",
+          "en": "Orb of Chance"
+        }
+      ],
+      "forbidden_english": [
+        "Mercury Flask",
+        "magic fuel",
+        "Orb of Modification",
+        "Orb of Possibility",
+        "gas meter",
+        "Elixir of Enchantment",
+        "Staff of Cleansing",
+        "Purification Mark",
+        "Eternal Ank",
+        "Torasan powder",
+        "Feather of Sekama",
+        "All Flame"
+      ]
+    },
+    "poe2": {
+      "zones": [
+        {
+          "poenavi_id": "poe2_act2_area09",
+          "game_id": "G2_4_1",
+          "ja": "ケス",
+          "en": "Keth"
+        },
+        {
+          "poenavi_id": "poe2_act2_area18",
+          "game_id": "G2_12",
+          "ja": "ドレッドノート",
+          "en": "Dreadnought"
+        },
+        {
+          "poenavi_id": "poe2_act2_area19",
+          "game_id": "G2_11",
+          "ja": "ドレッドノートの航跡",
+          "en": "The Dreadnought's Wake"
+        }
+      ],
+      "guide_terms": [
+        {
+          "table": "NPCs",
+          "game_id": "Metadata/Monsters/LeagueExpedition/ReaperBoss/EzomyteReaperBoss",
+          "ja": "霧の刃、シオラ",
+          "en": "Siora, Blade of the Mists"
+        },
+        {
+          "table": "MonsterVarieties",
+          "game_id": "Metadata/Monsters/KaruiChieftain/KaruiCaptainBoss3.ais",
+          "ja": "蝕まれたタヴァカイ",
+          "en": "Tavakai, the Consumed"
+        },
+        {
+          "table": "MonsterVarieties",
+          "game_id": "Metadata/Monsters/KaruiChieftain/KaruiCaptainBoss.ais",
+          "ja": "族長、タヴァカイ",
+          "en": "Tavakai, the Chieftain"
+        },
+        {
+          "table": "NPCs",
+          "game_id": "Metadata/NPC/Four_Act1/HoodedMentor",
+          "ja": "フードをかぶった者",
+          "en": "The Hooded One"
+        },
+        {
+          "table": "WorldAreas",
+          "game_id": "P2_Town",
+          "ja": "カーリバザール",
+          "en": "The Khari Bazaar"
+        },
+        {
+          "table": "MonsterVarieties",
+          "game_id": "Metadata/Monsters/Quadrilla/IcyQuadrilla/IcyQuadrillaBoss.ais",
+          "ja": "アボミネーションのイエティ",
+          "en": "The Abominable Yeti"
+        },
+        {
+          "table": "MonsterVarieties",
+          "game_id": "Metadata/Monsters/MudBurrower/DevourerDuo/DevourerBossDuoHead.ais",
+          "ja": "サンドワーム、アナンドル",
+          "en": "Anundr, the Sandworm"
+        },
+        {
+          "table": "NPCs",
+          "game_id": "Metadata/NPC/Four_Act2/MarakethMatriarch",
+          "ja": "セケマのアサラ",
+          "en": "Sekhema Asala"
+        },
+        {
+          "table": "NPCs",
+          "game_id": "Metadata/Monsters/VaalForgeMaster/VaalForgemaster",
+          "ja": "鍛造場主、メクトゥル",
+          "en": "Mektul, the Forgemaster"
+        },
+        {
+          "table": "MonsterVarieties",
+          "game_id": "Metadata/Monsters/MastodonBoss/MastodonBoss.ais",
+          "ja": "古代の戦象、エクバブ",
+          "en": "Ekbab, Ancient Steed"
+        },
+        {
+          "table": "NPCs",
+          "game_id": "Metadata/Monsters/BoneCultists/BoneCultists_Necromancer/BoneCultists_NecromancerBoss",
+          "ja": "死の王、イクタブ",
+          "en": "Iktab, the Deathlord"
+        },
+        {
+          "table": "BaseItemTypes",
+          "game_id": "Metadata/Items/QuestItems/Gallows/Act2/MedallionHyenaClan",
+          "ja": "太陽の部族の遺物",
+          "en": "Sun Clan Relic"
+        },
+        {
+          "table": "NPCs",
+          "game_id": "Metadata/Terrain/Gallows/Act2/2_town/Objects/MapTable",
+          "ja": "砂漠の地図",
+          "en": "Desert Map"
+        }
+      ],
+      "forbidden_english": [
+        "Word Processor",
+        "Noble Orb",
+        "Gin's Barrier",
+        "Jin's Barrier",
+        "maximum lifespan",
+        "Azarian, the son who was abandoned",
+        "the abandoned son, Azarian",
+        "Driyani",
+        "WulfricChieftain",
+        "Elswise",
+        "Kabara",
+        "to acquire",
+        "to do.",
+        "And enjoy",
+        "This will allow me",
+        "I must defeat",
+        "Help me talk",
+        "Picking up",
+        "How to defeat"
+      ]
+    }
+  }
+}

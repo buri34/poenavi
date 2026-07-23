@@ -36,7 +36,10 @@ jobs:
 
       - name: Build release assets
         shell: pwsh
-        run: .\scripts\build_release.ps1 -Python python
+        run: >-
+          .\scripts\build_release.ps1
+          -Python python
+          -ReleaseRepository $env:GITHUB_REPOSITORY
 
       - name: Create GitHub Release
         shell: pwsh

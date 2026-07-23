@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from src.ui.main_window import MainWindow
+from src.utils.i18n import tr_ui
 from src.utils.log_watcher import LogWatcher
 from src.utils.poe_version_data import POE1, POE2
 
@@ -57,9 +58,11 @@ def test_ready_is_rejected_with_existing_record_running_timer_or_poe2():
     assert window.timer_ready is False
     warning.assert_called_once_with(
         window,
-        "Readyにできません",
-        "タイマーの記録が残っています。\n"
-        "問題ないか確認のうえ、リセットしてからReadyしてください。",
+        tr_ui("Readyにできません"),
+        tr_ui(
+            "タイマーの記録が残っています。\n"
+            "問題ないか確認のうえ、リセットしてからReadyしてください。"
+        ),
     )
 
     window = make_window()

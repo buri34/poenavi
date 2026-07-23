@@ -1,5 +1,6 @@
 param(
-    [string]$Python = ".venv-build\Scripts\python.exe"
+    [string]$Python = ".venv-build\Scripts\python.exe",
+    [string]$ReleaseRepository = $env:GITHUB_REPOSITORY
 )
 
 $ErrorActionPreference = "Stop"
@@ -21,10 +22,43 @@ if ($Python -eq ".venv-build\Scripts\python.exe" -and -not (Test-Path $Python)) 
     }
 }
 
+function Resolve-ReleaseRepository {
+    param([string]$RequestedRepository)
+
+    $repository = "$RequestedRepository".Trim()
+    if (-not $repository) {
+        $origin = (& git remote get-url origin 2>$null)
+        if ($LASTEXITCODE -eq 0) {
+            $origin = "$origin".Trim()
+            if ($origin -match '^https://github\.com/([^/]+/[^/]+)/?$') {
+                $repository = $Matches[1]
+            }
+            elseif ($origin -match '^git@github\.com:([^/]+/[^/]+)$') {
+                $repository = $Matches[1]
+            }
+            elseif ($origin -match '^ssh://git@github\.com/([^/]+/[^/]+)/?$') {
+                $repository = $Matches[1]
+            }
+        }
+    }
+
+    $repository = ($repository.Trim().Trim('/') -replace '\.git$', '')
+    if ($repository -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
+        throw "Cannot determine a valid GitHub release repository. Pass -ReleaseRepository owner/repo."
+    }
+    return $repository
+}
+
+$ReleaseRepository = Resolve-ReleaseRepository $ReleaseRepository
+
 Invoke-Python -m pip install --upgrade pip setuptools wheel
 Invoke-Python -m pip install --upgrade -r requirements.txt pyinstaller pytest
 
 Remove-Item -Recurse -Force build, dist -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force build\generated | Out-Null
+$channelJson = @{ release_repository = $ReleaseRepository } | ConvertTo-Json -Compress
+Set-Content -Path build\generated\update_channel.json -Value $channelJson -Encoding ascii
+Write-Output "Update release repository: $ReleaseRepository"
 
 $appArgs = @(
     "-m", "PyInstaller",
@@ -37,7 +71,10 @@ $appArgs = @(
     "--add-data", "default_config.json;.",
     "--add-data", "guide_data.json;.",
     "--add-data", "guide_data_poe2.json;.",
+    "--add-data", "guide_data_en.json;.",
+    "--add-data", "guide_data_poe2_en.json;.",
     "--add-data", "monster_levels.json;.",
+    "--add-data", "build\generated\update_channel.json;data",
     "--add-data", "LICENSE;.",
     "--add-data", "README.md;.",
     "--add-data", "THIRD_PARTY_NOTICES.md;.",
@@ -62,6 +99,7 @@ $updaterArgs = @(
     "--icon", "assets\app\updater.ico",
     "--distpath", "dist\PoENavi",
     "--workpath", "build\updater",
+    "--add-data", "data\i18n;data\i18n",
     "--hidden-import", "PySide6.QtWidgets",
     "--hidden-import", "PySide6.QtCore",
     "--hidden-import", "PySide6.QtGui",
@@ -74,6 +112,13 @@ if (-not (Test-Path dist\PoENavi\PoENavi.exe)) {
 }
 if (-not (Test-Path dist\PoENavi\PoENaviUpdater.exe)) {
     throw "PoENaviUpdater.exe was not built"
+}
+$channelCandidates = @(
+    "dist\PoENavi\data\update_channel.json",
+    "dist\PoENavi\_internal\data\update_channel.json"
+)
+if (-not ($channelCandidates | Where-Object { Test-Path $_ })) {
+    throw "Build-generated update_channel.json was not packaged"
 }
 
 Remove-Item PoENavi.zip, PoENavi.zip.sha256 -ErrorAction SilentlyContinue

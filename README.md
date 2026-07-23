@@ -1,5 +1,7 @@
 # ぽえなび（PoENavi）
 
+[日本語](README.md) | [English](README.en.md)
+
 Path of Exile 1 / Path of Exile 2 に対応した軽量なレベリングガイド＆タイマーツール。
 **Client.txtログ監視による自動エリア検知**＋**攻略ガイド**＋**マップ画像表示**＋**RTAタイマー**を表示します。
 
@@ -452,6 +454,13 @@ PoE1ではAct 6-10の一部エリアがAct 1-5と同名で登場します。
 
 ---
 
+## 🌐 ローカライズ開発
+
+翻訳の構成、メンテナンス手順、検証方法については
+[Localization Development](docs/localization.md) を参照してください。
+
+---
+
 ## 🧑‍💻 開発者向けリリース手順
 
 1. `src/version.py` の `APP_VERSION` を次の `X.Y.Z` に更新する
@@ -461,6 +470,11 @@ PoE1ではAct 6-10の一部エリアがAct 1-5と同名で登場します。
 5. `Release Windows App` workflowが成功し、`PoENavi.zip` と `PoENavi.zip.sha256` がReleaseへ添付されたことを確認する
 
 タグと `APP_VERSION` が一致しない場合、workflowはReleaseを作成せず失敗します。
+
+ビルド時にはアップデート元リポジトリも成果物へ固定されます。判定順は
+`-ReleaseRepository owner/repo`、GitHub Actions の `GITHUB_REPOSITORY`、
+ローカルの `origin` URL です。有効なリポジトリを判定できない場合はビルドを
+失敗させるため、fork版が誤って別リポジトリのReleaseへ更新されることはありません。
 
 ---
 

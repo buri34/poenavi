@@ -36,7 +36,7 @@ def test_settings_dialog_can_change_poetore_capture_hotkey(monkeypatch):
     app = QApplication.instance() or QApplication([])
     monkeypatch.setattr(
         "src.ui.settings_dialog.load_guide_data",
-        lambda _version: {},
+        lambda _version, **_kwargs: {},
     )
     monkeypatch.setattr(
         "src.ui.settings_dialog.load_zone_master_data",

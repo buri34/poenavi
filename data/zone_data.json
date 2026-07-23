@@ -395,7 +395,8 @@
                 {
                     "id": "act4_area13",
                     "zone": "魔獣の深部",
-                    "level": 28
+                    "level": 28,
+                    "zone_en": "The Bowels"
                 },
                 {
                     "id": "act4_area14",
@@ -690,7 +691,8 @@
                 {
                     "id": "act8_area5",
                     "zone": "大釜",
-                    "level": 48
+                    "level": 48,
+                    "zone_en": "The Cauldron"
                 },
                 {
                     "id": "act8_area6",
@@ -701,7 +703,8 @@
                 {
                     "id": "act8_area7",
                     "zone": "復活の地",
-                    "level": 49
+                    "level": 49,
+                    "zone_en": "The Resurrection Site"
                 },
                 {
                     "id": "act8_area8",
@@ -854,7 +857,8 @@
                 {
                     "id": "act10_area2",
                     "zone": "聖堂の屋上",
-                    "level": 58
+                    "level": 58,
+                    "zone_en": "The Cathedral Rooftop (upper)"
                 },
                 {
                     "id": "act10_area3",
@@ -907,7 +911,8 @@
                 {
                     "id": "act10_area11",
                     "zone": "渇望の祭壇",
-                    "level": 60
+                    "level": 60,
+                    "zone_en": "The Altar of Hunger"
                 }
             ]
         },
@@ -1055,8 +1060,9 @@
                 },
                 {
                     "id": "poe2_act2_area09",
-                    "zone": "ケスの中心",
-                    "level": 0
+                    "zone": "ケス",
+                    "level": 0,
+                    "zone_en": "Keth"
                 },
                 {
                     "id": "poe2_act2_area10",
@@ -1110,13 +1116,13 @@
                     "id": "poe2_act2_area18",
                     "zone": "ドレッドノート",
                     "level": 31,
-                    "zone_en": "The Dreadnought"
+                    "zone_en": "Dreadnought"
                 },
                 {
                     "id": "poe2_act2_area19",
-                    "zone": "ドレッドノートの前衛",
+                    "zone": "ドレッドノートの航跡",
                     "level": 32,
-                    "zone_en": "Dreadnought Vanguard"
+                    "zone_en": "The Dreadnought's Wake"
                 },
                 {
                     "id": "poe2_act2_area20",

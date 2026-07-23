@@ -43,7 +43,88 @@ def write_default_config(app_dir: Path, overrides=None):
 
 
 class ConfigManagerTest(unittest.TestCase):
-    def test_schema_v3_adds_standard_mode_without_changing_existing_geometry(self):
+    def test_schema_v4_config_receives_poetrieve_hotkey_without_losing_locale(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp) / "app"
+            user_dir = Path(tmp) / "user-data"
+            app_dir.mkdir()
+            user_dir.mkdir()
+            write_default_config(app_dir, {
+                "hotkeys": {"poetore_capture": "alt+d"},
+                "language": "ja",
+                "language_selected": False,
+                "mini_guide_overlay": {"display_mode": "standard"},
+            })
+            (user_dir / ConfigManager.CONFIG_FILE).write_text(
+                json.dumps({
+                    "schemaVersion": 4,
+                    "language": "en",
+                    "language_selected": True,
+                    "hotkeys": {"start_stop": "F7"},
+                    "mini_guide_overlay": {"display_mode": "compact"},
+                }),
+                encoding="utf-8",
+            )
+
+            with patch.dict(
+                os.environ,
+                {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)},
+            ), patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
+                loaded = ConfigManager.load_config()
+
+            self.assertEqual(loaded["schemaVersion"], 4)
+            self.assertEqual(loaded["language"], "en")
+            self.assertTrue(loaded["language_selected"])
+            self.assertEqual(loaded["hotkeys"]["poetore_capture"], "alt+d")
+            self.assertEqual(
+                loaded["mini_guide_overlay"]["display_mode"],
+                "compact",
+            )
+
+    def test_existing_alt_d_hotkey_is_not_stolen_by_poetrieve_default(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp) / "app"
+            user_dir = Path(tmp) / "user-data"
+            app_dir.mkdir()
+            user_dir.mkdir()
+            write_default_config(app_dir, {
+                "hotkeys": {"poetore_capture": "alt+d"},
+            })
+            (user_dir / ConfigManager.CONFIG_FILE).write_text(
+                json.dumps({
+                    "schemaVersion": 4,
+                    "hotkeys": {"start_stop": "Alt+D"},
+                }),
+                encoding="utf-8",
+            )
+
+            with patch.dict(
+                os.environ,
+                {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)},
+            ), patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
+                loaded = ConfigManager.load_config()
+
+            self.assertEqual(loaded["hotkeys"]["start_stop"], "Alt+D")
+            self.assertEqual(loaded["hotkeys"]["poetore_capture"], "none")
+
+    def test_schema_v4_adds_standard_mode_to_localized_schema_v3_config(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 3,
+            "mini_guide_overlay": {
+                "position": {"x": 30, "y": 40},
+                "width": 800,
+                "height": 130,
+                "font_size": 18,
+            },
+        })
+
+        self.assertEqual(migrated["schemaVersion"], 4)
+        self.assertEqual(migrated["mini_guide_overlay"]["display_mode"], "standard")
+        self.assertEqual(migrated["mini_guide_overlay"]["position"], {"x": 30, "y": 40})
+        self.assertEqual(migrated["mini_guide_overlay"]["width"], 800)
+        self.assertEqual(migrated["mini_guide_overlay"]["height"], 130)
+
+    def test_schema_v4_adds_standard_mode_without_changing_existing_geometry(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 2,
             "mini_guide_overlay": {
@@ -53,13 +134,13 @@ class ConfigManagerTest(unittest.TestCase):
             },
         })
 
-        self.assertEqual(migrated["schemaVersion"], 3)
+        self.assertEqual(migrated["schemaVersion"], ConfigManager.CURRENT_SCHEMA_VERSION)
         self.assertEqual(migrated["mini_guide_overlay"]["display_mode"], "standard")
         self.assertEqual(migrated["mini_guide_overlay"]["position"], {"x": 30, "y": 40})
         self.assertEqual(migrated["mini_guide_overlay"]["width"], 795)
         self.assertEqual(migrated["mini_guide_overlay"]["height"], 126)
 
-    def test_schema_v2_migrates_only_old_mini_navi_defaults(self):
+    def test_schema_v3_migrates_only_old_mini_navi_defaults(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 1,
             "mini_guide_overlay": {
@@ -74,7 +155,7 @@ class ConfigManagerTest(unittest.TestCase):
         self.assertEqual(migrated["mini_guide_overlay"]["height"], 130)
         self.assertEqual(migrated["mini_guide_overlay"]["font_size"], 18)
 
-    def test_schema_v2_preserves_custom_mini_navi_values(self):
+    def test_schema_v3_preserves_custom_mini_navi_values(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 1,
             "mini_guide_overlay": {
@@ -88,7 +169,7 @@ class ConfigManagerTest(unittest.TestCase):
         self.assertEqual(migrated["mini_guide_overlay"]["height"], 126)
         self.assertEqual(migrated["mini_guide_overlay"]["font_size"], 17)
 
-    def test_schema_v2_size_and_font_migrations_are_independent(self):
+    def test_schema_v3_size_and_font_migrations_are_independent(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 1,
             "mini_guide_overlay": {
@@ -102,9 +183,9 @@ class ConfigManagerTest(unittest.TestCase):
         self.assertEqual(migrated["mini_guide_overlay"]["height"], 150)
         self.assertEqual(migrated["mini_guide_overlay"]["font_size"], 18)
 
-    def test_schema_v2_migration_runs_only_once(self):
+    def test_schema_v3_migration_runs_only_once(self):
         migrated = ConfigManager._migrate_config({
-            "schemaVersion": 2,
+            "schemaVersion": 3,
             "mini_guide_overlay": {
                 "width": 360,
                 "height": 100,
@@ -116,7 +197,7 @@ class ConfigManagerTest(unittest.TestCase):
         self.assertEqual(migrated["mini_guide_overlay"]["height"], 100)
         self.assertEqual(migrated["mini_guide_overlay"]["font_size"], 16)
 
-    def test_load_config_persists_migrated_mini_navi_defaults(self):
+    def test_load_config_persists_localized_schema_v2_mini_navi_migration(self):
         with tempfile.TemporaryDirectory() as tmp:
             app_dir = Path(tmp) / "app"
             user_dir = Path(tmp) / "user-data"
@@ -131,11 +212,11 @@ class ConfigManagerTest(unittest.TestCase):
             })
             config_path = user_dir / ConfigManager.CONFIG_FILE
             config_path.write_text(json.dumps({
-                "schemaVersion": 1,
+                "schemaVersion": 2,
                 "mini_guide_overlay": {
                     "width": 360,
                     "height": 100,
-                    "font_size": 16,
+                    "font_size": 15,
                 },
             }), encoding="utf-8")
 

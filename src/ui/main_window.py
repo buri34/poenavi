@@ -21,7 +21,7 @@ from src.utils.log_watcher import LogWatcher
 from src.utils.log_path_detector import fill_missing_client_log_paths
 from src.utils.performance_metrics import measure
 from src.utils.window_focus import get_foreground_window, focus_window, get_next_visible_window_after
-from src.utils.zone_lookup import get_zone_info, get_level_advice
+from src.utils.zone_lookup import get_zone_info, get_level_advice, get_zone_display_name
 from src.utils.guide_data import load_guide_data, get_zone_guide, get_zone_guide_level, format_guide_html, get_mini_navi_content
 from src.utils.poe_version_data import POE1, POE2, get_lap_labels, get_poe_label, get_timer_filename, get_progress_flags_filename
 from src.utils.zone_master_data import load_zone_master_data
@@ -34,9 +34,63 @@ from src.ui.gem_tracker_widget import GemTrackerWidget, PoBImportDialog, PoBSkil
 from src.ui.update_dialogs import UpdateAvailableDialog, UpdateProgressDialog
 from src.update.qt_controller import UpdateController
 from PySide6.QtWidgets import QComboBox, QDialog, QFormLayout
+from src.utils.i18n import get_locale, set_locale, tr, tr_ui
 
 
 DEFAULT_CLICK_THROUGH_HOTKEY = "F6"
+
+
+def _localized_vendor_label(source: str) -> str:
+    """Translate built-in vendor-helper labels while preserving regex tokens."""
+    return {
+        "共通": tr_ui("共通"),
+        "ビルド別": tr_ui("ビルド別"),
+        "武器ベース": tr_ui("武器ベース"),
+        "武器ベース（OR条件）": tr_ui("武器ベース（OR条件）"),
+        "移動スピード+": tr_ui("移動スピード+"),
+        "最大ライフ+": tr_ui("最大ライフ+"),
+        "耐性+": tr_ui("耐性+"),
+        "スピリット+": tr_ui("スピリット+"),
+        "筋力": tr_ui("筋力"),
+        "器用さ": tr_ui("器用さ"),
+        "知性": tr_ui("知性"),
+        "全ての近接スキルのレベル+": tr_ui("全ての近接スキルのレベル+"),
+        "全ての投射物スキルのレベル+": tr_ui("全ての投射物スキルのレベル+"),
+        "全てのスペルスキル+": tr_ui("全てのスペルスキル+"),
+        "火スペルスキル+": tr_ui("火スペルスキル+"),
+        "冷気スペルスキル+": tr_ui("冷気スペルスキル+"),
+        "雷スペルスキル+": tr_ui("雷スペルスキル+"),
+        "混沌スペルスキル+": tr_ui("混沌スペルスキル+"),
+        "物理スペルスキル+": tr_ui("物理スペルスキル+"),
+        "ミニオンスキル+": tr_ui("ミニオンスキル+"),
+        "物理ダメージが#%増加する": tr_ui("物理ダメージが#%増加する"),
+        "#の物理ダメージを追加する": tr_ui("#の物理ダメージを追加する"),
+        "#の火ダメージを追加する": tr_ui("#の火ダメージを追加する"),
+        "#の冷気ダメージを追加する": tr_ui("#の冷気ダメージを追加する"),
+        "#の雷ダメージを追加する": tr_ui("#の雷ダメージを追加する"),
+        "#の物理ダメージをアタックに追加する": tr_ui("#の物理ダメージをアタックに追加する"),
+        "#の火ダメージをアタックに追加する": tr_ui("#の火ダメージをアタックに追加する"),
+        "#の冷気ダメージをアタックに追加する": tr_ui("#の冷気ダメージをアタックに追加する"),
+        "#の雷ダメージをアタックに追加する": tr_ui("#の雷ダメージをアタックに追加する"),
+        "スペルダメージが#%増加する ": tr_ui("スペルダメージが#%増加する "),
+        "ダメージの#%を追加火ダメ獲得": tr_ui("ダメージの#%を追加火ダメ獲得"),
+        "ダメージの#%を追加冷気ダメ獲得": tr_ui("ダメージの#%を追加冷気ダメ獲得"),
+        "ダメージの#%を追加雷ダメ獲": tr_ui("ダメージの#%を追加雷ダメ獲"),
+        "弓": tr_ui("弓"),
+        "クロスボウ": tr_ui("クロスボウ"),
+        "槍（スピア）": tr_ui("槍（スピア）"),
+        "クォータースタッフ": tr_ui("クォータースタッフ"),
+        "ワンド": tr_ui("ワンド"),
+        "スタッフ": tr_ui("スタッフ"),
+        "セプター": tr_ui("セプター"),
+        "片手メイス": tr_ui("片手メイス"),
+        "両手メイス": tr_ui("両手メイス"),
+        "タリスマン": tr_ui("タリスマン"),
+        "矢筒": tr_ui("矢筒"),
+        "盾": tr_ui("盾"),
+        "バックラー": tr_ui("バックラー"),
+        "フォーカス": tr_ui("フォーカス"),
+    }.get(source, source)
 
 
 class MiniNaviLockButtonWindow(QWidget):
@@ -53,10 +107,10 @@ class MiniNaviLockButtonWindow(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
-        self.restore_button = QPushButton("本体")
+        self.restore_button = QPushButton(tr_ui("本体"))
         self.restore_button.setFixedSize(44, 28)
         self.restore_button.setCursor(QCursor(Qt.PointingHandCursor))
-        self.restore_button.setToolTip("ぽえなび本体の表示／非表示を切り替えます")
+        self.restore_button.setToolTip(tr_ui("ぽえなび本体の表示／非表示を切り替えます"))
         self.restore_button.setStyleSheet("""
             QPushButton {
                 background: rgba(10, 10, 10, 220);
@@ -225,7 +279,7 @@ class MiniNaviOverlay(QWidget):
         right_column.setContentsMargins(0, 0, 0, 0)
         right_column.setSpacing(5)
 
-        self.area_note_badge = QLabel("エリアメモあり")
+        self.area_note_badge = QLabel(tr_ui("エリアメモあり"))
         self.area_note_badge.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.area_note_badge.setStyleSheet(
             "color: #f0c674; font-size: 12px; font-weight: bold; "
@@ -859,7 +913,7 @@ class SearchStringPasteTestDialog(QDialog):
         self.owner = owner
         self.target_hwnd = target_hwnd
         self.choices = choices or []
-        self.setWindowTitle("店売り・スタッシュ検索")
+        self.setWindowTitle(tr_ui("店売り・スタッシュ検索"))
         self.setWindowFlags(_with_optional_always_on_top(Qt.Tool | Qt.FramelessWindowHint, parent))
         self.setAttribute(Qt.WA_DeleteOnClose, True)
         self.setStyleSheet(Styles.MAIN_WINDOW)
@@ -868,11 +922,11 @@ class SearchStringPasteTestDialog(QDialog):
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(8)
 
-        title = QLabel("🔍 店売り・スタッシュ検索")
+        title = QLabel(tr_ui("🔍 店売り・スタッシュ検索"))
         title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px; font-weight: bold;")
         layout.addWidget(title)
 
-        hint = QLabel("選択後、ホットキー時点のウィンドウへ戻して Ctrl+F → 貼り付けます。")
+        hint = QLabel(tr_ui("選択後、ホットキー時点のウィンドウへ戻して Ctrl+F → 貼り付けます。"))
         hint.setStyleSheet("color: #cccccc; font-size: 10px;")
         hint.setWordWrap(True)
         layout.addWidget(hint)
@@ -888,7 +942,7 @@ class SearchStringPasteTestDialog(QDialog):
             btn.clicked.connect(lambda _checked=False, value=query: self._select(value))
             layout.addWidget(btn)
 
-        cancel = QPushButton("キャンセル")
+        cancel = QPushButton(tr_ui("キャンセル"))
         cancel.setAutoDefault(False)
         cancel.setDefault(False)
         cancel.setStyleSheet(Styles.BUTTON)
@@ -920,7 +974,7 @@ class SearchStringPasteTestDialog(QDialog):
             target_hwnd = get_next_visible_window_after(target_hwnd, skip_current_process=True)
 
         if not target_hwnd:
-            QMessageBox.warning(self.parent(), "検索文字列の貼り付け", "復帰先ウィンドウを取得できませんでした。")
+            QMessageBox.warning(self.parent(), tr_ui("検索文字列の貼り付け"), tr_ui("復帰先ウィンドウを取得できませんでした。"))
             return
 
         self.target_hwnd = target_hwnd
@@ -938,8 +992,8 @@ class SearchStringPasteTestDialog(QDialog):
         if not focused:
             QMessageBox.warning(
                 self.parent(),
-                "検索文字列の貼り付け",
-                "元のウィンドウを前面化できませんでした。文字列はクリップボードへコピー済みです。",
+                tr_ui("検索文字列の貼り付け"),
+                tr_ui("元のウィンドウを前面化できませんでした。文字列はクリップボードへコピー済みです。"),
             )
             if self.owner is not None:
                 self.owner._search_paste_in_progress = False
@@ -983,7 +1037,7 @@ class PoeVersionSelectionDialog(QDialog):
 
     def __init__(self, parent=None, current_version=POE1):
         super().__init__(parent)
-        self.setWindowTitle("PoEバージョン選択")
+        self.setWindowTitle(tr_ui("PoEバージョン選択"))
         self.setModal(True)
         self.setStyleSheet(Styles.MAIN_WINDOW)
         self.resize(680, 360)
@@ -993,7 +1047,7 @@ class PoeVersionSelectionDialog(QDialog):
         layout.setContentsMargins(18, 16, 18, 14)
         layout.setSpacing(12)
 
-        title = QLabel("起動する対象を選んでください")
+        title = QLabel(tr_ui("起動する対象を選んでください"))
         title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 18px; font-weight: bold;")
         layout.addWidget(title)
 
@@ -1008,7 +1062,7 @@ class PoeVersionSelectionDialog(QDialog):
         tile_row.addWidget(self.poe2_tile)
         layout.addLayout(tile_row)
 
-        desc2 = QLabel("※ デフォルトでは起動時に毎回確認します。設定画面からPoE1/PoE2固定にもできます。")
+        desc2 = QLabel(tr_ui("※ デフォルトでは起動時に毎回確認します。設定画面からPoE1/PoE2固定にもできます。"))
         desc2.setStyleSheet("color: rgba(176, 255, 123, 0.78); font-size: 12px;")
         desc2.setWordWrap(True)
         layout.addWidget(desc2)
@@ -1017,7 +1071,7 @@ class PoeVersionSelectionDialog(QDialog):
         ok_btn = QPushButton("OK")
         ok_btn.setStyleSheet(Styles.BUTTON)
         ok_btn.clicked.connect(self._accept)
-        cancel_btn = QPushButton("キャンセル")
+        cancel_btn = QPushButton(tr_ui("キャンセル"))
         cancel_btn.setStyleSheet(Styles.BUTTON)
         cancel_btn.clicked.connect(self.reject)
         button_row.addStretch()
@@ -1098,7 +1152,7 @@ class GuideDetailLevelSelectionDialog(QDialog):
 
     def __init__(self, parent=None, current_level=BEGINNER):
         super().__init__(parent)
-        self.setWindowTitle("ガイド表示の選択")
+        self.setWindowTitle(tr_ui("ガイド表示の選択"))
         self.setModal(True)
         self.setStyleSheet(Styles.MAIN_WINDOW)
         self.resize(780, 460)
@@ -1108,11 +1162,11 @@ class GuideDetailLevelSelectionDialog(QDialog):
         layout.setContentsMargins(18, 16, 18, 14)
         layout.setSpacing(12)
 
-        title = QLabel("PoE2のガイド表示を選んでください")
+        title = QLabel(tr_ui("PoE2のガイド表示を選んでください"))
         title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 18px; font-weight: bold;")
         layout.addWidget(title)
 
-        desc = QLabel("後から設定画面でいつでも変更できます。")
+        desc = QLabel(tr_ui("後から設定画面でいつでも変更できます。"))
         desc.setStyleSheet("color: rgba(176, 255, 123, 0.78); font-size: 12px;")
         desc.setWordWrap(True)
         layout.addWidget(desc)
@@ -1124,21 +1178,21 @@ class GuideDetailLevelSelectionDialog(QDialog):
         tile_row.setSpacing(14)
         self.beginner_tile = self._create_level_tile(
             self.BEGINNER,
-            "初心者向け（詳細）",
-            "目的・進み方・補足をしっかり表示します。\n初見や慣れていないエリア向けです。",
+            tr_ui("初心者向け（詳細）"),
+            tr_ui("目的・進み方・補足をしっかり表示します。\n初見や慣れていないエリア向けです。"),
             self.selected_level == self.BEGINNER,
         )
         self.intermediate_tile = self._create_level_tile(
             self.INTERMEDIATE,
-            "中級者向け（要点）",
-            "次の目標と重要ポイントを短く表示します。\n周回に慣れてきた方向けです。",
+            tr_ui("中級者向け（要点）"),
+            tr_ui("次の目標と重要ポイントを短く表示します。\n周回に慣れてきた方向けです。"),
             self.selected_level == self.INTERMEDIATE,
         )
         tile_row.addWidget(self.beginner_tile)
         tile_row.addWidget(self.intermediate_tile)
         layout.addLayout(tile_row)
 
-        note = QLabel("※ この選択画面はPoE2モードの初回のみ表示されます。")
+        note = QLabel(tr_ui("※ この選択画面はPoE2モードの初回のみ表示されます。"))
         note.setStyleSheet("color: #aaaaaa; font-size: 12px;")
         note.setWordWrap(True)
         layout.addWidget(note)
@@ -1147,7 +1201,7 @@ class GuideDetailLevelSelectionDialog(QDialog):
         ok_btn = QPushButton("OK")
         ok_btn.setStyleSheet(Styles.BUTTON)
         ok_btn.clicked.connect(self._accept)
-        cancel_btn = QPushButton("キャンセル")
+        cancel_btn = QPushButton(tr_ui("キャンセル"))
         cancel_btn.setStyleSheet(Styles.BUTTON)
         cancel_btn.clicked.connect(self.reject)
         button_row.addStretch()
@@ -1223,15 +1277,14 @@ class RouteSelectionDialog(QDialog):
     """ルート選択ダイアログ（初回セットアップ用）"""
     def __init__(self, parent=None, config=None):
         super().__init__(parent)
-        self.setWindowTitle("ルート設定")
+        self.setWindowTitle(tr_ui("ルート設定"))
         self.setFixedSize(400, 270)
         self.setStyleSheet(Styles.MAIN_WINDOW)
         config = config or {}
 
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
-
-        desc = QLabel("攻略ルートを選択してください。後から設定画面で変更できます。")
+        desc = QLabel(tr_ui("攻略ルートを選択してください。後から設定画面で変更できます。"))
         desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px;")
         desc.setWordWrap(True)
         layout.addWidget(desc)
@@ -1253,33 +1306,33 @@ class RouteSelectionDialog(QDialog):
         form = QFormLayout()
         
         self.act3_combo = QComboBox()
-        self.act3_combo.addItem("通常ルート（図書館スキップ）", "standard")
-        self.act3_combo.addItem("図書館寄り道ルート", "library_detour")
+        self.act3_combo.addItem(tr_ui("通常ルート（図書館スキップ）"), "standard")
+        self.act3_combo.addItem(tr_ui("図書館寄り道ルート"), "library_detour")
         self.act3_combo.setStyleSheet(combo_style)
         cur3 = ConfigManager.effective_poe1_route_act3(config)
         idx3 = self.act3_combo.findData(cur3)
         if idx3 >= 0:
             self.act3_combo.setCurrentIndex(idx3)
-        lbl3 = QLabel("Act3 ルート:")
+        lbl3 = QLabel(tr_ui("Act3 ルート:"))
         lbl3.setStyleSheet(label_style)
         form.addRow(lbl3, self.act3_combo)
         
         self.act8_combo = QComboBox()
-        self.act8_combo.addItem("通常ルート", "standard")
-        self.act8_combo.addItem("隠れた裏道（The Hidden Underbelly）ルート", "underbelly")
+        self.act8_combo.addItem(tr_ui("通常ルート"), "standard")
+        self.act8_combo.addItem(tr_ui("隠れた裏道（The Hidden Underbelly）ルート"), "underbelly")
         self.act8_combo.setStyleSheet(combo_style)
         cur8 = ConfigManager.effective_poe1_route_act8(config)
         idx8 = self.act8_combo.findData(cur8)
         if idx8 >= 0:
             self.act8_combo.setCurrentIndex(idx8)
-        lbl8 = QLabel("Act8 ルート:")
+        lbl8 = QLabel(tr_ui("Act8 ルート:"))
         lbl8.setStyleSheet(label_style)
         form.addRow(lbl8, self.act8_combo)
         
         layout.addLayout(form)
         layout.addStretch()
         
-        tip = QLabel("あまり経験のない方は、Act3ルートは「図書館寄り道ルート」、\nAct8ルートは「通常ルート」を選択するのがおすすめです。")
+        tip = QLabel(tr_ui("あまり経験のない方は、Act3ルートは「図書館寄り道ルート」、\nAct8ルートは「通常ルート」を選択するのがおすすめです。"))
         tip.setStyleSheet(f"color: #aaaaaa; font-size: 13px;")
         tip.setWordWrap(True)
         layout.addWidget(tip)
@@ -1339,7 +1392,7 @@ class MemoDialog(QDialog):
         title_layout = QHBoxLayout(title_bar)
         title_layout.setContentsMargins(4, 0, 4, 0)
         
-        title_label = QLabel("📝 共通メモ")
+        title_label = QLabel(tr_ui("📝 共通メモ"))
         title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none;")
         title_layout.addWidget(title_label)
         title_layout.addStretch()
@@ -1383,7 +1436,7 @@ class MemoDialog(QDialog):
         
         reset_btn = QPushButton("✕")
         reset_btn.setFixedSize(18, 18)
-        reset_btn.setToolTip("色をリセット")
+        reset_btn.setToolTip(tr_ui("色をリセット"))
         reset_btn.setStyleSheet(f"""
             QPushButton {{ background: rgba(40,40,40,200); color: #888; 
                 border: 1px solid rgba(176,255,123,0.3); border-radius: 2px; font-size: 10px; }}
@@ -1599,7 +1652,9 @@ class VendorSearchPresetDialog(QDialog):
         title_layout = QHBoxLayout(title_bar)
         title_layout.setContentsMargins(4, 0, 4, 0)
         title_label = QLabel(
-            "🔍 PoE1 店売り検索プリセット" if self.poe_version == POE1 else "🔍 PoE2 店売り・スタッシュ検索プリセット"
+            tr_ui("🔍 PoE1 店売り検索プリセット")
+            if self.poe_version == POE1
+            else tr_ui("🔍 PoE2 店売り・スタッシュ検索プリセット")
         )
         title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none;")
         title_layout.addWidget(title_label)
@@ -1614,9 +1669,9 @@ class VendorSearchPresetDialog(QDialog):
         title_layout.addWidget(close_btn)
         container_layout.addWidget(title_bar)
 
-        hint_text = "左は一覧表示です。表示名・検索文字列は右側の編集枠で調整します。有効にチェックをつけたプリセットだけが検索ホットキー時のメニューに表示されます。"
+        hint_text = tr_ui("左は一覧表示です。表示名・検索文字列は右側の編集枠で調整します。有効にチェックをつけたプリセットだけが検索ホットキー時のメニューに表示されます。")
         if self.poe_version == POE1:
-            hint_text += " PoE1ではAct中の3リンク装備購入など、ベンダー検索向けのプリセットを管理します。"
+            hint_text += tr_ui(" PoE1ではAct中の3リンク装備購入など、ベンダー検索向けのプリセットを管理します。")
         hint = QLabel(hint_text)
         hint.setStyleSheet("color: #aaaaaa; font-size: 13px; border: none;")
         hint.setWordWrap(True)
@@ -1635,7 +1690,9 @@ class VendorSearchPresetDialog(QDialog):
         body_layout.addWidget(left_panel, stretch=9)
 
         self.table = QTableWidget(0, 3)
-        self.table.setHorizontalHeaderLabels(["有効", "表示名", "検索文字列"])
+        self.table.setHorizontalHeaderLabels(
+            [tr_ui("有効"), tr_ui("表示名"), tr_ui("検索文字列")]
+        )
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setAlternatingRowColors(True)
@@ -1669,17 +1726,17 @@ class VendorSearchPresetDialog(QDialog):
         btn_row = QHBoxLayout()
         btn_row.setSpacing(6)
         for label, handler in [
-            ("追加", self._add_row),
-            ("削除", self._delete_selected),
-            ("上へ", lambda: self._move_selected(-1)),
-            ("下へ", lambda: self._move_selected(1)),
+            (tr_ui("追加"), self._add_row),
+            (tr_ui("削除"), self._delete_selected),
+            (tr_ui("上へ"), lambda: self._move_selected(-1)),
+            (tr_ui("下へ"), lambda: self._move_selected(1)),
         ]:
             btn = QPushButton(label)
             btn.setStyleSheet(Styles.BUTTON)
             btn.clicked.connect(handler)
             btn_row.addWidget(btn)
         btn_row.addStretch()
-        self.save_btn = QPushButton("保存")
+        self.save_btn = QPushButton(tr_ui("保存"))
         self.save_btn.setStyleSheet(self._save_button_style())
         self.save_btn.clicked.connect(self._save_presets)
         btn_row.addWidget(self.save_btn)
@@ -1693,7 +1750,7 @@ class VendorSearchPresetDialog(QDialog):
         right_layout.setSpacing(8)
         body_layout.addWidget(right_panel, stretch=16)
 
-        editor_title = QLabel("編集")
+        editor_title = QLabel(tr_ui("編集"))
         editor_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 16px; font-weight: bold; border: none;")
         right_layout.addWidget(editor_title)
 
@@ -1706,7 +1763,7 @@ class VendorSearchPresetDialog(QDialog):
             }}
         """
 
-        name_label = QLabel("表示名")
+        name_label = QLabel(tr_ui("表示名"))
         name_label.setStyleSheet(label_style)
         right_layout.addWidget(name_label)
         self.name_edit = QLineEdit()
@@ -1716,10 +1773,10 @@ class VendorSearchPresetDialog(QDialog):
 
         query_header = QHBoxLayout()
         query_header.setContentsMargins(0, 0, 0, 0)
-        query_label = QLabel("検索文字列")
+        query_label = QLabel(tr_ui("検索文字列"))
         query_label.setStyleSheet(label_style)
         query_header.addWidget(query_label)
-        clear_query_btn = QPushButton("クリア")
+        clear_query_btn = QPushButton(tr_ui("クリア"))
         clear_query_btn.setFixedHeight(24)
         clear_query_btn.setStyleSheet(Styles.BUTTON)
         clear_query_btn.clicked.connect(self._clear_query)
@@ -1736,12 +1793,16 @@ class VendorSearchPresetDialog(QDialog):
         right_layout.addWidget(self.query_edit)
 
         if self.poe_version != POE1:
-            limit_note = "PoE2の検索窓は250文字が上限です。超過すると貼り付けができません。"
+            limit_note = tr_ui("PoE2の検索窓は250文字が上限です。超過すると貼り付けができません。")
             self.query_limit_note = QLabel(limit_note)
             self.query_limit_note.setStyleSheet("color: #aaaaaa; font-size: 12px; border: none;")
             right_layout.addWidget(self.query_limit_note)
 
-        helper_title = QLabel("PoE1検索作成支援（チェックすると検索文字列に追加）" if self.poe_version == POE1 else "正規表現の作成支援（チェックすると検索文字列に追加）")
+        helper_title = QLabel(
+            tr_ui("PoE1検索作成支援（チェックすると検索文字列に追加）")
+            if self.poe_version == POE1
+            else tr_ui("正規表現の作成支援（チェックすると検索文字列に追加）")
+        )
         helper_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none; margin-top: 4px;")
         right_layout.addWidget(helper_title)
 
@@ -1819,7 +1880,7 @@ class VendorSearchPresetDialog(QDialog):
     def _set_dirty(self, dirty=True):
         self._dirty = bool(dirty)
         if hasattr(self, "save_btn"):
-            self.save_btn.setText("保存 *" if self._dirty else "保存")
+            self.save_btn.setText(tr_ui("保存 *") if self._dirty else tr_ui("保存"))
 
     def _update_query_length_label(self):
         if not hasattr(self, "query_length_label"):
@@ -2060,7 +2121,9 @@ class VendorSearchPresetDialog(QDialog):
     }
 
     def _default_presets(self):
-        return self.POE1_DEFAULT_PRESETS if self.poe_version == POE1 else self.DEFAULT_PRESETS
+        if self.poe_version == POE1:
+            return [{"name": tr_ui("3リンク（色問わず）"), "query": r"-\w-", "enabled": True}]
+        return [{"name": tr_ui("新規プリセット"), "query": "", "enabled": True}]
 
     def _load_regex_helper_groups(self):
         """REGEX支援チェックボックス候補を返す。tasks配下の作業CSVには依存しない。"""
@@ -2098,16 +2161,16 @@ class VendorSearchPresetDialog(QDialog):
             return
         groups = self._load_regex_helper_groups()
         if not groups:
-            note = QLabel("REGEX支援候補が空です。")
+            note = QLabel(tr_ui("REGEX支援候補が空です。"))
             note.setStyleSheet("color: #ffaaaa; font-size: 13px; border: none;")
             parent_layout.addWidget(note)
             return
         for group_title, options in groups:
-            section_text = group_title
+            section_text = _localized_vendor_label(group_title)
             if group_title == self.WEAPON_BASE_AND_CATEGORY:
-                section_text = "武器ベース（共通・ビルド別とAND条件で絞り込み。チェックすると特定の武器に限定した検索文字列になります）"
+                section_text = tr_ui("武器ベース（共通・ビルド別とAND条件で絞り込み。チェックすると特定の武器に限定した検索文字列になります）")
             elif group_title == self.WEAPON_BASE_OR_CATEGORY:
-                section_text = "武器ベース（共通・ビルド別とOR条件で絞り込み。チェックした武器は共通・ビルド別の条件に依らず、すべてハイライトされます）"
+                section_text = tr_ui("武器ベース（共通・ビルド別とOR条件で絞り込み。チェックした武器は共通・ビルド別の条件に依らず、すべてハイライトされます）")
             section = QLabel(section_text)
             section.setStyleSheet(section_style)
             parent_layout.addWidget(section)
@@ -2140,7 +2203,7 @@ class VendorSearchPresetDialog(QDialog):
                         row_offset += columns - (position % columns)
                         position = index + row_offset
                     attack_row_aligned = True
-                cb = QCheckBox(label)
+                cb = QCheckBox(_localized_vendor_label(label))
                 cb.setToolTip(token)
                 cb.setStyleSheet(checkbox_style)
                 cb.toggled.connect(lambda checked, t=token: self._regex_option_toggled(t, checked))
@@ -2275,7 +2338,7 @@ class VendorSearchPresetDialog(QDialog):
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
 
-        enable_cb = QCheckBox("有効化")
+        enable_cb = QCheckBox(tr_ui("有効化"))
         enable_cb.setMinimumHeight(28)
         enable_cb.setStyleSheet(checkbox_style + """
             QCheckBox { padding: 4px 8px; }
@@ -3134,10 +3197,10 @@ class VendorSearchPresetDialog(QDialog):
                     details += f"\n...ほか{len(over_limit) - 5}件"
                 QMessageBox.warning(
                     self,
-                    "検索文字列が長すぎます",
-                    f"PoE2の検索窓は{self.MAX_SEARCH_QUERY_LENGTH}文字が上限です。\n"
+                    tr_ui("検索文字列が長すぎます"),
+                    tr_ui(f"PoE2の検索窓は{self.MAX_SEARCH_QUERY_LENGTH}文字が上限です。\n"
                     "上限を超えるプリセットは正しく貼り付けできないため、保存を中止しました。\n\n"
-                    f"{details}",
+                    f"{details}"),
                 )
                 return
             data = {"presets": presets}
@@ -3240,12 +3303,12 @@ class VendorSearchPresetDialog(QDialog):
             event.accept()
             return
         msg = QMessageBox(self)
-        msg.setWindowTitle("未保存の変更")
-        msg.setText("保存していない変更があります。保存しますか？")
+        msg.setWindowTitle(tr_ui("未保存の変更"))
+        msg.setText(tr_ui("保存していない変更があります。保存しますか？"))
         msg.setIcon(QMessageBox.Question)
-        save_button = msg.addButton("保存", QMessageBox.AcceptRole)
-        discard_button = msg.addButton("保存せずに閉じる", QMessageBox.DestructiveRole)
-        cancel_button = msg.addButton("キャンセル", QMessageBox.RejectRole)
+        save_button = msg.addButton(tr_ui("保存"), QMessageBox.AcceptRole)
+        discard_button = msg.addButton(tr_ui("保存せずに閉じる"), QMessageBox.DestructiveRole)
+        cancel_button = msg.addButton(tr_ui("キャンセル"), QMessageBox.RejectRole)
         msg.setDefaultButton(save_button)
         msg.exec()
         clicked = msg.clickedButton()
@@ -3445,7 +3508,7 @@ class MainWindow(QMainWindow):
         for widget in header_widgets:
             header_layout.addWidget(widget)
 
-        detach_button = QPushButton("↗ 切り離す")
+        detach_button = QPushButton(tr_ui("↗ 切り離す"))
         detach_button.setStyleSheet(Styles.BUTTON)
         detach_button.setCursor(QCursor(Qt.PointingHandCursor))
         detach_button.clicked.connect(lambda: self.detach_panel(panel_id))
@@ -3507,7 +3570,7 @@ class MainWindow(QMainWindow):
         for panel_window in getattr(self, "detached_panel_windows", {}).values():
             panel_window.apply_window_settings(self.config)
 
-    def __init__(self):
+    def __init__(self, config=None):
         super().__init__()
 
         # Qt can deliver showEvent while startup dialogs are running.  Keep
@@ -3515,11 +3578,11 @@ class MainWindow(QMainWindow):
         self._main_window_initialized = False
 
         # 設定読み込み
-        self.config = ConfigManager.load_config()
-        self.setWindowTitle(f"ぽえなび [{get_poe_label(self.config.get('poe_version', POE1))}]")
+        self.config = config if config is not None else ConfigManager.load_config()
+        set_locale(self.config.get("language", "ja"))
+        self.setWindowTitle(f"{tr('app.title')} [{get_poe_label(self.config.get('poe_version', POE1))}]")
 
         # config の display_monitor で指定されたモニターの右端に縦長で配置
-        from PySide6.QtWidgets import QApplication
         _config = self.config
         self._display_monitor_index = _config.get("display_monitor", 0)
         self._initial_positioned = False
@@ -3544,7 +3607,6 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(Styles.MAIN_WINDOW)
         
         # 設定読み込み
-        self.config = ConfigManager.load_config()
         self.update_controller = UpdateController(self)
         self._update_progress_dialog = None
         if not self._run_startup_update_gate():
@@ -3552,7 +3614,6 @@ class MainWindow(QMainWindow):
             return
         self._connect_update_controller()
         if not self._ensure_poe_version_selected():
-            from PySide6.QtWidgets import QApplication
             QTimer.singleShot(0, QApplication.instance().quit)
             return
         self.poe_version = self.config.get("poe_version", POE1)
@@ -3673,7 +3734,7 @@ class MainWindow(QMainWindow):
             self.zone_data_by_version = zone_master_data["zone_data_by_version"]
             self.town_zones_by_version = zone_master_data["town_zones_by_version"]
             self.zone_data = self.zone_data_by_version.get(self.poe_version, {})
-            self.guide_data = load_guide_data(self.poe_version)
+            self.guide_data = load_guide_data(self.poe_version, language=get_locale())
         self.mini_navi_overlay = MiniNaviOverlay(self)
         self.poelab_url_resolved.connect(self._open_resolved_poelab_url)
         self.poelab_url_failed.connect(self._handle_poelab_url_error)
@@ -3738,7 +3799,6 @@ class MainWindow(QMainWindow):
         self._check_first_run()
         
         # 全ウィジェットのマウスイベントを横取りしてリサイズ処理
-        from PySide6.QtWidgets import QApplication
         QApplication.instance().installEventFilter(self)
         self._ef_resize_active = False
         self._ef_resize_edge = None
@@ -3829,16 +3889,16 @@ class MainWindow(QMainWindow):
         if download_result["error"]:
             QMessageBox.warning(
                 self,
-                "アップデート",
-                f"更新をダウンロードできませんでした。\n{download_result['error']}",
+                tr_ui("アップデート"),
+                tr_ui(f"更新をダウンロードできませんでした。\n{download_result['error']}"),
             )
             return True
 
         answer = QMessageBox.question(
             self,
-            "アップデートを適用",
-            f"v{release.version} の検証が完了しました。\n"
-            "ぽえなびを終了して更新しますか？",
+            tr_ui("アップデートを適用"),
+            tr_ui(f"v{release.version} の検証が完了しました。\n"
+            "ぽえなびを終了して更新しますか？"),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.Yes,
         )
@@ -3847,7 +3907,7 @@ class MainWindow(QMainWindow):
         try:
             self.update_controller.launch_updater(download_result["archive"])
         except Exception as exc:
-            QMessageBox.critical(self, "アップデート", str(exc))
+            QMessageBox.critical(self, tr_ui("アップデート"), str(exc))
             return True
         return False
         
@@ -3886,7 +3946,7 @@ class MainWindow(QMainWindow):
     def _on_update_check_finished(self, release, manual):
         if release is None:
             if manual:
-                QMessageBox.information(self, "アップデート", "最新バージョンです。")
+                QMessageBox.information(self, tr_ui("アップデート"), tr_ui("最新バージョンです。"))
             return
         if not manual and self.config.get("notified_update_version") == release.version:
             return
@@ -3896,8 +3956,8 @@ class MainWindow(QMainWindow):
         if manual:
             QMessageBox.warning(
                 self,
-                "アップデート",
-                f"更新を確認できませんでした。\n{message}",
+                tr_ui("アップデート"),
+                tr_ui(f"更新を確認できませんでした。\n{message}"),
             )
 
     def _show_update_available(self, release):
@@ -3937,8 +3997,8 @@ class MainWindow(QMainWindow):
         self._on_update_download_cancelled()
         QMessageBox.warning(
             self,
-            "アップデート",
-            f"更新をダウンロードできませんでした。\n{message}",
+            tr_ui("アップデート"),
+            tr_ui(f"更新をダウンロードできませんでした。\n{message}"),
         )
 
     def _on_update_download_ready(self, archive, release):
@@ -3947,9 +4007,9 @@ class MainWindow(QMainWindow):
             self._update_progress_dialog = None
         answer = QMessageBox.question(
             self,
-            "アップデートを適用",
-            f"v{release.version} の検証が完了しました。\n"
-            "ぽえなびを終了して更新しますか？",
+            tr_ui("アップデートを適用"),
+            tr_ui(f"v{release.version} の検証が完了しました。\n"
+            "ぽえなびを終了して更新しますか？"),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.Yes,
         )
@@ -3958,7 +4018,7 @@ class MainWindow(QMainWindow):
         try:
             self.update_controller.launch_updater(archive)
         except Exception as exc:
-            QMessageBox.critical(self, "アップデート", str(exc))
+            QMessageBox.critical(self, tr_ui("アップデート"), str(exc))
             return
         QApplication.instance().quit()
     
@@ -3973,10 +4033,10 @@ class MainWindow(QMainWindow):
             # 初回または、選択中バージョンのログファイルが未設定なら案内を出す
             msg = QMessageBox(self)
             msg.setStyleSheet("QMessageBox { font-size: 14px; } QMessageBox QLabel { font-size: 14px; }")
-            msg.setWindowTitle("⚙️ ログファイル設定")
+            msg.setWindowTitle(tr_ui("⚙️ ログファイル設定"))
             msg.setIcon(QMessageBox.Icon.Information)
             msg.setText(
-                "ぽえなびをご利用いただきありがとうございます！\n\n"
+                tr_ui("ぽえなびをご利用いただきありがとうございます！\n\n"
                 f"現在は {poe_label} モードです。対応するログファイル（Client.txt）を設定してください。\n\n"
                 "1. 右クリックメニューの「設定」、または右側中央の ⚙️ ボタンから設定画面を開く\n"
                 "2. 「基本設定」タブで、現在のモードに対応するログファイル欄を設定\n"
@@ -3984,14 +4044,14 @@ class MainWindow(QMainWindow):
                 "3. 通常のパス例（これはPoE1 Steam版の例です）：\n"
                 "    C:\\Program Files (x86)\\Steam\\steamapps\n"
                 "    \\common\\Path of Exile\\logs\\Client.txt\n\n"
-                "⚠️ 対応するログファイルが未設定だと、エリア検知が動作しません。"
+                "⚠️ 対応するログファイルが未設定だと、エリア検知が動作しません。")
             )
             msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             msg.exec()
             # setup_completedフラグはログパス設定時に立てる
 
             self.guide_text_label.setText(
-                '<div style="padding: 15px;">'
+                tr_ui('<div style="padding: 15px;">'
                 '<span style="font-size: 20px;">⚙️</span>'
                 f'<span style="font-size: 15px; color: #ffc832; font-weight: bold;"> {poe_label}ログファイル（Client.txt）が未設定です</span><br><br>'
                 '<span style="font-size: 13px; color: #cccccc;">'
@@ -4001,7 +4061,7 @@ class MainWindow(QMainWindow):
                 '通常のパス例（これはPoE1 Steam版の例です）：<br>'
                 '<span style="color: #b0ffb0;">C:\\Program Files (x86)\\Steam\\steamapps<br>'
                 '\\common\\Path of Exile\\logs\\Client.txt</span></span>'
-                '</div>'
+                '</div>')
             )
 
     def _show_area_note_migration_notice_once(self):
@@ -4012,10 +4072,10 @@ class MainWindow(QMainWindow):
 
         msg = QMessageBox(self)
         msg.setStyleSheet("QMessageBox { font-size: 14px; } QMessageBox QLabel { font-size: 14px; }")
-        msg.setWindowTitle("📝 エリアメモ機能について")
+        msg.setWindowTitle(tr_ui("📝 エリアメモ機能について"))
         msg.setIcon(QMessageBox.Icon.Information)
         msg.setText(
-            "今回のバージョンから、各エリアのガイドデータは\n"
+            tr_ui("今回のバージョンから、各エリアのガイドデータは\n"
             "編集できない仕様に変更しました。\n"
             "（PoENaviの自動アップデート機能を正しく動作させるためです）\n"
             "その代わり、各エリアにエリアメモを追加できる\n"
@@ -4024,7 +4084,7 @@ class MainWindow(QMainWindow):
             "旧PoENaviフォルダのJSONファイルから、\n"
             "必要な内容を各エリアのエリアメモへコピーしてください。\n\n"
             "今後は公式ガイドとエリアメモを分けて保存するため、\n"
-            "次回以降のアップデートでエリアメモが失われることはありません。"
+            "次回以降のアップデートでエリアメモが失われることはありません。")
         )
         msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg.exec()
@@ -4178,7 +4238,7 @@ class MainWindow(QMainWindow):
         self.stop_btn.setVisible(expanded)
         self.reset_btn.setVisible(expanded)
         self.ready_btn.setVisible(expanded)
-        self.timer_toggle_btn.setText("▼ タイマー" if expanded else "▶ タイマー")
+        self.timer_toggle_btn.setText(tr_ui("▼ タイマー") if expanded else tr_ui("▶ タイマー"))
 
     def _apply_timer_size(self):
         """タイマーの表示サイズを適用する"""
@@ -4209,8 +4269,6 @@ class MainWindow(QMainWindow):
         self.timer_container.layout().setContentsMargins(pad, pad, pad, pad // 2)
 
     def setup_ui(self):
-        from PySide6.QtWidgets import QSizePolicy
-        
         central_widget = QWidget()
         central_widget.setObjectName("centralWidget")
         central_widget.setStyleSheet(f"#centralWidget {{ background-color: {Styles.BACKGROUND_COLOR}; border-radius: 10px; }}")
@@ -4253,14 +4311,14 @@ class MainWindow(QMainWindow):
         minimize_btn = QPushButton("─")
         minimize_btn.setFixedSize(30, 22)
         minimize_btn.setStyleSheet(btn_style)
-        minimize_btn.setToolTip("最小化（みになび表示中は本体だけ隠します）")
+        minimize_btn.setToolTip(tr_ui("最小化（みになび表示中は本体だけ隠します）"))
         minimize_btn.clicked.connect(self.minimize_main_window)
         title_bar.addWidget(minimize_btn)
         
         close_btn = QPushButton("✕")
         close_btn.setFixedSize(30, 22)
         close_btn.setStyleSheet(close_btn_style)
-        close_btn.setToolTip("閉じる")
+        close_btn.setToolTip(tr_ui("閉じる"))
         close_btn.clicked.connect(self.close)
         title_bar.addWidget(close_btn)
         
@@ -4271,7 +4329,9 @@ class MainWindow(QMainWindow):
         if self.config.get("timer_size") == "off":
             self.timer_expanded = False
         
-        self.timer_toggle_btn = QPushButton("▼ タイマー" if self.timer_expanded else "▶ タイマー")
+        self.timer_toggle_btn = QPushButton(
+            tr_ui("▼ タイマー") if self.timer_expanded else tr_ui("▶ タイマー")
+        )
         self.timer_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
@@ -4350,7 +4410,9 @@ class MainWindow(QMainWindow):
         # === ラップタイム折りたたみトグル ===
         self.lap_expanded = self.config.get("lap_expanded", True)
         
-        self.lap_toggle_btn = QPushButton("▼ ラップタイム" if self.lap_expanded else "▶ ラップタイム")
+        self.lap_toggle_btn = QPushButton(
+            tr_ui("▼ ラップタイム") if self.lap_expanded else tr_ui("▶ ラップタイム")
+        )
         self.lap_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
@@ -4371,7 +4433,7 @@ class MainWindow(QMainWindow):
         lap_header_layout.addWidget(self.lap_toggle_btn)
         
         self.auto_lap = self.config.get("auto_lap", True)
-        self.auto_lap_btn = QPushButton("自動" if self.auto_lap else "手動")
+        self.auto_lap_btn = QPushButton(tr_ui("自動") if self.auto_lap else tr_ui("手動"))
         self.auto_lap_btn.setStyleSheet(self._auto_lap_btn_style())
         self.auto_lap_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.auto_lap_btn.clicked.connect(self.toggle_auto_lap)
@@ -4423,7 +4485,7 @@ class MainWindow(QMainWindow):
 
         self.ready_btn = QPushButton("Ready")
         self.ready_btn.setStyleSheet(Styles.BUTTON)
-        self.ready_btn.setToolTip("黄昏の岸辺への入場を待ってタイマーを自動開始")
+        self.ready_btn.setToolTip(tr_ui("黄昏の岸辺への入場を待ってタイマーを自動開始"))
         self.ready_btn.clicked.connect(self.toggle_timer_ready)
         button_layout.addWidget(self.ready_btn)
         
@@ -4435,7 +4497,6 @@ class MainWindow(QMainWindow):
             self.ready_btn.setVisible(False)
         
         button_layout.addStretch()
-
         # PoENavi全体の操作。本体内ではタイマー操作と同じ行に置くが、
         # タイマー切り離し時は本体側へ残す。
         self.global_controls_widget = QWidget()
@@ -4447,14 +4508,14 @@ class MainWindow(QMainWindow):
         self.memo_btn = QPushButton("📝")
         self.memo_btn.setStyleSheet(Styles.BUTTON)
         self.memo_btn.setFixedSize(35, 35)
-        self.memo_btn.setToolTip("共通メモ")
+        self.memo_btn.setToolTip(tr_ui("共通メモ"))
         self.memo_btn.clicked.connect(self.open_memo)
         global_controls_layout.addWidget(self.memo_btn)
 
         self.vendor_search_btn = QPushButton("🔍")
         self.vendor_search_btn.setStyleSheet(Styles.BUTTON)
         self.vendor_search_btn.setFixedSize(35, 35)
-        self.vendor_search_btn.setToolTip("店売り・スタッシュ検索プリセット")
+        self.vendor_search_btn.setToolTip(tr_ui("店売り・スタッシュ検索プリセット"))
         self.vendor_search_btn.clicked.connect(self.open_vendor_search_presets)
         global_controls_layout.addWidget(self.vendor_search_btn)
 
@@ -4464,6 +4525,7 @@ class MainWindow(QMainWindow):
         self._update_poetore_hotkey_tooltip()
         self.poetore_btn.clicked.connect(self.open_poetore)
         global_controls_layout.addWidget(self.poetore_btn)
+        self._refresh_poetore_availability()
         
         self.settings_btn = QPushButton("⚙")
         self.settings_btn.setStyleSheet(Styles.BUTTON)
@@ -4502,14 +4564,16 @@ class MainWindow(QMainWindow):
         self.part2_btn.setVisible(self.poe_version == POE1)
         guide_mode_layout.addWidget(self.part2_btn)
 
-        self.visit_btn = QPushButton("自動")
+        self.visit_btn = QPushButton(tr_ui("自動"))
         self.visit_btn.setStyleSheet(self._visit_btn_style())
         self.visit_btn.setFixedHeight(22)
         self.visit_btn.clicked.connect(self.toggle_visit_override)
         guide_mode_layout.addWidget(self.visit_btn)
         
         # 折りたたみトグルボタン
-        self.guide_toggle_btn = QPushButton("▼ ガイド" if self.guide_expanded else "▶ ガイド")
+        self.guide_toggle_btn = QPushButton(
+            tr_ui("▼ ガイド") if self.guide_expanded else tr_ui("▶ ガイド")
+        )
         self.guide_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
@@ -4538,19 +4602,19 @@ class MainWindow(QMainWindow):
         
         # ゾーン名 + レベル表示
         zone_info_layout = QHBoxLayout()
-        self.zone_label = QLabel("📍 エリア: ---")
+        self.zone_label = QLabel(tr_ui("📍 エリア: ---"))
         self.zone_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px; font-weight: bold;")
         zone_info_layout.addWidget(self.zone_label)
         
         zone_info_layout.addStretch()
         
-        self.level_label = QLabel("キャラLv. 1")
+        self.level_label = QLabel(tr_ui("キャラLv. 1"))
         self.level_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px; font-weight: bold;")
         zone_info_layout.addWidget(self.level_label)
         guide_layout.addLayout(zone_info_layout)
         
         # アドバイスメッセージ
-        self.advice_label = QLabel("ログ監視待機中...")
+        self.advice_label = QLabel(tr_ui("ログ監視待機中..."))
         self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
         self.advice_label.setWordWrap(True)
         guide_layout.addWidget(self.advice_label)
@@ -4558,7 +4622,7 @@ class MainWindow(QMainWindow):
         self.guide_info_frame = guide_frame
         
         # ゾーンヘッダー折りたたみトグル
-        self.zone_header_toggle_btn = QPushButton("▼ ゾーン情報")
+        self.zone_header_toggle_btn = QPushButton(tr_ui("▼ ゾーン情報"))
         self.zone_header_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
@@ -4575,7 +4639,7 @@ class MainWindow(QMainWindow):
         
         # ── 攻略ガイド表示エリア ──
         # ガイドテキスト折りたたみトグル
-        self.guide_text_toggle_btn = QPushButton("▼ ガイドテキスト")
+        self.guide_text_toggle_btn = QPushButton(tr_ui("▼ ガイドテキスト"))
         self.guide_text_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
@@ -4594,10 +4658,10 @@ class MainWindow(QMainWindow):
         guide_text_header_layout.addWidget(self.guide_text_toggle_btn)
         guide_text_header_layout.addStretch()
 
-        self.area_note_edit_button = QPushButton("📝 エリアメモ")
+        self.area_note_edit_button = QPushButton(tr_ui("📝 エリアメモ"))
         self.area_note_edit_button.setCursor(QCursor(Qt.PointingHandCursor))
         self.area_note_edit_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self.area_note_edit_button.setToolTip("現在のエリアのエリアメモを編集します")
+        self.area_note_edit_button.setToolTip(tr_ui("現在のエリアのエリアメモを編集します"))
         self.area_note_edit_button.setStyleSheet(f"""
             QPushButton {{
                 background: rgba(20, 30, 20, 160);
@@ -4618,7 +4682,7 @@ class MainWindow(QMainWindow):
         self.guide_detail_level_toggle_btn = QPushButton()
         self.guide_detail_level_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.guide_detail_level_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self.guide_detail_level_toggle_btn.setToolTip("詳細版ガイド / 要点版ガイドを切り替えます")
+        self.guide_detail_level_toggle_btn.setToolTip(tr_ui("詳細版ガイド / 要点版ガイドを切り替えます"))
         self.guide_detail_level_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: rgba(20, 30, 20, 160);
@@ -4637,7 +4701,7 @@ class MainWindow(QMainWindow):
         self.mini_navi_toggle_btn = QPushButton()
         self.mini_navi_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.mini_navi_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self.mini_navi_toggle_btn.setToolTip("みになびのON/OFFを切り替えます。ロック操作はみになび側の鍵ボタンで行えます。")
+        self.mini_navi_toggle_btn.setToolTip(tr_ui("みになびのON/OFFを切り替えます。ロック操作はみになび側の鍵ボタンで行えます。"))
         self.mini_navi_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: rgba(20, 30, 20, 160);
@@ -4685,7 +4749,7 @@ class MainWindow(QMainWindow):
         area_note_layout = QVBoxLayout(self.area_note_frame)
         area_note_layout.setContentsMargins(9, 6, 9, 6)
         area_note_layout.setSpacing(3)
-        area_note_title = QLabel("📝 エリアメモ")
+        area_note_title = QLabel(tr_ui("📝 エリアメモ"))
         area_note_title.setStyleSheet(
             "color: #ffd86b; font-size: 11px; font-weight: bold; border: none; background: transparent;"
         )
@@ -4703,9 +4767,9 @@ class MainWindow(QMainWindow):
 
         poelab_button_layout = QHBoxLayout()
         poelab_button_layout.setContentsMargins(0, 0, 0, 0)
-        self.poelab_link_button = QPushButton("🏛️ 今日のPoELabを開く")
+        self.poelab_link_button = QPushButton(tr_ui("🏛️ 今日のPoELabを開く"))
         self.poelab_link_button.setCursor(QCursor(Qt.PointingHandCursor))
-        self.poelab_link_button.setToolTip("当日のPoELab Daily Notesを標準ブラウザで開きます")
+        self.poelab_link_button.setToolTip(tr_ui("当日のPoELab Daily Notesを標準ブラウザで開きます"))
         self.poelab_link_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         self.poelab_link_button.setStyleSheet("""
             QPushButton {
@@ -4749,7 +4813,7 @@ class MainWindow(QMainWindow):
             QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
         """)
         
-        self.guide_text_label = QLabel("エリアに入場すると攻略ガイドが表示されます")
+        self.guide_text_label = QLabel(tr_ui("エリアに入場すると攻略ガイドが表示されます"))
         self.guide_text_label.setStyleSheet(f"color: #888888; font-size: {self.guide_font_size}px; background: transparent;")
         self.guide_text_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.guide_text_label.setWordWrap(True)
@@ -4791,7 +4855,7 @@ class MainWindow(QMainWindow):
         
         # ── マップサムネイル一覧 ──
         # マップ折りたたみトグル
-        self.map_toggle_btn = QPushButton("▼ マップ")
+        self.map_toggle_btn = QPushButton(tr_ui("▼ マップ"))
         self.map_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
@@ -4813,7 +4877,9 @@ class MainWindow(QMainWindow):
         # ── ジェム取得タイミング表示 ──
         # ジェムトラッカー折りたたみトグル
         self.gem_tracker_expanded = self.config.get("gem_tracker_expanded", True)
-        self.gem_tracker_toggle_btn = QPushButton("▼ ジェム取得" if self.gem_tracker_expanded else "▶ ジェム取得")
+        self.gem_tracker_toggle_btn = QPushButton(
+            tr_ui("▼ ジェム取得") if self.gem_tracker_expanded else tr_ui("▶ ジェム取得")
+        )
         self.gem_tracker_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
@@ -4844,7 +4910,7 @@ class MainWindow(QMainWindow):
         pob_btn_layout = QHBoxLayout()
         pob_btn_layout.setSpacing(6)
         
-        self.pob_import_btn = QPushButton("📥 PoBインポート")
+        self.pob_import_btn = QPushButton(tr_ui("📥 PoBインポート"))
         self.pob_import_btn.setStyleSheet(f"""
             QPushButton {{
                 background: rgba(68,136,255,0.2); color: #4488ff;
@@ -4858,7 +4924,7 @@ class MainWindow(QMainWindow):
         pob_btn_layout.addWidget(self.pob_import_btn)
         
         # PoBクリアボタン
-        self.pob_clear_btn = QPushButton("データクリア")
+        self.pob_clear_btn = QPushButton(tr_ui("データクリア"))
         self.pob_clear_btn.setMinimumHeight(22)
         self.pob_clear_btn.setStyleSheet(f"""
             QPushButton {{
@@ -4868,7 +4934,7 @@ class MainWindow(QMainWindow):
             }}
             QPushButton:hover {{ background: rgba(255,102,102,0.22); color: #ffaaaa; }}
         """)
-        self.pob_clear_btn.setToolTip("PoBデータをクリア")
+        self.pob_clear_btn.setToolTip(tr_ui("PoBデータをクリア"))
         self.pob_clear_btn.clicked.connect(self._on_pob_clear)
         pob_btn_layout.addWidget(self.pob_clear_btn)
 
@@ -4900,18 +4966,18 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.guide_container, stretch=1)
 
         self._register_detachable_panel(
-            "timer", "タイマー", [self.timer_toggle_btn, self.timer_container], layout,
+            "timer", tr_ui("タイマー"), [self.timer_toggle_btn, self.timer_container], layout,
         )
         self._register_detachable_panel(
-            "guide", "ガイド", [self.guide_toggle_btn, self.guide_container], layout,
+            "guide", tr_ui("ガイド"), [self.guide_toggle_btn, self.guide_container], layout,
             expand_widgets=(self.guide_container,), header_widgets=(self.guide_mode_controls,),
         )
         self._register_detachable_panel(
-            "map", "マップ", [self.map_toggle_btn, self.map_thumbnail], guide_lower_layout,
+            "map", tr_ui("マップ"), [self.map_toggle_btn, self.map_thumbnail], guide_lower_layout,
             expand_widgets=(self.map_thumbnail,),
         )
         self._register_detachable_panel(
-            "gem", "ジェム取得", [self.gem_tracker_toggle_btn, self.gem_tracker_frame],
+            "gem", tr_ui("ジェム取得"), [self.gem_tracker_toggle_btn, self.gem_tracker_frame],
             guide_lower_layout, expand_widgets=(self.gem_tracker_frame,),
         )
         self.panel_registry["gem"]["content"].setVisible(self.poe_version == POE1)
@@ -5066,7 +5132,7 @@ class MainWindow(QMainWindow):
 
     def toggle_auto_lap(self):
         self.auto_lap = not self.auto_lap
-        self.auto_lap_btn.setText("自動" if self.auto_lap else "手動")
+        self.auto_lap_btn.setText(tr_ui("自動") if self.auto_lap else tr_ui("手動"))
         self.auto_lap_btn.setStyleSheet(self._auto_lap_btn_style())
         self.config["auto_lap"] = self.auto_lap
         ConfigManager.save_config(self.config)
@@ -5173,11 +5239,11 @@ class MainWindow(QMainWindow):
 
     def _update_visit_btn(self):
         if self.visit_override is None:
-            self.visit_btn.setText("自動")
+            self.visit_btn.setText(tr_ui("自動"))
         elif self.visit_override == 1:
-            self.visit_btn.setText("1回目")
+            self.visit_btn.setText(tr_ui("1回目"))
         else:
-            self.visit_btn.setText("2回目")
+            self.visit_btn.setText(tr_ui("2回目"))
         self.visit_btn.setStyleSheet(self._visit_btn_style())
 
     def _current_zone_id(self):
@@ -5223,7 +5289,9 @@ class MainWindow(QMainWindow):
         """ラップタイム表示の折りたたみ/展開"""
         self.lap_expanded = not self.lap_expanded
         self.lap_content.setVisible(self.lap_expanded)
-        self.lap_toggle_btn.setText("▼ ラップタイム" if self.lap_expanded else "▶ ラップタイム")
+        self.lap_toggle_btn.setText(
+            tr_ui("▼ ラップタイム") if self.lap_expanded else tr_ui("▶ ラップタイム")
+        )
         self.config["lap_expanded"] = self.lap_expanded
         ConfigManager.save_config(self.config)
         if self._is_panel_detached("timer"):
@@ -5240,7 +5308,9 @@ class MainWindow(QMainWindow):
             return
         self.gem_tracker_expanded = not self.gem_tracker_expanded
         self.gem_tracker_frame.setVisible(self.gem_tracker_expanded)
-        self.gem_tracker_toggle_btn.setText("▼ ジェム取得" if self.gem_tracker_expanded else "▶ ジェム取得")
+        self.gem_tracker_toggle_btn.setText(
+            tr_ui("▼ ジェム取得") if self.gem_tracker_expanded else tr_ui("▶ ジェム取得")
+        )
         self.config["gem_tracker_expanded"] = self.gem_tracker_expanded
         ConfigManager.save_config(self.config)
         self._adjust_panel_or_main("gem")
@@ -5272,7 +5342,7 @@ class MainWindow(QMainWindow):
 
                 result = import_pob(pob_code, selected_skill_set_ids=selected_skill_set_ids)
                 if not result or not result.get("gem_groups"):
-                    QMessageBox.warning(self, "インポートエラー", "選択されたSkill setからジェム情報を取得できませんでした。")
+                    QMessageBox.warning(self, tr_ui("インポートエラー"), tr_ui("選択されたSkill setからジェム情報を取得できませんでした。"))
                     return
 
                 # PoBインポート結果は設定ではなく専用JSONへ保存
@@ -5296,14 +5366,14 @@ class MainWindow(QMainWindow):
                 skill_set_summary = "\n".join(f"- {title}" for title in selected_titles[:8])
                 if len(selected_titles) > 8:
                     skill_set_summary += f"\n- 他 {len(selected_titles) - 8}件"
-                QMessageBox.information(self, "インポート成功",
+                QMessageBox.information(self, tr_ui("インポート成功"),
                     f"クラス: {result.get('class', '?')}\n"
                     f"昇華: {result.get('ascendancy', '?')}\n"
                     f"Skill set: {len(selected_titles) if selected_titles else '全'}個\n"
                     f"ジェムグループ: {len(result.get('gem_groups', []))}個"
                     + (f"\n\n{skill_set_summary}" if skill_set_summary else ""))
             except Exception as e:
-                QMessageBox.warning(self, "インポートエラー", f"PoBコードの解析に失敗しました:\n{e}")
+                QMessageBox.warning(self, tr_ui("インポートエラー"), tr_ui(f"PoBコードの解析に失敗しました:\n{e}"))
 
     def _update_gem_tracker(self):
         """ジェム取得リストを現在のActに基づいて更新"""
@@ -5384,14 +5454,18 @@ class MainWindow(QMainWindow):
         """ゾーンヘッダーの折りたたみ/展開"""
         self.zone_header_expanded = not self.zone_header_expanded
         self.guide_info_frame.setVisible(self.zone_header_expanded)
-        self.zone_header_toggle_btn.setText("▼ ゾーン情報" if self.zone_header_expanded else "▶ ゾーン情報")
+        self.zone_header_toggle_btn.setText(
+            tr_ui("▼ ゾーン情報") if self.zone_header_expanded else tr_ui("▶ ゾーン情報")
+        )
         self._adjust_panel_or_main("guide")
     
     def toggle_guide_text(self):
         """ガイドテキストの折りたたみ/展開"""
         self.guide_text_expanded = not self.guide_text_expanded
         self.guide_text_frame.setVisible(self.guide_text_expanded)
-        self.guide_text_toggle_btn.setText("▼ ガイドテキスト" if self.guide_text_expanded else "▶ ガイドテキスト")
+        self.guide_text_toggle_btn.setText(
+            tr_ui("▼ ガイドテキスト") if self.guide_text_expanded else tr_ui("▶ ガイドテキスト")
+        )
         self._adjust_panel_or_main("guide")
 
     def _update_poelab_link_visibility(self, zone_id: str | None):
@@ -5417,7 +5491,7 @@ class MainWindow(QMainWindow):
             self.area_note_label.clear()
             self.area_note_frame.hide()
             self.area_note_edit_button.setEnabled(False)
-            QMessageBox.warning(self, "エリアメモ読込エラー", str(exc))
+            QMessageBox.warning(self, tr_ui("エリアメモ読込エラー"), str(exc))
             return
         self._current_area_note = content
         self.area_note_label.setText(content.replace("\n", "<br>"))
@@ -5433,7 +5507,7 @@ class MainWindow(QMainWindow):
         try:
             set_area_note(self.poe_version, zone_id, dialog.content())
         except (OSError, ValueError) as exc:
-            QMessageBox.warning(self, "エリアメモ保存エラー", str(exc))
+            QMessageBox.warning(self, tr_ui("エリアメモ保存エラー"), str(exc))
             return
         self._update_area_note(self._current_zone_name, zone_id)
 
@@ -5443,7 +5517,7 @@ class MainWindow(QMainWindow):
         if not lab_type or not self.poelab_link_button.isEnabled():
             return
         self.poelab_link_button.setEnabled(False)
-        self.poelab_link_button.setText("🏛️ PoELabリンクを取得中…")
+        self.poelab_link_button.setText(tr_ui("🏛️ PoELabリンクを取得中…"))
 
         def resolve():
             try:
@@ -5464,7 +5538,7 @@ class MainWindow(QMainWindow):
 
     def _reset_poelab_link_button(self):
         self.poelab_link_button.setEnabled(True)
-        self.poelab_link_button.setText("🏛️ 今日のPoELabを開く")
+        self.poelab_link_button.setText(tr_ui("🏛️ 今日のPoELabを開く"))
     
     def _is_mini_navi_available(self):
         """みになびは現状PoE1専用。PoE2では未実装なので入口を出さない。"""
@@ -5473,7 +5547,7 @@ class MainWindow(QMainWindow):
     def _mini_navi_toggle_text(self):
         overlay_config = self.config.get("mini_guide_overlay", {})
         enabled = bool(overlay_config.get("enabled", False))
-        return "みになび ON" if enabled else "みになび OFF"
+        return tr_ui("みになび ON") if enabled else tr_ui("みになび OFF")
 
     def _refresh_mini_navi_toggle(self):
         if not hasattr(self, "mini_navi_toggle_btn"):
@@ -5504,8 +5578,8 @@ class MainWindow(QMainWindow):
     def _guide_detail_level_toggle_text(self):
         """現在のガイド表示レベルからトグルボタン文言を返す。"""
         if self.config.get("guide_detail_level", "beginner") == "intermediate":
-            return "要点版ガイド"
-        return "詳細版ガイド"
+            return tr_ui("要点版ガイド")
+        return tr_ui("詳細版ガイド")
 
     def _refresh_guide_detail_level_toggle(self):
         """PoE2専用のガイド表示レベルトグル状態を反映する。"""
@@ -5537,7 +5611,9 @@ class MainWindow(QMainWindow):
             self.map_thumbnail.setVisible(len(self.map_thumbnail.current_paths) > 0)
         else:
             self.map_thumbnail.setVisible(False)
-        self.map_toggle_btn.setText("▼ マップ" if self.map_section_expanded else "▶ マップ")
+        self.map_toggle_btn.setText(
+            tr_ui("▼ マップ") if self.map_section_expanded else tr_ui("▶ マップ")
+        )
         self._adjust_panel_or_main("map")
     
     def _apply_guide_visibility(self):
@@ -5576,7 +5652,9 @@ class MainWindow(QMainWindow):
             self.guide_container.setStyleSheet("""
                 #guideContainer { background-color: transparent; }
             """)
-        self.guide_toggle_btn.setText("▼ ガイド" if self.guide_expanded else "▶ ガイド")
+        self.guide_toggle_btn.setText(
+            tr_ui("▼ ガイド") if self.guide_expanded else tr_ui("▶ ガイド")
+        )
     
     def start_timer(self):
         self._set_timer_ready(False)
@@ -5608,9 +5686,9 @@ class MainWindow(QMainWindow):
             if has_data:
                 msg = QMessageBox(self)
                 msg.setStyleSheet("QMessageBox { font-size: 14px; } QMessageBox QLabel { font-size: 14px; }")
-                msg.setWindowTitle("リセット確認")
+                msg.setWindowTitle(tr_ui("リセット確認"))
                 msg.setIcon(QMessageBox.Icon.Warning)
-                msg.setText("タイマーとラップをリセットしますか？")
+                msg.setText(tr_ui("タイマーとラップをリセットしますか？"))
                 msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                 msg.setDefaultButton(QMessageBox.StandardButton.No)
                 if msg.exec() != QMessageBox.StandardButton.Yes:
@@ -5680,13 +5758,13 @@ class MainWindow(QMainWindow):
         self.ready_btn.setStyleSheet(self._ready_button_style())
         self.ready_btn.setEnabled(self.timer_ready or self._can_use_ready_button())
         if self.timer_ready:
-            tooltip = "黄昏の岸辺への入場を待機中（クリックで解除）"
+            tooltip = tr_ui("黄昏の岸辺への入場を待機中（クリックで解除）")
         elif self.poe_version != POE1:
-            tooltip = "Ready自動開始はPoE1専用です"
+            tooltip = tr_ui("Ready自動開始はPoE1専用です")
         elif self.is_running or self._has_timer_record():
-            tooltip = "ReadyにするにはタイマーをResetしてください"
+            tooltip = tr_ui("ReadyにするにはタイマーをResetしてください")
         else:
-            tooltip = "Client.txtを監視できる時だけReadyを使用できます"
+            tooltip = tr_ui("Client.txtを監視できる時だけReadyを使用できます")
         self.ready_btn.setToolTip(tooltip)
 
     def _set_timer_ready(self, ready: bool):
@@ -5704,9 +5782,9 @@ class MainWindow(QMainWindow):
         if not self.timer_ready and self._has_timer_record():
             QMessageBox.warning(
                 self,
-                "Readyにできません",
-                "タイマーの記録が残っています。\n"
-                "問題ないか確認のうえ、リセットしてからReadyしてください。",
+                tr_ui("Readyにできません"),
+                tr_ui("タイマーの記録が残っています。\n"
+                      "問題ないか確認のうえ、リセットしてからReadyしてください。"),
             )
             return
         self._set_timer_ready(not self.timer_ready)
@@ -5759,12 +5837,13 @@ class MainWindow(QMainWindow):
         return ConfigManager.get_user_data_dir() / get_timer_filename(self.poe_version)
 
     def _timer_state_payload(self):
+        segment_recorder = getattr(self, "segment_recorder", SegmentRecorder())
         return {
             "accumulated_time": self.accumulated_time,
             "lap_times": self.lap_times,
             "lap_record_order": self.lap_record_order,
             "current_act": self.current_act,
-            "segments": getattr(self, "segment_recorder", SegmentRecorder()).segments,
+            "segment_recorder": segment_recorder.to_state(),
         }
 
     def _save_timer_state_payload(self, payload):
@@ -5831,7 +5910,10 @@ class MainWindow(QMainWindow):
             self.lap_times.append(None)
         self.lap_record_order = [lap for lap in saved.get("lap_record_order", []) if 1 <= lap <= len(self.lap_labels)]
         self.current_act = saved.get("current_act", 1)
-        self.segment_recorder = SegmentRecorder(saved.get("segments", []))
+        segment_state = saved.get("segment_recorder")
+        if not isinstance(segment_state, dict):
+            segment_state = saved.get("segments", [])
+        self.segment_recorder = SegmentRecorder(segment_state)
         if self.accumulated_time > 0:
             self.update_text(self.accumulated_time)
             self.update_lap_display()
@@ -5956,17 +6038,23 @@ class MainWindow(QMainWindow):
         summary = self.segment_recorder.summary()
         latest = summary["latest"]
         if not latest:
-            self.segment_summary_label.setText("区間: エリア移動を待機中")
+            self.segment_summary_label.setText(tr_ui("区間: エリア移動を待機中"))
             return
 
-        latest_name = latest.get("zone_name") or latest.get("zone_id", "不明")
-        latest_text = f"直近: {latest_name} {self.format_lap_time(latest.get('duration', 0.0))}"
+        def segment_zone_name(segment):
+            raw_name = segment.get("zone_name") or segment.get("zone_id")
+            if not raw_name:
+                return tr_ui("不明")
+            return self._format_zone_display_name(str(raw_name))
+
+        latest_name = segment_zone_name(latest)
+        latest_text = tr_ui(f"直近: {latest_name} {self.format_lap_time(latest.get('duration', 0.0))}")
         slowest_text = " / ".join(
-            f"{segment.get('zone_name') or segment.get('zone_id', '不明')} {self.format_lap_time(segment.get('duration', 0.0))}"
+            f"{segment_zone_name(segment)} {self.format_lap_time(segment.get('duration', 0.0))}"
             for segment in summary["slowest"]
         )
         self.segment_summary_label.setText(
-            f"{latest_text}\n遅い区間: {slowest_text}"
+            tr_ui(f"{latest_text}\n遅い区間: {slowest_text}")
         )
 
     def update_lap_display(self):
@@ -5999,7 +6087,7 @@ class MainWindow(QMainWindow):
                 split_lbl.setStyleSheet(Styles.LAP_ITEM_COMPLETED)
             elif (i + 1) == self.current_act:
                 act_lbl.setText(f"⇒ {display_name}")
-                time_lbl.setText("進行中...")
+                time_lbl.setText(tr_ui("進行中..."))
                 split_lbl.setText("")
                 act_lbl.setStyleSheet(Styles.LAP_ITEM_CURRENT)
                 time_lbl.setStyleSheet(Styles.LAP_ITEM_CURRENT)
@@ -6049,6 +6137,8 @@ class MainWindow(QMainWindow):
                                      ("undo_lap", "F4"), ("click_through", DEFAULT_CLICK_THROUGH_HOTKEY), ("logout", "F5"),
                                      ("hideout", "F11"), ("monastery", "F12"),
                                      ("search_string_test", "none"), ("poetore_capture", "alt+d")]:
+                if action == "poetore_capture" and not self._poetore_enabled():
+                    continue
                 key = hotkeys.get(action, default)
                 if key and key != "none":
                     self.hotkey_map[key.lower()] = action
@@ -6126,7 +6216,7 @@ class MainWindow(QMainWindow):
             self.execute_chat_command("/monastery")
         elif command == "search_string_test":
             self.open_search_string_paste_test()
-        elif command == "poetore_capture":
+        elif command == "poetore_capture" and self._poetore_enabled():
             self.capture_poetore_item()
 
     def open_search_string_paste_test(self):
@@ -6167,7 +6257,7 @@ class MainWindow(QMainWindow):
         choices = self._load_vendor_search_presets(enabled_only=True)
         self._debug_search(f"open menu target={target_hwnd} title={self._window_title(target_hwnd)!r} choices={choices!r}")
         if not choices:
-            QMessageBox.information(self, "ベンダー検索", "有効なベンダー検索プリセットがありません。")
+            QMessageBox.information(self, tr_ui("ベンダー検索"), tr_ui("有効なベンダー検索プリセットがありません。"))
             return
 
         # 設定画面などのモーダルダイアログが開いている場合、メインウィンドウを親にした
@@ -6305,14 +6395,14 @@ class MainWindow(QMainWindow):
         time.sleep(0.05)
 
         if not target_hwnd:
-            QMessageBox.warning(self, "検索文字列の貼り付け", "復帰先ウィンドウを取得できませんでした。文字列はクリップボードへコピー済みです。")
+            QMessageBox.warning(self, tr_ui("検索文字列の貼り付け"), tr_ui("復帰先ウィンドウを取得できませんでした。文字列はクリップボードへコピー済みです。"))
             return
 
         if not focus_window(target_hwnd, wait_seconds=0.45):
             QMessageBox.warning(
                 self,
-                "検索文字列の貼り付け",
-                "元のウィンドウを前面化できませんでした。文字列はクリップボードへコピー済みです。",
+                tr_ui("検索文字列の貼り付け"),
+                tr_ui("元のウィンドウを前面化できませんでした。文字列はクリップボードへコピー済みです。"),
             )
             return
 
@@ -6407,8 +6497,8 @@ class MainWindow(QMainWindow):
             print(f"[LOGOUT] Failed: {msg}")
             if "管理者権限" in msg:
                 QMessageBox.warning(
-                    self, "ログアウトマクロ",
-                    "ログアウト機能を使用するためには、ぽえなびを「管理者として実行」する必要があります"
+                    self, tr_ui("ログアウトマクロ"),
+                    tr_ui("ログアウト機能を使用するためには、ぽえなびを「管理者として実行」する必要があります")
                 )
 
     # --- クリックスルー ---
@@ -6450,10 +6540,10 @@ class MainWindow(QMainWindow):
             return
         hotkey = self.config.get('hotkeys', {}).get('click_through', DEFAULT_CLICK_THROUGH_HOTKEY)
         if getattr(self, 'click_through', False):
-            self.click_through_label.setText(f"🔓 クリックスルーON（{hotkey}で解除）")
+            self.click_through_label.setText(tr_ui(f"🔓 クリックスルーON（{hotkey}で解除）"))
             self.click_through_label.setStyleSheet("color: #ff9944; font-size: 14px; font-weight: bold;")
         else:
-            self.click_through_label.setText(f"クリックスルーOFF（{hotkey}でON）")
+            self.click_through_label.setText(tr_ui(f"クリックスルーOFF（{hotkey}でON）"))
             self.click_through_label.setStyleSheet("color: rgba(176, 255, 123, 0.45); font-size: 12px; font-weight: normal;")
         self.click_through_label.setVisible(True)
 
@@ -6485,7 +6575,11 @@ class MainWindow(QMainWindow):
         return None
     
     def _format_zone_display_name(self, zone_name: str) -> str:
-        """表示用のエリア名表記を整える"""
+        """Resolve the stable zone entry and choose its display locale."""
+        for zones in self.zone_data.values():
+            for zone in zones:
+                if zone.get("zone") == zone_name or zone.get("zone_en") == zone_name:
+                    return get_zone_display_name(zone)
         return re.sub(r"^アクト\s*([0-9０-９]+)$", r"Act \1", zone_name)
 
     def _sync_gem_tracker_act_from_zone_act(self, act_name: str | None):
@@ -6530,7 +6624,7 @@ class MainWindow(QMainWindow):
         if actual_entry and self.poe_version == POE2 and zone_name in ("川岸", "The Riverbank") and not self._restoring:
             self.clear_progress_flags()
             self.player_level = 1
-            self.level_label.setText("キャラLv. 1")
+            self.level_label.setText(tr_ui("キャラLv. 1"))
 
         # 自動ラップ判定（街エリアでも実行 — 橋の野営地/オリアスの船着場がトリガー）
         if actual_entry and not self._restoring:
@@ -6564,7 +6658,7 @@ class MainWindow(QMainWindow):
             # Labクリア後の街帰還 → 志す者の広場の2回目ガイドを表示
             if actual_entry and self._in_lab and self._lab_zone_id:
                 self._in_lab = False
-                self.advice_label.setText("🏛️ Labクリア — 次のガイドを表示中")
+                self.advice_label.setText(tr_ui("🏛️ Labクリア — 次のガイドを表示中"))
                 self.advice_label.setStyleSheet("color: #ffc832; font-size: 12px;")
                 # 志す者の広場のvisitカウントを増やす
                 self.zone_visit_counts[self._lab_zone_id] = self.zone_visit_counts.get(self._lab_zone_id, 1) + 1
@@ -6573,7 +6667,7 @@ class MainWindow(QMainWindow):
                 self._update_guide_and_map(lab_zone_name, self._lab_zone_id, visit_num)
                 self._lab_zone_id = None
             else:
-                self.advice_label.setText("（街エリア — ガイドは前のエリアを表示中）")
+                self.advice_label.setText(tr_ui("（街エリア — ガイドは前のエリアを表示中）"))
                 self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
             return
         
@@ -6609,7 +6703,7 @@ class MainWindow(QMainWindow):
         elif actual_entry and self._in_lab and not zone_id:
             # Lab中に未知のエリア（Lab内部）→ ガイド更新スキップ
             self.zone_label.setText(f"📍 {display_zone_name}")
-            self.advice_label.setText("🏛️ Lab — ガイドは前のエリアを表示中")
+            self.advice_label.setText(tr_ui("🏛️ Lab — ガイドは前のエリアを表示中"))
             self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
             return
         
@@ -6622,7 +6716,7 @@ class MainWindow(QMainWindow):
             if exclude_type == "town":
                 # 街扱い — 既存の街処理と同じ
                 self.zone_label.setText(f"🏠 {display_zone_name}")
-                self.advice_label.setText("（街エリア — ガイドは前のエリアを表示中）")
+                self.advice_label.setText(tr_ui("（街エリア — ガイドは前のエリアを表示中）"))
                 self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
                 return
             elif exclude_type == "boss":
@@ -6631,7 +6725,7 @@ class MainWindow(QMainWindow):
                 act_name, _ = get_zone_info(self.zone_data, zone_name, part2=self.part2_mode)
                 act_prefix = f"{act_name} — " if act_name else ""
                 self.zone_label.setText(f"📍 {act_prefix}{display_zone_name}")
-                self.advice_label.setText("⚔️ ボスエリア")
+                self.advice_label.setText(tr_ui("⚔️ ボスエリア"))
                 self.advice_label.setStyleSheet("color: #ff9944; font-size: 12px;")
                 # ガイド・マップ更新は続行
                 self._update_guide_and_map(zone_name, zone_id, 1, zone_changed=actual_entry)
@@ -6642,7 +6736,7 @@ class MainWindow(QMainWindow):
                 act_name, _ = get_zone_info(self.zone_data, zone_name, part2=self.part2_mode)
                 act_prefix = f"{act_name} — " if act_name else ""
                 self.zone_label.setText(f"📍 {act_prefix}{display_zone_name}")
-                self.advice_label.setText("🏛️ 非戦闘エリア")
+                self.advice_label.setText(tr_ui("🏛️ 非戦闘エリア"))
                 self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
                 self._update_guide_and_map(zone_name, zone_id, 1, zone_changed=actual_entry)
                 return
@@ -6810,9 +6904,9 @@ class MainWindow(QMainWindow):
         else:
             self.zone_label.setText(f"📍 {display_zone_name}")
             if act_name:
-                self.advice_label.setText("（エリアレベルは攻略順で変動するため固定表示なし）")
+                self.advice_label.setText(tr_ui("（エリアレベルは攻略順で変動するため固定表示なし）"))
             else:
-                self.advice_label.setText("（適正レベル未登録エリア）")
+                self.advice_label.setText(tr_ui("（適正レベル未登録エリア）"))
             self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
         
         # 攻略ガイド・マップ更新
@@ -6876,7 +6970,9 @@ class MainWindow(QMainWindow):
                 else:
                     self.mini_navi_overlay.hide()
         else:
-            self.guide_text_label.setText(f"「{zone_name}」のガイドデータはありません")
+            self.guide_text_label.setText(
+                tr("guide.missing", zone=self._format_zone_display_name(zone_name))
+            )
             self.guide_text_label.setStyleSheet(f"color: #666666; font-size: {self.guide_font_size}px; background: transparent;")
             if hasattr(self, "mini_navi_overlay"):
                 self.mini_navi_overlay.hide()
@@ -6929,8 +7025,8 @@ class MainWindow(QMainWindow):
         zone_name = "渇望の祭壇"
         zone_id = "act10_area11"
         self.current_zone = zone_name
-        self.zone_label.setText("📍 Act 10 — 渇望の祭壇")
-        self.advice_label.setText("🎉 Act10クリア — クリア後ガイドを表示中")
+        self.zone_label.setText(tr_ui("📍 Act 10 — 渇望の祭壇"))
+        self.advice_label.setText(tr_ui("🎉 Act10クリア — クリア後ガイドを表示中"))
         self.advice_label.setStyleSheet("color: #ffd700; font-size: 12px;")
         self._update_guide_and_map(zone_name, zone_id, 1, zone_changed=True)
 
@@ -7016,7 +7112,7 @@ class MainWindow(QMainWindow):
     def on_level_up(self, char_name: str, level: int):
         """レベルアップ検知"""
         self.player_level = level
-        self.level_label.setText(f"キャラLv. {level}")
+        self.level_label.setText(tr_ui(f"キャラLv. {level}"))
         
         # 新キャラ判定: 黄昏の岸辺入場済み + Lv2 = ヒロック討伐 → visitカウントリセット
         if level == 2 and getattr(self, '_twilight_strand_entered', False):
@@ -7144,17 +7240,17 @@ class MainWindow(QMainWindow):
     def contextMenuEvent(self, event):
         menu = QMenu(self)
         
-        settings_action = menu.addAction("設定")
+        settings_action = menu.addAction(tr_ui("設定"))
         settings_action.triggered.connect(self.open_settings)
 
-        update_action = menu.addAction("アップデートを確認")
+        update_action = menu.addAction(tr_ui("アップデートを確認"))
         update_action.triggered.connect(
             lambda: self._check_for_updates(manual=True)
         )
         
         menu.addSeparator()
         
-        quit_action = menu.addAction("終了")
+        quit_action = menu.addAction(tr_ui("終了"))
         quit_action.triggered.connect(self.close)
         
         menu.exec(event.globalPos())
@@ -7181,26 +7277,45 @@ class MainWindow(QMainWindow):
 
     def open_poetore(self):
         """ぽえとれを必要になった時だけ読み込んで別ウィンドウで開く。"""
+        if not self._poetore_enabled():
+            return
         from src.poetore.ui import show_poetore_window
 
         show_poetore_window(self)
 
     def capture_poetore_item(self):
         """設定済みホットキーからぽえとれを開き、PoE上のアイテムを自動取得する。"""
+        if not self._poetore_enabled():
+            return
         from src.poetore.ui import show_poetore_window
 
         # コピーが終わるまでPoEからフォーカスを奪わない。
         show_poetore_window(self, activate=False).capture_from_poe()
+
+    def _poetore_enabled(self):
+        config = getattr(self, "config", {})
+        return config.get(
+            "poe_version",
+            getattr(self, "poe_version", POE1),
+        ) == POE1
+
+    def _refresh_poetore_availability(self):
+        enabled = self._poetore_enabled()
+        self.poetore_btn.setVisible(enabled)
+        if not enabled:
+            window = getattr(self, "_poetore_window", None)
+            if window is not None:
+                window.close()
 
     def _update_poetore_hotkey_tooltip(self):
         hotkey = self.config.get("hotkeys", {}).get("poetore_capture", "alt+d")
         if hotkey and hotkey != "none":
             display_hotkey = QKeySequence(hotkey).toString(QKeySequence.NativeText)
             self.poetore_btn.setToolTip(
-                f"ぽえとれ（{display_hotkey}で日本語名＋詳細Modを取得）"
+                tr_ui(f"ぽえとれ（{display_hotkey}で日本語名＋詳細Modを取得）")
             )
         else:
-            self.poetore_btn.setToolTip("ぽえとれ（ホットキー未設定）")
+            self.poetore_btn.setToolTip(tr_ui("ぽえとれ（ホットキー未設定）"))
     
     def open_settings(self):
         dialog = SettingsDialog(self, self.config)
@@ -7209,9 +7324,16 @@ class MainWindow(QMainWindow):
             # 設定保存
             previous_timer_size_setting = self.config.get("timer_size", "large")
             previous_always_on_top = self.config.get("always_on_top", True)
+            previous_language = get_locale()
             new_settings = dialog.get_settings()
             self.config.update(new_settings)
             ConfigManager.save_config(self.config)
+            if self.config.get("language", previous_language) != previous_language:
+                QMessageBox.information(
+                    self,
+                    tr("app.settings"),
+                    tr("app.restart_required"),
+                )
             if self.config.get("always_on_top", True) != previous_always_on_top:
                 self._apply_window_flags()
             
@@ -7245,7 +7367,7 @@ class MainWindow(QMainWindow):
             self.town_zones_by_version = zone_master_data["town_zones_by_version"]
             self.zone_data = self.zone_data_by_version.get(self.poe_version, {})
             self.log_watcher.set_poe_version(self.poe_version)
-            self.setWindowTitle(f"ぽえなび [{get_poe_label(self.poe_version)}]")
+            self.setWindowTitle(tr_ui(f"ぽえなび [{get_poe_label(self.poe_version)}]"))
             if prev_version != self.poe_version:
                 self.lap_times = [None] * len(self.lap_labels)
                 self.current_act = 1
@@ -7274,6 +7396,7 @@ class MainWindow(QMainWindow):
             if "gem" in self.panel_registry:
                 self.panel_registry["gem"]["content"].setVisible(self.poe_version == POE1)
             self.part2_btn.setVisible(self.poe_version == POE1)
+            self._refresh_poetore_availability()
             self._refresh_mini_navi_toggle()
             self._refresh_guide_detail_level_toggle()
             
@@ -7318,7 +7441,7 @@ class MainWindow(QMainWindow):
             self.update_level_guide_display()
         
         # ガイドデータは常にリロード（ガイド編集Saveで即保存されるため、Cancelでも反映する）
-        self.guide_data = load_guide_data(self.poe_version)
+        self.guide_data = load_guide_data(self.poe_version, language=get_locale())
         # 現在表示中のガイドを再描画
         if self.current_zone:
             zone_id = self._get_zone_id(self.current_zone)
@@ -7368,8 +7491,6 @@ class MainWindow(QMainWindow):
             return
         if not getattr(self, "_initial_positioned", False):
             self._initial_positioned = True
-            from PySide6.QtWidgets import QApplication
-            
             snap_to_right = self.config.get("snap_to_right_edge", False)
             saved_geo = self.config.get("window_geometry")
             
@@ -7430,7 +7551,6 @@ class MainWindow(QMainWindow):
     
     def _position_right_edge(self):
         """デフォルトの右端配置"""
-        from PySide6.QtWidgets import QApplication
         screens = QApplication.screens()
         if not screens:
             return

@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from src.utils.poe_version_data import POE1
+from src.utils.i18n import DEFAULT_LOCALE, normalize_locale
 
 
 class ConfigManager:
@@ -14,7 +15,7 @@ class ConfigManager:
     DEFAULT_CONFIG_FILE = "default_config.json"
     APP_NAME = "PoENavi"
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
-    CURRENT_SCHEMA_VERSION = 3
+    CURRENT_SCHEMA_VERSION = 4
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -382,22 +383,32 @@ class ConfigManager:
         if schema_version < 1:
             migrated["schemaVersion"] = 1
 
-        if schema_version < 2:
+        if schema_version < 3:
             mini_navi = migrated.get("mini_guide_overlay")
             if isinstance(mini_navi, dict):
                 if mini_navi.get("width") == 360 and mini_navi.get("height") == 100:
                     mini_navi["width"] = 800
                     mini_navi["height"] = 130
-                if mini_navi.get("font_size") == 16:
+                if mini_navi.get("font_size") in (15, 16):
                     mini_navi["font_size"] = 18
 
-        if schema_version < 3:
+        if schema_version < 4:
             mini_navi = migrated.get("mini_guide_overlay")
             if isinstance(mini_navi, dict):
                 mini_navi.setdefault("display_mode", "standard")
 
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)
+
+        # Locale fields were introduced in schema 2. The raw-config loader
+        # below distinguishes an existing installation from a new template;
+        # this method supplies safe values for either input shape.
+        if "language" not in migrated:
+            migrated["language"] = DEFAULT_LOCALE
+        migrated["language"] = normalize_locale(migrated.get("language"))
+        if "language_selected" not in migrated:
+            migrated["language_selected"] = False
+        migrated["language_selected"] = bool(migrated.get("language_selected"))
 
         migrated["schemaVersion"] = cls.CURRENT_SCHEMA_VERSION
         return migrated
@@ -422,7 +433,37 @@ class ConfigManager:
     @classmethod
     def _load_from_path(cls, config_path):
         raw_config = cls._read_json(config_path)
+        if not isinstance(raw_config, dict):
+            raise ValueError("config.json must contain a JSON object")
+
+        # Inspect the raw user document before merging the new-install
+        # defaults. Existing installations remain Japanese and do not receive
+        # the first-run picker after an upgrade.
+        raw_config = copy.deepcopy(raw_config)
+        if "language" not in raw_config:
+            raw_config["language"] = DEFAULT_LOCALE
+            raw_config["language_selected"] = True
+        elif "language_selected" not in raw_config:
+            raw_config["language_selected"] = True
+
         default_config = cls._load_default_config_template()
+        raw_hotkeys = raw_config.get("hotkeys")
+        default_hotkeys = default_config.get("hotkeys", {})
+        if (
+            isinstance(raw_hotkeys, dict)
+            and "poetore_capture" not in raw_hotkeys
+            and isinstance(default_hotkeys, dict)
+        ):
+            poetore_default = str(
+                default_hotkeys.get("poetore_capture", "none")
+            ).strip().casefold()
+            if poetore_default != "none" and any(
+                str(value).strip().casefold() == poetore_default
+                for value in raw_hotkeys.values()
+            ):
+                # An upgraded installation may already use Alt+D. Do not let
+                # the newly introduced default silently replace that action.
+                raw_hotkeys["poetore_capture"] = "none"
         migrated = cls._migrate_config(cls._deep_merge(default_config, raw_config))
         if isinstance(raw_config, dict) and "area_note_migration_notice_shown" not in raw_config:
             # この案内は旧版利用者向け。新規設定ではdefault_configのtrueを使い、
@@ -483,6 +524,11 @@ class ConfigManager:
         except Exception:
             cls._backup_config(config_path, reason="broken")
             config = cls._load_default_config_template()
+            # A recoverable existing installation has already completed its
+            # language choice. Keep the recovery path in Japanese so the
+            # picker is only shown for a genuinely new installation.
+            config["language"] = DEFAULT_LOCALE
+            config["language_selected"] = True
             cls._write_json(config_path, config)
             cls.migrate_startup_legacy_user_files()
             return config

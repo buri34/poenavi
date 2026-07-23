@@ -7,6 +7,7 @@ import sys
 import time
 
 from PySide6.QtWidgets import QApplication, QMessageBox
+from src.utils.i18n import set_locale, tr
 
 from src.update.updater_engine import (
     UpdateApplyError,
@@ -28,7 +29,7 @@ def process_running(pid: int) -> bool:
 
 def show_error(message: str) -> None:
     app = QApplication.instance() or QApplication([])
-    QMessageBox.critical(None, "ぽえなび アップデート", message)
+    QMessageBox.critical(None, tr("update.title"), message)
     app.processEvents()
 
 
@@ -43,14 +44,16 @@ def main() -> int:
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--install-dir", type=Path, required=True)
     parser.add_argument("--work-dir", type=Path, required=True)
+    parser.add_argument("--language", choices=("ja", "en"), default="ja")
     args = parser.parse_args()
+    set_locale(args.language)
 
     install_dir = args.install_dir.resolve()
     if install_dir.parent == install_dir or not (install_dir / "PoENavi.exe").is_file():
-        show_error("更新対象の PoENavi.exe が見つかりません。")
+        show_error(tr("errors.updater_target_missing"))
         return 2
     if not wait_for_process_exit(args.pid, 30, process_running):
-        show_error("ぽえなびを終了できなかったため、更新を中止しました。")
+        show_error(tr("errors.updater_process_running"))
         return 3
 
     try:
@@ -62,7 +65,7 @@ def main() -> int:
             startup_check=startup_stable,
         )
     except UpdateApplyError as exc:
-        suffix = f"\nバックアップ: {exc.backup}" if exc.backup else ""
+        suffix = f"\n{tr('errors.backup')}: {exc.backup}" if exc.backup else ""
         show_error(f"{exc}{suffix}")
         return 4
 

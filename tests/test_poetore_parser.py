@@ -1,6 +1,7 @@
 import unittest
 
 from src.poetore import ItemParseError, parse_item_text
+from src.utils.i18n import EN, JA, set_locale
 
 
 RARE_JP = """アイテムクラス: 指輪
@@ -61,6 +62,31 @@ Right-click to add this to your bestiary.
         self.assertEqual(item.base_type, "Chaos Orb")
         self.assertEqual(item.category, "currency")
         self.assertEqual(item.properties["Stack Size"], "4/20")
+
+    def test_english_item_copy_parsing_is_independent_of_ui_locale(self):
+        set_locale(EN)
+        try:
+            item = parse_item_text("""Item Class: Rings
+Rarity: Rare
+Coil Band
+Gold Ring
+--------
+Requirements:
+Level: 40
+--------
+Item Level: 70
+--------
+{ Crafted Prefix Modifier }
++45 to maximum Life (crafted)
+""")
+        finally:
+            set_locale(JA)
+
+        self.assertEqual(item.category, "accessory")
+        self.assertEqual(item.item_level, 70)
+        self.assertEqual(item.base_type, "Gold Ring")
+        self.assertEqual(len(item.modifiers), 1)
+        self.assertEqual(item.modifiers[0].kind, "crafted")
 
     def test_parses_quiver_as_accessory(self):
         item = parse_item_text("""Item Class: Quivers
