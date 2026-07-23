@@ -3614,6 +3614,8 @@ class MainWindow(QMainWindow):
         self.start_time = 0.0
         self.accumulated_time = 0.0
         self.is_running = False
+        self.timer_ready = False
+        self._normal_log_poll_interval_ms = 500
         
         # ラップタイム用
         self.poe_version = self.config.get("poe_version", POE1)
@@ -3682,6 +3684,8 @@ class MainWindow(QMainWindow):
             parent=self
         )
         self.log_watcher.set_poe_version(self.poe_version)
+        self._normal_log_poll_interval_ms = self.log_watcher.poll_interval_ms
+        self.log_watcher.actual_zone_entered.connect(self._on_actual_zone_entered_for_auto_start)
         self.log_watcher.zone_entered.connect(self.on_zone_entered)
         self.log_watcher.level_up.connect(self.on_level_up)
         self.log_watcher.kitava_defeated.connect(self.on_kitava_defeated)
@@ -3702,6 +3706,7 @@ class MainWindow(QMainWindow):
         
         # タイマー状態復元
         self._restore_timer_state()
+        self._refresh_ready_button()
         
         # エリアメモ導入案内（全モード共通で一度だけ）
         self._show_area_note_migration_notice_once()
@@ -4149,6 +4154,7 @@ class MainWindow(QMainWindow):
         self.start_btn.setVisible(expanded)
         self.stop_btn.setVisible(expanded)
         self.reset_btn.setVisible(expanded)
+        self.ready_btn.setVisible(expanded)
         self.timer_toggle_btn.setText("▼ タイマー" if expanded else "▶ タイマー")
 
     def _apply_timer_size(self):
@@ -4391,12 +4397,19 @@ class MainWindow(QMainWindow):
         self.reset_btn.setStyleSheet(Styles.BUTTON)
         self.reset_btn.clicked.connect(self.reset_timer)
         button_layout.addWidget(self.reset_btn)
+
+        self.ready_btn = QPushButton("Ready")
+        self.ready_btn.setStyleSheet(Styles.BUTTON)
+        self.ready_btn.setToolTip("黄昏の岸辺への入場を待ってタイマーを自動開始")
+        self.ready_btn.clicked.connect(self.toggle_timer_ready)
+        button_layout.addWidget(self.ready_btn)
         
         # タイマー折りたたみ時はボタンも隠す
         if not self.timer_expanded:
             self.start_btn.setVisible(False)
             self.stop_btn.setVisible(False)
             self.reset_btn.setVisible(False)
+            self.ready_btn.setVisible(False)
         
         button_layout.addStretch()
 
@@ -5536,6 +5549,7 @@ class MainWindow(QMainWindow):
         self.guide_toggle_btn.setText("▼ ガイド" if self.guide_expanded else "▶ ガイド")
     
     def start_timer(self):
+        self._set_timer_ready(False)
         if not self.is_running:
             self.start_time = time.time()
             self.timer.start(10)
@@ -5547,6 +5561,7 @@ class MainWindow(QMainWindow):
                     self.get_elapsed_time(),
                 )
                 self._update_segment_summary()
+        self._refresh_ready_button()
             
     def stop_timer(self):
         if self.is_running:
@@ -5554,6 +5569,7 @@ class MainWindow(QMainWindow):
             self.accumulated_time += time.time() - self.start_time
             self.is_running = False
             self._save_timer_state()
+        self._refresh_ready_button()
             
     def reset_timer(self):
         # 確認ダイアログ（設定ON かつ タイマーが動いているか記録がある場合）
@@ -5575,11 +5591,95 @@ class MainWindow(QMainWindow):
             total = self.get_elapsed_time()
             LapRecorder.save_run(self.lap_times, total, segments=self.segment_recorder.segments)
         
+        self._set_timer_ready(False)
         self.stop_timer()
         self.accumulated_time = 0.0
         self.update_text(0.0)
         self.reset_laps()
         self._clear_saved_timer()
+        self._refresh_ready_button()
+
+    def _has_timer_record(self):
+        """自動開始を禁止すべき既存タイマー記録があるか。"""
+        return (
+            self.accumulated_time > 0
+            or any(t is not None for t in self.lap_times)
+            or bool(getattr(self, "lap_record_order", []))
+            or bool(getattr(getattr(self, "segment_recorder", None), "segments", []))
+        )
+
+    def _can_set_timer_ready(self):
+        watcher = getattr(self, "log_watcher", None)
+        return (
+            self.poe_version == POE1
+            and not self.is_running
+            and not self._has_timer_record()
+            and watcher is not None
+            and watcher.is_active
+        )
+
+    def _ready_button_style(self):
+        if self.timer_ready:
+            return """
+                QPushButton {
+                    background-color: #2e7d32;
+                    color: white;
+                    border: 1px solid #66bb6a;
+                    border-radius: 4px;
+                    padding: 5px 12px;
+                    font-weight: bold;
+                }
+                QPushButton:hover { background-color: #388e3c; }
+            """
+        return Styles.BUTTON
+
+    def _refresh_ready_button(self):
+        if not hasattr(self, "ready_btn"):
+            return
+        self.ready_btn.setText("Ready ✓" if self.timer_ready else "Ready")
+        self.ready_btn.setStyleSheet(self._ready_button_style())
+        self.ready_btn.setEnabled(self.timer_ready or self._can_set_timer_ready())
+        if self.timer_ready:
+            tooltip = "黄昏の岸辺への入場を待機中（クリックで解除）"
+        elif self.poe_version != POE1:
+            tooltip = "Ready自動開始はPoE1専用です"
+        elif self.is_running or self._has_timer_record():
+            tooltip = "ReadyにするにはタイマーをResetしてください"
+        else:
+            tooltip = "Client.txtを監視できる時だけReadyを使用できます"
+        self.ready_btn.setToolTip(tooltip)
+
+    def _set_timer_ready(self, ready: bool):
+        ready = bool(ready)
+        if ready and not self._can_set_timer_ready():
+            ready = False
+        self.timer_ready = ready
+        watcher = getattr(self, "log_watcher", None)
+        if watcher is not None:
+            interval = 100 if ready else self._normal_log_poll_interval_ms
+            watcher.set_poll_interval(interval)
+        self._refresh_ready_button()
+
+    def toggle_timer_ready(self):
+        self._set_timer_ready(not self.timer_ready)
+
+    def _on_actual_zone_entered_for_auto_start(self, zone_name: str):
+        """LiveSplit準拠: 明示的な黄昏の岸辺入場ログで一度だけ開始する。"""
+        if not self.timer_ready:
+            return
+        if (
+            self._restoring
+            or self.poe_version != POE1
+            or self.is_running
+            or self._has_timer_record()
+        ):
+            self._set_timer_ready(False)
+            return
+        if zone_name not in ("黄昏の岸辺", "The Twilight Strand"):
+            return
+        # zone_enteredの通常処理より先に呼ばれるため、開始区間を前エリアにしない。
+        self.current_zone = zone_name
+        self.start_timer()
     
     def reset_laps(self):
         """全ラップをリセット"""
@@ -7008,6 +7108,7 @@ class MainWindow(QMainWindow):
     def open_settings(self):
         dialog = SettingsDialog(self, self.config)
         if dialog.exec():
+            self._set_timer_ready(False)
             # 設定保存
             previous_timer_size_setting = self.config.get("timer_size", "large")
             previous_always_on_top = self.config.get("always_on_top", True)
@@ -7115,6 +7216,7 @@ class MainWindow(QMainWindow):
                     self.config.get("text_opacity", 100)
                 )
             
+            self._refresh_ready_button()
             self.update_level_guide_display()
         
         # ガイドデータは常にリロード（ガイド編集Saveで即保存されるため、Cancelでも反映する）

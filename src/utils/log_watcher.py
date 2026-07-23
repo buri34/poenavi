@@ -16,6 +16,7 @@ class LogWatcher(QObject):
     
     # シグナル定義
     zone_entered = Signal(str)      # エリア名 (例: "地下墓地")
+    actual_zone_entered = Signal(str)  # Client.txtの明示的な入場ログ（復元・Set Sourceを除く）
     level_up = Signal(str, int)     # キャラ名, レベル
     kitava_defeated = Signal()      # Act5キタヴァ討伐検知
     act10_cleared = Signal()        # Act10キタヴァ討伐検知
@@ -58,6 +59,16 @@ class LogWatcher(QObject):
 
     def set_poe_version(self, poe_version: str):
         self.poe_version = poe_version
+
+    @property
+    def is_active(self) -> bool:
+        return self._active
+
+    def set_poll_interval(self, interval_ms: int):
+        """監視間隔を変更し、監視中なら即時反映する。"""
+        self.poll_interval_ms = max(1, int(interval_ms))
+        if self._active:
+            self._timer.start(self.poll_interval_ms)
     
     def start(self):
         """監視開始"""
@@ -171,6 +182,7 @@ class LogWatcher(QObject):
         if m:
             zone_name = m.group(1).strip()
             print(f"[LogWatcher] Zone detected: {zone_name} (pos={self._file_pos}, line={line.strip()[:80]})")
+            self.actual_zone_entered.emit(zone_name)
             self.zone_entered.emit(zone_name)
             return
         
@@ -179,6 +191,7 @@ class LogWatcher(QObject):
         if m:
             zone_name = m.group(1).strip()
             print(f"[LogWatcher] Zone detected: {zone_name} (pos={self._file_pos}, line={line.strip()[:80]})")
+            self.actual_zone_entered.emit(zone_name)
             self.zone_entered.emit(zone_name)
             return
         
