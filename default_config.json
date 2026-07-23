@@ -44,6 +44,7 @@
         "height": 867
     },
     "snap_to_right_edge": false,
+    "detached_panels": {},
     "gem_tracker_expanded": true,
     "client_log_paths": {
         "poe1": "",

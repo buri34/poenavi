@@ -7,7 +7,7 @@ import time
 from pynput import keyboard as pynput_keyboard
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QPushButton, QMenu, QFrame, QScrollArea, QSplitter,
-                               QSizeGrip, QMessageBox, QRadioButton, QButtonGroup, QApplication)
+                               QSizeGrip, QSizePolicy, QMessageBox, QRadioButton, QButtonGroup, QApplication)
 from PySide6.QtCore import Qt, QTimer, Signal, QRect, QEvent, QEventLoop, QPoint, QSize, QMimeData, QUrl
 from PySide6.QtGui import QCursor, QMouseEvent, QIcon, QDesktopServices
 from src.ui.styles import Styles
@@ -3294,6 +3294,114 @@ class VendorSearchPresetDialog(QDialog):
             event.ignore()
 
 
+class DetachedPanelWindow(QWidget):
+    """本体から外したパネルを表示する、移動可能な独立ウィンドウ。"""
+
+    def __init__(self, panel_id: str, title: str, content: QWidget, return_callback, state_callback):
+        super().__init__(None)
+        self.panel_id = panel_id
+        self.content = content
+        self._return_callback = return_callback
+        self._state_callback = state_callback
+        self._returning = False
+        self._drag_offset = None
+        self._content_size_policy = content.sizePolicy()
+
+        self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint)
+        self.setWindowTitle(title)
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setStyleSheet(
+            f"background-color: {Styles.BACKGROUND_COLOR}; color: {Styles.TEXT_COLOR};"
+        )
+        self.setMinimumSize(320, 180)
+        content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.resize(max(320, content.sizeHint().width()), max(180, content.sizeHint().height()))
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.header = QWidget()
+        self.header.setAttribute(Qt.WA_StyledBackground, True)
+        self.header.setCursor(QCursor(Qt.OpenHandCursor))
+        self.header.setStyleSheet(
+            f"background-color: {Styles.BACKGROUND_COLOR}; border-bottom: 1px solid rgba(176, 255, 123, 0.35);"
+        )
+        self.header.installEventFilter(self)
+        header_layout = QHBoxLayout(self.header)
+        header_layout.setContentsMargins(8, 5, 8, 5)
+        self.title_label = QLabel(title)
+        self.title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-weight: bold;")
+        header_layout.addWidget(self.title_label)
+        header_layout.addStretch()
+
+        return_button = QPushButton("↙ 本体へ戻す")
+        return_button.setStyleSheet(Styles.BUTTON)
+        return_button.setCursor(QCursor(Qt.PointingHandCursor))
+        return_button.clicked.connect(self.return_to_main)
+        header_layout.addWidget(return_button)
+
+        self.header.setFixedHeight(self.header.sizeHint().height())
+        layout.addWidget(self.header, stretch=0)
+        layout.addWidget(content, stretch=1)
+
+        self.resize_grip = QSizeGrip(self)
+        self.resize_grip.setFixedSize(18, 18)
+        self.resize_grip.setToolTip("ドラッグしてサイズ変更")
+        self.resize_grip.setStyleSheet("background: transparent;")
+        self.resize_grip.move(self.width() - self.resize_grip.width(), self.height() - self.resize_grip.height())
+        self.resize_grip.show()
+
+    def return_to_main(self):
+        self._return_callback(self.panel_id)
+
+    def restore_content_size_policy(self):
+        self.content.setSizePolicy(self._content_size_policy)
+
+    def _move_from_global_position(self, global_position: QPoint):
+        if self._drag_offset is not None:
+            self.move(global_position - self._drag_offset)
+
+    def eventFilter(self, watched, event):
+        if watched is self.header:
+            if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
+                self._drag_offset = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+                self.header.setCursor(QCursor(Qt.ClosedHandCursor))
+                return True
+            if (
+                event.type() == QEvent.MouseMove
+                and self._drag_offset is not None
+                and event.buttons() & Qt.LeftButton
+            ):
+                self._move_from_global_position(event.globalPosition().toPoint())
+                return True
+            if event.type() == QEvent.MouseButtonRelease:
+                self._drag_offset = None
+                self.header.setCursor(QCursor(Qt.OpenHandCursor))
+                return True
+        return super().eventFilter(watched, event)
+
+    def closeEvent(self, event):
+        if not self._returning:
+            self._state_callback(self.panel_id)
+            self._return_callback(self.panel_id)
+        event.accept()
+
+    def moveEvent(self, event):
+        self._state_callback(self.panel_id)
+        super().moveEvent(event)
+
+    def resizeEvent(self, event):
+        if hasattr(self, "resize_grip"):
+            self.resize_grip.move(
+                self.width() - self.resize_grip.width(),
+                self.height() - self.resize_grip.height(),
+            )
+        self._state_callback(self.panel_id)
+        super().resizeEvent(event)
+
+
 class MainWindow(QMainWindow):
     # Qt may call an overridden showEvent from QMainWindow.__init__ before
     # this class' __init__ body can initialize instance attributes.
@@ -3311,6 +3419,153 @@ class MainWindow(QMainWindow):
     hotkey_signal = Signal(str)
     poelab_url_resolved = Signal(str)
     poelab_url_failed = Signal(str)
+
+    def _detached_panel_config(self, panel_id: str) -> dict:
+        panels = self.config.setdefault("detached_panels", {})
+        return panels.setdefault(panel_id, {"detached": False})
+
+    def _is_panel_detached(self, panel_id: str) -> bool:
+        return panel_id in getattr(self, "detached_panel_windows", {})
+
+    def _save_detached_panel_state(self, panel_id: str):
+        state = self._detached_panel_config(panel_id)
+        panel_window = self.detached_panel_windows.get(panel_id)
+        state["detached"] = panel_window is not None
+        if panel_window is not None:
+            geometry = panel_window.geometry()
+            state.update({
+                "x": geometry.x(),
+                "y": geometry.y(),
+                "width": geometry.width(),
+                "height": geometry.height(),
+            })
+        ConfigManager.save_config(self.config)
+
+    def _detach_guide_lower_section(self):
+        """ガイドを外す際、マップ／ジェム領域は本体に残す。"""
+        if getattr(self, "_guide_lower_in_main", False):
+            return
+
+        lower_section = self.guide_lower_widget
+        self._guide_lower_splitter_sizes = self.guide_body_splitter.sizes()
+        lower_section.setParent(None)
+        guide_record = self.panel_registry["guide"]
+        guide_record["layout"].insertWidget(guide_record["index"] + 1, lower_section, 1)
+        self._guide_lower_in_main = True
+
+    def _restore_guide_lower_section(self):
+        """本体へ戻したガイドへ、下部領域を元のSplitter位置で戻す。"""
+        if not getattr(self, "_guide_lower_in_main", False):
+            return
+
+        lower_section = self.guide_lower_widget
+        self.panel_registry["guide"]["layout"].removeWidget(lower_section)
+        lower_section.setParent(None)
+        self.guide_body_splitter.insertWidget(1, lower_section)
+        sizes = getattr(self, "_guide_lower_splitter_sizes", None)
+        if isinstance(sizes, list) and len(sizes) == 2:
+            QTimer.singleShot(0, lambda: self.guide_body_splitter.setSizes(sizes))
+        self._guide_lower_in_main = False
+
+    def detach_panel(self, panel_id: str):
+        if panel_id in self.detached_panel_windows:
+            return
+
+        if panel_id == "guide":
+            self._detach_guide_lower_section()
+
+        record = self.panel_registry[panel_id]
+        content = record["content"]
+        record["layout"].removeWidget(content)
+        record["expanded_size_policies"] = {
+            widget: widget.sizePolicy() for widget in record.get("expand_widgets", ())
+        }
+        for widget in record.get("expand_widgets", ()):
+            widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        if record.get("detach_button") is not None:
+            record["detach_button"].hide()
+
+        panel_window = DetachedPanelWindow(
+            panel_id,
+            record["title"],
+            content,
+            self.restore_panel,
+            self._save_detached_panel_state,
+        )
+        self.detached_panel_windows[panel_id] = panel_window
+        panel_window.show()
+        self._save_detached_panel_state(panel_id)
+        self._adjust_height_keep_width()
+
+    def restore_panel(self, panel_id: str):
+        panel_window = self.detached_panel_windows.pop(panel_id, None)
+        if panel_window is None:
+            return
+
+        record = self.panel_registry[panel_id]
+        panel_window.layout().removeWidget(record["content"])
+        panel_window.restore_content_size_policy()
+        for widget, size_policy in record.pop("expanded_size_policies", {}).items():
+            widget.setSizePolicy(size_policy)
+        record["layout"].insertWidget(record["index"], record["content"], record.get("stretch", 0))
+        if panel_id == "guide":
+            self._restore_guide_lower_section()
+        if record.get("detach_button") is not None:
+            record["detach_button"].show()
+        panel_window._returning = True
+        panel_window.close()
+        panel_window.deleteLater()
+        self._save_detached_panel_state(panel_id)
+        self._adjust_height_keep_width()
+
+    def _register_detachable_panel(
+        self, panel_id: str, title: str, widgets: list[QWidget], layout, expand_widgets=(),
+    ):
+        """連続したUIを、初期化時に一つの移動可能なコンテナへまとめる。"""
+        index = layout.indexOf(widgets[0])
+        stretch = layout.stretch(index)
+        panel = QWidget()
+        panel.setAttribute(Qt.WA_StyledBackground, True)
+        panel_layout = QVBoxLayout(panel)
+        panel_layout.setContentsMargins(0, 0, 0, 0)
+        panel_layout.setSpacing(0)
+
+        detach_button = QPushButton("↗ 切り離す")
+        detach_button.setStyleSheet(Styles.BUTTON)
+        detach_button.setCursor(QCursor(Qt.PointingHandCursor))
+        detach_button.clicked.connect(lambda: self.detach_panel(panel_id))
+        panel_layout.addWidget(detach_button, alignment=Qt.AlignRight)
+
+        for widget in widgets:
+            layout.removeWidget(widget)
+            panel_layout.addWidget(widget, stretch=1 if widget in expand_widgets else 0)
+        layout.insertWidget(index, panel, stretch)
+        self.panel_registry[panel_id] = {
+            "content": panel,
+            "layout": layout,
+            "index": index,
+            "stretch": stretch,
+            "title": title,
+            "detach_button": detach_button,
+            "expand_widgets": tuple(expand_widgets),
+        }
+
+    def _restore_detached_panels(self):
+        for panel_id in tuple(self.panel_registry):
+            state = dict(self._detached_panel_config(panel_id))
+            if not state.get("detached", False):
+                continue
+
+            self.detach_panel(panel_id)
+            panel_window = self.detached_panel_windows[panel_id]
+            width, height = state.get("width"), state.get("height")
+            x, y = state.get("x"), state.get("y")
+            if (
+                isinstance(x, int) and isinstance(y, int)
+                and isinstance(width, int) and width >= 320
+                and isinstance(height, int) and height >= 180
+            ):
+                panel_window.setGeometry(x, y, width, height)
 
     def __init__(self):
         super().__init__()
@@ -3453,8 +3708,11 @@ class MainWindow(QMainWindow):
         self.current_zone_act = 1  # 現在エリアから判定したAct（ジェム取得表示の自動追従用）
         self.gem_tracker_popup = None
         self._last_search_target_hwnd = None
+        self.panel_registry = {}
+        self.detached_panel_windows = {}
         
         self.setup_ui()
+        self._restore_detached_panels()
         self.map_thumbnail.auto_open = self.config.get("auto_open_map", False)
         self.map_thumbnail.auto_position = self.config.get("auto_position_map", True)
         self.setMouseTracking(True)
@@ -4682,6 +4940,19 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(0, lambda sizes=saved_splitter_sizes: self.guide_body_splitter.setSizes(sizes))
         
         layout.addWidget(self.guide_container, stretch=1)
+
+        self._register_detachable_panel(
+            "timer", "タイマー", [self.timer_toggle_btn, self.timer_container], layout,
+            expand_widgets=(self.timer_container,),
+        )
+        self._register_detachable_panel(
+            "guide", "ガイド", [self.guide_toggle_btn, self.guide_container], layout,
+            expand_widgets=(self.guide_container,),
+        )
+        self._register_detachable_panel(
+            "map", "マップ", [self.map_toggle_btn, self.map_thumbnail], guide_lower_layout,
+            expand_widgets=(self.map_thumbnail,),
+        )
         
         # 初期状態の反映
         self._apply_guide_visibility()
@@ -4708,6 +4979,18 @@ class MainWindow(QMainWindow):
         self.adjustSize()
         if self.width() != current_width:
             self.resize(current_width, self.height())
+
+    def _adjust_detached_panel_height(self, panel_id: str):
+        """切り離しパネルの展開内容を収めつつ、ユーザー指定サイズは維持する。"""
+        panel_window = self.detached_panel_windows.get(panel_id)
+        if panel_window is None:
+            return
+
+        panel_window.content.updateGeometry()
+        panel_window.layout().activate()
+        required_height = max(panel_window.minimumHeight(), panel_window.sizeHint().height())
+        if required_height > panel_window.height():
+            panel_window.resize(panel_window.width(), required_height)
 
     def _on_guide_body_splitter_moved(self, _pos: int, _index: int):
         """ガイドテキスト欄のドラッグ調整位置を保存する。"""
@@ -4940,7 +5223,10 @@ class MainWindow(QMainWindow):
         self.lap_toggle_btn.setText("▼ ラップタイム" if self.lap_expanded else "▶ ラップタイム")
         self.config["lap_expanded"] = self.lap_expanded
         ConfigManager.save_config(self.config)
-        self._adjust_height_keep_width()
+        if self._is_panel_detached("timer"):
+            self._adjust_detached_panel_height("timer")
+        else:
+            self._adjust_height_keep_width()
     
     def toggle_gem_tracker(self):
         """ジェム取得リストの折りたたみ/展開"""
@@ -5279,18 +5565,21 @@ class MainWindow(QMainWindow):
             self.zone_header_toggle_btn.setVisible(True)
             self.guide_text_toggle_btn.setVisible(True)
             self._refresh_guide_detail_level_toggle()
-            self.map_toggle_btn.setVisible(True)
+            if not self._is_panel_detached("map"):
+                self.map_toggle_btn.setVisible(True)
         else:
             # 全体折りたたみ時は3セクションすべて非表示
             self.guide_info_frame.setVisible(False)
             self.guide_text_frame.setVisible(False)
-            self.map_thumbnail.setVisible(False)
+            if not self._is_panel_detached("map") and not self._is_panel_detached("guide"):
+                self.map_thumbnail.setVisible(False)
             # サブトグルボタンも非表示
             self.zone_header_toggle_btn.setVisible(False)
             self.guide_text_toggle_btn.setVisible(False)
             if hasattr(self, "guide_detail_level_toggle_btn"):
                 self.guide_detail_level_toggle_btn.setVisible(False)
-            self.map_toggle_btn.setVisible(False)
+            if not self._is_panel_detached("map") and not self._is_panel_detached("guide"):
+                self.map_toggle_btn.setVisible(False)
         # 背景も連動
         if self.guide_expanded:
             self.guide_container.setStyleSheet("""
