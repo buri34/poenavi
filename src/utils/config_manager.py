@@ -396,12 +396,6 @@ class ConfigManager:
             if isinstance(mini_navi, dict):
                 mini_navi.setdefault("display_mode", "standard")
 
-        migrated.setdefault("detached_panels", {
-            "timer": {"detached": False},
-            "guide": {"detached": False},
-            "map": {"detached": False},
-        })
-
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)
 

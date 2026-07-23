@@ -43,15 +43,6 @@ def write_default_config(app_dir: Path, overrides=None):
 
 
 class ConfigManagerTest(unittest.TestCase):
-    def test_migrate_config_adds_detached_panel_defaults(self):
-        migrated = ConfigManager._migrate_config({"schemaVersion": 3})
-
-        self.assertEqual(migrated["detached_panels"], {
-            "timer": {"detached": False},
-            "guide": {"detached": False},
-            "map": {"detached": False},
-        })
-
     def test_schema_v3_adds_standard_mode_without_changing_existing_geometry(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 2,

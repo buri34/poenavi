@@ -45,11 +45,6 @@
     },
     "snap_to_right_edge": false,
     "gem_tracker_expanded": true,
-    "detached_panels": {
-        "timer": {"detached": false},
-        "guide": {"detached": false},
-        "map": {"detached": false}
-    },
     "client_log_paths": {
         "poe1": "",
         "poe2": ""
