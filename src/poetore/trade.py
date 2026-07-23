@@ -1335,6 +1335,7 @@ def _pseudo_consumed_stat_ids(item: ParsedItem) -> set[str]:
 
 _stat_entries_cache: tuple[dict, ...] | None = None
 _item_entries_cache: tuple[dict, ...] | None = None
+_jp_item_entries_cache: tuple[dict, ...] | None = None
 
 
 def _normalized_stat_text(text: str) -> str:
@@ -1371,6 +1372,35 @@ def _trade_item_entries() -> tuple[dict, ...]:
             entry for group in data.get("result", ()) for entry in group.get("entries", ())
         )
     return _item_entries_cache
+
+
+def _jp_trade_item_entries() -> tuple[dict, ...]:
+    global _jp_item_entries_cache
+    if _jp_item_entries_cache is None:
+        data, _ = _request_json(f"{JP_API_ROOT}/data/items")
+        _jp_item_entries_cache = tuple(
+            entry for group in data.get("result", ()) for entry in group.get("entries", ())
+        )
+    return _jp_item_entries_cache
+
+
+def _localized_web_trade_type(item: ParsedItem, web_query: dict) -> str:
+    """日本語Tradeへ渡すtypeを、variantの基礎Gem名まで正規化する。"""
+    localized = _normalize_trade_base_type(item.base_type)
+    query_type = web_query.get("type")
+    if item.category != "gem" or not isinstance(query_type, dict):
+        return localized
+    discriminator = str(query_type.get("discriminator", "")).strip()
+    if not discriminator:
+        return localized
+    lowered = localized.casefold()
+    match = next((
+        entry for entry in _jp_trade_item_entries()
+        if str(entry.get("disc", "")).strip() == discriminator
+        and str(entry.get("text", "")).strip().casefold() == lowered
+        and str(entry.get("type", "")).strip()
+    ), None)
+    return str(match["type"]).strip() if match else localized
 
 
 def resolve_official_base_type(value: str) -> str:
@@ -2488,7 +2518,7 @@ def search_prices(
     # 日本語Trade画面自身に検索状態を読み込ませる。
     web_payload = json.loads(json.dumps(payload))
     web_query = web_payload["query"]
-    localized_type = _normalize_trade_base_type(item.base_type)
+    localized_type = _localized_web_trade_type(item, web_query)
     # ベース全体検索ではAPIクエリにtypeが存在しない。Magic品の通常コピーは
     # Affix込みの1行名になるため、ここでtypeを新規追加すると公式Tradeが
     # 「存在しないベースタイプ」として検索状態の読込を拒否する。

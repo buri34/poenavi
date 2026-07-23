@@ -1887,6 +1887,32 @@ def test_magic_base_jewel_web_url_does_not_add_affixed_name_as_type():
     ]
 
 
+def test_transfigured_gem_web_url_uses_localized_base_type_with_discriminator():
+    _trade_response_cache.clear()
+    item = _gem_item("爆撃するクローンのミラーアロー", level=14, quality=0)
+    response = ({"id": "qid", "result": [], "total": 0}, {})
+    jp_items = (
+        {"type": "ミラーアロー"},
+        {
+            "type": "ミラーアロー",
+            "text": "爆撃するクローンのミラーアロー",
+            "disc": "alt_x",
+        },
+    )
+    with patch("src.poetore.trade._request_json", return_value=response), patch(
+        "src.poetore.trade._jp_trade_item_entries", return_value=jp_items,
+    ):
+        result = search_prices(
+            item, "Mirror Arrow of Bombarding Clones", "Standard",
+        )
+
+    web_payload = json.loads(parse_qs(urlsplit(result.web_url).query)["q"][0])
+    assert web_payload["query"]["type"] == {
+        "option": "ミラーアロー",
+        "discriminator": "alt_x",
+    }
+
+
 def test_query_supports_option_not_count_and_special_item_states():
     item = parse_item_text(ITEM)
     item = replace(item, flags=item.flags + ("searing_item", "tangled_item", "veiled"))
