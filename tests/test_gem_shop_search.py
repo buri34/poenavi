@@ -1,6 +1,7 @@
 import json
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from PySide6.QtCore import QPoint
@@ -8,7 +9,7 @@ from PySide6.QtWidgets import QApplication
 
 from src.ui.gem_tracker_widget import GemTrackerWidget
 from src.ui.main_window import MainWindow
-from src.ui.settings_dialog import find_duplicate_hotkeys
+from src.ui.settings_dialog import SettingsDialog, find_duplicate_hotkeys
 from src.utils.gem_shop_search import (
     HoldTrigger,
     build_act_vendor_gem_query,
@@ -32,6 +33,40 @@ class GemShopSearchTest(unittest.TestCase):
 
         self.assertEqual(config["hotkeys"]["gem_shop_search"], "CapsLock")
         self.assertTrue(config["gem_shop_search_exclude_quest_rewards"])
+        self.assertEqual(config["gem_shop_search_hold_seconds"], 0.4)
+
+    def test_custom_term_override_replaces_the_automatic_term(self):
+        plan = [{"act": 1, "gems": [{"name": "ground slam", "type": "vendor"}]}]
+        names = {"ground slam": "グランドスラム"}
+
+        query = build_act_vendor_gem_query(
+            plan,
+            1,
+            names,
+            True,
+            {"ground slam": "グランドス"},
+        )
+
+        self.assertEqual(query, "グランドス")
+
+    def test_hold_delay_uses_the_saved_seconds(self):
+        window = SimpleNamespace(config={"gem_shop_search_hold_seconds": 0.7})
+
+        self.assertEqual(MainWindow._gem_shop_search_hold_delay_ms(window), 700)
+
+    def test_settings_persist_gem_search_hold_delay_and_term_overrides(self):
+        dialog = SettingsDialog(
+            current_config={
+                "gem_shop_search_hold_seconds": 0.7,
+                "gem_shop_search_term_overrides": {"ground slam": "グランドス"},
+            }
+        )
+
+        self.assertEqual(dialog.gem_shop_search_hold_seconds_spin.value(), 0.7)
+        self.assertEqual(
+            dialog.get_settings()["gem_shop_search_term_overrides"],
+            {"ground slam": "グランドス"},
+        )
 
     def test_gem_shop_search_status_is_shown_near_cursor_as_a_short_tooltip(self):
         owner = object()

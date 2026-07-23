@@ -6188,10 +6188,13 @@ class MainWindow(QMainWindow):
     def _start_gem_shop_search_hold(self):
         """長押し判定を開始する。キーリピートではタイマーを延長しない。"""
         generation = self._gem_shop_search_hold.start()
-        QTimer.singleShot(400, lambda: self._run_gem_shop_search_hold(generation))
+        QTimer.singleShot(self._gem_shop_search_hold_delay_ms(), lambda: self._run_gem_shop_search_hold(generation))
 
     def _finish_gem_shop_search_hold(self):
         self._gem_shop_search_hold.release()
+
+    def _gem_shop_search_hold_delay_ms(self) -> int:
+        return round(float(self.config.get("gem_shop_search_hold_seconds", 0.4)) * 1000)
 
     def _gem_shop_search_query(self) -> str:
         if self.poe_version != POE1 or not hasattr(self, "gem_tracker"):
@@ -6201,6 +6204,7 @@ class MainWindow(QMainWindow):
             self.gem_tracker._current_act,
             load_gem_names_ja(),
             self.config.get("gem_shop_search_exclude_quest_rewards", True),
+            self.config.get("gem_shop_search_term_overrides", {}),
         )
 
     def _refresh_gem_shop_search_preview(self):

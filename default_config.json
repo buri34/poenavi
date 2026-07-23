@@ -14,6 +14,8 @@
     },
     "poe_version": "",
     "gem_shop_search_exclude_quest_rewards": true,
+    "gem_shop_search_hold_seconds": 0.4,
+    "gem_shop_search_term_overrides": {},
     "poe_version_mode": "",
     "text_color": "#e9ffbd",
     "guide_expanded": true,

@@ -35,10 +35,31 @@ class HoldTrigger:
         return True
 
 
-def build_unique_gem_search_terms(gem_names_ja: Mapping[str, str]) -> dict[str, str]:
+def validate_gem_shop_search_term_override(
+    gem_key: str,
+    term: str,
+    gem_names_ja: Mapping[str, str],
+) -> str | None:
+    """正式名に含まれ、全ジェムで一意な短縮語だけを受け付ける。"""
+    candidate = term.strip()
+    gem_name = gem_names_ja.get(gem_key, "")
+    if len(candidate) < 4 or candidate not in gem_name:
+        return None
+    return candidate if sum(candidate in name for name in gem_names_ja.values()) == 1 else None
+
+
+def build_unique_gem_search_terms(
+    gem_names_ja: Mapping[str, str],
+    term_overrides: Mapping[str, str] | None = None,
+) -> dict[str, str]:
     """各公式名から、他ジェム名と重複しない最短4文字以上の検索語を選ぶ。"""
     entries = tuple(sorted((key, name) for key, name in gem_names_ja.items() if name))
-    return dict(_build_unique_gem_search_terms(entries))
+    terms = dict(_build_unique_gem_search_terms(entries))
+    for key, term in (term_overrides or {}).items():
+        valid_term = validate_gem_shop_search_term_override(key, term, gem_names_ja)
+        if valid_term:
+            terms[key] = valid_term
+    return terms
 
 
 @lru_cache(maxsize=4)
@@ -67,9 +88,10 @@ def build_act_vendor_gem_query(
     act: int,
     gem_names_ja: Mapping[str, str],
     exclude_quest_rewards: bool,
+    term_overrides: Mapping[str, str] | None = None,
 ) -> str:
     """現在Actのジェムを一意な公式日本語短縮語のOR検索にする。"""
-    search_terms = build_unique_gem_search_terms(gem_names_ja)
+    search_terms = build_unique_gem_search_terms(gem_names_ja, term_overrides)
     terms: list[str] = []
     seen: set[str] = set()
     for entry in acquisition_plan:
