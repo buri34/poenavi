@@ -1,6 +1,6 @@
 """切り離しパネル用の独立ウィンドウ。"""
 
-from PySide6.QtCore import QEvent, QPoint, Qt
+from PySide6.QtCore import QEvent, QPoint, QRect, Qt
 from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import QGraphicsOpacityEffect, QHBoxLayout, QLabel, QPushButton, QSizeGrip, QSizePolicy, QVBoxLayout, QWidget
 
@@ -18,6 +18,10 @@ class DetachedPanelWindow(QWidget):
         self._state_callback = state_callback
         self._returning = False
         self._drag_offset = None
+        self._resize_edges = frozenset()
+        self._resize_start_position = None
+        self._resize_start_geometry = None
+        self._resize_margin = 8
         self.window_locked = False
         self._content_size_policy = content.sizePolicy()
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint)
@@ -57,6 +61,58 @@ class DetachedPanelWindow(QWidget):
         self.resize_grip.setToolTip("ドラッグしてサイズ変更")
         self.resize_grip.setStyleSheet("background: transparent;")
         self.resize_grip.show()
+        self._install_resize_event_filters()
+
+    def _install_resize_event_filters(self):
+        """子ウィジェットで覆われた外周からもリサイズ操作を受け取る。"""
+        for widget in (self, *self.findChildren(QWidget)):
+            widget.setMouseTracking(True)
+            widget.installEventFilter(self)
+
+    def _resize_edges_at(self, global_position: QPoint) -> frozenset[str]:
+        local = self.mapFromGlobal(global_position)
+        margin = self._resize_margin
+        edges = set()
+        if local.x() <= margin:
+            edges.add("left")
+        elif local.x() >= self.width() - margin - 1:
+            edges.add("right")
+        if local.y() <= margin:
+            edges.add("top")
+        elif local.y() >= self.height() - margin - 1:
+            edges.add("bottom")
+        return frozenset(edges)
+
+    @staticmethod
+    def _cursor_for_edges(edges: frozenset[str]):
+        if edges in (frozenset(("left", "top")), frozenset(("right", "bottom"))):
+            return Qt.SizeFDiagCursor
+        if edges in (frozenset(("right", "top")), frozenset(("left", "bottom"))):
+            return Qt.SizeBDiagCursor
+        if "left" in edges or "right" in edges:
+            return Qt.SizeHorCursor
+        if "top" in edges or "bottom" in edges:
+            return Qt.SizeVerCursor
+        return Qt.ArrowCursor
+
+    def _resize_from_global_position(self, global_position: QPoint):
+        if self._resize_start_position is None or self._resize_start_geometry is None:
+            return
+        delta = global_position - self._resize_start_position
+        start = self._resize_start_geometry
+        geometry = QRect(start)
+        min_width = self.minimumWidth()
+        min_height = self.minimumHeight()
+
+        if "left" in self._resize_edges:
+            geometry.setLeft(min(start.right() - min_width + 1, start.left() + delta.x()))
+        elif "right" in self._resize_edges:
+            geometry.setRight(max(start.left() + min_width - 1, start.right() + delta.x()))
+        if "top" in self._resize_edges:
+            geometry.setTop(min(start.bottom() - min_height + 1, start.top() + delta.y()))
+        elif "bottom" in self._resize_edges:
+            geometry.setBottom(max(start.top() + min_height - 1, start.bottom() + delta.y()))
+        self.setGeometry(geometry)
 
     def apply_window_settings(self, config):
         """本体のウィンドウ設定を切り離しパネルにも反映する。"""
@@ -87,6 +143,30 @@ class DetachedPanelWindow(QWidget):
             self.move(global_position - self._drag_offset)
 
     def eventFilter(self, watched, event):
+        if event.type() in (QEvent.MouseButtonPress, QEvent.MouseMove, QEvent.MouseButtonRelease):
+            global_position = event.globalPosition().toPoint()
+            if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
+                edges = self._resize_edges_at(global_position)
+                if not self.window_locked and edges:
+                    self._resize_edges = edges
+                    self._resize_start_position = global_position
+                    self._resize_start_geometry = QRect(self.geometry())
+                    return True
+            elif event.type() == QEvent.MouseMove:
+                if not self.window_locked and self._resize_edges and event.buttons() & Qt.LeftButton:
+                    self._resize_from_global_position(global_position)
+                    return True
+                if not self.window_locked:
+                    self.setCursor(QCursor(self._cursor_for_edges(self._resize_edges_at(global_position))))
+                else:
+                    self.unsetCursor()
+            elif event.type() == QEvent.MouseButtonRelease and self._resize_edges:
+                self._resize_edges = frozenset()
+                self._resize_start_position = None
+                self._resize_start_geometry = None
+                self._state_callback(self.panel_id, True)
+                return True
+
         if watched is self.header:
             if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
                 if self.window_locked:

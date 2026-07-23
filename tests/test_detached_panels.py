@@ -2,7 +2,7 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "minimal")
 
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import QPoint, QRect, Qt
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QPushButton, QSizePolicy, QSplitter, QVBoxLayout, QWidget
 
 from src.ui.detached_panel import DetachedPanelWindow
@@ -106,6 +106,43 @@ def test_detached_panel_exposes_a_bottom_right_resize_grip():
     assert panel_window.resize_grip.width() == 18
     assert panel_window.minimumWidth() >= 320
     assert panel_window.minimumHeight() >= 180
+
+
+def test_detached_panel_detects_every_resize_edge_and_corner():
+    _app()
+    panel_window = DetachedPanelWindow("timer", "タイマー", QWidget(), lambda *_args: None, lambda *_args: None)
+    panel_window.setGeometry(100, 100, 400, 300)
+
+    expected_edges = {
+        QPoint(100, 100): {"left", "top"},
+        QPoint(499, 100): {"right", "top"},
+        QPoint(100, 399): {"left", "bottom"},
+        QPoint(499, 399): {"right", "bottom"},
+        QPoint(100, 250): {"left"},
+        QPoint(499, 250): {"right"},
+        QPoint(300, 100): {"top"},
+        QPoint(300, 399): {"bottom"},
+    }
+
+    for position, edges in expected_edges.items():
+        assert panel_window._resize_edges_at(position) == frozenset(edges)
+    panel_window.close()
+
+
+def test_detached_panel_resizes_from_top_left_without_moving_opposite_corner():
+    _app()
+    panel_window = DetachedPanelWindow("timer", "タイマー", QWidget(), lambda *_args: None, lambda *_args: None)
+    panel_window.setGeometry(100, 100, 400, 300)
+    original_bottom_right = panel_window.geometry().bottomRight()
+    panel_window._resize_edges = frozenset(("left", "top"))
+    panel_window._resize_start_position = QPoint(100, 100)
+    panel_window._resize_start_geometry = QRect(panel_window.geometry())
+
+    panel_window._resize_from_global_position(QPoint(150, 140))
+
+    assert panel_window.geometry().topLeft() == QPoint(150, 140)
+    assert panel_window.geometry().bottomRight() == original_bottom_right
+    panel_window.close()
 
 
 def test_resizing_detached_panel_keeps_header_at_its_original_height():
