@@ -8,7 +8,10 @@ from .metadata import normalize_stat_text
 
 
 SUPPORTED_KINDS = {"explicit", "implicit", "crafted", "fractured", "enchant", "veiled"}
-INDEX_FIELDS = ("ref", "stat_id", "kind", "japanese", "better", "inverted", "exact", "local", "tiers", "options")
+INDEX_FIELDS = (
+    "ref", "stat_id", "kind", "japanese", "better", "inverted", "exact",
+    "local", "decimal", "tiers", "options",
+)
 
 
 def _awakened_stats(lines: Iterable[str]) -> list[dict]:
@@ -157,6 +160,8 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
                     "inverted": bool(trade.get("inverted", False)),
                     "exact": int(stat.get("better", 1)) == 0 or bool(trade.get("option", False)),
                     "local": bool(repoe_row.get("local", False)),
+                    # Awakenedのdpフラグがあるstatだけ小数精度を維持する。
+                    "decimal": bool(stat.get("dp", False)),
                     "tiers": repoe_row.get("tiers", ()),
                     "options": options,
                 })

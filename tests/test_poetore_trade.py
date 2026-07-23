@@ -1728,7 +1728,7 @@ Onyx Amulet
     assert by_id["explicit.stat_2587176568"].text.startswith("スキルのリザーブ効率")
     requirements = by_id["explicit.stat_752930724"]
     assert requirements.text.startswith("アイテムおよびジェムの要求能力値")
-    assert requirements.min_value == 7.5
+    assert requirements.min_value == 7.0
     assert requirements.inverted is True
 
     query = build_search_query(
@@ -1743,8 +1743,8 @@ Onyx Amulet
         row for group in query["stats"] for row in group["filters"]
     ]
     by_query_id = {row["id"]: row["value"] for row in stat_filters}
-    assert by_query_id["explicit.stat_2587176568"] == {"min": 5.5}
-    assert by_query_id["explicit.stat_752930724"] == {"max": -7.5}
+    assert by_query_id["explicit.stat_2587176568"] == {"min": 5.0}
+    assert by_query_id["explicit.stat_752930724"] == {"max": -7.0}
 
 
 def test_replica_dragonfang_flavour_text_is_not_an_unresolved_modifier():
@@ -2252,7 +2252,7 @@ Tenacious Blood Sap Tincture of Battering
     assert web_query["type"] == "血の樹液のチンキ"
     assert web_query["stats"][0]["filters"] == [{
         "id": "explicit.stat_116232170",
-        "value": {"min": -19.8},
+        "value": {"min": -20.0},
     }]
 
 

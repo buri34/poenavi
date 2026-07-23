@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -149,6 +150,7 @@ class ModMetadata:
     inverted: bool = False
     exact: bool = False
     local: bool = False
+    decimal: bool = False
     tiers: tuple[TierRange, ...] = ()
     options: tuple[OptionValue, ...] = ()
 
@@ -164,10 +166,20 @@ class ModMetadata:
             if perfect:
                 relaxation = 0.0
         span = abs(roll_max - roll_min) if roll_min is not None and roll_max is not None else abs(value)
-        relaxed = round(span * relaxation, 1)
+        def rounded(bound: float, *, upper: bool) -> float:
+            if self.decimal:
+                decimals = 2 if abs(value) < 2.3 else 1 if abs(value) < 10 else 0
+            else:
+                decimals = 0
+            scale = 10 ** decimals
+            method = math.ceil if upper else math.floor
+            epsilon = -1e-9 if upper else 1e-9
+            return method((bound + epsilon) * scale) / scale
+
+        relaxed = span * relaxation
         if self.better < 0:
-            return None, round(value + relaxed, 1)
-        return round(value - relaxed, 1), None
+            return None, rounded(value + relaxed, upper=True)
+        return rounded(value - relaxed, upper=False), None
 
 
 class MetadataIndex:
@@ -231,7 +243,9 @@ class MetadataIndex:
                 ref=row["ref"], stat_id=row["stat_id"], kind=row["kind"],
                 japanese=tuple(row.get("japanese", ())), better=int(row.get("better", 1)),
                 inverted=bool(row.get("inverted", False)), exact=bool(row.get("exact", False)),
-                local=bool(row.get("local", False)), tiers=tiers, options=options,
+                local=bool(row.get("local", False)),
+                decimal=bool(row.get("decimal", False)),
+                tiers=tiers, options=options,
             ))
         return cls(records)
 

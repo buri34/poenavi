@@ -29,7 +29,11 @@ def test_builder_joins_awakened_and_japanese_by_trade_id_and_keeps_minimal_field
     row = payload["mods"][0]
     assert row["stat_id"] == "explicit.stat_life"
     assert row["japanese"] == ["最大ライフ +#"]
-    assert set(row) == {"ref", "stat_id", "kind", "japanese", "better", "inverted", "exact", "local", "tiers", "options"}
+    assert set(row) == {
+        "ref", "stat_id", "kind", "japanese", "better", "inverted",
+        "exact", "local", "decimal", "tiers", "options",
+    }
+    assert row["decimal"] is False
 
 
 def test_pseudo_relations_are_fixed_to_audited_awakened_source():
@@ -146,6 +150,17 @@ def test_metadata_search_bounds_support_minimum_maximum_and_exact():
     assert ModMetadata("r", "id", "explicit", ("被ダメージが#%増加する",), better=-1).search_bounds(20) == (None, 22.0)
     assert ModMetadata("r", "id", "explicit", ("値 #",), better=0).search_bounds(3) == (3, 3)
     assert ModMetadata("r", "id", "explicit", ("値 #",), better=1).search_bounds(100, 90, 100) == (100.0, None)
+    assert ModMetadata("r", "id", "explicit", ("値 #",)).search_bounds(11) == (9.0, None)
+    assert ModMetadata(
+        "r", "id", "explicit", ("吸収 #%",), decimal=True,
+    ).search_bounds(0.5) == (0.45, None)
+
+
+def test_awakened_integer_stats_floor_relaxed_defaults_without_decimals():
+    metadata = ModMetadata("r", "id", "explicit", ("値 #",))
+    assert [metadata.search_bounds(value)[0] for value in (8, 11, 35, 3, 1)] == [
+        7.0, 9.0, 31.0, 2.0, 0.0,
+    ]
 
 
 def test_metadata_index_matches_normalized_japanese_detail_copy():
@@ -200,7 +215,8 @@ def test_builder_is_reproducible_when_generation_time_and_sources_are_locked():
 def test_index_validation_reports_duplicates_empty_and_ambiguous_matchers():
     base = {
         "ref": "r", "kind": "explicit", "japanese": ["値 #"], "better": 1,
-        "inverted": False, "exact": False, "local": False, "tiers": [], "options": [],
+        "inverted": False, "exact": False, "local": False, "decimal": False,
+        "tiers": [], "options": [],
     }
     payload = {"mods": [
         {**base, "stat_id": "one"},
