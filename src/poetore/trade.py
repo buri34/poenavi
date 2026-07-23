@@ -1422,24 +1422,77 @@ def _jp_trade_item_groups() -> tuple[tuple[dict, ...], ...]:
     return _jp_item_groups_cache
 
 
+def _aligned_trade_item_pairs():
+    """日英itemsを構造境界で再同期しながら対応付ける。
+
+    公式APIは翻訳側だけentryが欠けることがあり、グループ総数が異なるだけで
+    グループ全体を捨てると、正常なbase typeやUnique名まで翻訳できなくなる。
+    Unique/variantなどのentry構造がずれた地点で短いlookaheadを行い、片側の
+    欠落entryを飛ばして以降の対応を復元する。
+    """
+    def signature(entry: dict) -> tuple:
+        flags = entry.get("flags") or {}
+        return (
+            str(entry.get("disc", "")),
+            bool(entry.get("name")),
+            bool(flags.get("unique")),
+            tuple(sorted(flags)),
+        )
+
+    for english_group, japanese_group in zip(
+        _trade_item_groups(), _jp_trade_item_groups(),
+    ):
+        if len(english_group) == len(japanese_group):
+            yield from zip(english_group, japanese_group)
+            continue
+        english_index = japanese_index = 0
+        while english_index < len(english_group) and japanese_index < len(japanese_group):
+            english = english_group[english_index]
+            japanese = japanese_group[japanese_index]
+            if signature(english) == signature(japanese):
+                yield english, japanese
+                english_index += 1
+                japanese_index += 1
+                continue
+
+            # 欠落数は通常1～2件。過度に遠い一致は別セクションを誤対応し得るため、
+            # 短い範囲で片側だけを進められる場合に限り再同期する。
+            lookahead = 8
+            english_skip = next((
+                offset for offset in range(1, lookahead + 1)
+                if english_index + offset < len(english_group)
+                and signature(english_group[english_index + offset]) == signature(japanese)
+            ), None)
+            japanese_skip = next((
+                offset for offset in range(1, lookahead + 1)
+                if japanese_index + offset < len(japanese_group)
+                and signature(japanese_group[japanese_index + offset]) == signature(english)
+            ), None)
+            if english_skip is not None and (
+                japanese_skip is None or english_skip < japanese_skip
+            ):
+                english_index += english_skip
+            elif japanese_skip is not None and (
+                english_skip is None or japanese_skip < english_skip
+            ):
+                japanese_index += japanese_skip
+            else:
+                break
+
+
 def _english_trade_item_name(japanese_name: str) -> str | None:
     """公式日英itemsの同一グループ・同一位置から英語固有名を得る。"""
     wanted = japanese_name.strip()
     if not wanted:
         return None
-    for english_group, japanese_group in zip(
-        _trade_item_groups(), _jp_trade_item_groups(),
-    ):
-        if len(english_group) != len(japanese_group):
+    for english, japanese in _aligned_trade_item_pairs():
+        if str(japanese.get("name", "")).strip() != wanted:
             continue
-        for english, japanese in zip(english_group, japanese_group):
-            if str(japanese.get("name", "")).strip() != wanted:
-                continue
-            if bool((english.get("flags") or {}).get("unique")) != bool(
-                (japanese.get("flags") or {}).get("unique")
-            ):
-                continue
-            return str(english.get("name", "")).strip() or None
+        if bool((english.get("flags") or {}).get("unique")) != bool(
+            (japanese.get("flags") or {}).get("unique")
+        ):
+            continue
+        return str(english.get("name", "")).strip() or None
     return None
 
 
@@ -1448,19 +1501,14 @@ def _japanese_trade_item_name(english_name: str) -> str | None:
     wanted = english_name.strip()
     if not wanted:
         return None
-    for english_group, japanese_group in zip(
-        _trade_item_groups(), _jp_trade_item_groups(),
-    ):
-        if len(english_group) != len(japanese_group):
+    for english, japanese in _aligned_trade_item_pairs():
+        if str(english.get("name", "")).strip() != wanted:
             continue
-        for english, japanese in zip(english_group, japanese_group):
-            if str(english.get("name", "")).strip() != wanted:
-                continue
-            if bool((english.get("flags") or {}).get("unique")) != bool(
-                (japanese.get("flags") or {}).get("unique")
-            ):
-                continue
-            return str(japanese.get("name", "")).strip() or None
+        if bool((english.get("flags") or {}).get("unique")) != bool(
+            (japanese.get("flags") or {}).get("unique")
+        ):
+            continue
+        return str(japanese.get("name", "")).strip() or None
     return None
 
 
@@ -1469,17 +1517,12 @@ def _japanese_trade_item_type(english_type: str) -> str | None:
     wanted = english_type.strip()
     if not wanted:
         return None
-    for english_group, japanese_group in zip(
-        _trade_item_groups(), _jp_trade_item_groups(),
-    ):
-        if len(english_group) != len(japanese_group):
+    for english, japanese in _aligned_trade_item_pairs():
+        if str(english.get("type", "")).strip() != wanted:
             continue
-        for english, japanese in zip(english_group, japanese_group):
-            if str(english.get("type", "")).strip() != wanted:
-                continue
-            localized = str(japanese.get("type", "")).strip()
-            if localized:
-                return localized
+        localized = str(japanese.get("type", "")).strip()
+        if localized:
+            return localized
     return None
 
 

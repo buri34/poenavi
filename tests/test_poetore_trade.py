@@ -21,6 +21,7 @@ from src.poetore.trade import _request_json
 from src.poetore.trade import _base_defence_percentile
 from src.poetore.trade import _trade_response_cache
 from src.poetore.trade import _awakened_tier_tags
+from src.poetore.trade import _japanese_trade_item_name, _japanese_trade_item_type
 
 
 ITEM = """Item Class: Two Hand Swords
@@ -64,6 +65,72 @@ Penumbra Ring
 --------
 ミラー状態
 """
+
+WARLORD_SYNDICATES_GARB = """アイテムクラス: 鎧
+レアリティ: レア
+Honour Jack
+Syndicate's Garb
+--------
+回避力: 1374
+--------
+装備要求:
+レベル: 84
+器用さ: 293
+--------
+ソケット: G G
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「ウォーロードの」 (ティア: 1) — 物理, 元素, 火 }
+ヒットによる物理ダメージの15(13-15)%を火ダメージとして受ける
+{ サフィックスモッド 「ジャガーの」 (ティア: 3) — 能力値 }
+器用さ +40(38-42)
+{ サフィックスモッド 「火山の」 (ティア: 3) — 元素, 火, 耐性 }
+火耐性 +40(36-41)%
+--------
+ウォーロードアイテム
+"""
+
+
+def test_japanese_type_mapping_keeps_safe_prefix_of_unequal_item_groups():
+    english = (({"type": "First Base"}, {"type": "Syndicate's Garb"},
+                {"type": "Missing Later"}, {"type": "Unique", "name": "Unique",
+                                            "flags": {"unique": True}},
+                {"type": "Crusader Gloves", "name": "Repentance",
+                 "flags": {"unique": True}}),)
+    japanese = (({"type": "最初のベース"}, {"type": "シンジケートの服"},
+                 {"type": "ユニーク", "name": "ユニーク",
+                  "flags": {"unique": True}},
+                 {"type": "聖戦士のグローブ", "name": "悔恨",
+                  "flags": {"unique": True}}),)
+    with patch("src.poetore.trade._trade_item_groups", return_value=english), patch(
+        "src.poetore.trade._jp_trade_item_groups", return_value=japanese,
+    ):
+        assert _japanese_trade_item_type("Syndicate's Garb") == "シンジケートの服"
+        # 欠落entry自体を誤った日本語typeへ変換せず、その後のUnique境界で再同期する。
+        assert _japanese_trade_item_type("Missing Later") is None
+        assert _japanese_trade_item_name("Repentance") == "悔恨"
+
+
+def test_warlord_syndicates_garb_web_url_uses_japanese_official_base_type():
+    _trade_response_cache.clear()
+    item = parse_item_text(WARLORD_SYNDICATES_GARB)
+    filters = resolve_trade_stat_filters(item)
+    response = ({"id": "qid", "result": [], "total": 0}, {})
+    with patch("src.poetore.trade._request_json", return_value=response), patch(
+        "src.poetore.trade._japanese_trade_item_type",
+        side_effect=lambda value: "シンジケートの服"
+        if value == "Syndicate's Garb" else None,
+    ):
+        result = search_prices(
+            item, "Syndicate's Garb", "Standard", filters,
+            item_level_min=85,
+        )
+    payload = json.loads(parse_qs(urlsplit(result.web_url).query)["q"][0])
+    assert payload["query"]["type"] == "シンジケートの服"
+    assert payload["query"]["filters"]["misc_filters"]["filters"]["ilvl"] == {
+        "min": 85,
+    }
 
 
 def test_awakened_tier_tags_preserve_each_aggregated_mod():
@@ -1577,6 +1644,59 @@ Iron Ring
     assert web_query["name"] == "皆を繋ぐもの"
     assert web_query["type"] == "鉄の指輪"
     assert len(web_query["stats"][0]["filters"]) == 4
+
+
+def test_foulborn_repentance_uses_normal_unique_name_in_japanese_trade_link():
+    _trade_response_cache.clear()
+    item = parse_item_text("""アイテムクラス: 手袋
+レアリティ: ユニーク
+Foulborn Repentance
+Crusader Gloves
+--------
+品質: +20% (augmented)
+アーマー: 920 (augmented)
+エナジーシールド: 185 (augmented)
+--------
+装備要求:
+レベル: 66
+筋力: 306 (augmented) (unmet)
+知性: 306 (augmented)
+--------
+ソケット: B-B-B B
+--------
+アイテムレベル: 81
+--------
+{ ユニークモッド — キャスター }
+アイアンウィル — スケールできない値
+{ ユニークモッド — 防御, アーマー, エナジーシールド }
+アーマーおよびエナジーシールドが472(400-500)%増加する
+{ ユニークモッド }
+要求能力値が500%増加する
+{ ファウルボーンユニークモッド — 能力値 }
+知性が16(12-16)%増加する
+""")
+    assert item.name == "Repentance"
+    filters = resolve_trade_stat_filters(
+        item, trade_base_type="Crusader Gloves", trade_name=item.name,
+    )
+    response = ({"id": "foulborn-repentance", "result": [], "total": 0}, {})
+    with patch("src.poetore.trade._request_json", return_value=response), patch(
+        "src.poetore.trade._japanese_trade_item_type", return_value="聖戦士のグローブ",
+    ), patch(
+        "src.poetore.trade._japanese_trade_item_name", return_value="悔恨",
+    ):
+        result = search_prices(
+            item, "Crusader Gloves", "Standard", stat_filters=filters,
+            trade_name=item.name,
+        )
+
+    web_query = json.loads(parse_qs(urlsplit(result.web_url).query)["q"][0])["query"]
+    assert web_query["name"] == "悔恨"
+    assert web_query["type"] == "聖戦士のグローブ"
+    assert any(
+        row["id"] == "explicit.stat_656461285"
+        for row in web_query["stats"][0]["filters"]
+    )
 
 
 def test_replica_dragonfang_uses_distinct_reservation_and_requirements_filters():
