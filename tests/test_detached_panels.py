@@ -199,3 +199,24 @@ def test_expanding_lap_content_grows_the_detached_timer_without_shrinking_it():
 
     assert panel_window.height() >= initial_height + 100
     panel_window.close()
+
+
+def test_collapsing_lap_content_shrinks_the_detached_timer_to_its_contents():
+    _app()
+    content = QWidget()
+    content_layout = QVBoxLayout(content)
+    lap_content = QWidget()
+    lap_content.setFixedHeight(300)
+    content_layout.addWidget(lap_content)
+    panel_window = DetachedPanelWindow("timer", "タイマー", content, lambda *_args: None, lambda *_args: None)
+    panel_window.show()
+    _app().processEvents()
+    panel_window.resize(640, 720)
+    lap_content.hide()
+
+    window = MainWindow.__new__(MainWindow)
+    window.detached_panel_windows = {"timer": panel_window}
+    MainWindow._fit_detached_panel_height(window, "timer")
+
+    assert panel_window.height() < 720
+    panel_window.close()

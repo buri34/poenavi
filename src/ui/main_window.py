@@ -4913,6 +4913,17 @@ class MainWindow(QMainWindow):
         if required_height > panel_window.height():
             panel_window.resize(panel_window.width(), required_height)
 
+    def _fit_detached_panel_height(self, panel_id: str):
+        """折りたたみ後の内容量に合わせて、切り離しパネルの余白を除去する。"""
+        panel_window = self.detached_panel_windows.get(panel_id)
+        if panel_window is None:
+            return
+
+        panel_window.content.updateGeometry()
+        panel_window.layout().activate()
+        required_height = max(panel_window.minimumHeight(), panel_window.sizeHint().height())
+        panel_window.resize(panel_window.width(), required_height)
+
     def _adjust_panel_or_main(self, panel_id: str):
         if self._is_panel_detached(panel_id):
             self._adjust_detached_panel_height(panel_id)
@@ -5151,7 +5162,10 @@ class MainWindow(QMainWindow):
         self.config["lap_expanded"] = self.lap_expanded
         ConfigManager.save_config(self.config)
         if self._is_panel_detached("timer"):
-            self._adjust_detached_panel_height("timer")
+            if self.lap_expanded:
+                self._adjust_detached_panel_height("timer")
+            else:
+                self._fit_detached_panel_height("timer")
         else:
             self._adjust_height_keep_width()
     
