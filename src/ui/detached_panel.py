@@ -24,7 +24,6 @@ class DetachedPanelWindow(QWidget):
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setStyleSheet(f"background-color: {Styles.BACKGROUND_COLOR}; color: {Styles.TEXT_COLOR};")
         self.setMinimumSize(320, 180)
-        content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.resize(max(320, content.sizeHint().width()), max(180, content.sizeHint().height()))
 
         layout = QVBoxLayout(self)

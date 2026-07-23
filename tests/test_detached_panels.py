@@ -122,19 +122,13 @@ def test_resizing_detached_panel_keeps_header_at_its_original_height():
     panel_window.close()
 
 
-def test_resizing_detached_panel_expands_its_fixed_content_area():
+def test_detached_panel_preserves_the_content_size_policy():
     _app()
     content = QWidget()
     content.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
     panel_window = DetachedPanelWindow("timer", "タイマー", content, lambda *_args: None, lambda *_args: None)
-    panel_window.show()
-    _app().processEvents()
-    content_height = content.height()
 
-    panel_window.resize(640, 720)
-    _app().processEvents()
-
-    assert content.height() > content_height
+    assert content.sizePolicy().verticalPolicy() == QSizePolicy.Fixed
     panel_window.close()
 
 

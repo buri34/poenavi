@@ -4864,7 +4864,6 @@ class MainWindow(QMainWindow):
 
         self._register_detachable_panel(
             "timer", "タイマー", [self.timer_toggle_btn, self.timer_container], layout,
-            expand_widgets=(self.timer_container,),
         )
         self._register_detachable_panel(
             "guide", "ガイド", [self.guide_toggle_btn, self.guide_container], layout,
