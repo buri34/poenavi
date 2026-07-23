@@ -1,10 +1,13 @@
 import json
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+from PySide6.QtCore import QPoint
 from PySide6.QtWidgets import QApplication
 
 from src.ui.gem_tracker_widget import GemTrackerWidget
+from src.ui.main_window import MainWindow
 from src.ui.settings_dialog import find_duplicate_hotkeys
 from src.utils.gem_shop_search import (
     HoldTrigger,
@@ -29,6 +32,21 @@ class GemShopSearchTest(unittest.TestCase):
 
         self.assertEqual(config["hotkeys"]["gem_shop_search"], "CapsLock")
         self.assertTrue(config["gem_shop_search_exclude_quest_rewards"])
+
+    def test_gem_shop_search_status_is_shown_near_cursor_as_a_short_tooltip(self):
+        owner = object()
+        cursor_pos = QPoint(120, 240)
+
+        with (
+            patch("src.ui.main_window.QCursor.pos", return_value=cursor_pos),
+            patch("src.ui.main_window.QToolTip.showText") as show_text,
+        ):
+            MainWindow._show_gem_shop_search_status(owner, "Act 2: 3件を検索します")
+
+        self.assertEqual(show_text.call_args.args[0], cursor_pos)
+        self.assertEqual(show_text.call_args.args[1], "Act 2: 3件を検索します")
+        self.assertIs(show_text.call_args.args[2], owner)
+        self.assertEqual(show_text.call_args.args[4], 2500)
 
     def test_current_act_query_excludes_quest_rewards_when_enabled(self):
         plan = [

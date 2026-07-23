@@ -7,7 +7,8 @@ import time
 from pynput import keyboard as pynput_keyboard
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QPushButton, QMenu, QFrame, QScrollArea, QSplitter,
-                               QSizeGrip, QSizePolicy, QMessageBox, QRadioButton, QButtonGroup, QApplication)
+                               QSizeGrip, QSizePolicy, QMessageBox, QRadioButton, QButtonGroup, QApplication,
+                               QToolTip)
 from PySide6.QtCore import Qt, QTimer, Signal, QRect, QEvent, QEventLoop, QPoint, QSize, QMimeData, QUrl
 from PySide6.QtGui import QCursor, QMouseEvent, QIcon, QDesktopServices, QKeySequence
 from src.ui.styles import Styles
@@ -4908,12 +4909,6 @@ class MainWindow(QMainWindow):
         gem_search_preview_layout.addWidget(self.gem_shop_search_copy_btn)
         gem_tracker_layout.addLayout(gem_search_preview_layout)
 
-        self.gem_shop_search_status_label = QLabel()
-        self.gem_shop_search_status_label.setStyleSheet("color: #aacc88; font-size: 10px;")
-        self.gem_shop_search_status_label.setVisible(False)
-        self._gem_shop_search_status_generation = 0
-        gem_tracker_layout.addWidget(self.gem_shop_search_status_label)
-        
         # ジェムトラッカーウィジェット
         self.gem_tracker = GemTrackerWidget()
         self.gem_tracker.gem_checked.connect(self._on_gem_checked)
@@ -6226,19 +6221,7 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(1200, lambda: self.gem_shop_search_copy_btn.setText("Regexをコピー"))
 
     def _show_gem_shop_search_status(self, message: str):
-        if not hasattr(self, "gem_shop_search_status_label"):
-            return
-        self._gem_shop_search_status_generation += 1
-        generation = self._gem_shop_search_status_generation
-        self.gem_shop_search_status_label.setText(message)
-        self.gem_shop_search_status_label.setVisible(True)
-
-        def clear_status():
-            if generation == self._gem_shop_search_status_generation:
-                self.gem_shop_search_status_label.clear()
-                self.gem_shop_search_status_label.setVisible(False)
-
-        QTimer.singleShot(2500, clear_status)
+        QToolTip.showText(QCursor.pos(), message, self, QRect(), 2500)
 
     def _run_gem_shop_search_hold(self, generation: int):
         if not self._gem_shop_search_hold.consume_if_current(generation):
