@@ -705,6 +705,7 @@ Item Level: 85
         window.resize(720, window.height())
         window.show()
         qapp.processEvents()
+        assert window.trade_preset_combo.width() <= window._panel.width() / 2
         single_width = window.trade_preset_combo._buttons[0].width()
         assert window.trade_preset_combo._empty_segment.isVisible()
 

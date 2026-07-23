@@ -621,7 +621,10 @@ class PoetoreWindow(QWidget):
             ("完成品", PRESET_FINISHED), ("ベースアイテム", PRESET_BASE),
         )
         self.trade_preset_combo.currentIndexChanged.connect(self._trade_preset_changed)
-        top_options.addWidget(self.trade_preset_combo)
+        # 検索プリセットは左半分だけを使い、下のMod表との視線移動を短くする。
+        # 単独表示時は空の第2セグメントも維持するため、ボタン自体は従来の半幅になる。
+        top_options.addWidget(self.trade_preset_combo, 1)
+        top_options.addStretch(1)
         self.magic_rarity_toggle = _BinaryToggle(
             ("ユニーク以外", False), ("マジック完全一致", True),
         )
