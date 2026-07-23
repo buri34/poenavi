@@ -361,3 +361,33 @@ def test_main_window_automatically_shrinks_when_all_visible_panels_are_detached(
 
     assert window.width() == 640
     assert window.height() == window.DETACHED_ONLY_MIN_HEIGHT
+
+
+def test_main_window_stays_collapsed_after_layout_updates_when_last_panel_detaches(monkeypatch):
+    _app()
+    window = MainWindow.__new__(MainWindow)
+    QMainWindow.__init__(window)
+    central = QWidget()
+    layout = QVBoxLayout(central)
+    timer_title = QPushButton("タイマー")
+    timer_content = QWidget()
+    timer_content.setMinimumHeight(300)
+    map_title = QPushButton("マップ")
+    map_content = QWidget()
+    map_content.setMinimumHeight(300)
+    for widget in (timer_title, timer_content, map_title, map_content):
+        layout.addWidget(widget)
+    window.setCentralWidget(central)
+    window.resize(640, 720)
+    window.config = {"detached_panels": {}}
+    window.panel_registry = {}
+    window.detached_panel_windows = {}
+    window._register_detachable_panel("timer", "タイマー", [timer_title, timer_content], layout)
+    window._register_detachable_panel("map", "マップ", [map_title, map_content], layout)
+    monkeypatch.setattr(ConfigManager, "save_config", lambda _config: None)
+
+    window.detach_panel("timer")
+    window.detach_panel("map")
+    _app().processEvents()
+
+    assert window.height() == window.DETACHED_ONLY_MIN_HEIGHT

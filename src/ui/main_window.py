@@ -4902,9 +4902,26 @@ class MainWindow(QMainWindow):
     def _adjust_main_window_after_panel_change(self):
         """パネル移動後に、本体の横幅を保ったまま適切な高さへ調整する。"""
         if self._are_all_visible_panels_detached():
-            self.resize(self.width(), self.DETACHED_ONLY_MIN_HEIGHT)
+            self._collapse_main_window_to_controls()
+            # reparent直後はQtのレイアウト最小サイズが古いことがあるため、
+            # レイアウト更新後にも同じ縮小を適用する。
+            QTimer.singleShot(0, self._collapse_main_window_to_controls)
             return
+        self.setMinimumHeight(self.MIN_HEIGHT)
         self._adjust_height_keep_width()
+
+    def _collapse_main_window_to_controls(self):
+        """全パネル切り離し中の本体を、共通操作列だけの高さへ縮める。"""
+        if not self._are_all_visible_panels_detached():
+            return
+        central = self.centralWidget()
+        if central is not None and central.layout() is not None:
+            central.layout().invalidate()
+            central.updateGeometry()
+        # QtのminimumSizeHintが切り離し前の内容を保持していても、
+        # 明示した最小高さを優先して操作列まで縮められるようにする。
+        self.setMinimumHeight(self.DETACHED_ONLY_MIN_HEIGHT)
+        self.resize(self.width(), self.DETACHED_ONLY_MIN_HEIGHT)
 
     def _adjust_detached_panel_height(self, panel_id: str):
         """切り離しパネルの展開内容を収めつつ、ユーザー指定サイズは維持する。"""
