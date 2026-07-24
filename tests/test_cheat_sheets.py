@@ -3,6 +3,7 @@ from pathlib import Path
 from PySide6.QtCore import QRect
 from PySide6.QtGui import QColor, QImage
 from PySide6.QtWidgets import QApplication
+import pytest
 
 from src.ui.cheat_sheets import (
     CheatSheetManagerDialog,
@@ -11,6 +12,12 @@ from src.ui.cheat_sheets import (
     normalized_cheat_sheet_config,
     registered_image_path,
 )
+
+
+@pytest.fixture(scope="module")
+def qapp():
+    app = QApplication.instance() or QApplication([])
+    yield app
 
 
 def _write_test_image(path: Path):

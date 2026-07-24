@@ -1827,7 +1827,10 @@ Medium Cluster Jewel
         special = window._selected_special_chip_filters()
         stat_ids = [row.stat_id for row in special]
         assert stat_ids.count("enchant.stat_3086156145") == 1
-        assert stat_ids.count("enchant.stat_3948993189") == 1
+        assert sum(
+            stat_id.split("|", 1)[0] == "enchant.stat_3948993189"
+            for stat_id in stat_ids
+        ) == 1
 
         initial = resolve_trade_stat_filters(
             item, PRESET_FINISHED, "Medium Cluster Jewel",
@@ -1835,7 +1838,10 @@ Medium Cluster Jewel
         effective = _replace_filters_with_special_chips(initial, (), special)
         effective_ids = [row.stat_id for row in effective if row.enabled]
         assert effective_ids.count("enchant.stat_3086156145") == 1
-        assert effective_ids.count("enchant.stat_3948993189") == 1
+        assert sum(
+            stat_id.split("|", 1)[0] == "enchant.stat_3948993189"
+            for stat_id in effective_ids
+        ) == 1
     finally:
         window.close()
 
