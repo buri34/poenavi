@@ -1635,7 +1635,7 @@ class VendorSearchPresetDialog(QDialog):
     ]
     MAX_SEARCH_QUERY_LENGTH = 250
 
-    def __init__(self, parent=None, presets_path: str = "", poe_version: str = POE2):
+    def __init__(self, parent=None, presets_path: str = "", poe_version: str = POE2, gem_shop_query_provider=None):
         super().__init__(parent)
         from PySide6.QtWidgets import (
             QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
@@ -1645,6 +1645,7 @@ class VendorSearchPresetDialog(QDialog):
         self.QTableWidgetItem = QTableWidgetItem
         self.presets_path = presets_path
         self.poe_version = poe_version
+        self.gem_shop_query_provider = gem_shop_query_provider
         self._syncing = False
         self._dirty = False
         self.option_checkboxes = []
@@ -1811,6 +1812,13 @@ class VendorSearchPresetDialog(QDialog):
         clear_query_btn.setStyleSheet(Styles.BUTTON)
         clear_query_btn.clicked.connect(self._clear_query)
         query_header.addWidget(clear_query_btn)
+        if self.poe_version == POE1:
+            self.gem_shop_query_btn = QPushButton("現在Actのジェムを追加")
+            self.gem_shop_query_btn.setFixedHeight(24)
+            self.gem_shop_query_btn.setStyleSheet(Styles.BUTTON)
+            self.gem_shop_query_btn.setToolTip("現在Actで購入対象のジェムRegexを、選択中の検索文字列へ追加します")
+            self.gem_shop_query_btn.clicked.connect(self._append_current_act_gem_shop_query)
+            query_header.addWidget(self.gem_shop_query_btn)
         query_header.addStretch()
         self.query_length_label = QLabel(f"0/{self.MAX_SEARCH_QUERY_LENGTH}")
         self.query_length_label.setStyleSheet("color: #aaaaaa; font-size: 12px; border: none;")
@@ -2765,6 +2773,20 @@ class VendorSearchPresetDialog(QDialog):
         if token not in patterns:
             patterns.append(token)
         self.query_edit.setPlainText(self._join_query_patterns(patterns))
+
+    def _append_gem_shop_query(self, gem_query):
+        """ジェム用OR候補を、選択中の装備検索文字列へ重複なく追加する。"""
+        patterns = self._split_query_patterns(self._query_text())
+        patterns.extend(self._split_query_patterns(gem_query))
+        self.query_edit.setPlainText(self._join_query_patterns(patterns))
+
+    def _append_current_act_gem_shop_query(self):
+        provider = getattr(self, "gem_shop_query_provider", None)
+        gem_query = provider() if callable(provider) else ""
+        if not gem_query:
+            QMessageBox.information(self, "ジェムRegex", "現在Actに追加できるジェムRegexがありません。")
+            return
+        self._append_gem_shop_query(gem_query)
 
     def _remove_query_token(self, token):
         self.query_edit.setPlainText(self._remove_exact_query_pattern_from_text(self._query_text(), token))
@@ -6485,6 +6507,7 @@ class MainWindow(QMainWindow):
             self,
             presets_path=self._vendor_search_presets_path(self.poe_version),
             poe_version=self.poe_version,
+            gem_shop_query_provider=self._gem_shop_search_query if self.poe_version == POE1 else None,
         )
         self._vendor_search_dialog.show()
 
