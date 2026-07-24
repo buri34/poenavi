@@ -162,7 +162,7 @@ class MiniNaviStandaloneTest(unittest.TestCase):
         main.hide_for_mini_navi.assert_called_once_with()
         main.restore_from_mini_navi.assert_not_called()
 
-    def test_lock_window_copies_gem_regex_while_overlay_is_click_through(self):
+    def test_overlay_has_no_gem_shop_purchase_controls(self):
         main = QWidget()
         main.config = {
             "mini_guide_overlay": {
@@ -172,17 +172,12 @@ class MiniNaviStandaloneTest(unittest.TestCase):
             }
         }
         overlay = MiniNaviOverlay(main)
-        copied = []
-        overlay.gem_shop_prompt_clicked.connect(lambda: copied.append(True))
         try:
             overlay.show()
-            overlay.set_gem_shop_prompt("💎 ショップでジェム購入可 — クリックでRegexをコピー")
             self.app.processEvents()
 
-            self.assertTrue(overlay.lock_button_window.gem_shop_copy_button.isVisible())
-            overlay.lock_button_window.gem_shop_copy_button.click()
-
-            self.assertEqual(copied, [True])
+            self.assertFalse(hasattr(overlay, "gem_shop_prompt_label"))
+            self.assertFalse(hasattr(overlay.lock_button_window, "gem_shop_copy_button"))
         finally:
             self._dispose_overlay(overlay, main)
 

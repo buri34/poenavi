@@ -5,7 +5,6 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from PySide6.QtCore import QPoint, Qt
-from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QTabWidget
 
 from src.ui.gem_tracker_widget import GemTrackerWidget
@@ -39,51 +38,6 @@ class GemShopSearchTest(unittest.TestCase):
         self.assertEqual(config["hotkeys"]["gem_shop_search"], "CapsLock")
         self.assertTrue(config["gem_shop_search_include_reward_purchases"])
         self.assertEqual(config["gem_shop_search_hold_seconds"], 0.4)
-
-    def test_mini_navi_prompt_only_appears_in_poe1_towns_with_shop_targets(self):
-        self.assertEqual(
-            gem_shop_search.get_mini_navi_gem_shop_prompt("poe1", True, "モーメン|プレシジ"),
-            "💎 ショップでジェム購入可 — クリックでRegexをコピー",
-        )
-        self.assertEqual(gem_shop_search.get_mini_navi_gem_shop_prompt("poe1", False, "モーメン"), "")
-        self.assertEqual(gem_shop_search.get_mini_navi_gem_shop_prompt("poe2", True, "モーメン"), "")
-        self.assertEqual(gem_shop_search.get_mini_navi_gem_shop_prompt("poe1", True, ""), "")
-
-    def test_mini_navi_displays_the_gem_shop_prompt_only_when_provided(self):
-        overlay = MiniNaviOverlay()
-
-        overlay.set_gem_shop_prompt("💎 ショップでジェム購入可 — クリックでRegexをコピー")
-        self.assertFalse(overlay.gem_shop_prompt_label.isHidden())
-        self.assertIn("Regexをコピー", overlay.gem_shop_prompt_label.text())
-
-        overlay.set_gem_shop_prompt("")
-        self.assertTrue(overlay.gem_shop_prompt_label.isHidden())
-        overlay.close()
-
-    def test_mini_navi_gem_shop_prompt_click_does_not_start_dragging(self):
-        parent = SimpleNamespace(
-            config={
-                "mini_guide_overlay": {
-                    "enabled": True,
-                    "locked": False,
-                    "click_through_when_locked": True,
-                }
-            }
-        )
-        overlay = MiniNaviOverlay(parent)
-        clicked = []
-        overlay.gem_shop_prompt_clicked.connect(lambda: clicked.append(True))
-        overlay.set_gem_shop_prompt("💎 ショップでジェム購入可 — クリックでRegexをコピー")
-        overlay.show()
-        self.app.processEvents()
-
-        QTest.mousePress(overlay.gem_shop_prompt_label, Qt.LeftButton)
-        self.assertIsNone(overlay._drag_pos)
-        QTest.mouseRelease(overlay.gem_shop_prompt_label, Qt.LeftButton)
-
-        self.assertEqual(clicked, [True])
-        self.assertIsNone(overlay._drag_pos)
-        overlay.close()
 
     def test_custom_term_override_replaces_the_automatic_term(self):
         plan = [{"act": 1, "gems": [{"name": "ground slam", "type": "vendor"}]}]
