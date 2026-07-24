@@ -92,6 +92,27 @@ class MiniNaviLockButtonWindow(QWidget):
         self.restore_button.clicked.connect(self.overlay.toggle_main_window)
         layout.addWidget(self.restore_button)
 
+        self.gem_shop_copy_button = QPushButton("💎 Regex")
+        self.gem_shop_copy_button.setFixedSize(78, 28)
+        self.gem_shop_copy_button.setCursor(QCursor(Qt.PointingHandCursor))
+        self.gem_shop_copy_button.setToolTip("ショップ検索Regexをコピー")
+        self.gem_shop_copy_button.setStyleSheet("""
+            QPushButton {
+                background: rgba(10, 10, 10, 220);
+                color: #f0c674;
+                border: 1px solid rgba(240, 198, 116, 180);
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: rgba(86, 73, 35, 230);
+                border-color: rgba(240, 198, 116, 230);
+            }
+        """)
+        self.gem_shop_copy_button.clicked.connect(self.overlay.gem_shop_prompt_clicked)
+        layout.addWidget(self.gem_shop_copy_button)
+
         self.button = QPushButton("🔒")
         self.button.setFixedSize(30, 28)
         self.button.setCursor(QCursor(Qt.PointingHandCursor))
@@ -118,11 +139,16 @@ class MiniNaviLockButtonWindow(QWidget):
         if not self.overlay.isVisible() or not cfg.get("enabled", False):
             self.hide()
             return
+        show_gem_shop_copy = bool(self.overlay._gem_shop_prompt)
         self.restore_button.setVisible(True)
+        self.gem_shop_copy_button.setVisible(show_gem_shop_copy)
         self.button.setVisible(show_lock_button)
-        width = 44 + (30 if show_lock_button else 0)
+        buttons = [self.restore_button]
+        if show_gem_shop_copy:
+            buttons.append(self.gem_shop_copy_button)
         if show_lock_button:
-            width += 4
+            buttons.append(self.button)
+        width = sum(button.width() for button in buttons) + 4 * (len(buttons) - 1)
         self.setFixedWidth(width)
         self.button.setText("🔒" if cfg.get("locked", True) else "🔓")
         self.move(self.overlay.x() + self.overlay.width() - self.width() - 4, self.overlay.y() + 4)
@@ -433,6 +459,7 @@ class MiniNaviOverlay(QWidget):
         self.gem_shop_prompt_label.setText(prompt)
         self.gem_shop_prompt_label.setVisible(bool(prompt))
         self._fit_height_to_content()
+        self._sync_lock_button()
 
     def show_gem_shop_copy_feedback(self):
         if not self._gem_shop_prompt:
