@@ -99,6 +99,42 @@ def test_show_poetore_window_is_independent_from_owner(qapp):
         window.close()
 
 
+def test_329_single_copy_is_parsed_without_normal_and_detailed_merge(qapp):
+    copied = """アイテムクラス: 靴
+レアリティ: ユニーク
+破滅の軌跡
+メッシュブーツ
+--------
+アイテムレベル: 41
+--------
+{ ユニークモッド — スピード }
+移動スピードが15%増加する
+"""
+    window = PoetoreWindow()
+    qapp.clipboard().setText(copied)
+    window._placement_context = PlacementContext(
+        QRect(0, 0, 1920, 1080), QPoint(100, 100),
+    )
+    try:
+        with patch(
+            "src.poetore.ui.english_trade_identity",
+            return_value=("Mesh Boots", "Wake of Destruction"),
+        ), patch.object(window, "parse_current_text") as parse, patch.object(
+            window, "show_at_context",
+        ) as show, patch.object(window, "search_current_item") as search:
+            window._capture_item_copy()
+
+        assert window.input_edit.toPlainText() == copied
+        assert window._trade_base_type == "Mesh Boots"
+        assert window._trade_item_name == "Wake of Destruction"
+        parse.assert_called_once_with()
+        show.assert_called_once_with(window._placement_context, activate=False)
+        search.assert_called_once_with()
+        assert not hasattr(window, "_normal_copy_text")
+    finally:
+        window.close()
+
+
 def test_show_at_context_places_window_inward_from_cursor_side(qapp):
     window = PoetoreWindow()
     try:

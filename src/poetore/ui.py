@@ -25,12 +25,11 @@ from src.ui.styles import Styles
 
 from .parser import ItemParseError, parse_item_text
 from .clipboard import read_item_clipboard
-from .merge import merge_normal_and_detailed_copy
 from .window_position import PlacementContext, capture_placement_context, position_for_context
 from .trade import (
     PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
     available_pc_leagues, available_trade_presets, default_pc_league, default_trade_currency,
-    gem_metadata,
+    english_trade_identity, gem_metadata,
     resolve_trade_stat_filters, search_prices, unique_candidates,
     unique_variants, unresolved_modifier_warnings, uses_dedicated_exact_preset,
     is_inscribed_ultimatum,
@@ -1941,13 +1940,13 @@ class PoetoreWindow(QWidget):
         super().closeEvent(event)
 
     def capture_from_poe(self):
-        """通常コピーと詳細コピーを順番に取得し、日本語名を保って解析する。"""
+        """PoE 3.29以降の詳細形式コピーを一度だけ取得して解析する。"""
         from pynput.keyboard import Controller, Key
 
         # この時点ではPoEが前面。コピー後にぽえとれがフォーカスを取る前に保存する。
         self._placement_context = capture_placement_context()
         self._capture_keyboard = Controller()
-        QTimer.singleShot(250, lambda: self._send_copy((Key.ctrl, "c"), self._capture_normal_copy))
+        QTimer.singleShot(250, lambda: self._send_copy((Key.ctrl, "c"), self._capture_item_copy))
 
     def _send_copy(self, keys, callback):
         for key in keys:
@@ -1956,25 +1955,25 @@ class PoetoreWindow(QWidget):
             self._capture_keyboard.release(key)
         QTimer.singleShot(300, callback)
 
-    def _capture_normal_copy(self):
-        self._normal_copy_text = read_item_clipboard(QApplication.clipboard())
-        from pynput.keyboard import Key
-        self._send_copy((Key.ctrl, Key.alt, "c"), self._capture_detailed_copy)
-
-    def _capture_detailed_copy(self):
-        detailed_text = read_item_clipboard(QApplication.clipboard())
+    def _capture_item_copy(self):
+        copied_text = read_item_clipboard(QApplication.clipboard())
         try:
-            detailed_item = parse_item_text(detailed_text)
-            merged_text = merge_normal_and_detailed_copy(self._normal_copy_text, detailed_text)
+            item = parse_item_text(copied_text)
         except ItemParseError as exc:
             QMessageBox.warning(self, "取り込めませんでした", f"PoEのアイテムコピーを取得できませんでした。\n{exc}")
             return
-        self._trade_base_type = detailed_item.base_type
-        self._trade_item_name = detailed_item.name if detailed_item.rarity.casefold() in {"unique", "ユニーク"} else None
+        copied_name = item.name if item.rarity.casefold() in {"unique", "ユニーク"} else None
+        try:
+            self._trade_base_type, self._trade_item_name = english_trade_identity(
+                item, item.base_type, copied_name,
+            )
+        except TradeApiError:
+            # 公式items取得が一時的に失敗しても、検索スレッド側で再試行できる。
+            self._trade_base_type, self._trade_item_name = item.base_type, copied_name
         self._preset_item_key = None
         self._reset_unique_candidates()
         self.mod_filter_tree.clear()
-        self.input_edit.setPlainText(merged_text)
+        self.input_edit.setPlainText(copied_text)
         self.parse_current_text()
         self.show_at_context(self._placement_context, activate=False)
         self.search_current_item()

@@ -1362,8 +1362,8 @@ def _pseudo_consumed_stat_ids(item: ParsedItem) -> set[str]:
 _stat_entries_cache: tuple[dict, ...] | None = None
 _item_entries_cache: tuple[dict, ...] | None = None
 _jp_item_entries_cache: tuple[dict, ...] | None = None
-_item_groups_cache: tuple[tuple[dict, ...], ...] | None = None
-_jp_item_groups_cache: tuple[tuple[dict, ...], ...] | None = None
+_item_groups_cache: tuple[tuple[str, tuple[dict, ...]], ...] | None = None
+_jp_item_groups_cache: tuple[tuple[str, tuple[dict, ...]], ...] | None = None
 
 
 def _normalized_stat_text(text: str) -> str:
@@ -1412,22 +1412,26 @@ def _jp_trade_item_entries() -> tuple[dict, ...]:
     return _jp_item_entries_cache
 
 
-def _trade_item_groups() -> tuple[tuple[dict, ...], ...]:
+def _trade_item_groups() -> tuple[tuple[str, tuple[dict, ...]], ...]:
     global _item_groups_cache
     if _item_groups_cache is None:
         data, _ = _request_json(f"{API_ROOT}/data/items")
         _item_groups_cache = tuple(
-            tuple(group.get("entries", ())) for group in data.get("result", ())
+            (str(group.get("id", "")), tuple(group.get("entries", ())))
+            for group in data.get("result", ())
+            if str(group.get("id", ""))
         )
     return _item_groups_cache
 
 
-def _jp_trade_item_groups() -> tuple[tuple[dict, ...], ...]:
+def _jp_trade_item_groups() -> tuple[tuple[str, tuple[dict, ...]], ...]:
     global _jp_item_groups_cache
     if _jp_item_groups_cache is None:
         data, _ = _request_json(f"{JP_API_ROOT}/data/items")
         _jp_item_groups_cache = tuple(
-            tuple(group.get("entries", ())) for group in data.get("result", ())
+            (str(group.get("id", "")), tuple(group.get("entries", ())))
+            for group in data.get("result", ())
+            if str(group.get("id", ""))
         )
     return _jp_item_groups_cache
 
@@ -1449,9 +1453,11 @@ def _aligned_trade_item_pairs():
             tuple(sorted(flags)),
         )
 
-    for english_group, japanese_group in zip(
-        _trade_item_groups(), _jp_trade_item_groups(),
-    ):
+    japanese_groups = dict(_jp_trade_item_groups())
+    for group_id, english_group in _trade_item_groups():
+        japanese_group = japanese_groups.get(group_id)
+        if japanese_group is None:
+            continue
         if len(english_group) == len(japanese_group):
             yield from zip(english_group, japanese_group)
             continue
@@ -1495,6 +1501,7 @@ def _english_trade_item_name(japanese_name: str) -> str | None:
     wanted = japanese_name.strip()
     if not wanted:
         return None
+    candidates: set[str] = set()
     for english, japanese in _aligned_trade_item_pairs():
         if str(japanese.get("name", "")).strip() != wanted:
             continue
@@ -1502,8 +1509,40 @@ def _english_trade_item_name(japanese_name: str) -> str | None:
             (japanese.get("flags") or {}).get("unique")
         ):
             continue
-        return str(english.get("name", "")).strip() or None
-    return None
+        translated = str(english.get("name", "")).strip()
+        if translated:
+            candidates.add(translated)
+    return next(iter(candidates)) if len(candidates) == 1 else None
+
+
+def _english_trade_item_type(japanese_type: str) -> str | None:
+    """公式日英itemsから日本語の一行名に対応する英語typeを得る。"""
+    wanted = japanese_type.strip()
+    if not wanted:
+        return None
+    exact: set[str] = set()
+    contained: list[tuple[int, str]] = []
+    for english, japanese in _aligned_trade_item_pairs():
+        source = str(japanese.get("type", "")).strip()
+        translated = str(english.get("type", "")).strip()
+        if not source or not translated:
+            continue
+        if source == wanted:
+            exact.add(translated)
+            continue
+        # Magic/Veiled/Synthesised等はPrefix/Suffixを含む一行名になる。
+        # 内包される最長の公式base typeを採用する。
+        if source in wanted:
+            contained.append((len(source), translated))
+    if exact:
+        return next(iter(exact)) if len(exact) == 1 else None
+    if not contained:
+        return None
+    longest = max(length for length, _translated in contained)
+    candidates = {
+        translated for length, translated in contained if length == longest
+    }
+    return next(iter(candidates)) if len(candidates) == 1 else None
 
 
 def _japanese_trade_item_name(english_name: str) -> str | None:
@@ -2627,14 +2666,43 @@ def _is_generic_map_copy_type(item: ParsedItem, base_type: str) -> bool:
     """詳細コピーの汎用Map表記を、公式Tradeのベース名として送らない。"""
     if item.category != "map":
         return False
-    return bool(re.fullmatch(
-        r"(?:(?:Blighted|Blight-ravaged)\s+)?Map\s*[（(]\s*Tier\s*\d+\s*[）)]",
-        base_type.strip(), flags=re.IGNORECASE,
-    ))
+    return bool(
+        re.fullmatch(
+            r"(?:(?:Blighted|Blight-ravaged)\s+)?Map\s*[（(]\s*Tier\s*\d+\s*[）)]",
+            base_type.strip(), flags=re.IGNORECASE,
+        )
+        or re.fullmatch(
+            r"(?:(?:ブライトに覆われた|ブライトに蹂躙された)\s*)?"
+            r"マップ\s*[（(]\s*ティア\s*\d+\s*[）)]",
+            base_type.strip(),
+        )
+    )
 
 
 def _contains_japanese_text(value: object) -> bool:
     return bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", str(value)))
+
+
+def english_trade_identity(
+    item: ParsedItem,
+    base_type: str | None = None,
+    name: str | None = None,
+) -> tuple[str | None, str | None]:
+    """3.29以降のローカライズ済み詳細コピーを英語Trade検索用IDへ変換する。"""
+    resolved_type = str(base_type or item.base_type or "").strip() or None
+    if resolved_type and _contains_japanese_text(resolved_type):
+        resolved_type = _english_trade_item_type(resolved_type) or resolved_type
+
+    resolved_name = str(name or "").strip() or None
+    if resolved_name and resolved_name == str(item.base_type or "").strip():
+        resolved_name = None
+    if (
+        resolved_name
+        and _is_unique(item)
+        and _contains_japanese_text(resolved_name)
+    ):
+        resolved_name = _english_trade_item_name(resolved_name) or resolved_name
+    return resolved_type, resolved_name
 
 
 def _require_english_search_identity(payload: dict) -> None:
@@ -2679,6 +2747,9 @@ def search_prices(
     include_foil: bool | None = None,
 ) -> PriceResult:
     league = league or active_pc_league()
+    trade_base_type, trade_name = english_trade_identity(
+        item, trade_base_type, trade_name,
+    )
     if (item.rarity.casefold() in {"magic", "マジック"}
             and trade_base_type and item.name == item.base_type):
         # 日本語詳細コピーのMagic品はAffix込み英語名がname/base_typeの両方へ
