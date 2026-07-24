@@ -1,0 +1,117 @@
+{
+  "app": {
+    "title": "ぽえなび",
+    "settings": "設定",
+    "update": "ぽえなび アップデート",
+    "restart_required": "言語を変更しました。変更を適用するには再起動してください。"
+  },
+  "startup": {
+    "language_title": "Language / 言語",
+    "language_prompt": "PoENaviで使用する言語を選択してください。",
+    "japanese": "日本語",
+    "english": "English",
+    "cancel": "キャンセル",
+    "poe_version_title": "PoEバージョン選択",
+    "guide_detail_title": "ガイド表示レベル"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "save": "保存",
+    "delete": "削除",
+    "yes": "はい",
+    "no": "いいえ",
+    "back": "戻る",
+    "next": "次へ",
+    "none": "なし",
+    "unknown": "不明"
+  },
+  "guide": {
+    "heading": {
+      "summary": "📋 要点版ガイド（次の目標、重要ポイント等）",
+      "direction": "🧭 基本方向",
+      "direction_reference": "📖 ガイド参照",
+      "objective": "📋 目標",
+      "layout": "🗺️ レイアウト情報",
+      "tips": "💡 Tips / 注意点"
+    },
+    "missing": "「{zone}」のガイドデータはありません",
+    "visit": "（{visit}回目）",
+    "level": "レベル",
+    "level_advice": {
+      "penalty_over": "🔴 ペナルティ (+{diff}) — レベル超過！経験値減少中",
+      "penalty_under": "🔴 ペナルティ ({diff}) — レベル不足！経験値減少中",
+      "optimal": "🟢 最適レベル ({diff:+d})",
+      "optimal_zero": "🟢 最適レベル (±0)",
+      "safe_over": "🟡 ペナルティなし (+{diff}) — ややレベル上がり気味",
+      "safe_under": "🟡 ペナルティなし ({diff}) — ややレベル不足気味"
+    },
+    "waiting": "エリアに入場すると攻略ガイドが表示されます"
+  },
+  "zone": {
+    "act_level": "{act} — {zone} (Lv.{level})",
+    "town": "🏠 {zone}",
+    "area": "📍 {zone}",
+    "area_with_act": "📍 {act} — {zone} (Lv.{level})",
+    "area_with_visit": "📍 {act} — {zone} (Lv.{level}) {visit}",
+    "unknown_level": "Lv動的"
+  },
+  "settings": {
+    "language": "言語:",
+    "language_japanese": "日本語",
+    "language_english": "English",
+    "language_help": "変更後は再起動が必要です。",
+    "hotkeys": {
+      "title": "ホットキー",
+      "start_stop": "開始/停止:",
+      "reset": "リセット:",
+      "lap": "ラップ（次のAct）:",
+      "undo_lap": "ラップ取消:",
+      "click_through": "クリックスルー:",
+      "logout": "ログアウト:",
+      "hideout": "隠れ家へ移動（/hideout）:",
+      "monastery": "（仮）修道院へ移動（/monastery）:",
+      "search": "検索文字列の貼り付け:"
+    }
+  },
+  "gems": {
+    "no_gems": "このActで取得するジェムはありません",
+    "reward": "報酬",
+    "vendor": "購入",
+    "search_hint": "クリックでPoE検索欄へ入力",
+    "pob_import": "PoBコードインポート",
+    "pob_placeholder": "PoBコード（Base64）をここに貼り付け..."
+  },
+  "update": {
+    "title": "ぽえなび アップデート",
+    "available": "新しいバージョン v{version} を利用できます。",
+    "now": "今すぐアップデート",
+    "open_release": "リリースページを開く",
+    "later": "後で",
+    "download": "v{version} をダウンロードしています…",
+    "progress_known": "ダウンロード中: {done:.1f} / {total:.1f} MB",
+    "progress_unknown": "ダウンロード中: {done:.1f} MB",
+    "cancel": "キャンセル",
+    "windows_only": "自動更新は Windows exe 版でのみ利用できます。",
+    "updater_missing": "PoENaviUpdater.exe が見つかりません。",
+    "checksum_mismatch": "ダウンロードした ZIP の SHA-256 が一致しません。"
+  },
+  "errors": {
+    "updater_target_missing": "更新対象の PoENavi.exe が見つかりません。",
+    "updater_process_running": "ぽえなびを終了できなかったため、更新を中止しました。",
+    "backup": "バックアップ",
+    "windows_only": "Windows専用機能です",
+    "admin_required": "管理者権限が必要です。PoENaviを「管理者として実行」してください。",
+    "process_list": "プロセス一覧の取得に失敗しました",
+    "poe_process_missing": "PoEのプロセスが見つかりません",
+    "tcp_table": "TCP接続テーブルの取得に失敗しました (error={error})",
+    "tcp_disconnect": "TCP接続の切断に失敗しました（{count}本）",
+    "tcp_not_found": "PoEのTCP接続が見つかりませんでした"
+  },
+  "progress": {
+    "poe1_clear": "Act10クリア！",
+    "poe1_tired": "お疲れ様でした！",
+    "poe2_clear": "キャンペーンクリア！"
+  }
+}

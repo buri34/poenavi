@@ -33,7 +33,10 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     script = (ROOT / "scripts" / "build_release.ps1").read_text(encoding="utf-8")
     for filename in ("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md"):
         assert f'"--add-data", "{filename};."' in script
+    for filename in ("guide_data_en.json", "guide_data_poe2_en.json"):
+        assert f'"--add-data", "{filename};."' in script
     assert '"--add-data", "data;data"' in script
+    assert '"--add-data", "data\\i18n;data\\i18n"' in script
     assert '"--add-data", "tests;' not in script
     assert '"--add-data", "build;' not in script
     assert "poetore-sources\\.lock\\.json" in script

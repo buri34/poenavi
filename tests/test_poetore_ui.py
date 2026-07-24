@@ -1765,6 +1765,18 @@ Judgement Staff
 def test_cluster_special_chips_do_not_duplicate_passive_or_enchant_filters(qapp):
     window = PoetoreWindow()
     try:
+        entries = (
+            {
+                "id": "enchant.stat_3086156145",
+                "text": "パッシブスキルを#個追加する",
+                "type": "enchant",
+            },
+            {
+                "id": "enchant.stat_3948993189",
+                "text": "追加される通常パッシブスキルは付与: 範囲ダメージが#%増加する",
+                "type": "enchant",
+            },
+        )
         item = parse_item_text("""アイテムクラス: ジュエル
 レアリティ: レア
 Loath Eye
@@ -1783,23 +1795,24 @@ Medium Cluster Jewel
 """)
         window._parsed_item = item
         window._trade_base_type = "Medium Cluster Jewel"
-        window._configure_special_filter_chips(item)
+        with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+            window._configure_special_filter_chips(item)
 
-        assert "パッシブスキルを4個追加する" not in window.cluster_enchant_chip.text()
-        assert "範囲ダメージが10%増加する" in window.cluster_enchant_chip.text()
+            assert "パッシブスキルを4個追加する" not in window.cluster_enchant_chip.text()
+            assert "範囲ダメージが10%増加する" in window.cluster_enchant_chip.text()
 
-        special = window._selected_special_chip_filters()
-        stat_ids = [row.stat_id for row in special]
-        assert stat_ids.count("enchant.stat_3086156145") == 1
-        assert stat_ids.count("enchant.stat_3948993189") == 1
+            special = window._selected_special_chip_filters()
+            stat_ids = [row.stat_id for row in special]
+            assert stat_ids.count("enchant.stat_3086156145") == 1
+            assert stat_ids.count("enchant.stat_3948993189") == 1
 
-        initial = resolve_trade_stat_filters(
-            item, PRESET_FINISHED, "Medium Cluster Jewel",
-        )
-        effective = _replace_filters_with_special_chips(initial, (), special)
-        effective_ids = [row.stat_id for row in effective if row.enabled]
-        assert effective_ids.count("enchant.stat_3086156145") == 1
-        assert effective_ids.count("enchant.stat_3948993189") == 1
+            initial = resolve_trade_stat_filters(
+                item, PRESET_FINISHED, "Medium Cluster Jewel",
+            )
+            effective = _replace_filters_with_special_chips(initial, (), special)
+            effective_ids = [row.stat_id for row in effective if row.enabled]
+            assert effective_ids.count("enchant.stat_3086156145") == 1
+            assert effective_ids.count("enchant.stat_3948993189") == 1
     finally:
         window.close()
 
@@ -2000,7 +2013,7 @@ def test_poe_ninja_price_panel_renders_price_trend_and_link(qapp):
         assert not window.poe_ninja_price_panel.isHidden()
         assert window.poe_ninja_price_value.text() == "200"
         assert not window.poe_ninja_currency_icon.pixmap().isNull()
-        assert window.poe_ninja_currency_icon.toolTip() == "Divine Orb"
+        assert window.poe_ninja_currency_icon.toolTip() == "神のオーブ"
         assert window.poe_ninja_price_multiplier.text() == "×"
         assert "7日推移" in window.poe_ninja_trend_label.text()
         assert window.poe_ninja_trend_chart._points == (0, 1, 2, 3, 4, 5, 6)
@@ -2023,7 +2036,7 @@ def test_poe_ninja_price_panel_uses_chaos_icon_for_small_price(qapp):
         )
         assert window.poe_ninja_price_value.text() == "10"
         assert not window.poe_ninja_currency_icon.pixmap().isNull()
-        assert window.poe_ninja_currency_icon.toolTip() == "Chaos Orb"
+        assert window.poe_ninja_currency_icon.toolTip() == "カオスオーブ"
     finally:
         window.close()
 

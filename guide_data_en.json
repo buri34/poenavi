@@ -1,0 +1,3314 @@
+{
+  "act1_area1": {
+    "visits": {
+      "1": {
+        "objective": "• Obtain the initial gem and set it in the weapon.\n• Defeat the boss and enter the town.\n\n(City)\n• Take the gem as a quest reward.\n• Search for 3-link equipment to buy from vendors (until you find one).\n• Go to \"The Coast\"",
+        "layout": "",
+        "tips": "• Assign movement to the left mouse button and set attack skills on easily accessible buttons.\nWhen doing this, clicking on the skill bar and checking \"Always attack without moving\" will make the controls more comfortable.",
+        "direction": "ne",
+        "mini_navi": {
+          "text": "▸[boss]Defeat the boss,[town]<span style='color:#dddd44'>Town</span>\n▸【City】 Take the gem as a quest reward.\n▸ [In-game] Search for 3-link equipment to purchase from vendors (acquire as needed)\n▸ [City][move]<span style='color:#dddd44'>The Coast</span>",
+          "direction": "ne"
+        }
+      }
+    }
+  },
+  "act1_area2": {
+    "visits": {
+      "1": {
+        "objective": "Activate the waypoint and proceed.",
+        "layout": "•<span style='color:#ff6666'>If the entrance faces the lower right, then go up.</span> Proceed\n- If there is a wall above, proceed to the lower right.\n      <span style='color:#ff8800'>Note:  However, there are instances where, if you can see the road ahead, you need to turn sharply to the left.</span>\n- If you want to continue progressing, simply move upwards.\n\n•<span style='color:#dddd44'>If the entrance faces left and downwards, then the exit should be either downwards or to the right downwards (→ right).</span> Proceed",
+        "tips": "• The enemies here don't provide much experience, so It is best to skip them.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[wp]Activate the waypoint[move]<span style='color:#dddd44'>The Mud Flats</span> \n▸<span style='color:#ff6666'>If the entrance faces the lower right, then go up.</span> Proceed (if there is a wall, go to the bottom right of it)\n▸<span style='color:#dd66ff'>If the entrance faces left and downwards, then the direction would be either downwards or further to the right and downwards.</span> Proceed",
+          "direction": "none"
+        },
+        "flags": {
+          "act1_submergedpassage_enter": {
+            "objective": "Enter The Tidal Island",
+            "layout": "",
+            "tips": "",
+            "mini_navi": {
+              "text": "[move]<span style='color:#dddd44'>Enter The Tidal Island</span>"
+            }
+          }
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act1_area3": {
+    "visits": {
+      "1": {
+        "objective": "Destroy three bird nests and break through the wall.",
+        "layout": "• <span style='color:#ff6666'>If the entrance faces the lower right, check whether you can go to the upper right.</span>\n  – <span style='color:#ff8800'>If you can, continue right</span> to find the nests and exit.\n  – <span style='color:#4488ff'>If you cannot, go straight down.</span>\n• <span style='color:#dddd44'>If the entrance faces the upper right, go upward.</span>\n• The three bird nests always form a triangle.",
+        "tips": "• Enemy combos can kill quickly, so use a hit-and-run strategy.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸<span style='color:#ff6666'>If the entrance faces the lower right, check whether you can go to the upper right.</span>\n  – <span style='color:#ff8800'>If you can, continue right</span> to find the three nests and the exit to [move]<span style='color:#dddd44'>The Submerged Passage</span>.\n  – <span style='color:#4488ff'>If you cannot, go straight down.</span>\n▸<span style='color:#dd66ff'>If the entrance faces the upper right, go upward.</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act1_area4": {
+    "visits": {
+      "1": {
+        "objective": "Once waypoint is secured, please return to The Coast.",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[wp]Activate the waypoint, then return to [move]<span style='color:#dddd44'>The Coast</span>",
+          "direction": "none"
+        },
+        "flags": {
+          "act1_floodeddepths_enter": {
+            "objective": "• Continue onward and enter The Ledge",
+            "layout": "",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸ Continue onward and enter [move]<span style='color:#dddd44'>The Ledge</span>",
+              "direction": "none"
+            }
+          }
+        }
+      },
+      "2": {
+        "objective": "• Enter The Flooded Depths midway through the area",
+        "layout": "• <span style='color:#4488ff'>If the waypoint is below the entrance:</span>\n    – <span style='color:#dddd44'>Go to the lower right if that route is open.</span>\n    – <span style='color:#44cc44'>Otherwise, go to the upper left.</span>\n      Note: Only in this layout, the entrance to The Flooded Depths is above the approach to the bridge.\n  • <span style='color:#ff6666'>If the waypoint is above the entrance:</span>\n    – <span style='color:#dddd44'>Go to the upper left if that route is open.</span>\n    – <span style='color:#44cc44'>Otherwise, follow the upper wall to the lower right.</span>\n\n• The Flooded Depths is always in the section before the bridge, below the bridge.",
+        "tips": "• From this point on, use travel skills such as Frostblink and Dash more frequently.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Enter [move]<span style='color:#dddd44'>The Flooded Depths</span> midway through the area\n▸<span style='color:#4488ff'>The waypoint is below the entrance</span> ⇒ <span style='color:#dddd44'>Go to the lower right.</span> <span style='color:#44cc44'>If blocked, go to the upper left.</span>\n▸<span style='color:#ff6666'>The waypoint is above the entrance</span> ⇒ <span style='color:#dddd44'>Go to the upper left.</span> <span style='color:#44cc44'>If blocked, follow the upper wall to the lower right.</span>",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act1_area5": {
+    "visits": {
+      "1": {
+        "objective": "Navigate the path, defeat the boss, and return to town.\n\n(City)\n• Obtain items such as \"Quicksilver Flask\" as rewards for completing quests.\n• Purchase the required gem.\n• From the waypoint, \"The Submerged Passage\"",
+        "layout": "• The first fork in the road<span style='color:#4488ff'>Always turn left first.</span>\n•<span style='color:#ff6666'>However, when you are on an uphill slope and approaching a cliff, you should turn right to return.</span> Proceed\n(Please only consider the two options shown in the attached images.)The other option is to simply follow the left route.",
+        "tips": "• Before returning to town, please level up to level 4.\n• From now on, when returning to town, using the \"/exit\" command will allow you to save the Portal Scroll.",
+        "direction": "w",
+        "mini_navi": {
+          "text": "▸Following the path[boss]Defeat the boss,[town]<span style='color:#dddd44'>Town</span>\nInitially<span style='color:#4488ff'>Always start by going left.</span> <span style='color:#ff6666'>However, if you are going uphill and encounter a cliff, turn back and go right.</span>\n▸ [City][quest]Obtain items such as \"Quicksilver Flask\" as rewards for completing quests.\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Submerged Passage</span>",
+          "direction": "w"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act1_area6": {
+    "visits": {
+      "1": {
+        "objective": "Activate the waypoint and enter \"The Climb\"",
+        "layout": "If you continue to follow the path, you will be fine.\n\n• Initially, the two paths that split off from each other lead to different destinations. One path leads to a narrow road, while the other leads to Goat Pass.\nA large number of monster goats appear, providing a good amount of experience points.",
+        "tips": "🌟 Excellent area for experience\n• Once you reach level 7, you'll have accumulated enough experience points, so you can safely ignore the next few levels and move on.\nHowever, there is no problem if you enter the next area while still at level 6.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[wp]Activate the waypoint and[move]<span style='color:#dddd44'>The Climb</span>\n▸The first fork in the road leads to Goat Pass.\n(Lots of monster goats appear, and they give a lot of experience points)",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act1_area7": {
+    "visits": {
+      "1": {
+        "objective": "Activate the waypoint and enter \"The Lower Prison\"",
+        "layout": "• Since there are open spaces to the right and left upon entering, proceed in the direction of the one that is open.\n• Essentially,<span style='color:#ff6666'>Along the wall on the left side, starting from the entrance.</span> Keep going.",
+        "tips": "• The goat that is trying to throw fireballs hits hard if it hits you, so avoid it.\n• The green skeleton arch at the end is not worth the time, so It is best to skip it.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[wp]Activate the waypoint and[move]<span style='color:#dddd44'>The Lower Prison</span>\nGenerally speaking,<span style='color:#ff6666'>Along the wall on the left side, starting from the entrance.</span> Let's proceed.",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act1_area8": {
+    "visits": {
+      "1": {
+        "objective": "• Complete the Trial of Ascendancy.\n• Enter The Upper Prison",
+        "layout": "•<span style='color:#ff6666'>If there is nothing particularly visible in the lower space, starting from the waypoint</span> The challenge for Ascendancy lies on the left side.\n- The Trial of Ascendancy begins after entering from the waypoint to the left, and then moving to the upper left.\n– The exit is further to the left from there.\n•<span style='color:#dddd44'>If you see the space below when you see waypoint</span> The challenge for Ascendancy lies to the right.\n- In this case, it is possible to determine the location of the exit by identifying the position of the \"Ascendancy's Trial\" within the game.\n- First, enter from the right, starting with waypoint.\n> If the \"Ascendancy\" challenge requires you to reach a specific location, it's located on the upper left side of the map.\n• The exit is on the upper right.\n\"If the challenge from Ascendancy is immediately apparent, or if it's located just a short distance away, perhaps on the upper right side of the map.\"\n• The exit is on the left side of waypoint, so return when you finish the challenge.\n• From the left side, enter through waypoint and proceed to the lower right to exit.\n\"If the player has moved at least 2 spaces and is now in the position to the right and below the central square, then.\"\n• The exit is located to the lower right, as viewed from the location of the challenge.\n> If the \"Ascendancy\" challenge requires you to reach a specific location, it's likely located in the upper right corner of the map.\n• The exit is located to the upper left, relative to the position of the challenge.",
+        "tips": "🌟 Excellent area for experience\n\n• There are book icons near the Trial of Ascendancy.\n\n• The spike-tile room in the Trial of Ascendancy can be skipped with Frostblink.\n  After clicking the final object, you can leave through a portal.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[trial]<span style='color:#4488ff'>Complete the Trial of Ascendancy</span>\n▸ Enter [move]<span style='color:#dddd44'>The Upper Prison</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act1_area9": {
+    "visits": {
+      "1": {
+        "objective": "• Continue onward and defeat the boss.\n• After the boss dies, take the boat that appears farther ahead back to The Submerged Passage.",
+        "layout": "• If you continue on the main road until you see the waterway, you will generally be on the right path (smaller roads, tunnels, and bridges are usually incorrect).",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Continue onward and [boss]defeat the boss\n▸ After the boss dies, take the boat that appears farther ahead back to [move]<span style='color:#dddd44'>The Submerged Passage</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act1_area10": {
+    "visits": {
+      "1": {
+        "objective": "• Entering the \"The Warden's Quarters\"\n• Boss: \"Defeat Brutus\"\n• Return to town.\n\n(City)\n• Obtain quest rewards.\n• From the waypoint, \"Prisoner's Gate\"",
+        "layout": "•<span style='color:#ff6666'>The basic method involves first moving to the upper right. If you reach a dead end, turn back and follow the outer wall.</span>\n• First, try moving to the upper right.\n  –<span style='color:#ff8800'>Move to the upper right.</span> \n> If you continue straight ahead to the right, you will eventually reach the exit.\nIf you reach a dead end in the upper right corner, simply move back to the upper left corner, and you will find the exit.\n  –<span style='color:#4488ff'>Cannot proceed to the upper right.</span> \n> From the entrance, the left side is the exit. The path splits ahead.\n• If there is no room above, go down.\n• If there is no room below, go up.\n• There are rooms on both the top and bottom floors → Go to the left.",
+        "tips": "• On your first visit, this area contains a strongbox that always holds flasks.\n  It is inside a room surrounded on four sides by a single path. Use the nearby switch where the paths meet to open the entrance.\n  It can contain a Quicksilver Flask or larger Life and Mana Flasks, making it especially useful if your flasks need upgrading.\n  (The strongbox appears only once.)\n• Aim to be around level 9 for the upcoming boss fight.\n\n• If Life or Mana becomes a problem during the boss fight, use a Portal Scroll and return to town to recover fully.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[move]<span style='color:#dddd44'>The Warden's Quarters</span>and then[boss]Boss: \"Defeat Brutus\"\n▸ After defeating the boss,[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Obtain quest rewards.\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>Prisoner's Gate</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act1_area11": {
+    "visits": {
+      "1": {
+        "objective": "Enter \"The Ship Graveyard\"",
+        "layout": "• The exits are always located at a lower height than the entrances. Therefore, the correct route involves several downhill sections and cliffs.",
+        "tips": "🌟 Excellent area for experience\n• However, as a guideline for the later levels, reaching level 12 before the final boss is sufficient. Furthermore, due to the presence of many enemies that must be defeated in narrow passages, intentional experience gain using \"Prisoner's Gate\" is unnecessary.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[move]<span style='color:#dddd44'>The Ship Graveyard</span>\nThe exits are always located at a lower height than the entrances.\nTherefore, the correct route involves several downhill sections and cliffs.",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act1_area12": {
+    "visits": {
+      "1": {
+        "objective": "• Open a portal before The Ship Graveyard Cave.\n• Enter The Cavern of Wrath.",
+        "layout": "• Follow the left wall from the entrance.\n\n• <span style='color:#ff6666'>If you find The Ship Graveyard Cave first,</span> open a portal nearby and continue searching for The Cavern of Wrath.\n• <span style='color:#dddd44'>If you find The Cavern of Wrath first,</span> activate its waypoint and resume searching for The Ship Graveyard Cave.\n\n• Ignore quest-marked NPCs on the map; progression through the next area will bring you back to them.",
+        "tips": "",
+        "direction": "none",
+        "flags": {
+          "act1_shipgraveyardcave_enter": {
+            "objective": "• Boss: \"Defeat Captain Fairgraves\"\n• Return to town.\n\n(City)\n• Obtain quest rewards (including gem and passive points).\n• From the waypoint, \"The Cavern of Wrath\"",
+            "layout": "",
+            "tips": "",
+            "mini_navi": {
+              "text": "▸[boss]Boss: \"Defeat Captain Fairgraves\"\n▸ After defeating the boss,[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Obtain quest rewards (including gem and passive points).\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Cavern of Wrath</span>",
+              "direction": "none"
+            },
+            "direction": "none"
+          }
+        },
+        "mini_navi": {
+          "text": "▸ Before \"The Ship Graveyard Cave\"[portal]Open a portal\n▸[move]<span style='color:#dddd44'>The Cavern of Wrath</span>\n(From the entrance, proceed along the left wall to reach it)",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act1_area14": {
+    "visits": {
+      "1": {
+        "objective": "Activate the waypoint, return to the city using the waypoint.\n\n(City)\nTake the portal to The Ship Graveyard (→The Ship Graveyard Cave)",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[wp]Activate the waypoint, then use it to return to town.[town]<span style='color:#dddd44'>Town</span>\n▸【City】Take the portal to,[move]<span style='color:#dddd44'>The Ship Graveyard</span>(→The Ship Graveyard Cave)",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "• Proceed along the path to the next area.",
+        "layout": "•<span style='color:#ff6666'>First, head towards the area where you can see the book markers as soon as you enter.</span>\n– From there<span style='color:#ff8800'>If there is a path to the right, the exit is either on the right or in the lower right.</span>\n  –<span style='color:#4488ff'>If you can't go to the right, then go up first.</span>\n> If there's a sheer cliff on the upper right, the exit is on the upper left.\n\"If there's no other way, the exit is on the upper right.\"",
+        "tips": "",
+        "mini_navi": {
+          "text": "▸ Proceed forward along the path to the next area.\n▸<span style='color:#ff6666'>First, head towards the area where you can see the book markers as soon as you enter.</span>\n– From there<span style='color:#ff8800'>If there is a path to the right, the exit is either on the right or in the lower right.</span>\n  –<span style='color:#4488ff'>If you can't go right, go up.</span>",
+          "direction": "none"
+        },
+        "direction": "none"
+      }
+    }
+  },
+  "act1_area13": {
+    "visits": {
+      "1": {
+        "objective": "• Obtain the quest item (Allflame) in the deepest part of the area.\n• Exit the back immediately.",
+        "layout": "• The best approach is to move as close to the center as possible, as this increases the likelihood of finding the correct path. If you follow the entrance and proceed along the left wall, you should generally be able to find your way through.\n• If there is a route that leads to the center, routes that significantly deviate from the center are likely to be incorrect.",
+        "tips": "• It is not necessary to defeat the boss who is near the quest item.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Obtain the quest item (Allflame) in the deepest part of the area.\n▸Immediately exit through the door at the back.",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area1": {
+    "visits": {
+      "1": {
+        "objective": "Move to the left and enter \"The Forest Encampment\"\n\n(City)\nFrom the upper right, \"The Old Fields\"",
+        "layout": "",
+        "tips": "🌟 Highest experience gain efficiency\n\n[General Notes for Act 2]\n• Collect all the yellow (rare) items and convert them into orbs (this will be useful later when you purchase gem, as you will need a large number of orbs).\n• In the Bandit Quest, choosing to help Alira allows you to gain elemental resistance (as shown in the following chart).\n• Starting at item level 25, players can obtain 4-linked equipment through gambling.\n• To ensure that the final \"The Vaal City\" is preserved, it's important to maximize its fire resistance as much as possible.",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸ Proceed to the upper left.[town]<span style='color:#dddd44'>The Forest Encampment</span> Entering\n▸ [City] From the upper right corner,[move]<span style='color:#dddd44'>The Old Fields</span>",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area2": {
+    "visits": {
+      "1": {
+        "objective": "Proceed along the road, and when you encounter The Den, send portal forward.",
+        "layout": "",
+        "tips": "• However, if you simply follow the road, you will never get lost.\n• If you leave The Den at the entrance to the area where you can obtain \"Quicksilver Flask\" by completing the quest, it will be more efficient.\n(If you don't need the Quicksilver Flask, you can omit it.)",
+        "direction": "ne",
+        "mini_navi": {
+          "text": "▸ Proceed along the road, and look for The Den[portal]Send portal[move]<span style='color:#dddd44'>The Crossroads</span>\n(If you don't need the Quicksilver Flask, you can omit The Den, and that's fine.)\n▸ Simply, if you follow the road, you won't get lost.",
+          "direction": "ne"
+        }
+      },
+      "2": {
+        "objective": "Go to \"The Den\"",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[move]<span style='color:#dddd44'>The Den</span>",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act2_area3": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the road, securing the waypoint.",
+        "layout": "",
+        "tips": "If you need a Quicksilver Flask, use waypoint to return to town and then increment your portal to The Old Fields → The Den.\nIf you no longer need the Quicksilver Flask, please proceed to the left and head towards the area designated for waste disposal.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Follow the road and [wp]activate the waypoint.\n  ① If you need a Quicksilver Flask, return to [town]<span style='color:#dddd44'>town</span> with the waypoint, then take your portal to [move]<span style='color:#dddd44'>The Old Fields</span> (→ The Den).\n  ② Otherwise, continue to the upper left and enter [move]<span style='color:#dddd44'>The Chamber of Sins</span>.",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "Starting from the top-left (Guilty), top-right (The Broken Bridge to Kraityn - Bandit), and bottom-right (The Fellshrine Ruins to The Crypt), clear the remaining ones in a clockwise direction.",
+        "layout": "",
+        "tips": "",
+        "mini_navi": {
+          "text": "▸Top left<span style='color:#dddd44'>The Crypt</span>), upper right<span style='color:#dddd44'>The Broken Bridge</span> Right, Kraityn (Bandit), bottom right (<span style='color:#dddd44'>The Fellshrine Ruins</span> From<span style='color:#dddd44'>The Crypt</span>) In the order listed, complete the tasks in a clockwise direction.",
+          "direction": "none"
+        },
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area4": {
+    "visits": {
+      "1": {
+        "objective": "• Continue and defeat the boss.\n• Return to town.\n\n(City)\n• Turn in the quest and obtain the Quicksilver Flask.(Choose from the following options)\n• From the waypoint, \"The Crossroads\"",
+        "layout": "• Simply moving clockwise along the wall is sufficient.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Continue forward to defeat the boss.[town]<span style='color:#dddd44'>Town</span>\n(If you can just keep moving clockwise along the wall, that's fine.)\n▸ [City][quest]Turn in the quest and obtain the Quicksilver Flask.\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Crossroads</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area5": {
+    "visits": {
+      "1": {
+        "objective": "Activate the waypoint and go to \"The Chamber of Sins Level 2\"",
+        "layout": "• The basic strategy is to go to the upper right corner as soon as you enter. When you see a circular area, approach it from the right side and enter from the inside.\n• Once you reach the circular room, simply proceed from the center in the direction of the \"waypoint\" the waypoint.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Activate the waypoint[move]<span style='color:#dddd44'>The Chamber of Sins Level 2</span>\n(Once inside the circular room, proceed from the center towards the waypoint.)",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "From the waypoint, proceed relentlessly to the upper-left, aiming for \"The Wetlands\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area6": {
+    "visits": {
+      "1": {
+        "objective": "• Complete the Trial of Ascendancy.\n• Continue and defeat the boss.\n• Return to town.\n\n(City)\n• Take the gem as a quest reward.\n• Bottom left: \"To The Riverways\"",
+        "layout": "•<span style='color:#ff6666'>The number of rooms that are connected to the room in the upper-left corner upon entering.</span> Then, it branches off.\n  –<span style='color:#ff8800'>Do not go to the top left.</span>→ Go back and turn right\n  –<span style='color:#4488ff'>You can go to the top left, but not to the next position.</span>→ Bottom left\n  –<span style='color:#dddd44'>Continue moving to the upper left.</span>→ Top left",
+        "tips": "• You must definitely complete the second trial to pass.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[trial]<span style='color:#4488ff'>Complete the Trial of Ascendancy</span> (refer to the guide for the layout)\n▸ Continue forward to defeat the boss.[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Take the gem as a quest reward.\n▸ [City] From the lower left[move]<span style='color:#dddd44'>The Riverways</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area7": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the road, secure the waypoint, and head towards \"The Western Forest\".",
+        "layout": "",
+        "tips": "",
+        "direction": "sw",
+        "flags": {
+          "act2_westernforest_enter": {
+            "objective": "From the waypoint, proceed relentlessly to the upper-left, aiming for \"The Wetlands\".",
+            "layout": "",
+            "tips": "",
+            "direction": "nw",
+            "mini_navi": {
+              "text": "▸From the waypoint, proceed consistently to the upper-left.[move]<span style='color:#dddd44'>The Wetlands</span>",
+              "direction": "nw"
+            }
+          }
+        },
+        "mini_navi": {
+          "text": "▸ Continue.[wp]Activate the waypoint and[move]<span style='color:#dddd44'>The Western Forest</span>",
+          "direction": "sw"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area8": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the road, securing the waypoint.\n• From the waypoint's perspective, proceed in the opposite direction and head towards \"The Weaver's Chambers\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Continue.[wp]Activate the waypoint\n▸As viewed from the waypoint, proceed in the opposite direction from the road.[move]<span style='color:#dddd44'>The Weaver's Chambers</span>",
+          "direction": "none"
+        },
+        "flags": {
+          "act2_weaverschambers_enter+act2_wetlands_enter": {
+            "objective": "• From the perspective of the road, the ally is located in the same direction as waypoint, so help Alira (helping the ally grants +15% elemental resistance).\n• Go to the bottom-left corner of the map, defeat the boss, and obtain the unique item. Then, unlock the nearby door.\n• Return to \"Lioneye's Watch\"\n\n(City)\n• Obtain quest rewards by using Lioneye's Watch to Bestel (passive points).\n• From the waypoint, go to Act2's \"The Wetlands\"",
+            "layout": "",
+            "tips": "Earlier, the quick return to Act 1's town from The Western Forest was done so you can immediately proceed to Act 1.\n\nAlso, it's probably a good time to start preparing for the upcoming \"The Vaal City\" challenge, with the goal of maximizing fire resistance.",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸From the perspective of the road, the ant colony is located in the same direction as the waypoint.\n▸ Go to the bottom-left corner, defeat the boss, and use a unique item to unlock the nearby door.\n▸[town]<span style='color:#dddd44'>Lioneye's Watch</span> Return\n▸ [City] Earn passive points and progress from Act 1 to Act 2.[move]<span style='color:#dddd44'>The Wetlands</span>",
+              "direction": "none"
+            }
+          }
+        }
+      }
+    }
+  },
+  "act2_area9": {
+    "visits": {
+      "1": {
+        "objective": "• Continue and defeat the boss.\n• Return to town.\n\n(City)\n• Submit a quest for Silk and take the gem.\n• From the waypoint, go to \"The Crossroads\" and then to the right, to \"The Broken Bridge\".",
+        "layout": "• Depending on which room the entrance leads to, the following scenarios apply.\n  –<span style='color:#ff6666'>If there's a passage on the upper right, go to the upper right and keep going up.</span>\n  –<span style='color:#ff8800'>If there's a passage on the left side, use the wall-climbing ability to move continuously to the left.</span>\n• If,<span style='color:#dddd44'>If you cannot go to the left, go to the right.</span>",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Proceed further into the area[boss]Defeat the boss,[town]<span style='color:#dddd44'>Town</span>\n(Please refer to the guide for the layout.)\n▸【City】Silk[quest]Turn in the quest and take the gem.\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Crossroads</span> Then go up and right to [move]<span style='color:#dddd44'>The Broken Bridge</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area10": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the road and defeat the Bandit (Kraityn).\n• Return to town.\n\n(City)\n• From the waypoint, go to \"The Crossroads\" and then to the The Fellshrine Ruins on the bottom right.",
+        "layout": "",
+        "tips": "• After defeating the three human-shaped enemies near the waypoint location, you will obtain a large amount of equipment.\n\n• In Act 2, the rewards for the quest will vary depending on whether you choose to help one of the three bandits, or defeat them all.\n• When choosing the option that grants \"+15% Elemental Resistance\" for helping Alira, this is a very beneficial reward.\n• For details on the rewards for other options, and how to change rewards later, please see the following link.\n　https://seesaawiki.jp/pathofexile/d/Bandit%A4%CE%CA%F3%BD%B7%A4%DE%A4%C8%A4%E1",
+        "direction": "ne",
+        "mini_navi": {
+          "text": "▸Proceed along the road and defeat the Bandit (Kraityn).\n▸ After defeating the boss,[town]<span style='color:#dddd44'>Town</span>\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Crossroads</span> Then, move to the right and down.[move]<span style='color:#dddd44'>The Fellshrine Ruins</span>",
+          "direction": "ne"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area11": {
+    "visits": {
+      "1": {
+        "objective": "• Proceeding along the street.\n• If you see this mark, please enter the building and proceed to The Crypt.",
+        "layout": "",
+        "tips": "",
+        "direction": "se",
+        "mini_navi": {
+          "text": "▸Proceeding along the street\n▸If you see a sign with this symbol, please enter the building.[move]<span style='color:#dddd44'>The Crypt</span>",
+          "direction": "se"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area12": {
+    "visits": {
+      "1": {
+        "objective": "• Complete the Trial of Ascendancy.\n• Proceed along the wall, heading towards \"The Crypt Level 2\".",
+        "layout": "• In all cases, the fastest route is along the upper wall.\n\n• You must definitely complete the third Ascendant trial.\n• Continuing to move along the wall, you will eventually reach the second level.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[trial]<span style='color:#4488ff'>The Trial of Ascendancy</span>\n▸ Proceed along the wall.[move]<span style='color:#dddd44'>The Crypt Level 2</span>\n(Regardless of the pattern, the fastest route is along the upper wall)",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area13": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the wall to acquire the quest items.\n• Return to town\n\n(City)\n• Submit a quest (passive points) for Yeena\n• From the waypoint, \"The Riverways\"",
+        "layout": "",
+        "tips": "Continuing to move along the wall.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Proceed along the wall to acquire the quest items.\n▸[town]<span style='color:#dddd44'>Town</span>\n▸【City】Yeena[quest]Turn in the quests (for passive points)\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Riverways</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area14": {
+    "visits": {
+      "1": {
+        "objective": "• Move to the upper left and defeat the bandit (Oak).\n• Once you've defeated the boss, activate the waypoint, and then use the waypoint to travel to the city in Act 1.\n\n(City)\nFrom the waypoint, travel directly to \"The Western Forest\"",
+        "layout": "• Essentially, move diagonally to the left and up, defeat Oak, and then continue moving upwards.\n• However, there is one exception: if the entrance is directly facing the river,\nOnce you defeat Oak, the correct way to proceed is to go down.\n\n• Once you've secured waypoint, first head to the town in Act 1, and then immediately proceed to The Western Forest in Act 2.",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸Move to the upper-left and defeat the bandit (Oak).\n▸ After defeating the boss,[wp]Activate the waypoint and transition from the waypoint to Act 1.[town]<span style='color:#dddd44'>Town</span>\n▸ [City] From the waypoint, immediately proceed to Act 2[move]<span style='color:#dddd44'>The Western Forest</span>",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "objective": "Move to the upper-left, and go to \"The Vaal Ruins\".",
+        "layout": "",
+        "tips": "",
+        "mini_navi": {
+          "text": "▸ Proceed to the upper left.[move]<span style='color:#dddd44'>The Vaal Ruins</span>",
+          "direction": "none"
+        },
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area15": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed to the end of the area and click on the object labeled \"Ancient Seal\".\n• Use the far exit to, go to \"The Northern Forest\".",
+        "layout": "• <span style='color:#ff6666'>If you can go to the lower right from the entrance, that route is always correct.</span>\n  – If you reach a dead end after a short distance:\n    • Go counter-clockwise from the upper right.\n  – If you reach a dead end after travelling a long distance:\n    • Continue to the upper right.\n• <span style='color:#ff6666'>If you cannot go to the lower right, try the upper left.</span>\n  – If that route is open, follow the left wall:\n    • If you can turn left, go to the lower left.\n    • If you cannot turn left, go to the upper right.\n• <span style='color:#dddd44'>If neither the lower-right nor upper-left route is open, go to the lower left from the entrance.</span>",
+        "tips": "• Once you obtain the quest item from the deeper area, proceed directly to the deeper part of the dungeon and emerge.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Proceed to the end of the area and click on the object labeled \"Ancient Seal\".\n(Please refer to the guide for the layout.)\n▸Use the far exit to.[move]<span style='color:#dddd44'>The Northern Forest</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area16": {
+    "visits": {
+      "1": {
+        "objective": "Move to the upper left and go to \"The Caverns\".",
+        "layout": "",
+        "tips": "🌟 Highest experience gain efficiency\n\nDespite its misleading name, \"The Forest of Terror\" is not a place you need to visit.",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸ Proceed to the upper left.[move]<span style='color:#dddd44'>The Caverns</span>",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area17": {
+    "visits": {
+      "1": {
+        "objective": "Go as far as possible, and proceed to \"The Ancient Pyramid\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue to the end of the path.[move]<span style='color:#dddd44'>The Ancient Pyramid</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area18": {
+    "visits": {
+      "1": {
+        "objective": "• Simply climbing stairs.\n• Defeat the boss.\n• Unlock crafting recipes\n• Return to town\n\n(City)\n• After organizing your inventory, use the waypoint to travel to \"The City of Sarn\".",
+        "layout": "",
+        "tips": "After defeating the boss, when you sort your inventory in the town of Act 2, you can then reach the town in Act 3 and proceed directly to The Slums with your inventory organized, which is an efficient strategy.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Constantly climbing the stairs,[boss]Defeat the boss.\n▸[craft]Unlock crafting recipes\n▸[town]<span style='color:#dddd44'>Town</span>\n▸ [City] After organizing your inventory, use the waypoint to enter [move]<span style='color:#dddd44'>The City of Sarn</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area1": {
+    "visits": {
+      "1": {
+        "objective": "• Move to the upper left and help with Clarissa\n• Proceed to the left, towards \"The Sarn Encampment\".\n\n(City)\n• From the upper right, go to \"The Slums\".",
+        "layout": "",
+        "tips": "🌟 Excellent area for experience\n\n[General Notes for Act 3]\n• Regularly check for four-linked items available for sale in stores.\n• The pier located in Act 3 is an ideal location for leveling up.",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸Move to the upper left and help with Clarissa\n▸ Proceed to the left[town]<span style='color:#dddd44'>The Sarn Encampment</span>\n▸ [City] From the upper right corner,[move]<span style='color:#dddd44'>The Slums</span>going",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area2": {
+    "visits": {
+      "1": {
+        "objective": "From the back, go to \"The Crematorium\".",
+        "layout": "• Determine the direction based on the entrance.\n  –<span style='color:#ff6666'>If facing the upper right, proceed along the lower wall in a counter-clockwise direction.</span>\n  –<span style='color:#dddd44'>When facing upwards on the left, proceed clockwise along the lower wall.</span>\n• This pattern includes two scenarios: one where the exit is easily found, and another where the path leads to a dead end and requires backtracking.\nIf you find yourself in a situation where you need to backtrack, the correct direction is to follow the wall in a counter-clockwise manner.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸From the back[move]<span style='color:#dddd44'>The Crematorium</span>\nThe layout is determined based on the direction of the entrance.\n  –<span style='color:#ff6666'>If facing the upper right, proceed along the lower wall in a counter-clockwise direction.</span>\n  –<span style='color:#dd66ff'>When facing upwards on the left, proceed clockwise along the lower wall.</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "Go to \"The Sewers\" which is a short walk from the entrance.",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Located a short walk from the entrance[move]<span style='color:#dddd44'>The Sewers</span>",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act3_area3": {
+    "visits": {
+      "1": {
+        "objective": "• Complete the Trial of Ascendancy.\n• Defeat the final boss, obtain the crafting recipes, and return to town.\n\n(City)\n• Take the gem as a quest reward.\n• Get the key from Clarissa and move to The Slums from the upper right.",
+        "layout": "• From the entrance, move right and inspect the layout beyond the wall.\n  –<span style='color:#ff6666'>If the book icon is visible</span>\n    • Go to the book icon and complete the fourth Trial of Ascendancy.\n    • Then continue upward and defeat the boss.\n  –<span style='color:#ff8800'>If the Trial of Ascendancy structure is visible</span>\n    • Approach from the lower left and complete the trial. The boss location depends on the layout:\n      > If the trial is entered from the left\n        • Return to the entrance, then go to the upper right.\n      > If the trial is entered from below\n        • The boss is immediately beyond the trial.\n  –<span style='color:#dddd44'>If neither is visible</span>\n    • Start by heading to the upper left:\n      > If you find the Trial of Ascendancy\n        • Complete it, then go to the upper right for the boss.\n      > If you find a room\n        • The trial is above, and the boss is to the upper left.\n      > If you find nothing\n        • Return to the entrance. The trial and boss are below.\n  –<span style='color:#ff8800'>If there is no upper-right route</span>\n    • Head to the lower left from the entrance.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[trial]<span style='color:#4488ff'>Complete the Trial of Ascendancy</span> (refer to the guide for the layout)\n▸Defeat the final boss[craft]Obtain the crafting recipe.[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Take the gem as a quest reward.\n▸【City】Obtain a key from Clarissa and use it to open the door on the upper right.[move]<span style='color:#dddd44'>The Slums</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area4": {
+    "visits": {
+      "1": {
+        "objective": "• Obtain three quest items.\n• Activate the waypoint and go to \"The Marketplace\"",
+        "layout": "",
+        "tips": "• The quest items are located: one in the foreground, and two in the background.\n• In most cases, the final quest item is located on the right side.\nHowever, the final quest item will only be located in the upper-left corner if the room immediately after the waypoint (World Prophecy) is shaped like a \"T\".",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸ Obtain three quest items.\n(The quest items are located one on the left and two on the right.)\n\"If the room is shaped like a 'T', the third item should be in the upper-left corner. \"Everything else is on the right.\n▸[wp]Activate the waypoint and[move]<span style='color:#dddd44'>The Marketplace</span>",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "objective": "Use the quest item to go to \"The Ebony Barracks\".",
+        "layout": "",
+        "tips": "",
+        "direction": "w",
+        "mini_navi": {
+          "text": "▸ Use quest items to:[move]<span style='color:#dddd44'>The Ebony Barracks</span>",
+          "direction": "w"
+        }
+      }
+    }
+  },
+  "act3_area5": {
+    "visits": {
+      "1": {
+        "objective": "Activate the waypoint and go to \"The Catacombs\"",
+        "layout": "•<span style='color:#ff6666'>If the entrance is on the left and you cannot proceed forward, this area should be located higher up.</span>\n•<span style='color:#dddd44'>If not, this area should be on the left.</span>",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[wp]Activate the waypoint and[move]<span style='color:#dddd44'>The Catacombs</span>\n  –<span style='color:#ff6666'>If the water body is on the left side of the entrance, then this area is located above.</span>\n  –<span style='color:#dd66ff'>If not, this area should be on the left.</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "From the waypoint's perspective, move in the opposite direction of \"The Catacombs\" to reach \"The Battlefront\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸From the waypoint's perspective, move in the opposite direction of The Catacombs,[move]<span style='color:#dddd44'>The Battlefront</span>",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act3_area6": {
+    "visits": {
+      "1": {
+        "objective": "• Complete the Trial of Ascendancy.\n• Return to town\n\n(City)\n• Submit a quest to Hargan (using passive points).\n• From the waypoint, back to \"The Marketplace\"",
+        "layout": "•<span style='color:#ff6666'>After exiting the first room, if you want to proceed to the left and upwards, please go that way.</span>\n•<span style='color:#dddd44'>If not, please proceed to the upper right.</span>",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸[trial]<span style='color:#4488ff'>The Trial of Ascendancy</span>, then return to [town]<span style='color:#dddd44'>Town</span>\n  （<span style='color:#ff6666'>After exiting the first room, if you want to proceed, go left and up.</span> <span style='color:#dd66ff'>If it's too difficult, try the upper right.</span>）\n▸ [City][quest]Turn in the quest (passive points) for Hargan\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Marketplace</span>",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area7": {
+    "visits": {
+      "1": {
+        "objective": "• Instead of moving towards the building, proceed in the direction where the opening is, and secure the waypoint.\n• Obtain a \"ribbon spool\" from the Black Guard chest.\n• From the waypoint, navigate to \"The Docks\" located in the top-left corner.",
+        "layout": "• To achieve waypoint (the goal), first move to the upper left.\n• The ribbon spool is located immediately to the left of the waypoint.\n• The Docks is located to the left and above waypoint.\n\n• Do not enter the lower-left area of the waypoint yet.",
+        "tips": "",
+        "direction": "w",
+        "mini_navi": {
+          "text": "▸Instead of proceeding in the direction of the building, move towards the open area.[wp]Activate the waypoint\n▸Obtain a \"Ribbon Spool\" from the Black Guard Chest.\n▸Located to the left and above waypoint[move]<span style='color:#dddd44'>The Docks</span>",
+          "direction": "w"
+        }
+      },
+      "2": {
+        "objective": "Proceed in the direction of the building, and head towards \"Solaris Temple\".",
+        "layout": "",
+        "tips": "",
+        "direction": "n",
+        "mini_navi": {
+          "text": "▸ Proceed in the direction of the building,[move]<span style='color:#dddd44'>Solaris Temple</span>",
+          "direction": "n"
+        }
+      }
+    }
+  },
+  "act3_area8": {
+    "visits": {
+      "1": {
+        "objective": "• Obtain \"Thaumetic Sulphite\" from the supply box.\n• Return to town\n\n(City)\n• From the waypoint, back to \"The Battlefront\"",
+        "layout": "• First, determine whether the entrance is located at the top or bottom of the area.\n•<span style='color:#ff6666'>If it's located upstairs, please enter and follow the wall to the right.</span> \n•<span style='color:#dddd44'>If it's located at the bottom, enter and walk along the left wall.</span> ",
+        "tips": "🌟 Highest experience gain efficiency\n\nSince it's easy to increase your level here, if you feel you're lacking, increase your level.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Obtain \"Thaumetic Sulphite\" from the supply box.\n(Please refer to the guide for the layout.)\n▸[town]<span style='color:#dddd44'>Town</span>\n▸ [City] From the waypoint[move]<span style='color:#dddd44'>The Battlefront</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area9": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, and you will find \"The Solaris Temple Level 2\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Solaris Temple Level 2</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area10": {
+    "visits": {
+      "1": {
+        "objective": "• Continue and activate the waypoint.\n• Obtain quest items from nearby NPCs.\n• In the back room (The Eternal Laboratory), obtain the crafting recipe.\n• From the waypoint, \"The Sewers\"",
+        "layout": "• If you follow the red carpet, it should be okay.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[wp]Secure a waypoint and collect the nearby quest items.\n(If you follow the red carpet, it's okay.)\n▸In the back room,[craft]Obtain the recipe.\n▸From the waypoint[move]<span style='color:#dddd44'>The Sewers</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area11": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed to the upper-left area and defeat the boss, General Gravicius.\n• Continuing further to the left, continue to \"Lunaris Temple\".",
+        "layout": "",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸ Proceed to the upper left.[boss]\"Our mission is to defeat General Gravicius.\"\n▸ Continue to move to the upper left.[move]<span style='color:#dddd44'>Lunaris Temple</span>",
+          "direction": "nw"
+        },
+        "flags": {
+          "act3_solaris_enter+act3_lunaris_enter": {
+            "objective": "Proceed to the right and go to \"The Imperial Gardens\".",
+            "layout": "",
+            "tips": "",
+            "direction": "ne",
+            "mini_navi": {
+              "text": "▸ Proceed to the upper right.[move]<span style='color:#dddd44'>The Imperial Gardens</span>",
+              "direction": "ne"
+            }
+          }
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area12": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, securing the waypoint, and then go to \"The Lunaris Temple Level 2\".",
+        "layout": "• If you follow the red carpet, it should be okay.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[wp]Activate the waypoint and[move]<span style='color:#dddd44'>The Lunaris Temple Level 2</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area13": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed further and defeat the boss.\n• Obtain the crafting recipe\n• Return to town\n\n(City)\n• Submit a quest for Maramoa and take the gem.\n• Submit a quest (passive points) for Grigor\n• From the waypoint, back to \"The Ebony Barracks\"",
+        "layout": "• This area is divided into two sections.\n(Section 1)\n• A series of stairs. Initially, there were always two staircases, and they were always located in the same direction. Furthermore, an important rule to remember is that if you find the second staircase, the third staircase will also be located in the same direction.\n(Section 2)\n• A straight maze (moving upwards) or a U-shaped maze.\n• In the final section, you will see a \"wagon.\"With one cart and two carts, if you always move in the direction where there are two carts, you will reach the goal.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[boss]Defeat the boss (refer to the guide for layout instructions)\n▸[craft]Obtain the crafting recipe.[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Turn in the quests for Maramoa and Grigor (including passive points, etc.)\n▸From the waypoint[move]<span style='color:#dddd44'>The Ebony Barracks</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area14": {
+    "visits": {
+      "1": {
+        "objective": "• Move forward in the direction indicated, and secure the waypoint.\n• Complete the Trial of Ascendancy.\n• From the waypoint, proceed upwards and to the right, towards \"The Sceptre of God\".",
+        "layout": "",
+        "tips": "By successfully completing this challenge, you will be able to attempt the Normal Labyrinth, and upon completion, you will be able to change jobs.\nAs a benchmark, if you have reached level 28, it is safe to attempt the challenge at this point.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Proceeding upwards[wp]Activate the waypoint\n▸ Continue moving upwards.[trial]<span style='color:#4488ff'>The Trial of Ascendancy</span>\n▸Proceed from the waypoint in a direction towards the upper right.[move]<span style='color:#dddd44'>The Sceptre of God</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    },
+    "routes": {
+      "library_detour": {
+        "visits": {
+          "1": {
+            "objective": "• Move forward in the direction indicated, and secure the waypoint.\n• \"The Library\" nearby",
+            "layout": "",
+            "tips": "Furthermore, the purpose of acquiring The Library is to obtain the necessary gem, which is not available within one's own class, and to facilitate early build transitions.\nEven if you complete the Lilly quest in Act 6, you can still purchase gem. Therefore, if you don't need to rush, you can skip The Library.\nIf you want to skip the Trial of Ascendancy, simply complete it and then proceed from the waypoint towards the upper right, heading towards \"The Sceptre of God\".",
+            "direction": "n",
+            "mini_navi": {
+              "text": "▸ Proceeding upwards[wp]Activate the waypoint\n▸ Located nearby[move]<span style='color:#dddd44'>The Library</span>",
+              "direction": "n"
+            }
+          },
+          "2": {
+            "objective": "• Complete the Trial of Ascendancy.\n• From the waypoint, proceed upwards and to the right, towards \"The Sceptre of God\".",
+            "layout": "",
+            "tips": "By successfully completing this challenge, you will be able to attempt the Normal Labyrinth, and upon completion, you will be able to change jobs.\nAs a benchmark, if you have reached level 28, it is safe to attempt the challenge at this point.",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸ Proceeding upwards[trial]<span style='color:#4488ff'>The Trial of Ascendancy</span>\n▸Proceed from the waypoint in a direction towards the upper right.[move]<span style='color:#dddd44'>The Sceptre of God</span>",
+              "direction": "none"
+            }
+          }
+        }
+      }
+    }
+  },
+  "act3_area15": {
+    "visits": {
+      "1": {
+        "objective": "• Continue and activate the waypoint.\n• Deeper in, find the \"movable candlestick\" and activate it, then proceed to \"The Archives\".",
+        "layout": "",
+        "tips": "\"Objects that can be moved\" are particularly important to pay attention to, as they do not display a quest marker.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[wp]Activate the waypoint\n▸Further down, Activate the movable candlestick.[move]<span style='color:#dddd44'>The Archives</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "• Turn in the quest and receive gem.\n• Buy gem from an NPC.\n• From the waypoint, back to \"The Imperial Gardens\"",
+        "layout": "",
+        "tips": "",
+        "mini_navi": {
+          "text": "▸[quest]Turn in the quest and receive gem.\n▸Buy gem from an NPC\n▸From the waypoint[move]<span style='color:#dddd44'>The Imperial Gardens</span>",
+          "direction": "none"
+        },
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area16": {
+    "visits": {
+      "1": {
+        "objective": "• Obtain four quest items.\n• Return to town\n\n(City)\n• Take the \"Orb of Alteration\" and the \"Orb of Chance\" from your stash, which are required for the purchase.\n• From the waypoint, back to \"The Library\"",
+        "layout": "• If you move in a clockwise direction, you will reach the four quest items.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Obtain four quest items.\n▸[town]<span style='color:#dddd44'>Town</span>\n▸【City】Extract the necessary Orb of Alteration from the stash to purchase\n▸ [City] From the waypoint[move]<span style='color:#dddd44'>The Library</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area17": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the path, heading towards \"The Upper Sceptre of God\".",
+        "layout": "• In each level, it is best to follow these two principles:\n- When entering the area, proceed straight along the direction of the stairs (if you encounter a wall, look for an alternative route).\n- Move in a clockwise direction.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Proceeding along the path[move]<span style='color:#dddd44'>The Upper Sceptre of God</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area1": {
+    "visits": {
+      "1": {
+        "objective": "Proceed to the upper-left corner and head towards \"Highgate\".\n(If you haven't cleared Act 3) Go from the town in Act 3 to the Normal Labyrinth.\n\n\n(City)\n• From the bottom left, go to \"The Dried Lake\".",
+        "layout": "",
+        "tips": "🌟 Excellent area for experience.\n\n[General notes for Act 4]\n• Portal Scrolls should now be plentiful.\n  Using a Portal Scroll is faster than `/exit`, so use one when you can spare it.\n• Corrupted Blood is extremely dangerous. Use Beastcrafting or another method to add bleed removal to a flask.\n• Incoming damage is becoming more dangerous, so prioritize armour with high evasion or Energy Shield and aim for 75% elemental resistances.\n  – Look for equipment with at least two elemental resistances.\n  – The Crafting Bench can add missing resistances easily.\n• Continue checking vendors for four-linked equipment.\n\n• Use the skull icon in The Sarn Encampment to enter Aspirants' Plaza and complete your first Ascendancy.",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸ Proceed to the upper left.[move]<span style='color:#dddd44'>Highgate</span>\n(If not completed)[move]<span style='color:#dddd44'>Complete the Normal Labyrinth from Act 3.</span>\n▸ [City] From the lower left corner,[move]<span style='color:#dddd44'>The Dried Lake</span>",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area2": {
+    "visits": {
+      "1": {
+        "objective": "• Defeat Voll, Emperor of Purity.\n• Obtain the crafting recipe.\n• Return to town.\n\n(Town)\n• Use the quest item in the upper-left corner to open the entrance to The Mines.\n• Turn in Oyun's quest and take the gem reward.\n• Buy any needed gems from Petarus and Vanja.\n• Enter The Mines.",
+        "layout": "• The boss is located somewhere in the center of the area, either to the left or slightly below (and to the right).\n\n• The mini-map displays icons for books and crafting recipes, allowing you to easily identify them.",
+        "tips": "🌟 Excellent area for experience",
+        "direction": "s",
+        "mini_navi": {
+          "text": "▸[boss]Defeat the boss, [craft]obtain the crafting recipe, and return to [town]<span style='color:#dddd44'>town</span>.\n▸【Town】Use the quest item in the upper-left corner to open the entrance to The Mines.\n▸【Town】[quest]Turn in Oyun's quest and take the gem reward.\n▸【Town】Enter [move]<span style='color:#dddd44'>The Mines</span>.",
+          "direction": "s"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area3": {
+    "visits": {
+      "1": {
+        "objective": "\"Complete the Normal Labyrinth\"",
+        "layout": "",
+        "tips": "• Enter through the skull-shaped mark with the text \"The Sarn Encampment\"\n• Before fighting the boss, be sure to grab the crafting recipes from the designated area (which may include storage spaces).\n• The layout should be based on the one used by \"PoE LAB\" (https://www.poelab.com/).\n• The \"D\" symbol indicates the location of the Dark Shrine. There is a hidden room somewhere within the area, with an entrance that can be opened nearby.\nBy obtaining them, players can benefit from buffs for themselves and the weakening of bosses.\n• The options for obtaining clear rewards are to focus on improving the quality of gem, which will be used after entering the map, or to aim for a high-value, randomly generated gem.\n• Complete your Ascendancy",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Complete \"Normal Labyrinth\"",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸From the lower left corner of Highgate's town center,[move]<span style='color:#dddd44'>The Dried Lake</span>",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act4_area4": {
+    "visits": {
+      "1": {
+        "objective": "• Obtain the recipe.\n• Proceed further, and you will find \"The Mines Level 2\".",
+        "layout": "•<span style='color:#ff6666'>When proceeding to the left and up at an intersection, always go left and up.</span> For everything else, simply continue on the path.",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸[craft]Obtain the recipe.\n▸Continue forward.[move]<span style='color:#dddd44'>The Mines Level 2</span>\n  （<span style='color:#ff6666'>When proceeding to the left and up at an intersection, always go left and up.</span> Everything else is straightforward.",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area5": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the path, and interact with the quest object, \"Deshlet's Soul,\" located along the way.\n• Obtain the recipe.\n• Go to \"The Crystal Veins\"",
+        "layout": "•<span style='color:#ff6666'>As soon as you enter, if the path slopes downwards, proceed downwards for a while.</span> Continue along the path.\n\"The Soul of Deshlet\" can be found on the right or below the path.\n•<span style='color:#dddd44'>As soon as you enter, if the path only extends upwards, proceed in that direction.</span> Continue along the path.\nIf you follow the wall on the right, you will eventually reach a fork in the path, where you can proceed towards the \"Soul of Deshlet.\" You will find it at the end of this path. Then, return to the upper-left corner.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Proceed forward along the path, and interact with the object \"The Soul of Deshlet\" along the way.\n\n(Please refer to the guide for the layout.)\n▸[craft]Obtain the recipe.\n▸[move]<span style='color:#dddd44'>The Crystal Veins</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area6": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, securing the waypoint, and go to \"Daresso's Dream\".",
+        "layout": "• The basic direction is to proceed along the opposite wall from the direction of the first left or right passage.\n  ―<span style='color:#ff6666'>If the first passage leads to the lower-left direction</span> Follow the wall on the right side.\n  ―<span style='color:#dddd44'>If the first passage leads to the upper right</span> Follow the wall on the left side.",
+        "tips": "★ Please be aware that if you miss the opportunity to connect to this Wi-Fi network, it can make subsequent travel less convenient.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[wp]Activate the waypoint and[move]<span style='color:#dddd44'>Daresso's Dream</span>\nThe basic principle is to proceed along the opposite wall from the initial corridor, facing the direction of the first corridor.\n  ―<span style='color:#ff6666'>If the first passage leads to the lower-left direction</span> Follow the wall on the right side.\n  ―<span style='color:#dddd44'>If the first passage leads to the upper right</span> Follow the wall on the left side.",
+          "direction": "none"
+        },
+        "flags": {
+          "act4_grandarena_enter": {
+            "objective": "Go to \"Kaom's Dream\"",
+            "layout": "",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸[move]<span style='color:#dddd44'>Kaom's Dream</span>",
+              "direction": "none"
+            }
+          },
+          "act4_grandarena_enter+act4_kaomstronghold_enter": {
+            "objective": "Turn in the quest and go to \"The Belly of the Beast\".",
+            "layout": "",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸[quest]Turn in the quest,[move]<span style='color:#dddd44'>The Belly of the Beast</span>",
+              "direction": "none"
+            }
+          },
+          "act4_kaomstronghold_enter": {
+            "objective": "Go to \"Daresso's Dream\"",
+            "layout": "",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸[move]<span style='color:#dddd44'>Daresso's Dream</span>",
+              "direction": "none"
+            }
+          }
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area7": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Grand Arena\".",
+        "layout": "• The basic principle is to always move towards the upper right when possible. For everything else, proceed to the right.\n• If you feel like you've reached the upper-right corner, aim upwards to reach the goal.",
+        "tips": "",
+        "direction": "ne",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Grand Arena</span>\n  –<span style='color:#ff8800'>Generally, when moving to the right, always move to the upper right.</span> <span style='color:#dd66ff'>For everything else, please refer to the lower right.</span>\n- If you feel like you've reached the upper-right corner, move towards the upper-left.",
+          "direction": "ne"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area8": {
+    "visits": {
+      "1": {
+        "objective": "• Activate the waypoint\n• Obtain the recipe.\n• Boss: \"Defeat Daresso\"\n• Return to town\n\n(City)\nFrom the waypoint, back to \"The Crystal Veins\"",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[wp]Activate the waypoint\n▸[craft]Obtain the recipe.\n▸[boss]Boss: \"Defeat Daresso\"[town]<span style='color:#dddd44'>Town</span>\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Crystal Veins</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area9": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"Kaom's Stronghold\".",
+        "layout": "• Essentially, the area is connected by a single path, featuring a winding, S-shaped route.\n• The layout includes sections where you can skip over waterfalls. Some layouts also allow for skipping two consecutive steps. It is rare to encounter a layout where skipping is completely impossible.",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>Kaom's Stronghold</span>\nThe area is primarily connected by a single path, forming a curved, S-shaped layout.",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area10": {
+    "visits": {
+      "1": {
+        "objective": "• Obtain the recipe.\n• Proceed further and defeat the boss.\n• Return to town\n\n(City)\nFrom the waypoint, back to \"The Crystal Veins\"",
+        "layout": "",
+        "tips": "🌟 Highest experience gain efficiency\n\nReach level 32 here before continuing.",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸[craft]Obtain the recipe.\n▸Continue forward.[boss]Defeat the boss,[town]<span style='color:#dddd44'>Town</span>\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Crystal Veins</span>",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area11": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Belly of the Beast Level 2\".",
+        "layout": "• The basic direction is to move left and down. For everything else, proceed to the left.\nIf neither option is feasible, proceed to the right.\nIf you find yourself stuck following this pattern, try going back to the lower-left corner.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Belly of the Beast Level 2</span>\n  <span style='color:#ff6666'>If the basic direction is to move to the lower-left, then the answer is lower-left.</span> <span style='color:#dd66ff'>Otherwise, continue to the upper left.</span>\n  <span style='color:#ff8800'>If neither of those options works, try the top right.</span> Proceed forward.\nIf you reach a dead end following this pattern, try moving back to the lower-left corner.",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area12": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Bowels\".\n\n(The Bowels)\n• Boss: \"Defeat Piety\"\n• Go to \"The Harvest\"",
+        "layout": "Six different layouts are available.\n\n•<span style='color:#ff6666'>If the starting point is the upper right corner of the entire area</span>(Image 1): Proceed along the left-hand side, heading towards the exit.\n\n•<span style='color:#dddd44'>When the starting point is on the right or below the entire area.</span>: Identify based on the presence of \"Tunnels\" (similar to a pathway for the gastrocnemius muscle).\n―If there is only one instance of \"Tunnels\" (as shown in Figure 2), proceed by passing through \"Tunnels\" until you are forced to hit the curve, and then continue along the road.\n\"There are two tunnels, with a significant distance between them (images 3 and 4): After passing the first tunnel, proceed until you reach a T-intersection. From there, turn left and then follow the wall upwards.\"\n\"There are two tunnels, and the distance between them is very short (enough to form a square).\"(Image 5): Returning to the exit of the first Tunnels and proceeding to the right, you will find a zigzag path leading to Piety.\n\"Short tunnels (also known as 'fake tunnels')\"(Image 6): If the second Tunnels ends at a T-intersection, proceed to the left and ignore the dead end, heading towards the curve leading to Piety.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Bowels</span>\n\n(Please refer to the guide for the layout.)\n[The Bowels][boss]Boss: \"Defeat Piety\"\n[The Bowels][move]<span style='color:#dddd44'>The Harvest</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area13": {
+    "visits": {
+      "1": {
+        "objective": "• Boss: \"Defeat Piety\"\n• Go to \"The Harvest\"",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "• Boss: \"Defeat Piety\"\n• Go to \"The Harvest\"",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act4_area14": {
+    "visits": {
+      "1": {
+        "objective": "• Activate the waypoint, enter the three arenas within the area, and defeat all three bosses within each arena.\n• Submit a quest for Piety\n• \"Go to Black Core\"\n\n(Black Core)\n• Boss: \"Defeat Malachai\"\n• Return to town\n\n(City)\n• Turn in the quests for Dialla and Tasuni, and receive passive points for gem.\n• Proceed from the upper right to \"The Ascent\".",
+        "layout": "• Regarding the three boss enemies, one is always positioned to the upper right, as viewed from the player's perspective.\nThe remaining two individuals are located on the left side (with more individuals in the upper-left and lower-left positions) as viewed from the waypoint.\n\n• First, go to the boss on the upper right and defeat him. Then, return to the town using the Warp Point.\nThe smoothest route involves returning to the starting point (waypoint), then defeating the two enemies on the left side consecutively, and finally returning to the starting point (waypoint).",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[wp]Activate the waypoint and defeat the three bosses in each of the three arenas.\n▸[quest]Turn in the quest \"Piety\"[move]<span style='color:#dddd44'>Black Core</span>\n▸[boss]Boss: \"Defeat Malachai\"[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Submit three quests to the NPCs, starting from the top right.[move]<span style='color:#dddd44'>The Ascent</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act4_area15": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed further and obtain the crafting recipe.\n• Operate the lever to \"Oriath to portal\"\n• Proceed to Act 5",
+        "layout": "• As you move upwards, you will come across a long bridge in the center of the area, which you can cross.\nAfter that, proceed upwards while following the right-hand wall.",
+        "tips": "🌟 Excellent area for experience",
+        "direction": "n",
+        "mini_navi": {
+          "text": "▸Continue forward.[craft]Obtain the crafting recipe\n▸ Operate the lever[move]<span style='color:#dddd44'>Oriath of portal</span>",
+          "direction": "n"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act5_area1": {
+    "visits": {
+      "1": {
+        "objective": "• Boss: \"Defeat Overseer Krow\"\n• Go to \"Overseer's Tower\"\n\n(City)\n• Talk to Lani and receive a reward ring.\n• \"Go to the slave management zone.\"",
+        "layout": "• From the starting point, follow the wall on the left.",
+        "tips": "3.27 In the Keepers League, completing the \"Breach\" content in this area guarantees a 5L armor, so it's possible that completing Mirage content here in 3.28 could also result in obtaining 5L armor.",
+        "direction": "sw",
+        "mini_navi": {
+          "text": "▸[boss]Boss: \"Defeat Overseer Krow\"[move]<span style='color:#dddd44'>Overseer's Tower</span>\n(From the starting point, follow the wall on the left.)\n▸ [City][quest]Talk to Lani and receive a reward ring.\n▸ [City][move]<span style='color:#dddd44'>The Control Blocks</span>",
+          "direction": "sw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act5_area2": {
+    "visits": {
+      "1": {
+        "objective": "• Find the Experimental Supplies chest and take the Miasmeter.\n• Defeat Justicar Casticus.\n• Continue onward to Oriath Square.",
+        "layout": "• The Control Blocks has a similar structure.\n• First, proceed to the left or to the left-hand side, where you will find the equipment box. From there, you can retrieve the Miasmeter.\n• After that, the boss will be located in the upper right corner of the map.\n\n• The experimental equipment box has a quest marker displayed on the mini-map.\n• There are also sections where the fence is damaged, which can be easily cleared with techniques like Frostblink, allowing for quick passage.",
+        "tips": "🌟 Excellent area for experience",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Search for a box of experimental equipment and obtain a \"Miasmeter.\"\n(If you proceed to the left or to the left-hand side, you will find the equipment box.)\n▸ Located in the upper right corner of the map[boss]\"Defeat Justicar Casticus\"\n▸Continue forward.[move]<span style='color:#dddd44'>Oriath Square</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act5_area3": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Templar Courts\".",
+        "layout": "",
+        "tips": "",
+        "direction": "ne",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Templar Courts</span>",
+          "direction": "ne"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act5_area4": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, and go to \"The Chamber of Innocence\".",
+        "layout": "• If you start at the entrance and walk around the entire area in a clockwise direction, you will reach the finish line.\n• There is a \"courtroom\" located in the center of the area, and this is where the proceedings will conclude.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Chamber of Innocence</span>\n\nFrom the entrance to the area<span style='color:#ff6666'>In a clockwise direction around the entire object.</span> Continue around the area.\nThere is a \"courtroom\" located in the center of the area, and this is where the proceedings will be revisited.",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act5_area5": {
+    "visits": {
+      "1": {
+        "objective": "Proceed counter-clockwise from the top-left, obtain the crafting recipe, and go to \"The Sanctuary of Innocence\".\n\n(The Sanctum of Innocence)\n• Defeat the boss.\n• Return to town\n\n(City)\n• Turn in the quests to two NPCs (using flasks and passive points).\n• Navigate from the waypoint to \"The Chamber of Innocence\"",
+        "layout": "• First, proceed continuously in the upper-left direction, and then, by moving to the lower-right, you will find the crafting recipe.\n• As you continue further, you will reach the finish line.",
+        "tips": "🌟 Highest experience gain efficiency",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸ Proceed clockwise from the top left.[craft]Obtain the craft.[move]<span style='color:#dddd44'>The Sanctum of Innocence</span>\n▸[boss]Defeat the boss,[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Turn in the quests to two NPCs (including passive points, etc.)\n▸From the waypoint[move]<span style='color:#dddd44'>The Chamber of Innocence</span>",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "objective": "Proceed further, heading towards \"The Torched Courts\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Torched Courts</span>",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act5_area6": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Ruined Square\".",
+        "layout": "• The reverse of \"The Templar Courts\", from the previous area.\nThis time, to reach the finish line, you would start at the entrance and walk around the entire area in a counter-clockwise direction.",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Ruined Square</span>\nThe reverse version of The Templar Courts from the previous area.\nStart at the entrance and proceed in a clockwise direction around the entire area.",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act5_area7": {
+    "visits": {
+      "1": {
+        "objective": "• Continue and activate the waypoint.\n• Go to \"The Ossuary\"",
+        "layout": "• If you continue straight ahead and turn left, you will find a waypoint.",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸Continue forward.[wp]Activate the waypoint\n▸[move]<span style='color:#dddd44'>The Ossuary</span>",
+          "direction": "nw"
+        },
+        "flags": {
+          "act5_reliquary_enter": {
+            "objective": "• Move towards \"The Cathedral Rooftop\" in the upper-left direction.",
+            "layout": "",
+            "tips": "",
+            "direction": "nw",
+            "mini_navi": {
+              "text": "▸Moving from the upper left corner,[move]<span style='color:#dddd44'>The Cathedral Rooftop</span>",
+              "direction": "nw"
+            }
+          }
+        }
+      },
+      "2": {
+        "objective": "Moving towards the lower left, cross the bridge, and then, having placed \"portal\" in its designated location, proceed downwards to \"The Reliquary\".",
+        "layout": "• If you continue straight from the waypoint, heading towards the left and downwards, you will eventually reach a bridge.\n• Cross the bridge and step into the open space, leaving portal behind.\n• Moving downwards, \"The Reliquary\"",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Proceed to the lower left, crossing the bridge.[portal]After opening a portal,\nContinue down.[move]<span style='color:#dddd44'>The Reliquary</span>\n(After walking a short distance from the bridge and passing a fountain-like structure)\nIdeally, it should be right below.",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act5_area8": {
+    "visits": {
+      "1": {
+        "objective": "• Obtain the \"Sign of Purity\" from the chest containing the original Templar's belongings, located deep within the area.\n• Obtain the crafting recipe\n• Return to town\n\n(City)\nNavigate from the waypoint to \"The Ruined Square\"",
+        "layout": "• There are only two layout patterns.\nTo determine if it's possible to proceed, first explore the path to the upper-left from the entrance.\n•<span style='color:#ff6666'>If you can move in the upper-left direction, then go around the entire area in a counter-clockwise direction.</span> Proceed\n•<span style='color:#dddd44'>If not, proceed to the right and turn clockwise.</span> Let's proceed.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Obtain the \"Sign of Purity\" from the chest containing the original Templar, located deep within the area.\n\n(Please refer to the guide for the layout.)\n▸ Obtain the craft recipe.[town]<span style='color:#dddd44'>Town</span>\n▸ [City] From the waypoint[move]<span style='color:#dddd44'>The Ruined Square</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act5_area9": {
+    "visits": {
+      "1": {
+        "objective": "• Acquire the three sorrows of Kitaba.\n• Obtain the crafting recipe\n• Returning from the entrance to the town via the waypoint.\n\n(City)\n• Turn in the quests (for passive points)\n• Change portal to The Ruined Square",
+        "layout": "• If you were to systematically visit each of the four corners of the area, that would be sufficient.",
+        "tips": "Return to town using the waypoint near the entrance so that the portal you opened in The Ruined Square remains available.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Obtain the three \"Kitava's Torments\" (difficulties) located at the edge of the area.\n▸ Obtain the craft recipe from the entrance waypoint.[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Turn in the quests (for passive points)\n▸【City】Take the portal to[move]<span style='color:#dddd44'>The Ruined Square</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act5_area10": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed forward, going to the left and deeper, to defeat the boss.\n• Talk to Lilly and proceed to Act 6.\n\n(City)\n• Escape to the hideout and apply the resistance using Crafting Bench.\n• From the bottom left, go to \"The Twilight Strand\".",
+        "layout": "",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸ Proceed further to the left, towards the back.[boss]Defeat the boss.\n▸Speak to Lilly and proceed to Act 6.\n▸ [City] From the lower left corner,[move]<span style='color:#dddd44'>The Twilight Strand</span>",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area1": {
+    "visits": {
+      "1": {
+        "objective": "Defeat all monsters and complete the quest \"Lilly\".\n\n(City)\n• Buy the required gem, starting from Lilly.\n• Go to \"The Coast\"",
+        "layout": "",
+        "tips": "In the 3.27 Keepers league, completing the Breach encounter in this area guaranteed a five-linked body armour. The equivalent Mirage encounter may offer the same reward in 3.28.\n\n• You must defeat every enemy in the encounter, including Essences.\n• Completing Lilly's quest lets you buy every level 1 gem from her.\n\n[General notes for Act 6]\n• The resistance penalty is now -30%, so check your resistances and adjust your gear.\n  (Continue aiming for resistances as close to 75% as possible.)\n  – Prioritize cold resistance for the Act 6 bosses.\n  – The Crafting Bench is a quick way to add resistances.\n  – You can also buy and use Purity of Elements from Lilly.\n• Act 6 and later revisit areas from Acts 1–5; their layouts are generally unchanged.",
+        "direction": "sw",
+        "mini_navi": {
+          "text": "▸ Defeat all monsters and complete the quest \"Lilly\".\n▸【City】Purchase the required gem, starting from Lilly.\n▸ [City][move]<span style='color:#dddd44'>The Coast</span>",
+          "direction": "sw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area2": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Mud Flats\".",
+        "layout": "The structure is the same as Act1's The Coast",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Mud Flats</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area3": {
+    "visits": {
+      "1": {
+        "objective": "• Defeat the \"The Dishonoured Queen\" located near the shack in the area, and obtain \"The Eye of Conquest\".\n• Open the gate and go to \"The Karui Fortress\"",
+        "layout": "• The Dishonoured Queen is located in the small hut on the right-hand side of the area.\n(There are a couple of these sheds within the area, and since The Dishonoured Queen is likely to be hidden among the trash, be careful not to miss it.)\n• Subsequently, follow the right/upper wall and proceed to \"The Karui Fortress\".",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Eliminate \"The Dishonoured Queen\" located near a cabin within the area.\n\"Obtain the 'Eye of Conquest'\"\n▸Open the gate,[move]<span style='color:#dddd44'>The Karui Fortress</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area4": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed further, and head towards \"Tukohama's Fort\".\n• Once you defeat the boss, you can obtain the crafting recipes.\n• Once you exit Boss Arena, proceed to the right and head towards \"The Ridge\".",
+        "layout": "• There is only one layout option available.\n• From the entrance, always proceed to the right until you find the entrance to the boss arena.",
+        "tips": "",
+        "direction": "ne",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>Tukohama's Fortress</span>\n▸[boss]Defeat the boss,[craft]Obtain the recipe.\n▸ After leaving Boss Arena, proceed to the right and then upwards.[move]<span style='color:#dddd44'>The Ridge</span>",
+          "direction": "ne"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area5": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Lower Prison\".",
+        "layout": "• If you start from the entrance and follow the wall on the right, you should be able to find it.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Lower Prison</span>\n\n(If you start from the entrance and follow the wall on the right, you'll find it.)",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area6": {
+    "visits": {
+      "1": {
+        "objective": "• Activate the waypoint\n• Complete the Trial of Ascendancy.\n• Obtain the crafting recipe\n• Proceed further, heading towards \"Shavronne's Tower\".",
+        "layout": "• Generally, the path follows the right-hand wall. The patterns are somewhat complex (see layout images).",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[wp]Activate the waypoint\n▸[trial]<span style='color:#4488ff'>The Trial of Ascendancy</span>\n▸[craft]Obtain the crafting recipe\n▸Continue forward.[move]<span style='color:#dddd44'>Shavronne's Tower</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area7": {
+    "visits": {
+      "1": {
+        "objective": "• Simply climbing stairs repeatedly.\n• On the rooftop, defeat the boss.\n• Enter The Warden's Chambers.\n\n(The Warden's Chambers)\n• Obtain the crafting recipe\n• Go to \"Prisoner's Gate\"",
+        "layout": "• From each floor, follow the wall on the left side as you enter.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Keep climbing the stairs and [boss]defeat the boss on the rooftop.\n▸Enter [move]<span style='color:#dddd44'>The Warden's Chambers</span>.\n▸【The Warden's Chambers】[craft]Obtain the crafting recipe.\n▸【The Warden's Chambers】Enter [move]<span style='color:#dddd44'>Prisoner's Gate</span>.",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area8": {
+    "visits": {
+      "1": {
+        "objective": "Proceed along the road, heading towards \"The Western Forest\".",
+        "layout": "",
+        "tips": "This area contains \"The Valley of the Fire Drinker,\" where you will encounter a boss named Abberath. However, Abberath is a very strong opponent, so it's best to deal with him later.\nDefeat it now only if your build is strong enough.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue.[move]<span style='color:#dddd44'>The Western Forest</span>\n(If there is extra building power available, do this here)[move]<span style='color:#dddd44'>The Valley of the Fire Drinker</span>\n(Aim for The Western Forest once you've cleared it)",
+          "direction": "none"
+        },
+        "flags": {
+          "act7_maligarosanctum_enter": {
+            "objective": "",
+            "layout": "",
+            "tips": "",
+            "direction": "none"
+          }
+        }
+      },
+      "2": {
+        "objective": "• Instead of exploring the direction where The Western Forest exists, explore the opposite direction and head towards \"The Valley of the Fire Drinker\".\n\n(The Valley of the Fire Drinker)\n• Boss: \"Defeat 'Abberath'\"\n• Return to town using a Portal Scroll\n\n(City)\n• Submit a quest (passive points) from Lioneye's Watch to Bestel.\n• From the waypoint, go to Act7's \"The Northern Forest\"",
+        "layout": "",
+        "tips": "• When fighting Abberath, it's desirable to have around 1200 points of Life plus ES as a general guideline.\n• Return to Act 7 first so that town travel returns you to the intended location.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Explore in the opposite direction of The Western Forest[move]<span style='color:#dddd44'>The Valley of the Fire Drinker</span>\n▸【The Valley of the Fire Drinker】[boss]Defeat the boss and use portal to.[town]Act6<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Turn in the quest (passive points) for Bestel\n▸From the waypoint[move]Act7<span style='color:#dddd44'>The Northern Forest</span>",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act6_area9": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the road, securing the waypoint.\n• Then, continue along the road and head towards \"The Riverways\".",
+        "layout": "",
+        "tips": "",
+        "direction": "ne",
+        "mini_navi": {
+          "text": "▸Continue.[wp]Activate the waypoint\n▸ Continue along the road.[move]<span style='color:#dddd44'>The Riverways</span>",
+          "direction": "ne"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area10": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the road, securing the waypoint.\n• From the waypoint, proceed to the left and move towards \"The Wetlands\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue.[wp]Activate the waypoint\n▸Proceed from the waypoint in a leftward direction.[move]<span style='color:#dddd44'>The Wetlands</span>",
+          "direction": "none"
+        },
+        "flags": {
+          "act6_wetlands_enter": {
+            "objective": "From the waypoint, move right and then up to reach \"The Southern Forest\".",
+            "layout": "",
+            "tips": "",
+            "direction": "e",
+            "mini_navi": {
+              "text": "▸From the waypoint, proceed to the right and then to the upper right.[move]<span style='color:#dddd44'>The Southern Forest</span>",
+              "direction": "e"
+            }
+          }
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area11": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, and head towards the \"spawning area.\"\n\n(The Spawning Ground)\n• Boss: \"Defeat Ryslatha, the Puppet Mistress\"\n• Return to town\n\n(City)\n• Turn in the quest: Tarkleigh (passive points and 4L helmet)\n• Navigate from the waypoint to \"The Riverways\"",
+        "layout": "• If you start from the entrance and follow the wall on the left, you'll be fine.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Proceed to the back by following the wall on the left.[move]<span style='color:#dddd44'>The Spawning Ground</span>\n▸ [Location for laying eggs][boss]Defeat the boss,[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Turn in the quest (passive points and 4L helmet) to Tarkleigh\n▸ [City] From the waypoint[move]<span style='color:#dddd44'>The Riverways</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area12": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Cavern of Anger\".",
+        "layout": "• From the entrance, proceed downwards and cross the bridge. Then, simply head to the right to reach the finish line.\n• Immediately to the right of the first bridge, if you have Level 10 travel skills (such as Frostblink), you can take a shortcut.",
+        "tips": "🌟 Highest experience gain efficiency",
+        "direction": "e",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Cavern of Anger</span>",
+          "direction": "e"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area13": {
+    "visits": {
+      "1": {
+        "objective": "• \"Picking up the The Black Flag\"\n• Proceed further, heading towards \"The Beacon\".",
+        "layout": "• Generally, it should be moved to the right.\n•<span style='color:#ff6666'>If the area extends to the right, follow the lower wall to the right and downwards.</span> Go\n•<span style='color:#dddd44'>When the area extends upwards to the right, there is a room with stairs in the middle, so the direction of the stairs is important.</span> Then, it branches off.\n  ―<span style='color:#ff8800'>If the staircase slopes to the left, the exit is directly above.</span> In the direction of\n  ―<span style='color:#4488ff'>In all other cases, the exit is on the right (slightly to the upper right).</span> In the direction of",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ \"The Black Flag\" – A Comprehensive Analysis\n▸Continue forward.[move]<span style='color:#dddd44'>The Beacon</span>\n\n(Please refer to the guide for the layout.)",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area14": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed further, obtain the crafting recipe, and complete the puzzle involving the pillar object.\n• Activate The Beacon\n• Talk to an NPC and go to \"The Brine King's Reef\".",
+        "layout": "",
+        "tips": "The enemy waves encountered during the transport of the column object are quite challenging, so it's best to have \"portal\" ready in case you die.",
+        "direction": "ne",
+        "mini_navi": {
+          "text": "▸Continue forward.[craft]Obtain the crafting materials and complete the puzzle involving the transport of the pillar.\n▸Launch The Beacon\n▸Talk to the NPCs.[move]<span style='color:#dddd44'>The Brine King's Reef</span>",
+          "direction": "ne"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act6_area15": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, towards the \"The Brine King's Reef.\"\n\n(The Throne of Blinking)\n• Defeat the boss.\n• Talk to Weylam and proceed to Act7.\n\n(City)\nNavigate from the top-left to \"The Broken Bridge\".",
+        "layout": "• If you start from the entrance and follow the edge on the left, that should be sufficient.",
+        "tips": "If the boss's lightning phase is difficult, open a portal, return to town, and re-enter. Remain still after entering to retain the one-minute grace period and avoid the attack.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Brine King's Reef</span>\n(If you start from the entrance and follow the edge to the left, that's fine.)\n▸[boss]Defeat the boss, talk to the NPC near Weylam, and proceed to Act 7.\n▸ [Cityscape] From the upper left[move]<span style='color:#dddd44'>The Broken Bridge</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area1": {
+    "visits": {
+      "1": {
+        "objective": "Proceed along the road, heading towards \"The Crossroads\".",
+        "layout": "• Simply follow the paved road.",
+        "tips": "[General Notes for Act 7]\n• When you open the \"Smuggler's Cache\" that appears randomly on the map, there is a chance to obtain items that can be used in heists (such as a contract).\nDue to the ease of starting and the ability to quickly accumulate funds, it is highly recommended for beginners.",
+        "direction": "sw",
+        "mini_navi": {
+          "text": "▸Continue.[move]<span style='color:#dddd44'>The Crossroads</span>",
+          "direction": "sw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area2": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the road, securing the waypoint.\n• From the waypoint, move to the bottom right and go to \"The Fellshrine Ruins\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue.[wp]Activate the waypoint\n▸From the waypoint, proceed to the lower right.[move]<span style='color:#dddd44'>The Fellshrine Ruins</span>",
+          "direction": "none"
+        },
+        "flags": {
+          "act7_crypt_enter": {
+            "objective": "From the waypoint, navigate to the upper-left corner and click on \"Guilt.\"",
+            "layout": "",
+            "tips": "",
+            "direction": "nw",
+            "mini_navi": {
+              "text": "▸Move from the bottom-left corner of the waypoint.[move]<span style='color:#dddd44'>The Crypt</span>",
+              "direction": "nw"
+            }
+          }
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area3": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Crypt\".",
+        "layout": "",
+        "tips": "",
+        "direction": "se",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Crypt</span>",
+          "direction": "se"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area4": {
+    "visits": {
+      "1": {
+        "objective": "• Complete the Trial of Ascendancy.\n• Continue forward, and proceed up the stairs from the sarcophagus.\n\n(Basement 1F)\n• Proceed further and open the \"Box of the Guilty,\" obtaining the \"Maligaro's Map.\"\n• Return to town\n\n(City)\n• Navigate from the waypoint to \"The Crossroads\"",
+        "layout": "• If you enter and follow the wall upwards, you will eventually reach the \"Ascension Trial.\"If you continue to follow the same rules, you will reach the finish line.",
+        "tips": "The \"Box of Sin\" on the 1st floor is marked with a quest marker on the mini-map.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[trial]<span style='color:#4488ff'>The Trial of Ascendancy</span> Successfully navigate the maze and descend into the crypt beneath the main tomb.\n\n(By continuing to explore the upper wall of the area, you will eventually reach the Trial of Ascendancy.)\n▸【B1F】Obtain the Maligaro's Map from the \"Box of the Guilty\".[town]<span style='color:#dddd44'>Town</span>\n▸ [City] From the waypoint[move]<span style='color:#dddd44'>The Crossroads</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area5": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed to the central map device.\n• Obtain the crafting recipe\n• Insert \"Maligaro's Map\" into the map device.\n• Go to \"Maligaro's Sanctum\"",
+        "layout": "• The basic strategy is to go to the upper right corner as soon as you enter. When you see a circular area, approach it from the right side and enter from the inside.\n• Once you reach the circular room, use the map device to navigate to the next area.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Proceed to the central map device.\n▸[craft]Obtain the crafting recipe\n▸ Insert \"Maligaro's Map\" into the map device.\n▸[move]<span style='color:#dddd44'>Maligaro's Sanctum</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "• Submit a quest to Silk and receive the key.\n• Continue straight ahead within the waypoint interface, and proceed towards the second layer.",
+        "layout": "",
+        "tips": "",
+        "mini_navi": {
+          "text": "▸[quest]Submit a quest for Silk to receive the key.\n▸ Proceed directly forward, following the path into the depths of the waypoint.[move]<span style='color:#dddd44'>Second Layer</span>heading towards",
+          "direction": "none"
+        },
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area6": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed further and defeat the boss, \"Maligaro\".\n• Use a Portal Scroll.",
+        "layout": "• If there is a wall on the upper right, first go around to the lower right and then return to the upper right.",
+        "tips": "If you die in this area, you will always be returned to the map device. Since the return is quite large, try to avoid dying.",
+        "direction": "ne",
+        "mini_navi": {
+          "text": "▸Continue forward.[boss]Boss: \"Defeat Maligaro\"\n\n(If there's a wall on the right, temporarily go down to the bottom right and then return to the right)\n▸Use a Portal Scroll",
+          "direction": "ne"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area7": {
+    "visits": {
+      "1": {
+        "objective": "• Complete the Trial of Ascendancy.\n• Proceed further, heading towards \"The Den\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[trial]<span style='color:#4488ff'>The Trial of Ascendancy</span>\n▸Continue forward.[move]<span style='color:#dddd44'>The Den</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area8": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Ashen Fields\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Ashen Fields</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area9": {
+    "visits": {
+      "1": {
+        "objective": "Follow the path to the left and down, and it will lead you to the \"fort's campsite.\"\n\n(The encampment near the fortress)\n• Defeat the boss.\n• Go to \"The Northern Forest\"",
+        "layout": "",
+        "tips": "",
+        "direction": "sw",
+        "mini_navi": {
+          "text": "▸ Proceed straight ahead, following the path to the left.[move]<span style='color:#dddd44'>Camp near a fortress</span>\n▸ [Fort Camping Site][boss]Defeat the boss.\n▸ [Fort Camping Site][move]<span style='color:#dddd44'>The Northern Forest</span>",
+          "direction": "sw"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area10": {
+    "visits": {
+      "1": {
+        "objective": "Activate the waypoint, then return to town.\n\n(Town)\n• Turn in Eramir's and Helena's quests for passive points.\n• Use the waypoint to travel to Prisoner's Gate in Act 6.",
+        "layout": "",
+        "tips": "🌟 Excellent area for experience",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[wp]Activate the waypoint, then[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Turn in the quest for Eramir and Helena (passive points)\n▸ First, retrieve the Act 6 information from the waypoint.[move]<span style='color:#dddd44'>Prisoner's Gate</span>\n(If you have already completed Abberath,)<span style='color:#dddd44'>The Northern Forest⇒The Dread Thicket</span>(Note)",
+          "direction": "none"
+        },
+        "flags": {
+          "act7_dreadthicket_enter": {
+            "objective": "Proceeding along the map in the indicated direction, towards \"The Causeway\".",
+            "layout": "",
+            "tips": "🌟 Excellent area for experience",
+            "direction": "n",
+            "mini_navi": {
+              "text": "▸ Proceed in the direction indicated on the map,[move]<span style='color:#dddd44'>The Causeway</span>",
+              "direction": "n"
+            }
+          }
+        }
+      },
+      "2": {
+        "objective": "Proceed to the left or downwards on the map, towards \"The Dread Thicket\".",
+        "layout": "",
+        "tips": "🌟 Excellent area for experience",
+        "direction": "sw",
+        "mini_navi": {
+          "text": "▸ Proceed to the left or downwards on the map,[move]<span style='color:#dddd44'>The Dread Thicket</span>",
+          "direction": "sw"
+        }
+      }
+    }
+  },
+  "act7_area11": {
+    "visits": {
+      "1": {
+        "objective": "• Instead of exploring the direction where The Western Forest exists, explore the opposite direction and head towards \"The Valley of the Fire Drinker\".\n\n(The Valley of the Fire Drinker)\n• Boss: \"Defeat 'Abberath'\"\n• Return to town using a Portal Scroll\n\n(City)\n• Submit a quest (passive points) from Lioneye's Watch to Bestel.\n• From the waypoint, go to Act7's \"The Northern Forest\"",
+        "layout": "",
+        "tips": "• When fighting Abberath, it's desirable to have around 1200 points of Life plus ES as a general guideline.\n• Return to Act 7 first so that town travel returns you to the intended location.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Explore in the opposite direction of The Western Forest[move]<span style='color:#dddd44'>The Valley of the Fire Drinker</span>\n▸【The Valley of the Fire Drinker】[boss]Defeat the boss and use portal to.[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Turn in the quest (passive points) for Bestel\n▸From the waypoint[move]Act7<span style='color:#dddd44'>The Northern Forest</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area12": {
+    "visits": {
+      "1": {
+        "objective": "• Catch 7 fireflies within the area.\n• Obtain the crafting recipe\n• \"Heading to 'The Den of Despair'\"\n\n(The Den of Despair)\n• Defeat the boss.\n• Return to town using a Portal Scroll\n\n(City)\n• Submit a quest (passive points) for Eramir\n• From the waypoint, travel to \"The Northern Forest\"",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Catch seven fireflies within the area.[move]<span style='color:#dddd44'>The Den of Despair</span>\n▸【The Den of Despair】[boss]Defeat the boss and use portal to.[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Turn in the quest (passive points) for Eramir\n▸ [City] From the waypoint[move]<span style='color:#dddd44'>The Northern Forest</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area13": {
+    "visits": {
+      "1": {
+        "objective": "• Continue and activate the waypoint.\n• Obtain the crafting recipe\n• Continuing further, pick up the quest item at the very end and go to \"The Vaal City\".",
+        "layout": "• There is a high probability that the exit is located in the upper right direction.\n\nIf not, please use the top-left corner.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[wp]Activate the waypoint\n▸[craft]Obtain the crafting recipe\n▸ Continue further, and collect the final quest item.\n  [move]<span style='color:#dddd44'>The Vaal City</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area14": {
+    "visits": {
+      "1": {
+        "objective": "• Continue onward and activate the waypoint.\n• Return to town.\n\n(Town)\n• Turn in Weylam's quest for a passive point.\n• Use the waypoint to return to The Vaal City.",
+        "layout": "• This area has only four layout patterns.\n  <span style='color:#4488ff'>① Cliff layout</span>:\n  Follow the cliff until it meets a wall. The waypoint is visible from there; follow the curve to the right.\n  <span style='color:#ff6666'>② Left-edge layout</span>:\n  A wall appears immediately, but you can pass it on the left. Continue left and circle around the wall.\n  <span style='color:#dddd44'>③ Long-wall layout</span>:\n  A wall appears shortly after heading upward. Circle around its left side, then follow the next wall left until you find the opening. (Going right is a detour.)\n  <span style='color:#ff8800'>④ Late-wall or short-wall layout</span>:\n  Walk until you reach a wall. Circling its left side immediately reveals a long wall.\n  In this layout, head to the upper right.",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸Continue forward.[wp]Activate the waypoint (refer to the guide for layout).\n▸ First[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Submit a quest to Weylam (passive points)\n▸ [City] From the waypoint[move]<span style='color:#dddd44'>The Vaal City</span>",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "objective": "\"Talk to the Yeena and go to The Temple of Decay Level 1\"",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Say \"Yeena\" to them,[move]<span style='color:#dddd44'>The Temple of Decay Level 1</span>",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act7_area15": {
+    "visits": {
+      "1": {
+        "objective": "Continue down the stairs to \"The Temple of Decay Level 2\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Proceeding further, and descending the stairs,[move]<span style='color:#dddd44'>The Temple of Decay Level 2</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act7_area16": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed further, descending the stairs while obtaining the crafting recipe.\n• Continue to \"Arakaali's Web\".\n\n(Arakaali's Web)\n• Defeat the boss.\n• From the back, go to \"The Sarn Ramparts\".",
+        "layout": "• Two layout options: one with the characters \"8\" or \"∞\". The exit is on the opposite side.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "\"With an area shape of '8 or ∞', proceed towards the opposite exit.\"[craft]Obtain crafting materials.\n▸ Proceed further into the depths.[move]<span style='color:#dddd44'>The ant nest</span>\n▸ [Aracari Nest][boss]Defeat the boss.\n▸【Arakaali's Web】From the back[move]<span style='color:#dddd44'>The Sarn Ramparts</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act8_area1": {
+    "visits": {
+      "1": {
+        "objective": "Proceed along the road, heading towards \"The Sarn Encampment\".\n\n(City)\nNow, let's move on to the second labyrinth, marked by the skull symbol.",
+        "layout": "",
+        "tips": "🌟 Excellent area for experience\n\n[General Notes for Act 8]\n• Use an Orb of Alteration to roll freeze immunity on either a Life Flask or a Quicksilver Flask.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue.[move]<span style='color:#dddd44'>The Sarn Encampment</span>\n▸ [In the town] Proceed to the second labyrinth, marked by a skull.",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act8_area2": {
+    "visits": {
+      "1": {
+        "objective": "How to beat \"Cruel Labyrinth\"",
+        "layout": "",
+        "tips": "• The minor Pantheon must be changed to Larakesh.\n\n• Before fighting the boss, be sure to grab the crafting recipes from the designated area (which may include storage spaces).\n• The layout should be based on the one used by \"PoE LAB\" (https://www.poelab.com/).\n• The \"D\" symbol indicates the location of the Dark Shrine. There is a hidden room somewhere within the area, with an entrance that can be opened nearby.\nBy obtaining them, players can benefit from buffs for themselves and the weakening of bosses.\n• The options for obtaining clear rewards are to focus on improving the quality of gem, which will be used after entering the map, or to aim for a high-value, randomly generated gem.\n• Complete your Ascendancy",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Complete \"Cruel Labyrinth\"\n\n(The minor Pantheon should be located in Larache)",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "From the bottom left, go to \"The Toxic Conduits\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Starting from the bottom left,[move]<span style='color:#dddd44'>The Toxic Conduits</span>",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act8_area3": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"Doedre's Cesspool\".",
+        "layout": "",
+        "tips": "🌟 Highest experience gain efficiency",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>Doedre's Cesspool</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act8_area4": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Cauldron\".\n\n(After the boss's explanation)\n• Obtain the crafting recipe\n• Proceed to the right and go to \"The Quay\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Cauldron</span>\n▸ [After Boss Clearing][craft]Obtain the crafting recipe\n▸ [After clearing the boss] Proceed to the right.[move]<span style='color:#dddd44'>The Quay</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act8_area5": {
+    "visits": {
+      "1": {
+        "objective": "• Boss: \"Defeat Doodu\"\n• \"Towards the outlet\"",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[boss]Boss: Defeat \"Doodu\"\n▸[move]<span style='color:#dddd44'>Outlet for wastewater</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act8_area6": {
+    "visits": {
+      "1": {
+        "objective": "• Along the way, you will find a sealed coffin on the ground and, upon opening it, obtain the \"Ankh of Eternity.\"\n• Proceed further, heading towards \"The Resurrection Site\".\n(What comes after The Grain Gate?)",
+        "layout": "• If you start from the entrance and proceed along the left side towards the water, that's the way to go.\n\nThe sealed coffin is marked with a quest marker on the minimap.",
+        "tips": "",
+        "direction": "se",
+        "mini_navi": {
+          "text": "▸Open the sealed coffin along the way to obtain \"Ankh of Eternity\".\n▸Continue forward.[move]<span style='color:#dddd44'>The Resurrection Site</span>\n(What comes after The Grain Gate?)",
+          "direction": "se"
+        }
+      },
+      "2": {
+        "objective": "Proceed further, heading towards \"The Grain Gate\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Grain Gate</span>",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act8_area7": {
+    "visits": {
+      "1": {
+        "objective": "• Defeat the boss.\n• Return to the area",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[boss]Defeat the boss.\n▸ Return to the area",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act8_area8": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed further and defeat the boss, \"Gemling Legionnaires\".\n• Continue to \"The Imperial Fields\".",
+        "layout": "",
+        "tips": "The Gemling Legionnaires are near where the book is marked on the mini-map.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[boss]Boss: \"Defeat Gemling Legionnaires\"\n(The boss is located near the area on the mini-map where the book is marked.)\n▸ Proceed further into the depths.[move]<span style='color:#dddd44'>The Imperial Fields</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    },
+    "routes": {
+      "underbelly": {
+        "visits": {
+          "1": {
+            "objective": "• Proceed further and defeat the boss, \"Gemling Legionnaires\".\n• Find the entrance to \"The Hidden Underbelly\" and enter.",
+            "layout": "• The Gemling Legionnaires is located near the area on the mini-map where books are marked.\n\n• The entrance to The Hidden Underbelly is the same as the entrance to The Sewers (map image 4), from Act 3. However, quest markers and other indicators will not be displayed, so it's important to pay close attention.\n\n• Once you defeat the Gemling Legionnaires, the next space will either be the one directly before it, or the space in the lower-left corner.(See map image)",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸Continue forward.[boss]Boss: \"Defeat Gemling Legionnaires\"\n(The boss is located near the area on the mini-map where the book is marked.)\n▸[move]<span style='color:#dddd44'>The Hidden Underbelly</span> Find the entrance and go inside.\n(Please refer to the guide for details on the The Hidden Underbelly entry point)",
+              "direction": "none"
+            }
+          },
+          "2": {
+            "objective": "",
+            "layout": "",
+            "tips": "",
+            "direction": "none"
+          }
+        }
+      }
+    }
+  },
+  "act8_area9": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the road, securing the waypoint.\n• Continue to \"Solaris Temple\".",
+        "layout": "",
+        "tips": "",
+        "direction": "n",
+        "mini_navi": {
+          "text": "▸Continue.[wp]Activate the waypoint\n▸ Proceed further into the depths.[move]<span style='color:#dddd44'>Solaris Temple</span>",
+          "direction": "n"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act8_area10": {
+    "visits": {
+      "1": {
+        "objective": "• Continue and activate the waypoint.\n• Continuing further, go to \"The Solaris Temple Level 2\"",
+        "layout": "",
+        "tips": "As you're progressing, you might encounter The Solaris Concourse, so please be cautious.\n(What comes after The Solaris Concourse?)",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[wp]Activate the waypoint\n▸ Proceed further into the depths.[move]<span style='color:#dddd44'>The Solaris Temple Level 2</span>\n(As you proceed, you may encounter The Solaris Concourse, so be careful.)\n\nIt is necessary to move towards the upper left, in the middle of the area.",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "Go back to the intermediate branching point and proceed in the opposite direction of the waypoint, heading towards \"The Solaris Concourse\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Return to the previous decision point, then proceed in a direction different from the one indicated by the waypoint.\n  [move]<span style='color:#dddd44'>The Solaris Concourse</span>",
+          "direction": "none"
+        }
+      }
+    },
+    "routes": {
+      "underbelly": {
+        "visits": {
+          "1": {
+            "objective": "• Continue and activate the waypoint.\n• Returning from the waypoint to the city.\n\n(City)\n• Take the portal to The Hidden Underbelly.",
+            "layout": "",
+            "tips": "",
+            "direction": "n",
+            "mini_navi": {
+              "text": "▸Continue forward.[wp]Activate the waypoint\n▸From the waypoint[town]<span style='color:#dddd44'>Town</span>\n▸【City】Take the portal,[move]<span style='color:#dddd44'>The Hidden Underbelly</span>",
+              "direction": "n"
+            }
+          },
+          "2": {
+            "objective": "• Proceed further, heading towards \"The Solaris Temple Level 2\".",
+            "layout": "",
+            "tips": "",
+            "direction": "nw",
+            "mini_navi": {
+              "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Solaris Temple Level 2</span>",
+              "direction": "nw"
+            }
+          }
+        }
+      }
+    }
+  },
+  "act8_area11": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed further and enter portal.\n• Defeat the boss.\n• Obtain the crafting recipe\n• Return to town\n\n(City)\n• Turn in the quests for Hargan, Maramoa, and Clarissa (passive points).\n• From the waypoint, go to \"Solaris Temple\"",
+        "layout": "• At the starting point, you must always go left and then down. The path depends on which room it connects to.\n  ―<span style='color:#ff6666'>The room is located on the lower left.</span> \nProceed clockwise along the wall on the left.\n  ―<span style='color:#dddd44'>The room is located on the upper right.</span> \nProceed counter-clockwise along the left wall.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Proceeding further, enter portal,[boss]Defeat the boss.\n▸[craft]Obtain the crafting recipe.[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Turn in the quests to three NPCs (including passive points, etc.)\n▸ [City] From the waypoint[move]<span style='color:#dddd44'>Solaris Temple</span>",
+          "direction": "none"
+        }
+      }
+    },
+    "routes": {
+      "underbelly": {
+        "visits": {
+          "1": {
+            "objective": "• Proceed further and enter portal.\n• Defeat the boss.\n• Obtain the crafting recipe\n• Return to town\n\n(City)\n• From the waypoint, travel to \"The Lunaris Concourse\"",
+            "layout": "• At the starting point, you must always go left and then down. The path depends on which room it connects to.\n\"The room is located to the left and below.\"\nProceed clockwise along the wall on the left.\n\"The room extends to the right and upwards.\"\nProceed counter-clockwise along the left wall.",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸Proceeding further, enter portal,[boss]Defeat the boss.\n▸[craft]Obtain the crafting recipe.[town]<span style='color:#dddd44'>Town</span>\n▸ [City] From the waypoint[move]<span style='color:#dddd44'>The Lunaris Concourse</span>",
+              "direction": "none"
+            }
+          }
+        }
+      }
+    }
+  },
+  "act8_area12": {
+    "visits": {
+      "1": {
+        "objective": "• Move to the left and secure the waypoint.\n• Continuing further, go to \"The Harbour Bridge\"",
+        "layout": "",
+        "tips": "",
+        "direction": "sw",
+        "mini_navi": {
+          "text": "▸ Proceed to the lower left.[wp]Activate the waypoint\n▸ Proceed further into the depths.[move]<span style='color:#dddd44'>The Harbour Bridge</span>",
+          "direction": "sw"
+        }
+      },
+      "2": {
+        "objective": "Go to \"The Harbour Bridge\"",
+        "layout": "",
+        "tips": "",
+        "direction": "sw",
+        "mini_navi": {
+          "text": "▸[move]<span style='color:#dddd44'>The Harbour Bridge</span>",
+          "direction": "sw"
+        }
+      }
+    },
+    "routes": {
+      "underbelly": {
+        "visits": {
+          "1": {
+            "objective": "• Proceed to the upper right and head towards \"Solaris Temple\".",
+            "layout": "",
+            "tips": "",
+            "direction": "ne",
+            "mini_navi": {
+              "text": "▸ Proceed to the upper right.[move]<span style='color:#dddd44'>Solaris Temple</span>",
+              "direction": "ne"
+            }
+          },
+          "2": {
+            "objective": "",
+            "layout": "",
+            "tips": "",
+            "direction": "none"
+          }
+        }
+      }
+    }
+  },
+  "act8_area13": {
+    "visits": {
+      "1": {
+        "objective": "Proceed straight left, heading towards \"The Lunaris Concourse\".",
+        "layout": "",
+        "tips": "🌟 Highest experience gain efficiency\n\nSkip The Harbour Bridge for now; it will be visited later.",
+        "direction": "sw",
+        "mini_navi": {
+          "text": "▸ Proceed straight ahead, turning left.[move]<span style='color:#dddd44'>The Lunaris Concourse</span>",
+          "direction": "sw"
+        },
+        "flags": {
+          "act8_lunaristemple2_enter+act8_solaristemple2_enter": {
+            "objective": "Proceed straight ahead to the left, and you will arrive at the \"The Harbour Bridge.\"\n\n(The The Harbour Bridge)\n• Defeat the boss.\n• From the back, go to \"The Blood Aqueduct\".",
+            "layout": "",
+            "tips": "",
+            "direction": "sw",
+            "mini_navi": {
+              "text": "▸ Proceed straight ahead, turning left.[move]<span style='color:#dddd44'>The Harbour Bridge</span>\n▸【The Harbour Bridge】[boss]Defeat the boss.\n▸【The Harbour Bridge】From the back[move]<span style='color:#dddd44'>The Blood Aqueduct</span>",
+              "direction": "sw"
+            }
+          }
+        }
+      }
+    },
+    "routes": {
+      "underbelly": {
+        "visits": {
+          "1": {
+            "objective": "Proceed straight ahead and to the upper right, towards the \"The Harbour Bridge.\"\n\n(The The Harbour Bridge)\n• Defeat the boss.\n• From the back, go to \"The Blood Aqueduct\".",
+            "layout": "",
+            "tips": "",
+            "direction": "ne",
+            "mini_navi": {
+              "text": "▸ Proceed straight upwards and to the right.[move]<span style='color:#dddd44'>The Harbour Bridge</span>\n▸【The Harbour Bridge】[boss]Defeat the boss.\n▸【The Harbour Bridge】From the back[move]<span style='color:#dddd44'>The Blood Aqueduct</span>",
+              "direction": "ne"
+            }
+          },
+          "2": {
+            "objective": "",
+            "layout": "",
+            "tips": "",
+            "direction": "none"
+          }
+        }
+      }
+    }
+  },
+  "act8_area14": {
+    "visits": {
+      "1": {
+        "objective": "• Move to the left and secure the waypoint.\n• Continue to \"Lunaris Temple\".",
+        "layout": "",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸ Proceed to the upper left.[wp]Activate the waypoint\n▸ Proceed further into the depths.[move]<span style='color:#dddd44'>Lunaris Temple</span>",
+          "direction": "nw"
+        },
+        "flags": {
+          "act8_bloodaqueduct_enter": {
+            "objective": "From the waypoint, proceed to the lower left and enter \"The Bath House\".",
+            "layout": "",
+            "tips": "",
+            "direction": "sw",
+            "mini_navi": {
+              "text": "▸Proceed from the waypoint to the lower left.[move]<span style='color:#dddd44'>The Bath House</span> Entering",
+              "direction": "sw"
+            }
+          }
+        }
+      }
+    },
+    "routes": {
+      "underbelly": {
+        "visits": {
+          "1": {
+            "objective": "• Proceed to the upper right and secure the waypoint.\n• Returning from the waypoint to the city.\n\n(City)\n• Take the portal to The Bath House.",
+            "layout": "",
+            "tips": "",
+            "direction": "ne",
+            "mini_navi": {
+              "text": "▸ Proceed to the upper right[wp]Activate the waypoint\n▸From the waypoint[town]<span style='color:#dddd44'>Town</span>\n▸【City】Take the portal,[move]<span style='color:#dddd44'>The Bath House</span>",
+              "direction": "ne"
+            },
+            "flags": {
+              "act8_lunaristemple2_enter+act8_solaristemple2_enter": {
+                "objective": "",
+                "layout": "",
+                "tips": "",
+                "direction": "none"
+              }
+            }
+          },
+          "2": {
+            "objective": "• Move to the left and head towards \"Lunaris Temple\".",
+            "layout": "",
+            "tips": "",
+            "direction": "nw",
+            "mini_navi": {
+              "text": "▸ Proceed to the upper left.[move]<span style='color:#dddd44'>Lunaris Temple</span>",
+              "direction": "nw"
+            },
+            "flags": {
+              "act8_lunaristemple2_enter+act8_solaristemple2_enter": {
+                "objective": "• Proceed to the right or to the right-down, heading towards \"The Harbour Bridge\".",
+                "layout": "",
+                "tips": "",
+                "direction": "se",
+                "mini_navi": {
+                  "text": "▸ Proceed to the right or to the lower right.[move]<span style='color:#dddd44'>The Harbour Bridge</span>",
+                  "direction": "se"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "act8_area15": {
+    "visits": {
+      "1": {
+        "objective": "• Continue and activate the waypoint.\n• Go to the nearby \"The Lunaris Temple Level 2\"",
+        "layout": "• If you follow the blue carpet, you'll be fine.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[wp]Activate the waypoint\n▸ Nearby[move]<span style='color:#dddd44'>The Lunaris Temple Level 2</span>\n\n(If you follow the blue carpet, it's okay.)",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    },
+    "routes": {
+      "underbelly": {
+        "visits": {
+          "1": {
+            "objective": "• Continue and activate the waypoint.\n• Go to the nearby \"The Lunaris Temple Level 2\"",
+            "layout": "• If you follow the blue carpet, you'll be fine.",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸Continue forward.[wp]Activate the waypoint\n▸ Nearby[move]<span style='color:#dddd44'>The Lunaris Temple Level 2</span>",
+              "direction": "none"
+            }
+          },
+          "2": {
+            "objective": "",
+            "layout": "",
+            "tips": "",
+            "direction": "none"
+          }
+        }
+      }
+    }
+  },
+  "act8_area16": {
+    "visits": {
+      "1": {
+        "objective": "• Proceeding further, enter portal.\n• Defeat the boss.\n• Obtain the crafting recipe\n• Return to town\n\n(City)\nFrom the waypoint, \"The Solaris Concourse\"",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue through the portal,[boss]Defeat the boss.\n▸[craft]Obtain the crafting recipe.[town]<span style='color:#dddd44'>Town</span>\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Solaris Concourse</span>",
+          "direction": "none"
+        }
+      }
+    },
+    "routes": {
+      "underbelly": {
+        "visits": {
+          "1": {
+            "objective": "• Proceeding further, enter portal.\n• Defeat the boss.\n• Obtain the crafting recipe\n• Return to town\n\n(City)\nFrom the waypoint, \"The Solaris Temple Level 1\"",
+            "layout": "",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸Continue through the portal,[boss]Defeat the boss.\n▸[craft]Obtain the crafting recipe.[town]<span style='color:#dddd44'>Town</span>\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Solaris Temple Level 1</span>",
+              "direction": "none"
+            }
+          }
+        }
+      }
+    }
+  },
+  "act8_area17": {
+    "visits": {
+      "1": {
+        "objective": "Continue forward and head towards \"Highgate\".\n\n(City)\nNavigate from the waypoint to \"The Lunaris Concourse\"",
+        "layout": "",
+        "tips": "🌟 Highest experience gain efficiency",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>Highgate</span>\n▸ [City] From the waypoint[move]<span style='color:#dddd44'>The Lunaris Concourse</span>",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    },
+    "routes": {
+      "underbelly": {
+        "visits": {
+          "1": {
+            "objective": "Continue forward and head towards \"Highgate\".\n\n(City)\n• From the upper right, go to \"The Descent\".",
+            "layout": "",
+            "tips": "",
+            "direction": "nw",
+            "mini_navi": {
+              "text": "▸Continue forward.[move]<span style='color:#dddd44'>Highgate</span>\n▸ [City] From the upper right corner,[move]<span style='color:#dddd44'>The Descent</span>",
+              "direction": "nw"
+            }
+          },
+          "2": {
+            "objective": "",
+            "layout": "",
+            "tips": "",
+            "direction": "none"
+          }
+        }
+      }
+    }
+  },
+  "act8_area18": {
+    "visits": {
+      "1": {
+        "objective": "• Complete the Trial of Ascendancy.\n• Obtain the crafting recipe\n• Move towards the upper-left, and go to \"The High Gardens\".",
+        "layout": "",
+        "tips": "While there is a path to \"The Grand Promenade\" in this area, it's unnecessary to go there, so skip it.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[trial]<span style='color:#4488ff'>The Trial of Ascendancy</span>\n▸[craft]Obtain the crafting recipe\n▸ Proceed to the left or to the left-hand side,[move]<span style='color:#dddd44'>The High Gardens</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    },
+    "routes": {
+      "underbelly": {
+        "visits": {
+          "1": {
+            "objective": "• When you enter, first, make sure to input portal.\n• Move to the upper right and go to \"The Lunaris Concourse\".",
+            "layout": "",
+            "tips": "",
+            "direction": "ne",
+            "mini_navi": {
+              "text": "▸Upon entering, the first thing to do is.[portal]Open a portal.\n▸ Proceed to the upper right.[move]<span style='color:#dddd44'>The Lunaris Concourse</span>",
+              "direction": "ne"
+            }
+          },
+          "2": {
+            "objective": "• Complete the Trial of Ascendancy.\n• Obtain the crafting recipe\n• ▸Move left or northwest, heading towards \"The High Gardens\"",
+            "layout": "",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸[trial]<span style='color:#4488ff'>The Trial of Ascendancy</span>\n▸[craft]Obtain the crafting recipe\n▸ Proceed to the left or to the left-hand side,[move]<span style='color:#dddd44'>The High Gardens</span>",
+              "direction": "none"
+            }
+          }
+        }
+      }
+    }
+  },
+  "act8_area19": {
+    "visits": {
+      "1": {
+        "objective": "• Continue forward, and head towards \"The Pool of Terror.\"\n\n(The Pool of Terror)\n• Defeat the boss.\n• Use portal to return to the city.\n\n(City)\n• Submit a quest from The Sarn Encampment to Hargan (passive points).\n• From the waypoint, to \"Highgate\"\n\n(After completing the \"Terror Lake\" quest, starting from Highgate)\n• From the upper right, go to \"The Descent\".",
+        "layout": "",
+        "tips": "The trash mobs in this area will use area-of-effect attacks when they are about to die. It can be quite painful if it happens repeatedly, so please be careful. Using items like jade flasks in specific areas to enhance durability is also a viable option.",
+        "direction": "se",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Pool of Terror</span>\n▸【The Pool of Terror】[boss]Defeat the boss and use portal to.[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Turn in the quest (PP) to Hargan and receive the response from the waypoint.[town]<span style='color:#dddd44'>Highgate</span>\n▸ (After completing the \"Pool of Terror\" quest) From the upper right corner,[move]<span style='color:#dddd44'>The Descent</span>",
+          "direction": "se"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    },
+    "routes": {
+      "underbelly": {
+        "visits": {
+          "1": {
+            "objective": "• Continue forward, and head towards \"The Pool of Terror.\"\n\n(The Pool of Terror)\n• Defeat the boss.\n• Use portal to return to the city.\n\n(City)\n• Turn in the quests for Hargan, Maramoa, and Clarissa (passive points).\n• From the waypoint, \"The Lunaris Concourse\"",
+            "layout": "",
+            "tips": "The trash mobs in this area will use area-of-effect attacks when they are about to die. It can be quite painful if it happens repeatedly, so please be careful. Using items like jade flasks in specific areas to enhance durability is also a viable option.",
+            "direction": "se",
+            "mini_navi": {
+              "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Pool of Terror</span>and then[boss]Defeat the boss.\n▸Use portal[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Submit a quest to three NPCs (passive points).\n▸ [City] From the waypoint,[move]<span style='color:#dddd44'>The Lunaris Concourse</span>",
+              "direction": "se"
+            }
+          },
+          "2": {
+            "objective": "",
+            "layout": "",
+            "tips": "",
+            "direction": "none"
+          }
+        }
+      }
+    }
+  },
+  "act9_area1": {
+    "visits": {
+      "1": {
+        "objective": "Use the three cargo cranes to disembark, and then proceed to the \"Vaster Desert.\"",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ you will use three cranes to unload the goods.[move]<span style='color:#dddd44'>Vaster Desert</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act9_area2": {
+    "visits": {
+      "1": {
+        "objective": "• Continue and activate the waypoint.\n• Obtain the crafting recipe\n• Obtain \"Storm Blade\" from the treasure chest, which was exposed by the sandstorm.\n• From the waypoint, proceed to the right and access the sandstorm area (but you cannot enter at this point).\n• Return to town using a Portal Scroll\n\n(City)\n• Submit a quest to Sin and Petarus and Vanja.\n• Navigate from the waypoint to \"The Vastiri Desert\"",
+        "layout": "",
+        "tips": "The treasure chest, weathered by the sandstorm, has a quest marker displayed on the mini-map.",
+        "direction": "e",
+        "mini_navi": {
+          "text": "▸Continue onward and [wp]activate the waypoint.[craft]Obtain the crafting recipe.\n▸Take the Storm Blade from the chest weathered by the sandstorm.\n▸Go right from the waypoint and touch the sandstorm; you cannot enter it yet. Use a Portal Scroll to return to [town]<span style='color:#dddd44'>town</span>.\n▸【Town】[quest]Turn in both quests, then take your portal to [move]<span style='color:#dddd44'>The Vastiri Desert</span>.",
+          "direction": "e"
+        },
+        "flags": {
+          "act9_oasis_enter": {
+            "objective": "Normally, you would go \"The Foothills\" which is directly above.",
+            "layout": "",
+            "tips": "",
+            "direction": "n",
+            "mini_navi": {
+              "text": "▸Typically located directly above[move]<span style='color:#dddd44'>The Foothills</span>",
+              "direction": "n"
+            }
+          }
+        }
+      },
+      "2": {
+        "objective": "Proceed further, heading towards \"The Oasis\".",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Oasis</span>",
+          "direction": "none"
+        }
+      },
+      "3": {
+        "act": 9,
+        "objective": "Normally, you would go \"The Foothills\" which is directly above.",
+        "mini_navi": {
+          "text": "Normally, you would go \"The Foothills\" which is directly above.",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act9_area3": {
+    "visits": {
+      "1": {
+        "objective": "Continue forward, heading towards \"the sand pit\".\n(Not The Forbidden Vault)\n\n(The Oasis)\n• Boss: \"Defeat Shakari, Queen of the Sands\"\n• Return to town\n\n(City)\n• Submit a quest (passive points) for Irasha\n• Navigate from the waypoint to \"The Vastiri Desert\"",
+        "layout": "• The basic route is to follow the wall on the right side from the entrance.\nHowever, if the entrance is located in the upper right corner of the area, proceed downwards (and then to the lower right).",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Oasis</span> Not (The Forbidden Vault)\n(Please refer to the guide for the layout.)\n▸ [Sand Pit][boss]Defeat the boss,[town]<span style='color:#dddd44'>Town</span>\n▸【City】Turn in the quest (PP) to Irasha, completed with waypoint.[move]<span style='color:#dddd44'>The Vastiri Desert</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act9_area4": {
+    "visits": {
+      "1": {
+        "objective": "• Continue and activate the waypoint.\n• Go to \"The Boiling Lake\" nearby.",
+        "layout": "• Almost a fixed layout. From the entrance, waypoint and The Boiling Lake are located in the upper right direction.",
+        "tips": "",
+        "direction": "ne",
+        "mini_navi": {
+          "text": "▸Continue forward.[wp]Activate the waypoint\n▸ Located nearby[move]<span style='color:#dddd44'>The Boiling Lake</span>",
+          "direction": "ne"
+        }
+      },
+      "2": {
+        "objective": "• Defeat the boss \"Boulderback\" within the area to obtain the legendary artifact.\n• Proceed further, heading towards \"The Tunnel\".",
+        "layout": "• Almost a fixed layout.\"The Tunnel\" is in the upper-left direction.",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸ Within the area[boss]Boss: \"Obtain the lucky stone from 'Boulderback'\"\n▸Continue forward.[move]<span style='color:#dddd44'>The Tunnel</span>",
+          "direction": "nw"
+        }
+      }
+    }
+  },
+  "act9_area5": {
+    "visits": {
+      "1": {
+        "objective": "• Defeat the boss \"The Basilisk\" located deeper in the area.\n• Obtain the crafting recipe\n• Return to town\n\n(City)\n• Navigate from the waypoint to \"The Foothills\"",
+        "layout": "• Almost a fixed layout. The boss is located either directly above or to the upper right, as viewed from the entrance.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Located in the back[boss]Boss: \"Defeat The Basilisk\"\n▸[craft]Obtain the crafting recipe.[town]<span style='color:#dddd44'>Town</span>\n▸ [City] From the waypoint[move]<span style='color:#dddd44'>The Foothills</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act9_area6": {
+    "visits": {
+      "1": {
+        "objective": "• Complete the Trial of Ascendancy.\n  (A hidden passage along the trial wall contains a guaranteed transfigured gem.)\n• Obtain the crafting recipe.\n• Activate the waypoint.\n• Continue onward to The Quarry.",
+        "layout": "• As you proceed along the path, you will soon come to a fork in the road.\nOne is on the upper left.\nAnother option is to position the image either in the lower-left or upper-right corner, depending on the layout pattern.\n• If you proceed to the lower-left or upper-right area, you will encounter the \"Ascension Trial,\" so complete it first.\n• Then continue to the upper left.",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸Complete [trial]<span style='color:#4488ff'>the Trial of Ascendancy</span> (see the guide for its layout).\n  (A hidden passage along the trial wall contains a guaranteed transfigured gem.)\n▸[craft]Obtain the crafting recipe.\n▸[wp]Activate the waypoint, then continue to [move]<span style='color:#dddd44'>The Quarry</span>.",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act9_area7": {
+    "visits": {
+      "1": {
+        "objective": "• Move to the left and secure the waypoint.\n• Obtain the crafting recipe\n• From the waypoint, move to the upper right and go to \"The Refinery\".",
+        "layout": "•<span style='color:#ff6666'>The position of The Refinery, when experienced, has a relatively high probability of being in the upper right direction.</span> Yes.\n  <span style='color:#dddd44'>However, there is also a layout with a wind shrine in the upper right, in which case, clearing from the wind shrine is not a problem, but The Refinery is located to the left of the wind shrine in waypoint.</span>",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸ Proceed to the upper left.[wp]Activate the waypoint\n▸[craft]Obtain the crafting recipe\n▸From the waypoint, go to the upper right.[move]<span style='color:#dddd44'>The Refinery</span>\n(Please refer to the guide for the layout.)",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "• From the waypoint, go to the lower left and proceed towards the \"Wind Shrine.\"\n\n(The shrine to the wind)\n• Defeat the boss and obtain the \"Sekhema Feather\".\n• Return to town\n\n(City)\n• Submit a quest to Irasha (passive points)\n• Navigate from the waypoint to \"The Quarry\"\n\n(After clearing both the \"The Refinery\" and the \"Wind Shrine\")\n• \"Talk to the Sin and go to The Belly of the Beast\"",
+        "layout": "",
+        "tips": "",
+        "mini_navi": {
+          "text": "▸From the waypoint, go to the lower left and enter [move]<span style='color:#dddd44'>The Shrine of the Winds</span>.\n▸【The Shrine of the Winds】[boss]Defeat the boss, take the Sekhema Feather, and return to [town]town.\n▸【Town】Turn in Irasha's quest (passive point), then use the waypoint to return to [move]<span style='color:#dddd44'>The Quarry</span>.\n▸After clearing The Refinery and The Shrine of the Winds, speak to Sin and enter [move]<span style='color:#dddd44'>The Belly of the Beast</span>.",
+          "direction": "none"
+        },
+        "direction": "none"
+      }
+    }
+  },
+  "act9_area8": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed further and defeat the boss \"General Adus\".\n• Obtain \"Trarthan Powder\" in the back room.\n• Return to town\n\n(City)\n• Submit a quest to Sin and Petarus and Vanja.\n• Navigate from the waypoint to \"The Quarry\"",
+        "layout": "• If you start from the entrance and follow the wall on the left, you should be able to find it. The Boss Arena is located in the upper area (or upper-right) of the map.",
+        "tips": "",
+        "direction": "n",
+        "mini_navi": {
+          "text": "▸Continue forward.[boss]Boss: \"Defeat General Adus\"\n▸Obtain \"Trarthan Powder\" in the back room.[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Submit a quest to Sin and Petarus and Vanja.\n▸ [City] From the waypoint[move]<span style='color:#dddd44'>The Quarry</span>",
+          "direction": "n"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act9_area9": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Rotting Core\".",
+        "layout": "• The Belly of the Beast is a continuous sequence of Tunnels. One of the largest zones in Path of Exile 1.\nTo be honest, it's quite challenging.\n\n• The first fork always results in a \"square\" shape.\nThe route is determined by which entrance and exit you use in this square room.\n  –<span style='color:#ff6666'>Starting from above</span>(The only starting point.)(Image 1): When turning to the left, always continue turning to the left to reach the exit.\n  ―<span style='color:#dddd44'>Other layouts (entering from the right)</span> Entering the square room.\n> When the output is generated from the lower-right corner of a square:\nAt the first fork, turn left; at the next fork, turn up.\n> When the output starts from the top-left corner of a square:\nProceed forward until you reach Tunnels, then turn right and go up the corridor.\n> When the output is a square originating from the upper right corner:\nWhile there are specific cases where the process reaches a dead end, the primary approach is to verify the behavior by examining the branching paths.",
+        "tips": "The route is long, so move quickly to minimize incoming damage.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Rotting Core</span>\n(Please refer to the guide for the layout.)",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act9_area10": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, and head towards \"Black Core\".\n\n(Black Core)\n• Talk to the character named Sin and defeat the bosses in each of the three areas.\n–Shavronne\n–Maligaro\n– Doedre\n• Once finished, say \"Sin\" and proceed to \"Black Heart\".\n\n(Black Heart)\n• Boss: \"Defeat The Depraved Trinity\"\n• \"Tell Lilly to go to 'Oriath'.\"\n\n(City)\nGo to \"The Cathedral Rooftop\" above.",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>Black Core</span>\n▸Talk to Sin, defeat the boss in 3 areas,[move]<span style='color:#dddd44'>Black Heart</span>\n▸[boss]Defeat the boss and speak to Lilly.[move]<span style='color:#dddd44'>Oriath</span>\n▸ [In the city][move]<span style='color:#dddd44'>The Cathedral Rooftop</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act10_area1": {
+    "visits": {
+      "1": {
+        "objective": "Go to \"The Cathedral Rooftop (upper)\" which is right nearby.\n\n(After rescue: Bannon)\nProceed to the lower right and go to \"The Ravaged Square\".",
+        "layout": "",
+        "tips": "[General Notes for Act 10]\n• Because Act 10 imposes a negative resistance penalty, it's easier to defeat the final boss if you've already acquired the third Ascension.",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Located very nearby[move]<span style='color:#dddd44'>The Cathedral Rooftop (upper)</span>\n▸ (After rescue: Bannon) Proceed to the lower right.[move]<span style='color:#dddd44'>The Ravaged Square</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act10_area2": {
+    "visits": {
+      "1": {
+        "objective": "• Defeat the boss and help Bannon.\n• Return to the area",
+        "mini_navi": {
+          "text": "▸[boss]Defeat the boss and help Bannon.\n▸ Return to the area",
+          "direction": "none"
+        },
+        "direction": "none"
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act10_area3": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed to the right and, when you find the bridge, leave \"portal\"\n• Continue further and secure the waypoint.\n• Return to the city from the waypoint\n\n(City)\n• Enter portal",
+        "layout": "• Fixed layout. The difference between Act 5 and \"The Ruined Square\" is that the northern bridge, which was previously accessible, is now destroyed.",
+        "tips": "",
+        "direction": "ne",
+        "mini_navi": {
+          "text": "▸ Proceed to the upper right, and when you find the bridge,[portal]Open a portal.\n▸ Proceed further into the depths.[wp]Activate the waypoint and then[town]<span style='color:#dddd44'>Town</span>\n▸[City] Enter portal",
+          "direction": "ne"
+        },
+        "flags": {
+          "act10_controlblocks_enter": {
+            "objective": "• Go to \"The Ossuary\"",
+            "layout": "",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸[move]<span style='color:#dddd44'>The Ossuary</span>",
+              "direction": "none"
+            }
+          },
+          "act10_controlblocks_enter+act10_ossuary_enter": {
+            "objective": "• Proceed to the lower right and go to \"The Torched Courts\".",
+            "layout": "",
+            "tips": "",
+            "direction": "se",
+            "mini_navi": {
+              "text": "▸ Proceed to the lower right.[move]<span style='color:#dddd44'>The Torched Courts</span>",
+              "direction": "se"
+            }
+          },
+          "act10_controlblocks_enter+act10_ossuary_enter+act10_desecratedchambers_enter": {
+            "objective": "• \"Go to Innocence near waypoint,\" and then \"go to The Canals\"",
+            "layout": "",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸Speak to someone near waypoint who is saying \"Innocence\"[move]<span style='color:#dddd44'>The Canals</span>",
+              "direction": "none"
+            }
+          }
+        }
+      },
+      "2": {
+        "objective": "Explore the lower-left area of the area on the bridge's side, looking for \"The Control Blocks\".",
+        "layout": "",
+        "tips": "\"The Control Blockss\" are located at the end of narrow side roads and can be difficult to find, so please be careful when searching for them.",
+        "direction": "sw",
+        "mini_navi": {
+          "text": "▸ Explore the lower-left corner of the area on the bridge's approach side.[move]<span style='color:#dddd44'>The Control Blocks</span>",
+          "direction": "sw"
+        }
+      }
+    }
+  },
+  "act10_area4": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, and head towards the \"arena\".\n\n(Arena)\n• Defeat the boss.\n• Return to town\n\n(City)\n• Turn in the quest (passive points, flask)\n• Navigate from the waypoint to \"The Ravaged Square\"",
+        "layout": "",
+        "tips": "Along the way, there are sections where the fence is damaged, which can be easily crossed using techniques like Frostblink, allowing you to jump over the gaps.",
+        "direction": "w",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>Arena</span>\n▸ [Arena][boss]Defeat the boss,[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Turn in the quest (passive points, flask)\n▸From the waypoint[move]<span style='color:#dddd44'>The Ravaged Square</span>",
+          "direction": "w"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act10_area5": {
+    "visits": {
+      "1": {
+        "objective": "Go to \"The Bone Pits\"\n\n(The Bone Pits)\n• Proceed further, open the \"Locked Box,\" and obtain the \"Elixir of Allure.\"\n• Obtain the crafting recipe\n• Successfully complete the trial at Ascendancy, which is located nearby.\n• Return to town\n\n(City)\n• Submit a quest for Weylam\n• Navigate from the waypoint to \"The Ravaged Square\"",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸[move]<span style='color:#dddd44'>The Bone Pits</span>\n▸ Proceed deeper into the area and open the \"Sealed Box\" to obtain the \"Elixir of Allure\".\n▸[trial]<span style='color:#4488ff'>The Trial of Ascendancy</span>, then return to [town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Turn in the quest: Weylam. Then use the waypoint to[move]<span style='color:#dddd44'>The Ravaged Square</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act10_area6": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Desecrated Chambers\".",
+        "layout": "• If you start at the entrance and walk around the entire area in a clockwise direction, you will reach the finish line.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Desecrated Chambers</span>\n\n(Starting from the entrance, proceed in a clockwise direction around the entire area)",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act10_area7": {
+    "visits": {
+      "1": {
+        "objective": "Proceed counter-clockwise from the top-left, obtain the crafting recipe, and go to \"The Sanctuary of Innocence\".\n\n(The Sanctum of Innocence)\n• Defeat the boss and obtain \"The Staff of Purity.\"\n• Return to town\n\n(City)\n• Submit a quest for Bannon\n• Attempting the labyrinth for the third time.",
+        "layout": "• Same layout as Act 5's \"The Chamber of Innocence\". First, proceed continuously in the upper-left direction, then move to the lower-right, and continue further to reach the goal.",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸ Proceed clockwise from the top left.[craft]Obtain the crafting materials.[move]<span style='color:#dddd44'>The Sanctum of Innocence</span>\n▸[boss]Defeat the boss and obtain \"The Staff of Purity.\"[town]<span style='color:#dddd44'>Town</span>\n▸ [City][quest]Submit a quest for Bannon\n▸ [City] Complete the third Labyrinth.",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act10_area8": {
+    "visits": {
+      "1": {
+        "objective": "\"Successfully navigate the labyrinth\"",
+        "layout": "",
+        "tips": "• The minor Pantheon must be changed to Larakesh.\n\n• Before fighting the boss, be sure to grab the crafting recipes from the designated area (which may include storage spaces).\n• The layout should be based on the one used by \"PoE LAB\" (https://www.poelab.com/).\n• The \"D\" symbol indicates the location of the Dark Shrine. There is a hidden room somewhere within the area, with an entrance that can be opened nearby.\nBy obtaining them, players can benefit from buffs for themselves and the weakening of bosses.\n• The options for obtaining clear rewards are to focus on improving the quality of gem, which will be used after entering the map, or to aim for a high-value, randomly generated gem.\n• Complete your Ascendancy",
+        "direction": "none",
+        "mini_navi": {
+          "text": "\"Successfully navigate the labyrinth\"",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "\"The Ravaged Square\" ⇒ \"The Canals\" ⇒ \"The Feeding Trough\" - Defeat Kitava to complete Act 10.",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "\"The Ravaged Square\" ⇒ \"The Canals\" ⇒ \"The Feeding Trough\" - Defeat Kitava to complete Act 10.",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act10_area9": {
+    "visits": {
+      "1": {
+        "objective": "Proceed further, heading towards \"The Feeding Trough\".",
+        "layout": "",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸Continue forward.[move]<span style='color:#dddd44'>The Feeding Trough</span>",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act10_area10": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed further and speak to Sin.\n• Obtain the crafting recipe\n• Go to \"The Altar of Hunger\"\n• Boss: \"Defeat Kitava.\"",
+        "layout": "",
+        "tips": "",
+        "direction": "nw",
+        "mini_navi": {
+          "text": "▸Proceed further and speak to Sin\n▸[craft]Obtain the crafting recipe\n▸[move]<span style='color:#dddd44'>The Altar of Hunger</span>\n\n▸[boss]Boss: \"Defeat Kitava.\"",
+          "direction": "nw"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act10_area11": {
+    "visits": {
+      "1": {
+        "objective": "🎉 Act 10 completed!\n• \"Speak to Sin, then go to Oriath Docks.\"\n• \"Speak to Lilly and travel to Karui Shores.\"\n• Obtain the crafting recipe\n• Speak to Lani and submit your quest.\n• Type \"/passives\" into the chat to check if you have missed any passive points.\n(If you defeat all the enemies in the Bandit Quest, you will earn 24 points. Otherwise, you will earn 23 points if you have completed the quest.)）",
+        "layout": "",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Talk to Sin[move]<span style='color:#dddd44'>Oriath Docks</span>\n▸Talk to Lilly[move]<span style='color:#dddd44'>Karui Shores</span>[craft]Obtain the crafting recipe\n▸[quest]Talk to Lani and submit your quest.\n▸ Use the \"/passives\" command to check passive points.",
+          "direction": "none"
+        }
+      }
+    }
+  },
+  "act1_area15": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the path to the next area.\n• Boss: \"Defeat Merveil\"",
+        "layout": "",
+        "tips": "",
+        "direction": "ne",
+        "mini_navi": {
+          "text": "▸ Proceed forward along the path to the next area.\n▸[boss]Boss: \"Defeat Merveil\"",
+          "direction": "ne"
+        }
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act3_area18": {
+    "visits": {
+      "1": {
+        "objective": "• Proceed along the path, and defeat the boss at the end.\n• Navigate to \"The Aqueduct\" on the right.",
+        "layout": "• In each level, it is best to follow these two principles:\n- When entering the area, proceed straight along the direction of the stairs (if you encounter a wall, look for an alternative route).\n- Move in a clockwise direction.",
+        "tips": "",
+        "direction": "none",
+        "mini_navi": {
+          "text": "▸Proceeding along the path, and continuing onward, [boss]Defeat the boss.\n▸On the right[move]<span style='color:#dddd44'>The Aqueduct</span>",
+          "direction": "none"
+        }
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
+  "act2_area19": {
+    "visits": {
+      "1": {
+        "objective": "In Act 2, it is not necessary to clear this area.\nLet's turn back and proceed along a different route.",
+        "mini_navi": {
+          "text": "*Note: It is not necessary to clear this area in Act 2.*\nNote:  Let's go back and choose a different route.",
+          "direction": "none"
+        },
+        "direction": "none"
+      },
+      "2": {
+        "direction": "none"
+      }
+    }
+  },
+  "act8_area20": {
+    "visits": {
+      "1": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    },
+    "routes": {
+      "underbelly": {
+        "visits": {
+          "1": {
+            "objective": "• Leave portal at the intermediate branching point.\n• Go to \"The Solaris Concourse\"",
+            "layout": "• There are two possible layouts for this area.\nIn all cases, the first step is to proceed along the left wall.\n\n•<span style='color:#ff6666'>When you reach a fork in the road, please leave portal</span> Now, let's discuss conditional statements.\n  ―<span style='color:#dddd44'>The fork goes to the left and downwards.</span>\nMove to the left and go to The Solaris Concourse.\n  ―<span style='color:#ff8800'>The branches split upwards and to the right/top, and downwards.</span>\nMove downwards and go to The Solaris Concourse.",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸At a fork in the road,[portal]Open a portal.\n(Please refer to the guide for the layout.)\n▸[move]<span style='color:#dddd44'>The Solaris Concourse</span>",
+              "direction": "none"
+            }
+          },
+          "2": {
+            "objective": "• Continue down the previously unvisited fork in the road and head towards \"The Bath House\".",
+            "layout": "",
+            "tips": "",
+            "direction": "none",
+            "mini_navi": {
+              "text": "▸Continue past the previously skipped turn.[move]<span style='color:#dddd44'>The Bath House</span>",
+              "direction": "none"
+            }
+          }
+        }
+      }
+    }
+  }
+}

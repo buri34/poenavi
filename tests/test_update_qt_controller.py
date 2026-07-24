@@ -83,6 +83,7 @@ def test_launch_updater_copies_executable_archive_and_uses_argument_list(
     assert staged_archive == updater_work / "PoENavi.zip"
     assert staged_archive.read_bytes() == b"zip"
     assert cwd == str(updater_work)
+    assert args[args.index("--language") + 1] == "ja"
     assert not download_dir.exists()
 
 

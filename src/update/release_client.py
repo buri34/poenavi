@@ -5,9 +5,13 @@ import re
 from urllib.parse import quote
 import urllib.request
 
+from src.update.release_channel import (
+    load_release_repository,
+    release_by_tag_api_url,
+    releases_api_url,
+    releases_page_url,
+)
 
-RELEASES_API = "https://api.github.com/repos/buri34/poenavi/releases/latest"
-RELEASE_BY_TAG_API = "https://api.github.com/repos/buri34/poenavi/releases/tags/{tag}"
 TEST_RELEASE_TAG_ENV = "POENAVI_UPDATE_TEST_TAG"
 VERSION_PATTERN = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
 
@@ -33,6 +37,7 @@ def parse_latest_release(
     current_version: str,
     *,
     allow_prerelease: bool = False,
+    repository: str | None = None,
 ) -> ReleaseInfo | None:
     if payload.get("draft") or (payload.get("prerelease") and not allow_prerelease):
         return None
@@ -60,7 +65,7 @@ def parse_latest_release(
         notes=str(payload.get("body") or "変更内容はリリースページで確認できます。"),
         page_url=str(
             payload.get("html_url")
-            or "https://github.com/buri34/poenavi/releases/latest"
+            or releases_page_url(repository)
         ),
         zip_url=str(zip_url),
         checksum_url=str(checksum_url),
@@ -70,15 +75,21 @@ def parse_latest_release(
 def fetch_latest_release(
     current_version: str,
     opener=urllib.request.urlopen,
+    *,
+    repository: str | None = None,
 ) -> ReleaseInfo | None:
+    repository = repository or load_release_repository()
     test_tag = os.environ.get(TEST_RELEASE_TAG_ENV, "").strip()
     allow_prerelease = False
-    release_api = RELEASES_API
+    release_api = releases_api_url(repository)
     if test_tag:
         # 明示したテスト起動だけ、指定タグのPre-releaseを参照する。
         # 通常起動では従来どおり /releases/latest の正式版のみが対象。
         parse_version(test_tag)
-        release_api = RELEASE_BY_TAG_API.format(tag=quote(test_tag, safe=""))
+        release_api = release_by_tag_api_url(
+            quote(test_tag, safe=""),
+            repository,
+        )
         allow_prerelease = True
 
     request = urllib.request.Request(
@@ -91,4 +102,5 @@ def fetch_latest_release(
         payload,
         current_version,
         allow_prerelease=allow_prerelease,
+        repository=repository,
     )

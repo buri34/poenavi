@@ -78,8 +78,12 @@ def get_lap_labels(poe_version: str) -> list[str]:
     return list(get_poe_definition(poe_version)["lap_labels"])
 
 
-def get_guide_filename(poe_version: str) -> str:
-    return get_poe_definition(poe_version)["guide_file"]
+def get_guide_filename(poe_version: str, language: str = "ja") -> str:
+    filename = get_poe_definition(poe_version)["guide_file"]
+    if str(language).lower().replace("_", "-").startswith("en"):
+        stem, suffix = filename.rsplit(".", 1)
+        return f"{stem}_en.{suffix}"
+    return filename
 
 
 def get_timer_filename(poe_version: str) -> str:

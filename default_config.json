@@ -1,4 +1,7 @@
 {
+    "schemaVersion": 5,
+    "language": "ja",
+    "language_selected": false,
     "hotkeys": {
         "start_stop": "F7",
         "reset": "F8",

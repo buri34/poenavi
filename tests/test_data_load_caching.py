@@ -10,7 +10,11 @@ from src.utils.poe_version_data import POE1
 def test_load_guide_data_reuses_unchanged_file(tmp_path, monkeypatch):
     path = tmp_path / "guide_data.json"
     path.write_text(json.dumps({"zone": {}}), encoding="utf-8")
-    monkeypatch.setattr(guide_data, "get_guide_path", lambda _version: str(path))
+    monkeypatch.setattr(
+        guide_data,
+        "get_guide_path",
+        lambda _version, _language="ja": str(path),
+    )
     guide_data._GUIDE_DATA_CACHE.clear()
 
     with patch("builtins.open", wraps=open) as mocked_open:

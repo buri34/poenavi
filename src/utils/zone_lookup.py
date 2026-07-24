@@ -4,6 +4,18 @@
 このモジュールには可変/重複しやすいゾーンマスタデータを置かない。
 """
 
+from src.utils.i18n import EN, get_locale, normalize_locale, tr
+
+
+def get_zone_display_name(zone: dict, locale: str | None = None) -> str:
+    """Return the locale-specific display name without changing zone identity."""
+    if not isinstance(zone, dict):
+        return ""
+    use_english = normalize_locale(locale or get_locale()) == EN
+    preferred = zone.get("zone_en") if use_english else zone.get("zone")
+    fallback = zone.get("zone") if use_english else zone.get("zone_en")
+    return str(preferred or fallback or zone.get("id", ""))
+
 
 def get_zone_info(zone_data: dict, zone_name: str, part2: bool = False) -> tuple:
     """
@@ -43,14 +55,14 @@ def get_level_advice(player_level: int, zone_level: int) -> tuple:
 
     if abs(diff) > safe_range:
         if diff > 0:
-            return f"🔴 ペナルティ (+{diff}) — レベル超過！経験値減少中", "#ff4444"
-        return f"🔴 ペナルティ ({diff:+d}) — レベル不足！経験値減少中", "#ff4444"
+            return tr("guide.level_advice.penalty_over", diff=diff), "#ff4444"
+        return tr("guide.level_advice.penalty_under", diff=diff), "#ff4444"
 
     if diff <= 0 and abs(diff) <= optimal_margin:
         if diff == 0:
-            return "🟢 最適レベル (±0)", "#b0ff7b"
-        return f"🟢 最適レベル ({diff:+d})", "#b0ff7b"
+            return tr("guide.level_advice.optimal_zero"), "#b0ff7b"
+        return tr("guide.level_advice.optimal", diff=diff), "#b0ff7b"
 
     if diff > 0:
-        return f"🟡 ペナルティなし (+{diff}) — ややレベル上がり気味", "#ffff66"
-    return f"🟡 ペナルティなし ({diff:+d}) — ややレベル不足気味", "#ffff66"
+        return tr("guide.level_advice.safe_over", diff=diff), "#ffff66"
+    return tr("guide.level_advice.safe_under", diff=diff), "#ffff66"

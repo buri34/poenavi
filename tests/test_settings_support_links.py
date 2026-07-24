@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QApplication, QPushButton
 
 from src.ui import settings_dialog
 from src.ui.settings_dialog import SettingsDialog
+from src.utils.i18n import tr_ui
 
 
 @pytest.fixture(scope="module")
@@ -19,11 +20,11 @@ def test_patreon_support_button_opens_configured_url(monkeypatch, qapp):
         button.text(): button
         for button in dialog.findChildren(QPushButton)
     }
-    assert "OFUSE（おふせ）で応援する" in buttons
-    assert "Ko-fi で応援する" in buttons
-    assert "Patreon で応援する" in buttons
+    assert tr_ui("OFUSE（おふせ）で応援する") in buttons
+    assert tr_ui("Ko-fi で応援する") in buttons
+    assert tr_ui("Patreon で応援する") in buttons
 
-    buttons["Patreon で応援する"].click()
+    buttons[tr_ui("Patreon で応援する")].click()
 
     assert opened_urls == ["https://www.patreon.com/cw/Buri8857"]
     dialog.close()

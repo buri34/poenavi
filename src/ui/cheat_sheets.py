@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 from src.ui.styles import Styles
 from src.poetore.window_position import path_of_exile_client_rect
 from src.utils.config_manager import ConfigManager
+from src.utils.i18n import tr_ui
 
 
 SUPPORTED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}
@@ -52,7 +53,7 @@ def import_cheat_sheet_image(source: str | Path) -> dict:
     source_path = Path(source)
     suffix = source_path.suffix.lower()
     if suffix not in SUPPORTED_IMAGE_SUFFIXES:
-        raise ValueError("対応していない画像形式です")
+        raise ValueError(tr_ui("対応していない画像形式です"))
     if not source_path.is_file():
         raise FileNotFoundError(source_path)
 
@@ -99,7 +100,7 @@ class CheatSheetManagerDialog(QDialog):
 
     def __init__(self, config: dict, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Cheat sheet画像の管理")
+        self.setWindowTitle(tr_ui("Cheat sheet画像の管理"))
         self.resize(620, 430)
         self.setStyleSheet(Styles.MAIN_WINDOW)
         self.value = normalized_cheat_sheet_config(config)
@@ -110,10 +111,10 @@ class CheatSheetManagerDialog(QDialog):
         self._pending_deletions: list[dict] = []
 
         layout = QVBoxLayout(self)
-        hint = QLabel(
+        hint = QLabel(tr_ui(
             "画像はPoENaviのユーザーデータへコピーされます。"
             " Shift+Spaceは登録ではなく表示／非表示に使います。"
-        )
+        ))
         hint.setWordWrap(True)
         layout.addWidget(hint)
 
@@ -123,15 +124,15 @@ class CheatSheetManagerDialog(QDialog):
         body.addWidget(self.list_widget, 2)
 
         editor = QVBoxLayout()
-        editor.addWidget(QLabel("表示名"))
+        editor.addWidget(QLabel(tr_ui("表示名")))
         self.name_edit = QLineEdit()
         self.name_edit.textEdited.connect(self._rename_current)
         editor.addWidget(self.name_edit)
 
-        self.add_button = QPushButton("画像を追加")
+        self.add_button = QPushButton(tr_ui("画像を追加"))
         self.add_button.clicked.connect(self._add_image)
         editor.addWidget(self.add_button)
-        self.remove_button = QPushButton("削除")
+        self.remove_button = QPushButton(tr_ui("削除"))
         self.remove_button.clicked.connect(self._remove_image)
         editor.addWidget(self.remove_button)
 
@@ -144,7 +145,7 @@ class CheatSheetManagerDialog(QDialog):
         order.addWidget(self.down_button)
         editor.addLayout(order)
 
-        editor.addWidget(QLabel("表示の不透明度"))
+        editor.addWidget(QLabel(tr_ui("表示の不透明度")))
         opacity_row = QHBoxLayout()
         self.opacity_slider = QSlider(Qt.Horizontal)
         self.opacity_slider.setRange(20, 100)
@@ -162,9 +163,9 @@ class CheatSheetManagerDialog(QDialog):
 
         buttons = QHBoxLayout()
         buttons.addStretch()
-        cancel = QPushButton("キャンセル")
+        cancel = QPushButton(tr_ui("キャンセル"))
         cancel.clicked.connect(self.reject)
-        save = QPushButton("保存")
+        save = QPushButton(tr_ui("保存"))
         save.clicked.connect(self.accept)
         buttons.addWidget(cancel)
         buttons.addWidget(save)
@@ -175,7 +176,10 @@ class CheatSheetManagerDialog(QDialog):
         current = self.list_widget.currentRow() if row is None else row
         self.list_widget.clear()
         for image in self.value["images"]:
-            self.list_widget.addItem(image.get("name") or "名称未設定")
+            name = image.get("name")
+            self.list_widget.addItem(
+                tr_ui("名称未設定") if not name or name == "名称未設定" else name
+            )
         if self.value["images"]:
             self.list_widget.setCurrentRow(max(0, min(current, len(self.value["images"]) - 1)))
         else:
@@ -192,15 +196,17 @@ class CheatSheetManagerDialog(QDialog):
     def _rename_current(self, text: str):
         row = self.list_widget.currentRow()
         if 0 <= row < len(self.value["images"]):
-            self.value["images"][row]["name"] = text.strip() or "名称未設定"
-            self.list_widget.item(row).setText(self.value["images"][row]["name"])
+            self.value["images"][row]["name"] = text.strip()
+            self.list_widget.item(row).setText(
+                self.value["images"][row]["name"] or tr_ui("名称未設定")
+            )
 
     def _add_image(self):
         paths, _ = QFileDialog.getOpenFileNames(
             self,
-            "Cheat sheet画像を選択",
+            tr_ui("Cheat sheet画像を選択"),
             "",
-            "画像 (*.png *.jpg *.jpeg *.webp *.bmp *.gif)",
+            tr_ui("画像 (*.png *.jpg *.jpeg *.webp *.bmp *.gif)"),
         )
         for path in paths:
             try:
@@ -208,7 +214,11 @@ class CheatSheetManagerDialog(QDialog):
                 self.value["images"].append(record)
                 self._new_records.append(record)
             except Exception as exc:
-                QMessageBox.warning(self, "画像を追加できません", str(exc))
+                QMessageBox.warning(
+                    self,
+                    tr_ui("画像を追加できません"),
+                    str(exc),
+                )
         if paths:
             self._refresh_list(len(self.value["images"]) - 1)
 
@@ -291,7 +301,7 @@ class CheatSheetOverlay(QWidget):
         self.title_label.installEventFilter(self)
         title_row.addWidget(self.title_label)
         title_row.addStretch()
-        manage = QPushButton("管理")
+        manage = QPushButton(tr_ui("管理"))
         manage.clicked.connect(self.manage_requested.emit)
         title_row.addWidget(manage)
         close = QPushButton("×")
@@ -307,9 +317,9 @@ class CheatSheetOverlay(QWidget):
         layout.addWidget(self.image_label, 1)
 
         nav = QHBoxLayout()
-        previous = QPushButton("◀ 前")
+        previous = QPushButton(tr_ui("◀ 前"))
         previous.clicked.connect(lambda: self.step_image(-1))
-        next_button = QPushButton("次 ▶")
+        next_button = QPushButton(tr_ui("次 ▶"))
         next_button.clicked.connect(lambda: self.step_image(1))
         nav.addWidget(previous)
         nav.addStretch()
@@ -356,7 +366,9 @@ class CheatSheetOverlay(QWidget):
     def _show_selected_image(self):
         images = self.config["images"]
         if not images:
-            self.title_label.setText("Cheat sheets（画像タイトルをドラッグで移動）")
+            self.title_label.setText(
+                tr_ui("Cheat sheets（画像タイトルをドラッグで移動）")
+            )
             self.image_label.setStyleSheet(
                 "QLabel {"
                 " background: rgba(0, 0, 0, 205);"
@@ -368,18 +380,22 @@ class CheatSheetOverlay(QWidget):
                 " font-weight: bold;"
                 "}"
             )
-            self.image_label.setText(
+            self.image_label.setText(tr_ui(
                 "画像が登録されていません\n\n"
                 "ぽえなび本体の「🖼」ボタンから画像を登録してください"
-            )
+            ))
             self.counter_label.clear()
             self._pixmap = QPixmap()
             return
         index = self._selected_index()
         record = images[index]
         self.config["selected_id"] = record["id"]
-        title = record.get("name") or "名称未設定"
-        self.title_label.setText(f"{title}（画像タイトルをドラッグで移動）")
+        title = record.get("name")
+        if not title or title == "名称未設定":
+            title = tr_ui("名称未設定")
+        self.title_label.setText(
+            tr_ui(f"{title}（画像タイトルをドラッグで移動）")
+        )
         self.counter_label.setText(f"{index + 1} / {len(images)}")
         self._pixmap = QPixmap(str(registered_image_path(record)))
         if self._pixmap.isNull():
@@ -394,7 +410,7 @@ class CheatSheetOverlay(QWidget):
                 " font-weight: bold;"
                 "}"
             )
-            self.image_label.setText("画像ファイルが見つかりません")
+            self.image_label.setText(tr_ui("画像ファイルが見つかりません"))
         else:
             self.image_label.setStyleSheet(
                 "QLabel { background: transparent; border: none; padding: 0; }"

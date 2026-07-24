@@ -3,10 +3,14 @@
 maps/PoE1/<ゾーン名>/ または maps/PoE2/<ゾーン名>/ フォルダ内の画像を自動読み込み
 """
 
+from src.utils.i18n import tr_ui
+from src.utils.config_manager import ConfigManager
+
 import os
 import sys
 from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QVBoxLayout, QLabel, QDialog, QScrollArea, QSizePolicy
+    QApplication, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QDialog,
+    QScrollArea, QSizePolicy
 )
 from PySide6.QtCore import Qt, QSize, Signal, QPoint, QTimer
 from PySide6.QtGui import QPixmap, QCursor, QPainter
@@ -126,7 +130,6 @@ class MapImageDialog(QDialog):
         self._positioned = False
 
         self.setWindowTitle(os.path.basename(image_path))
-        from src.utils.config_manager import ConfigManager
         flags = Qt.Dialog
         if ConfigManager.load_config().get("always_on_top", True):
             flags |= Qt.WindowStaysOnTopHint
@@ -138,8 +141,8 @@ class MapImageDialog(QDialog):
         layout.setContentsMargins(10, 10, 10, 10)
         
         self.notice_label = QLabel(
-            "実際のレイアウトは、ワールドマップ上の隣接エリアとの位置関係に依存してランダムに変動します。\n"
-            "そのため、上下または左右に反転したレイアウトや、90度回転したようなレイアウトになることがあります。"
+            tr_ui("実際のレイアウトは、ワールドマップ上の隣接エリアとの位置関係に依存してランダムに変動します。\n"
+            "そのため、上下または左右に反転したレイアウトや、90度回転したようなレイアウトになることがあります。")
         )
         self.notice_label.setWordWrap(True)
         self.notice_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -160,7 +163,6 @@ class MapImageDialog(QDialog):
         layout.addWidget(self.info_label)
         
         # 保存されたサイズを復元
-        from src.utils.config_manager import ConfigManager
         config = ConfigManager.load_config()
         saved_w = config.get("map_viewer_width", 0)
         saved_h = config.get("map_viewer_height", 0)
@@ -182,7 +184,6 @@ class MapImageDialog(QDialog):
         if not pix.isNull():
             if initial:
                 # 初回はモニター60%に合わせる
-                from PySide6.QtWidgets import QApplication
                 screen = QApplication.primaryScreen()
                 if screen:
                     screen_size = screen.availableSize()
@@ -226,7 +227,6 @@ class MapImageDialog(QDialog):
     
     def closeEvent(self, event):
         # サイズを保存
-        from src.utils.config_manager import ConfigManager
         config = ConfigManager.load_config()
         config["map_viewer_width"] = self.width()
         config["map_viewer_height"] = self.height()
@@ -284,7 +284,7 @@ class MapThumbnailWidget(QWidget):
         main_layout.setSpacing(2)
         
         # ヘッダ
-        self.header_label = QLabel("🗺 マップレイアウト")
+        self.header_label = QLabel(tr_ui("🗺 マップレイアウト"))
         self.header_label.setStyleSheet(
             "color: rgba(176, 255, 123, 0.7); font-size: 11px; font-weight: bold;"
         )
@@ -346,7 +346,7 @@ class MapThumbnailWidget(QWidget):
             return
         
         self.setVisible(True)
-        self.header_label.setText(f"🗺 マップレイアウト ({len(paths)}パターン)")
+        self.header_label.setText(tr_ui(f"🗺 マップレイアウト ({len(paths)}パターン)"))
         
         row_layout = QHBoxLayout()
         row_layout.setContentsMargins(0, 0, 0, 0)
@@ -395,7 +395,6 @@ class MapThumbnailWidget(QWidget):
         if self.auto_position:
             main_win = self.window()
             if main_win:
-                from PySide6.QtWidgets import QApplication
                 main_geo = main_win.frameGeometry()
                 dialog_w = dialog.width()
                 dialog_h = dialog.height()

@@ -29,6 +29,14 @@ jobs:
             throw "Tag $env:GITHUB_REF_NAME does not match APP_VERSION $version"
           }
 
+      - name: Verify release notes exist
+        shell: pwsh
+        run: |
+          $notes = "docs/releases/$env:GITHUB_REF_NAME.md"
+          if (-not (Test-Path -LiteralPath $notes -PathType Leaf)) {
+            throw "Missing release notes: $notes"
+          }
+
       - name: Run tests
         env:
           QT_QPA_PLATFORM: offscreen
@@ -36,7 +44,10 @@ jobs:
 
       - name: Build release assets
         shell: pwsh
-        run: .\scripts\build_release.ps1 -Python python
+        run: >-
+          .\scripts\build_release.ps1
+          -Python python
+          -ReleaseRepository $env:GITHUB_REPOSITORY
 
       - name: Create GitHub Release
         shell: pwsh
@@ -45,5 +56,5 @@ jobs:
         run: >-
           gh release create $env:GITHUB_REF_NAME
           PoENavi.zip PoENavi.zip.sha256
-          --verify-tag --generate-notes
+          --verify-tag --notes-file "docs/releases/$env:GITHUB_REF_NAME.md"
           --title "PoENavi $env:GITHUB_REF_NAME"

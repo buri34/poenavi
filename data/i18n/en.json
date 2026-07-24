@@ -1,0 +1,117 @@
+{
+  "app": {
+    "title": "PoENavi",
+    "settings": "Settings",
+    "update": "PoENavi Update",
+    "restart_required": "The language has changed. Restart PoENavi to apply the change."
+  },
+  "startup": {
+    "language_title": "Language / 言語",
+    "language_prompt": "Choose the language PoENavi should use.",
+    "japanese": "日本語",
+    "english": "English",
+    "cancel": "Cancel",
+    "poe_version_title": "Select PoE version",
+    "guide_detail_title": "Guide detail level"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "next": "Next",
+    "none": "None",
+    "unknown": "Unknown"
+  },
+  "guide": {
+    "heading": {
+      "summary": "📋 Summary guide (next objectives and key points)",
+      "direction": "🧭 General direction",
+      "direction_reference": "📖 See the guide",
+      "objective": "📋 Objective",
+      "layout": "🗺️ Layout information",
+      "tips": "💡 Tips"
+    },
+    "missing": "No guide data is available for “{zone}”.",
+    "visit": "(visit {visit})",
+    "level": "Level",
+    "level_advice": {
+      "penalty_over": "🔴 Penalty (+{diff}) — over-levelled; experience is reduced",
+      "penalty_under": "🔴 Penalty ({diff}) — under-levelled; experience is reduced",
+      "optimal": "🟢 Optimal level ({diff:+d})",
+      "optimal_zero": "🟢 Optimal level (±0)",
+      "safe_over": "🟡 No penalty (+{diff}) — slightly over-levelled",
+      "safe_under": "🟡 No penalty ({diff}) — slightly under-levelled"
+    },
+    "waiting": "Enter an area to display its guide"
+  },
+  "zone": {
+    "act_level": "{act} — {zone} (Lv.{level})",
+    "town": "🏠 {zone}",
+    "area": "📍 {zone}",
+    "area_with_act": "📍 {act} — {zone} (Lv.{level})",
+    "area_with_visit": "📍 {act} — {zone} (Lv.{level}) {visit}",
+    "unknown_level": "Dynamic level"
+  },
+  "settings": {
+    "language": "Language:",
+    "language_japanese": "日本語",
+    "language_english": "English",
+    "language_help": "Restart PoENavi after changing this setting.",
+    "hotkeys": {
+      "title": "Hotkeys",
+      "start_stop": "Start/stop:",
+      "reset": "Reset:",
+      "lap": "Lap (next Act):",
+      "undo_lap": "Undo lap:",
+      "click_through": "Click-through:",
+      "logout": "Log out:",
+      "hideout": "Go to hideout (/hideout):",
+      "monastery": "(Temporary) go to monastery (/monastery):",
+      "search": "Paste search string:"
+    }
+  },
+  "gems": {
+    "no_gems": "No gems are acquired in this Act",
+    "reward": "Quest",
+    "vendor": "Buy",
+    "search_hint": "Click to paste into the PoE search field",
+    "pob_import": "Import PoB code",
+    "pob_placeholder": "Paste PoB code (Base64) here..."
+  },
+  "update": {
+    "title": "PoENavi Update",
+    "available": "A new version, v{version}, is available.",
+    "now": "Update now",
+    "open_release": "Open release page",
+    "later": "Later",
+    "download": "Downloading v{version}…",
+    "progress_known": "Downloading: {done:.1f} / {total:.1f} MB",
+    "progress_unknown": "Downloading: {done:.1f} MB",
+    "cancel": "Cancel",
+    "windows_only": "Automatic updates are available only in the Windows executable.",
+    "updater_missing": "PoENaviUpdater.exe was not found.",
+    "checksum_mismatch": "The downloaded ZIP failed SHA-256 verification."
+  },
+  "errors": {
+    "updater_target_missing": "The PoENavi.exe targeted for update was not found.",
+    "updater_process_running": "The update was cancelled because PoENavi could not be closed.",
+    "backup": "Backup",
+    "windows_only": "This feature is available only on Windows",
+    "admin_required": "Administrator permission is required. Run PoENavi as administrator.",
+    "process_list": "Failed to retrieve the process list",
+    "poe_process_missing": "The PoE process was not found",
+    "tcp_table": "Failed to retrieve the TCP connection table (error={error})",
+    "tcp_disconnect": "Failed to disconnect {count} TCP connection(s)",
+    "tcp_not_found": "No PoE TCP connections were found"
+  },
+  "progress": {
+    "poe1_clear": "Act 10 complete!",
+    "poe1_tired": "Well done!",
+    "poe2_clear": "Campaign complete!"
+  }
+}

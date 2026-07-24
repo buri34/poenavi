@@ -13,6 +13,7 @@ import sys
 from datetime import datetime
 
 from src.utils.poe_version_data import POE1, get_guide_filename
+from src.utils.i18n import DEFAULT_LOCALE, get_locale, tr
 from src.utils.config_manager import ConfigManager
 
 # デフォルトガイド（guide_data.json がない場合のフォールバック）
@@ -37,8 +38,8 @@ def get_guide_dir():
     return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def get_guide_path(poe_version: str = POE1) -> str:
-    guide_file = get_guide_filename(poe_version)
+def get_guide_path(poe_version: str = POE1, language: str = DEFAULT_LOCALE) -> str:
+    guide_file = get_guide_filename(poe_version, language)
     guide_dir = get_guide_dir()
 
     if getattr(sys, 'frozen', False):
@@ -51,31 +52,38 @@ def get_guide_path(poe_version: str = POE1) -> str:
     return os.path.join(guide_dir, guide_file)
 
 
-def load_guide_data(poe_version: str = POE1) -> dict:
+def load_guide_data(poe_version: str = POE1, language: str = DEFAULT_LOCALE) -> dict:
     """ガイドデータを読み込み"""
-    path = get_guide_path(poe_version)
-    try:
-        modified_ns = os.stat(path).st_mtime_ns
-    except OSError:
-        return DEFAULT_GUIDE if poe_version == POE1 else {}
+    requested_path = get_guide_path(poe_version, language)
+    paths = [requested_path]
+    if str(language).lower().replace("_", "-").startswith("en"):
+        fallback_path = get_guide_path(poe_version, DEFAULT_LOCALE)
+        if fallback_path != requested_path:
+            paths.append(fallback_path)
 
-    cached = _GUIDE_DATA_CACHE.get(path)
-    if cached and cached[0] == modified_ns:
-        return cached[1]
+    for path in paths:
+        try:
+            modified_ns = os.stat(path).st_mtime_ns
+        except OSError:
+            continue
 
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        _GUIDE_DATA_CACHE[path] = (modified_ns, data)
-        return data
-    except Exception as e:
-        print(f"[GuideData] Failed to load ({poe_version}): {e}")
+        cached = _GUIDE_DATA_CACHE.get(path)
+        if cached and cached[0] == modified_ns:
+            return cached[1]
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            _GUIDE_DATA_CACHE[path] = (modified_ns, data)
+            return data
+        except Exception as e:
+            print(f"[GuideData] Failed to load ({poe_version}): {e}")
     return DEFAULT_GUIDE if poe_version == POE1 else {}
 
 
-def save_guide_data(data: dict, poe_version: str = POE1):
+def save_guide_data(data: dict, poe_version: str = POE1, language: str = DEFAULT_LOCALE):
     """ガイドデータを保存"""
-    path = get_guide_path(poe_version)
+    path = get_guide_path(poe_version, language)
     try:
         if (
             poe_version == POE1
@@ -466,7 +474,7 @@ def format_guide_html(guide: dict, font_size: int = 12, show_direction: bool = T
         summary_html = summary_html.replace("  ", "&nbsp;&nbsp;")
         return (
             f"<p style='margin:0;'>"
-            f"<b style='color:#b0ff7b; font-size:{font_size}px;'>📋 要点版ガイド（次の目標、重要ポイント等）</b><br>"
+            f"<b style='color:#b0ff7b; font-size:{font_size}px;'>{tr('guide.heading.summary')}</b><br>"
             f"<span style='color:#ffffff;'>{summary_html}</span>"
             f"</p>"
         )
@@ -482,15 +490,15 @@ def format_guide_html(guide: dict, font_size: int = 12, show_direction: bool = T
             arrow_size = max(font_size * 3, 36)
             direction_html = (
                 f"<div style='margin: 4px 0;'>"
-                f"<b style='color:#b0ff7b; font-size:{font_size}px;'>🧭 基本方向</b><br>"
+                f"<b style='color:#b0ff7b; font-size:{font_size}px;'>{tr('guide.heading.direction')}</b><br>"
                 f"<span style='font-size:{arrow_size}px; color:#FF69B4;'>{arrow}</span>"
                 f"</div>"
             )
     elif show_direction and direction == "none":
         direction_html = (
             f"<div style='margin: 4px 0;'>"
-            f"<b style='color:#b0ff7b; font-size:{font_size}px;'>🧭 基本方向</b><br>"
-            f"<span style='font-size:{font_size + 2}px; color:#888888;'>📖 ガイド参照</span>"
+            f"<b style='color:#b0ff7b; font-size:{font_size}px;'>{tr('guide.heading.direction')}</b><br>"
+            f"<span style='font-size:{font_size + 2}px; color:#888888;'>{tr('guide.heading.direction_reference')}</span>"
             f"</div>"
         )
     
@@ -501,7 +509,7 @@ def format_guide_html(guide: dict, font_size: int = 12, show_direction: bool = T
         obj_html = obj_html.replace("  ", "&nbsp;&nbsp;")
         parts.append(
             f"<p style='margin:0;'>"
-            f"<b style='color:#b0ff7b; font-size:{font_size}px;'>📋 目標</b><br>"
+            f"<b style='color:#b0ff7b; font-size:{font_size}px;'>{tr('guide.heading.objective')}</b><br>"
             f"<span style='color:#ffffff;'>{obj_html}</span>"
             f"</p>"
         )
@@ -516,13 +524,13 @@ def format_guide_html(guide: dict, font_size: int = 12, show_direction: bool = T
         layout_html = _safe_html(layout.strip()).replace("\n", "<br>")
         layout_html = layout_html.replace("　", "&nbsp;&nbsp;")  # 全角スペース→2つのnbsp
         layout_html = layout_html.replace("  ", "&nbsp;&nbsp;")  # 半角2連続スペースも保持
-        parts.append(f"<p style='margin:0;'><b style='color:#b0ff7b;'>🗺️ レイアウト情報</b><br>{layout_html}</p>")
+        parts.append(f"<p style='margin:0;'><b style='color:#b0ff7b;'>{tr('guide.heading.layout')}</b><br>{layout_html}</p>")
     
     tips = guide.get("tips", "")
     if tips:
         tips_html = _safe_html(tips.strip()).replace("\n", "<br>")
         tips_html = tips_html.replace("　", "&nbsp;&nbsp;")
         tips_html = tips_html.replace("  ", "&nbsp;&nbsp;")
-        parts.append(f"<p style='margin:0;'><b style='color:#b0ff7b;'>💡 Tips / 注意点</b><br><span style='color:#ffffff;'>{tips_html}</span></p>")
+        parts.append(f"<p style='margin:0;'><b style='color:#b0ff7b;'>{tr('guide.heading.tips')}</b><br><span style='color:#ffffff;'>{tips_html}</span></p>")
     
     return "<span style='font-size:6px; line-height:50%;'><br></span>".join(parts)

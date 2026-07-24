@@ -1,6 +1,7 @@
 """PoEバージョン別の進行・ラップ・クリアメッセージ定義"""
 
 from src.utils.poe_version_data import POE1, POE2
+from src.utils.i18n import EN, get_locale
 
 AUTO_LAP_TRIGGERS = {
     POE1: {
@@ -70,7 +71,27 @@ def get_auto_lap_triggers(poe_version: str) -> dict:
 
 
 def get_clear_message(poe_version: str, key: str = "final") -> str:
-    return CLEAR_MESSAGES.get(poe_version, {}).get(key, "")
+    message = CLEAR_MESSAGES.get(poe_version, {}).get(key, "")
+    if get_locale() != EN or key != "final":
+        return message
+    if poe_version == POE1:
+        return (
+            '<div style="text-align: center; padding: 20px;">'
+            '<span style="font-size: 24px; color: #ffd700;">🎉</span><br>'
+            '<span style="font-size: 18px; color: #ffd700; font-weight: bold;">Act 10 complete!</span><br><br>'
+            '<span style="font-size: 16px; color: #e0e0e0;">Well done!</span><br><br>'
+            '<span style="font-size: 13px; color: #b0ffb0;">'
+            'Enter "/passives" in chat and check that no passive points are missing.<br>'
+            'If you defeated all bandits in Act 2, the total should be 24 points; otherwise it should be 23.</span>'
+            '</div>'
+        )
+    return (
+        '<div style="text-align: center; padding: 20px;">'
+        '<span style="font-size: 18px; color: #ffd700; font-weight: bold;">🎉 Campaign complete!</span><br><br>'
+        '<span style="font-size: 18px; color: #e0e0e0;">Check your passive tree and make sure no passive points are missing.<br>'
+        'Your weapon set points in the top-right should be 24.</span>'
+        '</div>'
+    )
 
 
 def get_special_lap_event(poe_version: str, key: str):

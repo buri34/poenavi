@@ -10,6 +10,10 @@ $workDir = Join-Path $testRoot "updater-work"
 $notesPath = Join-Path $userDataDir "area_notes_poe1.json"
 $oldGuideMarker = "LOCAL_UPDATE_TEST_OLD_GUIDE"
 $releaseGuidePath = Join-Path $releaseDir "_internal\guide_data.json"
+$releasePoe2GuidePath = Join-Path $releaseDir "_internal\guide_data_poe2.json"
+$releaseEnglishGuidePath = Join-Path $releaseDir "_internal\guide_data_en.json"
+$releaseEnglishPoe2GuidePath = Join-Path $releaseDir "_internal\guide_data_poe2_en.json"
+$releaseLocaleDir = Join-Path $releaseDir "_internal\data\i18n"
 
 if (-not (Test-Path (Join-Path $releaseDir "PoENavi.exe"))) {
     throw "dist\PoENavi\PoENavi.exe was not found. Run build_exe.bat first."
@@ -22,6 +26,20 @@ if (-not (Test-Path $archive)) {
 }
 if (-not (Test-Path $releaseGuidePath)) {
     throw "The release guide_data.json was not found under dist\PoENavi\_internal."
+}
+if (-not (Test-Path $releasePoe2GuidePath)) {
+    throw "The release guide_data_poe2.json was not found under dist\PoENavi\_internal."
+}
+if (-not (Test-Path $releaseEnglishGuidePath)) {
+    throw "The English guide_data_en.json was not found under dist\PoENavi\_internal."
+}
+if (-not (Test-Path $releaseEnglishPoe2GuidePath)) {
+    throw "The English guide_data_poe2_en.json was not found under dist\PoENavi\_internal."
+}
+foreach ($catalog in @("ja.json", "en.json")) {
+    if (-not (Test-Path (Join-Path $releaseLocaleDir $catalog))) {
+        throw "The locale catalog $catalog was not found under dist\PoENavi\_internal\data\i18n."
+    }
 }
 
 Remove-Item $testRoot -Recurse -Force -ErrorAction SilentlyContinue
@@ -64,7 +82,16 @@ try {
         "--archive", ('"' + $stagedArchive + '"'),
         "--install-dir", ('"' + $installDir + '"'),
         "--work-dir", ('"' + $workDir + '"')
-    ) -WorkingDirectory $workDir -PassThru -Wait
+    ) -WorkingDirectory $workDir -WindowStyle Hidden -PassThru
+
+    $deadline = (Get-Date).AddSeconds(60)
+    while (-not $process.HasExited) {
+        if ((Get-Date) -gt $deadline) {
+            throw "Updater did not exit within 60 seconds."
+        }
+        Start-Sleep -Seconds 1
+        $process.Refresh()
+    }
 }
 finally {
     if ($null -eq $previousUserDataDir) {

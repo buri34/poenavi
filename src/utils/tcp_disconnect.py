@@ -1,12 +1,13 @@
 """PoEクライアントのTCP接続を強制切断してログアウトする（Windows専用）"""
 
 import sys
+from src.utils.i18n import tr
 
 
 def disconnect_poe() -> tuple:
     """PoEのTCP接続を強制切断する。戻り値: (成功bool, メッセージstr)"""
     if sys.platform != "win32":
-        return (False, "Windows専用機能です")
+        return (False, tr("errors.windows_only"))
 
     import ctypes
     import ctypes.wintypes as wt
@@ -17,7 +18,7 @@ def disconnect_poe() -> tuple:
     except Exception:
         is_admin = False
     if not is_admin:
-        return (False, "管理者権限が必要です。PoENaviを「管理者として実行」してください。")
+        return (False, tr("errors.admin_required"))
 
     # --- 定数 ---
     TH32CS_SNAPPROCESS = 0x00000002
@@ -65,7 +66,7 @@ def disconnect_poe() -> tuple:
 
     snap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
     if snap == INVALID_HANDLE_VALUE:
-        return (False, "プロセス一覧の取得に失敗しました")
+        return (False, tr("errors.process_list"))
 
     try:
         pe = PROCESSENTRY32W()
@@ -81,7 +82,7 @@ def disconnect_poe() -> tuple:
         kernel32.CloseHandle(snap)
 
     if not poe_pids:
-        return (False, "PoEのプロセスが見つかりません")
+        return (False, tr("errors.poe_process_missing"))
 
     # --- TCP接続テーブル用構造体 ---
     class MIB_TCPROW_OWNER_PID(ctypes.Structure):
@@ -119,7 +120,7 @@ def disconnect_poe() -> tuple:
     buf = (ctypes.c_byte * buf_size.value)()
     ret = iphlpapi.GetExtendedTcpTable(buf, ctypes.byref(buf_size), False, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0)
     if ret != NO_ERROR:
-        return (False, f"TCP接続テーブルの取得に失敗しました (error={ret})")
+        return (False, tr("errors.tcp_table", error=ret))
 
     table = ctypes.cast(buf, ctypes.POINTER(MIB_TCPTABLE_OWNER_PID)).contents
     num_entries = table.dwNumEntries
@@ -157,6 +158,6 @@ def disconnect_poe() -> tuple:
             msg += f"（{errors}本は失敗）"
         return (True, msg)
     elif errors > 0:
-        return (False, f"TCP接続の切断に失敗しました（{errors}本）")
+        return (False, tr("errors.tcp_disconnect", count=errors))
     else:
-        return (False, "PoEのTCP接続が見つかりませんでした")
+        return (False, tr("errors.tcp_not_found"))

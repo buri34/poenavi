@@ -144,9 +144,9 @@ DEFAULT_ZONE_DATA_POE2 = {
         },
         {
             "id": "poe2_act2_area09",
-            "zone": "ケスの中心",
+            "zone": "ケス",
             "level": 0,
-            "zone_en": "Heart of Keth"
+            "zone_en": "Keth"
         },
         {
             "id": "poe2_act2_area10",
@@ -200,13 +200,13 @@ DEFAULT_ZONE_DATA_POE2 = {
             "id": "poe2_act2_area18",
             "zone": "ドレッドノート",
             "level": 31,
-            "zone_en": "The Dreadnought"
+            "zone_en": "Dreadnought"
         },
         {
             "id": "poe2_act2_area19",
-            "zone": "ドレッドノートの前衛",
+            "zone": "ドレッドノートの航跡",
             "level": 32,
-            "zone_en": "Dreadnought Vanguard"
+            "zone_en": "The Dreadnought's Wake"
         },
         {
             "id": "poe2_act2_area20",

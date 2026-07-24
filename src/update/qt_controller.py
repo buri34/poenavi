@@ -17,6 +17,7 @@ from src.update.artifacts import (
 )
 from src.update.release_client import ReleaseInfo, fetch_latest_release
 from src.version import APP_VERSION
+from src.utils.i18n import get_locale, tr
 
 
 class UpdateController(QObject):
@@ -106,7 +107,7 @@ class UpdateController(QObject):
                 )
                 if not verify_sha256(archive, expected):
                     raise ValueError(
-                        "ダウンロードした ZIP の SHA-256 が一致しません。"
+                        tr("update.checksum_mismatch")
                     )
                 validate_update_archive(archive)
                 self._ready_archive = archive
@@ -148,13 +149,13 @@ class UpdateController(QObject):
     def launch_updater(self, archive: Path) -> None:
         if not getattr(sys, "frozen", False) or sys.platform != "win32":
             raise RuntimeError(
-                "自動更新は Windows exe 版でのみ利用できます。"
+                tr("update.windows_only")
             )
 
         install_dir = Path(sys.executable).resolve().parent
         source = install_dir / "PoENaviUpdater.exe"
         if not source.is_file():
-            raise RuntimeError("PoENaviUpdater.exe が見つかりません。")
+            raise RuntimeError(tr("update.updater_missing"))
 
         updater_work = Path(tempfile.mkdtemp(prefix="PoENavi-Updater-"))
         updater_work.mkdir(parents=True, exist_ok=True)
@@ -174,6 +175,8 @@ class UpdateController(QObject):
                     str(install_dir),
                     "--work-dir",
                     str(updater_work),
+                    "--language",
+                    get_locale(),
                 ],
                 cwd=str(updater_work),
             )

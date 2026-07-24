@@ -5,6 +5,7 @@ from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import QGraphicsOpacityEffect, QHBoxLayout, QLabel, QPushButton, QSizeGrip, QSizePolicy, QVBoxLayout, QWidget
 
 from src.ui.styles import Styles
+from src.utils.i18n import tr_ui
 
 
 class DetachedPanelWindow(QWidget):
@@ -49,7 +50,7 @@ class DetachedPanelWindow(QWidget):
         self.title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-weight: bold;")
         header_layout.addWidget(self.title_label)
         header_layout.addStretch()
-        return_button = QPushButton("↙ 本体へ戻す")
+        return_button = QPushButton(tr_ui("↙ 本体へ戻す"))
         return_button.setStyleSheet(Styles.BUTTON)
         return_button.setCursor(QCursor(Qt.PointingHandCursor))
         return_button.clicked.connect(self.return_to_main)
@@ -59,7 +60,7 @@ class DetachedPanelWindow(QWidget):
         layout.addWidget(content, stretch=1)
         self.resize_grip = QSizeGrip(self)
         self.resize_grip.setFixedSize(18, 18)
-        self.resize_grip.setToolTip("ドラッグしてサイズ変更")
+        self.resize_grip.setToolTip(tr_ui("ドラッグしてサイズ変更"))
         self.resize_grip.setStyleSheet("background: transparent;")
         self.resize_grip.show()
         self._install_resize_event_filters()
