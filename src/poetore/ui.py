@@ -2902,6 +2902,9 @@ class PoetoreWindow(QWidget):
                 text_layout.setContentsMargins(2, 3, 2, 3)
                 text_layout.setSpacing(3)
                 text_label = QLabel(stat_filter.text)
+                text_label.setStyleSheet(
+                    "background-color: #121212; color: #d8ded4;"
+                )
                 text_label.setToolTip(summary)
                 text_layout.addWidget(text_label)
                 slider = _UniqueRollSlider(

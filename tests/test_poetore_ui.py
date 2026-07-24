@@ -756,7 +756,9 @@ def test_unique_variable_roll_slider_drag_updates_minimum_and_enables_filter(qap
         assert row.text(3) == source.text
         assert text_widget.autoFillBackground()
         assert text_widget.palette().color(QPalette.Window).name() == "#121212"
-        assert len(text_widget.findChildren(QLabel)) == 1
+        labels = text_widget.findChildren(QLabel)
+        assert len(labels) == 1
+        assert "background-color: #121212" in labels[0].styleSheet()
         assert row.sizeHint(3).height() == 62
 
         drag_x = slider.width() * 3 // 4
