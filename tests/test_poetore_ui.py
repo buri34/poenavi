@@ -602,7 +602,7 @@ def test_mod_filter_check_and_condition_columns_fit_without_clipping(qapp):
     window = PoetoreWindow()
     try:
         assert window.mod_filter_tree.columnWidth(0) == 40
-        assert window.mod_filter_tree.columnWidth(3) == 346
+        assert window.mod_filter_tree.columnWidth(3) == 311
     finally:
         window.close()
 

@@ -64,7 +64,7 @@ _MOD_COLUMN_MAX = 5
 _MOD_COLUMN_DETAILS = 6
 _MOD_CHECK_COLUMN_WIDTH = 40
 _MOD_TIER_COLUMN_WIDTH = 75
-_MOD_TEXT_COLUMN_WIDTH = 346
+_MOD_TEXT_COLUMN_WIDTH = 311
 _SPECIAL_CHIP_FILTER_IDS = {
     "property.map_tier", "property.area_level", "property.heist_wings",
     "property.base_percentile",
