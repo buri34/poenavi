@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QAbstractItemView, QLayout,
     QApplication, QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton,
     QMenu, QSizeGrip, QSizePolicy, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget, QPlainTextEdit,
-    QHeaderView,
+    QHeaderView, QWidgetAction,
 )
 
 from src.ui.styles import Styles
@@ -1835,13 +1835,33 @@ class PoetoreWindow(QWidget):
         self.divine_rate_button.show()
         self.divine_rate_menu.clear()
         divine_icon_path = _asset_icon_path(_PRICE_CURRENCY_ICONS["divine"])
-        divine_icon = QIcon(str(divine_icon_path)) if divine_icon_path else QIcon()
+        chaos_icon_path = _asset_icon_path(_PRICE_CURRENCY_ICONS["chaos"])
         for step in range(1, 10):
             divine = step / 10
             chaos = self._awakened_round(rate * divine)
-            self.divine_rate_menu.addAction(
-                divine_icon, f"{divine:.1f} div  →  {chaos} c"
-            )
+            action = QWidgetAction(self.divine_rate_menu)
+            action.setText(f"{divine:.1f} div  →  {chaos} c")
+            row = QWidget(self.divine_rate_menu)
+            layout = QHBoxLayout(row)
+            layout.setContentsMargins(10, 3, 14, 3)
+            layout.setSpacing(5)
+            for icon_path, text in (
+                (divine_icon_path, f"{divine:.1f}"),
+                (None, "→"),
+                (chaos_icon_path, str(chaos)),
+            ):
+                if icon_path is not None:
+                    icon = QLabel()
+                    pixmap = QPixmap(str(icon_path))
+                    icon.setPixmap(pixmap.scaled(
+                        18, 18, Qt.KeepAspectRatio, Qt.SmoothTransformation,
+                    ))
+                    layout.addWidget(icon)
+                label = QLabel(text)
+                label.setStyleSheet("color: #f4ffed; background: transparent;")
+                layout.addWidget(label)
+            action.setDefaultWidget(row)
+            self.divine_rate_menu.addAction(action)
 
     def _hide_divine_rate(self, key=None):
         if key is not None and key != self._divine_rate_key:
@@ -2722,9 +2742,17 @@ class PoetoreWindow(QWidget):
             original = row.data(0, Qt.UserRole + 4)
             reason = original.selection_reason if isinstance(original, TradeStatFilter) else ""
             if reason.startswith("logbook-area:"):
-                row.setCheckState(
-                    0, Qt.Checked if reason == f"logbook-area:{selected_group}" else Qt.Unchecked,
+                checkbox_container = self.mod_filter_tree.itemWidget(
+                    row, _MOD_COLUMN_CHECK
                 )
+                checkbox = (
+                    checkbox_container.findChild(QCheckBox, "modFilterCheckbox")
+                    if checkbox_container is not None else None
+                )
+                enabled = reason == f"logbook-area:{selected_group}"
+                if checkbox is not None:
+                    checkbox.setChecked(enabled)
+                row.setData(_MOD_COLUMN_CHECK, Qt.UserRole + 5, enabled)
 
     def _trade_preset_changed(self):
         if not hasattr(self, "mod_filter_tree"):

@@ -2048,7 +2048,48 @@ def test_divine_rate_button_builds_awakened_style_conversion_menu(qapp):
             "0.8 div  →  140 c",
             "0.9 div  →  157 c",
         ]
-        assert all(not action.icon().isNull() for action in window.divine_rate_menu.actions())
+        for action in window.divine_rate_menu.actions():
+            row = action.defaultWidget()
+            icons = [
+                label for label in row.findChildren(QLabel)
+                if not label.pixmap().isNull()
+            ]
+            assert len(icons) == 2
+    finally:
+        window.close()
+
+
+def test_logbook_area_switch_uses_custom_checkboxes_without_native_indicators(qapp):
+    window = PoetoreWindow()
+    try:
+        filters = (
+            TradeStatFilter(
+                "pseudo.pseudo_logbook_faction_1", "エリア1", None, "pseudo",
+                True, selection_reason="logbook-area:1",
+            ),
+            TradeStatFilter(
+                "pseudo.pseudo_logbook_faction_2", "エリア2", None, "pseudo",
+                False, selection_reason="logbook-area:2",
+            ),
+        )
+        window._populate_stat_filters(filters)
+        window._logbook_area_groups = ((1, "エリア1"), (2, "エリア2"))
+
+        window._logbook_area_changed(1)
+
+        rows = [
+            window.mod_filter_tree.topLevelItem(index)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        checkboxes = [
+            window.mod_filter_tree.itemWidget(
+                row, 0,
+            ).findChild(QCheckBox, "modFilterCheckbox")
+            for row in rows
+        ]
+        assert [checkbox.isChecked() for checkbox in checkboxes] == [False, True]
+        assert [row.checkState(0) for row in rows] == [Qt.Unchecked, Qt.Unchecked]
+        assert [row.data(0, Qt.UserRole + 5) for row in rows] == [False, True]
     finally:
         window.close()
 
