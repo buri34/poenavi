@@ -751,6 +751,10 @@ def test_unique_variable_roll_slider_drag_updates_minimum_and_enables_filter(qap
             _UniqueRollSlider, "uniqueRollSlider"
         )
         assert slider is not None
+        text_widget = window.mod_filter_tree.itemWidget(row, 3)
+        assert row.text(3) == ""
+        assert len(text_widget.findChildren(QLabel)) == 1
+        assert row.sizeHint(3).height() == 62
 
         drag_x = slider.width() * 3 // 4
         expected = slider._value_at(drag_x)

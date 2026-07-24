@@ -10,7 +10,8 @@ from pathlib import Path
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRect, QSize, Qt, QTimer, Signal, QUrl
 from PySide6.QtGui import (
-    QColor, QDesktopServices, QIcon, QIntValidator, QPainter, QPen, QPixmap, QPolygonF,
+    QColor, QDesktopServices, QIcon, QIntValidator, QLinearGradient, QPainter,
+    QPen, QPixmap, QPolygonF,
 )
 from PySide6.QtWidgets import (
     QAbstractItemView, QLayout,
@@ -67,6 +68,7 @@ _MOD_CHECK_COLUMN_WIDTH = 40
 _MOD_TIER_COLUMN_WIDTH = 75
 _MOD_TEXT_COLUMN_WIDTH = 346
 _MOD_VALUE_EDITOR_WIDTH = 72
+_UNIQUE_ROLL_ROW_HEIGHT = 62
 _SPECIAL_CHIP_FILTER_IDS = {
     "property.map_tier", "property.area_level", "property.heist_wings",
     "property.base_percentile",
@@ -192,7 +194,14 @@ class _UniqueRollSlider(QWidget):
                 rect.height(),
             )
             painter.setPen(Qt.NoPen)
-            painter.setBrush(QColor("#727a72"))
+            gradient = QLinearGradient(fill.left(), 0, fill.right(), 0)
+            if self._better > 0:
+                gradient.setColorAt(0.0, QColor("#7f8781"))
+                gradient.setColorAt(1.0, QColor("#eef1ed"))
+            else:
+                gradient.setColorAt(0.0, QColor("#eef1ed"))
+                gradient.setColorAt(1.0, QColor("#7f8781"))
+            painter.setBrush(gradient)
             painter.drawRoundedRect(fill, 3, 3)
 
         roll_x = int(self._position(self._roll))
@@ -2882,10 +2891,13 @@ class PoetoreWindow(QWidget):
                 and not stat_filter.exact
             )
             if show_unique_slider:
+                # A cell widget is drawn over the tree item's native text. Clear the
+                # native text so the QLabel below is the only visible copy.
+                row.setText(_MOD_COLUMN_TEXT, "")
                 text_widget = QWidget()
                 text_layout = QVBoxLayout(text_widget)
-                text_layout.setContentsMargins(2, 1, 2, 1)
-                text_layout.setSpacing(1)
+                text_layout.setContentsMargins(2, 3, 2, 3)
+                text_layout.setSpacing(3)
                 text_label = QLabel(stat_filter.text)
                 text_label.setToolTip(summary)
                 text_layout.addWidget(text_label)
@@ -2899,7 +2911,9 @@ class PoetoreWindow(QWidget):
                 slider.setSearchValues(stat_filter.min_value, stat_filter.max_value)
                 text_layout.addWidget(slider)
                 self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_TEXT, text_widget)
-                row.setSizeHint(_MOD_COLUMN_TEXT, QSize(0, 48))
+                row.setSizeHint(
+                    _MOD_COLUMN_TEXT, QSize(0, _UNIQUE_ROLL_ROW_HEIGHT)
+                )
 
                 def sync_slider(
                     _text="",
