@@ -151,6 +151,25 @@ def test_item_mapping_rejects_ambiguous_localized_identity():
         assert _english_trade_item_type("重い矢筒") is None
 
 
+@pytest.mark.parametrize(("localized", "expected"), (
+    ("重い矢筒", "Heavy Arrow Quiver"),
+    ("原始の矢筒", "Primal Arrow Quiver"),
+    ("羽根付きの矢筒", "Feathered Arrow Quiver"),
+    ("灼熱の矢筒", "Blazing Arrow Quiver"),
+))
+def test_confirmed_quiver_overrides_resolve_ambiguous_official_data(
+    localized, expected,
+):
+    assert _english_trade_item_type(localized, "accessory") == expected
+
+
+def test_confirmed_rabid_rhoa_card_override_is_category_scoped():
+    assert _english_trade_item_type(
+        "狂犬病のロア", "divination_card",
+    ) == "The Rabid Rhoa"
+    assert _english_trade_item_type("狂犬病のロア", "captured_beast") is None
+
+
 def test_329_japanese_copy_resolves_base_type_for_nonunique_items():
     item = ParsedItem("靴", "レア", "破滅の足跡", "メッシュブーツ", "armour")
     with patch(
@@ -161,7 +180,7 @@ def test_329_japanese_copy_resolves_base_type_for_nonunique_items():
         assert english_trade_identity(
             item, item.base_type, item.name,
         ) == ("Mesh Boots", "破滅の足跡")
-    item_type.assert_called_once_with("メッシュブーツ")
+    item_type.assert_called_once_with("メッシュブーツ", "armour")
     item_name.assert_not_called()
 
 

@@ -1515,11 +1515,26 @@ def _english_trade_item_name(japanese_name: str) -> str | None:
     return next(iter(candidates)) if len(candidates) == 1 else None
 
 
-def _english_trade_item_type(japanese_type: str) -> str | None:
+_CONFIRMED_ENGLISH_TRADE_TYPE_OVERRIDES = {
+    ("accessory", "重い矢筒"): "Heavy Arrow Quiver",
+    ("accessory", "原始の矢筒"): "Primal Arrow Quiver",
+    ("accessory", "羽根付きの矢筒"): "Feathered Arrow Quiver",
+    ("accessory", "灼熱の矢筒"): "Blazing Arrow Quiver",
+    ("divination_card", "狂犬病のロア"): "The Rabid Rhoa",
+}
+
+
+def _english_trade_item_type(
+    japanese_type: str,
+    category: str | None = None,
+) -> str | None:
     """公式日英itemsから日本語の一行名に対応する英語typeを得る。"""
     wanted = japanese_type.strip()
     if not wanted:
         return None
+    confirmed = _CONFIRMED_ENGLISH_TRADE_TYPE_OVERRIDES.get((category or "", wanted))
+    if confirmed:
+        return confirmed
     exact: set[str] = set()
     contained: list[tuple[int, str]] = []
     for english, japanese in _aligned_trade_item_pairs():
@@ -2691,7 +2706,9 @@ def english_trade_identity(
     """3.29以降のローカライズ済み詳細コピーを英語Trade検索用IDへ変換する。"""
     resolved_type = str(base_type or item.base_type or "").strip() or None
     if resolved_type and _contains_japanese_text(resolved_type):
-        resolved_type = _english_trade_item_type(resolved_type) or resolved_type
+        resolved_type = (
+            _english_trade_item_type(resolved_type, item.category) or resolved_type
+        )
 
     resolved_name = str(name or "").strip() or None
     if resolved_name and resolved_name == str(item.base_type or "").strip():
