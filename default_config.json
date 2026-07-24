@@ -2,14 +2,14 @@
     "hotkeys": {
         "start_stop": "F7",
         "reset": "F8",
-        "lap": "F9",
+        "lap": "none",
         "undo_lap": "none",
-        "exit": "F4",
-        "logout": "F5",
+        "exit": "F5",
+        "logout": "none",
         "click_through": "F6",
         "hideout": "F11",
         "monastery": "F12",
-        "search_string_test": "none",
+        "search_string_test": "F4",
         "poetore_capture": "alt+d",
         "cheat_sheets_toggle": "shift+space"
     },

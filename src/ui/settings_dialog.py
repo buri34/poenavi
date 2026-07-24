@@ -1464,14 +1464,14 @@ class SettingsDialog(QDialog):
         self.hotkeys = self.current_config.get("hotkeys", {
             "start_stop": "F7",
             "reset": "F8",
-            "lap": "F9",
+            "lap": "none",
             "undo_lap": "none",
             "click_through": "F6",
-            "logout": "F5",
-            "exit": "F4",
+            "logout": "none",
+            "exit": "F5",
             "hideout": "F11",
             "monastery": "F12",
-            "search_string_test": "none",
+            "search_string_test": "F4",
             "poetore_capture": "alt+d",
             "cheat_sheets_toggle": "shift+space",
         })
@@ -1624,7 +1624,7 @@ class SettingsDialog(QDialog):
         
         h_layout3 = QHBoxLayout()
         h_layout3.addWidget(QLabel("ラップ（次のAct）:"))
-        self.lap_btn = HotkeyButton(self.hotkeys.get("lap", "F3"))
+        self.lap_btn = HotkeyButton(self.hotkeys.get("lap", "none"))
         h_layout3.addWidget(self.lap_btn)
         group_layout.addLayout(h_layout3)
         
@@ -1642,13 +1642,13 @@ class SettingsDialog(QDialog):
         
         h_layout6 = QHBoxLayout()
         h_layout6.addWidget(QLabel("ログアウト（TCP切断）:"))
-        self.logout_btn = HotkeyButton(self.hotkeys.get("logout", "F5"))
+        self.logout_btn = HotkeyButton(self.hotkeys.get("logout", "none"))
         h_layout6.addWidget(self.logout_btn)
         group_layout.addLayout(h_layout6)
 
         h_layout_exit = QHBoxLayout()
         h_layout_exit.addWidget(QLabel("キャラクター選択へ戻る（/exit）:"))
-        self.exit_btn = HotkeyButton(self.hotkeys.get("exit", "F4"))
+        self.exit_btn = HotkeyButton(self.hotkeys.get("exit", "F5"))
         h_layout_exit.addWidget(self.exit_btn)
         group_layout.addLayout(h_layout_exit)
 
@@ -1666,7 +1666,7 @@ class SettingsDialog(QDialog):
 
         h_layout9 = QHBoxLayout()
         h_layout9.addWidget(QLabel("検索文字列の貼り付け:"))
-        self.search_string_test_btn = HotkeyButton(self.hotkeys.get("search_string_test", "none"))
+        self.search_string_test_btn = HotkeyButton(self.hotkeys.get("search_string_test", "F4"))
         h_layout9.addWidget(self.search_string_test_btn)
         group_layout.addLayout(h_layout9)
 

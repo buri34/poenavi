@@ -18,13 +18,15 @@ def test_shift_space_is_default_cheat_sheets_toggle_hotkey():
     assert config["hotkeys"]["cheat_sheets_toggle"] == "shift+space"
 
 
-def test_f4_is_default_exit_hotkey_and_undo_lap_is_unassigned():
+def test_default_hotkeys_prioritize_vendor_search_and_chat_exit():
     with open("default_config.json", encoding="utf-8") as file:
         config = json.load(file)
 
-    assert config["hotkeys"]["exit"] == "F4"
+    assert config["hotkeys"]["lap"] == "none"
+    assert config["hotkeys"]["logout"] == "none"
+    assert config["hotkeys"]["exit"] == "F5"
     assert config["hotkeys"]["undo_lap"] == "none"
-    assert config["hotkeys"]["search_string_test"] == "none"
+    assert config["hotkeys"]["search_string_test"] == "F4"
 
 
 def test_ctrl_letter_control_character_is_normalized_to_letter():
@@ -80,14 +82,14 @@ def test_settings_dialog_can_change_poetore_capture_hotkey(monkeypatch):
     try:
         assert dialog.poetore_capture_btn.key_text == "Ctrl+Shift+P"
         assert dialog.cheat_sheets_toggle_btn.key_text == "shift+space"
-        assert dialog.exit_btn.key_text == "F4"
+        assert dialog.exit_btn.key_text == "F5"
         assert dialog.undo_lap_btn.key_text == "none"
         dialog.poetore_capture_btn.key_text = "Alt+Q"
         dialog.cheat_sheets_toggle_btn.key_text = "Ctrl+Space"
-        dialog.exit_btn.key_text = "Ctrl+F4"
+        dialog.exit_btn.key_text = "Ctrl+F5"
         assert dialog.get_settings()["hotkeys"]["poetore_capture"] == "Alt+Q"
         assert dialog.get_settings()["hotkeys"]["cheat_sheets_toggle"] == "Ctrl+Space"
-        assert dialog.get_settings()["hotkeys"]["exit"] == "Ctrl+F4"
+        assert dialog.get_settings()["hotkeys"]["exit"] == "Ctrl+F5"
     finally:
         dialog.close()
         app.processEvents()

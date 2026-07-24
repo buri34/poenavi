@@ -6052,11 +6052,11 @@ class MainWindow(QMainWindow):
             hotkeys = self.config.get("hotkeys", {})
             
             self.hotkey_map = {}
-            for action, default in [("start_stop", "F7"), ("reset", "F8"), ("lap", "F9"),
-                                     ("undo_lap", "none"), ("click_through", DEFAULT_CLICK_THROUGH_HOTKEY), ("logout", "F5"),
-                                     ("exit", "F4"),
+            for action, default in [("start_stop", "F7"), ("reset", "F8"), ("lap", "none"),
+                                     ("undo_lap", "none"), ("click_through", DEFAULT_CLICK_THROUGH_HOTKEY), ("logout", "none"),
+                                     ("exit", "F5"),
                                      ("hideout", "F11"), ("monastery", "F12"),
-                                     ("search_string_test", "none"), ("poetore_capture", "alt+d"),
+                                     ("search_string_test", "F4"), ("poetore_capture", "alt+d"),
                                      ("cheat_sheets_toggle", "shift+space")]:
                 key = hotkeys.get(action, default)
                 if key and key != "none":

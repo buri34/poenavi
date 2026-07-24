@@ -60,7 +60,7 @@ class ConfigManagerTest(unittest.TestCase):
         self.assertEqual(migrated["mini_guide_overlay"]["width"], 795)
         self.assertEqual(migrated["mini_guide_overlay"]["height"], 126)
 
-    def test_schema_v4_moves_old_default_f4_to_exit_without_overwriting_custom_hotkeys(self):
+    def test_old_default_hotkeys_are_migrated_to_current_defaults(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 3,
             "hotkeys": {
@@ -71,9 +71,47 @@ class ConfigManagerTest(unittest.TestCase):
         })
 
         self.assertEqual(migrated["hotkeys"]["undo_lap"], "none")
-        self.assertEqual(migrated["hotkeys"]["search_string_test"], "none")
-        self.assertEqual(migrated["hotkeys"]["exit"], "F4")
+        self.assertEqual(migrated["hotkeys"]["search_string_test"], "F4")
+        self.assertEqual(migrated["hotkeys"]["exit"], "F5")
         self.assertEqual(migrated["hotkeys"]["hideout"], "Ctrl+H")
+
+    def test_schema_v5_reassigns_only_v262_default_hotkeys(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 4,
+            "hotkeys": {
+                "lap": "F9",
+                "undo_lap": "none",
+                "logout": "F5",
+                "exit": "F4",
+                "search_string_test": "none",
+                "hideout": "Ctrl+H",
+            },
+        })
+
+        self.assertEqual(migrated["hotkeys"]["lap"], "none")
+        self.assertEqual(migrated["hotkeys"]["undo_lap"], "none")
+        self.assertEqual(migrated["hotkeys"]["logout"], "none")
+        self.assertEqual(migrated["hotkeys"]["exit"], "F5")
+        self.assertEqual(migrated["hotkeys"]["search_string_test"], "F4")
+        self.assertEqual(migrated["hotkeys"]["hideout"], "Ctrl+H")
+
+    def test_schema_v5_preserves_custom_hotkeys(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 4,
+            "hotkeys": {
+                "lap": "Ctrl+L",
+                "undo_lap": "Ctrl+U",
+                "logout": "Ctrl+Q",
+                "exit": "Ctrl+E",
+                "search_string_test": "Ctrl+S",
+            },
+        })
+
+        self.assertEqual(migrated["hotkeys"]["lap"], "Ctrl+L")
+        self.assertEqual(migrated["hotkeys"]["undo_lap"], "Ctrl+U")
+        self.assertEqual(migrated["hotkeys"]["logout"], "Ctrl+Q")
+        self.assertEqual(migrated["hotkeys"]["exit"], "Ctrl+E")
+        self.assertEqual(migrated["hotkeys"]["search_string_test"], "Ctrl+S")
 
     def test_schema_v2_migrates_only_old_mini_navi_defaults(self):
         migrated = ConfigManager._migrate_config({
