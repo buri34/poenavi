@@ -64,7 +64,8 @@ _MOD_COLUMN_MAX = 5
 _MOD_COLUMN_DETAILS = 6
 _MOD_CHECK_COLUMN_WIDTH = 40
 _MOD_TIER_COLUMN_WIDTH = 75
-_MOD_TEXT_COLUMN_WIDTH = 311
+_MOD_TEXT_COLUMN_WIDTH = 346
+_MOD_VALUE_EDITOR_WIDTH = 72
 _SPECIAL_CHIP_FILTER_IDS = {
     "property.map_tier", "property.area_level", "property.heist_wings",
     "property.base_percentile",
@@ -2723,14 +2724,14 @@ class PoetoreWindow(QWidget):
             editor = QLineEdit(value)
             editor.installEventFilter(self)
             editor.setPlaceholderText("最小")
-            editor.setFixedWidth(80)
+            editor.setFixedWidth(_MOD_VALUE_EDITOR_WIDTH)
             editor.setEnabled(stat_filter.option_value is None)
             editor.textEdited.connect(self._mark_search_dirty)
             self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_MIN, editor)
             max_editor = QLineEdit(maximum)
             max_editor.installEventFilter(self)
             max_editor.setPlaceholderText("最大")
-            max_editor.setFixedWidth(80)
+            max_editor.setFixedWidth(_MOD_VALUE_EDITOR_WIDTH)
             max_editor.setEnabled(stat_filter.option_value is None)
             max_editor.textEdited.connect(self._mark_search_dirty)
             self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_MAX, max_editor)

@@ -602,7 +602,20 @@ def test_mod_filter_check_and_condition_columns_fit_without_clipping(qapp):
     window = PoetoreWindow()
     try:
         assert window.mod_filter_tree.columnWidth(0) == 40
-        assert window.mod_filter_tree.columnWidth(3) == 311
+        assert window.mod_filter_tree.columnWidth(3) == 346
+    finally:
+        window.close()
+
+
+def test_mod_filter_minimum_and_maximum_editors_use_narrow_width(qapp):
+    window = PoetoreWindow()
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1", "命中力 +55", 55, "prefix", False, max_value=100,
+    ),))
+    try:
+        row = window.mod_filter_tree.topLevelItem(0)
+        assert window.mod_filter_tree.itemWidget(row, 4).width() == 72
+        assert window.mod_filter_tree.itemWidget(row, 5).width() == 72
     finally:
         window.close()
 
