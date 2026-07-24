@@ -2,7 +2,9 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                QPushButton, QGroupBox, QLineEdit, QFileDialog,
                                QTabWidget, QWidget, QScrollArea, QSpinBox,
                                QFormLayout, QTextEdit, QFrame, QRadioButton,
-                               QButtonGroup, QGridLayout, QCheckBox)
+                               QButtonGroup, QGridLayout, QCheckBox, QMessageBox,
+                               QDoubleSpinBox, QTableWidget, QTableWidgetItem,
+                               QHeaderView, QAbstractItemView)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QKeySequence
 from src.ui.styles import Styles
@@ -12,8 +14,24 @@ from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_act_li
 from src.utils.zone_master_data import load_zone_master_data, save_zone_master_data
 from src.utils.config_manager import ConfigManager
 from src.utils.area_notes import get_area_note, set_area_note
+from src.utils.gem_resolver import load_gem_names_ja
+from src.utils.gem_shop_search import (
+    build_unique_gem_search_terms,
+    validate_gem_shop_search_term_override,
+)
 import os
 import webbrowser
+
+
+def find_duplicate_hotkeys(hotkeys: dict[str, str]) -> dict[str, list[str]]:
+    """未割り当てを除き、同じキーへ割り当てられた操作を返す。"""
+    by_key: dict[str, list[str]] = {}
+    for action, key in hotkeys.items():
+        normalized = str(key or "").strip().casefold()
+        if not normalized or normalized == "none":
+            continue
+        by_key.setdefault(normalized, []).append(action)
+    return {key: actions for key, actions in by_key.items() if len(actions) > 1}
 
 
 def _flag_guide_header(zone_id: str) -> str:
@@ -40,33 +58,33 @@ def _act1_guide_dev_editor_enabled(poe_version: str, zone_id: str) -> bool:
 def _spinbox_style(width=55, height=28):
     """SpinBox共通スタイル（ボタン押しやすい版）"""
     return f"""
-        QSpinBox {{ 
+        QSpinBox, QDoubleSpinBox {{
             background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
             border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; 
             padding: 2px; padding-right: 22px;
             min-width: {width}px; min-height: {height}px;
         }}
-        QSpinBox::up-button {{
+        QSpinBox::up-button, QDoubleSpinBox::up-button {{
             subcontrol-origin: border; subcontrol-position: top right;
             width: 20px; height: 13px;
             background: rgba(80,80,80,220);
             border: 1px solid rgba(176,255,123,0.3);
             border-radius: 0 3px 0 0;
         }}
-        QSpinBox::up-button:hover {{ background: rgba(120,120,120,220); }}
-        QSpinBox::up-arrow {{ 
+        QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {{ background: rgba(120,120,120,220); }}
+        QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
             image: none; border-left: 4px solid transparent; border-right: 4px solid transparent;
             border-bottom: 4px solid {Styles.TEXT_COLOR}; width: 0; height: 0;
         }}
-        QSpinBox::down-button {{
+        QSpinBox::down-button, QDoubleSpinBox::down-button {{
             subcontrol-origin: border; subcontrol-position: bottom right;
             width: 20px; height: 13px;
             background: rgba(80,80,80,220);
             border: 1px solid rgba(176,255,123,0.3);
             border-radius: 0 0 3px 0;
         }}
-        QSpinBox::down-button:hover {{ background: rgba(120,120,120,220); }}
-        QSpinBox::down-arrow {{ 
+        QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{ background: rgba(120,120,120,220); }}
+        QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{
             image: none; border-left: 4px solid transparent; border-right: 4px solid transparent;
             border-top: 4px solid {Styles.TEXT_COLOR}; width: 0; height: 0;
         }}
@@ -1453,6 +1471,130 @@ class MiniNaviEditorDialog(QDialog):
                     guide.pop("mini_navi", None)
 
 
+class GemShopSearchTermOverridesDialog(QWidget):
+    """ショップ検索用の短縮語上書きを一覧で確認・編集する。"""
+
+    def __init__(self, parent=None, term_overrides=None):
+        super().__init__(parent)
+        self._gem_names_ja = load_gem_names_ja()
+        self._automatic_terms = build_unique_gem_search_terms(self._gem_names_ja)
+        self._term_overrides = dict(term_overrides or {})
+        self._term_edits = {}
+        self._row_by_gem_key = {}
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 10, 10, 10)
+        hint = QLabel("上書き欄が空欄なら自動短縮語を使います。上書きは正式名に含まれる、他ジェムと重複しない4文字以上の語だけ保存できます。")
+        hint.setWordWrap(True)
+        hint.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 11px;")
+        layout.addWidget(hint)
+
+        filters = QHBoxLayout()
+        filters.addWidget(QLabel("絞り込み:"))
+        self.search_edit = QLineEdit()
+        self.search_edit.setPlaceholderText("正式名・自動短縮語・上書き短縮語を検索")
+        self.search_edit.textChanged.connect(self._apply_filter)
+        filters.addWidget(self.search_edit, stretch=1)
+        self.changed_only_checkbox = QCheckBox("変更済みのみ")
+        self.changed_only_checkbox.toggled.connect(self._apply_filter)
+        filters.addWidget(self.changed_only_checkbox)
+        self.reset_all_button = QPushButton("すべて自動へ戻す")
+        self.reset_all_button.clicked.connect(self._reset_all_overrides)
+        filters.addWidget(self.reset_all_button)
+        layout.addLayout(filters)
+
+        table = QTableWidget(len(self._gem_names_ja), 3)
+        table.setHorizontalHeaderLabels(["正式名", "自動短縮語", "上書き短縮語"])
+        table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        table.setAlternatingRowColors(True)
+        table.verticalHeader().setVisible(False)
+        table.setColumnWidth(0, 310)
+        table.setColumnWidth(1, 130)
+        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Interactive)
+        table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
+        table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        table.setStyleSheet("""
+            QTableWidget { background: #1a1a1a; color: #e9ffbd; gridline-color: #454545; }
+            QTableWidget::item { padding: 4px; }
+            QTableWidget::item:alternate { background: #202020; }
+            QHeaderView::section { background: #29351e; color: #b0ff7b; padding: 5px; border: 1px solid #537336; }
+        """)
+        self._table = table
+
+        for row, (gem_key, gem_name) in enumerate(sorted(self._gem_names_ja.items(), key=lambda item: item[1])):
+            name_item = QTableWidgetItem(gem_name)
+            name_item.setData(Qt.UserRole, gem_key)
+            table.setItem(row, 0, name_item)
+            table.setItem(row, 1, QTableWidgetItem(self._automatic_terms.get(gem_key, "")))
+            term_edit = QLineEdit(self._term_overrides.get(gem_key, ""))
+            term_edit.setPlaceholderText("空欄: 自動")
+            term_edit.textChanged.connect(self._apply_filter)
+            table.setCellWidget(row, 2, term_edit)
+            self._term_edits[gem_key] = term_edit
+            self._row_by_gem_key[gem_key] = row
+            table.setRowHeight(row, 28)
+        layout.addWidget(table)
+        self._apply_filter()
+
+    def get_term_overrides(self) -> dict[str, str]:
+        valid_overrides, _ = self._collect_term_overrides()
+        return valid_overrides
+
+    def _collect_term_overrides(self) -> tuple[dict[str, str], list[str]]:
+        valid_overrides = {}
+        invalid_names = []
+        for gem_key, term_edit in self._term_edits.items():
+            term = term_edit.text().strip()
+            if not term:
+                continue
+            valid_term = validate_gem_shop_search_term_override(gem_key, term, self._gem_names_ja)
+            if valid_term is None:
+                invalid_names.append(self._gem_names_ja[gem_key])
+            else:
+                valid_overrides[gem_key] = valid_term
+        return valid_overrides, invalid_names
+
+    def validate_term_overrides(self) -> bool:
+        _, invalid_names = self._collect_term_overrides()
+        if invalid_names:
+            QMessageBox.warning(
+                self,
+                "短縮語を確認してください",
+                "次の短縮語は保存できません。正式名に含まれる、他ジェムと重複しない4文字以上の語を入力してください。\n\n"
+                + "、".join(invalid_names[:10]),
+            )
+            return False
+        return True
+
+    def _apply_filter(self):
+        query = self.search_edit.text().strip().casefold()
+        changed_only = self.changed_only_checkbox.isChecked()
+        for gem_key, row in self._row_by_gem_key.items():
+            override = self._term_edits[gem_key].text().strip()
+            searchable = " ".join((
+                self._gem_names_ja[gem_key],
+                self._automatic_terms.get(gem_key, ""),
+                override,
+            )).casefold()
+            visible = (not query or query in searchable) and (not changed_only or bool(override))
+            self._table.setRowHidden(row, not visible)
+
+    def _reset_all_overrides(self):
+        answer = QMessageBox.question(
+            self,
+            "すべて自動へ戻す",
+            "すべての上書き短縮語を空欄に戻します。設定を保存するまで変更は反映されません。",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if answer != QMessageBox.Yes:
+            return
+        for term_edit in self._term_edits.values():
+            term_edit.clear()
+        self._apply_filter()
+
+
 class SettingsDialog(QDialog):
     def __init__(self, parent=None, current_config=None):
         super().__init__(parent)
@@ -1472,6 +1614,7 @@ class SettingsDialog(QDialog):
             "monastery": "F12",
             "search_string_test": "none",
             "poetore_capture": "alt+d",
+            "gem_shop_search": "CapsLock",
         })
         self.poe_version = self.current_config.get("poe_version", POE1)
         self.poe_version_mode = self.current_config.get("poe_version_mode", "ask")
@@ -1669,6 +1812,34 @@ class SettingsDialog(QDialog):
         )
         h_layout10.addWidget(self.poetore_capture_btn)
         group_layout.addLayout(h_layout10)
+
+        h_layout11 = QHBoxLayout()
+        h_layout11.addWidget(QLabel("ジェムショップ検索（長押し）:"))
+        self.gem_shop_search_btn = HotkeyButton(self.hotkeys.get("gem_shop_search", "CapsLock"))
+        h_layout11.addWidget(self.gem_shop_search_btn)
+        group_layout.addLayout(h_layout11)
+
+        gem_search_hold_layout = QHBoxLayout()
+        gem_search_hold_layout.addWidget(QLabel("ジェムショップ検索の長押し時間:"))
+        self.gem_shop_search_hold_seconds_spin = QDoubleSpinBox()
+        self.gem_shop_search_hold_seconds_spin.setRange(0.2, 2.0)
+        self.gem_shop_search_hold_seconds_spin.setSingleStep(0.1)
+        self.gem_shop_search_hold_seconds_spin.setDecimals(1)
+        self.gem_shop_search_hold_seconds_spin.setSuffix(" 秒")
+        self.gem_shop_search_hold_seconds_spin.setValue(
+            self.current_config.get("gem_shop_search_hold_seconds", 0.4)
+        )
+        self.gem_shop_search_hold_seconds_spin.setStyleSheet(_spinbox_style(85))
+        gem_search_hold_layout.addWidget(self.gem_shop_search_hold_seconds_spin)
+        gem_search_hold_layout.addStretch()
+        group_layout.addLayout(gem_search_hold_layout)
+
+        self.gem_shop_search_include_reward_purchases_cb = QCheckBox("報酬から選ばなかったジェムをRegexに含める")
+        self.gem_shop_search_include_reward_purchases_cb.setChecked(
+            self.current_config.get("gem_shop_search_include_reward_purchases", True)
+        )
+        Styles.apply_checkbox_style(self.gem_shop_search_include_reward_purchases_cb)
+        group_layout.addWidget(self.gem_shop_search_include_reward_purchases_cb)
         
         self.logout_enabled_cb = QCheckBox("ログアウト機能を有効にする（TCP切断）")
         self.logout_enabled_cb.setChecked(self.current_config.get("logout_enabled", True))
@@ -2205,6 +2376,16 @@ class SettingsDialog(QDialog):
 
         tabs.addTab(about_tab, "アプリ情報")
 
+        term_review_tab = QWidget()
+        term_review_layout = QVBoxLayout(term_review_tab)
+        term_review_layout.setContentsMargins(0, 0, 0, 0)
+        self.gem_shop_search_term_review = GemShopSearchTermOverridesDialog(
+            term_review_tab,
+            self.current_config.get("gem_shop_search_term_overrides", {}),
+        )
+        term_review_layout.addWidget(self.gem_shop_search_term_review)
+        tabs.addTab(term_review_tab, "短縮語を見直す")
+
         layout.addWidget(tabs)
         
         # OK/Cancel
@@ -2680,6 +2861,43 @@ class SettingsDialog(QDialog):
         self.town_zones_edit.setPlainText("\n".join(self.town_zones_by_version.get(self.poe_version, get_town_zones(self.poe_version))))
         self._rebuild_zone_tab()
 
+    def accept(self):
+        if not self.gem_shop_search_term_review.validate_term_overrides():
+            return
+        hotkeys = {
+            "start_stop": self.start_stop_btn.key_text,
+            "reset": self.reset_btn.key_text,
+            "lap": self.lap_btn.key_text,
+            "undo_lap": self.undo_lap_btn.key_text,
+            "click_through": self.click_through_btn.key_text,
+            "logout": self.logout_btn.key_text,
+            "hideout": self.hideout_btn.key_text,
+            "monastery": self.monastery_btn.key_text,
+            "search_string_test": self.search_string_test_btn.key_text,
+            "gem_shop_search": self.gem_shop_search_btn.key_text,
+        }
+        duplicates = find_duplicate_hotkeys(hotkeys)
+        if duplicates:
+            labels = {
+                "start_stop": "開始/停止",
+                "reset": "リセット",
+                "lap": "ラップ（次のAct）",
+                "undo_lap": "ラップ取消",
+                "click_through": "クリックスルー",
+                "logout": "ログアウト",
+                "hideout": "隠れ家へ移動",
+                "monastery": "修道院へ移動",
+                "search_string_test": "検索文字列の貼り付け",
+                "gem_shop_search": "ジェムショップ検索",
+            }
+            details = "\n".join(
+                f"{key}: {'、'.join(labels[action] for action in actions)}"
+                for key, actions in duplicates.items()
+            )
+            QMessageBox.warning(self, "ホットキー重複", f"同じキーが複数の操作に設定されています。\n\n{details}")
+            return
+        super().accept()
+
     def get_settings(self):
         self._save_current_zone_ui_to_memory()
         self.town_zones_by_version[self.poe_version] = [z.strip() for z in self.town_zones_edit.toPlainText().split("\n") if z.strip()]
@@ -2711,8 +2929,12 @@ class SettingsDialog(QDialog):
                 "monastery": self.monastery_btn.key_text,
                 "search_string_test": self.search_string_test_btn.key_text,
                 "poetore_capture": self.poetore_capture_btn.key_text,
+                "gem_shop_search": self.gem_shop_search_btn.key_text,
             },
             "logout_enabled": self.logout_enabled_cb.isChecked(),
+            "gem_shop_search_include_reward_purchases": self.gem_shop_search_include_reward_purchases_cb.isChecked(),
+            "gem_shop_search_hold_seconds": self.gem_shop_search_hold_seconds_spin.value(),
+            "gem_shop_search_term_overrides": self.gem_shop_search_term_review.get_term_overrides(),
             "client_log_paths": {
                 POE1: normalize_log_path(self.log_path_edits[POE1].text()),
                 POE2: normalize_log_path(self.log_path_edits[POE2].text()),

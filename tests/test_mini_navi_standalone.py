@@ -162,6 +162,25 @@ class MiniNaviStandaloneTest(unittest.TestCase):
         main.hide_for_mini_navi.assert_called_once_with()
         main.restore_from_mini_navi.assert_not_called()
 
+    def test_overlay_has_no_gem_shop_purchase_controls(self):
+        main = QWidget()
+        main.config = {
+            "mini_guide_overlay": {
+                "enabled": True,
+                "locked": True,
+                "click_through_when_locked": True,
+            }
+        }
+        overlay = MiniNaviOverlay(main)
+        try:
+            overlay.show()
+            self.app.processEvents()
+
+            self.assertFalse(hasattr(overlay, "gem_shop_prompt_label"))
+            self.assertFalse(hasattr(overlay.lock_button_window, "gem_shop_copy_button"))
+        finally:
+            self._dispose_overlay(overlay, main)
+
 
 if __name__ == "__main__":
     unittest.main()

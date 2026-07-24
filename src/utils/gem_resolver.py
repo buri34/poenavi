@@ -81,12 +81,12 @@ QUEST_ORDER = [
 
 # スタータージェム（各クラスの初期ジェム）— gems.jsonには含まれないので除外
 STARTER_GEMS = {
-    "marauder": ["heavy strike", "ground slam"],
-    "ranger": ["burning arrow"],
-    "witch": ["fireball", "freezing pulse"],
-    "duelist": ["double strike"],
+    "marauder": ["heavy strike", "ground slam", "ruthless support"],
+    "ranger": ["burning arrow", "momentum support"],
+    "witch": ["fireball", "freezing pulse", "arcane surge support"],
+    "duelist": ["double strike", "chance to bleed support"],
     "templar": ["glacial hammer"],
-    "shadow": ["viper strike"],
+    "shadow": ["viper strike", "chance to poison support"],
     "scion": ["spectral throw"],
 }
 
@@ -163,6 +163,11 @@ def resolve_gem_acquisition(
             # gems.jsonに存在しないジェム → NPC入手不可（リストから除外）
             # Exceptional gems, Vaalジェム等
             continue
+
+        # PoBではサポートジェムの末尾 "support" が省略されることがある。
+        # 正式名へ補正した後も開始時所持ジェムとして除外する。
+        if gem_name in starter:
+            continue
         
         quests = gem_data.get("quests", {})
         if not quests:
@@ -171,6 +176,7 @@ def resolve_gem_acquisition(
         attribute = gem_data.get("attribute", 0)
         
         best = None  # {"quest": ..., "type": ..., "act": ..., "order": ...}
+        vendor_acts = set()
         
         for quest_key, quest_data in quests.items():
             quest_info = quests_info.get(quest_key, {})
@@ -194,12 +200,12 @@ def resolve_gem_acquisition(
                     candidate = {"quest": quest_key, "type": "quest", "act": quest_act, "order": order}
                     if best is None or order < best["order"]:
                         best = candidate
-                    continue  # quest報酬が最優先
-            
+
             # vendor購入チェック
             vendor_classes = quest_data.get("vendor", None)
             if vendor_classes is not None:
                 if len(vendor_classes) == 0 or char_class in vendor_classes:
+                    vendor_acts.add(6 if not library_route and quest_key == "a fixture of fate" else quest_act)
                     candidate = {"quest": quest_key, "type": "vendor", "act": quest_act, "order": order}
                     if best is None or order < best["order"]:
                         best = candidate
@@ -214,6 +220,7 @@ def resolve_gem_acquisition(
                 "type": best["type"],
                 "act": best["act"],
                 "attribute": attribute,
+                "vendor_acts": sorted(vendor_acts),
             }
         else:
             # どのクエストでも入手できない → Act6 Lilly
@@ -222,6 +229,7 @@ def resolve_gem_acquisition(
                 "type": "lilly",
                 "act": 6,
                 "attribute": attribute,
+                "vendor_acts": [6],
             }
     
     # クエストごとにジェムをグループ化
@@ -240,6 +248,7 @@ def resolve_gem_acquisition(
             "type": acq["type"],
             "is_support": is_support,
             "attribute": acq["attribute"],
+            "vendor_acts": acq["vendor_acts"],
         })
     
     # QUEST_ORDER順にソート

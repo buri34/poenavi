@@ -9,9 +9,13 @@
         "hideout": "F11",
         "monastery": "F12",
         "search_string_test": "F4",
-        "poetore_capture": "alt+d"
+        "poetore_capture": "alt+d",
+        "gem_shop_search": "CapsLock"
     },
     "poe_version": "",
+    "gem_shop_search_include_reward_purchases": true,
+    "gem_shop_search_hold_seconds": 0.4,
+    "gem_shop_search_term_overrides": {},
     "poe_version_mode": "",
     "text_color": "#e9ffbd",
     "guide_expanded": true,
