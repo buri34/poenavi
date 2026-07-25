@@ -625,7 +625,7 @@ def _apply_dedicated_exact_rules(
         keep_modifier_kinds.update({"prefix", "suffix", "explicit"})
     if item.category == "flask":
         keep_modifier_kinds.add("crafted")
-    if item.category in {"map", "invitation"}:
+    if item.category in {"map", "invitation"} and not _is_unique(item):
         keep_modifier_kinds.update({"prefix", "suffix", "explicit"})
 
     property_ids = {
@@ -2130,8 +2130,11 @@ def resolve_trade_stat_filters(
             row for row in _initial_property_filters(item, trade_base_type)
             if row.stat_id in {"property.block", "property.memory_strands"}
         )
+        # AwakenedのUnique Map Exactは固有名・Map種別・Tierだけで照合し、
+        # 個体ごとのUnique Modロールを検索条件へ追加しない。
+        exact_individual = () if item.category == "map" else individual
         return _decorate_filters(
-            item, special_properties + individual + _item_detail_filters(item)
+            item, special_properties + exact_individual + _item_detail_filters(item)
             + _unique_exception_filters(item) + _special_content_filters(item), True,
         )
     initial_properties = [
@@ -2450,6 +2453,8 @@ def build_search_query(
     query_type: str | dict = str(gem_info.get("trade_type") or base_type)
     if gem_info.get("discriminator"):
         query_type = {"option": query_type, "discriminator": gem_info["discriminator"]}
+    elif item.category == "map" and base_type == "Map":
+        query_type = {"option": query_type, "discriminator": "map"}
     query: dict = {
         "status": {"option": TRADE_STATUS_OPTIONS[trade_status]},
         "stats": [{"type": "and", "filters": []}],
@@ -2468,8 +2473,13 @@ def build_search_query(
             "option": listed_option
         }
     if _is_unique(item) and trade_name and trade_name.strip():
-        query["name"] = ({"option": trade_name.strip(), "discriminator": trade_discriminator}
-                         if trade_discriminator else trade_name.strip())
+        name_discriminator = trade_discriminator
+        if name_discriminator is None and item.category == "map" and base_type == "Map":
+            name_discriminator = "map"
+        query["name"] = (
+            {"option": trade_name.strip(), "discriminator": name_discriminator}
+            if name_discriminator else trade_name.strip()
+        )
     if include_unidentified is None:
         include_unidentified = _is_unique(item) and "unidentified" in item.flags
     if include_unidentified:

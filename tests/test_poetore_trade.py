@@ -2918,6 +2918,50 @@ Map (Tier 16)
     assert query["filters"]["map_filters"]["filters"]["map_tier"] == {"min": 16.0}
 
 
+def test_unique_generic_map_matches_awakened_identity_and_ignores_rolls():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: ユニーク
+オバの呪われた財宝
+マップ (ティア 16)
+--------
+アイテム数量: +40% (augmented)
+--------
+アイテムレベル: 84
+--------
+モンスターレベル：83
+--------
+{ ユニークモッド — ライフ }
+モンスターのライフが42(40-50)%上昇する
+{ ユニークモッド — ダメージ }
+モンスターのダメージが35(30-40)%増加する
+{ ユニークモッド — ダメージ, 混沌 }
+エリアには冒涜領域がまだらに存在する
+{ ユニークモッド }
+エリアは時間が経つと致命的になる
+""")
+    filters = resolve_trade_stat_filters(item, trade_base_type="Map")
+    assert [
+        row.stat_id for row in filters if row.enabled
+    ] == ["property.map_tier"]
+
+    tier = next(row for row in filters if row.stat_id == "property.map_tier")
+    query = build_search_query(
+        item,
+        "Map",
+        (replace(tier, max_value=tier.min_value),),
+        trade_name="Oba's Cursed Trove",
+    )["query"]
+
+    exact_map = {"option": "Map", "discriminator": "map"}
+    exact_name = {"option": "Oba's Cursed Trove", "discriminator": "map"}
+    assert query["type"] == exact_map
+    assert query["name"] == exact_name
+    assert query["stats"] == [{"type": "and", "filters": []}]
+    assert query["filters"]["map_filters"]["filters"]["map_tier"] == {
+        "min": 16.0, "max": 16.0,
+    }
+
+
 @pytest.mark.parametrize("text", [
     """アイテムクラス: マップ
 レアリティ: ノーマル
