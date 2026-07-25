@@ -35,6 +35,7 @@ from src.utils.pob_importer import import_pob, get_pob_skill_sets
 from src.utils.gem_resolver import load_gem_names_ja, resolve_gem_acquisition
 from src.utils.gem_shop_search import (
     HoldTrigger,
+    build_all_act_vendor_gem_query,
     build_act_vendor_gem_query,
     format_gem_shop_search_preview,
     get_gem_shop_search_feedback,
@@ -3019,6 +3020,17 @@ class MainWindow(QMainWindow):
             checked_gems=self.gem_tracker.get_checked_gems(),
         )
 
+    def _all_act_gem_shop_search_query(self) -> str:
+        if self.poe_version != POE1 or not hasattr(self, "gem_tracker"):
+            return ""
+        return build_all_act_vendor_gem_query(
+            self.gem_tracker._acquisition_plan,
+            load_gem_names_ja(),
+            self.config.get("gem_shop_search_include_reward_purchases", True),
+            self.config.get("gem_shop_search_term_overrides", {}),
+            checked_gems=self.gem_tracker.get_checked_gems(),
+        )
+
     def _refresh_gem_shop_search_preview(self):
         if not hasattr(self, "gem_shop_search_preview_label"):
             return
@@ -3214,6 +3226,7 @@ class MainWindow(QMainWindow):
             presets_path=self._vendor_search_presets_path(self.poe_version),
             poe_version=self.poe_version,
             gem_shop_query_provider=self._gem_shop_search_query if self.poe_version == POE1 else None,
+            all_act_gem_shop_query_provider=self._all_act_gem_shop_search_query if self.poe_version == POE1 else None,
         )
         self._vendor_search_dialog.show()
 

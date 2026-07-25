@@ -91,8 +91,29 @@ def build_act_vendor_gem_query(
     term_overrides: Mapping[str, str] | None = None,
     checked_gems: set[str] | None = None,
 ) -> str:
-    """現在Actで購入できる未取得ジェムを一意な日本語短縮語のOR検索にする。"""
-    search_terms = build_unique_gem_search_terms(gem_names_ja, term_overrides)
+    """現在Actで購入できる未取得ジェムを英語名のOR検索にする。"""
+    del gem_names_ja, term_overrides
+    return _build_vendor_gem_query(acquisition_plan, {act}, include_reward_purchases, checked_gems)
+
+
+def build_all_act_vendor_gem_query(
+    acquisition_plan: list[dict],
+    gem_names_ja: Mapping[str, str],
+    include_reward_purchases: bool,
+    term_overrides: Mapping[str, str] | None = None,
+    checked_gems: set[str] | None = None,
+) -> str:
+    """全Actで購入可能な未取得ジェムを英語名のOR検索にする。"""
+    del gem_names_ja, term_overrides
+    return _build_vendor_gem_query(acquisition_plan, set(range(1, 11)), include_reward_purchases, checked_gems)
+
+
+def _build_vendor_gem_query(
+    acquisition_plan: list[dict],
+    acts: set[int],
+    include_reward_purchases: bool,
+    checked_gems: set[str] | None,
+) -> str:
     checked = checked_gems or set()
     terms: list[str] = []
     seen: set[str] = set()
@@ -103,18 +124,16 @@ def build_act_vendor_gem_query(
                 continue
             vendor_acts = gem.get("vendor_acts")
             if vendor_acts is not None:
-                if act not in vendor_acts:
+                if not acts.intersection(vendor_acts):
                     continue
                 if gem.get("type") == "quest" and not include_reward_purchases:
                     continue
             else:
-                if entry.get("act") != act:
+                if entry.get("act") not in acts:
                     continue
                 if gem.get("type") == "quest":
                     continue
-            # 短縮できない場合も、正式名ならショップ検索へ渡せる。
-            # 例: サンダーは他ジェム名にも含まれるため一意な短縮語を作れない。
-            term = search_terms.get(name, gem_names_ja.get(name, ""))
+            term = name
             if term and term not in seen:
                 seen.add(term)
                 terms.append(term)

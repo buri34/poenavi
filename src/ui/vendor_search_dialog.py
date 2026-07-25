@@ -43,7 +43,14 @@ class VendorSearchPresetDialog(QDialog):
     ]
     MAX_SEARCH_QUERY_LENGTH = 250
 
-    def __init__(self, parent=None, presets_path: str = "", poe_version: str = POE2, gem_shop_query_provider=None):
+    def __init__(
+        self,
+        parent=None,
+        presets_path: str = "",
+        poe_version: str = POE2,
+        gem_shop_query_provider=None,
+        all_act_gem_shop_query_provider=None,
+    ):
         super().__init__(parent)
         from PySide6.QtWidgets import (
             QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
@@ -54,6 +61,7 @@ class VendorSearchPresetDialog(QDialog):
         self.presets_path = presets_path
         self.poe_version = poe_version
         self.gem_shop_query_provider = gem_shop_query_provider
+        self.all_act_gem_shop_query_provider = all_act_gem_shop_query_provider
         self._syncing = False
         self._dirty = False
         self.option_checkboxes = []
@@ -227,6 +235,12 @@ class VendorSearchPresetDialog(QDialog):
             self.gem_shop_query_btn.setToolTip("現在Actで購入対象のジェムRegexを、選択中の検索文字列へ追加します")
             self.gem_shop_query_btn.clicked.connect(self._append_current_act_gem_shop_query)
             query_header.addWidget(self.gem_shop_query_btn)
+            self.all_act_gem_shop_query_btn = QPushButton("全Actのジェムを追加")
+            self.all_act_gem_shop_query_btn.setFixedHeight(24)
+            self.all_act_gem_shop_query_btn.setStyleSheet(Styles.BUTTON)
+            self.all_act_gem_shop_query_btn.setToolTip("全Actで購入対象のジェムRegexを、選択中の検索文字列へ追加します")
+            self.all_act_gem_shop_query_btn.clicked.connect(self._append_all_act_gem_shop_query)
+            query_header.addWidget(self.all_act_gem_shop_query_btn)
         query_header.addStretch()
         self.query_length_label = QLabel(f"0/{self.MAX_SEARCH_QUERY_LENGTH}")
         self.query_length_label.setStyleSheet("color: #aaaaaa; font-size: 12px; border: none;")
@@ -1213,6 +1227,14 @@ class VendorSearchPresetDialog(QDialog):
         gem_query = provider() if callable(provider) else ""
         if not gem_query:
             QMessageBox.information(self, "ジェムRegex", "現在Actに追加できるジェムRegexがありません。")
+            return
+        self._append_gem_shop_query(gem_query)
+
+    def _append_all_act_gem_shop_query(self):
+        provider = getattr(self, "all_act_gem_shop_query_provider", None)
+        gem_query = provider() if callable(provider) else ""
+        if not gem_query:
+            QMessageBox.information(self, "ジェムRegex", "全Actに追加できるジェムRegexがありません。")
             return
         self._append_gem_shop_query(gem_query)
 

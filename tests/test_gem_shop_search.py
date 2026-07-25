@@ -22,6 +22,7 @@ from src.ui.settings_dialog import (
 from src.utils import gem_shop_search
 from src.utils.gem_shop_search import (
     HoldTrigger,
+    build_all_act_vendor_gem_query,
     build_act_vendor_gem_query,
     build_unique_gem_search_terms,
     format_gem_shop_search_preview,
@@ -46,7 +47,7 @@ class GemShopSearchTest(unittest.TestCase):
         self.assertTrue(config["gem_shop_search_include_reward_purchases"])
         self.assertEqual(config["gem_shop_search_hold_seconds"], 0.4)
 
-    def test_custom_term_override_replaces_the_automatic_term(self):
+    def test_custom_japanese_term_override_does_not_replace_english_gem_name(self):
         plan = [{"act": 1, "gems": [{"name": "ground slam", "type": "vendor"}]}]
         names = {"ground slam": "グランドスラム"}
 
@@ -58,7 +59,7 @@ class GemShopSearchTest(unittest.TestCase):
             {"ground slam": "グランドス"},
         )
 
-        self.assertEqual(query, "グランドス")
+        self.assertEqual(query, "ground slam")
 
     def test_hold_delay_uses_the_saved_seconds(self):
         window = SimpleNamespace(config={"gem_shop_search_hold_seconds": 0.7})
@@ -135,7 +136,33 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "グランド|出血付与")
+        self.assertEqual(query, "ground slam|chance to bleed support")
+
+    def test_current_act_query_uses_english_gem_names(self):
+        query = build_act_vendor_gem_query(
+            [{"act": 1, "gems": [{"name": "ground slam", "type": "vendor"}]}],
+            1,
+            {"ground slam": "グランドスラム"},
+            True,
+        )
+
+        self.assertEqual(query, "ground slam")
+
+    def test_all_act_query_collects_each_available_gem_once(self):
+        query = build_all_act_vendor_gem_query(
+            [
+                {"act": 1, "gems": [{"name": "ground slam", "type": "vendor"}]},
+                {"act": 2, "gems": [
+                    {"name": "ground slam", "type": "vendor"},
+                    {"name": "precision", "type": "vendor", "vendor_acts": [2, 6]},
+                    {"name": "momentum support", "type": "quest", "vendor_acts": [1]},
+                ]},
+            ],
+            {"ground slam": "グランドスラム", "precision": "プレシジョン"},
+            include_reward_purchases=False,
+        )
+
+        self.assertEqual(query, "ground slam|precision")
 
     def test_current_act_query_includes_reward_purchase_when_enabled(self):
         plan = [{
@@ -156,7 +183,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "グランド|モーメン")
+        self.assertEqual(query, "ground slam|momentum support")
 
     def test_current_act_query_includes_unchecked_reward_gem_sold_in_current_act(self):
         plan = [{
@@ -175,7 +202,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "モーメン")
+        self.assertEqual(query, "momentum support")
 
     def test_current_act_query_excludes_reward_purchase_when_disabled(self):
         plan = [{
@@ -233,7 +260,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "モーメン")
+        self.assertEqual(query, "momentum support")
 
     def test_main_window_query_excludes_checked_gems(self):
         window = SimpleNamespace(
@@ -358,9 +385,9 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "リープス")
+        self.assertEqual(query, "leap slam")
 
-    def test_current_act_query_uses_official_name_when_no_unique_short_term_exists(self):
+    def test_current_act_query_uses_english_official_name(self):
         query = build_act_vendor_gem_query(
             [{"act": 1, "gems": [{"name": "sunder", "type": "vendor", "vendor_acts": [1]}]}],
             1,
@@ -372,7 +399,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "サンダー")
+        self.assertEqual(query, "sunder")
 
     def test_unique_terms_use_the_shortest_non_overlapping_four_characters(self):
         terms = build_unique_gem_search_terms(load_gem_names_ja())
