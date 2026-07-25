@@ -778,11 +778,23 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
     for modifier in exact_modifiers:
         api_kind = "explicit" if modifier.kind in {"prefix", "suffix"} else modifier.kind
         source = _normalized_stat_text(modifier.text)
-        candidates = [
-            entry for entry in entries
-            if entry.get("type") == api_kind
-            and _normalized_stat_text(str(entry.get("text", ""))) == source
-        ]
+        # 3.29の詳細コピー本文には、Trade APIの表示用補足
+        # 「(ローカル)」が付かない。パーサーが確定したstat IDを優先し、
+        # IDがない古いコピー形式だけ正規化文字列で照合する。
+        candidates = (
+            [
+                entry for entry in entries
+                if entry.get("type") == api_kind
+                and str(entry.get("id")) == modifier.stat_id
+            ]
+            if modifier.stat_id else []
+        )
+        if not candidates:
+            candidates = [
+                entry for entry in entries
+                if entry.get("type") == api_kind
+                and _normalized_stat_text(str(entry.get("text", ""))) == source
+            ]
         if not candidates:
             continue
         if item.category == "weapon" and len(candidates) > 1:

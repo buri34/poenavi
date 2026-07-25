@@ -528,6 +528,46 @@ def test_fractured_item_can_offer_base_preset_below_ilvl_82():
     ]
 
 
+def test_japanese_329_fractured_local_mod_uses_stat_id_when_trade_text_has_local_suffix():
+    item = parse_item_text("""アイテムクラス: 手袋
+レアリティ: レア
+巻き込む前脚
+賢者のグローブ
+--------
+エナジーシールド: 110 (augmented)
+--------
+アイテムレベル: 85
+--------
+{ フラクチャー プレフィックスモッド「恐れ知らずな」 (ティア: 3) — 防御, エナジーシールド }
+エナジーシールドが74(68-79)%増加する
+--------
+フラクチャーアイテム
+""")
+    entries = ({
+        "id": "fractured.stat_4015621042",
+        "text": "エナジーシールドが#%増加する (ローカル)",
+        "type": "fractured",
+    },)
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item, PRESET_BASE)
+
+    fractured = next(row for row in filters if row.kind == "fractured")
+    assert fractured.stat_id == "fractured.stat_4015621042"
+    assert fractured.min_value == 74.0
+    assert fractured.enabled is True
+
+    query = build_search_query(
+        item, "Sage's Gloves", filters, preset=PRESET_BASE,
+    )["query"]
+    misc = query["filters"]["misc_filters"]["filters"]
+    assert misc["fractured_item"] == {"option": "true"}
+    assert query["stats"][0]["filters"] == [{
+        "id": "fractured.stat_4015621042",
+        "value": {"min": 74.0},
+    }]
+
+
 def test_influenced_and_synthesised_items_add_strict_base_conditions():
     item = parse_item_text(ITEM.replace("Item Level: 67", "Item Level: 70").replace(
         "74% increased Physical Damage",
