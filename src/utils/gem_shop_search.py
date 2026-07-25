@@ -92,8 +92,14 @@ def build_act_vendor_gem_query(
     checked_gems: set[str] | None = None,
 ) -> str:
     """現在Actで購入できる未取得ジェムを英語名のOR検索にする。"""
-    del gem_names_ja, term_overrides
-    return _build_vendor_gem_query(acquisition_plan, {act}, include_reward_purchases, checked_gems)
+    return _build_vendor_gem_query(
+        acquisition_plan,
+        {act},
+        gem_names_ja,
+        include_reward_purchases,
+        term_overrides,
+        checked_gems,
+    )
 
 
 def build_all_act_vendor_gem_query(
@@ -104,16 +110,26 @@ def build_all_act_vendor_gem_query(
     checked_gems: set[str] | None = None,
 ) -> str:
     """全Actで購入可能な未取得ジェムを英語名のOR検索にする。"""
-    del gem_names_ja, term_overrides
-    return _build_vendor_gem_query(acquisition_plan, set(range(1, 11)), include_reward_purchases, checked_gems)
+    return _build_vendor_gem_query(
+        acquisition_plan,
+        set(range(1, 11)),
+        gem_names_ja,
+        include_reward_purchases,
+        term_overrides,
+        checked_gems,
+    )
 
 
 def _build_vendor_gem_query(
     acquisition_plan: list[dict],
     acts: set[int],
+    gem_names_ja: Mapping[str, str],
     include_reward_purchases: bool,
+    term_overrides: Mapping[str, str] | None,
     checked_gems: set[str] | None,
 ) -> str:
+    english_names = {gem_key: gem_key for gem_key in gem_names_ja}
+    search_terms = build_unique_gem_search_terms(english_names, term_overrides)
     checked = checked_gems or set()
     terms: list[str] = []
     seen: set[str] = set()
@@ -133,7 +149,7 @@ def _build_vendor_gem_query(
                     continue
                 if gem.get("type") == "quest":
                     continue
-            term = name
+            term = search_terms.get(name, name)
             if term and term not in seen:
                 seen.add(term)
                 terms.append(term)

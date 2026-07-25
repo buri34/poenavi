@@ -14,7 +14,7 @@ from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_act_li
 from src.utils.zone_master_data import load_zone_master_data, save_zone_master_data
 from src.utils.config_manager import ConfigManager
 from src.utils.area_notes import get_area_note, set_area_note
-from src.utils.gem_resolver import load_gem_names_ja
+from src.utils.gem_resolver import load_gem_names_en
 from src.utils.gem_shop_search import (
     build_unique_gem_search_terms,
     validate_gem_shop_search_term_override,
@@ -1476,8 +1476,8 @@ class GemShopSearchTermOverridesDialog(QWidget):
 
     def __init__(self, parent=None, term_overrides=None):
         super().__init__(parent)
-        self._gem_names_ja = load_gem_names_ja()
-        self._automatic_terms = build_unique_gem_search_terms(self._gem_names_ja)
+        self._gem_names_en = load_gem_names_en()
+        self._automatic_terms = build_unique_gem_search_terms(self._gem_names_en)
         self._term_overrides = dict(term_overrides or {})
         self._term_edits = {}
         self._row_by_gem_key = {}
@@ -1503,7 +1503,7 @@ class GemShopSearchTermOverridesDialog(QWidget):
         filters.addWidget(self.reset_all_button)
         layout.addLayout(filters)
 
-        table = QTableWidget(len(self._gem_names_ja), 3)
+        table = QTableWidget(len(self._gem_names_en), 3)
         table.setHorizontalHeaderLabels(["正式名", "自動短縮語", "上書き短縮語"])
         table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -1522,7 +1522,7 @@ class GemShopSearchTermOverridesDialog(QWidget):
         """)
         self._table = table
 
-        for row, (gem_key, gem_name) in enumerate(sorted(self._gem_names_ja.items(), key=lambda item: item[1])):
+        for row, (gem_key, gem_name) in enumerate(sorted(self._gem_names_en.items(), key=lambda item: item[1])):
             name_item = QTableWidgetItem(gem_name)
             name_item.setData(Qt.UserRole, gem_key)
             table.setItem(row, 0, name_item)
@@ -1548,9 +1548,9 @@ class GemShopSearchTermOverridesDialog(QWidget):
             term = term_edit.text().strip()
             if not term:
                 continue
-            valid_term = validate_gem_shop_search_term_override(gem_key, term, self._gem_names_ja)
+            valid_term = validate_gem_shop_search_term_override(gem_key, term, self._gem_names_en)
             if valid_term is None:
-                invalid_names.append(self._gem_names_ja[gem_key])
+                invalid_names.append(self._gem_names_en[gem_key])
             else:
                 valid_overrides[gem_key] = valid_term
         return valid_overrides, invalid_names
@@ -1573,7 +1573,7 @@ class GemShopSearchTermOverridesDialog(QWidget):
         for gem_key, row in self._row_by_gem_key.items():
             override = self._term_edits[gem_key].text().strip()
             searchable = " ".join((
-                self._gem_names_ja[gem_key],
+                self._gem_names_en[gem_key],
                 self._automatic_terms.get(gem_key, ""),
                 override,
             )).casefold()

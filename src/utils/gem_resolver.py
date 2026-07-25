@@ -41,6 +41,11 @@ def load_gem_names_ja() -> dict:
         return json.load(f)
 
 
+def load_gem_names_en() -> dict:
+    """ジェム名の英語正式名マッピングを返す。"""
+    return {gem_key: gem_key for gem_key in load_gem_names_ja()}
+
+
 def load_quest_names_ja() -> dict:
     """クエスト名日本語マッピングを読み込む"""
     path = os.path.join(_get_data_dir(), "quest_names_ja.json")

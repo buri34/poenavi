@@ -47,7 +47,7 @@ class GemShopSearchTest(unittest.TestCase):
         self.assertTrue(config["gem_shop_search_include_reward_purchases"])
         self.assertEqual(config["gem_shop_search_hold_seconds"], 0.4)
 
-    def test_custom_japanese_term_override_does_not_replace_english_gem_name(self):
+    def test_custom_english_term_override_replaces_the_automatic_term(self):
         plan = [{"act": 1, "gems": [{"name": "ground slam", "type": "vendor"}]}]
         names = {"ground slam": "グランドスラム"}
 
@@ -56,10 +56,10 @@ class GemShopSearchTest(unittest.TestCase):
             1,
             names,
             True,
-            {"ground slam": "グランドス"},
+            {"ground slam": "ground"},
         )
 
-        self.assertEqual(query, "ground slam")
+        self.assertEqual(query, "ground")
 
     def test_hold_delay_uses_the_saved_seconds(self):
         window = SimpleNamespace(config={"gem_shop_search_hold_seconds": 0.7})
@@ -70,19 +70,19 @@ class GemShopSearchTest(unittest.TestCase):
         dialog = SettingsDialog(
             current_config={
                 "gem_shop_search_hold_seconds": 0.7,
-                "gem_shop_search_term_overrides": {"ground slam": "グラウンド"},
+                "gem_shop_search_term_overrides": {"momentum support": "mome"},
             }
         )
 
         self.assertEqual(dialog.gem_shop_search_hold_seconds_spin.value(), 0.7)
         self.assertEqual(
             dialog.get_settings()["gem_shop_search_term_overrides"],
-            {"ground slam": "グラウンド"},
+            {"momentum support": "mome"},
         )
 
     def test_term_review_tab_is_after_app_info_and_filters_changed_terms(self):
         settings = SettingsDialog(
-            current_config={"gem_shop_search_term_overrides": {"ground slam": "グラウンド"}}
+            current_config={"gem_shop_search_term_overrides": {"momentum support": "mome"}}
         )
         tabs = settings.findChild(QTabWidget)
         self.assertEqual(tabs.tabText(tabs.count() - 1), "短縮語を見直す")
@@ -91,9 +91,9 @@ class GemShopSearchTest(unittest.TestCase):
         review.changed_only_checkbox.setChecked(True)
         review._apply_filter()
 
-        ground_slam_row = review._row_by_gem_key["ground slam"]
-        self.assertFalse(review._table.isRowHidden(ground_slam_row))
-        self.assertTrue(review._table.isRowHidden(review._row_by_gem_key["momentum support"]))
+        momentum_row = review._row_by_gem_key["momentum support"]
+        self.assertFalse(review._table.isRowHidden(momentum_row))
+        self.assertTrue(review._table.isRowHidden(review._row_by_gem_key["ground slam"]))
 
     def test_gem_shop_search_status_is_shown_near_cursor_as_a_short_tooltip(self):
         owner = object()
@@ -136,7 +136,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "ground slam|chance to bleed support")
+        self.assertEqual(query, "grou|chan")
 
     def test_current_act_query_uses_english_gem_names(self):
         query = build_act_vendor_gem_query(
@@ -146,7 +146,23 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "ground slam")
+        self.assertEqual(query, "grou")
+
+    def test_current_act_query_uses_unique_english_short_terms(self):
+        query = build_act_vendor_gem_query(
+            [{"act": 1, "gems": [
+                {"name": "ground slam", "type": "vendor"},
+                {"name": "momentum support", "type": "vendor"},
+            ]}],
+            1,
+            {
+                "ground slam": "グランドスラム",
+                "momentum support": "モーメンタムサポート",
+            },
+            True,
+        )
+
+        self.assertEqual(query, "grou|mome")
 
     def test_all_act_query_collects_each_available_gem_once(self):
         query = build_all_act_vendor_gem_query(
@@ -162,7 +178,7 @@ class GemShopSearchTest(unittest.TestCase):
             include_reward_purchases=False,
         )
 
-        self.assertEqual(query, "ground slam|precision")
+        self.assertEqual(query, "grou|prec")
 
     def test_current_act_query_includes_reward_purchase_when_enabled(self):
         plan = [{
@@ -183,7 +199,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "ground slam|momentum support")
+        self.assertEqual(query, "grou|mome")
 
     def test_current_act_query_includes_unchecked_reward_gem_sold_in_current_act(self):
         plan = [{
@@ -202,7 +218,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "momentum support")
+        self.assertEqual(query, "mome")
 
     def test_current_act_query_excludes_reward_purchase_when_disabled(self):
         plan = [{
@@ -260,7 +276,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "momentum support")
+        self.assertEqual(query, "mome")
 
     def test_main_window_query_excludes_checked_gems(self):
         window = SimpleNamespace(
@@ -385,7 +401,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "leap slam")
+        self.assertEqual(query, "leap")
 
     def test_current_act_query_uses_english_official_name(self):
         query = build_act_vendor_gem_query(
@@ -399,7 +415,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "sunder")
+        self.assertEqual(query, "sund")
 
     def test_unique_terms_use_the_shortest_non_overlapping_four_characters(self):
         terms = build_unique_gem_search_terms(load_gem_names_ja())
