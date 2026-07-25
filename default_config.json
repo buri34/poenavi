@@ -2,15 +2,17 @@
     "hotkeys": {
         "start_stop": "F7",
         "reset": "F8",
-        "lap": "F9",
-        "undo_lap": "F10",
-        "logout": "F5",
+        "lap": "none",
+        "undo_lap": "none",
+        "exit": "F5",
+        "logout": "none",
         "click_through": "F6",
         "hideout": "F11",
         "monastery": "F12",
         "search_string_test": "F4",
         "poetore_capture": "alt+d",
-        "gem_shop_search": "CapsLock"
+        "gem_shop_search": "CapsLock",
+        "cheat_sheets_toggle": "shift+space"
     },
     "poe_version": "",
     "gem_shop_search_include_reward_purchases": true,
@@ -57,6 +59,18 @@
         "poe2": ""
     },
     "poe1_route_selected": false,
+    "cheat_sheets": {
+        "images": [],
+        "selected_id": "",
+        "opacity": 100,
+        "position": {
+            "x": 120,
+            "y": 120
+        },
+        "position_initialized": false,
+        "width": 900,
+        "height": 650
+    },
     "mini_guide_overlay": {
         "enabled": false,
         "display_mode": "standard",

@@ -255,6 +255,7 @@ class TradeStatFilter:
     group_type: str = "and"
     group_key: str = ""
     group_min: int | None = None
+    decimal: bool = False
     # Awakened同様、集約したproperty/pseudo行にも寄与元Modの高Tierを表示する。
     # Trade APIへは送らない表示専用情報。
     tier_tags: tuple[int, ...] = ()
@@ -1361,8 +1362,8 @@ def _pseudo_consumed_stat_ids(item: ParsedItem) -> set[str]:
 _stat_entries_cache: tuple[dict, ...] | None = None
 _item_entries_cache: tuple[dict, ...] | None = None
 _jp_item_entries_cache: tuple[dict, ...] | None = None
-_item_groups_cache: tuple[tuple[dict, ...], ...] | None = None
-_jp_item_groups_cache: tuple[tuple[dict, ...], ...] | None = None
+_item_groups_cache: tuple[tuple[str, tuple[dict, ...]], ...] | None = None
+_jp_item_groups_cache: tuple[tuple[str, tuple[dict, ...]], ...] | None = None
 
 
 def _normalized_stat_text(text: str) -> str:
@@ -1411,22 +1412,26 @@ def _jp_trade_item_entries() -> tuple[dict, ...]:
     return _jp_item_entries_cache
 
 
-def _trade_item_groups() -> tuple[tuple[dict, ...], ...]:
+def _trade_item_groups() -> tuple[tuple[str, tuple[dict, ...]], ...]:
     global _item_groups_cache
     if _item_groups_cache is None:
         data, _ = _request_json(f"{API_ROOT}/data/items")
         _item_groups_cache = tuple(
-            tuple(group.get("entries", ())) for group in data.get("result", ())
+            (str(group.get("id", "")), tuple(group.get("entries", ())))
+            for group in data.get("result", ())
+            if str(group.get("id", ""))
         )
     return _item_groups_cache
 
 
-def _jp_trade_item_groups() -> tuple[tuple[dict, ...], ...]:
+def _jp_trade_item_groups() -> tuple[tuple[str, tuple[dict, ...]], ...]:
     global _jp_item_groups_cache
     if _jp_item_groups_cache is None:
         data, _ = _request_json(f"{JP_API_ROOT}/data/items")
         _jp_item_groups_cache = tuple(
-            tuple(group.get("entries", ())) for group in data.get("result", ())
+            (str(group.get("id", "")), tuple(group.get("entries", ())))
+            for group in data.get("result", ())
+            if str(group.get("id", ""))
         )
     return _jp_item_groups_cache
 
@@ -1448,9 +1453,11 @@ def _aligned_trade_item_pairs():
             tuple(sorted(flags)),
         )
 
-    for english_group, japanese_group in zip(
-        _trade_item_groups(), _jp_trade_item_groups(),
-    ):
+    japanese_groups = dict(_jp_trade_item_groups())
+    for group_id, english_group in _trade_item_groups():
+        japanese_group = japanese_groups.get(group_id)
+        if japanese_group is None:
+            continue
         if len(english_group) == len(japanese_group):
             yield from zip(english_group, japanese_group)
             continue
@@ -1494,6 +1501,7 @@ def _english_trade_item_name(japanese_name: str) -> str | None:
     wanted = japanese_name.strip()
     if not wanted:
         return None
+    candidates: set[str] = set()
     for english, japanese in _aligned_trade_item_pairs():
         if str(japanese.get("name", "")).strip() != wanted:
             continue
@@ -1501,8 +1509,55 @@ def _english_trade_item_name(japanese_name: str) -> str | None:
             (japanese.get("flags") or {}).get("unique")
         ):
             continue
-        return str(english.get("name", "")).strip() or None
-    return None
+        translated = str(english.get("name", "")).strip()
+        if translated:
+            candidates.add(translated)
+    return next(iter(candidates)) if len(candidates) == 1 else None
+
+
+_CONFIRMED_ENGLISH_TRADE_TYPE_OVERRIDES = {
+    ("accessory", "重い矢筒"): "Heavy Arrow Quiver",
+    ("accessory", "原始の矢筒"): "Primal Arrow Quiver",
+    ("accessory", "羽根付きの矢筒"): "Feathered Arrow Quiver",
+    ("accessory", "灼熱の矢筒"): "Blazing Arrow Quiver",
+    ("divination_card", "狂犬病のロア"): "The Rabid Rhoa",
+}
+
+
+def _english_trade_item_type(
+    japanese_type: str,
+    category: str | None = None,
+) -> str | None:
+    """公式日英itemsから日本語の一行名に対応する英語typeを得る。"""
+    wanted = japanese_type.strip()
+    if not wanted:
+        return None
+    confirmed = _CONFIRMED_ENGLISH_TRADE_TYPE_OVERRIDES.get((category or "", wanted))
+    if confirmed:
+        return confirmed
+    exact: set[str] = set()
+    contained: list[tuple[int, str]] = []
+    for english, japanese in _aligned_trade_item_pairs():
+        source = str(japanese.get("type", "")).strip()
+        translated = str(english.get("type", "")).strip()
+        if not source or not translated:
+            continue
+        if source == wanted:
+            exact.add(translated)
+            continue
+        # Magic/Veiled/Synthesised等はPrefix/Suffixを含む一行名になる。
+        # 内包される最長の公式base typeを採用する。
+        if source in wanted:
+            contained.append((len(source), translated))
+    if exact:
+        return next(iter(exact)) if len(exact) == 1 else None
+    if not contained:
+        return None
+    longest = max(length for length, _translated in contained)
+    candidates = {
+        translated for length, translated in contained if length == longest
+    }
+    return next(iter(candidates)) if len(candidates) == 1 else None
 
 
 def _japanese_trade_item_name(english_name: str) -> str | None:
@@ -1731,10 +1786,23 @@ def unresolved_modifier_warnings(
         for line in row.text.splitlines()
         if line.strip()
     }
+    fixed_unique_refs = unique_fixed_stats(item.name) if _is_unique(item) else None
+
+    def should_warn(modifier) -> bool:
+        if modifier.stat_id is not None or modifier.kind in {"desecrated"}:
+            return False
+        if _normalized_stat_text(modifier.text) in resolved_lines:
+            return False
+        if _is_unique(item) and _unique_roll_bounds(modifier.text) is None:
+            # Awakenedのitems.ndjsonにfixedStatsがないUniqueでは、数値なしModを
+            # Variant検索候補として扱わない。SvalinnのLucky block等も警告不要。
+            if fixed_unique_refs is None or modifier.ref in fixed_unique_refs:
+                return False
+        return True
+
     return tuple(
         modifier.text for modifier in item.modifiers
-        if modifier.stat_id is None and modifier.kind not in {"desecrated"}
-        and _normalized_stat_text(modifier.text) not in resolved_lines
+        if should_warn(modifier)
     )
 
 
@@ -1855,6 +1923,7 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
             selection_reason=reason,
             exact=exact,
             better=source.better if source else row.better,
+            decimal=source.decimal if source else row.decimal,
             tier_tags=(
                 _awakened_tier_tags(property_sources or pseudo_sources or sources)
                 or row.tier_tags
@@ -1904,14 +1973,21 @@ def resolve_trade_stat_filters(
                 item.category == "accessory" and not talisman
                 and "corrupted" not in item.flags and "mirrored" not in item.flags
             )
-            if modifiable_amulet and not any(oil in {12, 13} for oil in modifier.oils):
-                # Awakened同様、付け直しやすい安価なAnointmentは候補自体を隠す。
+            if modifiable_amulet and not any(oil in {11, 12, 13} for oil in modifier.oils):
+                # Awakenedの銀・金に加え、相場が高くなりやすい乳白色を使う
+                # Anointmentも候補へ表示する。その他の付け直しやすいものは隠す。
                 continue
         roll_bounds = _unique_roll_bounds(modifier.text) if unique_item else None
         if unique_item and roll_bounds is None:
-            if fixed_unique_refs is None or modifier.ref in fixed_unique_refs:
+            corrupted_implicit = (
+                modifier.kind == "implicit" and modifier.generation == "corrupted"
+            )
+            if not corrupted_implicit and (
+                fixed_unique_refs is None or modifier.ref in fixed_unique_refs
+            ):
                 # Awakened準拠: 常設Modでも可変ロールがあれば候補へ残す。
-                # 数値なしModはfixedStats外のVariantだけを候補として扱う。
+                # 数値なしModはfixedStats外のVariantだけを候補として扱うが、
+                # 後付けされたコラプト暗黙はUnique固定Modではないため残す。
                 continue
         api_kind = "explicit" if modifier.kind in {"prefix", "suffix"} else modifier.kind
         source = _normalized_stat_text(modifier.text)
@@ -2605,14 +2681,45 @@ def _is_generic_map_copy_type(item: ParsedItem, base_type: str) -> bool:
     """詳細コピーの汎用Map表記を、公式Tradeのベース名として送らない。"""
     if item.category != "map":
         return False
-    return bool(re.fullmatch(
-        r"(?:(?:Blighted|Blight-ravaged)\s+)?Map\s*[（(]\s*Tier\s*\d+\s*[）)]",
-        base_type.strip(), flags=re.IGNORECASE,
-    ))
+    return bool(
+        re.fullmatch(
+            r"(?:(?:Blighted|Blight-ravaged)\s+)?Map\s*[（(]\s*Tier\s*\d+\s*[）)]",
+            base_type.strip(), flags=re.IGNORECASE,
+        )
+        or re.fullmatch(
+            r"(?:(?:ブライトに覆われた|ブライトに蹂躙された)\s*)?"
+            r"マップ\s*[（(]\s*ティア\s*\d+\s*[）)]",
+            base_type.strip(),
+        )
+    )
 
 
 def _contains_japanese_text(value: object) -> bool:
     return bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", str(value)))
+
+
+def english_trade_identity(
+    item: ParsedItem,
+    base_type: str | None = None,
+    name: str | None = None,
+) -> tuple[str | None, str | None]:
+    """3.29以降のローカライズ済み詳細コピーを英語Trade検索用IDへ変換する。"""
+    resolved_type = str(base_type or item.base_type or "").strip() or None
+    if resolved_type and _contains_japanese_text(resolved_type):
+        resolved_type = (
+            _english_trade_item_type(resolved_type, item.category) or resolved_type
+        )
+
+    resolved_name = str(name or "").strip() or None
+    if resolved_name and resolved_name == str(item.base_type or "").strip():
+        resolved_name = None
+    if (
+        resolved_name
+        and _is_unique(item)
+        and _contains_japanese_text(resolved_name)
+    ):
+        resolved_name = _english_trade_item_name(resolved_name) or resolved_name
+    return resolved_type, resolved_name
 
 
 def _require_english_search_identity(payload: dict) -> None:
@@ -2657,6 +2764,9 @@ def search_prices(
     include_foil: bool | None = None,
 ) -> PriceResult:
     league = league or active_pc_league()
+    trade_base_type, trade_name = english_trade_identity(
+        item, trade_base_type, trade_name,
+    )
     if (item.rarity.casefold() in {"magic", "マジック"}
             and trade_base_type and item.name == item.base_type):
         # 日本語詳細コピーのMagic品はAffix込み英語名がname/base_typeの両方へ

@@ -301,6 +301,8 @@ python main.py
 
 PoE1のアイテムへマウスカーソルを合わせて `Alt+D` を押すと、アイテムの詳細情報を読み取り、公式Tradeの出品価格を検索できます。
 
+ぽえとれは、[Awakened PoE Trade](https://github.com/SnosMe/awakened-poe-trade)の公開仕様・UI・検索ロジックを参考に、日本語版Path of Exile向けに独自実装しています。データ出典と第三者ライセンスの詳細は[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)を参照してください。
+
 1. PoE1モードでPoENaviを起動する
 2. スタッシュまたはインベントリのアイテムへマウスカーソルを合わせる
 3. `Alt+D`を押す
@@ -366,7 +368,7 @@ PoBインポート結果、ジェム取得チェック状態、PoE1/PoE2別の�
 | F7 | 開始 / 停止 |
 | F8 | リセット |
 | F9 | ラップ（次のAct/区間へ） |
-| F10 | ラップ取消 |
+| F4 | キャラクター選択へ戻る（`/exit`） |
 | F5 | ログアウト（TCP切断） |
 | F6 | クリックスルー ON/OFF |
 | Alt+D | ぽえとれ検索（PoE1） |

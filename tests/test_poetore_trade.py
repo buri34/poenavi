@@ -7,11 +7,12 @@ from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlsplit
 
 from src.poetore.parser import parse_item_text
+from src.poetore.metadata import unique_fixed_stats
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.trade import (
     PRESET_BASE, PRESET_FINISHED, PriceListing, PriceResult, TradeApiError, TradeStatFilter,
     active_pc_league, available_pc_leagues, available_trade_presets, build_search_query,
-    default_pc_league, elemental_dps,
+    default_pc_league, elemental_dps, english_trade_identity,
     default_trade_currency, physical_dps, physical_dps_at_20_quality,
     resolve_trade_stat_filters, search_prices, unique_candidates, unique_variants,
     unresolved_modifier_warnings, uses_dedicated_exact_preset, resolve_official_base_type,
@@ -21,7 +22,12 @@ from src.poetore.trade import _request_json
 from src.poetore.trade import _base_defence_percentile
 from src.poetore.trade import _trade_response_cache
 from src.poetore.trade import _awakened_tier_tags
-from src.poetore.trade import _japanese_trade_item_name, _japanese_trade_item_type
+from src.poetore.trade import (
+    _english_trade_item_name,
+    _english_trade_item_type,
+    _japanese_trade_item_name,
+    _japanese_trade_item_type,
+)
 
 
 ITEM = """Item Class: Two Hand Swords
@@ -93,16 +99,16 @@ Syndicate's Garb
 
 
 def test_japanese_type_mapping_keeps_safe_prefix_of_unequal_item_groups():
-    english = (({"type": "First Base"}, {"type": "Syndicate's Garb"},
+    english = (("armour", ({"type": "First Base"}, {"type": "Syndicate's Garb"},
                 {"type": "Missing Later"}, {"type": "Unique", "name": "Unique",
                                             "flags": {"unique": True}},
                 {"type": "Crusader Gloves", "name": "Repentance",
-                 "flags": {"unique": True}}),)
-    japanese = (({"type": "最初のベース"}, {"type": "シンジケートの服"},
+                 "flags": {"unique": True}})),)
+    japanese = (("armour", ({"type": "最初のベース"}, {"type": "シンジケートの服"},
                  {"type": "ユニーク", "name": "ユニーク",
                   "flags": {"unique": True}},
                  {"type": "聖戦士のグローブ", "name": "悔恨",
-                  "flags": {"unique": True}}),)
+                  "flags": {"unique": True}})),)
     with patch("src.poetore.trade._trade_item_groups", return_value=english), patch(
         "src.poetore.trade._jp_trade_item_groups", return_value=japanese,
     ):
@@ -110,6 +116,109 @@ def test_japanese_type_mapping_keeps_safe_prefix_of_unequal_item_groups():
         # 欠落entry自体を誤った日本語typeへ変換せず、その後のUnique境界で再同期する。
         assert _japanese_trade_item_type("Missing Later") is None
         assert _japanese_trade_item_name("Repentance") == "悔恨"
+
+
+def test_item_mapping_uses_stable_group_id_instead_of_group_order():
+    english = (
+        ("accessory", ({"type": "Iron Ring"},)),
+        ("armour", ({"type": "Mesh Boots", "name": "Wake of Destruction",
+                     "flags": {"unique": True}},)),
+    )
+    japanese = (
+        ("armour", ({"type": "メッシュブーツ", "name": "破滅の軌跡",
+                     "flags": {"unique": True}},)),
+        ("accessory", ({"type": "鉄の指輪"},)),
+    )
+    with patch("src.poetore.trade._trade_item_groups", return_value=english), patch(
+        "src.poetore.trade._jp_trade_item_groups", return_value=japanese,
+    ):
+        assert _english_trade_item_type("メッシュブーツ") == "Mesh Boots"
+        assert _english_trade_item_name("破滅の軌跡") == "Wake of Destruction"
+
+
+def test_item_mapping_rejects_ambiguous_localized_identity():
+    english = (("weapon", (
+        {"type": "Heavy Arrow Quiver"},
+        {"type": "Heavy Quiver"},
+    )),)
+    japanese = (("weapon", (
+        {"type": "重い矢筒"},
+        {"type": "重い矢筒"},
+    )),)
+    with patch("src.poetore.trade._trade_item_groups", return_value=english), patch(
+        "src.poetore.trade._jp_trade_item_groups", return_value=japanese,
+    ):
+        assert _english_trade_item_type("重い矢筒") is None
+
+
+@pytest.mark.parametrize(("localized", "expected"), (
+    ("重い矢筒", "Heavy Arrow Quiver"),
+    ("原始の矢筒", "Primal Arrow Quiver"),
+    ("羽根付きの矢筒", "Feathered Arrow Quiver"),
+    ("灼熱の矢筒", "Blazing Arrow Quiver"),
+))
+def test_confirmed_quiver_overrides_resolve_ambiguous_official_data(
+    localized, expected,
+):
+    assert _english_trade_item_type(localized, "accessory") == expected
+
+
+def test_confirmed_rabid_rhoa_card_override_is_category_scoped():
+    assert _english_trade_item_type(
+        "狂犬病のロア", "divination_card",
+    ) == "The Rabid Rhoa"
+    assert _english_trade_item_type("狂犬病のロア", "captured_beast") is None
+
+
+def test_329_japanese_copy_resolves_base_type_for_nonunique_items():
+    item = ParsedItem("靴", "レア", "破滅の足跡", "メッシュブーツ", "armour")
+    with patch(
+        "src.poetore.trade._english_trade_item_type", return_value="Mesh Boots",
+    ) as item_type, patch(
+        "src.poetore.trade._english_trade_item_name",
+    ) as item_name:
+        assert english_trade_identity(
+            item, item.base_type, item.name,
+        ) == ("Mesh Boots", "破滅の足跡")
+    item_type.assert_called_once_with("メッシュブーツ", "armour")
+    item_name.assert_not_called()
+
+
+def test_329_japanese_copy_resolves_unique_name_and_base_type():
+    item = ParsedItem("靴", "ユニーク", "破滅の軌跡", "メッシュブーツ", "armour")
+    with patch(
+        "src.poetore.trade._english_trade_item_type", return_value="Mesh Boots",
+    ), patch(
+        "src.poetore.trade._english_trade_item_name", return_value="Wake of Destruction",
+    ):
+        assert english_trade_identity(
+            item, item.base_type, item.name,
+        ) == ("Mesh Boots", "Wake of Destruction")
+
+
+def test_329_japanese_magic_one_line_name_resolves_contained_base_type():
+    english = (("flask", ({"type": "Jade Flask"}, {"type": "Blood Sap Tincture"})),)
+    japanese = (("flask", ({"type": "翡翠のフラスコ"}, {"type": "血の樹液のチンキ"})),)
+    with patch("src.poetore.trade._trade_item_groups", return_value=english), patch(
+        "src.poetore.trade._jp_trade_item_groups", return_value=japanese,
+    ):
+        assert _english_trade_item_type(
+            "初学者の 消費の 翡翠のフラスコ",
+        ) == "Jade Flask"
+        assert _english_trade_item_type(
+            "固く握った 殴打の 血の樹液のチンキ",
+        ) == "Blood Sap Tincture"
+
+
+def test_329_unidentified_unique_base_is_not_used_as_unique_name():
+    item = ParsedItem("スタッフ", "ユニーク", "ねじれた枝", "ねじれた枝", "weapon")
+    with patch(
+        "src.poetore.trade._english_trade_item_type", return_value="Gnarled Branch",
+    ), patch("src.poetore.trade._english_trade_item_name") as item_name:
+        assert english_trade_identity(
+            item, item.base_type, item.name,
+        ) == ("Gnarled Branch", None)
+    item_name.assert_not_called()
 
 
 def test_warlord_syndicates_garb_web_url_uses_japanese_official_base_type():
@@ -277,7 +386,9 @@ def test_search_auto_resolves_magic_single_line_detail_name_before_api():
 
 def test_normal_search_rejects_japanese_identity_before_api_request():
     item = parse_item_text(ITEM)
-    with patch("src.poetore.trade._cached_request_json") as request_json:
+    with patch(
+        "src.poetore.trade._english_trade_item_type", return_value=None,
+    ), patch("src.poetore.trade._cached_request_json") as request_json:
         with pytest.raises(TradeApiError, match="英語のアイテム名またはベースタイプ"):
             search_prices(
                 item, "上質な エゾマイトの刃", league="Standard",
@@ -1769,6 +1880,44 @@ Onyx Amulet
     )
 
 
+def test_svalinn_fixed_lucky_block_is_not_an_unresolved_modifier():
+    item = parse_item_text("""アイテムクラス: 盾
+レアリティ: ユニーク
+Svalinn
+Girded Tower Shield
+--------
+品質: +12% (augmented)
+ブロック率: 23%
+アーマー: 458 (augmented)
+ワード: 138 (augmented)
+--------
+ソケット: R-R-R
+--------
+アイテムレベル: 86
+--------
+{ 暗黙モッド — ライフ }
+最大ライフ +20(10-20)
+--------
+{ ユニークモッド }
+スペルブロック率が15(10-15)%
+{ ユニークモッド — 防御 }
+ワード +123(100-150)
+{ ユニークモッド }
+アタックブロック率の最大値 -10%
+{ ユニークモッド }
+スペルブロック率の最大値 -10%
+{ ユニークモッド }
+ブロック確率が幸運になる
+(Lucky: 幸運は2度試行し、良いほうの結果を用いる)
+{ ユニークモッド — キャスター, ジェム }
+ブロック時にソケットされた元素スペルをトリガーする。クールダウンは0.25秒 — スケールできない値
+""")
+    filters = resolve_trade_stat_filters(item, trade_name="Svalinn")
+
+    assert unique_fixed_stats("Svalinn") is None
+    assert unresolved_modifier_warnings(item, filters) == ()
+
+
 def test_crafted_affix_header_is_counted_for_exact_empty_slots():
     item = parse_item_text("""アイテムクラス: 指輪
 レアリティ: レア
@@ -2312,6 +2461,46 @@ Corrupted
 
     web_payload = json.loads(parse_qs(urlsplit(result.web_url).query)["q"][0])
     assert web_payload["query"]["type"] == "ヴァールモルテンストライク"
+
+
+@pytest.mark.parametrize(
+    ("oils", "expected_visible"),
+    [
+        ((10, 10, 10), False),  # 黒色のみ
+        ((10, 11, 10), True),   # 乳白色
+        ((10, 12, 10), True),   # 銀色
+        ((10, 13, 10), True),   # 金色
+    ],
+)
+def test_modifiable_amulet_shows_anointments_using_valuable_oils(
+    oils, expected_visible,
+):
+    item = ParsedItem(
+        item_class="アミュレット",
+        rarity="レア",
+        name="試験用",
+        base_type="オニキスのアミュレット",
+        category="accessory",
+        modifiers=(
+            ItemModifier(
+                "処刑人 を割り当てる",
+                kind="enchant",
+                ref="Allocates #",
+                stat_id="enchant.allocates",
+                option_value=10016,
+                oils=oils,
+            ),
+        ),
+    )
+    entries = ({"id": "enchant.allocates", "type": "enchant", "text": "# を割り当てる"},)
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item)
+
+    assert bool(filters) is expected_visible
+    if expected_visible:
+        assert filters[0].oils == oils
+        assert filters[0].enabled is False
 
 
 def test_query_supports_option_not_count_and_special_item_states():

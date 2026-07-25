@@ -21,42 +21,75 @@ class PlacementContext:
     cursor_pos: QPoint
 
 
-def _path_of_exile_client_rect() -> QRect | None:
-    """Return the foreground PoE client rect in global coordinates on Windows."""
+def _window_title(hwnd) -> str:
+    user32 = ctypes.windll.user32
+    length = user32.GetWindowTextLengthW(hwnd)
+    if length <= 0:
+        return ""
+    title = ctypes.create_unicode_buffer(length + 1)
+    user32.GetWindowTextW(hwnd, title, len(title))
+    return title.value
+
+
+def _window_client_rect(hwnd) -> QRect | None:
+    user32 = ctypes.windll.user32
+    client = wintypes.RECT()
+    origin = wintypes.POINT(0, 0)
+    if not user32.GetClientRect(hwnd, ctypes.byref(client)):
+        return None
+    if not user32.ClientToScreen(hwnd, ctypes.byref(origin)):
+        return None
+    width = client.right - client.left
+    height = client.bottom - client.top
+    if width <= 0 or height <= 0:
+        return None
+    return _native_rect_to_qt(hwnd, QRect(origin.x, origin.y, width, height))
+
+
+def path_of_exile_client_rect() -> QRect | None:
+    """Return a visible PoE client rect in global coordinates on Windows.
+
+    Prefer the foreground game, then fall back to any visible PoE window so
+    placement also works when PoENavi's image button currently has focus.
+    """
     if sys.platform != "win32":
         return None
     try:
         user32 = ctypes.windll.user32
         user32.GetForegroundWindow.restype = wintypes.HWND
-        hwnd = user32.GetForegroundWindow()
-        if not hwnd:
-            return None
-
         user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
         user32.GetWindowTextLengthW.restype = ctypes.c_int
         user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
         user32.GetWindowTextW.restype = ctypes.c_int
-        length = user32.GetWindowTextLengthW(hwnd)
-        title = ctypes.create_unicode_buffer(length + 1)
-        user32.GetWindowTextW(hwnd, title, len(title))
-        if "path of exile" not in title.value.casefold():
-            return None
-
-        client = wintypes.RECT()
-        origin = wintypes.POINT(0, 0)
         user32.GetClientRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
         user32.GetClientRect.restype = wintypes.BOOL
         user32.ClientToScreen.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.POINT)]
         user32.ClientToScreen.restype = wintypes.BOOL
-        if not user32.GetClientRect(hwnd, ctypes.byref(client)):
-            return None
-        if not user32.ClientToScreen(hwnd, ctypes.byref(origin)):
-            return None
-        width = client.right - client.left
-        height = client.bottom - client.top
-        if width <= 0 or height <= 0:
-            return None
-        return _native_rect_to_qt(hwnd, QRect(origin.x, origin.y, width, height))
+        user32.IsWindowVisible.argtypes = [wintypes.HWND]
+        user32.IsWindowVisible.restype = wintypes.BOOL
+
+        foreground = user32.GetForegroundWindow()
+        if foreground and "path of exile" in _window_title(foreground).casefold():
+            return _window_client_rect(foreground)
+
+        candidates = []
+        enum_proc = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+
+        @enum_proc
+        def collect(hwnd, _lparam):
+            if (
+                user32.IsWindowVisible(hwnd)
+                and "path of exile" in _window_title(hwnd).casefold()
+            ):
+                candidates.append(hwnd)
+            return True
+
+        user32.EnumWindows(collect, 0)
+        for hwnd in candidates:
+            rect = _window_client_rect(hwnd)
+            if rect is not None:
+                return rect
+        return None
     except (AttributeError, OSError):
         return None
 
@@ -114,7 +147,7 @@ def _native_rect_to_qt(hwnd: int, rect: QRect) -> QRect:
 
 def capture_placement_context() -> PlacementContext:
     """Capture before the app takes focus from PoE."""
-    return PlacementContext(_path_of_exile_client_rect(), QCursor.pos())
+    return PlacementContext(path_of_exile_client_rect(), QCursor.pos())
 
 
 def calculate_panel_position(

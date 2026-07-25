@@ -319,6 +319,7 @@ def _modifier_header_details(
     else:
         affix = kind if kind in {"prefix", "suffix"} else None
     generation = next((value for labels, value in (
+        (("corrupted implicit", "コラプト暗黙"), "corrupted"),
         (("foulborn", "ファウルボーン"), "foulborn"),
         (("monster mod", "モンスターモッド"), "monster"),
         (("crusader", "クルセーダー"), "crusader"), (("warlord", "ウォーロード"), "warlord"),
@@ -598,6 +599,7 @@ def parse_item_text(text: str) -> ParsedItem:
                 option_value=option.value if option else None,
                 option_text=option.japanese if option else None,
                 oils=option.oils if option else (),
+                decimal=metadata.decimal if metadata else False,
             ))
 
     # 日本語クライアントの詳細コピーでは、Map Tierが独立したプロパティ行ではなく

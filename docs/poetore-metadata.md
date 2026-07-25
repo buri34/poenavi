@@ -6,6 +6,9 @@ PoE 1の武器・防具・装飾品について、日本語コピー文を共通
 対応付ける。アプリにはRePoEの全データを同梱せず、検索に必要な項目だけへ変換した
 `data/poetore/mod_metadata.json`を同梱する。
 
+新リーグ時の日英アイテム／Stat同期、pseudo差分、代表Trade API確認まで含む総合更新フローの
+実装前設計は`docs/poetore-league-data-update-plan.md`を参照する。
+
 ## 情報源
 
 - Awakened PoE Trade: 共通ref、数値の良し悪し、Trade API ID、反転・完全一致ルール、

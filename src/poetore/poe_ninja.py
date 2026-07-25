@@ -44,11 +44,16 @@ class PoeNinjaPrice:
     total_change: float | None = None
     source_type: str | None = None
 
-    def display_price(self) -> str:
+    def display_price_parts(self) -> tuple[str, str]:
         if self.divine_chaos and self.chaos >= self.divine_chaos * 0.94:
             value = self.chaos / self.divine_chaos
-            return f"{_display_number(value)} div"
-        return f"{_display_number(self.chaos)} chaos"
+            return _display_number(value), "divine"
+        return _display_number(self.chaos), "chaos"
+
+    def display_price(self) -> str:
+        amount, currency = self.display_price_parts()
+        suffix = "div" if currency == "divine" else currency
+        return f"{amount} {suffix}"
 
     def graph_points(self) -> tuple[float, ...]:
         return tuple(float(value) for value in self.graph if value is not None)
@@ -176,6 +181,12 @@ class PoeNinjaPriceService:
             # 参考価格の補助取得失敗で通常検索を妨げず、dense API値へフォールバックする。
             return price
 
+    def divine_chaos_rate(self, league: str) -> float | None:
+        """Return the league's current Divine Orb value in Chaos Orbs."""
+        if not league or re.search(r"\(PL\d+\)$", league):
+            return None
+        return divine_chaos_rate(self._payload(league))
+
     def _payload(self, league: str) -> dict:
         with self._lock:
             cached = self._cache.get(league)
@@ -241,6 +252,19 @@ def _overview_lines(payload: dict) -> dict[str, list[dict]]:
                         type_seen.add(key)
                         target.append(line)
     return result
+
+
+def divine_chaos_rate(payload: dict) -> float | None:
+    """Extract a sane Divine Orb rate from poe.ninja's dense overview."""
+    overviews = _overview_lines(payload)
+    divine_line = next(
+        (row for row in overviews.get("Currency", ()) if row.get("name") == "Divine Orb"),
+        None,
+    )
+    if divine_line is None:
+        return None
+    rate = float(divine_line.get("chaos", 0))
+    return rate if rate >= 30 else None
 
 
 def _english_candidates(item: ParsedItem, trade_name: str | None, trade_base_type: str | None) -> tuple[str, ...]:
@@ -382,8 +406,7 @@ def match_poe_ninja_price(
     chaos = float(line.get("chaos", 0))
     if chaos <= 0:
         return None
-    divine_line = next((row for row in overviews.get("Currency", ()) if row.get("name") == "Divine Orb"), None)
-    divine_chaos = float(divine_line["chaos"]) if divine_line and float(divine_line.get("chaos", 0)) >= 30 else None
+    divine_chaos = divine_chaos_rate(payload)
     return PoeNinjaPrice(
         str(line.get("name", "")), str(line["variant"]) if line.get("variant") else None,
         chaos, tuple(line.get("graph", ())),

@@ -1604,17 +1604,19 @@ class SettingsDialog(QDialog):
         
         self.current_config = current_config or {}
         self.hotkeys = self.current_config.get("hotkeys", {
-            "start_stop": "F1", 
-            "reset": "F2",
-            "lap": "F3",
-            "undo_lap": "F4",
+            "start_stop": "F7",
+            "reset": "F8",
+            "lap": "none",
+            "undo_lap": "none",
             "click_through": "F6",
-            "logout": "F5",
+            "logout": "none",
+            "exit": "F5",
             "hideout": "F11",
             "monastery": "F12",
-            "search_string_test": "none",
+            "search_string_test": "F4",
             "poetore_capture": "alt+d",
             "gem_shop_search": "CapsLock",
+            "cheat_sheets_toggle": "shift+space",
         })
         self.poe_version = self.current_config.get("poe_version", POE1)
         self.poe_version_mode = self.current_config.get("poe_version_mode", "ask")
@@ -1765,13 +1767,13 @@ class SettingsDialog(QDialog):
         
         h_layout3 = QHBoxLayout()
         h_layout3.addWidget(QLabel("ラップ（次のAct）:"))
-        self.lap_btn = HotkeyButton(self.hotkeys.get("lap", "F3"))
+        self.lap_btn = HotkeyButton(self.hotkeys.get("lap", "none"))
         h_layout3.addWidget(self.lap_btn)
         group_layout.addLayout(h_layout3)
         
         h_layout4 = QHBoxLayout()
         h_layout4.addWidget(QLabel("ラップ取消:"))
-        self.undo_lap_btn = HotkeyButton(self.hotkeys.get("undo_lap", "F4"))
+        self.undo_lap_btn = HotkeyButton(self.hotkeys.get("undo_lap", "none"))
         h_layout4.addWidget(self.undo_lap_btn)
         group_layout.addLayout(h_layout4)
         
@@ -1782,10 +1784,16 @@ class SettingsDialog(QDialog):
         group_layout.addLayout(h_layout5)
         
         h_layout6 = QHBoxLayout()
-        h_layout6.addWidget(QLabel("ログアウト:"))
-        self.logout_btn = HotkeyButton(self.hotkeys.get("logout", "F5"))
+        h_layout6.addWidget(QLabel("ログアウト（TCP切断）:"))
+        self.logout_btn = HotkeyButton(self.hotkeys.get("logout", "none"))
         h_layout6.addWidget(self.logout_btn)
         group_layout.addLayout(h_layout6)
+
+        h_layout_exit = QHBoxLayout()
+        h_layout_exit.addWidget(QLabel("キャラクター選択へ戻る（/exit）:"))
+        self.exit_btn = HotkeyButton(self.hotkeys.get("exit", "F5"))
+        h_layout_exit.addWidget(self.exit_btn)
+        group_layout.addLayout(h_layout_exit)
 
         h_layout7 = QHBoxLayout()
         h_layout7.addWidget(QLabel("隠れ家へ移動（/hideout）:"))
@@ -1801,7 +1809,7 @@ class SettingsDialog(QDialog):
 
         h_layout9 = QHBoxLayout()
         h_layout9.addWidget(QLabel("検索文字列の貼り付け:"))
-        self.search_string_test_btn = HotkeyButton(self.hotkeys.get("search_string_test", "none"))
+        self.search_string_test_btn = HotkeyButton(self.hotkeys.get("search_string_test", "F4"))
         h_layout9.addWidget(self.search_string_test_btn)
         group_layout.addLayout(h_layout9)
 
@@ -1840,6 +1848,13 @@ class SettingsDialog(QDialog):
         )
         Styles.apply_checkbox_style(self.gem_shop_search_include_reward_purchases_cb)
         group_layout.addWidget(self.gem_shop_search_include_reward_purchases_cb)
+        h_layout12 = QHBoxLayout()
+        h_layout12.addWidget(QLabel("Cheat sheets表示:"))
+        self.cheat_sheets_toggle_btn = HotkeyButton(
+            self.hotkeys.get("cheat_sheets_toggle", "shift+space")
+        )
+        h_layout12.addWidget(self.cheat_sheets_toggle_btn)
+        group_layout.addLayout(h_layout12)
         
         self.logout_enabled_cb = QCheckBox("ログアウト機能を有効にする（TCP切断）")
         self.logout_enabled_cb.setChecked(self.current_config.get("logout_enabled", True))
@@ -2925,11 +2940,13 @@ class SettingsDialog(QDialog):
                 "undo_lap": self.undo_lap_btn.key_text,
                 "click_through": self.click_through_btn.key_text,
                 "logout": self.logout_btn.key_text,
+                "exit": self.exit_btn.key_text,
                 "hideout": self.hideout_btn.key_text,
                 "monastery": self.monastery_btn.key_text,
                 "search_string_test": self.search_string_test_btn.key_text,
                 "poetore_capture": self.poetore_capture_btn.key_text,
                 "gem_shop_search": self.gem_shop_search_btn.key_text,
+                "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,
             },
             "logout_enabled": self.logout_enabled_cb.isChecked(),
             "gem_shop_search_include_reward_purchases": self.gem_shop_search_include_reward_purchases_cb.isChecked(),

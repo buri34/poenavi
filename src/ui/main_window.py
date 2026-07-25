@@ -1271,6 +1271,13 @@ class MainWindow(QMainWindow):
         self._update_poetore_hotkey_tooltip()
         self.poetore_btn.clicked.connect(self.open_poetore)
         global_controls_layout.addWidget(self.poetore_btn)
+
+        self.cheat_sheets_btn = QPushButton("🖼")
+        self.cheat_sheets_btn.setStyleSheet(Styles.BUTTON)
+        self.cheat_sheets_btn.setFixedSize(35, 35)
+        self._update_cheat_sheets_hotkey_tooltip()
+        self.cheat_sheets_btn.clicked.connect(self.open_cheat_sheets_from_button)
+        global_controls_layout.addWidget(self.cheat_sheets_btn)
         
         self.settings_btn = QPushButton("⚙")
         self.settings_btn.setStyleSheet(Styles.BUTTON)
@@ -2880,10 +2887,12 @@ class MainWindow(QMainWindow):
             hotkeys = self.config.get("hotkeys", {})
             
             self.hotkey_map = {}
-            for action, default in [("start_stop", "F1"), ("reset", "F2"), ("lap", "F3"),
-                                     ("undo_lap", "F4"), ("click_through", DEFAULT_CLICK_THROUGH_HOTKEY), ("logout", "F5"),
+            for action, default in [("start_stop", "F7"), ("reset", "F8"), ("lap", "none"),
+                                     ("undo_lap", "none"), ("click_through", DEFAULT_CLICK_THROUGH_HOTKEY), ("logout", "none"),
+                                     ("exit", "F5"),
                                      ("hideout", "F11"), ("monastery", "F12"),
-                                     ("search_string_test", "none"), ("poetore_capture", "alt+d")]:
+                                     ("search_string_test", "F4"), ("poetore_capture", "alt+d"),
+                                     ("cheat_sheets_toggle", "shift+space")]:
                 key = hotkeys.get(action, default)
                 if key and key != "none":
                     self.hotkey_map[_listener_hotkey_name(key)] = action
@@ -2910,6 +2919,9 @@ class MainWindow(QMainWindow):
                         pressed_modifiers.add("ctrl")
                     elif key_name in {"shift", "shift_l", "shift_r"}:
                         pressed_modifiers.add("shift")
+
+                    if key_name in {"esc", "escape"}:
+                        self.hotkey_signal.emit("cheat_sheets_escape")
 
                     combo = "+".join([modifier for modifier in ("ctrl", "alt", "shift") if modifier in pressed_modifiers] + [key_name])
                     if combo in self.hotkey_map:
@@ -2963,6 +2975,8 @@ class MainWindow(QMainWindow):
             self.toggle_click_through()
         elif command == "logout":
             self.execute_logout()
+        elif command == "exit":
+            self.execute_chat_command("/exit")
         elif command == "hideout":
             self.execute_chat_command("/hideout")
         elif command == "monastery":
@@ -2975,6 +2989,12 @@ class MainWindow(QMainWindow):
             self._start_gem_shop_search_hold()
         elif command == "gem_shop_search_released":
             self._finish_gem_shop_search_hold()
+        elif command == "cheat_sheets_toggle":
+            self.toggle_cheat_sheets()
+        elif command == "cheat_sheets_escape":
+            overlay = getattr(self, "_cheat_sheet_overlay", None)
+            if overlay is not None and overlay.isVisible():
+                overlay.hide_and_save()
 
     def _start_gem_shop_search_hold(self):
         """長押し判定を開始する。キーリピートではタイマーを延長しない。"""
@@ -4110,6 +4130,58 @@ class MainWindow(QMainWindow):
             )
         else:
             self.poetore_btn.setToolTip("ぽえとれ（ホットキー未設定）")
+
+    def _update_cheat_sheets_hotkey_tooltip(self):
+        hotkey = self.config.get("hotkeys", {}).get("cheat_sheets_toggle", "shift+space")
+        if hotkey and hotkey != "none":
+            display_hotkey = QKeySequence(hotkey).toString(QKeySequence.NativeText)
+            self.cheat_sheets_btn.setToolTip(
+                f"Cheat sheets（{display_hotkey}で表示／非表示）"
+            )
+        else:
+            self.cheat_sheets_btn.setToolTip("Cheat sheets（ホットキー未設定）")
+
+    def _ensure_cheat_sheet_overlay(self):
+        from src.ui.cheat_sheets import CheatSheetOverlay
+
+        overlay = getattr(self, "_cheat_sheet_overlay", None)
+        if overlay is None:
+            overlay = CheatSheetOverlay(self.config.get("cheat_sheets", {}), self)
+            overlay.config_changed.connect(self._save_cheat_sheet_config)
+            overlay.manage_requested.connect(self.open_cheat_sheet_manager)
+            self._cheat_sheet_overlay = overlay
+        return overlay
+
+    def _save_cheat_sheet_config(self, cheat_sheet_config):
+        self.config["cheat_sheets"] = dict(cheat_sheet_config)
+        ConfigManager.save_config(self.config)
+
+    def open_cheat_sheet_manager(self):
+        from src.ui.cheat_sheets import CheatSheetManagerDialog
+
+        overlay = self._ensure_cheat_sheet_overlay()
+        was_visible = overlay.isVisible()
+        if was_visible:
+            overlay.hide_and_save()
+        dialog = CheatSheetManagerDialog(self.config.get("cheat_sheets", {}), self)
+        if dialog.exec():
+            self._save_cheat_sheet_config(dialog.result_config())
+            overlay.reload(self.config["cheat_sheets"])
+            if self.config["cheat_sheets"].get("images"):
+                overlay.show()
+                overlay.raise_()
+
+    def open_cheat_sheets_from_button(self):
+        """本体ボタンでは、未登録なら管理画面、登録済みなら表示を切り替える。"""
+        if not self.config.get("cheat_sheets", {}).get("images"):
+            self.open_cheat_sheet_manager()
+            return
+        self.toggle_cheat_sheets()
+
+    def toggle_cheat_sheets(self):
+        """表示ホットキーでは、未登録案内を含むオーバーレイを切り替える。"""
+        overlay = self._ensure_cheat_sheet_overlay()
+        overlay.toggle()
     
     def open_settings(self):
         dialog = SettingsDialog(self, self.config)
@@ -4129,6 +4201,7 @@ class MainWindow(QMainWindow):
             self.register_hotkeys()
             self._update_click_through_label()
             self._update_poetore_hotkey_tooltip()
+            self._update_cheat_sheets_hotkey_tooltip()
             
             # ログ監視の再設定
             active_version = self.config.get("poe_version", self.poe_version)
@@ -4381,6 +4454,11 @@ class MainWindow(QMainWindow):
         overlay = getattr(self, "mini_navi_overlay", None)
         if overlay is not None:
             overlay.close()
+
+        cheat_sheet_overlay = getattr(self, "_cheat_sheet_overlay", None)
+        if cheat_sheet_overlay is not None:
+            cheat_sheet_overlay.hide_and_save()
+            cheat_sheet_overlay.close()
 
         keyboard_listener = getattr(self, "keyboard_listener", None)
         if keyboard_listener:

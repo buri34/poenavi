@@ -22,6 +22,7 @@ class ItemModifier:
     option_value: int | str | None = None
     option_text: str | None = None
     oils: tuple[int, ...] = ()
+    decimal: bool = False
 
 
 @dataclass(frozen=True)

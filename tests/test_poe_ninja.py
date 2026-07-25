@@ -1,6 +1,7 @@
 from src.poetore.models import ParsedItem
 from src.poetore.poe_ninja import (
-    CACHE_TTL_SECONDS, PoeNinjaPrice, PoeNinjaPriceService, match_poe_ninja_price,
+    CACHE_TTL_SECONDS, PoeNinjaPrice, PoeNinjaPriceService, divine_chaos_rate,
+    match_poe_ninja_price,
 )
 
 
@@ -45,10 +46,24 @@ def test_unique_price_uses_name_and_formats_divines():
         _payload(), item, "Standard", trade_name="Mageblood", trade_base_type="Heavy Belt",
     )
     assert price is not None
+    assert price.display_price_parts() == ("200", "divine")
     assert price.display_price() == "200 div"
     assert price.graph_points() == (0, 1, 2, 3, 4, 5, 6)
     assert "/unique-accessories/mageblood-4-flasks-heavy-belt" in price.url
     assert price.source_type == "UniqueAccessory"
+
+
+def test_small_price_uses_chaos_display_parts():
+    price = PoeNinjaPrice("Arc", None, 8.5, (), "https://example.com", 200)
+    assert price.display_price_parts() == ("8.5", "chaos")
+    assert price.display_price() == "8.5 chaos"
+
+
+def test_divine_chaos_rate_uses_currency_overview_and_rejects_invalid_values():
+    assert divine_chaos_rate(_payload()) == 200
+    payload = _payload()
+    payload["currencyOverviews"][0]["lines"][0]["chaos"] = 29.9
+    assert divine_chaos_rate(payload) is None
 
 
 def test_trend_summary_uses_signed_total_change_instead_of_graph_deviation():
@@ -124,6 +139,22 @@ def test_service_caches_each_league_for_31_minutes():
     now[0] += CACHE_TTL_SECONDS + 1
     assert service.lookup(item, "Standard") is not None
     assert calls == ["Standard", "Standard"]
+
+
+def test_divine_rate_and_item_lookup_share_the_same_league_cache():
+    calls = []
+
+    def fetcher(league):
+        calls.append(league)
+        return _payload()
+
+    service = PoeNinjaPriceService(
+        fetcher=fetcher, stash_fetcher=lambda _league, _type: {"lines": []},
+    )
+    item = ParsedItem("Divination Cards", "Normal", "The Doctor", "The Doctor", "divination_card")
+    assert service.divine_chaos_rate("Standard") == 200
+    assert service.lookup(item, "Standard") is not None
+    assert calls == ["Standard"]
 
 
 def test_private_league_is_not_fetched():

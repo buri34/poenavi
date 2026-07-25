@@ -4,18 +4,20 @@ from datetime import datetime, timezone
 import csv
 from pathlib import Path
 
-from PySide6.QtCore import QPoint, QRect, QSize, Qt
+from PySide6.QtCore import QEvent, QPoint, QRect, QSize, Qt
+from PySide6.QtGui import QPalette
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QLabel, QPushButton
 import pytest
 
 from src.poetore.ui import (
-    PoetoreWindow, _replace_filters_with_special_chips, show_poetore_window,
+    PoetoreWindow, _UniqueRollSlider, _replace_filters_with_special_chips,
+    show_poetore_window,
 )
 from src.poetore.window_position import PlacementContext
 from src.poetore.trade import (
     PRESET_FINISHED, PriceListing, PriceResult, TradeLeague, TradeStatFilter,
-    resolve_trade_stat_filters,
+    build_search_query, resolve_trade_stat_filters,
 )
 from src.poetore.parser import parse_item_text
 from src.poetore.models import ItemModifier, ParsedItem
@@ -46,6 +48,15 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
         assert not window.trade_url_button.isEnabled()
         assert window.trade_currency_combo.currentData() == "any"
         assert window.trade_currency_combo.count() == 4
+        assert [
+            window.trade_currency_combo.itemText(index)
+            for index in range(window.trade_currency_combo.count())
+        ] == [
+            "すべての通貨",
+            "カオスオーブのみ",
+            "神のオーブのみ",
+            "カオスまたは神のオーブ",
+        ]
         assert not hasattr(window, "disclaimer_label")
         assert window.trade_league_combo.currentData() == "auto"
         assert window._selected_trade_league() is None
@@ -84,6 +95,42 @@ def test_show_poetore_window_is_independent_from_owner(qapp):
     try:
         assert window.parent() is None
         assert owner._poetore_window is window
+    finally:
+        window.close()
+
+
+def test_329_single_copy_is_parsed_without_normal_and_detailed_merge(qapp):
+    copied = """アイテムクラス: 靴
+レアリティ: ユニーク
+破滅の軌跡
+メッシュブーツ
+--------
+アイテムレベル: 41
+--------
+{ ユニークモッド — スピード }
+移動スピードが15%増加する
+"""
+    window = PoetoreWindow()
+    qapp.clipboard().setText(copied)
+    window._placement_context = PlacementContext(
+        QRect(0, 0, 1920, 1080), QPoint(100, 100),
+    )
+    try:
+        with patch(
+            "src.poetore.ui.english_trade_identity",
+            return_value=("Mesh Boots", "Wake of Destruction"),
+        ), patch.object(window, "parse_current_text") as parse, patch.object(
+            window, "show_at_context",
+        ) as show, patch.object(window, "search_current_item") as search:
+            window._capture_item_copy()
+
+        assert window.input_edit.toPlainText() == copied
+        assert window._trade_base_type == "Mesh Boots"
+        assert window._trade_item_name == "Wake of Destruction"
+        parse.assert_called_once_with()
+        show.assert_called_once_with(window._placement_context, activate=False)
+        search.assert_called_once_with()
+        assert not hasattr(window, "_normal_copy_text")
     finally:
         window.close()
 
@@ -221,6 +268,99 @@ def test_poetore_title_bar_keeps_close_button(qapp):
         window.close()
 
 
+def test_search_condition_change_clears_stale_results_and_waits(qapp):
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            "Rings", "Rare", "Test Ring", "Ruby Ring", "accessory", raw_text="test-ring",
+        )
+        window._has_searched_current_item = True
+        window._show_price_result(PriceResult(
+            "Mirage", "q", 1, (PriceListing(5, "chaos"),),
+            web_url="https://example.invalid/trade",
+        ))
+        window._populate_stat_filters((
+            TradeStatFilter("explicit.stat_1", "+# to maximum Life", 70, "explicit"),
+        ))
+        checkbox = window.mod_filter_tree.itemWidget(
+            window.mod_filter_tree.topLevelItem(0), 0,
+        ).findChild(QCheckBox, "modFilterCheckbox")
+
+        checkbox.click()
+
+        assert window._search_dirty is True
+        assert window.price_list.topLevelItemCount() == 0
+        assert window.price_status.text() == ""
+        assert not window.trade_url_button.isEnabled()
+        assert window.price_button.isEnabled()
+    finally:
+        window.close()
+
+
+def test_enter_in_changed_mod_value_researches(qapp):
+    window = PoetoreWindow()
+    try:
+        window.show()
+        window._parsed_item = ParsedItem(
+            "Rings", "Rare", "Test Ring", "Ruby Ring", "accessory", raw_text="test-ring",
+        )
+        window._has_searched_current_item = True
+        window._populate_stat_filters((
+            TradeStatFilter("explicit.stat_1", "+# to maximum Life", 70, "explicit"),
+        ))
+        editor = window.mod_filter_tree.itemWidget(
+            window.mod_filter_tree.topLevelItem(0), 4,
+        )
+        editor.setFocus()
+        QTest.keyClicks(editor, "8")
+        assert window._search_dirty is True
+
+        with patch.object(window, "search_current_item") as search:
+            QTest.keyClick(editor, Qt.Key_Return)
+
+        search.assert_called_once_with()
+    finally:
+        window.close()
+
+
+def test_hovering_search_button_researches_when_conditions_changed(qapp):
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            "Rings", "Rare", "Test Ring", "Ruby Ring", "accessory", raw_text="test-ring",
+        )
+        window._has_searched_current_item = True
+        window._search_dirty = True
+
+        with patch.object(window, "search_current_item") as search:
+            QApplication.sendEvent(window.price_button, QEvent(QEvent.Enter))
+
+        search.assert_called_once_with()
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize("combo_name", [
+    "trade_status_combo", "trade_currency_combo", "listed_within_combo",
+])
+def test_trade_option_change_researches_immediately(qapp, combo_name):
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            "Rings", "Rare", "Test Ring", "Ruby Ring", "accessory", raw_text="test-ring",
+        )
+        window._has_searched_current_item = True
+        combo = getattr(window, combo_name)
+
+        with patch.object(window, "search_current_item") as search:
+            combo.setCurrentIndex(1)
+            qapp.processEvents()
+
+        search.assert_called_once_with()
+    finally:
+        window.close()
+
+
 def test_filter_kind_column_is_japanese_and_marks_foulborn_generation(qapp):
     window = PoetoreWindow()
     try:
@@ -285,6 +425,7 @@ def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
         assert not window._debug_parse_area.isVisible()
         assert window.mod_filter_tree.isColumnHidden(6)
         assert window.mod_filter_tree.columnCount() == 7
+        assert window.mod_filter_tree.header().isHidden()
         assert window.mod_filter_tree.headerItem().text(2) == "ティア"
         assert window.mod_filter_tree.headerItem().text(6) == "詳細"
         assert "論理" not in [
@@ -514,6 +655,19 @@ def test_mod_filter_check_and_condition_columns_fit_without_clipping(qapp):
         window.close()
 
 
+def test_mod_filter_minimum_and_maximum_editors_use_narrow_width(qapp):
+    window = PoetoreWindow()
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1", "命中力 +55", 55, "prefix", False, max_value=100,
+    ),))
+    try:
+        row = window.mod_filter_tree.topLevelItem(0)
+        assert window.mod_filter_tree.itemWidget(row, 4).width() == 72
+        assert window.mod_filter_tree.itemWidget(row, 5).width() == 72
+    finally:
+        window.close()
+
+
 def test_watchers_eye_shows_all_three_variable_aura_mods_in_actual_ui(qapp):
     window = PoetoreWindow()
     try:
@@ -625,6 +779,159 @@ def test_mod_filter_ui_shows_reason_tier_range_generation_and_matching(qapp):
         window.close()
 
 
+def test_unique_variable_roll_slider_drag_updates_minimum_and_enables_filter(qapp):
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            "Amulets", "Unique", "The Example", "Gold Amulet", "accessory",
+        )
+        source = TradeStatFilter(
+            "explicit.life", "+40(30-50) to maximum Life", 38, "explicit", False,
+            read_value=40, roll_min=30, roll_max=50, better=1,
+        )
+        window._populate_stat_filters((source,))
+        window.show()
+        qapp.processEvents()
+        row = window.mod_filter_tree.topLevelItem(0)
+        slider = window.mod_filter_tree.itemWidget(row, 3).findChild(
+            _UniqueRollSlider, "uniqueRollSlider"
+        )
+        assert slider is not None
+        text_widget = window.mod_filter_tree.itemWidget(row, 3)
+        assert row.text(3) == source.text
+        assert text_widget.palette().color(QPalette.Window).name() == "#121212"
+        assert "QWidget#uniqueRollCell" in text_widget.styleSheet()
+        labels = text_widget.findChildren(QLabel)
+        assert len(labels) == 1
+        assert row.sizeHint(3).height() == 62
+        rendered_cell = text_widget.grab().toImage()
+        assert {
+            rendered_cell.pixelColor(x, y).name()
+            for x, y in (
+                (0, 0),
+                (rendered_cell.width() - 1, 0),
+                (0, rendered_cell.height() - 1),
+                (rendered_cell.width() - 1, rendered_cell.height() - 1),
+            )
+        } == {"#121212"}
+
+        drag_x = slider.width() * 3 // 4
+        expected = slider._value_at(drag_x)
+        QTest.mousePress(slider, Qt.LeftButton, pos=QPoint(drag_x, 12))
+        assert slider._preview == expected
+        QTest.mouseMove(slider, QPoint(drag_x, 12))
+        QTest.mouseRelease(slider, Qt.LeftButton, pos=QPoint(drag_x, 12))
+        assert slider._preview is None
+
+        minimum_editor = window.mod_filter_tree.itemWidget(row, 4)
+        maximum_editor = window.mod_filter_tree.itemWidget(row, 5)
+        checkbox = window.mod_filter_tree.itemWidget(row, 0).findChild(
+            QCheckBox, "modFilterCheckbox"
+        )
+        assert minimum_editor.text() == f"{expected:g}"
+        assert maximum_editor.text() == ""
+        assert checkbox.isChecked()
+        selected = window._selected_stat_filters()[0]
+        assert selected.enabled is True
+        assert selected.min_value == expected
+        assert selected.max_value is None
+        query = build_search_query(
+            window._parsed_item, "Gold Amulet", (selected,),
+            trade_name="The Example",
+        )["query"]
+        assert query["stats"][0]["filters"] == [{
+            "id": "explicit.life", "value": {"min": expected},
+        }]
+    finally:
+        window.close()
+
+
+def test_unique_roll_slider_tracks_numeric_input_and_awakened_decimal_precision(qapp):
+    slider = _UniqueRollSlider((1.0, 2.0), 1.5, 1, True)
+    slider.resize(300, 24)
+    assert slider._value_at(100) == 1.33
+
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            "Jewels", "Unique", "Decimal Example", "Jewel", "jewel",
+        )
+        source = TradeStatFilter(
+            "explicit.speed", "Speed", 1.4, "explicit", True,
+            read_value=1.5, roll_min=1.0, roll_max=2.0, better=1,
+            decimal=True,
+        )
+        window._populate_stat_filters((source,))
+        row = window.mod_filter_tree.topLevelItem(0)
+        roll_slider = window.mod_filter_tree.itemWidget(row, 3).findChild(
+            _UniqueRollSlider, "uniqueRollSlider"
+        )
+        window.mod_filter_tree.itemWidget(row, 4).setText("1.75")
+        assert roll_slider.searchValues() == (1.75, None)
+    finally:
+        window.close()
+
+
+def test_unique_lower_is_better_slider_updates_maximum(qapp):
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            "Rings", "Unique", "Lower Example", "Gold Ring", "accessory",
+        )
+        source = TradeStatFilter(
+            "explicit.penalty", "Penalty", None, "explicit", False,
+            max_value=18, read_value=15, roll_min=10, roll_max=20, better=-1,
+        )
+        window._populate_stat_filters((source,))
+        window.show()
+        qapp.processEvents()
+        row = window.mod_filter_tree.topLevelItem(0)
+        slider = window.mod_filter_tree.itemWidget(row, 3).findChild(
+            _UniqueRollSlider, "uniqueRollSlider"
+        )
+        drag_x = slider.width() // 4
+        expected = slider._value_at(drag_x)
+        QTest.mouseClick(slider, Qt.LeftButton, pos=QPoint(drag_x, 12))
+
+        assert window.mod_filter_tree.itemWidget(row, 4).text() == ""
+        assert window.mod_filter_tree.itemWidget(row, 5).text() == f"{expected:g}"
+        selected = window._selected_stat_filters()[0]
+        assert selected.enabled is True
+        assert selected.min_value is None
+        assert selected.max_value == expected
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize("changes", [
+    {"roll_min": 10, "roll_max": 10},
+    {"better": 0},
+    {"option_value": 1},
+])
+def test_unique_roll_slider_is_hidden_for_unsupported_mods(qapp, changes):
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            "Rings", "Unique", "Fixed Example", "Gold Ring", "accessory",
+        )
+        values = {
+            "roll_min": 10, "roll_max": 20, "better": 1, "option_value": None,
+        }
+        values.update(changes)
+        source = TradeStatFilter(
+            "explicit.stat_1", "Example", 10, "explicit", True,
+            read_value=15, **values,
+        )
+        window._populate_stat_filters((source,))
+        row = window.mod_filter_tree.topLevelItem(0)
+        text_widget = window.mod_filter_tree.itemWidget(row, 3)
+        assert text_widget is None or text_widget.findChild(
+            _UniqueRollSlider, "uniqueRollSlider"
+        ) is None
+    finally:
+        window.close()
+
+
 def test_mod_filter_ui_shows_multiple_awakened_tier_tags_on_property(qapp):
     window = PoetoreWindow()
     try:
@@ -690,7 +997,7 @@ Imbued Wand
         )
         tier_widget = window.mod_filter_tree.itemWidget(accuracy_row, 2)
 
-        assert window.mod_filter_tree.columnWidth(2) == 94
+        assert window.mod_filter_tree.columnWidth(2) == 75
         assert accuracy_row.text(2) == ""
         assert tier_widget is not None
         assert [label.text() for label in tier_widget.findChildren(QLabel)] == ["T2", "T2"]
@@ -1520,7 +1827,10 @@ Medium Cluster Jewel
         special = window._selected_special_chip_filters()
         stat_ids = [row.stat_id for row in special]
         assert stat_ids.count("enchant.stat_3086156145") == 1
-        assert stat_ids.count("enchant.stat_3948993189") == 1
+        assert sum(
+            stat_id.split("|", 1)[0] == "enchant.stat_3948993189"
+            for stat_id in stat_ids
+        ) == 1
 
         initial = resolve_trade_stat_filters(
             item, PRESET_FINISHED, "Medium Cluster Jewel",
@@ -1528,7 +1838,10 @@ Medium Cluster Jewel
         effective = _replace_filters_with_special_chips(initial, (), special)
         effective_ids = [row.stat_id for row in effective if row.enabled]
         assert effective_ids.count("enchant.stat_3086156145") == 1
-        assert effective_ids.count("enchant.stat_3948993189") == 1
+        assert sum(
+            stat_id.split("|", 1)[0] == "enchant.stat_3948993189"
+            for stat_id in effective_ids
+        ) == 1
     finally:
         window.close()
 
@@ -1630,8 +1943,8 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
     window = PoetoreWindow()
     try:
         assert tuple(name for name, _widget in window._filter_chips) == (
-            "links", "map_tier", "completion_reward", "area_level", "logbook_area",
-            "heist_wings", "heist_job", "heist_target", "cluster_enchant",
+            "links", "map_tier", "completion_reward", "area_level", "heist_wings",
+            "heist_job", "heist_target", "cluster_enchant",
             "cluster_passives", "cluster_sockets", "blighted", "item_level",
             "base_percentile", "gem_variant", "gem_level", "quality",
             "influence_shaper", "influence_elder", "influence_crusader",
@@ -1727,13 +2040,136 @@ def test_poe_ninja_price_panel_renders_price_trend_and_link(qapp):
         )
         window._show_poe_ninja_price(key, price)
         assert not window.poe_ninja_price_panel.isHidden()
-        assert window.poe_ninja_price_value.text() == "200 div"
+        assert window.poe_ninja_price_value.text() == "200"
+        assert not window.poe_ninja_currency_icon.pixmap().isNull()
+        assert window.poe_ninja_currency_icon.toolTip() == "Divine Orb"
+        assert window.poe_ninja_price_multiplier.text() == "×"
         assert "7日推移" in window.poe_ninja_trend_label.text()
         assert window.poe_ninja_trend_chart._points == (0, 1, 2, 3, 4, 5, 6)
         assert window._last_poe_ninja_url == "https://poe.ninja/example"
 
         window._hide_poe_ninja_price(key)
         assert window.poe_ninja_price_panel.isHidden()
+    finally:
+        window.close()
+
+
+def test_poe_ninja_price_panel_uses_chaos_icon_for_small_price(qapp):
+    window = PoetoreWindow()
+    try:
+        key = ("item", "Standard", "Arc", "Arc")
+        window._poe_ninja_item_key = key
+        window._show_poe_ninja_price(
+            key,
+            PoeNinjaPrice("Arc", None, 10, (), "https://poe.ninja/example", 200),
+        )
+        assert window.poe_ninja_price_value.text() == "10"
+        assert not window.poe_ninja_currency_icon.pixmap().isNull()
+        assert window.poe_ninja_currency_icon.toolTip() == "Chaos Orb"
+    finally:
+        window.close()
+
+
+def test_divine_rate_button_builds_awakened_style_conversion_menu(qapp):
+    window = PoetoreWindow()
+    try:
+        window._divine_rate_key = "Standard"
+        window._show_divine_rate("Standard", 174.4)
+
+        assert not window.divine_rate_button.isHidden()
+        assert window.divine_rate_button.text() == "⇄ 174"
+        labels = [action.text() for action in window.divine_rate_menu.actions()]
+        assert labels == [
+            "0.1 div  →  17 c",
+            "0.2 div  →  35 c",
+            "0.3 div  →  52 c",
+            "0.4 div  →  70 c",
+            "0.5 div  →  87 c",
+            "0.6 div  →  105 c",
+            "0.7 div  →  122 c",
+            "0.8 div  →  140 c",
+            "0.9 div  →  157 c",
+        ]
+        for action in window.divine_rate_menu.actions():
+            row = action.defaultWidget()
+            icons = [
+                label for label in row.findChildren(QLabel)
+                if not label.pixmap().isNull()
+            ]
+            assert len(icons) == 2
+    finally:
+        window.close()
+
+
+def test_logbook_area_switch_uses_custom_checkboxes_without_native_indicators(qapp):
+    window = PoetoreWindow()
+    try:
+        filters = (
+            TradeStatFilter(
+                "pseudo.pseudo_logbook_faction_1", "エリア1", None, "pseudo",
+                True, selection_reason="logbook-area:1",
+            ),
+            TradeStatFilter(
+                "pseudo.pseudo_logbook_faction_2", "エリア2", None, "pseudo",
+                False, selection_reason="logbook-area:2",
+            ),
+        )
+        window._populate_stat_filters(filters)
+        window._logbook_area_groups = ((1, "エリア1"), (2, "エリア2"))
+
+        window._logbook_area_changed(1)
+
+        rows = [
+            window.mod_filter_tree.topLevelItem(index)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        checkboxes = [
+            window.mod_filter_tree.itemWidget(
+                row, 0,
+            ).findChild(QCheckBox, "modFilterCheckbox")
+            for row in rows
+        ]
+        assert [checkbox.isChecked() for checkbox in checkboxes] == [False, True]
+        assert [row.checkState(0) for row in rows] == [Qt.Unchecked, Qt.Unchecked]
+        assert [row.data(0, Qt.UserRole + 5) for row in rows] == [False, True]
+    finally:
+        window.close()
+
+
+def test_logbook_area_switch_has_dedicated_row_and_fits_long_labels(qapp):
+    window = PoetoreWindow()
+    try:
+        groups = (
+            (1, "断たれた円環のドルイド"),
+            (2, "太陽の騎士団"),
+        )
+        window._logbook_area_groups = groups
+        window.logbook_area_selector.setLabels(
+            tuple(f"エリア{index + 1}：{label}" for index, (_group, label)
+                  in enumerate(groups))
+        )
+        window.logbook_area_container.show()
+
+        panel_layout = window._panel.layout()
+        chip_index = panel_layout.indexOf(window.filter_chip_container)
+        area_index = panel_layout.indexOf(window.logbook_area_container)
+        assert area_index == chip_index + 2
+        assert panel_layout.itemAt(area_index - 1).layout() is not None
+        assert window.logbook_area_selector.parentWidget() is window.logbook_area_container
+        assert window.logbook_area_selector not in window.filter_chip_layout.ordered_widgets()
+        for button in window.logbook_area_selector._buttons:
+            required = button.fontMetrics().horizontalAdvance(button.text()) + 24
+            assert button.minimumWidth() >= required
+    finally:
+        window.close()
+
+
+def test_stale_divine_rate_result_does_not_replace_current_league(qapp):
+    window = PoetoreWindow()
+    try:
+        window._divine_rate_key = "Current"
+        window._show_divine_rate("Old", 200)
+        assert window.divine_rate_button.text() != "⇄ 200"
     finally:
         window.close()
 
