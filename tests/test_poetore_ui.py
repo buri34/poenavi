@@ -1047,6 +1047,20 @@ def test_mod_condition_checks_can_all_be_cleared_without_changing_item_level(qap
         assert window.clear_mod_conditions_button.toolTip() == (
             "上の条件一覧のみ。ilvlなどの基本条件は変更しません"
         )
+        window.show()
+        qapp.processEvents()
+        assert (
+            window.clear_mod_conditions_button.parentWidget()
+            is window.mod_conditions_toggle.parentWidget()
+        )
+        assert (
+            window.clear_mod_conditions_button.geometry().left()
+            > window.mod_conditions_toggle.geometry().right()
+        )
+        assert (
+            window.clear_mod_conditions_button.geometry().center().y()
+            == window.mod_conditions_toggle.geometry().center().y()
+        )
         window.clear_mod_conditions_button.click()
 
         assert [row.enabled for row in window._selected_stat_filters()] == [False, False]

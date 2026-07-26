@@ -1112,9 +1112,7 @@ class PoetoreWindow(QWidget):
 
         self.weapon_property_label = QLabel("武器性能・検索Mod")
         self.weapon_property_label.setObjectName("sectionTitle")
-        mod_conditions_header = QHBoxLayout()
-        mod_conditions_header.addWidget(self.weapon_property_label)
-        mod_conditions_header.addStretch()
+        panel_layout.addWidget(self.weapon_property_label)
         self.clear_mod_conditions_button = QPushButton("一覧のチェックを全解除")
         self.clear_mod_conditions_button.setObjectName("clearModConditionsButton")
         self.clear_mod_conditions_button.setToolTip(
@@ -1123,8 +1121,6 @@ class PoetoreWindow(QWidget):
         self.clear_mod_conditions_button.clicked.connect(
             self._clear_mod_condition_checks
         )
-        mod_conditions_header.addWidget(self.clear_mod_conditions_button)
-        panel_layout.addLayout(mod_conditions_header)
 
         self._debug_parse_area = QWidget()
         self._debug_parse_area.hide()
@@ -1169,7 +1165,11 @@ class PoetoreWindow(QWidget):
         self.mod_conditions_toggle.setObjectName("modConditionsToggle")
         self.mod_conditions_toggle.setToolTip("Mod検索条件の一覧を折りたたむ")
         self.mod_conditions_toggle.clicked.connect(self._toggle_mod_conditions)
-        panel_layout.addWidget(self.mod_conditions_toggle, alignment=Qt.AlignLeft)
+        mod_conditions_actions = QHBoxLayout()
+        mod_conditions_actions.addWidget(self.mod_conditions_toggle)
+        mod_conditions_actions.addWidget(self.clear_mod_conditions_button)
+        mod_conditions_actions.addStretch()
+        panel_layout.addLayout(mod_conditions_actions)
         self.mod_warning = QLabel("")
         self.mod_warning.setWordWrap(True)
         self.mod_warning.setStyleSheet("color: #d6a84b;")
