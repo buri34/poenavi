@@ -565,6 +565,8 @@ def test_poetore_search_range_is_persisted(qapp):
 def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
     window = PoetoreWindow()
     try:
+        assert "価格比較に影響しないため" in window.hidden_mods_toggle.toolTip()
+        assert "影響しにくい" not in window.hidden_mods_toggle.toolTip()
         assert "Pseudo" not in window.mod_sources_toggle.toolTip()
         assert "複数の数値をまとめた検索条件" in (
             window.mod_sources_toggle.toolTip()
