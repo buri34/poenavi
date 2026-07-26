@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import re
 
 from .models import ItemModifier, ParsedItem
@@ -285,6 +286,61 @@ def _modifier_header_kind(line: str) -> str | None:
         if any(label.lower() in body for label in labels):
             return kind
     return None
+
+
+def _combine_multiline_modifiers(
+    modifiers: list[ItemModifier],
+) -> list[ItemModifier]:
+    """同じMod見出しに属する複数行を、公式の改行Stat単位へ戻す。"""
+    result: list[ItemModifier] = []
+    index = 0
+    metadata_index = default_metadata_index()
+    while index < len(modifiers):
+        first = modifiers[index]
+        if first.group is None or first.kind not in {"prefix", "suffix"}:
+            result.append(first)
+            index += 1
+            continue
+        group_end = index + 1
+        while (
+            group_end < len(modifiers)
+            and modifiers[group_end].group == first.group
+        ):
+            group_end += 1
+        matched = False
+        for size in range(group_end - index, 1, -1):
+            group = modifiers[index:index + size]
+            text = "\n".join(row.text for row in group)
+            metadata, option, confidence = metadata_index.match_with_option(
+                text, first.kind,
+            )
+            if metadata is None:
+                continue
+            roll_mins = [row.roll_min for row in group if row.roll_min is not None]
+            roll_maxes = [row.roll_max for row in group if row.roll_max is not None]
+            result.append(replace(
+                first,
+                text=text,
+                values=tuple(value for row in group for value in row.values),
+                ref=metadata.ref,
+                stat_id=metadata.stat_id,
+                confidence=confidence,
+                roll_min=min(roll_mins) if roll_mins else None,
+                roll_max=max(roll_maxes) if roll_maxes else None,
+                better=metadata.better,
+                inverted=metadata.inverted,
+                option_value=option.value if option else None,
+                option_text=option.japanese if option else None,
+                oils=option.oils if option else (),
+                decimal=metadata.decimal,
+            ))
+            index += size
+            matched = True
+            break
+        if not matched:
+            result.append(first)
+            index += 1
+    return result
 
 
 def _section_has_modifier_evidence(section: list[str]) -> bool:
@@ -627,6 +683,7 @@ def parse_item_text(text: str) -> ParsedItem:
             if foulborn_name:
                 name = foulborn_name.group(1).strip()
 
+    modifiers = _combine_multiline_modifiers(modifiers)
     return ParsedItem(
         item_class=header.get("item_class", ""), rarity=rarity, name=name,
         base_type=base_type, category=item_category,

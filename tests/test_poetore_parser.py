@@ -22,6 +22,26 @@ RARE_JP = """アイテムクラス: 指輪
 
 
 class PoetoreParserTest(unittest.TestCase):
+    def test_combines_multiline_flask_suffix_using_official_metadata(self):
+        item = parse_item_text("""アイテムクラス: ライフフラスコ
+レアリティ: マジック
+防水の 神々しいライフフラスコ
+--------
+アイテムレベル: 84
+--------
+{ サフィックスモッド 「防水の」 (ティア: 4) }
+出血状態で使用すると出血の完全無効化を8(6-8)秒間付与する
+穢れた血の影響下で使用すると穢れた血の完全無効化を8(6-8)秒間付与する
+--------
+右クリックして飲む。
+""")
+        self.assertEqual(len(item.modifiers), 1)
+        modifier = item.modifiers[0]
+        self.assertEqual(modifier.stat_id, "explicit.stat_182714578")
+        self.assertEqual(modifier.kind, "suffix")
+        self.assertEqual(modifier.tier, 4)
+        self.assertIn("\n", modifier.text)
+
     def test_captured_beast_is_detected_by_class_and_help_text(self):
         by_class = parse_item_text("""Item Class: Captured Beasts
 Rarity: Rare
