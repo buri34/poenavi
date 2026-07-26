@@ -489,6 +489,31 @@ Synthesised Item
 """)
         self.assertEqual(japanese.flags, ("influence:hunter", "synthesised"))
 
+    def test_eldritch_item_markers_are_flags_not_modifier_text(self):
+        item = parse_item_text("""アイテムクラス: 鎧
+レアリティ: レア
+血守護者
+ロイヤルプレート
+--------
+アイテムレベル: 85
+--------
+{ シアリング・エグザーク 暗黙モッド 「小」 }
+ウォークライのバフの効果が19(19-20)%増加する
+{ イーター・オブ・ワールズ 暗黙モッド 「小」 — 物理, 元素, 雷 }
+ヒットによる物理ダメージの10%を雷ダメージとして受ける
+--------
+{ プレフィックスモッド「堅固な」 (ティア: 2) — 防御, アーマー }
+アーマーが99(92-100)%増加する
+--------
+シアリング・エグザークのアイテム
+イーター・オブ・ワールズのアイテム
+""")
+        self.assertEqual(item.flags, ("searing_item", "tangled_item"))
+        self.assertEqual(len(item.modifiers), 3)
+        self.assertEqual(item.modifiers[0].generation, "eldritch")
+        self.assertEqual(item.modifiers[1].generation, "eldritch")
+        self.assertFalse(any("のアイテム" in mod.text for mod in item.modifiers))
+
     def test_parses_modifier_generation_for_ui_details(self):
         item = parse_item_text("""アイテムクラス: 鎧
 レアリティ: レア
