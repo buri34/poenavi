@@ -16,7 +16,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide6.QtWidgets import (
-    QAbstractItemView, QLayout,
+    QAbstractItemView, QButtonGroup, QLayout,
     QApplication, QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton,
     QMenu, QSizeGrip, QSizePolicy, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget, QPlainTextEdit,
     QHeaderView, QWidgetAction,
@@ -888,21 +888,27 @@ class PoetoreWindow(QWidget):
         ):
             self.listed_within_combo.addItem(label, value)
 
-        unique_options = QHBoxLayout()
+        unique_options = QVBoxLayout()
         self.unique_name_label = QLabel("未鑑定ユニーク候補:")
-        self.unique_name_combo = QComboBox()
-        self.unique_name_combo.setIconSize(QSize(48, 48))
+        self.unique_name_container = QWidget()
+        self.unique_name_layout = _FlowLayout(
+            self.unique_name_container, h_spacing=6, v_spacing=6,
+        )
+        self.unique_name_group = QButtonGroup(self)
+        self.unique_name_group.setExclusive(True)
         self.unique_name_label.hide()
-        self.unique_name_combo.hide()
+        self.unique_name_container.hide()
         unique_options.addWidget(self.unique_name_label)
-        unique_options.addWidget(self.unique_name_combo)
+        unique_options.addWidget(self.unique_name_container)
+        variant_options = QHBoxLayout()
         self.unique_variant_label = QLabel("ユニークVariant:")
         self.unique_variant_combo = QComboBox()
         self.unique_variant_label.hide()
         self.unique_variant_combo.hide()
-        unique_options.addWidget(self.unique_variant_label)
-        unique_options.addWidget(self.unique_variant_combo)
-        unique_options.addStretch()
+        variant_options.addWidget(self.unique_variant_label)
+        variant_options.addWidget(self.unique_variant_combo)
+        variant_options.addStretch()
+        unique_options.addLayout(variant_options)
         panel_layout.addLayout(unique_options)
 
         self.filter_chip_container = QWidget()
@@ -1275,7 +1281,7 @@ class PoetoreWindow(QWidget):
             chip.toggle.clicked.connect(self._mark_search_dirty)
             chip.minimum_edit.textEdited.connect(self._mark_search_dirty)
             chip.maximum_edit.textEdited.connect(self._mark_search_dirty)
-        self.unique_name_combo.currentIndexChanged.connect(self._mark_search_dirty)
+        self.unique_name_group.buttonClicked.connect(self._mark_search_dirty)
         self.unique_variant_combo.currentIndexChanged.connect(self._mark_search_dirty)
         for combo in (
             self.trade_status_combo, self.trade_currency_combo, self.listed_within_combo,
@@ -2220,7 +2226,12 @@ class PoetoreWindow(QWidget):
         )
         filters = self._selected_stat_filters()
         needs_initial_filters = self.mod_filter_tree.topLevelItemCount() == 0
-        selected_unique_name = self.unique_name_combo.currentData() if self.unique_name_combo.isVisible() else None
+        selected_button = self.unique_name_group.checkedButton()
+        selected_unique_name = (
+            selected_button.property("uniqueName")
+            if self.unique_name_container.isVisible() and selected_button is not None
+            else None
+        )
         trade_name = str(selected_unique_name or self._trade_item_name or "").strip() or None
         selected_discriminator = (
             self.unique_variant_combo.currentData() if self.unique_variant_combo.isVisible() else None
@@ -2855,8 +2866,13 @@ class PoetoreWindow(QWidget):
             self.price_status.setText("完成品として、実際の性能を中心に検索します。")
 
     def _reset_unique_candidates(self):
-        self.unique_name_combo.clear()
-        self.unique_name_combo.hide()
+        while self.unique_name_layout.count():
+            item = self.unique_name_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                self.unique_name_group.removeButton(widget)
+                widget.deleteLater()
+        self.unique_name_container.hide()
         self.unique_name_label.hide()
         self.unique_variant_combo.clear()
         self.unique_variant_combo.hide()
@@ -2864,22 +2880,41 @@ class PoetoreWindow(QWidget):
 
     def _show_unique_candidates(self, candidates):
         self.price_button.setEnabled(True)
-        self.unique_name_combo.clear()
+        self._reset_unique_candidates()
         for candidate in candidates:
             name = str(getattr(candidate, "name", candidate))
             icon_url = getattr(candidate, "icon_url", None)
-            self.unique_name_combo.addItem(name, name)
-            index = self.unique_name_combo.count() - 1
-            self.unique_name_combo.setItemData(index, icon_url, Qt.UserRole + 1)
+            button = QPushButton(name)
+            button.setObjectName("uniqueCandidateButton")
+            button.setCheckable(True)
+            button.setProperty("uniqueName", name)
+            button.setProperty("iconUrl", icon_url)
+            button.setIconSize(QSize(48, 48))
+            button.setMinimumSize(150, 64)
+            button.setToolTip(name)
+            button.setStyleSheet(
+                "QPushButton#uniqueCandidateButton {"
+                " text-align: left; padding: 6px; border: 1px solid #555; border-radius: 4px;"
+                "}"
+                "QPushButton#uniqueCandidateButton:hover { border-color: #a78bfa; }"
+                "QPushButton#uniqueCandidateButton:checked {"
+                " border: 2px solid #a78bfa; background: #33294d;"
+                "}"
+            )
+            self.unique_name_group.addButton(button)
+            self.unique_name_layout.addWidget(button)
             if icon_url:
                 cached = self._unique_icon_cache.get(icon_url)
                 if cached is not None:
-                    self.unique_name_combo.setItemIcon(index, cached)
+                    button.setIcon(cached)
                 else:
                     reply = self._unique_icon_manager.get(QNetworkRequest(QUrl(icon_url)))
-                    self._unique_icon_requests[reply] = (index, icon_url)
+                    self._unique_icon_requests[reply] = (button, icon_url)
+        first_button = next(iter(self.unique_name_group.buttons()), None)
+        if first_button is not None:
+            first_button.setChecked(True)
         self.unique_name_label.show()
-        self.unique_name_combo.show()
+        self.unique_name_container.show()
         self.price_status.setText(
             f"同じベースの未鑑定ユニークが{len(candidates)}種類あります。候補を選んで「価格を検索」を押してください。"
         )
@@ -2889,15 +2924,15 @@ class PoetoreWindow(QWidget):
         try:
             if request is None or reply.error() != QNetworkReply.NoError:
                 return
-            index, icon_url = request
+            button, icon_url = request
             pixmap = QPixmap()
             if not pixmap.loadFromData(reply.readAll()):
                 return
             icon = QIcon(pixmap)
             self._unique_icon_cache[icon_url] = icon
-            if (index < self.unique_name_combo.count()
-                    and self.unique_name_combo.itemData(index, Qt.UserRole + 1) == icon_url):
-                self.unique_name_combo.setItemIcon(index, icon)
+            if (button in self.unique_name_group.buttons()
+                    and button.property("iconUrl") == icon_url):
+                button.setIcon(icon)
         finally:
             reply.deleteLater()
 

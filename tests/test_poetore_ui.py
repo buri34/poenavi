@@ -1381,9 +1381,15 @@ def test_unidentified_unique_candidates_can_be_selected(qapp):
     window = PoetoreWindow()
     try:
         window._show_unique_candidates(("The First", "The Second"))
-        assert not window.unique_name_combo.isHidden()
-        assert window.unique_name_combo.count() == 2
-        assert window.unique_name_combo.itemData(1) == "The Second"
+        buttons = window.unique_name_group.buttons()
+        assert not window.unique_name_container.isHidden()
+        assert [button.property("uniqueName") for button in buttons] == [
+            "The First", "The Second",
+        ]
+        assert buttons[0].isChecked()
+        buttons[1].click()
+        assert buttons[1].isChecked()
+        assert not buttons[0].isChecked()
         assert "2種類" in window.price_status.text()
     finally:
         window.close()
@@ -1396,9 +1402,36 @@ def test_unidentified_unique_candidates_keep_icon_urls(qapp):
     try:
         icon = "https://web.poecdn.com/gen/image/example.png"
         window._show_unique_candidates((UniqueCandidate("The Example", icon),))
-        assert window.unique_name_combo.itemData(0) == "The Example"
-        assert window.unique_name_combo.itemData(0, Qt.UserRole + 1) == icon
-        assert window.unique_name_combo.iconSize() == QSize(48, 48)
+        button = window.unique_name_group.buttons()[0]
+        assert button.property("uniqueName") == "The Example"
+        assert button.property("iconUrl") == icon
+        assert button.iconSize() == QSize(48, 48)
+    finally:
+        window.close()
+
+
+def test_unidentified_agate_amulet_shows_all_five_candidates(qapp):
+    from src.poetore.trade import UniqueCandidate
+
+    window = PoetoreWindow()
+    try:
+        names = (
+            "Eternal Damnation",
+            "Extractor Mentis",
+            "Shaper's Seed",
+            "The Aylardex",
+            "Voll's Devotion",
+        )
+        candidates = tuple(
+            UniqueCandidate(name, f"https://web.poecdn.com/{index}.png")
+            for index, name in enumerate(names)
+        )
+        window._show_unique_candidates(candidates)
+
+        buttons = window.unique_name_group.buttons()
+        assert [button.property("uniqueName") for button in buttons] == list(names)
+        assert all(button.property("iconUrl") for button in buttons)
+        assert all(not button.isHidden() for button in buttons)
     finally:
         window.close()
 
@@ -2017,7 +2050,7 @@ Judgement Staff
         assert window.search_scope_notice.isHidden()
         assert window.price_button.isEnabled()
         assert not window.trade_url_button.isEnabled()
-        assert window.unique_name_combo.isHidden()
+        assert window.unique_name_container.isHidden()
 
         candidates = (
             UniqueCandidate("The First", "https://web.poecdn.com/first.png"),
@@ -2027,13 +2060,15 @@ Judgement Staff
             window.search_current_item()
             for _ in range(50):
                 qapp.processEvents()
-                if not window.unique_name_combo.isHidden():
+                if not window.unique_name_container.isHidden():
                     break
                 QTest.qWait(10)
 
-        assert not window.unique_name_combo.isHidden()
-        assert window.unique_name_combo.count() == 2
-        assert window.unique_name_combo.itemData(1) == "The Second"
+        assert not window.unique_name_container.isHidden()
+        assert [
+            button.property("uniqueName")
+            for button in window.unique_name_group.buttons()
+        ] == ["The First", "The Second"]
         assert window.price_button.isEnabled()
         assert "候補を選んで" in window.price_status.text()
     finally:
