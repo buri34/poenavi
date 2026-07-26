@@ -2477,30 +2477,23 @@ class MainWindow(QMainWindow):
     def _apply_guide_visibility(self):
         """ガイドの表示/非表示を適用"""
         if self.guide_expanded:
-            # 全体展開時は各セクションの個別状態に従う
+            # 全体展開時はガイド配下の各セクションの個別状態に従う。
+            # マップは独立パネルなので、ガイドの開閉では表示状態を変えない。
             self.guide_info_frame.setVisible(self.zone_header_expanded)
             self.guide_text_frame.setVisible(self.guide_text_expanded)
-            has_maps = len(self.map_thumbnail.current_paths) > 0
-            self.map_thumbnail.setVisible(self.map_section_expanded and has_maps)
             # サブトグルボタンも表示
             self.zone_header_toggle_btn.setVisible(True)
             self.guide_text_toggle_btn.setVisible(True)
             self._refresh_guide_detail_level_toggle()
-            if not self._is_panel_detached("map"):
-                self.map_toggle_btn.setVisible(True)
         else:
-            # 全体折りたたみ時は3セクションすべて非表示
+            # 全体折りたたみ時はガイド配下のセクションだけを非表示にする。
             self.guide_info_frame.setVisible(False)
             self.guide_text_frame.setVisible(False)
-            if not self._is_panel_detached("map") and not self._is_panel_detached("guide"):
-                self.map_thumbnail.setVisible(False)
             # サブトグルボタンも非表示
             self.zone_header_toggle_btn.setVisible(False)
             self.guide_text_toggle_btn.setVisible(False)
             if hasattr(self, "guide_detail_level_toggle_btn"):
                 self.guide_detail_level_toggle_btn.setVisible(False)
-            if not self._is_panel_detached("map") and not self._is_panel_detached("guide"):
-                self.map_toggle_btn.setVisible(False)
         # 背景も連動
         if self.guide_expanded:
             self.guide_container.setStyleSheet("""

@@ -384,6 +384,31 @@ def test_minimize_detached_panel_hides_window_and_restore_all_shows_it(monkeypat
     panel_window.close()
 
 
+def test_collapsing_guide_does_not_hide_the_attached_map_panel():
+    _app()
+    window = MainWindow.__new__(MainWindow)
+    window.guide_expanded = False
+    window.zone_header_expanded = True
+    window.guide_text_expanded = True
+    window.guide_info_frame = QWidget()
+    window.guide_text_frame = QWidget()
+    window.zone_header_toggle_btn = QPushButton()
+    window.guide_text_toggle_btn = QPushButton()
+    window.guide_detail_level_toggle_btn = QPushButton()
+    window.guide_container = QWidget()
+    window.guide_container.setObjectName("guideContainer")
+    window.guide_toggle_btn = QPushButton()
+    window.map_toggle_btn = QPushButton("▼ マップ")
+    window.map_thumbnail = QWidget()
+    window.map_toggle_btn.show()
+    window.map_thumbnail.show()
+
+    window._apply_guide_visibility()
+
+    assert not window.map_toggle_btn.isHidden()
+    assert not window.map_thumbnail.isHidden()
+
+
 def test_restore_minimized_panels_reapplies_saved_attached_state(monkeypatch):
     window, content, _layout = _window()
     window.config["detached_panels"]["timer"]["minimized"] = True
