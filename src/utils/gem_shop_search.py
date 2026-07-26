@@ -137,7 +137,7 @@ def _build_vendor_gem_query(
     search_terms = build_unique_gem_search_terms(
         english_names,
         term_overrides,
-        minimum_length=6,
+        minimum_length=4,
     )
     checked = checked_gems or set()
     terms: list[str] = []
@@ -162,7 +162,7 @@ def _build_vendor_gem_query(
             if term and term not in seen:
                 seen.add(term)
                 terms.append(term)
-    return "|".join(terms)
+    return f'"{"|".join(terms)}"' if terms else ""
 
 
 def format_gem_shop_search_preview(query: str) -> str:

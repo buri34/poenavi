@@ -59,7 +59,7 @@ class GemShopSearchTest(unittest.TestCase):
             {"ground slam": "ground"},
         )
 
-        self.assertEqual(query, "ground")
+        self.assertEqual(query, '"ground"')
 
     def test_hold_delay_uses_the_saved_seconds(self):
         window = SimpleNamespace(config={"gem_shop_search_hold_seconds": 0.7})
@@ -136,7 +136,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "ground|chance")
+        self.assertEqual(query, '"grou|chan"')
 
     def test_current_act_query_uses_english_gem_names(self):
         query = build_act_vendor_gem_query(
@@ -146,7 +146,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "ground")
+        self.assertEqual(query, '"grou"')
 
     def test_current_act_query_uses_unique_english_short_terms(self):
         query = build_act_vendor_gem_query(
@@ -162,7 +162,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "ground|moment")
+        self.assertEqual(query, '"grou|mome"')
 
     def test_all_act_query_collects_each_available_gem_once(self):
         query = build_all_act_vendor_gem_query(
@@ -178,7 +178,7 @@ class GemShopSearchTest(unittest.TestCase):
             include_reward_purchases=False,
         )
 
-        self.assertEqual(query, "ground|precis")
+        self.assertEqual(query, '"grou|prec"')
 
     def test_current_act_query_includes_reward_purchase_when_enabled(self):
         plan = [{
@@ -199,7 +199,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "ground|moment")
+        self.assertEqual(query, '"grou|mome"')
 
     def test_current_act_query_includes_unchecked_reward_gem_sold_in_current_act(self):
         plan = [{
@@ -218,7 +218,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "moment")
+        self.assertEqual(query, '"mome"')
 
     def test_current_act_query_excludes_reward_purchase_when_disabled(self):
         plan = [{
@@ -276,7 +276,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "moment")
+        self.assertEqual(query, '"mome"')
 
     def test_main_window_query_excludes_checked_gems(self):
         window = SimpleNamespace(
@@ -307,14 +307,14 @@ class GemShopSearchTest(unittest.TestCase):
             choices=[{
                 "name": "3リンク",
                 "query": r"-\w-",
-                "gem_query_provider": lambda: "モーメン|プレシジ",
+                "gem_query_provider": lambda: '"mome|prec"',
             }],
         )
         self.addCleanup(dialog.close)
 
         self.assertEqual(
             dialog._query_for_choice(dialog.choices[0]),
-            r"-\w-|モーメン|プレシジ",
+            r'-\w-|"mome|prec"',
         )
 
     def test_dynamic_vendor_preset_keeps_base_query_when_no_gems_match(self):
@@ -401,7 +401,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "leap s")
+        self.assertEqual(query, '"leap"')
 
     def test_current_act_query_uses_english_official_name(self):
         query = build_act_vendor_gem_query(
@@ -415,7 +415,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "sunder")
+        self.assertEqual(query, '"sund"')
 
     def test_unique_terms_use_the_shortest_non_overlapping_four_characters(self):
         terms = build_unique_gem_search_terms(load_gem_names_ja())
