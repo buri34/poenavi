@@ -80,12 +80,13 @@ class GemShopSearchTest(unittest.TestCase):
             {"momentum support": "moment"},
         )
 
-    def test_term_review_tab_is_after_app_info_and_filters_changed_terms(self):
+    def test_app_info_is_the_rightmost_tab_and_term_review_filters_changed_terms(self):
         settings = SettingsDialog(
             current_config={"gem_shop_search_term_overrides": {"momentum support": "moment"}}
         )
         tabs = settings.findChild(QTabWidget)
-        self.assertEqual(tabs.tabText(tabs.count() - 1), "Regex短縮設定")
+        self.assertEqual(tabs.tabText(tabs.count() - 2), "Regex短縮設定")
+        self.assertEqual(tabs.tabText(tabs.count() - 1), "アプリ情報")
 
         review = settings.gem_shop_search_term_review
         hint_labels = [

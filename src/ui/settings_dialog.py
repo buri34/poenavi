@@ -2410,8 +2410,6 @@ class SettingsDialog(QDialog):
 
         about_layout.addStretch()
 
-        tabs.addTab(about_tab, "アプリ情報")
-
         term_review_tab = QWidget()
         term_review_layout = QVBoxLayout(term_review_tab)
         term_review_layout.setContentsMargins(0, 0, 0, 0)
@@ -2421,6 +2419,7 @@ class SettingsDialog(QDialog):
         )
         term_review_layout.addWidget(self.gem_shop_search_term_review)
         tabs.addTab(term_review_tab, "Regex短縮設定")
+        tabs.addTab(about_tab, "アプリ情報")
 
         layout.addWidget(tabs)
         
