@@ -472,11 +472,9 @@ def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
         assert window.size().width() == 720
         assert window._panel.objectName() == "poetorePanel"
         assert not window._debug_parse_area.isVisible()
-        assert window.mod_filter_tree.isColumnHidden(6)
-        assert window.mod_filter_tree.columnCount() == 7
+        assert window.mod_filter_tree.columnCount() == 6
         assert window.mod_filter_tree.header().isHidden()
         assert window.mod_filter_tree.headerItem().text(2) == "ティア"
-        assert window.mod_filter_tree.headerItem().text(6) == "詳細"
         assert "論理" not in [
             window.mod_filter_tree.headerItem().text(index)
             for index in range(window.mod_filter_tree.columnCount())
@@ -586,14 +584,24 @@ def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
         hidden = window.mod_filter_tree.topLevelItem(1)
         assert not normal.isHidden()
         assert hidden.isHidden()
-        assert "構成元: 最大ライフ +70 / 筋力 +60" in normal.text(6)
+        assert normal.childCount() == 1
+        source_row = normal.child(0)
+        source_label = window.mod_filter_tree.itemWidget(source_row, 0)
+        assert source_label.wordWrap()
+        assert "この検索条件に含まれるMod" in source_label.text()
+        assert "・最大ライフ +70" in source_label.text()
+        assert "・筋力 +60" in source_label.text()
+        assert "→ 「最大ライフ合計」として検索" in source_label.text()
+        assert not normal.isExpanded()
 
         window.hidden_mods_toggle.setChecked(True)
         assert normal.isHidden()
         assert not hidden.isHidden()
 
         window.mod_sources_toggle.setChecked(True)
-        assert not window.mod_filter_tree.isColumnHidden(6)
+        assert normal.isExpanded()
+        window.mod_sources_toggle.setChecked(False)
+        assert not normal.isExpanded()
     finally:
         window.close()
 
@@ -894,7 +902,7 @@ def test_mod_filter_ui_shows_reason_tier_range_generation_and_matching(qapp):
         window._populate_stat_filters((source,))
         row = window.mod_filter_tree.topLevelItem(0)
         assert row.text(2) == "T1"
-        detail = row.text(6)
+        detail = row.toolTip(3)
         assert "ベースアイテム向けT1 Mod" in detail
         assert "読取 100" in detail
         assert "T1" in detail

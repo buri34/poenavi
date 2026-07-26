@@ -66,7 +66,6 @@ _MOD_COLUMN_TIER = 2
 _MOD_COLUMN_TEXT = 3
 _MOD_COLUMN_MIN = 4
 _MOD_COLUMN_MAX = 5
-_MOD_COLUMN_DETAILS = 6
 _MOD_CHECK_COLUMN_WIDTH = 40
 _MOD_TIER_COLUMN_WIDTH = 75
 _MOD_TEXT_COLUMN_WIDTH = 346
@@ -1168,7 +1167,7 @@ class PoetoreWindow(QWidget):
         panel_layout.addWidget(self._debug_parse_area)
         self.mod_filter_tree = QTreeWidget()
         self.mod_filter_tree.setHeaderLabels([
-            "", "種別", "ティア", "検索条件", "最小", "最大", "詳細",
+            "", "種別", "ティア", "検索条件", "最小", "最大",
         ])
         self.mod_filter_tree.setRootIsDecorated(False)
         self.mod_filter_tree.setAlternatingRowColors(True)
@@ -1189,7 +1188,6 @@ class PoetoreWindow(QWidget):
         self.mod_filter_tree.setColumnWidth(_MOD_COLUMN_TEXT, _MOD_TEXT_COLUMN_WIDTH)
         mod_header.setSectionResizeMode(_MOD_COLUMN_MIN, QHeaderView.ResizeToContents)
         mod_header.setSectionResizeMode(_MOD_COLUMN_MAX, QHeaderView.ResizeToContents)
-        mod_header.setSectionResizeMode(_MOD_COLUMN_DETAILS, QHeaderView.Stretch)
         self.mod_filter_tree.itemClicked.connect(
             self._toggle_mod_condition_from_text
         )
@@ -1611,9 +1609,6 @@ class PoetoreWindow(QWidget):
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
             QSizeGrip { background: transparent; }
         """)
-        # Awakenedでは詳細ソースは任意表示。初期画面は検索条件そのものに集中する。
-        self.mod_filter_tree.setColumnHidden(_MOD_COLUMN_DETAILS, True)
-
     def _toggle_mod_conditions(self):
         collapsed = self.mod_filter_tree.isVisible()
         self.mod_filter_tree.setVisible(not collapsed)
@@ -1638,7 +1633,9 @@ class PoetoreWindow(QWidget):
         self.mod_sources_toggle.setText(
             "Mod構成を隠す" if visible else "Mod構成を表示"
         )
-        self.mod_filter_tree.setColumnHidden(_MOD_COLUMN_DETAILS, not visible)
+        for index in range(self.mod_filter_tree.topLevelItemCount()):
+            row = self.mod_filter_tree.topLevelItem(index)
+            row.setExpanded(visible and row.childCount() > 0)
 
     def _clear_mod_condition_checks(self):
         """一覧内の検索条件だけを解除し、基本条件チップは変更しない。"""
@@ -3151,7 +3148,7 @@ class PoetoreWindow(QWidget):
             row = QTreeWidgetItem([
                 "", _filter_kind_label(stat_filter),
                 "" if tier_tags else tier_text,
-                stat_filter.text, "", "", summary,
+                stat_filter.text, "", "",
             ])
             row.setData(0, Qt.UserRole, stat_filter.stat_id)
             row.setData(0, Qt.UserRole + 1, stat_filter.ref)
@@ -3160,9 +3157,40 @@ class PoetoreWindow(QWidget):
             row.setData(0, Qt.UserRole + 4, stat_filter)
             row.setData(0, Qt.UserRole + 5, stat_filter.enabled)
             row.setToolTip(_MOD_COLUMN_TEXT, summary)
-            row.setToolTip(_MOD_COLUMN_DETAILS, summary)
             row.setSizeHint(_MOD_COLUMN_TEXT, QSize(0, _MOD_ROW_HEIGHT))
             self.mod_filter_tree.addTopLevelItem(row)
+            if stat_filter.source_texts:
+                source_lines = [
+                    "この検索条件に含まれるMod",
+                    *(f"・{source}" for source in stat_filter.source_texts),
+                    (
+                        f"→ {stat_filter.selection_reason}"
+                        if stat_filter.selection_reason
+                        else f"→ 「{stat_filter.text}」として検索"
+                    ),
+                ]
+                source_item = QTreeWidgetItem(row)
+                source_item.setFirstColumnSpanned(True)
+                source_label = QLabel("\n".join(source_lines))
+                source_label.setObjectName("modSourceDetails")
+                source_label.setWordWrap(True)
+                source_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+                source_label.setContentsMargins(12, 6, 12, 8)
+                source_label.setStyleSheet(
+                    "QLabel#modSourceDetails {"
+                    " color: #aeb8aa;"
+                    " background: rgba(24, 29, 22, 220);"
+                    " border-left: 2px solid rgba(176, 255, 123, 90);"
+                    "}"
+                )
+                source_label.setSizePolicy(
+                    QSizePolicy.Expanding, QSizePolicy.Preferred
+                )
+                source_item.setSizeHint(
+                    0, QSize(0, 34 + 18 * len(stat_filter.source_texts))
+                )
+                self.mod_filter_tree.setItemWidget(source_item, 0, source_label)
+                row.setExpanded(self.mod_sources_toggle.isChecked())
             row.setHidden(
                 bool(stat_filter.hidden_reason) != self.hidden_mods_toggle.isChecked()
             )
