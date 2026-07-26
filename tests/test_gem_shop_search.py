@@ -70,19 +70,19 @@ class GemShopSearchTest(unittest.TestCase):
         dialog = SettingsDialog(
             current_config={
                 "gem_shop_search_hold_seconds": 0.7,
-                "gem_shop_search_term_overrides": {"momentum support": "mome"},
+                "gem_shop_search_term_overrides": {"momentum support": "moment"},
             }
         )
 
         self.assertEqual(dialog.gem_shop_search_hold_seconds_spin.value(), 0.7)
         self.assertEqual(
             dialog.get_settings()["gem_shop_search_term_overrides"],
-            {"momentum support": "mome"},
+            {"momentum support": "moment"},
         )
 
     def test_term_review_tab_is_after_app_info_and_filters_changed_terms(self):
         settings = SettingsDialog(
-            current_config={"gem_shop_search_term_overrides": {"momentum support": "mome"}}
+            current_config={"gem_shop_search_term_overrides": {"momentum support": "moment"}}
         )
         tabs = settings.findChild(QTabWidget)
         self.assertEqual(tabs.tabText(tabs.count() - 1), "短縮語を見直す")
@@ -136,7 +136,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "grou|chan")
+        self.assertEqual(query, "ground|chance")
 
     def test_current_act_query_uses_english_gem_names(self):
         query = build_act_vendor_gem_query(
@@ -146,7 +146,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "grou")
+        self.assertEqual(query, "ground")
 
     def test_current_act_query_uses_unique_english_short_terms(self):
         query = build_act_vendor_gem_query(
@@ -162,7 +162,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "grou|mome")
+        self.assertEqual(query, "ground|moment")
 
     def test_all_act_query_collects_each_available_gem_once(self):
         query = build_all_act_vendor_gem_query(
@@ -178,7 +178,7 @@ class GemShopSearchTest(unittest.TestCase):
             include_reward_purchases=False,
         )
 
-        self.assertEqual(query, "grou|prec")
+        self.assertEqual(query, "ground|precis")
 
     def test_current_act_query_includes_reward_purchase_when_enabled(self):
         plan = [{
@@ -199,7 +199,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "grou|mome")
+        self.assertEqual(query, "ground|moment")
 
     def test_current_act_query_includes_unchecked_reward_gem_sold_in_current_act(self):
         plan = [{
@@ -218,7 +218,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "mome")
+        self.assertEqual(query, "moment")
 
     def test_current_act_query_excludes_reward_purchase_when_disabled(self):
         plan = [{
@@ -276,7 +276,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "mome")
+        self.assertEqual(query, "moment")
 
     def test_main_window_query_excludes_checked_gems(self):
         window = SimpleNamespace(
@@ -401,7 +401,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "leap")
+        self.assertEqual(query, "leap s")
 
     def test_current_act_query_uses_english_official_name(self):
         query = build_act_vendor_gem_query(
@@ -415,7 +415,7 @@ class GemShopSearchTest(unittest.TestCase):
             True,
         )
 
-        self.assertEqual(query, "sund")
+        self.assertEqual(query, "sunder")
 
     def test_unique_terms_use_the_shortest_non_overlapping_four_characters(self):
         terms = build_unique_gem_search_terms(load_gem_names_ja())

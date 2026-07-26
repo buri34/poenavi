@@ -1477,14 +1477,14 @@ class GemShopSearchTermOverridesDialog(QWidget):
     def __init__(self, parent=None, term_overrides=None):
         super().__init__(parent)
         self._gem_names_en = load_gem_names_en()
-        self._automatic_terms = build_unique_gem_search_terms(self._gem_names_en)
+        self._automatic_terms = build_unique_gem_search_terms(self._gem_names_en, minimum_length=6)
         self._term_overrides = dict(term_overrides or {})
         self._term_edits = {}
         self._row_by_gem_key = {}
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
-        hint = QLabel("上書き欄が空欄なら自動短縮語を使います。上書きは正式名に含まれる、他ジェムと重複しない4文字以上の語だけ保存できます。")
+        hint = QLabel("上書き欄が空欄なら自動短縮語を使います。上書きは正式名に含まれる、他ジェムと重複しない6文字以上の語だけ保存できます。")
         hint.setWordWrap(True)
         hint.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 11px;")
         layout.addWidget(hint)
@@ -1548,7 +1548,12 @@ class GemShopSearchTermOverridesDialog(QWidget):
             term = term_edit.text().strip()
             if not term:
                 continue
-            valid_term = validate_gem_shop_search_term_override(gem_key, term, self._gem_names_en)
+            valid_term = validate_gem_shop_search_term_override(
+                gem_key,
+                term,
+                self._gem_names_en,
+                minimum_length=6,
+            )
             if valid_term is None:
                 invalid_names.append(self._gem_names_en[gem_key])
             else:
@@ -1561,7 +1566,7 @@ class GemShopSearchTermOverridesDialog(QWidget):
             QMessageBox.warning(
                 self,
                 "短縮語を確認してください",
-                "次の短縮語は保存できません。正式名に含まれる、他ジェムと重複しない4文字以上の語を入力してください。\n\n"
+                "次の短縮語は保存できません。正式名に含まれる、他ジェムと重複しない6文字以上の語を入力してください。\n\n"
                 + "、".join(invalid_names[:10]),
             )
             return False

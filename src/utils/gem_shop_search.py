@@ -39,11 +39,12 @@ def validate_gem_shop_search_term_override(
     gem_key: str,
     term: str,
     gem_names_ja: Mapping[str, str],
+    minimum_length: int = 4,
 ) -> str | None:
     """正式名に含まれ、全ジェムで一意な短縮語だけを受け付ける。"""
     candidate = term.strip()
     gem_name = gem_names_ja.get(gem_key, "")
-    if len(candidate) < 4 or candidate not in gem_name:
+    if len(candidate) < minimum_length or candidate not in gem_name:
         return None
     return candidate if sum(candidate in name for name in gem_names_ja.values()) == 1 else None
 
@@ -51,26 +52,30 @@ def validate_gem_shop_search_term_override(
 def build_unique_gem_search_terms(
     gem_names_ja: Mapping[str, str],
     term_overrides: Mapping[str, str] | None = None,
+    minimum_length: int = 4,
 ) -> dict[str, str]:
     """各公式名から、他ジェム名と重複しない最短4文字以上の検索語を選ぶ。"""
     entries = tuple(sorted((key, name) for key, name in gem_names_ja.items() if name))
-    terms = dict(_build_unique_gem_search_terms(entries))
+    terms = dict(_build_unique_gem_search_terms(entries, minimum_length))
     for key, term in (term_overrides or {}).items():
-        valid_term = validate_gem_shop_search_term_override(key, term, gem_names_ja)
+        valid_term = validate_gem_shop_search_term_override(key, term, gem_names_ja, minimum_length)
         if valid_term:
             terms[key] = valid_term
     return terms
 
 
-@lru_cache(maxsize=4)
-def _build_unique_gem_search_terms(entries: tuple[tuple[str, str], ...]) -> tuple[tuple[str, str], ...]:
+@lru_cache(maxsize=8)
+def _build_unique_gem_search_terms(
+    entries: tuple[tuple[str, str], ...],
+    minimum_length: int,
+) -> tuple[tuple[str, str], ...]:
     names = tuple(name for _, name in entries)
     terms = []
     for key, name in entries:
         preferred = PREFERRED_SEARCH_TERMS.get(key, "")
         term = preferred if sum(preferred in other for other in names) == 1 else ""
         if not term:
-            for length in range(4, len(name) + 1):
+            for length in range(minimum_length, len(name) + 1):
                 for start in range(len(name) - length + 1):
                     candidate = name[start:start + length]
                     if sum(candidate in other for other in names) == 1:
@@ -129,7 +134,11 @@ def _build_vendor_gem_query(
     checked_gems: set[str] | None,
 ) -> str:
     english_names = {gem_key: gem_key for gem_key in gem_names_ja}
-    search_terms = build_unique_gem_search_terms(english_names, term_overrides)
+    search_terms = build_unique_gem_search_terms(
+        english_names,
+        term_overrides,
+        minimum_length=6,
+    )
     checked = checked_gems or set()
     terms: list[str] = []
     seen: set[str] = set()
