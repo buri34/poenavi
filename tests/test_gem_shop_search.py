@@ -180,6 +180,22 @@ class GemShopSearchTest(unittest.TestCase):
 
         self.assertEqual(query, '"grou|prec"')
 
+    def test_all_act_query_keeps_checked_gems_for_sharing(self):
+        query = build_all_act_vendor_gem_query(
+            [{"act": 1, "gems": [
+                {"name": "ground slam", "type": "vendor"},
+                {"name": "momentum support", "type": "vendor"},
+            ]}],
+            {
+                "ground slam": "グランドスラム",
+                "momentum support": "モーメンタムサポート",
+            },
+            include_reward_purchases=True,
+            checked_gems={"ground slam"},
+        )
+
+        self.assertEqual(query, '"grou|mome"')
+
     def test_current_act_query_includes_reward_purchase_when_enabled(self):
         plan = [{
             "act": 1,

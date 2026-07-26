@@ -114,14 +114,15 @@ def build_all_act_vendor_gem_query(
     term_overrides: Mapping[str, str] | None = None,
     checked_gems: set[str] | None = None,
 ) -> str:
-    """全Actで購入可能な未取得ジェムを英語名のOR検索にする。"""
+    """全Actで購入可能なジェムを共有用の英語名OR検索にする。"""
+    del checked_gems
     return _build_vendor_gem_query(
         acquisition_plan,
         set(range(1, 11)),
         gem_names_ja,
         include_reward_purchases,
         term_overrides,
-        checked_gems,
+        None,
     )
 
 

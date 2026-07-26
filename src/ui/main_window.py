@@ -3028,7 +3028,6 @@ class MainWindow(QMainWindow):
             load_gem_names_ja(),
             self.config.get("gem_shop_search_include_reward_purchases", True),
             self.config.get("gem_shop_search_term_overrides", {}),
-            checked_gems=self.gem_tracker.get_checked_gems(),
         )
 
     def _refresh_gem_shop_search_preview(self):
