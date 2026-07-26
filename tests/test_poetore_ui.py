@@ -1999,7 +1999,9 @@ Valdo Map
         window.close()
 
 
-def test_unidentified_unique_is_explicitly_unsupported_in_initial_release(qapp):
+def test_unidentified_unique_can_open_candidate_selector(qapp):
+    from src.poetore.trade import UniqueCandidate
+
     window = PoetoreWindow()
     try:
         window.input_edit.setPlainText("""アイテムクラス: スタッフ
@@ -2012,14 +2014,28 @@ Judgement Staff
 """)
         window.parse_current_text()
 
-        assert not window.search_scope_notice.isHidden()
-        assert window.search_scope_notice.text() == (
-            "⚠ 未鑑定ユニークの候補選択は初版では対応していません。"
-            "鑑定後に検索してください。"
-        )
-        assert not window.price_button.isEnabled()
+        assert window.search_scope_notice.isHidden()
+        assert window.price_button.isEnabled()
         assert not window.trade_url_button.isEnabled()
         assert window.unique_name_combo.isHidden()
+
+        candidates = (
+            UniqueCandidate("The First", "https://web.poecdn.com/first.png"),
+            UniqueCandidate("The Second", "https://web.poecdn.com/second.png"),
+        )
+        with patch("src.poetore.ui.unique_candidate_details", return_value=candidates):
+            window.search_current_item()
+            for _ in range(50):
+                qapp.processEvents()
+                if not window.unique_name_combo.isHidden():
+                    break
+                QTest.qWait(10)
+
+        assert not window.unique_name_combo.isHidden()
+        assert window.unique_name_combo.count() == 2
+        assert window.unique_name_combo.itemData(1) == "The Second"
+        assert window.price_button.isEnabled()
+        assert "候補を選んで" in window.price_status.text()
     finally:
         window.close()
 

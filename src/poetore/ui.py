@@ -228,18 +228,6 @@ def _is_valdo_map(item) -> bool:
     )
 
 
-def _unsupported_initial_release_search_reason(item) -> str | None:
-    if (
-        item.rarity.casefold() in {"unique", "ユニーク"}
-        and "unidentified" in item.flags
-    ):
-        return (
-            "未鑑定ユニークの候補選択は初版では対応していません。"
-            "鑑定後に検索してください。"
-        )
-    return None
-
-
 _FILTER_KIND_LABELS = {
     "explicit": "明示",
     "prefix": "プレフィックス",
@@ -2150,14 +2138,7 @@ class PoetoreWindow(QWidget):
         else:
             self.mod_warning.clear()
             self.mod_warning.hide()
-        unsupported_reason = _unsupported_initial_release_search_reason(item)
-        if unsupported_reason:
-            self.search_scope_notice.setText(f"⚠ {unsupported_reason}")
-            self.search_scope_notice.show()
-            self.price_status.setText(unsupported_reason)
-            self.price_button.setEnabled(False)
-            self.trade_url_button.setEnabled(False)
-        elif _is_valdo_map(item) and (
+        if _is_valdo_map(item) and (
             item.properties.get("報酬") or item.properties.get("Reward")
             or item.properties.get("マップ完了報酬")
             or item.properties.get("Map Completion Reward")
@@ -2185,8 +2166,6 @@ class PoetoreWindow(QWidget):
         self.parse_current_text()
         item = getattr(self, "_parsed_item", None)
         if item is None:
-            return
-        if _unsupported_initial_release_search_reason(item):
             return
         self._has_searched_current_item = True
         self._search_dirty = False
