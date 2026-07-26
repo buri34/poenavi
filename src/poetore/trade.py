@@ -15,7 +15,7 @@ from urllib.request import Request, urlopen
 from .models import ParsedItem
 from .metadata import (
     base_armour_bounds, default_metadata_index, gem_metadata, normalize_stat_text,
-    pseudo_definitions, pseudo_relations, unique_fixed_stats,
+    pseudo_definitions, pseudo_relations, unique_fixed_stats, unique_icon_url,
 )
 
 
@@ -1676,6 +1676,20 @@ def unique_candidates(base_type: str) -> tuple[str, ...]:
         and str(entry.get("name", "")).strip()
     }
     return tuple(sorted(names))
+
+
+@dataclass(frozen=True)
+class UniqueCandidate:
+    name: str
+    icon_url: str | None
+
+
+def unique_candidate_details(base_type: str) -> tuple[UniqueCandidate, ...]:
+    """未鑑定Unique候補へ、Awakened由来の公式CDNアイコンURLを付ける。"""
+    return tuple(
+        UniqueCandidate(name, unique_icon_url(name))
+        for name in unique_candidates(base_type)
+    )
 
 
 def unique_variants(name: str, base_type: str) -> tuple[tuple[str, str | None], ...]:

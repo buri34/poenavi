@@ -1389,6 +1389,20 @@ def test_unidentified_unique_candidates_can_be_selected(qapp):
         window.close()
 
 
+def test_unidentified_unique_candidates_keep_icon_urls(qapp):
+    from src.poetore.trade import UniqueCandidate
+
+    window = PoetoreWindow()
+    try:
+        icon = "https://web.poecdn.com/gen/image/example.png"
+        window._show_unique_candidates((UniqueCandidate("The Example", icon),))
+        assert window.unique_name_combo.itemData(0) == "The Example"
+        assert window.unique_name_combo.itemData(0, Qt.UserRole + 1) == icon
+        assert window.unique_name_combo.iconSize() == QSize(48, 48)
+    finally:
+        window.close()
+
+
 def test_unique_variant_discriminator_can_be_selected(qapp):
     window = PoetoreWindow()
     try:

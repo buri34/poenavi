@@ -59,6 +59,7 @@ PYTHONPATH=. python scripts/build_poetore_metadata.py --refresh-lock --apply
 - 日本語matcher: `japanese`
 - Tier: `tier`, `minimum`, `maximum`, `required_level`, `generation`, `mod_id`
 - 防具ベース: `base_armour`配下の英語ベースタイプと`ar`／`ev`／`es`／`ward`の最小・最大値
+- 未鑑定Unique候補: `unique_icons`配下の英語Unique名とPoE公式CDNアイコンURL
 - 実アイテム解析: `stat_id`, `ref`, `confidence`, `roll_min/max`, `better`, `inverted`
 
 一致が一意なら確度1.0、同一日本語表記に複数候補があれば0.75、未解決は0.0とする。

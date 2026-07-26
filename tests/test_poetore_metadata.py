@@ -3,7 +3,7 @@ from pathlib import Path
 
 from src.poetore.metadata import (
     MetadataIndex, ModMetadata, OptionValue, pseudo_definitions, pseudo_relations,
-    diff_pseudo_payloads, unique_fixed_stats, validate_pseudo_payload,
+    diff_pseudo_payloads, unique_fixed_stats, unique_icon_url, validate_pseudo_payload,
 )
 from src.poetore.metadata_builder import (
     build_minimal_index, diff_minimal_indexes, excessive_removal, unresolved_trade_entries,
@@ -144,6 +144,20 @@ def test_builder_keeps_awakened_unique_fixed_stats_and_loader_distinguishes_miss
     path.write_text(json.dumps(payload), encoding="utf-8")
     assert unique_fixed_stats("WATCHER'S EYE", path) == frozenset(expected)
     assert unique_fixed_stats("No Metadata", path) is None
+
+
+def test_builder_keeps_official_unique_icon_url(tmp_path):
+    icon = "https://web.poecdn.com/gen/image/example/WatchersEye.png"
+    items = [json.dumps({
+        "name": "Watcher's Eye", "refName": "Watcher's Eye", "namespace": "UNIQUE",
+        "unique": {"base": "Prismatic Jewel"}, "icon": icon,
+    })]
+    payload = build_minimal_index([], {"result": []}, awakened_items=items)
+    assert payload["unique_icons"] == {"watcher's eye": icon}
+    path = tmp_path / "metadata.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    assert unique_icon_url("WATCHER'S EYE", path) == icon
+    assert unique_icon_url("No Metadata", path) is None
 
 
 def test_metadata_search_bounds_support_minimum_maximum_and_exact():

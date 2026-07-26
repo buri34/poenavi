@@ -54,6 +54,15 @@ def unique_fixed_stats(name: str, path: Path | None = None) -> frozenset[str] | 
     return frozenset(str(ref) for ref in records[key])
 
 
+def unique_icon_url(name: str, path: Path | None = None) -> str | None:
+    """固定済みAwakened itemsからPoE公式CDNのUniqueアイコンURLを返す。"""
+    path = (path or Path(os.environ.get("POETORE_METADATA_PATH", INDEX_PATH))).resolve()
+    if not name or not path.exists():
+        return None
+    value = _load_payload(str(path)).get("unique_icons", {}).get(name.strip().casefold())
+    return str(value) if value else None
+
+
 def pseudo_relations(path: Path | None = None) -> tuple[dict, ...]:
     """Awakened固定commitから機械抽出したpseudo間関係を返す。"""
     path = (path or PSEUDO_RELATIONS_PATH).resolve()

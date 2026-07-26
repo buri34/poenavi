@@ -108,6 +108,20 @@ def _unique_fixed_stats(items_lines: Iterable[str]) -> dict[str, list[str]]:
     return dict(sorted(result.items()))
 
 
+def _unique_icons(items_lines: Iterable[str]) -> dict[str, str]:
+    """AwakenedのUnique名とPoE公式CDNアイコンURLだけを抽出する。"""
+    result = {}
+    for line in items_lines:
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        name = str(row.get("refName", "")).strip()
+        icon = str(row.get("icon", "")).strip()
+        if row.get("namespace") == "UNIQUE" and name and icon:
+            result[name.casefold()] = icon
+    return dict(sorted(result.items()))
+
+
 def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
                         repoe_stats: dict | None = None,
                         repoe_mods: dict | None = None,
@@ -174,6 +188,7 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
         "base_armour": _base_armour(awakened_items),
         "gems": _gems(awakened_items),
         "unique_fixed_stats": _unique_fixed_stats(awakened_items),
+        "unique_icons": _unique_icons(awakened_items),
         "mods": records,
     }
 
@@ -202,6 +217,10 @@ def validate_minimal_index(payload: dict) -> dict:
                 or any(not isinstance(ref, str) or not ref.strip() for ref in fixed_stats)
                 or len(fixed_stats) != len(set(fixed_stats))):
             errors.append(f"invalid unique fixed stats: {unique_name}")
+    for unique_name, icon_url in payload.get("unique_icons", {}).items():
+        if (not unique_name or not isinstance(icon_url, str)
+                or not icon_url.startswith("https://web.poecdn.com/")):
+            errors.append(f"invalid unique icon: {unique_name}")
     keys: set[tuple[str, str]] = set()
     matchers: dict[tuple[str, str], list[str]] = {}
     for index, row in enumerate(mods):

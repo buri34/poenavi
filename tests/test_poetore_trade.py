@@ -11,10 +11,12 @@ from src.poetore.metadata import unique_fixed_stats
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.trade import (
     PRESET_BASE, PRESET_FINISHED, PriceListing, PriceResult, TradeApiError, TradeStatFilter,
+    UniqueCandidate,
     active_pc_league, available_pc_leagues, available_trade_presets, build_search_query,
     default_pc_league, elemental_dps, english_trade_identity,
     default_trade_currency, physical_dps, physical_dps_at_20_quality,
-    resolve_trade_stat_filters, search_prices, unique_candidates, unique_variants,
+    resolve_trade_stat_filters, search_prices, unique_candidate_details,
+    unique_candidates, unique_variants,
     unresolved_modifier_warnings, uses_dedicated_exact_preset, resolve_official_base_type,
     is_inscribed_ultimatum,
 )
@@ -1680,6 +1682,21 @@ def test_unique_candidates_come_from_official_item_data():
         "src.poetore.trade._request_json", return_value=(payload, {}),
     ):
         assert unique_candidates("Gold Amulet") == ("Another Example", "The Example")
+
+
+def test_unique_candidate_details_include_official_icon_urls():
+    payload = {"result": [{"entries": [
+        {"name": "The Example", "type": "Gold Amulet", "flags": {"unique": True}},
+    ]}]}
+    with patch("src.poetore.trade._item_entries_cache", None), patch(
+        "src.poetore.trade._request_json", return_value=(payload, {}),
+    ), patch(
+        "src.poetore.trade.unique_icon_url",
+        return_value="https://web.poecdn.com/example.png",
+    ):
+        assert unique_candidate_details("Gold Amulet") == (
+            UniqueCandidate("The Example", "https://web.poecdn.com/example.png"),
+        )
 
 
 def test_unique_variants_preserve_trade_discriminator():

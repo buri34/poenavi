@@ -14,6 +14,7 @@ from PySide6.QtGui import (
     QColor, QDesktopServices, QIcon, QIntValidator, QLinearGradient, QPainter,
     QPalette, QPen, QPixmap, QPolygonF,
 )
+from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide6.QtWidgets import (
     QAbstractItemView, QLayout,
     QApplication, QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton,
@@ -30,7 +31,7 @@ from .trade import (
     PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
     available_pc_leagues, available_trade_presets, default_pc_league, default_trade_currency,
     english_trade_identity, gem_metadata,
-    resolve_trade_stat_filters, search_prices, unique_candidates,
+    resolve_trade_stat_filters, search_prices, unique_candidate_details,
     unique_variants, unresolved_modifier_warnings, uses_dedicated_exact_preset,
     is_inscribed_ultimatum,
 )
@@ -746,6 +747,10 @@ class PoetoreWindow(QWidget):
         self._search_generation = 0
         self._active_item_key: str | None = None
         self._auto_search_queued = False
+        self._unique_icon_manager = QNetworkAccessManager(self)
+        self._unique_icon_manager.finished.connect(self._unique_icon_downloaded)
+        self._unique_icon_requests: dict[QNetworkReply, tuple[int, str]] = {}
+        self._unique_icon_cache: dict[str, QIcon] = {}
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         # PoENavi本体には入力透過（クリックスルー）機能があるため、
         # ぽえとれ側では常にマウス入力を受け取れる状態を明示する。
@@ -898,6 +903,7 @@ class PoetoreWindow(QWidget):
         unique_options = QHBoxLayout()
         self.unique_name_label = QLabel("未鑑定ユニーク候補:")
         self.unique_name_combo = QComboBox()
+        self.unique_name_combo.setIconSize(QSize(48, 48))
         self.unique_name_label.hide()
         self.unique_name_combo.hide()
         unique_options.addWidget(self.unique_name_label)
@@ -2260,13 +2266,13 @@ class PoetoreWindow(QWidget):
                     effective_filters, influence_filters, special_filters,
                 )
                 if item.rarity.casefold() in {"unique", "ユニーク"} and "unidentified" in item.flags and not trade_name:
-                    candidates = unique_candidates(self._trade_base_type or item.base_type)
+                    candidates = unique_candidate_details(self._trade_base_type or item.base_type)
                     if len(candidates) > 1:
                         self._trade_signals.unique_candidates_ready.emit(candidates)
                         return
                     if not candidates:
                         raise TradeApiError("未鑑定ユニークの候補を公式データから特定できませんでした。")
-                    resolved_trade_name = candidates[0]
+                    resolved_trade_name = candidates[0].name
                 else:
                     resolved_trade_name = trade_name
                 if resolved_trade_name and item.rarity.casefold() in {"unique", "ユニーク"}:
@@ -2880,13 +2886,41 @@ class PoetoreWindow(QWidget):
     def _show_unique_candidates(self, candidates):
         self.price_button.setEnabled(True)
         self.unique_name_combo.clear()
-        for name in candidates:
-            self.unique_name_combo.addItem(str(name), str(name))
+        for candidate in candidates:
+            name = str(getattr(candidate, "name", candidate))
+            icon_url = getattr(candidate, "icon_url", None)
+            self.unique_name_combo.addItem(name, name)
+            index = self.unique_name_combo.count() - 1
+            self.unique_name_combo.setItemData(index, icon_url, Qt.UserRole + 1)
+            if icon_url:
+                cached = self._unique_icon_cache.get(icon_url)
+                if cached is not None:
+                    self.unique_name_combo.setItemIcon(index, cached)
+                else:
+                    reply = self._unique_icon_manager.get(QNetworkRequest(QUrl(icon_url)))
+                    self._unique_icon_requests[reply] = (index, icon_url)
         self.unique_name_label.show()
         self.unique_name_combo.show()
         self.price_status.setText(
             f"同じベースの未鑑定ユニークが{len(candidates)}種類あります。候補を選んで「価格を検索」を押してください。"
         )
+
+    def _unique_icon_downloaded(self, reply: QNetworkReply):
+        request = self._unique_icon_requests.pop(reply, None)
+        try:
+            if request is None or reply.error() != QNetworkReply.NoError:
+                return
+            index, icon_url = request
+            pixmap = QPixmap()
+            if not pixmap.loadFromData(reply.readAll()):
+                return
+            icon = QIcon(pixmap)
+            self._unique_icon_cache[icon_url] = icon
+            if (index < self.unique_name_combo.count()
+                    and self.unique_name_combo.itemData(index, Qt.UserRole + 1) == icon_url):
+                self.unique_name_combo.setItemIcon(index, icon)
+        finally:
+            reply.deleteLater()
 
     def _show_unique_variants(self, variants):
         self.price_button.setEnabled(True)
