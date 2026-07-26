@@ -113,6 +113,22 @@ class ConfigManagerTest(unittest.TestCase):
         self.assertEqual(migrated["hotkeys"]["exit"], "Ctrl+E")
         self.assertEqual(migrated["hotkeys"]["search_string_test"], "Ctrl+S")
 
+    def test_schema_v6_moves_old_gem_shop_default_to_left_alt(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 5,
+            "hotkeys": {"gem_shop_search": "CapsLock"},
+        })
+
+        self.assertEqual(migrated["hotkeys"]["gem_shop_search"], "Left Alt")
+
+    def test_schema_v6_preserves_custom_gem_shop_hotkey(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 5,
+            "hotkeys": {"gem_shop_search": "F2"},
+        })
+
+        self.assertEqual(migrated["hotkeys"]["gem_shop_search"], "F2")
+
     def test_schema_v2_migrates_only_old_mini_navi_defaults(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 1,

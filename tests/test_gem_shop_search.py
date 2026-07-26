@@ -10,10 +10,12 @@ from PySide6.QtWidgets import QApplication, QLabel, QTabWidget
 
 from src.ui.gem_tracker_widget import GemTrackerWidget
 from src.ui.main_window import (
+    DEFAULT_GEM_SHOP_SEARCH_HOTKEY,
     MainWindow,
     MiniNaviOverlay,
     SearchStringPasteTestDialog,
     VendorSearchPresetDialog,
+    _listener_hotkey_name,
 )
 from src.ui.settings_dialog import (
     SettingsDialog,
@@ -38,14 +40,21 @@ class GemShopSearchTest(unittest.TestCase):
     def setUpClass(cls):
         cls.app = QApplication.instance() or QApplication([])
 
-    def test_default_config_sets_capslock_for_gem_shop_search(self):
+    def test_default_config_sets_left_alt_for_gem_shop_search(self):
         config_path = Path(__file__).parents[1] / "default_config.json"
         with config_path.open(encoding="utf-8") as file:
             config = json.load(file)
 
-        self.assertEqual(config["hotkeys"]["gem_shop_search"], "CapsLock")
+        self.assertEqual(DEFAULT_GEM_SHOP_SEARCH_HOTKEY, "Left Alt")
+        self.assertEqual(config["hotkeys"]["gem_shop_search"], "Left Alt")
+        self.assertEqual(_listener_hotkey_name("Left Alt"), "alt_l")
         self.assertTrue(config["gem_shop_search_include_reward_purchases"])
         self.assertEqual(config["gem_shop_search_hold_seconds"], 0.4)
+
+    def test_settings_fallback_uses_left_alt_for_gem_shop_search(self):
+        dialog = SettingsDialog(current_config={})
+
+        self.assertEqual(dialog.gem_shop_search_btn.key_text, "Left Alt")
 
     def test_custom_english_term_override_replaces_the_automatic_term(self):
         plan = [{"act": 1, "gems": [{"name": "ground slam", "type": "vendor"}]}]

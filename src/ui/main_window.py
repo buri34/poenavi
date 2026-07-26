@@ -66,11 +66,16 @@ from src.ui.window_flags import (
 from src.ui.vendor_search_dialog import VendorSearchPresetDialog
 
 DEFAULT_CLICK_THROUGH_HOTKEY = "F6"
+DEFAULT_GEM_SHOP_SEARCH_HOTKEY = "Left Alt"
 
 
 def _listener_hotkey_name(key_text: str) -> str:
     """設定画面の表記をpynputのキー名表記へ揃える。"""
-    return str(key_text).lower().replace("capslock", "caps_lock")
+    normalized = str(key_text).lower().replace(" ", "_").replace("capslock", "caps_lock")
+    return {
+        "left_alt": "alt_l",
+        "right_alt": "alt_r",
+    }.get(normalized, normalized)
 
 
 def _hotkey_key_name(key) -> str | None:
@@ -2995,7 +3000,9 @@ class MainWindow(QMainWindow):
                 key = hotkeys.get(action, default)
                 if key and key != "none":
                     self.hotkey_map[_listener_hotkey_name(key)] = action
-            self._gem_shop_search_key = _listener_hotkey_name(hotkeys.get("gem_shop_search", "CapsLock"))
+            self._gem_shop_search_key = _listener_hotkey_name(
+                hotkeys.get("gem_shop_search", DEFAULT_GEM_SHOP_SEARCH_HOTKEY)
+            )
             
             print(f"Registering hotkeys: {self.hotkey_map}")
             
@@ -3010,7 +3017,6 @@ class MainWindow(QMainWindow):
 
                     if key_name == self._gem_shop_search_key:
                         self.hotkey_signal.emit("gem_shop_search_pressed")
-                        return
                     
                     if key_name in {"alt", "alt_l", "alt_r", "alt_gr"}:
                         pressed_modifiers.add("alt")
@@ -3024,6 +3030,11 @@ class MainWindow(QMainWindow):
 
                     combo = "+".join([modifier for modifier in ("ctrl", "alt", "shift") if modifier in pressed_modifiers] + [key_name])
                     if combo in self.hotkey_map:
+                        if (
+                            "alt" in pressed_modifiers
+                            and self._gem_shop_search_key in {"alt", "alt_l", "alt_r", "alt_gr"}
+                        ):
+                            self.hotkey_signal.emit("gem_shop_search_released")
                         if combo not in triggered_combos:
                             triggered_combos.add(combo)
                             self.hotkey_signal.emit(self.hotkey_map[combo])
