@@ -2917,11 +2917,11 @@ def search_prices(
             web_query["type"]["option"] = localized_type
         else:
             web_query["type"] = localized_type
-    localized_name = item.name.strip()
+    localized_name = str(trade_name or item.name or "").strip()
     if _is_unique(item):
-        # 日本語クライアントでも詳細コピーのUnique名は英語になる場合がある。
-        # 日本語Tradeへ英語名を渡すと検索状態の読込が失敗するため、
-        # 公式itemsの日英対応から正式な日本語Unique名へ変換する。
+        # 未鑑定Uniqueではitem.nameがベースタイプになるため、候補選択で確定した
+        # trade_nameを正本にする。日本語Tradeへは公式itemsの日英対応から得た
+        # 正式な日本語Unique名を渡す。
         localized_name = _japanese_trade_item_name(localized_name) or localized_name
     if "name" in web_query and localized_name:
         if isinstance(web_query["name"], dict):

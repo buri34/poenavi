@@ -2376,6 +2376,55 @@ def test_search_result_exposes_japanese_trade_url_and_reuses_cache():
     assert "qid" not in first.web_url
 
 
+@pytest.mark.parametrize(("english_name", "japanese_name"), (
+    ("Eternal Damnation", "永遠の破滅"),
+    ("Voll's Devotion", "ヴォールの献身"),
+))
+def test_unidentified_unique_candidate_is_kept_in_japanese_trade_url(
+    english_name, japanese_name,
+):
+    _trade_response_cache.clear()
+    item = parse_item_text("""アイテムクラス: アミュレット
+レアリティ: ユニーク
+瑪瑙のアミュレット
+--------
+アイテムレベル: 85
+--------
+未鑑定
+""")
+    response = ({"id": "qid", "result": [], "total": 0}, {})
+    with (
+        patch("src.poetore.trade._request_json", return_value=response),
+        patch(
+            "src.poetore.trade._english_trade_item_type",
+            return_value="Agate Amulet",
+        ),
+        patch(
+            "src.poetore.trade._japanese_trade_item_type",
+            return_value="瑪瑙のアミュレット",
+        ),
+        patch(
+            "src.poetore.trade._japanese_trade_item_name",
+            return_value=japanese_name,
+        ) as localize_name,
+    ):
+        result = search_prices(
+            item,
+            "Agate Amulet",
+            "Standard",
+            trade_name=english_name,
+            include_unidentified=True,
+        )
+
+    web_payload = json.loads(parse_qs(urlsplit(result.web_url).query)["q"][0])
+    assert web_payload["query"]["name"] == japanese_name
+    assert web_payload["query"]["type"] == "瑪瑙のアミュレット"
+    assert web_payload["query"]["filters"]["misc_filters"]["filters"]["identified"] == {
+        "option": "false",
+    }
+    localize_name.assert_called_with(english_name)
+
+
 def test_magic_base_jewel_web_url_does_not_add_affixed_name_as_type():
     _trade_response_cache.clear()
     item = parse_item_text("""アイテムクラス: ジュエル
