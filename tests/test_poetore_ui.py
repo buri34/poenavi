@@ -551,6 +551,10 @@ def test_poetore_search_range_is_persisted(qapp):
     window = PoetoreWindow(app_config=config, save_config=saved)
     try:
         assert window.search_range_combo.currentData() == 20
+        assert window.search_range_combo.currentText() == "Mod数値：±20%"
+        assert "読取値100・±10% → 90～110で検索" in (
+            window.search_range_combo.toolTip()
+        )
         window.search_range_combo.setCurrentIndex(
             window.search_range_combo.findData(5)
         )
@@ -563,6 +567,10 @@ def test_poetore_search_range_is_persisted(qapp):
 def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
     window = PoetoreWindow()
     try:
+        assert "Pseudo" not in window.mod_sources_toggle.toolTip()
+        assert "複数の数値をまとめた検索条件" in (
+            window.mod_sources_toggle.toolTip()
+        )
         window._populate_stat_filters((
             TradeStatFilter(
                 "pseudo.life", "最大ライフ合計", 90, "pseudo", True,

@@ -861,7 +861,11 @@ class PoetoreWindow(QWidget):
         top_options.addWidget(self.trade_preset_combo, 1)
         self.search_range_combo = QComboBox()
         for percent in (0, 5, 10, 15, 20, 30, 50):
-            label = "検索値：完全一致" if percent == 0 else f"検索幅：±{percent}%"
+            label = (
+                "Mod数値：完全一致"
+                if percent == 0
+                else f"Mod数値：±{percent}%"
+            )
             self.search_range_combo.addItem(label, percent)
         saved_range = self._app_config.get("poetore", {}).get("search_stat_range", 10)
         try:
@@ -871,7 +875,9 @@ class PoetoreWindow(QWidget):
         index = self.search_range_combo.findData(saved_range)
         self.search_range_combo.setCurrentIndex(index if index >= 0 else 2)
         self.search_range_combo.setToolTip(
-            "Modの読取値から検索する範囲を共通設定します。ユニークは可変幅を基準にします"
+            "各Modの読取値を基準に、検索する数値の許容範囲を設定します。\n"
+            "例：読取値100・±10% → 90～110で検索\n"
+            "ユニーク品はModの可変範囲を基準に調整します。"
         )
         self.search_range_combo.currentIndexChanged.connect(self._search_range_changed)
         top_options.addWidget(self.search_range_combo, 1)
@@ -1201,7 +1207,8 @@ class PoetoreWindow(QWidget):
         self.mod_sources_toggle = QPushButton("Mod構成を表示")
         self.mod_sources_toggle.setCheckable(True)
         self.mod_sources_toggle.setToolTip(
-            "Pseudo・Property検索条件を構成する元Mod原文と選択理由を表示します"
+            "合計ライフや防御力など、複数の数値をまとめた検索条件について、\n"
+            "計算に使われた元のMod文章と、その条件が選ばれた理由を表示します。"
         )
         self.mod_sources_toggle.toggled.connect(self._toggle_mod_sources)
         mod_conditions_actions = QHBoxLayout()
