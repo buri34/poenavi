@@ -86,7 +86,7 @@ def test_f4_key_repeat_opens_the_vendor_search_menu_once(monkeypatch):
     assert emitted == ["search_string_test"]
 
 
-def test_left_alt_alias_starts_and_releases_gem_shop_hold(monkeypatch):
+def test_f2_starts_and_releases_gem_shop_hold(monkeypatch):
     callbacks = {}
 
     class FakeListener:
@@ -102,16 +102,16 @@ def test_left_alt_alias_starts_and_releases_gem_shop_hold(monkeypatch):
 
     emitted = []
     window = SimpleNamespace(
-        config={"hotkeys": {"gem_shop_search": "Left Alt"}},
+        config={"hotkeys": {"gem_shop_search": "F2"}},
         keyboard_listener=None,
         hotkey_signal=SimpleNamespace(emit=emitted.append),
     )
     monkeypatch.setattr("src.ui.main_window.pynput_keyboard.Listener", FakeListener)
 
     MainWindow.register_hotkeys(window)
-    left_alt_alias = SimpleNamespace(name="alt")
-    callbacks["on_press"](left_alt_alias)
-    callbacks["on_release"](left_alt_alias)
+    f2 = SimpleNamespace(name="f2")
+    callbacks["on_press"](f2)
+    callbacks["on_release"](f2)
 
     assert emitted == ["gem_shop_search_pressed", "gem_shop_search_released"]
 

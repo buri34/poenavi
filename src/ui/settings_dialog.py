@@ -1624,7 +1624,7 @@ class SettingsDialog(QDialog):
             "monastery": "F12",
             "search_string_test": "F4",
             "poetore_capture": "alt+d",
-            "gem_shop_search": "Left Alt",
+            "gem_shop_search": "F2",
             "cheat_sheets_toggle": "shift+space",
         })
         self.poe_version = self.current_config.get("poe_version", POE1)
@@ -1832,7 +1832,7 @@ class SettingsDialog(QDialog):
 
         h_layout11 = QHBoxLayout()
         h_layout11.addWidget(QLabel("ジェムショップ検索（長押し）:"))
-        self.gem_shop_search_btn = HotkeyButton(self.hotkeys.get("gem_shop_search", "Left Alt"))
+        self.gem_shop_search_btn = HotkeyButton(self.hotkeys.get("gem_shop_search", "F2"))
         h_layout11.addWidget(self.gem_shop_search_btn)
         group_layout.addLayout(h_layout11)
 

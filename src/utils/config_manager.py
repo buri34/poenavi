@@ -14,7 +14,7 @@ class ConfigManager:
     DEFAULT_CONFIG_FILE = "default_config.json"
     APP_NAME = "PoENavi"
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
-    CURRENT_SCHEMA_VERSION = 6
+    CURRENT_SCHEMA_VERSION = 7
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -428,6 +428,16 @@ class ConfigManager:
                 # CapsLock以外へ変更済みの割り当ては保持する。
                 if str(hotkeys.get("gem_shop_search", "")).lower() == "capslock":
                     hotkeys["gem_shop_search"] = "Left Alt"
+
+        if schema_version < 7:
+            hotkeys = migrated.get("hotkeys")
+            if isinstance(hotkeys, dict):
+                # 未公開機能の旧既定値だけをF2へ移す。
+                if str(hotkeys.get("gem_shop_search", "")).lower() == "left alt":
+                    hotkeys["gem_shop_search"] = "F2"
+                    # F2を隠れ家へ割り当てていた場合は重複を避ける。
+                    if str(hotkeys.get("hideout", "")).lower() == "f2":
+                        hotkeys["hideout"] = "none"
 
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)

@@ -66,7 +66,7 @@ from src.ui.window_flags import (
 from src.ui.vendor_search_dialog import VendorSearchPresetDialog
 
 DEFAULT_CLICK_THROUGH_HOTKEY = "F6"
-DEFAULT_GEM_SHOP_SEARCH_HOTKEY = "Left Alt"
+DEFAULT_GEM_SHOP_SEARCH_HOTKEY = "F2"
 
 
 def _listener_hotkey_name(key_text: str) -> str:

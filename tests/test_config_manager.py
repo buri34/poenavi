@@ -113,13 +113,13 @@ class ConfigManagerTest(unittest.TestCase):
         self.assertEqual(migrated["hotkeys"]["exit"], "Ctrl+E")
         self.assertEqual(migrated["hotkeys"]["search_string_test"], "Ctrl+S")
 
-    def test_schema_v6_moves_old_gem_shop_default_to_left_alt(self):
+    def test_old_capslock_gem_shop_default_reaches_current_f2_default(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 5,
             "hotkeys": {"gem_shop_search": "CapsLock"},
         })
 
-        self.assertEqual(migrated["hotkeys"]["gem_shop_search"], "Left Alt")
+        self.assertEqual(migrated["hotkeys"]["gem_shop_search"], "F2")
 
     def test_schema_v6_preserves_custom_gem_shop_hotkey(self):
         migrated = ConfigManager._migrate_config({
@@ -128,6 +128,30 @@ class ConfigManagerTest(unittest.TestCase):
         })
 
         self.assertEqual(migrated["hotkeys"]["gem_shop_search"], "F2")
+
+    def test_schema_v7_moves_left_alt_to_f2_and_clears_conflicting_hideout(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 6,
+            "hotkeys": {
+                "gem_shop_search": "Left Alt",
+                "hideout": "F2",
+            },
+        })
+
+        self.assertEqual(migrated["hotkeys"]["gem_shop_search"], "F2")
+        self.assertEqual(migrated["hotkeys"]["hideout"], "none")
+
+    def test_schema_v7_preserves_custom_gem_shop_and_hideout_hotkeys(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 6,
+            "hotkeys": {
+                "gem_shop_search": "F3",
+                "hideout": "F2",
+            },
+        })
+
+        self.assertEqual(migrated["hotkeys"]["gem_shop_search"], "F3")
+        self.assertEqual(migrated["hotkeys"]["hideout"], "F2")
 
     def test_schema_v2_migrates_only_old_mini_navi_defaults(self):
         migrated = ConfigManager._migrate_config({
