@@ -194,6 +194,8 @@ class MainWindow(QMainWindow):
             widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         if record.get("detach_button") is not None:
             record["detach_button"].hide()
+        if record.get("minimize_button") is not None:
+            record["minimize_button"].hide()
 
         panel_window = DetachedPanelWindow(
             panel_id,
@@ -226,6 +228,8 @@ class MainWindow(QMainWindow):
             self._restore_guide_lower_section()
         if record.get("detach_button") is not None:
             record["detach_button"].show()
+        if record.get("minimize_button") is not None:
+            record["minimize_button"].show()
         panel_window._returning = True
         panel_window.close()
         panel_window.deleteLater()

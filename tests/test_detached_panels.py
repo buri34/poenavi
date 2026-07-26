@@ -20,6 +20,7 @@ def _window():
     layout = QVBoxLayout(host)
     content = QWidget()
     layout.addWidget(content)
+    minimize_button = QPushButton("─ 最小化")
 
     window = MainWindow.__new__(MainWindow)
     QMainWindow.__init__(window)
@@ -32,6 +33,7 @@ def _window():
             "index": 0,
             "title": "タイマー",
             "detach_button": None,
+            "minimize_button": minimize_button,
         }
     }
     window.detached_panel_windows = {}
@@ -46,11 +48,13 @@ def test_detach_panel_removes_content_from_main_layout_and_restore_returns_it(mo
 
     assert layout.indexOf(content) == -1
     assert window.detached_panel_windows["timer"].content is content
+    assert window.panel_registry["timer"]["minimize_button"].isHidden()
 
     window.restore_panel("timer")
 
     assert layout.indexOf(content) == 0
     assert window.detached_panel_windows == {}
+    assert not window.panel_registry["timer"]["minimize_button"].isHidden()
 
 
 def test_detached_panel_persists_geometry_when_moved_or_resized(monkeypatch):
