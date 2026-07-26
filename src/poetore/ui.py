@@ -1199,7 +1199,8 @@ class PoetoreWindow(QWidget):
         self.hidden_mods_toggle = QPushButton("隠し候補を表示")
         self.hidden_mods_toggle.setCheckable(True)
         self.hidden_mods_toggle.setToolTip(
-            "固定値などの理由でAwakenedが初期非表示にする検索候補を切り替えます"
+            "数値が固定され、同じアイテム同士の価格比較に影響しにくいため、\n"
+            "通常は隠している検索候補を表示します。"
         )
         self.hidden_mods_toggle.toggled.connect(self._toggle_hidden_mods)
         self.mod_sources_toggle = QPushButton("Mod構成を表示")
