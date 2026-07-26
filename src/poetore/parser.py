@@ -166,16 +166,9 @@ _CATEGORY_HELP_LINES = {
     },
 }
 
-# Replica固有Modなど、公式Trade statは「増加」を正方向として持つ一方、
-# 詳細コピーでは同じstatが「減少」として出るものを明示的に正規化する。
-# 広範な語句置換は別statの誤照合を招くため、確認済みテンプレートだけを扱う。
+# 方向語だけでは扱えない不規則な反転表現を明示的に正規化する。
+# 「減少する／低下する」はMetadataIndexの一意照合で汎用的に扱う。
 _DIRECTIONAL_STAT_ALIASES = {
-    normalize_stat_text("アイテムおよびジェムの要求能力値が#%減少する"):
-        "アイテムおよびジェムの要求能力値が#%増加する",
-    normalize_stat_text("持続時間が#%減少する"):
-        "持続時間が#%増加する",
-    normalize_stat_text("左の指輪スロット: 受けている呪いの効果が#%減少する"):
-        "左の指輪スロット: 受けている呪いの効果が#%増加する",
     normalize_stat_text("倒した敵1体ごとに#のマナを失う"):
         "倒した敵1体ごとに#のマナを獲得する",
 }
@@ -555,8 +548,17 @@ def parse_item_text(text: str) -> ParsedItem:
             direction_alias_key = None
             if metadata is None:
                 direction_alias_key = normalize_stat_text(metadata_text)
-                alias = _DIRECTIONAL_STAT_ALIASES.get(direction_alias_key)
-                if alias:
+                metadata, option, confidence = (
+                    default_metadata_index().match_directional_inverse(
+                        metadata_text, kind,
+                    )
+                )
+                direction_inverted = metadata is not None
+                alias = (
+                    _DIRECTIONAL_STAT_ALIASES.get(direction_alias_key)
+                    if metadata is None else None
+                )
+                if metadata is None and alias:
                     metadata, option, confidence = default_metadata_index().match_with_option(
                         alias, kind,
                     )

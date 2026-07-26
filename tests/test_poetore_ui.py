@@ -2772,6 +2772,16 @@ Tenacious Blood Sap Tincture of Battering
 { サフィックスモッド 「殴打の」 (ティア: 3) }
 近接武器は30(30-39)%の確率で敵物理ダメージ軽減を無視する
 """, "explicit.stat_116232170"),
+    ("""アイテムクラス: ユーティリティフラスコ
+レアリティ: ユニーク
+オロスの決意
+ルビーフラスコ
+--------
+アイテムレベル: 84
+--------
+{ ユニークモッド }
+持続時間が36(39-35)%低下する
+""", "explicit.stat_1256719186"),
 ])
 def test_current_japanese_flask_and_tincture_have_no_unresolved_warning(
     qapp, text, expected_stat_id,

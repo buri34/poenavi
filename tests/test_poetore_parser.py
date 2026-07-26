@@ -392,6 +392,23 @@ Onyx Amulet
         self.assertTrue(requirements.inverted)
         self.assertEqual((requirements.roll_min, requirements.roll_max), (5.0, 10.0))
 
+    def test_unique_flask_lower_duration_resolves_generic_signed_stat(self):
+        item = parse_item_text("""アイテムクラス: ユーティリティフラスコ
+レアリティ: ユニーク
+オロスの決意
+ルビーフラスコ
+--------
+アイテムレベル: 84
+--------
+{ ユニークモッド }
+持続時間が36(39-35)%低下する
+""")
+        duration = item.modifiers[0]
+        self.assertEqual(duration.stat_id, "explicit.stat_1256719186")
+        self.assertEqual(duration.ref, "#% increased Duration")
+        self.assertTrue(duration.inverted)
+        self.assertEqual((duration.roll_min, duration.roll_max), (35.0, 39.0))
+
     def test_unique_flavour_text_after_separator_is_not_parsed_as_modifiers(self):
         item = parse_item_text("""アイテムクラス: アミュレット
 レアリティ: ユニーク

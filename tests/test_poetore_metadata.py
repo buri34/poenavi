@@ -172,6 +172,35 @@ def test_metadata_index_matches_normalized_japanese_detail_copy():
     assert confidence == 1.0
 
 
+def test_metadata_index_matches_unique_single_value_directional_inverse():
+    index = MetadataIndex((ModMetadata(
+        "#% increased Duration", "explicit.duration", "explicit",
+        ("持続時間が#%増加する",),
+    ),))
+    record, option, confidence = index.match_directional_inverse(
+        "持続時間が36(39-35)%低下する", "explicit",
+    )
+    assert record and record.stat_id == "explicit.duration"
+    assert option is None
+    assert confidence == 1.0
+
+
+def test_metadata_index_rejects_ambiguous_or_multi_value_directional_inverse():
+    records = (
+        ModMetadata("first", "explicit.first", "explicit", ("効果が#%増加する",)),
+        ModMetadata("second", "explicit.second", "explicit", ("効果が#%増加する",)),
+        ModMetadata(
+            "per attribute", "explicit.attribute", "explicit",
+            ("筋力250ごとに受けるダメージが#%増加する",),
+        ),
+    )
+    index = MetadataIndex(records)
+    assert index.match_directional_inverse("効果が20%低下する", "explicit")[0] is None
+    assert index.match_directional_inverse(
+        "筋力250ごとに受けるダメージが1%低下する", "explicit",
+    )[0] is None
+
+
 def test_builder_and_index_match_option_by_shared_trade_option_id():
     awakened = [json.dumps({
         "ref": "Allocates #", "better": 0,

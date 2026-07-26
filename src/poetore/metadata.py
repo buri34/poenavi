@@ -226,6 +226,32 @@ class MetadataIndex:
             return matches[0], None, 0.75
         return None, None, 0.0
 
+    def match_directional_inverse(
+        self, text: str, kind: str,
+    ) -> tuple[ModMetadata | None, OptionValue | None, float]:
+        """負方向の日本語表記を、同じ文型の正方向statへ安全に照合する。
+
+        公式Tradeが ``increased`` statの負数として持つModは、日本語の詳細
+        コピーでは「減少する」「低下する」と表示されることがある。数値位置が
+        一つで、置換後の候補が一意な場合だけ対応させる。
+        """
+        normalized = normalize_stat_text(text)
+        if normalized.count("#") != 1:
+            return None, None, 0.0
+        for negative in ("減少する", "低下する"):
+            if negative not in normalized:
+                continue
+            candidate = normalized.replace(negative, "増加する")
+            key = ("explicit" if kind in {"prefix", "suffix"} else kind, candidate)
+            option_matches = self._by_option.get(key, ())
+            matches = self._by_match.get(key, ())
+            if len(option_matches) == 1 and not matches:
+                record, option = option_matches[0]
+                return record, option, 1.0
+            if len(matches) == 1 and not option_matches:
+                return matches[0], None, 1.0
+        return None, None, 0.0
+
     @classmethod
     def load(cls, path: Path = INDEX_PATH) -> "MetadataIndex":
         if not path.exists():
