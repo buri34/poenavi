@@ -15,6 +15,7 @@ from src.ui.main_window import (
     MiniNaviOverlay,
     SearchStringPasteTestDialog,
     VendorSearchPresetDialog,
+    _gem_shop_hotkey_matches,
     _listener_hotkey_name,
 )
 from src.ui.settings_dialog import (
@@ -48,6 +49,9 @@ class GemShopSearchTest(unittest.TestCase):
         self.assertEqual(DEFAULT_GEM_SHOP_SEARCH_HOTKEY, "Left Alt")
         self.assertEqual(config["hotkeys"]["gem_shop_search"], "Left Alt")
         self.assertEqual(_listener_hotkey_name("Left Alt"), "alt_l")
+        self.assertTrue(_gem_shop_hotkey_matches("alt_l", "alt"))
+        self.assertTrue(_gem_shop_hotkey_matches("alt_l", "alt_l"))
+        self.assertFalse(_gem_shop_hotkey_matches("alt_l", "alt_r"))
         self.assertTrue(config["gem_shop_search_include_reward_purchases"])
         self.assertEqual(config["gem_shop_search_hold_seconds"], 0.4)
 

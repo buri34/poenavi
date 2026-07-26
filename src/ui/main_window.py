@@ -101,6 +101,15 @@ def _hotkey_key_name(key) -> str | None:
     return None
 
 
+def _gem_shop_hotkey_matches(configured: str, actual: str) -> bool:
+    """pynputで別名になる左Altなどを同じ物理キーとして比較する。"""
+    if configured == "alt_l":
+        return actual in {"alt", "alt_l"}
+    if configured == "alt_r":
+        return actual in {"alt_r", "alt_gr"}
+    return configured == actual
+
+
 class MainWindow(QMainWindow):
     # Qt may call an overridden showEvent from QMainWindow.__init__ before
     # this class' __init__ body can initialize instance attributes.
@@ -3015,7 +3024,7 @@ class MainWindow(QMainWindow):
                     if key_name is None:
                         return
 
-                    if key_name == self._gem_shop_search_key:
+                    if _gem_shop_hotkey_matches(self._gem_shop_search_key, key_name):
                         self.hotkey_signal.emit("gem_shop_search_pressed")
                     
                     if key_name in {"alt", "alt_l", "alt_r", "alt_gr"}:
@@ -3052,7 +3061,7 @@ class MainWindow(QMainWindow):
                 key_name = _hotkey_key_name(key)
                 if key_name is None:
                     return
-                if key_name == self._gem_shop_search_key:
+                if _gem_shop_hotkey_matches(self._gem_shop_search_key, key_name):
                     self.hotkey_signal.emit("gem_shop_search_released")
                 if key_name in {"alt", "alt_l", "alt_r", "alt_gr"}:
                     pressed_modifiers.discard("alt")
