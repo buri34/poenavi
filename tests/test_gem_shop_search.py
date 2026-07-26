@@ -97,7 +97,7 @@ class GemShopSearchTest(unittest.TestCase):
         settings = SettingsDialog(
             current_config={"gem_shop_search_term_overrides": {"momentum support": "moment"}}
         )
-        self.assertEqual(settings.size().width(), 610)
+        self.assertEqual(settings.size().width(), 630)
         tabs = settings.findChild(QTabWidget)
         self.assertEqual(tabs.tabText(tabs.count() - 2), "Regex短縮設定")
         self.assertEqual(tabs.tabText(tabs.count() - 1), "アプリ情報")

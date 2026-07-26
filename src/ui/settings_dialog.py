@@ -1609,7 +1609,7 @@ class SettingsDialog(QDialog):
     def __init__(self, parent=None, current_config=None):
         super().__init__(parent)
         self.setWindowTitle("設定")
-        self.resize(610, 600)
+        self.resize(630, 600)
         self.setStyleSheet(Styles.MAIN_WINDOW)
         
         self.current_config = current_config or {}
