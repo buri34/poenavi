@@ -319,16 +319,16 @@ class MainWindow(QMainWindow):
         for widget in header_widgets:
             header_layout.addWidget(widget)
 
-        detach_button = QPushButton("↗ 切り離す")
-        detach_button.setStyleSheet(Styles.BUTTON)
-        detach_button.setCursor(QCursor(Qt.PointingHandCursor))
-        detach_button.clicked.connect(lambda: self.detach_panel(panel_id))
-        header_layout.addWidget(detach_button)
         minimize_button = QPushButton("─ 最小化")
         minimize_button.setStyleSheet(Styles.BUTTON)
         minimize_button.setCursor(QCursor(Qt.PointingHandCursor))
         minimize_button.clicked.connect(lambda: self.minimize_panel(panel_id))
         header_layout.addWidget(minimize_button)
+        detach_button = QPushButton("↗ 切り離す")
+        detach_button.setStyleSheet(Styles.BUTTON)
+        detach_button.setCursor(QCursor(Qt.PointingHandCursor))
+        detach_button.clicked.connect(lambda: self.detach_panel(panel_id))
+        header_layout.addWidget(detach_button)
         panel_layout.addWidget(header_widget)
 
         for widget in widgets[1:]:

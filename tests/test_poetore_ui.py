@@ -1719,6 +1719,27 @@ Map (Tier 16)
         assert detailed_ids["property.map_tier"].min_value == 16.0
         assert detailed_ids["property.map_tier"].max_value == 16.0
 
+        nightmare_map = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+勝利の航海
+ナイトメアマップ
+--------
+アイテム数量: +96% (augmented)
+--------
+アイテムレベル: 85
+--------
+モンスターレベル：83
+""")
+        window._trade_base_type = "Nightmare Map"
+        window._configure_special_filter_chips(nightmare_map)
+        assert not window.nightmare_map_chip.isHidden()
+        assert window.nightmare_map_chip.text() == "ナイトメア"
+        assert not window.nightmare_map_chip.isEnabled()
+        assert window.map_tier_chip.isHidden()
+        assert "property.map_tier" not in {
+            row.stat_id for row in window._selected_special_chip_filters()
+        }
+
         detailed_blighted_map = parse_item_text("""アイテムクラス: マップ
 レアリティ: レア
 Glyph Stone
@@ -1989,7 +2010,7 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
     window = PoetoreWindow()
     try:
         assert tuple(name for name, _widget in window._filter_chips) == (
-            "links", "map_tier", "completion_reward", "area_level", "heist_wings",
+            "links", "nightmare_map", "map_tier", "completion_reward", "area_level", "heist_wings",
             "heist_job", "heist_target", "cluster_enchant",
             "cluster_passives", "cluster_sockets", "blighted", "item_level",
             "base_percentile", "gem_variant", "gem_level", "quality",

@@ -317,9 +317,9 @@ def test_register_detachable_panel_places_button_on_title_row():
     record = window.panel_registry["timer"]
     header_layout = record["header_widget"].layout()
     assert header_layout.indexOf(title) == 0
-    assert header_layout.indexOf(panel_controls) < header_layout.indexOf(record["detach_button"])
+    assert header_layout.indexOf(panel_controls) < header_layout.indexOf(record["minimize_button"])
     assert header_layout.indexOf(record["detach_button"]) >= 0
-    assert header_layout.indexOf(record["minimize_button"]) > header_layout.indexOf(record["detach_button"])
+    assert header_layout.indexOf(record["minimize_button"]) < header_layout.indexOf(record["detach_button"])
     assert record["minimize_button"].text() == "─ 最小化"
     assert record["content"].layout().count() == 2
 

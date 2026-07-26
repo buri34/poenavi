@@ -1025,6 +1025,10 @@ class PoetoreWindow(QWidget):
         self.foil_chip.hide()
         self.map_tier_chip = _NumericFilterChip("Tier", 1, 17)
         self.map_tier_chip.setFixedWidth(116)
+        self.nightmare_map_chip = QPushButton("ナイトメア")
+        self.nightmare_map_chip.setObjectName("readonlyFilterChip")
+        self.nightmare_map_chip.setEnabled(False)
+        self.nightmare_map_chip.hide()
         self.base_percentile_chip = _NumericFilterChip(
             "ベース防御値", 0, 100, suffix="%",
         )
@@ -1081,6 +1085,7 @@ class PoetoreWindow(QWidget):
         self.mirrored_combo.hide()
         self._filter_chips = (
             ("links", self.links_tag),
+            ("nightmare_map", self.nightmare_map_chip),
             ("map_tier", self.map_tier_chip),
             ("completion_reward", self.completion_reward_chip),
             ("area_level", self.area_level_chip),
@@ -2648,6 +2653,15 @@ class PoetoreWindow(QWidget):
 
         self._configure_logbook_areas(item)
 
+        map_identity = " ".join(filter(None, (
+            item.name, item.base_type, self._trade_base_type,
+        ))).casefold()
+        is_nightmare_map = (
+            item.category == "map"
+            and ("nightmare map" in map_identity or "ナイトメアマップ" in map_identity)
+        )
+        self.nightmare_map_chip.setVisible(is_nightmare_map)
+
         numeric = (
             (self.map_tier_chip, "property.map_tier", True),
             (self.base_percentile_chip, "property.base_percentile", False),
@@ -2656,7 +2670,9 @@ class PoetoreWindow(QWidget):
         )
         for chip, stat_id, exact in numeric:
             row = by_id.get(stat_id)
-            chip.setVisible(row is not None)
+            chip.setVisible(row is not None and not (
+                chip is self.map_tier_chip and is_nightmare_map
+            ))
             if row is not None:
                 # Map Tierは完全一致だが、同じ値を2欄へ重複表示しない。
                 # 選択条件へ戻す段階でmin=maxに復元する。
