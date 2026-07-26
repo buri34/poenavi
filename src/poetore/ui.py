@@ -863,7 +863,7 @@ class PoetoreWindow(QWidget):
             label = (
                 "Mod数値：完全一致"
                 if percent == 0
-                else f"Mod数値：±{percent}%"
+                else f"Mod数値：-{percent}%まで許容"
             )
             self.search_range_combo.addItem(label, percent)
         saved_range = self._app_config.get("poetore", {}).get("search_stat_range", 10)
@@ -874,8 +874,8 @@ class PoetoreWindow(QWidget):
         index = self.search_range_combo.findData(saved_range)
         self.search_range_combo.setCurrentIndex(index if index >= 0 else 2)
         self.search_range_combo.setToolTip(
-            "各Modの読取値を基準に、検索する数値の許容範囲を設定します。\n"
-            "例：読取値100・±10% → 90～110で検索\n"
+            "各Modの読取値を基準に、どこまで低い数値を検索に含めるか設定します。\n"
+            "例：読取値100・-10%まで許容 → 最小値90で検索\n"
             "ユニーク品はModの可変範囲を基準に調整します。"
         )
         self.search_range_combo.currentIndexChanged.connect(self._search_range_changed)

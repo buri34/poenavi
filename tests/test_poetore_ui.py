@@ -549,8 +549,8 @@ def test_poetore_search_range_is_persisted(qapp):
     window = PoetoreWindow(app_config=config, save_config=saved)
     try:
         assert window.search_range_combo.currentData() == 20
-        assert window.search_range_combo.currentText() == "Mod数値：±20%"
-        assert "読取値100・±10% → 90～110で検索" in (
+        assert window.search_range_combo.currentText() == "Mod数値：-20%まで許容"
+        assert "読取値100・-10%まで許容 → 最小値90で検索" in (
             window.search_range_combo.toolTip()
         )
         window.search_range_combo.setCurrentIndex(
