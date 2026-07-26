@@ -143,6 +143,12 @@ class MainWindow(QMainWindow):
         self._detached_state_save_scheduled = False
         ConfigManager.save_config(self.config)
 
+    def _set_panel_minimized_state(self, panel_id: str, minimized: bool, persist: bool = True):
+        self._detached_panel_config(panel_id)["minimized"] = minimized
+        self._update_restore_all_panels_button()
+        if persist:
+            ConfigManager.save_config(self.config)
+
     def _detach_guide_lower_section(self):
         """ガイドを外す際、マップ／ジェム領域は本体に残す。"""
         if getattr(self, "_guide_lower_in_main", False):
@@ -179,9 +185,8 @@ class MainWindow(QMainWindow):
         record = self.panel_registry[panel_id]
         content = record["content"]
         record["layout"].removeWidget(content)
-        if panel_id == "timer" and hasattr(self, "global_controls_widget"):
-            self.timer_button_layout.removeWidget(self.global_controls_widget)
-            record["layout"].insertWidget(record["index"], self.global_controls_widget)
+        if panel_id == "timer":
+            self._move_global_controls_to_main()
         record["expanded_size_policies"] = {
             widget: widget.sizePolicy() for widget in record.get("expand_widgets", ())
         }
@@ -196,6 +201,7 @@ class MainWindow(QMainWindow):
             content,
             self.restore_panel,
             self._save_detached_panel_state,
+            self.minimize_panel,
         )
         self.detached_panel_windows[panel_id] = panel_window
         panel_window.apply_window_settings(self.config)
@@ -209,9 +215,8 @@ class MainWindow(QMainWindow):
             return
 
         record = self.panel_registry[panel_id]
-        if panel_id == "timer" and hasattr(self, "global_controls_widget"):
-            record["layout"].removeWidget(self.global_controls_widget)
-            self.timer_button_layout.addWidget(self.global_controls_widget)
+        if panel_id == "timer" and not self._detached_panel_config(panel_id).get("minimized", False):
+            self._move_global_controls_to_timer()
         panel_window.layout().removeWidget(record["content"])
         panel_window.restore_content_size_policy()
         for widget, size_policy in record.pop("expanded_size_policies", {}).items():
@@ -226,6 +231,64 @@ class MainWindow(QMainWindow):
         panel_window.deleteLater()
         self._save_detached_panel_state(panel_id)
         self._adjust_main_window_after_panel_change()
+
+    def _move_global_controls_to_main(self):
+        if not hasattr(self, "global_controls_widget"):
+            return
+        record = self.panel_registry["timer"]
+        if self.timer_button_layout.indexOf(self.global_controls_widget) >= 0:
+            self.timer_button_layout.removeWidget(self.global_controls_widget)
+        if record["layout"].indexOf(self.global_controls_widget) < 0:
+            record["layout"].insertWidget(record["index"], self.global_controls_widget)
+
+    def _move_global_controls_to_timer(self):
+        if not hasattr(self, "global_controls_widget"):
+            return
+        record = self.panel_registry["timer"]
+        if record["layout"].indexOf(self.global_controls_widget) >= 0:
+            record["layout"].removeWidget(self.global_controls_widget)
+        if self.timer_button_layout.indexOf(self.global_controls_widget) < 0:
+            self.timer_button_layout.addWidget(self.global_controls_widget)
+
+    def minimize_panel(self, panel_id: str):
+        record = self.panel_registry[panel_id]
+        if panel_id == "timer":
+            self._move_global_controls_to_main()
+        panel_window = self.detached_panel_windows.get(panel_id)
+        if panel_window is not None:
+            self._save_detached_panel_state(panel_id, persist=False)
+            panel_window.hide()
+        else:
+            record["content"].hide()
+        self._set_panel_minimized_state(panel_id, True)
+        self._adjust_main_window_after_panel_change()
+
+    def restore_all_minimized_panels(self):
+        for panel_id, record in self.panel_registry.items():
+            state = self._detached_panel_config(panel_id)
+            if not state.get("minimized", False):
+                continue
+            panel_window = self.detached_panel_windows.get(panel_id)
+            if panel_window is not None:
+                panel_window.show()
+            elif panel_id != "gem" or self.poe_version == POE1:
+                record["content"].show()
+            state["minimized"] = False
+        if not self._is_panel_detached("timer"):
+            self._move_global_controls_to_timer()
+        self._update_restore_all_panels_button()
+        ConfigManager.save_config(self.config)
+        self._adjust_main_window_after_panel_change()
+
+    def _update_restore_all_panels_button(self):
+        button = getattr(self, "restore_all_panels_btn", None)
+        if button is None:
+            return
+        has_minimized = any(
+            self._detached_panel_config(panel_id).get("minimized", False)
+            for panel_id in getattr(self, "panel_registry", {})
+        )
+        button.setVisible(has_minimized)
 
     def _register_detachable_panel(
         self, panel_id: str, title: str, widgets: list[QWidget], layout, expand_widgets=(),
@@ -257,6 +320,11 @@ class MainWindow(QMainWindow):
         detach_button.setCursor(QCursor(Qt.PointingHandCursor))
         detach_button.clicked.connect(lambda: self.detach_panel(panel_id))
         header_layout.addWidget(detach_button)
+        minimize_button = QPushButton("─ 最小化")
+        minimize_button.setStyleSheet(Styles.BUTTON)
+        minimize_button.setCursor(QCursor(Qt.PointingHandCursor))
+        minimize_button.clicked.connect(lambda: self.minimize_panel(panel_id))
+        header_layout.addWidget(minimize_button)
         panel_layout.addWidget(header_widget)
 
         for widget in widgets[1:]:
@@ -270,6 +338,7 @@ class MainWindow(QMainWindow):
             "stretch": stretch,
             "title": title,
             "detach_button": detach_button,
+            "minimize_button": minimize_button,
             "header_widget": header_widget,
             "expand_widgets": tuple(expand_widgets),
         }
@@ -302,6 +371,20 @@ class MainWindow(QMainWindow):
                         width,
                         height,
                     )
+
+    def _restore_minimized_panels(self):
+        for panel_id, record in self.panel_registry.items():
+            if not self._detached_panel_config(panel_id).get("minimized", False):
+                continue
+            panel_window = self.detached_panel_windows.get(panel_id)
+            if panel_window is not None:
+                panel_window.hide()
+            else:
+                record["content"].hide()
+                if panel_id == "timer":
+                    self._move_global_controls_to_main()
+        self._update_restore_all_panels_button()
+        self._adjust_main_window_after_panel_change()
 
     def _close_detached_panels(self):
         """アプリ終了時はパネルを本体へ戻さず閉じ、切り離し状態を保持する。"""
@@ -461,6 +544,7 @@ class MainWindow(QMainWindow):
         
         self.setup_ui()
         self._restore_detached_panels()
+        self._restore_minimized_panels()
         self.map_thumbnail.auto_open = self.config.get("auto_open_map", False)
         self.map_thumbnail.auto_position = self.config.get("auto_position_map", True)
         self.setMouseTracking(True)
@@ -1252,6 +1336,13 @@ class MainWindow(QMainWindow):
         global_controls_layout.setSpacing(10)
         global_controls_layout.addStretch()
 
+        self.restore_all_panels_btn = QPushButton("パネルを全て表示")
+        self.restore_all_panels_btn.setStyleSheet(Styles.BUTTON)
+        self.restore_all_panels_btn.setToolTip("最小化したパネルをすべて表示")
+        self.restore_all_panels_btn.clicked.connect(self.restore_all_minimized_panels)
+        self.restore_all_panels_btn.hide()
+        global_controls_layout.addWidget(self.restore_all_panels_btn)
+
         self.memo_btn = QPushButton("📝")
         self.memo_btn.setStyleSheet(Styles.BUTTON)
         self.memo_btn.setFixedSize(35, 35)
@@ -1777,7 +1868,7 @@ class MainWindow(QMainWindow):
 
     def _adjust_main_window_after_panel_change(self):
         """パネル移動後に、本体の横幅を保ったまま適切な高さへ調整する。"""
-        if self._are_all_visible_panels_detached():
+        if self._are_all_visible_panels_outside_main():
             self._collapse_main_window_to_controls()
             # reparent直後はQtのレイアウト最小サイズが古いことがあるため、
             # レイアウト更新後にも同じ縮小を適用する。
@@ -1787,8 +1878,8 @@ class MainWindow(QMainWindow):
         self._adjust_height_keep_width()
 
     def _collapse_main_window_to_controls(self):
-        """全パネル切り離し中の本体を、共通操作列だけの高さへ縮める。"""
-        if not self._are_all_visible_panels_detached():
+        """全パネルが切り離し／最小化中なら、共通操作列だけの高さへ縮める。"""
+        if not self._are_all_visible_panels_outside_main():
             return
         central = self.centralWidget()
         if central is not None and central.layout() is not None:
@@ -3993,9 +4084,26 @@ class MainWindow(QMainWindow):
         detached_panels = set(getattr(self, "detached_panel_windows", {}))
         return bool(relevant_panels and relevant_panels.issubset(detached_panels))
 
+    def _are_all_visible_panels_outside_main(self) -> bool:
+        """表示対象の全パネルが、本体から切り離されるか最小化されているか。"""
+        registry = getattr(self, "panel_registry", {})
+        relevant_panels = {
+            panel_id
+            for panel_id in registry
+            if panel_id != "gem" or getattr(self, "poe_version", POE1) == POE1
+        }
+        detached_panels = set(getattr(self, "detached_panel_windows", {}))
+        panel_states = getattr(self, "config", {}).get("detached_panels", {})
+        minimized_panels = {
+            panel_id
+            for panel_id in relevant_panels
+            if panel_states.get(panel_id, {}).get("minimized", False)
+        }
+        return bool(relevant_panels and relevant_panels.issubset(detached_panels | minimized_panels))
+
     def _main_window_min_height(self) -> int:
-        """表示対象の全パネルを切り離した本体だけ、操作列相当まで縮小可能にする。"""
-        if self._are_all_visible_panels_detached():
+        """全パネルが本体外なら、操作列相当まで縮小可能にする。"""
+        if self._are_all_visible_panels_outside_main():
             return self.DETACHED_ONLY_MIN_HEIGHT
         return self.MIN_HEIGHT
     

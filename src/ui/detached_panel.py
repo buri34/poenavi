@@ -10,11 +10,12 @@ from src.ui.styles import Styles
 class DetachedPanelWindow(QWidget):
     """本体から外したパネルを表示する、移動・リサイズ可能な独立ウィンドウ。"""
 
-    def __init__(self, panel_id, title, content, return_callback, state_callback):
+    def __init__(self, panel_id, title, content, return_callback, state_callback, minimize_callback=None):
         super().__init__(None)
         self.panel_id = panel_id
         self.content = content
         self._return_callback = return_callback
+        self._minimize_callback = minimize_callback or (lambda _panel_id: self.hide())
         self._state_callback = state_callback
         self._returning = False
         self._drag_offset = None
@@ -49,6 +50,11 @@ class DetachedPanelWindow(QWidget):
         self.title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-weight: bold;")
         header_layout.addWidget(self.title_label)
         header_layout.addStretch()
+        minimize_button = QPushButton("─ 最小化")
+        minimize_button.setStyleSheet(Styles.BUTTON)
+        minimize_button.setCursor(QCursor(Qt.PointingHandCursor))
+        minimize_button.clicked.connect(self.minimize_panel)
+        header_layout.addWidget(minimize_button)
         return_button = QPushButton("↙ 本体へ戻す")
         return_button.setStyleSheet(Styles.BUTTON)
         return_button.setCursor(QCursor(Qt.PointingHandCursor))
@@ -162,6 +168,9 @@ class DetachedPanelWindow(QWidget):
     def return_to_main(self):
         self._return_callback(self.panel_id)
 
+    def minimize_panel(self):
+        self._minimize_callback(self.panel_id)
+
     def restore_content_size_policy(self):
         self.content.setSizePolicy(self._content_size_policy)
 
@@ -201,7 +210,7 @@ class DetachedPanelWindow(QWidget):
                 self._state_callback(self.panel_id, True)
                 return True
 
-        if watched is self.header:
+        if watched is getattr(self, "header", None):
             if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
                 if self.window_locked:
                     return True

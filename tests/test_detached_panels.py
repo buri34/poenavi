@@ -315,7 +315,85 @@ def test_register_detachable_panel_places_button_on_title_row():
     assert header_layout.indexOf(title) == 0
     assert header_layout.indexOf(panel_controls) < header_layout.indexOf(record["detach_button"])
     assert header_layout.indexOf(record["detach_button"]) >= 0
+    assert header_layout.indexOf(record["minimize_button"]) > header_layout.indexOf(record["detach_button"])
+    assert record["minimize_button"].text() == "─ 最小化"
     assert record["content"].layout().count() == 2
+
+
+def test_minimize_attached_timer_keeps_global_controls_and_restore_all_returns_it(monkeypatch):
+    _app()
+    host = QWidget()
+    main_layout = QVBoxLayout(host)
+    title = QPushButton("▼ タイマー")
+    timer_body = QWidget()
+    timer_button_layout = QHBoxLayout(timer_body)
+    global_controls = QWidget()
+    restore_all_button = QPushButton("パネルを全て表示")
+    timer_button_layout.addWidget(global_controls)
+    main_layout.addWidget(title)
+    main_layout.addWidget(timer_body)
+
+    window = MainWindow.__new__(MainWindow)
+    QMainWindow.__init__(window)
+    window.config = {"detached_panels": {"timer": {"detached": False}}}
+    window.panel_registry = {}
+    window.detached_panel_windows = {}
+    window.timer_button_layout = timer_button_layout
+    window.global_controls_widget = global_controls
+    window.restore_all_panels_btn = restore_all_button
+    window.poe_version = "poe1"
+    window._adjust_main_window_after_panel_change = lambda: None
+    window._register_detachable_panel("timer", "タイマー", [title, timer_body], main_layout)
+    monkeypatch.setattr(ConfigManager, "save_config", lambda _config: None)
+
+    window.minimize_panel("timer")
+
+    assert window.panel_registry["timer"]["content"].isHidden()
+    assert main_layout.indexOf(global_controls) >= 0
+    assert window.config["detached_panels"]["timer"]["minimized"] is True
+    assert restore_all_button.isVisible()
+
+    window.restore_all_minimized_panels()
+
+    assert not window.panel_registry["timer"]["content"].isHidden()
+    assert timer_button_layout.indexOf(global_controls) >= 0
+    assert window.config["detached_panels"]["timer"]["minimized"] is False
+    assert restore_all_button.isHidden()
+
+
+def test_minimize_detached_panel_hides_window_and_restore_all_shows_it(monkeypatch):
+    window, _content, _layout = _window()
+    window.restore_all_panels_btn = QPushButton("パネルを全て表示")
+    window.poe_version = "poe1"
+    window._adjust_main_window_after_panel_change = lambda: None
+    monkeypatch.setattr(ConfigManager, "save_config", lambda _config: None)
+    window.detach_panel("timer")
+    panel_window = window.detached_panel_windows["timer"]
+
+    window.minimize_panel("timer")
+
+    assert panel_window.isHidden()
+    assert window.config["detached_panels"]["timer"]["detached"] is True
+    assert window.config["detached_panels"]["timer"]["minimized"] is True
+
+    window.restore_all_minimized_panels()
+
+    assert panel_window.isVisible()
+    assert window.detached_panel_windows["timer"] is panel_window
+    assert window.config["detached_panels"]["timer"]["minimized"] is False
+    panel_window.close()
+
+
+def test_restore_minimized_panels_reapplies_saved_attached_state(monkeypatch):
+    window, content, _layout = _window()
+    window.config["detached_panels"]["timer"]["minimized"] = True
+    window.restore_all_panels_btn = QPushButton("パネルを全て表示")
+    window._adjust_main_window_after_panel_change = lambda: None
+
+    window._restore_minimized_panels()
+
+    assert content.isHidden()
+    assert window.restore_all_panels_btn.isVisible()
 
 
 def test_detaching_timer_keeps_global_controls_in_main_and_timer_controls_detached(monkeypatch):
