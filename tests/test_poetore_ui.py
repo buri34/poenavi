@@ -11,8 +11,8 @@ from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QLabel, QPushB
 import pytest
 
 from src.poetore.ui import (
-    PoetoreWindow, _UniqueRollSlider, _replace_filters_with_special_chips,
-    show_poetore_window,
+    PoetoreWindow, _MOD_COLUMN_CHECK, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
+    _UniqueRollSlider, _replace_filters_with_special_chips, show_poetore_window,
 )
 from src.poetore.window_position import PlacementContext
 from src.poetore.trade import (
@@ -948,6 +948,77 @@ def test_unique_lower_is_better_slider_updates_maximum(qapp):
         assert selected.enabled is True
         assert selected.min_value is None
         assert selected.max_value == expected
+    finally:
+        window.close()
+
+
+def test_mod_text_click_toggles_condition_but_value_editor_does_not(qapp):
+    window = PoetoreWindow()
+    try:
+        source = TradeStatFilter(
+            "explicit.stat_1", "+50 to maximum Life", 45,
+            "explicit", False,
+        )
+        window._populate_stat_filters((source,))
+        window.show()
+        qapp.processEvents()
+
+        row = window.mod_filter_tree.topLevelItem(0)
+        checkbox = window.mod_filter_tree.itemWidget(
+            row, 0
+        ).findChild(QCheckBox, "modFilterCheckbox")
+        row_rect = window.mod_filter_tree.visualItemRect(row)
+        text_x = (
+            window.mod_filter_tree.header().sectionViewportPosition(
+                _MOD_COLUMN_TEXT
+            ) + 12
+        )
+
+        QTest.mouseClick(
+            window.mod_filter_tree.viewport(), Qt.LeftButton,
+            pos=QPoint(text_x, row_rect.center().y()),
+        )
+        assert checkbox.isChecked()
+
+        minimum_editor = window.mod_filter_tree.itemWidget(
+            row, _MOD_COLUMN_MIN
+        )
+        QTest.mouseClick(minimum_editor, Qt.LeftButton)
+        assert checkbox.isChecked()
+    finally:
+        window.close()
+
+
+def test_unique_roll_mod_text_click_toggles_condition_without_touching_slider(qapp):
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            "Amulets", "Unique", "The Example", "Gold Amulet", "accessory",
+        )
+        source = TradeStatFilter(
+            "explicit.life", "+40(30-50) to maximum Life", 38,
+            "explicit", True, read_value=40, roll_min=30, roll_max=50,
+            better=1,
+        )
+        window._populate_stat_filters((source,))
+        window.show()
+        qapp.processEvents()
+
+        row = window.mod_filter_tree.topLevelItem(0)
+        text_widget = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_TEXT)
+        text_label = text_widget.findChild(QLabel)
+        checkbox = window.mod_filter_tree.itemWidget(
+            row, _MOD_COLUMN_CHECK
+        ).findChild(QCheckBox, "modFilterCheckbox")
+        slider = text_widget.findChild(
+            _UniqueRollSlider, "uniqueRollSlider"
+        )
+        before_values = slider.searchValues()
+
+        QTest.mouseClick(text_label, Qt.LeftButton)
+
+        assert not checkbox.isChecked()
+        assert slider.searchValues() == before_values
     finally:
         window.close()
 

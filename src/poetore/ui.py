@@ -1165,6 +1165,9 @@ class PoetoreWindow(QWidget):
         mod_header.setSectionResizeMode(_MOD_COLUMN_MIN, QHeaderView.ResizeToContents)
         mod_header.setSectionResizeMode(_MOD_COLUMN_MAX, QHeaderView.ResizeToContents)
         mod_header.setSectionResizeMode(_MOD_COLUMN_DETAILS, QHeaderView.Stretch)
+        self.mod_filter_tree.itemClicked.connect(
+            self._toggle_mod_condition_from_text
+        )
         panel_layout.addWidget(self.mod_filter_tree, stretch=3)
         self.mod_conditions_toggle = QPushButton("mod条件をたたむ∧")
         self.mod_conditions_toggle.setObjectName("modConditionsToggle")
@@ -1673,6 +1676,17 @@ class PoetoreWindow(QWidget):
         return not nonunique_jewel_group
 
     def eventFilter(self, watched, event):
+        condition_checkbox = getattr(
+            watched, "_mod_condition_checkbox", None
+        )
+        if (
+            condition_checkbox is not None
+            and event.type() == QEvent.MouseButtonRelease
+            and event.button() == Qt.LeftButton
+        ):
+            condition_checkbox.toggle()
+            event.accept()
+            return True
         if event.type() == QEvent.KeyPress and self.isVisible():
             is_escape = event.key() == Qt.Key_Escape
             is_alt_w = event.key() == Qt.Key_W and event.modifiers() == Qt.AltModifier
@@ -1696,6 +1710,23 @@ class PoetoreWindow(QWidget):
             self.search_current_item()
             return True
         return super().eventFilter(watched, event)
+
+    def _toggle_mod_condition_from_text(self, row, column):
+        """Awakened同様、Mod文章のクリックでも条件をON/OFFする。"""
+        if column != _MOD_COLUMN_TEXT:
+            return
+        # ユニークロール行の文章はセル内QLabelが直接処理する。
+        if self.mod_filter_tree.itemWidget(row, _MOD_COLUMN_TEXT) is not None:
+            return
+        checkbox_container = self.mod_filter_tree.itemWidget(
+            row, _MOD_COLUMN_CHECK
+        )
+        checkbox = (
+            checkbox_container.findChild(QCheckBox, "modFilterCheckbox")
+            if checkbox_container is not None else None
+        )
+        if checkbox is not None:
+            checkbox.toggle()
 
     def _close_when_focus_leaves_panel(self, old, new):
         old_belongs = self._widget_belongs_to_panel(old)
@@ -3083,6 +3114,9 @@ class PoetoreWindow(QWidget):
                 text_layout.setSpacing(3)
                 text_label = QLabel(stat_filter.text)
                 text_label.setToolTip(summary)
+                text_label.setCursor(Qt.PointingHandCursor)
+                text_label._mod_condition_checkbox = checkbox
+                text_label.installEventFilter(self)
                 text_layout.addWidget(text_label)
                 slider = _UniqueRollSlider(
                     (stat_filter.roll_min, stat_filter.roll_max),
