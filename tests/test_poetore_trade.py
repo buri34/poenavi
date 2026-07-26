@@ -1759,6 +1759,45 @@ Iron Ring
     assert "foulborn_item" not in query["filters"]["misc_filters"]["filters"]
 
 
+def test_foulborn_unique_keeps_fixed_replacement_mod_as_enabled_filter():
+    item = parse_item_text("""アイテムクラス: 鉤爪
+レアリティ: ユニーク
+ファウルボーン 思考と動作の手
+帝国の鉤爪
+--------
+アイテムレベル: 85
+--------
+{ ユニークモッド — 能力値 }
+知性が12(8-12)%増加する
+{ ユニークモッド — 能力値 }
+器用さが11(8-12)%増加する
+{ ファウルボーンユニークモッド }
+知性25ごとに命中力が3%増加する
+""")
+
+    filters = resolve_trade_stat_filters(item)
+    accuracy = next(
+        row for row in filters
+        if row.stat_id == "explicit.stat_4106889136"
+    )
+
+    assert accuracy.text == "知性25ごとに命中力が3%増加する"
+    assert accuracy.min_value == 3
+    assert accuracy.read_value == 3
+    assert accuracy.generation == "foulborn"
+    assert accuracy.enabled
+
+    query = build_search_query(
+        item, "Imperial Claw", trade_name="Hand of Thought and Motion",
+        stat_filters=filters,
+    )["query"]
+    query_filter = next(
+        row for row in query["stats"][0]["filters"]
+        if row["id"] == "explicit.stat_4106889136"
+    )
+    assert query_filter["value"] == {"min": 3}
+
+
 def test_foulborn_unique_localizes_name_for_japanese_trade_link():
     _trade_response_cache.clear()
     item = parse_item_text("""アイテムクラス: 指輪

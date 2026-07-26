@@ -1918,7 +1918,15 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
         exact = row.exact or (
             row.min_value is not None and row.max_value is not None and row.min_value == row.max_value
         )
-        read_value = source.values[0] if source and source.values else row.read_value
+        fixed_foulborn = (
+            source is not None
+            and source.generation == "foulborn"
+            and _unique_roll_bounds(source.text) is None
+        )
+        read_value = (
+            row.min_value if fixed_foulborn else
+            source.values[0] if source and source.values else row.read_value
+        )
         if read_value is None:
             read_value = property_values.get(row.stat_id)
         if read_value is None and row.kind == "pseudo" and row.min_value is not None:
@@ -1994,12 +2002,14 @@ def resolve_trade_stat_filters(
             corrupted_implicit = (
                 modifier.kind == "implicit" and modifier.generation == "corrupted"
             )
-            if not corrupted_implicit and (
+            foulborn_variant = modifier.generation == "foulborn"
+            if not corrupted_implicit and not foulborn_variant and (
                 fixed_unique_refs is None or modifier.ref in fixed_unique_refs
             ):
                 # Awakened準拠: 常設Modでも可変ロールがあれば候補へ残す。
                 # 数値なしModはfixedStats外のVariantだけを候補として扱うが、
-                # 後付けされたコラプト暗黙はUnique固定Modではないため残す。
+                # 後付けされたコラプト暗黙とFoulborn置換ModはUnique固定Modでは
+                # ないため、固定値でも個体識別用の候補として残す。
                 continue
         api_kind = "explicit" if modifier.kind in {"prefix", "suffix"} else modifier.kind
         source = _normalized_stat_text(modifier.text)
@@ -2046,10 +2056,19 @@ def resolve_trade_stat_filters(
                         modifier.ref, modifier.kind,
                     )
                 if metadata:
+                    fixed_foulborn_value = (
+                        value
+                        if modifier.generation == "foulborn" and roll_bounds is None
+                        else None
+                    )
                     value, maximum = metadata.search_bounds(
                         value,
-                        modifier.roll_min if unique_item else None,
-                        modifier.roll_max if unique_item else None,
+                        fixed_foulborn_value if fixed_foulborn_value is not None else (
+                            modifier.roll_min if unique_item else None
+                        ),
+                        fixed_foulborn_value if fixed_foulborn_value is not None else (
+                            modifier.roll_max if unique_item else None
+                        ),
                         DEFAULT_SEARCH_RANGE,
                     )
             if unique_item and roll_bounds is not None and modifier.stat_id != str(entry["id"]):

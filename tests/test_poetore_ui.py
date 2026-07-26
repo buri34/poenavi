@@ -424,6 +424,48 @@ def test_foulborn_unique_uses_normal_name_and_enables_variable_mods_in_real_pane
         window.close()
 
 
+def test_foulborn_fixed_replacement_mod_is_enabled_in_real_panel(qapp):
+    window = PoetoreWindow()
+    try:
+        window._trade_base_type = "Imperial Claw"
+        window._trade_item_name = "Hand of Thought and Motion"
+        window.input_edit.setPlainText("""アイテムクラス: 鉤爪
+レアリティ: ユニーク
+ファウルボーン 思考と動作の手
+帝国の鉤爪
+--------
+アイテムレベル: 85
+--------
+{ ユニークモッド — 能力値 }
+知性が12(8-12)%増加する
+{ ユニークモッド — 能力値 }
+器用さが11(8-12)%増加する
+{ ファウルボーンユニークモッド }
+知性25ごとに命中力が3%増加する
+""")
+        window.parse_current_text()
+
+        rows = [
+            window.mod_filter_tree.topLevelItem(index)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        accuracy = next(
+            row for row in rows
+            if row.text(3) == "知性25ごとに命中力が3%増加する"
+        )
+        checkbox = window.mod_filter_tree.itemWidget(
+            accuracy, 0
+        ).findChild(QCheckBox, "modFilterCheckbox")
+
+        assert accuracy.text(1) == "ファウルボーン"
+        assert checkbox.isChecked()
+        selected = window._selected_stat_filters()
+        assert selected[rows.index(accuracy)].min_value == 3
+        assert not window.mod_warning.isVisible()
+    finally:
+        window.close()
+
+
 def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
     window = PoetoreWindow()
     try:
