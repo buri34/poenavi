@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from PySide6.QtCore import QPoint, Qt
-from PySide6.QtWidgets import QApplication, QTabWidget
+from PySide6.QtWidgets import QApplication, QLabel, QTabWidget
 
 from src.ui.gem_tracker_widget import GemTrackerWidget
 from src.ui.main_window import (
@@ -85,9 +85,24 @@ class GemShopSearchTest(unittest.TestCase):
             current_config={"gem_shop_search_term_overrides": {"momentum support": "moment"}}
         )
         tabs = settings.findChild(QTabWidget)
-        self.assertEqual(tabs.tabText(tabs.count() - 1), "短縮語を見直す")
+        self.assertEqual(tabs.tabText(tabs.count() - 1), "Regex短縮設定")
 
         review = settings.gem_shop_search_term_review
+        hint_labels = [
+            label.text()
+            for label in review.findChildren(QLabel)
+            if "ジェム取得支援機能において" in label.text()
+        ]
+        self.assertEqual(
+            hint_labels,
+            [
+                "ジェム取得支援機能において自動で生成するジェムのRegexについて、"
+                "カスタマイズができます。"
+                "上書き欄が空欄なら自動短縮語を使います。"
+                "上書きは正式名に含まれる、他ジェムと重複しない4文字以上の語だけ保存できます。"
+            ],
+        )
+
         review.changed_only_checkbox.setChecked(True)
         review._apply_filter()
 

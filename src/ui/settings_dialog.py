@@ -1484,7 +1484,11 @@ class GemShopSearchTermOverridesDialog(QWidget):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
-        hint = QLabel("上書き欄が空欄なら自動短縮語を使います。上書きは正式名に含まれる、他ジェムと重複しない4文字以上の語だけ保存できます。")
+        hint = QLabel(
+            "ジェム取得支援機能において自動で生成するジェムのRegexについて、カスタマイズができます。"
+            "上書き欄が空欄なら自動短縮語を使います。"
+            "上書きは正式名に含まれる、他ジェムと重複しない4文字以上の語だけ保存できます。"
+        )
         hint.setWordWrap(True)
         hint.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 11px;")
         layout.addWidget(hint)
@@ -2416,7 +2420,7 @@ class SettingsDialog(QDialog):
             self.current_config.get("gem_shop_search_term_overrides", {}),
         )
         term_review_layout.addWidget(self.gem_shop_search_term_review)
-        tabs.addTab(term_review_tab, "短縮語を見直す")
+        tabs.addTab(term_review_tab, "Regex短縮設定")
 
         layout.addWidget(tabs)
         
