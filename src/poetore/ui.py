@@ -1206,7 +1206,7 @@ class PoetoreWindow(QWidget):
         self.mod_sources_toggle.setCheckable(True)
         self.mod_sources_toggle.setToolTip(
             "合計ライフや防御力など、複数の数値をまとめた検索条件について、\n"
-            "計算に使われた元のMod文章と、合計へ加算された値を表示します。"
+            "計算に使われた元のMod文章を表示します。"
         )
         self.mod_sources_toggle.toggled.connect(self._toggle_mod_sources)
         mod_conditions_actions = QHBoxLayout()
@@ -3184,36 +3184,10 @@ class PoetoreWindow(QWidget):
                         "color: #788174; font-style: italic;"
                     )
                     source_layout.addWidget(heading)
-                    source_row = QWidget()
-                    source_row_layout = QHBoxLayout(source_row)
-                    source_row_layout.setContentsMargins(0, 0, 0, 0)
-                    source_row_layout.setSpacing(8)
                     source_label = QLabel(source_text)
                     source_label.setWordWrap(True)
                     source_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-                    source_row_layout.addWidget(source_label, stretch=1)
-                    contribution = (
-                        stat_filter.source_contributions[source_index]
-                        if source_index < len(stat_filter.source_contributions)
-                        else None
-                    )
-                    if contribution is not None:
-                        contribution_label = QLabel(f"{contribution:+g}")
-                        contribution_label.setAlignment(
-                            Qt.AlignRight | Qt.AlignVCenter
-                        )
-                        contribution_label.setMinimumWidth(48)
-                        contribution_label.setToolTip(
-                            f"「{stat_filter.text}」の合計へ加算される値"
-                        )
-                        contribution_label.setStyleSheet(
-                            "color: #d8ffbd;"
-                            " border: 1px solid #596452;"
-                            " border-radius: 3px;"
-                            " padding: 1px 5px;"
-                        )
-                        source_row_layout.addWidget(contribution_label)
-                    source_layout.addWidget(source_row)
+                    source_layout.addWidget(source_label)
                 source_widget.setSizePolicy(
                     QSizePolicy.Expanding, QSizePolicy.Preferred
                 )

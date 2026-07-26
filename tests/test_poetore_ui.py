@@ -569,7 +569,9 @@ def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
         assert "複数の数値をまとめた検索条件" in (
             window.mod_sources_toggle.toolTip()
         )
-        assert "合計へ加算された値" in window.mod_sources_toggle.toolTip()
+        assert "計算に使われた元のMod文章" in (
+            window.mod_sources_toggle.toolTip()
+        )
         window._populate_stat_filters((
             TradeStatFilter(
                 "pseudo.life", "最大ライフ合計", 90, "pseudo", True,
@@ -593,10 +595,10 @@ def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
         labels = [label.text() for label in source_widget.findChildren(QLabel)]
         assert "プレフィックス (T1)" in labels
         assert "最大ライフ +70" in labels
-        assert "+70" in labels
         assert "サフィックス (T2)" in labels
         assert "筋力 +60" in labels
-        assert "+30" in labels
+        assert "+70" not in labels
+        assert "+30" not in labels
         assert not any("pseudo" in text.casefold() for text in labels)
         assert not any("主要" in text for text in labels)
         assert not normal.isExpanded()
