@@ -545,6 +545,51 @@ def test_poetore_league_choices_include_sc_hc_and_persist(qapp):
         window.close()
 
 
+def test_poetore_search_range_is_persisted(qapp):
+    config = {"poetore": {"search_stat_range": 20}}
+    saved = Mock()
+    window = PoetoreWindow(app_config=config, save_config=saved)
+    try:
+        assert window.search_range_combo.currentData() == 20
+        window.search_range_combo.setCurrentIndex(
+            window.search_range_combo.findData(5)
+        )
+        assert config["poetore"]["search_stat_range"] == 5
+        assert saved.called
+    finally:
+        window.close()
+
+
+def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
+    window = PoetoreWindow()
+    try:
+        window._populate_stat_filters((
+            TradeStatFilter(
+                "pseudo.life", "最大ライフ合計", 90, "pseudo", True,
+                read_value=100,
+                source_texts=("最大ライフ +70", "筋力 +60"),
+            ),
+            TradeStatFilter(
+                "explicit.fixed", "固定Mod", 10, "explicit", False,
+                hidden_reason="ユニーク固定値のため初期非表示",
+            ),
+        ))
+        normal = window.mod_filter_tree.topLevelItem(0)
+        hidden = window.mod_filter_tree.topLevelItem(1)
+        assert not normal.isHidden()
+        assert hidden.isHidden()
+        assert "構成元: 最大ライフ +70 / 筋力 +60" in normal.text(6)
+
+        window.hidden_mods_toggle.setChecked(True)
+        assert normal.isHidden()
+        assert not hidden.isHidden()
+
+        window.mod_sources_toggle.setChecked(True)
+        assert not window.mod_filter_tree.isColumnHidden(6)
+    finally:
+        window.close()
+
+
 def test_poetore_private_league_is_kept_and_ended_public_league_falls_back(qapp):
     private = PoetoreWindow(app_config={"poetore": {"league": "My League (PL12345)"}})
     ended = PoetoreWindow(app_config={"poetore": {"league": "Old Challenge"}})

@@ -227,6 +227,7 @@ class PriceListing:
     gem_level: int | None = None
     quality: int | None = None
     stack_size: int | None = None
+    listed_times: int = 1
 
 
 @dataclass(frozen=True)
@@ -259,6 +260,8 @@ class TradeStatFilter:
     # Awakened同様、集約したproperty/pseudo行にも寄与元Modの高Tierを表示する。
     # Trade APIへは送らない表示専用情報。
     tier_tags: tuple[int, ...] = ()
+    hidden_reason: str = ""
+    source_texts: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -282,6 +285,77 @@ class PriceResult:
         for listing in self.listings:
             grouped.setdefault(listing.currency, []).append(listing.amount)
         return {currency: median(values) for currency, values in grouped.items()}
+
+
+def _group_price_listings(listings: list[PriceListing]) -> tuple[PriceListing, ...]:
+    """Awakened同様、同一出品者の同価格連投を相場サンプル1件へ集約する。"""
+    grouped: list[PriceListing] = []
+    positions: dict[tuple[str, str, float], int] = {}
+    for listing in listings:
+        key = (listing.account, listing.currency, listing.amount)
+        if not listing.account or key not in positions:
+            positions[key] = len(grouped)
+            grouped.append(listing)
+            continue
+        index = positions[key]
+        previous = grouped[index]
+        stack_size = previous.stack_size
+        if stack_size is not None and listing.stack_size is not None:
+            stack_size += listing.stack_size
+        grouped[index] = replace(
+            previous,
+            stack_size=stack_size,
+            listed_times=previous.listed_times + 1,
+        )
+    return tuple(grouped)
+
+
+def apply_search_range(
+    filters: tuple[TradeStatFilter, ...], percent: float, item: ParsedItem | None = None,
+) -> tuple[TradeStatFilter, ...]:
+    """検索値をAwakenedの共通幅設定で再計算する（0～50%）。"""
+    if item is not None and item.rarity.casefold() in {"magic", "マジック"} and (
+        "mirrored" in item.flags or "corrupted" in item.flags or "unmodifiable" in item.flags
+    ):
+        percent = 0
+    percent = max(0.0, min(float(percent), 50.0)) / 100.0
+    adjusted = []
+    for row in filters:
+        if (
+            row.read_value is None
+            or row.option_value is not None
+            or row.exact
+            or row.inverted
+            or row.hidden_reason
+            or (
+                row.generation == "foulborn"
+                and row.roll_min is None and row.roll_max is None
+            )
+            or (row.min_value is None and row.max_value is None)
+        ):
+            adjusted.append(row)
+            continue
+        api_value = row.read_value
+        if row.roll_min is not None and row.roll_max is not None:
+            delta = abs(row.roll_max - row.roll_min) * percent
+        else:
+            delta = abs(api_value) * percent
+        minimum = row.min_value
+        maximum = row.max_value
+        if minimum is not None:
+            minimum = (
+                api_value if percent == 0
+                else math.floor(api_value - delta) if not row.decimal
+                else api_value - delta
+            )
+        if maximum is not None:
+            maximum = (
+                api_value if percent == 0
+                else math.ceil(api_value + delta) if not row.decimal
+                else api_value + delta
+            )
+        adjusted.append(replace(row, min_value=minimum, max_value=maximum))
+    return tuple(adjusted)
 
 
 class _TtlLruCache:
@@ -1967,6 +2041,11 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
                 _awakened_tier_tags(property_sources or pseudo_sources or sources)
                 or row.tier_tags
             ),
+            source_texts=tuple(dict.fromkeys(
+                modifier.text
+                for modifier in (property_sources or pseudo_sources or sources)
+                if modifier.text and modifier.text != row.text
+            )),
         ))
     return tuple(decorated)
 
@@ -2000,6 +2079,7 @@ def resolve_trade_stat_filters(
     ) if unique_item else None
     modifiers = _combine_valdo_multiline_modifiers(item, entries)
     for modifier in modifiers:
+        hidden_reason = ""
         if (
             item.category in {"heist_blueprint", "heist_contract"}
             and modifier.kind in {"prefix", "suffix", "crafted"}
@@ -2026,10 +2106,8 @@ def resolve_trade_stat_filters(
                 fixed_unique_refs is None or modifier.ref in fixed_unique_refs
             ):
                 # Awakened準拠: 常設Modでも可変ロールがあれば候補へ残す。
-                # 数値なしModはfixedStats外のVariantだけを候補として扱うが、
-                # 後付けされたコラプト暗黙とFoulborn置換ModはUnique固定Modでは
-                # ないため、固定値でも個体識別用の候補として残す。
-                continue
+                # 固定Modも「隠された候補」から確認できるよう保持する。
+                hidden_reason = "ユニーク固定値のため初期非表示"
         api_kind = "explicit" if modifier.kind in {"prefix", "suffix"} else modifier.kind
         source = _normalized_stat_text(modifier.text)
         candidates = []
@@ -2107,6 +2185,7 @@ def resolve_trade_stat_filters(
                 ),
                 group_type="count" if alternatives else "and",
                 group_key=group_key, group_min=1 if alternatives else None,
+                hidden_reason=hidden_reason,
             ))
     combined: dict[str, TradeStatFilter] = {}
     counts: dict[str, int] = {}
@@ -2134,6 +2213,7 @@ def resolve_trade_stat_filters(
             selection_reason=previous.selection_reason or stat_filter.selection_reason,
             group_type=stat_filter.group_type, group_key=stat_filter.group_key,
             group_min=stat_filter.group_min,
+            hidden_reason=previous.hidden_reason or stat_filter.hidden_reason,
         )
     enable_unique_rolls = unique_item and len(combined) <= 3
     # AwakenedはFoulborn品について、置換されたFoulborn Modだけでなく、
@@ -2154,11 +2234,14 @@ def resolve_trade_stat_filters(
             row.stat_id,
             f"{row.text} ({counts[combine_key]}行合計)" if counts[combine_key] > 1 else row.text,
             row.min_value, row.kind,
-            enable_unique_rolls or enable_foulborn_rolls or row.enabled,
+            False if row.hidden_reason else (
+                enable_unique_rolls or enable_foulborn_rolls or row.enabled
+            ),
             row.max_value, row.ref, row.confidence, row.inverted,
             option_value=row.option_value, option_text=row.option_text, oils=row.oils,
             selection_reason=row.selection_reason,
             group_type=row.group_type, group_key=row.group_key, group_min=row.group_min,
+            hidden_reason=row.hidden_reason,
         )
         for combine_key, row in combined.items()
         if row.stat_id not in consumed_stat_ids and not (not unique_item and row.ref in consumed_refs)
@@ -2860,13 +2943,18 @@ def search_prices(
     if not query_id:
         _trade_log("search failed: response did not contain a query ID")
         raise TradeApiError("検索IDを取得できませんでした。")
-    listings: list[PriceListing] = []
+    raw_listings: list[PriceListing] = []
     fetch_cached = False
-    if ids:
-        fetch_ids = ",".join(ids[:10])
+    fetched_count = 0
+    while fetched_count < min(len(ids), 100):
+        fetch_ids = ",".join(ids[fetched_count:fetched_count + 10])
         fetch_url = f"{API_ROOT}/fetch/{fetch_ids}?query={quote(query_id)}"
-        _trade_log(f"request: GET {fetch_url} (first {min(len(ids), 10)} candidates)")
-        fetched, _, fetch_cached = _cached_request_json(fetch_url)
+        _trade_log(
+            f"request: GET {fetch_url} "
+            f"(candidates {fetched_count + 1}-{min(fetched_count + 10, len(ids))})"
+        )
+        fetched, _, block_cached = _cached_request_json(fetch_url)
+        fetch_cached = fetch_cached or block_cached
         for row in fetched.get("result", ()):
             listing = row.get("listing", {})
             fetched_item = row.get("item", {})
@@ -2889,7 +2977,7 @@ def search_prices(
                         return int(match.group())
                 return None
 
-            listings.append(PriceListing(
+            raw_listings.append(PriceListing(
                 float(price["amount"]), str(price["currency"]), str(account),
                 str(fetched_item.get("name", "")), str(fetched_item.get("baseType", "")),
                 str(listing.get("indexed", "")),
@@ -2898,10 +2986,19 @@ def search_prices(
                 property_number("Quality", "品質"),
                 int(fetched_item["stackSize"]) if fetched_item.get("stackSize") is not None else None,
             ))
+        fetched_count += 10
+        grouped = _group_price_listings(raw_listings)
+        ungrouped = sum(row.listed_times <= 2 for row in grouped)
+        # Awakened準拠: 最初の20件は必ず確認し、価格操作らしい同一出品者の
+        # 連投が多い時だけ、十分な独立サンプルが得られるまで最大100件取得する。
+        if fetched_count >= 20 and len(grouped) >= 10 and ungrouped >= 7:
+            break
+    listings = _group_price_listings(raw_listings)
     rate_limit = headers.get("X-Rate-Limit-Ip-State", "") if headers else ""
     _trade_log(
         f"completed: query_id={query_id!r} candidates={len(ids)} "
-        f"priced_listings={len(listings)} rate_limit={rate_limit!r}"
+        f"priced_listings={len(listings)} rate_limit={rate_limit!r} "
+        f"raw_listings={len(raw_listings)}"
     )
     # 検索IDはAPIホストごとに管理されるため、www側のIDをjp側へ渡せない。
     # 日本語アイテム文から得た名称を使った検索JSONをURLへ埋め込み、

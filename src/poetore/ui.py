@@ -30,7 +30,7 @@ from .window_position import PlacementContext, capture_placement_context, positi
 from .trade import (
     PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
     available_pc_leagues, available_trade_presets, default_pc_league, default_trade_currency,
-    english_trade_identity, gem_metadata,
+    apply_search_range, english_trade_identity, gem_metadata,
     resolve_trade_stat_filters, search_prices, unique_candidate_details,
     unique_variants, unresolved_modifier_warnings, uses_dedicated_exact_preset,
     is_inscribed_ultimatum,
@@ -859,7 +859,22 @@ class PoetoreWindow(QWidget):
         # 検索プリセットは左半分だけを使い、下のMod表との視線移動を短くする。
         # 単独表示時は空の第2セグメントも維持するため、ボタン自体は従来の半幅になる。
         top_options.addWidget(self.trade_preset_combo, 1)
-        top_options.addStretch(1)
+        self.search_range_combo = QComboBox()
+        for percent in (0, 5, 10, 15, 20, 30, 50):
+            label = "検索値：完全一致" if percent == 0 else f"検索幅：±{percent}%"
+            self.search_range_combo.addItem(label, percent)
+        saved_range = self._app_config.get("poetore", {}).get("search_stat_range", 10)
+        try:
+            saved_range = int(saved_range)
+        except (TypeError, ValueError):
+            saved_range = 10
+        index = self.search_range_combo.findData(saved_range)
+        self.search_range_combo.setCurrentIndex(index if index >= 0 else 2)
+        self.search_range_combo.setToolTip(
+            "Modの読取値から検索する範囲を共通設定します。ユニークは可変幅を基準にします"
+        )
+        self.search_range_combo.currentIndexChanged.connect(self._search_range_changed)
+        top_options.addWidget(self.search_range_combo, 1)
         self.magic_rarity_toggle = _BinaryToggle(
             ("ユニーク以外", False), ("マジック完全一致", True),
         )
@@ -1177,9 +1192,23 @@ class PoetoreWindow(QWidget):
         self.mod_conditions_toggle.setObjectName("modConditionsToggle")
         self.mod_conditions_toggle.setToolTip("Mod検索条件の一覧を折りたたむ")
         self.mod_conditions_toggle.clicked.connect(self._toggle_mod_conditions)
+        self.hidden_mods_toggle = QPushButton("隠し候補を表示")
+        self.hidden_mods_toggle.setCheckable(True)
+        self.hidden_mods_toggle.setToolTip(
+            "固定値などの理由でAwakenedが初期非表示にする検索候補を切り替えます"
+        )
+        self.hidden_mods_toggle.toggled.connect(self._toggle_hidden_mods)
+        self.mod_sources_toggle = QPushButton("Mod構成を表示")
+        self.mod_sources_toggle.setCheckable(True)
+        self.mod_sources_toggle.setToolTip(
+            "Pseudo・Property検索条件を構成する元Mod原文と選択理由を表示します"
+        )
+        self.mod_sources_toggle.toggled.connect(self._toggle_mod_sources)
         mod_conditions_actions = QHBoxLayout()
         mod_conditions_actions.addWidget(self.mod_conditions_toggle)
         mod_conditions_actions.addWidget(self.clear_mod_conditions_button)
+        mod_conditions_actions.addWidget(self.hidden_mods_toggle)
+        mod_conditions_actions.addWidget(self.mod_sources_toggle)
         mod_conditions_actions.addStretch()
         panel_layout.addLayout(mod_conditions_actions)
         self.mod_warning = QLabel("")
@@ -1589,6 +1618,21 @@ class PoetoreWindow(QWidget):
             else "Mod検索条件の一覧を折りたたむ"
         )
 
+    def _toggle_hidden_mods(self, visible: bool):
+        self.hidden_mods_toggle.setText(
+            "通常候補を表示" if visible else "隠し候補を表示"
+        )
+        for index in range(self.mod_filter_tree.topLevelItemCount()):
+            row = self.mod_filter_tree.topLevelItem(index)
+            stat_filter = row.data(_MOD_COLUMN_CHECK, Qt.UserRole + 4)
+            row.setHidden(bool(getattr(stat_filter, "hidden_reason", "")) != visible)
+
+    def _toggle_mod_sources(self, visible: bool):
+        self.mod_sources_toggle.setText(
+            "Mod構成を隠す" if visible else "Mod構成を表示"
+        )
+        self.mod_filter_tree.setColumnHidden(_MOD_COLUMN_DETAILS, not visible)
+
     def _clear_mod_condition_checks(self):
         """一覧内の検索条件だけを解除し、基本条件チップは変更しない。"""
         for index in range(self.mod_filter_tree.topLevelItemCount()):
@@ -1828,6 +1872,29 @@ class PoetoreWindow(QWidget):
         if item is not None:
             self._poe_ninja_item_key = None
             self._queue_poe_ninja_price(item)
+
+    def _selected_search_range(self) -> int:
+        return int(self.search_range_combo.currentData() or 0)
+
+    def _resolved_trade_filters(self, item, preset):
+        return apply_search_range(
+            resolve_trade_stat_filters(
+                item, preset, self._trade_base_type, self._trade_item_name,
+            ),
+            self._selected_search_range(),
+            item,
+        )
+
+    def _search_range_changed(self):
+        value = self._selected_search_range()
+        self._app_config.setdefault("poetore", {})["search_stat_range"] = value
+        if self._save_app_config is not None:
+            self._save_app_config(self._app_config)
+        item = getattr(self, "_parsed_item", None)
+        if item is not None:
+            preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
+            self._populate_stat_filters(self._resolved_trade_filters(item, preset))
+            self._mark_search_dirty()
 
     def _league_selection_value(self) -> str:
         index = self.trade_league_combo.currentIndex()
@@ -2128,9 +2195,7 @@ class PoetoreWindow(QWidget):
         self._parsed_item = item
         if self.mod_filter_tree.topLevelItemCount() == 0:
             preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
-            self._populate_stat_filters(resolve_trade_stat_filters(
-                item, preset, self._trade_base_type, self._trade_item_name,
-            ))
+            self._populate_stat_filters(self._resolved_trade_filters(item, preset))
         warnings = unresolved_modifier_warnings(
             item, tuple(getattr(self, "_special_chip_rows", {}).values()),
         )
@@ -2239,8 +2304,8 @@ class PoetoreWindow(QWidget):
 
         def run():
             try:
-                initial_filters = resolve_trade_stat_filters(
-                    item, preset, self._trade_base_type, self._trade_item_name,
+                initial_filters = self._resolved_trade_filters(
+                    item, preset,
                 ) if needs_initial_filters else ()
                 effective_filters = initial_filters if needs_initial_filters else filters
                 if item.category in {"gem", "weapon", "armour", "flask", "tincture"}:
@@ -2653,9 +2718,7 @@ class PoetoreWindow(QWidget):
         if key == getattr(self, "_special_chip_item_key", None):
             return
         self._special_chip_item_key = key
-        rows = resolve_trade_stat_filters(
-            item, preset, self._trade_base_type, self._trade_item_name
-        )
+        rows = self._resolved_trade_filters(item, preset)
         by_id = {row.stat_id: row for row in rows}
         self._special_chip_rows = by_id
 
@@ -2851,9 +2914,7 @@ class PoetoreWindow(QWidget):
             self._configure_quality(item)
             self._configure_influence_chips(item)
             self._configure_special_filter_chips(item)
-            self._populate_stat_filters(resolve_trade_stat_filters(
-                item, preset, self._trade_base_type, self._trade_item_name,
-            ))
+            self._populate_stat_filters(self._resolved_trade_filters(item, preset))
         if preset == PRESET_BASE:
             self.price_status.setText(
                 "ベースアイテムとして、ベースタイプとアイテムレベルを中心に検索します。"
@@ -3060,6 +3121,10 @@ class PoetoreWindow(QWidget):
                 details.append("Oil " + " + ".join(oil_names[index] for index in stat_filter.oils))
             if stat_filter.group_type != "and":
                 details.append(stat_filter.group_type.upper())
+            if stat_filter.hidden_reason:
+                details.append(f"非表示理由: {stat_filter.hidden_reason}")
+            if stat_filter.source_texts:
+                details.append("構成元: " + " / ".join(stat_filter.source_texts))
             is_mod = stat_filter.kind in {
                 "explicit", "prefix", "suffix", "crafted", "fractured", "implicit", "enchant", "veiled"
             }
@@ -3091,6 +3156,9 @@ class PoetoreWindow(QWidget):
             row.setToolTip(_MOD_COLUMN_DETAILS, summary)
             row.setSizeHint(_MOD_COLUMN_TEXT, QSize(0, _MOD_ROW_HEIGHT))
             self.mod_filter_tree.addTopLevelItem(row)
+            row.setHidden(
+                bool(stat_filter.hidden_reason) != self.hidden_mods_toggle.isChecked()
+            )
             checkbox = QCheckBox()
             checkbox.setObjectName("modFilterCheckbox")
             checkbox.setToolTip("この条件を価格検索に使用する")
@@ -3281,7 +3349,10 @@ class PoetoreWindow(QWidget):
             )
 
         for listing in result.listings:
-            values = [f"{listing.amount:g} {listing.currency}"]
+            price_text = f"{listing.amount:g} {listing.currency}"
+            if listing.listed_times > 1:
+                price_text += f" ×{listing.listed_times}"
+            values = [price_text]
             if show_stock:
                 values.append(str(listing.stack_size) if listing.stack_size is not None else "-")
             if show_ilvl:

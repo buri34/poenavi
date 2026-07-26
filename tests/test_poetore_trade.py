@@ -12,7 +12,7 @@ from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.trade import (
     PRESET_BASE, PRESET_FINISHED, PriceListing, PriceResult, TradeApiError, TradeStatFilter,
     UniqueCandidate,
-    active_pc_league, available_pc_leagues, available_trade_presets, build_search_query,
+    active_pc_league, apply_search_range, available_pc_leagues, available_trade_presets, build_search_query,
     default_pc_league, elemental_dps, english_trade_identity,
     default_trade_currency, physical_dps, physical_dps_at_20_quality,
     resolve_trade_stat_filters, search_prices, unique_candidate_details,
@@ -24,6 +24,7 @@ from src.poetore.trade import _request_json
 from src.poetore.trade import _base_defence_percentile
 from src.poetore.trade import _trade_response_cache
 from src.poetore.trade import _awakened_tier_tags
+from src.poetore.trade import _group_price_listings
 from src.poetore.trade import (
     _english_trade_item_name,
     _english_trade_item_type,
@@ -1576,10 +1577,12 @@ Item Level: 70
     )
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         filters = resolve_trade_stat_filters(item)
-    assert filters == (TradeStatFilter(
+    assert filters[0] == TradeStatFilter(
         "explicit.life", "+40(30-50) to maximum Life", 38.0, "explicit", True,
         selection_reason="ユニークの可変Modが3個以下のため自動選択",
-    ),)
+    )
+    assert filters[1].stat_id == "explicit.fire"
+    assert filters[1].hidden_reason == "ユニーク固定値のため初期非表示"
     query = build_search_query(item, "Gold Amulet", filters, trade_name="The Example")["query"]
     assert query["name"] == "The Example"
     assert query["type"] == "Gold Amulet"
@@ -1650,7 +1653,8 @@ Prismatic Jewel
     ]
     assert filters[0].min_value == 6.0
     assert filters[1].min_value is None
-    assert all(row.enabled for row in filters)
+    assert all(row.enabled for row in filters if not row.hidden_reason)
+    assert all(not row.enabled for row in filters if row.hidden_reason)
 
 
 def test_unidentified_unique_query_requires_unidentified_state():
@@ -1790,7 +1794,8 @@ Iron Ring
         "explicit.stat_3917489142",
         "explicit.stat_1389153006",
     }
-    assert all(row.enabled for row in filters)
+    assert all(row.enabled for row in filters if not row.hidden_reason)
+    assert all(not row.enabled for row in filters if row.hidden_reason)
     query = build_search_query(
         item, "Iron Ring", trade_name=item.name,
         stat_filters=filters,
@@ -2307,6 +2312,33 @@ def test_price_result_calculates_median_per_currency():
     assert result.median_by_currency() == {"chaos": 5, "divine": 1}
 
 
+def test_same_seller_same_price_is_grouped_before_median():
+    grouped = _group_price_listings([
+        PriceListing(1, "chaos", "price-fixer"),
+        PriceListing(1, "chaos", "price-fixer"),
+        PriceListing(1, "chaos", "price-fixer"),
+        PriceListing(8, "chaos", "seller-a"),
+        PriceListing(10, "chaos", "seller-b"),
+    ])
+    assert [(row.amount, row.account, row.listed_times) for row in grouped] == [
+        (1, "price-fixer", 3),
+        (8, "seller-a", 1),
+        (10, "seller-b", 1),
+    ]
+    assert PriceResult("Mirage", "q", 5, grouped).median_by_currency() == {
+        "chaos": 8,
+    }
+
+
+def test_common_search_range_recalculates_from_read_value():
+    row = TradeStatFilter(
+        "explicit.life", "最大ライフ +100", 90, "explicit", True,
+        read_value=100,
+    )
+    assert apply_search_range((row,), 0)[0].min_value == 100
+    assert apply_search_range((row,), 20)[0].min_value == 80
+
+
 def test_search_prices_keeps_item_and_seller_for_list_display():
     _trade_response_cache.clear()
     search = ({"id": "query1", "result": ["item1"]}, {"X-Rate-Limit-Ip-State": "1:10:0"})
@@ -2333,6 +2365,32 @@ def test_search_prices_keeps_item_and_seller_for_list_display():
             "2026-07-22T09:21:00Z", 86, 20, 23, 3,
         ),
     )
+
+
+def test_search_prices_fetches_at_least_twenty_results():
+    _trade_response_cache.clear()
+    search = ({"id": "query1", "result": [f"item{i}" for i in range(30)]}, {})
+
+    def block(start):
+        return ({"result": [{
+            "listing": {
+                "price": {"amount": start + index + 1, "currency": "chaos"},
+                "account": {"name": f"seller-{start + index}"},
+            },
+            "item": {"baseType": "Reaver Sword"},
+        } for index in range(10)]}, {})
+
+    with patch(
+        "src.poetore.trade._request_json",
+        side_effect=[search, block(0), block(10)],
+    ) as request, patch(
+        "src.poetore.trade._japanese_trade_item_type",
+        return_value="略奪者の剣",
+    ):
+        result = search_prices(parse_item_text(ITEM), "Reaver Sword", "Mirage")
+
+    assert request.call_count == 3
+    assert len(result.listings) == 20
 
 
 def test_search_prices_logs_request_payload_and_response_summary(capsys):
