@@ -84,11 +84,14 @@ class GemShopSearchTest(unittest.TestCase):
         settings = SettingsDialog(
             current_config={"gem_shop_search_term_overrides": {"momentum support": "moment"}}
         )
+        self.assertEqual(settings.size().width(), 760)
         tabs = settings.findChild(QTabWidget)
         self.assertEqual(tabs.tabText(tabs.count() - 2), "Regex短縮設定")
         self.assertEqual(tabs.tabText(tabs.count() - 1), "アプリ情報")
 
         review = settings.gem_shop_search_term_review
+        self.assertEqual(review._table.columnWidth(0), 279)
+        self.assertEqual(review._table.horizontalScrollBar().maximum(), 0)
         hint_labels = [
             label.text()
             for label in review.findChildren(QLabel)

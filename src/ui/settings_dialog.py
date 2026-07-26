@@ -1513,7 +1513,7 @@ class GemShopSearchTermOverridesDialog(QWidget):
         table.setSelectionBehavior(QAbstractItemView.SelectRows)
         table.setAlternatingRowColors(True)
         table.verticalHeader().setVisible(False)
-        table.setColumnWidth(0, 310)
+        table.setColumnWidth(0, 279)
         table.setColumnWidth(1, 130)
         table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Interactive)
         table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
@@ -1608,7 +1608,7 @@ class SettingsDialog(QDialog):
     def __init__(self, parent=None, current_config=None):
         super().__init__(parent)
         self.setWindowTitle("設定")
-        self.resize(500, 600)
+        self.resize(760, 600)
         self.setStyleSheet(Styles.MAIN_WINDOW)
         
         self.current_config = current_config or {}
