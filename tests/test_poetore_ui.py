@@ -115,8 +115,15 @@ def test_329_single_copy_is_parsed_without_normal_and_detailed_merge(qapp):
     window._placement_context = PlacementContext(
         QRect(0, 0, 1920, 1080), QPoint(100, 100),
     )
+    parsed = ParsedItem("Boots", "Unique", "破滅の軌跡", "メッシュブーツ", "armour", raw_text=copied)
     try:
         with patch(
+            "src.poetore.ui.read_item_clipboard",
+            return_value=copied,
+        ), patch(
+            "src.poetore.ui.parse_item_text",
+            return_value=parsed,
+        ), patch(
             "src.poetore.ui.english_trade_identity",
             return_value=("Mesh Boots", "Wake of Destruction"),
         ), patch.object(window, "parse_current_text") as parse, patch.object(

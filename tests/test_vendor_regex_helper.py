@@ -91,6 +91,13 @@ class VendorRegexHelperTest(unittest.TestCase):
         self.assertEqual(dialog._and_base_tokens_from_query(), {"弓$"})
         self.assertEqual(dialog._or_base_tokens_from_query(), {"ロスボウ$"})
 
+    def test_current_act_gem_query_is_appended_without_duplicate_terms(self):
+        dialog = self.make_dialog(r"-\w- | モーメン")
+
+        dialog._append_gem_shop_query("モーメン|プレシジ")
+
+        self.assertEqual(dialog.query_edit.toPlainText(), r"-\w-|モーメン|プレシジ")
+
 
 if __name__ == "__main__":
     unittest.main()

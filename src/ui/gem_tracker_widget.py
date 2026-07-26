@@ -433,11 +433,13 @@ class GemTrackerWidget(QWidget):
         if self._current_act > 1:
             self._current_act -= 1
             self._update_display()
+            self.act_changed.emit(self._current_act)
     
     def _next_act(self):
         if self._current_act < 10:
             self._current_act += 1
             self._update_display()
+            self.act_changed.emit(self._current_act)
     
     def _update_display(self):
         """現在のActに対応するジェムリストを表示"""
