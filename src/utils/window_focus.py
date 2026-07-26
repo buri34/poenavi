@@ -62,6 +62,28 @@ def get_foreground_window():
         return None
 
 
+def get_window_rect(hwnd):
+    """Return a window's outer bounds as (x, y, width, height)."""
+    if sys.platform != "win32" or not hwnd:
+        return None
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        rect = wintypes.RECT()
+        if not ctypes.windll.user32.GetWindowRect(wintypes.HWND(hwnd), ctypes.byref(rect)):
+            return None
+        return (
+            rect.left,
+            rect.top,
+            rect.right - rect.left,
+            rect.bottom - rect.top,
+        )
+    except Exception as exc:
+        print(f"[WINDOW] GetWindowRect failed: {exc}")
+        return None
+
+
 def focus_window(hwnd, wait_seconds=0.12):
     """Best-effort foreground restore for a previously captured HWND."""
     if sys.platform != "win32" or not hwnd:
