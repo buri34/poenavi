@@ -1693,9 +1693,32 @@ def test_unique_candidate_details_include_official_icon_urls():
     ), patch(
         "src.poetore.trade.unique_icon_url",
         return_value="https://web.poecdn.com/example.png",
+    ), patch(
+        "src.poetore.trade._japanese_trade_item_name",
+        return_value="日本語の例",
     ):
         assert unique_candidate_details("Gold Amulet") == (
-            UniqueCandidate("The Example", "https://web.poecdn.com/example.png"),
+            UniqueCandidate(
+                "The Example",
+                "https://web.poecdn.com/example.png",
+                "日本語の例",
+            ),
+        )
+
+
+def test_unique_candidate_details_fall_back_to_english_name():
+    payload = {"result": [{"entries": [
+        {"name": "The Example", "type": "Gold Amulet", "flags": {"unique": True}},
+    ]}]}
+    with patch("src.poetore.trade._item_entries_cache", None), patch(
+        "src.poetore.trade._request_json", return_value=(payload, {}),
+    ), patch(
+        "src.poetore.trade.unique_icon_url", return_value=None,
+    ), patch(
+        "src.poetore.trade._japanese_trade_item_name", return_value=None,
+    ):
+        assert unique_candidate_details("Gold Amulet") == (
+            UniqueCandidate("The Example", None, "The Example"),
         )
 
 

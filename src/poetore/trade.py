@@ -1682,12 +1682,17 @@ def unique_candidates(base_type: str) -> tuple[str, ...]:
 class UniqueCandidate:
     name: str
     icon_url: str | None
+    display_name: str | None = None
 
 
 def unique_candidate_details(base_type: str) -> tuple[UniqueCandidate, ...]:
-    """未鑑定Unique候補へ、Awakened由来の公式CDNアイコンURLを付ける。"""
+    """未鑑定Unique候補へ、日本語表示名と公式CDNアイコンURLを付ける。"""
     return tuple(
-        UniqueCandidate(name, unique_icon_url(name))
+        UniqueCandidate(
+            name,
+            unique_icon_url(name),
+            _japanese_trade_item_name(name) or name,
+        )
         for name in unique_candidates(base_type)
     )
 

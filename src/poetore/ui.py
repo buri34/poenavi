@@ -2883,15 +2883,19 @@ class PoetoreWindow(QWidget):
         self._reset_unique_candidates()
         for candidate in candidates:
             name = str(getattr(candidate, "name", candidate))
+            display_name = str(getattr(candidate, "display_name", None) or name)
             icon_url = getattr(candidate, "icon_url", None)
-            button = QPushButton(name)
+            button = QPushButton(display_name)
             button.setObjectName("uniqueCandidateButton")
             button.setCheckable(True)
             button.setProperty("uniqueName", name)
             button.setProperty("iconUrl", icon_url)
             button.setIconSize(QSize(48, 48))
             button.setMinimumSize(150, 64)
-            button.setToolTip(name)
+            button.setToolTip(
+                display_name if display_name == name
+                else f"{display_name}\n{name}"
+            )
             button.setStyleSheet(
                 "QPushButton#uniqueCandidateButton {"
                 " text-align: left; padding: 6px; border: 1px solid #555; border-radius: 4px;"

@@ -1410,6 +1410,26 @@ def test_unidentified_unique_candidates_keep_icon_urls(qapp):
         window.close()
 
 
+def test_unidentified_unique_candidates_show_japanese_but_search_in_english(qapp):
+    from src.poetore.trade import UniqueCandidate
+
+    window = PoetoreWindow()
+    try:
+        window._show_unique_candidates((
+            UniqueCandidate(
+                "Eternal Damnation",
+                "https://web.poecdn.com/example.png",
+                "永遠の破滅",
+            ),
+        ))
+        button = window.unique_name_group.buttons()[0]
+        assert button.text() == "永遠の破滅"
+        assert button.property("uniqueName") == "Eternal Damnation"
+        assert button.toolTip() == "永遠の破滅\nEternal Damnation"
+    finally:
+        window.close()
+
+
 def test_unidentified_agate_amulet_shows_all_five_candidates(qapp):
     from src.poetore.trade import UniqueCandidate
 
