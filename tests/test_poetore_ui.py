@@ -625,6 +625,22 @@ def test_japanese_trade_url_button_opens_result_url(qapp):
         window.close()
 
 
+def test_opening_trade_url_does_not_close_panel_on_browser_focus_change(qapp):
+    window = PoetoreWindow()
+    try:
+        window.show()
+        window._last_trade_url = "https://www.pathofexile.com/trade/search/Standard/example"
+        with patch("src.poetore.ui.QDesktopServices.openUrl") as open_url:
+            window._open_trade_url()
+            window._close_when_focus_leaves_panel(window.price_button, None)
+
+        open_url.assert_called_once()
+        assert window.isVisible()
+        assert window._opening_external_url is True
+    finally:
+        window.close()
+
+
 def test_price_result_columns_reset_when_switching_from_gem_to_weapon(qapp):
     window = PoetoreWindow()
     try:

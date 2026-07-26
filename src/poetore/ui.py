@@ -772,6 +772,7 @@ class PoetoreWindow(QWidget):
         self.trade_league_combo.lineEdit().editingFinished.connect(self._persist_trade_league)
         self._placement_context: PlacementContext | None = None
         self._focus_signal_connected = False
+        self._opening_external_url = False
         self._outside_click_listener = None
         self._passive_hotkey_display = False
         layout = QVBoxLayout(self)
@@ -1727,6 +1728,11 @@ class PoetoreWindow(QWidget):
             checkbox.toggle()
 
     def _close_when_focus_leaves_panel(self, old, new):
+        # 公式Trade等を明示的に開いた時は、ブラウザへのフォーカス移動で
+        # この画面を閉じない。古いPoENaviが背後で起動している場合に、
+        # その旧画面が再描画されたように露出することも防ぐ。
+        if self._opening_external_url:
+            return
         old_belongs = self._widget_belongs_to_panel(old)
         new_belongs = self._widget_belongs_to_panel(new)
         if new is None and self._widget_is_panel_popup(old):
@@ -3291,7 +3297,11 @@ class PoetoreWindow(QWidget):
 
     def _open_trade_url(self):
         if self._last_trade_url:
+            self._opening_external_url = True
             QDesktopServices.openUrl(QUrl(self._last_trade_url))
+            QTimer.singleShot(
+                1500, lambda: setattr(self, "_opening_external_url", False)
+            )
 
 
 def show_poetore_window(owner, activate=True):
