@@ -70,6 +70,7 @@ _MOD_CHECK_COLUMN_WIDTH = 40
 _MOD_TIER_COLUMN_WIDTH = 75
 _MOD_TEXT_COLUMN_WIDTH = 346
 _MOD_VALUE_EDITOR_WIDTH = 72
+_MOD_ROW_HEIGHT = 36
 _UNIQUE_ROLL_ROW_HEIGHT = 62
 _SPECIAL_CHIP_FILTER_IDS = {
     "property.map_tier", "property.area_level", "property.heist_wings",
@@ -3036,6 +3037,7 @@ class PoetoreWindow(QWidget):
             row.setData(0, Qt.UserRole + 5, stat_filter.enabled)
             row.setToolTip(_MOD_COLUMN_TEXT, summary)
             row.setToolTip(_MOD_COLUMN_DETAILS, summary)
+            row.setSizeHint(_MOD_COLUMN_TEXT, QSize(0, _MOD_ROW_HEIGHT))
             self.mod_filter_tree.addTopLevelItem(row)
             checkbox = QCheckBox()
             checkbox.setObjectName("modFilterCheckbox")

@@ -739,6 +739,12 @@ def test_mod_text_click_toggles_without_selecting_or_moving_value_editors(qapp):
         assert checkbox.isChecked()
         assert not row.isSelected()
         assert (minimum_editor.geometry(), maximum_editor.geometry()) == before
+        row_rect = window.mod_filter_tree.visualItemRect(row)
+        assert row_rect.height() > minimum_editor.height()
+        assert minimum_editor.geometry().top() > 0
+        assert minimum_editor.geometry().bottom() < row_rect.height() - 1
+        assert maximum_editor.geometry().top() > 0
+        assert maximum_editor.geometry().bottom() < row_rect.height() - 1
     finally:
         window.close()
 
