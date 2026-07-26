@@ -262,6 +262,10 @@ class TradeStatFilter:
     tier_tags: tuple[int, ...] = ()
     hidden_reason: str = ""
     source_texts: tuple[str, ...] = ()
+    # source_textsと同じ順序の、検索条件への寄与値と元Mod見出し。
+    # Trade APIへは送らないAwakened風の表示専用情報。
+    source_contributions: tuple[float | None, ...] = ()
+    source_headings: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -1986,11 +1990,82 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
         },
     }
     pseudo_refs.update({stat_id: {ref} for stat_id, ref in simple_sources.items()})
+    known_source_refs = set().union(*pseudo_refs.values())
+
+    def effective_source_ref(modifier) -> str:
+        if modifier.ref:
+            return modifier.ref
+        normalized = normalize_stat_text(modifier.text)
+        return next((
+            ref for ref in known_source_refs
+            if normalize_stat_text(ref) == normalized
+        ), "")
+
+    def source_contribution(stat_id: str, modifier) -> float | None:
+        if not modifier.values:
+            return None
+        value = modifier.values[0]
+        ref = effective_source_ref(modifier)
+        if stat_id == "pseudo.pseudo_total_life":
+            if ref == "+# to maximum Life":
+                return value
+            if "str" in _ATTRIBUTE_REFS.get(ref, ()):
+                return value * 0.5
+        if stat_id == "pseudo.pseudo_total_mana":
+            if ref == "+# to maximum Mana":
+                return value
+            if "int" in _ATTRIBUTE_REFS.get(ref, ()):
+                return value * 0.5
+        resistance_targets = {
+            "pseudo.pseudo_total_fire_resistance": "fire",
+            "pseudo.pseudo_total_cold_resistance": "cold",
+            "pseudo.pseudo_total_lightning_resistance": "lightning",
+        }
+        resistance = _RESISTANCE_REFS.get(ref)
+        if resistance:
+            elements, chaos = resistance
+            if stat_id == "pseudo.pseudo_total_elemental_resistance":
+                return value * len(elements)
+            if stat_id == "pseudo.pseudo_total_chaos_resistance" and chaos:
+                return value
+            if resistance_targets.get(stat_id) in elements:
+                return value
+        attribute_targets = {
+            "pseudo.pseudo_total_strength": "str",
+            "pseudo.pseudo_total_dexterity": "dex",
+            "pseudo.pseudo_total_intelligence": "int",
+        }
+        if attribute_targets.get(stat_id) in _ATTRIBUTE_REFS.get(ref, ()):
+            return value
+        if (stat_id == "pseudo.pseudo_total_all_attributes"
+                and ref == "+# to all Attributes"):
+            return value
+        if ref in pseudo_refs.get(stat_id, set()):
+            return value
+        return value if modifier.stat_id == stat_id else None
+
+    def source_heading(modifier) -> str:
+        labels = {
+            "prefix": "プレフィックス",
+            "suffix": "サフィックス",
+            "implicit": "暗黙Mod",
+            "crafted": "クラフトMod",
+            "fractured": "フラクチャーMod",
+            "enchant": "エンチャント",
+            "veiled": "ヴェールドMod",
+            "explicit": "明示Mod",
+        }
+        heading = labels.get(modifier.affix or modifier.kind, "元Mod")
+        if modifier.tier is not None:
+            heading += f" (T{modifier.tier})"
+        return heading
+
     for row in filters:
         sources = by_stat.get(row.stat_id, ())
         source = sources[0] if sources else None
         pseudo_sources = [modifier for modifier in item.modifiers
-                          if modifier.ref in pseudo_refs.get(row.stat_id, set())]
+                          if effective_source_ref(modifier)
+                          in pseudo_refs.get(row.stat_id, set())]
         property_sources = _property_tier_sources(item, row.stat_id)
         if source is None and len(pseudo_sources) == 1:
             source = pseudo_sources[0]
@@ -2024,6 +2099,12 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
             read_value = property_values.get(row.stat_id)
         if read_value is None and row.kind == "pseudo" and row.min_value is not None:
             read_value = round(row.min_value / (1 - DEFAULT_SEARCH_RANGE), 2)
+        contributing_sources = property_sources or pseudo_sources or sources
+        unique_sources = tuple(dict.fromkeys(
+            modifier
+            for modifier in contributing_sources
+            if modifier.text and modifier.text != row.text
+        ))
         decorated.append(replace(
             row,
             read_value=read_value,
@@ -2041,11 +2122,14 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
                 _awakened_tier_tags(property_sources or pseudo_sources or sources)
                 or row.tier_tags
             ),
-            source_texts=tuple(dict.fromkeys(
-                modifier.text
-                for modifier in (property_sources or pseudo_sources or sources)
-                if modifier.text and modifier.text != row.text
-            )),
+            source_texts=tuple(modifier.text for modifier in unique_sources),
+            source_contributions=tuple(
+                source_contribution(row.stat_id, modifier)
+                for modifier in unique_sources
+            ),
+            source_headings=tuple(
+                source_heading(modifier) for modifier in unique_sources
+            ),
         ))
     return tuple(decorated)
 

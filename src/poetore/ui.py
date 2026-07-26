@@ -1206,7 +1206,7 @@ class PoetoreWindow(QWidget):
         self.mod_sources_toggle.setCheckable(True)
         self.mod_sources_toggle.setToolTip(
             "合計ライフや防御力など、複数の数値をまとめた検索条件について、\n"
-            "計算に使われた元のMod文章と、その条件が選ばれた理由を表示します。"
+            "計算に使われた元のMod文章と、合計へ加算された値を表示します。"
         )
         self.mod_sources_toggle.toggled.connect(self._toggle_mod_sources)
         mod_conditions_actions = QHBoxLayout()
@@ -3160,36 +3160,67 @@ class PoetoreWindow(QWidget):
             row.setSizeHint(_MOD_COLUMN_TEXT, QSize(0, _MOD_ROW_HEIGHT))
             self.mod_filter_tree.addTopLevelItem(row)
             if stat_filter.source_texts:
-                source_lines = [
-                    "この検索条件に含まれるMod",
-                    *(f"・{source}" for source in stat_filter.source_texts),
-                    (
-                        f"→ {stat_filter.selection_reason}"
-                        if stat_filter.selection_reason
-                        else f"→ 「{stat_filter.text}」として検索"
-                    ),
-                ]
                 source_item = QTreeWidgetItem(row)
                 source_item.setFirstColumnSpanned(True)
-                source_label = QLabel("\n".join(source_lines))
-                source_label.setObjectName("modSourceDetails")
-                source_label.setWordWrap(True)
-                source_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-                source_label.setContentsMargins(12, 6, 12, 8)
-                source_label.setStyleSheet(
-                    "QLabel#modSourceDetails {"
+                source_widget = QWidget()
+                source_widget.setObjectName("modSourceDetails")
+                source_layout = QVBoxLayout(source_widget)
+                source_layout.setContentsMargins(12, 6, 12, 8)
+                source_layout.setSpacing(2)
+                source_widget.setStyleSheet(
+                    "QWidget#modSourceDetails {"
                     " color: #aeb8aa;"
                     " background: rgba(24, 29, 22, 220);"
                     " border-left: 2px solid rgba(176, 255, 123, 90);"
                     "}"
                 )
-                source_label.setSizePolicy(
+                for source_index, source_text in enumerate(stat_filter.source_texts):
+                    heading = QLabel(
+                        stat_filter.source_headings[source_index]
+                        if source_index < len(stat_filter.source_headings)
+                        else "元Mod"
+                    )
+                    heading.setStyleSheet(
+                        "color: #788174; font-style: italic;"
+                    )
+                    source_layout.addWidget(heading)
+                    source_row = QWidget()
+                    source_row_layout = QHBoxLayout(source_row)
+                    source_row_layout.setContentsMargins(0, 0, 0, 0)
+                    source_row_layout.setSpacing(8)
+                    source_label = QLabel(source_text)
+                    source_label.setWordWrap(True)
+                    source_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+                    source_row_layout.addWidget(source_label, stretch=1)
+                    contribution = (
+                        stat_filter.source_contributions[source_index]
+                        if source_index < len(stat_filter.source_contributions)
+                        else None
+                    )
+                    if contribution is not None:
+                        contribution_label = QLabel(f"{contribution:+g}")
+                        contribution_label.setAlignment(
+                            Qt.AlignRight | Qt.AlignVCenter
+                        )
+                        contribution_label.setMinimumWidth(48)
+                        contribution_label.setToolTip(
+                            f"「{stat_filter.text}」の合計へ加算される値"
+                        )
+                        contribution_label.setStyleSheet(
+                            "color: #d8ffbd;"
+                            " border: 1px solid #596452;"
+                            " border-radius: 3px;"
+                            " padding: 1px 5px;"
+                        )
+                        source_row_layout.addWidget(contribution_label)
+                    source_layout.addWidget(source_row)
+                source_widget.setSizePolicy(
                     QSizePolicy.Expanding, QSizePolicy.Preferred
                 )
                 source_item.setSizeHint(
-                    0, QSize(0, 34 + 18 * len(stat_filter.source_texts))
+                    0, QSize(0, 12 + 42 * len(stat_filter.source_texts))
                 )
-                self.mod_filter_tree.setItemWidget(source_item, 0, source_label)
+                self.mod_filter_tree.setItemWidget(source_item, 0, source_widget)
                 row.setExpanded(self.mod_sources_toggle.isChecked())
             row.setHidden(
                 bool(stat_filter.hidden_reason) != self.hidden_mods_toggle.isChecked()

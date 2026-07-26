@@ -569,11 +569,14 @@ def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
         assert "複数の数値をまとめた検索条件" in (
             window.mod_sources_toggle.toolTip()
         )
+        assert "合計へ加算された値" in window.mod_sources_toggle.toolTip()
         window._populate_stat_filters((
             TradeStatFilter(
                 "pseudo.life", "最大ライフ合計", 90, "pseudo", True,
                 read_value=100,
                 source_texts=("最大ライフ +70", "筋力 +60"),
+                source_contributions=(70, 30),
+                source_headings=("プレフィックス (T1)", "サフィックス (T2)"),
             ),
             TradeStatFilter(
                 "explicit.fixed", "固定Mod", 10, "explicit", False,
@@ -586,12 +589,16 @@ def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
         assert hidden.isHidden()
         assert normal.childCount() == 1
         source_row = normal.child(0)
-        source_label = window.mod_filter_tree.itemWidget(source_row, 0)
-        assert source_label.wordWrap()
-        assert "この検索条件に含まれるMod" in source_label.text()
-        assert "・最大ライフ +70" in source_label.text()
-        assert "・筋力 +60" in source_label.text()
-        assert "→ 「最大ライフ合計」として検索" in source_label.text()
+        source_widget = window.mod_filter_tree.itemWidget(source_row, 0)
+        labels = [label.text() for label in source_widget.findChildren(QLabel)]
+        assert "プレフィックス (T1)" in labels
+        assert "最大ライフ +70" in labels
+        assert "+70" in labels
+        assert "サフィックス (T2)" in labels
+        assert "筋力 +60" in labels
+        assert "+30" in labels
+        assert not any("pseudo" in text.casefold() for text in labels)
+        assert not any("主要" in text for text in labels)
         assert not normal.isExpanded()
 
         window.hidden_mods_toggle.setChecked(True)

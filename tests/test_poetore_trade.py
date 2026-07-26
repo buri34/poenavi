@@ -1360,6 +1360,27 @@ Item Level: 85
         "pseudo.pseudo_total_elemental_resistance": 63.0,
         "pseudo.pseudo_total_chaos_resistance": 9.0,
     }
+    details = {row.stat_id: row for row in filters}
+    elemental = details["pseudo.pseudo_total_elemental_resistance"]
+    assert elemental.source_contributions == (30.0, 40.0)
+
+
+def test_pseudo_source_contributions_include_attribute_conversion():
+    item = parse_item_text("""Item Class: Amulets
+Rarity: Rare
+Test Amulet
+Onyx Amulet
+--------
+Item Level: 85
+--------
++70 to maximum Life
++60 to Strength
+""")
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
+    life = rows["pseudo.pseudo_total_life"]
+    assert life.source_texts == ("+70 to maximum Life", "+60 to Strength")
+    assert life.source_contributions == (70.0, 30.0)
 
 
 def test_accessory_finished_filters_use_requested_awakened_based_order():
