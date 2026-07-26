@@ -1031,6 +1031,31 @@ def test_mod_conditions_can_be_collapsed_without_losing_values(qapp):
         window.close()
 
 
+def test_mod_condition_checks_can_all_be_cleared_without_changing_item_level(qapp):
+    window = PoetoreWindow()
+    try:
+        filters = (
+            TradeStatFilter("explicit.stat_1", "最大ライフ +100", 90, "prefix", True),
+            TradeStatFilter("explicit.stat_2", "火耐性 +40%", 35, "suffix", True),
+        )
+        window._populate_stat_filters(filters)
+        window.item_level_tag.show()
+        window.item_level_edit.setText("84")
+        window._set_item_level_filter_enabled(True)
+
+        assert window.clear_mod_conditions_button.text() == "一覧のチェックを全解除"
+        assert window.clear_mod_conditions_button.toolTip() == (
+            "上の条件一覧のみ。ilvlなどの基本条件は変更しません"
+        )
+        window.clear_mod_conditions_button.click()
+
+        assert [row.enabled for row in window._selected_stat_filters()] == [False, False]
+        assert window._selected_item_level() == 84
+        assert window._item_level_filter_enabled
+    finally:
+        window.close()
+
+
 def test_unresolved_modifiers_are_shown_as_warning(qapp):
     window = PoetoreWindow()
     try:

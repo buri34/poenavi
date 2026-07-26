@@ -1112,7 +1112,19 @@ class PoetoreWindow(QWidget):
 
         self.weapon_property_label = QLabel("武器性能・検索Mod")
         self.weapon_property_label.setObjectName("sectionTitle")
-        panel_layout.addWidget(self.weapon_property_label)
+        mod_conditions_header = QHBoxLayout()
+        mod_conditions_header.addWidget(self.weapon_property_label)
+        mod_conditions_header.addStretch()
+        self.clear_mod_conditions_button = QPushButton("一覧のチェックを全解除")
+        self.clear_mod_conditions_button.setObjectName("clearModConditionsButton")
+        self.clear_mod_conditions_button.setToolTip(
+            "上の条件一覧のみ。ilvlなどの基本条件は変更しません"
+        )
+        self.clear_mod_conditions_button.clicked.connect(
+            self._clear_mod_condition_checks
+        )
+        mod_conditions_header.addWidget(self.clear_mod_conditions_button)
+        panel_layout.addLayout(mod_conditions_header)
 
         self._debug_parse_area = QWidget()
         self._debug_parse_area.hide()
@@ -1565,6 +1577,20 @@ class PoetoreWindow(QWidget):
             else "Mod検索条件の一覧を折りたたむ"
         )
 
+    def _clear_mod_condition_checks(self):
+        """一覧内の検索条件だけを解除し、基本条件チップは変更しない。"""
+        for index in range(self.mod_filter_tree.topLevelItemCount()):
+            row = self.mod_filter_tree.topLevelItem(index)
+            checkbox_container = self.mod_filter_tree.itemWidget(
+                row, _MOD_COLUMN_CHECK
+            )
+            checkbox = (
+                checkbox_container.findChild(QCheckBox, "modFilterCheckbox")
+                if checkbox_container is not None else None
+            )
+            if checkbox is not None:
+                checkbox.setChecked(False)
+
     def _update_item_header(self, item):
         is_nonunique_equipment = (
             item.category in {"weapon", "armour", "accessory"}
@@ -1586,7 +1612,7 @@ class PoetoreWindow(QWidget):
                 self._base_scope_item_key = key
                 self.base_scope_toggle.setCurrentIndex(0)
         self.weapon_property_label.setText(
-            "武器性能・検索Mod" if item.category == "weapon" else "検索条件"
+            "武器性能・検索Mod" if item.category == "weapon" else "検索条件一覧"
         )
 
     def _display_base_type(self, item) -> str:
