@@ -1150,6 +1150,9 @@ class PoetoreWindow(QWidget):
         ])
         self.mod_filter_tree.setRootIsDecorated(False)
         self.mod_filter_tree.setAlternatingRowColors(True)
+        # 行選択は使わない。Mod文章クリックはチェック切替だけを行い、
+        # セルウィジェット（最小・最大欄）と選択背景の見た目が分離しないようにする。
+        self.mod_filter_tree.setSelectionMode(QAbstractItemView.NoSelection)
         self.mod_filter_tree.setMinimumHeight(230)
         mod_header = self.mod_filter_tree.header()
         mod_header.hide()

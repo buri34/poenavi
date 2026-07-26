@@ -717,6 +717,32 @@ def test_mod_filter_minimum_and_maximum_editors_use_narrow_width(qapp):
         window.close()
 
 
+def test_mod_text_click_toggles_without_selecting_or_moving_value_editors(qapp):
+    window = PoetoreWindow()
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1", "命中力 +55", 55, "prefix", False, max_value=100,
+    ),))
+    try:
+        window.show()
+        qapp.processEvents()
+        row = window.mod_filter_tree.topLevelItem(0)
+        checkbox = window.mod_filter_tree.itemWidget(row, 0).findChild(
+            QCheckBox, "modFilterCheckbox"
+        )
+        minimum_editor = window.mod_filter_tree.itemWidget(row, 4)
+        maximum_editor = window.mod_filter_tree.itemWidget(row, 5)
+        before = (minimum_editor.geometry(), maximum_editor.geometry())
+
+        window._toggle_mod_condition_from_text(row, 3)
+        qapp.processEvents()
+
+        assert checkbox.isChecked()
+        assert not row.isSelected()
+        assert (minimum_editor.geometry(), maximum_editor.geometry()) == before
+    finally:
+        window.close()
+
+
 def test_watchers_eye_shows_all_three_variable_aura_mods_in_actual_ui(qapp):
     window = PoetoreWindow()
     try:
