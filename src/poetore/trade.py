@@ -2876,7 +2876,12 @@ def build_search_query(
                 group["value"] = {"min": stat_filter.group_min or 1}
             query["stats"].append(group)
             stat_groups[group_key] = group
-        group["filters"].append({"id": stat_filter.stat_id, "value": value})
+        api_stat_id = (
+            stat_filter.stat_id.split("|", 1)[0]
+            if stat_filter.option_value is not None
+            else stat_filter.stat_id
+        )
+        group["filters"].append({"id": api_stat_id, "value": value})
     if item_level_min is not None:
         level_filter = {"min": item_level_min}
         if item_level_max is not None:

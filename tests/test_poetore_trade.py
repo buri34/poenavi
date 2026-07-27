@@ -2803,7 +2803,7 @@ def test_option_stat_query_does_not_include_numeric_bounds():
     query = build_search_query(item, stat_filters=(base_effect,))["query"]
     sent = query["stats"][0]["filters"][0]
     assert sent == {
-        "id": base_effect.stat_id,
+        "id": "enchant.stat_3948993189",
         "value": {"option": 43},
     }
 
