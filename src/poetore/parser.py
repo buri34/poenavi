@@ -625,8 +625,13 @@ def parse_item_text(text: str) -> ParsedItem:
                 metadata, confidence = default_metadata_index().match_ref(
                     current_header_name, kind,
                 )
-            if metadata is None and detailed_copy and _PARENTHETICAL_LINE.fullmatch(line):
-                # 詳細コピーでMod直後に付く用語説明・上限説明は検索条件ではない。
+            if (
+                metadata is None
+                and _PARENTHETICAL_LINE.fullmatch(line)
+                and (detailed_copy or item_category == "cluster_jewel")
+            ):
+                # 詳細コピーやクラスタージュエルに付く用語説明・上限説明は
+                # `(enchant)` 表記でも検索条件ではない。
                 continue
             roll_min, roll_max = _roll_bounds(line)
             inferred_affix = None

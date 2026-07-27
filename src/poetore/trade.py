@@ -2851,7 +2851,13 @@ def build_search_query(
         value = {}
         if stat_filter.option_value is not None:
             value["option"] = stat_filter.option_value
-        minimum, maximum = stat_filter.min_value, stat_filter.max_value
+        # Trade APIのoption型statは選択肢自体が値を表す。
+        # コピー文中の数値をmin/maxとして併記すると、正しいoptionでも0件になる。
+        minimum, maximum = (
+            (None, None)
+            if stat_filter.option_value is not None
+            else (stat_filter.min_value, stat_filter.max_value)
+        )
         if stat_filter.inverted:
             minimum, maximum = (
                 -maximum if maximum is not None else None,

@@ -22,6 +22,32 @@ RARE_JP = """アイテムクラス: 指輪
 
 
 class PoetoreParserTest(unittest.TestCase):
+    def test_cluster_jewel_parenthetical_enchant_help_is_not_an_unresolved_mod(self):
+        item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: ノーマル
+クラスタージュエル (中)
+--------
+アイテムレベル: 83
+--------
+パッシブスキルを4個追加する (enchant)
+(追加されたパッシブスキルは他のジュエルの範囲内にあるとみなされることはない) (enchant)
+(追加されるパッシブスキルは別途明記されない限り通常パッシブである) (enchant)
+ジュエルソケット1個がパッシブスキルに追加される (enchant)
+追加される通常パッシブスキルは付与: 非ダメージ性状態異常の効果が10%増加する (enchant)
+(特殊パッシブ、マスタリー、キーストーン、ジュエルソケット以外のパッシブスキルを通常パッシブという) (enchant)
+--------
+パッシブツリーで割り当てられたジュエルソケット(大)または(中)にはめる。追加されたパッシブは他の半径を持つジュエルと相互作用しない。右クリックしてソケットから取り外すことができる。
+""")
+
+        self.assertEqual(item.category, "cluster_jewel")
+        self.assertFalse(any(mod.stat_id is None for mod in item.modifiers))
+        self.assertFalse(any(mod.text.startswith("(") for mod in item.modifiers))
+        base_effect = next(
+            mod for mod in item.modifiers
+            if mod.stat_id == "enchant.stat_3948993189"
+        )
+        self.assertEqual(base_effect.option_value, 23)
+
     def test_combines_multiline_flask_suffix_using_official_metadata(self):
         item = parse_item_text("""アイテムクラス: ライフフラスコ
 レアリティ: マジック

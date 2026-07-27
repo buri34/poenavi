@@ -2779,6 +2779,35 @@ def test_query_supports_option_not_count_and_special_item_states():
     assert "veiled" not in without_veiled["filters"]["misc_filters"]["filters"]
 
 
+def test_option_stat_query_does_not_include_numeric_bounds():
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: レア
+思案する瞳
+クラスタージュエル (小)
+--------
+アイテムレベル: 83
+--------
+パッシブスキルを2個追加する (enchant)
+追加される通常パッシブスキルは付与: 回避力が15%増加する (enchant)
+""")
+    filters = resolve_trade_stat_filters(
+        item, PRESET_FINISHED, "Small Cluster Jewel",
+    )
+    base_effect = next(
+        row for row in filters
+        if row.stat_id.split("|", 1)[0] == "enchant.stat_3948993189"
+    )
+    assert base_effect.option_value == 43
+    assert base_effect.min_value == 15
+
+    query = build_search_query(item, stat_filters=(base_effect,))["query"]
+    sent = query["stats"][0]["filters"][0]
+    assert sent == {
+        "id": base_effect.stat_id,
+        "value": {"option": 43},
+    }
+
+
 def test_veiled_chip_uses_matching_veiled_stat_ids_like_awakened():
     item = parse_item_text("""Item Class: Body Armours
 Rarity: Rare
