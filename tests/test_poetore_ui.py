@@ -3233,6 +3233,49 @@ def test_current_japanese_flask_and_tincture_have_no_unresolved_warning(
         window.close()
 
 
+def test_flask_instilling_enchantment_is_visible_in_search_conditions(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: ユーティリティフラスコ
+レアリティ: マジック
+検査者の 虹の シルバーフラスコ
+--------
+品質: +17% (augmented)
+8.90 (augmented)秒間持続
+使用時に60中40チャージを消費
+現在0チャージ
+猛攻
+--------
+装備要求:
+レベル: 64
+--------
+アイテムレベル: 85
+--------
+チャージがフルになった時に使用される (enchant)
+--------
+{ プレフィックスモッド「検査者の」 (ティア: 3) }
+持続時間が27(26-30)%増加する
+{ サフィックスモッド 「虹の」 (ティア: 1) }
+効果中は20(18-20)%の元素耐性が追加される
+--------
+右クリックして飲む。腰につけているときだけチャージを貯めることができる。
+""")
+        window.parse_current_text()
+
+        rows = [
+            window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole + 4)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        enchant = next(
+            row for row in rows if row.stat_id == "enchant.stat_3287581721"
+        )
+        assert enchant.text == "チャージがフルになった時に使用される (enchant)"
+        assert enchant.enabled is True
+        assert window.mod_warning.isHidden()
+    finally:
+        window.close()
+
+
 @pytest.mark.parametrize("metadata,name,expected", [
     ({}, "Fireball", "Variant：通常ジェム"),
     ({"vaal": True}, "Vaal Fireball", "Variant：ヴァールジェム"),

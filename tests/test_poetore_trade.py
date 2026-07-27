@@ -3450,6 +3450,37 @@ def test_dedicated_exact_magic_flask_keeps_t1_t2_and_crafted_only():
     assert rows["property.item_level"].enabled is False
 
 
+def test_dedicated_exact_magic_flask_keeps_instilling_enchantment():
+    item = parse_item_text("""アイテムクラス: ユーティリティフラスコ
+レアリティ: マジック
+検査者の 虹の シルバーフラスコ
+--------
+アイテムレベル: 85
+--------
+チャージがフルになった時に使用される (enchant)
+--------
+{ プレフィックスモッド「検査者の」 (ティア: 3) }
+持続時間が27(26-30)%増加する
+{ サフィックスモッド 「虹の」 (ティア: 1) }
+効果中は20(18-20)%の元素耐性が追加される
+""")
+
+    filters = resolve_trade_stat_filters(item)
+    rows = {row.stat_id: row for row in filters}
+    enchant = rows["enchant.stat_3287581721"]
+    assert enchant.text == "チャージがフルになった時に使用される (enchant)"
+    assert enchant.enabled is True
+    assert enchant.min_value is None
+
+    query = build_search_query(
+        item, "Silver Flask", filters, preset=PRESET_FINISHED,
+    )["query"]
+    assert {
+        "id": "enchant.stat_3287581721",
+        "value": {},
+    } in query["stats"][0]["filters"]
+
+
 def test_forbidden_tome_below_83_uses_exact_area_level_range():
     item = ParsedItem(
         item_class="Misc Map Items", rarity="Normal", name="Forbidden Tome",

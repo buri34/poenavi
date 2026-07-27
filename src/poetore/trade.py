@@ -2520,11 +2520,6 @@ def resolve_trade_stat_filters(
             adjusted.append(replace(row, enabled=enabled))
         decorated = [row for _, row in sorted(enumerate(adjusted), key=jewel_priority)]
     if item.category in {"flask", "tincture"}:
-        used_enkindling = any(
-            modifier.ref == "Gains no Charges during Flask Effect" for modifier in item.modifiers
-        )
-        if item.category == "flask" and not used_enkindling:
-            decorated = [row for row in decorated if row.kind != "enchant"]
         has_recovery = any(modifier.ref == "#% increased Charge Recovery" for modifier in item.modifiers)
         has_effect = any(modifier.ref == "#% increased effect" for modifier in item.modifiers)
         if item.rarity.casefold() in {"magic", "マジック"} and has_recovery and not has_effect:
