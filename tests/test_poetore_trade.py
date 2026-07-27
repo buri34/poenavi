@@ -2736,6 +2736,35 @@ def test_transfigured_gem_web_url_uses_localized_base_type_with_discriminator():
     }
 
 
+def test_japanese_transfigured_gem_text_resolves_to_english_variant_identity():
+    item = _gem_item("動地のグラウンドスラム", level=20, quality=20)
+    aligned_items = ((
+        {
+            "type": "Ground Slam",
+            "text": "Ground Slam of Earthshaking",
+            "disc": "alt_x",
+        },
+        {
+            "type": "グラウンドスラム",
+            "text": "動地のグラウンドスラム",
+            "disc": "alt_x",
+        },
+    ),)
+    with patch(
+        "src.poetore.trade._aligned_trade_item_pairs",
+        return_value=iter(aligned_items),
+    ):
+        trade_type, trade_name = english_trade_identity(item)
+
+    assert trade_type == "Ground Slam of Earthshaking"
+    assert trade_name is None
+    query = build_search_query(item, trade_type)["query"]
+    assert query["type"] == {
+        "option": "Ground Slam",
+        "discriminator": "alt_x",
+    }
+
+
 def test_vaal_gem_detailed_copy_searches_the_vaal_item_not_the_normal_gem():
     item = parse_item_text("""Item Class: Skill Gems
 Rarity: Gem

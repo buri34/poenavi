@@ -1631,6 +1631,17 @@ def _english_trade_item_type(
     confirmed = _CONFIRMED_ENGLISH_TRADE_TYPE_OVERRIDES.get((category or "", wanted))
     if confirmed:
         return confirmed
+    if category == "gem":
+        gem_text_matches = {
+            str(english.get("text", "")).strip()
+            for english, japanese in _aligned_trade_item_pairs()
+            if str(japanese.get("text", "")).strip() == wanted
+            and str(english.get("text", "")).strip()
+        }
+        if len(gem_text_matches) == 1:
+            # 変容ジェムはtypeが通常版と共通で、textとdiscだけが異なる。
+            # 英語textを返せば固定メタデータから正しいtrade_type/alt_xを引ける。
+            return next(iter(gem_text_matches))
     exact: set[str] = set()
     contained: list[tuple[int, str]] = []
     for english, japanese in _aligned_trade_item_pairs():
