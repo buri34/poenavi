@@ -2476,7 +2476,7 @@ class PoetoreWindow(QWidget):
         # 通常・Unique・Blighted・Valdoを含むMapカテゴリ全体で非表示にする。
         has_item_level = (
             item.item_level is not None
-            and item.category not in {"map", "captured_beast", "corpse"}
+            and item.category not in {"map", "captured_beast"}
         )
         self.item_level_tag.setVisible(has_item_level)
         # Flask/Tinctureはilvlを確認・任意指定できるが、Awakened同様に初期OFF。

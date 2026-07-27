@@ -1337,8 +1337,16 @@ def test_itemised_spectre_corpse_hides_fixed_ability_mod_warning(qapp):
         assert window._parsed_item.category == "corpse"
         assert window.mod_warning.isHidden()
         assert window._selected_stat_filters() == ()
-        assert window.item_level_tag.isHidden()
+        assert not window.item_level_tag.isHidden()
+        assert window._selected_item_level() == 85
+
+        window.item_level_toggle.click()
         assert window._selected_item_level() is None
+
+        window.item_level_edit.setFocus()
+        window.item_level_edit.selectAll()
+        QTest.keyClicks(window.item_level_edit, "83")
+        assert window._selected_item_level() == 83
     finally:
         window.close()
 

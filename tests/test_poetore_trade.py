@@ -2289,7 +2289,12 @@ def test_itemised_spectre_corpse_uses_awakened_exact_identity_without_mod_warnin
     )["query"]
     assert query["type"] == "完全体のドルイド錬金術師"
     assert query["stats"] == [{"type": "and", "filters": []}]
-    assert "ilvl" not in query["filters"]["misc_filters"]["filters"]
+    assert query["filters"]["misc_filters"]["filters"]["ilvl"] == {"min": 85}
+
+    query_without_ilvl = build_search_query(
+        item, item.base_type, stat_filters=(), item_level_min=None,
+    )["query"]
+    assert "ilvl" not in query_without_ilvl["filters"]["misc_filters"]["filters"]
 
 
 def test_japanese_local_physical_modifier_is_not_duplicated_after_pdps_aggregation():
