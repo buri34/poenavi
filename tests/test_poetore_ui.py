@@ -20,7 +20,6 @@ from src.poetore.trade import (
     build_search_query, resolve_trade_stat_filters,
 )
 from src.poetore.parser import parse_item_text
-from src.poetore.parser import ItemParseError
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.poe_ninja import PoeNinjaPrice
 from src.ui.settings_dialog import SettingsDialog
@@ -75,16 +74,24 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
 def test_capture_error_dialog_uses_readable_dark_theme(qapp):
     window = PoetoreWindow()
     try:
-        dialog = window._build_capture_error_dialog(ItemParseError("アイテム文章が空です。"))
+        dialog = window._build_capture_error_dialog()
         style = dialog.styleSheet()
 
         assert dialog.icon() == QMessageBox.Icon.Warning
-        assert "PoEのアイテムコピーを取得できませんでした。" in dialog.text()
-        assert "アイテム文章が空です。" in dialog.text()
+        assert dialog.text() == (
+            "アイテムを取得できませんでした。\n"
+            "PoEがアクティブでない可能性があります。\n"
+            "PoEを前面にしてアイテムへカーソルを合わせ、\n"
+            "もう一度 Alt+D を押してください。"
+        )
         assert "background-color: #111111" in style
         assert "color: #f4ffed" in style
         assert "color: #b0ff7b" in style
+        assert "min-width: 290px" not in style
         assert dialog.standardButtons() == QMessageBox.StandardButton.Ok
+        dialog.ensurePolished()
+        dialog.adjustSize()
+        assert dialog.sizeHint().width() < 450
     finally:
         window.close()
 
@@ -104,7 +111,7 @@ def test_capture_failure_opens_the_dark_error_dialog(qapp):
             window._capture_item_copy()
 
         build.assert_called_once()
-        assert isinstance(build.call_args.args[0], ItemParseError)
+        assert build.call_args.args == ()
         dialog.exec.assert_called_once_with()
     finally:
         window.close()

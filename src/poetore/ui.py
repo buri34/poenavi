@@ -2093,12 +2093,17 @@ class PoetoreWindow(QWidget):
             self._capture_keyboard.release(key)
         QTimer.singleShot(300, callback)
 
-    def _build_capture_error_dialog(self, error: ItemParseError) -> QMessageBox:
+    def _build_capture_error_dialog(self) -> QMessageBox:
         """Create a readable error dialog that matches the dark poetore theme."""
         message = QMessageBox(self)
         message.setObjectName("poetoreCaptureError")
         message.setIcon(QMessageBox.Icon.Warning)
-        message.setText(f"PoEのアイテムコピーを取得できませんでした。\n{error}")
+        message.setText(
+            "アイテムを取得できませんでした。\n"
+            "PoEがアクティブでない可能性があります。\n"
+            "PoEを前面にしてアイテムへカーソルを合わせ、\n"
+            "もう一度 Alt+D を押してください。"
+        )
         message.setStandardButtons(QMessageBox.StandardButton.Ok)
         # QMessageBox may reset an empty application title while configuring its buttons.
         message.setWindowTitle("取り込めませんでした")
@@ -2112,7 +2117,6 @@ class PoetoreWindow(QWidget):
                 color: #f4ffed;
                 font-family: "Segoe UI", sans-serif;
                 font-size: 12px;
-                min-width: 290px;
             }
             QMessageBox QPushButton {
                 min-width: 54px;
@@ -2137,8 +2141,8 @@ class PoetoreWindow(QWidget):
         copied_text = read_item_clipboard(QApplication.clipboard())
         try:
             item = parse_item_text(copied_text)
-        except ItemParseError as exc:
-            self._build_capture_error_dialog(exc).exec()
+        except ItemParseError:
+            self._build_capture_error_dialog().exec()
             return
         copied_name = item.name if item.rarity.casefold() in {"unique", "ユニーク"} else None
         try:
