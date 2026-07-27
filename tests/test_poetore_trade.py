@@ -2948,6 +2948,46 @@ def test_option_stat_query_does_not_include_numeric_bounds():
     }
 
 
+def test_dark_monarch_holy_armaments_variant_is_enabled_and_sent_exactly():
+    item = parse_item_text("""アイテムクラス: 兜
+レアリティ: ユニーク
+闇の王
+リッチのサークレット
+--------
+エナジーシールド: 205 (augmented)
+--------
+アイテムレベル: 86
+--------
+{ ユニークモッド — 防御, エナジーシールド }
+最大エナジーシールド +76(50-100)
+{ ユニークモッド — ミニオン, ジェム }
+全てのミニオンスキルジェムのレベル +1
+{ ユニークモッド — 混沌, 耐性 }
+混沌耐性 +33(27-37)%
+{ ユニークモッド }
+光半径が50%減少する
+{ ユニークモッド }
+スケルトン召喚(アニメイトウェポン-ホーリーアーマメント)の最大数が二倍になる
+スケルトン召喚(アニメイトウェポン-ホーリーアーマメント)以外のミニオンを召喚できない
+""")
+
+    filters = resolve_trade_stat_filters(item, trade_name="The Dark Monarch")
+    variant = next(
+        row for row in filters
+        if row.stat_id == "explicit.stat_56473917|16"
+    )
+    assert variant.enabled
+    assert not variant.hidden_reason
+
+    query = build_search_query(
+        item, "Lich's Circlet", filters, trade_name="The Dark Monarch",
+    )["query"]
+    assert query["stats"][0]["filters"] == [{
+        "id": "explicit.stat_56473917|16",
+        "value": {},
+    }]
+
+
 def test_veiled_chip_uses_matching_veiled_stat_ids_like_awakened():
     item = parse_item_text("""Item Class: Body Armours
 Rarity: Rare

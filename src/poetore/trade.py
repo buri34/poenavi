@@ -2208,6 +2208,12 @@ def resolve_trade_stat_filters(
                 # Anointmentも候補へ表示する。その他の付け直しやすいものは隠す。
                 continue
         roll_bounds = _unique_roll_bounds(modifier.text) if unique_item else None
+        unique_variant = (
+            unique_item
+            and modifier.kind == "explicit"
+            and fixed_unique_refs is not None
+            and modifier.ref not in fixed_unique_refs
+        )
         if unique_item and roll_bounds is None:
             corrupted_implicit = (
                 modifier.kind == "implicit" and modifier.generation == "corrupted"
@@ -2294,7 +2300,7 @@ def resolve_trade_stat_filters(
             valdo_exact = item.category == "map" and item.base_type.casefold() == "valdo map"
             resolved.append(TradeStatFilter(
                 str(entry["id"]), modifier.text, value, modifier.kind,
-                valdo_exact or (modifier.ref == "Allocates #" and (
+                unique_variant or valdo_exact or (modifier.ref == "Allocates #" and (
                     "talisman" in item.item_class.casefold() or "タリスマン" in item.item_class
                 )),
                 maximum, modifier.ref, modifier.confidence, modifier.inverted,

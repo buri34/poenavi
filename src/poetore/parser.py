@@ -185,6 +185,12 @@ _DIRECTIONAL_STAT_ALIASES = {
 _DIRECTIONAL_STAT_VALUE_INDEX = {
     normalize_stat_text("倒した敵1体ごとに#のマナを失う"): 1,
 }
+_MULTILINE_STAT_TEXT_ALIASES = {
+    # 3.29日本語クライアントの詳細コピーではHoly Armamentsが、
+    # スキル由来の補足名を含む不規則な表記になる。
+    "スケルトン召喚(アニメイトウェポン-ホーリーアーマメント)":
+        "ホーリーアーマメント",
+}
 _JEWEL_CATEGORIES = {"jewel", "abyss_jewel", "cluster_jewel"}
 _MAP_TIER_IN_NAME = re.compile(
     r"(?:\bMap|マップ)\s*[（(]\s*(?:Tier|ティア)\s*[:：]?\s*(\d+)\s*[）)]",
@@ -304,7 +310,7 @@ def _combine_multiline_modifiers(
     metadata_index = default_metadata_index()
     while index < len(modifiers):
         first = modifiers[index]
-        if first.group is None or first.kind not in {"prefix", "suffix"}:
+        if first.group is None or first.kind not in {"prefix", "suffix", "explicit"}:
             result.append(first)
             index += 1
             continue
@@ -321,6 +327,14 @@ def _combine_multiline_modifiers(
             metadata, option, confidence = metadata_index.match_with_option(
                 text, first.kind,
             )
+            if metadata is None:
+                aliased_text = text
+                for source, replacement in _MULTILINE_STAT_TEXT_ALIASES.items():
+                    aliased_text = aliased_text.replace(source, replacement)
+                if aliased_text != text:
+                    metadata, option, confidence = metadata_index.match_with_option(
+                        aliased_text, first.kind,
+                    )
             if metadata is None:
                 continue
             roll_mins = [row.roll_min for row in group if row.roll_min is not None]

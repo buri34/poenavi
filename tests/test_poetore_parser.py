@@ -91,6 +91,29 @@ class PoetoreParserTest(unittest.TestCase):
         self.assertEqual(modifier.tier, 4)
         self.assertIn("\n", modifier.text)
 
+    def test_combines_dark_monarch_holy_armaments_variant(self):
+        item = parse_item_text("""アイテムクラス: 兜
+レアリティ: ユニーク
+闇の王
+リッチのサークレット
+--------
+アイテムレベル: 86
+--------
+{ ユニークモッド }
+スケルトン召喚(アニメイトウェポン-ホーリーアーマメント)の最大数が二倍になる
+スケルトン召喚(アニメイトウェポン-ホーリーアーマメント)以外のミニオンを召喚できない
+""")
+
+        self.assertEqual(len(item.modifiers), 1)
+        modifier = item.modifiers[0]
+        self.assertEqual(modifier.stat_id, "explicit.stat_56473917|16")
+        self.assertEqual(
+            modifier.ref,
+            "Maximum number of Holy Armaments is Doubled\n"
+            "Cannot have Minions other than Holy Armaments",
+        )
+        self.assertIn("\n", modifier.text)
+
     def test_captured_beast_is_detected_by_class_and_help_text(self):
         by_class = parse_item_text("""Item Class: Captured Beasts
 Rarity: Rare
