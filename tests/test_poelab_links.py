@@ -57,6 +57,19 @@ class PoELabLinksTest(unittest.TestCase):
         window.poelab_link_button.setVisible.assert_called_with(False)
         window._reset_poelab_link_button.assert_called_once_with()
 
+    @patch("src.ui.main_window.QDesktopServices.openUrl")
+    def test_all_three_lab_buttons_open_poelab_home(self, open_url):
+        window = MainWindow.__new__(MainWindow)
+        for zone_id in MainWindow.POELAB_ZONE_TYPES:
+            window._current_poelab_type = MainWindow.POELAB_ZONE_TYPES[zone_id]
+            MainWindow.open_daily_poelab(window)
+
+        self.assertEqual(open_url.call_count, 3)
+        self.assertTrue(all(
+            call.args[0].toString() == "https://www.poelab.com/"
+            for call in open_url.call_args_list
+        ))
+
     @patch("src.utils.poelab_links.urllib.request.urlopen", return_value=_Response())
     def test_fetches_only_top_page_and_extracts_link(self, urlopen):
         self.assertEqual(find_daily_notes_url("normal"), "https://www.poelab.com/today-normal/")

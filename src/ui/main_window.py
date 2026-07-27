@@ -41,7 +41,7 @@ from src.utils.gem_shop_search import (
     format_gem_shop_search_preview,
     get_gem_shop_search_feedback,
 )
-from src.utils.poelab_links import POELAB_HOME, find_daily_notes_url
+from src.utils.poelab_links import POELAB_HOME
 from src.utils.area_notes import get_area_note, set_area_note
 from src.ui.gem_tracker_widget import GemTrackerWidget, PoBImportDialog, PoBSkillSetSelectionDialog
 from src.ui.update_dialogs import UpdateAvailableDialog, UpdateProgressDialog
@@ -1632,9 +1632,9 @@ class MainWindow(QMainWindow):
 
         poelab_button_layout = QHBoxLayout()
         poelab_button_layout.setContentsMargins(0, 0, 0, 0)
-        self.poelab_link_button = QPushButton("🏛️ 今日のPoELabを開く")
+        self.poelab_link_button = QPushButton("🏛️ PoELabを開く")
         self.poelab_link_button.setCursor(QCursor(Qt.PointingHandCursor))
-        self.poelab_link_button.setToolTip("当日のPoELab Daily Notesを標準ブラウザで開きます")
+        self.poelab_link_button.setToolTip("PoELabトップページを標準ブラウザで開きます")
         self.poelab_link_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         self.poelab_link_button.setStyleSheet("""
             QPushButton {
@@ -2395,20 +2395,10 @@ class MainWindow(QMainWindow):
         self._update_area_note(self._current_zone_name, zone_id)
 
     def open_daily_poelab(self):
-        """当日のDaily Notes URLだけを取得し、標準ブラウザで開く。"""
-        lab_type = self._current_poelab_type
-        if not lab_type or not self.poelab_link_button.isEnabled():
+        """PoELabトップページを標準ブラウザで開く。"""
+        if not self._current_poelab_type:
             return
-        self.poelab_link_button.setEnabled(False)
-        self.poelab_link_button.setText("🏛️ PoELabリンクを取得中…")
-
-        def resolve():
-            try:
-                self.poelab_url_resolved.emit(find_daily_notes_url(lab_type))
-            except Exception as exc:
-                self.poelab_url_failed.emit(str(exc))
-
-        threading.Thread(target=resolve, daemon=True).start()
+        QDesktopServices.openUrl(QUrl(POELAB_HOME))
 
     def _open_resolved_poelab_url(self, url: str):
         QDesktopServices.openUrl(QUrl(url))
@@ -2421,7 +2411,7 @@ class MainWindow(QMainWindow):
 
     def _reset_poelab_link_button(self):
         self.poelab_link_button.setEnabled(True)
-        self.poelab_link_button.setText("🏛️ 今日のPoELabを開く")
+        self.poelab_link_button.setText("🏛️ PoELabを開く")
     
     def _is_mini_navi_available(self):
         """みになびは現状PoE1専用。PoE2では未実装なので入口を出さない。"""
