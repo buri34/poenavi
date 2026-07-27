@@ -2313,6 +2313,13 @@ class PoetoreWindow(QWidget):
                     item, preset,
                 ) if needs_initial_filters else ()
                 effective_filters = initial_filters if needs_initial_filters else filters
+                # ilvlは上部の共通チップだけを正本にする。Mod一覧が空の専用検索では
+                # 初期フィルターのproperty.item_levelが復活し、チップOFFでも送信
+                # されていたため、最終送信前に必ず除外する。
+                effective_filters = tuple(
+                    row for row in effective_filters
+                    if row.stat_id != "property.item_level"
+                )
                 if item.category in {"gem", "weapon", "armour", "flask", "tincture"}:
                     effective_filters = tuple(
                         row for row in effective_filters

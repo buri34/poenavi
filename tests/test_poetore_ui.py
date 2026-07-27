@@ -1351,6 +1351,49 @@ def test_itemised_spectre_corpse_hides_fixed_ability_mod_warning(qapp):
         window.close()
 
 
+def test_itemised_spectre_corpse_item_level_toggle_controls_final_search(qapp):
+    from src.poetore.trade import PriceResult
+
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 死体
+レアリティ: カレンシー
+完全体のドルイド錬金術師
+--------
+死体レベル: 85
+モンスターカテゴリー: 人型
+--------
+アイテムレベル: 85
+--------
+ポイゾナスコンコクションを投げる
+フラスコの効果が200％増加する
+所有者は3秒ごとにライフフラスコのチャージを1得る
+--------
+このアイテムを右クリックしてこの死体を生成する。
+""")
+        window.parse_current_text()
+        window.item_level_toggle.click()
+
+        result = PriceResult("Standard", "qid", 0, ())
+        with patch("src.poetore.ui.search_prices", return_value=result) as search:
+            window.search_current_item()
+            for _ in range(50):
+                qapp.processEvents()
+                if search.called:
+                    break
+                QTest.qWait(10)
+
+        assert search.called
+        kwargs = search.call_args.kwargs
+        assert kwargs["item_level_min"] is None
+        assert all(
+            row.stat_id != "property.item_level"
+            for row in kwargs["stat_filters"]
+        )
+    finally:
+        window.close()
+
+
 def test_current_japanese_blueprint_shows_revealed_wings_without_rolled_mod_warning(qapp):
     window = PoetoreWindow()
     try:
