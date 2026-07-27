@@ -2396,6 +2396,28 @@ def test_common_search_range_recalculates_from_read_value():
     assert apply_search_range((row,), 20)[0].min_value == 80
 
 
+def test_search_range_does_not_reduce_discrete_socket_counts():
+    item = parse_item_text("""アイテムクラス: 両手斧
+レアリティ: レア
+魂の引き裂き
+ヴァールアックス
+--------
+ソケット: R-R-R-W-G W
+--------
+アイテムレベル: 85
+""")
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        filters = resolve_trade_stat_filters(item)
+    adjusted = {
+        row.stat_id: row
+        for row in apply_search_range(filters, 10, item)
+        if row.stat_id.startswith("property.")
+    }
+    assert adjusted["property.sockets"].min_value == 6
+    assert adjusted["property.links"].min_value == 5
+    assert adjusted["property.white_sockets"].min_value == 2
+
+
 def test_search_prices_keeps_item_and_seller_for_list_display():
     _trade_response_cache.clear()
     search = ({"id": "query1", "result": ["item1"]}, {"X-Rate-Limit-Ip-State": "1:10:0"})

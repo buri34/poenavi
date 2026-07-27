@@ -324,9 +324,15 @@ def apply_search_range(
         percent = 0
     percent = max(0.0, min(float(percent), 50.0)) / 100.0
     adjusted = []
+    discrete_socket_stats = {
+        "property.sockets",
+        "property.links",
+        "property.white_sockets",
+    }
     for row in filters:
         if (
             row.read_value is None
+            or row.stat_id in discrete_socket_stats
             or row.option_value is not None
             or row.exact
             or row.inverted
