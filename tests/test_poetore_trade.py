@@ -2261,6 +2261,37 @@ Farric Lynx Alpha
     assert web_query["stats"] == [{"type": "and", "filters": []}]
 
 
+def test_itemised_spectre_corpse_uses_awakened_exact_identity_without_mod_warnings():
+    item = parse_item_text("""アイテムクラス: 死体
+レアリティ: カレンシー
+完全体のドルイド錬金術師
+--------
+死体レベル: 85
+モンスターカテゴリー: 人型
+--------
+アイテムレベル: 85
+--------
+ポイゾナスコンコクションを投げる
+フラスコの効果が200％増加する
+所有者は3秒ごとにライフフラスコのチャージを1得る
+--------
+このアイテムを右クリックしてこの死体を生成する。
+""")
+
+    assert item.category == "corpse"
+    assert uses_dedicated_exact_preset(item)
+    filters = resolve_trade_stat_filters(item)
+    assert [row.stat_id for row in filters] == ["property.item_level"]
+    assert unresolved_modifier_warnings(item, filters) == ()
+
+    query = build_search_query(
+        item, item.base_type, stat_filters=filters, item_level_min=85,
+    )["query"]
+    assert query["type"] == "完全体のドルイド錬金術師"
+    assert query["stats"] == [{"type": "and", "filters": []}]
+    assert query["filters"]["misc_filters"]["filters"]["ilvl"] == {"min": 85}
+
+
 def test_japanese_local_physical_modifier_is_not_duplicated_after_pdps_aggregation():
     item = parse_item_text(ITEM.replace("74% increased Physical Damage", "物理ダメージが74%\u5897加する"))
     entries = ({"id": "explicit.stat_1509134228", "text": "物理ダメージが#%増加する", "type": "explicit"},)

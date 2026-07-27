@@ -70,6 +70,7 @@ _FLAG_LINES = {
 }
 _CATEGORY_WORDS = (
     (("Captured Beast", "捕獲したビースト", "捕獲済みビースト"), "captured_beast"),
+    (("Corpse", "死体"), "corpse"),
     (("武器", "Weapon", "弓", "Bow", "ワンド", "Wand", "剣", "Sword", "斧", "Axe",
       "メイス", "Mace", "セプター", "Sceptre", "スタッフ", "Staff", "ダガー", "Dagger",
       "クロー", "Claw", "釣り竿", "Fishing Rod"), "weapon"),
@@ -166,6 +167,10 @@ _CATEGORY_HELP_LINES = {
     "captured_beast": {
         "右クリックしてこのモンスターを怪獣園に追加する。",
         "Right-click to add this to your bestiary.",
+    },
+    "corpse": {
+        "このアイテムを右クリックしてこの死体を生成する。",
+        "Right click this item to create this corpse.",
     },
 }
 

@@ -79,10 +79,10 @@ CONSUMABLE_CRAFTABLE_CATEGORIES = {
     "map", "heist_blueprint", "heist_contract", "invitation",
     "memory_line", "expedition_logbook",
 }
-NON_CRAFTABLE_CATEGORIES = {"gem", "flask", "currency", "divination_card"}
+NON_CRAFTABLE_CATEGORIES = {"gem", "flask", "currency", "divination_card", "corpse"}
 DEDICATED_EXACT_CATEGORIES = {
     "gem", "captured_beast", "map", "memory_line", "invitation",
-    "heist_contract", "heist_blueprint", "charm", "cluster_jewel",
+    "heist_contract", "heist_blueprint", "charm", "cluster_jewel", "corpse",
 }
 PRESET_FINISHED = "finished"
 PRESET_BASE = "base"
@@ -1887,6 +1887,11 @@ def unresolved_modifier_warnings(
         return ()
     # Captured BeastはBeast種別だけを検索し、個体のMonster Modは照合しない。
     if item.category == "captured_beast":
+        return ()
+    # Awakenedは現在のアイテム化スペクター死体をCurrencyのExact検索として扱う。
+    # 固有能力は個体差のない説明であり、公式Tradeにも完全な検索Statがないため、
+    # Mod候補や「未解決」警告には含めない。
+    if item.category == "corpse":
         return ()
     resolved_lines = {
         _normalized_stat_text(line)

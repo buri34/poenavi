@@ -1314,6 +1314,34 @@ Unknown Experimental Modifier 123
         window.close()
 
 
+def test_itemised_spectre_corpse_hides_fixed_ability_mod_warning(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 死体
+レアリティ: カレンシー
+完全体のドルイド錬金術師
+--------
+死体レベル: 85
+モンスターカテゴリー: 人型
+--------
+アイテムレベル: 85
+--------
+ポイゾナスコンコクションを投げる
+フラスコの効果が200％増加する
+所有者は3秒ごとにライフフラスコのチャージを1得る
+--------
+このアイテムを右クリックしてこの死体を生成する。
+""")
+        window.parse_current_text()
+
+        assert window._parsed_item.category == "corpse"
+        assert window.mod_warning.isHidden()
+        assert window._selected_stat_filters() == ()
+        assert window._selected_item_level() == 85
+    finally:
+        window.close()
+
+
 def test_current_japanese_blueprint_shows_revealed_wings_without_rolled_mod_warning(qapp):
     window = PoetoreWindow()
     try:

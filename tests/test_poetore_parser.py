@@ -22,6 +22,29 @@ RARE_JP = """アイテムクラス: 指輪
 
 
 class PoetoreParserTest(unittest.TestCase):
+    def test_itemised_spectre_corpse_is_detected_and_help_text_is_ignored(self):
+        item = parse_item_text("""アイテムクラス: 死体
+レアリティ: カレンシー
+完全体のドルイド錬金術師
+--------
+死体レベル: 85
+モンスターカテゴリー: 人型
+--------
+アイテムレベル: 85
+--------
+ポイゾナスコンコクションを投げる
+フラスコの効果が200％増加する
+所有者は3秒ごとにライフフラスコのチャージを1得る
+--------
+このアイテムを右クリックしてこの死体を生成する。
+""")
+
+        self.assertEqual(item.category, "corpse")
+        self.assertEqual(item.item_level, 85)
+        self.assertEqual(item.properties["死体レベル"], "85")
+        self.assertEqual(len(item.modifiers), 3)
+        self.assertFalse(any("右クリック" in mod.text for mod in item.modifiers))
+
     def test_cluster_jewel_parenthetical_enchant_help_is_not_an_unresolved_mod(self):
         item = parse_item_text("""アイテムクラス: ジュエル
 レアリティ: ノーマル
