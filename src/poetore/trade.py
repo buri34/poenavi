@@ -2614,6 +2614,14 @@ def build_search_query(
         raise ValueError(f"未対応の価格通貨です: {trade_currency}")
     if listed_within not in LISTED_WITHIN_OPTIONS:
         raise ValueError(f"未対応の出品期間です: {listed_within}")
+    # アイテム化スペクター死体は名前で能力が確定する。ゲーム内のilvlを
+    # 公式Tradeへ渡すと同名出品を0件にしてしまうため、常に名前だけで検索する。
+    if item.category == "corpse":
+        item_level_min = None
+        item_level_max = None
+        stat_filters = tuple(
+            row for row in stat_filters if row.stat_id != "property.item_level"
+        )
     if item.category == "map":
         # Awakened準拠: MapはTier・種類・固有条件で検索し、ilvlは使わない。
         # UIの古い状態や直接呼び出しから渡されてもクエリへ混入させない。
