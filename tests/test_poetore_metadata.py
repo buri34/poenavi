@@ -36,6 +36,35 @@ def test_builder_joins_awakened_and_japanese_by_trade_id_and_keeps_minimal_field
     assert row["decimal"] is False
 
 
+def test_builder_restores_official_cluster_option_entries_to_base_stat():
+    jp = {
+        "result": [{
+            "entries": [
+                {
+                    "id": "enchant.stat_3948993189|23",
+                    "type": "enchant",
+                    "text": "追加される通常パッシブスキルは付与: 非ダメージ性状態異常の効果が10%増加する",
+                },
+                {
+                    "id": "enchant.stat_3948993189|43",
+                    "type": "enchant",
+                    "text": "追加される通常パッシブスキルは付与: 回避力が15%増加する",
+                },
+            ],
+        }],
+    }
+
+    payload = build_minimal_index([], jp)
+    record = next(
+        row for row in payload["mods"]
+        if row["stat_id"] == "enchant.stat_3948993189"
+    )
+
+    assert record["exact"] is True
+    assert [option["value"] for option in record["options"]] == [23, 43]
+    assert record["options"][1]["japanese"].endswith("回避力が15%増加する")
+
+
 def test_pseudo_relations_are_fixed_to_audited_awakened_source():
     path = Path("data/poetore/pseudo_relations.json")
     payload = json.loads(path.read_text(encoding="utf-8"))

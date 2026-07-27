@@ -13,6 +13,16 @@ INDEX_FIELDS = (
     "local", "decimal", "tiers", "options",
 )
 
+# Awakenedの配布statsから消えていても、公式Trade APIでは現在も有効なoption型stat。
+# 公式側は ``stat_id|option`` の個別entryだけを返すため、ぽえとれ用には従来どおり
+# ``stat_id`` + ``value.option`` へ復元する。
+OFFICIAL_OPTION_COMPATIBILITY = {
+    ("enchant", "enchant.stat_3948993189"): {
+        "ref": "Added Small Passive Skills grant: #",
+        "japanese": "追加される通常パッシブスキルは付与: #",
+    },
+}
+
 
 def _awakened_stats(lines: Iterable[str]) -> list[dict]:
     rows = []
@@ -29,6 +39,49 @@ def _trade_entries(payload: dict) -> dict[tuple[str, str], dict]:
         (str(entry.get("type", "")), str(entry.get("id", ""))): entry
         for group in payload.get("result", ()) for entry in group.get("entries", ())
     }
+
+
+def _official_option_compatibility_records(
+    trade_entries: dict[tuple[str, str], dict],
+) -> list[dict]:
+    """公式APIの合成IDを、検索送信用のbase stat＋optionへ戻す。"""
+    records = []
+    for (kind, stat_id), definition in OFFICIAL_OPTION_COMPATIBILITY.items():
+        prefix = f"{stat_id}|"
+        options = []
+        for (entry_kind, entry_id), entry in trade_entries.items():
+            if entry_kind != kind or not entry_id.startswith(prefix):
+                continue
+            option_id = entry_id[len(prefix):]
+            if not option_id:
+                continue
+            try:
+                value: int | str = int(option_id)
+            except ValueError:
+                value = option_id
+            options.append({
+                "value": value,
+                "japanese": str(entry.get("text", "")),
+                "english": "",
+                "oils": [],
+            })
+        if not options:
+            continue
+        options.sort(key=lambda row: (isinstance(row["value"], str), row["value"]))
+        records.append({
+            "ref": definition["ref"],
+            "stat_id": stat_id,
+            "kind": kind,
+            "japanese": [definition["japanese"]],
+            "better": 0,
+            "inverted": False,
+            "exact": True,
+            "local": False,
+            "decimal": False,
+            "tiers": [],
+            "options": options,
+        })
+    return records
 
 
 def _repoe_by_ref(stats: dict, mods: dict) -> dict[str, dict]:
@@ -179,6 +232,11 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
                     "tiers": repoe_row.get("tiers", ()),
                     "options": options,
                 })
+    for record in _official_option_compatibility_records(jp):
+        key = (record["kind"], record["stat_id"])
+        if key not in seen:
+            records.append(record)
+            seen.add(key)
     records.sort(key=lambda row: (row["kind"], row["stat_id"]))
     return {
         "schema_version": 2,
