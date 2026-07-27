@@ -110,6 +110,11 @@ _INFLUENCE_STATS = {
     "redeemer": ("pseudo.pseudo_has_redeemer_influence", "Redeemer影響"),
     "warlord": ("pseudo.pseudo_has_warlord_influence", "Warlord影響"),
 }
+# Awakened stats.ndjson の resolve/select と同じ、アイテム種別で分岐する
+# 同名Trade stat。日本語Trade APIでは表示文だけでは区別できない。
+_CATEGORY_STAT_OVERRIDES = {
+    ("tincture", "explicit", "効果が#%増加する"): "explicit.stat_3529940209",
+}
 
 
 def _trade_log(message: str) -> None:
@@ -2229,6 +2234,16 @@ def resolve_trade_stat_filters(
                 candidates.append(entry)
         if not candidates:
             continue
+        preferred_stat_id = _CATEGORY_STAT_OVERRIDES.get((
+            item.category, api_kind, source,
+        ))
+        if preferred_stat_id:
+            preferred_candidates = [
+                entry for entry in candidates
+                if str(entry.get("id")) == preferred_stat_id
+            ]
+            if preferred_candidates:
+                candidates = preferred_candidates
         if modifier.stat_id:
             exact_candidates = [
                 entry for entry in candidates

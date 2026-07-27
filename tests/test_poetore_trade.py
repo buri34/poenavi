@@ -2710,6 +2710,59 @@ Tenacious Blood Sap Tincture of Battering
     }]
 
 
+def test_tincture_effect_uses_tincture_specific_duplicate_trade_stat():
+    item = parse_item_text("""アイテムクラス: チンキ
+レアリティ: マジック
+強い 液状化の 血の樹液のチンキ
+--------
+毎秒0.43 (augmented)のマナ燃焼を付与する
+不活性化時のクールダウン 6秒
+--------
+装備要求:
+レベル: 46
+--------
+アイテムレベル: 84
+--------
+{ 暗黙モッド — ダメージ, 物理, アタック, 状態異常 - 35%増加 }
+近接武器により20%の確率で出血を付与する
+近接武器による出血ダメージが85(60-90)%増加する
+--------
+{ プレフィックスモッド「強い」 (ティア: 3) - 35%増加 }
+効果が35%増加する
+マナ燃焼レートが48(47-51)%増加する
+{ サフィックスモッド 「液状化の」 (ティア: 3) — ダメージ, アタック - 35%増加 }
+近接武器によるアタックの継続ダメージ倍率 +23(19-23)%
+""")
+    duplicate_entries = (
+        {
+            "id": "explicit.stat_2448920197",
+            "text": "効果が#%増加する",
+            "type": "explicit",
+        },
+        {
+            "id": "explicit.stat_3529940209",
+            "text": "効果が#%増加する",
+            "type": "explicit",
+        },
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=duplicate_entries):
+        filters = resolve_trade_stat_filters(item)
+
+    effect = next(row for row in filters if row.text == "効果が35%増加する")
+    assert effect.stat_id == "explicit.stat_3529940209"
+    assert effect.min_value == 35
+    assert not any(row.stat_id == "explicit.stat_2448920197" for row in filters)
+
+    query = build_search_query(
+        item, "Blood Sap Tincture",
+        stat_filters=(replace(effect, enabled=True),),
+    )["query"]
+    assert query["stats"][0]["filters"] == [{
+        "id": "explicit.stat_3529940209",
+        "value": {"min": 35},
+    }]
+
+
 def test_transfigured_gem_web_url_uses_localized_base_type_with_discriminator():
     _trade_response_cache.clear()
     item = _gem_item("爆撃するクローンのミラーアロー", level=14, quality=0)
