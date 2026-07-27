@@ -2093,12 +2093,52 @@ class PoetoreWindow(QWidget):
             self._capture_keyboard.release(key)
         QTimer.singleShot(300, callback)
 
+    def _build_capture_error_dialog(self, error: ItemParseError) -> QMessageBox:
+        """Create a readable error dialog that matches the dark poetore theme."""
+        message = QMessageBox(self)
+        message.setObjectName("poetoreCaptureError")
+        message.setIcon(QMessageBox.Icon.Warning)
+        message.setText(f"PoEのアイテムコピーを取得できませんでした。\n{error}")
+        message.setStandardButtons(QMessageBox.StandardButton.Ok)
+        # QMessageBox may reset an empty application title while configuring its buttons.
+        message.setWindowTitle("取り込めませんでした")
+        message.setStyleSheet("""
+            QMessageBox {
+                background-color: #111111;
+                color: #f4ffed;
+            }
+            QMessageBox QLabel {
+                background-color: transparent;
+                color: #f4ffed;
+                font-family: "Segoe UI", sans-serif;
+                font-size: 12px;
+                min-width: 290px;
+            }
+            QMessageBox QPushButton {
+                min-width: 54px;
+                padding: 5px 12px;
+                background-color: #1a1a1a;
+                color: #b0ff7b;
+                border: 1px solid #b0ff7b;
+                border-radius: 3px;
+                font-weight: 700;
+            }
+            QMessageBox QPushButton:hover {
+                background-color: #2a2a2a;
+                border-color: #ffffff;
+            }
+            QMessageBox QPushButton:pressed {
+                background-color: #000000;
+            }
+        """)
+        return message
+
     def _capture_item_copy(self):
         copied_text = read_item_clipboard(QApplication.clipboard())
         try:
             item = parse_item_text(copied_text)
         except ItemParseError as exc:
-            QMessageBox.warning(self, "取り込めませんでした", f"PoEのアイテムコピーを取得できませんでした。\n{exc}")
+            self._build_capture_error_dialog(exc).exec()
             return
         copied_name = item.name if item.rarity.casefold() in {"unique", "ユニーク"} else None
         try:
