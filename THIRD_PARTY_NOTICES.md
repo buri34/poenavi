@@ -60,11 +60,3 @@ SOFTWARE.
 RePoEの生成データはGrinding Gear Gamesが権利を保有し、同社の利用規約に従います。
 
 <https://github.com/repoe-fork/repoe>
-
-## PyWinRT
-
-Windows標準OCR APIの呼び出しにPyWinRTのWindows Runtimeパッケージを使用します。
-
-MIT License — Copyright (c) Microsoft Corporation
-
-<https://github.com/pywinrt/pywinrt>

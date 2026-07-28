@@ -1537,29 +1537,6 @@ def _jp_trade_item_groups() -> tuple[tuple[str, tuple[dict, ...]], ...]:
     return _jp_item_groups_cache
 
 
-_OCR_ITEM_CLASS_BY_TRADE_GROUP = {
-    "accessory": "アクセサリー",
-    "armour": "防具",
-    "flask": "フラスコ",
-    "jewel": "ジュエル",
-    "map": "マップ",
-    "weapon": "武器",
-}
-
-
-def official_japanese_base_types() -> tuple[tuple[str, str], ...]:
-    """Return current non-unique Japanese base types and their broad item class."""
-    rows = {
-        (str(entry.get("type", "")).strip(), item_class)
-        for group_id, entries in _jp_trade_item_groups()
-        if (item_class := _OCR_ITEM_CLASS_BY_TRADE_GROUP.get(group_id))
-        for entry in entries
-        if str(entry.get("type", "")).strip()
-        and not bool((entry.get("flags") or {}).get("unique"))
-    }
-    return tuple(sorted(rows))
-
-
 def _aligned_trade_item_pairs():
     """日英itemsを構造境界で再同期しながら対応付ける。
 

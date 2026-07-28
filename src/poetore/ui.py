@@ -2086,11 +2086,6 @@ class PoetoreWindow(QWidget):
         self._capture_keyboard = Controller()
         QTimer.singleShot(250, lambda: self._send_copy((Key.ctrl, "c"), self._capture_item_copy))
 
-    def capture_from_item_text(self, item_text: str):
-        """Parse OCR-reconstructed item text through the normal search flow."""
-        self._placement_context = capture_placement_context()
-        self._load_captured_item_text(item_text)
-
     def _send_copy(self, keys, callback):
         for key in keys:
             self._capture_keyboard.press(key)
@@ -2144,9 +2139,6 @@ class PoetoreWindow(QWidget):
 
     def _capture_item_copy(self):
         copied_text = read_item_clipboard(QApplication.clipboard())
-        self._load_captured_item_text(copied_text)
-
-    def _load_captured_item_text(self, copied_text: str):
         try:
             item = parse_item_text(copied_text)
         except ItemParseError:

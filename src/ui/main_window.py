@@ -2,7 +2,6 @@ import json
 import os
 import re
 import sys
-import threading
 import time
 from pynput import keyboard as pynput_keyboard
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
@@ -126,7 +125,6 @@ class MainWindow(QMainWindow):
 
     # ホットキーイベントをメインスレッドで処理するためのシグナル
     hotkey_signal = Signal(str)
-    poetore_ocr_finished = Signal(object, object)
     poelab_url_resolved = Signal(str)
     poelab_url_failed = Signal(str)
 
@@ -630,7 +628,6 @@ class MainWindow(QMainWindow):
         
         # ホットキー初期化
         self.hotkey_signal.connect(self.handle_hotkey)
-        self.poetore_ocr_finished.connect(self._finish_poetore_ocr_capture)
         self.keyboard_listener = None
         self.stash_tab_scroll = StashTabScrollController(
             enabled=self.config.get("stash_tab_scroll_enabled", True),
@@ -2998,7 +2995,6 @@ class MainWindow(QMainWindow):
                                      ("exit", "F5"),
                                      ("hideout", "F11"), ("monastery", "F12"),
                                      ("search_string_test", "F4"), ("poetore_capture", "alt+d"),
-                                     ("poetore_ocr_capture", "alt+g"),
                                      ("cheat_sheets_toggle", "shift+space")]:
                 key = hotkeys.get(action, default)
                 if key and key != "none":
@@ -3098,8 +3094,6 @@ class MainWindow(QMainWindow):
             self.open_search_string_paste_test()
         elif command == "poetore_capture":
             self.capture_poetore_item()
-        elif command == "poetore_ocr_capture":
-            self.capture_poetore_item_ocr()
         elif command == "gem_shop_search_pressed":
             self._start_gem_shop_search_hold()
         elif command == "gem_shop_search_released":
@@ -4263,59 +4257,6 @@ class MainWindow(QMainWindow):
 
         # コピーが終わるまでPoEからフォーカスを奪わない。
         show_poetore_window(self, activate=False).capture_from_poe()
-
-    def capture_poetore_item_ocr(self):
-        """Capture the item panel around the cursor and search its OCR result."""
-        from src.poetore.ocr_capture import (
-            capture_around_cursor,
-            recognize_japanese,
-            save_ocr_debug_artifacts,
-        )
-
-        try:
-            capture = capture_around_cursor(QCursor.pos())
-            save_ocr_debug_artifacts(image=capture.image)
-        except Exception as exc:
-            self.poetore_ocr_finished.emit(None, exc)
-            return
-
-        def run_ocr():
-            try:
-                text = recognize_japanese(capture.image)
-                save_ocr_debug_artifacts(raw_text=text)
-                self.poetore_ocr_finished.emit(text, None)
-            except Exception as exc:
-                self.poetore_ocr_finished.emit(None, exc)
-
-        threading.Thread(target=run_ocr, name="poetore-ocr", daemon=True).start()
-
-    def _finish_poetore_ocr_capture(self, raw_text, error):
-        if error is not None:
-            QMessageBox.warning(self, "OCR検索に失敗しました", str(error))
-            return
-        from src.poetore.ocr_capture import (
-            ocr_text_to_item_text,
-            save_ocr_debug_artifacts,
-        )
-        from src.poetore.parser import ItemParseError, parse_item_text
-        from src.poetore.ui import show_poetore_window
-
-        try:
-            item_text = ocr_text_to_item_text(str(raw_text))
-            save_ocr_debug_artifacts(item_text=item_text)
-            parse_item_text(item_text)
-        except Exception as exc:
-            stage = "再構成後の解析" if isinstance(exc, ItemParseError) else "OCR結果の再構成"
-            QMessageBox.warning(
-                self,
-                "OCR検索に失敗しました",
-                f"{stage}で失敗しました: {exc}\n\n"
-                f"認識結果:\n{str(raw_text)[:700]}\n\n"
-                f"再構成結果:\n{locals().get('item_text', '(作成前)')[:700]}\n\n"
-                "診断ファイルを .dev-user-data\\ocr-debug に保存しました。",
-            )
-            return
-        show_poetore_window(self, activate=False).capture_from_item_text(item_text)
 
     def _update_poetore_hotkey_tooltip(self):
         hotkey = self.config.get("hotkeys", {}).get("poetore_capture", "alt+d")

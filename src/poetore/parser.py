@@ -586,10 +586,6 @@ def parse_item_text(text: str) -> ParsedItem:
         # 装備性能・装備条件など、item levelより前の区画は検索Modではない。
         metadata_section = not reached_item_level
         for line in section:
-            if line == "OCR検索Mod:":
-                reached_item_level = True
-                metadata_section = False
-                continue
             if line in _FLAG_LINES:
                 flags.append(_FLAG_LINES[line])
                 continue

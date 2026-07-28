@@ -1,9 +1,3 @@
 PySide6
 keyboard
 pynput
-winrt-Windows.Foundation; platform_system == "Windows"
-winrt-Windows.Foundation.Collections; platform_system == "Windows"
-winrt-Windows.Globalization[all]; platform_system == "Windows"
-winrt-Windows.Graphics.Imaging[all]; platform_system == "Windows"
-winrt-Windows.Media.Ocr[all]; platform_system == "Windows"
-winrt-Windows.Storage.Streams[all]; platform_system == "Windows"
