@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import re
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QPoint, QRect, Qt
 from PySide6.QtGui import QGuiApplication, QImage
@@ -22,6 +24,30 @@ class OcrCapture:
     image: QImage
     screen_rect: QRect
     panel_rect: QRect
+
+
+def save_ocr_debug_artifacts(
+    *,
+    image: QImage | None = None,
+    raw_text: str | None = None,
+    item_text: str | None = None,
+) -> Path | None:
+    """Keep the latest local OCR evidence so Windows-only failures are diagnosable."""
+    user_data = str(os.environ.get("POENAVI_USER_DATA_DIR", "")).strip()
+    if not user_data:
+        return None
+    debug_dir = Path(user_data) / "ocr-debug"
+    try:
+        debug_dir.mkdir(parents=True, exist_ok=True)
+        if image is not None and not image.isNull():
+            image.save(str(debug_dir / "latest-panel.png"), "PNG")
+        if raw_text is not None:
+            (debug_dir / "latest-raw.txt").write_text(raw_text, encoding="utf-8")
+        if item_text is not None:
+            (debug_dir / "latest-item.txt").write_text(item_text, encoding="utf-8")
+    except OSError:
+        return None
+    return debug_dir
 
 
 def capture_around_cursor(

@@ -11,6 +11,7 @@ from src.poetore.ocr_capture import (
     _ocr_candidate_score,
     detect_item_panel,
     ocr_text_to_item_text,
+    save_ocr_debug_artifacts,
 )
 from src.poetore.parser import parse_item_text
 
@@ -118,3 +119,20 @@ def test_ocr_candidate_with_recognized_base_type_is_preferred():
     recovered = "螺旋するループ\n多様体の指輪\n最大ライフ +91"
 
     assert _ocr_candidate_score(recovered) > _ocr_candidate_score(failed)
+
+
+def test_latest_ocr_debug_artifacts_are_saved_in_user_data(tmp_path, monkeypatch):
+    monkeypatch.setenv("POENAVI_USER_DATA_DIR", str(tmp_path))
+    image = QImage(10, 10, QImage.Format.Format_RGB32)
+    image.fill(0x101010)
+
+    debug_dir = save_ocr_debug_artifacts(
+        image=image,
+        raw_text="OCR原文",
+        item_text="再構成文",
+    )
+
+    assert debug_dir == tmp_path / "ocr-debug"
+    assert (debug_dir / "latest-panel.png").is_file()
+    assert (debug_dir / "latest-raw.txt").read_text(encoding="utf-8") == "OCR原文"
+    assert (debug_dir / "latest-item.txt").read_text(encoding="utf-8") == "再構成文"
