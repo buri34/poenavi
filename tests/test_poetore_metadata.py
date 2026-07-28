@@ -270,6 +270,44 @@ def test_builder_and_index_match_option_by_shared_trade_option_id():
     assert confidence == 1.0
 
 
+def test_builder_keeps_trade_site_composite_stat_id_without_option_picker():
+    awakened = [json.dumps({
+        "ref": "Allocates Bastion of Elements if you have the matching modifier on Forbidden Flame",
+        "better": 0,
+        "matchers": [{
+            "string": (
+                "Allocates Bastion of Elements if you have the matching modifier "
+                "on Forbidden Flame"
+            ),
+        }],
+        "trade": {"ids": {"explicit": ["explicit.stat_2460506030|4917"]}},
+    })]
+    jp = {"result": [{"entries": [{
+        "id": "explicit.stat_2460506030|4917",
+        "type": "explicit",
+        "text": "禁じられた炎に一致するモッドがあれば元素の要塞を割り当てる",
+    }]}]}
+
+    payload = build_minimal_index(awakened, jp)
+
+    assert payload["mods"] == [{
+        "ref": (
+            "Allocates Bastion of Elements if you have the matching modifier "
+            "on Forbidden Flame"
+        ),
+        "stat_id": "explicit.stat_2460506030|4917",
+        "kind": "explicit",
+        "japanese": ["禁じられた炎に一致するモッドがあれば元素の要塞を割り当てる"],
+        "better": 0,
+        "inverted": False,
+        "exact": True,
+        "local": False,
+        "decimal": False,
+        "tiers": (),
+        "options": [],
+    }]
+
+
 def test_builder_is_reproducible_when_generation_time_and_sources_are_locked():
     awakened = [json.dumps({
         "ref": "+# to maximum Life", "better": 1,

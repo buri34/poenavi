@@ -2988,6 +2988,34 @@ def test_dark_monarch_holy_armaments_variant_is_enabled_and_sent_exactly():
     }]
 
 
+def test_forbidden_flame_ascendancy_uses_trade_site_composite_stat_id():
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: ユニーク
+禁じられた炎
+クリムゾンジュエル
+--------
+アイテムレベル: 86
+--------
+禁じられた炎に一致するモッドがあれば元素の要塞を割り当てる
+""")
+
+    filters = resolve_trade_stat_filters(item, trade_name="Forbidden Flame")
+    ascendancy = next(
+        row for row in filters
+        if row.stat_id == "explicit.stat_2460506030|4917"
+    )
+    assert ascendancy.enabled
+    assert ascendancy.option_value is None
+
+    query = build_search_query(
+        item, "Crimson Jewel", (ascendancy,), trade_name="Forbidden Flame",
+    )["query"]
+    assert query["stats"][0]["filters"] == [{
+        "id": "explicit.stat_2460506030|4917",
+        "value": {},
+    }]
+
+
 def test_veiled_chip_uses_matching_veiled_stat_ids_like_awakened():
     item = parse_item_text("""Item Class: Body Armours
 Rarity: Rare

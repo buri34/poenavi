@@ -2208,18 +2208,27 @@ def resolve_trade_stat_filters(
                 # Anointmentも候補へ表示する。その他の付け直しやすいものは隠す。
                 continue
         roll_bounds = _unique_roll_bounds(modifier.text) if unique_item else None
-        unique_variant = (
+        standalone_variant = (
             unique_item
             and modifier.kind == "explicit"
-            and fixed_unique_refs is not None
-            and modifier.ref not in fixed_unique_refs
+            and modifier.option_value is None
+            and "|" in (modifier.stat_id or "")
+        )
+        unique_variant = (
+            standalone_variant
+            or (
+                unique_item
+                and modifier.kind == "explicit"
+                and fixed_unique_refs is not None
+                and modifier.ref not in fixed_unique_refs
+            )
         )
         if unique_item and roll_bounds is None:
             corrupted_implicit = (
                 modifier.kind == "implicit" and modifier.generation == "corrupted"
             )
             foulborn_variant = modifier.generation == "foulborn"
-            if not corrupted_implicit and not foulborn_variant and (
+            if not standalone_variant and not corrupted_implicit and not foulborn_variant and (
                 fixed_unique_refs is None or modifier.ref in fixed_unique_refs
             ):
                 # Awakened準拠: 常設Modでも可変ロールがあれば候補へ残す。
