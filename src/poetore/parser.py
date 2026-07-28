@@ -273,8 +273,18 @@ def _numbers(text: str) -> tuple[float, ...]:
 
 def _normalized_modifier_line(line: str, item_category: str | None = None) -> str | None:
     """詳細コピー固有の注釈を除き、検索対象となるMod本文だけを返す。"""
-    if item_category in _JEWEL_CATEGORIES and line.strip() in _JEWEL_HELP_LINES:
-        return None
+    if item_category in _JEWEL_CATEGORIES:
+        stripped = line.strip()
+        if stripped in _JEWEL_HELP_LINES or (
+            stripped.startswith(
+                "パッシブツリーで割り当てられたジュエルソケット"
+            )
+            and "右クリックしてソケットから取り外す" in stripped
+        ) or (
+            stripped.casefold().startswith("place into an allocated jewel socket")
+            and "right click to remove from the socket" in stripped.casefold()
+        ):
+            return None
     if _GLOSSARY_HELP_LINE.fullmatch(line):
         return None
     if line.strip() in _MODIFIER_HELP_LINES:
