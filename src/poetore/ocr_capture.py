@@ -5,7 +5,7 @@ import re
 import sys
 from dataclasses import dataclass
 
-from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QPoint, QRect
+from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QPoint, QRect, Qt
 from PySide6.QtGui import QGuiApplication, QImage
 
 
@@ -125,7 +125,11 @@ def recognize_japanese(image: QImage) -> str:
     if sys.platform != "win32":
         raise OcrCaptureError("スクリーンショットOCRはWindows版で利用できます。")
     try:
-        return asyncio.run(_recognize_windows_png(image_to_png(image)))
+        original = asyncio.run(_recognize_windows_png(image_to_png(image)))
+        enhanced = asyncio.run(
+            _recognize_windows_png(image_to_png(_enhance_for_ocr(image)))
+        )
+        return max((original, enhanced), key=_ocr_candidate_score)
     except OcrCaptureError:
         raise
     except ImportError as exc:
@@ -156,11 +160,56 @@ async def _recognize_windows_png(png: bytes) -> str:
     decoder = await BitmapDecoder.create_async(stream)
     bitmap = await decoder.get_software_bitmap_async()
     result = await engine.recognize_async(bitmap)
-    return "\n".join(
-        " ".join(word.text for word in line.words).strip()
-        for line in result.lines
-        if line.words
-    )
+    lines = []
+    for line in result.lines:
+        if not line.words:
+            continue
+        left = min(word.bounding_rect.x for word in line.words)
+        right = max(
+            word.bounding_rect.x + word.bounding_rect.width
+            for word in line.words
+        )
+        if _line_belongs_to_central_panel(left, right, bitmap.pixel_width):
+            lines.append(" ".join(word.text for word in line.words).strip())
+    return "\n".join(lines)
+
+
+def _line_belongs_to_central_panel(left: float, right: float, width: int) -> bool:
+    """Reject text from item descriptions visible behind the centred preview."""
+    if width <= 0:
+        return True
+    central_left = width * 0.20
+    central_right = width * 0.80
+    return right >= central_left and left <= central_right
+
+
+def _enhance_for_ocr(image: QImage) -> QImage:
+    """Make coloured PoE text high-contrast while keeping its layout."""
+    source = image.convertToFormat(QImage.Format.Format_RGB32)
+    enhanced = QImage(source.size(), QImage.Format.Format_RGB32)
+    for y in range(source.height()):
+        for x in range(source.width()):
+            pixel = source.pixel(x, y)
+            red = (pixel >> 16) & 0xFF
+            green = (pixel >> 8) & 0xFF
+            blue = pixel & 0xFF
+            brightness = max(red, green, blue)
+            value = 255 if brightness >= 105 else 0
+            enhanced.setPixel(x, y, (value << 16) | (value << 8) | value)
+    max_width = 2000
+    if enhanced.width() < max_width:
+        enhanced = enhanced.scaledToWidth(
+            min(max_width, enhanced.width() * 2),
+            Qt.TransformationMode.FastTransformation,
+        )
+    return enhanced
+
+
+def _ocr_candidate_score(text: str) -> tuple[int, int, int]:
+    lines = [_clean_ocr_line(line) for line in text.splitlines() if line.strip()]
+    has_title_pair = int(_find_title_and_base(lines) is not None)
+    useful_mods = sum(_looks_like_modifier(line) for line in lines)
+    return has_title_pair, useful_mods, len(lines)
 
 
 _CLASS_BY_BASE_SUFFIX = (
@@ -171,6 +220,14 @@ _CLASS_BY_BASE_SUFFIX = (
     ("フラスコ", "フラスコ"),
     ("盾", "盾"),
     ("シールド", "盾"),
+    ("ワンド", "ワンド"),
+    ("スタッフ", "スタッフ"),
+    ("セプター", "セプター"),
+    ("ソード", "片手剣"),
+    ("アックス", "片手斧"),
+    ("メイス", "片手メイス"),
+    ("ボウ", "弓"),
+    ("クイヴァー", "矢筒"),
 )
 
 
@@ -181,17 +238,11 @@ def ocr_text_to_item_text(raw_text: str) -> str:
     if not lines:
         raise OcrCaptureError("アイテムの文字を認識できませんでした。")
 
-    while lines and ("実体化" in lines[0] or lines[0] in {"検索", "閉じる"}):
-        lines.pop(0)
-    if len(lines) < 3:
+    title = _find_title_and_base(lines)
+    if title is None:
         raise OcrCaptureError("アイテム名とベースタイプを認識できませんでした。")
-
-    name, base_type = lines[0], lines[1]
-    item_class = next((value for suffix, value in _CLASS_BY_BASE_SUFFIX if suffix in base_type), "")
-    if not item_class:
-        raise OcrCaptureError(f"アイテムクラスを判定できませんでした: {base_type}")
-
-    body = lines[2:]
+    title_index, name, base_type, item_class = title
+    body = lines[title_index + 2:]
     required_level = None
     property_lines: list[str] = []
     searchable_lines: list[str] = []
@@ -231,6 +282,23 @@ def ocr_text_to_item_text(raw_text: str) -> str:
         result.extend(["{ 暗黙モッド }", line])
     result.extend(["--------", *flags])
     return "\n".join(result)
+
+
+def _find_title_and_base(lines: list[str]) -> tuple[int, str, str, str] | None:
+    """Locate the centred name/base pair even when background text came first."""
+    for index in range(1, len(lines)):
+        base_type = lines[index]
+        item_class = next(
+            (value for suffix, value in _CLASS_BY_BASE_SUFFIX if suffix in base_type),
+            "",
+        )
+        if not item_class:
+            continue
+        name = lines[index - 1]
+        if _looks_like_modifier(name) or re.search(r"[:：]\s*\d", name):
+            continue
+        return index - 1, name, base_type, item_class
+    return None
 
 
 def _clean_ocr_line(line: str) -> str:

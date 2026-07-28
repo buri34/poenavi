@@ -5,7 +5,10 @@ from PySide6.QtCore import QRect
 from PySide6.QtGui import QImage
 
 from src.poetore.ocr_capture import (
+    _enhance_for_ocr,
     _largest_true_run,
+    _line_belongs_to_central_panel,
+    _ocr_candidate_score,
     detect_item_panel,
     ocr_text_to_item_text,
 )
@@ -67,3 +70,51 @@ def test_panel_detector_accepts_real_sample_when_available():
     assert rect.width() >= image.width() * 0.45
     assert rect.height() >= 180
     assert rect.top() <= 70
+
+
+def test_background_lines_before_title_do_not_replace_preview_item():
+    raw = """最大ライフ +91
+クイックスタッフ
+グローバルクリティカルダメージ倍率 +2%
+螺旋するループ (Loath Loop)
+多様体の指輪 (Manifold Ring)
+メモリーストランド: 5
+幽体化度: 7%
+装備条件レベル 65
+プレフィックスモッド +1個
+サフィックスモッド -2個
+暗黙モッドは変化しない
+最大マナ +62
+最大エナジーシールド +47
+最大ライフ +91
+グローバルクリティカルダメージ倍率 +21%"""
+
+    item = parse_item_text(ocr_text_to_item_text(raw))
+
+    assert item.name == "螺旋するループ (Loath Loop)"
+    assert item.base_type == "多様体の指輪 (Manifold Ring)"
+    assert all("クイックスタッフ" not in modifier.text for modifier in item.modifiers)
+
+
+def test_central_panel_filter_rejects_right_side_background_text():
+    assert _line_belongs_to_central_panel(250, 620, 819)
+    assert not _line_belongs_to_central_panel(680, 810, 819)
+
+
+def test_enhanced_ocr_image_is_scaled_and_binary():
+    image = QImage(100, 50, QImage.Format.Format_RGB32)
+    image.fill(0x202020)
+    image.setPixel(10, 10, 0xD0A040)
+
+    enhanced = _enhance_for_ocr(image)
+
+    assert enhanced.width() == 200
+    assert enhanced.height() == 100
+    assert enhanced.pixel(20, 20) & 0xFFFFFF == 0xFFFFFF
+
+
+def test_ocr_candidate_with_recognized_base_type_is_preferred():
+    failed = "最大ライフ +91\nクイックスタッフ\nグローバルクリティカルダメージ倍率 +2%"
+    recovered = "螺旋するループ\n多様体の指輪\n最大ライフ +91"
+
+    assert _ocr_candidate_score(recovered) > _ocr_candidate_score(failed)
