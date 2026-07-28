@@ -185,6 +185,11 @@ _DIRECTIONAL_STAT_ALIASES = {
 _DIRECTIONAL_STAT_VALUE_INDEX = {
     normalize_stat_text("倒した敵1体ごとに#のマナを失う"): 1,
 }
+_SHIELD_STAT_ALIASES = {
+    # 公式Tradeの日本語statは他のBlock statとの曖昧さ回避で「(盾)」を
+    # 付けるが、ゲーム内の詳細コピーにはこの識別子が表示されない。
+    normalize_stat_text("ブロック率 +#%"): "ブロック率 +#% (盾)",
+}
 _MULTILINE_STAT_TEXT_ALIASES = {
     # 3.29日本語クライアントの詳細コピーではHoly Armamentsが、
     # スキル由来の補足名を含む不規則な表記になる。
@@ -621,6 +626,17 @@ def parse_item_text(text: str) -> ParsedItem:
             metadata, option, confidence = default_metadata_index().match_with_option(
                 metadata_text, kind,
             )
+            if metadata is None and (
+                "盾" in header.get("item_class", "")
+                or "shield" in header.get("item_class", "").casefold()
+            ):
+                shield_alias = _SHIELD_STAT_ALIASES.get(
+                    normalize_stat_text(metadata_text)
+                )
+                if shield_alias:
+                    metadata, option, confidence = (
+                        default_metadata_index().match_with_option(shield_alias, kind)
+                    )
             direction_inverted = False
             direction_alias_key = None
             if metadata is None:

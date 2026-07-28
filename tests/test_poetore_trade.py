@@ -2063,6 +2063,34 @@ Girded Tower Shield
     assert unresolved_modifier_warnings(item, filters) == ()
 
 
+def test_dawnbreaker_shield_block_mod_uses_shield_specific_trade_stat():
+    item = parse_item_text("""アイテムクラス: 盾
+レアリティ: ユニーク
+ドーンブレイカー
+巨大なタワーシールド
+--------
+ブロック率: 45% (augmented)
+アーマー: 2003 (augmented)
+--------
+アイテムレベル: 86
+--------
+{ 暗黙モッド — ライフ }
+最大ライフ +17(10-20)
+--------
+{ ユニークモッド }
+ブロック率 +22(20-25)%
+""")
+    filters = resolve_trade_stat_filters(item, trade_name="Dawnbreaker")
+
+    block_modifier = next(
+        modifier for modifier in item.modifiers
+        if modifier.text == "ブロック率 +22(20-25)%"
+    )
+    assert block_modifier.stat_id == "explicit.stat_4253454700"
+    assert any(row.stat_id == "property.block" for row in filters)
+    assert unresolved_modifier_warnings(item, filters) == ()
+
+
 def test_crafted_affix_header_is_counted_for_exact_empty_slots():
     item = parse_item_text("""アイテムクラス: 指輪
 レアリティ: レア

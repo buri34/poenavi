@@ -1360,6 +1360,46 @@ Unknown Experimental Modifier 123
         window.close()
 
 
+def test_dawnbreaker_shield_block_mod_does_not_show_unresolved_warning(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 盾
+レアリティ: ユニーク
+ドーンブレイカー
+巨大なタワーシールド
+--------
+ブロック率: 45% (augmented)
+アーマー: 2003 (augmented)
+--------
+アイテムレベル: 86
+--------
+{ 暗黙モッド — ライフ }
+最大ライフ +17(10-20)
+--------
+{ ユニークモッド }
+ブロック率 +22(20-25)%
+{ ユニークモッド }
+直近ヒットにより受けた火ダメージ200ごとにアタックブロック率 -1%
+(Recently: 直近とは過去4秒間を指す)
+{ ユニークモッド }
+冷気ダメージの10(10-20)%を火ダメージとして受ける
+{ ユニークモッド }
+雷ダメージの12(10-20)%を火ダメージとして受ける
+{ ユニークモッド }
+物理ダメージの20(10-20)%を火ダメージとして受ける
+{ ユニークモッド }
+ブロック時に近距離にいる敵に焦げを付与する
+(Scorch: 焦げた敵は元素耐性が-10%される)
+(近距離は最大2メートル)
+""")
+        window.parse_current_text()
+
+        assert window.mod_warning.isHidden()
+        assert window.mod_warning.text() == ""
+    finally:
+        window.close()
+
+
 def test_itemised_spectre_corpse_hides_fixed_ability_mod_warning(qapp):
     window = PoetoreWindow()
     try:
