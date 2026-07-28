@@ -15,6 +15,7 @@ from src.poetore.trade import (
     active_pc_league, apply_search_range, available_pc_leagues, available_trade_presets, build_search_query,
     default_pc_league, elemental_dps, english_trade_identity,
     default_trade_currency, physical_dps, physical_dps_at_20_quality,
+    official_japanese_base_types,
     resolve_trade_stat_filters, search_prices, unique_candidate_details,
     unique_candidates, unique_variants,
     unresolved_modifier_warnings, uses_dedicated_exact_preset, resolve_official_base_type,
@@ -31,6 +32,22 @@ from src.poetore.trade import (
     _japanese_trade_item_name,
     _japanese_trade_item_type,
 )
+
+
+def test_official_japanese_base_types_use_current_nonunique_trade_entries():
+    groups = (
+        ("armour", (
+            {"type": "暗殺者のミット"},
+            {"type": "暗殺者のミット", "name": "冒涜者の掌握", "flags": {"unique": True}},
+            {"type": "王族のバーゴネット"},
+        )),
+        ("currency", ({"type": "混沌のオーブ"},)),
+    )
+    with patch("src.poetore.trade._jp_trade_item_groups", return_value=groups):
+        assert official_japanese_base_types() == (
+            ("暗殺者のミット", "防具"),
+            ("王族のバーゴネット", "防具"),
+        )
 
 
 ITEM = """Item Class: Two Hand Swords

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from difflib import SequenceMatcher
 import os
 import re
 import sys
@@ -9,6 +10,8 @@ from pathlib import Path
 
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QPoint, QRect, Qt
 from PySide6.QtGui import QGuiApplication, QImage
+
+from .trade import official_japanese_base_types
 
 
 CAPTURE_WIDTH = 1200
@@ -238,25 +241,6 @@ def _ocr_candidate_score(text: str) -> tuple[int, int, int]:
     return has_title_pair, useful_mods, len(lines)
 
 
-_CLASS_BY_BASE_SUFFIX = (
-    ("指輪", "指輪"),
-    ("アミュレット", "アミュレット"),
-    ("ベルト", "ベルト"),
-    ("ジュエル", "ジュエル"),
-    ("フラスコ", "フラスコ"),
-    ("盾", "盾"),
-    ("シールド", "盾"),
-    ("ワンド", "ワンド"),
-    ("スタッフ", "スタッフ"),
-    ("セプター", "セプター"),
-    ("ソード", "片手剣"),
-    ("アックス", "片手斧"),
-    ("メイス", "片手メイス"),
-    ("ボウ", "弓"),
-    ("クイヴァー", "矢筒"),
-)
-
-
 def ocr_text_to_item_text(raw_text: str) -> str:
     """Convert OCR lines from a recombination/preview panel into parser input."""
     lines = [_clean_ocr_line(line) for line in raw_text.splitlines()]
@@ -311,20 +295,71 @@ def ocr_text_to_item_text(raw_text: str) -> str:
 
 
 def _find_title_and_base(lines: list[str]) -> tuple[int, str, str, str] | None:
-    """Locate the centred name/base pair even when background text came first."""
+    """Locate a title/base pair by matching current official Japanese base types."""
+    official_rows = official_japanese_base_types()
+    normalized_rows = {
+        _normalized_base_candidate(base_type): (base_type, item_class)
+        for base_type, item_class in official_rows
+    }
+    candidates: list[tuple[tuple[int, int, float, int], tuple[int, str, str, str]]] = []
     for index in range(1, len(lines)):
-        base_type = lines[index]
-        item_class = next(
-            (value for suffix, value in _CLASS_BY_BASE_SUFFIX if suffix in base_type),
-            "",
-        )
-        if not item_class:
+        recognized_base = lines[index]
+        match = _match_official_base_type(recognized_base, normalized_rows)
+        if match is None:
             continue
         name = lines[index - 1]
         if _looks_like_modifier(name) or re.search(r"[:：]\s*\d", name):
             continue
-        return index - 1, name, base_type, item_class
-    return None
+        official_base, item_class, similarity, exact = match
+        next_lines = lines[index + 1:index + 4]
+        follows_title = int(any(
+            re.search(r"(?:メモリー?ストランド|幽体化度|装備条件レベル|品質|Quality)", line)
+            for line in next_lines
+        ))
+        english_hint = re.search(r"\([^)]*[A-Za-z][^)]*\)", recognized_base)
+        resolved_base = (
+            f"{official_base} {english_hint.group(0)}"
+            if english_hint else official_base
+        )
+        score = (int(exact), follows_title, similarity, index)
+        candidates.append((score, (index - 1, name, resolved_base, item_class)))
+    return max(candidates, key=lambda row: row[0])[1] if candidates else None
+
+
+def _normalized_base_candidate(value: str) -> str:
+    value = re.sub(r"\([^)]*[A-Za-z][^)]*\)", "", value)
+    value = re.sub(r"[\s\u3000]+", "", value)
+    return value.casefold().strip()
+
+
+def _match_official_base_type(
+    recognized: str,
+    official_rows: dict[str, tuple[str, str]],
+) -> tuple[str, str, float, bool] | None:
+    candidate = _normalized_base_candidate(recognized)
+    if not candidate:
+        return None
+    exact = official_rows.get(candidate)
+    if exact is not None:
+        return exact[0], exact[1], 1.0, True
+    if len(candidate) < 4:
+        return None
+    nearby = (
+        (normalized, row)
+        for normalized, row in official_rows.items()
+        if abs(len(normalized) - len(candidate)) <= 2
+    )
+    best = max(
+        (
+            (SequenceMatcher(None, candidate, normalized).ratio(), row)
+            for normalized, row in nearby
+        ),
+        default=None,
+        key=lambda value: value[0],
+    )
+    if best is None or best[0] < 0.84:
+        return None
+    return best[1][0], best[1][1], best[0], False
 
 
 def _clean_ocr_line(line: str) -> str:

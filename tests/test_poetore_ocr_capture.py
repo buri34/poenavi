@@ -33,6 +33,20 @@ SAMPLE_OCR = """実体化させる
 最大マナ +111"""
 
 
+@pytest.fixture(autouse=True)
+def official_base_types(monkeypatch):
+    rows = (
+        ("多様体の指輪", "アクセサリー"),
+        ("クイックスタッフ", "武器"),
+        ("暗殺者のミット", "防具"),
+        ("王族のバーゴネット", "防具"),
+    )
+    monkeypatch.setattr(
+        "src.poetore.ocr_capture.official_japanese_base_types",
+        lambda: rows,
+    )
+
+
 def test_ocr_preview_is_converted_to_parseable_item_text():
     item_text = ocr_text_to_item_text(SAMPLE_OCR)
     item = parse_item_text(item_text)
@@ -119,6 +133,44 @@ def test_ocr_candidate_with_recognized_base_type_is_preferred():
     recovered = "螺旋するループ\n多様体の指輪\n最大ライフ +91"
 
     assert _ocr_candidate_score(recovered) > _ocr_candidate_score(failed)
+
+
+@pytest.mark.parametrize(
+    ("spaced_base", "expected_base"),
+    (
+        ("暗 殺 者 の ミ ッ ト", "暗殺者のミット"),
+        ("王 族 の バ ー ゴ ネ ッ ト", "王族のバーゴネット"),
+    ),
+)
+def test_official_base_type_dictionary_handles_cjk_ocr_spacing(
+    spaced_base, expected_base,
+):
+    raw = f"""実体化させる
+嵐の掌握
+{spaced_base}
+装備条件レベル 68
+最大ライフ +91"""
+
+    item = parse_item_text(ocr_text_to_item_text(raw))
+
+    assert item.name == "嵐の掌握"
+    assert item.base_type == expected_base
+    assert item.item_class == "防具"
+    assert item.category == "armour"
+
+
+def test_official_base_type_dictionary_tolerates_one_ocr_substitution():
+    raw = """実体化させる
+嵐の掌握
+暗殺者のミツト
+装備条件レベル 68
+最大ライフ +91"""
+
+    item = parse_item_text(ocr_text_to_item_text(raw))
+
+    assert item.name == "嵐の掌握"
+    assert item.base_type == "暗殺者のミット"
+    assert item.item_class == "防具"
 
 
 def test_latest_ocr_debug_artifacts_are_saved_in_user_data(tmp_path, monkeypatch):
