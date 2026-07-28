@@ -662,6 +662,59 @@ def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
     finally:
         window.close()
 
+def test_checked_hidden_unique_mutation_is_sent_as_exact_filter(qapp):
+    window = PoetoreWindow()
+    try:
+        window._trade_base_type = "Titanium Spirit Shield"
+        window._trade_item_name = "Rathpith Globe"
+        window.input_edit.setPlainText("""アイテムクラス: 盾
+レアリティ: ユニーク
+ラスピスの球体
+チタンスピリットシールド
+--------
+アイテムレベル: 83
+--------
+{ ユニークモッド — ダメージ, キャスター }
+プレイヤーの最大ライフ100ごとにスペルダメージが4(3)%増加する
+--------
+コラプト状態
+""")
+        window.parse_current_text()
+        window.hidden_mods_toggle.setChecked(True)
+
+        target = next(
+            window.mod_filter_tree.topLevelItem(index)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+            if window.mod_filter_tree.topLevelItem(index).data(
+                0, Qt.UserRole + 4
+            ).stat_id == "explicit.stat_3491815140"
+        )
+        checkbox = window.mod_filter_tree.itemWidget(
+            target, 0
+        ).findChild(QCheckBox, "modFilterCheckbox")
+        checkbox.setChecked(True)
+
+        selected = tuple(
+            row for row in window._selected_stat_filters() if row.enabled
+        )
+        spell_damage = next(
+            row for row in selected
+            if row.stat_id == "explicit.stat_3491815140"
+        )
+        assert spell_damage.min_value == 4
+        assert spell_damage.max_value == 4
+
+        query = build_search_query(
+            window._parsed_item, "Titanium Spirit Shield", selected,
+            trade_name="Rathpith Globe",
+        )["query"]
+        assert query["stats"][0]["filters"] == [{
+            "id": "explicit.stat_3491815140",
+            "value": {"min": 4, "max": 4},
+        }]
+    finally:
+        window.close()
+
 
 def test_poetore_private_league_is_kept_and_ended_public_league_falls_back(qapp):
     private = PoetoreWindow(app_config={"poetore": {"league": "My League (PL12345)"}})

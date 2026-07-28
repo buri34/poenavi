@@ -2312,6 +2312,15 @@ def resolve_trade_stat_filters(
                         ),
                         DEFAULT_SEARCH_RANGE,
                     )
+            if hidden_reason and value is not None:
+                # 初期非表示の固定Unique Modは、ユーザーが明示的に選んだ時だけ
+                # 現在値を完全一致で検索する。共通の許容幅を適用すると、
+                # 4(3)%の変異値が3%以上になり通常品まで混ざってしまう。
+                current_value = _value_for_template(
+                    modifier.text, str(entry.get("text", "")),
+                )
+                if current_value is not None:
+                    value = maximum = current_value
             if unique_item and roll_bounds is not None and modifier.stat_id != str(entry["id"]):
                 value = _unique_minimum(value, roll_bounds)
             valdo_exact = item.category == "map" and item.base_type.casefold() == "valdo map"

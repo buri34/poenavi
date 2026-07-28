@@ -1611,6 +1611,43 @@ Item Level: 70
         {"id": "explicit.life", "value": {"min": 38.0}},
     ]
 
+def test_corrupted_unique_hidden_fixed_mutation_can_be_selected_exactly():
+    item = parse_item_text("""アイテムクラス: 盾
+レアリティ: ユニーク
+ラスピスの球体
+チタンスピリットシールド
+--------
+アイテムレベル: 83
+--------
+{ ユニークモッド — ダメージ, キャスター }
+プレイヤーの最大ライフ100ごとにスペルダメージが4(3)%増加する
+--------
+コラプト状態
+""")
+    filters = resolve_trade_stat_filters(
+        item, trade_base_type="Titanium Spirit Shield",
+        trade_name="Rathpith Globe",
+    )
+    spell_damage = next(
+        row for row in filters
+        if row.stat_id == "explicit.stat_3491815140"
+    )
+
+    assert spell_damage.hidden_reason == "ユニーク固定値のため初期非表示"
+    assert spell_damage.enabled is False
+    assert spell_damage.min_value == 4
+    assert spell_damage.max_value == 4
+
+    selected = replace(spell_damage, enabled=True)
+    query = build_search_query(
+        item, "Titanium Spirit Shield", (selected,),
+        trade_name="Rathpith Globe",
+    )["query"]
+    assert query["stats"][0]["filters"] == [{
+        "id": "explicit.stat_3491815140",
+        "value": {"min": 4, "max": 4},
+    }]
+
 
 def test_unique_with_more_than_three_variable_mods_does_not_preselect_all():
     labels = ("Alpha", "Beta", "Gamma", "Delta")
