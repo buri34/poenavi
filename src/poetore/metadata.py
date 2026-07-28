@@ -162,6 +162,7 @@ class ModMetadata:
     decimal: bool = False
     tiers: tuple[TierRange, ...] = ()
     options: tuple[OptionValue, ...] = ()
+    category_select: str | None = None
 
     def search_bounds(self, value: float | None, roll_min: float | None = None,
                       roll_max: float | None = None, relaxation: float = 0.10
@@ -241,21 +242,22 @@ class MetadataIndex:
         """Awakenedのcategory select resolverを必要とする同文statを解決する。"""
         key = ("explicit" if kind in {"prefix", "suffix"} else kind, normalize_stat_text(text))
         matches = self._by_match.get(key, ())
-        evasion_suffixes = {"stat_2106365538", "stat_124859000"}
-        if (
-            {record.stat_id.split(".", 1)[-1] for record in matches} == evasion_suffixes
-        ):
-            selected_suffix = (
-                "stat_124859000"
-                if item_category == "armour"
-                else "stat_2106365538"
-            )
-            selected = [
-                record for record in matches
-                if record.stat_id.endswith(f".{selected_suffix}")
-            ]
-            if len(selected) == 1:
-                return selected[0], None, 1.0
+        category = {
+            "weapon": "WEAPON",
+            "armour": "ARMOUR",
+            "heist_equipment": "HEIST_EQUIPMENT",
+            "tincture": "Tincture",
+            "sanctum_relic": "Sanctum Relic",
+        }.get(item_category)
+        selected = ([
+            record for record in matches
+            if record.category_select == category
+        ] if category is not None else [])
+        if len(selected) == 1:
+            return selected[0], None, 1.0
+        fallback = [record for record in matches if record.category_select == ""]
+        if len(fallback) == 1:
+            return fallback[0], None, 1.0
         return self.match_with_option(text, kind)
 
     def match_directional_inverse(
@@ -316,6 +318,9 @@ class MetadataIndex:
                 local=bool(row.get("local", False)),
                 decimal=bool(row.get("decimal", False)),
                 tiers=tiers, options=options,
+                category_select=("" if row.get("category_select") is None
+                                 and "category_select" in row
+                                 else row.get("category_select")),
             ))
         return cls(records)
 

@@ -36,6 +36,64 @@ def test_builder_joins_awakened_and_japanese_by_trade_id_and_keeps_minimal_field
     assert row["decimal"] is False
 
 
+def test_builder_keeps_awakened_category_select_resolver():
+    awakened = [json.dumps({
+        "resolve": {"strat": "select", "test": [None, "WEAPON"]},
+        "stats": [
+            {
+                "ref": "#% increased Attack Speed",
+                "trade": {"ids": {"explicit": ["explicit.global_attack_speed"]}},
+            },
+            {
+                "ref": "#% increased Attack Speed",
+                "trade": {"ids": {"explicit": ["explicit.local_attack_speed"]}},
+            },
+        ],
+    })]
+    jp = {"result": [{"entries": [
+        {
+            "id": "explicit.global_attack_speed", "type": "explicit",
+            "text": "アタックスピードが#%増加する",
+        },
+        {
+            "id": "explicit.local_attack_speed", "type": "explicit",
+            "text": "アタックスピードが#%増加する (ローカル)",
+        },
+    ]}]}
+
+    payload = build_minimal_index(awakened, jp)
+    rows = {row["stat_id"]: row for row in payload["mods"]}
+
+    assert rows["explicit.global_attack_speed"]["category_select"] is None
+    assert rows["explicit.local_attack_speed"]["category_select"] == "WEAPON"
+
+
+def test_category_select_uses_global_attack_speed_for_accessory():
+    index = MetadataIndex((
+        ModMetadata(
+            ref="#% increased Attack Speed", stat_id="explicit.global",
+            kind="explicit", japanese=("アタックスピードが#%増加する",),
+            category_select="",
+        ),
+        ModMetadata(
+            ref="#% increased Attack Speed", stat_id="explicit.local",
+            kind="explicit", japanese=("アタックスピードが#%増加する",),
+            category_select="WEAPON",
+        ),
+    ))
+
+    accessory, _, confidence = index.match_for_item_category(
+        "アタックスピードが10%増加する", "explicit", "accessory",
+    )
+    weapon, _, _ = index.match_for_item_category(
+        "アタックスピードが10%増加する", "explicit", "weapon",
+    )
+
+    assert accessory.stat_id == "explicit.global"
+    assert weapon.stat_id == "explicit.local"
+    assert confidence == 1.0
+
+
 def test_builder_restores_official_cluster_option_entries_to_base_stat():
     jp = {
         "result": [{

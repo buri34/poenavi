@@ -2319,7 +2319,7 @@ def resolve_trade_stat_filters(
                     metadata, _ = default_metadata_index().match_ref(
                         modifier.ref, modifier.kind,
                     )
-                if metadata:
+                if metadata and not preferred_stat_id:
                     fixed_foulborn_value = (
                         value
                         if modifier.generation == "foulborn" and roll_bounds is None

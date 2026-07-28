@@ -30,7 +30,18 @@ def _awakened_stats(lines: Iterable[str]) -> list[dict]:
         if not line.strip():
             continue
         row = json.loads(line)
-        rows.extend(row.get("stats", ())) if "stats" in row else rows.append(row)
+        nested = row.get("stats")
+        if nested is None:
+            rows.append(row)
+            continue
+        resolve = row.get("resolve") or {}
+        tests = resolve.get("test", ()) if resolve.get("strat") == "select" else ()
+        for index, stat in enumerate(nested):
+            stat = dict(stat)
+            if index < len(tests):
+                # nullはAwakenedのfallback候補、文字列はそのカテゴリ専用候補。
+                stat["category_select"] = tests[index]
+            rows.append(stat)
     return rows
 
 
@@ -218,7 +229,7 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
                             "english": str(matcher.get("string", "")),
                             "oils": oils,
                         })
-                records.append({
+                record = {
                     "ref": str(stat.get("ref", "")),
                     "stat_id": stat_id,
                     "kind": kind,
@@ -231,7 +242,10 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
                     "decimal": bool(stat.get("dp", False)),
                     "tiers": repoe_row.get("tiers", ()),
                     "options": options,
-                })
+                }
+                if "category_select" in stat:
+                    record["category_select"] = stat["category_select"]
+                records.append(record)
     for record in _official_option_compatibility_records(jp):
         key = (record["kind"], record["stat_id"])
         if key not in seen:

@@ -745,6 +745,34 @@ def test_other_vaal_gem_is_detected_without_name_specific_logic():
     assert item.base_type == "Vaal Arc"
 
 
+def test_unique_amulet_uses_global_attack_speed_like_awakened():
+    item = parse_item_text("""アイテムクラス: アミュレット
+レアリティ: ユニーク
+歪んだ砂時計
+ターコイズのアミュレット
+--------
+装備要求:
+レベル: 50
+--------
+アイテムレベル: 80
+--------
+{ 暗黙モッド — 能力値 }
+器用さおよび知性 +17(16-24)
+--------
+{ ユニークモッド — アタック, スピード }
+アタックスピードが10(10-25)%増加する
+{ ユニークモッド — キャスター, スピード }
+キャストスピードが10(10-25)%増加する
+""")
+
+    attack_speed = next(
+        mod for mod in item.modifiers if mod.text.startswith("アタックスピード")
+    )
+    assert item.category == "accessory"
+    assert attack_speed.stat_id == "explicit.stat_681332047"
+    assert attack_speed.confidence == 1.0
+
+
 def test_synthesised_weapon_uses_global_evasion_implicit_like_awakened():
     item = parse_item_text("""アイテムクラス: セプター
 レアリティ: ユニーク
