@@ -715,6 +715,62 @@ def test_checked_hidden_unique_mutation_is_sent_as_exact_filter(qapp):
     finally:
         window.close()
 
+def test_search_resets_hidden_candidate_view_but_keeps_checked_filter(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 盾
+レアリティ: ユニーク
+ラスピスの球体
+チタンスピリットシールド
+--------
+アイテムレベル: 83
+--------
+{ ユニークモッド — ダメージ, キャスター }
+プレイヤーの最大ライフ100ごとにスペルダメージが4(3)%増加する
+""")
+        window.parse_current_text()
+        window._populate_stat_filters((
+            TradeStatFilter(
+                "explicit.normal", "通常候補", 10, "explicit", False,
+            ),
+            TradeStatFilter(
+                "explicit.hidden", "隠し候補", 4, "explicit", False,
+                max_value=4,
+                hidden_reason="ユニーク固定値のため初期非表示",
+            ),
+        ))
+        window.hidden_mods_toggle.setChecked(True)
+        hidden = window.mod_filter_tree.topLevelItem(1)
+        checkbox = window.mod_filter_tree.itemWidget(
+            hidden, 0
+        ).findChild(QCheckBox, "modFilterCheckbox")
+        checkbox.setChecked(True)
+
+        result = PriceResult("Standard", "qid", 0, ())
+        with patch("src.poetore.ui.search_prices", return_value=result) as search:
+            window.search_current_item()
+            for _ in range(50):
+                qapp.processEvents()
+                if search.called:
+                    break
+                QTest.qWait(10)
+
+        assert search.called
+        assert not window.hidden_mods_toggle.isChecked()
+        assert window.hidden_mods_toggle.text() == "隠し候補を表示"
+        assert not window.mod_filter_tree.topLevelItem(0).isHidden()
+        assert window.mod_filter_tree.topLevelItem(1).isHidden()
+        sent = search.call_args.kwargs["stat_filters"]
+        assert any(
+            row.stat_id == "explicit.hidden"
+            and row.enabled
+            and row.min_value == 4
+            and row.max_value == 4
+            for row in sent
+        )
+    finally:
+        window.close()
+
 
 def test_poetore_private_league_is_kept_and_ended_public_league_falls_back(qapp):
     private = PoetoreWindow(app_config={"poetore": {"league": "My League (PL12345)"}})

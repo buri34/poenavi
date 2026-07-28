@@ -2283,6 +2283,9 @@ class PoetoreWindow(QWidget):
             self._queue_poe_ninja_price(item)
 
     def search_current_item(self):
+        # 前回のUniqueで隠し候補を開いたまま次を検索すると、通常候補が
+        # 空に見えて誤解を招く。チェック状態は検索へ残し、表示だけ戻す。
+        self.hidden_mods_toggle.setChecked(False)
         self.parse_current_text()
         item = getattr(self, "_parsed_item", None)
         if item is None:
