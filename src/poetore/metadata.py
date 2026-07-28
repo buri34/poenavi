@@ -235,6 +235,29 @@ class MetadataIndex:
             return matches[0], None, 0.75
         return None, None, 0.0
 
+    def match_for_item_category(
+        self, text: str, kind: str, item_category: str,
+    ) -> tuple[ModMetadata | None, OptionValue | None, float]:
+        """Awakenedのcategory select resolverを必要とする同文statを解決する。"""
+        key = ("explicit" if kind in {"prefix", "suffix"} else kind, normalize_stat_text(text))
+        matches = self._by_match.get(key, ())
+        evasion_suffixes = {"stat_2106365538", "stat_124859000"}
+        if (
+            {record.stat_id.split(".", 1)[-1] for record in matches} == evasion_suffixes
+        ):
+            selected_suffix = (
+                "stat_124859000"
+                if item_category == "armour"
+                else "stat_2106365538"
+            )
+            selected = [
+                record for record in matches
+                if record.stat_id.endswith(f".{selected_suffix}")
+            ]
+            if len(selected) == 1:
+                return selected[0], None, 1.0
+        return self.match_with_option(text, kind)
+
     def match_directional_inverse(
         self, text: str, kind: str,
     ) -> tuple[ModMetadata | None, OptionValue | None, float]:

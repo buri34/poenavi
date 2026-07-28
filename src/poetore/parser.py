@@ -670,8 +670,8 @@ def parse_item_text(text: str) -> ParsedItem:
             metadata_text = (
                 current_header_name if kind == "veiled" and current_header_name else line
             )
-            metadata, option, confidence = default_metadata_index().match_with_option(
-                metadata_text, kind,
+            metadata, option, confidence = default_metadata_index().match_for_item_category(
+                metadata_text, kind, item_category,
             )
             if metadata is None and (
                 "盾" in header.get("item_class", "")

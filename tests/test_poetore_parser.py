@@ -745,5 +745,57 @@ def test_other_vaal_gem_is_detected_without_name_specific_logic():
     assert item.base_type == "Vaal Arc"
 
 
+def test_synthesised_weapon_uses_global_evasion_implicit_like_awakened():
+    item = parse_item_text("""アイテムクラス: セプター
+レアリティ: ユニーク
+シンセサイズされた 虚無のセプター
+--------
+セプター
+物理ダメージ: 50-76
+クリティカル率: 7.30%
+秒間アタック回数: 1.33 (augmented)
+武器攻撃距離：1.1 メートル
+--------
+装備要求:
+筋力: 104
+知性: 122
+--------
+ソケット: W W
+--------
+アイテムレベル: 87
+--------
+{ 暗黙モッド — 防御, 回避力 }
+回避力が7(7-9)%増加する
+{ 暗黙モッド — アタック, スピード }
+アタックスピードが6(5-6)%増加する
+{ 暗黙モッド — 能力値 }
+器用さ +9(9-11)
+--------
+未鑑定
+--------
+シンセシスアイテム""")
+
+    evasion = next(mod for mod in item.modifiers if mod.text.startswith("回避力"))
+    assert evasion.stat_id == "implicit.stat_2106365538"
+    assert evasion.confidence == 1.0
+
+    armour = parse_item_text("""アイテムクラス: ブーツ
+レアリティ: レア
+風の足跡
+シャークスキンブーツ
+--------
+回避力: 180 (augmented)
+--------
+アイテムレベル: 87
+--------
+{ 暗黙モッド — 防御, 回避力 }
+回避力が7(7-9)%増加する""")
+    armour_evasion = next(
+        mod for mod in armour.modifiers if mod.text.startswith("回避力")
+    )
+    assert armour_evasion.stat_id == "implicit.stat_124859000"
+    assert armour_evasion.confidence == 1.0
+
+
 if __name__ == "__main__":
     unittest.main()
