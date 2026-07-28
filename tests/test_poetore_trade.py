@@ -2088,6 +2088,13 @@ def test_dawnbreaker_shield_block_mod_uses_shield_specific_trade_stat():
     )
     assert block_modifier.stat_id == "explicit.stat_4253454700"
     assert any(row.stat_id == "property.block" for row in filters)
+    block_filter = next(
+        row for row in filters
+        if row.stat_id == "explicit.stat_4253454700"
+    )
+    assert block_filter.text == "ブロック率 +22(20-25)%"
+    assert block_filter.min_value == 21
+    assert block_filter.hidden_reason == ""
     assert unresolved_modifier_warnings(item, filters) == ()
 
 

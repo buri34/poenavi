@@ -1819,6 +1819,14 @@ def _is_unique(item: ParsedItem) -> bool:
 def _aggregated_local_property_stat(item: ParsedItem, stat_id: str) -> bool:
     """完成品のプロパティ値へ既に集約済みのローカルstatか。"""
     key = stat_id.rsplit("_", 1)[-1]
+    if (
+        _is_unique(item)
+        and key == "4253454700"
+        and _property_value(item, "ブロック率", "Chance to Block") is not None
+    ):
+        # Unique盾では総ブロック率だけでなく、価格差になる可変Unique Modの
+        # ロールも独立して比較できるよう候補へ残す。
+        return False
     if item.category == "weapon":
         if key in _WEAPON_PHYSICAL_STAT_KEYS:
             return physical_dps(item) is not None

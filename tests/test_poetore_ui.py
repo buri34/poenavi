@@ -1396,6 +1396,16 @@ def test_dawnbreaker_shield_block_mod_does_not_show_unresolved_warning(qapp):
 
         assert window.mod_warning.isHidden()
         assert window.mod_warning.text() == ""
+        visible_filters = [
+            window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole + 4)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        block_filter = next(
+            row for row in visible_filters
+            if row.stat_id == "explicit.stat_4253454700"
+        )
+        assert block_filter.text == "ブロック率 +22(20-25)%"
+        assert block_filter.min_value == 21
     finally:
         window.close()
 
