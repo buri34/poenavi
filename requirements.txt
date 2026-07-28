@@ -1,7 +1,7 @@
 PySide6
 keyboard
 pynput
-winrt-Windows.Globalization; platform_system == "Windows"
-winrt-Windows.Graphics.Imaging; platform_system == "Windows"
-winrt-Windows.Media.Ocr; platform_system == "Windows"
-winrt-Windows.Storage.Streams; platform_system == "Windows"
+winrt-Windows.Globalization[all]; platform_system == "Windows"
+winrt-Windows.Graphics.Imaging[all]; platform_system == "Windows"
+winrt-Windows.Media.Ocr[all]; platform_system == "Windows"
+winrt-Windows.Storage.Streams[all]; platform_system == "Windows"
