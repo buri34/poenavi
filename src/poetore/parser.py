@@ -325,6 +325,43 @@ def _combine_multiline_modifiers(
     metadata_index = default_metadata_index()
     while index < len(modifiers):
         first = modifiers[index]
+        if first.kind == "enchant" and first.stat_id is None:
+            # Cluster Jewelの基礎効果には、ゲーム内で複数行表示される一方、
+            # 公式Tradeでは改行を含む1つのoptionとして定義されたものがある。
+            # 未解決Enchantの連続範囲だけを公式メタデータへ照合する。
+            group_end = index + 1
+            while (
+                group_end < len(modifiers)
+                and modifiers[group_end].kind == "enchant"
+                and modifiers[group_end].stat_id is None
+            ):
+                group_end += 1
+            for size in range(group_end - index, 1, -1):
+                group = modifiers[index:index + size]
+                text = "\n".join(row.text for row in group)
+                metadata, option, confidence = metadata_index.match_with_option(
+                    text, first.kind,
+                )
+                if metadata is None:
+                    continue
+                result.append(replace(
+                    first,
+                    text=text,
+                    values=tuple(value for row in group for value in row.values),
+                    ref=metadata.ref,
+                    stat_id=metadata.stat_id,
+                    confidence=confidence,
+                    option_value=option.value if option else None,
+                    option_text=option.japanese if option else None,
+                    oils=option.oils if option else (),
+                    decimal=metadata.decimal,
+                ))
+                index += size
+                break
+            else:
+                result.append(first)
+                index += 1
+            continue
         if first.group is None or first.kind not in {"prefix", "suffix", "explicit"}:
             result.append(first)
             index += 1

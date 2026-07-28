@@ -100,6 +100,37 @@ class PoetoreParserTest(unittest.TestCase):
             },
         )
 
+    def test_combines_multiline_cluster_jewel_enchant_option(self):
+        item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: レア
+竜の石
+クラスタージュエル (大)
+--------
+アイテムレベル: 83
+--------
+パッシブスキルを10個追加する (enchant)
+ジュエルソケット2個がパッシブスキルに追加される (enchant)
+追加される通常パッシブスキルは付与: スタッフによるアタックのヒットおよび状態異常のダメージが12%増加する (enchant)
+追加される通常パッシブスキルは付与: メイスまたはセプターによるアタックのヒットおよび状態異常のダメージが12%増加する (enchant)
+--------
+{ プレフィックスモッド「健康な」 (ティア: 2) — ライフ }
+追加されるスモールパッシブスキルはさらに付与: 最大ライフ +5(4-7)
+""")
+
+        self.assertFalse(any(mod.stat_id is None for mod in item.modifiers))
+        base_effect = next(
+            mod for mod in item.modifiers
+            if mod.stat_id == "enchant.stat_3948993189"
+        )
+        self.assertEqual(base_effect.option_value, 2)
+        self.assertIn("\n", base_effect.text)
+        life = next(
+            mod for mod in item.modifiers
+            if mod.stat_id == "explicit.stat_3819827377"
+        )
+        self.assertEqual(life.kind, "prefix")
+        self.assertEqual(life.tier, 2)
+
     def test_combines_multiline_flask_suffix_using_official_metadata(self):
         item = parse_item_text("""アイテムクラス: ライフフラスコ
 レアリティ: マジック
