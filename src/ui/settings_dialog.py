@@ -1625,6 +1625,7 @@ class SettingsDialog(QDialog):
             "monastery": "F12",
             "search_string_test": "F4",
             "poetore_capture": "alt+d",
+            "poetore_ocr_capture": "alt+g",
             "gem_shop_search": "F2",
             "cheat_sheets_toggle": "shift+space",
         })
@@ -1830,6 +1831,14 @@ class SettingsDialog(QDialog):
         )
         h_layout10.addWidget(self.poetore_capture_btn)
         group_layout.addLayout(h_layout10)
+
+        h_layout_ocr = QHBoxLayout()
+        h_layout_ocr.addWidget(QLabel("ぽえとれ画像OCR検索:"))
+        self.poetore_ocr_capture_btn = HotkeyButton(
+            self.hotkeys.get("poetore_ocr_capture", "alt+g")
+        )
+        h_layout_ocr.addWidget(self.poetore_ocr_capture_btn)
+        group_layout.addLayout(h_layout_ocr)
 
         h_layout11 = QHBoxLayout()
         h_layout11.addWidget(QLabel("ジェムショップ検索（長押し）:"))
@@ -2910,6 +2919,8 @@ class SettingsDialog(QDialog):
             "hideout": self.hideout_btn.key_text,
             "monastery": self.monastery_btn.key_text,
             "search_string_test": self.search_string_test_btn.key_text,
+            "poetore_capture": self.poetore_capture_btn.key_text,
+            "poetore_ocr_capture": self.poetore_ocr_capture_btn.key_text,
             "gem_shop_search": self.gem_shop_search_btn.key_text,
         }
         duplicates = find_duplicate_hotkeys(hotkeys)
@@ -2924,6 +2935,8 @@ class SettingsDialog(QDialog):
                 "hideout": "隠れ家へ移動",
                 "monastery": "修道院へ移動",
                 "search_string_test": "検索文字列の貼り付け",
+                "poetore_capture": "ぽえとれ検索",
+                "poetore_ocr_capture": "ぽえとれ画像OCR検索",
                 "gem_shop_search": "ジェムショップ検索",
             }
             details = "\n".join(
@@ -2966,6 +2979,7 @@ class SettingsDialog(QDialog):
                 "monastery": self.monastery_btn.key_text,
                 "search_string_test": self.search_string_test_btn.key_text,
                 "poetore_capture": self.poetore_capture_btn.key_text,
+                "poetore_ocr_capture": self.poetore_ocr_capture_btn.key_text,
                 "gem_shop_search": self.gem_shop_search_btn.key_text,
                 "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,
             },
