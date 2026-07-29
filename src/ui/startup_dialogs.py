@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 
 from src.ui.styles import Styles
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
+from src.ui.app_theme import theme_for_mode
 from src.utils.config_manager import ConfigManager
 from src.utils.poe_version_data import POE1, POE2
 
@@ -54,7 +55,7 @@ class AppModeSelectionDialog(QDialog):
             POENAVI_MODE,
             "ぽえなび",
             "レベリング・進行支援",
-            "#B0FF7B",
+            theme_for_mode(POENAVI_MODE).accent,
             "icon.ico",
             self.selected_mode == POENAVI_MODE,
         )
@@ -62,7 +63,7 @@ class AppModeSelectionDialog(QDialog):
             POETORE_MODE,
             "ぽえとれ",
             "価格チェック・トレード支援",
-            "#DB86EF",
+            theme_for_mode(POETORE_MODE).accent,
             "icon2.ico",
             self.selected_mode == POETORE_MODE,
         )

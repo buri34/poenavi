@@ -19,11 +19,15 @@ def test_settings_can_restore_mode_selector_without_changing_preferred_mode(monk
     })
 
     assert not dialog.show_mode_selector_cb.isChecked()
+    assert dialog.preferred_mode_combo.currentData() == "poetore"
     dialog.show_mode_selector_cb.setChecked(True)
+    dialog.preferred_mode_combo.setCurrentIndex(
+        dialog.preferred_mode_combo.findData("poenavi")
+    )
     settings = dialog.get_settings()
 
     assert settings["startup"] == {
-        "preferred_mode": "poetore",
+        "preferred_mode": "poenavi",
         "show_mode_selector": True,
     }
     dialog.close()

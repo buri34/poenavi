@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.ui.styles import Styles
+from src.ui.app_theme import POETORE_THEME
 from src.utils.chat_command import send_chat_command
 from src.utils.config_manager import ConfigManager
 from src.utils.global_hotkeys import GlobalHotkeyService
@@ -23,8 +24,8 @@ from src.utils.poe_version_data import POE1, POE2
 from src.utils.stash_tab_scroll import StashTabScrollController
 
 
-POETORE_ACCENT = "#DB86EF"
-POETORE_TEXT = "#F2E7F5"
+POETORE_ACCENT = POETORE_THEME.accent
+POETORE_TEXT = POETORE_THEME.text
 RATE_REFRESH_MSEC = 31 * 60 * 1000
 
 
@@ -77,11 +78,11 @@ class PoetoreModeWindow(QMainWindow):
         central.setObjectName("poetoreModeRoot")
         central.setStyleSheet(f"""
             QWidget#poetoreModeRoot {{
-                background: #151119;
+                background: {POETORE_THEME.background};
                 color: {POETORE_TEXT};
             }}
             QFrame#rateCard {{
-                background: #211825;
+                background: {POETORE_THEME.panel};
                 border: 1px solid rgba(219, 134, 239, 0.42);
                 border-radius: 10px;
             }}
@@ -108,7 +109,9 @@ class PoetoreModeWindow(QMainWindow):
             f"color: {POETORE_ACCENT}; font-size: 26px; font-weight: bold;"
         )
         subtitle = QLabel("価格チェック・トレード支援")
-        subtitle.setStyleSheet("color: #B9A9BE; font-size: 12px;")
+        subtitle.setStyleSheet(
+            f"color: {POETORE_THEME.muted_text}; font-size: 12px;"
+        )
         title_box.addWidget(title)
         title_box.addWidget(subtitle)
         header.addLayout(title_box)
@@ -282,9 +285,9 @@ class PoetoreModeWindow(QMainWindow):
         self._memo_dialog.show()
 
     def open_settings(self):
-        from src.ui.settings_dialog import SettingsDialog
+        from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 
-        dialog = SettingsDialog(self, self.config)
+        dialog = PoetoreSettingsDialog(self, self.config)
         if not dialog.exec():
             return
         self.config.update(dialog.get_settings())

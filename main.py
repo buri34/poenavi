@@ -1,5 +1,6 @@
 import sys
 import os
+from time import perf_counter
 
 # srcディレクトリへのパスを通す (VSCodeなどで実行した際のパスずれ対策)
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -11,6 +12,7 @@ from src.utils.config_manager import ConfigManager
 
 __version__ = APP_VERSION
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QDialog
 
 
@@ -36,17 +38,37 @@ def select_app_mode(config):
 
 
 def run():
+    started_at = perf_counter()
     app = QApplication(sys.argv)
     config = ConfigManager.load_config()
     app_mode = select_app_mode(config)
     if app_mode is None:
         return 0
 
+    from src.update.startup_gate import run_startup_update_gate
+
+    config = ConfigManager.load_config()
+    if not run_startup_update_gate(config):
+        return 0
+    app.setProperty("startupUpdateChecked", True)
+
     from src.app_composition import create_mode_window
 
     app.setProperty("appMode", app_mode)
     window = create_mode_window(app_mode)
     window.show()
+
+    def report_runtime():
+        from src.utils.runtime_diagnostics import (
+            capture_runtime_snapshot,
+            print_runtime_snapshot,
+        )
+
+        print_runtime_snapshot(
+            capture_runtime_snapshot(app_mode, started_at, window)
+        )
+
+    QTimer.singleShot(0, report_runtime)
     return app.exec()
 
 if __name__ == "__main__":

@@ -436,7 +436,11 @@ class MainWindow(QMainWindow):
         self.config = ConfigManager.load_config()
         self.update_controller = UpdateController(self)
         self._update_progress_dialog = None
-        if not self._run_startup_update_gate():
+        app = QApplication.instance()
+        if (
+            not bool(app and app.property("startupUpdateChecked"))
+            and not self._run_startup_update_gate()
+        ):
             QTimer.singleShot(0, QApplication.instance().quit)
             return
         self._connect_update_controller()
@@ -4502,6 +4506,25 @@ class MainWindow(QMainWindow):
         x = geo.left() + geo.width() - actual_w
         y = geo.top()
         self.move(x, y)
+
+    @property
+    def active_service_names(self):
+        names = set()
+        if getattr(self, "update_controller", None) is not None:
+            names.add("update_controller")
+        if getattr(self, "keyboard_listener", None) is not None:
+            names.add("global_hotkeys")
+        if getattr(self, "stash_tab_scroll", None) is not None:
+            names.add("stash_tab_scroll")
+        if getattr(self, "log_watcher", None) is not None:
+            names.add("log_watcher")
+        if getattr(self, "timer", None) is not None:
+            names.add("timer")
+        if getattr(self, "mini_navi_overlay", None) is not None:
+            names.add("mini_navi")
+        if getattr(self, "_cheat_sheet_overlay", None) is not None:
+            names.add("cheat_sheets")
+        return frozenset(names)
 
     def closeEvent(self, event):
         # 起動時アップデートでは、保存済みジオメトリを復元する前の仮サイズ

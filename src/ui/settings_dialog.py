@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
                                QPushButton, QGroupBox, QLineEdit, QFileDialog,
-                               QTabWidget, QWidget, QScrollArea, QSpinBox,
+                               QTabWidget, QWidget, QScrollArea, QSpinBox, QComboBox,
                                QFormLayout, QTextEdit, QFrame, QRadioButton,
                                QButtonGroup, QGridLayout, QCheckBox, QMessageBox,
                                QDoubleSpinBox, QTableWidget, QTableWidgetItem,
@@ -22,6 +22,7 @@ from src.utils.gem_shop_search import (
 import os
 import webbrowser
 
+from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 
 def find_duplicate_hotkeys(hotkeys: dict[str, str]) -> dict[str, list[str]]:
     """未割り当てを除き、同じキーへ割り当てられた操作を返す。"""
@@ -1724,6 +1725,22 @@ class SettingsDialog(QDialog):
         )
         self.show_mode_selector_cb.setStyleSheet(checkbox_style)
         startup_layout.addWidget(self.show_mode_selector_cb)
+        preferred_mode_row = QHBoxLayout()
+        preferred_mode_label = QLabel("次回起動するモード:")
+        preferred_mode_label.setStyleSheet(
+            f"color: {Styles.TEXT_COLOR}; font-size: 12px;"
+        )
+        preferred_mode_row.addWidget(preferred_mode_label)
+        self.preferred_mode_combo = QComboBox()
+        self.preferred_mode_combo.addItem("ぽえなび", POENAVI_MODE)
+        self.preferred_mode_combo.addItem("ぽえとれ", POETORE_MODE)
+        preferred_mode = normalize_app_mode(
+            startup_config.get("preferred_mode", POENAVI_MODE)
+        )
+        preferred_index = self.preferred_mode_combo.findData(preferred_mode)
+        self.preferred_mode_combo.setCurrentIndex(max(0, preferred_index))
+        preferred_mode_row.addWidget(self.preferred_mode_combo, 1)
+        startup_layout.addLayout(preferred_mode_row)
         startup_note = QLabel("OFFにすると、次回から前回選んだモードで直接起動します。")
         startup_note.setStyleSheet("color: #aaaaaa; font-size: 11px;")
         startup_note.setWordWrap(True)
@@ -1756,7 +1773,6 @@ class SettingsDialog(QDialog):
         mode_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
         mode_row.addWidget(mode_label)
 
-        from PySide6.QtWidgets import QComboBox
         self.poe_version_mode_combo = QComboBox()
         self.poe_version_mode_combo.addItem("毎回確認", "ask")
         self.poe_version_mode_combo.addItem("PoE1固定", POE1)
@@ -1914,7 +1930,6 @@ class SettingsDialog(QDialog):
         timer_size_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
         timer_size_row.addWidget(timer_size_label)
         
-        from PySide6.QtWidgets import QComboBox
         self.timer_size_combo = QComboBox()
         self.timer_size_combo.addItem("大", "large")
         self.timer_size_combo.addItem("中", "medium")
@@ -2973,6 +2988,9 @@ class SettingsDialog(QDialog):
         startup_config = self.current_config.get("startup")
         startup_config = dict(startup_config) if isinstance(startup_config, dict) else {}
         startup_config["show_mode_selector"] = self.show_mode_selector_cb.isChecked()
+        startup_config["preferred_mode"] = normalize_app_mode(
+            self.preferred_mode_combo.currentData()
+        )
 
         return {
             "startup": startup_config,
