@@ -1867,8 +1867,12 @@ def test_many_unidentified_unique_candidates_are_scrollable(qapp):
 
         assert len(window.unique_name_group.buttons()) == 55
         assert not window.unique_name_scroll.isHidden()
-        assert window.unique_name_scroll.maximumHeight() == 214
+        assert window.unique_name_scroll.minimumHeight() == 204
+        assert window.unique_name_scroll.maximumHeight() == 204
         assert window.unique_name_scroll.verticalScrollBar().maximum() > 0
+        assert window.unique_name_scroll.viewport().palette().color(
+            window.unique_name_scroll.viewport().backgroundRole()
+        ).name() == "#121212"
     finally:
         window.close()
 

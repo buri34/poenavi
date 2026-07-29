@@ -73,6 +73,13 @@ _MOD_TEXT_COLUMN_WIDTH = 346
 _MOD_VALUE_EDITOR_WIDTH = 72
 _MOD_ROW_HEIGHT = 36
 _UNIQUE_ROLL_ROW_HEIGHT = 62
+_UNIQUE_CANDIDATE_ROW_HEIGHT = 64
+_UNIQUE_CANDIDATE_ROW_SPACING = 6
+_UNIQUE_CANDIDATE_VISIBLE_ROWS = 3
+_UNIQUE_CANDIDATE_VIEWPORT_HEIGHT = (
+    _UNIQUE_CANDIDATE_ROW_HEIGHT * _UNIQUE_CANDIDATE_VISIBLE_ROWS
+    + _UNIQUE_CANDIDATE_ROW_SPACING * (_UNIQUE_CANDIDATE_VISIBLE_ROWS - 1)
+)
 _SPECIAL_CHIP_FILTER_IDS = {
     "property.map_tier", "property.area_level", "property.heist_wings",
     "property.base_percentile",
@@ -912,14 +919,17 @@ class PoetoreWindow(QWidget):
         unique_options = QVBoxLayout()
         self.unique_name_label = QLabel("未鑑定ユニーク候補:")
         self.unique_name_container = QWidget()
+        self.unique_name_container.setObjectName("uniqueCandidateContainer")
         self.unique_name_layout = _FlowLayout(
-            self.unique_name_container, h_spacing=6, v_spacing=6,
+            self.unique_name_container,
+            h_spacing=6,
+            v_spacing=_UNIQUE_CANDIDATE_ROW_SPACING,
         )
         self.unique_name_scroll = QScrollArea()
         self.unique_name_scroll.setObjectName("uniqueCandidateScroll")
         self.unique_name_scroll.setWidgetResizable(True)
         self.unique_name_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.unique_name_scroll.setMaximumHeight(214)
+        self.unique_name_scroll.setFixedHeight(_UNIQUE_CANDIDATE_VIEWPORT_HEIGHT)
         self.unique_name_scroll.setFrameShape(QFrame.NoFrame)
         self.unique_name_scroll.setWidget(self.unique_name_container)
         self.unique_name_group = QButtonGroup(self)
@@ -1605,6 +1615,11 @@ class PoetoreWindow(QWidget):
             }
             QTreeWidget::item { padding: 4px 2px; border-bottom: 1px solid rgba(176, 255, 123, 24); }
             QTreeWidget::item:selected { background: rgba(112, 164, 79, 125); color: white; }
+            QScrollArea#uniqueCandidateScroll,
+            QScrollArea#uniqueCandidateScroll > QWidget > QWidget,
+            QWidget#uniqueCandidateContainer {
+                background: #121212;
+            }
             QHeaderView::section {
                 background: rgba(34, 38, 32, 245);
                 color: #b0ff7b;
