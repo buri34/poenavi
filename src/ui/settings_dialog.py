@@ -1712,6 +1712,24 @@ class SettingsDialog(QDialog):
 
         general_layout.addWidget(log_group)
 
+        startup_group = QGroupBox("起動モード")
+        startup_group.setStyleSheet(group_style)
+        startup_layout = QVBoxLayout(startup_group)
+        self.show_mode_selector_cb = QCheckBox("起動時に「ぽえなび／ぽえとれ」を毎回選択する")
+        startup_config = self.current_config.get("startup")
+        if not isinstance(startup_config, dict):
+            startup_config = {}
+        self.show_mode_selector_cb.setChecked(
+            bool(startup_config.get("show_mode_selector", True))
+        )
+        self.show_mode_selector_cb.setStyleSheet(checkbox_style)
+        startup_layout.addWidget(self.show_mode_selector_cb)
+        startup_note = QLabel("OFFにすると、次回から前回選んだモードで直接起動します。")
+        startup_note.setStyleSheet("color: #aaaaaa; font-size: 11px;")
+        startup_note.setWordWrap(True)
+        startup_layout.addWidget(startup_note)
+        general_layout.addWidget(startup_group)
+
         # ━━━━━ PoEバージョン ━━━━━
         poe_group = QGroupBox("PoEバージョン")
         poe_group.setStyleSheet(group_style)
@@ -2952,8 +2970,12 @@ class SettingsDialog(QDialog):
         mini_navi_overlay_config["text_opacity"] = self.mini_navi_text_opacity_slider.value()
         mini_navi_overlay_config["always_on_top"] = self.mini_navi_always_on_top_cb.isChecked()
         mini_navi_overlay_config["fade_enabled"] = self.mini_navi_fade_enabled_cb.isChecked()
+        startup_config = self.current_config.get("startup")
+        startup_config = dict(startup_config) if isinstance(startup_config, dict) else {}
+        startup_config["show_mode_selector"] = self.show_mode_selector_cb.isChecked()
 
         return {
+            "startup": startup_config,
             "hotkeys": {
                 "start_stop": self.start_stop_btn.key_text,
                 "reset": self.reset_btn.key_text,

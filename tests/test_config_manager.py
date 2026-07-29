@@ -44,6 +44,29 @@ def write_default_config(app_dir: Path, overrides=None):
 
 
 class ConfigManagerTest(unittest.TestCase):
+    def test_schema_v8_adds_startup_mode_defaults(self):
+        migrated = ConfigManager._migrate_config({"schemaVersion": 7})
+
+        self.assertEqual(
+            migrated["startup"],
+            {
+                "preferred_mode": "poenavi",
+                "show_mode_selector": True,
+            },
+        )
+
+    def test_schema_v8_preserves_existing_startup_choice(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 7,
+            "startup": {
+                "preferred_mode": "poetore",
+                "show_mode_selector": False,
+            },
+        })
+
+        self.assertEqual(migrated["startup"]["preferred_mode"], "poetore")
+        self.assertFalse(migrated["startup"]["show_mode_selector"])
+
     def test_schema_v3_adds_standard_mode_without_changing_existing_geometry(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 2,

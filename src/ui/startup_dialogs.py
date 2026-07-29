@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QCursor, QIcon
 from PySide6.QtWidgets import (
     QButtonGroup,
+    QCheckBox,
     QComboBox,
     QDialog,
     QFormLayout,
@@ -15,8 +16,113 @@ from PySide6.QtWidgets import (
 )
 
 from src.ui.styles import Styles
+from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 from src.utils.config_manager import ConfigManager
 from src.utils.poe_version_data import POE1, POE2
+
+
+class AppModeSelectionDialog(QDialog):
+    """ぽえなび／ぽえとれの起動モード選択。"""
+
+    def __init__(self, parent=None, current_mode=POENAVI_MODE):
+        super().__init__(parent)
+        self.selected_mode = normalize_app_mode(current_mode)
+        self.setWindowTitle("起動モード選択")
+        self.setModal(True)
+        self.setFixedSize(720, 430)
+        self.setStyleSheet(Styles.MAIN_WINDOW)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(22, 20, 22, 18)
+        layout.setSpacing(14)
+
+        title = QLabel("使う機能を選んでください")
+        title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 20px; font-weight: bold;")
+        layout.addWidget(title)
+
+        description = QLabel("選ばなかったモードの専用機能は起動しません。後から設定で変更できます。")
+        description.setStyleSheet("color: #c9d4c2; font-size: 13px;")
+        layout.addWidget(description)
+
+        self.group = QButtonGroup(self)
+        self.group.setExclusive(True)
+        cards = QHBoxLayout()
+        cards.setSpacing(16)
+        self.poenavi_card = self._create_card(
+            POENAVI_MODE,
+            "ぽえなび",
+            "レベリング・進行支援",
+            "#B0FF7B",
+            self.selected_mode == POENAVI_MODE,
+        )
+        self.poetore_card = self._create_card(
+            POETORE_MODE,
+            "ぽえとれ",
+            "価格チェック・トレード支援",
+            "#DB86EF",
+            self.selected_mode == POETORE_MODE,
+        )
+        cards.addWidget(self.poenavi_card)
+        cards.addWidget(self.poetore_card)
+        layout.addLayout(cards)
+
+        self.skip_selector_checkbox = QCheckBox("次回からこのモードで直接起動")
+        self.skip_selector_checkbox.setChecked(False)
+        self.skip_selector_checkbox.setStyleSheet(
+            f"QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: 13px; spacing: 8px; }}"
+        )
+        layout.addWidget(self.skip_selector_checkbox)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        start_button = QPushButton("このモードで起動")
+        start_button.setStyleSheet(Styles.BUTTON)
+        start_button.clicked.connect(self._accept_selection)
+        cancel_button = QPushButton("キャンセル")
+        cancel_button.setStyleSheet(Styles.BUTTON)
+        cancel_button.clicked.connect(self.reject)
+        buttons.addWidget(start_button)
+        buttons.addWidget(cancel_button)
+        layout.addLayout(buttons)
+
+    def _create_card(self, mode, title, description, accent, checked):
+        button = QPushButton(f"{title}\n\n{description}")
+        button.setProperty("app_mode", mode)
+        button.setCheckable(True)
+        button.setChecked(checked)
+        button.setCursor(QCursor(Qt.PointingHandCursor))
+        button.setMinimumHeight(230)
+        button.setStyleSheet(f"""
+            QPushButton {{
+                color: {accent};
+                background-color: rgba(15, 18, 17, 245);
+                border: 1px solid rgba(190, 200, 190, 0.28);
+                border-radius: 14px;
+                padding: 18px;
+                font-size: 17px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                border: 2px solid {accent};
+                background-color: rgba(30, 34, 32, 250);
+            }}
+            QPushButton:checked {{
+                border: 3px solid {accent};
+                background-color: rgba(42, 46, 43, 250);
+            }}
+        """)
+        self.group.addButton(button)
+        return button
+
+    def _accept_selection(self):
+        checked = self.group.checkedButton()
+        if checked is not None:
+            self.selected_mode = normalize_app_mode(checked.property("app_mode"))
+        self.accept()
+
+    @property
+    def skip_selector(self):
+        return self.skip_selector_checkbox.isChecked()
 
 
 class PoeVersionSelectionDialog(QDialog):

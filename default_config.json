@@ -1,4 +1,8 @@
 {
+    "startup": {
+        "preferred_mode": "poenavi",
+        "show_mode_selector": true
+    },
     "hotkeys": {
         "start_stop": "F7",
         "reset": "F8",

@@ -6,14 +6,50 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
 from src.version import APP_VERSION
+from src.app_mode import save_startup_preferences, startup_preferences
+from src.utils.config_manager import ConfigManager
 
 __version__ = APP_VERSION
 
-from PySide6.QtWidgets import QApplication
-from src.ui.main_window import MainWindow
+from PySide6.QtWidgets import QApplication, QDialog
 
-if __name__ == "__main__":
+
+def select_app_mode(config):
+    """保存設定に従い、必要な場合だけ起動モード選択画面を表示する。"""
+    preferred_mode, show_selector = startup_preferences(config)
+    if not show_selector:
+        return preferred_mode
+
+    from src.ui.startup_dialogs import AppModeSelectionDialog
+
+    dialog = AppModeSelectionDialog(current_mode=preferred_mode)
+    if dialog.exec() != QDialog.Accepted:
+        return None
+
+    updated = save_startup_preferences(
+        config,
+        dialog.selected_mode,
+        dialog.skip_selector,
+    )
+    ConfigManager.save_config(updated)
+    return dialog.selected_mode
+
+
+def run():
     app = QApplication(sys.argv)
+    config = ConfigManager.load_config()
+    app_mode = select_app_mode(config)
+    if app_mode is None:
+        return 0
+
+    # 専用画面のimportはモード確定後に行う。Phase 1では両モードとも
+    # 既存MainWindowを起動し、サービス分離はPhase 2で実施する。
+    from src.ui.main_window import MainWindow
+
+    app.setProperty("appMode", app_mode)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec())
+    return app.exec()
+
+if __name__ == "__main__":
+    sys.exit(run())
