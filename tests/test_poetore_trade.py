@@ -3628,6 +3628,28 @@ def test_awakened_supported_categories_use_dedicated_exact(category, rarity):
     assert uses_dedicated_exact_preset(item)
 
 
+def test_misc_map_boss_invitation_ignores_fixed_reward_quantity_implicit():
+    item = parse_item_text("""アイテムクラス: その他マップアイテム
+レアリティ: ノーマル
+極性の招待状
+--------
+アイテムレベル: 83
+--------
+{ 暗黙モッド }
+アイテムの数量のモッドはボスからドロップする報酬の量に影響する
+--------
+一度ブラック・スターに捕まれば、
+逃げ場はない。
+--------
+自身のマップデバイスで使用することで、極性の虚無へのポータルを開く。
+""")
+    filters = resolve_trade_stat_filters(item)
+
+    assert item.category == "invitation"
+    assert all(row.kind != "implicit" for row in filters)
+    assert unresolved_modifier_warnings(item, filters) == ()
+
+
 @pytest.mark.parametrize("category", ["sentinel"])
 def test_product_exclusions_do_not_enter_dedicated_exact(category):
     item = ParsedItem("Test", "Rare", "Test", "Test", category)

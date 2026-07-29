@@ -1923,6 +1923,17 @@ def unresolved_modifier_warnings(
     # Mod候補や「未解決」警告には含めない。
     if item.category == "corpse":
         return ()
+    # Pinnacle boss invitations display this fixed implicit without the
+    # percentage found in the official Trade stat template. It has no
+    # per-item value and the invitation name already identifies the product.
+    invitation_fixed_implicits = {
+        _normalized_stat_text(
+            "アイテムの数量のモッドはボスからドロップする報酬の量に影響する"
+        ),
+        _normalized_stat_text(
+            "Modifiers to Item Quantity affect the amount of rewards dropped by the boss"
+        ),
+    }
     resolved_lines = {
         _normalized_stat_text(line)
         for row in resolved_filters
@@ -1934,6 +1945,12 @@ def unresolved_modifier_warnings(
 
     def should_warn(modifier) -> bool:
         if modifier.stat_id is not None or modifier.kind in {"desecrated"}:
+            return False
+        if (
+            item.category == "invitation"
+            and modifier.kind == "implicit"
+            and _normalized_stat_text(modifier.text) in invitation_fixed_implicits
+        ):
             return False
         if _normalized_stat_text(modifier.text) in resolved_lines:
             return False

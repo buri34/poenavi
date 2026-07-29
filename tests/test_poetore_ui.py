@@ -1747,6 +1747,32 @@ Chaos Orb
         window.close()
 
 
+def test_misc_map_boss_invitation_has_no_unresolved_modifier_warning(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: その他マップアイテム
+レアリティ: ノーマル
+極性の招待状
+--------
+アイテムレベル: 83
+--------
+{ 暗黙モッド }
+アイテムの数量のモッドはボスからドロップする報酬の量に影響する
+--------
+一度ブラック・スターに捕まれば、
+逃げ場はない。
+--------
+自身のマップデバイスで使用することで、極性の虚無へのポータルを開く。
+""")
+        window.parse_current_text()
+
+        assert window._parsed_item.category == "invitation"
+        assert window.mod_warning.isHidden()
+        assert window.mod_filter_tree.topLevelItemCount() == 0
+    finally:
+        window.close()
+
+
 def test_unidentified_unique_candidates_can_be_selected(qapp):
     window = PoetoreWindow()
     try:

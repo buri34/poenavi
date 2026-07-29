@@ -257,6 +257,13 @@ def _category_with_item_identity(
 ) -> str:
     category = _category_with_help_text(item_class, text)
     identity = f"{name}\n{base_type}".casefold()
+    # Pinnacle boss invitations use the broad "Misc Map Items" /
+    # 「その他マップアイテム」class, so the class alone is classified as a map.
+    # Their item identity is the reliable discriminator.
+    if category == "map" and (
+        "invitation" in identity or "招待状" in identity
+    ):
+        return "invitation"
     if category == "jewel" and (
         "cluster jewel" in identity or "クラスタージュエル" in identity
     ):
