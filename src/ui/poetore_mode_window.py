@@ -178,7 +178,7 @@ class PoetoreModeWindow(QMainWindow):
         value_label.setStyleSheet(
             f"color: {POETORE_TEXT}; font-size: 20px; font-weight: bold;"
         )
-        layout.addWidget(value_label, 1)
+        layout.addWidget(value_label)
         chaos_icon = QLabel()
         chaos_icon.setObjectName("chaosCurrencyIcon")
         chaos_pixmap = QPixmap(str(self._asset_path("ChaosOrb.png")))
@@ -190,6 +190,7 @@ class PoetoreModeWindow(QMainWindow):
         chaos_icon.setFixedSize(46, 46)
         chaos_icon.setToolTip("Chaos Orb")
         layout.addWidget(chaos_icon)
+        layout.addStretch()
         return card
 
     def _start_hotkeys(self):

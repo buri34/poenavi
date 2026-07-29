@@ -74,6 +74,11 @@ def test_poetore_mode_renders_divine_chaos_rate():
     chaos_icon = window.findChild(QLabel, "chaosCurrencyIcon")
     assert divine_icon is not None and not divine_icon.pixmap().isNull()
     assert chaos_icon is not None and not chaos_icon.pixmap().isNull()
+    rate_layout = window.divine_rate_value.parentWidget().layout()
+    assert rate_layout.itemAt(1).widget() is window.divine_rate_value
+    assert rate_layout.stretch(1) == 0
+    assert rate_layout.itemAt(2).widget() is chaos_icon
+    assert rate_layout.itemAt(3).spacerItem() is not None
     assert window.rate_status.text() == "Mirage ・ poe.ninja ・ 31分ごとに自動更新"
     assert "#DB86EF" in window.centralWidget().styleSheet()
     window.close()
