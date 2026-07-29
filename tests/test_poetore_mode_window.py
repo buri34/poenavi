@@ -41,9 +41,11 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert not hasattr(window, "mini_navi_overlay")
     assert not hasattr(window, "timer")
     assert "currency_rate_refresh" in window.active_service_names
-    assert window.memo_button.text() == "メモ"
-    assert window.cheat_sheets_button.text() == "画像管理"
-    assert window.settings_button.text() == "設定"
+    assert window.memo_button.text() == "📝"
+    assert window.cheat_sheets_button.text() == "🖼"
+    assert window.settings_button.text() == "⚙"
+    assert window.memo_button.size().width() == 35
+    assert window.memo_button.size().height() == 35
     assert window.divine_rate_value.text() == "取得中…"
     stash_class.return_value.start.assert_called_once()
     hotkey_service.start.assert_called_once()

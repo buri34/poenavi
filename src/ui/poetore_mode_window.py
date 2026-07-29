@@ -114,11 +114,11 @@ class PoetoreModeWindow(QMainWindow):
         header.addLayout(title_box)
         header.addStretch()
 
-        self.memo_button = self._header_button("メモ", "共通メモを開く")
+        self.memo_button = self._header_button("📝", "共通メモを開く")
         self.cheat_sheets_button = self._header_button(
-            "画像管理", "Cheat sheetsの画像を登録・管理"
+            "🖼", "Cheat sheetsの画像を登録・管理"
         )
-        self.settings_button = self._header_button("設定", "設定画面を開く")
+        self.settings_button = self._header_button("⚙", "設定画面を開く")
         self.memo_button.clicked.connect(self.open_memo)
         self.cheat_sheets_button.clicked.connect(self.open_cheat_sheet_manager)
         self.settings_button.clicked.connect(self.open_settings)
@@ -152,7 +152,7 @@ class PoetoreModeWindow(QMainWindow):
     def _header_button(self, text, tooltip):
         button = QPushButton(text)
         button.setToolTip(tooltip)
-        button.setMinimumHeight(34)
+        button.setFixedSize(35, 35)
         return button
 
     def _rate_card(self, value_label):
