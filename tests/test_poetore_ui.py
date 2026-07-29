@@ -715,18 +715,29 @@ def test_checked_hidden_unique_mutation_is_sent_as_exact_filter(qapp):
     finally:
         window.close()
 
-def test_search_resets_hidden_candidate_view_but_keeps_checked_filter(qapp):
+def test_search_keeps_checked_hidden_unique_mutation_visible(qapp):
     window = PoetoreWindow()
     try:
-        window.input_edit.setPlainText("""アイテムクラス: 盾
+        window.input_edit.setPlainText("""アイテムクラス: 鎧
 レアリティ: ユニーク
-ラスピスの球体
-チタンスピリットシールド
+カオムの心臓
+栄光のプレート
 --------
-アイテムレベル: 83
+品質: +20% (augmented)
+アーマー: 944 (augmented)
 --------
-{ ユニークモッド — ダメージ, キャスター }
-プレイヤーの最大ライフ100ごとにスペルダメージが4(3)%増加する
+装備要求:
+レベル: 68
+筋力: 191
+--------
+アイテムレベル: 80
+--------
+{ ユニークモッド — ライフ }
+最大ライフ +1080(1000)
+{ ユニークモッド }
+ソケットを持たない
+--------
+コラプト状態
 """)
         window.parse_current_text()
         window._populate_stat_filters((
@@ -734,8 +745,8 @@ def test_search_resets_hidden_candidate_view_but_keeps_checked_filter(qapp):
                 "explicit.normal", "通常候補", 10, "explicit", False,
             ),
             TradeStatFilter(
-                "explicit.hidden", "隠し候補", 4, "explicit", False,
-                max_value=4,
+                "explicit.hidden", "最大ライフ +1080(1000)", 1080,
+                "explicit", False, max_value=1080,
                 hidden_reason="ユニーク固定値のため初期非表示",
             ),
         ))
@@ -759,15 +770,17 @@ def test_search_resets_hidden_candidate_view_but_keeps_checked_filter(qapp):
         assert not window.hidden_mods_toggle.isChecked()
         assert window.hidden_mods_toggle.text() == "隠し候補を表示"
         assert not window.mod_filter_tree.topLevelItem(0).isHidden()
-        assert window.mod_filter_tree.topLevelItem(1).isHidden()
+        assert not window.mod_filter_tree.topLevelItem(1).isHidden()
         sent = search.call_args.kwargs["stat_filters"]
         assert any(
             row.stat_id == "explicit.hidden"
             and row.enabled
-            and row.min_value == 4
-            and row.max_value == 4
+            and row.min_value == 1080
+            and row.max_value == 1080
             for row in sent
         )
+        checkbox.setChecked(False)
+        assert window.mod_filter_tree.topLevelItem(1).isHidden()
     finally:
         window.close()
 

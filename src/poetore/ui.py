@@ -1628,7 +1628,21 @@ class PoetoreWindow(QWidget):
         for index in range(self.mod_filter_tree.topLevelItemCount()):
             row = self.mod_filter_tree.topLevelItem(index)
             stat_filter = row.data(_MOD_COLUMN_CHECK, Qt.UserRole + 4)
-            row.setHidden(bool(getattr(stat_filter, "hidden_reason", "")) != visible)
+            is_hidden_candidate = bool(
+                getattr(stat_filter, "hidden_reason", "")
+            )
+            checkbox_container = self.mod_filter_tree.itemWidget(
+                row, _MOD_COLUMN_CHECK
+            )
+            checkbox = (
+                checkbox_container.findChild(QCheckBox, "modFilterCheckbox")
+                if checkbox_container is not None else None
+            )
+            is_checked = checkbox is not None and checkbox.isChecked()
+            row.setHidden(
+                is_hidden_candidate != visible
+                and not (is_hidden_candidate and is_checked)
+            )
 
     def _toggle_mod_sources(self, visible: bool):
         self.mod_sources_toggle.setText(
@@ -3260,6 +3274,11 @@ class PoetoreWindow(QWidget):
             Styles.apply_checkbox_style(checkbox)
             checkbox.setChecked(stat_filter.enabled)
             checkbox.stateChanged.connect(self._mark_search_dirty)
+            checkbox.stateChanged.connect(
+                lambda _state, row=row: self._toggle_hidden_mods(
+                    self.hidden_mods_toggle.isChecked()
+                )
+            )
             checkbox_container = QWidget()
             checkbox_layout = QHBoxLayout(checkbox_container)
             checkbox_layout.setContentsMargins(5, 0, 5, 0)
