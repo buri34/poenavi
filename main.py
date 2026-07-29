@@ -42,12 +42,10 @@ def run():
     if app_mode is None:
         return 0
 
-    # 専用画面のimportはモード確定後に行う。Phase 1では両モードとも
-    # 既存MainWindowを起動し、サービス分離はPhase 2で実施する。
-    from src.ui.main_window import MainWindow
+    from src.app_composition import create_mode_window
 
     app.setProperty("appMode", app_mode)
-    window = MainWindow()
+    window = create_mode_window(app_mode)
     window.show()
     return app.exec()
 

@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QLabel, QPushButton, QMenu, QFrame, QScrollArea, QSplitter,
                                QSizeGrip, QSizePolicy, QMessageBox, QRadioButton, QButtonGroup, QApplication,
                                QToolTip)
-from PySide6.QtCore import Qt, QTimer, Signal, QRect, QEvent, QEventLoop, QPoint, QSize, QMimeData, QUrl
+from PySide6.QtCore import Qt, QTimer, Signal, QRect, QEvent, QEventLoop, QPoint, QSize, QUrl
 from PySide6.QtGui import QCursor, QMouseEvent, QIcon, QDesktopServices, QKeySequence
 from src.ui.styles import Styles
 from src.ui.detached_panel import DetachedPanelWindow
@@ -25,6 +25,8 @@ from src.utils.window_focus import (
     is_path_of_exile_window,
 )
 from src.utils.stash_tab_scroll import StashTabScrollController
+from src.utils.global_hotkeys import hotkey_key_name, listener_hotkey_name
+from src.utils.chat_command import send_chat_command
 from src.utils.log_path_detector import fill_missing_client_log_paths
 from src.utils.performance_metrics import measure
 from src.utils.zone_lookup import get_zone_info, get_level_advice
@@ -71,34 +73,12 @@ DEFAULT_GEM_SHOP_SEARCH_HOTKEY = "F2"
 
 def _listener_hotkey_name(key_text: str) -> str:
     """設定画面の表記をpynputのキー名表記へ揃える。"""
-    normalized = str(key_text).lower().replace(" ", "_").replace("capslock", "caps_lock")
-    return {
-        "left_alt": "alt_l",
-        "right_alt": "alt_r",
-    }.get(normalized, normalized)
+    return listener_hotkey_name(key_text)
 
 
 def _hotkey_key_name(key) -> str | None:
     """pynputのキーイベントを設定値と比較できる名前へ正規化する。"""
-    if hasattr(key, "name") and key.name:
-        return key.name.lower()
-
-    char = getattr(key, "char", None)
-    if char and char.isprintable():
-        return char.lower()
-
-    # WindowsではCtrl+A～Zが制御文字(\x01～\x1a)として届く。
-    # vkが取れる場合は物理キー名へ戻し、Ctrl+D等も設定可能にする。
-    vk = getattr(key, "vk", None)
-    if isinstance(vk, int):
-        if ord("A") <= vk <= ord("Z"):
-            return chr(vk).lower()
-        if ord("0") <= vk <= ord("9"):
-            return chr(vk)
-
-    if char and len(char) == 1 and 1 <= ord(char) <= 26:
-        return chr(ord("a") + ord(char) - 1)
-    return None
+    return hotkey_key_name(key)
 
 
 def _gem_shop_hotkey_matches(configured: str, actual: str) -> bool:
@@ -3399,48 +3379,8 @@ class MainWindow(QMainWindow):
         if getattr(self, "_search_paste_in_progress", False):
             print(f"[CHAT COMMAND] Ignored during search paste: {command}")
             return
-        try:
-            clipboard = QApplication.clipboard()
-            original_mime = self._clone_clipboard_mime_data(clipboard.mimeData())
-            self._set_clipboard_text_debug("execute_chat_command", command)
-
-            controller = pynput_keyboard.Controller()
-
-            def tap(key):
-                controller.press(key)
-                controller.release(key)
-
-            tap(pynput_keyboard.Key.enter)
-            time.sleep(0.05)
-            with controller.pressed(pynput_keyboard.Key.ctrl):
-                tap('v')
-            time.sleep(0.05)
-            tap(pynput_keyboard.Key.enter)
-
-            # Ctrl+V処理が終わったあと、ユーザーのクリップボードをできるだけ元に戻す。
-            QTimer.singleShot(500, lambda: clipboard.setMimeData(original_mime))
+        if send_chat_command(command):
             print(f"[CHAT COMMAND] Sent: {command}")
-        except Exception as e:
-            print(f"[CHAT COMMAND] Failed: {e}")
-
-    def _clone_clipboard_mime_data(self, source):
-        """QClipboardの内容を復元用にコピーする。主要な形式を保持する。"""
-        clone = QMimeData()
-        if source is None:
-            return clone
-        for fmt in source.formats():
-            clone.setData(fmt, source.data(fmt))
-        if source.hasText():
-            clone.setText(source.text())
-        if source.hasHtml():
-            clone.setHtml(source.html())
-        if source.hasUrls():
-            clone.setUrls(source.urls())
-        if source.hasImage():
-            clone.setImageData(source.imageData())
-        if source.hasColor():
-            clone.setColorData(source.colorData())
-        return clone
 
     # --- ログアウト（TCP切断） ---
     def execute_logout(self):
