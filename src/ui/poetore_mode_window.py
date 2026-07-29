@@ -4,7 +4,7 @@ from pathlib import Path
 import threading
 
 from PySide6.QtCore import QObject, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QKeySequence, QPixmap
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -15,7 +15,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.ui.styles import Styles
 from src.ui.app_theme import POETORE_THEME
 from src.utils.chat_command import send_chat_command
 from src.utils.config_manager import ConfigManager
@@ -32,6 +31,89 @@ RATE_REFRESH_MSEC = 31 * 60 * 1000
 class _RateSignals(QObject):
     ready = Signal(str, float)
     failed = Signal(str)
+
+
+class _PoetoreModeTitleBar(QWidget):
+    """ぽえなび本体と同じ構成のドラッグ可能なタイトルバー。"""
+
+    def __init__(self, window):
+        super().__init__(window)
+        self._window = window
+        self._drag_offset = None
+        self.setObjectName("poetoreModeTitleBar")
+        self.setFixedHeight(38)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(5, 10, 10, 0)
+        layout.setSpacing(0)
+        layout.addStretch()
+
+        button_style = f"""
+            QPushButton {{
+                background: transparent;
+                color: {POETORE_TEXT};
+                border: none;
+                font-size: 14px;
+                font-weight: bold;
+                padding: 2px 8px;
+            }}
+            QPushButton:hover {{
+                background: rgba(219, 134, 239, 0.20);
+                border-radius: 3px;
+            }}
+        """
+        close_style = f"""
+            QPushButton {{
+                background: transparent;
+                color: {POETORE_TEXT};
+                border: none;
+                font-size: 14px;
+                font-weight: bold;
+                padding: 2px 8px;
+            }}
+            QPushButton:hover {{
+                background: rgba(255, 60, 60, 0.8);
+                border-radius: 3px;
+                color: #ffffff;
+            }}
+        """
+
+        self.minimize_button = QPushButton("─")
+        self.minimize_button.setObjectName("poetoreMinimizeButton")
+        self.minimize_button.setFixedSize(30, 22)
+        self.minimize_button.setStyleSheet(button_style)
+        self.minimize_button.setToolTip("最小化")
+        self.minimize_button.clicked.connect(window.showMinimized)
+        layout.addWidget(self.minimize_button)
+
+        self.close_button = QPushButton("✕")
+        self.close_button.setObjectName("poetoreCloseButton")
+        self.close_button.setFixedSize(30, 22)
+        self.close_button.setStyleSheet(close_style)
+        self.close_button.setToolTip("閉じる")
+        self.close_button.clicked.connect(window.close)
+        layout.addWidget(self.close_button)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._drag_offset = (
+                event.globalPosition().toPoint()
+                - self._window.frameGeometry().topLeft()
+            )
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self._drag_offset is not None and event.buttons() & Qt.LeftButton:
+            self._window.move(event.globalPosition().toPoint() - self._drag_offset)
+            event.accept()
+            return
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self._drag_offset = None
+        super().mouseReleaseEvent(event)
 
 
 class PoetoreModeWindow(QMainWindow):
@@ -52,9 +134,10 @@ class PoetoreModeWindow(QMainWindow):
         self._rate_signals.failed.connect(self._show_rate_error)
 
         self.setWindowTitle("ぽえとれ")
-        self.setMinimumSize(520, 300)
-        self.resize(620, 360)
-        self.setStyleSheet(Styles.MAIN_WINDOW)
+        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setMinimumSize(500, 300)
+        self.resize(558, 360)
         self._build_ui()
 
         self.stash_tab_scroll = StashTabScrollController(
@@ -80,7 +163,10 @@ class PoetoreModeWindow(QMainWindow):
             QWidget#poetoreModeRoot {{
                 background: {POETORE_THEME.background};
                 color: {POETORE_TEXT};
+                border: 1px solid {POETORE_ACCENT};
+                border-radius: 10px;
             }}
+            QWidget#poetoreModeTitleBar {{ border: none; background: transparent; }}
             QFrame#rateCard {{
                 background: {POETORE_THEME.panel};
                 border: 1px solid rgba(219, 134, 239, 0.42);
@@ -98,8 +184,17 @@ class PoetoreModeWindow(QMainWindow):
             QPushButton:pressed {{ background: #4A2D54; }}
         """)
         root = QVBoxLayout(central)
-        root.setContentsMargins(24, 18, 24, 22)
-        root.setSpacing(16)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
+        self.title_bar = _PoetoreModeTitleBar(self)
+        root.addWidget(self.title_bar)
+
+        body = QWidget()
+        body.setObjectName("poetoreModeBody")
+        body.setStyleSheet("QWidget#poetoreModeBody { border: none; background: transparent; }")
+        body_layout = QVBoxLayout(body)
+        body_layout.setContentsMargins(24, 8, 24, 18)
+        body_layout.setSpacing(16)
 
         header = QHBoxLayout()
         title_box = QVBoxLayout()
@@ -128,16 +223,16 @@ class PoetoreModeWindow(QMainWindow):
         header.addWidget(self.memo_button)
         header.addWidget(self.cheat_sheets_button)
         header.addWidget(self.settings_button)
-        root.addLayout(header)
+        body_layout.addLayout(header)
 
         section_title = QLabel("Divine / Chaos 換算")
         section_title.setStyleSheet(
             f"color: {POETORE_ACCENT}; font-size: 15px; font-weight: bold;"
         )
-        root.addWidget(section_title)
+        body_layout.addWidget(section_title)
 
         self.divine_rate_value = QLabel("取得中…")
-        root.addWidget(self._rate_card(self.divine_rate_value))
+        body_layout.addWidget(self._rate_card(self.divine_rate_value))
 
         footer = QHBoxLayout()
         self.rate_status = QLabel("poe.ninjaから現在のレートを取得しています")
@@ -148,9 +243,20 @@ class PoetoreModeWindow(QMainWindow):
         refresh_button.setToolTip("現在の換算レートを再取得")
         refresh_button.clicked.connect(self.refresh_currency_rate)
         footer.addWidget(refresh_button)
-        root.addLayout(footer)
-        root.addStretch()
+        body_layout.addLayout(footer)
+        body_layout.addStretch()
+
+        self.capture_hint = QLabel()
+        self.capture_hint.setObjectName("poetoreCaptureHint")
+        self.capture_hint.setAlignment(Qt.AlignCenter)
+        self.capture_hint.setWordWrap(True)
+        self.capture_hint.setStyleSheet(
+            f"color: {POETORE_THEME.muted_text}; font-size: 12px;"
+        )
+        body_layout.addWidget(self.capture_hint)
+        root.addWidget(body, 1)
         self.setCentralWidget(central)
+        self._update_capture_hint()
 
     def _header_button(self, text, tooltip):
         button = QPushButton(text)
@@ -202,6 +308,24 @@ class PoetoreModeWindow(QMainWindow):
         self.hotkey_service = GlobalHotkeyService(mode_hotkeys, parent=self)
         self.hotkey_service.command.connect(self.handle_hotkey)
         self.hotkey_service.start()
+
+    @staticmethod
+    def _display_hotkey(hotkey):
+        value = str(hotkey or "").strip()
+        if not value or value.lower() == "none":
+            return ""
+        display = QKeySequence(value).toString(QKeySequence.PortableText) or value
+        return " + ".join(part.strip() for part in display.split("+"))
+
+    def _update_capture_hint(self):
+        hotkey = self.config.get("hotkeys", {}).get("poetore_capture", "alt+d")
+        display_hotkey = self._display_hotkey(hotkey)
+        if display_hotkey:
+            self.capture_hint.setText(
+                f"アイテムにマウスオーバーしながら{display_hotkey}で価格チェックができます。"
+            )
+        else:
+            self.capture_hint.setText("価格チェックのホットキーが設定されていません。")
 
     @property
     def active_service_names(self):
@@ -300,6 +424,7 @@ class PoetoreModeWindow(QMainWindow):
         )
         self.stash_tab_scroll.start()
         self._start_hotkeys()
+        self._update_capture_hint()
         self.refresh_currency_rate()
 
     def _ensure_cheat_sheet_overlay(self):

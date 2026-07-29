@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
-from PySide6.QtWidgets import QApplication, QLabel
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QLabel, QPushButton
 
 from src.ui.poetore_mode_window import PoetoreModeWindow
 
@@ -47,8 +48,42 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert window.memo_button.size().width() == 35
     assert window.memo_button.size().height() == 35
     assert window.divine_rate_value.text() == "取得中…"
+    assert window.width() == 558
+    assert window.windowFlags() & Qt.FramelessWindowHint
+    assert window.capture_hint.text() == (
+        "アイテムにマウスオーバーしながらAlt + Dで価格チェックができます。"
+    )
+    assert window.findChild(QPushButton, "poetoreMinimizeButton").text() == "─"
+    assert window.findChild(QPushButton, "poetoreCloseButton").text() == "✕"
     stash_class.return_value.start.assert_called_once()
     hotkey_service.start.assert_called_once()
+    window.close()
+    app.processEvents()
+
+
+def test_poetore_mode_capture_hint_uses_configured_hotkey():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "hotkeys": {"poetore_capture": "Ctrl+Shift+P"},
+        "stash_tab_scroll_enabled": False,
+    }
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.StashTabScrollController"
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    assert window.capture_hint.text() == (
+        "アイテムにマウスオーバーしながらCtrl + Shift + Pで価格チェックができます。"
+    )
+    window.config["hotkeys"]["poetore_capture"] = "none"
+    window._update_capture_hint()
+    assert window.capture_hint.text() == "価格チェックのホットキーが設定されていません。"
     window.close()
     app.processEvents()
 
