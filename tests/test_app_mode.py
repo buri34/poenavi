@@ -46,6 +46,18 @@ class AppModeTest(unittest.TestCase):
 
         self.assertTrue(dialog.poetore_card.isChecked())
         self.assertFalse(dialog.skip_selector)
+        self.assertFalse(dialog.poenavi_card.icon().isNull())
+        self.assertFalse(dialog.poetore_card.icon().isNull())
+        self.assertTrue(
+            AppModeSelectionDialog._app_icon_path("icon.ico").endswith(
+                "assets/app/icon.ico"
+            )
+        )
+        self.assertTrue(
+            AppModeSelectionDialog._app_icon_path("icon2.ico").endswith(
+                "assets/app/icon2.ico"
+            )
+        )
 
     def test_dialog_returns_checked_mode(self):
         dialog = AppModeSelectionDialog(current_mode=POENAVI_MODE)

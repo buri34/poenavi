@@ -12,6 +12,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QSizePolicy,
+    QToolButton,
     QVBoxLayout,
 )
 
@@ -53,6 +55,7 @@ class AppModeSelectionDialog(QDialog):
             "ぽえなび",
             "レベリング・進行支援",
             "#B0FF7B",
+            "icon.ico",
             self.selected_mode == POENAVI_MODE,
         )
         self.poetore_card = self._create_card(
@@ -60,6 +63,7 @@ class AppModeSelectionDialog(QDialog):
             "ぽえとれ",
             "価格チェック・トレード支援",
             "#DB86EF",
+            "icon2.ico",
             self.selected_mode == POETORE_MODE,
         )
         cards.addWidget(self.poenavi_card)
@@ -85,28 +89,49 @@ class AppModeSelectionDialog(QDialog):
         buttons.addWidget(cancel_button)
         layout.addLayout(buttons)
 
-    def _create_card(self, mode, title, description, accent, checked):
-        button = QPushButton(f"{title}\n\n{description}")
+    @staticmethod
+    def _app_icon_path(filename):
+        if getattr(sys, "frozen", False):
+            exe_dir = os.path.dirname(sys.executable)
+            bundled = os.path.join(exe_dir, "assets", "app", filename)
+            if os.path.exists(bundled):
+                return bundled
+            base = getattr(sys, "_MEIPASS", exe_dir)
+            return os.path.join(base, "assets", "app", filename)
+        project_root = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
+        return os.path.join(project_root, "assets", "app", filename)
+
+    def _create_card(self, mode, title, description, accent, icon_name, checked):
+        button = QToolButton()
+        button.setText(f"{title}\n{description}")
+        button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        icon_path = self._app_icon_path(icon_name)
+        if os.path.exists(icon_path):
+            button.setIcon(QIcon(icon_path))
+            button.setIconSize(QSize(128, 128))
         button.setProperty("app_mode", mode)
         button.setCheckable(True)
         button.setChecked(checked)
         button.setCursor(QCursor(Qt.PointingHandCursor))
         button.setMinimumHeight(230)
+        button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         button.setStyleSheet(f"""
-            QPushButton {{
+            QToolButton {{
                 color: {accent};
                 background-color: rgba(15, 18, 17, 245);
                 border: 1px solid rgba(190, 200, 190, 0.28);
                 border-radius: 14px;
-                padding: 18px;
+                padding: 12px 18px 16px 18px;
                 font-size: 17px;
                 font-weight: bold;
             }}
-            QPushButton:hover {{
+            QToolButton:hover {{
                 border: 2px solid {accent};
                 background-color: rgba(30, 34, 32, 250);
             }}
-            QPushButton:checked {{
+            QToolButton:checked {{
                 border: 3px solid {accent};
                 background-color: rgba(42, 46, 43, 250);
             }}
