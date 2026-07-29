@@ -3,6 +3,17 @@
 from PySide6.QtCore import QObject, Signal
 
 
+def find_duplicate_hotkeys(hotkeys: dict[str, str]) -> dict[str, list[str]]:
+    """未割り当てを除き、同じキーへ割り当てられた操作を返す。"""
+    by_key: dict[str, list[str]] = {}
+    for action, key in hotkeys.items():
+        normalized = str(key or "").strip().casefold()
+        if not normalized or normalized == "none":
+            continue
+        by_key.setdefault(normalized, []).append(action)
+    return {key: actions for key, actions in by_key.items() if len(actions) > 1}
+
+
 def listener_hotkey_name(key_text: str) -> str:
     normalized = str(key_text).lower().replace(" ", "_").replace("capslock", "caps_lock")
     return {

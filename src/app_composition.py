@@ -1,20 +1,22 @@
 """選択モードから必要なトップレベル構成だけを遅延生成する。"""
 
-import importlib
-
-from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
-
-
-WINDOW_CLASS_BY_MODE = {
-    POENAVI_MODE: ("src.ui.main_window", "MainWindow"),
-    POETORE_MODE: ("src.ui.poetore_mode_window", "PoetoreModeWindow"),
-}
+from src.app_mode import POETORE_MODE, normalize_app_mode
 
 
 def resolve_window_class(mode):
-    module_name, class_name = WINDOW_CLASS_BY_MODE[normalize_app_mode(mode)]
-    module = importlib.import_module(module_name)
-    return getattr(module, class_name)
+    """必要な画面だけを実行時に読み込む。
+
+    import文を関数内へ置くことで遅延読込を保ちつつ、PyInstallerにも
+    配布対象モジュールとして静的に検出させる。
+    """
+    if normalize_app_mode(mode) == POETORE_MODE:
+        from src.ui.poetore_mode_window import PoetoreModeWindow
+
+        return PoetoreModeWindow
+
+    from src.ui.main_window import MainWindow
+
+    return MainWindow
 
 
 def create_mode_window(mode):

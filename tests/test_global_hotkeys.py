@@ -1,6 +1,10 @@
 from types import SimpleNamespace
 
-from src.utils.global_hotkeys import GlobalHotkeyService, hotkey_key_name
+from src.utils.global_hotkeys import (
+    GlobalHotkeyService,
+    find_duplicate_hotkeys,
+    hotkey_key_name,
+)
 
 
 class FakeListener:
@@ -20,6 +24,17 @@ class FakeListener:
 def test_ctrl_control_character_is_normalized_to_letter():
     key = SimpleNamespace(char="\x04", vk=ord("D"))
     assert hotkey_key_name(key) == "d"
+
+
+def test_duplicate_hotkeys_are_normalized_and_disabled_values_are_ignored():
+    assert find_duplicate_hotkeys(
+        {
+            "exit": "F5",
+            "capture": " f5 ",
+            "disabled": "none",
+            "empty": "",
+        }
+    ) == {"f5": ["exit", "capture"]}
 
 
 def test_service_registers_only_supplied_mode_actions():

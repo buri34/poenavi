@@ -9,12 +9,14 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
 )
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 from src.ui.app_theme import POETORE_THEME
+from src.utils.global_hotkeys import find_duplicate_hotkeys
 
 
 class PoetoreSettingsDialog(QDialog):
@@ -157,3 +159,28 @@ class PoetoreSettingsDialog(QDialog):
             "stash_tab_scroll_enabled": self.stash_tab_scroll_cb.isChecked(),
             "poetore": poetore,
         }
+
+    def accept(self):
+        hotkeys = {
+            "exit": self.exit_hotkey.text(),
+            "poetore_capture": self.capture_hotkey.text(),
+            "cheat_sheets_toggle": self.cheat_hotkey.text(),
+        }
+        duplicates = find_duplicate_hotkeys(hotkeys)
+        if duplicates:
+            labels = {
+                "exit": "キャラクター選択へ戻る",
+                "poetore_capture": "ぽえとれ検索",
+                "cheat_sheets_toggle": "Cheat sheets表示",
+            }
+            details = "\n".join(
+                f"{key}: {'、'.join(labels[action] for action in actions)}"
+                for key, actions in duplicates.items()
+            )
+            QMessageBox.warning(
+                self,
+                "ホットキー重複",
+                f"同じキーが複数の操作に設定されています。\n\n{details}",
+            )
+            return
+        super().accept()

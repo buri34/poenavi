@@ -19,20 +19,11 @@ from src.utils.gem_shop_search import (
     build_unique_gem_search_terms,
     validate_gem_shop_search_term_override,
 )
+from src.utils.global_hotkeys import find_duplicate_hotkeys
 import os
 import webbrowser
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
-
-def find_duplicate_hotkeys(hotkeys: dict[str, str]) -> dict[str, list[str]]:
-    """未割り当てを除き、同じキーへ割り当てられた操作を返す。"""
-    by_key: dict[str, list[str]] = {}
-    for action, key in hotkeys.items():
-        normalized = str(key or "").strip().casefold()
-        if not normalized or normalized == "none":
-            continue
-        by_key.setdefault(normalized, []).append(action)
-    return {key: actions for key, actions in by_key.items() if len(actions) > 1}
 
 
 def _flag_guide_header(zone_id: str) -> str:
@@ -2940,10 +2931,13 @@ class SettingsDialog(QDialog):
             "undo_lap": self.undo_lap_btn.key_text,
             "click_through": self.click_through_btn.key_text,
             "logout": self.logout_btn.key_text,
+            "exit": self.exit_btn.key_text,
             "hideout": self.hideout_btn.key_text,
             "monastery": self.monastery_btn.key_text,
             "search_string_test": self.search_string_test_btn.key_text,
+            "poetore_capture": self.poetore_capture_btn.key_text,
             "gem_shop_search": self.gem_shop_search_btn.key_text,
+            "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,
         }
         duplicates = find_duplicate_hotkeys(hotkeys)
         if duplicates:
@@ -2954,10 +2948,13 @@ class SettingsDialog(QDialog):
                 "undo_lap": "ラップ取消",
                 "click_through": "クリックスルー",
                 "logout": "ログアウト",
+                "exit": "キャラクター選択へ戻る",
                 "hideout": "隠れ家へ移動",
                 "monastery": "修道院へ移動",
                 "search_string_test": "検索文字列の貼り付け",
+                "poetore_capture": "ぽえとれ検索",
                 "gem_shop_search": "ジェムショップ検索",
+                "cheat_sheets_toggle": "Cheat sheets表示",
             }
             details = "\n".join(
                 f"{key}: {'、'.join(labels[action] for action in actions)}"
