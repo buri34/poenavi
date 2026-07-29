@@ -2400,9 +2400,14 @@ def resolve_trade_stat_filters(
         if row.stat_id not in consumed_stat_ids and not (not unique_item and row.ref in consumed_refs)
     )
     if unique_item:
+        unique_property_ids = {
+            "property.total_dps", "property.physical_dps",
+            "property.elemental_dps", "property.aps", "property.crit",
+            "property.block", "property.memory_strands",
+        }
         special_properties = tuple(
             row for row in _initial_property_filters(item, trade_base_type)
-            if row.stat_id in {"property.block", "property.memory_strands"}
+            if row.stat_id in unique_property_ids
         )
         # AwakenedのUnique Map Exactは固有名・Map種別・Tierだけで照合し、
         # 個体ごとのUnique Modロールを検索条件へ追加しない。

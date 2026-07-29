@@ -1611,6 +1611,74 @@ Item Level: 70
         {"id": "explicit.life", "value": {"min": 38.0}},
     ]
 
+
+def test_unique_weapon_shows_aggregated_performance_properties():
+    item = parse_item_text("""アイテムクラス: ルーンの短剣
+レアリティ: ユニーク
+ビノの包丁
+屠殺のナイフ
+--------
+ルーンの短剣
+物理ダメージ: 152-319 (augmented)
+クリティカル率: 12.32% (augmented)
+秒間アタック回数: 1.40
+武器攻撃距離：1 メートル
+--------
+装備要求:
+レベル: 65
+器用さ: 81 (unmet)
+知性: 117
+--------
+ソケット: W
+--------
+アイテムレベル: 84
+--------
+{ 暗黙モッド — クリティカル }
+グローバルクリティカル率が45(40-45)%増加する
+--------
+{ ユニークモッド — ダメージ, 物理, アタック }
+142(140-155)から233(210-235)の物理ダメージを追加する
+{ ユニークモッド — 混沌, 耐性 }
+混沌耐性 +29(17-29)%
+{ ユニークモッド — ダメージ, クリティカル }
+グローバルクリティカルダメージ倍率 +15(15-25)%
+{ ユニークモッド — アタック, クリティカル }
+クリティカル率が45(40-50)%増加する
+{ ユニークモッド — ライフ, 混沌, 状態異常 }
+毒状態の敵を倒すと3m以内の敵に毒を付与し
+3m以内のプレイヤーと味方は毒の持続時間の間毎秒400ライフを自動回復する
+--------
+それを毒と呼ぶことはそもそもそれが
+食べられるものだったということになる。
+""")
+    filters = resolve_trade_stat_filters(
+        item, trade_base_type="Slaughter Knife", trade_name="Bino's Kitchen Knife",
+    )
+    properties = {
+        row.stat_id: row for row in filters if row.kind == "property"
+    }
+
+    assert set(properties) >= {
+        "property.physical_dps", "property.aps", "property.crit",
+    }
+    assert properties["property.physical_dps"].enabled is True
+    assert properties["property.aps"].enabled is False
+    assert properties["property.crit"].enabled is False
+    # 品質表示がない武器は既存仕様どおり、比較可能な品質20%時へ正規化する。
+    assert properties["property.physical_dps"].read_value == pytest.approx(395.64)
+    assert not any(
+        row.text == "142(140-155)から233(210-235)の物理ダメージを追加する"
+        for row in filters
+    )
+
+    query = build_search_query(
+        item, "Slaughter Knife", filters, trade_name="Bino's Kitchen Knife",
+    )["query"]
+    assert query["filters"]["weapon_filters"]["filters"]["pdps"] == {
+        "min": properties["property.physical_dps"].min_value,
+    }
+
+
 def test_corrupted_unique_hidden_fixed_mutation_can_be_selected_exactly():
     item = parse_item_text("""アイテムクラス: 盾
 レアリティ: ユニーク
