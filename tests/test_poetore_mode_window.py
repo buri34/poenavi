@@ -28,7 +28,8 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
         hotkey_service = MagicMock()
         hotkey_service.command.connect = MagicMock()
         hotkey_class.return_value = hotkey_service
-        window = PoetoreModeWindow()
+        with patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+            window = PoetoreModeWindow()
 
     supplied_hotkeys = hotkey_class.call_args.args[0]
     assert supplied_hotkeys == {
@@ -39,7 +40,35 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert not hasattr(window, "log_watcher")
     assert not hasattr(window, "mini_navi_overlay")
     assert not hasattr(window, "timer")
+    assert "currency_rate_refresh" in window.active_service_names
+    assert window.memo_button.text() == "メモ"
+    assert window.cheat_sheets_button.text() == "画像管理"
+    assert window.settings_button.text() == "設定"
+    assert window.divine_rate_value.text() == "取得中…"
     stash_class.return_value.start.assert_called_once()
     hotkey_service.start.assert_called_once()
+    window.close()
+    app.processEvents()
+
+
+def test_poetore_mode_renders_divine_chaos_rate():
+    app = QApplication.instance() or QApplication([])
+    config = {"hotkeys": {}, "stash_tab_scroll_enabled": False}
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.StashTabScrollController"
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    window._show_rate("Mirage", 200)
+    assert window.divine_rate_value.text() == "1 = 200.0 Chaos"
+    assert window.chaos_rate_value.text() == "1 = 0.00500 Divine"
+    assert window.rate_status.text() == "Mirage ・ poe.ninja ・ 31分ごとに自動更新"
+    assert "#DB86EF" in window.centralWidget().styleSheet()
     window.close()
     app.processEvents()
