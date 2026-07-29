@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QLabel
 
 from src.ui.poetore_mode_window import PoetoreModeWindow
 
@@ -67,7 +67,11 @@ def test_poetore_mode_renders_divine_chaos_rate():
 
     window._show_rate("Mirage", 200)
     assert window.divine_rate_value.text() == "1 = 200.0 Chaos"
-    assert window.chaos_rate_value.text() == "1 = 0.00500 Divine"
+    assert not hasattr(window, "chaos_rate_value")
+    divine_icon = window.findChild(QLabel, "divineCurrencyIcon")
+    chaos_icon = window.findChild(QLabel, "chaosCurrencyIcon")
+    assert divine_icon is not None and not divine_icon.pixmap().isNull()
+    assert chaos_icon is not None and not chaos_icon.pixmap().isNull()
     assert window.rate_status.text() == "Mirage ・ poe.ninja ・ 31分ごとに自動更新"
     assert "#DB86EF" in window.centralWidget().styleSheet()
     window.close()

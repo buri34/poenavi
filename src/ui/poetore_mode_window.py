@@ -133,17 +133,8 @@ class PoetoreModeWindow(QMainWindow):
         )
         root.addWidget(section_title)
 
-        cards = QHBoxLayout()
-        cards.setSpacing(12)
         self.divine_rate_value = QLabel("取得中…")
-        self.chaos_rate_value = QLabel("取得中…")
-        cards.addWidget(self._rate_card(
-            "Divine Orb", "DivineOrb.png", self.divine_rate_value
-        ))
-        cards.addWidget(self._rate_card(
-            "Chaos Orb", "ChaosOrb.png", self.chaos_rate_value
-        ))
-        root.addLayout(cards)
+        root.addWidget(self._rate_card(self.divine_rate_value))
 
         footer = QHBoxLayout()
         self.rate_status = QLabel("poe.ninjaから現在のレートを取得しています")
@@ -164,30 +155,38 @@ class PoetoreModeWindow(QMainWindow):
         button.setMinimumHeight(34)
         return button
 
-    def _rate_card(self, name, icon_filename, value_label):
+    def _rate_card(self, value_label):
         card = QFrame()
         card.setObjectName("rateCard")
         layout = QHBoxLayout(card)
         layout.setContentsMargins(16, 14, 16, 14)
         layout.setSpacing(12)
-        icon = QLabel()
-        pixmap = QPixmap(str(self._asset_path(icon_filename)))
-        icon.setPixmap(pixmap.scaled(
+        divine_icon = QLabel()
+        divine_icon.setObjectName("divineCurrencyIcon")
+        divine_pixmap = QPixmap(str(self._asset_path("DivineOrb.png")))
+        divine_icon.setPixmap(divine_pixmap.scaled(
             QSize(52, 52),
             Qt.KeepAspectRatio,
             Qt.SmoothTransformation,
         ))
-        icon.setFixedSize(52, 52)
-        layout.addWidget(icon)
-        text = QVBoxLayout()
-        name_label = QLabel(name)
-        name_label.setStyleSheet("color: #C8BACD; font-size: 12px;")
+        divine_icon.setFixedSize(52, 52)
+        divine_icon.setToolTip("Divine Orb")
+        layout.addWidget(divine_icon)
         value_label.setStyleSheet(
             f"color: {POETORE_TEXT}; font-size: 20px; font-weight: bold;"
         )
-        text.addWidget(name_label)
-        text.addWidget(value_label)
-        layout.addLayout(text, 1)
+        layout.addWidget(value_label, 1)
+        chaos_icon = QLabel()
+        chaos_icon.setObjectName("chaosCurrencyIcon")
+        chaos_pixmap = QPixmap(str(self._asset_path("ChaosOrb.png")))
+        chaos_icon.setPixmap(chaos_pixmap.scaled(
+            QSize(46, 46),
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation,
+        ))
+        chaos_icon.setFixedSize(46, 46)
+        chaos_icon.setToolTip("Chaos Orb")
+        layout.addWidget(chaos_icon)
         return card
 
     def _start_hotkeys(self):
@@ -239,13 +238,11 @@ class PoetoreModeWindow(QMainWindow):
     def _show_rate(self, league, rate):
         self._rate_request_running = False
         self.divine_rate_value.setText(f"1 = {rate:,.1f} Chaos")
-        self.chaos_rate_value.setText(f"1 = {1 / rate:.5f} Divine")
         self.rate_status.setText(f"{league} ・ poe.ninja ・ 31分ごとに自動更新")
 
     def _show_rate_error(self, message):
         self._rate_request_running = False
         self.divine_rate_value.setText("取得できませんでした")
-        self.chaos_rate_value.setText("取得できませんでした")
         self.rate_status.setText(f"レート取得失敗：{message}")
 
     def handle_hotkey(self, command):
