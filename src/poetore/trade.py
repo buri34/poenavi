@@ -1790,10 +1790,19 @@ def unique_candidate_details(base_type: str) -> tuple[UniqueCandidate, ...]:
     return tuple(
         UniqueCandidate(
             name,
-            unique_icon_url(name),
+            unique_icon_url(name) or _poewiki_unique_icon_url(name),
             _japanese_trade_item_name(name) or name,
         )
         for name in unique_candidates(base_type)
+    )
+
+
+def _poewiki_unique_icon_url(name: str) -> str:
+    """現行Awakenedデータから消えた旧Uniqueの画像をPoE Wikiから補う。"""
+    filename = f"{name.strip()} inventory icon.png".replace(" ", "_")
+    return (
+        "https://www.poewiki.net/wiki/Special:Redirect/file/"
+        + quote(filename, safe="_")
     )
 
 

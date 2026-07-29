@@ -1836,7 +1836,7 @@ def test_unique_candidate_details_include_official_icon_urls():
         )
 
 
-def test_unique_candidate_details_fall_back_to_english_name():
+def test_unique_candidate_details_fall_back_to_wiki_icon_and_english_name():
     payload = {"result": [{"entries": [
         {"name": "The Example", "type": "Gold Amulet", "flags": {"unique": True}},
     ]}]}
@@ -1848,7 +1848,12 @@ def test_unique_candidate_details_fall_back_to_english_name():
         "src.poetore.trade._japanese_trade_item_name", return_value=None,
     ):
         assert unique_candidate_details("Gold Amulet") == (
-            UniqueCandidate("The Example", None, "The Example"),
+            UniqueCandidate(
+                "The Example",
+                "https://www.poewiki.net/wiki/Special:Redirect/file/"
+                "The_Example_inventory_icon.png",
+                "The Example",
+            ),
         )
 
 

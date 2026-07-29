@@ -18,7 +18,8 @@ from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequ
 from PySide6.QtWidgets import (
     QAbstractItemView, QButtonGroup, QLayout,
     QApplication, QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton,
-    QMenu, QSizeGrip, QSizePolicy, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget, QPlainTextEdit,
+    QMenu, QScrollArea, QSizeGrip, QSizePolicy, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
+    QPlainTextEdit,
     QHeaderView, QWidgetAction,
 )
 
@@ -914,12 +915,20 @@ class PoetoreWindow(QWidget):
         self.unique_name_layout = _FlowLayout(
             self.unique_name_container, h_spacing=6, v_spacing=6,
         )
+        self.unique_name_scroll = QScrollArea()
+        self.unique_name_scroll.setObjectName("uniqueCandidateScroll")
+        self.unique_name_scroll.setWidgetResizable(True)
+        self.unique_name_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.unique_name_scroll.setMaximumHeight(214)
+        self.unique_name_scroll.setFrameShape(QFrame.NoFrame)
+        self.unique_name_scroll.setWidget(self.unique_name_container)
         self.unique_name_group = QButtonGroup(self)
         self.unique_name_group.setExclusive(True)
         self.unique_name_label.hide()
         self.unique_name_container.hide()
+        self.unique_name_scroll.hide()
         unique_options.addWidget(self.unique_name_label)
-        unique_options.addWidget(self.unique_name_container)
+        unique_options.addWidget(self.unique_name_scroll)
         variant_options = QHBoxLayout()
         self.unique_variant_label = QLabel("ユニークVariant:")
         self.unique_variant_combo = QComboBox()
@@ -3007,6 +3016,7 @@ class PoetoreWindow(QWidget):
                 self.unique_name_group.removeButton(widget)
                 widget.deleteLater()
         self.unique_name_container.hide()
+        self.unique_name_scroll.hide()
         self.unique_name_label.hide()
         self.unique_variant_combo.clear()
         self.unique_variant_combo.hide()
@@ -3053,6 +3063,7 @@ class PoetoreWindow(QWidget):
             first_button.setChecked(True)
         self.unique_name_label.show()
         self.unique_name_container.show()
+        self.unique_name_scroll.show()
         self.price_status.setText(
             f"同じベースの未鑑定ユニークが{len(candidates)}種類あります。候補を選んで「価格を検索」を押してください。"
         )

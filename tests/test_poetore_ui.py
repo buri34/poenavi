@@ -1852,6 +1852,27 @@ def test_unidentified_agate_amulet_shows_all_five_candidates(qapp):
         window.close()
 
 
+def test_many_unidentified_unique_candidates_are_scrollable(qapp):
+    from src.poetore.trade import UniqueCandidate
+
+    window = PoetoreWindow()
+    try:
+        candidates = tuple(
+            UniqueCandidate(f"Candidate {index}", f"https://example.test/{index}.png")
+            for index in range(55)
+        )
+        window._show_unique_candidates(candidates)
+        window.show()
+        qapp.processEvents()
+
+        assert len(window.unique_name_group.buttons()) == 55
+        assert not window.unique_name_scroll.isHidden()
+        assert window.unique_name_scroll.maximumHeight() == 214
+        assert window.unique_name_scroll.verticalScrollBar().maximum() > 0
+    finally:
+        window.close()
+
+
 def test_unique_variant_discriminator_can_be_selected(qapp):
     window = PoetoreWindow()
     try:
