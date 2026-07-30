@@ -61,6 +61,12 @@ class PoetoreSettingsDialog(QDialog):
             bool(startup.get("show_mode_selector", True))
         )
         startup_layout.addWidget(self.show_mode_selector_cb)
+        startup_note = QLabel(
+            "OFFにすると、次回から前回選んだモードで直接起動します。"
+        )
+        startup_note.setObjectName("startupModeSelectorNote")
+        startup_note.setWordWrap(True)
+        startup_layout.addWidget(startup_note)
         startup_row = QFormLayout()
         self.preferred_mode_combo = QComboBox()
         self.preferred_mode_combo.addItem("ぽえなび", POENAVI_MODE)
@@ -235,6 +241,10 @@ class PoetoreSettingsDialog(QDialog):
             }}
             QPushButton:hover {{ background: #382440; }}
             QLabel#settingsNote {{ color: {POETORE_THEME.muted_text}; font-size: 11px; }}
+            QLabel#startupModeSelectorNote {{
+                color: {POETORE_THEME.muted_text};
+                font-size: 11px;
+            }}
         """
 
     @staticmethod

@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 
 from src.app_restart import (
     _restart_command,
+    _poetore_message_box_style,
     confirm_mode_switch_restart,
     restart_application,
 )
@@ -41,7 +42,7 @@ def test_changed_mode_restarts_after_ok():
 
     with (
         patch(
-            "src.app_restart.QMessageBox.question",
+            "src.app_restart._ask_mode_switch_restart",
             return_value=QMessageBox.Ok,
         ) as question,
         patch(
@@ -51,6 +52,7 @@ def test_changed_mode_restarts_after_ok():
     ):
         assert confirm_mode_switch_restart(None, config) is True
 
+    assert question.call_args.args[1] == "poetore"
     assert "選択したモードへ切り替わります" in question.call_args.args[2]
     restart.assert_called_once_with()
 
@@ -66,7 +68,7 @@ def test_changed_mode_with_selector_explains_mode_will_be_selected_again():
 
     with (
         patch(
-            "src.app_restart.QMessageBox.question",
+            "src.app_restart._ask_mode_switch_restart",
             return_value=QMessageBox.Cancel,
         ) as question,
         patch("src.app_restart.restart_application") as restart,
@@ -75,6 +77,14 @@ def test_changed_mode_with_selector_explains_mode_will_be_selected_again():
 
     assert "もう一度選択します" in question.call_args.args[2]
     restart.assert_not_called()
+
+
+def test_poetore_restart_prompt_uses_purple_theme():
+    style = _poetore_message_box_style()
+
+    assert "#DB86EF" in style
+    assert "#151119" in style
+    assert "QMessageBox QPushButton" in style
 
 
 def test_development_restart_command_runs_main_script():

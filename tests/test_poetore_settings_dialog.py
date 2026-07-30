@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from PySide6.QtWidgets import QApplication, QDialog, QPushButton, QTabWidget
+from PySide6.QtWidgets import QApplication, QDialog, QLabel, QPushButton, QTabWidget
 
 from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 
@@ -46,6 +46,10 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     ]
     assert dialog.windowTitle() == "設定"
     assert "subcontrol-position: top center" in dialog.styleSheet()
+    note = dialog.findChild(QLabel, "startupModeSelectorNote")
+    layout = dialog.show_mode_selector_cb.parentWidget().layout()
+    assert layout.indexOf(note) == layout.indexOf(dialog.show_mode_selector_cb) + 1
+    assert "OFFにすると" in note.text()
     dialog.close()
 
 
