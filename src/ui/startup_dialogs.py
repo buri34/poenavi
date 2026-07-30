@@ -54,7 +54,7 @@ class AppModeSelectionDialog(QDialog):
         self.poenavi_card = self._create_card(
             POENAVI_MODE,
             "ぽえなび",
-            "レベリング・進行支援",
+            "Act攻略支援",
             theme_for_mode(POENAVI_MODE).accent,
             "icon.ico",
             self.selected_mode == POENAVI_MODE,

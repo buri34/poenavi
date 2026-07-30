@@ -124,6 +124,12 @@ class AppModeTest(unittest.TestCase):
         app.setProperty.assert_any_call("appMode", POENAVI_MODE)
         window.show.assert_called_once_with()
 
+    def test_mode_selection_dialog_uses_act_support_label(self):
+        dialog = AppModeSelectionDialog()
+
+        self.assertEqual(dialog.poenavi_card.text(), "ぽえなび\nAct攻略支援")
+        self.assertNotIn("レベリング・進行支援", dialog.poenavi_card.text())
+
 
 if __name__ == "__main__":
     unittest.main()
