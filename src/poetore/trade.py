@@ -904,8 +904,9 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
         # COUNT(OR)にはしない。COUNTはUI指定または確定済み論理グループだけに使う。
         candidates = candidates[:1]
         entry = candidates[0]
-        value = _value_for_template(modifier.text, str(entry.get("text", "")))
-        if value is None:
+        entry_text = str(entry.get("text", ""))
+        value = _value_for_template(modifier.text, entry_text)
+        if value is None and ("#" in entry_text or modifier.option_value is not None):
             value = modifier.values[0] if modifier.values else None
         enabled = modifier.kind not in {"prefix", "suffix"} or modifier.tier in {1, 2}
         filters.append(TradeStatFilter(
@@ -2318,8 +2319,9 @@ def resolve_trade_stat_filters(
             if _aggregated_local_property_stat(item, str(entry["id"])):
                 # DPS・APS・クリ率・防御値へ反映済みなので二重条件化しない。
                 continue
-            value = _value_for_template(modifier.text, str(entry.get("text", "")))
-            if value is None:
+            entry_text = str(entry.get("text", ""))
+            value = _value_for_template(modifier.text, entry_text)
+            if value is None and ("#" in entry_text or modifier.option_value is not None):
                 value = modifier.values[0] if modifier.values else None
             maximum = None
             if modifier.stat_id == str(entry["id"]):

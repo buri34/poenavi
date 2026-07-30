@@ -512,6 +512,66 @@ def test_foulborn_fixed_replacement_mod_is_enabled_in_real_panel(qapp):
         window.close()
 
 
+def test_foulborn_tulborn_fixed_number_mod_builds_valueless_trade_filter(qapp):
+    window = PoetoreWindow()
+    try:
+        window._trade_base_type = "Opal Wand"
+        window._trade_item_name = "Tulborn"
+        window.input_edit.setPlainText("""アイテムクラス: ワンド
+レアリティ: ユニーク
+ファウルボーン トゥルボーン
+オパールのワンド
+--------
+ワンド
+物理ダメージ: 30-56
+クリティカル率: 8.00%
+秒間アタック回数: 1.45
+--------
+装備要求:
+レベル: 62
+知性: 212
+--------
+ソケット: W-W-W
+--------
+アイテムレベル: 85
+--------
+{ 暗黙モッド — ダメージ, キャスター }
+スペルダメージが35(31-35)%増加する
+--------
+{ ユニークモッド }
+付与した冷気の曝露は冷気耐性を追加で-12%させる
+{ ユニークモッド — ダメージ, 元素, 冷気, キャスター }
+122(120-140)から168(150-170)の冷気ダメージをスペルに追加する
+{ ユニークモッド — マナ }
+凍結状態の敵を倒した時に+25(20-25)のマナを獲得する
+{ ファウルボーンユニークモッド }
+マナを合計200消費した後にパワーチャージを1個獲得する
+""")
+        window.parse_current_text()
+
+        selected = next(
+            row for row in window._selected_stat_filters()
+            if row.stat_id == "explicit.stat_3269060224"
+        )
+        assert selected.enabled
+        assert selected.min_value is None
+        assert selected.max_value is None
+
+        query = build_search_query(
+            window._parsed_item,
+            window._trade_base_type,
+            (selected,),
+            trade_status="offline",
+            trade_name=window._trade_item_name,
+        )["query"]
+        assert query["stats"][0]["filters"] == [{
+            "id": "explicit.stat_3269060224",
+            "value": {},
+        }]
+    finally:
+        window.close()
+
+
 def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
     window = PoetoreWindow()
     try:
