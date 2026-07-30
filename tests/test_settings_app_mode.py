@@ -33,7 +33,7 @@ def test_settings_can_restore_mode_selector_without_changing_preferred_mode(monk
     dialog.close()
 
 
-def test_general_group_titles_are_left_aligned(qapp):
+def test_general_group_titles_are_center_aligned(qapp):
     dialog = SettingsDialog(current_config={})
     general_group_titles = {
         "PoE ログファイル",
@@ -50,6 +50,6 @@ def test_general_group_titles_are_left_aligned(qapp):
 
     assert groups.keys() == general_group_titles
     for group in groups.values():
-        assert "subcontrol-position: top left" in group.styleSheet()
+        assert "subcontrol-position: top center" in group.styleSheet()
 
     dialog.close()

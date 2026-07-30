@@ -45,6 +45,7 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
         "アプリ情報",
     ]
     assert dialog.windowTitle() == "設定"
+    assert "subcontrol-position: top center" in dialog.styleSheet()
     dialog.close()
 
 

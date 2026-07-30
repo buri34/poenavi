@@ -179,7 +179,12 @@ class PoetoreSettingsDialog(QDialog):
                 margin-top: 10px;
                 padding-top: 7px;
             }}
-            QGroupBox::title {{ color: {POETORE_THEME.accent}; padding: 0 5px; }}
+            QGroupBox::title {{
+                color: {POETORE_THEME.accent};
+                subcontrol-origin: margin;
+                subcontrol-position: top center;
+                padding: 0 5px;
+            }}
             QLineEdit, QComboBox {{
                 background: {POETORE_THEME.panel};
                 color: {POETORE_THEME.text};
