@@ -3695,6 +3695,55 @@ def test_misc_map_boss_invitation_ignores_fixed_reward_quantity_implicit():
     assert unresolved_modifier_warnings(item, filters) == ()
 
 
+@pytest.mark.parametrize(("text", "stat_id", "expected_min"), [
+    (
+        "自身のアクションスピードは最低でも基礎値の90%となる",
+        "explicit.stat_179010262",
+        None,
+    ),
+    (
+        "プレイヤーにより凍結させられた敵が受けるダメージが20%増加する",
+        "explicit.stat_849085925",
+        None,
+    ),
+    (
+        "敵の蠢く虫は2秒ごとにスポーンする",
+        "explicit.stat_933024928",
+        None,
+    ),
+    (
+        "クリティカル時に混沌の力を4秒間獲得する",
+        "explicit.stat_1183009081",
+        4,
+    ),
+    (
+        "120m以内のレアおよびユニークの敵はミニマップアイコンを持つ",
+        "explicit.stat_2543266731",
+        120,
+    ),
+])
+def test_only_api_verified_fixed_number_stats_omit_numeric_bounds(
+    text, stat_id, expected_min,
+):
+    item = parse_item_text(f"""アイテムクラス: 指輪
+レアリティ: ユニーク
+ファウルボーン テスト
+鉄の指輪
+--------
+アイテムレベル: 85
+--------
+{{ ファウルボーンユニークモッド }}
+{text}
+""")
+
+    row = next(
+        row for row in resolve_trade_stat_filters(item, trade_base_type="Iron Ring")
+        if row.stat_id == stat_id
+    )
+    assert row.min_value == expected_min
+    assert row.max_value is None
+
+
 @pytest.mark.parametrize("category", ["sentinel"])
 def test_product_exclusions_do_not_enter_dedicated_exact(category):
     item = ParsedItem("Test", "Rare", "Test", "Test", category)

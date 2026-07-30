@@ -174,6 +174,16 @@ _ARMOUR_STAT_KEYS = {
     "4253454700",
 }
 
+# Allflameの日本語Trade APIで、固定文言中の数字をmin値として送る旧条件が0件、
+# 値なし条件が1件以上になることを新旧比較で確認したStatだけを対象にする。
+# 出品なしで判定不能、または新旧同数のStatは従来の数値抽出を維持する。
+_API_VERIFIED_VALUELESS_FIXED_STAT_IDS = {
+    "explicit.stat_179010262",   # 最低アクションスピード90%
+    "explicit.stat_3269060224",  # マナ200消費後にパワーチャージ
+    "explicit.stat_849085925",   # 凍結した敵が受けるダメージ20%増加
+    "explicit.stat_933024928",   # 2秒ごとに蠢く虫
+}
+
 _RESISTANCE_REFS = {
     "+#% to All Resistances": (("fire", "cold", "lightning"), True),
     "+#% to all Elemental Resistances": (("fire", "cold", "lightning"), False),
@@ -906,7 +916,11 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
         entry = candidates[0]
         entry_text = str(entry.get("text", ""))
         value = _value_for_template(modifier.text, entry_text)
-        if value is None and ("#" in entry_text or modifier.option_value is not None):
+        if value is None and (
+            "#" in entry_text
+            or modifier.option_value is not None
+            or str(entry["id"]) not in _API_VERIFIED_VALUELESS_FIXED_STAT_IDS
+        ):
             value = modifier.values[0] if modifier.values else None
         enabled = modifier.kind not in {"prefix", "suffix"} or modifier.tier in {1, 2}
         filters.append(TradeStatFilter(
@@ -2321,7 +2335,11 @@ def resolve_trade_stat_filters(
                 continue
             entry_text = str(entry.get("text", ""))
             value = _value_for_template(modifier.text, entry_text)
-            if value is None and ("#" in entry_text or modifier.option_value is not None):
+            if value is None and (
+                "#" in entry_text
+                or modifier.option_value is not None
+                or str(entry["id"]) not in _API_VERIFIED_VALUELESS_FIXED_STAT_IDS
+            ):
                 value = modifier.values[0] if modifier.values else None
             maximum = None
             if modifier.stat_id == str(entry["id"]):
