@@ -3723,6 +3723,11 @@ def test_misc_map_boss_invitation_ignores_fixed_reward_quantity_implicit():
         None,
     ),
     (
+        "エルダーアイテムを4個装備していれば反射物理ダメージを受けることがない",
+        "explicit.stat_609019022",
+        None,
+    ),
+    (
         "クリティカル時に混沌の力を4秒間獲得する",
         "explicit.stat_1183009081",
         4,
@@ -3731,6 +3736,11 @@ def test_misc_map_boss_invitation_ignores_fixed_reward_quantity_implicit():
         "120m以内のレアおよびユニークの敵はミニマップアイコンを持つ",
         "explicit.stat_2543266731",
         120,
+    ),
+    (
+        "レアモンスターを倒すとそのモッドの全てを60秒間獲得する",
+        "explicit.stat_2913235441",
+        60,
     ),
 ])
 def test_only_api_verified_fixed_number_stats_omit_numeric_bounds(
