@@ -2306,6 +2306,14 @@ class SettingsDialog(QDialog):
         
         town_group.setVisible(False)  # 一般ユーザーには非表示（機能は残す）
         general_layout.addWidget(town_group)
+        settings_note = QLabel(
+            "変更は保存後すぐ反映されます。起動モードを変更した場合は、"
+            "保存後に再起動を確認します。"
+        )
+        settings_note.setObjectName("generalSettingsSaveNote")
+        settings_note.setStyleSheet("color: #aaaaaa; font-size: 11px;")
+        settings_note.setWordWrap(True)
+        general_layout.addWidget(settings_note)
         general_layout.addStretch()
         
         tabs.addTab(general_tab, "基本設定")
