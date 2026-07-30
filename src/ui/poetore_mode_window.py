@@ -455,6 +455,10 @@ class PoetoreModeWindow(QMainWindow):
             return
         self.config.update(dialog.get_settings())
         ConfigManager.save_config(self.config)
+        from src.app_restart import confirm_mode_switch_restart
+
+        if confirm_mode_switch_restart(self, self.config):
+            return
         self._apply_window_settings()
         self._apply_startup_position()
         self.hotkey_service.stop()

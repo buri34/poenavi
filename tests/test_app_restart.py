@@ -1,0 +1,119 @@
+from unittest.mock import patch
+
+from PySide6.QtWidgets import QApplication, QMessageBox
+
+from src.app_restart import (
+    _restart_command,
+    confirm_mode_switch_restart,
+    restart_application,
+)
+
+
+def _app_with_mode(mode):
+    app = QApplication.instance() or QApplication([])
+    app.setProperty("appMode", mode)
+    return app
+
+
+def test_same_mode_does_not_prompt():
+    _app_with_mode("poetore")
+    config = {
+        "startup": {
+            "preferred_mode": "poetore",
+            "show_mode_selector": False,
+        }
+    }
+
+    with patch("src.app_restart.QMessageBox.question") as question:
+        assert confirm_mode_switch_restart(None, config) is False
+
+    question.assert_not_called()
+
+
+def test_changed_mode_restarts_after_ok():
+    _app_with_mode("poetore")
+    config = {
+        "startup": {
+            "preferred_mode": "poenavi",
+            "show_mode_selector": False,
+        }
+    }
+
+    with (
+        patch(
+            "src.app_restart.QMessageBox.question",
+            return_value=QMessageBox.Ok,
+        ) as question,
+        patch(
+            "src.app_restart.restart_application",
+            return_value=True,
+        ) as restart,
+    ):
+        assert confirm_mode_switch_restart(None, config) is True
+
+    assert "選択したモードへ切り替わります" in question.call_args.args[2]
+    restart.assert_called_once_with()
+
+
+def test_changed_mode_with_selector_explains_mode_will_be_selected_again():
+    _app_with_mode("poenavi")
+    config = {
+        "startup": {
+            "preferred_mode": "poetore",
+            "show_mode_selector": True,
+        }
+    }
+
+    with (
+        patch(
+            "src.app_restart.QMessageBox.question",
+            return_value=QMessageBox.Cancel,
+        ) as question,
+        patch("src.app_restart.restart_application") as restart,
+    ):
+        assert confirm_mode_switch_restart(None, config) is False
+
+    assert "もう一度選択します" in question.call_args.args[2]
+    restart.assert_not_called()
+
+
+def test_development_restart_command_runs_main_script():
+    with (
+        patch("src.app_restart.sys.frozen", False, create=True),
+        patch("src.app_restart.sys.argv", ["main.py", "--sample"]),
+    ):
+        program, arguments = _restart_command()
+
+    assert program
+    assert arguments[0].endswith("main.py")
+    assert arguments[1:] == ["--sample"]
+
+
+def test_restart_does_not_quit_when_detached_process_fails():
+    app = _app_with_mode("poenavi")
+
+    with (
+        patch(
+            "src.app_restart.QProcess.startDetached",
+            return_value=(False, 0),
+        ),
+        patch.object(app, "quit") as quit_app,
+    ):
+        assert restart_application() is False
+
+    quit_app.assert_not_called()
+
+
+def test_restart_quits_after_detached_process_starts():
+    app = _app_with_mode("poenavi")
+
+    with (
+        patch(
+            "src.app_restart.QProcess.startDetached",
+            return_value=(True, 123),
+        ),
+        patch.object(app, "quit") as quit_app,
+    ):
+        assert restart_application() is True
+
+    quit_app.assert_called_once_with()

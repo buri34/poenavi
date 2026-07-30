@@ -147,7 +147,10 @@ class PoetoreSettingsDialog(QDialog):
         self.snap_right_edge_cb.toggled.connect(self.monitor_combo.setEnabled)
         basic_layout.addWidget(window_group)
 
-        note = QLabel("変更は保存後すぐ反映されます。起動モードは次回起動時に切り替わります。")
+        note = QLabel(
+            "変更は保存後すぐ反映されます。起動モードを変更した場合は、"
+            "保存後に再起動を確認します。"
+        )
         note.setWordWrap(True)
         note.setObjectName("settingsNote")
         basic_layout.addWidget(note)

@@ -4278,6 +4278,10 @@ class MainWindow(QMainWindow):
             new_settings = dialog.get_settings()
             self.config.update(new_settings)
             ConfigManager.save_config(self.config)
+            from src.app_restart import confirm_mode_switch_restart
+
+            if confirm_mode_switch_restart(self, self.config):
+                return
             self._refresh_gem_shop_search_preview()
             if self.config.get("always_on_top", True) != previous_always_on_top:
                 self._apply_window_flags()
