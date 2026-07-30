@@ -138,7 +138,7 @@ class PoetoreSettingsDialog(QDialog):
         trade_form.addRow("リーグ:", self.league_combo)
         trade_layout.addLayout(trade_form)
         league_note = QLabel(
-            "プライベートリーグを使う場合は、一覧にないリーグ名を直接入力してください。"
+            "プライベートリーグで使う場合は、リーグ名を直接手打ちで入力してください。"
         )
         league_note.setObjectName("privateLeagueNote")
         league_note.setWordWrap(True)

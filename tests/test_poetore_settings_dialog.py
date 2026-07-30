@@ -52,7 +52,10 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert layout.indexOf(note) == layout.indexOf(dialog.show_mode_selector_cb) + 1
     assert "OFFにすると" in note.text()
     private_note = dialog.findChild(QLabel, "privateLeagueNote")
-    assert "プライベートリーグ" in private_note.text()
+    assert (
+        private_note.text()
+        == "プライベートリーグで使う場合は、リーグ名を直接手打ちで入力してください。"
+    )
     dialog.close()
 
 
