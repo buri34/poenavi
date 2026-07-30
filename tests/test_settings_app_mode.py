@@ -1,5 +1,5 @@
 import pytest
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QGroupBox
 
 from src.ui.settings_dialog import SettingsDialog
 
@@ -30,4 +30,26 @@ def test_settings_can_restore_mode_selector_without_changing_preferred_mode(monk
         "preferred_mode": "poenavi",
         "show_mode_selector": True,
     }
+    dialog.close()
+
+
+def test_general_group_titles_are_left_aligned(qapp):
+    dialog = SettingsDialog(current_config={})
+    general_group_titles = {
+        "PoE ログファイル",
+        "起動モード",
+        "PoEバージョン",
+        "ホットキー",
+        "ウィンドウ設定（本体）",
+    }
+    groups = {
+        group.title(): group
+        for group in dialog.findChildren(QGroupBox)
+        if group.title() in general_group_titles
+    }
+
+    assert groups.keys() == general_group_titles
+    for group in groups.values():
+        assert "subcontrol-position: top left" in group.styleSheet()
+
     dialog.close()
