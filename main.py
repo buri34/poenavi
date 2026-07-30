@@ -41,16 +41,17 @@ def run():
     started_at = perf_counter()
     app = QApplication(sys.argv)
     config = ConfigManager.load_config()
-    app_mode = select_app_mode(config)
-    if app_mode is None:
-        return 0
 
     from src.update.startup_gate import run_startup_update_gate
 
-    config = ConfigManager.load_config()
     if not run_startup_update_gate(config):
         return 0
     app.setProperty("startupUpdateChecked", True)
+
+    config = ConfigManager.load_config()
+    app_mode = select_app_mode(config)
+    if app_mode is None:
+        return 0
 
     from src.app_composition import create_mode_window
 

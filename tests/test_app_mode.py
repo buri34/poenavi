@@ -1,7 +1,10 @@
 import unittest
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 from PySide6.QtWidgets import QApplication
 
+import main
 from src.app_mode import (
     POENAVI_MODE,
     POETORE_MODE,
@@ -66,6 +69,49 @@ class AppModeTest(unittest.TestCase):
         dialog._accept_selection()
 
         self.assertEqual(dialog.selected_mode, POETORE_MODE)
+
+    def test_update_gate_runs_before_mode_selection(self):
+        events = []
+        app = MagicMock()
+        app.exec.return_value = 0
+        window = MagicMock()
+
+        def load_config():
+            events.append("load_config")
+            return {}
+
+        def update_gate(_config):
+            events.append("update_gate")
+            return True
+
+        def select_mode(_config):
+            events.append("select_mode")
+            return POENAVI_MODE
+
+        update_module = SimpleNamespace(run_startup_update_gate=update_gate)
+        composition_module = SimpleNamespace(
+            create_mode_window=lambda _mode: window
+        )
+        with patch.object(main, "QApplication", return_value=app), \
+             patch.object(main.ConfigManager, "load_config", side_effect=load_config), \
+             patch.object(main, "select_app_mode", side_effect=select_mode), \
+             patch.object(main.QTimer, "singleShot"), \
+             patch.dict(
+                 "sys.modules",
+                 {
+                     "src.update.startup_gate": update_module,
+                     "src.app_composition": composition_module,
+                 },
+             ):
+            self.assertEqual(main.run(), 0)
+
+        self.assertEqual(
+            events,
+            ["load_config", "update_gate", "load_config", "select_mode"],
+        )
+        app.setProperty.assert_any_call("startupUpdateChecked", True)
+        app.setProperty.assert_any_call("appMode", POENAVI_MODE)
+        window.show.assert_called_once_with()
 
 
 if __name__ == "__main__":
