@@ -1108,6 +1108,35 @@ Item Level: 72
     assert query["filters"]["misc_filters"]["filters"]["ilvl"] == {"min": 68.0, "max": 74.0}
 
 
+@pytest.mark.parametrize(("base_type", "trade_base_type", "passive_count"), [
+    ("クラスタージュエル (小)", "Small Cluster Jewel", 2),
+    ("クラスタージュエル (大)", "Large Cluster Jewel", 8),
+])
+def test_optimal_cluster_passive_count_does_not_include_next_integer(
+    base_type, trade_base_type, passive_count,
+):
+    item = parse_item_text(f"""アイテムクラス: ジュエル
+レアリティ: ノーマル
+{base_type}
+--------
+アイテムレベル: 84
+--------
+パッシブスキルを{passive_count}個追加する (enchant)
+""")
+    filters = resolve_trade_stat_filters(item)
+    passive = next(row for row in filters if row.ref == "Adds # Passive Skills")
+    assert (passive.min_value, passive.max_value, passive.enabled) == (
+        None, float(passive_count), True,
+    )
+
+    query = build_search_query(item, trade_base_type, filters)["query"]
+    sent = query["stats"][0]["filters"][0]
+    assert sent == {
+        "id": "enchant.stat_3086156145",
+        "value": {"max": float(passive_count)},
+    }
+
+
 @pytest.mark.parametrize(("base_type", "english_base"), [
     ("クラスタージュエル (大)", "Large Cluster Jewel"),
     ("クラスタージュエル (中)", "Medium Cluster Jewel"),

@@ -2619,7 +2619,9 @@ def resolve_trade_stat_filters(
             if row.ref == "Adds # Passive Skills" and row.read_value is not None:
                 value = row.read_value
                 minimum, maximum = row.min_value, row.max_value
-                if value == 4:
+                if value in {2, 8}:
+                    minimum, maximum = None, value
+                elif value == 4:
                     minimum, maximum = None, 5.0
                 elif value == 5:
                     minimum, maximum = 5.0, 5.0
