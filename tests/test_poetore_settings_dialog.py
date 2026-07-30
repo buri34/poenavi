@@ -3,6 +3,7 @@ from unittest.mock import patch
 from PySide6.QtWidgets import QApplication, QDialog, QLabel, QPushButton, QTabWidget
 
 from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
+from src.poetore.trade import TradeLeague
 
 
 def test_poetore_settings_contains_common_trade_and_window_controls():
@@ -50,6 +51,31 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     layout = dialog.show_mode_selector_cb.parentWidget().layout()
     assert layout.indexOf(note) == layout.indexOf(dialog.show_mode_selector_cb) + 1
     assert "OFFにすると" in note.text()
+    private_note = dialog.findChild(QLabel, "privateLeagueNote")
+    assert "プライベートリーグ" in private_note.text()
+    dialog.close()
+
+
+def test_poetore_settings_league_choices_match_trade_window_and_allow_manual_input():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(
+        current_config={"poetore": {"league": "auto"}}
+    )
+
+    dialog._show_trade_leagues((
+        TradeLeague("Standard"),
+        TradeLeague("Allflame"),
+        TradeLeague("Hardcore Allflame", True),
+    ))
+
+    assert dialog.league_combo.itemText(0) == "自動（現行SC: Allflame）"
+    assert [
+        dialog.league_combo.itemData(index)
+        for index in range(dialog.league_combo.count())
+    ] == ["auto", "Standard", "Allflame", "Hardcore Allflame"]
+
+    dialog.league_combo.setEditText("My Private League")
+    assert dialog.get_settings()["poetore"]["league"] == "My Private League"
     dialog.close()
 
 

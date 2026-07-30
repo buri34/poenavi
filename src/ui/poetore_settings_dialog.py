@@ -1,6 +1,8 @@
 """ぽえとれモード専用の軽量設定画面。"""
 
-from PySide6.QtCore import Qt
+import threading
+
+from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -23,7 +25,16 @@ from PySide6.QtWidgets import (
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 from src.ui.app_theme import POETORE_THEME
 from src.ui.app_info_widget import AppInfoWidget
+from src.poetore.trade import (
+    TradeApiError,
+    available_pc_leagues,
+    default_pc_league,
+)
 from src.utils.global_hotkeys import find_duplicate_hotkeys
+
+
+class _LeagueSignals(QObject):
+    ready = Signal(object)
 
 
 class PoetoreSettingsDialog(QDialog):
@@ -36,6 +47,9 @@ class PoetoreSettingsDialog(QDialog):
         super().__init__(parent)
         self.current_config = current_config or {}
         self.update_check_callback = update_check_callback
+        self._league_refresh_started = False
+        self._league_signals = _LeagueSignals(self)
+        self._league_signals.ready.connect(self._show_trade_leagues)
         self.setWindowTitle("設定")
         self.setMinimumSize(540, 620)
         self.resize(560, 760)
@@ -109,10 +123,26 @@ class PoetoreSettingsDialog(QDialog):
         poetore = self.current_config.get("poetore")
         poetore = poetore if isinstance(poetore, dict) else {}
         trade_group = QGroupBox("価格データ")
-        trade_form = QFormLayout(trade_group)
-        self.league_edit = QLineEdit(str(poetore.get("league", "auto")))
-        self.league_edit.setPlaceholderText("auto")
-        trade_form.addRow("リーグ（autoで自動）:", self.league_edit)
+        trade_layout = QVBoxLayout(trade_group)
+        trade_form = QFormLayout()
+        self.league_combo = QComboBox()
+        self.league_combo.setEditable(True)
+        self.league_combo.setToolTip(
+            "一覧から選択、またはプライベートリーグ名を直接入力"
+        )
+        self.league_combo.addItem("自動（現行SCを取得中）", "auto")
+        saved_league = str(poetore.get("league", "auto")).strip() or "auto"
+        if saved_league != "auto":
+            self.league_combo.addItem(saved_league, saved_league)
+            self.league_combo.setCurrentIndex(1)
+        trade_form.addRow("リーグ:", self.league_combo)
+        trade_layout.addLayout(trade_form)
+        league_note = QLabel(
+            "プライベートリーグを使う場合は、一覧にないリーグ名を直接入力してください。"
+        )
+        league_note.setObjectName("privateLeagueNote")
+        league_note.setWordWrap(True)
+        trade_layout.addWidget(league_note)
         basic_layout.addWidget(trade_group)
 
         window_group = QGroupBox("ウィンドウ設定（本体・共通UI）")
@@ -245,7 +275,54 @@ class PoetoreSettingsDialog(QDialog):
                 color: {POETORE_THEME.muted_text};
                 font-size: 11px;
             }}
+            QLabel#privateLeagueNote {{
+                color: {POETORE_THEME.muted_text};
+                font-size: 11px;
+            }}
         """
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._refresh_trade_leagues()
+
+    def _refresh_trade_leagues(self):
+        if self._league_refresh_started:
+            return
+        self._league_refresh_started = True
+
+        def run():
+            try:
+                leagues = available_pc_leagues()
+            except TradeApiError:
+                leagues = ()
+            self._league_signals.ready.emit(leagues)
+
+        threading.Thread(target=run, daemon=True).start()
+
+    def _show_trade_leagues(self, leagues):
+        saved = self._league_selection_value()
+        auto_league = default_pc_league(tuple(leagues))
+        self.league_combo.blockSignals(True)
+        self.league_combo.clear()
+        self.league_combo.addItem(f"自動（現行SC: {auto_league}）", "auto")
+        for league in leagues:
+            label = f"{league.id}（HC）" if league.hardcore else league.id
+            self.league_combo.addItem(label, league.id)
+        if saved != "auto" and self.league_combo.findData(saved) < 0:
+            self.league_combo.addItem(saved, saved)
+        self.league_combo.setCurrentIndex(
+            max(0, self.league_combo.findData(saved))
+        )
+        self.league_combo.blockSignals(False)
+
+    def _league_selection_value(self):
+        index = self.league_combo.currentIndex()
+        text = self.league_combo.currentText().strip()
+        if index >= 0 and text == self.league_combo.itemText(index):
+            value = self.league_combo.itemData(index)
+            if value:
+                return str(value)
+        return text or "auto"
 
     @staticmethod
     def _slider_row(layout, label_text, value, minimum):
@@ -278,7 +355,7 @@ class PoetoreSettingsDialog(QDialog):
             }
         )
         poetore = dict(self.current_config.get("poetore", {}))
-        poetore["league"] = self.league_edit.text().strip() or "auto"
+        poetore["league"] = self._league_selection_value()
         return {
             "startup": startup,
             "hotkeys": hotkeys,
