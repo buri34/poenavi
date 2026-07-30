@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -53,16 +54,9 @@ class AppModeTest(unittest.TestCase):
         self.assertIn("border: 2px solid", dialog.skip_selector_checkbox.styleSheet())
         self.assertFalse(dialog.poenavi_card.icon().isNull())
         self.assertFalse(dialog.poetore_card.icon().isNull())
-        self.assertTrue(
-            AppModeSelectionDialog._app_icon_path("icon.ico").endswith(
-                "assets/app/icon.ico"
-            )
-        )
-        self.assertTrue(
-            AppModeSelectionDialog._app_icon_path("icon2.ico").endswith(
-                "assets/app/icon2.ico"
-            )
-        )
+        for icon_name in ("icon.ico", "icon2.ico"):
+            icon_path = Path(AppModeSelectionDialog._app_icon_path(icon_name))
+            self.assertEqual(icon_path.parts[-3:], ("assets", "app", icon_name))
 
     def test_dialog_returns_checked_mode(self):
         dialog = AppModeSelectionDialog(current_mode=POENAVI_MODE)
