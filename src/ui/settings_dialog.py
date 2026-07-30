@@ -1723,6 +1723,11 @@ class SettingsDialog(QDialog):
         )
         self.show_mode_selector_cb.setStyleSheet(checkbox_style)
         startup_layout.addWidget(self.show_mode_selector_cb)
+        startup_note = QLabel("OFFにすると、次回から前回選んだモードで直接起動します。")
+        startup_note.setObjectName("startupModeSelectorNote")
+        startup_note.setStyleSheet("color: #aaaaaa; font-size: 11px;")
+        startup_note.setWordWrap(True)
+        startup_layout.addWidget(startup_note)
         preferred_mode_row = QHBoxLayout()
         preferred_mode_label = QLabel("次回起動するモード:")
         preferred_mode_label.setStyleSheet(
@@ -1739,10 +1744,6 @@ class SettingsDialog(QDialog):
         self.preferred_mode_combo.setCurrentIndex(max(0, preferred_index))
         preferred_mode_row.addWidget(self.preferred_mode_combo, 1)
         startup_layout.addLayout(preferred_mode_row)
-        startup_note = QLabel("OFFにすると、次回から前回選んだモードで直接起動します。")
-        startup_note.setStyleSheet("color: #aaaaaa; font-size: 11px;")
-        startup_note.setWordWrap(True)
-        startup_layout.addWidget(startup_note)
         general_layout.addWidget(startup_group)
 
         # ━━━━━ PoEバージョン ━━━━━

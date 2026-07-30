@@ -1,5 +1,5 @@
 import pytest
-from PySide6.QtWidgets import QApplication, QGroupBox
+from PySide6.QtWidgets import QApplication, QGroupBox, QLabel
 
 from src.ui.settings_dialog import SettingsDialog
 
@@ -52,4 +52,17 @@ def test_general_group_titles_are_center_aligned(qapp):
     for group in groups.values():
         assert "subcontrol-position: top center" in group.styleSheet()
 
+    dialog.close()
+
+
+def test_startup_mode_note_is_directly_below_selector_checkbox(qapp):
+    dialog = SettingsDialog(current_config={})
+    note = dialog.findChild(QLabel, "startupModeSelectorNote")
+    layout = dialog.show_mode_selector_cb.parentWidget().layout()
+
+    checkbox_index = layout.indexOf(dialog.show_mode_selector_cb)
+    note_index = layout.indexOf(note)
+
+    assert checkbox_index >= 0
+    assert note_index == checkbox_index + 1
     dialog.close()
