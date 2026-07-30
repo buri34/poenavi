@@ -46,6 +46,7 @@ class AppModeTest(unittest.TestCase):
 
         self.assertTrue(dialog.poetore_card.isChecked())
         self.assertFalse(dialog.skip_selector)
+        self.assertIn("border: 2px solid", dialog.skip_selector_checkbox.styleSheet())
         self.assertFalse(dialog.poenavi_card.icon().isNull())
         self.assertFalse(dialog.poetore_card.icon().isNull())
         self.assertTrue(

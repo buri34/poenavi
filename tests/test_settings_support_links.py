@@ -1,7 +1,7 @@
 import pytest
 from PySide6.QtWidgets import QApplication, QPushButton
 
-from src.ui import settings_dialog
+from src.ui import app_info_widget
 from src.ui.settings_dialog import SettingsDialog
 
 
@@ -12,7 +12,7 @@ def qapp():
 
 def test_patreon_support_button_opens_configured_url(monkeypatch, qapp):
     opened_urls = []
-    monkeypatch.setattr(settings_dialog.webbrowser, "open", opened_urls.append)
+    monkeypatch.setattr(app_info_widget.webbrowser, "open", opened_urls.append)
     dialog = SettingsDialog(current_config={})
 
     buttons = {

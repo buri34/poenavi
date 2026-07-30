@@ -6,6 +6,7 @@ import threading
 from PySide6.QtCore import QObject, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QKeySequence, QPixmap
 from PySide6.QtWidgets import (
+    QApplication,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -95,7 +96,10 @@ class _PoetoreModeTitleBar(QWidget):
         layout.addWidget(self.close_button)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if (
+            event.button() == Qt.LeftButton
+            and not self._window.config.get("window_locked", False)
+        ):
             self._drag_offset = (
                 event.globalPosition().toPoint()
                 - self._window.frameGeometry().topLeft()
@@ -139,6 +143,8 @@ class PoetoreModeWindow(QMainWindow):
         self.setMinimumSize(500, 300)
         self.resize(558, 360)
         self._build_ui()
+        self._apply_window_settings()
+        QTimer.singleShot(0, self._apply_startup_position)
 
         self.stash_tab_scroll = StashTabScrollController(
             enabled=self.config.get("stash_tab_scroll_enabled", True)
@@ -258,6 +264,34 @@ class PoetoreModeWindow(QMainWindow):
         self.setCentralWidget(central)
         self._update_capture_hint()
 
+    def _apply_window_settings(self):
+        self.setWindowOpacity(
+            max(0.05, min(1.0, int(self.config.get("window_opacity", 100)) / 100))
+        )
+        flags = Qt.Window | Qt.FramelessWindowHint
+        if self.config.get("always_on_top", True):
+            flags |= Qt.WindowStaysOnTopHint
+        was_visible = self.isVisible()
+        self.setWindowFlags(flags)
+        if was_visible:
+            self.show()
+        if self._memo_dialog is not None:
+            self._memo_dialog.apply_opacity(
+                self.config.get("window_opacity", 100),
+                self.config.get("text_opacity", 100),
+            )
+
+    def _apply_startup_position(self):
+        if not self.config.get("snap_to_right_edge", False):
+            return
+        screens = QApplication.screens()
+        if not screens:
+            return
+        index = int(self.config.get("display_monitor", 0))
+        screen = screens[index] if 0 <= index < len(screens) else screens[0]
+        available = screen.availableGeometry()
+        self.move(available.right() - self.width() + 1, available.top())
+
     def _header_button(self, text, tooltip):
         button = QPushButton(text)
         button.setToolTip(tooltip)
@@ -322,7 +356,7 @@ class PoetoreModeWindow(QMainWindow):
         display_hotkey = self._display_hotkey(hotkey)
         if display_hotkey:
             self.capture_hint.setText(
-                f"アイテムにマウスオーバーしながら{display_hotkey}で価格チェックができます。"
+                f"アイテムにマウスオーバーしながら{display_hotkey}で価格チェック"
             )
         else:
             self.capture_hint.setText("価格チェックのホットキーが設定されていません。")
@@ -402,7 +436,7 @@ class PoetoreModeWindow(QMainWindow):
         poe_version = self.config.get("poe_version", POE1)
         filename = "notes_poe2.json" if poe_version == POE2 else "notes_poe1.json"
         notes_path = str(ConfigManager.get_user_data_path(filename))
-        self._memo_dialog = MemoDialog(self, notes_path=notes_path)
+        self._memo_dialog = MemoDialog(self, notes_path=notes_path, theme=POETORE_THEME)
         self._memo_dialog.apply_opacity(
             self.config.get("window_opacity", 100),
             self.config.get("text_opacity", 100),
@@ -417,6 +451,8 @@ class PoetoreModeWindow(QMainWindow):
             return
         self.config.update(dialog.get_settings())
         ConfigManager.save_config(self.config)
+        self._apply_window_settings()
+        self._apply_startup_position()
         self.hotkey_service.stop()
         self.stash_tab_scroll.stop()
         self.stash_tab_scroll = StashTabScrollController(
@@ -431,7 +467,9 @@ class PoetoreModeWindow(QMainWindow):
         from src.ui.cheat_sheets import CheatSheetOverlay
 
         if self._cheat_sheet_overlay is None:
-            overlay = CheatSheetOverlay(self.config.get("cheat_sheets", {}), self)
+            overlay = CheatSheetOverlay(
+                self.config.get("cheat_sheets", {}), self, theme=POETORE_THEME
+            )
             overlay.config_changed.connect(self._save_cheat_sheet_config)
             overlay.manage_requested.connect(self.open_cheat_sheet_manager)
             self._cheat_sheet_overlay = overlay
@@ -451,7 +489,9 @@ class PoetoreModeWindow(QMainWindow):
         was_visible = overlay.isVisible()
         if was_visible:
             overlay.hide_and_save()
-        dialog = CheatSheetManagerDialog(self.config.get("cheat_sheets", {}), self)
+        dialog = CheatSheetManagerDialog(
+            self.config.get("cheat_sheets", {}), self, theme=POETORE_THEME
+        )
         if dialog.exec():
             self._save_cheat_sheet_config(dialog.result_config())
             overlay.reload(self.config["cheat_sheets"])

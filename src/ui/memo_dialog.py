@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.app_theme import POENAVI_THEME
 from src.ui.styles import Styles
 from src.ui.window_flags import _with_optional_always_on_top
 
@@ -25,8 +26,9 @@ class MemoDialog(QDialog):
         ("#44cc44", "緑"), ("#dddd44", "黄"), ("#dd66ff", "紫"), ("#ffffff", "白"),
     ]
 
-    def __init__(self, parent=None, notes_path: str = ""):
+    def __init__(self, parent=None, notes_path: str = "", theme=POENAVI_THEME):
         super().__init__(parent)
+        self.theme = theme
         self.setWindowFlags(_with_optional_always_on_top(Qt.Window | Qt.FramelessWindowHint, parent))
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.resize(350, 300)
@@ -44,7 +46,7 @@ class MemoDialog(QDialog):
         container.setStyleSheet(f"""
             QWidget {{
                 background: rgba(20, 20, 20, 230);
-                border: 1px solid rgba(176,255,123,0.4);
+                border: 1px solid {theme.accent};
                 border-radius: 6px;
             }}
         """)
@@ -61,7 +63,7 @@ class MemoDialog(QDialog):
         title_layout.setContentsMargins(4, 0, 4, 0)
 
         title_label = QLabel("📝 共通メモ")
-        title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none;")
+        title_label.setStyleSheet(f"color: {theme.text}; font-size: 15px; font-weight: bold; border: none;")
         title_layout.addWidget(title_label)
         title_layout.addStretch()
 
@@ -77,8 +79,8 @@ class MemoDialog(QDialog):
 
         text_style = f"""
             QTextEdit {{ 
-                background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 4px; 
+                background: rgba(26,26,26,200); color: {theme.text};
+                border: 1px solid {theme.accent}; border-radius: 4px;
                 padding: 5px; font-size: 13px;
                 font-family: "MS Gothic", "Yu Gothic", "Meiryo", monospace;
             }}
@@ -107,7 +109,7 @@ class MemoDialog(QDialog):
         reset_btn.setToolTip("色をリセット")
         reset_btn.setStyleSheet(f"""
             QPushButton {{ background: rgba(40,40,40,200); color: #888; 
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 2px; font-size: 10px; }}
+                border: 1px solid {theme.accent}; border-radius: 2px; font-size: 10px; }}
             QPushButton:hover {{ background: rgba(80,80,80,200); }}
         """)
         reset_btn.clicked.connect(self._reset_color)
@@ -135,14 +137,14 @@ class MemoDialog(QDialog):
         self._container.setStyleSheet(f"""
             QWidget {{
                 background: rgba(20, 20, 20, {alpha});
-                border: 1px solid rgba(176,255,123,0.4);
+                border: 1px solid {self.theme.accent};
                 border-radius: 6px;
             }}
         """)
         self.text_edit.setStyleSheet(f"""
             QTextEdit {{ 
-                background: rgba(26, 26, 26, {te_alpha}); color: {Styles.TEXT_COLOR}; 
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 4px; 
+                background: rgba(26, 26, 26, {te_alpha}); color: {self.theme.text};
+                border: 1px solid {self.theme.accent}; border-radius: 4px;
                 padding: 5px; font-size: 13px;
                 font-family: "MS Gothic", "Yu Gothic", "Meiryo", monospace;
             }}

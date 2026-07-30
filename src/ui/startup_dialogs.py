@@ -74,7 +74,17 @@ class AppModeSelectionDialog(QDialog):
         self.skip_selector_checkbox = QCheckBox("次回からこのモードで直接起動")
         self.skip_selector_checkbox.setChecked(False)
         self.skip_selector_checkbox.setStyleSheet(
-            f"QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: 13px; spacing: 8px; }}"
+            f"""
+            QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: 13px; spacing: 8px; }}
+            QCheckBox::indicator {{
+                width: 17px; height: 17px; background: #101310;
+                border: 2px solid #9eaaa0; border-radius: 3px;
+            }}
+            QCheckBox::indicator:hover {{ border-color: {Styles.TEXT_COLOR}; }}
+            QCheckBox::indicator:checked {{
+                background: {Styles.TEXT_COLOR}; border-color: {Styles.TEXT_COLOR};
+            }}
+            """
         )
         layout.addWidget(self.skip_selector_checkbox)
 

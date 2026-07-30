@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.ui.styles import Styles
+from src.ui.app_theme import POENAVI_THEME
 from src.poetore.window_position import path_of_exile_client_rect
 from src.utils.config_manager import ConfigManager
 
@@ -97,11 +97,30 @@ def normalized_cheat_sheet_config(config: dict | None) -> dict:
 class CheatSheetManagerDialog(QDialog):
     """画像の登録・名称変更・順序変更を行う管理画面。"""
 
-    def __init__(self, config: dict, parent=None):
+    def __init__(self, config: dict, parent=None, theme=POENAVI_THEME):
         super().__init__(parent)
         self.setWindowTitle("Cheat sheet画像の管理")
         self.resize(620, 430)
-        self.setStyleSheet(Styles.MAIN_WINDOW)
+        self.setStyleSheet(f"""
+            QDialog {{ background: {theme.background}; color: {theme.text}; }}
+            QLabel {{ color: {theme.text}; }}
+            QLineEdit, QListWidget {{
+                background: {theme.panel}; color: {theme.text};
+                border: 1px solid {theme.accent}; border-radius: 4px; padding: 5px;
+            }}
+            QPushButton {{
+                background: {theme.panel}; color: {theme.accent};
+                border: 1px solid {theme.accent}; border-radius: 5px;
+                padding: 6px 10px; font-weight: bold;
+            }}
+            QSlider::groove:horizontal {{
+                background: #555; height: 6px; border-radius: 3px;
+            }}
+            QSlider::handle:horizontal {{
+                background: {theme.accent}; width: 16px;
+                margin: -5px 0; border-radius: 8px;
+            }}
+        """)
         self.value = normalized_cheat_sheet_config(config)
         self._original_records = {
             item["id"]: dict(item) for item in self.value["images"]
@@ -258,7 +277,7 @@ class CheatSheetOverlay(QWidget):
     config_changed = Signal(dict)
     manage_requested = Signal()
 
-    def __init__(self, config: dict, parent=None):
+    def __init__(self, config: dict, parent=None, theme=POENAVI_THEME):
         super().__init__(None)
         self.owner = parent
         self.config = normalized_cheat_sheet_config(config)
@@ -276,12 +295,12 @@ class CheatSheetOverlay(QWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(5)
         self.setStyleSheet(
-            "QWidget { background: rgba(12, 12, 12, 235); color: white; "
-            "border: 1px solid rgba(176,255,123,150); border-radius: 6px; }"
+            f"QWidget {{ background: rgba(12, 12, 12, 235); color: {theme.text}; "
+            f"border: 1px solid {theme.accent}; border-radius: 6px; }}"
             "QLabel { border: none; background: transparent; }"
-            "QPushButton { background:#292929; color:white; border:1px solid #666; "
+            f"QPushButton {{ background:{theme.panel}; color:{theme.text}; border:1px solid #666; "
             "border-radius:4px; padding:4px 8px; }"
-            "QPushButton:hover { border-color:#b0ff7b; }"
+            f"QPushButton:hover {{ border-color:{theme.accent}; }}"
         )
 
         title_row = QHBoxLayout()

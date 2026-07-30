@@ -51,7 +51,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert window.width() == 558
     assert window.windowFlags() & Qt.FramelessWindowHint
     assert window.capture_hint.text() == (
-        "アイテムにマウスオーバーしながらAlt + Dで価格チェックができます。"
+        "アイテムにマウスオーバーしながらAlt + Dで価格チェック"
     )
     assert window.findChild(QPushButton, "poetoreMinimizeButton").text() == "─"
     assert window.findChild(QPushButton, "poetoreCloseButton").text() == "✕"
@@ -79,7 +79,7 @@ def test_poetore_mode_capture_hint_uses_configured_hotkey():
         window = PoetoreModeWindow()
 
     assert window.capture_hint.text() == (
-        "アイテムにマウスオーバーしながらCtrl + Shift + Pで価格チェックができます。"
+        "アイテムにマウスオーバーしながらCtrl + Shift + Pで価格チェック"
     )
     window.config["hotkeys"]["poetore_capture"] = "none"
     window._update_capture_hint()

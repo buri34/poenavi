@@ -12,6 +12,7 @@ from src.ui.cheat_sheets import (
     normalized_cheat_sheet_config,
     registered_image_path,
 )
+from src.ui.app_theme import POETORE_THEME
 
 
 @pytest.fixture(scope="module")
@@ -71,6 +72,17 @@ def test_empty_overlay_guides_user_to_main_window_button(qapp):
     assert "font-size: 20px" in overlay.image_label.styleSheet()
     assert "画像タイトルをドラッグで移動" in overlay.title_label.text()
     overlay.close()
+
+
+def test_poetore_theme_is_applied_to_manager_and_overlay(qapp):
+    manager = CheatSheetManagerDialog({"images": []}, theme=POETORE_THEME)
+    overlay = CheatSheetOverlay({"images": []}, theme=POETORE_THEME)
+    try:
+        assert POETORE_THEME.accent in manager.styleSheet()
+        assert POETORE_THEME.accent in overlay.styleSheet()
+    finally:
+        manager.close()
+        overlay.close()
 
 
 def test_manager_cancel_removes_only_newly_imported_files(qapp, tmp_path, monkeypatch):

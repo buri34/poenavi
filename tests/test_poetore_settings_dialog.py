@@ -1,11 +1,11 @@
 from unittest.mock import patch
 
-from PySide6.QtWidgets import QApplication, QDialog
+from PySide6.QtWidgets import QApplication, QDialog, QTabWidget
 
 from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 
 
-def test_poetore_settings_contains_only_common_and_trade_controls():
+def test_poetore_settings_contains_common_trade_and_window_controls():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(
         current_config={
@@ -15,6 +15,11 @@ def test_poetore_settings_contains_only_common_and_trade_controls():
             },
             "hotkeys": {"start_stop": "F7", "poetore_capture": "alt+d"},
             "poetore": {"league": "auto"},
+            "window_opacity": 80,
+            "text_opacity": 70,
+            "window_locked": True,
+            "always_on_top": False,
+            "snap_to_right_edge": True,
         }
     )
 
@@ -29,6 +34,17 @@ def test_poetore_settings_contains_only_common_and_trade_controls():
     assert settings["startup"]["preferred_mode"] == "poenavi"
     assert settings["hotkeys"]["start_stop"] == "F7"
     assert settings["hotkeys"]["poetore_capture"] == "alt+d"
+    assert settings["window_opacity"] == 80
+    assert settings["text_opacity"] == 70
+    assert settings["window_locked"] is True
+    assert settings["always_on_top"] is False
+    assert settings["snap_to_right_edge"] is True
+    tabs = dialog.findChild(QTabWidget)
+    assert [tabs.tabText(index) for index in range(tabs.count())] == [
+        "基本設定",
+        "アプリ情報",
+    ]
+    assert dialog.windowTitle() == "設定"
     dialog.close()
 
 

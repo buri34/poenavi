@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QKeySequence
 from src.ui.styles import Styles
+from src.ui.app_info_widget import AppInfoWidget
+from src.ui.app_theme import POENAVI_THEME
 from src.utils.zone_data_poe2 import DEFAULT_ZONE_DATA_POE2
 from src.utils.guide_data import load_guide_data, save_guide_data, get_visit_guide_for_edit, set_visit_guide_for_edit
 from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_act_list, get_poe_label, get_town_zones
@@ -21,7 +23,6 @@ from src.utils.gem_shop_search import (
 )
 from src.utils.global_hotkeys import find_duplicate_hotkeys
 import os
-import webbrowser
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 
@@ -2325,115 +2326,9 @@ class SettingsDialog(QDialog):
         
         tabs.addTab(zone_tab, "エリア情報")
 
-        # === アプリ情報タブ ===
-        about_tab = QWidget()
-        about_layout = QVBoxLayout(about_tab)
-        about_layout.setContentsMargins(20, 20, 20, 20)
-        about_layout.setSpacing(15)
-
-        # バージョン情報
-        try:
-            from main import __version__
-        except ImportError:
-            __version__ = "不明"
-        
-        version_label = QLabel(f"ぽえなび v{__version__}")
-        version_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 18px; font-weight: bold;")
-        about_layout.addWidget(version_label)
-
-        # GitHubリンク
-        github_btn = QPushButton("GitHub（最新版のダウンロード）")
-        github_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: rgba(45, 45, 45, 200); color: {Styles.TEXT_COLOR};
-                border: 1px solid rgba(176,255,123,0.4); border-radius: 6px;
-                padding: 10px 20px; font-size: 13px;
-            }}
-            QPushButton:hover {{ background: rgba(65, 65, 65, 220); }}
-        """)
-        github_btn.setCursor(Qt.PointingHandCursor)
-        github_btn.clicked.connect(lambda: webbrowser.open("https://github.com/buri34/poenavi/releases"))
-        about_layout.addWidget(github_btn)
-
-        # 区切り線
-        separator = QFrame()
-        separator.setFrameShape(QFrame.HLine)
-        separator.setStyleSheet(f"color: rgba(176,255,123,0.3);")
-        about_layout.addWidget(separator)
-
-        # サポートセクション
-        support_title = QLabel("☕ ぽえなびを応援する")
-        support_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 16px; font-weight: bold;")
-        about_layout.addWidget(support_title)
-
-        support_desc = QLabel(
-            "ぽえなびを気に入っていただけたら、応援いただけると嬉しいです。\n"
-            "いただいたサポートは、開発環境の維持・改善に充てさせていただきます。"
-        )
-        support_desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px;")
-        support_desc.setWordWrap(True)
-        about_layout.addWidget(support_desc)
-
-        # OFUSEボタン
-        ofuse_btn = QPushButton("OFUSE（おふせ）で応援する")
-        ofuse_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: rgba(255, 147, 69, 200); color: white;
-                border: none; border-radius: 6px;
-                padding: 12px 20px; font-size: 14px; font-weight: bold;
-            }}
-            QPushButton:hover {{ background: rgba(255, 167, 99, 220); }}
-        """)
-        ofuse_btn.setCursor(Qt.PointingHandCursor)
-        ofuse_btn.clicked.connect(lambda: webbrowser.open("https://ofuse.me/48eca107"))
-        about_layout.addWidget(ofuse_btn)
-
-        # Ko-fiボタン
-        kofi_btn = QPushButton("Ko-fi で応援する")
-        kofi_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: rgba(41, 171, 224, 200); color: white;
-                border: none; border-radius: 6px;
-                padding: 12px 20px; font-size: 14px; font-weight: bold;
-            }}
-            QPushButton:hover {{ background: rgba(61, 191, 244, 220); }}
-        """)
-        kofi_btn.setCursor(Qt.PointingHandCursor)
-        kofi_btn.clicked.connect(lambda: webbrowser.open("https://ko-fi.com/buri8857"))
-        about_layout.addWidget(kofi_btn)
-
-        # Patreonボタン
-        patreon_btn = QPushButton("Patreon で応援する")
-        patreon_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: rgba(255, 66, 77, 200); color: white;
-                border: none; border-radius: 6px;
-                padding: 12px 20px; font-size: 14px; font-weight: bold;
-            }}
-            QPushButton:hover {{ background: rgba(255, 86, 97, 220); }}
-        """)
-        patreon_btn.setCursor(Qt.PointingHandCursor)
-        patreon_btn.clicked.connect(lambda: webbrowser.open("https://www.patreon.com/cw/Buri8857"))
-        about_layout.addWidget(patreon_btn)
-
-        support_note = QLabel("※ ブラウザが開きます")
-        support_note.setStyleSheet(f"color: rgba(200,200,200,150); font-size: 11px;")
-        about_layout.addWidget(support_note)
-
-        # アプリの免責事項
-        poetore_separator = QFrame()
-        poetore_separator.setFrameShape(QFrame.HLine)
-        poetore_separator.setStyleSheet("color: rgba(176,255,123,0.3);")
-        about_layout.addWidget(poetore_separator)
-
-        self.app_disclaimer_label = QLabel(
-            "ぽえなびは無料の非公式ツールです。Grinding Gear Gamesとの提携・承認関係はありません。"
-        )
-        self.app_disclaimer_label.setWordWrap(True)
-        self.app_disclaimer_label.setStyleSheet("color: rgba(200,200,200,180); font-size: 12px;")
-        about_layout.addWidget(self.app_disclaimer_label)
-
-        about_layout.addStretch()
+        # === アプリ情報タブ（ぽえとれ設定と共通） ===
+        about_tab = AppInfoWidget(POENAVI_THEME)
+        self.app_disclaimer_label = about_tab.disclaimer_label
 
         term_review_tab = QWidget()
         term_review_layout = QVBoxLayout(term_review_tab)

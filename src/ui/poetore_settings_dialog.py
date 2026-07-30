@@ -1,9 +1,11 @@
 """ぽえとれモード専用の軽量設定画面。"""
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
+    QApplication,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
@@ -11,11 +13,16 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QScrollArea,
+    QSlider,
+    QTabWidget,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 from src.ui.app_theme import POETORE_THEME
+from src.ui.app_info_widget import AppInfoWidget
 from src.utils.global_hotkeys import find_duplicate_hotkeys
 
 
@@ -23,13 +30,19 @@ class PoetoreSettingsDialog(QDialog):
     def __init__(self, parent=None, current_config=None):
         super().__init__(parent)
         self.current_config = current_config or {}
-        self.setWindowTitle("ぽえとれ設定")
-        self.setMinimumWidth(480)
+        self.setWindowTitle("設定")
+        self.setMinimumSize(540, 620)
+        self.resize(560, 760)
         self.setStyleSheet(self._style_sheet())
 
         root = QVBoxLayout(self)
         root.setContentsMargins(18, 18, 18, 14)
         root.setSpacing(12)
+        tabs = QTabWidget()
+        basic_tab = QWidget()
+        basic_layout = QVBoxLayout(basic_tab)
+        basic_layout.setContentsMargins(12, 12, 12, 12)
+        basic_layout.setSpacing(12)
 
         startup = self.current_config.get("startup")
         startup = startup if isinstance(startup, dict) else {}
@@ -54,7 +67,7 @@ class PoetoreSettingsDialog(QDialog):
         )
         startup_row.addRow("次回起動するモード:", self.preferred_mode_combo)
         startup_layout.addLayout(startup_row)
-        root.addWidget(startup_group)
+        basic_layout.addWidget(startup_group)
 
         hotkeys = self.current_config.get("hotkeys")
         hotkeys = hotkeys if isinstance(hotkeys, dict) else {}
@@ -68,7 +81,7 @@ class PoetoreSettingsDialog(QDialog):
         hotkey_form.addRow("キャラクター選択へ戻る:", self.exit_hotkey)
         hotkey_form.addRow("ぽえとれ検索:", self.capture_hotkey)
         hotkey_form.addRow("Cheat sheets表示:", self.cheat_hotkey)
-        root.addWidget(hotkey_group)
+        basic_layout.addWidget(hotkey_group)
 
         common_group = QGroupBox("共通機能")
         common_layout = QVBoxLayout(common_group)
@@ -79,7 +92,7 @@ class PoetoreSettingsDialog(QDialog):
             bool(self.current_config.get("stash_tab_scroll_enabled", True))
         )
         common_layout.addWidget(self.stash_tab_scroll_cb)
-        root.addWidget(common_group)
+        basic_layout.addWidget(common_group)
 
         poetore = self.current_config.get("poetore")
         poetore = poetore if isinstance(poetore, dict) else {}
@@ -88,12 +101,58 @@ class PoetoreSettingsDialog(QDialog):
         self.league_edit = QLineEdit(str(poetore.get("league", "auto")))
         self.league_edit.setPlaceholderText("auto")
         trade_form.addRow("リーグ（autoで自動）:", self.league_edit)
-        root.addWidget(trade_group)
+        basic_layout.addWidget(trade_group)
+
+        window_group = QGroupBox("ウィンドウ設定（本体・共通UI）")
+        window_layout = QVBoxLayout(window_group)
+        self.opacity_slider = self._slider_row(
+            window_layout, "透過率:", self.current_config.get("window_opacity", 100), 5
+        )
+        self.text_opacity_slider = self._slider_row(
+            window_layout, "文字透過率:", self.current_config.get("text_opacity", 100), 0
+        )
+        self.window_lock_check = QCheckBox("ウィンドウの移動・リサイズを禁止する")
+        self.window_lock_check.setChecked(self.current_config.get("window_locked", False))
+        window_layout.addWidget(self.window_lock_check)
+        self.always_on_top_check = QCheckBox("常に最前面に表示する")
+        self.always_on_top_check.setChecked(self.current_config.get("always_on_top", True))
+        window_layout.addWidget(self.always_on_top_check)
+        self.snap_right_edge_cb = QCheckBox("起動時にモニター右端に配置")
+        self.snap_right_edge_cb.setChecked(
+            self.current_config.get("snap_to_right_edge", False)
+        )
+        window_layout.addWidget(self.snap_right_edge_cb)
+
+        monitor_row = QFormLayout()
+        self.monitor_combo = QComboBox()
+        screens = QApplication.screens()
+        for index, screen in enumerate(screens):
+            geometry = screen.geometry()
+            name = f"モニター {index + 1}（{geometry.width()}x{geometry.height()}）"
+            if screen == QApplication.primaryScreen():
+                name += " [メイン]"
+            self.monitor_combo.addItem(name, index)
+        current_monitor = int(self.current_config.get("display_monitor", 0))
+        if 0 <= current_monitor < len(screens):
+            self.monitor_combo.setCurrentIndex(current_monitor)
+        monitor_row.addRow("起動時の配置先:", self.monitor_combo)
+        window_layout.addLayout(monitor_row)
+        self.monitor_combo.setEnabled(self.snap_right_edge_cb.isChecked())
+        self.snap_right_edge_cb.toggled.connect(self.monitor_combo.setEnabled)
+        basic_layout.addWidget(window_group)
 
         note = QLabel("変更は保存後すぐ反映されます。起動モードは次回起動時に切り替わります。")
         note.setWordWrap(True)
         note.setObjectName("settingsNote")
-        root.addWidget(note)
+        basic_layout.addWidget(note)
+        basic_layout.addStretch()
+        basic_scroll = QScrollArea()
+        basic_scroll.setWidgetResizable(True)
+        basic_scroll.setFrameShape(QScrollArea.NoFrame)
+        basic_scroll.setWidget(basic_tab)
+        tabs.addTab(basic_scroll, "基本設定")
+        tabs.addTab(AppInfoWidget(POETORE_THEME), "アプリ情報")
+        root.addWidget(tabs)
 
         buttons = QHBoxLayout()
         buttons.addStretch()
@@ -110,6 +169,9 @@ class PoetoreSettingsDialog(QDialog):
     def _style_sheet():
         return f"""
             QDialog {{ background: {POETORE_THEME.background}; color: {POETORE_THEME.text}; }}
+            QScrollArea, QScrollArea > QWidget > QWidget {{
+                background: {POETORE_THEME.background};
+            }}
             QLabel, QCheckBox, QGroupBox {{ color: {POETORE_THEME.text}; }}
             QGroupBox {{
                 border: 1px solid rgba(219, 134, 239, 0.5);
@@ -125,6 +187,24 @@ class PoetoreSettingsDialog(QDialog):
                 border-radius: 5px;
                 padding: 5px;
             }}
+            QComboBox QAbstractItemView {{
+                background: {POETORE_THEME.panel};
+                color: {POETORE_THEME.text};
+                selection-background-color: #4A2D54;
+                selection-color: #ffffff;
+            }}
+            QTabWidget::pane {{ border: 1px solid {POETORE_THEME.accent}; }}
+            QTabBar::tab {{
+                background: {POETORE_THEME.panel}; color: {POETORE_THEME.text};
+                border: 1px solid {POETORE_THEME.accent};
+                padding: 7px 14px;
+            }}
+            QTabBar::tab:selected {{ color: {POETORE_THEME.accent}; }}
+            QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
+            QSlider::handle:horizontal {{
+                background: {POETORE_THEME.accent}; width: 16px;
+                margin: -5px 0; border-radius: 8px;
+            }}
             QPushButton {{
                 background: #241929;
                 color: {POETORE_THEME.accent};
@@ -136,6 +216,22 @@ class PoetoreSettingsDialog(QDialog):
             QPushButton:hover {{ background: #382440; }}
             QLabel#settingsNote {{ color: {POETORE_THEME.muted_text}; font-size: 11px; }}
         """
+
+    @staticmethod
+    def _slider_row(layout, label_text, value, minimum):
+        row = QHBoxLayout()
+        row.addWidget(QLabel(label_text))
+        slider = QSlider()
+        slider.setOrientation(Qt.Horizontal)
+        slider.setRange(minimum, 100)
+        slider.setValue(int(value))
+        value_label = QLabel(f"{slider.value()}%")
+        value_label.setFixedWidth(40)
+        slider.valueChanged.connect(lambda new_value: value_label.setText(f"{new_value}%"))
+        row.addWidget(slider)
+        row.addWidget(value_label)
+        layout.addLayout(row)
+        return slider
 
     def get_settings(self):
         startup = dict(self.current_config.get("startup", {}))
@@ -158,6 +254,12 @@ class PoetoreSettingsDialog(QDialog):
             "hotkeys": hotkeys,
             "stash_tab_scroll_enabled": self.stash_tab_scroll_cb.isChecked(),
             "poetore": poetore,
+            "window_opacity": self.opacity_slider.value(),
+            "text_opacity": self.text_opacity_slider.value(),
+            "window_locked": self.window_lock_check.isChecked(),
+            "always_on_top": self.always_on_top_check.isChecked(),
+            "display_monitor": self.monitor_combo.currentData(),
+            "snap_to_right_edge": self.snap_right_edge_cb.isChecked(),
         }
 
     def accept(self):
