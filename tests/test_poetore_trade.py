@@ -259,43 +259,19 @@ def test_awakened_tier_tags_preserve_each_aggregated_mod():
     assert _awakened_tier_tags(mixed) == (1, 2)
 
 
-def test_trade_api_retries_429_once_using_retry_after():
+def test_trade_api_surfaces_rate_limit_immediately():
     error = HTTPError(
-        "https://example.invalid", 429, "rate limited", {"Retry-After": "2"},
-        BytesIO(b'{}'),
-    )
-    response = MagicMock()
-    response.__enter__.return_value = response
-    response.read.return_value = b'{"ok": true}'
-    response.headers = {"X-Rate-Limit-Ip-State": "1:10:0"}
-    with patch("src.poetore.trade.urlopen", side_effect=[error, response]), patch(
-        "src.poetore.trade.time.sleep"
-    ) as sleep:
-        payload, headers = _request_json("https://example.invalid")
-    assert payload == {"ok": True}
-    assert headers["X-Rate-Limit-Ip-State"] == "1:10:0"
-    sleep.assert_called_once_with(2.0)
-
-
-def test_trade_api_surfaces_rate_limit_with_retry_minutes_after_retry():
-    first_error = HTTPError(
         "https://example.invalid", 429, "rate limited", {"Retry-After": "580"},
         BytesIO(b'{}'),
     )
-    second_error = HTTPError(
-        "https://example.invalid", 429, "rate limited", {"Retry-After": "550"},
-        BytesIO(b'{}'),
-    )
-    with patch(
-        "src.poetore.trade.urlopen", side_effect=[first_error, second_error]
-    ), patch("src.poetore.trade.time.sleep") as sleep:
+    with patch("src.poetore.trade.urlopen", side_effect=error) as urlopen:
         with pytest.raises(Exception) as exc_info:
             _request_json("https://example.invalid", {"query": {}})
     assert str(exc_info.value) == (
         "検索回数が多いため、PoE Trade APIの利用制限に達しました。"
         " 約10分後に、もう一度検索してください。"
     )
-    sleep.assert_called_once_with(30.0)
+    urlopen.assert_called_once()
 
 
 def test_trade_api_surfaces_rate_limit_without_retry_after():
@@ -303,9 +279,7 @@ def test_trade_api_surfaces_rate_limit_without_retry_after():
         "https://example.invalid", 429, "rate limited", {},
         BytesIO(b'{}'),
     )
-    with patch("src.poetore.trade.urlopen", side_effect=[error, error]), patch(
-        "src.poetore.trade.time.sleep"
-    ):
+    with patch("src.poetore.trade.urlopen", side_effect=error):
         with pytest.raises(Exception) as exc_info:
             _request_json("https://example.invalid", {"query": {}})
     assert str(exc_info.value) == (

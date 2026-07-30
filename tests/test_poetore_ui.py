@@ -392,6 +392,25 @@ def test_search_condition_change_clears_stale_results_and_waits(qapp):
         window.close()
 
 
+def test_search_error_replaces_searching_status_and_reenables_button(qapp):
+    window = PoetoreWindow()
+    try:
+        window._search_generation = 3
+        window.price_button.setEnabled(False)
+        window.price_status.setText("検索中…")
+
+        message = (
+            "検索回数が多いため、PoE Trade APIの利用制限に達しました。"
+            " 約10分後に、もう一度検索してください。"
+        )
+        window._show_price_error(message, 3)
+
+        assert window.price_status.text() == message
+        assert window.price_button.isEnabled()
+    finally:
+        window.close()
+
+
 def test_enter_in_changed_mod_value_researches(qapp):
     window = PoetoreWindow()
     try:
