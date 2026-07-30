@@ -679,6 +679,9 @@ def parse_item_text(text: str) -> ParsedItem:
             )
             metadata, option, confidence = default_metadata_index().match_for_item_category(
                 metadata_text, kind, item_category,
+                current_header_generation if from_header else (
+                    "foulborn" if is_mutated else None
+                ),
             )
             if metadata is None and (
                 "盾" in header.get("item_class", "")

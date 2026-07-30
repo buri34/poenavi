@@ -238,10 +238,21 @@ class MetadataIndex:
 
     def match_for_item_category(
         self, text: str, kind: str, item_category: str,
+        generation: str | None = None,
     ) -> tuple[ModMetadata | None, OptionValue | None, float]:
-        """Awakenedのcategory select resolverを必要とする同文statを解決する。"""
+        """アイテム種別・生成種別を使い、表示文が同じTrade statを解決する。"""
         key = ("explicit" if kind in {"prefix", "suffix"} else kind, normalize_stat_text(text))
         matches = self._by_match.get(key, ())
+        if generation == "foulborn":
+            mutated = [
+                record for record in matches
+                if any(
+                    (tier.mod_id or "").casefold().startswith("mutatedunique")
+                    for tier in record.tiers
+                )
+            ]
+            if len(mutated) == 1:
+                return mutated[0], None, 1.0
         category = {
             "weapon": "WEAPON",
             "armour": "ARMOUR",

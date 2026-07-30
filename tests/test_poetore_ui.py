@@ -572,6 +572,95 @@ def test_foulborn_tulborn_fixed_number_mod_builds_valueless_trade_filter(qapp):
         window.close()
 
 
+def test_foulborn_xoph_uses_mutated_unique_returning_projectiles_stat(qapp):
+    window = PoetoreWindow()
+    try:
+        window._trade_base_type = "Citadel Bow"
+        window._trade_item_name = "Xoph's Inception"
+        window.input_edit.setPlainText("""アイテムクラス: 弓
+レアリティ: ユニーク
+ファウルボーン ゾフの発端
+シタデルボウ
+--------
+弓
+物理ダメージ: 97-389 (augmented)
+クリティカル率: 6.00%
+秒間アタック回数: 1.25
+--------
+装備要求:
+レベル: 58
+器用さ: 185 (unmet)
+--------
+ソケット: W-W
+--------
+アイテムレベル: 85
+--------
+{ ユニークモッド — ダメージ, 物理, アタック }
+物理ダメージが170(160-190)%増加する
+{ ユニークモッド — ダメージ, 物理, 元素, 火 }
+物理ダメージの20%を追加火ダメージとして獲得する
+{ ユニークモッド — 元素, 火, 状態異常 }
+10%の確率で敵を発火させる
+(Ignite: 発火は、スキルの基礎火ダメージに基づいて火継続ダメージを与える。持続時間は4秒)
+{ ユニークモッド — ライフ }
+発火状態の敵を倒した時に298(200-300)のライフを獲得する
+{ ユニークモッド }
+矢は貫通した回数1回ごとに30から50の火ダメージを追加する
+{ ファウルボーンユニークモッド }
+ソケットされたジェムはレベル20投射物回帰によりサポートされる
+--------
+赤き火葬壇の上に我らは生まれる。
+
+このアイテムはゾフの祝福によって変化させることができる
+""")
+        returning_projectiles = (
+            {
+                "id": "explicit.indexable_support_149", "type": "explicit",
+                "text": "ソケットされたジェムはレベル#投射物回帰によりサポートされる",
+            },
+            {
+                "id": "explicit.stat_1549219417", "type": "explicit",
+                "text": "ソケットされたジェムはレベル#投射物回帰によりサポートされる",
+            },
+            {
+                "id": "explicit.stat_52197415", "type": "explicit",
+                "text": "ソケットされたジェムはレベル#投射物回帰によりサポートされる",
+            },
+        )
+        with patch(
+            "src.poetore.trade._trade_stat_entries",
+            return_value=returning_projectiles,
+        ):
+            window.parse_current_text()
+
+        parsed = next(
+            modifier for modifier in window._parsed_item.modifiers
+            if "投射物回帰" in modifier.text
+        )
+        assert parsed.stat_id == "explicit.stat_1549219417"
+        selected = [
+            row for row in window._selected_stat_filters()
+            if "投射物回帰" in row.text
+        ]
+        assert len(selected) == 1
+        assert selected[0].stat_id == "explicit.stat_1549219417"
+        assert selected[0].min_value == 20
+
+        query = build_search_query(
+            window._parsed_item,
+            window._trade_base_type,
+            selected,
+            trade_status="offline",
+            trade_name=window._trade_item_name,
+        )["query"]
+        assert query["stats"][0]["filters"] == [{
+            "id": "explicit.stat_1549219417",
+            "value": {"min": 20},
+        }]
+    finally:
+        window.close()
+
+
 def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
     window = PoetoreWindow()
     try:

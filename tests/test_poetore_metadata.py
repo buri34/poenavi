@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from src.poetore.metadata import (
-    MetadataIndex, ModMetadata, OptionValue, pseudo_definitions, pseudo_relations,
+    MetadataIndex, ModMetadata, OptionValue, TierRange, pseudo_definitions, pseudo_relations,
     diff_pseudo_payloads, unique_fixed_stats, unique_icon_url, validate_pseudo_payload,
 )
 from src.poetore.metadata_builder import (
@@ -270,6 +270,34 @@ def test_metadata_index_matches_normalized_japanese_detail_copy():
     ),))
     record, confidence = index.match("最大ライフ +100(90-100)", "prefix")
     assert record and record.stat_id == "explicit.life"
+    assert confidence == 1.0
+
+
+def test_metadata_index_prefers_mutated_unique_stat_for_foulborn_heading():
+    text = "ソケットされたジェムはレベル#投射物回帰によりサポートされる"
+    index = MetadataIndex((
+        ModMetadata(
+            "random support", "explicit.random", "explicit", (text,),
+        ),
+        ModMetadata(
+            "mutated unique", "explicit.foulborn", "explicit", (text,),
+            tiers=(TierRange(
+                None, 20, 20, generation="unique",
+                mod_id="MutatedUniqueBow18DisplaySupportedByReturningProjectiles",
+            ),),
+        ),
+        ModMetadata(
+            "other", "explicit.other", "explicit", (text,),
+        ),
+    ))
+
+    record, option, confidence = index.match_for_item_category(
+        "ソケットされたジェムはレベル20投射物回帰によりサポートされる",
+        "explicit", "weapon", "foulborn",
+    )
+
+    assert record and record.stat_id == "explicit.foulborn"
+    assert option is None
     assert confidence == 1.0
 
 
