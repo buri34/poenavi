@@ -93,6 +93,10 @@ def test_poetore_settings_saves_result_font_size():
         dialog.result_font_size_combo.itemData(index)
         for index in range(dialog.result_font_size_combo.count())
     ] == ["small", "medium", "large"]
+    assert [
+        dialog.result_font_size_combo.itemText(index)
+        for index in range(dialog.result_font_size_combo.count())
+    ] == ["小", "中", "大"]
 
     dialog.result_font_size_combo.setCurrentIndex(
         dialog.result_font_size_combo.findData("large")

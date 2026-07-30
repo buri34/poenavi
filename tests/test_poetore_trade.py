@@ -277,6 +277,43 @@ def test_trade_api_retries_429_once_using_retry_after():
     sleep.assert_called_once_with(2.0)
 
 
+def test_trade_api_surfaces_rate_limit_with_retry_minutes_after_retry():
+    first_error = HTTPError(
+        "https://example.invalid", 429, "rate limited", {"Retry-After": "580"},
+        BytesIO(b'{}'),
+    )
+    second_error = HTTPError(
+        "https://example.invalid", 429, "rate limited", {"Retry-After": "550"},
+        BytesIO(b'{}'),
+    )
+    with patch(
+        "src.poetore.trade.urlopen", side_effect=[first_error, second_error]
+    ), patch("src.poetore.trade.time.sleep") as sleep:
+        with pytest.raises(Exception) as exc_info:
+            _request_json("https://example.invalid", {"query": {}})
+    assert str(exc_info.value) == (
+        "検索回数が多いため、PoE Trade APIの利用制限に達しました。"
+        " 約10分後に、もう一度検索してください。"
+    )
+    sleep.assert_called_once_with(30.0)
+
+
+def test_trade_api_surfaces_rate_limit_without_retry_after():
+    error = HTTPError(
+        "https://example.invalid", 429, "rate limited", {},
+        BytesIO(b'{}'),
+    )
+    with patch("src.poetore.trade.urlopen", side_effect=[error, error]), patch(
+        "src.poetore.trade.time.sleep"
+    ):
+        with pytest.raises(Exception) as exc_info:
+            _request_json("https://example.invalid", {"query": {}})
+    assert str(exc_info.value) == (
+        "検索回数が多いため、PoE Trade APIの利用制限に達しました。"
+        " しばらく時間を置いてから、もう一度検索してください。"
+    )
+
+
 def test_trade_api_surfaces_official_error_message():
     error = HTTPError(
         "https://example.invalid", 400, "bad request", {},

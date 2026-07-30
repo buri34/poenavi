@@ -148,7 +148,7 @@ class PoetoreSettingsDialog(QDialog):
         display_group = QGroupBox("検索結果画面")
         display_form = QFormLayout(display_group)
         self.result_font_size_combo = QComboBox()
-        self.result_font_size_combo.addItem("小（現在のサイズ）", "small")
+        self.result_font_size_combo.addItem("小", "small")
         self.result_font_size_combo.addItem("中", "medium")
         self.result_font_size_combo.addItem("大", "large")
         saved_result_font_size = str(

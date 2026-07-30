@@ -454,6 +454,20 @@ def _request_json(url: str, payload: dict | None = None) -> tuple[dict, object]:
                 _trade_log(f"rate limited; retrying once after {delay:g}s")
                 time.sleep(delay)
                 continue
+            if exc.code == 429:
+                try:
+                    retry_after = max(0, int(float(exc.headers.get("Retry-After", ""))))
+                except (AttributeError, TypeError, ValueError):
+                    retry_after = 0
+                if retry_after:
+                    retry_minutes = max(1, (retry_after + 59) // 60)
+                    retry_note = f" 約{retry_minutes}分後に、もう一度検索してください。"
+                else:
+                    retry_note = " しばらく時間を置いてから、もう一度検索してください。"
+                raise TradeApiError(
+                    "検索回数が多いため、PoE Trade APIの利用制限に達しました。"
+                    f"{retry_note}"
+                ) from exc
             try:
                 error_body = exc.read().decode("utf-8", errors="replace")
                 error_payload = json.loads(error_body)
