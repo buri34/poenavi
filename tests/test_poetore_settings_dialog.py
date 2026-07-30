@@ -14,7 +14,11 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
                 "preferred_mode": "poetore",
                 "show_mode_selector": False,
             },
-            "hotkeys": {"start_stop": "F7", "poetore_capture": "alt+d"},
+            "hotkeys": {
+                "start_stop": "F7",
+                "monastery": "F12",
+                "poetore_capture": "alt+d",
+            },
             "poetore": {"league": "auto"},
             "window_opacity": 80,
             "text_opacity": 70,
@@ -34,6 +38,7 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     settings = dialog.get_settings()
     assert settings["startup"]["preferred_mode"] == "poenavi"
     assert settings["hotkeys"]["start_stop"] == "F7"
+    assert settings["hotkeys"]["monastery"] == "F12"
     assert settings["hotkeys"]["poetore_capture"] == "alt+d"
     assert settings["window_opacity"] == 80
     assert settings["text_opacity"] == 70
@@ -124,6 +129,7 @@ def test_poetore_settings_rejects_duplicate_common_hotkeys():
         current_config={
             "hotkeys": {
                 "exit": "F5",
+                "monastery": "F12",
                 "poetore_capture": "F5",
                 "cheat_sheets_toggle": "shift+space",
             }

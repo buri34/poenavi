@@ -11,6 +11,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     config = {
         "hotkeys": {
             "exit": "F5",
+            "monastery": "F12",
             "poetore_capture": "alt+d",
             "cheat_sheets_toggle": "shift+space",
             "start_stop": "F7",
@@ -35,6 +36,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     supplied_hotkeys = hotkey_class.call_args.args[0]
     assert supplied_hotkeys == {
         "exit": "F5",
+        "monastery": "F12",
         "poetore_capture": "alt+d",
         "cheat_sheets_toggle": "shift+space",
     }
@@ -57,6 +59,31 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert window.findChild(QPushButton, "poetoreCloseButton").text() == "✕"
     stash_class.return_value.start.assert_called_once()
     hotkey_service.start.assert_called_once()
+    window.close()
+    app.processEvents()
+
+
+def test_poetore_mode_monastery_hotkey_sends_chat_command():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "hotkeys": {"monastery": "F12"},
+        "stash_tab_scroll_enabled": False,
+    }
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.StashTabScrollController"
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"), patch(
+        "src.ui.poetore_mode_window.send_chat_command"
+    ) as send_command:
+        window = PoetoreModeWindow()
+        window.handle_hotkey("monastery")
+
+    send_command.assert_called_once_with("/monastery")
     window.close()
     app.processEvents()
 

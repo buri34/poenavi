@@ -123,6 +123,7 @@ class _PoetoreModeTitleBar(QWidget):
 class PoetoreModeWindow(QMainWindow):
     MODE_ACTION_DEFAULTS = {
         "exit": "F5",
+        "monastery": "F12",
         "poetore_capture": "alt+d",
         "cheat_sheets_toggle": "shift+space",
     }
@@ -417,6 +418,8 @@ class PoetoreModeWindow(QMainWindow):
                 self._cheat_sheet_overlay.hide_and_save()
         elif command == "exit":
             self.execute_chat_command("/exit")
+        elif command == "monastery":
+            self.execute_chat_command("/monastery")
 
     def capture_poetore_item(self):
         from src.poetore.ui import show_poetore_window

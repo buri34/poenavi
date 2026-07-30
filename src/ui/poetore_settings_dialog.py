@@ -100,11 +100,15 @@ class PoetoreSettingsDialog(QDialog):
         hotkey_group = QGroupBox("共通・ぽえとれホットキー")
         hotkey_form = QFormLayout(hotkey_group)
         self.exit_hotkey = QLineEdit(hotkeys.get("exit", "F5"))
+        self.monastery_hotkey = QLineEdit(hotkeys.get("monastery", "F12"))
         self.capture_hotkey = QLineEdit(hotkeys.get("poetore_capture", "alt+d"))
         self.cheat_hotkey = QLineEdit(
             hotkeys.get("cheat_sheets_toggle", "shift+space")
         )
         hotkey_form.addRow("キャラクター選択へ戻る:", self.exit_hotkey)
+        hotkey_form.addRow(
+            "（仮）修道院へ移動（/monastery）:", self.monastery_hotkey
+        )
         hotkey_form.addRow("ぽえとれ検索:", self.capture_hotkey)
         hotkey_form.addRow("Cheat sheets表示:", self.cheat_hotkey)
         basic_layout.addWidget(hotkey_group)
@@ -378,6 +382,7 @@ class PoetoreSettingsDialog(QDialog):
         hotkeys.update(
             {
                 "exit": self.exit_hotkey.text().strip() or "none",
+                "monastery": self.monastery_hotkey.text().strip() or "none",
                 "poetore_capture": self.capture_hotkey.text().strip() or "none",
                 "cheat_sheets_toggle": self.cheat_hotkey.text().strip() or "none",
             }
@@ -403,6 +408,7 @@ class PoetoreSettingsDialog(QDialog):
     def accept(self):
         hotkeys = {
             "exit": self.exit_hotkey.text(),
+            "monastery": self.monastery_hotkey.text(),
             "poetore_capture": self.capture_hotkey.text(),
             "cheat_sheets_toggle": self.cheat_hotkey.text(),
         }
@@ -410,6 +416,7 @@ class PoetoreSettingsDialog(QDialog):
         if duplicates:
             labels = {
                 "exit": "キャラクター選択へ戻る",
+                "monastery": "修道院へ移動",
                 "poetore_capture": "ぽえとれ検索",
                 "cheat_sheets_toggle": "Cheat sheets表示",
             }
