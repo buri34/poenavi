@@ -1194,7 +1194,7 @@ def test_quality_sockets_and_item_states_are_added_to_finished_search():
 Kraken Pelt
 Sacred Chainmail
 --------
-品質: +30% (augmented)
+品質: +21% (augmented)
 アーマー: 2940 (augmented)
 ソケット: W-W-W-R-B-B
 --------
@@ -1207,13 +1207,13 @@ Sacred Chainmail
     with patch("src.poetore.trade._trade_stat_entries", return_value=()):
         filters = resolve_trade_stat_filters(item)
     details = {row.stat_id: (row.min_value, row.enabled) for row in filters}
-    assert details["property.quality"] == (30.0, True)
+    assert details["property.quality"] == (21.0, True)
     assert details["property.sockets"] == (6.0, True)
     assert details["property.links"] == (6.0, True)
     assert details["property.white_sockets"] == (3.0, True)
     query = build_search_query(item, "Sacred Chainmail", filters)["query"]
     misc = query["filters"]["misc_filters"]["filters"]
-    assert misc["quality"] == {"min": 30.0}
+    assert misc["quality"] == {"min": 21.0}
     assert "mirrored" not in misc
     assert "corrupted" not in misc
     assert "split" not in misc

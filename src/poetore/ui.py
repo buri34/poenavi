@@ -2677,7 +2677,10 @@ class PoetoreWindow(QWidget):
         if item.category == "gem":
             visible = quality is not None and quality > 0
         elif item.category in {"weapon", "armour", "accessory"}:
-            visible = preset == PRESET_BASE and quality is not None and quality >= 20
+            visible = quality is not None and (
+                quality > 20
+                or (preset == PRESET_BASE and quality >= 20)
+            )
         elif item.category in {"flask", "tincture"}:
             visible = quality is not None and quality >= 20
         self.gem_quality_tag.setVisible(visible)
@@ -3167,7 +3170,9 @@ class PoetoreWindow(QWidget):
                 continue
             if (stat_filter.stat_id == "property.quality"
                     and getattr(self, "_parsed_item", None) is not None
-                    and self._parsed_item.category in {"gem", "weapon", "armour", "flask", "tincture"}):
+                    and self._parsed_item.category in {
+                        "gem", "weapon", "armour", "accessory", "flask", "tincture",
+                    }):
                 continue
             if stat_filter.stat_id == "property.links" and not self.links_tag.isHidden():
                 continue

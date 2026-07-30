@@ -3102,7 +3102,7 @@ def test_gem_quality_chip_initial_state_matches_awakened(
         window.close()
 
 
-def test_non_gem_quality_chip_matches_awakened_exact_rules(qapp):
+def test_non_gem_quality_chip_keeps_exceptional_quality_in_finished_search(qapp):
     window = PoetoreWindow()
     try:
         armour = parse_item_text("""Item Class: Body Armours
@@ -3110,17 +3110,18 @@ Rarity: Rare
 Test Armour
 Sacred Chainmail
 --------
-Quality: +30%
+Quality: +21%
 Item Level: 86
 """)
         window._parsed_item = armour
         window._configure_trade_presets(armour)
         window._configure_quality(armour)
-        assert window.gem_quality_tag.isHidden()
+        assert not window.gem_quality_tag.isHidden()
+        assert window._selected_quality() == 21
 
         window.trade_preset_combo.setCurrentIndex(1)
         assert not window.gem_quality_tag.isHidden()
-        assert window._selected_quality() == 30
+        assert window._selected_quality() == 21
 
         accessory = parse_item_text("""Item Class: Rings
 Rarity: Rare
@@ -3137,6 +3138,18 @@ Item Level: 86
         window.trade_preset_combo.setCurrentIndex(1)
         assert not window.gem_quality_tag.isHidden()
         assert window._selected_quality() is None
+
+        accessory25 = replace(
+            accessory,
+            raw_text=accessory.raw_text + "\n25",
+            properties={**accessory.properties, "Quality": "+25%"},
+        )
+        window._parsed_item = accessory25
+        window._configure_trade_presets(accessory25)
+        window._configure_quality(accessory25)
+        assert not window.gem_quality_tag.isHidden()
+        assert window.gem_quality_edit.text() == "25"
+        assert window._selected_quality() == 25
 
         flask20 = parse_item_text("""Item Class: Utility Flasks
 Rarity: Magic
