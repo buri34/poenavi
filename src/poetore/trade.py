@@ -338,6 +338,12 @@ def apply_search_range(
         if (
             row.read_value is None
             or row.stat_id in discrete_socket_stats
+            or (
+                item is not None
+                and item.category == "cluster_jewel"
+                and row.ref == "Adds # Passive Skills"
+                and row.read_value in {2, 8}
+            )
             or row.option_value is not None
             or row.exact
             or row.inverted

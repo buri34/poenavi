@@ -1136,6 +1136,17 @@ def test_optimal_cluster_passive_count_does_not_include_next_integer(
         "value": {"max": float(passive_count)},
     }
 
+    ranged = apply_search_range(filters, 2, item)
+    passive = next(row for row in ranged if row.ref == "Adds # Passive Skills")
+    assert (passive.min_value, passive.max_value) == (
+        None, float(passive_count),
+    )
+    ranged_query = build_search_query(item, trade_base_type, ranged)["query"]
+    assert ranged_query["stats"][0]["filters"][0] == {
+        "id": "enchant.stat_3086156145",
+        "value": {"max": float(passive_count)},
+    }
+
 
 @pytest.mark.parametrize(("base_type", "english_base"), [
     ("クラスタージュエル (大)", "Large Cluster Jewel"),

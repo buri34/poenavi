@@ -2564,6 +2564,32 @@ Medium Cluster Jewel
         window.close()
 
 
+def test_large_cluster_eight_passives_stays_at_eight_in_ui_with_search_range(qapp):
+    window = PoetoreWindow(app_config={"poetore": {"search_stat_range": 10}})
+    try:
+        item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: ノーマル
+クラスタージュエル (大)
+--------
+アイテムレベル: 84
+--------
+パッシブスキルを8個追加する (enchant)
+ジュエルソケット2個がパッシブスキルに追加される (enchant)
+追加される通常パッシブスキルは付与: 物理ダメージが12%増加する (enchant)
+""")
+        window._trade_base_type = "Large Cluster Jewel"
+        filters = window._resolved_trade_filters(item, PRESET_FINISHED)
+        window._configure_special_filter_chips(item)
+        window._populate_stat_filters(filters)
+
+        assert window.cluster_passives_chip.values() == (None, 8.0)
+        selected = window._selected_special_chip_filters()
+        passive = next(row for row in selected if row.ref == "Adds # Passive Skills")
+        assert (passive.min_value, passive.max_value) == (None, 8.0)
+    finally:
+        window.close()
+
+
 def test_item_level_tag_is_editable_state_and_replaces_tree_filter(qapp):
     window = PoetoreWindow()
     try:
