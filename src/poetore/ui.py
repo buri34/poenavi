@@ -80,6 +80,31 @@ _UNIQUE_CANDIDATE_VIEWPORT_HEIGHT = (
     _UNIQUE_CANDIDATE_ROW_HEIGHT * _UNIQUE_CANDIDATE_VISIBLE_ROWS
     + _UNIQUE_CANDIDATE_ROW_SPACING * (_UNIQUE_CANDIDATE_VISIBLE_ROWS - 1)
 )
+_DISPLAY_SIZE_PROFILES = {
+    "small": {
+        "font": 12, "width": 720, "height": 1039,
+        "minimum_width": 680, "minimum_height": 620,
+        "mod_height": 230, "price_height": 434,
+        "button_v_padding": 5, "button_h_padding": 9,
+    },
+    "medium": {
+        "font": 14, "width": 840, "height": 1039,
+        "minimum_width": 760, "minimum_height": 620,
+        "mod_height": 250, "price_height": 434,
+        "button_v_padding": 6, "button_h_padding": 11,
+    },
+    "large": {
+        "font": 16, "width": 960, "height": 1039,
+        "minimum_width": 840, "minimum_height": 620,
+        "mod_height": 270, "price_height": 434,
+        "button_v_padding": 7, "button_h_padding": 13,
+    },
+}
+
+
+def normalize_result_font_size(value) -> str:
+    normalized = str(value or "small").casefold()
+    return normalized if normalized in _DISPLAY_SIZE_PROFILES else "small"
 _SPECIAL_CHIP_FILTER_IDS = {
     "property.map_tier", "property.area_level", "property.heist_wings",
     "property.base_percentile",
@@ -703,11 +728,11 @@ class _PoetoreTitleBar(QWidget):
         window.league_popup_button.clicked.connect(window.trade_league_combo.showPopup)
         layout.addWidget(window.league_popup_button)
         layout.addStretch()
-        close_button = QPushButton("×")
-        close_button.setToolTip("閉じる")
-        close_button.setFixedSize(28, 24)
-        close_button.clicked.connect(window.close)
-        layout.addWidget(close_button)
+        window.poetore_close_button = QPushButton("×")
+        window.poetore_close_button.setToolTip("閉じる")
+        window.poetore_close_button.setFixedSize(28, 24)
+        window.poetore_close_button.clicked.connect(window.close)
+        layout.addWidget(window.poetore_close_button)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -759,8 +784,12 @@ class PoetoreWindow(QWidget):
         # 安全なフォーカス先にする。各入力欄は必要な時だけ個別にフォーカスする。
         self.setFocusPolicy(Qt.StrongFocus)
         self.setWindowTitle("ぽえとれ")
-        self.resize(720, 1039)
-        self.setMinimumSize(680, 620)
+        self._result_font_size = normalize_result_font_size(
+            self._app_config.get("poetore", {}).get("result_font_size", "small")
+        )
+        profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
+        self.resize(profile["width"], profile["height"])
+        self.setMinimumSize(profile["minimum_width"], profile["minimum_height"])
         self.trade_league_combo = QComboBox()
         self.trade_league_combo.setEditable(True)
         # Private Leagueの直接入力は維持しつつ、ウィンドウ表示時やTab移動では
@@ -1193,7 +1222,7 @@ class PoetoreWindow(QWidget):
         # 行選択は使わない。Mod文章クリックはチェック切替だけを行い、
         # セルウィジェット（最小・最大欄）と選択背景の見た目が分離しないようにする。
         self.mod_filter_tree.setSelectionMode(QAbstractItemView.NoSelection)
-        self.mod_filter_tree.setMinimumHeight(230)
+        self.mod_filter_tree.setMinimumHeight(profile["mod_height"])
         mod_header = self.mod_filter_tree.header()
         mod_header.hide()
         mod_header.setSectionResizeMode(_MOD_COLUMN_CHECK, QHeaderView.Fixed)
@@ -1271,7 +1300,7 @@ class PoetoreWindow(QWidget):
         self.price_list.setRootIsDecorated(False)
         self.price_list.setAlternatingRowColors(True)
         self.price_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.price_list.setMinimumHeight(434)
+        self.price_list.setMinimumHeight(profile["price_height"])
         price_header = self.price_list.header()
         price_header.setSectionResizeMode(0, QHeaderView.Stretch)
         price_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
@@ -1280,7 +1309,7 @@ class PoetoreWindow(QWidget):
         resize_row.addStretch()
         resize_row.addWidget(QSizeGrip(self))
         panel_layout.addLayout(resize_row)
-        self._apply_poetore_style()
+        self.apply_result_display_size()
         self._trade_signals = _TradeSignals(self)
         self._trade_signals.completed.connect(self._search_completed)
         self._trade_signals.failed.connect(self._show_price_error)
@@ -1378,7 +1407,8 @@ class PoetoreWindow(QWidget):
 
     def _apply_poetore_style(self):
         """Awakenedの情報密度を、ぽえとれの黒＋紫テーマで表現する。"""
-        self.setStyleSheet("""
+        profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
+        style = """
             QWidget {
                 color: #db86ef;
                 font-family: "Segoe UI", sans-serif;
@@ -1633,7 +1663,74 @@ class PoetoreWindow(QWidget):
             QScrollBar::handle:vertical { background: rgba(219, 134, 239, 125); min-height: 26px; border-radius: 4px; }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
             QSizeGrip { background: transparent; }
-        """)
+        """
+        font = profile["font"]
+        font_sizes = {
+            10: max(10, font - 2),
+            11: max(11, font - 1),
+            12: font,
+            13: font + 1,
+            14: font + 2,
+            15: font + 3,
+        }
+        style = re.sub(
+            r"font-size: (10|11|12|13|14|15)px;",
+            lambda match: f"font-size: {font_sizes[int(match.group(1))]}px;",
+            style,
+        )
+        style = style.replace(
+            "padding: 5px 9px;",
+            f"padding: {profile['button_v_padding']}px "
+            f"{profile['button_h_padding']}px;",
+        )
+        self.setStyleSheet(style)
+
+    def _display_scale(self) -> float:
+        return _DISPLAY_SIZE_PROFILES[self._result_font_size]["font"] / 12
+
+    def _scaled_display_value(self, value: int) -> int:
+        return round(value * self._display_scale())
+
+    def apply_result_display_size(self):
+        """設定済みの小／中／大を既存の検索画面へ即時反映する。"""
+        selected = normalize_result_font_size(
+            self._app_config.get("poetore", {}).get("result_font_size", "small")
+        )
+        profile = _DISPLAY_SIZE_PROFILES[selected]
+        self._result_font_size = selected
+        self.setMinimumSize(profile["minimum_width"], profile["minimum_height"])
+        self.resize(profile["width"], profile["height"])
+        self.mod_filter_tree.setMinimumHeight(profile["mod_height"])
+        self.price_list.setMinimumHeight(profile["price_height"])
+        self.trade_league_combo.setFixedWidth(self._scaled_display_value(290))
+        self.league_popup_button.setFixedSize(
+            self._scaled_display_value(28), self._scaled_display_value(28)
+        )
+        self.poetore_close_button.setFixedSize(
+            self._scaled_display_value(28), self._scaled_display_value(24)
+        )
+        self.poe_ninja_currency_icon.setFixedSize(
+            self._scaled_display_value(28), self._scaled_display_value(28)
+        )
+        self.mod_filter_tree.setColumnWidth(
+            _MOD_COLUMN_CHECK, self._scaled_display_value(_MOD_CHECK_COLUMN_WIDTH)
+        )
+        self.mod_filter_tree.setColumnWidth(
+            _MOD_COLUMN_TIER, self._scaled_display_value(_MOD_TIER_COLUMN_WIDTH)
+        )
+        self.mod_filter_tree.setColumnWidth(
+            _MOD_COLUMN_TEXT, self._scaled_display_value(_MOD_TEXT_COLUMN_WIDTH)
+        )
+        for column in (_MOD_COLUMN_MIN, _MOD_COLUMN_MAX):
+            for index in range(self.mod_filter_tree.topLevelItemCount()):
+                editor = self.mod_filter_tree.itemWidget(
+                    self.mod_filter_tree.topLevelItem(index), column
+                )
+                if isinstance(editor, QLineEdit):
+                    editor.setFixedWidth(
+                        self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH)
+                    )
+        self._apply_poetore_style()
     def _toggle_mod_conditions(self):
         collapsed = self.mod_filter_tree.isVisible()
         self.mod_filter_tree.setVisible(not collapsed)
@@ -3257,7 +3354,10 @@ class PoetoreWindow(QWidget):
             row.setData(0, Qt.UserRole + 4, stat_filter)
             row.setData(0, Qt.UserRole + 5, stat_filter.enabled)
             row.setToolTip(_MOD_COLUMN_TEXT, summary)
-            row.setSizeHint(_MOD_COLUMN_TEXT, QSize(0, _MOD_ROW_HEIGHT))
+            row.setSizeHint(
+                _MOD_COLUMN_TEXT,
+                QSize(0, self._scaled_display_value(_MOD_ROW_HEIGHT)),
+            )
             self.mod_filter_tree.addTopLevelItem(row)
             if stat_filter.source_texts:
                 source_item = QTreeWidgetItem(row)
@@ -3341,14 +3441,18 @@ class PoetoreWindow(QWidget):
             editor = QLineEdit(value)
             editor.installEventFilter(self)
             editor.setPlaceholderText("最小")
-            editor.setFixedWidth(_MOD_VALUE_EDITOR_WIDTH)
+            editor.setFixedWidth(
+                self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH)
+            )
             editor.setEnabled(stat_filter.option_value is None)
             editor.textEdited.connect(self._mark_search_dirty)
             self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_MIN, editor)
             max_editor = QLineEdit(maximum)
             max_editor.installEventFilter(self)
             max_editor.setPlaceholderText("最大")
-            max_editor.setFixedWidth(_MOD_VALUE_EDITOR_WIDTH)
+            max_editor.setFixedWidth(
+                self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH)
+            )
             max_editor.setEnabled(stat_filter.option_value is None)
             max_editor.textEdited.connect(self._mark_search_dirty)
             self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_MAX, max_editor)
@@ -3399,7 +3503,8 @@ class PoetoreWindow(QWidget):
                 text_layout.addWidget(slider)
                 self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_TEXT, text_widget)
                 row.setSizeHint(
-                    _MOD_COLUMN_TEXT, QSize(0, _UNIQUE_ROLL_ROW_HEIGHT)
+                    _MOD_COLUMN_TEXT,
+                    QSize(0, self._scaled_display_value(_UNIQUE_ROLL_ROW_HEIGHT))
                 )
 
                 def sync_slider(
@@ -3564,6 +3669,7 @@ def show_poetore_window(owner, activate=True):
         )
         owner._poetore_window = window
     if isinstance(getattr(owner, "config", None), dict):
+        window.apply_result_display_size()
         window.refresh_trade_leagues()
     if activate:
         window.show_at_context()

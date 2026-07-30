@@ -145,6 +145,30 @@ class PoetoreSettingsDialog(QDialog):
         trade_layout.addWidget(league_note)
         basic_layout.addWidget(trade_group)
 
+        display_group = QGroupBox("検索結果画面")
+        display_form = QFormLayout(display_group)
+        self.result_font_size_combo = QComboBox()
+        self.result_font_size_combo.addItem("小（現在のサイズ）", "small")
+        self.result_font_size_combo.addItem("中", "medium")
+        self.result_font_size_combo.addItem("大", "large")
+        saved_result_font_size = str(
+            poetore.get("result_font_size", "small")
+        ).casefold()
+        result_font_index = self.result_font_size_combo.findData(
+            saved_result_font_size
+        )
+        self.result_font_size_combo.setCurrentIndex(
+            result_font_index if result_font_index >= 0 else 0
+        )
+        display_form.addRow("フォントサイズ:", self.result_font_size_combo)
+        display_note = QLabel(
+            "文字に合わせてボタンや入力欄、検索結果ウィンドウの大きさも調整します。"
+        )
+        display_note.setObjectName("resultFontSizeNote")
+        display_note.setWordWrap(True)
+        display_form.addRow("", display_note)
+        basic_layout.addWidget(display_group)
+
         window_group = QGroupBox("ウィンドウ設定（本体・共通UI）")
         window_layout = QVBoxLayout(window_group)
         self.opacity_slider = self._slider_row(
@@ -279,6 +303,10 @@ class PoetoreSettingsDialog(QDialog):
                 color: {POETORE_THEME.muted_text};
                 font-size: 11px;
             }}
+            QLabel#resultFontSizeNote {{
+                color: {POETORE_THEME.muted_text};
+                font-size: 11px;
+            }}
         """
 
     def showEvent(self, event):
@@ -356,6 +384,9 @@ class PoetoreSettingsDialog(QDialog):
         )
         poetore = dict(self.current_config.get("poetore", {}))
         poetore["league"] = self._league_selection_value()
+        poetore["result_font_size"] = (
+            self.result_font_size_combo.currentData() or "small"
+        )
         return {
             "startup": startup,
             "hotkeys": hotkeys,

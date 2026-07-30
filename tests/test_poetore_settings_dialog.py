@@ -82,6 +82,38 @@ def test_poetore_settings_league_choices_match_trade_window_and_allow_manual_inp
     dialog.close()
 
 
+def test_poetore_settings_saves_result_font_size():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(
+        current_config={"poetore": {"result_font_size": "medium"}}
+    )
+
+    assert dialog.result_font_size_combo.currentData() == "medium"
+    assert [
+        dialog.result_font_size_combo.itemData(index)
+        for index in range(dialog.result_font_size_combo.count())
+    ] == ["small", "medium", "large"]
+
+    dialog.result_font_size_combo.setCurrentIndex(
+        dialog.result_font_size_combo.findData("large")
+    )
+
+    assert dialog.get_settings()["poetore"]["result_font_size"] == "large"
+    note = dialog.findChild(QLabel, "resultFontSizeNote")
+    assert "ボタンや入力欄" in note.text()
+    dialog.close()
+
+
+def test_poetore_settings_defaults_unknown_result_font_size_to_small():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(
+        current_config={"poetore": {"result_font_size": "unknown"}}
+    )
+
+    assert dialog.result_font_size_combo.currentData() == "small"
+    dialog.close()
+
+
 def test_poetore_settings_rejects_duplicate_common_hotkeys():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(

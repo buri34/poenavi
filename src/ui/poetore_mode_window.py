@@ -461,6 +461,8 @@ class PoetoreModeWindow(QMainWindow):
             return
         self._apply_window_settings()
         self._apply_startup_position()
+        if getattr(self, "_poetore_window", None) is not None:
+            self._poetore_window.apply_result_display_size()
         self.hotkey_service.stop()
         self.stash_tab_scroll.stop()
         self.stash_tab_scroll = StashTabScrollController(

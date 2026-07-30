@@ -71,6 +71,48 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
         window.close()
 
 
+@pytest.mark.parametrize(
+    ("setting", "font_px", "width", "height", "minimum_width"),
+    (
+        ("small", 12, 720, 1039, 680),
+        ("medium", 14, 840, 1039, 760),
+        ("large", 16, 960, 1039, 840),
+    ),
+)
+def test_poetore_result_display_size_scales_window_and_controls(
+    qapp, setting, font_px, width, height, minimum_width,
+):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
+    try:
+        assert window._result_font_size == setting
+        assert window.width() == width
+        assert window.height() == height
+        assert window.minimumWidth() == minimum_width
+        assert f"font-size: {font_px}px" in window.styleSheet()
+        assert window.trade_league_combo.width() == round(290 * font_px / 12)
+        assert window.mod_filter_tree.minimumHeight() > 0
+        assert window.price_list.minimumHeight() > 0
+    finally:
+        window.close()
+
+
+def test_poetore_result_display_size_can_change_on_existing_window(qapp):
+    config = {"poetore": {"result_font_size": "small"}}
+    window = PoetoreWindow(app_config=config)
+    try:
+        config["poetore"]["result_font_size"] = "large"
+        window.apply_result_display_size()
+
+        assert window._result_font_size == "large"
+        assert window.width() == 960
+        assert window.height() == 1039
+        assert "font-size: 16px" in window.styleSheet()
+    finally:
+        window.close()
+
+
 def test_capture_error_dialog_uses_readable_dark_theme(qapp):
     window = PoetoreWindow()
     try:

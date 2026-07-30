@@ -51,7 +51,8 @@
     "stash_tab_scroll_enabled": true,
     "poetore": {
         "league": "auto",
-        "search_stat_range": 10
+        "search_stat_range": 10,
+        "result_font_size": "small"
     },
     "window_geometry": {
         "x": 2644,
