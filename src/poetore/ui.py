@@ -189,8 +189,8 @@ class _UniqueRollSlider(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         rect = self.rect().adjusted(0, 3, -1, -3)
-        painter.setPen(QPen(QColor("#505650"), 1))
-        painter.setBrush(QColor("#252925"))
+        painter.setPen(QPen(QColor("#5f5363"), 1))
+        painter.setBrush(QColor("#2a222d"))
         painter.drawRoundedRect(rect, 3, 3)
 
         active = self._preview
@@ -294,7 +294,7 @@ def _influence_chip_icon(label: str, active: bool) -> QIcon:
     result.fill(Qt.transparent)
     painter = QPainter(result)
     painter.setRenderHint(QPainter.Antialiasing)
-    painter.setPen(QColor("#f4ffed" if active else "#687064"))
+    painter.setPen(QColor("#f2e7f5" if active else "#766a79"))
     painter.drawText(QRect(0, 0, 16, 20), Qt.AlignCenter, "☑" if active else "☐")
     icon_path = Path(__file__).resolve().parents[2] / "assets" / "icons" / f"{label}.png"
     influence = QPixmap(str(icon_path))
@@ -655,7 +655,7 @@ class _SparklineWidget(QWidget):
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(QPen(QColor("#53604f"), 1, Qt.DashLine))
+        painter.setPen(QPen(QColor("#66566b"), 1, Qt.DashLine))
         middle = self.height() / 2
         painter.drawLine(0, round(middle), self.width(), round(middle))
         if len(self._points) < 2:
@@ -667,7 +667,7 @@ class _SparklineWidget(QWidget):
             x = index * (self.width() - 2) / (len(self._points) - 1) + 1
             y = 1 + (high - value) * (self.height() - 2) / spread
             polygon.append(QPointF(x, y))
-        color = "#79d65b" if self._points[-1] >= self._points[0] else "#ff6b6b"
+        color = "#db86ef" if self._points[-1] >= self._points[0] else "#ff6b6b"
         painter.setPen(QPen(QColor(color), 1.5))
         painter.drawPolyline(polygon)
 
@@ -1377,76 +1377,76 @@ class PoetoreWindow(QWidget):
         self.search_current_item()
 
     def _apply_poetore_style(self):
-        """Awakenedの情報密度を、ぽえなびの黒＋黄緑テーマで表現する。"""
+        """Awakenedの情報密度を、ぽえとれの黒＋紫テーマで表現する。"""
         self.setStyleSheet("""
             QWidget {
-                color: #b0ff7b;
+                color: #db86ef;
                 font-family: "Segoe UI", sans-serif;
                 font-size: 12px;
             }
             QFrame#poetorePanel {
                 background: rgba(14, 14, 14, 246);
-                border: 1px solid rgba(176, 255, 123, 120);
+                border: 1px solid rgba(219, 134, 239, 120);
                 border-radius: 5px;
             }
             QFrame#itemHeader {
                 background: rgba(5, 5, 5, 205);
-                border: 1px solid rgba(176, 255, 123, 80);
+                border: 1px solid rgba(219, 134, 239, 80);
                 border-radius: 4px;
             }
             QFrame#poeNinjaPricePanel {
-                background: rgba(22, 28, 20, 205);
-                border: 1px solid rgba(176, 255, 123, 65);
+                background: rgba(33, 24, 37, 205);
+                border: 1px solid rgba(219, 134, 239, 65);
                 border-radius: 4px;
             }
-            QLabel#poeNinjaPriceLabel { color: #91b87a; font-weight: 700; }
-            QLabel#poeNinjaPriceValue { color: #f4ffed; font-size: 14px; font-weight: 700; }
-            QLabel#poeNinjaPriceMultiplier { color: #f4ffed; font-size: 13px; }
-            QLabel#poeNinjaTrendLabel { color: #91b87a; font-size: 10px; }
+            QLabel#poeNinjaPriceLabel { color: #b9a9be; font-weight: 700; }
+            QLabel#poeNinjaPriceValue { color: #f2e7f5; font-size: 14px; font-weight: 700; }
+            QLabel#poeNinjaPriceMultiplier { color: #f2e7f5; font-size: 13px; }
+            QLabel#poeNinjaTrendLabel { color: #b9a9be; font-size: 10px; }
             QPushButton#poeNinjaOpenButton { padding: 3px 7px; }
             QPushButton#divineRateButton {
-                color: #f4ffed;
+                color: #f2e7f5;
                 padding: 2px 7px;
                 font-weight: 700;
-                border-color: rgba(176, 255, 123, 100);
+                border-color: rgba(219, 134, 239, 100);
             }
             QMenu#divineRateMenu {
                 background: #161616;
-                color: #f4ffed;
-                border: 1px solid rgba(176, 255, 123, 120);
+                color: #f2e7f5;
+                border: 1px solid rgba(219, 134, 239, 120);
                 padding: 4px;
             }
             QMenu#divineRateMenu::item { padding: 4px 18px 4px 10px; }
-            QMenu#divineRateMenu::item:selected { background: rgba(176, 255, 123, 45); }
+            QMenu#divineRateMenu::item:selected { background: rgba(219, 134, 239, 45); }
             QPushButton#leaguePopupButton {
-                color: #d8ffbd;
+                color: #ebd0f2;
                 padding: 0;
                 font-size: 11px;
-                border-color: rgba(176, 255, 123, 150);
+                border-color: rgba(219, 134, 239, 150);
             }
             QLabel#itemName {
-                color: #d8ffbd;
+                color: #ebd0f2;
                 font-size: 15px;
                 font-weight: 700;
             }
-            QLabel#itemBase { color: #91b87a; font-size: 11px; }
+            QLabel#itemBase { color: #b9a9be; font-size: 11px; }
             QLabel#sectionTitle {
-                color: #b0ff7b;
+                color: #db86ef;
                 font-weight: 700;
-                border-bottom: 1px solid rgba(176, 255, 123, 70);
+                border-bottom: 1px solid rgba(219, 134, 239, 70);
                 padding: 4px 2px;
             }
-            QLabel#priceStatus { color: #aab2a5; padding: 1px 2px; }
+            QLabel#priceStatus { color: #b9a9be; padding: 1px 2px; }
             QPushButton {
                 background: rgba(26, 26, 26, 225);
-                color: #b0ff7b;
-                border: 1px solid rgba(176, 255, 123, 150);
+                color: #db86ef;
+                border: 1px solid rgba(219, 134, 239, 150);
                 border-radius: 3px;
                 padding: 5px 9px;
             }
-            QPushButton:hover { background: rgba(55, 72, 46, 230); border-color: #d8ffbd; }
+            QPushButton:hover { background: rgba(56, 36, 64, 230); border-color: #ebd0f2; }
             QPushButton:pressed { background: #111; }
-            QPushButton:disabled { color: #52604c; border-color: #394136; }
+            QPushButton:disabled { color: #665a69; border-color: #463b49; }
             QPushButton#binaryToggle {
                 border-radius: 0;
                 padding: 4px 7px;
@@ -1454,91 +1454,91 @@ class PoetoreWindow(QWidget):
             QPushButton#binaryToggle:first-child { border-radius: 3px 0 0 3px; }
             QPushButton#binaryToggle:last-child { border-radius: 0 3px 3px 0; }
             QPushButton#binaryToggle:checked {
-                background: rgba(93, 145, 66, 225);
-                color: #f4ffed;
-                border-color: #d8ffbd;
+                background: rgba(126, 71, 139, 225);
+                color: #f2e7f5;
+                border-color: #ebd0f2;
                 font-weight: 700;
             }
             QPushButton#cycleToggle {
-                background: rgba(70, 105, 52, 210);
-                color: #f4ffed;
-                border: 1px solid #b0ff7b;
+                background: rgba(91, 53, 102, 210);
+                color: #f2e7f5;
+                border: 1px solid #db86ef;
                 min-width: 112px;
                 font-weight: 700;
             }
             QPushButton#cycleToggle[alert="true"] { color: #ff5757; }
             QPushButton#influenceChip {
                 background: rgba(20, 20, 20, 180);
-                color: #687064;
-                border: 1px dashed rgba(145, 155, 140, 150);
+                color: #766a79;
+                border: 1px dashed rgba(156, 137, 161, 150);
                 padding: 3px 7px;
                 font-weight: 700;
             }
             QPushButton#influenceChip[active="true"] {
-                background: rgba(70, 105, 52, 210);
-                color: #f4ffed;
-                border: 1px solid #b0ff7b;
+                background: rgba(91, 53, 102, 210);
+                color: #f2e7f5;
+                border: 1px solid #db86ef;
             }
             QFrame#numericFilterTag {
-                background: rgba(70, 105, 52, 210);
-                border: 1px solid #b0ff7b;
+                background: rgba(91, 53, 102, 210);
+                border: 1px solid #db86ef;
                 border-radius: 3px;
             }
             QFrame#numericFilterTag[active="false"] {
                 background: rgba(20, 20, 20, 180);
-                border: 1px dashed rgba(145, 155, 140, 150);
+                border: 1px dashed rgba(156, 137, 161, 150);
             }
             QPushButton#numericFilterToggle, QLineEdit#numericFilterEdit {
                 background: transparent;
-                color: #f4ffed;
+                color: #f2e7f5;
                 border: none;
                 padding: 0;
                 font-weight: 700;
             }
             QFrame#numericFilterTag[active="false"] QPushButton,
             QFrame#numericFilterTag[active="false"] QLineEdit,
-            QFrame#numericFilterTag[active="false"] QLabel { color: #687064; }
+            QFrame#numericFilterTag[active="false"] QLabel { color: #766a79; }
             QPushButton#readonlyFilterChip {
-                background: rgba(70, 105, 52, 210);
-                color: #f4ffed;
-                border: 1px solid #b0ff7b;
+                background: rgba(91, 53, 102, 210);
+                color: #f2e7f5;
+                border: 1px solid #db86ef;
                 padding: 3px 7px;
                 font-weight: 700;
             }
             QFrame#itemLevelTag {
-                background: rgba(70, 105, 52, 210);
-                border: 1px solid #b0ff7b;
+                background: rgba(91, 53, 102, 210);
+                border: 1px solid #db86ef;
                 border-radius: 3px;
             }
             QFrame#gemLevelTag {
-                background: rgba(70, 105, 52, 210);
-                border: 1px solid #b0ff7b;
+                background: rgba(91, 53, 102, 210);
+                border: 1px solid #db86ef;
                 border-radius: 3px;
             }
             QFrame#gemQualityTag {
-                background: rgba(70, 105, 52, 210);
-                border: 1px solid #b0ff7b;
+                background: rgba(91, 53, 102, 210);
+                border: 1px solid #db86ef;
                 border-radius: 3px;
             }
             QFrame#linksTag {
-                background: rgba(70, 105, 52, 210);
-                border: 1px solid #b0ff7b;
+                background: rgba(91, 53, 102, 210);
+                border: 1px solid #db86ef;
                 border-radius: 3px;
             }
             QFrame#itemLevelTag QLabel {
-                color: #f4ffed;
+                color: #f2e7f5;
                 font-weight: 700;
             }
             QPushButton#itemLevelToggle, QPushButton#gemLevelToggle, QPushButton#gemQualityToggle, QPushButton#linksToggle {
                 background: transparent;
-                color: #f4ffed;
+                color: #f2e7f5;
                 border: none;
                 padding: 0;
                 font-weight: 700;
             }
             QLineEdit#itemLevelEdit, QLineEdit#itemLevelMaxEdit, QLineEdit#gemLevelEdit, QLineEdit#gemQualityEdit, QLineEdit#linksEdit {
                 background: transparent;
-                color: #f4ffed;
+                color: #f2e7f5;
                 border: none;
                 padding: 0;
                 min-height: 20px;
@@ -1546,91 +1546,91 @@ class PoetoreWindow(QWidget):
             }
             QLineEdit#itemLevelEdit:focus, QLineEdit#itemLevelMaxEdit:focus, QLineEdit#gemLevelEdit:focus, QLineEdit#gemQualityEdit:focus, QLineEdit#linksEdit:focus {
                 border: none;
-                color: #d8ffbd;
+                color: #ebd0f2;
             }
             QFrame#itemLevelTag[active="false"] {
-                border: 1px dashed rgba(145, 155, 140, 150);
+                border: 1px dashed rgba(156, 137, 161, 150);
                 background: rgba(20, 20, 20, 180);
             }
             QFrame#gemLevelTag[active="false"] {
-                border: 1px dashed rgba(145, 155, 140, 150);
+                border: 1px dashed rgba(156, 137, 161, 150);
                 background: rgba(20, 20, 20, 180);
             }
             QFrame#gemQualityTag[active="false"] {
-                border: 1px dashed rgba(145, 155, 140, 150);
+                border: 1px dashed rgba(156, 137, 161, 150);
                 background: rgba(20, 20, 20, 180);
             }
             QFrame#linksTag[active="false"] {
-                border: 1px dashed rgba(145, 155, 140, 150);
+                border: 1px dashed rgba(156, 137, 161, 150);
                 background: rgba(20, 20, 20, 180);
             }
             QFrame#itemLevelTag[active="false"] QPushButton,
             QFrame#itemLevelTag[active="false"] QLineEdit,
             QFrame#itemLevelTag[active="false"] QLabel {
-                color: #687064;
+                color: #766a79;
             }
             QFrame#gemLevelTag[active="false"] QPushButton,
             QFrame#gemLevelTag[active="false"] QLineEdit {
-                color: #687064;
+                color: #766a79;
             }
             QFrame#gemQualityTag[active="false"] QPushButton,
             QFrame#gemQualityTag[active="false"] QLineEdit {
-                color: #687064;
+                color: #766a79;
             }
             QFrame#linksTag[active="false"] QPushButton,
             QFrame#linksTag[active="false"] QLineEdit {
-                color: #687064;
+                color: #766a79;
             }
             QPushButton#primaryButton {
-                background: rgba(93, 145, 66, 225);
-                color: #f4ffed;
+                background: rgba(126, 71, 139, 225);
+                color: #f2e7f5;
                 font-weight: 700;
                 min-width: 76px;
             }
             QComboBox, QLineEdit {
                 background: rgba(25, 25, 25, 235);
-                color: #d8ffbd;
-                border: 1px solid rgba(176, 255, 123, 105);
+                color: #ebd0f2;
+                border: 1px solid rgba(219, 134, 239, 105);
                 border-radius: 3px;
                 padding: 4px 6px;
                 min-height: 20px;
-                selection-background-color: rgba(112, 164, 79, 220);
+                selection-background-color: rgba(126, 76, 139, 220);
             }
-            QComboBox:hover, QLineEdit:focus { border-color: #b0ff7b; }
+            QComboBox:hover, QLineEdit:focus { border-color: #db86ef; }
             QComboBox::drop-down { border: none; width: 18px; }
             QComboBox QAbstractItemView {
                 background: #1b1b1b;
-                color: #d8ffbd;
-                border: 1px solid #6f9b55;
-                selection-background-color: #557d3e;
+                color: #ebd0f2;
+                border: 1px solid #9c5eaa;
+                selection-background-color: #70427a;
             }
             QTreeWidget {
                 background: rgba(18, 18, 18, 222);
-                alternate-background-color: rgba(29, 36, 26, 205);
-                color: #d8ded4;
-                border: 1px solid rgba(176, 255, 123, 65);
+                alternate-background-color: rgba(35, 26, 39, 205);
+                color: #e2d8e5;
+                border: 1px solid rgba(219, 134, 239, 65);
                 border-radius: 3px;
-                gridline-color: rgba(176, 255, 123, 35);
+                gridline-color: rgba(219, 134, 239, 35);
                 outline: none;
             }
-            QTreeWidget::item { padding: 4px 2px; border-bottom: 1px solid rgba(176, 255, 123, 24); }
-            QTreeWidget::item:selected { background: rgba(112, 164, 79, 125); color: white; }
+            QTreeWidget::item { padding: 4px 2px; border-bottom: 1px solid rgba(219, 134, 239, 24); }
+            QTreeWidget::item:selected { background: rgba(126, 76, 139, 125); color: white; }
             QScrollArea#uniqueCandidateScroll,
             QScrollArea#uniqueCandidateScroll > QWidget > QWidget,
             QWidget#uniqueCandidateContainer {
                 background: #121212;
             }
             QHeaderView::section {
-                background: rgba(34, 38, 32, 245);
-                color: #b0ff7b;
+                background: rgba(39, 29, 43, 245);
+                color: #db86ef;
                 border: none;
-                border-right: 1px solid rgba(176, 255, 123, 45);
-                border-bottom: 1px solid rgba(176, 255, 123, 70);
+                border-right: 1px solid rgba(219, 134, 239, 45);
+                border-bottom: 1px solid rgba(219, 134, 239, 70);
                 padding: 5px 4px;
                 font-weight: 600;
             }
             QScrollBar:vertical { background: #181818; width: 10px; margin: 0; }
-            QScrollBar::handle:vertical { background: rgba(176, 255, 123, 125); min-height: 26px; border-radius: 4px; }
+            QScrollBar::handle:vertical { background: rgba(219, 134, 239, 125); min-height: 26px; border-radius: 4px; }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
             QSizeGrip { background: transparent; }
         """)
@@ -2044,7 +2044,7 @@ class PoetoreWindow(QWidget):
                     ))
                     layout.addWidget(icon)
                 label = QLabel(text)
-                label.setStyleSheet("color: #f4ffed; background: transparent;")
+                label.setStyleSheet("color: #f2e7f5; background: transparent;")
                 layout.addWidget(label)
             action.setDefaultWidget(row)
             self.divine_rate_menu.addAction(action)
@@ -2148,11 +2148,11 @@ class PoetoreWindow(QWidget):
         message.setStyleSheet("""
             QMessageBox {
                 background-color: #111111;
-                color: #f4ffed;
+                color: #f2e7f5;
             }
             QMessageBox QLabel {
                 background-color: transparent;
-                color: #f4ffed;
+                color: #f2e7f5;
                 font-family: "Segoe UI", sans-serif;
                 font-size: 12px;
             }
@@ -2160,8 +2160,8 @@ class PoetoreWindow(QWidget):
                 min-width: 54px;
                 padding: 5px 12px;
                 background-color: #1a1a1a;
-                color: #b0ff7b;
-                border: 1px solid #b0ff7b;
+                color: #db86ef;
+                border: 1px solid #db86ef;
                 border-radius: 3px;
                 font-weight: 700;
             }
@@ -3269,9 +3269,9 @@ class PoetoreWindow(QWidget):
                 source_layout.setSpacing(2)
                 source_widget.setStyleSheet(
                     "QWidget#modSourceDetails {"
-                    " color: #aeb8aa;"
-                    " background: rgba(24, 29, 22, 220);"
-                    " border-left: 2px solid rgba(176, 255, 123, 90);"
+                    " color: #c5b8c9;"
+                    " background: rgba(31, 23, 34, 220);"
+                    " border-left: 2px solid rgba(219, 134, 239, 90);"
                     "}"
                 )
                 for source_index, source_text in enumerate(stat_filter.source_texts):
@@ -3281,7 +3281,7 @@ class PoetoreWindow(QWidget):
                         else "元Mod"
                     )
                     heading.setStyleSheet(
-                        "color: #788174; font-style: italic;"
+                        "color: #8d7d92; font-style: italic;"
                     )
                     source_layout.addWidget(heading)
                     source_label = QLabel(source_text)

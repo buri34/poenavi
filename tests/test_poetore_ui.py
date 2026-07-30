@@ -85,8 +85,8 @@ def test_capture_error_dialog_uses_readable_dark_theme(qapp):
             "もう一度 Alt+D を押してください。"
         )
         assert "background-color: #111111" in style
-        assert "color: #f4ffed" in style
-        assert "color: #b0ff7b" in style
+        assert "color: #f2e7f5" in style
+        assert "color: #db86ef" in style
         assert "min-width: 290px" not in style
         assert dialog.standardButtons() == QMessageBox.StandardButton.Ok
         dialog.ensurePolished()
@@ -675,7 +675,8 @@ def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
             for index in range(window.mod_filter_tree.columnCount())
         ]
         assert "rgba(14, 14, 14, 246)" in window.styleSheet()
-        assert "#b0ff7b" in window.styleSheet()
+        assert "#db86ef" in window.styleSheet()
+        assert "#b0ff7b" not in window.styleSheet()
     finally:
         window.close()
 
