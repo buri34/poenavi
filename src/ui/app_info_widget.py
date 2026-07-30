@@ -11,7 +11,12 @@ from src.ui.app_theme import AppTheme
 class AppInfoWidget(QWidget):
     """アプリ情報を一元管理し、呼び出し元のテーマで表示する。"""
 
-    def __init__(self, theme: AppTheme, parent=None):
+    def __init__(
+        self,
+        theme: AppTheme,
+        parent=None,
+        update_check_callback=None,
+    ):
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -28,6 +33,18 @@ class AppInfoWidget(QWidget):
             f"color: {theme.text}; font-size: 18px; font-weight: bold;"
         )
         layout.addWidget(version_label)
+        self.update_button = QPushButton("アップデートを確認")
+        self.update_button.setObjectName("appInfoUpdateButton")
+        self.update_button.setStyleSheet(
+            f"QPushButton {{ background: {theme.accent}; color: #101010; "
+            "border: none; border-radius: 6px; padding: 10px 20px; "
+            "font-size: 13px; font-weight: bold; }"
+        )
+        self.update_button.setCursor(Qt.PointingHandCursor)
+        self.update_button.setEnabled(update_check_callback is not None)
+        if update_check_callback is not None:
+            self.update_button.clicked.connect(update_check_callback)
+        layout.addWidget(self.update_button)
         layout.addWidget(self._link_button(
             "GitHub（最新版のダウンロード）",
             "https://github.com/buri34/poenavi/releases",

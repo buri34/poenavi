@@ -11,7 +11,7 @@ from src.update.qt_controller import UpdateController
 from src.utils.config_manager import ConfigManager
 
 
-def run_startup_update_gate(config: dict, parent=None) -> bool:
+def _run_update_gate(config: dict, parent=None, manual: bool = False) -> bool:
     """更新確認を完了し、通常起動を続ける場合はTrueを返す。"""
     controller = UpdateController(parent)
     check_loop = QEventLoop()
@@ -27,15 +27,31 @@ def run_startup_update_gate(config: dict, parent=None) -> bool:
 
     controller.check_finished.connect(on_finished)
     controller.check_failed.connect(on_failed)
-    QTimer.singleShot(0, lambda: controller.check(False))
+    QTimer.singleShot(0, lambda: controller.check(manual))
     check_loop.exec()
     controller.check_finished.disconnect(on_finished)
     controller.check_failed.disconnect(on_failed)
 
     release = result["release"]
     if release is None:
+        if manual:
+            if result["error"]:
+                QMessageBox.warning(
+                    parent,
+                    "アップデート",
+                    f"更新を確認できませんでした。\n{result['error']}",
+                )
+            else:
+                QMessageBox.information(
+                    parent,
+                    "アップデート",
+                    "最新バージョンです。",
+                )
         return True
-    if config.get("notified_update_version") == release.version:
+    if (
+        not manual
+        and config.get("notified_update_version") == release.version
+    ):
         return True
 
     config["notified_update_version"] = release.version
@@ -103,3 +119,13 @@ def run_startup_update_gate(config: dict, parent=None) -> bool:
         QMessageBox.critical(parent, "アップデート", str(exc))
         return True
     return False
+
+
+def run_startup_update_gate(config: dict, parent=None) -> bool:
+    """起動時の自動更新確認を行う。"""
+    return _run_update_gate(config, parent, manual=False)
+
+
+def run_manual_update_check(config: dict, parent=None) -> bool:
+    """ユーザー操作による更新確認を行い、同じ版の再通知も許可する。"""
+    return _run_update_gate(config, parent, manual=True)

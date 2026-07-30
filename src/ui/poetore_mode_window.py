@@ -446,7 +446,11 @@ class PoetoreModeWindow(QMainWindow):
     def open_settings(self):
         from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 
-        dialog = PoetoreSettingsDialog(self, self.config)
+        dialog = PoetoreSettingsDialog(
+            self,
+            self.config,
+            update_check_callback=lambda: self._check_for_updates(dialog),
+        )
         if not dialog.exec():
             return
         self.config.update(dialog.get_settings())
@@ -462,6 +466,14 @@ class PoetoreModeWindow(QMainWindow):
         self._start_hotkeys()
         self._update_capture_hint()
         self.refresh_currency_rate()
+
+    def _check_for_updates(self, parent=None):
+        """アプリ情報タブから、通知済みバージョンも含めて手動確認する。"""
+        from src.update.startup_gate import run_manual_update_check
+
+        self.config = ConfigManager.load_config()
+        if not run_manual_update_check(self.config, parent or self):
+            QApplication.instance().quit()
 
     def _ensure_cheat_sheet_overlay(self):
         from src.ui.cheat_sheets import CheatSheetOverlay

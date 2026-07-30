@@ -27,9 +27,15 @@ from src.utils.global_hotkeys import find_duplicate_hotkeys
 
 
 class PoetoreSettingsDialog(QDialog):
-    def __init__(self, parent=None, current_config=None):
+    def __init__(
+        self,
+        parent=None,
+        current_config=None,
+        update_check_callback=None,
+    ):
         super().__init__(parent)
         self.current_config = current_config or {}
+        self.update_check_callback = update_check_callback
         self.setWindowTitle("設定")
         self.setMinimumSize(540, 620)
         self.resize(560, 760)
@@ -151,7 +157,13 @@ class PoetoreSettingsDialog(QDialog):
         basic_scroll.setFrameShape(QScrollArea.NoFrame)
         basic_scroll.setWidget(basic_tab)
         tabs.addTab(basic_scroll, "基本設定")
-        tabs.addTab(AppInfoWidget(POETORE_THEME), "アプリ情報")
+        tabs.addTab(
+            AppInfoWidget(
+                POETORE_THEME,
+                update_check_callback=self.update_check_callback,
+            ),
+            "アプリ情報",
+        )
         root.addWidget(tabs)
 
         buttons = QHBoxLayout()

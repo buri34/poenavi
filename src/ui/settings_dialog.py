@@ -1599,13 +1599,19 @@ class GemShopSearchTermOverridesDialog(QWidget):
 
 
 class SettingsDialog(QDialog):
-    def __init__(self, parent=None, current_config=None):
+    def __init__(
+        self,
+        parent=None,
+        current_config=None,
+        update_check_callback=None,
+    ):
         super().__init__(parent)
         self.setWindowTitle("設定")
         self.resize(630, 600)
         self.setStyleSheet(Styles.MAIN_WINDOW)
         
         self.current_config = current_config or {}
+        self.update_check_callback = update_check_callback
         self.hotkeys = self.current_config.get("hotkeys", {
             "start_stop": "F7",
             "reset": "F8",
@@ -2327,7 +2333,10 @@ class SettingsDialog(QDialog):
         tabs.addTab(zone_tab, "エリア情報")
 
         # === アプリ情報タブ（ぽえとれ設定と共通） ===
-        about_tab = AppInfoWidget(POENAVI_THEME)
+        about_tab = AppInfoWidget(
+            POENAVI_THEME,
+            update_check_callback=self.update_check_callback,
+        )
         self.app_disclaimer_label = about_tab.disclaimer_label
 
         term_review_tab = QWidget()

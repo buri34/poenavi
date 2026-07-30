@@ -27,3 +27,21 @@ def test_patreon_support_button_opens_configured_url(monkeypatch, qapp):
 
     assert opened_urls == ["https://www.patreon.com/cw/Buri8857"]
     dialog.close()
+
+
+def test_app_information_update_button_uses_injected_callback(qapp):
+    calls = []
+    dialog = SettingsDialog(
+        current_config={},
+        update_check_callback=lambda: calls.append("checked"),
+    )
+
+    button = dialog.findChild(QPushButton, "appInfoUpdateButton")
+    assert button is not None
+    assert button.text() == "アップデートを確認"
+    assert button.isEnabled()
+
+    button.click()
+
+    assert calls == ["checked"]
+    dialog.close()

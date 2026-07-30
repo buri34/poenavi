@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from PySide6.QtWidgets import QApplication, QDialog, QTabWidget
+from PySide6.QtWidgets import QApplication, QDialog, QPushButton, QTabWidget
 
 from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 
@@ -69,4 +69,22 @@ def test_poetore_settings_rejects_duplicate_common_hotkeys():
     assert dialog.result() != QDialog.Accepted
     warning.assert_called_once()
     assert "f5" in warning.call_args.args[2].casefold()
+    dialog.close()
+
+
+def test_poetore_app_information_update_button_uses_injected_callback():
+    QApplication.instance() or QApplication([])
+    calls = []
+    dialog = PoetoreSettingsDialog(
+        current_config={},
+        update_check_callback=lambda: calls.append("checked"),
+    )
+
+    button = dialog.findChild(QPushButton, "appInfoUpdateButton")
+    assert button is not None
+    assert button.isEnabled()
+
+    button.click()
+
+    assert calls == ["checked"]
     dialog.close()

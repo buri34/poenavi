@@ -67,6 +67,18 @@ class ConfigManagerTest(unittest.TestCase):
         self.assertEqual(migrated["startup"]["preferred_mode"], "poetore")
         self.assertFalse(migrated["startup"]["show_mode_selector"])
 
+    def test_schema_v9_removes_obsolete_setup_completed_flag(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 8,
+            "setup_completed": True,
+        })
+
+        self.assertNotIn("setup_completed", migrated)
+        self.assertEqual(
+            migrated["schemaVersion"],
+            ConfigManager.CURRENT_SCHEMA_VERSION,
+        )
+
     def test_schema_v3_adds_standard_mode_without_changing_existing_geometry(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 2,

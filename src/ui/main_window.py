@@ -633,8 +633,8 @@ class MainWindow(QMainWindow):
         # エリアメモ導入案内（全モード共通で一度だけ）
         self._show_area_note_migration_notice_once()
 
-        # 初回起動チェック（ポップアップ + ガイドエリア案内）
-        self._check_first_run()
+        # 現在のPoEバージョンに対応するログが未設定なら案内
+        self._show_missing_log_notice()
         
         # 全ウィジェットのマウスイベントを横取りしてリサイズ処理
         from PySide6.QtWidgets import QApplication
@@ -861,11 +861,10 @@ class MainWindow(QMainWindow):
             return
         QApplication.instance().quit()
     
-    def _check_first_run(self):
+    def _show_missing_log_notice(self):
         """現在のPoEバージョンに対応するログファイル設定案内"""
         client_log_paths = self.config.get("client_log_paths", {})
         log_path = client_log_paths.get(self.poe_version, "")
-        is_first_run = not self.config.get("setup_completed", False)
         poe_label = get_poe_label(self.poe_version)
 
         if not log_path:
@@ -887,7 +886,6 @@ class MainWindow(QMainWindow):
             )
             msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             msg.exec()
-            # setup_completedフラグはログパス設定時に立てる
 
             self.guide_text_label.setText(
                 '<div style="padding: 15px;">'
@@ -4265,7 +4263,13 @@ class MainWindow(QMainWindow):
         overlay.toggle()
     
     def open_settings(self):
-        dialog = SettingsDialog(self, self.config)
+        dialog = SettingsDialog(
+            self,
+            self.config,
+            update_check_callback=lambda: self._check_for_updates_from_settings(
+                dialog
+            ),
+        )
         if dialog.exec():
             self._set_timer_ready(False)
             # 設定保存
@@ -4291,12 +4295,9 @@ class MainWindow(QMainWindow):
             if log_path:
                 self.log_watcher.set_log_path(log_path)
                 self.log_watcher.start()
-                # PoE1ルート未選択なら、初回セットアップ完了済みでもPoE1ログ設定時に表示する
+                # PoE1ルート未選択なら、PoE1ログ設定時に表示する
                 if active_version == POE1 and not self.config.get("poe1_route_selected", False):
                     self._show_route_selection_dialog()
-                if not self.config.get("setup_completed"):
-                    self.config["setup_completed"] = True
-                    ConfigManager.save_config(self.config)
                 # ログファイル未設定メッセージをクリア
                 self.guide_text_label.setText("")
             
@@ -4388,6 +4389,14 @@ class MainWindow(QMainWindow):
             zone_id = self._get_zone_id(self.current_zone)
             visit_num = self.zone_visit_counts.get(self.current_zone, 1)
             self._update_guide_and_map(self.current_zone, zone_id, visit_num)
+
+    def _check_for_updates_from_settings(self, parent):
+        """設定のアプリ情報タブから、通知済みバージョンも含めて確認する。"""
+        from src.update.startup_gate import run_manual_update_check
+
+        self.config = ConfigManager.load_config()
+        if not run_manual_update_check(self.config, parent):
+            QApplication.instance().quit()
 
     def _main_window_flags(self):
         return _with_optional_always_on_top(Qt.FramelessWindowHint, self)
