@@ -2,6 +2,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QApplication
 
 import main
@@ -69,6 +70,22 @@ class AppModeTest(unittest.TestCase):
         dialog._accept_selection()
 
         self.assertEqual(dialog.selected_mode, POETORE_MODE)
+
+    def test_mode_icons_have_transparent_corners(self):
+        for icon_name in ("icon.ico", "icon2.ico"):
+            pixmap = QPixmap(AppModeSelectionDialog._app_icon_path(icon_name))
+            self.assertFalse(pixmap.isNull())
+            image = pixmap.toImage()
+            corners = (
+                (0, 0),
+                (image.width() - 1, 0),
+                (0, image.height() - 1),
+                (image.width() - 1, image.height() - 1),
+            )
+            self.assertTrue(
+                all(image.pixelColor(x, y).alpha() < 64 for x, y in corners),
+                icon_name,
+            )
 
     def test_update_gate_runs_before_mode_selection(self):
         events = []
