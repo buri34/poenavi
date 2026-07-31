@@ -3396,11 +3396,17 @@ Large Cluster Jewel
 --------
 Item Level: {item_level}
 """)
+        window._parsed_item = item
+        window._trade_base_type = "Large Cluster Jewel"
+        window._configure_trade_presets(item)
         window._configure_item_level(item)
 
         assert window.item_level_edit.text() == minimum
         assert not window.item_level_max_edit.isHidden()
         assert window.item_level_max_edit.text() == maximum
+        assert window._selected_item_level_range() == (None, None)
+
+        window.trade_preset_combo.setCurrentIndex(1)
         assert window._selected_item_level_range() == (
             int(minimum), int(maximum) if maximum else None,
         )

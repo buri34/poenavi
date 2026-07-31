@@ -1326,6 +1326,40 @@ Item Level: 72
     assert query["filters"]["misc_filters"]["filters"]["ilvl"] == {"min": 68.0, "max": 74.0}
 
 
+def test_rare_cluster_notables_are_visible_off_for_finished_and_absent_from_base():
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: レア
+燦爛たる創傷
+クラスタージュエル (中)
+--------
+アイテムレベル: 83
+--------
+パッシブスキルを4個追加する (enchant)
+--------
+{ プレフィックスモッド「特殊な」 (ティア: 1) }
+パッシブスキルを1個追加: 優位の主張
+{ プレフィックスモッド「特殊な」 (ティア: 1) — ライフ }
+パッシブスキルを1個追加: 高くそびえる脅威
+""")
+
+    finished = resolve_trade_stat_filters(item, PRESET_FINISHED, "Medium Cluster Jewel")
+    notables = {
+        row.ref: row for row in finished
+        if row.ref in {
+            "1 Added Passive Skill is Assert Dominance",
+            "1 Added Passive Skill is Towering Threat",
+        }
+    }
+    assert set(notables) == {
+        "1 Added Passive Skill is Assert Dominance",
+        "1 Added Passive Skill is Towering Threat",
+    }
+    assert all(not row.enabled for row in notables.values())
+
+    base = resolve_trade_stat_filters(item, PRESET_BASE, "Medium Cluster Jewel")
+    assert not any(row.ref in notables for row in base)
+
+
 @pytest.mark.parametrize(("base_type", "trade_base_type", "passive_count"), [
     ("クラスタージュエル (小)", "Small Cluster Jewel", 2),
     ("クラスタージュエル (大)", "Large Cluster Jewel", 8),
@@ -3475,7 +3509,9 @@ def test_option_stat_query_does_not_include_numeric_bounds():
     assert base_effect.option_value == 43
     assert base_effect.min_value == 15
 
-    query = build_search_query(item, stat_filters=(base_effect,))["query"]
+    query = build_search_query(
+        item, stat_filters=(replace(base_effect, enabled=True),),
+    )["query"]
     sent = query["stats"][0]["filters"][0]
     assert sent == {
         "id": "enchant.stat_3948993189",
@@ -4525,10 +4561,11 @@ def test_atzoatl_obstructed_room_requires_open_explosives():
     assert rows[0].enabled is False
 
 
-def test_cluster_is_dedicated_and_flask_tincture_ilvl_is_initially_disabled():
+def test_cluster_uses_finished_and_base_presets_and_flask_tincture_ilvl_is_disabled():
     cluster = ParsedItem("Cluster Jewels", "Rare", "Test", "Large Cluster Jewel",
                          "cluster_jewel", item_level=84)
-    assert uses_dedicated_exact_preset(cluster)
+    assert not uses_dedicated_exact_preset(cluster)
+    assert available_trade_presets(cluster) == (PRESET_FINISHED, PRESET_BASE)
     for category, item_class, base in (
         ("flask", "Utility Flasks", "Granite Flask"),
         ("tincture", "Tinctures", "Prismatic Tincture"),

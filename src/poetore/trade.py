@@ -82,7 +82,7 @@ CONSUMABLE_CRAFTABLE_CATEGORIES = {
 NON_CRAFTABLE_CATEGORIES = {"gem", "flask", "currency", "divination_card", "corpse"}
 DEDICATED_EXACT_CATEGORIES = {
     "gem", "captured_beast", "map", "memory_line", "invitation",
-    "heist_contract", "heist_blueprint", "charm", "cluster_jewel", "corpse",
+    "heist_contract", "heist_blueprint", "charm", "corpse",
 }
 PRESET_FINISHED = "finished"
 PRESET_BASE = "base"
@@ -1357,6 +1357,13 @@ def preset_item_level_filter(
         rows = _base_item_filters(item, trade_base_type)
     elif _is_unique(item):
         rows = _unique_exception_filters(item)
+    elif item.category == "cluster_jewel":
+        # Awakenedの完成品（Pseudo）検索ではMod出現帯を表示するが
+        # 初期OFF。ベース検索では同じ帯を初期ONにする。
+        rows = tuple(
+            replace(row, enabled=False)
+            for row in _dedicated_exact_identity_filters(item)
+        )
     elif uses_dedicated_exact_preset(item) and item.category not in {
         "gem", "captured_beast",
     }:

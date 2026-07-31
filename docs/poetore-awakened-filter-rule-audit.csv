@@ -38,7 +38,7 @@ I21a,ilvl,通常装備の完成品,条件を表示するが初期OFF,表示・�
 I21b,ilvl,通常装備のExact／クラフトベース,条件を表示して初期ON,プリセット切替時に初期ONでAPIへ送信,準拠,維持,,create-item-filters.ts:342-343,tests:test_base_preset_keeps_item_level_enabled
 I21c,ilvl,通常装備の87以上,検索下限を86へ丸める,同じ,準拠,維持,,create-item-filters.ts:341-343,tests:test_finished_rare_equipment_item_level_is_visible_but_disabled
 I21d,ilvl,通常装備の表示と結果列,検索条件OFFでも読み取ったilvl表示は維持,検索条件と結果列を分離して維持,準拠,維持,,create-item-filters.ts:320-345,tests:test_finished_rare_equipment_item_level_is_visible_but_disabled
-I22,ilvl,Cluster Jewel,1-49・50-67・68-74・75-83・84以上へ帯化,同じ帯へ正規化,準拠,維持,,create-item-filters.ts:333-338,tests:test_cluster_jewel_item_level_is_normalized_to_awakened_bracket
+I22,ilvl,Cluster Jewel,1-49・50-67・68-74・75-83・84以上へ帯化。完成品は表示・初期OFF、ベースは初期ON,同じ帯とプリセット別初期状態,準拠,維持,,create-item-filters.ts:333-338,tests:test_cluster_item_level_tag_uses_awakened_bracket
 I23,ilvl,Flask・Tincture,表示するが初期OFF,同じ,準拠,維持,,create-item-filters.ts:340-344,tests:test_cluster_is_dedicated_and_flask_tincture_ilvl_is_initially_disabled
 I24,ilvl,Map・Jewel・Heist・Memory・Relic等,ilvl条件を出さない,主要カテゴリで除外,準拠,維持,,create-item-filters.ts:320-332,tests:test_all_map_variants_never_send_item_level
 I25,ilvl,未鑑定Watcher's Eye,現在ilvlを初期ON,同じ,準拠,維持,,create-item-filters.ts:348-354,tests:test_unique_item_level_exceptions_match_awakened
@@ -101,6 +101,7 @@ C01e,Cluster,5パッシブ,5完全一致で初期ON,同じ,準拠,維持,,create
 C01f,Cluster,6・10・11・12パッシブ,現在値以上で初期ON,同じ,準拠,維持,,create-stat-filters.ts:496-502,trade.py:cluster_jewel分岐
 C01g,Cluster,8パッシブ,最大8で初期ON,同じ,準拠,維持,,create-stat-filters.ts:496-505,tests:test_optimal_cluster_passive_count_does_not_include_next_integer
 C01h,Cluster,9パッシブ,Awakenedは最大9,ぽえとれはユーザー判断で最小9,独自仕様,9以上を維持,維持,create-stat-filters.ts:496-505,tests:test_nine_passive_large_cluster_searches_nine_or_more
+C01i,Cluster,ノータブルMod,完成品検索で表示・初期OFF、ベース検索で除外,同じ,準拠,維持,,create-presets.ts:56-60・create-stat-filters.ts:141-180,tests:test_rare_cluster_notables_are_visible_off_for_finished_and_absent_from_base
 C02,Flask,Enchant,Enkindling使用時以外のHarvest/Instilling Enchantを隠してOFF,Enkindling使用時だけEnchantを表示・ON,準拠,維持,,create-stat-filters.ts:511-518,tests:test_dedicated_exact_magic_flask_hides_instilling_enchantment・test_dedicated_exact_magic_flask_keeps_enkindling_enchantment
 C03,Flask,Charge Recovery hybrid,Charge RecoveryありEffectなしならEffect条件をNOT追加,同じ,準拠,維持,,pseudo/flasks.ts:13-27,tests:test_flask_hybrid_cluster_and_special_area_rules
 C04,Anointment,Amulet・Ring,TalismanはON。非Corrupted/非Mirroredで最高Oilが金銀以外なら隠してOFF,同じ価値Oil規則,準拠,維持,,pseudo/anointments.ts:45-57,tests:test_modifiable_amulet_shows_anointments_using_valuable_oils
