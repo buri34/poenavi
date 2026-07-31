@@ -925,10 +925,11 @@ def _dedicated_exact_identity_filters(item: ParsedItem) -> tuple[TradeStatFilter
             and item.category not in excluded_ilvl):
         if item.category == "cluster_jewel":
             minimum = max(value for value in (1, 50, 68, 75, 84) if value <= item.item_level)
-            maximum = next((value for value in (49, 67, 74, 100) if value >= item.item_level), 100)
+            maximum = next((value for value in (49, 67, 74) if value >= item.item_level), None)
             filters.append(TradeStatFilter(
                 "property.item_level", "アイテムレベル帯", float(minimum), "base", True,
-                max_value=float(maximum), selection_reason="Cluster JewelのMod出現帯へ正規化",
+                max_value=float(maximum) if maximum is not None else None,
+                selection_reason="Cluster JewelのMod出現帯へ正規化",
             ))
         else:
             filters.append(TradeStatFilter(
@@ -949,10 +950,11 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
     if item.item_level is not None:
         if item.category == "cluster_jewel":
             minimum = max(value for value in (1, 50, 68, 75, 84) if value <= item.item_level)
-            maximum = next((value for value in (49, 67, 74, 100) if value >= item.item_level), 100)
+            maximum = next((value for value in (49, 67, 74) if value >= item.item_level), None)
             filters.append(TradeStatFilter(
                 "property.item_level", "アイテムレベル帯", float(minimum), "base", True,
-                max_value=float(maximum), selection_reason="Cluster JewelのMod出現帯へ正規化",
+                max_value=float(maximum) if maximum is not None else None,
+                selection_reason="Cluster JewelのMod出現帯へ正規化",
             ))
         elif item.category not in {
             "jewel", "abyss_jewel", "heist_blueprint", "heist_contract",
@@ -1142,10 +1144,11 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
     area_level = _property_value(item, "エリアレベル", "Area Level")
     if item.category == "cluster_jewel" and item.item_level is not None:
         minimum = max(value for value in (1, 50, 68, 75, 84) if value <= item.item_level)
-        maximum = next((value for value in (49, 67, 74, 100) if value >= item.item_level), 100)
+        maximum = next((value for value in (49, 67, 74) if value >= item.item_level), None)
         filters.append(TradeStatFilter(
             "property.item_level", "アイテムレベル帯", float(minimum), "cluster", True,
-            max_value=float(maximum), selection_reason="Cluster JewelのMod出現帯へ正規化",
+            max_value=float(maximum) if maximum is not None else None,
+            selection_reason="Cluster JewelのMod出現帯へ正規化",
         ))
     if item.category == "map":
         tier = _property_value(item, "マップティア", "Map Tier")
@@ -1329,6 +1332,35 @@ def _unique_exception_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
             "unique exception", True, selection_reason="AgnerodのVinktar Square生成帯へ正規化",
         ),)
     return ()
+
+
+def preset_item_level_filter(
+    item: ParsedItem, preset: str = PRESET_FINISHED,
+    trade_base_type: str | None = None,
+) -> TradeStatFilter | None:
+    """Return Awakened's ilvl condition for the selected search preset.
+
+    Finished rare gear may expose an optional ilvl control in the UI, but it is
+    not part of the initial search. Dedicated Exact and craft-base searches use
+    their normalized ilvl condition, while unique items only use documented
+    exceptions such as unidentified Watcher's Eye and Agnerod.
+    """
+    if preset not in TRADE_PRESETS:
+        raise ValueError(f"未対応の検索プリセットです: {preset}")
+    if preset == PRESET_BASE:
+        rows = _base_item_filters(item, trade_base_type)
+    elif _is_unique(item):
+        rows = _unique_exception_filters(item)
+    elif uses_dedicated_exact_preset(item) and item.category not in {
+        "gem", "captured_beast",
+    }:
+        rows = _dedicated_exact_identity_filters(item)
+    else:
+        rows = ()
+    return next(
+        (row for row in rows if row.stat_id == "property.item_level"),
+        None,
+    )
 
 
 def _affix_limits(

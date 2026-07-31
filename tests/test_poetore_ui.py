@@ -16,7 +16,7 @@ from src.poetore.ui import (
 )
 from src.poetore.window_position import PlacementContext
 from src.poetore.trade import (
-    PRESET_FINISHED, PriceListing, PriceResult, TradeLeague, TradeStatFilter,
+    PRESET_BASE, PRESET_FINISHED, PriceListing, PriceResult, TradeLeague, TradeStatFilter,
     build_search_query, resolve_trade_stat_filters,
 )
 from src.poetore.parser import parse_item_text
@@ -2950,8 +2950,11 @@ Item Level: 86
         assert window.item_level_edit.validator().bottom() == 1
         assert window.item_level_edit.validator().top() == 100
         assert window.item_level_tag.parentWidget() is window.filter_chip_container
+        assert window._selected_item_level() is None
+        assert window.item_level_toggle.text() == "☐ ilvl："
 
         window.item_level_edit.setText("84")
+        window.item_level_toggle.click()
         assert window._selected_item_level() == 84
         window.item_level_toggle.click()
         assert window._selected_item_level_range() == (None, None)
@@ -2977,6 +2980,47 @@ Item Level: 86
             "property.item_level", "アイテムレベル", 86.0, "base", True,
         ),))
         assert window.mod_filter_tree.topLevelItemCount() == 0
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(("item_class", "base_type"), [
+    ("Two Hand Axes", "Vaal Axe"),
+    ("Body Armours", "Sacred Chainmail"),
+    ("Rings", "Ruby Ring"),
+])
+def test_rare_gear_item_level_is_off_for_finished_and_on_for_base(
+    qapp, item_class, base_type,
+):
+    window = PoetoreWindow()
+    try:
+        item = parse_item_text(f"""Item Class: {item_class}
+Rarity: Rare
+Test Item
+{base_type}
+--------
+Item Level: 89
+--------
+Fractured Item
+""")
+        window._parsed_item = item
+        window._trade_base_type = base_type
+        window._configure_trade_presets(item)
+        window._configure_item_level(item, force=True)
+
+        assert window.trade_preset_combo.currentData() == PRESET_FINISHED
+        assert not window.item_level_tag.isHidden()
+        assert window.item_level_edit.text() == "89"
+        assert window._selected_item_level_range() == (None, None)
+
+        window.trade_preset_combo.setCurrentIndex(1)
+        assert window.trade_preset_combo.currentData() == PRESET_BASE
+        assert window.item_level_edit.text() == "86"
+        assert window._selected_item_level_range() == (86, None)
+
+        window.trade_preset_combo.setCurrentIndex(0)
+        assert window.item_level_edit.text() == "89"
+        assert window._selected_item_level_range() == (None, None)
     finally:
         window.close()
 

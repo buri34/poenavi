@@ -26,7 +26,7 @@ I17,状態,Fractured,安全な未Fractured品にfalse条件を持つ,非Fracture
 I18,状態,Foil,Foilなら完全一致ON,Foil条件を送信,準拠,維持,,create-item-filters.ts:309-311,tests:test_unique_variant_foil_and_foulborn_conditions_are_sent_exactly
 I19,状態,Foulborn,UniqueはFoulborn状態を一致,Foulborn状態と固有Modを検索,準拠,維持,,create-item-filters.ts:396-400,tests:test_foulborn_unique_keeps_all_variable_explicit_mods_as_filters
 I20,影響,Influence 1～2個,ExactではON・完成品ではOFF,プリセットに応じ同じ,準拠,維持,,create-item-filters.ts:313-317,trade.py:_dedicated_exact_identity_filters
-I21,ilvl,通常クラフトベース,上限86。ExactだけON,上限86でベース検索時ON,準拠,維持,,create-item-filters.ts:320-345,trade.py:_base_item_filters
+I21,ilvl,通常装備,完成品は初期OFF。Exact／クラフトベースは上限86で初期ON,完成品は表示・初期OFF。Exact／クラフトベース切替時は上限86で初期ON,準拠,維持,,create-item-filters.ts:320-345,trade.py:preset_item_level_filter・ui.py:_configure_item_level
 I22,ilvl,Cluster Jewel,1-49・50-67・68-74・75-83・84以上へ帯化,同じ帯へ正規化,準拠,維持,,create-item-filters.ts:333-338,tests:test_cluster_jewel_item_level_is_normalized_to_awakened_bracket
 I23,ilvl,Flask・Tincture,表示するが初期OFF,同じ,準拠,維持,,create-item-filters.ts:340-344,tests:test_cluster_is_dedicated_and_flask_tincture_ilvl_is_initially_disabled
 I24,ilvl,Map・Jewel・Heist・Memory・Relic等,ilvl条件を出さない,主要カテゴリで除外,準拠,維持,,create-item-filters.ts:320-332,tests:test_all_map_variants_never_send_item_level

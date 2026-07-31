@@ -33,7 +33,7 @@ from .trade import (
     available_pc_leagues, available_trade_presets, default_pc_league, default_trade_currency,
     apply_search_range, english_trade_identity, gem_metadata,
     japanese_trade_item_label,
-    resolve_trade_stat_filters, search_prices, unique_candidate_details,
+    preset_item_level_filter, resolve_trade_stat_filters, search_prices, unique_candidate_details,
     unique_variants, unresolved_modifier_warnings, uses_dedicated_exact_preset,
     is_inscribed_ultimatum,
 )
@@ -2521,7 +2521,7 @@ class PoetoreWindow(QWidget):
         self._configure_trade_presets(item)
         self._configure_trade_currency(item)
         self._configure_item_state_filters(item)
-        self._configure_item_level(item)
+        self._configure_item_level(item, force=is_new_item)
         self._configure_gem_level(item)
         self._configure_quality(item)
         self._configure_links(item)
@@ -2826,32 +2826,41 @@ class PoetoreWindow(QWidget):
         self.mirrored_combo.setVisible(is_mirrored)
         self._hidden_include_mirrored = not (craftable and "corrupted" not in item.flags)
 
-    def _configure_item_level(self, item):
-        """新しいアイテムを読み取った時だけ、共通ilvl条件を実値へ戻す。"""
+    def _configure_item_level(self, item, *, force: bool = False):
+        """Awakenedのプリセット規則に合わせて共通ilvl条件を設定する。"""
         key = item.raw_text
-        if key == getattr(self, "_item_level_item_key", None):
+        preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
+        state_key = (key, preset)
+        if not force and state_key == getattr(self, "_item_level_item_key", None):
             return
-        self._item_level_item_key = key
-        # Awakened準拠: MapはTierで検索し、ilvlは検索条件として扱わない。
-        # 通常・Unique・Blighted・Valdoを含むMapカテゴリ全体で非表示にする。
-        has_item_level = (
-            item.item_level is not None
-            and item.category not in {"map", "captured_beast"}
+        self._item_level_item_key = state_key
+        preset_filter = preset_item_level_filter(
+            item, preset, self._trade_base_type,
+        )
+        # 完成品の通常装備とFlask/Tinctureは任意条件として表示するが初期OFF。
+        # Exact／クラフトベースはpreset_filterの値・初期状態を正本にする。
+        optional_finished = (
+            preset == PRESET_FINISHED
+            and item.category in {"weapon", "armour", "accessory", "flask", "tincture"}
+            and item.rarity.casefold() not in {"unique", "ユニーク"}
+        )
+        has_item_level = item.item_level is not None and (
+            preset_filter is not None or optional_finished
         )
         self.item_level_tag.setVisible(has_item_level)
-        # Flask/Tinctureはilvlを確認・任意指定できるが、Awakened同様に初期OFF。
         self._set_item_level_filter_enabled(
-            has_item_level and item.category not in {"flask", "tincture"}
+            has_item_level and preset_filter is not None and preset_filter.enabled
         )
         is_cluster = has_item_level and item.category == "cluster_jewel"
         self.item_level_range_separator.setVisible(is_cluster)
         self.item_level_max_edit.setVisible(is_cluster)
         self.item_level_tag.setFixedWidth(157 if is_cluster else 104)
-        if is_cluster:
-            minimum = max(value for value in (1, 50, 68, 75, 84) if value <= item.item_level)
-            maximum = next((value for value in (49, 67, 74) if value >= item.item_level), None)
-            self.item_level_edit.setText(str(minimum))
-            self.item_level_max_edit.setText(str(maximum) if maximum is not None else "")
+        if preset_filter is not None:
+            self.item_level_edit.setText(f"{preset_filter.min_value:g}")
+            self.item_level_max_edit.setText(
+                f"{preset_filter.max_value:g}"
+                if preset_filter.max_value is not None else ""
+            )
         else:
             self.item_level_edit.setText(str(item.item_level) if has_item_level else "")
             self.item_level_max_edit.clear()
@@ -3279,6 +3288,7 @@ class PoetoreWindow(QWidget):
         item = getattr(self, "_parsed_item", None)
         self._configure_magic_rarity_toggle(item)
         if item is not None:
+            self._configure_item_level(item, force=True)
             self._configure_quality(item)
             self._configure_influence_chips(item)
             self._configure_special_filter_chips(item)
@@ -3746,8 +3756,10 @@ class PoetoreWindow(QWidget):
         )
         item = getattr(self, "_parsed_item", None)
         show_stock = any(row.stack_size is not None for row in result.listings)
-        show_ilvl = item is not None and item.category != "gem" and any(
-            value is not None for value in self._selected_item_level_range()
+        # 検索条件が初期OFFでも、参照アイテムと出品のilvl比較には価値がある。
+        show_ilvl = (
+            item is not None and item.category != "gem"
+            and not self.item_level_tag.isHidden()
         )
         show_gem = item is not None and item.category == "gem"
         show_quality = show_gem or (
