@@ -333,6 +333,7 @@ class PriceListing:
     quality: int | None = None
     stack_size: int | None = None
     listed_times: int = 1
+    pricing_method: str = "face_to_face"
 
 
 @dataclass(frozen=True)
@@ -392,6 +393,8 @@ class PriceResult:
     def median_by_currency(self) -> dict[str, float]:
         grouped: dict[str, list[float]] = {}
         for listing in self.listings:
+            if listing.pricing_method == "unpriced":
+                continue
             grouped.setdefault(listing.currency, []).append(listing.amount)
         return {currency: median(values) for currency, values in grouped.items()}
 
@@ -399,9 +402,12 @@ class PriceResult:
 def _group_price_listings(listings: list[PriceListing]) -> tuple[PriceListing, ...]:
     """Awakened同様、同一出品者の同価格連投を相場サンプル1件へ集約する。"""
     grouped: list[PriceListing] = []
-    positions: dict[tuple[str, str, float], int] = {}
+    positions: dict[tuple[str, str, float, str], int] = {}
     for listing in listings:
-        key = (listing.account, listing.currency, listing.amount)
+        key = (
+            listing.account, listing.currency, listing.amount,
+            listing.pricing_method,
+        )
         if not listing.account or key not in positions:
             positions[key] = len(grouped)
             grouped.append(listing)
@@ -3272,8 +3278,15 @@ def search_prices(
             listing = row.get("listing", {})
             fetched_item = row.get("item", {})
             price = listing.get("price") or {}
-            if price.get("amount") is None or not price.get("currency"):
-                continue
+            has_price = (
+                price.get("amount") is not None
+                and bool(price.get("currency"))
+            )
+            pricing_method = (
+                "instant" if listing.get("fee") is not None
+                else "face_to_face" if has_price or fetched_item.get("note") is not None
+                else "unpriced"
+            )
             account = (listing.get("account") or {}).get("name", "")
             fetched_properties = fetched_item.get("properties") or ()
 
@@ -3291,13 +3304,16 @@ def search_prices(
                 return None
 
             raw_listings.append(PriceListing(
-                float(price["amount"]), str(price["currency"]), str(account),
+                float(price["amount"]) if has_price else 0.0,
+                str(price["currency"]) if has_price else "",
+                str(account),
                 str(fetched_item.get("name", "")), str(fetched_item.get("baseType", "")),
                 str(listing.get("indexed", "")),
                 int(fetched_item["ilvl"]) if fetched_item.get("ilvl") is not None else None,
                 property_number("Level", "レベル", "Gem Level", "ジェムレベル"),
                 property_number("Quality", "品質"),
                 int(fetched_item["stackSize"]) if fetched_item.get("stackSize") is not None else None,
+                pricing_method=pricing_method,
             ))
         fetched_count += 10
         grouped = _group_price_listings(raw_listings)

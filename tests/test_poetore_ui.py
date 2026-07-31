@@ -1030,10 +1030,13 @@ def test_price_result_is_rendered_in_japanese(qapp):
     assert "候補42件" in window.price_status.text()
     assert "中央値 5 chaos" in window.price_status.text()
     assert window.price_list.topLevelItemCount() == 2
-    assert [window.price_list.headerItem().text(i) for i in range(3)] == ["価格", "ilvl", "出品日時"]
+    assert [window.price_list.headerItem().text(i) for i in range(4)] == [
+        "価格", "ilvl", "出品日時", "取引方式",
+    ]
     assert window.price_list.topLevelItem(0).text(0) == "4 chaos"
     assert window.price_list.topLevelItem(0).text(1) == "86"
     assert window.price_list.topLevelItem(0).text(2).endswith("前")
+    assert window.price_list.topLevelItem(0).text(3) == "対面"
     window.close()
 
 
@@ -1044,6 +1047,26 @@ def test_relative_listing_time_is_shown_without_online_status(qapp):
     assert PoetoreWindow._relative_listing_time("", now) == "-"
 
 
+def test_price_result_shows_pricing_method_in_rightmost_column(qapp):
+    window = PoetoreWindow()
+    try:
+        window._show_price_result(PriceResult("Mirage", "q", 3, (
+            PriceListing(4, "chaos", pricing_method="face_to_face"),
+            PriceListing(5, "chaos", pricing_method="instant"),
+            PriceListing(0, "", pricing_method="unpriced"),
+        )))
+        last_column = window.price_list.columnCount() - 1
+        assert window.price_list.headerItem().text(last_column) == "取引方式"
+        assert [
+            window.price_list.topLevelItem(index).text(last_column)
+            for index in range(3)
+        ] == ["対面", "インスタント", "値段なし"]
+        assert window.price_list.topLevelItem(2).text(0) == "値段なし"
+        assert "中央値 4.5 chaos" in window.price_status.text()
+    finally:
+        window.close()
+
+
 def test_gem_result_adds_gem_level_and_quality_columns(qapp):
     window = PoetoreWindow()
     window._parsed_item = ParsedItem("ジェム", "ジェム", "Arc", "Arc", "gem")
@@ -1051,8 +1074,8 @@ def test_gem_result_adds_gem_level_and_quality_columns(qapp):
         window._show_price_result(PriceResult("Mirage", "q", 1, (
             PriceListing(2, "chaos", indexed="2026-07-22T09:21:00Z", gem_level=20, quality=23),
         )))
-        assert [window.price_list.headerItem().text(i) for i in range(4)] == [
-            "価格", "ジェムLv", "品質", "出品日時",
+        assert [window.price_list.headerItem().text(i) for i in range(5)] == [
+            "価格", "ジェムLv", "品質", "出品日時", "取引方式",
         ]
         assert window.price_list.topLevelItem(0).text(1) == "20"
         assert window.price_list.topLevelItem(0).text(2) == "23"
@@ -1097,7 +1120,7 @@ Arc
         assert [
             window.price_list.headerItem().text(index)
             for index in range(window.price_list.columnCount())
-        ] == ["価格", "ジェムLv", "品質", "出品日時"]
+        ] == ["価格", "ジェムLv", "品質", "出品日時", "取引方式"]
 
         weapon = parse_item_text("""アイテムクラス: ワンド
 レアリティ: レア
@@ -1115,11 +1138,11 @@ Imbued Wand
         window._show_price_result(PriceResult(
             "Standard", "weapon", 1, (weapon_listing,),
         ))
-        assert window.price_list.columnCount() == 3
+        assert window.price_list.columnCount() == 4
         assert [
             window.price_list.headerItem().text(index)
             for index in range(window.price_list.columnCount())
-        ] == ["価格", "ilvl", "出品日時"]
+        ] == ["価格", "ilvl", "出品日時", "取引方式"]
     finally:
         window.close()
 

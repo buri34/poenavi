@@ -3561,8 +3561,14 @@ class PoetoreWindow(QWidget):
             return
         medians = " / ".join(
             f"{value:g} {currency}" for currency, value in result.median_by_currency().items()
-        )
-        samples = ", ".join(f"{row.amount:g} {row.currency}" for row in result.listings[:5])
+        ) or "価格付き出品なし"
+        priced = [
+            row for row in result.listings
+            if row.pricing_method != "unpriced"
+        ]
+        samples = ", ".join(
+            f"{row.amount:g} {row.currency}" for row in priced[:5]
+        ) or "なし"
         self.price_status.setText(
             f"{result.league}: 候補{result.total}件 / 取得{len(result.listings)}件{cache_note} | "
             f"中央値 {medians} | 安値例 {samples}"
@@ -3585,7 +3591,7 @@ class PoetoreWindow(QWidget):
             columns.append("ジェムLv")
         if show_quality:
             columns.append("品質")
-        columns.append("出品日時")
+        columns.extend(("出品日時", "取引方式"))
         # QTreeWidget#setHeaderLabels()は既存より列数が少ない場合に、
         # 余った末尾列を削除しない。Gem→武器などで固有列が減る時は
         # 先に列数を確定し、前カテゴリのヘッダーを残さない。
@@ -3599,7 +3605,11 @@ class PoetoreWindow(QWidget):
             )
 
         for listing in result.listings:
-            price_text = f"{listing.amount:g} {listing.currency}"
+            price_text = (
+                "値段なし"
+                if listing.pricing_method == "unpriced"
+                else f"{listing.amount:g} {listing.currency}"
+            )
             if listing.listed_times > 1:
                 price_text += f" ×{listing.listed_times}"
             values = [price_text]
@@ -3612,6 +3622,10 @@ class PoetoreWindow(QWidget):
             if show_quality:
                 values.append(str(listing.quality) if listing.quality is not None else "-")
             values.append(self._relative_listing_time(listing.indexed))
+            values.append({
+                "instant": "インスタント",
+                "unpriced": "値段なし",
+            }.get(listing.pricing_method, "対面"))
             QTreeWidgetItem(self.price_list, values)
 
     @staticmethod

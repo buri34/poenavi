@@ -2632,7 +2632,12 @@ def test_search_prices_keeps_item_and_seller_for_list_display():
             ],
         },
     }]}, {})
-    with patch("src.poetore.trade._request_json", side_effect=[search, fetch]):
+    with patch(
+        "src.poetore.trade._request_json", side_effect=[search, fetch],
+    ), patch(
+        "src.poetore.trade._japanese_trade_item_type",
+        return_value="略奪者の剣",
+    ):
         result = search_prices(parse_item_text(ITEM), "Reaver Sword", "Mirage")
     assert result.listings == (
         PriceListing(
@@ -2640,6 +2645,47 @@ def test_search_prices_keeps_item_and_seller_for_list_display():
             "2026-07-22T09:21:00Z", 86, 20, 23, 3,
         ),
     )
+
+
+def test_search_prices_classifies_face_to_face_instant_and_unpriced_listings():
+    _trade_response_cache.clear()
+    search = (
+        {"id": "query1", "result": ["face", "instant", "unpriced"]},
+        {},
+    )
+    fetch = ({"result": [
+        {
+            "listing": {
+                "price": {"amount": 4, "currency": "chaos"},
+                "account": {"name": "face-seller"},
+            },
+            "item": {"baseType": "Reaver Sword", "note": "~price 4 chaos"},
+        },
+        {
+            "listing": {
+                "price": {"amount": 5, "currency": "chaos"},
+                "fee": 1,
+                "account": {"name": "instant-seller"},
+            },
+            "item": {"baseType": "Reaver Sword"},
+        },
+        {
+            "listing": {"account": {"name": "stash-seller"}},
+            "item": {"baseType": "Reaver Sword"},
+        },
+    ]}, {})
+    with patch(
+        "src.poetore.trade._request_json", side_effect=[search, fetch],
+    ), patch(
+        "src.poetore.trade._japanese_trade_item_type",
+        return_value="略奪者の剣",
+    ):
+        result = search_prices(parse_item_text(ITEM), "Reaver Sword", "Mirage")
+
+    assert [row.pricing_method for row in result.listings] == [
+        "face_to_face", "instant", "unpriced",
+    ]
+    assert result.median_by_currency() == {"chaos": 4.5}
 
 
 def test_search_prices_fetches_at_least_twenty_results():
