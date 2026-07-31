@@ -1,0 +1,86 @@
+rule_id,大分類,対象,Awakened仕様,ぽえとれ現状,判定,推奨,鰤さん判断欄,Awakened根拠,ぽえとれ根拠
+P01,プリセット,Expedition Logbook,エリアごとにI～VのExactプリセットを作り先頭を選択,エリアグループを保持し先頭だけ初期ON,部分準拠,複数エリアをタブで切り替えるUIが必要か判断,要判断,create-presets.ts:20-27,trade.py:_apply_dedicated_exact_rules
+P02,プリセット,非クラフト可能な非ユニーク,Exactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:31-52,trade.py:uses_dedicated_exact_preset
+P03,プリセット,未鑑定アイテム,Exactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:31-52,trade.py:uses_dedicated_exact_preset
+P04,プリセット,ノーマル品,Exactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:31-52,tests:test_dedicated_exact_normal_item_uses_nonunique_ilvl_and_exact_stats_only
+P05,プリセット,Map・Memory Line・Invitation・Heist・Charm等,カテゴリ別Exactプリセットだけを使用,主要対象カテゴリを専用Exactへ送る,準拠,維持,,create-presets.ts:39-46,tests:test_awakened_supported_categories_use_dedicated_exact
+P06,プリセット,完成品らしさ,Unique・Crafted・品質20・Corrupted・Mirroredなら完成品だけ,同じ判定を実装。ただしMemory Strands付き品質20は完成品扱いしない,準拠,維持,,create-presets.ts:63-69,trade.py:available_trade_presets
+P07,プリセット,クラフト価値,Synthesised・Fractured・Influence・Cluster・Magic Jewel・ilvl82以上ならベース候補あり,同じ骨格を実装,準拠,維持,,create-presets.ts:71-80,trade.py:available_trade_presets
+I01,名前・カテゴリ,Unique,ユニーク名とベースを完全一致,英語名・日本語Trade名・discriminatorを使って完全一致,準拠,維持,,create-item-filters.ts:184-190,tests:test_unique_search_uses_exact_english_name_and_hides_fixed_mods
+I02,名前・カテゴリ,非Unique,ベース完全一致とカテゴリ緩和候補を持つ,ベース・カテゴリ条件を生成,準拠,維持,,create-item-filters.ts:191-214,trade.py:build_search_query
+I03,名前・カテゴリ,Cluster・Idol・Graft,カテゴリ条件は初期OFF,同等のカテゴリ認識あり,準拠,維持,,create-item-filters.ts:197-203,tests:test_japanese_cluster_jewel_class_keeps_exact_cluster_base
+I04,名前・カテゴリ,Sanctum Relic・Charm・Heist Contract,カテゴリ条件を初期ON,専用カテゴリ条件を初期ON,準拠,維持,,create-item-filters.ts:203-210,trade.py:_apply_dedicated_exact_rules
+I05,通貨,非クラフト消耗品,通貨未指定時はChaosまたはDivine,同じ既定通貨を使用,準拠,維持,,create-item-filters.ts:40-46,trade.py:default_trade_currency
+I06,スタック,Stack品,数量2以上かつ設定ONならstock条件を初期ON,旧Bulkを対象外としstock条件なし,対象外,ゲーム内取引所優先の方針を維持,維持,create-item-filters.ts:58-62,docs/poetore-awakened-gap-audit.md
+I07,品質,武器・防具のExact,品質20以上を表示し20はOFF・21以上はON,同じ,準拠,維持,,create-item-filters.ts:224-233,trade.py:_item_detail_filters
+I08,品質,Flask・Tincture,品質20以上を表示し20はOFF・21以上はON,同じ,準拠,維持,,create-item-filters.ts:224-233,tests:test_quality_20_and_non_six_socket_count_are_visible_but_not_preselected
+I09,ソケット,リンク数,リンクがあれば初期ON,2リンク以上を表示して初期ON,準拠,維持,,create-item-filters.ts:236-240,trade.py:_item_detail_filters
+I10,ソケット,総ソケット数,専用の総ソケット条件は現行Awakenedにない,6ソケットなら総数条件を初期ON,独自仕様,6ソケット品の実用性があるため維持候補,要判断,create-item-filters.ts:236-240,trade.py:_item_detail_filters
+I11,ソケット,白ソケット,条件を生成しない,条件を生成しない,準拠,維持,,3c8e032で削除,docs/poetore-awakened-gap-audit.md
+I12,状態,Corrupted,変更不能品を除き現在状態を条件化。Magic Jewelは完全一致,3状態UIで除外・含む・限定を選べMagic Jewelは厳密化,独自仕様,Awakenedより柔軟なので維持候補,要判断,create-item-filters.ts:243-258,tests:test_magic_jewel_search_requires_magic_rarity_and_exact_corruption_state
+I13,状態,Magic Jewel・Abyss Jewel,Adorned用途としてMagic rarityを初期ON,Magic rarityとCorrupted状態を厳密化,準拠,維持,,create-item-filters.ts:243-264,tests:test_magic_jewel_search_requires_magic_rarity_and_exact_corruption_state
+I14,状態,非Unique rarity,Normal・Magic・Rareはnonuniqueで検索,同じ,準拠,維持,,create-item-filters.ts:275-283,tests:test_dedicated_exact_normal_item_uses_nonunique_ilvl_and_exact_stats_only
+I15,状態,Mirrored,MirroredならON。未Mirrorのクラフト可能品には隠しOFF候補,同等の状態条件を生成,準拠,維持,,create-item-filters.ts:286-292,tests:test_finished_search_state_filters_can_exclude_or_include_items
+I16,状態,Split,SplitならON。安全な未Split品には隠しOFF候補,2状態UIで同等以上の制御,独自仕様,柔軟性が高いので維持候補,要判断,create-item-filters.ts:294-301,tests:test_split_uncorrupted_item_defaults_to_uncorrupted_and_includes_split
+I17,状態,Fractured,安全な未Fractured品にfalse条件を持つ,非Fractured条件を生成,準拠,維持,,create-item-filters.ts:303-307,trade.py:build_search_query
+I18,状態,Foil,Foilなら完全一致ON,Foil条件を送信,準拠,維持,,create-item-filters.ts:309-311,tests:test_unique_variant_foil_and_foulborn_conditions_are_sent_exactly
+I19,状態,Foulborn,UniqueはFoulborn状態を一致,Foulborn状態と固有Modを検索,準拠,維持,,create-item-filters.ts:396-400,tests:test_foulborn_unique_keeps_all_variable_explicit_mods_as_filters
+I20,影響,Influence 1～2個,ExactではON・完成品ではOFF,プリセットに応じ同じ,準拠,維持,,create-item-filters.ts:313-317,trade.py:_dedicated_exact_identity_filters
+I21,ilvl,通常クラフトベース,上限86。ExactだけON,上限86でベース検索時ON,準拠,維持,,create-item-filters.ts:320-345,trade.py:_base_item_filters
+I22,ilvl,Cluster Jewel,1-49・50-67・68-74・75-83・84以上へ帯化,同じ帯へ正規化,準拠,維持,,create-item-filters.ts:333-338,tests:test_cluster_jewel_item_level_is_normalized_to_awakened_bracket
+I23,ilvl,Flask・Tincture,表示するが初期OFF,同じ,準拠,維持,,create-item-filters.ts:340-344,tests:test_cluster_is_dedicated_and_flask_tincture_ilvl_is_initially_disabled
+I24,ilvl,Map・Jewel・Heist・Memory・Relic等,ilvl条件を出さない,主要カテゴリで除外,準拠,維持,,create-item-filters.ts:320-332,tests:test_all_map_variants_never_send_item_level
+I25,ilvl,未鑑定Watcher's Eye,現在ilvlを初期ON,同じ,準拠,維持,,create-item-filters.ts:348-354,tests:test_unique_item_level_exceptions_match_awakened
+I26,ilvl,Agnerod系,75・78・80・82へ正規化してON,同じ,準拠,維持,,create-item-filters.ts:356-369,tests:test_unique_item_level_exceptions_match_awakened
+G01,Gem,通常・Vaal・変容・Awakened,通常形とdiscriminatorで正確に識別,公式対応表で同じ識別,準拠,維持,,create-item-filters.ts:414-433,tests:test_transfigured_vaal_awakened_and_exceptional_gem_identity
+G02,Gem,Corrupted,現在状態を条件化,同じ,準拠,維持,,create-item-filters.ts:435-437,tests:test_gem_filters_use_awakened_max_level_quality_and_corruption_rules
+G03,Gem,Imbued候補,非ImbuedかつCorruptedかつLv20以上なら候補をOFF表示,同じ候補を初期OFF表示,準拠,維持,,create-item-filters.ts:439-443,trade.py:_gem_filters
+G04,Gem,Gem Level,最大レベル以上だけ初期ON,同じ,準拠,維持,,create-item-filters.ts:445-448,tests:test_gem_filters_use_awakened_max_level_quality_and_corruption_rules
+G05,Gem,品質,最大Lv1は常時ON・通常最大Lv20は16以上ON・その他は20以上ON,同じ,準拠,維持,,create-item-filters.ts:450-457,trade.py:_gem_filters
+S01,Mod,Exactで保持する種別,pseudo・fractured・enchant・necropolis・imbuedを保持,同じ。Flask craftedも保持,準拠,維持,,create-stat-filters.ts:39-62,trade.py:_apply_dedicated_exact_rules
+S02,Mod,Exact implicit,Influenceなし・Fracturedなし・Tincture/Idol以外なら保持,同じ,準拠,維持,,create-stat-filters.ts:39-46,trade.py:_apply_dedicated_exact_rules
+S03,Mod,Magic Explicit,Cluster・Map・Heist・Sentinel以外は保持,同じ主要カテゴリ分岐,準拠,維持,,create-stat-filters.ts:48-55,trade.py:_apply_dedicated_exact_rules
+S04,Mod,Rare Explicit,IdolだけExactで保持,同じ,準拠,維持,,create-stat-filters.ts:56-58,trade.py:_apply_dedicated_exact_rules
+S05,Mod,Exact数値幅,Map以外は設定値を最大2%へ制限,一般の許容幅設定を使い一部propertyは固定10%緩和,部分準拠,API結果差が出るため2%上限制御へ揃えるか判断,要判断,create-stat-filters.ts:64-72,trade.py:apply_search_range・_relaxed
+S06,Mod,Exact Explicit初期値,T1・T2だけON,同じ,準拠,維持,,create-stat-filters.ts:96-107,tests:test_dedicated_exact_magic_flask_keeps_t1_t2_and_crafted_only
+S07,Mod,Map Explicit,Blighted以外のExact Mapでは通常ModをすべてON,通常Map Modを初期OFF。ValdoだけON,差分・判断必要,危険Modを含むMap検索の使い勝手を優先するかAwakened準拠にするか判断,要判断,create-stat-filters.ts:90-95,trade.py:_apply_dedicated_exact_rules
+S08,Mod,Memory Line・Sanctum Relic・Charm,表示中の全条件を初期ON,同じ,準拠,維持,,create-stat-filters.ts:128-133,trade.py:_apply_dedicated_exact_rules
+S09,Mod,Idol,固定値または良ロール66%以上をON,同じ,準拠,維持,,create-stat-filters.ts:134-136,trade.py:_apply_dedicated_exact_rules
+S10,Mod,Veiled,Veiled候補を専用条件化し他ModをOFF,Veiled stat IDを解決し検索,部分準拠,複数Veiled時の全候補OFF挙動を追加確認,要確認,create-stat-filters.ts:174-185,tests:test_veiled_chip_uses_matching_veiled_stat_ids_like_awakened
+S11,Mod,NotComparable,数値を完全一致しVariant扱いでON,固定数値かAPI値不要かを検証して完全一致または値なし検索,部分準拠,固定数字監査済み範囲は維持し未監査Statを継続確認,要確認,create-stat-filters.ts:232-237,tests:test_only_api_verified_fixed_number_stats_omit_numeric_bounds
+S12,Mod,Unique固定Mod,fixedStatsとroll boundsで固定Modを隠す,同じ固定Stats基盤で除外,準拠,維持,,create-stat-filters.ts:247-253・361-377,tests:test_unique_search_uses_exact_english_name_and_hides_fixed_mods
+S13,Mod,Foulborn Explicit,固定扱いでも表示し全てON,同じ,準拠,維持,,create-stat-filters.ts:379-383,tests:test_foulborn_unique_keeps_all_variable_explicit_mods_as_filters
+S14,Mod,Unique少数可変Mod,表示可能条件が3個以下なら全てON,同じ,準拠,維持,,create-stat-filters.ts:470-475,tests:test_unique_with_more_than_three_variable_mods_does_not_preselect_all
+S15,Mod,数値方向,高いほど良いはmin・低いほど良いはmax・比較不能は両端,better・inverted・negateを保持して同じ方向へ送信,準拠,維持,,create-stat-filters.ts:281-354,tests:test_mirrored_penumbra_ring_resolves_negative_direction_stats_like_awakened
+S16,Mod,Essence・Infamous生成元,Mod名からEssence・Infamousをタグ表示,エッセンス・悪名高いと表示,準拠,維持,,create-stat-filters.ts:272-277,tests:test_infamous_directional_modifier_resolves_to_negative_trade_value
+R01,Property,防具単一属性,AR/EV/ES/Wardの該当1種だけ初期ON,同じ単属性では該当防御値をON,準拠,維持,,item-property.ts:55-103,trade.py:_initial_property_filters
+R02,Property,ハイブリッド防具,AR/EV/ES/Wardを表示するが全て初期OFF,存在する全防御値を初期ON,差分・判断必要,ハイブリッド検索を広く拾う独自仕様かAwakened準拠か判断,要判断,item-property.ts:55-103,tests:test_japanese_armour_energy_shield_hybrid_enables_both_properties
+R03,Property,Block,表示するが初期OFF,通常完成品では初期ON・ベースではOFF,差分・判断必要,Block盾で絞る価値を優先するか判断,要判断,item-property.ts:106-115,trade.py:_initial_property_filters
+R04,Property,Base Percentile,50以上ON・50未満OFF,通常候補は50以上ON。ベースプリセットでは常時ON,部分準拠,ベースプリセットでも50未満OFFに揃えるか判断,要判断,item-property.ts:18-27,trade.py:_base_item_filters
+R05,Property,Memory Strands完成品,完成品プリセットでは非表示・常時OFF,60以上なら表示してON,差分・判断必要,完成品側で非表示にするか価値条件として残すか判断,要判断,create-stat-filters.ts:160-167,trade.py:_initial_property_filters
+R06,Property,Memory Strandsベース/Exact,60以上ON・59以下OFF,同じ,準拠,維持,,item-property.ts:30-40,tests:test_base_preset_uses_awakened_memory_strands_threshold
+R07,Property,武器混合DPS,混合ならTotal DPSをON。支配成分67%以上だけpDPS/eDPSを表示・ON,pDPS/eDPSとTotal DPSを同じ67%規則で処理,準拠,維持,,item-property.ts:141-197,trade.py:_initial_property_filters
+R08,Property,pDPS重要武器,Axe・Sword・Bow・WarstaffだけpDPSを優先,同じカテゴリ判断,準拠,維持,,item-property.ts:245-256,trade.py:_physical_dps_is_important
+R09,Property,APS・Crit,表示するが初期OFF,同じ,準拠,維持,,item-property.ts:200-219,trade.py:_initial_property_filters
+R10,Property,品質20換算,武器DPS・防御値を最低品質20へ換算,同じ,準拠,維持,,item-property.ts:55-219,trade.py:_defence_at_20_quality・physical_dps_at_20_quality
+C01,Cluster,Added Passive Skills,Jewel Socket数を隠し最適パッシブ数を特殊範囲化,同じ,準拠,維持,,create-stat-filters.ts:478-507,tests:test_optimal_cluster_passive_count_does_not_include_next_integer
+C02,Flask,Enchant,Enkindling使用時以外のHarvest/Instilling Enchantを隠してOFF,Instilling Enchantを認識。全分岐は部分確認,部分準拠,Enkindling有無別fixtureを増やす,要確認,create-stat-filters.ts:511-518,tests:test_dedicated_exact_magic_flask_keeps_instilling_enchantment
+C03,Flask,Charge Recovery hybrid,Charge RecoveryありEffectなしならEffect条件をNOT追加,同じ,準拠,維持,,pseudo/flasks.ts:13-27,tests:test_flask_hybrid_cluster_and_special_area_rules
+C04,Anointment,Amulet・Ring,TalismanはON。非Corrupted/非Mirroredで最高Oilが金銀以外なら隠してOFF,同じ価値Oil規則,準拠,維持,,pseudo/anointments.ts:45-57,tests:test_modifiable_amulet_shows_anointments_using_valuable_oils
+C05,空きAffix,Rare,5Mod無Craftまたは6Mod有Craftで空きPrefix/Suffixを候補化,カテゴリ別上限も考慮した独自実装,独自仕様,ぽえとれ側が精密なので維持候補,維持,create-stat-filters.ts:524-560,tests:test_empty_affixes_use_category_and_special_base_limits
+M01,Map,Map properties,Corrupted・More Drops・NightmareだけQuantity/Pack等を価値条件化,全MapでTierをONしQuantity/Rarity/PackをOFF表示,部分準拠,Map種別別の初期値をAwakenedへ揃えるか判断,要判断,pseudo/maps.ts:20-93,trade.py:_special_content_filters
+M02,Map,More Drops,More Maps/Scarabs/Currency/Cardsを初期ON,候補を表示するが初期OFF,差分・判断必要,利益比較用途ならAwakened同様ONが自然,要判断,pseudo/maps.ts:56-82,trade.py:_special_content_filters
+M03,Map,8 Mod Map,Explicit Modが8個でMore Dropsなしなら# Modifiers=8をON,専用8Mod pseudoなし,未対応,実用品なので追加候補,要判断,pseudo/maps.ts:85-92,rgで該当実装なし
+M04,Map,Valdo lethal,死亡時Voidを持たない品はNOT条件をON,同じ,準拠,維持,,pseudo/maps.ts:95-108,tests:test_map_properties_blight_and_valdo_safety_filters
+M05,Map,Blighted Map,rolled Mod条件を空にし本体条件だけ,同じ,準拠,維持,,create-stat-filters.ts:23-29,tests:test_blighted_map_ignores_all_map_mods_and_unresolved_warnings
+H01,Heist,Contract Job,必要JobとLevelを完全値でON,9 Jobを解析してON,準拠,維持,,pseudo/heist.ts:18-52,tests:test_current_japanese_contract_copy_uses_required_job_like_awakened
+H02,Heist,Contract target,Pricelessだけ専用条件をON,同じ,準拠,維持,,pseudo/heist.ts:54-62,tests:test_heist_blueprint_contract_and_logbook_rules
+H03,Heist,Blueprint Enchant,Enchantがない設計図はEnchant数NOTをON,同じ,準拠,維持,,pseudo/heist.ts:65-76,tests:test_heist_blueprint_contract_and_logbook_rules
+H04,Heist,Blueprint wings,公開済みWing数をON,同じ,準拠,維持,,create-item-filters.ts:163-183,tests:test_current_japanese_blueprint_copy_uses_revealed_wings_like_awakened
+X01,特殊,Chronicle of Atzoatl,Area Level帯と部屋ごとの削除・非表示・Tier3初期値・閉鎖部屋処理,Area Level帯と主要Tier3部屋を実装,部分準拠,全Room規則を機械比較して不足を追加候補化,要判断,pseudo/atzoatl-rules.ts:15-181,docs/poetore-awakened-gap-audit.md
+X02,特殊,Mirrored Tablet,難易度8未満を除外し高価値ReflectionをON,同じ主要規則,準拠,維持,,pseudo/reflection-rules.ts:10-50,tests:test_flask_hybrid_cluster_and_special_area_rules
+X03,特殊,Forbidden Tome,83未満はArea Levelをmin=maxで固定,同じ,準拠,維持,,create-item-filters.ts:96-105,tests:test_forbidden_tome_below_83_uses_exact_area_level_range
+X04,特殊,Metamorph Sample,名前とilvlをExact検索,製品スコープ外,対象外,現行ゲームでの必要性が低く維持,維持,create-item-filters.ts:71-80,docs/poetore-exact-preset-audit.md
+X05,特殊,Sentinel,Chargeと専用Exact検索,製品スコープ外,対象外,現行ゲームでの必要性が低く維持,維持,create-item-filters.ts:217-221,docs/poetore-exact-preset-audit.md
+X06,特殊,Captured Beast,種名完全一致,同じ,準拠,維持,,create-item-filters.ts:51-56,tests:test_current_japanese_captured_beast_uses_species_only_like_awakened
+U01,Unique,固定数字Stat,可変でないUnique Statは数値条件を隠す,fixedStatsとAPI実測allowlistで値なし検索,部分準拠,ユニーク外を含む未監査Statは別監査対象,要確認,create-stat-filters.ts:361-377,tests:test_only_api_verified_fixed_number_stats_omit_numeric_bounds
