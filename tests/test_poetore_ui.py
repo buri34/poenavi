@@ -485,11 +485,12 @@ def test_filter_kind_column_is_japanese_and_marks_foulborn_generation(qapp):
                 generation="foulborn",
             ),
             TradeStatFilter("pseudo.test", "疑似Mod", 10, "pseudo"),
+            TradeStatFilter("pseudo.map", "マップ量", 35, "map pseudo"),
         ))
         assert [
             window.mod_filter_tree.topLevelItem(index).text(1)
             for index in range(window.mod_filter_tree.topLevelItemCount())
-        ] == ["明示", "ファウルボーン", "疑似"]
+        ] == ["明示", "ファウルボーン", "疑似", "マップ"]
     finally:
         window.close()
 

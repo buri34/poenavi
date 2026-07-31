@@ -4688,7 +4688,9 @@ def test_japanese_nightmare_map_new_more_drop_labels_and_mods_resolve():
     by_id = {row.stat_id: row for row in rows}
 
     assert by_id["pseudo.pseudo_map_more_map_drops"].min_value == 35
+    assert by_id["pseudo.pseudo_map_more_map_drops"].text == "マップ量"
     assert by_id["pseudo.pseudo_map_more_scarab_drops"].min_value == 88
+    assert by_id["pseudo.pseudo_map_more_scarab_drops"].text == "スカラベ量"
     assert by_id["property.map_rarity"].enabled is False
     assert by_id["explicit.stat_1706239920"].min_value == 100
     assert by_id["explicit.stat_943960754"].min_value == 30

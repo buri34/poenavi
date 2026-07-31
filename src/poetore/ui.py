@@ -306,7 +306,7 @@ _FILTER_KIND_LABELS = {
     "heist": "ハイスト",
     "influence": "インフルエンス",
     "map": "マップ",
-    "map pseudo": "マップ疑似",
+    "map pseudo": "マップ",
     "map safety": "マップ危険",
     "sanctum": "サンクタム",
     "socket": "ソケット",
