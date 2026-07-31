@@ -17,11 +17,11 @@ I08,品質,Flask・Tincture,品質20以上を表示し20はOFF・21以上はON,�
 I09,ソケット,リンク数,リンクがあれば初期ON,2リンク以上を表示して初期ON,準拠,維持,,create-item-filters.ts:236-240,trade.py:_item_detail_filters
 I10,ソケット,総ソケット数,専用の総ソケット条件は現行Awakenedにない,6ソケットなら総数条件を初期ON,独自仕様,6ソケット品の実用性があるため維持候補,要判断,create-item-filters.ts:236-240,trade.py:_item_detail_filters
 I11,ソケット,白ソケット,条件を生成しない,条件を生成しない,準拠,維持,,3c8e032で削除,docs/poetore-awakened-gap-audit.md
-I12,状態,Corrupted,変更不能品を除き現在状態を条件化。Magic Jewelは完全一致,3状態UIで除外・含む・限定を選べMagic Jewelは厳密化,独自仕様,Awakenedより柔軟なので維持候補,要判断,create-item-filters.ts:243-258,tests:test_magic_jewel_search_requires_magic_rarity_and_exact_corruption_state
+I12,状態,Corrupted,変更不能品を除き現在状態を条件化。Magic Jewelは完全一致,3状態UIで除外・含む・限定を選べMagic Jewelは厳密化,独自仕様,Awakenedより柔軟なので維持,維持,create-item-filters.ts:243-258,tests:test_magic_jewel_search_requires_magic_rarity_and_exact_corruption_state
 I13,状態,Magic Jewel・Abyss Jewel,Adorned用途としてMagic rarityを初期ON,Magic rarityとCorrupted状態を厳密化,準拠,維持,,create-item-filters.ts:243-264,tests:test_magic_jewel_search_requires_magic_rarity_and_exact_corruption_state
 I14,状態,非Unique rarity,Normal・Magic・Rareはnonuniqueで検索,同じ,準拠,維持,,create-item-filters.ts:275-283,tests:test_dedicated_exact_normal_item_uses_nonunique_ilvl_and_exact_stats_only
 I15,状態,Mirrored,MirroredならON。未Mirrorのクラフト可能品には隠しOFF候補,同等の状態条件を生成,準拠,維持,,create-item-filters.ts:286-292,tests:test_finished_search_state_filters_can_exclude_or_include_items
-I16,状態,Split,SplitならON。安全な未Split品には隠しOFF候補,2状態UIで同等以上の制御,独自仕様,柔軟性が高いので維持候補,要判断,create-item-filters.ts:294-301,tests:test_split_uncorrupted_item_defaults_to_uncorrupted_and_includes_split
+I16,状態,Split,Split品は条件なしで含める。切替時はsplit=false。安全な未Split品は隠しsplit=false,Split品だけ「スプリット／非スプリット」切替を表示。通常品は内部でsplit=false,準拠,維持,,create-item-filters.ts:294-301,tests:test_split_uncorrupted_item_defaults_to_uncorrupted_and_includes_split
 I17,状態,Fractured,安全な未Fractured品にfalse条件を持つ,非Fractured条件を生成,準拠,維持,,create-item-filters.ts:303-307,trade.py:build_search_query
 I18,状態,Foil,Foilなら完全一致ON,Foil条件を送信,準拠,維持,,create-item-filters.ts:309-311,tests:test_unique_variant_foil_and_foulborn_conditions_are_sent_exactly
 I19,状態,Foulborn,UniqueはFoulborn状態を一致,Foulborn状態と固有Modを検索,準拠,維持,,create-item-filters.ts:396-400,tests:test_foulborn_unique_keeps_all_variable_explicit_mods_as_filters
