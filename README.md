@@ -225,9 +225,9 @@ Path of Exile 1 / Path of Exile 2 に対応した軽量なレベリングガイ�
 
 ### 🔒 安全性と透明性
 
-PoENaviはゲームとは独立して動作するツールです。機能ごとに、PC内で読み取る情報、PoEへ送る入力、外部サービスとの通信内容を以下に記載します。
+PoENaviはゲームとは独立して動作し、GGGの[Developer Docs](https://www.pathofexile.com/developer/docs)に記載されたサードパーティーツールおよびマクロの方針に沿うよう設計しています。以下に、PC内で読み取る情報、PoEへ送る入力、外部サービスとの通信内容を公開します。
 
-GGGのサードパーティーツールに関する情報は[Developer Docs](https://www.pathofexile.com/developer/docs)もご確認ください。本ツールの利用可否を保証するものではないため、利用者自身の判断でご使用ください。
+本ツールは、Grinding Gear Gamesによる個別の公認・承認を受けたものではありません。
 
 #### ぽえなびが行うこと
 
