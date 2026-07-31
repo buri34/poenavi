@@ -6,8 +6,8 @@ from src.poetore.metadata import (
     diff_pseudo_payloads, unique_fixed_stats, unique_icon_url, validate_pseudo_payload,
 )
 from src.poetore.metadata_builder import (
-    build_minimal_index, diff_minimal_indexes, excessive_removal, unresolved_trade_entries,
-    validate_minimal_index,
+    build_minimal_index, build_related_item_groups, diff_minimal_indexes,
+    excessive_removal, unresolved_trade_entries, validate_minimal_index,
 )
 
 
@@ -429,6 +429,46 @@ def test_builder_expands_awakened_related_item_groups():
     group = payload["related_item_groups"][0]
     assert group["query"][0]["name"] == "Chayula's Breachstone"
     assert group["items"][0]["icon"] == "skin.png"
+
+
+def test_builder_supplements_all_uber_boss_groups_with_shared_drops():
+    query_ids = (
+        "Awakening Fragment", "Reality Fragment", "Devouring Fragment",
+        "Blazing Fragment", "Cosmic Fragment", "Decaying Fragment",
+        "Synthesising Fragment",
+    )
+    expected = {
+        "Awakening Fragment": {"Awakener's Orb", "Orb of Dominance"},
+        "Reality Fragment": {"Orb of Conflict", "Awakened Empower Support"},
+        "Devouring Fragment": {"Forbidden Flesh", "Exceptional Eldritch Ichor"},
+        "Blazing Fragment": {"Forbidden Flame", "Exceptional Eldritch Ember"},
+        "Cosmic Fragment": {"Shaper's Exalted Orb", "Orb of Dominance"},
+        "Decaying Fragment": {"Watcher's Eye", "Elder's Exalted Orb"},
+        "Synthesising Fragment": {"Greater Kinetic Instability Support", "The Hook"},
+    }
+    items = [
+        json.dumps({"namespace": "ITEM", "refName": name})
+        for name in query_ids
+    ]
+    groups = build_related_item_groups(
+        items,
+        [{"query": [f"ITEM::{name}"], "items": []} for name in query_ids],
+    )
+
+    assert len(groups) == 7
+    for group in groups:
+        query_name = group["query"][0]["name"]
+        assert expected[query_name] <= {row["name"] for row in group["items"]}
+
+
+def test_builder_deduplicates_upstream_and_supplemental_uber_drops():
+    groups = build_related_item_groups([], [{
+        "query": ["ITEM::Awakening Fragment"],
+        "items": ["ITEM::Orb of Dominance"],
+    }])
+
+    names = [row["name"] for row in groups[0]["items"]]
+    assert names.count("Orb of Dominance") == 1
 
 
 def test_index_validation_reports_duplicates_empty_and_ambiguous_matchers():

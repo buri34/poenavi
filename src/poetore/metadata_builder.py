@@ -186,6 +186,71 @@ def _unique_icons(items_lines: Iterable[str]) -> dict[str, str]:
     return dict(sorted(result.items()))
 
 
+UBER_BOSS_DROP_SUPPLEMENTS = {
+    # Awakenedのitem-drop.jsonはUber固有枠を中心に収録しており、
+    # 通常版とUber版に共通する取引可能ドロップが各入場券から欠けている。
+    "ITEM::Awakening Fragment": (
+        "UNIQUE::Thread of Hope // Crimson Jewel",
+        "UNIQUE::Zana's Ingenuity // Prismatic Ring",
+        "GEM::Annihilation Support",
+        "ITEM::Orb of Dominance",
+        "ITEM::Awakener's Orb",
+        "DIVINATION_CARD::A Fate Worse Than Death",
+    ),
+    "ITEM::Reality Fragment": (
+        "GEM::Awakened Empower Support",
+        "GEM::Awakened Enhance Support",
+        "GEM::Awakened Enlighten Support",
+        "GEM::Eclipse Support",
+        "GEM::Invert the Rules Support",
+        "ITEM::Orb of Conflict",
+        "DIVINATION_CARD::Auspicious Ambitions",
+    ),
+    "ITEM::Devouring Fragment": (
+        "UNIQUE::Forbidden Flesh // Cobalt Jewel",
+        "GEM::Gluttony Support",
+        "ITEM::Exceptional Eldritch Ichor",
+        "ITEM::Eldritch Orb of Annulment",
+        "ITEM::Eldritch Chaos Orb",
+        "ITEM::Eldritch Exalted Orb",
+        "DIVINATION_CARD::Auspicious Ambitions",
+    ),
+    "ITEM::Blazing Fragment": (
+        "UNIQUE::Forbidden Flame // Crimson Jewel",
+        "GEM::Overheat Support",
+        "ITEM::Exceptional Eldritch Ember",
+        "ITEM::Eldritch Orb of Annulment",
+        "ITEM::Eldritch Chaos Orb",
+        "ITEM::Eldritch Exalted Orb",
+        "DIVINATION_CARD::Auspicious Ambitions",
+    ),
+    "ITEM::Cosmic Fragment": (
+        "UNIQUE::The Unblinking Eye // Harlequin Mask",
+        "ITEM::Fragment of Knowledge",
+        "ITEM::Fragment of Shape",
+        "GEM::Voidstorm Support",
+        "ITEM::Shaper's Exalted Orb",
+        "ITEM::Orb of Dominance",
+    ),
+    "ITEM::Decaying Fragment": (
+        "UNIQUE::Impresence // Onyx Amulet",
+        "GEM::Void Shockwave Support",
+        "GEM::Cooldown Recovery Support",
+        "UNIQUE::Watcher's Eye // Prismatic Jewel",
+        "ITEM::Shaper's Exalted Orb",
+        "ITEM::Elder's Exalted Orb",
+        "ITEM::Orb of Dominance",
+        "DIVINATION_CARD::Void of the Elements",
+        "DIVINATION_CARD::Auspicious Ambitions",
+    ),
+    "ITEM::Synthesising Fragment": (
+        "GEM::Greater Kinetic Instability Support",
+        "DIVINATION_CARD::The Hook",
+        "DIVINATION_CARD::Imperfect Memories",
+    ),
+}
+
+
 def build_related_item_groups(items_lines: Iterable[str], drop_rows: Iterable[dict]) -> list[dict]:
     """Awakenedの関連品定義を、表示に必要な名前・variant・iconへ展開する。"""
     items = {}
@@ -222,8 +287,13 @@ def build_related_item_groups(items_lines: Iterable[str], drop_rows: Iterable[di
 
     groups = []
     for row in drop_rows:
-        queries = [resolve(str(value)) for value in row.get("query", ())]
-        related = [resolve(str(value)) for value in row.get("items", ())]
+        query_ids = [str(value) for value in row.get("query", ())]
+        related_ids = [str(value) for value in row.get("items", ())]
+        for query_id in query_ids:
+            related_ids.extend(UBER_BOSS_DROP_SUPPLEMENTS.get(query_id, ()))
+        related_ids = list(dict.fromkeys(related_ids))
+        queries = [resolve(value) for value in query_ids]
+        related = [resolve(value) for value in related_ids]
         if queries:
             groups.append({"query": queries, "items": related})
     return groups
