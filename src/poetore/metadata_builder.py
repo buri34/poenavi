@@ -252,8 +252,10 @@ UBER_BOSS_DROP_SUPPLEMENTS = {
 
 # Awakenedのitem-drop.jsonには、素材・報酬・派生関係ではなく、単に用途が
 # 近い装備を横並びにする比較用グループも含まれる。ぽえとれでは価格一覧の
-# 意味を明確にするため、実用性が低い次の2グループだけを表示対象外にする。
+# 意味を明確にするため、比較用途のグループと、個体ごとの価値判断に
+# 関連ドロップ価格が役立たないナイトメアマップを表示対象外にする。
 EXCLUDED_RELATED_ITEM_QUERY_GROUPS = {
+    frozenset({"ITEM::Nightmare Map // T0, Atlas"}),
     frozenset({
         "UNIQUE::Ventor's Gamble // Gold Ring",
         "UNIQUE::Sadima's Touch // Wool Gloves",

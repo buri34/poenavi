@@ -510,6 +510,24 @@ def test_builder_excludes_mf_and_levelling_comparison_groups():
     ]
 
 
+def test_builder_excludes_nightmare_map_drop_group():
+    groups = build_related_item_groups([], [
+        {
+            "query": ["ITEM::Nightmare Map // T0, Atlas"],
+            "items": ["UNIQUE::Yoke of Suffering // Onyx Amulet"],
+        },
+        {
+            "query": ["ITEM::Golden Oil", "ITEM::Silver Oil"],
+            "items": [],
+        },
+    ])
+
+    assert len(groups) == 1
+    assert [row["name"] for row in groups[0]["query"]] == [
+        "Golden Oil", "Silver Oil",
+    ]
+
+
 def test_builder_excludes_bestiary_armour_comparison_groups():
     groups = build_related_item_groups([], [
         {
