@@ -6,6 +6,12 @@ P04,プリセット,ノーマル品,Exactプリセットだけを使用,専用Ex
 P05,プリセット,Map・Memory Line・Invitation・Heist・Charm等,カテゴリ別Exactプリセットだけを使用,主要対象カテゴリを専用Exactへ送る,準拠,維持,,create-presets.ts:39-46,tests:test_awakened_supported_categories_use_dedicated_exact
 P06,プリセット,完成品らしさ,Unique・Crafted・品質20・Corrupted・Mirroredなら完成品だけ,同じ判定を実装。ただしMemory Strands付き品質20は完成品扱いしない,準拠,維持,,create-presets.ts:63-69,trade.py:available_trade_presets
 P07,プリセット,クラフト価値,Synthesised・Fractured・Influence・Cluster・Magic Jewel・ilvl82以上ならベース候補あり,同じ骨格を実装,準拠,維持,,create-presets.ts:71-80,trade.py:available_trade_presets
+P08,プリセット,非Unique Flask・Tincture,Exactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:34-35,trade.py:uses_dedicated_exact_preset
+P09,プリセット,非Unique Sanctum Relic・Idol,Exactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:36-37,trade.py:uses_dedicated_exact_preset
+P10,プリセット,Charm・Map・Memory Line・Invitation,rarityを問わずExactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:38-41,trade.py:uses_dedicated_exact_preset
+P11,プリセット,Heist Contract・Blueprint・Sentinel,rarityを問わずExactプリセットだけを使用,Heistは専用Exact。Sentinelは製品スコープ外,部分準拠,Sentinel対象外を維持,維持,create-presets.ts:42-44,trade.py:uses_dedicated_exact_preset
+P12,プリセット,品質による完成品判定,品質20かつMemory Strandsなしなら完成品。21以上だけでは完成品扱いしない,同じ,準拠,維持,,create-presets.ts:63-69,tests:test_memory_strands_quality_twenty_still_offers_base_preset
+P13,プリセット,ilvlによるクラフト価値,Jewel・Abyss Jewelを除くilvl82以上はベース候補あり,同じ,準拠,維持,,create-presets.ts:75-80,trade.py:available_trade_presets
 I01,名前・カテゴリ,Unique,ユニーク名とベースを完全一致,英語名・日本語Trade名・discriminatorを使って完全一致,準拠,維持,,create-item-filters.ts:184-190,tests:test_unique_search_uses_exact_english_name_and_hides_fixed_mods
 I02,名前・カテゴリ,非Unique,ベース完全一致とカテゴリ緩和候補を持つ,ベース・カテゴリ条件を生成,準拠,維持,,create-item-filters.ts:191-214,trade.py:build_search_query
 I03,名前・カテゴリ,Cluster・Idol・Graft,カテゴリ条件は初期OFF,同等のカテゴリ認識あり,準拠,維持,,create-item-filters.ts:197-203,tests:test_japanese_cluster_jewel_class_keeps_exact_cluster_base
@@ -20,18 +26,33 @@ I11,ソケット,白ソケット,条件を生成しない,条件を生成しな�
 I12,状態,Corrupted,変更不能品を除き現在状態を条件化。Magic Jewelは完全一致,3状態UIで除外・含む・限定を選べMagic Jewelは厳密化,独自仕様,Awakenedより柔軟なので維持,維持,create-item-filters.ts:243-258,tests:test_magic_jewel_search_requires_magic_rarity_and_exact_corruption_state
 I13,状態,Magic Jewel・Abyss Jewel,Adorned用途としてMagic rarityを初期ON,Magic rarityとCorrupted状態を厳密化,準拠,維持,,create-item-filters.ts:243-264,tests:test_magic_jewel_search_requires_magic_rarity_and_exact_corruption_state
 I14,状態,非Unique rarity,Normal・Magic・Rareはnonuniqueで検索,同じ,準拠,維持,,create-item-filters.ts:275-283,tests:test_dedicated_exact_normal_item_uses_nonunique_ilvl_and_exact_stats_only
+I14a,状態,ExactのMagic rarity,Adorned対象外のMagic品はmagic条件を非表示候補として持つが初期OFF。初期APIにrarityを送らない,ぽえとれはnonuniqueを初期APIへ送る,差分・判断必要,Awakened準拠で初期rarity条件を外すか判断,要判断,create-item-filters.ts:265-274,trade.py:build_search_query rarity_option
 I15,状態,Mirrored,MirroredならON。未Mirrorのクラフト可能品には隠しOFF候補,同等の状態条件を生成,準拠,維持,,create-item-filters.ts:286-292,tests:test_finished_search_state_filters_can_exclude_or_include_items
 I16,状態,Split,Split品は条件なしで含める。切替時はsplit=false。安全な未Split品は隠しsplit=false,Split品だけ「スプリット品含む／非スプリット」切替を表示。通常品は内部でsplit=false,準拠,維持,,create-item-filters.ts:294-301,tests:test_split_uncorrupted_item_defaults_to_uncorrupted_and_includes_split
 I17,状態,Fractured,安全な未Fractured品にfalse条件を持つ,非Fractured条件を生成,準拠,維持,,create-item-filters.ts:303-307,trade.py:build_search_query
 I18,状態,Foil,Foilなら完全一致ON,Foil条件を送信,準拠,維持,,create-item-filters.ts:309-311,tests:test_unique_variant_foil_and_foulborn_conditions_are_sent_exactly
 I19,状態,Foulborn,UniqueはFoulborn状態を一致,Foulborn状態と固有Modを検索,準拠,維持,,create-item-filters.ts:396-400,tests:test_foulborn_unique_keeps_all_variable_explicit_mods_as_filters
 I20,影響,Influence 1～2個,ExactではON・完成品ではOFF,プリセットに応じ同じ,準拠,維持,,create-item-filters.ts:313-317,trade.py:_dedicated_exact_identity_filters
-I21,ilvl,通常装備,完成品は初期OFF。Exact／クラフトベースは上限86で初期ON,完成品は表示・初期OFF。Exact／クラフトベース切替時は上限86で初期ON,準拠,維持,,create-item-filters.ts:320-345,trade.py:preset_item_level_filter・ui.py:_configure_item_level
+I21,ilvl,通常装備（概要）,完成品とExact／クラフトベースで初期状態を分ける,同じ。詳細はI21a～I21dへ分割,準拠,維持,,create-item-filters.ts:320-345,trade.py:preset_item_level_filter・ui.py:_configure_item_level
+I21a,ilvl,通常装備の完成品,条件を表示するが初期OFF,表示・初期OFFでAPIへ送信しない,準拠,維持,,create-item-filters.ts:342-343,tests:test_finished_rare_equipment_item_level_is_visible_but_disabled
+I21b,ilvl,通常装備のExact／クラフトベース,条件を表示して初期ON,プリセット切替時に初期ONでAPIへ送信,準拠,維持,,create-item-filters.ts:342-343,tests:test_base_preset_keeps_item_level_enabled
+I21c,ilvl,通常装備の87以上,検索下限を86へ丸める,同じ,準拠,維持,,create-item-filters.ts:341-343,tests:test_finished_rare_equipment_item_level_is_visible_but_disabled
+I21d,ilvl,通常装備の表示と結果列,検索条件OFFでも読み取ったilvl表示は維持,検索条件と結果列を分離して維持,準拠,維持,,create-item-filters.ts:320-345,tests:test_finished_rare_equipment_item_level_is_visible_but_disabled
 I22,ilvl,Cluster Jewel,1-49・50-67・68-74・75-83・84以上へ帯化,同じ帯へ正規化,準拠,維持,,create-item-filters.ts:333-338,tests:test_cluster_jewel_item_level_is_normalized_to_awakened_bracket
 I23,ilvl,Flask・Tincture,表示するが初期OFF,同じ,準拠,維持,,create-item-filters.ts:340-344,tests:test_cluster_is_dedicated_and_flask_tincture_ilvl_is_initially_disabled
 I24,ilvl,Map・Jewel・Heist・Memory・Relic等,ilvl条件を出さない,主要カテゴリで除外,準拠,維持,,create-item-filters.ts:320-332,tests:test_all_map_variants_never_send_item_level
 I25,ilvl,未鑑定Watcher's Eye,現在ilvlを初期ON,同じ,準拠,維持,,create-item-filters.ts:348-354,tests:test_unique_item_level_exceptions_match_awakened
 I26,ilvl,Agnerod系,75・78・80・82へ正規化してON,同じ,準拠,維持,,create-item-filters.ts:356-369,tests:test_unique_item_level_exceptions_match_awakened
+I27,識別,未鑑定Unique,unidentified=trueを初期ON。非Unique未鑑定は条件を初期OFF,同じ,準拠,維持,,create-item-filters.ts:374-378,trade.py:_dedicated_exact_identity_filters
+I28,ilvl,Veiled非Unique,完成品プリセットでもilvl条件を強制的に初期ON,完成品では通常装備と同じ初期OFF,未対応,Awakened準拠でVeiled品だけ初期ONへ変更,要対応,create-item-filters.ts:381-393,trade.py:preset_item_level_filter・ui.py:_configure_item_level
+I29,Area Level,Expedition Logbook,1・68・73・78・81・83の下限帯へ丸めて初期ON,同じ,準拠,維持,,create-item-filters.ts:154-162,tests:test_heist_blueprint_contract_and_logbook_rules
+I30,Area Level,Chronicle of Atzoatl,1・68・73・75・78・80の下限帯へ丸めて初期ON,同じ,準拠,維持,,create-item-filters.ts:91-95,tests:test_atzoatl_room_rules_match_awakened_priorities_and_visibility
+I31,Area Level,Mirrored Tablet,現在値を完全一致で初期ON,同じ,準拠,維持,,create-item-filters.ts:96-100,tests:test_flask_hybrid_cluster_and_special_area_rules
+I32,Area Level,Heist Blueprint,現在値を初期ON,同じ,準拠,維持,,create-item-filters.ts:163-181,tests:test_current_japanese_blueprint_copy_uses_revealed_wings_like_awakened
+I33,Area Level,非Unique Heist Contract,現在値を初期ON,同じ,準拠,維持,,create-item-filters.ts:402-407,tests:test_current_japanese_contract_copy_uses_required_job_like_awakened
+I34,Map,Tier,Tierがあれば初期ONでAPIへ送信,同じ,準拠,維持,,create-item-filters.ts:148-152,tests:test_exact_map_starts_with_tier_and_all_explicit_mods_on
+I35,Map,Blighted状態,Blighted種別を条件化,同じ,準拠,維持,,create-item-filters.ts:137-139,tests:test_map_properties_blight_and_valdo_safety_filters
+I36,Map,Valdo completion reward,報酬Unique名を完全一致条件化,同じ,準拠,維持,,create-item-filters.ts:141-146,tests:test_map_properties_blight_and_valdo_safety_filters
 G01,Gem,通常・Vaal・変容・Awakened,通常形とdiscriminatorで正確に識別,公式対応表で同じ識別,準拠,維持,,create-item-filters.ts:414-433,tests:test_transfigured_vaal_awakened_and_exceptional_gem_identity
 G02,Gem,Corrupted,現在状態を条件化,同じ,準拠,維持,,create-item-filters.ts:435-437,tests:test_gem_filters_use_awakened_max_level_quality_and_corruption_rules
 G03,Gem,Imbued候補,非ImbuedかつCorruptedかつLv20以上なら候補をOFF表示,同じ候補を初期OFF表示,準拠,維持,,create-item-filters.ts:439-443,trade.py:_gem_filters
@@ -53,6 +74,12 @@ S13,Mod,Foulborn Explicit,固定扱いでも表示し全てON,同じ,準拠,維�
 S14,Mod,Unique少数可変Mod,表示可能条件が3個以下なら全てON,同じ,準拠,維持,,create-stat-filters.ts:470-475,tests:test_unique_with_more_than_three_variable_mods_does_not_preselect_all
 S15,Mod,数値方向,高いほど良いはmin・低いほど良いはmax・比較不能は両端,better・inverted・negateを保持して同じ方向へ送信,準拠,維持,,create-stat-filters.ts:281-354,tests:test_mirrored_penumbra_ring_resolves_negative_direction_stats_like_awakened
 S16,Mod,Essence・Infamous生成元,Mod名からEssence・Infamousをタグ表示,エッセンス・悪名高いと表示,準拠,維持,,create-stat-filters.ts:272-277,tests:test_infamous_directional_modifier_resolves_to_negative_trade_value
+S17,Mod,未鑑定非Synthesised Unique,rolled Mod条件を生成しない,同じ,準拠,維持,,create-stat-filters.ts:27-30,trade.py:_apply_dedicated_exact_rules
+S18,Mod,Corrupted implicit,生成元をCorruptedとして表示し検索可能,検索可能だが種別欄は通常の暗黙表示,部分準拠,生成元表示まで揃えるか判断,要判断,create-stat-filters.ts:239-247,parser.py:modifier generation・ui.py:_filter_kind_label
+S19,Mod,Eldritch・Synthesised implicit,生成元をEldritchまたはSynthesisedとして表示し検索可能,検索可能だが種別欄は通常の暗黙表示,部分準拠,生成元表示まで揃えるか判断,要判断,create-stat-filters.ts:239-247,parser.py:modifier generation・ui.py:_filter_kind_label
+S20,Mod,Influence・Delve・Veiled・Incursion生成元,Mod名から生成元を判定して表示,検索自体は可能。Influenceは専用表示だがDelve・Incursion等は通常のPrefix/Suffix表示,部分準拠,生成元表示まで揃えるか判断,要判断,create-stat-filters.ts:247-277,parser.py:modifier generation・ui.py:_filter_kind_label
+S21,Mod,Fracturedの完成品表示,完成品ではExplicit相当へ寄せつつFractured候補を保持,同じ最終検索条件,準拠,維持,,create-stat-filters.ts:150-158・169-172,trade.py:_initial_stat_filters
+S22,Mod,Split Personality,通常Property・Pseudo・Memory Strands生成を省略,同じ専用処理,準拠,維持,,create-stat-filters.ts:160-167,trade.py:_initial_property_filters
 R01,Property,防具単一属性,AR/EV/ES/Wardの該当1種だけ初期ON,同じ単属性では該当防御値をON,準拠,維持,,item-property.ts:55-103,trade.py:_initial_property_filters
 R02,Property,ハイブリッド防具,AR/EV/ES/Wardを表示するが全て初期OFF,存在する全防御値を初期ON,差分・判断必要,ハイブリッド検索を広く拾う独自仕様かAwakened準拠か判断,要判断,item-property.ts:55-103,tests:test_japanese_armour_energy_shield_hybrid_enables_both_properties
 R03,Property,Block,表示するが初期OFF,表示するが初期OFF,準拠,維持,,item-property.ts:106-115,tests:test_shield_finished_and_base_presets_use_armour_specific_order_and_defaults
@@ -63,7 +90,17 @@ R07,Property,武器混合DPS,混合ならTotal DPSをON。支配成分67%以上�
 R08,Property,pDPS重要武器,Axe・Sword・Bow・WarstaffだけpDPSを優先,同じカテゴリ判断,準拠,維持,,item-property.ts:245-256,trade.py:_physical_dps_is_important
 R09,Property,APS・Crit,表示するが初期OFF,同じ,準拠,維持,,item-property.ts:200-219,trade.py:_initial_property_filters
 R10,Property,品質20換算,武器DPS・防御値を最低品質20へ換算,同じ,準拠,維持,,item-property.ts:55-219,trade.py:_defence_at_20_quality・physical_dps_at_20_quality
-C01,Cluster,Added Passive Skills,"Jewel Socket数を隠し、2・8・9は上限、4は上限5、5は完全一致、3・6・10・11・12は下限にする","Jewel Socket数を隠し、9のみユーザー判断で下限9、その他はAwakenedと同じ",独自仕様,9パッシブは9以上,9パッシブは実用上8パッシブと同等ではないため8を検索結果へ混ぜない,create-stat-filters.ts:478-507,tests:test_nine_passive_large_cluster_searches_nine_or_more
+R11,Pseudo,最大ライフ合計,明示最大ライフModがある時だけ生成し筋力換算分を加算。カテゴリ制限なし,筋力だけでも生成。武器は初期OFF・武器以外は初期ON,未対応,required明示ライフ条件を実装してAwakened準拠にする,要対応,pseudo/index.ts:117-125,trade.py:_pseudo_stat_filters
+R12,Pseudo,最大マナ合計,明示最大マナModがある時だけ生成し知性換算分を加算,知性だけでも生成,未対応,required明示マナ条件を実装してAwakened準拠にする,要対応,pseudo/index.ts:126-133,trade.py:_pseudo_stat_filters
+C01,Cluster,Added Passive Skills（概要）,サイズと現在値に応じ上限・完全一致・下限を切替,9だけ独自仕様。詳細はC01a～C01gへ分割,独自仕様,9パッシブは9以上,9パッシブは実用上8パッシブと同等ではないため8を検索結果へ混ぜない,create-stat-filters.ts:478-507,tests:test_nine_passive_large_cluster_searches_nine_or_more
+C01a,Cluster,Jewel Socket数,個別Mod行を隠して専用条件へ集約,同じ,準拠,維持,,create-stat-filters.ts:478-483,trade.py:cluster_jewel分岐
+C01b,Cluster,2パッシブ,最大2で初期ON,同じ,準拠,維持,,create-stat-filters.ts:486-492,tests:test_optimal_cluster_passive_count_does_not_include_next_integer
+C01c,Cluster,3パッシブ,最小3で初期ON,同じ,準拠,維持,,create-stat-filters.ts:496-502,trade.py:cluster_jewel分岐
+C01d,Cluster,4パッシブ,最大5で初期ON,同じ,準拠,維持,,create-stat-filters.ts:490-495,trade.py:cluster_jewel分岐
+C01e,Cluster,5パッシブ,5完全一致で初期ON,同じ,準拠,維持,,create-stat-filters.ts:493-495,trade.py:cluster_jewel分岐
+C01f,Cluster,6・10・11・12パッシブ,現在値以上で初期ON,同じ,準拠,維持,,create-stat-filters.ts:496-502,trade.py:cluster_jewel分岐
+C01g,Cluster,8パッシブ,最大8で初期ON,同じ,準拠,維持,,create-stat-filters.ts:496-505,tests:test_optimal_cluster_passive_count_does_not_include_next_integer
+C01h,Cluster,9パッシブ,Awakenedは最大9,ぽえとれはユーザー判断で最小9,独自仕様,9以上を維持,維持,create-stat-filters.ts:496-505,tests:test_nine_passive_large_cluster_searches_nine_or_more
 C02,Flask,Enchant,Enkindling使用時以外のHarvest/Instilling Enchantを隠してOFF,Enkindling使用時だけEnchantを表示・ON,準拠,維持,,create-stat-filters.ts:511-518,tests:test_dedicated_exact_magic_flask_hides_instilling_enchantment・test_dedicated_exact_magic_flask_keeps_enkindling_enchantment
 C03,Flask,Charge Recovery hybrid,Charge RecoveryありEffectなしならEffect条件をNOT追加,同じ,準拠,維持,,pseudo/flasks.ts:13-27,tests:test_flask_hybrid_cluster_and_special_area_rules
 C04,Anointment,Amulet・Ring,TalismanはON。非Corrupted/非Mirroredで最高Oilが金銀以外なら隠してOFF,同じ価値Oil規則,準拠,維持,,pseudo/anointments.ts:45-57,tests:test_modifiable_amulet_shows_anointments_using_valuable_oils
