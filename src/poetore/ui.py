@@ -83,6 +83,8 @@ _UNIQUE_CANDIDATE_VIEWPORT_HEIGHT = (
     _UNIQUE_CANDIDATE_ROW_HEIGHT * _UNIQUE_CANDIDATE_VISIBLE_ROWS
     + _UNIQUE_CANDIDATE_ROW_SPACING * (_UNIQUE_CANDIDATE_VISIBLE_ROWS - 1)
 )
+_RELATED_ITEMS_TREE_HEIGHT = 180
+_RELATED_ITEMS_PRICE_HEIGHT_REDUCTION = 180
 _DISPLAY_SIZE_PROFILES = {
     "small": {
         "font": 12, "width": 720, "height": 1039,
@@ -912,7 +914,7 @@ class PoetoreWindow(QWidget):
         self.related_items_tree.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.related_items_tree.header().setSectionResizeMode(0, QHeaderView.Stretch)
         self.related_items_tree.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.related_items_tree.setMaximumHeight(210)
+        self.related_items_tree.setMaximumHeight(_RELATED_ITEMS_TREE_HEIGHT)
         related_layout.addWidget(self.related_items_tree)
         self.related_items_panel.hide()
         panel_layout.addWidget(self.related_items_panel)
@@ -1734,7 +1736,9 @@ class PoetoreWindow(QWidget):
         self.setMinimumSize(profile["minimum_width"], profile["minimum_height"])
         self.resize(profile["width"], profile["height"])
         self.mod_filter_tree.setMinimumHeight(profile["mod_height"])
-        self.price_list.setMinimumHeight(profile["price_height"])
+        self._apply_related_items_layout(
+            not self.related_items_panel.isHidden()
+        )
         self.trade_league_combo.setFixedWidth(self._scaled_display_value(290))
         self.league_popup_button.setFixedSize(
             self._scaled_display_value(28), self._scaled_display_value(28)
@@ -2306,15 +2310,31 @@ class PoetoreWindow(QWidget):
                     child.setToolTip(1, "poe.ninja参考価格")
                 parent.addChild(child)
             parent.setExpanded(True)
-        self.related_items_panel.setVisible(
-            self.related_items_tree.topLevelItemCount() > 0
-        )
+        visible = self.related_items_tree.topLevelItemCount() > 0
+        self.related_items_panel.setVisible(visible)
+        self._apply_related_items_layout(visible)
 
     def _hide_related_items(self, key=None):
         if key is not None and key != self._poe_ninja_item_key:
             return
         self.related_items_tree.clear()
         self.related_items_panel.hide()
+        self._apply_related_items_layout(False)
+
+    def _apply_related_items_layout(self, visible: bool):
+        """関連品がある時だけ価格結果欄の一部を関連品一覧へ割り当てる。"""
+        profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
+        related_height = self._scaled_display_value(_RELATED_ITEMS_TREE_HEIGHT)
+        self.related_items_tree.setMinimumHeight(related_height if visible else 0)
+        self.related_items_tree.setMaximumHeight(related_height)
+        price_height = profile["price_height"]
+        if visible:
+            price_height = max(
+                120,
+                price_height
+                - self._scaled_display_value(_RELATED_ITEMS_PRICE_HEIGHT_REDUCTION),
+            )
+        self.price_list.setMinimumHeight(price_height)
 
     def _open_poe_ninja_url(self):
         if self._last_poe_ninja_url:

@@ -3138,6 +3138,17 @@ def test_related_items_panel_renders_materials_and_rewards(qapp):
         assert window.related_items_tree.topLevelItemCount() == 2
         assert window.related_items_tree.topLevelItem(0).child(0).text(0).startswith("● ")
         assert window.related_items_tree.topLevelItem(1).child(0).text(1) == "12 chaos"
+        assert window.related_items_tree.minimumHeight() == 180
+        assert window.related_items_tree.maximumHeight() == 180
+        assert window.price_list.minimumHeight() == 254
+        window.show()
+        qapp.processEvents()
+        assert window.related_items_tree.height() == 180
+        assert window.related_items_panel.height() >= 200
+
+        window._hide_related_items(key)
+        assert window.related_items_tree.minimumHeight() == 0
+        assert window.price_list.minimumHeight() == 434
     finally:
         window.close()
 
