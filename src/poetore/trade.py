@@ -1459,6 +1459,135 @@ def _initial_property_filters(
     return filters
 
 
+_ATZOATL_REMOVE_ROOMS = frozenset({
+    "Has Room: Banquet Hall",
+    "Has Room: Antechamber",
+    "Has Room: Passageways",
+    "Has Room: Cloister",
+    "Has Room: Tunnels",
+    "Has Room: Cellar",
+    "Has Room: Chasm",
+    "Has Room: Halls",
+    "Has Room: Tombs",
+    "Has Room: Pits",
+    "Has Room: Shrine of Empowerment (Tier 1)",
+    "Has Room: Sanctum of Unity (Tier 2)",
+    "Has Room: Temple Nexus (Tier 3)",
+    "Has Room: Explosives Room (Tier 1)",
+    "Has Room: Demolition Lab (Tier 2)",
+    "Has Room: Shrine of Unmaking (Tier 3)",
+    "Has Room: Corruption Chamber (Tier 1)",
+    "Has Room: Catalyst of Corruption (Tier 2)",
+    "Has Room: Gemcutter's Workshop (Tier 1)",
+    "Has Room: Department of Thaumaturgy (Tier 2)",
+    "Has Room: Sacrificial Chamber (Tier 1)",
+    "Has Room: Hall of Offerings (Tier 2)",
+    "Has Room: Storage Room (Tier 1)",
+    "Has Room: Guardhouse (Tier 1)",
+    "Has Room: Workshop (Tier 1)",
+    "Has Room: Royal Meeting Room (Tier 1)",
+    "Has Room: Torment Cells (Tier 1)",
+    "Has Room: Strongbox Chamber (Tier 1)",
+    "Has Room: Jeweller's Workshop (Tier 1)",
+    "Has Room: Splinter Research Lab (Tier 1)",
+    "Has Room: Tempest Generator (Tier 1)",
+    "Has Room: Hurricane Engine (Tier 2)",
+    "Has Room: Armourer's Workshop (Tier 1)",
+    "Has Room: Armoury (Tier 2)",
+    "Has Room: Sparring Room (Tier 1)",
+    "Has Room: Arena of Valour (Tier 2)",
+    "Has Room: Poison Garden (Tier 1)",
+    "Has Room: Cultivar Chamber (Tier 2)",
+    "Has Room: Hatchery (Tier 1)",
+    "Has Room: Automaton Lab (Tier 2)",
+    "Has Room: Trap Workshop (Tier 1)",
+    "Has Room: Temple Defense Workshop (Tier 2)",
+    "Has Room: Flame Workshop (Tier 1)",
+    "Has Room: Omnitect Forge (Tier 2)",
+    "Has Room: Lightning Workshop (Tier 1)",
+    "Has Room: Omnitect Reactor Plant (Tier 2)",
+    "Has Room: Pools of Restoration (Tier 1)",
+    "Has Room: Sanctum of Vitality (Tier 2)",
+})
+
+_ATZOATL_HIDDEN_ROOMS = frozenset({
+    "Has Room: Vault (Tier 1)",
+    "Has Room: Surveyor's Study (Tier 1)",
+    "Has Room: Hall of Mettle (Tier 1)",
+    "Has Room: Warehouses (Tier 2)",
+    "Has Room: Barracks (Tier 2)",
+    "Has Room: Engineering Department (Tier 2)",
+    "Has Room: Hall of Lords (Tier 2)",
+    "Has Room: Torture Cages (Tier 2)",
+    "Has Room: Hall of Locks (Tier 2)",
+    "Has Room: Jewellery Forge (Tier 2)",
+    "Has Room: Breach Containment Chamber (Tier 2)",
+    "Has Room: Storm of Corruption (Tier 3)",
+    "Has Room: Chamber of Iron (Tier 3)",
+    "Has Room: Hall of Champions (Tier 3)",
+    "Has Room: Toxic Grove (Tier 3)",
+    "Has Room: Hybridisation Chamber (Tier 3)",
+    "Has Room: Defense Research Lab (Tier 3)",
+    "Has Room: Crucible of Flame (Tier 3)",
+    "Has Room: Conduit of Lightning (Tier 3)",
+    "Has Room: Sanctum of Immortality (Tier 3)",
+})
+
+_ATZOATL_ENABLED_ROOMS = frozenset({
+    "Has Room: Apex of Atzoatl",
+    "Has Room: Locus of Corruption (Tier 3)",
+    "Has Room: Doryani's Institute (Tier 3)",
+    "Has Room: Apex of Ascension (Tier 3)",
+    "Has Room: Wealth of the Vaal (Tier 3)",
+})
+
+_ATZOATL_EXPLOSIVES_ROOMS = frozenset({
+    "Has Room: Explosives Room (Tier 1)",
+    "Has Room: Demolition Lab (Tier 2)",
+    "Has Room: Shrine of Unmaking (Tier 3)",
+})
+
+
+def _apply_atzoatl_room_rules(
+    filters: list[TradeStatFilter],
+) -> list[TradeStatFilter]:
+    """AwakenedのChronicle of Atzoatl全Room規則を適用する。"""
+    room_filters = [
+        row for row in filters
+        if row.ref and row.ref.startswith("Has Room:")
+    ]
+    has_open_explosives = any(
+        row.ref in _ATZOATL_EXPLOSIVES_ROOMS and row.option_value == 1
+        for row in room_filters
+    )
+    adjusted = []
+    for row in filters:
+        if not row.ref or not row.ref.startswith("Has Room:"):
+            adjusted.append(row)
+            continue
+        obstructed = row.option_value == 2
+        if row.ref in _ATZOATL_REMOVE_ROOMS or (
+            obstructed and not has_open_explosives
+        ):
+            continue
+        hidden_reason = (
+            "Awakened: 低優先度のAtzoatl部屋を非表示"
+            if row.ref in _ATZOATL_HIDDEN_ROOMS else ""
+        )
+        adjusted.append(replace(
+            row,
+            enabled=row.ref in _ATZOATL_ENABLED_ROOMS and not hidden_reason,
+            option_value=None if obstructed else row.option_value,
+            option_text=None if obstructed else row.option_text,
+            hidden_reason=hidden_reason,
+            selection_reason=(
+                "Atzoatlの主要部屋"
+                if row.ref in _ATZOATL_ENABLED_ROOMS else row.selection_reason
+            ),
+        ))
+    return adjusted
+
+
 def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
     if item.category not in {"weapon", "armour", "accessory"}:
         return []
@@ -2811,14 +2940,7 @@ def resolve_trade_stat_filters(
             ))
     special_name = f"{item.name} {item.base_type}".casefold()
     if "chronicle of atzoatl" in special_name or "アトゾアトルの年代記" in special_name:
-        valuable_rooms = {
-            "Has Room: Apex of Atzoatl", "Has Room: Locus of Corruption (Tier 3)",
-            "Has Room: Doryani's Institute (Tier 3)", "Has Room: Apex of Ascension (Tier 3)",
-        }
-        decorated = [row for row in decorated if not (row.ref and "(Tier 1)" in row.ref)]
-        decorated = [replace(
-            row, enabled=True, selection_reason="Atzoatlの主要Tier 3部屋"
-        ) if row.ref in valuable_rooms else row for row in decorated]
+        decorated = _apply_atzoatl_room_rules(decorated)
     if "mirrored tablet" in special_name or "ミラーされたタブレット" in special_name:
         premium = ("Reflection of Kalandra", "Reflection of the Sun", "Reflection of Paradise", "Reflection of Angling")
         decorated = [row for row in decorated if not (

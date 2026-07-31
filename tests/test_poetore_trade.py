@@ -25,6 +25,7 @@ from src.poetore.trade import _request_json
 from src.poetore.trade import _base_defence_percentile
 from src.poetore.trade import _trade_response_cache
 from src.poetore.trade import _awakened_tier_tags
+from src.poetore.trade import _apply_atzoatl_room_rules
 from src.poetore.trade import _group_price_listings
 from src.poetore.trade import (
     _english_trade_item_name,
@@ -4258,6 +4259,58 @@ Item Level: 72
     with patch("src.poetore.trade._trade_stat_entries", return_value=()):
         filters = resolve_trade_stat_filters(chronicle)
     assert next(row for row in filters if row.stat_id == "property.area_level").min_value == 78
+
+
+def test_atzoatl_room_rules_match_awakened_priorities_and_visibility():
+    def room(ref, option=1):
+        return TradeStatFilter(
+            f"pseudo.{ref}", ref, None, "pseudo", True,
+            ref=ref, option_value=option,
+        )
+
+    area = TradeStatFilter(
+        "property.area_level", "エリアレベル", 78, "special", True,
+    )
+    rows = _apply_atzoatl_room_rules([
+        area,
+        room("Has Room: Banquet Hall"),
+        room("Has Room: Corruption Chamber (Tier 1)"),
+        room("Has Room: Locus of Corruption (Tier 3)"),
+        room("Has Room: Wealth of the Vaal (Tier 3)"),
+        room("Has Room: Treasury (Tier 2)"),
+        room("Has Room: Vault (Tier 1)"),
+        room("Has Room: Storm of Corruption (Tier 3)"),
+    ])
+    by_ref = {row.ref: row for row in rows if row.ref}
+
+    assert area in rows
+    assert "Has Room: Banquet Hall" not in by_ref
+    assert "Has Room: Corruption Chamber (Tier 1)" not in by_ref
+    assert by_ref["Has Room: Locus of Corruption (Tier 3)"].enabled
+    assert by_ref["Has Room: Wealth of the Vaal (Tier 3)"].enabled
+    assert not by_ref["Has Room: Treasury (Tier 2)"].enabled
+    assert by_ref["Has Room: Vault (Tier 1)"].hidden_reason
+    assert by_ref["Has Room: Storm of Corruption (Tier 3)"].hidden_reason
+
+
+def test_atzoatl_obstructed_room_requires_open_explosives():
+    def room(ref, option):
+        return TradeStatFilter(
+            f"pseudo.{ref}", ref, None, "pseudo", True,
+            ref=ref, option_value=option,
+        )
+
+    obstructed = room("Has Room: Treasury (Tier 2)", 2)
+    assert _apply_atzoatl_room_rules([obstructed]) == []
+
+    rows = _apply_atzoatl_room_rules([
+        room("Has Room: Explosives Room (Tier 1)", 1),
+        obstructed,
+    ])
+    assert len(rows) == 1
+    assert rows[0].ref == "Has Room: Treasury (Tier 2)"
+    assert rows[0].option_value is None
+    assert rows[0].enabled is False
 
 
 def test_cluster_is_dedicated_and_flask_tincture_ilvl_is_initially_disabled():

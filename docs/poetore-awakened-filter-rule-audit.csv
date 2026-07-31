@@ -77,7 +77,7 @@ H01,Heist,Contract Job,必要JobとLevelを完全値でON,9 Jobを解析してON
 H02,Heist,Contract target,Pricelessだけ専用条件をON,同じ,準拠,維持,,pseudo/heist.ts:54-62,tests:test_heist_blueprint_contract_and_logbook_rules
 H03,Heist,Blueprint Enchant,Enchantがない設計図はEnchant数NOTをON,同じ,準拠,維持,,pseudo/heist.ts:65-76,tests:test_heist_blueprint_contract_and_logbook_rules
 H04,Heist,Blueprint wings,公開済みWing数をON,同じ,準拠,維持,,create-item-filters.ts:163-183,tests:test_current_japanese_blueprint_copy_uses_revealed_wings_like_awakened
-X01,特殊,Chronicle of Atzoatl,Area Level帯と部屋ごとの削除・非表示・Tier3初期値・閉鎖部屋処理,Area Level帯と主要Tier3部屋を実装,部分準拠,全Room規則を機械比較して不足を追加候補化,要判断,pseudo/atzoatl-rules.ts:15-181,docs/poetore-awakened-gap-audit.md
+X01,特殊,Chronicle of Atzoatl,Area Level帯と部屋ごとの削除・非表示・Tier3初期値・閉鎖部屋処理,Awakened全86 Room規則とArea Level帯を実装,準拠,維持,,pseudo/atzoatl-rules.ts:15-181,tests:test_atzoatl_room_rules_match_awakened_priorities_and_visibility・test_atzoatl_obstructed_room_requires_open_explosives
 X02,特殊,Mirrored Tablet,難易度8未満を除外し高価値ReflectionをON,同じ主要規則,準拠,維持,,pseudo/reflection-rules.ts:10-50,tests:test_flask_hybrid_cluster_and_special_area_rules
 X03,特殊,Forbidden Tome,83未満はArea Levelをmin=maxで固定,同じ,準拠,維持,,create-item-filters.ts:96-105,tests:test_forbidden_tome_below_83_uses_exact_area_level_range
 X04,特殊,Metamorph Sample,名前とilvlをExact検索,製品スコープ外,対象外,現行ゲームでの必要性が低く維持,維持,create-item-filters.ts:71-80,docs/poetore-exact-preset-audit.md
