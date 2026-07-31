@@ -156,13 +156,14 @@ class PoetoreSettingsDialog(QDialog):
         self.result_font_size_combo.addItem("中", "medium")
         self.result_font_size_combo.addItem("大", "large")
         saved_result_font_size = str(
-            poetore.get("result_font_size", "small")
+            poetore.get("result_font_size", "medium")
         ).casefold()
         result_font_index = self.result_font_size_combo.findData(
             saved_result_font_size
         )
         self.result_font_size_combo.setCurrentIndex(
-            result_font_index if result_font_index >= 0 else 0
+            result_font_index if result_font_index >= 0
+            else self.result_font_size_combo.findData("medium")
         )
         display_form.addRow("フォントサイズ:", self.result_font_size_combo)
         display_note = QLabel(
@@ -390,7 +391,7 @@ class PoetoreSettingsDialog(QDialog):
         poetore = dict(self.current_config.get("poetore", {}))
         poetore["league"] = self._league_selection_value()
         poetore["result_font_size"] = (
-            self.result_font_size_combo.currentData() or "small"
+            self.result_font_size_combo.currentData() or "medium"
         )
         return {
             "startup": startup,

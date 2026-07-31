@@ -113,13 +113,13 @@ def test_poetore_settings_saves_result_font_size():
     dialog.close()
 
 
-def test_poetore_settings_defaults_unknown_result_font_size_to_small():
+def test_poetore_settings_defaults_unknown_result_font_size_to_medium():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(
         current_config={"poetore": {"result_font_size": "unknown"}}
     )
 
-    assert dialog.result_font_size_combo.currentData() == "small"
+    assert dialog.result_font_size_combo.currentData() == "medium"
     dialog.close()
 
 

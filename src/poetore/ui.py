@@ -109,8 +109,8 @@ _DISPLAY_SIZE_PROFILES = {
 
 
 def normalize_result_font_size(value) -> str:
-    normalized = str(value or "small").casefold()
-    return normalized if normalized in _DISPLAY_SIZE_PROFILES else "small"
+    normalized = str(value or "medium").casefold()
+    return normalized if normalized in _DISPLAY_SIZE_PROFILES else "medium"
 _SPECIAL_CHIP_FILTER_IDS = {
     "property.map_tier", "property.area_level", "property.heist_wings",
     "property.base_percentile",
@@ -797,7 +797,7 @@ class PoetoreWindow(QWidget):
         self.setFocusPolicy(Qt.StrongFocus)
         self.setWindowTitle("ぽえとれ")
         self._result_font_size = normalize_result_font_size(
-            self._app_config.get("poetore", {}).get("result_font_size", "small")
+            self._app_config.get("poetore", {}).get("result_font_size", "medium")
         )
         profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
         self.resize(profile["width"], profile["height"])
@@ -1730,7 +1730,7 @@ class PoetoreWindow(QWidget):
     def apply_result_display_size(self):
         """設定済みの小／中／大を既存の検索画面へ即時反映する。"""
         selected = normalize_result_font_size(
-            self._app_config.get("poetore", {}).get("result_font_size", "small")
+            self._app_config.get("poetore", {}).get("result_font_size", "medium")
         )
         profile = _DISPLAY_SIZE_PROFILES[selected]
         self._result_font_size = selected

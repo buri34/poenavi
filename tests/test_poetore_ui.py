@@ -60,8 +60,8 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
         assert not hasattr(window, "disclaimer_label")
         assert window.trade_league_combo.currentData() == "auto"
         assert window._selected_trade_league() is None
-        assert window.width() == 720
-        assert window.minimumWidth() == 680
+        assert window.width() == 840
+        assert window.minimumWidth() == 760
         assert window.height() == 1039
         assert window.price_list.minimumHeight() == 434
         assert window.trade_url_button.text() == "公式トレード  ↗"
@@ -238,7 +238,7 @@ def test_show_at_context_places_window_inward_from_cursor_side(qapp):
             window, "activateWindow"
         ):
             window.show_at_context(context)
-        assert window.pos() == QPoint(634, 50)
+        assert window.pos() == QPoint(514, 50)
     finally:
         window.close()
 
@@ -348,7 +348,7 @@ def test_poetore_title_bar_keeps_close_button(qapp):
     window = PoetoreWindow()
     try:
         assert window.trade_league_combo.parentWidget().objectName() == "poetoreTitleBar"
-        assert window.trade_league_combo.width() == 290
+        assert window.trade_league_combo.width() == 338
         assert window.league_popup_button.text() == "▼"
         assert window.league_popup_button.toolTip() == "リーグ一覧を開く"
         close_buttons = [
@@ -794,7 +794,7 @@ def test_foulborn_xoph_uses_mutated_unique_returning_projectiles_stat(qapp):
 def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
     window = PoetoreWindow()
     try:
-        assert window.size().width() == 720
+        assert window.size().width() == 840
         assert window._panel.objectName() == "poetorePanel"
         assert not window._debug_parse_area.isVisible()
         assert window.mod_filter_tree.columnCount() == 6
@@ -1241,8 +1241,8 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
 def test_mod_filter_check_and_condition_columns_fit_without_clipping(qapp):
     window = PoetoreWindow()
     try:
-        assert window.mod_filter_tree.columnWidth(0) == 40
-        assert window.mod_filter_tree.columnWidth(3) == 346
+        assert window.mod_filter_tree.columnWidth(0) == 47
+        assert window.mod_filter_tree.columnWidth(3) == 404
     finally:
         window.close()
 
@@ -1254,8 +1254,8 @@ def test_mod_filter_minimum_and_maximum_editors_use_narrow_width(qapp):
     ),))
     try:
         row = window.mod_filter_tree.topLevelItem(0)
-        assert window.mod_filter_tree.itemWidget(row, 4).width() == 72
-        assert window.mod_filter_tree.itemWidget(row, 5).width() == 72
+        assert window.mod_filter_tree.itemWidget(row, 4).width() == 84
+        assert window.mod_filter_tree.itemWidget(row, 5).width() == 84
     finally:
         window.close()
 
@@ -1427,7 +1427,7 @@ def test_unique_variable_roll_slider_drag_updates_minimum_and_enables_filter(qap
         assert "QWidget#uniqueRollCell" in text_widget.styleSheet()
         labels = text_widget.findChildren(QLabel)
         assert len(labels) == 1
-        assert row.sizeHint(3).height() == 62
+        assert row.sizeHint(3).height() == 72
         rendered_cell = text_widget.grab().toImage()
         assert {
             rendered_cell.pixelColor(x, y).name()
@@ -1692,7 +1692,7 @@ Imbued Wand
         )
         tier_widget = window.mod_filter_tree.itemWidget(accuracy_row, 2)
 
-        assert window.mod_filter_tree.columnWidth(2) == 75
+        assert window.mod_filter_tree.columnWidth(2) == 88
         assert accuracy_row.text(2) == ""
         assert tier_widget is not None
         assert [label.text() for label in tier_widget.findChildren(QLabel)] == ["T2", "T2"]
@@ -3188,12 +3188,12 @@ def test_related_items_panel_renders_materials_and_rewards(qapp):
             == "チャユラの祝福"
         )
         assert window.related_items_tree.topLevelItem(1).child(0).text(1) == "12 chaos"
-        assert window.related_items_tree.minimumHeight() == 180
-        assert window.related_items_tree.maximumHeight() == 180
-        assert window.price_list.minimumHeight() == 254
+        assert window.related_items_tree.minimumHeight() == 210
+        assert window.related_items_tree.maximumHeight() == 210
+        assert window.price_list.minimumHeight() == 224
         window.show()
         qapp.processEvents()
-        assert window.related_items_tree.height() == 180
+        assert window.related_items_tree.height() == 210
         assert window.related_items_panel.height() >= 200
 
         window._hide_related_items(key)

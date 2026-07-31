@@ -52,7 +52,7 @@
     "poetore": {
         "league": "auto",
         "search_stat_range": 10,
-        "result_font_size": "small"
+        "result_font_size": "medium"
     },
     "window_geometry": {
         "x": 2644,
