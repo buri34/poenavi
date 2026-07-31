@@ -57,12 +57,14 @@ class _TradeSignals(QObject):
 
 
 _INFLUENCE_CHIPS = {
-    "shaper": ("Shaper", "pseudo.pseudo_has_shaper_influence"),
-    "elder": ("Elder", "pseudo.pseudo_has_elder_influence"),
-    "crusader": ("Crusader", "pseudo.pseudo_has_crusader_influence"),
-    "hunter": ("Hunter", "pseudo.pseudo_has_hunter_influence"),
-    "redeemer": ("Redeemer", "pseudo.pseudo_has_redeemer_influence"),
-    "warlord": ("Warlord", "pseudo.pseudo_has_warlord_influence"),
+    "shaper": ("Shaper", "pseudo.pseudo_has_shaper_influence", "influence:shaper"),
+    "elder": ("Elder", "pseudo.pseudo_has_elder_influence", "influence:elder"),
+    "crusader": ("Crusader", "pseudo.pseudo_has_crusader_influence", "influence:crusader"),
+    "hunter": ("Hunter", "pseudo.pseudo_has_hunter_influence", "influence:hunter"),
+    "redeemer": ("Redeemer", "pseudo.pseudo_has_redeemer_influence", "influence:redeemer"),
+    "warlord": ("Warlord", "pseudo.pseudo_has_warlord_influence", "influence:warlord"),
+    "eater": ("Eater", None, "tangled_item"),
+    "exarch": ("Exarch", None, "searing_item"),
 }
 
 _MOD_COLUMN_CHECK = 0
@@ -1120,7 +1122,7 @@ class PoetoreWindow(QWidget):
         self.links_tag.hide()
         self.influence_chips = {}
         self._influence_chip_enabled = {}
-        for influence, (label, _stat_id) in _INFLUENCE_CHIPS.items():
+        for influence, (label, _stat_id, _item_flag) in _INFLUENCE_CHIPS.items():
             button = QPushButton(label)
             button.setObjectName("influenceChip")
             button.setIcon(_influence_chip_icon(label, False))
@@ -2643,6 +2645,7 @@ class PoetoreWindow(QWidget):
         links_min = self._selected_links()
         links_chip_visible = not self.links_tag.isHidden()
         influence_filters = self._selected_influence_filters()
+        include_searing, include_tangled = self._selected_eldritch_influences()
         special_filters = self._selected_special_chip_filters()
         include_unidentified = (
             bool(self.unidentified_chip.currentData())
@@ -2732,6 +2735,8 @@ class PoetoreWindow(QWidget):
                     include_unidentified=include_unidentified,
                     include_veiled=include_veiled,
                     include_foil=include_foil,
+                    include_searing=include_searing,
+                    include_tangled=include_tangled,
                 )
             except (TradeApiError, ValueError) as exc:
                 self._trade_signals.failed.emit(str(exc), search_generation)
@@ -3068,14 +3073,17 @@ class PoetoreWindow(QWidget):
             return
         self._influence_item_key = key
         influences = [
-            flag.split(":", 1)[1] for flag in item.flags
-            if flag.startswith("influence:") and flag.split(":", 1)[1] in _INFLUENCE_CHIPS
+            influence for influence, (_label, _stat_id, item_flag) in _INFLUENCE_CHIPS.items()
+            if item_flag in item.flags
         ]
         visible = set(influences) if 1 <= len(influences) <= 2 else set()
         exact = preset == PRESET_BASE or uses_dedicated_exact_preset(item)
         for influence, button in self.influence_chips.items():
             button.setVisible(influence in visible)
-            self._set_influence_filter_enabled(influence, influence in visible and exact)
+            eldritch = influence in {"eater", "exarch"}
+            self._set_influence_filter_enabled(
+                influence, influence in visible and (exact or eldritch),
+            )
 
     def _toggle_influence_filter(self, influence: str):
         self._set_influence_filter_enabled(
@@ -3097,9 +3105,22 @@ class PoetoreWindow(QWidget):
         for influence, enabled in self._influence_chip_enabled.items():
             if not enabled or self.influence_chips[influence].isHidden():
                 continue
-            label, stat_id = _INFLUENCE_CHIPS[influence]
+            label, stat_id, _item_flag = _INFLUENCE_CHIPS[influence]
+            if stat_id is None:
+                continue
             rows.append(TradeStatFilter(stat_id, f"{label}影響", None, "influence", True))
         return tuple(rows)
+
+    def _selected_eldritch_influences(self) -> tuple[bool | None, bool | None]:
+        """表示中のEldritchチップをTrade APIのmisc条件へ変換する。"""
+        selected = []
+        for influence in ("exarch", "eater"):
+            button = self.influence_chips[influence]
+            selected.append(
+                None if button.isHidden()
+                else bool(self._influence_chip_enabled.get(influence, False))
+            )
+        return tuple(selected)
 
     def _configure_special_filter_chips(self, item):
         preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)

@@ -3428,6 +3428,32 @@ def test_query_supports_option_not_count_and_special_item_states():
     assert "veiled" not in without_veiled["filters"]["misc_filters"]["filters"]
 
 
+def test_eldritch_item_filters_can_be_disabled_independently():
+    item = replace(
+        parse_item_text(ITEM),
+        flags=parse_item_text(ITEM).flags + ("searing_item", "tangled_item"),
+    )
+
+    initial = build_search_query(item)["query"]
+    initial_misc = initial["filters"]["misc_filters"]["filters"]
+    assert initial_misc["searing_item"] == {"option": "true"}
+    assert initial_misc["tangled_item"] == {"option": "true"}
+
+    eater_disabled = build_search_query(
+        item, include_searing=True, include_tangled=False,
+    )["query"]
+    eater_disabled_misc = eater_disabled["filters"]["misc_filters"]["filters"]
+    assert eater_disabled_misc["searing_item"] == {"option": "true"}
+    assert "tangled_item" not in eater_disabled_misc
+
+    both_disabled = build_search_query(
+        item, include_searing=False, include_tangled=False,
+    )["query"]
+    both_disabled_misc = both_disabled["filters"]["misc_filters"]["filters"]
+    assert "searing_item" not in both_disabled_misc
+    assert "tangled_item" not in both_disabled_misc
+
+
 def test_option_stat_query_does_not_include_numeric_bounds():
     item = parse_item_text("""アイテムクラス: ジュエル
 レアリティ: レア

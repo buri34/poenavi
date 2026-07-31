@@ -3108,6 +3108,7 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
             "base_percentile", "gem_variant", "gem_level", "quality",
             "influence_shaper", "influence_elder", "influence_crusader",
             "influence_hunter", "influence_redeemer", "influence_warlord",
+            "influence_eater", "influence_exarch",
             "magic_rarity", "unidentified", "veiled", "foil", "mirrored", "split",
         )
         assert window.filter_chip_layout.ordered_widgets() == tuple(
@@ -3700,6 +3701,41 @@ Elder Item
         ))
         window._configure_influence_chips(three)
         assert all(button.isHidden() for button in window.influence_chips.values())
+    finally:
+        window.close()
+
+
+def test_eldritch_influence_chips_are_visible_enabled_and_independent(qapp):
+    window = PoetoreWindow()
+    try:
+        item = parse_item_text("""アイテムクラス: 靴
+レアリティ: レア
+勝利の拍車
+賢者の履物
+--------
+アイテムレベル: 83
+--------
+シアリング・エグザークのアイテム
+イーター・オブ・ワールズのアイテム
+""")
+        window._parsed_item = item
+        window._configure_trade_presets(item)
+        window._configure_influence_chips(item)
+
+        eater = window.influence_chips["eater"]
+        exarch = window.influence_chips["exarch"]
+        assert not eater.isHidden()
+        assert not exarch.isHidden()
+        assert not eater.icon().isNull()
+        assert not exarch.icon().isNull()
+        assert eater.text() == "Eater"
+        assert exarch.text() == "Exarch"
+        assert window._selected_eldritch_influences() == (True, True)
+
+        eater.click()
+        assert window._selected_eldritch_influences() == (True, False)
+        exarch.click()
+        assert window._selected_eldritch_influences() == (False, False)
     finally:
         window.close()
 

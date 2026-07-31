@@ -3086,6 +3086,8 @@ def build_search_query(
     include_unidentified: bool | None = None,
     include_veiled: bool | None = None,
     include_foil: bool | None = None,
+    include_searing: bool | None = None,
+    include_tangled: bool | None = None,
 ) -> dict:
     if trade_status not in TRADE_STATUS_OPTIONS:
         raise ValueError(f"未対応の取引方式です: {trade_status}")
@@ -3120,6 +3122,10 @@ def build_search_query(
     corruption_mode_explicit = include_corrupted is not None
     if include_corrupted is None:
         include_corrupted = "corrupted" in item.flags
+    if include_searing is None:
+        include_searing = "searing_item" in item.flags
+    if include_tangled is None:
+        include_tangled = "tangled_item" in item.flags
     if include_corrupted not in {False, True, "only"}:
         raise ValueError(f"未対応のコラプト条件です: {include_corrupted}")
     craftable = (
@@ -3259,10 +3265,6 @@ def build_search_query(
         if (item.category in {"weapon", "armour", "accessory", "cluster_jewel", "jewel", "abyss_jewel"}
                 and "foulborn" not in item.flags):
             misc["foulborn_item"] = {"option": "false"}
-        if "searing_item" in item.flags:
-            misc["searing_item"] = {"option": "true"}
-        if "tangled_item" in item.flags:
-            misc["tangled_item"] = {"option": "true"}
         if (not corruption_mode_explicit
                 and item.category in {"jewel", "abyss_jewel"}
                 and rarity in {"magic", "マジック"}):
@@ -3275,6 +3277,14 @@ def build_search_query(
             "option": "true" if include_corrupted == "only" else "false"
         }
     misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
+    if include_searing:
+        misc["searing_item"] = {"option": "true"}
+    else:
+        misc.pop("searing_item", None)
+    if include_tangled:
+        misc["tangled_item"] = {"option": "true"}
+    else:
+        misc.pop("tangled_item", None)
     if include_mirrored:
         misc.pop("mirrored", None)
     else:
@@ -3488,6 +3498,8 @@ def search_prices(
     include_unidentified: bool | None = None,
     include_veiled: bool | None = None,
     include_foil: bool | None = None,
+    include_searing: bool | None = None,
+    include_tangled: bool | None = None,
 ) -> PriceResult:
     league = league or active_pc_league()
     trade_base_type, trade_name = english_trade_identity(
@@ -3506,6 +3518,7 @@ def search_prices(
         quality_min,
         links_min,
         include_unidentified, include_veiled, include_foil,
+        include_searing, include_tangled,
     )
     _require_english_search_identity(payload)
     search_url = f"{API_ROOT}/search/{quote(league, safe='')}"
