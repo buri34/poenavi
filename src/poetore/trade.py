@@ -768,19 +768,25 @@ def available_trade_presets(item: ParsedItem) -> tuple[str, ...]:
         any(modifier.kind == "crafted" for modifier in item.modifiers)
         or (quality == 20 and item.category in {"weapon", "armour"}
             and _memory_strands(item) is None)
-        or "corrupted" in item.flags
-        or "mirrored" in item.flags
     )
-    has_crafting_value = (
+    is_unmodifiable = "corrupted" in item.flags or "mirrored" in item.flags
+    has_strong_crafting_value = (
         any(modifier.kind == "fractured" for modifier in item.modifiers)
         or "synthesised" in item.flags
         or any(flag.startswith("influence:") for flag in item.flags)
         or item.category == "cluster_jewel"
         or (item.category == "jewel" and rarity in {"magic", "マジック"})
-        or bool(item.category not in {"jewel", "abyss_jewel"}
-                and item.item_level is not None and item.item_level >= 82)
     )
-    if likely_finished or not has_crafting_value:
+    has_item_level_crafting_value = bool(
+        item.category not in {"jewel", "abyss_jewel"}
+        and item.item_level is not None
+        and item.item_level >= 82
+    )
+    if is_unmodifiable:
+        return (PRESET_FINISHED,)
+    if has_strong_crafting_value:
+        return (PRESET_FINISHED, PRESET_BASE)
+    if likely_finished or not has_item_level_crafting_value:
         return (PRESET_FINISHED,)
     return (PRESET_FINISHED, PRESET_BASE)
 

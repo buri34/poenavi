@@ -605,6 +605,82 @@ def test_fractured_item_can_offer_base_preset_below_ilvl_82():
     ]
 
 
+def test_quality_twenty_fractured_armour_still_offers_base_preset():
+    item = parse_item_text("""アイテムクラス: 靴
+レアリティ: レア
+腐敗した足取り
+ウォーロックブーツ
+--------
+品質: +20% (augmented)
+エナジーシールド: 194 (augmented)
+--------
+アイテムレベル: 85
+--------
+{ フラクチャー プレフィックスモッド「競技者の」 (ティア: 1) — ライフ }
+最大ライフ +122(115-129)
+--------
+フラクチャーアイテム
+""")
+    entries = ({
+        "id": "fractured.stat_3299347043",
+        "text": "+# to maximum Life",
+        "type": "fractured",
+    },)
+
+    assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BASE)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item, PRESET_BASE)
+
+    fractured = next(
+        row for row in filters
+        if row.stat_id == "fractured.stat_3299347043"
+    )
+    assert fractured.enabled
+    query = build_search_query(
+        item, "Warlock Boots", filters, preset=PRESET_BASE,
+    )["query"]
+    assert query["filters"]["misc_filters"]["filters"]["fractured_item"] == {
+        "option": "true",
+    }
+    assert query["stats"][0]["filters"] == [{
+        "id": "fractured.stat_3299347043",
+        "value": {"min": 122.0},
+    }]
+
+
+@pytest.mark.parametrize("blocked_flag", ("corrupted", "mirrored"))
+def test_unmodifiable_fractured_item_does_not_offer_base_preset(blocked_flag):
+    item = ParsedItem(
+        "Body Armours", "Rare", "Test Mantle", "Vaal Regalia", "armour",
+        item_level=85, flags=(blocked_flag,),
+        modifiers=(
+            ItemModifier(
+                "+100 to maximum Life", (100,), kind="fractured",
+                ref="+# to maximum Life", stat_id="fractured.life",
+            ),
+        ),
+    )
+
+    assert available_trade_presets(item) == (PRESET_FINISHED,)
+
+
+@pytest.mark.parametrize("strong_flag", ("synthesised", "influence:elder"))
+def test_crafted_item_with_strong_crafting_identity_offers_base_preset(
+        strong_flag):
+    item = ParsedItem(
+        "Boots", "Rare", "Test Boots", "Warlock Boots", "armour",
+        item_level=85, flags=(strong_flag,),
+        modifiers=(
+            ItemModifier(
+                "+20 to maximum Energy Shield", (20,), kind="crafted",
+                ref="+# to maximum Energy Shield", stat_id="crafted.es",
+            ),
+        ),
+    )
+
+    assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BASE)
+
+
 def test_japanese_329_fractured_local_mod_uses_stat_id_when_trade_text_has_local_suffix():
     item = parse_item_text("""アイテムクラス: 手袋
 レアリティ: レア

@@ -4,8 +4,8 @@ P02,プリセット,非クラフト可能な非ユニーク,Exactプリセット
 P03,プリセット,未鑑定アイテム,Exactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:31-52,trade.py:uses_dedicated_exact_preset
 P04,プリセット,ノーマル品,Exactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:31-52,tests:test_dedicated_exact_normal_item_uses_nonunique_ilvl_and_exact_stats_only
 P05,プリセット,Map・Memory Line・Invitation・Heist・Charm等,カテゴリ別Exactプリセットだけを使用,主要対象カテゴリを専用Exactへ送る,準拠,維持,,create-presets.ts:39-46,tests:test_awakened_supported_categories_use_dedicated_exact
-P06,プリセット,完成品らしさ,Unique・Crafted・品質20・Corrupted・Mirroredなら完成品だけ,同じ判定を実装。ただしMemory Strands付き品質20は完成品扱いしない,準拠,維持,,create-presets.ts:63-69,trade.py:available_trade_presets
-P07,プリセット,クラフト価値,Synthesised・Fractured・Influence・Cluster・Magic Jewel・ilvl82以上ならベース候補あり,同じ骨格を実装,準拠,維持,,create-presets.ts:71-80,trade.py:available_trade_presets
+P06,プリセット,完成品らしさ,Unique・Crafted・品質20・Corrupted・Mirroredなら完成品だけ,Corrupted・Mirrored・Uniqueは完成品だけ。Crafted・品質20は強いクラフト要素がなければ完成品だけ,独自仕様,強いクラフト価値を品質20等で失わないため維持,維持,create-presets.ts:63-83,trade.py:available_trade_presets
+P07,プリセット,クラフト価値,Synthesised・Fractured・Influence・Cluster・Magic Jewel・ilvl82以上ならベース候補あり。ただし完成品らしさがあれば抑止,強いクラフト要素は完成品らしさより優先して両プリセット。ilvlだけなら従来判定,独自仕様,フラクチャー等の検索機会を維持,維持,create-presets.ts:71-83,trade.py:available_trade_presets
 P08,プリセット,非Unique Flask・Tincture,Exactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:34-35,trade.py:uses_dedicated_exact_preset
 P09,プリセット,非Unique Sanctum Relic・Idol,Exactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:36-37,trade.py:uses_dedicated_exact_preset
 P10,プリセット,Charm・Map・Memory Line・Invitation,rarityを問わずExactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:38-41,trade.py:uses_dedicated_exact_preset
