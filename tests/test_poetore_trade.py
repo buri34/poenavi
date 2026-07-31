@@ -795,6 +795,23 @@ Item Level: 85
     assert by_id["property.memory_strands"].enabled is expected_enabled
 
 
+def test_finished_preset_hides_memory_strands_even_above_threshold():
+    item = parse_item_text("""Item Class: Rings
+Rarity: Rare
+Test Ring
+Manifold Ring
+--------
+Memory Strands: 64
+--------
+Item Level: 86
+""")
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        filters = resolve_trade_stat_filters(item)
+    strands = next(row for row in filters if row.stat_id == "property.memory_strands")
+    assert strands.enabled is False
+    assert strands.hidden_reason
+
+
 def test_finished_preset_does_not_force_special_base_state():
     item = parse_item_text(ITEM.replace(
         "74% increased Physical Damage", "74% increased Physical Damage\nHunter Item",
@@ -944,7 +961,13 @@ Cardinal Round Shield
         "property.block", "property.armour", "property.evasion",
         "property.energy_shield",
     ]
-    assert all(row.enabled for row in finished if row.stat_id in property_ids)
+    assert not next(
+        row for row in finished if row.stat_id == "property.block"
+    ).enabled
+    assert all(
+        row.enabled for row in finished
+        if row.stat_id in property_ids and row.stat_id != "property.block"
+    )
     assert not any(row.stat_id == "property.base_percentile" for row in finished)
 
     base_properties = [row for row in base if row.stat_id in property_ids]
@@ -955,7 +978,7 @@ Cardinal Round Shield
     assert not any(row.enabled for row in base_properties)
 
 
-def test_normal_armour_dedicated_base_search_uses_base_defaults():
+def test_normal_armour_dedicated_base_search_uses_awakened_percentile_threshold():
     item = parse_item_text("""アイテムクラス: 盾
 レアリティ: ノーマル
 Cardinal Round Shield
@@ -968,10 +991,32 @@ Cardinal Round Shield
 """)
     filters = resolve_trade_stat_filters(item, trade_base_type="Cardinal Round Shield")
     by_id = {row.stat_id: row for row in filters}
-    assert by_id["property.base_percentile"].enabled
+    assert by_id["property.base_percentile"].enabled is False
     assert not by_id["property.block"].enabled
     assert not by_id["property.armour"].enabled
     assert not by_id["property.evasion"].enabled
+
+
+def test_base_percentile_below_50_starts_off_in_base_preset():
+    item = parse_item_text("""アイテムクラス: 盾
+レアリティ: レア
+Test Guard
+Cardinal Round Shield
+--------
+ブロック率: 25%
+アーマー: 220
+回避力: 220
+--------
+アイテムレベル: 86
+""")
+    with patch("src.poetore.trade._base_defence_percentile", return_value=49.0):
+        filters = resolve_trade_stat_filters(
+            item, PRESET_BASE, trade_base_type="Cardinal Round Shield",
+        )
+    percentile = next(
+        row for row in filters if row.stat_id == "property.base_percentile"
+    )
+    assert percentile.enabled is False
 
 
 def test_quality_above_20_is_not_normalized_down():
@@ -3909,7 +3954,7 @@ def test_dedicated_exact_magic_flask_keeps_t1_t2_and_crafted_only():
     assert rows["property.item_level"].enabled is False
 
 
-def test_dedicated_exact_magic_flask_keeps_instilling_enchantment():
+def test_dedicated_exact_magic_flask_hides_instilling_enchantment():
     item = parse_item_text("""アイテムクラス: ユーティリティフラスコ
 レアリティ: マジック
 検査者の 虹の シルバーフラスコ
@@ -3928,16 +3973,42 @@ def test_dedicated_exact_magic_flask_keeps_instilling_enchantment():
     rows = {row.stat_id: row for row in filters}
     enchant = rows["enchant.stat_3287581721"]
     assert enchant.text == "チャージがフルになった時に使用される (enchant)"
-    assert enchant.enabled is True
+    assert enchant.enabled is False
+    assert enchant.hidden_reason
     assert enchant.min_value is None
 
     query = build_search_query(
         item, "Silver Flask", filters, preset=PRESET_FINISHED,
     )["query"]
-    assert {
-        "id": "enchant.stat_3287581721",
-        "value": {},
-    } in query["stats"][0]["filters"]
+    assert not any(
+        row["id"] == "enchant.stat_3287581721"
+        for row in query["stats"][0]["filters"]
+    )
+
+
+def test_dedicated_exact_magic_flask_keeps_enkindling_enchantment():
+    item = ParsedItem(
+        "Utility Flasks", "Magic", "Test", "Granite Flask", "flask",
+        item_level=84,
+        modifiers=(
+            ItemModifier(
+                "70% increased effect\nGains no Charges during Flask Effect",
+                (70,), kind="enchant",
+                ref="Gains no Charges during Flask Effect",
+                stat_id="enchant.enkindling",
+            ),
+        ),
+    )
+    entries = ({
+        "id": "enchant.enkindling",
+        "text": "#% increased effect\\nGains no Charges during Flask Effect",
+        "type": "enchant",
+    },)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item)
+    enchant = next(row for row in filters if row.stat_id == "enchant.enkindling")
+    assert enchant.enabled is True
+    assert not enchant.hidden_reason
 
 
 def test_forbidden_tome_below_83_uses_exact_area_level_range():
@@ -4235,5 +4306,73 @@ def test_map_tier_starts_on_but_quantity_and_map_mods_start_off():
         rows = resolve_trade_stat_filters(item)
     by_id = {row.stat_id: row for row in rows}
     assert by_id["property.map_tier"].enabled is True
-    assert by_id["property.map_quantity"].enabled is False
+    assert "property.map_quantity" not in by_id
     assert by_id["explicit.map_damage"].enabled is False
+
+
+def test_corrupted_map_value_properties_start_on():
+    item = ParsedItem(
+        "Maps", "Rare", "Test", "Cemetery Map", "map",
+        properties={
+            "Map Tier": "16", "Item Quantity": "+100%",
+            "Item Rarity": "+55%", "Monster Pack Size": "+32%",
+        },
+        flags=("corrupted",),
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = resolve_trade_stat_filters(item)
+    by_id = {row.stat_id: row for row in rows}
+    for stat_id in (
+        "property.map_quantity", "property.map_rarity",
+        "property.map_pack_size",
+    ):
+        assert by_id[stat_id].enabled is True
+
+
+def test_more_drops_map_enables_value_pseudos_but_not_rarity():
+    item = ParsedItem(
+        "Maps", "Rare", "Test", "Cemetery Map", "map",
+        properties={
+            "Map Tier": "16", "Item Quantity": "+100%",
+            "Item Rarity": "+55%", "Monster Pack Size": "+32%",
+            "More Scarabs": "150%",
+        },
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = resolve_trade_stat_filters(item)
+    by_id = {row.stat_id: row for row in rows}
+    assert by_id["property.map_quantity"].enabled is True
+    assert by_id["property.map_rarity"].enabled is False
+    assert by_id["property.map_pack_size"].enabled is True
+    assert by_id["pseudo.pseudo_map_more_scarab_drops"].enabled is True
+
+
+def test_corrupted_eight_mod_map_enables_modifier_count_pseudo():
+    modifiers = tuple(
+        ItemModifier(
+            f"Map modifier {index}", (index,),
+            kind="prefix" if index < 4 else "suffix",
+        )
+        for index in range(8)
+    )
+    item = ParsedItem(
+        "Maps", "Rare", "Test", "Cemetery Map", "map",
+        properties={"Map Tier": "16", "Item Quantity": "+100%"},
+        modifiers=modifiers, flags=("corrupted",),
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = resolve_trade_stat_filters(item)
+    count = next(
+        row for row in rows
+        if row.stat_id == "pseudo.pseudo_number_of_affix_mods"
+    )
+    assert count.enabled is True
+    assert count.min_value == 8
+    assert count.max_value == 8
+    query = build_search_query(
+        item, "Cemetery Map", rows, preset=PRESET_FINISHED,
+    )["query"]
+    assert {
+        "id": "pseudo.pseudo_number_of_affix_mods",
+        "value": {"min": 8.0, "max": 8.0},
+    } in query["stats"][0]["filters"]

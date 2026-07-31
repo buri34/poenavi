@@ -3526,15 +3526,15 @@ Cardinal Round Shield
 
         window.trade_preset_combo.setCurrentIndex(1)
         assert not window.base_percentile_chip.isHidden()
-        assert window.base_percentile_chip.isActive()
+        assert not window.base_percentile_chip.isActive()
         assert window.base_percentile_chip.suffix_label.text() == "%"
         minimum, maximum = window.base_percentile_chip.values()
         assert minimum is not None
         assert maximum is None
 
         window.base_percentile_chip.toggle.click()
-        assert not window.base_percentile_chip.isActive()
-        assert not any(
+        assert window.base_percentile_chip.isActive()
+        assert any(
             row.stat_id == "property.base_percentile"
             for row in window._selected_special_chip_filters()
         )
@@ -3930,7 +3930,7 @@ def test_current_japanese_flask_and_tincture_have_no_unresolved_warning(
         window.close()
 
 
-def test_flask_instilling_enchantment_is_visible_in_search_conditions(qapp):
+def test_flask_instilling_enchantment_is_hidden_from_search_conditions(qapp):
     window = PoetoreWindow()
     try:
         window.input_edit.setPlainText("""アイテムクラス: ユーティリティフラスコ
@@ -3959,15 +3959,17 @@ def test_flask_instilling_enchantment_is_visible_in_search_conditions(qapp):
 """)
         window.parse_current_text()
 
-        rows = [
-            window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole + 4)
+        enchant_item = next(
+            window.mod_filter_tree.topLevelItem(index)
             for index in range(window.mod_filter_tree.topLevelItemCount())
-        ]
-        enchant = next(
-            row for row in rows if row.stat_id == "enchant.stat_3287581721"
+            if window.mod_filter_tree.topLevelItem(index).data(
+                0, Qt.UserRole + 4,
+            ).stat_id == "enchant.stat_3287581721"
         )
+        enchant = enchant_item.data(0, Qt.UserRole + 4)
         assert enchant.text == "チャージがフルになった時に使用される (enchant)"
-        assert enchant.enabled is True
+        assert enchant.enabled is False
+        assert enchant_item.isHidden()
         assert window.mod_warning.isHidden()
     finally:
         window.close()

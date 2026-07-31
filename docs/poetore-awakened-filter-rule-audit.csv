@@ -55,22 +55,22 @@ S15,Mod,数値方向,高いほど良いはmin・低いほど良いはmax・比�
 S16,Mod,Essence・Infamous生成元,Mod名からEssence・Infamousをタグ表示,エッセンス・悪名高いと表示,準拠,維持,,create-stat-filters.ts:272-277,tests:test_infamous_directional_modifier_resolves_to_negative_trade_value
 R01,Property,防具単一属性,AR/EV/ES/Wardの該当1種だけ初期ON,同じ単属性では該当防御値をON,準拠,維持,,item-property.ts:55-103,trade.py:_initial_property_filters
 R02,Property,ハイブリッド防具,AR/EV/ES/Wardを表示するが全て初期OFF,存在する全防御値を初期ON,差分・判断必要,ハイブリッド検索を広く拾う独自仕様かAwakened準拠か判断,要判断,item-property.ts:55-103,tests:test_japanese_armour_energy_shield_hybrid_enables_both_properties
-R03,Property,Block,表示するが初期OFF,通常完成品では初期ON・ベースではOFF,差分・判断必要,Block盾で絞る価値を優先するか判断,要判断,item-property.ts:106-115,trade.py:_initial_property_filters
-R04,Property,Base Percentile,50以上ON・50未満OFF,通常候補は50以上ON。ベースプリセットでは常時ON,部分準拠,ベースプリセットでも50未満OFFに揃えるか判断,要判断,item-property.ts:18-27,trade.py:_base_item_filters
-R05,Property,Memory Strands完成品,完成品プリセットでは非表示・常時OFF,60以上なら表示してON,差分・判断必要,完成品側で非表示にするか価値条件として残すか判断,要判断,create-stat-filters.ts:160-167,trade.py:_initial_property_filters
+R03,Property,Block,表示するが初期OFF,表示するが初期OFF,準拠,維持,,item-property.ts:106-115,tests:test_shield_finished_and_base_presets_use_armour_specific_order_and_defaults
+R04,Property,Base Percentile,50以上ON・50未満OFF,完成品・ベースとも50以上ON・50未満OFF,準拠,維持,,item-property.ts:18-27,tests:test_base_percentile_below_50_starts_off_in_base_preset
+R05,Property,Memory Strands完成品,完成品プリセットでは非表示・常時OFF,完成品プリセットでは非表示・常時OFF,準拠,維持,,create-stat-filters.ts:160-167,tests:test_finished_preset_hides_memory_strands_even_above_threshold
 R06,Property,Memory Strandsベース/Exact,60以上ON・59以下OFF,同じ,準拠,維持,,item-property.ts:30-40,tests:test_base_preset_uses_awakened_memory_strands_threshold
 R07,Property,武器混合DPS,混合ならTotal DPSをON。支配成分67%以上だけpDPS/eDPSを表示・ON,pDPS/eDPSとTotal DPSを同じ67%規則で処理,準拠,維持,,item-property.ts:141-197,trade.py:_initial_property_filters
 R08,Property,pDPS重要武器,Axe・Sword・Bow・WarstaffだけpDPSを優先,同じカテゴリ判断,準拠,維持,,item-property.ts:245-256,trade.py:_physical_dps_is_important
 R09,Property,APS・Crit,表示するが初期OFF,同じ,準拠,維持,,item-property.ts:200-219,trade.py:_initial_property_filters
 R10,Property,品質20換算,武器DPS・防御値を最低品質20へ換算,同じ,準拠,維持,,item-property.ts:55-219,trade.py:_defence_at_20_quality・physical_dps_at_20_quality
 C01,Cluster,Added Passive Skills,Jewel Socket数を隠し最適パッシブ数を特殊範囲化,同じ,準拠,維持,,create-stat-filters.ts:478-507,tests:test_optimal_cluster_passive_count_does_not_include_next_integer
-C02,Flask,Enchant,Enkindling使用時以外のHarvest/Instilling Enchantを隠してOFF,Instilling Enchantを認識。全分岐は部分確認,部分準拠,Enkindling有無別fixtureを増やす,要確認,create-stat-filters.ts:511-518,tests:test_dedicated_exact_magic_flask_keeps_instilling_enchantment
+C02,Flask,Enchant,Enkindling使用時以外のHarvest/Instilling Enchantを隠してOFF,Enkindling使用時だけEnchantを表示・ON,準拠,維持,,create-stat-filters.ts:511-518,tests:test_dedicated_exact_magic_flask_hides_instilling_enchantment・test_dedicated_exact_magic_flask_keeps_enkindling_enchantment
 C03,Flask,Charge Recovery hybrid,Charge RecoveryありEffectなしならEffect条件をNOT追加,同じ,準拠,維持,,pseudo/flasks.ts:13-27,tests:test_flask_hybrid_cluster_and_special_area_rules
 C04,Anointment,Amulet・Ring,TalismanはON。非Corrupted/非Mirroredで最高Oilが金銀以外なら隠してOFF,同じ価値Oil規則,準拠,維持,,pseudo/anointments.ts:45-57,tests:test_modifiable_amulet_shows_anointments_using_valuable_oils
 C05,空きAffix,Rare,5Mod無Craftまたは6Mod有Craftで空きPrefix/Suffixを候補化,カテゴリ別上限も考慮した独自実装,独自仕様,ぽえとれ側が精密なので維持候補,維持,create-stat-filters.ts:524-560,tests:test_empty_affixes_use_category_and_special_base_limits
-M01,Map,Map properties,Corrupted・More Drops・NightmareだけQuantity/Pack等を価値条件化,全MapでTierをONしQuantity/Rarity/PackをOFF表示,部分準拠,Map種別別の初期値をAwakenedへ揃えるか判断,要判断,pseudo/maps.ts:20-93,trade.py:_special_content_filters
-M02,Map,More Drops,More Maps/Scarabs/Currency/Cardsを初期ON,候補を表示するが初期OFF,差分・判断必要,利益比較用途ならAwakened同様ONが自然,要判断,pseudo/maps.ts:56-82,trade.py:_special_content_filters
-M03,Map,8 Mod Map,Explicit Modが8個でMore Dropsなしなら# Modifiers=8をON,専用8Mod pseudoなし,未対応,実用品なので追加候補,要判断,pseudo/maps.ts:85-92,rgで該当実装なし
+M01,Map,Map properties,Corrupted・More Drops・NightmareだけQuantity/Pack等を価値条件化,同じ対象だけQuantity/Rarity/Packを価値条件化,準拠,維持,,pseudo/maps.ts:20-93,tests:test_corrupted_map_value_properties_start_on
+M02,Map,More Drops,More Maps/Scarabs/Currency/Cardsを初期ON,More Drops候補を初期ON,準拠,維持,,pseudo/maps.ts:56-82,tests:test_more_drops_map_enables_value_pseudos_but_not_rarity
+M03,Map,8 Mod Map,Explicit Modが8個でMore Dropsなしなら# Modifiers=8をON,同条件でMod数=8をON,準拠,維持,,pseudo/maps.ts:85-92,tests:test_corrupted_eight_mod_map_enables_modifier_count_pseudo
 M04,Map,Valdo lethal,死亡時Voidを持たない品はNOT条件をON,同じ,準拠,維持,,pseudo/maps.ts:95-108,tests:test_map_properties_blight_and_valdo_safety_filters
 M05,Map,Blighted Map,rolled Mod条件を空にし本体条件だけ,同じ,準拠,維持,,create-stat-filters.ts:23-29,tests:test_blighted_map_ignores_all_map_mods_and_unresolved_warnings
 H01,Heist,Contract Job,必要JobとLevelを完全値でON,9 Jobを解析してON,準拠,維持,,pseudo/heist.ts:18-52,tests:test_current_japanese_contract_copy_uses_required_job_like_awakened

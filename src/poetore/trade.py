@@ -878,7 +878,7 @@ def _apply_dedicated_exact_rules(
             if is_valdo and row.kind in {"prefix", "suffix", "explicit"}:
                 enabled = True
             if item.category == "map" and not is_valdo and row.kind in {
-                "prefix", "suffix", "explicit", "map pseudo",
+                "prefix", "suffix", "explicit",
             }:
                 enabled = False
             if item.category == "invitation" and row.kind in {
@@ -898,6 +898,8 @@ def _apply_dedicated_exact_rules(
                 "logbook-area:"
             ):
                 enabled = row.selection_reason == f"logbook-area:{first_logbook_group}"
+            if row.hidden_reason:
+                enabled = False
             result.append(replace(row, enabled=enabled))
         elif row.stat_id in property_ids:
             if item.category == "armour" and row.stat_id in {
@@ -906,7 +908,7 @@ def _apply_dedicated_exact_rules(
             }:
                 result.append(replace(row, enabled=False))
             elif row.stat_id == "property.base_percentile":
-                result.append(replace(row, enabled=True))
+                result.append(row)
             else:
                 result.append(row)
     return tuple(result)
@@ -1039,9 +1041,9 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
         replace(
             row,
             enabled=(
-                True if row.stat_id == "property.base_percentile"
-                else row.enabled if row.stat_id == "property.memory_strands"
-                else False
+                row.enabled if row.stat_id in {
+                    "property.base_percentile", "property.memory_strands",
+                } else False
             ),
         )
         for row in _initial_property_filters(item, trade_base_type)
@@ -1146,16 +1148,12 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
             max_value=float(maximum), selection_reason="Cluster JewelのMod出現帯へ正規化",
         ))
     if item.category == "map":
-        for stat_id, label, value in (
-            ("property.map_tier", "マップティア", _property_value(item, "マップティア", "Map Tier")),
-            ("property.map_quantity", "アイテム数量", _property_value(item, "アイテム数量", "Item Quantity")),
-            ("property.map_rarity", "アイテムレアリティ", _property_value(item, "アイテムレアリティ", "Item Rarity")),
-            ("property.map_pack_size", "モンスターパックサイズ", _property_value(item, "モンスターパックサイズ", "Monster Pack Size")),
-        ):
-            if value is not None:
-                filters.append(TradeStatFilter(
-                    stat_id, label, value, "map", stat_id == "property.map_tier",
-                ))
+        tier = _property_value(item, "マップティア", "Map Tier")
+        if tier is not None:
+            filters.append(TradeStatFilter(
+                "property.map_tier", "マップティア", tier, "map", True,
+            ))
+        more_drop_rows = []
         for stat_id, label, labels in (
             ("pseudo.pseudo_map_more_map_drops", "追加マップ", ("追加マップ", "More Maps")),
             ("pseudo.pseudo_map_more_scarab_drops", "追加スカラベ", ("追加スカラベ", "More Scarabs")),
@@ -1164,7 +1162,9 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         ):
             value = _property_value(item, *labels)
             if value is not None:
-                filters.append(TradeStatFilter(stat_id, label, value, "map pseudo", False))
+                more_drop_rows.append(TradeStatFilter(
+                    stat_id, label, value, "map pseudo", True,
+                ))
         blight_state = _map_blight_state(item)
         if blight_state == "ravaged":
             filters.append(TradeStatFilter("property.map_uberblighted", "ブライトに破壊されたマップ", None, "map", True))
@@ -1187,6 +1187,52 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                 filters.append(TradeStatFilter(
                     "explicit.stat_1095765106", "死亡時にVoidへ送られるマップを除外", None,
                     "map safety", True, group_type="not", group_key="valdo-lethal",
+                ))
+        map_identity = f"{item.name} {item.base_type}".casefold()
+        is_nightmare = (
+            "nightmare map" in map_identity
+            or "ナイトメアマップ" in map_identity
+        )
+        use_value_properties = (
+            not _is_unique(item)
+            and blight_state is None
+            and not completion
+            and (
+                "corrupted" in item.flags
+                or bool(more_drop_rows)
+                or is_nightmare
+            )
+        )
+        if use_value_properties:
+            for stat_id, label, value, enabled in (
+                (
+                    "property.map_quantity", "アイテム数量",
+                    _property_value(item, "アイテム数量", "Item Quantity"), True,
+                ),
+                (
+                    "property.map_rarity", "アイテムレアリティ",
+                    _property_value(item, "アイテムレアリティ", "Item Rarity"),
+                    not more_drop_rows,
+                ),
+                (
+                    "property.map_pack_size", "モンスターパックサイズ",
+                    _property_value(item, "モンスターパックサイズ", "Monster Pack Size"), True,
+                ),
+            ):
+                if value is not None:
+                    filters.append(TradeStatFilter(
+                        stat_id, label, value, "map", enabled,
+                    ))
+            filters.extend(more_drop_rows)
+            explicit_mods = [
+                modifier for modifier in item.modifiers
+                if modifier.kind in {"prefix", "suffix"}
+            ]
+            if len(explicit_mods) == 8 and not more_drop_rows:
+                filters.append(TradeStatFilter(
+                    "pseudo.pseudo_number_of_affix_mods", "Mod数", 8.0,
+                    "map pseudo", True, max_value=8.0,
+                    selection_reason="Awakenedの8 Mod Map条件",
                 ))
     elif item.category == "expedition_logbook" and area_level is not None:
         filters.append(TradeStatFilter(
@@ -1336,7 +1382,12 @@ def _empty_affix_filters(
     return tuple(filters)
 
 
-def _initial_property_filters(item: ParsedItem, trade_base_type: str | None = None) -> list[TradeStatFilter]:
+def _initial_property_filters(
+    item: ParsedItem,
+    trade_base_type: str | None = None,
+    *,
+    hide_memory_strands: bool = False,
+) -> list[TradeStatFilter]:
     filters: list[TradeStatFilter] = []
     if item.category == "weapon":
         pdps = physical_dps_at_20_quality(item) or 0
@@ -1368,7 +1419,7 @@ def _initial_property_filters(item: ParsedItem, trade_base_type: str | None = No
         block = _property_value(item, "ブロック率", "Chance to Block")
         if block is not None:
             filters.append(TradeStatFilter(
-                "property.block", "ブロック率", _relaxed(block), "property", True,
+                "property.block", "ブロック率", _relaxed(block), "property", False,
             ))
         defenses = [
             ("property.armour", "アーマー", _property_value(item, "アーマー", "防具", "Armour")),
@@ -1399,7 +1450,11 @@ def _initial_property_filters(item: ParsedItem, trade_base_type: str | None = No
     if strands is not None:
         filters.append(TradeStatFilter(
             "property.memory_strands", "メモリーの糸", _relaxed(strands),
-            "property", strands >= 60, read_value=strands,
+            "property", strands >= 60 and not hide_memory_strands, read_value=strands,
+            hidden_reason=(
+                "Awakened完成品プリセットではメモリーの糸を非表示"
+                if hide_memory_strands else ""
+            ),
         ))
     return filters
 
@@ -2576,7 +2631,9 @@ def resolve_trade_stat_filters(
             "property.block", "property.memory_strands",
         }
         special_properties = tuple(
-            row for row in _initial_property_filters(item, trade_base_type)
+            row for row in _initial_property_filters(
+                item, trade_base_type, hide_memory_strands=True,
+            )
             if row.stat_id in unique_property_ids
         )
         # AwakenedのUnique Map Exactは固有名・Map種別・Tierだけで照合し、
@@ -2587,7 +2644,9 @@ def resolve_trade_stat_filters(
             + _unique_exception_filters(item) + _special_content_filters(item), True,
         )
     initial_properties = [
-        row for row in _initial_property_filters(item, trade_base_type)
+        row for row in _initial_property_filters(
+            item, trade_base_type, hide_memory_strands=True,
+        )
         if (row.stat_id != "property.base_percentile"
             or uses_dedicated_exact_preset(item))
     ]
@@ -2726,6 +2785,21 @@ def resolve_trade_stat_filters(
                 enabled = True
             adjusted.append(replace(row, enabled=enabled))
         decorated = [row for _, row in sorted(enumerate(adjusted), key=jewel_priority)]
+    if item.category == "flask":
+        used_enkindling = any(
+            modifier.ref == "Gains no Charges during Flask Effect"
+            for modifier in item.modifiers
+        )
+        if not used_enkindling:
+            decorated = [
+                replace(
+                    row,
+                    enabled=False,
+                    hidden_reason="Awakened: Enkindling以外のフラスコEnchantを非表示",
+                )
+                if row.kind == "enchant" else row
+                for row in decorated
+            ]
     if item.category in {"flask", "tincture"}:
         has_recovery = any(modifier.ref == "#% increased Charge Recovery" for modifier in item.modifiers)
         has_effect = any(modifier.ref == "#% increased effect" for modifier in item.modifiers)
