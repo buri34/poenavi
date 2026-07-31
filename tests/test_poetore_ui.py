@@ -510,7 +510,7 @@ def test_filter_kind_column_marks_essence_and_infamous_generations(qapp):
         assert [
             window.mod_filter_tree.topLevelItem(index).text(1)
             for index in range(window.mod_filter_tree.topLevelItemCount())
-        ] == ["エッセンス", "悪名"]
+        ] == ["エッセンス", "悪名高い"]
     finally:
         window.close()
 
@@ -557,7 +557,7 @@ def test_reported_infamous_helmet_resolves_and_is_labelled_in_real_panel(qapp):
             row for row in rows
             if row.text(3) == "憤怒の固有効果による喪失が20%遅くなる"
         )
-        assert infamous.text(1) == "悪名"
+        assert infamous.text(1) == "悪名高い"
         assert window.mod_warning.isHidden()
     finally:
         window.close()
@@ -3129,14 +3129,23 @@ def test_related_items_panel_renders_materials_and_rewards(qapp):
             "current": ("ITEM", "chayula's breachstone"),
             "query": (({
                 "namespace": "ITEM", "name": "Chayula's Breachstone",
+                "display_name": "チャユラのブリーチストーン",
             }, None),),
             "items": (({
                 "namespace": "ITEM", "name": "Blessing of Chayula",
+                "display_name": "チャユラの祝福",
             }, price),),
         })
         assert not window.related_items_panel.isHidden()
         assert window.related_items_tree.topLevelItemCount() == 2
-        assert window.related_items_tree.topLevelItem(0).child(0).text(0).startswith("● ")
+        assert (
+            window.related_items_tree.topLevelItem(0).child(0).text(0)
+            == "● チャユラのブリーチストーン"
+        )
+        assert (
+            window.related_items_tree.topLevelItem(1).child(0).text(0)
+            == "チャユラの祝福"
+        )
         assert window.related_items_tree.topLevelItem(1).child(0).text(1) == "12 chaos"
         assert window.related_items_tree.minimumHeight() == 180
         assert window.related_items_tree.maximumHeight() == 180

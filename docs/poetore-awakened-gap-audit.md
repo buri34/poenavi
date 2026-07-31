@@ -59,7 +59,7 @@ Magic JewelのAdorned向けrarity／corrupted厳密条件まで対応済み。
 - Anointment 470候補のOil構成とAwakened準拠の初期表示・選択規則
 - AND／NOT／COUNT検索グループのUI編集とTrade query生成
 - Veiled 20候補、Searing Exarch／Eater of Worlds状態、Eldritch等の生成元表示
-- Essence由来は「エッセンス」、Infamous由来は「悪名」と種別欄へ表示
+- Essence由来は「エッセンス」、Infamous由来は「悪名高い」と種別欄へ表示
 
 装備価格チェック範囲の差分は解消済み。Filled Coffin固有のNecropolis ModとImbued Gemは、
 後続の特殊アイテム／Gem対応側に残る。

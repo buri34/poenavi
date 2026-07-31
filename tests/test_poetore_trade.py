@@ -14,6 +14,7 @@ from src.poetore.trade import (
     UniqueCandidate,
     active_pc_league, apply_search_range, available_pc_leagues, available_trade_presets, build_search_query,
     default_pc_league, elemental_dps, english_trade_identity,
+    japanese_trade_item_label,
     default_trade_currency, physical_dps, physical_dps_at_20_quality,
     resolve_trade_stat_filters, search_prices, unique_candidate_details,
     unique_candidates, unique_variants,
@@ -31,6 +32,36 @@ from src.poetore.trade import (
     _japanese_trade_item_name,
     _japanese_trade_item_type,
 )
+
+
+def test_japanese_trade_item_label_uses_unique_name_and_regular_type():
+    with (
+        patch(
+            "src.poetore.trade._japanese_trade_item_name",
+            return_value="忠臣の皮膚",
+        ) as unique_name,
+        patch(
+            "src.poetore.trade._japanese_trade_item_type",
+            return_value="チャユラの祝福",
+        ) as item_type,
+    ):
+        assert japanese_trade_item_label(
+            "UNIQUE", "Skin of the Loyal", "Simple Robe",
+        ) == "忠臣の皮膚"
+        assert japanese_trade_item_label(
+            "ITEM", "Blessing of Chayula",
+        ) == "チャユラの祝福"
+        unique_name.assert_called_once_with("Skin of the Loyal")
+        item_type.assert_called_once_with("Blessing of Chayula")
+
+
+def test_japanese_trade_item_label_falls_back_to_english_name():
+    with (
+        patch("src.poetore.trade._japanese_trade_item_name", return_value=None),
+        patch("src.poetore.trade._japanese_trade_item_type", return_value=None),
+    ):
+        assert japanese_trade_item_label("UNIQUE", "Unknown Unique") == "Unknown Unique"
+        assert japanese_trade_item_label("ITEM", "Unknown Item") == "Unknown Item"
 
 
 ITEM = """Item Class: Two Hand Swords

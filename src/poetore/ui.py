@@ -32,6 +32,7 @@ from .trade import (
     PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
     available_pc_leagues, available_trade_presets, default_pc_league, default_trade_currency,
     apply_search_range, english_trade_identity, gem_metadata,
+    japanese_trade_item_label,
     resolve_trade_stat_filters, search_prices, unique_candidate_details,
     unique_variants, unresolved_modifier_warnings, uses_dedicated_exact_preset,
     is_inscribed_ultimatum,
@@ -279,7 +280,7 @@ _FILTER_KIND_LABELS = {
     "imbued": "注入",
     "foulborn": "ファウルボーン",
     "essence": "エッセンス",
-    "infamous": "悪名",
+    "infamous": "悪名高い",
     "pseudo": "疑似",
     "property": "アイテム特性",
     "base": "ベース",
@@ -2160,7 +2161,14 @@ class PoetoreWindow(QWidget):
 
         def priced(rows):
             return tuple(
-                (dict(row), price_by_id.get(str(row.get("id", ""))))
+                ({
+                    **dict(row),
+                    "display_name": japanese_trade_item_label(
+                        str(row.get("namespace", "")),
+                        str(row.get("name", "")),
+                        row.get("variant"),
+                    ),
+                }, price_by_id.get(str(row.get("id", ""))))
                 for row in rows
             )
 
@@ -2302,7 +2310,8 @@ class PoetoreWindow(QWidget):
                 is_current = (
                     str(row.get("namespace", "")), str(row.get("name", "")).casefold()
                 ) == current
-                label = f"● {row['name']}" if is_current else str(row["name"])
+                display_name = str(row.get("display_name") or row["name"])
+                label = f"● {display_name}" if is_current else display_name
                 child = QTreeWidgetItem([
                     label, price.display_price() if price is not None else "—",
                 ])

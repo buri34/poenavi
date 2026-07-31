@@ -1818,6 +1818,26 @@ def _japanese_trade_item_type(english_type: str) -> str | None:
     return None
 
 
+def japanese_trade_item_label(
+    namespace: str,
+    english_name: str,
+    variant: str | None = None,
+) -> str:
+    """関連アイテム用に公式Tradeの日英itemsから日本語表示名を得る。
+
+    価格照合に使う英語identityは変更せず、公式側に日本語entryがない場合だけ
+    英語名へフォールバックする。variantは将来の表示拡張用に受け取るが、
+    Uniqueは固有名、その他はアイテムtype/nameを正本にする。
+    """
+    del variant
+    name = str(english_name or "").strip()
+    if not name:
+        return ""
+    if str(namespace or "").strip().upper() == "UNIQUE":
+        return _japanese_trade_item_name(name) or name
+    return _japanese_trade_item_type(name) or name
+
+
 def _localized_web_trade_type(item: ParsedItem, web_query: dict) -> str:
     """日本語Tradeへ渡すtypeを、variantの基礎Gem名まで正規化する。"""
     query_type = web_query.get("type")

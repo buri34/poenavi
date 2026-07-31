@@ -91,12 +91,13 @@ Valdo固有Modの解析・Trade stat解決は実装済み。
 ### Awakenedとの差分候補
 
 - [x] Essence由来Modを検索条件表の種別欄へ「エッセンス」と表示する
-- [x] Infamous（Mercenary）由来Modを検索条件表の種別欄へ「悪名」と表示する
+- [x] Infamous（Mercenary）由来Modを検索条件表の種別欄へ「悪名高い」と表示する
   - Awakenedコミット`94fcb2d`（2026-07-27 JST）で追加
   - 2026-07-28に取り込んだAwakened`3c8e032`の履歴に含まれており、
     前回の最新版対応より後に追加された機能ではない
   - stat検索自体ではなく、Modの由来を見分ける表示機能
 - [x] 関連アイテム価格一覧を表示する
+  - 公式Tradeの日英items対応を使い、アイテム名は日本語表示する（公式訳がない場合は英語）
   - Awakened `3c8e032` の`item-drop.json`に固定した132グループを派生データ化
   - Breachstone／ボス断片／合成素材等を選んだ時に、「関連素材・同系統」と
     「報酬・派生品」をpoe.ninja参考価格付きで表示する
