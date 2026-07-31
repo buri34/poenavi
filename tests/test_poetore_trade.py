@@ -3402,6 +3402,39 @@ Veiled Suffix
     assert disabled["stats"][0]["filters"] == []
 
 
+def test_veiled_item_starts_with_only_its_veiled_type_enabled():
+    item = ParsedItem(
+        "Body Armours", "Rare", "Test Mantle", "Vaal Regalia", "armour",
+        item_level=86, flags=("veiled",),
+        modifiers=(
+            ItemModifier(
+                "Catarina's Veiled", kind="veiled",
+                ref="Catarina's Veiled", stat_id="veiled.mod_63772",
+            ),
+            ItemModifier(
+                "+100 to maximum Life", (100,), kind="prefix", tier=1,
+                ref="+# to maximum Life", stat_id="explicit.life",
+            ),
+        ),
+    )
+    entries = ({
+        "id": "explicit.life", "text": "+# to maximum Life", "type": "explicit",
+    },)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item)
+    assert filters
+    assert not any(row.enabled for row in filters)
+
+    query = build_search_query(
+        item, "Vaal Regalia", filters,
+        include_veiled=True, preset=PRESET_FINISHED,
+    )["query"]
+    assert query["stats"][0]["filters"] == [{
+        "id": "veiled.mod_63772",
+        "value": {},
+    }]
+
+
 def test_japanese_veiled_header_resolves_its_specific_stat_id():
     item = parse_item_text("""アイテムクラス: 鎧
 レアリティ: レア
@@ -4344,7 +4377,7 @@ def test_rare_jewel_mods_start_off_and_magic_affixes_start_on():
         assert next(row for row in rows if row.stat_id == "explicit.life").enabled is expected
 
 
-def test_map_tier_starts_on_but_quantity_and_map_mods_start_off():
+def test_exact_map_starts_with_tier_and_all_explicit_mods_on():
     item = ParsedItem(
         "Maps", "Rare", "Test", "Cemetery Map", "map",
         properties={"Map Tier": "16", "Item Quantity": "+100%"},
@@ -4360,7 +4393,14 @@ def test_map_tier_starts_on_but_quantity_and_map_mods_start_off():
     by_id = {row.stat_id: row for row in rows}
     assert by_id["property.map_tier"].enabled is True
     assert "property.map_quantity" not in by_id
-    assert by_id["explicit.map_damage"].enabled is False
+    assert by_id["explicit.map_damage"].enabled is True
+    query = build_search_query(
+        item, "Cemetery Map", rows, preset=PRESET_FINISHED,
+    )["query"]
+    assert {
+        "id": "explicit.map_damage",
+        "value": {"min": 100.0},
+    } in query["stats"][0]["filters"]
 
 
 def test_corrupted_map_value_properties_start_on():

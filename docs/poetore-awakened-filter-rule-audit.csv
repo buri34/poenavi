@@ -43,10 +43,10 @@ S03,Mod,Magic Explicit,Cluster・Map・Heist・Sentinel以外は保持,同じ主
 S04,Mod,Rare Explicit,IdolだけExactで保持,同じ,準拠,維持,,create-stat-filters.ts:56-58,trade.py:_apply_dedicated_exact_rules
 S05,Mod,Exact数値幅,Map以外は設定値を最大2%へ制限,一般の許容幅設定を使い一部propertyは固定10%緩和,部分準拠,API結果差が出るため2%上限制御へ揃えるか判断,要判断,create-stat-filters.ts:64-72,trade.py:apply_search_range・_relaxed
 S06,Mod,Exact Explicit初期値,T1・T2だけON,同じ,準拠,維持,,create-stat-filters.ts:96-107,tests:test_dedicated_exact_magic_flask_keeps_t1_t2_and_crafted_only
-S07,Mod,Map Explicit,Blighted以外のExact Mapでは通常ModをすべてON,通常Map Modを初期OFF。ValdoだけON,差分・判断必要,危険Modを含むMap検索の使い勝手を優先するかAwakened準拠にするか判断,要判断,create-stat-filters.ts:90-95,trade.py:_apply_dedicated_exact_rules
+S07,Mod,Map Explicit,Blighted以外のExact Mapでは通常ModをすべてON,Blighted以外のExact Mapで通常ModをすべてON,準拠,維持,,create-stat-filters.ts:90-95,tests:test_exact_map_starts_with_tier_and_all_explicit_mods_on
 S08,Mod,Memory Line・Sanctum Relic・Charm,表示中の全条件を初期ON,同じ,準拠,維持,,create-stat-filters.ts:128-133,trade.py:_apply_dedicated_exact_rules
 S09,Mod,Idol,固定値または良ロール66%以上をON,同じ,準拠,維持,,create-stat-filters.ts:134-136,trade.py:_apply_dedicated_exact_rules
-S10,Mod,Veiled,Veiled候補を専用条件化し他ModをOFF,Veiled stat IDを解決し検索,部分準拠,複数Veiled時の全候補OFF挙動を追加確認,要確認,create-stat-filters.ts:174-185,tests:test_veiled_chip_uses_matching_veiled_stat_ids_like_awakened
+S10,Mod,Veiled,Veiled候補を専用条件化し他ModをOFF,Veiled stat IDだけをONにして他の全条件をOFF,準拠,維持,,create-stat-filters.ts:174-185,tests:test_veiled_item_starts_with_only_its_veiled_type_enabled
 S11,Mod,NotComparable,数値を完全一致しVariant扱いでON,固定数値かAPI値不要かを検証して完全一致または値なし検索,部分準拠,固定数字監査済み範囲は維持し未監査Statを継続確認,要確認,create-stat-filters.ts:232-237,tests:test_only_api_verified_fixed_number_stats_omit_numeric_bounds
 S12,Mod,Unique固定Mod,fixedStatsとroll boundsで固定Modを隠す,同じ固定Stats基盤で除外,準拠,維持,,create-stat-filters.ts:247-253・361-377,tests:test_unique_search_uses_exact_english_name_and_hides_fixed_mods
 S13,Mod,Foulborn Explicit,固定扱いでも表示し全てON,同じ,準拠,維持,,create-stat-filters.ts:379-383,tests:test_foulborn_unique_keeps_all_variable_explicit_mods_as_filters

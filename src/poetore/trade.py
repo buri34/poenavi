@@ -880,7 +880,7 @@ def _apply_dedicated_exact_rules(
             if item.category == "map" and not is_valdo and row.kind in {
                 "prefix", "suffix", "explicit",
             }:
-                enabled = False
+                enabled = True
             if item.category == "invitation" and row.kind in {
                 "prefix", "suffix", "explicit", "map", "map pseudo",
             }:
@@ -2981,6 +2981,10 @@ def resolve_trade_stat_filters(
             row for row in _dedicated_exact_identity_filters(item)
             if row.stat_id not in existing_ids
         )
+    if "veiled" in item.flags:
+        # AwakenedはVeiled種別だけを専用item filterとして検索し、
+        # 通常Mod・property・pseudo条件はすべて初期OFFにする。
+        decorated = [replace(row, enabled=False) for row in decorated]
     return tuple(decorated)
 
 

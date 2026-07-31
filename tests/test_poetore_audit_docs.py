@@ -52,7 +52,6 @@ def test_awakened_filter_rule_audit_keeps_decision_rows_visible():
         rows = {row["rule_id"]: row for row in csv.DictReader(stream)}
 
     expected_review_rows = {
-        "S07",  # Map explicit Mod defaults
         "R02",  # Hybrid armour properties
     }
     assert expected_review_rows <= rows.keys()
