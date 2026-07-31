@@ -1179,7 +1179,7 @@ class PoetoreWindow(QWidget):
         logbook_area_layout.addStretch()
         self.logbook_area_container.hide()
         self.split_combo = _CycleButton(
-            (("スプリット", True, False), ("非スプリット", False, False)),
+            (("スプリット品含む", True, False), ("非スプリット", False, False)),
         )
         self.split_combo.hide()
         self.mirrored_combo = _CycleButton(

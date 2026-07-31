@@ -2271,14 +2271,14 @@ def test_split_filter_is_an_awakened_style_cycle_button(qapp):
     try:
         toggle = window.split_combo
         assert toggle.property("active") is True
-        assert toggle.currentText() == "スプリット"
+        assert toggle.currentText() == "スプリット品含む"
         assert toggle.currentData() is True
         toggle.click()
         assert toggle.currentText() == "非スプリット"
         assert toggle.currentData() is False
         assert toggle.property("active") is True
         toggle.click()
-        assert toggle.currentText() == "スプリット"
+        assert toggle.currentText() == "スプリット品含む"
     finally:
         window.close()
 
@@ -2499,7 +2499,7 @@ Split
         assert window.corrupted_combo.itemText(1) == "非コラプトのみ"
         assert window.corrupted_combo.itemText(2) == "コラプト品含む"
         assert window.corrupted_combo.currentData() is False
-        assert window.split_combo.itemText(0) == "スプリット"
+        assert window.split_combo.itemText(0) == "スプリット品含む"
         assert window.split_combo.itemText(1) == "非スプリット"
         assert window.split_combo.currentData() is True
         assert not window.split_combo.isHidden()
