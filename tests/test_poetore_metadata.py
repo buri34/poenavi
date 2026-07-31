@@ -510,6 +510,29 @@ def test_builder_excludes_mf_and_levelling_comparison_groups():
     ]
 
 
+def test_builder_excludes_bestiary_armour_comparison_groups():
+    groups = build_related_item_groups([], [
+        {
+            "query": [
+                "UNIQUE::Farrul's Bite // Harlequin Mask",
+                "UNIQUE::Farrul's Pounce // Hydrascale Gauntlets",
+                "UNIQUE::Farrul's Fur // Triumphant Lamellar",
+                "UNIQUE::Farrul's Chase // Slink Boots",
+            ],
+            "items": [],
+        },
+        {
+            "query": ["ITEM::Abrasive Catalyst", "ITEM::Fertile Catalyst"],
+            "items": [],
+        },
+    ])
+
+    assert len(groups) == 1
+    assert [row["name"] for row in groups[0]["query"]] == [
+        "Abrasive Catalyst", "Fertile Catalyst",
+    ]
+
+
 def test_index_validation_reports_duplicates_empty_and_ambiguous_matchers():
     base = {
         "ref": "r", "kind": "explicit", "japanese": ["値 #"], "better": 1,

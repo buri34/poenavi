@@ -273,6 +273,30 @@ EXCLUDED_RELATED_ITEM_QUERY_GROUPS = {
         "UNIQUE::Lifesprig // Driftwood Wand",
         "UNIQUE::Karui Ward // Jade Amulet",
     }),
+    frozenset({
+        "UNIQUE::Farrul's Bite // Harlequin Mask",
+        "UNIQUE::Farrul's Pounce // Hydrascale Gauntlets",
+        "UNIQUE::Farrul's Fur // Triumphant Lamellar",
+        "UNIQUE::Farrul's Chase // Slink Boots",
+    }),
+    frozenset({
+        "UNIQUE::Craiceann's Chitin // Magistrate Crown",
+        "UNIQUE::Craiceann's Carapace // Golden Plate",
+        "UNIQUE::Craiceann's Pincers // Titan Gauntlets",
+        "UNIQUE::Craiceann's Tracks // Goliath Greaves",
+    }),
+    frozenset({
+        "UNIQUE::Fenumus' Toxins // Necromancer Circlet",
+        "UNIQUE::Fenumus' Shroud // Widowsilk Robe",
+        "UNIQUE::Fenumus' Weave // Carnal Mitts",
+        "UNIQUE::Fenumus' Spinnerets // Assassin's Boots",
+    }),
+    frozenset({
+        "UNIQUE::Saqawal's Flock // Silken Hood",
+        "UNIQUE::Saqawal's Nest // Blood Raiment",
+        "UNIQUE::Saqawal's Winds // Soldier Gloves",
+        "UNIQUE::Saqawal's Talons // Hydrascale Boots",
+    }),
 }
 
 
