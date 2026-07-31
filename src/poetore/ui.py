@@ -1771,6 +1771,9 @@ class PoetoreWindow(QWidget):
         self._apply_poetore_style()
     def _toggle_mod_conditions(self):
         collapsed = self.mod_filter_tree.isVisible()
+        self._set_mod_conditions_collapsed(collapsed)
+
+    def _set_mod_conditions_collapsed(self, collapsed: bool):
         self.mod_filter_tree.setVisible(not collapsed)
         self.mod_conditions_toggle.setText(
             "mod条件をひらく∨" if collapsed else "mod条件をたたむ∧"
@@ -1779,6 +1782,13 @@ class PoetoreWindow(QWidget):
             "Mod検索条件の一覧を展開する" if collapsed
             else "Mod検索条件の一覧を折りたたむ"
         )
+
+    def _reset_mod_conditions_for_item(self):
+        has_visible_conditions = any(
+            not self.mod_filter_tree.topLevelItem(index).isHidden()
+            for index in range(self.mod_filter_tree.topLevelItemCount())
+        )
+        self._set_mod_conditions_collapsed(not has_visible_conditions)
 
     def _toggle_hidden_mods(self, visible: bool):
         self.hidden_mods_toggle.setText(
@@ -2495,7 +2505,8 @@ class PoetoreWindow(QWidget):
         except ItemParseError as exc:
             QMessageBox.warning(self, "解析できませんでした", str(exc))
             return
-        if item.raw_text != self._active_item_key:
+        is_new_item = item.raw_text != self._active_item_key
+        if is_new_item:
             self._active_item_key = item.raw_text
             self._has_searched_current_item = False
             self._search_dirty = False
@@ -2534,6 +2545,8 @@ class PoetoreWindow(QWidget):
         if self.mod_filter_tree.topLevelItemCount() == 0:
             preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
             self._populate_stat_filters(self._resolved_trade_filters(item, preset))
+        if is_new_item:
+            self._reset_mod_conditions_for_item()
         warnings = unresolved_modifier_warnings(
             item, tuple(getattr(self, "_special_chip_rows", {}).values()),
         )

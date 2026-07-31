@@ -1726,6 +1726,47 @@ def test_mod_conditions_can_be_collapsed_without_losing_values(qapp):
         window.close()
 
 
+def test_mod_conditions_default_is_reset_for_each_new_item(qapp):
+    window = PoetoreWindow()
+    try:
+        fragment = """アイテムクラス: その他マップアイテム
+レアリティ: ノーマル
+覚醒のフラグメント
+--------
+スタックサイズ: 1/10
+"""
+        window.input_edit.setPlainText(fragment)
+        window.parse_current_text()
+
+        assert window.mod_filter_tree.topLevelItemCount() == 0
+        assert window.mod_filter_tree.isHidden()
+        assert window.mod_conditions_toggle.text() == "mod条件をひらく∨"
+
+        window.mod_conditions_toggle.click()
+        assert not window.mod_filter_tree.isHidden()
+        window.parse_current_text()
+        assert not window.mod_filter_tree.isHidden()
+
+        window.mod_filter_tree.clear()
+        window.input_edit.setPlainText("""アイテムクラス: 兜
+レアリティ: レア
+堅牢な冠
+鉄の帽子
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「頑健な」 (ティア: 5) — ライフ }
+最大ライフ +72(70-84)
+""")
+        window.parse_current_text()
+
+        assert window.mod_filter_tree.topLevelItemCount() > 0
+        assert not window.mod_filter_tree.isHidden()
+        assert window.mod_conditions_toggle.text() == "mod条件をたたむ∧"
+    finally:
+        window.close()
+
+
 def test_mod_condition_checks_can_all_be_cleared_without_changing_item_level(qapp):
     window = PoetoreWindow()
     try:
