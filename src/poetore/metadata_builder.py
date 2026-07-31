@@ -250,6 +250,31 @@ UBER_BOSS_DROP_SUPPLEMENTS = {
     ),
 }
 
+# Awakenedのitem-drop.jsonには、素材・報酬・派生関係ではなく、単に用途が
+# 近い装備を横並びにする比較用グループも含まれる。ぽえとれでは価格一覧の
+# 意味を明確にするため、実用性が低い次の2グループだけを表示対象外にする。
+EXCLUDED_RELATED_ITEM_QUERY_GROUPS = {
+    frozenset({
+        "UNIQUE::Ventor's Gamble // Gold Ring",
+        "UNIQUE::Sadima's Touch // Wool Gloves",
+        "UNIQUE::Bisco's Leash // Heavy Belt",
+        "UNIQUE::Goldwyrm // Nubuck Boots",
+        "UNIQUE::Divination Distillate",
+        "UNIQUE::The Ascetic // Gold Amulet",
+        "UNIQUE::Greed's Embrace // Golden Plate",
+        "UNIQUE::Sentari's Answer // Brass Spirit Shield",
+    }),
+    frozenset({
+        "GEM::Cast on Death Support",
+        "UNIQUE::Goldrim // Leather Cap",
+        "UNIQUE::Tabula Rasa // Simple Robe, 6L",
+        "UNIQUE::Lochtonial Caress // Iron Gauntlets",
+        "UNIQUE::Wanderlust // Wool Shoes",
+        "UNIQUE::Lifesprig // Driftwood Wand",
+        "UNIQUE::Karui Ward // Jade Amulet",
+    }),
+}
+
 
 def build_related_item_groups(items_lines: Iterable[str], drop_rows: Iterable[dict]) -> list[dict]:
     """Awakenedの関連品定義を、表示に必要な名前・variant・iconへ展開する。"""
@@ -288,6 +313,8 @@ def build_related_item_groups(items_lines: Iterable[str], drop_rows: Iterable[di
     groups = []
     for row in drop_rows:
         query_ids = [str(value) for value in row.get("query", ())]
+        if frozenset(query_ids) in EXCLUDED_RELATED_ITEM_QUERY_GROUPS:
+            continue
         related_ids = [str(value) for value in row.get("items", ())]
         for query_id in query_ids:
             related_ids.extend(UBER_BOSS_DROP_SUPPLEMENTS.get(query_id, ()))

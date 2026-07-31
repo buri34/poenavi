@@ -471,6 +471,45 @@ def test_builder_deduplicates_upstream_and_supplemental_uber_drops():
     assert names.count("Orb of Dominance") == 1
 
 
+def test_builder_excludes_mf_and_levelling_comparison_groups():
+    groups = build_related_item_groups([], [
+        {
+            "query": [
+                "UNIQUE::Ventor's Gamble // Gold Ring",
+                "UNIQUE::Sadima's Touch // Wool Gloves",
+                "UNIQUE::Bisco's Leash // Heavy Belt",
+                "UNIQUE::Goldwyrm // Nubuck Boots",
+                "UNIQUE::Divination Distillate",
+                "UNIQUE::The Ascetic // Gold Amulet",
+                "UNIQUE::Greed's Embrace // Golden Plate",
+                "UNIQUE::Sentari's Answer // Brass Spirit Shield",
+            ],
+            "items": [],
+        },
+        {
+            "query": [
+                "GEM::Cast on Death Support",
+                "UNIQUE::Goldrim // Leather Cap",
+                "UNIQUE::Tabula Rasa // Simple Robe, 6L",
+                "UNIQUE::Lochtonial Caress // Iron Gauntlets",
+                "UNIQUE::Wanderlust // Wool Shoes",
+                "UNIQUE::Lifesprig // Driftwood Wand",
+                "UNIQUE::Karui Ward // Jade Amulet",
+            ],
+            "items": [],
+        },
+        {
+            "query": ["ITEM::Golden Oil", "ITEM::Silver Oil"],
+            "items": [],
+        },
+    ])
+
+    assert len(groups) == 1
+    assert [row["name"] for row in groups[0]["query"]] == [
+        "Golden Oil", "Silver Oil",
+    ]
+
+
 def test_index_validation_reports_duplicates_empty_and_ambiguous_matchers():
     base = {
         "ref": "r", "kind": "explicit", "japanese": ["値 #"], "better": 1,
