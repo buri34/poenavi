@@ -39,7 +39,8 @@ _PROPERTY_LABELS = {
     "必要なジョブ", "必要ジョブ", "Requires",
     "決心", "Resolve", "決心の最大値", "Maximum Resolve", "勇気", "Inspiration",
     "アウレウス", "Aureus", "マップ完了報酬", "Map Completion Reward",
-    "追加マップ", "More Maps", "追加スカラベ", "More Scarabs",
+    "追加マップ", "マップ量が上昇", "More Maps",
+    "追加スカラベ", "スカラベ量が上昇", "More Scarabs",
     "追加カレンシー", "More Currency", "追加占いカード", "More Divination Cards",
 }
 _FLAG_LINES = {
@@ -179,6 +180,22 @@ _CATEGORY_HELP_LINES = {
 _DIRECTIONAL_STAT_ALIASES = {
     normalize_stat_text("倒した敵1体ごとに#のマナを失う"):
         "倒した敵1体ごとに#のマナを獲得する",
+    normalize_stat_text("プレイヤーの防御力が#%低下する"):
+        "プレイヤーの防御力が#%上昇する",
+}
+_STAT_TEXT_ALIASES = {
+    # Nightmare Mapは確率100%の一部Modから確率部分を省略して表示する。
+    normalize_stat_text("レアモンスターはボラタイルコアを持つ"):
+        "レアモンスターは100%の確率でボラタイルコアを持つ",
+    normalize_stat_text("モンスターはヒット時にエンデュランスチャージを1個獲得する"):
+        "モンスターはヒット時に100%の確率でエンデュランスチャージを1個獲得する",
+    # 詳細コピーと公式Trade statで語順が異なる同一Mod。
+    normalize_stat_text("全てのプレイヤーはスペルダメージを抑制して防ぐダメージ割合が#%される"):
+        "全てのプレイヤーはスペルダメージを抑制すると#%のダメージを防ぐ",
+}
+_STAT_VALUE_OVERRIDES = {
+    normalize_stat_text("レアモンスターはボラタイルコアを持つ"): (100.0,),
+    normalize_stat_text("モンスターはヒット時にエンデュランスチャージを1個獲得する"): (100.0,),
 }
 # 固定文言中にも数値がある場合、検索値に対応する数値の位置を明示する。
 # 「敵1体」の1ではなく、その後のMana値を使う。
@@ -332,6 +349,22 @@ def _combine_multiline_modifiers(
     metadata_index = default_metadata_index()
     while index < len(modifiers):
         first = modifiers[index]
+        if first.text.startswith("(") and first.group is not None:
+            # 日本語クライアントの用語説明が表示幅により複数行へ折り返されても、
+            # 各断片を検索Modや未解決警告として扱わない。
+            help_end = index
+            found_help_end = False
+            while (
+                help_end < len(modifiers)
+                and modifiers[help_end].group == first.group
+            ):
+                if modifiers[help_end].text.endswith(")"):
+                    index = help_end + 1
+                    found_help_end = True
+                    break
+                help_end += 1
+            if found_help_end:
+                continue
         if first.kind == "enchant" and first.stat_id is None:
             # Cluster Jewelの基礎効果には、ゲーム内で複数行表示される一方、
             # 公式Tradeでは改行を含む1つのoptionとして定義されたものがある。
@@ -716,6 +749,11 @@ def parse_item_text(text: str) -> ParsedItem:
                         alias, kind,
                     )
                     direction_inverted = metadata is not None
+            stat_alias_key = normalize_stat_text(metadata_text)
+            if metadata is None and stat_alias_key in _STAT_TEXT_ALIASES:
+                metadata, option, confidence = default_metadata_index().match_with_option(
+                    _STAT_TEXT_ALIASES[stat_alias_key], kind,
+                )
             if metadata is None and kind == "veiled" and current_header_name:
                 metadata, confidence = default_metadata_index().match_ref(
                     current_header_name, kind,
@@ -736,6 +774,8 @@ def parse_item_text(text: str) -> ParsedItem:
                 if len(generations) == 1:
                     inferred_affix = generations.pop()
             values = _numbers(line)
+            if stat_alias_key in _STAT_VALUE_OVERRIDES:
+                values = _STAT_VALUE_OVERRIDES[stat_alias_key]
             value_index = _DIRECTIONAL_STAT_VALUE_INDEX.get(direction_alias_key)
             if value_index is not None and len(values) > value_index:
                 values = (values[value_index],)

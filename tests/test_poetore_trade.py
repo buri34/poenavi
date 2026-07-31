@@ -4656,6 +4656,54 @@ def test_more_drops_map_enables_value_pseudos_but_not_rarity():
     assert by_id["pseudo.pseudo_map_more_scarab_drops"].enabled is True
 
 
+def test_japanese_nightmare_map_new_more_drop_labels_and_mods_resolve():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+黒焦げの覚悟
+ナイトメアマップ
+--------
+アイテム数量: +101% (augmented)
+アイテムレアリティ: +63% (augmented)
+モンスターパックサイズ: +53% (augmented)
+マップ量が上昇: +35% (augmented)
+スカラベ量が上昇: +88% (augmented)
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「不安定な」 (ティア: 1) }
+レアモンスターはボラタイルコアを持つ
+{ サフィックスモッド 「ぬかるみの」 (ティア: 1) }
+プレイヤーの防御力が30(30-25)%低下する
+(アーマー、回避力、エナジーシールドは標準的な防御力である)
+{ サフィックスモッド 「耐久力の」 }
+モンスターはヒット時にエンデュランスチャージを1個獲得する
+{ サフィックスモッド 「ぬかるみの」 — アタック }
+全てのプレイヤーはスペルダメージを抑制して防ぐダメージ割合が-20%される
+(抑制したヒットによるダメージとそのヒットが付与した
+状態異常によるダメージの40%を防ぐ)
+--------
+コラプト状態
+""")
+    rows = resolve_trade_stat_filters(item)
+    by_id = {row.stat_id: row for row in rows}
+
+    assert by_id["pseudo.pseudo_map_more_map_drops"].min_value == 35
+    assert by_id["pseudo.pseudo_map_more_scarab_drops"].min_value == 88
+    assert by_id["property.map_rarity"].enabled is False
+    assert by_id["explicit.stat_1706239920"].min_value == 100
+    assert by_id["explicit.stat_943960754"].min_value == 30
+    assert by_id["explicit.stat_943960754"].inverted is True
+    assert by_id["explicit.stat_687813731"].min_value == 100
+    assert by_id["explicit.stat_286947568"].min_value == -20
+    assert unresolved_modifier_warnings(item, rows) == ()
+    query = build_search_query(item, "Nightmare Map", rows)["query"]
+    api_rows = {
+        row["id"]: row.get("value", {})
+        for group in query["stats"] for row in group["filters"]
+    }
+    assert api_rows["explicit.stat_943960754"] == {"max": -30.0}
+
+
 def test_corrupted_eight_mod_map_enables_modifier_count_pseudo():
     modifiers = tuple(
         ItemModifier(

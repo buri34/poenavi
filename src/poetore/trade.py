@@ -1164,8 +1164,8 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
             ))
         more_drop_rows = []
         for stat_id, label, labels in (
-            ("pseudo.pseudo_map_more_map_drops", "追加マップ", ("追加マップ", "More Maps")),
-            ("pseudo.pseudo_map_more_scarab_drops", "追加スカラベ", ("追加スカラベ", "More Scarabs")),
+            ("pseudo.pseudo_map_more_map_drops", "追加マップ", ("追加マップ", "マップ量が上昇", "More Maps")),
+            ("pseudo.pseudo_map_more_scarab_drops", "追加スカラベ", ("追加スカラベ", "スカラベ量が上昇", "More Scarabs")),
             ("pseudo.pseudo_map_more_currency_drops", "追加カレンシー", ("追加カレンシー", "More Currency")),
             ("pseudo.pseudo_map_more_card_drops", "追加占いカード", ("追加占いカード", "More Divination Cards")),
         ):
