@@ -1528,6 +1528,29 @@ def test_armour_also_enables_general_life_pseudo():
     assert enabled["pseudo.pseudo_total_life"] == 72.0
 
 
+def test_weapon_strength_contribution_to_life_pseudo_is_not_preselected():
+    item = parse_item_text("""アイテムクラス: 両手斧
+レアリティ: レア
+恐怖の分割
+ヴァールアックス
+--------
+物理ダメージ: 765-1316 (augmented)
+クリティカル率: 5.00%
+秒間アタック回数: 1.38 (augmented)
+--------
+アイテムレベル: 89
+--------
+{ サフィックスモッド 「結社の」 (ティア: 1) — アタック, 能力値 }
+筋力および器用さ +25(25-28)
+""")
+    filters = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
+    life = filters["pseudo.pseudo_total_life"]
+    assert life.enabled is False
+    assert life.source_texts == ("筋力および器用さ +25(25-28)",)
+    assert life.source_contributions == (12.5,)
+    assert filters["property.physical_dps"].enabled is True
+
+
 def test_accessory_enables_aggregated_life_and_resistance_pseudos():
     item = parse_item_text("""Item Class: Rings
 Rarity: Rare

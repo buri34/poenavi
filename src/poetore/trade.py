@@ -1629,7 +1629,11 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
     elemental = totals["fire"] + totals["cold"] + totals["lightning"]
     if totals["life"]:
         filters.append(TradeStatFilter(
-            "pseudo.pseudo_total_life", "最大ライフ合計", _relaxed(totals["life"]), "pseudo", True,
+            "pseudo.pseudo_total_life", "最大ライフ合計",
+            _relaxed(totals["life"]), "pseudo",
+            # 武器では筋力由来のライフを価格検索の主要条件にしない。
+            # 条件候補としては残し、必要な場合だけユーザーが選択できるようにする。
+            item.category != "weapon",
         ))
     if totals["mana"]:
         filters.append(TradeStatFilter("pseudo.pseudo_total_mana", "最大マナ合計", _relaxed(totals["mana"]), "pseudo"))
