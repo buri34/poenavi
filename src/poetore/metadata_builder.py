@@ -186,10 +186,54 @@ def _unique_icons(items_lines: Iterable[str]) -> dict[str, str]:
     return dict(sorted(result.items()))
 
 
+def build_related_item_groups(items_lines: Iterable[str], drop_rows: Iterable[dict]) -> list[dict]:
+    """Awakenedの関連品定義を、表示に必要な名前・variant・iconへ展開する。"""
+    items = {}
+    for line in items_lines:
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        namespace = str(row.get("namespace", "")).strip()
+        name = str(row.get("refName", "")).strip()
+        if not namespace or not name:
+            continue
+        variant = ""
+        if namespace == "UNIQUE":
+            variant = str((row.get("unique") or {}).get("base", "")).strip()
+        items.setdefault((namespace, name, variant), row)
+
+    def resolve(query_id: str) -> dict:
+        namespace, encoded = query_id.split("::", 1)
+        name, separator, variant = encoded.partition(" // ")
+        row = items.get((namespace, name, variant if separator else ""))
+        if row is None and namespace == "UNIQUE":
+            candidates = [
+                value for (ns, item_name, _variant), value in items.items()
+                if ns == namespace and item_name == name
+            ]
+            row = candidates[0] if len(candidates) == 1 else None
+        return {
+            "id": query_id,
+            "namespace": namespace,
+            "name": name,
+            "variant": variant if separator else None,
+            "icon": str((row or {}).get("icon", "")),
+        }
+
+    groups = []
+    for row in drop_rows:
+        queries = [resolve(str(value)) for value in row.get("query", ())]
+        related = [resolve(str(value)) for value in row.get("items", ())]
+        if queries:
+            groups.append({"query": queries, "items": related})
+    return groups
+
+
 def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
                         repoe_stats: dict | None = None,
                         repoe_mods: dict | None = None,
                         awakened_items: Iterable[str] = (),
+                        awakened_item_drops: Iterable[dict] = (),
                         sources: dict | None = None,
                         generated_at: str | None = None) -> dict:
     """必要な照合・検索項目だけに縮小した派生インデックスを生成する。"""
@@ -252,6 +296,7 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
             records.append(record)
             seen.add(key)
     records.sort(key=lambda row: (row["kind"], row["stat_id"]))
+    awakened_items = tuple(awakened_items)
     return {
         "schema_version": 2,
         "generated_at": generated_at or datetime.now(timezone.utc).isoformat(),
@@ -261,6 +306,9 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
         "gems": _gems(awakened_items),
         "unique_fixed_stats": _unique_fixed_stats(awakened_items),
         "unique_icons": _unique_icons(awakened_items),
+        "related_item_groups": build_related_item_groups(
+            awakened_items, awakened_item_drops,
+        ),
         "mods": records,
     }
 

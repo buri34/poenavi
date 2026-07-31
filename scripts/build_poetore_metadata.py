@@ -11,7 +11,7 @@ import sys
 from urllib.request import Request, urlopen
 
 from src.poetore.metadata_builder import (
-    build_minimal_index,
+    build_minimal_index, build_related_item_groups,
     diff_minimal_indexes,
     excessive_removal,
     unresolved_trade_entries,
@@ -62,12 +62,46 @@ def main() -> int:
         "--allow-large-removal", action="store_true",
         help="10%%超または100件超の削除をレビュー済みとして許可する",
     )
+    parser.add_argument(
+        "--related-items-only", action="store_true",
+        help="固定済みAwakened items/item-dropだけから関連品定義を更新する",
+    )
     args = parser.parse_args()
     lock = _load_json(args.lock)
     source_rows = lock.get("sources", {})
-    required = {"awakened_poe_trade", "awakened_items", "jp_trade_api", "repoe_stats", "repoe_mods"}
+    required = {
+        "awakened_poe_trade", "awakened_items", "awakened_item_drops",
+        "jp_trade_api", "repoe_stats", "repoe_mods",
+    }
     if set(source_rows) != required:
         raise SystemExit(f"source lock keys mismatch: expected={sorted(required)} actual={sorted(source_rows)}")
+
+    if args.related_items_only:
+        if not args.apply:
+            raise SystemExit("--related-items-only requires --apply")
+        item_blob = _get(str(source_rows["awakened_items"]["url"]))
+        drop_blob = _get(str(source_rows["awakened_item_drops"]["url"]))
+        for name, blob in (
+            ("awakened_items", item_blob),
+            ("awakened_item_drops", drop_blob),
+        ):
+            digest = hashlib.sha256(blob).hexdigest()
+            if digest != source_rows[name].get("sha256"):
+                raise SystemExit(f"locked source hash changed: {name}")
+        payload = _load_json(args.output)
+        payload["related_item_groups"] = build_related_item_groups(
+            item_blob.decode("utf-8").splitlines(), json.loads(drop_blob),
+        )
+        payload.setdefault("sources", {})["awakened_item_drops"] = {
+            key: value for key, value in source_rows["awakened_item_drops"].items()
+            if key in {"url", "revision", "version", "sha256"}
+        }
+        args.output.write_bytes(_serialized(payload))
+        print(
+            f"applied {len(payload['related_item_groups'])} related item groups: "
+            f"{args.output}"
+        )
+        return 0
 
     blobs: dict[str, bytes] = {}
     hashes: dict[str, str] = {}
@@ -111,6 +145,7 @@ def main() -> int:
         json.loads(blobs["repoe_stats"]),
         json.loads(blobs["repoe_mods"]),
         awakened_items=blobs["awakened_items"].decode("utf-8").splitlines(),
+        awakened_item_drops=json.loads(blobs["awakened_item_drops"]),
         sources=sources,
         generated_at=str(effective_lock["generated_at"]),
     )

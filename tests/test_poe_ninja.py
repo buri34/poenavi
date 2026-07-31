@@ -2,7 +2,29 @@ from src.poetore.models import ParsedItem
 from src.poetore.poe_ninja import (
     CACHE_TTL_SECONDS, PoeNinjaPrice, PoeNinjaPriceService, divine_chaos_rate,
     match_poe_ninja_price,
+    match_poe_ninja_identity,
 )
+
+
+def test_related_item_identity_matches_unique_variant():
+    payload = {
+        "currencyOverviews": [{
+            "type": "Currency",
+            "lines": [{"name": "Divine Orb", "chaos": 200}],
+        }],
+        "itemOverviews": [{
+            "type": "UniqueArmour",
+            "lines": [{
+                "name": "Skin of the Loyal", "variant": "Simple Robe, 6L",
+                "chaos": 320, "graph": [], "sparkLine": {"totalChange": 1},
+            }],
+        }],
+    }
+    price = match_poe_ninja_identity(
+        payload, "UNIQUE", "Skin of the Loyal", "Simple Robe", "Standard",
+    )
+    assert price is not None
+    assert price.chaos == 320
 
 
 def _payload():

@@ -462,6 +462,8 @@ def _modifier_header_details(
         (("desecrated", "冒涜"), "desecrated"),
         (("incursion", "インカージョン"), "incursion"),
         (("delve", "デルヴ"), "delve"),
+        (("of the essence", "essences", "エッセンス"), "essence"),
+        (("of infamy", "infamous", "悪名"), "infamous"),
     ) if any(label in lowered or label in body for label in labels)), None)
     name_match = re.search(r'"([^"]*)"|「([^」]*)」', body)
     name = (

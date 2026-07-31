@@ -1,7 +1,7 @@
 # Awakened価格チェック機能 最終ギャップ監査
 
-監査日: 2026-07-21  
-比較対象: Awakened PoE Trade `fa31bfbbe99e04e386b4af2d71d633e2b6823c0f`
+監査日: 2026-07-31
+比較対象: Awakened PoE Trade `3c8e0320ab3ea22d6dccc6cad48b5efaf94d1fe2`
 
 ## 結論
 
@@ -31,6 +31,7 @@ Awakened相当まで実装済み。意図的に対象外とした旧Bulk Exchang
 - 通貨条件（任意、Chaos、Divine、Chaos＋Divine）
 - 件数、先頭出品、通貨別中央値、rate-limit表示
 - 429 `Retry-After`バックオフ
+- 関連素材・同系統／報酬・派生品のpoe.ninja参考価格一覧
 
 Awakenedとの差: リーグ内オンラインの細分化、販売者情報の詳細、
 アプリ側/API側の重複出品集約切替は未対応。
@@ -58,6 +59,7 @@ Magic JewelのAdorned向けrarity／corrupted厳密条件まで対応済み。
 - Anointment 470候補のOil構成とAwakened準拠の初期表示・選択規則
 - AND／NOT／COUNT検索グループのUI編集とTrade query生成
 - Veiled 20候補、Searing Exarch／Eater of Worlds状態、Eldritch等の生成元表示
+- Essence由来は「エッセンス」、Infamous由来は「悪名」と種別欄へ表示
 
 装備価格チェック範囲の差分は解消済み。Filled Coffin固有のNecropolis ModとImbued Gemは、
 後続の特殊アイテム／Gem対応側に残る。
@@ -131,8 +133,26 @@ Cluster Jewelはitem level帯、最適Passive数、Jewel Socket Mod非表示に�
 
 ## 優先度付き残課題
 
-専用Exactは、意図的な対象外5項目を除いてAwakened `fa31bfb` のカテゴリ分岐、
+専用Exactは、意図的な対象外5項目を除いてAwakened `3c8e032` のカテゴリ分岐、
 条件構成、初期ON/OFFへ準拠済み。
+
+## `fa31bfb`から`3c8e032`までの再監査
+
+価格チェックに関係する変更をコミット単位で確認した。
+
+- Essence／Infamous由来表示: 今回ぽえとれへ反映
+- Expedition Logbook解析修正、翻訳名を含むコピー解析、Trade option仕様変更、
+  3.29ゲームデータ更新: 2026-07-28のメタデータ更新・日本語詳細コピー対応で反映済み
+- 白ソケット専用フィルター削除: ぽえとれは有用な検索条件として意図的に維持
+- 詳細Modボタン操作不要化: ぽえとれは単一詳細コピーを直接取得するため対応済み
+- Captcha後のリーグ一覧取得: Awakened内蔵WebView固有。外部ブラウザ方式の
+  ぽえとれには適用しない
+- Trade結果キャッシュ時間修正: ぽえとれは独自の5分キャッシュであり、
+  Awakened旧6時間キャッシュ問題の影響を受けない
+- アイコンのclipping修正、サイトversion、既定設定: ぽえとれ機能への移植対象外
+
+この範囲で、Essence／Infamous表示以外に未反映だった新しい価格検索機能はない。
+関連アイテム価格一覧は`3c8e032`より前から存在する既存差分で、今回あわせて実装した。
 
 ## 総合判定
 

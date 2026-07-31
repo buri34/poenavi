@@ -187,6 +187,32 @@ class PoeNinjaPriceService:
             return None
         return divine_chaos_rate(self._payload(league))
 
+    def lookup_identity(
+        self, namespace: str, name: str, variant: str | None, league: str,
+    ) -> PoeNinjaPrice | None:
+        """Awakenedのquery IDで関連アイテムの参考価格を照合する。"""
+        if not league or re.search(r"\(PL\d+\)$", league):
+            return None
+        return match_poe_ninja_identity(
+            self._payload(league), namespace, name, variant, league,
+        )
+
+    def lookup_identities(
+        self, identities: tuple[tuple[str, str, str | None], ...], league: str,
+    ) -> tuple[PoeNinjaPrice | None, ...]:
+        """関連品一式をdense overviewの単一インデックスからまとめて照合する。"""
+        if not league or re.search(r"\(PL\d+\)$", league):
+            return tuple(None for _identity in identities)
+        payload = self._payload(league)
+        overviews = _overview_lines(payload)
+        divine_rate = divine_chaos_rate(payload)
+        return tuple(
+            _match_poe_ninja_identity_overviews(
+                overviews, divine_rate, namespace, name, variant, league,
+            )
+            for namespace, name, variant in identities
+        )
+
     def _payload(self, league: str) -> dict:
         with self._lock:
             cached = self._cache.get(league)
@@ -414,6 +440,61 @@ def match_poe_ninja_price(
         float(line["sparkLine"]["totalChange"])
         if isinstance(line.get("sparkLine"), dict) and line["sparkLine"].get("totalChange") is not None
         else None,
+        type_name,
+    )
+
+
+def match_poe_ninja_identity(
+    payload: dict, namespace: str, name: str, variant: str | None, league: str,
+) -> PoeNinjaPrice | None:
+    """関連品定義のnamespace/name/variantをdense overviewへ直接照合する。"""
+    return _match_poe_ninja_identity_overviews(
+        _overview_lines(payload), divine_chaos_rate(payload),
+        namespace, name, variant, league,
+    )
+
+
+def _match_poe_ninja_identity_overviews(
+    overviews: dict[str, list[dict]], divine_rate: float | None,
+    namespace: str, name: str, variant: str | None, league: str,
+) -> PoeNinjaPrice | None:
+    namespace = namespace.upper()
+    allowed = {
+        "DIVINATION_CARD": {"DivinationCard"},
+        "GEM": {"SkillGem", "ImbuedGem"},
+    }.get(namespace)
+    if namespace == "UNIQUE":
+        allowed = _UNIQUE_TYPES
+    elif namespace == "ITEM":
+        allowed = set(_URL_BY_TYPE) - _UNIQUE_TYPES - {"DivinationCard", "SkillGem", "ImbuedGem"}
+    if not allowed:
+        return None
+
+    matches = []
+    for type_name in allowed:
+        for line in overviews.get(type_name, ()):
+            if str(line.get("name", "")).casefold() != name.casefold():
+                continue
+            line_variant = str(line.get("variant", ""))
+            if variant and variant.casefold() not in line_variant.casefold():
+                continue
+            matches.append((type_name, line))
+    if len(matches) != 1:
+        return None
+    type_name, line = matches[0]
+    chaos = float(line.get("chaos", 0))
+    if chaos <= 0:
+        return None
+    return PoeNinjaPrice(
+        str(line.get("name", "")),
+        str(line["variant"]) if line.get("variant") else None,
+        chaos,
+        tuple(line.get("graph", ())),
+        _line_url(league, _URL_BY_TYPE[type_name], line),
+        divine_rate,
+        float(line["sparkLine"]["totalChange"])
+        if isinstance(line.get("sparkLine"), dict)
+        and line["sparkLine"].get("totalChange") is not None else None,
         type_name,
     )
 

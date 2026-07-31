@@ -63,6 +63,31 @@ def unique_icon_url(name: str, path: Path | None = None) -> str | None:
     return str(value) if value else None
 
 
+def related_item_group(
+    namespace: str, name: str, variant: str | None = None, path: Path | None = None,
+) -> dict | None:
+    """英語Trade識別子に対応するAwakened由来の関連素材・報酬グループを返す。"""
+    path = (path or Path(os.environ.get("POETORE_METADATA_PATH", INDEX_PATH))).resolve()
+    if not namespace or not name or not path.exists():
+        return None
+    wanted_namespace = namespace.strip().upper()
+    wanted_name = name.strip().casefold()
+    wanted_variant = (variant or "").strip().casefold()
+    for group in _load_payload(str(path)).get("related_item_groups", ()):
+        for item in group.get("query", ()):
+            if (
+                str(item.get("namespace", "")).upper() == wanted_namespace
+                and str(item.get("name", "")).casefold() == wanted_name
+                and (
+                    not wanted_variant
+                    or not item.get("variant")
+                    or str(item.get("variant", "")).casefold() == wanted_variant
+                )
+            ):
+                return dict(group)
+    return None
+
+
 def pseudo_relations(path: Path | None = None) -> tuple[dict, ...]:
     """Awakened固定commitから機械抽出したpseudo間関係を返す。"""
     path = (path or PSEUDO_RELATIONS_PATH).resolve()

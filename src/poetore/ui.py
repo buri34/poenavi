@@ -37,6 +37,7 @@ from .trade import (
     is_inscribed_ultimatum,
 )
 from .poe_ninja import PoeNinjaPrice, default_poe_ninja_service
+from .metadata import related_item_group
 
 
 class _TradeSignals(QObject):
@@ -47,6 +48,8 @@ class _TradeSignals(QObject):
     leagues_ready = Signal(object)
     poe_ninja_ready = Signal(object, object)
     poe_ninja_failed = Signal(object)
+    related_items_ready = Signal(object, object)
+    related_items_failed = Signal(object)
     divine_rate_ready = Signal(object, object)
     divine_rate_failed = Signal(object)
     global_mouse_pressed = Signal(int, int)
@@ -273,6 +276,8 @@ _FILTER_KIND_LABELS = {
     "necropolis": "ネクロポリス",
     "imbued": "注入",
     "foulborn": "ファウルボーン",
+    "essence": "エッセンス",
+    "infamous": "悪名",
     "pseudo": "疑似",
     "property": "アイテム特性",
     "base": "ベース",
@@ -294,7 +299,11 @@ _FILTER_KIND_LABELS = {
 
 
 def _filter_kind_label(stat_filter: TradeStatFilter) -> str:
-    kind = "foulborn" if stat_filter.generation == "foulborn" else stat_filter.kind
+    kind = (
+        stat_filter.generation
+        if stat_filter.generation in {"foulborn", "essence", "infamous"}
+        else stat_filter.kind
+    )
     return _FILTER_KIND_LABELS.get(kind, "特殊")
 
 
@@ -886,6 +895,28 @@ class PoetoreWindow(QWidget):
         self.poe_ninja_price_panel.hide()
         panel_layout.addWidget(self.poe_ninja_price_panel)
 
+        self.related_items_panel = QFrame()
+        self.related_items_panel.setObjectName("relatedItemsPanel")
+        related_layout = QVBoxLayout(self.related_items_panel)
+        related_layout.setContentsMargins(8, 6, 8, 6)
+        related_layout.setSpacing(4)
+        related_title = QLabel("関連アイテムのpoe.ninja参考価格")
+        related_title.setObjectName("relatedItemsTitle")
+        related_layout.addWidget(related_title)
+        self.related_items_tree = QTreeWidget()
+        self.related_items_tree.setObjectName("relatedItemsTree")
+        self.related_items_tree.setColumnCount(2)
+        self.related_items_tree.setHeaderLabels(("アイテム", "価格"))
+        self.related_items_tree.setRootIsDecorated(True)
+        self.related_items_tree.setAlternatingRowColors(True)
+        self.related_items_tree.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.related_items_tree.header().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.related_items_tree.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.related_items_tree.setMaximumHeight(210)
+        related_layout.addWidget(self.related_items_tree)
+        self.related_items_panel.hide()
+        panel_layout.addWidget(self.related_items_panel)
+
         top_options = QHBoxLayout()
         top_options.setSpacing(6)
         self.trade_preset_combo = _BinaryToggle(
@@ -1318,6 +1349,8 @@ class PoetoreWindow(QWidget):
         self._trade_signals.leagues_ready.connect(self._show_trade_leagues)
         self._trade_signals.poe_ninja_ready.connect(self._show_poe_ninja_price)
         self._trade_signals.poe_ninja_failed.connect(self._hide_poe_ninja_price)
+        self._trade_signals.related_items_ready.connect(self._show_related_items)
+        self._trade_signals.related_items_failed.connect(self._hide_related_items)
         self._trade_signals.divine_rate_ready.connect(self._show_divine_rate)
         self._trade_signals.divine_rate_failed.connect(self._hide_divine_rate)
         self._trade_signals.global_mouse_pressed.connect(self._handle_global_mouse_press)
@@ -2055,6 +2088,7 @@ class PoetoreWindow(QWidget):
             return
         self._poe_ninja_item_key = key
         self._hide_poe_ninja_price(key)
+        self._hide_related_items(key)
         self._queue_divine_rate(league)
         if not league:
             return
@@ -2066,15 +2100,71 @@ class PoetoreWindow(QWidget):
                     trade_name=self._trade_item_name,
                     trade_base_type=self._trade_base_type,
                 )
+                related = self._lookup_related_items(item, league, result)
             except Exception:
                 self._trade_signals.poe_ninja_failed.emit(key)
+                self._trade_signals.related_items_failed.emit(key)
             else:
                 if result is None:
                     self._trade_signals.poe_ninja_failed.emit(key)
                 else:
                     self._trade_signals.poe_ninja_ready.emit(key, result)
+                if related:
+                    self._trade_signals.related_items_ready.emit(key, related)
+                else:
+                    self._trade_signals.related_items_failed.emit(key)
 
         threading.Thread(target=run, daemon=True).start()
+
+    def _lookup_related_items(self, item, league, primary_price=None):
+        namespace = (
+            "UNIQUE" if item.rarity.casefold() in {"unique", "ユニーク"}
+            else "GEM" if item.category == "gem"
+            else "DIVINATION_CARD" if item.category == "divination_card"
+            else "ITEM"
+        )
+        names = tuple(dict.fromkeys(
+            str(value).strip() for value in (
+                self._trade_item_name, self._trade_base_type,
+                getattr(primary_price, "name", None), item.name, item.base_type,
+            ) if value and str(value).strip()
+        ))
+        variant = str(
+            getattr(primary_price, "variant", None) or self._trade_base_type or ""
+        ) if namespace == "UNIQUE" else None
+        group = next(
+            (found for name in names
+             if (found := related_item_group(namespace, name, variant)) is not None),
+            None,
+        )
+        if group is None:
+            return None
+
+        all_rows = tuple(group.get("query", ())) + tuple(group.get("items", ()))
+        identities = tuple(
+            (
+                str(row.get("namespace", "")),
+                str(row.get("name", "")),
+                row.get("variant"),
+            )
+            for row in all_rows
+        )
+        prices = default_poe_ninja_service.lookup_identities(identities, league)
+        price_by_id = {
+            str(row.get("id", "")): price for row, price in zip(all_rows, prices)
+        }
+
+        def priced(rows):
+            return tuple(
+                (dict(row), price_by_id.get(str(row.get("id", ""))))
+                for row in rows
+            )
+
+        return {
+            "query": priced(group.get("query", ())),
+            "items": priced(group.get("items", ())),
+            "current": (namespace, names[0].casefold()),
+        }
 
     def _queue_divine_rate(self, league):
         key = str(league or "")
@@ -2190,6 +2280,41 @@ class PoetoreWindow(QWidget):
         self.poe_ninja_trend_label.clear()
         self.poe_ninja_trend_chart.setPoints(())
         self._last_poe_ninja_url = ""
+
+    def _show_related_items(self, key, result):
+        if key != self._poe_ninja_item_key:
+            return
+        self.related_items_tree.clear()
+        current = result.get("current")
+        for title, rows in (
+            ("関連素材・同系統", result.get("query", ())),
+            ("報酬・派生品", result.get("items", ())),
+        ):
+            if not rows:
+                continue
+            parent = QTreeWidgetItem([title, ""])
+            self.related_items_tree.addTopLevelItem(parent)
+            for row, price in rows:
+                is_current = (
+                    str(row.get("namespace", "")), str(row.get("name", "")).casefold()
+                ) == current
+                label = f"● {row['name']}" if is_current else str(row["name"])
+                child = QTreeWidgetItem([
+                    label, price.display_price() if price is not None else "—",
+                ])
+                if price is not None:
+                    child.setToolTip(1, "poe.ninja参考価格")
+                parent.addChild(child)
+            parent.setExpanded(True)
+        self.related_items_panel.setVisible(
+            self.related_items_tree.topLevelItemCount() > 0
+        )
+
+    def _hide_related_items(self, key=None):
+        if key is not None and key != self._poe_ninja_item_key:
+            return
+        self.related_items_tree.clear()
+        self.related_items_panel.hide()
 
     def _open_poe_ninja_url(self):
         if self._last_poe_ninja_url:

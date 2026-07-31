@@ -408,6 +408,29 @@ def test_builder_is_reproducible_when_generation_time_and_sources_are_locked():
     assert first == second
 
 
+def test_builder_expands_awakened_related_item_groups():
+    items = [
+        json.dumps({
+            "namespace": "ITEM", "refName": "Chayula's Breachstone",
+            "icon": "stone.png",
+        }),
+        json.dumps({
+            "namespace": "UNIQUE", "refName": "Skin of the Loyal",
+            "icon": "skin.png", "unique": {"base": "Simple Robe"},
+        }),
+    ]
+    payload = build_minimal_index(
+        [], {"result": []}, awakened_items=items,
+        awakened_item_drops=[{
+            "query": ["ITEM::Chayula's Breachstone"],
+            "items": ["UNIQUE::Skin of the Loyal // Simple Robe"],
+        }],
+    )
+    group = payload["related_item_groups"][0]
+    assert group["query"][0]["name"] == "Chayula's Breachstone"
+    assert group["items"][0]["icon"] == "skin.png"
+
+
 def test_index_validation_reports_duplicates_empty_and_ambiguous_matchers():
     base = {
         "ref": "r", "kind": "explicit", "japanese": ["値 #"], "better": 1,

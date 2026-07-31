@@ -1,6 +1,7 @@
 import unittest
 
 from src.poetore import ItemParseError, parse_item_text
+from src.poetore.parser import _modifier_header_details
 
 
 RARE_JP = """アイテムクラス: 指輪
@@ -660,6 +661,16 @@ Synthesised Item
         modifier = item.modifiers[0]
         self.assertEqual(modifier.affix, "prefix")
         self.assertEqual(modifier.generation, "crusader")
+
+    def test_parses_essence_and_infamous_modifier_generations(self):
+        essence = _modifier_header_details(
+            '{ Prefix Modifier "Essences" (Tier: 1) — Life }'
+        )
+        infamous = _modifier_header_details(
+            '{ Suffix Modifier "of Infamy" (Tier: 1) — Attack }'
+        )
+        self.assertEqual(essence[3], "essence")
+        self.assertEqual(infamous[3], "infamous")
 
     def test_ignores_flask_usage_help_text_in_japanese_and_english(self):
         japanese = parse_item_text("""アイテムクラス: ユーティリティフラスコ

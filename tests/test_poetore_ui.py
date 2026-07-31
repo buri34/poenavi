@@ -494,6 +494,27 @@ def test_filter_kind_column_is_japanese_and_marks_foulborn_generation(qapp):
         window.close()
 
 
+def test_filter_kind_column_marks_essence_and_infamous_generations(qapp):
+    window = PoetoreWindow()
+    try:
+        window._populate_stat_filters((
+            TradeStatFilter(
+                "explicit.stat_1", "Essence Mod", 10, "explicit",
+                generation="essence",
+            ),
+            TradeStatFilter(
+                "explicit.stat_2", "Infamous Mod", 10, "explicit",
+                generation="infamous",
+            ),
+        ))
+        assert [
+            window.mod_filter_tree.topLevelItem(index).text(1)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ] == ["エッセンス", "悪名"]
+    finally:
+        window.close()
+
+
 def test_foulborn_unique_uses_normal_name_and_enables_variable_mods_in_real_panel(qapp):
     window = PoetoreWindow()
     try:
@@ -3044,6 +3065,31 @@ def test_poe_ninja_price_panel_uses_chaos_icon_for_small_price(qapp):
         assert window.poe_ninja_price_value.text() == "10"
         assert not window.poe_ninja_currency_icon.pixmap().isNull()
         assert window.poe_ninja_currency_icon.toolTip() == "Chaos Orb"
+    finally:
+        window.close()
+
+
+def test_related_items_panel_renders_materials_and_rewards(qapp):
+    window = PoetoreWindow()
+    try:
+        key = ("item", "Standard", "", "")
+        window._poe_ninja_item_key = key
+        price = PoeNinjaPrice(
+            "Blessing of Chayula", None, 12, (), "https://poe.ninja/example", 200,
+        )
+        window._show_related_items(key, {
+            "current": ("ITEM", "chayula's breachstone"),
+            "query": (({
+                "namespace": "ITEM", "name": "Chayula's Breachstone",
+            }, None),),
+            "items": (({
+                "namespace": "ITEM", "name": "Blessing of Chayula",
+            }, price),),
+        })
+        assert not window.related_items_panel.isHidden()
+        assert window.related_items_tree.topLevelItemCount() == 2
+        assert window.related_items_tree.topLevelItem(0).child(0).text(0).startswith("● ")
+        assert window.related_items_tree.topLevelItem(1).child(0).text(1) == "12 chaos"
     finally:
         window.close()
 

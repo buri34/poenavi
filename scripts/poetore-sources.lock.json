@@ -12,6 +12,11 @@
       "revision": "3c8e0320",
       "sha256": "6c3817a18a0e94311601cbca1b488ea842490fb3d8fe4a8914e9ac793cc8e67c"
     },
+    "awakened_item_drops": {
+      "url": "https://raw.githubusercontent.com/SnosMe/awakened-poe-trade/3c8e0320/renderer/public/data/item-drop.json",
+      "revision": "3c8e0320",
+      "sha256": "7df1ba69071bfbc221f7054ed91053c1e3b2ab14ef8bfd62867a131143504d77"
+    },
     "jp_trade_api": {
       "url": "https://jp.pathofexile.com/api/trade/data/stats",
       "version": "snapshot-2026-07-28",
