@@ -63,7 +63,7 @@ R07,Property,武器混合DPS,混合ならTotal DPSをON。支配成分67%以上�
 R08,Property,pDPS重要武器,Axe・Sword・Bow・WarstaffだけpDPSを優先,同じカテゴリ判断,準拠,維持,,item-property.ts:245-256,trade.py:_physical_dps_is_important
 R09,Property,APS・Crit,表示するが初期OFF,同じ,準拠,維持,,item-property.ts:200-219,trade.py:_initial_property_filters
 R10,Property,品質20換算,武器DPS・防御値を最低品質20へ換算,同じ,準拠,維持,,item-property.ts:55-219,trade.py:_defence_at_20_quality・physical_dps_at_20_quality
-C01,Cluster,Added Passive Skills,Jewel Socket数を隠し最適パッシブ数を特殊範囲化,同じ,準拠,維持,,create-stat-filters.ts:478-507,tests:test_optimal_cluster_passive_count_does_not_include_next_integer
+C01,Cluster,Added Passive Skills,"Jewel Socket数を隠し、2・8・9は上限、4は上限5、5は完全一致、3・6・10・11・12は下限にする","Jewel Socket数を隠し、9のみユーザー判断で下限9、その他はAwakenedと同じ",独自仕様,9パッシブは9以上,9パッシブは実用上8パッシブと同等ではないため8を検索結果へ混ぜない,create-stat-filters.ts:478-507,tests:test_nine_passive_large_cluster_searches_nine_or_more
 C02,Flask,Enchant,Enkindling使用時以外のHarvest/Instilling Enchantを隠してOFF,Enkindling使用時だけEnchantを表示・ON,準拠,維持,,create-stat-filters.ts:511-518,tests:test_dedicated_exact_magic_flask_hides_instilling_enchantment・test_dedicated_exact_magic_flask_keeps_enkindling_enchantment
 C03,Flask,Charge Recovery hybrid,Charge RecoveryありEffectなしならEffect条件をNOT追加,同じ,準拠,維持,,pseudo/flasks.ts:13-27,tests:test_flask_hybrid_cluster_and_special_area_rules
 C04,Anointment,Amulet・Ring,TalismanはON。非Corrupted/非Mirroredで最高Oilが金銀以外なら隠してOFF,同じ価値Oil規則,準拠,維持,,pseudo/anointments.ts:45-57,tests:test_modifiable_amulet_shows_anointments_using_valuable_oils

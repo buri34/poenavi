@@ -1273,6 +1273,30 @@ def test_optimal_cluster_passive_count_does_not_include_next_integer(
     }
 
 
+def test_nine_passive_large_cluster_searches_nine_or_more():
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: ノーマル
+クラスタージュエル (大)
+--------
+アイテムレベル: 84
+--------
+パッシブスキルを9個追加する (enchant)
+""")
+    filters = resolve_trade_stat_filters(item)
+    passive = next(row for row in filters if row.ref == "Adds # Passive Skills")
+    assert (passive.min_value, passive.max_value, passive.enabled) == (9.0, None, True)
+
+    query = build_search_query(item, "Large Cluster Jewel", filters)["query"]
+    assert query["stats"][0]["filters"][0] == {
+        "id": "enchant.stat_3086156145",
+        "value": {"min": 9.0},
+    }
+
+    ranged = apply_search_range(filters, 50, item)
+    passive = next(row for row in ranged if row.ref == "Adds # Passive Skills")
+    assert (passive.min_value, passive.max_value) == (9.0, None)
+
+
 @pytest.mark.parametrize(("base_type", "english_base"), [
     ("クラスタージュエル (大)", "Large Cluster Jewel"),
     ("クラスタージュエル (中)", "Medium Cluster Jewel"),

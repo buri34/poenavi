@@ -447,7 +447,7 @@ def apply_search_range(
                 item is not None
                 and item.category == "cluster_jewel"
                 and row.ref == "Adds # Passive Skills"
-                and row.read_value in {2, 8}
+                and row.read_value in {2, 8, 9}
             )
             or row.option_value is not None
             or row.exact
@@ -2965,7 +2965,7 @@ def resolve_trade_stat_filters(
                     minimum, maximum = None, 5.0
                 elif value == 5:
                     minimum, maximum = 5.0, 5.0
-                elif value in {3, 6, 10, 11, 12}:
+                elif value in {3, 6, 9, 10, 11, 12}:
                     minimum, maximum = value, None
                 adjusted.append(replace(
                     row, min_value=minimum, max_value=maximum, enabled=True,
