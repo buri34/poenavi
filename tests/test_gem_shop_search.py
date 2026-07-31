@@ -80,18 +80,25 @@ class GemShopSearchTest(unittest.TestCase):
         self.assertEqual(MainWindow._gem_shop_search_hold_delay_ms(window), 700)
 
     def test_settings_persist_gem_search_hold_delay_and_term_overrides(self):
-        dialog = SettingsDialog(
-            current_config={
-                "gem_shop_search_hold_seconds": 0.7,
-                "gem_shop_search_term_overrides": {"momentum support": "moment"},
-            }
-        )
+        with TemporaryDirectory() as temp_dir:
+            zone_master_path = Path(temp_dir) / "zone_data.json"
+            with patch(
+                "src.utils.zone_master_data.get_zone_master_path",
+                return_value=str(zone_master_path),
+            ):
+                dialog = SettingsDialog(
+                    current_config={
+                        "gem_shop_search_hold_seconds": 0.7,
+                        "gem_shop_search_term_overrides": {"momentum support": "moment"},
+                    }
+                )
 
-        self.assertEqual(dialog.gem_shop_search_hold_seconds_spin.value(), 0.7)
-        self.assertEqual(
-            dialog.get_settings()["gem_shop_search_term_overrides"],
-            {"momentum support": "moment"},
-        )
+                self.assertEqual(dialog.gem_shop_search_hold_seconds_spin.value(), 0.7)
+                self.assertEqual(
+                    dialog.get_settings()["gem_shop_search_term_overrides"],
+                    {"momentum support": "moment"},
+                )
+                self.assertTrue(zone_master_path.exists())
 
     def test_app_info_is_the_rightmost_tab_and_term_review_filters_changed_terms(self):
         settings = SettingsDialog(

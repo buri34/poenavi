@@ -32,3 +32,17 @@ def test_load_zone_master_data_reloads_when_file_changes(tmp_path, monkeypatch):
     os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns + 1))
 
     assert zone_master_data.load_zone_master_data() != first
+
+
+def test_save_zone_master_data_uses_lf_line_endings(tmp_path, monkeypatch):
+    path = Path(tmp_path) / "zone_data.json"
+    monkeypatch.setattr(zone_master_data, "get_zone_master_path", lambda: str(path))
+
+    zone_master_data.save_zone_master_data(
+        {"poe1": {"1_1_1": {"name": "岸辺"}}},
+        {"poe1": ["ライオンアイの見張り場"]},
+    )
+
+    content = path.read_bytes()
+    assert b"\r\n" not in content
+    assert b"\n" in content

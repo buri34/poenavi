@@ -77,7 +77,7 @@ def save_zone_master_data(zone_data_by_version: dict, town_zones_by_version: dic
         "zone_data_by_version": zone_data_by_version,
         "town_zones_by_version": town_zones_by_version,
     }
-    with open(path, "w", encoding="utf-8") as f:
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     _ZONE_MASTER_CACHE = None
     print(f"[ZoneMasterData] Saved: {path}")

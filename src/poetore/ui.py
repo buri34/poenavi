@@ -605,6 +605,10 @@ class _AreaSegmentedControl(QWidget):
     def _sync(self):
         for index, button in enumerate(self._buttons):
             button.setChecked(index == self._current)
+            button.ensurePolished()
+            button.setMinimumWidth(
+                button.fontMetrics().horizontalAdvance(button.text()) + 24
+            )
 
 
 class _NumericFilterChip(QFrame):
