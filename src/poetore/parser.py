@@ -459,6 +459,7 @@ def _modifier_header_details(
         (("veiled", "ヴェール"), "veiled"),
         (("eldritch", "エルドリッチ", "searing exarch", "シアリング・エグザーク",
           "eater of worlds", "イーター・オブ・ワールズ"), "eldritch"),
+        (("synthesised", "synthesized", "シンセシス"), "synthesised"),
         (("desecrated", "冒涜"), "desecrated"),
         (("incursion", "インカージョン"), "incursion"),
         (("delve", "デルヴ"), "delve"),

@@ -34,13 +34,11 @@ def test_awakened_audit_has_unique_granular_rule_ids():
     } <= set(rule_ids)
 
 
-def test_awakened_audit_marks_newly_found_differences_for_action():
+def test_awakened_audit_tracks_resolved_and_remaining_differences():
     rows = {row["rule_id"]: row for row in _rows()}
 
-    assert rows["I14a"]["判定"] == "差分・判断必要"
+    for rule_id in ("I14a", "S18", "S19", "S20", "R11", "R12"):
+        assert rows[rule_id]["判定"] == "準拠"
+        assert rows[rule_id]["鰤さん判断欄"] == ""
     assert rows["I28"]["判定"] == "未対応"
-    assert rows["R11"]["判定"] == "未対応"
-    assert rows["R12"]["判定"] == "未対応"
-    for rule_id in ("I28", "R11", "R12"):
-        assert rows[rule_id]["鰤さん判断欄"] == "要対応"
-
+    assert rows["I28"]["鰤さん判断欄"] == "要対応"

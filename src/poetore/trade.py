@@ -1631,6 +1631,8 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
         return []
     totals = {"life": 0.0, "mana": 0.0, "fire": 0.0, "cold": 0.0,
               "lightning": 0.0, "chaos": 0.0, "str": 0.0, "dex": 0.0, "int": 0.0}
+    has_maximum_life_mod = False
+    has_maximum_mana_mod = False
     simple: dict[str, float] = {}
     for modifier in item.modifiers:
         value = modifier.values[0] if modifier.values else 0
@@ -1642,8 +1644,12 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
             ) + tuple(row[0] for row in _SIMPLE_PSEUDOS) + tuple(_RELATIONAL_SOURCE_REFS)
             ref = next((candidate for candidate in known_refs
                         if normalize_stat_text(candidate) == normalized), "")
-        if ref == "+# to maximum Life": totals["life"] += value
-        if ref == "+# to maximum Mana": totals["mana"] += value
+        if ref == "+# to maximum Life":
+            has_maximum_life_mod = True
+            totals["life"] += value
+        if ref == "+# to maximum Mana":
+            has_maximum_mana_mod = True
+            totals["mana"] += value
         for attr in _ATTRIBUTE_REFS.get(ref, ()):
             totals[attr] += value
         if ref == "+# to all Attributes":
@@ -1665,15 +1671,12 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
     totals["life"] += totals["str"] * 0.5
     totals["mana"] += totals["int"] * 0.5
     elemental = totals["fire"] + totals["cold"] + totals["lightning"]
-    if totals["life"]:
+    if has_maximum_life_mod:
         filters.append(TradeStatFilter(
             "pseudo.pseudo_total_life", "最大ライフ合計",
-            _relaxed(totals["life"]), "pseudo",
-            # 武器では筋力由来のライフを価格検索の主要条件にしない。
-            # 条件候補としては残し、必要な場合だけユーザーが選択できるようにする。
-            item.category != "weapon",
+            _relaxed(totals["life"]), "pseudo", True,
         ))
-    if totals["mana"]:
+    if has_maximum_mana_mod:
         filters.append(TradeStatFilter("pseudo.pseudo_total_mana", "最大マナ合計", _relaxed(totals["mana"]), "pseudo"))
     if elemental:
         filters.append(TradeStatFilter(
@@ -3190,8 +3193,15 @@ def build_search_query(
             normalized = 82 if item.item_level >= 82 else 80 if item.item_level >= 80 else 78 if item.item_level >= 78 else 75
             misc["ilvl"] = {"min": normalized}
     rarity = item.rarity.lower()
+    magic = rarity in {"マジック", "magic"}
+    exact_magic_search = (
+        magic
+        and (preset == PRESET_BASE or uses_dedicated_exact_preset(item))
+    )
     if preset == PRESET_BASE:
-        rarity_option = "magic" if magic_exact else "nonunique"
+        rarity_option = "magic" if magic_exact else (
+            None if exact_magic_search else "nonunique"
+        )
     elif _is_unique(item):
         rarity_option = "unique"
     elif rarity in {"ノーマル", "normal", "マジック", "magic", "レア", "rare"}:
@@ -3201,6 +3211,8 @@ def build_search_query(
         if (item.category in {"jewel", "abyss_jewel"}
                 and rarity in {"マジック", "magic"}):
             rarity_option = "magic"
+        elif exact_magic_search:
+            rarity_option = "magic" if magic_exact else None
     else:
         rarity_option = None
     if include_foil is None:

@@ -796,8 +796,25 @@ Item Level: 85
     exact_query = build_search_query(
         item, "Ruby Ring", filters, preset=PRESET_BASE, magic_exact=True,
     )["query"]
-    assert default_query["filters"]["type_filters"]["filters"]["rarity"] == {"option": "nonunique"}
+    assert "type_filters" not in default_query["filters"]
     assert exact_query["filters"]["type_filters"]["filters"]["rarity"] == {"option": "magic"}
+
+
+def test_dedicated_exact_magic_item_starts_without_rarity_filter():
+    item = ParsedItem(
+        "Utility Flasks", "Magic", "Test Flask", "Granite Flask", "flask",
+        item_level=85,
+    )
+
+    default_query = build_search_query(item, "Granite Flask")["query"]
+    magic_query = build_search_query(
+        item, "Granite Flask", magic_exact=True,
+    )["query"]
+
+    assert "type_filters" not in default_query["filters"]
+    assert magic_query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "magic",
+    }
 
 
 def test_nonexact_accessory_search_uses_item_class_category():
@@ -1604,7 +1621,7 @@ def test_armour_also_enables_general_life_pseudo():
     assert enabled["pseudo.pseudo_total_life"] == 72.0
 
 
-def test_weapon_strength_contribution_to_life_pseudo_is_not_preselected():
+def test_weapon_strength_without_life_mod_does_not_create_life_pseudo():
     item = parse_item_text("""アイテムクラス: 両手斧
 レアリティ: レア
 恐怖の分割
@@ -1618,12 +1635,9 @@ def test_weapon_strength_contribution_to_life_pseudo_is_not_preselected():
 --------
 { サフィックスモッド 「結社の」 (ティア: 1) — アタック, 能力値 }
 筋力および器用さ +25(25-28)
-""")
+    """)
     filters = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
-    life = filters["pseudo.pseudo_total_life"]
-    assert life.enabled is False
-    assert life.source_texts == ("筋力および器用さ +25(25-28)",)
-    assert life.source_contributions == (12.5,)
+    assert "pseudo.pseudo_total_life" not in filters
     assert filters["property.physical_dps"].enabled is True
 
 
@@ -1669,6 +1683,23 @@ Item Level: 85
     life = rows["pseudo.pseudo_total_life"]
     assert life.source_texts == ("+70 to maximum Life", "+60 to Strength")
     assert life.source_contributions == (70.0, 30.0)
+
+
+def test_attributes_alone_do_not_create_life_or_mana_pseudos():
+    item = parse_item_text("""Item Class: Amulets
+Rarity: Rare
+Test Amulet
+Onyx Amulet
+--------
+Item Level: 85
+--------
++60 to Strength
++60 to Intelligence
+""")
+
+    rows = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
+    assert "pseudo.pseudo_total_life" not in rows
+    assert "pseudo.pseudo_total_mana" not in rows
 
 
 def test_accessory_finished_filters_use_requested_awakened_based_order():
@@ -1742,7 +1773,6 @@ def test_pseudo_mods_cover_attributes_resources_speed_damage_crit_and_recovery()
     filters = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
     expected = {
         "pseudo.pseudo_total_all_attributes": 18.0,
-        "pseudo.pseudo_total_life": 9.0,
         "pseudo.pseudo_total_mana": 63.0,
         "pseudo.pseudo_total_energy_shield": 36.0,
         "pseudo.pseudo_total_cast_speed": 10.0,
@@ -1754,8 +1784,8 @@ def test_pseudo_mods_cover_attributes_resources_speed_damage_crit_and_recovery()
         "pseudo.pseudo_increased_mana_regen": 36.0,
     }
     assert {stat_id: filters[stat_id].min_value for stat_id in expected} == expected
-    assert filters["pseudo.pseudo_total_life"].enabled is True
-    assert all(not filters[stat_id].enabled for stat_id in expected if stat_id != "pseudo.pseudo_total_life")
+    assert "pseudo.pseudo_total_life" not in filters
+    assert all(not filters[stat_id].enabled for stat_id in expected)
     assert all(row.kind == "pseudo" for row in filters.values())
 
 

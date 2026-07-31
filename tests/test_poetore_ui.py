@@ -515,6 +515,33 @@ def test_filter_kind_column_marks_essence_and_infamous_generations(qapp):
         window.close()
 
 
+def test_filter_kind_column_marks_awakened_source_generations(qapp):
+    window = PoetoreWindow()
+    try:
+        generations = (
+            ("corrupted", "コラプト"),
+            ("eldritch", "エルドリッチ"),
+            ("synthesised", "シンセシス"),
+            ("delve", "デルブ"),
+            ("incursion", "インカージョン"),
+            ("shaper", "シェイパー"),
+        )
+        window._populate_stat_filters(tuple(
+            TradeStatFilter(
+                f"explicit.stat_{index}", generation, 10, "explicit",
+                generation=generation,
+            )
+            for index, (generation, _) in enumerate(generations)
+        ))
+
+        assert [
+            window.mod_filter_tree.topLevelItem(index).text(1)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ] == [label for _, label in generations]
+    finally:
+        window.close()
+
+
 def test_reported_infamous_helmet_resolves_and_is_labelled_in_real_panel(qapp):
     text = """アイテムクラス: 兜
 レアリティ: レア

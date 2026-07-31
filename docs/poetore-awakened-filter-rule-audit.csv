@@ -26,7 +26,7 @@ I11,ソケット,白ソケット,条件を生成しない,条件を生成しな�
 I12,状態,Corrupted,変更不能品を除き現在状態を条件化。Magic Jewelは完全一致,3状態UIで除外・含む・限定を選べMagic Jewelは厳密化,独自仕様,Awakenedより柔軟なので維持,維持,create-item-filters.ts:243-258,tests:test_magic_jewel_search_requires_magic_rarity_and_exact_corruption_state
 I13,状態,Magic Jewel・Abyss Jewel,Adorned用途としてMagic rarityを初期ON,Magic rarityとCorrupted状態を厳密化,準拠,維持,,create-item-filters.ts:243-264,tests:test_magic_jewel_search_requires_magic_rarity_and_exact_corruption_state
 I14,状態,非Unique rarity,Normal・Magic・Rareはnonuniqueで検索,同じ,準拠,維持,,create-item-filters.ts:275-283,tests:test_dedicated_exact_normal_item_uses_nonunique_ilvl_and_exact_stats_only
-I14a,状態,ExactのMagic rarity,Adorned対象外のMagic品はmagic条件を非表示候補として持つが初期OFF。初期APIにrarityを送らない,ぽえとれはnonuniqueを初期APIへ送る,差分・判断必要,Awakened準拠で初期rarity条件を外すか判断,要判断,create-item-filters.ts:265-274,trade.py:build_search_query rarity_option
+I14a,状態,ExactのMagic rarity,Adorned対象外のMagic品はmagic条件を非表示候補として持つが初期OFF。初期APIにrarityを送らない,初期APIにはrarityを送らず手動選択時だけmagicを送る,準拠,維持,,create-item-filters.ts:265-274,tests:test_dedicated_exact_magic_item_starts_without_rarity_filter
 I15,状態,Mirrored,MirroredならON。未Mirrorのクラフト可能品には隠しOFF候補,同等の状態条件を生成,準拠,維持,,create-item-filters.ts:286-292,tests:test_finished_search_state_filters_can_exclude_or_include_items
 I16,状態,Split,Split品は条件なしで含める。切替時はsplit=false。安全な未Split品は隠しsplit=false,Split品だけ「スプリット品含む／非スプリット」切替を表示。通常品は内部でsplit=false,準拠,維持,,create-item-filters.ts:294-301,tests:test_split_uncorrupted_item_defaults_to_uncorrupted_and_includes_split
 I17,状態,Fractured,安全な未Fractured品にfalse条件を持つ,非Fractured条件を生成,準拠,維持,,create-item-filters.ts:303-307,trade.py:build_search_query
@@ -75,9 +75,9 @@ S14,Mod,Unique少数可変Mod,表示可能条件が3個以下なら全てON,同�
 S15,Mod,数値方向,高いほど良いはmin・低いほど良いはmax・比較不能は両端,better・inverted・negateを保持して同じ方向へ送信,準拠,維持,,create-stat-filters.ts:281-354,tests:test_mirrored_penumbra_ring_resolves_negative_direction_stats_like_awakened
 S16,Mod,Essence・Infamous生成元,Mod名からEssence・Infamousをタグ表示,エッセンス・悪名高いと表示,準拠,維持,,create-stat-filters.ts:272-277,tests:test_infamous_directional_modifier_resolves_to_negative_trade_value
 S17,Mod,未鑑定非Synthesised Unique,rolled Mod条件を生成しない,同じ,準拠,維持,,create-stat-filters.ts:27-30,trade.py:_apply_dedicated_exact_rules
-S18,Mod,Corrupted implicit,生成元をCorruptedとして表示し検索可能,検索可能だが種別欄は通常の暗黙表示,部分準拠,生成元表示まで揃えるか判断,要判断,create-stat-filters.ts:239-247,parser.py:modifier generation・ui.py:_filter_kind_label
-S19,Mod,Eldritch・Synthesised implicit,生成元をEldritchまたはSynthesisedとして表示し検索可能,検索可能だが種別欄は通常の暗黙表示,部分準拠,生成元表示まで揃えるか判断,要判断,create-stat-filters.ts:239-247,parser.py:modifier generation・ui.py:_filter_kind_label
-S20,Mod,Influence・Delve・Veiled・Incursion生成元,Mod名から生成元を判定して表示,検索自体は可能。Influenceは専用表示だがDelve・Incursion等は通常のPrefix/Suffix表示,部分準拠,生成元表示まで揃えるか判断,要判断,create-stat-filters.ts:247-277,parser.py:modifier generation・ui.py:_filter_kind_label
+S18,Mod,Corrupted implicit,生成元をCorruptedとして表示し検索可能,検索可能で種別欄にコラプトと表示,準拠,維持,,create-stat-filters.ts:239-247,tests:test_filter_kind_column_marks_awakened_source_generations
+S19,Mod,Eldritch・Synthesised implicit,生成元をEldritchまたはSynthesisedとして表示し検索可能,種別欄にエルドリッチまたはシンセシスと表示,準拠,維持,,create-stat-filters.ts:239-247,tests:test_filter_kind_column_marks_awakened_source_generations
+S20,Mod,Influence・Delve・Veiled・Incursion生成元,Mod名から生成元を判定して表示,Influence各種・デルブ・インカージョン・ヴェールを種別欄へ表示,準拠,維持,,create-stat-filters.ts:247-277,tests:test_filter_kind_column_marks_awakened_source_generations
 S21,Mod,Fracturedの完成品表示,完成品ではExplicit相当へ寄せつつFractured候補を保持,同じ最終検索条件,準拠,維持,,create-stat-filters.ts:150-158・169-172,trade.py:_initial_stat_filters
 S22,Mod,Split Personality,通常Property・Pseudo・Memory Strands生成を省略,同じ専用処理,準拠,維持,,create-stat-filters.ts:160-167,trade.py:_initial_property_filters
 R01,Property,防具単一属性,AR/EV/ES/Wardの該当1種だけ初期ON,同じ単属性では該当防御値をON,準拠,維持,,item-property.ts:55-103,trade.py:_initial_property_filters
@@ -90,8 +90,8 @@ R07,Property,武器混合DPS,混合ならTotal DPSをON。支配成分67%以上�
 R08,Property,pDPS重要武器,Axe・Sword・Bow・WarstaffだけpDPSを優先,同じカテゴリ判断,準拠,維持,,item-property.ts:245-256,trade.py:_physical_dps_is_important
 R09,Property,APS・Crit,表示するが初期OFF,同じ,準拠,維持,,item-property.ts:200-219,trade.py:_initial_property_filters
 R10,Property,品質20換算,武器DPS・防御値を最低品質20へ換算,同じ,準拠,維持,,item-property.ts:55-219,trade.py:_defence_at_20_quality・physical_dps_at_20_quality
-R11,Pseudo,最大ライフ合計,明示最大ライフModがある時だけ生成し筋力換算分を加算。カテゴリ制限なし,筋力だけでも生成。武器は初期OFF・武器以外は初期ON,未対応,required明示ライフ条件を実装してAwakened準拠にする,要対応,pseudo/index.ts:117-125,trade.py:_pseudo_stat_filters
-R12,Pseudo,最大マナ合計,明示最大マナModがある時だけ生成し知性換算分を加算,知性だけでも生成,未対応,required明示マナ条件を実装してAwakened準拠にする,要対応,pseudo/index.ts:126-133,trade.py:_pseudo_stat_filters
+R11,Pseudo,最大ライフ合計,明示最大ライフModがある時だけ生成し筋力換算分を加算。カテゴリ制限なし,同じ。筋力だけでは生成せず明示ライフがあれば筋力分も加算して初期ON,準拠,維持,,pseudo/index.ts:117-125,tests:test_attributes_alone_do_not_create_life_or_mana_pseudos
+R12,Pseudo,最大マナ合計,明示最大マナModがある時だけ生成し知性換算分を加算,同じ。知性だけでは生成せず明示マナがあれば知性分も加算,準拠,維持,,pseudo/index.ts:126-133,tests:test_attributes_alone_do_not_create_life_or_mana_pseudos
 C01,Cluster,Added Passive Skills（概要）,サイズと現在値に応じ上限・完全一致・下限を切替,9だけ独自仕様。詳細はC01a～C01gへ分割,独自仕様,9パッシブは9以上,9パッシブは実用上8パッシブと同等ではないため8を検索結果へ混ぜない,create-stat-filters.ts:478-507,tests:test_nine_passive_large_cluster_searches_nine_or_more
 C01a,Cluster,Jewel Socket数,個別Mod行を隠して専用条件へ集約,同じ,準拠,維持,,create-stat-filters.ts:478-483,trade.py:cluster_jewel分岐
 C01b,Cluster,2パッシブ,最大2で初期ON,同じ,準拠,維持,,create-stat-filters.ts:486-492,tests:test_optimal_cluster_passive_count_does_not_include_next_integer

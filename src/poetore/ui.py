@@ -281,6 +281,18 @@ _FILTER_KIND_LABELS = {
     "foulborn": "ファウルボーン",
     "essence": "エッセンス",
     "infamous": "悪名高い",
+    "corrupted": "コラプト",
+    "eldritch": "エルドリッチ",
+    "synthesised": "シンセシス",
+    "delve": "デルブ",
+    "incursion": "インカージョン",
+    "veiled": "ヴェール",
+    "shaper": "シェイパー",
+    "elder": "エルダー",
+    "hunter": "ハンター",
+    "warlord": "ウォーロード",
+    "redeemer": "リディーマー",
+    "crusader": "クルセーダー",
     "pseudo": "疑似",
     "property": "アイテム特性",
     "base": "ベース",
@@ -304,7 +316,7 @@ _FILTER_KIND_LABELS = {
 def _filter_kind_label(stat_filter: TradeStatFilter) -> str:
     kind = (
         stat_filter.generation
-        if stat_filter.generation in {"foulborn", "essence", "infamous"}
+        if stat_filter.generation in _FILTER_KIND_LABELS
         else stat_filter.kind
     )
     return _FILTER_KIND_LABELS.get(kind, "特殊")

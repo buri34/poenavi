@@ -672,6 +672,21 @@ Synthesised Item
         self.assertEqual(essence[3], "essence")
         self.assertEqual(infamous[3], "infamous")
 
+    def test_parses_special_implicit_and_legacy_modifier_generations(self):
+        cases = (
+            ('{ Corrupted Implicit Modifier }', "corrupted"),
+            ('{ Eldritch Implicit Modifier }', "eldritch"),
+            ('{ Synthesised Implicit Modifier }', "synthesised"),
+            ('{ Prefix Modifier "Delve" }', "delve"),
+            ('{ Prefix Modifier "Incursion" }', "incursion"),
+        )
+
+        for header, expected in cases:
+            with self.subTest(header=header):
+                details = _modifier_header_details(header)
+                self.assertIsNotNone(details)
+                self.assertEqual(details[3], expected)
+
     def test_infamous_slower_rage_loss_resolves_signed_trade_stat(self):
         item = parse_item_text("""アイテムクラス: 兜
 レアリティ: レア
