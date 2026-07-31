@@ -515,6 +515,54 @@ def test_filter_kind_column_marks_essence_and_infamous_generations(qapp):
         window.close()
 
 
+def test_reported_infamous_helmet_resolves_and_is_labelled_in_real_panel(qapp):
+    text = """アイテムクラス: 兜
+レアリティ: レア
+恐ろしい堅塁
+征服者のヘルメット
+--------
+アーマー: 615 (augmented)
+--------
+装備要求:
+レベル: 78
+筋力: 194
+--------
+ソケット: W-W-W-W
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「悪名高い」 (ティア: 1) }
+憤怒の固有効果による喪失が20%遅くなる
+(この効果は直近にヒット受けていないか憤怒を獲得していない時の憤怒の減少にのみ影響を与える)
+{ プレフィックスモッド「雲丹の」 (ティア: 2) — ライフ, 防御, アーマー }
+アーマー +46(33-48)
+最大ライフ +28(24-28)
+{ プレフィックスモッド「頑健な」 (ティア: 5) — ライフ }
+最大ライフ +72(70-84)
+{ サフィックスモッド 「碩学の」 (ティア: 4) — 能力値 }
+知性 +39(38-42)
+--------
+メモ: ~b/o 1 chaos
+"""
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+
+        rows = [
+            window.mod_filter_tree.topLevelItem(index)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        infamous = next(
+            row for row in rows
+            if row.text(3) == "憤怒の固有効果による喪失が20%遅くなる"
+        )
+        assert infamous.text(1) == "悪名"
+        assert window.mod_warning.isHidden()
+    finally:
+        window.close()
+
+
 def test_foulborn_unique_uses_normal_name_and_enables_variable_mods_in_real_panel(qapp):
     window = PoetoreWindow()
     try:

@@ -313,6 +313,8 @@ class MetadataIndex:
             ("減少する", ("増加する",)),
             ("低下する", ("増加する",)),
             ("増加する", ("減少する", "低下する")),
+            ("遅くなる", ("速くなる",)),
+            ("速くなる", ("遅くなる",)),
         ):
             if source in normalized:
                 candidates.extend(normalized.replace(source, target) for target in targets)

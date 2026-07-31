@@ -472,6 +472,37 @@ def test_stat_filter_supports_maximum_exact_and_trade_inversion():
     ]
 
 
+def test_infamous_slower_rage_loss_uses_negative_faster_value():
+    item = parse_item_text("""アイテムクラス: 兜
+レアリティ: レア
+恐ろしい堅塁
+征服者のヘルメット
+--------
+アーマー: 615 (augmented)
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「悪名高い」 (ティア: 1) }
+憤怒の固有効果による喪失が20%遅くなる
+(この効果は直近にヒット受けていないか憤怒を獲得していない時の憤怒の減少にのみ影響を与える)
+""")
+    filters = resolve_trade_stat_filters(item)
+    infamous = next(
+        row for row in filters if row.stat_id == "explicit.stat_3645269560"
+    )
+    assert infamous.generation == "infamous"
+    assert infamous.inverted is True
+    assert unresolved_modifier_warnings(item, filters) == ()
+
+    query = build_search_query(
+        item, stat_filters=(replace(infamous, enabled=True),),
+    )["query"]
+    assert query["stats"][0]["filters"] == [{
+        "id": "explicit.stat_3645269560",
+        "value": {"max": -20.0},
+    }]
+
+
 def test_high_item_level_unfinished_rare_has_finished_and_base_presets():
     item = parse_item_text(ITEM.replace("Item Level: 67", "Item Level: 85"))
     assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BASE)

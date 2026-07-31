@@ -672,6 +672,41 @@ Synthesised Item
         self.assertEqual(essence[3], "essence")
         self.assertEqual(infamous[3], "infamous")
 
+    def test_infamous_slower_rage_loss_resolves_signed_trade_stat(self):
+        item = parse_item_text("""アイテムクラス: 兜
+レアリティ: レア
+恐ろしい堅塁
+征服者のヘルメット
+--------
+アーマー: 615 (augmented)
+--------
+装備要求:
+レベル: 78
+筋力: 194
+--------
+ソケット: W-W-W-W
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「悪名高い」 (ティア: 1) }
+憤怒の固有効果による喪失が20%遅くなる
+(この効果は直近にヒット受けていないか憤怒を獲得していない時の憤怒の減少にのみ影響を与える)
+{ プレフィックスモッド「雲丹の」 (ティア: 2) — ライフ, 防御, アーマー }
+アーマー +46(33-48)
+最大ライフ +28(24-28)
+{ プレフィックスモッド「頑健な」 (ティア: 5) — ライフ }
+最大ライフ +72(70-84)
+{ サフィックスモッド 「碩学の」 (ティア: 4) — 能力値 }
+知性 +39(38-42)
+--------
+メモ: ~b/o 1 chaos
+""")
+        infamous = item.modifiers[0]
+        self.assertEqual(infamous.stat_id, "explicit.stat_3645269560")
+        self.assertEqual(infamous.ref, "Inherent loss of Rage is #% faster")
+        self.assertEqual(infamous.generation, "infamous")
+        self.assertTrue(infamous.inverted)
+
     def test_ignores_flask_usage_help_text_in_japanese_and_english(self):
         japanese = parse_item_text("""アイテムクラス: ユーティリティフラスコ
 レアリティ: ノーマル
