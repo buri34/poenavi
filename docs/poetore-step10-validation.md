@@ -23,7 +23,7 @@
 
 - ユニークの可変Modが4個以上、完璧ロール、低いほど良い、exact、符号反転
 - 未鑑定ユニーク、Legacy discriminator、Foulborn
-- 6ソケット／リンク／白ソケット、品質、Fractured／Synthesisedのクラフトベース検索
+- 6ソケット／リンク、品質、Fractured／Synthesisedのクラフトベース検索
 - 単一Influence、複数行Mod、同一stat合算、ローカルModの二重条件除去
 
 ## 公式Trade API検証

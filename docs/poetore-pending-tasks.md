@@ -110,9 +110,8 @@ Valdo固有Modの解析・Trade stat解決は実装済み。
 - [ ] Cluster Jewelのpoe.ninja参考価格照合
   - 日英Enchantを公式ID等で高信頼度に対応付ける
   - パッシブ数・ilvl帯まで一致した場合だけ価格を表示する
-- [x] 白ソケット数の検索条件
-  - ぽえとれでは読み取った個数を最小値として保持する
-  - Awakened最新では白ソケット専用チップが削除されたため、ぽえとれ独自維持
+- [x] 白ソケット数の検索条件を削除
+  - Awakened `3c8e032` に準拠し、検索条件一覧への表示とTrade API条件送信を廃止
 - [ ] Gem Variantの読み取り専用チップ
   - Transfigured／Vaal／Awakened等、現在適用中のVariantを明示する
 - [x] 選択中Mod数／全Mod数の表示とMod欄の展開・折りたたみ

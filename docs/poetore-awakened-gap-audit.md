@@ -40,7 +40,7 @@ Awakenedとの差: リーグ内オンラインの細分化、販売者情報の�
 
 - 日本語ベースタイプ、レアリティ、ユニーク名
 - 完成品／クラフトベースのプリセット
-- item level、品質、ソケット、リンク、白ソケット
+- item level、品質、ソケット、リンク
 - 武器のtotal DPS／pDPS／eDPS／APS／crit（品質20%換算を含む）
 - 防具のArmour／Evasion／ES／Ward（ハイブリッドを含む）
 - 空きPrefix／Suffix
@@ -143,7 +143,7 @@ Cluster Jewelはitem level帯、最適Passive数、Jewel Socket Mod非表示に�
 - Essence／Infamous由来表示: 今回ぽえとれへ反映
 - Expedition Logbook解析修正、翻訳名を含むコピー解析、Trade option仕様変更、
   3.29ゲームデータ更新: 2026-07-28のメタデータ更新・日本語詳細コピー対応で反映済み
-- 白ソケット専用フィルター削除: ぽえとれは有用な検索条件として意図的に維持
+- 白ソケット専用フィルター削除: 今回ぽえとれへ反映
 - 詳細Modボタン操作不要化: ぽえとれは単一詳細コピーを直接取得するため対応済み
 - Captcha後のリーグ一覧取得: Awakened内蔵WebView固有。外部ブラウザ方式の
   ぽえとれには適用しない

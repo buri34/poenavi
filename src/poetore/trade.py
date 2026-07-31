@@ -438,7 +438,6 @@ def apply_search_range(
     discrete_socket_stats = {
         "property.sockets",
         "property.links",
-        "property.white_sockets",
     }
     for row in filters:
         if (
@@ -838,7 +837,7 @@ def _apply_dedicated_exact_rules(
         "property.armour", "property.evasion", "property.energy_shield",
         "property.ward", "property.block", "property.base_percentile",
         "property.memory_strands", "property.quality",
-        "property.sockets", "property.links", "property.white_sockets",
+        "property.sockets", "property.links",
     }
     special_kinds = {
         "map", "map pseudo", "map safety", "cluster", "heist", "expedition",
@@ -1047,14 +1046,13 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
     return tuple(filters) + special_properties + _item_detail_filters(item)
 
 
-def _socket_summary(item: ParsedItem) -> tuple[int, int, int]:
+def _socket_summary(item: ParsedItem) -> tuple[int, int]:
     text = item.properties.get("ソケット") or item.properties.get("Sockets") or ""
     groups = re.findall(r"[RGBW](?:-[RGBW])*", text.upper())
     sizes = [len(group.split("-")) for group in groups]
     total = sum(sizes)
     linked = max(sizes, default=0)
-    white = len(re.findall(r"W", text.upper()))
-    return total, linked, white
+    return total, linked
 
 
 def _item_detail_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
@@ -1064,7 +1062,7 @@ def _item_detail_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         filters.append(TradeStatFilter(
             "property.quality", "品質", quality, "property", quality > 20,
         ))
-    sockets, links, white = _socket_summary(item)
+    sockets, links = _socket_summary(item)
     if sockets:
         filters.append(TradeStatFilter(
             "property.sockets", "ソケット数", float(sockets), "socket", sockets >= 6,
@@ -1072,10 +1070,6 @@ def _item_detail_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
     if links > 1:
         filters.append(TradeStatFilter(
             "property.links", "最大リンク数", float(links), "socket", True,
-        ))
-    if white:
-        filters.append(TradeStatFilter(
-            "property.white_sockets", "白ソケット数", float(white), "socket", True,
         ))
     return tuple(filters)
 
@@ -2111,12 +2105,12 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
         "property.physical_dps": "物理ダメージ主体の武器性能",
         "property.armour": "防具の主要アーマー値", "property.evasion": "防具の主要回避力",
         "property.energy_shield": "防具の主要エナジーシールド値", "property.ward": "防具の主要Ward値",
-        "property.links": "リンク数は価格への影響が大きい", "property.white_sockets": "白ソケットを保持",
+        "property.links": "リンク数は価格への影響が大きい",
         "property.quality": "品質20%超を保持", "property.item_level": "クラフト価値のあるアイテムレベル",
         "property.base_percentile": "防具ベース固有値のロールを保持",
         "property.memory_strands": "高いメモリーの糸を保持",
     }
-    sockets, links, white = _socket_summary(item)
+    sockets, links = _socket_summary(item)
     property_values = {
         "property.total_dps": (physical_dps_at_20_quality(item) or 0) + (elemental_dps(item) or 0),
         "property.elemental_dps": elemental_dps(item),
@@ -2131,7 +2125,6 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
         "property.quality": _property_value(item, "品質", "Quality"),
         "property.sockets": float(sockets) if sockets else None,
         "property.links": float(links) if links else None,
-        "property.white_sockets": float(white) if white else None,
     }
     simple_sources = {stat_id: source_ref for source_ref, stat_id, _ in _SIMPLE_PSEUDOS}
     pseudo_refs: dict[str, set[str]] = {
@@ -3030,13 +3023,6 @@ def build_search_query(
     stat_groups: dict[tuple[str, str], dict] = {("and", ""): query["stats"][0]}
     for stat_filter in stat_filters:
         if not stat_filter.enabled:
-            continue
-        if stat_filter.stat_id == "property.white_sockets":
-            sockets = query["filters"].setdefault(
-                "socket_filters", {"filters": {}}
-            )["filters"].setdefault("sockets", {})
-            if stat_filter.min_value is not None:
-                sockets["w"] = int(stat_filter.min_value)
             continue
         if stat_filter.stat_id == "property.gem_imbued":
             query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]["gem_imbued"] = {

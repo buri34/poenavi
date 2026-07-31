@@ -26,7 +26,7 @@
 8. discriminator／Variant
 9. item level
 10. stock
-11. 白ソケット数
+11. ~~白ソケット数~~（Awakened準拠で検索条件から削除）
 12. Gem Level
 13. Quality
 14. Influence

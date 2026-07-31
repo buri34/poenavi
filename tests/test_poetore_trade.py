@@ -1221,7 +1221,7 @@ Sacred Chainmail
     assert details["property.quality"] == (21.0, True)
     assert details["property.sockets"] == (6.0, True)
     assert details["property.links"] == (6.0, True)
-    assert details["property.white_sockets"] == (3.0, True)
+    assert "property.white_sockets" not in details
     query = build_search_query(item, "Sacred Chainmail", filters)["query"]
     misc = query["filters"]["misc_filters"]["filters"]
     assert misc["quality"] == {"min": 21.0}
@@ -1229,7 +1229,7 @@ Sacred Chainmail
     assert "corrupted" not in misc
     assert "split" not in misc
     sockets = query["filters"]["socket_filters"]["filters"]
-    assert sockets == {"sockets": {"min": 6, "w": 3}, "links": {"min": 6}}
+    assert sockets == {"sockets": {"min": 6}, "links": {"min": 6}}
     assert query["stats"][0]["filters"] == []
 
     non_mirrored = build_search_query(
@@ -2611,7 +2611,7 @@ def test_search_range_does_not_reduce_discrete_socket_counts():
     }
     assert adjusted["property.sockets"].min_value == 6
     assert adjusted["property.links"].min_value == 5
-    assert adjusted["property.white_sockets"].min_value == 2
+    assert "property.white_sockets" not in adjusted
 
 
 def test_search_prices_keeps_item_and_seller_for_list_display():
