@@ -762,19 +762,25 @@ Item Level: 84
         assert available_trade_presets(item) == (PRESET_FINISHED,)
 
 
-def test_base_preset_keeps_implicit_enchant_and_memory_strands_like_awakened():
-    item = parse_item_text("""Item Class: Two Hand Swords
+@pytest.mark.parametrize(("strands", "expected_enabled"), (
+    (59, False),
+    (60, True),
+    (64, True),
+))
+def test_base_preset_uses_awakened_memory_strands_threshold(
+        strands, expected_enabled):
+    item = parse_item_text(f"""Item Class: Two Hand Swords
 Rarity: Rare
 Test Sword
 Reaver Sword
 --------
-Memory Strands: 70
+Memory Strands: {strands}
 --------
 Item Level: 85
 --------
 +25% to Global Critical Strike Multiplier (implicit)
 --------
-{ Enchant Modifier }
+{{ Enchant Modifier }}
 10% increased Attack Speed
 """)
     entries = (
@@ -786,7 +792,7 @@ Item Level: 85
     by_id = {row.stat_id: row for row in filters}
     assert by_id["implicit.crit"].enabled is True
     assert by_id["enchant.speed"].enabled is True
-    assert by_id["property.memory_strands"].enabled is True
+    assert by_id["property.memory_strands"].enabled is expected_enabled
 
 
 def test_finished_preset_does_not_force_special_base_state():

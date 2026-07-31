@@ -1038,7 +1038,11 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
     special_properties = tuple(
         replace(
             row,
-            enabled=(row.stat_id in {"property.base_percentile", "property.memory_strands"}),
+            enabled=(
+                True if row.stat_id == "property.base_percentile"
+                else row.enabled if row.stat_id == "property.memory_strands"
+                else False
+            ),
         )
         for row in _initial_property_filters(item, trade_base_type)
         if row.stat_id in base_property_ids
