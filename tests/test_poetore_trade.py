@@ -825,7 +825,7 @@ Item Level: 85
     assert exact_query["filters"]["type_filters"]["filters"]["rarity"] == {"option": "magic"}
 
 
-def test_dedicated_exact_magic_item_starts_without_rarity_filter():
+def test_dedicated_exact_magic_flask_uses_nonunique_rarity_like_awakened():
     item = ParsedItem(
         "Utility Flasks", "Magic", "Test Flask", "Granite Flask", "flask",
         item_level=85,
@@ -836,9 +836,26 @@ def test_dedicated_exact_magic_item_starts_without_rarity_filter():
         item, "Granite Flask", magic_exact=True,
     )["query"]
 
-    assert "type_filters" not in default_query["filters"]
+    assert default_query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "nonunique",
+    }
     assert magic_query["filters"]["type_filters"]["filters"]["rarity"] == {
-        "option": "magic",
+        "option": "nonunique",
+    }
+
+
+def test_unique_flask_still_uses_unique_rarity():
+    item = ParsedItem(
+        "Utility Flasks", "Unique", "Kiara's Determination", "Silver Flask", "flask",
+        item_level=85,
+    )
+
+    query = build_search_query(
+        item, "Silver Flask", trade_name="Kiara's Determination",
+    )["query"]
+
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "unique",
     }
 
 
