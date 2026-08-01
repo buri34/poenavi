@@ -4560,6 +4560,25 @@ def test_flask_hybrid_cluster_and_special_area_rules():
     hybrid = next(row for row in filters if row.kind == "flask hybrid")
     assert hybrid.group_type == "not" and hybrid.enabled
 
+    reduced_hybrid = parse_item_text("""アイテムクラス: ユーティリティフラスコ
+レアリティ: マジック
+割り当てられた ダイヤモンドフラスコ
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「割り当てられた」 (ティア: 2) }
+チャージ回復量が60(55-60)%増加する
+効果が25%減少する
+""")
+    reduced_filters = resolve_trade_stat_filters(reduced_hybrid)
+    reduced_effect = next(
+        row for row in reduced_filters
+        if row.stat_id == "explicit.stat_2448920197"
+    )
+    assert reduced_effect.inverted and reduced_effect.enabled
+    assert not any(row.kind == "flask hybrid" for row in reduced_filters)
+    assert unresolved_modifier_warnings(reduced_hybrid, reduced_filters) == ()
+
     cluster = parse_item_text("""Item Class: Cluster Jewels
 Rarity: Rare
 Test

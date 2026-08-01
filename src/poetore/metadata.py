@@ -298,7 +298,8 @@ class MetadataIndex:
         return self.match_with_option(text, kind)
 
     def match_directional_inverse(
-        self, text: str, kind: str,
+        self, text: str, kind: str, item_category: str = "",
+        generation: str | None = None,
     ) -> tuple[ModMetadata | None, OptionValue | None, float]:
         """方向が逆の日本語表記を、同じ文型の公式statへ安全に照合する。
 
@@ -321,6 +322,13 @@ class MetadataIndex:
                 candidates.extend(normalized.replace(source, target) for target in targets)
         resolved = []
         for candidate in candidates:
+            if item_category:
+                record, option, confidence = self.match_for_item_category(
+                    candidate, kind, item_category, generation,
+                )
+                if record is not None and confidence == 1.0:
+                    resolved.append((record, option))
+                continue
             key = ("explicit" if kind in {"prefix", "suffix"} else kind, candidate)
             option_matches = self._by_option.get(key, ())
             matches = self._by_match.get(key, ())

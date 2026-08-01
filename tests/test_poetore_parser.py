@@ -23,6 +23,33 @@ RARE_JP = """アイテムクラス: 指輪
 
 
 class PoetoreParserTest(unittest.TestCase):
+    def test_flask_hybrid_reduced_effect_uses_flask_directional_stat(self):
+        item = parse_item_text("""アイテムクラス: ユーティリティフラスコ
+レアリティ: マジック
+割り当てられた クリスタルの ダイヤモンドフラスコ
+--------
+6秒間持続
+使用時に40中20チャージを消費
+現在0チャージ
+グローバルクリティカル率が100%増加する
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「割り当てられた」 (ティア: 2) }
+チャージ回復量が60(55-60)%増加する
+効果が25%減少する
+{ サフィックスモッド 「クリスタルの」 (ティア: 3) — 元素, 耐性 }
+効果中は13(12-14)%の元素耐性が追加される
+""")
+
+        reduced_effect = next(
+            modifier for modifier in item.modifiers
+            if modifier.text == "効果が25%減少する"
+        )
+        self.assertEqual(reduced_effect.stat_id, "explicit.stat_2448920197")
+        self.assertTrue(reduced_effect.inverted)
+        self.assertEqual(reduced_effect.better, 1)
+
     def test_itemised_spectre_corpse_is_detected_and_help_text_is_ignored(self):
         item = parse_item_text("""アイテムクラス: 死体
 レアリティ: カレンシー

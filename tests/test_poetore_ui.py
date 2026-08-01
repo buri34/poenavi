@@ -2738,6 +2738,39 @@ def test_reduced_curse_effect_flask_shows_awakened_positive_minimum(qapp):
         window.close()
 
 
+def test_reduced_effect_flask_hybrid_is_resolved_without_exclusion_warning(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: ユーティリティフラスコ
+レアリティ: マジック
+割り当てられた クリスタルの ダイヤモンドフラスコ
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「割り当てられた」 (ティア: 2) }
+チャージ回復量が60(55-60)%増加する
+効果が25%減少する
+{ サフィックスモッド 「クリスタルの」 (ティア: 3) — 元素, 耐性 }
+効果中は13(12-14)%の元素耐性が追加される
+""")
+        window.parse_current_text()
+
+        rows = [
+            window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole + 4)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        effect = next(
+            row for row in rows if row.stat_id == "explicit.stat_2448920197"
+        )
+        assert effect.text == "効果が25%減少する"
+        assert effect.inverted is True
+        assert effect.enabled is True
+        assert not any(row.kind == "flask hybrid" for row in rows)
+        assert window.mod_warning.isHidden()
+    finally:
+        window.close()
+
+
 def test_special_state_chips_for_unidentified_veiled_and_foil(qapp):
     window = PoetoreWindow()
     try:

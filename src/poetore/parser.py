@@ -737,7 +737,10 @@ def parse_item_text(text: str) -> ParsedItem:
                 direction_alias_key = normalize_stat_text(metadata_text)
                 metadata, option, confidence = (
                     default_metadata_index().match_directional_inverse(
-                        metadata_text, kind,
+                        metadata_text, kind, item_category,
+                        current_header_generation if from_header else (
+                            "foulborn" if is_mutated else kind
+                        ),
                     )
                 )
                 direction_inverted = metadata is not None

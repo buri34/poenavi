@@ -356,6 +356,28 @@ def test_metadata_index_rejects_ambiguous_or_multi_value_directional_inverse():
     )[0] is None
 
 
+def test_directional_inverse_uses_item_category_to_select_flask_stat():
+    index = MetadataIndex((
+        ModMetadata(
+            "#% increased effect", "explicit.flask", "explicit",
+            ("効果が#%増加する",), category_select="",
+        ),
+        ModMetadata(
+            "#% increased effect", "explicit.tincture", "explicit",
+            ("効果が#%増加する",), category_select="Tincture",
+        ),
+    ))
+
+    record, option, confidence = index.match_directional_inverse(
+        "効果が25%減少する", "prefix", "flask",
+    )
+
+    assert record is not None
+    assert record.stat_id == "explicit.flask"
+    assert option is None
+    assert confidence == 1.0
+
+
 def test_builder_and_index_match_option_by_shared_trade_option_id():
     awakened = [json.dumps({
         "ref": "Allocates #", "better": 0,
