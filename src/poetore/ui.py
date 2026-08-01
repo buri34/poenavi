@@ -32,6 +32,7 @@ from .trade import (
     PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
     available_pc_leagues, available_trade_presets, default_pc_league, default_trade_currency,
     apply_search_range, english_trade_identity, gem_metadata,
+    elemental_dps, physical_dps_at_20_quality,
     japanese_trade_item_label,
     preset_item_level_filter, resolve_trade_stat_filters, search_prices, unique_candidate_details,
     unique_variants, unresolved_modifier_warnings, uses_dedicated_exact_preset,
@@ -1238,7 +1239,16 @@ class PoetoreWindow(QWidget):
 
         self.weapon_property_label = QLabel("武器性能・検索Mod")
         self.weapon_property_label.setObjectName("sectionTitle")
-        panel_layout.addWidget(self.weapon_property_label)
+        self.weapon_dps_label = QLabel()
+        self.weapon_dps_label.setObjectName("weaponDpsSummary")
+        self.weapon_dps_label.hide()
+        weapon_property_header = QHBoxLayout()
+        weapon_property_header.setContentsMargins(0, 0, 0, 0)
+        weapon_property_header.setSpacing(8)
+        weapon_property_header.addWidget(self.weapon_property_label)
+        weapon_property_header.addWidget(self.weapon_dps_label)
+        weapon_property_header.addStretch(1)
+        panel_layout.addLayout(weapon_property_header)
         self.clear_mod_conditions_button = QPushButton("一覧のチェックを全解除")
         self.clear_mod_conditions_button.setObjectName("clearModConditionsButton")
         self.clear_mod_conditions_button.setToolTip(
@@ -1518,6 +1528,10 @@ class PoetoreWindow(QWidget):
                 color: #db86ef;
                 font-weight: 700;
                 border-bottom: 1px solid rgba(219, 134, 239, 70);
+                padding: 4px 2px;
+            }
+            QLabel#weaponDpsSummary {
+                color: #f2e7f5;
                 padding: 4px 2px;
             }
             QLabel#priceStatus { color: #b9a9be; padding: 1px 2px; }
@@ -1876,6 +1890,29 @@ class PoetoreWindow(QWidget):
         self.weapon_property_label.setText(
             "武器性能・検索Mod" if item.category == "weapon" else "検索条件一覧"
         )
+        self._update_weapon_dps_summary(item)
+
+    def _update_weapon_dps_summary(self, item):
+        if item.category != "weapon":
+            self.weapon_dps_label.clear()
+            self.weapon_dps_label.hide()
+            return
+        pdps = physical_dps_at_20_quality(item) or 0.0
+        edps = elemental_dps(item) or 0.0
+        if pdps and edps:
+            self.weapon_dps_label.setText(
+                f"合計DPS：{pdps + edps:.1f}（pDPS {pdps:.1f} / eDPS {edps:.1f}、"
+                "pDPSは品質20%換算）"
+            )
+        elif pdps:
+            self.weapon_dps_label.setText(f"pDPS：{pdps:.1f}（品質20%換算）")
+        elif edps:
+            self.weapon_dps_label.setText(f"eDPS：{edps:.1f}")
+        else:
+            self.weapon_dps_label.clear()
+            self.weapon_dps_label.hide()
+            return
+        self.weapon_dps_label.show()
 
     def _display_base_type(self, item) -> str:
         """日本語Magicの1行名から表示用ベース名を取り出す。

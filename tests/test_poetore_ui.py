@@ -859,6 +859,8 @@ Item Level: 83
         assert window.base_scope_toggle.itemText(0) == "Spine Bow"
         assert window.base_scope_toggle.itemText(1) == "すべての弓"
         assert window.weapon_property_label.text() == "武器性能・検索Mod"
+        assert window.weapon_dps_label.text() == "pDPS：137.7（品質20%換算）"
+        assert not window.weapon_dps_label.isHidden()
         filter_ids = {
             window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole)
             for index in range(window.mod_filter_tree.topLevelItemCount())
@@ -866,6 +868,57 @@ Item Level: 83
         assert "property.physical_dps" in filter_ids
         assert "property.aps" in filter_ids
         assert "property.crit" in filter_ids
+    finally:
+        window.close()
+
+
+def test_weapon_header_shows_total_pdps_and_edps_but_hides_summary_for_non_weapon(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 両手剣
+レアリティ: レア
+混沌の刃
+略奪者の剣
+--------
+品質: +20% (augmented)
+物理ダメージ: 100-200 (augmented)
+元素ダメージ: 20-40 (augmented)
+秒間アタック回数: 1.50 (augmented)
+--------
+アイテムレベル: 84
+""")
+        window.parse_current_text()
+        assert window.weapon_dps_label.text() == (
+            "合計DPS：270.0（pDPS 225.0 / eDPS 45.0、pDPSは品質20%換算）"
+        )
+        assert not window.weapon_dps_label.isHidden()
+
+        elemental = parse_item_text("""Item Class: Wands
+Rarity: Rare
+Elemental Wand
+Imbued Wand
+--------
+Elemental Damage: 20-40, 30-60, 10-20
+Attacks per Second: 1.50
+--------
+Item Level: 84
+""")
+        window._update_item_header(elemental)
+        assert window.weapon_dps_label.text() == "eDPS：135.0"
+        assert not window.weapon_dps_label.isHidden()
+
+        armour = parse_item_text("""Item Class: Body Armours
+Rarity: Rare
+Test Armour
+Sacred Chainmail
+--------
+Armour: 1000
+--------
+Item Level: 84
+""")
+        window._update_item_header(armour)
+        assert window.weapon_dps_label.text() == ""
+        assert window.weapon_dps_label.isHidden()
     finally:
         window.close()
 
