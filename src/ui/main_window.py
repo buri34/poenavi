@@ -3016,6 +3016,9 @@ class MainWindow(QMainWindow):
                         self.hotkey_signal.emit("cheat_sheets_escape")
 
                     combo = "+".join([modifier for modifier in ("ctrl", "alt", "shift") if modifier in pressed_modifiers] + [key_name])
+                    if combo == "alt+w" and combo not in triggered_combos:
+                        triggered_combos.add(combo)
+                        self.hotkey_signal.emit("poetore_close")
                     if combo in self.hotkey_map:
                         if (
                             "alt" in pressed_modifiers
@@ -3089,9 +3092,16 @@ class MainWindow(QMainWindow):
         elif command == "cheat_sheets_toggle":
             self.toggle_cheat_sheets()
         elif command == "cheat_sheets_escape":
+            poetore = getattr(self, "_poetore_window", None)
+            if poetore is not None and poetore.isVisible():
+                poetore.close()
             overlay = getattr(self, "_cheat_sheet_overlay", None)
             if overlay is not None and overlay.isVisible():
                 overlay.hide_and_save()
+        elif command == "poetore_close":
+            poetore = getattr(self, "_poetore_window", None)
+            if poetore is not None and poetore.isVisible():
+                poetore.close()
 
     def _start_gem_shop_search_hold(self):
         """長押し判定を開始する。キーリピートではタイマーを延長しない。"""

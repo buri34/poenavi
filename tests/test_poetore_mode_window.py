@@ -1,8 +1,10 @@
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton
 
+from src.ui.main_window import MainWindow
 from src.ui.poetore_mode_window import PoetoreModeWindow
 
 
@@ -86,6 +88,46 @@ def test_poetore_mode_monastery_hotkey_sends_chat_command():
     send_command.assert_called_once_with("/monastery")
     window.close()
     app.processEvents()
+
+
+def test_poetore_mode_escape_closes_passive_poetore_window():
+    poetore = MagicMock()
+    poetore.isVisible.return_value = True
+    window = SimpleNamespace(_poetore_window=poetore, _cheat_sheet_overlay=None)
+
+    PoetoreModeWindow.handle_hotkey(window, "cheat_sheets_escape")
+
+    poetore.close.assert_called_once_with()
+
+
+def test_poetore_mode_alt_w_closes_passive_poetore_window():
+    poetore = MagicMock()
+    poetore.isVisible.return_value = True
+    window = SimpleNamespace(_poetore_window=poetore)
+
+    PoetoreModeWindow.handle_hotkey(window, "poetore_close")
+
+    poetore.close.assert_called_once_with()
+
+
+def test_main_mode_escape_closes_passive_poetore_window():
+    poetore = MagicMock()
+    poetore.isVisible.return_value = True
+    window = SimpleNamespace(_poetore_window=poetore, _cheat_sheet_overlay=None)
+
+    MainWindow.handle_hotkey(window, "cheat_sheets_escape")
+
+    poetore.close.assert_called_once_with()
+
+
+def test_main_mode_alt_w_closes_passive_poetore_window():
+    poetore = MagicMock()
+    poetore.isVisible.return_value = True
+    window = SimpleNamespace(_poetore_window=poetore)
+
+    MainWindow.handle_hotkey(window, "poetore_close")
+
+    poetore.close.assert_called_once_with()
 
 
 def test_poetore_mode_capture_hint_uses_configured_hotkey():
