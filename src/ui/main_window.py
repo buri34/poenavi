@@ -132,11 +132,17 @@ class MainWindow(QMainWindow):
             return
         if not getattr(self, "_detached_state_save_scheduled", False):
             self._detached_state_save_scheduled = True
-            QTimer.singleShot(250, self._flush_detached_panel_state)
+            # Debounce開始時の保存処理を保持する。テスト中の一時差し替えや、
+            # 遅延実行までの実行環境変化に巻き込まれないようにする。
+            save_config = ConfigManager.save_config
+            QTimer.singleShot(
+                250,
+                lambda: self._flush_detached_panel_state(save_config),
+            )
 
-    def _flush_detached_panel_state(self):
+    def _flush_detached_panel_state(self, save_config=None):
         self._detached_state_save_scheduled = False
-        ConfigManager.save_config(self.config)
+        (save_config or ConfigManager.save_config)(self.config)
 
     def _set_panel_minimized_state(self, panel_id: str, minimized: bool, persist: bool = True):
         self._detached_panel_config(panel_id)["minimized"] = minimized

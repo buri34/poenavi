@@ -3,6 +3,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "minimal")
 
 from PySide6.QtCore import QPoint, QRect, Qt
+from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QPushButton, QSizePolicy, QSplitter, QVBoxLayout, QWidget
 
 from src.ui.detached_panel import DetachedPanelWindow
@@ -73,6 +74,21 @@ def test_detached_panel_persists_geometry_when_moved_or_resized(monkeypatch):
         "width": 420,
         "height": 280,
     }
+
+
+def test_debounced_detached_panel_save_keeps_the_scheduled_callback(monkeypatch):
+    window, _content, _layout = _window()
+    saved = []
+    monkeypatch.setattr(ConfigManager, "save_config", lambda config: saved.append(config))
+
+    window._save_detached_panel_state("timer", persist=False)
+    monkeypatch.setattr(
+        ConfigManager, "save_config",
+        lambda _config: (_ for _ in ()).throw(AssertionError("late lookup")),
+    )
+    QTest.qWait(300)
+
+    assert saved == [window.config]
 
 
 def test_restore_detached_panels_uses_saved_geometry(monkeypatch):
