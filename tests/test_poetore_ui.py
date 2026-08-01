@@ -2054,8 +2054,7 @@ Contract: Underbelly
             window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole + 4)
             for index in range(window.mod_filter_tree.topLevelItemCount())
         ]
-        assert rows
-        assert all(row.kind == "craft" for row in rows)
+        assert rows == []
     finally:
         window.close()
 

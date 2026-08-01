@@ -87,7 +87,7 @@
     ],
     "text": "アイテムクラス: 指輪\nレアリティ: レア\n割れた環\nルビーの指輪\n--------\nアイテムレベル: 86\n--------\n{ フラクチャー サフィックスモッド「火炎の」 (ティア: 1) }\n火耐性 +40(36-41)%\n{ マスタークラフト プレフィックスモッド「製作の」 }\n最大ライフ +55\n",
     "expected_enabled": {"pseudo.pseudo_total_life": 49.0, "pseudo.pseudo_total_elemental_resistance": 36.0},
-    "expected_visible": ["pseudo.pseudo_number_of_empty_prefix_mods", "pseudo.pseudo_number_of_empty_suffix_mods"],
+    "expected_visible": [],
     "expected_misc": {"corrupted": "false"}
   },
   {

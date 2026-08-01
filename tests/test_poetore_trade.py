@@ -2560,7 +2560,7 @@ def test_dawnbreaker_shield_block_mod_uses_shield_specific_trade_stat():
     assert unresolved_modifier_warnings(item, filters) == ()
 
 
-def test_crafted_affix_header_is_counted_for_exact_empty_slots():
+def test_sparse_item_with_crafted_affix_is_not_a_one_slot_finished_item():
     item = parse_item_text("""アイテムクラス: 指輪
 レアリティ: レア
 試作品
@@ -2574,10 +2574,49 @@ def test_crafted_affix_header_is_counted_for_exact_empty_slots():
 火耐性 +20%
 """)
     empty = {row.stat_id: row.text for row in resolve_trade_stat_filters(item) if row.kind == "craft"}
+    assert empty == {}
+
+
+def test_six_mod_item_with_crafted_suffix_offers_empty_suffix_like_awakened():
+    item = parse_item_text("""アイテムクラス: 指輪
+レアリティ: レア
+試作品
+ルビーの指輪
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「健康な」 (ティア: 1) }
+最大ライフ +100(90-100)
+{ プレフィックスモッド「強固な」 (ティア: 1) }
+最大エナジーシールド +50(40-50)
+{ プレフィックスモッド「頑丈な」 (ティア: 1) }
+アーマー +100(90-100)
+{ サフィックスモッド 「炎の」 (ティア: 1) }
+火耐性 +40(36-40)%
+{ サフィックスモッド 「氷の」 (ティア: 1) }
+冷気耐性 +40(36-40)%
+{ マスタークラフト サフィックスモッド「製作の」 }
+雷耐性 +20%
+""")
+    empty = {row.stat_id: row.text for row in resolve_trade_stat_filters(item) if row.kind == "craft"}
     assert empty == {
-        "pseudo.pseudo_number_of_empty_prefix_mods": "空きPrefix枠（現在2枠）",
-        "pseudo.pseudo_number_of_empty_suffix_mods": "空きSuffix枠（現在2枠）",
+        "pseudo.pseudo_number_of_empty_suffix_mods": "空きSuffix枠（現在1枠）",
     }
+
+
+def test_four_mod_item_without_craft_does_not_offer_empty_affix_like_awakened():
+    modifiers = tuple(
+        ItemModifier(f"Prefix {index}", kind="prefix", affix="prefix", group=index)
+        for index in range(2)
+    ) + tuple(
+        ItemModifier(f"Suffix {index}", kind="suffix", affix="suffix", group=100 + index)
+        for index in range(2)
+    )
+    item = ParsedItem(
+        item_class="Rings", rarity="Rare", name="Test", base_type="Ruby Ring",
+        category="accessory", modifiers=modifiers,
+    )
+    assert not any(row.kind == "craft" for row in resolve_trade_stat_filters(item))
 
 
 def test_rare_jewel_uses_two_prefix_and_two_suffix_limits():
@@ -2604,21 +2643,21 @@ Crimson Jewel
 
 
 @pytest.mark.parametrize(
-    ("category", "base_type", "prefixes", "suffixes", "expected"),
+    ("category", "base_type", "prefixes", "suffixes", "expected_stat"),
     (
-        ("accessory", "Cogwork Ring", 1, 2, (1, 2)),
-        ("accessory", "Geodesic Ring", 2, 1, (2, 1)),
-        ("accessory", "Manifold Ring", 2, 1, (2, 0)),
-        ("accessory", "Helical Ring", 1, 2, (0, 2)),
-        ("accessory", "Simplex Amulet", 1, 1, (0, 1)),
-        ("accessory", "Focused Amulet", 1, 1, (1, 0)),
-        ("abyss_jewel", "Ghastly Eye Jewel", 1, 1, (1, 1)),
-        ("cluster_jewel", "Large Cluster Jewel", 1, 1, (1, 1)),
-        ("map", "Strand Map", 1, 1, (2, 2)),
+        ("accessory", "Cogwork Ring", 1, 4, "pseudo.pseudo_number_of_empty_prefix_mods"),
+        ("accessory", "Geodesic Ring", 4, 1, "pseudo.pseudo_number_of_empty_suffix_mods"),
+        ("accessory", "Manifold Ring", 3, 1, "pseudo.pseudo_number_of_empty_prefix_mods"),
+        ("accessory", "Helical Ring", 1, 3, "pseudo.pseudo_number_of_empty_suffix_mods"),
+        ("accessory", "Simplex Amulet", 1, 1, "pseudo.pseudo_number_of_empty_suffix_mods"),
+        ("accessory", "Focused Amulet", 1, 1, "pseudo.pseudo_number_of_empty_prefix_mods"),
+        ("abyss_jewel", "Ghastly Eye Jewel", 2, 1, "pseudo.pseudo_number_of_empty_suffix_mods"),
+        ("cluster_jewel", "Large Cluster Jewel", 1, 2, "pseudo.pseudo_number_of_empty_prefix_mods"),
+        ("map", "Strand Map", 3, 2, "pseudo.pseudo_number_of_empty_suffix_mods"),
     ),
 )
 def test_empty_affixes_use_category_and_special_base_limits(
-    category, base_type, prefixes, suffixes, expected,
+    category, base_type, prefixes, suffixes, expected_stat,
 ):
     modifiers = tuple(
         ItemModifier(f"Prefix {index}", kind="prefix", affix="prefix", group=index)
@@ -2636,12 +2675,7 @@ def test_empty_affixes_use_category_and_special_base_limits(
         for row in resolve_trade_stat_filters(item, trade_base_type=base_type)
         if row.kind == "craft"
     }
-    expected_filters = {}
-    if expected[0]:
-        expected_filters["pseudo.pseudo_number_of_empty_prefix_mods"] = expected[0]
-    if expected[1]:
-        expected_filters["pseudo.pseudo_number_of_empty_suffix_mods"] = expected[1]
-    assert empty == expected_filters
+    assert empty == {expected_stat: 1}
 
 
 @pytest.mark.parametrize("flag", ("corrupted", "mirrored"))

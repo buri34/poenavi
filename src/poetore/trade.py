@@ -1406,20 +1406,36 @@ def _empty_affix_filters(
     limits = _affix_limits(item, trade_base_type)
     if limits is None:
         return ()
+    # Awakened's "1 Empty or Crafted Modifier" treats a crafted affix as a
+    # slot that can be freed at the crafting bench.  Count only natural affix
+    # groups as occupied; the remainder therefore includes both genuinely
+    # empty slots and removable crafted slots.
     groups: dict[str, set[object]] = {"prefix": set(), "suffix": set()}
+    known_affix = False
     for index, modifier in enumerate(item.modifiers):
         if modifier.affix not in groups:
             continue
+        known_affix = True
+        if modifier.kind == "crafted":
+            continue
         groups[modifier.affix].add(modifier.group if modifier.group is not None else ("line", index))
-    if not groups["prefix"] and not groups["suffix"]:
+    if not known_affix:
         # 通常コピーなどでPrefix/Suffix情報がない場合は推測しない。
         return ()
+    available = {
+        "prefix": max(0, limits[0] - len(groups["prefix"])),
+        "suffix": max(0, limits[1] - len(groups["suffix"])),
+    }
+    # Awakened intentionally offers this conservative preset only when the
+    # finished item has exactly one customizable affix slot in total.
+    if sum(available.values()) != 1:
+        return ()
     filters: list[TradeStatFilter] = []
-    for affix, maximum, stat_id, label in (
-        ("prefix", limits[0], "pseudo.pseudo_number_of_empty_prefix_mods", "空きPrefix枠"),
-        ("suffix", limits[1], "pseudo.pseudo_number_of_empty_suffix_mods", "空きSuffix枠"),
+    for affix, stat_id, label in (
+        ("prefix", "pseudo.pseudo_number_of_empty_prefix_mods", "空きPrefix枠"),
+        ("suffix", "pseudo.pseudo_number_of_empty_suffix_mods", "空きSuffix枠"),
     ):
-        empty = max(0, maximum - len(groups[affix]))
+        empty = available[affix]
         if empty:
             filters.append(TradeStatFilter(
                 stat_id, f"{label}（現在{empty}枠）", 1.0, "craft", False,

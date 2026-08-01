@@ -105,7 +105,7 @@ C01i,Cluster,ノータブルMod,完成品検索で表示・初期OFF、ベース
 C02,Flask,Enchant,Enkindling使用時以外のHarvest/Instilling Enchantを隠してOFF,Enkindling使用時だけEnchantを表示・ON,準拠,維持,,create-stat-filters.ts:511-518,tests:test_dedicated_exact_magic_flask_hides_instilling_enchantment・test_dedicated_exact_magic_flask_keeps_enkindling_enchantment
 C03,Flask,Charge Recovery hybrid,Charge RecoveryありEffectなしならEffect条件をNOT追加,同じ,準拠,維持,,pseudo/flasks.ts:13-27,tests:test_flask_hybrid_cluster_and_special_area_rules
 C04,Anointment,Amulet・Ring,TalismanはON。非Corrupted/非Mirroredで最高Oilが金銀以外なら隠してOFF,同じ価値Oil規則,準拠,維持,,pseudo/anointments.ts:45-57,tests:test_modifiable_amulet_shows_anointments_using_valuable_oils
-C05,空きAffix,Rare,5Mod無Craftまたは6Mod有Craftで空きPrefix/Suffixを候補化,カテゴリ別上限も考慮した独自実装,独自仕様,ぽえとれ側が精密なので維持候補,維持,create-stat-filters.ts:524-560,tests:test_empty_affixes_use_category_and_special_base_limits
+C05,空きAffix,Rare,5Mod無Craftまたは6Mod有Craftで空きPrefix/Suffixを候補化,同じ1 Empty or Crafted Modifier条件で候補化しカテゴリ別上限も考慮,準拠,Awakened条件とベース固有上限を両立,反映,create-stat-filters.ts:524-560,tests:test_six_mod_item_with_crafted_suffix_offers_empty_suffix_like_awakened
 M01,Map,Map properties,Corrupted・More Drops・NightmareだけQuantity/Pack等を価値条件化,同じ対象だけQuantity/Rarity/Packを価値条件化,準拠,維持,,pseudo/maps.ts:20-93,tests:test_corrupted_map_value_properties_start_on
 M02,Map,More Drops,More Maps/Scarabs/Currency/Cardsを初期ON,More Drops候補を初期ON,準拠,維持,,pseudo/maps.ts:56-82,tests:test_more_drops_map_enables_value_pseudos_but_not_rarity
 M03,Map,8 Mod Map,Explicit Modが8個でMore Dropsなしなら# Modifiers=8をON,同条件でMod数=8をON,準拠,維持,,pseudo/maps.ts:85-92,tests:test_corrupted_eight_mod_map_enables_modifier_count_pseudo
