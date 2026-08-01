@@ -1166,8 +1166,14 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         for stat_id, label, labels in (
             ("pseudo.pseudo_map_more_map_drops", "マップ量", ("追加マップ", "マップ量が上昇", "More Maps")),
             ("pseudo.pseudo_map_more_scarab_drops", "スカラベ量", ("追加スカラベ", "スカラベ量が上昇", "More Scarabs")),
-            ("pseudo.pseudo_map_more_currency_drops", "追加カレンシー", ("追加カレンシー", "More Currency")),
-            ("pseudo.pseudo_map_more_card_drops", "追加占いカード", ("追加占いカード", "More Divination Cards")),
+            (
+                "pseudo.pseudo_map_more_currency_drops", "カレンシー量",
+                ("追加カレンシー", "カレンシー量が上昇", "More Currency"),
+            ),
+            (
+                "pseudo.pseudo_map_more_card_drops", "占いカード量",
+                ("追加占いカード", "占いカード増加", "More Divination Cards"),
+            ),
         ):
             value = _property_value(item, *labels)
             if value is not None:

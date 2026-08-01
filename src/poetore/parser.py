@@ -41,7 +41,8 @@ _PROPERTY_LABELS = {
     "アウレウス", "Aureus", "マップ完了報酬", "Map Completion Reward",
     "追加マップ", "マップ量が上昇", "More Maps",
     "追加スカラベ", "スカラベ量が上昇", "More Scarabs",
-    "追加カレンシー", "More Currency", "追加占いカード", "More Divination Cards",
+    "追加カレンシー", "カレンシー量が上昇", "More Currency",
+    "追加占いカード", "占いカード増加", "More Divination Cards",
 }
 _FLAG_LINES = {
     "未鑑定": "unidentified", "Unidentified": "unidentified",

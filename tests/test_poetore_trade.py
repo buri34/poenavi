@@ -4765,6 +4765,50 @@ def test_japanese_nightmare_map_new_more_drop_labels_and_mods_resolve():
     assert api_rows["explicit.stat_943960754"] == {"max": -30.0}
 
 
+def test_japanese_map_new_currency_and_divination_card_drop_labels_resolve():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+苦悩する中核
+マップ (ティア 16)
+--------
+アイテム数量: +80% (augmented)
+アイテムレアリティ: +41% (augmented)
+モンスターパックサイズ: +26% (augmented)
+カレンシー量が上昇: +139% (augmented)
+占いカード増加: +50% (augmented)
+品質 (占いカード): +20% (augmented)
+--------
+アイテムレベル: 85
+--------
+モンスターレベル：83
+--------
+{ 暗黙モッド }
+エリアはオリジネイターのメモリーインフルエンスを受けている
+--------
+コラプト状態
+""")
+    rows = resolve_trade_stat_filters(item)
+    by_id = {row.stat_id: row for row in rows}
+
+    currency = by_id["pseudo.pseudo_map_more_currency_drops"]
+    assert currency.text == "カレンシー量"
+    assert currency.min_value == 139
+    assert currency.enabled is True
+
+    cards = by_id["pseudo.pseudo_map_more_card_drops"]
+    assert cards.text == "占いカード量"
+    assert cards.min_value == 50
+    assert cards.enabled is True
+
+    query = build_search_query(item, item.base_type, rows)["query"]
+    api_rows = {
+        row["id"]: row.get("value", {})
+        for group in query["stats"] for row in group["filters"]
+    }
+    assert api_rows["pseudo.pseudo_map_more_currency_drops"] == {"min": 139.0}
+    assert api_rows["pseudo.pseudo_map_more_card_drops"] == {"min": 50.0}
+
+
 def test_corrupted_eight_mod_map_enables_modifier_count_pseudo():
     modifiers = tuple(
         ItemModifier(
