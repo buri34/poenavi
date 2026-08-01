@@ -1485,7 +1485,7 @@ Sacred Chainmail
     details = {row.stat_id: (row.min_value, row.enabled) for row in filters}
     assert details["property.quality"] == (21.0, True)
     assert details["property.sockets"] == (6.0, True)
-    assert details["property.links"] == (6.0, True)
+    assert details["property.links"] == (6.0, False)
     assert "property.white_sockets" not in details
     query = build_search_query(item, "Sacred Chainmail", filters)["query"]
     misc = query["filters"]["misc_filters"]["filters"]
@@ -1494,7 +1494,7 @@ Sacred Chainmail
     assert "corrupted" not in misc
     assert "split" not in misc
     sockets = query["filters"]["socket_filters"]["filters"]
-    assert sockets == {"sockets": {"min": 6}, "links": {"min": 6}}
+    assert sockets == {"sockets": {"min": 6}}
     assert query["stats"][0]["filters"] == []
 
     non_mirrored = build_search_query(
@@ -1641,7 +1641,7 @@ def test_quality_20_and_non_six_socket_count_are_visible_but_not_preselected():
     assert details["property.sockets"].min_value == 3.0
     assert details["property.sockets"].enabled is False
     assert details["property.links"].min_value == 2.0
-    assert details["property.links"].enabled is True
+    assert details["property.links"].enabled is False
 
 
 def test_armour_also_enables_general_life_pseudo():

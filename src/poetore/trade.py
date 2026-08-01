@@ -1083,7 +1083,7 @@ def _item_detail_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         ))
     if links > 1:
         filters.append(TradeStatFilter(
-            "property.links", "最大リンク数", float(links), "socket", True,
+            "property.links", "最大リンク数", float(links), "socket", False,
         ))
     return tuple(filters)
 
