@@ -102,9 +102,6 @@ class GlobalHotkeyService(QObject):
                     ]
                     + [key_name]
                 )
-                if combo == "alt+w" and combo not in triggered_combos:
-                    triggered_combos.add(combo)
-                    self.command.emit("poetore_close")
                 configured = self._hotkey_map.get(combo) or self._hotkey_map.get(key_name)
                 if configured and combo not in triggered_combos:
                     triggered_combos.add(combo)

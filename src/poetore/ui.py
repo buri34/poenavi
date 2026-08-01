@@ -24,6 +24,9 @@ from PySide6.QtWidgets import (
 )
 
 from src.ui.styles import Styles
+from src.utils.window_focus import (
+    focus_window, get_foreground_window, is_path_of_exile_window,
+)
 
 from .parser import ItemParseError, parse_item_text
 from .clipboard import read_item_clipboard
@@ -762,7 +765,7 @@ class _PoetoreTitleBar(QWidget):
         window.poetore_close_button = QPushButton("×")
         window.poetore_close_button.setToolTip("閉じる")
         window.poetore_close_button.setFixedSize(28, 24)
-        window.poetore_close_button.clicked.connect(window.close)
+        window.poetore_close_button.clicked.connect(window._close_and_return_to_poe)
         layout.addWidget(window.poetore_close_button)
 
     def mousePressEvent(self, event):
@@ -807,8 +810,8 @@ class PoetoreWindow(QWidget):
         # ぽえとれ側では常にマウス入力を受け取れる状態を明示する。
         self.setWindowFlag(Qt.WindowTransparentForInput, False)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, False)
-        # Alt+Dの検索結果表示だけでPoEからフォーカスを奪わない。
-        # 明示的なactivateWindow()やユーザーのクリックによる操作は許可する。
+        # 非アクティブ表示を明示した場合だけフォーカスを奪わない。
+        # Alt+Dの検索結果はAwakenedの操作可能モード同様、明示的にactivateWindow()する。
         self.setAttribute(Qt.WA_ShowWithoutActivating, True)
         self.setEnabled(True)
         # Alt+Dで表示した直後に編集欄へ文字が入らないよう、ウィンドウ自身を
@@ -838,6 +841,7 @@ class PoetoreWindow(QWidget):
         self.trade_league_combo.currentIndexChanged.connect(self._persist_trade_league)
         self.trade_league_combo.lineEdit().editingFinished.connect(self._persist_trade_league)
         self._placement_context: PlacementContext | None = None
+        self._poe_window_hwnd: int | None = None
         self._focus_signal_connected = False
         self._outside_click_listener = None
         self._passive_hotkey_display = False
@@ -1983,7 +1987,7 @@ class PoetoreWindow(QWidget):
             is_alt_w = event.key() == Qt.Key_W and event.modifiers() == Qt.AltModifier
             if is_escape or is_alt_w:
                 event.accept()
-                self.close()
+                self._close_and_return_to_poe()
                 return True
             if (
                 self._search_dirty
@@ -2437,6 +2441,10 @@ class PoetoreWindow(QWidget):
 
         # この時点ではPoEが前面。コピー後にぽえとれがフォーカスを取る前に保存する。
         self._placement_context = capture_placement_context()
+        foreground = get_foreground_window()
+        self._poe_window_hwnd = (
+            foreground if is_path_of_exile_window(foreground) else None
+        )
         self._capture_keyboard = Controller()
         QTimer.singleShot(250, lambda: self._send_copy((Key.ctrl, "c"), self._capture_item_copy))
 
@@ -2511,8 +2519,16 @@ class PoetoreWindow(QWidget):
         self.mod_filter_tree.clear()
         self.input_edit.setPlainText(copied_text)
         self.parse_current_text()
-        self.show_at_context(self._placement_context, activate=False)
+        self.show_at_context(self._placement_context, activate=True)
         self.search_current_item()
+
+    def _close_and_return_to_poe(self):
+        """操作可能なぽえとれを閉じ、Alt+D取得元のPoEへ戻る。"""
+        target_hwnd = self._poe_window_hwnd
+        self._poe_window_hwnd = None
+        self.close()
+        if target_hwnd is not None:
+            QTimer.singleShot(0, lambda: focus_window(target_hwnd))
 
     def show_at_context(self, context: PlacementContext | None = None, activate: bool = True):
         context = context or capture_placement_context()

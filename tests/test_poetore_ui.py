@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import csv
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QPoint, QRect, QSize, Qt
+from PySide6.QtCore import QEvent, QPoint, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QPalette
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QLabel, QMessageBox, QPushButton
@@ -159,6 +159,22 @@ def test_capture_failure_opens_the_dark_error_dialog(qapp):
         window.close()
 
 
+def test_capture_from_poe_remembers_the_verified_game_window(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.get_foreground_window", return_value=1234), patch(
+            "src.poetore.ui.is_path_of_exile_window", return_value=True,
+        ) as verify, patch("pynput.keyboard.Controller"), patch.object(
+            QTimer, "singleShot",
+        ):
+            window.capture_from_poe()
+
+        verify.assert_called_once_with(1234)
+        assert window._poe_window_hwnd == 1234
+    finally:
+        window.close()
+
+
 def test_poetore_disclaimer_is_in_app_information(qapp):
     dialog = SettingsDialog(current_config={})
     try:
@@ -223,7 +239,7 @@ def test_329_single_copy_is_parsed_without_normal_and_detailed_merge(qapp):
         assert window._trade_base_type == "Mesh Boots"
         assert window._trade_item_name == "Wake of Destruction"
         parse.assert_called_once_with()
-        show.assert_called_once_with(window._placement_context, activate=False)
+        show.assert_called_once_with(window._placement_context, activate=True)
         search.assert_called_once_with()
         assert not hasattr(window, "_normal_copy_text")
     finally:
@@ -303,6 +319,23 @@ def test_poetore_close_shortcuts_apply_to_child_widgets(qapp, key, modifiers):
         QTest.keyClick(window.input_edit, key, modifiers)
         qapp.processEvents()
         assert not window.isVisible()
+    finally:
+        window.close()
+
+
+def test_poetore_close_shortcut_returns_focus_to_captured_poe(qapp):
+    window = PoetoreWindow()
+    try:
+        window._poe_window_hwnd = 1234
+        window.show()
+        window.input_edit.setFocus()
+        with patch("src.poetore.ui.focus_window") as focus:
+            QTest.keyClick(window.input_edit, Qt.Key_Escape)
+            qapp.processEvents()
+
+        assert not window.isVisible()
+        assert window._poe_window_hwnd is None
+        focus.assert_called_once_with(1234)
     finally:
         window.close()
 

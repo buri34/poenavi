@@ -83,21 +83,3 @@ def test_escape_is_available_for_common_cheat_sheet_overlay():
     listener_box[0].on_press(SimpleNamespace(name="esc"))
 
     assert emitted == ["cheat_sheets_escape"]
-
-
-def test_alt_w_is_available_to_close_passive_poetore_window():
-    listener_box = []
-
-    def factory(**kwargs):
-        listener = FakeListener(**kwargs)
-        listener_box.append(listener)
-        return listener
-
-    service = GlobalHotkeyService({}, listener_factory=factory)
-    emitted = []
-    service.command.connect(emitted.append)
-    service.start()
-    listener_box[0].on_press(SimpleNamespace(name="alt"))
-    listener_box[0].on_press(SimpleNamespace(char="w", vk=ord("W")))
-
-    assert emitted == ["poetore_close"]

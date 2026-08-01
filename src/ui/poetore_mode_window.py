@@ -414,15 +414,8 @@ class PoetoreModeWindow(QMainWindow):
         elif command == "cheat_sheets_toggle":
             self.toggle_cheat_sheets()
         elif command == "cheat_sheets_escape":
-            poetore = getattr(self, "_poetore_window", None)
-            if poetore is not None and poetore.isVisible():
-                poetore.close()
             if self._cheat_sheet_overlay is not None and self._cheat_sheet_overlay.isVisible():
                 self._cheat_sheet_overlay.hide_and_save()
-        elif command == "poetore_close":
-            poetore = getattr(self, "_poetore_window", None)
-            if poetore is not None and poetore.isVisible():
-                poetore.close()
         elif command == "exit":
             self.execute_chat_command("/exit")
         elif command == "monastery":
