@@ -3251,8 +3251,6 @@ def build_search_query(
         if (item.category in {"jewel", "abyss_jewel"}
                 and rarity in {"マジック", "magic"}):
             rarity_option = "magic"
-        elif exact_magic_search and item.category != "flask":
-            rarity_option = "magic" if magic_exact else None
     else:
         rarity_option = None
     if include_foil is None:

@@ -844,6 +844,23 @@ def test_dedicated_exact_magic_flask_uses_nonunique_rarity_like_awakened():
     }
 
 
+@pytest.mark.parametrize("category", [
+    "map", "memory_line", "heist_contract", "heist_blueprint",
+    "tincture", "sanctum_relic", "charm", "idol",
+])
+def test_dedicated_exact_magic_items_exclude_uniques_like_awakened(category):
+    item = ParsedItem(
+        "Test Items", "Magic", "Test Item", "Test Base", category,
+        item_level=85,
+    )
+
+    query = build_search_query(item, "Test Base")["query"]
+
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "nonunique",
+    }
+
+
 def test_unique_flask_still_uses_unique_rarity():
     item = ParsedItem(
         "Utility Flasks", "Unique", "Kiara's Determination", "Silver Flask", "flask",
