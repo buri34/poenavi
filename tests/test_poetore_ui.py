@@ -2708,7 +2708,7 @@ Penumbra Ring
         window.close()
 
 
-def test_reduced_curse_effect_flask_shows_negative_maximum_like_official_trade(qapp):
+def test_reduced_curse_effect_flask_shows_awakened_positive_minimum(qapp):
     window = PoetoreWindow()
     try:
         window.input_edit.setPlainText("""アイテムクラス: ユーティリティフラスコ
@@ -2732,8 +2732,8 @@ def test_reduced_curse_effect_flask_shows_negative_maximum_like_official_trade(q
         assert target is not None
         minimum = window.mod_filter_tree.itemWidget(target, _MOD_COLUMN_MIN)
         maximum = window.mod_filter_tree.itemWidget(target, _MOD_COLUMN_MAX)
-        assert minimum.text() == ""
-        assert maximum.text() == "-50"
+        assert minimum.text() == "44"
+        assert maximum.text() == ""
     finally:
         window.close()
 

@@ -30,10 +30,36 @@ def test_builder_joins_awakened_and_japanese_by_trade_id_and_keeps_minimal_field
     assert row["stat_id"] == "explicit.stat_life"
     assert row["japanese"] == ["最大ライフ +#"]
     assert set(row) == {
-        "ref", "stat_id", "kind", "japanese", "better", "inverted",
+        "ref", "stat_id", "kind", "japanese", "better", "inverted", "negated",
         "exact", "local", "decimal", "tiers", "options",
     }
     assert row["decimal"] is False
+
+
+def test_builder_keeps_awakened_ref_matcher_negate_for_shared_increase_reduction_stat():
+    awakened = [json.dumps({
+        "ref": "#% reduced Effect of Curses on you during Effect",
+        "better": -1,
+        "matchers": [
+            {"string": "#% increased Effect of Curses on you during Effect"},
+            {
+                "string": "#% reduced Effect of Curses on you during Effect",
+                "negate": True,
+            },
+        ],
+        "trade": {
+            "ids": {"explicit": ["explicit.stat_4265534424"]},
+            "inverted": True,
+        },
+    })]
+    jp = {"result": [{"entries": [{
+        "id": "explicit.stat_4265534424", "type": "explicit",
+        "text": "効果中にプレイヤーに対する呪いの効果が#%減少する",
+    }]}]}
+
+    row = build_minimal_index(awakened, jp)["mods"][0]
+
+    assert (row["better"], row["inverted"], row["negated"]) == (-1, True, True)
 
 
 def test_builder_keeps_awakened_category_select_resolver():
@@ -183,7 +209,7 @@ def test_builder_keeps_only_variable_base_armour_bounds():
         json.dumps({"refName": "Fixed Base", "armour": {"ar": [100, 100]}}),
     ]
     payload = build_minimal_index([], {"result": []}, awakened_items=items)
-    assert payload["schema_version"] == 2
+    assert payload["schema_version"] == 3
     assert payload["base_armour"] == {
         "sacred chainmail": {"ar": [723, 831], "es": [145, 167]},
     }
@@ -386,6 +412,7 @@ def test_builder_keeps_trade_site_composite_stat_id_without_option_picker():
         "japanese": ["禁じられた炎に一致するモッドがあれば元素の要塞を割り当てる"],
         "better": 0,
         "inverted": False,
+        "negated": False,
         "exact": True,
         "local": False,
         "decimal": False,
@@ -554,7 +581,7 @@ def test_builder_excludes_bestiary_armour_comparison_groups():
 def test_index_validation_reports_duplicates_empty_and_ambiguous_matchers():
     base = {
         "ref": "r", "kind": "explicit", "japanese": ["値 #"], "better": 1,
-        "inverted": False, "exact": False, "local": False, "decimal": False,
+        "inverted": False, "negated": False, "exact": False, "local": False, "decimal": False,
         "tiers": [], "options": [],
     }
     payload = {"mods": [
@@ -574,7 +601,7 @@ def test_index_diff_reports_added_removed_and_changed_fields():
     def row(stat_id, ref="r"):
         return {
             "ref": ref, "stat_id": stat_id, "kind": "explicit", "japanese": ["値 #"],
-            "better": 1, "inverted": False, "exact": False, "local": False, "tiers": [], "options": [],
+            "better": 1, "inverted": False, "negated": False, "exact": False, "local": False, "tiers": [], "options": [],
         }
     result = diff_minimal_indexes(
         {"mods": [row("removed"), row("changed")]},

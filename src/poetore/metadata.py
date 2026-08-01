@@ -182,6 +182,7 @@ class ModMetadata:
     japanese: tuple[str, ...]
     better: int = 1
     inverted: bool = False
+    negated: bool = False
     exact: bool = False
     local: bool = False
     decimal: bool = False
@@ -353,6 +354,7 @@ class MetadataIndex:
                 ref=row["ref"], stat_id=row["stat_id"], kind=row["kind"],
                 japanese=tuple(row.get("japanese", ())), better=int(row.get("better", 1)),
                 inverted=bool(row.get("inverted", False)), exact=bool(row.get("exact", False)),
+                negated=bool(row.get("negated", False)),
                 local=bool(row.get("local", False)),
                 decimal=bool(row.get("decimal", False)),
                 tiers=tiers, options=options,

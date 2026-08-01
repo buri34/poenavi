@@ -440,8 +440,8 @@ def _combine_multiline_modifiers(
                 confidence=confidence,
                 roll_min=min(roll_mins) if roll_mins else None,
                 roll_max=max(roll_maxes) if roll_maxes else None,
-                better=metadata.better,
-                inverted=metadata.inverted,
+                better=metadata.better * (-1 if metadata.negated else 1),
+                inverted=metadata.inverted ^ metadata.negated,
                 option_value=option.value if option else None,
                 option_text=option.japanese if option else None,
                 oils=option.oils if option else (),
@@ -779,6 +779,10 @@ def parse_item_text(text: str) -> ParsedItem:
             value_index = _DIRECTIONAL_STAT_VALUE_INDEX.get(direction_alias_key)
             if value_index is not None and len(values) > value_index:
                 values = (values[value_index],)
+            # 公式日本語文（refに対応）のmatcher.negateはAwakenedと同じく
+            # better/invertedの両方へ反映する。方向語の別表記を一意照合した場合は、
+            # 従来どおり表示値に対する良否を維持し、API符号だけを反転する。
+            matcher_negated = bool(metadata and metadata.negated and not direction_inverted)
             modifiers.append(ItemModifier(
                 text=line, values=values, kind=kind,
                 tier=current_header_tier if from_header else None,
@@ -792,8 +796,10 @@ def parse_item_text(text: str) -> ParsedItem:
                 confidence=confidence,
                 roll_min=roll_min,
                 roll_max=roll_max,
-                better=metadata.better if metadata else None,
-                inverted=(metadata.inverted ^ direction_inverted) if metadata else False,
+                better=(metadata.better * (-1 if matcher_negated else 1)) if metadata else None,
+                inverted=(metadata.inverted ^ (
+                    direction_inverted if direction_inverted else matcher_negated
+                )) if metadata else False,
                 generation=(kind if kind == "veiled" else current_header_generation)
                 if from_header else ("foulborn" if is_mutated else kind),
                 option_value=option.value if option else None,

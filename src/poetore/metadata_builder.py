@@ -9,7 +9,7 @@ from .metadata import normalize_stat_text
 
 SUPPORTED_KINDS = {"explicit", "implicit", "crafted", "fractured", "enchant", "veiled"}
 INDEX_FIELDS = (
-    "ref", "stat_id", "kind", "japanese", "better", "inverted", "exact",
+    "ref", "stat_id", "kind", "japanese", "better", "inverted", "negated", "exact",
     "local", "decimal", "tiers", "options",
 )
 
@@ -86,6 +86,7 @@ def _official_option_compatibility_records(
             "japanese": [definition["japanese"]],
             "better": 0,
             "inverted": False,
+            "negated": False,
             "exact": True,
             "local": False,
             "decimal": False,
@@ -403,6 +404,14 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
                     "japanese": [str(entry.get("text", ""))],
                     "better": int(stat.get("better", 1)),
                     "inverted": bool(trade.get("inverted", False)),
+                    # Awakenedは表示文ごとのmatcher.negateで内部値の符号を
+                    # 正規化した後、trade.invertedでAPI値へ変換する。公式Tradeの
+                    # 日本語文はrefに対応するため、refと同じmatcherの属性を保持する。
+                    "negated": bool(next((
+                        matcher.get("negate", False)
+                        for matcher in stat.get("matchers", ())
+                        if matcher.get("string") == stat.get("ref")
+                    ), False)),
                     "exact": int(stat.get("better", 1)) == 0 or bool(trade.get("option", False)),
                     "local": bool(repoe_row.get("local", False)),
                     # Awakenedのdpフラグがあるstatだけ小数精度を維持する。
@@ -421,7 +430,7 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
     records.sort(key=lambda row: (row["kind"], row["stat_id"]))
     awakened_items = tuple(awakened_items)
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "generated_at": generated_at or datetime.now(timezone.utc).isoformat(),
         "sources": sources or {},
         "scope": "PoE1 trade stat matching for equipment and gems",
@@ -472,6 +481,8 @@ def validate_minimal_index(payload: dict) -> dict:
             errors.append(f"mods[{index}] missing fields: {', '.join(missing)}")
             continue
         key = (str(row["kind"]), str(row["stat_id"]))
+        if not isinstance(row.get("negated"), bool):
+            errors.append(f"invalid negated flag: {key[0]}:{key[1]}")
         if key in keys:
             errors.append(f"duplicate stat ID: {key[0]}:{key[1]}")
         keys.add(key)
