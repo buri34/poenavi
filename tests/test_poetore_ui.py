@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QLabel, QMessa
 import pytest
 
 from src.poetore.ui import (
-    PoetoreWindow, _MOD_COLUMN_CHECK, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
+    PoetoreWindow, _MOD_COLUMN_CHECK, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
     _UniqueRollSlider, _replace_filters_with_special_chips, show_poetore_window,
 )
 from src.poetore.window_position import PlacementContext
@@ -2704,6 +2704,36 @@ Penumbra Ring
         assert window.mod_warning.isHidden()
         assert not window.mirrored_combo.isHidden()
         assert window.mirrored_combo.currentText() == "ミラー化"
+    finally:
+        window.close()
+
+
+def test_reduced_curse_effect_flask_shows_negative_maximum_like_official_trade(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: ユーティリティフラスコ
+レアリティ: マジック
+医者の モッキングバードの 水銀のフラスコ
+--------
+アイテムレベル: 84
+--------
+{ サフィックスモッド 「モッキングバードの」 (ティア: 4) }
+効果中にプレイヤーに対する呪いの効果が45(47-42)%減少する
+""")
+        window.parse_current_text()
+
+        target = None
+        for index in range(window.mod_filter_tree.topLevelItemCount()):
+            row = window.mod_filter_tree.topLevelItem(index)
+            stat_filter = row.data(0, Qt.UserRole + 4)
+            if stat_filter.stat_id == "explicit.stat_4265534424":
+                target = row
+                break
+        assert target is not None
+        minimum = window.mod_filter_tree.itemWidget(target, _MOD_COLUMN_MIN)
+        maximum = window.mod_filter_tree.itemWidget(target, _MOD_COLUMN_MAX)
+        assert minimum.text() == ""
+        assert maximum.text() == "-50"
     finally:
         window.close()
 

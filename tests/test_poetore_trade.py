@@ -535,6 +535,33 @@ def test_infamous_slower_rage_loss_uses_negative_faster_value():
     }]
 
 
+def test_reduced_curse_effect_flask_uses_official_negative_maximum():
+    item = parse_item_text("""アイテムクラス: ユーティリティフラスコ
+レアリティ: マジック
+医者の モッキングバードの 水銀のフラスコ
+--------
+アイテムレベル: 84
+--------
+{ サフィックスモッド 「モッキングバードの」 (ティア: 4) }
+効果中にプレイヤーに対する呪いの効果が45(47-42)%減少する
+""")
+    filters = resolve_trade_stat_filters(item)
+    curse = next(
+        row for row in filters if row.stat_id == "explicit.stat_4265534424"
+    )
+
+    assert (curse.min_value, curse.max_value, curse.inverted) == (
+        None, -50.0, False,
+    )
+    query = build_search_query(
+        item, stat_filters=(replace(curse, enabled=True),),
+    )["query"]
+    assert query["stats"][0]["filters"] == [{
+        "id": "explicit.stat_4265534424",
+        "value": {"max": -50.0},
+    }]
+
+
 def test_high_item_level_unfinished_rare_has_finished_and_base_presets():
     item = parse_item_text(ITEM.replace("Item Level: 67", "Item Level: 85"))
     assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BASE)
@@ -3259,7 +3286,8 @@ Tenacious Blood Sap Tincture of Battering
 """)
     filters = resolve_trade_stat_filters(item)
     mana_burn = next(row for row in filters if row.stat_id == "explicit.stat_116232170")
-    assert mana_burn.inverted is True
+    assert mana_burn.inverted is False
+    assert mana_burn.api_signed is True
     assert unresolved_modifier_warnings(item, filters) == ()
     assert next(
         row for row in filters if row.stat_id == "property.item_level"
@@ -3283,7 +3311,7 @@ Tenacious Blood Sap Tincture of Battering
     assert web_query["type"] == "血の樹液のチンキ"
     assert web_query["stats"][0]["filters"] == [{
         "id": "explicit.stat_116232170",
-        "value": {"min": -20.0},
+        "value": {"max": -20.0},
     }]
 
 

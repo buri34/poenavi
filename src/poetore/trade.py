@@ -372,6 +372,8 @@ class TradeStatFilter:
     # Trade APIへは送らないAwakened風の表示専用情報。
     source_contributions: tuple[float | None, ...] = ()
     source_headings: tuple[str, ...] = ()
+    # metadata上のinverted値を公式Tradeと同じ負数へ正規化済み。
+    api_signed: bool = False
 
 
 @dataclass(frozen=True)
@@ -452,6 +454,7 @@ def apply_search_range(
             or row.option_value is not None
             or row.exact
             or row.inverted
+            or row.api_signed
             or row.hidden_reason
             or (
                 row.generation == "foulborn"
@@ -2712,6 +2715,9 @@ def resolve_trade_stat_filters(
             ):
                 value = modifier.values[0] if modifier.values else None
             maximum = None
+            modifier_inverted = modifier.inverted
+            api_signed = False
+            normalize_api_signed = False
             if modifier.stat_id == str(entry["id"]):
                 metadata, _ = default_metadata_index().match(modifier.text, modifier.kind)
                 if metadata is None and modifier.ref:
@@ -2734,6 +2740,18 @@ def resolve_trade_stat_filters(
                         ),
                         DEFAULT_SEARCH_RANGE,
                     )
+                    if metadata.inverted and modifier.inverted:
+                        # Awakened/公式Tradeと同じ符号・境界で表示する。
+                        # `reduced` 系はAPI上の値が負数なので、たとえば
+                        # 45% reduced（10%幅）は「最大 -50」で検索する。
+                        # min/maxを入れ替える通常の方向反転とは異なり、
+                        # metadata由来のinvertedは境界の側を維持して符号だけ反転する。
+                        modifier_inverted = False
+                        normalize_api_signed = True
+                    else:
+                        modifier_inverted = modifier.inverted
+                else:
+                    modifier_inverted = modifier.inverted
             if hidden_reason and value is not None:
                 # 初期非表示の固定Unique Modは、ユーザーが明示的に選んだ時だけ
                 # 現在値を完全一致で検索する。共通の許容幅を適用すると、
@@ -2745,13 +2763,17 @@ def resolve_trade_stat_filters(
                     value = maximum = current_value
             if unique_item and roll_bounds is not None and modifier.stat_id != str(entry["id"]):
                 value = _unique_minimum(value, roll_bounds)
+            if normalize_api_signed:
+                value = -value if value is not None else None
+                maximum = -maximum if maximum is not None else None
+                api_signed = True
             valdo_exact = item.category == "map" and item.base_type.casefold() == "valdo map"
             resolved.append(TradeStatFilter(
                 str(entry["id"]), modifier.text, value, modifier.kind,
                 unique_variant or valdo_exact or (modifier.ref == "Allocates #" and (
                     "talisman" in item.item_class.casefold() or "タリスマン" in item.item_class
                 )),
-                maximum, modifier.ref, modifier.confidence, modifier.inverted,
+                maximum, modifier.ref, modifier.confidence, modifier_inverted,
                 option_value=modifier.option_value, option_text=modifier.option_text,
                 oils=modifier.oils,
                 selection_reason=(
@@ -2761,6 +2783,7 @@ def resolve_trade_stat_filters(
                 group_type="count" if alternatives else "and",
                 group_key=group_key, group_min=1 if alternatives else None,
                 hidden_reason=hidden_reason,
+                api_signed=api_signed,
             ))
     combined: dict[str, TradeStatFilter] = {}
     counts: dict[str, int] = {}
@@ -2789,6 +2812,7 @@ def resolve_trade_stat_filters(
             group_type=stat_filter.group_type, group_key=stat_filter.group_key,
             group_min=stat_filter.group_min,
             hidden_reason=previous.hidden_reason or stat_filter.hidden_reason,
+            api_signed=stat_filter.api_signed,
         )
     enable_unique_rolls = unique_item and len(combined) <= 3
     # AwakenedはFoulborn品について、置換されたFoulborn Modだけでなく、
@@ -2817,6 +2841,7 @@ def resolve_trade_stat_filters(
             selection_reason=row.selection_reason,
             group_type=row.group_type, group_key=row.group_key, group_min=row.group_min,
             hidden_reason=row.hidden_reason,
+            api_signed=row.api_signed,
         )
         for combine_key, row in combined.items()
         if row.stat_id not in consumed_stat_ids and not (not unique_item and row.ref in consumed_refs)
