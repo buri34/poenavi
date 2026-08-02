@@ -445,6 +445,115 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
     }
 
 
+def build_official_index(jp_trade: dict, stat_rules: dict,
+                         repoe_stats: dict | None = None,
+                         repoe_mods: dict | None = None,
+                         awakened_items: Iterable[str] = (),
+                         awakened_item_drops: Iterable[dict] = (),
+                         sources: dict | None = None,
+                         generated_at: str | None = None) -> dict:
+    """公式Tradeを骨格、RePoEと独自台帳を補足情報として派生indexを作る。
+
+    ``stat_rules`` は一度監査した意味判断だけを保持するPoENavi正本であり、
+    Awakenedの稼働や取得可否に依存しない。公式APIに存在しない古いruleは出力せず、
+    未登録の公式statは ``unresolved_trade_entries`` で明示する。
+    """
+    jp = _trade_entries(jp_trade)
+    repoe = _repoe_by_ref(repoe_stats or {}, repoe_mods or {})
+    records = []
+    seen = set()
+    for rule in stat_rules.get("rules", ()):
+        kind = str(rule.get("kind", ""))
+        stat_id = str(rule.get("stat_id", ""))
+        entry = jp.get((kind, stat_id))
+        if kind not in SUPPORTED_KINDS or not entry or (kind, stat_id) in seen:
+            continue
+        seen.add((kind, stat_id))
+        ref = str(rule.get("ref", ""))
+        repoe_row = repoe.get(normalize_stat_text(ref), {})
+        record = {
+            "ref": ref,
+            "stat_id": stat_id,
+            "kind": kind,
+            "japanese": [str(entry.get("text", ""))],
+            "better": int(rule.get("better", 1)),
+            "inverted": bool(rule.get("inverted", False)),
+            "negated": bool(rule.get("negated", False)),
+            "exact": bool(rule.get("exact", False)),
+            "local": bool(repoe_row.get("local", False)),
+            "decimal": bool(rule.get("decimal", False)),
+            "tiers": repoe_row.get("tiers", ()),
+            "options": list(rule.get("options", ())),
+        }
+        if "category_select" in rule:
+            record["category_select"] = rule["category_select"]
+        records.append(record)
+    for record in _official_option_compatibility_records(jp):
+        key = (record["kind"], record["stat_id"])
+        if key not in seen:
+            records.append(record)
+            seen.add(key)
+    records.sort(key=lambda row: (row["kind"], row["stat_id"]))
+    awakened_items = tuple(awakened_items)
+    return {
+        "schema_version": 3,
+        "generated_at": generated_at or datetime.now(timezone.utc).isoformat(),
+        "sources": sources or {},
+        "scope": "PoE1 trade stat matching for equipment and gems",
+        "base_armour": _base_armour(awakened_items),
+        "gems": _gems(awakened_items),
+        "unique_fixed_stats": _unique_fixed_stats(awakened_items),
+        "unique_icons": _unique_icons(awakened_items),
+        "related_item_groups": build_related_item_groups(
+            awakened_items, awakened_item_drops,
+        ),
+        "mods": records,
+    }
+
+
+def audit_awakened_stat_rules(awakened_lines: Iterable[str], stat_rules: dict) -> dict:
+    """Awakenedを入力正本にせず、独自台帳との差分だけを報告する。"""
+    upstream = {}
+    for stat in _awakened_stats(awakened_lines):
+        trade = stat.get("trade") or {}
+        for kind, ids in (trade.get("ids") or {}).items():
+            for stat_id in ids:
+                upstream[(kind, stat_id)] = {
+                    "ref": str(stat.get("ref", "")),
+                    "better": int(stat.get("better", 1)),
+                    "inverted": bool(trade.get("inverted", False)),
+                    "negated": bool(next((
+                        matcher.get("negate", False)
+                        for matcher in stat.get("matchers", ())
+                        if matcher.get("string") == stat.get("ref")
+                    ), False)),
+                    "exact": int(stat.get("better", 1)) == 0 or bool(trade.get("option", False)),
+                    "decimal": bool(stat.get("dp", False)),
+                }
+    local = {
+        (str(row.get("kind", "")), str(row.get("stat_id", ""))): row
+        for row in stat_rules.get("rules", ())
+    }
+    common = set(upstream) & set(local)
+    fields = ("ref", "better", "inverted", "negated", "exact", "decimal")
+    changed = [
+        {"kind": key[0], "stat_id": key[1], "fields": [
+            field for field in fields if upstream[key].get(field) != local[key].get(field)
+        ]}
+        for key in sorted(common)
+        if any(upstream[key].get(field) != local[key].get(field) for field in fields)
+    ]
+    return {
+        "only_in_awakened": [
+            {"kind": kind, "stat_id": stat_id} for kind, stat_id in sorted(set(upstream) - set(local))
+        ],
+        "only_in_poetore": [
+            {"kind": kind, "stat_id": stat_id} for kind, stat_id in sorted(set(local) - set(upstream))
+        ],
+        "changed": changed,
+    }
+
+
 def validate_minimal_index(payload: dict) -> dict:
     """更新前に、壊れた・曖昧な派生インデックスを検出する。"""
     mods = payload.get("mods", ())

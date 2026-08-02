@@ -11,7 +11,7 @@ import sys
 from urllib.request import Request, urlopen
 
 from src.poetore.metadata_builder import (
-    build_minimal_index, build_related_item_groups,
+    audit_awakened_stat_rules, build_official_index, build_related_item_groups,
     diff_minimal_indexes,
     excessive_removal,
     unresolved_trade_entries,
@@ -22,6 +22,7 @@ from src.poetore.metadata_builder import (
 DEFAULT_LOCK = Path("scripts/poetore-sources.lock.json")
 DEFAULT_OUTPUT = Path("data/poetore/mod_metadata.json")
 DEFAULT_REPORT = Path("build/poetore-metadata-report.json")
+DEFAULT_STAT_RULES = Path("scripts/poetore-stat-rules.json")
 
 
 def _get(url: str) -> bytes:
@@ -53,6 +54,7 @@ def main() -> int:
     parser.add_argument("--lock", type=Path, default=DEFAULT_LOCK)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
+    parser.add_argument("--stat-rules", type=Path, default=DEFAULT_STAT_RULES)
     parser.add_argument("--apply", action="store_true", help="検査成功後に正本を原子的に置換する")
     parser.add_argument(
         "--refresh-lock", action="store_true",
@@ -65,6 +67,10 @@ def main() -> int:
     parser.add_argument(
         "--related-items-only", action="store_true",
         help="固定済みAwakened items/item-dropだけから関連品定義を更新する",
+    )
+    parser.add_argument(
+        "--official-mods-only", action="store_true",
+        help="Awakenedを取得せず、公式Trade＋RePoE＋独自台帳だけでMod基盤を更新する",
     )
     args = parser.parse_args()
     lock = _load_json(args.lock)
@@ -106,7 +112,13 @@ def main() -> int:
     blobs: dict[str, bytes] = {}
     hashes: dict[str, str] = {}
     changed_sources: list[str] = []
+    skipped_awakened = {
+        "awakened_poe_trade", "awakened_items", "awakened_item_drops",
+    } if args.official_mods_only else set()
     for name, row in source_rows.items():
+        if name in skipped_awakened:
+            print(f"source {name}: skipped (--official-mods-only)")
+            continue
         blob = _get(str(row["url"]))
         digest = hashlib.sha256(blob).hexdigest()
         blobs[name], hashes[name] = blob, digest
@@ -130,6 +142,7 @@ def main() -> int:
             if "version" in effective_lock["sources"][name]:
                 effective_lock["sources"][name]["version"] = f"snapshot-{refreshed_at.date().isoformat()}"
 
+    previous = _load_json(args.output) if args.output.exists() else {"mods": []}
     sources = {
         name: {
             key: value for key, value in row.items()
@@ -137,22 +150,36 @@ def main() -> int:
         }
         for name, row in effective_lock["sources"].items()
     }
-    awakened = blobs["awakened_poe_trade"].decode("utf-8").splitlines()
+    if args.official_mods_only:
+        for name in skipped_awakened:
+            if name in previous.get("sources", {}):
+                sources[name] = previous["sources"][name]
+    awakened = blobs.get("awakened_poe_trade", b"").decode("utf-8").splitlines()
     jp_trade = json.loads(blobs["jp_trade_api"])
-    candidate = build_minimal_index(
-        awakened,
+    stat_rules = _load_json(args.stat_rules)
+    candidate = build_official_index(
         jp_trade,
+        stat_rules,
         json.loads(blobs["repoe_stats"]),
         json.loads(blobs["repoe_mods"]),
-        awakened_items=blobs["awakened_items"].decode("utf-8").splitlines(),
-        awakened_item_drops=json.loads(blobs["awakened_item_drops"]),
+        awakened_items=blobs.get("awakened_items", b"").decode("utf-8").splitlines(),
+        awakened_item_drops=json.loads(blobs.get("awakened_item_drops", b"[]")),
         sources=sources,
         generated_at=str(effective_lock["generated_at"]),
     )
-    previous = _load_json(args.output) if args.output.exists() else {"mods": []}
+    if args.official_mods_only:
+        for field in (
+            "base_armour", "gems", "unique_fixed_stats", "unique_icons",
+            "related_item_groups",
+        ):
+            candidate[field] = previous.get(field, candidate.get(field))
     integrity = validate_minimal_index(candidate)
     differences = diff_minimal_indexes(previous, candidate)
     unresolved = unresolved_trade_entries(candidate, jp_trade)
+    awakened_audit = (
+        {"skipped": True} if args.official_mods_only
+        else audit_awakened_stat_rules(awakened, stat_rules)
+    )
     candidate_bytes = _serialized(candidate)
     too_many_removed, removal_limit = excessive_removal(differences)
     failures = list(integrity["errors"])
@@ -168,6 +195,7 @@ def main() -> int:
         "integrity": integrity,
         "diff": differences,
         "unresolved_japanese_stats": unresolved,
+        "awakened_comparison": awakened_audit,
         "failures": failures,
     }
     args.report.parent.mkdir(parents=True, exist_ok=True)

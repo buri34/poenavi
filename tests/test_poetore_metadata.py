@@ -6,9 +6,68 @@ from src.poetore.metadata import (
     diff_pseudo_payloads, unique_fixed_stats, unique_icon_url, validate_pseudo_payload,
 )
 from src.poetore.metadata_builder import (
-    build_minimal_index, build_related_item_groups, diff_minimal_indexes,
+    audit_awakened_stat_rules, build_minimal_index, build_official_index,
+    build_related_item_groups, diff_minimal_indexes,
     excessive_removal, unresolved_trade_entries, validate_minimal_index,
 )
+from scripts.extract_poetore_stat_rules import extract_rules
+
+
+def test_official_builder_uses_official_japanese_repoe_tiers_and_poetore_rules():
+    jp = {"result": [{"entries": [{
+        "id": "explicit.stat_life", "type": "explicit", "text": "最大ライフ +#",
+    }]}]}
+    rules = {"rules": [{
+        "ref": "+# to maximum Life", "stat_id": "explicit.stat_life",
+        "kind": "explicit", "better": 1, "inverted": False,
+        "negated": False, "exact": False, "decimal": False, "options": [],
+    }]}
+    repoe_stats = {"base_maximum_life": {"is_local": False}}
+    repoe_mods = {"Life1": {
+        "domain": "item", "text": "+# to maximum Life", "required_level": 1,
+        "generation_type": "prefix", "stats": [{"id": "base_maximum_life", "min": 10, "max": 19}],
+    }}
+
+    row = build_official_index(jp, rules, repoe_stats, repoe_mods)["mods"][0]
+
+    assert row["japanese"] == ["最大ライフ +#"]
+    assert row["better"] == 1
+    assert row["tiers"][0]["mod_id"] == "Life1"
+
+
+def test_awakened_is_comparison_only_for_poetore_stat_rules():
+    awakened = [json.dumps({
+        "ref": "+# to maximum Life", "better": -1,
+        "matchers": [{"string": "+# to maximum Life"}],
+        "trade": {"ids": {"explicit": ["explicit.stat_life"]}},
+    })]
+    rules = {"rules": [{
+        "ref": "+# to maximum Life", "stat_id": "explicit.stat_life",
+        "kind": "explicit", "better": 1, "inverted": False,
+        "negated": False, "exact": False, "decimal": False,
+    }]}
+
+    audit = audit_awakened_stat_rules(awakened, rules)
+
+    assert audit["changed"] == [{
+        "kind": "explicit", "stat_id": "explicit.stat_life", "fields": ["better"],
+    }]
+
+
+def test_stat_rule_extractor_drops_runtime_and_repoe_fields():
+    rules = extract_rules({"mods": [{
+        "ref": "r", "stat_id": "explicit.id", "kind": "explicit",
+        "japanese": ["値 #"], "better": 1, "inverted": False,
+        "negated": False, "exact": False, "local": True, "decimal": False,
+        "tiers": [{"tier": 1}], "options": [],
+    }]}, "abc123")
+
+    assert rules["rules"] == [{
+        "ref": "r", "stat_id": "explicit.id", "kind": "explicit",
+        "better": 1, "inverted": False, "negated": False,
+        "exact": False, "decimal": False, "options": [],
+    }]
+    assert rules["initial_source_sha256"] == "abc123"
 
 
 def test_builder_joins_awakened_and_japanese_by_trade_id_and_keeps_minimal_fields():
