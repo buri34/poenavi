@@ -2546,6 +2546,24 @@ Onyx Amulet
     )
 
 
+def test_embryonic_gift_uses_exact_search_without_unresolved_modifiers():
+    item = parse_item_text("""アイテムクラス: 母胎ギフト
+レアリティ: カレンシー
+古代の母胎ギフト
+--------
+アイテムレベル: 83
+1790のハイヴブラッドが必要
+--------
+創生の樹でユニークアイテムに成長させられる
+--------
+このアイテムを創生の樹の割り当て済みのユニークアイテムの母胎に配置する。右クリックで創生の樹から取り除ける。
+""")
+
+    assert uses_dedicated_exact_preset(item)
+    assert default_trade_currency(item) == "chaos_divine"
+    assert unresolved_modifier_warnings(item) == ()
+
+
 def test_svalinn_fixed_lucky_block_is_not_an_unresolved_modifier():
     item = parse_item_text("""アイテムクラス: 盾
 レアリティ: ユニーク

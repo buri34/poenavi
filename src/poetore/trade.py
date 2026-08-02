@@ -79,10 +79,12 @@ CONSUMABLE_CRAFTABLE_CATEGORIES = {
     "map", "heist_blueprint", "heist_contract", "invitation",
     "memory_line", "expedition_logbook",
 }
-NON_CRAFTABLE_CATEGORIES = {"gem", "flask", "currency", "divination_card", "corpse"}
+NON_CRAFTABLE_CATEGORIES = {
+    "gem", "flask", "currency", "divination_card", "corpse", "incubator",
+}
 DEDICATED_EXACT_CATEGORIES = {
     "gem", "captured_beast", "map", "memory_line", "invitation",
-    "heist_contract", "heist_blueprint", "charm", "corpse",
+    "heist_contract", "heist_blueprint", "charm", "corpse", "incubator",
 }
 PRESET_FINISHED = "finished"
 PRESET_BASE = "base"
@@ -2329,6 +2331,10 @@ def unresolved_modifier_warnings(
     # 固有能力は個体差のない説明であり、公式Tradeにも完全な検索Statがないため、
     # Mod候補や「未解決」警告には含めない。
     if item.category == "corpse":
+        return ()
+    # Embryonic Gifts all carry fixed Genesis Tree instructions. They identify
+    # no variable item stat and are searched by their exact base type.
+    if item.category == "incubator":
         return ()
     # Pinnacle boss invitations display this fixed implicit without the
     # percentage found in the official Trade stat template. It has no

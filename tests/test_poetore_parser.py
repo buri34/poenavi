@@ -73,6 +73,24 @@ class PoetoreParserTest(unittest.TestCase):
         self.assertEqual(len(item.modifiers), 3)
         self.assertFalse(any("右クリック" in mod.text for mod in item.modifiers))
 
+    def test_embryonic_gift_is_detected_and_fixed_help_text_is_ignored(self):
+        item = parse_item_text("""アイテムクラス: 母胎ギフト
+レアリティ: カレンシー
+古代の母胎ギフト
+--------
+アイテムレベル: 83
+1790のハイヴブラッドが必要
+--------
+創生の樹でユニークアイテムに成長させられる
+--------
+このアイテムを創生の樹の割り当て済みのユニークアイテムの母胎に配置する。右クリックで創生の樹から取り除ける。
+""")
+
+        self.assertEqual(item.category, "incubator")
+        self.assertEqual(item.base_type, "古代の母胎ギフト")
+        self.assertEqual(item.item_level, 83)
+        self.assertEqual(item.modifiers, ())
+
     def test_cluster_jewel_parenthetical_enchant_help_is_not_an_unresolved_mod(self):
         item = parse_item_text("""アイテムクラス: ジュエル
 レアリティ: ノーマル

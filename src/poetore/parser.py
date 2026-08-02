@@ -100,6 +100,7 @@ _CATEGORY_WORDS = (
     (("アイドル", "Idol"), "idol"),
     (("グラフト", "Graft"), "graft"),
     (("センチネル", "Sentinel"), "sentinel"),
+    (("母胎ギフト",), "incubator"),
     (("カレンシー", "Currency"), "currency"),
     (("カード", "Divination Card"), "divination_card"),
 )
@@ -173,6 +174,10 @@ _CATEGORY_HELP_LINES = {
     "corpse": {
         "このアイテムを右クリックしてこの死体を生成する。",
         "Right click this item to create this corpse.",
+    },
+    "incubator": {
+        "創生の樹でユニークアイテムに成長させられる",
+        "このアイテムを創生の樹の割り当て済みのユニークアイテムの母胎に配置する。右クリックで創生の樹から取り除ける。",
     },
 }
 
@@ -298,6 +303,11 @@ def _numbers(text: str) -> tuple[float, ...]:
 
 def _normalized_modifier_line(line: str, item_category: str | None = None) -> str | None:
     """詳細コピー固有の注釈を除き、検索対象となるMod本文だけを返す。"""
+    if item_category == "incubator" and (
+        "ハイヴブラッド" in line and "必要" in line
+    ):
+        # 必要量は母胎ギフトの成長コスト表示であり、検索Modではない。
+        return None
     if item_category in _JEWEL_CATEGORIES:
         stripped = line.strip()
         if stripped in _JEWEL_HELP_LINES or (

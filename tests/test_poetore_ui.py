@@ -2027,6 +2027,31 @@ def test_itemised_spectre_corpse_hides_fixed_ability_mod_warning(qapp):
         window.close()
 
 
+def test_embryonic_gift_full_copy_has_no_unresolved_metadata_warning(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 母胎ギフト
+レアリティ: カレンシー
+古代の母胎ギフト
+--------
+アイテムレベル: 83
+1790のハイヴブラッドが必要
+--------
+創生の樹でユニークアイテムに成長させられる
+--------
+このアイテムを創生の樹の割り当て済みのユニークアイテムの母胎に配置する。右クリックで創生の樹から取り除ける。
+""")
+        window.parse_current_text()
+
+        assert window._parsed_item.category == "incubator"
+        assert window._parsed_item.modifiers == ()
+        assert window.mod_warning.isHidden()
+        assert window.mod_warning.text() == ""
+        assert window._selected_stat_filters() == ()
+    finally:
+        window.close()
+
+
 def test_itemised_spectre_corpse_item_level_toggle_controls_final_search(qapp):
     from src.poetore.trade import PriceResult
 
