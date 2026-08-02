@@ -1712,6 +1712,7 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
     if elemental:
         filters.append(TradeStatFilter(
             "pseudo.pseudo_total_elemental_resistance", "元素耐性合計", _relaxed(elemental), "pseudo", True,
+            read_value=elemental,
         ))
     for element, stat_id, label in (("fire", "pseudo.pseudo_total_fire_resistance", "火耐性合計"),
                                     ("cold", "pseudo.pseudo_total_cold_resistance", "冷気耐性合計"),
@@ -1725,6 +1726,7 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
     if totals["chaos"] and not crafted_chaos_only:
         filters.append(TradeStatFilter(
             "pseudo.pseudo_total_chaos_resistance", "混沌耐性合計", _relaxed(totals["chaos"]), "pseudo", True,
+            read_value=totals["chaos"],
         ))
     for attr, stat_id, label in (("str", "pseudo.pseudo_total_strength", "筋力合計"),
                                  ("dex", "pseudo.pseudo_total_dexterity", "器用さ合計"),

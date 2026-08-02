@@ -1972,6 +1972,33 @@ def test_crafted_chaos_only_is_hidden_but_mixed_sources_are_aggregated():
     assert rows["pseudo.pseudo_total_chaos_resistance"].enabled is True
 
 
+def test_aggregated_resistances_keep_exact_read_values_from_item():
+    item = parse_item_text("""アイテムクラス: 鎧
+レアリティ: レア
+復讐の殻
+黄昏のレガリア
+--------
+アイテムレベル: 86
+--------
+{ サフィックスモッド 「雷の」 (ティア: 2) — 元素, 雷, 耐性 }
+雷耐性 +45(42-45)%
+{ サフィックスモッド 「排出の」 (ティア: 4) — 混沌, 耐性 }
+混沌耐性 +19(16-20)%
+{ マスタークラフト サフィックスモッド 「製作の」 — 元素, 冷気, 混沌, 耐性 }
+冷気と混沌耐性 +13(13-15)%
+""")
+    rows = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
+
+    elemental = rows["pseudo.pseudo_total_elemental_resistance"]
+    chaos = rows["pseudo.pseudo_total_chaos_resistance"]
+    assert (elemental.min_value, elemental.read_value) == (52.0, 58.0)
+    assert (chaos.min_value, chaos.read_value) == (28.0, 32.0)
+
+    exact_rows = {row.stat_id: row for row in apply_search_range(tuple(rows.values()), 0, item)}
+    assert exact_rows["pseudo.pseudo_total_elemental_resistance"].min_value == 58.0
+    assert exact_rows["pseudo.pseudo_total_chaos_resistance"].min_value == 32.0
+
+
 def test_unresolved_modifier_does_not_remove_unrelated_pseudos():
     item = _pseudo_test_item((
         ItemModifier("未解決Mod", (999,), ref=None, stat_id=None),
