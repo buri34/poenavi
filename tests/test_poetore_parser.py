@@ -649,6 +649,55 @@ Iron Ring
             ["implicit", "explicit", "explicit", "explicit", "explicit"],
         )
         self.assertEqual(item.modifiers[-1].generation, "foulborn")
+
+    def test_japanese_vestigial_unique_uses_normal_base_and_marks_implicit(self):
+        item = parse_item_text("""アイテムクラス: 靴
+レアリティ: ユニーク
+ララケシュの短気
+痕跡 リベットブーツ
+--------
+アーマー: 65
+エナジーシールド: 14
+--------
+装備要求:
+レベル: 40
+筋力: 35
+知性: 35
+--------
+ソケット: B
+--------
+アイテムレベル: 86
+--------
+{ 痕跡暗黙モッド — 元素, 火, 状態異常 }
+近くの敵は焦げ状態になる
+(Scorch: 焦げた敵は元素耐性が-10%される)
+--------
+{ ユニークモッド — 元素, 冷気, 耐性 }
+冷気耐性 +21(15-25)%
+{ ユニークモッド — 混沌, 耐性 }
+混沌耐性 +20(15-25)%
+{ ユニークモッド — スピード }
+移動スピードが18(15-25)%増加する
+{ ユニークモッド — 物理, 状態異常 }
+穢れた血を付与されることがない
+{ ユニークモッド }
+パワーチャージを最大数持っているとして見なされる
+--------
+不死者にとって、
+時代と瞬間に違いはあるのか？
+--------
+メモ: ~b/o 10 mirror
+""")
+
+        self.assertEqual(item.name, "ララケシュの短気")
+        self.assertEqual(item.base_type, "リベットブーツ")
+        self.assertIn("vestigial", item.flags)
+        self.assertEqual(item.modifiers[0].kind, "implicit")
+        self.assertEqual(item.modifiers[0].generation, "vestigial")
+        self.assertEqual(
+            item.modifiers[0].stat_id, "implicit.stat_3733114005",
+        )
+        self.assertEqual(len(item.modifiers), 6)
         self.assertTrue(all(modifier.stat_id for modifier in item.modifiers))
 
     def test_replica_dragonfang_reduced_requirements_resolves_signed_stat(self):

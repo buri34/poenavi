@@ -2655,6 +2655,7 @@ def resolve_trade_stat_filters(
         )
         unique_variant = (
             standalone_variant
+            or modifier.generation == "vestigial"
             or (
                 unique_item
                 and modifier.kind == "explicit"
@@ -2674,7 +2675,9 @@ def resolve_trade_stat_filters(
                 modifier.kind == "implicit" and modifier.generation == "corrupted"
             )
             foulborn_variant = modifier.generation == "foulborn"
-            if not standalone_variant and not corrupted_implicit and not foulborn_variant and (
+            vestigial_variant = modifier.generation == "vestigial"
+            if (not standalone_variant and not corrupted_implicit
+                    and not foulborn_variant and not vestigial_variant) and (
                 fixed_unique_refs is None or modifier.ref in fixed_unique_refs
             ):
                 # Awakened準拠: 常設Modでも可変ロールがあれば候補へ残す。
@@ -3312,6 +3315,10 @@ def build_search_query(
         if (item.category in {"weapon", "armour", "accessory", "cluster_jewel", "jewel", "abyss_jewel"}
                 and "foulborn" not in item.flags):
             misc["foulborn_item"] = {"option": "false"}
+        if (rarity in {"unique", "ユニーク"}
+                and item.category in {"weapon", "armour", "accessory", "cluster_jewel", "jewel", "abyss_jewel"}
+                and "vestigial" not in item.flags):
+            misc["vestigial"] = {"option": "false"}
         if (not corruption_mode_explicit
                 and item.category in {"jewel", "abyss_jewel"}
                 and rarity in {"magic", "マジック"}):

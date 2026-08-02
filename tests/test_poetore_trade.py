@@ -2373,6 +2373,72 @@ Iron Ring
     assert "foulborn_item" not in query["filters"]["misc_filters"]["filters"]
 
 
+def test_japanese_vestigial_unique_enables_implicit_and_uses_state_filter():
+    item = parse_item_text("""アイテムクラス: 靴
+レアリティ: ユニーク
+ララケシュの短気
+痕跡 リベットブーツ
+--------
+アーマー: 65
+エナジーシールド: 14
+--------
+装備要求:
+レベル: 40
+筋力: 35
+知性: 35
+--------
+ソケット: B
+--------
+アイテムレベル: 86
+--------
+{ 痕跡暗黙モッド — 元素, 火, 状態異常 }
+近くの敵は焦げ状態になる
+(Scorch: 焦げた敵は元素耐性が-10%される)
+--------
+{ ユニークモッド — 元素, 冷気, 耐性 }
+冷気耐性 +21(15-25)%
+{ ユニークモッド — 混沌, 耐性 }
+混沌耐性 +20(15-25)%
+{ ユニークモッド — スピード }
+移動スピードが18(15-25)%増加する
+{ ユニークモッド — 物理, 状態異常 }
+穢れた血を付与されることがない
+{ ユニークモッド }
+パワーチャージを最大数持っているとして見なされる
+--------
+不死者にとって、
+時代と瞬間に違いはあるのか？
+--------
+メモ: ~b/o 10 mirror
+""")
+    filters = resolve_trade_stat_filters(item)
+    scorch = next(
+        row for row in filters
+        if row.stat_id == "implicit.stat_3733114005"
+    )
+
+    assert item.base_type == "リベットブーツ"
+    assert scorch.generation == "vestigial"
+    assert scorch.enabled
+    query = build_search_query(
+        item, "Riveted Boots", trade_name="Ralakesh's Impatience",
+        stat_filters=filters,
+    )["query"]
+    assert query["name"] == "Ralakesh's Impatience"
+    misc = query["filters"]["misc_filters"]["filters"]
+    assert "vestigial" not in misc
+    assert next(
+        row for row in query["stats"][0]["filters"]
+        if row["id"] == "implicit.stat_3733114005"
+    )["value"] == {}
+
+    plain = parse_item_text(item.raw_text.replace("痕跡 リベットブーツ", "リベットブーツ"))
+    plain_misc = build_search_query(
+        plain, "Riveted Boots", trade_name="Ralakesh's Impatience",
+    )["query"]["filters"]["misc_filters"]["filters"]
+    assert plain_misc["vestigial"] == {"option": "false"}
+
+
 def test_foulborn_unique_keeps_fixed_replacement_mod_as_enabled_filter():
     item = parse_item_text("""アイテムクラス: 鉤爪
 レアリティ: ユニーク

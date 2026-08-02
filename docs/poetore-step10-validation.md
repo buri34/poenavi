@@ -55,7 +55,8 @@ Mirageリーグでの受理時候補件数（時点値）:
 - Finished検索ではSynthesisedやInfluenceを暗黙固定しない。クラフトベース検索では
   ベース価値に関わるため、Synthesised、Fractured、Influenceを条件化する。
 - Foilは公式rarity `uniquefoil` を使用する。Foulborn品は状態指定なし、通常品は
-  `foulborn_item=false` とする。
+  `foulborn_item=false` とする。Vestigial品は痕跡Implicitを初期ON、通常Uniqueは
+  `vestigial=false` とする。
 
 ## 未対応・実機確認が必要な範囲
 

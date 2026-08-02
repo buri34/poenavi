@@ -128,6 +128,10 @@ _FOULBORN_NAME_PREFIX = re.compile(
     r"^(?:Foulborn|ファウルボーン)\s+(.+)$",
     re.IGNORECASE,
 )
+_VESTIGIAL_BASE_PREFIX = re.compile(
+    r"^(?:Vestigial|痕跡)\s+(.+)$",
+    re.IGNORECASE,
+)
 _GLOSSARY_HELP_LINE = re.compile(
     r"^[（(]\s*[^()（）:：\r\n]{1,80}\s*[:：].*[）)]$",
 )
@@ -500,6 +504,7 @@ def _modifier_header_details(
         affix = kind if kind in {"prefix", "suffix"} else None
     generation = next((value for labels, value in (
         (("corrupted implicit", "コラプト暗黙"), "corrupted"),
+        (("vestigial implicit", "痕跡暗黙"), "vestigial"),
         (("foulborn", "ファウルボーン"), "foulborn"),
         (("monster mod", "モンスターモッド"), "monster"),
         (("crusader", "クルセーダー"), "crusader"), (("warlord", "ウォーロード"), "warlord"),
@@ -604,8 +609,16 @@ def parse_item_text(text: str) -> ParsedItem:
     rarity = header["rarity"]
     # Rare/Uniqueは固有名とベースを分ける。日英併記なら日本語の組を表示に使う。
     name, base_type = _localized_name_lines(name_lines, rarity)
+    vestigial_base = (
+        _VESTIGIAL_BASE_PREFIX.fullmatch(base_type.strip())
+        if rarity.casefold() in {"unique", "ユニーク"} else None
+    )
+    if vestigial_base:
+        # Awakened準拠: Vestigialは固有名ではなくベース名の接頭辞で表される。
+        # 通常Unique名・通常ベースで検索し、専用Implicitと状態条件で個体を絞る。
+        base_type = vestigial_base.group(1).strip()
     properties: dict[str, str] = {}
-    flags: list[str] = []
+    flags: list[str] = ["vestigial"] if vestigial_base else []
     modifiers: list[ItemModifier] = []
     item_level = None
 

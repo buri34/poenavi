@@ -87,7 +87,7 @@ Magic JewelのAdorned向けrarity／corrupted厳密条件まで対応済み。
 - 未鑑定ユニーク候補解決、Legacy discriminator選択
 - 固定Mod除外、可変Mod数による初期選択、完璧／低いほど良いroll
 - Corrupted、Mirrored、Split、Fractured、Synthesised
-- 1～2 Influence、Foil、Foulborn
+- 1～2 Influence、Foil、Foulborn、Vestigial（痕跡）
 - Enchant、特殊Implicit、Synthesised Implicitのstat ID経路
 - 未鑑定Watcher's Eyeのitem level固定
 - Agnerod系のitem levelを75／78／80／82へ正規化

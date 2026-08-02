@@ -32,6 +32,7 @@ I16,状態,Split,Split品は条件なしで含める。切替時はsplit=false�
 I17,状態,Fractured,安全な未Fractured品にfalse条件を持つ,非Fractured条件を生成,準拠,維持,,create-item-filters.ts:303-307,trade.py:build_search_query
 I18,状態,Foil,Foilなら完全一致ON,Foil条件を送信,準拠,維持,,create-item-filters.ts:309-311,tests:test_unique_variant_foil_and_foulborn_conditions_are_sent_exactly
 I19,状態,Foulborn,UniqueはFoulborn状態を一致,Foulborn状態と固有Modを検索,準拠,維持,,create-item-filters.ts:396-400,tests:test_foulborn_unique_keeps_all_variable_explicit_mods_as_filters
+I19a,状態,Vestigial,UniqueはVestigial状態を一致しVestigial Implicitを初期ON,痕跡ベース名を通常名へ戻し痕跡暗黙Modを初期ON。通常Uniqueはvestigial=false,準拠,維持,,create-item-filters.ts:397-403・create-stat-filters.ts:241-247,tests:test_japanese_vestigial_unique_enables_implicit_and_uses_state_filter
 I20,影響,Influence 1～2個,ExactではON・完成品ではOFF,プリセットに応じ同じ,準拠,維持,,create-item-filters.ts:313-317,trade.py:_dedicated_exact_identity_filters
 I21,ilvl,通常装備（概要）,完成品とExact／クラフトベースで初期状態を分ける,同じ。詳細はI21a～I21dへ分割,準拠,維持,,create-item-filters.ts:320-345,trade.py:preset_item_level_filter・ui.py:_configure_item_level
 I21a,ilvl,通常装備の完成品,条件を表示するが初期OFF,表示・初期OFFでAPIへ送信しない,準拠,維持,,create-item-filters.ts:342-343,tests:test_finished_rare_equipment_item_level_is_visible_but_disabled

@@ -661,6 +661,66 @@ def test_foulborn_unique_uses_normal_name_and_enables_variable_mods_in_real_pane
         window.close()
 
 
+def test_japanese_vestigial_unique_shows_enabled_implicit_in_real_panel(qapp):
+    window = PoetoreWindow()
+    try:
+        window._trade_base_type = "Riveted Boots"
+        window._trade_item_name = "Ralakesh's Impatience"
+        window.input_edit.setPlainText("""アイテムクラス: 靴
+レアリティ: ユニーク
+ララケシュの短気
+痕跡 リベットブーツ
+--------
+アーマー: 65
+エナジーシールド: 14
+--------
+装備要求:
+レベル: 40
+筋力: 35
+知性: 35
+--------
+ソケット: B
+--------
+アイテムレベル: 86
+--------
+{ 痕跡暗黙モッド — 元素, 火, 状態異常 }
+近くの敵は焦げ状態になる
+(Scorch: 焦げた敵は元素耐性が-10%される)
+--------
+{ ユニークモッド — 元素, 冷気, 耐性 }
+冷気耐性 +21(15-25)%
+{ ユニークモッド — 混沌, 耐性 }
+混沌耐性 +20(15-25)%
+{ ユニークモッド — スピード }
+移動スピードが18(15-25)%増加する
+{ ユニークモッド — 物理, 状態異常 }
+穢れた血を付与されることがない
+{ ユニークモッド }
+パワーチャージを最大数持っているとして見なされる
+--------
+不死者にとって、
+時代と瞬間に違いはあるのか？
+--------
+メモ: ~b/o 10 mirror
+""")
+        window.parse_current_text()
+
+        assert window._parsed_item.base_type == "リベットブーツ"
+        rows = [
+            window.mod_filter_tree.topLevelItem(index)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        scorch = next(row for row in rows if row.text(3) == "近くの敵は焦げ状態になる")
+        checkbox = window.mod_filter_tree.itemWidget(
+            scorch, 0,
+        ).findChild(QCheckBox, "modFilterCheckbox")
+        assert scorch.text(1) == "痕跡"
+        assert checkbox.isChecked()
+        assert not window.mod_warning.isVisible()
+    finally:
+        window.close()
+
+
 def test_foulborn_fixed_replacement_mod_is_enabled_in_real_panel(qapp):
     window = PoetoreWindow()
     try:

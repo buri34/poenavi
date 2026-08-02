@@ -285,6 +285,7 @@ _FILTER_KIND_LABELS = {
     "necropolis": "ネクロポリス",
     "imbued": "注入",
     "foulborn": "ファウルボーン",
+    "vestigial": "痕跡",
     "essence": "エッセンス",
     "infamous": "悪名高い",
     "corrupted": "コラプト",
