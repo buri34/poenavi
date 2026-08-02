@@ -8,7 +8,8 @@ from src.poetore.metadata import (
 from src.poetore.metadata_builder import (
     audit_awakened_stat_rules, build_minimal_index, build_official_index,
     build_related_item_groups, diff_minimal_indexes,
-    excessive_removal, unresolved_trade_entries, validate_minimal_index,
+    diff_official_trade_entries, excessive_removal, official_trade_entry_snapshot,
+    unresolved_trade_entries, validate_minimal_index,
 )
 from scripts.extract_poetore_stat_rules import extract_rules
 
@@ -51,6 +52,34 @@ def test_awakened_is_comparison_only_for_poetore_stat_rules():
 
     assert audit["changed"] == [{
         "kind": "explicit", "stat_id": "explicit.stat_life", "fields": ["better"],
+    }]
+
+
+def test_official_trade_diff_lists_new_removed_and_reworded_stats():
+    previous = {"entries": [
+        {"kind": "explicit", "stat_id": "same", "japanese": "旧文面 #"},
+        {"kind": "implicit", "stat_id": "removed", "japanese": "削除 #"},
+    ]}
+    current_payload = {"result": [{"entries": [
+        {"type": "explicit", "id": "same", "text": "新文面 #"},
+        {"type": "crafted", "id": "added", "text": "追加 #"},
+        {"type": "pseudo", "id": "ignored", "text": "対象外 #"},
+    ]}]}
+
+    current = official_trade_entry_snapshot(current_payload)
+    diff = diff_official_trade_entries(previous, current)
+
+    assert diff["previous_count"] == 2
+    assert diff["current_count"] == 2
+    assert diff["added"] == [{
+        "kind": "crafted", "stat_id": "added", "japanese": "追加 #",
+    }]
+    assert diff["removed"] == [{
+        "kind": "implicit", "stat_id": "removed", "japanese": "削除 #",
+    }]
+    assert diff["changed"] == [{
+        "kind": "explicit", "stat_id": "same",
+        "previous_japanese": "旧文面 #", "current_japanese": "新文面 #",
     }]
 
 

@@ -12,8 +12,9 @@ from urllib.request import Request, urlopen
 
 from src.poetore.metadata_builder import (
     audit_awakened_stat_rules, build_official_index, build_related_item_groups,
-    diff_minimal_indexes,
+    diff_minimal_indexes, diff_official_trade_entries,
     excessive_removal,
+    official_trade_entry_snapshot,
     unresolved_trade_entries,
     validate_minimal_index,
 )
@@ -23,6 +24,7 @@ DEFAULT_LOCK = Path("scripts/poetore-sources.lock.json")
 DEFAULT_OUTPUT = Path("data/poetore/mod_metadata.json")
 DEFAULT_REPORT = Path("build/poetore-metadata-report.json")
 DEFAULT_STAT_RULES = Path("scripts/poetore-stat-rules.json")
+DEFAULT_OFFICIAL_BASELINE = Path("scripts/poetore-official-stats-baseline.json")
 
 
 def _get(url: str) -> bytes:
@@ -55,6 +57,10 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     parser.add_argument("--stat-rules", type=Path, default=DEFAULT_STAT_RULES)
+    parser.add_argument(
+        "--official-baseline", type=Path, default=DEFAULT_OFFICIAL_BASELINE,
+        help="前回確認済みの公式Trade Stat一覧",
+    )
     parser.add_argument("--apply", action="store_true", help="検査成功後に正本を原子的に置換する")
     parser.add_argument(
         "--refresh-lock", action="store_true",
@@ -156,6 +162,10 @@ def main() -> int:
                 sources[name] = previous["sources"][name]
     awakened = blobs.get("awakened_poe_trade", b"").decode("utf-8").splitlines()
     jp_trade = json.loads(blobs["jp_trade_api"])
+    official_snapshot = official_trade_entry_snapshot(jp_trade)
+    official_changes = diff_official_trade_entries(
+        _load_json(args.official_baseline), official_snapshot,
+    )
     stat_rules = _load_json(args.stat_rules)
     candidate = build_official_index(
         jp_trade,
@@ -195,6 +205,7 @@ def main() -> int:
         "integrity": integrity,
         "diff": differences,
         "unresolved_japanese_stats": unresolved,
+        "official_trade_changes": official_changes,
         "awakened_comparison": awakened_audit,
         "failures": failures,
     }
@@ -204,6 +215,7 @@ def main() -> int:
         f"candidate records={integrity['record_count']} size={len(candidate_bytes)} "
         f"added={len(differences['added'])} removed={len(differences['removed'])} "
         f"changed={len(differences['changed'])} ambiguous={len(integrity['ambiguous_matchers'])} "
+        f"official_added={len(official_changes['added'])} "
         f"unresolved={len(unresolved)} report={args.report}"
     )
     if failures:
@@ -219,6 +231,10 @@ def main() -> int:
             if args.refresh_lock:
                 args.lock.write_text(
                     json.dumps(effective_lock, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+                )
+                args.official_baseline.write_text(
+                    json.dumps(official_snapshot, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
                 )
             print(f"applied {integrity['record_count']} records atomically: {args.output}")
         else:

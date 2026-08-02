@@ -664,6 +664,49 @@ def unresolved_trade_entries(payload: dict, jp_trade: dict) -> list[dict]:
     return rows
 
 
+def official_trade_entry_snapshot(jp_trade: dict) -> dict:
+    """新リーグ差分の基準にする、対応対象の公式Stat一覧を返す。"""
+    entries = [
+        {"kind": kind, "stat_id": stat_id, "japanese": str(entry.get("text", ""))}
+        for (kind, stat_id), entry in sorted(_trade_entries(jp_trade).items())
+        if kind in SUPPORTED_KINDS
+    ]
+    return {"schema_version": 1, "entries": entries}
+
+
+def diff_official_trade_entries(previous: dict, current: dict) -> dict:
+    """公式Trade Statの追加・削除・日本語文面変更をレビュー用に列挙する。"""
+    def keyed(payload: dict) -> dict[tuple[str, str], str]:
+        return {
+            (str(row.get("kind", "")), str(row.get("stat_id", ""))):
+                str(row.get("japanese", ""))
+            for row in payload.get("entries", ())
+        }
+
+    old, new = keyed(previous), keyed(current)
+    return {
+        "previous_count": len(old),
+        "current_count": len(new),
+        "added": [
+            {"kind": kind, "stat_id": stat_id, "japanese": new[(kind, stat_id)]}
+            for kind, stat_id in sorted(set(new) - set(old))
+        ],
+        "removed": [
+            {"kind": kind, "stat_id": stat_id, "japanese": old[(kind, stat_id)]}
+            for kind, stat_id in sorted(set(old) - set(new))
+        ],
+        "changed": [
+            {
+                "kind": kind, "stat_id": stat_id,
+                "previous_japanese": old[(kind, stat_id)],
+                "current_japanese": new[(kind, stat_id)],
+            }
+            for kind, stat_id in sorted(set(old) & set(new))
+            if old[(kind, stat_id)] != new[(kind, stat_id)]
+        ],
+    }
+
+
 def excessive_removal(diff: dict) -> tuple[bool, int]:
     """小規模インデックスは100件、大規模は10%を超える削除を危険とする。"""
     limit = max(100, int(int(diff.get("previous_count", 0)) * 0.10))

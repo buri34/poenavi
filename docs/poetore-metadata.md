@@ -35,6 +35,7 @@ PYTHONPATH=. python scripts/build_poetore_metadata.py
 - ルール、Tier、日本語matcher、曖昧matcher、未解決公式statの監査
 - 件数、重複stat ID、空matcher、10%超または100件超の大量削除検査
 - 候補データを使った全pytest回帰テスト
+- 前回確認済みの公式Stat一覧との差分（追加・削除・日本語文面変更）
 
 Awakened本家が取得不能でも、Mod基盤は次の経路で更新できる。この場合、既存の
 防具ベース・Gem・Unique・関連品の派生情報は保持し、Awakened比較監査だけを省略する。
@@ -51,6 +52,10 @@ PYTHONPATH=. python scripts/build_poetore_metadata.py --official-mods-only
 
 1. 公式Trade API／RePoEを更新し、必要なら比較対象Awakenedのcommitも変更する。
 2. 次のdry-runで新しいSHA、差分レポート、全テスト結果を確認する。
+
+レポートの`official_trade_changes.added`が新リーグで増えたStat、
+`unresolved_japanese_stats`が独自台帳へ未登録のStat全体である。追加Statの仕様を確認して
+台帳へ反映した後、`--refresh-lock --apply`で公式Stat基準も同時に更新する。
 
 ```bash
 PYTHONPATH=. python scripts/build_poetore_metadata.py --refresh-lock
