@@ -700,6 +700,30 @@ Iron Ring
         self.assertEqual(len(item.modifiers), 6)
         self.assertTrue(all(modifier.stat_id for modifier in item.modifiers))
 
+    def test_vestigial_parser_is_generic_across_base_and_implicit_modifier(self):
+        item = parse_item_text("""アイテムクラス: 手袋
+レアリティ: ユニーク
+マリガロの妙技
+痕跡 ディアストーカーの手袋
+--------
+アイテムレベル: 86
+--------
+{ 痕跡暗黙モッド — 物理 }
+プレイヤーが倒した出血状態の敵は爆発し、その最大ライフの5%を物理ダメージとして与える
+--------
+{ ユニークモッド }
+グローバルクリティカル率が50%増加する
+""")
+
+        self.assertEqual(item.name, "マリガロの妙技")
+        self.assertEqual(item.base_type, "ディアストーカーの手袋")
+        self.assertIn("vestigial", item.flags)
+        self.assertEqual(item.modifiers[0].kind, "implicit")
+        self.assertEqual(item.modifiers[0].generation, "vestigial")
+        self.assertEqual(
+            item.modifiers[0].stat_id, "implicit.stat_3133323410",
+        )
+
     def test_replica_dragonfang_reduced_requirements_resolves_signed_stat(self):
         item = parse_item_text("""アイテムクラス: アミュレット
 レアリティ: ユニーク
