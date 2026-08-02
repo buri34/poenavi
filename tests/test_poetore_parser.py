@@ -23,6 +23,40 @@ RARE_JP = """アイテムクラス: 指輪
 
 
 class PoetoreParserTest(unittest.TestCase):
+    def test_japanese_forbidden_shako_random_support_mods_use_indexable_stats(self):
+        for name in ("禁断のシャコー帽", "禁断のシャコー帽（レプリカ）"):
+            item = parse_item_text(f"""アイテムクラス: 兜
+レアリティ: ユニーク
+{name}
+グレートクラウン
+--------
+アイテムレベル: 85
+--------
+{{ ユニークモッド }}
+ソケットされたジェムはレベル8(1-10)クリティカルダメージ増加によりサポートされる
+{{ ユニークモッド }}
+ソケットされたジェムはレベル29(25-35)ミニオンスピードによりサポートされる
+{{ ユニークモッド — 能力値 }}
+全ての能力値 +29(25-30)
+--------
+""")
+
+            with self.subTest(name=name):
+                by_id = {modifier.stat_id: modifier for modifier in item.modifiers}
+                self.assertEqual(
+                    by_id["explicit.indexable_support_67"].values[0], 8.0
+                )
+                self.assertEqual(
+                    by_id["explicit.indexable_support_62"].values[0], 29.0
+                )
+                self.assertEqual(
+                    by_id["explicit.indexable_support_67"].roll_min, 1.0
+                )
+                self.assertEqual(
+                    by_id["explicit.indexable_support_62"].roll_max, 35.0
+                )
+                self.assertNotIn(None, by_id)
+
     def test_japanese_dragonfang_random_skill_mod_uses_indexable_skill_stat(self):
         for name in ("竜の牙の飛翔", "竜の牙の飛翔（レプリカ）"):
             for skill, stat_id in (

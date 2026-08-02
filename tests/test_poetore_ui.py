@@ -2099,6 +2099,44 @@ def test_replica_dragonfang_full_copy_shows_selected_skill_mod(qapp):
         window.close()
 
 
+def test_forbidden_shako_full_copy_shows_both_random_support_mods(qapp):
+    window = PoetoreWindow()
+    try:
+        window._trade_base_type = "Great Crown"
+        window._trade_item_name = "Forbidden Shako"
+        window.input_edit.setPlainText("""アイテムクラス: 兜
+レアリティ: ユニーク
+禁断のシャコー帽
+グレートクラウン
+--------
+装備要求:
+レベル: 68
+--------
+アイテムレベル: 85
+--------
+{ ユニークモッド }
+ソケットされたジェムはレベル8(1-10)クリティカルダメージ増加によりサポートされる
+{ ユニークモッド }
+ソケットされたジェムはレベル29(25-35)ミニオンスピードによりサポートされる
+{ ユニークモッド — 能力値 }
+全ての能力値 +29(25-30)
+""")
+        window.parse_current_text()
+
+        visible_filters = [
+            window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole + 4)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        by_id = {row.stat_id: row for row in visible_filters}
+        assert by_id["explicit.indexable_support_67"].enabled is True
+        assert by_id["explicit.indexable_support_62"].enabled is True
+        assert by_id["explicit.indexable_support_67"].read_value == 8
+        assert by_id["explicit.indexable_support_62"].read_value == 29
+        assert window.mod_warning.isHidden()
+    finally:
+        window.close()
+
+
 def test_itemised_spectre_corpse_item_level_toggle_controls_final_search(qapp):
     from src.poetore.trade import PriceResult
 

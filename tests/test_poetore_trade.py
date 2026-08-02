@@ -2566,6 +2566,51 @@ Onyx Amulet
     } in query_filters
 
 
+def test_forbidden_shako_random_supports_are_visible_and_searchable():
+    for name, trade_name in (
+        ("禁断のシャコー帽", "Forbidden Shako"),
+        ("禁断のシャコー帽（レプリカ）", "Replica Forbidden Shako"),
+    ):
+        item = parse_item_text(f"""アイテムクラス: 兜
+レアリティ: ユニーク
+{name}
+グレートクラウン
+--------
+アイテムレベル: 85
+--------
+{{ ユニークモッド }}
+ソケットされたジェムはレベル8(1-10)クリティカルダメージ増加によりサポートされる
+{{ ユニークモッド }}
+ソケットされたジェムはレベル29(25-35)ミニオンスピードによりサポートされる
+{{ ユニークモッド — 能力値 }}
+全ての能力値 +29(25-30)
+""")
+        filters = resolve_trade_stat_filters(item, trade_name=trade_name)
+        by_id = {row.stat_id: row for row in filters}
+
+        low = by_id["explicit.indexable_support_67"]
+        high = by_id["explicit.indexable_support_62"]
+        assert (low.read_value, low.min_value, low.enabled) == (8, 7, True), name
+        assert (high.read_value, high.min_value, high.enabled) == (29, 28, True), name
+        assert unresolved_modifier_warnings(item, filters) == (), name
+
+        query = build_search_query(
+            item, "Great Crown", trade_name=trade_name,
+            stat_filters=filters,
+        )["query"]
+        query_filters = [
+            row for group in query["stats"] for row in group["filters"]
+        ]
+        assert {
+            "id": "explicit.indexable_support_67",
+            "value": {"min": 7.0},
+        } in query_filters, name
+        assert {
+            "id": "explicit.indexable_support_62",
+            "value": {"min": 28.0},
+        } in query_filters, name
+
+
 def test_embryonic_gift_uses_exact_search_without_unresolved_modifiers():
     item = parse_item_text("""アイテムクラス: 母胎ギフト
 レアリティ: カレンシー

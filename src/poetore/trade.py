@@ -2656,6 +2656,13 @@ def resolve_trade_stat_filters(
             or (
                 unique_item
                 and modifier.kind == "explicit"
+                and (modifier.stat_id or "").startswith(
+                    "explicit.indexable_support_"
+                )
+            )
+            or (
+                unique_item
+                and modifier.kind == "explicit"
                 and fixed_unique_refs is not None
                 and modifier.ref not in fixed_unique_refs
             )
