@@ -3019,7 +3019,7 @@ def resolve_trade_stat_filters(
         has_effect = any(modifier.ref == "#% increased effect" for modifier in item.modifiers)
         if item.rarity.casefold() in {"magic", "マジック"} and has_recovery and not has_effect:
             decorated.append(TradeStatFilter(
-                "explicit.stat_2448920197", "効果増加hybrid Modを除外", None,
+                "explicit.stat_2448920197", "効果減少を含む複合Modを除外", None,
                 "flask hybrid", True, group_type="not", group_key="flask-effect",
                 selection_reason="Charge Recovery単独品を検索",
             ))

@@ -4594,6 +4594,7 @@ def test_flask_hybrid_cluster_and_special_area_rules():
         filters = resolve_trade_stat_filters(flask)
     hybrid = next(row for row in filters if row.kind == "flask hybrid")
     assert hybrid.group_type == "not" and hybrid.enabled
+    assert hybrid.text == "効果減少を含む複合Modを除外"
 
     reduced_hybrid = parse_item_text("""アイテムクラス: ユーティリティフラスコ
 レアリティ: マジック
