@@ -57,6 +57,28 @@ class PoetoreParserTest(unittest.TestCase):
                 )
                 self.assertNotIn(None, by_id)
 
+    def test_japanese_forbidden_shako_supports_ignore_advanced_copy_suffix(self):
+        item = parse_item_text("""アイテムクラス: 兜
+レアリティ: ユニーク
+禁断のシャコー帽
+グレートクラウン
+--------
+アイテムレベル: 85
+--------
+{ ユニークモッド — ジェム }
+ソケットされたジェムはレベル10(1-10)投射物追加(グレーター投射物追加-聖別)によりサポートされる
+{ ユニークモッド — ジェム }
+ソケットされたジェムはレベル25(25-35)元素伝染(グレーター投射物追加-聖別)によりサポートされる
+--------
+""")
+
+        by_id = {modifier.stat_id: modifier for modifier in item.modifiers}
+        self.assertEqual(by_id["explicit.indexable_support_55"].values[0], 10.0)
+        self.assertEqual(by_id["explicit.indexable_support_89"].values[0], 25.0)
+        self.assertEqual(by_id["explicit.indexable_support_55"].roll_min, 1.0)
+        self.assertEqual(by_id["explicit.indexable_support_89"].roll_max, 35.0)
+        self.assertNotIn(None, by_id)
+
     def test_japanese_dragonfang_random_skill_mod_uses_indexable_skill_stat(self):
         for name in ("竜の牙の飛翔", "竜の牙の飛翔（レプリカ）"):
             for skill, stat_id in (

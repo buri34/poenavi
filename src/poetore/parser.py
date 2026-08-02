@@ -149,6 +149,10 @@ _PARENTHETICAL_LINE = re.compile(r"^[（(].*[）)]$")
 _JAPANESE_RANDOM_SKILL_GEM_LEVEL = re.compile(
     r"^全ての(?P<skill>.+?)[（(][^()（）]+[）)]ジェムのレベル\s*[+]\d+(?:\.\d+)?$"
 )
+_JAPANESE_RANDOM_SUPPORT_GEM = re.compile(
+    r"^(?P<prefix>ソケットされたジェムはレベル\d+(?:\.\d+)?(?:[（(][^()（）]+[）)])?)"
+    r"(?P<support>[^()（）]+?)[（(][^()（）]+[）)](?P<suffix>によりサポートされる)$"
+)
 _FOIL_VARIANT_LINE = re.compile(r"^(?:Foil|フォイル)\s*[（(].+[）)]$")
 _CATEGORY_HELP_LINES = {
     "flask": {
@@ -781,6 +785,28 @@ def parse_item_text(text: str) -> ParsedItem:
                     api_matcher = (
                         "全ての#ジェムのレベル +"
                         f"{random_skill.group('skill')}"
+                    )
+                    metadata, option, confidence = (
+                        default_metadata_index().match_with_option(
+                            api_matcher, kind,
+                        )
+                    )
+            if metadata is None and kind == "explicit" and name in {
+                "禁断のシャコー帽", "禁断のシャコー帽（レプリカ）",
+                "Forbidden Shako", "Replica Forbidden Shako",
+            }:
+                random_support = _JAPANESE_RANDOM_SUPPORT_GEM.fullmatch(
+                    metadata_text
+                )
+                if random_support:
+                    # 3.29日本語クライアントの詳細コピーは、選ばれたSupport名の
+                    # 後ろへスキル系統の補足括弧を挿入する場合がある。公式Tradeと
+                    # AwakenedのRandom Support statは括弧なしの定型文なので、
+                    # Shakoの可変Support行に限って補足だけを除いて照合する。
+                    api_matcher = (
+                        f"{random_support.group('prefix')}"
+                        f"{random_support.group('support')}"
+                        f"{random_support.group('suffix')}"
                     )
                     metadata, option, confidence = (
                         default_metadata_index().match_with_option(

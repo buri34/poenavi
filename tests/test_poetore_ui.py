@@ -2137,6 +2137,41 @@ def test_forbidden_shako_full_copy_shows_both_random_support_mods(qapp):
         window.close()
 
 
+def test_forbidden_shako_reported_advanced_copy_shows_both_support_mods(qapp):
+    window = PoetoreWindow()
+    try:
+        window._trade_base_type = "Great Crown"
+        window._trade_item_name = "Forbidden Shako"
+        window.input_edit.setPlainText("""アイテムクラス: 兜
+レアリティ: ユニーク
+禁断のシャコー帽
+グレートクラウン
+--------
+アイテムレベル: 85
+--------
+{ ユニークモッド — ジェム }
+ソケットされたジェムはレベル10(1-10)投射物追加(グレーター投射物追加-聖別)によりサポートされる
+{ ユニークモッド — ジェム }
+ソケットされたジェムはレベル25(25-35)元素伝染(グレーター投射物追加-聖別)によりサポートされる
+{ ユニークモッド — 能力値 }
+全ての能力値 +29(25-30)
+""")
+        window.parse_current_text()
+
+        visible_filters = [
+            window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole + 4)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        by_id = {row.stat_id: row for row in visible_filters}
+        assert by_id["explicit.indexable_support_55"].enabled is True
+        assert by_id["explicit.indexable_support_89"].enabled is True
+        assert by_id["explicit.indexable_support_55"].read_value == 10
+        assert by_id["explicit.indexable_support_89"].read_value == 25
+        assert window.mod_warning.isHidden()
+    finally:
+        window.close()
+
+
 def test_itemised_spectre_corpse_item_level_toggle_controls_final_search(qapp):
     from src.poetore.trade import PriceResult
 

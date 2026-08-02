@@ -2638,6 +2638,45 @@ def test_forbidden_shako_random_supports_are_visible_and_searchable():
         } in query_filters, name
 
 
+def test_forbidden_shako_advanced_japanese_support_names_are_searchable():
+    item = parse_item_text("""アイテムクラス: 兜
+レアリティ: ユニーク
+禁断のシャコー帽
+グレートクラウン
+--------
+アイテムレベル: 85
+--------
+{ ユニークモッド — ジェム }
+ソケットされたジェムはレベル10(1-10)投射物追加(グレーター投射物追加-聖別)によりサポートされる
+{ ユニークモッド — ジェム }
+ソケットされたジェムはレベル25(25-35)元素伝染(グレーター投射物追加-聖別)によりサポートされる
+""")
+    filters = resolve_trade_stat_filters(item, trade_name="Forbidden Shako")
+    by_id = {row.stat_id: row for row in filters}
+
+    assert (by_id["explicit.indexable_support_55"].read_value,
+            by_id["explicit.indexable_support_55"].min_value,
+            by_id["explicit.indexable_support_55"].enabled) == (10, 10, True)
+    assert (by_id["explicit.indexable_support_89"].read_value,
+            by_id["explicit.indexable_support_89"].min_value,
+            by_id["explicit.indexable_support_89"].enabled) == (25, 24, True)
+    assert unresolved_modifier_warnings(item, filters) == ()
+
+    query = build_search_query(
+        item, "Great Crown", trade_name="Forbidden Shako",
+        stat_filters=filters,
+    )["query"]
+    query_filters = [
+        row for group in query["stats"] for row in group["filters"]
+    ]
+    assert {
+        "id": "explicit.indexable_support_55", "value": {"min": 10.0},
+    } in query_filters
+    assert {
+        "id": "explicit.indexable_support_89", "value": {"min": 24.0},
+    } in query_filters
+
+
 def test_embryonic_gift_uses_exact_search_without_unresolved_modifiers():
     item = parse_item_text("""アイテムクラス: 母胎ギフト
 レアリティ: カレンシー
