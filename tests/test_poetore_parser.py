@@ -23,6 +23,30 @@ RARE_JP = """アイテムクラス: 指輪
 
 
 class PoetoreParserTest(unittest.TestCase):
+    def test_japanese_dragonfang_random_skill_mod_uses_indexable_skill_stat(self):
+        for name in ("竜の牙の飛翔", "竜の牙の飛翔（レプリカ）"):
+            for skill, stat_id in (
+                ("ブレードブラスト", "explicit.indexable_skill_217"),
+                ("ブレードヴォーテックス", "explicit.indexable_skill_138"),
+            ):
+                item = parse_item_text(f"""アイテムクラス: アミュレット
+レアリティ: ユニーク
+{name}
+オニキスのアミュレット
+--------
+アイテムレベル: 85
+--------
+{{ ユニークモッド }}
+全ての{skill}(ファイヤーボール-マナインフューズスタッフ)ジェムのレベル +3
+--------
+""")
+
+                with self.subTest(name=name, skill=skill):
+                    modifier = item.modifiers[0]
+                    self.assertEqual(modifier.stat_id, stat_id)
+                    self.assertEqual(modifier.values, (3.0,))
+                    self.assertEqual(modifier.better, 1)
+
     def test_flask_hybrid_reduced_effect_uses_flask_directional_stat(self):
         item = parse_item_text("""アイテムクラス: ユーティリティフラスコ
 レアリティ: マジック

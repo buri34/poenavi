@@ -2524,7 +2524,7 @@ Onyx Amulet
     assert by_query_id["explicit.stat_752930724"] == {"max": -7.0}
 
 
-def test_replica_dragonfang_flavour_text_is_not_an_unresolved_modifier():
+def test_replica_dragonfang_random_skill_is_visible_and_searchable():
     item = parse_item_text("""アイテムクラス: アミュレット
 レアリティ: ユニーク
 Replica Dragonfang's Flight
@@ -2533,7 +2533,7 @@ Onyx Amulet
 アイテムレベル: 83
 --------
 { ユニークモッド }
-全てのブライト(ファイヤーボール-ディバインブラスト)ジェムのレベル +3
+全てのブレードブラスト(ファイヤーボール-マナインフューズスタッフ)ジェムのレベル +3
 { ユニークモッド }
 スキルのリザーブ効率が6(5-10)%増加する
 --------
@@ -2541,9 +2541,29 @@ Onyx Amulet
 何かが起こると警告はされていましたが……」
 ―管理者クォトラ
 """)
-    assert unresolved_modifier_warnings(item) == (
-        "全てのブライト(ファイヤーボール-ディバインブラスト)ジェムのレベル +3",
+    filters = resolve_trade_stat_filters(item)
+    skill = next(
+        row for row in filters
+        if row.stat_id == "explicit.indexable_skill_217"
     )
+    assert skill.text.startswith("全てのブレードブラスト")
+    assert skill.read_value == 3
+    assert skill.min_value == 2
+    assert skill.enabled is True
+    assert skill.hidden_reason == ""
+    assert unresolved_modifier_warnings(item, filters) == ()
+
+    query = build_search_query(
+        item, "Onyx Amulet", trade_name="Replica Dragonfang's Flight",
+        stat_filters=filters,
+    )["query"]
+    query_filters = [
+        row for group in query["stats"] for row in group["filters"]
+    ]
+    assert {
+        "id": "explicit.indexable_skill_217",
+        "value": {"min": 2.0},
+    } in query_filters
 
 
 def test_embryonic_gift_uses_exact_search_without_unresolved_modifiers():

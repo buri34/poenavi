@@ -2052,6 +2052,53 @@ def test_embryonic_gift_full_copy_has_no_unresolved_metadata_warning(qapp):
         window.close()
 
 
+def test_replica_dragonfang_full_copy_shows_selected_skill_mod(qapp):
+    window = PoetoreWindow()
+    try:
+        window._trade_base_type = "Onyx Amulet"
+        window._trade_item_name = "Replica Dragonfang's Flight"
+        window.input_edit.setPlainText("""アイテムクラス: アミュレット
+レアリティ: ユニーク
+竜の牙の飛翔（レプリカ）
+オニキスのアミュレット
+--------
+装備要求:
+レベル: 56
+--------
+アイテムレベル: 85
+--------
+山の如し を割り当てる (enchant)
+--------
+{ 暗黙モッド — 能力値 }
+全ての能力値 +16(10-16)
+--------
+{ ユニークモッド }
+全てのブレードブラスト(ファイヤーボール-マナインフューズスタッフ)ジェムのレベル +3
+{ ユニークモッド — 元素, 耐性 }
+全ての元素耐性 +5(5-10)%
+{ ユニークモッド }
+スキルのリザーブ効率が10(5-10)%増加する
+{ ユニークモッド }
+アイテムおよびジェムの要求能力値が10(10-5)%減少する
+""")
+        window.parse_current_text()
+
+        visible_filters = [
+            window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole + 4)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        skill = next(
+            row for row in visible_filters
+            if row.stat_id == "explicit.indexable_skill_217"
+        )
+        assert skill.text.startswith("全てのブレードブラスト")
+        assert skill.enabled is True
+        assert skill.hidden_reason == ""
+        assert window.mod_warning.isHidden()
+    finally:
+        window.close()
+
+
 def test_itemised_spectre_corpse_item_level_toggle_controls_final_search(qapp):
     from src.poetore.trade import PriceResult
 

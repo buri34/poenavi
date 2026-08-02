@@ -146,6 +146,9 @@ _INLINE_MODIFIER_MARKER = re.compile(
     re.IGNORECASE,
 )
 _PARENTHETICAL_LINE = re.compile(r"^[（(].*[）)]$")
+_JAPANESE_RANDOM_SKILL_GEM_LEVEL = re.compile(
+    r"^全ての(?P<skill>.+?)[（(][^()（）]+[）)]ジェムのレベル\s*[+]\d+(?:\.\d+)?$"
+)
 _FOIL_VARIANT_LINE = re.compile(r"^(?:Foil|フォイル)\s*[（(].+[）)]$")
 _CATEGORY_HELP_LINES = {
     "flask": {
@@ -764,6 +767,26 @@ def parse_item_text(text: str) -> ParsedItem:
                     )
                     direction_inverted = metadata is not None
             stat_alias_key = normalize_stat_text(metadata_text)
+            if metadata is None and kind == "explicit":
+                random_skill = _JAPANESE_RANDOM_SKILL_GEM_LEVEL.fullmatch(
+                    metadata_text
+                )
+                if random_skill:
+                    # The Japanese Trade API exposes Dragonfang's per-skill
+                    # indexable stats as ``全ての#ジェムのレベル +<skill>``.
+                    # Detailed item copy uses the actual, differently ordered
+                    # advanced form with a parenthesised skill-family marker.
+                    # Awakened matches that advanced form; reshape it to the
+                    # API matcher while retaining the selected skill identity.
+                    api_matcher = (
+                        "全ての#ジェムのレベル +"
+                        f"{random_skill.group('skill')}"
+                    )
+                    metadata, option, confidence = (
+                        default_metadata_index().match_with_option(
+                            api_matcher, kind,
+                        )
+                    )
             if metadata is None and stat_alias_key in _STAT_TEXT_ALIASES:
                 metadata, option, confidence = default_metadata_index().match_with_option(
                     _STAT_TEXT_ALIASES[stat_alias_key], kind,
