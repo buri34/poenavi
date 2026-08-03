@@ -3,6 +3,15 @@ from __future__ import annotations
 import sys
 
 
+def clipboard_change_token(qt_clipboard):
+    """Return a value that changes whenever the OS clipboard is rewritten."""
+    if sys.platform == "win32":
+        sequence = _windows_clipboard_sequence_number()
+        if sequence is not None:
+            return ("windows", sequence)
+    return ("qt", qt_clipboard.text())
+
+
 def read_item_clipboard(qt_clipboard) -> str:
     """WindowsではUnicode本文を直接読み、取得できなければQtへフォールバックする。"""
     if sys.platform == "win32":
@@ -44,3 +53,16 @@ def _read_windows_unicode_text() -> str:
             kernel32.GlobalUnlock(handle)
     finally:
         user32.CloseClipboard()
+
+
+def _windows_clipboard_sequence_number() -> int | None:
+    """Read the Windows clipboard generation without opening the clipboard."""
+    try:
+        import ctypes
+
+        user32 = ctypes.windll.user32
+        user32.GetClipboardSequenceNumber.argtypes = []
+        user32.GetClipboardSequenceNumber.restype = ctypes.c_uint
+        return int(user32.GetClipboardSequenceNumber())
+    except (AttributeError, OSError):
+        return None

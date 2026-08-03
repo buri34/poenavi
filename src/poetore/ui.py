@@ -29,7 +29,7 @@ from src.utils.window_focus import (
 )
 
 from .parser import ItemParseError, parse_item_text
-from .clipboard import read_item_clipboard
+from .clipboard import clipboard_change_token, read_item_clipboard
 from .window_position import PlacementContext, capture_placement_context, position_for_context
 from .trade import (
     PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
@@ -2490,13 +2490,42 @@ class PoetoreWindow(QWidget):
         trace = self._pending_performance_trace
         if trace is not None:
             trace.mark("copy_keys_started")
+        previous_token = clipboard_change_token(QApplication.clipboard())
         for key in keys:
             self._capture_keyboard.press(key)
         for key in reversed(keys):
             self._capture_keyboard.release(key)
         if trace is not None:
-            trace.mark("copy_keys_sent", callback_delay_ms=300)
-        QTimer.singleShot(300, callback)
+            trace.mark(
+                "copy_keys_sent", clipboard_poll_ms=10, callback_timeout_ms=300,
+            )
+        generation = getattr(self, "_clipboard_wait_generation", 0) + 1
+        self._clipboard_wait_generation = generation
+        self._wait_for_clipboard_update(previous_token, callback, generation, 0)
+
+    def _wait_for_clipboard_update(self, previous_token, callback, generation, elapsed_ms):
+        """Continue as soon as Ctrl+C rewrites the clipboard, with a safe timeout."""
+        if generation != getattr(self, "_clipboard_wait_generation", None):
+            return
+        current_token = clipboard_change_token(QApplication.clipboard())
+        trace = self._pending_performance_trace
+        if current_token != previous_token:
+            if trace is not None:
+                trace.mark("clipboard_change_detected", wait_ms=elapsed_ms)
+            callback()
+            return
+        if elapsed_ms >= 300:
+            if trace is not None:
+                trace.mark("clipboard_change_timeout", wait_ms=elapsed_ms)
+            callback()
+            return
+        delay_ms = min(10, 300 - elapsed_ms)
+        QTimer.singleShot(
+            delay_ms,
+            lambda: self._wait_for_clipboard_update(
+                previous_token, callback, generation, elapsed_ms + delay_ms,
+            ),
+        )
 
     def _build_capture_error_dialog(self) -> QMessageBox:
         """Create a readable error dialog that matches the dark poetore theme."""

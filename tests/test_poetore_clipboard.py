@@ -1,6 +1,6 @@
 from unittest.mock import Mock, patch
 
-from src.poetore.clipboard import read_item_clipboard
+from src.poetore.clipboard import clipboard_change_token, read_item_clipboard
 
 
 def test_uses_qt_clipboard_outside_windows():
@@ -42,3 +42,19 @@ def test_windows_clipboard_uses_pointer_sized_handle_types():
     from ctypes import wintypes
 
     assert ctypes.sizeof(wintypes.HGLOBAL) == ctypes.sizeof(ctypes.c_void_p)
+
+
+def test_windows_change_token_uses_sequence_number_even_for_identical_text():
+    clipboard = Mock()
+    with patch("src.poetore.clipboard.sys.platform", "win32"), patch(
+        "src.poetore.clipboard._windows_clipboard_sequence_number", return_value=42,
+    ):
+        assert clipboard_change_token(clipboard) == ("windows", 42)
+    clipboard.text.assert_not_called()
+
+
+def test_change_token_falls_back_to_qt_text():
+    clipboard = Mock()
+    clipboard.text.return_value = "現在の本文"
+    with patch("src.poetore.clipboard.sys.platform", "darwin"):
+        assert clipboard_change_token(clipboard) == ("qt", "現在の本文")

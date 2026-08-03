@@ -175,6 +175,61 @@ def test_capture_from_poe_remembers_the_verified_game_window(qapp):
         window.close()
 
 
+def test_copy_continues_immediately_when_clipboard_generation_changes(qapp):
+    window = PoetoreWindow()
+    window._capture_keyboard = Mock()
+    callback = Mock()
+    try:
+        with patch(
+            "src.poetore.ui.clipboard_change_token",
+            side_effect=[("windows", 10), ("windows", 11)],
+        ), patch.object(QTimer, "singleShot") as single_shot:
+            window._send_copy(("ctrl", "c"), callback)
+
+        callback.assert_called_once_with()
+        single_shot.assert_not_called()
+    finally:
+        window.close()
+
+
+def test_copy_polls_until_clipboard_generation_changes(qapp):
+    window = PoetoreWindow()
+    window._clipboard_wait_generation = 1
+    callback = Mock()
+    scheduled = []
+    try:
+        with patch(
+            "src.poetore.ui.clipboard_change_token",
+            side_effect=[("windows", 10), ("windows", 11)],
+        ), patch.object(
+            QTimer, "singleShot", side_effect=lambda delay, fn: scheduled.append((delay, fn)),
+        ):
+            window._wait_for_clipboard_update(("windows", 10), callback, 1, 0)
+            callback.assert_not_called()
+            assert scheduled[0][0] == 10
+            scheduled.pop(0)[1]()
+
+        callback.assert_called_once_with()
+    finally:
+        window.close()
+
+
+def test_copy_uses_existing_capture_after_clipboard_timeout(qapp):
+    window = PoetoreWindow()
+    window._clipboard_wait_generation = 1
+    callback = Mock()
+    try:
+        with patch(
+            "src.poetore.ui.clipboard_change_token", return_value=("windows", 10),
+        ), patch.object(QTimer, "singleShot") as single_shot:
+            window._wait_for_clipboard_update(("windows", 10), callback, 1, 300)
+
+        callback.assert_called_once_with()
+        single_shot.assert_not_called()
+    finally:
+        window.close()
+
+
 def test_poetore_disclaimer_is_in_app_information(qapp):
     dialog = SettingsDialog(current_config={})
     try:
