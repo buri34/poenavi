@@ -12,7 +12,8 @@ import pytest
 
 from src.poetore.ui import (
     PoetoreWindow, _MOD_COLUMN_CHECK, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
-    _UniqueRollSlider, _replace_filters_with_special_chips, show_poetore_window,
+    _UniqueRollSlider, _replace_filters_with_special_chips, prepare_poetore_window,
+    show_poetore_window,
 )
 from src.poetore.window_position import PlacementContext
 from src.poetore.trade import (
@@ -254,6 +255,23 @@ def test_show_poetore_window_is_independent_from_owner(qapp):
     try:
         assert window.parent() is None
         assert owner._poetore_window is window
+    finally:
+        window.close()
+
+
+def test_prepare_poetore_window_has_no_trade_api_side_effect(qapp):
+    owner = Mock()
+    owner._poetore_window = None
+    owner.config = {}
+    with patch.object(PoetoreWindow, "refresh_trade_leagues") as refresh, patch(
+        "src.poetore.trade._request_json",
+    ) as request_json:
+        window = prepare_poetore_window(owner)
+    try:
+        assert owner._poetore_window is window
+        assert not window.isVisible()
+        refresh.assert_not_called()
+        request_json.assert_not_called()
     finally:
         window.close()
 
@@ -1336,6 +1354,25 @@ def test_price_result_is_rendered_in_japanese(qapp):
     assert window.price_list.topLevelItem(0).text(2).endswith("前")
     assert window.price_list.topLevelItem(0).text(3) == "対面"
     window.close()
+
+
+def test_partial_price_result_is_shown_without_finishing_search(qapp):
+    window = PoetoreWindow()
+    window._search_generation = 7
+    window.price_button.setEnabled(False)
+    window.trade_url_button.setEnabled(False)
+    result = PriceResult("Mirage", "q", 42, (
+        PriceListing(4, "chaos", "seller1", "", "Reaver Sword", ""),
+    ))
+    try:
+        window._search_partially_completed(result, 7)
+
+        assert "取得中" in window.price_status.text()
+        assert window.price_list.topLevelItemCount() == 1
+        assert not window.price_button.isEnabled()
+        assert not window.trade_url_button.isEnabled()
+    finally:
+        window.close()
 
 
 def test_relative_listing_time_is_shown_without_online_status(qapp):

@@ -2,15 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from collections import OrderedDict
+from collections.abc import Callable
 import json
 import math
 import re
 from statistics import median
 import threading
 import time
-from urllib.error import HTTPError
 from urllib.parse import quote
-from urllib.request import Request, urlopen
+
+import urllib3
 
 from .models import ParsedItem
 from .performance import SearchPerformanceTrace
@@ -519,6 +520,8 @@ class _TtlLruCache:
 
 
 _trade_response_cache = _TtlLruCache()
+_trade_http_pool = urllib3.PoolManager(num_pools=2, maxsize=1, block=True)
+_trade_http_request_lock = threading.Lock()
 
 
 def _cached_request_json(url: str, payload: dict | None = None) -> tuple[dict, object, bool]:
@@ -537,44 +540,53 @@ def _request_json(url: str, payload: dict | None = None) -> tuple[dict, object]:
     headers = {"Accept": "application/json", "User-Agent": USER_AGENT}
     if data is not None:
         headers["Content-Type"] = "application/json"
-    request = Request(url, data=data, headers=headers)
-    for attempt in range(2):
-        try:
-            with urlopen(request, timeout=15) as response:
-                return json.loads(response.read().decode("utf-8")), response.headers
-        except HTTPError as exc:
-            if exc.code == 429:
-                try:
-                    retry_after = max(0, int(float(exc.headers.get("Retry-After", ""))))
-                except (AttributeError, TypeError, ValueError):
-                    retry_after = 0
-                if retry_after:
-                    retry_minutes = max(1, (retry_after + 59) // 60)
-                    retry_note = f" 約{retry_minutes}分後に、もう一度検索してください。"
-                else:
-                    retry_note = " しばらく時間を置いてから、もう一度検索してください。"
-                raise TradeApiError(
-                    "検索回数が多いため、PoE Trade APIの利用制限に達しました。"
-                    f"{retry_note}"
-                ) from exc
-            try:
-                error_body = exc.read().decode("utf-8", errors="replace")
-                error_payload = json.loads(error_body)
-                api_message = str((error_payload.get("error") or {}).get("message") or "").strip()
-            except (AttributeError, TypeError, ValueError, json.JSONDecodeError):
-                api_message = ""
-            _trade_log(
-                f"request failed: {request.get_method()} {url} error={exc!r} "
-                f"api_message={api_message!r}"
+    method = "POST" if data is not None else "GET"
+    try:
+        # retries=False keeps the request count exactly one per call. The lock
+        # preserves sequential API use; PoolManager only reuses its TCP/TLS link.
+        with _trade_http_request_lock:
+            response = _trade_http_pool.request(
+                method, url, body=data, headers=headers,
+                timeout=urllib3.Timeout(total=15), retries=False,
             )
-            detail = f"（{api_message}）" if api_message else ""
-            raise TradeApiError(
-                f"PoE Trade APIが検索条件を受理しませんでした: HTTP {exc.code}{detail}"
-            ) from exc
-        except Exception as exc:
-            _trade_log(f"request failed: {request.get_method()} {url} error={exc!r}")
-            raise TradeApiError(f"PoE Trade APIへの接続に失敗しました: {exc}") from exc
-    raise TradeApiError("PoE Trade APIへの再接続に失敗しました。")
+    except Exception as exc:
+        _trade_log(f"request failed: {method} {url} error={exc!r}")
+        raise TradeApiError(f"PoE Trade APIへの接続に失敗しました: {exc}") from exc
+    body = response.data.decode("utf-8", errors="replace")
+    if response.status == 429:
+        try:
+            retry_after = max(0, int(float(response.headers.get("Retry-After", ""))))
+        except (AttributeError, TypeError, ValueError):
+            retry_after = 0
+        if retry_after:
+            retry_minutes = max(1, (retry_after + 59) // 60)
+            retry_note = f" 約{retry_minutes}分後に、もう一度検索してください。"
+        else:
+            retry_note = " しばらく時間を置いてから、もう一度検索してください。"
+        raise TradeApiError(
+            "検索回数が多いため、PoE Trade APIの利用制限に達しました。"
+            f"{retry_note}"
+        )
+    if response.status >= 400:
+        try:
+            error_payload = json.loads(body)
+            api_message = str((error_payload.get("error") or {}).get("message") or "").strip()
+        except (TypeError, ValueError, json.JSONDecodeError):
+            api_message = ""
+        _trade_log(
+            f"request failed: {method} {url} status={response.status} "
+            f"api_message={api_message!r}"
+        )
+        detail = f"（{api_message}）" if api_message else ""
+        raise TradeApiError(
+            f"PoE Trade APIが検索条件を受理しませんでした: "
+            f"HTTP {response.status}{detail}"
+        )
+    try:
+        return json.loads(body), response.headers
+    except json.JSONDecodeError as exc:
+        _trade_log(f"request failed: {method} {url} invalid JSON")
+        raise TradeApiError(f"PoE Trade APIから不正な応答を受信しました: {exc}") from exc
 
 
 def active_pc_league() -> str:
@@ -1844,6 +1856,7 @@ def _pseudo_consumed_stat_ids(item: ParsedItem) -> set[str]:
 
 
 _stat_entries_cache: tuple[dict, ...] | None = None
+_stat_entry_indexes_cache = None
 _item_entries_cache: tuple[dict, ...] | None = None
 _jp_item_entries_cache: tuple[dict, ...] | None = None
 _item_groups_cache: tuple[tuple[str, tuple[dict, ...]], ...] | None = None
@@ -1874,6 +1887,27 @@ def _trade_stat_entries() -> tuple[dict, ...]:
             entry for group in data.get("result", ()) for entry in group.get("entries", ())
         )
     return _stat_entries_cache
+
+
+def _trade_stat_entry_indexes(entries: tuple[dict, ...]):
+    """Index official stats once instead of scanning all 13k rows for every mod."""
+    global _stat_entry_indexes_cache
+    if (
+        _stat_entry_indexes_cache is not None
+        and _stat_entry_indexes_cache[0] is entries
+    ):
+        return _stat_entry_indexes_cache[1:]
+    by_id: dict[tuple[str, str], list[tuple[int, dict]]] = {}
+    by_text: dict[tuple[str, str], list[tuple[int, dict]]] = {}
+    for position, entry in enumerate(entries):
+        kind = str(entry.get("type", ""))
+        stat_id = str(entry.get("id", ""))
+        by_id.setdefault((kind, stat_id), []).append((position, entry))
+        comparable = str(entry.get("text", "")).replace(" (ローカル)", "")
+        normalized = _normalized_stat_text(comparable)
+        by_text.setdefault((kind, normalized), []).append((position, entry))
+    _stat_entry_indexes_cache = (entries, by_id, by_text)
+    return by_id, by_text
 
 
 def _trade_item_entries() -> tuple[dict, ...]:
@@ -2623,6 +2657,7 @@ def resolve_trade_stat_filters(
     if item.category == "gem":
         return _gem_filters(item, trade_base_type)
     entries = _trade_stat_entries()
+    entries_by_id, entries_by_text = _trade_stat_entry_indexes(entries)
     resolved: list[TradeStatFilter] = []
     unique_item = _is_unique(item)
     fixed_unique_refs = unique_fixed_stats(
@@ -2686,17 +2721,18 @@ def resolve_trade_stat_filters(
                 hidden_reason = "ユニーク固定値のため初期非表示"
         api_kind = "explicit" if modifier.kind in {"prefix", "suffix"} else modifier.kind
         source = _normalized_stat_text(modifier.text)
+        indexed_candidates = list(entries_by_text.get((api_kind, source), ()))
+        if modifier.stat_id:
+            indexed_candidates.extend(
+                entries_by_id.get((api_kind, modifier.stat_id), ())
+            )
         candidates = []
-        for entry in entries:
-            if entry.get("type") != api_kind:
+        seen_positions = set()
+        for position, entry in sorted(indexed_candidates, key=lambda row: row[0]):
+            if position in seen_positions:
                 continue
-            if modifier.stat_id and str(entry.get("id")) == modifier.stat_id:
-                candidates.append(entry)
-                continue
-            candidate = str(entry.get("text", ""))
-            comparable = candidate.replace(" (ローカル)", "")
-            if _normalized_stat_text(comparable) == source:
-                candidates.append(entry)
+            seen_positions.add(position)
+            candidates.append(entry)
         if not candidates:
             continue
         preferred_stat_id = _CATEGORY_STAT_OVERRIDES.get((
@@ -3556,6 +3592,7 @@ def search_prices(
     include_searing: bool | None = None,
     include_tangled: bool | None = None,
     performance_trace: SearchPerformanceTrace | None = None,
+    partial_result_callback: Callable[[PriceResult], None] | None = None,
 ) -> PriceResult:
     if performance_trace is not None:
         performance_trace.mark("trade_worker_started")
@@ -3680,6 +3717,20 @@ def search_prices(
             ))
         fetched_count += 10
         grouped = _group_price_listings(raw_listings)
+        if (
+            partial_result_callback is not None
+            and fetched_count == 10
+            and len(ids) > fetched_count
+        ):
+            rate_limit = headers.get("X-Rate-Limit-Ip-State", "") if headers else ""
+            partial_result_callback(PriceResult(
+                league, query_id, len(ids), tuple(grouped), rate_limit,
+                "", search_cached or fetch_cached,
+            ))
+            if performance_trace is not None:
+                performance_trace.mark(
+                    "trade_partial_result_emitted", listings=len(grouped),
+                )
         ungrouped = sum(row.listed_times <= 2 for row in grouped)
         # Awakened準拠: 最初の20件は必ず確認し、価格操作らしい同一出品者の
         # 連投が多い時だけ、十分な独立サンプルが得られるまで最大100件取得する。

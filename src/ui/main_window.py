@@ -645,6 +645,7 @@ class MainWindow(QMainWindow):
         self._ef_resize_start_geo = None
         self._ef_resize_start_pos = None
         self._main_window_initialized = True
+        self._prepare_poetore_window()
 
     def _connect_update_controller(self):
         """Connect handlers used after the startup update gate."""
@@ -4189,6 +4190,12 @@ class MainWindow(QMainWindow):
 
         show_poetore_window(self)
 
+    def _prepare_poetore_window(self):
+        """Build poetore after startup without showing it or accessing Trade API."""
+        from src.poetore.ui import prepare_poetore_window
+
+        prepare_poetore_window(self)
+
     def capture_poetore_item(self):
         """設定済みホットキーからぽえとれを開き、PoE上のアイテムを自動取得する。"""
         started_at = time.perf_counter()
@@ -4591,6 +4598,12 @@ class MainWindow(QMainWindow):
         if cheat_sheet_overlay is not None:
             cheat_sheet_overlay.hide_and_save()
             cheat_sheet_overlay.close()
+
+        poetore_window = getattr(self, "_poetore_window", None)
+        if poetore_window is not None:
+            poetore_window.close()
+            poetore_window.deleteLater()
+            self._poetore_window = None
 
         keyboard_listener = getattr(self, "keyboard_listener", None)
         if keyboard_listener:

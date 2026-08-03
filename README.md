@@ -498,6 +498,7 @@ PoE1ではAct 6-10の一部エリアがAct 1-5と同名で登場します。
 - Python 3.12+
 - PySide6 (Qt6)
 - pynput（グローバルホットキー）
+- urllib3（PoE Trade APIのHTTP接続再利用）
 
 ---
 

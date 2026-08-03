@@ -1,9 +1,8 @@
-from io import BytesIO
 from dataclasses import replace
 import json
 import pytest
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
-from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlsplit
 
 from src.poetore.parser import parse_item_text
@@ -292,26 +291,25 @@ def test_awakened_tier_tags_preserve_each_aggregated_mod():
 
 
 def test_trade_api_surfaces_rate_limit_immediately():
-    error = HTTPError(
-        "https://example.invalid", 429, "rate limited", {"Retry-After": "580"},
-        BytesIO(b'{}'),
+    response = SimpleNamespace(
+        status=429, headers={"Retry-After": "580"}, data=b"{}",
     )
-    with patch("src.poetore.trade.urlopen", side_effect=error) as urlopen:
+    with patch("src.poetore.trade._trade_http_pool.request", return_value=response) as request:
         with pytest.raises(Exception) as exc_info:
             _request_json("https://example.invalid", {"query": {}})
     assert str(exc_info.value) == (
         "検索回数が多いため、PoE Trade APIの利用制限に達しました。"
         " 約10分後に、もう一度検索してください。"
     )
-    urlopen.assert_called_once()
+    request.assert_called_once()
+    assert request.call_args.kwargs["retries"] is False
 
 
 def test_trade_api_surfaces_rate_limit_without_retry_after():
-    error = HTTPError(
-        "https://example.invalid", 429, "rate limited", {},
-        BytesIO(b'{}'),
+    response = SimpleNamespace(
+        status=429, headers={}, data=b"{}",
     )
-    with patch("src.poetore.trade.urlopen", side_effect=error):
+    with patch("src.poetore.trade._trade_http_pool.request", return_value=response):
         with pytest.raises(Exception) as exc_info:
             _request_json("https://example.invalid", {"query": {}})
     assert str(exc_info.value) == (
@@ -321,15 +319,27 @@ def test_trade_api_surfaces_rate_limit_without_retry_after():
 
 
 def test_trade_api_surfaces_official_error_message():
-    error = HTTPError(
-        "https://example.invalid", 400, "bad request", {},
-        BytesIO(b'{"error":{"code":2,"message":"Unknown item base type"}}'),
+    response = SimpleNamespace(
+        status=400, headers={},
+        data=b'{"error":{"code":2,"message":"Unknown item base type"}}',
     )
-    with patch("src.poetore.trade.urlopen", side_effect=error):
+    with patch("src.poetore.trade._trade_http_pool.request", return_value=response):
         with pytest.raises(Exception) as exc_info:
             _request_json("https://example.invalid", {"query": {}})
     assert "HTTP 400" in str(exc_info.value)
     assert "Unknown item base type" in str(exc_info.value)
+
+
+def test_trade_http_pool_reuses_connections_without_automatic_retries():
+    response = SimpleNamespace(status=200, headers={}, data=b'{"ok":true}')
+    with patch(
+        "src.poetore.trade._trade_http_pool.request", return_value=response,
+    ) as request:
+        assert _request_json("https://example.invalid/a")[0] == {"ok": True}
+        assert _request_json("https://example.invalid/b")[0] == {"ok": True}
+
+    assert request.call_count == 2
+    assert all(call.kwargs["retries"] is False for call in request.call_args_list)
 
 
 def test_weapon_search_uses_english_base_rarity_and_comparable_pdps():
@@ -3415,6 +3425,7 @@ def test_search_prices_fetches_at_least_twenty_results():
             "item": {"baseType": "Reaver Sword"},
         } for index in range(10)]}, {})
 
+    partial_results = []
     with patch(
         "src.poetore.trade._request_json",
         side_effect=[search, block(0), block(10)],
@@ -3422,9 +3433,15 @@ def test_search_prices_fetches_at_least_twenty_results():
         "src.poetore.trade._japanese_trade_item_type",
         return_value="略奪者の剣",
     ):
-        result = search_prices(parse_item_text(ITEM), "Reaver Sword", "Mirage")
+        result = search_prices(
+            parse_item_text(ITEM), "Reaver Sword", "Mirage",
+            partial_result_callback=partial_results.append,
+        )
 
     assert request.call_count == 3
+    assert len(partial_results) == 1
+    assert len(partial_results[0].listings) == 10
+    assert partial_results[0].web_url == ""
     assert len(result.listings) == 20
 
 

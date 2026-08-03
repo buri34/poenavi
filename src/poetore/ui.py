@@ -48,6 +48,7 @@ from .performance import SearchPerformanceTrace, start_search_trace
 
 class _TradeSignals(QObject):
     completed = Signal(object, object, int)
+    partial_completed = Signal(object, int)
     failed = Signal(str, int)
     unique_candidates_ready = Signal(object)
     unique_variants_ready = Signal(object)
@@ -1380,6 +1381,7 @@ class PoetoreWindow(QWidget):
         self.apply_result_display_size()
         self._trade_signals = _TradeSignals(self)
         self._trade_signals.completed.connect(self._search_completed)
+        self._trade_signals.partial_completed.connect(self._search_partially_completed)
         self._trade_signals.failed.connect(self._show_price_error)
         self._trade_signals.unique_candidates_ready.connect(self._show_unique_candidates)
         self._trade_signals.unique_variants_ready.connect(self._show_unique_variants)
@@ -2907,6 +2909,11 @@ class PoetoreWindow(QWidget):
                     include_searing=include_searing,
                     include_tangled=include_tangled,
                     performance_trace=trace,
+                    partial_result_callback=lambda partial: (
+                        self._trade_signals.partial_completed.emit(
+                            partial, search_generation,
+                        )
+                    ),
                 )
             except (TradeApiError, ValueError) as exc:
                 trace.mark("search_failed", error_type=type(exc).__name__)
@@ -3945,10 +3952,22 @@ class PoetoreWindow(QWidget):
                 cached=result.cached,
             )
 
-    def _show_price_result(self, result: PriceResult):
-        self.price_button.setEnabled(True)
-        self._last_trade_url = result.web_url
-        self.trade_url_button.setEnabled(bool(result.web_url))
+    def _search_partially_completed(self, result: PriceResult, search_generation: int):
+        if search_generation != self._search_generation:
+            return
+        self._show_price_result(result, partial=True)
+        trace = self._search_performance_traces.get(search_generation)
+        if trace is not None:
+            trace.mark(
+                "trade_partial_result_displayed", listings=len(result.listings),
+            )
+
+    def _show_price_result(self, result: PriceResult, partial: bool = False):
+        if not partial:
+            self.price_button.setEnabled(True)
+            self._last_trade_url = result.web_url
+            self.trade_url_button.setEnabled(bool(result.web_url))
+        self.price_list.clear()
         cache_note = " / キャッシュ" if result.cached else ""
         if not result.listings:
             self.price_status.setText(
@@ -3966,8 +3985,10 @@ class PoetoreWindow(QWidget):
         samples = ", ".join(
             f"{row.amount:g} {row.currency}" for row in priced[:5]
         ) or "なし"
+        progress_note = "取得中 / " if partial else ""
         self.price_status.setText(
-            f"{result.league}: 候補{result.total}件 / 取得{len(result.listings)}件{cache_note} | "
+            f"{result.league}: {progress_note}候補{result.total}件 / "
+            f"取得{len(result.listings)}件{cache_note} | "
             f"中央値 {medians} | 安値例 {samples}"
         )
         item = getattr(self, "_parsed_item", None)
@@ -4072,8 +4093,8 @@ class PoetoreWindow(QWidget):
             QDesktopServices.openUrl(QUrl(self._last_trade_url))
 
 
-def show_poetore_window(owner, activate=True):
-    """ownerが参照を保持し、二重起動せず独立表示できる公開エントリ。"""
+def prepare_poetore_window(owner):
+    """Create the reusable poetore window without showing it or making API calls."""
     window = getattr(owner, "_poetore_window", None)
     if window is None:
         # QWidgetの親子関係を持たせると、本体のdisabled/入力透過状態が
@@ -4086,6 +4107,12 @@ def show_poetore_window(owner, activate=True):
             save_config=ConfigManager.save_config if isinstance(app_config, dict) else None,
         )
         owner._poetore_window = window
+    return window
+
+
+def show_poetore_window(owner, activate=True):
+    """ownerが参照を保持し、二重起動せず独立表示できる公開エントリ。"""
+    window = prepare_poetore_window(owner)
     if isinstance(getattr(owner, "config", None), dict):
         window.apply_result_display_size()
         window.refresh_trade_leagues()

@@ -1,3 +1,4 @@
 PySide6
 keyboard
 pynput
+urllib3

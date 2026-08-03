@@ -154,6 +154,7 @@ class PoetoreModeWindow(QMainWindow):
         self._rate_timer.timeout.connect(self.refresh_currency_rate)
         self._rate_timer.start()
         QTimer.singleShot(0, self.refresh_currency_rate)
+        self._prepare_poetore_window()
 
     @staticmethod
     def _asset_path(filename):
@@ -429,6 +430,12 @@ class PoetoreModeWindow(QMainWindow):
         trace.mark("poetore_window_ready")
         window.capture_from_poe(trace)
 
+    def _prepare_poetore_window(self):
+        """Build the search panel after startup without issuing Trade requests."""
+        from src.poetore.ui import prepare_poetore_window
+
+        prepare_poetore_window(self)
+
     def open_memo(self):
         if self._memo_dialog is not None:
             if self._memo_dialog.isVisible():
@@ -530,4 +537,8 @@ class PoetoreModeWindow(QMainWindow):
         if self._cheat_sheet_overlay is not None:
             self._cheat_sheet_overlay.hide_and_save()
             self._cheat_sheet_overlay.close()
+        if getattr(self, "_poetore_window", None) is not None:
+            self._poetore_window.close()
+            self._poetore_window.deleteLater()
+            self._poetore_window = None
         super().closeEvent(event)
