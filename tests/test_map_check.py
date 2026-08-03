@@ -109,6 +109,24 @@ def test_manager_uses_numeric_profiles_and_lists_current_plus_outdated_defaults(
     dialog.close()
 
 
+def test_manager_orders_normal_then_uber_map_then_heist_mods():
+    QApplication.instance() or QApplication([])
+    dialog = MapModManagerDialog(default_map_check_config())
+    scopes = [entry.scope for entry, _tag in dialog._rows()]
+    assert scopes == sorted(
+        scopes,
+        key={
+            "normal": 0,
+            "ubermap_exclusive": 1,
+            "heist_exclusive": 2,
+            "outdated": 3,
+        }.get,
+    )
+    assert scopes.index("ubermap_exclusive") > scopes.index("normal")
+    assert scopes.index("heist_exclusive") > scopes.index("ubermap_exclusive")
+    dialog.close()
+
+
 def test_non_map_clipboard_is_rejected_without_trade_search():
     app = QApplication.instance() or QApplication([])
     app.clipboard().setText("""アイテムクラス: 指輪

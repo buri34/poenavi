@@ -115,6 +115,13 @@ class MapModManagerDialog(QDialog):
             if query and query not in searchable:
                 continue
             result.append((entry, tag))
+        scope_order = {
+            "normal": 0,
+            "ubermap_exclusive": 1,
+            "heist_exclusive": 2,
+            "outdated": 3,
+        }
+        result.sort(key=lambda row: scope_order.get(row[0].scope, 3))
         return result
 
     def _refresh(self):
