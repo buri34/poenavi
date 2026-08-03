@@ -13,6 +13,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from .models import ParsedItem
+from .performance import SearchPerformanceTrace
 from .metadata import (
     base_armour_bounds, default_metadata_index, gem_metadata, normalize_stat_text,
     pseudo_definitions, pseudo_relations, unique_fixed_stats, unique_icon_url,
@@ -3554,11 +3555,16 @@ def search_prices(
     include_foil: bool | None = None,
     include_searing: bool | None = None,
     include_tangled: bool | None = None,
+    performance_trace: SearchPerformanceTrace | None = None,
 ) -> PriceResult:
+    if performance_trace is not None:
+        performance_trace.mark("trade_worker_started")
     league = league or active_pc_league()
     trade_base_type, trade_name = english_trade_identity(
         item, trade_base_type, trade_name,
     )
+    if performance_trace is not None:
+        performance_trace.mark("trade_identity_resolved", league=league)
     if (item.rarity.casefold() in {"magic", "マジック"}
             and trade_base_type and item.name == item.base_type):
         # 日本語詳細コピーのMagic品はAffix込み英語名がname/base_typeの両方へ
@@ -3574,6 +3580,10 @@ def search_prices(
         include_unidentified, include_veiled, include_foil,
         include_searing, include_tangled,
     )
+    if performance_trace is not None:
+        performance_trace.mark(
+            "trade_query_built", stat_filters=len(stat_filters), preset=preset,
+        )
     _require_english_search_identity(payload)
     search_url = f"{API_ROOT}/search/{quote(league, safe='')}"
     _trade_log(
@@ -3584,11 +3594,19 @@ def search_prices(
         f"api_currency={TRADE_CURRENCY_OPTIONS[trade_currency]!r} url={search_url}"
     )
     _trade_log_payload(payload)
+    if performance_trace is not None:
+        performance_trace.mark("trade_search_request_started")
     search, headers, search_cached = _cached_request_json(
         search_url, payload,
     )
     query_id = str(search.get("id", ""))
     ids = list(search.get("result", ()))
+    if performance_trace is not None:
+        performance_trace.mark(
+            "trade_search_response",
+            cached=search_cached,
+            candidates=len(ids),
+        )
     _trade_log(f"search response: query_id={query_id!r} candidates={len(ids)}")
     if not query_id:
         _trade_log("search failed: response did not contain a query ID")
@@ -3597,13 +3615,27 @@ def search_prices(
     fetch_cached = False
     fetched_count = 0
     while fetched_count < min(len(ids), 100):
+        block_number = fetched_count // 10 + 1
         fetch_ids = ",".join(ids[fetched_count:fetched_count + 10])
         fetch_url = f"{API_ROOT}/fetch/{fetch_ids}?query={quote(query_id)}"
         _trade_log(
             f"request: GET {fetch_url} "
             f"(candidates {fetched_count + 1}-{min(fetched_count + 10, len(ids))})"
         )
+        if performance_trace is not None:
+            performance_trace.mark(
+                "trade_fetch_started",
+                block=block_number,
+                first_candidate=fetched_count + 1,
+            )
         fetched, _, block_cached = _cached_request_json(fetch_url)
+        if performance_trace is not None:
+            performance_trace.mark(
+                "trade_fetch_response",
+                block=block_number,
+                cached=block_cached,
+                rows=len(fetched.get("result", ())),
+            )
         fetch_cached = fetch_cached or block_cached
         for row in fetched.get("result", ()):
             listing = row.get("listing", {})
@@ -3660,6 +3692,13 @@ def search_prices(
         f"priced_listings={len(listings)} rate_limit={rate_limit!r} "
         f"raw_listings={len(raw_listings)}"
     )
+    if performance_trace is not None:
+        performance_trace.mark(
+            "trade_listings_built",
+            fetch_blocks=(fetched_count + 9) // 10,
+            listings=len(listings),
+            candidates=len(ids),
+        )
     # 検索IDはAPIホストごとに管理されるため、www側のIDをjp側へ渡せない。
     # 日本語アイテム文から得た名称を使った検索JSONをURLへ埋め込み、
     # 日本語Trade画面自身に検索状態を読み込ませる。
@@ -3701,6 +3740,8 @@ def search_prices(
         f"https://jp.pathofexile.com/trade/search/{quote(league, safe='')}"
         f"?q={encoded_query}"
     )
+    if performance_trace is not None:
+        performance_trace.mark("trade_worker_completed")
     return PriceResult(
         league, query_id, len(ids), tuple(listings), rate_limit,
         web_url, search_cached or fetch_cached,

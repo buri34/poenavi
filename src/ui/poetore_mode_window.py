@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import threading
+import time
 
 from PySide6.QtCore import QObject, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QKeySequence, QPixmap
@@ -417,9 +418,16 @@ class PoetoreModeWindow(QMainWindow):
             self.execute_chat_command("/monastery")
 
     def capture_poetore_item(self):
+        started_at = time.perf_counter()
+        from src.poetore.performance import start_search_trace
+
+        trace = start_search_trace("alt_d_poetore_mode", started_at=started_at)
+        trace.mark("hotkey_dispatched")
         from src.poetore.ui import show_poetore_window
 
-        show_poetore_window(self, activate=False).capture_from_poe()
+        window = show_poetore_window(self, activate=False)
+        trace.mark("poetore_window_ready")
+        window.capture_from_poe(trace)
 
     def open_memo(self):
         if self._memo_dialog is not None:

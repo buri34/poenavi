@@ -3304,6 +3304,14 @@ def test_search_range_does_not_reduce_discrete_socket_counts():
 
 
 def test_search_prices_keeps_item_and_seller_for_list_display():
+    class Trace:
+        def __init__(self):
+            self.events = []
+
+        def mark(self, event, **details):
+            self.events.append((event, details))
+
+    trace = Trace()
     _trade_response_cache.clear()
     search = ({"id": "query1", "result": ["item1"]}, {"X-Rate-Limit-Ip-State": "1:10:0"})
     fetch = ({"result": [{
@@ -3327,13 +3335,30 @@ def test_search_prices_keeps_item_and_seller_for_list_display():
         "src.poetore.trade._japanese_trade_item_type",
         return_value="略奪者の剣",
     ):
-        result = search_prices(parse_item_text(ITEM), "Reaver Sword", "Mirage")
+        result = search_prices(
+            parse_item_text(ITEM), "Reaver Sword", "Mirage",
+            performance_trace=trace,
+        )
     assert result.listings == (
         PriceListing(
             4, "chaos", "seller", "Doom Sever", "Reaver Sword",
             "2026-07-22T09:21:00Z", 86, 20, 23, 3,
         ),
     )
+    events = [event for event, _details in trace.events]
+    assert events == [
+        "trade_worker_started",
+        "trade_identity_resolved",
+        "trade_query_built",
+        "trade_search_request_started",
+        "trade_search_response",
+        "trade_fetch_started",
+        "trade_fetch_response",
+        "trade_listings_built",
+        "trade_worker_completed",
+    ]
+    assert trace.events[4][1]["candidates"] == 1
+    assert trace.events[6][1]["rows"] == 1
 
 
 def test_search_prices_classifies_face_to_face_instant_and_unpriced_listings():

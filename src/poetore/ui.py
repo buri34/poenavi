@@ -43,6 +43,7 @@ from .trade import (
 )
 from .poe_ninja import PoeNinjaPrice, default_poe_ninja_service
 from .metadata import related_item_group
+from .performance import SearchPerformanceTrace, start_search_trace
 
 
 class _TradeSignals(QObject):
@@ -1400,6 +1401,10 @@ class PoetoreWindow(QWidget):
         self._last_trade_url = ""
         self._last_poe_ninja_url = ""
         self._poe_ninja_item_key = None
+        self._poe_ninja_performance_traces = {}
+        self._pending_performance_trace = None
+        self._current_performance_trace = None
+        self._search_performance_traces = {}
         self._divine_rate_key = None
         self._divine_rate_retry_after = 0.0
         self._connect_search_trigger_signals()
@@ -2162,13 +2167,19 @@ class PoetoreWindow(QWidget):
         if key == self._poe_ninja_item_key:
             return
         self._poe_ninja_item_key = key
+        trace = self._current_performance_trace
         self._hide_poe_ninja_price(key)
         self._hide_related_items(key)
         self._queue_divine_rate(league)
+        if trace is not None:
+            self._poe_ninja_performance_traces[key] = trace
+            trace.mark("poe_ninja_queued", league=league)
         if not league:
             return
 
         def run():
+            if trace is not None:
+                trace.mark("poe_ninja_lookup_started")
             try:
                 result = default_poe_ninja_service.lookup(
                     item, league,
@@ -2177,9 +2188,17 @@ class PoetoreWindow(QWidget):
                 )
                 related = self._lookup_related_items(item, league, result)
             except Exception:
+                if trace is not None:
+                    trace.mark("poe_ninja_lookup_failed")
                 self._trade_signals.poe_ninja_failed.emit(key)
                 self._trade_signals.related_items_failed.emit(key)
             else:
+                if trace is not None:
+                    trace.mark(
+                        "poe_ninja_lookup_completed",
+                        matched=result is not None,
+                        related=bool(related),
+                    )
                 if result is None:
                     self._trade_signals.poe_ninja_failed.emit(key)
                 else:
@@ -2329,6 +2348,9 @@ class PoetoreWindow(QWidget):
 
     def _show_poe_ninja_price(self, key, price: PoeNinjaPrice):
         if key != self._poe_ninja_item_key:
+            trace = self._poe_ninja_performance_traces.pop(key, None)
+            if trace is not None:
+                trace.mark("stale_poe_ninja_result_discarded")
             return
         amount, currency = price.display_price_parts()
         self.poe_ninja_price_value.setText(amount)
@@ -2351,10 +2373,19 @@ class PoetoreWindow(QWidget):
         self.poe_ninja_trend_chart.setPoints(price.graph_points())
         self._last_poe_ninja_url = price.url
         self.poe_ninja_price_panel.show()
+        trace = self._poe_ninja_performance_traces.pop(key, None)
+        if trace is not None:
+            trace.mark("poe_ninja_result_displayed")
 
     def _hide_poe_ninja_price(self, key=None):
         if key is not None and key != self._poe_ninja_item_key:
+            trace = self._poe_ninja_performance_traces.pop(key, None)
+            if trace is not None:
+                trace.mark("stale_poe_ninja_error_discarded")
             return
+        trace = self._poe_ninja_performance_traces.pop(key, None) if key is not None else None
+        if trace is not None:
+            trace.mark("poe_ninja_result_unavailable")
         self.poe_ninja_price_panel.hide()
         self.poe_ninja_price_value.setText("—")
         self.poe_ninja_price_multiplier.show()
@@ -2437,9 +2468,13 @@ class PoetoreWindow(QWidget):
             self._focus_signal_connected = False
         super().closeEvent(event)
 
-    def capture_from_poe(self):
+    def capture_from_poe(self, performance_trace: SearchPerformanceTrace | None = None):
         """PoE 3.29以降の詳細形式コピーを一度だけ取得して解析する。"""
         from pynput.keyboard import Controller, Key
+
+        trace = performance_trace or start_search_trace("alt_d_direct")
+        self._pending_performance_trace = trace
+        trace.mark("capture_started")
 
         # この時点ではPoEが前面。コピー後にぽえとれがフォーカスを取る前に保存する。
         self._placement_context = capture_placement_context()
@@ -2448,13 +2483,19 @@ class PoetoreWindow(QWidget):
             foreground if is_path_of_exile_window(foreground) else None
         )
         self._capture_keyboard = Controller()
+        trace.mark("copy_scheduled", delay_ms=250)
         QTimer.singleShot(250, lambda: self._send_copy((Key.ctrl, "c"), self._capture_item_copy))
 
     def _send_copy(self, keys, callback):
+        trace = self._pending_performance_trace
+        if trace is not None:
+            trace.mark("copy_keys_started")
         for key in keys:
             self._capture_keyboard.press(key)
         for key in reversed(keys):
             self._capture_keyboard.release(key)
+        if trace is not None:
+            trace.mark("copy_keys_sent", callback_delay_ms=300)
         QTimer.singleShot(300, callback)
 
     def _build_capture_error_dialog(self) -> QMessageBox:
@@ -2502,12 +2543,22 @@ class PoetoreWindow(QWidget):
         return message
 
     def _capture_item_copy(self):
+        trace = self._pending_performance_trace
         copied_text = read_item_clipboard(QApplication.clipboard())
+        if trace is not None:
+            trace.mark("clipboard_read", characters=len(copied_text))
         try:
             item = parse_item_text(copied_text)
         except ItemParseError:
+            if trace is not None:
+                trace.mark("clipboard_parse_failed")
+            self._pending_performance_trace = None
             self._build_capture_error_dialog().exec()
             return
+        if trace is not None:
+            trace.mark(
+                "clipboard_parsed", category=item.category, modifiers=len(item.modifiers),
+            )
         copied_name = item.name if item.rarity.casefold() in {"unique", "ユニーク"} else None
         try:
             self._trade_base_type, self._trade_item_name = english_trade_identity(
@@ -2516,12 +2567,18 @@ class PoetoreWindow(QWidget):
         except TradeApiError:
             # 公式items取得が一時的に失敗しても、検索スレッド側で再試行できる。
             self._trade_base_type, self._trade_item_name = item.base_type, copied_name
+        if trace is not None:
+            trace.mark("capture_identity_resolved")
         self._preset_item_key = None
         self._reset_unique_candidates()
         self.mod_filter_tree.clear()
         self.input_edit.setPlainText(copied_text)
         self.parse_current_text()
+        if trace is not None:
+            trace.mark("capture_ui_populated")
         self.show_at_context(self._placement_context, activate=True)
+        if trace is not None:
+            trace.mark("window_shown")
         self.search_current_item()
 
     def _close_and_return_to_poe(self):
@@ -2572,12 +2629,19 @@ class PoetoreWindow(QWidget):
             self.close()
 
     def parse_current_text(self):
+        trace = self._current_performance_trace or self._pending_performance_trace
+        if trace is not None:
+            trace.mark("ui_parse_started")
         self._parsed_item = None
         try:
             item = parse_item_text(self.input_edit.toPlainText())
         except ItemParseError as exc:
+            if trace is not None:
+                trace.mark("ui_parse_failed")
             QMessageBox.warning(self, "解析できませんでした", str(exc))
             return
+        if trace is not None:
+            trace.mark("ui_parse_completed", modifiers=len(item.modifiers))
         is_new_item = item.raw_text != self._active_item_key
         if is_new_item:
             self._active_item_key = item.raw_text
@@ -2617,7 +2681,14 @@ class PoetoreWindow(QWidget):
         self._parsed_item = item
         if self.mod_filter_tree.topLevelItemCount() == 0:
             preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
-            self._populate_stat_filters(self._resolved_trade_filters(item, preset))
+            if trace is not None:
+                trace.mark("initial_filter_resolution_started")
+            initial_filters = self._resolved_trade_filters(item, preset)
+            if trace is not None:
+                trace.mark(
+                    "initial_filter_resolution_completed", filters=len(initial_filters),
+                )
+            self._populate_stat_filters(initial_filters)
         if is_new_item:
             self._reset_mod_conditions_for_item()
         warnings = unresolved_modifier_warnings(
@@ -2656,19 +2727,29 @@ class PoetoreWindow(QWidget):
             self.price_button.setEnabled(True)
         if self.isVisible():
             self._queue_poe_ninja_price(item)
+        if trace is not None:
+            trace.mark("ui_parse_applied")
 
     def search_current_item(self):
+        trace = self._pending_performance_trace or start_search_trace("manual_search")
+        self._pending_performance_trace = None
+        self._current_performance_trace = trace
+        trace.mark("search_invoked")
         # 前回のUniqueで隠し候補を開いたまま次を検索すると、通常候補が
         # 空に見えて誤解を招く。チェック状態は検索へ残し、表示だけ戻す。
         self.hidden_mods_toggle.setChecked(False)
         self.parse_current_text()
         item = getattr(self, "_parsed_item", None)
         if item is None:
+            trace.mark("search_parse_failed")
+            self._current_performance_trace = None
             return
+        trace.mark("search_ui_prepared")
         self._has_searched_current_item = True
         self._search_dirty = False
         self._search_generation += 1
         search_generation = self._search_generation
+        self._search_performance_traces[search_generation] = trace
         self.price_button.setEnabled(False)
         self.trade_url_button.setEnabled(False)
         self.price_list.clear()
@@ -2732,6 +2813,7 @@ class PoetoreWindow(QWidget):
 
         def run():
             try:
+                trace.mark("filter_resolution_started")
                 initial_filters = self._resolved_trade_filters(
                     item, preset,
                 ) if needs_initial_filters else ()
@@ -2754,6 +2836,9 @@ class PoetoreWindow(QWidget):
                     )
                 effective_filters = _replace_filters_with_special_chips(
                     effective_filters, influence_filters, special_filters,
+                )
+                trace.mark(
+                    "filter_resolution_completed", filters=len(effective_filters),
                 )
                 if item.rarity.casefold() in {"unique", "ユニーク"} and "unidentified" in item.flags and not trade_name:
                     candidates = unique_candidate_details(self._trade_base_type or item.base_type)
@@ -2792,13 +2877,17 @@ class PoetoreWindow(QWidget):
                     include_foil=include_foil,
                     include_searing=include_searing,
                     include_tangled=include_tangled,
+                    performance_trace=trace,
                 )
             except (TradeApiError, ValueError) as exc:
+                trace.mark("search_failed", error_type=type(exc).__name__)
                 self._trade_signals.failed.emit(str(exc), search_generation)
             else:
+                trace.mark("search_result_signal_emitted")
                 self._trade_signals.completed.emit(result, initial_filters, search_generation)
 
         threading.Thread(target=run, daemon=True).start()
+        self._current_performance_trace = None
 
     def _configure_trade_presets(self, item):
         key = item.raw_text
@@ -3811,11 +3900,21 @@ class PoetoreWindow(QWidget):
                 slider.valueCommitted.connect(commit_slider)
 
     def _search_completed(self, result: PriceResult, initial_filters, search_generation: int):
+        trace = self._search_performance_traces.pop(search_generation, None)
         if search_generation != self._search_generation:
+            if trace is not None:
+                trace.mark("stale_search_result_discarded")
             return
         if initial_filters:
             self._populate_stat_filters(initial_filters)
         self._show_price_result(result)
+        if trace is not None:
+            trace.mark(
+                "trade_result_displayed",
+                listings=len(result.listings),
+                candidates=result.total,
+                cached=result.cached,
+            )
 
     def _show_price_result(self, result: PriceResult):
         self.price_button.setEnabled(True)
@@ -3928,11 +4027,16 @@ class PoetoreWindow(QWidget):
         return f"{days // 365}年前"
 
     def _show_price_error(self, message: str, search_generation: int):
+        trace = self._search_performance_traces.pop(search_generation, None)
         if search_generation != self._search_generation:
+            if trace is not None:
+                trace.mark("stale_search_error_discarded")
             return
         self.price_button.setEnabled(True)
         self.price_list.clear()
         self.price_status.setText(message)
+        if trace is not None:
+            trace.mark("search_error_displayed")
 
     def _open_trade_url(self):
         if self._last_trade_url:

@@ -4191,10 +4191,19 @@ class MainWindow(QMainWindow):
 
     def capture_poetore_item(self):
         """設定済みホットキーからぽえとれを開き、PoE上のアイテムを自動取得する。"""
+        started_at = time.perf_counter()
+        from src.poetore.performance import start_search_trace
+
+        trace = start_search_trace(
+            "alt_d_poetore_from_poenavi", started_at=started_at,
+        )
+        trace.mark("hotkey_dispatched")
         from src.poetore.ui import show_poetore_window
 
         # コピーが終わるまでPoEからフォーカスを奪わない。
-        show_poetore_window(self, activate=False).capture_from_poe()
+        window = show_poetore_window(self, activate=False)
+        trace.mark("poetore_window_ready")
+        window.capture_from_poe(trace)
 
     def _update_poetore_hotkey_tooltip(self):
         hotkey = self.config.get("hotkeys", {}).get("poetore_capture", "alt+d")
