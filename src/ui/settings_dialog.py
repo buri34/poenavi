@@ -2342,7 +2342,9 @@ class SettingsDialog(QDialog):
         guide_reset_description = QLabel(
             "新しいキャラクターの開始は通常、自動で検知されるため操作は不要です。\n"
             "ガイドの訪問回数や進行状況が前のキャラクターから残っている場合のみ、"
-            "初期状態に戻してください。タイマーの記録や設定は変更されません。"
+            "初期状態に戻してください。タイマーの記録や設定は変更されません。\n"
+            "リセット後にAct 6以降を攻略中の場合は、ぽえなび本体の「Act 1-5」を"
+            "クリックして「Act 6-10」表示へ切り替えてください。"
         )
         guide_reset_description.setObjectName("guideProgressResetDescription")
         guide_reset_description.setWordWrap(True)
