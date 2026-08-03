@@ -1904,18 +1904,6 @@ class SettingsDialog(QDialog):
         Styles.apply_checkbox_style(self.logout_enabled_cb)
         group_layout.addWidget(self.logout_enabled_cb)
 
-        self.stash_tab_scroll_enabled_cb = QCheckBox(
-            "Ctrl＋マウスホイールでスタッシュタブを切り替える"
-        )
-        self.stash_tab_scroll_enabled_cb.setChecked(
-            self.current_config.get("stash_tab_scroll_enabled", True)
-        )
-        self.stash_tab_scroll_enabled_cb.setToolTip(
-            "Awakened PoE Tradeと同じ操作です。PoEが最前面の時だけ有効です。"
-        )
-        Styles.apply_checkbox_style(self.stash_tab_scroll_enabled_cb)
-        group_layout.addWidget(self.stash_tab_scroll_enabled_cb)
-        
         general_layout.addWidget(group)
         
         # ━━━━━ 3. タイマー表示 ━━━━━
@@ -2920,7 +2908,6 @@ class SettingsDialog(QDialog):
                 "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,
             },
             "logout_enabled": self.logout_enabled_cb.isChecked(),
-            "stash_tab_scroll_enabled": self.stash_tab_scroll_enabled_cb.isChecked(),
             "gem_shop_search_include_reward_purchases": self.gem_shop_search_include_reward_purchases_cb.isChecked(),
             "gem_shop_search_hold_seconds": self.gem_shop_search_hold_seconds_spin.value(),
             "gem_shop_search_term_overrides": self.gem_shop_search_term_review.get_term_overrides(),

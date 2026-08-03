@@ -16,15 +16,12 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
             "cheat_sheets_toggle": "shift+space",
             "start_stop": "F7",
         },
-        "stash_tab_scroll_enabled": True,
     }
 
     with patch(
         "src.ui.poetore_mode_window.ConfigManager.load_config",
         return_value=config,
     ), patch(
-        "src.ui.poetore_mode_window.StashTabScrollController"
-    ) as stash_class, patch(
         "src.ui.poetore_mode_window.GlobalHotkeyService"
     ) as hotkey_class:
         hotkey_service = MagicMock()
@@ -57,7 +54,6 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     )
     assert window.findChild(QPushButton, "poetoreMinimizeButton").text() == "─"
     assert window.findChild(QPushButton, "poetoreCloseButton").text() == "✕"
-    stash_class.return_value.start.assert_called_once()
     hotkey_service.start.assert_called_once()
     window.close()
     app.processEvents()
@@ -65,16 +61,11 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
 
 def test_poetore_mode_monastery_hotkey_sends_chat_command():
     app = QApplication.instance() or QApplication([])
-    config = {
-        "hotkeys": {"monastery": "F12"},
-        "stash_tab_scroll_enabled": False,
-    }
+    config = {"hotkeys": {"monastery": "F12"}}
 
     with patch(
         "src.ui.poetore_mode_window.ConfigManager.load_config",
         return_value=config,
-    ), patch(
-        "src.ui.poetore_mode_window.StashTabScrollController"
     ), patch(
         "src.ui.poetore_mode_window.GlobalHotkeyService"
     ), patch.object(PoetoreModeWindow, "refresh_currency_rate"), patch(
@@ -90,16 +81,11 @@ def test_poetore_mode_monastery_hotkey_sends_chat_command():
 
 def test_poetore_mode_capture_hint_uses_configured_hotkey():
     app = QApplication.instance() or QApplication([])
-    config = {
-        "hotkeys": {"poetore_capture": "Ctrl+Shift+P"},
-        "stash_tab_scroll_enabled": False,
-    }
+    config = {"hotkeys": {"poetore_capture": "Ctrl+Shift+P"}}
 
     with patch(
         "src.ui.poetore_mode_window.ConfigManager.load_config",
         return_value=config,
-    ), patch(
-        "src.ui.poetore_mode_window.StashTabScrollController"
     ), patch(
         "src.ui.poetore_mode_window.GlobalHotkeyService"
     ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
@@ -117,13 +103,11 @@ def test_poetore_mode_capture_hint_uses_configured_hotkey():
 
 def test_poetore_mode_renders_divine_chaos_rate():
     app = QApplication.instance() or QApplication([])
-    config = {"hotkeys": {}, "stash_tab_scroll_enabled": False}
+    config = {"hotkeys": {}}
 
     with patch(
         "src.ui.poetore_mode_window.ConfigManager.load_config",
         return_value=config,
-    ), patch(
-        "src.ui.poetore_mode_window.StashTabScrollController"
     ), patch(
         "src.ui.poetore_mode_window.GlobalHotkeyService"
     ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):

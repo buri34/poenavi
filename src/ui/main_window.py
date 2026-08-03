@@ -24,7 +24,6 @@ from src.utils.window_focus import (
     get_next_visible_window_after,
     is_path_of_exile_window,
 )
-from src.utils.stash_tab_scroll import StashTabScrollController
 from src.utils.global_hotkeys import hotkey_key_name, listener_hotkey_name
 from src.utils.chat_command import send_chat_command
 from src.utils.log_path_detector import fill_missing_client_log_paths
@@ -619,10 +618,6 @@ class MainWindow(QMainWindow):
         # ホットキー初期化
         self.hotkey_signal.connect(self.handle_hotkey)
         self.keyboard_listener = None
-        self.stash_tab_scroll = StashTabScrollController(
-            enabled=self.config.get("stash_tab_scroll_enabled", True),
-        )
-        self.stash_tab_scroll.start()
         self._gem_shop_search_hold = HoldTrigger()
         self.register_hotkeys()
         
@@ -2971,11 +2966,6 @@ class MainWindow(QMainWindow):
                 self.keyboard_listener = None
             
             hotkeys = self.config.get("hotkeys", {})
-            stash_tab_scroll = getattr(self, "stash_tab_scroll", None)
-            if stash_tab_scroll is not None:
-                stash_tab_scroll.set_enabled(
-                    self.config.get("stash_tab_scroll_enabled", True)
-                )
             
             self.hotkey_map = {}
             for action, default in [("start_stop", "F7"), ("reset", "F8"), ("lap", "none"),
@@ -4533,8 +4523,6 @@ class MainWindow(QMainWindow):
             names.add("update_controller")
         if getattr(self, "keyboard_listener", None) is not None:
             names.add("global_hotkeys")
-        if getattr(self, "stash_tab_scroll", None) is not None:
-            names.add("stash_tab_scroll")
         if getattr(self, "log_watcher", None) is not None:
             names.add("log_watcher")
         if getattr(self, "timer", None) is not None:
@@ -4582,9 +4570,6 @@ class MainWindow(QMainWindow):
         keyboard_listener = getattr(self, "keyboard_listener", None)
         if keyboard_listener:
             keyboard_listener.stop()
-        stash_tab_scroll = getattr(self, "stash_tab_scroll", None)
-        if stash_tab_scroll is not None:
-            stash_tab_scroll.stop()
         log_watcher = getattr(self, "log_watcher", None)
         if log_watcher is not None:
             log_watcher.stop()

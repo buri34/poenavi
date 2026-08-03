@@ -113,17 +113,6 @@ class PoetoreSettingsDialog(QDialog):
         hotkey_form.addRow("Cheat sheets表示:", self.cheat_hotkey)
         basic_layout.addWidget(hotkey_group)
 
-        common_group = QGroupBox("共通機能")
-        common_layout = QVBoxLayout(common_group)
-        self.stash_tab_scroll_cb = QCheckBox(
-            "Ctrl＋マウスホイールでスタッシュタブを切り替える"
-        )
-        self.stash_tab_scroll_cb.setChecked(
-            bool(self.current_config.get("stash_tab_scroll_enabled", True))
-        )
-        common_layout.addWidget(self.stash_tab_scroll_cb)
-        basic_layout.addWidget(common_group)
-
         poetore = self.current_config.get("poetore")
         poetore = poetore if isinstance(poetore, dict) else {}
         trade_group = QGroupBox("価格データ")
@@ -396,7 +385,6 @@ class PoetoreSettingsDialog(QDialog):
         return {
             "startup": startup,
             "hotkeys": hotkeys,
-            "stash_tab_scroll_enabled": self.stash_tab_scroll_cb.isChecked(),
             "poetore": poetore,
             "window_opacity": self.opacity_slider.value(),
             "text_opacity": self.text_opacity_slider.value(),
