@@ -3629,6 +3629,32 @@ def test_related_items_panel_renders_materials_and_rewards(qapp):
         window.close()
 
 
+def test_related_items_panel_uses_specific_beastcraft_label(qapp):
+    window = PoetoreWindow()
+    try:
+        key = ("item", "Standard", "Watcher's Eye", "Prismatic Jewel")
+        window._poe_ninja_item_key = key
+        window._show_related_items(key, {
+            "current": ("UNIQUE", "watcher's eye"),
+            "query_label": "ビーストクラフト素材：Modをリロール",
+            "query": (({
+                "namespace": "CAPTURED_BEAST", "name": "Wild Hellion Alpha",
+                "display_name": "ワイルド・ヘリオン・アルファ",
+            }, PoeNinjaPrice(
+                "Wild Hellion Alpha", None, 42, (),
+                "https://poe.ninja/example", 200,
+            )),),
+            "items": (),
+        })
+
+        parent = window.related_items_tree.topLevelItem(0)
+        assert parent.text(0) == "ビーストクラフト素材：Modをリロール"
+        assert parent.child(0).text(0) == "ワイルド・ヘリオン・アルファ"
+        assert parent.child(0).text(1) == "42 chaos"
+    finally:
+        window.close()
+
+
 def test_divine_rate_button_builds_awakened_style_conversion_menu(qapp):
     window = PoetoreWindow()
     try:

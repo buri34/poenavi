@@ -462,6 +462,7 @@ def _match_poe_ninja_identity_overviews(
     allowed = {
         "DIVINATION_CARD": {"DivinationCard"},
         "GEM": {"SkillGem", "ImbuedGem"},
+        "CAPTURED_BEAST": {"Beast"},
     }.get(namespace)
     if namespace == "UNIQUE":
         allowed = _UNIQUE_TYPES

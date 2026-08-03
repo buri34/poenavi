@@ -2245,6 +2245,7 @@ class PoetoreWindow(QWidget):
         return {
             "query": priced(group.get("query", ())),
             "items": priced(group.get("items", ())),
+            "query_label": str(group.get("query_label") or "関連素材・同系統"),
             "current": (namespace, names[0].casefold()),
         }
 
@@ -2369,7 +2370,7 @@ class PoetoreWindow(QWidget):
         self.related_items_tree.clear()
         current = result.get("current")
         for title, rows in (
-            ("関連素材・同系統", result.get("query", ())),
+            (str(result.get("query_label") or "関連素材・同系統"), result.get("query", ())),
             ("報酬・派生品", result.get("items", ())),
         ):
             if not rows:

@@ -27,6 +27,27 @@ def test_related_item_identity_matches_unique_variant():
     assert price.chaos == 320
 
 
+def test_related_captured_beast_identity_matches_beast_overview():
+    payload = {
+        "itemOverviews": [{
+            "type": "Beast",
+            "lines": [{
+                "name": "Wild Hellion Alpha", "chaos": 42,
+                "graph": [], "sparkLine": {"totalChange": 3},
+            }],
+        }],
+    }
+
+    price = match_poe_ninja_identity(
+        payload, "CAPTURED_BEAST", "Wild Hellion Alpha", None, "Standard",
+    )
+
+    assert price is not None
+    assert price.chaos == 42
+    assert price.source_type == "Beast"
+    assert "/beasts/wild-hellion-alpha" in price.url
+
+
 def _payload():
     return {
         "currencyOverviews": [{

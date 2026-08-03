@@ -29,7 +29,7 @@ def test_poetore_distribution_contains_only_minimal_derived_data():
         for row in payload["mods"]
     )
     assert all(isinstance(row["negated"], bool) for row in payload["mods"])
-    assert sum(row["negated"] for row in payload["mods"]) == 133
+    assert sum(row["negated"] for row in payload["mods"]) == 143
     relations = json.loads((data_dir / "pseudo_relations.json").read_text(encoding="utf-8"))
     assert relations["source_revision"] and len(relations["source_sha256"]) == 64
     assert 10 <= len(relations["relations"]) <= 30

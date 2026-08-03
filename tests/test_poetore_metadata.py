@@ -682,6 +682,18 @@ def test_builder_expands_awakened_related_item_groups():
     assert group["items"][0]["icon"] == "skin.png"
 
 
+def test_builder_labels_watchers_eye_beastcraft_group():
+    groups = build_related_item_groups([], [{
+        "query": [
+            "UNIQUE::Watcher's Eye // Prismatic Jewel",
+            "CAPTURED_BEAST::Wild Hellion Alpha",
+        ],
+        "items": [],
+    }])
+
+    assert groups[0]["query_label"] == "ビーストクラフト素材：Modをリロール"
+
+
 def test_builder_supplements_all_uber_boss_groups_with_shared_drops():
     query_ids = (
         "Awakening Fragment", "Reality Fragment", "Devouring Fragment",

@@ -334,6 +334,13 @@ EXCLUDED_RELATED_ITEM_QUERY_GROUPS = {
     }),
 }
 
+RELATED_ITEM_QUERY_LABELS = {
+    frozenset({
+        "UNIQUE::Watcher's Eye // Prismatic Jewel",
+        "CAPTURED_BEAST::Wild Hellion Alpha",
+    }): "ビーストクラフト素材：Modをリロール",
+}
+
 
 def build_related_item_groups(items_lines: Iterable[str], drop_rows: Iterable[dict]) -> list[dict]:
     """Awakenedの関連品定義を、表示に必要な名前・variant・iconへ展開する。"""
@@ -381,7 +388,10 @@ def build_related_item_groups(items_lines: Iterable[str], drop_rows: Iterable[di
         queries = [resolve(value) for value in query_ids]
         related = [resolve(value) for value in related_ids]
         if queries:
-            groups.append({"query": queries, "items": related})
+            group = {"query": queries, "items": related}
+            if label := RELATED_ITEM_QUERY_LABELS.get(frozenset(query_ids)):
+                group["query_label"] = label
+            groups.append(group)
     return groups
 
 
