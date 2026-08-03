@@ -149,6 +149,7 @@ def test_default_metadata_keeps_reviewed_reflect_japanese(stat_id, japanese):
     payload = json.loads(Path("data/poetore/mod_metadata.json").read_text(encoding="utf-8"))
     row = next(row for row in payload["mods"] if row["stat_id"] == stat_id)
     assert row["japanese"] == [japanese]
+    assert (row["better"], row["inverted"], row["negated"]) == (-1, True, True)
 
 
 def test_stat_rule_extractor_drops_runtime_and_repoe_fields():
@@ -216,6 +217,35 @@ def test_builder_keeps_awakened_ref_matcher_negate_for_shared_increase_reduction
     row = build_minimal_index(awakened, jp)["mods"][0]
 
     assert (row["better"], row["inverted"], row["negated"]) == (-1, True, True)
+
+
+def test_builder_matches_ref_negate_when_only_literal_plus_differs():
+    awakened = [json.dumps({
+        "ref": "Minions prevent +#% of Reflected Damage they would take",
+        "better": -1,
+        "matchers": [{
+            "string": "Minions prevent #% of Reflected Damage they would take",
+            "negate": True,
+        }],
+        "trade": {
+            "ids": {"implicit": ["implicit.stat_2467518140"]},
+            "inverted": True,
+        },
+    })]
+    jp = {"result": [{"entries": [{
+        "id": "implicit.stat_2467518140", "type": "implicit",
+        "text": "ミニオンは受ける反射ダメージの+#%を防ぐ",
+    }]}]}
+
+    row = build_minimal_index(awakened, jp)["mods"][0]
+    assert row["negated"] is True
+    rules = {"rules": [{
+        "ref": row["ref"], "stat_id": row["stat_id"], "kind": row["kind"],
+        "better": row["better"], "inverted": row["inverted"],
+        "negated": row["negated"], "exact": row["exact"],
+        "decimal": row["decimal"],
+    }]}
+    assert audit_awakened_stat_rules(awakened, rules)["changed"] == []
 
 
 def test_builder_keeps_awakened_category_select_resolver():

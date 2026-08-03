@@ -560,6 +560,67 @@ def test_reduced_curse_effect_flask_uses_awakened_positive_minimum():
     }]
 
 
+@pytest.mark.parametrize(("stat_id", "line", "implicit"), [
+    (
+        "explicit.stat_1574578643",
+        "ピュリティオブエレメントの影響を受けている間受ける反射元素ダメージの66%を防ぐ",
+        False,
+    ),
+    (
+        "explicit.stat_2255585376",
+        "デターミネーションの影響を受けている間受ける反射物理ダメージの66%を防ぐ",
+        False,
+    ),
+    (
+        "explicit.stat_3829555156",
+        "右の指輪スロット: プレイヤーおよびミニオンは反射物理ダメージの110%を防ぐ",
+        False,
+    ),
+    (
+        "explicit.stat_3991837781",
+        "左の指輪スロット: プレイヤーおよびミニオンは反射元素ダメージの110%を防ぐ",
+        False,
+    ),
+    (
+        "implicit.stat_1973340656",
+        "アトラスのピナクルボスが付近にいる場合、ミニオンは受ける反射ダメージの90%を防ぐ",
+        True,
+    ),
+    (
+        "implicit.stat_2467518140",
+        "ミニオンは受ける反射ダメージの66%を防ぐ",
+        True,
+    ),
+])
+def test_reflected_damage_prevention_uses_positive_trade_minimum(
+    stat_id, line, implicit,
+):
+    suffix = " (implicit)" if implicit else ""
+    item = parse_item_text(f"""アイテムクラス: 胴体防具
+レアリティ: レア
+反射監査用胴体
+ヴァールレガリア
+--------
+アイテムレベル: 86
+--------
+{line}{suffix}
+""")
+    stat_filter = next(
+        row for row in resolve_trade_stat_filters(item) if row.stat_id == stat_id
+    )
+
+    assert stat_filter.inverted is False
+    assert stat_filter.min_value is not None and stat_filter.min_value > 0
+    assert stat_filter.max_value is None
+    query = build_search_query(
+        item, stat_filters=(replace(stat_filter, enabled=True),),
+    )["query"]
+    sent = query["stats"][0]["filters"][0]
+    assert sent["id"] == stat_id
+    assert sent["value"]["min"] > 0
+    assert "max" not in sent["value"]
+
+
 def test_high_item_level_unfinished_rare_has_finished_and_base_presets():
     item = parse_item_text(ITEM.replace("Item Level: 67", "Item Level: 85"))
     assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BASE)

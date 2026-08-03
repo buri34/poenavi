@@ -53,6 +53,16 @@ def _trade_entries(payload: dict) -> dict[tuple[str, str], dict]:
     }
 
 
+def _ref_matcher_negated(stat: dict) -> bool:
+    """refと同じ表示文のAwakened matcher.negateを返す。"""
+    ref = normalize_stat_text(str(stat.get("ref", "")))
+    return bool(next((
+        matcher.get("negate", False)
+        for matcher in stat.get("matchers", ())
+        if normalize_stat_text(str(matcher.get("string", ""))) == ref
+    ), False))
+
+
 def apply_japanese_trade_overrides(jp_trade: dict, overrides: dict) -> tuple[dict, list[dict]]:
     """公式日本語APIの既知の翻訳欠落だけを監査済み文面へ差し替える。"""
     effective = copy.deepcopy(jp_trade)
@@ -429,11 +439,7 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
                     # Awakenedは表示文ごとのmatcher.negateで内部値の符号を
                     # 正規化した後、trade.invertedでAPI値へ変換する。公式Tradeの
                     # 日本語文はrefに対応するため、refと同じmatcherの属性を保持する。
-                    "negated": bool(next((
-                        matcher.get("negate", False)
-                        for matcher in stat.get("matchers", ())
-                        if matcher.get("string") == stat.get("ref")
-                    ), False)),
+                    "negated": _ref_matcher_negated(stat),
                     "exact": int(stat.get("better", 1)) == 0 or bool(trade.get("option", False)),
                     "local": bool(repoe_row.get("local", False)),
                     # Awakenedのdpフラグがあるstatだけ小数精度を維持する。
@@ -544,11 +550,7 @@ def audit_awakened_stat_rules(awakened_lines: Iterable[str], stat_rules: dict) -
                     "ref": str(stat.get("ref", "")),
                     "better": int(stat.get("better", 1)),
                     "inverted": bool(trade.get("inverted", False)),
-                    "negated": bool(next((
-                        matcher.get("negate", False)
-                        for matcher in stat.get("matchers", ())
-                        if matcher.get("string") == stat.get("ref")
-                    ), False)),
+                    "negated": _ref_matcher_negated(stat),
                     "exact": int(stat.get("better", 1)) == 0 or bool(trade.get("option", False)),
                     "decimal": bool(stat.get("dp", False)),
                 }
