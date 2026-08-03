@@ -162,6 +162,8 @@ Map (Tier 16)
 モンスターはヒット時に盲目を付与する
 { サフィックスモッド (ティア: 1) }
 モンスターはヒット時にパワーチャージを1個獲得する
+{ サフィックスモッド (ティア: 1) }
+モンスターはヒット時にフレンジーチャージを1個獲得する
 """)
     assert [(modifier.stat_id, modifier.values) for modifier in parsed.modifiers] == [
         ("explicit.stat_1821565133", (23.0, 20.0, -30.0)),
@@ -170,6 +172,7 @@ Map (Tier 16)
         ("explicit.stat_3667574329", (25.0,)),
         ("explicit.stat_1629869774", (100.0,)),
         ("explicit.stat_406353061", (100.0,)),
+        ("explicit.stat_1742567045", (100.0,)),
     ]
     assert parsed.modifiers[3].inverted is True
 
