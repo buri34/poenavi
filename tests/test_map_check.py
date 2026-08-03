@@ -100,6 +100,25 @@ Map (Tier 16)
     assert all(modifier.stat_id in catalog_ids for modifier in parsed.modifiers)
 
 
+def test_japanese_map_copy_aliases_resolve_boss_damage_and_implicit_hinder_chance():
+    parsed = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+Alias Test
+Map (Tier 16)
+--------
+アイテムレベル: 83
+--------
+{ プレフィックスモッド (ティア: 1) }
+ユニークボスのダメージが25%増加する
+{ サフィックスモッド (ティア: 1) }
+モンスターはスペルによるヒット時に阻害を付与する
+""")
+    assert [(modifier.stat_id, modifier.values) for modifier in parsed.modifiers] == [
+        ("explicit.stat_124877078", (25.0,)),
+        ("explicit.stat_962720646", (100.0,)),
+    ]
+
+
 def test_manager_uses_numeric_profiles_and_lists_current_plus_outdated_defaults():
     QApplication.instance() or QApplication([])
     dialog = MapModManagerDialog(default_map_check_config())
