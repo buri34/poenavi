@@ -1549,11 +1549,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_1000620493",
-      "japanese": "ブライトエンカウンターにはブライトボスが追加で最大#体含まれる"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1000620493",
       "japanese": "マップに出現するブライトエンカウンターではブライトボスが最大#体出現する"
     },
     {
@@ -1714,17 +1709,7 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_1070816711",
-      "japanese": "エリアにはアビスが追加で1個出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1070816711",
       "japanese": "マップにアビスが追加で1個出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1076056376",
-      "japanese": "エリアには使用された定命の者フラグメント1個ごとに#%の確率で赤き女王の贈り物が出現する"
     },
     {
       "kind": "enchant",
@@ -1735,11 +1720,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_1076392774",
       "japanese": "拷問された幽霊に憑りつかれている"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1080470148",
-      "japanese": "エリアには奇妙な樽のクラスターが追加で#個出現する"
     },
     {
       "kind": "enchant",
@@ -1839,11 +1819,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_1145451936",
-      "japanese": "エリアには聖なる木立が出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1145451936",
       "japanese": "マップには+#%の確率で聖なる木立が出現する"
     },
     {
@@ -1939,11 +1914,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_1207515735",
-      "japanese": "エリアには奇妙な樽のクラスターが追加で#個出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1207515735",
       "japanese": "マップには奇妙な樽のクラスターが追加で#個出現する"
     },
     {
@@ -1985,11 +1955,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_122106412",
       "japanese": "アーケインクロークはマナの現在値の#%を追加で消費する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1223360315",
-      "japanese": "エリアで見つかるユニーク以外のマップはコラプト状態で8個のモッドを持つ"
     },
     {
       "kind": "enchant",
@@ -2039,11 +2004,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_124877078",
-      "japanese": "ユニークボスのダメージが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_124877078",
       "japanese": "マップボスのダメージが#%増加する"
     },
     {
@@ -2070,11 +2030,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_1259277978",
       "japanese": "ヒットを受けた時に#%の確率で悪意の命令をトリガーする"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1260718722",
-      "japanese": "ブライトのチェストには#%の確率で報酬が追加で1個入っている"
     },
     {
       "kind": "enchant",
@@ -2110,11 +2065,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_1270423035",
       "japanese": "メテオタワーの範囲が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1274634881",
-      "japanese": "エリアには共鳴のシュラインが追加で1個出現する"
     },
     {
       "kind": "enchant",
@@ -2414,11 +2364,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_1463704577",
-      "japanese": "マップには追加で1体の拷問された墓荒らしが彷徨っている"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1463704577",
       "japanese": "マップは追加で1体の拷問された墓荒らしが彷徨っている"
     },
     {
@@ -2430,11 +2375,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_1468606528",
       "japanese": "敵を倒した時にレベル10スペクトラルウルフ召喚をトリガーする"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1468737867",
-      "japanese": "エリアに追加のシュラインが1個出現する"
     },
     {
       "kind": "enchant",
@@ -2530,11 +2470,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_1503864797",
       "japanese": "直近プレイヤーがスペルダメージを受けていればスペルダメージ抑制確率 +#%"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1508220097",
-      "japanese": "ユニークボスはカレンシーシャードを追加でドロップする"
     },
     {
       "kind": "enchant",
@@ -2804,11 +2739,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_1640965354",
-      "japanese": "エリアに含まれるルークニックモンスターの目印の数が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1640965354",
       "japanese": "マップにあるルーニックモンスターの目印の数が#%増加する"
     },
     {
@@ -2874,17 +2804,7 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_1669553893",
-      "japanese": "エリアには奇妙な樽のクラスターが追加で#個出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1669553893",
       "japanese": "マップには奇妙な樽のクラスターが追加で#個出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1671749203",
-      "japanese": "エリアにはリチュアルの祭壇が出現する"
     },
     {
       "kind": "enchant",
@@ -2900,11 +2820,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_1678345858",
       "japanese": "ベアトラップの影響を受けた敵はトラップまたはマインのヒットにより受けるダメージが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1682417271",
-      "japanese": "イモータルシンジケートのメンバーから得られる情報が#%増加する"
     },
     {
       "kind": "enchant",
@@ -3005,11 +2920,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_1730304831",
       "japanese": "ヘラルドオブピュリティのリザーブが#%減少する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1730598557",
-      "japanese": "#個のブライトのチェストに入っているアイテムの種類が幸運になる"
     },
     {
       "kind": "enchant",
@@ -3199,11 +3109,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_1829593182",
-      "japanese": "リージョンモンスターのライフが#%上昇する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1829593182",
       "japanese": "マップに出現するリージョンモンスターのライフが#%上昇する"
     },
     {
@@ -3225,11 +3130,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_1837040413",
       "japanese": "敵どうしが近くにいる状態で同時に倒すとこの世界の外からのビヨンドからモンスターを呼び寄せる"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1837341489",
-      "japanese": "ブライトモンスターは#%速くスポーンする"
     },
     {
       "kind": "enchant",
@@ -3270,11 +3170,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_1866415366",
       "japanese": "トルネードの効果範囲が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1867024035",
-      "japanese": "エリアにはコラプト状態のヴァールモンスターが追加で#パック出現する"
     },
     {
       "kind": "enchant",
@@ -3444,11 +3339,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_1959158336",
-      "japanese": "ユニークボスのライフが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1959158336",
       "japanese": "マップボスのライフが#%増加する"
     },
     {
@@ -3540,11 +3430,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_1988467615",
       "japanese": "敵を倒した時に#%の確率で雷の命令をトリガーする"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_1992047981",
-      "japanese": "エリアには暗闇のシュラインが追加で1個出現する"
     },
     {
       "kind": "enchant",
@@ -3664,11 +3549,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_2055257822",
-      "japanese": "エリアにはアルティメイタムエンカウンターが出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2055257822",
       "japanese": "マップにはアルティメイタムエンカウンターが出現する"
     },
     {
@@ -3680,11 +3560,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_2067062068",
       "japanese": "投射物は対象を追加で#体貫通する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2067409550",
-      "japanese": "ハーベストモンスターのライフが#%上昇する"
     },
     {
       "kind": "enchant",
@@ -3874,11 +3749,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_2180286756",
-      "japanese": "エリアに複数のブリーチが出現することがある"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2180286756",
       "japanese": "マップに複数のブリーチが出現することがある"
     },
     {
@@ -3910,11 +3780,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_2194261591",
       "japanese": "憤怒の効果が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_21993405",
-      "japanese": "エリアにはミラー状態のレアモンスターが追加で#パック出現する"
     },
     {
       "kind": "enchant",
@@ -3965,11 +3830,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_2223678961",
       "japanese": "#から#の混沌ダメージを追加する (ローカル)"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2224050171",
-      "japanese": "エリアのブリーチには閉じた手が追加で#個出現する"
     },
     {
       "kind": "enchant",
@@ -4055,11 +3915,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_2254480358",
       "japanese": "全ての冷気スペルスキルジェムのレベル +#"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2256808958",
-      "japanese": "エリアで見つかるユニーク以外のハイストの依頼書は#%の確率で暗黙モッドを追加で1個持つ"
     },
     {
       "kind": "enchant",
@@ -4224,11 +4079,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_2366645974",
-      "japanese": "エリアには火ダメージを与えるモンスターが追加で#パック出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2366645974",
       "japanese": "マップには火ダメージを与えるモンスターが追加で#パック出現する"
     },
     {
@@ -4270,11 +4120,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_2396402660",
       "japanese": "メテオタワーは追加で1個のメテオを落とす"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2398157267",
-      "japanese": "エリアにはデリリウムのミラーが出現する"
     },
     {
       "kind": "enchant",
@@ -4334,22 +4179,12 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_2425554673",
-      "japanese": "リチュアルの祭壇で恩寵をリロールする最初の1回のコストが無くなる"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2425554673",
       "japanese": "マップに出現するリチュアルの祭壇では最初の#回の恩寵のリロールがコストなしで行える"
     },
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_2426838124",
       "japanese": "バトルメイジズクライのバフの効果が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2428040317",
-      "japanese": "メタモルフのライフが#%上昇する"
     },
     {
       "kind": "enchant",
@@ -4410,11 +4245,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_2454791895",
       "japanese": "グレイシャルケージタワーの範囲が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2459443694",
-      "japanese": "エリアにはブライトエンカウンターが出現する"
     },
     {
       "kind": "enchant",
@@ -4485,11 +4315,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_248838155",
       "japanese": "反射により受ける元素ダメージが#%減少する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_249139784",
-      "japanese": "エリアには倒すと味方になるモンスターが追加で#パック出現する"
     },
     {
       "kind": "enchant",
@@ -4819,11 +4644,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_2649372092",
-      "japanese": "エリアには使用された生贄フラグメント1個ごとに#%の確率で生贄からの贈り物が出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2649372092",
       "japanese": "マップは使用されたサクリファイスフラグメント1個ごとに#%の確率で生贄の贈り物が出現する"
     },
     {
@@ -4885,11 +4705,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_2680060124",
       "japanese": "コンヴォケーションのクールダウン解消レートが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2681419531",
-      "japanese": "エリアのストロングボックスはコラプト状態である"
     },
     {
       "kind": "enchant",
@@ -5114,11 +4929,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_279246355",
-      "japanese": "エリアにはインベージョンボスが追加で1体生息している"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_279246355",
       "japanese": "マップにはインベージョンボスが追加で1体生息している"
     },
     {
@@ -5175,11 +4985,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_2834109076",
       "japanese": "フリーズボルトタワーのダメージが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_2836003955",
-      "japanese": "エリアで捕獲したビーストのコピーを#%の確率で生成する"
     },
     {
       "kind": "enchant",
@@ -7834,11 +7639,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_3011365432",
-      "japanese": "メタモルフのドロップするカタリストは複製される"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3011365432",
       "japanese": "マップでメタモルフがドロップするカタリストは複製される"
     },
     {
@@ -7924,11 +7724,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_3045497140",
-      "japanese": "コラプトヴァールモンスターのドロップするアイテムは#%の確率でコラプト状態となる"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3045497140",
       "japanese": "マップに出現するコラプトヴァールモンスターからドロップするアイテムは#%の確率でコラプト状態になる"
     },
     {
@@ -7945,11 +7740,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_3059357595",
       "japanese": "スケルトンのダメージが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3059368202",
-      "japanese": "エリアには回復するモンスターが追加で#パック出現する"
     },
     {
       "kind": "enchant",
@@ -8045,11 +7835,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_3094222195",
       "japanese": "スペルによるヒット時に#%の確率で敵を串刺しにする"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3094365680",
-      "japanese": "エリアには毒性のモンスターが追加で#パック出現する"
     },
     {
       "kind": "enchant",
@@ -8219,11 +8004,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_3194736016",
-      "japanese": "エリアには冷気ダメージを与えるモンスターが追加で#パック出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3194736016",
       "japanese": "マップには冷気ダメージを与えるモンスターが追加で#パック出現する"
     },
     {
@@ -8334,11 +8114,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_3240183538",
-      "japanese": "エリアにはストロングボックスが追加で1個出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3240183538",
       "japanese": "マップにはストロングボックスが追加で#個出現する"
     },
     {
@@ -8375,11 +8150,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_325889252",
       "japanese": "デターミネーションのマナリザーブ効率が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3259960466",
-      "japanese": "エリアで見つかるオイルは#%の確率で1ティア高くなる"
     },
     {
       "kind": "enchant",
@@ -8674,11 +8444,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_3407367154",
-      "japanese": "ユニークボスのライフが#%上昇する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3407367154",
       "japanese": "マップボスのライフが#%上昇する"
     },
     {
@@ -8780,11 +8545,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_3473724367",
       "japanese": "スカウトタワーにより召喚されたミニオンのダメージが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3481854423",
-      "japanese": "ユニークボスはボディーガードを伴っている"
     },
     {
       "kind": "enchant",
@@ -8929,11 +8689,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_3550168289",
-      "japanese": "エリアにはローグエグザイルが追加で1体生息している"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3550168289",
       "japanese": "マップにはローグエグザイルが追加で1体生息している"
     },
     {
@@ -8970,11 +8725,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_3564777492",
       "japanese": "スモークマインは追加で移動スピード#%増加を付与する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3564826949",
-      "japanese": "エリアにアビスが出現する"
     },
     {
       "kind": "enchant",
@@ -9110,11 +8860,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_3651039490",
       "japanese": "サモニングタワーにより召喚されたミニオンのライフが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3651651560",
-      "japanese": "エリアで収穫された作物はより珍しいクラフトオプションを提供する確率が上がる"
     },
     {
       "kind": "enchant",
@@ -9264,11 +9009,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_3728052911",
-      "japanese": "エリアには混沌ダメージを与えるモンスターが追加で#パック出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3728052911",
       "japanese": "マップには混沌ダメージを与えるモンスターが追加で#パック出現する"
     },
     {
@@ -9280,11 +9020,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_3730999759",
       "japanese": "リープスラムのアタックスピードが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_373209496",
-      "japanese": "マップには追加で1体の拷問された異端者が彷徨っている"
     },
     {
       "kind": "enchant",
@@ -9324,11 +9059,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_3747734818",
-      "japanese": "エリアには追われている裏切り者が出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3747734818",
       "japanese": "マップには追われている裏切り者が出現する"
     },
     {
@@ -9355,11 +9085,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_3760588941",
       "japanese": "ヘビーストライクは#%の確率でダブルダメージを与える"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3760667977",
-      "japanese": "ユニークボスはユニークアイテムを追加で#個ドロップする"
     },
     {
       "kind": "enchant",
@@ -9440,11 +9165,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_3804575865",
       "japanese": "クリーピングフロストの持続時間が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3804597710",
-      "japanese": "ブライトタワーの建設コストおよびアップグレードコストが二倍になる"
     },
     {
       "kind": "enchant",
@@ -9534,11 +9254,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_3844573517",
-      "japanese": "エリアを完了するとエルダーマップを追加で1個ドロップする (ティア14以上)"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3844573517",
       "japanese": "マップを完了するとエルダーの守護者のマップが追加で1個ドロップする（ティア14以上）"
     },
     {
@@ -9594,11 +9309,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_387722020",
-      "japanese": "リージョンモンスターのドロップするスプリンターとエンブレムが複製される"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_387722020",
       "japanese": "マップでリージョンモンスターがドロップするスプリンターおよびエンブレムは複製される"
     },
     {
@@ -9644,11 +9354,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_3897451709",
-      "japanese": "エリアにはリージョンエンカウンターが追加で1個出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3897451709",
       "japanese": "マップにはリージョンエンカウンターが追加で1個出現する"
     },
     {
@@ -9660,11 +9365,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_3901337328",
       "japanese": "敵を倒した時に#%の確率で獄炎の言葉をトリガーする"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3903190985",
-      "japanese": "エリアを完了すると征服者マップを追加で1個ドロップする (ティア14以上)"
     },
     {
       "kind": "enchant",
@@ -9695,11 +9395,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_391609701",
       "japanese": "プレイヤーが直近クリティカルストライクを受けていれば#から#の混沌ダメージを追加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3917452877",
-      "japanese": "ユニークボスのダメージが#%上昇する"
     },
     {
       "kind": "enchant",
@@ -10019,11 +9714,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_395808938",
-      "japanese": "エリアにはエッセンスに囚われたモンスターが追加で1体出現する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_395808938",
       "japanese": "マップには追加で1体のエッセンスに囚われたモンスターが出現する"
     },
     {
@@ -10045,11 +9735,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_3962278098",
       "japanese": "火ダメージが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_397012377",
-      "japanese": "ユニークボスは奇妙なハービンジャーを伴っている"
     },
     {
       "kind": "enchant",
@@ -10084,11 +9769,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_3986662538",
-      "japanese": "ブライトエンカウンターのレーンは#%の確率で報酬のチェストを追加で1個持つ"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3986662538",
       "japanese": "マップにあるブライトエンカウンターのレーンには#%の確率で報酬のチェストが追加で1個ある"
     },
     {
@@ -10100,11 +9780,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_3988628118",
       "japanese": "レイジヴォーテックスの効果範囲が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_3989543665",
-      "japanese": "エリアには物理ダメージを与えるモンスターが追加で#パック出現する"
     },
     {
       "kind": "enchant",
@@ -10154,11 +9829,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_4008016019",
-      "japanese": "ビヨンドのポータルは#%の確率でビヨンドデーモンを追加で1体スポーンさせる"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_4008016019",
       "japanese": "マップに出現するビヨンドポータルは#%の確率でビヨンドデーモンを追加で1体スポーンさせる"
     },
     {
@@ -10170,11 +9840,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_4014289250",
       "japanese": "ブラストレインのダメージが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_4019701925",
-      "japanese": "エリアには奇妙な樽のクラスターが追加で#個出現する"
     },
     {
       "kind": "enchant",
@@ -10385,11 +10050,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_4139135963",
       "japanese": "ヒット時に#%の確率で敵をテンポラルチェーンで呪う"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_4139181362",
-      "japanese": "デリリウムの報酬のゲージが#%速く増える"
     },
     {
       "kind": "enchant",
@@ -10634,11 +10294,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_4265846487",
-      "japanese": "このマップの品質は見つかるアイテムのレアリティにも適用される"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_4265846487",
       "japanese": "マップの品質のボーナスは見つかるアイテムのレアリティにも適用される"
     },
     {
@@ -10744,11 +10399,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_471027242",
-      "japanese": "ローグエグザイルの最大ライフが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_471027242",
       "japanese": "マップに出現するローグエグザイルのライフが#%増加する"
     },
     {
@@ -10779,11 +10429,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_493747147",
-      "japanese": "エリアを完了するとシェイパーの守護者のマップを追加で1個ドロップする (ティア14以上)"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_493747147",
       "japanese": "マップを完了するとシェイパーの守護者のマップが追加で1個ドロップする（ティア14以上）"
     },
     {
@@ -10799,17 +10444,7 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_495713612",
-      "japanese": "全てのプレイヤーに対するシュラインの効果の持続時間が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_495713612",
       "japanese": "マップで全てのプレイヤーに対するシュラインの効果の持続時間が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_504023787",
-      "japanese": "マップには追加で1体の拷問された裏切り者が彷徨っている"
     },
     {
       "kind": "enchant",
@@ -10855,11 +10490,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_535507671",
       "japanese": "ライトニングスパイアトラップのキャストスピードが#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_545950479",
-      "japanese": "エリアには雷ダメージを与えるモンスターが追加で#パック出現する"
     },
     {
       "kind": "enchant",
@@ -11104,11 +10734,6 @@
     {
       "kind": "enchant",
       "stat_id": "enchant.stat_696413077",
-      "japanese": "エリアを完了するとマップが追加で1個ドロップする"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_696413077",
       "japanese": "マップを完了するとマップが追加で1個ドロップする"
     },
     {
@@ -11150,11 +10775,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_728213819",
       "japanese": "ディストラクティブリンクの持続時間が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_728267040",
-      "japanese": "エリアで見つかるアイテムは#%の確率でコラプト状態でドロップする"
     },
     {
       "kind": "enchant",
@@ -11470,11 +11090,6 @@
       "kind": "enchant",
       "stat_id": "enchant.stat_900639351",
       "japanese": "グレースのマナリザーブ効率が#%増加する"
-    },
-    {
-      "kind": "enchant",
-      "stat_id": "enchant.stat_906446422",
-      "japanese": "ハービンジャーはカレンシーシャードを追加でドロップする"
     },
     {
       "kind": "enchant",
@@ -14424,11 +14039,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1048062553",
-      "japanese": "エリアでドロップするスカラベがビトレイアルスカラベになる確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1048062553",
       "japanese": "マップでドロップするスカラベがビトレイアルスカラベになる確率が#%増加する"
     },
     {
@@ -14590,11 +14200,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1070347065",
       "japanese": "範囲内の割り当て済みパッシブの知性1ごとに知性 #"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1070816711",
-      "japanese": "エリアにはアビスが追加で1個出現する"
     },
     {
       "kind": "explicit",
@@ -15240,11 +14845,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1144937587",
       "japanese": "装備中の兜の最大エナジーシールド1ごとに回避力 +#"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1145451936",
-      "japanese": "エリアには聖なる木立が出現する"
     },
     {
       "kind": "explicit",
@@ -16574,11 +16174,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_120737942",
-      "japanese": "エリアのリチュアルの祭壇は恩寵を追加で1回リロールできる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_120737942",
       "japanese": "マップに出現するリチュアルの祭壇では恩寵を追加で1回リロールすることができる"
     },
     {
@@ -16610,11 +16205,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1210020540",
       "japanese": "エリアには記憶されし者が出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1210760818",
-      "japanese": "エリアのブリーチモンスターはパックサイズが#%増加する"
     },
     {
       "kind": "explicit",
@@ -16685,11 +16275,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1215155013",
       "japanese": "装備中の盾から得られる防御力が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1215465898",
-      "japanese": "エリアでドロップするスカラベがインカージョンスカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -16964,11 +16549,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_124877078",
-      "japanese": "ユニークボスのダメージが#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_124877078",
       "japanese": "マップボスのダメージが#%増加する"
     },
     {
@@ -17045,11 +16625,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1260233365",
       "japanese": "マップには#%の確率でシュラインが追加で1個出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1260718722",
-      "japanese": "ブライトのチェストには#%の確率で報酬が追加で1個入っている"
     },
     {
       "kind": "explicit",
@@ -17509,11 +17084,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1314822783",
-      "japanese": "エリアにリチュアルの祭壇が出現する確率が+#%される"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1314822783",
       "japanese": "マップには+#%の確率でリチュアルの祭壇が出現する"
     },
     {
@@ -17934,11 +17504,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1365687125",
-      "japanese": "エリアには+#%の確率でアルティメイタムエンカウンターが出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1365687125",
       "japanese": "マップには+#%の確率でアルティメイタムエンカウンターが出現する"
     },
     {
@@ -18099,11 +17664,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1385280440",
-      "japanese": "エリアに不安定なブリーチが追加で1個出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1385280440",
       "japanese": "マップに不安定なブリーチが追加で1個出現する"
     },
     {
@@ -18185,11 +17745,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1394963553",
       "japanese": "スタッフのアタックスピードが#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1395445308",
-      "japanese": "エリアでドロップするスカラベがサルファイトスカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -18544,11 +18099,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1445968994",
-      "japanese": "囚われたモンスターは#%の確率でエッセンスモッド1個を持つレアアイテムを追加で1個ドロップする"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1445968994",
       "japanese": "マップでエッセンスに囚われたモンスターは#%の確率でエッセンスモッドを持つレアアイテムを追加で1個ドロップする"
     },
     {
@@ -18725,11 +18275,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1468606528",
       "japanese": "敵を倒した時にレベル10スペクトラルウルフ召喚をトリガーする"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1468737867",
-      "japanese": "エリアに追加のシュラインが1個出現する"
     },
     {
       "kind": "explicit",
@@ -19069,11 +18614,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1506277901",
-      "japanese": "見つかるエッセンスは1ティア高くなる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1506277901",
       "japanese": "マップで見つかるエッセンスは1ティア高くなる"
     },
     {
@@ -19339,11 +18879,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1539368271",
-      "japanese": "爆発物の設置距離が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1539368271",
       "japanese": "マップでは爆発物の設置間隔が#%増加する"
     },
     {
@@ -19539,11 +19074,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1560748306",
-      "japanese": "エリアでドロップするスカラベがハービンジャースカラベになる確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1560748306",
       "japanese": "マップでドロップするスカラベがハービンジャースカラベになる確率が#%増加する"
     },
     {
@@ -19579,17 +19109,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1564500422",
-      "japanese": "エリアのストロングボックスは最低でもレアである"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1564500422",
       "japanese": "マップに出現するストロングボックスは最低でもレアになる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1565587169",
-      "japanese": "エリアの畑は#%の確率で選ばれなかった作物が枯れない"
     },
     {
       "kind": "explicit",
@@ -19660,11 +19180,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1571123250",
       "japanese": "レディーマーアイテムを4個装備していればヒット時に#%の確率でフレンジーチャージを1個獲得する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1571899068",
-      "japanese": "エリアでドロップするスカラベがデリリウムスカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -19854,11 +19369,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1594755360",
-      "japanese": "シュラインはランダムなシュラインの効果を追加で1種類付与する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1594755360",
       "japanese": "マップに出現するシュラインはランダムなシュライン効果を追加で1個付与する"
     },
     {
@@ -19875,11 +19385,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_159709680",
       "japanese": "マップに出現するエクスペディションがグウェネンに率いられている確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_159726667",
-      "japanese": "エリアのリチュアルの祭壇で捧げられたモンスターが付与するトリビュートが#%増加する"
     },
     {
       "kind": "explicit",
@@ -20214,11 +19719,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1640965354",
-      "japanese": "エリアに含まれるルークニックモンスターの目印の数が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1640965354",
       "japanese": "マップにあるルーニックモンスターの目印の数が#%増加する"
     },
     {
@@ -20454,11 +19954,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1671749203",
-      "japanese": "エリアにはリチュアルの祭壇が出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1671749203",
       "japanese": "マップにはリチュアルの祭壇が出現する"
     },
     {
@@ -20529,11 +20024,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1682417271",
-      "japanese": "イモータルシンジケートのメンバーから得られる情報が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1682417271",
       "japanese": "マップでエンカウンターしたイモータルシンジケートのメンバーから得られる情報が#%増加する"
     },
     {
@@ -20550,11 +20040,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1683578560",
       "japanese": "アンウェイバリングスタンス"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1684527465",
-      "japanese": "エリアでドロップするスカラベが占いスカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -20864,11 +20349,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1730598557",
-      "japanese": "#個のブライトのチェストに入っているアイテムの種類が幸運になる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1730598557",
       "japanese": "マップでブライトチェスト1個の中に入っているアイテムの種類が幸運になる"
     },
     {
@@ -21135,11 +20615,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1761642973",
       "japanese": "ラースのマナリザーブ効率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1762451150",
-      "japanese": "エリアでドロップするスカラベが地図製作のスカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -21609,11 +21084,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1821565133",
-      "japanese": "マジックモンスターの数が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1821565133",
       "japanese": "マップでマジックモンスターの数が#%増加する"
     },
     {
@@ -21754,11 +21224,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1837341489",
-      "japanese": "ブライトモンスターは#%速くスポーンする"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1837341489",
       "japanese": "マップに出現するブライトモンスターがスポーンする速度が#%速くなる"
     },
     {
@@ -21810,11 +21275,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1849042097",
       "japanese": "追加されるスモールパッシブスキルはさらに付与: 火スキルのアタックスピードおよびキャストスピードが#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1849225887",
-      "japanese": "エリアでドロップするスカラベがアビススカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -21890,11 +21350,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1857935842",
       "japanese": "召喚したアルバリストの投射物をは#個に分裂する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1858240316",
-      "japanese": "エリアでドロップするスカラベがリージョンスカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -22040,11 +21495,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1871765599",
       "japanese": "#%の確率で感電を無効化する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1871805225",
-      "japanese": "レムナントは#%の確率でサフィックスモッドが1個追加される"
     },
     {
       "kind": "explicit",
@@ -22469,11 +21919,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1937345315",
-      "japanese": "エリアのアルティメイタムエンカウンターは追加のラウンドを1回完了したと仮定して報酬を付与する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1937345315",
       "japanese": "マップに出現するアルティメイタムエンカウンターは追加で1回のラウンドを完了したと仮定して報酬を与える"
     },
     {
@@ -22629,11 +22074,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1959158336",
-      "japanese": "ユニークボスのライフが#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1959158336",
       "japanese": "マップボスのライフが#%増加する"
     },
     {
@@ -22745,11 +22185,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_1971757986",
       "japanese": "ライフをリーチ中は受けている混沌継続ダメージは代わりに回復する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_1972294007",
-      "japanese": "ハービンジャーのクールダウン解消レートが#%増加する"
     },
     {
       "kind": "explicit",
@@ -23349,11 +22784,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2049349490",
-      "japanese": "シンセシスモンスターのパックサイズが#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2049349490",
       "japanese": "シンセシスマップに出現するシンセサイズモンスターのパックサイズが#%増加する"
     },
     {
@@ -23395,11 +22825,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_2054538312",
       "japanese": "マップで見つかるハイストの依頼書がレベル4のジョブが必要であるものである確率が#%上昇する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2055257822",
-      "japanese": "エリアにはアルティメイタムエンカウンターが出現する"
     },
     {
       "kind": "explicit",
@@ -24219,11 +23644,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2147182152",
-      "japanese": "エリアのブリーチがエシュのものである確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2147182152",
       "japanese": "マップに出現するブリーチがエシュのものである確率が#%増加する"
     },
     {
@@ -24310,11 +23730,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_2156140483",
       "japanese": "ヘイトレッドのマナリザーブ効率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2156201537",
-      "japanese": "+#%の確率でヴァールサイドエリアが出現する"
     },
     {
       "kind": "explicit",
@@ -24485,11 +23900,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_2172297405",
       "japanese": "ソケットされたジェムはレベル#ヘックストードによりサポートされる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2172921782",
-      "japanese": "リチュアルの祭壇に特別な報酬がある確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -24859,11 +24269,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2224050171",
-      "japanese": "エリアのブリーチには閉じた手が追加で#個出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2224050171",
       "japanese": "マップに出現するブリーチには閉じた手が追加で#個出現する"
     },
     {
@@ -25180,11 +24585,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_2262736444",
       "japanese": "エルドリッチバッテリー"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2263557454",
-      "japanese": "エリアでドロップするスカラベがアルティメイタムスカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -25764,11 +25164,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2343561786",
-      "japanese": "エリアには奇妙な樽のクラスターが追加で#個出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2343561786",
       "japanese": "マップには奇妙な樽のクラスターが追加で#個出現する"
     },
     {
@@ -25780,11 +25175,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_23466649",
       "japanese": "低ライフ時に透明化を獲得する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2347014488",
-      "japanese": "エリアでジェネラルを伴うリージョンエンカウンターには両方の陣営にジェネラルがいる"
     },
     {
       "kind": "explicit",
@@ -27004,11 +26394,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2459443694",
-      "japanese": "エリアにはブライトエンカウンターが出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2459443694",
       "japanese": "マップにはブライトエンカウンターが出現する"
     },
     {
@@ -27979,11 +27364,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2477998669",
-      "japanese": "エリアでドロップするスカラベがドミネーションスカラベになる確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2477998669",
       "japanese": "マップでドロップするスカラベがドミネーションスカラベになる確率が#%増加する"
     },
     {
@@ -28030,11 +27410,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_2481358827",
       "japanese": "エンデュランスチャージ1個ごとに物理ダメージが#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2482214457",
-      "japanese": "エリアにはマラカイのクリーピングアゴニーが出現する"
     },
     {
       "kind": "explicit",
@@ -28259,11 +27634,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2504358770",
-      "japanese": "ブリーチエンカウンターは#%速くなる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2504358770",
       "japanese": "マップのブリーチエンカウンターは#%速くなる"
     },
     {
@@ -28290,11 +27660,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_2506782284",
       "japanese": "このグラフトにより使用されるスキルは火ダメージの#%を追加混沌ダメージとして獲得する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2507275343",
-      "japanese": "エリアでドロップするスカラベがビヨンドスカラベとなる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -28559,11 +27924,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2528440851",
-      "japanese": "エリアにはシェイパーの創造物が追加で#パック出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2528440851",
       "japanese": "マップにはシェイパークリエイションが追加で#パック出現する"
     },
     {
@@ -28780,11 +28140,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_2549889921",
       "japanese": "全てのプレイヤーの獲得フラスコチャージが#%減少する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2550456553",
-      "japanese": "それぞれのレアモンスターはモッドを追加で#個持つ"
     },
     {
       "kind": "explicit",
@@ -29024,11 +28379,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2584308379",
-      "japanese": "エリアでドロップするスカラベがタイタンのスカラベになる確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2584308379",
       "japanese": "マップでドロップするスカラベがタイタンのスカラベになる確率が#%増加する"
     },
     {
@@ -29220,11 +28570,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_2606808909",
       "japanese": "アローダンシング"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2608186870",
-      "japanese": "エリアにはエルダーフィーンドが追加で#パック出現する"
     },
     {
       "kind": "explicit",
@@ -29804,11 +29149,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2681419531",
-      "japanese": "エリアのストロングボックスはコラプト状態である"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2681419531",
       "japanese": "マップに出現するストロングボックスはコラプト状態になる"
     },
     {
@@ -30069,11 +29409,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2722831300",
-      "japanese": "エリアに出現するアビスがアビスの深淵に通じる確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2722831300",
       "japanese": "マップに出現するアビスがアビスの深淵に繋がる確率が#%増加する"
     },
     {
@@ -30140,11 +29475,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_2731416566",
       "japanese": "ゼロトリーの影響を受けている時のリーチによる秒間最大合計エナジーシールド回復量が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2731689292",
-      "japanese": "エリアのストロングボックスがユニークになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -30634,11 +29964,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_279246355",
-      "japanese": "エリアにはインベージョンボスが追加で1体生息している"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_279246355",
       "japanese": "マップにはインベージョンボスが追加で1体生息している"
     },
     {
@@ -30774,11 +30099,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2810286377",
-      "japanese": "エリアにはレアモンスターが追加で1パック出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2810286377",
       "japanese": "マップにはレアモンスターを含むパックが追加で1パック出現する"
     },
     {
@@ -30790,11 +30110,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_2810785117",
       "japanese": "このグラフトにより使用されるスキルは稲妻を追加で1本落雷させる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2810822634",
-      "japanese": "エリアでドロップするスカラベがリチュアルスカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -30885,11 +30200,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_2818854203",
       "japanese": "アタックブロック率1%ごとにアーマーと回避力 +#"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2819193674",
-      "japanese": "エリアのブリーチがウール・ネトルのものである確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -31025,11 +30335,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_2835888248",
       "japanese": "全てのプレイヤーはポイントブランクになる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2836003955",
-      "japanese": "エリアで捕獲したビーストのコピーを#%の確率で生成する"
     },
     {
       "kind": "explicit",
@@ -31929,11 +31234,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2934907255",
-      "japanese": "エリアのモンスターがドロップするベンダー更新カレンシーの数量が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2934907255",
       "japanese": "マップではモンスターがドロップするベンダー更新カレンシーの数量が#%増加する"
     },
     {
@@ -32359,11 +31659,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2992379436",
-      "japanese": "エリアのハーベストの畑でティア3の作物が出現する確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_2992379436",
       "japanese": "マップに出現するハーベストの畑がティア3の作物である確率が#%増加する"
     },
     {
@@ -32499,11 +31794,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3011076420",
-      "japanese": "エリアのエッセンスに囚われたモンスターは#%の確率で3個追加のエッセンスを持つ"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3011076420",
       "japanese": "マップでエッセンスに囚われたモンスターは#%の確率でエッセンスを追加で3個持つ"
     },
     {
@@ -32555,11 +31845,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3016436615",
       "japanese": "ソケットされたジェムはレベル#マルチトラップによりサポートされる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3017211510",
-      "japanese": "エリアでドロップするスカラベがアンブッシュスカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -32625,11 +31910,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3025453294",
       "japanese": "パッシブスキルを1個追加: セルフコントロール"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3027114376",
-      "japanese": "エリアのアルティメイタムモンスターが付与する経験値が#%増加する"
     },
     {
       "kind": "explicit",
@@ -32714,11 +31994,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3036422124",
-      "japanese": "倒した敵がビヨンドポータルをスポーンさせる確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3036422124",
       "japanese": "マップで倒した敵がビヨンドポータルをスポーンする確率が#%増加する"
     },
     {
@@ -32790,11 +32065,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3049891689",
       "japanese": "ストライクスキルによる近接ヒットは堅牢化する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3051490307",
-      "japanese": "爆発物の数が#%増加する"
     },
     {
       "kind": "explicit",
@@ -32984,11 +32254,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3070577277",
-      "japanese": "エリアでドロップするスカラベがトーメントスカラベになる確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3070577277",
       "japanese": "マップでドロップするスカラベがトーメントスカラベになる確率が#%増加する"
     },
     {
@@ -33155,11 +32420,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3089482869",
       "japanese": "ブランドスキルの持続時間が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3089506271",
-      "japanese": "全てのストロングボックスにはランダムなレアアイテムが追加で1個入っている"
     },
     {
       "kind": "explicit",
@@ -33354,11 +32614,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3113439544",
-      "japanese": "エリアでドロップするブループリントは#%の確率で完全に明らかになっている"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3113439544",
       "japanese": "マップでドロップしたブループリントは#%の確率で完全に秘密が明らかになっている"
     },
     {
@@ -33420,11 +32675,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3126598962",
       "japanese": "メモリースレッドが無視の化身に繋がる確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3126771445",
-      "japanese": "レアモンスターの数が#%増加する"
     },
     {
       "kind": "explicit",
@@ -33765,11 +33015,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3169460653",
       "japanese": "ヴァール以外のスキルによるミニオンごとに防御力が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_316950976",
-      "japanese": "エリアでドロップするスカラベがハーベストスカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -34354,11 +33599,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3240183538",
-      "japanese": "エリアにはストロングボックスが追加で1個出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3240183538",
       "japanese": "マップにはストロングボックスが追加で#個出現する"
     },
     {
@@ -34445,11 +33685,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3248691197",
       "japanese": "短剣によるアタックに#から#の追加混沌ダメージ"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3249943883",
-      "japanese": "拷問された幽霊はプレイヤーに20秒間憑依できる\n拷問された幽霊はモンスターに憑依できない"
     },
     {
       "kind": "explicit",
@@ -34555,11 +33790,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3259812992",
       "japanese": "過去10秒間にフラマビリティをキャストしていればヒット時に火の曝露を付与する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3259960466",
-      "japanese": "エリアで見つかるオイルは#%の確率で1ティア高くなる"
     },
     {
       "kind": "explicit",
@@ -34840,11 +34070,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3289633055",
       "japanese": "ソケットされたジェムのリザーブ効率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3289828378",
-      "japanese": "爆発物の半径が#%増加する"
     },
     {
       "kind": "explicit",
@@ -35279,22 +34504,12 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3346769137",
-      "japanese": "エリアでドロップするスカラベがカルグールスカラベになる確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3346769137",
       "japanese": "マップでドロップするスカラベがカルグールスカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3348211884",
       "japanese": "ヘイトレッド以外のオーラスキルは無効化される"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3349136454",
-      "japanese": "インカージョンアーキテクトは#%の確率で追加のレアインカージョンアイテムをドロップする"
     },
     {
       "kind": "explicit",
@@ -35669,11 +34884,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3394339562",
-      "japanese": "#%の確率でブリーチスプリンターの代わりにブリーチストーンがドロップする"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3394339562",
       "japanese": "マップでは#%の確率でブリーチスプリンターの代わりにブリーチストーンがドロップする"
     },
     {
@@ -35865,11 +35075,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3417925939",
       "japanese": "ハンターアイテムを2個装備していれば4秒ごとにライフの#%を1秒かけて自動回復する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3418377329",
-      "japanese": "エリアに通じるポータルは#個だけ開く"
     },
     {
       "kind": "explicit",
@@ -36264,11 +35469,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3465791711",
-      "japanese": "エリアのデリリウムモンスターのパックサイズが#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3465791711",
       "japanese": "マップに出現するデリリウムモンスターのパックサイズが#%増加する"
     },
     {
@@ -36619,11 +35819,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3511358099",
-      "japanese": "ハービンジャーは#%の確率で強力なハービンジャーボスと置き換わる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3511358099",
       "japanese": "マップに出現するハービンジャーは#%の確率で強力なハービンジャーボスに置き換わる"
     },
     {
@@ -36860,11 +36055,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3549734978",
       "japanese": "近くの敵はプレイヤーと同じ数値の雷耐性になる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3550168289",
-      "japanese": "エリアにはローグエグザイルが追加で1体生息している"
     },
     {
       "kind": "explicit",
@@ -37125,11 +36315,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_35810390",
       "japanese": "緑ソケット1個ごとにグローバルクリティカルダメージ倍率 +#%"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_358129101",
-      "japanese": "エリアには拷問された幽霊が追加で#体彷徨っている"
     },
     {
       "kind": "explicit",
@@ -38494,11 +37679,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3753446846",
-      "japanese": "エリアのエクスペディションにあるレムナントの数 +#"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3753446846",
       "japanese": "マップにあるエクスペディションにはレムナントが+#個ある"
     },
     {
@@ -38784,11 +37964,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3788235244",
-      "japanese": "エリアには#%の確率でカディーロ・ペランダスが出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3788235244",
       "japanese": "マップには#%の確率でカディーロ・ペランダスが出現する"
     },
     {
@@ -39030,11 +38205,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3818661553",
       "japanese": "パッシブスキルを1個追加: 台風の目"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3819443367",
-      "japanese": "エリアにはアルティメイタムエンカウンターが出現しない"
     },
     {
       "kind": "explicit",
@@ -39484,11 +38654,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3866432319",
-      "japanese": "エリアでドロップするスカラベがブライトスカラベになる確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3866432319",
       "japanese": "マップでドロップするスカラベがブライトスカラベになる確率が#%増加する"
     },
     {
@@ -39805,11 +38970,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3897433431",
       "japanese": "効果中は付与できる呪いが追加で#個増える"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3897451709",
-      "japanese": "エリアにはリージョンエンカウンターが追加で1個出現する"
     },
     {
       "kind": "explicit",
@@ -40319,11 +39479,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_395808938",
-      "japanese": "エリアにはエッセンスに囚われたモンスターが追加で1体出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_395808938",
       "japanese": "マップには追加で1体のエッセンスに囚われたモンスターが出現する"
     },
     {
@@ -40380,11 +39535,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3962960008",
       "japanese": "マップに出現するデリリウムエンカウンターでユニークボスがスポーンする確率が#%上昇する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3963266703",
-      "japanese": "エリアのブリーチがゾフのものである確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -40560,11 +39710,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_3986347319",
       "japanese": "パワーチャージ1個ごとに#%の物理ダメージ軽減率追加"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_3986662538",
-      "japanese": "ブライトエンカウンターのレーンは#%の確率で報酬のチェストを追加で1個持つ"
     },
     {
       "kind": "explicit",
@@ -40779,22 +39924,12 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_4008016019",
-      "japanese": "ビヨンドのポータルは#%の確率でビヨンドデーモンを追加で1体スポーンさせる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_4008016019",
       "japanese": "マップに出現するビヨンドポータルは#%の確率でビヨンドデーモンを追加で1体スポーンさせる"
     },
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_4009462747",
       "japanese": "レベル#サベージバーナクルを付与する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_4012065952",
-      "japanese": "エリアでドロップする装備品アイテムがメモリーストランドを持つ確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -40960,11 +40095,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_4033049853",
       "japanese": "プレイヤーのキャラクターサイズが#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_403369937",
-      "japanese": "ストロングボックスは#%の確率で追加のモンスターパックに守られている"
     },
     {
       "kind": "explicit",
@@ -45069,11 +44199,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_4128958145",
-      "japanese": "エリアで収穫された作物は#%の確率でモンスターを追加で1体スポーンさせる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_4128958145",
       "japanese": "マップで収穫された作物は#%の確率でモンスターを追加で1体スポーンさせる"
     },
     {
@@ -45250,11 +44375,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_4154709486",
       "japanese": "パッシブスキルを1個追加: 軍国主義"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_4154778375",
-      "japanese": "エクスペディションエンカウンターが追加で1個出現する"
     },
     {
       "kind": "explicit",
@@ -46399,11 +45519,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_436556261",
-      "japanese": "このマップのアイテム数量のモッドはレアリティにも適用される"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_436556261",
       "japanese": "このエリアで見つかるアイテムの数量のモッドはアイテムのレアリティにも適用される"
     },
     {
@@ -46644,11 +45759,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_46751559",
-      "japanese": "エリアでドロップするスカラベがエクスペディションスカラベになる確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_46751559",
       "japanese": "マップでドロップするスカラベがエクスペディションスカラベになる確率が#%増加する"
     },
     {
@@ -46774,11 +45884,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_480028751",
-      "japanese": "リージョンエンカウンターには軍曹が追加で#体出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_480028751",
       "japanese": "マップに出現するリージョンエンカウンターは下士官が追加で#体出現する"
     },
     {
@@ -46810,11 +45915,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_482967934",
       "japanese": "フレンジーチャージ1個ごとにスペル抑制確率 +#%"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_4842372",
-      "japanese": "見つかるアビスジュエルは#%の確率でコラプト状態となり5または6個のランダムなモッドを持つ"
     },
     {
       "kind": "explicit",
@@ -46895,11 +45995,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_495465216",
       "japanese": "マップには+#%の確率でアセンダンシーの試練が出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_495713612",
-      "japanese": "全てのプレイヤーに対するシュラインの効果の持続時間が#%増加する"
     },
     {
       "kind": "explicit",
@@ -46985,11 +46080,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_504462346",
       "japanese": "近くの死体1体ごとに移動スピードが#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_504850499",
-      "japanese": "エリアにはハービンジャーが追加で1体出現する"
     },
     {
       "kind": "explicit",
@@ -47614,11 +46704,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_581013336",
-      "japanese": "エリアにはマジックモンスターが追加で1パック出現する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_581013336",
       "japanese": "マップにはマジックモンスターが追加で1パック出現する"
     },
     {
@@ -47665,11 +46750,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_587431675",
       "japanese": "グローバルクリティカル率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_588512487",
-      "japanese": "エリアはランダムなモッドを追加で#個持つ"
     },
     {
       "kind": "explicit",
@@ -47939,11 +47019,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_617548179",
-      "japanese": "インカージョンアーキテクトは#%の確率で拷問された幽霊に憑依されている"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_617548179",
       "japanese": "#%の確率でマップに出現するインカージョンアーキテクトは拷問された幽霊に取り憑かれている"
     },
     {
@@ -47980,11 +47055,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_622678123",
       "japanese": "モンスターは20秒ごとにエンデュランスチャージを#個獲得する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_622901199",
-      "japanese": "エリアのブリーチがトゥルのものである確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -48370,11 +47440,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_663447087",
       "japanese": "ローグエグザイルがドロップするアイテムはコラプト状態である"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_663610248",
-      "japanese": "拷問された幽霊はの持続時間が#%増加する"
     },
     {
       "kind": "explicit",
@@ -48864,11 +47929,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_723578929",
-      "japanese": "エリアでドロップするスカラベがアナーキースカラベとなる確率が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_723578929",
       "japanese": "マップでドロップするスカラベがアナーキースカラベとなる確率が#%増加する"
     },
     {
@@ -48910,11 +47970,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_726359715",
       "japanese": "全ての装備中のアイテムにある空の赤ソケット1個ごとに最大ライフ +#"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_728267040",
-      "japanese": "エリアで見つかるアイテムは#%の確率でコラプト状態でドロップする"
     },
     {
       "kind": "explicit",
@@ -49110,11 +48165,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_751322171",
       "japanese": "ヘイストのリザーブがなくなる"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_751635784",
-      "japanese": "エリアでドロップするスカラベがエッセンススカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -50089,11 +49139,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_866902458",
-      "japanese": "全てのプレイヤーに対するシュラインのバフの効果が#%増加する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_866902458",
       "japanese": "マップで全てのプレイヤーに対するシュラインのバフの効果が#%増加する"
     },
     {
@@ -50389,11 +49434,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_906368454",
-      "japanese": "マップボスは#%の確率で拷問された幽霊に包囲されている"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_906368454",
       "japanese": "マップボスは#%の確率で拷問された幽霊に囲まれている"
     },
     {
@@ -50645,11 +49685,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_943960754",
       "japanese": "プレイヤーの防御力が#%上昇する"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_944630113",
-      "japanese": "エリアに出現するアビスがスポーンさせるモンスターが#%増加する"
     },
     {
       "kind": "explicit",
@@ -50969,11 +50004,6 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_988187710",
-      "japanese": "エリアで倒したブリーチボスは#%の確率でブリーチストーンを1個ドロップする"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_988187710",
       "japanese": "マップで倒したブリーチボスは#%の確率でブリーチストーンをドロップする"
     },
     {
@@ -51055,11 +50085,6 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_99487834",
       "japanese": "スキルは起動時コストとして消費したマナコストの#%を物理ダメージとして与える"
-    },
-    {
-      "kind": "explicit",
-      "stat_id": "explicit.stat_9949109",
-      "japanese": "エリアでドロップするスカラベがベスティアリースカラベになる確率が#%増加する"
     },
     {
       "kind": "explicit",
@@ -51680,11 +50705,6 @@
       "kind": "fractured",
       "stat_id": "fractured.stat_124859000",
       "japanese": "回避力が#%増加する (ローカル)"
-    },
-    {
-      "kind": "fractured",
-      "stat_id": "fractured.stat_124877078",
-      "japanese": "ユニークボスのダメージが#%増加する"
     },
     {
       "kind": "fractured",
@@ -52929,11 +51949,6 @@
     {
       "kind": "fractured",
       "stat_id": "fractured.stat_1821565133",
-      "japanese": "マジックモンスターの数が#%増加する"
-    },
-    {
-      "kind": "fractured",
-      "stat_id": "fractured.stat_1821565133",
       "japanese": "マップでマジックモンスターの数が#%増加する"
     },
     {
@@ -53235,11 +52250,6 @@
       "kind": "fractured",
       "stat_id": "fractured.stat_1950806024",
       "japanese": "冷気継続ダメージ倍率 +#%"
-    },
-    {
-      "kind": "fractured",
-      "stat_id": "fractured.stat_1959158336",
-      "japanese": "ユニークボスのライフが#%増加する"
     },
     {
       "kind": "fractured",
@@ -54204,11 +53214,6 @@
     {
       "kind": "fractured",
       "stat_id": "fractured.stat_2343561786",
-      "japanese": "エリアには奇妙な樽のクラスターが追加で#個出現する"
-    },
-    {
-      "kind": "fractured",
-      "stat_id": "fractured.stat_2343561786",
       "japanese": "マップには奇妙な樽のクラスターが追加で#個出現する"
     },
     {
@@ -54770,11 +53775,6 @@
       "kind": "fractured",
       "stat_id": "fractured.stat_2549889921",
       "japanese": "全てのプレイヤーの獲得フラスコチャージが#%減少する"
-    },
-    {
-      "kind": "fractured",
-      "stat_id": "fractured.stat_2550456553",
-      "japanese": "それぞれのレアモンスターはモッドを追加で#個持つ"
     },
     {
       "kind": "fractured",
@@ -55994,11 +54994,6 @@
     {
       "kind": "fractured",
       "stat_id": "fractured.stat_3126771445",
-      "japanese": "レアモンスターの数が#%増加する"
-    },
-    {
-      "kind": "fractured",
-      "stat_id": "fractured.stat_3126771445",
       "japanese": "マップでレアモンスターの数が#%増加する"
     },
     {
@@ -57000,11 +55995,6 @@
       "kind": "fractured",
       "stat_id": "fractured.stat_3539175001",
       "japanese": "パッシブスキルを1個追加: 瞬間を味わう"
-    },
-    {
-      "kind": "fractured",
-      "stat_id": "fractured.stat_3550168289",
-      "japanese": "エリアにはローグエグザイルが追加で1体生息している"
     },
     {
       "kind": "fractured",
@@ -58809,11 +57799,6 @@
     {
       "kind": "fractured",
       "stat_id": "fractured.stat_436556261",
-      "japanese": "このマップのアイテム数量のモッドはレアリティにも適用される"
-    },
-    {
-      "kind": "fractured",
-      "stat_id": "fractured.stat_436556261",
       "japanese": "このエリアで見つかるアイテムの数量のモッドはアイテムのレアリティにも適用される"
     },
     {
@@ -59505,11 +58490,6 @@
       "kind": "fractured",
       "stat_id": "fractured.stat_725880290",
       "japanese": "アタックによるヒット時に#%の確率で敵を串刺しにする"
-    },
-    {
-      "kind": "fractured",
-      "stat_id": "fractured.stat_728267040",
-      "japanese": "エリアで見つかるアイテムは#%の確率でコラプト状態でドロップする"
     },
     {
       "kind": "fractured",
@@ -60449,11 +59429,6 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_1070816711",
-      "japanese": "エリアにはアビスが追加で1個出現する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_1070816711",
       "japanese": "マップにアビスが追加で1個出現する"
     },
     {
@@ -60585,11 +59560,6 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1139878780",
       "japanese": "混沌ダメージは発火を付与できる"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_1145451936",
-      "japanese": "エリアには聖なる木立が出現する"
     },
     {
       "kind": "implicit",
@@ -61194,11 +60164,6 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_1468737867",
-      "japanese": "エリアに追加のシュラインが1個出現する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_1468737867",
       "japanese": "マップにはシュラインが追加で1個出現する"
     },
     {
@@ -61330,11 +60295,6 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1538773178",
       "japanese": "#%の確率で敵を感電させる"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_1539368271",
-      "japanese": "爆発物の設置距離が#%増加する"
     },
     {
       "kind": "implicit",
@@ -61524,11 +60484,6 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_1640965354",
-      "japanese": "エリアに含まれるルークニックモンスターの目印の数が#%増加する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_1640965354",
       "japanese": "マップにあるルーニックモンスターの目印の数が#%増加する"
     },
     {
@@ -61605,11 +60560,6 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1671639542",
       "japanese": "アーマーは最大値を超過した火耐性の#%分増加する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_1671749203",
-      "japanese": "エリアにはリチュアルの祭壇が出現する"
     },
     {
       "kind": "implicit",
@@ -61965,11 +60915,6 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1871765599",
       "japanese": "#%の確率で感電を無効化する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_1871805225",
-      "japanese": "レムナントは#%の確率でサフィックスモッドが1個追加される"
     },
     {
       "kind": "implicit",
@@ -62339,11 +61284,6 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_2055257822",
-      "japanese": "エリアにはアルティメイタムエンカウンターが出現する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_2055257822",
       "japanese": "マップにはアルティメイタムエンカウンターが出現する"
     },
     {
@@ -62580,11 +61520,6 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2156140483",
       "japanese": "ヘイトレッドのマナリザーブ効率が#%増加する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_2156201537",
-      "japanese": "+#%の確率でヴァールサイドエリアが出現する"
     },
     {
       "kind": "implicit",
@@ -63864,11 +62799,6 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_279246355",
-      "japanese": "エリアにはインベージョンボスが追加で1体生息している"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_279246355",
       "japanese": "マップにはインベージョンボスが追加で1体生息している"
     },
     {
@@ -63900,11 +62830,6 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_280731498",
       "japanese": "効果範囲が#%増加する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_2810286377",
-      "japanese": "エリアにはレアモンスターが追加で1パック出現する"
     },
     {
       "kind": "implicit",
@@ -63965,11 +62890,6 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2833896424",
       "japanese": "ハイスト中にドロップするアイテムのレアリティが#%増加する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_2834034653",
-      "japanese": "エリアはランダムな未割り当て特殊アトラスパッシブ追加で1個の影響を受ける"
     },
     {
       "kind": "implicit",
@@ -64479,11 +63399,6 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_3051490307",
-      "japanese": "爆発物の数が#%増加する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_3051490307",
       "japanese": "マップにある爆発物の数が#%増加する"
     },
     {
@@ -64784,11 +63699,6 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_3240183538",
-      "japanese": "エリアにはストロングボックスが追加で1個出現する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_3240183538",
       "japanese": "マップにはストロングボックスが追加で#個出現する"
     },
     {
@@ -64865,11 +63775,6 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3289633055",
       "japanese": "ソケットされたジェムのリザーブ効率が#%増加する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_3289828378",
-      "japanese": "爆発物の半径が#%増加する"
     },
     {
       "kind": "implicit",
@@ -65419,11 +64324,6 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_3550168289",
-      "japanese": "エリアにはローグエグザイルが追加で1体生息している"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_3550168289",
       "japanese": "マップにはローグエグザイルが追加で1体生息している"
     },
     {
@@ -65475,11 +64375,6 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3577248251",
       "japanese": "プレイヤーおよびミニオンが受ける反射ダメージが#%減少する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_358129101",
-      "japanese": "エリアには拷問された幽霊が追加で#体彷徨っている"
     },
     {
       "kind": "implicit",
@@ -65944,11 +64839,6 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_3788235244",
-      "japanese": "エリアには#%の確率でカディーロ・ペランダスが出現する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_3788235244",
       "japanese": "マップには#%の確率でカディーロ・ペランダスが出現する"
     },
     {
@@ -66154,11 +65044,6 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_3897451709",
-      "japanese": "エリアにはリージョンエンカウンターが追加で1個出現する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_3897451709",
       "japanese": "マップにはリージョンエンカウンターが追加で1個出現する"
     },
     {
@@ -66285,11 +65170,6 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3948776386",
       "japanese": "筋力15ごとにダメージが#%増加する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_395808938",
-      "japanese": "エリアにはエッセンスに囚われたモンスターが追加で1体出現する"
     },
     {
       "kind": "implicit",
@@ -66715,11 +65595,6 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_4154614323",
       "japanese": "ユニークの敵が付近にいる場合、プレイヤーが付与した凍結は#m以内の他の敵に伝染する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_4154778375",
-      "japanese": "エクスペディションエンカウンターが追加で1個出現する"
     },
     {
       "kind": "implicit",
@@ -67184,11 +66059,6 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_504850499",
-      "japanese": "エリアにはハービンジャーが追加で1体出現する"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_504850499",
       "japanese": "マップにはハービンジャーが追加で1体出現する"
     },
     {
@@ -67315,11 +66185,6 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_575726461",
       "japanese": "ユニークの敵が付近にいる場合、混沌耐性の最大値 +#%"
-    },
-    {
-      "kind": "implicit",
-      "stat_id": "implicit.stat_581013336",
-      "japanese": "エリアにはマジックモンスターが追加で1パック出現する"
     },
     {
       "kind": "implicit",
@@ -68209,102 +67074,102 @@
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_11536",
-      "japanese": "of Janus' Veil"
+      "japanese": "ヤーネスのヴェールの"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_14269",
-      "japanese": "Vagan's Veiled"
+      "japanese": "ヴェイガンのヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_3258",
-      "japanese": "Leo's Veiled"
+      "japanese": "リオのヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_38872",
-      "japanese": "Gravicius' Veiled"
+      "japanese": "グラヴィシウスのヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_39023",
-      "japanese": "Haku's Veiled"
+      "japanese": "ハクのヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_3975",
-      "japanese": "of Hillock's Veil"
+      "japanese": "ヒロックのヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_44855",
-      "japanese": "Korell's Veiled"
+      "japanese": "コレルのヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_47933",
-      "japanese": "Vorici's Veiled"
+      "japanese": "ヴォリーチのヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_48007",
-      "japanese": "of Aisling's Veil"
+      "japanese": "アシュリングのヴェールの"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_48408",
-      "japanese": "of Riker's Veil"
+      "japanese": "ライカーのヴェールの"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_55787",
-      "japanese": "It That Fled's Veiled"
+      "japanese": "逃げたもののヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_5769",
-      "japanese": "Elreon's Veiled"
+      "japanese": "エルレオンのヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_6131",
-      "japanese": "Rin's Veiled"
+      "japanese": "リンのヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_62955",
-      "japanese": "of Jorgin's Veil"
+      "japanese": "ジョーギンのヴェールの"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_63099",
-      "japanese": "of the Veil"
+      "japanese": "ヴェールの"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_63772",
-      "japanese": "Catarina's Veiled"
+      "japanese": "カタリナのヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_65000",
-      "japanese": "Veiled"
+      "japanese": "ヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_65163",
-      "japanese": "of Cameria's Veil"
+      "japanese": "カミリアのヴェールの"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_6779",
-      "japanese": "Guff's Veiled"
+      "japanese": "ガフのヴェールされた"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_8541",
-      "japanese": "Tora's Veiled"
+      "japanese": "トーラのヴェールされた"
     }
   ]
 }

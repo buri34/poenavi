@@ -15,6 +15,8 @@ PoE 1の武器・防具・装飾品について、日本語コピー文を共通
   反転・完全一致・小数精度・カテゴリ選択。Mod基盤の正本
 - RePoE: Tier範囲、必要レベル、Prefix/Suffix等の生成種別、ローカルstat判定
 - 日本語公式Trade API: 検索可能なstat IDと日本語matcher。Mod基盤の骨格
+- 日本語補完台帳 (`scripts/poetore-japanese-overrides.json`): 公式日本語APIの既知の
+  翻訳欠落だけを、確認済みの旧日本語文面で補完
 - Awakened PoE Trade: 独自台帳との比較監査、防具ベース、Gem、Unique固定Mod、関連品。
   Mod基盤の生成入力には使わない
 
@@ -56,6 +58,8 @@ PYTHONPATH=. python scripts/build_poetore_metadata.py --official-mods-only
 レポートの`official_trade_changes.added`が新リーグで増えたStat、
 `unresolved_japanese_stats`が独自台帳へ未登録のStat全体である。追加Statの仕様を確認して
 台帳へ反映した後、`--refresh-lock --apply`で公式Stat基準も同時に更新する。
+`japanese_overrides`には公式文面と実際に採用した補完文面を併記する。公式側で日本語が
+復旧した項目は、確認後に補完台帳から削除する。
 
 ```bash
 PYTHONPATH=. python scripts/build_poetore_metadata.py --refresh-lock

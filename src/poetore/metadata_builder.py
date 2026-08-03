@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import copy
 import json
 from typing import Iterable
 
@@ -50,6 +51,27 @@ def _trade_entries(payload: dict) -> dict[tuple[str, str], dict]:
         (str(entry.get("type", "")), str(entry.get("id", ""))): entry
         for group in payload.get("result", ()) for entry in group.get("entries", ())
     }
+
+
+def apply_japanese_trade_overrides(jp_trade: dict, overrides: dict) -> tuple[dict, list[dict]]:
+    """公式日本語APIの既知の翻訳欠落だけを監査済み文面へ差し替える。"""
+    effective = copy.deepcopy(jp_trade)
+    entries = _trade_entries(effective)
+    applied = []
+    for row in overrides.get("overrides", ()):
+        kind = str(row.get("kind", ""))
+        stat_id = str(row.get("stat_id", ""))
+        japanese = str(row.get("japanese", ""))
+        entry = entries.get((kind, stat_id))
+        if entry is None or not japanese:
+            raise ValueError(f"invalid Japanese Trade override: {kind}:{stat_id}")
+        upstream = str(entry.get("text", ""))
+        entry["text"] = japanese
+        applied.append({
+            "kind": kind, "stat_id": stat_id,
+            "upstream": upstream, "effective": japanese,
+        })
+    return effective, applied
 
 
 def _official_option_compatibility_records(

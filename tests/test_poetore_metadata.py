@@ -1,12 +1,15 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from src.poetore.metadata import (
     MetadataIndex, ModMetadata, OptionValue, TierRange, pseudo_definitions, pseudo_relations,
     diff_pseudo_payloads, unique_fixed_stats, unique_icon_url, validate_pseudo_payload,
 )
 from src.poetore.metadata_builder import (
-    audit_awakened_stat_rules, build_minimal_index, build_official_index,
+    apply_japanese_trade_overrides, audit_awakened_stat_rules,
+    build_minimal_index, build_official_index,
     build_related_item_groups, diff_minimal_indexes,
     diff_official_trade_entries, excessive_removal, official_trade_entry_snapshot,
     unresolved_trade_entries, validate_minimal_index,
@@ -81,6 +84,71 @@ def test_official_trade_diff_lists_new_removed_and_reworded_stats():
         "kind": "explicit", "stat_id": "same",
         "previous_japanese": "旧文面 #", "current_japanese": "新文面 #",
     }]
+
+
+def test_japanese_trade_override_preserves_known_translation_regression():
+    upstream = {"result": [{"entries": [{
+        "type": "veiled", "id": "veiled.mod_65000", "text": "Veiled",
+    }]}]}
+    overrides = {"overrides": [{
+        "kind": "veiled", "stat_id": "veiled.mod_65000",
+        "japanese": "ヴェールされた",
+    }]}
+
+    effective, applied = apply_japanese_trade_overrides(upstream, overrides)
+
+    assert upstream["result"][0]["entries"][0]["text"] == "Veiled"
+    assert effective["result"][0]["entries"][0]["text"] == "ヴェールされた"
+    assert applied == [{
+        "kind": "veiled", "stat_id": "veiled.mod_65000",
+        "upstream": "Veiled", "effective": "ヴェールされた",
+    }]
+
+
+def test_japanese_trade_override_rejects_unknown_stat():
+    try:
+        apply_japanese_trade_overrides(
+            {"result": []},
+            {"overrides": [{
+                "kind": "veiled", "stat_id": "veiled.missing", "japanese": "値",
+            }]},
+        )
+    except ValueError as error:
+        assert "veiled:veiled.missing" in str(error)
+    else:
+        raise AssertionError("unknown override must fail")
+
+
+@pytest.mark.parametrize(("stat_id", "japanese"), [
+    (
+        "explicit.stat_1574578643",
+        "ピュリティオブエレメントの影響を受けている間受ける反射元素ダメージの+#%を防ぐ",
+    ),
+    (
+        "explicit.stat_2255585376",
+        "デターミネーションの影響を受けている間受ける反射物理ダメージの+#%を防ぐ",
+    ),
+    (
+        "explicit.stat_3829555156",
+        "右の指輪スロット: プレイヤーおよびミニオンは反射物理ダメージの+#%を防ぐ",
+    ),
+    (
+        "explicit.stat_3991837781",
+        "左の指輪スロット: プレイヤーおよびミニオンは反射元素ダメージの+#%を防ぐ",
+    ),
+    (
+        "implicit.stat_1973340656",
+        "アトラスのピナクルボスが付近にいる場合、ミニオンは受ける反射ダメージの+#%を防ぐ",
+    ),
+    (
+        "implicit.stat_2467518140",
+        "ミニオンは受ける反射ダメージの+#%を防ぐ",
+    ),
+])
+def test_default_metadata_keeps_reviewed_reflect_japanese(stat_id, japanese):
+    payload = json.loads(Path("data/poetore/mod_metadata.json").read_text(encoding="utf-8"))
+    row = next(row for row in payload["mods"] if row["stat_id"] == stat_id)
+    assert row["japanese"] == [japanese]
 
 
 def test_stat_rule_extractor_drops_runtime_and_repoe_fields():

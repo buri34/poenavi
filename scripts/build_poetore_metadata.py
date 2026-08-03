@@ -11,7 +11,8 @@ import sys
 from urllib.request import Request, urlopen
 
 from src.poetore.metadata_builder import (
-    audit_awakened_stat_rules, build_official_index, build_related_item_groups,
+    apply_japanese_trade_overrides, audit_awakened_stat_rules,
+    build_official_index, build_related_item_groups,
     diff_minimal_indexes, diff_official_trade_entries,
     excessive_removal,
     official_trade_entry_snapshot,
@@ -25,6 +26,7 @@ DEFAULT_OUTPUT = Path("data/poetore/mod_metadata.json")
 DEFAULT_REPORT = Path("build/poetore-metadata-report.json")
 DEFAULT_STAT_RULES = Path("scripts/poetore-stat-rules.json")
 DEFAULT_OFFICIAL_BASELINE = Path("scripts/poetore-official-stats-baseline.json")
+DEFAULT_JAPANESE_OVERRIDES = Path("scripts/poetore-japanese-overrides.json")
 
 
 def _get(url: str) -> bytes:
@@ -60,6 +62,10 @@ def main() -> int:
     parser.add_argument(
         "--official-baseline", type=Path, default=DEFAULT_OFFICIAL_BASELINE,
         help="前回確認済みの公式Trade Stat一覧",
+    )
+    parser.add_argument(
+        "--japanese-overrides", type=Path, default=DEFAULT_JAPANESE_OVERRIDES,
+        help="公式日本語APIの既知の翻訳欠落を補う監査済み台帳",
     )
     parser.add_argument("--apply", action="store_true", help="検査成功後に正本を原子的に置換する")
     parser.add_argument(
@@ -161,10 +167,13 @@ def main() -> int:
             if name in previous.get("sources", {}):
                 sources[name] = previous["sources"][name]
     awakened = blobs.get("awakened_poe_trade", b"").decode("utf-8").splitlines()
-    jp_trade = json.loads(blobs["jp_trade_api"])
-    official_snapshot = official_trade_entry_snapshot(jp_trade)
+    raw_jp_trade = json.loads(blobs["jp_trade_api"])
+    official_snapshot = official_trade_entry_snapshot(raw_jp_trade)
     official_changes = diff_official_trade_entries(
         _load_json(args.official_baseline), official_snapshot,
+    )
+    jp_trade, japanese_overrides = apply_japanese_trade_overrides(
+        raw_jp_trade, _load_json(args.japanese_overrides),
     )
     stat_rules = _load_json(args.stat_rules)
     candidate = build_official_index(
@@ -206,6 +215,7 @@ def main() -> int:
         "diff": differences,
         "unresolved_japanese_stats": unresolved,
         "official_trade_changes": official_changes,
+        "japanese_overrides": japanese_overrides,
         "awakened_comparison": awakened_audit,
         "failures": failures,
     }

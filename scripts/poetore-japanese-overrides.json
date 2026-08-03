@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "description": "Reviewed Japanese Trade API translation fallbacks; keep only while upstream Japanese text is unavailable.",
+  "overrides": [
+    {"kind": "veiled", "stat_id": "veiled.mod_11536", "japanese": "ヤーネスのヴェールの"},
+    {"kind": "veiled", "stat_id": "veiled.mod_14269", "japanese": "ヴェイガンのヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_3258", "japanese": "リオのヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_38872", "japanese": "グラヴィシウスのヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_39023", "japanese": "ハクのヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_3975", "japanese": "ヒロックのヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_44855", "japanese": "コレルのヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_47933", "japanese": "ヴォリーチのヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_48007", "japanese": "アシュリングのヴェールの"},
+    {"kind": "veiled", "stat_id": "veiled.mod_48408", "japanese": "ライカーのヴェールの"},
+    {"kind": "veiled", "stat_id": "veiled.mod_55787", "japanese": "逃げたもののヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_5769", "japanese": "エルレオンのヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_6131", "japanese": "リンのヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_62955", "japanese": "ジョーギンのヴェールの"},
+    {"kind": "veiled", "stat_id": "veiled.mod_63099", "japanese": "ヴェールの"},
+    {"kind": "veiled", "stat_id": "veiled.mod_63772", "japanese": "カタリナのヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_65000", "japanese": "ヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_65163", "japanese": "カミリアのヴェールの"},
+    {"kind": "veiled", "stat_id": "veiled.mod_6779", "japanese": "ガフのヴェールされた"},
+    {"kind": "veiled", "stat_id": "veiled.mod_8541", "japanese": "トーラのヴェールされた"}
+  ]
+}
