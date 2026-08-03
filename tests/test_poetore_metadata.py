@@ -144,6 +144,22 @@ def test_japanese_trade_override_rejects_unknown_stat():
         "implicit.stat_2467518140",
         "ミニオンは受ける反射ダメージの+#%を防ぐ",
     ),
+    (
+        "crafted.stat_603134774",
+        "効果中は反射ダメージの+#%を防ぐ",
+    ),
+    (
+        "explicit.stat_603134774",
+        "効果中は反射ダメージの+#%を防ぐ",
+    ),
+    (
+        "implicit.stat_2173565521",
+        "アトラスのピナクルボスが付近にいる場合、反射ダメージの+#%を防ぐ",
+    ),
+    (
+        "implicit.stat_2510655429",
+        "反射ダメージの+#%を防ぐ",
+    ),
 ])
 def test_default_metadata_keeps_reviewed_reflect_japanese(stat_id, japanese):
     payload = json.loads(Path("data/poetore/mod_metadata.json").read_text(encoding="utf-8"))

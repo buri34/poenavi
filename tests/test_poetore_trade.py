@@ -560,42 +560,61 @@ def test_reduced_curse_effect_flask_uses_awakened_positive_minimum():
     }]
 
 
-@pytest.mark.parametrize(("stat_id", "line", "implicit"), [
+@pytest.mark.parametrize(("stat_id", "line", "suffix"), [
     (
         "explicit.stat_1574578643",
         "ピュリティオブエレメントの影響を受けている間受ける反射元素ダメージの66%を防ぐ",
-        False,
+        "",
     ),
     (
         "explicit.stat_2255585376",
         "デターミネーションの影響を受けている間受ける反射物理ダメージの66%を防ぐ",
-        False,
+        "",
     ),
     (
         "explicit.stat_3829555156",
         "右の指輪スロット: プレイヤーおよびミニオンは反射物理ダメージの110%を防ぐ",
-        False,
+        "",
     ),
     (
         "explicit.stat_3991837781",
         "左の指輪スロット: プレイヤーおよびミニオンは反射元素ダメージの110%を防ぐ",
-        False,
+        "",
     ),
     (
         "implicit.stat_1973340656",
         "アトラスのピナクルボスが付近にいる場合、ミニオンは受ける反射ダメージの90%を防ぐ",
-        True,
+        " (implicit)",
     ),
     (
         "implicit.stat_2467518140",
         "ミニオンは受ける反射ダメージの66%を防ぐ",
-        True,
+        " (implicit)",
+    ),
+    (
+        "crafted.stat_603134774",
+        "効果中は反射ダメージの60%を防ぐ",
+        " (crafted)",
+    ),
+    (
+        "explicit.stat_603134774",
+        "効果中は反射ダメージの60%を防ぐ",
+        "",
+    ),
+    (
+        "implicit.stat_2173565521",
+        "アトラスのピナクルボスが付近にいる場合、反射ダメージの90%を防ぐ",
+        " (implicit)",
+    ),
+    (
+        "implicit.stat_2510655429",
+        "反射ダメージの66%を防ぐ",
+        " (implicit)",
     ),
 ])
 def test_reflected_damage_prevention_uses_positive_trade_minimum(
-    stat_id, line, implicit,
+    stat_id, line, suffix,
 ):
-    suffix = " (implicit)" if implicit else ""
     item = parse_item_text(f"""アイテムクラス: 胴体防具
 レアリティ: レア
 反射監査用胴体

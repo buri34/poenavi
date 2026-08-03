@@ -2697,7 +2697,7 @@
       "kind": "crafted",
       "better": -1,
       "inverted": true,
-      "negated": false,
+      "negated": true,
       "exact": false,
       "decimal": false,
       "options": []
@@ -80314,7 +80314,7 @@
       "kind": "explicit",
       "better": -1,
       "inverted": true,
-      "negated": false,
+      "negated": true,
       "exact": false,
       "decimal": false,
       "options": []
@@ -109451,9 +109451,9 @@
       "ref": "While a Pinnacle Atlas Boss is in your Presence, Prevent +#% of Reflected Damage",
       "stat_id": "implicit.stat_2173565521",
       "kind": "implicit",
-      "better": 1,
+      "better": -1,
       "inverted": true,
-      "negated": false,
+      "negated": true,
       "exact": false,
       "decimal": false,
       "options": []
@@ -110788,12 +110788,13 @@
       "ref": "Prevent +#% of Reflected Damage",
       "stat_id": "implicit.stat_2510655429",
       "kind": "implicit",
-      "better": 1,
+      "better": -1,
       "inverted": true,
-      "negated": false,
+      "negated": true,
       "exact": false,
       "decimal": false,
-      "options": []
+      "options": [],
+      "category_select": "ARMOUR"
     },
     {
       "ref": "#% increased Stun and Block Recovery",
