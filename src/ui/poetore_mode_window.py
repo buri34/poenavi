@@ -408,6 +408,10 @@ class PoetoreModeWindow(QMainWindow):
     def handle_hotkey(self, command):
         if command == "poetore_capture":
             self.capture_poetore_item()
+        elif command == "poetore_capture_released":
+            window = getattr(self, "_poetore_window", None)
+            if window is not None:
+                window.capture_hotkey_released()
         elif command == "cheat_sheets_toggle":
             self.toggle_cheat_sheets()
         elif command == "cheat_sheets_escape":

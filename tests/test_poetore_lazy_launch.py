@@ -40,6 +40,14 @@ class PoetoreLazyLaunchTest(unittest.TestCase):
             ["hotkey_dispatched", "poetore_window_ready"],
         )
 
+    def test_capture_release_is_forwarded_to_prepared_poetore_window(self):
+        window = MainWindow.__new__(MainWindow)
+        window._poetore_window = Mock()
+
+        MainWindow.handle_hotkey(window, "poetore_capture_released")
+
+        window._poetore_window.capture_hotkey_released.assert_called_once_with()
+
 
 if __name__ == "__main__":
     unittest.main()

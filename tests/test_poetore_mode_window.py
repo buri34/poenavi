@@ -79,6 +79,15 @@ def test_poetore_mode_monastery_hotkey_sends_chat_command():
     app.processEvents()
 
 
+def test_poetore_mode_forwards_capture_hotkey_release():
+    window = MagicMock()
+    window._poetore_window = MagicMock()
+
+    PoetoreModeWindow.handle_hotkey(window, "poetore_capture_released")
+
+    window._poetore_window.capture_hotkey_released.assert_called_once_with()
+
+
 def test_poetore_mode_capture_hint_uses_configured_hotkey():
     app = QApplication.instance() or QApplication([])
     config = {"hotkeys": {"poetore_capture": "Ctrl+Shift+P"}}

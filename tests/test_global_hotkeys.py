@@ -67,6 +67,31 @@ def test_service_registers_only_supplied_mode_actions():
     }
     assert emitted == ["poetore_capture"]
 
+    listeners[0].on_release(SimpleNamespace(char="d", vk=ord("D")))
+    assert emitted == ["poetore_capture"]
+    listeners[0].on_release(SimpleNamespace(name="alt"))
+    assert emitted == ["poetore_capture", "poetore_capture_released"]
+
+
+def test_capture_release_waits_for_every_key_regardless_of_release_order():
+    listeners = []
+    service = GlobalHotkeyService(
+        {"poetore_capture": "ctrl+shift+p"},
+        listener_factory=lambda **kwargs: listeners.append(FakeListener(**kwargs)) or listeners[-1],
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+
+    listeners[0].on_press(SimpleNamespace(name="ctrl"))
+    listeners[0].on_press(SimpleNamespace(name="shift"))
+    listeners[0].on_press(SimpleNamespace(char="p", vk=ord("P")))
+    listeners[0].on_release(SimpleNamespace(name="ctrl"))
+    listeners[0].on_release(SimpleNamespace(name="shift"))
+    assert emitted == ["poetore_capture"]
+    listeners[0].on_release(SimpleNamespace(char="p", vk=ord("P")))
+    assert emitted == ["poetore_capture", "poetore_capture_released"]
+
 
 def test_escape_is_available_for_common_cheat_sheet_overlay():
     listener_box = []

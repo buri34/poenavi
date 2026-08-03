@@ -176,6 +176,38 @@ def test_capture_from_poe_remembers_the_verified_game_window(qapp):
         window.close()
 
 
+def test_capture_copy_starts_as_soon_as_hotkey_is_fully_released(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("pynput.keyboard.Controller"), patch.object(
+            QTimer, "singleShot",
+        ) as single_shot, patch.object(window, "_send_copy") as send_copy:
+            window.capture_from_poe()
+            window.capture_hotkey_released()
+
+        assert single_shot.call_args.args[0] == 250
+        send_copy.assert_called_once_with(window._capture_copy_keys, window._capture_item_copy)
+    finally:
+        window.close()
+
+
+def test_capture_copy_timeout_preserves_previous_250ms_fallback(qapp):
+    window = PoetoreWindow()
+    scheduled = []
+    try:
+        with patch("pynput.keyboard.Controller"), patch.object(
+            QTimer, "singleShot", side_effect=lambda delay, fn: scheduled.append((delay, fn)),
+        ), patch.object(window, "_send_copy") as send_copy:
+            window.capture_from_poe()
+            assert scheduled[0][0] == 250
+            scheduled[0][1]()
+            window.capture_hotkey_released()
+
+        send_copy.assert_called_once_with(window._capture_copy_keys, window._capture_item_copy)
+    finally:
+        window.close()
+
+
 def test_copy_continues_immediately_when_clipboard_generation_changes(qapp):
     window = PoetoreWindow()
     window._capture_keyboard = Mock()

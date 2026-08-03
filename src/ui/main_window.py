@@ -2985,7 +2985,9 @@ class MainWindow(QMainWindow):
             print(f"Registering hotkeys: {self.hotkey_map}")
             
             pressed_modifiers = set()
+            pressed_keys = set()
             triggered_combos = set()
+            pending_poetore_releases = {}
 
             def on_press(key):
                 try:
@@ -2998,10 +3000,16 @@ class MainWindow(QMainWindow):
                     
                     if key_name in {"alt", "alt_l", "alt_r", "alt_gr"}:
                         pressed_modifiers.add("alt")
+                        normalized_key = "alt"
                     elif key_name in {"ctrl", "ctrl_l", "ctrl_r"}:
                         pressed_modifiers.add("ctrl")
+                        normalized_key = "ctrl"
                     elif key_name in {"shift", "shift_l", "shift_r"}:
                         pressed_modifiers.add("shift")
+                        normalized_key = "shift"
+                    else:
+                        normalized_key = key_name
+                    pressed_keys.add(normalized_key)
 
                     if key_name in {"esc", "escape"}:
                         self.hotkey_signal.emit("cheat_sheets_escape")
@@ -3015,12 +3023,17 @@ class MainWindow(QMainWindow):
                             self.hotkey_signal.emit("gem_shop_search_released")
                         if combo not in triggered_combos:
                             triggered_combos.add(combo)
-                            self.hotkey_signal.emit(self.hotkey_map[combo])
+                            command = self.hotkey_map[combo]
+                            if command == "poetore_capture":
+                                pending_poetore_releases[combo] = frozenset(combo.split("+"))
+                            self.hotkey_signal.emit(command)
                         return
 
                     # 単独ホットキーマップをチェック
                     if key_name in self.hotkey_map:
                         command = self.hotkey_map[key_name]
+                        if command == "poetore_capture":
+                            pending_poetore_releases[key_name] = frozenset((key_name,))
                         print(f"[HOTKEY DEBUG] key={key_name} command={command} search_in_progress={getattr(self, '_search_paste_in_progress', False)}")
                         self.hotkey_signal.emit(command)
                 except Exception as e:
@@ -3034,10 +3047,20 @@ class MainWindow(QMainWindow):
                     self.hotkey_signal.emit("gem_shop_search_released")
                 if key_name in {"alt", "alt_l", "alt_r", "alt_gr"}:
                     pressed_modifiers.discard("alt")
+                    normalized_key = "alt"
                 elif key_name in {"ctrl", "ctrl_l", "ctrl_r"}:
                     pressed_modifiers.discard("ctrl")
+                    normalized_key = "ctrl"
                 elif key_name in {"shift", "shift_l", "shift_r"}:
                     pressed_modifiers.discard("shift")
+                    normalized_key = "shift"
+                else:
+                    normalized_key = key_name
+                pressed_keys.discard(normalized_key)
+                for combo, required_keys in tuple(pending_poetore_releases.items()):
+                    if not required_keys.intersection(pressed_keys):
+                        pending_poetore_releases.pop(combo, None)
+                        self.hotkey_signal.emit("poetore_capture_released")
                 triggered_combos.clear()
             
             self.keyboard_listener = pynput_keyboard.Listener(on_press=on_press, on_release=on_release)
@@ -3073,6 +3096,10 @@ class MainWindow(QMainWindow):
             self.open_search_string_paste_test()
         elif command == "poetore_capture":
             self.capture_poetore_item()
+        elif command == "poetore_capture_released":
+            window = getattr(self, "_poetore_window", None)
+            if window is not None:
+                window.capture_hotkey_released()
         elif command == "gem_shop_search_pressed":
             self._start_gem_shop_search_hold()
         elif command == "gem_shop_search_released":

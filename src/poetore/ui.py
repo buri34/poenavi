@@ -2485,8 +2485,32 @@ class PoetoreWindow(QWidget):
             foreground if is_path_of_exile_window(foreground) else None
         )
         self._capture_keyboard = Controller()
-        trace.mark("copy_scheduled", delay_ms=250)
-        QTimer.singleShot(250, lambda: self._send_copy((Key.ctrl, "c"), self._capture_item_copy))
+        generation = getattr(self, "_capture_release_generation", 0) + 1
+        self._capture_release_generation = generation
+        self._capture_copy_started = False
+        self._capture_copy_keys = (Key.ctrl, "c")
+        trace.mark("copy_scheduled", release_wait_timeout_ms=250)
+        QTimer.singleShot(
+            250,
+            lambda: self._start_capture_copy(generation, "release_timeout"),
+        )
+
+    def capture_hotkey_released(self):
+        """Start copying once every key in the configured capture hotkey is up."""
+        generation = getattr(self, "_capture_release_generation", None)
+        if generation is not None:
+            self._start_capture_copy(generation, "hotkey_released")
+
+    def _start_capture_copy(self, generation: int, source: str):
+        if generation != getattr(self, "_capture_release_generation", None):
+            return
+        if getattr(self, "_capture_copy_started", False):
+            return
+        self._capture_copy_started = True
+        trace = self._pending_performance_trace
+        if trace is not None:
+            trace.mark("copy_triggered", source=source)
+        self._send_copy(self._capture_copy_keys, self._capture_item_copy)
 
     def _send_copy(self, keys, callback):
         trace = self._pending_performance_trace

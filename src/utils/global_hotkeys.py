@@ -81,7 +81,9 @@ class GlobalHotkeyService(QObject):
                 listener_factory = keyboard.Listener
 
             pressed_modifiers = set()
+            pressed_keys = set()
             triggered_combos = set()
+            pending_releases = {}
 
             def on_press(key):
                 key_name = hotkey_key_name(key)
@@ -90,6 +92,7 @@ class GlobalHotkeyService(QObject):
                 modifier = self._modifier_name(key_name)
                 if modifier:
                     pressed_modifiers.add(modifier)
+                pressed_keys.add(modifier or key_name)
 
                 if key_name in {"esc", "escape"}:
                     self.command.emit("cheat_sheets_escape")
@@ -105,6 +108,8 @@ class GlobalHotkeyService(QObject):
                 configured = self._hotkey_map.get(combo) or self._hotkey_map.get(key_name)
                 if configured and combo not in triggered_combos:
                     triggered_combos.add(combo)
+                    if configured == "poetore_capture":
+                        pending_releases[combo] = frozenset(combo.split("+"))
                     self.command.emit(configured)
 
             def on_release(key):
@@ -114,6 +119,11 @@ class GlobalHotkeyService(QObject):
                 modifier = self._modifier_name(key_name)
                 if modifier:
                     pressed_modifiers.discard(modifier)
+                pressed_keys.discard(modifier or key_name)
+                for combo, required_keys in tuple(pending_releases.items()):
+                    if not required_keys.intersection(pressed_keys):
+                        pending_releases.pop(combo, None)
+                        self.command.emit("poetore_capture_released")
                 triggered_combos.clear()
 
             self._listener = listener_factory(on_press=on_press, on_release=on_release)
