@@ -15,6 +15,7 @@
         "monastery": "F12",
         "search_string_test": "F4",
         "poetore_capture": "alt+d",
+        "map_check": "alt+f",
         "gem_shop_search": "F2",
         "cheat_sheets_toggle": "shift+space"
     },
@@ -52,6 +53,11 @@
         "league": "auto",
         "search_stat_range": 10,
         "result_font_size": "medium"
+    },
+    "map_check": {
+        "profile": 1,
+        "show_new_stats": false,
+        "decisions": {}
     },
     "window_geometry": {
         "x": 2644,

@@ -1626,6 +1626,7 @@ class SettingsDialog(QDialog):
             "monastery": "F12",
             "search_string_test": "F4",
             "poetore_capture": "alt+d",
+            "map_check": "alt+f",
             "gem_shop_search": "F2",
             "cheat_sheets_toggle": "shift+space",
         })
@@ -1865,6 +1866,12 @@ class SettingsDialog(QDialog):
         )
         h_layout10.addWidget(self.poetore_capture_btn)
         group_layout.addLayout(h_layout10)
+
+        map_check_layout = QHBoxLayout()
+        map_check_layout.addWidget(QLabel("Map Modチェック:"))
+        self.map_check_btn = HotkeyButton(self.hotkeys.get("map_check", "alt+f"))
+        map_check_layout.addWidget(self.map_check_btn)
+        group_layout.addLayout(map_check_layout)
 
         h_layout11 = QHBoxLayout()
         h_layout11.addWidget(QLabel("ジェムショップ検索（長押し）:"))
@@ -2890,6 +2897,7 @@ class SettingsDialog(QDialog):
             "monastery": self.monastery_btn.key_text,
             "search_string_test": self.search_string_test_btn.key_text,
             "poetore_capture": self.poetore_capture_btn.key_text,
+            "map_check": self.map_check_btn.key_text,
             "gem_shop_search": self.gem_shop_search_btn.key_text,
             "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,
         }
@@ -2907,6 +2915,7 @@ class SettingsDialog(QDialog):
                 "monastery": "修道院へ移動",
                 "search_string_test": "検索文字列の貼り付け",
                 "poetore_capture": "ぽえとれ検索",
+                "map_check": "Map Modチェック",
                 "gem_shop_search": "ジェムショップ検索",
                 "cheat_sheets_toggle": "Cheat sheets表示",
             }
@@ -2957,6 +2966,7 @@ class SettingsDialog(QDialog):
                 "monastery": self.monastery_btn.key_text,
                 "search_string_test": self.search_string_test_btn.key_text,
                 "poetore_capture": self.poetore_capture_btn.key_text,
+                "map_check": self.map_check_btn.key_text,
                 "gem_shop_search": self.gem_shop_search_btn.key_text,
                 "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,
             },

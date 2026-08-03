@@ -108,7 +108,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path PoENavi.zip))
 try {
     $entryNames = @($archive.Entries | ForEach-Object { $_.FullName.Replace("\", "/") })
-    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json")) {
+    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json", "map_mods.json")) {
         if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {
             throw "Release audit failed: missing $requiredName"
         }

@@ -108,7 +108,7 @@ class GlobalHotkeyService(QObject):
                 configured = self._hotkey_map.get(combo) or self._hotkey_map.get(key_name)
                 if configured and combo not in triggered_combos:
                     triggered_combos.add(combo)
-                    if configured == "poetore_capture":
+                    if configured in {"poetore_capture", "map_check"}:
                         pending_releases[combo] = frozenset(combo.split("+"))
                     self.command.emit(configured)
 
@@ -123,7 +123,8 @@ class GlobalHotkeyService(QObject):
                 for combo, required_keys in tuple(pending_releases.items()):
                     if not required_keys.intersection(pressed_keys):
                         pending_releases.pop(combo, None)
-                        self.command.emit("poetore_capture_released")
+                        action = self._hotkey_map.get(combo) or "poetore_capture"
+                        self.command.emit(f"{action}_released")
                 triggered_combos.clear()
 
             self._listener = listener_factory(on_press=on_press, on_release=on_release)

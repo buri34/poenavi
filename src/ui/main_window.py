@@ -2974,6 +2974,7 @@ class MainWindow(QMainWindow):
                                      ("exit", "F5"),
                                      ("hideout", "F11"), ("monastery", "F12"),
                                      ("search_string_test", "F4"), ("poetore_capture", "alt+d"),
+                                     ("map_check", "alt+f"),
                                      ("cheat_sheets_toggle", "shift+space")]:
                 key = hotkeys.get(action, default)
                 if key and key != "none":
@@ -3024,16 +3025,20 @@ class MainWindow(QMainWindow):
                         if combo not in triggered_combos:
                             triggered_combos.add(combo)
                             command = self.hotkey_map[combo]
-                            if command == "poetore_capture":
-                                pending_poetore_releases[combo] = frozenset(combo.split("+"))
+                            if command in {"poetore_capture", "map_check"}:
+                                pending_poetore_releases[combo] = (
+                                    frozenset(combo.split("+")), command,
+                                )
                             self.hotkey_signal.emit(command)
                         return
 
                     # 単独ホットキーマップをチェック
                     if key_name in self.hotkey_map:
                         command = self.hotkey_map[key_name]
-                        if command == "poetore_capture":
-                            pending_poetore_releases[key_name] = frozenset((key_name,))
+                        if command in {"poetore_capture", "map_check"}:
+                            pending_poetore_releases[key_name] = (
+                                frozenset((key_name,)), command,
+                            )
                         print(f"[HOTKEY DEBUG] key={key_name} command={command} search_in_progress={getattr(self, '_search_paste_in_progress', False)}")
                         self.hotkey_signal.emit(command)
                 except Exception as e:
@@ -3057,10 +3062,11 @@ class MainWindow(QMainWindow):
                 else:
                     normalized_key = key_name
                 pressed_keys.discard(normalized_key)
-                for combo, required_keys in tuple(pending_poetore_releases.items()):
+                for combo, pending in tuple(pending_poetore_releases.items()):
+                    required_keys, action = pending
                     if not required_keys.intersection(pressed_keys):
                         pending_poetore_releases.pop(combo, None)
-                        self.hotkey_signal.emit("poetore_capture_released")
+                        self.hotkey_signal.emit(f"{action}_released")
                 triggered_combos.clear()
             
             self.keyboard_listener = pynput_keyboard.Listener(on_press=on_press, on_release=on_release)
@@ -3098,6 +3104,12 @@ class MainWindow(QMainWindow):
             self.capture_poetore_item()
         elif command == "poetore_capture_released":
             window = getattr(self, "_poetore_window", None)
+            if window is not None:
+                window.capture_hotkey_released()
+        elif command == "map_check":
+            self.capture_map_check_item()
+        elif command == "map_check_released":
+            window = getattr(self, "_map_check_window", None)
             if window is not None:
                 window.capture_hotkey_released()
         elif command == "gem_shop_search_pressed":
@@ -4239,6 +4251,26 @@ class MainWindow(QMainWindow):
         trace.mark("poetore_window_ready")
         window.capture_from_poe(trace)
 
+    def _save_map_check_config(self, map_check_config):
+        self.config["map_check"] = dict(map_check_config)
+        ConfigManager.save_config(self.config)
+
+    def _ensure_map_check_window(self):
+        from src.ui.map_check import MapCheckWindow
+
+        window = getattr(self, "_map_check_window", None)
+        if window is None:
+            window = MapCheckWindow(self.config.get("map_check", {}), self)
+            window.config_changed.connect(self._save_map_check_config)
+            self._map_check_window = window
+        else:
+            window.reload_config(self.config.get("map_check", {}))
+        return window
+
+    def capture_map_check_item(self):
+        """Map系アイテムをコピーし、通信なしで危険Modを確認する。"""
+        self._ensure_map_check_window().capture_from_poe()
+
     def _update_poetore_hotkey_tooltip(self):
         hotkey = self.config.get("hotkeys", {}).get("poetore_capture", "alt+d")
         if hotkey and hotkey != "none":
@@ -4631,6 +4663,12 @@ class MainWindow(QMainWindow):
             poetore_window.close()
             poetore_window.deleteLater()
             self._poetore_window = None
+
+        map_check_window = getattr(self, "_map_check_window", None)
+        if map_check_window is not None:
+            map_check_window.close()
+            map_check_window.deleteLater()
+            self._map_check_window = None
 
         keyboard_listener = getattr(self, "keyboard_listener", None)
         if keyboard_listener:

@@ -13,6 +13,12 @@ def test_alt_d_is_default_poetore_capture_hotkey():
     assert config["hotkeys"]["poetore_capture"] == "alt+d"
 
 
+def test_alt_f_is_default_map_check_hotkey():
+    with open("default_config.json", encoding="utf-8") as file:
+        config = json.load(file)
+    assert config["hotkeys"]["map_check"] == "alt+f"
+
+
 def test_shift_space_is_default_cheat_sheets_toggle_hotkey():
     with open("default_config.json", encoding="utf-8") as file:
         config = json.load(file)
@@ -143,6 +149,30 @@ def test_main_mode_waits_for_all_poetore_hotkey_keys_to_be_released(monkeypatch)
     assert emitted == ["poetore_capture", "poetore_capture_released"]
 
 
+def test_main_mode_emits_map_check_release_separately(monkeypatch):
+    callbacks = {}
+
+    class FakeListener:
+        def __init__(self, on_press, on_release):
+            callbacks["on_press"] = on_press
+            callbacks["on_release"] = on_release
+        def start(self): pass
+        def stop(self): pass
+
+    emitted = []
+    window = SimpleNamespace(
+        config={"hotkeys": {"map_check": "alt+f"}}, keyboard_listener=None,
+        hotkey_signal=SimpleNamespace(emit=emitted.append),
+    )
+    monkeypatch.setattr("src.ui.main_window.pynput_keyboard.Listener", FakeListener)
+    MainWindow.register_hotkeys(window)
+    callbacks["on_press"](SimpleNamespace(name="alt"))
+    callbacks["on_press"](SimpleNamespace(char="f", vk=ord("F")))
+    callbacks["on_release"](SimpleNamespace(char="f", vk=ord("F")))
+    callbacks["on_release"](SimpleNamespace(name="alt"))
+    assert emitted == ["map_check", "map_check_released"]
+
+
 def test_settings_dialog_can_change_poetore_capture_hotkey(monkeypatch):
     app = QApplication.instance() or QApplication([])
     monkeypatch.setattr(
@@ -175,6 +205,7 @@ def test_settings_dialog_can_change_poetore_capture_hotkey(monkeypatch):
     )
     try:
         assert dialog.poetore_capture_btn.key_text == "Ctrl+Shift+P"
+        assert dialog.map_check_btn.key_text == "alt+f"
         assert dialog.cheat_sheets_toggle_btn.key_text == "shift+space"
         assert dialog.exit_btn.key_text == "F5"
         assert dialog.undo_lap_btn.key_text == "none"

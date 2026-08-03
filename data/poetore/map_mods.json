@@ -1,0 +1,2306 @@
+{
+  "schema_version": 1,
+  "source_revision": "3c8e0320",
+  "entries": [
+    {
+      "key": "explicit.stat_2787931289",
+      "ref": "Players have #% more Armour per 25% Alert Level",
+      "japanese": "アラートレベル25%ごとにプレイヤーのアーマーが#%上昇する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_2787931289",
+        "fractured.stat_2787931289"
+      ]
+    },
+    {
+      "key": "explicit.stat_751773204",
+      "ref": "Players have #% more Energy Shield Recovery Rate per 25% Alert Level",
+      "japanese": "アラートレベル25%ごとにプレイヤーのエナジーシールド回復レートが#%上昇する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_751773204",
+        "fractured.stat_751773204"
+      ]
+    },
+    {
+      "key": "explicit.stat_816079058",
+      "ref": "Players gain #% increased Flask Charges per 25% Alert Level",
+      "japanese": "アラートレベル25%ごとにプレイヤーのフラスコチャージ獲得量が#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_816079058",
+        "fractured.stat_816079058"
+      ]
+    },
+    {
+      "key": "explicit.stat_953449033",
+      "ref": "Players have #% more Mana Recovery Rate per 25% Alert Level",
+      "japanese": "アラートレベル25%ごとにプレイヤーのマナ回復レートが#%上昇する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_953449033",
+        "fractured.stat_953449033"
+      ]
+    },
+    {
+      "key": "explicit.stat_1466172118",
+      "ref": "Players have #% more Life Recovery Rate per 25% Alert Level",
+      "japanese": "アラートレベル25%ごとにプレイヤーのライフ回復レートが#%上昇する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_1466172118",
+        "fractured.stat_1466172118"
+      ]
+    },
+    {
+      "key": "explicit.stat_2916448124",
+      "ref": "+#% Player Cold Resistance per 25% Alert Level",
+      "japanese": "アラートレベル25%ごとにプレイヤーの冷気耐性が+#%される",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_2916448124",
+        "fractured.stat_2916448124"
+      ]
+    },
+    {
+      "key": "explicit.stat_1238382441",
+      "ref": "Players have #% more Evasion per 25% Alert Level",
+      "japanese": "アラートレベル25%ごとにプレイヤーの回避力が#%上昇する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_1238382441",
+        "fractured.stat_1238382441"
+      ]
+    },
+    {
+      "key": "explicit.stat_1318683911",
+      "ref": "+#% Player Fire Resistance per 25% Alert Level",
+      "japanese": "アラートレベル25%ごとにプレイヤーの火耐性が+#%される",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_1318683911",
+        "fractured.stat_1318683911"
+      ]
+    },
+    {
+      "key": "explicit.stat_652638686",
+      "ref": "+#% maximum Player Resistances per 25% Alert Level",
+      "japanese": "アラートレベル25%ごとにプレイヤーの耐性の最大値が+#%される",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_652638686",
+        "fractured.stat_652638686"
+      ]
+    },
+    {
+      "key": "explicit.stat_3839688967",
+      "ref": "+#% Player Lightning Resistance per 25% Alert Level",
+      "japanese": "アラートレベル25%ごとにプレイヤーの雷耐性が+#%される",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_3839688967",
+        "fractured.stat_3839688967"
+      ]
+    },
+    {
+      "key": "explicit.stat_1239251576",
+      "ref": "Lockdown occurs immediately when Alert Level is full",
+      "japanese": "アラートレベルがフルになった時に即座にロックダウンが起きる",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_1239251576",
+        "fractured.stat_1239251576"
+      ]
+    },
+    {
+      "key": "explicit.stat_873692616",
+      "ref": "Guards take #% increased Damage",
+      "japanese": "ガードが受けるダメージが#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_873692616",
+        "fractured.stat_873692616"
+      ]
+    },
+    {
+      "key": "explicit.stat_2569717992",
+      "ref": "Guards deal #% increased Damage",
+      "japanese": "ガードのダメージが#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_2569717992",
+        "fractured.stat_2569717992"
+      ]
+    },
+    {
+      "key": "explicit.stat_2978905446",
+      "ref": "#% increased Job speed",
+      "japanese": "ジョブスピードが#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_2978905446",
+        "fractured.stat_2978905446"
+      ]
+    },
+    {
+      "key": "explicit.stat_3144910208",
+      "ref": "Patrolling Monsters deal #% increased Damage",
+      "japanese": "パトロールのモンスターのダメージが#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_3144910208",
+        "fractured.stat_3144910208"
+      ]
+    },
+    {
+      "key": "explicit.stat_1982436039",
+      "ref": "Patrol Packs have #% increased chance to be replaced by an Elite Patrol Pack",
+      "japanese": "パトロールパックがエリートパトロールパックに置き換わる確率が#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_1982436039",
+        "fractured.stat_1982436039"
+      ]
+    },
+    {
+      "key": "explicit.stat_3702411606",
+      "ref": "Patrol Packs take #% increased damage",
+      "japanese": "パトロールパックが受けるダメージが#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_3702411606",
+        "fractured.stat_3702411606"
+      ]
+    },
+    {
+      "key": "explicit.stat_616993076",
+      "ref": "The Ring takes no Cut",
+      "japanese": "リングの取り分がなくなる",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_616993076",
+        "fractured.stat_616993076"
+      ]
+    },
+    {
+      "key": "explicit.stat_553402472",
+      "ref": "#% increased Total Heist Fee",
+      "japanese": "合計ハイスト費用が#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_553402472",
+        "fractured.stat_553402472"
+      ]
+    },
+    {
+      "key": "explicit.stat_4056408881",
+      "ref": "Reward Rooms have #% increased Monsters",
+      "japanese": "報酬部屋にいるモンスターが#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_4056408881",
+        "fractured.stat_4056408881"
+      ]
+    },
+    {
+      "key": "explicit.stat_839556554",
+      "ref": "Reward Room Monsters take #% increased Damage",
+      "japanese": "報酬部屋のモンスターが受けるダメージが#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_839556554",
+        "fractured.stat_839556554"
+      ]
+    },
+    {
+      "key": "explicit.stat_1390113017",
+      "ref": "Reward Room Monsters deal #% increased Damage",
+      "japanese": "報酬部屋のモンスターのダメージが#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_1390113017",
+        "fractured.stat_1390113017"
+      ]
+    },
+    {
+      "key": "explicit.stat_1339532482",
+      "ref": "Reinforcements have #% increased Attack Speed",
+      "japanese": "増援のアタックスピードが#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_1339532482",
+        "fractured.stat_1339532482"
+      ]
+    },
+    {
+      "key": "explicit.stat_1843941387",
+      "ref": "Reinforcements have #% increased Cast Speed",
+      "japanese": "増援のキャストスピードが#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_1843941387",
+        "fractured.stat_1843941387"
+      ]
+    },
+    {
+      "key": "explicit.stat_1342271987",
+      "ref": "Reinforcements have #% increased Movement Speed",
+      "japanese": "増援の移動スピードが#%増加する",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_1342271987",
+        "fractured.stat_1342271987"
+      ]
+    },
+    {
+      "key": "explicit.stat_3138486617",
+      "ref": "Alert Level increases by #% per second",
+      "japanese": "毎秒#%アラートレベルが増える",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_3138486617",
+        "fractured.stat_3138486617"
+      ]
+    },
+    {
+      "key": "explicit.stat_2946222246",
+      "ref": "No Travel Cost",
+      "japanese": "移動費用がなくなる",
+      "scope": "heist_exclusive",
+      "stat_ids": [
+        "explicit.stat_2946222246",
+        "fractured.stat_2946222246"
+      ]
+    },
+    {
+      "key": "implicit.stat_1522386771",
+      "ref": "Modifiers to Item Quantity will affect the number of encounter rewards dropped by #% of their value",
+      "japanese": "アイテムの数量のモッドはその数値の#%がエンカウンターの報酬からドロップするアイテムの数に影響する",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_1522386771"
+      ]
+    },
+    {
+      "key": "implicit.stat_989948703",
+      "ref": "Modifiers to Item Quantity affect the amount of rewards dropped by the boss by #% of their value",
+      "japanese": "アイテムの数量のモッドはその数値の#%がボスからドロップする報酬の量に影響する",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_989948703"
+      ]
+    },
+    {
+      "key": "implicit.stat_190932737",
+      "ref": "+#% Item Rarity",
+      "japanese": "アイテムレアリティ +#%",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_190932737"
+      ]
+    },
+    {
+      "key": "implicit.stat_2023217031",
+      "ref": "+#% Item Quantity",
+      "japanese": "アイテム数量 +#%",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_2023217031"
+      ]
+    },
+    {
+      "key": "explicit.stat_2530372417",
+      "ref": "#% Chance to Block Attack Damage",
+      "japanese": "アタックブロック率が#%",
+      "scope": "normal",
+      "stat_ids": [
+        "crafted.stat_2530372417",
+        "explicit.stat_2530372417",
+        "fractured.stat_2530372417",
+        "implicit.stat_2530372417"
+      ]
+    },
+    {
+      "key": "implicit.stat_3737068014",
+      "ref": "Atlas Passives have #% reduced Effect on Area",
+      "japanese": "アトラスパッシブのエリアに対する効果が#%減少する",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_3737068014"
+      ]
+    },
+    {
+      "key": "implicit.stat_1915989164",
+      "ref": "Area contains #% increased number of Monster Markers",
+      "japanese": "エリアにあるモンスターの目印の数が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_1915989164"
+      ]
+    },
+    {
+      "key": "implicit.stat_2991413918",
+      "ref": "Area contains #% increased number of Remnants",
+      "japanese": "エリアにあるレムナントの数が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_2991413918"
+      ]
+    },
+    {
+      "key": "explicit.stat_799271621",
+      "ref": "Area contains two Unique Bosses",
+      "japanese": "エリアには2体のユニークボスがいる",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_799271621",
+        "fractured.stat_799271621"
+      ]
+    },
+    {
+      "key": "explicit.stat_1948962470",
+      "ref": "Area has patches of Consecrated Ground",
+      "japanese": "エリアにはまだら状に神聖領域がある",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1948962470",
+        "fractured.stat_1948962470"
+      ]
+    },
+    {
+      "key": "explicit.stat_2961018200",
+      "ref": "Area is inhabited by Abominations",
+      "japanese": "エリアにはアボミネーションが出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2961018200",
+        "fractured.stat_2961018200"
+      ]
+    },
+    {
+      "key": "explicit.stat_808491979",
+      "ref": "Area is inhabited by Undead",
+      "japanese": "エリアにはアンデッドが生息している",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_808491979",
+        "fractured.stat_808491979"
+      ]
+    },
+    {
+      "key": "explicit.stat_4252630904",
+      "ref": "Area is inhabited by Cultists of Kitava",
+      "japanese": "エリアにはキタヴァの崇拝者が出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_4252630904",
+        "fractured.stat_4252630904"
+      ]
+    },
+    {
+      "key": "explicit.stat_3516340048",
+      "ref": "Area is inhabited by Ghosts",
+      "japanese": "エリアにはゴーストが出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3516340048",
+        "fractured.stat_3516340048"
+      ]
+    },
+    {
+      "key": "explicit.stat_1813544255",
+      "ref": "Area is inhabited by Goatmen",
+      "japanese": "エリアにはゴートマンが生息している",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1813544255",
+        "fractured.stat_1813544255"
+      ]
+    },
+    {
+      "key": "explicit.stat_25085466",
+      "ref": "Area is inhabited by Sea Witches and their Spawn",
+      "japanese": "エリアにはシーウィッチとその幼体が生息している",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_25085466",
+        "fractured.stat_25085466"
+      ]
+    },
+    {
+      "key": "explicit.stat_45546355",
+      "ref": "Area is inhabited by Skeletons",
+      "japanese": "エリアにはスケルトンが生息している",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_45546355",
+        "fractured.stat_45546355"
+      ]
+    },
+    {
+      "key": "explicit.stat_2457517302",
+      "ref": "Area is inhabited by Solaris fanatics",
+      "japanese": "エリアにはソラリスの狂信者が出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2457517302",
+        "fractured.stat_2457517302"
+      ]
+    },
+    {
+      "key": "implicit.stat_4160330571",
+      "ref": "Area contains # additional Chest Marker",
+      "japanese": "エリアにはチェストマーカーが#個追加である",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_4160330571"
+      ]
+    },
+    {
+      "key": "explicit.stat_3916182167",
+      "ref": "Area is inhabited by Demons",
+      "japanese": "エリアにはデーモンが生息している",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3916182167",
+        "fractured.stat_3916182167"
+      ]
+    },
+    {
+      "key": "explicit.stat_2651141461",
+      "ref": "Area is inhabited by Humanoids",
+      "japanese": "エリアにはヒューマノイドが生息している",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2651141461",
+        "fractured.stat_2651141461"
+      ]
+    },
+    {
+      "key": "enchant.stat_2436559047",
+      "ref": "Area contains an Empowered Mirage which covers the entire Map",
+      "japanese": "エリアにはマップ全体をカバーする強化ミラージュが出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_2436559047"
+      ]
+    },
+    {
+      "key": "implicit.stat_1994562755",
+      "ref": "Area contains Metamorph Monsters",
+      "japanese": "エリアにはメタモルフモンスターが出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1994562755",
+        "implicit.stat_1994562755"
+      ]
+    },
+    {
+      "key": "explicit.stat_1612402470",
+      "ref": "Area contains an additional guarded Exquisite Vaal Vessel",
+      "japanese": "エリアにはモンスターに守られた洗練されたヴァールの器が追加で1個出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1612402470",
+        "implicit.stat_1612402470"
+      ]
+    },
+    {
+      "key": "implicit.stat_44159086",
+      "ref": "Area contains an additional guarded Vaal Vessel",
+      "japanese": "エリアにはモンスターに守られているヴァールの器が追加で1個出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_44159086"
+      ]
+    },
+    {
+      "key": "explicit.stat_3134632618",
+      "ref": "Area is inhabited by Lunaris fanatics",
+      "japanese": "エリアにはルナリスの狂信者が出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3134632618",
+        "fractured.stat_3134632618"
+      ]
+    },
+    {
+      "key": "explicit.stat_3577222856",
+      "ref": "Area has patches of desecrated ground",
+      "japanese": "エリアには冒涜領域がまだらに存在する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3577222856",
+        "fractured.stat_3577222856"
+      ]
+    },
+    {
+      "key": "explicit.stat_349586058",
+      "ref": "Area has patches of Chilled Ground",
+      "japanese": "エリアには冷却領域がまだらに存在する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_349586058",
+        "fractured.stat_349586058"
+      ]
+    },
+    {
+      "key": "explicit.stat_4198346809",
+      "ref": "Area is inhabited by Animals",
+      "japanese": "エリアには動物が生息している",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_4198346809",
+        "fractured.stat_4198346809"
+      ]
+    },
+    {
+      "key": "implicit.stat_1160596338",
+      "ref": "Area contains an additional Underground Area",
+      "japanese": "エリアには地下エリアが追加で1個ある",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_1160596338"
+      ]
+    },
+    {
+      "key": "explicit.stat_1000591322",
+      "ref": "Area contains many Totems",
+      "japanese": "エリアには多数のトーテムが出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1000591322",
+        "fractured.stat_1000591322"
+      ]
+    },
+    {
+      "key": "explicit.stat_3960907415",
+      "ref": "Area contains a Smuggler's Cache",
+      "japanese": "エリアには密輸人の貯蔵箱が出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_3960907415",
+        "explicit.stat_3960907415"
+      ]
+    },
+    {
+      "key": "implicit.stat_3307533469",
+      "ref": "Area contains an additional Smuggler's Cache",
+      "japanese": "エリアには密輸人の貯蔵箱が追加で1個出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_3307533469"
+      ]
+    },
+    {
+      "key": "explicit.stat_3246076198",
+      "ref": "Area has patches of Shocked Ground which increase Damage taken by #%",
+      "japanese": "エリアには感電領域がまだらに存在し受けるダメージを#%増加させる",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3246076198",
+        "fractured.stat_3246076198"
+      ]
+    },
+    {
+      "key": "explicit.stat_133340941",
+      "ref": "Area has patches of Burning Ground",
+      "japanese": "エリアには燃焼領域がまだらに存在する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_133340941",
+        "fractured.stat_133340941"
+      ]
+    },
+    {
+      "key": "explicit.stat_645841425",
+      "ref": "Area is inhabited by ranged monsters",
+      "japanese": "エリアには遠距離攻撃を行うモンスターが生息している",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_645841425",
+        "fractured.stat_645841425"
+      ]
+    },
+    {
+      "key": "explicit.stat_3557750122",
+      "ref": "Area contains an Expedition Encounter",
+      "japanese": "エリアにエクスペディションエンカウンター1個が出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3557750122",
+        "implicit.stat_3557750122"
+      ]
+    },
+    {
+      "key": "explicit.stat_3561450806",
+      "ref": "Area has increased monster variety",
+      "japanese": "エリアのモンスターの種類が増える",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3561450806",
+        "fractured.stat_3561450806"
+      ]
+    },
+    {
+      "key": "explicit.stat_1715784068",
+      "ref": "Players in Area are #% Delirious",
+      "japanese": "エリアの全てのプレイヤーは#%のせん妄度になる",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1715784068",
+        "explicit.stat_1715784068"
+      ]
+    },
+    {
+      "key": "implicit.stat_2696470877",
+      "ref": "Area is Influenced by the Originator's Memories",
+      "japanese": "エリアはオリジネイターのメモリーインフルエンスを受けている",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_2696470877"
+      ]
+    },
+    {
+      "key": "implicit.stat_754268389",
+      "ref": "Area has an additional random Scarab effect",
+      "japanese": "エリアはランダムなスカラベ効果を追加で1種類持つ",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_754268389"
+      ]
+    },
+    {
+      "key": "implicit.stat_299373046",
+      "ref": "Area is infested with Fungal Growths\nMap's Item Quantity Modifiers also affect Blight Chest count at 25% value\nCan be Anointed up to 3 times",
+      "japanese": "エリアは真菌に覆われている\nマップのアイテムの数量のモッドはその数値の20%がブライトチェストにも影響する\n3回アノイントすることができる",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_299373046"
+      ]
+    },
+    {
+      "key": "explicit.stat_74338099",
+      "ref": "Skills fire an additional Projectile",
+      "japanese": "スキルは投射物を追加で1個放つ",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_74338099",
+        "explicit.stat_74338099",
+        "fractured.stat_74338099",
+        "implicit.stat_74338099"
+      ]
+    },
+    {
+      "key": "explicit.stat_561307714",
+      "ref": "#% Chance to Block Spell Damage",
+      "japanese": "スペルブロック率が#%",
+      "scope": "normal",
+      "stat_ids": [
+        "crafted.stat_561307714",
+        "explicit.stat_561307714",
+        "fractured.stat_561307714",
+        "implicit.stat_561307714"
+      ]
+    },
+    {
+      "key": "explicit.stat_2154246560",
+      "ref": "#% increased Damage",
+      "japanese": "ダメージが#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "crafted.stat_2154246560",
+        "explicit.stat_2154246560",
+        "fractured.stat_2154246560",
+        "implicit.stat_2154246560"
+      ]
+    },
+    {
+      "key": "implicit.stat_948600126",
+      "ref": "+#% Pack Size",
+      "japanese": "パックサイズ +#%",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_948600126"
+      ]
+    },
+    {
+      "key": "explicit.stat_795138349",
+      "ref": "#% chance to Poison on Hit",
+      "japanese": "ヒット時に#%の確率で敵に毒を付与する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_795138349",
+        "explicit.stat_795138349",
+        "fractured.stat_795138349",
+        "implicit.stat_795138349"
+      ]
+    },
+    {
+      "key": "explicit.stat_1260718722",
+      "ref": "#% chance for Blight Chests to contain an additional Reward",
+      "japanese": "ブライトの宝箱に#%の確率で追加の報酬が入っている",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1260718722",
+        "explicit.stat_1260718722"
+      ]
+    },
+    {
+      "key": "explicit.stat_3376488707",
+      "ref": "Players have #% to all maximum Resistances",
+      "japanese": "プレイヤーの全ての耐性の最大値 #%",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3376488707",
+        "fractured.stat_3376488707"
+      ]
+    },
+    {
+      "key": "explicit.stat_558910024",
+      "ref": "Players are Cursed with Elemental Weakness",
+      "japanese": "プレイヤーはエレメンタルウィークネスの呪いを受ける",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_558910024",
+        "fractured.stat_558910024"
+      ]
+    },
+    {
+      "key": "explicit.stat_4103440490",
+      "ref": "Players are Cursed with Enfeeble",
+      "japanese": "プレイヤーはエンフィーブルの呪いを受ける",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_4103440490",
+        "fractured.stat_4103440490"
+      ]
+    },
+    {
+      "key": "explicit.stat_2326202293",
+      "ref": "Players are Cursed with Temporal Chains",
+      "japanese": "プレイヤーはテンポラルチェーンの呪いを受ける",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2326202293",
+        "fractured.stat_2326202293"
+      ]
+    },
+    {
+      "key": "explicit.stat_1366534040",
+      "ref": "Players are Cursed with Vulnerability",
+      "japanese": "プレイヤーはヴァルネラビリティの呪いを受ける",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1366534040",
+        "fractured.stat_1366534040"
+      ]
+    },
+    {
+      "key": "explicit.stat_1026390635",
+      "ref": "Players cannot inflict Exposure",
+      "japanese": "プレイヤーは曝露を付与することができない",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1026390635",
+        "fractured.stat_1026390635"
+      ]
+    },
+    {
+      "key": "explicit.stat_1539368271",
+      "ref": "#% increased Explosive Placement Range",
+      "japanese": "マップでは爆発物の設置間隔が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1539368271",
+        "implicit.stat_1539368271"
+      ]
+    },
+    {
+      "key": "explicit.stat_1821565133",
+      "ref": "#% increased Magic Monsters",
+      "japanese": "マップでマジックモンスターの数が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1821565133",
+        "fractured.stat_1821565133"
+      ]
+    },
+    {
+      "key": "explicit.stat_3126771445",
+      "ref": "#% increased number of Rare Monsters",
+      "japanese": "マップでレアモンスターの数が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3126771445",
+        "fractured.stat_3126771445"
+      ]
+    },
+    {
+      "key": "explicit.stat_495713612",
+      "ref": "#% increased Duration of Shrine Effects on Players",
+      "japanese": "マップで全てのプレイヤーに対するシュラインの効果の持続時間が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_495713612",
+        "explicit.stat_495713612"
+      ]
+    },
+    {
+      "key": "explicit.stat_728267040",
+      "ref": "Found Items have #% chance to drop Corrupted in Area",
+      "japanese": "マップで見つかるアイテムは#%の確率でコラプト状態になる",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_728267040",
+        "explicit.stat_728267040",
+        "fractured.stat_728267040"
+      ]
+    },
+    {
+      "key": "explicit.stat_3259960466",
+      "ref": "Oils found have a #% chance to be 1 tier higher",
+      "japanese": "マップで見つかるオイルは#%の確率で1ティア高くなる",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_3259960466",
+        "explicit.stat_3259960466"
+      ]
+    },
+    {
+      "key": "explicit.stat_1640965354",
+      "ref": "Area contains #% increased number of Runic Monster Markers",
+      "japanese": "マップにあるルーニックモンスターの目印の数が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1640965354",
+        "explicit.stat_1640965354",
+        "implicit.stat_1640965354"
+      ]
+    },
+    {
+      "key": "explicit.stat_1871805225",
+      "ref": "Remnants have #% chance to have an additional Suffix Modifier",
+      "japanese": "マップにあるレムナントは#%の確率でサフィックスモッドを追加で1個持つ",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1871805225",
+        "implicit.stat_1871805225"
+      ]
+    },
+    {
+      "key": "explicit.stat_3289828378",
+      "ref": "#% increased Explosive Radius",
+      "japanese": "マップにある爆発物の半径が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3289828378",
+        "implicit.stat_3289828378"
+      ]
+    },
+    {
+      "key": "explicit.stat_3051490307",
+      "ref": "#% increased number of Explosives",
+      "japanese": "マップにある爆発物の数が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3051490307",
+        "implicit.stat_3051490307"
+      ]
+    },
+    {
+      "key": "explicit.stat_3788235244",
+      "ref": "Area has a #% chance to contain Cadiro Perandus",
+      "japanese": "マップには#%の確率でカディーロ・ペランダスが出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3788235244",
+        "implicit.stat_3788235244"
+      ]
+    },
+    {
+      "key": "explicit.stat_2156201537",
+      "ref": "+#% Chance to contain a Vaal Side Area",
+      "japanese": "マップには+#%の確率でヴァールサイドエリアが出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2156201537",
+        "implicit.stat_2156201537"
+      ]
+    },
+    {
+      "key": "explicit.stat_1145451936",
+      "ref": "Area contains The Sacred Grove",
+      "japanese": "マップには+#%の確率で聖なる木立が出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1145451936",
+        "explicit.stat_1145451936",
+        "implicit.stat_1145451936"
+      ]
+    },
+    {
+      "key": "explicit.stat_2055257822",
+      "ref": "Areas contain an Ultimatum Encounter",
+      "japanese": "マップにはアルティメイタムエンカウンターが出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_2055257822",
+        "explicit.stat_2055257822",
+        "implicit.stat_2055257822"
+      ]
+    },
+    {
+      "key": "explicit.stat_279246355",
+      "ref": "Area is inhabited by an additional Invasion Boss",
+      "japanese": "マップにはインベージョンボスが追加で1体生息している",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_279246355",
+        "explicit.stat_279246355",
+        "implicit.stat_279246355"
+      ]
+    },
+    {
+      "key": "enchant.stat_1867024035",
+      "ref": "Area contains # additional pack of Corrupted Vaal Monsters",
+      "japanese": "マップにはコラプトヴァールモンスターが追加で#パック出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1867024035"
+      ]
+    },
+    {
+      "key": "explicit.stat_1468737867",
+      "ref": "Area contains an additional Shrine",
+      "japanese": "マップにはシュラインが追加で1個出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1468737867",
+        "explicit.stat_1468737867",
+        "implicit.stat_1468737867"
+      ]
+    },
+    {
+      "key": "explicit.stat_3240183538",
+      "ref": "Area contains an additional Strongbox",
+      "japanese": "マップにはストロングボックスが追加で#個出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_3240183538",
+        "explicit.stat_3240183538",
+        "implicit.stat_3240183538"
+      ]
+    },
+    {
+      "key": "enchant.stat_2398157267",
+      "ref": "Areas contain a Mirror of Delirium",
+      "japanese": "マップにはデリリウムの鏡が出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_2398157267"
+      ]
+    },
+    {
+      "key": "explicit.stat_504850499",
+      "ref": "Area contains an additional Harbinger",
+      "japanese": "マップにはハービンジャーが追加で1体出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_504850499",
+        "implicit.stat_504850499"
+      ]
+    },
+    {
+      "key": "explicit.stat_2459443694",
+      "ref": "Area contains a Blight Encounter",
+      "japanese": "マップにはブライトエンカウンターが出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_2459443694",
+        "explicit.stat_2459443694"
+      ]
+    },
+    {
+      "key": "explicit.stat_581013336",
+      "ref": "Area contains an additional Magic Monster pack",
+      "japanese": "マップにはマジックモンスターが追加で1パック出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_581013336",
+        "implicit.stat_581013336"
+      ]
+    },
+    {
+      "key": "explicit.stat_1671749203",
+      "ref": "Areas contain Ritual Altars",
+      "japanese": "マップにはリチュアルの祭壇が出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1671749203",
+        "explicit.stat_1671749203",
+        "implicit.stat_1671749203"
+      ]
+    },
+    {
+      "key": "explicit.stat_3897451709",
+      "ref": "Area contains an additional Legion Encounter",
+      "japanese": "マップにはリージョンエンカウンターが追加で1個出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_3897451709",
+        "explicit.stat_3897451709",
+        "implicit.stat_3897451709"
+      ]
+    },
+    {
+      "key": "explicit.stat_2810286377",
+      "ref": "Area contains an additional pack with a Rare monster",
+      "japanese": "マップにはレアモンスターを含むパックが追加で1パック出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2810286377",
+        "implicit.stat_2810286377"
+      ]
+    },
+    {
+      "key": "explicit.stat_3550168289",
+      "ref": "Area is inhabited by an additional Rogue Exile",
+      "japanese": "マップにはローグエグザイルが追加で1体生息している",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_3550168289",
+        "explicit.stat_3550168289",
+        "fractured.stat_3550168289",
+        "implicit.stat_3550168289"
+      ]
+    },
+    {
+      "key": "enchant.stat_73209495",
+      "ref": "Map has a Vaal Side Area",
+      "japanese": "マップにはヴァールサイドエリアが出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_73209495"
+      ]
+    },
+    {
+      "key": "explicit.stat_395808938",
+      "ref": "Area contains an additional Imprisoned Monster",
+      "japanese": "マップには追加で1体のエッセンスに囚われたモンスターが出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_395808938",
+        "explicit.stat_395808938",
+        "implicit.stat_395808938"
+      ]
+    },
+    {
+      "key": "enchant.stat_3564826949",
+      "ref": "Areas contain Abysses",
+      "japanese": "マップにアビスが出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_3564826949"
+      ]
+    },
+    {
+      "key": "explicit.stat_1070816711",
+      "ref": "Area contains an additional Abyss",
+      "japanese": "マップにアビスが追加で1個出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1070816711",
+        "explicit.stat_1070816711",
+        "implicit.stat_1070816711"
+      ]
+    },
+    {
+      "key": "explicit.stat_4154778375",
+      "ref": "Contains an Expedition Encounter",
+      "japanese": "マップにエクスペディションエンカウンターが出現する確率が+#%される",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_4154778375",
+        "implicit.stat_4154778375"
+      ]
+    },
+    {
+      "key": "enchant.stat_1000620493",
+      "ref": "Blight Encounters contain up to # additional Blight Boss",
+      "japanese": "マップに出現するブライトエンカウンターではブライトボスが最大#体出現する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1000620493"
+      ]
+    },
+    {
+      "key": "explicit.stat_1837341489",
+      "ref": "Blight Monsters spawn #% faster",
+      "japanese": "マップに出現するブライトモンスターがスポーンする速度が#%速くなる",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1837341489",
+        "explicit.stat_1837341489"
+      ]
+    },
+    {
+      "key": "enchant.stat_2425554673",
+      "ref": "Rerolling Favours at Ritual Altars has no Cost the first # time",
+      "japanese": "マップに出現するリチュアルの祭壇では最初の#回の恩寵のリロールがコストなしで行える",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_2425554673"
+      ]
+    },
+    {
+      "key": "enchant.stat_2180286756",
+      "ref": "Area can contain Breaches",
+      "japanese": "マップに複数のブリーチが出現することがある",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_2180286756"
+      ]
+    },
+    {
+      "key": "explicit.stat_2379532196",
+      "ref": "#% increased Pack size",
+      "japanese": "マップのパックサイズが#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2379532196"
+      ]
+    },
+    {
+      "key": "explicit.stat_358129101",
+      "ref": "Area is haunted by # additional Tormented Spirit",
+      "japanese": "マップは追加で1体の拷問された幽霊が彷徨っている",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_358129101",
+        "implicit.stat_358129101"
+      ]
+    },
+    {
+      "key": "explicit.stat_124877078",
+      "ref": "Unique Boss deals #% increased Damage",
+      "japanese": "マップボスのダメージが#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_124877078",
+        "explicit.stat_124877078",
+        "fractured.stat_124877078"
+      ]
+    },
+    {
+      "key": "explicit.stat_1959158336",
+      "ref": "Unique Boss has #% increased Life",
+      "japanese": "マップボスのライフが#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1959158336",
+        "explicit.stat_1959158336",
+        "fractured.stat_1959158336"
+      ]
+    },
+    {
+      "key": "explicit.stat_4150353141",
+      "ref": "Map Boss is accompanied by a Synthesis Boss",
+      "japanese": "マップボスはシンセシスボスを伴う",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_4150353141",
+        "fractured.stat_4150353141"
+      ]
+    },
+    {
+      "key": "explicit.stat_3606985138",
+      "ref": "Maven releases all Bosses at once",
+      "japanese": "メイヴェンは全てのボスを同時に解き放つ",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3606985138"
+      ]
+    },
+    {
+      "key": "explicit.stat_1140978125",
+      "ref": "Monsters cannot be Leeched from",
+      "japanese": "モンスターからリーチできない",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1140978125",
+        "fractured.stat_1140978125"
+      ]
+    },
+    {
+      "key": "explicit.stat_337935900",
+      "ref": "Monsters take #% reduced Extra Damage from Critical Strikes",
+      "japanese": "モンスターがクリティカルストライクから受ける追加ダメージが#%減少する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_337935900",
+        "fractured.stat_337935900"
+      ]
+    },
+    {
+      "key": "explicit.stat_4219583418",
+      "ref": "#% increased quantity of Artifacts dropped by Monsters",
+      "japanese": "モンスターがドロップするアーティファクトの数量が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_4219583418",
+        "implicit.stat_4219583418"
+      ]
+    },
+    {
+      "key": "explicit.stat_3044826007",
+      "ref": "Monsters have #% chance to inflict Withered for 2 seconds on Hit",
+      "japanese": "モンスターによるヒット時に#%の確率で衰弱を2秒間付与する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3044826007",
+        "fractured.stat_3044826007"
+      ]
+    },
+    {
+      "key": "explicit.stat_3796523155",
+      "ref": "#% less effect of Curses on Monsters",
+      "japanese": "モンスターに対する呪いの効果が#%低下する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3796523155",
+        "fractured.stat_3796523155"
+      ]
+    },
+    {
+      "key": "explicit.stat_798009319",
+      "ref": "Monsters' Action Speed cannot be modified to below Base Value\nMonsters' Movement Speed cannot be modified to below Base Value",
+      "japanese": "モンスターのアクションスピードは基礎値よりも低く修正されることがない\nモンスターの移動スピードは基礎値よりも低く修正されることがない",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_798009319",
+        "fractured.stat_798009319"
+      ]
+    },
+    {
+      "key": "explicit.stat_1913583994",
+      "ref": "#% increased Monster Attack Speed",
+      "japanese": "モンスターのアタックスピードが#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1913583994",
+        "fractured.stat_1913583994"
+      ]
+    },
+    {
+      "key": "explicit.stat_2488361432",
+      "ref": "#% increased Monster Cast Speed",
+      "japanese": "モンスターのキャストスピードが#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2488361432",
+        "fractured.stat_2488361432"
+      ]
+    },
+    {
+      "key": "explicit.stat_57326096",
+      "ref": "+#% to Monster Critical Strike Multiplier",
+      "japanese": "モンスターのクリティカルダメージ倍率 +#%",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_57326096",
+        "fractured.stat_57326096"
+      ]
+    },
+    {
+      "key": "explicit.stat_2753083623",
+      "ref": "Monsters have #% increased Critical Strike Chance",
+      "japanese": "モンスターのクリティカル率が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2753083623",
+        "fractured.stat_2753083623"
+      ]
+    },
+    {
+      "key": "explicit.stat_3183973644",
+      "ref": "Monsters' skills Chain # additional times",
+      "japanese": "モンスターのスキルは追加で#回連鎖する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3183973644",
+        "fractured.stat_3183973644"
+      ]
+    },
+    {
+      "key": "explicit.stat_2138205941",
+      "ref": "Monsters have +#% chance to Suppress Spell Damage",
+      "japanese": "モンスターのスペルダメージ抑制確率 +#%",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2138205941",
+        "fractured.stat_2138205941"
+      ]
+    },
+    {
+      "key": "explicit.stat_1890519597",
+      "ref": "#% increased Monster Damage",
+      "japanese": "モンスターのダメージが#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1890519597",
+        "fractured.stat_1890519597"
+      ]
+    },
+    {
+      "key": "explicit.stat_95249895",
+      "ref": "#% more Monster Life",
+      "japanese": "モンスターのライフが#%上昇する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_95249895",
+        "fractured.stat_95249895",
+        "implicit.stat_95249895"
+      ]
+    },
+    {
+      "key": "explicit.stat_1054098949",
+      "ref": "+#% Monster Elemental Resistances",
+      "japanese": "モンスターの元素耐性 +#%",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1054098949",
+        "fractured.stat_1054098949"
+      ]
+    },
+    {
+      "key": "explicit.stat_816367946",
+      "ref": "All Monster Damage from Hits always Ignites",
+      "japanese": "モンスターの全てのダメージにより発火が付与される",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_816367946",
+        "fractured.stat_816367946"
+      ]
+    },
+    {
+      "key": "explicit.stat_1708461270",
+      "ref": "Monsters have #% increased Area of Effect",
+      "japanese": "モンスターの効果範囲が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1708461270",
+        "fractured.stat_1708461270"
+      ]
+    },
+    {
+      "key": "explicit.stat_1588049749",
+      "ref": "Monsters have #% increased Accuracy Rating",
+      "japanese": "モンスターの命中力が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1588049749",
+        "fractured.stat_1588049749"
+      ]
+    },
+    {
+      "key": "explicit.stat_365540634",
+      "ref": "+#% Monster Chaos Resistance",
+      "japanese": "モンスターの混沌耐性 +#%",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_365540634",
+        "fractured.stat_365540634"
+      ]
+    },
+    {
+      "key": "explicit.stat_839186746",
+      "ref": "+#% Monster Physical Damage Reduction",
+      "japanese": "モンスターの物理ダメージ軽減率 +#%",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_839186746",
+        "fractured.stat_839186746"
+      ]
+    },
+    {
+      "key": "explicit.stat_2306522833",
+      "ref": "#% increased Monster Movement Speed",
+      "japanese": "モンスターの移動スピードが#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_2306522833",
+        "explicit.stat_2306522833",
+        "fractured.stat_2306522833",
+        "implicit.stat_2306522833"
+      ]
+    },
+    {
+      "key": "explicit.stat_322206271",
+      "ref": "Monsters have #% chance to Avoid Elemental Ailments",
+      "japanese": "モンスターは#%の確率で元素系状態異常を無効化する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_322206271",
+        "fractured.stat_322206271"
+      ]
+    },
+    {
+      "key": "explicit.stat_144665660",
+      "ref": "Monsters have a #% chance to avoid Poison, Impale, and Bleeding",
+      "japanese": "モンスターは#%の確率で毒、串刺しおよび出血を無効化する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_144665660",
+        "fractured.stat_144665660"
+      ]
+    },
+    {
+      "key": "explicit.stat_1840747977",
+      "ref": "Monsters gain #% of their Physical Damage as Extra Chaos Damage",
+      "japanese": "モンスターはその物理ダメージの#%を追加混沌ダメージとして獲得する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1840747977",
+        "fractured.stat_1840747977"
+      ]
+    },
+    {
+      "key": "explicit.stat_4164174520",
+      "ref": "Monsters have #% chance to Maim on Hit with Attacks",
+      "japanese": "モンスターはアタックによるヒット時に#%の確率で重傷を付与する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_4164174520",
+        "fractured.stat_4164174520"
+      ]
+    },
+    {
+      "key": "explicit.stat_1041951480",
+      "ref": "Monsters cannot be Stunned",
+      "japanese": "モンスターはスタンを受けることがない",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1041951480",
+        "fractured.stat_1041951480"
+      ]
+    },
+    {
+      "key": "explicit.stat_962720646",
+      "ref": "Monsters have #% chance to Hinder on Hit with Spells",
+      "japanese": "モンスターはスペルによるヒット時に#%の確率で阻害を付与する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_962720646",
+        "fractured.stat_962720646"
+      ]
+    },
+    {
+      "key": "explicit.stat_687813731",
+      "ref": "Monsters have #% chance to gain an Endurance Charge on Hit",
+      "japanese": "モンスターはヒット時に#%の確率でエンデュランスチャージを1個獲得する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_687813731",
+        "fractured.stat_687813731"
+      ]
+    },
+    {
+      "key": "explicit.stat_3222482040",
+      "ref": "Monsters have #% chance to steal Power, Frenzy and Endurance charges on Hit",
+      "japanese": "モンスターはヒット時に#%の確率でパワーチャージ、フレンジーチャージおよびエンデュランスチャージのスタックを盗む",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3222482040",
+        "fractured.stat_3222482040"
+      ]
+    },
+    {
+      "key": "explicit.stat_406353061",
+      "ref": "Monsters have #% chance to gain a Power Charge on Hit",
+      "japanese": "モンスターはヒット時に#%の確率でパワーチャージを1個獲得する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_406353061",
+        "fractured.stat_406353061"
+      ]
+    },
+    {
+      "key": "explicit.stat_1742567045",
+      "ref": "Monsters have #% chance to gain a Frenzy Charge on Hit",
+      "japanese": "モンスターはヒット時に#%の確率でフレンジーチャージを1個獲得する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1742567045",
+        "fractured.stat_1742567045"
+      ]
+    },
+    {
+      "key": "explicit.stat_2553656203",
+      "ref": "Monsters have a #% chance to Ignite, Freeze and Shock on Hit",
+      "japanese": "モンスターはヒット時に#%の確率で発火、凍結および感電を付与する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2553656203",
+        "fractured.stat_2553656203"
+      ]
+    },
+    {
+      "key": "explicit.stat_1629869774",
+      "ref": "Monsters have #% chance to Blind on Hit",
+      "japanese": "モンスターはヒット時に#%の確率で盲目を付与する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1629869774",
+        "fractured.stat_1629869774"
+      ]
+    },
+    {
+      "key": "explicit.stat_3350803563",
+      "ref": "Monsters Poison on Hit",
+      "japanese": "モンスターはヒット時に毒を付与する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3350803563",
+        "fractured.stat_3350803563"
+      ]
+    },
+    {
+      "key": "explicit.stat_4154059009",
+      "ref": "Monsters are Hexproof",
+      "japanese": "モンスターはヘックスプルーフを持つ",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_4154059009",
+        "fractured.stat_4154059009"
+      ]
+    },
+    {
+      "key": "explicit.stat_1309819744",
+      "ref": "Monsters fire # additional Projectiles",
+      "japanese": "モンスターは投射物を追加で#個放つ",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1309819744",
+        "fractured.stat_1309819744"
+      ]
+    },
+    {
+      "key": "explicit.stat_1106651798",
+      "ref": "Monsters cannot be Taunted",
+      "japanese": "モンスターは挑発を受けることがない",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1106651798",
+        "fractured.stat_1106651798"
+      ]
+    },
+    {
+      "key": "explicit.stat_2887760183",
+      "ref": "Monsters gain #% of Maximum Life as Extra Maximum Energy Shield",
+      "japanese": "モンスターは最大ライフの#%を追加最大エナジーシールドとして獲得する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2887760183",
+        "fractured.stat_2887760183"
+      ]
+    },
+    {
+      "key": "explicit.stat_3448216135",
+      "ref": "Monsters deal #% extra Physical Damage as Cold",
+      "japanese": "モンスターは物理ダメージの#%を追加冷気ダメージとして与える",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3448216135",
+        "fractured.stat_3448216135"
+      ]
+    },
+    {
+      "key": "explicit.stat_1497673356",
+      "ref": "Monsters deal #% extra Physical Damage as Fire",
+      "japanese": "モンスターは物理ダメージの#%を追加火ダメージとして与える",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1497673356",
+        "fractured.stat_1497673356"
+      ]
+    },
+    {
+      "key": "explicit.stat_3416853625",
+      "ref": "Monsters deal #% extra Physical Damage as Lightning",
+      "japanese": "モンスターは物理ダメージの#%を追加雷ダメージとして与える",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3416853625",
+        "fractured.stat_3416853625"
+      ]
+    },
+    {
+      "key": "implicit.stat_1277237365",
+      "ref": "Monsters have Onslaught",
+      "japanese": "モンスターは猛攻ととなる",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_1277237365"
+      ]
+    },
+    {
+      "key": "explicit.stat_1541224187",
+      "ref": "Monsters' Attacks have #% chance to Impale on Hit",
+      "japanese": "モンスターアタックはヒット時に#%の確率で串刺しを付与する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1541224187",
+        "fractured.stat_1541224187"
+      ]
+    },
+    {
+      "key": "explicit.stat_2109106920",
+      "ref": "Unique Boss has #% increased Attack and Cast Speed",
+      "japanese": "ユニークボスのアタックスピードおよびキャストスピードが#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2109106920",
+        "fractured.stat_2109106920"
+      ]
+    },
+    {
+      "key": "explicit.stat_3040667106",
+      "ref": "Unique Boss has #% increased Area of Effect",
+      "japanese": "ユニークボスの効果範囲が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3040667106",
+        "fractured.stat_3040667106"
+      ]
+    },
+    {
+      "key": "explicit.stat_2588474575",
+      "ref": "Unique Bosses are Possessed",
+      "japanese": "ユニークボスは取り憑かれている",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2588474575",
+        "fractured.stat_2588474575"
+      ]
+    },
+    {
+      "key": "implicit.stat_804187877",
+      "ref": "Unique Monsters drop Corrupted Items",
+      "japanese": "ユニークモンスターはコラプト状態のアイテムをドロップする",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_804187877",
+        "implicit.stat_804187877"
+      ]
+    },
+    {
+      "key": "implicit.stat_2834034653",
+      "ref": "Area is affected by an additional random Unallocated Notable Atlas Passives",
+      "japanese": "ランダムな未割り当てアトラスノータブルパッシブを追加で#個割り当てたとしてマップは開かれる",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_2834034653"
+      ]
+    },
+    {
+      "key": "explicit.stat_3938822425",
+      "ref": "Rare Monsters have Elemental Thorns reflecting # Elemental Damage",
+      "japanese": "レアモンスターは元素の棘を持ち#の元素ダメージを反射する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3938822425",
+        "fractured.stat_3938822425"
+      ]
+    },
+    {
+      "key": "explicit.stat_3278889477",
+      "ref": "Rare Monsters have Physical Thorns reflecting # Physical Damage",
+      "japanese": "レアモンスターは物理の棘を持ち#の物理ダメージを反射する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3278889477",
+        "fractured.stat_3278889477"
+      ]
+    },
+    {
+      "key": "explicit.stat_1217583941",
+      "ref": "Buffs on Players expire #% faster",
+      "japanese": "全てのプレイヤーに対するバフは#%速く消える",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1217583941",
+        "fractured.stat_1217583941"
+      ]
+    },
+    {
+      "key": "explicit.stat_272758639",
+      "ref": "Players have #% less Armour",
+      "japanese": "全てのプレイヤーのアーマーが#%低下する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_272758639",
+        "fractured.stat_272758639"
+      ]
+    },
+    {
+      "key": "explicit.stat_941368244",
+      "ref": "Players have #% more Cooldown Recovery Rate",
+      "japanese": "全てのプレイヤーのクールダウン解消レートが#%上昇する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_941368244",
+        "fractured.stat_941368244"
+      ]
+    },
+    {
+      "key": "explicit.stat_3729221884",
+      "ref": "Players have #% reduced Chance to Block",
+      "japanese": "全てのプレイヤーのブロック率が#%減少する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3729221884",
+        "fractured.stat_3729221884"
+      ]
+    },
+    {
+      "key": "explicit.stat_4181072906",
+      "ref": "Players have #% less Recovery Rate of Life and Energy Shield",
+      "japanese": "全てのプレイヤーのライフとエナジーシールドの回復レートが#%低下する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_4181072906",
+        "fractured.stat_4181072906"
+      ]
+    },
+    {
+      "key": "implicit.stat_977063976",
+      "ref": "Players' Vaal Skills do not apply Soul Gain Prevention",
+      "japanese": "全てのプレイヤーのヴァールスキルはソウル獲得不能を適用しない",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_977063976",
+        "implicit.stat_977063976"
+      ]
+    },
+    {
+      "key": "explicit.stat_2312028586",
+      "ref": "Players have #% less Area of Effect",
+      "japanese": "全てのプレイヤーの効果範囲が#%低下する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2312028586",
+        "fractured.stat_2312028586"
+      ]
+    },
+    {
+      "key": "explicit.stat_3667574329",
+      "ref": "Players have #% more Accuracy Rating",
+      "japanese": "全てのプレイヤーの命中力が#%上昇する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_3667574329",
+        "fractured.stat_3667574329"
+      ]
+    },
+    {
+      "key": "explicit.stat_2549889921",
+      "ref": "Players gain #% reduced Flask Charges",
+      "japanese": "全てのプレイヤーの獲得フラスコチャージが#%減少する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2549889921",
+        "fractured.stat_2549889921"
+      ]
+    },
+    {
+      "key": "explicit.stat_2450628570",
+      "ref": "Players have #% increased effect of Non-Curse Auras from Skills",
+      "japanese": "全てのプレイヤーはスキルによる呪い以外のオーラの効果が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2450628570",
+        "fractured.stat_2450628570"
+      ]
+    },
+    {
+      "key": "explicit.stat_286947568",
+      "ref": "Players Prevent +#% of Suppressed Spell Damage",
+      "japanese": "全てのプレイヤーはスペルダメージを抑制すると+#%のダメージを防ぐ",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_286947568",
+        "fractured.stat_286947568"
+      ]
+    },
+    {
+      "key": "explicit.stat_1910157106",
+      "ref": "Players cannot Regenerate Life, Mana or Energy Shield",
+      "japanese": "全てのプレイヤーはライフ、マナおよびエナジーシールドを自動回復することができない",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1910157106",
+        "fractured.stat_1910157106"
+      ]
+    },
+    {
+      "key": "explicit.stat_4220027924",
+      "ref": "+#% to Cold Resistance",
+      "japanese": "冷気耐性 +#%",
+      "scope": "normal",
+      "stat_ids": [
+        "crafted.stat_4220027924",
+        "explicit.stat_4220027924",
+        "fractured.stat_4220027924",
+        "implicit.stat_4220027924"
+      ]
+    },
+    {
+      "key": "explicit.stat_280731498",
+      "ref": "#% increased Area of Effect",
+      "japanese": "効果範囲が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "crafted.stat_280731498",
+        "enchant.stat_280731498",
+        "explicit.stat_280731498",
+        "fractured.stat_280731498",
+        "implicit.stat_280731498"
+      ]
+    },
+    {
+      "key": "explicit.stat_1092987622",
+      "ref": "#% of Melee Physical Damage taken reflected to Attacker",
+      "japanese": "受けた近接物理ダメージの#%がアタックをしてきた敵に反射される",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1092987622",
+        "implicit.stat_1092987622"
+      ]
+    },
+    {
+      "key": "explicit.stat_1837040413",
+      "ref": "Slaying Enemies close together can attract monsters from Beyond this realm",
+      "japanese": "敵どうしが近くにいる状態で同時に倒すとこの世界の外からのビヨンドからモンスターを呼び寄せる",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1837040413",
+        "explicit.stat_1837040413",
+        "fractured.stat_1837040413",
+        "implicit.stat_1837040413"
+      ]
+    },
+    {
+      "key": "explicit.stat_2517001139",
+      "ref": "#% increased Stun Duration on Enemies",
+      "japanese": "敵に対するスタンの持続時間が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "crafted.stat_2517001139",
+        "enchant.stat_2517001139",
+        "explicit.stat_2517001139",
+        "fractured.stat_2517001139",
+        "implicit.stat_2517001139"
+      ]
+    },
+    {
+      "key": "explicit.stat_452077019",
+      "ref": "Slaying Enemies in a kill streak grants Rampage bonuses",
+      "japanese": "敵を連続して倒すとランページボーナスが付与される",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_452077019",
+        "implicit.stat_452077019"
+      ]
+    },
+    {
+      "key": "explicit.stat_1581907402",
+      "ref": "#% increased Explicit Modifier magnitudes",
+      "japanese": "明示モッドの強さが#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1581907402",
+        "implicit.stat_1581907402"
+      ]
+    },
+    {
+      "key": "explicit.stat_57434274",
+      "ref": "#% increased Experience gain",
+      "japanese": "獲得経験値が#%増加する (マップ)",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_57434274",
+        "explicit.stat_57434274"
+      ]
+    },
+    {
+      "key": "implicit.stat_3239978999",
+      "ref": "Excavated Chests have a #% chance to contain twice as many Items",
+      "japanese": "発掘されたチェストは#%の確率で二倍のアイテムが入っている",
+      "scope": "normal",
+      "stat_ids": [
+        "implicit.stat_3239978999"
+      ]
+    },
+    {
+      "key": "enchant.stat_1568365503",
+      "ref": "Found Items with Memory Strands have +# Memory Strands",
+      "japanese": "見つかったメモリーストランドを持つアイテムのメモリーストランドの数が+#される",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1568365503"
+      ]
+    },
+    {
+      "key": "enchant.stat_1187817277",
+      "ref": "#% more Quantity of Items found",
+      "japanese": "見つかるアイテムの数量が#%上昇する",
+      "scope": "normal",
+      "stat_ids": [
+        "enchant.stat_1187817277"
+      ]
+    },
+    {
+      "key": "explicit.stat_2264295449",
+      "ref": "+# metres to Melee Strike Range",
+      "japanese": "近接ストライク距離 +#m",
+      "scope": "normal",
+      "stat_ids": [
+        "crafted.stat_2264295449",
+        "explicit.stat_2264295449",
+        "fractured.stat_2264295449",
+        "implicit.stat_2264295449"
+      ]
+    },
+    {
+      "key": "explicit.stat_3097694855",
+      "ref": "#% chance for Rare Monsters to Fracture on death",
+      "japanese": "#%の確率でレアモンスターは死亡時にフラクチャー化する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_3097694855",
+        "fractured.stat_3097694855"
+      ]
+    },
+    {
+      "key": "explicit.stat_2073168229",
+      "ref": "Area contains Runes of the Searing Exarch",
+      "japanese": "エリアにはシアリング・エグザークのルーンが出現する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_2073168229",
+        "fractured.stat_2073168229"
+      ]
+    },
+    {
+      "key": "explicit.stat_2577650864",
+      "ref": "Area contains Labyrinth Hazards",
+      "japanese": "エリアにはラビリンスの罠が出現する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_2577650864",
+        "fractured.stat_2577650864"
+      ]
+    },
+    {
+      "key": "explicit.stat_1943574423",
+      "ref": "Area contains Unstable Tentacle Fiends",
+      "japanese": "エリアには不安定な触手の悪魔が出現する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_1943574423",
+        "fractured.stat_1943574423"
+      ]
+    },
+    {
+      "key": "explicit.stat_25225034",
+      "ref": "Area contains Drowning Orbs",
+      "japanese": "エリアには溺死のオーブが出現する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_25225034",
+        "fractured.stat_25225034"
+      ]
+    },
+    {
+      "key": "explicit.stat_2931889194",
+      "ref": "Rare monsters in area are Shaper-Touched",
+      "japanese": "エリアのレアモンスターはシェイパーに触れられている",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_2931889194",
+        "fractured.stat_2931889194"
+      ]
+    },
+    {
+      "key": "explicit.stat_1593763475",
+      "ref": "Rare monsters in area Temporarily Revive on death",
+      "japanese": "エリアのレアモンスターは死亡時に一時的に生き返る",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_1593763475",
+        "fractured.stat_1593763475"
+      ]
+    },
+    {
+      "key": "explicit.stat_2796704737",
+      "ref": "Area contains patches of moving Marked Ground, inflicting random Marks",
+      "japanese": "エリアの移動する呪印領域がパッチ状に存在し、ランダムな呪印を付与する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_2796704737",
+        "fractured.stat_2796704737"
+      ]
+    },
+    {
+      "key": "explicit.stat_943960754",
+      "ref": "Players have #% more Defences",
+      "japanese": "プレイヤーの防御力が#%上昇する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_943960754",
+        "fractured.stat_943960754"
+      ]
+    },
+    {
+      "key": "explicit.stat_4102870672",
+      "ref": "Players have #% chance to be targeted by a Meteor when they use a Flask",
+      "japanese": "プレイヤーはフラスコを使用した時に#%の確率で隕石の対象となる",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_4102870672",
+        "fractured.stat_4102870672"
+      ]
+    },
+    {
+      "key": "explicit.stat_2946888410",
+      "ref": "Players have #% increased Maximum total Life, Mana and Energy Shield Recovery per second from Leech",
+      "japanese": "プレイヤーはリーチによるライフ、マナおよびエナジーシールドの最大合計回復量が#%増加する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_2946888410",
+        "fractured.stat_2946888410"
+      ]
+    },
+    {
+      "key": "explicit.stat_3052102815",
+      "ref": "Players are assaulted by Bloodstained Sawblades",
+      "japanese": "プレイヤーは血塗れのノコギリに襲われる",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_3052102815",
+        "fractured.stat_3052102815"
+      ]
+    },
+    {
+      "key": "explicit.stat_1207482628",
+      "ref": "Players have #% more effect of Flasks applied to them",
+      "japanese": "プレイヤーは適用されるフラスコの効果が#%上昇する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_1207482628",
+        "fractured.stat_1207482628"
+      ]
+    },
+    {
+      "key": "explicit.stat_2550456553",
+      "ref": "Rare Monsters each have # additional Modifier",
+      "japanese": "マップに出現するレアモンスターは追加のモッドを#個持つ",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_2550456553",
+        "fractured.stat_2550456553"
+      ]
+    },
+    {
+      "key": "explicit.stat_1594156261",
+      "ref": "The Maven interferes with Players",
+      "japanese": "メイヴェンはプレイヤーに干渉する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_1594156261",
+        "fractured.stat_1594156261"
+      ]
+    },
+    {
+      "key": "explicit.stat_3555807120",
+      "ref": "All Damage from Monsters' Hits can Poison",
+      "japanese": "モンスターによる全てのダメージが毒を付与できる",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_3555807120",
+        "fractured.stat_3555807120"
+      ]
+    },
+    {
+      "key": "explicit.stat_134839587",
+      "ref": "Monsters have #% increased Poison Duration",
+      "japanese": "モンスターによる毒の持続時間が#%増加する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_134839587",
+        "fractured.stat_134839587"
+      ]
+    },
+    {
+      "key": "explicit.stat_1200027417",
+      "ref": "Debuffs on Monsters expire #% faster",
+      "japanese": "モンスターに対するデバフは#%速く消える",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_1200027417",
+        "fractured.stat_1200027417"
+      ]
+    },
+    {
+      "key": "explicit.stat_2758454849",
+      "ref": "Monsters' Action Speed cannot be modified to below Base Value",
+      "japanese": "モンスターのアクションスピードは基礎値よりも低く修正されることがない",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_2758454849",
+        "fractured.stat_2758454849"
+      ]
+    },
+    {
+      "key": "explicit.stat_881836292",
+      "ref": "Monsters have +#% Chance to Block Attack Damage",
+      "japanese": "モンスターのアタックダメージブロック確率 +#%",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_881836292",
+        "fractured.stat_881836292"
+      ]
+    },
+    {
+      "key": "explicit.stat_1898978455",
+      "ref": "Monster Damage Penetrates #% Elemental Resistances",
+      "japanese": "モンスターのダメージは#%の元素耐性を貫通する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_1898978455",
+        "fractured.stat_1898978455"
+      ]
+    },
+    {
+      "key": "explicit.stat_2753403220",
+      "ref": "Monsters' Projectiles have #% chance to be able to Chain when colliding with Terrain",
+      "japanese": "モンスターの投射物は地形と衝突した時に#%の確率で連鎖することができる",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_2753403220",
+        "fractured.stat_2753403220"
+      ]
+    },
+    {
+      "key": "explicit.stat_4067268731",
+      "ref": "Monsters have +# to Maximum Endurance Charges",
+      "japanese": "モンスターの最大エンデュランスチャージ数が+#される",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_4067268731",
+        "fractured.stat_4067268731"
+      ]
+    },
+    {
+      "key": "explicit.stat_1103106414",
+      "ref": "Monsters have +# to Maximum Power Charges",
+      "japanese": "モンスターの最大パワーチャージ数が+#される",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_1103106414",
+        "fractured.stat_1103106414"
+      ]
+    },
+    {
+      "key": "explicit.stat_3900284865",
+      "ref": "Monsters have +# to Maximum Frenzy Charges",
+      "japanese": "モンスターの最大フレンジーチャージ数が+#される",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_3900284865",
+        "fractured.stat_3900284865"
+      ]
+    },
+    {
+      "key": "explicit.stat_777421120",
+      "ref": "Monsters' Movement Speed cannot be modified to below Base Value",
+      "japanese": "モンスターの移動スピードは基礎値よりも低く修正されることがない",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_777421120",
+        "fractured.stat_777421120"
+      ]
+    },
+    {
+      "key": "explicit.stat_4062840317",
+      "ref": "Monsters gain #% of their Physical Damage as Extra Damage of a random Element",
+      "japanese": "モンスターはその物理ダメージの#%をランダムな元素属性の追加ダメージとして獲得する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_4062840317",
+        "fractured.stat_4062840317"
+      ]
+    },
+    {
+      "key": "explicit.stat_3707756896",
+      "ref": "Monsters have a #% chance to gain an Endurance Charge when hit",
+      "japanese": "モンスターはヒットを受けた時に#%の確率でエンデュランスチャージを1個獲得する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_3707756896",
+        "fractured.stat_3707756896"
+      ]
+    },
+    {
+      "key": "explicit.stat_1751584857",
+      "ref": "Monsters inflict # Grasping Vine on Hit",
+      "japanese": "モンスターはヒット時に束縛する蔓を#スタック付与する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_1751584857",
+        "fractured.stat_1751584857"
+      ]
+    },
+    {
+      "key": "explicit.stat_2919181457",
+      "ref": "All Monster Damage can Ignite, Freeze and Shock",
+      "japanese": "モンスターは全てのダメージで発火、凍結および感電を付与できる",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_2919181457",
+        "fractured.stat_2919181457"
+      ]
+    },
+    {
+      "key": "explicit.stat_872972810",
+      "ref": "Unique Monsters have a random Shrine Buff",
+      "japanese": "ユニークモンスターはランダムなシュラインバフを1個持つ",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_872972810",
+        "fractured.stat_872972810"
+      ]
+    },
+    {
+      "key": "explicit.stat_1706239920",
+      "ref": "Rare Monsters have #% chance to have a Volatile Core",
+      "japanese": "レアモンスターは#%の確率でボラタイルコアを持つ",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_1706239920",
+        "fractured.stat_1706239920"
+      ]
+    },
+    {
+      "key": "explicit.stat_2156372077",
+      "ref": "Auras from Player Skills which affect Allies also affect Enemies",
+      "japanese": "味方に影響する、プレイヤースキルによるオーラは敵にも影響する",
+      "scope": "ubermap_exclusive",
+      "stat_ids": [
+        "explicit.stat_2156372077",
+        "fractured.stat_2156372077"
+      ]
+    }
+  ]
+}

@@ -13,6 +13,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
             "exit": "F5",
             "monastery": "F12",
             "poetore_capture": "alt+d",
+            "map_check": "alt+f",
             "cheat_sheets_toggle": "shift+space",
             "start_stop": "F7",
         },
@@ -35,6 +36,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
         "exit": "F5",
         "monastery": "F12",
         "poetore_capture": "alt+d",
+        "map_check": "alt+f",
         "cheat_sheets_toggle": "shift+space",
     }
     assert not hasattr(window, "log_watcher")
@@ -43,6 +45,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert "currency_rate_refresh" in window.active_service_names
     assert window.memo_button.text() == "📝"
     assert window.cheat_sheets_button.text() == "🖼"
+    assert window.map_mods_button.text() == "🗺"
     assert window.settings_button.text() == "⚙"
     assert window.memo_button.size().width() == 35
     assert window.memo_button.size().height() == 35

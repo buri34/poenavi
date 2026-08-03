@@ -9,7 +9,10 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_poetore_distribution_contains_only_minimal_derived_data():
     data_dir = ROOT / "data" / "poetore"
     names = {path.name for path in data_dir.iterdir() if path.is_file()}
-    expected = {"mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json"}
+    expected = {
+        "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json",
+        "map_mods.json",
+    }
     if os.environ.get("POETORE_CANDIDATE_BUILD") == "1":
         expected.add(".mod_metadata.json.candidate")
     assert names == expected

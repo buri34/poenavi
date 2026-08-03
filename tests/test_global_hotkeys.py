@@ -93,6 +93,22 @@ def test_capture_release_waits_for_every_key_regardless_of_release_order():
     assert emitted == ["poetore_capture", "poetore_capture_released"]
 
 
+def test_map_check_uses_its_own_release_notification():
+    listeners = []
+    service = GlobalHotkeyService(
+        {"map_check": "alt+f"},
+        listener_factory=lambda **kwargs: listeners.append(FakeListener(**kwargs)) or listeners[-1],
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+    listeners[0].on_press(SimpleNamespace(name="alt"))
+    listeners[0].on_press(SimpleNamespace(char="f", vk=ord("F")))
+    listeners[0].on_release(SimpleNamespace(char="f", vk=ord("F")))
+    listeners[0].on_release(SimpleNamespace(name="alt"))
+    assert emitted == ["map_check", "map_check_released"]
+
+
 def test_escape_is_available_for_common_cheat_sheet_overlay():
     listener_box = []
 

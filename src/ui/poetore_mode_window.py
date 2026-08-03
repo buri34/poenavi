@@ -125,6 +125,7 @@ class PoetoreModeWindow(QMainWindow):
         "exit": "F5",
         "monastery": "F12",
         "poetore_capture": "alt+d",
+        "map_check": "alt+f",
         "cheat_sheets_toggle": "shift+space",
     }
 
@@ -132,6 +133,7 @@ class PoetoreModeWindow(QMainWindow):
         super().__init__()
         self.config = ConfigManager.load_config()
         self._cheat_sheet_overlay = None
+        self._map_check_window = None
         self._memo_dialog = None
         self._rate_request_running = False
         self._rate_signals = _RateSignals(self)
@@ -220,11 +222,14 @@ class PoetoreModeWindow(QMainWindow):
         self.cheat_sheets_button = self._header_button(
             "🖼", "Cheat sheetsの画像を登録・管理"
         )
+        self.map_mods_button = self._header_button("🗺", "Map Modを登録・管理")
         self.settings_button = self._header_button("⚙", "設定画面を開く")
         self.memo_button.clicked.connect(self.open_memo)
+        self.map_mods_button.clicked.connect(self.open_map_mod_manager)
         self.cheat_sheets_button.clicked.connect(self.open_cheat_sheet_manager)
         self.settings_button.clicked.connect(self.open_settings)
         header.addWidget(self.memo_button)
+        header.addWidget(self.map_mods_button)
         header.addWidget(self.cheat_sheets_button)
         header.addWidget(self.settings_button)
         body_layout.addLayout(header)
@@ -412,6 +417,11 @@ class PoetoreModeWindow(QMainWindow):
             window = getattr(self, "_poetore_window", None)
             if window is not None:
                 window.capture_hotkey_released()
+        elif command == "map_check":
+            self.capture_map_check_item()
+        elif command == "map_check_released":
+            if self._map_check_window is not None:
+                self._map_check_window.capture_hotkey_released()
         elif command == "cheat_sheets_toggle":
             self.toggle_cheat_sheets()
         elif command == "cheat_sheets_escape":
@@ -433,6 +443,36 @@ class PoetoreModeWindow(QMainWindow):
         window = show_poetore_window(self, activate=False)
         trace.mark("poetore_window_ready")
         window.capture_from_poe(trace)
+
+    def _save_map_check_config(self, map_check_config):
+        self.config["map_check"] = dict(map_check_config)
+        ConfigManager.save_config(self.config)
+
+    def _ensure_map_check_window(self):
+        from src.ui.map_check import MapCheckWindow
+
+        if self._map_check_window is None:
+            self._map_check_window = MapCheckWindow(
+                self.config.get("map_check", {}), self,
+            )
+            self._map_check_window.config_changed.connect(
+                self._save_map_check_config
+            )
+        else:
+            self._map_check_window.reload_config(self.config.get("map_check", {}))
+        return self._map_check_window
+
+    def capture_map_check_item(self):
+        self._ensure_map_check_window().capture_from_poe()
+
+    def open_map_mod_manager(self):
+        from src.ui.map_check import MapModManagerDialog
+
+        dialog = MapModManagerDialog(self.config.get("map_check", {}), self)
+        dialog.config_changed.connect(self._save_map_check_config)
+        dialog.exec()
+        if self._map_check_window is not None:
+            self._map_check_window.reload_config(self.config.get("map_check", {}))
 
     def _prepare_poetore_window(self):
         """Build the search panel after startup without issuing Trade requests."""
@@ -541,6 +581,10 @@ class PoetoreModeWindow(QMainWindow):
         if self._cheat_sheet_overlay is not None:
             self._cheat_sheet_overlay.hide_and_save()
             self._cheat_sheet_overlay.close()
+        if self._map_check_window is not None:
+            self._map_check_window.close()
+            self._map_check_window.deleteLater()
+            self._map_check_window = None
         if getattr(self, "_poetore_window", None) is not None:
             self._poetore_window.close()
             self._poetore_window.deleteLater()
