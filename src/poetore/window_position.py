@@ -181,3 +181,18 @@ def fallback_screen_rect(cursor_pos: QPoint) -> QRect:
 def position_for_context(context: PlacementContext, panel_size: QSize) -> QPoint:
     target = context.target_rect or fallback_screen_rect(context.cursor_pos)
     return calculate_panel_position(target, context.cursor_pos, panel_size)
+
+
+def position_for_context_at_cursor_y(
+    context: PlacementContext,
+    panel_size: QSize,
+    margin: int = PANEL_MARGIN,
+) -> QPoint:
+    """Keep the established horizontal placement and center vertically at cursor."""
+    target = context.target_rect or fallback_screen_rect(context.cursor_pos)
+    base = calculate_panel_position(target, context.cursor_pos, panel_size, margin)
+    height = min(panel_size.height(), max(1, target.height() - margin * 2))
+    min_y = target.top() + margin
+    max_y = target.bottom() - margin - height + 1
+    y = context.cursor_pos.y() - height // 2
+    return QPoint(base.x(), max(min_y, min(y, max_y)))

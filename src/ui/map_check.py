@@ -17,7 +17,9 @@ from src.poetore.map_check import (
     normalized_map_check_config, set_decision,
 )
 from src.poetore.parser import ItemParseError, parse_item_text
-from src.poetore.window_position import capture_placement_context, position_for_context
+from src.poetore.window_position import (
+    capture_placement_context, position_for_context_at_cursor_y,
+)
 from src.utils.window_focus import (
     focus_window, get_foreground_window, is_path_of_exile_window,
 )
@@ -249,7 +251,7 @@ class MapCheckWindow(QDialog):
         self._item = item
         self._render(item)
         context = self._placement_context or capture_placement_context()
-        self.move(position_for_context(context, self.size()))
+        self.move(position_for_context_at_cursor_y(context, self.size()))
         self.show()
         self.raise_()
         self.activateWindow()

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QPoint, QRect, QSize
 
 from src.poetore.map_check import (
     decision_for, default_map_check_config, is_map_check_item,
@@ -10,6 +11,9 @@ from src.poetore.map_check import (
 )
 from src.poetore.models import ParsedItem
 from src.poetore.parser import parse_item_text
+from src.poetore.window_position import (
+    PlacementContext, position_for_context_at_cursor_y,
+)
 from unittest.mock import patch
 
 from src.ui.map_check import MapCheckWindow, MapModManagerDialog
@@ -18,6 +22,25 @@ from scripts.build_poetore_map_mods import build_catalog
 
 def item(category="map", rarity="レア"):
     return ParsedItem("マップ", rarity, "テスト", "テストマップ", category)
+
+
+def test_map_check_position_keeps_side_and_centers_at_cursor_y_with_clamping():
+    target = QRect(100, 50, 1920, 1080)
+    size = QSize(560, 360)
+
+    middle = position_for_context_at_cursor_y(
+        PlacementContext(target, QPoint(1700, 700)), size,
+    )
+    top = position_for_context_at_cursor_y(
+        PlacementContext(target, QPoint(1700, 60)), size,
+    )
+    bottom = position_for_context_at_cursor_y(
+        PlacementContext(target, QPoint(1700, 1120)), size,
+    )
+
+    assert middle == QPoint(794, 520)
+    assert top == QPoint(794, 66)
+    assert bottom == QPoint(794, 754)
 
 
 def test_catalog_matches_locked_awakened_area_mod_population():
