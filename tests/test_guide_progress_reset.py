@@ -26,10 +26,17 @@ class GuideProgressResetTest(unittest.TestCase):
         self.assertEqual(tabs.tabText(tabs.count() - 2), "その他")
 
         description = dialog.findChild(QLabel, "guideProgressResetDescription")
-        self.assertIn("通常、自動で検知されるため操作は不要", description.text())
-        self.assertIn("タイマーの記録や設定は変更されません", description.text())
-        self.assertIn("Act 1-5", description.text())
-        self.assertIn("Act 6-10", description.text())
+        self.assertEqual(
+            description.text(),
+            "ガイド進行制御に用いるフラグ等の状態は、新しいキャラクターの開始時に"
+            "自動で検知して、初期状態にするため、通常は操作不要です。\n"
+            "にもかかわらず、フラグ等の状態が前のキャラクターから残っていると思われる場合は、"
+            "以下のボタンを押して初期状態に戻してください。タイマーの記録やぽえなびの設定は"
+            "変更されません。\n\n"
+            "なお、Act 6以降を攻略中の場合、リセット後にぽえなび本体のガイドタイル右側に"
+            "表示されている「Act 1-5」のトグルをクリックして「Act 6-10」表示へ"
+            "切り替えてください。",
+        )
 
         button = dialog.findChild(QPushButton, "guideProgressResetButton")
         self.assertEqual(button.text(), "ガイド進行を初期状態に戻す")

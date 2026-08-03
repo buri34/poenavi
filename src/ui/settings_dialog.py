@@ -2340,11 +2340,14 @@ class SettingsDialog(QDialog):
         guide_reset_group.setStyleSheet(group_style)
         guide_reset_layout = QVBoxLayout(guide_reset_group)
         guide_reset_description = QLabel(
-            "新しいキャラクターの開始は通常、自動で検知されるため操作は不要です。\n"
-            "ガイドの訪問回数や進行状況が前のキャラクターから残っている場合のみ、"
-            "初期状態に戻してください。タイマーの記録や設定は変更されません。\n"
-            "リセット後にAct 6以降を攻略中の場合は、ぽえなび本体の「Act 1-5」を"
-            "クリックして「Act 6-10」表示へ切り替えてください。"
+            "ガイド進行制御に用いるフラグ等の状態は、新しいキャラクターの開始時に"
+            "自動で検知して、初期状態にするため、通常は操作不要です。\n"
+            "にもかかわらず、フラグ等の状態が前のキャラクターから残っていると思われる場合は、"
+            "以下のボタンを押して初期状態に戻してください。タイマーの記録やぽえなびの設定は"
+            "変更されません。\n\n"
+            "なお、Act 6以降を攻略中の場合、リセット後にぽえなび本体のガイドタイル右側に"
+            "表示されている「Act 1-5」のトグルをクリックして「Act 6-10」表示へ"
+            "切り替えてください。"
         )
         guide_reset_description.setObjectName("guideProgressResetDescription")
         guide_reset_description.setWordWrap(True)
