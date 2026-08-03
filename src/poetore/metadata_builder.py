@@ -334,6 +334,12 @@ EXCLUDED_RELATED_ITEM_QUERY_GROUPS = {
     }),
 }
 
+# 現行PoEでは廃止済みだが、Awakenedの関連品定義に残っている項目。
+# グループ自体は有用なので、該当項目だけを生成時に除外する。
+EXCLUDED_RELATED_ITEM_IDS = {
+    "ITEM::Bestiary Scarab of the Shadowed Crow",
+}
+
 RELATED_ITEM_QUERY_LABELS = {
     frozenset({
         "UNIQUE::Watcher's Eye // Prismatic Jewel",
@@ -381,6 +387,10 @@ def build_related_item_groups(items_lines: Iterable[str], drop_rows: Iterable[di
         query_ids = [str(value) for value in row.get("query", ())]
         if frozenset(query_ids) in EXCLUDED_RELATED_ITEM_QUERY_GROUPS:
             continue
+        query_ids = [
+            value for value in query_ids
+            if value not in EXCLUDED_RELATED_ITEM_IDS
+        ]
         related_ids = [str(value) for value in row.get("items", ())]
         for query_id in query_ids:
             related_ids.extend(UBER_BOSS_DROP_SUPPLEMENTS.get(query_id, ()))

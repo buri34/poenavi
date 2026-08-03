@@ -791,6 +791,26 @@ def test_builder_excludes_nightmare_map_drop_group():
     ]
 
 
+def test_builder_excludes_removed_shadowed_crow_scarab_only():
+    groups = build_related_item_groups([], [{
+        "query": [
+            "ITEM::Orb of Fusing",
+            "ITEM::Omen of Connections",
+            "ITEM::Bestiary Scarab of the Shadowed Crow",
+            "CAPTURED_BEAST::Black Mórrigan",
+            "CAPTURED_BEAST::Craicic Sand Spitter",
+        ],
+        "items": [],
+    }])
+
+    assert [row["id"] for row in groups[0]["query"]] == [
+        "ITEM::Orb of Fusing",
+        "ITEM::Omen of Connections",
+        "CAPTURED_BEAST::Black Mórrigan",
+        "CAPTURED_BEAST::Craicic Sand Spitter",
+    ]
+
+
 def test_builder_excludes_bestiary_armour_comparison_groups():
     groups = build_related_item_groups([], [
         {
