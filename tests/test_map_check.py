@@ -119,6 +119,38 @@ Map (Tier 16)
     ]
 
 
+def test_additional_real_japanese_map_copy_aliases_resolve_to_area_mods():
+    parsed = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+Alias Test 2
+Map (Tier 16)
+--------
+アイテムレベル: 83
+--------
+{ プレフィックスモッド (ティア: 1) }
+マジックモンスターの数が23(20-30)%増加する
+{ サフィックスモッド (ティア: 1) }
+モンスターはヒット時にパワーチャージ、フレンジーチャージおよびエンデュランスチャージのスタックを盗む
+{ サフィックスモッド (ティア: 1) }
+モンスターはアタックによるヒット時に重傷を付与する
+{ サフィックスモッド (ティア: 1) }
+全てのプレイヤーの命中力が25%低下する
+{ サフィックスモッド (ティア: 1) }
+モンスターはヒット時に盲目を付与する
+{ サフィックスモッド (ティア: 1) }
+モンスターはヒット時にパワーチャージを1個獲得する
+""")
+    assert [(modifier.stat_id, modifier.values) for modifier in parsed.modifiers] == [
+        ("explicit.stat_1821565133", (23.0, 20.0, -30.0)),
+        ("explicit.stat_3222482040", (100.0,)),
+        ("explicit.stat_4164174520", (100.0,)),
+        ("explicit.stat_3667574329", (25.0,)),
+        ("explicit.stat_1629869774", (100.0,)),
+        ("explicit.stat_406353061", (100.0,)),
+    ]
+    assert parsed.modifiers[3].inverted is True
+
+
 def test_manager_uses_numeric_profiles_and_lists_current_plus_outdated_defaults():
     QApplication.instance() or QApplication([])
     dialog = MapModManagerDialog(default_map_check_config())
