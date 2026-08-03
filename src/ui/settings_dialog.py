@@ -1604,6 +1604,7 @@ class SettingsDialog(QDialog):
         parent=None,
         current_config=None,
         update_check_callback=None,
+        guide_progress_reset_callback=None,
     ):
         super().__init__(parent)
         self.setWindowTitle("設定")
@@ -1612,6 +1613,7 @@ class SettingsDialog(QDialog):
         
         self.current_config = current_config or {}
         self.update_check_callback = update_check_callback
+        self.guide_progress_reset_callback = guide_progress_reset_callback
         self.hotkeys = self.current_config.get("hotkeys", {
             "start_stop": "F7",
             "reset": "F8",
@@ -2329,6 +2331,33 @@ class SettingsDialog(QDialog):
         
         tabs.addTab(zone_tab, "エリア情報")
 
+        # === その他タブ ===
+        other_tab = QWidget()
+        other_layout = QVBoxLayout(other_tab)
+        other_layout.setContentsMargins(20, 20, 20, 20)
+
+        guide_reset_group = QGroupBox("ガイド進行のリセット")
+        guide_reset_group.setStyleSheet(group_style)
+        guide_reset_layout = QVBoxLayout(guide_reset_group)
+        guide_reset_description = QLabel(
+            "新しいキャラクターの開始は通常、自動で検知されるため操作は不要です。\n"
+            "ガイドの訪問回数や進行状況が前のキャラクターから残っている場合のみ、"
+            "初期状態に戻してください。タイマーの記録や設定は変更されません。"
+        )
+        guide_reset_description.setObjectName("guideProgressResetDescription")
+        guide_reset_description.setWordWrap(True)
+        guide_reset_description.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        guide_reset_layout.addWidget(guide_reset_description)
+
+        self.guide_progress_reset_btn = QPushButton("ガイド進行を初期状態に戻す")
+        self.guide_progress_reset_btn.setObjectName("guideProgressResetButton")
+        self.guide_progress_reset_btn.setStyleSheet(Styles.BUTTON)
+        self.guide_progress_reset_btn.setEnabled(self.guide_progress_reset_callback is not None)
+        self.guide_progress_reset_btn.clicked.connect(self._confirm_guide_progress_reset)
+        guide_reset_layout.addWidget(self.guide_progress_reset_btn)
+        other_layout.addWidget(guide_reset_group)
+        other_layout.addStretch()
+
         # === アプリ情報タブ（ぽえとれ設定と共通） ===
         about_tab = AppInfoWidget(
             POENAVI_THEME,
@@ -2345,6 +2374,7 @@ class SettingsDialog(QDialog):
         )
         term_review_layout.addWidget(self.gem_shop_search_term_review)
         tabs.addTab(term_review_tab, "Regex短縮設定")
+        tabs.addTab(other_tab, "その他")
         tabs.addTab(about_tab, "アプリ情報")
 
         layout.addWidget(tabs)
@@ -2362,6 +2392,24 @@ class SettingsDialog(QDialog):
         btn_layout.addWidget(self.ok_btn)
         btn_layout.addWidget(self.cancel_btn)
         layout.addLayout(btn_layout)
+
+    def _confirm_guide_progress_reset(self):
+        answer = QMessageBox.question(
+            self,
+            "ガイド進行を初期状態に戻す",
+            "ガイドの訪問回数と進行状況を初期状態に戻します。\n"
+            "タイマーの記録や設定は変更されません。実行しますか？",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if answer != QMessageBox.Yes or self.guide_progress_reset_callback is None:
+            return
+        self.guide_progress_reset_callback()
+        QMessageBox.information(
+            self,
+            "リセット完了",
+            "ガイド進行を初期状態に戻しました。",
+        )
     
     def browse_log_file(self, poe_version=None):
         path, _ = QFileDialog.getOpenFileName(

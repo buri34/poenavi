@@ -106,7 +106,8 @@ class GemShopSearchTest(unittest.TestCase):
         )
         self.assertEqual(settings.size().width(), 630)
         tabs = settings.findChild(QTabWidget)
-        self.assertEqual(tabs.tabText(tabs.count() - 2), "Regex短縮設定")
+        self.assertEqual(tabs.tabText(tabs.count() - 3), "Regex短縮設定")
+        self.assertEqual(tabs.tabText(tabs.count() - 2), "その他")
         self.assertEqual(tabs.tabText(tabs.count() - 1), "アプリ情報")
 
         review = settings.gem_shop_search_term_review

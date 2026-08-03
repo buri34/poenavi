@@ -4265,6 +4265,7 @@ class MainWindow(QMainWindow):
             update_check_callback=lambda: self._check_for_updates_from_settings(
                 dialog
             ),
+            guide_progress_reset_callback=self._reset_guide_progress_from_settings,
         )
         if dialog.exec():
             self._set_timer_ready(False)
@@ -4389,6 +4390,21 @@ class MainWindow(QMainWindow):
             zone_id = self._get_zone_id(self.current_zone)
             visit_num = self.zone_visit_counts.get(self.current_zone, 1)
             self._update_guide_and_map(self.current_zone, zone_id, visit_num)
+
+    def _reset_guide_progress_from_settings(self):
+        """設定画面から、タイマーに触れずガイド進行だけを初期化する。"""
+        self.clear_progress_flags()
+        self.visit_override = None
+        self._update_visit_btn()
+        self._in_act10 = False
+        self._set_part2(False)
+        if self.current_zone:
+            zone_id = self._get_zone_id(self.current_zone)
+            self._update_guide_and_map(
+                self.current_zone,
+                zone_id,
+                self.zone_visit_counts.get(zone_id or self.current_zone, 1),
+            )
 
     def _check_for_updates_from_settings(self, parent):
         """設定のアプリ情報タブから、通知済みバージョンも含めて確認する。"""
