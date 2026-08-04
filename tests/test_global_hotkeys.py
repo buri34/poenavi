@@ -1,9 +1,11 @@
 from types import SimpleNamespace
 
 from src.utils.global_hotkeys import (
+    HOTKEY_ACTIONS_ALLOWED_OUTSIDE_POE,
     GlobalHotkeyService,
     find_duplicate_hotkeys,
     hotkey_key_name,
+    is_hotkey_action_allowed,
 )
 from src.utils.internal_key_input import internal_key_input
 
@@ -36,6 +38,50 @@ def test_duplicate_hotkeys_are_normalized_and_disabled_values_are_ignored():
             "empty": "",
         }
     ) == {"f5": ["exit", "capture"]}
+
+
+def test_only_requested_passive_actions_are_allowed_outside_poe(monkeypatch):
+    monkeypatch.setattr(
+        "src.utils.global_hotkeys.is_path_of_exile_window", lambda _hwnd: False,
+    )
+    assert HOTKEY_ACTIONS_ALLOWED_OUTSIDE_POE == {
+        "start_stop", "lap", "click_through",
+        "cheat_sheets_toggle", "cheat_sheets_escape",
+    }
+    for action in HOTKEY_ACTIONS_ALLOWED_OUTSIDE_POE:
+        assert is_hotkey_action_allowed(action, foreground_window=123)
+    assert not is_hotkey_action_allowed("poetore_capture", foreground_window=123)
+    assert not is_hotkey_action_allowed("custom_command:0", foreground_window=123)
+
+
+def test_restricted_hotkeys_are_allowed_when_poe_is_foreground(monkeypatch):
+    monkeypatch.setattr(
+        "src.utils.global_hotkeys.is_path_of_exile_window", lambda hwnd: hwnd == 123,
+    )
+    assert is_hotkey_action_allowed("poetore_capture", foreground_window=123)
+    assert not is_hotkey_action_allowed("poetore_capture", foreground_window=456)
+
+
+def test_service_filters_disallowed_press_and_its_release():
+    listeners = []
+    service = GlobalHotkeyService(
+        {"poetore_capture": "alt+d", "cheat_sheets_toggle": "shift+space"},
+        listener_factory=lambda **kwargs: listeners.append(FakeListener(**kwargs)) or listeners[-1],
+        action_filter=lambda action: action in HOTKEY_ACTIONS_ALLOWED_OUTSIDE_POE,
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+
+    listeners[0].on_press(SimpleNamespace(name="alt"))
+    listeners[0].on_press(SimpleNamespace(char="d", vk=ord("D")))
+    listeners[0].on_release(SimpleNamespace(char="d", vk=ord("D")))
+    listeners[0].on_release(SimpleNamespace(name="alt"))
+    assert emitted == []
+
+    listeners[0].on_press(SimpleNamespace(name="shift"))
+    listeners[0].on_press(SimpleNamespace(name="space"))
+    assert emitted == ["cheat_sheets_toggle"]
 
 
 def test_service_registers_only_supplied_mode_actions():

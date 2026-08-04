@@ -3,6 +3,24 @@
 from PySide6.QtCore import QObject, Signal
 
 from src.utils.internal_key_input import is_internal_key_input
+from src.utils.window_focus import get_foreground_window, is_path_of_exile_window
+
+
+HOTKEY_ACTIONS_ALLOWED_OUTSIDE_POE = frozenset({
+    "start_stop",
+    "lap",
+    "click_through",
+    "cheat_sheets_toggle",
+    "cheat_sheets_escape",
+})
+
+
+def is_hotkey_action_allowed(action: str, foreground_window=None) -> bool:
+    """Return whether a hotkey action may run for the current foreground window."""
+    if action in HOTKEY_ACTIONS_ALLOWED_OUTSIDE_POE:
+        return True
+    foreground = get_foreground_window() if foreground_window is None else foreground_window
+    return bool(foreground and is_path_of_exile_window(foreground))
 
 
 def find_duplicate_hotkeys(hotkeys: dict[str, str]) -> dict[str, list[str]]:
@@ -49,9 +67,12 @@ class GlobalHotkeyService(QObject):
 
     command = Signal(str)
 
-    def __init__(self, hotkeys=None, *, listener_factory=None, parent=None):
+    def __init__(
+        self, hotkeys=None, *, listener_factory=None, action_filter=None, parent=None,
+    ):
         super().__init__(parent)
         self._listener_factory = listener_factory
+        self._action_filter = action_filter
         self._listener = None
         self._hotkey_map = {}
         self.configure(hotkeys or {})
@@ -99,7 +120,8 @@ class GlobalHotkeyService(QObject):
                 pressed_keys.add(modifier or key_name)
 
                 if key_name in {"esc", "escape"}:
-                    self.command.emit("cheat_sheets_escape")
+                    if self._action_is_allowed("cheat_sheets_escape"):
+                        self.command.emit("cheat_sheets_escape")
 
                 combo = "+".join(
                     [
@@ -110,7 +132,8 @@ class GlobalHotkeyService(QObject):
                     + [key_name]
                 )
                 configured = self._hotkey_map.get(combo) or self._hotkey_map.get(key_name)
-                if configured and combo not in triggered_combos:
+                if (configured and combo not in triggered_combos
+                        and self._action_is_allowed(configured)):
                     triggered_combos.add(combo)
                     if configured in {"poetore_capture", "map_check"}:
                         pending_releases[combo] = frozenset(combo.split("+"))
@@ -145,6 +168,9 @@ class GlobalHotkeyService(QObject):
         self._listener = None
         if listener is not None:
             listener.stop()
+
+    def _action_is_allowed(self, action):
+        return self._action_filter is None or bool(self._action_filter(action))
 
     @staticmethod
     def _modifier_name(key_name):

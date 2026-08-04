@@ -75,6 +75,7 @@ def test_f4_key_repeat_opens_the_vendor_search_menu_once(monkeypatch):
         config={"hotkeys": {"search_string_test": "F4"}},
         keyboard_listener=None,
         hotkey_signal=SimpleNamespace(emit=emitted.append),
+        _hotkey_action_allowed=lambda _action: True,
     )
     monkeypatch.setattr("src.ui.main_window.pynput_keyboard.Listener", FakeListener)
 
@@ -84,6 +85,51 @@ def test_f4_key_repeat_opens_the_vendor_search_menu_once(monkeypatch):
     callbacks["on_press"](f4)
 
     assert emitted == ["search_string_test"]
+
+
+def test_main_mode_blocks_restricted_actions_but_keeps_passive_actions_outside_poe(
+    monkeypatch,
+):
+    callbacks = {}
+
+    class FakeListener:
+        def __init__(self, on_press, on_release):
+            callbacks["on_press"] = on_press
+            callbacks["on_release"] = on_release
+
+        def start(self):
+            pass
+
+        def stop(self):
+            pass
+
+    emitted = []
+    allowed_outside_poe = {"start_stop", "lap", "click_through", "cheat_sheets_toggle"}
+    window = SimpleNamespace(
+        config={"hotkeys": {
+            "search_string_test": "F4",
+            "start_stop": "F7",
+            "lap": "F9",
+            "click_through": "F6",
+            "cheat_sheets_toggle": "shift+space",
+        }},
+        keyboard_listener=None,
+        hotkey_signal=SimpleNamespace(emit=emitted.append),
+        _hotkey_action_allowed=lambda action: action in allowed_outside_poe,
+    )
+    monkeypatch.setattr("src.ui.main_window.pynput_keyboard.Listener", FakeListener)
+
+    MainWindow.register_hotkeys(window)
+    callbacks["on_press"](SimpleNamespace(name="f4"))
+    callbacks["on_press"](SimpleNamespace(name="f7"))
+    callbacks["on_press"](SimpleNamespace(name="f9"))
+    callbacks["on_press"](SimpleNamespace(name="f6"))
+    callbacks["on_press"](SimpleNamespace(name="shift"))
+    callbacks["on_press"](SimpleNamespace(name="space"))
+
+    assert emitted == [
+        "start_stop", "lap", "click_through", "cheat_sheets_toggle",
+    ]
 
 
 def test_f2_starts_and_releases_gem_shop_hold(monkeypatch):
@@ -105,6 +151,7 @@ def test_f2_starts_and_releases_gem_shop_hold(monkeypatch):
         config={"hotkeys": {"gem_shop_search": "F2"}},
         keyboard_listener=None,
         hotkey_signal=SimpleNamespace(emit=emitted.append),
+        _hotkey_action_allowed=lambda _action: True,
     )
     monkeypatch.setattr("src.ui.main_window.pynput_keyboard.Listener", FakeListener)
 
@@ -135,6 +182,7 @@ def test_main_mode_waits_for_all_poetore_hotkey_keys_to_be_released(monkeypatch)
         config={"hotkeys": {"poetore_capture": "alt+d"}},
         keyboard_listener=None,
         hotkey_signal=SimpleNamespace(emit=emitted.append),
+        _hotkey_action_allowed=lambda _action: True,
     )
     monkeypatch.setattr("src.ui.main_window.pynput_keyboard.Listener", FakeListener)
 
@@ -163,6 +211,7 @@ def test_main_mode_emits_map_check_release_separately(monkeypatch):
     window = SimpleNamespace(
         config={"hotkeys": {"map_check": "alt+f"}}, keyboard_listener=None,
         hotkey_signal=SimpleNamespace(emit=emitted.append),
+        _hotkey_action_allowed=lambda _action: True,
     )
     monkeypatch.setattr("src.ui.main_window.pynput_keyboard.Listener", FakeListener)
     MainWindow.register_hotkeys(window)

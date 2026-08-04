@@ -24,7 +24,11 @@ from src.utils.window_focus import (
     get_next_visible_window_after,
     is_path_of_exile_window,
 )
-from src.utils.global_hotkeys import hotkey_key_name, listener_hotkey_name
+from src.utils.global_hotkeys import (
+    hotkey_key_name,
+    is_hotkey_action_allowed,
+    listener_hotkey_name,
+)
 from src.utils.chat_command import send_chat_command
 from src.ui.custom_command_settings import custom_command_hotkeys, normalized_custom_commands
 from src.utils.log_path_detector import fill_missing_client_log_paths
@@ -3037,8 +3041,19 @@ class MainWindow(QMainWindow):
             pressed_keys = set()
             triggered_combos = set()
             pending_poetore_releases = {}
+            gem_shop_press_accepted = False
+            action_allowed = getattr(
+                self, "_hotkey_action_allowed", is_hotkey_action_allowed,
+            )
+
+            def emit_if_allowed(action):
+                if not action_allowed(action):
+                    return False
+                self.hotkey_signal.emit(action)
+                return True
 
             def on_press(key):
+                nonlocal gem_shop_press_accepted
                 try:
                     from src.utils.internal_key_input import is_internal_key_input
                     if is_internal_key_input():
@@ -3048,7 +3063,7 @@ class MainWindow(QMainWindow):
                         return
 
                     if _gem_shop_hotkey_matches(self._gem_shop_search_key, key_name):
-                        self.hotkey_signal.emit("gem_shop_search_pressed")
+                        gem_shop_press_accepted = emit_if_allowed("gem_shop_search_pressed")
                     
                     if key_name in {"alt", "alt_l", "alt_r", "alt_gr"}:
                         pressed_modifiers.add("alt")
@@ -3064,44 +3079,50 @@ class MainWindow(QMainWindow):
                     pressed_keys.add(normalized_key)
 
                     if key_name in {"esc", "escape"}:
-                        self.hotkey_signal.emit("cheat_sheets_escape")
+                        emit_if_allowed("cheat_sheets_escape")
 
                     combo = "+".join([modifier for modifier in ("ctrl", "alt", "shift") if modifier in pressed_modifiers] + [key_name])
                     if combo in self.hotkey_map:
                         if (
                             "alt" in pressed_modifiers
                             and self._gem_shop_search_key in {"alt", "alt_l", "alt_r", "alt_gr"}
+                            and gem_shop_press_accepted
                         ):
                             self.hotkey_signal.emit("gem_shop_search_released")
+                            gem_shop_press_accepted = False
                         if combo not in triggered_combos:
-                            triggered_combos.add(combo)
                             command = self.hotkey_map[combo]
-                            if command in {"poetore_capture", "map_check"}:
-                                pending_poetore_releases[combo] = (
-                                    frozenset(combo.split("+")), command,
-                                )
-                            self.hotkey_signal.emit(command)
+                            if emit_if_allowed(command):
+                                triggered_combos.add(combo)
+                                if command in {"poetore_capture", "map_check"}:
+                                    pending_poetore_releases[combo] = (
+                                        frozenset(combo.split("+")), command,
+                                    )
                         return
 
                     # 単独ホットキーマップをチェック
                     if key_name in self.hotkey_map:
                         command = self.hotkey_map[key_name]
-                        if command in {"poetore_capture", "map_check"}:
+                        print(f"[HOTKEY DEBUG] key={key_name} command={command} search_in_progress={getattr(self, '_search_paste_in_progress', False)}")
+                        if emit_if_allowed(command) and command in {
+                            "poetore_capture", "map_check",
+                        }:
                             pending_poetore_releases[key_name] = (
                                 frozenset((key_name,)), command,
                             )
-                        print(f"[HOTKEY DEBUG] key={key_name} command={command} search_in_progress={getattr(self, '_search_paste_in_progress', False)}")
-                        self.hotkey_signal.emit(command)
                 except Exception as e:
                     print(f"Hotkey error: {e}")
 
             def on_release(key):
+                nonlocal gem_shop_press_accepted
                 from src.utils.internal_key_input import is_internal_key_input
                 key_name = _hotkey_key_name(key)
                 if key_name is None:
                     return
                 if _gem_shop_hotkey_matches(self._gem_shop_search_key, key_name):
-                    self.hotkey_signal.emit("gem_shop_search_released")
+                    if gem_shop_press_accepted:
+                        self.hotkey_signal.emit("gem_shop_search_released")
+                        gem_shop_press_accepted = False
                 if key_name in {"alt", "alt_l", "alt_r", "alt_gr"}:
                     pressed_modifiers.discard("alt")
                     normalized_key = "alt"

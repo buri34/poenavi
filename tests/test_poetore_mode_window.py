@@ -32,6 +32,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
             window = PoetoreModeWindow()
 
     supplied_hotkeys = hotkey_class.call_args.args[0]
+    assert hotkey_class.call_args.kwargs["action_filter"] is not None
     assert supplied_hotkeys == {
         "exit": "F5",
         "monastery": "F12",

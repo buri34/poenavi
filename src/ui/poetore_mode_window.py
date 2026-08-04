@@ -33,7 +33,7 @@ from src.ui.app_theme import POETORE_THEME
 from src.utils.chat_command import send_chat_command
 from src.ui.custom_command_settings import custom_command_hotkeys, normalized_custom_commands
 from src.utils.config_manager import ConfigManager
-from src.utils.global_hotkeys import GlobalHotkeyService
+from src.utils.global_hotkeys import GlobalHotkeyService, is_hotkey_action_allowed
 from src.utils.poe_version_data import POE1, POE2
 
 
@@ -560,7 +560,9 @@ class PoetoreModeWindow(QMainWindow):
             for action, default in self.MODE_ACTION_DEFAULTS.items()
         }
         mode_hotkeys.update(custom_command_hotkeys(self.config.get("custom_commands", [])))
-        self.hotkey_service = GlobalHotkeyService(mode_hotkeys, parent=self)
+        self.hotkey_service = GlobalHotkeyService(
+            mode_hotkeys, action_filter=is_hotkey_action_allowed, parent=self,
+        )
         self.hotkey_service.command.connect(self.handle_hotkey)
         self.hotkey_service.start()
 
