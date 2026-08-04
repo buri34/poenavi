@@ -53,6 +53,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert all(button.text() == "" for button in header_buttons)
     assert all(not button.icon().isNull() for button in header_buttons)
     assert all(button.iconSize() == QSize(24, 24) for button in header_buttons)
+    assert all(button.focusPolicy() == Qt.NoFocus for button in header_buttons)
     icon_images = [
         button.icon().pixmap(QSize(24, 24)).toImage() for button in header_buttons
     ]
@@ -65,8 +66,12 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert window.capture_hint.text() == (
         "アイテムにマウスオーバーしながらAlt + Dで価格チェック"
     )
-    assert window.findChild(QPushButton, "poetoreMinimizeButton").text() == "─"
-    assert window.findChild(QPushButton, "poetoreCloseButton").text() == "✕"
+    minimize_button = window.findChild(QPushButton, "poetoreMinimizeButton")
+    close_button = window.findChild(QPushButton, "poetoreCloseButton")
+    assert minimize_button.text() == "─"
+    assert close_button.text() == "✕"
+    assert minimize_button.focusPolicy() == Qt.NoFocus
+    assert close_button.focusPolicy() == Qt.NoFocus
     assert window.tray_icon.toolTip() == "ぽえとれ"
     assert [
         action.text() for action in window.tray_icon.contextMenu().actions()

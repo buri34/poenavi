@@ -225,6 +225,7 @@ class _PoetoreModeTitleBar(QWidget):
 
         self.minimize_button = QPushButton("─")
         self.minimize_button.setObjectName("poetoreMinimizeButton")
+        self.minimize_button.setFocusPolicy(Qt.NoFocus)
         self.minimize_button.setFixedSize(30, 22)
         self.minimize_button.setStyleSheet(button_style)
         self.minimize_button.setToolTip("最小化")
@@ -233,6 +234,7 @@ class _PoetoreModeTitleBar(QWidget):
 
         self.close_button = QPushButton("✕")
         self.close_button.setObjectName("poetoreCloseButton")
+        self.close_button.setFocusPolicy(Qt.NoFocus)
         self.close_button.setFixedSize(30, 22)
         self.close_button.setStyleSheet(close_style)
         self.close_button.setToolTip("閉じる")
@@ -514,6 +516,7 @@ class PoetoreModeWindow(QMainWindow):
 
     def _header_button(self, text, tooltip):
         button = QPushButton(text)
+        button.setFocusPolicy(Qt.NoFocus)
         button.setToolTip(tooltip)
         button.setFixedSize(35, 35)
         return button
