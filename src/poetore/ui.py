@@ -119,6 +119,24 @@ _DISPLAY_SIZE_PROFILES = {
 def normalize_result_font_size(value) -> str:
     normalized = str(value or "medium").casefold()
     return normalized if normalized in _DISPLAY_SIZE_PROFILES else "medium"
+
+
+def _auto_mod_layout_sizes(
+    *, profile_height: int, profile_mod_height: int,
+    content_height: int, available_height: int, minimum_height: int,
+) -> tuple[int, int]:
+    """Mod行を優先して広げつつ、ウィンドウを作業領域内へ収める。"""
+    wanted_mod_height = max(profile_mod_height, content_height)
+    wanted_window_height = profile_height + wanted_mod_height - profile_mod_height
+    window_height = min(
+        wanted_window_height,
+        max(minimum_height, available_height - 16),
+    )
+    mod_height = max(
+        80,
+        profile_mod_height + window_height - profile_height,
+    )
+    return min(wanted_mod_height, mod_height), window_height
 _SPECIAL_CHIP_FILTER_IDS = {
     "property.map_tier", "property.area_level", "property.heist_wings",
     "property.base_percentile",
@@ -1813,6 +1831,7 @@ class PoetoreWindow(QWidget):
                         self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH)
                     )
         self._apply_poetore_style()
+        self._adjust_window_height_to_mod_rows()
     def _toggle_mod_conditions(self):
         collapsed = self.mod_filter_tree.isVisible()
         self._set_mod_conditions_collapsed(collapsed)
@@ -1826,6 +1845,7 @@ class PoetoreWindow(QWidget):
             "Mod検索条件の一覧を展開する" if collapsed
             else "Mod検索条件の一覧を折りたたむ"
         )
+        self._adjust_window_height_to_mod_rows()
 
     def _reset_mod_conditions_for_item(self):
         has_visible_conditions = any(
@@ -1856,6 +1876,7 @@ class PoetoreWindow(QWidget):
                 is_hidden_candidate != visible
                 and not (is_hidden_candidate and is_checked)
             )
+        self._adjust_window_height_to_mod_rows()
 
     def _toggle_mod_sources(self, visible: bool):
         self.mod_sources_toggle.setText(
@@ -1864,6 +1885,54 @@ class PoetoreWindow(QWidget):
         for index in range(self.mod_filter_tree.topLevelItemCount()):
             row = self.mod_filter_tree.topLevelItem(index)
             row.setExpanded(visible and row.childCount() > 0)
+        self._adjust_window_height_to_mod_rows()
+
+    def _visible_mod_content_height(self) -> int:
+        if not self.mod_filter_tree.isVisible():
+            return 0
+        height = self.mod_filter_tree.frameWidth() * 2 + 4
+        default_row_height = self._scaled_display_value(_MOD_ROW_HEIGHT)
+        for index in range(self.mod_filter_tree.topLevelItemCount()):
+            row = self.mod_filter_tree.topLevelItem(index)
+            if row.isHidden():
+                continue
+            height += max(row.sizeHint(_MOD_COLUMN_TEXT).height(), default_row_height)
+            if row.isExpanded():
+                for child_index in range(row.childCount()):
+                    child = row.child(child_index)
+                    height += max(child.sizeHint(0).height(), default_row_height)
+        return height
+
+    def _adjust_window_height_to_mod_rows(self):
+        """通常候補が収まる分だけ縦へ拡張し、画面超過時だけスクロールを残す。"""
+        if not hasattr(self, "mod_filter_tree"):
+            return
+        # 初期表示サイズは従来どおり維持し、アイテム解析後だけ内容に合わせる。
+        if self.mod_filter_tree.topLevelItemCount() == 0:
+            return
+        profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
+        screen = QApplication.screenAt(self.frameGeometry().center())
+        if screen is None:
+            screen = QApplication.primaryScreen()
+        available = screen.availableGeometry() if screen is not None else self.screen().availableGeometry()
+        content_height = (
+            self._visible_mod_content_height()
+            if self.mod_filter_tree.isVisible() else profile["mod_height"]
+        )
+        mod_height, window_height = _auto_mod_layout_sizes(
+            profile_height=profile["height"],
+            profile_mod_height=profile["mod_height"],
+            content_height=content_height,
+            available_height=available.height(),
+            minimum_height=profile["minimum_height"],
+        )
+        self.mod_filter_tree.setMinimumHeight(mod_height)
+        self.mod_filter_tree.setMaximumHeight(mod_height)
+        self.resize(max(self.width(), profile["width"]), window_height)
+        if self.y() < available.top():
+            self.move(self.x(), available.top())
+        elif self.frameGeometry().bottom() > available.bottom():
+            self.move(self.x(), available.bottom() - self.frameGeometry().height() + 1)
 
     def _clear_mod_condition_checks(self):
         """一覧内の検索条件だけを解除し、基本条件チップは変更しない。"""
@@ -4033,6 +4102,7 @@ class PoetoreWindow(QWidget):
                 editor.textChanged.connect(sync_slider)
                 max_editor.textChanged.connect(sync_slider)
                 slider.valueCommitted.connect(commit_slider)
+        self._adjust_window_height_to_mod_rows()
 
     def _search_completed(self, result: PriceResult, initial_filters, search_generation: int):
         trace = self._search_performance_traces.pop(search_generation, None)

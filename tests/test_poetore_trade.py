@@ -1145,12 +1145,18 @@ Item Level: 86
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         rows = resolve_trade_stat_filters(item)
     ids = [row.stat_id for row in rows]
+    major_ids = {
+        "property.total_dps", "property.physical_dps", "property.elemental_dps",
+    }
+    assert [row.stat_id for row in rows[:3] if row.stat_id in major_ids] == [
+        row.stat_id for row in rows if row.stat_id in major_ids
+    ]
     expected = [
-        "explicit.gem_level",
+        "pseudo.pseudo_total_mana",
         "pseudo.pseudo_increased_spell_damage",
         "pseudo.pseudo_total_cast_speed",
         "pseudo.pseudo_critical_strike_chance_for_spells",
-        "pseudo.pseudo_total_mana",
+        "explicit.gem_level",
     ]
     assert [stat_id for stat_id in ids if stat_id in expected] == expected
     assert next(row for row in rows if row.stat_id == "explicit.gem_level").enabled
@@ -1158,6 +1164,34 @@ Item Level: 86
         row.enabled for row in rows
         if row.stat_id in set(expected) - {"explicit.gem_level"}
     )
+
+
+def test_armour_finished_filters_show_final_defence_then_pseudos_then_special_mods():
+    item = parse_item_text("""Item Class: Body Armours
+Rarity: Rare
+Test Armour
+Saintly Chainmail
+--------
+Armour: 800
+Energy Shield: 200
+--------
+Item Level: 86
+--------
++70 to maximum Life
++30% to Fire Resistance
+Enemies you Kill Explode, dealing 3% of their Life as Physical Damage
+""")
+    entries = ({
+        "id": "explicit.explode", "text": "Enemies you Kill Explode, dealing #% of their Life as Physical Damage",
+        "type": "explicit",
+    },)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        rows = resolve_trade_stat_filters(item)
+    ids = [row.stat_id for row in rows]
+    assert ids.index("property.armour") < ids.index("pseudo.pseudo_total_life")
+    assert ids.index("property.energy_shield") < ids.index("pseudo.pseudo_total_life")
+    assert ids.index("pseudo.pseudo_total_life") < ids.index("explicit.explode")
+    assert ids.index("pseudo.pseudo_total_elemental_resistance") < ids.index("explicit.explode")
 
 
 def test_weapon_base_preset_shows_performance_properties_but_keeps_them_off():
@@ -1217,8 +1251,8 @@ Cardinal Round Shield
         "property.energy_shield", "property.ward",
     }
     assert [row.stat_id for row in finished if row.stat_id in property_ids] == [
-        "property.block", "property.armour", "property.evasion",
-        "property.energy_shield",
+        "property.armour", "property.evasion", "property.energy_shield",
+        "property.block",
     ]
     assert not next(
         row for row in finished if row.stat_id == "property.block"

@@ -12,7 +12,7 @@ import pytest
 
 from src.poetore.ui import (
     PoetoreWindow, _MOD_COLUMN_CHECK, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
-    _UniqueRollSlider, _replace_filters_with_special_chips, prepare_poetore_window,
+    _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
     show_poetore_window,
 )
 from src.poetore.window_position import PlacementContext
@@ -1260,6 +1260,23 @@ def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
         assert not normal.isExpanded()
     finally:
         window.close()
+
+
+def test_auto_mod_layout_expands_until_available_height():
+    assert _auto_mod_layout_sizes(
+        profile_height=900,
+        profile_mod_height=250,
+        content_height=430,
+        available_height=1200,
+        minimum_height=620,
+    ) == (430, 1080)
+    assert _auto_mod_layout_sizes(
+        profile_height=900,
+        profile_mod_height=250,
+        content_height=600,
+        available_height=1000,
+        minimum_height=620,
+    ) == (334, 984)
 
 def test_checked_hidden_unique_mutation_is_sent_as_exact_filter(qapp):
     window = PoetoreWindow()

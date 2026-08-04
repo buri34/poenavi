@@ -3055,6 +3055,49 @@ def resolve_trade_stat_filters(
         decorated = [row for _, row in sorted(
             enumerate(decorated), key=accessory_sort_key,
         )]
+    if item.category in {"weapon", "armour", "accessory"}:
+        # 完成品はPrefix/Suffixの生成順ではなく、最終性能→集約pseudo→
+        # 集約できない特殊Modの順で読む。元の構成はsource_textsからUIで確認する。
+        major_property_order = {
+            "weapon": (
+                "property.total_dps", "property.physical_dps",
+                "property.elemental_dps",
+            ),
+            "armour": (
+                "property.armour", "property.evasion",
+                "property.energy_shield", "property.ward",
+            ),
+            "accessory": (),
+        }[item.category]
+        property_priority = {
+            stat_id: index for index, stat_id in enumerate(major_property_order)
+        }
+        pseudo_order = (
+            "pseudo.pseudo_total_life",
+            "pseudo.pseudo_total_energy_shield",
+            "pseudo.pseudo_total_elemental_resistance",
+            "pseudo.pseudo_total_chaos_resistance",
+            "pseudo.pseudo_total_all_attributes",
+            "pseudo.pseudo_total_strength",
+            "pseudo.pseudo_total_dexterity",
+            "pseudo.pseudo_total_intelligence",
+            "pseudo.pseudo_total_mana",
+        )
+        pseudo_priority = {
+            stat_id: index for index, stat_id in enumerate(pseudo_order)
+        }
+
+        def finished_gear_sort_key(pair):
+            index, row = pair
+            if row.stat_id in property_priority:
+                return (0, property_priority[row.stat_id], index)
+            if row.kind == "pseudo":
+                return (1, pseudo_priority.get(row.stat_id, len(pseudo_priority)), index)
+            return (2, 0, index)
+
+        decorated = [row for _, row in sorted(
+            enumerate(decorated), key=finished_gear_sort_key,
+        )]
     if item.category in {"jewel", "abyss_jewel"}:
         rarity = item.rarity.casefold()
         magic = rarity in {"magic", "マジック"}
