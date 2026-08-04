@@ -72,6 +72,8 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert close_button.text() == "✕"
     assert minimize_button.focusPolicy() == Qt.NoFocus
     assert close_button.focusPolicy() == Qt.NoFocus
+    assert window.rate_refresh_button.text() == "更新"
+    assert window.rate_refresh_button.focusPolicy() == Qt.NoFocus
     assert window.tray_icon.toolTip() == "ぽえとれ"
     assert [
         action.text() for action in window.tray_icon.contextMenu().actions()
