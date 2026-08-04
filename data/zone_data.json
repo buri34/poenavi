@@ -870,9 +870,15 @@
                 },
                 {
                     "id": "act10_area5",
-                    "zone": "聖廟",
+                    "zone": "納骨堂",
                     "level": 67,
                     "zone_en": "The Ossuary"
+                },
+                {
+                    "id": "act10_area12",
+                    "zone": "聖廟",
+                    "level": 67,
+                    "zone_en": "The Reliquary"
                 },
                 {
                     "id": "act10_area6",

@@ -3105,6 +3105,22 @@
       }
     }
   },
+  "act10_area12": {
+    "visits": {
+      "1": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      },
+      "2": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "direction": "none"
+      }
+    }
+  },
   "act10_area6": {
     "visits": {
       "1": {
