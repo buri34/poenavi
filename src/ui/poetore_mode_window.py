@@ -42,15 +42,117 @@ POETORE_TEXT = POETORE_THEME.text
 RATE_REFRESH_MSEC = 31 * 60 * 1000
 
 
-def _map_mod_manager_icon() -> QIcon:
-    """Return a compact folded-map icon with a settings gear overlay."""
+def _icon_canvas():
     scale = 2
     pixmap = QPixmap(24 * scale, 24 * scale)
     pixmap.setDevicePixelRatio(scale)
     pixmap.fill(Qt.transparent)
-
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.Antialiasing)
+    return pixmap, painter
+
+
+def _finish_icon(pixmap, painter) -> QIcon:
+    painter.end()
+    return QIcon(pixmap)
+
+
+def _memo_icon() -> QIcon:
+    """Return a compact note page with a folded corner."""
+    pixmap, painter = _icon_canvas()
+    accent = QColor(POETORE_ACCENT)
+    dark = QColor("#211425")
+    page = QPainterPath(QPointF(5.0, 2.8))
+    page.lineTo(15.8, 2.8)
+    page.lineTo(20.0, 7.0)
+    page.lineTo(20.0, 21.0)
+    page.lineTo(5.0, 21.0)
+    page.closeSubpath()
+    painter.setPen(QPen(accent, 1.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+    painter.setBrush(QColor(60, 38, 68))
+    painter.drawPath(page)
+    painter.drawLine(QPointF(15.8, 3.1), QPointF(15.8, 7.0))
+    painter.drawLine(QPointF(15.8, 7.0), QPointF(19.7, 7.0))
+    painter.setPen(QPen(dark, 1.5, Qt.SolidLine, Qt.RoundCap))
+    painter.drawLine(QPointF(8.0, 10.0), QPointF(16.8, 10.0))
+    painter.drawLine(QPointF(8.0, 14.0), QPointF(16.8, 14.0))
+    painter.drawLine(QPointF(8.0, 18.0), QPointF(14.0, 18.0))
+    return _finish_icon(pixmap, painter)
+
+
+def _image_manager_icon() -> QIcon:
+    """Return stacked picture cards to convey image management."""
+    pixmap, painter = _icon_canvas()
+    accent = QColor(POETORE_ACCENT)
+    painter.setPen(QPen(QColor(126, 78, 139), 1.3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+    painter.setBrush(QColor(47, 30, 53))
+    painter.drawRoundedRect(2.8, 3.2, 15.5, 14.5, 2.0, 2.0)
+    painter.setPen(QPen(accent, 1.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+    painter.setBrush(QColor(60, 38, 68))
+    painter.drawRoundedRect(5.5, 6.0, 15.5, 14.5, 2.0, 2.0)
+    painter.setBrush(accent)
+    painter.setPen(Qt.NoPen)
+    painter.drawEllipse(QPointF(16.4, 10.4), 1.7, 1.7)
+    mountain = QPainterPath(QPointF(7.4, 18.4))
+    mountain.lineTo(11.5, 13.2)
+    mountain.lineTo(14.2, 16.1)
+    mountain.lineTo(16.1, 14.3)
+    mountain.lineTo(19.2, 18.4)
+    mountain.closeSubpath()
+    painter.setBrush(QColor(151, 86, 169))
+    painter.drawPath(mountain)
+    return _finish_icon(pixmap, painter)
+
+
+def _draw_gear(
+    painter,
+    center: QPointF,
+    radius=3.5,
+    tooth_length=1.6,
+    stroke_color=None,
+    fill_color=None,
+):
+    dark = QColor("#211425")
+    stroke = QColor(stroke_color) if stroke_color else dark
+    fill = QColor(fill_color) if fill_color else QColor(POETORE_ACCENT)
+    cx, cy = center.x(), center.y()
+    painter.setPen(QPen(stroke, 2.6, Qt.SolidLine, Qt.RoundCap))
+    diagonal = tooth_length * 0.72
+    for start, end in (
+        ((cx, cy - radius - tooth_length), (cx, cy - radius)),
+        ((cx, cy + radius), (cx, cy + radius + tooth_length)),
+        ((cx - radius - tooth_length, cy), (cx - radius, cy)),
+        ((cx + radius, cy), (cx + radius + tooth_length, cy)),
+        ((cx - radius - diagonal, cy - radius - diagonal), (cx - radius * 0.72, cy - radius * 0.72)),
+        ((cx + radius * 0.72, cy + radius * 0.72), (cx + radius + diagonal, cy + radius + diagonal)),
+        ((cx - radius - diagonal, cy + radius + diagonal), (cx - radius * 0.72, cy + radius * 0.72)),
+        ((cx + radius * 0.72, cy - radius * 0.72), (cx + radius + diagonal, cy - radius - diagonal)),
+    ):
+        painter.drawLine(QPointF(*start), QPointF(*end))
+    painter.setPen(QPen(stroke, 1.2))
+    painter.setBrush(fill)
+    painter.drawEllipse(center, radius, radius)
+    painter.setBrush(dark)
+    painter.drawEllipse(center, radius * 0.36, radius * 0.36)
+
+
+def _settings_icon() -> QIcon:
+    """Return a standalone gear matching the map-management overlay."""
+    pixmap, painter = _icon_canvas()
+    _draw_gear(
+        painter,
+        QPointF(12.0, 12.0),
+        radius=5.5,
+        tooth_length=2.4,
+        stroke_color=POETORE_ACCENT,
+        fill_color="#3C2644",
+    )
+    return _finish_icon(pixmap, painter)
+
+
+def _map_mod_manager_icon() -> QIcon:
+    """Return a compact folded-map icon with a settings gear overlay."""
+    pixmap, painter = _icon_canvas()
 
     map_path = QPainterPath(QPointF(2.5, 4.5))
     map_path.lineTo(8.5, 2.5)
@@ -67,26 +169,8 @@ def _map_mod_manager_icon() -> QIcon:
     painter.drawLine(QPointF(8.5, 2.8), QPointF(8.5, 16.2))
     painter.drawLine(QPointF(14.5, 4.8), QPointF(14.5, 18.0))
 
-    gear_center = QPointF(17.5, 17.0)
-    painter.setPen(QPen(QColor("#211425"), 2.6, Qt.SolidLine, Qt.RoundCap))
-    for start, end in (
-        ((17.5, 12.1), (17.5, 13.7)),
-        ((17.5, 20.3), (17.5, 21.9)),
-        ((12.6, 17.0), (14.2, 17.0)),
-        ((20.8, 17.0), (22.4, 17.0)),
-        ((14.0, 13.5), (15.2, 14.7)),
-        ((19.8, 19.3), (21.0, 20.5)),
-        ((14.0, 20.5), (15.2, 19.3)),
-        ((19.8, 14.7), (21.0, 13.5)),
-    ):
-        painter.drawLine(QPointF(*start), QPointF(*end))
-    painter.setPen(QPen(QColor("#211425"), 1.2))
-    painter.setBrush(QColor(POETORE_ACCENT))
-    painter.drawEllipse(gear_center, 3.5, 3.5)
-    painter.setBrush(QColor("#211425"))
-    painter.drawEllipse(gear_center, 1.25, 1.25)
-    painter.end()
-    return QIcon(pixmap)
+    _draw_gear(painter, QPointF(17.5, 17.0))
+    return _finish_icon(pixmap, painter)
 
 
 class _RateSignals(QObject):
@@ -343,14 +427,20 @@ class PoetoreModeWindow(QMainWindow):
         header.addLayout(title_box)
         header.addStretch()
 
-        self.memo_button = self._header_button("📝", "共通メモを開く")
+        self.memo_button = self._header_button("", "共通メモを開く")
+        self.memo_button.setIcon(_memo_icon())
+        self.memo_button.setIconSize(QSize(24, 24))
         self.cheat_sheets_button = self._header_button(
-            "🖼", "Cheat sheetsの画像を登録・管理"
+            "", "Cheat sheetsの画像を登録・管理"
         )
+        self.cheat_sheets_button.setIcon(_image_manager_icon())
+        self.cheat_sheets_button.setIconSize(QSize(24, 24))
         self.map_mods_button = self._header_button("", "Map Modを登録・管理")
         self.map_mods_button.setIcon(_map_mod_manager_icon())
         self.map_mods_button.setIconSize(QSize(24, 24))
-        self.settings_button = self._header_button("⚙", "設定画面を開く")
+        self.settings_button = self._header_button("", "設定画面を開く")
+        self.settings_button.setIcon(_settings_icon())
+        self.settings_button.setIconSize(QSize(24, 24))
         self.memo_button.clicked.connect(self.open_memo)
         self.map_mods_button.clicked.connect(self.open_map_mod_manager)
         self.cheat_sheets_button.clicked.connect(self.open_cheat_sheet_manager)

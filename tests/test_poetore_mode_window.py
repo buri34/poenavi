@@ -43,12 +43,19 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert not hasattr(window, "mini_navi_overlay")
     assert not hasattr(window, "timer")
     assert "currency_rate_refresh" in window.active_service_names
-    assert window.memo_button.text() == "📝"
-    assert window.cheat_sheets_button.text() == "🖼"
-    assert window.map_mods_button.text() == ""
-    assert not window.map_mods_button.icon().isNull()
-    assert window.map_mods_button.iconSize() == QSize(24, 24)
-    assert window.settings_button.text() == "⚙"
+    header_buttons = (
+        window.memo_button,
+        window.map_mods_button,
+        window.cheat_sheets_button,
+        window.settings_button,
+    )
+    assert all(button.text() == "" for button in header_buttons)
+    assert all(not button.icon().isNull() for button in header_buttons)
+    assert all(button.iconSize() == QSize(24, 24) for button in header_buttons)
+    icon_images = [
+        button.icon().pixmap(QSize(24, 24)).toImage() for button in header_buttons
+    ]
+    assert all(image != icon_images[0] for image in icon_images[1:])
     assert window.memo_button.size().width() == 35
     assert window.memo_button.size().height() == 35
     assert window.divine_rate_value.text() == "取得中…"
