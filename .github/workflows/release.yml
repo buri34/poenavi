@@ -42,8 +42,9 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >-
-          gh release create $env:GITHUB_REF_NAME
-          PoENavi.zip PoENavi.zip.sha256
-          --verify-tag --generate-notes
-          --title "PoENavi $env:GITHUB_REF_NAME"
+        run: |
+          $notesFile = "docs/release-notes-$env:GITHUB_REF_NAME.md"
+          if (-not (Test-Path $notesFile)) {
+            throw "Release notes file was not found: $notesFile"
+          }
+          gh release create $env:GITHUB_REF_NAME PoENavi.zip PoENavi.zip.sha256 --verify-tag --notes-file $notesFile --title "PoENavi $env:GITHUB_REF_NAME"
