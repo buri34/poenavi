@@ -4638,3 +4638,39 @@ Vaal Molten Strike
         assert window.gem_variant_chip.text() == "Variant：ヴァールジェム"
     finally:
         window.close()
+
+
+def test_japanese_vaal_gem_copy_is_parsed_and_shown_as_vaal_grace(qapp):
+    text = """アイテムクラス: スキルジェム
+レアリティ: ジェム
+グレース
+--------
+オーラ, スペル, 範囲効果, 持続時間, ヴァール
+レベル: 1
+リザーブ: 50% マナ
+--------
+使用者とその仲間に回避力を付与するオーラを纏う。
+--------
+ヴァールグレース
+--------
+クールダウン時間: 0.50秒
+使用ごとの必要ソウル: 50
+1回分保持可能
+--------
+基礎持続時間は6.00秒
+--------
+経験値: 1/118,383
+--------
+コラプト状態
+"""
+    window = PoetoreWindow()
+    try:
+        detailed_item = parse_item_text(text)
+        window._trade_base_type = detailed_item.base_type
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+
+        assert window._parsed_item.base_type == "Vaal Grace"
+        assert window.gem_variant_chip.text() == "Variant：ヴァールジェム"
+    finally:
+        window.close()

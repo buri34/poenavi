@@ -1004,6 +1004,54 @@ def test_other_vaal_gem_is_detected_without_name_specific_logic():
     assert item.base_type == "Vaal Arc"
 
 
+def test_japanese_vaal_gem_uses_the_second_skill_name_as_trade_identity():
+    item = parse_item_text("""アイテムクラス: スキルジェム
+レアリティ: ジェム
+グレース
+--------
+オーラ, スペル, 範囲効果, 持続時間, ヴァール
+レベル: 1
+リザーブ: 50% マナ
+--------
+使用者とその仲間に回避力を付与するオーラを纏う。
+--------
+ヴァールグレース
+--------
+クールダウン時間: 0.50秒
+使用ごとの必要ソウル: 50
+1回分保持可能
+--------
+基礎持続時間は6.00秒
+--------
+経験値: 1/118,383
+--------
+コラプト状態
+""")
+
+    assert item.name == "Vaal Grace"
+    assert item.base_type == "Vaal Grace"
+    assert "corrupted" in item.flags
+
+
+def test_scrying_orb_keeps_its_map_area_property():
+    item = parse_item_text("""アイテムクラス: スタック可能カレンシー
+レアリティ: カレンシー
+透視のオーブ
+--------
+マップエリア: 岸辺
+--------
+アトラス上のマップを透視する
+--------
+このアイテムを右クリックして、アトラス上のマップを左クリックする。
+--------
+メモ: ~b/o 4 chaos
+""")
+
+    assert item.category == "currency"
+    assert item.base_type == "透視のオーブ"
+    assert item.properties["マップエリア"] == "岸辺"
+
+
 def test_unique_amulet_uses_global_attack_speed_like_awakened():
     item = parse_item_text("""アイテムクラス: アミュレット
 レアリティ: ユニーク

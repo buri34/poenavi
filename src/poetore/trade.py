@@ -2105,6 +2105,32 @@ def _japanese_trade_item_name(english_name: str) -> str | None:
     return None
 
 
+def _scrying_orb_trade_identity(item: ParsedItem) -> tuple[str, str] | None:
+    """透視のオーブをマップエリアに対応する公式Trade identityへ解決する。"""
+    if item.category != "currency" or item.base_type.strip() not in {
+        "透視のオーブ", "Scrying Orb",
+    }:
+        return None
+    area = str(
+        item.properties.get("マップエリア")
+        or item.properties.get("Map Area")
+        or ""
+    ).strip()
+    if not area:
+        return None
+    wanted = f"透視のオーブ ({area})"
+    for english, japanese in _aligned_trade_item_pairs():
+        if (
+            str(japanese.get("text", "")).strip() == wanted
+            and str(japanese.get("disc", "")).strip() == "scrying_orb"
+        ):
+            option = str(english.get("type", "")).strip()
+            discriminator = str(english.get("disc", "")).strip()
+            if option and discriminator:
+                return option, discriminator
+    return None
+
+
 def _japanese_trade_item_type(english_type: str) -> str | None:
     """公式日英itemsの同一位置から日本語Trade用typeを得る。"""
     wanted = english_type.strip()
@@ -3237,7 +3263,13 @@ def build_search_query(
     base_type = _normalize_trade_base_type(trade_base_type or item.base_type)
     gem_info = gem_metadata(base_type) if item.category == "gem" else {}
     query_type: str | dict = str(gem_info.get("trade_type") or base_type)
-    if gem_info.get("discriminator"):
+    scrying_identity = _scrying_orb_trade_identity(item)
+    if scrying_identity:
+        query_type = {
+            "option": scrying_identity[0],
+            "discriminator": scrying_identity[1],
+        }
+    elif gem_info.get("discriminator"):
         query_type = {"option": query_type, "discriminator": gem_info["discriminator"]}
     elif item.category == "map" and base_type == "Map":
         query_type = {"option": query_type, "discriminator": "map"}
@@ -3531,7 +3563,11 @@ def english_trade_identity(
     name: str | None = None,
 ) -> tuple[str | None, str | None]:
     """3.29以降のローカライズ済み詳細コピーを英語Trade検索用IDへ変換する。"""
-    resolved_type = str(base_type or item.base_type or "").strip() or None
+    scrying_identity = _scrying_orb_trade_identity(item)
+    resolved_type = (
+        scrying_identity[0] if scrying_identity
+        else str(base_type or item.base_type or "").strip() or None
+    )
     if resolved_type and _contains_japanese_text(resolved_type):
         resolved_type = (
             _english_trade_item_type(resolved_type, item.category) or resolved_type

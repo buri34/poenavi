@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from functools import lru_cache
 import re
 
 from .models import ItemModifier, ParsedItem
@@ -43,6 +44,7 @@ _PROPERTY_LABELS = {
     "追加スカラベ", "スカラベ量が上昇", "More Scarabs",
     "追加カレンシー", "カレンシー量が上昇", "More Currency",
     "追加占いカード", "占いカード増加", "More Divination Cards",
+    "マップエリア", "Map Area",
 }
 _FLAG_LINES = {
     "未鑑定": "unidentified", "Unidentified": "unidentified",
@@ -613,18 +615,36 @@ def _localized_name_lines(name_lines: list[str], rarity: str) -> tuple[str, str]
     return selected[0], selected[-1]
 
 
+@lru_cache(maxsize=1)
+def _japanese_gem_names_to_english() -> dict[str, str]:
+    from src.utils.gem_resolver import load_gem_names_ja
+
+    return {
+        localized.strip(): english.strip()
+        for english, localized in load_gem_names_ja().items()
+        if str(localized).strip()
+    }
+
+
 def _vaal_gem_identity(sections: list[list[str]]) -> str | None:
     """Vaalジェム詳細コピー内の独立したVaalスキル名を返す。
 
     Vaalジェムのヘッダーは通常スキル名（例: Molten Strike）のため、
     後半セクションの `Vaal Molten Strike` を公式Gemメタデータで検証する。
     """
+    japanese_to_english = _japanese_gem_names_to_english()
     for section in sections[1:]:
         if len(section) != 1:
             continue
         candidate = section[0].strip()
-        if candidate.casefold().startswith("vaal ") and gem_metadata(candidate).get("vaal"):
-            return candidate
+        english_candidate = candidate
+        if candidate.startswith("ヴァール"):
+            normal_name = candidate[len("ヴァール"):].strip()
+            normal_english = japanese_to_english.get(normal_name)
+            english_candidate = f"Vaal {normal_english}" if normal_english else ""
+        metadata = gem_metadata(english_candidate)
+        if english_candidate.casefold().startswith("vaal ") and metadata.get("vaal"):
+            return str(metadata.get("trade_type") or english_candidate)
     return None
 
 

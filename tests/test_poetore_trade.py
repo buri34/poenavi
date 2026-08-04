@@ -3823,6 +3823,58 @@ Corrupted
     assert web_payload["query"]["type"] == "ヴァールモルテンストライク"
 
 
+def test_scrying_orb_searches_the_official_map_area_variant():
+    item = parse_item_text("""アイテムクラス: スタック可能カレンシー
+レアリティ: カレンシー
+透視のオーブ
+--------
+マップエリア: 岸辺
+--------
+アトラス上のマップを透視する
+--------
+このアイテムを右クリックして、アトラス上のマップを左クリックする。
+--------
+メモ: ~b/o 4 chaos
+""")
+    aligned = ((
+        {"type": "10021", "text": "Scrying Orb (Strand)", "disc": "scrying_orb"},
+        {"type": "10021", "text": "透視のオーブ (岸辺)", "disc": "scrying_orb"},
+    ),)
+
+    with patch(
+        "src.poetore.trade._aligned_trade_item_pairs",
+        side_effect=lambda: iter(aligned),
+    ):
+        trade_type, trade_name = english_trade_identity(item)
+        query = build_search_query(item, trade_type)["query"]
+
+    assert trade_type == "10021"
+    assert trade_name is None
+    assert query["type"] == {"option": "10021", "discriminator": "scrying_orb"}
+
+
+def test_japanese_vaal_grace_copy_builds_a_vaal_grace_query():
+    item = parse_item_text("""アイテムクラス: スキルジェム
+レアリティ: ジェム
+グレース
+--------
+オーラ, スペル, 範囲効果, 持続時間, ヴァール
+レベル: 1
+--------
+ヴァールグレース
+--------
+使用ごとの必要ソウル: 50
+1回分保持可能
+--------
+コラプト状態
+""")
+
+    query = build_search_query(item, item.base_type)["query"]
+
+    assert item.base_type == "Vaal Grace"
+    assert query["type"] == "Vaal Grace"
+
+
 @pytest.mark.parametrize(
     ("oils", "expected_visible"),
     [
