@@ -351,7 +351,7 @@ Map系アイテムへカーソルを合わせて`Alt+F`を押すと、Trade API�
 - プロファイル1／2／3で、ビルドごとに別のラベルを保存
 - 非ユニークMap、Invitation、Heist Contract／Blueprint、Expedition Logbookに対応
 - ぽえとれ本体上部の`🗺`ボタンから、全Map Modの検索・ラベル管理が可能
-- 初期ラベルはAwakened PoE Tradeと同じく、最大耐性、物理／元素反射、
+- 初期ラベルは3.29のMap Modに合わせ、最大耐性、レアモンスターの物理／元素の棘、
   ユニークボス2体の4項目
 - 未設定Mod通知を有効にすると、未確認のModをMap Check画面で確認可能
 

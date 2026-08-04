@@ -12,8 +12,8 @@ CATALOG_PATH = Path(__file__).resolve().parents[2] / "data" / "poetore" / "map_m
 DECISIONS = {"-", "d", "w", "g", "s"}
 DEFAULT_DECISIONS_BY_REF = {
     "Players have #% to all maximum Resistances": "w--",
-    "Monsters reflect #% of Physical Damage": "d--",
-    "Monsters reflect #% of Elemental Damage": "d--",
+    "Rare Monsters have Physical Thorns reflecting # Physical Damage": "d--",
+    "Rare Monsters have Elemental Thorns reflecting # Elemental Damage": "d--",
     "Area contains two Unique Bosses": "g--",
 }
 MAP_CHECK_CATEGORIES = {

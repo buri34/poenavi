@@ -66,9 +66,17 @@ def test_catalog_is_reproducible_from_locked_awakened_and_poetore_metadata():
 
 def test_awakened_defaults_and_three_numeric_profiles_are_preserved():
     config = default_map_check_config()
+    catalog = {entry.ref: entry.key for entry in load_map_mod_catalog()}
     assert config["profile"] == 1
     assert len(config["decisions"]) == 4
     assert sorted(config["decisions"].values()) == ["d--", "d--", "g--", "w--"]
+    assert config["decisions"][catalog[
+        "Rare Monsters have Physical Thorns reflecting # Physical Damage"
+    ]] == "d--"
+    assert config["decisions"][catalog[
+        "Rare Monsters have Elemental Thorns reflecting # Elemental Damage"
+    ]] == "d--"
+    assert not any(key.startswith("legacy:") for key in config["decisions"])
     key = next(iter(config["decisions"]))
     set_decision(config, key, "g", profile=2)
     assert decision_for(config, key, profile=2) == "g"
@@ -306,12 +314,13 @@ Map (Tier 16)
     window.close()
 
 
-def test_manager_uses_numeric_profiles_and_lists_current_plus_outdated_defaults():
+def test_manager_uses_numeric_profiles_without_removed_reflect_defaults():
     QApplication.instance() or QApplication([])
     dialog = MapModManagerDialog(default_map_check_config())
     assert [button.text() for button in dialog.profile_buttons] == ["1", "2", "3"]
-    assert dialog.table.rowCount() == 231
+    assert dialog.table.rowCount() == 229
     assert "全229件" in dialog.count_label.text()
+    assert all(entry.scope != "outdated" for entry, _tag in dialog._rows())
     dialog.close()
 
 

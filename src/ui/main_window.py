@@ -3835,7 +3835,7 @@ class MainWindow(QMainWindow):
             # Act9 オアシス 到達フラグ。Act9 ヴァスティリ砂漠の復帰後ガイド切替に使う。
             if zone_id == "act9_area3":
                 self.set_progress_flag("act9_oasis_enter")
-            # Act10 奴隷管理区画/納骨堂/冒涜された広間 到達フラグ。Act10 荒廃した広場の復帰後ガイド切替に使う。
+            # Act10 奴隷管理区画/聖廟/冒涜された広間 到達フラグ。Act10 荒廃した広場の復帰後ガイド切替に使う。
             # Act5の同名エリアと混同しないよう、zone_idでAct10のみ判定する。
             if zone_id == "act10_area4":
                 self.set_progress_flag("act10_controlblocks_enter")
