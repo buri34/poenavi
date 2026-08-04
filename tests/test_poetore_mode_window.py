@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, call, patch
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QSystemTrayIcon
 
 from src.ui.poetore_mode_window import PoetoreModeWindow
@@ -45,7 +45,9 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert "currency_rate_refresh" in window.active_service_names
     assert window.memo_button.text() == "📝"
     assert window.cheat_sheets_button.text() == "🖼"
-    assert window.map_mods_button.text() == "🗺"
+    assert window.map_mods_button.text() == ""
+    assert not window.map_mods_button.icon().isNull()
+    assert window.map_mods_button.iconSize() == QSize(24, 24)
     assert window.settings_button.text() == "⚙"
     assert window.memo_button.size().width() == 35
     assert window.memo_button.size().height() == 35

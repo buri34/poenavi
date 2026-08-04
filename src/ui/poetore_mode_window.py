@@ -4,8 +4,17 @@ from pathlib import Path
 import threading
 import time
 
-from PySide6.QtCore import QObject, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import QAction, QIcon, QKeySequence, QPixmap
+from PySide6.QtCore import QObject, QPointF, QSize, Qt, QTimer, Signal
+from PySide6.QtGui import (
+    QAction,
+    QColor,
+    QIcon,
+    QKeySequence,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+)
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
@@ -31,6 +40,53 @@ from src.utils.poe_version_data import POE1, POE2
 POETORE_ACCENT = POETORE_THEME.accent
 POETORE_TEXT = POETORE_THEME.text
 RATE_REFRESH_MSEC = 31 * 60 * 1000
+
+
+def _map_mod_manager_icon() -> QIcon:
+    """Return a compact folded-map icon with a settings gear overlay."""
+    scale = 2
+    pixmap = QPixmap(24 * scale, 24 * scale)
+    pixmap.setDevicePixelRatio(scale)
+    pixmap.fill(Qt.transparent)
+
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.Antialiasing)
+
+    map_path = QPainterPath(QPointF(2.5, 4.5))
+    map_path.lineTo(8.5, 2.5)
+    map_path.lineTo(14.5, 4.5)
+    map_path.lineTo(20.5, 2.5)
+    map_path.lineTo(20.5, 16.5)
+    map_path.lineTo(14.5, 18.5)
+    map_path.lineTo(8.5, 16.5)
+    map_path.lineTo(2.5, 18.5)
+    map_path.closeSubpath()
+    painter.setPen(QPen(QColor(POETORE_ACCENT), 1.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+    painter.setBrush(QColor(60, 38, 68))
+    painter.drawPath(map_path)
+    painter.drawLine(QPointF(8.5, 2.8), QPointF(8.5, 16.2))
+    painter.drawLine(QPointF(14.5, 4.8), QPointF(14.5, 18.0))
+
+    gear_center = QPointF(17.5, 17.0)
+    painter.setPen(QPen(QColor("#211425"), 2.6, Qt.SolidLine, Qt.RoundCap))
+    for start, end in (
+        ((17.5, 12.1), (17.5, 13.7)),
+        ((17.5, 20.3), (17.5, 21.9)),
+        ((12.6, 17.0), (14.2, 17.0)),
+        ((20.8, 17.0), (22.4, 17.0)),
+        ((14.0, 13.5), (15.2, 14.7)),
+        ((19.8, 19.3), (21.0, 20.5)),
+        ((14.0, 20.5), (15.2, 19.3)),
+        ((19.8, 14.7), (21.0, 13.5)),
+    ):
+        painter.drawLine(QPointF(*start), QPointF(*end))
+    painter.setPen(QPen(QColor("#211425"), 1.2))
+    painter.setBrush(QColor(POETORE_ACCENT))
+    painter.drawEllipse(gear_center, 3.5, 3.5)
+    painter.setBrush(QColor("#211425"))
+    painter.drawEllipse(gear_center, 1.25, 1.25)
+    painter.end()
+    return QIcon(pixmap)
 
 
 class _RateSignals(QObject):
@@ -291,7 +347,9 @@ class PoetoreModeWindow(QMainWindow):
         self.cheat_sheets_button = self._header_button(
             "🖼", "Cheat sheetsの画像を登録・管理"
         )
-        self.map_mods_button = self._header_button("🗺", "Map Modを登録・管理")
+        self.map_mods_button = self._header_button("", "Map Modを登録・管理")
+        self.map_mods_button.setIcon(_map_mod_manager_icon())
+        self.map_mods_button.setIconSize(QSize(24, 24))
         self.settings_button = self._header_button("⚙", "設定画面を開く")
         self.memo_button.clicked.connect(self.open_memo)
         self.map_mods_button.clicked.connect(self.open_map_mod_manager)
