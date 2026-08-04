@@ -2048,6 +2048,12 @@ def test_pseudo_group_output_is_independent_of_modifier_input_order():
         "pseudo.pseudo_total_cold_resistance",
         "pseudo.pseudo_total_lightning_resistance",
     } == {"pseudo.pseudo_total_cold_resistance"}
+    cold = next(
+        row for row in forward
+        if row.stat_id == "pseudo.pseudo_total_cold_resistance"
+    )
+    assert cold.enabled is False
+    assert cold.hidden_reason == "Awakened: 最大の個別元素耐性は隠し候補"
     assert "pseudo.pseudo_total_intelligence" not in ids
 
 

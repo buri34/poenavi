@@ -1817,6 +1817,14 @@ def _apply_pseudo_relations(filters: list[TradeStatFilter]) -> list[TradeStatFil
         winners = [row for row in elemental if (row.min_value or 0) == maximum]
         winner_id = winners[0].stat_id if len(winners) == 1 else None
         kept = [row for row in kept if row.stat_id not in elemental_ids or row.stat_id == winner_id]
+        if winner_id:
+            kept = [
+                replace(
+                    row,
+                    hidden_reason="Awakened: 最大の個別元素耐性は隠し候補",
+                ) if row.stat_id == winner_id else row
+                for row in kept
+            ]
 
     # 能力値はAwakenedと同じく、all attributesと個別値のどちらかを残す。
     attr_ids = {
