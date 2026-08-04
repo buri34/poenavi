@@ -27,6 +27,11 @@ import os
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 
 
+# Act 10「聖廟」のガイド執筆が終わるまでの一時的な許可。
+# リリース前に空集合へ戻し、通常ユーザー向けUIでは編集ボタンを隠す。
+_TEMP_GUIDE_AUTHORING_ZONE_IDS = {"act10_area12"}
+
+
 def _flag_guide_header(zone_id: str) -> str:
     """編集画面上で、フラグ別ガイドに付随するルート条件も明示する。"""
     if zone_id in ("act8_area13", "act8_area14"):
@@ -44,6 +49,8 @@ def _guide_dev_editor_enabled(poe_version: str, zone_id: str) -> bool:
     """開発用起動時だけ、明示的に許可した公式ガイド編集UIを表示する。"""
     if poe_version != POE1:
         return False
+    if zone_id in _TEMP_GUIDE_AUTHORING_ZONE_IDS:
+        return True
     if os.environ.get("POENAVI_ACT1_GUIDE_DEV") == "1" and zone_id.startswith("act1_"):
         return True
     return os.environ.get("POENAVI_GUIDE_DEV_ZONE_ID", "").strip() == zone_id
