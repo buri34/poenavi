@@ -157,6 +157,11 @@ class MapModManagerDialog(QDialog):
 class MapCheckWindow(QDialog):
     config_changed = Signal(dict)
 
+    DEFAULT_WIDTH = 560
+    DEFAULT_HEIGHT = 360
+    MIN_HEIGHT = 180
+    SCREEN_EDGE_MARGIN = 16
+
     def __init__(self, config: dict, parent=None):
         super().__init__(parent)
         self.config = normalized_map_check_config(config)
@@ -166,7 +171,7 @@ class MapCheckWindow(QDialog):
         self._placement_context = None
         self.setWindowTitle("Map Check")
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.resize(560, 360)
+        self.resize(self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT)
         self.setStyleSheet(
             "QDialog,QWidget{background:#111;color:#f2e7f5;}"
             "QPushButton{padding:7px;background:#241929;color:#f2e7f5;border:1px solid #6f4778;}"
@@ -193,6 +198,7 @@ class MapCheckWindow(QDialog):
         self.root.addLayout(header)
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.body = QWidget()
         self.body_layout = QVBoxLayout(self.body)
         self.scroll.setWidget(self.body)
@@ -251,6 +257,7 @@ class MapCheckWindow(QDialog):
         self._item = item
         self._render(item)
         context = self._placement_context or capture_placement_context()
+        self._resize_to_content(context)
         self.move(position_for_context_at_cursor_y(context, self.size()))
         self.show()
         self.raise_()
@@ -294,6 +301,40 @@ class MapCheckWindow(QDialog):
         if not item.modifiers:
             self.body_layout.addWidget(QLabel("認識できるMap Modがありません。"))
         self.body_layout.addStretch()
+
+    def _content_height(self):
+        """Return the body height required by every rendered Map Mod row."""
+        margins = self.body_layout.contentsMargins()
+        height = margins.top() + margins.bottom()
+        visible_items = []
+        for index in range(self.body_layout.count()):
+            layout_item = self.body_layout.itemAt(index)
+            widget = layout_item.widget()
+            if widget is not None and not widget.isHidden():
+                visible_items.append(widget)
+                height += widget.sizeHint().height()
+        if visible_items:
+            height += self.body_layout.spacing() * (len(visible_items) - 1)
+        return height
+
+    def _resize_to_content(self, context):
+        """Grow to show all rows, retaining scrolling only at the screen limit."""
+        self.body_layout.activate()
+        root_margins = self.root.contentsMargins()
+        header = self.root.itemAt(0).layout()
+        chrome_height = (
+            root_margins.top()
+            + root_margins.bottom()
+            + header.sizeHint().height()
+            + self.root.spacing()
+            + self.scroll.frameWidth() * 2
+        )
+        desired_height = max(self.MIN_HEIGHT, chrome_height + self._content_height())
+        available_height = max(
+            self.MIN_HEIGHT,
+            context.target_rect.height() - self.SCREEN_EDGE_MARGIN * 2,
+        )
+        self.resize(self.DEFAULT_WIDTH, min(desired_height, available_height))
 
     def _style_mod_button(self, button, key, text):
         decision = decision_for(self.config, key)

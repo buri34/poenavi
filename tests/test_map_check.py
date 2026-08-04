@@ -259,6 +259,48 @@ Map (Tier 16)
     window.close()
 
 
+def test_map_check_grows_to_show_all_mod_rows_and_caps_at_screen_height():
+    QApplication.instance() or QApplication([])
+    parsed = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+Tall UI Test
+Map (Tier 16)
+--------
+アイテムレベル: 83
+--------
+{ プレフィックスモッド (ティア: 1) }
+マジックモンスターの数が23(20-30)%増加する
+{ サフィックスモッド (ティア: 1) }
+モンスターはヒット時にパワーチャージ、フレンジーチャージおよびエンデュランスチャージのスタックを盗む
+{ サフィックスモッド (ティア: 1) }
+モンスターはアタックによるヒット時に重傷を付与する
+{ サフィックスモッド (ティア: 1) }
+全てのプレイヤーの命中力が25%低下する
+{ サフィックスモッド (ティア: 1) }
+モンスターはヒット時に盲目を付与する
+{ サフィックスモッド (ティア: 1) }
+モンスターはヒット時にパワーチャージを1個獲得する
+{ サフィックスモッド (ティア: 1) }
+モンスターはヒット時にフレンジーチャージを1個獲得する
+""")
+    window = MapCheckWindow(default_map_check_config())
+    window._render(parsed)
+
+    large_screen = PlacementContext(QRect(0, 0, 1920, 1080), QPoint(800, 500))
+    window._resize_to_content(large_screen)
+    expanded_height = window.height()
+    assert expanded_height > window.DEFAULT_HEIGHT
+    assert window.scroll.verticalScrollBar().maximum() == 0
+
+    small_screen = PlacementContext(QRect(0, 0, 800, 300), QPoint(400, 150))
+    window._resize_to_content(small_screen)
+    window.show()
+    QApplication.processEvents()
+    assert window.height() == 300 - window.SCREEN_EDGE_MARGIN * 2
+    assert window.scroll.verticalScrollBar().maximum() > 0
+    window.close()
+
+
 def test_manager_uses_numeric_profiles_and_lists_current_plus_outdated_defaults():
     QApplication.instance() or QApplication([])
     dialog = MapModManagerDialog(default_map_check_config())
