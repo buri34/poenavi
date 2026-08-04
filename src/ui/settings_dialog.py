@@ -40,13 +40,18 @@ def _mini_navi_flag_section_title(zone_id: str, flag_key: str) -> str:
     return f"フラグ別: {flag_key}"
 
 
+def _guide_dev_editor_enabled(poe_version: str, zone_id: str) -> bool:
+    """開発用起動時だけ、明示的に許可した公式ガイド編集UIを表示する。"""
+    if poe_version != POE1:
+        return False
+    if os.environ.get("POENAVI_ACT1_GUIDE_DEV") == "1" and zone_id.startswith("act1_"):
+        return True
+    return os.environ.get("POENAVI_GUIDE_DEV_ZONE_ID", "").strip() == zone_id
+
+
 def _act1_guide_dev_editor_enabled(poe_version: str, zone_id: str) -> bool:
-    """開発用起動時だけPoE1 Act 1の公式ガイド編集を許可する。"""
-    return (
-        os.environ.get("POENAVI_ACT1_GUIDE_DEV") == "1"
-        and poe_version == POE1
-        and zone_id.startswith("act1_")
-    )
+    """旧テスト・呼び出し向けの互換ラッパー。"""
+    return _guide_dev_editor_enabled(poe_version, zone_id)
 
 def _spinbox_style(width=55, height=28):
     """SpinBox共通スタイル（ボタン押しやすい版）"""
@@ -2823,15 +2828,15 @@ class SettingsDialog(QDialog):
                 )
                 row.addWidget(memo_button)
 
-                if _act1_guide_dev_editor_enabled(self.poe_version, zone_id):
-                    guide_button = self._create_small_action_button("📝", "Act 1公式ガイドを編集")
+                if _guide_dev_editor_enabled(self.poe_version, zone_id):
+                    guide_button = self._create_small_action_button("📝", "公式ガイドを編集")
                     guide_button.clicked.connect(
                         lambda checked=False, ne=name_edit, zid=zone_id:
                         self._open_guide_editor(ne, zid)
                     )
                     row.addWidget(guide_button)
 
-                    mini_button = self._create_small_action_button("み", "Act 1みになびを編集")
+                    mini_button = self._create_small_action_button("み", "みになびを編集")
                     mini_button.clicked.connect(
                         lambda checked=False, ne=name_edit, zid=zone_id:
                         self._open_mini_navi_editor(ne, zid)

@@ -3,7 +3,11 @@ import json
 import pytest
 from PySide6.QtWidgets import QApplication, QPushButton
 
-from src.ui.settings_dialog import SettingsDialog, _act1_guide_dev_editor_enabled
+from src.ui.settings_dialog import (
+    SettingsDialog,
+    _act1_guide_dev_editor_enabled,
+    _guide_dev_editor_enabled,
+)
 from src.utils import guide_data
 from src.utils.poe_version_data import POE1, POE2
 
@@ -33,8 +37,8 @@ def test_settings_shows_act1_editor_buttons_only_in_dev_mode(monkeypatch, qapp):
 
     tooltips = [button.toolTip() for button in dialog.findChildren(QPushButton)]
 
-    assert tooltips.count("Act 1公式ガイドを編集") == 15
-    assert tooltips.count("Act 1みになびを編集") == 15
+    assert tooltips.count("公式ガイドを編集") == 15
+    assert tooltips.count("みになびを編集") == 15
     dialog.close()
 
 
@@ -44,8 +48,24 @@ def test_settings_hides_official_editor_buttons_in_normal_mode(monkeypatch, qapp
 
     tooltips = [button.toolTip() for button in dialog.findChildren(QPushButton)]
 
-    assert "Act 1公式ガイドを編集" not in tooltips
-    assert "Act 1みになびを編集" not in tooltips
+    assert "公式ガイドを編集" not in tooltips
+    assert "みになびを編集" not in tooltips
+    dialog.close()
+
+
+def test_settings_shows_only_requested_act10_guide_editor(monkeypatch, qapp):
+    monkeypatch.delenv("POENAVI_ACT1_GUIDE_DEV", raising=False)
+    monkeypatch.setenv("POENAVI_GUIDE_DEV_ZONE_ID", "act10_area12")
+
+    assert _guide_dev_editor_enabled(POE1, "act10_area12")
+    assert not _guide_dev_editor_enabled(POE1, "act10_area5")
+    assert not _guide_dev_editor_enabled(POE2, "act10_area12")
+
+    dialog = SettingsDialog(current_config={"poe_version": POE1})
+    tooltips = [button.toolTip() for button in dialog.findChildren(QPushButton)]
+
+    assert tooltips.count("公式ガイドを編集") == 1
+    assert tooltips.count("みになびを編集") == 1
     dialog.close()
 
 
@@ -60,7 +80,7 @@ def test_dev_save_creates_backup_before_overwriting(monkeypatch, tmp_path):
 
     guide_data.save_guide_data(updated, POE1)
 
-    backups = list(tmp_path.glob("guide_data.backup-before-act1-guide-edit-*.json"))
+    backups = list(tmp_path.glob("guide_data.backup-before-guide-edit-*.json"))
     assert len(backups) == 1
     assert json.loads(backups[0].read_text(encoding="utf-8")) == original
     assert json.loads(path.read_text(encoding="utf-8")) == updated
@@ -74,4 +94,21 @@ def test_normal_save_does_not_create_dev_backup(monkeypatch, tmp_path):
 
     guide_data.save_guide_data({"saved": True}, POE1)
 
-    assert not list(tmp_path.glob("guide_data.backup-before-act1-guide-edit-*.json"))
+    assert not list(tmp_path.glob("guide_data.backup-before-guide-edit-*.json"))
+
+
+def test_requested_zone_dev_save_creates_backup(monkeypatch, tmp_path):
+    path = tmp_path / "guide_data.json"
+    original = {"act10_area12": {"objective": "before"}}
+    updated = {"act10_area12": {"objective": "after"}}
+    path.write_text(json.dumps(original), encoding="utf-8")
+
+    monkeypatch.delenv("POENAVI_ACT1_GUIDE_DEV", raising=False)
+    monkeypatch.setenv("POENAVI_GUIDE_DEV_ZONE_ID", "act10_area12")
+    monkeypatch.setattr(guide_data, "get_guide_path", lambda version=POE1: str(path))
+
+    guide_data.save_guide_data(updated, POE1)
+
+    backups = list(tmp_path.glob("guide_data.backup-before-guide-edit-*.json"))
+    assert len(backups) == 1
+    assert json.loads(backups[0].read_text(encoding="utf-8")) == original
