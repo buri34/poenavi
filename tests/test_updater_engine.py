@@ -143,7 +143,7 @@ def test_apply_update_restores_old_install_when_launch_fails(tmp_path):
     def fail_launch(_exe):
         raise OSError("launch failed")
 
-    with pytest.raises(UpdateApplyError, match="旧版を復元"):
+    with pytest.raises(UpdateApplyError, match="更新前のぽえなびを復元"):
         apply_update(archive, install, tmp_path / "work", fail_launch)
     assert (install / "PoENavi.exe").read_text(encoding="utf-8") == "old"
 
@@ -182,7 +182,7 @@ def test_apply_update_restores_old_install_when_new_app_exits_immediately(tmp_pa
     archive = tmp_path / "PoENavi.zip"
     make_release(archive)
 
-    with pytest.raises(UpdateApplyError, match="旧版を復元"):
+    with pytest.raises(UpdateApplyError, match="更新前のぽえなびを復元"):
         apply_update(
             archive,
             install,
@@ -222,7 +222,7 @@ def test_apply_update_restores_stale_backup_name_when_update_fails(tmp_path):
     archive = tmp_path / "PoENavi.zip"
     make_release(archive)
 
-    with pytest.raises(UpdateApplyError, match="旧版を復元"):
+    with pytest.raises(UpdateApplyError, match="更新前のぽえなびを復元"):
         apply_update(
             archive,
             install,
@@ -246,11 +246,22 @@ def test_apply_update_rejects_unrecognizable_stale_backup(tmp_path):
     archive = tmp_path / "PoENavi.zip"
     make_release(archive)
 
-    with pytest.raises(UpdateApplyError, match="安全に確認できません"):
+    with pytest.raises(UpdateApplyError) as error:
         apply_update(archive, install, tmp_path / "work", lambda _exe: object())
 
     assert (backup / "unknown.txt").read_text(encoding="utf-8") == "keep me"
     assert (install / "PoENavi.exe").read_text(encoding="utf-8") == "old"
+    assert error.value.user_message() == (
+        "既存のバックアップの内容を安全に確認できないため、アップデートを中止しました。\n"
+        "（不足しているファイル: PoENavi.exe, PoENaviUpdater.exe）\n\n"
+        "対処方法:\n"
+        "1. この画面を閉じます。\n"
+        "2. 下記の対象フォルダを、PoENaviフォルダの外へ移動します。"
+        "削除する必要はありません。\n"
+        "3. ぽえなびを起動し、もう一度アップデートしてください。\n\n"
+        "安全を確認できなかったため、ファイルの削除や変更は行っていません。\n\n"
+        f"対象フォルダ:\n{backup}"
+    )
 
 
 def test_apply_update_reports_when_stale_backup_cannot_be_archived(
@@ -276,11 +287,15 @@ def test_apply_update_reports_when_stale_backup_cannot_be_archived(
         lambda operation: operation(),
     )
 
-    with pytest.raises(UpdateApplyError, match="安全に退避できませんでした"):
+    with pytest.raises(UpdateApplyError) as error:
         apply_update(archive, install, tmp_path / "work", lambda _exe: object())
 
     assert (backup / "PoENavi.exe").read_text(encoding="utf-8") == "stale"
     assert (install / "PoENavi.exe").read_text(encoding="utf-8") == "old"
+    message = error.value.user_message()
+    assert "OneDriveの同期やセキュリティソフトの確認処理が終わるまで待ちます" in message
+    assert "Windowsを再起動してから再度お試しください" in message
+    assert message.count(str(backup)) == 1
 
 
 def test_apply_update_stops_when_failed_update_directory_exists(tmp_path):
@@ -291,10 +306,14 @@ def test_apply_update_stops_when_failed_update_directory_exists(tmp_path):
     archive = tmp_path / "PoENavi.zip"
     make_release(archive)
 
-    with pytest.raises(UpdateApplyError, match="自動整理せず停止"):
+    with pytest.raises(UpdateApplyError) as error:
         apply_update(archive, install, tmp_path / "work", lambda _exe: object())
 
     assert (failed / "PoENavi.exe").read_text(encoding="utf-8") == "failed"
+    message = error.value.user_message()
+    assert "PoENaviフォルダの外へ移動します" in message
+    assert "もう一度アップデートしてください" in message
+    assert message.count(str(failed)) == 1
 
 
 def test_stale_backup_archive_name_avoids_collision(tmp_path):

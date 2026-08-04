@@ -15,6 +15,11 @@ class UpdateApplyError(RuntimeError):
         super().__init__(message)
         self.backup = backup
 
+    def user_message(self) -> str:
+        if self.backup is None:
+            return str(self)
+        return f"{self}\n\n対象フォルダ:\n{self.backup}"
+
 
 def retry_transient_file_operation(
     operation: Callable[[], object],
@@ -48,13 +53,35 @@ def wait_for_process_exit(
 
 def _validate_install_directory(path: Path, label: str) -> None:
     if not path.is_dir():
-        raise UpdateApplyError(f"{label}がフォルダではありません: {path}", path)
-    missing = [name for name in REQUIRED_INSTALL_FILES if not (path / name).is_file()]
-    if missing:
-        raise UpdateApplyError(
-            f"{label}の内容を安全に確認できません（不足: {', '.join(missing)}）: {path}",
-            path,
+        detail = "フォルダではありません"
+    else:
+        missing = [name for name in REQUIRED_INSTALL_FILES if not (path / name).is_file()]
+        if not missing:
+            return
+        detail = f"不足しているファイル: {', '.join(missing)}"
+
+    if label == "既存のバックアップ":
+        message = (
+            f"{label}の内容を安全に確認できないため、アップデートを中止しました。"
+            f"\n（{detail}）\n\n"
+            "対処方法:\n"
+            "1. この画面を閉じます。\n"
+            "2. 下記の対象フォルダを、PoENaviフォルダの外へ移動します。"
+            "削除する必要はありません。\n"
+            "3. ぽえなびを起動し、もう一度アップデートしてください。\n\n"
+            "安全を確認できなかったため、ファイルの削除や変更は行っていません。"
         )
+    else:
+        message = (
+            f"{label}の内容を確認できないため、アップデートを中止しました。"
+            f"\n（{detail}）\n\n"
+            "対処方法:\n"
+            "1. この画面を閉じます。\n"
+            "2. 公式配布の PoENavi.zip をもう一度ダウンロードします。\n"
+            "3. ZIPを新しいフォルダへ展開し、PoENavi.exeを起動してください。\n\n"
+            "現在のフォルダは変更していません。"
+        )
+    raise UpdateApplyError(message, path)
 
 
 def _next_stale_backup_path(backup: Path, timestamp: str) -> Path:
@@ -87,7 +114,14 @@ def apply_update(
     _validate_install_directory(install_dir, "現在のインストール先")
     if failed.exists():
         raise UpdateApplyError(
-            f"前回の更新失敗フォルダがあります。自動整理せず停止します: {failed}",
+            "前回のアップデートで作成された失敗フォルダが残っているため、"
+            "アップデートを中止しました。\n\n"
+            "対処方法:\n"
+            "1. この画面を閉じます。\n"
+            "2. 下記の対象フォルダを、PoENaviフォルダの外へ移動します。"
+            "削除する必要はありません。\n"
+            "3. ぽえなびを起動し、もう一度アップデートしてください。\n\n"
+            "安全のため、失敗フォルダは自動削除していません。",
             failed,
         )
 
@@ -112,7 +146,14 @@ def apply_update(
             retry_transient_file_operation(lambda: backup.rename(stale_backup))
         except Exception as exc:
             raise UpdateApplyError(
-                f"既存のバックアップを安全に退避できませんでした: {exc}",
+                "既存のバックアップを移動できなかったため、アップデートを中止しました。"
+                f"\n（Windowsからの詳細: {exc}）\n\n"
+                "対処方法:\n"
+                "1. この画面を閉じます。\n"
+                "2. OneDriveの同期やセキュリティソフトの確認処理が終わるまで待ちます。\n"
+                "3. ぽえなびを起動し、もう一度アップデートしてください。\n"
+                "4. 繰り返し発生する場合は、Windowsを再起動してから再度お試しください。\n\n"
+                "ファイルの削除や変更は行っていません。",
                 backup,
             ) from exc
 
@@ -137,6 +178,12 @@ def apply_update(
         if stale_backup is not None and stale_backup.exists() and not backup.exists():
             retry_transient_file_operation(lambda: stale_backup.rename(backup))
         raise UpdateApplyError(
-            f"更新に失敗したため旧版を復元しました: {exc}",
-            backup,
+            "アップデートに失敗したため、更新前のぽえなびを復元しました。"
+            f"\n（詳細: {exc}）\n\n"
+            "対処方法:\n"
+            "1. この画面を閉じます。\n"
+            "2. 現在のPoENavi.exeを起動できることを確認します。\n"
+            "3. 起動できた場合は、もう一度アップデートしてください。\n"
+            "4. 繰り返し失敗する場合は、この画面の内容を添えてご報告ください。",
+            install_dir,
         ) from exc

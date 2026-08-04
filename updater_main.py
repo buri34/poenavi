@@ -62,8 +62,7 @@ def main() -> int:
             startup_check=startup_stable,
         )
     except UpdateApplyError as exc:
-        suffix = f"\nバックアップ: {exc.backup}" if exc.backup else ""
-        show_error(f"{exc}{suffix}")
+        show_error(exc.user_message())
         return 4
 
     shutil.rmtree(backup, ignore_errors=True)
