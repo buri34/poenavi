@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 from PySide6.QtWidgets import QApplication, QPushButton
@@ -63,10 +64,23 @@ def test_settings_shows_only_requested_act10_guide_editor(monkeypatch, qapp):
 
     dialog = SettingsDialog(current_config={"poe_version": POE1})
     tooltips = [button.toolTip() for button in dialog.findChildren(QPushButton)]
+    texts = [button.text() for button in dialog.findChildren(QPushButton)]
 
     assert tooltips.count("公式ガイドを編集") == 1
     assert tooltips.count("みになびを編集") == 1
+    assert texts.count("公式ガイド") == 1
+    assert texts.count("みになび") == 1
     dialog.close()
+
+
+def test_act10_guide_authoring_has_dedicated_launcher():
+    launcher = (
+        Path(__file__).resolve().parents[1]
+        / "run_guide_authoring_act10_area12.bat"
+    ).read_text(encoding="utf-8")
+
+    assert 'POENAVI_GUIDE_DEV_ZONE_ID=act10_area12' in launcher
+    assert 'POENAVI_USER_DATA_DIR=%~dp0.dev-user-data-guide-act10-area12' in launcher
 
 
 def test_dev_save_creates_backup_before_overwriting(monkeypatch, tmp_path):

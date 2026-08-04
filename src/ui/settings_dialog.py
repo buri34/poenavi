@@ -2829,14 +2829,16 @@ class SettingsDialog(QDialog):
                 row.addWidget(memo_button)
 
                 if _guide_dev_editor_enabled(self.poe_version, zone_id):
-                    guide_button = self._create_small_action_button("📝", "公式ガイドを編集")
+                    guide_button = self._create_small_action_button("公式ガイド", "公式ガイドを編集")
+                    guide_button.setFixedWidth(90)
                     guide_button.clicked.connect(
                         lambda checked=False, ne=name_edit, zid=zone_id:
                         self._open_guide_editor(ne, zid)
                     )
                     row.addWidget(guide_button)
 
-                    mini_button = self._create_small_action_button("み", "みになびを編集")
+                    mini_button = self._create_small_action_button("みになび", "みになびを編集")
+                    mini_button.setFixedWidth(75)
                     mini_button.clicked.connect(
                         lambda checked=False, ne=name_edit, zid=zone_id:
                         self._open_mini_navi_editor(ne, zid)
