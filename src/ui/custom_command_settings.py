@@ -48,6 +48,7 @@ class CustomCommandSettingsWidget(QWidget):
         self.table = QTableWidget(0, 4)
         self.table.setHorizontalHeaderLabels(["有効", "名前", "ホットキー", "コマンド"])
         self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setStyleSheet(f"""
             QTableWidget {{ background: {self.theme.background}; color: {self.theme.text};

@@ -31,6 +31,7 @@ def test_custom_command_hotkey_cell_captures_keys_and_uses_requested_theme():
     )
     button = widget.table.cellWidget(0, 2)
     assert isinstance(button, HotkeyButton)
+    assert widget.table.verticalHeader().isHidden()
     assert widget.table.rowHeight(0) >= CustomCommandSettingsWidget.ROW_HEIGHT
     button.setChecked(True)
     assert button.text() == "Press any key..."
