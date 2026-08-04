@@ -1622,7 +1622,6 @@ class SettingsDialog(QDialog):
             "click_through": "F6",
             "logout": "none",
             "exit": "F5",
-            "hideout": "F11",
             "monastery": "F12",
             "search_string_test": "F4",
             "poetore_capture": "alt+d",
@@ -1841,14 +1840,8 @@ class SettingsDialog(QDialog):
         h_layout_exit.addWidget(self.exit_btn)
         group_layout.addLayout(h_layout_exit)
 
-        h_layout7 = QHBoxLayout()
-        h_layout7.addWidget(QLabel("隠れ家へ移動（/hideout）:"))
-        self.hideout_btn = HotkeyButton(self.hotkeys.get("hideout", "F11"))
-        h_layout7.addWidget(self.hideout_btn)
-        group_layout.addLayout(h_layout7)
-
         h_layout8 = QHBoxLayout()
-        h_layout8.addWidget(QLabel("（仮）修道院へ移動（/monastery）:"))
+        h_layout8.addWidget(QLabel("修道院へ移動（/monastery）:"))
         self.monastery_btn = HotkeyButton(self.hotkeys.get("monastery", "F12"))
         h_layout8.addWidget(self.monastery_btn)
         group_layout.addLayout(h_layout8)
@@ -2898,7 +2891,6 @@ class SettingsDialog(QDialog):
             "click_through": self.click_through_btn.key_text,
             "logout": self.logout_btn.key_text,
             "exit": self.exit_btn.key_text,
-            "hideout": self.hideout_btn.key_text,
             "monastery": self.monastery_btn.key_text,
             "search_string_test": self.search_string_test_btn.key_text,
             "poetore_capture": self.poetore_capture_btn.key_text,
@@ -2918,7 +2910,6 @@ class SettingsDialog(QDialog):
                 "click_through": "クリックスルー",
                 "logout": "ログアウト",
                 "exit": "キャラクター選択へ戻る",
-                "hideout": "隠れ家へ移動",
                 "monastery": "修道院へ移動",
                 "search_string_test": "検索文字列の貼り付け",
                 "poetore_capture": "ぽえとれ検索",
@@ -2969,7 +2960,6 @@ class SettingsDialog(QDialog):
                 "click_through": self.click_through_btn.key_text,
                 "logout": self.logout_btn.key_text,
                 "exit": self.exit_btn.key_text,
-                "hideout": self.hideout_btn.key_text,
                 "monastery": self.monastery_btn.key_text,
                 "search_string_test": self.search_string_test_btn.key_text,
                 "poetore_capture": self.poetore_capture_btn.key_text,

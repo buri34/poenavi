@@ -34,6 +34,9 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert "#DB86EF" in dialog.styleSheet()
     assert not hasattr(dialog, "log_path_edits")
     assert not hasattr(dialog, "timer_size_combo")
+    labels = [label.text() for label in dialog.findChildren(QLabel)]
+    assert "修道院へ移動（/monastery）:" in labels
+    assert all("（仮）修道院" not in label for label in labels)
     assert dialog.preferred_mode_combo.currentData() == "poetore"
     dialog.preferred_mode_combo.setCurrentIndex(
         dialog.preferred_mode_combo.findData("poenavi")

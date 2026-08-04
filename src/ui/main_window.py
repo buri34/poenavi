@@ -3005,7 +3005,7 @@ class MainWindow(QMainWindow):
             for action, default in [("start_stop", "F7"), ("reset", "F8"), ("lap", "none"),
                                      ("undo_lap", "none"), ("click_through", DEFAULT_CLICK_THROUGH_HOTKEY), ("logout", "none"),
                                      ("exit", "F5"),
-                                     ("hideout", "F11"), ("monastery", "F12"),
+                                     ("monastery", "F12"),
                                      ("search_string_test", "F4"), ("poetore_capture", "alt+d"),
                                      ("map_check", "alt+f"),
                                      ("cheat_sheets_toggle", "shift+space")]:
@@ -3135,8 +3135,6 @@ class MainWindow(QMainWindow):
             self.execute_logout()
         elif command == "exit":
             self.execute_chat_command("/exit")
-        elif command == "hideout":
-            self.execute_chat_command("/hideout")
         elif command == "monastery":
             self.execute_chat_command("/monastery")
         elif command == "search_string_test":

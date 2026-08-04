@@ -44,6 +44,15 @@ def write_default_config(app_dir: Path, overrides=None):
 
 
 class ConfigManagerTest(unittest.TestCase):
+    def test_schema_v10_removes_retired_hideout_hotkey(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 9,
+            "hotkeys": {"hideout": "F11", "monastery": "F12"},
+        })
+
+        self.assertNotIn("hideout", migrated["hotkeys"])
+        self.assertEqual(migrated["hotkeys"]["monastery"], "F12")
+
     def test_schema_v8_adds_startup_mode_defaults(self):
         migrated = ConfigManager._migrate_config({"schemaVersion": 7})
 
@@ -108,7 +117,7 @@ class ConfigManagerTest(unittest.TestCase):
         self.assertEqual(migrated["hotkeys"]["undo_lap"], "none")
         self.assertEqual(migrated["hotkeys"]["search_string_test"], "F4")
         self.assertEqual(migrated["hotkeys"]["exit"], "F5")
-        self.assertEqual(migrated["hotkeys"]["hideout"], "Ctrl+H")
+        self.assertNotIn("hideout", migrated["hotkeys"])
 
     def test_schema_v5_reassigns_only_v262_default_hotkeys(self):
         migrated = ConfigManager._migrate_config({
@@ -128,7 +137,7 @@ class ConfigManagerTest(unittest.TestCase):
         self.assertEqual(migrated["hotkeys"]["logout"], "none")
         self.assertEqual(migrated["hotkeys"]["exit"], "F5")
         self.assertEqual(migrated["hotkeys"]["search_string_test"], "F4")
-        self.assertEqual(migrated["hotkeys"]["hideout"], "Ctrl+H")
+        self.assertNotIn("hideout", migrated["hotkeys"])
 
     def test_schema_v5_preserves_custom_hotkeys(self):
         migrated = ConfigManager._migrate_config({
@@ -174,7 +183,7 @@ class ConfigManagerTest(unittest.TestCase):
         })
 
         self.assertEqual(migrated["hotkeys"]["gem_shop_search"], "F2")
-        self.assertEqual(migrated["hotkeys"]["hideout"], "none")
+        self.assertNotIn("hideout", migrated["hotkeys"])
 
     def test_schema_v7_preserves_custom_gem_shop_and_hideout_hotkeys(self):
         migrated = ConfigManager._migrate_config({
@@ -186,7 +195,7 @@ class ConfigManagerTest(unittest.TestCase):
         })
 
         self.assertEqual(migrated["hotkeys"]["gem_shop_search"], "F3")
-        self.assertEqual(migrated["hotkeys"]["hideout"], "F2")
+        self.assertNotIn("hideout", migrated["hotkeys"])
 
     def test_schema_v2_migrates_only_old_mini_navi_defaults(self):
         migrated = ConfigManager._migrate_config({

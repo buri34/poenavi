@@ -116,7 +116,7 @@ class PoetoreSettingsDialog(QDialog):
             button.setStyleSheet("")
         hotkey_form.addRow("キャラクター選択へ戻る:", self.exit_hotkey)
         hotkey_form.addRow(
-            "（仮）修道院へ移動（/monastery）:", self.monastery_hotkey
+            "修道院へ移動（/monastery）:", self.monastery_hotkey
         )
         hotkey_form.addRow("ぽえとれ検索:", self.capture_hotkey)
         hotkey_form.addRow("Map Modチェック:", self.map_check_hotkey)

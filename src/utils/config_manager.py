@@ -14,7 +14,7 @@ class ConfigManager:
     DEFAULT_CONFIG_FILE = "default_config.json"
     APP_NAME = "PoENavi"
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
-    CURRENT_SCHEMA_VERSION = 9
+    CURRENT_SCHEMA_VERSION = 10
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -451,6 +451,12 @@ class ConfigManager:
             # ログ未設定案内は現在のPoEバージョンのログパスだけで判定する。
             # 旧「初回セットアップ完了」フラグは表示条件に使われなくなったため廃止。
             migrated.pop("setup_completed", None)
+
+        if schema_version < 10:
+            hotkeys = migrated.get("hotkeys")
+            if isinstance(hotkeys, dict):
+                # PoEクライアント本体で隠れ家ホットキーが利用可能になったため廃止。
+                hotkeys.pop("hideout", None)
 
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)
