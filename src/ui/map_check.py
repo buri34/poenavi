@@ -282,16 +282,13 @@ class MapCheckWindow(QDialog):
             button.setProperty("map_mod_text", modifier.text)
             button.clicked.connect(partial(self._cycle_entry, entry.key))
             row_layout.addWidget(button, 1)
-            seen = QPushButton("◉" if (
-                self.config.get("show_new_stats")
-                and decision_for(self.config, entry.key) == "-"
-            ) else "")
-            seen.setFixedWidth(34)
-            seen.setEnabled(bool(self.config.get("show_new_stats")))
-            seen.setToolTip("未確認／確認済みを切り替え")
-            seen.setProperty("map_seen_key", entry.key)
-            seen.clicked.connect(partial(self._toggle_seen, entry.key))
-            row_layout.addWidget(seen)
+            if self.config.get("show_new_stats"):
+                seen = QPushButton()
+                seen.setFixedWidth(72)
+                seen.setProperty("map_seen_key", entry.key)
+                seen.clicked.connect(partial(self._toggle_seen, entry.key))
+                row_layout.addWidget(seen)
+                self._style_seen_button(seen, entry.key)
             self.body_layout.addWidget(row_widget)
             self._style_mod_button(button, entry.key, modifier.text)
         if not item.modifiers:
@@ -316,6 +313,8 @@ class MapCheckWindow(QDialog):
         if not self.config.get("show_new_stats"):
             return
         current = decision_for(self.config, key)
+        if current not in {"-", "s"}:
+            return
         set_decision(self.config, key, "s" if current == "-" else "-")
         self.config_changed.emit(dict(self.config))
         self._refresh_seen_buttons(key)
@@ -323,10 +322,22 @@ class MapCheckWindow(QDialog):
     def _refresh_seen_buttons(self, key):
         for button in self.body.findChildren(QPushButton):
             if button.property("map_seen_key") == key:
-                button.setText("◉" if (
-                    self.config.get("show_new_stats")
-                    and decision_for(self.config, key) == "-"
-                ) else "")
+                self._style_seen_button(button, key)
+
+    def _style_seen_button(self, button, key):
+        decision = decision_for(self.config, key)
+        if decision == "-":
+            button.setText("未確認")
+            button.setToolTip("クリックして、このModを確認済みにします")
+            button.setEnabled(True)
+        elif decision == "s":
+            button.setText("確認済")
+            button.setToolTip("クリックして、未確認の状態に戻します")
+            button.setEnabled(True)
+        else:
+            button.setText("設定済")
+            button.setToolTip("警告・危険・有利のいずれかに設定済みです")
+            button.setEnabled(False)
 
     def _select_profile(self, profile, _checked=False, save=True):
         self.config["profile"] = profile

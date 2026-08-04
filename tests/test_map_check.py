@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QPushButton
 from PySide6.QtCore import QPoint, QRect, QSize
 
 from src.poetore.map_check import (
@@ -175,6 +175,88 @@ Map (Tier 16)
         ("explicit.stat_1742567045", (100.0,)),
     ]
     assert parsed.modifiers[3].inverted is True
+
+
+def test_reported_japanese_map_copy_aliases_resolve_to_area_mods():
+    parsed = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+Reported Alias Test
+Map (Tier 16)
+--------
+アイテムレベル: 83
+--------
+{ プレフィックスモッド (ティア: 1) }
+レアモンスターの数が25%増加する
+{ プレフィックスモッド (ティア: 1) }
+ユニークボスのライフが40%増加する
+{ サフィックスモッド (ティア: 1) }
+全てのプレイヤーのクールダウン解消レートが25%低下する
+""")
+    catalog_ids = {
+        stat_id for row in load_map_mod_catalog() for stat_id in row.stat_ids
+    }
+    assert [(modifier.stat_id, modifier.values) for modifier in parsed.modifiers] == [
+        ("explicit.stat_3126771445", (25.0,)),
+        ("explicit.stat_1959158336", (40.0,)),
+        ("explicit.stat_941368244", (25.0,)),
+    ]
+    assert all(modifier.stat_id in catalog_ids for modifier in parsed.modifiers)
+    assert parsed.modifiers[2].inverted is True
+
+
+def test_seen_column_is_hidden_when_new_mod_notifications_are_disabled():
+    QApplication.instance() or QApplication([])
+    parsed = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+UI Test
+Map (Tier 16)
+--------
+アイテムレベル: 83
+--------
+{ プレフィックスモッド (ティア: 1) }
+レアモンスターの数が25%増加する
+""")
+    window = MapCheckWindow(default_map_check_config())
+    window._render(parsed)
+    assert not [
+        button for button in window.body.findChildren(QPushButton)
+        if button.property("map_seen_key")
+    ]
+    window.close()
+
+
+def test_seen_column_uses_clear_labels_and_preserves_colored_decisions():
+    QApplication.instance() or QApplication([])
+    parsed = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+UI Test
+Map (Tier 16)
+--------
+アイテムレベル: 83
+--------
+{ プレフィックスモッド (ティア: 1) }
+レアモンスターの数が25%増加する
+""")
+    config = default_map_check_config()
+    config["show_new_stats"] = True
+    window = MapCheckWindow(config)
+    window._render(parsed)
+    seen = next(
+        button for button in window.body.findChildren(QPushButton)
+        if button.property("map_seen_key")
+    )
+    key = seen.property("map_seen_key")
+    assert seen.text() == "未確認"
+    assert "確認済み" in seen.toolTip()
+
+    seen.click()
+    assert seen.text() == "確認済"
+    set_decision(window.config, key, "d")
+    window._refresh_seen_buttons(key)
+    assert seen.text() == "設定済"
+    assert not seen.isEnabled()
+    assert decision_for(window.config, key) == "d"
+    window.close()
 
 
 def test_manager_uses_numeric_profiles_and_lists_current_plus_outdated_defaults():
