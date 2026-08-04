@@ -1,7 +1,7 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QLabel, QPushButton
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QSystemTrayIcon
 
 from src.ui.poetore_mode_window import PoetoreModeWindow
 
@@ -57,9 +57,82 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     )
     assert window.findChild(QPushButton, "poetoreMinimizeButton").text() == "─"
     assert window.findChild(QPushButton, "poetoreCloseButton").text() == "✕"
+    assert window.tray_icon.toolTip() == "ぽえとれ"
+    assert [
+        action.text() for action in window.tray_icon.contextMenu().actions()
+        if not action.isSeparator()
+    ] == ["ぽえとれを表示", "設定", "終了"]
     hotkey_service.start.assert_called_once()
     window.close()
     app.processEvents()
+
+
+def test_poetore_mode_minimize_hides_to_tray_and_notifies_once():
+    app = QApplication.instance() or QApplication([])
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value={"hotkeys": {}},
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(
+        PoetoreModeWindow, "refresh_currency_rate"
+    ), patch.object(
+        QSystemTrayIcon, "isSystemTrayAvailable", return_value=True
+    ):
+        window = PoetoreModeWindow()
+        window.show()
+        app.processEvents()
+        with patch.object(window.tray_icon, "show") as show_tray, patch.object(
+            window.tray_icon, "showMessage"
+        ) as show_message:
+            window.title_bar.minimize_button.click()
+            window.minimize_to_tray()
+
+    assert not window.isVisible()
+    assert show_tray.call_count == 2
+    show_message.assert_called_once()
+    window.close()
+    app.processEvents()
+
+
+def test_poetore_mode_minimize_falls_back_when_tray_is_unavailable():
+    window = MagicMock()
+    with patch.object(QSystemTrayIcon, "isSystemTrayAvailable", return_value=False):
+        PoetoreModeWindow.minimize_to_tray(window)
+
+    window.showMinimized.assert_called_once_with()
+    window.hide.assert_not_called()
+
+
+def test_poetore_mode_tray_settings_restores_before_opening_dialog():
+    window = MagicMock()
+    with patch.object(QTimer, "singleShot", side_effect=lambda _delay, callback: callback()):
+        PoetoreModeWindow.open_settings_from_tray(window)
+
+    assert window.method_calls[:2] == [
+        call.restore_from_tray(),
+        call.open_settings(),
+    ]
+
+
+def test_poetore_mode_tray_activation_restores_on_click_and_double_click():
+    window = MagicMock()
+
+    PoetoreModeWindow._handle_tray_activation(window, QSystemTrayIcon.Trigger)
+    PoetoreModeWindow._handle_tray_activation(window, QSystemTrayIcon.DoubleClick)
+    PoetoreModeWindow._handle_tray_activation(window, QSystemTrayIcon.Context)
+
+    assert window.restore_from_tray.call_count == 2
+
+
+def test_poetore_mode_tray_exit_closes_window_and_quits_application():
+    window = MagicMock()
+    app = MagicMock()
+    with patch.object(QApplication, "instance", return_value=app):
+        PoetoreModeWindow.quit_from_tray(window)
+
+    window.close.assert_called_once_with()
+    app.quit.assert_called_once_with()
 
 
 def test_poetore_mode_monastery_hotkey_sends_chat_command():

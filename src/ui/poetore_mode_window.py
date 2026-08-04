@@ -5,14 +5,17 @@ import threading
 import time
 
 from PySide6.QtCore import QObject, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import QKeySequence, QPixmap
+from PySide6.QtGui import QAction, QIcon, QKeySequence, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QMenu,
     QPushButton,
+    QStyle,
+    QSystemTrayIcon,
     QVBoxLayout,
     QWidget,
 )
@@ -84,7 +87,7 @@ class _PoetoreModeTitleBar(QWidget):
         self.minimize_button.setFixedSize(30, 22)
         self.minimize_button.setStyleSheet(button_style)
         self.minimize_button.setToolTip("最小化")
-        self.minimize_button.clicked.connect(window.showMinimized)
+        self.minimize_button.clicked.connect(window.minimize_to_tray)
         layout.addWidget(self.minimize_button)
 
         self.close_button = QPushButton("✕")
@@ -146,6 +149,7 @@ class PoetoreModeWindow(QMainWindow):
         self.setMinimumSize(500, 300)
         self.resize(558, 360)
         self._build_ui()
+        self._build_tray_icon()
         self._apply_window_settings()
         QTimer.singleShot(0, self._apply_startup_position)
 
@@ -161,6 +165,70 @@ class PoetoreModeWindow(QMainWindow):
     @staticmethod
     def _asset_path(filename):
         return Path(__file__).resolve().parents[2] / "assets" / "icons" / filename
+
+    @staticmethod
+    def _app_asset_path(filename):
+        return Path(__file__).resolve().parents[2] / "assets" / "app" / filename
+
+    def _build_tray_icon(self):
+        icon = QIcon(str(self._app_asset_path("icon2.ico")))
+        if icon.isNull():
+            icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
+        self.setWindowIcon(icon)
+
+        self.tray_icon = QSystemTrayIcon(icon, self)
+        self.tray_icon.setToolTip("ぽえとれ")
+        self.tray_icon.activated.connect(self._handle_tray_activation)
+
+        menu = QMenu(self)
+        self.tray_show_action = QAction("ぽえとれを表示", menu)
+        self.tray_show_action.triggered.connect(self.restore_from_tray)
+        menu.addAction(self.tray_show_action)
+        self.tray_settings_action = QAction("設定", menu)
+        self.tray_settings_action.triggered.connect(self.open_settings_from_tray)
+        menu.addAction(self.tray_settings_action)
+        menu.addSeparator()
+        self.tray_exit_action = QAction("終了", menu)
+        self.tray_exit_action.triggered.connect(self.quit_from_tray)
+        menu.addAction(self.tray_exit_action)
+        self.tray_icon.setContextMenu(menu)
+        self._tray_notification_shown = False
+
+    def minimize_to_tray(self):
+        """トレイ非対応環境では、従来どおりタスクバーへ最小化する。"""
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            self.showMinimized()
+            return
+        self.tray_icon.show()
+        self.hide()
+        if not self._tray_notification_shown:
+            self.tray_icon.showMessage(
+                "ぽえとれ",
+                "タスクトレイに格納しました。",
+                QSystemTrayIcon.Information,
+                3000,
+            )
+            self._tray_notification_shown = True
+
+    def restore_from_tray(self):
+        self.showNormal()
+        self.raise_()
+        self.activateWindow()
+        self.tray_icon.hide()
+
+    def open_settings_from_tray(self):
+        self.restore_from_tray()
+        QTimer.singleShot(0, self.open_settings)
+
+    def quit_from_tray(self):
+        self.close()
+        app = QApplication.instance()
+        if app is not None:
+            app.quit()
+
+    def _handle_tray_activation(self, reason):
+        if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.DoubleClick):
+            self.restore_from_tray()
 
     def _build_ui(self):
         central = QWidget()
@@ -574,6 +642,7 @@ class PoetoreModeWindow(QMainWindow):
         send_chat_command(command)
 
     def closeEvent(self, event):
+        self.tray_icon.hide()
         self._rate_timer.stop()
         self.hotkey_service.stop()
         if self._memo_dialog is not None:
