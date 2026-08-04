@@ -225,7 +225,7 @@ class PoetoreSettingsDialog(QDialog):
         basic_scroll.setWidget(basic_tab)
         tabs.addTab(basic_scroll, "基本設定")
         self.custom_commands_widget = CustomCommandSettingsWidget(
-            self.current_config.get("custom_commands", [])
+            self.current_config.get("custom_commands", []), theme=POETORE_THEME
         )
         tabs.insertTab(1, self.custom_commands_widget, "任意コマンド設定")
         tabs.addTab(

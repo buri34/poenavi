@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QAbstractItemView, QCheckBox, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
+    QAbstractItemView, QCheckBox, QHBoxLayout, QLabel, QMessageBox,
     QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
+from src.ui.app_theme import POENAVI_THEME
+from src.ui.settings_dialog import HotkeyButton
 
 
 def normalized_custom_commands(value) -> list[dict]:
@@ -32,8 +34,9 @@ def custom_command_hotkeys(commands) -> dict[str, str]:
 
 
 class CustomCommandSettingsWidget(QWidget):
-    def __init__(self, commands=None, parent=None):
+    def __init__(self, commands=None, parent=None, theme=None):
         super().__init__(parent)
+        self.theme = theme or POENAVI_THEME
         layout = QVBoxLayout(self)
         note = QLabel(
             "PoEチャットへ送るコマンドを登録します。ホットキーは Ctrl+H のように入力してください。"
@@ -44,6 +47,14 @@ class CustomCommandSettingsWidget(QWidget):
         self.table.setHorizontalHeaderLabels(["有効", "名前", "ホットキー", "コマンド"])
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setStyleSheet(f"""
+            QTableWidget {{ background: {self.theme.background}; color: {self.theme.text};
+                gridline-color: {self.theme.accent}; border: 1px solid {self.theme.accent}; }}
+            QTableWidget::item {{ background: {self.theme.panel}; color: {self.theme.text}; padding: 4px; }}
+            QTableWidget::item:selected {{ background: {self.theme.accent}; color: {self.theme.background}; }}
+            QHeaderView::section {{ background: {self.theme.panel}; color: {self.theme.text};
+                border: 1px solid {self.theme.accent}; padding: 5px; }}
+        """)
         layout.addWidget(self.table, 1)
         buttons = QHBoxLayout()
         add = QPushButton("追加")
@@ -70,7 +81,13 @@ class CustomCommandSettingsWidget(QWidget):
         holder_layout.setAlignment(enabled, Qt.AlignmentFlag.AlignCenter)
         self.table.setCellWidget(row, 0, holder)
         self.table.setItem(row, 1, QTableWidgetItem(str(command.get("name", ""))))
-        self.table.setItem(row, 2, QTableWidgetItem(str(command.get("hotkey", "none"))))
+        hotkey = HotkeyButton(str(command.get("hotkey", "none")))
+        hotkey.setStyleSheet(
+            f"QPushButton{{background:{self.theme.panel};color:{self.theme.text};"
+            f"border:1px solid {self.theme.accent};padding:5px;}}"
+            f"QPushButton:checked{{background:{self.theme.accent};color:{self.theme.background};}}"
+        )
+        self.table.setCellWidget(row, 2, hotkey)
         self.table.setItem(row, 3, QTableWidgetItem(str(command.get("command", "/"))))
 
     def remove_selected_rows(self):
@@ -83,7 +100,8 @@ class CustomCommandSettingsWidget(QWidget):
             holder = self.table.cellWidget(row, 0)
             enabled = holder.findChild(QCheckBox).isChecked()
             text = lambda column: (self.table.item(row, column).text().strip() if self.table.item(row, column) else "")
-            rows.append({"enabled": enabled, "name": text(1), "hotkey": text(2) or "none", "command": text(3)})
+            hotkey = self.table.cellWidget(row, 2).key_text
+            rows.append({"enabled": enabled, "name": text(1), "hotkey": hotkey or "none", "command": text(3)})
         return rows
 
     def validate(self, existing_hotkeys: dict[str, str]) -> bool:

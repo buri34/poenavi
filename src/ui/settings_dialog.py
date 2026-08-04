@@ -22,7 +22,6 @@ from src.utils.gem_shop_search import (
     validate_gem_shop_search_term_override,
 )
 from src.utils.global_hotkeys import find_duplicate_hotkeys
-from src.ui.custom_command_settings import CustomCommandSettingsWidget
 import os
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
@@ -2315,8 +2314,9 @@ class SettingsDialog(QDialog):
         general_layout.addStretch()
         
         tabs.addTab(general_tab, "基本設定")
+        from src.ui.custom_command_settings import CustomCommandSettingsWidget
         self.custom_commands_widget = CustomCommandSettingsWidget(
-            self.current_config.get("custom_commands", [])
+            self.current_config.get("custom_commands", []), theme=POENAVI_THEME
         )
         tabs.insertTab(1, self.custom_commands_widget, "任意コマンド設定")
         
