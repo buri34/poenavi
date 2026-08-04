@@ -2940,7 +2940,8 @@ class PoetoreWindow(QWidget):
                     )
                 if links_chip_visible:
                     effective_filters = tuple(
-                        row for row in effective_filters if row.stat_id != "property.links"
+                        row for row in effective_filters
+                        if row.stat_id not in {"property.links", "property.sockets"}
                     )
                 effective_filters = _replace_filters_with_special_chips(
                     effective_filters, influence_filters, special_filters,
@@ -3762,6 +3763,8 @@ class PoetoreWindow(QWidget):
                     }):
                 continue
             if stat_filter.stat_id == "property.links" and not self.links_tag.isHidden():
+                continue
+            if stat_filter.stat_id == "property.sockets" and not self.links_tag.isHidden():
                 continue
             if stat_filter.kind == "influence":
                 continue

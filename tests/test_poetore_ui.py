@@ -4246,6 +4246,53 @@ Test Item
         window.close()
 
 
+def test_six_link_chip_hides_redundant_socket_count_from_mod_list(qapp):
+    window = PoetoreWindow()
+    try:
+        six_link_armour = parse_item_text("""アイテムクラス: 鎧
+レアリティ: レア
+Test Item
+Sacred Chainmail
+--------
+ソケット: R-R-R-G-B-B
+--------
+アイテムレベル: 86
+""")
+        window._parsed_item = six_link_armour
+        window._configure_links(six_link_armour)
+        window._populate_stat_filters((
+            TradeStatFilter("property.sockets", "ソケット数", 6.0, "socket", True),
+            TradeStatFilter("property.links", "最大リンク数", 6.0, "socket", False),
+        ))
+        assert not window.links_tag.isHidden()
+        assert window.mod_filter_tree.topLevelItemCount() == 0
+
+        three_socket_armour = parse_item_text("""アイテムクラス: 鎧
+レアリティ: レア
+Test Item
+Sacred Chainmail
+--------
+ソケット: R-G B
+--------
+アイテムレベル: 86
+""")
+        window._parsed_item = three_socket_armour
+        window._configure_links(three_socket_armour)
+        window._populate_stat_filters((
+            TradeStatFilter("property.sockets", "ソケット数", 3.0, "socket", False),
+            TradeStatFilter("property.links", "最大リンク数", 2.0, "socket", False),
+        ))
+        assert window.links_tag.isHidden()
+        stat_ids = [
+            window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        assert "property.sockets" in stat_ids
+        assert "property.links" in stat_ids
+    finally:
+        window.close()
+
+
 def test_influence_chips_match_awakened_finished_and_exact_states(qapp):
     window = PoetoreWindow()
     try:
