@@ -26,6 +26,7 @@ from src.utils.window_focus import (
 )
 from src.utils.global_hotkeys import hotkey_key_name, listener_hotkey_name
 from src.utils.chat_command import send_chat_command
+from src.ui.custom_command_settings import custom_command_hotkeys, normalized_custom_commands
 from src.utils.log_path_detector import fill_missing_client_log_paths
 from src.utils.performance_metrics import measure
 from src.utils.zone_lookup import get_zone_info, get_level_advice
@@ -3011,6 +3012,8 @@ class MainWindow(QMainWindow):
                 key = hotkeys.get(action, default)
                 if key and key != "none":
                     self.hotkey_map[_listener_hotkey_name(key)] = action
+            for action, key in custom_command_hotkeys(self.config.get("custom_commands", [])).items():
+                self.hotkey_map[_listener_hotkey_name(key)] = action
             self._gem_shop_search_key = _listener_hotkey_name(
                 hotkeys.get("gem_shop_search", DEFAULT_GEM_SHOP_SEARCH_HOTKEY)
             )
@@ -3109,6 +3112,12 @@ class MainWindow(QMainWindow):
 
     def handle_hotkey(self, command):
         print(f"[HOTKEY DEBUG] handle command={command} search_in_progress={getattr(self, '_search_paste_in_progress', False)}")
+        if command.startswith("custom_command:"):
+            index = int(command.split(":", 1)[1])
+            commands = normalized_custom_commands(self.config.get("custom_commands", []))
+            if 0 <= index < len(commands) and commands[index]["enabled"]:
+                self.execute_chat_command(commands[index]["command"])
+            return
         if command == "start_stop":
             if self.is_running:
                 self.stop_timer()
@@ -4292,11 +4301,15 @@ class MainWindow(QMainWindow):
 
         window = getattr(self, "_map_check_window", None)
         if window is None:
-            window = MapCheckWindow(self.config.get("map_check", {}), self)
+            map_config = dict(self.config.get("map_check", {}))
+            map_config["_font_size"] = self.config.get("poetore", {}).get("result_font_size", "medium")
+            window = MapCheckWindow(map_config, self)
             window.config_changed.connect(self._save_map_check_config)
             self._map_check_window = window
         else:
-            window.reload_config(self.config.get("map_check", {}))
+            map_config = dict(self.config.get("map_check", {}))
+            map_config["_font_size"] = self.config.get("poetore", {}).get("result_font_size", "medium")
+            window.reload_config(map_config)
         return window
 
     def capture_map_check_item(self):

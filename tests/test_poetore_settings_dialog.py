@@ -48,6 +48,7 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     tabs = dialog.findChild(QTabWidget)
     assert [tabs.tabText(index) for index in range(tabs.count())] == [
         "基本設定",
+        "任意コマンド設定",
         "アプリ情報",
     ]
     assert dialog.windowTitle() == "設定"

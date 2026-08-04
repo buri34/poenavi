@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 
 from src.ui.app_theme import POETORE_THEME
 from src.utils.chat_command import send_chat_command
+from src.ui.custom_command_settings import custom_command_hotkeys, normalized_custom_commands
 from src.utils.config_manager import ConfigManager
 from src.utils.global_hotkeys import GlobalHotkeyService
 from src.utils.poe_version_data import POE1, POE2
@@ -410,6 +411,7 @@ class PoetoreModeWindow(QMainWindow):
             action: configured.get(action, default)
             for action, default in self.MODE_ACTION_DEFAULTS.items()
         }
+        mode_hotkeys.update(custom_command_hotkeys(self.config.get("custom_commands", [])))
         self.hotkey_service = GlobalHotkeyService(mode_hotkeys, parent=self)
         self.hotkey_service.command.connect(self.handle_hotkey)
         self.hotkey_service.start()
@@ -479,6 +481,12 @@ class PoetoreModeWindow(QMainWindow):
         self.rate_status.setText(f"レート取得失敗：{message}")
 
     def handle_hotkey(self, command):
+        if command.startswith("custom_command:"):
+            index = int(command.split(":", 1)[1])
+            commands = normalized_custom_commands(self.config.get("custom_commands", []))
+            if 0 <= index < len(commands) and commands[index]["enabled"]:
+                self.execute_chat_command(commands[index]["command"])
+            return
         if command == "poetore_capture":
             self.capture_poetore_item()
         elif command == "poetore_capture_released":
@@ -520,14 +528,16 @@ class PoetoreModeWindow(QMainWindow):
         from src.ui.map_check import MapCheckWindow
 
         if self._map_check_window is None:
-            self._map_check_window = MapCheckWindow(
-                self.config.get("map_check", {}), self,
-            )
+            map_config = dict(self.config.get("map_check", {}))
+            map_config["_font_size"] = self.config.get("poetore", {}).get("result_font_size", "medium")
+            self._map_check_window = MapCheckWindow(map_config, self)
             self._map_check_window.config_changed.connect(
                 self._save_map_check_config
             )
         else:
-            self._map_check_window.reload_config(self.config.get("map_check", {}))
+            map_config = dict(self.config.get("map_check", {}))
+            map_config["_font_size"] = self.config.get("poetore", {}).get("result_font_size", "medium")
+            self._map_check_window.reload_config(map_config)
         return self._map_check_window
 
     def capture_map_check_item(self):

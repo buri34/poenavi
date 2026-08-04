@@ -33,6 +33,8 @@ _COLORS = {
     "s": ("", "#241929"),
 }
 
+_FONT_SIZES = {"small": 11, "medium": 13, "large": 16}
+
 
 class MapModManagerDialog(QDialog):
     config_changed = Signal(dict)
@@ -165,6 +167,7 @@ class MapCheckWindow(QDialog):
     def __init__(self, config: dict, parent=None):
         super().__init__(parent)
         self.config = normalized_map_check_config(config)
+        self._font_size_name = str(config.get("_font_size", "medium")).casefold()
         self._capture_generation = 0
         self._copy_started = False
         self._keyboard = None
@@ -177,6 +180,7 @@ class MapCheckWindow(QDialog):
             "QPushButton{padding:7px;background:#241929;color:#f2e7f5;border:1px solid #6f4778;}"
             "QPushButton:checked{border:2px solid #db86ef;}"
         )
+        self._apply_font_size()
         self.root = QVBoxLayout(self)
         header = QHBoxLayout()
         self.title = QLabel("Map Check")
@@ -207,7 +211,15 @@ class MapCheckWindow(QDialog):
 
     def reload_config(self, config):
         self.config = normalized_map_check_config(config)
+        self._font_size_name = str(config.get("_font_size", "medium")).casefold()
+        self._apply_font_size()
         self._select_profile(self.config["profile"], save=False)
+
+    def _apply_font_size(self):
+        size = _FONT_SIZES.get(self._font_size_name, _FONT_SIZES["medium"])
+        self.setStyleSheet(
+            self.styleSheet() + f"QLabel,QPushButton{{font-size:{size}px;}}"
+        )
 
     def capture_from_poe(self):
         from pynput.keyboard import Controller, Key

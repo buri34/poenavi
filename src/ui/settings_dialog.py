@@ -22,6 +22,7 @@ from src.utils.gem_shop_search import (
     validate_gem_shop_search_term_override,
 )
 from src.utils.global_hotkeys import find_duplicate_hotkeys
+from src.ui.custom_command_settings import CustomCommandSettingsWidget
 import os
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
@@ -2314,6 +2315,10 @@ class SettingsDialog(QDialog):
         general_layout.addStretch()
         
         tabs.addTab(general_tab, "基本設定")
+        self.custom_commands_widget = CustomCommandSettingsWidget(
+            self.current_config.get("custom_commands", [])
+        )
+        tabs.insertTab(1, self.custom_commands_widget, "任意コマンド設定")
         
         # ── Tab 2: Zone Info ──
         zone_tab = QWidget()
@@ -2901,6 +2906,8 @@ class SettingsDialog(QDialog):
             "gem_shop_search": self.gem_shop_search_btn.key_text,
             "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,
         }
+        if not self.custom_commands_widget.validate(hotkeys):
+            return
         duplicates = find_duplicate_hotkeys(hotkeys)
         if duplicates:
             labels = {
@@ -2970,6 +2977,7 @@ class SettingsDialog(QDialog):
                 "gem_shop_search": self.gem_shop_search_btn.key_text,
                 "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,
             },
+            "custom_commands": self.custom_commands_widget.commands(),
             "logout_enabled": self.logout_enabled_cb.isChecked(),
             "gem_shop_search_include_reward_purchases": self.gem_shop_search_include_reward_purchases_cb.isChecked(),
             "gem_shop_search_hold_seconds": self.gem_shop_search_hold_seconds_spin.value(),

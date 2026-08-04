@@ -31,6 +31,7 @@ from src.poetore.trade import (
     default_pc_league,
 )
 from src.utils.global_hotkeys import find_duplicate_hotkeys
+from src.ui.custom_command_settings import CustomCommandSettingsWidget
 
 
 class _LeagueSignals(QObject):
@@ -140,7 +141,7 @@ class PoetoreSettingsDialog(QDialog):
         trade_layout.addWidget(league_note)
         basic_layout.addWidget(trade_group)
 
-        display_group = QGroupBox("検索結果画面")
+        display_group = QGroupBox("検索結果・マップチェック画面")
         display_form = QFormLayout(display_group)
         self.result_font_size_combo = QComboBox()
         self.result_font_size_combo.addItem("小", "small")
@@ -216,6 +217,10 @@ class PoetoreSettingsDialog(QDialog):
         basic_scroll.setFrameShape(QScrollArea.NoFrame)
         basic_scroll.setWidget(basic_tab)
         tabs.addTab(basic_scroll, "基本設定")
+        self.custom_commands_widget = CustomCommandSettingsWidget(
+            self.current_config.get("custom_commands", [])
+        )
+        tabs.insertTab(1, self.custom_commands_widget, "任意コマンド設定")
         tabs.addTab(
             AppInfoWidget(
                 POETORE_THEME,
@@ -388,6 +393,7 @@ class PoetoreSettingsDialog(QDialog):
         return {
             "startup": startup,
             "hotkeys": hotkeys,
+            "custom_commands": self.custom_commands_widget.commands(),
             "poetore": poetore,
             "window_opacity": self.opacity_slider.value(),
             "text_opacity": self.text_opacity_slider.value(),
@@ -405,6 +411,8 @@ class PoetoreSettingsDialog(QDialog):
             "map_check": self.map_check_hotkey.text(),
             "cheat_sheets_toggle": self.cheat_hotkey.text(),
         }
+        if not self.custom_commands_widget.validate(hotkeys):
+            return
         duplicates = find_duplicate_hotkeys(hotkeys)
         if duplicates:
             labels = {

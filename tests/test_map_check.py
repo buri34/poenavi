@@ -347,3 +347,9 @@ def test_non_map_clipboard_is_rejected_without_trade_search():
     assert "Map系アイテムではありません" in information.call_args.args[2]
     assert not window.isVisible()
     window.close()
+def test_map_check_uses_shared_result_font_size():
+    QApplication.instance() or QApplication([])
+    config = default_map_check_config()
+    config["_font_size"] = "large"
+    window = MapCheckWindow(config)
+    assert "font-size:16px" in window.styleSheet()
