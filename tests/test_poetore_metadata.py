@@ -700,6 +700,21 @@ def test_builder_expands_awakened_related_item_groups():
     assert group["items"][0]["icon"] == "skin.png"
 
 
+def test_builder_normalizes_legacy_doryani_delusion_base_variants():
+    groups = build_related_item_groups([], [{
+        "query": ["UNIQUE::Doryani's Machinarium // T0"],
+        "items": [
+            "UNIQUE::Doryani's Delusion // Leviathan Greaves",
+            "UNIQUE::Doryani's Delusion // Warlock Boots",
+            "UNIQUE::Doryani's Delusion // Velour Boots",
+        ],
+    }])
+
+    assert [row["variant"] for row in groups[0]["items"]] == [
+        "Titan Greaves", "Sorcerer Boots", "Slink Boots",
+    ]
+
+
 def test_builder_labels_watchers_eye_beastcraft_group():
     groups = build_related_item_groups([], [{
         "query": [

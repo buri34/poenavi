@@ -27,6 +27,28 @@ def test_related_item_identity_matches_unique_variant():
     assert price.chaos == 320
 
 
+def test_related_doryani_delusion_identity_matches_current_base_variants():
+    payload = {
+        "itemOverviews": [{
+            "type": "UniqueArmour",
+            "lines": [
+                {"name": "Doryani's Delusion", "variant": "Titan Greaves", "chaos": 10},
+                {"name": "Doryani's Delusion", "variant": "Sorcerer Boots", "chaos": 20},
+                {"name": "Doryani's Delusion", "variant": "Slink Boots", "chaos": 30},
+            ],
+        }],
+    }
+
+    prices = [
+        match_poe_ninja_identity(
+            payload, "UNIQUE", "Doryani's Delusion", variant, "Standard",
+        )
+        for variant in ("Titan Greaves", "Sorcerer Boots", "Slink Boots")
+    ]
+
+    assert [price.chaos for price in prices if price is not None] == [10, 20, 30]
+
+
 def test_related_captured_beast_identity_matches_beast_overview():
     payload = {
         "itemOverviews": [{

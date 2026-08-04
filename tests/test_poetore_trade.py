@@ -55,6 +55,22 @@ def test_japanese_trade_item_label_uses_unique_name_and_regular_type():
         item_type.assert_called_once_with("Blessing of Chayula")
 
 
+def test_japanese_trade_item_label_distinguishes_doryani_delusion_variants():
+    with (
+        patch(
+            "src.poetore.trade._japanese_trade_item_name",
+            return_value="ドリヤニの妄想",
+        ),
+        patch(
+            "src.poetore.trade._japanese_trade_item_type",
+            return_value="タイタングリーヴ",
+        ),
+    ):
+        assert japanese_trade_item_label(
+            "UNIQUE", "Doryani's Delusion", "Titan Greaves",
+        ) == "ドリヤニの妄想（タイタングリーヴ）"
+
+
 def test_japanese_trade_item_label_falls_back_to_english_name():
     with (
         patch("src.poetore.trade._japanese_trade_item_name", return_value=None),

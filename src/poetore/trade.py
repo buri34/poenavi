@@ -2153,15 +2153,22 @@ def japanese_trade_item_label(
     """関連アイテム用に公式Tradeの日英itemsから日本語表示名を得る。
 
     価格照合に使う英語identityは変更せず、公式側に日本語entryがない場合だけ
-    英語名へフォールバックする。variantは将来の表示拡張用に受け取るが、
-    Uniqueは固有名、その他はアイテムtype/nameを正本にする。
+    英語名へフォールバックする。ドリヤニの妄想は同名で3種類あるため、
+    公式日本語ベース名も添えて区別できるようにする。
     """
-    del variant
     name = str(english_name or "").strip()
     if not name:
         return ""
     if str(namespace or "").strip().upper() == "UNIQUE":
-        return _japanese_trade_item_name(name) or name
+        localized_name = _japanese_trade_item_name(name) or name
+        localized_variant = (
+            _japanese_trade_item_type(str(variant or ""))
+            if name.casefold() == "doryani's delusion" else None
+        )
+        return (
+            f"{localized_name}（{localized_variant}）"
+            if localized_variant else localized_name
+        )
     return _japanese_trade_item_type(name) or name
 
 
