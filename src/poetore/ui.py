@@ -2171,9 +2171,35 @@ class PoetoreWindow(QWidget):
             self._save_app_config(self._app_config)
         item = getattr(self, "_parsed_item", None)
         if item is not None:
+            previous_filters = self._selected_stat_filters()
             preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
-            self._populate_stat_filters(self._resolved_trade_filters(item, preset))
+            resolved_filters = self._resolved_trade_filters(item, preset)
+            enabled_by_key: dict[tuple, list[bool]] = {}
+            for row in previous_filters:
+                key = self._stat_filter_identity(row)
+                enabled_by_key.setdefault(key, []).append(row.enabled)
+            adjusted_filters = []
+            for row in resolved_filters:
+                states = enabled_by_key.get(self._stat_filter_identity(row))
+                adjusted_filters.append(
+                    replace(row, enabled=states.pop(0)) if states else row
+                )
+            self._populate_stat_filters(tuple(adjusted_filters))
             self._mark_search_dirty()
+
+    @staticmethod
+    def _stat_filter_identity(row: TradeStatFilter) -> tuple:
+        """数値範囲と選択状態を除いた、再生成前後で安定する行識別子。"""
+        return (
+            row.stat_id,
+            row.ref,
+            row.text,
+            row.kind,
+            row.option_value,
+            row.group_type,
+            row.group_key,
+            row.selection_reason,
+        )
 
     def _league_selection_value(self) -> str:
         index = self.trade_league_combo.currentIndex()

@@ -1167,6 +1167,46 @@ def test_poetore_search_range_is_persisted(qapp):
         window.close()
 
 
+def test_search_range_change_keeps_checkboxes_but_recalculates_edited_values(qapp):
+    window = PoetoreWindow(
+        app_config={"poetore": {"search_stat_range": 0}}
+    )
+    try:
+        original = TradeStatFilter(
+            "explicit.stat_fire_resistance", "+40% to Fire Resistance", 40,
+            "explicit", enabled=True, read_value=40,
+            ref="+#% to Fire Resistance",
+        )
+        window._populate_stat_filters((original,))
+        checkbox = window.mod_filter_tree.itemWidget(
+            window.mod_filter_tree.topLevelItem(0), _MOD_COLUMN_CHECK
+        ).findChild(QCheckBox, "modFilterCheckbox")
+        minimum = window.mod_filter_tree.itemWidget(
+            window.mod_filter_tree.topLevelItem(0), _MOD_COLUMN_MIN
+        )
+        checkbox.setChecked(False)
+        minimum.setText("30")
+
+        window._parsed_item = ParsedItem(
+            "Rings", "Rare", "Test Ring", "Ruby Ring", "accessory.ring"
+        )
+        window._resolved_trade_filters = Mock(return_value=(
+            replace(original, min_value=36),
+        ))
+        window.search_range_combo.setCurrentIndex(
+            window.search_range_combo.findData(10)
+        )
+
+        selected = window._selected_stat_filters()[0]
+        assert not selected.enabled
+        assert selected.min_value == 36
+        window._resolved_trade_filters.assert_called_once_with(
+            window._parsed_item, PRESET_FINISHED
+        )
+    finally:
+        window.close()
+
+
 def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
     window = PoetoreWindow()
     try:
