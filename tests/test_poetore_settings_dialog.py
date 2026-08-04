@@ -1,9 +1,12 @@
 from unittest.mock import patch
 
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import QApplication, QDialog, QLabel, QPushButton, QTabWidget
 
 from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 from src.poetore.trade import TradeLeague
+from src.ui.settings_dialog import HotkeyButton
 
 
 def test_poetore_settings_contains_common_trade_and_window_controls():
@@ -62,6 +65,23 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
         private_note.text()
         == "プライベートリーグで使う場合は、リーグ名を直接手打ちで入力してください。"
     )
+    dialog.close()
+
+
+def test_poetore_hotkey_controls_capture_the_next_pressed_key():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={"hotkeys": {"exit": "F5"}})
+    assert isinstance(dialog.exit_hotkey, HotkeyButton)
+    dialog.exit_hotkey.setChecked(True)
+    assert dialog.exit_hotkey.text() == "Press any key..."
+    event = QKeyEvent(
+        QKeyEvent.Type.KeyPress,
+        Qt.Key.Key_H,
+        Qt.KeyboardModifier.ControlModifier,
+    )
+    dialog.exit_hotkey.keyPressEvent(event)
+    assert dialog.exit_hotkey.key_text == "Ctrl+H"
+    assert dialog.get_settings()["hotkeys"]["exit"] == "Ctrl+H"
     dialog.close()
 
 

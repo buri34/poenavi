@@ -32,6 +32,7 @@ from src.poetore.trade import (
 )
 from src.utils.global_hotkeys import find_duplicate_hotkeys
 from src.ui.custom_command_settings import CustomCommandSettingsWidget
+from src.ui.settings_dialog import HotkeyButton
 
 
 class _LeagueSignals(QObject):
@@ -100,13 +101,19 @@ class PoetoreSettingsDialog(QDialog):
         hotkeys = hotkeys if isinstance(hotkeys, dict) else {}
         hotkey_group = QGroupBox("共通・ぽえとれホットキー")
         hotkey_form = QFormLayout(hotkey_group)
-        self.exit_hotkey = QLineEdit(hotkeys.get("exit", "F5"))
-        self.monastery_hotkey = QLineEdit(hotkeys.get("monastery", "F12"))
-        self.capture_hotkey = QLineEdit(hotkeys.get("poetore_capture", "alt+d"))
-        self.map_check_hotkey = QLineEdit(hotkeys.get("map_check", "alt+f"))
-        self.cheat_hotkey = QLineEdit(
+        self.exit_hotkey = HotkeyButton(hotkeys.get("exit", "F5"))
+        self.monastery_hotkey = HotkeyButton(hotkeys.get("monastery", "F12"))
+        self.capture_hotkey = HotkeyButton(hotkeys.get("poetore_capture", "alt+d"))
+        self.map_check_hotkey = HotkeyButton(hotkeys.get("map_check", "alt+f"))
+        self.cheat_hotkey = HotkeyButton(
             hotkeys.get("cheat_sheets_toggle", "shift+space")
         )
+        for button in (
+            self.exit_hotkey, self.monastery_hotkey, self.capture_hotkey,
+            self.map_check_hotkey, self.cheat_hotkey,
+        ):
+            # ぽえとれ画面の親スタイルを使い、操作だけぽえなびと共通化する。
+            button.setStyleSheet("")
         hotkey_form.addRow("キャラクター選択へ戻る:", self.exit_hotkey)
         hotkey_form.addRow(
             "（仮）修道院へ移動（/monastery）:", self.monastery_hotkey
@@ -378,11 +385,11 @@ class PoetoreSettingsDialog(QDialog):
         hotkeys = dict(self.current_config.get("hotkeys", {}))
         hotkeys.update(
             {
-                "exit": self.exit_hotkey.text().strip() or "none",
-                "monastery": self.monastery_hotkey.text().strip() or "none",
-                "poetore_capture": self.capture_hotkey.text().strip() or "none",
-                "map_check": self.map_check_hotkey.text().strip() or "none",
-                "cheat_sheets_toggle": self.cheat_hotkey.text().strip() or "none",
+                "exit": self.exit_hotkey.key_text,
+                "monastery": self.monastery_hotkey.key_text,
+                "poetore_capture": self.capture_hotkey.key_text,
+                "map_check": self.map_check_hotkey.key_text,
+                "cheat_sheets_toggle": self.cheat_hotkey.key_text,
             }
         )
         poetore = dict(self.current_config.get("poetore", {}))
@@ -405,11 +412,11 @@ class PoetoreSettingsDialog(QDialog):
 
     def accept(self):
         hotkeys = {
-            "exit": self.exit_hotkey.text(),
-            "monastery": self.monastery_hotkey.text(),
-            "poetore_capture": self.capture_hotkey.text(),
-            "map_check": self.map_check_hotkey.text(),
-            "cheat_sheets_toggle": self.cheat_hotkey.text(),
+            "exit": self.exit_hotkey.key_text,
+            "monastery": self.monastery_hotkey.key_text,
+            "poetore_capture": self.capture_hotkey.key_text,
+            "map_check": self.map_check_hotkey.key_text,
+            "cheat_sheets_toggle": self.cheat_hotkey.key_text,
         }
         if not self.custom_commands_widget.validate(hotkeys):
             return
