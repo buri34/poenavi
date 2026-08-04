@@ -123,20 +123,31 @@ def normalize_result_font_size(value) -> str:
 
 def _auto_mod_layout_sizes(
     *, profile_height: int, profile_mod_height: int,
+    profile_price_height: int, minimum_price_height: int,
     content_height: int, available_height: int, minimum_height: int,
-) -> tuple[int, int]:
-    """Mod行を優先して広げつつ、ウィンドウを作業領域内へ収める。"""
+) -> tuple[int, int, int]:
+    """Mod行へ価格欄の高さも振り替え、ウィンドウを作業領域内へ収める。"""
     wanted_mod_height = max(profile_mod_height, content_height)
-    wanted_window_height = profile_height + wanted_mod_height - profile_mod_height
+    fixed_height = profile_height - profile_mod_height - profile_price_height
+    wanted_window_height = fixed_height + wanted_mod_height + profile_price_height
     window_height = min(
         wanted_window_height,
         max(minimum_height, available_height - 16),
     )
-    mod_height = max(
-        80,
-        profile_mod_height + window_height - profile_height,
+    flexible_height = max(
+        80 + minimum_price_height,
+        window_height - fixed_height,
     )
-    return min(wanted_mod_height, mod_height), window_height
+    # Mod条件を優先する。ただし検索結果が操作不能にならない最低高は残す。
+    mod_height = min(
+        wanted_mod_height,
+        max(80, flexible_height - minimum_price_height),
+    )
+    price_height = max(
+        minimum_price_height,
+        min(profile_price_height, flexible_height - mod_height),
+    )
+    return mod_height, price_height, window_height
 _SPECIAL_CHIP_FILTER_IDS = {
     "property.map_tier", "property.area_level", "property.heist_wings",
     "property.base_percentile",
@@ -1919,15 +1930,26 @@ class PoetoreWindow(QWidget):
             self._visible_mod_content_height()
             if self.mod_filter_tree.isVisible() else profile["mod_height"]
         )
-        mod_height, window_height = _auto_mod_layout_sizes(
+        related_visible = not self.related_items_panel.isHidden()
+        price_height = profile["price_height"]
+        if related_visible:
+            price_height = max(
+                120,
+                price_height
+                - self._scaled_display_value(_RELATED_ITEMS_PRICE_HEIGHT_REDUCTION),
+            )
+        mod_height, price_height, window_height = _auto_mod_layout_sizes(
             profile_height=profile["height"],
             profile_mod_height=profile["mod_height"],
+            profile_price_height=price_height,
+            minimum_price_height=self._scaled_display_value(120),
             content_height=content_height,
             available_height=available.height(),
             minimum_height=profile["minimum_height"],
         )
         self.mod_filter_tree.setMinimumHeight(mod_height)
         self.mod_filter_tree.setMaximumHeight(mod_height)
+        self.price_list.setMinimumHeight(price_height)
         self.resize(max(self.width(), profile["width"]), window_height)
         if self.y() < available.top():
             self.move(self.x(), available.top())
@@ -2567,6 +2589,7 @@ class PoetoreWindow(QWidget):
                 - self._scaled_display_value(_RELATED_ITEMS_PRICE_HEIGHT_REDUCTION),
             )
         self.price_list.setMinimumHeight(price_height)
+        self._adjust_window_height_to_mod_rows()
 
     def _open_poe_ninja_url(self):
         if self._last_poe_ninja_url:

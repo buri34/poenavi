@@ -1266,17 +1266,45 @@ def test_auto_mod_layout_expands_until_available_height():
     assert _auto_mod_layout_sizes(
         profile_height=900,
         profile_mod_height=250,
+        profile_price_height=300,
+        minimum_price_height=120,
         content_height=430,
         available_height=1200,
         minimum_height=620,
-    ) == (430, 1080)
+    ) == (430, 300, 1080)
     assert _auto_mod_layout_sizes(
         profile_height=900,
         profile_mod_height=250,
+        profile_price_height=300,
+        minimum_price_height=120,
         content_height=600,
         available_height=1000,
         minimum_height=620,
-    ) == (334, 984)
+    ) == (514, 120, 984)
+
+
+def test_auto_mod_layout_borrows_height_from_price_results_on_fhd():
+    assert _auto_mod_layout_sizes(
+        profile_height=1039,
+        profile_mod_height=250,
+        profile_price_height=434,
+        minimum_price_height=120,
+        content_height=330,
+        available_height=1040,
+        minimum_height=620,
+    ) == (330, 339, 1024)
+
+
+def test_auto_mod_layout_keeps_related_items_budget_on_fhd():
+    assert _auto_mod_layout_sizes(
+        profile_height=1039,
+        profile_mod_height=250,
+        profile_price_height=254,
+        minimum_price_height=120,
+        content_height=330,
+        available_height=1040,
+        minimum_height=620,
+    ) == (330, 159, 1024)
 
 def test_checked_hidden_unique_mutation_is_sent_as_exact_filter(qapp):
     window = PoetoreWindow()
