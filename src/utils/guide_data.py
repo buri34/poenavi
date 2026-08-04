@@ -28,7 +28,6 @@ DEFAULT_GUIDE = {
 }
 
 _GUIDE_DATA_CACHE: dict[str, tuple[int, dict]] = {}
-_TEMP_ACT10_RELIQUARY_AUTHORING = True
 
 
 def get_guide_dir():
@@ -82,10 +81,6 @@ def save_guide_data(data: dict, poe_version: str = POE1):
         if (
             poe_version == POE1
             and (
-                # Act 10「聖廟」の執筆期間中は通常の開発BATでも必ず退避する。
-                # 執筆完了後、編集ボタンの一時許可と一緒に削除する。
-                _TEMP_ACT10_RELIQUARY_AUTHORING
-                or
                 os.environ.get("POENAVI_ACT1_GUIDE_DEV") == "1"
                 or bool(os.environ.get("POENAVI_GUIDE_DEV_ZONE_ID", "").strip())
             )

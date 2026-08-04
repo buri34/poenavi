@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 
 import pytest
 from PySide6.QtWidgets import QApplication, QPushButton
@@ -38,34 +37,20 @@ def test_settings_shows_act1_editor_buttons_only_in_dev_mode(monkeypatch, qapp):
 
     tooltips = [button.toolTip() for button in dialog.findChildren(QPushButton)]
 
-    assert tooltips.count("公式ガイドを編集") == 16
-    assert tooltips.count("みになびを編集") == 16
+    assert tooltips.count("公式ガイドを編集") == 15
+    assert tooltips.count("みになびを編集") == 15
     dialog.close()
 
 
-def test_settings_shows_only_temporary_act10_editor_buttons_in_normal_mode(monkeypatch, qapp):
+def test_settings_hides_official_editor_buttons_in_normal_mode(monkeypatch, qapp):
     monkeypatch.delenv("POENAVI_ACT1_GUIDE_DEV", raising=False)
     monkeypatch.delenv("POENAVI_GUIDE_DEV_ZONE_ID", raising=False)
     dialog = SettingsDialog(current_config={"poe_version": POE1})
 
     tooltips = [button.toolTip() for button in dialog.findChildren(QPushButton)]
-    texts = [button.text() for button in dialog.findChildren(QPushButton)]
-
-    assert tooltips.count("公式ガイドを編集") == 1
-    assert tooltips.count("みになびを編集") == 1
-    assert texts.count("公式ガイド") == 1
-    assert texts.count("みになび") == 1
+    assert "公式ガイドを編集" not in tooltips
+    assert "みになびを編集" not in tooltips
     dialog.close()
-
-
-def test_temporary_authoring_buttons_are_limited_to_act10_reliquary(monkeypatch, qapp):
-    monkeypatch.delenv("POENAVI_ACT1_GUIDE_DEV", raising=False)
-    monkeypatch.delenv("POENAVI_GUIDE_DEV_ZONE_ID", raising=False)
-
-    assert _guide_dev_editor_enabled(POE1, "act10_area12")
-    assert not _guide_dev_editor_enabled(POE1, "act10_area5")
-    assert not _guide_dev_editor_enabled(POE1, "act5_area12")
-    assert not _guide_dev_editor_enabled(POE2, "act10_area12")
 
 
 def test_settings_shows_only_requested_act10_guide_editor(monkeypatch, qapp):
@@ -87,16 +72,6 @@ def test_settings_shows_only_requested_act10_guide_editor(monkeypatch, qapp):
     dialog.close()
 
 
-def test_act10_guide_authoring_has_dedicated_launcher():
-    launcher = (
-        Path(__file__).resolve().parents[1]
-        / "run_guide_authoring_act10_area12.bat"
-    ).read_text(encoding="utf-8")
-
-    assert 'POENAVI_GUIDE_DEV_ZONE_ID=act10_area12' in launcher
-    assert 'POENAVI_USER_DATA_DIR=%~dp0.dev-user-data-guide-act10-area12' in launcher
-
-
 def test_dev_save_creates_backup_before_overwriting(monkeypatch, tmp_path):
     path = tmp_path / "guide_data.json"
     original = {"act1_area1": {"objective": "before"}}
@@ -114,7 +89,7 @@ def test_dev_save_creates_backup_before_overwriting(monkeypatch, tmp_path):
     assert json.loads(path.read_text(encoding="utf-8")) == updated
 
 
-def test_temporary_authoring_build_always_backs_up_poe1_guide(monkeypatch, tmp_path):
+def test_normal_save_does_not_create_dev_backup(monkeypatch, tmp_path):
     path = tmp_path / "guide_data.json"
     path.write_text("{}", encoding="utf-8")
     monkeypatch.delenv("POENAVI_ACT1_GUIDE_DEV", raising=False)
@@ -122,8 +97,7 @@ def test_temporary_authoring_build_always_backs_up_poe1_guide(monkeypatch, tmp_p
 
     guide_data.save_guide_data({"saved": True}, POE1)
 
-    backups = list(tmp_path.glob("guide_data.backup-before-guide-edit-*.json"))
-    assert len(backups) == 1
+    assert not list(tmp_path.glob("guide_data.backup-before-guide-edit-*.json"))
 
 
 def test_requested_zone_dev_save_creates_backup(monkeypatch, tmp_path):

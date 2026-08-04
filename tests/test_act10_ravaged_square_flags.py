@@ -41,7 +41,7 @@ class Act10RavagedSquareFlagsTest(unittest.TestCase):
         self.assertEqual(act10_reliquary[0]["id"], "act10_area12")
         self.assertEqual(desecrated[0]["id"], "act10_area7")
 
-    def test_part2_mode_resolves_reliquary_to_act10_empty_guide_slot(self):
+    def test_part2_mode_resolves_reliquary_to_act10_authored_guide(self):
         from src.ui.main_window import MainWindow
 
         window = SimpleNamespace(
@@ -55,7 +55,8 @@ class Act10RavagedSquareFlagsTest(unittest.TestCase):
         guide = get_zone_guide(guide_data, zone_id, visit=1)
 
         self.assertEqual(zone_id, "act10_area12")
-        self.assertIsNone(guide)
+        self.assertIn("このエリアの攻略は不要です", guide["objective"])
+        self.assertEqual(guide["mini_navi"]["text"], guide["objective"])
 
     def test_controlblocks_two_flags_and_three_flags_select_different_guides(self):
         guide_data = {
