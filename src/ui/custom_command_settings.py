@@ -34,6 +34,8 @@ def custom_command_hotkeys(commands) -> dict[str, str]:
 
 
 class CustomCommandSettingsWidget(QWidget):
+    ROW_HEIGHT = 38
+
     def __init__(self, commands=None, parent=None, theme=None):
         super().__init__(parent)
         self.theme = theme or POENAVI_THEME
@@ -72,6 +74,7 @@ class CustomCommandSettingsWidget(QWidget):
         command = command or {"enabled": True, "name": "", "hotkey": "none", "command": "/"}
         row = self.table.rowCount()
         self.table.insertRow(row)
+        self.table.setRowHeight(row, self.ROW_HEIGHT)
         enabled = QCheckBox()
         enabled.setChecked(bool(command.get("enabled", True)))
         holder = QWidget()
