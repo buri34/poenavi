@@ -3374,16 +3374,10 @@ class PoetoreWindow(QWidget):
         socket_text = item.properties.get("ソケット") or item.properties.get("Sockets") or ""
         groups = re.findall(r"[RGBW](?:-[RGBW])*", socket_text.upper())
         linked = max((len(group.split("-")) for group in groups), default=0)
-        six_link_classes = {
-            "鎧", "Body Armours", "弓", "Bows", "両手剣", "Two Hand Swords",
-            "両手斧", "Two Hand Axes", "両手メイス", "Two Hand Maces",
-            "スタッフ", "Staves", "ウォースタッフ", "Warstaves",
-        }
-        exceptional_base = item.base_type.casefold() in {"gnarled branch", "fishing rod"}
-        visible = linked == 6 and item.item_class in six_link_classes and not exceptional_base
+        visible = linked >= 1 and item.category in {"weapon", "armour"}
         self.links_tag.setVisible(visible)
-        self.links_edit.setText("6" if visible else "")
-        self._set_links_filter_enabled(visible)
+        self.links_edit.setText(str(linked) if visible else "")
+        self._set_links_filter_enabled(visible and linked in {5, 6})
 
     def _toggle_links_filter(self):
         self._set_links_filter_enabled(not getattr(self, "_links_filter_enabled", False))
@@ -3833,7 +3827,7 @@ class PoetoreWindow(QWidget):
                 continue
             if stat_filter.stat_id == "property.links" and not self.links_tag.isHidden():
                 continue
-            if stat_filter.stat_id == "property.sockets" and not self.links_tag.isHidden():
+            if stat_filter.stat_id == "property.sockets":
                 continue
             if stat_filter.kind == "influence":
                 continue

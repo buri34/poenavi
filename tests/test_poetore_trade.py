@@ -1683,7 +1683,7 @@ Sacred Chainmail
         filters = resolve_trade_stat_filters(item)
     details = {row.stat_id: (row.min_value, row.enabled) for row in filters}
     assert details["property.quality"] == (21.0, True)
-    assert details["property.sockets"] == (6.0, True)
+    assert "property.sockets" not in details
     assert details["property.links"] == (6.0, False)
     assert "property.white_sockets" not in details
     query = build_search_query(item, "Sacred Chainmail", filters)["query"]
@@ -1692,8 +1692,7 @@ Sacred Chainmail
     assert "mirrored" not in misc
     assert "corrupted" not in misc
     assert "split" not in misc
-    sockets = query["filters"]["socket_filters"]["filters"]
-    assert sockets == {"sockets": {"min": 6}}
+    assert "socket_filters" not in query["filters"]
     assert query["stats"][0]["filters"] == []
 
     non_mirrored = build_search_query(
@@ -1828,7 +1827,7 @@ def test_split_uncorrupted_item_defaults_to_uncorrupted_and_includes_split():
     assert "split" not in misc
 
 
-def test_quality_20_and_non_six_socket_count_are_visible_but_not_preselected():
+def test_quality_20_and_non_six_link_count_is_visible_but_not_preselected():
     item = parse_item_text(ITEM.replace(
         "Physical Damage: 108-181 (augmented)",
         "Quality: +20% (augmented)\nSockets: R-G B\nPhysical Damage: 108-181 (augmented)",
@@ -1837,8 +1836,7 @@ def test_quality_20_and_non_six_socket_count_are_visible_but_not_preselected():
         filters = resolve_trade_stat_filters(item)
     details = {row.stat_id: row for row in filters}
     assert details["property.quality"].enabled is False
-    assert details["property.sockets"].min_value == 3.0
-    assert details["property.sockets"].enabled is False
+    assert "property.sockets" not in details
     assert details["property.links"].min_value == 2.0
     assert details["property.links"].enabled is False
 
@@ -3347,7 +3345,7 @@ def test_common_search_range_recalculates_from_read_value():
     assert apply_search_range((row,), 20)[0].min_value == 80
 
 
-def test_search_range_does_not_reduce_discrete_socket_counts():
+def test_search_range_does_not_reduce_discrete_link_count():
     item = parse_item_text("""アイテムクラス: 両手斧
 レアリティ: レア
 魂の引き裂き
@@ -3364,7 +3362,7 @@ def test_search_range_does_not_reduce_discrete_socket_counts():
         for row in apply_search_range(filters, 10, item)
         if row.stat_id.startswith("property.")
     }
-    assert adjusted["property.sockets"].min_value == 6
+    assert "property.sockets" not in adjusted
     assert adjusted["property.links"].min_value == 5
     assert "property.white_sockets" not in adjusted
 

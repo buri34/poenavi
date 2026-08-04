@@ -4226,15 +4226,15 @@ Cardinal Round Shield
         window.close()
 
 
-@pytest.mark.parametrize(("item_class", "base_type", "visible"), [
-    ("鎧", "Sacred Chainmail", True),
-    ("弓", "Spine Bow", True),
-    ("両手剣", "Exquisite Blade", True),
-    ("スタッフ", "Gnarled Branch", False),
-    ("ワンド", "Imbued Wand", False),
+@pytest.mark.parametrize(("item_class", "base_type"), [
+    ("鎧", "Sacred Chainmail"),
+    ("弓", "Spine Bow"),
+    ("両手剣", "Exquisite Blade"),
+    ("スタッフ", "Gnarled Branch"),
+    ("ワンド", "Imbued Wand"),
 ])
-def test_six_link_chip_is_limited_to_body_armour_and_normal_two_handers(
-    qapp, item_class, base_type, visible,
+def test_link_chip_is_shown_for_socketed_weapons_and_armour(
+    qapp, item_class, base_type,
 ):
     window = PoetoreWindow()
     try:
@@ -4250,20 +4250,19 @@ Test Item
         window._parsed_item = item
         window._configure_links(item)
 
-        assert window.links_tag.isHidden() is (not visible)
-        assert window._selected_links() == (6 if visible else None)
-        if visible:
-            window.links_toggle.click()
-            assert window._selected_links() is None
-            window.links_edit.setFocus()
-            window.links_edit.selectAll()
-            QTest.keyClicks(window.links_edit, "5")
-            assert window._selected_links() == 5
+        assert not window.links_tag.isHidden()
+        assert window._selected_links() == 6
+        window.links_toggle.click()
+        assert window._selected_links() is None
+        window.links_edit.setFocus()
+        window.links_edit.selectAll()
+        QTest.keyClicks(window.links_edit, "5")
+        assert window._selected_links() == 5
     finally:
         window.close()
 
 
-def test_six_link_chip_hides_redundant_socket_count_from_mod_list(qapp):
+def test_link_chip_always_replaces_link_and_socket_rows_for_equipment(qapp):
     window = PoetoreWindow()
     try:
         six_link_armour = parse_item_text("""アイテムクラス: 鎧
@@ -4299,13 +4298,43 @@ Sacred Chainmail
             TradeStatFilter("property.sockets", "ソケット数", 3.0, "socket", False),
             TradeStatFilter("property.links", "最大リンク数", 2.0, "socket", False),
         ))
-        assert window.links_tag.isHidden()
+        assert not window.links_tag.isHidden()
+        assert window.links_edit.text() == "2"
+        assert window._selected_links() is None
         stat_ids = [
             window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole)
             for index in range(window.mod_filter_tree.topLevelItemCount())
         ]
-        assert "property.sockets" in stat_ids
-        assert "property.links" in stat_ids
+        assert "property.sockets" not in stat_ids
+        assert "property.links" not in stat_ids
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(("socket_text", "value", "enabled"), [
+    ("R-R-R-R-R", 5, True),
+    ("R-R-R-R-R-R", 6, True),
+    ("R-R-R-R G", 4, False),
+    ("R-G B", 2, False),
+])
+def test_link_chip_defaults_only_five_and_six_links_on(
+    qapp, socket_text, value, enabled,
+):
+    window = PoetoreWindow()
+    try:
+        item = parse_item_text(f"""Item Class: Body Armours
+Rarity: Rare
+Test Item
+Sacred Chainmail
+--------
+Sockets: {socket_text}
+--------
+Item Level: 86
+""")
+        window._configure_links(item)
+        assert not window.links_tag.isHidden()
+        assert window.links_edit.text() == str(value)
+        assert window._selected_links() == (value if enabled else None)
     finally:
         window.close()
 

@@ -1091,11 +1091,7 @@ def _item_detail_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         filters.append(TradeStatFilter(
             "property.quality", "品質", quality, "property", quality > 20,
         ))
-    sockets, links = _socket_summary(item)
-    if sockets:
-        filters.append(TradeStatFilter(
-            "property.sockets", "ソケット数", float(sockets), "socket", sockets >= 6,
-        ))
+    _sockets, links = _socket_summary(item)
     if links > 1:
         filters.append(TradeStatFilter(
             "property.links", "最大リンク数", float(links), "socket", False,
