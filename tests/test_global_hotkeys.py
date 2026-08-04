@@ -5,6 +5,7 @@ from src.utils.global_hotkeys import (
     find_duplicate_hotkeys,
     hotkey_key_name,
 )
+from src.utils.internal_key_input import internal_key_input
 
 
 class FakeListener:
@@ -124,3 +125,26 @@ def test_escape_is_available_for_common_cheat_sheet_overlay():
     listener_box[0].on_press(SimpleNamespace(name="esc"))
 
     assert emitted == ["cheat_sheets_escape"]
+
+
+def test_service_ignores_keys_sent_by_the_application():
+    listeners = []
+    service = GlobalHotkeyService(
+        {"custom_command:0": "ctrl+c"},
+        listener_factory=lambda **kwargs: listeners.append(FakeListener(**kwargs)) or listeners[-1],
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+
+    with internal_key_input(cooldown_seconds=0):
+        listeners[0].on_press(SimpleNamespace(name="ctrl"))
+        listeners[0].on_press(SimpleNamespace(char="c", vk=ord("C")))
+        listeners[0].on_release(SimpleNamespace(char="c", vk=ord("C")))
+        listeners[0].on_release(SimpleNamespace(name="ctrl"))
+
+    assert emitted == []
+
+    listeners[0].on_press(SimpleNamespace(name="ctrl"))
+    listeners[0].on_press(SimpleNamespace(char="c", vk=ord("C")))
+    assert emitted == ["custom_command:0"]

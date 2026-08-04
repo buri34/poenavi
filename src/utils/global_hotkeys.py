@@ -2,6 +2,8 @@
 
 from PySide6.QtCore import QObject, Signal
 
+from src.utils.internal_key_input import is_internal_key_input
+
 
 def find_duplicate_hotkeys(hotkeys: dict[str, str]) -> dict[str, list[str]]:
     """未割り当てを除き、同じキーへ割り当てられた操作を返す。"""
@@ -86,6 +88,8 @@ class GlobalHotkeyService(QObject):
             pending_releases = {}
 
             def on_press(key):
+                if is_internal_key_input():
+                    return
                 key_name = hotkey_key_name(key)
                 if key_name is None:
                     return
@@ -120,6 +124,9 @@ class GlobalHotkeyService(QObject):
                 if modifier:
                     pressed_modifiers.discard(modifier)
                 pressed_keys.discard(modifier or key_name)
+                if is_internal_key_input():
+                    triggered_combos.clear()
+                    return
                 for combo, required_keys in tuple(pending_releases.items()):
                     if not required_keys.intersection(pressed_keys):
                         pending_releases.pop(combo, None)

@@ -2563,14 +2563,17 @@ class PoetoreWindow(QWidget):
         self._send_copy(self._capture_copy_keys, self._capture_item_copy)
 
     def _send_copy(self, keys, callback):
+        from src.utils.internal_key_input import internal_key_input
+
         trace = self._pending_performance_trace
         if trace is not None:
             trace.mark("copy_keys_started")
         previous_token = clipboard_change_token(QApplication.clipboard())
-        for key in keys:
-            self._capture_keyboard.press(key)
-        for key in reversed(keys):
-            self._capture_keyboard.release(key)
+        with internal_key_input():
+            for key in keys:
+                self._capture_keyboard.press(key)
+            for key in reversed(keys):
+                self._capture_keyboard.release(key)
         if trace is not None:
             trace.mark(
                 "copy_keys_sent", clipboard_poll_ms=10, callback_timeout_ms=300,

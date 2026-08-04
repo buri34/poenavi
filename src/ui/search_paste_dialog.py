@@ -131,6 +131,8 @@ class SearchStringPasteTestDialog(QDialog):
         QTimer.singleShot(650, lambda: self._paste_to_search(text))
 
     def _paste_to_search(self, text):
+        from src.utils.internal_key_input import internal_key_input
+
         try:
             controller = pynput_keyboard.Controller()
             ctrl = pynput_keyboard.Key.ctrl
@@ -143,16 +145,17 @@ class SearchStringPasteTestDialog(QDialog):
 
             if self.owner is not None:
                 self.owner._debug_search(f"send keys start text={text!r} foreground={get_foreground_window()} title={self.owner._window_title(get_foreground_window())!r}")
-            with controller.pressed(ctrl):
-                if self.owner is not None:
-                    self.owner._debug_search("press Ctrl+F")
-                tap('f')
-            time.sleep(0.20)
-            with controller.pressed(ctrl):
-                if self.owner is not None:
-                    self.owner._debug_search("press Ctrl+V")
-                tap('v')
-            time.sleep(0.08)
+            with internal_key_input():
+                with controller.pressed(ctrl):
+                    if self.owner is not None:
+                        self.owner._debug_search("press Ctrl+F")
+                    tap('f')
+                time.sleep(0.20)
+                with controller.pressed(ctrl):
+                    if self.owner is not None:
+                        self.owner._debug_search("press Ctrl+V")
+                    tap('v')
+                time.sleep(0.08)
             print(f"[SEARCH TEST] pasted: {text}")
         except Exception as exc:
             print(f"[SEARCH TEST] paste failed: {exc}")

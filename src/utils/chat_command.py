@@ -31,6 +31,7 @@ def send_chat_command(command, *, clipboard=None, controller=None, sleep_fn=time
         return False
     try:
         from pynput import keyboard
+        from src.utils.internal_key_input import internal_key_input
 
         clipboard = clipboard or QApplication.clipboard()
         original_mime = clone_clipboard_mime_data(clipboard.mimeData())
@@ -41,12 +42,13 @@ def send_chat_command(command, *, clipboard=None, controller=None, sleep_fn=time
             controller.press(key)
             controller.release(key)
 
-        tap(keyboard.Key.enter)
-        sleep_fn(0.05)
-        with controller.pressed(keyboard.Key.ctrl):
-            tap("v")
-        sleep_fn(0.05)
-        tap(keyboard.Key.enter)
+        with internal_key_input():
+            tap(keyboard.Key.enter)
+            sleep_fn(0.05)
+            with controller.pressed(keyboard.Key.ctrl):
+                tap("v")
+            sleep_fn(0.05)
+            tap(keyboard.Key.enter)
         QTimer.singleShot(500, lambda: clipboard.setMimeData(original_mime))
         return True
     except Exception as exc:

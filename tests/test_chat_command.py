@@ -4,6 +4,7 @@ from unittest.mock import patch
 from PySide6.QtCore import QMimeData
 
 from src.utils.chat_command import send_chat_command
+from src.utils.internal_key_input import is_internal_key_input
 
 
 class FakeClipboard:
@@ -28,9 +29,11 @@ class FakeController:
         self.events = []
 
     def press(self, key):
+        assert is_internal_key_input()
         self.events.append(("press", str(key)))
 
     def release(self, key):
+        assert is_internal_key_input()
         self.events.append(("release", str(key)))
 
     @contextmanager

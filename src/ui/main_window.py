@@ -3040,6 +3040,9 @@ class MainWindow(QMainWindow):
 
             def on_press(key):
                 try:
+                    from src.utils.internal_key_input import is_internal_key_input
+                    if is_internal_key_input():
+                        return
                     key_name = _hotkey_key_name(key)
                     if key_name is None:
                         return
@@ -3093,6 +3096,7 @@ class MainWindow(QMainWindow):
                     print(f"Hotkey error: {e}")
 
             def on_release(key):
+                from src.utils.internal_key_input import is_internal_key_input
                 key_name = _hotkey_key_name(key)
                 if key_name is None:
                     return
@@ -3110,6 +3114,9 @@ class MainWindow(QMainWindow):
                 else:
                     normalized_key = key_name
                 pressed_keys.discard(normalized_key)
+                if is_internal_key_input():
+                    triggered_combos.clear()
+                    return
                 for combo, pending in tuple(pending_poetore_releases.items()):
                     required_keys, action = pending
                     if not required_keys.intersection(pressed_keys):
@@ -3438,6 +3445,8 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(450, lambda: self._paste_to_poe_search_field(text))
 
     def _paste_to_poe_search_field(self, text: str):
+        from src.utils.internal_key_input import internal_key_input
+
         try:
             controller = pynput_keyboard.Controller()
             ctrl = pynput_keyboard.Key.ctrl
@@ -3446,12 +3455,13 @@ class MainWindow(QMainWindow):
                 controller.press(key)
                 controller.release(key)
 
-            with controller.pressed(ctrl):
-                tap('f')
-            time.sleep(0.20)
-            with controller.pressed(ctrl):
-                tap('v')
-            time.sleep(0.08)
+            with internal_key_input():
+                with controller.pressed(ctrl):
+                    tap('f')
+                time.sleep(0.20)
+                with controller.pressed(ctrl):
+                    tap('v')
+                time.sleep(0.08)
             print(f"[POE SEARCH] pasted: {text}")
         except Exception as exc:
             print(f"[POE SEARCH] paste failed: {exc}")

@@ -239,14 +239,17 @@ class MapCheckWindow(QDialog):
         self._start_copy(self._capture_generation)
 
     def _start_copy(self, generation):
+        from src.utils.internal_key_input import internal_key_input
+
         if generation != self._capture_generation or self._copy_started:
             return
         self._copy_started = True
         before = clipboard_change_token(QApplication.clipboard())
-        for key in self._copy_keys:
-            self._keyboard.press(key)
-        for key in reversed(self._copy_keys):
-            self._keyboard.release(key)
+        with internal_key_input():
+            for key in self._copy_keys:
+                self._keyboard.press(key)
+            for key in reversed(self._copy_keys):
+                self._keyboard.release(key)
         self._wait_clipboard(before, generation, 0)
 
     def _wait_clipboard(self, before, generation, elapsed):
