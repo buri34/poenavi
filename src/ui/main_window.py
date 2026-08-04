@@ -208,6 +208,7 @@ class MainWindow(QMainWindow):
         self.detached_panel_windows[panel_id] = panel_window
         panel_window.apply_window_settings(self.config)
         panel_window.show()
+        self._keep_detached_panel_header_on_screen(panel_window)
         self._save_detached_panel_state(panel_id)
         self._adjust_main_window_after_panel_change()
 
@@ -363,18 +364,49 @@ class MainWindow(QMainWindow):
                 and isinstance(height, int) and height >= 180
             ):
                 saved_geometry = QRect(x, y, width, height)
-                screens = QApplication.screens()
-                visible = any(screen.availableGeometry().intersects(saved_geometry) for screen in screens)
-                if visible:
-                    panel_window.setGeometry(saved_geometry)
-                elif screens:
-                    available = screens[0].availableGeometry()
-                    panel_window.setGeometry(
-                        available.center().x() - width // 2,
-                        available.center().y() - height // 2,
-                        width,
-                        height,
-                    )
+                panel_window.setGeometry(saved_geometry)
+                self._keep_detached_panel_header_on_screen(panel_window)
+
+    @staticmethod
+    def _geometry_with_visible_header(
+        geometry: QRect, header_height: int, available_geometries: list[QRect]
+    ) -> QRect:
+        """操作ヘッダー全体が、最も近いモニターの作業領域へ収まる位置を返す。"""
+        if not available_geometries:
+            return QRect(geometry)
+
+        header = QRect(geometry.x(), geometry.y(), geometry.width(), max(1, header_height))
+
+        def intersection_area(available: QRect) -> int:
+            overlap = available.intersected(header)
+            return max(0, overlap.width()) * max(0, overlap.height())
+
+        target = max(available_geometries, key=intersection_area)
+        if intersection_area(target) == 0:
+            # 完全に画面外なら、ウィンドウ中心に最も近いモニターを選ぶ。
+            center = geometry.center()
+            target = min(
+                available_geometries,
+                key=lambda available: (
+                    available.center().x() - center.x()
+                ) ** 2 + (
+                    available.center().y() - center.y()
+                ) ** 2,
+            )
+
+        max_x = target.right() - geometry.width() + 1
+        x = target.left() if max_x < target.left() else min(max(geometry.x(), target.left()), max_x)
+        max_y = target.bottom() - header.height() + 1
+        y = target.top() if max_y < target.top() else min(max(geometry.y(), target.top()), max_y)
+        return QRect(x, y, geometry.width(), geometry.height())
+
+    def _keep_detached_panel_header_on_screen(self, panel_window):
+        available_geometries = [screen.availableGeometry() for screen in QApplication.screens()]
+        corrected = self._geometry_with_visible_header(
+            panel_window.geometry(), panel_window.header.height(), available_geometries
+        )
+        if corrected != panel_window.geometry():
+            panel_window.setGeometry(corrected)
 
     def _restore_minimized_panels(self):
         for panel_id, record in self.panel_registry.items():

@@ -94,6 +94,7 @@ def test_debounced_detached_panel_save_keeps_the_scheduled_callback(monkeypatch)
 def test_restore_detached_panels_uses_saved_geometry(monkeypatch):
     window, _content, _layout = _window()
     monkeypatch.setattr(ConfigManager, "save_config", lambda _config: None)
+    monkeypatch.setattr(window, "_keep_detached_panel_header_on_screen", lambda _panel: None)
     window.config["detached_panels"]["timer"] = {
         "detached": True,
         "x": 41,
@@ -105,6 +106,36 @@ def test_restore_detached_panels_uses_saved_geometry(monkeypatch):
     window._restore_detached_panels()
 
     assert window.detached_panel_windows["timer"].geometry().getRect() == (41, 52, 420, 280)
+
+
+def test_visible_header_geometry_clamps_top_and_right_edges():
+    corrected = MainWindow._geometry_with_visible_header(
+        QRect(1700, -80, 500, 600),
+        42,
+        [QRect(0, 0, 1920, 1040)],
+    )
+
+    assert corrected.getRect() == (1420, 0, 500, 600)
+
+
+def test_visible_header_geometry_supports_negative_monitor_coordinates():
+    corrected = MainWindow._geometry_with_visible_header(
+        QRect(-2200, -120, 640, 700),
+        40,
+        [QRect(-1920, 0, 1920, 1040), QRect(0, 0, 2560, 1400)],
+    )
+
+    assert corrected.getRect() == (-1920, 0, 640, 700)
+
+
+def test_visible_header_geometry_uses_nearest_screen_when_fully_offscreen():
+    corrected = MainWindow._geometry_with_visible_header(
+        QRect(5000, 400, 480, 500),
+        40,
+        [QRect(-1920, 0, 1920, 1040), QRect(0, 0, 2560, 1400)],
+    )
+
+    assert corrected.getRect() == (2080, 400, 480, 500)
 
 
 def test_detached_panel_moves_from_its_header_drag_area():
