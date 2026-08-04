@@ -10,6 +10,14 @@ DEFAULT_ARCHIVE = Path("vendor-sources/awakened-poe-trade-31b3e0e8.tar.gz")
 DEFAULT_METADATA = Path("data/poetore/mod_metadata.json")
 DEFAULT_OUTPUT = Path("data/poetore/map_mods.json")
 
+# Awakened marks this generic item stat as ``fromAreaMods``, but it is not
+# available under the official Trade site's Map stat category.  Keeping it in
+# Map Check would therefore expose a modifier that cannot occur on maps.
+NON_MAP_AREA_STAT_IDS = {
+    "explicit.stat_1953432004",
+    "implicit.stat_1953432004",
+}
+
 
 def _flatten_stats(rows: list[dict]) -> list[dict]:
     flattened = []
@@ -52,8 +60,15 @@ def build_catalog(archive: Path, metadata_path: Path) -> dict:
         scope = stat.get("fromAreaMods")
         if not scope:
             continue
+        trade_ids = (stat.get("trade") or {}).get("ids") or {}
+        if any(
+            stat_id in NON_MAP_AREA_STAT_IDS
+            for stat_ids in trade_ids.values()
+            for stat_id in stat_ids
+        ):
+            continue
         pairs = []
-        for kind, stat_ids in ((stat.get("trade") or {}).get("ids") or {}).items():
+        for kind, stat_ids in trade_ids.items():
             for stat_id in stat_ids:
                 if (kind, stat_id) in by_id:
                     pairs.append((kind, stat_id))

@@ -1924,16 +1924,6 @@
       ]
     },
     {
-      "key": "explicit.stat_1953432004",
-      "ref": "Unaffected by Poison",
-      "japanese": "毒の影響を受けない",
-      "scope": "normal",
-      "stat_ids": [
-        "explicit.stat_1953432004",
-        "implicit.stat_1953432004"
-      ]
-    },
-    {
       "key": "explicit.stat_57434274",
       "ref": "#% increased Experience gain",
       "japanese": "獲得経験値が#%増加する (マップ)",

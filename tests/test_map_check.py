@@ -45,11 +45,12 @@ def test_map_check_position_keeps_side_and_centers_at_cursor_y_with_clamping():
 
 def test_catalog_matches_locked_awakened_area_mod_population():
     catalog = load_map_mod_catalog()
-    assert len(catalog) == 230
-    assert sum(row.scope == "normal" for row in catalog) == 170
+    assert len(catalog) == 229
+    assert sum(row.scope == "normal" for row in catalog) == 169
     assert sum(row.scope == "heist_exclusive" for row in catalog) == 27
     assert sum(row.scope == "ubermap_exclusive" for row in catalog) == 33
     assert all(row.stat_ids and row.japanese for row in catalog)
+    assert all("stat_1953432004" not in row.stat_ids for row in catalog)
 
 
 def test_catalog_is_reproducible_from_locked_awakened_and_poetore_metadata():
@@ -309,8 +310,8 @@ def test_manager_uses_numeric_profiles_and_lists_current_plus_outdated_defaults(
     QApplication.instance() or QApplication([])
     dialog = MapModManagerDialog(default_map_check_config())
     assert [button.text() for button in dialog.profile_buttons] == ["1", "2", "3"]
-    assert dialog.table.rowCount() == 232
-    assert "全230件" in dialog.count_label.text()
+    assert dialog.table.rowCount() == 231
+    assert "全229件" in dialog.count_label.text()
     dialog.close()
 
 

@@ -177,7 +177,8 @@ Cluster Jewelはitem level帯、最適Passive数、Jewel Socket Mod非表示に�
 - Stat台帳へ、公式日本語Trade APIにも存在する新規ID 315件を追加
 - `items.ndjson`由来のGem、Unique固定Mod・アイコン、透視のオーブを含むアイテム定義を更新
 - `item-drop.json`由来の関連ドロップ・派生品グループを更新
-- Area Modカタログを229件から230件へ更新
+- Area Modカタログは229件を維持（公式TradeのMapカテゴリに存在しない
+  `Unaffected by Poison`は誤分類として除外）
 - Standardの完成品検索だけSplit品を自動除外せず、Exact相当のベース検索は非Splitへ限定
 
 入力commit、取得URL、SHA-256は`scripts/poetore-sources.lock.json`へ固定し、復旧用原本は
