@@ -347,15 +347,6 @@ RELATED_ITEM_QUERY_LABELS = {
     }): "ビーストクラフト素材：Modをリロール",
 }
 
-# Awakenedのitem-drop.jsonに旧ベース名が残っている関連品。poe.ninjaの
-# 現行variantと照合できるよう、派生台帳では現行ベース名へ正規化する。
-RELATED_ITEM_VARIANT_ALIASES = {
-    "Leviathan Greaves": "Titan Greaves",
-    "Warlock Boots": "Sorcerer Boots",
-    "Velour Boots": "Slink Boots",
-}
-
-
 def build_related_item_groups(items_lines: Iterable[str], drop_rows: Iterable[dict]) -> list[dict]:
     """Awakenedの関連品定義を、表示に必要な名前・variant・iconへ展開する。"""
     items = {}
@@ -382,12 +373,11 @@ def build_related_item_groups(items_lines: Iterable[str], drop_rows: Iterable[di
                 if ns == namespace and item_name == name
             ]
             row = candidates[0] if len(candidates) == 1 else None
-        resolved_variant = RELATED_ITEM_VARIANT_ALIASES.get(variant, variant)
         return {
             "id": query_id,
             "namespace": namespace,
             "name": name,
-            "variant": resolved_variant if separator else None,
+            "variant": variant if separator else None,
             "icon": str((row or {}).get("icon", "")),
         }
 

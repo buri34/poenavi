@@ -67,7 +67,7 @@ def test_japanese_trade_item_label_distinguishes_doryani_delusion_variants():
         ),
     ):
         assert japanese_trade_item_label(
-            "UNIQUE", "Doryani's Delusion", "Titan Greaves",
+            "UNIQUE", "Doryani's Delusion", "Leviathan Greaves",
         ) == "ドリヤニの妄想（タイタングリーヴ）"
 
 
