@@ -184,6 +184,24 @@ def test_stat_rule_extractor_drops_runtime_and_repoe_fields():
     assert rules["initial_source_sha256"] == "abc123"
 
 
+def test_default_metadata_uses_latest_reviewed_awakened_snapshot():
+    payload = json.loads(Path("data/poetore/mod_metadata.json").read_text(encoding="utf-8"))
+
+    assert payload["sources"]["awakened_poe_trade"]["revision"] == (
+        "31b3e0e8ba0a6bac2266603c2e170925c8f02b81"
+    )
+    assert payload["gems"]["coursing current support"]["max_level"] == 3
+    assert payload["unique_fixed_stats"]["heroic tragedy"] == ["Historic"]
+    assert any(
+        row["stat_id"] == "explicit.pseudo_timeless_jewel_zorath"
+        for row in payload["mods"]
+    )
+    assert any(
+        any(item["name"] == "Reclaimed Malevolence" for item in group["items"])
+        for group in payload["related_item_groups"]
+    )
+
+
 def test_builder_joins_awakened_and_japanese_by_trade_id_and_keeps_minimal_fields():
     awakened = [json.dumps({
         "ref": "+# to maximum Life", "better": 1,

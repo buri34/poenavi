@@ -6,12 +6,12 @@ from scripts.archive_awakened_source import sha256
 
 
 def test_preserved_awakened_source_matches_manifest_and_contains_dependencies():
-    archive = Path("vendor-sources/awakened-poe-trade-3c8e0320.tar.gz")
+    archive = Path("vendor-sources/awakened-poe-trade-31b3e0e8.tar.gz")
     manifest = json.loads(Path(
-        "vendor-sources/awakened-poe-trade-3c8e0320.json"
+        "vendor-sources/awakened-poe-trade-31b3e0e8.json"
     ).read_text(encoding="utf-8"))
 
-    assert manifest["revision"] == "3c8e0320ab3ea22d6dccc6cad48b5efaf94d1fe2"
+    assert manifest["revision"] == "31b3e0e8ba0a6bac2266603c2e170925c8f02b81"
     assert sha256(archive) == manifest["archive_sha256"]
     with tarfile.open(archive, "r:gz") as source:
         names = {name.rsplit("/", 1)[-1] for name in source.getnames()}

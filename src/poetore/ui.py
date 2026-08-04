@@ -2148,6 +2148,7 @@ class PoetoreWindow(QWidget):
             self._save_app_config(self._app_config)
         item = getattr(self, "_parsed_item", None)
         if item is not None:
+            self._refresh_hidden_split_default(item)
             self._poe_ninja_item_key = None
             self._queue_poe_ninja_price(item)
 
@@ -3064,11 +3065,29 @@ class PoetoreWindow(QWidget):
             or any(flag.startswith("influence:") for flag in item.flags)
             or any(modifier.kind == "fractured" for modifier in item.modifiers)
         )
-        self._hidden_include_split = not (craftable and not has_special_state)
+        self._split_item_is_craftable = craftable
+        self._split_item_has_special_state = has_special_state
+        self._refresh_hidden_split_default(item)
         is_mirrored = "mirrored" in item.flags
         self.mirrored_combo.setCurrentIndex(0)
         self.mirrored_combo.setVisible(is_mirrored)
         self._hidden_include_mirrored = not (craftable and "corrupted" not in item.flags)
+
+    def _refresh_hidden_split_default(self, item):
+        """Awakened準拠で、非表示のSplit条件をリーグ・プリセット別に決める。"""
+        if "split" in item.flags:
+            return
+        craftable = bool(getattr(self, "_split_item_is_craftable", False))
+        has_special_state = bool(getattr(self, "_split_item_has_special_state", False))
+        league = str(self._selected_trade_league() or "")
+        preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
+        exact = preset == PRESET_BASE or uses_dedicated_exact_preset(item)
+        auto_exclude = (
+            (league != "Standard" or exact)
+            and craftable
+            and not has_special_state
+        )
+        self._hidden_include_split = not auto_exclude
 
     def _configure_item_level(self, item, *, force: bool = False):
         """Awakenedのプリセット規則に合わせて共通ilvl条件を設定する。"""
@@ -3548,6 +3567,7 @@ class PoetoreWindow(QWidget):
         item = getattr(self, "_parsed_item", None)
         self._configure_magic_rarity_toggle(item)
         if item is not None:
+            self._refresh_hidden_split_default(item)
             self._configure_item_level(item, force=True)
             self._configure_quality(item)
             self._configure_influence_chips(item)

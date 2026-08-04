@@ -65573,6 +65573,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_4142376596",
+      "japanese": "火ダメージの#%を雷ダメージとして受ける"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_4147277532",
       "japanese": "ラリイングクライのバフの効果が#%増加する"
     },

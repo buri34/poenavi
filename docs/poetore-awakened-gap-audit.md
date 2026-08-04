@@ -165,3 +165,20 @@ Cluster Jewelはitem level帯、最適Passive数、Jewel Socket Mod非表示に�
   Mod判断、pseudo、ユニーク、Gem、Map、Heist等に対応」
 
 この監査はソース比較であり、Windows実機の配布ZIP／Alt+D最終確認は別の未完了項目として残す。
+
+## 2026-08-04 追加同期
+
+リリース前監査としてAwakened PoE Trade `31b3e0e8ba0a6bac2266603c2e170925c8f02b81`
+（v3.29.103）までを再比較した。内蔵WebView／Captcha、開発文書、中国語専用解析、
+内部リファクタリングはぽえとれへ直接移植する対象外とした。
+
+価格検索へ影響する差分は次のとおり反映した。
+
+- Stat台帳へ、公式日本語Trade APIにも存在する新規ID 315件を追加
+- `items.ndjson`由来のGem、Unique固定Mod・アイコン、透視のオーブを含むアイテム定義を更新
+- `item-drop.json`由来の関連ドロップ・派生品グループを更新
+- Area Modカタログを229件から230件へ更新
+- Standardの完成品検索だけSplit品を自動除外せず、Exact相当のベース検索は非Splitへ限定
+
+入力commit、取得URL、SHA-256は`scripts/poetore-sources.lock.json`へ固定し、復旧用原本は
+`vendor-sources/awakened-poe-trade-31b3e0e8.tar.gz`へ更新した。

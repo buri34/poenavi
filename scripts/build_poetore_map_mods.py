@@ -6,7 +6,7 @@ from pathlib import Path
 import tarfile
 
 
-DEFAULT_ARCHIVE = Path("vendor-sources/awakened-poe-trade-3c8e0320.tar.gz")
+DEFAULT_ARCHIVE = Path("vendor-sources/awakened-poe-trade-31b3e0e8.tar.gz")
 DEFAULT_METADATA = Path("data/poetore/mod_metadata.json")
 DEFAULT_OUTPUT = Path("data/poetore/map_mods.json")
 
@@ -75,7 +75,7 @@ def build_catalog(archive: Path, metadata_path: Path) -> dict:
     entries.sort(key=lambda row: (row["scope"], row["japanese"], row["key"]))
     return {
         "schema_version": 1,
-        "source_revision": "3c8e0320",
+        "source_revision": "31b3e0e8",
         "entries": entries,
     }
 

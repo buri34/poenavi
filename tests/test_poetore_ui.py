@@ -3001,6 +3001,44 @@ def test_hidden_split_filter_does_not_auto_exclude_fractured_item(qapp):
         window.close()
 
 
+def test_standard_finished_search_includes_split_but_base_search_excludes_it(qapp):
+    window = PoetoreWindow(app_config={"poetore": {"league": "Standard"}})
+    try:
+        item = parse_item_text("""Item Class: Body Armours
+Rarity: Rare
+Test Armour
+Sacred Chainmail
+--------
+Item Level: 94
+""")
+        window._parsed_item = item
+        window._configure_item_state_filters(item)
+        assert window.trade_preset_combo.currentData() == PRESET_FINISHED
+        assert window._hidden_include_split is True
+
+        window.trade_preset_combo.setCurrentIndex(1)
+        assert window._hidden_include_split is False
+    finally:
+        window.close()
+
+
+def test_temporary_league_finished_search_excludes_split(qapp):
+    window = PoetoreWindow(app_config={"poetore": {"league": "Mirage"}})
+    try:
+        item = parse_item_text("""Item Class: Body Armours
+Rarity: Rare
+Test Armour
+Sacred Chainmail
+--------
+Item Level: 94
+""")
+        window._configure_item_state_filters(item)
+
+        assert window._hidden_include_split is False
+    finally:
+        window.close()
+
+
 def test_mirrored_chip_matches_awakened_visible_and_hidden_states(qapp):
     window = PoetoreWindow()
     try:

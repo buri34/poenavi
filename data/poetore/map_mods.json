@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "3c8e0320",
+  "source_revision": "31b3e0e8",
   "entries": [
     {
       "key": "explicit.stat_2787931289",
@@ -1921,6 +1921,16 @@
       "stat_ids": [
         "explicit.stat_1581907402",
         "implicit.stat_1581907402"
+      ]
+    },
+    {
+      "key": "explicit.stat_1953432004",
+      "ref": "Unaffected by Poison",
+      "japanese": "毒の影響を受けない",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1953432004",
+        "implicit.stat_1953432004"
       ]
     },
     {

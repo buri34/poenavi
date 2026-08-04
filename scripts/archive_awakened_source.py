@@ -8,9 +8,9 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 
-DEFAULT_REVISION = "3c8e0320ab3ea22d6dccc6cad48b5efaf94d1fe2"
-DEFAULT_ARCHIVE = Path("vendor-sources/awakened-poe-trade-3c8e0320.tar.gz")
-DEFAULT_MANIFEST = Path("vendor-sources/awakened-poe-trade-3c8e0320.json")
+DEFAULT_REVISION = "31b3e0e8ba0a6bac2266603c2e170925c8f02b81"
+DEFAULT_ARCHIVE = Path("vendor-sources/awakened-poe-trade-31b3e0e8.tar.gz")
+DEFAULT_MANIFEST = Path("vendor-sources/awakened-poe-trade-31b3e0e8.json")
 
 
 def sha256(path: Path) -> str:

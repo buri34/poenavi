@@ -1,0 +1,8 @@
+{
+  "project": "Awakened PoE Trade",
+  "license": "MIT",
+  "revision": "31b3e0e8ba0a6bac2266603c2e170925c8f02b81",
+  "source_url": "https://codeload.github.com/SnosMe/awakened-poe-trade/tar.gz/31b3e0e8ba0a6bac2266603c2e170925c8f02b81",
+  "archive_sha256": "41a4ac2c56339dad82c9f907e5da26a3b3d66ee3061dea1636f8a9f0253e9207",
+  "purpose": "Development-only recovery source; excluded from PoENavi releases."
+}
