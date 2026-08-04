@@ -1887,7 +1887,7 @@ class PoetoreWindow(QWidget):
         display_name = (
             self._display_base_type(item)
             if is_nonunique_equipment or item.category == "captured_beast"
-            else item.name or item.base_type or "名称不明"
+            else self._display_item_name(item)
         )
         self.item_name_label.setText(display_name)
         self.item_name_label.setVisible(not is_nonunique_equipment)
@@ -1903,6 +1903,29 @@ class PoetoreWindow(QWidget):
             "武器性能・検索Mod" if item.category == "weapon" else "検索条件一覧"
         )
         self._update_weapon_dps_summary(item)
+
+    @staticmethod
+    def _display_item_name(item) -> str:
+        """検索identityは変えず、コピー元に対応する日本語表示名を返す。"""
+        if item.category == "currency" and item.base_type in {"透視のオーブ", "Scrying Orb"}:
+            area = str(
+                item.properties.get("マップエリア")
+                or item.properties.get("Map Area")
+                or ""
+            ).strip()
+            if area:
+                return f"透視のオーブ ({area})"
+
+        identity = str(item.base_type or item.name or "").strip()
+        if item.category == "gem" and identity.casefold().startswith("vaal "):
+            from src.utils.gem_resolver import load_gem_names_ja
+
+            normal_english = identity[5:].strip()
+            normal_japanese = load_gem_names_ja().get(normal_english.casefold())
+            if normal_japanese:
+                return f"ヴァール{normal_japanese}"
+
+        return item.name or item.base_type or "名称不明"
 
     def _update_weapon_dps_summary(self, item):
         if item.category != "weapon":

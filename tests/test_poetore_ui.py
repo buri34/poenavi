@@ -4635,6 +4635,7 @@ Vaal Molten Strike
         window.parse_current_text()
 
         assert window._parsed_item.base_type == "Vaal Molten Strike"
+        assert window.item_name_label.text() == "ヴァールモルテンストライク"
         assert window.gem_variant_chip.text() == "Variant：ヴァールジェム"
     finally:
         window.close()
@@ -4671,6 +4672,25 @@ def test_japanese_vaal_gem_copy_is_parsed_and_shown_as_vaal_grace(qapp):
         window.parse_current_text()
 
         assert window._parsed_item.base_type == "Vaal Grace"
+        assert window.item_name_label.text() == "ヴァールグレース"
         assert window.gem_variant_chip.text() == "Variant：ヴァールジェム"
+    finally:
+        window.close()
+
+
+def test_scrying_orb_header_includes_the_searched_map_area(qapp):
+    text = """アイテムクラス: スタック可能カレンシー
+レアリティ: カレンシー
+透視のオーブ
+--------
+マップエリア: 岸辺
+--------
+アトラス上のマップを透視する
+"""
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+        assert window.item_name_label.text() == "透視のオーブ (岸辺)"
     finally:
         window.close()
