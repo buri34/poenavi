@@ -66,6 +66,12 @@ from src.ui.window_flags import (
 )
 
 from src.ui.vendor_search_dialog import VendorSearchPresetDialog
+from src.ui.toolbar_icons import (
+    image_manager_icon,
+    memo_icon,
+    settings_icon,
+    vendor_presets_icon,
+)
 
 DEFAULT_CLICK_THROUGH_HOTKEY = "F6"
 DEFAULT_GEM_SHOP_SEARCH_HOTKEY = "F2"
@@ -1383,37 +1389,44 @@ class MainWindow(QMainWindow):
         self.restore_all_panels_btn.hide()
         global_controls_layout.addWidget(self.restore_all_panels_btn)
 
-        self.memo_btn = QPushButton("📝")
+        poenavi_icon_colors = {
+            "accent_color": Styles.TEXT_COLOR,
+            "panel_color": "#263A20",
+            "dark_color": "#142111",
+        }
+
+        self.memo_btn = QPushButton("")
         self.memo_btn.setStyleSheet(Styles.BUTTON)
         self.memo_btn.setFixedSize(35, 35)
+        self.memo_btn.setIcon(memo_icon(**poenavi_icon_colors))
+        self.memo_btn.setIconSize(QSize(24, 24))
         self.memo_btn.setToolTip("共通メモ")
         self.memo_btn.clicked.connect(self.open_memo)
         global_controls_layout.addWidget(self.memo_btn)
 
-        self.vendor_search_btn = QPushButton("🔍")
+        self.vendor_search_btn = QPushButton("")
         self.vendor_search_btn.setStyleSheet(Styles.BUTTON)
         self.vendor_search_btn.setFixedSize(35, 35)
+        self.vendor_search_btn.setIcon(vendor_presets_icon(**poenavi_icon_colors))
+        self.vendor_search_btn.setIconSize(QSize(24, 24))
         self.vendor_search_btn.setToolTip("店売り・スタッシュ検索プリセット")
         self.vendor_search_btn.clicked.connect(self.open_vendor_search_presets)
         global_controls_layout.addWidget(self.vendor_search_btn)
 
-        self.poetore_btn = QPushButton("💰")
-        self.poetore_btn.setStyleSheet(Styles.BUTTON)
-        self.poetore_btn.setFixedSize(35, 35)
-        self._update_poetore_hotkey_tooltip()
-        self.poetore_btn.clicked.connect(self.open_poetore)
-        global_controls_layout.addWidget(self.poetore_btn)
-
-        self.cheat_sheets_btn = QPushButton("🖼")
+        self.cheat_sheets_btn = QPushButton("")
         self.cheat_sheets_btn.setStyleSheet(Styles.BUTTON)
         self.cheat_sheets_btn.setFixedSize(35, 35)
+        self.cheat_sheets_btn.setIcon(image_manager_icon(**poenavi_icon_colors))
+        self.cheat_sheets_btn.setIconSize(QSize(24, 24))
         self._update_cheat_sheets_hotkey_tooltip()
         self.cheat_sheets_btn.clicked.connect(self.open_cheat_sheets_from_button)
         global_controls_layout.addWidget(self.cheat_sheets_btn)
         
-        self.settings_btn = QPushButton("⚙")
+        self.settings_btn = QPushButton("")
         self.settings_btn.setStyleSheet(Styles.BUTTON)
         self.settings_btn.setFixedSize(35, 35)
+        self.settings_btn.setIcon(settings_icon(**poenavi_icon_colors))
+        self.settings_btn.setIconSize(QSize(24, 24))
         self.settings_btn.clicked.connect(self.open_settings)
         global_controls_layout.addWidget(self.settings_btn)
         button_layout.addWidget(self.global_controls_widget)
@@ -4314,16 +4327,6 @@ class MainWindow(QMainWindow):
         """Map系アイテムをコピーし、通信なしで危険Modを確認する。"""
         self._ensure_map_check_window().capture_from_poe()
 
-    def _update_poetore_hotkey_tooltip(self):
-        hotkey = self.config.get("hotkeys", {}).get("poetore_capture", "alt+d")
-        if hotkey and hotkey != "none":
-            display_hotkey = QKeySequence(hotkey).toString(QKeySequence.NativeText)
-            self.poetore_btn.setToolTip(
-                f"ぽえとれ（{display_hotkey}で日本語名＋詳細Modを取得）"
-            )
-        else:
-            self.poetore_btn.setToolTip("ぽえとれ（ホットキー未設定）")
-
     def _update_cheat_sheets_hotkey_tooltip(self):
         hotkey = self.config.get("hotkeys", {}).get("cheat_sheets_toggle", "shift+space")
         if hotkey and hotkey != "none":
@@ -4404,7 +4407,6 @@ class MainWindow(QMainWindow):
             # ホットキー再登録
             self.register_hotkeys()
             self._update_click_through_label()
-            self._update_poetore_hotkey_tooltip()
             self._update_cheat_sheets_hotkey_tooltip()
             
             # ログ監視の再設定
