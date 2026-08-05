@@ -304,6 +304,13 @@ pip install -r requirements.txt
 python main.py
 ```
 
+> [!NOTE]
+> Linuxは非公式サポートです。WaylandセッションでXWaylandが利用可能な場合、
+> Qtを自動的に`xcb`バックエンドで起動し、クリップボード互換性を優先します。
+> `QT_QPA_PLATFORM`を明示している場合は、その設定を変更しません。
+> グローバルホットキー、キー入力送信、PoEウィンドウ判定など、Windows依存機能の
+> 動作を保証するものではありません。
+
 ---
 
 ## 🚀 使い方

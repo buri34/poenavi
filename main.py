@@ -1,14 +1,20 @@
-import sys
 import os
+import sys
 from time import perf_counter
 
 # srcディレクトリへのパスを通す (VSCodeなどで実行した際のパスずれ対策)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-from src.version import APP_VERSION
+from src.qt_platform import configure_qt_platform
+
+# Wayland上でXWaylandが利用可能なら、Qtのクリップボード互換性を優先する。
+# PySide6を読み込む前に設定する必要がある。
+configure_qt_platform()
+
 from src.app_mode import save_startup_preferences, startup_preferences
 from src.utils.config_manager import ConfigManager
+from src.version import APP_VERSION
 
 __version__ = APP_VERSION
 
