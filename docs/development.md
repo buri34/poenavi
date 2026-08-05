@@ -27,3 +27,29 @@ Windows全体の環境変数として `POENAVI_USER_DATA_DIR` を恒久追加す
 
 旧バージョン互換のため、アプリ本体フォルダ直下に `config.json` が残っていて、かつ `%APPDATA%\PoENavi\config.json` がまだ無い場合だけ、その旧 `config.json` を移行します。
 新規配布物には `config.json` を同梱しません。
+
+## ぽえとれTradeデータ更新
+
+新リーグや公式Tradeデータ変更時は、個別生成器を直接反映する前に総合入口を使います。
+
+```bash
+# 読み取り専用監査
+python scripts/update_poetore_trade_data.py
+
+# 最新データから隔離候補とJSON／Markdownレポートを生成
+python scripts/update_poetore_trade_data.py --refresh
+
+# 必要に応じて代表12 fixtureを公式Trade検索APIへ実送信
+python scripts/update_poetore_trade_data.py --refresh --verify-api
+
+# レビュー済みmanifestと候補だけを正本へ原子的に反映
+python scripts/update_poetore_trade_data.py \
+  --apply build/poetore-update-candidate/manifest.json
+```
+
+`--refresh`は正本を変更しません。`--apply`はレビュー時点の正本または候補のSHA-256が
+変わっていれば停止し、複数ファイルの置換途中に失敗した場合は全正本を復元します。
+Awakenedが取得不能な場合は`--official-mods-only`を付け、既存のAwakened由来派生情報を
+保持したまま、公式Trade・RePoE・PoENavi独自台帳だけで監査・候補生成できます。
+
+詳細は`docs/poetore-league-data-update-plan.md`を参照してください。

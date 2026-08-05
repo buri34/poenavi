@@ -1,7 +1,7 @@
 # ぽえとれ 新リーグ向けTradeデータ更新計画
 
-更新日: 2026-07-24
-状態: 実装前設計
+更新日: 2026-08-05
+状態: 実装済み
 対象: PoE 1の新リーグ開始時および公式Tradeデータ更新時
 
 ## 目的
@@ -17,12 +17,15 @@
 
 取得データを無条件に上書きせず、不明点や大きな差分があれば正本を変更せず停止する。
 
-## 今回の境界
+## 実装
 
-この文書は実装前の設計を確定するものであり、更新コマンドやアプリ本体は変更しない。
+総合入口は`scripts/update_poetore_trade_data.py`。
+既存の`scripts/build_poetore_metadata.py`をModメタデータ更新の中核として再利用し、
+日英データ同期監査、pseudo／Map Mod再生成監査、代表API確認を統合する。
 
-既存の`scripts/build_poetore_metadata.py`は廃止せず、Modメタデータ更新の中核として再利用する。
-新しい総合フローは、その前後に日英データ同期監査、pseudo監査、代表API確認を追加する。
+候補は`build/poetore-update-candidate/`へ隔離し、正本へ直接書かない。
+候補manifestは各正本の更新前SHA-256と候補SHA-256を保持するため、レビュー後に
+正本または候補が変わった場合、`--apply`は反映せず停止する。
 
 ## 更新対象
 
@@ -133,14 +136,20 @@ Markdownの先頭には次の要約を置く。
 最終的には、総合入口を1つ用意する。
 
 ```bash
-# lock済み入力で再現性を確認
-PYTHONPATH=. python scripts/update_poetore_trade_data.py
+# lock済み入力と現在の公式日英データを監査
+python scripts/update_poetore_trade_data.py
 
 # 上流の最新データを取得し、候補と差分だけ生成
-PYTHONPATH=. python scripts/update_poetore_trade_data.py --refresh
+python scripts/update_poetore_trade_data.py --refresh
+
+# 代表12 fixtureも公式Trade検索APIへ実送信する
+python scripts/update_poetore_trade_data.py --refresh --verify-api
 
 # レビュー後、同じ候補を正本とlockへ原子的に反映
-PYTHONPATH=. python scripts/update_poetore_trade_data.py --apply
+python scripts/update_poetore_trade_data.py --apply build/poetore-update-candidate/manifest.json
+
+# Awakened取得不能時の公式Trade＋RePoE経路
+python scripts/update_poetore_trade_data.py --refresh --official-mods-only
 ```
 
 `--refresh`と`--apply`を同時実行する設計にはしない。確認した候補と反映対象が同一であることを
@@ -197,7 +206,7 @@ PYTHONPATH=. python scripts/update_poetore_trade_data.py --apply
 
 ## 実装を小分けにする順序
 
-### Phase 1: 読み取り専用の総合監査
+### Phase 1: 読み取り専用の総合監査（完了）
 
 - 日英`items`／`stats`を取得してID単位で比較する
 - 既存Modメタデータdry-runを呼び出す
@@ -210,7 +219,7 @@ PYTHONPATH=. python scripts/update_poetore_trade_data.py --apply
 - 日英の順序差だけでは変更扱いにならない
 - 片側欠落とoption差分を具体的なID付きで確認できる
 
-### Phase 2: pseudo監査と停止条件
+### Phase 2: pseudo監査と停止条件（完了）
 
 - pseudo definitions／relationsの差分を統合する
 - 参照切れ、大量削除、曖昧対応を`BLOCKED`にする
@@ -221,7 +230,7 @@ PYTHONPATH=. python scripts/update_poetore_trade_data.py --apply
 - 意図的に壊したfixtureで正本を変更せず停止する
 - 追加・削除・変更がMarkdownへ読みやすく出る
 
-### Phase 3: レビュー済み候補の原子的反映
+### Phase 3: レビュー済み候補の原子的反映（完了）
 
 - candidate manifestとSHA-256を保存する
 - `--apply`はレビュー済みmanifestだけを受け付ける
@@ -232,7 +241,7 @@ PYTHONPATH=. python scripts/update_poetore_trade_data.py --apply
 - 適用途中の疑似エラーでも正本が半端な状態にならない
 - dry-run後に上流が変わっても未レビュー内容を反映しない
 
-### Phase 4: 代表Trade API確認
+### Phase 4: 代表Trade API確認（完了）
 
 - 代表fixtureから日英クエリを生成する
 - HTTP受理だけでなく、送信したfilter ID／optionを検査する

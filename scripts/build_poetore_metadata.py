@@ -46,7 +46,10 @@ def _serialized(payload: dict) -> bytes:
 def _run_regression_tests(candidate: Path) -> None:
     env = os.environ.copy()
     env["POETORE_METADATA_PATH"] = str(candidate.resolve())
-    env["POETORE_CANDIDATE_BUILD"] = "1"
+    if candidate.parent.resolve() == DEFAULT_OUTPUT.parent.resolve():
+        env["POETORE_CANDIDATE_BUILD"] = "1"
+    else:
+        env.pop("POETORE_CANDIDATE_BUILD", None)
     env.setdefault("QT_QPA_PLATFORM", "offscreen")
     command = [sys.executable, "-m", "pytest", "-q"]
     print(f"running candidate regression tests: {' '.join(command)}")

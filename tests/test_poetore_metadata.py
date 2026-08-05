@@ -372,7 +372,7 @@ def test_builder_restores_official_cluster_option_entries_to_base_stat():
 def test_pseudo_relations_are_fixed_to_audited_awakened_source():
     path = Path("data/poetore/pseudo_relations.json")
     payload = json.loads(path.read_text(encoding="utf-8"))
-    assert payload["source_revision"] == "fa31bfbbe99e04e386b4af2d71d633e2b6823c0f"
+    assert payload["source_revision"] == "31b3e0e8ba0a6bac2266603c2e170925c8f02b81"
     assert payload["source_sha256"] == "50209531e87e8d3d2f87d98b51ca6371dd4c2c2e4dce9c37302333e44c0a4b70"
     relations = pseudo_relations(path)
     assert len(relations) == 19
