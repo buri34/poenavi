@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QApplication, QDialog, QLabel, QPushButton, QTabWi
 
 from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 from src.poetore.trade import TradeLeague
-from src.ui.settings_dialog import HotkeyButton
+from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
 
 
 def test_poetore_settings_contains_common_trade_and_window_controls():
@@ -48,6 +48,9 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert settings["hotkeys"]["monastery"] == "F12"
     assert settings["hotkeys"]["poetore_capture"] == "alt+d"
     assert settings["hotkeys"]["poetore_auto_hide"] == "ctrl+d"
+    assert isinstance(dialog.auto_hide_hotkey, AutoHideHotkeyWidget)
+    assert dialog.auto_hide_hotkey.ctrl_button.isChecked()
+    assert dialog.auto_hide_hotkey.key_button.key_text == "d"
     assert settings["window_opacity"] == 80
     assert settings["text_opacity"] == 70
     assert settings["window_locked"] is True
@@ -87,6 +90,27 @@ def test_poetore_hotkey_controls_capture_the_next_pressed_key():
     dialog.exit_hotkey.keyPressEvent(event)
     assert dialog.exit_hotkey.key_text == "Ctrl+H"
     assert dialog.get_settings()["hotkeys"]["exit"] == "Ctrl+H"
+    dialog.close()
+
+
+def test_auto_hide_hotkey_uses_selected_modifier_and_plain_trigger_key():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(
+        current_config={"hotkeys": {"poetore_auto_hide": "alt+q"}}
+    )
+    assert dialog.auto_hide_hotkey.alt_button.isChecked()
+    assert dialog.auto_hide_hotkey.key_button.key_text == "q"
+
+    dialog.auto_hide_hotkey.key_button.setChecked(True)
+    event = QKeyEvent(
+        QKeyEvent.Type.KeyPress,
+        Qt.Key.Key_R,
+        Qt.KeyboardModifier.ControlModifier,
+    )
+    dialog.auto_hide_hotkey.key_button.keyPressEvent(event)
+
+    assert dialog.auto_hide_hotkey.key_button.key_text == "R"
+    assert dialog.get_settings()["hotkeys"]["poetore_auto_hide"] == "alt+R"
     dialog.close()
 
 

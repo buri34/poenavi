@@ -32,7 +32,7 @@ from src.poetore.trade import (
 )
 from src.utils.global_hotkeys import find_duplicate_hotkeys
 from src.ui.custom_command_settings import CustomCommandSettingsWidget
-from src.ui.settings_dialog import HotkeyButton
+from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
 
 
 class _LeagueSignals(QObject):
@@ -104,7 +104,7 @@ class PoetoreSettingsDialog(QDialog):
         self.exit_hotkey = HotkeyButton(hotkeys.get("exit", "F5"))
         self.monastery_hotkey = HotkeyButton(hotkeys.get("monastery", "F12"))
         self.capture_hotkey = HotkeyButton(hotkeys.get("poetore_capture", "alt+d"))
-        self.auto_hide_hotkey = HotkeyButton(
+        self.auto_hide_hotkey = AutoHideHotkeyWidget(
             hotkeys.get("poetore_auto_hide", "ctrl+d")
         )
         self.map_check_hotkey = HotkeyButton(hotkeys.get("map_check", "alt+f"))
@@ -113,11 +113,11 @@ class PoetoreSettingsDialog(QDialog):
         )
         for button in (
             self.exit_hotkey, self.monastery_hotkey, self.capture_hotkey,
-            self.auto_hide_hotkey,
             self.map_check_hotkey, self.cheat_hotkey,
         ):
             # ぽえとれ画面の親スタイルを使い、操作だけぽえなびと共通化する。
             button.setStyleSheet("")
+        self.auto_hide_hotkey.key_button.setStyleSheet("")
         hotkey_form.addRow("キャラクター選択へ戻る:", self.exit_hotkey)
         hotkey_form.addRow(
             "修道院へ移動（/monastery）:", self.monastery_hotkey

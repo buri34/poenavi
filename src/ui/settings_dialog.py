@@ -159,6 +159,98 @@ class HotkeyButton(QPushButton):
             print(f"Unknown key: {key}")
             self.setChecked(False)
 
+
+class TriggerKeyButton(HotkeyButton):
+    """修飾キーを含めず、AUTO-HIDEの通常キーだけを取得する。"""
+
+    def keyPressEvent(self, event):
+        if not self.isChecked():
+            super().keyPressEvent(event)
+            return
+        key = event.key()
+        if key == Qt.Key_Escape:
+            self.setChecked(False)
+            return
+        if key in (Qt.Key_Delete, Qt.Key_Backspace):
+            self.key_text = "none"
+            self.setChecked(False)
+            return
+        if key in (Qt.Key_Control, Qt.Key_Shift, Qt.Key_Alt, Qt.Key_Meta):
+            return
+        text = QKeySequence(key).toString(QKeySequence.PortableText)
+        if not text and Qt.Key_F1 <= key <= Qt.Key_F12:
+            text = f"F{key - Qt.Key_F1 + 1}"
+        if text:
+            self.key_text = text
+        self.setChecked(False)
+
+
+class AutoHideHotkeyWidget(QWidget):
+    """AUTO-HIDE専用の保持キー選択＋通常キー入力。"""
+
+    def __init__(self, hotkey="ctrl+d", parent=None):
+        super().__init__(parent)
+        modifier, trigger = self._split_hotkey(hotkey)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+
+        self.modifier_group = QButtonGroup(self)
+        self.modifier_group.setExclusive(True)
+        self.ctrl_button = QPushButton("Ctrl")
+        self.alt_button = QPushButton("Alt")
+        for name, button in (("ctrl", self.ctrl_button), ("alt", self.alt_button)):
+            button.setObjectName(f"autoHide{name.title()}Modifier")
+            button.setCheckable(True)
+            button.setMinimumWidth(48)
+            button.setStyleSheet(
+                Styles.BUTTON
+                + f"QPushButton:checked {{ background-color: {Styles.TEXT_COLOR}; color: #1a1a1a; }}"
+            )
+            button.setProperty("modifier", name)
+            self.modifier_group.addButton(button)
+            layout.addWidget(button)
+        (self.alt_button if modifier == "alt" else self.ctrl_button).setChecked(True)
+
+        self.key_button = TriggerKeyButton(trigger)
+        self.key_button.setObjectName("autoHideTriggerKey")
+        self.key_button.setToolTip("通常キーを1つ入力してください（Ctrl / Altは左で選択）")
+        layout.addWidget(self.key_button, 1)
+
+    @staticmethod
+    def _split_hotkey(hotkey):
+        tokens = [token.strip() for token in str(hotkey or "").split("+") if token.strip()]
+        modifier = "alt" if any(token.casefold() == "alt" for token in tokens) else "ctrl"
+        trigger = next(
+            (token for token in reversed(tokens)
+             if token.casefold() not in {"ctrl", "control", "alt", "shift", "win", "meta"}),
+            "d",
+        )
+        return modifier, trigger
+
+    @property
+    def modifier(self):
+        checked = self.modifier_group.checkedButton()
+        return checked.property("modifier") if checked is not None else "ctrl"
+
+    @property
+    def key_text(self):
+        trigger = str(self.key_button.key_text or "").strip()
+        if not trigger or trigger.casefold() == "none":
+            return "none"
+        # 通常キー欄で修飾キー付き入力をしても、選択中の保持キーだけを採用する。
+        _, trigger = self._split_hotkey(trigger)
+        return f"{self.modifier}+{trigger}"
+
+    def set_modifier(self, modifier):
+        (self.alt_button if str(modifier).casefold() == "alt" else self.ctrl_button).setChecked(True)
+
+    def set_key(self, key):
+        _, trigger = self._split_hotkey(key)
+        self.key_button.key_text = trigger
+        self.key_button.setText(trigger)
+
 class RichTextEdit(QTextEdit):
     """HTML出力対応のリッチテキストエディタ"""
     
@@ -1868,7 +1960,7 @@ class SettingsDialog(QDialog):
 
         poetore_auto_hide_layout = QHBoxLayout()
         poetore_auto_hide_layout.addWidget(QLabel("ぽえとれ検索（AUTO-HIDE）:"))
-        self.poetore_auto_hide_btn = HotkeyButton(
+        self.poetore_auto_hide_btn = AutoHideHotkeyWidget(
             self.hotkeys.get("poetore_auto_hide", "ctrl+d")
         )
         poetore_auto_hide_layout.addWidget(self.poetore_auto_hide_btn)

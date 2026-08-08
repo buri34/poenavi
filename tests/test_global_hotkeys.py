@@ -158,6 +158,25 @@ def test_auto_hide_capture_emits_its_own_release_notification():
     assert emitted == ["poetore_auto_hide", "poetore_auto_hide_released"]
 
 
+def test_alt_auto_hide_waits_for_selected_hold_key_release():
+    listeners = []
+    service = GlobalHotkeyService(
+        {"poetore_auto_hide": "alt+q"},
+        listener_factory=lambda **kwargs: listeners.append(FakeListener(**kwargs)) or listeners[-1],
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+
+    listeners[0].on_press(SimpleNamespace(name="alt"))
+    listeners[0].on_press(SimpleNamespace(char="q", vk=ord("Q")))
+    listeners[0].on_release(SimpleNamespace(char="q", vk=ord("Q")))
+    assert emitted == ["poetore_auto_hide"]
+
+    listeners[0].on_release(SimpleNamespace(name="alt"))
+    assert emitted == ["poetore_auto_hide", "poetore_auto_hide_released"]
+
+
 def test_map_check_uses_its_own_release_notification():
     listeners = []
     service = GlobalHotkeyService(

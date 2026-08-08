@@ -287,16 +287,19 @@ def test_settings_dialog_can_change_poetore_capture_hotkey(monkeypatch):
     try:
         assert dialog.poetore_capture_btn.key_text == "Ctrl+Shift+P"
         assert dialog.poetore_auto_hide_btn.key_text == "ctrl+d"
+        assert dialog.poetore_auto_hide_btn.ctrl_button.isChecked()
+        assert dialog.poetore_auto_hide_btn.key_button.key_text == "d"
         assert dialog.map_check_btn.key_text == "alt+f"
         assert dialog.cheat_sheets_toggle_btn.key_text == "shift+space"
         assert dialog.exit_btn.key_text == "F5"
         assert dialog.undo_lap_btn.key_text == "none"
         dialog.poetore_capture_btn.key_text = "Alt+Q"
-        dialog.poetore_auto_hide_btn.key_text = "Ctrl+Q"
+        dialog.poetore_auto_hide_btn.set_modifier("alt")
+        dialog.poetore_auto_hide_btn.set_key("Q")
         dialog.cheat_sheets_toggle_btn.key_text = "Ctrl+Space"
         dialog.exit_btn.key_text = "Ctrl+F5"
         assert dialog.get_settings()["hotkeys"]["poetore_capture"] == "Alt+Q"
-        assert dialog.get_settings()["hotkeys"]["poetore_auto_hide"] == "Ctrl+Q"
+        assert dialog.get_settings()["hotkeys"]["poetore_auto_hide"] == "alt+Q"
         assert dialog.get_settings()["hotkeys"]["cheat_sheets_toggle"] == "Ctrl+Space"
         assert dialog.get_settings()["hotkeys"]["exit"] == "Ctrl+F5"
     finally:
