@@ -1,9 +1,12 @@
 from dataclasses import replace
 
 import pytest
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QCheckBox
 
 from src.poetore.parser import parse_item_text
 from src.poetore import trade
+from src.poetore.ui import PoetoreWindow, _MOD_COLUMN_CHECK
 
 
 SAMPLE = """アイテムクラス: マップフラグメント
@@ -41,6 +44,12 @@ STAT_ENTRIES = (
     {"id": "mercenary.skill_21523", "text": "デセクレート", "type": "mercenary"},
     {"id": "mercenary.skill_relic", "text": "レリックオブバインディング", "type": "mercenary"},
 )
+
+
+@pytest.fixture(scope="module")
+def qapp():
+    app = QApplication.instance() or QApplication([])
+    yield app
 
 
 def test_parses_warrant_build_skills_and_support_tiers():
@@ -102,3 +111,56 @@ def test_rejects_unknown_build_variant(monkeypatch):
     monkeypatch.setattr(trade, "_item_entries_cache", ())
     with pytest.raises(ValueError, match="公式Tradeデータ"):
         trade.build_search_query(item)
+
+
+def test_warrant_ui_reveals_supports_without_losing_selected_skills(
+    qapp, monkeypatch,
+):
+    monkeypatch.setattr(trade, "_stat_entries_cache", STAT_ENTRIES)
+    monkeypatch.setattr(trade, "_stat_entry_indexes_cache", None)
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText(SAMPLE)
+        window.parse_current_text()
+
+        rows = [
+            window.mod_filter_tree.topLevelItem(index)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        main_rows = [
+            row for row in rows
+            if row.data(0, Qt.UserRole + 4).stat_id.startswith("mercenary.skill")
+        ]
+        support_rows = [
+            row for row in rows
+            if row.data(0, Qt.UserRole + 4).stat_id.startswith("mercenary.support")
+        ]
+        assert main_rows and support_rows
+        assert all(not row.isHidden() for row in main_rows)
+        assert all(row.isHidden() for row in support_rows)
+        assert not window.mercenary_supports_toggle.isHidden()
+        assert window.mercenary_supports_toggle.text() == "傭兵のサポートジェムを表示"
+
+        main_checkbox = window.mod_filter_tree.itemWidget(
+            main_rows[0], _MOD_COLUMN_CHECK,
+        ).findChild(QCheckBox, "modFilterCheckbox")
+        main_checkbox.setChecked(True)
+        window.mercenary_supports_toggle.click()
+
+        assert all(not row.isHidden() for row in main_rows + support_rows)
+        assert main_checkbox.isChecked()
+        selected = {
+            row.stat_id for row in window._selected_stat_filters() if row.enabled
+        }
+        assert main_rows[0].data(0, Qt.UserRole + 4).stat_id in selected
+    finally:
+        window.close()
+
+
+def test_mercenary_support_toggle_is_hidden_for_other_items(qapp):
+    window = PoetoreWindow()
+    try:
+        window._populate_stat_filters(())
+        assert window.mercenary_supports_toggle.isHidden()
+    finally:
+        window.close()

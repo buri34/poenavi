@@ -1362,11 +1362,22 @@ class PoetoreWindow(QWidget):
             "計算に使われた元のMod文章を表示します。"
         )
         self.mod_sources_toggle.toggled.connect(self._toggle_mod_sources)
+        self.mercenary_supports_toggle = QPushButton("傭兵のサポートジェムを表示")
+        self.mercenary_supports_toggle.setObjectName("mercenarySupportsToggle")
+        self.mercenary_supports_toggle.setCheckable(True)
+        self.mercenary_supports_toggle.setToolTip(
+            "傭兵の召喚状に含まれるサポートジェムの検索条件を表示します"
+        )
+        self.mercenary_supports_toggle.toggled.connect(
+            self._toggle_mercenary_supports
+        )
+        self.mercenary_supports_toggle.hide()
         mod_conditions_actions = QHBoxLayout()
         mod_conditions_actions.addWidget(self.mod_conditions_toggle)
         mod_conditions_actions.addWidget(self.clear_mod_conditions_button)
         mod_conditions_actions.addWidget(self.hidden_mods_toggle)
         mod_conditions_actions.addWidget(self.mod_sources_toggle)
+        mod_conditions_actions.addWidget(self.mercenary_supports_toggle)
         mod_conditions_actions.addStretch()
         panel_layout.addLayout(mod_conditions_actions)
         self.mod_warning = QLabel("")
@@ -1890,11 +1901,29 @@ class PoetoreWindow(QWidget):
                 if checkbox_container is not None else None
             )
             is_checked = checkbox is not None and checkbox.isChecked()
-            row.setHidden(
+            hidden_by_candidate_filter = (
                 is_hidden_candidate != visible
                 and not (is_hidden_candidate and is_checked)
             )
+            row.setHidden(
+                hidden_by_candidate_filter or self._mercenary_support_row_is_hidden(row)
+            )
         self._adjust_window_height_to_mod_rows()
+
+    def _mercenary_support_row_is_hidden(self, row: QTreeWidgetItem) -> bool:
+        stat_filter = row.data(_MOD_COLUMN_CHECK, Qt.UserRole + 4)
+        return bool(
+            isinstance(stat_filter, TradeStatFilter)
+            and stat_filter.stat_id.startswith("mercenary.support")
+            and not self.mercenary_supports_toggle.isChecked()
+        )
+
+    def _toggle_mercenary_supports(self, visible: bool):
+        self.mercenary_supports_toggle.setText(
+            "傭兵のサポートジェムを隠す"
+            if visible else "傭兵のサポートジェムを表示"
+        )
+        self._toggle_hidden_mods(self.hidden_mods_toggle.isChecked())
 
     def _toggle_mod_sources(self, visible: bool):
         self.mod_sources_toggle.setText(
@@ -3958,6 +3987,12 @@ class PoetoreWindow(QWidget):
 
     def _populate_stat_filters(self, filters: tuple[TradeStatFilter, ...]):
         self.mod_filter_tree.clear()
+        has_mercenary_supports = any(
+            stat_filter.stat_id.startswith("mercenary.support")
+            for stat_filter in filters
+        )
+        self.mercenary_supports_toggle.setChecked(False)
+        self.mercenary_supports_toggle.setVisible(has_mercenary_supports)
         for stat_filter in filters:
             if stat_filter.stat_id in {"property.item_level", "property.gem_level"}:
                 continue
@@ -4096,6 +4131,7 @@ class PoetoreWindow(QWidget):
                 row.setExpanded(self.mod_sources_toggle.isChecked())
             row.setHidden(
                 bool(stat_filter.hidden_reason) != self.hidden_mods_toggle.isChecked()
+                or self._mercenary_support_row_is_hidden(row)
             )
             checkbox = QCheckBox()
             checkbox.setObjectName("modFilterCheckbox")
