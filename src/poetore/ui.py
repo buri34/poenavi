@@ -349,6 +349,7 @@ _FILTER_KIND_LABELS = {
     "socket": "ソケット",
     "special": "特殊",
     "unique exception": "ユニーク例外",
+    "mercenary": "MERCENARY",
 }
 
 
@@ -1985,6 +1986,10 @@ class PoetoreWindow(QWidget):
             if is_nonunique_equipment or item.category == "captured_beast"
             else self._display_item_name(item)
         )
+        if item.name.strip() == "傭兵の召喚状":
+            build = str(item.properties.get("ビルド") or "").strip()
+            if build:
+                display_name = f"{display_name} ({build})"
         self.item_name_label.setText(display_name)
         self.item_name_label.setVisible(not is_nonunique_equipment)
         self.base_scope_toggle.setVisible(is_nonunique_equipment)

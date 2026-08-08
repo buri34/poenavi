@@ -836,6 +836,7 @@ def _apply_dedicated_exact_rules(
     """汎用完成品候補からAwakenedのcreateExactStatFilters相当だけを残す。"""
     keep_modifier_kinds = {
         "pseudo", "fractured", "enchant", "necropolis", "imbued", "craft",
+        "mercenary",
     }
     if (not any(flag.startswith("influence:") for flag in item.flags)
             and not any(mod.kind == "fractured" for mod in item.modifiers)
@@ -881,7 +882,7 @@ def _apply_dedicated_exact_rules(
         if row.kind in keep_modifier_kinds or row.kind in special_kinds:
             enabled = row.enabled
             if enable_all or (
-                item.category != "map"
+                item.category != "map" and row.kind != "mercenary"
                 and row.kind not in {"prefix", "suffix", "explicit"}
             ):
                 enabled = True
@@ -1873,6 +1874,15 @@ def _normalized_stat_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def _indexed_stat_text(text: str, kind: str) -> str:
+    # Mercenary SupportはTierごとに別の公式stat IDを持つ。
+    if kind == "mercenary":
+        text = text.replace("（", "(").replace("）", ")")
+        text = re.sub(r"(ティア|Tier)\s*[:：]\s*", r"\1 ", text, flags=re.IGNORECASE)
+        return re.sub(r"\s+", " ", text).strip()
+    return _normalized_stat_text(text)
+
+
 def _value_for_template(source: str, template: str) -> float | None:
     source = re.sub(r"\([^)]*(?:\d|implicit|crafted|enchant)[^)]*\)", "", source, flags=re.IGNORECASE).strip()
     template = template.replace(" (ローカル)", "").strip()
@@ -1908,7 +1918,7 @@ def _trade_stat_entry_indexes(entries: tuple[dict, ...]):
         stat_id = str(entry.get("id", ""))
         by_id.setdefault((kind, stat_id), []).append((position, entry))
         comparable = str(entry.get("text", "")).replace(" (ローカル)", "")
-        normalized = _normalized_stat_text(comparable)
+        normalized = _indexed_stat_text(comparable, kind)
         by_text.setdefault((kind, normalized), []).append((position, entry))
     _stat_entry_indexes_cache = (entries, by_id, by_text)
     return by_id, by_text
@@ -2132,6 +2142,24 @@ def _scrying_orb_trade_identity(item: ParsedItem) -> tuple[str, str] | None:
             discriminator = str(english.get("disc", "")).strip()
             if option and discriminator:
                 return option, discriminator
+    return None
+
+
+def _mercenary_warrant_trade_identity(item: ParsedItem) -> tuple[str, str] | None:
+    if item.name.strip() not in {"傭兵の召喚状", "Mercenary's Warrant", "Mercenary Warrant"}:
+        return None
+    build = str(item.properties.get("ビルド") or item.properties.get("Build") or "").strip()
+    if not build:
+        return None
+    wanted = {f"傭兵の召喚状 ({build})", f"Mercenary's Warrant ({build})"}
+    for entry in (*_jp_trade_item_entries(), *_trade_item_entries()):
+        if str(entry.get("text", "")).strip() not in wanted:
+            continue
+        if str(entry.get("disc", "")).strip() != "mercenary_warrant":
+            continue
+        option = str(entry.get("type", "")).strip()
+        if option:
+            return option, "mercenary_warrant"
     return None
 
 
@@ -2431,7 +2459,7 @@ def unresolved_modifier_warnings(
     fixed_unique_refs = unique_fixed_stats(item.name) if _is_unique(item) else None
 
     def should_warn(modifier) -> bool:
-        if modifier.stat_id is not None or modifier.kind in {"desecrated"}:
+        if modifier.stat_id is not None or modifier.kind in {"desecrated", "mercenary"}:
             return False
         if (
             item.category == "invitation"
@@ -2757,7 +2785,7 @@ def resolve_trade_stat_filters(
                 # 固定Modも「隠された候補」から確認できるよう保持する。
                 hidden_reason = "ユニーク固定値のため初期非表示"
         api_kind = "explicit" if modifier.kind in {"prefix", "suffix"} else modifier.kind
-        source = _normalized_stat_text(modifier.text)
+        source = _indexed_stat_text(modifier.text, api_kind)
         indexed_candidates = list(entries_by_text.get((api_kind, source), ()))
         if modifier.stat_id:
             indexed_candidates.extend(
@@ -3318,7 +3346,15 @@ def build_search_query(
     gem_info = gem_metadata(base_type) if item.category == "gem" else {}
     query_type: str | dict = str(gem_info.get("trade_type") or base_type)
     scrying_identity = _scrying_orb_trade_identity(item)
-    if scrying_identity:
+    mercenary_identity = _mercenary_warrant_trade_identity(item)
+    if item.name.strip() in {"傭兵の召喚状", "Mercenary's Warrant", "Mercenary Warrant"} and not mercenary_identity:
+        raise ValueError("傭兵の召喚状のビルドを公式Tradeデータで解決できませんでした。")
+    if mercenary_identity:
+        query_type = {
+            "option": mercenary_identity[0],
+            "discriminator": mercenary_identity[1],
+        }
+    elif scrying_identity:
         query_type = {
             "option": scrying_identity[0],
             "discriminator": scrying_identity[1],

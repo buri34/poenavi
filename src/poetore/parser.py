@@ -160,6 +160,12 @@ _JAPANESE_RANDOM_SUPPORT_GEM = re.compile(
     r"(?P<support>[^()（）]+?)[（(][^()（）]+[）)](?P<suffix>によりサポートされる)$"
 )
 _FOIL_VARIANT_LINE = re.compile(r"^(?:Foil|フォイル)\s*[（(].+[）)]$")
+_MERCENARY_WARRANT_NAMES = {
+    "傭兵の召喚状", "Mercenary's Warrant", "Mercenary Warrant",
+}
+_MERCENARY_SUPPORT_TIER = re.compile(
+    r"\s*[（(](?:ティア|Tier)\s*[:：]\s*(\d+)[）)]\s*$", re.IGNORECASE,
+)
 _CATEGORY_HELP_LINES = {
     "flask": {
         "右クリックして飲む。腰につけているときだけチャージを貯めることができる。モンスターを倒すことで充填される。",
@@ -648,6 +654,44 @@ def _vaal_gem_identity(sections: list[list[str]]) -> str | None:
     return None
 
 
+def _parse_mercenary_warrant_sections(
+    sections: list[list[str]],
+) -> tuple[dict[str, str], tuple[ItemModifier, ...]]:
+    """傭兵の召喚状のBuildとSkill/Supportを専用構造として読み取る。"""
+    properties: dict[str, str] = {}
+    modifiers: list[ItemModifier] = []
+    build_seen = False
+    for section_index, section in enumerate(sections[1:], start=1):
+        section_rows: list[tuple[str, int | None]] = []
+        for line in section:
+            pair = _split_label(line)
+            if pair and pair[0] in {"ビルド", "Build"}:
+                properties["ビルド"] = pair[1]
+                build_seen = True
+                continue
+            if pair and pair[0] in {"傭兵のレベル", "Mercenary Level"}:
+                properties["傭兵のレベル"] = pair[1]
+                continue
+            if not build_seen:
+                properties.setdefault("傭兵名", line)
+                continue
+            tier_match = _MERCENARY_SUPPORT_TIER.search(line)
+            tier = int(tier_match.group(1)) if tier_match else None
+            section_rows.append((line.strip(), tier))
+        if not build_seen or not section_rows:
+            continue
+        if any("このアイテムを右クリック" in row[0] for row in section_rows):
+            continue
+        modifiers.extend(
+            ItemModifier(
+                text=line, kind="mercenary", tier=tier, group=section_index,
+                confidence=1.0, generation="mercenary",
+            )
+            for line, tier in section_rows
+        )
+    return properties, tuple(modifiers)
+
+
 def parse_item_text(text: str) -> ParsedItem:
     """PoEの詳細コピー文を、価格検索に渡せる最小構造へ変換する。"""
     if not text or not text.strip():
@@ -694,6 +738,15 @@ def parse_item_text(text: str) -> ParsedItem:
     item_category = _category_with_item_identity(
         header.get("item_class", ""), name, base_type, text,
     )
+    if name.strip() in _MERCENARY_WARRANT_NAMES:
+        properties, warrant_modifiers = _parse_mercenary_warrant_sections(sections)
+        if not properties.get("ビルド") or not warrant_modifiers:
+            raise ItemParseError("傭兵の召喚状のビルドまたはスキルを取得できませんでした。")
+        return ParsedItem(
+            item_class=header.get("item_class", ""), rarity=rarity,
+            name=name, base_type=base_type, category="invitation",
+            properties=properties, modifiers=warrant_modifiers, raw_text=text,
+        )
     if item_category == "gem":
         vaal_identity = _vaal_gem_identity(sections)
         if vaal_identity:
