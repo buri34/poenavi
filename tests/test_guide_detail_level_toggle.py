@@ -41,7 +41,7 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
             "The Grelwood", "poe2_act1_area04", 2
         )
 
-    def test_mini_navi_toggle_is_hidden_in_poe2_mode(self):
+    def test_mini_navi_toggle_is_visible_in_poe2_when_guide_expanded(self):
         window = MainWindow.__new__(MainWindow)
         window.config = {"mini_guide_overlay": {"enabled": False}}
         window.poe_version = POE2
@@ -51,7 +51,7 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
         window._refresh_mini_navi_toggle()
 
         window.mini_navi_toggle_btn.setText.assert_called_with("みになび OFF")
-        window.mini_navi_toggle_btn.setVisible.assert_called_once_with(False)
+        window.mini_navi_toggle_btn.setVisible.assert_called_once_with(True)
 
     def test_mini_navi_toggle_is_visible_in_poe1_when_guide_expanded(self):
         window = MainWindow.__new__(MainWindow)
@@ -64,7 +64,7 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
 
         window.mini_navi_toggle_btn.setVisible.assert_called_once_with(True)
 
-    def test_switching_to_poe2_closes_poe1_only_feature_windows(self):
+    def test_switching_to_poe2_keeps_mini_navi_and_closes_poetore(self):
         window = MainWindow.__new__(MainWindow)
         window.poe_version = POE2
         window.config = {"poe_version": POE2}
@@ -74,9 +74,48 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
 
         window._enforce_feature_support()
 
-        window.mini_navi_overlay.hide.assert_called_once_with()
+        window.mini_navi_overlay.hide.assert_not_called()
         poetore_window.close.assert_called_once_with()
         self.assertIsNone(window._poetore_window)
+
+    def test_poe2_guide_updates_mini_navi_content(self):
+        window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE2
+        window.config = {
+            "guide_detail_level": "beginner",
+            "mini_guide_overlay": {"enabled": True, "display_mode": "standard"},
+        }
+        window.guide_data = {
+            "poe2_act1_area04": {
+                "objective": "詳細版本文",
+                "mini_navi": {"text": "PoE2みになび本文"},
+            }
+        }
+        window.progress_flags = set()
+        window.visit_override = None
+        window.zone_data = {}
+        window.part2_mode = False
+        window.guide_font_size = 18
+        window.player_level = 1
+        window.monster_levels = {}
+        window._restoring = False
+        window.guide_text_label = Mock()
+        window.mini_navi_overlay = Mock()
+        window.map_thumbnail = Mock()
+        window._current_area_note = ""
+        window._update_area_note = Mock()
+        window._update_poelab_link_visibility = Mock()
+
+        window._update_guide_and_map(
+            "グレルウッド", "poe2_act1_area04", 1, exp_level=None
+        )
+
+        window.mini_navi_overlay.update_content.assert_called_once_with(
+            {"text": "PoE2みになび本文", "direction": "none"},
+            None,
+            zone_id="poe2_act1_area04",
+            has_area_note=False,
+        )
 
     def test_mini_navi_toggle_text_only_reflects_enabled_state(self):
         window = MainWindow.__new__(MainWindow)

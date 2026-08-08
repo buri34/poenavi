@@ -8,11 +8,11 @@ from src.utils.feature_support import (
 from src.utils.poe_version_data import POE1, POE2
 
 
-def test_poe1_only_features_are_declared_in_one_registry():
-    assert supported_versions(MINI_NAVI) == {POE1}
+def test_version_specific_features_are_declared_in_one_registry():
+    assert supported_versions(MINI_NAVI) == {POE1, POE2}
     assert supported_versions(POETORE) == {POE1}
     assert is_feature_supported(MINI_NAVI, POE1)
-    assert not is_feature_supported(MINI_NAVI, POE2)
+    assert is_feature_supported(MINI_NAVI, POE2)
     assert is_feature_supported(POETORE, POE1)
     assert not is_feature_supported(POETORE, POE2)
 

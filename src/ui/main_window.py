@@ -2454,7 +2454,7 @@ class MainWindow(QMainWindow):
         self.poelab_link_button.setText("🏛️ PoELabを開く")
     
     def _is_mini_navi_available(self):
-        """みになびは現状PoE1専用。PoE2では未実装なので入口を出さない。"""
+        """Return whether the current PoE version supports the mini guide overlay."""
         return is_feature_supported(MINI_NAVI, self.poe_version)
 
     def _is_poetore_available(self):

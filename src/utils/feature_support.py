@@ -1,13 +1,13 @@
 """Central registry for features that support only specific PoE versions."""
 
-from src.utils.poe_version_data import POE1
+from src.utils.poe_version_data import POE1, POE2
 
 
 MINI_NAVI = "mini_navi"
 POETORE = "poetore"
 
 FEATURE_SUPPORTED_VERSIONS = {
-    MINI_NAVI: frozenset({POE1}),
+    MINI_NAVI: frozenset({POE1, POE2}),
     POETORE: frozenset({POE1}),
 }
 
