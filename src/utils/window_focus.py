@@ -5,6 +5,17 @@ import time
 from pathlib import PureWindowsPath
 
 
+SW_RESTORE = 9
+
+
+def _restore_window_if_minimized(user32, hwnd) -> bool:
+    """Restore hwnd only when Windows reports that it is minimized."""
+    if not user32.IsIconic(hwnd):
+        return False
+    user32.ShowWindow(hwnd, SW_RESTORE)
+    return True
+
+
 def is_path_of_exile_process_name(process_name: str) -> bool:
     """Path of Exileの実行ファイル名だけを安全な送信先として受け入れる。"""
     name = PureWindowsPath(process_name or "").name.lower()
@@ -76,6 +87,8 @@ def focus_window(hwnd, wait_seconds=0.12):
 
         user32.GetForegroundWindow.restype = wintypes.HWND
         user32.IsWindow.argtypes = [wintypes.HWND]
+        user32.IsIconic.argtypes = [wintypes.HWND]
+        user32.IsIconic.restype = wintypes.BOOL
         user32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
         user32.BringWindowToTop.argtypes = [wintypes.HWND]
         user32.SetForegroundWindow.argtypes = [wintypes.HWND]
@@ -90,8 +103,7 @@ def focus_window(hwnd, wait_seconds=0.12):
             print("[WINDOW] target window no longer exists")
             return False
 
-        SW_RESTORE = 9
-        user32.ShowWindow(hwnd, SW_RESTORE)
+        _restore_window_if_minimized(user32, hwnd)
 
         foreground = user32.GetForegroundWindow()
         current_thread = kernel32.GetCurrentThreadId()
