@@ -4,7 +4,10 @@
       "objective": "・ボス「腐りし群れのベイラ」を倒す\n・「グレルウッド」へ進む",
       "layout": "<span style=\" color:#ffffff;\">・このエリアで重要なのは、まずワールドマップを見ること。\n  これで、クリアフェルの野営地→クリアフェル→グレルウッドの位置関係がわかる。ワールドマップでみたときのグレルウッドの方向に出口があると仮定して進むのが期待値が高い。</span>\n<span style='color:#dddd44'>（以降も、基本的にはワールドマップを信じることが重要）</span>\n\n<span style=\" color:#ffffff;\">・マップレイアウト画像は、大まかなパターン６種類。\n・基本的には、ベイラがいる位置よりもさらに奥に出口（グレルウッド）がある確率が高い。</span>",
       "tips": "<span style=\" color:#ffffff;\">・重要ポイントの説明\n  －キャンプ跡：\n    </span><span style='color:#dddd44'>「放棄されたスタッシュ」という名前の箱から、確定でスキルジェムの原石Lv1を入手可能</span><span style=\" color:#ffffff;\">。\n  －泥の巣穴：\n    中のボス「デヴァウラー」を倒すと、確定でスキルジェムの原石Lv2をドロップ。\n    また、クエスト報酬でサポートジェムの原石Lv1を入手可能。\n    （面倒だからスルーしても良し。最初のスキルジェムを取る手段としては非効率）\n  －腐りし群れのベイラ：\n    倒すと冬狼の首（</span><span style='color:#dddd44'>永続で冷気耐性+10%</span><span style=\" color:#ffffff;\">）がもらえるため、必ず倒す。\n\n【ボス情報】\n腐りし群れのベイラ\n属性：物理、冷気\n耐性：冷気\n弱点：火</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「腐りし群れのベイラ」を倒す\n・「グレルウッド」へ進む</span>\n\n<span style='color:#ffffff'>まずワールドマップを見て、クリアフェル→グレルウッドの位置関係をみてグレルウッドの方向へ進むと期待値が高い。</span>\n<span style='color:#ffffff'>（以降も、</span><span style='color:#dddd44'>基本的にはワールドマップを信じる</span><span style='color:#ffffff'>ことが重要）</span>\n\n<span style='color:#ffffff'>「放棄されたスタッシュ」からスキルジェムの原石Lv1</span>\n\n<span style='color:#ffffff'>泥の巣穴内のデヴァウラーからスキルジェムの原石Lv2＋クエスト報酬でサポートジェムの原石Lv1。（時間がかかるので序盤がつらくてどうしてもすぐにサポジェムが欲しいキャラ以外は非推奨）</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「腐りし群れのベイラ」を倒す\n・「グレルウッド」へ進む</span>\n\n<span style='color:#ffffff'>まずワールドマップを見て、クリアフェル→グレルウッドの位置関係をみてグレルウッドの方向へ進むと期待値が高い。</span>\n<span style='color:#ffffff'>（以降も、</span><span style='color:#dddd44'>基本的にはワールドマップを信じる</span><span style='color:#ffffff'>ことが重要）</span>\n\n<span style='color:#ffffff'>「放棄されたスタッシュ」からスキルジェムの原石Lv1</span>\n\n<span style='color:#ffffff'>泥の巣穴内のデヴァウラーからスキルジェムの原石Lv2＋クエスト報酬でサポートジェムの原石Lv1。（時間がかかるので序盤がつらくてどうしてもすぐにサポジェムが欲しいキャラ以外は非推奨）</span>",
+      "mini_navi": {
+        "text": "▸[boss]ボス「腐りし群れのベイラ」を倒す\n▸[move]<span style='color:#dddd44'>グレルウッド</span>へ進む\n<span style='color:#ffffff'>（まずワールドマップを見て、クリアフェル→グレルウッドの位置関係をみてグレルウッドの方向へ進むと期待値が高い）</span>"
+      }
     },
     "flags": {}
   },
@@ -13,7 +16,10 @@
       "objective": "・初期ジェムを入手する",
       "layout": "<span style='color:#ffffff'>道なりに進むだけ</span>",
       "tips": "<span style=\" color:#ffffff;\">・一番最初に拾える武器は、拾ってから装備せずに、「チェックポイントでリスポーン」をすると再び拾える（二刀流にしたい場合に使えるテク）。\n・ボスを倒すときは、クリアフェルの野営地が画面外になっている位置で倒すと、ゲートが開くシーンがスキップされて、ちょっとだけ早く街に入れる。</span>",
-      "summary": "<span style='color:#ffffff'>道なりに進むだけ。</span>\n\n<span style='color:#ffffff'>ボスを倒すときは、クリアフェルの野営地が画面外になっている位置で倒すと、ゲートが開くシーンがスキップされて、ちょっとだけ早く街に入れる。</span>"
+      "summary": "<span style='color:#ffffff'>道なりに進むだけ。</span>\n\n<span style='color:#ffffff'>ボスを倒すときは、クリアフェルの野営地が画面外になっている位置で倒すと、ゲートが開くシーンがスキップされて、ちょっとだけ早く街に入れる。</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>▸道なりに進んで、初期ジェムを入手し、[boss]ボスを倒して[town]</span><span style='color:#dddd44'>街</span><span style='color:#ffffff'>へ入る</span>"
+      }
     },
     "flags": {}
   },
@@ -22,14 +28,20 @@
       "objective": "・魂の木のWPを確保する\n・「赤き谷」へ進む",
       "layout": "<span style='color:#ffffff'>・入り口の位置はランダム。</span>\n<span style='color:#ffffff'>・エリア内には、4つの重要ポイントがあり、ひし形に配置されている。</span>\n<span style='color:#ffffff'>・そのため、エリアに入ったらまずは直進して最初のポイントを見つけ、</span>\n<span style='color:#ffffff'>  そこから斜め上or斜め下に進んで、次のポイントを探す進め方が速い。</span>\n\n<span style='color:#ffffff'>・４つの重要ポイント</span>\n<span style='color:#ffffff'>  ①魂の木：ストーリークエストで必須。WPあり</span>\n<span style='color:#ffffff'>  ②不気味なもつれ：ストーリークエストで必須。中に入るとWPあり。</span>\n<span style='color:#ffffff'>  ③動く茨：ボス（ブランブルガスト）。倒すと確定でスキルジェムの原石Lv2をドロップ。必須ではない</span>\n<span style='color:#ffffff'>  ④アリアグネの小屋：近くの大釜から確定でフラスコがドロップ。魔女を倒すとサポートジェムの原石をドロップ。</span>\n\n<span style='color:#dd66ff'>5/14のGGG動画によると、以下３つの目印あり</span>\n<span style='color:#dd66ff'>・エリア内に川をみつければその上流側に赤き谷の入口がある</span>\n<span style='color:#dd66ff'>・木の根がみつかれば魂の木が近い</span>\n<span style=\" color:#dd66ff;\">・きのこがみつかれば不気味なもつれが近い\n</span>\n<span style='color:#dddd44'>推奨の進め方は、①魂の木のWP確保と、④の魔女からサポートジェムを獲得してから、赤き谷へ進む</span><span style='color:#ffffff'>流れ。</span>\n<span style='color:#ffffff'>先に赤き谷が見つかってしまった場合は、中に入ってWPだけ確保して戻るか、そのまま赤き谷をクリアしてしまうのが良い。</span>\n<span style='color:#ffffff'>先に②不気味なもつれを見つけた場合は、中に入ってWPだけ確保する。</span>",
       "tips": "<span style='color:#ffffff'>【中ボス情報】  </span><span style='color:#dddd44'>※倒すことを推奨</span><span style=\" color:#ffffff;\">\n忘れられた魔女、アリアグネ</span>\n<span style='color:#dddd44'>Act1で最も強い手ごわい敵と言っても過言ではない</span><span style='color:#ffffff'>。</span>\n<span style='color:#ffffff'>工夫として、</span><span style='color:#dddd44'>小屋前の左か右にあるチェックポイントは、反対側から壁のギリギリを通って中に入ればチェックポイントに触れずに入ることができる</span><span style='color:#ffffff'>。</span>\n<span style='color:#ffffff'>小屋からでるときも同様にすれば、アリアグネ戦できつくなってきたときの</span><span style='color:#dddd44'>回復のために活用</span><span style='color:#ffffff'>できる</span>\n\n<span style='color:#ffffff'>【ボス情報】  </span><span style='color:#dddd44'>※スルー可</span><span style=\" color:#ffffff;\">\nブランブルガスト\n属性：物理\n耐性：物理、冷気\n弱点：火</span>",
-      "summary": "<span style=\" color:#ffffff;\">・魂の木のWPを確保する\n・魔女からサポートジェムを獲得する\n・「赤き谷」へ進む\n</span>\n<span style='color:#ffffff'>エリア内には、4つの重要ポイントがあり、ひし形に配置されている。</span>\n<span style='color:#ffffff'>エリアに入ったらまずは直進して最初のポイントを見つけ、そこから斜め上or斜め下に進んで、次のポイントを探す</span>\n\n<span style='color:#dddd44'>魔女戦は、小屋前の左か右にあるチェックポイントは、反対側から壁のギリギリを通って中に入ればチェックポイントに触れずに入ることができる。</span>\n<span style='color:#dddd44'>小屋からでるときも同様にすれば、きつくなってきたときに回復できる</span>\n\n<span style='color:#dd66ff'>5/14のGGG動画によると、以下３つの目印あり</span>\n<span style='color:#dd66ff'>・エリア内に川をみつければその上流側に赤き谷の入口がある</span>\n<span style='color:#dd66ff'>・木の根がみつかれば魂の木が近い</span>\n<span style='color:#dd66ff'>・きのこがみつかれば不気味なもつれが近い</span>"
+      "summary": "<span style=\" color:#ffffff;\">・魂の木のWPを確保する\n・魔女からサポートジェムを獲得する\n・「赤き谷」へ進む\n</span>\n<span style='color:#ffffff'>エリア内には、4つの重要ポイントがあり、ひし形に配置されている。</span>\n<span style='color:#ffffff'>エリアに入ったらまずは直進して最初のポイントを見つけ、そこから斜め上or斜め下に進んで、次のポイントを探す</span>\n\n<span style='color:#dddd44'>魔女戦は、小屋前の左か右にあるチェックポイントは、反対側から壁のギリギリを通って中に入ればチェックポイントに触れずに入ることができる。</span>\n<span style='color:#dddd44'>小屋からでるときも同様にすれば、きつくなってきたときに回復できる</span>\n\n<span style='color:#dd66ff'>5/14のGGG動画によると、以下３つの目印あり</span>\n<span style='color:#dd66ff'>・エリア内に川をみつければその上流側に赤き谷の入口がある</span>\n<span style='color:#dd66ff'>・木の根がみつかれば魂の木が近い</span>\n<span style='color:#dd66ff'>・きのこがみつかれば不気味なもつれが近い</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・魂の木のWPを確保する\n・魔女からサポートジェムを獲得する\n・「赤き谷」へ進む\n</span>\n<span style='color:#ffffff'>エリア内には、4つの重要ポイントがあり、ひし形に配置されている。</span>\n<span style='color:#ffffff'>エリアに入ったらまずは直進して最初のポイントを見つけ、そこから斜め上or斜め下に進んで、次のポイントを探す</span>\n\n<span style='color:#dddd44'>魔女戦は、小屋前の左か右にあるチェックポイントは、反対側から壁のギリギリを通って中に入ればチェックポイントに触れずに入ることができる。</span>\n<span style='color:#dddd44'>小屋からでるときも同様にすれば、きつくなってきたときに回復できる</span>\n\n<span style='color:#dd66ff'>5/14のGGG動画によると、以下３つの目印あり</span>\n<span style='color:#dd66ff'>・エリア内に川をみつければその上流側に赤き谷の入口がある</span>\n<span style='color:#dd66ff'>・木の根がみつかれば魂の木が近い</span>\n<span style='color:#dd66ff'>・きのこがみつかれば不気味なもつれが近い</span>"
+      }
     },
     "flags": {
       "act1_rustking_dead": {
         "objective": "・ルーンの封印を解く\n・街へ戻る\n\n（街）\n・ウーナにクエストを提出する\n・WPから「不気味なもつれ」へ行く\n※不気味なもつれのWPがまだない場合は、グレルウッドへ飛んで、不気味なもつれを探す",
         "layout": "",
         "tips": "",
-        "summary": "<span style=\" color:#ffffff;\">・ルーンの封印を解く\n・街へ戻る\n\n（街）\n・ウーナにクエストを提出する\n・WPから「不気味なもつれ」へ行く\n\n※不気味なもつれのWPがまだない場合は、グレルウッドへ飛んで、不気味なもつれを探す</span>"
+        "summary": "<span style=\" color:#ffffff;\">・ルーンの封印を解く\n・街へ戻る\n\n（街）\n・ウーナにクエストを提出する\n・WPから「不気味なもつれ」へ行く\n\n※不気味なもつれのWPがまだない場合は、グレルウッドへ飛んで、不気味なもつれを探す</span>",
+        "mini_navi": {
+          "text": "<span style=\" color:#ffffff;\">・ルーンの封印を解く\n・街へ戻る\n\n（街）\n・ウーナにクエストを提出する\n・WPから「不気味なもつれ」へ行く\n\n※不気味なもつれのWPがまだない場合は、グレルウッドへ飛んで、不気味なもつれを探す</span>"
+        }
       }
     }
   },
@@ -38,7 +50,10 @@
       "objective": "・「デヴァウラー」を倒す。\n・街に戻って、レイリーのクエストを提出する。",
       "layout": "<span style='color:#ffffff'>・このエリアが縦に伸びているなら、ボスエリアは入口からみて上下の反対側に</span>\n<span style='color:#ffffff'>  エリアが横に伸びているなら、ボスエリアは入口からみて左右の反対側にある</span>",
       "tips": "<span style=\" color:#ffffff;\">・中のボス「デヴァウラー」を倒すと、確定でスキルジェムの原石Lv2をドロップ。\n・また、クエスト報酬でサポートジェムの原石Lv1を入手可能。</span>",
-      "summary": "<span style=\" color:#ffffff;\">・「デヴァウラー」を倒す。\n・街に戻って、レイリーにクエストを提出する。</span>\n\n<span style='color:#ffffff'>エリアが縦に伸びているなら、ボスエリアは入口の上下の反対側に</span>\n<span style='color:#ffffff'>横に伸びているなら、ボスエリアは入口の左右の反対側に</span>"
+      "summary": "<span style=\" color:#ffffff;\">・「デヴァウラー」を倒す。\n・街に戻って、レイリーにクエストを提出する。</span>\n\n<span style='color:#ffffff'>エリアが縦に伸びているなら、ボスエリアは入口の上下の反対側に</span>\n<span style='color:#ffffff'>横に伸びているなら、ボスエリアは入口の左右の反対側に</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">▸[boss]「デヴァウラー」を倒す。\n▸[town]</span><span style='color:#dddd44'>街</span><span style='color:#ffffff'>に戻って、[quest]レイリーのクエストを提出する。</span>\n<span style=\" color:#ffffff;\">（エリアが縦に伸びているなら、ボスエリアは入口の上下の反対側に\n　横に伸びているなら、ボスエリアは入口の左右の反対側にある）</span>"
+      }
     },
     "flags": {}
   },
@@ -47,7 +62,10 @@
       "objective": "・３つの「錆のオベリスク」を見つける\n・ボス「錆の王」を倒す\n・ポータルで街へ戻る\n\n（街）\n・レンリーにクエストを提出する\n・WPから「グレルウッド」へ行く",
       "layout": "<span style='color:#ffffff'>・大まかに言うと円形の構造になっているため、</span><span style='color:#dddd44'>基本的にはエリアをぐるりと一周するように回る</span><span style=\" color:#ffffff;\">。\n</span>\n<span style='color:#ffffff'>・</span><span style='color:#dddd44'>敵の攻撃がまあまあ痛いが、近接モブは近づかなければ殴られないので、遠距離モブを優先的に倒すようにする</span><span style='color:#ffffff'>と楽。</span>\n<span style=\" color:#ffffff;\">\n・錆のオベリスクに近づくと、低い唸り声のような音が聞こえる。\n・経験値がおいしいエリアではあるため、はずれレイアウトを引いて無駄に周ることになっても、いいレベル上げになったと考えたらいい\n・錆の王を倒したら、ポータルで戻ってウェイポイントでグレルウッドに向かうのが速い</span>",
       "tips": "<span style='color:#ffffff'>このエリアでは、</span><span style='color:#dddd44'>「錆びた武器」や「洗練された武器」というオブジェクトから武器がドロップ</span><span style=\" color:#ffffff;\">する。個々の中身はランダムだが、エリア内のすべてのオブジェクトを開ければ、すべての武器タイプが少なくとも1つずつ手に入ることが保証されている（ワンドとスタッフを除く）。\n自分のクラスに適した武器を見つけるために、見かけたら常にクリックするのが良い。\n</span>\n\n<span style=\" color:#ffffff;\">【ボス情報】\n錆の王\n属性：物理\n耐性：物理、火\n弱点：雷\n\n・錆の王は、確定でスキルジェムの原石Lv3をドロップする</span>",
-      "summary": "<span style='color:#ffffff'>・３つの「錆のオベリスク」を見つける</span>\n<span style='color:#ffffff'>・ボス「錆の王」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・レンリーにクエストを提出する</span>\n<span style='color:#ffffff'>・WPから「グレルウッド」へ行く</span>\n\n<span style='color:#ffffff'>基本的にはエリアをぐるりと一周するように回る</span>\n\n<span style='color:#ffffff'>敵の攻撃がまあまあ痛いが、近接モブは近づかなければ殴られないので、遠距離モブを優先的に倒すようにすると楽。</span>\n\n<span style='color:#ffffff'>「錆びた武器」や「洗練された武器」から武器がドロップ。個々の中身はランダムだが、エリア内のすべてのオブジェクトを開ければ、すべての武器タイプが少なくとも1つずつ手に入ることが保証されている（ワンドとスタッフを除く）。</span>\n<span style='color:#ffffff'>自分のクラスに適した武器を見つけるために、見かけたら常にクリックする</span>"
+      "summary": "<span style='color:#ffffff'>・３つの「錆のオベリスク」を見つける</span>\n<span style='color:#ffffff'>・ボス「錆の王」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・レンリーにクエストを提出する</span>\n<span style='color:#ffffff'>・WPから「グレルウッド」へ行く</span>\n\n<span style='color:#ffffff'>基本的にはエリアをぐるりと一周するように回る</span>\n\n<span style='color:#ffffff'>敵の攻撃がまあまあ痛いが、近接モブは近づかなければ殴られないので、遠距離モブを優先的に倒すようにすると楽。</span>\n\n<span style='color:#ffffff'>「錆びた武器」や「洗練された武器」から武器がドロップ。個々の中身はランダムだが、エリア内のすべてのオブジェクトを開ければ、すべての武器タイプが少なくとも1つずつ手に入ることが保証されている（ワンドとスタッフを除く）。</span>\n<span style='color:#ffffff'>自分のクラスに適した武器を見つけるために、見かけたら常にクリックする</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・３つの「錆のオベリスク」を見つける</span>\n<span style='color:#ffffff'>・ボス「錆の王」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・レンリーにクエストを提出する</span>\n<span style='color:#ffffff'>・WPから「グレルウッド」へ行く</span>\n\n<span style='color:#ffffff'>基本的にはエリアをぐるりと一周するように回る</span>\n\n<span style='color:#ffffff'>敵の攻撃がまあまあ痛いが、近接モブは近づかなければ殴られないので、遠距離モブを優先的に倒すようにすると楽。</span>\n\n<span style='color:#ffffff'>「錆びた武器」や「洗練された武器」から武器がドロップ。個々の中身はランダムだが、エリア内のすべてのオブジェクトを開ければ、すべての武器タイプが少なくとも1つずつ手に入ることが保証されている（ワンドとスタッフを除く）。</span>\n<span style='color:#ffffff'>自分のクラスに適した武器を見つけるために、見かけたら常にクリックする</span>"
+      }
     },
     "flags": {}
   },
@@ -56,7 +74,10 @@
       "objective": "・ウーナに話して、進む。\n・入口と反対の方向へ進み、「永遠なる帝国の墓地」へ行く。",
       "layout": "<span style='color:#ffffff'>・ランダム性が高いレイアウトだが、基本的には入口の正反対側に出口があることが多い。</span>\n<span style='color:#ffffff'>  稀に、到達するために回り道が必要な場合もある。</span>\n<span style='color:#ffffff'>・</span><span style='color:#dddd44'>基本的には、ワールドマップを信じる</span><span style='color:#ffffff'>。グレルウッド→不気味なもつれ→永遠なる帝国の墓地の位置関係を確認し、永遠なる帝国の墓地がある方向へ進むと、高い確率で出口へ繋がっている。</span>",
       "tips": "<span style='color:#ffffff'>・</span><span style='color:#dddd44'>ウーナの歌が始まった瞬間に、チェックポイントに体当たりするようにローリングすると、なぜかツタが開く前に通れる</span><span style=\" color:#ffffff;\">ようになる（以前は歌が始まった瞬間にEscキーを押して 「チェックポイントでリスポーン」 を選択してスキップしてたが、それより早い）\n\n・ボスの「腐ったドルイド」はスルー可能だが、</span><span style='color:#dddd44'>倒すと確定でサポートジェムの原石Lv1をドロップ</span><span style=\" color:#ffffff;\">する\n\n【ボス情報】\n腐ったドルイド\n属性：物理、混沌\n耐性：－\n弱点：－</span>",
-      "summary": "<span style='color:#ffffff'>・ウーナに話して、進む。</span>\n<span style='color:#ffffff'>・入口と反対の方向へ進み、「永遠なる帝国の墓地」へ行く。</span>\n\n<span style='color:#ffffff'>ウーナの歌が始まった瞬間に、チェックポイントに体当たりするようにローリングすると、なぜかツタが開く前に通れるようになる</span>\n\n<span style='color:#ffffff'>基本的には、ワールドマップを信じる</span>\n\n<span style='color:#ffffff'>ボスの「腐ったドルイド」は倒すとサポートジェムの原石Lv1</span>"
+      "summary": "<span style='color:#ffffff'>・ウーナに話して、進む。</span>\n<span style='color:#ffffff'>・入口と反対の方向へ進み、「永遠なる帝国の墓地」へ行く。</span>\n\n<span style='color:#ffffff'>ウーナの歌が始まった瞬間に、チェックポイントに体当たりするようにローリングすると、なぜかツタが開く前に通れるようになる</span>\n\n<span style='color:#ffffff'>基本的には、ワールドマップを信じる</span>\n\n<span style='color:#ffffff'>ボスの「腐ったドルイド」は倒すとサポートジェムの原石Lv1</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ウーナに話して、進む。</span>\n<span style='color:#ffffff'>・入口と反対の方向へ進み、「永遠なる帝国の墓地」へ行く。</span>\n\n<span style='color:#ffffff'>ウーナの歌が始まった瞬間に、チェックポイントに体当たりするようにローリングすると、なぜかツタが開く前に通れるようになる</span>\n\n<span style='color:#ffffff'>基本的には、ワールドマップを信じる</span>\n\n<span style='color:#ffffff'>ボスの「腐ったドルイド」は倒すとサポートジェムの原石Lv1</span>"
+      }
     },
     "flags": {}
   },
@@ -65,14 +86,20 @@
       "objective": "・２つの墓地（「妃の墓所」「法務官の霊廟」を探し、クリアする。",
       "layout": "<span style='color:#ffffff'>・２つの墓を見つける必要あり。</span>\n<span style='color:#ffffff'>・墓の位置はランダム性が高いが、どちらか１つは追悼の門（次のボスエリア）と同じ壁沿いに生成される確率が高い。</span>\n<span style='color:#ffffff'>・それ以外は、側面の壁沿いに生成される傾向がある。</span>\n<span style='color:#ffffff'>・２つの墓が、各側面の壁沿いの生成されるパターンもある。</span>\n\n<span style='color:#dddd44'>推奨の進め方は、まずは、追悼の門と同じ壁沿いを探す</span><span style='color:#ffffff'>。</span>\n<span style='color:#ffffff'>１つ墓地を見つけたら、普通はその近くか、反対側の壁沿いにある。</span>\n\n<span style='color:#ffffff'>・確定で指輪がもらえるポイント（サルコファガス）があり、WPの反対側の壁に出現する確率が高い。鉄の指輪（フラットダメージ追加）がドロップする可能性があり、強いので</span><span style='color:#dddd44'>アタック職なら積極的に狙う</span><span style='color:#ffffff'>べき。</span>",
       "tips": "<span style='color:#ffffff'>・</span><span style='color:#dddd44'>「妃の墓所」「法務官の霊廟」のクリア順番は、最初に「法務官の霊廟」に一歩だけ入ってから、すぐに抜けて、「妃の墓所」へ行くと、「妃の墓所」のエリアレベルが９にあがる</span><span style='color:#ffffff'>。</span>\n<span style='color:#ffffff'>・こうすることで経験値効率が良くなるのと、エリアレベル９のボスは+2レベルでレベル11ベースのアイテムをドロップするため、装備強化のチャンスが増える。</span>\n\n<span style='color:#ffffff'>※なお、わかりやすい例は弓で、「監視者の弓」はレベル11ベース。これをやらないとレベル5ベースのショートボウしかドロップしない。ただ、クロスボウ/スピア/タリスマンなどはレベル10ベース（頑丈なクロスボウ/ハンティングスピア/灰皮のタリスマンが該当）が次の強化先なので装備強化の観点だけであれば、やらなくても良い。自分の使う武器にあわせてやればよいが、経験値もうまいので、結論、基本的にやっておけば良い</span>",
-      "summary": "<span style=\" color:#ffffff;\">・２つの墓地「妃の墓所」「法務官の霊廟」を探し、クリアする。\n\n推奨の進め方は、まずは、追悼の門と同じ壁沿いを探す。\n１つ墓地を見つけたら、普通はその近くか、反対側の壁沿いにある。\n\n「サルコファガス」を開けると確定で指輪がもらえる。WPの反対側の壁に出現する確率が高い。</span><span style='color:#dddd44'>鉄の指輪（フラットダメージ追加）がドロップ</span><span style='color:#ffffff'>する可能性がある</span>\n\n<span style='color:#ffffff'>「妃の墓所」「法務官の霊廟」のクリア順番は、最初に「法務官の霊廟」に一歩だけ入ってから、すぐに抜けて、「妃の墓所」へ行くと、「妃の墓所」のエリアlvlが9にあがる。</span>\n<span style='color:#ffffff'>結果、経験値効率が良くなるのと、エリアlvl9のボスは+2レベルでレベル11ベースのアイテムをドロップするため、装備強化のチャンスが増える。</span>"
+      "summary": "<span style=\" color:#ffffff;\">・２つの墓地「妃の墓所」「法務官の霊廟」を探し、クリアする。\n\n推奨の進め方は、まずは、追悼の門と同じ壁沿いを探す。\n１つ墓地を見つけたら、普通はその近くか、反対側の壁沿いにある。\n\n「サルコファガス」を開けると確定で指輪がもらえる。WPの反対側の壁に出現する確率が高い。</span><span style='color:#dddd44'>鉄の指輪（フラットダメージ追加）がドロップ</span><span style='color:#ffffff'>する可能性がある</span>\n\n<span style='color:#ffffff'>「妃の墓所」「法務官の霊廟」のクリア順番は、最初に「法務官の霊廟」に一歩だけ入ってから、すぐに抜けて、「妃の墓所」へ行くと、「妃の墓所」のエリアlvlが9にあがる。</span>\n<span style='color:#ffffff'>結果、経験値効率が良くなるのと、エリアlvl9のボスは+2レベルでレベル11ベースのアイテムをドロップするため、装備強化のチャンスが増える。</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・２つの墓地「妃の墓所」「法務官の霊廟」を探し、クリアする。\n\n推奨の進め方は、まずは、追悼の門と同じ壁沿いを探す。\n１つ墓地を見つけたら、普通はその近くか、反対側の壁沿いにある。\n\n「サルコファガス」を開けると確定で指輪がもらえる。WPの反対側の壁に出現する確率が高い。</span><span style='color:#dddd44'>鉄の指輪（フラットダメージ追加）がドロップ</span><span style='color:#ffffff'>する可能性がある</span>\n\n<span style='color:#ffffff'>「妃の墓所」「法務官の霊廟」のクリア順番は、最初に「法務官の霊廟」に一歩だけ入ってから、すぐに抜けて、「妃の墓所」へ行くと、「妃の墓所」のエリアlvlが9にあがる。</span>\n<span style='color:#ffffff'>結果、経験値効率が良くなるのと、エリアlvl9のボスは+2レベルでレベル11ベースのアイテムをドロップするため、装備強化のチャンスが増える。</span>"
+      }
     },
     "flags": {
       "act1_draven_dead+act1_asinia_dead": {
         "objective": "・ボス「終わりなき悲嘆のラクラン」を倒す\n・「狩場」へ行く",
         "layout": "",
         "tips": "・２つの鍵を手に入れて、追悼の門をクリックしたタイミングでEscキーから 「チェックポイントでリスポーン」 を選択すると、戦闘前のラクランの会話をスキップできる。\n\n【ボス情報】\n終わりなき悲嘆のラクラン\n属性：物理\n耐性：物理\n弱点：－\n攻略：巨大な腕攻撃は密着していれば当たらないので、懐に潜り込むのが安全かつ効果的\n\n・ボスが落とす「ラクラン伯爵の指輪」は拾わなくて良い。（拾うと無駄なクエストが発生して遅くなるだけ。Act1のボスを倒せばストーリークエストは進むので問題なし）",
-        "summary": "<span style=\" color:#ffffff;\">・ボス「終わりなき悲嘆のラクラン」を倒す\n・「狩場」へ行く</span>\n\n<span style=\" color:#ffffff;\">追悼の門をクリックしたタイミングでEscキーから 「チェックポイントでリスポーン」 を選択すると、戦闘前のラクランの会話をスキップできる。\n\n巨大な腕攻撃は密着していれば当たらないので、懐に潜り込むのが安全\n\nボスが落とす「ラクラン伯爵の指輪」は拾わなくて良い</span>"
+        "summary": "<span style=\" color:#ffffff;\">・ボス「終わりなき悲嘆のラクラン」を倒す\n・「狩場」へ行く</span>\n\n<span style=\" color:#ffffff;\">追悼の門をクリックしたタイミングでEscキーから 「チェックポイントでリスポーン」 を選択すると、戦闘前のラクランの会話をスキップできる。\n\n巨大な腕攻撃は密着していれば当たらないので、懐に潜り込むのが安全\n\nボスが落とす「ラクラン伯爵の指輪」は拾わなくて良い</span>",
+        "mini_navi": {
+          "text": "<span style=\" color:#ffffff;\">・ボス「終わりなき悲嘆のラクラン」を倒す\n・「狩場」へ行く</span>\n\n<span style=\" color:#ffffff;\">追悼の門をクリックしたタイミングでEscキーから 「チェックポイントでリスポーン」 を選択すると、戦闘前のラクランの会話をスキップできる。\n\n巨大な腕攻撃は密着していれば当たらないので、懐に潜り込むのが安全\n\nボスが落とす「ラクラン伯爵の指輪」は拾わなくて良い</span>"
+        }
       }
     }
   },
@@ -81,7 +108,10 @@
       "objective": "ボス「法務官の妻、アシニア」を倒す",
       "layout": "<span style=\" color:#ffffff;\">・このエリアに入ったら、まずは最初の分岐は両方とも確認すること。\n  －もし入り口近くのコーナーに後述する「幽霊の財宝」がある場合、ボスエリアは反対側のコーナーを進んでこのエリアの一番奥にあるため、エリアを俯瞰した視点で見て入口から対角線を目指す。\n  ―もし入り口近くに「幽霊の財宝」がなかった場合、「幽霊の財宝」はエリアの中央付近まで進んだあたりの分岐の先にあり、ボスエリアも同じサイドにある可能性が高い。</span>",
       "tips": "<span style='color:#ffffff'>・長いマップ、かつ、狭い通路で敵にボックスされて死ぬ事故が起きやすいので余裕を持って進むようにするのが良い。</span>\n\n<span style='color:#ffffff'>・途中、チェックポイントのある</span><span style='color:#dddd44'>「幽霊の財宝」で出現するレアモンスターを倒すと確定でサポートジェムの原石Lv1をドロップ</span><span style='color:#ffffff'>する。</span>\n<span style='color:#dddd44'>注意点としては、レアモンスターを倒す前に、レアチェストを開けない</span><span style=\" color:#ffffff;\">こと。倒す前にチェストを開けてしまうと、万が一死んでしまった場合にレアモンスターがリスポンしなくなり、サポートジェムを手に入れることができなくなる。\n\n【ボス情報】\n法務官の妻、アシニア\n属性：物理\n耐性：物理、冷気\n弱点：－</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「法務官の妻、アシニア」を倒す</span>\n\n<span style='color:#ffffff'>途中、チェックポイントのある「幽霊の財宝」で出現するレアモンスターを倒すとサポートジェムの原石Lv1</span>\n\n<span style='color:#ffffff'>注意点は、レアモンスターを倒す前に、レアチェストを開けないこと。倒す前にチェストを開けてると、万が一死んでしまった場合にレアモンスターがリスポンしなくなり、サポートジェムを手に入れることができなくなる。</span>"
+      "summary": "<span style='color:#ffffff'>・ボス「法務官の妻、アシニア」を倒す</span>\n\n<span style='color:#ffffff'>途中、チェックポイントのある「幽霊の財宝」で出現するレアモンスターを倒すとサポートジェムの原石Lv1</span>\n\n<span style='color:#ffffff'>注意点は、レアモンスターを倒す前に、レアチェストを開けないこと。倒す前にチェストを開けてると、万が一死んでしまった場合にレアモンスターがリスポンしなくなり、サポートジェムを手に入れることができなくなる。</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ボス「法務官の妻、アシニア」を倒す</span>\n\n<span style='color:#ffffff'>途中、チェックポイントのある「幽霊の財宝」で出現するレアモンスターを倒すとサポートジェムの原石Lv1</span>\n\n<span style='color:#ffffff'>注意点は、レアモンスターを倒す前に、レアチェストを開けないこと。倒す前にチェストを開けてると、万が一死んでしまった場合にレアモンスターがリスポンしなくなり、サポートジェムを手に入れることができなくなる。</span>"
+      }
     },
     "flags": {}
   },
@@ -90,7 +120,10 @@
       "objective": "ボス「永遠なる法務官、ドレイヴン」を倒す",
       "layout": "<span style='color:#ffffff'>・エリアの中央に向かい、真ん中にあるような部屋（マップ画像を参照）を見つけたら、</span><span style='color:#dddd44'>『エリア入口』から『その部屋』を通る直線を引くと、その先にボス部屋があることが非常に多い</span><span style=\" color:#ffffff;\">\n・ボス部屋は、外縁が非常に特徴的なギザギザの形状をしているため、エリアを走り回りながら、この特徴的な外縁を探すように意識する。</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n永遠なる法務官、ドレイヴン\n属性：物理、火\n耐性：物理、火\n弱点：－</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「永遠なる法務官、ドレイヴン」を倒す</span>\n\n<span style='color:#ffffff'>エリアの中央に向かい、真ん中にあるような部屋（マップ画像を参照）を見つけたら、『エリア入口』から『その部屋』を通る直線を引くと、その先にボス部屋があることが非常に多い</span>\n\n<span style='color:#ffffff'>ボス部屋は、外縁が非常に特徴的なギザギザの形状をしている</span>"
+      "summary": "<span style='color:#ffffff'>・ボス「永遠なる法務官、ドレイヴン」を倒す</span>\n\n<span style='color:#ffffff'>エリアの中央に向かい、真ん中にあるような部屋（マップ画像を参照）を見つけたら、『エリア入口』から『その部屋』を通る直線を引くと、その先にボス部屋があることが非常に多い</span>\n\n<span style='color:#ffffff'>ボス部屋は、外縁が非常に特徴的なギザギザの形状をしている</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ボス「永遠なる法務官、ドレイヴン」を倒す</span>\n\n<span style='color:#ffffff'>エリアの中央に向かい、真ん中にあるような部屋（マップ画像を参照）を見つけたら、『エリア入口』から『その部屋』を通る直線を引くと、その先にボス部屋があることが非常に多い</span>\n\n<span style='color:#ffffff'>ボス部屋は、外縁が非常に特徴的なギザギザの形状をしている</span>"
+      }
     },
     "flags": {}
   },
@@ -99,7 +132,10 @@
       "objective": "・ボス「クロウベル」を倒す\n・「オガムの農地」に行って、WPを確保する\n・「フレイソーン」へ行く",
       "layout": "<span style=\" color:#ffffff;\">・３つの重要ポイントがあり、外周を走っていれば全て見つかる\n・３つの重要ポイント\n  ①フレイソーン：谷のような長い道が特徴。入ってちょっと進んだところにWPあり。\n  ②クロウベル：ボス。倒すと武器スワップスロットが解放（スキルポイント+2） される\n  ③オガムの農地：ストーリークエストで必須。入ってすぐにWPあり。\n\n・ミニマップ上で円形の闘技場のような地形が見えたら、③のボス部屋。\n・</span><span style='color:#dddd44'>③に進む前に、①と②をクリアするのが一般的なルート</span><span style=\" color:#ffffff;\">。\n  外周を回っている最中に①や③が先に見つかったら、一旦WPの確保だけして残りを探す。\n\n・外周にある「ドリュアスの儀式」にいるレアmobの</span><span style='color:#dddd44'>「アンバーベロウ」を倒すと確定でサポートジェムの原石Lv1が手に入る</span><span style='color:#ffffff'>ので、不足していたら入手する</span>",
       "tips": "<span style='color:#ffffff'>・エリア中央にあるリチュアルをクリアするとスキルジェムの原石Lv4が手に入るが、面倒なだけなので、スルー推奨</span>\n\n<span style='color:#dd66ff'>※2026/5/8ライブ配信の情報によると、リチュアルをクリアすると虫の大群がフレイソーンの入口を示してくれる模様</span><span style='color:#ffffff'>。</span>\n<span style='color:#ffffff'>また、</span><span style='color:#dd66ff'>クロウベルのボスエリアの近くには死骸とクロウベルの足跡が描写</span><span style=\" color:#ffffff;\">されるらしい。\n\n【ボス情報】\nクロウベル\n属性：物理\n耐性：－\n弱点：－</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「クロウベル」を倒す（</span><span style='color:#dddd44'>スキルポイント+2</span><span style='color:#ffffff'>）</span>\n<span style='color:#ffffff'>・「オガム農地」に行って、WPを確保する</span>\n<span style='color:#ffffff'>・「フレイソーン」へ行く</span>\n\n<span style='color:#ffffff'>外周にある「ドリュアスの儀式」にいるレアmobを倒すとサポートジェムの原石Lv1</span>\n\n<span style='color:#dd66ff'>※2026/5/8ライブ配信の情報によると、リチュアルをクリアすると虫の大群がフレイソーンの入口を示してくれる模様。</span>\n<span style='color:#dd66ff'>また、クロウベルのボスエリアの近くには死骸とクロウベルの足跡が描写されるらしい。</span>"
+      "summary": "<span style='color:#ffffff'>・ボス「クロウベル」を倒す（</span><span style='color:#dddd44'>スキルポイント+2</span><span style='color:#ffffff'>）</span>\n<span style='color:#ffffff'>・「オガム農地」に行って、WPを確保する</span>\n<span style='color:#ffffff'>・「フレイソーン」へ行く</span>\n\n<span style='color:#ffffff'>外周にある「ドリュアスの儀式」にいるレアmobを倒すとサポートジェムの原石Lv1</span>\n\n<span style='color:#dd66ff'>※2026/5/8ライブ配信の情報によると、リチュアルをクリアすると虫の大群がフレイソーンの入口を示してくれる模様。</span>\n<span style='color:#dd66ff'>また、クロウベルのボスエリアの近くには死骸とクロウベルの足跡が描写されるらしい。</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ボス「クロウベル」を倒す（</span><span style='color:#dddd44'>スキルポイント+2</span><span style='color:#ffffff'>）</span>\n<span style='color:#ffffff'>・「オガム農地」に行って、WPを確保する</span>\n<span style='color:#ffffff'>・「フレイソーン」へ行く</span>\n\n<span style='color:#ffffff'>外周にある「ドリュアスの儀式」にいるレアmobを倒すとサポートジェムの原石Lv1</span>\n\n<span style='color:#dd66ff'>※2026/5/8ライブ配信の情報によると、リチュアルをクリアすると虫の大群がフレイソーンの入口を示してくれる模様。</span>\n<span style='color:#dd66ff'>また、クロウベルのボスエリアの近くには死骸とクロウベルの足跡が描写されるらしい。</span>"
+      }
     },
     "flags": {}
   },
@@ -108,7 +144,10 @@
       "objective": "・ボス「霧の中の王」を倒す\n・ポータルで街へ戻る\n\n（街）\n・フィンにクエストを提出する\n・WPから「オガムの農地」へ行く",
       "layout": "<span style=\" color:#ffffff;\">・３つのリチュアルを見つけた後、ボスのリチュアルを起動して倒す。\n・ただ、３つのリチュアルを見つける前に、ボスのリチュアルを発見した場合、\n  ボスリチュアルを取り巻く黒いモヤモヤが、未完了のリチュアルの方角を示してくれる。</span>\n\n<span style='color:#dd66ff'>5/14GGG公開動画によると、１つのリチュアルをクリアすると、その次の方向を虫の大群が示してくれる模様</span>\n\n<span style='color:#ffffff'>・</span><span style='color:#dddd44'>ボスのリチュアルを開始する前には、一度「チェックポイントでリスポン」をする</span><span style='color:#ffffff'>と、なぜかリチュアルで沸く雑魚敵が減るので攻略が早くなる</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n霧の中の王\n属性：物理、冷気、混沌\n耐性：混沌\n弱点：－\n攻略：霧の中の王がかけてくる赤のデバフは「その場で停止」、紫のデバフは「動き続ける」ことで回避\n\n・ボスを倒すと、</span><span style='color:#dddd44'>スピリット+30</span><span style=\" color:#ffffff;\">\n\n・フィンからもらえるチャームの報酬は、Act1のボスが冷気属性を使ってくるため、</span><span style='color:#dddd44'>サファイヤチャーム（冷気耐性）を選ぶのが無難</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「霧の中の王」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・フィンにクエストを提出する</span>\n<span style='color:#ffffff'>・WPから「オガムの農地」へ行く</span>\n\n<span style='color:#ffffff'>３つのリチュアルを見つける前に、ボスのリチュアルを発見した場合、ボスリチュアルを取り巻く黒いモヤモヤが、未完了のリチュアルの方角を示してくれる。</span>\n\n<span style='color:#ffffff'>ボスのリチュアルを開始する前には、一度「チェックポイントでリスポン」をするとリチュアルで沸く雑魚敵が減って攻略が早くなる</span>\n\n<span style='color:#dd66ff'>5/14GGG公開動画によると、１つのリチュアルをクリアすると、その次の方向を虫の大群が示してくれる模様</span>"
+      "summary": "<span style='color:#ffffff'>・ボス「霧の中の王」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・フィンにクエストを提出する</span>\n<span style='color:#ffffff'>・WPから「オガムの農地」へ行く</span>\n\n<span style='color:#ffffff'>３つのリチュアルを見つける前に、ボスのリチュアルを発見した場合、ボスリチュアルを取り巻く黒いモヤモヤが、未完了のリチュアルの方角を示してくれる。</span>\n\n<span style='color:#ffffff'>ボスのリチュアルを開始する前には、一度「チェックポイントでリスポン」をするとリチュアルで沸く雑魚敵が減って攻略が早くなる</span>\n\n<span style='color:#dd66ff'>5/14GGG公開動画によると、１つのリチュアルをクリアすると、その次の方向を虫の大群が示してくれる模様</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ボス「霧の中の王」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・フィンにクエストを提出する</span>\n<span style='color:#ffffff'>・WPから「オガムの農地」へ行く</span>\n\n<span style='color:#ffffff'>３つのリチュアルを見つける前に、ボスのリチュアルを発見した場合、ボスリチュアルを取り巻く黒いモヤモヤが、未完了のリチュアルの方角を示してくれる。</span>\n\n<span style='color:#ffffff'>ボスのリチュアルを開始する前には、一度「チェックポイントでリスポン」をするとリチュアルで沸く雑魚敵が減って攻略が早くなる</span>\n\n<span style='color:#dd66ff'>5/14GGG公開動画によると、１つのリチュアルをクリアすると、その次の方向を虫の大群が示してくれる模様</span>"
+      }
     },
     "flags": {}
   },
@@ -117,7 +156,10 @@
       "objective": "・「ウーナのリュートケース」から「ウナのリュート」を拾う\n・「オガム村」へ行く",
       "layout": "<span style=\" color:#ffffff;\">・シンプルなレイアウト。このエリアには２つの基本レイアウトあり。\n・最初は片側を進む必要があるが、</span><span style='color:#dddd44'>小屋のリュートを入手するため、できるだけ早く中央に入るようにする</span><span style='color:#ffffff'>。</span>",
       "tips": "<span style='color:#ffffff'>・ウナのリュートは、あとでクエストを提出すると、</span><span style='color:#dddd44'>スキルポイント+2</span>",
-      "summary": "<span style='color:#ffffff'>・「ウーナのリュートケース」から「ウナのリュート」を拾う</span><span style='color:#dddd44'>（スキルポイント+2）</span>\n<span style='color:#ffffff'>・「オガム村」へ行く</span>\n\n<span style='color:#ffffff'>シンプルなレイアウト。このエリアには２つの基本レイアウトあり。</span>\n<span style='color:#ffffff'>最初は片側を進む必要があるが、小屋のリュートを入手するため、できるだけ早く中央に入るようにする。</span>\n\n<span style='color:#ffffff'>入口からまっすぐ小屋を目指すと、高い確率で荷車が横倒しになって通れない状態に遭遇するが、</span><span style='color:#dddd44'>パウンスがあると飛び越えてショートカットが可能</span><span style='color:#ffffff'>。</span>"
+      "summary": "<span style='color:#ffffff'>・「ウーナのリュートケース」から「ウナのリュート」を拾う</span><span style='color:#dddd44'>（スキルポイント+2）</span>\n<span style='color:#ffffff'>・「オガム村」へ行く</span>\n\n<span style='color:#ffffff'>シンプルなレイアウト。このエリアには２つの基本レイアウトあり。</span>\n<span style='color:#ffffff'>最初は片側を進む必要があるが、小屋のリュートを入手するため、できるだけ早く中央に入るようにする。</span>\n\n<span style='color:#ffffff'>入口からまっすぐ小屋を目指すと、高い確率で荷車が横倒しになって通れない状態に遭遇するが、</span><span style='color:#dddd44'>パウンスがあると飛び越えてショートカットが可能</span><span style='color:#ffffff'>。</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・「ウーナのリュートケース」から「ウナのリュート」を拾う</span><span style='color:#dddd44'>（スキルポイント+2）</span>\n<span style='color:#ffffff'>・「オガム村」へ行く</span>\n\n<span style='color:#ffffff'>シンプルなレイアウト。このエリアには２つの基本レイアウトあり。</span>\n<span style='color:#ffffff'>最初は片側を進む必要があるが、小屋のリュートを入手するため、できるだけ早く中央に入るようにする。</span>\n\n<span style='color:#ffffff'>入口からまっすぐ小屋を目指すと、高い確率で荷車が横倒しになって通れない状態に遭遇するが、</span><span style='color:#dddd44'>パウンスがあると飛び越えてショートカットが可能</span><span style='color:#ffffff'>。</span>"
+      }
     },
     "flags": {}
   },
@@ -126,7 +168,10 @@
       "objective": "・「鍛冶道具」を拾う\n・ボス「処刑人」を倒す\n・レイティスを助けて話す\n・ポータルで街へ戻る\n\n（街）\n・レイリー、ウーナ、レイティスにクエストを提出する\n・WPから「邸宅の城壁」へ行く",
       "layout": "<span style='color:#ffffff'>・ほとんど固定されたレイアウト。</span><span style='color:#dddd44'>ボスエリアは高い確率で上部に配置される</span><span style=\" color:#ffffff;\">が、基本的にはワールドマップを信じて進むべき。\n・入り口から右手の壁に沿って進み、上方向を目指せばOK</span>\n<span style=\" color:#ffffff;\">\n・同じリーグ内で初めてのキャラの場合、サルベージベンチを解放するために「鍛冶道具」を拾ってクエストを完了する必要がある。大抵の場合は、前述の上方向を目指す途中で見つかる。\n  もし先にボスエリアに到達した場合は、そのままチェックポイントを通り過ぎて壁沿いに探索をすればチェックポイントと「鍛冶道具」が見つかる。\n  なお、</span><span style='color:#dddd44'>同じ部屋にあるチェストから任意のルーンへ変換してもらえるクエストアイテムが手に入る</span><span style='color:#ffffff'>のであわせて入手すること。</span>\n\n<span style='color:#dd66ff'>・なお、5/8 ZiggyDインタビュー動画によると、リーグ0.5からは分かりやすい『石畳の道』が敷かれていて、それに沿って進めばスムーズに鍛冶屋にたどり着ける模様</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n処刑人\n属性：物理、火\n耐性：火\n弱点：－\n攻略：斧投げやギロチンはHP227以上のダメージを出してきて、即死級。が、背後に回れば当たらない。\n\n・ボスを倒して、レイティスを助けた時点で、次のエリアの邸宅の城壁のWPは自動的に開放される</span>",
-      "summary": "<span style='color:#ffffff'>・「鍛冶道具」を拾う</span>\n<span style='color:#ffffff'>・ボス「処刑人」を倒す</span>\n<span style='color:#ffffff'>・レイティスを助けて話す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・レイリー、ウーナ、レイティスにクエストを提出する</span><span style='color:#dddd44'>（スキルポイント+2）</span>\n<span style='color:#ffffff'>・WPから「邸宅の城壁」へ行く</span>\n\n<span style='color:#ffffff'>ボスエリアは高い確率で上部に配置されるが、基本的にはワールドマップを信じて進むべき。</span>\n\n<span style='color:#dd66ff'>5/8 ZiggyDインタビュー動画によると、リーグ0.5からは分かりやすい『石畳の道』が敷かれていて、それに沿って進めばスムーズに鍛冶屋にたどり着ける模様</span>"
+      "summary": "<span style='color:#ffffff'>・「鍛冶道具」を拾う</span>\n<span style='color:#ffffff'>・ボス「処刑人」を倒す</span>\n<span style='color:#ffffff'>・レイティスを助けて話す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・レイリー、ウーナ、レイティスにクエストを提出する</span><span style='color:#dddd44'>（スキルポイント+2）</span>\n<span style='color:#ffffff'>・WPから「邸宅の城壁」へ行く</span>\n\n<span style='color:#ffffff'>ボスエリアは高い確率で上部に配置されるが、基本的にはワールドマップを信じて進むべき。</span>\n\n<span style='color:#dd66ff'>5/8 ZiggyDインタビュー動画によると、リーグ0.5からは分かりやすい『石畳の道』が敷かれていて、それに沿って進めばスムーズに鍛冶屋にたどり着ける模様</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・「鍛冶道具」を拾う</span>\n<span style='color:#ffffff'>・ボス「処刑人」を倒す</span>\n<span style='color:#ffffff'>・レイティスを助けて話す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・レイリー、ウーナ、レイティスにクエストを提出する</span><span style='color:#dddd44'>（スキルポイント+2）</span>\n<span style='color:#ffffff'>・WPから「邸宅の城壁」へ行く</span>\n\n<span style='color:#ffffff'>ボスエリアは高い確率で上部に配置されるが、基本的にはワールドマップを信じて進むべき。</span>\n\n<span style='color:#dd66ff'>5/8 ZiggyDインタビュー動画によると、リーグ0.5からは分かりやすい『石畳の道』が敷かれていて、それに沿って進めばスムーズに鍛冶屋にたどり着ける模様</span>"
+      }
     },
     "flags": {}
   },
@@ -135,7 +180,10 @@
       "objective": "・「オガムの邸宅」へ行く",
       "layout": "<span style='color:#ffffff'>・このエリアは、</span><span style='color:#dddd44'>ほぼU字型の固定されたレイアウト</span><span style='color:#ffffff'>になる</span>\n<span style='color:#ffffff'>・入口から片方は行き止まり、もう片方が正解ルート。行き止まりを確認したら、逆方向へUの字を描くように進めばOK</span>",
       "tips": "<span style='color:#ffffff'>・途中にある絞首台の</span><span style='color:#dddd44'>ロープに触ると、確定でサポートジェムの原石Lv1</span><span style='color:#ffffff'>が手に入る。</span>",
-      "summary": "<span style='color:#ffffff'>・「オガムの邸宅」へ行く</span>\n\n<span style='color:#ffffff'>このエリアは、ほぼU字型の固定されたレイアウト</span>\n\n<span style='color:#ffffff'>途中にある絞首台のロープに触ると</span><span style='color:#dddd44'>サポートジェムの原石Lv1</span>"
+      "summary": "<span style='color:#ffffff'>・「オガムの邸宅」へ行く</span>\n\n<span style='color:#ffffff'>このエリアは、ほぼU字型の固定されたレイアウト</span>\n\n<span style='color:#ffffff'>途中にある絞首台のロープに触ると</span><span style='color:#dddd44'>サポートジェムの原石Lv1</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・「オガムの邸宅」へ行く</span>\n\n<span style='color:#ffffff'>このエリアは、ほぼU字型の固定されたレイアウト</span>\n\n<span style='color:#ffffff'>途中にある絞首台のロープに触ると</span><span style='color:#dddd44'>サポートジェムの原石Lv1</span>"
+      }
     },
     "flags": {}
   },
@@ -144,7 +192,10 @@
       "objective": "・ボス「生ける儀式、キャンドルマス」を倒す\n・階段から奥へ進む\n\n・ボス「ジオノール伯爵」を倒す\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、ヴァスティリ郊外へ行く",
       "layout": "<span style='color:#ffffff'>・３階層構造</span>\n<span style='color:#ffffff'>・「長方形のエリア - 橋 - 長方形のエリア」という構成になっている。</span>\n<span style='color:#ffffff'>・</span><span style='color:#dddd44'>１～３層の共通パターンとして、層を進むごとに「前の層とは逆方向」へ進む</span><span style='color:#ffffff'>ことになる。</span>\n\n<span style='color:#ffffff'>【１層】</span>\n<span style='color:#ffffff'>・いくつかのパターンはあるものの、ほとんど固定レイアウト。</span>\n<span style='color:#ffffff'>・</span><span style='color:#dddd44'>ボス（キャンドルマス）を倒すと「最大ライフ +20」の永続バフが貰える</span><span style='color:#ffffff'>ため、基本的に必須。</span>\n<span style='color:#ffffff'>  出現場所は3パターンあるが、基本的には順路の途中か、橋を渡った先の部屋にいる。</span>\n\n<span style='color:#ffffff'>【２層】</span>\n<span style='color:#ffffff'>・１層で進んできた方向とは逆方向へ進む</span>\n<span style='color:#ffffff'>・橋を渡り、３層への入り口を見つける</span>\n\n<span style='color:#ffffff'>【３層】</span>\n<span style='color:#ffffff'>・同様に、２層で進んできた方向とは逆方向へ進む</span>\n<span style='color:#ffffff'>・ボス部屋への入り口を見つける</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n生ける儀式、キャンドルマス\n属性：物理、火\n耐性：物理、火、冷気\n弱点：－\n（※）稀なケースだが、ビルドによって、最大ライフが少ない方が良い場合あり。その場合はスルー\n\n【ボス情報】\nジオノール伯爵\n属性：物理、冷気\n耐性：物理、冷気\n弱点：－</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「生ける儀式、キャンドルマス」を倒す（</span><span style='color:#dddd44'>最大ライフ +20</span><span style='color:#ffffff'>）</span>\n<span style='color:#ffffff'>・階段から奥へ進む</span>\n<span style='color:#ffffff'>・ボス「ジオノール伯爵」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・フードをかぶった者に話して、ヴァスティリ郊外へ行く</span>\n\n<span style='color:#ffffff'>1～3層の共通パターンとして、層を進むごとに「前の層とは逆方向」へ進むことになる。</span>"
+      "summary": "<span style='color:#ffffff'>・ボス「生ける儀式、キャンドルマス」を倒す（</span><span style='color:#dddd44'>最大ライフ +20</span><span style='color:#ffffff'>）</span>\n<span style='color:#ffffff'>・階段から奥へ進む</span>\n<span style='color:#ffffff'>・ボス「ジオノール伯爵」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・フードをかぶった者に話して、ヴァスティリ郊外へ行く</span>\n\n<span style='color:#ffffff'>1～3層の共通パターンとして、層を進むごとに「前の層とは逆方向」へ進むことになる。</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ボス「生ける儀式、キャンドルマス」を倒す（</span><span style='color:#dddd44'>最大ライフ +20</span><span style='color:#ffffff'>）</span>\n<span style='color:#ffffff'>・階段から奥へ進む</span>\n<span style='color:#ffffff'>・ボス「ジオノール伯爵」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・フードをかぶった者に話して、ヴァスティリ郊外へ行く</span>\n\n<span style='color:#ffffff'>1～3層の共通パターンとして、層を進むごとに「前の層とは逆方向」へ進むことになる。</span>"
+      }
     },
     "flags": {}
   },
@@ -153,7 +204,10 @@
       "objective": "・ボス「ラスブレイカー」を倒す\n・街へ戻る\n・ザーカにクエストを提出する\n・「アードゥラのキャラバン」へ行く\n\n（街）\n・セケマのアサラと話す\n・「砂漠の地図」を使って、「穢れの痕跡」へ移動する\n・「ハラニの門」へ行く",
       "layout": "<span style=\" color:#ffffff;\">・大まかには、「S字パターン」「直線パターン」「U字パターン」の３つがあって、\n  そこから90度回転やミラーなどまで含めると相当数のパターンがある様子。\n・どのパターンになるのかをすぐに見分ける方法がなさそうなので、３つのパターンがあるという知識だけ頭に入れて、探すしかなさそう。</span>",
       "tips": "<span style='color:#ffffff'>・エリア内で</span><span style='color:#dddd44'>近くにチェックポイントのあるレアチェストからサポートジェムLv2</span><span style=\" color:#ffffff;\">が獲得できる\n\n【ボス情報】\nラスブレイカー\n属性：物理\n耐性：－\n弱点：－</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「ラスブレイカー」を倒す</span>\n<span style='color:#ffffff'>・街へ戻る</span>\n<span style='color:#ffffff'>・ザーカにクエストを提出する</span>\n<span style='color:#ffffff'>・「アードゥラのキャラバン」へ行く</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・セケマのアサラと話す</span>\n<span style='color:#ffffff'>・「砂漠の地図」を使って、「穢れの痕跡」へ移動する</span>\n<span style='color:#ffffff'>・「ハラニの門」へ行く</span>\n\n<span style='color:#ffffff'>エリア内で近くにチェックポイントのあるレアチェスト（壊滅したキャンプ内）から</span><span style='color:#dddd44'>サポートジェムLv2</span>"
+      "summary": "<span style='color:#ffffff'>・ボス「ラスブレイカー」を倒す</span>\n<span style='color:#ffffff'>・街へ戻る</span>\n<span style='color:#ffffff'>・ザーカにクエストを提出する</span>\n<span style='color:#ffffff'>・「アードゥラのキャラバン」へ行く</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・セケマのアサラと話す</span>\n<span style='color:#ffffff'>・「砂漠の地図」を使って、「穢れの痕跡」へ移動する</span>\n<span style='color:#ffffff'>・「ハラニの門」へ行く</span>\n\n<span style='color:#ffffff'>エリア内で近くにチェックポイントのあるレアチェスト（壊滅したキャンプ内）から</span><span style='color:#dddd44'>サポートジェムLv2</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ボス「ラスブレイカー」を倒す</span>\n<span style='color:#ffffff'>・街へ戻る</span>\n<span style='color:#ffffff'>・ザーカにクエストを提出する</span>\n<span style='color:#ffffff'>・「アードゥラのキャラバン」へ行く</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・セケマのアサラと話す</span>\n<span style='color:#ffffff'>・「砂漠の地図」を使って、「穢れの痕跡」へ移動する</span>\n<span style='color:#ffffff'>・「ハラニの門」へ行く</span>\n\n<span style='color:#ffffff'>エリア内で近くにチェックポイントのあるレアチェスト（壊滅したキャンプ内）から</span><span style='color:#dddd44'>サポートジェムLv2</span>"
+      }
     },
     "flags": {}
   },
@@ -162,14 +216,20 @@
       "objective": "・セケマのアサラの頭上にクエストマークがでるまで、近づく\n・ポータルで街へ戻る\n\n（街）\n・セケマのアサラと話す\n・「砂漠の地図」を使って、「穢れの痕跡」へ移動する\n・「マウドゥンの採石場」へ行く",
       "layout": "",
       "tips": "<span style='color:#ffffff'>通常はセケマのアサラとの会話が必要だが、アサラの頭上に「！」マークが出る距離まで近づくだけでフラグが立つので、会話せずにポータルでキャラバンへ戻れば時短に。</span>",
-      "summary": "<span style=\" color:#ffffff;\">・セケマのアサラの頭上にクエストマークがでるまで、近づく\n・ポータルで街へ戻る\n\n（街）\n・セケマのアサラと話す\n・「砂漠の地図」を使って、「穢れの痕跡」へ移動する\n・「マウドゥンの採石場」へ行く</span>\n\n<span style='color:#ffffff'>通常はセケマのアサラとの会話が必要だが、アサラの頭上に「！」マークが出る距離まで近づくだけでフラグが立つので、会話せずにポータルでキャラバンへ戻れば時短に。</span>"
+      "summary": "<span style=\" color:#ffffff;\">・セケマのアサラの頭上にクエストマークがでるまで、近づく\n・ポータルで街へ戻る\n\n（街）\n・セケマのアサラと話す\n・「砂漠の地図」を使って、「穢れの痕跡」へ移動する\n・「マウドゥンの採石場」へ行く</span>\n\n<span style='color:#ffffff'>通常はセケマのアサラとの会話が必要だが、アサラの頭上に「！」マークが出る距離まで近づくだけでフラグが立つので、会話せずにポータルでキャラバンへ戻れば時短に。</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・セケマのアサラの頭上にクエストマークがでるまで、近づく\n・ポータルで街へ戻る\n\n（街）\n・セケマのアサラと話す\n・「砂漠の地図」を使って、「穢れの痕跡」へ移動する\n・「マウドゥンの採石場」へ行く</span>\n\n<span style='color:#ffffff'>通常はセケマのアサラとの会話が必要だが、アサラの頭上に「！」マークが出る距離まで近づくだけでフラグが立つので、会話せずにポータルでキャラバンへ戻れば時短に。</span>"
+      }
     },
     "flags": {
       "act2_traitor_clear": {
         "objective": "・アサラを呼ぶ\n・道なりに進んで、ボス「復活した王、ヤマンラ」を倒す。\n・階段を降りる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・アサラに話して、次のエリアへ行く",
         "layout": "<span style=\" color:#ffffff;\">・極めて固定的なレイアウトで、プレイヤーをまっすぐ出口へと導く細い一本道のような構造\n・基本的には、「エリアに入ってきた方向と逆に向かって橋を渡り続ける」だけで、迷うことなくボスエリアと出口にたどり着ける</span>",
         "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n復活した王、ヤマンラ\n属性：物理、雷\n耐性：物理、火、雷\n弱点：冷気\n攻略：雷耐性を積む。持っていればトパーズチャームをはめる。\n\n</span><span style=\" color:#dddd44;\">【ここからのルート分岐について】\n・ここから先は攻略順序を選べる。\n・通常は「ケス」か「マストドンの不毛地帯」のどちらかへ行く。それぞれのメリットは以下。\n  －ケス先攻: カバラを倒して「スキルポイント+2」を早く入手できる。\n  －マストドン先攻: レベルが高い状態でカバラを倒せるため、確定ドロップのジェムレベルが7になり、進行がスムーズになる。</span>",
-        "summary": "<span style=\" color:#ffffff;\">・アサラを呼ぶ\n・道なりに進んで、ボス「復活した王、ヤマンラ」を倒す。\n・階段を降りる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・アサラに話して、次のエリアへ行く</span>"
+        "summary": "<span style=\" color:#ffffff;\">・アサラを呼ぶ\n・道なりに進んで、ボス「復活した王、ヤマンラ」を倒す。\n・階段を降りる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・アサラに話して、次のエリアへ行く</span>",
+        "mini_navi": {
+          "text": "<span style=\" color:#ffffff;\">・アサラを呼ぶ\n・道なりに進んで、ボス「復活した王、ヤマンラ」を倒す。\n・階段を降りる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・アサラに話して、次のエリアへ行く</span>"
+        }
       }
     }
   },
@@ -178,7 +238,10 @@
       "objective": "「マウドゥン鉱山」へ行く",
       "layout": "<span style='color:#ffffff'>・比較的単純なレイアウトで、形状は「S字パターン」（マップ画像の左）、「ループパターン」（画像の右）または「Z字パターン」になる。</span>\n\n<span style='color:#ffffff'>・より具体的には、</span><span style='color:#dddd44'>俯瞰の視点で考えて、マップ全体が巨大な正方形になるように進めば出口にたどり着きやすい</span><span style='color:#ffffff'>。例えば、マップの上側と左側をすでに通ってきたなら、マップ全体を正方形にするためには、「埋まっていない空間」を目指して下側や右側の方へ進む。</span>\n\n<span style='color:#ffffff'>・全体は橋で隔てられた2つの大きな広場で構成されている。</span>\n<span style='color:#ffffff'>・途中で行き止まりにつながる橋などの小さなひっかけもあるが、基本構造はシンプル</span>",
       "tips": "",
-      "summary": "<span style='color:#ffffff'>・「マウドゥン鉱山」へ行く</span>\n\n<span style='color:#ffffff'>俯瞰の視点で考えて、</span><span style='color:#dddd44'>マップ全体が巨大な正方形になるように進めば出口にたどり着きやすい</span><span style='color:#ffffff'>。例えば、マップの上側と左側をすでに通ってきたなら、マップ全体を正方形にするためには、「埋まっていない空間」を目指して下側や右側の方へ進む。</span>"
+      "summary": "<span style='color:#ffffff'>・「マウドゥン鉱山」へ行く</span>\n\n<span style='color:#ffffff'>俯瞰の視点で考えて、</span><span style='color:#dddd44'>マップ全体が巨大な正方形になるように進めば出口にたどり着きやすい</span><span style='color:#ffffff'>。例えば、マップの上側と左側をすでに通ってきたなら、マップ全体を正方形にするためには、「埋まっていない空間」を目指して下側や右側の方へ進む。</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・「マウドゥン鉱山」へ行く</span>\n\n<span style='color:#ffffff'>俯瞰の視点で考えて、</span><span style='color:#dddd44'>マップ全体が巨大な正方形になるように進めば出口にたどり着きやすい</span><span style='color:#ffffff'>。例えば、マップの上側と左側をすでに通ってきたなら、マップ全体を正方形にするためには、「埋まっていない空間」を目指して下側や右側の方へ進む。</span>"
+      }
     },
     "flags": {}
   },
@@ -187,7 +250,10 @@
       "objective": "・ボス「恐怖の技師、ルジャ」を倒す\n・「リス」を助ける\n・ポータルで街へ戻る\n\n（街）\n ・リスに話す\n・アサラに話す\n・「砂漠の地図」を使って、「穢れの痕跡」へ移動する\n・「裏切り者の通路」へ行く",
       "layout": "<span style=\" color:#ffffff;\">・パターンがほぼ固定されており、非常に分かりやすい構造をしている\n・エリア全体をひし形としてイメージしたときに、\n  このエリアの入り口が、ひし形の「下側の角」あたりになり、\n  ゴールのボスの位置は、 ひし形の「上側の角」あたりになる。\n\n・</span><span style='color:#dddd44'>とにかく「上方向」を目指して進み続ければ、問題なくボスのもとへたどり着ける</span><span style='color:#ffffff'>。</span>\n<span style='color:#ffffff'>（レイアウトによっては、エリア全体が少し右に傾いていたり、スタート地点が角ではなく側面寄りになることはある）</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n恐怖の技師、ルジャ\n属性：物理、火\n耐性：火\n弱点：冷気\n攻略：なるべく火耐性を積む。持っていればルビーチャームをはめる。ボスが爆弾を振り回す動作を始めたら要注意。回避に集中すること。</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「恐怖の技師、ルジャ」を倒す</span>\n<span style='color:#ffffff'>・「リス」を助ける</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・リスに話す</span>\n<span style='color:#ffffff'>・アサラに話す</span>\n<span style='color:#ffffff'>・「砂漠の地図」を使って、「穢れの痕跡」へ移動する</span>\n<span style='color:#ffffff'>・「裏切り者の通路」へ行く</span>\n\n<span style='color:#ffffff'>エリア全体をひし形としてイメージしたときに、このエリアの入り口が、ひし形の「下側の角」あたりになり、ゴールのボスの位置は、 ひし形の「上側の角」あたりになる</span>"
+      "summary": "<span style='color:#ffffff'>・ボス「恐怖の技師、ルジャ」を倒す</span>\n<span style='color:#ffffff'>・「リス」を助ける</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・リスに話す</span>\n<span style='color:#ffffff'>・アサラに話す</span>\n<span style='color:#ffffff'>・「砂漠の地図」を使って、「穢れの痕跡」へ移動する</span>\n<span style='color:#ffffff'>・「裏切り者の通路」へ行く</span>\n\n<span style='color:#ffffff'>エリア全体をひし形としてイメージしたときに、このエリアの入り口が、ひし形の「下側の角」あたりになり、ゴールのボスの位置は、 ひし形の「上側の角」あたりになる</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ボス「恐怖の技師、ルジャ」を倒す</span>\n<span style='color:#ffffff'>・「リス」を助ける</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・リスに話す</span>\n<span style='color:#ffffff'>・アサラに話す</span>\n<span style='color:#ffffff'>・「砂漠の地図」を使って、「穢れの痕跡」へ移動する</span>\n<span style='color:#ffffff'>・「裏切り者の通路」へ行く</span>\n\n<span style='color:#ffffff'>エリア全体をひし形としてイメージしたときに、このエリアの入り口が、ひし形の「下側の角」あたりになり、ゴールのボスの位置は、 ひし形の「上側の角」あたりになる</span>"
+      }
     },
     "flags": {}
   },
@@ -196,7 +262,10 @@
       "objective": "・（任意）ボス「裏切り者、バルバラ」を倒す\n・「ハラニの門」へ行く",
       "layout": "<span style=\" color:#ffffff;\">・裏切りの通路はかなり広く、曲がりくねっていて、地形を読むのが難しいエリア\n・裏切りの通路を半分ほど進んだあたりで、</span><span style='color:#dddd44'>ミニマップ上に本のアイコンが付いた「収監令」という大きな柱</span><span style=\" color:#ffffff;\">が見つかる。この柱は交差点に配置されていて、\n   一方の道は、ボスのバルバラへ。\n  もう一方の道は、ハラニの門へ続いている。\n・バルバラに繋がっている道にはヒントがあり、「壁に貼られた黄色いお札」でわかる。この黄色いお札をたどっていくと「裏切り者の忘れ去られし監獄」にたどり着き、バルバラと戦闘。\n\n・なお、例外で、道なりに進むだけでは収監令にたどりつけないパターンもあるので注意。</span>",
       "tips": "<span style='color:#ffffff'>・セケマの試練へ挑戦するために必要な</span><span style='color:#dddd44'>「ジンのバリャ」は</span><span style='color:#ffffff'>、このエリアのバルバラから入手する以外の方法として、</span><span style=\" color:#dddd44;\">後で必ず行くことになるデシャールでも入手可能。\nそちらで手に入れた方がエリアレベルが高く報酬や経験値もおいしくなる</span><span style='color:#ffffff'>ため、早くアセンダンシーを取得したい場合を除き、</span><span style='color:#dddd44'>ここのバルバラはスルーする方が効率的</span><span style=\" color:#ffffff;\">。\n\n【ボス情報】\n裏切り者、バルバラ\n属性：物理、火、混沌\n耐性：火\n弱点：冷気</span>",
-      "summary": "<span style=\" color:#ffffff;\">・（任意）ボス「裏切り者、バルバラ」を倒す\n・「ハラニの門」へ行く</span>\n\n<span style='color:#ffffff'>セケマの試練へ挑戦するために必要な</span><span style='color:#dddd44'>「ジンのバリャ」は</span><span style='color:#ffffff'>、このエリアのバルバラから入手する以外の方法として、</span><span style='color:#dddd44'>後で必ず行くことになるデシャールでも入手可能。そちらで手に入れた方がエリアレベルが高く報酬や経験値もおいしくなる</span><span style='color:#ffffff'>ため、早くアセンダンシーを取得したい場合を除き、</span><span style='color:#dddd44'>ここのバルバラはスルーする方が効率的</span><span style='color:#ffffff'>。</span>\n\n<span style='color:#ffffff'>なお、バルバラに繋がっている道は、「壁に貼られた黄色いお札」でわかる</span>"
+      "summary": "<span style=\" color:#ffffff;\">・（任意）ボス「裏切り者、バルバラ」を倒す\n・「ハラニの門」へ行く</span>\n\n<span style='color:#ffffff'>セケマの試練へ挑戦するために必要な</span><span style='color:#dddd44'>「ジンのバリャ」は</span><span style='color:#ffffff'>、このエリアのバルバラから入手する以外の方法として、</span><span style='color:#dddd44'>後で必ず行くことになるデシャールでも入手可能。そちらで手に入れた方がエリアレベルが高く報酬や経験値もおいしくなる</span><span style='color:#ffffff'>ため、早くアセンダンシーを取得したい場合を除き、</span><span style='color:#dddd44'>ここのバルバラはスルーする方が効率的</span><span style='color:#ffffff'>。</span>\n\n<span style='color:#ffffff'>なお、バルバラに繋がっている道は、「壁に貼られた黄色いお札」でわかる</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・（任意）ボス「裏切り者、バルバラ」を倒す\n・「ハラニの門」へ行く</span>\n\n<span style='color:#ffffff'>セケマの試練へ挑戦するために必要な</span><span style='color:#dddd44'>「ジンのバリャ」は</span><span style='color:#ffffff'>、このエリアのバルバラから入手する以外の方法として、</span><span style='color:#dddd44'>後で必ず行くことになるデシャールでも入手可能。そちらで手に入れた方がエリアレベルが高く報酬や経験値もおいしくなる</span><span style='color:#ffffff'>ため、早くアセンダンシーを取得したい場合を除き、</span><span style='color:#dddd44'>ここのバルバラはスルーする方が効率的</span><span style='color:#ffffff'>。</span>\n\n<span style='color:#ffffff'>なお、バルバラに繋がっている道は、「壁に貼られた黄色いお札」でわかる</span>"
+      }
     },
     "flags": {}
   },
@@ -205,7 +274,10 @@
       "objective": "・ボス「大蛇の女王、カバラ」を倒す\n・「失われし都市」へ行く",
       "layout": "<span style=\" color:#ffffff;\">・カバラのいる「毒の穴」は、エリア中央に正方形を描いた時の四隅のどこかに存在。\n・出口は、カバラがいる場所とは反対側の隅に生成されることが多い\n\n・推奨の進め方は、\n  －エリアの外周（端）のどちらか一方を走り、「毒の穴」を探してカバラを倒す。見つからないまま進んだ場合は、先に出口タイルを探す。\n  －出口のチェックポイントを起動したら、スタート地点のチェックポイントへ戻る。\n  －今度は反対側の外周を走り、毒の穴を探す。見つからなければチェックポイントでリスポーンする。\n  －ウェイポイントのチェックポイントから、残りの上部2箇所を確認する。\n  －これでも見つからない場合はエリア全体を探索する。\n\n・ミニマップ上で「人の頭」のような形状があれば、そのすぐ左右どちらかにカバラがいる</span>",
       "tips": "<span style='color:#ffffff'>・カバラを倒すと、</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">を獲得\n\n【ボス情報】\n大蛇の女王、カバラ\n属性：物理\n耐性：冷気\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「大蛇の女王、カバラ」を倒す（スキルポイント+2）\n・「失われし都市」へ行く\n\n推奨の進め方は、\n－エリアの外周（端）のどちらか一方を走り、「毒の穴」を探してカバラを倒す。見つからないまま進んだ場合は、先に出口タイルを探す。\n－出口のチェックポイントを起動したら、スタート地点のチェックポイントへ戻る。\n－今度は反対側の外周を走り、毒の穴を探す。見つからなければチェックポイントでリスポーンする。\n－ウェイポイントのチェックポイントから、残りの上部2箇所を確認する。\n－これでも見つからない場合はエリア全体を探索する。</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「大蛇の女王、カバラ」を倒す（スキルポイント+2）\n・「失われし都市」へ行く\n\n推奨の進め方は、\n－エリアの外周（端）のどちらか一方を走り、「毒の穴」を探してカバラを倒す。見つからないまま進んだ場合は、先に出口タイルを探す。\n－出口のチェックポイントを起動したら、スタート地点のチェックポイントへ戻る。\n－今度は反対側の外周を走り、毒の穴を探す。見つからなければチェックポイントでリスポーンする。\n－ウェイポイントのチェックポイントから、残りの上部2箇所を確認する。\n－これでも見つからない場合はエリア全体を探索する。</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「大蛇の女王、カバラ」を倒す（スキルポイント+2）\n・「失われし都市」へ行く\n\n推奨の進め方は、\n－エリアの外周（端）のどちらか一方を走り、「毒の穴」を探してカバラを倒す。見つからないまま進んだ場合は、先に出口タイルを探す。\n－出口のチェックポイントを起動したら、スタート地点のチェックポイントへ戻る。\n－今度は反対側の外周を走り、毒の穴を探す。見つからなければチェックポイントでリスポーンする。\n－ウェイポイントのチェックポイントから、残りの上部2箇所を確認する。\n－これでも見つからない場合はエリア全体を探索する。</span>"
+      }
     },
     "flags": {}
   },
@@ -214,7 +286,10 @@
       "objective": "「埋葬された神殿」へ行く",
       "layout": "<span style='color:#ffffff'>・2つの「長方形エリア」が「V字型の橋」で繋がっている</span>\n\n<span style='color:#ffffff'>・第1エリアは、長方形の角を目指して走り、「V字型の橋」を探す。</span>\n<span style='color:#ffffff'>  （なお、ここにスピリットジェムの原石が確定で手に入る霊廟があることもあり）</span>\n\n<span style='color:#ffffff'>・第2エリアは、橋を渡った先のエリア。ここでも反対側の端を目指す。</span>\n<span style='color:#ffffff'>・出口は、「翼」や「飛行機」のような形をした特徴的なタイルが目印。</span>",
       "tips": "<span style=\" color:#ffffff;\">・道中にいる大きなスカラベのモンスターは確定でマジックジュエルをドロップするが、火力が結構高いので注意。スルーして良い。\n\n・ここまでに、</span><span style='color:#dddd44'>敵からのドロップである「カバラの部族の遺物」を拾っておく</span><span style='color:#ffffff'>こと。</span>",
-      "summary": "・<span style='color:#ffffff'>「埋葬された神殿」へ行く</span>\n\n<span style='color:#ffffff'>2つの「長方形エリア」が「V字型の橋」で繋がっている。</span>\n<span style='color:#ffffff'>第1エリアは、長方形の角を目指して走り、「V字型の橋」を探す。</span>\n<span style='color:#ffffff'>（なお、第1エリアにスピリットジェムの原石が手に入る霊廟があり）</span>\n<span style='color:#ffffff'>第2エリアは、橋を渡った先のエリア。ここでも反対側の端を目指す。</span>\n<span style='color:#ffffff'>出口は、「翼」や「飛行機」のような形をした特徴的なタイルが目印。</span>\n\n<span style='color:#ffffff'>ここまでに、敵（ヘビのmob）からのドロップである</span><span style='color:#dddd44'>「カバラの部族の遺物」を拾っておく</span><span style='color:#ffffff'>こと。</span>"
+      "summary": "・<span style='color:#ffffff'>「埋葬された神殿」へ行く</span>\n\n<span style='color:#ffffff'>2つの「長方形エリア」が「V字型の橋」で繋がっている。</span>\n<span style='color:#ffffff'>第1エリアは、長方形の角を目指して走り、「V字型の橋」を探す。</span>\n<span style='color:#ffffff'>（なお、第1エリアにスピリットジェムの原石が手に入る霊廟があり）</span>\n<span style='color:#ffffff'>第2エリアは、橋を渡った先のエリア。ここでも反対側の端を目指す。</span>\n<span style='color:#ffffff'>出口は、「翼」や「飛行機」のような形をした特徴的なタイルが目印。</span>\n\n<span style='color:#ffffff'>ここまでに、敵（ヘビのmob）からのドロップである</span><span style='color:#dddd44'>「カバラの部族の遺物」を拾っておく</span><span style='color:#ffffff'>こと。</span>",
+      "mini_navi": {
+        "text": "・<span style='color:#ffffff'>「埋葬された神殿」へ行く</span>\n\n<span style='color:#ffffff'>2つの「長方形エリア」が「V字型の橋」で繋がっている。</span>\n<span style='color:#ffffff'>第1エリアは、長方形の角を目指して走り、「V字型の橋」を探す。</span>\n<span style='color:#ffffff'>（なお、第1エリアにスピリットジェムの原石が手に入る霊廟があり）</span>\n<span style='color:#ffffff'>第2エリアは、橋を渡った先のエリア。ここでも反対側の端を目指す。</span>\n<span style='color:#ffffff'>出口は、「翼」や「飛行機」のような形をした特徴的なタイルが目印。</span>\n\n<span style='color:#ffffff'>ここまでに、敵（ヘビのmob）からのドロップである</span><span style='color:#dddd44'>「カバラの部族の遺物」を拾っておく</span><span style='color:#ffffff'>こと。</span>"
+      }
     },
     "flags": {}
   },
@@ -223,7 +298,10 @@
       "objective": "・「ケスの中心」へ行く\n\n（ケスの中心）\n・ボス「見捨てられた息子、アザリアン」を倒す\n・「水の精髄」を手に入れる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く",
       "layout": "<span style=\" color:#ffffff;\">・ここも「失われた都市」同様、2つの長方形エリアが橋でつながっている構造\n・ボス部屋につながる出口は、ミニマップ上で「王冠」のような形になっているのが目印。</span>",
       "tips": "<span style='color:#ffffff'>リーグ0.3および0.4において、</span><span style='color:#dddd44'>リーグコンテンツをクリアしたときの報酬が「宝飾職人のオーブ（見習い）」だった</span><span style='color:#ffffff'>。0.5のリーグ要素では報酬が固定ではなさそうなので、意味があるかは不明だが、初回時はクリアすることを推奨。</span>\n\n<span style='color:#ffffff'>・ミニマップ上で「怪しげな石棺」と表示されたエリア（大量の兵士の像あり）の</span><span style='color:#dddd44'>石棺からは、確定でサポートジェムの原石Lv2を入手</span><span style=\" color:#ffffff;\">可能。\n\n・道中、本のアイコンとチェックポイントがある部屋（元素の供物）で、</span><span style='color:#dddd44'>確定でマジック指輪が入手</span><span style=\" color:#ffffff;\">可能\n  －火の捧げ物：ルビーリング（火炎耐性）\n  －水の捧げ物：サファイアリング（冷気耐性）\n  －雷の捧げ物：トパーズリング（雷耐性）\n\n【ボス情報】\n見捨てられた息子、アザリアン\n属性：物理、火\n耐性：物理、火\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・「ケスの中心」へ行き、ボスを倒し、「水の精髄」を手に入れる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く</span>\n\n<span style='color:#dddd44'>リーグ0.3および0.4において、リーグコンテンツをクリアしたときの報酬が「宝飾職人のオーブ（見習い）」だった。0.5のリーグ要素では報酬が固定ではなさそうなので、意味があるかは不明だが、初回時はクリアすることを推奨。</span>\n\n<span style='color:#ffffff'>ミニマップ上で「怪しげな石棺」と表示されたエリア（大量の兵士の像あり）の石棺から</span><span style='color:#dddd44'>サポートジェムの原石Lv2</span>\n\n<span style='color:#ffffff'>道中、本のアイコンとチェックポイントがある部屋（元素の供物）で</span><span style='color:#dddd44'>マジックの元素耐性指輪</span>"
+      "summary": "<span style=\" color:#ffffff;\">・「ケスの中心」へ行き、ボスを倒し、「水の精髄」を手に入れる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く</span>\n\n<span style='color:#dddd44'>リーグ0.3および0.4において、リーグコンテンツをクリアしたときの報酬が「宝飾職人のオーブ（見習い）」だった。0.5のリーグ要素では報酬が固定ではなさそうなので、意味があるかは不明だが、初回時はクリアすることを推奨。</span>\n\n<span style='color:#ffffff'>ミニマップ上で「怪しげな石棺」と表示されたエリア（大量の兵士の像あり）の石棺から</span><span style='color:#dddd44'>サポートジェムの原石Lv2</span>\n\n<span style='color:#ffffff'>道中、本のアイコンとチェックポイントがある部屋（元素の供物）で</span><span style='color:#dddd44'>マジックの元素耐性指輪</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・「ケスの中心」へ行き、ボスを倒し、「水の精髄」を手に入れる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く</span>\n\n<span style='color:#dddd44'>リーグ0.3および0.4において、リーグコンテンツをクリアしたときの報酬が「宝飾職人のオーブ（見習い）」だった。0.5のリーグ要素では報酬が固定ではなさそうなので、意味があるかは不明だが、初回時はクリアすることを推奨。</span>\n\n<span style='color:#ffffff'>ミニマップ上で「怪しげな石棺」と表示されたエリア（大量の兵士の像あり）の石棺から</span><span style='color:#dddd44'>サポートジェムの原石Lv2</span>\n\n<span style='color:#ffffff'>道中、本のアイコンとチェックポイントがある部屋（元素の供物）で</span><span style='color:#dddd44'>マジックの元素耐性指輪</span>"
+      }
     },
     "flags": {}
   },
@@ -232,7 +310,10 @@
       "objective": "・ボス「見捨てられた息子、アザリアン」を倒す\n・「水の精髄」を手に入れる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く",
       "layout": "",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n見捨てられた息子、アザリアン\n属性：物理、火\n耐性：物理、火\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「見捨てられた息子、アザリアン」を倒す\n・「水の精髄」を手に入れる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「見捨てられた息子、アザリアン」を倒す\n・「水の精髄」を手に入れる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「見捨てられた息子、アザリアン」を倒す\n・「水の精髄」を手に入れる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く</span>"
+      }
     },
     "flags": {}
   },
@@ -241,7 +322,10 @@
       "objective": "・「光なき者の通路」に入り、WPを確保する\n・「骨の穴」へ行く",
       "layout": "<span style='color:#ffffff'>・明確なパターンなし。壁沿いに進み、出口を探すのが最善。</span>",
       "tips": "<span style=\" color:#ffffff;\">・出口寄りの１つのチェックポイント近くに必ずレアの彫像があり、そこから確定でサポートジェムの原石Lv2が入手可能。\n\n・アビスが0.4でコア入りしたので、光なき者の通路に入って、魂の井戸のウェイポイントを解放しておく。</span><span style='color:#dd66ff'>なお、2026/5/8のライブ配信によると、光なき者の通路まで数カ所の亀裂が描写される模様</span>",
-      "summary": "<span style=\" color:#ffffff;\">・「光なき者の通路」に入り、WPを確保する\n・「骨の穴」へ行く</span>\n\n<span style='color:#ffffff'>出口寄りの１つのチェックポイント近くに必ずレアの彫像があり、そこから</span><span style='color:#dddd44'>サポートジェムの原石Lv2</span>\n\n<span style='color:#dd66ff'>2026/5/8のライブ配信によると、光なき者の通路まで数カ所の亀裂が描写される模様</span>"
+      "summary": "<span style=\" color:#ffffff;\">・「光なき者の通路」に入り、WPを確保する\n・「骨の穴」へ行く</span>\n\n<span style='color:#ffffff'>出口寄りの１つのチェックポイント近くに必ずレアの彫像があり、そこから</span><span style='color:#dddd44'>サポートジェムの原石Lv2</span>\n\n<span style='color:#dd66ff'>2026/5/8のライブ配信によると、光なき者の通路まで数カ所の亀裂が描写される模様</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・「光なき者の通路」に入り、WPを確保する\n・「骨の穴」へ行く</span>\n\n<span style='color:#ffffff'>出口寄りの１つのチェックポイント近くに必ずレアの彫像があり、そこから</span><span style='color:#dddd44'>サポートジェムの原石Lv2</span>\n\n<span style='color:#dd66ff'>2026/5/8のライブ配信によると、光なき者の通路まで数カ所の亀裂が描写される模様</span>"
+      }
     },
     "flags": {}
   },
@@ -250,7 +334,10 @@
       "objective": "奥へ進み「魂の井戸」へいき、WPを確保する",
       "layout": "",
       "tips": "",
-      "summary": "<span style='color:#ffffff'>奥へ進み「魂の井戸」へいき、WPを確保する</span>"
+      "summary": "<span style='color:#ffffff'>奥へ進み「魂の井戸」へいき、WPを確保する</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>奥へ進み「魂の井戸」へいき、WPを確保する</span>"
+      }
     },
     "flags": {}
   },
@@ -259,7 +346,10 @@
       "objective": "・ボス「死の王、イクタブ」と「古代の戦象、エクバブ」を倒す。\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く",
       "layout": "<span style='color:#ffffff'>・ボス部屋は、入り口からほぼ直線の位置にあり。</span>\n<span style='color:#ffffff'>  </span><span style='color:#dddd44'>開始地点の骨のアーチをくぐったら、アーチをくぐった時の進行方向を維持して直進し、ボス部屋への入り口を探す</span>",
       "tips": "<span style='color:#ffffff'>・ここまでに、</span><span style='color:#dddd44'>敵からのドロップである「太陽の部族の遺物」を拾っておく</span><span style='color:#ffffff'>こと。</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「死の王、イクタブ」と「古代の戦象、エクバブ」を倒す。\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く</span>\n\n<span style='color:#ffffff'>ボス部屋は、入り口からほぼ直線の位置にあり。</span>\n<span style='color:#ffffff'>開始地点の骨のアーチをくぐったら、アーチをくぐった時の進行方向を維持して直進し、ボス部屋への入り口を探す</span>\n\n<span style='color:#ffffff'>ここまでに、敵（狼のmob）からのドロップである</span><span style='color:#dddd44'>「太陽の部族の遺物」を拾っておく</span><span style='color:#ffffff'>こと。</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「死の王、イクタブ」と「古代の戦象、エクバブ」を倒す。\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く</span>\n\n<span style='color:#ffffff'>ボス部屋は、入り口からほぼ直線の位置にあり。</span>\n<span style='color:#ffffff'>開始地点の骨のアーチをくぐったら、アーチをくぐった時の進行方向を維持して直進し、ボス部屋への入り口を探す</span>\n\n<span style='color:#ffffff'>ここまでに、敵（狼のmob）からのドロップである</span><span style='color:#dddd44'>「太陽の部族の遺物」を拾っておく</span><span style='color:#ffffff'>こと。</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「死の王、イクタブ」と「古代の戦象、エクバブ」を倒す。\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く</span>\n\n<span style='color:#ffffff'>ボス部屋は、入り口からほぼ直線の位置にあり。</span>\n<span style='color:#ffffff'>開始地点の骨のアーチをくぐったら、アーチをくぐった時の進行方向を維持して直進し、ボス部屋への入り口を探す</span>\n\n<span style='color:#ffffff'>ここまでに、敵（狼のmob）からのドロップである</span><span style='color:#dddd44'>「太陽の部族の遺物」を拾っておく</span><span style='color:#ffffff'>こと。</span>"
+      }
     },
     "flags": {}
   },
@@ -268,7 +358,10 @@
       "objective": "・アムリットの供物クエストでチャーム関連の永続バフを獲得する\n・「タイタンの洞窟」へ行く",
       "layout": "<span style='color:#ffffff'>・ここでは3つの「古代の封印」を見つけて「タイタンの洞窟」への道を開く必要がある。封印はマップの外周を壁沿いに進めば見つかるが、稀にアクセスできない峡谷の内側に配置されることもある。</span>\n\n<span style='color:#ffffff'>・タイタンの谷は、全部で12パターンの固定されたレイアウト。</span>\n<span style='color:#ffffff'>  どの位置に入口があり、どの位置にタイタンの洞窟があるかで、３つの古代の封印と遺物をはめるオブジェクトの位置がわかる。</span>\n<span style='color:#ffffff'>  マップ画像２枚目（作：Crimson先生）の凡例は以下のとおり。</span>\n<span style='color:#ffffff'>  －矢印：入口からタイタンの洞窟までの方向</span>\n<span style='color:#ffffff'>  －</span><span style='color:#4488ff'>青い四角</span><span style='color:#ffffff'>：タイタンの洞窟</span>\n<span style='color:#ffffff'>  －</span><span style='color:#dddd44'>黄土色の四角</span><span style='color:#ffffff'>：３つの古代の封印</span>\n<span style='color:#ffffff'>  －</span><span style='color:#dd66ff'>紫の三角</span><span style='color:#ffffff'>：遺物をはめるオブジェクト</span>\n\n<span style='color:#ffffff'>5/14プレビュー映像によると、</span><span style='color:#dd66ff'>３つの封印それぞれの近くに巨象の顔のオブジェクトがあり、さらに３つ揃えると、次のタイタンの洞窟の入口近くにワープできる</span><span style='color:#ffffff'>ようになる模様</span>",
       "tips": "<span style='color:#ffffff'>・アムリットの供物クエストで、２つの遺物をはめて</span><span style='color:#dddd44'>チャーム関連の永続バフ</span><span style='color:#ffffff'>を獲得する</span>",
-      "summary": "<span style='color:#ffffff'>・アムリットの供物クエストで</span><span style='color:#dddd44'>チャーム関連の永続バフ</span><span style=\" color:#ffffff;\">を獲得する\n・「タイタンの洞窟」へ行く</span>\n\n<span style='color:#dd66ff'>5/14プレビュー映像によると、３つの封印のそれぞれの近くに顔の像が設置され目印になる模様。また、３つ揃えると、次のタイタンの洞窟の入口近くにワープできるようになる</span>\n\n<span style='color:#ffffff'>タイタンの谷は、全部で12パターンの固定されたレイアウト。</span>\n<span style='color:#ffffff'>  どの位置に入口があり、どの位置にタイタンの洞窟があるかで、３つの古代の封印と遺物をはめるオブジェクトの位置がわかる。</span>\n<span style='color:#ffffff'>  マップ画像（作：Crimson先生）の凡例は以下のとおり。</span>\n<span style='color:#ffffff'>  －矢印：入口からタイタンの洞窟までの方向</span>\n<span style='color:#ffffff'>  －青い四角：タイタンの洞窟</span>\n<span style='color:#ffffff'>  －黄土色の四角：３つの古代の封印</span>\n<span style='color:#ffffff'>  －紫の三角：遺物をはめるオブジェクト</span>"
+      "summary": "<span style='color:#ffffff'>・アムリットの供物クエストで</span><span style='color:#dddd44'>チャーム関連の永続バフ</span><span style=\" color:#ffffff;\">を獲得する\n・「タイタンの洞窟」へ行く</span>\n\n<span style='color:#dd66ff'>5/14プレビュー映像によると、３つの封印のそれぞれの近くに顔の像が設置され目印になる模様。また、３つ揃えると、次のタイタンの洞窟の入口近くにワープできるようになる</span>\n\n<span style='color:#ffffff'>タイタンの谷は、全部で12パターンの固定されたレイアウト。</span>\n<span style='color:#ffffff'>  どの位置に入口があり、どの位置にタイタンの洞窟があるかで、３つの古代の封印と遺物をはめるオブジェクトの位置がわかる。</span>\n<span style='color:#ffffff'>  マップ画像（作：Crimson先生）の凡例は以下のとおり。</span>\n<span style='color:#ffffff'>  －矢印：入口からタイタンの洞窟までの方向</span>\n<span style='color:#ffffff'>  －青い四角：タイタンの洞窟</span>\n<span style='color:#ffffff'>  －黄土色の四角：３つの古代の封印</span>\n<span style='color:#ffffff'>  －紫の三角：遺物をはめるオブジェクト</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・アムリットの供物クエストで</span><span style='color:#dddd44'>チャーム関連の永続バフ</span><span style=\" color:#ffffff;\">を獲得する\n・「タイタンの洞窟」へ行く</span>\n\n<span style='color:#dd66ff'>5/14プレビュー映像によると、３つの封印のそれぞれの近くに顔の像が設置され目印になる模様。また、３つ揃えると、次のタイタンの洞窟の入口近くにワープできるようになる</span>\n\n<span style='color:#ffffff'>タイタンの谷は、全部で12パターンの固定されたレイアウト。</span>\n<span style='color:#ffffff'>  どの位置に入口があり、どの位置にタイタンの洞窟があるかで、３つの古代の封印と遺物をはめるオブジェクトの位置がわかる。</span>\n<span style='color:#ffffff'>  マップ画像（作：Crimson先生）の凡例は以下のとおり。</span>\n<span style='color:#ffffff'>  －矢印：入口からタイタンの洞窟までの方向</span>\n<span style='color:#ffffff'>  －青い四角：タイタンの洞窟</span>\n<span style='color:#ffffff'>  －黄土色の四角：３つの古代の封印</span>\n<span style='color:#ffffff'>  －紫の三角：遺物をはめるオブジェクト</span>"
+      }
     },
     "flags": {}
   },
@@ -277,7 +370,10 @@
       "objective": "・ボス「巨像、ザルマラス」を倒す\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、「裏切り者の通路」へ行く\n・船頭で角笛を使用する\n・砂漠の地図を操作して、「デシャール」へ行く",
       "layout": "<span style='color:#ffffff'>・曲がりくねっているが、全体としては「長方形」をイメージして、入口から対角線上にある奥を目指せばよい。</span>\n<span style='color:#ffffff'>・エリアの中間にチェックポイントがあるが、チェックポイントがある廊下の向きが、このエリアの長辺の向き（長く伸びている方向）を示している。これを見つけたら、その方向に進めばボスがいる。</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n巨像、ザルマラス\n属性：物理、火\n耐性：物理、火\n弱点：冷気</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「巨像、ザルマラス」を倒す\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、「裏切り者の通路」へ行く\n・船頭で角笛を使用する\n・砂漠の地図を操作して、「デシャール」へ行く</span>\n\n<span style='color:#dddd44'>エリアの中間にチェックポイントがあるが、チェックポイントがある廊下の向きが、このエリアの長辺の向き</span><span style='color:#ffffff'>（長く伸びている方向）を示している。これを見つけたら、</span><span style='color:#dddd44'>その方向に進めばボス</span><span style='color:#ffffff'>がいる。</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「巨像、ザルマラス」を倒す\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、「裏切り者の通路」へ行く\n・船頭で角笛を使用する\n・砂漠の地図を操作して、「デシャール」へ行く</span>\n\n<span style='color:#dddd44'>エリアの中間にチェックポイントがあるが、チェックポイントがある廊下の向きが、このエリアの長辺の向き</span><span style='color:#ffffff'>（長く伸びている方向）を示している。これを見つけたら、</span><span style='color:#dddd44'>その方向に進めばボス</span><span style='color:#ffffff'>がいる。</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「巨像、ザルマラス」を倒す\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、「裏切り者の通路」へ行く\n・船頭で角笛を使用する\n・砂漠の地図を操作して、「デシャール」へ行く</span>\n\n<span style='color:#dddd44'>エリアの中間にチェックポイントがあるが、チェックポイントがある廊下の向きが、このエリアの長辺の向き</span><span style='color:#ffffff'>（長く伸びている方向）を示している。これを見つけたら、</span><span style='color:#dddd44'>その方向に進めばボス</span><span style='color:#ffffff'>がいる。</span>"
+      }
     },
     "flags": {}
   },
@@ -286,7 +382,10 @@
       "objective": "・死したデカーラから「遺書」を獲得する。\n・「哀悼者の道」へ行く。",
       "layout": "<span style=\" color:#ffffff;\">・非常に広いエリア。2つの正方形セクションに分かれていて、前半は砂漠、後半は大きな建物が並ぶエリア。\n・建物が並ぶエリアにある多角形の建物の根元に「死したデカーラ」があるので、クエストアイテム（遺書）を回収する。（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n\n・</span><span style='color:#dddd44'>基本的に入口からの進行方向を維持して進めばOK</span>",
       "tips": "<span style='color:#ffffff'>・このエリアの</span><span style='color:#dddd44'>固定レアモブの２頭の鳥型モブは、確定でジンのバリャを落とす</span><span style='color:#ffffff'>。裏切り者の通路でバルバラから手に入るものよりilvlが高く報酬や経験値もおいしくなるため、早くアセンダンシーを取得したい場合を除き、</span><span style='color:#dddd44'>ここで手に入れる方が効率的</span><span style=\" color:#ffffff;\">。\n\n・「熟練工のオーブ」が不足している場合は、入口近くの外壁沿いに「忘れられた者」という遺体から拾えるので入手しておく。\n\n・</span><span style='color:#dddd44'>デシャールは、モブの密度が高く、倒しやすい敵が多いため、経験値稼ぎに最適</span><span style=\" color:#ffffff;\">。\n  また、レベル28付近なので、優秀なベースアイテムが落ちる可能性がある。\n  このあとのデシャールの尖塔のエリアレベルが30なので、経験値ペナルティを回避するためには、レベル26が必要。その点を意識して、</span><span style='color:#dddd44'>ここでレベル25にはなっておくくらいに経験値を稼いでおくと良い</span><span style='color:#ffffff'>。</span>",
-      "summary": "<span style='color:#ffffff'>・死したデカーラから「遺書」を獲得する。（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・「哀悼者の道」へ行く。</span>\n\n<span style='color:#ffffff'>デシャールは、モブの密度が高く、倒しやすい敵が多いため、経験値稼ぎに最適。</span>\n<span style='color:#ffffff'>また、lvl28付近なので、優秀なベースアイテムが落ちる可能性がある。</span>\n<span style='color:#ffffff'>このあとのデシャールの尖塔で経験値ペナルティを回避するには、lvl26が必要。その点を意識して、</span><span style='color:#dddd44'>ここでlvl25にはなっておくくらいに経験値を稼いでおくと良い</span>\n<span style=\" color:#ffffff;\">\n</span><span style='color:#dddd44'>このエリアの固定レアモブの２頭の鳥型モブは、確定でジンのバリャを落とす</span><span style=\" color:#ffffff;\">。裏切り者の通路でバルバラから手に入るものよりilvlが高く報酬や経験値もおいしくなる。\n\n「熟練工のオーブ」が不足している場合は、入口近くの外壁沿いに「忘れられた者」という遺体から拾えるので入手しておく。</span>"
+      "summary": "<span style='color:#ffffff'>・死したデカーラから「遺書」を獲得する。（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・「哀悼者の道」へ行く。</span>\n\n<span style='color:#ffffff'>デシャールは、モブの密度が高く、倒しやすい敵が多いため、経験値稼ぎに最適。</span>\n<span style='color:#ffffff'>また、lvl28付近なので、優秀なベースアイテムが落ちる可能性がある。</span>\n<span style='color:#ffffff'>このあとのデシャールの尖塔で経験値ペナルティを回避するには、lvl26が必要。その点を意識して、</span><span style='color:#dddd44'>ここでlvl25にはなっておくくらいに経験値を稼いでおくと良い</span>\n<span style=\" color:#ffffff;\">\n</span><span style='color:#dddd44'>このエリアの固定レアモブの２頭の鳥型モブは、確定でジンのバリャを落とす</span><span style=\" color:#ffffff;\">。裏切り者の通路でバルバラから手に入るものよりilvlが高く報酬や経験値もおいしくなる。\n\n「熟練工のオーブ」が不足している場合は、入口近くの外壁沿いに「忘れられた者」という遺体から拾えるので入手しておく。</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・死したデカーラから「遺書」を獲得する。（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・「哀悼者の道」へ行く。</span>\n\n<span style='color:#ffffff'>デシャールは、モブの密度が高く、倒しやすい敵が多いため、経験値稼ぎに最適。</span>\n<span style='color:#ffffff'>また、lvl28付近なので、優秀なベースアイテムが落ちる可能性がある。</span>\n<span style='color:#ffffff'>このあとのデシャールの尖塔で経験値ペナルティを回避するには、lvl26が必要。その点を意識して、</span><span style='color:#dddd44'>ここでlvl25にはなっておくくらいに経験値を稼いでおくと良い</span>\n<span style=\" color:#ffffff;\">\n</span><span style='color:#dddd44'>このエリアの固定レアモブの２頭の鳥型モブは、確定でジンのバリャを落とす</span><span style=\" color:#ffffff;\">。裏切り者の通路でバルバラから手に入るものよりilvlが高く報酬や経験値もおいしくなる。\n\n「熟練工のオーブ」が不足している場合は、入口近くの外壁沿いに「忘れられた者」という遺体から拾えるので入手しておく。</span>"
+      }
     },
     "flags": {}
   },
@@ -295,7 +394,10 @@
       "objective": "「デシャールの尖塔」へ行く",
       "layout": "<span style='color:#ffffff'>・ワールドマップ上の「デシャール」「哀悼者の道」「デシャールの尖塔」の３エリアの位置関係に依存して、</span><span style='color:#dddd44'>横向きか縦向きのいずれかのレイアウトに</span><span style='color:#ffffff'>なる。</span>\n\n<span style='color:#ffffff'>・いずれの場合も、</span><span style='color:#dddd44'>入口と出口は、エリアが伸びている方向と平行の線で結ぶことができる</span><span style='color:#ffffff'>ので、エリアの方向を意識しながら反対側を目指して進む。</span>",
       "tips": "",
-      "summary": "<span style=\" color:#ffffff;\">・「デシャールの尖塔」へ行く\n\nワールドマップ上の「デシャール」「哀悼者の道」「デシャールの尖塔」の３エリアの位置関係に依存して、横向きか縦向きのいずれかのレイアウトになる。\nいずれの場合も、入口と出口は、エリアが伸びている方向と平行の線で結ぶことができるので、エリアの方向を意識しながら反対側を目指して進む。</span>"
+      "summary": "<span style=\" color:#ffffff;\">・「デシャールの尖塔」へ行く\n\nワールドマップ上の「デシャール」「哀悼者の道」「デシャールの尖塔」の３エリアの位置関係に依存して、横向きか縦向きのいずれかのレイアウトになる。\nいずれの場合も、入口と出口は、エリアが伸びている方向と平行の線で結ぶことができるので、エリアの方向を意識しながら反対側を目指して進む。</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・「デシャールの尖塔」へ行く\n\nワールドマップ上の「デシャール」「哀悼者の道」「デシャールの尖塔」の３エリアの位置関係に依存して、横向きか縦向きのいずれかのレイアウトになる。\nいずれの場合も、入口と出口は、エリアが伸びている方向と平行の線で結ぶことができるので、エリアの方向を意識しながら反対側を目指して進む。</span>"
+      }
     },
     "flags": {}
   },
@@ -304,7 +406,10 @@
       "objective": "・ボス「冒涜者、トール・ガル」を倒す\n・ポータルで街へ戻る\n\n（街）\n・シャンブリンにクエストを提出する\n・砂漠の地図を操作して、「ドレッドノート」へ行く",
       "layout": "<span style='color:#ffffff'>・ボスは入口からほぼ一直線上（反対側）にいる。</span>\n<span style='color:#ffffff'>・道中にあるガルカーンの姉妹達で、</span><span style='color:#dddd44'>永続の雷耐性+10%バフ</span><span style='color:#ffffff'>を獲得できる。</span>\n<span style='color:#ffffff'>  エリアの形状は、「G字型」のタイル。下と右から橋が伸び、左上にプラットフォームがある形状。</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n冒涜者、トール・ガル\n属性：物理、火、毒\n耐性：物理、火\n弱点：－</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「冒涜者、トール・ガル」を倒す</span>\n<span style='color:#ffffff'>・ガルカーンの姉妹達で、永続の</span><span style='color:#dddd44'>雷耐性+10%バフ</span><span style=\" color:#ffffff;\">を獲得\n・ポータルで街へ戻る\n\n（街）\n・シャンブリンにクエストを提出する\n・砂漠の地図を操作して、「ドレッドノート」へ行く</span>\n\n<span style='color:#ffffff'>永続の雷耐性+10%バフがあるエリアの形状は、「G字型」のタイル。下と右から橋が伸び、左上にプラットフォームがある形状。</span>"
+      "summary": "<span style='color:#ffffff'>・ボス「冒涜者、トール・ガル」を倒す</span>\n<span style='color:#ffffff'>・ガルカーンの姉妹達で、永続の</span><span style='color:#dddd44'>雷耐性+10%バフ</span><span style=\" color:#ffffff;\">を獲得\n・ポータルで街へ戻る\n\n（街）\n・シャンブリンにクエストを提出する\n・砂漠の地図を操作して、「ドレッドノート」へ行く</span>\n\n<span style='color:#ffffff'>永続の雷耐性+10%バフがあるエリアの形状は、「G字型」のタイル。下と右から橋が伸び、左上にプラットフォームがある形状。</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ボス「冒涜者、トール・ガル」を倒す</span>\n<span style='color:#ffffff'>・ガルカーンの姉妹達で、永続の</span><span style='color:#dddd44'>雷耐性+10%バフ</span><span style=\" color:#ffffff;\">を獲得\n・ポータルで街へ戻る\n\n（街）\n・シャンブリンにクエストを提出する\n・砂漠の地図を操作して、「ドレッドノート」へ行く</span>\n\n<span style='color:#ffffff'>永続の雷耐性+10%バフがあるエリアの形状は、「G字型」のタイル。下と右から橋が伸び、左上にプラットフォームがある形状。</span>"
+      }
     },
     "flags": {}
   },
@@ -313,7 +418,10 @@
       "objective": "「ドレッドノートの前衛」へ行く",
       "layout": "<span style='color:#ffffff'>・直線的で分かりやすいレイアウト。キャラバンの上を進むという性質上、変な方向へ分岐することはない。入り口から反対方向へひたすら進むだけ。</span>",
       "tips": "<span style='color:#dd66ff'>5/8 ZiggyDのGGGインタビューによると、次のエリアに今まであった「ドレッドノートの前衛」は削除されて、このエリアがさらに伸びる形で調整される模様</span>",
-      "summary": "<span style='color:#ffffff'>「ドレッドノートの前衛」へ行く</span>\n\n<span style='color:#dd66ff'>5/8 ZiggyDのGGGインタビューによると、次のエリアに今まであった「ドレッドノートの前衛」は削除されて、このエリアがさらに伸びる形で調整される模様</span>"
+      "summary": "<span style='color:#ffffff'>「ドレッドノートの前衛」へ行く</span>\n\n<span style='color:#dd66ff'>5/8 ZiggyDのGGGインタビューによると、次のエリアに今まであった「ドレッドノートの前衛」は削除されて、このエリアがさらに伸びる形で調整される模様</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>「ドレッドノートの前衛」へ行く</span>\n\n<span style='color:#dd66ff'>5/8 ZiggyDのGGGインタビューによると、次のエリアに今まであった「ドレッドノートの前衛」は削除されて、このエリアがさらに伸びる形で調整される模様</span>"
+      }
     },
     "flags": {}
   },
@@ -322,7 +430,10 @@
       "objective": "・ボス「忌まわしき者、ヤマンラ」を倒す\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者と話す\n・まだセケマの試練をクリアしていなければ、砂漠の地図を操作して、「セケマの試練」へ行く\n・アサラに話してAct3へ",
       "layout": "",
       "tips": "<span style=\" color:#ffffff;\">・チェックポイント近くにマジックモンスターのパックが確定で湧く場所があり、「チェックポイントでリスポーン」を繰り返すことで経験値稼ぎが可能\n\n【ボス情報】\n忌まわしき者、ヤマンラ\n属性：物理、雷\n耐性：物理、火、雷\n弱点：冷気</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「忌まわしき者、ヤマンラ」を倒す\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者と話す\n・まだセケマの試練をクリアしていなければ、砂漠の地図を操作して、「セケマの試練」へ行く\n・アサラに話してAct3へ</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「忌まわしき者、ヤマンラ」を倒す\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者と話す\n・まだセケマの試練をクリアしていなければ、砂漠の地図を操作して、「セケマの試練」へ行く\n・アサラに話してAct3へ</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「忌まわしき者、ヤマンラ」を倒す\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者と話す\n・まだセケマの試練をクリアしていなければ、砂漠の地図を操作して、「セケマの試練」へ行く\n・アサラに話してAct3へ</span>"
+      }
     },
     "flags": {}
   },
@@ -331,7 +442,10 @@
       "objective": "「ジッグラトの野営地」へ行く\n\n（街）\n「ジャングルの遺跡」へ行く",
       "layout": "<span style='color:#ffffff'>・大きな長方形のエリア。基本的には直線的。</span>\n<span style='color:#ffffff'>・エリアの前半1/3の中央付近に、ユニークボス「ルートドレッジ」がいる。</span>\n<span style='color:#ffffff'>  倒すと、確定でスキルジェムLv9を落とす。</span>\n\n<span style='color:#ffffff'>・出口であるジッグラトの野営地の両サイドどちらかに、「アザクの焚き火」がある。</span>\n<span style='color:#ffffff'>  レアモンスターを倒すと、レアチェストが開けられるようになり、中に、</span><span style='color:#dddd44'>確定で宝石職人オーブ（見習い）が入っている。この時点では貴重なので拾う</span><span style='color:#ffffff'>のが良い。</span>",
       "tips": "<span style='color:#ffffff'>・Act3は最速プレイを意識して進めると、レベルが不足しがち。</span><span style='color:#dddd44'>このエリアではレベルを最低29まであげるのを意識</span><span style='color:#ffffff'>してファームする。</span>",
-      "summary": "・<span style=\" color:#ffffff;\">「ジッグラトの野営地」へ行く\n\n（街）\n「ジャングルの遺跡」へ行く</span>\n\n<span style='color:#ffffff'>エリアの前半1/3の中央付近にボス「ルートドレッジ」（</span><span style='color:#dddd44'>スキルジェムLv9</span><span style='color:#ffffff'>）</span>\n\n<span style='color:#ffffff'>出口の左か右に、「アザクの焚き火」。</span><span style='color:#dddd44'>レアチェストに宝石職人オーブ（見習い）</span>"
+      "summary": "・<span style=\" color:#ffffff;\">「ジッグラトの野営地」へ行く\n\n（街）\n「ジャングルの遺跡」へ行く</span>\n\n<span style='color:#ffffff'>エリアの前半1/3の中央付近にボス「ルートドレッジ」（</span><span style='color:#dddd44'>スキルジェムLv9</span><span style='color:#ffffff'>）</span>\n\n<span style='color:#ffffff'>出口の左か右に、「アザクの焚き火」。</span><span style='color:#dddd44'>レアチェストに宝石職人オーブ（見習い）</span>",
+      "mini_navi": {
+        "text": "・<span style=\" color:#ffffff;\">「ジッグラトの野営地」へ行く\n\n（街）\n「ジャングルの遺跡」へ行く</span>\n\n<span style='color:#ffffff'>エリアの前半1/3の中央付近にボス「ルートドレッジ」（</span><span style='color:#dddd44'>スキルジェムLv9</span><span style='color:#ffffff'>）</span>\n\n<span style='color:#ffffff'>出口の左か右に、「アザクの焚き火」。</span><span style='color:#dddd44'>レアチェストに宝石職人オーブ（見習い）</span>"
+      }
     },
     "flags": {}
   },
@@ -340,7 +454,10 @@
       "objective": "・ボス「マイティ・シルバーフィスト」を倒す\n・毒の地下聖堂の近くにあるWPを取る\n・「害虫の荒れ地」前のチェックポイントを取る\n・「毒の地下聖堂」に行く",
       "layout": "<span style='color:#ffffff'>・大きな正方形のようなエリア。３つの重要ポイントがあるが、外周を走るのが鉄則。</span>\n\n<span style='color:#ffffff'>・３つの重要ポイント</span>\n<span style='color:#ffffff'>  ①毒の地下聖堂：WPが近くにある。永続バフが得られるクエスト報酬がある場所。</span>\n<span style='color:#ffffff'>  ②マイティ・シルバーフィスト：ボス。</span><span style='color:#dddd44'>倒すとスキルポイント+2</span><span style='color:#ffffff'>を獲得。</span>\n<span style='color:#ffffff'>  ③害虫の荒れ地（出口）</span>\n\n<span style='color:#ffffff'>①は外周沿いにある。</span>\n<span style='color:#ffffff'>②は、エリアの「上部3分の1」の範囲（左上、中央上、右上など）にスポーンしやすい</span>\n<span style='color:#dd66ff'>⇒ただ、5/8のZiggyDインタビュー動画によると、リーグ0.5からゴリラはエリアの中央に配置するように変わる</span>\n<span style='color:#ffffff'>③は、スタート地点の反対側の壁沿いにある確率が高い。ワールドマップでみて害虫の荒れ地の方向を確認して進めば外れが少ない。</span>",
       "tips": "<span style='color:#ffffff'>・エリア内の外周沿いのどこかにある</span><span style='color:#dddd44'>「物騒なキャンプ」において、NPCの近くにある白チェストからは、確定で4mod付きのレアの手袋がドロップ</span><span style='color:#ffffff'>する。（</span><span style='color:#dd66ff'>また、2026/5/8ライブ配信によると、このNPCが次のエリアの場所を教えてくれるようになる</span><span style=\" color:#ffffff;\">模様）\n・また、「破壊された死体」のオブジェクトをクリックすると、</span><span style='color:#dddd44'>セルヴィからレアベルトをもらえる</span><span style=\" color:#ffffff;\">。\n\n・毒の地下聖堂は、一旦後回しにして、この先のどこかのエリアでWPを取得したタイミングで飛んできても良い。\n\n【ボス情報】\nマイティ・シルバーフィスト \n属性：物理、冷気\n耐性：冷気\n弱点：火</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「マイティ・シルバーフィスト」を倒す（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・毒の地下聖堂の近くにあるWPを取る\n・「害虫の荒れ地」前のチェックポイントを取る\n・「毒の地下聖堂」に行く</span>\n\n<span style='color:#dd66ff'>5/8ZiggyDとGGGのインタビュー動画によると、</span>\n<span style='color:#dd66ff'>①ゴリラはエリアの中央に配置されるように</span>\n<span style='color:#dd66ff'>②「物騒なキャンプ」のNPCが次のエリアの場所を教えてくれるように</span>\n\n<span style='color:#ffffff'>「物騒なキャンプ」の白チェストから</span><span style='color:#dddd44'>4mod付きのレアの手袋</span>\n\n<span style='color:#ffffff'>「破壊された死体」のオブジェクトをクリックでNPCから</span><span style='color:#dddd44'>レアベルト</span>"
+      "summary": "<span style='color:#ffffff'>・ボス「マイティ・シルバーフィスト」を倒す（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・毒の地下聖堂の近くにあるWPを取る\n・「害虫の荒れ地」前のチェックポイントを取る\n・「毒の地下聖堂」に行く</span>\n\n<span style='color:#dd66ff'>5/8ZiggyDとGGGのインタビュー動画によると、</span>\n<span style='color:#dd66ff'>①ゴリラはエリアの中央に配置されるように</span>\n<span style='color:#dd66ff'>②「物騒なキャンプ」のNPCが次のエリアの場所を教えてくれるように</span>\n\n<span style='color:#ffffff'>「物騒なキャンプ」の白チェストから</span><span style='color:#dddd44'>4mod付きのレアの手袋</span>\n\n<span style='color:#ffffff'>「破壊された死体」のオブジェクトをクリックでNPCから</span><span style='color:#dddd44'>レアベルト</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ボス「マイティ・シルバーフィスト」を倒す（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・毒の地下聖堂の近くにあるWPを取る\n・「害虫の荒れ地」前のチェックポイントを取る\n・「毒の地下聖堂」に行く</span>\n\n<span style='color:#dd66ff'>5/8ZiggyDとGGGのインタビュー動画によると、</span>\n<span style='color:#dd66ff'>①ゴリラはエリアの中央に配置されるように</span>\n<span style='color:#dd66ff'>②「物騒なキャンプ」のNPCが次のエリアの場所を教えてくれるように</span>\n\n<span style='color:#ffffff'>「物騒なキャンプ」の白チェストから</span><span style='color:#dddd44'>4mod付きのレアの手袋</span>\n\n<span style='color:#ffffff'>「破壊された死体」のオブジェクトをクリックでNPCから</span><span style='color:#dddd44'>レアベルト</span>"
+      }
     },
     "flags": {}
   },
@@ -349,14 +466,20 @@
       "objective": "「アザク湿原」へ行く",
       "layout": "<span style='color:#ffffff'>・大きな長方形のエリア。</span>\n<span style='color:#ffffff'>・重要なポイントはすべてエリアの外周に配置されているため、中央ではなく端を走るのが正解</span>\n\n<span style='color:#dd66ff'>なお、5/14のGGG動画によると、アザク湿原の入り口はマトラン水路に移動する様子。そのため、リーグ0.5からは、このエリアはキメラの湿地だけ意識すればよいはず</span>\n\n<span style='color:#ffffff'>・３つの重要ポイント</span>\n<span style='color:#ffffff'>  ①キメラの湿地</span>\n<span style='color:#ffffff'>  ②アザク湿原</span>\n<span style='color:#ffffff'>  ③マトラン水路</span>\n\n<span style='color:#ffffff'>・推奨の進め方は、</span>\n<span style='color:#ffffff'>  －外周を走り、すべてのチェックポイントとウェイポイントを確保する。</span>\n<span style='color:#ffffff'>  －チェックポイントから「アザク湿原」へ飛び、エリアをクリアしてウェイポイントで戻ってくる</span>\n<span style='color:#ffffff'>  －チェックポイントから「キメラの湿地」へ進む。</span>\n\n<span style='color:#ffffff'>・このエリアおよび隣接エリアは、ワールドマップが示す位置関係とは全く異なる可能性が高い。そのため、</span><span style='color:#dddd44'>ここに限ってはワールドマップを信じない方がいい</span>",
       "tips": "<span style='color:#ffffff'>・エリア内の外周沿いのどこかにある</span><span style='color:#dddd44'>キャンプにおいて、NPCの近くにある白チェストからは、確定で4mod付きのレアの靴がドロップ</span><span style='color:#ffffff'>する。</span><span style='color:#dd66ff'>また、2026/5/8ライブ配信を踏まえると、おそらく、このNPCも次のエリアの場所を教えてくれるようになる模様</span>",
-      "summary": "<span style=\" color:#ffffff;\">・「アザク湿原」へ行く\n</span>\n<span style='color:#dd66ff'>5/14のGGG動画によると、</span>\n<span style='color:#dd66ff'>・アザク湿原の入り口はマトラン水路に移動する。このエリアはキメラの湿地だけ意識すればよくなるはず</span>\n<span style='color:#dd66ff'>・おそらく、このNPCも次のエリアの場所を教えてくれるように</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプの白チェストから</span><span style='color:#dddd44'>4mod付きのレアの靴</span>"
+      "summary": "<span style=\" color:#ffffff;\">・「アザク湿原」へ行く\n</span>\n<span style='color:#dd66ff'>5/14のGGG動画によると、</span>\n<span style='color:#dd66ff'>・アザク湿原の入り口はマトラン水路に移動する。このエリアはキメラの湿地だけ意識すればよくなるはず</span>\n<span style='color:#dd66ff'>・おそらく、このNPCも次のエリアの場所を教えてくれるように</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプの白チェストから</span><span style='color:#dddd44'>4mod付きのレアの靴</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・「アザク湿原」へ行く\n</span>\n<span style='color:#dd66ff'>5/14のGGG動画によると、</span>\n<span style='color:#dd66ff'>・アザク湿原の入り口はマトラン水路に移動する。このエリアはキメラの湿地だけ意識すればよくなるはず</span>\n<span style='color:#dd66ff'>・おそらく、このNPCも次のエリアの場所を教えてくれるように</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプの白チェストから</span><span style='color:#dddd44'>4mod付きのレアの靴</span>"
+      }
     },
     "flags": {
       "act3_zicoatl_dead": {
         "objective": "・「石の祭壇」を起動する\n・「マトラン水路」へ行く",
         "layout": "",
         "tips": "",
-        "summary": "<span style='color:#ffffff'>・「石の祭壇」を起動する</span>\n<span style='color:#ffffff'>・「マトラン水路」へ行く</span>"
+        "summary": "<span style='color:#ffffff'>・「石の祭壇」を起動する</span>\n<span style='color:#ffffff'>・「マトラン水路」へ行く</span>",
+        "mini_navi": {
+          "text": "<span style='color:#ffffff'>・「石の祭壇」を起動する</span>\n<span style='color:#ffffff'>・「マトラン水路」へ行く</span>"
+        }
       }
     }
   },
@@ -365,7 +488,10 @@
       "objective": "・「死体」を見つけてクエストアイテムを獲得する\n・ポータルで街へ戻る\n\n（街）\n・セルヴィにクエストを提出する\n・WPから「ジャングルの遺跡」へ飛び、チェックポイントから「害虫の荒れ地」へ行く",
       "layout": "<span style='color:#ffffff'>・かなりランダム性の高いエリア。</span>\n\n<span style='color:#ffffff'>・このエリアは基本的に円形をしており、死体はほぼどこにでも出現する可能性があるが、</span><span style='color:#dddd44'>もし、入口がエリアの端だった場合（マップ画像参照）、死体は必ずゾーンの中央に</span><span style='color:#ffffff'>あり、そこへは、入口の反対側の壁沿いを進めば良し。</span>\n\n<span style='color:#ffffff'>・推奨の進め方は、</span>\n<span style='color:#ffffff'>  －入口側と同じ壁沿いを進み、中央付近へと回り込んで、そこに死体があることを祈る</span>\n<span style='color:#ffffff'>  －入口側の壁沿いに進めない場合は、それはエリアの端にいるということになるので、代わりに入口と反対側の壁沿いを進めば、中央で死体が見つかる。</span>\n<span style='color:#ffffff'>  －もし、上記のどちらかのパターンで中央にない場合、運が悪い。</span>\n<span style='color:#ffffff'>    死体はエリアのいずれの角にある可能性があり、外周を探すことになる。</span>\n\n<span style='color:#ffffff'>・5/8 ZiggyDとGGGのインタビュー動画や5/14プレビュー映像によると、以下２点が追加される模様</span>\n<span style='color:#ffffff'>①</span><span style='color:#dd66ff'>死体の近くには、部族の人型mobが多く出現するように</span><span style='color:#ffffff'>なる。『このタイプのmobが出てきたってことは、近づいてるな』と直感的にわかるように</span>\n<span style='color:#ffffff'>②</span><span style='color:#dd66ff'>死体の近くに新しい追加の出口を実装</span><span style='color:#ffffff'>。害虫の荒れ地への出口の近くに出ることができる模様</span>",
       "tips": "<span style='color:#ffffff'>・「死体」から獲得したクエストアイテムの報酬で、</span><span style='color:#dddd44'>永続バフを獲得</span><span style=\" color:#ffffff;\">\n</span>\n<span style='color:#ffffff'>・エリア内にある</span><span style='color:#dddd44'>サルコファガス（レア宝箱）から確定でサポートジェムの原石Lv3</span><span style='color:#ffffff'>が手に入る</span>\n<span style=\" color:#ffffff;\">\n・永続バフは、「スタン閾値」が無難な選択。「元素系状態異常閾値」も悪くない。「マナ自動回復レート」は多くのビルドで価値が低い</span>",
-      "summary": "<span style=\" color:#ffffff;\">・「死体」を見つけてクエストアイテムを獲得する\n・ポータルで街へ戻る\n\n（街）\n・セルヴィにクエストを提出する（</span><span style='color:#dddd44'>永続バフ</span><span style=\" color:#ffffff;\">）\n・WPから「ジャングルの遺跡」へ飛び、チェックポイントから「害虫の荒れ地」へ行く</span>\n\n<span style='color:#dd66ff'>5/8 ZiggyDとGGGのインタビュー動画や5/14プレビュー映像によると、以下２点が追加される模様</span>\n<span style='color:#dd66ff'>①死体の近くには、部族の人型mobが多く出現するようになる。『このタイプのmobが出てきたってことは、近づいてるな』と直感的にわかるように</span>\n<span style='color:#dd66ff'>②死体の近くに新しい追加の出口を実装。害虫の荒れ地への出口の近くに出ることができる模様</span>\n\n<span style='color:#ffffff'>エリア内にあるサルコファガス（レア宝箱）から</span><span style='color:#dddd44'>サポートジェムの原石Lv3</span>"
+      "summary": "<span style=\" color:#ffffff;\">・「死体」を見つけてクエストアイテムを獲得する\n・ポータルで街へ戻る\n\n（街）\n・セルヴィにクエストを提出する（</span><span style='color:#dddd44'>永続バフ</span><span style=\" color:#ffffff;\">）\n・WPから「ジャングルの遺跡」へ飛び、チェックポイントから「害虫の荒れ地」へ行く</span>\n\n<span style='color:#dd66ff'>5/8 ZiggyDとGGGのインタビュー動画や5/14プレビュー映像によると、以下２点が追加される模様</span>\n<span style='color:#dd66ff'>①死体の近くには、部族の人型mobが多く出現するようになる。『このタイプのmobが出てきたってことは、近づいてるな』と直感的にわかるように</span>\n<span style='color:#dd66ff'>②死体の近くに新しい追加の出口を実装。害虫の荒れ地への出口の近くに出ることができる模様</span>\n\n<span style='color:#ffffff'>エリア内にあるサルコファガス（レア宝箱）から</span><span style='color:#dddd44'>サポートジェムの原石Lv3</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・「死体」を見つけてクエストアイテムを獲得する\n・ポータルで街へ戻る\n\n（街）\n・セルヴィにクエストを提出する（</span><span style='color:#dddd44'>永続バフ</span><span style=\" color:#ffffff;\">）\n・WPから「ジャングルの遺跡」へ飛び、チェックポイントから「害虫の荒れ地」へ行く</span>\n\n<span style='color:#dd66ff'>5/8 ZiggyDとGGGのインタビュー動画や5/14プレビュー映像によると、以下２点が追加される模様</span>\n<span style='color:#dd66ff'>①死体の近くには、部族の人型mobが多く出現するようになる。『このタイプのmobが出てきたってことは、近づいてるな』と直感的にわかるように</span>\n<span style='color:#dd66ff'>②死体の近くに新しい追加の出口を実装。害虫の荒れ地への出口の近くに出ることができる模様</span>\n\n<span style='color:#ffffff'>エリア内にあるサルコファガス（レア宝箱）から</span><span style='color:#dddd44'>サポートジェムの原石Lv3</span>"
+      }
     },
     "flags": {}
   },
@@ -374,7 +500,10 @@
       "objective": "・ボス「沼地の魔女、イグナグドゥク」を倒す\n・チェックポイントから害虫の荒れ地を経由するか、ポータルで街へ戻って「キメラル湿地」へ行く",
       "layout": "<span style='color:#ffffff'>・エリア全体を巨大な正方形とイメージして、上下左右で分けた４つのエリアだと考えたときに、ボスエリアは入口から一番遠い区画内にある。</span>",
       "tips": "・このエリアの中にあるオブジェクトを火で燃やす広めの部屋があるが、密集した敵がいて近くにチェックポイントがあるため、ファーム＆リセットを繰り返すことで効率よく経験値を稼ぐことが可能。\n\n【ボス情報】\n沼地の魔女、イグナグドゥク\n属性：物理、火\n耐性：火\n弱点：冷気",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「沼地の魔女、イグナグドゥク」を倒す\n・チェックポイントから害虫の荒れ地を経由するか、ポータルで街へ戻って「キメラル湿地」へ行く</span>\n\n<span style='color:#ffffff'>エリア全体を巨大な正方形とイメージして、上下左右で分けた４つのエリアだと考えたときに、ボスエリアは入口から一番遠い区画内に</span>\n\n<span style='color:#ffffff'>オブジェクトを火で燃やす広めの部屋は、</span><span style='color:#dddd44'>ファーム＆リセットを繰り返すことで効率よく経験値を稼ぐことが可能</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「沼地の魔女、イグナグドゥク」を倒す\n・チェックポイントから害虫の荒れ地を経由するか、ポータルで街へ戻って「キメラル湿地」へ行く</span>\n\n<span style='color:#ffffff'>エリア全体を巨大な正方形とイメージして、上下左右で分けた４つのエリアだと考えたときに、ボスエリアは入口から一番遠い区画内に</span>\n\n<span style='color:#ffffff'>オブジェクトを火で燃やす広めの部屋は、</span><span style='color:#dddd44'>ファーム＆リセットを繰り返すことで効率よく経験値を稼ぐことが可能</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「沼地の魔女、イグナグドゥク」を倒す\n・チェックポイントから害虫の荒れ地を経由するか、ポータルで街へ戻って「キメラル湿地」へ行く</span>\n\n<span style='color:#ffffff'>エリア全体を巨大な正方形とイメージして、上下左右で分けた４つのエリアだと考えたときに、ボスエリアは入口から一番遠い区画内に</span>\n\n<span style='color:#ffffff'>オブジェクトを火で燃やす広めの部屋は、</span><span style='color:#dddd44'>ファーム＆リセットを繰り返すことで効率よく経験値を稼ぐことが可能</span>"
+      }
     },
     "flags": {}
   },
@@ -383,7 +512,10 @@
       "objective": "・ボス「キメラ、ザイクルシアン」を倒す\n・「カオスの寺院」に入って、WPを確保する\n・「ジクアニのマシナリウム」へ行く",
       "layout": "<span style='color:#ffffff'>・カオスの寺院は、エリアの上辺に生成される。</span>\n<span style='color:#ffffff'>・</span><span style='color:#dddd44'>ボスの場所は、左向きに開いている地形が特徴</span><span style='color:#ffffff'>。そのため左の壁沿いを走り続ければ、いつか辿り着くはず。</span>\n\n<span style='color:#ffffff'>・推奨の進め方は、</span>\n<span style='color:#ffffff'>  －外周の壁に沿って進み、２つの重要ポイントを探す。</span>\n<span style='color:#ffffff'>  －先にボスを見つけたら、ボスを倒してマシナリウムに入ってウェイポイントを確保し、戻ってきてカオスの寺院を探す</span>\n\n<span style='color:#ffffff'>※カオスの寺院は基本的にエリアの上側にできるが、ごく稀にエリアの左右の端の上辺に生成されることもある。（マップ画像２枚目のパターン）</span>\n<span style='color:#ffffff'>※なぜかここだけ40種類以上のレイアウトが存在することから、Actレーサーから呪われたゾーンと呼ばれているらしい。</span>\n\n<span style='color:#dd66ff'>⇒GGGのレベルデザイナーのSunaが最近明かした情報では、もう40種類ものレイアウトパターンはなくなったとのこと。</span><span style='color:#ffffff'>つまりもっとわかりやすくなっているはず。</span>",
       "tips": "<span style='color:#ffffff'>・エリア内の外周沿いのどこかにある</span><span style='color:#dddd44'>キャンプにおいて、NPCの近くにある白チェストからは、確定で4mod付きのレアの兜がドロップ</span><span style='color:#ffffff'>する。</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「キメラ、ザイクルシアン」を倒す\n・「カオスの寺院」に入って、WPを確保する\n・「ジクアニのマシナリウム」へ行く</span>\n\n<span style='color:#ffffff'>カオスの寺院は、エリアの上辺に生成。</span>\n<span style='color:#ffffff'>ボスの場所は、左向きに開いている地形が特徴。そのため左の壁沿いを走り続ければ、いつか辿り着く</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプで白チェストから</span><span style='color:#dddd44'>4mod付きのレアの兜</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「キメラ、ザイクルシアン」を倒す\n・「カオスの寺院」に入って、WPを確保する\n・「ジクアニのマシナリウム」へ行く</span>\n\n<span style='color:#ffffff'>カオスの寺院は、エリアの上辺に生成。</span>\n<span style='color:#ffffff'>ボスの場所は、左向きに開いている地形が特徴。そのため左の壁沿いを走り続ければ、いつか辿り着く</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプで白チェストから</span><span style='color:#dddd44'>4mod付きのレアの兜</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「キメラ、ザイクルシアン」を倒す\n・「カオスの寺院」に入って、WPを確保する\n・「ジクアニのマシナリウム」へ行く</span>\n\n<span style='color:#ffffff'>カオスの寺院は、エリアの上辺に生成。</span>\n<span style='color:#ffffff'>ボスの場所は、左向きに開いている地形が特徴。そのため左の壁沿いを走り続ければ、いつか辿り着く</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプで白チェストから</span><span style='color:#dddd44'>4mod付きのレアの兜</span>"
+      }
     },
     "flags": {}
   },
@@ -392,7 +524,10 @@
       "objective": "・ボス「亡霊、黒き顎」を倒す\n・「ジクアニの聖所」へ行く",
       "layout": "<span style='color:#ffffff'>・ドアを開けるための「小さなソウルコア」を探す2つのセクションがある。</span>\n<span style='color:#ffffff'>  －第1セクション: 中央にアルヴァがいる部屋。左右どちらかの小部屋にコアがある。</span>\n<span style='color:#ffffff'>  －第2セクション: 中央の大通路と、コアがある脇部屋で構成。</span>\n\n<span style='color:#ffffff'>・ジクアニの聖所への入り口は、第2セクションの開始地点から直線を引いた先に最終通路がある。</span>\n\n<span style='color:#ffffff'>・ボス「亡霊、黒き顎」（</span><span style='color:#dddd44'>永続で火耐性+10</span><span style='color:#ffffff'>%）は、エリアの左右どちらかの端に出現する。</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n亡霊、黒き顎\n属性：物理、火\n耐性：物理、火\n弱点：冷気</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「亡霊、黒き顎」を倒す（</span><span style='color:#dddd44'>火耐性+10%</span><span style=\" color:#ffffff;\">）\n・「ジクアニの聖所」へ行く</span>\n\n<span style='color:#ffffff'>ジクアニの聖所への入り口は、第2セクションの開始地点から直線を引いた先に最終通路がある</span>"
+      "summary": "<span style='color:#ffffff'>・ボス「亡霊、黒き顎」を倒す（</span><span style='color:#dddd44'>火耐性+10%</span><span style=\" color:#ffffff;\">）\n・「ジクアニの聖所」へ行く</span>\n\n<span style='color:#ffffff'>ジクアニの聖所への入り口は、第2セクションの開始地点から直線を引いた先に最終通路がある</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ボス「亡霊、黒き顎」を倒す（</span><span style='color:#dddd44'>火耐性+10%</span><span style=\" color:#ffffff;\">）\n・「ジクアニの聖所」へ行く</span>\n\n<span style='color:#ffffff'>ジクアニの聖所への入り口は、第2セクションの開始地点から直線を引いた先に最終通路がある</span>"
+      }
     },
     "flags": {}
   },
@@ -401,7 +536,10 @@
       "objective": "・２つの中型のソウルコアを見つけて、ジェネレーターを起動する。\n・ボス「コアの番人、ジコアトル」を倒す\n・すぐ近くのWPから、「害虫の荒れ地」へ飛ぶ",
       "layout": "<span style='color:#ffffff'>・左右対称の2つのエリアに分かれている</span>",
       "tips": "<span style=\" color:#ffffff;\">・ジェネレーターを見つけたものの、コアが見つからない場合、ジェネレーター横のチェックポイントを確保し、「チェックポイントでリスポーン」を使うと、運が良ければコアがすぐ近くに再配置され、ミニマップに「！」マークで表示される。\n  アイテムフィルターを導入していれば、近くにある場合、クエストアイテムのドロップ音が聞こえるため便利。\n  なお、コアを持った状態でリスポーンするとコアが消滅するので、ジェネレーターへの移動手段としては使えない。\n\n・２つのコアをはめた後は、チェックポイントでリスポーンすると床が赤くなる演出をスキップできて早い</span>",
-      "summary": "<span style=\" color:#ffffff;\">・２つの中型のソウルコアを見つけて、ジェネレーターを起動する。\n・ボス「コアの番人、ジコアトル」を倒す\n・すぐ近くのWPから、「害虫の荒れ地」へ飛ぶ</span>\n\n<span style='color:#ffffff'>コアが見つからない場合、ジェネレーター横のチェックポイントを確保し、「チェックポイントでリスポーン」を繰り返すと、いつかコアがすぐ近くに再配置され、ミニマップに「！」マークで表示される（音を注意して聞くとよい）</span>\n\n<span style='color:#ffffff'>２つのコアをはめた後は、チェックポイントでリスポーンすると床が赤くなる演出をスキップできて早い</span>"
+      "summary": "<span style=\" color:#ffffff;\">・２つの中型のソウルコアを見つけて、ジェネレーターを起動する。\n・ボス「コアの番人、ジコアトル」を倒す\n・すぐ近くのWPから、「害虫の荒れ地」へ飛ぶ</span>\n\n<span style='color:#ffffff'>コアが見つからない場合、ジェネレーター横のチェックポイントを確保し、「チェックポイントでリスポーン」を繰り返すと、いつかコアがすぐ近くに再配置され、ミニマップに「！」マークで表示される（音を注意して聞くとよい）</span>\n\n<span style='color:#ffffff'>２つのコアをはめた後は、チェックポイントでリスポーンすると床が赤くなる演出をスキップできて早い</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・２つの中型のソウルコアを見つけて、ジェネレーターを起動する。\n・ボス「コアの番人、ジコアトル」を倒す\n・すぐ近くのWPから、「害虫の荒れ地」へ飛ぶ</span>\n\n<span style='color:#ffffff'>コアが見つからない場合、ジェネレーター横のチェックポイントを確保し、「チェックポイントでリスポーン」を繰り返すと、いつかコアがすぐ近くに再配置され、ミニマップに「！」マークで表示される（音を注意して聞くとよい）</span>\n\n<span style='color:#ffffff'>２つのコアをはめた後は、チェックポイントでリスポーンすると床が赤くなる演出をスキップできて早い</span>"
+      }
     },
     "flags": {}
   },
@@ -410,7 +548,10 @@
       "objective": "・最奥の運河のレバーを起動する\n・ポータルで街へ戻る\n\n（街）\n・「沈んだ都市」へ行く（階段を降りて右下へ）",
       "layout": "<span style='color:#ffffff'>・レバーを引いて水位を下げながら進む</span>\n\n<span style='color:#dd66ff'>・5/14のGGG動画によると、アザク湿原の入り口はマトラン水路に移動する様子。</span>",
       "tips": "<span style='color:#ffffff'>・狭いエリアに、火属性の敵がわんさか集まることがあるので、火耐性を積むと安全。</span>",
-      "summary": "<span style=\" color:#ffffff;\">・最奥の運河のレバーを起動する\n・ポータルで街へ戻る\n\n（街）\n・「沈んだ都市」へ行く（階段を降りて右下へ）</span>\n\n<span style='color:#dd66ff'>5/14のGGG動画によると、アザク湿原の入り口がマトラン水路内にできるはずなのでクリアすること</span>\n\n<span style='color:#ffffff'>狭いエリアに、火属性の敵がわんさか集まることがあるので、火耐性を積むと安全。</span>"
+      "summary": "<span style=\" color:#ffffff;\">・最奥の運河のレバーを起動する\n・ポータルで街へ戻る\n\n（街）\n・「沈んだ都市」へ行く（階段を降りて右下へ）</span>\n\n<span style='color:#dd66ff'>5/14のGGG動画によると、アザク湿原の入り口がマトラン水路内にできるはずなのでクリアすること</span>\n\n<span style='color:#ffffff'>狭いエリアに、火属性の敵がわんさか集まることがあるので、火耐性を積むと安全。</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・最奥の運河のレバーを起動する\n・ポータルで街へ戻る\n\n（街）\n・「沈んだ都市」へ行く（階段を降りて右下へ）</span>\n\n<span style='color:#dd66ff'>5/14のGGG動画によると、アザク湿原の入り口がマトラン水路内にできるはずなのでクリアすること</span>\n\n<span style='color:#ffffff'>狭いエリアに、火属性の敵がわんさか集まることがあるので、火耐性を積むと安全。</span>"
+      }
     },
     "flags": {}
   },
@@ -419,14 +560,20 @@
       "objective": "（1stキャラの場合）\n・「溶融した宝物庫」へ行く\n（溶融した宝物庫クリア後or2ndキャラ以降）\n・「汚物の頂」へ行く",
       "layout": "<span style='color:#ffffff'>・マップ画像の「1」が入口。「2」がチェックポイントのすぐあとにある待ち伏せエリア。</span>\n\n<span style='color:#ffffff'>・右下方向に進みつつ、「A」の長さを意識しておく（頭の中で測る）。</span>\n<span style='color:#ffffff'>  以下、場合分け</span>\n\n<span style='color:#ffffff'>  ①もしAの長さが通常より長い（8ユニット）場合</span>\n<span style='color:#ffffff'>    ⇒出口の汚物の頂は「Left」の位置のどちらか</span>\n\n<span style='color:#ffffff'>  ②もし長さAが通常の場合：</span>\n<span style='color:#ffffff'>    ・橋を渡り、長さ「B」の計測を開始する。</span>\n<span style='color:#ffffff'>    ・3ユニット進んだら右上へ曲がり、壁沿いに進んで、「2」のチェックポイントを見つける。</span>\n<span style='color:#ffffff'>    (1)もし長さBが長さAより短い（3または5ユニット）場合：</span>\n<span style='color:#ffffff'>      ⇒出口は「Right」の位置</span>\n<span style='color:#ffffff'>    (2)もし長さBが長さAより長い場合：</span>\n<span style='color:#ffffff'>      ⇒チェックポイント1と2の位置関係（並び）を比較する：</span>\n<span style='color:#ffffff'>      (a)2が1より低い位置にある場合：</span>\n<span style='color:#ffffff'>        ⇒出口は「Left」の位置のどちらか</span>\n<span style='color:#ffffff'>      (b)2と1がほぼ一直線（同じ高さ）にある場合：</span>\n<span style='color:#ffffff'>        ⇒地点「C」のマップ境界（外縁）を見る</span>\n<span style='color:#ffffff'>        1.もしCが水 なら → 出口は「Left」のどちらか</span>\n<span style='color:#ffffff'>        2.もしCが壁（石） なら → 出口は「Middle」</span>\n\n<span style='color:#ffffff'>・上記は無視して、あまり深く考えずに、２の待ち伏せエリアを超えたら、Mid⇒Leftの順に探して、それでも見つからなかったら、Rightにいけば見つかる（Rightになるパターンが一番少ないので最後に）</span>",
       "tips": "<span style='color:#ffffff'>・同じリーグ内で初めてのキャラの場合、リフォージベンチを解放するために、「溶融した宝物庫」のクエストを完了する必要あり。入口は、「D」の位置になる確率が高い。</span>",
-      "summary": "<span style=\" color:#ffffff;\">（1stキャラの場合）\n・「溶融した宝物庫」へ行く\n（溶融した宝物庫クリア後or2ndキャラ以降）\n・「汚物の頂」へ行く</span>\n\n<span style='color:#ffffff'>マップ画像「２」の待ち伏せエリアを超えたら、Mid⇒Leftの順に探して、それでも見つからなかったら、Rightにいけば見つかる（Rightになるのが一番確率が低いようなので最後にいく。法則を更に詳しく見たい場合は詳細版のガイドを参照）</span>"
+      "summary": "<span style=\" color:#ffffff;\">（1stキャラの場合）\n・「溶融した宝物庫」へ行く\n（溶融した宝物庫クリア後or2ndキャラ以降）\n・「汚物の頂」へ行く</span>\n\n<span style='color:#ffffff'>マップ画像「２」の待ち伏せエリアを超えたら、Mid⇒Leftの順に探して、それでも見つからなかったら、Rightにいけば見つかる（Rightになるのが一番確率が低いようなので最後にいく。法則を更に詳しく見たい場合は詳細版のガイドを参照）</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">（1stキャラの場合）\n・「溶融した宝物庫」へ行く\n（溶融した宝物庫クリア後or2ndキャラ以降）\n・「汚物の頂」へ行く</span>\n\n<span style='color:#ffffff'>マップ画像「２」の待ち伏せエリアを超えたら、Mid⇒Leftの順に探して、それでも見つからなかったら、Rightにいけば見つかる（Rightになるのが一番確率が低いようなので最後にいく。法則を更に詳しく見たい場合は詳細版のガイドを参照）</span>"
+      }
     },
     "flags": {
       "act3_queenfilth_dead": {
         "objective": "・街に入る\n\n（街）\n・「コペク神殿」へ行く",
         "layout": "",
         "tips": "",
-        "summary": "<span style=\" color:#ffffff;\">・街に入る\n\n（街）\n・「コペク神殿」へ行く</span>"
+        "summary": "<span style=\" color:#ffffff;\">・街に入る\n\n（街）\n・「コペク神殿」へ行く</span>",
+        "mini_navi": {
+          "text": "<span style=\" color:#ffffff;\">・街に入る\n\n（街）\n・「コペク神殿」へ行く</span>"
+        }
       }
     }
   },
@@ -435,7 +582,10 @@
       "objective": "・ボス「鍛造場主、メクトゥル」を倒す\n・「沈んだ都市」へ戻る",
       "layout": "<span style='color:#ffffff'>・中は単純な一本道。時計回りに進んでいけば、ボスにたどり着ける。</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n鍛造場主、メクトゥル\n属性：物理、火\n耐性：物理、火\n弱点：冷気</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「鍛造場主、メクトゥル」を倒す\n・「沈んだ都市」へ戻る</span>\n\n<span style='color:#ffffff'>中は単純な一本道。時計回りに進んでいけば、ボスにたどり着ける。</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「鍛造場主、メクトゥル」を倒す\n・「沈んだ都市」へ戻る</span>\n\n<span style='color:#ffffff'>中は単純な一本道。時計回りに進んでいけば、ボスにたどり着ける。</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「鍛造場主、メクトゥル」を倒す\n・「沈んだ都市」へ戻る</span>\n\n<span style='color:#ffffff'>中は単純な一本道。時計回りに進んでいけば、ボスにたどり着ける。</span>"
+      }
     },
     "flags": {}
   },
@@ -444,7 +594,10 @@
       "objective": "・ボス「汚物の女王」を倒す\n・チェックポイントでWPへ飛ぶ\n・WPから「沈んだ都市」へ飛ぶ\n・街に入る\n\n（街に用事があるなら）\nポータルで街へ戻って、「コペク神殿」へ行く",
       "layout": "<span style='color:#ffffff'>・入ってきた方向と同じ方向（ほぼストレート）と、入ってきた方向から横にそれるL字型の２パターンのどちらかになる確率が高い。</span>\n<span style='color:#ffffff'>  ※ここからさらに、90度回転やミラー版もある。</span>\n\n<span style='color:#ffffff'>・マップ画像の</span><span style='color:#44cc44'>緑線</span><span style='color:#ffffff'>のとおり、序盤のT字路で左に入って壁沿いに進むと、運が良ければこれだけですぐにボスが見つかる。ここにいなかった場合は、</span><span style='color:#ff8800'>オレンジ線</span><span style='color:#ffffff'>のとおり進むと、間に壁がなければすぐにボスに。</span>\n<span style='color:#ffffff'>壁があれば、</span><span style='color:#ff6666'>赤線</span><span style='color:#ffffff'>のとおり迂回する。</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n汚物の女王\n属性：物理、火\n耐性：物理\n弱点：－\n\n・次のコペク神殿は、街の階段をまた降りるのがちょっと長いので、ボスを倒した後はチェックポイントでウェイポイントに飛んで、ウェイポイントを使って沈んだ都市から街に戻るルートで行くと早い\n  （街に用事がなければ）</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「汚物の女王」を倒す\n・チェックポイントでWPへ飛ぶ\n・WPから「沈んだ都市」へ飛ぶ\n・街に入る\n\n（街に用事があるなら）\nポータルで街へ戻って、「コペク神殿」へ行く</span>\n\n<span style='color:#ffffff'>入ってきた方向と同じ方向（ほぼストレート）と、入ってきた方向から横にそれるL字型の２パターンのどちらかになる確率が高い</span>\n\n<span style='color:#ffffff'>マップ画像の</span><span style='color:#44cc44'>緑線</span><span style='color:#ffffff'>のとおり、序盤のT字路で左に入って壁沿いに進むと、運が良ければすぐにボスが見つかる。いなければ、</span><span style='color:#ff8800'>オレンジ線</span><span style='color:#ffffff'>のとおり進んで壁がなければすぐにボス。</span>\n<span style='color:#ffffff'>壁があれば、</span><span style='color:#ff6666'>赤線</span><span style='color:#ffffff'>のとおり迂回する</span>\n<span style=\" color:#ffffff;\">\nボスを倒した後は、街の階段をまた降りるのがちょっと長いので、ボスを倒した後にチェックポイントでウェイポイントに飛んで、ウェイポイントを使って沈んだ都市から街に戻るルートで行くと早い</span>\n<span style='color:#ffffff'>  （街に用事がなければ）</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「汚物の女王」を倒す\n・チェックポイントでWPへ飛ぶ\n・WPから「沈んだ都市」へ飛ぶ\n・街に入る\n\n（街に用事があるなら）\nポータルで街へ戻って、「コペク神殿」へ行く</span>\n\n<span style='color:#ffffff'>入ってきた方向と同じ方向（ほぼストレート）と、入ってきた方向から横にそれるL字型の２パターンのどちらかになる確率が高い</span>\n\n<span style='color:#ffffff'>マップ画像の</span><span style='color:#44cc44'>緑線</span><span style='color:#ffffff'>のとおり、序盤のT字路で左に入って壁沿いに進むと、運が良ければすぐにボスが見つかる。いなければ、</span><span style='color:#ff8800'>オレンジ線</span><span style='color:#ffffff'>のとおり進んで壁がなければすぐにボス。</span>\n<span style='color:#ffffff'>壁があれば、</span><span style='color:#ff6666'>赤線</span><span style='color:#ffffff'>のとおり迂回する</span>\n<span style=\" color:#ffffff;\">\nボスを倒した後は、街の階段をまた降りるのがちょっと長いので、ボスを倒した後にチェックポイントでウェイポイントに飛んで、ウェイポイントを使って沈んだ都市から街に戻るルートで行くと早い</span>\n<span style='color:#ffffff'>  （街に用事がなければ）</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「汚物の女王」を倒す\n・チェックポイントでWPへ飛ぶ\n・WPから「沈んだ都市」へ飛ぶ\n・街に入る\n\n（街に用事があるなら）\nポータルで街へ戻って、「コペク神殿」へ行く</span>\n\n<span style='color:#ffffff'>入ってきた方向と同じ方向（ほぼストレート）と、入ってきた方向から横にそれるL字型の２パターンのどちらかになる確率が高い</span>\n\n<span style='color:#ffffff'>マップ画像の</span><span style='color:#44cc44'>緑線</span><span style='color:#ffffff'>のとおり、序盤のT字路で左に入って壁沿いに進むと、運が良ければすぐにボスが見つかる。いなければ、</span><span style='color:#ff8800'>オレンジ線</span><span style='color:#ffffff'>のとおり進んで壁がなければすぐにボス。</span>\n<span style='color:#ffffff'>壁があれば、</span><span style='color:#ff6666'>赤線</span><span style='color:#ffffff'>のとおり迂回する</span>\n<span style=\" color:#ffffff;\">\nボスを倒した後は、街の階段をまた降りるのがちょっと長いので、ボスを倒した後にチェックポイントでウェイポイントに飛んで、ウェイポイントを使って沈んだ都市から街に戻るルートで行くと早い</span>\n<span style='color:#ffffff'>  （街に用事がなければ）</span>"
+      }
     },
     "flags": {}
   },
@@ -453,7 +606,10 @@
       "objective": "・ボス「太陽の大祭司、ケツーリ」を倒す\n・アルヴァに話しかけてプラットフォームを起動する\n・ポータルで街へ\n\n（街）\n過去のジッグラトを経由して、「ウトザール」へ行く",
       "layout": "<span style='color:#ffffff'>・三角形のレイアウトで、3つの角のどこかに次の階への出口がある。</span>\n\n<span style='color:#ffffff'>・1階は、角を順番にチェックするしかない。</span>\n<span style='color:#ffffff'>・2階は、</span><span style='color:#dddd44'>通れない亀裂がある場合、ボスへの入り口は亀裂を越えた先にある</span><span style='color:#ffffff'>。亀裂がなければ残りの角をチェック。</span>\n\n<span style='color:#ffffff'>なお、亀裂は「パウンス」や「リープスラム」で飛び越えることが可能。</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n太陽の大祭司、ケツーリ\n属性：火\n耐性：火\n弱点：冷気\n\n・ボスを倒して、アルヴァの選択肢で「プラットフォームを調査」を選んだ後、「エレベーターに乗れ」の表示がでたら、ポータルで街へ帰ったほうが早い</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「太陽の大祭司、ケツーリ」を倒す\n・アルヴァに話しかけてプラットフォームを起動する\n・ポータルで街へ\n\n（街）\n過去のジッグラトを経由して、「ウトザール」へ行く</span>\n\n<span style='color:#ffffff'>1階は、角を順番にチェックするしかない</span>\n<span style='color:#ffffff'>2階は、通れない亀裂がある場合、ボスへの入り口は亀裂を越えた先にある。亀裂がなければ残りの角をチェック。</span>\n<span style='color:#ffffff'>なお、亀裂は「パウンス」や「リープスラム」で飛び越えることが可能</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「太陽の大祭司、ケツーリ」を倒す\n・アルヴァに話しかけてプラットフォームを起動する\n・ポータルで街へ\n\n（街）\n過去のジッグラトを経由して、「ウトザール」へ行く</span>\n\n<span style='color:#ffffff'>1階は、角を順番にチェックするしかない</span>\n<span style='color:#ffffff'>2階は、通れない亀裂がある場合、ボスへの入り口は亀裂を越えた先にある。亀裂がなければ残りの角をチェック。</span>\n<span style='color:#ffffff'>なお、亀裂は「パウンス」や「リープスラム」で飛び越えることが可能</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「太陽の大祭司、ケツーリ」を倒す\n・アルヴァに話しかけてプラットフォームを起動する\n・ポータルで街へ\n\n（街）\n過去のジッグラトを経由して、「ウトザール」へ行く</span>\n\n<span style='color:#ffffff'>1階は、角を順番にチェックするしかない</span>\n<span style='color:#ffffff'>2階は、通れない亀裂がある場合、ボスへの入り口は亀裂を越えた先にある。亀裂がなければ残りの角をチェック。</span>\n<span style='color:#ffffff'>なお、亀裂は「パウンス」や「リープスラム」で飛び越えることが可能</span>"
+      }
     },
     "flags": {}
   },
@@ -462,7 +618,10 @@
       "objective": "・ボス「ヴァイパー・ナプアツィ」を倒す\n・「アゴラット」へ行く",
       "layout": "<span style='color:#ffffff'>・「沈んだ都市」の過去の姿で、同じレイアウトになっている。</span>\n<span style='color:#ffffff'>  </span><span style='color:#dddd44'>基本方針は、「舗装された道を辿る」</span>\n\n<span style='color:#ffffff'>・沈んだ都市の待ち伏せエリアと同じところに、ボスがいる。</span>\n\n<span style='color:#ffffff'>・沈んだ都市同様で、Left/Middle/Rightの３パターンに出口がある</span>\n\n<span style='color:#ffffff'>・ボス以降は、まずは舗装された道を辿っていき、行き止まりにぶつかってしまったら、戻って反対側を探す。</span>\n<span style='color:#dd66ff'>※なお、5/24のGGGインタビュー動画によると、ボスを倒したあとすぐの位置に、次のエリアへの出口が設置されるようになるらしい</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\nヴァイパー・ナプアツィ\n属性：物理、火、混沌\n耐性：物理、火、冷気、雷\n弱点：－\n\n・このエリアか、次のエリアで、</span><span style='color:#dddd44'>「生贄の心臓」を拾う</span><span style='color:#ffffff'>こと。</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「ヴァイパー・ナプアツィ」を倒す\n・「アゴラット」へ行く\n</span>\n<span style='color:#dddd44'>基本方針は、「舗装された道を辿る」</span>\n\n<span style='color:#ffffff'>ボス以降は、まずは舗装された道を辿っていき、行き止まりにぶつかってしまったら、戻って反対側を探す</span>\n<span style='color:#dd66ff'>※なお、5/24のGGGインタビュー動画によると、ボスを倒したあとすぐの位置に、次のエリアへの出口が設置されるようになるらしい</span>\n\n<span style='color:#ffffff'>このエリアか、次のエリアで、</span><span style='color:#dddd44'>「生贄の心臓」を拾う</span><span style='color:#ffffff'>こと</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「ヴァイパー・ナプアツィ」を倒す\n・「アゴラット」へ行く\n</span>\n<span style='color:#dddd44'>基本方針は、「舗装された道を辿る」</span>\n\n<span style='color:#ffffff'>ボス以降は、まずは舗装された道を辿っていき、行き止まりにぶつかってしまったら、戻って反対側を探す</span>\n<span style='color:#dd66ff'>※なお、5/24のGGGインタビュー動画によると、ボスを倒したあとすぐの位置に、次のエリアへの出口が設置されるようになるらしい</span>\n\n<span style='color:#ffffff'>このエリアか、次のエリアで、</span><span style='color:#dddd44'>「生贄の心臓」を拾う</span><span style='color:#ffffff'>こと</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「ヴァイパー・ナプアツィ」を倒す\n・「アゴラット」へ行く\n</span>\n<span style='color:#dddd44'>基本方針は、「舗装された道を辿る」</span>\n\n<span style='color:#ffffff'>ボス以降は、まずは舗装された道を辿っていき、行き止まりにぶつかってしまったら、戻って反対側を探す</span>\n<span style='color:#dd66ff'>※なお、5/24のGGGインタビュー動画によると、ボスを倒したあとすぐの位置に、次のエリアへの出口が設置されるようになるらしい</span>\n\n<span style='color:#ffffff'>このエリアか、次のエリアで、</span><span style='color:#dddd44'>「生贄の心臓」を拾う</span><span style='color:#ffffff'>こと</span>"
+      }
     },
     "flags": {}
   },
@@ -471,7 +630,10 @@
       "objective": "・「黒の間」へ行く",
       "layout": "<span style='color:#ffffff'>・礼拝の台座の前と後で、２つのセクションがある。</span>\n<span style='color:#ffffff'>  －セクション1：</span>\n<span style='color:#ffffff'>    「血の川」が流れる巨大な直線道路。これをひたすら直進する。</span>\n<span style='color:#ffffff'>    台座が近くなると、「アッツィリ、アッツィリ」という声が聞こえてくる。</span>\n<span style='color:#ffffff'>  －セクション2：</span>\n<span style='color:#ffffff'>    チェックポイントを越えた後、ループ状に進んで黒の間を目指す。</span>\n<span style='color:#ffffff'>    台座に心臓をささげて</span><span style='color:#dddd44'>スキルポイント+2</span><span style='color:#ffffff'>を獲得。</span>\n<span style='color:#ffffff'>    台座は、黒の間の出口からみて右のほうにある</span>",
       "tips": "",
-      "summary": "<span style='color:#ffffff'>・「黒の間」へ行く</span>\n\n<span style='color:#ffffff'>礼拝の台座の前と後で、２つのセクションがある。</span>\n<span style='color:#ffffff'>－セクション1：</span>\n<span style='color:#ffffff'>  「血の川」が流れる巨大な直線道路。これをひたすら直進する。</span>\n<span style='color:#ffffff'>  台座が近くなると、「アッツィリ、アッツィリ」という声が聞こえてくる。</span>\n<span style='color:#ffffff'>－セクション2：</span>\n<span style='color:#ffffff'>  チェックポイントを越えた後、ループ状に進んで黒の間を目指す</span>\n\n<span style='color:#ffffff'>セクション2の</span><span style='color:#dddd44'>台座に心臓をささげてスキルポイント+2</span><span style='color:#ffffff'>を獲得</span>"
+      "summary": "<span style='color:#ffffff'>・「黒の間」へ行く</span>\n\n<span style='color:#ffffff'>礼拝の台座の前と後で、２つのセクションがある。</span>\n<span style='color:#ffffff'>－セクション1：</span>\n<span style='color:#ffffff'>  「血の川」が流れる巨大な直線道路。これをひたすら直進する。</span>\n<span style='color:#ffffff'>  台座が近くなると、「アッツィリ、アッツィリ」という声が聞こえてくる。</span>\n<span style='color:#ffffff'>－セクション2：</span>\n<span style='color:#ffffff'>  チェックポイントを越えた後、ループ状に進んで黒の間を目指す</span>\n\n<span style='color:#ffffff'>セクション2の</span><span style='color:#dddd44'>台座に心臓をささげてスキルポイント+2</span><span style='color:#ffffff'>を獲得</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・「黒の間」へ行く</span>\n\n<span style='color:#ffffff'>礼拝の台座の前と後で、２つのセクションがある。</span>\n<span style='color:#ffffff'>－セクション1：</span>\n<span style='color:#ffffff'>  「血の川」が流れる巨大な直線道路。これをひたすら直進する。</span>\n<span style='color:#ffffff'>  台座が近くなると、「アッツィリ、アッツィリ」という声が聞こえてくる。</span>\n<span style='color:#ffffff'>－セクション2：</span>\n<span style='color:#ffffff'>  チェックポイントを越えた後、ループ状に進んで黒の間を目指す</span>\n\n<span style='color:#ffffff'>セクション2の</span><span style='color:#dddd44'>台座に心臓をささげてスキルポイント+2</span><span style='color:#ffffff'>を獲得</span>"
+      }
     },
     "flags": {}
   },
@@ -480,7 +642,10 @@
       "objective": "・ボス「宮廷魔術師、ドリヤニ」を倒す\n・ポータルで街へ戻る\n・ドリヤニに話しかける\n\n（街）\n・カオスの寺院が未だならクリア（後からセケマでまとめて6pt取得でも良し）\n・ドリヤニ⇒アルヴァに話しかけて、Act4へ行く\n\n（キングスマーチ）\n・ドリヤニ⇒アルヴァ⇒ログに話して「出航許可証」をもらう\n・マコルに話して、船で「キンの島」へ行く\n※攻略順番は自由",
       "layout": "<span style=\" color:#ffffff;\">・3つの主要セクションが橋でつながっている構造。\n\n・ドリアニの闘技場は入り口の反対側にある。\n\n・橋を見つけて渡り、部屋を出入りしながら進み、中央ラインを意識して奥へ進んでいくとボスにたどり着ける</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n宮廷魔術師、ドリヤニ\n属性：物理、火、冷気、雷\n耐性：火、雷\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「宮廷魔術師、ドリヤニ」を倒す\n・ポータルで街へ戻る\n・ドリヤニに話しかける\n\n（街）\n・カオスの寺院が未だならクリア（後からセケマでまとめて6pt取得でも良し）\n・ドリヤニ⇒アルヴァに話しかけて、Act4へ行く\n\n（キングスマーチ）\n・ドリヤニ⇒アルヴァ⇒ログに話して「出航許可証」をもらう\n・マコルに話して、船で「キンの島」へ行く\n※なお、攻略順番は自由</span>\n\n<span style='color:#ffffff'>ドリアニの闘技場は入り口の反対側にある。</span>\n\n<span style='color:#ffffff'>橋を見つけて渡り、部屋を出入りしながら進み、</span><span style='color:#dddd44'>中央ラインを意識して奥へ進んでいくとボスに</span><span style='color:#ffffff'>たどり着ける</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「宮廷魔術師、ドリヤニ」を倒す\n・ポータルで街へ戻る\n・ドリヤニに話しかける\n\n（街）\n・カオスの寺院が未だならクリア（後からセケマでまとめて6pt取得でも良し）\n・ドリヤニ⇒アルヴァに話しかけて、Act4へ行く\n\n（キングスマーチ）\n・ドリヤニ⇒アルヴァ⇒ログに話して「出航許可証」をもらう\n・マコルに話して、船で「キンの島」へ行く\n※なお、攻略順番は自由</span>\n\n<span style='color:#ffffff'>ドリアニの闘技場は入り口の反対側にある。</span>\n\n<span style='color:#ffffff'>橋を見つけて渡り、部屋を出入りしながら進み、</span><span style='color:#dddd44'>中央ラインを意識して奥へ進んでいくとボスに</span><span style='color:#ffffff'>たどり着ける</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「宮廷魔術師、ドリヤニ」を倒す\n・ポータルで街へ戻る\n・ドリヤニに話しかける\n\n（街）\n・カオスの寺院が未だならクリア（後からセケマでまとめて6pt取得でも良し）\n・ドリヤニ⇒アルヴァに話しかけて、Act4へ行く\n\n（キングスマーチ）\n・ドリヤニ⇒アルヴァ⇒ログに話して「出航許可証」をもらう\n・マコルに話して、船で「キンの島」へ行く\n※なお、攻略順番は自由</span>\n\n<span style='color:#ffffff'>ドリアニの闘技場は入り口の反対側にある。</span>\n\n<span style='color:#ffffff'>橋を見つけて渡り、部屋を出入りしながら進み、</span><span style='color:#dddd44'>中央ラインを意識して奥へ進んでいくとボスに</span><span style='color:#ffffff'>たどり着ける</span>"
+      }
     },
     "flags": {}
   },
@@ -489,7 +654,10 @@
       "objective": "・ボス「盲目の獣」を倒す\n・「火山地帯」へ行く",
       "layout": "<span style='color:#ffffff'>・エリアの上部に出口と「原始の闘技場」あり。</span>\n\n<span style='color:#ffffff'>・原始の闘技場にいるボス「盲目の獣」を倒すと、ルーンを獲得</span>",
       "tips": "<span style='color:#ffffff'>・道中の牢屋にいるレアモンスターの</span><span style='color:#dddd44'>「縛られしミンボック」を倒すと、確定でスキルジェムの原石Lv11/12とサポートジェムの原石Lv4</span><span style=\" color:#ffffff;\">が手に入る。\n\n・エリア内にある「石化した構造物」から確定で「宝石職人オーブ（見習い）」で手に入る\n\n・経験値効率の良いエリアなので、ここでエリアレベルの-4or-5まで上げるのを推奨\n\n【ボス情報】\n盲目の獣\n属性：物理、雷\n耐性：物理、雷\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「盲目の獣」を倒す\n・「火山地帯」へ行く</span>\n\n<span style='color:#ffffff'>エリアの上部に出口と「原始の闘技場」あり。</span>\n<span style='color:#ffffff'>原始の闘技場にいる</span><span style='color:#dddd44'>ボス「盲目の獣」を倒すと、ルーン</span><span style='color:#ffffff'>を獲得</span>\n\n<span style='color:#ffffff'>道中の牢屋にいるレアモンスターの「縛られしミンボック」から</span><span style='color:#dddd44'>スキルジェムの原石Lv11or12とサポートジェムの原石Lv4</span>\n\n<span style='color:#ffffff'>エリア内にある「石化した構造物」から</span><span style='color:#dddd44'>「宝石職人オーブ（見習い）」</span>\n\n<span style='color:#ffffff'>経験値効率の良いエリアなので、ここで</span><span style='color:#dddd44'>エリアlvlの-4or-5まで上げるのを推奨</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「盲目の獣」を倒す\n・「火山地帯」へ行く</span>\n\n<span style='color:#ffffff'>エリアの上部に出口と「原始の闘技場」あり。</span>\n<span style='color:#ffffff'>原始の闘技場にいる</span><span style='color:#dddd44'>ボス「盲目の獣」を倒すと、ルーン</span><span style='color:#ffffff'>を獲得</span>\n\n<span style='color:#ffffff'>道中の牢屋にいるレアモンスターの「縛られしミンボック」から</span><span style='color:#dddd44'>スキルジェムの原石Lv11or12とサポートジェムの原石Lv4</span>\n\n<span style='color:#ffffff'>エリア内にある「石化した構造物」から</span><span style='color:#dddd44'>「宝石職人オーブ（見習い）」</span>\n\n<span style='color:#ffffff'>経験値効率の良いエリアなので、ここで</span><span style='color:#dddd44'>エリアlvlの-4or-5まで上げるのを推奨</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「盲目の獣」を倒す\n・「火山地帯」へ行く</span>\n\n<span style='color:#ffffff'>エリアの上部に出口と「原始の闘技場」あり。</span>\n<span style='color:#ffffff'>原始の闘技場にいる</span><span style='color:#dddd44'>ボス「盲目の獣」を倒すと、ルーン</span><span style='color:#ffffff'>を獲得</span>\n\n<span style='color:#ffffff'>道中の牢屋にいるレアモンスターの「縛られしミンボック」から</span><span style='color:#dddd44'>スキルジェムの原石Lv11or12とサポートジェムの原石Lv4</span>\n\n<span style='color:#ffffff'>エリア内にある「石化した構造物」から</span><span style='color:#dddd44'>「宝石職人オーブ（見習い）」</span>\n\n<span style='color:#ffffff'>経験値効率の良いエリアなので、ここで</span><span style='color:#dddd44'>エリアlvlの-4or-5まで上げるのを推奨</span>"
+      }
     },
     "flags": {}
   },
@@ -498,7 +666,10 @@
       "objective": "・ボス「キンの領主、クルトォグ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ケッジ湾」へ行く",
       "layout": "<span style='color:#ffffff'>・広大なエリア。上部にボスがいる。</span>",
       "tips": "<span style='color:#ffffff'>・道中にある「火山の巣」には、２体のレアモンスターがいる（「ボルタキシック、サルフィロックス」と「溶けし者、マグマノア」）。</span><span style='color:#dddd44'>倒すと、確定でレア指輪をドロップ</span><span style=\" color:#ffffff;\">する。\n\n【ボス情報】\nキンの領主、クルトォグ\n属性：物理、雷\n耐性：物理、雷\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「キンの領主、クルトォグ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ケッジ湾」へ行く</span>\n\n<span style='color:#ffffff'>広大なエリア。上部にボスがいる。</span>\n\n<span style='color:#ffffff'>道中にある「火山の巣」の２体のレアmobから</span><span style='color:#dddd44'>レア指輪</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「キンの領主、クルトォグ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ケッジ湾」へ行く</span>\n\n<span style='color:#ffffff'>広大なエリア。上部にボスがいる。</span>\n\n<span style='color:#ffffff'>道中にある「火山の巣」の２体のレアmobから</span><span style='color:#dddd44'>レア指輪</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「キンの領主、クルトォグ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ケッジ湾」へ行く</span>\n\n<span style='color:#ffffff'>広大なエリア。上部にボスがいる。</span>\n\n<span style='color:#ffffff'>道中にある「火山の巣」の２体のレアmobから</span><span style='color:#dddd44'>レア指輪</span>"
+      }
     },
     "flags": {}
   },
@@ -507,7 +678,10 @@
       "objective": "「旅の終わり」へ行く",
       "layout": "<span style='color:#ffffff'>・少し脇道が存在するが、基本的には一本道</span>",
       "tips": "",
-      "summary": "・<span style='color:#ffffff'>「旅の終わり」へ行く</span>\n\n<span style='color:#ffffff'>少し脇道が存在するが、基本的には一本道</span>"
+      "summary": "・<span style='color:#ffffff'>「旅の終わり」へ行く</span>\n\n<span style='color:#ffffff'>少し脇道が存在するが、基本的には一本道</span>",
+      "mini_navi": {
+        "text": "・<span style='color:#ffffff'>「旅の終わり」へ行く</span>\n\n<span style='color:#ffffff'>少し脇道が存在するが、基本的には一本道</span>"
+      }
     },
     "flags": {}
   },
@@ -516,14 +690,20 @@
       "objective": "・ボス「ハートリン船長を倒す」\n・ポータルで街へ戻る\n\n（街）\n・ダニグに話して、ヴェリシウムの釘をもらう\n・「旅の終わり」へ戻る",
       "layout": "<span style='color:#ffffff'>・入ってきた方向からそのまままっすぐ進むパターン（マップ画像パターン１）と、L字型にそれるパターン（同パターン２）がある。</span>\n\n<span style='color:#ffffff'>・</span><span style='color:#dddd44'>まずは、まっすぐ進んでみて完全な壁にぶつかったら横に逸れる</span><span style='color:#ffffff'>進み方が良い。</span>",
       "tips": "<span style=\" color:#ffffff;\">・途中、宝が乗った船があり、拾おうとすると10秒のカウントダウンスタート。そのまま気にせず漁っていると死ぬ。初見殺し。\n\n【ボス情報】\nハートリン船長\n属性：物理、火、冷気\n耐性：物理、冷気\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「ハートリン船長を倒す」\n・ポータルで街へ戻る\n\n（街）\n・ダニグに話して、ヴェリシウムの釘をもらう\n・「旅の終わり」へ戻る</span>\n\n<span style='color:#ffffff'>入ってきた方向からそのまままっすぐ進むパターン（マップ画像パターン１）と、L字型にそれるパターン（同パターン２）がある</span>\n\n<span style='color:#ffffff'>まずは、まっすぐ進んでみて完全な壁にぶつかったら横に逸れる進み方が良い</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「ハートリン船長を倒す」\n・ポータルで街へ戻る\n\n（街）\n・ダニグに話して、ヴェリシウムの釘をもらう\n・「旅の終わり」へ戻る</span>\n\n<span style='color:#ffffff'>入ってきた方向からそのまままっすぐ進むパターン（マップ画像パターン１）と、L字型にそれるパターン（同パターン２）がある</span>\n\n<span style='color:#ffffff'>まずは、まっすぐ進んでみて完全な壁にぶつかったら横に逸れる進み方が良い</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「ハートリン船長を倒す」\n・ポータルで街へ戻る\n\n（街）\n・ダニグに話して、ヴェリシウムの釘をもらう\n・「旅の終わり」へ戻る</span>\n\n<span style='color:#ffffff'>入ってきた方向からそのまままっすぐ進むパターン（マップ画像パターン１）と、L字型にそれるパターン（同パターン２）がある</span>\n\n<span style='color:#ffffff'>まずは、まっすぐ進んでみて完全な壁にぶつかったら横に逸れる進み方が良い</span>"
+      }
     },
     "flags": {
       "act4_hartlin_dead": {
         "objective": "・フレイヤ・ハートリンと話す\n・ボス「恐怖の顕現、オムニファビア」を倒す\n・ポータルで街へ戻る\n\n（街）\n・トゥージェンにクエストを提出する\n・マコルに話して、船で「放棄された監獄」へ行く",
         "layout": "",
         "tips": "【ボス情報】\n恐怖の顕現、オムニファビア\n属性：物理\n耐性：－\n弱点：－\n\n・倒したら街へ戻ってトゥージェンにクエストを提出。これでスキルポイント+2",
-        "summary": "<span style='color:#ffffff'>・フレイヤ・ハートリンと話す</span>\n<span style='color:#ffffff'>・ボス「恐怖の顕現、オムニファビア」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・トゥージェンにクエストを提出する</span>\n<span style='color:#ffffff'>・マコルに話して、船で「放棄された監獄」へ行く</span>"
+        "summary": "<span style='color:#ffffff'>・フレイヤ・ハートリンと話す</span>\n<span style='color:#ffffff'>・ボス「恐怖の顕現、オムニファビア」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・トゥージェンにクエストを提出する</span>\n<span style='color:#ffffff'>・マコルに話して、船で「放棄された監獄」へ行く</span>",
+        "mini_navi": {
+          "text": "<span style='color:#ffffff'>・フレイヤ・ハートリンと話す</span>\n<span style='color:#ffffff'>・ボス「恐怖の顕現、オムニファビア」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・トゥージェンにクエストを提出する</span>\n<span style='color:#ffffff'>・マコルに話して、船で「放棄された監獄」へ行く</span>"
+        }
       }
     }
   },
@@ -532,7 +712,10 @@
       "objective": "・モンスターがランダムにドロップする「礼拝堂の鍵」を拾う\n・礼拝堂をあけて永続バフを獲得する\n・「監禁独房」へ行く",
       "layout": "<span style='color:#ffffff'>・放棄された監獄には、4つのレイアウトが存在する。</span>\n<span style='color:#ffffff'>  </span><span style='color:#dddd44'>大事な基本は、いずれのレイアウトであっても、まずはじめは常に「船側」の壁沿いに進むこと</span><span style='color:#ffffff'>。</span>\n<span style='color:#ffffff'>  そして、</span><span style='color:#dddd44'>特徴的な形をした「ゲートタイル」について以下２つの観点に注目</span><span style='color:#ffffff'>すること。</span>\n<span style='color:#ffffff'>  ①ゲートタイルがエリアの入り口の近くにあるか、遠くにあるか</span>\n<span style='color:#ffffff'>  ②船に対して、平行か垂直か</span>\n<span style='color:#ffffff'>  上記を踏まえて、以下４パターンに場合分け</span>\n<span style='color:#ffffff'>  （A～Dはマップ画像と対応）</span>\n\n<span style='color:#ffffff'>  A（ゲートタイルが近い、かつ、船に対して平行）：</span>\n<span style='color:#ffffff'>  ゲートをくぐったあと、反対側へぐるっと回る形</span>\n\n<span style='color:#ffffff'>  B（ゲートタイルが遠い、かつ、船に対して平行）：</span>\n<span style='color:#ffffff'>  ゲートが見つかったら、V字型を描くように進む</span>\n\n<span style='color:#ffffff'>  C（ゲートタイルが近い、かつ、船に対して垂直）：</span>\n<span style='color:#ffffff'>  ゲートをくぐったら、船に対して反対方向を目指して奥を目指す</span>\n\n<span style='color:#ffffff'>  D（ゲートがない）：</span>\n<span style='color:#ffffff'>  このパターンだけ、はじめの段階で船側の壁沿いに進めない。</span>\n<span style='color:#ffffff'>  その場合は船とは反対側へ向かうと「忘れ去られた独房」がある。そのままジグザグに進んでいく。</span>",
       "tips": "<span style='color:#ffffff'>・道中に「礼拝堂」があり、正義の女神のオブジェクトに触れると、</span><span style='color:#dddd44'>フラスコ関連の永続バフ</span><span style=\" color:#ffffff;\">が得られる。（フラスコによるライフ回復量が30%増加orフラスコによるマナ回復量が30%増加）\n・鍵は、このエリアのモンスターがランダムでドロップする</span>",
-      "summary": "<span style=\" color:#ffffff;\">・モンスターがランダムにドロップする「礼拝堂の鍵」を拾う\n・礼拝堂をあけて永続バフを獲得する\n・「監禁独房」へ行く</span>\n\n<span style='color:#ffffff'>放棄された監獄には、4つのレイアウトが存在する。</span>\n<span style='color:#ffffff'>大事な基本は、いずれのレイアウトであっても、まずはじめは常に「船側」の壁沿いに進むこと。</span>\n<span style='color:#ffffff'>詳細は、マップ画像を参照。特徴的な形をした「ゲートタイル」に注目すること</span>\n\n<span style='color:#ffffff'>道中の</span><span style='color:#dddd44'>「礼拝堂」のオブジェクトからフラスコ関連の永続バフ</span>\n<span style='color:#ffffff'>鍵は、このエリアのモンスター（ネクロマンサー型）がランダムでドロップ</span>"
+      "summary": "<span style=\" color:#ffffff;\">・モンスターがランダムにドロップする「礼拝堂の鍵」を拾う\n・礼拝堂をあけて永続バフを獲得する\n・「監禁独房」へ行く</span>\n\n<span style='color:#ffffff'>放棄された監獄には、4つのレイアウトが存在する。</span>\n<span style='color:#ffffff'>大事な基本は、いずれのレイアウトであっても、まずはじめは常に「船側」の壁沿いに進むこと。</span>\n<span style='color:#ffffff'>詳細は、マップ画像を参照。特徴的な形をした「ゲートタイル」に注目すること</span>\n\n<span style='color:#ffffff'>道中の</span><span style='color:#dddd44'>「礼拝堂」のオブジェクトからフラスコ関連の永続バフ</span>\n<span style='color:#ffffff'>鍵は、このエリアのモンスター（ネクロマンサー型）がランダムでドロップ</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・モンスターがランダムにドロップする「礼拝堂の鍵」を拾う\n・礼拝堂をあけて永続バフを獲得する\n・「監禁独房」へ行く</span>\n\n<span style='color:#ffffff'>放棄された監獄には、4つのレイアウトが存在する。</span>\n<span style='color:#ffffff'>大事な基本は、いずれのレイアウトであっても、まずはじめは常に「船側」の壁沿いに進むこと。</span>\n<span style='color:#ffffff'>詳細は、マップ画像を参照。特徴的な形をした「ゲートタイル」に注目すること</span>\n\n<span style='color:#ffffff'>道中の</span><span style='color:#dddd44'>「礼拝堂」のオブジェクトからフラスコ関連の永続バフ</span>\n<span style='color:#ffffff'>鍵は、このエリアのモンスター（ネクロマンサー型）がランダムでドロップ</span>"
+      }
     },
     "flags": {}
   },
@@ -541,7 +724,10 @@
       "objective": "・ボス「プリズナー」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ワーカパヌ島」へ行く",
       "layout": "<span style='color:#ffffff'>・基本的に一本道なので、構造はシンプル。</span>\n<span style='color:#ffffff'>  波が打ち寄せてくる側の壁を伝っていけば、必ず出口にたどり着く。</span>\n\n<span style='color:#ffffff'>・柵の壁部分は、リープスラムやパウンスで飛び越えることができるので、ショートカットが可能</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\nプリズナー\n属性：物理、冷気\n耐性：物理、冷気\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「プリズナー」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ワーカパヌ島」へ行く</span>\n\n<span style='color:#ffffff'>波が打ち寄せてくる側の壁を伝っていけば、必ず出口にたどり着く</span>\n\n<span style='color:#ffffff'>柵の壁部分は、リープスラムやパウンスで飛び越えることができるので、ショートカットが可能</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「プリズナー」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ワーカパヌ島」へ行く</span>\n\n<span style='color:#ffffff'>波が打ち寄せてくる側の壁を伝っていけば、必ず出口にたどり着く</span>\n\n<span style='color:#ffffff'>柵の壁部分は、リープスラムやパウンスで飛び越えることができるので、ショートカットが可能</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「プリズナー」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ワーカパヌ島」へ行く</span>\n\n<span style='color:#ffffff'>波が打ち寄せてくる側の壁を伝っていけば、必ず出口にたどり着く</span>\n\n<span style='color:#ffffff'>柵の壁部分は、リープスラムやパウンスで飛び越えることができるので、ショートカットが可能</span>"
+      }
     },
     "flags": {}
   },
@@ -550,7 +736,10 @@
       "objective": "「歌う大洞窟」へ行く",
       "layout": "<span style=\" color:#ffffff;\">・かなり広大なエリア。迷いやすい。\n\n・円を描くようにエリアを回ると出口へたどり着ける。\n  マップ画像は、あくまで１パターンの例。入口の位置が右下になることもある。\n  時計回りではなく、反時計回りの形になることもある。\n\n・サメのボス（偉大なる白きもの）はメインストーリーに関係がないため、スルーして問題なし。</span>",
       "tips": "<span style=\" color:#ffffff;\">・道中にいるレアのカニモンスター（近くにチェックポイントあり。海岸沿い）を倒すと、サポートジェムの原石Lv4が入手可能\n\n【ボス情報】  </span><span style='color:#dddd44'>※スルー可</span><span style=\" color:#ffffff;\">\n偉大なる白きもの\n属性：物理\n耐性：物理、冷気\n弱点：雷</span>",
-      "summary": "<span style='color:#ffffff'>・「歌う大洞窟」へ行く</span>\n\n<span style='color:#ffffff'>円を描くようにエリアを回ると出口へたどり着ける</span>\n\n<span style='color:#ffffff'>道中、海辺にいるレアのカニモンスターを倒すと、サポートジェムの原石</span>\n\n<span style='color:#ffffff'>サメのボスはメインストーリーに関係がないため、スルーして問題なし</span>"
+      "summary": "<span style='color:#ffffff'>・「歌う大洞窟」へ行く</span>\n\n<span style='color:#ffffff'>円を描くようにエリアを回ると出口へたどり着ける</span>\n\n<span style='color:#ffffff'>道中、海辺にいるレアのカニモンスターを倒すと、サポートジェムの原石</span>\n\n<span style='color:#ffffff'>サメのボスはメインストーリーに関係がないため、スルーして問題なし</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・「歌う大洞窟」へ行く</span>\n\n<span style='color:#ffffff'>円を描くようにエリアを回ると出口へたどり着ける</span>\n\n<span style='color:#ffffff'>道中、海辺にいるレアのカニモンスターを倒すと、サポートジェムの原石</span>\n\n<span style='color:#ffffff'>サメのボスはメインストーリーに関係がないため、スルーして問題なし</span>"
+      }
     },
     "flags": {}
   },
@@ -559,7 +748,10 @@
       "objective": "・ボス「死の歌、ディアモラ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「モズの島」へ行く",
       "layout": "<span style='color:#ffffff'>・ボスがいる地形はドーナツ型の形状。</span>\n<span style='color:#ffffff'>  これが、右上、左上、中央（入口は左から）、中央（入口は右から）に位置する４パターン存在する。</span>\n\n<span style='color:#ffffff'>・推奨の進め方は、</span>\n<span style='color:#ffffff'>  －まずは、右上と左上を探索する</span>\n<span style='color:#ffffff'>  －どっちにもなければ中央のエリアに入る道を探す。</span>\n<span style='color:#ffffff'>    おそらく、このエリアの入口の反対側に道がある。</span>",
       "tips": "<span style='color:#ffffff'>・道中にある「誘う貝」（近くにチェックポイントあり）から、「口ずさむ真珠」が手に入る。これをキングスマーチのログに渡すと、</span><span style='color:#dddd44'>「玉虫色のアミュレット」（暗黙modに元素耐性+%）付がもらえる</span><span style=\" color:#ffffff;\">。\n\n【ボス情報】\n死の歌、ディアモラ\n属性：物理、冷気\n耐性：冷気\n弱点：雷</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「死の歌、ディアモラ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「モズの島」へ行く</span>\n\n<span style='color:#ffffff'>推奨の進め方は、</span>\n<span style='color:#ffffff'>－まずは、右上と左上を探索する</span>\n<span style='color:#ffffff'>－どっちにもなければ中央のエリアに入る道を探す。</span>\n\n<span style='color:#ffffff'>道中にある「誘う貝」から、「口ずさむ真珠」が手に入る。キングスマーチのログに渡すと、</span><span style='color:#dddd44'>「玉虫色のアミュレット」（暗黙modに元素耐性+%）</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「死の歌、ディアモラ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「モズの島」へ行く</span>\n\n<span style='color:#ffffff'>推奨の進め方は、</span>\n<span style='color:#ffffff'>－まずは、右上と左上を探索する</span>\n<span style='color:#ffffff'>－どっちにもなければ中央のエリアに入る道を探す。</span>\n\n<span style='color:#ffffff'>道中にある「誘う貝」から、「口ずさむ真珠」が手に入る。キングスマーチのログに渡すと、</span><span style='color:#dddd44'>「玉虫色のアミュレット」（暗黙modに元素耐性+%）</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「死の歌、ディアモラ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「モズの島」へ行く</span>\n\n<span style='color:#ffffff'>推奨の進め方は、</span>\n<span style='color:#ffffff'>－まずは、右上と左上を探索する</span>\n<span style='color:#ffffff'>－どっちにもなければ中央のエリアに入る道を探す。</span>\n\n<span style='color:#ffffff'>道中にある「誘う貝」から、「口ずさむ真珠」が手に入る。キングスマーチのログに渡すと、</span><span style='color:#dddd44'>「玉虫色のアミュレット」（暗黙modに元素耐性+%）</span>"
+      }
     },
     "flags": {}
   },
@@ -568,7 +760,10 @@
       "objective": "・ボス「空のスカージ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ヒネコラの目」へ行く",
       "layout": "<span style='color:#ffffff'>・かなり広大なエリア。ただ、基本的に一本道なので、構造はシンプル。</span>\n<span style='color:#ffffff'>  二手に分かれる道があっても、並行して道が走っているだけ。</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n空のスカージ\n属性：物理\n耐性：－\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「空のスカージ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ヒネコラの目」へ行く</span>\n\n<span style='color:#ffffff'>かなり広大なエリア。ただ、基本的に一本道なので、構造はシンプル。</span>\n<span style='color:#ffffff'>二手に分かれる道があっても、並行して道が走っているだけ</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「空のスカージ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ヒネコラの目」へ行く</span>\n\n<span style='color:#ffffff'>かなり広大なエリア。ただ、基本的に一本道なので、構造はシンプル。</span>\n<span style='color:#ffffff'>二手に分かれる道があっても、並行して道が走っているだけ</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「空のスカージ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ヒネコラの目」へ行く</span>\n\n<span style='color:#ffffff'>かなり広大なエリア。ただ、基本的に一本道なので、構造はシンプル。</span>\n<span style='color:#ffffff'>二手に分かれる道があっても、並行して道が走っているだけ</span>"
+      }
     },
     "flags": {}
   },
@@ -577,7 +772,10 @@
       "objective": "・３つの試練をクリアする\n・永続バフを獲得する\n・さらに奥へ進み、「死者の殿堂」へ行く。",
       "layout": "<span style='color:#ffffff'>・おそらく、ほぼ固定レイアウト。円を描くようにエリアを回ると出口へたどり着ける。</span>\n<span style='color:#ffffff'>・途中３つ試練があり、モンスターのウェーブが３つずつ発生する。</span>\n<span style='color:#ffffff'>・３つ目の試練のあと、左上へ進むと、永続バフ（</span><span style='color:#dddd44'>最大マナ+5%</span><span style='color:#ffffff'>）を獲得できる。</span>\n<span style='color:#ffffff'>・獲得後、再び円を描くルートに戻って、奥へ進むと出口がある。</span>",
       "tips": "",
-      "summary": "<span style=\" color:#ffffff;\">・３つの試練をクリアする\n・永続バフを獲得する\n・さらに奥へ進み、「死者の殿堂」へ行く。</span>\n\n<span style='color:#ffffff'>おそらくほぼ固定レイアウト。円を描くようにエリアを回ると出口へ</span>\n\n<span style='color:#ffffff'>３つ目の試練のあと、左上へ進むと、</span><span style='color:#dddd44'>最大マナ+5%</span><span style='color:#ffffff'>を獲得</span>"
+      "summary": "<span style=\" color:#ffffff;\">・３つの試練をクリアする\n・永続バフを獲得する\n・さらに奥へ進み、「死者の殿堂」へ行く。</span>\n\n<span style='color:#ffffff'>おそらくほぼ固定レイアウト。円を描くようにエリアを回ると出口へ</span>\n\n<span style='color:#ffffff'>３つ目の試練のあと、左上へ進むと、</span><span style='color:#dddd44'>最大マナ+5%</span><span style='color:#ffffff'>を獲得</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・３つの試練をクリアする\n・永続バフを獲得する\n・さらに奥へ進み、「死者の殿堂」へ行く。</span>\n\n<span style='color:#ffffff'>おそらくほぼ固定レイアウト。円を描くようにエリアを回ると出口へ</span>\n\n<span style='color:#ffffff'>３つ目の試練のあと、左上へ進むと、</span><span style='color:#dddd44'>最大マナ+5%</span><span style='color:#ffffff'>を獲得</span>"
+      }
     },
     "flags": {}
   },
@@ -586,7 +784,10 @@
       "objective": "・３つの試練をクリアする\n・永続バフを獲得する\n・ボス「白猿のヤマ」を倒す\n・さらに奥へ進み、「祖先の試練」へ行く。",
       "layout": "<span style='color:#ffffff'>・おそらく、ほぼ固定レイアウト。</span>\n<span style='color:#ffffff'>・大回りに外周沿いを歩いていけば、途中３つ試練があり、モンスターのウェーブが３つずつ発生する。</span>\n<span style='color:#ffffff'>・それぞれの試練終了後にタトゥーが手に入り、</span><span style='color:#dddd44'>像に使用すると永続バフを２択で選択</span><span style='color:#ffffff'>して獲得できる。</span>\n<span style='color:#ffffff'>・最奥にボスがいる。</span>\n\n<span style='color:#ffffff'>なお、タトゥーの交換は１個ずつやらずに、最後にまとめて交換可能。（次のエリアのナヴァリに渡して交換ができる）</span>",
       "tips": "<span style=\" color:#ffffff;\">・タトゥー報酬については、能力値が無難。理由は元素耐性は後々で装備で積むことが容易、かつ、能力値に比べて最大値以上に稼ぐことのメリットがあまりないため。\nただ、元素耐性もマップ序盤をスムーズに進行するためには悪くないし、ハードコアやSSF等であれば有用。\n\n【ボス情報】\n白猿のヤマ\n属性：物理、混沌\n耐性：－\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・３つの試練をクリアする\n・永続バフを獲得する\n・ボス「白猿のヤマ」を倒す\n・さらに奥へ進み、「祖先の試練」へ行く。</span>\n\n<span style='color:#ffffff'>タトゥー報酬については、能力値が無難。理由は元素耐性は後々で装備で積むことが容易、かつ、能力値に比べて最大値以上に稼ぐことのメリットがあまりないため。</span>\n<span style='color:#ffffff'>ただ、元素耐性もマップ序盤をスムーズに進行するためには悪くないし、ハードコアやSSF等であれば有用なので、ビルド等を踏まえて選択する</span>\n\n<span style='color:#ffffff'>なお、タトゥーの交換は１個ずつやらずに、最後にまとめて交換可能。（次のエリアのナヴァリに渡して交換ができる）</span>"
+      "summary": "<span style=\" color:#ffffff;\">・３つの試練をクリアする\n・永続バフを獲得する\n・ボス「白猿のヤマ」を倒す\n・さらに奥へ進み、「祖先の試練」へ行く。</span>\n\n<span style='color:#ffffff'>タトゥー報酬については、能力値が無難。理由は元素耐性は後々で装備で積むことが容易、かつ、能力値に比べて最大値以上に稼ぐことのメリットがあまりないため。</span>\n<span style='color:#ffffff'>ただ、元素耐性もマップ序盤をスムーズに進行するためには悪くないし、ハードコアやSSF等であれば有用なので、ビルド等を踏まえて選択する</span>\n\n<span style='color:#ffffff'>なお、タトゥーの交換は１個ずつやらずに、最後にまとめて交換可能。（次のエリアのナヴァリに渡して交換ができる）</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・３つの試練をクリアする\n・永続バフを獲得する\n・ボス「白猿のヤマ」を倒す\n・さらに奥へ進み、「祖先の試練」へ行く。</span>\n\n<span style='color:#ffffff'>タトゥー報酬については、能力値が無難。理由は元素耐性は後々で装備で積むことが容易、かつ、能力値に比べて最大値以上に稼ぐことのメリットがあまりないため。</span>\n<span style='color:#ffffff'>ただ、元素耐性もマップ序盤をスムーズに進行するためには悪くないし、ハードコアやSSF等であれば有用なので、ビルド等を踏まえて選択する</span>\n\n<span style='color:#ffffff'>なお、タトゥーの交換は１個ずつやらずに、最後にまとめて交換可能。（次のエリアのナヴァリに渡して交換ができる）</span>"
+      }
     },
     "flags": {}
   },
@@ -595,7 +796,10 @@
       "objective": "・ナヴァリに話してスキルポイントを獲得する\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「アラスタス」へ行く",
       "layout": "",
       "tips": "",
-      "summary": "<span style=\" color:#ffffff;\">・ナヴァリに話してスキルポイントを獲得する\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「アラスタス」へ行く</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ナヴァリに話してスキルポイントを獲得する\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「アラスタス」へ行く</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ナヴァリに話してスキルポイントを獲得する\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「アラスタス」へ行く</span>"
+      }
     },
     "flags": {}
   },
@@ -604,7 +808,10 @@
       "objective": "・ロランティスに話す\n・ボス「救世主の片腕、トーヴィアン」を倒す\n・「発掘現場」へ行く",
       "layout": "<span style='color:#ffffff'>・全体としては長いが、基本的には一本道のマップ。</span>\n<span style='color:#ffffff'>・入口部分のレイアウトは固定だが、その後、時計回りに進むか、反時計回りに進むか２パターン存在。</span>\n<span style='color:#ffffff'>・基本的には上側の壁沿いに進んでいけば、ボスへ辿り着ける。</span>",
       "tips": "<span style=\" color:#ffffff;\">・道中にあるベルから、カレンシーが手に入る\n</span><span style=\" color:#dddd44;\">  時の鐘⇒王者のオーブ\n  夕暮れの鐘⇒高貴のオーブ</span><span style=\" color:#ffffff;\">\n\n【ボス情報】\n救世主の片腕、トーヴィアン\n属性：物理、火\n耐性：物理\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ロランティスに話す\n・ボス「救世主の片腕、トーヴィアン」を倒す\n・「発掘現場」へ行く</span>\n\n<span style='color:#ffffff'>入口部分のレイアウトは固定だが、その後、時計回りに進むか、反時計回りに進むか２パターン存在</span>\n<span style='color:#ffffff'>基本的には上側の壁沿いに進んでいけば、ボスへ</span>\n\n<span style='color:#ffffff'>道中にあるベルから、カレンシーが手に入る</span>\n<span style='color:#ffffff'>時の鐘⇒</span><span style='color:#dddd44'>王者のオーブ×３</span>\n<span style='color:#ffffff'>夕暮れの鐘⇒</span><span style='color:#dddd44'>高貴のオーブ×３</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ロランティスに話す\n・ボス「救世主の片腕、トーヴィアン」を倒す\n・「発掘現場」へ行く</span>\n\n<span style='color:#ffffff'>入口部分のレイアウトは固定だが、その後、時計回りに進むか、反時計回りに進むか２パターン存在</span>\n<span style='color:#ffffff'>基本的には上側の壁沿いに進んでいけば、ボスへ</span>\n\n<span style='color:#ffffff'>道中にあるベルから、カレンシーが手に入る</span>\n<span style='color:#ffffff'>時の鐘⇒</span><span style='color:#dddd44'>王者のオーブ×３</span>\n<span style='color:#ffffff'>夕暮れの鐘⇒</span><span style='color:#dddd44'>高貴のオーブ×３</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ロランティスに話す\n・ボス「救世主の片腕、トーヴィアン」を倒す\n・「発掘現場」へ行く</span>\n\n<span style='color:#ffffff'>入口部分のレイアウトは固定だが、その後、時計回りに進むか、反時計回りに進むか２パターン存在</span>\n<span style='color:#ffffff'>基本的には上側の壁沿いに進んでいけば、ボスへ</span>\n\n<span style='color:#ffffff'>道中にあるベルから、カレンシーが手に入る</span>\n<span style='color:#ffffff'>時の鐘⇒</span><span style='color:#dddd44'>王者のオーブ×３</span>\n<span style='color:#ffffff'>夕暮れの鐘⇒</span><span style='color:#dddd44'>高貴のオーブ×３</span>"
+      }
     },
     "flags": {}
   },
@@ -613,7 +820,10 @@
       "objective": "・ボス「ユートピアの第一の使者、ベネディクタス」を倒す\n・最奥でクエストを進める\n・ポータルで街へ戻る\n\n（街）\nロードリに話して、船で「ナカヌ」へ行く",
       "layout": "<span style='color:#ffffff'>・ほとんどの場合に、ボス部屋はエリアの上部に存在する。</span>\n\n・<span style='color:#ffffff'>推奨の進め方は、</span>\n<span style='color:#ffffff'>  －</span><span style='color:#dddd44'>スタート地点で、「左」または「上」に進める場合は、必ずそちらへ進む</span><span style='color:#ffffff'>。</span>\n<span style='color:#ffffff'>    もしマップの構造上、スタートで強制的に「右」に行かされる場合、</span>\n<span style='color:#ffffff'>    その後のひし形の分岐点を抜けた後は、ほぼ間違いなく「左/上」に進むことになる。</span>\n<span style='color:#ffffff'>  －ほとんどのレイアウトにおいて、ボス部屋はひし形のエリアの上の方向に位置している。</span>\n<span style='color:#ffffff'>    そのため、ひし形エリアから抜ける方向は、ほぼ常に入ってきた方向と逆になる。</span>\n<span style='color:#ffffff'>    ・右からひし形エリアに入った場合 → 左/上 へ出る</span>\n<span style='color:#ffffff'>    ・左からひし形エリアに入った場合 → 右/上 へ出る</span>",
       "tips": "<span style='color:#ffffff'>ボス戦の初回時の長い会話は、チェックポイントからリスポンでスキップ可能。（だいたいボス部屋の中央くらいまで進んで画面下部にクエストログがでたらOK）</span>\n\n<span style='color:#ffffff'>ボス戦後のイベントは、奥に進んで、画面全体がまぶしい光が覆われる瞬間、「フードをかぶった者に話しかけろ」が表示されたら、チェックポイントからリスポンでスキップ可能。</span>\n\n<span style=\" color:#ffffff;\">【ボス情報】\nユートピアの第一の使者、ベネディクタス\n属性：物理、雷\n耐性：雷\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「ユートピアの第一の使者、ベネディクタス」を倒す\n・最奥でクエストを進める\n・ポータルで街へ戻る\n\n（街）\nロードリに話して、船で「ナカヌ」へ行く\n\n基本、ボス部屋はエリアの上部に配置\n\n①スタート地点で、「左」または「上」に進める場合は、必ずそちらへ進む。\n②もしマップの構造上、スタートで強制的に「右」に行かされる場合、\n  その後のひし形の分岐点を抜けた後、「左/上」に進む</span>\n\n<span style='color:#ffffff'>ボス戦の初回時の長い会話は、チェックポイントからリスポンでスキップ可能。（だいたいボス部屋の中央くらいまで進んで画面下部にクエストログがでたらOK）</span>\n\n<span style='color:#ffffff'>ボス戦後のイベントは、奥に進んで、画面全体がまぶしい光が覆われる瞬間、「フードをかぶった者に話しかけろ」が表示されたら、チェックポイントからリスポンでスキップ可能。</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「ユートピアの第一の使者、ベネディクタス」を倒す\n・最奥でクエストを進める\n・ポータルで街へ戻る\n\n（街）\nロードリに話して、船で「ナカヌ」へ行く\n\n基本、ボス部屋はエリアの上部に配置\n\n①スタート地点で、「左」または「上」に進める場合は、必ずそちらへ進む。\n②もしマップの構造上、スタートで強制的に「右」に行かされる場合、\n  その後のひし形の分岐点を抜けた後、「左/上」に進む</span>\n\n<span style='color:#ffffff'>ボス戦の初回時の長い会話は、チェックポイントからリスポンでスキップ可能。（だいたいボス部屋の中央くらいまで進んで画面下部にクエストログがでたらOK）</span>\n\n<span style='color:#ffffff'>ボス戦後のイベントは、奥に進んで、画面全体がまぶしい光が覆われる瞬間、「フードをかぶった者に話しかけろ」が表示されたら、チェックポイントからリスポンでスキップ可能。</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「ユートピアの第一の使者、ベネディクタス」を倒す\n・最奥でクエストを進める\n・ポータルで街へ戻る\n\n（街）\nロードリに話して、船で「ナカヌ」へ行く\n\n基本、ボス部屋はエリアの上部に配置\n\n①スタート地点で、「左」または「上」に進める場合は、必ずそちらへ進む。\n②もしマップの構造上、スタートで強制的に「右」に行かされる場合、\n  その後のひし形の分岐点を抜けた後、「左/上」に進む</span>\n\n<span style='color:#ffffff'>ボス戦の初回時の長い会話は、チェックポイントからリスポンでスキップ可能。（だいたいボス部屋の中央くらいまで進んで画面下部にクエストログがでたらOK）</span>\n\n<span style='color:#ffffff'>ボス戦後のイベントは、奥に進んで、画面全体がまぶしい光が覆われる瞬間、「フードをかぶった者に話しかけろ」が表示されたら、チェックポイントからリスポンでスキップ可能。</span>"
+      }
     },
     "flags": {}
   },
@@ -622,7 +832,10 @@
       "objective": "「部族の中心」へ行く",
       "layout": "<span style='color:#ffffff'>・入口から出口までストレートのパターンとL字型のパターンが存在する模様。</span>\n\n<span style='color:#ffffff'>・マップ画像はストレートパターン。</span>\n\n<span style='color:#ffffff'>・基本的に、最初のゲートを通ったら、あとは右側の壁沿いに進むだけで、出口にたどり着ける</span>",
       "tips": "<span style='color:#ffffff'>リーグ0.3および0.4において、</span><span style='color:#dddd44'>リーグコンテンツをクリアしたときの報酬が「宝飾職人のオーブ（上級）」だった</span><span style='color:#ffffff'>。0.5のリーグ要素では報酬が固定ではなさそうなので、意味があるかは不明だが、初回時はクリアすることを推奨。</span>",
-      "summary": "・<span style='color:#ffffff'>「部族の中心」へ行く</span>\n\n<span style='color:#ffffff'>入口から出口までストレートのパターンとL字型のパターンが存在する模様</span>\n\n<span style='color:#ffffff'>基本的に、最初のゲートを通ったら、あとは右側の壁沿いに進むだけで、出口にたどり着ける</span>\n\n<span style='color:#ffffff'>リーグ0.3および0.4において、リーグコンテンツをクリアしたときの報酬が「宝飾職人のオーブ（上級）」だった。</span><span style='color:#dddd44'>0.5のリーグ要素では報酬が固定ではなさそうなので、意味があるかは不明だが、初回時はクリアすることを推奨</span><span style='color:#ffffff'>。</span>"
+      "summary": "・<span style='color:#ffffff'>「部族の中心」へ行く</span>\n\n<span style='color:#ffffff'>入口から出口までストレートのパターンとL字型のパターンが存在する模様</span>\n\n<span style='color:#ffffff'>基本的に、最初のゲートを通ったら、あとは右側の壁沿いに進むだけで、出口にたどり着ける</span>\n\n<span style='color:#ffffff'>リーグ0.3および0.4において、リーグコンテンツをクリアしたときの報酬が「宝飾職人のオーブ（上級）」だった。</span><span style='color:#dddd44'>0.5のリーグ要素では報酬が固定ではなさそうなので、意味があるかは不明だが、初回時はクリアすることを推奨</span><span style='color:#ffffff'>。</span>",
+      "mini_navi": {
+        "text": "・<span style='color:#ffffff'>「部族の中心」へ行く</span>\n\n<span style='color:#ffffff'>入口から出口までストレートのパターンとL字型のパターンが存在する模様</span>\n\n<span style='color:#ffffff'>基本的に、最初のゲートを通ったら、あとは右側の壁沿いに進むだけで、出口にたどり着ける</span>\n\n<span style='color:#ffffff'>リーグ0.3および0.4において、リーグコンテンツをクリアしたときの報酬が「宝飾職人のオーブ（上級）」だった。</span><span style='color:#dddd44'>0.5のリーグ要素では報酬が固定ではなさそうなので、意味があるかは不明だが、初回時はクリアすることを推奨</span><span style='color:#ffffff'>。</span>"
+      }
     },
     "flags": {}
   },
@@ -631,14 +844,20 @@
       "objective": "・ボス「タヴァカイ」を倒す",
       "layout": "<span style='color:#ffffff'>・ほとんどの場合に、ボス部屋はエリアの上部に存在する。</span>\n\n<span style='color:#ffffff'>・ゾーンに入ったら常に「上」を目指す。</span>\n<span style='color:#ffffff'>  チェックポイント（マップ画像の赤丸位置）を見つけたら、そのチェックポイントとは逆方向へ進み続けると、Act 4のラスボスに辿り着ける。</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n族長、タヴァカイ\n属性：物理\n耐性：物理、火\n弱点：－\n\n蝕まれたタヴァカイ\n属性：物理\n耐性：物理\n弱点：－</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「タヴァカイ」を倒す</span>\n\n<span style='color:#ffffff'>ほとんどの場合に、ボス部屋はエリアの上部に存在する</span>\n\n<span style='color:#ffffff'>チェックポイント（マップ画像の赤丸位置）を見つけたら、そのチェックポイントとは逆方向へ進み続けるとボスに辿り着ける</span>"
+      "summary": "<span style='color:#ffffff'>・ボス「タヴァカイ」を倒す</span>\n\n<span style='color:#ffffff'>ほとんどの場合に、ボス部屋はエリアの上部に存在する</span>\n\n<span style='color:#ffffff'>チェックポイント（マップ画像の赤丸位置）を見つけたら、そのチェックポイントとは逆方向へ進み続けるとボスに辿り着ける</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ボス「タヴァカイ」を倒す</span>\n\n<span style='color:#ffffff'>ほとんどの場合に、ボス部屋はエリアの上部に存在する</span>\n\n<span style='color:#ffffff'>チェックポイント（マップ画像の赤丸位置）を見つけたら、そのチェックポイントとは逆方向へ進み続けるとボスに辿り着ける</span>"
+      }
     },
     "flags": {
       "act4_tavakai_dead": {
         "objective": "・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、ヴァスティリ（幕間２）へ行く\n\n（カーリバザール）\n・街の右下から「カーリの渡り路」へ行く",
         "layout": "",
         "tips": "<span style=\" color:#ffffff;\">・幕間の攻略順番のおすすめは、\n  幕間２⇒幕間３⇒幕間１\n・</span><span style='color:#dddd44'>幕間２のボスが一番強いので、最初に攻略することで少しでもボスを楽に倒せるようにするため、幕間２から攻略するのがおすすめ</span>",
-        "summary": "・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、ヴァスティリ（幕間２）へ行く\n\n（カーリバザール）\n・街の右下から「カーリの渡り路」へ行く\n\n<span style=\" color:#ffffff;\">・幕間の攻略順番のおすすめは、\n  幕間２⇒幕間３⇒幕間１\n・</span><span style='color:#dddd44'>幕間２のボスが一番強いので、最初に攻略することで少しでもボスを楽に倒せるようにするため、幕間２から攻略するのがおすすめ</span>"
+        "summary": "・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、ヴァスティリ（幕間２）へ行く\n\n（カーリバザール）\n・街の右下から「カーリの渡り路」へ行く\n\n<span style=\" color:#ffffff;\">・幕間の攻略順番のおすすめは、\n  幕間２⇒幕間３⇒幕間１\n・</span><span style='color:#dddd44'>幕間２のボスが一番強いので、最初に攻略することで少しでもボスを楽に倒せるようにするため、幕間２から攻略するのがおすすめ</span>",
+        "mini_navi": {
+          "text": "・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、ヴァスティリ（幕間２）へ行く\n\n（カーリバザール）\n・街の右下から「カーリの渡り路」へ行く\n\n<span style=\" color:#ffffff;\">・幕間の攻略順番のおすすめは、\n  幕間２⇒幕間３⇒幕間１\n・</span><span style='color:#dddd44'>幕間２のボスが一番強いので、最初に攻略することで少しでもボスを楽に倒せるようにするため、幕間２から攻略するのがおすすめ</span>"
+        }
       }
     }
   },
@@ -647,7 +866,10 @@
       "objective": "・ボス「サンドワーム、アナンドル」「最後の一刺し、アクティ」を倒す\n・ポータルで街へ戻る\n・リスにクエストを提出する\n・「カタールのプール」へ行く\n・ウェイポイントで街へ戻る\n・「骸骨の顎の階段」へ行く\n・「ガライの門」へ行く\n・ウェイポイントで「カタールのプール」へ行く",
       "layout": "<span style='color:#ffffff'>・広大なエリア。推奨の進め方は以下。</span><span style='color:#dddd44'>マップ画像を見るとイメージしやすい</span>\n\n<span style='color:#ffffff'>  1. 街の右下出口から出る</span>\n<span style='color:#ffffff'>    －右へ進む</span>\n<span style='color:#ffffff'>    －その後、右上へ進み2体のボスを倒す。</span>\n<span style='color:#ffffff'>    －ポータルで街に戻り、クエストを完了して</span><span style='color:#dddd44'>スキルポイント+2</span><span style='color:#ffffff'>を獲得する</span>\n\n<span style='color:#ffffff'>  2. 街の左下出口から出る</span>\n<span style='color:#ffffff'>    －左へ進み、エリア「カタールのプール」へ入る。</span>\n<span style='color:#ffffff'>    －ウェイポイントを使って街に戻る。</span>\n\n<span style='color:#ffffff'>  3. 街の左上出口から出る</span>\n<span style='color:#ffffff'>    －上へ進み、チェックポイントを見つける（NPCがいる）。</span>\n<span style='color:#ffffff'>    －右上へ進み、エリア「骸骨の顎の階段」へ入る。</span>\n<span style='color:#ffffff'>    －永続バフ（</span><span style='color:#dddd44'>最大ライフ+5%</span><span style='color:#ffffff'>）を獲得する</span>\n<span style='color:#ffffff'>    －「チェックポイントでリスポン」で外に出る。</span>\n\n<span style='color:#ffffff'>  最後</span>\n<span style='color:#ffffff'>    －チェックポイント移動で、先ほど確保したチェックポイント（NPCがいる場所）へ飛ぶ。</span>\n<span style='color:#ffffff'>    －左上へ進み、エリア「ガライの門」へ入ってウェイポイントを取る。</span>\n<span style='color:#ffffff'>    －ウェイポイントで「カタールのプール」へ飛び、クエストを進める。</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\nサンドワーム、アナンドル\n属性：物理、混沌\n耐性：物理\n弱点：－\n\n最後の一刺し、アクティ\n属性：物理、混沌\n耐性：物理、火、雷\n弱点：冷気</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「サンドワーム、アナンドル」「最後の一刺し、アクティ」を倒す\n・ポータルで街へ戻る\n・リスにクエストを提出する（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・「カタールのプール」へ行く\n・ウェイポイントで街へ戻る\n・「骸骨の顎の階段」へ行く（</span><span style='color:#dddd44'>最大ライフ+5%</span><span style=\" color:#ffffff;\">）\n・「ガライの門」へ行く\n・ウェイポイントで「カタールのプール」へ行く</span>\n\n<span style='color:#dddd44'>推奨の進め方はマップ画像参照</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「サンドワーム、アナンドル」「最後の一刺し、アクティ」を倒す\n・ポータルで街へ戻る\n・リスにクエストを提出する（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・「カタールのプール」へ行く\n・ウェイポイントで街へ戻る\n・「骸骨の顎の階段」へ行く（</span><span style='color:#dddd44'>最大ライフ+5%</span><span style=\" color:#ffffff;\">）\n・「ガライの門」へ行く\n・ウェイポイントで「カタールのプール」へ行く</span>\n\n<span style='color:#dddd44'>推奨の進め方はマップ画像参照</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「サンドワーム、アナンドル」「最後の一刺し、アクティ」を倒す\n・ポータルで街へ戻る\n・リスにクエストを提出する（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・「カタールのプール」へ行く\n・ウェイポイントで街へ戻る\n・「骸骨の顎の階段」へ行く（</span><span style='color:#dddd44'>最大ライフ+5%</span><span style=\" color:#ffffff;\">）\n・「ガライの門」へ行く\n・ウェイポイントで「カタールのプール」へ行く</span>\n\n<span style='color:#dddd44'>推奨の進め方はマップ画像参照</span>"
+      }
     },
     "flags": {}
   },
@@ -656,7 +878,10 @@
       "objective": "「セル・カーリの聖域」へ行く",
       "layout": "<span style='color:#ffffff'>・時計回りに内側の壁に沿って進めば、出口にたどり着ける</span>",
       "tips": "",
-      "summary": "<span style=\" color:#ffffff;\">・「セル・カーリの聖域」へ行く\n</span>\n<span style='color:#ffffff'>時計回りに内側の壁に沿って進めば、出口にたどり着ける</span>"
+      "summary": "<span style=\" color:#ffffff;\">・「セル・カーリの聖域」へ行く\n</span>\n<span style='color:#ffffff'>時計回りに内側の壁に沿って進めば、出口にたどり着ける</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・「セル・カーリの聖域」へ行く\n</span>\n<span style='color:#ffffff'>時計回りに内側の壁に沿って進めば、出口にたどり着ける</span>"
+      }
     },
     "flags": {}
   },
@@ -665,7 +890,10 @@
       "objective": "・ボス「コブラの王、エルザラ」を倒す\n・ポータルで街へ戻る\n\n（街）\n「ガライの門」へ行く",
       "layout": "<span style='color:#ffffff'>・入口のまっすぐ反対側のところにボスエリアがある。</span>",
       "tips": "<span style='color:#ffffff'>・エリア内でドロップする２種のバリャは、エリア内にあるオブジェクトで使用すると、</span><span style='color:#dddd44'>レアのリング/アミュレット/ジュエル</span><span style=\" color:#ffffff;\">が手に入る。\n\n【ボス情報】\nコブラの王、エルザラ\n属性：物理、火、雷\n耐性：物理、雷\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「コブラの王、エルザラ」を倒す\n・ポータルで街へ戻る\n\n（街）\n「ガライの門」へ行く</span>\n\n<span style='color:#ffffff'>入口のまっすぐ反対側のところにボスエリアがある。</span>\n\n<span style='color:#ffffff'>エリア内ドロップの２種のバリャは、エリア内のオブジェクトで使用すると、</span><span style='color:#dddd44'>レアのリングorアミュレットorジュエル</span><span style='color:#ffffff'>に</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「コブラの王、エルザラ」を倒す\n・ポータルで街へ戻る\n\n（街）\n「ガライの門」へ行く</span>\n\n<span style='color:#ffffff'>入口のまっすぐ反対側のところにボスエリアがある。</span>\n\n<span style='color:#ffffff'>エリア内ドロップの２種のバリャは、エリア内のオブジェクトで使用すると、</span><span style='color:#dddd44'>レアのリングorアミュレットorジュエル</span><span style='color:#ffffff'>に</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「コブラの王、エルザラ」を倒す\n・ポータルで街へ戻る\n\n（街）\n「ガライの門」へ行く</span>\n\n<span style='color:#ffffff'>入口のまっすぐ反対側のところにボスエリアがある。</span>\n\n<span style='color:#ffffff'>エリア内ドロップの２種のバリャは、エリア内のオブジェクトで使用すると、</span><span style='color:#dddd44'>レアのリングorアミュレットorジュエル</span><span style='color:#ffffff'>に</span>"
+      }
     },
     "flags": {}
   },
@@ -674,7 +902,10 @@
       "objective": "・ボス「邪悪な炎、ヴォルナス」を倒す\n・「キーマ」へ行く",
       "layout": "<span style='color:#ffffff'>・N字型の地形。</span>\n\n<span style='color:#ffffff'>・狭いエリアに敵が密集することがあるので、注意</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n邪悪な炎、ヴォルナス\n属性：物理、火\n耐性：物理、火\n弱点：冷気</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「邪悪な炎、ヴォルナス」を倒す\n・「キーマ」へ行く</span>\n\n<span style='color:#ffffff'>N字型の地形</span>\n\n<span style='color:#ffffff'>狭いエリアに敵が密集することがあるので、注意</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「邪悪な炎、ヴォルナス」を倒す\n・「キーマ」へ行く</span>\n\n<span style='color:#ffffff'>N字型の地形</span>\n\n<span style='color:#ffffff'>狭いエリアに敵が密集することがあるので、注意</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「邪悪な炎、ヴォルナス」を倒す\n・「キーマ」へ行く</span>\n\n<span style='color:#ffffff'>N字型の地形</span>\n\n<span style='color:#ffffff'>狭いエリアに敵が密集することがあるので、注意</span>"
+      }
     },
     "flags": {}
   },
@@ -683,7 +914,10 @@
       "objective": "・ボス「ファリドゥンの王子、アズマディ」を倒す\n・グランドバリャを起動する\n・ジャドに話しかける\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、クリアール山（幕間３）へ行く",
       "layout": "<span style='color:#ffffff'>・エリアの上部に、ボス部屋がある</span>",
       "tips": "<span style=\" color:#ffffff;\">・エリア内の敵がランダムで落とす「神聖な水の小瓶」は、道中にある泉で使用するとカレンシー（高貴のオーブ等）が手に入る\n\n【ボス情報】\nファリドゥンの王子、アズマディ\n属性：物理\n耐性：物理、火\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「ファリドゥンの王子、アズマディ」を倒す\n・グランドバリャを起動する\n・ジャドに話しかける\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、クリアール山（幕間３）へ行く</span>\n\n<span style='color:#ffffff'>エリアの上部に、ボス部屋がある</span>\n\n<span style='color:#ffffff'>敵がランダムで落とす「神聖な水の小瓶」は、道中にある泉で使用するとカレンシー（高貴のオーブ等）が手に入る</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「ファリドゥンの王子、アズマディ」を倒す\n・グランドバリャを起動する\n・ジャドに話しかける\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、クリアール山（幕間３）へ行く</span>\n\n<span style='color:#ffffff'>エリアの上部に、ボス部屋がある</span>\n\n<span style='color:#ffffff'>敵がランダムで落とす「神聖な水の小瓶」は、道中にある泉で使用するとカレンシー（高貴のオーブ等）が手に入る</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「ファリドゥンの王子、アズマディ」を倒す\n・グランドバリャを起動する\n・ジャドに話しかける\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、クリアール山（幕間３）へ行く</span>\n\n<span style='color:#ffffff'>エリアの上部に、ボス部屋がある</span>\n\n<span style='color:#ffffff'>敵がランダムで落とす「神聖な水の小瓶」は、道中にある泉で使用するとカレンシー（高貴のオーブ等）が手に入る</span>"
+      }
     },
     "flags": {}
   },
@@ -692,7 +926,10 @@
       "objective": "・７つの柱をアクティベートして、永続バフを獲得する\n・「キーマの貯水池」へ行く",
       "layout": "<span style='color:#ffffff'>・エリア内に、７つの柱部屋（</span><span style='color:#dddd44'>永続バフを獲得。振り直し可</span><span style=\" color:#ffffff;\">）がある。外周に沿って歩けば見つかる。\n\n・入口のまっすぐ反対側のところに出口がある。</span>",
       "tips": "",
-      "summary": "<span style=\" color:#ffffff;\">・７つの柱をアクティベートして、永続バフを獲得する\n・「キーマの貯水池」へ行く</span>\n\n<span style='color:#ffffff'>エリア内に、７つの柱部屋（永続バフを獲得。振り直し可）がある。外周に沿って歩けば見つかる</span>\n\n<span style='color:#ffffff'>入口のまっすぐ反対側のところに出口がある</span>"
+      "summary": "<span style=\" color:#ffffff;\">・７つの柱をアクティベートして、永続バフを獲得する\n・「キーマの貯水池」へ行く</span>\n\n<span style='color:#ffffff'>エリア内に、７つの柱部屋（永続バフを獲得。振り直し可）がある。外周に沿って歩けば見つかる</span>\n\n<span style='color:#ffffff'>入口のまっすぐ反対側のところに出口がある</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・７つの柱をアクティベートして、永続バフを獲得する\n・「キーマの貯水池」へ行く</span>\n\n<span style='color:#ffffff'>エリア内に、７つの柱部屋（永続バフを獲得。振り直し可）がある。外周に沿って歩けば見つかる</span>\n\n<span style='color:#ffffff'>入口のまっすぐ反対側のところに出口がある</span>"
+      }
     },
     "flags": {}
   },
@@ -701,7 +938,10 @@
       "objective": "「クリアール村」へ行く",
       "layout": "<span style='color:#ffffff'>・出口は、エリアの上部にある確率が高い。上側の壁沿いにいけばたどり着ける。</span>",
       "tips": "<span style='color:#ffffff'>・出口からちょっとだけ離れたところの「古代のモニュメント」からスキルジェムの原石Lv14が手に入る</span>",
-      "summary": "<span style='color:#ffffff'>「クリアール村」へ行く</span>\n\n<span style='color:#ffffff'>出口は、エリアの上部にある確率が高い。上側の壁沿いにいけばたどり着ける</span>\n\n<span style='color:#ffffff'>出口やや近くの「古代のモニュメント」から</span><span style='color:#dddd44'>スキルジェムの原石</span>"
+      "summary": "<span style='color:#ffffff'>「クリアール村」へ行く</span>\n\n<span style='color:#ffffff'>出口は、エリアの上部にある確率が高い。上側の壁沿いにいけばたどり着ける</span>\n\n<span style='color:#ffffff'>出口やや近くの「古代のモニュメント」から</span><span style='color:#dddd44'>スキルジェムの原石</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>「クリアール村」へ行く</span>\n\n<span style='color:#ffffff'>出口は、エリアの上部にある確率が高い。上側の壁沿いにいけばたどり着ける</span>\n\n<span style='color:#ffffff'>出口やや近くの「古代のモニュメント」から</span><span style='color:#dddd44'>スキルジェムの原石</span>"
+      }
     },
     "flags": {}
   },
@@ -710,7 +950,10 @@
       "objective": "・ボス「流浪の槍、リサラ」を倒す\n・「氷河の湖」へ行く",
       "layout": "<span style='color:#ffffff'>・一本道のシンプルな構造</span>\n\n<span style='color:#ffffff'>・ボスを倒すと、永続バフ（</span><span style='color:#dddd44'>スピリット+40</span><span style='color:#ffffff'>）を獲得</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n流浪の槍、リサラ\n属性：物理、火、雷、混沌\n耐性：物理、火、冷気、雷\n弱点：－</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「流浪の槍、リサラ」を倒す（</span><span style='color:#dddd44'>スピリット+40</span><span style=\" color:#ffffff;\">）\n・「氷河の湖」へ行く</span>\n\n<span style='color:#ffffff'>一本道のシンプルな構造</span>"
+      "summary": "<span style='color:#ffffff'>・ボス「流浪の槍、リサラ」を倒す（</span><span style='color:#dddd44'>スピリット+40</span><span style=\" color:#ffffff;\">）\n・「氷河の湖」へ行く</span>\n\n<span style='color:#ffffff'>一本道のシンプルな構造</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・ボス「流浪の槍、リサラ」を倒す（</span><span style='color:#dddd44'>スピリット+40</span><span style=\" color:#ffffff;\">）\n・「氷河の湖」へ行く</span>\n\n<span style='color:#ffffff'>一本道のシンプルな構造</span>"
+      }
     },
     "flags": {}
   },
@@ -719,14 +962,20 @@
       "objective": "「吠える洞窟」へ行く",
       "layout": "<span style='color:#ffffff'>・エリアに入ったら右手の壁沿いの進むと、吠える洞窟あり</span>",
       "tips": "",
-      "summary": "<span style='color:#ffffff'>・「吠える洞窟」へ行く</span>\n\n<span style='color:#ffffff'>エリアに入ったら右手の壁沿いの進むと、吠える洞窟あり</span>"
+      "summary": "<span style='color:#ffffff'>・「吠える洞窟」へ行く</span>\n\n<span style='color:#ffffff'>エリアに入ったら右手の壁沿いの進むと、吠える洞窟あり</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・「吠える洞窟」へ行く</span>\n\n<span style='color:#ffffff'>エリアに入ったら右手の壁沿いの進むと、吠える洞窟あり</span>"
+      }
     },
     "flags": {
       "interlude3_yeti_dead": {
         "objective": "・ボス「凍てつく鉤爪、ラッカー」を倒す\n・「クリアール山山頂」へ行く",
         "layout": "<span style='color:#ffffff'>・エリアに入ったら左手の壁沿いの進むと、ボスエリアに辿り着ける</span>",
         "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n凍てつく鉤爪、ラッカー\n属性：物理、冷気\n耐性：物理、冷気\n弱点：火</span>",
-        "summary": "<span style=\" color:#ffffff;\">・ボス「凍てつく鉤爪、ラッカー」を倒す\n・「クリアール山山頂」へ行く</span>\n\n<span style='color:#ffffff'>エリアに入ったら左手の壁沿いの進むと、ボスエリアに辿り着ける</span>"
+        "summary": "<span style=\" color:#ffffff;\">・ボス「凍てつく鉤爪、ラッカー」を倒す\n・「クリアール山山頂」へ行く</span>\n\n<span style='color:#ffffff'>エリアに入ったら左手の壁沿いの進むと、ボスエリアに辿り着ける</span>",
+        "mini_navi": {
+          "text": "<span style=\" color:#ffffff;\">・ボス「凍てつく鉤爪、ラッカー」を倒す\n・「クリアール山山頂」へ行く</span>\n\n<span style='color:#ffffff'>エリアに入ったら左手の壁沿いの進むと、ボスエリアに辿り着ける</span>"
+        }
       }
     }
   },
@@ -735,7 +984,10 @@
       "objective": "・ボス「アボミネーションのイエティ」を倒す\n・ポータルで街へ戻る\n\n（街）\n・ヒルダにクエストを提出する\n・「氷河の湖」へ行く",
       "layout": "<span style='color:#ffffff'>・縦に長い一本道の構造。</span>\n\n<span style='color:#ffffff'>・チェックポイントが少ないので注意。</span>\n\n<span style='color:#ffffff'>・ボスを倒すと、クエスト報酬で</span><span style='color:#dddd44'>スキルポイント+2</span><span style='color:#ffffff'>を獲得</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\nアボミネーションのイエティ\n属性：物理、冷気\n耐性：物理\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「アボミネーションのイエティ」を倒す\n・ポータルで街へ戻る\n\n（街）\n・ヒルダにクエストを提出する（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・「氷河の湖」へ行く</span>\n\n<span style='color:#ffffff'>縦に長い一本道の構造。チェックポイントが少ないので注意</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「アボミネーションのイエティ」を倒す\n・ポータルで街へ戻る\n\n（街）\n・ヒルダにクエストを提出する（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・「氷河の湖」へ行く</span>\n\n<span style='color:#ffffff'>縦に長い一本道の構造。チェックポイントが少ないので注意</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「アボミネーションのイエティ」を倒す\n・ポータルで街へ戻る\n\n（街）\n・ヒルダにクエストを提出する（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・「氷河の湖」へ行く</span>\n\n<span style='color:#ffffff'>縦に長い一本道の構造。チェックポイントが少ないので注意</span>"
+      }
     },
     "flags": {}
   },
@@ -744,7 +996,10 @@
       "objective": "「侵蝕の峡谷」へ行く",
       "layout": "<span style='color:#ffffff'>・縦に長い一本道の構造。</span>",
       "tips": "",
-      "summary": "<span style='color:#ffffff'>・「侵蝕の峡谷」へ行く</span>\n\n<span style='color:#ffffff'>縦に長い一本道の構造。</span>\n\n<span style='color:#ffffff'>このエリアにいる商人は、ユニークアイテムを売っている。</span>\n<span style='color:#ffffff'>（以前は、レベルが１あがるごとに、インスタンスをリセットすれば品揃えが更新される仕様だったが、修正されて不可に）</span>"
+      "summary": "<span style='color:#ffffff'>・「侵蝕の峡谷」へ行く</span>\n\n<span style='color:#ffffff'>縦に長い一本道の構造。</span>\n\n<span style='color:#ffffff'>このエリアにいる商人は、ユニークアイテムを売っている。</span>\n<span style='color:#ffffff'>（以前は、レベルが１あがるごとに、インスタンスをリセットすれば品揃えが更新される仕様だったが、修正されて不可に）</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・「侵蝕の峡谷」へ行く</span>\n\n<span style='color:#ffffff'>縦に長い一本道の構造。</span>\n\n<span style='color:#ffffff'>このエリアにいる商人は、ユニークアイテムを売っている。</span>\n<span style='color:#ffffff'>（以前は、レベルが１あがるごとに、インスタンスをリセットすれば品揃えが更新される仕様だったが、修正されて不可に）</span>"
+      }
     },
     "flags": {}
   },
@@ -753,7 +1008,10 @@
       "objective": "・ボス「守護者、ストームゴア」を倒す\n・「クアチクの地下避難所」へ行く",
       "layout": "<span style='color:#ffffff'>・完全な一本道のレイアウト。シンプル。</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n守護者、ストームゴア\n属性：物理、雷\n耐性：物理、雷\n弱点：冷気</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「守護者、ストームゴア」を倒す\n・「クアチクの地下避難所」へ行く</span>\n\n<span style='color:#ffffff'>完全な一本道のレイアウト。シンプル</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「守護者、ストームゴア」を倒す\n・「クアチクの地下避難所」へ行く</span>\n\n<span style='color:#ffffff'>完全な一本道のレイアウト。シンプル</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「守護者、ストームゴア」を倒す\n・「クアチクの地下避難所」へ行く</span>\n\n<span style='color:#ffffff'>完全な一本道のレイアウト。シンプル</span>"
+      }
     },
     "flags": {}
   },
@@ -762,7 +1020,10 @@
       "objective": "・ボス「血の巫女、ゼリナ」「血の司祭、ゾリン」を倒す\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、オガム（幕間１）へ行く",
       "layout": "<span style='color:#ffffff'>・右手の壁沿いに進めばボス部屋に辿り着ける</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n血の巫女、ゼリナ\n属性：物理、出血\n耐性：物理、冷気\n弱点：－\n\n血の司祭、ゾリン\n属性：物理、火、雷\n耐性：物理、冷気\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「血の巫女、ゼリナ」「血の司祭、ゾリン」を倒す\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、オガム（幕間１）へ行く</span>\n\n<span style='color:#ffffff'>右手の壁沿いに進めばボス部屋に辿り着ける</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「血の巫女、ゼリナ」「血の司祭、ゾリン」を倒す\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、オガム（幕間１）へ行く</span>\n\n<span style='color:#ffffff'>右手の壁沿いに進めばボス部屋に辿り着ける</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「血の巫女、ゼリナ」「血の司祭、ゾリン」を倒す\n・ポータルで街へ戻る\n\n（街）\n・フードをかぶった者に話して、オガム（幕間１）へ行く</span>\n\n<span style='color:#ffffff'>右手の壁沿いに進めばボス部屋に辿り着ける</span>"
+      }
     },
     "flags": {}
   },
@@ -771,14 +1032,20 @@
       "objective": "・ボス「黒き火葬のヘルドラ」「白き死衣のイゾルデ」を倒す\n・「セールの巨石群」へ行く",
       "layout": "<span style='color:#ffffff'>・おそらくほぼ固定のレイアウト？</span>\n\n<span style='color:#ffffff'>・この時点ではブラックウッドには行けないのでスルー</span>\n\n<span style='color:#ffffff'>・ボス「黒き火葬のヘルドラ」「白き死衣のイゾルデ」を倒したら更に奥へ進んで、セールの巨石群へ行く</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n黒き火葬のヘルドラ\n属性：物理、火\n耐性：火\n弱点：冷気\n\n白き死衣のイゾルデ\n属性：物理、冷気\n耐性：冷気\n弱点：火</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「黒き火葬のヘルドラ」「白き死衣のイゾルデ」を倒す\n・「セールの巨石群」へ行く</span>\n\n<span style='color:#ffffff'>この時点ではブラックウッドには行けないのでスルー</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「黒き火葬のヘルドラ」「白き死衣のイゾルデ」を倒す\n・「セールの巨石群」へ行く</span>\n\n<span style='color:#ffffff'>この時点ではブラックウッドには行けないのでスルー</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「黒き火葬のヘルドラ」「白き死衣のイゾルデ」を倒す\n・「セールの巨石群」へ行く</span>\n\n<span style='color:#ffffff'>この時点ではブラックウッドには行けないのでスルー</span>"
+      }
     },
     "flags": {
       "interlude1_siora_dead": {
         "objective": "「ブラックウッド」へ行く",
         "layout": "",
         "tips": "",
-        "summary": "<span style='color:#ffffff'>「ブラックウッド」へ行く</span>"
+        "summary": "<span style='color:#ffffff'>「ブラックウッド」へ行く</span>",
+        "mini_navi": {
+          "text": "<span style='color:#ffffff'>「ブラックウッド」へ行く</span>"
+        }
       }
     }
   },
@@ -787,7 +1054,10 @@
       "objective": "・６個の「ルーンの刻まれたメガリス」をアクティベートする\n・ボス「霧の刃、シオラ」\n・必ず、ウーナに話す\n・「焼け焦げた農場」へ戻る",
       "layout": "<span style='color:#ffffff'>・６個の「ルーンの刻まれたメガリス」をアクティベートすると中央にボスが出現する</span>\n\n<span style='color:#ffffff'>・「ルーンの刻まれたメガリス」は、外周を壁沿いに歩けば容易に見つかる</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n霧の刃、シオラ\n属性：物理、混沌\n耐性：物理、雷\n弱点：火\n\n・</span><span style='color:#dddd44'>このエリアは経験値効率が良い</span><span style='color:#ffffff'>。レベル不足を感じたときは、ここのエリアで十分になるまでファームするのが良い。</span>",
-      "summary": "<span style=\" color:#ffffff;\">・６個の「ルーンの刻まれたメガリス」をアクティベートする\n・ボス「霧の刃、シオラ」\n・必ず、ウーナに話す\n・「焼け焦げた農場」へ戻る</span>\n\n<span style='color:#ffffff'>「ルーンの刻まれたメガリス」は、外周を壁沿いに歩けば容易に見つかる</span>\n\n<span style='color:#dddd44'>このエリアは経験値効率が良い</span><span style='color:#ffffff'>。レベル不足を感じたときは、ここのエリアで十分になるまでファームするのが良い。</span>"
+      "summary": "<span style=\" color:#ffffff;\">・６個の「ルーンの刻まれたメガリス」をアクティベートする\n・ボス「霧の刃、シオラ」\n・必ず、ウーナに話す\n・「焼け焦げた農場」へ戻る</span>\n\n<span style='color:#ffffff'>「ルーンの刻まれたメガリス」は、外周を壁沿いに歩けば容易に見つかる</span>\n\n<span style='color:#dddd44'>このエリアは経験値効率が良い</span><span style='color:#ffffff'>。レベル不足を感じたときは、ここのエリアで十分になるまでファームするのが良い。</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・６個の「ルーンの刻まれたメガリス」をアクティベートする\n・ボス「霧の刃、シオラ」\n・必ず、ウーナに話す\n・「焼け焦げた農場」へ戻る</span>\n\n<span style='color:#ffffff'>「ルーンの刻まれたメガリス」は、外周を壁沿いに歩けば容易に見つかる</span>\n\n<span style='color:#dddd44'>このエリアは経験値効率が良い</span><span style='color:#ffffff'>。レベル不足を感じたときは、ここのエリアで十分になるまでファームするのが良い。</span>"
+      }
     },
     "flags": {}
   },
@@ -796,7 +1066,10 @@
       "objective": "「ホルテン」へ行く",
       "layout": "<span style='color:#ffffff'>・出口は、入口の反対側にある。上の壁沿いに外周を回ればたどり着ける</span>",
       "tips": "",
-      "summary": "<span style='color:#ffffff'>・「ホルテン」へ行く</span>\n\n<span style='color:#ffffff'>出口は、入口の反対側にある。上の壁沿いに外周を回ればたどり着ける</span>"
+      "summary": "<span style='color:#ffffff'>・「ホルテン」へ行く</span>\n\n<span style='color:#ffffff'>出口は、入口の反対側にある。上の壁沿いに外周を回ればたどり着ける</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・「ホルテン」へ行く</span>\n\n<span style='color:#ffffff'>出口は、入口の反対側にある。上の壁沿いに外周を回ればたどり着ける</span>"
+      }
     },
     "flags": {}
   },
@@ -805,14 +1078,20 @@
       "objective": "「狼の砦」へ行く",
       "layout": "<span style='color:#ffffff'>・右手の壁沿いに進めば、狼の砦にたどり着く</span>",
       "tips": "<span style='color:#ffffff'>・</span><span style='color:#dddd44'>ドックにいるNPC（渡し守の魂）からグレータールーンを安く購入可能</span><span style='color:#ffffff'>。大きめの橋を渡ったあと、川沿いを探すとチェックポイントのそばにいる</span>",
-      "summary": "<span style='color:#ffffff'>・「狼の砦」へ行く</span>\n\n<span style='color:#ffffff'>右手の壁沿いに進めば、狼の砦にたどり着く</span>\n\n<span style='color:#ffffff'>ドックにいるNPCから</span><span style='color:#dddd44'>グレータールーンを購入可能</span><span style='color:#ffffff'>。大きめの橋を渡ったあと、川沿いを探すとチェックポイントのそばにいる</span>"
+      "summary": "<span style='color:#ffffff'>・「狼の砦」へ行く</span>\n\n<span style='color:#ffffff'>右手の壁沿いに進めば、狼の砦にたどり着く</span>\n\n<span style='color:#ffffff'>ドックにいるNPCから</span><span style='color:#dddd44'>グレータールーンを購入可能</span><span style='color:#ffffff'>。大きめの橋を渡ったあと、川沿いを探すとチェックポイントのそばにいる</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>・「狼の砦」へ行く</span>\n\n<span style='color:#ffffff'>右手の壁沿いに進めば、狼の砦にたどり着く</span>\n\n<span style='color:#ffffff'>ドックにいるNPCから</span><span style='color:#dddd44'>グレータールーンを購入可能</span><span style='color:#ffffff'>。大きめの橋を渡ったあと、川沿いを探すとチェックポイントのそばにいる</span>"
+      }
     },
     "flags": {
       "interlude1_veynar_dead": {
         "objective": "・「ホルテンの豪邸」へ行く",
         "layout": "",
         "tips": "",
-        "summary": "<span style='color:#ffffff'>・「ホルテンの豪邸」へ行く</span>"
+        "summary": "<span style='color:#ffffff'>・「ホルテンの豪邸」へ行く</span>",
+        "mini_navi": {
+          "text": "<span style='color:#ffffff'>・「ホルテンの豪邸」へ行く</span>"
+        }
       }
     }
   },
@@ -821,7 +1100,10 @@
       "objective": "・ボス「恐怖の看守、オスウィン」を倒す\n・チェックポイントから「ホルテン」へ戻る",
       "layout": "<span style='color:#ffffff'>・高い確率で、入口からまっすぐ反対側へ進めばボスエリアにたどり着く。シンプルな構造。</span>\n<span style='color:#ffffff'>  もしなかった場合は、左上/右上（まだ見てない方）の壁沿いを探せばあるはず。</span>\n\n<span style='color:#ffffff'>・ボスを倒すと、</span><span style='color:#dddd44'>スキルポイント+2</span><span style='color:#ffffff'>を獲得</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n恐怖の看守、オスウィン\n属性：物理、冷気\n耐性：物理、火、冷気\n弱点：－</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「恐怖の看守、オスウィン」を倒す（スキルポイント+2）\n・チェックポイントから「ホルテン」へ戻る</span>\n\n<span style='color:#ffffff'>高い確率で、入口からまっすぐ反対側へ進めばボスエリアにたどり着く。シンプルな構造。</span>\n\n<span style='color:#ffffff'>もしなかった場合は、左上/右上（まだ見てない方）の壁沿いを探せばあるはず</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「恐怖の看守、オスウィン」を倒す（スキルポイント+2）\n・チェックポイントから「ホルテン」へ戻る</span>\n\n<span style='color:#ffffff'>高い確率で、入口からまっすぐ反対側へ進めばボスエリアにたどり着く。シンプルな構造。</span>\n\n<span style='color:#ffffff'>もしなかった場合は、左上/右上（まだ見てない方）の壁沿いを探せばあるはず</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「恐怖の看守、オスウィン」を倒す（スキルポイント+2）\n・チェックポイントから「ホルテン」へ戻る</span>\n\n<span style='color:#ffffff'>高い確率で、入口からまっすぐ反対側へ進めばボスエリアにたどり着く。シンプルな構造。</span>\n\n<span style='color:#ffffff'>もしなかった場合は、左上/右上（まだ見てない方）の壁沿いを探せばあるはず</span>"
+      }
     },
     "flags": {}
   },
@@ -830,7 +1112,10 @@
       "objective": "・ボス「ウルフリック族長」「エルズウィス婦人」を倒す\n・ポータルで街へ戻る\n\n（街）\n・レンリーにクエストを提出する\n・WPから「キングスマーチ」へ飛ぶ",
       "layout": "<span style='color:#ffffff'>・入ってすぐの中央のエリアにボスがいる。</span>\n\n<span style='color:#ffffff'>・たどりつくには、１回ぐるっと１周まわって２階にあがったうえで、再びぐるっと回って１階へ</span>",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\nウルフリック族長\n属性：物理\n耐性：物理\n弱点：－\n\nエルズウィス婦人\n属性：物理、火、混沌\n耐性：物理、火\n弱点：－\n\n・混沌ダメージはやや痛いので、婦人から倒すと楽</span>",
-      "summary": "<span style=\" color:#ffffff;\">・ボス「ウルフリック族長」「エルズウィス婦人」を倒す\n・ポータルで街へ戻る\n\n（街）\n・レンリーにクエストを提出する\n・WPから「キングスマーチ」へ飛ぶ</span>\n\n<span style='color:#ffffff'>たどりつくには、１回ぐるっと１周まわって２階にあがったうえで、再びぐるっと回って１階へ</span>\n\n<span style='color:#ffffff'>混沌ダメージはやや痛いので、婦人から倒すと楽</span>"
+      "summary": "<span style=\" color:#ffffff;\">・ボス「ウルフリック族長」「エルズウィス婦人」を倒す\n・ポータルで街へ戻る\n\n（街）\n・レンリーにクエストを提出する\n・WPから「キングスマーチ」へ飛ぶ</span>\n\n<span style='color:#ffffff'>たどりつくには、１回ぐるっと１周まわって２階にあがったうえで、再びぐるっと回って１階へ</span>\n\n<span style='color:#ffffff'>混沌ダメージはやや痛いので、婦人から倒すと楽</span>",
+      "mini_navi": {
+        "text": "<span style=\" color:#ffffff;\">・ボス「ウルフリック族長」「エルズウィス婦人」を倒す\n・ポータルで街へ戻る\n\n（街）\n・レンリーにクエストを提出する\n・WPから「キングスマーチ」へ飛ぶ</span>\n\n<span style='color:#ffffff'>たどりつくには、１回ぐるっと１周まわって２階にあがったうえで、再びぐるっと回って１階へ</span>\n\n<span style='color:#ffffff'>混沌ダメージはやや痛いので、婦人から倒すと楽</span>"
+      }
     },
     "flags": {}
   },
