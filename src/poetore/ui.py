@@ -2652,7 +2652,18 @@ class PoetoreWindow(QWidget):
         generation = getattr(self, "_capture_release_generation", 0) + 1
         self._capture_release_generation = generation
         self._capture_copy_started = False
-        self._capture_copy_keys = (Key.ctrl, "c")
+        hold_modifier = next(
+            (
+                token.strip().casefold()
+                for token in str(capture_hotkey or "").split("+")
+                if token.strip().casefold() in {"ctrl", "control", "alt"}
+            ),
+            None,
+        )
+        self._capture_copy_keys = (
+            ("c",) if auto_hide and hold_modifier in {"ctrl", "control"}
+            else (Key.ctrl, "c")
+        )
         if auto_hide and self._release_auto_hide_trigger_key(capture_hotkey, Key):
             trace.mark("copy_scheduled", release_wait_timeout_ms=30)
             QTimer.singleShot(
@@ -2713,7 +2724,9 @@ class PoetoreWindow(QWidget):
         if trace is not None:
             trace.mark("copy_keys_started")
         previous_token = clipboard_change_token(QApplication.clipboard())
-        with internal_key_input():
+        with internal_key_input(
+            cooldown_seconds=0 if self._capture_auto_hide else 0.12,
+        ):
             for key in keys:
                 self._capture_keyboard.press(key)
             for key in reversed(keys):

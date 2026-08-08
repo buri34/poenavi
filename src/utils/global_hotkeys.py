@@ -145,17 +145,25 @@ class GlobalHotkeyService(QObject):
                 key_name = hotkey_key_name(key)
                 if key_name is None:
                     return
+                if is_internal_key_input():
+                    triggered_combos.clear()
+                    return
                 modifier = self._modifier_name(key_name)
                 if modifier:
                     pressed_modifiers.discard(modifier)
                 pressed_keys.discard(modifier or key_name)
-                if is_internal_key_input():
-                    triggered_combos.clear()
-                    return
                 for combo, required_keys in tuple(pending_releases.items()):
-                    if not required_keys.intersection(pressed_keys):
+                    action = self._hotkey_map.get(combo) or "poetore_capture"
+                    hold_key_released = (
+                        action == "poetore_auto_hide"
+                        and modifier in {"ctrl", "alt"}
+                        and modifier in required_keys
+                    )
+                    if hold_key_released or (
+                        action != "poetore_auto_hide"
+                        and not required_keys.intersection(pressed_keys)
+                    ):
                         pending_releases.pop(combo, None)
-                        action = self._hotkey_map.get(combo) or "poetore_capture"
                         self.command.emit(f"{action}_released")
                 triggered_combos.clear()
 

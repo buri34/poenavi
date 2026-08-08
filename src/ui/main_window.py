@@ -3122,6 +3122,9 @@ class MainWindow(QMainWindow):
                 key_name = _hotkey_key_name(key)
                 if key_name is None:
                     return
+                if is_internal_key_input():
+                    triggered_combos.clear()
+                    return
                 if _gem_shop_hotkey_matches(self._gem_shop_search_key, key_name):
                     if gem_shop_press_accepted:
                         self.hotkey_signal.emit("gem_shop_search_released")
@@ -3138,12 +3141,17 @@ class MainWindow(QMainWindow):
                 else:
                     normalized_key = key_name
                 pressed_keys.discard(normalized_key)
-                if is_internal_key_input():
-                    triggered_combos.clear()
-                    return
                 for combo, pending in tuple(pending_poetore_releases.items()):
                     required_keys, action = pending
-                    if not required_keys.intersection(pressed_keys):
+                    hold_key_released = (
+                        action == "poetore_auto_hide"
+                        and normalized_key in {"ctrl", "alt"}
+                        and normalized_key in required_keys
+                    )
+                    if hold_key_released or (
+                        action != "poetore_auto_hide"
+                        and not required_keys.intersection(pressed_keys)
+                    ):
                         pending_poetore_releases.pop(combo, None)
                         self.hotkey_signal.emit(f"{action}_released")
                 triggered_combos.clear()

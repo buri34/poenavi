@@ -191,8 +191,21 @@ def test_auto_hide_capture_remembers_mode_and_cursor_origin(qapp):
         assert window._capture_auto_hide is True
         assert window._auto_hide_hotkey_released is False
         assert window._auto_hide_origin == QPoint(500, 400)
+        assert window._capture_copy_keys == ("c",)
         controller.release.assert_called_once_with("d")
         assert [call.args[0] for call in single_shot.call_args_list] == [30, 250]
+    finally:
+        window.close()
+
+
+def test_alt_auto_hide_copy_uses_ctrl_c_without_changing_the_alt_hold_key(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("pynput.keyboard.Controller"), patch.object(QTimer, "singleShot"):
+            window.capture_from_poe(auto_hide=True, capture_hotkey="alt+q")
+
+        assert window._capture_copy_keys[1] == "c"
+        assert len(window._capture_copy_keys) == 2
     finally:
         window.close()
 

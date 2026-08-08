@@ -177,6 +177,38 @@ def test_alt_auto_hide_waits_for_selected_hold_key_release():
     assert emitted == ["poetore_auto_hide", "poetore_auto_hide_released"]
 
 
+def test_auto_hide_ignores_internal_copy_releases_then_detects_physical_hold_release(
+    monkeypatch,
+):
+    listeners = []
+    internal = {"active": False}
+    monkeypatch.setattr(
+        "src.utils.global_hotkeys.is_internal_key_input",
+        lambda: internal["active"],
+    )
+    service = GlobalHotkeyService(
+        {"poetore_auto_hide": "ctrl+d"},
+        listener_factory=lambda **kwargs: listeners.append(FakeListener(**kwargs)) or listeners[-1],
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+
+    listeners[0].on_press(SimpleNamespace(name="ctrl"))
+    listeners[0].on_press(SimpleNamespace(char="d", vk=ord("D")))
+    internal["active"] = True
+    listeners[0].on_release(SimpleNamespace(char="d", vk=ord("D")))
+    listeners[0].on_press(SimpleNamespace(name="ctrl"))
+    listeners[0].on_press(SimpleNamespace(char="c", vk=ord("C")))
+    listeners[0].on_release(SimpleNamespace(char="c", vk=ord("C")))
+    listeners[0].on_release(SimpleNamespace(name="ctrl"))
+    internal["active"] = False
+    assert emitted == ["poetore_auto_hide"]
+
+    listeners[0].on_release(SimpleNamespace(name="ctrl"))
+    assert emitted == ["poetore_auto_hide", "poetore_auto_hide_released"]
+
+
 def test_map_check_uses_its_own_release_notification():
     listeners = []
     service = GlobalHotkeyService(
