@@ -32,6 +32,16 @@ def qapp():
     yield app
 
 
+@pytest.fixture
+def deterministic_global_cursor(monkeypatch):
+    """Keep listener-coordinate tests independent from the real CI cursor."""
+    monkeypatch.setattr(
+        PoetoreWindow,
+        "_global_cursor_point",
+        lambda _self, x, y: QPoint(x, y),
+    )
+
+
 def test_poetore_window_always_accepts_mouse_input(qapp):
     window = PoetoreWindow()
     try:
@@ -429,7 +439,7 @@ def test_show_at_context_can_display_without_activating(qapp):
         window.close()
 
 
-def test_passive_hotkey_display_closes_only_for_outside_click(qapp):
+def test_passive_hotkey_display_closes_only_for_outside_click(qapp, deterministic_global_cursor):
     window = PoetoreWindow()
     try:
         window.setGeometry(100, 100, 720, 1039)
@@ -446,7 +456,7 @@ def test_passive_hotkey_display_closes_only_for_outside_click(qapp):
         window.close()
 
 
-def test_auto_hide_closes_only_after_release_and_mouse_threshold(qapp):
+def test_auto_hide_closes_only_after_release_and_mouse_threshold(qapp, deterministic_global_cursor):
     window = PoetoreWindow()
     try:
         window.setGeometry(1000, 100, 720, 1039)
@@ -468,7 +478,7 @@ def test_auto_hide_closes_only_after_release_and_mouse_threshold(qapp):
         window.close()
 
 
-def test_auto_hide_can_become_interactive_while_hotkey_is_held(qapp):
+def test_auto_hide_can_become_interactive_while_hotkey_is_held(qapp, deterministic_global_cursor):
     window = PoetoreWindow()
     try:
         window.setGeometry(100, 100, 720, 1039)
@@ -491,7 +501,7 @@ def test_auto_hide_can_become_interactive_while_hotkey_is_held(qapp):
         window.close()
 
 
-def test_auto_hide_interactive_returns_to_poe_after_pointer_leaves(qapp):
+def test_auto_hide_interactive_returns_to_poe_after_pointer_leaves(qapp, deterministic_global_cursor):
     window = PoetoreWindow()
     try:
         window.setGeometry(100, 100, 720, 1039)
@@ -514,7 +524,7 @@ def test_auto_hide_interactive_returns_to_poe_after_pointer_leaves(qapp):
         window.close()
 
 
-def test_auto_hide_click_inside_enters_interactive_mode(qapp):
+def test_auto_hide_click_inside_enters_interactive_mode(qapp, deterministic_global_cursor):
     window = PoetoreWindow()
     try:
         window.setGeometry(100, 100, 720, 1039)
