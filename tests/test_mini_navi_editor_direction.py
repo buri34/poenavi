@@ -4,7 +4,7 @@ import unittest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QLabel
 
 from src.ui.settings_dialog import MiniNaviEditorDialog
 
@@ -75,6 +75,27 @@ class MiniNaviEditorDirectionTest(unittest.TestCase):
 
         self.assertEqual(guide["direction"], "e")
         self.assertEqual(guide["mini_navi"], {"text": "", "direction": "e"})
+
+    def test_poe2_mode_hides_direction_and_saves_only_mini_navi_text(self):
+        guide = {
+            "objective": "PoE2詳細ガイド",
+            "mini_navi": {"text": "旧本文", "direction": "ne"},
+        }
+        dialog = MiniNaviEditorDialog(
+            None,
+            "PoE2テスト",
+            [{"kind": "default", "title": "通常時", "guide": guide}],
+            show_direction=False,
+        )
+
+        labels = {label.text() for label in dialog.findChildren(QLabel)}
+        self.assertNotIn("🧭 基本方向", labels)
+        self.assertIsNone(dialog.section_editors[0]["direction"])
+
+        dialog.section_editors[0]["editor"].setPlainText("新本文")
+        dialog.apply_to_sections()
+
+        self.assertEqual(guide["mini_navi"], {"text": "新本文"})
 
 
 if __name__ == "__main__":

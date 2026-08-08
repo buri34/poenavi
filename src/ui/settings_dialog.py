@@ -1358,12 +1358,13 @@ class MiniNaviEditorDialog(QDialog):
 
     COLORS = GuideEditorDialog.COLORS
 
-    def __init__(self, parent, zone_name: str, sections: list[dict]):
+    def __init__(self, parent, zone_name: str, sections: list[dict], *, show_direction: bool = True):
         super().__init__(parent)
         self.setWindowTitle(f"みになび編集 — {zone_name}")
         self.resize(520, 560)
         self.setStyleSheet(Styles.MAIN_WINDOW)
         self.sections = sections
+        self.show_direction = show_direction
         self.section_editors = []
 
         main_layout = QVBoxLayout(self)
@@ -1416,44 +1417,46 @@ class MiniNaviEditorDialog(QDialog):
             if not isinstance(mini, dict):
                 mini = {"text": str(mini)} if mini else {}
 
-            dir_label = QLabel("🧭 基本方向")
-            dir_label.setStyleSheet(label_style)
-            layout.addWidget(dir_label)
-            dir_grid = QGridLayout()
-            dir_grid.setSpacing(2)
-            direction_group = QButtonGroup(self)
-            directions = [
-                (0, 0, "↖", "nw"), (0, 1, "↑", "n"), (0, 2, "↗", "ne"),
-                (1, 0, "←", "w"),  (1, 1, "—", "none"), (1, 2, "→", "e"),
-                (2, 0, "↙", "sw"), (2, 1, "↓", "s"), (2, 2, "↘", "se"),
-            ]
-            allow_inherit = not (
-                section.get("kind") == "default"
-                or (
-                    section.get("kind") == "visit"
-                    and section.get("visit") == 1
-                    and not section.get("route")
+            direction_group = None
+            if self.show_direction:
+                dir_label = QLabel("🧭 基本方向")
+                dir_label.setStyleSheet(label_style)
+                layout.addWidget(dir_label)
+                dir_grid = QGridLayout()
+                dir_grid.setSpacing(2)
+                direction_group = QButtonGroup(self)
+                directions = [
+                    (0, 0, "↖", "nw"), (0, 1, "↑", "n"), (0, 2, "↗", "ne"),
+                    (1, 0, "←", "w"),  (1, 1, "—", "none"), (1, 2, "→", "e"),
+                    (2, 0, "↙", "sw"), (2, 1, "↓", "s"), (2, 2, "↘", "se"),
+                ]
+                allow_inherit = not (
+                    section.get("kind") == "default"
+                    or (
+                        section.get("kind") == "visit"
+                        and section.get("visit") == 1
+                        and not section.get("route")
+                    )
                 )
-            )
-            if allow_inherit:
-                directions.append((1, 3, "同上", "inherit"))
-            current_dir = mini.get("direction", guide.get("direction", "inherit" if allow_inherit else "none"))
-            for row, col, label, value in directions:
-                rb = QRadioButton(label)
-                rb.setStyleSheet(radio_style if label != "同上" else f"""
-                    QRadioButton {{ color: {Styles.TEXT_COLOR}; font-size: 11px; padding: 6px 8px;
-                        background: rgba(40,40,40,180); border: 1px solid rgba(176,255,123,0.2);
-                        border-radius: 4px; min-width: 36px; min-height: 28px; }}
-                    QRadioButton:checked {{ background: rgba(176,255,123,0.2); border: 2px solid {Styles.TEXT_COLOR}; }}
-                    QRadioButton:hover {{ background: rgba(80,80,80,200); }}
-                    QRadioButton::indicator {{ width: 0; height: 0; }}
-                """)
-                rb.setProperty("dir_value", value)
-                if value == current_dir:
-                    rb.setChecked(True)
-                direction_group.addButton(rb)
-                dir_grid.addWidget(rb, row, col, Qt.AlignCenter)
-            layout.addLayout(dir_grid)
+                if allow_inherit:
+                    directions.append((1, 3, "同上", "inherit"))
+                current_dir = mini.get("direction", guide.get("direction", "inherit" if allow_inherit else "none"))
+                for row, col, label, value in directions:
+                    rb = QRadioButton(label)
+                    rb.setStyleSheet(radio_style if label != "同上" else f"""
+                        QRadioButton {{ color: {Styles.TEXT_COLOR}; font-size: 11px; padding: 6px 8px;
+                            background: rgba(40,40,40,180); border: 1px solid rgba(176,255,123,0.2);
+                            border-radius: 4px; min-width: 36px; min-height: 28px; }}
+                        QRadioButton:checked {{ background: rgba(176,255,123,0.2); border: 2px solid {Styles.TEXT_COLOR}; }}
+                        QRadioButton:hover {{ background: rgba(80,80,80,200); }}
+                        QRadioButton::indicator {{ width: 0; height: 0; }}
+                    """)
+                    rb.setProperty("dir_value", value)
+                    if value == current_dir:
+                        rb.setChecked(True)
+                    direction_group.addButton(rb)
+                    dir_grid.addWidget(rb, row, col, Qt.AlignCenter)
+                layout.addLayout(dir_grid)
 
             text_header = QHBoxLayout()
             text_label = QLabel("みになび本文")
@@ -1558,6 +1561,12 @@ class MiniNaviEditorDialog(QDialog):
             if not isinstance(guide, dict):
                 continue
             text = item["editor"].to_storage_html()
+            if item["direction"] is None:
+                if text:
+                    guide["mini_navi"] = {"text": text}
+                else:
+                    guide.pop("mini_navi", None)
+                continue
             checked = item["direction"].checkedButton()
             direction = checked.property("dir_value") if checked else "none"
             # みになび編集画面の「基本方向」は、通常ガイド側の方向にも同期する。
@@ -2613,7 +2622,7 @@ class SettingsDialog(QDialog):
                     })
 
             dialog = MiniNaviEditorDialog(
-                self, f"{zone_name} ({zone_id})", sections,
+                self, f"{zone_name} ({zone_id})", sections, show_direction=False,
             )
             if dialog.exec():
                 dialog.apply_to_sections()

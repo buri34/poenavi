@@ -90,8 +90,9 @@ def test_poe2_mini_navi_editor_updates_default_and_flag_sections(monkeypatch, qa
     captured = {}
 
     class FakeMiniEditor:
-        def __init__(self, _parent, _title, sections):
+        def __init__(self, _parent, _title, sections, *, show_direction=True):
             captured["sections"] = sections
+            captured["show_direction"] = show_direction
 
         def exec(self):
             return True
@@ -100,7 +101,6 @@ def test_poe2_mini_navi_editor_updates_default_and_flag_sections(monkeypatch, qa
             for section in captured["sections"]:
                 section["guide"]["mini_navi"] = {
                     "text": section["title"],
-                    "direction": "e",
                 }
 
     monkeypatch.setattr(
@@ -117,6 +117,7 @@ def test_poe2_mini_navi_editor_updates_default_and_flag_sections(monkeypatch, qa
     assert entry["default"]["mini_navi"]["text"] == "通常時"
     assert entry["flags"]["boss_done"]["mini_navi"]["text"] == "フラグ進行後: boss_done"
     assert len(captured["sections"]) == 2
+    assert captured["show_direction"] is False
     dialog.close()
 
 
