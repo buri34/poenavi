@@ -42,6 +42,11 @@ def _mini_navi_flag_section_title(zone_id: str, flag_key: str) -> str:
 
 def _guide_dev_editor_enabled(poe_version: str, zone_id: str) -> bool:
     """開発用起動時だけ、明示的に許可した公式ガイド編集UIを表示する。"""
+    if poe_version == POE2:
+        return (
+            os.environ.get("POENAVI_POE2_GUIDE_DEV") == "1"
+            and zone_id.startswith("poe2_")
+        )
     if poe_version != POE1:
         return False
     if os.environ.get("POENAVI_ACT1_GUIDE_DEV") == "1" and zone_id.startswith("act1_"):
@@ -1349,7 +1354,7 @@ class GuideSummaryEditorDialog(QDialog):
 
 
 class MiniNaviEditorDialog(QDialog):
-    """PoE1用: みになび編集ダイアログ"""
+    """PoE1／PoE2のガイド構造を共通編集する、みになびダイアログ。"""
 
     COLORS = GuideEditorDialog.COLORS
 
@@ -1422,7 +1427,14 @@ class MiniNaviEditorDialog(QDialog):
                 (1, 0, "←", "w"),  (1, 1, "—", "none"), (1, 2, "→", "e"),
                 (2, 0, "↙", "sw"), (2, 1, "↓", "s"), (2, 2, "↘", "se"),
             ]
-            allow_inherit = not (section.get("kind") == "visit" and section.get("visit") == 1 and not section.get("route"))
+            allow_inherit = not (
+                section.get("kind") == "default"
+                or (
+                    section.get("kind") == "visit"
+                    and section.get("visit") == 1
+                    and not section.get("route")
+                )
+            )
             if allow_inherit:
                 directions.append((1, 3, "同上", "inherit"))
             current_dir = mini.get("direction", guide.get("direction", "inherit" if allow_inherit else "none"))
@@ -2564,9 +2576,52 @@ class SettingsDialog(QDialog):
         return []
 
     def _open_mini_navi_editor(self, name_edit: QLineEdit, zone_id: str = ""):
-        """PoE1の各エリア向けに、みになび編集ダイアログを開く。"""
+        """現在のPoEバージョンのガイド構造で、みになびを編集する。"""
         zone_name = name_edit.text().strip()
-        if not zone_name or not zone_id or self.poe_version != POE1:
+        if not zone_name or not zone_id:
+            return
+
+        if self.poe_version == POE2:
+            raw_entry = self.guide_data.get(zone_id, {})
+            if not isinstance(raw_entry, dict):
+                raw_entry = {}
+            if "default" in raw_entry or "flags" in raw_entry:
+                default_guide = raw_entry.setdefault("default", {})
+                if not isinstance(default_guide, dict):
+                    default_guide = {}
+                    raw_entry["default"] = default_guide
+                flags = raw_entry.setdefault("flags", {})
+                if not isinstance(flags, dict):
+                    flags = {}
+                    raw_entry["flags"] = flags
+            else:
+                default_guide = raw_entry
+                flags = {}
+
+            sections = [{
+                "kind": "default",
+                "title": "通常時",
+                "guide": default_guide,
+            }]
+            for flag_key, flag_guide in sorted(flags.items()):
+                if isinstance(flag_guide, dict):
+                    sections.append({
+                        "kind": "flag",
+                        "title": f"フラグ進行後: {flag_key}",
+                        "flag_key": flag_key,
+                        "guide": flag_guide,
+                    })
+
+            dialog = MiniNaviEditorDialog(
+                self, f"{zone_name} ({zone_id})", sections,
+            )
+            if dialog.exec():
+                dialog.apply_to_sections()
+                self.guide_data[zone_id] = raw_entry
+                save_guide_data(self.guide_data, self.poe_version)
+            return
+
+        if self.poe_version != POE1:
             return
 
         sections = []
@@ -2935,13 +2990,26 @@ class SettingsDialog(QDialog):
                 row.addWidget(memo_button)
 
                 if _guide_dev_editor_enabled(self.poe_version, zone_id):
-                    guide_button = self._create_small_action_button("公式ガイド", "公式ガイドを編集")
-                    guide_button.setFixedWidth(90)
+                    guide_label = "詳細版" if self.poe_version == POE2 else "公式ガイド"
+                    guide_tooltip = "詳細版ガイドを編集" if self.poe_version == POE2 else "公式ガイドを編集"
+                    guide_button = self._create_small_action_button(guide_label, guide_tooltip)
+                    guide_button.setFixedWidth(75 if self.poe_version == POE2 else 90)
                     guide_button.clicked.connect(
                         lambda checked=False, ne=name_edit, zid=zone_id:
                         self._open_guide_editor(ne, zid)
                     )
                     row.addWidget(guide_button)
+
+                    if self.poe_version == POE2:
+                        summary_button = self._create_small_action_button(
+                            "要約版", "要約版ガイドを編集",
+                        )
+                        summary_button.setFixedWidth(75)
+                        summary_button.clicked.connect(
+                            lambda checked=False, ne=name_edit, zid=zone_id:
+                            self._open_summary_editor(ne, zid)
+                        )
+                        row.addWidget(summary_button)
 
                     mini_button = self._create_small_action_button("みになび", "みになびを編集")
                     mini_button.setFixedWidth(75)

@@ -79,17 +79,23 @@ def save_guide_data(data: dict, poe_version: str = POE1):
     path = get_guide_path(poe_version)
     try:
         if (
-            poe_version == POE1
-            and (
-                os.environ.get("POENAVI_ACT1_GUIDE_DEV") == "1"
-                or bool(os.environ.get("POENAVI_GUIDE_DEV_ZONE_ID", "").strip())
+            (
+                poe_version == POE1
+                and (
+                    os.environ.get("POENAVI_ACT1_GUIDE_DEV") == "1"
+                    or bool(os.environ.get("POENAVI_GUIDE_DEV_ZONE_ID", "").strip())
+                )
             )
-            and os.path.exists(path)
-        ):
+            or (
+                poe_version != POE1
+                and os.environ.get("POENAVI_POE2_GUIDE_DEV") == "1"
+            )
+        ) and os.path.exists(path):
             timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+            guide_stem = os.path.splitext(os.path.basename(path))[0]
             backup_path = os.path.join(
                 os.path.dirname(path),
-                f"guide_data.backup-before-guide-edit-{timestamp}.json",
+                f"{guide_stem}.backup-before-guide-edit-{timestamp}.json",
             )
             shutil.copy2(path, backup_path)
             print(f"[GuideData] Backup: {backup_path}")
