@@ -466,8 +466,81 @@ def test_auto_hide_can_become_interactive_while_hotkey_is_held(qapp):
             window._handle_global_mouse_move(200, 200)
 
         assert window._passive_hotkey_display is False
-        stop.assert_called_once_with()
+        assert window._auto_hide_interactive is True
+        stop.assert_not_called()
         activate.assert_called_once_with()
+    finally:
+        window.close()
+
+
+def test_auto_hide_interactive_returns_to_poe_after_pointer_leaves(qapp):
+    window = PoetoreWindow()
+    try:
+        window.setGeometry(100, 100, 720, 1039)
+        window.show()
+        window._capture_auto_hide = True
+        window._auto_hide_interactive = True
+        window._poe_window_hwnd = 1234
+        qapp.processEvents()
+
+        with patch.object(window, "_stop_outside_click_listener") as stop, patch.object(
+            window, "_close_and_return_to_poe"
+        ) as close_and_return:
+            window._handle_global_mouse_move(200, 200)
+            close_and_return.assert_not_called()
+            window._handle_global_mouse_move(50, 50)
+
+        stop.assert_called_once_with()
+        close_and_return.assert_called_once_with()
+    finally:
+        window.close()
+
+
+def test_auto_hide_click_inside_enters_interactive_mode(qapp):
+    window = PoetoreWindow()
+    try:
+        window.setGeometry(100, 100, 720, 1039)
+        window.show()
+        window._passive_hotkey_display = True
+        window._capture_auto_hide = True
+        qapp.processEvents()
+
+        with patch.object(window, "activateWindow") as activate:
+            window._handle_global_mouse_press(200, 200)
+
+        assert window.isVisible()
+        assert window._passive_hotkey_display is False
+        assert window._auto_hide_interactive is True
+        activate.assert_called_once_with()
+    finally:
+        window.close()
+
+
+def test_auto_hide_treats_combo_popup_as_interactive_area(qapp):
+    window = PoetoreWindow()
+    try:
+        window.show()
+        window.trade_league_combo.showPopup()
+        qapp.processEvents()
+        popup = qapp.activePopupWidget()
+
+        assert popup is not None
+        assert window._widget_belongs_to_panel(popup)
+        assert window._auto_hide_area_contains(
+            popup.window().frameGeometry().center()
+        )
+    finally:
+        window.trade_league_combo.hidePopup()
+        window.close()
+
+
+def test_auto_hide_uses_qt_cursor_coordinates_on_windows(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.sys.platform", "win32"), patch(
+            "src.poetore.ui.QCursor.pos", return_value=QPoint(321, 654)
+        ):
+            assert window._global_cursor_point(999, 888) == QPoint(321, 654)
     finally:
         window.close()
 

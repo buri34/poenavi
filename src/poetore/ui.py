@@ -11,7 +11,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRect, QSize, Qt, QTimer, Signal, QUrl
 from PySide6.QtGui import (
-    QColor, QDesktopServices, QIcon, QIntValidator, QLinearGradient, QPainter,
+    QColor, QCursor, QDesktopServices, QIcon, QIntValidator, QLinearGradient, QPainter,
     QPalette, QPen, QPixmap, QPolygonF,
 )
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
@@ -882,6 +882,7 @@ class PoetoreWindow(QWidget):
         self._capture_auto_hide = False
         self._auto_hide_hotkey_released = False
         self._auto_hide_origin: QPoint | None = None
+        self._auto_hide_interactive = False
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -2616,6 +2617,7 @@ class PoetoreWindow(QWidget):
 
     def closeEvent(self, event):
         self._passive_hotkey_display = False
+        self._auto_hide_interactive = False
         self._stop_outside_click_listener()
         if self._focus_signal_connected:
             QApplication.instance().focusChanged.disconnect(self._close_when_focus_leaves_panel)
@@ -2640,6 +2642,7 @@ class PoetoreWindow(QWidget):
         self._capture_auto_hide = auto_hide
         self._auto_hide_hotkey_released = False
         self._auto_hide_origin = self._placement_context.cursor_pos
+        self._auto_hide_interactive = False
         foreground = get_foreground_window()
         self._poe_window_hwnd = (
             foreground if is_path_of_exile_window(foreground) else None
@@ -2852,26 +2855,55 @@ class PoetoreWindow(QWidget):
     def _handle_global_mouse_press(self, x: int, y: int):
         if not self.isVisible() or not self._passive_hotkey_display:
             return
-        if not self.frameGeometry().contains(QPoint(x, y)):
+        if self._auto_hide_area_contains(self._global_cursor_point(x, y)):
+            if self._capture_auto_hide:
+                self._enter_auto_hide_interactive()
+        else:
             self.close()
 
     def _handle_global_mouse_move(self, x: int, y: int):
         """Mirror Awakened's AUTO-HIDE behavior without stealing PoE focus."""
-        if not self.isVisible() or not self._passive_hotkey_display:
+        if not self.isVisible() or not (
+            self._passive_hotkey_display or self._auto_hide_interactive
+        ):
             return
-        point = QPoint(x, y)
-        if not self._auto_hide_hotkey_released:
-            if self.frameGeometry().contains(point):
-                self._passive_hotkey_display = False
+        point = self._global_cursor_point(x, y)
+        if self._auto_hide_interactive:
+            if not self._auto_hide_area_contains(point):
                 self._stop_outside_click_listener()
-                self.activateWindow()
-                self.setFocus(Qt.OtherFocusReason)
+                self._close_and_return_to_poe()
+            return
+        if not self._auto_hide_hotkey_released:
+            if self._auto_hide_area_contains(point):
+                self._enter_auto_hide_interactive()
             return
         origin = self._auto_hide_origin
         if origin is not None and (
             (point.x() - origin.x()) ** 2 + (point.y() - origin.y()) ** 2
         ) >= 40 ** 2:
             self.close()
+
+    def _enter_auto_hide_interactive(self):
+        self._passive_hotkey_display = False
+        self._auto_hide_interactive = True
+        self.activateWindow()
+        self.setFocus(Qt.OtherFocusReason)
+
+    def _global_cursor_point(self, x: int, y: int) -> QPoint:
+        """Use Qt's coordinate space on Windows to avoid per-monitor DPI drift."""
+        if sys.platform == "win32":
+            return QCursor.pos()
+        return QPoint(x, y)
+
+    def _auto_hide_area_contains(self, point: QPoint) -> bool:
+        if self.frameGeometry().contains(point):
+            return True
+        popup = QApplication.instance().activePopupWidget()
+        return bool(
+            popup is not None
+            and self._widget_belongs_to_panel(popup)
+            and popup.window().frameGeometry().contains(point)
+        )
 
     def parse_current_text(self):
         trace = self._current_performance_trace or self._pending_performance_trace
