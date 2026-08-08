@@ -1,0 +1,2347 @@
+{
+  "schema_version": 1,
+  "description": "PoE1 divination-card identities. English Trade type is the stable ID; Japanese labels are never aligned by array position.",
+  "sources": [
+    "https://www.pathofexile.com/api/trade/data/items",
+    "https://jp.pathofexile.com/api/trade/data/items",
+    "https://poedb.tw/us/Divination_Cards",
+    "https://poedb.tw/jp/Divination_Cards"
+  ],
+  "cards": [
+    {
+      "id": "Abandoned Wealth",
+      "english": "Abandoned Wealth",
+      "japanese": "放棄された富"
+    },
+    {
+      "id": "Acclimatisation",
+      "english": "Acclimatisation",
+      "japanese": "順応"
+    },
+    {
+      "id": "A Chilling Wind",
+      "english": "A Chilling Wind",
+      "japanese": "冷たい風"
+    },
+    {
+      "id": "A Dab of Ink",
+      "english": "A Dab of Ink",
+      "japanese": "インク"
+    },
+    {
+      "id": "A Dusty Memory",
+      "english": "A Dusty Memory",
+      "japanese": "埃を被った記憶"
+    },
+    {
+      "id": "A Familiar Call",
+      "english": "A Familiar Call",
+      "japanese": "親しみのある鳴き声"
+    },
+    {
+      "id": "A Fate Worse Than Death",
+      "english": "A Fate Worse Than Death",
+      "japanese": "死よりも過酷な運命"
+    },
+    {
+      "id": "Akil's Prophecy",
+      "english": "Akil's Prophecy",
+      "japanese": "アキルの預言"
+    },
+    {
+      "id": "Alivia's Grace",
+      "english": "Alivia's Grace",
+      "japanese": "アリヴィアの気品"
+    },
+    {
+      "id": "Alluring Bounty",
+      "english": "Alluring Bounty",
+      "japanese": "魅惑的な宝"
+    },
+    {
+      "id": "Alone in the Darkness",
+      "english": "Alone in the Darkness",
+      "japanese": "暗闇の中の孤立"
+    },
+    {
+      "id": "Altered Perception",
+      "english": "Altered Perception",
+      "japanese": "変容した知覚"
+    },
+    {
+      "id": "Ambitious Obsession",
+      "english": "Ambitious Obsession",
+      "japanese": "野心的な妄想"
+    },
+    {
+      "id": "A Modest Request",
+      "english": "A Modest Request",
+      "japanese": "謙虚な頼み事"
+    },
+    {
+      "id": "A Mother's Parting Gift",
+      "english": "A Mother's Parting Gift",
+      "japanese": "母の餞別"
+    },
+    {
+      "id": "Anarchy's Price",
+      "english": "Anarchy's Price",
+      "japanese": "無秩序の代価"
+    },
+    {
+      "id": "A Note in the Wind",
+      "english": "A Note in the Wind",
+      "japanese": "風の中に流れる音"
+    },
+    {
+      "id": "Apocalypse",
+      "english": "Apocalypse",
+      "japanese": "アポカリプス"
+    },
+    {
+      "id": "Arrogance of the Vaal",
+      "english": "Arrogance of the Vaal",
+      "japanese": "ヴァールの傲慢さ"
+    },
+    {
+      "id": "A Sea of Blue",
+      "english": "A Sea of Blue",
+      "japanese": "青の海"
+    },
+    {
+      "id": "Assassin's Favour",
+      "english": "Assassin's Favour",
+      "japanese": "暗殺者の好意"
+    },
+    {
+      "id": "Assassin's Gift",
+      "english": "Assassin's Gift",
+      "japanese": "暗殺者の贈物"
+    },
+    {
+      "id": "A Stone Perfected",
+      "english": "A Stone Perfected",
+      "japanese": "完成された石"
+    },
+    {
+      "id": "Astral Protection",
+      "english": "Astral Protection",
+      "japanese": "星の守り"
+    },
+    {
+      "id": "Atziri's Arsenal",
+      "english": "Atziri's Arsenal",
+      "japanese": "アッツィリの武器庫"
+    },
+    {
+      "id": "Audacity",
+      "english": "Audacity",
+      "japanese": "大胆"
+    },
+    {
+      "id": "Auspicious Ambitions",
+      "english": "Auspicious Ambitions",
+      "japanese": "吉兆の大望"
+    },
+    {
+      "id": "Avian Pursuit",
+      "english": "Avian Pursuit",
+      "japanese": "鳥の追跡"
+    },
+    {
+      "id": "Azure Rage",
+      "english": "Azure Rage",
+      "japanese": "空色の憤怒"
+    },
+    {
+      "id": "Azyran's Reward",
+      "english": "Azyran's Reward",
+      "japanese": "アジランの報酬"
+    },
+    {
+      "id": "Baited Expectations",
+      "english": "Baited Expectations",
+      "japanese": "釣りにかける期待"
+    },
+    {
+      "id": "Beauty Through Death",
+      "english": "Beauty Through Death",
+      "japanese": "死を乗り越えた美しさ"
+    },
+    {
+      "id": "Bijoux",
+      "english": "Bijoux",
+      "japanese": "珠玉"
+    },
+    {
+      "id": "Birth of the Three",
+      "english": "Birth of the Three",
+      "japanese": "三人の誕生"
+    },
+    {
+      "id": "Blessing of God",
+      "english": "Blessing of God",
+      "japanese": "神の祝福"
+    },
+    {
+      "id": "Blind Venture",
+      "english": "Blind Venture",
+      "japanese": "闇雲な投機"
+    },
+    {
+      "id": "Boon of Justice",
+      "english": "Boon of Justice",
+      "japanese": "正義の女神からの賜物"
+    },
+    {
+      "id": "Boon of the First Ones",
+      "english": "Boon of the First Ones",
+      "japanese": "最初の者からの賜物"
+    },
+    {
+      "id": "Bound by Flame",
+      "english": "Bound by Flame",
+      "japanese": "炎の絆"
+    },
+    {
+      "id": "Boundless Realms",
+      "english": "Boundless Realms",
+      "japanese": "果てしない世界"
+    },
+    {
+      "id": "Bowyer's Dream",
+      "english": "Bowyer's Dream",
+      "japanese": "弓師の夢"
+    },
+    {
+      "id": "Broken Promises",
+      "english": "Broken Promises",
+      "japanese": "破られた約束"
+    },
+    {
+      "id": "Broken Truce",
+      "english": "Broken Truce",
+      "japanese": "破られた休戦"
+    },
+    {
+      "id": "Brotherhood in Exile",
+      "english": "Brotherhood in Exile",
+      "japanese": "追放者同士の友情"
+    },
+    {
+      "id": "Brother's Gift",
+      "english": "Brother's Gift",
+      "japanese": "兄弟からの贈り物"
+    },
+    {
+      "id": "Brother's Stash",
+      "english": "Brother's Stash",
+      "japanese": "弟の宝物"
+    },
+    {
+      "id": "Brush, Paint and Palette",
+      "english": "Brush, Paint and Palette",
+      "japanese": "ブラシ、絵の具、パレット"
+    },
+    {
+      "id": "Buried Treasure",
+      "english": "Buried Treasure",
+      "japanese": "埋蔵金"
+    },
+    {
+      "id": "Burning Blood",
+      "english": "Burning Blood",
+      "japanese": "燃え盛る血"
+    },
+    {
+      "id": "Call to the First Ones",
+      "english": "Call to the First Ones",
+      "japanese": "始まりの者たちへの呼びかけ"
+    },
+    {
+      "id": "Cameria's Cut",
+      "english": "Cameria's Cut",
+      "japanese": "カミリアの取り分"
+    },
+    {
+      "id": "Cartographer's Delight",
+      "english": "Cartographer's Delight",
+      "japanese": "地図職人の喜び"
+    },
+    {
+      "id": "Chaotic Disposition",
+      "english": "Chaotic Disposition",
+      "japanese": "混沌とした気質"
+    },
+    {
+      "id": "Chasing Risk",
+      "english": "Chasing Risk",
+      "japanese": "チェイシングリスク"
+    },
+    {
+      "id": "Checkmate",
+      "english": "Checkmate",
+      "japanese": "チェックメイト"
+    },
+    {
+      "id": "Choking Guilt",
+      "english": "Choking Guilt",
+      "japanese": "絞め殺す罪悪感"
+    },
+    {
+      "id": "Costly Curio",
+      "english": "Costly Curio",
+      "japanese": "高価な骨董品"
+    },
+    {
+      "id": "Council of Cats",
+      "english": "Council of Cats",
+      "japanese": "猫の評議会"
+    },
+    {
+      "id": "Coveted Possession",
+      "english": "Coveted Possession",
+      "japanese": "所有欲"
+    },
+    {
+      "id": "Cursed Words",
+      "english": "Cursed Words",
+      "japanese": "呪われし言葉"
+    },
+    {
+      "id": "Damnation",
+      "english": "Damnation",
+      "japanese": "天罰"
+    },
+    {
+      "id": "Dark Dreams",
+      "english": "Dark Dreams",
+      "japanese": "暗き野望"
+    },
+    {
+      "id": "Darker Half",
+      "english": "Darker Half",
+      "japanese": "ダーカーハーフ"
+    },
+    {
+      "id": "Dark Temptation",
+      "english": "Dark Temptation",
+      "japanese": "闇の誘惑"
+    },
+    {
+      "id": "Deadly Joy",
+      "english": "Deadly Joy",
+      "japanese": "命懸けの喜び"
+    },
+    {
+      "id": "Death",
+      "english": "Death",
+      "japanese": "死没"
+    },
+    {
+      "id": "Deathly Designs",
+      "english": "Deathly Designs",
+      "japanese": "死を招く設計図"
+    },
+    {
+      "id": "Dementophobia",
+      "english": "Dementophobia",
+      "japanese": "精神異常恐怖症"
+    },
+    {
+      "id": "Demigod's Wager",
+      "english": "Demigod's Wager",
+      "japanese": "半神の賭け事"
+    },
+    {
+      "id": "Desecrated Virtue",
+      "english": "Desecrated Virtue",
+      "japanese": "冒涜されし美徳"
+    },
+    {
+      "id": "Desperate Crusade",
+      "english": "Desperate Crusade",
+      "japanese": "絶望的な聖戦"
+    },
+    {
+      "id": "Destined to Crumble",
+      "english": "Destined to Crumble",
+      "japanese": "滅びの運命"
+    },
+    {
+      "id": "Dialla's Subjugation",
+      "english": "Dialla's Subjugation",
+      "japanese": "ディアーラの服従"
+    },
+    {
+      "id": "Disdain",
+      "english": "Disdain",
+      "japanese": "蔑視"
+    },
+    {
+      "id": "Divine Beauty",
+      "english": "Divine Beauty",
+      "japanese": "神々しい美しさ"
+    },
+    {
+      "id": "Divine Justice",
+      "english": "Divine Justice",
+      "japanese": "神聖な正義の女神"
+    },
+    {
+      "id": "Divine Shard",
+      "english": "Divine Shard",
+      "japanese": "神性のかけら"
+    },
+    {
+      "id": "Doedre's Madness",
+      "english": "Doedre's Madness",
+      "japanese": "ドードリの狂気"
+    },
+    {
+      "id": "Doryani's Epiphany",
+      "english": "Doryani's Epiphany",
+      "japanese": "ドリアニの閃き"
+    },
+    {
+      "id": "Draped in Dreams",
+      "english": "Draped in Dreams",
+      "japanese": "夢に包まれて"
+    },
+    {
+      "id": "Duality",
+      "english": "Duality",
+      "japanese": "双対性"
+    },
+    {
+      "id": "Dying Anguish",
+      "english": "Dying Anguish",
+      "japanese": "消えゆく苦痛"
+    },
+    {
+      "id": "Dying Light",
+      "english": "Dying Light",
+      "japanese": "消えゆく光"
+    },
+    {
+      "id": "Earth Drinker",
+      "english": "Earth Drinker",
+      "japanese": "アースドリンカー"
+    },
+    {
+      "id": "Echoes of Love",
+      "english": "Echoes of Love",
+      "japanese": "愛のこだま"
+    },
+    {
+      "id": "Eldritch Perfection",
+      "english": "Eldritch Perfection",
+      "japanese": "エルドリッチパーフェクション"
+    },
+    {
+      "id": "Emperor of Purity",
+      "english": "Emperor of Purity",
+      "japanese": "浄化の皇帝"
+    },
+    {
+      "id": "Emperor's Luck",
+      "english": "Emperor's Luck",
+      "japanese": "皇帝の幸運"
+    },
+    {
+      "id": "Endless Night",
+      "english": "Endless Night",
+      "japanese": "終わりなき夜"
+    },
+    {
+      "id": "Energy Sword",
+      "english": "Energy Sword",
+      "japanese": "エナジーソード"
+    },
+    {
+      "id": "Etched in Blood",
+      "english": "Etched in Blood",
+      "japanese": "血で刻まれた文字"
+    },
+    {
+      "id": "Eternal Bonds",
+      "english": "Eternal Bonds",
+      "japanese": "永遠の繋がり"
+    },
+    {
+      "id": "Ever-Changing",
+      "english": "Ever-Changing",
+      "japanese": "千変万化"
+    },
+    {
+      "id": "Fateful Meeting",
+      "english": "Fateful Meeting",
+      "japanese": "運命の出会い"
+    },
+    {
+      "id": "Father's Love",
+      "english": "Father's Love",
+      "japanese": "父の愛"
+    },
+    {
+      "id": "Fire Of Unknown Origin",
+      "english": "Fire Of Unknown Origin",
+      "japanese": "どこから来たかわからない炎"
+    },
+    {
+      "id": "Forbidden Power",
+      "english": "Forbidden Power",
+      "japanese": "禁じられし力"
+    },
+    {
+      "id": "Friendship",
+      "english": "Friendship",
+      "japanese": "友情"
+    },
+    {
+      "id": "From Bone to Ashes",
+      "english": "From Bone to Ashes",
+      "japanese": "骨から灰へ"
+    },
+    {
+      "id": "Further Invention",
+      "english": "Further Invention",
+      "japanese": "さらなる発明"
+    },
+    {
+      "id": "Gemcutter's Mercy",
+      "english": "Gemcutter's Mercy",
+      "japanese": "宝石職人の慈悲"
+    },
+    {
+      "id": "Gemcutter's Promise",
+      "english": "Gemcutter's Promise",
+      "japanese": "宝石職人の誓い"
+    },
+    {
+      "id": "Gift of Asenath",
+      "english": "Gift of Asenath",
+      "japanese": "アセナスの贈り物"
+    },
+    {
+      "id": "Gift of the Gemling Queen",
+      "english": "Gift of the Gemling Queen",
+      "japanese": "ジェムリングの女王の贈り物"
+    },
+    {
+      "id": "Glimmer of Hope",
+      "english": "Glimmer of Hope",
+      "japanese": "希望の光"
+    },
+    {
+      "id": "Grave Knowledge",
+      "english": "Grave Knowledge",
+      "japanese": "墓場の知識"
+    },
+    {
+      "id": "Guardian's Challenge",
+      "english": "Guardian's Challenge",
+      "japanese": "守護者への挑戦"
+    },
+    {
+      "id": "Harmony of Souls",
+      "english": "Harmony of Souls",
+      "japanese": "魂の奏でるハーモニー"
+    },
+    {
+      "id": "Haunting Shadows",
+      "english": "Haunting Shadows",
+      "japanese": "彷徨う影"
+    },
+    {
+      "id": "Her Mask",
+      "english": "Her Mask",
+      "japanese": "女王の仮面"
+    },
+    {
+      "id": "Heterochromia",
+      "english": "Heterochromia",
+      "japanese": "異色症"
+    },
+    {
+      "id": "History",
+      "english": "History",
+      "japanese": "歴史"
+    },
+    {
+      "id": "Home",
+      "english": "Home",
+      "japanese": "家族"
+    },
+    {
+      "id": "Hope",
+      "english": "Hope",
+      "japanese": "希望"
+    },
+    {
+      "id": "House of Mirrors",
+      "english": "House of Mirrors",
+      "japanese": "鏡の館"
+    },
+    {
+      "id": "Hubris",
+      "english": "Hubris",
+      "japanese": "ヒュブリス"
+    },
+    {
+      "id": "Humility",
+      "english": "Humility",
+      "japanese": "謙虚"
+    },
+    {
+      "id": "Hunter's Resolve",
+      "english": "Hunter's Resolve",
+      "japanese": "狩人の覚悟"
+    },
+    {
+      "id": "Hunter's Reward",
+      "english": "Hunter's Reward",
+      "japanese": "狩人の褒賞"
+    },
+    {
+      "id": "Immortal Resolve",
+      "english": "Immortal Resolve",
+      "japanese": "不死への決意"
+    },
+    {
+      "id": "Imperfect Memories",
+      "english": "Imperfect Memories",
+      "japanese": "不完全な記憶"
+    },
+    {
+      "id": "Imperial Legacy",
+      "english": "Imperial Legacy",
+      "japanese": "帝国の遺産"
+    },
+    {
+      "id": "I See Brothers",
+      "english": "I See Brothers",
+      "japanese": "兄弟を見た"
+    },
+    {
+      "id": "Jack in the Box",
+      "english": "Jack in the Box",
+      "japanese": "びっくり箱"
+    },
+    {
+      "id": "Judging Voices",
+      "english": "Judging Voices",
+      "japanese": "裁きの声"
+    },
+    {
+      "id": "Justified Ambition",
+      "english": "Justified Ambition",
+      "japanese": "正当化された野望"
+    },
+    {
+      "id": "Keeper's Corruption",
+      "english": "Keeper's Corruption",
+      "japanese": "コラプトされた番人"
+    },
+    {
+      "id": "Lachrymal Necrosis",
+      "english": "Lachrymal Necrosis",
+      "japanese": "ラクリマルネクローシス"
+    },
+    {
+      "id": "Lantador's Lost Love",
+      "english": "Lantador's Lost Love",
+      "japanese": "ランタドールの失恋"
+    },
+    {
+      "id": "Last Hope",
+      "english": "Last Hope",
+      "japanese": "最後の望み"
+    },
+    {
+      "id": "Last Stand",
+      "english": "Last Stand",
+      "japanese": "最後の抵抗"
+    },
+    {
+      "id": "Left to Fate",
+      "english": "Left to Fate",
+      "japanese": "運命に身を任せて"
+    },
+    {
+      "id": "Lethean Temptation",
+      "english": "Lethean Temptation",
+      "japanese": "忘却の誘惑"
+    },
+    {
+      "id": "Light and Truth",
+      "english": "Light and Truth",
+      "japanese": "光と真実"
+    },
+    {
+      "id": "Lingering Remnants",
+      "english": "Lingering Remnants",
+      "japanese": "残党"
+    },
+    {
+      "id": "Lonely Warrior",
+      "english": "Lonely Warrior",
+      "japanese": "孤独な戦士"
+    },
+    {
+      "id": "Lost Worlds",
+      "english": "Lost Worlds",
+      "japanese": "失われた世界"
+    },
+    {
+      "id": "Love Through Ice",
+      "english": "Love Through Ice",
+      "japanese": "氷越しの愛"
+    },
+    {
+      "id": "Loyalty",
+      "english": "Loyalty",
+      "japanese": "忠義"
+    },
+    {
+      "id": "Lucky Bastion",
+      "english": "Lucky Bastion",
+      "japanese": "幸運の砦"
+    },
+    {
+      "id": "Lucky Connections",
+      "english": "Lucky Connections",
+      "japanese": "幸運なコネクション"
+    },
+    {
+      "id": "Lucky Deck",
+      "english": "Lucky Deck",
+      "japanese": "幸運なカード"
+    },
+    {
+      "id": "Luminous Trove",
+      "english": "Luminous Trove",
+      "japanese": "光り輝く財宝"
+    },
+    {
+      "id": "Lysah's Respite",
+      "english": "Lysah's Respite",
+      "japanese": "リサの休息"
+    },
+    {
+      "id": "Magnum Opus",
+      "english": "Magnum Opus",
+      "japanese": "最高傑作"
+    },
+    {
+      "id": "Man With Bear",
+      "english": "Man With Bear",
+      "japanese": "熊を連れた男"
+    },
+    {
+      "id": "Matryoshka",
+      "english": "Matryoshka",
+      "japanese": "マトリョーシカ"
+    },
+    {
+      "id": "Mawr Blaidd",
+      "english": "Mawr Blaidd",
+      "japanese": "マウルブライズ"
+    },
+    {
+      "id": "Merciless Armament",
+      "english": "Merciless Armament",
+      "japanese": "無慈悲な武装"
+    },
+    {
+      "id": "Might is Right",
+      "english": "Might is Right",
+      "japanese": "力は正義"
+    },
+    {
+      "id": "Misery in Darkness",
+      "english": "Misery in Darkness",
+      "japanese": "闇の中の嘆き"
+    },
+    {
+      "id": "Mitts",
+      "english": "Mitts",
+      "japanese": "ミトン"
+    },
+    {
+      "id": "Monochrome",
+      "english": "Monochrome",
+      "japanese": "モノクロ"
+    },
+    {
+      "id": "More is Never Enough",
+      "english": "More is Never Enough",
+      "japanese": "多すぎても十分にはならない"
+    },
+    {
+      "id": "Nook's Crown",
+      "english": "Nook's Crown",
+      "japanese": "ノークの冠"
+    },
+    {
+      "id": "No Traces",
+      "english": "No Traces",
+      "japanese": "跡形も残さず"
+    },
+    {
+      "id": "One Last Score",
+      "english": "One Last Score",
+      "japanese": "最後の大仕事"
+    },
+    {
+      "id": "Outfoxed",
+      "english": "Outfoxed",
+      "japanese": "一枚上手"
+    },
+    {
+      "id": "Parasitic Passengers",
+      "english": "Parasitic Passengers",
+      "japanese": "寄生性の同道者"
+    },
+    {
+      "id": "Peaceful Moments",
+      "english": "Peaceful Moments",
+      "japanese": "平和な時"
+    },
+    {
+      "id": "Pearls Before Swine",
+      "english": "Pearls Before Swine",
+      "japanese": "豚に真珠"
+    },
+    {
+      "id": "Perfection",
+      "english": "Perfection",
+      "japanese": "完全性"
+    },
+    {
+      "id": "Poisoned Faith",
+      "english": "Poisoned Faith",
+      "japanese": "毒された信仰"
+    },
+    {
+      "id": "Prejudice",
+      "english": "Prejudice",
+      "japanese": "偏見"
+    },
+    {
+      "id": "Pride Before the Fall",
+      "english": "Pride Before the Fall",
+      "japanese": "堕落前の誇り"
+    },
+    {
+      "id": "Pride of the First Ones",
+      "english": "Pride of the First Ones",
+      "japanese": "最初のものたちの誇り"
+    },
+    {
+      "id": "Prometheus' Armoury",
+      "english": "Prometheus' Armoury",
+      "japanese": "プロメテウスの武器庫"
+    },
+    {
+      "id": "Prosperity",
+      "english": "Prosperity",
+      "japanese": "繁栄"
+    },
+    {
+      "id": "Rain of Chaos",
+      "english": "Rain of Chaos",
+      "japanese": "混沌の雨"
+    },
+    {
+      "id": "Rain Tempter",
+      "english": "Rain Tempter",
+      "japanese": "雨の誘惑"
+    },
+    {
+      "id": "Rats",
+      "english": "Rats",
+      "japanese": "ネズミ"
+    },
+    {
+      "id": "Rebirth",
+      "english": "Rebirth",
+      "japanese": "復活"
+    },
+    {
+      "id": "Rebirth and Renewal",
+      "english": "Rebirth and Renewal",
+      "japanese": "再誕と再生"
+    },
+    {
+      "id": "Reckless Ambition",
+      "english": "Reckless Ambition",
+      "japanese": "無謀な野心"
+    },
+    {
+      "id": "Remembrance",
+      "english": "Remembrance",
+      "japanese": "記念品"
+    },
+    {
+      "id": "Runic Luck",
+      "english": "Runic Luck",
+      "japanese": "ルーンの幸運"
+    },
+    {
+      "id": "Sambodhi's Vow",
+      "english": "Sambodhi's Vow",
+      "japanese": "菩薩の誓い"
+    },
+    {
+      "id": "Sambodhi's Wisdom",
+      "english": "Sambodhi's Wisdom",
+      "japanese": "菩薩の知恵"
+    },
+    {
+      "id": "Scholar of the Seas",
+      "english": "Scholar of the Seas",
+      "japanese": "海の学者"
+    },
+    {
+      "id": "Seven Years Bad Luck",
+      "english": "Seven Years Bad Luck",
+      "japanese": "7年続く不幸"
+    },
+    {
+      "id": "Shard of Fate",
+      "english": "Shard of Fate",
+      "japanese": "運命の破片"
+    },
+    {
+      "id": "Silence and Frost",
+      "english": "Silence and Frost",
+      "japanese": "静寂と霜"
+    },
+    {
+      "id": "Society's Remorse",
+      "english": "Society's Remorse",
+      "japanese": "現実への疑念"
+    },
+    {
+      "id": "Something Dark",
+      "english": "Something Dark",
+      "japanese": "暗いなにか"
+    },
+    {
+      "id": "Soul Quenched",
+      "english": "Soul Quenched",
+      "japanese": "焼入れされた魂"
+    },
+    {
+      "id": "Squandered Prosperity",
+      "english": "Squandered Prosperity",
+      "japanese": "浪費された繁栄"
+    },
+    {
+      "id": "Struck by Lightning",
+      "english": "Struck by Lightning",
+      "japanese": "落雷"
+    },
+    {
+      "id": "Succor of the Sinless",
+      "english": "Succor of the Sinless",
+      "japanese": "罪なき者からの救援"
+    },
+    {
+      "id": "Temperance",
+      "english": "Temperance",
+      "japanese": "節制"
+    },
+    {
+      "id": "Terrible Secret of Space",
+      "english": "Terrible Secret of Space",
+      "japanese": "宇宙の恐るべき秘密"
+    },
+    {
+      "id": "The Academic",
+      "english": "The Academic",
+      "japanese": "研究員"
+    },
+    {
+      "id": "The Admirer",
+      "english": "The Admirer",
+      "japanese": "崇拝者"
+    },
+    {
+      "id": "The Adventuring Spirit",
+      "english": "The Adventuring Spirit",
+      "japanese": "冒険家の精神"
+    },
+    {
+      "id": "The Aesthete",
+      "english": "The Aesthete",
+      "japanese": "耽美主義者"
+    },
+    {
+      "id": "The Apothecary",
+      "english": "The Apothecary",
+      "japanese": "薬剤師"
+    },
+    {
+      "id": "The Archmage's Right Hand",
+      "english": "The Archmage's Right Hand",
+      "japanese": "アークメイジの右手"
+    },
+    {
+      "id": "The Arena Champion",
+      "english": "The Arena Champion",
+      "japanese": "闘技場の英雄"
+    },
+    {
+      "id": "The Army of Blood",
+      "english": "The Army of Blood",
+      "japanese": "血の軍隊"
+    },
+    {
+      "id": "The Artist",
+      "english": "The Artist",
+      "japanese": "芸術家"
+    },
+    {
+      "id": "The Aspirant",
+      "english": "The Aspirant",
+      "japanese": "大望を抱く者"
+    },
+    {
+      "id": "The Astromancer",
+      "english": "The Astromancer",
+      "japanese": "占星術師"
+    },
+    {
+      "id": "The Avenger",
+      "english": "The Avenger",
+      "japanese": "復讐者"
+    },
+    {
+      "id": "The Awakened",
+      "english": "The Awakened",
+      "japanese": "覚醒者"
+    },
+    {
+      "id": "The Bargain",
+      "english": "The Bargain",
+      "japanese": "取り引き"
+    },
+    {
+      "id": "The Battle Born",
+      "english": "The Battle Born",
+      "japanese": "戦禍の生まれ"
+    },
+    {
+      "id": "The Bear Woman",
+      "english": "The Bear Woman",
+      "japanese": "熊の婦人"
+    },
+    {
+      "id": "The Beast",
+      "english": "The Beast",
+      "japanese": "魔獣"
+    },
+    {
+      "id": "The Betrayal",
+      "english": "The Betrayal",
+      "japanese": "裏切り"
+    },
+    {
+      "id": "The Bitter Blossom",
+      "english": "The Bitter Blossom",
+      "japanese": "苦しみの花"
+    },
+    {
+      "id": "The Blazing Fire",
+      "english": "The Blazing Fire",
+      "japanese": "燃え盛る炎"
+    },
+    {
+      "id": "The Blessing of Moosh",
+      "english": "The Blessing of Moosh",
+      "japanese": "最愛のものの祝福"
+    },
+    {
+      "id": "The Body",
+      "english": "The Body",
+      "japanese": "肉体"
+    },
+    {
+      "id": "The Bones",
+      "english": "The Bones",
+      "japanese": "骸骨"
+    },
+    {
+      "id": "The Brawny Battle Mage",
+      "english": "The Brawny Battle Mage",
+      "japanese": "勇敢なバトルメイジ"
+    },
+    {
+      "id": "The Breach",
+      "english": "The Breach",
+      "japanese": "侵入する者"
+    },
+    {
+      "id": "The Brittle Emperor",
+      "english": "The Brittle Emperor",
+      "japanese": "脆い皇帝"
+    },
+    {
+      "id": "The Cache",
+      "english": "The Cache",
+      "japanese": "秘密の宝物"
+    },
+    {
+      "id": "The Cacophony",
+      "english": "The Cacophony",
+      "japanese": "不協和音"
+    },
+    {
+      "id": "The Calling",
+      "english": "The Calling",
+      "japanese": "呼び声"
+    },
+    {
+      "id": "The Card Sharp",
+      "english": "The Card Sharp",
+      "japanese": "いかさまトランプ師"
+    },
+    {
+      "id": "The Carrion Crow",
+      "english": "The Carrion Crow",
+      "japanese": "死肉を食らうカラス"
+    },
+    {
+      "id": "The Cartographer",
+      "english": "The Cartographer",
+      "japanese": "地図職人"
+    },
+    {
+      "id": "The Cataclysm",
+      "english": "The Cataclysm",
+      "japanese": "大災害"
+    },
+    {
+      "id": "The Catalyst",
+      "english": "The Catalyst",
+      "japanese": "触媒"
+    },
+    {
+      "id": "The Catch",
+      "english": "The Catch",
+      "japanese": "釣果"
+    },
+    {
+      "id": "The Celestial Justicar",
+      "english": "The Celestial Justicar",
+      "japanese": "天上の大司法長官"
+    },
+    {
+      "id": "The Celestial Stone",
+      "english": "The Celestial Stone",
+      "japanese": "天体を秘めた石"
+    },
+    {
+      "id": "The Chains that Bind",
+      "english": "The Chains that Bind",
+      "japanese": "束縛する鎖"
+    },
+    {
+      "id": "The Cheater",
+      "english": "The Cheater",
+      "japanese": "不正行為者"
+    },
+    {
+      "id": "The Chosen",
+      "english": "The Chosen",
+      "japanese": "選ばれし者"
+    },
+    {
+      "id": "The Coming Storm",
+      "english": "The Coming Storm",
+      "japanese": "迫り来る嵐"
+    },
+    {
+      "id": "The Conduit",
+      "english": "The Conduit",
+      "japanese": "導き"
+    },
+    {
+      "id": "The Craving",
+      "english": "The Craving",
+      "japanese": "渇望"
+    },
+    {
+      "id": "The Cursed King",
+      "english": "The Cursed King",
+      "japanese": "呪われた王"
+    },
+    {
+      "id": "The Damned",
+      "english": "The Damned",
+      "japanese": "呪われし者"
+    },
+    {
+      "id": "The Dapper Prodigy",
+      "english": "The Dapper Prodigy",
+      "japanese": "小粋な天才"
+    },
+    {
+      "id": "The Darkest Dream",
+      "english": "The Darkest Dream",
+      "japanese": "最も暗き夢"
+    },
+    {
+      "id": "The Dark Mage",
+      "english": "The Dark Mage",
+      "japanese": "闇の魔術師"
+    },
+    {
+      "id": "The Deal",
+      "english": "The Deal",
+      "japanese": "取り引き"
+    },
+    {
+      "id": "The Deceiver",
+      "english": "The Deceiver",
+      "japanese": "欺く者"
+    },
+    {
+      "id": "The Deep Ones",
+      "english": "The Deep Ones",
+      "japanese": "深き者"
+    },
+    {
+      "id": "The Demon",
+      "english": "The Demon",
+      "japanese": "悪魔"
+    },
+    {
+      "id": "The Demoness",
+      "english": "The Demoness",
+      "japanese": "デモネス"
+    },
+    {
+      "id": "The Destination",
+      "english": "The Destination",
+      "japanese": "目的地"
+    },
+    {
+      "id": "The Doctor",
+      "english": "The Doctor",
+      "japanese": "医者"
+    },
+    {
+      "id": "The Doppelganger",
+      "english": "The Doppelganger",
+      "japanese": "ドッペルゲンガー"
+    },
+    {
+      "id": "The Dragon",
+      "english": "The Dragon",
+      "japanese": "ドラゴン"
+    },
+    {
+      "id": "The Dragon's Heart",
+      "english": "The Dragon's Heart",
+      "japanese": "龍の心臓"
+    },
+    {
+      "id": "The Dreamer",
+      "english": "The Dreamer",
+      "japanese": "夢見る者"
+    },
+    {
+      "id": "The Dreamland",
+      "english": "The Dreamland",
+      "japanese": "夢の国"
+    },
+    {
+      "id": "The Drunken Aristocrat",
+      "english": "The Drunken Aristocrat",
+      "japanese": "酔っぱらった貴族"
+    },
+    {
+      "id": "The Dungeon Master",
+      "english": "The Dungeon Master",
+      "japanese": "地下牢の主"
+    },
+    {
+      "id": "The Easy Stroll",
+      "english": "The Easy Stroll",
+      "japanese": "ちょっとした散歩"
+    },
+    {
+      "id": "The Eldritch Decay",
+      "english": "The Eldritch Decay",
+      "japanese": "自然を超越した腐敗"
+    },
+    {
+      "id": "The Emptiness",
+      "english": "The Emptiness",
+      "japanese": "空虚"
+    },
+    {
+      "id": "The Encroaching Darkness",
+      "english": "The Encroaching Darkness",
+      "japanese": "侵食する闇"
+    },
+    {
+      "id": "The Endless Darkness",
+      "english": "The Endless Darkness",
+      "japanese": "終わりなき闇"
+    },
+    {
+      "id": "The Endurance",
+      "english": "The Endurance",
+      "japanese": "忍耐"
+    },
+    {
+      "id": "The Enforcer",
+      "english": "The Enforcer",
+      "japanese": "執行人"
+    },
+    {
+      "id": "The Enlightened",
+      "english": "The Enlightened",
+      "japanese": "悟り"
+    },
+    {
+      "id": "The Enthusiasts",
+      "english": "The Enthusiasts",
+      "japanese": "熱狂的ファン"
+    },
+    {
+      "id": "The Escape",
+      "english": "The Escape",
+      "japanese": "現実逃避"
+    },
+    {
+      "id": "The Eternal War",
+      "english": "The Eternal War",
+      "japanese": "永遠に続く戦争"
+    },
+    {
+      "id": "The Ethereal",
+      "english": "The Ethereal",
+      "japanese": "幽玄"
+    },
+    {
+      "id": "The Everlasting",
+      "english": "The Everlasting",
+      "japanese": "永遠に変わらぬもの"
+    },
+    {
+      "id": "The Explorer",
+      "english": "The Explorer",
+      "japanese": "冒険者"
+    },
+    {
+      "id": "The Eye of Terror",
+      "english": "The Eye of Terror",
+      "japanese": "恐怖の眼"
+    },
+    {
+      "id": "The Eye of the Dragon",
+      "english": "The Eye of the Dragon",
+      "japanese": "ドラゴンの瞳"
+    },
+    {
+      "id": "The Fathomless Depths",
+      "english": "The Fathomless Depths",
+      "japanese": "底しれぬ深淵"
+    },
+    {
+      "id": "The Feast",
+      "english": "The Feast",
+      "japanese": "祝宴"
+    },
+    {
+      "id": "The Fiend",
+      "english": "The Fiend",
+      "japanese": "悪霊"
+    },
+    {
+      "id": "The Finishing Touch",
+      "english": "The Finishing Touch",
+      "japanese": "最後の仕上げ"
+    },
+    {
+      "id": "The Fishmonger",
+      "english": "The Fishmonger",
+      "japanese": "漁師"
+    },
+    {
+      "id": "The Fletcher",
+      "english": "The Fletcher",
+      "japanese": "矢師"
+    },
+    {
+      "id": "The Flora's Gift",
+      "english": "The Flora's Gift",
+      "japanese": "植物の恩恵"
+    },
+    {
+      "id": "The Fool",
+      "english": "The Fool",
+      "japanese": "愚か者"
+    },
+    {
+      "id": "The Forbidden Fruit",
+      "english": "The Forbidden Fruit",
+      "japanese": "禁断の果実"
+    },
+    {
+      "id": "The Forgotten Treasure",
+      "english": "The Forgotten Treasure",
+      "japanese": "忘れ去られた財宝"
+    },
+    {
+      "id": "The Formless Sea",
+      "english": "The Formless Sea",
+      "japanese": "形なき海"
+    },
+    {
+      "id": "The Forsaken",
+      "english": "The Forsaken",
+      "japanese": "取り残された者たち"
+    },
+    {
+      "id": "The Fortunate",
+      "english": "The Fortunate",
+      "japanese": "幸運な人"
+    },
+    {
+      "id": "The Forward Gaze",
+      "english": "The Forward Gaze",
+      "japanese": "将来への眼差し"
+    },
+    {
+      "id": "The Fox",
+      "english": "The Fox",
+      "japanese": "キツネ"
+    },
+    {
+      "id": "The Fox in the Brambles",
+      "english": "The Fox in the Brambles",
+      "japanese": "藪の中の狐"
+    },
+    {
+      "id": "The Gambler",
+      "english": "The Gambler",
+      "japanese": "ギャンブラー"
+    },
+    {
+      "id": "The Garish Power",
+      "english": "The Garish Power",
+      "japanese": "眩しい力"
+    },
+    {
+      "id": "The Gemcutter",
+      "english": "The Gemcutter",
+      "japanese": "宝石職人"
+    },
+    {
+      "id": "The Gentleman",
+      "english": "The Gentleman",
+      "japanese": "紳士"
+    },
+    {
+      "id": "The Gladiator",
+      "english": "The Gladiator",
+      "japanese": "剣闘士"
+    },
+    {
+      "id": "The Golden Era",
+      "english": "The Golden Era",
+      "japanese": "黄金期"
+    },
+    {
+      "id": "The Greatest Intentions",
+      "english": "The Greatest Intentions",
+      "japanese": "最も偉大な意志"
+    },
+    {
+      "id": "The Gulf",
+      "english": "The Gulf",
+      "japanese": "隔絶"
+    },
+    {
+      "id": "The Hale Heart",
+      "english": "The Hale Heart",
+      "japanese": "壮健な心臓"
+    },
+    {
+      "id": "The Harvester",
+      "english": "The Harvester",
+      "japanese": "収獲者"
+    },
+    {
+      "id": "The Hermit",
+      "english": "The Hermit",
+      "japanese": "世捨て人"
+    },
+    {
+      "id": "The Heroic Shot",
+      "english": "The Heroic Shot",
+      "japanese": "英雄の一撃"
+    },
+    {
+      "id": "The Hive of Knowledge",
+      "english": "The Hive of Knowledge",
+      "japanese": "知識の巣"
+    },
+    {
+      "id": "The Hoarder",
+      "english": "The Hoarder",
+      "japanese": "貯め込み屋"
+    },
+    {
+      "id": "The Hook",
+      "english": "The Hook",
+      "japanese": "釣り針"
+    },
+    {
+      "id": "The Hunger",
+      "english": "The Hunger",
+      "japanese": "飢え"
+    },
+    {
+      "id": "The Immortal",
+      "english": "The Immortal",
+      "japanese": "不死身"
+    },
+    {
+      "id": "The Incantation",
+      "english": "The Incantation",
+      "japanese": "呪文"
+    },
+    {
+      "id": "The Innocent",
+      "english": "The Innocent",
+      "japanese": "罪なき者"
+    },
+    {
+      "id": "The Inoculated",
+      "english": "The Inoculated",
+      "japanese": "接種"
+    },
+    {
+      "id": "The Insane Cat",
+      "english": "The Insane Cat",
+      "japanese": "狂気の猫"
+    },
+    {
+      "id": "The Insatiable",
+      "english": "The Insatiable",
+      "japanese": "強欲な者"
+    },
+    {
+      "id": "The Inventor",
+      "english": "The Inventor",
+      "japanese": "発明家"
+    },
+    {
+      "id": "The Rusted Bard",
+      "english": "The Rusted Bard",
+      "japanese": "錆びた詩人"
+    },
+    {
+      "id": "The Jester",
+      "english": "The Jester",
+      "japanese": "道化師"
+    },
+    {
+      "id": "The Jeweller's Boon",
+      "english": "The Jeweller's Boon",
+      "japanese": "宝飾職人の賜物"
+    },
+    {
+      "id": "The Journalist",
+      "english": "The Journalist",
+      "japanese": "ジャーナリスト"
+    },
+    {
+      "id": "The Journey",
+      "english": "The Journey",
+      "japanese": "旅路"
+    },
+    {
+      "id": "The King's Blade",
+      "english": "The King's Blade",
+      "japanese": "王の刃"
+    },
+    {
+      "id": "The King's Heart",
+      "english": "The King's Heart",
+      "japanese": "王の心"
+    },
+    {
+      "id": "The Lake",
+      "english": "The Lake",
+      "japanese": "湖面"
+    },
+    {
+      "id": "The Landing",
+      "english": "The Landing",
+      "japanese": "上陸"
+    },
+    {
+      "id": "The Last Laugh",
+      "english": "The Last Laugh",
+      "japanese": "最期の笑い"
+    },
+    {
+      "id": "The Last One Standing",
+      "english": "The Last One Standing",
+      "japanese": "最後の一人"
+    },
+    {
+      "id": "The Last Supper",
+      "english": "The Last Supper",
+      "japanese": "最後の晩餐"
+    },
+    {
+      "id": "The Leviathan",
+      "english": "The Leviathan",
+      "japanese": "リヴァイアサン"
+    },
+    {
+      "id": "The Lich",
+      "english": "The Lich",
+      "japanese": "リッチ"
+    },
+    {
+      "id": "The Life Thief",
+      "english": "The Life Thief",
+      "japanese": "生命を盗む者"
+    },
+    {
+      "id": "The Lion",
+      "english": "The Lion",
+      "japanese": "獅子"
+    },
+    {
+      "id": "The Long Con",
+      "english": "The Long Con",
+      "japanese": "長きにわたるペテン"
+    },
+    {
+      "id": "The Long Watch",
+      "english": "The Long Watch",
+      "japanese": "長時間の見張り"
+    },
+    {
+      "id": "The Lord in Black",
+      "english": "The Lord in Black",
+      "japanese": "黒ずくめの領主"
+    },
+    {
+      "id": "The Lord of Celebration",
+      "english": "The Lord of Celebration",
+      "japanese": "祝賀の君主"
+    },
+    {
+      "id": "The Lover",
+      "english": "The Lover",
+      "japanese": "恋人"
+    },
+    {
+      "id": "The Lunaris Priestess",
+      "english": "The Lunaris Priestess",
+      "japanese": "ルナリスの巫女"
+    },
+    {
+      "id": "The Mad King",
+      "english": "The Mad King",
+      "japanese": "狂気の王"
+    },
+    {
+      "id": "The Magma Crab",
+      "english": "The Magma Crab",
+      "japanese": "溶岩蟹"
+    },
+    {
+      "id": "The Master",
+      "english": "The Master",
+      "japanese": "主人"
+    },
+    {
+      "id": "The Master Artisan",
+      "english": "The Master Artisan",
+      "japanese": "親方職人"
+    },
+    {
+      "id": "The Mayor",
+      "english": "The Mayor",
+      "japanese": "市長"
+    },
+    {
+      "id": "The Mercenary",
+      "english": "The Mercenary",
+      "japanese": "傭兵"
+    },
+    {
+      "id": "The Messenger",
+      "english": "The Messenger",
+      "japanese": "伝令"
+    },
+    {
+      "id": "The Metalsmith's Gift",
+      "english": "The Metalsmith's Gift",
+      "japanese": "鍛冶屋の贈り物"
+    },
+    {
+      "id": "The Mind's Eyes",
+      "english": "The Mind's Eyes",
+      "japanese": "心の目"
+    },
+    {
+      "id": "The Miracle",
+      "english": "The Miracle",
+      "japanese": "奇跡そのもの"
+    },
+    {
+      "id": "The Mountain",
+      "english": "The Mountain",
+      "japanese": "山岳"
+    },
+    {
+      "id": "The Nurse",
+      "english": "The Nurse",
+      "japanese": "看護師"
+    },
+    {
+      "id": "The Oath",
+      "english": "The Oath",
+      "japanese": "誓約"
+    },
+    {
+      "id": "The Obscured",
+      "english": "The Obscured",
+      "japanese": "眼に映らない者"
+    },
+    {
+      "id": "The Offering",
+      "english": "The Offering",
+      "japanese": "生贄"
+    },
+    {
+      "id": "The Offspring",
+      "english": "The Offspring",
+      "japanese": "子孫"
+    },
+    {
+      "id": "The Old Man",
+      "english": "The Old Man",
+      "japanese": "老人"
+    },
+    {
+      "id": "The One That Got Away",
+      "english": "The One That Got Away",
+      "japanese": "逃がした魚は大きい"
+    },
+    {
+      "id": "The One With All",
+      "english": "The One With All",
+      "japanese": "皆とともにある者"
+    },
+    {
+      "id": "The Opulent",
+      "english": "The Opulent",
+      "japanese": "富豪"
+    },
+    {
+      "id": "The Pack Leader",
+      "english": "The Pack Leader",
+      "japanese": "群れのリーダー"
+    },
+    {
+      "id": "The Pact",
+      "english": "The Pact",
+      "japanese": "協定"
+    },
+    {
+      "id": "The Patient",
+      "english": "The Patient",
+      "japanese": "患者"
+    },
+    {
+      "id": "The Penitent",
+      "english": "The Penitent",
+      "japanese": "懺悔する者"
+    },
+    {
+      "id": "The Poet",
+      "english": "The Poet",
+      "japanese": "詩人"
+    },
+    {
+      "id": "The Polymath",
+      "english": "The Polymath",
+      "japanese": "博学者"
+    },
+    {
+      "id": "The Porcupine",
+      "english": "The Porcupine",
+      "japanese": "ヤマアラシ"
+    },
+    {
+      "id": "The Price of Devotion",
+      "english": "The Price of Devotion",
+      "japanese": "献身の対価"
+    },
+    {
+      "id": "The Price of Loyalty",
+      "english": "The Price of Loyalty",
+      "japanese": "忠誠の対価"
+    },
+    {
+      "id": "The Price of Prescience",
+      "english": "The Price of Prescience",
+      "japanese": "先見の代償"
+    },
+    {
+      "id": "The Price of Protection",
+      "english": "The Price of Protection",
+      "japanese": "保護の対価"
+    },
+    {
+      "id": "The Primordial",
+      "english": "The Primordial",
+      "japanese": "原初"
+    },
+    {
+      "id": "The Prince of Darkness",
+      "english": "The Prince of Darkness",
+      "japanese": "光なき王子"
+    },
+    {
+      "id": "The Professor",
+      "english": "The Professor",
+      "japanese": "教授"
+    },
+    {
+      "id": "The Progeny of Lunaris",
+      "english": "The Progeny of Lunaris",
+      "japanese": "ルナリスの子孫"
+    },
+    {
+      "id": "The Puzzle",
+      "english": "The Puzzle",
+      "japanese": "パズル"
+    },
+    {
+      "id": "The Queen",
+      "english": "The Queen",
+      "japanese": "女王"
+    },
+    {
+      "id": "The Rabbit's Foot",
+      "english": "The Rabbit's Foot",
+      "japanese": "兎の足"
+    },
+    {
+      "id": "The Rabid Rhoa",
+      "english": "The Rabid Rhoa",
+      "japanese": "狂犬病のロア"
+    },
+    {
+      "id": "The Realm",
+      "english": "The Realm",
+      "japanese": "異世界"
+    },
+    {
+      "id": "Reflection of the Heart",
+      "english": "Reflection of the Heart",
+      "japanese": "心臓の鏡像"
+    },
+    {
+      "id": "The Return of the Rat",
+      "english": "The Return of the Rat",
+      "japanese": "鼠の帰還"
+    },
+    {
+      "id": "The Risk",
+      "english": "The Risk",
+      "japanese": "リスク"
+    },
+    {
+      "id": "The Rite of Elements",
+      "english": "The Rite of Elements",
+      "japanese": "精霊の儀式"
+    },
+    {
+      "id": "The Road to Power",
+      "english": "The Road to Power",
+      "japanese": "力への道"
+    },
+    {
+      "id": "The Ruthless Ceinture",
+      "english": "The Ruthless Ceinture",
+      "japanese": "無慈悲なベルト"
+    },
+    {
+      "id": "The Sacrifice",
+      "english": "The Sacrifice",
+      "japanese": "生贄"
+    },
+    {
+      "id": "The Saint's Treasure",
+      "english": "The Saint's Treasure",
+      "japanese": "聖者の宝物"
+    },
+    {
+      "id": "The Samurai's Eye",
+      "english": "The Samurai's Eye",
+      "japanese": "侍の眼"
+    },
+    {
+      "id": "The Scarred Meadow",
+      "english": "The Scarred Meadow",
+      "japanese": "傷ついた牧草地"
+    },
+    {
+      "id": "The Scavenger",
+      "english": "The Scavenger",
+      "japanese": "スカベンジャー"
+    },
+    {
+      "id": "The Scholar",
+      "english": "The Scholar",
+      "japanese": "学者"
+    },
+    {
+      "id": "The Scout",
+      "english": "The Scout",
+      "japanese": "偵察"
+    },
+    {
+      "id": "The Seeker",
+      "english": "The Seeker",
+      "japanese": "追い求める者"
+    },
+    {
+      "id": "The Sephirot",
+      "english": "The Sephirot",
+      "japanese": "セフィロト"
+    },
+    {
+      "id": "The Shepherd's Sandals",
+      "english": "The Shepherd's Sandals",
+      "japanese": "羊飼いのサンダル"
+    },
+    {
+      "id": "The Shieldbearer",
+      "english": "The Shieldbearer",
+      "japanese": "盾を持つ者"
+    },
+    {
+      "id": "The Shortcut",
+      "english": "The Shortcut",
+      "japanese": "近道"
+    },
+    {
+      "id": "The Side Quest",
+      "english": "The Side Quest",
+      "japanese": "サイドクエスト"
+    },
+    {
+      "id": "The Sigil",
+      "english": "The Sigil",
+      "japanese": "紋章"
+    },
+    {
+      "id": "The Silly Boy",
+      "english": "The Silly Boy",
+      "japanese": "愚かな少年"
+    },
+    {
+      "id": "The Siren",
+      "english": "The Siren",
+      "japanese": "セイレーン"
+    },
+    {
+      "id": "The Skeleton",
+      "english": "The Skeleton",
+      "japanese": "骨格"
+    },
+    {
+      "id": "The Slumbering Beast",
+      "english": "The Slumbering Beast",
+      "japanese": "まどろむ獣"
+    },
+    {
+      "id": "The Soul",
+      "english": "The Soul",
+      "japanese": "たましい"
+    },
+    {
+      "id": "The Spark and the Flame",
+      "english": "The Spark and the Flame",
+      "japanese": "閃光と炎"
+    },
+    {
+      "id": "The Spoiled Prince",
+      "english": "The Spoiled Prince",
+      "japanese": "甘やかされた王子"
+    },
+    {
+      "id": "The Standoff",
+      "english": "The Standoff",
+      "japanese": "引き分け"
+    },
+    {
+      "id": "The Stormcaller",
+      "english": "The Stormcaller",
+      "japanese": "嵐を呼ぶ者"
+    },
+    {
+      "id": "The Strategist",
+      "english": "The Strategist",
+      "japanese": "戦略家"
+    },
+    {
+      "id": "The Summoner",
+      "english": "The Summoner",
+      "japanese": "召喚士"
+    },
+    {
+      "id": "The Sun",
+      "english": "The Sun",
+      "japanese": "太陽"
+    },
+    {
+      "id": "The Surgeon",
+      "english": "The Surgeon",
+      "japanese": "外科医"
+    },
+    {
+      "id": "The Surveyor",
+      "english": "The Surveyor",
+      "japanese": "測量士"
+    },
+    {
+      "id": "The Survivalist",
+      "english": "The Survivalist",
+      "japanese": "サバイバリスト"
+    },
+    {
+      "id": "The Sustenance",
+      "english": "The Sustenance",
+      "japanese": "生命の持続"
+    },
+    {
+      "id": "The Sword King's Salute",
+      "english": "The Sword King's Salute",
+      "japanese": "剣の王の敬礼"
+    },
+    {
+      "id": "The Thaumaturgist",
+      "english": "The Thaumaturgist",
+      "japanese": "魔術師"
+    },
+    {
+      "id": "The Throne",
+      "english": "The Throne",
+      "japanese": "玉座"
+    },
+    {
+      "id": "The Tinkerer's Table",
+      "english": "The Tinkerer's Table",
+      "japanese": "機械いじり屋のテーブル"
+    },
+    {
+      "id": "The Tireless Extractor",
+      "english": "The Tireless Extractor",
+      "japanese": "弛まぬ抽出者"
+    },
+    {
+      "id": "The Tower",
+      "english": "The Tower",
+      "japanese": "タワー"
+    },
+    {
+      "id": "The Traitor",
+      "english": "The Traitor",
+      "japanese": "反逆者"
+    },
+    {
+      "id": "The Transformation",
+      "english": "The Transformation",
+      "japanese": "変身"
+    },
+    {
+      "id": "The Trial",
+      "english": "The Trial",
+      "japanese": "試練"
+    },
+    {
+      "id": "The Tumbleweed",
+      "english": "The Tumbleweed",
+      "japanese": "タンブルウィード"
+    },
+    {
+      "id": "The Twilight Moon",
+      "english": "The Twilight Moon",
+      "japanese": "黄昏の月"
+    },
+    {
+      "id": "The Twins",
+      "english": "The Twins",
+      "japanese": "双子"
+    },
+    {
+      "id": "The Tyrant",
+      "english": "The Tyrant",
+      "japanese": "暴君"
+    },
+    {
+      "id": "The Undaunted",
+      "english": "The Undaunted",
+      "japanese": "不屈の者"
+    },
+    {
+      "id": "The Undisputed",
+      "english": "The Undisputed",
+      "japanese": "誰もが認める者"
+    },
+    {
+      "id": "The Unexpected Prize",
+      "english": "The Unexpected Prize",
+      "japanese": "予期しない掘り出し物"
+    },
+    {
+      "id": "The Union",
+      "english": "The Union",
+      "japanese": "結婚"
+    },
+    {
+      "id": "The Valkyrie",
+      "english": "The Valkyrie",
+      "japanese": "ヴァルキリー"
+    },
+    {
+      "id": "The Valley of Steel Boxes",
+      "english": "The Valley of Steel Boxes",
+      "japanese": "鋼鉄の箱の谷"
+    },
+    {
+      "id": "The Vast",
+      "english": "The Vast",
+      "japanese": "広大"
+    },
+    {
+      "id": "The Visionary",
+      "english": "The Visionary",
+      "japanese": "幻視者"
+    },
+    {
+      "id": "The Void",
+      "english": "The Void",
+      "japanese": "虚空"
+    },
+    {
+      "id": "The Warden",
+      "english": "The Warden",
+      "japanese": "刑務所長"
+    },
+    {
+      "id": "The Warlord",
+      "english": "The Warlord",
+      "japanese": "将軍"
+    },
+    {
+      "id": "The Watcher",
+      "english": "The Watcher",
+      "japanese": "傍観者"
+    },
+    {
+      "id": "The Web",
+      "english": "The Web",
+      "japanese": "蜘蛛の巣"
+    },
+    {
+      "id": "The Wedding Gift",
+      "english": "The Wedding Gift",
+      "japanese": "結婚祝い"
+    },
+    {
+      "id": "The White Knight",
+      "english": "The White Knight",
+      "japanese": "白騎士"
+    },
+    {
+      "id": "The Whiteout",
+      "english": "The Whiteout",
+      "japanese": "ホワイトアウト"
+    },
+    {
+      "id": "The Wilted Rose",
+      "english": "The Wilted Rose",
+      "japanese": "しおれたバラ"
+    },
+    {
+      "id": "The Wind",
+      "english": "The Wind",
+      "japanese": "疾風"
+    },
+    {
+      "id": "The Witch",
+      "english": "The Witch",
+      "japanese": "魔女"
+    },
+    {
+      "id": "The Wolf",
+      "english": "The Wolf",
+      "japanese": "オオカミ"
+    },
+    {
+      "id": "The Wolf's Legacy",
+      "english": "The Wolf's Legacy",
+      "japanese": "狼の遺産"
+    },
+    {
+      "id": "The Wolf's Shadow",
+      "english": "The Wolf's Shadow",
+      "japanese": "狼の影"
+    },
+    {
+      "id": "The Wolven King's Bite",
+      "english": "The Wolven King's Bite",
+      "japanese": "狼王の咬合"
+    },
+    {
+      "id": "The Wolverine",
+      "english": "The Wolverine",
+      "japanese": "クズリ"
+    },
+    {
+      "id": "The World Eater",
+      "english": "The World Eater",
+      "japanese": "イーター・オブ・ワールズ"
+    },
+    {
+      "id": "The Wrath",
+      "english": "The Wrath",
+      "japanese": "憤怒"
+    },
+    {
+      "id": "The Wretched",
+      "english": "The Wretched",
+      "japanese": "卑劣なる者"
+    },
+    {
+      "id": "Thirst for Knowledge",
+      "english": "Thirst for Knowledge",
+      "japanese": "知識への渇望"
+    },
+    {
+      "id": "Three Faces in the Dark",
+      "english": "Three Faces in the Dark",
+      "japanese": "闇の中の三つの顔"
+    },
+    {
+      "id": "Three Voices",
+      "english": "Three Voices",
+      "japanese": "3つの声"
+    },
+    {
+      "id": "Thunderous Skies",
+      "english": "Thunderous Skies",
+      "japanese": "万雷の空"
+    },
+    {
+      "id": "Time-Lost Relic",
+      "english": "Time-Lost Relic",
+      "japanese": "失われた遺物"
+    },
+    {
+      "id": "Toxic Tidings",
+      "english": "Toxic Tidings",
+      "japanese": "有毒な知らせ"
+    },
+    {
+      "id": "Tranquillity",
+      "english": "Tranquillity",
+      "japanese": "平穏"
+    },
+    {
+      "id": "Treasure Hunter",
+      "english": "Treasure Hunter",
+      "japanese": "トレジャーハンター"
+    },
+    {
+      "id": "Triskaidekaphobia",
+      "english": "Triskaidekaphobia",
+      "japanese": "13恐怖症"
+    },
+    {
+      "id": "Turn the Other Cheek",
+      "english": "Turn the Other Cheek",
+      "japanese": "別の頬を出せ"
+    },
+    {
+      "id": "Unchained",
+      "english": "Unchained",
+      "japanese": "鎖を解かれし者"
+    },
+    {
+      "id": "Underground Forest",
+      "english": "Underground Forest",
+      "japanese": "地下の森"
+    },
+    {
+      "id": "Unrequited Love",
+      "english": "Unrequited Love",
+      "japanese": "片思い"
+    },
+    {
+      "id": "Vanity",
+      "english": "Vanity",
+      "japanese": "虚栄心"
+    },
+    {
+      "id": "Vile Power",
+      "english": "Vile Power",
+      "japanese": "卑劣な力"
+    },
+    {
+      "id": "Vinia's Token",
+      "english": "Vinia's Token",
+      "japanese": "ヴィニアの形見"
+    },
+    {
+      "id": "Void of the Elements",
+      "english": "Void of the Elements",
+      "japanese": "元素の不存在"
+    },
+    {
+      "id": "Volatile Power",
+      "english": "Volatile Power",
+      "japanese": "危険な力"
+    },
+    {
+      "id": "Wealth and Power",
+      "english": "Wealth and Power",
+      "japanese": "富と権力"
+    },
+    {
+      "id": "When Currents Blaze",
+      "english": "When Currents Blaze",
+      "japanese": "流れが燃える時"
+    },
+    {
+      "id": "Who Asked",
+      "english": "Who Asked",
+      "japanese": "依頼人"
+    },
+    {
+      "id": "Winter's Embrace",
+      "english": "Winter's Embrace",
+      "japanese": "冬の抱擁"
+    }
+  ]
+}

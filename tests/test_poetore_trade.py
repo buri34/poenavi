@@ -27,8 +27,11 @@ from src.poetore.trade import _awakened_tier_tags
 from src.poetore.trade import _apply_atzoatl_room_rules
 from src.poetore.trade import _group_price_listings
 from src.poetore.trade import (
+    _divination_card_identities,
+    _english_divination_card_type,
     _english_trade_item_name,
     _english_trade_item_type,
+    _japanese_divination_card_type,
     _japanese_trade_item_name,
     _japanese_trade_item_type,
 )
@@ -78,6 +81,83 @@ def test_japanese_trade_item_label_falls_back_to_english_name():
     ):
         assert japanese_trade_item_label("UNIQUE", "Unknown Unique") == "Unknown Unique"
         assert japanese_trade_item_label("ITEM", "Unknown Item") == "Unknown Item"
+
+
+def test_divination_card_identity_catalog_is_complete_and_stable():
+    identities = _divination_card_identities()
+
+    assert len(identities) == 467
+    assert len({english for english, _japanese in identities}) == 467
+    assert len({japanese for _english, japanese in identities}) == 465
+    assert {
+        english for english, japanese in identities if japanese == "取り引き"
+    } == {"The Bargain", "The Deal"}
+    assert {
+        english for english, japanese in identities if japanese == "生贄"
+    } == {"The Offering", "The Sacrifice"}
+
+
+@pytest.mark.parametrize(("japanese", "english"), (
+    ("闇の魔術師", "The Dark Mage"),
+    ("欺く者", "The Deceiver"),
+    ("悪霊", "The Fiend"),
+    ("最後の仕上げ", "The Finishing Touch"),
+    ("聖者の宝物", "The Saint's Treasure"),
+    ("侍の眼", "The Samurai's Eye"),
+    ("冬の抱擁", "Winter's Embrace"),
+))
+def test_divination_card_identity_does_not_depend_on_api_array_position(
+    japanese, english,
+):
+    assert _english_divination_card_type(japanese) == english
+    assert _japanese_divination_card_type(english) == japanese
+    assert _english_trade_item_type(japanese, "divination_card") == english
+    assert japanese_trade_item_label("DIVINATION_CARD", english) == japanese
+
+
+@pytest.mark.parametrize("japanese", ("取り引き", "生贄"))
+def test_ambiguous_japanese_divination_card_name_is_not_misidentified(japanese):
+    assert _english_divination_card_type(japanese) is None
+    assert _english_trade_item_type(japanese, "divination_card") is None
+
+
+def test_finishing_touch_uses_correct_english_trade_identity_and_query():
+    item = parse_item_text("""アイテムクラス: 占いカード
+レアリティ: ノーマル
+最後の仕上げ
+--------
+スタック数: 1/10
+--------
+報酬
+""")
+
+    trade_type, trade_name = english_trade_identity(item)
+    query = build_search_query(item, trade_type, trade_name=trade_name)["query"]
+
+    assert item.category == "divination_card"
+    assert trade_type == "The Finishing Touch"
+    assert trade_name is None
+    assert query["type"] == "The Finishing Touch"
+
+
+def test_finishing_touch_search_and_japanese_link_keep_the_same_identity():
+    item = parse_item_text("""アイテムクラス: 占いカード
+レアリティ: ノーマル
+最後の仕上げ
+--------
+スタック数: 1/10
+""")
+    response = ({"id": "qid", "result": [], "total": 0}, {}, False)
+
+    with patch(
+        "src.poetore.trade._cached_request_json", return_value=response,
+    ) as request:
+        result = search_prices(item, league="Standard")
+
+    api_payload = request.call_args.args[1]
+    web_payload = json.loads(parse_qs(urlsplit(result.web_url).query)["q"][0])
+    assert api_payload["query"]["type"] == "The Finishing Touch"
+    assert web_payload["query"]["type"] == "最後の仕上げ"
 
 
 ITEM = """Item Class: Two Hand Swords

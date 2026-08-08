@@ -4,6 +4,7 @@ from src.poetore.poe_ninja import (
     match_poe_ninja_price,
     match_poe_ninja_identity,
 )
+from src.poetore.trade import english_trade_identity
 
 
 def test_related_item_identity_matches_unique_variant():
@@ -166,6 +167,33 @@ def test_exact_name_item_price_is_supported():
     item = ParsedItem("Divination Cards", "Normal", "The Doctor", "The Doctor", "divination_card")
     price = match_poe_ninja_price(_payload(), item, "Standard", trade_base_type="The Doctor")
     assert price is not None and price.chaos == 1800
+
+
+def test_japanese_finishing_touch_uses_correct_poe_ninja_identity():
+    payload = {
+        "itemOverviews": [{
+            "type": "DivinationCard",
+            "lines": [
+                {"name": "The Fiend", "chaos": 1000, "graph": []},
+                {"name": "The Finishing Touch", "chaos": 7, "graph": []},
+            ],
+        }],
+    }
+    item = ParsedItem(
+        "占いカード", "ノーマル", "最後の仕上げ", "最後の仕上げ",
+        "divination_card",
+    )
+    trade_type, trade_name = english_trade_identity(item)
+
+    price = match_poe_ninja_price(
+        payload, item, "Standard",
+        trade_name=trade_name, trade_base_type=trade_type,
+    )
+
+    assert trade_type == "The Finishing Touch"
+    assert price is not None
+    assert price.name == "The Finishing Touch"
+    assert price.chaos == 7
 
 
 def test_duplicate_currency_overviews_are_deduplicated():
