@@ -176,6 +176,22 @@ def test_capture_from_poe_remembers_the_verified_game_window(qapp):
         window.close()
 
 
+def test_auto_hide_capture_remembers_mode_and_cursor_origin(qapp):
+    window = PoetoreWindow()
+    context = PlacementContext(QRect(0, 0, 1920, 1080), QPoint(500, 400))
+    try:
+        with patch("src.poetore.ui.capture_placement_context", return_value=context), patch(
+            "pynput.keyboard.Controller"
+        ), patch.object(QTimer, "singleShot"):
+            window.capture_from_poe(auto_hide=True)
+
+        assert window._capture_auto_hide is True
+        assert window._auto_hide_hotkey_released is False
+        assert window._auto_hide_origin == QPoint(500, 400)
+    finally:
+        window.close()
+
+
 def test_capture_copy_starts_as_soon_as_hotkey_is_fully_released(qapp):
     window = PoetoreWindow()
     try:
@@ -408,6 +424,50 @@ def test_passive_hotkey_display_closes_only_for_outside_click(qapp):
 
         window._handle_global_mouse_press(50, 50)
         assert not window.isVisible()
+    finally:
+        window.close()
+
+
+def test_auto_hide_closes_only_after_release_and_mouse_threshold(qapp):
+    window = PoetoreWindow()
+    try:
+        window.setGeometry(1000, 100, 720, 1039)
+        window.show()
+        window._passive_hotkey_display = True
+        window._capture_auto_hide = True
+        window._auto_hide_origin = QPoint(500, 400)
+        qapp.processEvents()
+
+        window._handle_global_mouse_move(550, 400)
+        assert window.isVisible()
+
+        window.capture_hotkey_released()
+        window._handle_global_mouse_move(520, 400)
+        assert window.isVisible()
+        window._handle_global_mouse_move(541, 400)
+        assert not window.isVisible()
+    finally:
+        window.close()
+
+
+def test_auto_hide_can_become_interactive_while_hotkey_is_held(qapp):
+    window = PoetoreWindow()
+    try:
+        window.setGeometry(100, 100, 720, 1039)
+        window.show()
+        window._passive_hotkey_display = True
+        window._capture_auto_hide = True
+        window._auto_hide_hotkey_released = False
+        qapp.processEvents()
+
+        with patch.object(window, "_stop_outside_click_listener") as stop, patch.object(
+            window, "activateWindow"
+        ) as activate:
+            window._handle_global_mouse_move(200, 200)
+
+        assert window._passive_hotkey_display is False
+        stop.assert_called_once_with()
+        activate.assert_called_once_with()
     finally:
         window.close()
 

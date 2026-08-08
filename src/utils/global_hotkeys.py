@@ -135,7 +135,9 @@ class GlobalHotkeyService(QObject):
                 if (configured and combo not in triggered_combos
                         and self._action_is_allowed(configured)):
                     triggered_combos.add(combo)
-                    if configured in {"poetore_capture", "map_check"}:
+                    if configured in {
+                        "poetore_capture", "poetore_auto_hide", "map_check",
+                    }:
                         pending_releases[combo] = frozenset(combo.split("+"))
                     self.command.emit(configured)
 

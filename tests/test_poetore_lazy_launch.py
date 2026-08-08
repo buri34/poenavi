@@ -48,6 +48,21 @@ class PoetoreLazyLaunchTest(unittest.TestCase):
 
         window._poetore_window.capture_hotkey_released.assert_called_once_with()
 
+    def test_auto_hide_capture_uses_passive_mode(self):
+        window = MainWindow.__new__(MainWindow)
+        poetore_window = Mock()
+        trace = Mock()
+        with patch(
+            "src.poetore.performance.start_search_trace", return_value=trace,
+        ), patch(
+            "src.poetore.ui.show_poetore_window", return_value=poetore_window,
+        ):
+            MainWindow.capture_poetore_item(window, auto_hide=True)
+
+        poetore_window.capture_from_poe.assert_called_once_with(
+            trace, auto_hide=True,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

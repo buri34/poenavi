@@ -60,6 +60,7 @@ class _TradeSignals(QObject):
     divine_rate_ready = Signal(object, object)
     divine_rate_failed = Signal(object)
     global_mouse_pressed = Signal(int, int)
+    global_mouse_moved = Signal(int, int)
 
 
 _INFLUENCE_CHIPS = {
@@ -877,6 +878,9 @@ class PoetoreWindow(QWidget):
         self._focus_signal_connected = False
         self._outside_click_listener = None
         self._passive_hotkey_display = False
+        self._capture_auto_hide = False
+        self._auto_hide_hotkey_released = False
+        self._auto_hide_origin: QPoint | None = None
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -1422,6 +1426,7 @@ class PoetoreWindow(QWidget):
         self._trade_signals.divine_rate_ready.connect(self._show_divine_rate)
         self._trade_signals.divine_rate_failed.connect(self._hide_divine_rate)
         self._trade_signals.global_mouse_pressed.connect(self._handle_global_mouse_press)
+        self._trade_signals.global_mouse_moved.connect(self._handle_global_mouse_move)
         self._trade_base_type = None
         self._trade_item_name = None
         self._preset_item_key = None
@@ -2612,7 +2617,12 @@ class PoetoreWindow(QWidget):
             self._focus_signal_connected = False
         super().closeEvent(event)
 
-    def capture_from_poe(self, performance_trace: SearchPerformanceTrace | None = None):
+    def capture_from_poe(
+        self,
+        performance_trace: SearchPerformanceTrace | None = None,
+        *,
+        auto_hide: bool = False,
+    ):
         """PoE 3.29以降の詳細形式コピーを一度だけ取得して解析する。"""
         from pynput.keyboard import Controller, Key
 
@@ -2622,6 +2632,9 @@ class PoetoreWindow(QWidget):
 
         # この時点ではPoEが前面。コピー後にぽえとれがフォーカスを取る前に保存する。
         self._placement_context = capture_placement_context()
+        self._capture_auto_hide = auto_hide
+        self._auto_hide_hotkey_released = False
+        self._auto_hide_origin = self._placement_context.cursor_pos
         foreground = get_foreground_window()
         self._poe_window_hwnd = (
             foreground if is_path_of_exile_window(foreground) else None
@@ -2639,6 +2652,8 @@ class PoetoreWindow(QWidget):
 
     def capture_hotkey_released(self):
         """Start copying once every key in the configured capture hotkey is up."""
+        if self._capture_auto_hide:
+            self._auto_hide_hotkey_released = True
         generation = getattr(self, "_capture_release_generation", None)
         if generation is not None:
             self._start_capture_copy(generation, "hotkey_released")
@@ -2776,7 +2791,9 @@ class PoetoreWindow(QWidget):
         self.parse_current_text()
         if trace is not None:
             trace.mark("capture_ui_populated")
-        self.show_at_context(self._placement_context, activate=True)
+        self.show_at_context(
+            self._placement_context, activate=not self._capture_auto_hide,
+        )
         if trace is not None:
             trace.mark("window_shown")
         self.search_current_item()
@@ -2813,7 +2830,12 @@ class PoetoreWindow(QWidget):
             if pressed:
                 self._trade_signals.global_mouse_pressed.emit(round(x), round(y))
 
-        self._outside_click_listener = mouse.Listener(on_click=on_click)
+        def on_move(x, y):
+            self._trade_signals.global_mouse_moved.emit(round(x), round(y))
+
+        self._outside_click_listener = mouse.Listener(
+            on_click=on_click, on_move=on_move,
+        )
         self._outside_click_listener.start()
 
     def _stop_outside_click_listener(self):
@@ -2826,6 +2848,24 @@ class PoetoreWindow(QWidget):
         if not self.isVisible() or not self._passive_hotkey_display:
             return
         if not self.frameGeometry().contains(QPoint(x, y)):
+            self.close()
+
+    def _handle_global_mouse_move(self, x: int, y: int):
+        """Mirror Awakened's AUTO-HIDE behavior without stealing PoE focus."""
+        if not self.isVisible() or not self._passive_hotkey_display:
+            return
+        point = QPoint(x, y)
+        if not self._auto_hide_hotkey_released:
+            if self.frameGeometry().contains(point):
+                self._passive_hotkey_display = False
+                self._stop_outside_click_listener()
+                self.activateWindow()
+                self.setFocus(Qt.OtherFocusReason)
+            return
+        origin = self._auto_hide_origin
+        if origin is not None and (
+            (point.x() - origin.x()) ** 2 + (point.y() - origin.y()) ** 2
+        ) >= 40 ** 2:
             self.close()
 
     def parse_current_text(self):

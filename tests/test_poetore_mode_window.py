@@ -13,6 +13,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
             "exit": "F5",
             "monastery": "F12",
             "poetore_capture": "alt+d",
+            "poetore_auto_hide": "ctrl+d",
             "map_check": "alt+f",
             "cheat_sheets_toggle": "shift+space",
             "start_stop": "F7",
@@ -37,6 +38,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
         "exit": "F5",
         "monastery": "F12",
         "poetore_capture": "alt+d",
+        "poetore_auto_hide": "ctrl+d",
         "map_check": "alt+f",
         "cheat_sheets_toggle": "shift+space",
     }
@@ -64,7 +66,8 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert window.width() == 558
     assert window.windowFlags() & Qt.FramelessWindowHint
     assert window.capture_hint.text() == (
-        "アイテムにマウスオーバーしながらAlt + Dで価格チェック"
+        "アイテムにマウスオーバーして Alt + D 操作モード / "
+        "Ctrl + D AUTO-HIDE"
     )
     minimize_button = window.findChild(QPushButton, "poetoreMinimizeButton")
     close_button = window.findChild(QPushButton, "poetoreCloseButton")
@@ -181,9 +184,23 @@ def test_poetore_mode_forwards_capture_hotkey_release():
     window._poetore_window.capture_hotkey_released.assert_called_once_with()
 
 
+def test_poetore_mode_starts_auto_hide_capture_and_forwards_release():
+    window = MagicMock()
+    window._poetore_window = MagicMock()
+
+    PoetoreModeWindow.handle_hotkey(window, "poetore_auto_hide")
+    PoetoreModeWindow.handle_hotkey(window, "poetore_auto_hide_released")
+
+    window.capture_poetore_item.assert_called_once_with(auto_hide=True)
+    window._poetore_window.capture_hotkey_released.assert_called_once_with()
+
+
 def test_poetore_mode_capture_hint_uses_configured_hotkey():
     app = QApplication.instance() or QApplication([])
-    config = {"hotkeys": {"poetore_capture": "Ctrl+Shift+P"}}
+    config = {"hotkeys": {
+        "poetore_capture": "Ctrl+Shift+P",
+        "poetore_auto_hide": "Alt+Q",
+    }}
 
     with patch(
         "src.ui.poetore_mode_window.ConfigManager.load_config",
@@ -194,9 +211,11 @@ def test_poetore_mode_capture_hint_uses_configured_hotkey():
         window = PoetoreModeWindow()
 
     assert window.capture_hint.text() == (
-        "アイテムにマウスオーバーしながらCtrl + Shift + Pで価格チェック"
+        "アイテムにマウスオーバーして Ctrl + Shift + P 操作モード / "
+        "Alt + Q AUTO-HIDE"
     )
     window.config["hotkeys"]["poetore_capture"] = "none"
+    window.config["hotkeys"]["poetore_auto_hide"] = "none"
     window._update_capture_hint()
     assert window.capture_hint.text() == "価格チェックのホットキーが設定されていません。"
     window.close()

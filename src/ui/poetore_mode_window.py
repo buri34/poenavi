@@ -271,6 +271,7 @@ class PoetoreModeWindow(QMainWindow):
         "exit": "F5",
         "monastery": "F12",
         "poetore_capture": "alt+d",
+        "poetore_auto_hide": "ctrl+d",
         "map_check": "alt+f",
         "cheat_sheets_toggle": "shift+space",
     }
@@ -579,11 +580,21 @@ class PoetoreModeWindow(QMainWindow):
         return " + ".join(part.strip() for part in display.split("+"))
 
     def _update_capture_hint(self):
-        hotkey = self.config.get("hotkeys", {}).get("poetore_capture", "alt+d")
-        display_hotkey = self._display_hotkey(hotkey)
-        if display_hotkey:
+        hotkeys = self.config.get("hotkeys", {})
+        interactive = self._display_hotkey(
+            hotkeys.get("poetore_capture", "alt+d")
+        )
+        auto_hide = self._display_hotkey(
+            hotkeys.get("poetore_auto_hide", "ctrl+d")
+        )
+        modes = []
+        if interactive:
+            modes.append(f"{interactive} 操作モード")
+        if auto_hide:
+            modes.append(f"{auto_hide} AUTO-HIDE")
+        if modes:
             self.capture_hint.setText(
-                f"アイテムにマウスオーバーしながら{display_hotkey}で価格チェック"
+                "アイテムにマウスオーバーして " + " / ".join(modes)
             )
         else:
             self.capture_hint.setText("価格チェックのホットキーが設定されていません。")
@@ -647,6 +658,12 @@ class PoetoreModeWindow(QMainWindow):
             window = getattr(self, "_poetore_window", None)
             if window is not None:
                 window.capture_hotkey_released()
+        elif command == "poetore_auto_hide":
+            self.capture_poetore_item(auto_hide=True)
+        elif command == "poetore_auto_hide_released":
+            window = getattr(self, "_poetore_window", None)
+            if window is not None:
+                window.capture_hotkey_released()
         elif command == "map_check":
             self.capture_map_check_item()
         elif command == "map_check_released":
@@ -662,17 +679,23 @@ class PoetoreModeWindow(QMainWindow):
         elif command == "monastery":
             self.execute_chat_command("/monastery")
 
-    def capture_poetore_item(self):
+    def capture_poetore_item(self, auto_hide=False):
         started_at = time.perf_counter()
         from src.poetore.performance import start_search_trace
 
-        trace = start_search_trace("alt_d_poetore_mode", started_at=started_at)
+        trace = start_search_trace(
+            "auto_hide_poetore_mode" if auto_hide else "interactive_poetore_mode",
+            started_at=started_at,
+        )
         trace.mark("hotkey_dispatched")
         from src.poetore.ui import show_poetore_window
 
         window = show_poetore_window(self, activate=False)
         trace.mark("poetore_window_ready")
-        window.capture_from_poe(trace)
+        if auto_hide:
+            window.capture_from_poe(trace, auto_hide=True)
+        else:
+            window.capture_from_poe(trace)
 
     def _save_map_check_config(self, map_check_config):
         self.config["map_check"] = dict(map_check_config)

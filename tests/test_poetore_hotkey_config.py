@@ -13,6 +13,12 @@ def test_alt_d_is_default_poetore_capture_hotkey():
     assert config["hotkeys"]["poetore_capture"] == "alt+d"
 
 
+def test_ctrl_d_is_default_poetore_auto_hide_hotkey():
+    with open("default_config.json", encoding="utf-8") as file:
+        config = json.load(file)
+    assert config["hotkeys"]["poetore_auto_hide"] == "ctrl+d"
+
+
 def test_alt_f_is_default_map_check_hotkey():
     with open("default_config.json", encoding="utf-8") as file:
         config = json.load(file)
@@ -197,6 +203,32 @@ def test_main_mode_waits_for_all_poetore_hotkey_keys_to_be_released(monkeypatch)
     assert emitted == ["poetore_capture", "poetore_capture_released"]
 
 
+def test_main_mode_emits_auto_hide_release_separately(monkeypatch):
+    callbacks = {}
+
+    class FakeListener:
+        def __init__(self, on_press, on_release):
+            callbacks["on_press"] = on_press
+            callbacks["on_release"] = on_release
+        def start(self): pass
+        def stop(self): pass
+
+    emitted = []
+    window = SimpleNamespace(
+        config={"hotkeys": {"poetore_auto_hide": "ctrl+d"}},
+        keyboard_listener=None,
+        hotkey_signal=SimpleNamespace(emit=emitted.append),
+        _hotkey_action_allowed=lambda _action: True,
+    )
+    monkeypatch.setattr("src.ui.main_window.pynput_keyboard.Listener", FakeListener)
+    MainWindow.register_hotkeys(window)
+    callbacks["on_press"](SimpleNamespace(name="ctrl"))
+    callbacks["on_press"](SimpleNamespace(char="d", vk=ord("D")))
+    callbacks["on_release"](SimpleNamespace(char="d", vk=ord("D")))
+    callbacks["on_release"](SimpleNamespace(name="ctrl"))
+    assert emitted == ["poetore_auto_hide", "poetore_auto_hide_released"]
+
+
 def test_main_mode_emits_map_check_release_separately(monkeypatch):
     callbacks = {}
 
@@ -254,14 +286,17 @@ def test_settings_dialog_can_change_poetore_capture_hotkey(monkeypatch):
     )
     try:
         assert dialog.poetore_capture_btn.key_text == "Ctrl+Shift+P"
+        assert dialog.poetore_auto_hide_btn.key_text == "ctrl+d"
         assert dialog.map_check_btn.key_text == "alt+f"
         assert dialog.cheat_sheets_toggle_btn.key_text == "shift+space"
         assert dialog.exit_btn.key_text == "F5"
         assert dialog.undo_lap_btn.key_text == "none"
         dialog.poetore_capture_btn.key_text = "Alt+Q"
+        dialog.poetore_auto_hide_btn.key_text = "Ctrl+Q"
         dialog.cheat_sheets_toggle_btn.key_text = "Ctrl+Space"
         dialog.exit_btn.key_text = "Ctrl+F5"
         assert dialog.get_settings()["hotkeys"]["poetore_capture"] == "Alt+Q"
+        assert dialog.get_settings()["hotkeys"]["poetore_auto_hide"] == "Ctrl+Q"
         assert dialog.get_settings()["hotkeys"]["cheat_sheets_toggle"] == "Ctrl+Space"
         assert dialog.get_settings()["hotkeys"]["exit"] == "Ctrl+F5"
     finally:

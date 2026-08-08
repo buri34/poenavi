@@ -3024,6 +3024,7 @@ class MainWindow(QMainWindow):
                                      ("exit", "F5"),
                                      ("monastery", "F12"),
                                      ("search_string_test", "F4"), ("poetore_capture", "alt+d"),
+                                     ("poetore_auto_hide", "ctrl+d"),
                                      ("map_check", "alt+f"),
                                      ("cheat_sheets_toggle", "shift+space")]:
                 key = hotkeys.get(action, default)
@@ -3094,7 +3095,9 @@ class MainWindow(QMainWindow):
                             command = self.hotkey_map[combo]
                             if emit_if_allowed(command):
                                 triggered_combos.add(combo)
-                                if command in {"poetore_capture", "map_check"}:
+                                if command in {
+                                    "poetore_capture", "poetore_auto_hide", "map_check",
+                                }:
                                     pending_poetore_releases[combo] = (
                                         frozenset(combo.split("+")), command,
                                     )
@@ -3105,7 +3108,7 @@ class MainWindow(QMainWindow):
                         command = self.hotkey_map[key_name]
                         print(f"[HOTKEY DEBUG] key={key_name} command={command} search_in_progress={getattr(self, '_search_paste_in_progress', False)}")
                         if emit_if_allowed(command) and command in {
-                            "poetore_capture", "map_check",
+                            "poetore_capture", "poetore_auto_hide", "map_check",
                         }:
                             pending_poetore_releases[key_name] = (
                                 frozenset((key_name,)), command,
@@ -3183,6 +3186,12 @@ class MainWindow(QMainWindow):
         elif command == "poetore_capture":
             self.capture_poetore_item()
         elif command == "poetore_capture_released":
+            window = getattr(self, "_poetore_window", None)
+            if window is not None:
+                window.capture_hotkey_released()
+        elif command == "poetore_auto_hide":
+            self.capture_poetore_item(auto_hide=True)
+        elif command == "poetore_auto_hide_released":
             window = getattr(self, "_poetore_window", None)
             if window is not None:
                 window.capture_hotkey_released()
@@ -4318,13 +4327,15 @@ class MainWindow(QMainWindow):
 
         prepare_poetore_window(self)
 
-    def capture_poetore_item(self):
+    def capture_poetore_item(self, auto_hide=False):
         """設定済みホットキーからぽえとれを開き、PoE上のアイテムを自動取得する。"""
         started_at = time.perf_counter()
         from src.poetore.performance import start_search_trace
 
         trace = start_search_trace(
-            "alt_d_poetore_from_poenavi", started_at=started_at,
+            "auto_hide_poetore_from_poenavi" if auto_hide
+            else "interactive_poetore_from_poenavi",
+            started_at=started_at,
         )
         trace.mark("hotkey_dispatched")
         from src.poetore.ui import show_poetore_window
@@ -4332,7 +4343,10 @@ class MainWindow(QMainWindow):
         # コピーが終わるまでPoEからフォーカスを奪わない。
         window = show_poetore_window(self, activate=False)
         trace.mark("poetore_window_ready")
-        window.capture_from_poe(trace)
+        if auto_hide:
+            window.capture_from_poe(trace, auto_hide=True)
+        else:
+            window.capture_from_poe(trace)
 
     def _save_map_check_config(self, map_check_config):
         self.config["map_check"] = dict(map_check_config)

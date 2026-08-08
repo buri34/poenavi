@@ -1630,6 +1630,7 @@ class SettingsDialog(QDialog):
             "monastery": "F12",
             "search_string_test": "F4",
             "poetore_capture": "alt+d",
+            "poetore_auto_hide": "ctrl+d",
             "map_check": "alt+f",
             "gem_shop_search": "F2",
             "cheat_sheets_toggle": "shift+space",
@@ -1858,12 +1859,20 @@ class SettingsDialog(QDialog):
         group_layout.addLayout(h_layout9)
 
         h_layout10 = QHBoxLayout()
-        h_layout10.addWidget(QLabel("ぽえとれ検索:"))
+        h_layout10.addWidget(QLabel("ぽえとれ検索（操作モード）:"))
         self.poetore_capture_btn = HotkeyButton(
             self.hotkeys.get("poetore_capture", "alt+d")
         )
         h_layout10.addWidget(self.poetore_capture_btn)
         group_layout.addLayout(h_layout10)
+
+        poetore_auto_hide_layout = QHBoxLayout()
+        poetore_auto_hide_layout.addWidget(QLabel("ぽえとれ検索（AUTO-HIDE）:"))
+        self.poetore_auto_hide_btn = HotkeyButton(
+            self.hotkeys.get("poetore_auto_hide", "ctrl+d")
+        )
+        poetore_auto_hide_layout.addWidget(self.poetore_auto_hide_btn)
+        group_layout.addLayout(poetore_auto_hide_layout)
 
         map_check_layout = QHBoxLayout()
         map_check_layout.addWidget(QLabel("Map Modチェック:"))
@@ -2901,6 +2910,7 @@ class SettingsDialog(QDialog):
             "monastery": self.monastery_btn.key_text,
             "search_string_test": self.search_string_test_btn.key_text,
             "poetore_capture": self.poetore_capture_btn.key_text,
+            "poetore_auto_hide": self.poetore_auto_hide_btn.key_text,
             "map_check": self.map_check_btn.key_text,
             "gem_shop_search": self.gem_shop_search_btn.key_text,
             "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,
@@ -2919,7 +2929,8 @@ class SettingsDialog(QDialog):
                 "exit": "キャラクター選択へ戻る",
                 "monastery": "修道院へ移動",
                 "search_string_test": "検索文字列の貼り付け",
-                "poetore_capture": "ぽえとれ検索",
+                "poetore_capture": "ぽえとれ検索（操作モード）",
+                "poetore_auto_hide": "ぽえとれ検索（AUTO-HIDE）",
                 "map_check": "Map Modチェック",
                 "gem_shop_search": "ジェムショップ検索",
                 "cheat_sheets_toggle": "Cheat sheets表示",
@@ -2970,6 +2981,7 @@ class SettingsDialog(QDialog):
                 "monastery": self.monastery_btn.key_text,
                 "search_string_test": self.search_string_test_btn.key_text,
                 "poetore_capture": self.poetore_capture_btn.key_text,
+                "poetore_auto_hide": self.poetore_auto_hide_btn.key_text,
                 "map_check": self.map_check_btn.key_text,
                 "gem_shop_search": self.gem_shop_search_btn.key_text,
                 "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,

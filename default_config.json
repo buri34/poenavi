@@ -14,6 +14,7 @@
         "monastery": "F12",
         "search_string_test": "F4",
         "poetore_capture": "alt+d",
+        "poetore_auto_hide": "ctrl+d",
         "map_check": "alt+f",
         "gem_shop_search": "F2",
         "cheat_sheets_toggle": "shift+space"

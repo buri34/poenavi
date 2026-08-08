@@ -21,6 +21,7 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
                 "start_stop": "F7",
                 "monastery": "F12",
                 "poetore_capture": "alt+d",
+                "poetore_auto_hide": "ctrl+d",
             },
             "poetore": {"league": "auto"},
             "window_opacity": 80,
@@ -46,6 +47,7 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert settings["hotkeys"]["start_stop"] == "F7"
     assert settings["hotkeys"]["monastery"] == "F12"
     assert settings["hotkeys"]["poetore_capture"] == "alt+d"
+    assert settings["hotkeys"]["poetore_auto_hide"] == "ctrl+d"
     assert settings["window_opacity"] == 80
     assert settings["text_opacity"] == 70
     assert settings["window_locked"] is True

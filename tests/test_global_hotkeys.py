@@ -140,6 +140,24 @@ def test_capture_release_waits_for_every_key_regardless_of_release_order():
     assert emitted == ["poetore_capture", "poetore_capture_released"]
 
 
+def test_auto_hide_capture_emits_its_own_release_notification():
+    listeners = []
+    service = GlobalHotkeyService(
+        {"poetore_auto_hide": "ctrl+d"},
+        listener_factory=lambda **kwargs: listeners.append(FakeListener(**kwargs)) or listeners[-1],
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+
+    listeners[0].on_press(SimpleNamespace(name="ctrl"))
+    listeners[0].on_press(SimpleNamespace(char="d", vk=ord("D")))
+    listeners[0].on_release(SimpleNamespace(char="d", vk=ord("D")))
+    listeners[0].on_release(SimpleNamespace(name="ctrl"))
+
+    assert emitted == ["poetore_auto_hide", "poetore_auto_hide_released"]
+
+
 def test_map_check_uses_its_own_release_notification():
     listeners = []
     service = GlobalHotkeyService(

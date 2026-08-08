@@ -104,12 +104,16 @@ class PoetoreSettingsDialog(QDialog):
         self.exit_hotkey = HotkeyButton(hotkeys.get("exit", "F5"))
         self.monastery_hotkey = HotkeyButton(hotkeys.get("monastery", "F12"))
         self.capture_hotkey = HotkeyButton(hotkeys.get("poetore_capture", "alt+d"))
+        self.auto_hide_hotkey = HotkeyButton(
+            hotkeys.get("poetore_auto_hide", "ctrl+d")
+        )
         self.map_check_hotkey = HotkeyButton(hotkeys.get("map_check", "alt+f"))
         self.cheat_hotkey = HotkeyButton(
             hotkeys.get("cheat_sheets_toggle", "shift+space")
         )
         for button in (
             self.exit_hotkey, self.monastery_hotkey, self.capture_hotkey,
+            self.auto_hide_hotkey,
             self.map_check_hotkey, self.cheat_hotkey,
         ):
             # ぽえとれ画面の親スタイルを使い、操作だけぽえなびと共通化する。
@@ -118,7 +122,8 @@ class PoetoreSettingsDialog(QDialog):
         hotkey_form.addRow(
             "修道院へ移動（/monastery）:", self.monastery_hotkey
         )
-        hotkey_form.addRow("ぽえとれ検索:", self.capture_hotkey)
+        hotkey_form.addRow("ぽえとれ検索（操作モード）:", self.capture_hotkey)
+        hotkey_form.addRow("ぽえとれ検索（AUTO-HIDE）:", self.auto_hide_hotkey)
         hotkey_form.addRow("Map Modチェック:", self.map_check_hotkey)
         hotkey_form.addRow("Cheat sheets表示:", self.cheat_hotkey)
         basic_layout.addWidget(hotkey_group)
@@ -388,6 +393,7 @@ class PoetoreSettingsDialog(QDialog):
                 "exit": self.exit_hotkey.key_text,
                 "monastery": self.monastery_hotkey.key_text,
                 "poetore_capture": self.capture_hotkey.key_text,
+                "poetore_auto_hide": self.auto_hide_hotkey.key_text,
                 "map_check": self.map_check_hotkey.key_text,
                 "cheat_sheets_toggle": self.cheat_hotkey.key_text,
             }
@@ -415,6 +421,7 @@ class PoetoreSettingsDialog(QDialog):
             "exit": self.exit_hotkey.key_text,
             "monastery": self.monastery_hotkey.key_text,
             "poetore_capture": self.capture_hotkey.key_text,
+            "poetore_auto_hide": self.auto_hide_hotkey.key_text,
             "map_check": self.map_check_hotkey.key_text,
             "cheat_sheets_toggle": self.cheat_hotkey.key_text,
         }
@@ -425,7 +432,8 @@ class PoetoreSettingsDialog(QDialog):
             labels = {
                 "exit": "キャラクター選択へ戻る",
                 "monastery": "修道院へ移動",
-                "poetore_capture": "ぽえとれ検索",
+                "poetore_capture": "ぽえとれ検索（操作モード）",
+                "poetore_auto_hide": "ぽえとれ検索（AUTO-HIDE）",
                 "map_check": "Map Modチェック",
                 "cheat_sheets_toggle": "Cheat sheets表示",
             }
