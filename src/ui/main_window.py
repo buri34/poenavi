@@ -4605,19 +4605,30 @@ class MainWindow(QMainWindow):
             visit_num = self.zone_visit_counts.get(self.current_zone, 1)
             self._update_guide_and_map(self.current_zone, zone_id, visit_num)
 
-    def _reset_guide_progress_from_settings(self):
+    def _reset_guide_progress_from_settings(self, poe_version=None):
         """設定画面から、タイマーに触れずガイド進行だけを初期化する。"""
+        target_version = poe_version or self.poe_version
+        if target_version != self.poe_version:
+            filename = get_progress_flags_filename(target_version)
+            if filename:
+                path = ConfigManager.get_user_data_path(filename)
+                with open(path, 'w', encoding='utf-8') as f:
+                    json.dump({"active_flags": []}, f, ensure_ascii=False, indent=2)
+            return
+
         self.clear_progress_flags()
         self.visit_override = None
         self._update_visit_btn()
-        self._in_act10 = False
-        self._set_part2(False)
+        if self.poe_version == POE1:
+            self._in_act10 = False
+            self._set_part2(False)
         if self.current_zone:
             zone_id = self._get_zone_id(self.current_zone)
             self._update_guide_and_map(
                 self.current_zone,
                 zone_id,
-                self.zone_visit_counts.get(zone_id or self.current_zone, 1),
+                self.zone_visit_counts.get(zone_id or self.current_zone, 1)
+                if self.poe_version == POE1 else 1,
             )
 
     def _check_for_updates_from_settings(self, parent):

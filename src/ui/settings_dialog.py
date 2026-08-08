@@ -2476,20 +2476,12 @@ class SettingsDialog(QDialog):
         guide_reset_group = QGroupBox("ガイド進行のリセット")
         guide_reset_group.setStyleSheet(group_style)
         guide_reset_layout = QVBoxLayout(guide_reset_group)
-        guide_reset_description = QLabel(
-            "ガイド進行制御に用いるフラグ等の状態は、新しいキャラクターの開始時に"
-            "自動で検知して、初期状態にするため、通常は操作不要です。\n"
-            "にもかかわらず、フラグ等の状態が前のキャラクターから残っていると思われる場合は、"
-            "以下のボタンを押して初期状態に戻してください。タイマーの記録やぽえなびの設定は"
-            "変更されません。\n\n"
-            "なお、Act 6以降を攻略中の場合、リセット後にぽえなび本体のガイドタイル右側に"
-            "表示されている「Act 1-5」のトグルをクリックして「Act 6-10」表示へ"
-            "切り替えてください。"
-        )
-        guide_reset_description.setObjectName("guideProgressResetDescription")
-        guide_reset_description.setWordWrap(True)
-        guide_reset_description.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
-        guide_reset_layout.addWidget(guide_reset_description)
+        self.guide_reset_description = QLabel()
+        self.guide_reset_description.setObjectName("guideProgressResetDescription")
+        self.guide_reset_description.setWordWrap(True)
+        self.guide_reset_description.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        self._update_guide_reset_description()
+        guide_reset_layout.addWidget(self.guide_reset_description)
 
         self.guide_progress_reset_btn = QPushButton("ガイド進行を初期状態に戻す")
         self.guide_progress_reset_btn.setObjectName("guideProgressResetButton")
@@ -2515,25 +2507,54 @@ class SettingsDialog(QDialog):
             self.current_config.get("gem_shop_search_term_overrides", {}),
         )
         term_review_layout.addWidget(self.gem_shop_search_term_review)
-        tabs.addTab(term_review_tab, "Regex短縮設定")
-        tabs.addTab(other_tab, "その他")
-        tabs.addTab(about_tab, "アプリ情報")
+        self.settings_tabs = tabs
+        self.term_review_tab = term_review_tab
+        self.other_tab = other_tab
+        self.about_tab = about_tab
+        self._refresh_version_specific_tabs()
 
         layout.addWidget(tabs)
-        
+
         # OK/Cancel
         btn_layout = QHBoxLayout()
         self.ok_btn = QPushButton("保存")
         self.ok_btn.setStyleSheet(Styles.BUTTON)
         self.ok_btn.clicked.connect(self.accept)
-        
+
         self.cancel_btn = QPushButton("キャンセル")
         self.cancel_btn.setStyleSheet(Styles.BUTTON)
         self.cancel_btn.clicked.connect(self.reject)
-        
+
         btn_layout.addWidget(self.ok_btn)
         btn_layout.addWidget(self.cancel_btn)
         layout.addLayout(btn_layout)
+
+    def _update_guide_reset_description(self):
+        description = (
+            "ガイド進行制御に用いるフラグ等の状態は、新しいキャラクターの開始時に"
+            "自動で検知して、初期状態にするため、通常は操作不要です。\n"
+            "にもかかわらず、フラグ等の状態が前のキャラクターから残っていると思われる場合は、"
+            "以下のボタンを押して初期状態に戻してください。タイマーの記録やぽえなびの設定は"
+            "変更されません。"
+        )
+        if self.poe_version == POE1:
+            description += (
+                "\n\nなお、Act 6以降を攻略中の場合、リセット後にぽえなび本体のガイドタイル右側に"
+                "表示されている「Act 1-5」のトグルをクリックして「Act 6-10」表示へ"
+                "切り替えてください。"
+            )
+        self.guide_reset_description.setText(description)
+
+    def _refresh_version_specific_tabs(self):
+        for tab in (self.term_review_tab, self.other_tab, self.about_tab):
+            index = self.settings_tabs.indexOf(tab)
+            if index >= 0:
+                self.settings_tabs.removeTab(index)
+        if self.poe_version == POE1:
+            self.settings_tabs.addTab(self.term_review_tab, "Regex短縮設定")
+        self.settings_tabs.addTab(self.other_tab, "その他")
+        self.settings_tabs.addTab(self.about_tab, "アプリ情報")
+        self._update_guide_reset_description()
 
     def _confirm_guide_progress_reset(self):
         answer = QMessageBox.question(
@@ -2546,7 +2567,7 @@ class SettingsDialog(QDialog):
         )
         if answer != QMessageBox.Yes or self.guide_progress_reset_callback is None:
             return
-        self.guide_progress_reset_callback()
+        self.guide_progress_reset_callback(self.poe_version)
         QMessageBox.information(
             self,
             "リセット完了",
@@ -3069,6 +3090,7 @@ class SettingsDialog(QDialog):
         self.guide_data = load_guide_data(self.poe_version)
         self.town_zones_edit.setPlainText("\n".join(self.town_zones_by_version.get(self.poe_version, get_town_zones(self.poe_version))))
         self._rebuild_zone_tab()
+        self._refresh_version_specific_tabs()
 
     def accept(self):
         if not self.gem_shop_search_term_review.validate_term_overrides():

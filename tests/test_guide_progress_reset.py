@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QApplication, QLabel, QMessageBox, QPushButton, QT
 
 from src.ui.main_window import MainWindow
 from src.ui.settings_dialog import SettingsDialog
-from src.utils.poe_version_data import POE1
+from src.utils.poe_version_data import POE1, POE2
 
 
 class GuideProgressResetTest(unittest.TestCase):
@@ -46,11 +46,48 @@ class GuideProgressResetTest(unittest.TestCase):
         ):
             button.click()
 
-        callback.assert_called_once_with()
+        callback.assert_called_once_with(POE1)
         information.assert_called_once()
+
+    def test_poe2_hides_regex_tab_and_omits_poe1_only_reset_guidance(self):
+        callback = Mock()
+        dialog = SettingsDialog(
+            current_config={"poe_version": POE2},
+            guide_progress_reset_callback=callback,
+        )
+        tabs = dialog.findChild(QTabWidget)
+        tab_names = [tabs.tabText(index) for index in range(tabs.count())]
+
+        self.assertNotIn("Regex短縮設定", tab_names)
+        self.assertEqual(tab_names[-2:], ["その他", "アプリ情報"])
+        description = dialog.findChild(QLabel, "guideProgressResetDescription")
+        self.assertNotIn("なお、Act 6以降", description.text())
+
+        button = dialog.findChild(QPushButton, "guideProgressResetButton")
+        with (
+            patch.object(QMessageBox, "question", return_value=QMessageBox.Yes),
+            patch.object(QMessageBox, "information"),
+        ):
+            button.click()
+        callback.assert_called_once_with(POE2)
+
+    def test_switching_version_updates_version_specific_tabs_and_description(self):
+        dialog = SettingsDialog(current_config={"poe_version": POE1})
+        tabs = dialog.findChild(QTabWidget)
+        self.assertIn("Regex短縮設定", [tabs.tabText(i) for i in range(tabs.count())])
+
+        dialog.poe_version_radios[POE2].setChecked(True)
+        self.assertNotIn("Regex短縮設定", [tabs.tabText(i) for i in range(tabs.count())])
+        description = dialog.findChild(QLabel, "guideProgressResetDescription")
+        self.assertNotIn("なお、Act 6以降", description.text())
+
+        dialog.poe_version_radios[POE1].setChecked(True)
+        self.assertIn("Regex短縮設定", [tabs.tabText(i) for i in range(tabs.count())])
+        self.assertIn("なお、Act 6以降", description.text())
 
     def test_manual_reset_clears_guide_state_without_touching_timer(self):
         window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE1
         window.clear_progress_flags = Mock()
         window.visit_override = 3
         window._update_visit_btn = Mock()
@@ -68,6 +105,29 @@ class GuideProgressResetTest(unittest.TestCase):
         window._set_part2.assert_called_once_with(False)
         self.assertEqual(window.accumulated_time, 123.4)
         self.assertEqual(window.lap_times, [10.0, 20.0])
+
+    def test_resetting_inactive_poe2_version_clears_only_poe2_persisted_flags(self):
+        with TemporaryDirectory() as temp_dir:
+            progress_path = Path(temp_dir) / "progress_flags_poe2.json"
+            progress_path.write_text(
+                json.dumps({"active_flags": ["poe2_old_flag"]}),
+                encoding="utf-8",
+            )
+            window = MainWindow.__new__(MainWindow)
+            window.poe_version = POE1
+            window.clear_progress_flags = Mock()
+
+            with patch(
+                "src.ui.main_window.ConfigManager.get_user_data_path",
+                return_value=progress_path,
+            ):
+                MainWindow._reset_guide_progress_from_settings(window, POE2)
+
+            window.clear_progress_flags.assert_not_called()
+            self.assertEqual(
+                json.loads(progress_path.read_text(encoding="utf-8")),
+                {"active_flags": []},
+            )
 
     def test_twilight_then_level_two_clears_old_flags_and_persisted_state(self):
         with TemporaryDirectory() as temp_dir:
