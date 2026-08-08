@@ -4,6 +4,7 @@ from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QSystemTrayIcon
 
 from src.ui.poetore_mode_window import PoetoreModeWindow
+from src.utils.poe_version_data import POE2
 
 
 def test_poetore_mode_starts_only_common_and_poetore_services():
@@ -83,6 +84,38 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
         if not action.isSeparator()
     ] == ["ぽえとれを表示", "設定", "終了"]
     hotkey_service.start.assert_called_once()
+    window.close()
+    app.processEvents()
+
+
+def test_poetore_mode_does_not_start_capture_services_for_poe2():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "poe_version": POE2,
+        "hotkeys": {
+            "poetore_capture": "alt+d",
+            "poetore_auto_hide": "ctrl+d",
+            "map_check": "alt+f",
+        },
+    }
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ) as hotkey_class, patch.object(
+        PoetoreModeWindow, "refresh_currency_rate"
+    ), patch(
+        "src.poetore.ui.prepare_poetore_window"
+    ) as prepare_window:
+        window = PoetoreModeWindow()
+
+    supplied_hotkeys = hotkey_class.call_args.args[0]
+    assert "poetore_capture" not in supplied_hotkeys
+    assert "poetore_auto_hide" not in supplied_hotkeys
+    assert supplied_hotkeys["map_check"] == "alt+f"
+    prepare_window.assert_not_called()
     window.close()
     app.processEvents()
 

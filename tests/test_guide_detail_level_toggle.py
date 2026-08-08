@@ -64,6 +64,20 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
 
         window.mini_navi_toggle_btn.setVisible.assert_called_once_with(True)
 
+    def test_switching_to_poe2_closes_poe1_only_feature_windows(self):
+        window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE2
+        window.config = {"poe_version": POE2}
+        window.mini_navi_overlay = Mock()
+        window._poetore_window = Mock()
+        poetore_window = window._poetore_window
+
+        window._enforce_feature_support()
+
+        window.mini_navi_overlay.hide.assert_called_once_with()
+        poetore_window.close.assert_called_once_with()
+        self.assertIsNone(window._poetore_window)
+
     def test_mini_navi_toggle_text_only_reflects_enabled_state(self):
         window = MainWindow.__new__(MainWindow)
 

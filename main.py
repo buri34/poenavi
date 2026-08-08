@@ -12,8 +12,10 @@ from src.qt_platform import configure_qt_platform
 # PySide6を読み込む前に設定する必要がある。
 configure_qt_platform()
 
-from src.app_mode import save_startup_preferences, startup_preferences
+from src.app_mode import POENAVI_MODE, POETORE_MODE, save_startup_preferences, startup_preferences
+from src.utils.feature_support import POETORE, is_feature_supported
 from src.utils.config_manager import ConfigManager
+from src.utils.poe_version_data import POE1
 from src.version import APP_VERSION
 
 __version__ = APP_VERSION
@@ -25,12 +27,22 @@ from PySide6.QtWidgets import QApplication, QDialog
 def select_app_mode(config):
     """保存設定に従い、必要な場合だけ起動モード選択画面を表示する。"""
     preferred_mode, show_selector = startup_preferences(config)
+    poe_version = (config or {}).get("poe_version", POE1)
+    if (
+        preferred_mode == POETORE_MODE
+        and not is_feature_supported(POETORE, poe_version)
+    ):
+        preferred_mode = POENAVI_MODE
+        show_selector = True
     if not show_selector:
         return preferred_mode
 
     from src.ui.startup_dialogs import AppModeSelectionDialog
 
-    dialog = AppModeSelectionDialog(current_mode=preferred_mode)
+    dialog = AppModeSelectionDialog(
+        current_mode=preferred_mode,
+        poe_version=poe_version,
+    )
     if dialog.exec() != QDialog.Accepted:
         return None
 

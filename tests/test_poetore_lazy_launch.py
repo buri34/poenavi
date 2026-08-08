@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from src.ui.main_window import MainWindow
+from src.utils.poe_version_data import POE2
 
 
 class PoetoreLazyLaunchTest(unittest.TestCase):
@@ -62,6 +63,21 @@ class PoetoreLazyLaunchTest(unittest.TestCase):
         poetore_window.capture_from_poe.assert_called_once_with(
             trace, auto_hide=True, capture_hotkey="ctrl+d",
         )
+
+    def test_poe2_blocks_open_prepare_and_capture_before_importing_ui(self):
+        window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE2
+        window.config = {"poe_version": POE2}
+
+        with patch("src.poetore.ui.show_poetore_window") as show_window, patch(
+            "src.poetore.ui.prepare_poetore_window"
+        ) as prepare_window:
+            self.assertIsNone(MainWindow.open_poetore(window))
+            self.assertIsNone(MainWindow._prepare_poetore_window(window))
+            self.assertIsNone(MainWindow.capture_poetore_item(window))
+
+        show_window.assert_not_called()
+        prepare_window.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -36,6 +36,12 @@ from src.utils.performance_metrics import measure
 from src.utils.zone_lookup import get_zone_info, get_level_advice
 from src.utils.guide_data import load_guide_data, get_zone_guide, get_zone_guide_level, format_guide_html, get_mini_navi_content
 from src.utils.poe_version_data import POE1, POE2, get_lap_labels, get_poe_label, get_timer_filename, get_progress_flags_filename
+from src.utils.feature_support import (
+    MINI_NAVI,
+    POETORE,
+    is_feature_hotkey_supported,
+    is_feature_supported,
+)
 from src.utils.zone_master_data import load_zone_master_data
 from src.utils.poe_progress_data import get_auto_lap_triggers, get_clear_message, get_special_lap_event
 from src.utils.pob_importer import import_pob, get_pob_skill_sets
@@ -2449,7 +2455,16 @@ class MainWindow(QMainWindow):
     
     def _is_mini_navi_available(self):
         """みになびは現状PoE1専用。PoE2では未実装なので入口を出さない。"""
-        return self.poe_version == POE1
+        return is_feature_supported(MINI_NAVI, self.poe_version)
+
+    def _is_poetore_available(self):
+        """Return whether the current PoE version has a price-check backend."""
+        version = getattr(
+            self,
+            "poe_version",
+            getattr(self, "config", {}).get("poe_version", POE1),
+        )
+        return is_feature_supported(POETORE, version)
 
     def _mini_navi_toggle_text(self):
         overlay_config = self.config.get("mini_guide_overlay", {})
@@ -2461,6 +2476,17 @@ class MainWindow(QMainWindow):
             return
         self.mini_navi_toggle_btn.setText(self._mini_navi_toggle_text())
         self.mini_navi_toggle_btn.setVisible(self._is_mini_navi_available() and self.guide_expanded)
+
+    def _enforce_feature_support(self):
+        """Close active feature windows that the selected PoE version cannot use."""
+        overlay = getattr(self, "mini_navi_overlay", None)
+        if overlay is not None and not self._is_mini_navi_available():
+            overlay.hide()
+        if not self._is_poetore_available():
+            poetore_window = getattr(self, "_poetore_window", None)
+            if poetore_window is not None:
+                poetore_window.close()
+                self._poetore_window = None
 
     def toggle_mini_navi_overlay(self):
         if not self._is_mini_navi_available():
@@ -3027,6 +3053,9 @@ class MainWindow(QMainWindow):
                                      ("poetore_auto_hide", "ctrl+d"),
                                      ("map_check", "alt+f"),
                                      ("cheat_sheets_toggle", "shift+space")]:
+                active_version = self.config.get("poe_version", POE1)
+                if not is_feature_hotkey_supported(action, active_version):
+                    continue
                 key = hotkeys.get(action, default)
                 if key and key != "none":
                     self.hotkey_map[_listener_hotkey_name(key)] = action
@@ -4325,18 +4354,24 @@ class MainWindow(QMainWindow):
 
     def open_poetore(self):
         """ぽえとれを必要になった時だけ読み込んで別ウィンドウで開く。"""
+        if not self._is_poetore_available():
+            return None
         from src.poetore.ui import show_poetore_window
 
-        show_poetore_window(self)
+        return show_poetore_window(self)
 
     def _prepare_poetore_window(self):
         """Build poetore after startup without showing it or accessing Trade API."""
+        if not self._is_poetore_available():
+            return None
         from src.poetore.ui import prepare_poetore_window
 
-        prepare_poetore_window(self)
+        return prepare_poetore_window(self)
 
     def capture_poetore_item(self, auto_hide=False):
         """設定済みホットキーからぽえとれを開き、PoE上のアイテムを自動取得する。"""
+        if not self._is_poetore_available():
+            return None
         started_at = time.perf_counter()
         from src.poetore.performance import start_search_trace
 
@@ -4520,6 +4555,7 @@ class MainWindow(QMainWindow):
             self.part2_btn.setVisible(self.poe_version == POE1)
             self._refresh_mini_navi_toggle()
             self._refresh_guide_detail_level_toggle()
+            self._enforce_feature_support()
             
             # タイマーサイズ更新
             new_timer_size_setting = self.config.get("timer_size", "large")
