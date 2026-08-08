@@ -15,7 +15,7 @@ from src.app_mode import (
     startup_preferences,
 )
 from src.ui.startup_dialogs import AppModeSelectionDialog
-from src.utils.poe_version_data import POE2
+from src.utils.poe_version_data import POE1, POE2
 
 
 class AppModeTest(unittest.TestCase):
@@ -102,6 +102,47 @@ class AppModeTest(unittest.TestCase):
             poe_version=POE2,
         )
 
+    def test_fixed_poe_version_is_resolved_before_mode_selection(self):
+        config = {"poe_version": POE1, "poe_version_mode": POE2}
+
+        with patch.object(main.ConfigManager, "save_config") as save_config:
+            selected = main.select_poe_version(config)
+
+        self.assertEqual(selected["poe_version"], POE2)
+        self.assertEqual(config["poe_version"], POE1)
+        save_config.assert_called_once_with(selected)
+
+    def test_ask_poe_version_returns_dialog_selection(self):
+        dialog = MagicMock()
+        dialog.exec.return_value = QDialog.Accepted
+        dialog.selected_version = POE2
+        config = {"poe_version": POE1, "poe_version_mode": "ask"}
+
+        with patch(
+            "src.ui.startup_dialogs.PoeVersionSelectionDialog",
+            return_value=dialog,
+        ) as dialog_class, patch.object(
+            main.ConfigManager, "save_config",
+        ) as save_config:
+            selected = main.select_poe_version(config)
+
+        self.assertEqual(selected["poe_version"], POE2)
+        dialog_class.assert_called_once_with(current_version=POE1)
+        save_config.assert_called_once_with(selected)
+
+    def test_cancelling_poe_version_selection_stops_startup(self):
+        dialog = MagicMock()
+        dialog.exec.return_value = QDialog.Rejected
+
+        with patch(
+            "src.ui.startup_dialogs.PoeVersionSelectionDialog",
+            return_value=dialog,
+        ), patch.object(main.ConfigManager, "save_config") as save_config:
+            selected = main.select_poe_version({"poe_version_mode": "ask"})
+
+        self.assertIsNone(selected)
+        save_config.assert_not_called()
+
     def test_mode_icons_have_transparent_corners(self):
         for icon_name in ("icon.ico", "icon2.ico"):
             pixmap = QPixmap(AppModeSelectionDialog._app_icon_path(icon_name))
@@ -132,6 +173,10 @@ class AppModeTest(unittest.TestCase):
             events.append("update_gate")
             return True
 
+        def select_version(config):
+            events.append("select_version")
+            return config
+
         def select_mode(_config):
             events.append("select_mode")
             return POENAVI_MODE
@@ -142,6 +187,7 @@ class AppModeTest(unittest.TestCase):
         )
         with patch.object(main, "QApplication", return_value=app), \
              patch.object(main.ConfigManager, "load_config", side_effect=load_config), \
+             patch.object(main, "select_poe_version", side_effect=select_version), \
              patch.object(main, "select_app_mode", side_effect=select_mode), \
              patch.object(main.QTimer, "singleShot"), \
              patch.dict(
@@ -155,9 +201,10 @@ class AppModeTest(unittest.TestCase):
 
         self.assertEqual(
             events,
-            ["load_config", "update_gate", "load_config", "select_mode"],
+            ["load_config", "update_gate", "load_config", "select_version", "select_mode"],
         )
         app.setProperty.assert_any_call("startupUpdateChecked", True)
+        app.setProperty.assert_any_call("startupPoeVersionSelected", True)
         app.setProperty.assert_any_call("appMode", POENAVI_MODE)
         window.show.assert_called_once_with()
 

@@ -802,6 +802,10 @@ class MainWindow(QMainWindow):
         return False
         
     def _ensure_poe_version_selected(self):
+        app = QApplication.instance()
+        if bool(app and app.property("startupPoeVersionSelected")):
+            return self._ensure_guide_detail_level_selected_if_needed()
+
         mode = self.config.get("poe_version_mode", "ask")
         if mode in (POE1, POE2):
             self.config["poe_version"] = mode

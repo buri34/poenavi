@@ -15,13 +15,35 @@ configure_qt_platform()
 from src.app_mode import POENAVI_MODE, POETORE_MODE, save_startup_preferences, startup_preferences
 from src.utils.feature_support import POETORE, is_feature_supported
 from src.utils.config_manager import ConfigManager
-from src.utils.poe_version_data import POE1
+from src.utils.poe_version_data import POE1, POE2
 from src.version import APP_VERSION
 
 __version__ = APP_VERSION
 
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QDialog
+
+
+def select_poe_version(config):
+    """機能選択より先に、今回起動するPoEバージョンを確定する。"""
+    updated = dict(config or {})
+    version_mode = updated.get("poe_version_mode", "ask")
+    if version_mode in (POE1, POE2):
+        selected_version = version_mode
+    else:
+        from src.ui.startup_dialogs import PoeVersionSelectionDialog
+
+        dialog = PoeVersionSelectionDialog(
+            current_version=updated.get("poe_version", POE1),
+        )
+        if dialog.exec() != QDialog.Accepted:
+            return None
+        selected_version = dialog.selected_version
+
+    if updated.get("poe_version") != selected_version:
+        updated["poe_version"] = selected_version
+        ConfigManager.save_config(updated)
+    return updated
 
 
 def select_app_mode(config):
@@ -67,6 +89,10 @@ def run():
     app.setProperty("startupUpdateChecked", True)
 
     config = ConfigManager.load_config()
+    config = select_poe_version(config)
+    if config is None:
+        return 0
+    app.setProperty("startupPoeVersionSelected", True)
     app_mode = select_app_mode(config)
     if app_mode is None:
         return 0
