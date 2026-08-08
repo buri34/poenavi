@@ -29,6 +29,7 @@ _EXACT_TYPES_BY_CATEGORY = {
     "captured_beast": {"Beast"},
     "invitation": {"Invitation"},
     "incursion_item": {"IncursionTemple"},
+    "scarab": {"Scarab"},
 }
 _MAP_TYPES = {"Map", "BlightedMap", "BlightRavagedMap", "ValdoMap"}
 

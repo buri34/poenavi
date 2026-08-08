@@ -341,6 +341,15 @@ def _category_with_item_identity(
 ) -> str:
     category = _category_with_help_text(item_class, text)
     identity = f"{name}\n{base_type}".casefold()
+    # Scarabs share the broad Map Fragments / 「マップフラグメント」
+    # item class with unrelated fragments.  Their item-name token is the stable
+    # discriminator used by both the Trade and poe.ninja datasets.
+    identity_lines = (name.strip().casefold(), base_type.strip().casefold())
+    if category == "map" and any(
+        re.search(r"\bscarab\b", value) or "スカラベ" in value
+        for value in identity_lines
+    ):
+        return "scarab"
     # Pinnacle boss invitations use the broad "Misc Map Items" /
     # 「その他マップアイテム」class, so the class alone is classified as a map.
     # Their item identity is the reliable discriminator.

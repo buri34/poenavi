@@ -463,6 +463,40 @@ Map (Tier 16)
         self.assertEqual(item.category, "map")
         self.assertEqual(item.properties["Map Tier"], "16")
 
+    def test_japanese_scarab_is_distinguished_from_other_map_fragments(self):
+        item = parse_item_text("""アイテムクラス: マップフラグメント
+レアリティ: ノーマル
+豊富な占いのスカラベ
+--------
+スタック数: 12/20
+個数制限: 5
+--------
+エリアには占いカードをドロップする確率が1000%増加した
+""")
+
+        self.assertEqual(item.category, "scarab")
+
+    def test_english_scarab_is_distinguished_from_other_map_fragments(self):
+        item = parse_item_text("""Item Class: Map Fragments
+Rarity: Normal
+Divination Scarab of Plenty
+--------
+Stack Size: 12/20
+Limit: 5
+""")
+
+        self.assertEqual(item.category, "scarab")
+
+    def test_non_scarab_map_fragment_remains_a_map(self):
+        item = parse_item_text("""アイテムクラス: マップフラグメント
+レアリティ: ノーマル
+ミノタウロスの迷路
+--------
+スタック数: 1/10
+""")
+
+        self.assertEqual(item.category, "map")
+
     def test_strips_unscalable_value_and_ignores_recently_glossary_in_japanese(self):
         item = parse_item_text("""アイテムクラス: 胴体防具
 レアリティ: レア

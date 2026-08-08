@@ -5,6 +5,7 @@ from collections import OrderedDict
 from collections.abc import Callable
 import json
 import math
+from pathlib import Path
 import re
 from statistics import median
 import threading
@@ -24,6 +25,9 @@ from .metadata import (
 API_ROOT = "https://www.pathofexile.com/api/trade"
 JP_API_ROOT = "https://jp.pathofexile.com/api/trade"
 LEAGUES_API_URL = "https://www.pathofexile.com/api/leagues?type=main&realm=pc"
+DIVINATION_CARD_IDENTITIES_PATH = (
+    Path(__file__).resolve().parents[2] / "data" / "poetore" / "divination_cards_ja.json"
+)
 USER_AGENT = "PoENavi/poetore-local-spike (github.com/buri34/poenavi)"
 DEFAULT_SEARCH_RANGE = 0.10
 TRADE_STATUS_OPTIONS = {
@@ -2028,6 +2032,53 @@ def _aligned_trade_item_pairs():
                 break
 
 
+_divination_card_identities_cache: tuple[tuple[str, str], ...] | None = None
+
+
+def _divination_card_identities() -> tuple[tuple[str, str], ...]:
+    """Return stable English Trade IDs paired with Japanese display names.
+
+    The official EN/JA ``data/items`` endpoints do not expose a shared entry ID,
+    and the Japanese card list omits duplicate localized names.  Consequently,
+    card entries must never be joined by array position.
+    """
+    global _divination_card_identities_cache
+    if _divination_card_identities_cache is None:
+        payload = json.loads(DIVINATION_CARD_IDENTITIES_PATH.read_text(encoding="utf-8"))
+        rows = tuple(
+            (
+                str(row.get("english", "")).strip(),
+                str(row.get("japanese", "")).strip(),
+            )
+            for row in payload.get("cards", ())
+        )
+        if not rows or any(not english or not japanese for english, japanese in rows):
+            raise ValueError("占いカード日英対応表が不正です。")
+        if len({english for english, _japanese in rows}) != len(rows):
+            raise ValueError("占いカードの英語identityが重複しています。")
+        _divination_card_identities_cache = rows
+    return _divination_card_identities_cache
+
+
+def _english_divination_card_type(japanese_type: str) -> str | None:
+    wanted = japanese_type.strip()
+    candidates = {
+        english for english, japanese in _divination_card_identities()
+        if japanese == wanted
+    }
+    # 「取り引き」「生贄」は日本語名がそれぞれ2種類のカードと重複する。
+    # コピー本文だけで識別できる処理を追加するまでは誤検索せず未解決にする。
+    return next(iter(candidates)) if len(candidates) == 1 else None
+
+
+def _japanese_divination_card_type(english_type: str) -> str | None:
+    wanted = english_type.strip()
+    return next((
+        japanese for english, japanese in _divination_card_identities()
+        if english == wanted
+    ), None)
+
+
 def _english_trade_item_name(japanese_name: str) -> str | None:
     """公式日英itemsの同一グループ・同一位置から英語固有名を得る。"""
     wanted = japanese_name.strip()
@@ -2064,6 +2115,8 @@ def _english_trade_item_type(
     wanted = japanese_type.strip()
     if not wanted:
         return None
+    if category == "divination_card":
+        return _english_divination_card_type(wanted)
     confirmed = _CONFIRMED_ENGLISH_TRADE_TYPE_OVERRIDES.get((category or "", wanted))
     if confirmed:
         return confirmed
@@ -2191,7 +2244,8 @@ def japanese_trade_item_label(
     name = str(english_name or "").strip()
     if not name:
         return ""
-    if str(namespace or "").strip().upper() == "UNIQUE":
+    normalized_namespace = str(namespace or "").strip().upper()
+    if normalized_namespace == "UNIQUE":
         localized_name = _japanese_trade_item_name(name) or name
         localized_variant = (
             _japanese_trade_item_type(str(variant or ""))
@@ -2201,6 +2255,8 @@ def japanese_trade_item_label(
             f"{localized_name}（{localized_variant}）"
             if localized_variant else localized_name
         )
+    if normalized_namespace == "DIVINATION_CARD":
+        return _japanese_divination_card_type(name) or name
     return _japanese_trade_item_type(name) or name
 
 
@@ -2217,6 +2273,8 @@ def _localized_web_trade_type(item: ParsedItem, web_query: dict) -> str:
     localized = _normalize_trade_base_type(
         item.base_type if item.category == "gem" else (query_type_value or item.base_type)
     )
+    if item.category == "divination_card":
+        return _japanese_divination_card_type(localized) or localized
     if item.category != "gem":
         return _japanese_trade_item_type(localized) or localized
     if localized.casefold().startswith("vaal "):

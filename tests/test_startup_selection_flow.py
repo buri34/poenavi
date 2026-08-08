@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import patch
 
+from PySide6.QtWidgets import QApplication
+
 try:
     from src.ui.main_window import MainWindow
 except ModuleNotFoundError as exc:  # pragma: no cover - local dev without GUI deps
@@ -9,7 +11,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - local dev without GUI d
 else:
     IMPORT_ERROR = None
 
-from src.utils.poe_version_data import POE2
+from src.utils.poe_version_data import POE1, POE2
 
 
 class FakePoeVersionDialog:
@@ -60,6 +62,23 @@ class StartupSelectionFlowTest(unittest.TestCase):
         self.assertEqual(window.config["guide_detail_level"], "intermediate")
         self.assertTrue(window.config["guide_detail_level_selected"])
         self.assertEqual(save_config.call_count, 2)
+
+    def test_main_window_does_not_repeat_version_dialog_after_common_startup_selection(self):
+        app = QApplication.instance() or QApplication([])
+        previous = app.property("startupPoeVersionSelected")
+        app.setProperty("startupPoeVersionSelected", True)
+        window = MainWindow.__new__(MainWindow)
+        window.config = {
+            "poe_version": POE1,
+            "poe_version_mode": "ask",
+        }
+
+        try:
+            with patch("src.ui.main_window.PoeVersionSelectionDialog") as dialog:
+                self.assertTrue(window._ensure_poe_version_selected())
+            dialog.assert_not_called()
+        finally:
+            app.setProperty("startupPoeVersionSelected", previous)
 
 
 if __name__ == "__main__":

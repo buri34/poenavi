@@ -116,7 +116,6 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
             zone_id="poe2_act1_area04",
             has_area_note=False,
         )
-
     def test_mini_navi_toggle_text_only_reflects_enabled_state(self):
         window = MainWindow.__new__(MainWindow)
 
