@@ -1,4 +1,5 @@
 from src.poetore.models import ParsedItem
+from src.poetore.parser import parse_item_text
 from src.poetore.poe_ninja import (
     CACHE_TTL_SECONDS, PoeNinjaPrice, PoeNinjaPriceService, divine_chaos_rate,
     match_poe_ninja_price,
@@ -167,6 +168,64 @@ def test_exact_name_item_price_is_supported():
     item = ParsedItem("Divination Cards", "Normal", "The Doctor", "The Doctor", "divination_card")
     price = match_poe_ninja_price(_payload(), item, "Standard", trade_base_type="The Doctor")
     assert price is not None and price.chaos == 1800
+
+
+def test_scarab_price_uses_only_scarab_overview():
+    payload = {
+        "itemOverviews": [
+            {"type": "Map", "lines": [
+                {"name": "Divination Scarab of Plenty", "chaos": 999, "graph": []},
+            ]},
+            {"type": "Scarab", "lines": [
+                {"name": "Divination Scarab of Plenty", "chaos": 14.9,
+                 "graph": [], "sparkLine": {"totalChange": 2}},
+            ]},
+        ],
+    }
+    item = ParsedItem(
+        "マップフラグメント", "ノーマル",
+        "豊富な占いのスカラベ", "豊富な占いのスカラベ", "scarab",
+    )
+
+    price = match_poe_ninja_price(
+        payload, item, "Allflame", trade_base_type="Divination Scarab of Plenty",
+    )
+
+    assert price is not None
+    assert price.chaos == 14.9
+    assert price.source_type == "Scarab"
+    assert "/scarabs/divination-scarab-of-plenty" in price.url
+
+
+def test_reported_japanese_scarab_copy_reaches_poe_ninja_price():
+    item = parse_item_text("""アイテムクラス: マップフラグメント
+レアリティ: ノーマル
+豊富な占いのスカラベ
+--------
+スタック数: 12/20
+個数制限: 5
+--------
+エリアには占いカードをドロップする確率が1000%増加した
+占いに触れられしマジックモンスターパックが6から10パック追加で出現する
+--------
+全ての行動は一千の未来を作る。
+--------
+自身のマップデバイスで使用してマップにモッドを追加できる。
+""")
+    trade_type, trade_name = english_trade_identity(item)
+    payload = {"itemOverviews": [{"type": "Scarab", "lines": [{
+        "name": "Divination Scarab of Plenty", "chaos": 14.9,
+        "graph": [], "sparkLine": {"totalChange": 2},
+    }]}]}
+
+    price = match_poe_ninja_price(
+        payload, item, "Allflame",
+        trade_name=trade_name, trade_base_type=trade_type,
+    )
+
+    assert item.category == "scarab"
+    assert trade_type == "Divination Scarab of Plenty"
+    assert price is not None and price.chaos == 14.9
 
 
 def test_japanese_finishing_touch_uses_correct_poe_ninja_identity():
