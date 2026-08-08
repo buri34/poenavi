@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QKeySequence
 from src.ui.styles import Styles
 from src.ui.app_info_widget import AppInfoWidget
-from src.ui.app_theme import POENAVI_THEME
+from src.ui.app_theme import POENAVI_THEME, POETORE_THEME
 from src.utils.zone_data_poe2 import DEFAULT_ZONE_DATA_POE2
 from src.utils.guide_data import load_guide_data, save_guide_data, get_visit_guide_for_edit, set_visit_guide_for_edit
 from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_act_list, get_poe_label, get_town_zones
@@ -205,8 +205,13 @@ class AutoHideHotkeyWidget(QWidget):
             button.setCheckable(True)
             button.setMinimumWidth(48)
             button.setStyleSheet(
-                Styles.BUTTON
-                + f"QPushButton:checked {{ background-color: {Styles.TEXT_COLOR}; color: #1a1a1a; }}"
+                f"QPushButton {{ background-color: {POETORE_THEME.panel}; "
+                f"color: {POETORE_THEME.accent}; "
+                f"border: 1px solid {POETORE_THEME.accent}; "
+                "border-radius: 4px; padding: 5px 10px; font-weight: bold; }"
+                f"QPushButton:hover {{ border-color: {POETORE_THEME.text}; }}"
+                f"QPushButton:checked {{ background-color: {POETORE_THEME.accent}; "
+                f"color: {POETORE_THEME.background}; }}"
             )
             button.setProperty("modifier", name)
             self.modifier_group.addButton(button)
