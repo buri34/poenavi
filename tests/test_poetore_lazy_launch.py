@@ -60,7 +60,7 @@ class PoetoreLazyLaunchTest(unittest.TestCase):
             MainWindow.capture_poetore_item(window, auto_hide=True)
 
         poetore_window.capture_from_poe.assert_called_once_with(
-            trace, auto_hide=True,
+            trace, auto_hide=True, capture_hotkey="ctrl+d",
         )
 
 

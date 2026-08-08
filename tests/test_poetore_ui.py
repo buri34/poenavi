@@ -180,14 +180,19 @@ def test_auto_hide_capture_remembers_mode_and_cursor_origin(qapp):
     window = PoetoreWindow()
     context = PlacementContext(QRect(0, 0, 1920, 1080), QPoint(500, 400))
     try:
+        controller = Mock()
         with patch("src.poetore.ui.capture_placement_context", return_value=context), patch(
-            "pynput.keyboard.Controller"
-        ), patch.object(QTimer, "singleShot"):
-            window.capture_from_poe(auto_hide=True)
+            "pynput.keyboard.Controller", return_value=controller,
+        ), patch.object(QTimer, "singleShot") as single_shot:
+            window.capture_from_poe(
+                auto_hide=True, capture_hotkey="ctrl+d",
+            )
 
         assert window._capture_auto_hide is True
         assert window._auto_hide_hotkey_released is False
         assert window._auto_hide_origin == QPoint(500, 400)
+        controller.release.assert_called_once_with("d")
+        assert [call.args[0] for call in single_shot.call_args_list] == [30, 250]
     finally:
         window.close()
 

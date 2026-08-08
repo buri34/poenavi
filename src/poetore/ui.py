@@ -2629,6 +2629,7 @@ class PoetoreWindow(QWidget):
         performance_trace: SearchPerformanceTrace | None = None,
         *,
         auto_hide: bool = False,
+        capture_hotkey: str | None = None,
     ):
         """PoE 3.29以降の詳細形式コピーを一度だけ取得して解析する。"""
         from pynput.keyboard import Controller, Key
@@ -2652,11 +2653,39 @@ class PoetoreWindow(QWidget):
         self._capture_release_generation = generation
         self._capture_copy_started = False
         self._capture_copy_keys = (Key.ctrl, "c")
+        if auto_hide and self._release_auto_hide_trigger_key(capture_hotkey, Key):
+            trace.mark("copy_scheduled", release_wait_timeout_ms=30)
+            QTimer.singleShot(
+                30,
+                lambda: self._start_capture_copy(generation, "trigger_key_released"),
+            )
         trace.mark("copy_scheduled", release_wait_timeout_ms=250)
         QTimer.singleShot(
             250,
             lambda: self._start_capture_copy(generation, "release_timeout"),
         )
+
+    def _release_auto_hide_trigger_key(self, hotkey: str | None, key_enum) -> bool:
+        """Release only the non-modifier key, matching Awakened's hold-key mode."""
+        tokens = [token.strip().casefold() for token in str(hotkey or "").split("+")]
+        trigger_keys = [
+            token for token in tokens
+            if token and token not in {"ctrl", "control", "alt", "shift", "win", "meta"}
+        ]
+        if len(trigger_keys) != 1:
+            return False
+        token = trigger_keys[0]
+        key = token if len(token) == 1 else getattr(key_enum, token, None)
+        if key is None:
+            return False
+        from src.utils.internal_key_input import internal_key_input
+
+        try:
+            with internal_key_input():
+                self._capture_keyboard.release(key)
+        except Exception:
+            return False
+        return True
 
     def capture_hotkey_released(self):
         """Start copying once every key in the configured capture hotkey is up."""

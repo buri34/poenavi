@@ -693,7 +693,12 @@ class PoetoreModeWindow(QMainWindow):
         window = show_poetore_window(self, activate=False)
         trace.mark("poetore_window_ready")
         if auto_hide:
-            window.capture_from_poe(trace, auto_hide=True)
+            hotkey = self.config.get("hotkeys", {}).get(
+                "poetore_auto_hide", "ctrl+d"
+            )
+            window.capture_from_poe(
+                trace, auto_hide=True, capture_hotkey=hotkey,
+            )
         else:
             window.capture_from_poe(trace)
 
