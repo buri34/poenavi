@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QApplication
 
 from src.ui.main_window import MainWindow, _hotkey_key_name
 from src.ui.settings_dialog import SettingsDialog
+from src.utils.poe_version_data import POE2
 
 
 def test_alt_d_is_default_poetore_capture_hotkey():
@@ -201,6 +202,40 @@ def test_main_mode_waits_for_all_poetore_hotkey_keys_to_be_released(monkeypatch)
     assert emitted == ["poetore_capture"]
     callbacks["on_release"](d_key)
     assert emitted == ["poetore_capture", "poetore_capture_released"]
+
+
+def test_main_mode_does_not_register_poetore_hotkeys_in_poe2(monkeypatch):
+    class FakeListener:
+        def __init__(self, on_press, on_release):
+            self.on_press = on_press
+            self.on_release = on_release
+
+        def start(self):
+            pass
+
+        def stop(self):
+            pass
+
+    window = SimpleNamespace(
+        config={
+            "poe_version": POE2,
+            "hotkeys": {
+                "poetore_capture": "alt+d",
+                "poetore_auto_hide": "ctrl+d",
+                "map_check": "alt+f",
+            },
+        },
+        keyboard_listener=None,
+        hotkey_signal=SimpleNamespace(emit=lambda _action: None),
+        _hotkey_action_allowed=lambda _action: True,
+    )
+    monkeypatch.setattr("src.ui.main_window.pynput_keyboard.Listener", FakeListener)
+
+    MainWindow.register_hotkeys(window)
+
+    assert "poetore_capture" not in window.hotkey_map.values()
+    assert "poetore_auto_hide" not in window.hotkey_map.values()
+    assert "map_check" in window.hotkey_map.values()
 
 
 def test_main_mode_emits_auto_hide_release_separately(monkeypatch):

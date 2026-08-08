@@ -21,15 +21,19 @@ from src.ui.styles import Styles
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 from src.ui.app_theme import theme_for_mode
 from src.utils.config_manager import ConfigManager
+from src.utils.feature_support import POETORE, is_feature_supported
 from src.utils.poe_version_data import POE1, POE2
 
 
 class AppModeSelectionDialog(QDialog):
     """ぽえなび／ぽえとれの起動モード選択。"""
 
-    def __init__(self, parent=None, current_mode=POENAVI_MODE):
+    def __init__(self, parent=None, current_mode=POENAVI_MODE, poe_version=POE1):
         super().__init__(parent)
         self.selected_mode = normalize_app_mode(current_mode)
+        poetore_supported = is_feature_supported(POETORE, poe_version)
+        if self.selected_mode == POETORE_MODE and not poetore_supported:
+            self.selected_mode = POENAVI_MODE
         self.setWindowTitle("起動モード選択")
         self.setModal(True)
         self.setFixedSize(720, 430)
@@ -67,6 +71,9 @@ class AppModeSelectionDialog(QDialog):
             "icon2.ico",
             self.selected_mode == POETORE_MODE,
         )
+        self.poetore_card.setEnabled(poetore_supported)
+        if not poetore_supported:
+            self.poetore_card.setToolTip("ぽえとれは現在PoE1専用です")
         cards.addWidget(self.poenavi_card)
         cards.addWidget(self.poetore_card)
         layout.addLayout(cards)

@@ -35,6 +35,7 @@ from src.ui.custom_command_settings import custom_command_hotkeys, normalized_cu
 from src.utils.config_manager import ConfigManager
 from src.utils.global_hotkeys import GlobalHotkeyService, is_hotkey_action_allowed
 from src.utils.poe_version_data import POE1, POE2
+from src.utils.feature_support import POETORE, is_feature_hotkey_supported, is_feature_supported
 
 
 POETORE_ACCENT = POETORE_THEME.accent
@@ -560,9 +561,11 @@ class PoetoreModeWindow(QMainWindow):
 
     def _start_hotkeys(self):
         configured = self.config.get("hotkeys", {})
+        poe_version = self.config.get("poe_version", POE1)
         mode_hotkeys = {
             action: configured.get(action, default)
             for action, default in self.MODE_ACTION_DEFAULTS.items()
+            if is_feature_hotkey_supported(action, poe_version)
         }
         mode_hotkeys.update(custom_command_hotkeys(self.config.get("custom_commands", [])))
         self.hotkey_service = GlobalHotkeyService(
@@ -680,6 +683,10 @@ class PoetoreModeWindow(QMainWindow):
             self.execute_chat_command("/monastery")
 
     def capture_poetore_item(self, auto_hide=False):
+        if not is_feature_supported(
+            POETORE, self.config.get("poe_version", POE1),
+        ):
+            return None
         started_at = time.perf_counter()
         from src.poetore.performance import start_search_trace
 
@@ -736,9 +743,13 @@ class PoetoreModeWindow(QMainWindow):
 
     def _prepare_poetore_window(self):
         """Build the search panel after startup without issuing Trade requests."""
+        if not is_feature_supported(
+            POETORE, self.config.get("poe_version", POE1),
+        ):
+            return None
         from src.poetore.ui import prepare_poetore_window
 
-        prepare_poetore_window(self)
+        return prepare_poetore_window(self)
 
     def open_memo(self):
         if self._memo_dialog is not None:

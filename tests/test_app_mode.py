@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QDialog
 
 import main
 from src.app_mode import (
@@ -15,6 +15,7 @@ from src.app_mode import (
     startup_preferences,
 )
 from src.ui.startup_dialogs import AppModeSelectionDialog
+from src.utils.poe_version_data import POE2
 
 
 class AppModeTest(unittest.TestCase):
@@ -64,6 +65,42 @@ class AppModeTest(unittest.TestCase):
         dialog._accept_selection()
 
         self.assertEqual(dialog.selected_mode, POETORE_MODE)
+
+    def test_dialog_disables_poetore_when_poe2_is_selected(self):
+        dialog = AppModeSelectionDialog(
+            current_mode=POETORE_MODE,
+            poe_version=POE2,
+        )
+
+        self.assertEqual(dialog.selected_mode, POENAVI_MODE)
+        self.assertTrue(dialog.poenavi_card.isChecked())
+        self.assertFalse(dialog.poetore_card.isEnabled())
+        self.assertIn("PoE1専用", dialog.poetore_card.toolTip())
+
+    def test_saved_poetore_mode_cannot_skip_selector_in_poe2(self):
+        dialog = MagicMock()
+        dialog.exec.return_value = QDialog.Accepted
+        dialog.selected_mode = POENAVI_MODE
+        dialog.skip_selector = False
+        config = {
+            "poe_version": POE2,
+            "startup": {
+                "preferred_mode": POETORE_MODE,
+                "show_mode_selector": False,
+            },
+        }
+
+        with patch(
+            "src.ui.startup_dialogs.AppModeSelectionDialog",
+            return_value=dialog,
+        ) as dialog_class, patch.object(main.ConfigManager, "save_config"):
+            selected = main.select_app_mode(config)
+
+        self.assertEqual(selected, POENAVI_MODE)
+        dialog_class.assert_called_once_with(
+            current_mode=POENAVI_MODE,
+            poe_version=POE2,
+        )
 
     def test_mode_icons_have_transparent_corners(self):
         for icon_name in ("icon.ico", "icon2.ico"):
