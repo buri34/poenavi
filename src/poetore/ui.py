@@ -2324,13 +2324,14 @@ class PoetoreWindow(QWidget):
 
     def _resolved_trade_filters(self, item, preset):
         if self.poe_version == POE2:
+            from .poe2.trade import trade_stat_value
             return tuple(
                 TradeStatFilter(
                     modifier.stat_id, modifier.text,
-                    modifier.values[0] if modifier.values else None,
+                    trade_stat_value(modifier.values),
                     modifier.kind, enabled=bool(modifier.stat_id),
                     ref=modifier.ref, confidence=modifier.confidence,
-                    read_value=modifier.values[0] if modifier.values else None,
+                    read_value=trade_stat_value(modifier.values),
                 )
                 for modifier in item.modifiers if modifier.stat_id
             )
@@ -3281,6 +3282,7 @@ class PoetoreWindow(QWidget):
                         item, league,
                         status=trade_status,
                         stat_filters=effective_filters,
+                        quality_min=quality_min,
                         partial_result_callback=lambda partial: (
                             self._trade_signals.partial_completed.emit(
                                 partial, search_generation,
@@ -3568,7 +3570,17 @@ class PoetoreWindow(QWidget):
         match = re.search(r"\d+", str(raw_quality or ""))
         quality = int(match.group()) if match else None
         visible = False
-        if item.category == "gem":
+        if self.poe_version == POE2:
+            from .poe2.parser import TRADE_CATEGORY_BY_CATEGORY
+            trade_category = TRADE_CATEGORY_BY_CATEGORY.get(item.category, "")
+            poe2_equipment = trade_category.startswith(("weapon.", "armour.")) or item.category in {
+                "ring", "amulet", "belt",
+            }
+        else:
+            poe2_equipment = False
+        if poe2_equipment:
+            visible = quality is not None and quality > 0
+        elif item.category == "gem":
             visible = quality is not None and quality > 0
         elif item.category in {"weapon", "armour", "accessory"}:
             visible = quality is not None and (

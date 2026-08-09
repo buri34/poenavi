@@ -4418,6 +4418,32 @@ Item Level: 84
         window.close()
 
 
+def test_poe2_weapon_quality_20_is_visible_but_initially_disabled(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        from src.poetore.poe2.parser import parse_item_text as parse_poe2_item_text
+
+        text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(
+            encoding="utf-8"
+        )
+        item = parse_poe2_item_text(text)
+        window._configure_quality(item)
+        filters = window._resolved_trade_filters(item, "finished")
+        flat = next(row for row in filters if "物理ダメージを追加" in row.text)
+
+        assert not window.gem_quality_tag.isHidden()
+        assert window.gem_quality_edit.text() == "20"
+        assert window._selected_quality() is None
+        assert window.gem_quality_toggle.text() == "☐ 品質："
+        assert flat.min_value == 32.0
+        assert flat.read_value == 32.0
+
+        window.gem_quality_toggle.click()
+        assert window._selected_quality() == 20
+    finally:
+        window.close()
+
+
 def test_armour_base_percentile_is_an_editable_base_only_chip(qapp):
     window = PoetoreWindow()
     try:

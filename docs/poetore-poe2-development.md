@@ -72,6 +72,19 @@ PoE2リーグは画面生成時点でRunes of Aldur／HC Runes of Aldur／Standa
 augmentとして優先解決する。Runes of AldurでGrand Bracers＋混沌耐性15以上を実検索し、
 HTTP 200、2件、fetchした出品のbaseTypeがGrand Bracersであることを確認した。
 
+### 3回目の実機報告の修正
+
+日本語Rareスピアの実コピー全文をfixtureへ追加。EE2固定revision
+`d72afb83bc0888919a89d3c3744acee2c597e9c8`の`getRollOrMinmaxAvg()`と同様、
+2値および4値Statは算術平均へ正規化してTrade2のminへ送る。
+`25から39の物理ダメージを追加する`は`(25 + 39) / 2 = 32`として表示・送信する。
+
+PoE2装備の品質は20でも共通品質チップへ表示する。通常品質20は価値を決める条件では
+ないため初期OFFとし、ユーザーがONにした時だけ`misc_filters.quality.min`へ送る。
+従来はチップが非表示でもParser値から品質20を送っていたため、UIと最終JSONの正本を
+品質チップへ一本化した。Runes of AldurでSoaring Spear＋物理フラット平均32以上を
+実検索し、HTTP 200、3,177件を確認した。
+
 ## 公式API検証記録
 
 2026-08-09 JST、リーグ`Runes of Aldur`へ以下を送信した。

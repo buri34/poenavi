@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from src.poetore.poe2 import build_search_query, fetch_listings, parse_item_text, search_items
-from src.poetore.poe2.trade import available_pc_leagues, default_pc_league
+from src.poetore.poe2.trade import available_pc_leagues, default_pc_league, trade_stat_value
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
@@ -87,3 +87,30 @@ def test_reported_rare_gloves_send_chaos_resistance_to_trade2():
     filters = payload["query"]["stats"][0]["filters"]
     chaos = next(row for row in filters if row["id"] == "explicit.stat_2923486259")
     assert chaos["value"] == {"min": 15.0}
+
+
+def test_multi_value_trade_stats_use_same_arithmetic_mean_as_ee2():
+    assert trade_stat_value((25.0, 39.0)) == 32.0
+    assert trade_stat_value((1.0, 3.0, 5.0, 7.0)) == 4.0
+    assert trade_stat_value((8.0,)) == 8.0
+    assert trade_stat_value(()) is None
+
+
+def test_reported_rare_spear_sends_flat_damage_average_and_optional_quality():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+    without_quality = build_search_query(item)
+    flat = next(
+        row for row in without_quality["query"]["stats"][0]["filters"]
+        if row["id"] == "explicit.stat_1940865751"
+    )
+    assert flat["value"] == {"min": 32.0}
+    misc = without_quality["query"]["filters"]["misc_filters"]["filters"]
+    assert misc == {"ilvl": {"min": 81}}
+
+    with_quality = build_search_query(item, quality_min=20)
+    assert with_quality["query"]["filters"]["misc_filters"]["filters"]["quality"] == {
+        "min": 20
+    }

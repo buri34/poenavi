@@ -51,7 +51,21 @@ _STATUS_OPTIONS = {
 }
 
 
-def build_search_query(item: ParsedItem, status: str = "online") -> dict:
+def trade_stat_value(values: tuple[float, ...]) -> float | None:
+    """Return Trade2's scalar value for a parsed stat roll."""
+    if not values:
+        return None
+    if len(values) in {2, 4}:
+        return sum(values) / len(values)
+    return values[0]
+
+
+def build_search_query(
+    item: ParsedItem,
+    status: str = "online",
+    *,
+    quality_min: int | None = None,
+) -> dict:
     trade_category = TRADE_CATEGORY_BY_CATEGORY.get(item.category)
     if trade_category is None:
         raise ValueError(f"PoE2 Trade category未対応: {item.category}")
@@ -60,7 +74,8 @@ def build_search_query(item: ParsedItem, status: str = "online") -> dict:
     for modifier in item.modifiers:
         if not modifier.stat_id:
             continue
-        value = {"min": modifier.values[0]} if modifier.values else None
+        trade_value = trade_stat_value(modifier.values)
+        value = {"min": trade_value} if trade_value is not None else None
         row = {"id": modifier.stat_id}
         if value is not None:
             row["value"] = value
@@ -74,11 +89,8 @@ def build_search_query(item: ParsedItem, status: str = "online") -> dict:
     misc = {}
     if item.item_level is not None and item.rarity == "rare":
         misc["ilvl"] = {"min": item.item_level}
-    quality = item.properties.get("Quality") or item.properties.get("品質")
-    if quality:
-        match = re.search(r"\d+", quality)
-        if match:
-            misc["quality"] = {"min": int(match.group())}
+    if quality_min is not None:
+        misc["quality"] = {"min": quality_min}
     if misc:
         query["filters"]["misc_filters"] = {"filters": misc}
     if item.rarity == "unique":
@@ -125,10 +137,11 @@ def search_prices(
     *,
     status: str = "online",
     stat_filters: tuple = (),
+    quality_min: int | None = None,
     partial_result_callback: Callable[[PriceResult], None] | None = None,
 ) -> PriceResult:
     """Search Trade2 and adapt its rows to the existing shared price UI model."""
-    payload = build_search_query(item, status=status)
+    payload = build_search_query(item, status=status, quality_min=quality_min)
     if stat_filters:
         payload["query"]["stats"][0]["filters"] = [
             {

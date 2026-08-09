@@ -87,3 +87,16 @@ def test_reported_japanese_rare_gloves_resolve_chaos_and_desecrated_mods():
     assert chaos.values == (15.0,)
     cold = next(mod for mod in item.modifiers if "冷気ダメージ" in mod.text)
     assert cold.stat_id.startswith("desecrated.")
+
+
+def test_reported_japanese_rare_spear_keeps_quality_and_both_flat_damage_values():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+    assert item.base_type == "Soaring Spear"
+    assert item.category == "spear"
+    assert item.properties["品質"] == "+20% (augmented)"
+    flat = next(mod for mod in item.modifiers if "物理ダメージを追加" in mod.text)
+    assert flat.stat_id == "explicit.stat_1940865751"
+    assert flat.values == (25.0, 39.0)
