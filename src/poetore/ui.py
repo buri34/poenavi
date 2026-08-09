@@ -1291,13 +1291,13 @@ class PoetoreWindow(QWidget):
         weapon_property_header.addWidget(self.weapon_dps_label)
         weapon_property_header.addStretch(1)
         panel_layout.addLayout(weapon_property_header)
-        self.clear_mod_conditions_button = QPushButton("一覧のチェックを全解除")
+        self.clear_mod_conditions_button = QPushButton("すべて選択")
         self.clear_mod_conditions_button.setObjectName("clearModConditionsButton")
         self.clear_mod_conditions_button.setToolTip(
             "上の条件一覧のみ。ilvlなどの基本条件は変更しません"
         )
         self.clear_mod_conditions_button.clicked.connect(
-            self._clear_mod_condition_checks
+            self._toggle_all_mod_condition_checks
         )
 
         self._debug_parse_area = QWidget()
@@ -1992,8 +1992,9 @@ class PoetoreWindow(QWidget):
         elif self.frameGeometry().bottom() > available.bottom():
             self.move(self.x(), available.bottom() - self.frameGeometry().height() + 1)
 
-    def _clear_mod_condition_checks(self):
-        """一覧内の検索条件だけを解除し、基本条件チップは変更しない。"""
+    def _mod_condition_checkboxes(self) -> tuple[QCheckBox, ...]:
+        """Mod条件一覧にある検索可能なチェックボックスを返す。"""
+        checkboxes = []
         for index in range(self.mod_filter_tree.topLevelItemCount()):
             row = self.mod_filter_tree.topLevelItem(index)
             checkbox_container = self.mod_filter_tree.itemWidget(
@@ -2004,7 +2005,26 @@ class PoetoreWindow(QWidget):
                 if checkbox_container is not None else None
             )
             if checkbox is not None:
-                checkbox.setChecked(False)
+                checkboxes.append(checkbox)
+        return tuple(checkboxes)
+
+    def _update_all_mod_conditions_button(self):
+        """1件でも選択中なら解除、全解除時なら選択を次の操作にする。"""
+        has_checked_condition = any(
+            checkbox.isChecked()
+            for checkbox in self._mod_condition_checkboxes()
+        )
+        self.clear_mod_conditions_button.setText(
+            "すべて解除" if has_checked_condition else "すべて選択"
+        )
+
+    def _toggle_all_mod_condition_checks(self):
+        """Mod条件だけを一括選択／解除し、基本条件チップは変更しない。"""
+        checkboxes = self._mod_condition_checkboxes()
+        should_check = not any(checkbox.isChecked() for checkbox in checkboxes)
+        for checkbox in checkboxes:
+            checkbox.setChecked(should_check)
+        self._update_all_mod_conditions_button()
 
     def _update_item_header(self, item):
         is_nonunique_equipment = (
@@ -4139,6 +4159,7 @@ class PoetoreWindow(QWidget):
             Styles.apply_checkbox_style(checkbox)
             checkbox.setChecked(stat_filter.enabled)
             checkbox.stateChanged.connect(self._mark_search_dirty)
+            checkbox.stateChanged.connect(self._update_all_mod_conditions_button)
             checkbox.stateChanged.connect(
                 lambda _state, row=row: self._toggle_hidden_mods(
                     self.hidden_mods_toggle.isChecked()
@@ -4274,6 +4295,7 @@ class PoetoreWindow(QWidget):
                 editor.textChanged.connect(sync_slider)
                 max_editor.textChanged.connect(sync_slider)
                 slider.valueCommitted.connect(commit_slider)
+        self._update_all_mod_conditions_button()
         self._adjust_window_height_to_mod_rows()
 
     def _search_completed(self, result: PriceResult, initial_filters, search_generation: int):
