@@ -187,22 +187,21 @@ def parse_item_text(text: str) -> ParsedItem:
         if any(line.startswith(f"{label}:") for label in _LABELS):
             continue
         line_kind = "augment" if re.search(r"\(rune\)\s*$", line, re.IGNORECASE) else current_kind
-        include_local_variants = (
+        prefer_local = (
             rarity != "unique"
             and category in _LOCAL_AFFIX_CATEGORIES
             and line_kind in {"explicit", "fractured", "crafted", "desecrated"}
         )
         resolved = resolve_stat_line_candidates(
-            line, line_kind, include_local_variants=include_local_variants,
+            line, line_kind, include_local_variants=prefer_local,
         )
         if resolved:
             entry, values = resolved[0]
-            stat_ids = tuple(str(row.get("id", "")) for row, _values in resolved)
             raw_stat_id = str(entry.get("id", ""))
             modifiers.append(ItemModifier(
                 text=line, values=values, kind=str(entry.get("type", current_kind or "explicit")),
                 ref=str((entry.get("text") or {}).get("en", line)),
-                stat_id=raw_stat_id, confidence=1.0, stat_ids=stat_ids,
+                stat_id=raw_stat_id, confidence=1.0,
             ))
         elif re.search(r"\d", line) and not separator:
             # Keep suspicious numeric lines visible to the user instead of silently dropping them.

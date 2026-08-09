@@ -119,51 +119,30 @@ def test_reported_rare_spear_sends_flat_damage_average_and_optional_quality():
     }
 
 
-def test_reported_rare_body_armour_sends_local_and_global_as_ee2_or_group():
+def test_reported_rare_body_armour_sends_only_category_selected_local_stat():
     text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_body_armour_ja.txt").read_text(
         encoding="utf-8"
     )
     payload = build_search_query(parse_item_text(text))
-    groups = payload["query"]["stats"]
-    evasion = [
-        group for group in groups
-        if {row["id"] for row in group["filters"]} == {
-            "explicit.stat_124859000", "explicit.stat_2106365538",
-        }
-    ]
+    filters = payload["query"]["stats"][0]["filters"]
+    evasion = [row for row in filters if row["id"] == "explicit.stat_124859000"]
     assert evasion == [
-        {
-            "type": "count", "value": {"min": 1},
-            "filters": [
-                {"id": "explicit.stat_124859000", "value": {"min": 105.0}},
-                {"id": "explicit.stat_2106365538", "value": {"min": 105.0}},
-            ],
-        },
-        {
-            "type": "count", "value": {"min": 1},
-            "filters": [
-                {"id": "explicit.stat_124859000", "value": {"min": 40.0}},
-                {"id": "explicit.stat_2106365538", "value": {"min": 40.0}},
-            ],
-        },
+        {"id": "explicit.stat_124859000", "value": {"min": 105.0}},
+        {"id": "explicit.stat_124859000", "value": {"min": 40.0}},
     ]
+    assert all(row["id"] != "explicit.stat_2106365538" for row in filters)
 
 
-def test_edited_or_filter_applies_bounds_to_both_ids_and_off_removes_group():
+def test_poe2_filter_ignores_audit_alternatives_in_normal_search():
     row = TradeStatFilter(
         "explicit.stat_124859000", "回避力が増加する", 90, "explicit",
         enabled=True, max_value=120,
         alternative_stat_ids=("explicit.stat_2106365538",),
     )
     assert _stat_groups_from_filters((row,)) == [
-        {"type": "and", "filters": []},
-        {
-            "type": "count", "value": {"min": 1},
-            "filters": [
-                {"id": "explicit.stat_124859000", "value": {"min": 90, "max": 120}},
-                {"id": "explicit.stat_2106365538", "value": {"min": 90, "max": 120}},
-            ],
-        },
+        {"type": "and", "filters": [
+            {"id": "explicit.stat_124859000", "value": {"min": 90, "max": 120}},
+        ]},
     ]
     assert _stat_groups_from_filters((row.__class__(
         **{**row.__dict__, "enabled": False}

@@ -1372,9 +1372,7 @@ def test_reported_poe2_rare_body_armour_shows_local_evasion_filter(qapp):
             ("explicit.stat_124859000", 105),
             ("explicit.stat_124859000", 40),
         ]
-        assert all(row.alternative_stat_ids == (
-            "explicit.stat_2106365538",
-        ) for row in evasion)
+        assert all(not row.alternative_stat_ids for row in evasion)
         assert window.mod_warning.isHidden()
     finally:
         window.close()

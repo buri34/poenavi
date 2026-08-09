@@ -2338,7 +2338,6 @@ class PoetoreWindow(QWidget):
                     modifier.kind, enabled=bool(modifier.stat_id),
                     ref=modifier.ref, confidence=modifier.confidence,
                     read_value=trade_stat_value(modifier.values),
-                    alternative_stat_ids=(modifier.stat_ids or (modifier.stat_id,))[1:],
                 )
                 for modifier in item.modifiers if modifier.stat_id
             )

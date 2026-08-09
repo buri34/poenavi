@@ -77,14 +77,7 @@ def _stat_groups_from_modifiers(modifiers) -> list[dict]:
         if not modifier.stat_id:
             continue
         value = trade_stat_value(modifier.values)
-        stat_ids = modifier.stat_ids or (modifier.stat_id,)
-        rows = [_trade_filter_row(stat_id, value) for stat_id in stat_ids]
-        if len(rows) == 1:
-            direct.append(rows[0])
-        else:
-            groups.append({
-                "type": "count", "value": {"min": 1}, "filters": rows,
-            })
+        direct.append(_trade_filter_row(modifier.stat_id, value))
     return groups
 
 
@@ -94,17 +87,7 @@ def _stat_groups_from_filters(filters) -> list[dict]:
     for row in filters:
         if not row.enabled or not row.stat_id:
             continue
-        stat_ids = (row.stat_id,) + tuple(row.alternative_stat_ids)
-        rows = [
-            _trade_filter_row(stat_id, row.min_value, row.max_value)
-            for stat_id in stat_ids
-        ]
-        if len(rows) == 1:
-            direct.append(rows[0])
-        else:
-            groups.append({
-                "type": "count", "value": {"min": 1}, "filters": rows,
-            })
+        direct.append(_trade_filter_row(row.stat_id, row.min_value, row.max_value))
     return groups
 
 
