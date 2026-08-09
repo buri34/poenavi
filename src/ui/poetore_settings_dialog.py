@@ -33,6 +33,7 @@ from src.poetore.trade import (
 from src.utils.global_hotkeys import find_duplicate_hotkeys
 from src.ui.custom_command_settings import CustomCommandSettingsWidget
 from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
+from src.utils.poe_version_data import POE1, POE2
 
 
 class _LeagueSignals(QObject):
@@ -48,6 +49,7 @@ class PoetoreSettingsDialog(QDialog):
     ):
         super().__init__(parent)
         self.current_config = current_config or {}
+        self.poe_version = str(self.current_config.get("poe_version", POE1))
         self.update_check_callback = update_check_callback
         self._league_refresh_started = False
         self._league_signals = _LeagueSignals(self)
@@ -139,7 +141,8 @@ class PoetoreSettingsDialog(QDialog):
             "一覧から選択、またはプライベートリーグ名を直接入力"
         )
         self.league_combo.addItem("自動（現行SCを取得中）", "auto")
-        saved_league = str(poetore.get("league", "auto")).strip() or "auto"
+        league_key = "league_poe2" if self.poe_version == POE2 else "league"
+        saved_league = str(poetore.get(league_key, "auto")).strip() or "auto"
         if saved_league != "auto":
             self.league_combo.addItem(saved_league, saved_league)
             self.league_combo.setCurrentIndex(1)
@@ -333,7 +336,11 @@ class PoetoreSettingsDialog(QDialog):
 
         def run():
             try:
-                leagues = available_pc_leagues()
+                if self.poe_version == POE2:
+                    from src.poetore.poe2.trade import available_pc_leagues as poe2_available_pc_leagues
+                    leagues = poe2_available_pc_leagues()
+                else:
+                    leagues = available_pc_leagues()
             except TradeApiError:
                 leagues = ()
             self._league_signals.ready.emit(leagues)
@@ -342,7 +349,11 @@ class PoetoreSettingsDialog(QDialog):
 
     def _show_trade_leagues(self, leagues):
         saved = self._league_selection_value()
-        auto_league = default_pc_league(tuple(leagues))
+        if self.poe_version == POE2:
+            from src.poetore.poe2.trade import default_pc_league as poe2_default_pc_league
+            auto_league = poe2_default_pc_league(tuple(leagues))
+        else:
+            auto_league = default_pc_league(tuple(leagues))
         self.league_combo.blockSignals(True)
         self.league_combo.clear()
         self.league_combo.addItem(f"自動（現行SC: {auto_league}）", "auto")
@@ -399,7 +410,8 @@ class PoetoreSettingsDialog(QDialog):
             }
         )
         poetore = dict(self.current_config.get("poetore", {}))
-        poetore["league"] = self._league_selection_value()
+        league_key = "league_poe2" if self.poe_version == POE2 else "league"
+        poetore[league_key] = self._league_selection_value()
         poetore["result_font_size"] = (
             self.result_font_size_combo.currentData() or "medium"
         )

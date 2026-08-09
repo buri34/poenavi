@@ -66,18 +66,17 @@ class AppModeTest(unittest.TestCase):
 
         self.assertEqual(dialog.selected_mode, POETORE_MODE)
 
-    def test_dialog_disables_poetore_when_poe2_is_selected(self):
+    def test_dialog_allows_poetore_when_poe2_is_selected(self):
         dialog = AppModeSelectionDialog(
             current_mode=POETORE_MODE,
             poe_version=POE2,
         )
 
-        self.assertEqual(dialog.selected_mode, POENAVI_MODE)
-        self.assertTrue(dialog.poenavi_card.isChecked())
-        self.assertFalse(dialog.poetore_card.isEnabled())
-        self.assertIn("PoE1専用", dialog.poetore_card.toolTip())
+        self.assertEqual(dialog.selected_mode, POETORE_MODE)
+        self.assertTrue(dialog.poetore_card.isChecked())
+        self.assertTrue(dialog.poetore_card.isEnabled())
 
-    def test_saved_poetore_mode_cannot_skip_selector_in_poe2(self):
+    def test_saved_poetore_mode_can_skip_selector_in_poe2(self):
         dialog = MagicMock()
         dialog.exec.return_value = QDialog.Accepted
         dialog.selected_mode = POENAVI_MODE
@@ -96,11 +95,8 @@ class AppModeTest(unittest.TestCase):
         ) as dialog_class, patch.object(main.ConfigManager, "save_config"):
             selected = main.select_app_mode(config)
 
-        self.assertEqual(selected, POENAVI_MODE)
-        dialog_class.assert_called_once_with(
-            current_mode=POENAVI_MODE,
-            poe_version=POE2,
-        )
+        self.assertEqual(selected, POETORE_MODE)
+        dialog_class.assert_not_called()
 
     def test_fixed_poe_version_is_resolved_before_mode_selection(self):
         config = {"poe_version": POE1, "poe_version_mode": POE2}

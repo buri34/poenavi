@@ -8,7 +8,7 @@ POETORE = "poetore"
 
 FEATURE_SUPPORTED_VERSIONS = {
     MINI_NAVI: frozenset({POE1, POE2}),
-    POETORE: frozenset({POE1}),
+    POETORE: frozenset({POE1, POE2}),
 }
 
 FEATURE_HOTKEY_ACTIONS = {

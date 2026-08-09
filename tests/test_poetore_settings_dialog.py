@@ -137,6 +137,27 @@ def test_poetore_settings_league_choices_match_trade_window_and_allow_manual_inp
     dialog.close()
 
 
+def test_poe2_league_selection_uses_same_ui_but_separate_setting():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "poe_version": "poe2",
+        "poetore": {"league": "Allflame", "league_poe2": "auto"},
+    })
+    dialog._show_trade_leagues((
+        TradeLeague("Runes of Aldur"), TradeLeague("HC Runes of Aldur", True),
+        TradeLeague("Standard"),
+    ))
+    assert dialog.league_combo.itemText(0) == "自動（現行SC: Runes of Aldur）"
+    assert [dialog.league_combo.itemData(i) for i in range(dialog.league_combo.count())] == [
+        "auto", "Runes of Aldur", "HC Runes of Aldur", "Standard",
+    ]
+    dialog.league_combo.setCurrentIndex(1)
+    settings = dialog.get_settings()["poetore"]
+    assert settings["league"] == "Allflame"
+    assert settings["league_poe2"] == "Runes of Aldur"
+    dialog.close()
+
+
 def test_poetore_settings_saves_result_font_size():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(

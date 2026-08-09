@@ -38,3 +38,17 @@ def test_bilingual_pairs_resolve_to_same_trade_identity():
 def test_unknown_base_is_not_silently_guessed():
     with pytest.raises(Poe2ItemParseError, match="base identity未解決"):
         parse_item_text("Item Class: Bows\nRarity: Rare\nTest Name\nUnknown Bow\n")
+
+
+def test_rare_properties_and_resolved_mod_are_kept_for_editable_trade_filters():
+    text = (
+        "Item Class: Bows\nRarity: Rare\nTest Name\nRider Bow\n--------\n"
+        "Quality: +20%\nPhysical Damage: 12-34\n--------\nItem Level: 80\n--------\n"
+        "123 to maximum Life\n999 unrecognised power\n"
+    )
+    item = parse_item_text(text)
+    assert item.properties["Quality"] == "+20%"
+    assert item.modifiers[0].stat_id == "explicit.stat_3299347043"
+    assert item.modifiers[0].values == (123.0,)
+    assert item.modifiers[1].stat_id is None
+    assert item.modifiers[1].text == "999 unrecognised power"

@@ -88,7 +88,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     app.processEvents()
 
 
-def test_poetore_mode_does_not_start_capture_services_for_poe2():
+def test_poetore_mode_starts_capture_services_for_poe2():
     app = QApplication.instance() or QApplication([])
     config = {
         "poe_version": POE2,
@@ -112,10 +112,10 @@ def test_poetore_mode_does_not_start_capture_services_for_poe2():
         window = PoetoreModeWindow()
 
     supplied_hotkeys = hotkey_class.call_args.args[0]
-    assert "poetore_capture" not in supplied_hotkeys
-    assert "poetore_auto_hide" not in supplied_hotkeys
+    assert "poetore_capture" in supplied_hotkeys
+    assert "poetore_auto_hide" in supplied_hotkeys
     assert supplied_hotkeys["map_check"] == "alt+f"
-    prepare_window.assert_not_called()
+    prepare_window.assert_called_once_with(window)
     window.close()
     app.processEvents()
 

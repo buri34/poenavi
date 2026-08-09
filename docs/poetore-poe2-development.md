@@ -27,13 +27,28 @@ PoE2クライアントから直接採取した文面とは称さない。実機�
 ## 次の残タスク
 
 - [ ] 実PoE2クライアントからCurrency、Rare武器／防具、Unique、Gem、Waystoneの日英全文を収集
-- [ ] identity indexを3組の最小fixture用から公式metadata全体のcandidate生成へ拡張
-- [ ] section、property、advanced Mod header、tier、roll、未解決Mod保持を実装
-- [ ] Crossbow、Spear、Flail、Focus、Buckler、Gem、Waystoneのカテゴリを追加
-- [ ] 既存Trade transport、10件単位fetch、先行表示、cache、価格結果へPoE2 adapterを接続
-- [ ] PoE2モードの起動カード、ホットキー、遅延生成、共通UIを解禁
-- [ ] PoE1／PoE2を実行時に切り替え、表示中ウィンドウとservice lifecycleを検証
+- [x] identity indexをEE2固定revisionの日英全identityへ拡張
+- [x] 基本property、公式Stat ID、数値、未解決Mod保持を実装
+- [x] Currency、Unique、Rare武器／防具の基本カテゴリを追加
+- [x] 既存10件単位fetch、先行表示、cache、価格結果へPoE2 adapterを接続
+- [x] PoE2モードの起動カード、ホットキー、遅延生成、共通UIを解禁
+- [x] PoE1／PoE2切替時に旧版のぽえとれ画面を破棄するlifecycleを実装
+- [x] 共通リーグ選択UIへPoE2リーグだけを表示し、版別に選択値を保存
+- [ ] 実機fixtureでadvanced Mod header、tier、roll範囲、Mod種別の精度を追加検証
+- [ ] Gem、Waystoneを実機試用対象へ追加
+- [ ] Crossbow、Spear、Flail、Focus、Bucklerの実コピー全文を追加検証
 - [ ] 縦切り完成後、重複した共通処理だけを小さく抽出する
+
+## Phase 1〜3 実機試用版（2026-08-09）
+
+PoE1と同じぽえとれ画面をPoE2でも開放し、PoE2 Parser／Trade2 adapterを実行時に
+切り替える。リーグ欄は共通UIだが、PoE2ではTrade2 `/data/leagues`の結果だけを表示し、
+`league_poe2`へPoE1とは別保存する。「自動」はStandard／Hardcore以外の最初のSCを選ぶ。
+
+実機試用対象はCurrency、Unique、基本Rare武器／防具。特殊カテゴリ、Rune／Soul Core、
+Charm／Tablet／Relic、Sanctified／Desecrated／Runeforged、Pseudo Stat、DPS自動計算、
+品質20%換算、PoE2固有Unique例外は今回の対象外として残す。解析できない数値Modは
+黙って捨てず、画面の未解決警告へ残す。
 
 ## 公式API検証記録
 

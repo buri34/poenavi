@@ -233,8 +233,8 @@ def test_main_mode_does_not_register_poetore_hotkeys_in_poe2(monkeypatch):
 
     MainWindow.register_hotkeys(window)
 
-    assert "poetore_capture" not in window.hotkey_map.values()
-    assert "poetore_auto_hide" not in window.hotkey_map.values()
+    assert "poetore_capture" in window.hotkey_map.values()
+    assert "poetore_auto_hide" in window.hotkey_map.values()
     assert "map_check" in window.hotkey_map.values()
 
 

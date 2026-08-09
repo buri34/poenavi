@@ -2486,11 +2486,13 @@ class MainWindow(QMainWindow):
         overlay = getattr(self, "mini_navi_overlay", None)
         if overlay is not None and not self._is_mini_navi_available():
             overlay.hide()
-        if not self._is_poetore_available():
-            poetore_window = getattr(self, "_poetore_window", None)
-            if poetore_window is not None:
-                poetore_window.close()
-                self._poetore_window = None
+        poetore_window = getattr(self, "_poetore_window", None)
+        if poetore_window is not None and (
+            not self._is_poetore_available()
+            or getattr(poetore_window, "poe_version", None) != self.poe_version
+        ):
+            poetore_window.close()
+            self._poetore_window = None
 
     def toggle_mini_navi_overlay(self):
         if not self._is_mini_navi_available():

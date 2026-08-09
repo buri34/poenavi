@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from src.poetore.poe2 import build_search_query, fetch_listings, parse_item_text, search_items
+from src.poetore.poe2.trade import available_pc_leagues, default_pc_league
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
@@ -46,3 +47,19 @@ def test_mock_search_and_fetch_complete_the_minimal_vertical_slice():
     assert len(seen) == 2
     assert "/api/trade2/search/Standard" in seen[0].full_url
     assert "/api/trade2/fetch/listing-id?query=query-id" in seen[1].full_url
+
+
+def test_poe2_leagues_are_filtered_and_auto_selects_current_softcore(monkeypatch):
+    monkeypatch.setattr(
+        "src.poetore.poe2.trade._cached_request_json",
+        lambda _url: ({"result": [
+            {"id": "Runes of Aldur", "realm": "poe2"},
+            {"id": "HC Runes of Aldur", "realm": "poe2"},
+            {"id": "Standard", "realm": "poe2"},
+            {"id": "PoE1 League", "realm": "pc"},
+        ]}, {}),
+    )
+    leagues = available_pc_leagues()
+    assert [row.id for row in leagues] == ["Runes of Aldur", "HC Runes of Aldur", "Standard"]
+    assert leagues[1].hardcore
+    assert default_pc_league(leagues) == "Runes of Aldur"

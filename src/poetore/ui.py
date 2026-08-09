@@ -27,6 +27,7 @@ from src.ui.styles import Styles
 from src.utils.window_focus import (
     focus_window, get_foreground_window, is_path_of_exile_window,
 )
+from src.utils.poe_version_data import POE1, POE2
 
 from .parser import ItemParseError, parse_item_text
 from .clipboard import clipboard_change_token, read_item_clipboard
@@ -827,6 +828,7 @@ class PoetoreWindow(QWidget):
     def __init__(self, parent=None, app_config=None, save_config=None):
         super().__init__(parent)
         self._app_config = app_config if isinstance(app_config, dict) else {}
+        self.poe_version = str(self._app_config.get("poe_version", POE1))
         self._save_app_config = save_config
         self._league_refresh_started = False
         self._auto_league: str | None = None
@@ -868,7 +870,7 @@ class PoetoreWindow(QWidget):
         self.trade_league_combo.setMinimumContentsLength(12)
         self.trade_league_combo.setToolTip("一覧から選択、またはPrivate League IDを直接入力")
         self.trade_league_combo.addItem("自動（現行SCを取得中）", "auto")
-        saved_league = str(self._app_config.get("poetore", {}).get("league", "auto"))
+        saved_league = self._saved_trade_league()
         if saved_league != "auto":
             self.trade_league_combo.addItem(saved_league, saved_league)
             self.trade_league_combo.setCurrentIndex(1)
@@ -2235,7 +2237,11 @@ class PoetoreWindow(QWidget):
 
         def run():
             try:
-                leagues = available_pc_leagues()
+                if self.poe_version == POE2:
+                    from .poe2.trade import available_pc_leagues as poe2_available_pc_leagues
+                    leagues = poe2_available_pc_leagues()
+                else:
+                    leagues = available_pc_leagues()
             except TradeApiError:
                 leagues = ()
             self._trade_signals.leagues_ready.emit(leagues)
@@ -2243,8 +2249,12 @@ class PoetoreWindow(QWidget):
         threading.Thread(target=run, daemon=True).start()
 
     def _show_trade_leagues(self, leagues):
-        saved = str(self._app_config.get("poetore", {}).get("league", "auto"))
-        self._auto_league = default_pc_league(tuple(leagues))
+        saved = self._saved_trade_league()
+        if self.poe_version == POE2:
+            from .poe2.trade import default_pc_league as poe2_default_pc_league
+            self._auto_league = poe2_default_pc_league(tuple(leagues))
+        else:
+            self._auto_league = default_pc_league(tuple(leagues))
         listed_ids = {league.id for league in leagues}
         is_private = bool(re.search(r"\(PL\d+\)$", saved))
         if saved != "auto" and saved not in listed_ids and not is_private:
@@ -2274,7 +2284,11 @@ class PoetoreWindow(QWidget):
         value = self._league_selection_value()
         if not value:
             value = "auto"
-        self._app_config.setdefault("poetore", {})["league"] = value
+        poetore = self._app_config.setdefault("poetore", {})
+        if self.poe_version == POE2:
+            poetore["league_poe2"] = value
+        else:
+            poetore["league"] = value
         if self._save_app_config is not None:
             self._save_app_config(self._app_config)
         item = getattr(self, "_parsed_item", None)
@@ -2283,10 +2297,26 @@ class PoetoreWindow(QWidget):
             self._poe_ninja_item_key = None
             self._queue_poe_ninja_price(item)
 
+    def _saved_trade_league(self) -> str:
+        poetore = self._app_config.get("poetore", {})
+        key = "league_poe2" if self.poe_version == POE2 else "league"
+        return str(poetore.get(key, "auto")).strip() or "auto"
+
     def _selected_search_range(self) -> int:
         return int(self.search_range_combo.currentData() or 0)
 
     def _resolved_trade_filters(self, item, preset):
+        if self.poe_version == POE2:
+            return tuple(
+                TradeStatFilter(
+                    modifier.stat_id, modifier.text,
+                    modifier.values[0] if modifier.values else None,
+                    modifier.kind, enabled=bool(modifier.stat_id),
+                    ref=modifier.ref, confidence=modifier.confidence,
+                    read_value=modifier.values[0] if modifier.values else None,
+                )
+                for modifier in item.modifiers if modifier.stat_id
+            )
         return apply_search_range(
             resolve_trade_stat_filters(
                 item, preset, self._trade_base_type, self._trade_item_name,
@@ -2342,6 +2372,10 @@ class PoetoreWindow(QWidget):
         return text
 
     def _queue_poe_ninja_price(self, item):
+        if self.poe_version == POE2:
+            self._hide_poe_ninja_price(None)
+            self._hide_related_items(None)
+            return
         league = self._selected_trade_league()
         key = (
             item.raw_text, league, str(self._trade_item_name or ""),
@@ -2842,8 +2876,8 @@ class PoetoreWindow(QWidget):
         if trace is not None:
             trace.mark("clipboard_read", characters=len(copied_text))
         try:
-            item = parse_item_text(copied_text)
-        except ItemParseError:
+            item = self._parse_item_text(copied_text)
+        except (ItemParseError, ValueError):
             if trace is not None:
                 trace.mark("clipboard_parse_failed")
             self._pending_performance_trace = None
@@ -2854,13 +2888,16 @@ class PoetoreWindow(QWidget):
                 "clipboard_parsed", category=item.category, modifiers=len(item.modifiers),
             )
         copied_name = item.name if item.rarity.casefold() in {"unique", "ユニーク"} else None
-        try:
-            self._trade_base_type, self._trade_item_name = english_trade_identity(
-                item, item.base_type, copied_name,
-            )
-        except TradeApiError:
-            # 公式items取得が一時的に失敗しても、検索スレッド側で再試行できる。
+        if self.poe_version == POE2:
             self._trade_base_type, self._trade_item_name = item.base_type, copied_name
+        else:
+            try:
+                self._trade_base_type, self._trade_item_name = english_trade_identity(
+                    item, item.base_type, copied_name,
+                )
+            except TradeApiError:
+                # 公式items取得が一時的に失敗しても、検索スレッド側で再試行できる。
+                self._trade_base_type, self._trade_item_name = item.base_type, copied_name
         if trace is not None:
             trace.mark("capture_identity_resolved")
         self._preset_item_key = None
@@ -2982,8 +3019,8 @@ class PoetoreWindow(QWidget):
             trace.mark("ui_parse_started")
         self._parsed_item = None
         try:
-            item = parse_item_text(self.input_edit.toPlainText())
-        except ItemParseError as exc:
+            item = self._parse_item_text(self.input_edit.toPlainText())
+        except (ItemParseError, ValueError) as exc:
             if trace is not None:
                 trace.mark("ui_parse_failed")
             QMessageBox.warning(self, "解析できませんでした", str(exc))
@@ -3039,9 +3076,12 @@ class PoetoreWindow(QWidget):
             self._populate_stat_filters(initial_filters)
         if is_new_item:
             self._reset_mod_conditions_for_item()
-        warnings = unresolved_modifier_warnings(
-            item, tuple(getattr(self, "_special_chip_rows", {}).values()),
-        )
+        if self.poe_version == POE2:
+            warnings = tuple(mod.text for mod in item.modifiers if not mod.stat_id)
+        else:
+            warnings = unresolved_modifier_warnings(
+                item, tuple(getattr(self, "_special_chip_rows", {}).values()),
+            )
         if warnings:
             preview = " / ".join(warnings[:3])
             suffix = f" ほか{len(warnings) - 3}件" if len(warnings) > 3 else ""
@@ -3077,6 +3117,12 @@ class PoetoreWindow(QWidget):
             self._queue_poe_ninja_price(item)
         if trace is not None:
             trace.mark("ui_parse_applied")
+
+    def _parse_item_text(self, text: str):
+        if self.poe_version == POE2:
+            from .poe2.parser import parse_item_text as parse_poe2_item_text
+            return parse_poe2_item_text(text)
+        return parse_item_text(text)
 
     def search_current_item(self):
         trace = self._pending_performance_trace or start_search_trace("manual_search")
@@ -3189,7 +3235,11 @@ class PoetoreWindow(QWidget):
                 trace.mark(
                     "filter_resolution_completed", filters=len(effective_filters),
                 )
-                if item.rarity.casefold() in {"unique", "ユニーク"} and "unidentified" in item.flags and not trade_name:
+                if (
+                    self.poe_version != POE2
+                    and item.rarity.casefold() in {"unique", "ユニーク"}
+                    and "unidentified" in item.flags and not trade_name
+                ):
                     candidates = unique_candidate_details(self._trade_base_type or item.base_type)
                     if len(candidates) > 1:
                         self._trade_signals.unique_candidates_ready.emit(candidates)
@@ -3199,40 +3249,57 @@ class PoetoreWindow(QWidget):
                     resolved_trade_name = candidates[0].name
                 else:
                     resolved_trade_name = trade_name
-                if resolved_trade_name and item.rarity.casefold() in {"unique", "ユニーク"}:
+                if (
+                    self.poe_version != POE2
+                    and resolved_trade_name
+                    and item.rarity.casefold() in {"unique", "ユニーク"}
+                ):
                     variants = unique_variants(resolved_trade_name, self._trade_base_type or item.base_type)
                     if len(variants) > 1 and not self.unique_variant_combo.isVisible():
                         self._trade_signals.unique_variants_ready.emit(variants)
                         return
-                result = search_prices(
-                    item, self._trade_base_type, league=league, stat_filters=effective_filters,
-                    trade_status=trade_status, trade_name=resolved_trade_name,
-                    preset=preset,
-                    trade_currency=trade_currency,
-                    include_corrupted=include_corrupted,
-                    include_split=include_split,
-                    include_mirrored=include_mirrored,
-                    trade_discriminator=str(selected_discriminator) if selected_discriminator else None,
-                    listed_within=listed_within,
-                    magic_exact=magic_exact,
-                    exact_base_type=self._searches_exact_base_type(item),
-                    item_level_min=item_level_min,
-                    item_level_max=item_level_max,
-                    gem_level_min=gem_level_min,
-                    quality_min=quality_min,
-                    links_min=links_min,
-                    include_unidentified=include_unidentified,
-                    include_veiled=include_veiled,
-                    include_foil=include_foil,
-                    include_searing=include_searing,
-                    include_tangled=include_tangled,
-                    performance_trace=trace,
-                    partial_result_callback=lambda partial: (
-                        self._trade_signals.partial_completed.emit(
-                            partial, search_generation,
-                        )
-                    ),
-                )
+                if self.poe_version == POE2:
+                    from .poe2.trade import search_prices as search_poe2_prices
+                    result = search_poe2_prices(
+                        item, league,
+                        status=trade_status,
+                        stat_filters=effective_filters,
+                        partial_result_callback=lambda partial: (
+                            self._trade_signals.partial_completed.emit(
+                                partial, search_generation,
+                            )
+                        ),
+                    )
+                else:
+                    result = search_prices(
+                        item, self._trade_base_type, league=league, stat_filters=effective_filters,
+                        trade_status=trade_status, trade_name=resolved_trade_name,
+                        preset=preset,
+                        trade_currency=trade_currency,
+                        include_corrupted=include_corrupted,
+                        include_split=include_split,
+                        include_mirrored=include_mirrored,
+                        trade_discriminator=str(selected_discriminator) if selected_discriminator else None,
+                        listed_within=listed_within,
+                        magic_exact=magic_exact,
+                        exact_base_type=self._searches_exact_base_type(item),
+                        item_level_min=item_level_min,
+                        item_level_max=item_level_max,
+                        gem_level_min=gem_level_min,
+                        quality_min=quality_min,
+                        links_min=links_min,
+                        include_unidentified=include_unidentified,
+                        include_veiled=include_veiled,
+                        include_foil=include_foil,
+                        include_searing=include_searing,
+                        include_tangled=include_tangled,
+                        performance_trace=trace,
+                        partial_result_callback=lambda partial: (
+                            self._trade_signals.partial_completed.emit(
+                                partial, search_generation,
+                            )
+                        ),
+                    )
             except (TradeApiError, ValueError) as exc:
                 trace.mark("search_failed", error_type=type(exc).__name__)
                 self._trade_signals.failed.emit(str(exc), search_generation)
