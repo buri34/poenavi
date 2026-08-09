@@ -23,6 +23,9 @@ class ItemModifier:
     option_text: str | None = None
     oils: tuple[int, ...] = ()
     decimal: bool = False
+    # PoE2 Trade2で同じコピー文面に対応するLocal／Global等の代替Stat ID。
+    # 先頭はUI表示用の代表ID。複数時はcount(min=1)のOR条件として送る。
+    stat_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

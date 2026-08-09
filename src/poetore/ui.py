@@ -394,10 +394,16 @@ def _influence_chip_icon(label: str, active: bool) -> QIcon:
     return QIcon(result)
 
 
-_PRICE_CURRENCY_ICONS = {
-    "chaos": "ChaosOrb.png",
-    "divine": "DivineOrb.png",
+_PRICE_CURRENCY_ICON_STEMS = {
+    "chaos": "ChaosOrb",
+    "divine": "DivineOrb",
+    "exalted": "ExaltedOrb",
 }
+
+
+def _price_currency_icon_filename(currency: str, poe_version: str) -> str:
+    stem = _PRICE_CURRENCY_ICON_STEMS[currency]
+    return f"{stem}2.png" if poe_version == POE2 else f"{stem}.png"
 
 
 def _asset_icon_path(filename: str) -> Path | None:
@@ -2332,6 +2338,7 @@ class PoetoreWindow(QWidget):
                     modifier.kind, enabled=bool(modifier.stat_id),
                     ref=modifier.ref, confidence=modifier.confidence,
                     read_value=trade_stat_value(modifier.values),
+                    alternative_stat_ids=(modifier.stat_ids or (modifier.stat_id,))[1:],
                 )
                 for modifier in item.modifiers if modifier.stat_id
             )
@@ -2549,8 +2556,12 @@ class PoetoreWindow(QWidget):
         self.divine_rate_button.setEnabled(True)
         self.divine_rate_button.show()
         self.divine_rate_menu.clear()
-        divine_icon_path = _asset_icon_path(_PRICE_CURRENCY_ICONS["divine"])
-        chaos_icon_path = _asset_icon_path(_PRICE_CURRENCY_ICONS["chaos"])
+        divine_icon_path = _asset_icon_path(
+            _price_currency_icon_filename("divine", self.poe_version)
+        )
+        chaos_icon_path = _asset_icon_path(
+            _price_currency_icon_filename("chaos", self.poe_version)
+        )
         for step in range(1, 10):
             divine = step / 10
             chaos = self._awakened_round(rate * divine)
@@ -2594,7 +2605,9 @@ class PoetoreWindow(QWidget):
             return
         amount, currency = price.display_price_parts()
         self.poe_ninja_price_value.setText(amount)
-        icon_path = _asset_icon_path(_PRICE_CURRENCY_ICONS[currency])
+        icon_path = _asset_icon_path(
+            _price_currency_icon_filename(currency, self.poe_version)
+        )
         pixmap = QPixmap(str(icon_path)) if icon_path else QPixmap()
         self.poe_ninja_currency_icon.setPixmap(
             pixmap.scaled(26, 26, Qt.KeepAspectRatio, Qt.SmoothTransformation)

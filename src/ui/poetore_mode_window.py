@@ -43,6 +43,12 @@ POETORE_TEXT = POETORE_THEME.text
 RATE_REFRESH_MSEC = 31 * 60 * 1000
 
 
+def _currency_icon_filename(currency: str, poe_version: str) -> str:
+    stems = {"divine": "DivineOrb", "chaos": "ChaosOrb", "exalted": "ExaltedOrb"}
+    stem = stems[currency]
+    return f"{stem}2.png" if poe_version == POE2 else f"{stem}.png"
+
+
 def _icon_canvas():
     scale = 2
     pixmap = QPixmap(24 * scale, 24 * scale)
@@ -532,7 +538,10 @@ class PoetoreModeWindow(QMainWindow):
         layout.setSpacing(12)
         divine_icon = QLabel()
         divine_icon.setObjectName("divineCurrencyIcon")
-        divine_pixmap = QPixmap(str(self._asset_path("DivineOrb.png")))
+        poe_version = self.config.get("poe_version", POE1)
+        divine_pixmap = QPixmap(str(self._asset_path(
+            _currency_icon_filename("divine", poe_version)
+        )))
         divine_icon.setPixmap(divine_pixmap.scaled(
             QSize(52, 52),
             Qt.KeepAspectRatio,
@@ -547,7 +556,9 @@ class PoetoreModeWindow(QMainWindow):
         layout.addWidget(value_label)
         chaos_icon = QLabel()
         chaos_icon.setObjectName("chaosCurrencyIcon")
-        chaos_pixmap = QPixmap(str(self._asset_path("ChaosOrb.png")))
+        chaos_pixmap = QPixmap(str(self._asset_path(
+            _currency_icon_filename("chaos", poe_version)
+        )))
         chaos_icon.setPixmap(chaos_pixmap.scaled(
             QSize(46, 46),
             Qt.KeepAspectRatio,

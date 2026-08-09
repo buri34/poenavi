@@ -98,6 +98,16 @@ PoE2 EconomyのUniqueカテゴリ画面は、公開画面用の内部API
 混ぜない。ぽえとれ設定画面にも、ぽえなびと同じ`poe_version`と
 `poe_version_mode`（毎回確認／PoE1固定／PoE2固定）を追加する。
 
+### Local／Global Statの暫定OR検索
+
+PoE2のStat仕様が安定するまでは、EE2と同様、同一コピー文面に対応するLocal／Globalの
+Trade2 Stat IDを1つへ断定せず、`count`・`min: 1`のOR条件として送る。検索UIでは1行として
+扱い、条件OFFやmin／max編集をOR内の全候補へ反映する。
+
+- [ ] 実コピーfixtureと公式Trade2挙動をカテゴリ別に蓄積する
+- [ ] 武器、防具、アクセサリー、Unique、Rune等でLocal／Global選択規則を確定する
+- [ ] PoE2仕様が安定した段階で、OR検索から適切な単一Stat ID選択へ移行する
+
 ## 公式API検証記録
 
 2026-08-09 JST、リーグ`Runes of Aldur`へ以下を送信した。

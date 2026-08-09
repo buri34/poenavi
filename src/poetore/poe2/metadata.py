@@ -69,6 +69,18 @@ def local_stat_matchers() -> tuple[tuple[dict, re.Pattern], ...]:
 def resolve_stat_line(
     text: str, preferred_type: str | None = None, *, prefer_local: bool = False,
 ) -> tuple[dict, tuple[float, ...]] | None:
+    candidates = resolve_stat_line_candidates(
+        text, preferred_type, include_local_variants=prefer_local,
+    )
+    return candidates[0] if candidates else None
+
+
+def resolve_stat_line_candidates(
+    text: str,
+    preferred_type: str | None = None,
+    *,
+    include_local_variants: bool = False,
+) -> tuple[tuple[dict, tuple[float, ...]], ...]:
     comparable = re.sub(
         r"\s*\((?:implicit|explicit|enchant|rune|sanctified|desecrated|fractured|crafted)[^)]*\)\s*$",
         "", text.strip(), flags=re.IGNORECASE,
@@ -82,7 +94,8 @@ def resolve_stat_line(
         ) + tuple(
             row for row in matchers if row[0].get("type") != preferred_type
         )
-    if prefer_local:
+    candidate_matchers = []
+    if include_local_variants:
         local_matchers = local_stat_matchers()
         if preferred_type:
             local_matchers = tuple(
@@ -90,12 +103,21 @@ def resolve_stat_line(
             ) + tuple(
                 row for row in local_matchers if row[0].get("type") != preferred_type
             )
-        for entry, pattern in local_matchers:
-            match = pattern.fullmatch(comparable)
-            if match:
-                return entry, tuple(float(value) for value in match.groups())
-    for entry, pattern in matchers:
+        candidate_matchers.extend(local_matchers)
+    candidate_matchers.extend(matchers)
+    resolved = []
+    seen_ids = set()
+    for entry, pattern in candidate_matchers:
         match = pattern.fullmatch(comparable)
-        if match:
-            return entry, tuple(float(value) for value in match.groups())
-    return None
+        entry_id = str(entry.get("id", ""))
+        if match and entry_id not in seen_ids:
+            seen_ids.add(entry_id)
+            resolved.append((entry, tuple(float(value) for value in match.groups())))
+    if not resolved:
+        return ()
+    if preferred_type and any(row[0].get("type") == preferred_type for row in resolved):
+        resolved = [row for row in resolved if row[0].get("type") == preferred_type]
+    else:
+        first_type = resolved[0][0].get("type")
+        resolved = [row for row in resolved if row[0].get("type") == first_type]
+    return tuple(resolved)

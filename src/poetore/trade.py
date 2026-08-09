@@ -380,6 +380,7 @@ class TradeStatFilter:
     # Trade APIへは送らないAwakened風の表示専用情報。
     source_contributions: tuple[float | None, ...] = ()
     source_headings: tuple[str, ...] = ()
+    alternative_stat_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

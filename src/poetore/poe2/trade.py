@@ -60,6 +60,54 @@ def trade_stat_value(values: tuple[float, ...]) -> float | None:
     return values[0]
 
 
+def _trade_filter_row(stat_id: str, min_value=None, max_value=None) -> dict:
+    row = {"id": stat_id}
+    if min_value is not None or max_value is not None:
+        row["value"] = {
+            **({"min": min_value} if min_value is not None else {}),
+            **({"max": max_value} if max_value is not None else {}),
+        }
+    return row
+
+
+def _stat_groups_from_modifiers(modifiers) -> list[dict]:
+    direct = []
+    groups = [{"type": "and", "filters": direct}]
+    for modifier in modifiers:
+        if not modifier.stat_id:
+            continue
+        value = trade_stat_value(modifier.values)
+        stat_ids = modifier.stat_ids or (modifier.stat_id,)
+        rows = [_trade_filter_row(stat_id, value) for stat_id in stat_ids]
+        if len(rows) == 1:
+            direct.append(rows[0])
+        else:
+            groups.append({
+                "type": "count", "value": {"min": 1}, "filters": rows,
+            })
+    return groups
+
+
+def _stat_groups_from_filters(filters) -> list[dict]:
+    direct = []
+    groups = [{"type": "and", "filters": direct}]
+    for row in filters:
+        if not row.enabled or not row.stat_id:
+            continue
+        stat_ids = (row.stat_id,) + tuple(row.alternative_stat_ids)
+        rows = [
+            _trade_filter_row(stat_id, row.min_value, row.max_value)
+            for stat_id in stat_ids
+        ]
+        if len(rows) == 1:
+            direct.append(rows[0])
+        else:
+            groups.append({
+                "type": "count", "value": {"min": 1}, "filters": rows,
+            })
+    return groups
+
+
 def build_search_query(
     item: ParsedItem,
     status: str = "online",
@@ -70,20 +118,10 @@ def build_search_query(
     if trade_category is None:
         raise ValueError(f"PoE2 Trade category未対応: {item.category}")
     type_filters = {"category": {"option": trade_category}}
-    stat_filters = []
-    for modifier in item.modifiers:
-        if not modifier.stat_id:
-            continue
-        trade_value = trade_stat_value(modifier.values)
-        value = {"min": trade_value} if trade_value is not None else None
-        row = {"id": modifier.stat_id}
-        if value is not None:
-            row["value"] = value
-        stat_filters.append(row)
     query = {
         "status": {"option": _STATUS_OPTIONS.get(status, status)},
         "type": item.base_type,
-        "stats": [{"type": "and", "filters": stat_filters}],
+        "stats": _stat_groups_from_modifiers(item.modifiers),
         "filters": {"type_filters": {"filters": type_filters}},
     }
     misc = {}
@@ -143,16 +181,7 @@ def search_prices(
     """Search Trade2 and adapt its rows to the existing shared price UI model."""
     payload = build_search_query(item, status=status, quality_min=quality_min)
     if stat_filters:
-        payload["query"]["stats"][0]["filters"] = [
-            {
-                "id": row.stat_id,
-                **({"value": {
-                    **({"min": row.min_value} if row.min_value is not None else {}),
-                    **({"max": row.max_value} if row.max_value is not None else {}),
-                }} if row.min_value is not None or row.max_value is not None else {}),
-            }
-            for row in stat_filters if row.enabled and row.stat_id
-        ]
+        payload["query"]["stats"] = _stat_groups_from_filters(stat_filters)
     search_url = f"{API_ROOT}/search/{quote(league, safe='')}"
     search, headers, search_cached = _cached_request_json(search_url, payload)
     query_id = str(search.get("id", ""))

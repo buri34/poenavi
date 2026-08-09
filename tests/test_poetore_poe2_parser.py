@@ -112,3 +112,6 @@ def test_reported_japanese_rare_body_armour_prefers_local_evasion_stats():
         ("explicit.stat_124859000", (105.0,)),
         ("explicit.stat_124859000", (40.0,)),
     ]
+    assert all(mod.stat_ids == (
+        "explicit.stat_124859000", "explicit.stat_2106365538",
+    ) for mod in increased)

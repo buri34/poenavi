@@ -1,9 +1,10 @@
 from unittest.mock import MagicMock, call, patch
 
 from PySide6.QtCore import QSize, Qt, QTimer
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QSystemTrayIcon
 
-from src.ui.poetore_mode_window import PoetoreModeWindow
+from src.ui.poetore_mode_window import PoetoreModeWindow, _currency_icon_filename
 from src.utils.poe_version_data import POE2
 
 
@@ -116,8 +117,24 @@ def test_poetore_mode_starts_capture_services_for_poe2():
     assert "poetore_auto_hide" in supplied_hotkeys
     assert supplied_hotkeys["map_check"] == "alt+f"
     prepare_window.assert_called_once_with(window)
+    for object_name, filename, size in (
+        ("divineCurrencyIcon", "DivineOrb2.png", 52),
+        ("chaosCurrencyIcon", "ChaosOrb2.png", 46),
+    ):
+        label = window.findChild(QLabel, object_name)
+        expected = QPixmap(str(window._asset_path(filename))).scaled(
+            QSize(size, size), Qt.KeepAspectRatio, Qt.SmoothTransformation,
+        )
+        assert label.pixmap().toImage() == expected.toImage()
     window.close()
     app.processEvents()
+
+
+def test_poetore_mode_uses_version_specific_currency_icon_names():
+    assert _currency_icon_filename("divine", "poe2") == "DivineOrb2.png"
+    assert _currency_icon_filename("chaos", "poe2") == "ChaosOrb2.png"
+    assert _currency_icon_filename("exalted", "poe2") == "ExaltedOrb2.png"
+    assert _currency_icon_filename("chaos", "poe1") == "ChaosOrb.png"
 
 
 def test_poetore_mode_minimize_hides_to_tray_and_notifies_once():

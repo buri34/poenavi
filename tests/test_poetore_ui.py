@@ -5,7 +5,7 @@ import csv
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPoint, QRect, QSize, Qt, QTimer
-from PySide6.QtGui import QPalette
+from PySide6.QtGui import QPalette, QPixmap
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QLabel, QMessageBox, QPushButton
 import pytest
@@ -13,7 +13,7 @@ import pytest
 from src.poetore.ui import (
     PoetoreWindow, _MOD_COLUMN_CHECK, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
     _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
-    show_poetore_window,
+    show_poetore_window, _price_currency_icon_filename,
 )
 from src.poetore.window_position import PlacementContext
 from src.poetore.trade import (
@@ -1372,6 +1372,9 @@ def test_reported_poe2_rare_body_armour_shows_local_evasion_filter(qapp):
             ("explicit.stat_124859000", 105),
             ("explicit.stat_124859000", 40),
         ]
+        assert all(row.alternative_stat_ids == (
+            "explicit.stat_2106365538",
+        ) for row in evasion)
         assert window.mod_warning.isHidden()
     finally:
         window.close()
@@ -4056,6 +4059,31 @@ def test_poe_ninja_price_panel_uses_chaos_icon_for_small_price(qapp):
         assert window.poe_ninja_price_value.text() == "10"
         assert not window.poe_ninja_currency_icon.pixmap().isNull()
         assert window.poe_ninja_currency_icon.toolTip() == "Chaos Orb"
+    finally:
+        window.close()
+
+
+def test_poe2_currency_icon_names_use_supplied_assets():
+    assert _price_currency_icon_filename("divine", "poe2") == "DivineOrb2.png"
+    assert _price_currency_icon_filename("chaos", "poe2") == "ChaosOrb2.png"
+    assert _price_currency_icon_filename("exalted", "poe2") == "ExaltedOrb2.png"
+    assert _price_currency_icon_filename("divine", "poe1") == "DivineOrb.png"
+
+
+def test_poe2_poe_ninja_panel_renders_supplied_divine_icon(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        key = ("item", "Runes of Aldur", "Mageblood", "Utility Belt")
+        window._poe_ninja_item_key = key
+        window._show_poe_ninja_price(
+            key,
+            PoeNinjaPrice("Mageblood", "Utility Belt", 35000, (), "https://poe.ninja/example", 100),
+        )
+        icon_path = Path(__file__).parents[1] / "assets" / "icons" / "DivineOrb2.png"
+        expected = QPixmap(str(icon_path)).scaled(
+            26, 26, Qt.KeepAspectRatio, Qt.SmoothTransformation,
+        )
+        assert window.poe_ninja_currency_icon.pixmap().toImage() == expected.toImage()
     finally:
         window.close()
 
