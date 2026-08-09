@@ -116,15 +116,67 @@ def build_stat_index() -> dict:
     return {"schema_version": 1, "source": "scripts/poetore-poe2-sources.lock.json", "entries": entries}
 
 
+def build_augment_index(ee2_root: Path) -> dict:
+    """Build the compact bilingual Rune/Soul Core editor index from fixed EE2 data."""
+    localized = {}
+    for language in ("en", "ja"):
+        path = ee2_root / "renderer" / "public" / "data" / language / "items.ndjson"
+        localized[language] = [
+            json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line
+        ]
+    entries = []
+    for en, ja in zip(localized["en"], localized["ja"]):
+        effects = en.get("augment") or ()
+        if not effects:
+            continue
+        if en.get("refName") != ja.get("refName"):
+            raise ValueError("EE2 bilingual augment rows are not aligned")
+        ja_effects = ja.get("augment") or ()
+        built_effects = []
+        for index, effect in enumerate(effects):
+            trade_ids = tuple(str(value) for value in effect.get("tradeId") or () if value)
+            if not trade_ids:
+                continue
+            localized_effect = ja_effects[index] if index < len(ja_effects) else {}
+            built_effects.append({
+                "categories": list(effect.get("categories") or ()),
+                "text": {
+                    "en": str(effect.get("string", "")),
+                    "ja": str(localized_effect.get("string") or effect.get("string", "")),
+                },
+                "values": list(effect.get("values") or ()),
+                "trade_ids": list(trade_ids),
+                "socket_bound": bool(effect.get("socketBound")),
+            })
+        if built_effects:
+            entries.append({
+                "ref_name": str(en.get("refName", "")),
+                "names": {"en": str(en.get("name", "")), "ja": str(ja.get("name", ""))},
+                "effects": built_effects,
+            })
+    return {
+        "schema_version": 1,
+        "source": "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8",
+        "entries": entries,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ee2-root", type=Path)
+    parser.add_argument("--augment-only", action="store_true")
     args = parser.parse_args()
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    for name, payload in (
-        ("identity_index.json", build_identity_index(args.ee2_root)),
-        ("stat_index.json", build_stat_index()),
-    ):
+    if args.augment_only:
+        if args.ee2_root is None:
+            parser.error("--augment-only requires --ee2-root")
+        payloads = (("augment_index.json", build_augment_index(args.ee2_root)),)
+    else:
+        payloads = (
+            ("identity_index.json", build_identity_index(args.ee2_root)),
+            ("stat_index.json", build_stat_index()),
+        )
+    for name, payload in payloads:
         (OUTPUT / name).write_text(
             json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n",
             encoding="utf-8",

@@ -198,6 +198,45 @@ Mirrored TabletはEE2のPoE1実装には存在する一方、固定したPoE2 Tr
 確認時点の出品は0件だった。その後Rate Limitへ到達したため、Time-Lost Jewelの追加ライブ
 検索は行わず、固定metadataと最終JSONで検証した。
 
+## Phase 7 高度な検索支援（2026-08-09）
+
+EE2固定revisionの計算規則と公式Trade2 filterを照合し、PoE2専用カテゴリのまま共通検索UIへ
+次の高度条件を追加した。
+
+- 武器: 物理DPS（最低品質20%換算）、元素DPS、合計DPS、APS、Critical Hit Chance
+- 防具: Armour、Evasion、Energy Shield、Runic Ward（最低品質20%換算）、Block
+- Pseudo: 元素耐性合計、火／冷気／雷／混沌耐性、筋力／器用さ／知性、最大Life、最大Mana
+- Tablet: `pseudo.pseudo_number_of_uses_remaining`
+- Unique可変値: コピー文面の現在値とroll下限／上限を保持し、安全に高いほど良いと判断できる
+  Statだけ共通UIの可変値操作へ接続
+
+初期ONのPseudoが集約する元Modは同時送信せず、同じ性能を直接StatとPseudoで二重拘束しない。
+最大LifeはEE2と同様、明示Lifeが存在する時だけStrength由来分を加える。最大Manaも明示Manaが
+存在する時だけIntelligence由来分を加える。元素耐性合計は各元素への寄与数を反映するため、
+全元素耐性10%は合計30として扱う。
+
+### Empty Augment Socketの仮想Rune検索
+
+EE2固定の日英itemsから259アイテム・475カテゴリ別効果を`augment_index.json`へ生成した。
+非Corrupted／非Mirrored装備に空きAugment Socketがある時だけ、検索画面へ
+「空きソケットN個 仮Rune」選択を表示する。選択したRune／Soul Coreの効果を空き数ぶん合算し、
+`rune.*` Statとして最終Trade2 JSONへ加える。ゲーム内アイテム自体は変更しない。
+
+同じ効果に複数のTrade ID候補がある場合は、選択した仮想Runeの1条件だけを
+`count(min=1)`のORへする。通常ModのLocal／Global単一選択方針は変更せず、未ログイン時の
+クエリ複雑度を常時増やさない。Socket-bound効果も固定データの対象カテゴリだけへ表示する。
+
+### 公式仕様上の境界
+
+EE2のBase Defence Percentileは内部表示値を計算するが、現行Trade2送信処理はコメントアウト
+されており、公式Trade2 filtersにも対応filterがない。このため検索できるように見せる行は
+追加しない。Exact／Count／Notの一般編集UIも、今回必要な仮想Runeの限定OR以外は導入しない。
+PoE2 Trade2側へ正式filterが追加された時点でmetadata差分監査から再評価する。
+
+`augment_index.json`はEE2のMIT対象データを由来として固定revisionを明記する。更新時は
+`build_poetore_poe2_indexes.py --ee2-root <固定checkout> --augment-only`でcandidateを生成し、
+カテゴリ数・効果数・Trade ID差分を確認してから適用する。
+
 ## 公式API検証記録
 
 2026-08-09 JST、リーグ`Runes of Aldur`へ以下を送信した。

@@ -9,9 +9,11 @@ import pytest
 from src.poetore.poe2 import build_search_query, fetch_listings, parse_item_text, search_items
 from src.poetore.poe2.trade import (
     _stat_groups_from_filters, available_pc_leagues, build_web_trade_url,
-    default_pc_league, poe2_search_filters, search_prices, trade_stat_value,
+    available_virtual_augments, default_pc_league, empty_augment_socket_count,
+    poe2_search_filters, poe2_trade_filters, search_prices, trade_stat_value,
+    virtual_augment_filters,
 )
-from src.poetore.models import ParsedItem
+from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.trade import TradeStatFilter
 
 
@@ -336,6 +338,122 @@ def test_phase6_relic_barya_and_ultimatum_send_dedicated_filters():
     assert ultimatum["query"]["filters"]["map_filters"]["filters"]["ultimatum_hint"] == {
         "option": "Deadly",
     }
+
+    tablet_rows = poe2_trade_filters(items["normal_tablet"])
+    uses = next(row for row in tablet_rows if row.stat_id == "pseudo.pseudo_number_of_uses_remaining")
+    assert (uses.min_value, uses.enabled) == (10.0, True)
+    tablet = build_search_query(items["normal_tablet"], stat_filters=tablet_rows)
+    assert {"id": "pseudo.pseudo_number_of_uses_remaining", "value": {"min": 10.0}} in (
+        tablet["query"]["stats"][0]["filters"]
+    )
+
+
+def test_phase7_weapon_and_armour_calculated_properties_use_trade2_equipment_filters():
+    fixtures = Path(__file__).parent / "fixtures" / "poe2"
+    spear = parse_item_text((fixtures / "rare_spear_ja.txt").read_text(encoding="utf-8"))
+    spear_rows = poe2_trade_filters(spear)
+    by_id = {row.stat_id: row for row in spear_rows}
+    assert by_id["property.physical_dps"].enabled
+    assert by_id["property.physical_dps"].read_value == pytest.approx(241.325)
+    assert by_id["property.physical_dps"].min_value == 217.0
+    assert not by_id["property.aps"].enabled
+    spear_query = build_search_query(spear, stat_filters=spear_rows)
+    equipment = spear_query["query"]["filters"]["equipment_filters"]["filters"]
+    assert equipment["pdps"] == {"min": 217.0}
+    assert "aps" not in equipment
+
+    armour = parse_item_text((fixtures / "rare_body_armour_ja.txt").read_text(encoding="utf-8"))
+    armour_rows = poe2_trade_filters(armour)
+    evasion = next(row for row in armour_rows if row.stat_id == "property.evasion")
+    assert evasion.enabled
+    assert evasion.read_value == pytest.approx(3090.0)
+    armour_query = build_search_query(armour, stat_filters=armour_rows)
+    assert armour_query["query"]["filters"]["equipment_filters"]["filters"]["ev"] == {
+        "min": 2781.0,
+    }
+
+
+def test_phase7_pseudo_replaces_direct_chaos_filter_without_duplicate_constraint():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2" / "rare_body_armour_ja.txt").read_text(
+            encoding="utf-8"
+        )
+    )
+    rows = poe2_trade_filters(item)
+    direct = next(row for row in rows if row.stat_id == "crafted.stat_2923486259")
+    pseudo = next(row for row in rows if row.stat_id == "pseudo.pseudo_total_chaos_resistance")
+    assert not direct.enabled
+    assert pseudo.enabled and pseudo.min_value == 21.0
+    query = build_search_query(item, stat_filters=rows)
+    sent = query["query"]["stats"][0]["filters"]
+    assert {"id": "pseudo.pseudo_total_chaos_resistance", "value": {"min": 21.0}} in sent
+    assert not any(row["id"] == "crafted.stat_2923486259" for row in sent)
+
+
+def test_phase7_elemental_and_life_pseudos_sum_shared_sources_once():
+    item = ParsedItem(
+        item_class="Rings", rarity="rare", name="Test", base_type="Prismatic Ring",
+        category="ring", modifiers=(
+            ItemModifier("all res", (10.0,), ref="#% to all Elemental Resistances", stat_id="explicit.all"),
+            ItemModifier("fire res", (15.0,), ref="#% to Fire Resistance", stat_id="explicit.fire"),
+            ItemModifier("life", (100.0,), ref="# to maximum Life", stat_id="explicit.life"),
+            ItemModifier("strength", (20.0,), ref="# to Strength", stat_id="explicit.str"),
+        ),
+    )
+    rows = poe2_trade_filters(item)
+    by_id = {row.stat_id: row for row in rows}
+    assert by_id["pseudo.pseudo_total_elemental_resistance"].min_value == 45.0
+    assert by_id["pseudo.pseudo_total_life"].min_value == 140.0
+    assert by_id["pseudo.pseudo_total_elemental_resistance"].enabled
+    assert by_id["pseudo.pseudo_total_life"].enabled
+    assert not by_id["explicit.all"].enabled
+    assert not by_id["explicit.fire"].enabled
+    assert not by_id["explicit.life"].enabled
+    assert not by_id["explicit.str"].enabled
+
+
+def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
+    item = _phase45_item("phase45_sceptre_ja.txt")
+    assert empty_augment_socket_count(item) == 1
+    choices = available_virtual_augments(item)
+    adept = next(row for row in choices if row["ref_name"] == "Adept Rune")
+    assert adept["names"]["ja"]
+    rows = virtual_augment_filters(item, "Adept Rune")
+    assert len(rows) == 1
+    assert rows[0].kind == "virtual-rune"
+    assert rows[0].min_value == 9.0
+    payload = build_search_query(item, stat_filters=poe2_trade_filters(item, "Adept Rune"))
+    sent = payload["query"]["stats"][0]["filters"]
+    assert any(row["id"].startswith("rune.") and row.get("value") == {"min": 9.0} for row in sent)
+
+    corrupted = item.__class__(**{**item.__dict__, "flags": (*item.flags, "corrupted")})
+    assert empty_augment_socket_count(corrupted) == 0
+    assert not available_virtual_augments(corrupted)
+
+    wand = item.__class__(**{**item.__dict__, "category": "wand"})
+    body_rune = virtual_augment_filters(wand, "Body Rune")
+    assert len(body_rune) == 1
+    assert body_rune[0].alternative_stat_ids
+    wand_payload = build_search_query(
+        wand, stat_filters=poe2_trade_filters(wand, "Body Rune"),
+    )
+    groups = wand_payload["query"]["stats"]
+    alternate = next(group for group in groups if group["type"] == "count")
+    assert alternate["value"] == {"min": 1}
+    assert len(alternate["filters"]) == 2
+
+
+def test_phase7_unique_roll_range_reaches_shared_editable_filter_model():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2" / "mageblood_ja.txt").read_text(
+            encoding="utf-8"
+        )
+    )
+    row = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "explicit.stat_3874491706"
+    )
+    assert (row.read_value, row.roll_min, row.roll_max, row.better) == (43.0, 25.0, 50.0, 1)
 
 
 def test_phase6_special_items_open_japanese_trade_with_localized_identity():

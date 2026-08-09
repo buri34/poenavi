@@ -135,6 +135,7 @@ _PROPERTY_LABELS = {
     "Rare Monsters", "モンスターレアリティ", "Area Level", "エリアレベル",
     "Unidentified Tier", "未鑑定ティア",
     "Number of Trials", "試練数", "Radius", "半径",
+    "Uses Remaining", "残り使用回数", "使用回数残り",
 }
 
 _ULTIMATUM_HINT_LINES = {
@@ -153,6 +154,25 @@ _STATE_LINES = {
 _DESCRIPTION_PREFIXES = (
     "Can be used in a Map Device", "マップデバイスで使用すると",
 )
+
+
+def _roll_bounds(text: str) -> tuple[float | None, float | None, int | None]:
+    ranges = re.findall(
+        r"-?\d+(?:\.\d+)?\s*\(\s*(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)\s*\)",
+        text,
+    )
+    if not ranges:
+        return None, None, None
+    minimum = sum(float(low) for low, _high in ranges) / len(ranges)
+    maximum = sum(float(high) for _low, high in ranges) / len(ranges)
+    # Only expose the convenience slider when larger values are unambiguously
+    # beneficial. Ambiguous/inverted lines remain editable as normal min/max.
+    lowered = text.casefold()
+    negative_markers = ("reduced", "less", "減少", "低下", "失う", "受ける")
+    better = None if any(marker in lowered for marker in negative_markers) else 1
+    return minimum, maximum, better
+
+
 def _mod_kind_from_heading(heading: str, previous: str | None) -> str | None:
     lowered = heading.casefold()
     if "冒涜" in heading or "desecrated" in lowered:
@@ -298,6 +318,7 @@ def parse_item_text(text: str) -> ParsedItem:
     properties = {}
     modifiers = []
     flags = set()
+    augment_count = 0
     if base_type.casefold().startswith(("runeforged ", "runemastered ")):
         flags.add("runeforged")
     current_kind = None
@@ -306,6 +327,8 @@ def parse_item_text(text: str) -> ParsedItem:
         if line.startswith("{") and line.endswith("}"):
             heading = line.strip("{} ")
             current_kind = _mod_kind_from_heading(heading, current_kind)
+            if current_kind == "augment":
+                augment_count += 1
             continue
         state = _STATE_LINES.get(line)
         if state:
@@ -332,7 +355,10 @@ def parse_item_text(text: str) -> ParsedItem:
             continue
         if any(line.startswith(f"{label}:") for label in _LABELS):
             continue
-        line_kind = "augment" if re.search(r"\(rune\)\s*$", line, re.IGNORECASE) else current_kind
+        standalone_augment = bool(re.search(r"\(rune\)\s*$", line, re.IGNORECASE))
+        line_kind = "augment" if standalone_augment else current_kind
+        if standalone_augment and current_kind != "augment":
+            augment_count += 1
         prefer_local = (
             rarity != "unique"
             and category in _LOCAL_AFFIX_CATEGORIES
@@ -345,10 +371,12 @@ def parse_item_text(text: str) -> ParsedItem:
         if resolved:
             entry, values = resolved[0]
             raw_stat_id = str(entry.get("id", ""))
+            roll_min, roll_max, better = _roll_bounds(line)
             modifiers.append(ItemModifier(
                 text=line, values=values, kind=str(entry.get("type", current_kind or "explicit")),
                 ref=str((entry.get("text") or {}).get("en", line)),
                 stat_id=raw_stat_id, confidence=1.0,
+                roll_min=roll_min, roll_max=roll_max, better=better,
             ))
             if line_kind in {"augment", "desecrated", "fractured", "crafted", "sanctified"}:
                 flags.add(line_kind)
@@ -366,4 +394,5 @@ def parse_item_text(text: str) -> ParsedItem:
         modifiers=tuple(modifiers),
         flags=tuple(sorted(flags)),
         raw_text=text,
+        augment_count=augment_count,
     )

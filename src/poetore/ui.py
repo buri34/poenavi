@@ -1094,6 +1094,20 @@ class PoetoreWindow(QWidget):
         self.unique_variant_combo.hide()
         variant_options.addWidget(self.unique_variant_label)
         variant_options.addWidget(self.unique_variant_combo)
+        self.virtual_augment_label = QLabel("空きソケット仮Rune／Soul Core:")
+        self.virtual_augment_combo = QComboBox()
+        self.virtual_augment_combo.setMinimumWidth(220)
+        self.virtual_augment_combo.setToolTip(
+            "空きオーグメントソケットへRune／Soul Coreを仮挿入した性能で検索します。\n"
+            "実際のアイテムやゲーム内ソケットは変更しません。"
+        )
+        self.virtual_augment_label.hide()
+        self.virtual_augment_combo.hide()
+        self.virtual_augment_combo.currentIndexChanged.connect(
+            self._virtual_augment_changed
+        )
+        variant_options.addWidget(self.virtual_augment_label)
+        variant_options.addWidget(self.virtual_augment_combo)
         variant_options.addStretch()
         unique_options.addLayout(variant_options)
         panel_layout.addLayout(unique_options)
@@ -2341,18 +2355,12 @@ class PoetoreWindow(QWidget):
 
     def _resolved_trade_filters(self, item, preset):
         if self.poe_version == POE2:
-            from .poe2.trade import poe2_search_filters, trade_stat_value
-            modifier_rows = tuple(
-                TradeStatFilter(
-                    modifier.stat_id, modifier.text,
-                    trade_stat_value(modifier.values),
-                    modifier.kind, enabled=bool(modifier.stat_id),
-                    ref=modifier.ref, confidence=modifier.confidence,
-                    read_value=trade_stat_value(modifier.values),
-                )
-                for modifier in item.modifiers if modifier.stat_id
+            from .poe2.trade import poe2_trade_filters
+            virtual_ref = (
+                self.virtual_augment_combo.currentData()
+                if not self.virtual_augment_combo.isHidden() else None
             )
-            return modifier_rows + poe2_search_filters(item)
+            return poe2_trade_filters(item, virtual_ref)
         return apply_search_range(
             resolve_trade_stat_filters(
                 item, preset, self._trade_base_type, self._trade_item_name,
@@ -2383,6 +2391,40 @@ class PoetoreWindow(QWidget):
                 )
             self._populate_stat_filters(tuple(adjusted_filters))
             self._mark_search_dirty()
+
+    def _configure_virtual_augments(self, item):
+        if self.poe_version != POE2:
+            self.virtual_augment_label.hide()
+            self.virtual_augment_combo.hide()
+            return
+        from .poe2.trade import available_virtual_augments, empty_augment_socket_count
+        choices = available_virtual_augments(item)
+        self.virtual_augment_combo.blockSignals(True)
+        self.virtual_augment_combo.clear()
+        self.virtual_augment_combo.addItem("仮挿入しない", None)
+        for choice in choices:
+            names = choice.get("names") or {}
+            self.virtual_augment_combo.addItem(
+                str(names.get("ja") or names.get("en") or choice["ref_name"]),
+                choice["ref_name"],
+            )
+        self.virtual_augment_combo.setCurrentIndex(0)
+        self.virtual_augment_combo.blockSignals(False)
+        visible = bool(choices)
+        self.virtual_augment_label.setVisible(visible)
+        self.virtual_augment_combo.setVisible(visible)
+        if visible:
+            self.virtual_augment_label.setText(
+                f"空きソケット{empty_augment_socket_count(item)}個 仮Rune／Soul Core:"
+            )
+
+    def _virtual_augment_changed(self, _index):
+        item = getattr(self, "_parsed_item", None)
+        if item is None:
+            return
+        preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
+        self._populate_stat_filters(self._resolved_trade_filters(item, preset))
+        self._mark_search_dirty()
 
     @staticmethod
     def _stat_filter_identity(row: TradeStatFilter) -> tuple:
@@ -3103,6 +3145,7 @@ class PoetoreWindow(QWidget):
         self._configure_links(item)
         self._configure_influence_chips(item)
         self._configure_special_filter_chips(item)
+        self._configure_virtual_augments(item)
         self._update_item_header(item)
         self.result_tree.clear()
         for label, value in (

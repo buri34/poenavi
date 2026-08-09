@@ -59,6 +59,38 @@ def test_phase6_relic_trial_and_timelost_properties_are_preserved():
     assert fixtures["djinn_barya"].properties == {"エリアレベル": "80", "試練数": "3"}
     assert fixtures["inscribed_ultimatum"].properties["Ultimatum Hint"] == "Deadly"
     assert fixtures["timelost_jewel"].properties["半径"] == "大"
+    assert fixtures["normal_tablet"].properties["残り使用回数"] == "10"
+
+
+def test_poe2_roll_ranges_are_averaged_and_only_safe_ranges_get_better_direction():
+    spear = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(
+            encoding="utf-8"
+        )
+    )
+    flat = next(mod for mod in spear.modifiers if mod.stat_id == "explicit.stat_1940865751")
+    assert (flat.roll_min, flat.roll_max, flat.better) == (28.5, 42.0, 1)
+
+    text = """アイテムクラス: ウェイストーン
+レアリティ: マジック
+減退する ウェイストーン (ティア15)
+--------
+アイテムレベル: 81
+--------
+{ サフィックスモッド }
+モンスターがクリティカルヒットから受ける追加ダメージが28(26-30)%減少する
+"""
+    reduced = parse_item_text(text).modifiers[0]
+    assert (reduced.roll_min, reduced.roll_max, reduced.better) == (26.0, 30.0, None)
+
+
+def test_poe2_standalone_rune_line_counts_one_installed_augment():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2" / "phase45_sceptre_ja.txt").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert item.augment_count == 1
 
 
 def test_unknown_base_is_not_silently_guessed():

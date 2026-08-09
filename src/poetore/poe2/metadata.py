@@ -10,6 +10,7 @@ IDENTITY_PATH = (
     Path(__file__).resolve().parents[3] / "data" / "poetore" / "poe2" / "identity_index.json"
 )
 STAT_PATH = IDENTITY_PATH.with_name("stat_index.json")
+AUGMENT_PATH = IDENTITY_PATH.with_name("augment_index.json")
 
 
 @lru_cache(maxsize=1)
@@ -33,6 +34,12 @@ def resolve_identity(name: str, namespace: str | None = None) -> dict | None:
     if namespace is None:
         return candidates[0] if candidates else None
     return next((row for row in candidates if row.get("namespace") == namespace), None)
+
+
+@lru_cache(maxsize=1)
+def augment_entries() -> tuple[dict, ...]:
+    payload = json.loads(AUGMENT_PATH.read_text(encoding="utf-8"))
+    return tuple(payload.get("entries", ()))
 
 
 @lru_cache(maxsize=256)

@@ -40,3 +40,5 @@ class ParsedItem:
     modifiers: tuple[ItemModifier, ...] = ()
     flags: tuple[str, ...] = ()
     raw_text: str = ""
+    # PoE2のRune/Soul Coreセクション数。複数行効果を複数ソケットと誤認しない。
+    augment_count: int = 0

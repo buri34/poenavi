@@ -2,7 +2,7 @@
   "source": "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8 Japanese identity data and locked 2026-08-09 Trade2 metadata; synthetic copy fixtures, not live-client captures",
   "fixtures": [
     {"id":"magic_charm","text":"アイテムクラス: チャーム\nレアリティ: マジック\n帯電した トパーズチャーム\n--------\nアイテムレベル: 80\n","base_type":"Topaz Charm","category":"charm","trade_category":"flask.charm"},
-    {"id":"normal_tablet","text":"アイテムクラス: 石板\nレアリティ: ノーマル\nアビスの石板\n--------\nアイテムレベル: 80\n","base_type":"Abyss Tablet","category":"tablet","trade_category":"map.tablet"},
+    {"id":"normal_tablet","text":"アイテムクラス: 石板\nレアリティ: ノーマル\nアビスの石板\n--------\n残り使用回数: 10\n--------\nアイテムレベル: 80\n","base_type":"Abyss Tablet","category":"tablet","trade_category":"map.tablet"},
     {"id":"sanctum_relic","text":"アイテムクラス: レリック\nレアリティ: ノーマル\n壷のレリック\n--------\nアイテムレベル: 80\n--------\n{ レリックモッド }\n部屋を完了した時に神聖な水を5獲得する\n","base_type":"Urn Relic","category":"relic","trade_category":"sanctum.relic"},
     {"id":"djinn_barya","text":"アイテムクラス: バリャ\nレアリティ: ノーマル\nジンのバリャ\n--------\nエリアレベル: 80\n試練数: 3\n--------\nアイテムレベル: 80\n","base_type":"Djinn Barya","category":"barya","trade_category":"map.barya"},
     {"id":"inscribed_ultimatum","text":"アイテムクラス: アルティメイタム\nレアリティ: ノーマル\nアルティメイタムの刻印\n--------\nエリアレベル: 80\n試練数: 10\n致死\n--------\nアイテムレベル: 80\n","base_type":"Inscribed Ultimatum","category":"ultimatum","trade_category":"map.ultimatum"},

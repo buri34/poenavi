@@ -1361,12 +1361,18 @@ def test_reported_poe2_rare_gloves_show_chaos_resistance_without_warning(qapp):
         window.input_edit.setPlainText(text)
         window.parse_current_text()
 
-        assert window.mod_filter_tree.topLevelItemCount() == 9
+        assert window.mod_filter_tree.topLevelItemCount() == 11
         assert window.mod_warning.isHidden()
         selected = window._selected_stat_filters()
-        chaos = next(row for row in selected if row.stat_id == "explicit.stat_2923486259")
-        assert chaos.text == "混沌耐性 +15(12-15)%"
+        chaos = next(
+            row for row in selected
+            if row.stat_id == "pseudo.pseudo_total_chaos_resistance"
+        )
+        assert chaos.text == "混沌耐性合計"
         assert chaos.min_value == 15
+        direct = next(row for row in selected if row.stat_id == "explicit.stat_2923486259")
+        assert not direct.enabled
+        assert any(row.stat_id == "property.evasion" for row in selected)
         assert any(row.stat_id == "property.augment_sockets" for row in selected)
         assert any(row.stat_id == "property.state.desecrated" for row in selected)
     finally:
@@ -4513,6 +4519,8 @@ def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
 
         fixture = Path(__file__).parent / "fixtures" / "poe2" / "phase45_sceptre_ja.txt"
         item = parse_poe2_item_text(fixture.read_text(encoding="utf-8"))
+        window.input_edit.setPlainText(item.raw_text)
+        window.parse_current_text()
         filters = window._resolved_trade_filters(item, "finished")
         by_id = {row.stat_id: row for row in filters}
         assert by_id["property.spirit"].min_value == 100
@@ -4521,6 +4529,14 @@ def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
         assert not by_id["property.augment_sockets"].enabled
         assert by_id["property.state.sanctified"].enabled
         assert any(row.stat_id.startswith("rune.") for row in filters)
+        assert not window.virtual_augment_combo.isHidden()
+        index = window.virtual_augment_combo.findData("Adept Rune")
+        assert index >= 0
+        window.virtual_augment_combo.setCurrentIndex(index)
+        selected = window._selected_stat_filters()
+        virtual = next(row for row in selected if row.kind == "virtual-rune")
+        assert virtual.min_value == 9.0
+        assert "仮想:" in virtual.text
     finally:
         window.close()
 

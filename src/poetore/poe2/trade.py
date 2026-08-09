@@ -10,10 +10,11 @@ from urllib.request import Request, urlopen
 from ..models import ParsedItem
 from ..trade import (
     PriceListing, PriceResult, TradeApiError, TradeLeague, TradeStatFilter, _cached_request_json,
-    _group_price_listings,
+    _defence_at_20_quality, _group_price_listings, _property_value, _relaxed,
+    _relaxed_decimal, elemental_dps, physical_dps_at_20_quality,
 )
 from .parser import TRADE_CATEGORY_BY_CATEGORY
-from .metadata import resolve_identity
+from .metadata import augment_entries, resolve_identity
 
 
 API_ROOT = "https://www.pathofexile.com/api/trade2"
@@ -50,6 +51,25 @@ def default_pc_league(leagues: tuple[TradeLeague, ...]) -> str:
 
 _STATUS_OPTIONS = {
     "instant": "securable", "available": "available", "online": "online", "offline": "any",
+}
+
+_WEAPON_CATEGORIES = {
+    "bow", "crossbow", "spear", "flail", "staff", "quarterstaff", "wand",
+    "sceptre", "one_mace", "two_mace", "one_sword", "two_sword", "one_axe",
+    "two_axe", "dagger",
+}
+_ARMOUR_CATEGORIES = {
+    "focus", "buckler", "shield", "body_armour", "helmet", "gloves", "boots",
+}
+_EE2_CATEGORY_BY_CATEGORY = {
+    "bow": "Bow", "crossbow": "Crossbow", "spear": "Spear", "flail": "Flail",
+    "staff": "Staff", "quarterstaff": "Warstaff", "wand": "Wand",
+    "sceptre": "Sceptre", "one_mace": "One Hand Mace", "two_mace": "Two Hand Mace",
+    "one_sword": "One Hand Sword", "two_sword": "Two Hand Sword",
+    "one_axe": "One Hand Axe", "two_axe": "Two Hand Axe", "dagger": "Dagger",
+    "focus": "Focus", "buckler": "Buckler", "shield": "Shield",
+    "body_armour": "Body Armour", "helmet": "Helmet", "gloves": "Gloves",
+    "boots": "Boots",
 }
 
 
@@ -89,6 +109,16 @@ def _stat_groups_from_filters(filters) -> list[dict]:
     for row in filters:
         if not row.enabled or not row.stat_id or row.stat_id.startswith("property."):
             continue
+        alternatives = tuple(dict.fromkeys((row.stat_id, *row.alternative_stat_ids)))
+        if row.kind == "virtual-rune" and len(alternatives) > 1:
+            groups.append({
+                "type": "count", "value": {"min": 1},
+                "filters": [
+                    _trade_filter_row(stat_id, row.min_value, row.max_value)
+                    for stat_id in alternatives
+                ],
+            })
+            continue
         direct.append(_trade_filter_row(row.stat_id, row.min_value, row.max_value))
     return groups
 
@@ -110,12 +140,222 @@ def _augment_socket_count(item: ParsedItem) -> int | None:
     return count or None
 
 
+def empty_augment_socket_count(item: ParsedItem) -> int:
+    """Return a conservative count of sockets that can accept a virtual augment."""
+    total = _augment_socket_count(item) or 0
+    if total <= 0 or "corrupted" in item.flags or "mirrored" in item.flags:
+        return 0
+    installed = item.augment_count
+    return max(0, total - installed)
+
+
+def available_virtual_augments(item: ParsedItem) -> tuple[dict, ...]:
+    """Return bilingual augment choices applicable to the copied item category."""
+    category = _EE2_CATEGORY_BY_CATEGORY.get(item.category)
+    if category is None or empty_augment_socket_count(item) <= 0:
+        return ()
+    choices = []
+    for entry in augment_entries():
+        effects = tuple(
+            effect for effect in entry.get("effects", ())
+            if category in (effect.get("categories") or ())
+        )
+        if effects:
+            choices.append({**entry, "effects": effects})
+    return tuple(choices)
+
+
+def virtual_augment_filters(item: ParsedItem, ref_name: str | None) -> tuple[TradeStatFilter, ...]:
+    """Build disabled-by-default Rune stat rows for one user-selected virtual augment."""
+    if not ref_name:
+        return ()
+    empty = empty_augment_socket_count(item)
+    choice = next((row for row in available_virtual_augments(item) if row["ref_name"] == ref_name), None)
+    if choice is None or empty <= 0:
+        return ()
+    rows = []
+    for effect in choice["effects"]:
+        values = tuple(float(value) * empty for value in effect.get("values") or ())
+        value = trade_stat_value(values)
+        names = choice.get("names") or {}
+        text = str((effect.get("text") or {}).get("ja") or (effect.get("text") or {}).get("en") or "")
+        trade_ids = tuple(effect.get("trade_ids") or ())
+        if trade_ids:
+            rows.append(TradeStatFilter(
+                str(trade_ids[0]), f"仮想: {names.get('ja') or names.get('en')} — {text}", value,
+                "virtual-rune", True, read_value=value, source_texts=(
+                    f"空きソケット{empty}個へ仮挿入（実アイテムは変更しません）",
+                ),
+                alternative_stat_ids=tuple(str(stat_id) for stat_id in trade_ids[1:]),
+            ))
+    return tuple(rows)
+
+
 def _waystone_tier(item: ParsedItem) -> float | None:
     value = _property_float(item, "Waystone Tier", "ウェイストーンティア", "Map Tier", "マップティア")
     if value is not None:
         return value
     match = re.search(r"(?:Tier|ティア)\s*(\d+)", item.base_type, re.IGNORECASE)
     return float(match.group(1)) if match else None
+
+
+def _poe2_item_property_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
+    """Build EE2-style calculated weapon/armour rows from copied final properties."""
+    rows: list[TradeStatFilter] = []
+    if item.category in _WEAPON_CATEGORIES:
+        pdps = physical_dps_at_20_quality(item) or 0.0
+        edps = elemental_dps(item) or 0.0
+        total = pdps + edps
+        if pdps and edps:
+            rows.append(TradeStatFilter(
+                "property.total_dps", "合計DPS", _relaxed(total), "property", True,
+                read_value=total,
+            ))
+        if pdps:
+            rows.append(TradeStatFilter(
+                "property.physical_dps", "物理DPS（品質20%換算）", _relaxed(pdps),
+                "property", not edps or pdps / total >= 0.67, read_value=pdps,
+            ))
+        if edps:
+            rows.append(TradeStatFilter(
+                "property.elemental_dps", "元素DPS", _relaxed(edps), "property",
+                not pdps or edps / total >= 0.67, read_value=edps,
+            ))
+        aps = _property_value(item, "秒間アタック回数", "Attacks per Second")
+        if aps is not None:
+            rows.append(TradeStatFilter(
+                "property.aps", "秒間アタック回数", _relaxed_decimal(aps), "property",
+                False, read_value=aps, decimal=True,
+            ))
+        crit = _property_value(item, "クリティカルヒット率", "Critical Hit Chance")
+        if crit is not None:
+            rows.append(TradeStatFilter(
+                "property.crit", "クリティカルヒット率", _relaxed_decimal(crit),
+                "property", False, read_value=crit, decimal=True,
+            ))
+    elif item.category in _ARMOUR_CATEGORIES:
+        for stat_id, label, defence, names in (
+            ("property.armour", "アーマー（品質20%換算）", "ar", ("アーマー", "Armour")),
+            ("property.evasion", "回避力（品質20%換算）", "ev", ("回避力", "Evasion Rating")),
+            ("property.energy_shield", "エナジーシールド（品質20%換算）", "es", ("エナジーシールド", "Energy Shield")),
+            ("property.ward", "ルーンワード（品質20%換算）", "ward", ("ルーンワード", "Runic Ward", "Ward")),
+        ):
+            value = _property_value(item, *names)
+            if value is None:
+                continue
+            q20 = _defence_at_20_quality(value, item, defence)
+            rows.append(TradeStatFilter(
+                stat_id, label, _relaxed(q20), "property", True, read_value=q20,
+            ))
+        block = _property_value(item, "ブロック率", "Block Chance", "Chance to Block")
+        if block is not None:
+            rows.append(TradeStatFilter(
+                "property.block", "ブロック率", _relaxed(block), "property", False,
+                read_value=block,
+            ))
+    return tuple(rows)
+
+
+_RESISTANCE_REFS = {
+    "#% to All Resistances": (("fire", "cold", "lightning", "chaos"),),
+    "#% to all Elemental Resistances": (("fire", "cold", "lightning"),),
+    "#% to Fire Resistance": (("fire",),),
+    "#% to Cold Resistance": (("cold",),),
+    "#% to Lightning Resistance": (("lightning",),),
+    "#% to Chaos Resistance": (("chaos",),),
+    "#% to Fire and Lightning Resistances": (("fire", "lightning"),),
+    "#% to Fire and Cold Resistances": (("fire", "cold"),),
+    "#% to Cold and Lightning Resistances": (("cold", "lightning"),),
+    "#% to Fire and Chaos Resistances": (("fire", "chaos"),),
+    "#% to Cold and Chaos Resistances": (("cold", "chaos"),),
+    "#% to Lightning and Chaos Resistances": (("lightning", "chaos"),),
+}
+_ATTRIBUTE_REFS = {
+    "# to all Attributes": ("str", "dex", "int"),
+    "# to Strength": ("str",), "# to Dexterity": ("dex",),
+    "# to Intelligence": ("int",),
+    "# to Strength and Intelligence": ("str", "int"),
+    "# to Strength and Dexterity": ("str", "dex"),
+    "# to Dexterity and Intelligence": ("dex", "int"),
+}
+
+
+def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...], set[str]]:
+    """Return useful aggregate pseudos and direct stat IDs replaced by enabled pseudos."""
+    resistances = {key: 0.0 for key in ("fire", "cold", "lightning", "chaos")}
+    attributes = {key: 0.0 for key in ("str", "dex", "int")}
+    sources = {key: [] for key in (*resistances, *attributes, "life", "mana")}
+    life = mana = 0.0
+    direct_life = direct_mana = False
+    for modifier in item.modifiers:
+        if not modifier.stat_id or not modifier.ref:
+            continue
+        value = trade_stat_value(modifier.values)
+        if value is None:
+            continue
+        for elements_group in _RESISTANCE_REFS.get(modifier.ref, ()):
+            for element in elements_group:
+                resistances[element] += value
+                sources[element].append(modifier)
+        for attribute in _ATTRIBUTE_REFS.get(modifier.ref, ()):
+            attributes[attribute] += value
+            sources[attribute].append(modifier)
+        if modifier.ref == "# to maximum Life":
+            life += value
+            direct_life = True
+            sources["life"].append(modifier)
+        elif modifier.ref == "# to maximum Mana":
+            mana += value
+            direct_mana = True
+            sources["mana"].append(modifier)
+
+    rows: list[TradeStatFilter] = []
+    replaced: set[str] = set()
+
+    def add(stat_id: str, text: str, value: float, enabled: bool, used) -> None:
+        if not used:
+            return
+        unique = list(dict.fromkeys(used))
+        rows.append(TradeStatFilter(
+            stat_id, text, value, "pseudo", enabled, read_value=value,
+            source_texts=tuple(mod.text for mod in unique),
+        ))
+        if enabled:
+            replaced.update(mod.stat_id for mod in unique if mod.stat_id)
+
+    elemental_sources = sources["fire"] + sources["cold"] + sources["lightning"]
+    add(
+        "pseudo.pseudo_total_elemental_resistance", "元素耐性合計",
+        resistances["fire"] + resistances["cold"] + resistances["lightning"],
+        True, elemental_sources,
+    )
+    for element, stat_id, label in (
+        ("fire", "pseudo.pseudo_total_fire_resistance", "火耐性合計"),
+        ("cold", "pseudo.pseudo_total_cold_resistance", "冷気耐性合計"),
+        ("lightning", "pseudo.pseudo_total_lightning_resistance", "雷耐性合計"),
+    ):
+        add(stat_id, label, resistances[element], False, sources[element])
+    add(
+        "pseudo.pseudo_total_chaos_resistance", "混沌耐性合計",
+        resistances["chaos"], True, sources["chaos"],
+    )
+    for attribute, stat_id, label in (
+        ("str", "pseudo.pseudo_total_strength", "筋力合計"),
+        ("dex", "pseudo.pseudo_total_dexterity", "器用さ合計"),
+        ("int", "pseudo.pseudo_total_intelligence", "知性合計"),
+    ):
+        add(stat_id, label, attributes[attribute], False, sources[attribute])
+    if direct_life:
+        add(
+            "pseudo.pseudo_total_life", "最大ライフ合計",
+            life + attributes["str"] * 2, True, sources["life"] + sources["str"],
+        )
+    if direct_mana:
+        add(
+            "pseudo.pseudo_total_mana", "最大マナ合計",
+            mana + attributes["int"] * 2, False, sources["mana"] + sources["int"],
+        )
+    return tuple(rows), replaced
 
 
 _POE2_PROPERTY_SPECS = (
@@ -180,6 +420,13 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                 "Victorious": "勝利の", "Cowardly": "臆病者の", "Deadly": "致命的な",
             }.get(ultimatum_hint, ultimatum_hint),
         ))
+    if item.category == "tablet":
+        uses = _property_float(item, "Uses Remaining", "残り使用回数", "使用回数残り")
+        if uses is not None:
+            rows.append(TradeStatFilter(
+                "pseudo.pseudo_number_of_uses_remaining", "石板の残り使用回数",
+                uses, "pseudo", True, read_value=uses, exact=True,
+            ))
     for flag, label in _POE2_STATE_LABELS.items():
         if flag in item.flags:
             rows.append(TradeStatFilter(
@@ -188,7 +435,38 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
     return tuple(rows)
 
 
+def poe2_trade_filters(
+    item: ParsedItem, virtual_augment_ref: str | None = None,
+) -> tuple[TradeStatFilter, ...]:
+    """Return the complete editable PoE2 filter set, including Phase 7 aggregates."""
+    pseudos, replaced_ids = _poe2_pseudo_filters(item)
+    modifier_rows = tuple(
+        TradeStatFilter(
+            modifier.stat_id, modifier.text, trade_stat_value(modifier.values),
+            modifier.kind, enabled=bool(modifier.stat_id) and modifier.stat_id not in replaced_ids,
+            ref=modifier.ref, confidence=modifier.confidence,
+            read_value=trade_stat_value(modifier.values), roll_min=modifier.roll_min,
+            roll_max=modifier.roll_max, better=modifier.better,
+        )
+        for modifier in item.modifiers if modifier.stat_id
+    )
+    return (
+        modifier_rows + pseudos + _poe2_item_property_filters(item)
+        + poe2_search_filters(item) + virtual_augment_filters(item, virtual_augment_ref)
+    )
+
+
 _POE2_FILTER_TARGETS = {
+    "property.total_dps": ("equipment_filters", "dps"),
+    "property.physical_dps": ("equipment_filters", "pdps"),
+    "property.elemental_dps": ("equipment_filters", "edps"),
+    "property.aps": ("equipment_filters", "aps"),
+    "property.crit": ("equipment_filters", "crit"),
+    "property.armour": ("equipment_filters", "ar"),
+    "property.evasion": ("equipment_filters", "ev"),
+    "property.energy_shield": ("equipment_filters", "es"),
+    "property.ward": ("equipment_filters", "ward"),
+    "property.block": ("equipment_filters", "block"),
     "property.spirit": ("equipment_filters", "spirit"),
     "property.runic_ward": ("equipment_filters", "ward"),
     "property.reload_time": ("equipment_filters", "reload_time"),
