@@ -4537,6 +4537,14 @@ def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
         virtual = next(row for row in selected if row.kind == "virtual-rune")
         assert virtual.min_value == 9.0
         assert "仮想:" in virtual.text
+
+        corrupted = item.__class__(**{**item.__dict__, "flags": (*item.flags, "corrupted")})
+        window._configure_virtual_augments(corrupted)
+        assert not window.virtual_augment_combo.isHidden()
+
+        unique = item.__class__(**{**item.__dict__, "rarity": "unique"})
+        window._configure_virtual_augments(unique)
+        assert window.virtual_augment_combo.isHidden()
     finally:
         window.close()
 

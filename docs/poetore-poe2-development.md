@@ -218,9 +218,14 @@ EE2固定revisionの計算規則と公式Trade2 filterを照合し、PoE2専用�
 ### Empty Augment Socketの仮想Rune検索
 
 EE2固定の日英itemsから259アイテム・475カテゴリ別効果を`augment_index.json`へ生成した。
-非Corrupted／非Mirrored装備に空きAugment Socketがある時だけ、検索画面へ
+非Unique／非Mirrored装備に空きAugment Socketがある時だけ、検索画面へ
 「空きソケットN個 仮Rune」選択を表示する。選択したRune／Soul Coreの効果を空き数ぶん合算し、
 `rune.*` Statとして最終Trade2 JSONへ加える。ゲーム内アイテム自体は変更しない。
+
+PoE2ではCorrupted品にもRune／Soul Coreを挿入できるため、Corruptedは表示除外条件にしない。
+EE2の`create-item-filters.ts`も空きソケットUIの条件を`rarity !== Unique`としており、
+Corrupted状態では除外していない。UniqueはEE2準拠で仮挿入UIを出さず、Mirroredは変更不能品として
+引き続き対象外にする。
 
 同じ効果に複数のTrade ID候補がある場合は、選択した仮想Runeの1条件だけを
 `count(min=1)`のORへする。通常ModのLocal／Global単一選択方針は変更せず、未ログイン時の

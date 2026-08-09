@@ -465,8 +465,16 @@ def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
     assert any(row["id"].startswith("rune.") and row.get("value") == {"min": 9.0} for row in sent)
 
     corrupted = item.__class__(**{**item.__dict__, "flags": (*item.flags, "corrupted")})
-    assert empty_augment_socket_count(corrupted) == 0
-    assert not available_virtual_augments(corrupted)
+    assert empty_augment_socket_count(corrupted) == 1
+    assert available_virtual_augments(corrupted)
+
+    unique = item.__class__(**{**item.__dict__, "rarity": "unique"})
+    assert empty_augment_socket_count(unique) == 0
+    assert not available_virtual_augments(unique)
+
+    mirrored = item.__class__(**{**item.__dict__, "flags": (*item.flags, "mirrored")})
+    assert empty_augment_socket_count(mirrored) == 0
+    assert not available_virtual_augments(mirrored)
 
     wand = item.__class__(**{**item.__dict__, "category": "wand"})
     body_rune = virtual_augment_filters(wand, "Body Rune")

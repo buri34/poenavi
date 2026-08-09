@@ -143,7 +143,9 @@ def _augment_socket_count(item: ParsedItem) -> int | None:
 def empty_augment_socket_count(item: ParsedItem) -> int:
     """Return a conservative count of sockets that can accept a virtual augment."""
     total = _augment_socket_count(item) or 0
-    if total <= 0 or "corrupted" in item.flags or "mirrored" in item.flags:
+    # PoE2ではCorrupted品にもRune／Soul Coreを挿入できる。
+    # EE2と同様にUniqueでは仮挿入UIを出さず、変更不能なMirrored品も対象外にする。
+    if total <= 0 or item.rarity == "unique" or "mirrored" in item.flags:
         return 0
     installed = item.augment_count
     return max(0, total - installed)
