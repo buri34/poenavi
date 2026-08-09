@@ -151,6 +151,10 @@ Sanctified／Desecrated／Fractured／Craftedも見出しから由来を判別�
   Empty Socketへの仮想Rune追加は高度検索支援のPhaseへ残す。
 - Runeforged／Runemasteredは状態チェックではなく別ベース選択を維持する。
 - 固定EE2由来の日英fixtureは実クライアント採取と混同しない。実コピー全文を継続追加する。
+- MagicのAffix付き表示名はEE2同様、全ITEM identityの連続部分一致から最長かつ
+  アイテムクラスとカテゴリが一致するベースを選ぶ。Waystone等のカテゴリ固有文字列除去へ
+  戻さない。公式日本語identityには同一訳を持つ英語ベースが8組あるため、将来は防御値等の
+  propertyを使うvariant判定を追加し、曖昧な日本語ベースの単一選択を監査する。
 - Deflection等の個別StatとLocal／Global単一選択は、低頻度監査で件数と実出品を照合する。
 
 ### Magic Waystone実コピー追補

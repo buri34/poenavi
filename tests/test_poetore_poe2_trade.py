@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
+import pytest
+
 from src.poetore.poe2 import build_search_query, fetch_listings, parse_item_text, search_items
 from src.poetore.poe2.trade import (
     _stat_groups_from_filters, available_pc_leagues, build_web_trade_url,
@@ -356,6 +358,28 @@ def test_reported_rare_waystone_sends_tier_base_instead_of_affix_name():
 
     assert payload["query"]["type"] == "Waystone (Tier 15)"
     assert payload["query"].get("name") != "先祖の突撃"
+
+
+@pytest.mark.parametrize(
+    ("item_class", "affixed_name", "expected_type"),
+    [
+        ("Focus", "Pulsing Antler Focus", "Antler Focus"),
+        ("Two Hand Mace", "Reaver's Temple Maul of Stunning", "Temple Maul"),
+        ("指輪", "火炎の アメジストの指輪", "Amethyst Ring"),
+        ("鎧", "幻術の スリップストライクベスト", "Slipstrike Vest"),
+    ],
+)
+def test_magic_trade_query_never_sends_affixed_display_name_as_type(
+    item_class, affixed_name, expected_type,
+):
+    item = parse_item_text(
+        f"アイテムクラス: {item_class}\nレアリティ: マジック\n"
+        f"{affixed_name}\n--------\nアイテムレベル: 80\n"
+    )
+    payload = build_search_query(item)
+
+    assert payload["query"]["type"] == expected_type
+    assert payload["query"]["type"] != affixed_name
 
 
 def test_phase45_runemastered_desecrated_and_fractured_filters_are_distinct():

@@ -3,7 +3,11 @@ from __future__ import annotations
 import re
 
 from ..models import ItemModifier, ParsedItem
-from .metadata import resolve_identity, resolve_stat_line_candidates
+from .metadata import (
+    resolve_identity,
+    resolve_identity_fragments,
+    resolve_stat_line_candidates,
+)
 
 
 class Poe2ItemParseError(ValueError):
@@ -170,15 +174,35 @@ def _header(text: str) -> tuple[dict[str, str], list[str]]:
     return labels, identity_lines
 
 
-def _waystone_base_identity(raw_base: str) -> str:
-    match = re.search(
-        r"(?:Waystone\s*\(\s*Tier\s*|ウェイストーン\s*\(\s*ティア\s*)(\d+)\s*\)\s*$",
-        raw_base, re.IGNORECASE,
+def _identity_matches_category(identity: dict, category: str | None) -> bool:
+    if category is None:
+        return True
+    identity_category = str(identity.get("category", ""))
+    mapped = _CLASS_CATEGORY.get(identity_category)
+    if mapped == category:
+        return True
+    ref_name = str(identity.get("ref_name", "")).casefold()
+    if category == "waystone":
+        return identity_category == "Map" and "waystone" in ref_name
+    if category in {"rune", "soul_core"}:
+        return identity_category == "SoulCore"
+    return False
+
+
+def _resolve_base_identity(raw_base: str, category: str | None, rarity: str) -> dict | None:
+    exact = resolve_identity(raw_base, "ITEM")
+    if exact is not None:
+        return exact
+    if rarity != "magic":
+        return None
+    return next(
+        (
+            identity
+            for identity in resolve_identity_fragments(raw_base, "ITEM")
+            if _identity_matches_category(identity, category)
+        ),
+        None,
     )
-    if not match:
-        return raw_base
-    tier = match.group(1)
-    return f"Waystone (Tier {tier})" if "waystone" in match.group(0).casefold() else f"ウェイストーン (ティア{tier})"
 
 
 def parse_item_text(text: str) -> ParsedItem:
@@ -190,10 +214,12 @@ def parse_item_text(text: str) -> ParsedItem:
         raise Poe2ItemParseError("PoE2アイテムのclass、rarity、identityを解決できません")
 
     raw_base = identity_lines[-1]
-    if category == "waystone":
-        raw_base = _waystone_base_identity(raw_base)
     identity_namespace = "GEM" if category == "gem" or rarity == "gem" else "ITEM"
-    base_identity = resolve_identity(raw_base, identity_namespace)
+    base_identity = (
+        resolve_identity(raw_base, identity_namespace)
+        if identity_namespace != "ITEM"
+        else _resolve_base_identity(raw_base, category, rarity)
+    )
     if base_identity is None:
         raise Poe2ItemParseError(f"PoE2 base identity未解決: {raw_base}")
     base_type = str(base_identity["ref_name"])

@@ -40,6 +40,48 @@ def test_unknown_base_is_not_silently_guessed():
         parse_item_text("Item Class: Bows\nRarity: Rare\nTest Name\nUnknown Bow\n")
 
 
+@pytest.mark.parametrize(
+    ("item_class", "affixed_name", "expected_base", "expected_category"),
+    [
+        ("Focus", "Pulsing Antler Focus", "Antler Focus", "focus"),
+        ("Two Hand Mace", "Reaver's Temple Maul of Stunning", "Temple Maul", "two_mace"),
+        ("指輪", "火炎の アメジストの指輪", "Amethyst Ring", "ring"),
+        ("鎧", "幻術の スリップストライクベスト", "Slipstrike Vest", "body_armour"),
+    ],
+)
+def test_magic_items_extract_longest_category_matching_base_from_affixed_name(
+    item_class, affixed_name, expected_base, expected_category,
+):
+    item = parse_item_text(
+        f"アイテムクラス: {item_class}\n"
+        f"レアリティ: マジック\n{affixed_name}\n--------\nアイテムレベル: 80\n"
+    )
+
+    assert item.base_type == expected_base
+    assert item.category == expected_category
+    assert affixed_name not in item.base_type
+
+
+@pytest.mark.parametrize(
+    ("item_class", "rare_name", "localized_base", "expected_base"),
+    [
+        ("スピア", "崇高なエッジ", "飛翔のスピア", "Soaring Spear"),
+        ("鎧", "災いのカーテン", "スリップストライクベスト", "Slipstrike Vest"),
+        ("指輪", "大渦の環", "アメジストの指輪", "Amethyst Ring"),
+    ],
+)
+def test_rare_items_keep_generated_name_separate_from_exact_base_line(
+    item_class, rare_name, localized_base, expected_base,
+):
+    item = parse_item_text(
+        f"アイテムクラス: {item_class}\nレアリティ: レア\n"
+        f"{rare_name}\n{localized_base}\n--------\nアイテムレベル: 80\n"
+    )
+
+    assert item.name == rare_name
+    assert item.base_type == expected_base
+
+
 def test_rare_properties_and_resolved_mod_are_kept_for_editable_trade_filters():
     text = (
         "Item Class: Bows\nRarity: Rare\nTest Name\nRider Bow\n--------\n"
