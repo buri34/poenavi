@@ -2414,7 +2414,7 @@ def test_mod_condition_checks_toggle_all_without_changing_item_level(qapp):
         window.item_level_edit.setText("84")
         window._set_item_level_filter_enabled(True)
 
-        assert window.clear_mod_conditions_button.text() == "すべて解除"
+        assert window.clear_mod_conditions_button.text() == "一覧のチェックを全て解除"
         assert window.clear_mod_conditions_button.toolTip() == (
             "上の条件一覧のみ。ilvlなどの基本条件は変更しません"
         )
@@ -2435,14 +2435,14 @@ def test_mod_condition_checks_toggle_all_without_changing_item_level(qapp):
         window.clear_mod_conditions_button.click()
 
         assert [row.enabled for row in window._selected_stat_filters()] == [False, False]
-        assert window.clear_mod_conditions_button.text() == "すべて選択"
+        assert window.clear_mod_conditions_button.text() == "一覧のチェックを全て選択"
         assert window._selected_item_level() == 84
         assert window._item_level_filter_enabled
 
         window.clear_mod_conditions_button.click()
 
         assert [row.enabled for row in window._selected_stat_filters()] == [True, True]
-        assert window.clear_mod_conditions_button.text() == "すべて解除"
+        assert window.clear_mod_conditions_button.text() == "一覧のチェックを全て解除"
     finally:
         window.close()
 
@@ -2457,14 +2457,14 @@ def test_mod_condition_toggle_shows_clear_when_partially_checked(qapp):
         window._populate_stat_filters(filters)
 
         assert [row.enabled for row in window._selected_stat_filters()] == [True, False]
-        assert window.clear_mod_conditions_button.text() == "すべて解除"
+        assert window.clear_mod_conditions_button.text() == "一覧のチェックを全て解除"
 
         checkboxes = window._mod_condition_checkboxes()
         checkboxes[0].setChecked(False)
-        assert window.clear_mod_conditions_button.text() == "すべて選択"
+        assert window.clear_mod_conditions_button.text() == "一覧のチェックを全て選択"
 
         checkboxes[1].setChecked(True)
-        assert window.clear_mod_conditions_button.text() == "すべて解除"
+        assert window.clear_mod_conditions_button.text() == "一覧のチェックを全て解除"
     finally:
         window.close()
 
