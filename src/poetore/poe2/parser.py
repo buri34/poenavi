@@ -5,6 +5,7 @@ import re
 from ..models import ItemModifier, ParsedItem
 from .metadata import (
     resolve_identity,
+    resolve_identity_candidates,
     resolve_identity_fragments,
     resolve_stat_line_candidates,
 )
@@ -235,23 +236,153 @@ def _identity_matches_category(identity: dict, category: str | None) -> bool:
         return identity_category == "Charm"
     if category == "jewel":
         return identity_category == "Jewel"
+    if category == "barya":
+        return identity_category in {"MiscMapItem", "MapFragment"} and "barya" in ref_name
+    if category == "ultimatum":
+        return identity_category in {"MiscMapItem", "MapFragment"} and (
+            "ultimatum" in ref_name or ref_name.endswith(" fate")
+        )
     return False
 
 
-def _resolve_base_identity(raw_base: str, category: str | None, rarity: str) -> dict | None:
-    exact = resolve_identity(raw_base, "ITEM")
-    if exact is not None:
+def _base_identity_candidates(
+    raw_base: str, category: str | None, rarity: str,
+) -> tuple[dict, ...]:
+    exact = tuple(
+        identity for identity in resolve_identity_candidates(raw_base, "ITEM")
+        if _identity_matches_category(identity, category)
+    )
+    if exact:
         return exact
     if rarity != "magic":
-        return None
-    return next(
-        (
-            identity
-            for identity in resolve_identity_fragments(raw_base, "ITEM")
-            if _identity_matches_category(identity, category)
-        ),
-        None,
+        return ()
+    fragments = tuple(
+        identity for identity in resolve_identity_fragments(raw_base, "ITEM")
+        if _identity_matches_category(identity, category)
     )
+    if not fragments:
+        return ()
+    comparable = raw_base.strip().casefold()
+    lengths = {
+        id(identity): max(
+            len(str(name)) for name in (identity.get("names") or {}).values()
+            if str(name).strip().casefold() in comparable
+        )
+        for identity in fragments
+    }
+    longest = max(lengths.values())
+    return tuple(identity for identity in fragments if lengths[id(identity)] == longest)
+
+
+def _resolve_base_identity(
+    raw_base: str, category: str | None, rarity: str,
+    preferred_ref: str | None = None,
+) -> dict | None:
+    candidates = _base_identity_candidates(raw_base, category, rarity)
+    if preferred_ref:
+        preferred = next(
+            (row for row in candidates if row.get("ref_name") == preferred_ref), None,
+        )
+        if preferred is not None:
+            return preferred
+    return candidates[0] if candidates else None
+
+
+_BASE_DEFENCE_PROPERTIES = {
+    "ar": ("アーマー", "Armour"),
+    "ev": ("回避力", "Evasion Rating"),
+    "es": ("エナジーシールド", "Energy Shield"),
+    "ward": ("ルーンワード", "Runic Ward", "Ward"),
+}
+_BASE_DEFENCE_FLAT_REFS = {
+    "ar": {"# to Armour"},
+    "ev": {"# to Evasion Rating"},
+    "es": {"# to maximum Energy Shield"},
+    "ward": {"# to maximum Runic Ward", "# to Ward"},
+}
+_BASE_DEFENCE_INCREASED_REFS = {
+    "ar": {
+        "#% increased Armour", "#% increased Armour and Energy Shield",
+        "#% increased Armour and Evasion", "#% increased Armour, Evasion and Energy Shield",
+    },
+    "ev": {
+        "#% increased Evasion Rating", "#% increased Armour and Evasion",
+        "#% increased Evasion and Energy Shield", "#% increased Armour, Evasion and Energy Shield",
+    },
+    "es": {
+        "#% increased Energy Shield", "#% increased Armour and Energy Shield",
+        "#% increased Evasion and Energy Shield", "#% increased Armour, Evasion and Energy Shield",
+    },
+    "ward": {"#% increased Runic Ward", "#% increased Ward"},
+}
+
+
+def _numeric_property(properties: dict[str, str], *labels: str) -> float | None:
+    for label in labels:
+        value = properties.get(label)
+        if value is None:
+            continue
+        match = re.search(r"[-+]?\d+(?:\.\d+)?", value.replace(",", ""))
+        if match:
+            return float(match.group())
+    return None
+
+
+def _copied_base_defences(item: ParsedItem) -> dict[str, float]:
+    """Undo copied quality/local modifiers for comparison with EE2 base data."""
+    quality = _numeric_property(item.properties, "品質", "Quality") or 0.0
+    result = {}
+    for defence, labels in _BASE_DEFENCE_PROPERTIES.items():
+        total = _numeric_property(item.properties, *labels)
+        if total is None:
+            continue
+        flat = increased = 0.0
+        for modifier in item.modifiers:
+            ref = re.sub(r"\s*\((?:Local|ローカル)\)\s*$", "", modifier.ref or "")
+            value = modifier.values[0] if modifier.values else 0.0
+            if ref in _BASE_DEFENCE_FLAT_REFS[defence]:
+                flat += value
+            elif ref in _BASE_DEFENCE_INCREASED_REFS[defence]:
+                increased += value
+        denominator = (1.0 + quality / 100.0) * (1.0 + increased / 100.0)
+        if denominator > 0:
+            result[defence] = total / denominator - flat
+    return result
+
+
+def _refine_base_identity(
+    raw_base: str, category: str, rarity: str, item: ParsedItem,
+    preferred_ref: str | None = None,
+) -> dict | None:
+    candidates = _base_identity_candidates(raw_base, category, rarity)
+    if preferred_ref:
+        preferred = [row for row in candidates if row.get("ref_name") == preferred_ref]
+        if len(preferred) == 1:
+            return preferred[0]
+        if preferred:
+            candidates = tuple(preferred)
+    distinct_refs = {str(row.get("ref_name", "")) for row in candidates}
+    if len(distinct_refs) <= 1:
+        return candidates[0] if candidates else None
+
+    copied = _copied_base_defences(item)
+    scored = []
+    for candidate in candidates:
+        armour = candidate.get("armour") or {}
+        differences = []
+        for defence, actual in copied.items():
+            bounds = armour.get(defence)
+            if not bounds:
+                continue
+            low, high = (float(bounds[0]), float(bounds[-1]))
+            differences.append(0.0 if low <= actual <= high else min(abs(actual - low), abs(actual - high)))
+        if differences:
+            scored.append((max(differences), sum(differences), candidate))
+    scored.sort(key=lambda row: (row[0], row[1]))
+    if scored and scored[0][0] <= 1.5:
+        if len(scored) == 1 or scored[1][:2] != scored[0][:2]:
+            return scored[0][2]
+    return None
 
 
 def parse_item_text(text: str) -> ParsedItem:
@@ -264,10 +395,18 @@ def parse_item_text(text: str) -> ParsedItem:
 
     raw_base = identity_lines[-1]
     identity_namespace = "GEM" if category == "gem" or rarity == "gem" else "ITEM"
+    unique_identity = None
+    if rarity == "unique":
+        if len(identity_lines) < 2:
+            raise Poe2ItemParseError("PoE2 Unique名がありません")
+        unique_identity = resolve_identity(identity_lines[-2], "UNIQUE")
+        if unique_identity is None:
+            raise Poe2ItemParseError(f"PoE2 Unique identity未解決: {identity_lines[-2]}")
+    preferred_base_ref = str((unique_identity or {}).get("base_ref", "")) or None
     base_identity = (
         resolve_identity(raw_base, identity_namespace)
         if identity_namespace != "ITEM"
-        else _resolve_base_identity(raw_base, category, rarity)
+        else _resolve_base_identity(raw_base, category, rarity, preferred_base_ref)
     )
     if base_identity is None:
         raise Poe2ItemParseError(f"PoE2 base identity未解決: {raw_base}")
@@ -303,11 +442,6 @@ def parse_item_text(text: str) -> ParsedItem:
         raise Poe2ItemParseError(f"PoE2カテゴリ未解決: {item_class} / {base_type}")
 
     if rarity == "unique":
-        if len(identity_lines) < 2:
-            raise Poe2ItemParseError("PoE2 Unique名がありません")
-        unique_identity = resolve_identity(identity_lines[-2], "UNIQUE")
-        if unique_identity is None:
-            raise Poe2ItemParseError(f"PoE2 Unique identity未解決: {identity_lines[-2]}")
         name = str(unique_identity["ref_name"])
     elif rarity == "currency":
         name = base_type
@@ -383,7 +517,7 @@ def parse_item_text(text: str) -> ParsedItem:
         elif re.search(r"\d", line) and not separator:
             # Keep suspicious numeric lines visible to the user instead of silently dropping them.
             modifiers.append(ItemModifier(text=line, confidence=0.0))
-    return ParsedItem(
+    item = ParsedItem(
         item_class=item_class,
         rarity=rarity,
         name=name,
@@ -396,3 +530,16 @@ def parse_item_text(text: str) -> ParsedItem:
         raw_text=text,
         augment_count=augment_count,
     )
+    if identity_namespace == "ITEM":
+        refined = _refine_base_identity(
+            raw_base, category, rarity, item, preferred_base_ref,
+        )
+        candidate_refs = {
+            str(row.get("ref_name", ""))
+            for row in _base_identity_candidates(raw_base, category, rarity)
+        }
+        if refined is None and len(candidate_refs) > 1:
+            raise Poe2ItemParseError(f"PoE2 base identity曖昧: {raw_base}")
+        if refined is not None and refined.get("ref_name") != item.base_type:
+            item = ParsedItem(**{**item.__dict__, "base_type": str(refined["ref_name"])})
+    return item

@@ -10,6 +10,9 @@ from src.poetore.poe2.parser import Poe2ItemParseError, TRADE_CATEGORY_BY_CATEGO
 
 FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
 PHASE6_FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "phase6_special_items_ja.json"
+AMBIGUOUS_BASE_FIXTURES = (
+    Path(__file__).parent / "fixtures" / "poe2" / "ambiguous_bases_bilingual.json"
+)
 
 
 def _fixtures():
@@ -18,6 +21,10 @@ def _fixtures():
 
 def _phase6_fixtures():
     return json.loads(PHASE6_FIXTURES.read_text(encoding="utf-8"))["fixtures"]
+
+
+def _ambiguous_base_fixtures():
+    return json.loads(AMBIGUOUS_BASE_FIXTURES.read_text(encoding="utf-8"))["fixtures"]
 
 
 @pytest.mark.parametrize("fixture", _fixtures(), ids=lambda row: row["id"])
@@ -38,6 +45,23 @@ def test_bilingual_pairs_resolve_to_same_trade_identity():
         identity = (item.base_type, item.category, TRADE_CATEGORY_BY_CATEGORY[item.category])
         by_pair.setdefault(fixture["pair"], set()).add(identity)
     assert all(len(values) == 1 for values in by_pair.values())
+
+
+@pytest.mark.parametrize("fixture", _ambiguous_base_fixtures(), ids=lambda row: row["id"])
+@pytest.mark.parametrize("language", ("ja", "en"))
+def test_user_captured_bilingual_ambiguous_bases_resolve_exactly(fixture, language):
+    item = parse_item_text(fixture[language])
+    assert item.base_type == fixture["expected_base_type"]
+    assert item.category in {"body_armour", "boots", "gloves", "helmet"}
+
+
+def test_ambiguous_localized_base_without_discriminator_is_not_guessed():
+    text = (
+        "アイテムクラス: 靴\nレアリティ: レア\nテスト品\n要塞のサバトン\n"
+        "--------\nアイテムレベル: 80\n"
+    )
+    with pytest.raises(Poe2ItemParseError, match="base identity曖昧"):
+        parse_item_text(text)
 
 
 @pytest.mark.parametrize("fixture", _phase6_fixtures(), ids=lambda row: row["id"])

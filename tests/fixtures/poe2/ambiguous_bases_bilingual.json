@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "source": "User-captured same-item bilingual detailed copies, 2026-08-09",
+  "excluded_current_league_items": [
+    "Ominous Gloves",
+    "Wanderer Armour"
+  ],
+  "fixtures": [
+    {
+      "id": "ascetic_garb",
+      "group": 1,
+      "japanese_display_name": "禁欲の衣",
+      "expected_base_type": "Ascetic Garb",
+      "expected_ja_base_type": "禁欲者の服",
+      "ja": "アイテムクラス: 鎧\nレアリティ: レア\n痛みの布\n禁欲者の服\n--------\n回避力: 322 (augmented)\nエナジーシールド: 101 (augmented)\n--------\n装備条件：レベル 52, 33 (augmented) 器用さ, 33 (augmented) 知性\n--------\nアイテムレベル: 69\n--------\n{ プレフィックスモッド「幻影の」 (ティア: 2) — 回避力, エナジーシールド }\n回避力 +125(120-141)\n最大エナジーシールド +38(37-42)\n{ サフィックスモッド 「血清の」 (ティア: 5) — 混沌, 状態異常 }\nプレイヤー自身に対する毒の持続時間が39(40-36)%減少する\n{ サフィックスモッド 「トロルの」 (ティア: 6) — ライフ }\n毎秒12.4(9.1-13)のライフを自動回復する\n{ サフィックスモッド 「奇才の」 (ティア: 3) }\n要求能力値が25%減少する\n",
+      "en": "Item Class: Body Armours\nRarity: Rare\nPain Wrap\nAscetic Garb\n--------\nEvasion Rating: 322 (augmented)\nEnergy Shield: 101 (augmented)\n--------\nRequires: Level 52, 33 (augmented) Dex, 33 (augmented) Int\n--------\nItem Level: 69\n--------\n{ Prefix Modifier \"Apparition's\" (Tier: 2) — Evasion, Energy Shield }\n+125(120-141) to Evasion Rating\n+38(37-42) to maximum Energy Shield\n{ Suffix Modifier \"of the Antitoxin\" (Tier: 5) — Chaos, Ailment }\n39(40-36)% reduced Poison Duration on you\n{ Suffix Modifier \"of the Troll\" (Tier: 6) — Life }\n12.4(9.1-13) Life Regeneration per second\n{ Suffix Modifier \"of the Talented\" (Tier: 3) }\n25% reduced Attribute Requirements\n"
+    },
+    {
+      "id": "austere_garb",
+      "group": 1,
+      "japanese_display_name": "禁欲の衣",
+      "expected_base_type": "Austere Garb",
+      "expected_ja_base_type": "禁欲の衣",
+      "ja": "アイテムクラス: 鎧\nレアリティ: レア\n腐敗したコート\n禁欲の衣\n--------\n回避力: 517 (augmented)\nエナジーシールド: 153 (augmented)\n--------\n装備条件：レベル 80, 67 器用さ, 67 知性\n--------\nアイテムレベル: 80\n--------\n{ 暗黙モッド — 元素, 状態異常 }\n受ける元素系状態異常の持続時間が11(10-15)%減少する\n--------\n{ プレフィックスモッド「幻影の」 (ティア: 2) — 回避力, エナジーシールド }\n回避力 +135(120-141)\n最大エナジーシールド +37(37-42)\n{ プレフィックスモッド「伶人の」 (ティア: 2) — ライフ, 回避力, エナジーシールド }\n回避力およびエナジーシールドが35(33-38)%増加する\n最大ライフ +35(33-41)\n{ プレフィックスモッド「雄健な」 (ティア: 6) — ライフ }\n最大ライフ +106(100-119)\n{ サフィックスモッド 「マグマの」 (ティア: 2) — 元素, 火, 耐性 }\n火耐性 +36(36-40)%\n",
+      "en": "Item Class: Body Armours\nRarity: Rare\nCorruption Coat\nAustere Garb\n--------\nEvasion Rating: 517 (augmented)\nEnergy Shield: 153 (augmented)\n--------\nRequires: Level 80, 67 Dex, 67 Int\n--------\nItem Level: 80\n--------\n{ Implicit Modifier — Elemental, Ailment }\n11(10-15)% reduced Elemental Ailment Duration on you\n--------\n{ Prefix Modifier \"Apparition's\" (Tier: 2) — Evasion, Energy Shield }\n+135(120-141) to Evasion Rating\n+37(37-42) to maximum Energy Shield\n{ Prefix Modifier \"Minstrel's\" (Tier: 2) — Life, Evasion, Energy Shield }\n35(33-38)% increased Evasion and Energy Shield\n+35(33-41) to maximum Life\n{ Prefix Modifier \"Virile\" (Tier: 6) — Life }\n+106(100-119) to maximum Life\n{ Suffix Modifier \"of Magma\" (Tier: 2) — Elemental, Fire, Resistance }\n+36(36-40)% to Fire Resistance\n"
+    },
+    {
+      "id": "bastion_sabatons",
+      "group": 2,
+      "japanese_display_name": "要塞のサバトン",
+      "expected_base_type": "Bastion Sabatons",
+      "expected_ja_base_type": "要塞のサバトン",
+      "ja": "アイテムクラス: 靴\nレアリティ: レア\n災いの閃光\n要塞のサバトン\n--------\nアーマー: 123\n回避力: 111\n--------\n装備条件：レベル 59, 35 (augmented) 筋力, 35 (augmented) 器用さ\n--------\nアイテムレベル: 62\n--------\n{ プレフィックスモッド「血色良い」 (ティア: 7) — ライフ }\n最大ライフ +37(30-39)\n{ プレフィックスモッド「競走者の」 (ティア: 5) — スピード }\n移動スピードが15%増加する\n{ サフィックスモッド 「ヒトデの」 (ティア: 5) — ライフ }\n毎秒5.9(4.1-6)のライフを自動回復する\n{ サフィックスモッド 「強奪の」 (ティア: 2) — ドロップ }\n見つかるアイテムのレアリティが12(11-14)%増加する\n{ サフィックスモッド 「秀才の」 (ティア: 4) }\n要求能力値が20%減少する\n",
+      "en": "Item Class: Boots\nRarity: Rare\nDoom Spark\nBastion Sabatons\n--------\nArmour: 123\nEvasion Rating: 111\n--------\nRequires: Level 59, 35 (augmented) Str, 35 (augmented) Dex\n--------\nItem Level: 62\n--------\n{ Prefix Modifier \"Sanguine\" (Tier: 7) — Life }\n+37(30-39) to maximum Life\n{ Prefix Modifier \"Sprinter's\" (Tier: 5) — Speed }\n15% increased Movement Speed\n{ Suffix Modifier \"of the Starfish\" (Tier: 5) — Life }\n5.9(4.1-6) Life Regeneration per second\n{ Suffix Modifier \"of Raiding\" (Tier: 2) }\n12(11-14)% increased Rarity of Items found\n{ Suffix Modifier \"of the Apt\" (Tier: 4) }\n20% reduced Attribute Requirements\n"
+    },
+    {
+      "id": "fortress_sabatons",
+      "group": 2,
+      "japanese_display_name": "要塞のサバトン",
+      "expected_base_type": "Fortress Sabatons",
+      "expected_ja_base_type": "要塞のサバトン",
+      "ja": "アイテムクラス: 靴\nレアリティ: マジック\n鋼鉄の肌の 要塞のサバトン\n--------\nアーマー: 147\n回避力: 134\n--------\n装備条件：レベル 75, 56 筋力, 56 器用さ\n--------\nソケット: S \n--------\nアイテムレベル: 82\n--------\n冷気耐性 +18% (rune)\n--------\n{ サフィックスモッド 「鋼鉄の肌の」 (ティア: 7) }\nスタン閾値 +91(73-97)\n",
+      "en": "Item Class: Boots\nRarity: Magic\nFortress Sabatons of Steel Skin\n--------\nArmour: 147\nEvasion Rating: 134\n--------\nRequires: Level 75, 56 Str, 56 Dex\n--------\nSockets: S \n--------\nItem Level: 82\n--------\n+18% to Cold Resistance (rune)\n--------\n{ Suffix Modifier \"of Steel Skin\" (Tier: 7) }\n+91(73-97) to Stun Threshold\n"
+    },
+    {
+      "id": "grim_gloves",
+      "group": 3,
+      "japanese_display_name": "不気味な手袋",
+      "expected_base_type": "Grim Gloves",
+      "expected_ja_base_type": "不気味な手袋",
+      "ja": "アイテムクラス: 手袋\nレアリティ: マジック\n鍛えられた 相応しき者の 不気味な手袋\n--------\nエナジーシールド: 45\n--------\n装備条件：レベル 65, 68 (augmented) 知性\n--------\nソケット: S \n--------\nアイテムレベル: 73\n--------\n火耐性 +18% (rune)\n--------\n{ プレフィックスモッド「鍛えられた」 (ティア: 4) — ダメージ, 物理, アタック }\n8(6-10)から13(12-17)の物理ダメージをアタックに追加する\n{ サフィックスモッド 「相応しき者の」 (ティア: 5) }\n要求能力値が15%減少する\n",
+      "en": "Item Class: Gloves\nRarity: Magic\nAnnealed Grim Gloves of the Worthy\n--------\nEnergy Shield: 45\n--------\nRequires: Level 65, 68 (augmented) Int\n--------\nSockets: S \n--------\nItem Level: 73\n--------\n+18% to Fire Resistance (rune)\n--------\n{ Prefix Modifier \"Annealed\" (Tier: 4) — Damage, Physical, Attack }\nAdds 8(6-10) to 13(12-17) Physical Damage to Attacks\n{ Suffix Modifier \"of the Worthy\" (Tier: 5) }\n15% reduced Attribute Requirements\n"
+    },
+    {
+      "id": "swathed_cap",
+      "group": 4,
+      "japanese_display_name": "巻き布の帽子",
+      "expected_base_type": "Swathed Cap",
+      "expected_ja_base_type": "巻き布の帽子",
+      "ja": "アイテムクラス: 兜\nレアリティ: レア\n高潔な先端\n巻き布の帽子\n--------\n回避力: 127\n--------\n装備条件：レベル 26, 38 器用さ\n--------\nアイテムレベル: 40\n--------\n{ プレフィックスモッド「健康な」 (ティア: 9) — ライフ }\n最大ライフ +24(20-29)\n{ プレフィックスモッド「慎重な」 (ティア: 6) — アタック }\n命中力 +88(85-123)\n{ サフィックスモッド 「リンクスの」 (ティア: 7) — 能力値 }\n器用さ +9(9-12)\n{ サフィックスモッド 「学徒の」 (ティア: 8) — 能力値 }\n知性 +12(9-12)\n{ サフィックスモッド 「ドレイクの」 (ティア: 6) — 元素, 火, 耐性 }\n火耐性 +20(16-20)%\n",
+      "en": "Item Class: Helmets\nRarity: Rare\nHonour Peak\nSwathed Cap\n--------\nEvasion Rating: 127\n--------\nRequires: Level 26, 38 Dex\n--------\nItem Level: 40\n--------\n{ Prefix Modifier \"Healthy\" (Tier: 9) — Life }\n+24(20-29) to maximum Life\n{ Prefix Modifier \"Deliberate\" (Tier: 6) — Attack }\n+88(85-123) to Accuracy Rating\n{ Suffix Modifier \"of the Lynx\" (Tier: 7) — Attribute }\n+9(9-12) to Dexterity\n{ Suffix Modifier \"of the Student\" (Tier: 8) — Attribute }\n+12(9-12) to Intelligence\n{ Suffix Modifier \"of the Drake\" (Tier: 6) — Elemental, Fire, Resistance }\n+20(16-20)% to Fire Resistance\n"
+    },
+    {
+      "id": "wrapped_cap",
+      "group": 4,
+      "japanese_display_name": "巻き布の帽子",
+      "expected_base_type": "Wrapped Cap",
+      "expected_ja_base_type": "巻き布の帽子",
+      "ja": "アイテムクラス: 兜\nレアリティ: レア\n頭骨の額当て\n巻き布の帽子\n--------\n回避力: 325 (augmented)\n--------\n装備条件：レベル 54, 57 (augmented) 器用さ\n--------\nアイテムレベル: 80\n--------\n{ プレフィックスモッド「探検家の」 (ティア: 3) — マナ, 回避力 }\n回避力が31(27-32)%増加する\n最大マナ +21(21-26)\n{ プレフィックスモッド「丸々とした」 (ティア: 4) — ライフ }\n最大ライフ +88(85-99)\n{ サフィックスモッド 「奇才の」 (ティア: 3) }\n要求能力値が25%減少する\n{ サフィックスモッド 「火山の」 (ティア: 3) — 元素, 火, 耐性 }\n火耐性 +31(31-35)%\n",
+      "en": "Item Class: Helmets\nRarity: Rare\nSkull Brow\nWrapped Cap\n--------\nEvasion Rating: 325 (augmented)\n--------\nRequires: Level 54, 57 (augmented) Dex\n--------\nItem Level: 80\n--------\n{ Prefix Modifier \"Explorer's\" (Tier: 3) — Mana, Evasion }\n31(27-32)% increased Evasion Rating\n+21(21-26) to maximum Mana\n{ Prefix Modifier \"Rotund\" (Tier: 4) — Life }\n+88(85-99) to maximum Life\n{ Suffix Modifier \"of the Talented\" (Tier: 3) }\n25% reduced Attribute Requirements\n{ Suffix Modifier \"of the Volcano\" (Tier: 3) — Elemental, Fire, Resistance }\n+31(31-35)% to Fire Resistance\n"
+    },
+    {
+      "id": "vagabond_armour",
+      "group": 5,
+      "japanese_display_name": "放浪者の鎧",
+      "expected_base_type": "Vagabond Armour",
+      "expected_ja_base_type": "放浪者の鎧",
+      "ja": "アイテムクラス: 鎧\nレアリティ: レア\n災いを生むスーツ\n放浪者の鎧\n--------\nアーマー: 125 (augmented)\n回避力: 107 (augmented)\n--------\n装備条件：レベル 43, 17 筋力, 17 器用さ\n--------\nアイテムレベル: 54\n--------\n{ プレフィックスモッド「雄健な」 (ティア: 6) — ライフ }\n最大ライフ +111(100-119)\n{ プレフィックスモッド「フェンサーの」 (ティア: 6) — アーマー, 回避力 }\nアーマーおよび回避力が51(43-55)%増加する\n{ サフィックスモッド 「アシカの」 (ティア: 8) — 元素, 冷気, 耐性 }\n冷気耐性 +6(6-10)%\n{ サフィックスモッド 「医療の」 (ティア: 4) — 混沌, 状態異常 }\nプレイヤー自身に対する毒の持続時間が44(45-41)%減少する\n",
+      "en": "Item Class: Body Armours\nRarity: Rare\nPlague Suit\nVagabond Armour\n--------\nArmour: 125 (augmented)\nEvasion Rating: 107 (augmented)\n--------\nRequires: Level 43, 17 Str, 17 Dex\n--------\nItem Level: 54\n--------\n{ Prefix Modifier \"Virile\" (Tier: 6) — Life }\n+111(100-119) to maximum Life\n{ Prefix Modifier \"Fencer's\" (Tier: 6) — Armour, Evasion }\n51(43-55)% increased Armour and Evasion\n{ Suffix Modifier \"of the Seal\" (Tier: 8) — Elemental, Cold, Resistance }\n+6(6-10)% to Cold Resistance\n{ Suffix Modifier \"of the Remedy\" (Tier: 4) — Chaos, Ailment }\n44(45-41)% reduced Poison Duration on you\n"
+    },
+    {
+      "id": "runeforged_bastion_sabatons",
+      "group": 6,
+      "japanese_display_name": "ルーンフォージの要塞のサバトン",
+      "expected_base_type": "Runeforged Bastion Sabatons",
+      "expected_ja_base_type": "ルーンフォージの要塞のサバトン",
+      "ja": "アイテムクラス: 靴\nレアリティ: レア\n亀裂のある猛進\nルーンフォージの要塞のサバトン\n--------\nアーマー: 126 (augmented)\n回避力: 114 (augmented)\nルーンワード: 39\n--------\n装備条件：レベル 59, 44 筋力, 44 器用さ\n--------\nソケット: S \n--------\nアイテムレベル: 71\n--------\n冷気耐性 +14% (rune)\n--------\n{ プレフィックスモッド「走者の」 (ティア: 6) — スピード }\n移動スピードが10%増加する\n{ プレフィックスモッド「雄健な」 (ティア: 2) — ライフ }\n最大ライフ +117(100-119)\n{ プレフィックスモッド「隊長の」 (ティア: 6) }\nアーマーおよび回避力が7(6-13)%増加する\nスタン閾値 +13(8-13)\n{ サフィックスモッド 「排除の」 (ティア: 3) — 混沌, 耐性 }\n混沌耐性 +17(16-19)%\n{ サフィックスモッド 「イモリの」 (ティア: 8) — ライフ }\n毎秒1.4(1-2)のライフを自動回復する\n{ サフィックスモッド 「霧散の」 (ティア: 2) — 元素, 冷気, 状態異常 }\n受ける冷却の持続時間が51(51-55)%減少する\n",
+      "en": "Item Class: Boots\nRarity: Rare\nRift Dash\nRuneforged Bastion Sabatons\n--------\nArmour: 126 (augmented)\nEvasion Rating: 114 (augmented)\nRunic Ward: 39\n--------\nRequires: Level 59, 44 Str, 44 Dex\n--------\nSockets: S \n--------\nItem Level: 71\n--------\n+14% to Cold Resistance (rune)\n--------\n{ Prefix Modifier \"Runner's\" (Tier: 6) — Speed }\n10% increased Movement Speed\n{ Prefix Modifier \"Virile\" (Tier: 2) — Life }\n+117(100-119) to maximum Life\n{ Prefix Modifier \"Captain's\" (Tier: 6) }\n7(6-13)% increased Armour and Evasion\n+13(8-13) to Stun Threshold\n{ Suffix Modifier \"of Expulsion\" (Tier: 3) — Chaos, Resistance }\n+17(16-19)% to Chaos Resistance\n{ Suffix Modifier \"of the Newt\" (Tier: 8) — Life }\n1.4(1-2) Life Regeneration per second\n{ Suffix Modifier \"of Dissipation\" (Tier: 2) — Elemental, Cold, Ailment }\n51(51-55)% reduced Chill Duration on you\n"
+    },
+    {
+      "id": "runeforged_fortress_sabatons",
+      "group": 6,
+      "japanese_display_name": "ルーンフォージの要塞のサバトン",
+      "expected_base_type": "Runeforged Fortress Sabatons",
+      "expected_ja_base_type": "ルーンフォージの要塞のサバトン",
+      "ja": "アイテムクラス: 靴\nレアリティ: レア\n嫌悪するスパン\nルーンフォージの要塞のサバトン\n--------\nアーマー: 129\n回避力: 117\nルーンワード: 63\n--------\n装備条件：レベル 75, 56 筋力, 56 器用さ\n--------\nソケット: S \n--------\nアイテムレベル: 81\n--------\n{ プレフィックスモッド「ガゼルの」 (ティア: 3) — スピード }\n移動スピードが25%増加する\n{ サフィックスモッド 「黒曜石の肌の」 (ティア: 2) }\nスタン閾値 +291(254-304)\n{ サフィックスモッド 「火山の」 (ティア: 3) — 元素, 火, 耐性 }\n火耐性 +34(31-35)%\n{ サフィックスモッド 「イエティの」 (ティア: 5) — 元素, 冷気, 耐性 }\n冷気耐性 +24(21-25)%\n",
+      "en": "Item Class: Boots\nRarity: Rare\nBeast Spark\nRuneforged Fortress Sabatons\n--------\nArmour: 202 (augmented)\nEvasion Rating: 195 (augmented)\nRunic Ward: 63\n--------\nRequires: Level 75, 56 Str, 56 Dex\n--------\nItem Level: 80\n--------\n{ Prefix Modifier \"Virile\" (Tier: 2) — Life }\n+100(100-119) to maximum Life\n{ Prefix Modifier \"Cheetah's\" (Tier: 2) — Speed }\n30% increased Movement Speed\n{ Prefix Modifier \"Durable\" (Tier: 1) — Armour, Evasion }\n+73(72-85) to Armour\n+78(65-78) to Evasion Rating\n{ Suffix Modifier \"of the Falcon\" (Tier: 5) — Attribute }\n+20(17-20) to Dexterity\n{ Suffix Modifier \"of Obsidian Skin\" (Tier: 2) }\n+262(254-304) to Stun Threshold\n"
+    },
+    {
+      "id": "runeforged_swathed_cap",
+      "group": 7,
+      "japanese_display_name": "ルーンフォージの巻き布の帽子",
+      "expected_base_type": "Runeforged Swathed Cap",
+      "expected_ja_base_type": "ルーンフォージの巻き布の帽子",
+      "ja": "アイテムクラス: 兜\nレアリティ: レア\n腐敗した容貌\nルーンフォージの巻き布の帽子\n--------\n回避力: 184 (augmented)\nルーンワード: 48\n--------\n装備条件：レベル 37, 38 器用さ\n--------\nソケット: S \n--------\nアイテムレベル: 47\n--------\nアーマー、回避力およびエナジーシールドが18%増加する (rune)\n--------\n{ プレフィックスモッド「貯蔵者の」 (ティア: 1) — ドロップ }\n見つかるアイテムのレアリティが18(16-19)%増加する\n{ プレフィックスモッド「鴨の羽色の」 (ティア: 7) — マナ }\n最大マナ +39(35-54)\n{ 冒涜 プレフィックスモッド「ヤギの」 (ティア: 3) — ライフ, 回避力 }\n回避力が27(27-32)%増加する\n最大ライフ +27(26-32)\n{ サフィックスモッド 「雲の」 (ティア: 8) — 元素, 雷, 耐性 }\n雷耐性 +8(6-10)%\n{ サフィックスモッド 「ペンギンの」 (ティア: 7) — 元素, 冷気, 耐性 }\n冷気耐性 +11(11-15)%\n{ サフィックスモッド 「光輝の」 (ティア: 1) — アタック }\n命中力 +47(41-60)\n光半径が15%増加する\n",
+      "en": "Item Class: Helmets\nRarity: Rare\nLoath Brow\nRuneforged Swathed Cap\n--------\nEvasion Rating: 140 (augmented)\nRunic Ward: 48\n--------\nRequires: Level 37, 38 Dex\n--------\nItem Level: 57\n--------\n{ Prefix Modifier \"Hoarder's\" (Tier: 1) }\n19(16-19)% increased Rarity of Items found\n{ Prefix Modifier \"Agile\" (Tier: 8) — Evasion }\n+13(11-18) to Evasion Rating\n{ Prefix Modifier \"Deliberate\" (Tier: 6) — Attack }\n+98(85-123) to Accuracy Rating\n{ Suffix Modifier \"of Disaster\" (Tier: 3) — Critical }\n20(20-24)% increased Critical Hit Chance\n{ Suffix Modifier \"of Deflecting\" (Tier: 5) — Evasion }\nGain Deflection Rating equal to 8(8-11)% of Evasion Rating\n{ Suffix Modifier \"of Plunder\" (Tier: 3) }\n8(6-10)% increased Rarity of Items found\n"
+    },
+    {
+      "id": "runeforged_wrapped_cap",
+      "group": 7,
+      "japanese_display_name": "ルーンフォージの巻き布の帽子",
+      "expected_base_type": "Runeforged Wrapped Cap",
+      "expected_ja_base_type": "ルーンフォージの巻き布の帽子",
+      "ja": "アイテムクラス: 兜\nレアリティ: レア\n恐怖の冠\nルーンフォージの巻き布の帽子\n--------\n回避力: 307 (augmented)\nルーンワード: 72\n--------\n装備条件：レベル 54, 77 器用さ\n--------\nアイテムレベル: 55\n--------\n{ プレフィックスモッド「ヤギの」 (ティア: 3) — ライフ, 回避力 }\n回避力が28(27-32)%増加する\n最大ライフ +29(26-32)\n{ プレフィックスモッド「遊牧民の」 (ティア: 6) — マナ, 回避力 }\n回避力が12(6-13)%増加する\n最大マナ +7(6-8)\n{ サフィックスモッド 「蜥蜴の」 (ティア: 7) — ライフ }\n毎秒3(2.1-3)のライフを自動回復する\n{ サフィックスモッド 「厄災の」 (ティア: 2) — クリティカル }\nクリティカルヒット率が28(25-29)%増加する\n",
+      "en": "Item Class: Helmets\nRarity: Rare\nBramble Veil\nRuneforged Wrapped Cap\n--------\nQuality: +15% (augmented)\nEvasion Rating: 538 (augmented)\nRunic Ward: 83 (augmented)\n--------\nRequires: Level 54, 77 Dex\n--------\nItem Level: 64\n--------\n{ Prefix Modifier \"Cerulean\" (Tier: 6) — Mana }\n+56(55-64) to maximum Mana\n{ Prefix Modifier \"Spectre's\" (Tier: 5) — Evasion }\n52(43-55)% increased Evasion Rating\n{ Prefix Modifier \"Blurred\" (Tier: 4) — Evasion }\n+89(88-116) to Evasion Rating\n{ Suffix Modifier \"of Convalescence\" (Tier: 2) — Life }\n17.6(13.1-18) Life Regeneration per second\n"
+    },
+    {
+      "id": "runemastered_fine_bracers",
+      "group": 8,
+      "japanese_display_name": "ルーンマスターの針付きの弓籠手",
+      "expected_base_type": "Runemastered Fine Bracers",
+      "expected_ja_base_type": "ルーンマスターの針付きの弓籠手",
+      "ja": "アイテムクラス: 手袋\nレアリティ: ユニーク\nマリガロの妙技\nルーンマスターの針付きの弓籠手\n--------\n品質: +20% (augmented)\n回避力: 106 (augmented)\nルーンワード: 62 (augmented)\n--------\n装備条件：レベル 45, 56 器用さ\n--------\nソケット: S \n--------\nアイテムレベル: 81\n--------\n{ ユニークモッド — 回避力 }\n回避力が70(60-80)%増加する\n{ ユニークモッド — クリティカル }\nクリティカルヒット率が18(20-30)%増加する\n{ ユニークモッド — アタック, スピード }\nアタックスピードが6(5)%増加する\n{ ユニークモッド — 能力値 }\n器用さ +9(10-20)\n{ ユニークモッド — クリティカル }\nクリティカルヒット率をリロールすることができなくなる — スケールできない値\n{ ユニークモッド — ダメージ, クリティカル }\nクリティカルダメージボーナスが250%になる — スケールできない値\n--------\nマリガロは軽々と行動した。\n迅速に、そして恐ろしい結果を残して。\n--------\nコラプト状態\n",
+      "en": "Item Class: Gloves\nRarity: Unique\nMaligaro's Virtuosity\nRunemastered Fine Bracers\n--------\nQuality: +20% (augmented)\nEvasion Rating: 101 (augmented)\nRunic Ward: 62 (augmented)\n--------\nRequires: Level 45, 56 Dex\n--------\nSockets: S \n--------\nItem Level: 82\n--------\n{ Corruption Enhancement }\n6(5-10)% increased Quantity of Gold Dropped by Slain Enemies\n--------\n{ Unique Modifier — Evasion }\n62(60-80)% increased Evasion Rating\n{ Unique Modifier — Critical }\n20(20-30)% increased Critical Hit Chance\n{ Unique Modifier — Attack, Speed }\n5% increased Attack Speed\n{ Unique Modifier — Attribute }\n+10(10-20) to Dexterity\n{ Unique Modifier — Critical }\nYour Critical Hit Chance cannot be Rerolled — Unscalable Value\n{ Unique Modifier — Damage, Critical }\nYour Critical Damage Bonus is 250% — Unscalable Value\n--------\nMaligaro operated effortlessly,\nwith great speed and terrible consequences.\n--------\nCorrupted\n"
+    },
+    {
+      "id": "runemastered_spined_bracers",
+      "group": 8,
+      "japanese_display_name": "ルーンマスターの針付きの弓籠手",
+      "expected_base_type": "Runemastered Spined Bracers",
+      "expected_ja_base_type": "ルーンマスターの針付きの弓籠手",
+      "ja": "アイテムクラス: 手袋\nレアリティ: ユニーク\nスネークバイト\nルーンマスターの針付きの弓籠手\n--------\n回避力: 115 (augmented)\nルーンワード: 18\n--------\n装備条件：レベル 38, 48 器用さ\n--------\nアイテムレベル: 80\n--------\n{ ユニークモッド — 回避力 }\n回避力が60(40-60)%増加する\n{ ユニークモッド — 混沌, 耐性 }\n混沌耐性 +14(7-17)%\n{ ユニークモッド — 状態異常 }\nヒット時に22(20-30)%の確率で毒を付与する\n{ ユニークモッド }\n一度に対象に付与できる毒のスタック数 +1\n{ ユニークモッド — ライフ }\n毎秒9.5(6-10)のライフを自動回復する\n--------\n蛇は思考を押し退けるように、\n恐怖をも押し退ける。\n憤怒の速度と\n強迫の技を持って攻撃する。\n",
+      "en": "Item Class: Gloves\nRarity: Unique\nSnakebite\nRunemastered Spined Bracers\n--------\nQuality: +20% (augmented)\nEvasion Rating: 131 (augmented)\nRunic Ward: 22 (augmented)\n--------\nRequires: Level 38, 48 Dex\n--------\nSockets: S \n--------\nItem Level: 81\n--------\n{ Corruption Enhancement }\nBreak 14(10-15)% increased Armour\n--------\n{ Unique Modifier — Evasion }\n52(40-60)% increased Evasion Rating\n{ Unique Modifier — Chaos, Resistance }\n+9(7-17)% to Chaos Resistance\n{ Unique Modifier — Ailment }\n22(20-30)% chance to Poison on Hit\n{ Unique Modifier }\nTargets can be affected by +1 of your Poisons at the same time\n{ Unique Modifier — Life }\n8.8(6-10) Life Regeneration per second\n--------\nAs the serpent shuns thought,\nIt shuns fear.\nIt strikes with the speed of wrath\nAnd the skill of compulsion.\n--------\nCorrupted\n"
+    }
+  ]
+}

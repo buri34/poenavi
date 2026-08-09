@@ -64,6 +64,16 @@ def build_identity_index(ee2_root: Path | None = None) -> dict:
                 "namespace": en["namespace"], "ref_name": en["refName"],
                 "names": {"en": en["name"], "ja": ja["name"]},
             }
+            # Keep the EE2 base variant fingerprint.  Several PoE2 bases share
+            # the same localized name (and occasionally even the same refName),
+            # so flattening these fields makes exact Trade2 identity resolution
+            # impossible for copied rare/magic equipment.
+            if en.get("tags"):
+                row["tags"] = list(en["tags"])
+            if en.get("armour"):
+                row["armour"] = {
+                    key: list(value) for key, value in en["armour"].items()
+                }
             if en.get("craftable", {}).get("category"):
                 row["category"] = en["craftable"]["category"]
             if en.get("unique"):

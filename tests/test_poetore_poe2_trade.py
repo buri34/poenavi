@@ -19,6 +19,9 @@ from src.poetore.trade import TradeStatFilter
 
 FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
 PHASE6_FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "phase6_special_items_ja.json"
+AMBIGUOUS_BASE_FIXTURES = (
+    Path(__file__).parent / "fixtures" / "poe2" / "ambiguous_bases_bilingual.json"
+)
 
 
 def _unique_fixture():
@@ -29,6 +32,23 @@ def _unique_fixture():
 def _web_payload(url: str) -> dict:
     encoded = parse_qs(urlparse(url).query)["q"][0]
     return json.loads(unquote(encoded))
+
+
+@pytest.mark.parametrize(
+    "fixture",
+    json.loads(AMBIGUOUS_BASE_FIXTURES.read_text(encoding="utf-8"))["fixtures"],
+    ids=lambda row: row["id"],
+)
+def test_user_captured_ambiguous_bases_send_exact_trade2_type(fixture):
+    for language in ("ja", "en"):
+        item = parse_item_text(fixture[language])
+        assert build_search_query(item)["query"]["type"] == fixture["expected_base_type"]
+    japanese_item = parse_item_text(fixture["ja"])
+    payload = build_search_query(japanese_item)
+    localized_query = _web_payload(
+        build_web_trade_url(japanese_item, "Standard", payload, "query-id")
+    )["query"]
+    assert localized_query["type"] == fixture["expected_ja_base_type"]
 
 
 def test_unique_query_contains_only_minimal_identity_filters():

@@ -237,6 +237,21 @@ PoE2 Trade2側へ正式filterが追加された時点でmetadata差分監査か�
 `build_poetore_poe2_indexes.py --ee2-root <固定checkout> --augment-only`でcandidateを生成し、
 カテゴリ数・効果数・Trade ID差分を確認してから適用する。
 
+## 実コピーによる曖昧ベース判定（2026-08-09）
+
+同じ日本語名を持つPoE2装備を、鰤さんが同一現物の日本語／英語設定で詳細コピーした14組を
+`ambiguous_bases_bilingual.json`へ固定した。現行リーグで出品が存在しないOminous Glovesと
+Wanderer Armourは対象外として記録し、存在を推測したfixtureは作らない。
+
+EE2固定revisionの`items.ndjson`からidentityを生成する際、従来捨てていた`tags`と
+`armour`（基礎AR／EV／ES／Ward範囲）をVariantごとに保持する。同じ日本語名の候補が複数ある
+Rare／Magic装備は、コピーされた最終防御値から品質・ローカルflat・ローカルincreasedの影響を
+除き、EE2の基礎値候補へ照合して英語`ref_name`を一意に決定する。
+
+Uniqueは名前が持つ`base_ref`を先に使う。基礎値による候補差が一意にならない場合は先頭候補を
+推測採用せず、`base identity曖昧`として検索を停止する。日英14組についてParserの`base_type`、
+英語Trade2の`type`、日本語公式Trade2 URLのローカライズ済み`type`まで回帰テストする。
+
 ## 公式API検証記録
 
 2026-08-09 JST、リーグ`Runes of Aldur`へ以下を送信した。

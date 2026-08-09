@@ -29,11 +29,18 @@ def identity_entries() -> tuple[dict, ...]:
     return tuple(payload.get("entries", ()))
 
 
-def resolve_identity(name: str, namespace: str | None = None) -> dict | None:
+def resolve_identity_candidates(
+    name: str, namespace: str | None = None,
+) -> tuple[dict, ...]:
     candidates = identity_index().get(name.strip().casefold(), ())
     if namespace is None:
-        return candidates[0] if candidates else None
-    return next((row for row in candidates if row.get("namespace") == namespace), None)
+        return candidates
+    return tuple(row for row in candidates if row.get("namespace") == namespace)
+
+
+def resolve_identity(name: str, namespace: str | None = None) -> dict | None:
+    candidates = resolve_identity_candidates(name, namespace)
+    return candidates[0] if candidates else None
 
 
 @lru_cache(maxsize=1)
