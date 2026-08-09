@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "reference_revision": "d72afb83bc0888919a89d3c3744acee2c597e9c8",
+  "provenance": {
+    "english": "Exiled Exchange 2 parser fixtures or item data at the fixed revision",
+    "japanese": "Constructed bilingual counterpart using the fixed EE2 Japanese item data; not claimed as a captured game-client sample"
+  },
+  "fixtures": [
+    {
+      "id": "currency_chaos_en",
+      "pair": "currency_chaos",
+      "language": "en",
+      "text": "Item Class: Currency\nRarity: Currency\nChaos Orb\n--------\nStack Size: 1/20\n",
+      "expected": {"name": "Chaos Orb", "base_type": "Chaos Orb", "category": "currency", "trade_category": "currency"}
+    },
+    {
+      "id": "currency_chaos_ja",
+      "pair": "currency_chaos",
+      "language": "ja",
+      "text": "アイテムクラス: カレンシー\nレアリティ: カレンシー\nカオスオーブ\n--------\nスタックサイズ: 1/20\n",
+      "expected": {"name": "Chaos Orb", "base_type": "Chaos Orb", "category": "currency", "trade_category": "currency"}
+    },
+    {
+      "id": "rare_bow_en",
+      "pair": "rare_bow",
+      "language": "en",
+      "text": "Item Class: Bows\nRarity: Rare\nOblivion Strike\nRider Bow\n--------\nItem Level: 80\n",
+      "expected": {"name": "Oblivion Strike", "base_type": "Rider Bow", "category": "bow", "trade_category": "weapon.bow", "item_level": 80}
+    },
+    {
+      "id": "rare_bow_ja",
+      "pair": "rare_bow",
+      "language": "ja",
+      "text": "アイテムクラス: 弓\nレアリティ: レア\n忘却の一撃\nライダーボウ\n--------\nアイテムレベル: 80\n",
+      "expected": {"name": "忘却の一撃", "base_type": "Rider Bow", "category": "bow", "trade_category": "weapon.bow", "item_level": 80}
+    },
+    {
+      "id": "unique_focus_en",
+      "pair": "unique_focus",
+      "language": "en",
+      "text": "Item Class: Foci\nRarity: Unique\nThe Eternal Spark\nCrystal Focus\n--------\nEnergy Shield: 44\n--------\nItem Level: 81\n",
+      "expected": {"name": "The Eternal Spark", "base_type": "Crystal Focus", "category": "focus", "trade_category": "armour.focus", "item_level": 81}
+    },
+    {
+      "id": "unique_focus_ja",
+      "pair": "unique_focus",
+      "language": "ja",
+      "text": "アイテムクラス: フォーカス\nレアリティ: ユニーク\n永遠の火花\n結晶のフォーカス\n--------\nエナジーシールド: 44\n--------\nアイテムレベル: 81\n",
+      "expected": {"name": "The Eternal Spark", "base_type": "Crystal Focus", "category": "focus", "trade_category": "armour.focus", "item_level": 81}
+    }
+  ]
+}

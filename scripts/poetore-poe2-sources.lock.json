@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-09T02:34:39.833444+00:00",
+  "sources": {
+    "stats_en": {
+      "url": "https://www.pathofexile.com/api/trade2/data/stats",
+      "path": "vendor-sources/poe2-trade-api-2026-08-09/stats_en.json",
+      "sha256": "5201bf9220d7ca02ba72418cb10ffc8155644b837585a772f5830e76aaa42b33",
+      "bytes": 848101,
+      "groups": 10,
+      "entries": 8248
+    },
+    "stats_ja": {
+      "url": "https://jp.pathofexile.com/api/trade2/data/stats",
+      "path": "vendor-sources/poe2-trade-api-2026-08-09/stats_ja.json",
+      "sha256": "98c238fb8a81680c02d984c6989d595133b64f089d8f095db7d623051affabff",
+      "bytes": 987054,
+      "groups": 10,
+      "entries": 8249
+    },
+    "items_en": {
+      "url": "https://www.pathofexile.com/api/trade2/data/items",
+      "path": "vendor-sources/poe2-trade-api-2026-08-09/items_en.json",
+      "sha256": "9d107596bfddfac11cc5c6326ed1b5f84453afb0eb646c267848783ce4e7fa0c",
+      "bytes": 185812,
+      "groups": 10,
+      "entries": 3880
+    },
+    "items_ja": {
+      "url": "https://jp.pathofexile.com/api/trade2/data/items",
+      "path": "vendor-sources/poe2-trade-api-2026-08-09/items_ja.json",
+      "sha256": "6fe73f974fe9f826817043f70b8830dbc40a8f9b14e4178e9411ee1ec4f9c9f4",
+      "bytes": 247220,
+      "groups": 10,
+      "entries": 3873
+    },
+    "filters_en": {
+      "url": "https://www.pathofexile.com/api/trade2/data/filters",
+      "path": "vendor-sources/poe2-trade-api-2026-08-09/filters_en.json",
+      "sha256": "10dd5540736a1d8c2a26455a1292a63366b8214bb43c7cf9e16023de4490d7e0",
+      "bytes": 9464,
+      "groups": 7,
+      "entries": 0
+    },
+    "filters_ja": {
+      "url": "https://jp.pathofexile.com/api/trade2/data/filters",
+      "path": "vendor-sources/poe2-trade-api-2026-08-09/filters_ja.json",
+      "sha256": "a3c98ac217aa2c334f6cbc5c023513d7184260628ead0af570a84f62b2fdd03e",
+      "bytes": 10987,
+      "groups": 7,
+      "entries": 0
+    },
+    "static_en": {
+      "url": "https://www.pathofexile.com/api/trade2/data/static",
+      "path": "vendor-sources/poe2-trade-api-2026-08-09/static_en.json",
+      "sha256": "f3342b530e1f5f3263a057aad13c0d117447897a97013398be236faecb9e40c9",
+      "bytes": 175867,
+      "groups": 15,
+      "entries": 780
+    },
+    "static_ja": {
+      "url": "https://jp.pathofexile.com/api/trade2/data/static",
+      "path": "vendor-sources/poe2-trade-api-2026-08-09/static_ja.json",
+      "sha256": "26cecaa87a91e95aaf147b50ba9027f05c31471d95342cf9f82253e6ea3d1fe1",
+      "bytes": 182989,
+      "groups": 15,
+      "entries": 780
+    },
+    "leagues": {
+      "url": "https://www.pathofexile.com/api/trade2/data/leagues",
+      "path": "vendor-sources/poe2-trade-api-2026-08-09/leagues.json",
+      "sha256": "b3d63fc413db2e0c4a4dd5437b2bc0b4d55657515f7e4671cc6098b1da0a4b05",
+      "bytes": 246,
+      "groups": 4,
+      "entries": 0
+    }
+  },
+  "reference_implementations": {
+    "exiled_exchange_2": {
+      "url": "https://github.com/Kvan7/Exiled-Exchange-2/tree/d72afb83bc0888919a89d3c3744acee2c597e9c8",
+      "revision": "d72afb83bc0888919a89d3c3744acee2c597e9c8",
+      "usage": "PoE2 parser fixtures, categories, and query behavior reference"
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "source": {
+    "official_snapshot": "scripts/poetore-poe2-sources.lock.json",
+    "reference": "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8"
+  },
+  "entries": [
+    {
+      "namespace": "ITEM",
+      "ref_name": "Chaos Orb",
+      "category": "currency",
+      "names": {"en": "Chaos Orb", "ja": "カオスオーブ"}
+    },
+    {
+      "namespace": "ITEM",
+      "ref_name": "Rider Bow",
+      "category": "bow",
+      "names": {"en": "Rider Bow", "ja": "ライダーボウ"}
+    },
+    {
+      "namespace": "ITEM",
+      "ref_name": "Crystal Focus",
+      "category": "focus",
+      "names": {"en": "Crystal Focus", "ja": "結晶のフォーカス"}
+    },
+    {
+      "namespace": "UNIQUE",
+      "ref_name": "The Eternal Spark",
+      "base_ref": "Crystal Focus",
+      "category": "focus",
+      "names": {"en": "The Eternal Spark", "ja": "永遠の火花"}
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from src.poetore.poe2.parser import Poe2ItemParseError, TRADE_CATEGORY_BY_CATEGORY, parse_item_text
+
+
+FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
+
+
+def _fixtures():
+    return json.loads(FIXTURES.read_text(encoding="utf-8"))["fixtures"]
+
+
+@pytest.mark.parametrize("fixture", _fixtures(), ids=lambda row: row["id"])
+def test_parse_minimal_poe2_fixtures(fixture):
+    item = parse_item_text(fixture["text"])
+    expected = fixture["expected"]
+    assert item.name == expected["name"]
+    assert item.base_type == expected["base_type"]
+    assert item.category == expected["category"]
+    assert item.item_level == expected.get("item_level")
+    assert TRADE_CATEGORY_BY_CATEGORY[item.category] == expected["trade_category"]
+
+
+def test_bilingual_pairs_resolve_to_same_trade_identity():
+    by_pair = {}
+    for fixture in _fixtures():
+        item = parse_item_text(fixture["text"])
+        identity = (item.base_type, item.category, TRADE_CATEGORY_BY_CATEGORY[item.category])
+        by_pair.setdefault(fixture["pair"], set()).add(identity)
+    assert all(len(values) == 1 for values in by_pair.values())
+
+
+def test_unknown_base_is_not_silently_guessed():
+    with pytest.raises(Poe2ItemParseError, match="base identity未解決"):
+        parse_item_text("Item Class: Bows\nRarity: Rare\nTest Name\nUnknown Bow\n")
