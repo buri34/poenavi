@@ -2402,7 +2402,7 @@ def test_mod_conditions_default_is_reset_for_each_new_item(qapp):
         window.close()
 
 
-def test_mod_condition_checks_can_all_be_cleared_without_changing_item_level(qapp):
+def test_mod_condition_checks_toggle_all_without_changing_item_level(qapp):
     window = PoetoreWindow()
     try:
         filters = (
@@ -2414,7 +2414,7 @@ def test_mod_condition_checks_can_all_be_cleared_without_changing_item_level(qap
         window.item_level_edit.setText("84")
         window._set_item_level_filter_enabled(True)
 
-        assert window.clear_mod_conditions_button.text() == "一覧のチェックを全解除"
+        assert window.clear_mod_conditions_button.text() == "すべて解除"
         assert window.clear_mod_conditions_button.toolTip() == (
             "上の条件一覧のみ。ilvlなどの基本条件は変更しません"
         )
@@ -2435,8 +2435,36 @@ def test_mod_condition_checks_can_all_be_cleared_without_changing_item_level(qap
         window.clear_mod_conditions_button.click()
 
         assert [row.enabled for row in window._selected_stat_filters()] == [False, False]
+        assert window.clear_mod_conditions_button.text() == "すべて選択"
         assert window._selected_item_level() == 84
         assert window._item_level_filter_enabled
+
+        window.clear_mod_conditions_button.click()
+
+        assert [row.enabled for row in window._selected_stat_filters()] == [True, True]
+        assert window.clear_mod_conditions_button.text() == "すべて解除"
+    finally:
+        window.close()
+
+
+def test_mod_condition_toggle_shows_clear_when_partially_checked(qapp):
+    window = PoetoreWindow()
+    try:
+        filters = (
+            TradeStatFilter("explicit.stat_1", "最大ライフ +100", 90, "prefix", True),
+            TradeStatFilter("explicit.stat_2", "火耐性 +40%", 35, "suffix", False),
+        )
+        window._populate_stat_filters(filters)
+
+        assert [row.enabled for row in window._selected_stat_filters()] == [True, False]
+        assert window.clear_mod_conditions_button.text() == "すべて解除"
+
+        checkboxes = window._mod_condition_checkboxes()
+        checkboxes[0].setChecked(False)
+        assert window.clear_mod_conditions_button.text() == "すべて選択"
+
+        checkboxes[1].setChecked(True)
+        assert window.clear_mod_conditions_button.text() == "すべて解除"
     finally:
         window.close()
 
