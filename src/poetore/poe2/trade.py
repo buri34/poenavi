@@ -376,6 +376,7 @@ _POE2_STATE_LABELS = {
     "desecrated": "冒涜",
     "fractured": "フラクチャー",
     "crafted": "クラフト済み",
+    "unidentified": "未鑑定",
 }
 
 _POE2_STATE_FILTER_NAMES = {
@@ -383,6 +384,7 @@ _POE2_STATE_FILTER_NAMES = {
     "desecrated": "desecrated",
     "fractured": "fractured_item",
     "crafted": "crafted",
+    "unidentified": "identified",
 }
 
 
@@ -494,7 +496,7 @@ def _apply_poe2_filter_rows(query: dict, filters) -> None:
             if filter_name is None:
                 continue
             query["filters"].setdefault("misc_filters", {"filters": {}})["filters"][filter_name] = {
-                "option": "true"
+                "option": "false" if state == "unidentified" else "true"
             }
             continue
         target = _POE2_FILTER_TARGETS.get(row.stat_id)
@@ -540,7 +542,10 @@ def build_search_query(
     if quality_min is not None:
         type_filter_values["quality"] = {"min": quality_min}
     if item.rarity == "unique":
-        query["name"] = item.name
+        if item.name:
+            query["name"] = item.name
+        else:
+            type_filter_values["rarity"] = {"option": "unique"}
     if stat_filters:
         _apply_poe2_filter_rows(query, stat_filters)
     return {"query": query, "sort": {"price": "asc"}}
@@ -565,7 +570,9 @@ def build_web_trade_url(
     localized_name = (
         _localized_identity(item.name, "UNIQUE") if item.rarity == "unique" else None
     )
-    if localized_type is None or (item.rarity == "unique" and localized_name is None):
+    if localized_type is None or (
+        item.rarity == "unique" and item.name and localized_name is None
+    ):
         return (
             f"https://www.pathofexile.com/trade2/search/poe2/"
             f"{quote(league, safe='')}/{quote(query_id, safe='')}"

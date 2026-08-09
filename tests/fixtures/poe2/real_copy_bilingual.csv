@@ -1,0 +1,1012 @@
+fixture_id,分類,収集対象,推奨状態・特徴,日本語設定の詳細コピー全文,英語設定の詳細コピー全文,状態,確認したい解析・検索項目,メモ
+FX001,武器,Crossbow,Rare・Reload Timeと複数Modを含む,"アイテムクラス: クロスボウ
+レアリティ: レア
+思案する中心部
+フレックスクロスボウ
+--------
+物理ダメージ: 32-127
+雷ダメージ: 3-59 (lightning)
+クリティカルヒット率: 5.00%
+秒間アタック回数: 1.60
+再装填時間: 0.85
+--------
+装備条件：レベル 77, 62 (augmented) 筋力, 62 (augmented) 器用さ
+--------
+アイテムレベル: 81
+--------
+{ 暗黙モッド }
+ボルトのスピードが29(20-30)%増加する
+--------
+{ プレフィックスモッド「レンジャーの」 (ティア: 3) — アタック }
+命中力 +375(347-450)
+{ プレフィックスモッド「雷鳴の」 (ティア: 7) — ダメージ, 元素, 雷, アタック }
+3(1-4)から59(53-76)の雷ダメージを追加する
+{ サフィックスモッド 「乾燥の」 (ティア: 3) — マナ, 物理, アタック }
+物理ダメージの6.08(6-6.9)%をマナとしてリーチする
+{ サフィックスモッド 「熟練者の」 (ティア: 2) }
+要求能力値が30%減少する
+","Item Class: Crossbows
+Rarity: Rare
+Brood Core
+Flexed Crossbow
+--------
+Physical Damage: 32-127
+Lightning Damage: 3-59 (lightning)
+Critical Hit Chance: 5.00%
+Attacks per Second: 1.60
+Reload Time: 0.85
+--------
+Requires: Level 77, 62 (augmented) Str, 62 (augmented) Dex
+--------
+Item Level: 81
+--------
+{ Implicit Modifier }
+29(20-30)% increased Bolt Speed
+--------
+{ Prefix Modifier ""Ranger's"" (Tier: 3) — Attack }
++375(347-450) to Accuracy Rating
+{ Prefix Modifier ""Crackling"" (Tier: 7) — Damage, Elemental, Lightning, Attack }
+Adds 3(1-4) to 59(53-76) Lightning Damage
+{ Suffix Modifier ""of the Arid"" (Tier: 3) — Mana, Physical, Attack }
+Leeches 6.08(6-6.9)% of Physical Damage as Mana
+{ Suffix Modifier ""of the Skilled"" (Tier: 2) }
+30% reduced Attribute Requirements
+",未収集,Item Class／ベース名／Reload Time／物理DPS／元素DPS／合計DPS／APS／品質20%換算／Local Mod／Trade2 type,同じ現物を日英でコピー
+FX002,武器,Flail,Rare・物理または元素フラットと速度Modを含む,"アイテムクラス: フレイル
+レアリティ: ユニーク
+未完
+チェインフレイル
+--------
+物理ダメージ: 8-14
+クリティカルヒット率: 10.00%
+秒間アタック回数: 1.45
+--------
+装備条件：レベル 6, 12 筋力
+--------
+アイテムレベル: 80
+--------
+WIP","Item Class: Flails
+Rarity: Unique
+INCOMPLETE
+Chain Flail
+--------
+Physical Damage: 8-14
+Critical Hit Chance: 10.00%
+Attacks per Second: 1.45
+--------
+Requires: Level 6, 12 Str
+--------
+Item Level: 80
+--------
+Coming soon
+",未収集,Item Class／ベース名／DPS／APS／品質20%換算／Local Mod／Trade2 type,同じ現物を日英でコピー
+FX003,武器,Focus,Rare・SpiritまたはRunic Ward等の固有Propertyを含む,"アイテムクラス: フォーカス
+レアリティ: レア
+勝利の織工
+神聖なフォーカス
+--------
+エナジーシールド: 57
+--------
+装備条件：レベル 61, 73 (augmented) 知性
+--------
+アイテムレベル: 69
+--------
+{ プレフィックスモッド「オパール色の」 (ティア: 5) — マナ }
+最大マナ +84(80-89)
+{ サフィックスモッド 「相応しき者の」 (ティア: 5) }
+要求能力値が15%減少する
+{ サフィックスモッド 「哲学者の」 (ティア: 4) — 能力値 }
+知性 +23(21-24)
+{ サフィックスモッド 「セイウチの」 (ティア: 4) — 元素, 冷気, 耐性 }
+冷気耐性 +27(26-30)%","Item Class: Foci
+Rarity: Rare
+Victory Weaver
+Hallowed Focus
+--------
+Energy Shield: 57
+--------
+Requires: Level 61, 73 (augmented) Int
+--------
+Item Level: 69
+--------
+{ Prefix Modifier ""Opalescent"" (Tier: 5) — Mana }
++84(80-89) to maximum Mana
+{ Suffix Modifier ""of the Worthy"" (Tier: 5) }
+15% reduced Attribute Requirements
+{ Suffix Modifier ""of the Philosopher"" (Tier: 4) — Attribute }
++23(21-24) to Intelligence
+{ Suffix Modifier ""of the Walrus"" (Tier: 4) — Elemental, Cold, Resistance }
++27(26-30)% to Cold Resistance
+",未収集,Item Class／ベース名／Spirit／Runic Ward／防御Property／Local Mod／Trade2 type,同じ現物を日英でコピー
+FX004,防具,Buckler,Rare・BlockまたはDeflectionを含む,"アイテムクラス: バックラー
+レアリティ: マジック
+大渦の 古代のバックラー
+--------
+ブロック率: 20%
+回避力: 178
+--------
+装備条件：レベル 75, 107 器用さ
+--------
+アイテムレベル: 75
+--------
+スキルを付与: パリィ
+--------
+{ サフィックスモッド 「大渦の」 (ティア: 3) — 元素, 雷, 耐性 }
+雷耐性 +33(31-35)%
+","Item Class: Bucklers
+Rarity: Magic
+Ancient Buckler of the Maelstrom
+--------
+Block chance: 20%
+Evasion Rating: 178
+--------
+Requires: Level 75, 107 Dex
+--------
+Item Level: 75
+--------
+Grants Skill: Parry
+--------
+{ Suffix Modifier ""of the Maelstrom"" (Tier: 3) — Elemental, Lightning, Resistance }
++33(31-35)% to Lightning Resistance
+",未収集,Item Class／ベース名／Block／Deflection／防御Property／Local Mod／Trade2 type,同じ現物を日英でコピー
+FX005,Gem,Active Gem,レベル・品質・ソケット情報が確認できるもの,"アイテムクラス: スキルジェム
+レアリティ: ジェム
+凍結の呪印
+--------
+呪印, バフ, 冷気, 持続時間
+レベル: 19
+品質: +20% (augmented)
+コスト: 75 マナ
+クールダウン時間: 0.50秒
+使用時間: 0.50秒
+--------
+装備条件：レベル 84, 80 器用さ, 80 知性
+--------
+ソケット: G G G G 
+--------
+対象に呪印を付与し、その敵をより凍結状態にしやすくする。呪印を付与された敵が凍結状態になった時、呪印はアクティベートし、その呪印を消費し、プレイヤーに追加冷気ダメージを付与するバフを付与する。バフを持っている時に他の対象に呪印を付与すると、そのバフは取り除かれる。
+--------
+呪印
+--------
+呪印を付与できる対象の上限 1
+呪印を付与された敵に対するヒットが引き起こす凍結蓄積が54%上昇する
+呪印を付与された敵が凍結寸前の時にヒットを受けると凍結状態になる
+呪印の持続時間は8秒
+バフはダメージの30%を冷気ダメージとして獲得を付与する
+バフの持続時間は10秒
+--------
+スキルはスキルジェムパネルで管理できる。
+","Item Class: Skill Gems
+Rarity: Gem
+Freezing Mark
+--------
+Mark, Buff, Cold, Duration
+Level: 19
+Quality: +20% (augmented)
+Cost: 75 Mana
+Cooldown Time: 0.50s
+Use Time: 0.50s
+--------
+Requires: Level 84, 80 Dex, 80 Int
+--------
+Sockets: G G G G 
+--------
+Mark a target, making them more susceptible to being Frozen. When the Marked target is Frozen, the Mark Activates, granting you a Buff which gives extra Cold damage and Consuming the Mark. Marking another target while you have the Buff will remove the Buff.
+--------
+Mark
+--------
+Limit 1 Marked target
+Hits against Marked enemy cause 54% more Freeze buildup
+Marked enemy becomes Frozen when
+Hit while Primed for Freeze
+Mark duration is 8 seconds
+Buff grants 30% of damage Gained as Cold damage
+Buff duration is 10 seconds
+--------
+Skills can be managed in the Skills Panel.
+",未収集,Gem種別／英語identity／Gem Level／Quality／Socket／Trade2 category・type,同じ現物を日英でコピー
+FX006,Gem,Support Gem,レベル・品質・ソケット情報が確認できるもの,"アイテムクラス: サポートジェム
+レアリティ: ジェム
+オルロスの信念
+--------
+サポート, リネージュ
+カテゴリー: オルロスの信念
+--------
+装備条件：レベル 65
+--------
+他のスキルを特定の回数強化できるスキルをサポートし、スキル使用回数を多く付与するようにする。
+--------
+サポートされたスキルはライフおよびマナコストの100%を追加ルーンワードコストとして獲得する
+サポートされたスキルはスキル使用追加で2回を強化する
+--------
+目の無い悪魔が闇から出現した。
+オルロスは柄に魔石の嵌った剣を掲げた。
+悪魔は笑った。オルロスは振り下ろした。
+悪魔の首は転がり、その眼下は喜びで燃えていた。
+--------
+スキルパネル上でスキルのサポートジェムソケットにはめることで、スキルに効果が適用される。スキルに同じカテゴリーのサポートジェムを複数ソケットすることはできない。
+","Item Class: Support Gems
+Rarity: Gem
+Olroth's Conviction
+--------
+Support, Lineage
+Category: Olroth's Conviction
+--------
+Requires: Level 65
+--------
+Supports skills that can Empower a specific number of other skills, causing them to apply to more skill uses.
+--------
+Supported Skills Gain 100% of Life and Mana Cost as Extra Runic Ward Cost
+Supported Skills Empower 2 additional Skill uses
+--------
+The Empty-Eyed Fiend emerged from darkness.
+Olroth raised his sword, gem in its pommel. 
+The Fiend smiled. Olroth swung. 
+Its head rolled, sockets ablaze with delight.
+
+--------
+Place into a Skill's Support Gem socket in the Skills Panel to apply its effects to that Skill. You cannot have multiple Support Gems of the same Category socketed within one Skill.
+",未収集,Gem種別／英語identity／Gem Level／Quality／Socket／Trade2 category・type,同じ現物を日英でコピー
+FX007,Gem,Meta Gem,レベル・品質・ソケット情報が確認できるもの,"レアリティ: ジェム
+ブラスファミー
+--------
+バフ, 永続, 範囲効果, オーラ, メタ
+レベル: 10
+--------
+装備条件：レベル 36, 65 知性
+--------
+ソケット: G G 
+--------
+ソケットされたすべての呪いスキルを凶悪なオーラに変化させ、その効果を近くのすべての敵に適用する。
+--------
+バフ
+--------
+ソケットされた呪いスキルはプレイヤーの周囲にオーラとして適用される
+ソケットされた呪い1個ごとに60のスピリットをリザーブする
+--------
+呪い
+--------
+サポートされた呪いは強度が46%低下する
+ソケットされたスキルは基礎半径が+1mされる
+--------
+スキルパネル上で1個以上のスキルジェムをこのメタジェムにソケットする。ソケットされたスキルはメタジェムの効果に組み込まれれる。
+","Rarity: Gem
+Blasphemy
+--------
+Buff, Persistent, AoE, Aura, Meta
+Level: 10
+--------
+Requires: Level 36, 65 Int
+--------
+Sockets: G G 
+--------
+Turn socketed Curse skills into vile Auras, applying their effects to all nearby enemies.
+--------
+Buff
+--------
+Socketed Curse Skills apply in an Aura around you
+Reserves 60 Spirit per socketed Curse
+--------
+Curses
+--------
+Supported Curses have 46% less Magnitudes
+Socketed Skills have +1 metres to base radius
+--------
+Place one or more Skill Gems into this Meta Gem's sockets in the Skills Panel. The socketed Skills will be incorporated into the Meta Gem's effect.
+",未収集,Gem種別／英語identity／Gem Level／Quality／Socket／Trade2 category・type,同じ現物を日英でコピー
+FX008,Gem,Uncut Gem,レベルまたはTier違いが確認できるもの,"アイテムクラス: スキルジェムの原石
+レアリティ: カレンシー
+スキルジェムの原石 (レベル18)
+--------
+ジェムを生成するか既存のジェムのレベルをレベル18に上げる
+--------
+右クリックしてスキルジェムを彫刻する。
+","Item Class: Uncut Skill Gems
+Rarity: Currency
+Uncut Skill Gem (Level 18)
+--------
+Creates a Skill Gem or Level an existing gem to level 18
+--------
+Right Click to engrave a Skill Gem.
+",未収集,Uncut種別／英語identity／Level・Tier／Trade2 category・type,同じ現物を日英でコピー
+FX009,特殊品,Charm,MagicまたはRare・複数Modを含む,"アイテムクラス: チャーム
+レアリティ: マジック
+練習生の 解凍のチャーム
+--------
+3秒間持続
+使用時に40中32 (augmented)チャージを消費
+現在0チャージ
+凍結への完全無効化を付与する
+--------
+装備条件：レベル 12
+--------
+アイテムレベル: 36
+--------
+{ 暗黙モッド }
+凍結すると使用される — スケールできない値
+--------
+{ サフィックスモッド 「練習生の」 (ティア: 5) }
+使用に必要なチャージ量が20(20-18)%減少する
+--------
+条件を満たした時に自動的に使用される。腰につけているときだけチャージを貯めることができる。井戸で、またはモンスターを倒すことで補充される。
+","Item Class: Charms
+Rarity: Magic
+Thawing Charm of the Practitioner
+--------
+Lasts 3 Seconds
+Consumes 32 (augmented) of 40 Charges on use
+Currently has 0 Charges
+Grants Immunity to Freeze
+--------
+Requires: Level 12
+--------
+Item Level: 36
+--------
+{ Implicit Modifier }
+Used when you become Frozen — Unscalable Value
+--------
+{ Suffix Modifier ""of the Practitioner"" (Tier: 5) }
+20(20-18)% reduced Charges per use
+--------
+Used automatically when condition is met. Can only hold charges while in belt. Refill at Wells or by killing monsters.
+",未収集,Item Class／ベース名／Charm Slot関連／Mod／可変範囲／Trade2 category・type,同じ現物を日英でコピー
+FX010,特殊品,Tablet,MagicまたはRare・残り使用回数と複数Modを含む,"アイテムクラス: 石板
+レアリティ: レア
+神無き象徴
+照射の石板
+--------
+アイテムレベル: 80
+--------
+{ 暗黙モッド }
+マップに照射状態を追加する
+残り使用回数 10回
+--------
+{ プレフィックスモッド「収集家の」 (ティア: 1) }
+マップで見つかるアイテムのレアリティが11(8-12)%増加する
+{ プレフィックスモッド「高い」 (ティア: 1) }
+マップでの獲得経験値が15(12-18)%増加する
+{ サフィックスモッド 「シュラインの」 (ティア: 1) }
+マップにシュラインが出現する確率が72(70-100)%増加する
+{ サフィックスモッド 「地図製作者の」 (ティア: 1) }
+マップで見つかるウェイストーンの数量が30(30-40)%増加する
+--------
+自身のマップデバイスで使用してマップにモッドを追加できる。
+","Item Class: Tablet
+Rarity: Rare
+Godless Emblem
+Irradiated Tablet
+--------
+Item Level: 80
+--------
+{ Implicit Modifier }
+Adds Irradiated to a Map
+10 uses remaining
+--------
+{ Prefix Modifier ""Collector's"" (Tier: 1) }
+11(8-12)% increased Rarity of Items found in Map
+{ Prefix Modifier ""Elevated"" (Tier: 1) }
+15(12-18)% increased Experience gain in Map
+{ Suffix Modifier ""of Shrines"" (Tier: 1) }
+Map has 72(70-100)% increased chance to contain Shrines
+{ Suffix Modifier ""of the Cartographer"" (Tier: 1) }
+30(30-40)% increased Quantity of Waystones found in Map
+--------
+Can be used in a personal Map Device to add modifiers to a Map.
+",未収集,Item Class／ベース名／残り使用回数／Mod／可変範囲／Trade2 category・type,同じ現物を日英でコピー
+FX011,特殊品,RelicまたはSanctum Relic,MagicまたはRare・複数Modを含む,"アイテムクラス: レリック
+レアリティ: マジック
+補強された 浸漬の 壷のレリック
+--------
+アイテムレベル: 62
+--------
+{ プレフィックスモッド「補強された」 (ティア: 4) }
+アーマー、回避力およびエナジーシールドが21(20-29)%増加する
+{ サフィックスモッド 「浸漬の」 (ティア: 3) }
+モンスターは7(7-8)%の確率で二倍の神聖な水をドロップする
+--------
+セケマの試練開始時にこのアイテムをレリックの祭壇に置く
+","Item Class: Relics
+Rarity: Magic
+Reinforced Urn Relic of Soaking
+--------
+Item Level: 62
+--------
+{ Prefix Modifier ""Reinforced"" (Tier: 4) }
+21(20-29)% increased Armour, Evasion and Energy Shield
+{ Suffix Modifier ""of Soaking"" (Tier: 3) }
+Monsters have 7(7-8)% chance to drop double Sacred Water
+--------
+Place this item on the Relic Altar at the start of the Trial of the Sekhemas
+",未収集,Item Class／ベース名／Mod／可変範囲／Trade2 category・type,同じ現物を日英でコピー
+FX012,Trial,Djinn Barya,Trial CountやArea Level等を含むもの,"アイテムクラス: 試練のコイン
+レアリティ: カレンシー
+ジンのバリャ
+--------
+エリアレベル: 80
+試練数: 4
+--------
+アイテムレベル: 80
+--------
+「セケマの試練へ連れて行ってくれ。
+仕えよう。」
+--------
+このアイテムをセケマの試練のレリックの祭壇に持っていく。
+","Item Class: Trial Coins
+Rarity: Currency
+Djinn Barya
+--------
+Area Level: 80
+Number of Trials: 4
+--------
+Item Level: 80
+--------
+""Take me to the Trial of the Sekhemas.
+I will serve.""
+--------
+Take this item to the Relic Altar at the Trial of the Sekhemas.
+",未収集,Item Class／ベース名／Area Level／Trial関連Property／Trade2 category・type,同じ現物を日英でコピー
+FX013,Trial,Inscribed Ultimatum,Area Level・Hint・報酬情報を含むもの,"アイテムクラス: 刻印されたアルティメイタム
+レアリティ: カレンシー
+アルティメイタムの刻印
+--------
+エリアレベル: 80
+試練数: 10
+勝利
+--------
+アイテムレベル: 81
+--------
+人間は自分のものとなるのがどの運命かを
+想像することに生涯を費やす。カオスは
+その答えを知ってほくそ笑む：全てだ。
+
+--------
+このアイテムをカオスの寺院に持っていきカオスの試練に参加する
+","Item Class: Inscribed Ultimatum
+Rarity: Currency
+Inscribed Ultimatum
+--------
+Area Level: 80
+Number of Trials: 10
+Victorious
+--------
+Item Level: 81
+--------
+Mortals spend their lives wondering which
+fate shall be theirs. Chaos takes amusement
+in knowing the answer: all of them.
+--------
+Take this item to The Temple of Chaos to participate in a Trial of Chaos.
+",未収集,Item Class／ベース名／Area Level／Ultimatum Hint／Mod／Trade2 category・type,同じ現物を日英でコピー
+FX014,Jewel,Time-Lost Jewel,Radius等の固有Propertyと複数Modを含む,"アイテムクラス: ジュエル
+レアリティ: レア
+混沌の歓喜
+タイムロストエメラルド
+--------
+半径: 特大
+--------
+アイテムレベル: 78
+--------
+{ プレフィックスモッド「飛翔する」 (ティア: 1) — スピード }
+範囲内のノータブルパッシブスキルは投射物スピードが3(2-3)%増加するも付与する
+{ クラフト プレフィックスモッド「」 }
+半径を特大範囲にアップグレードする — スケールできない値
+{ サフィックスモッド 「至上の」 (ティア: 1) }
+範囲内のノータブルパッシブスキルの効果が24(15-25)%増加する — スケールできない値
+{ サフィックスモッド 「突槍の」 (ティア: 1) — アタック, スピード }
+範囲内のノータブルパッシブスキルはスピアのアタックスピードが2(1-2)%増加するも付与する
+{ 冒涜 サフィックスモッド 「有効性の」 (ティア: 1) }
+範囲内のスモールパッシブスキルの効果が20(15-25)%増加する — スケールできない値
+--------
+パッシブツリーで割り当てられたジュエルソケットにはめる。右クリックしてソケットから取り外すことができる。
+","Item Class: Jewels
+Rarity: Rare
+Entropy Joy
+Time-Lost Emerald
+--------
+Radius: Very Large
+--------
+Item Level: 78
+--------
+{ Prefix Modifier ""Soaring"" (Tier: 1) — Speed }
+Notable Passive Skills in Radius also grant 3(2-3)% increased Projectile Speed
+{ Crafted Prefix Modifier """" }
+Upgrades Radius to Very Large — Unscalable Value
+{ Suffix Modifier ""of Supremacy"" (Tier: 1) }
+24(15-25)% increased Effect of Notable Passive Skills in Radius — Unscalable Value
+{ Suffix Modifier ""of Spearing"" (Tier: 1) — Attack, Speed }
+Notable Passive Skills in Radius also grant 2(1-2)% increased Attack Speed with Spears
+{ Desecrated Suffix Modifier ""of Potency"" (Tier: 1) }
+20(15-25)% increased Effect of Small Passive Skills in Radius — Unscalable Value
+--------
+Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.
+",未収集,Item Class／Unique名／ベース名／Radius／Mod／可変範囲／Trade2 name・type,同じ現物を日英でコピー
+FX015,Augment,Rune単体,任意のRune（できれば数値効果あり）,"アイテムクラス: オーグメント
+レアリティ: カレンシー
+鉄のグレータールーン
+--------
+スタック数: 1/10
+ルーン
+--------
+装備条件：レベル 30
+--------
+マーシャル武器: 物理ダメージが18%増加する
+ワンドまたはスタッフ: スペルダメージが30%増加する
+防具: アーマー、回避力およびエナジーシールドが18%増加する
+--------
+武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。
+","Item Class: Augment
+Rarity: Currency
+Greater Iron Rune
+--------
+Stack Size: 1/10
+Rune
+--------
+Requires: Level 30
+--------
+Martial Weapon: 18% increased Physical Damage
+Wand or Staff: 30% increased Spell Damage
+Armour: 18% increased Armour, Evasion and Energy Shield
+--------
+Place into an empty Augment Socket in a Weapon or Armour to apply its effect to that item. Once socketed it cannot be retrieved but can be replaced by other Augment items.
+",未収集,Item Class／英語identity／効果Mod／option・数値／Trade2 category・type,同じ現物を日英でコピー
+FX016,Augment,Soul Core単体,任意のSoul Core（できれば数値効果あり）,"アイテムクラス: オーグメント
+レアリティ: カレンシー
+トポタンテのソウルコア
+--------
+スタック数: 1/10
+ソウルコア
+--------
+マーシャル武器: この武器によるアタックは15%の元素耐性を貫通する
+靴: 元素系状態異常閾値が25%増加する
+--------
+武器または靴の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。
+","Item Class: Augment
+Rarity: Currency
+Soul Core of Topotante
+--------
+Stack Size: 1/10
+Soul Core
+--------
+Martial Weapon: Attacks with this Weapon Penetrate 15% Elemental Resistances
+Boots: 25% increased Elemental Ailment Threshold
+--------
+Place into an empty Augment Socket in a Weapon or a pair of Boots to apply its effect to that item. Once socketed it cannot be retrieved but can be replaced by other Augment items.
+",未収集,Item Class／英語identity／効果Mod／option・数値／Trade2 category・type,同じ現物を日英でコピー
+FX017,装着品,Rune装着済み装備,Rune由来Modと通常Modを含む装備,"アイテムクラス: スピア
+レアリティ: レア
+崇高なエッジ
+飛翔のスピア
+--------
+品質: +20% (augmented)
+物理ダメージ: 72-125 (augmented)
+クリティカルヒット率: 5.00%
+秒間アタック回数: 2.45 (augmented)
+--------
+装備条件：レベル 70, 41 筋力, 115 器用さ
+--------
+ソケット: S 
+--------
+アイテムレベル: 81
+--------
+デストラクションモッドをロールできるようになる (rune)
+--------
+スキルを付与: スピアスロー
+--------
+{ プレフィックスモッド「鍛錬された」 (ティア: 2) — ダメージ, 物理, アタック }
+25(21-31)から39(36-53)の物理ダメージを追加する
+{ プレフィックスモッド「スラッドの」 (ティア: 1) — スピード- 30%増加 }
+明示スピードモッドの強さが30(25-30)%増加する — スケールできない値
+{ クラフト プレフィックスモッド「ヴェリシウムの」 }
+命中力 +427(327-427)
+アタックスピードが8(5-8)%増加する
+{ フラクチャー サフィックスモッド 「祝賀の」 (ティア: 1) — アタック, スピード- 30%増加 }
+アタックスピードが28(26-28)%増加する
+{ サフィックスモッド 「栄光の」 (ティア: 2) — ライフ }
+倒した敵1体ごとに68(54-68)のライフを獲得する
+--------
+フラクチャーアイテム
+","Item Class: Spears
+Rarity: Rare
+Empyrean Edge
+Soaring Spear
+--------
+Quality: +20% (augmented)
+Physical Damage: 72-125 (augmented)
+Critical Hit Chance: 5.00%
+Attacks per Second: 2.45 (augmented)
+--------
+Requires: Level 70, 41 Str, 115 Dex
+--------
+Sockets: S 
+--------
+Item Level: 81
+--------
+Can roll Destruction modifiers (rune)
+--------
+Grants Skill: Spear Throw
+--------
+{ Prefix Modifier ""Tempered"" (Tier: 2) — Damage, Physical, Attack }
+Adds 25(21-31) to 39(36-53) Physical Damage
+{ Prefix Modifier ""Thrud's"" (Tier: 1) — Speed — 30% Increased }
+30(25-30)% increased Explicit Speed Modifier magnitudes — Unscalable Value
+{ Crafted Prefix Modifier ""Verisium"" }
++427(327-427) to Accuracy Rating
+8(5-8)% increased Attack Speed
+{ Fractured Suffix Modifier ""of Celebration"" (Tier: 1) — Attack, Speed — 30% Increased }
+28(26-28)% increased Attack Speed
+{ Suffix Modifier ""of Glory"" (Tier: 2) — Life }
+Gain 68(54-68) Life per enemy killed
+--------
+Fractured Item
+",未収集,装着元の識別／Rune由来Mod／通常Modとの分離／Socket数／最終Trade2 JSON,同じ現物を日英でコピー
+FX018,装着品,Soul Core装着済み装備,Soul Core由来Modと通常Modを含む装備,"アイテムクラス: 靴
+レアリティ: レア
+亀裂のある猛進
+ルーンフォージの要塞のサバトン
+--------
+アーマー: 126 (augmented)
+回避力: 114 (augmented)
+ルーンワード: 39
+--------
+装備条件：レベル 59, 44 筋力, 44 器用さ
+--------
+ソケット: S 
+--------
+アイテムレベル: 71
+--------
+元素系状態異常閾値が25%増加する (rune)
+--------
+{ プレフィックスモッド「走者の」 (ティア: 6) — スピード }
+移動スピードが10%増加する
+{ プレフィックスモッド「雄健な」 (ティア: 2) — ライフ }
+最大ライフ +117(100-119)
+{ プレフィックスモッド「隊長の」 (ティア: 6) }
+アーマーおよび回避力が7(6-13)%増加する
+スタン閾値 +13(8-13)
+{ サフィックスモッド 「排除の」 (ティア: 3) — 混沌, 耐性 }
+混沌耐性 +17(16-19)%
+{ サフィックスモッド 「イモリの」 (ティア: 8) — ライフ }
+毎秒1.4(1-2)のライフを自動回復する
+{ サフィックスモッド 「霧散の」 (ティア: 2) — 元素, 冷気, 状態異常 }
+受ける冷却の持続時間が51(51-55)%減少する
+","Item Class: Boots
+Rarity: Rare
+Rift Dash
+Runeforged Bastion Sabatons
+--------
+Armour: 126 (augmented)
+Evasion Rating: 114 (augmented)
+Runic Ward: 39
+--------
+Requires: Level 59, 44 Str, 44 Dex
+--------
+Sockets: S 
+--------
+Item Level: 71
+--------
+25% increased Elemental Ailment Threshold (rune)
+--------
+{ Prefix Modifier ""Runner's"" (Tier: 6) — Speed }
+10% increased Movement Speed
+{ Prefix Modifier ""Virile"" (Tier: 2) — Life }
++117(100-119) to maximum Life
+{ Prefix Modifier ""Captain's"" (Tier: 6) }
+7(6-13)% increased Armour and Evasion
++13(8-13) to Stun Threshold
+{ Suffix Modifier ""of Expulsion"" (Tier: 3) — Chaos, Resistance }
++17(16-19)% to Chaos Resistance
+{ Suffix Modifier ""of the Newt"" (Tier: 8) — Life }
+1.4(1-2) Life Regeneration per second
+{ Suffix Modifier ""of Dissipation"" (Tier: 2) — Elemental, Cold, Ailment }
+51(51-55)% reduced Chill Duration on you
+",未収集,装着元の識別／Soul Core由来Mod／通常Modとの分離／Socket数／最終Trade2 JSON,同じ現物を日英でコピー
+FX019,状態区分,Sanctified品,Sanctified由来Modを含む装備,,,未収集,Sanctified状態／Mod由来／可変範囲／最終Trade2 JSON,同じ現物を日英でコピー
+FX020,状態区分,Desecrated品,Desecrated由来Modを含む装備,"アイテムクラス: 靴
+レアリティ: レア
+巨大な靴底
+ダガーフットシューズ
+--------
+品質: +23% (augmented)
+回避力: 451 (augmented)
+エナジーシールド: 145 (augmented)
+--------
+装備条件：レベル 80, 59 器用さ, 59 知性
+--------
+ソケット: S 
+--------
+アイテムレベル: 82
+--------
+プレイヤーのスピードは減速の影響を受けない (rune)
+--------
+{ プレフィックスモッド「智天使の」 (ティア: 1) — 回避力, エナジーシールド }
+回避力 +66(65-78)
+最大エナジーシールド +23(22-25)
+{ 冒涜 プレフィックスモッド「ヘリオンの」 (ティア: 1) — スピード }
+移動スピードが35%増加する
+{ クラフト プレフィックスモッド「儚い」 (ティア: 3) — 回避力, エナジーシールド }
+回避力およびエナジーシールドが78(68-79)%増加する
+{ サフィックスモッド 「ハーストの」 (ティア: 1) — 元素, 冷気, 耐性 }
+冷気耐性 +45(41-45)%
+{ サフィックスモッド 「考古学の」 (ティア: 1) — ドロップ }
+見つかるアイテムのレアリティが18(15-18)%増加する
+{ サフィックスモッド 「雷雨の」 (ティア: 4) — 元素, 雷, 耐性 }
+雷耐性 +30(26-30)%
+","Item Class: Boots
+Rarity: Rare
+Behemoth Sole
+Daggerfoot Shoes
+--------
+Quality: +23% (augmented)
+Evasion Rating: 451 (augmented)
+Energy Shield: 145 (augmented)
+--------
+Requires: Level 80, 59 Dex, 59 Int
+--------
+Sockets: S 
+--------
+Item Level: 82
+--------
+Your speed is unaffected by Slows (rune)
+--------
+{ Prefix Modifier ""Cherub's"" (Tier: 1) — Evasion, Energy Shield }
++66(65-78) to Evasion Rating
++23(22-25) to maximum Energy Shield
+{ Desecrated Prefix Modifier ""Hellion's"" (Tier: 1) — Speed }
+35% increased Movement Speed
+{ Crafted Prefix Modifier ""Evanescent"" (Tier: 3) — Evasion, Energy Shield }
+78(68-79)% increased Evasion and Energy Shield
+{ Suffix Modifier ""of Haast"" (Tier: 1) — Elemental, Cold, Resistance }
++45(41-45)% to Cold Resistance
+{ Suffix Modifier ""of Archaeology"" (Tier: 1) }
+18(15-18)% increased Rarity of Items found
+{ Suffix Modifier ""of the Tempest"" (Tier: 4) — Elemental, Lightning, Resistance }
++30(26-30)% to Lightning Resistance
+",未収集,Desecrated状態／Mod由来／可変範囲／最終Trade2 JSON,同じ現物を日英でコピー
+FX021,状態区分,Runeforged品,Runeforgedベース・Runic Ward等が分かるもの,"アイテムクラス: 靴
+レアリティ: レア
+亀裂のある猛進
+ルーンフォージの要塞のサバトン
+--------
+アーマー: 126 (augmented)
+回避力: 114 (augmented)
+ルーンワード: 39
+--------
+装備条件：レベル 59, 44 筋力, 44 器用さ
+--------
+ソケット: S 
+--------
+アイテムレベル: 71
+--------
+元素系状態異常閾値が25%増加する (rune)
+--------
+{ プレフィックスモッド「走者の」 (ティア: 6) — スピード }
+移動スピードが10%増加する
+{ プレフィックスモッド「雄健な」 (ティア: 2) — ライフ }
+最大ライフ +117(100-119)
+{ プレフィックスモッド「隊長の」 (ティア: 6) }
+アーマーおよび回避力が7(6-13)%増加する
+スタン閾値 +13(8-13)
+{ サフィックスモッド 「排除の」 (ティア: 3) — 混沌, 耐性 }
+混沌耐性 +17(16-19)%
+{ サフィックスモッド 「イモリの」 (ティア: 8) — ライフ }
+毎秒1.4(1-2)のライフを自動回復する
+{ サフィックスモッド 「霧散の」 (ティア: 2) — 元素, 冷気, 状態異常 }
+受ける冷却の持続時間が51(51-55)%減少する
+","Item Class: Boots
+Rarity: Rare
+Rift Dash
+Runeforged Bastion Sabatons
+--------
+Armour: 126 (augmented)
+Evasion Rating: 114 (augmented)
+Runic Ward: 39
+--------
+Requires: Level 59, 44 Str, 44 Dex
+--------
+Sockets: S 
+--------
+Item Level: 71
+--------
+25% increased Elemental Ailment Threshold (rune)
+--------
+{ Prefix Modifier ""Runner's"" (Tier: 6) — Speed }
+10% increased Movement Speed
+{ Prefix Modifier ""Virile"" (Tier: 2) — Life }
++117(100-119) to maximum Life
+{ Prefix Modifier ""Captain's"" (Tier: 6) }
+7(6-13)% increased Armour and Evasion
++13(8-13) to Stun Threshold
+{ Suffix Modifier ""of Expulsion"" (Tier: 3) — Chaos, Resistance }
++17(16-19)% to Chaos Resistance
+{ Suffix Modifier ""of the Newt"" (Tier: 8) — Life }
+1.4(1-2) Life Regeneration per second
+{ Suffix Modifier ""of Dissipation"" (Tier: 2) — Elemental, Cold, Ailment }
+51(51-55)% reduced Chill Duration on you
+",未収集,Runeforgedベース／基礎防御値／tags／Property／Trade2 type,同じ現物を日英でコピー
+FX022,状態区分,Runemastered品,RunemasteredベースまたはUnique,"アイテムクラス: 鎧
+レアリティ: ユニーク
+ユリエルの養育
+ルーンマスターのストライダーベスト
+--------
+品質: +24% (augmented)
+回避力: 1024 (augmented)
+ルーンワード: 133 (augmented)
+--------
+装備条件：レベル 70, 103 器用さ
+--------
+ソケット: S S 
+--------
+アイテムレベル: 80
+--------
+{ コラプトエンハンス — ライフ }
+最大ライフ +32(30-40)
+--------
+{ ユニークモッド — 回避力 }
+回避力が115(100-150)%増加する
+{ ユニークモッド — ライフ }
+最大ライフ +116(80-120)
+{ ユニークモッド — 混沌, 状態異常 }
+プレイヤー自身に対する毒の持続時間が60(60-40)%減少する
+{ ユニークモッド — 物理, 状態異常 }
+プレイヤーに対する出血の持続時間が47(60-40)%減少する
+{ ユニークモッド }
+異なる種類の2体のコンパニオンを使役できる — スケールできない値
+{ ユニークモッド }
+スピリット +19(10-30)
+--------
+獣に餌をやれば狩りをやめるだろう。
+守ってやれば戦うことをやめるだろう。
+獰猛さとは教えられるものではなく学ぶものだ。
+苦しみこそが最強の戦士を鍛えるのだ。
+--------
+コラプト状態
+","Item Class: Body Armours
+Rarity: Unique
+Yriel's Fostering
+Runemastered Strider Vest
+--------
+Quality: +24% (augmented)
+Evasion Rating: 1024 (augmented)
+Runic Ward: 133 (augmented)
+--------
+Requires: Level 70, 103 Dex
+--------
+Sockets: S S 
+--------
+Item Level: 80
+--------
+{ Corruption Enhancement — Life }
++32(30-40) to maximum Life
+--------
+{ Unique Modifier — Evasion }
+115(100-150)% increased Evasion Rating
+{ Unique Modifier — Life }
++116(80-120) to maximum Life
+{ Unique Modifier — Chaos, Ailment }
+60(60-40)% reduced Poison Duration on you
+{ Unique Modifier — Physical, Ailment }
+47(60-40)% reduced Duration of Bleeding on You
+{ Unique Modifier }
+You can have two Companions of different types — Unscalable Value
+{ Unique Modifier }
++19(10-30) to Spirit
+--------
+Feed a beast and it will not hunt.
+Protect it and it will not fight.
+Ferocity must be learned, not taught.
+It is suffering that forges the greatest warriors.
+--------
+Corrupted
+",未収集,Runemasteredベース／Unique名／基礎防御値／tags／Trade2 name・type,同じ現物を日英でコピー
+FX023,状態区分,Corrupted品,RareまたはUnique・複数Modを含む,"アイテムクラス: 鎧
+レアリティ: ユニーク
+ユリエルの養育
+ルーンマスターのストライダーベスト
+--------
+品質: +24% (augmented)
+回避力: 1024 (augmented)
+ルーンワード: 133 (augmented)
+--------
+装備条件：レベル 70, 103 器用さ
+--------
+ソケット: S S 
+--------
+アイテムレベル: 80
+--------
+{ コラプトエンハンス — ライフ }
+最大ライフ +32(30-40)
+--------
+{ ユニークモッド — 回避力 }
+回避力が115(100-150)%増加する
+{ ユニークモッド — ライフ }
+最大ライフ +116(80-120)
+{ ユニークモッド — 混沌, 状態異常 }
+プレイヤー自身に対する毒の持続時間が60(60-40)%減少する
+{ ユニークモッド — 物理, 状態異常 }
+プレイヤーに対する出血の持続時間が47(60-40)%減少する
+{ ユニークモッド }
+異なる種類の2体のコンパニオンを使役できる — スケールできない値
+{ ユニークモッド }
+スピリット +19(10-30)
+--------
+獣に餌をやれば狩りをやめるだろう。
+守ってやれば戦うことをやめるだろう。
+獰猛さとは教えられるものではなく学ぶものだ。
+苦しみこそが最強の戦士を鍛えるのだ。
+--------
+コラプト状態
+","Item Class: Body Armours
+Rarity: Unique
+Yriel's Fostering
+Runemastered Strider Vest
+--------
+Quality: +24% (augmented)
+Evasion Rating: 1024 (augmented)
+Runic Ward: 133 (augmented)
+--------
+Requires: Level 70, 103 Dex
+--------
+Sockets: S S 
+--------
+Item Level: 80
+--------
+{ Corruption Enhancement — Life }
++32(30-40) to maximum Life
+--------
+{ Unique Modifier — Evasion }
+115(100-150)% increased Evasion Rating
+{ Unique Modifier — Life }
++116(80-120) to maximum Life
+{ Unique Modifier — Chaos, Ailment }
+60(60-40)% reduced Poison Duration on you
+{ Unique Modifier — Physical, Ailment }
+47(60-40)% reduced Duration of Bleeding on You
+{ Unique Modifier }
+You can have two Companions of different types — Unscalable Value
+{ Unique Modifier }
++19(10-30) to Spirit
+--------
+Feed a beast and it will not hunt.
+Protect it and it will not fight.
+Ferocity must be learned, not taught.
+It is suffering that forges the greatest warriors.
+--------
+Corrupted
+",未収集,Corrupted状態／Mod／仮Rune候補の非表示／最終Trade2 JSON,同じ現物を日英でコピー
+FX024,状態区分,Mirrored品,Rareまたは特殊品・複数Modを含む,,,未収集,Mirrored状態／Mod／仮Rune候補の非表示／最終Trade2 JSON,同じ現物を日英でコピー
+FX025,状態区分,未鑑定品,UnidentifiedのRareまたはUnique,"アイテムクラス: タリスマン
+レアリティ: ユニーク
+規格外の イラクサのタリスマン
+--------
+品質: +23% (augmented)
+物理ダメージ: 15-25 (augmented)
+クリティカルヒット率: 11.00%
+秒間アタック回数: 1.25
+--------
+装備条件：9 筋力, 8 知性
+--------
+アイテムレベル: 83
+--------
+スキルを付与: レベル18 サングインレヴェルリー
+--------
+未鑑定
+","Item Class: Talismans
+Rarity: Unique
+Exceptional Nettle Talisman
+--------
+Quality: +23% (augmented)
+Physical Damage: 15-25 (augmented)
+Critical Hit Chance: 11.00%
+Attacks per Second: 1.25
+--------
+Requires: 9 Str, 8 Int
+--------
+Item Level: 83
+--------
+Grants Skill: Level 18 Sanguine Revelry
+--------
+Unidentified
+",未収集,Unidentified状態／名前・ベース解決／送信可能条件／最終Trade2 JSON,同じ現物を日英でコピー
+FX026,Unique,複雑なUnique 1,option型Statまたは選択肢型Modを含む,ちょっと一旦保留（まずは残タスク文書に追加して）,ちょっと一旦保留（まずは残タスク文書に追加して）,未収集,Unique名／ベース名／option型Stat／可変範囲／poe.ninja価格／日本語Trade URL,同じ現物を日英でコピー。アイテム名をメモ欄へ記入
+FX027,Unique,複雑なUnique 2,複数行Modまたはスケール不可値を含む,ちょっと一旦保留（まずは残タスク文書に追加して）,ちょっと一旦保留（まずは残タスク文書に追加して）,未収集,Unique名／ベース名／複数行Mod／スケール不可値／可変範囲／日本語Trade URL,同じ現物を日英でコピー。アイテム名をメモ欄へ記入
+FX028,Unique,複雑なUnique 3,特殊Property・特殊可変値・状態区分のいずれかを含む,ちょっと一旦保留（まずは残タスク文書に追加して）,ちょっと一旦保留（まずは残タスク文書に追加して）,未収集,Unique名／ベース名／特殊Property／可変範囲／最終Trade2 JSON／日本語Trade URL,同じ現物を日英でコピー。アイテム名をメモ欄へ記入

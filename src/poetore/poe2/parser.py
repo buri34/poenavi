@@ -44,6 +44,7 @@ _CLASS_CATEGORY = {
     "One Hand Axes": "one_axe", "片手斧": "one_axe",
     "Two Hand Axes": "two_axe", "両手斧": "two_axe",
     "Daggers": "dagger", "短剣": "dagger",
+    "Talismans": "talisman", "Talisman": "talisman", "タリスマン": "talisman",
     "Bucklers": "buckler", "バックラー": "buckler",
     "Shields": "shield", "盾": "shield",
     "Body Armours": "body_armour", "鎧": "body_armour",
@@ -100,11 +101,12 @@ TRADE_CATEGORY_BY_CATEGORY = {
     "active_gem": "gem.activegem",
     "support_gem": "gem.supportgem",
     "meta_gem": "gem.metagem",
+    "talisman": "weapon.talisman",
 }
 _LOCAL_AFFIX_CATEGORIES = {
     "bow", "focus", "crossbow", "spear", "flail", "staff", "quarterstaff",
     "wand", "sceptre", "one_mace", "two_mace", "one_sword", "two_sword",
-    "one_axe", "two_axe", "dagger", "buckler", "shield", "body_armour",
+    "one_axe", "two_axe", "dagger", "talisman", "buckler", "shield", "body_armour",
     "helmet", "gloves", "boots", "quiver",
 }
 _RARITIES = {
@@ -390,23 +392,43 @@ def parse_item_text(text: str) -> ParsedItem:
     item_class = labels.get("item_class", "")
     rarity = _RARITIES.get(labels.get("rarity", ""), labels.get("rarity", "").casefold())
     category = _CLASS_CATEGORY.get(item_class)
+    unidentified = any(
+        line.strip() in {"Unidentified", "未鑑定"} for line in text.splitlines()
+    )
+    if not item_class and rarity == "gem" and len(identity_lines) == 1:
+        # PoE2 omits Item Class for Meta Gems.  EE2 handles that omission as a
+        # dedicated special case; require both the copied Meta tag and the GEM
+        # identity category so an arbitrary malformed Gem cannot enter it.
+        tag_section = re.split(r"^--------\s*$", text.strip(), flags=re.MULTILINE)[1:2]
+        tag_text = tag_section[0] if tag_section else ""
+        candidate = resolve_identity(identity_lines[0], "GEM")
+        if (
+            candidate is not None
+            and candidate.get("category") == "MetaSkillGem"
+            and re.search(r"(?:^|,\s*)(?:Meta|メタ)(?:\s*,|$)", tag_text, re.MULTILINE)
+        ):
+            item_class = "Meta Gems"
+            category = "gem"
     if not item_class or not rarity or not identity_lines:
         raise Poe2ItemParseError("PoE2アイテムのclass、rarity、identityを解決できません")
 
     raw_base = identity_lines[-1]
     identity_namespace = "GEM" if category == "gem" or rarity == "gem" else "ITEM"
     unique_identity = None
-    if rarity == "unique":
+    if rarity == "unique" and not unidentified:
         if len(identity_lines) < 2:
             raise Poe2ItemParseError("PoE2 Unique名がありません")
         unique_identity = resolve_identity(identity_lines[-2], "UNIQUE")
         if unique_identity is None:
             raise Poe2ItemParseError(f"PoE2 Unique identity未解決: {identity_lines[-2]}")
     preferred_base_ref = str((unique_identity or {}).get("base_ref", "")) or None
+    base_resolution_rarity = "magic" if unidentified else rarity
     base_identity = (
         resolve_identity(raw_base, identity_namespace)
         if identity_namespace != "ITEM"
-        else _resolve_base_identity(raw_base, category, rarity, preferred_base_ref)
+        else _resolve_base_identity(
+            raw_base, category, base_resolution_rarity, preferred_base_ref,
+        )
     )
     if base_identity is None:
         raise Poe2ItemParseError(f"PoE2 base identity未解決: {raw_base}")
@@ -441,7 +463,7 @@ def parse_item_text(text: str) -> ParsedItem:
     if not category:
         raise Poe2ItemParseError(f"PoE2カテゴリ未解決: {item_class} / {base_type}")
 
-    if rarity == "unique":
+    if rarity == "unique" and not unidentified:
         name = str(unique_identity["ref_name"])
     elif rarity == "currency":
         name = base_type
@@ -451,9 +473,11 @@ def parse_item_text(text: str) -> ParsedItem:
     item_level = None
     properties = {}
     modifiers = []
-    flags = set()
+    flags = {"unidentified"} if unidentified else set()
     augment_count = 0
-    if base_type.casefold().startswith(("runeforged ", "runemastered ")):
+    if base_type.casefold().startswith("runemastered "):
+        flags.add("runemastered")
+    elif base_type.casefold().startswith("runeforged "):
         flags.add("runeforged")
     current_kind = None
     for line in text.splitlines():
@@ -488,6 +512,11 @@ def parse_item_text(text: str) -> ParsedItem:
         if line.startswith(_DESCRIPTION_PREFIXES):
             continue
         if any(line.startswith(f"{label}:") for label in _LABELS):
+            continue
+        # EE2 consumes Gem description/effect sections before its modifier
+        # parser. Gem trade searches use identity, level, quality and sockets;
+        # prose and skill effects are not item modifiers.
+        if category in {"active_gem", "support_gem", "meta_gem"}:
             continue
         standalone_augment = bool(re.search(r"\(rune\)\s*$", line, re.IGNORECASE))
         line_kind = "augment" if standalone_augment else current_kind
@@ -532,11 +561,11 @@ def parse_item_text(text: str) -> ParsedItem:
     )
     if identity_namespace == "ITEM":
         refined = _refine_base_identity(
-            raw_base, category, rarity, item, preferred_base_ref,
+            raw_base, category, base_resolution_rarity, item, preferred_base_ref,
         )
         candidate_refs = {
             str(row.get("ref_name", ""))
-            for row in _base_identity_candidates(raw_base, category, rarity)
+            for row in _base_identity_candidates(raw_base, category, base_resolution_rarity)
         }
         if refined is None and len(candidate_refs) > 1:
             raise Poe2ItemParseError(f"PoE2 base identity曖昧: {raw_base}")

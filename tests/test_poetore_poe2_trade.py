@@ -65,6 +65,24 @@ def test_unique_query_contains_only_minimal_identity_filters():
     assert query["stats"] == [{"type": "and", "filters": []}]
 
 
+def test_unidentified_unique_searches_base_with_unique_and_unidentified_filters():
+    item = ParsedItem(
+        item_class="Talismans", rarity="unique", name="", base_type="Nettle Talisman",
+        category="talisman", flags=("unidentified",),
+    )
+    payload = build_search_query(item, stat_filters=poe2_trade_filters(item))
+    query = payload["query"]
+    assert query["type"] == "Nettle Talisman"
+    assert "name" not in query
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {"option": "unique"}
+    assert query["filters"]["misc_filters"]["filters"]["identified"] == {"option": "false"}
+    web_query = _web_payload(
+        build_web_trade_url(item, "Standard", payload, "query-id")
+    )["query"]
+    assert web_query["type"] == "イラクサのタリスマン"
+    assert "name" not in web_query
+
+
 def test_mock_search_and_fetch_complete_the_minimal_vertical_slice():
     item = parse_item_text(_unique_fixture()["text"])
     payload = build_search_query(item)

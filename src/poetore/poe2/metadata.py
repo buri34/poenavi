@@ -146,6 +146,7 @@ def resolve_stat_line_candidates(
     )
     comparable = re.sub(r"\((?:[^()]*)-[^()]*\)", "", comparable)
     comparable = re.sub(r"\s*[—-]\s*スケールできない値\s*$", "", comparable)
+    comparable = re.sub(r"\s*[—-]\s*Unscalable Value\s*$", "", comparable, flags=re.IGNORECASE)
     matchers = stat_matchers()
     if preferred_type:
         matchers = tuple(

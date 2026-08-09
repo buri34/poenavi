@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 from pathlib import Path
 
@@ -13,6 +14,7 @@ PHASE6_FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "phase6_special_
 AMBIGUOUS_BASE_FIXTURES = (
     Path(__file__).parent / "fixtures" / "poe2" / "ambiguous_bases_bilingual.json"
 )
+REAL_COPY_FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "real_copy_bilingual.csv"
 
 
 def _fixtures():
@@ -25,6 +27,77 @@ def _phase6_fixtures():
 
 def _ambiguous_base_fixtures():
     return json.loads(AMBIGUOUS_BASE_FIXTURES.read_text(encoding="utf-8"))["fixtures"]
+
+
+def _real_copy_fixtures():
+    with REAL_COPY_FIXTURES.open(encoding="utf-8-sig", newline="") as handle:
+        return tuple(csv.DictReader(handle))
+
+
+def _real_copy(fixture_id):
+    return next(row for row in _real_copy_fixtures() if row["fixture_id"] == fixture_id)
+
+
+@pytest.mark.parametrize(
+    "fixture",
+    tuple(
+        row for row in _real_copy_fixtures()
+        if row["日本語設定の詳細コピー全文"].strip()
+        and not row["日本語設定の詳細コピー全文"].startswith("ちょっと一旦保留")
+        and row["fixture_id"] != "FX008"
+    ),
+    ids=lambda row: row["fixture_id"],
+)
+def test_user_captured_real_copy_pairs_resolve_to_same_identity(fixture):
+    ja = parse_item_text(fixture["日本語設定の詳細コピー全文"])
+    en = parse_item_text(fixture["英語設定の詳細コピー全文"])
+    assert (ja.base_type, ja.category, ja.rarity) == (en.base_type, en.category, en.rarity)
+
+
+def test_meta_gem_without_item_class_requires_meta_tag_and_metadata_identity():
+    fixture = _real_copy("FX007")
+    for language in ("日本語設定の詳細コピー全文", "英語設定の詳細コピー全文"):
+        item = parse_item_text(fixture[language])
+        assert (item.base_type, item.category, item.modifiers) == ("Blasphemy", "meta_gem", ())
+        without_meta = fixture[language].replace("メタ", "永続").replace("Meta", "Persistent")
+        with pytest.raises(Poe2ItemParseError, match="class、rarity、identity"):
+            parse_item_text(without_meta)
+
+
+def test_gem_prose_is_not_reported_as_unresolved_item_modifiers():
+    for fixture_id in ("FX005", "FX006", "FX007"):
+        fixture = _real_copy(fixture_id)
+        assert parse_item_text(fixture["日本語設定の詳細コピー全文"]).modifiers == ()
+        assert parse_item_text(fixture["英語設定の詳細コピー全文"]).modifiers == ()
+
+
+def test_charm_and_timelost_unscalable_suffixes_resolve_equally_in_both_languages():
+    charm = _real_copy("FX009")
+    charm_items = [parse_item_text(charm[key]) for key in (
+        "日本語設定の詳細コピー全文", "英語設定の詳細コピー全文",
+    )]
+    assert [len(item.modifiers) for item in charm_items] == [5, 5]
+    assert all(any(mod.stat_id == "implicit.stat_1691862754" for mod in item.modifiers) for item in charm_items)
+
+    jewel = _real_copy("FX014")
+    jewel_items = [parse_item_text(jewel[key]) for key in (
+        "日本語設定の詳細コピー全文", "英語設定の詳細コピー全文",
+    )]
+    assert all(len(item.modifiers) == 5 for item in jewel_items)
+    assert all(sum(not mod.stat_id for mod in item.modifiers) == 0 for item in jewel_items)
+    assert all({"crafted", "desecrated"}.issubset(item.flags) for item in jewel_items)
+
+
+def test_runemastered_and_unidentified_unique_are_preserved_as_distinct_states():
+    runemastered = parse_item_text(_real_copy("FX022")["英語設定の詳細コピー全文"])
+    assert "runemastered" in runemastered.flags
+    assert "runeforged" not in runemastered.flags
+
+    unidentified = _real_copy("FX025")
+    for language in ("日本語設定の詳細コピー全文", "英語設定の詳細コピー全文"):
+        item = parse_item_text(unidentified[language])
+        assert (item.name, item.base_type, item.category) == ("", "Nettle Talisman", "talisman")
+        assert "unidentified" in item.flags
 
 
 @pytest.mark.parametrize("fixture", _fixtures(), ids=lambda row: row["id"])
@@ -308,7 +381,8 @@ def test_phase45_runemastered_base_and_desecrated_state_are_not_collapsed():
     )
     item = parse_item_text(text)
     assert item.base_type == "Runemastered Vaal Cuirass"
-    assert {"runeforged", "desecrated", "fractured"} <= set(item.flags)
+    assert {"runemastered", "desecrated", "fractured"} <= set(item.flags)
+    assert "runeforged" not in item.flags
     desecrated = next(mod for mod in item.modifiers if mod.kind == "desecrated")
     assert desecrated.stat_id == "desecrated.stat_2923486259"
 
