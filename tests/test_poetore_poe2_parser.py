@@ -134,6 +134,8 @@ def test_runemastered_and_unidentified_unique_are_preserved_as_distinct_states()
     runemastered = parse_item_text(_real_copy("FX022")["英語設定の詳細コピー全文"])
     assert "runemastered" in runemastered.flags
     assert "runeforged" not in runemastered.flags
+    evasion = next(mod for mod in runemastered.modifiers if "Evasion Rating" in (mod.ref or ""))
+    assert evasion.stat_id == "explicit.stat_124859000"
 
     unidentified = _real_copy("FX025")
     for language in ("日本語設定の詳細コピー全文", "英語設定の詳細コピー全文"):
@@ -326,6 +328,8 @@ def test_reported_japanese_rare_gloves_resolve_chaos_and_desecrated_mods():
     assert chaos.values == (15.0,)
     cold = next(mod for mod in item.modifiers if "冷気ダメージ" in mod.text)
     assert cold.stat_id.startswith("desecrated.")
+    attack_speed = next(mod for mod in item.modifiers if "アタックスピード" in mod.text)
+    assert attack_speed.stat_id == "explicit.stat_681332047"
 
 
 def test_reported_japanese_rare_spear_keeps_quality_and_both_flat_damage_values():
@@ -342,6 +346,46 @@ def test_reported_japanese_rare_spear_keeps_quality_and_both_flat_damage_values(
     fractured = next(mod for mod in item.modifiers if "アタックスピードが28" in mod.text)
     assert fractured.kind == "fractured"
     assert "fractured" in item.flags
+    crafted_accuracy = next(mod for mod in item.modifiers if mod.text.startswith("命中力"))
+    assert crafted_accuracy.stat_id == "crafted.stat_803737631"
+    crafted_speed = next(mod for mod in item.modifiers if "アタックスピードが8" in mod.text)
+    assert crafted_speed.stat_id == "crafted.stat_210067635"
+
+
+def test_audited_crossbow_accuracy_keeps_local_scope_when_both_ids_have_results():
+    fixture = _real_copy("FX001")
+    for language in ("日本語設定の詳細コピー全文", "英語設定の詳細コピー全文"):
+        item = parse_item_text(fixture[language])
+        accuracy = next(
+            mod for mod in item.modifiers if "命中" in mod.text or "Accuracy" in mod.text
+        )
+        assert accuracy.stat_id == "explicit.stat_691932474"
+
+
+@pytest.mark.parametrize(
+    ("base_type", "needle", "expected_id"),
+    (
+        ("Swathed Cap", "Accuracy", "explicit.stat_803737631"),
+        ("Runeforged Swathed Cap", "Accuracy", "explicit.stat_803737631"),
+        ("Runemastered Fine Bracers", "Evasion Rating", "explicit.stat_124859000"),
+        ("Runemastered Spined Bracers", "Evasion Rating", "explicit.stat_124859000"),
+    ),
+)
+def test_audited_ambiguous_base_stats_use_confirmed_scope(base_type, needle, expected_id):
+    fixture = next(
+        row for row in _ambiguous_base_fixtures()
+        if row["expected_base_type"] == base_type
+    )
+    for language in ("ja", "en"):
+        item = parse_item_text(fixture[language])
+        matching = [
+            mod for mod in item.modifiers
+            if needle in (mod.ref or "") and mod.stat_id in {
+                "explicit.stat_803737631", "explicit.stat_691932474",
+                "explicit.stat_124859000", "explicit.stat_2106365538",
+            }
+        ]
+        assert matching and all(mod.stat_id == expected_id for mod in matching)
 
 
 def test_reported_japanese_rare_body_armour_prefers_local_evasion_stats():

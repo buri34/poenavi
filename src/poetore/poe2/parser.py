@@ -112,6 +112,18 @@ _LOCAL_AFFIX_CATEGORIES = {
     "one_axe", "two_axe", "dagger", "talisman", "buckler", "shield", "body_armour",
     "helmet", "gloves", "boots", "quiver",
 }
+_WEAPON_LOCAL_AFFIX_CATEGORIES = {
+    "bow", "crossbow", "spear", "flail", "staff", "quarterstaff", "wand",
+    "sceptre", "one_mace", "two_mace", "one_sword", "two_sword", "one_axe",
+    "two_axe", "dagger", "talisman",
+}
+_ARMOUR_LOCAL_AFFIX_CATEGORIES = {
+    "focus", "buckler", "shield", "body_armour", "helmet", "gloves", "boots",
+    "quiver",
+}
+_LOCAL_DEFENCE_TERMS = (
+    "Armour", "Evasion Rating", "Energy Shield", "Runic Ward",
+)
 _RARITIES = {
     "Currency": "currency",
     "カレンシー": "currency",
@@ -460,6 +472,35 @@ def _refine_base_identity(
     return None
 
 
+def _is_local_stat_entry(entry: dict) -> bool:
+    return bool(re.search(
+        r"\s*\((?:Local|ローカル)\)\s*$",
+        str((entry.get("text") or {}).get("en", "")),
+        flags=re.IGNORECASE,
+    ))
+
+
+def _select_scoped_stat_candidate(candidates, category: str, line_kind: str):
+    """Choose Local/Global scope from item domain, then preserve matcher priority."""
+    if not candidates:
+        return None
+    local_candidates = tuple(row for row in candidates if _is_local_stat_entry(row[0]))
+    non_local_candidates = tuple(row for row in candidates if not _is_local_stat_entry(row[0]))
+    if not local_candidates or not non_local_candidates:
+        return candidates[0]
+
+    local_ref = str((local_candidates[0][0].get("text") or {}).get("en", ""))
+    if category in _ARMOUR_LOCAL_AFFIX_CATEGORIES:
+        prefer_local = any(term in local_ref for term in _LOCAL_DEFENCE_TERMS)
+    elif category in _WEAPON_LOCAL_AFFIX_CATEGORIES:
+        # The audited crafted accuracy hybrid on weapons uses the non-Local ID,
+        # while ordinary weapon accuracy and attack properties remain Local.
+        prefer_local = not (line_kind == "crafted" and "Accuracy Rating" in local_ref)
+    else:
+        prefer_local = False
+    return (local_candidates if prefer_local else non_local_candidates)[0]
+
+
 def parse_item_text(text: str) -> ParsedItem:
     labels, identity_lines = _header(text)
     item_class = labels.get("item_class", "")
@@ -599,17 +640,18 @@ def parse_item_text(text: str) -> ParsedItem:
         line_kind = "augment" if standalone_augment else current_kind
         if standalone_augment and current_kind != "augment":
             augment_count += 1
-        prefer_local = (
-            rarity != "unique"
-            and category in _LOCAL_AFFIX_CATEGORIES
+        scoped_affix = (
+            category in _LOCAL_AFFIX_CATEGORIES
             and line_kind in {"explicit", "fractured", "crafted", "desecrated"}
+            and (rarity != "unique" or category in _ARMOUR_LOCAL_AFFIX_CATEGORIES)
         )
         preferred_stat_type = "rune" if line_kind == "augment" else line_kind
-        resolved = resolve_stat_line_candidates(
-            line, preferred_stat_type, include_local_variants=prefer_local,
+        candidates = resolve_stat_line_candidates(
+            line, preferred_stat_type, include_local_variants=scoped_affix,
         )
+        resolved = _select_scoped_stat_candidate(candidates, category, line_kind)
         if resolved:
-            entry, values = resolved[0]
+            entry, values = resolved
             raw_stat_id = str(entry.get("id", ""))
             roll_min, roll_max, better = _roll_bounds(line)
             is_negated_match = bool(values) and all(value <= 0 for value in values) and (

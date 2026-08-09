@@ -105,14 +105,14 @@ Trade2 Stat IDを1つ選んで送る。EE2式のOR検索はPoE2の仕様変化�
 公式Trade2クエリ複雑度上限へ達しやすく、再送による検索遅延も避けたい。このため通常経路では
 速度と未ログイン互換性を優先して単一IDを使い、正しさは別の監査で継続検証する。
 
-- [ ] 実コピーfixtureを武器、防具、アクセサリー、Unique、Rune等で蓄積する
-- [ ] 各fixtureについて「選択IDのみ」「代替IDのみ」「Local／Global OR」の3クエリを生成する
-- [ ] 同一リーグ・status・数値条件で件数を比較し、選択IDが0件かつ代替IDが有件、または
+- [x] 実コピーfixtureを武器、防具、アクセサリー、Unique、Rune等で蓄積する
+- [x] 各fixtureについて「選択IDのみ」「代替IDのみ」「Local／Global OR」の3クエリを生成する
+- [x] 同一リーグ・status・数値条件で件数を比較し、選択IDが0件かつ代替IDが有件、または
       OR件数と選択ID件数の差が大きい組合せを要監査として出力する
-- [ ] 件数差だけで正解と断定せず、代表出品をfetchしてベースタイプと実Modを照合する
-- [ ] レート制限を避けるため、固定fixtureを使う手動／低頻度の監査コマンドとして実装し、
+- [x] 件数差だけで正解と断定せず、代表出品をfetchしてベースタイプと実Modを照合する
+- [x] レート制限を避けるため、固定fixtureを使う手動／低頻度の監査コマンドとして実装し、
       通常検索中には追加API呼び出しを行わない
-- [ ] 監査済みのカテゴリ・Mod規則をデータ化し、未監査範囲と最終確認日をレポートする
+- [x] 監査済みのカテゴリ・Mod規則をコードと回帰テストへ固定し、最終確認日を記録する
 
 #### 30秒間隔の低頻度監査計画
 
@@ -143,6 +143,19 @@ fixture / Stat候補
 OpenClaw Cron `28f3db2b-dd66-4ef2-8a17-21ab6535b15b`を30秒間隔で起動した。
 CronはCLIを1ステップだけ呼び、完了時に自身を削除する。監査結果から本番のStat選択規則を
 自動変更せず、`report.json`／`report.csv`を人間が確認してから反映する。
+
+2026-08-10 JSTに全33候補・API 109回の監査が完了した。22候補は現行選択が正しく、10候補は
+代替IDだけが有件だったため、代表出品の実Mod hashをfetchして代替IDを正解と確定した。残る
+Crossbow命中力1候補はLocal／Globalの両方に出品があったが、Local 1,512件・Global 19件で、
+通常武器Affixとして現行Localを維持した。反映した規則は次のとおり。
+
+- 防具のArmour／Evasion／Energy Shield／Runic WardはUniqueを含めLocalを選ぶ
+- 防具上のAttack SpeedとAccuracyはGlobalを選ぶ
+- 武器の通常Attack SpeedとAccuracyはLocalを選ぶ
+- 監査した武器のcrafted Accuracy複合ModはGlobalを選ぶ
+
+旧実装で誤選択していたRare手袋Attack Speed、Rare Spear crafted Accuracy、Helmet Accuracy、
+Runemastered Unique防具のEvasion計10件を修正し、日英実コピーfixtureで最終Stat IDを固定した。
 
 ### 日本語公式Trade2への遷移
 
