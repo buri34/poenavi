@@ -45,9 +45,11 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     labels = [label.text() for label in dialog.findChildren(QLabel)]
     assert "修道院へ移動（/monastery）:" in labels
     assert all("（仮）修道院" not in label for label in labels)
-    assert dialog.preferred_mode_combo.currentData() == "poetore"
-    dialog.preferred_mode_combo.setCurrentIndex(
-        dialog.preferred_mode_combo.findData("poenavi")
+    assert dialog.app_mode_radios["poetore"].isChecked()
+    assert dialog.app_mode_startup_combo.currentData() == "poetore"
+    dialog.app_mode_radios["poenavi"].setChecked(True)
+    dialog.app_mode_startup_combo.setCurrentIndex(
+        dialog.app_mode_startup_combo.findData("ask")
     )
     settings = dialog.get_settings()
     assert settings["startup"]["preferred_mode"] == "poenavi"
@@ -71,10 +73,13 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     ]
     assert dialog.windowTitle() == "設定"
     assert "subcontrol-position: top center" in dialog.styleSheet()
-    note = dialog.findChild(QLabel, "startupModeSelectorNote")
-    layout = dialog.show_mode_selector_cb.parentWidget().layout()
-    assert layout.indexOf(note) == layout.indexOf(dialog.show_mode_selector_cb) + 1
-    assert "OFFにすると" in note.text()
+    assert [radio.text() for radio in dialog.app_mode_radios.values()] == [
+        "ぽえなび", "ぽえとれ"
+    ]
+    assert [
+        dialog.app_mode_startup_combo.itemText(index)
+        for index in range(dialog.app_mode_startup_combo.count())
+    ] == ["毎回確認", "ぽえなび固定", "ぽえとれ固定"]
     private_note = dialog.findChild(QLabel, "privateLeagueNote")
     assert (
         private_note.text()
@@ -182,6 +187,22 @@ def test_poetore_settings_saves_same_poe_version_controls_as_poenavi():
     settings = dialog.get_settings()
     assert settings["poe_version"] == "poe2"
     assert settings["poe_version_mode"] == "poe2"
+    dialog.close()
+
+
+def test_poetore_fixed_startup_mode_selects_the_fixed_app():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "startup": {"preferred_mode": "poetore", "show_mode_selector": True}
+    })
+    dialog.app_mode_startup_combo.setCurrentIndex(
+        dialog.app_mode_startup_combo.findData("poenavi")
+    )
+
+    assert dialog.get_settings()["startup"] == {
+        "preferred_mode": "poenavi",
+        "show_mode_selector": False,
+    }
     dialog.close()
 
 

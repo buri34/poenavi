@@ -1881,36 +1881,47 @@ class SettingsDialog(QDialog):
         startup_group = QGroupBox("起動モード")
         startup_group.setStyleSheet(group_style)
         startup_layout = QVBoxLayout(startup_group)
-        self.show_mode_selector_cb = QCheckBox("起動時に「ぽえなび／ぽえとれ」を毎回選択する")
         startup_config = self.current_config.get("startup")
         if not isinstance(startup_config, dict):
             startup_config = {}
-        self.show_mode_selector_cb.setChecked(
-            bool(startup_config.get("show_mode_selector", True))
-        )
-        self.show_mode_selector_cb.setStyleSheet(checkbox_style)
-        startup_layout.addWidget(self.show_mode_selector_cb)
-        startup_note = QLabel("OFFにすると、次回から前回選んだモードで直接起動します。")
-        startup_note.setObjectName("startupModeSelectorNote")
-        startup_note.setStyleSheet("color: #aaaaaa; font-size: 11px;")
-        startup_note.setWordWrap(True)
-        startup_layout.addWidget(startup_note)
-        preferred_mode_row = QHBoxLayout()
-        preferred_mode_label = QLabel("次回起動するモード:")
-        preferred_mode_label.setStyleSheet(
-            f"color: {Styles.TEXT_COLOR}; font-size: 12px;"
-        )
-        preferred_mode_row.addWidget(preferred_mode_label)
-        self.preferred_mode_combo = QComboBox()
-        self.preferred_mode_combo.addItem("ぽえなび", POENAVI_MODE)
-        self.preferred_mode_combo.addItem("ぽえとれ", POETORE_MODE)
         preferred_mode = normalize_app_mode(
             startup_config.get("preferred_mode", POENAVI_MODE)
         )
-        preferred_index = self.preferred_mode_combo.findData(preferred_mode)
-        self.preferred_mode_combo.setCurrentIndex(max(0, preferred_index))
-        preferred_mode_row.addWidget(self.preferred_mode_combo, 1)
-        startup_layout.addLayout(preferred_mode_row)
+        self.app_mode_group = QButtonGroup(self)
+        self.app_mode_radios = {}
+        for mode, label in (
+            (POENAVI_MODE, "ぽえなび"),
+            (POETORE_MODE, "ぽえとれ"),
+        ):
+            radio = QRadioButton(label)
+            radio.setChecked(mode == preferred_mode)
+            radio.setStyleSheet(radio_style)
+            startup_layout.addWidget(radio)
+            self.app_mode_group.addButton(radio)
+            self.app_mode_radios[mode] = radio
+
+        startup_mode_row = QHBoxLayout()
+        startup_mode_label = QLabel("起動時:")
+        startup_mode_label.setStyleSheet(
+            f"color: {Styles.TEXT_COLOR}; font-size: 12px;"
+        )
+        startup_mode_row.addWidget(startup_mode_label)
+        self.app_mode_startup_combo = QComboBox()
+        self.app_mode_startup_combo.addItem("毎回確認", "ask")
+        self.app_mode_startup_combo.addItem("ぽえなび固定", POENAVI_MODE)
+        self.app_mode_startup_combo.addItem("ぽえとれ固定", POETORE_MODE)
+        self.app_mode_startup_combo.setFixedWidth(140)
+        self.app_mode_startup_combo.setStyleSheet(combo_style)
+        startup_mode = (
+            "ask"
+            if bool(startup_config.get("show_mode_selector", True))
+            else preferred_mode
+        )
+        startup_mode_index = self.app_mode_startup_combo.findData(startup_mode)
+        self.app_mode_startup_combo.setCurrentIndex(max(0, startup_mode_index))
+        startup_mode_row.addWidget(self.app_mode_startup_combo)
+        startup_mode_row.addStretch()
+        startup_layout.addLayout(startup_mode_row)
         general_layout.addWidget(startup_group)
         
         # ━━━━━ 2. ホットキー ━━━━━
@@ -3159,9 +3170,17 @@ class SettingsDialog(QDialog):
         mini_navi_overlay_config["fade_enabled"] = self.mini_navi_fade_enabled_cb.isChecked()
         startup_config = self.current_config.get("startup")
         startup_config = dict(startup_config) if isinstance(startup_config, dict) else {}
-        startup_config["show_mode_selector"] = self.show_mode_selector_cb.isChecked()
+        selected_app_mode = next(
+            (
+                mode for mode, radio in self.app_mode_radios.items()
+                if radio.isChecked()
+            ),
+            POENAVI_MODE,
+        )
+        startup_mode = self.app_mode_startup_combo.currentData()
+        startup_config["show_mode_selector"] = startup_mode == "ask"
         startup_config["preferred_mode"] = normalize_app_mode(
-            self.preferred_mode_combo.currentData()
+            selected_app_mode if startup_mode == "ask" else startup_mode
         )
 
         return {

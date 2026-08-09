@@ -9,7 +9,7 @@ def qapp():
     return QApplication.instance() or QApplication([])
 
 
-def test_settings_can_restore_mode_selector_without_changing_preferred_mode(monkeypatch, qapp):
+def test_settings_app_mode_uses_same_radio_and_startup_combo_structure(monkeypatch, qapp):
     monkeypatch.setattr("src.ui.settings_dialog.save_zone_master_data", lambda *_args: None)
     dialog = SettingsDialog(current_config={
         "startup": {
@@ -18,11 +18,11 @@ def test_settings_can_restore_mode_selector_without_changing_preferred_mode(monk
         }
     })
 
-    assert not dialog.show_mode_selector_cb.isChecked()
-    assert dialog.preferred_mode_combo.currentData() == "poetore"
-    dialog.show_mode_selector_cb.setChecked(True)
-    dialog.preferred_mode_combo.setCurrentIndex(
-        dialog.preferred_mode_combo.findData("poenavi")
+    assert dialog.app_mode_radios["poetore"].isChecked()
+    assert dialog.app_mode_startup_combo.currentData() == "poetore"
+    dialog.app_mode_radios["poenavi"].setChecked(True)
+    dialog.app_mode_startup_combo.setCurrentIndex(
+        dialog.app_mode_startup_combo.findData("ask")
     )
     settings = dialog.get_settings()
 
@@ -68,16 +68,34 @@ def test_poe_version_group_is_above_startup_mode_group(qapp):
     dialog.close()
 
 
-def test_startup_mode_note_is_directly_below_selector_checkbox(qapp):
+def test_startup_mode_controls_match_poe_version_control_structure(qapp):
     dialog = SettingsDialog(current_config={})
-    note = dialog.findChild(QLabel, "startupModeSelectorNote")
-    layout = dialog.show_mode_selector_cb.parentWidget().layout()
+    assert [radio.text() for radio in dialog.app_mode_radios.values()] == [
+        "ぽえなび", "ぽえとれ"
+    ]
+    assert [
+        dialog.app_mode_startup_combo.itemData(index)
+        for index in range(dialog.app_mode_startup_combo.count())
+    ] == ["ask", "poenavi", "poetore"]
+    assert [
+        dialog.app_mode_startup_combo.itemText(index)
+        for index in range(dialog.app_mode_startup_combo.count())
+    ] == ["毎回確認", "ぽえなび固定", "ぽえとれ固定"]
+    dialog.close()
 
-    checkbox_index = layout.indexOf(dialog.show_mode_selector_cb)
-    note_index = layout.indexOf(note)
 
-    assert checkbox_index >= 0
-    assert note_index == checkbox_index + 1
+def test_fixed_startup_mode_selects_the_fixed_app(qapp):
+    dialog = SettingsDialog(current_config={
+        "startup": {"preferred_mode": "poenavi", "show_mode_selector": True}
+    })
+    dialog.app_mode_startup_combo.setCurrentIndex(
+        dialog.app_mode_startup_combo.findData("poetore")
+    )
+
+    assert dialog.get_settings()["startup"] == {
+        "preferred_mode": "poetore",
+        "show_mode_selector": False,
+    }
     dialog.close()
 
 

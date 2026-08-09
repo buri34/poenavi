@@ -99,30 +99,32 @@ class PoetoreSettingsDialog(QDialog):
         startup = startup if isinstance(startup, dict) else {}
         startup_group = QGroupBox("起動モード")
         startup_layout = QVBoxLayout(startup_group)
-        self.show_mode_selector_cb = QCheckBox(
-            "起動時に「ぽえなび／ぽえとれ」を毎回選択する"
-        )
-        self.show_mode_selector_cb.setChecked(
-            bool(startup.get("show_mode_selector", True))
-        )
-        startup_layout.addWidget(self.show_mode_selector_cb)
-        startup_note = QLabel(
-            "OFFにすると、次回から前回選んだモードで直接起動します。"
-        )
-        startup_note.setObjectName("startupModeSelectorNote")
-        startup_note.setWordWrap(True)
-        startup_layout.addWidget(startup_note)
-        startup_row = QFormLayout()
-        self.preferred_mode_combo = QComboBox()
-        self.preferred_mode_combo.addItem("ぽえなび", POENAVI_MODE)
-        self.preferred_mode_combo.addItem("ぽえとれ", POETORE_MODE)
         preferred = normalize_app_mode(
             startup.get("preferred_mode", POETORE_MODE)
         )
-        self.preferred_mode_combo.setCurrentIndex(
-            self.preferred_mode_combo.findData(preferred)
+        self.app_mode_group = QButtonGroup(self)
+        self.app_mode_radios = {}
+        for mode, label in (
+            (POENAVI_MODE, "ぽえなび"),
+            (POETORE_MODE, "ぽえとれ"),
+        ):
+            radio = QRadioButton(label)
+            radio.setChecked(mode == preferred)
+            self.app_mode_group.addButton(radio)
+            self.app_mode_radios[mode] = radio
+            startup_layout.addWidget(radio)
+        startup_row = QFormLayout()
+        self.app_mode_startup_combo = QComboBox()
+        self.app_mode_startup_combo.addItem("毎回確認", "ask")
+        self.app_mode_startup_combo.addItem("ぽえなび固定", POENAVI_MODE)
+        self.app_mode_startup_combo.addItem("ぽえとれ固定", POETORE_MODE)
+        startup_mode = (
+            "ask" if bool(startup.get("show_mode_selector", True)) else preferred
         )
-        startup_row.addRow("次回起動するモード:", self.preferred_mode_combo)
+        self.app_mode_startup_combo.setCurrentIndex(
+            max(0, self.app_mode_startup_combo.findData(startup_mode))
+        )
+        startup_row.addRow("起動時:", self.app_mode_startup_combo)
         startup_layout.addLayout(startup_row)
         basic_layout.addWidget(startup_group)
 
@@ -347,10 +349,6 @@ class PoetoreSettingsDialog(QDialog):
             }}
             QPushButton:hover {{ background: #382440; }}
             QLabel#settingsNote {{ color: {POETORE_THEME.muted_text}; font-size: 11px; }}
-            QLabel#startupModeSelectorNote {{
-                color: {POETORE_THEME.muted_text};
-                font-size: 11px;
-            }}
             QLabel#privateLeagueNote {{
                 color: {POETORE_THEME.muted_text};
                 font-size: 11px;
@@ -434,9 +432,17 @@ class PoetoreSettingsDialog(QDialog):
 
     def get_settings(self):
         startup = dict(self.current_config.get("startup", {}))
-        startup["show_mode_selector"] = self.show_mode_selector_cb.isChecked()
+        selected_app_mode = next(
+            (
+                mode for mode, radio in self.app_mode_radios.items()
+                if radio.isChecked()
+            ),
+            POETORE_MODE,
+        )
+        startup_mode = self.app_mode_startup_combo.currentData()
+        startup["show_mode_selector"] = startup_mode == "ask"
         startup["preferred_mode"] = normalize_app_mode(
-            self.preferred_mode_combo.currentData()
+            selected_app_mode if startup_mode == "ask" else startup_mode
         )
         hotkeys = dict(self.current_config.get("hotkeys", {}))
         hotkeys.update(
