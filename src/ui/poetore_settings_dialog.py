@@ -4,6 +4,7 @@ import threading
 
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QCheckBox,
     QComboBox,
     QDialog,
@@ -15,6 +16,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QRadioButton,
     QScrollArea,
     QSlider,
     QTabWidget,
@@ -33,7 +35,7 @@ from src.poetore.trade import (
 from src.utils.global_hotkeys import find_duplicate_hotkeys
 from src.ui.custom_command_settings import CustomCommandSettingsWidget
 from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
-from src.utils.poe_version_data import POE1, POE2
+from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_poe_label
 
 
 class _LeagueSignals(QObject):
@@ -98,6 +100,31 @@ class PoetoreSettingsDialog(QDialog):
         startup_row.addRow("次回起動するモード:", self.preferred_mode_combo)
         startup_layout.addLayout(startup_row)
         basic_layout.addWidget(startup_group)
+
+        poe_group = QGroupBox("PoEバージョン")
+        poe_layout = QVBoxLayout(poe_group)
+        self.poe_version_group = QButtonGroup(self)
+        self.poe_version_radios = {}
+        for version in POE_VERSION_ORDER:
+            radio = QRadioButton(get_poe_label(version))
+            radio.setChecked(version == self.poe_version)
+            self.poe_version_group.addButton(radio)
+            self.poe_version_radios[version] = radio
+            poe_layout.addWidget(radio)
+        version_mode_row = QFormLayout()
+        self.poe_version_mode_combo = QComboBox()
+        self.poe_version_mode_combo.addItem("毎回確認", "ask")
+        self.poe_version_mode_combo.addItem("PoE1固定", POE1)
+        self.poe_version_mode_combo.addItem("PoE2固定", POE2)
+        saved_version_mode = str(self.current_config.get("poe_version_mode", "ask"))
+        version_mode_index = self.poe_version_mode_combo.findData(saved_version_mode)
+        self.poe_version_mode_combo.setCurrentIndex(max(0, version_mode_index))
+        version_mode_row.addRow("起動時:", self.poe_version_mode_combo)
+        poe_layout.addLayout(version_mode_row)
+        poe_note = QLabel("変更内容は次回起動時から適用されます。")
+        poe_note.setObjectName("poeVersionNote")
+        poe_layout.addWidget(poe_note)
+        basic_layout.addWidget(poe_group)
 
         hotkeys = self.current_config.get("hotkeys")
         hotkeys = hotkeys if isinstance(hotkeys, dict) else {}
@@ -428,11 +455,20 @@ class PoetoreSettingsDialog(QDialog):
         poetore["result_font_size"] = (
             self.result_font_size_combo.currentData() or "medium"
         )
+        selected_poe_version = next(
+            (
+                version for version, radio in self.poe_version_radios.items()
+                if radio.isChecked()
+            ),
+            self.poe_version,
+        )
         return {
             "startup": startup,
             "hotkeys": hotkeys,
             "custom_commands": self.custom_commands_widget.commands(),
             "poetore": poetore,
+            "poe_version": selected_poe_version,
+            "poe_version_mode": self.poe_version_mode_combo.currentData(),
             "window_opacity": self.opacity_slider.value(),
             "text_opacity": self.text_opacity_slider.value(),
             "window_locked": self.window_lock_check.isChecked(),

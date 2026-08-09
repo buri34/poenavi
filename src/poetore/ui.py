@@ -2390,10 +2390,6 @@ class PoetoreWindow(QWidget):
         return text
 
     def _queue_poe_ninja_price(self, item):
-        if self.poe_version == POE2:
-            self._hide_poe_ninja_price(None)
-            self._hide_related_items(None)
-            return
         league = self._selected_trade_league()
         key = (
             item.raw_text, league, str(self._trade_item_name or ""),
@@ -2405,7 +2401,8 @@ class PoetoreWindow(QWidget):
         trace = self._current_performance_trace
         self._hide_poe_ninja_price(key)
         self._hide_related_items(key)
-        self._queue_divine_rate(league)
+        if self.poe_version != POE2:
+            self._queue_divine_rate(league)
         if trace is not None:
             self._poe_ninja_performance_traces[key] = trace
             trace.mark("poe_ninja_queued", league=league)
@@ -2416,12 +2413,20 @@ class PoetoreWindow(QWidget):
             if trace is not None:
                 trace.mark("poe_ninja_lookup_started")
             try:
-                result = default_poe_ninja_service.lookup(
-                    item, league,
-                    trade_name=self._trade_item_name,
-                    trade_base_type=self._trade_base_type,
-                )
-                related = self._lookup_related_items(item, league, result)
+                if self.poe_version == POE2:
+                    result = default_poe_ninja_service.lookup_poe2_unique(
+                        item, league,
+                        trade_name=self._trade_item_name,
+                        trade_base_type=self._trade_base_type,
+                    )
+                    related = ()
+                else:
+                    result = default_poe_ninja_service.lookup(
+                        item, league,
+                        trade_name=self._trade_item_name,
+                        trade_base_type=self._trade_base_type,
+                    )
+                    related = self._lookup_related_items(item, league, result)
             except Exception:
                 if trace is not None:
                     trace.mark("poe_ninja_lookup_failed")

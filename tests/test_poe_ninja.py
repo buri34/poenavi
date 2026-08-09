@@ -4,6 +4,7 @@ from src.poetore.poe_ninja import (
     CACHE_TTL_SECONDS, PoeNinjaPrice, PoeNinjaPriceService, divine_chaos_rate,
     match_poe_ninja_price,
     match_poe_ninja_identity,
+    match_poe2_unique_price,
 )
 from src.poetore.trade import english_trade_identity
 
@@ -336,3 +337,52 @@ def test_service_refreshes_item_price_and_trend_from_current_stash_overview():
     assert price.graph_points() == (0, 0, 0, 0, 0, 0, -20)
     assert price.trend_summary() == ("↘", "-20%")
     assert stash_calls == [("Standard", "UniqueAccessory")]
+
+
+def _poe2_unique_payload():
+    return {
+        "core": {
+            "items": [{"id": "divine", "name": "Divine Orb"}],
+            "rates": {"chaos": 7.73},
+            "primary": "divine",
+            "secondary": "chaos",
+        },
+        "lines": [{
+            "name": "Mageblood",
+            "baseType": "Utility Belt",
+            "detailsId": "mageblood-utility-belt",
+            "primaryValue": 350.0,
+            "listingCount": 5993,
+            "corrupted": False,
+            "sparkLine": {"totalChange": -7.89, "data": [0, None, -2.63, None, -7.89]},
+        }],
+    }
+
+
+def test_poe2_unique_overview_matches_name_base_and_divine_value():
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
+    price = match_poe2_unique_price(
+        _poe2_unique_payload(), item, "Runes of Aldur",
+        trade_name="Mageblood", trade_base_type="Utility Belt",
+    )
+    assert price is not None
+    assert price.display_price() == "350 div"
+    assert price.trend_summary() == ("↘", "-8%")
+    assert price.url == (
+        "https://poe.ninja/poe2/economy/runesofaldur/"
+        "unique-accessories/mageblood-utility-belt"
+    )
+
+
+def test_poe2_unique_service_uses_plural_overview_type_and_cache():
+    calls = []
+
+    def poe2_fetcher(league, type_name):
+        calls.append((league, type_name))
+        return _poe2_unique_payload()
+
+    service = PoeNinjaPriceService(poe2_fetcher=poe2_fetcher)
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
+    assert service.lookup_poe2_unique(item, "Runes of Aldur") is not None
+    assert service.lookup_poe2_unique(item, "Runes of Aldur") is not None
+    assert calls == [("Runes of Aldur", "UniqueAccessories")]

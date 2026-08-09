@@ -158,6 +158,26 @@ def test_poe2_league_selection_uses_same_ui_but_separate_setting():
     dialog.close()
 
 
+def test_poetore_settings_saves_same_poe_version_controls_as_poenavi():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "poe_version": "poe1",
+        "poe_version_mode": "ask",
+    })
+
+    assert dialog.poe_version_radios["poe1"].isChecked()
+    assert dialog.poe_version_mode_combo.currentData() == "ask"
+    dialog.poe_version_radios["poe2"].setChecked(True)
+    dialog.poe_version_mode_combo.setCurrentIndex(
+        dialog.poe_version_mode_combo.findData("poe2")
+    )
+
+    settings = dialog.get_settings()
+    assert settings["poe_version"] == "poe2"
+    assert settings["poe_version_mode"] == "poe2"
+    dialog.close()
+
+
 def test_poetore_settings_saves_result_font_size():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(

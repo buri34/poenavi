@@ -15,6 +15,7 @@ from .models import ParsedItem
 
 API_URL = "https://poe.ninja/poe1/api/economy/current/dense/overviews"
 STASH_OVERVIEW_URL = "https://poe.ninja/poe1/api/economy/stash/current/item/overview"
+POE2_STASH_OVERVIEW_URL = "https://poe.ninja/poe2/api/economy/stash/current/item/overview"
 CACHE_TTL_SECONDS = 31 * 60
 
 _UNIQUE_TYPES = {
@@ -97,6 +98,16 @@ def _default_stash_fetcher(league: str, type_name: str) -> dict:
         return json.load(response)
 
 
+def _default_poe2_fetcher(league: str, type_name: str) -> dict:
+    url = (
+        f"{POE2_STASH_OVERVIEW_URL}?league={quote(league, safe='')}"
+        f"&type={quote(type_name, safe='')}"
+    )
+    request = Request(url, headers={"User-Agent": "PoENavi/poetore"})
+    with urlopen(request, timeout=30) as response:
+        return json.load(response)
+
+
 def _slug(value: str) -> str:
     normalized = unicodedata.normalize("NFKD", value)
     normalized = re.sub(r"[^a-zA-Z0-9:\- ]", "", normalized).lower()
@@ -146,18 +157,45 @@ class PoeNinjaPriceService:
         fetcher: Callable[[str], dict] = _default_fetcher,
         stash_fetcher: Callable[[str, str], dict] = _default_stash_fetcher,
         clock: Callable[[], float] = time.monotonic,
+        poe2_fetcher: Callable[[str, str], dict] = _default_poe2_fetcher,
     ):
         self._fetcher = fetcher
         self._stash_fetcher = stash_fetcher
+        self._poe2_fetcher = poe2_fetcher
         self._clock = clock
         self._cache: dict[str, tuple[float, dict]] = {}
         self._stash_cache: dict[tuple[str, str], tuple[float, dict]] = {}
+        self._poe2_cache: dict[tuple[str, str], tuple[float, dict]] = {}
         self._lock = threading.Lock()
 
     def clear(self):
         with self._lock:
             self._cache.clear()
             self._stash_cache.clear()
+            self._poe2_cache.clear()
+
+    def lookup_poe2_unique(
+        self,
+        item: ParsedItem,
+        league: str,
+        *,
+        trade_name: str | None = None,
+        trade_base_type: str | None = None,
+    ) -> PoeNinjaPrice | None:
+        if not league or re.search(r"\(PL\d+\)$", league):
+            return None
+        type_name = _poe2_unique_overview_type(item.category)
+        if type_name is None or item.rarity.casefold() not in {"unique", "ユニーク"}:
+            return None
+        payload = self._poe2_payload(league, type_name)
+        return match_poe2_unique_price(
+            payload,
+            item,
+            league,
+            trade_name=trade_name,
+            trade_base_type=trade_base_type,
+            source_type=type_name,
+        )
 
     def lookup(
         self,
@@ -237,6 +275,19 @@ class PoeNinjaPriceService:
             if not isinstance(payload, dict):
                 raise ValueError("poe.ninjaの現行価格応答を認識できませんでした。")
             self._stash_cache[key] = (now, payload)
+            return payload
+
+    def _poe2_payload(self, league: str, type_name: str) -> dict:
+        key = (league, type_name)
+        with self._lock:
+            cached = self._poe2_cache.get(key)
+            now = self._clock()
+            if cached and now - cached[0] < CACHE_TTL_SECONDS:
+                return cached[1]
+            payload = self._poe2_fetcher(league, type_name)
+            if not isinstance(payload, dict):
+                raise ValueError("poe.ninja PoE2の応答形式を認識できませんでした。")
+            self._poe2_cache[key] = (now, payload)
             return payload
 
 
@@ -499,6 +550,74 @@ def _match_poe_ninja_identity_overviews(
         and line["sparkLine"].get("totalChange") is not None else None,
         type_name,
     )
+
+
+def _poe2_unique_overview_type(category: str) -> str | None:
+    if category in {"ring", "amulet", "belt"}:
+        return "UniqueAccessories"
+    if category in {
+        "bow", "crossbow", "spear", "flail", "staff", "quarterstaff", "wand",
+        "sceptre", "one_mace", "two_mace", "one_sword", "two_sword", "one_axe",
+        "two_axe", "dagger",
+    }:
+        return "UniqueWeapons"
+    if category in {
+        "focus", "buckler", "shield", "body_armour", "helmet", "gloves", "boots",
+        "quiver",
+    }:
+        return "UniqueArmours"
+    return None
+
+
+def match_poe2_unique_price(
+    payload: dict,
+    item: ParsedItem,
+    league: str,
+    *,
+    trade_name: str | None = None,
+    trade_base_type: str | None = None,
+    source_type: str = "UniqueAccessories",
+) -> PoeNinjaPrice | None:
+    name = str(trade_name or item.name or "").strip()
+    base_type = str(trade_base_type or item.base_type or "").strip()
+    matches = [
+        row for row in payload.get("lines", ())
+        if str(row.get("name", "")).casefold() == name.casefold()
+        and (not base_type or str(row.get("baseType", "")).casefold() == base_type.casefold())
+        and not bool(row.get("corrupted"))
+    ]
+    if len(matches) != 1:
+        return None
+    line = matches[0]
+    primary = float(line.get("primaryValue", 0))
+    core = payload.get("core") or {}
+    if primary <= 0 or core.get("primary") != "divine":
+        return None
+    chaos_rate = float((core.get("rates") or {}).get("chaos", 0))
+    if chaos_rate <= 0:
+        return None
+    sparkline = line.get("sparkLine") or {}
+    details_id = str(line.get("detailsId", ""))
+    return PoeNinjaPrice(
+        str(line.get("name", "")),
+        str(line["variant"]) if line.get("variant") else None,
+        primary * chaos_rate,
+        tuple(sparkline.get("data", ())),
+        f"https://poe.ninja/poe2/economy/{_league_slug(league)}/"
+        f"{_poe2_overview_slug(source_type)}/{details_id}",
+        chaos_rate,
+        float(sparkline["totalChange"])
+        if sparkline.get("totalChange") is not None else None,
+        source_type,
+    )
+
+
+def _poe2_overview_slug(type_name: str) -> str:
+    return {
+        "UniqueAccessories": "unique-accessories",
+        "UniqueWeapons": "unique-weapons",
+        "UniqueArmours": "unique-armours",
+    }[type_name]
 
 
 default_poe_ninja_service = PoeNinjaPriceService()

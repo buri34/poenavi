@@ -85,6 +85,19 @@ PoE2装備の品質は20でも共通品質チップへ表示する。通常品�
 品質チップへ一本化した。Runes of AldurでSoaring Spear＋物理フラット平均32以上を
 実検索し、HTTP 200、3,177件を確認した。
 
+### poe.ninja PoE2 Unique参考価格
+
+PoE2 EconomyのUniqueカテゴリ画面は、公開画面用の内部API
+`/poe2/api/economy/stash/current/item/overview`を使用する。カテゴリ型はPoE1の
+`UniqueAccessory`ではなく`UniqueAccessories`、同様に`UniqueWeapons`、
+`UniqueArmours`の複数形。これは公式に安定性が保証されたAPIではないため、31分キャッシュし、
+取得失敗時は参考価格欄だけを非表示にしてTrade2検索を継続する。
+
+2026-08-09 JST、Runes of Aldurの実APIでMageblood 350 Divine、The Taming
+3.91 Divineを確認した。Unique名とbaseTypeの両方を完全一致させ、corrupted集計は通常品と
+混ぜない。ぽえとれ設定画面にも、ぽえなびと同じ`poe_version`と
+`poe_version_mode`（毎回確認／PoE1固定／PoE2固定）を追加する。
+
 ## 公式API検証記録
 
 2026-08-09 JST、リーグ`Runes of Aldur`へ以下を送信した。
