@@ -1309,6 +1309,35 @@ def test_poetore_league_choices_include_sc_hc_and_persist(qapp):
         window.close()
 
 
+def test_poe2_window_starts_with_four_leagues_and_reported_mageblood_is_resolved(qapp):
+    config = {"poe_version": "poe2", "poetore": {"league_poe2": "auto"}}
+    window = PoetoreWindow(app_config=config)
+    try:
+        assert window.trade_league_combo.itemText(0) == "自動（現行SC: Runes of Aldur）"
+        assert [
+            window.trade_league_combo.itemData(index)
+            for index in range(window.trade_league_combo.count())
+        ] == ["auto", "Runes of Aldur", "HC Runes of Aldur", "Standard", "Hardcore"]
+
+        text = (Path(__file__).parent / "fixtures" / "poe2" / "mageblood_ja.txt").read_text(
+            encoding="utf-8"
+        )
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+
+        assert window._parsed_item.name == "Mageblood"
+        assert window.mod_filter_tree.topLevelItemCount() == 7
+        assert window.mod_warning.isHidden()
+        selected = window._selected_stat_filters()
+        assert len(selected) == 7
+        assert [row.stat_id for row in selected if "264262054" in row.stat_id] == [
+            "explicit.stat_264262054|3", "explicit.stat_264262054|11",
+            "explicit.stat_264262054|4", "explicit.stat_264262054|8",
+        ]
+    finally:
+        window.close()
+
+
 def test_poetore_search_range_is_persisted(qapp):
     config = {"poetore": {"search_stat_range": 20}}
     saved = Mock()

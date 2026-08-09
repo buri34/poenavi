@@ -63,3 +63,17 @@ def test_poe2_leagues_are_filtered_and_auto_selects_current_softcore(monkeypatch
     assert [row.id for row in leagues] == ["Runes of Aldur", "HC Runes of Aldur", "Standard"]
     assert leagues[1].hardcore
     assert default_pc_league(leagues) == "Runes of Aldur"
+
+
+def test_mageblood_option_stats_use_trade2_pipe_suffix_ids():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "mageblood_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    payload = build_search_query(parse_item_text(text))
+    filters = payload["query"]["stats"][0]["filters"]
+    legacy = [row for row in filters if row["id"].startswith("explicit.stat_264262054|")]
+    assert [row["id"] for row in legacy] == [
+        "explicit.stat_264262054|3", "explicit.stat_264262054|11",
+        "explicit.stat_264262054|4", "explicit.stat_264262054|8",
+    ]
+    assert all("value" not in row for row in legacy)

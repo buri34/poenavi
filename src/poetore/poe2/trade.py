@@ -17,6 +17,12 @@ from .parser import TRADE_CATEGORY_BY_CATEGORY
 API_ROOT = "https://www.pathofexile.com/api/trade2"
 USER_AGENT = "PoENavi/poetore-poe2-development (github.com/buri34/poenavi)"
 LEAGUES_URL = f"{API_ROOT}/data/leagues"
+FALLBACK_LEAGUES = (
+    TradeLeague("Runes of Aldur"),
+    TradeLeague("HC Runes of Aldur", True),
+    TradeLeague("Standard"),
+    TradeLeague("Hardcore", True),
+)
 
 
 def available_pc_leagues() -> tuple[TradeLeague, ...]:

@@ -50,6 +50,17 @@ Charm／Tablet／Relic、Sanctified／Desecrated／Runeforged、Pseudo Stat、DP
 品質20%換算、PoE2固有Unique例外は今回の対象外として残す。解析できない数値Modは
 黙って捨てず、画面の未解決警告へ残す。
 
+### 初回実機報告の修正
+
+日本語Mageblood詳細コピーを固定fixtureへ追加。全角コロンの装備条件、`{ 暗黙モッド }`／
+`{ ユニークモッド }`見出し、`2(1-3)`のroll範囲、4種類のMage's Legacy option、
+`43(25-50)%`の可変値を解析し、検索可能な7 Modを全件解決する。
+
+PoE2リーグは画面生成時点でRunes of Aldur／HC Runes of Aldur／Standard／Hardcoreを
+表示し、ライブ更新に失敗しても同じ候補を維持する。Trade2のoption StatはPoE1と異なり、
+`stat_id|option`をIDとして送る。公式Runes of Aldurの`any`検索でMagebloodの全7条件が
+12件となることを確認した。
+
 ## 公式API検証記録
 
 2026-08-09 JST、リーグ`Runes of Aldur`へ以下を送信した。

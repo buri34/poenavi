@@ -86,6 +86,13 @@ _PROPERTY_LABELS = {
     "Physical Damage", "物理ダメージ", "Elemental Damage", "元素ダメージ",
     "Attacks per Second", "秒間アタック回数", "Critical Hit Chance", "クリティカルヒット率",
     "Reload Time", "リロード時間", "Requires", "要求値", "Sockets", "ソケット",
+    "Requirements", "装備条件",
+}
+_MOD_HEADER_KIND = {
+    "暗黙モッド": "implicit",
+    "ユニークモッド": "explicit",
+    "Implicit Modifiers": "implicit",
+    "Unique Modifiers": "explicit",
 }
 
 
@@ -138,8 +145,16 @@ def parse_item_text(text: str) -> ParsedItem:
     item_level = None
     properties = {}
     modifiers = []
+    current_kind = None
     for line in text.splitlines():
-        line = line.strip()
+        line = line.strip().replace("：", ":")
+        if line.startswith("{") and line.endswith("}"):
+            heading = line.strip("{} ")
+            current_kind = next(
+                (kind for label, kind in _MOD_HEADER_KIND.items() if heading.startswith(label)),
+                current_kind,
+            )
+            continue
         match = _ITEM_LEVEL.match(line.strip())
         if match:
             item_level = int(match.group(1))
@@ -155,13 +170,14 @@ def parse_item_text(text: str) -> ParsedItem:
             continue
         if any(line.startswith(f"{label}:") for label in _LABELS):
             continue
-        resolved = resolve_stat_line(line)
+        resolved = resolve_stat_line(line, current_kind)
         if resolved is not None:
             entry, values = resolved
+            raw_stat_id = str(entry.get("id", ""))
             modifiers.append(ItemModifier(
-                text=line, values=values, kind=str(entry.get("type", "explicit")),
+                text=line, values=values, kind=str(entry.get("type", current_kind or "explicit")),
                 ref=str((entry.get("text") or {}).get("en", line)),
-                stat_id=str(entry.get("id", "")), confidence=1.0,
+                stat_id=raw_stat_id, confidence=1.0,
             ))
         elif re.search(r"\d", line) and not separator:
             # Keep suspicious numeric lines visible to the user instead of silently dropping them.

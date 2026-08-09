@@ -48,12 +48,23 @@ def stat_matchers() -> tuple[tuple[dict, re.Pattern], ...]:
     return tuple(rows)
 
 
-def resolve_stat_line(text: str) -> tuple[dict, tuple[float, ...]] | None:
+def resolve_stat_line(
+    text: str, preferred_type: str | None = None,
+) -> tuple[dict, tuple[float, ...]] | None:
     comparable = re.sub(
         r"\s*\((?:implicit|explicit|enchant|rune|sanctified|desecrated|fractured|crafted)[^)]*\)\s*$",
         "", text.strip(), flags=re.IGNORECASE,
     )
-    for entry, pattern in stat_matchers():
+    comparable = re.sub(r"\((?:[^()]*)-[^()]*\)", "", comparable)
+    comparable = re.sub(r"\s*[—-]\s*スケールできない値\s*$", "", comparable)
+    matchers = stat_matchers()
+    if preferred_type:
+        matchers = tuple(
+            row for row in matchers if row[0].get("type") == preferred_type
+        ) + tuple(
+            row for row in matchers if row[0].get("type") != preferred_type
+        )
+    for entry, pattern in matchers:
         match = pattern.fullmatch(comparable)
         if match:
             return entry, tuple(float(value) for value in match.groups())

@@ -869,11 +869,24 @@ class PoetoreWindow(QWidget):
         self.trade_league_combo.setFixedWidth(290)
         self.trade_league_combo.setMinimumContentsLength(12)
         self.trade_league_combo.setToolTip("一覧から選択、またはPrivate League IDを直接入力")
-        self.trade_league_combo.addItem("自動（現行SCを取得中）", "auto")
         saved_league = self._saved_trade_league()
-        if saved_league != "auto":
+        if self.poe_version == POE2:
+            from .poe2.trade import FALLBACK_LEAGUES, default_pc_league as poe2_default_pc_league
+            self._auto_league = poe2_default_pc_league(FALLBACK_LEAGUES)
+            self.trade_league_combo.addItem(
+                f"自動（現行SC: {self._auto_league}）", "auto"
+            )
+            for league in FALLBACK_LEAGUES:
+                label = f"{league.id}（HC）" if league.hardcore else league.id
+                self.trade_league_combo.addItem(label, league.id)
+        else:
+            self.trade_league_combo.addItem("自動（現行SCを取得中）", "auto")
+        if saved_league != "auto" and self.trade_league_combo.findData(saved_league) < 0:
             self.trade_league_combo.addItem(saved_league, saved_league)
-            self.trade_league_combo.setCurrentIndex(1)
+        if saved_league != "auto":
+            self.trade_league_combo.setCurrentIndex(
+                max(0, self.trade_league_combo.findData(saved_league))
+            )
         self.trade_league_combo.currentIndexChanged.connect(self._persist_trade_league)
         self.trade_league_combo.lineEdit().editingFinished.connect(self._persist_trade_league)
         self._placement_context: PlacementContext | None = None
@@ -2242,8 +2255,12 @@ class PoetoreWindow(QWidget):
                     leagues = poe2_available_pc_leagues()
                 else:
                     leagues = available_pc_leagues()
-            except TradeApiError:
-                leagues = ()
+            except Exception:
+                if self.poe_version == POE2:
+                    from .poe2.trade import FALLBACK_LEAGUES
+                    leagues = FALLBACK_LEAGUES
+                else:
+                    leagues = ()
             self._trade_signals.leagues_ready.emit(leagues)
 
         threading.Thread(target=run, daemon=True).start()

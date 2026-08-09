@@ -52,3 +52,22 @@ def test_rare_properties_and_resolved_mod_are_kept_for_editable_trade_filters():
     assert item.modifiers[0].values == (123.0,)
     assert item.modifiers[1].stat_id is None
     assert item.modifiers[1].text == "999 unrecognised power"
+
+
+def test_reported_japanese_mageblood_resolves_all_searchable_mods():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "mageblood_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+    assert item.name == "Mageblood"
+    assert item.base_type == "Utility Belt"
+    assert item.category == "belt"
+    assert item.properties["装備条件"] == "レベル 55"
+    assert len(item.modifiers) == 7
+    assert all(mod.stat_id for mod in item.modifiers)
+    assert [mod.stat_id for mod in item.modifiers[2:6]] == [
+        "explicit.stat_264262054|3", "explicit.stat_264262054|11",
+        "explicit.stat_264262054|4", "explicit.stat_264262054|8",
+    ]
+    assert item.modifiers[1].values == (2.0,)
+    assert item.modifiers[-1].values == (43.0,)

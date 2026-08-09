@@ -140,12 +140,21 @@ class PoetoreSettingsDialog(QDialog):
         self.league_combo.setToolTip(
             "一覧から選択、またはプライベートリーグ名を直接入力"
         )
-        self.league_combo.addItem("自動（現行SCを取得中）", "auto")
         league_key = "league_poe2" if self.poe_version == POE2 else "league"
         saved_league = str(poetore.get(league_key, "auto")).strip() or "auto"
-        if saved_league != "auto":
+        if self.poe_version == POE2:
+            from src.poetore.poe2.trade import FALLBACK_LEAGUES, default_pc_league as poe2_default_pc_league
+            auto_league = poe2_default_pc_league(FALLBACK_LEAGUES)
+            self.league_combo.addItem(f"自動（現行SC: {auto_league}）", "auto")
+            for league in FALLBACK_LEAGUES:
+                label = f"{league.id}（HC）" if league.hardcore else league.id
+                self.league_combo.addItem(label, league.id)
+        else:
+            self.league_combo.addItem("自動（現行SCを取得中）", "auto")
+        if saved_league != "auto" and self.league_combo.findData(saved_league) < 0:
             self.league_combo.addItem(saved_league, saved_league)
-            self.league_combo.setCurrentIndex(1)
+        if saved_league != "auto":
+            self.league_combo.setCurrentIndex(max(0, self.league_combo.findData(saved_league)))
         trade_form.addRow("リーグ:", self.league_combo)
         trade_layout.addLayout(trade_form)
         league_note = QLabel(
@@ -341,8 +350,12 @@ class PoetoreSettingsDialog(QDialog):
                     leagues = poe2_available_pc_leagues()
                 else:
                     leagues = available_pc_leagues()
-            except TradeApiError:
-                leagues = ()
+            except Exception:
+                if self.poe_version == POE2:
+                    from src.poetore.poe2.trade import FALLBACK_LEAGUES
+                    leagues = FALLBACK_LEAGUES
+                else:
+                    leagues = ()
             self._league_signals.ready.emit(leagues)
 
         threading.Thread(target=run, daemon=True).start()
