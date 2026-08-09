@@ -71,3 +71,19 @@ def test_reported_japanese_mageblood_resolves_all_searchable_mods():
     ]
     assert item.modifiers[1].values == (2.0,)
     assert item.modifiers[-1].values == (43.0,)
+
+
+def test_reported_japanese_rare_gloves_resolve_chaos_and_desecrated_mods():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_gloves_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+    assert item.base_type == "Grand Bracers"
+    assert item.category == "gloves"
+    assert len(item.modifiers) == 7
+    assert all(mod.stat_id for mod in item.modifiers)
+    chaos = next(mod for mod in item.modifiers if mod.text.startswith("混沌耐性"))
+    assert chaos.stat_id == "explicit.stat_2923486259"
+    assert chaos.values == (15.0,)
+    cold = next(mod for mod in item.modifiers if "冷気ダメージ" in mod.text)
+    assert cold.stat_id.startswith("desecrated.")

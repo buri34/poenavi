@@ -31,7 +31,10 @@ def resolve_identity(name: str, namespace: str | None = None) -> dict | None:
 
 def _template_pattern(template: str) -> re.Pattern:
     escaped = re.escape(template)
-    escaped = escaped.replace(r"\#", r"(-?\d+(?:\.\d+)?)")
+    escaped = escaped.replace(r"\#", r"\+?(-?\d+(?:\.\d+)?)")
+    # A template that explicitly contains +# still requires the plus sign;
+    # templates containing only # accept the positive-sign form used by JP copy text.
+    escaped = escaped.replace(r"\+\+?(", r"\+(")
     return re.compile(rf"^{escaped}$", re.IGNORECASE)
 
 

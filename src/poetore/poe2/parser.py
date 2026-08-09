@@ -88,12 +88,25 @@ _PROPERTY_LABELS = {
     "Reload Time", "リロード時間", "Requires", "要求値", "Sockets", "ソケット",
     "Requirements", "装備条件",
 }
-_MOD_HEADER_KIND = {
-    "暗黙モッド": "implicit",
-    "ユニークモッド": "explicit",
-    "Implicit Modifiers": "implicit",
-    "Unique Modifiers": "explicit",
-}
+def _mod_kind_from_heading(heading: str, previous: str | None) -> str | None:
+    lowered = heading.casefold()
+    if "冒涜" in heading or "desecrated" in lowered:
+        return "desecrated"
+    if "破砕" in heading or "fractured" in lowered:
+        return "fractured"
+    if "クラフト" in heading or "crafted" in lowered:
+        return "crafted"
+    if "エンチャント" in heading or "enchant" in lowered:
+        return "enchant"
+    if "ルーン" in heading or "rune" in lowered:
+        return "augment"
+    if "暗黙" in heading or "implicit" in lowered:
+        return "implicit"
+    if any(label in heading for label in ("プレフィックス", "サフィックス", "ユニーク")):
+        return "explicit"
+    if any(label in lowered for label in ("prefix", "suffix", "unique")):
+        return "explicit"
+    return previous
 
 
 def _header(text: str) -> tuple[dict[str, str], list[str]]:
@@ -150,10 +163,7 @@ def parse_item_text(text: str) -> ParsedItem:
         line = line.strip().replace("：", ":")
         if line.startswith("{") and line.endswith("}"):
             heading = line.strip("{} ")
-            current_kind = next(
-                (kind for label, kind in _MOD_HEADER_KIND.items() if heading.startswith(label)),
-                current_kind,
-            )
+            current_kind = _mod_kind_from_heading(heading, current_kind)
             continue
         match = _ITEM_LEVEL.match(line.strip())
         if match:
@@ -170,7 +180,8 @@ def parse_item_text(text: str) -> ParsedItem:
             continue
         if any(line.startswith(f"{label}:") for label in _LABELS):
             continue
-        resolved = resolve_stat_line(line, current_kind)
+        line_kind = "augment" if re.search(r"\(rune\)\s*$", line, re.IGNORECASE) else current_kind
+        resolved = resolve_stat_line(line, line_kind)
         if resolved is not None:
             entry, values = resolved
             raw_stat_id = str(entry.get("id", ""))

@@ -77,3 +77,13 @@ def test_mageblood_option_stats_use_trade2_pipe_suffix_ids():
         "explicit.stat_264262054|4", "explicit.stat_264262054|8",
     ]
     assert all("value" not in row for row in legacy)
+
+
+def test_reported_rare_gloves_send_chaos_resistance_to_trade2():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_gloves_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    payload = build_search_query(parse_item_text(text))
+    filters = payload["query"]["stats"][0]["filters"]
+    chaos = next(row for row in filters if row["id"] == "explicit.stat_2923486259")
+    assert chaos["value"] == {"min": 15.0}

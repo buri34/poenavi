@@ -1338,6 +1338,25 @@ def test_poe2_window_starts_with_four_leagues_and_reported_mageblood_is_resolved
         window.close()
 
 
+def test_reported_poe2_rare_gloves_show_chaos_resistance_without_warning(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_gloves_ja.txt").read_text(
+            encoding="utf-8"
+        )
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+
+        assert window.mod_filter_tree.topLevelItemCount() == 7
+        assert window.mod_warning.isHidden()
+        selected = window._selected_stat_filters()
+        chaos = next(row for row in selected if row.stat_id == "explicit.stat_2923486259")
+        assert chaos.text == "混沌耐性 +15(12-15)%"
+        assert chaos.min_value == 15
+    finally:
+        window.close()
+
+
 def test_poetore_search_range_is_persisted(qapp):
     config = {"poetore": {"search_stat_range": 20}}
     saved = Mock()

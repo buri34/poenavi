@@ -61,6 +61,17 @@ PoE2リーグは画面生成時点でRunes of Aldur／HC Runes of Aldur／Standa
 `stat_id|option`をIDとして送る。公式Runes of Aldurの`any`検索でMagebloodの全7条件が
 12件となることを確認した。
 
+### 2回目の実機報告の修正
+
+日本語Rare手袋の実コピー全文をfixtureへ追加。公式Trade2の日本語Statテンプレートが
+`混沌耐性 #%`である一方、ゲーム内コピーは正の値へ`+15(12-15)%`のように`+`を挿入する。
+テンプレート自体に符号指定がない`#`では、このコピー由来の正符号を許容するようにした。
+混沌耐性は`explicit.stat_2923486259`、min 15として検索クエリへ送る。
+
+同じ全文に含まれる`{ 冒涜 プレフィックスモッド ... }`はdesecrated、行末`(rune)`は
+augmentとして優先解決する。Runes of AldurでGrand Bracers＋混沌耐性15以上を実検索し、
+HTTP 200、2件、fetchした出品のbaseTypeがGrand Bracersであることを確認した。
+
 ## 公式API検証記録
 
 2026-08-09 JST、リーグ`Runes of Aldur`へ以下を送信した。
