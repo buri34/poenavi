@@ -9,10 +9,15 @@ from src.poetore.poe2.parser import Poe2ItemParseError, TRADE_CATEGORY_BY_CATEGO
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
+PHASE6_FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "phase6_special_items_ja.json"
 
 
 def _fixtures():
     return json.loads(FIXTURES.read_text(encoding="utf-8"))["fixtures"]
+
+
+def _phase6_fixtures():
+    return json.loads(PHASE6_FIXTURES.read_text(encoding="utf-8"))["fixtures"]
 
 
 @pytest.mark.parametrize("fixture", _fixtures(), ids=lambda row: row["id"])
@@ -33,6 +38,27 @@ def test_bilingual_pairs_resolve_to_same_trade_identity():
         identity = (item.base_type, item.category, TRADE_CATEGORY_BY_CATEGORY[item.category])
         by_pair.setdefault(fixture["pair"], set()).add(identity)
     assert all(len(values) == 1 for values in by_pair.values())
+
+
+@pytest.mark.parametrize("fixture", _phase6_fixtures(), ids=lambda row: row["id"])
+def test_phase6_special_categories_resolve_to_trade_identity(fixture):
+    item = parse_item_text(fixture["text"])
+    assert item.base_type == fixture["base_type"]
+    assert item.category == fixture["category"]
+    assert TRADE_CATEGORY_BY_CATEGORY[item.category] == fixture["trade_category"]
+    if "name" in fixture:
+        assert item.name == fixture["name"]
+
+
+def test_phase6_relic_trial_and_timelost_properties_are_preserved():
+    fixtures = {row["id"]: parse_item_text(row["text"]) for row in _phase6_fixtures()}
+    relic = fixtures["sanctum_relic"]
+    assert [(mod.kind, mod.stat_id, mod.values) for mod in relic.modifiers] == [
+        ("sanctum", "sanctum.stat_4057192895", (5.0,)),
+    ]
+    assert fixtures["djinn_barya"].properties == {"エリアレベル": "80", "試練数": "3"}
+    assert fixtures["inscribed_ultimatum"].properties["Ultimatum Hint"] == "Deadly"
+    assert fixtures["timelost_jewel"].properties["半径"] == "大"
 
 
 def test_unknown_base_is_not_silently_guessed():

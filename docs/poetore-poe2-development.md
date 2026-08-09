@@ -168,6 +168,36 @@ Tier付きベース名の前へ連結する。末尾の`ウェイストーン (�
 説明文は未解決Mod警告へ入れない。Runes of AldurへTier／復活／Pack Size／Drop Chanceと
 3 Modを送信し、HTTP 200、30件を確認した。
 
+## Phase 6 特殊カテゴリ（2026-08-09）
+
+公式Trade2 snapshotとEE2固定revisionを照合し、次のPoE2カテゴリを専用Tradeカテゴリへ
+分離した。通常・Magic・Rareはベースidentityだけをtypeへ送り、Uniqueはnameとtypeを送る。
+
+- Charm: `flask.charm`
+- Tablet: `map.tablet`
+- Relic: `sanctum.relic`
+- Jewel／Time-Lost Jewel: `jewel`
+- Djinn Barya等: `map.barya`
+- Inscribed Ultimatum／Fate: `map.ultimatum`
+
+Barya／UltimatumではArea Levelを解析して初期ONにする。Trial Countはコピー文面から保持するが、
+現在の公式Trade2には対応する直接filterがないため検索条件へは送らない。Ultimatum Hintは
+`Victorious`／`Cowardly`／`Deadly`へ正規化し、EE2と同様に編集可能な初期OFF条件として表示する。
+
+Time-Lost JewelのRadiusも解析して保持するが、現在の公式Trade2にはRadius専用filterがない。
+Tabletの残り使用回数はpseudo Statであり、高度検索支援のPhaseへ残す。Filled Coffinと
+Mirrored TabletはEE2のPoE1実装には存在する一方、固定したPoE2 Trade2 itemsとidentityには
+存在しないため、PoE2用の推測カテゴリやidentityは作らない。
+
+固定fixtureはEE2の日英identityと公式snapshotから作った合成コピー文面であり、実クライアント
+採取とは区別する。Charm、Tablet、Relic、Barya、Ultimatum、Time-Lost Jewelの実コピー全文を
+入手した際はfixtureを置き換えるか追補し、表示文面の変更を監査する。
+
+2026-08-09 JST、Runes of AldurでMagic Charm、通常Tablet、Djinn Barya、Inscribed Ultimatumを
+検索し、HTTP 200と取得出品のbaseType一致を確認した。Relic検索もHTTP 200で受理されたが、
+確認時点の出品は0件だった。その後Rate Limitへ到達したため、Time-Lost Jewelの追加ライブ
+検索は行わず、固定metadataと最終JSONで検証した。
+
 ## 公式API検証記録
 
 2026-08-09 JST、リーグ`Runes of Aldur`へ以下を送信した。

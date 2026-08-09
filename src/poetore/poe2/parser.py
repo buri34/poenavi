@@ -53,6 +53,12 @@ _CLASS_CATEGORY = {
     "Rings": "ring", "指輪": "ring",
     "Amulets": "amulet", "アミュレット": "amulet",
     "Belts": "belt", "ベルト": "belt",
+    "Charms": "charm", "Charm": "charm", "チャーム": "charm",
+    "Tablets": "tablet", "Tablet": "tablet", "石板": "tablet", "タブレット": "tablet",
+    "Relics": "relic", "Relic": "relic", "レリック": "relic",
+    "Jewels": "jewel", "Jewel": "jewel", "ジュエル": "jewel",
+    "Baryas": "barya", "Barya": "barya", "バリャ": "barya",
+    "Ultimatums": "ultimatum", "Ultimatum": "ultimatum", "アルティメイタム": "ultimatum",
     "Waystones": "waystone", "Waystone": "waystone", "ウェイストーン": "waystone",
     "Runes": "rune", "Rune": "rune", "ルーン": "rune",
     "Soul Cores": "soul_core", "Soul Core": "soul_core", "ソウルコア": "soul_core",
@@ -81,6 +87,12 @@ TRADE_CATEGORY_BY_CATEGORY = {
     "helmet": "armour.helmet", "gloves": "armour.gloves", "boots": "armour.boots",
     "quiver": "armour.quiver", "ring": "accessory.ring", "amulet": "accessory.amulet",
     "belt": "accessory.belt",
+    "charm": "flask.charm",
+    "tablet": "map.tablet",
+    "relic": "sanctum.relic",
+    "jewel": "jewel",
+    "barya": "map.barya",
+    "ultimatum": "map.ultimatum",
     "waystone": "map.waystone",
     "rune": "currency.rune",
     "soul_core": "currency.soulcore",
@@ -122,6 +134,13 @@ _PROPERTY_LABELS = {
     "Magic Monsters", "モンスターエフェクティブ",
     "Rare Monsters", "モンスターレアリティ", "Area Level", "エリアレベル",
     "Unidentified Tier", "未鑑定ティア",
+    "Number of Trials", "試練数", "Radius", "半径",
+}
+
+_ULTIMATUM_HINT_LINES = {
+    "Victorious": "Victorious", "勝利": "Victorious", "勝利の": "Victorious",
+    "Cowardly": "Cowardly", "卑怯者": "Cowardly", "臆病者": "Cowardly", "臆病者の": "Cowardly",
+    "Deadly": "Deadly", "致死": "Deadly", "致命的": "Deadly", "致命的な": "Deadly",
 }
 
 _STATE_LINES = {
@@ -150,6 +169,8 @@ def _mod_kind_from_heading(heading: str, previous: str | None) -> str | None:
         return "augment"
     if "暗黙" in heading or "implicit" in lowered:
         return "implicit"
+    if "レリック" in heading or "sanctum" in lowered or "relic" in lowered:
+        return "sanctum"
     if any(label in heading for label in ("プレフィックス", "サフィックス", "ユニーク")):
         return "explicit"
     if any(label in lowered for label in ("prefix", "suffix", "unique")):
@@ -186,6 +207,14 @@ def _identity_matches_category(identity: dict, category: str | None) -> bool:
         return identity_category == "Map" and "waystone" in ref_name
     if category in {"rune", "soul_core"}:
         return identity_category == "SoulCore"
+    if category == "tablet":
+        return identity_category == "TowerAugment"
+    if category == "relic":
+        return identity_category == "Relic"
+    if category == "charm":
+        return identity_category == "Charm"
+    if category == "jewel":
+        return identity_category == "Jewel"
     return False
 
 
@@ -236,6 +265,20 @@ def parse_item_text(text: str) -> ParsedItem:
     if identity_category == "SoulCore":
         identity_text = f"{raw_base} {base_type}".casefold()
         category = "soul_core" if ("soul core" in identity_text or "ソウルコア" in identity_text) else "rune"
+    elif identity_category == "TowerAugment":
+        category = "tablet"
+    elif identity_category == "Relic":
+        category = "relic"
+    elif identity_category == "Charm":
+        category = "charm"
+    elif identity_category == "Jewel":
+        category = "jewel"
+    elif identity_category in {"MiscMapItem", "MapFragment"}:
+        folded_base = base_type.casefold()
+        if "barya" in folded_base:
+            category = "barya"
+        elif "ultimatum" in folded_base or folded_base.endswith(" fate"):
+            category = "ultimatum"
     if not category:
         raise Poe2ItemParseError(f"PoE2カテゴリ未解決: {item_class} / {base_type}")
 
@@ -267,6 +310,10 @@ def parse_item_text(text: str) -> ParsedItem:
         state = _STATE_LINES.get(line)
         if state:
             flags.add(state)
+            continue
+        ultimatum_hint = _ULTIMATUM_HINT_LINES.get(line)
+        if ultimatum_hint:
+            properties["Ultimatum Hint"] = ultimatum_hint
             continue
         match = _ITEM_LEVEL.match(line.strip())
         if match:

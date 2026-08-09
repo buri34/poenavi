@@ -152,6 +152,8 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
     for stat_id, label, names, kind, enabled in _POE2_PROPERTY_SPECS:
         value = _property_float(item, *names)
         if value is not None:
+            if stat_id == "property.area_level" and item.category in {"barya", "ultimatum"}:
+                enabled = True
             rows.append(TradeStatFilter(
                 stat_id, label, value, kind, enabled=enabled, read_value=value,
                 exact=stat_id == "property.unidentified_tier",
@@ -169,6 +171,15 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                 "property.map_tier", "ウェイストーンティア", tier, "property", True,
                 max_value=tier, read_value=tier, exact=True,
             ))
+    ultimatum_hint = str(item.properties.get("Ultimatum Hint") or "").strip()
+    if item.category == "ultimatum" and ultimatum_hint:
+        rows.append(TradeStatFilter(
+            "property.ultimatum_hint", "アルティメイタムの試練のヒント", None,
+            "property", False, option_value=ultimatum_hint,
+            option_text={
+                "Victorious": "勝利の", "Cowardly": "臆病者の", "Deadly": "致命的な",
+            }.get(ultimatum_hint, ultimatum_hint),
+        ))
     for flag, label in _POE2_STATE_LABELS.items():
         if flag in item.flags:
             rows.append(TradeStatFilter(
@@ -191,6 +202,7 @@ _POE2_FILTER_TARGETS = {
     "property.map_rare_monsters": ("map_filters", "map_rare_monsters"),
     "property.area_level": ("misc_filters", "area_level"),
     "property.unidentified_tier": ("misc_filters", "unidentified_tier"),
+    "property.ultimatum_hint": ("map_filters", "ultimatum_hint"),
 }
 
 
@@ -211,6 +223,11 @@ def _apply_poe2_filter_rows(query: dict, filters) -> None:
         if target is None:
             continue
         group, name = target
+        if row.option_value is not None:
+            query["filters"].setdefault(group, {"filters": {}})["filters"][name] = {
+                "option": row.option_value
+            }
+            continue
         value = {
             **({"min": row.min_value} if row.min_value is not None else {}),
             **({"max": row.max_value} if row.max_value is not None else {}),

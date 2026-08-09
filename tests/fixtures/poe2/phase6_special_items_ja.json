@@ -1,0 +1,15 @@
+{
+  "source": "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8 Japanese identity data and locked 2026-08-09 Trade2 metadata; synthetic copy fixtures, not live-client captures",
+  "fixtures": [
+    {"id":"magic_charm","text":"アイテムクラス: チャーム\nレアリティ: マジック\n帯電した トパーズチャーム\n--------\nアイテムレベル: 80\n","base_type":"Topaz Charm","category":"charm","trade_category":"flask.charm"},
+    {"id":"normal_tablet","text":"アイテムクラス: 石板\nレアリティ: ノーマル\nアビスの石板\n--------\nアイテムレベル: 80\n","base_type":"Abyss Tablet","category":"tablet","trade_category":"map.tablet"},
+    {"id":"sanctum_relic","text":"アイテムクラス: レリック\nレアリティ: ノーマル\n壷のレリック\n--------\nアイテムレベル: 80\n--------\n{ レリックモッド }\n部屋を完了した時に神聖な水を5獲得する\n","base_type":"Urn Relic","category":"relic","trade_category":"sanctum.relic"},
+    {"id":"djinn_barya","text":"アイテムクラス: バリャ\nレアリティ: ノーマル\nジンのバリャ\n--------\nエリアレベル: 80\n試練数: 3\n--------\nアイテムレベル: 80\n","base_type":"Djinn Barya","category":"barya","trade_category":"map.barya"},
+    {"id":"inscribed_ultimatum","text":"アイテムクラス: アルティメイタム\nレアリティ: ノーマル\nアルティメイタムの刻印\n--------\nエリアレベル: 80\n試練数: 10\n致死\n--------\nアイテムレベル: 80\n","base_type":"Inscribed Ultimatum","category":"ultimatum","trade_category":"map.ultimatum"},
+    {"id":"timelost_jewel","text":"アイテムクラス: ジュエル\nレアリティ: マジック\n燃え盛る タイムロストルビー\n--------\n半径: 大\n--------\nアイテムレベル: 80\n","base_type":"Time-Lost Ruby","category":"jewel","trade_category":"jewel"},
+    {"id":"unique_charm","text":"アイテムクラス: チャーム\nレアリティ: ユニーク\nヴァラコの雄叫び\nトパーズチャーム\n--------\nアイテムレベル: 80\n","base_type":"Topaz Charm","category":"charm","trade_category":"flask.charm","name":"Valako's Roar"},
+    {"id":"unique_tablet","text":"アイテムクラス: 石板\nレアリティ: ユニーク\n予期せぬ結果\nアビスの石板\n--------\nアイテムレベル: 80\n","base_type":"Abyss Tablet","category":"tablet","trade_category":"map.tablet","name":"Unforeseen Consequences"},
+    {"id":"unique_relic","text":"アイテムクラス: レリック\nレアリティ: ユニーク\n最後の炎\n香のレリック\n--------\nアイテムレベル: 80\n","base_type":"Incense Relic","category":"relic","trade_category":"sanctum.relic","name":"The Last Flame"},
+    {"id":"unique_timelost_jewel","text":"アイテムクラス: ジュエル\nレアリティ: ユニーク\n闇との対立\nタイムロストダイヤモンド\n--------\n半径: 大\n--------\nアイテムレベル: 80\n","base_type":"Time-Lost Diamond","category":"jewel","trade_category":"jewel","name":"Against the Darkness"}
+  ]
+}

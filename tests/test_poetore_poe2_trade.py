@@ -16,6 +16,7 @@ from src.poetore.trade import TradeStatFilter
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
+PHASE6_FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "phase6_special_items_ja.json"
 
 
 def _unique_fixture():
@@ -290,6 +291,69 @@ def _phase45_rows(item):
         for row in poe2_search_filters(item)
     )
     return modifier_rows + property_rows
+
+
+def _phase6_items():
+    rows = json.loads(PHASE6_FIXTURES.read_text(encoding="utf-8"))["fixtures"]
+    return {row["id"]: (row, parse_item_text(row["text"])) for row in rows}
+
+
+def test_phase6_special_categories_build_exact_trade2_queries():
+    for row, item in _phase6_items().values():
+        payload = build_search_query(item, stat_filters=_phase45_rows(item))
+        assert payload["query"]["type"] == row["base_type"]
+        assert payload["query"]["filters"]["type_filters"]["filters"]["category"] == {
+            "option": row["trade_category"],
+        }
+        if "name" in row:
+            assert payload["query"]["name"] == row["name"]
+
+
+def test_phase6_relic_barya_and_ultimatum_send_dedicated_filters():
+    items = {key: item for key, (_row, item) in _phase6_items().items()}
+
+    relic = build_search_query(items["sanctum_relic"], stat_filters=_phase45_rows(items["sanctum_relic"]))
+    assert relic["query"]["stats"][0]["filters"] == [
+        {"id": "sanctum.stat_4057192895", "value": {"min": 5.0}},
+    ]
+
+    barya_rows = poe2_search_filters(items["djinn_barya"])
+    assert next(row for row in barya_rows if row.stat_id == "property.area_level").enabled
+    barya = build_search_query(items["djinn_barya"], stat_filters=barya_rows)
+    assert barya["query"]["filters"]["misc_filters"]["filters"]["area_level"] == {
+        "min": 80.0,
+    }
+
+    ultimatum_rows = poe2_search_filters(items["inscribed_ultimatum"])
+    hint = next(row for row in ultimatum_rows if row.stat_id == "property.ultimatum_hint")
+    assert not hint.enabled
+    enabled_rows = tuple(
+        row.__class__(**{**row.__dict__, "enabled": True})
+        if row.stat_id == "property.ultimatum_hint" else row
+        for row in ultimatum_rows
+    )
+    ultimatum = build_search_query(items["inscribed_ultimatum"], stat_filters=enabled_rows)
+    assert ultimatum["query"]["filters"]["map_filters"]["filters"]["ultimatum_hint"] == {
+        "option": "Deadly",
+    }
+
+
+def test_phase6_special_items_open_japanese_trade_with_localized_identity():
+    items = {key: item for key, (_row, item) in _phase6_items().items()}
+    expected = {
+        "unique_charm": ("ヴァラコの雄叫び", "トパーズチャーム"),
+        "unique_tablet": ("予期せぬ結果", "アビスの石板"),
+        "unique_relic": ("最後の炎", "香のレリック"),
+        "unique_timelost_jewel": ("闇との対立", "タイムロストダイヤモンド"),
+    }
+    for fixture_id, (name, base_type) in expected.items():
+        item = items[fixture_id]
+        payload = build_search_query(item, stat_filters=poe2_search_filters(item))
+        url = build_web_trade_url(item, "Standard", payload, "english-query-id")
+        assert urlparse(url).netloc == "jp.pathofexile.com"
+        query = _web_payload(url)["query"]
+        assert query["name"] == name
+        assert query["type"] == base_type
 
 
 def test_phase45_equipment_properties_and_states_use_official_filter_groups():
