@@ -12,7 +12,7 @@ from pathlib import Path
 from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRect, QSize, Qt, QTimer, Signal, QUrl
 from PySide6.QtGui import (
     QColor, QCursor, QDesktopServices, QIcon, QIntValidator, QLinearGradient, QPainter,
-    QPalette, QPen, QPixmap, QPolygonF,
+    QKeySequence, QPalette, QPen, QPixmap, QPolygonF,
 )
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide6.QtWidgets import (
@@ -901,6 +901,9 @@ class PoetoreWindow(QWidget):
         self._outside_click_listener = None
         self._passive_hotkey_display = False
         self._capture_auto_hide = False
+        self._capture_hotkey = str(
+            self._app_config.get("hotkeys", {}).get("poetore_capture", "alt+d")
+        )
         self._auto_hide_hotkey_released = False
         self._auto_hide_origin: QPoint | None = None
         self._auto_hide_interactive = False
@@ -2740,6 +2743,13 @@ class PoetoreWindow(QWidget):
         # この時点ではPoEが前面。コピー後にぽえとれがフォーカスを取る前に保存する。
         self._placement_context = capture_placement_context()
         self._capture_auto_hide = auto_hide
+        self._capture_hotkey = str(
+            capture_hotkey
+            or self._app_config.get("hotkeys", {}).get(
+                "poetore_auto_hide" if auto_hide else "poetore_capture",
+                "ctrl+d" if auto_hide else "alt+d",
+            )
+        )
         self._auto_hide_hotkey_released = False
         self._auto_hide_origin = self._placement_context.cursor_pos
         self._auto_hide_interactive = False
@@ -2864,6 +2874,10 @@ class PoetoreWindow(QWidget):
 
     def _build_capture_error_dialog(self) -> QMessageBox:
         """Create a readable error dialog that matches the dark poetore theme."""
+        hotkey = QKeySequence(self._capture_hotkey).toString(
+            QKeySequence.PortableText
+        ) or self._capture_hotkey
+        hotkey = " + ".join(part.strip() for part in hotkey.split("+"))
         message = QMessageBox(self)
         message.setObjectName("poetoreCaptureError")
         message.setIcon(QMessageBox.Icon.Warning)
@@ -2871,7 +2885,7 @@ class PoetoreWindow(QWidget):
             "アイテムを取得できませんでした。\n"
             "PoEがアクティブでない可能性があります。\n"
             "PoEを前面にしてアイテムへカーソルを合わせ、\n"
-            "もう一度 Alt+D を押してください。"
+            f"もう一度 {hotkey} を押してください。"
         )
         message.setStandardButtons(QMessageBox.StandardButton.Ok)
         # QMessageBox may reset an empty application title while configuring its buttons.

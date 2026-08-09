@@ -135,7 +135,7 @@ def test_capture_error_dialog_uses_readable_dark_theme(qapp):
             "アイテムを取得できませんでした。\n"
             "PoEがアクティブでない可能性があります。\n"
             "PoEを前面にしてアイテムへカーソルを合わせ、\n"
-            "もう一度 Alt+D を押してください。"
+            "もう一度 Alt + D を押してください。"
         )
         assert "background-color: #111111" in style
         assert "color: #f2e7f5" in style
@@ -145,6 +145,20 @@ def test_capture_error_dialog_uses_readable_dark_theme(qapp):
         dialog.ensurePolished()
         dialog.adjustSize()
         assert dialog.sizeHint().width() < 450
+    finally:
+        window.close()
+
+
+def test_capture_error_dialog_uses_configured_interactive_hotkey(qapp):
+    window = PoetoreWindow(
+        app_config={"hotkeys": {"poetore_capture": "ctrl+shift+p"}}
+    )
+    try:
+        dialog = window._build_capture_error_dialog()
+
+        assert dialog.text().endswith(
+            "もう一度 Ctrl + Shift + P を押してください。"
+        )
     finally:
         window.close()
 

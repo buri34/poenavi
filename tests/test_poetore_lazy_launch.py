@@ -26,6 +26,7 @@ class PoetoreLazyLaunchTest(unittest.TestCase):
 
     def test_capture_poetore_item_starts_capture(self):
         window = MainWindow.__new__(MainWindow)
+        window.config = {"hotkeys": {"poetore_capture": "ctrl+shift+p"}}
         poetore_window = Mock()
         trace = Mock()
         with patch(
@@ -35,7 +36,9 @@ class PoetoreLazyLaunchTest(unittest.TestCase):
         ) as show_window:
             MainWindow.capture_poetore_item(window)
         show_window.assert_called_once_with(window, activate=False)
-        poetore_window.capture_from_poe.assert_called_once_with(trace)
+        poetore_window.capture_from_poe.assert_called_once_with(
+            trace, capture_hotkey="ctrl+shift+p",
+        )
         self.assertEqual(
             [call.args[0] for call in trace.mark.call_args_list],
             ["hotkey_dispatched", "poetore_window_ready"],

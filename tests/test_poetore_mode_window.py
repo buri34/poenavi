@@ -272,6 +272,27 @@ def test_poetore_mode_capture_hint_uses_configured_hotkey():
     app.processEvents()
 
 
+def test_poetore_mode_passes_configured_interactive_hotkey_to_capture():
+    owner = MagicMock()
+    owner.config = {
+        "poe_version": POE2,
+        "hotkeys": {"poetore_capture": "Ctrl+Shift+P"},
+    }
+    poetore_window = MagicMock()
+    trace = MagicMock()
+
+    with patch(
+        "src.poetore.performance.start_search_trace", return_value=trace,
+    ), patch(
+        "src.poetore.ui.show_poetore_window", return_value=poetore_window,
+    ):
+        PoetoreModeWindow.capture_poetore_item(owner)
+
+    poetore_window.capture_from_poe.assert_called_once_with(
+        trace, capture_hotkey="Ctrl+Shift+P",
+    )
+
+
 def test_poetore_mode_renders_divine_chaos_rate():
     app = QApplication.instance() or QApplication([])
     config = {"hotkeys": {}}

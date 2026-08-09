@@ -4400,7 +4400,10 @@ class MainWindow(QMainWindow):
                 trace, auto_hide=True, capture_hotkey=hotkey,
             )
         else:
-            window.capture_from_poe(trace)
+            hotkey = getattr(self, "config", {}).get("hotkeys", {}).get(
+                "poetore_capture", "alt+d"
+            )
+            window.capture_from_poe(trace, capture_hotkey=hotkey)
 
     def _save_map_check_config(self, map_check_config):
         self.config["map_check"] = dict(map_check_config)
