@@ -1291,7 +1291,7 @@ class PoetoreWindow(QWidget):
         weapon_property_header.addWidget(self.weapon_dps_label)
         weapon_property_header.addStretch(1)
         panel_layout.addLayout(weapon_property_header)
-        self.clear_mod_conditions_button = QPushButton("すべて選択")
+        self.clear_mod_conditions_button = QPushButton("一覧のチェックを全て選択")
         self.clear_mod_conditions_button.setObjectName("clearModConditionsButton")
         self.clear_mod_conditions_button.setToolTip(
             "上の条件一覧のみ。ilvlなどの基本条件は変更しません"
@@ -2015,7 +2015,8 @@ class PoetoreWindow(QWidget):
             for checkbox in self._mod_condition_checkboxes()
         )
         self.clear_mod_conditions_button.setText(
-            "すべて解除" if has_checked_condition else "すべて選択"
+            "一覧のチェックを全て解除"
+            if has_checked_condition else "一覧のチェックを全て選択"
         )
 
     def _toggle_all_mod_condition_checks(self):
