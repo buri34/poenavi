@@ -165,14 +165,29 @@ def resolve_stat_line_candidates(
             )
         candidate_matchers.extend(local_matchers)
     candidate_matchers.extend(matchers)
-    resolved = []
-    seen_ids = set()
-    for entry, pattern in candidate_matchers:
-        match = pattern.fullmatch(comparable)
-        entry_id = str(entry.get("id", ""))
-        if match and entry_id not in seen_ids:
-            seen_ids.add(entry_id)
-            resolved.append((entry, tuple(float(value) for value in match.groups())))
+    def collect(candidate: str, value_multiplier: float = 1.0):
+        matches = []
+        seen_ids = set()
+        for entry, pattern in candidate_matchers:
+            match = pattern.fullmatch(candidate)
+            entry_id = str(entry.get("id", ""))
+            if match and entry_id not in seen_ids:
+                seen_ids.add(entry_id)
+                matches.append((
+                    entry,
+                    tuple(float(value) * value_multiplier for value in match.groups()),
+                ))
+        return matches
+
+    resolved = collect(comparable)
+    if not resolved:
+        # EE2 stores these Trade stats in their `increased` direction and
+        # registers reduced copy text as a negated matcher.  Our compact index
+        # keeps only the canonical template, so reproduce that rule here.
+        inverted = re.sub(r"\breduced\b", "increased", comparable, flags=re.IGNORECASE)
+        inverted = inverted.replace("減少する", "増加する")
+        if inverted != comparable:
+            resolved = collect(inverted, -1.0)
     if not resolved:
         return ()
     if preferred_type and any(row[0].get("type") == preferred_type for row in resolved):

@@ -158,6 +158,74 @@ _DESCRIPTION_PREFIXES = (
     "Can be used in a Map Device", "マップデバイスで使用すると",
 )
 
+_TABLET_USES = (
+    re.compile(r"^(\d+)\s+uses?\s+remaining$", re.IGNORECASE),
+    re.compile(r"^残り使用回数\s*(\d+)回$"),
+)
+_CHARM_DURATION = (
+    re.compile(r"^Lasts\s+(\d+(?:\.\d+)?)\s+Seconds?$", re.IGNORECASE),
+    re.compile(r"^(\d+(?:\.\d+)?)秒間持続$"),
+)
+_CHARM_CONSUMPTION = (
+    re.compile(
+        r"^Consumes\s+(\d+)\s*(?:\(augmented\)\s*)?of\s+(\d+)\s+Charges on use$",
+        re.IGNORECASE,
+    ),
+    re.compile(r"^使用時に(\d+)中(\d+)\s*(?:\(augmented\))?チャージを消費$"),
+)
+_CHARM_CURRENT = (
+    re.compile(r"^Currently has\s+(\d+)\s+Charges$", re.IGNORECASE),
+    re.compile(r"^現在(\d+)チャージ$"),
+)
+_CHARM_EFFECT = (
+    re.compile(r"^Grants\s+(.+)$", re.IGNORECASE),
+    re.compile(r"^(.+)を付与する$"),
+)
+
+
+def _consume_special_property(category: str, line: str, properties: dict[str, str]) -> bool:
+    """Consume non-Trade item properties using stable bilingual keys.
+
+    EE2 consumes the whole Charm flask-property section so its duration,
+    charge counters and granted effect never reach modifier matching.  Keep
+    those useful display values in PoENavi while preserving the same Trade
+    behaviour.
+    """
+    if category == "tablet":
+        for pattern in _TABLET_USES:
+            match = pattern.fullmatch(line)
+            if match:
+                properties["残り使用回数"] = match.group(1)
+                return True
+    if category != "charm":
+        return False
+    for pattern in _CHARM_DURATION:
+        match = pattern.fullmatch(line)
+        if match:
+            properties["持続時間"] = match.group(1)
+            return True
+    for pattern in _CHARM_CONSUMPTION:
+        match = pattern.fullmatch(line)
+        if match:
+            if line.startswith("使用時に"):
+                properties["最大チャージ"] = match.group(1)
+                properties["使用チャージ"] = match.group(2)
+            else:
+                properties["使用チャージ"] = match.group(1)
+                properties["最大チャージ"] = match.group(2)
+            return True
+    for pattern in _CHARM_CURRENT:
+        match = pattern.fullmatch(line)
+        if match:
+            properties["現在チャージ"] = match.group(1)
+            return True
+    for pattern in _CHARM_EFFECT:
+        match = pattern.fullmatch(line)
+        if match:
+            properties["効果"] = match.group(1).strip()
+            return True
+    return False
+
 
 def _roll_bounds(text: str) -> tuple[float | None, float | None, int | None]:
     ranges = re.findall(
@@ -509,6 +577,8 @@ def parse_item_text(text: str) -> ParsedItem:
             continue
         if not line or line == "--------" or line in identity_lines:
             continue
+        if _consume_special_property(category, line, properties):
+            continue
         if line.startswith(_DESCRIPTION_PREFIXES):
             continue
         if any(line.startswith(f"{label}:") for label in _LABELS):
@@ -535,6 +605,14 @@ def parse_item_text(text: str) -> ParsedItem:
             entry, values = resolved[0]
             raw_stat_id = str(entry.get("id", ""))
             roll_min, roll_max, better = _roll_bounds(line)
+            is_negated_match = bool(values) and all(value <= 0 for value in values) and (
+                re.search(r"\breduced\b", line, re.IGNORECASE) is not None
+                or "減少する" in line
+            )
+            if is_negated_match:
+                if roll_min is not None and roll_max is not None:
+                    roll_min, roll_max = sorted((-roll_min, -roll_max))
+                better = -1
             modifiers.append(ItemModifier(
                 text=line, values=values, kind=str(entry.get("type", current_kind or "explicit")),
                 ref=str((entry.get("text") or {}).get("en", line)),

@@ -444,8 +444,10 @@ def poe2_trade_filters(
     pseudos, replaced_ids = _poe2_pseudo_filters(item)
     modifier_rows = tuple(
         TradeStatFilter(
-            modifier.stat_id, modifier.text, trade_stat_value(modifier.values),
+            modifier.stat_id, modifier.text,
+            None if modifier.better == -1 else trade_stat_value(modifier.values),
             modifier.kind, enabled=bool(modifier.stat_id) and modifier.stat_id not in replaced_ids,
+            max_value=(trade_stat_value(modifier.values) if modifier.better == -1 else None),
             ref=modifier.ref, confidence=modifier.confidence,
             read_value=trade_stat_value(modifier.values), roll_min=modifier.roll_min,
             roll_max=modifier.roll_max, better=modifier.better,

@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from src.poetore.poe2.parser import Poe2ItemParseError, TRADE_CATEGORY_BY_CATEGORY, parse_item_text
+from src.poetore.poe2.trade import build_search_query, poe2_trade_filters
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
@@ -71,13 +72,40 @@ def test_gem_prose_is_not_reported_as_unresolved_item_modifiers():
         assert parse_item_text(fixture["英語設定の詳細コピー全文"]).modifiers == ()
 
 
-def test_charm_and_timelost_unscalable_suffixes_resolve_equally_in_both_languages():
+def test_charm_properties_and_searchable_mods_resolve_equally_in_both_languages():
     charm = _real_copy("FX009")
     charm_items = [parse_item_text(charm[key]) for key in (
         "日本語設定の詳細コピー全文", "英語設定の詳細コピー全文",
     )]
-    assert [len(item.modifiers) for item in charm_items] == [5, 5]
+    assert [len(item.modifiers) for item in charm_items] == [2, 2]
     assert all(any(mod.stat_id == "implicit.stat_1691862754" for mod in item.modifiers) for item in charm_items)
+    assert all(any(
+        mod.stat_id == "explicit.stat_388617051" and mod.values == (-20.0,)
+        for mod in item.modifiers
+    ) for item in charm_items)
+    assert all(item.properties["持続時間"] == "3" for item in charm_items)
+    assert all(item.properties["使用チャージ"] == "32" for item in charm_items)
+    assert all(item.properties["最大チャージ"] == "40" for item in charm_items)
+    assert all(item.properties["現在チャージ"] == "0" for item in charm_items)
+    assert all(item.properties["効果"] for item in charm_items)
+    for item in charm_items:
+        payload = build_search_query(item, stat_filters=poe2_trade_filters(item))
+        sent_ids = {
+            row["id"]
+            for group in payload["query"]["stats"]
+            for row in group["filters"]
+        }
+        assert sent_ids == {"implicit.stat_1691862754", "explicit.stat_388617051"}
+        charge_filter = next(
+            row
+            for group in payload["query"]["stats"]
+            for row in group["filters"]
+            if row["id"] == "explicit.stat_388617051"
+        )
+        assert charge_filter["value"] == {"max": -20.0}
+
+
+def test_timelost_unscalable_suffixes_resolve_equally_in_both_languages():
 
     jewel = _real_copy("FX014")
     jewel_items = [parse_item_text(jewel[key]) for key in (
@@ -86,6 +114,20 @@ def test_charm_and_timelost_unscalable_suffixes_resolve_equally_in_both_language
     assert all(len(item.modifiers) == 5 for item in jewel_items)
     assert all(sum(not mod.stat_id for mod in item.modifiers) == 0 for item in jewel_items)
     assert all({"crafted", "desecrated"}.issubset(item.flags) for item in jewel_items)
+
+
+@pytest.mark.parametrize("fixture_id", ("FX001", "FX003", "FX010", "FX022", "FX023"))
+def test_real_copy_previously_unresolved_numeric_lines_are_resolved(fixture_id):
+    fixture = _real_copy(fixture_id)
+    for language in ("日本語設定の詳細コピー全文", "英語設定の詳細コピー全文"):
+        item = parse_item_text(fixture[language])
+        assert all(mod.stat_id for mod in item.modifiers), [
+            mod.text for mod in item.modifiers if not mod.stat_id
+        ]
+    if fixture_id == "FX010":
+        ja = parse_item_text(fixture["日本語設定の詳細コピー全文"])
+        en = parse_item_text(fixture["英語設定の詳細コピー全文"])
+        assert ja.properties["残り使用回数"] == en.properties["残り使用回数"] == "10"
 
 
 def test_runemastered_and_unidentified_unique_are_preserved_as_distinct_states():

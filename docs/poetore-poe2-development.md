@@ -296,3 +296,17 @@ EE2の現行実装も、Item Classを欠くMeta Gemを特例としてGEMデー�
 未鑑定UniqueはEE2同様、固有名を要求せず、正規化したベース、Unique rarity、Identified=falseを
 Trade2へ送る。RunemasteredはEE2上でもRuneforgedから文字列を除く対象ではなく別ベースであり、
 PoENavi内部でも`runemastered`と`runeforged`を別フラグとして保持する。
+
+## 実コピーfixtureの未解決警告整理（2026-08-09）
+
+EE2はCharmのProperty区画に`Currently has # Charges`がある場合、持続時間、消費／最大／現在
+チャージ、付与効果を含む区画全体をFlask系Propertyとして消費し、Mod解析へ渡さない。PoENaviも
+同じ検索責務に揃えつつ、表示に使える値は`properties`へ保持する。Trade2へ送るのは暗黙の発動条件と
+明示Affix（例：Charges per use減少）だけとする。
+
+EE2のStat matcherが持つ`negate`規則もcompact indexの照合時に再現する。`reduced`／`減少する`を
+canonicalな`increased`／`増加する`Statへ照合し、値を負数へ変換する。低い値が良い条件はTrade2の
+maxへ送る。これにより要求能力値減少、Charges per use減少、毒・出血持続時間減少を日英同一IDへ
+解決する。Tabletのコロンなし`10 uses remaining`／`残り使用回数 10回`もPropertyとして保持する。
+
+収集済み実コピー23組（Uncut Gem除外）を再集計し、数値を含む未解決行が0件であることを固定する。
