@@ -100,6 +100,9 @@ def test_reported_japanese_rare_spear_keeps_quality_and_both_flat_damage_values(
     flat = next(mod for mod in item.modifiers if "物理ダメージを追加" in mod.text)
     assert flat.stat_id == "explicit.stat_1940865751"
     assert flat.values == (25.0, 39.0)
+    fractured = next(mod for mod in item.modifiers if "アタックスピードが28" in mod.text)
+    assert fractured.kind == "fractured"
+    assert "fractured" in item.flags
 
 
 def test_reported_japanese_rare_body_armour_prefers_local_evasion_stats():
@@ -113,3 +116,70 @@ def test_reported_japanese_rare_body_armour_prefers_local_evasion_stats():
         ("explicit.stat_124859000", (40.0,)),
     ]
     assert all(not mod.stat_ids for mod in increased)
+    deflection = next(mod for mod in item.modifiers if "受け流し力" in mod.text)
+    assert deflection.stat_id == "explicit.stat_3033371881"
+    assert deflection.values == (17.0,)
+    assert {"augment", "desecrated", "crafted", "corrupted"} <= set(item.flags)
+
+
+def test_phase45_sceptre_parses_spirit_augment_sockets_and_sanctified_state():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "phase45_sceptre_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+    assert item.category == "sceptre"
+    assert item.properties["スピリット"] == "100"
+    assert item.properties["ソケット"] == "S S"
+    assert {"augment", "sanctified"} <= set(item.flags)
+    augment = next(mod for mod in item.modifiers if mod.kind == "augment")
+    assert augment.stat_id and augment.stat_id.startswith("rune.")
+
+
+def test_phase45_waystone_parses_all_dedicated_properties():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "phase45_waystone_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+    assert item.category == "waystone"
+    assert item.base_type == "Waystone (Tier 15)"
+    assert item.properties["ウェイストーンティア"] == "15"
+    assert item.properties["復活が利用可能"] == "3"
+    assert item.properties["モンスターパックサイズ"] == "+42%"
+
+
+def test_phase45_runemastered_base_and_desecrated_state_are_not_collapsed():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "phase45_runemastered_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+    assert item.base_type == "Runemastered Vaal Cuirass"
+    assert {"runeforged", "desecrated", "fractured"} <= set(item.flags)
+    desecrated = next(mod for mod in item.modifiers if mod.kind == "desecrated")
+    assert desecrated.stat_id == "desecrated.stat_2923486259"
+
+
+@pytest.mark.parametrize(
+    "fixture",
+    json.loads(
+        (Path(__file__).parent / "fixtures" / "poe2" / "phase45_augment_items_ja.json").read_text(
+            encoding="utf-8"
+        )
+    )["fixtures"],
+    ids=lambda row: row["id"],
+)
+def test_phase45_standalone_rune_and_soul_core_categories(fixture):
+    item = parse_item_text(fixture["text"])
+    assert item.category == fixture["category"]
+    assert item.base_type == fixture["base_type"]
+    assert TRADE_CATEGORY_BY_CATEGORY[item.category] == fixture["trade_category"]
+
+
+def test_phase45_gem_identity_and_socket_property():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "phase45_gem_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+    assert item.rarity == "gem"
+    assert item.base_type == "Arc"
+    assert item.category == "active_gem"
+    assert item.properties["ソケット"] == "S S"

@@ -35,7 +35,7 @@ PoE2クライアントから直接採取した文面とは称さない。実機�
 - [x] PoE1／PoE2切替時に旧版のぽえとれ画面を破棄するlifecycleを実装
 - [x] 共通リーグ選択UIへPoE2リーグだけを表示し、版別に選択値を保存
 - [ ] 実機fixtureでadvanced Mod header、tier、roll範囲、Mod種別の精度を追加検証
-- [ ] Gem、Waystoneを実機試用対象へ追加
+- [x] Gem、WaystoneをParser／Trade2検索対象へ追加（実コピー全文の追加検証は継続）
 - [ ] Crossbow、Spear、Flail、Focus、Bucklerの実コピー全文を追加検証
 - [ ] 縦切り完成後、重複した共通処理だけを小さく抽出する
 
@@ -124,6 +124,34 @@ Stat ID、`stat_id|option`、filter option ID、数値条件は日英で共通�
 英語3,880件に対して日本語itemsは3,873件で、防具groupに7件の差がある。日本語identityを
 確認できない場合は日本語サイトへ英語名を推測送信せず、英語APIが発行したquery IDの
 `www.pathofexile.com/trade2/...` URLへフォールバックする。
+
+## Phase 4〜5 PoE2固有プロパティ・状態区分（2026-08-09）
+
+公式Trade2 snapshotとEE2固定revisionを照合し、次の専用条件を共通検索UIの編集可能行へ
+追加した。条件をOFFにした場合は最終JSONへ送信しない。
+
+- 装備: Spirit、Runic Ward、Reload Time、Augment Socket数
+- Gem: Gem Socket数（Active／Support／Meta Gemを別カテゴリで保持）
+- Waystone: Tier、Revive、Pack Size、Magic Monster、Rare Monster、Area Level、
+  Unidentified Tier
+- 状態: Sanctified、Desecrated、Fractured、Crafted、Corrupted、Mirrored
+- 単体アイテム: RuneとSoul Coreを`currency.rune`／`currency.soulcore`へ分離
+
+Deflectionには公式Trade2の集約property filterがないため、コピー文面の個別Stat IDとして
+検索する。Runeforged／Runemasteredにも状態filterはなく、公式items上の別ベースidentityを
+そのままtypeへ送る。通常ベースへ丸めない。
+
+Rune／Soul Core由来の数値Modは通常explicitへ混ぜず、`rune.*`等の由来Statとして保持する。
+Sanctified／Desecrated／Fractured／Craftedも見出しから由来を判別し、対応する状態filterと
+個別Statを独立してON／OFFできる。
+
+### Phase 4〜5後も残す境界
+
+- Empty Socket数そのものには公式専用filterがない。今回は総Augment Socket数を実装し、
+  Empty Socketへの仮想Rune追加は高度検索支援のPhaseへ残す。
+- Runeforged／Runemasteredは状態チェックではなく別ベース選択を維持する。
+- 固定EE2由来の日英fixtureは実クライアント採取と混同しない。実コピー全文を継続追加する。
+- Deflection等の個別StatとLocal／Global単一選択は、低頻度監査で件数と実出品を照合する。
 
 ## 公式API検証記録
 

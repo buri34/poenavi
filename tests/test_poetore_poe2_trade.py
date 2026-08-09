@@ -7,7 +7,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 from src.poetore.poe2 import build_search_query, fetch_listings, parse_item_text, search_items
 from src.poetore.poe2.trade import (
     _stat_groups_from_filters, available_pc_leagues, build_web_trade_url,
-    default_pc_league, search_prices, trade_stat_value,
+    default_pc_league, poe2_search_filters, search_prices, trade_stat_value,
 )
 from src.poetore.models import ParsedItem
 from src.poetore.trade import TradeStatFilter
@@ -148,6 +148,29 @@ def test_poe2_price_result_exposes_japanese_web_trade_url(monkeypatch):
     assert query["type"] == "実用的なベルト"
 
 
+def test_phase45_search_prices_sends_corrupted_and_mirrored_state_filters(monkeypatch):
+    item = _phase45_item("phase45_runemastered_ja.txt")
+    rows = _phase45_rows(item)
+
+    def fake_cached_request(url, payload=None):
+        assert "/api/trade2/search/Standard" in url
+        misc = payload["query"]["filters"]["misc_filters"]["filters"]
+        assert misc["desecrated"] == {"option": "true"}
+        assert misc["fractured_item"] == {"option": "true"}
+        assert misc["corrupted"] == {"option": "true"}
+        assert misc["mirrored"] == {"option": "false"}
+        return {"id": "phase45-query", "result": []}, {}, False
+
+    monkeypatch.setattr(
+        "src.poetore.poe2.trade._cached_request_json", fake_cached_request,
+    )
+    result = search_prices(
+        item, "Standard", stat_filters=rows,
+        include_corrupted="only", include_mirrored=False,
+    )
+    assert result.query_id == "phase45-query"
+
+
 def test_poe2_leagues_are_filtered_and_auto_selects_current_softcore(monkeypatch):
     monkeypatch.setattr(
         "src.poetore.poe2.trade._cached_request_json",
@@ -206,11 +229,11 @@ def test_reported_rare_spear_sends_flat_damage_average_and_optional_quality():
         if row["id"] == "explicit.stat_1940865751"
     )
     assert flat["value"] == {"min": 32.0}
-    misc = without_quality["query"]["filters"]["misc_filters"]["filters"]
-    assert misc == {"ilvl": {"min": 81}}
+    type_filters = without_quality["query"]["filters"]["type_filters"]["filters"]
+    assert type_filters["ilvl"] == {"min": 81}
 
     with_quality = build_search_query(item, quality_min=20)
-    assert with_quality["query"]["filters"]["misc_filters"]["filters"]["quality"] == {
+    assert with_quality["query"]["filters"]["type_filters"]["filters"]["quality"] == {
         "min": 20
     }
 
@@ -243,3 +266,103 @@ def test_poe2_filter_ignores_audit_alternatives_in_normal_search():
     assert _stat_groups_from_filters((row.__class__(
         **{**row.__dict__, "enabled": False}
     ),)) == [{"type": "and", "filters": []}]
+
+
+def _phase45_item(filename: str):
+    text = (Path(__file__).parent / "fixtures" / "poe2" / filename).read_text(
+        encoding="utf-8"
+    )
+    return parse_item_text(text)
+
+
+def _phase45_rows(item):
+    modifier_rows = tuple(
+        TradeStatFilter(
+            mod.stat_id, mod.text, trade_stat_value(mod.values), mod.kind,
+            enabled=True, ref=mod.ref, confidence=mod.confidence,
+        )
+        for mod in item.modifiers if mod.stat_id
+    )
+    property_rows = tuple(
+        row.__class__(**{**row.__dict__, "enabled": True})
+        for row in poe2_search_filters(item)
+    )
+    return modifier_rows + property_rows
+
+
+def test_phase45_equipment_properties_and_states_use_official_filter_groups():
+    item = _phase45_item("phase45_sceptre_ja.txt")
+    rows = _phase45_rows(item)
+    payload = build_search_query(item, stat_filters=rows)
+    filters = payload["query"]["filters"]
+    assert filters["equipment_filters"]["filters"] == {
+        "spirit": {"min": 100.0},
+        "rune_sockets": {"min": 2.0},
+    }
+    assert filters["misc_filters"]["filters"]["sanctified"] == {"option": "true"}
+    assert any(row["id"].startswith("rune.") for row in payload["query"]["stats"][0]["filters"])
+
+
+def test_phase45_waystone_properties_use_official_map_and_misc_filters():
+    item = _phase45_item("phase45_waystone_ja.txt")
+    rows = _phase45_rows(item)
+    payload = build_search_query(item, stat_filters=rows)
+    filters = payload["query"]["filters"]
+    assert filters["map_filters"]["filters"] == {
+        "map_revives": {"min": 3.0},
+        "map_packsize": {"min": 42.0},
+        "map_magic_monsters": {"min": 18.0},
+        "map_rare_monsters": {"min": 11.0},
+        "map_tier": {"min": 15.0, "max": 15.0},
+    }
+    assert filters["misc_filters"]["filters"] == {
+        "area_level": {"min": 79.0},
+        "unidentified_tier": {"min": 5.0},
+    }
+
+
+def test_phase45_runemastered_desecrated_and_fractured_filters_are_distinct():
+    item = _phase45_item("phase45_runemastered_ja.txt")
+    rows = _phase45_rows(item)
+    payload = build_search_query(item, stat_filters=rows)
+    assert payload["query"]["type"] == "Runemastered Vaal Cuirass"
+    assert payload["query"]["filters"]["equipment_filters"]["filters"]["ward"] == {
+        "min": 500.0
+    }
+    assert payload["query"]["filters"]["misc_filters"]["filters"] == {
+        "desecrated": {"option": "true"},
+        "fractured_item": {"option": "true"},
+    }
+    assert payload["query"]["stats"][0]["filters"] == [{
+        "id": "desecrated.stat_2923486259", "value": {"min": 21.0},
+    }]
+
+
+def test_phase45_rune_and_soul_core_queries_use_separate_categories():
+    fixtures = json.loads(
+        (Path(__file__).parent / "fixtures" / "poe2" / "phase45_augment_items_ja.json").read_text(
+            encoding="utf-8"
+        )
+    )["fixtures"]
+    for fixture in fixtures:
+        item = parse_item_text(fixture["text"])
+        payload = build_search_query(item)
+        assert payload["query"]["type"] == fixture["base_type"]
+        assert payload["query"]["filters"]["type_filters"]["filters"]["category"] == {
+            "option": fixture["trade_category"]
+        }
+
+
+def test_phase45_gem_socket_uses_official_misc_filter():
+    item = _phase45_item("phase45_gem_ja.txt")
+    rows = tuple(
+        row.__class__(**{**row.__dict__, "enabled": True})
+        for row in poe2_search_filters(item)
+    )
+    payload = build_search_query(item, stat_filters=rows)
+    assert payload["query"]["filters"]["type_filters"]["filters"]["category"] == {
+        "option": "gem.activegem"
+    }
+    assert payload["query"]["filters"]["misc_filters"]["filters"]["gem_sockets"] == {
+        "min": 2.0
+    }

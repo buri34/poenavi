@@ -2330,8 +2330,8 @@ class PoetoreWindow(QWidget):
 
     def _resolved_trade_filters(self, item, preset):
         if self.poe_version == POE2:
-            from .poe2.trade import trade_stat_value
-            return tuple(
+            from .poe2.trade import poe2_search_filters, trade_stat_value
+            modifier_rows = tuple(
                 TradeStatFilter(
                     modifier.stat_id, modifier.text,
                     trade_stat_value(modifier.values),
@@ -2341,6 +2341,7 @@ class PoetoreWindow(QWidget):
                 )
                 for modifier in item.modifiers if modifier.stat_id
             )
+            return modifier_rows + poe2_search_filters(item)
         return apply_search_range(
             resolve_trade_stat_filters(
                 item, preset, self._trade_base_type, self._trade_item_name,
@@ -3300,6 +3301,8 @@ class PoetoreWindow(QWidget):
                         status=trade_status,
                         stat_filters=effective_filters,
                         quality_min=quality_min,
+                        include_corrupted=include_corrupted,
+                        include_mirrored=include_mirrored,
                         partial_result_callback=lambda partial: (
                             self._trade_signals.partial_completed.emit(
                                 partial, search_generation,
@@ -3424,6 +3427,12 @@ class PoetoreWindow(QWidget):
             "gem", "map", "flask", "tincture", "heist_equipment", "sanctum_relic",
             "charm", "idol",
         }
+        if self.poe_version == POE2:
+            from .poe2.parser import TRADE_CATEGORY_BY_CATEGORY
+            trade_category = TRADE_CATEGORY_BY_CATEGORY.get(item.category, "")
+            supports_corruption_filter = trade_category.startswith((
+                "weapon.", "armour.", "accessory.", "map.", "gem", "flask.",
+            ))
         self.corrupted_combo.setVisible(supports_corruption_filter)
         self.corrupted_combo.setEnabled(supports_corruption_filter)
         rarity = item.rarity.casefold()

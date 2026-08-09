@@ -1,0 +1,19 @@
+{
+  "source": "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8 Japanese identity data; not captured from a live client",
+  "fixtures": [
+    {
+      "id": "iron_rune",
+      "text": "アイテムクラス: ルーン\nレアリティ: ノーマル\n鉄のルーン\n",
+      "category": "rune",
+      "trade_category": "currency.rune",
+      "base_type": "Iron Rune"
+    },
+    {
+      "id": "azcapa_soul_core",
+      "text": "アイテムクラス: ソウルコア\nレアリティ: ノーマル\nアズカパのソウルコア\n",
+      "category": "soul_core",
+      "trade_category": "currency.soulcore",
+      "base_type": "Soul Core of Azcapa"
+    }
+  ]
+}

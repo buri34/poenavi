@@ -49,6 +49,12 @@ _CLASS_CATEGORY = {
     "Rings": "ring", "指輪": "ring",
     "Amulets": "amulet", "アミュレット": "amulet",
     "Belts": "belt", "ベルト": "belt",
+    "Waystones": "waystone", "Waystone": "waystone", "ウェイストーン": "waystone",
+    "Runes": "rune", "Rune": "rune", "ルーン": "rune",
+    "Soul Cores": "soul_core", "Soul Core": "soul_core", "ソウルコア": "soul_core",
+    "Skill Gems": "gem", "スキルジェム": "gem",
+    "Support Gems": "gem", "サポートジェム": "gem",
+    "Meta Gems": "gem", "メタジェム": "gem",
     "Bow": "bow", "Crossbow": "crossbow", "Spear": "spear", "Flail": "flail",
     "Staff": "staff", "Warstaff": "quarterstaff", "Wand": "wand", "Sceptre": "sceptre",
     "One Hand Mace": "one_mace", "Two Hand Mace": "two_mace",
@@ -71,6 +77,12 @@ TRADE_CATEGORY_BY_CATEGORY = {
     "helmet": "armour.helmet", "gloves": "armour.gloves", "boots": "armour.boots",
     "quiver": "armour.quiver", "ring": "accessory.ring", "amulet": "accessory.amulet",
     "belt": "accessory.belt",
+    "waystone": "map.waystone",
+    "rune": "currency.rune",
+    "soul_core": "currency.soulcore",
+    "active_gem": "gem.activegem",
+    "support_gem": "gem.supportgem",
+    "meta_gem": "gem.metagem",
 }
 _LOCAL_AFFIX_CATEGORIES = {
     "bow", "focus", "crossbow", "spear", "flail", "staff", "quarterstaff",
@@ -85,6 +97,12 @@ _RARITIES = {
     "レア": "rare",
     "Unique": "unique",
     "ユニーク": "unique",
+    "Normal": "normal",
+    "ノーマル": "normal",
+    "Magic": "magic",
+    "マジック": "magic",
+    "Gem": "gem",
+    "ジェム": "gem",
 }
 _PROPERTY_LABELS = {
     "Quality", "品質", "Armour", "アーマー", "Evasion Rating", "回避力",
@@ -93,12 +111,27 @@ _PROPERTY_LABELS = {
     "Attacks per Second", "秒間アタック回数", "Critical Hit Chance", "クリティカルヒット率",
     "Reload Time", "リロード時間", "Requires", "要求値", "Sockets", "ソケット",
     "Requirements", "装備条件",
+    "Runic Ward", "ルーンワード", "Deflection Rating", "受け流し力",
+    "Waystone Tier", "ウェイストーンティア", "Revives Available", "復活が利用可能",
+    "Monster Pack Size", "モンスターパックサイズ", "Magic Monsters", "モンスターエフェクティブ",
+    "Rare Monsters", "モンスターレアリティ", "Area Level", "エリアレベル",
+    "Unidentified Tier", "未鑑定ティア",
+}
+
+_STATE_LINES = {
+    "Corrupted": "corrupted", "コラプト状態": "corrupted", "コラプト": "corrupted",
+    "Mirrored": "mirrored", "ミラー化": "mirrored", "ミラー化アイテム": "mirrored",
+    "Sanctified": "sanctified", "聖別化": "sanctified", "聖別化アイテム": "sanctified",
+    "Desecrated": "desecrated", "冒涜": "desecrated", "冒涜アイテム": "desecrated",
+    "Fractured Item": "fractured", "フラクチャーアイテム": "fractured",
 }
 def _mod_kind_from_heading(heading: str, previous: str | None) -> str | None:
     lowered = heading.casefold()
     if "冒涜" in heading or "desecrated" in lowered:
         return "desecrated"
-    if "破砕" in heading or "fractured" in lowered:
+    if "聖別" in heading or "sanctified" in lowered:
+        return "sanctified"
+    if "破砕" in heading or "フラクチャー" in heading or "fractured" in lowered:
         return "fractured"
     if "クラフト" in heading or "crafted" in lowered:
         return "crafted"
@@ -141,11 +174,24 @@ def parse_item_text(text: str) -> ParsedItem:
         raise Poe2ItemParseError("PoE2アイテムのclass、rarity、identityを解決できません")
 
     raw_base = identity_lines[-1]
-    base_identity = resolve_identity(raw_base, "ITEM")
+    identity_namespace = "GEM" if category == "gem" or rarity == "gem" else "ITEM"
+    base_identity = resolve_identity(raw_base, identity_namespace)
     if base_identity is None:
         raise Poe2ItemParseError(f"PoE2 base identity未解決: {raw_base}")
     base_type = str(base_identity["ref_name"])
     category = category or _CLASS_CATEGORY.get(str(base_identity.get("category", "")))
+    identity_category = str(base_identity.get("category", ""))
+    if identity_namespace == "GEM":
+        category = {
+            "Active Skill Gem": "active_gem",
+            "Support Skill Gem": "support_gem",
+            "MetaSkillGem": "meta_gem",
+        }.get(identity_category, category)
+    if category is None and identity_category == "Map" and "waystone" in base_type.casefold():
+        category = "waystone"
+    if identity_category == "SoulCore":
+        identity_text = f"{raw_base} {base_type}".casefold()
+        category = "soul_core" if ("soul core" in identity_text or "ソウルコア" in identity_text) else "rune"
     if not category:
         raise Poe2ItemParseError(f"PoE2カテゴリ未解決: {item_class} / {base_type}")
 
@@ -164,12 +210,19 @@ def parse_item_text(text: str) -> ParsedItem:
     item_level = None
     properties = {}
     modifiers = []
+    flags = set()
+    if base_type.casefold().startswith(("runeforged ", "runemastered ")):
+        flags.add("runeforged")
     current_kind = None
     for line in text.splitlines():
         line = line.strip().replace("：", ":")
         if line.startswith("{") and line.endswith("}"):
             heading = line.strip("{} ")
             current_kind = _mod_kind_from_heading(heading, current_kind)
+            continue
+        state = _STATE_LINES.get(line)
+        if state:
+            flags.add(state)
             continue
         match = _ITEM_LEVEL.match(line.strip())
         if match:
@@ -192,8 +245,9 @@ def parse_item_text(text: str) -> ParsedItem:
             and category in _LOCAL_AFFIX_CATEGORIES
             and line_kind in {"explicit", "fractured", "crafted", "desecrated"}
         )
+        preferred_stat_type = "rune" if line_kind == "augment" else line_kind
         resolved = resolve_stat_line_candidates(
-            line, line_kind, include_local_variants=prefer_local,
+            line, preferred_stat_type, include_local_variants=prefer_local,
         )
         if resolved:
             entry, values = resolved[0]
@@ -203,6 +257,8 @@ def parse_item_text(text: str) -> ParsedItem:
                 ref=str((entry.get("text") or {}).get("en", line)),
                 stat_id=raw_stat_id, confidence=1.0,
             ))
+            if line_kind in {"augment", "desecrated", "fractured", "crafted", "sanctified"}:
+                flags.add(line_kind)
         elif re.search(r"\d", line) and not separator:
             # Keep suspicious numeric lines visible to the user instead of silently dropping them.
             modifiers.append(ItemModifier(text=line, confidence=0.0))
@@ -215,5 +271,6 @@ def parse_item_text(text: str) -> ParsedItem:
         item_level=item_level,
         properties=properties,
         modifiers=tuple(modifiers),
+        flags=tuple(sorted(flags)),
         raw_text=text,
     )

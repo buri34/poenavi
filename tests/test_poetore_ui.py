@@ -1347,12 +1347,14 @@ def test_reported_poe2_rare_gloves_show_chaos_resistance_without_warning(qapp):
         window.input_edit.setPlainText(text)
         window.parse_current_text()
 
-        assert window.mod_filter_tree.topLevelItemCount() == 7
+        assert window.mod_filter_tree.topLevelItemCount() == 9
         assert window.mod_warning.isHidden()
         selected = window._selected_stat_filters()
         chaos = next(row for row in selected if row.stat_id == "explicit.stat_2923486259")
         assert chaos.text == "混沌耐性 +15(12-15)%"
         assert chaos.min_value == 15
+        assert any(row.stat_id == "property.augment_sockets" for row in selected)
+        assert any(row.stat_id == "property.state.desecrated" for row in selected)
     finally:
         window.close()
 
@@ -4486,6 +4488,25 @@ def test_poe2_weapon_quality_20_is_visible_but_initially_disabled(qapp):
 
         window.gem_quality_toggle.click()
         assert window._selected_quality() == 20
+    finally:
+        window.close()
+
+
+def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        from src.poetore.poe2.parser import parse_item_text as parse_poe2_item_text
+
+        fixture = Path(__file__).parent / "fixtures" / "poe2" / "phase45_sceptre_ja.txt"
+        item = parse_poe2_item_text(fixture.read_text(encoding="utf-8"))
+        filters = window._resolved_trade_filters(item, "finished")
+        by_id = {row.stat_id: row for row in filters}
+        assert by_id["property.spirit"].min_value == 100
+        assert not by_id["property.spirit"].enabled
+        assert by_id["property.augment_sockets"].min_value == 2
+        assert not by_id["property.augment_sockets"].enabled
+        assert by_id["property.state.sanctified"].enabled
+        assert any(row.stat_id.startswith("rune.") for row in filters)
     finally:
         window.close()
 

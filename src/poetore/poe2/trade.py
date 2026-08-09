@@ -9,7 +9,7 @@ from urllib.request import Request, urlopen
 
 from ..models import ParsedItem
 from ..trade import (
-    PriceListing, PriceResult, TradeApiError, TradeLeague, _cached_request_json,
+    PriceListing, PriceResult, TradeApiError, TradeLeague, TradeStatFilter, _cached_request_json,
     _group_price_listings,
 )
 from .parser import TRADE_CATEGORY_BY_CATEGORY
@@ -87,10 +87,134 @@ def _stat_groups_from_filters(filters) -> list[dict]:
     direct = []
     groups = [{"type": "and", "filters": direct}]
     for row in filters:
-        if not row.enabled or not row.stat_id:
+        if not row.enabled or not row.stat_id or row.stat_id.startswith("property."):
             continue
         direct.append(_trade_filter_row(row.stat_id, row.min_value, row.max_value))
     return groups
+
+
+def _property_float(item: ParsedItem, *names: str) -> float | None:
+    wanted = {name.casefold() for name in names}
+    for name, raw_value in item.properties.items():
+        if name.casefold() not in wanted:
+            continue
+        match = re.search(r"[+-]?\d+(?:\.\d+)?", str(raw_value).replace(",", ""))
+        if match:
+            return float(match.group())
+    return None
+
+
+def _augment_socket_count(item: ParsedItem) -> int | None:
+    raw = item.properties.get("Sockets") or item.properties.get("ソケット") or ""
+    count = len(re.findall(r"(?<![A-Za-z])S(?![A-Za-z])", str(raw), re.IGNORECASE))
+    return count or None
+
+
+def _waystone_tier(item: ParsedItem) -> float | None:
+    value = _property_float(item, "Waystone Tier", "ウェイストーンティア", "Map Tier", "マップティア")
+    if value is not None:
+        return value
+    match = re.search(r"(?:Tier|ティア)\s*(\d+)", item.base_type, re.IGNORECASE)
+    return float(match.group(1)) if match else None
+
+
+_POE2_PROPERTY_SPECS = (
+    ("property.spirit", "スピリット", ("Spirit", "スピリット"), "property", False),
+    ("property.runic_ward", "ルーンワード", ("Runic Ward", "ルーンワード", "Ward"), "property", False),
+    ("property.reload_time", "リロード時間", ("Reload Time", "リロード時間", "再装填時間"), "property", False),
+    ("property.map_revives", "復活回数", ("Revives Available", "復活が利用可能"), "property", False),
+    ("property.map_pack_size", "モンスターパックサイズ", ("Monster Pack Size", "モンスターパックサイズ"), "property", False),
+    ("property.map_magic_monsters", "モンスターエフェクティブ", ("Magic Monsters", "モンスターエフェクティブ"), "property", False),
+    ("property.map_rare_monsters", "モンスターレアリティ", ("Rare Monsters", "モンスターレアリティ"), "property", False),
+    ("property.area_level", "エリアレベル", ("Area Level", "エリアレベル"), "property", False),
+    ("property.unidentified_tier", "未鑑定ティア", ("Unidentified Tier", "未鑑定ティア"), "property", False),
+)
+
+_POE2_STATE_LABELS = {
+    "sanctified": "聖別化",
+    "desecrated": "冒涜",
+    "fractured": "フラクチャー",
+    "crafted": "クラフト済み",
+}
+
+_POE2_STATE_FILTER_NAMES = {
+    "sanctified": "sanctified",
+    "desecrated": "desecrated",
+    "fractured": "fractured_item",
+    "crafted": "crafted",
+}
+
+
+def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
+    """Build editable Trade2 property/state rows beside resolved modifier rows."""
+    rows: list[TradeStatFilter] = []
+    for stat_id, label, names, kind, enabled in _POE2_PROPERTY_SPECS:
+        value = _property_float(item, *names)
+        if value is not None:
+            rows.append(TradeStatFilter(
+                stat_id, label, value, kind, enabled=enabled, read_value=value,
+                exact=stat_id == "property.unidentified_tier",
+            ))
+    sockets = _augment_socket_count(item)
+    if sockets is not None:
+        is_gem = item.category in {"active_gem", "support_gem", "meta_gem"}
+        stat_id = "property.gem_sockets" if is_gem else "property.augment_sockets"
+        label = "ジェムソケット" if is_gem else "オーグメントソケット"
+        rows.append(TradeStatFilter(stat_id, label, float(sockets), "property", False, read_value=float(sockets)))
+    if item.category == "waystone":
+        tier = _waystone_tier(item)
+        if tier is not None:
+            rows.append(TradeStatFilter(
+                "property.map_tier", "ウェイストーンティア", tier, "property", True,
+                max_value=tier, read_value=tier, exact=True,
+            ))
+    for flag, label in _POE2_STATE_LABELS.items():
+        if flag in item.flags:
+            rows.append(TradeStatFilter(
+                f"property.state.{flag}", label, None, "state", True,
+            ))
+    return tuple(rows)
+
+
+_POE2_FILTER_TARGETS = {
+    "property.spirit": ("equipment_filters", "spirit"),
+    "property.runic_ward": ("equipment_filters", "ward"),
+    "property.reload_time": ("equipment_filters", "reload_time"),
+    "property.augment_sockets": ("equipment_filters", "rune_sockets"),
+    "property.gem_sockets": ("misc_filters", "gem_sockets"),
+    "property.map_tier": ("map_filters", "map_tier"),
+    "property.map_revives": ("map_filters", "map_revives"),
+    "property.map_pack_size": ("map_filters", "map_packsize"),
+    "property.map_magic_monsters": ("map_filters", "map_magic_monsters"),
+    "property.map_rare_monsters": ("map_filters", "map_rare_monsters"),
+    "property.area_level": ("misc_filters", "area_level"),
+    "property.unidentified_tier": ("misc_filters", "unidentified_tier"),
+}
+
+
+def _apply_poe2_filter_rows(query: dict, filters) -> None:
+    for row in filters:
+        if not row.enabled:
+            continue
+        if row.stat_id.startswith("property.state."):
+            state = row.stat_id.rsplit(".", 1)[-1]
+            filter_name = _POE2_STATE_FILTER_NAMES.get(state)
+            if filter_name is None:
+                continue
+            query["filters"].setdefault("misc_filters", {"filters": {}})["filters"][filter_name] = {
+                "option": "true"
+            }
+            continue
+        target = _POE2_FILTER_TARGETS.get(row.stat_id)
+        if target is None:
+            continue
+        group, name = target
+        value = {
+            **({"min": row.min_value} if row.min_value is not None else {}),
+            **({"max": row.max_value} if row.max_value is not None else {}),
+        }
+        if value:
+            query["filters"].setdefault(group, {"filters": {}})["filters"][name] = value
 
 
 def build_search_query(
@@ -98,6 +222,7 @@ def build_search_query(
     status: str = "online",
     *,
     quality_min: int | None = None,
+    stat_filters: tuple = (),
 ) -> dict:
     trade_category = TRADE_CATEGORY_BY_CATEGORY.get(item.category)
     if trade_category is None:
@@ -106,18 +231,21 @@ def build_search_query(
     query = {
         "status": {"option": _STATUS_OPTIONS.get(status, status)},
         "type": item.base_type,
-        "stats": _stat_groups_from_modifiers(item.modifiers),
+        "stats": (
+            _stat_groups_from_filters(stat_filters)
+            if stat_filters else _stat_groups_from_modifiers(item.modifiers)
+        ),
         "filters": {"type_filters": {"filters": type_filters}},
     }
-    misc = {}
+    type_filter_values = query["filters"]["type_filters"]["filters"]
     if item.item_level is not None and item.rarity == "rare":
-        misc["ilvl"] = {"min": item.item_level}
+        type_filter_values["ilvl"] = {"min": item.item_level}
     if quality_min is not None:
-        misc["quality"] = {"min": quality_min}
-    if misc:
-        query["filters"]["misc_filters"] = {"filters": misc}
+        type_filter_values["quality"] = {"min": quality_min}
     if item.rarity == "unique":
         query["name"] = item.name
+    if stat_filters:
+        _apply_poe2_filter_rows(query, stat_filters)
     return {"query": query, "sort": {"price": "asc"}}
 
 
@@ -133,7 +261,10 @@ def build_web_trade_url(
     item: ParsedItem, league: str, payload: dict, query_id: str,
 ) -> str:
     """Build a Japanese Trade2 URL, falling back when identity is unverified."""
-    localized_type = _localized_identity(item.base_type, "ITEM")
+    identity_namespace = (
+        "GEM" if item.category in {"active_gem", "support_gem", "meta_gem"} else "ITEM"
+    )
+    localized_type = _localized_identity(item.base_type, identity_namespace)
     localized_name = (
         _localized_identity(item.name, "UNIQUE") if item.rarity == "unique" else None
     )
@@ -198,12 +329,23 @@ def search_prices(
     status: str = "online",
     stat_filters: tuple = (),
     quality_min: int | None = None,
+    include_corrupted=None,
+    include_mirrored: bool | None = None,
     partial_result_callback: Callable[[PriceResult], None] | None = None,
 ) -> PriceResult:
     """Search Trade2 and adapt its rows to the existing shared price UI model."""
-    payload = build_search_query(item, status=status, quality_min=quality_min)
-    if stat_filters:
-        payload["query"]["stats"] = _stat_groups_from_filters(stat_filters)
+    payload = build_search_query(
+        item, status=status, quality_min=quality_min, stat_filters=stat_filters,
+    )
+    misc = payload["query"]["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
+    if include_corrupted == "only":
+        misc["corrupted"] = {"option": "true"}
+    elif include_corrupted is False:
+        misc["corrupted"] = {"option": "false"}
+    if include_mirrored is False:
+        misc["mirrored"] = {"option": "false"}
+    if not misc:
+        payload["query"]["filters"].pop("misc_filters", None)
     search_url = f"{API_ROOT}/search/{quote(league, safe='')}"
     search, headers, search_cached = _cached_request_json(search_url, payload)
     query_id = str(search.get("id", ""))
