@@ -16,6 +16,7 @@ from .models import ParsedItem
 API_URL = "https://poe.ninja/poe1/api/economy/current/dense/overviews"
 STASH_OVERVIEW_URL = "https://poe.ninja/poe1/api/economy/stash/current/item/overview"
 POE2_STASH_OVERVIEW_URL = "https://poe.ninja/poe2/api/economy/stash/current/item/overview"
+POE2_EXCHANGE_OVERVIEW_URL = "https://poe.ninja/poe2/api/economy/exchange/current/overview"
 CACHE_TTL_SECONDS = 31 * 60
 
 _UNIQUE_TYPES = {
@@ -45,8 +46,12 @@ class PoeNinjaPrice:
     divine_chaos: float | None = None
     total_change: float | None = None
     source_type: str | None = None
+    quote_amount: float | None = None
+    quote_currency: str | None = None
 
     def display_price_parts(self) -> tuple[str, str]:
+        if self.quote_amount is not None and self.quote_currency:
+            return _display_number(self.quote_amount), self.quote_currency
         if self.divine_chaos and self.chaos >= self.divine_chaos * 0.94:
             value = self.chaos / self.divine_chaos
             return _display_number(value), "divine"
@@ -76,6 +81,8 @@ class PoeNinjaPrice:
 
 
 def _display_number(value: float) -> str:
+    if abs(value) < 1:
+        return f"{value:.2f}".rstrip("0").rstrip(".")
     if abs(value) < 10:
         return f"{value:.1f}".rstrip("0").rstrip(".")
     return str(round(value))
@@ -101,6 +108,16 @@ def _default_stash_fetcher(league: str, type_name: str) -> dict:
 def _default_poe2_fetcher(league: str, type_name: str) -> dict:
     url = (
         f"{POE2_STASH_OVERVIEW_URL}?league={quote(league, safe='')}"
+        f"&type={quote(type_name, safe='')}"
+    )
+    request = Request(url, headers={"User-Agent": "PoENavi/poetore"})
+    with urlopen(request, timeout=30) as response:
+        return json.load(response)
+
+
+def _default_poe2_exchange_fetcher(league: str, type_name: str) -> dict:
+    url = (
+        f"{POE2_EXCHANGE_OVERVIEW_URL}?league={quote(league, safe='')}"
         f"&type={quote(type_name, safe='')}"
     )
     request = Request(url, headers={"User-Agent": "PoENavi/poetore"})
@@ -158,14 +175,17 @@ class PoeNinjaPriceService:
         stash_fetcher: Callable[[str, str], dict] = _default_stash_fetcher,
         clock: Callable[[], float] = time.monotonic,
         poe2_fetcher: Callable[[str, str], dict] = _default_poe2_fetcher,
+        poe2_exchange_fetcher: Callable[[str, str], dict] = _default_poe2_exchange_fetcher,
     ):
         self._fetcher = fetcher
         self._stash_fetcher = stash_fetcher
         self._poe2_fetcher = poe2_fetcher
+        self._poe2_exchange_fetcher = poe2_exchange_fetcher
         self._clock = clock
         self._cache: dict[str, tuple[float, dict]] = {}
         self._stash_cache: dict[tuple[str, str], tuple[float, dict]] = {}
         self._poe2_cache: dict[tuple[str, str], tuple[float, dict]] = {}
+        self._poe2_exchange_cache: dict[tuple[str, str], tuple[float, dict]] = {}
         self._lock = threading.Lock()
 
     def clear(self):
@@ -173,6 +193,7 @@ class PoeNinjaPriceService:
             self._cache.clear()
             self._stash_cache.clear()
             self._poe2_cache.clear()
+            self._poe2_exchange_cache.clear()
 
     def lookup_poe2_unique(
         self,
@@ -189,6 +210,29 @@ class PoeNinjaPriceService:
             return None
         payload = self._poe2_payload(league, type_name)
         return match_poe2_unique_price(
+            payload,
+            item,
+            league,
+            trade_name=trade_name,
+            trade_base_type=trade_base_type,
+            source_type=type_name,
+        )
+
+    def lookup_poe2_exchange(
+        self,
+        item: ParsedItem,
+        league: str,
+        *,
+        trade_name: str | None = None,
+        trade_base_type: str | None = None,
+    ) -> PoeNinjaPrice | None:
+        if not league or re.search(r"\(PL\d+\)$", league):
+            return None
+        type_name = _poe2_exchange_overview_type(item)
+        if type_name is None:
+            return None
+        payload = self._poe2_exchange_payload(league, type_name)
+        return match_poe2_exchange_price(
             payload,
             item,
             league,
@@ -288,6 +332,19 @@ class PoeNinjaPriceService:
             if not isinstance(payload, dict):
                 raise ValueError("poe.ninja PoE2の応答形式を認識できませんでした。")
             self._poe2_cache[key] = (now, payload)
+            return payload
+
+    def _poe2_exchange_payload(self, league: str, type_name: str) -> dict:
+        key = (league, type_name)
+        with self._lock:
+            cached = self._poe2_exchange_cache.get(key)
+            now = self._clock()
+            if cached and now - cached[0] < CACHE_TTL_SECONDS:
+                return cached[1]
+            payload = self._poe2_exchange_fetcher(league, type_name)
+            if not isinstance(payload, dict):
+                raise ValueError("poe.ninja PoE2 Currency Exchangeの応答形式を認識できませんでした。")
+            self._poe2_exchange_cache[key] = (now, payload)
             return payload
 
 
@@ -569,6 +626,81 @@ def _poe2_unique_overview_type(category: str) -> str | None:
     return None
 
 
+def _poe2_exchange_overview_type(item: ParsedItem) -> str | None:
+    if item.category == "uncut_gem":
+        return "UncutGems"
+    if item.category == "currency":
+        return "Currency"
+    return None
+
+
+def match_poe2_exchange_price(
+    payload: dict,
+    item: ParsedItem,
+    league: str,
+    *,
+    trade_name: str | None = None,
+    trade_base_type: str | None = None,
+    source_type: str = "Currency",
+) -> PoeNinjaPrice | None:
+    candidates = {
+        str(value).strip().casefold()
+        for value in (trade_name, trade_base_type, item.name, item.base_type)
+        if value and str(value).strip()
+    }
+    items_by_id = {
+        str(row.get("id", "")): row for row in payload.get("items", ())
+        if str(row.get("id", ""))
+    }
+    matches = [
+        row for row in items_by_id.values()
+        if str(row.get("name", "")).casefold() in candidates
+    ]
+    if len(matches) != 1:
+        return None
+    identity = matches[0]
+    item_id = str(identity.get("id", ""))
+    line = next(
+        (row for row in payload.get("lines", ()) if str(row.get("id", "")) == item_id),
+        None,
+    )
+    if line is None:
+        return None
+
+    primary = float(line.get("primaryValue", 0))
+    max_volume_rate = float(line.get("maxVolumeRate", 0))
+    quote_currency = str(line.get("maxVolumeCurrency", "")).casefold()
+    core = payload.get("core") or {}
+    if primary <= 0 or core.get("primary") != "divine":
+        return None
+    chaos_rate = float((core.get("rates") or {}).get("chaos", 0))
+    if chaos_rate <= 0:
+        return None
+    supported_quotes = {"divine", "exalted", "chaos"}
+    if max_volume_rate > 0 and quote_currency in supported_quotes:
+        quote_amount = 1 / max_volume_rate
+    else:
+        quote_amount = primary
+        quote_currency = "divine"
+
+    sparkline = line.get("sparkline") or {}
+    details_id = str(identity.get("detailsId", ""))
+    return PoeNinjaPrice(
+        str(identity.get("name", "")),
+        None,
+        primary * chaos_rate,
+        tuple(sparkline.get("data", ())),
+        f"https://poe.ninja/poe2/economy/{_league_slug(league)}/"
+        f"{_poe2_overview_slug(source_type)}/{details_id}",
+        chaos_rate,
+        float(sparkline["totalChange"])
+        if sparkline.get("totalChange") is not None else None,
+        source_type,
+        quote_amount,
+        quote_currency,
+    )
+
+
 def match_poe2_unique_price(
     payload: dict,
     item: ParsedItem,
@@ -617,6 +749,8 @@ def _poe2_overview_slug(type_name: str) -> str:
         "UniqueAccessories": "unique-accessories",
         "UniqueWeapons": "unique-weapons",
         "UniqueArmours": "unique-armours",
+        "Currency": "currency",
+        "UncutGems": "uncut-gems",
     }[type_name]
 
 

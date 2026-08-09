@@ -4108,6 +4108,42 @@ def test_poe2_poe_ninja_panel_renders_supplied_divine_icon(qapp):
         window.close()
 
 
+def test_poe2_exchange_item_skips_trade2_and_uses_exalted_price_icon(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        fixture = Path(__file__).parent / "fixtures" / "poe2" / "real_copy_bilingual.csv"
+        with fixture.open(encoding="utf-8-sig", newline="") as stream:
+            row = next(
+                row for row in csv.DictReader(stream) if row["収集対象"] == "Uncut Gem"
+            )
+        window.input_edit.setPlainText(row["日本語設定の詳細コピー全文"])
+        with patch("src.poetore.poe2.trade.search_prices") as trade_search:
+            window.search_current_item()
+        trade_search.assert_not_called()
+        assert window._parsed_item.category == "uncut_gem"
+        assert "通常Trade出品検索は行わず" in window.search_scope_notice.text()
+        assert "poe.ninja参考価格のみ" in window.price_status.text()
+
+        key = ("uncut",)
+        window._poe_ninja_item_key = key
+        window._show_poe_ninja_price(
+            key,
+            PoeNinjaPrice(
+                "Uncut Skill Gem (Level 18)", None, 0.01, (),
+                "https://poe.ninja/example", 7.74,
+                quote_amount=0.56, quote_currency="exalted",
+            ),
+        )
+        assert window.poe_ninja_price_value.text() == "0.56"
+        assert window.poe_ninja_currency_icon.toolTip() == "Exalted Orb"
+        expected = QPixmap(str(
+            Path(__file__).resolve().parents[1] / "assets" / "icons" / "ExaltedOrb2.png"
+        )).scaled(26, 26, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        assert window.poe_ninja_currency_icon.pixmap().toImage() == expected.toImage()
+    finally:
+        window.close()
+
+
 def test_related_items_panel_renders_materials_and_rewards(qapp):
     window = PoetoreWindow()
     try:

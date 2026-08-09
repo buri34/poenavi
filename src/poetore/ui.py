@@ -406,6 +406,10 @@ def _price_currency_icon_filename(currency: str, poe_version: str) -> str:
     return f"{stem}2.png" if poe_version == POE2 else f"{stem}.png"
 
 
+def _is_poe2_exchange_price_item(item, poe_version: str) -> bool:
+    return poe_version == POE2 and item.category in {"currency", "uncut_gem"}
+
+
 def _asset_icon_path(filename: str) -> Path | None:
     """開発実行・配布EXEのどちらでも同梱アイコンを解決する。"""
     source_root = Path(__file__).resolve().parents[2]
@@ -2481,11 +2485,18 @@ class PoetoreWindow(QWidget):
                 trace.mark("poe_ninja_lookup_started")
             try:
                 if self.poe_version == POE2:
-                    result = default_poe_ninja_service.lookup_poe2_unique(
-                        item, league,
-                        trade_name=self._trade_item_name,
-                        trade_base_type=self._trade_base_type,
-                    )
+                    if _is_poe2_exchange_price_item(item, self.poe_version):
+                        result = default_poe_ninja_service.lookup_poe2_exchange(
+                            item, league,
+                            trade_name=self._trade_item_name,
+                            trade_base_type=self._trade_base_type,
+                        )
+                    else:
+                        result = default_poe_ninja_service.lookup_poe2_unique(
+                            item, league,
+                            trade_name=self._trade_item_name,
+                            trade_base_type=self._trade_base_type,
+                        )
                     related = ()
                 else:
                     result = default_poe_ninja_service.lookup(
@@ -2673,7 +2684,11 @@ class PoetoreWindow(QWidget):
             pixmap.scaled(26, 26, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             if not pixmap.isNull() else QPixmap()
         )
-        currency_name = "Divine Orb" if currency == "divine" else "Chaos Orb"
+        currency_name = {
+            "divine": "Divine Orb",
+            "chaos": "Chaos Orb",
+            "exalted": "Exalted Orb",
+        }[currency]
         self.poe_ninja_currency_icon.setToolTip(currency_name)
         self.poe_ninja_price_multiplier.setVisible(not pixmap.isNull())
         self.poe_ninja_currency_icon.setVisible(not pixmap.isNull())
@@ -3200,7 +3215,14 @@ class PoetoreWindow(QWidget):
         else:
             self.mod_warning.clear()
             self.mod_warning.hide()
-        if _is_valdo_map(item) and (
+        if _is_poe2_exchange_price_item(item, self.poe_version):
+            self.search_scope_notice.setText(
+                "ℹ Currency Exchange対象品です。通常Trade出品検索は行わず、"
+                "poe.ninja参考価格を表示します。"
+            )
+            self.search_scope_notice.show()
+            self.price_button.setEnabled(True)
+        elif _is_valdo_map(item) and (
             item.properties.get("報酬") or item.properties.get("Reward")
             or item.properties.get("マップ完了報酬")
             or item.properties.get("Map Completion Reward")
@@ -3244,6 +3266,18 @@ class PoetoreWindow(QWidget):
         item = getattr(self, "_parsed_item", None)
         if item is None:
             trace.mark("search_parse_failed")
+            self._current_performance_trace = None
+            return
+        if _is_poe2_exchange_price_item(item, self.poe_version):
+            trace.mark("poe2_exchange_trade_search_skipped")
+            self._has_searched_current_item = True
+            self._search_dirty = False
+            self.price_button.setEnabled(True)
+            self.trade_url_button.setEnabled(False)
+            self.price_list.clear()
+            self.price_status.setText(
+                "Currency Exchange対象品のため、poe.ninja参考価格のみ表示します。"
+            )
             self._current_performance_trace = None
             return
         trace.mark("search_ui_prepared")

@@ -25,6 +25,8 @@ _ITEM_LEVEL = re.compile(r"^(?:Item Level|アイテムレベル):\s*(\d+)\s*$")
 _CLASS_CATEGORY = {
     "Currency": "currency",
     "カレンシー": "currency",
+    "Uncut Skill Gems": "uncut_gem",
+    "スキルジェムの原石": "uncut_gem",
     "Bows": "bow",
     "弓": "bow",
     "Foci": "focus",
@@ -101,6 +103,7 @@ TRADE_CATEGORY_BY_CATEGORY = {
     "active_gem": "gem.activegem",
     "support_gem": "gem.supportgem",
     "meta_gem": "gem.metagem",
+    "uncut_gem": "currency",
     "talisman": "weapon.talisman",
 }
 _LOCAL_AFFIX_CATEGORIES = {
@@ -306,6 +309,8 @@ def _identity_matches_category(identity: dict, category: str | None) -> bool:
         return identity_category == "Charm"
     if category == "jewel":
         return identity_category == "Jewel"
+    if category == "uncut_gem":
+        return identity_category == "UncutSkillGem"
     if category == "barya":
         return identity_category in {"MiscMapItem", "MapFragment"} and "barya" in ref_name
     if category == "ultimatum":
@@ -509,6 +514,8 @@ def parse_item_text(text: str) -> ParsedItem:
             "Support Skill Gem": "support_gem",
             "MetaSkillGem": "meta_gem",
         }.get(identity_category, category)
+    elif identity_category == "UncutSkillGem":
+        category = "uncut_gem"
     if category is None and identity_category == "Map" and "waystone" in base_type.casefold():
         category = "waystone"
     if identity_category == "SoulCore":
@@ -586,7 +593,7 @@ def parse_item_text(text: str) -> ParsedItem:
         # EE2 consumes Gem description/effect sections before its modifier
         # parser. Gem trade searches use identity, level, quality and sockets;
         # prose and skill effects are not item modifiers.
-        if category in {"active_gem", "support_gem", "meta_gem"}:
+        if category in {"active_gem", "support_gem", "meta_gem", "uncut_gem"}:
             continue
         standalone_augment = bool(re.search(r"\(rune\)\s*$", line, re.IGNORECASE))
         line_kind = "augment" if standalone_augment else current_kind

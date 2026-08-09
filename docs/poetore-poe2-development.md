@@ -308,9 +308,20 @@ python3 scripts/snapshot_poetore_poe2_sources.py --verify
 除く22組をParserの日英identity回帰へ利用する。Sanctified、Mirrored、複雑Unique 3件は未収集／
 保留としてCSV内に残し、実物を得た時だけfixture化する。
 
-Uncut Gemは通常Trade2出品検索ではなくCurrency Exchangeで売買する運用のため、現段階では
-ぽえとれ検索へ対応しない。将来Currency Exchange参考価格・交換比率を実装する際に、
-`Uncut Skill Gems`／`スキルジェムの原石`のカテゴリとidentityを同じ経路で再評価する。
+Uncut Gemは通常Trade2出品検索ではなくCurrency Exchangeで売買する運用のため、
+`Uncut Skill Gems`／`スキルジェムの原石`を専用`uncut_gem`カテゴリとして解析し、通常Currencyと
+同じくTrade2出品検索を行わない。poe.ninjaが実際に使用する
+`/poe2/api/economy/exchange/current/overview`の`Currency`／`UncutGems`をリーグ別に31分キャッシュし、
+英語identity（UncutはLevel込み）で照合する。表示価格は`maxVolumeCurrency`／`maxVolumeRate`から、
+最も取引量の多いDivine／Exalted／Chaos建ての1個あたり価格を算出する。取得不能時は参考価格欄だけを
+非表示とし、別のTrade2検索へフォールバックしない。
+
+確認ソース:
+
+- <https://poe.ninja/poe2/economy/runesofaldur/currency>
+- <https://poe.ninja/poe2/economy/runesofaldur/uncut-gems>
+- <https://poe.ninja/poe2/api/economy/exchange/current/overview?league=Runes%20of%20Aldur&type=Currency>
+- <https://poe.ninja/poe2/api/economy/exchange/current/overview?league=Runes%20of%20Aldur&type=UncutGems>
 
 EE2の現行実装も、Item Classを欠くMeta Gemを特例としてGEMデータベースへ照合する。PoENaviは
 さらに誤判定防止として、コピータグの`Meta`／`メタ`と、固定GEM metadataの`MetaSkillGem`が

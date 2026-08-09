@@ -454,3 +454,16 @@ def test_phase45_gem_identity_and_socket_property():
     assert item.base_type == "Arc"
     assert item.category == "active_gem"
     assert item.properties["ソケット"] == "S S"
+def test_real_uncut_skill_gem_is_exchange_identity_without_description_mods():
+    import csv
+    from pathlib import Path
+
+    fixture = Path(__file__).parent / "fixtures" / "poe2" / "real_copy_bilingual.csv"
+    with fixture.open(encoding="utf-8-sig", newline="") as stream:
+        row = next(row for row in csv.DictReader(stream) if row["収集対象"] == "Uncut Gem")
+    for column in ("日本語設定の詳細コピー全文", "英語設定の詳細コピー全文"):
+        item = parse_item_text(row[column])
+        assert item.name == "Uncut Skill Gem (Level 18)"
+        assert item.base_type == "Uncut Skill Gem (Level 18)"
+        assert item.category == "uncut_gem"
+        assert item.modifiers == ()

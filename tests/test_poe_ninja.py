@@ -4,6 +4,7 @@ from src.poetore.poe_ninja import (
     CACHE_TTL_SECONDS, PoeNinjaPrice, PoeNinjaPriceService, divine_chaos_rate,
     match_poe_ninja_price,
     match_poe_ninja_identity,
+    match_poe2_exchange_price,
     match_poe2_unique_price,
 )
 from src.poetore.trade import english_trade_identity
@@ -386,3 +387,73 @@ def test_poe2_unique_service_uses_plural_overview_type_and_cache():
     assert service.lookup_poe2_unique(item, "Runes of Aldur") is not None
     assert service.lookup_poe2_unique(item, "Runes of Aldur") is not None
     assert calls == [("Runes of Aldur", "UniqueAccessories")]
+
+
+def _poe2_exchange_payload():
+    return {
+        "core": {
+            "primary": "divine",
+            "secondary": "chaos",
+            "rates": {"exalted": 364.9, "chaos": 7.74},
+        },
+        "items": [{
+            "id": "uncut-skill-gem-18",
+            "name": "Uncut Skill Gem (Level 18)",
+            "detailsId": "uncut-skill-gem-level-18",
+        }],
+        "lines": [{
+            "id": "uncut-skill-gem-18",
+            "primaryValue": 0.001535,
+            "maxVolumeCurrency": "exalted",
+            "maxVolumeRate": 1.79,
+            "sparkline": {"totalChange": 12.4, "data": [1, 3, 12.4]},
+        }],
+    }
+
+
+def test_poe2_exchange_matches_uncut_gem_and_uses_most_traded_quote_currency():
+    item = ParsedItem(
+        "Uncut Skill Gems", "currency", "Uncut Skill Gem (Level 18)",
+        "Uncut Skill Gem (Level 18)", "uncut_gem",
+    )
+    price = match_poe2_exchange_price(
+        _poe2_exchange_payload(), item, "Runes of Aldur", source_type="UncutGems",
+    )
+    assert price is not None
+    assert price.display_price_parts() == ("0.56", "exalted")
+    assert price.url == (
+        "https://poe.ninja/poe2/economy/runesofaldur/"
+        "uncut-gems/uncut-skill-gem-level-18"
+    )
+
+
+def test_poe2_exchange_service_uses_exchange_category_and_cache():
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        return _poe2_exchange_payload()
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    item = ParsedItem(
+        "Uncut Skill Gems", "currency", "Uncut Skill Gem (Level 18)",
+        "Uncut Skill Gem (Level 18)", "uncut_gem",
+    )
+    assert service.lookup_poe2_exchange(item, "Runes of Aldur") is not None
+    assert service.lookup_poe2_exchange(item, "Runes of Aldur") is not None
+    assert calls == [("Runes of Aldur", "UncutGems")]
+
+
+def test_poe2_exchange_matches_regular_currency():
+    payload = _poe2_exchange_payload()
+    payload["items"] = [{"id": "chaos", "name": "Chaos Orb", "detailsId": "chaos-orb"}]
+    payload["lines"] = [{
+        "id": "chaos", "primaryValue": 0.1293,
+        "maxVolumeCurrency": "divine", "maxVolumeRate": 7.74,
+        "sparkline": {"totalChange": 5.19, "data": [1.54, 5.19]},
+    }]
+    item = ParsedItem("Currency", "currency", "Chaos Orb", "Chaos Orb", "currency")
+    price = match_poe2_exchange_price(payload, item, "Runes of Aldur")
+    assert price is not None
+    assert price.display_price_parts() == ("0.13", "divine")
+    assert price.url.endswith("/currency/chaos-orb")
