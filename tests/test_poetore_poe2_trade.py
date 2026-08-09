@@ -11,7 +11,7 @@ from src.poetore.poe2.trade import (
     _stat_groups_from_filters, available_pc_leagues, build_web_trade_url,
     available_virtual_augments, default_pc_league, empty_augment_socket_count,
     poe2_search_filters, poe2_trade_filters, search_prices, trade_stat_value,
-    virtual_augment_filters,
+    virtual_augment_choice_label, virtual_augment_filters,
 )
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.trade import TradeStatFilter
@@ -463,6 +463,21 @@ def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
     payload = build_search_query(item, stat_filters=poe2_trade_filters(item, "Adept Rune"))
     sent = payload["query"]["stats"][0]["filters"]
     assert any(row["id"].startswith("rune.") and row.get("value") == {"min": 9.0} for row in sent)
+
+    body = item.__class__(**{
+        **item.__dict__,
+        "category": "body_armour",
+        "properties": {**item.properties, "Sockets": "S S"},
+        "augment_count": 0,
+    })
+    greater_iron = next(
+        row for row in available_virtual_augments(body)
+        if row["ref_name"] == "Greater Iron Rune"
+    )
+    assert virtual_augment_choice_label(body, greater_iron) == (
+        "アーマー、回避力およびエナジーシールドが36%増加する"
+        "（鉄のグレータールーン ×2）"
+    )
 
     corrupted = item.__class__(**{**item.__dict__, "flags": (*item.flags, "corrupted")})
     assert empty_augment_socket_count(corrupted) == 1

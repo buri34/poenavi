@@ -2397,17 +2397,24 @@ class PoetoreWindow(QWidget):
             self.virtual_augment_label.hide()
             self.virtual_augment_combo.hide()
             return
-        from .poe2.trade import available_virtual_augments, empty_augment_socket_count
+        from .poe2.trade import (
+            available_virtual_augments, empty_augment_socket_count,
+            virtual_augment_choice_label,
+        )
         choices = available_virtual_augments(item)
         self.virtual_augment_combo.blockSignals(True)
         self.virtual_augment_combo.clear()
         self.virtual_augment_combo.addItem("仮挿入しない", None)
         for choice in choices:
-            names = choice.get("names") or {}
+            label = virtual_augment_choice_label(item, choice)
             self.virtual_augment_combo.addItem(
-                str(names.get("ja") or names.get("en") or choice["ref_name"]),
-                choice["ref_name"],
+                label, choice["ref_name"],
             )
+            self.virtual_augment_combo.setItemData(
+                self.virtual_augment_combo.count() - 1, label, Qt.ToolTipRole,
+            )
+        popup_width = self.virtual_augment_combo.view().sizeHintForColumn(0) + 36
+        self.virtual_augment_combo.view().setMinimumWidth(min(760, max(220, popup_width)))
         self.virtual_augment_combo.setCurrentIndex(0)
         self.virtual_augment_combo.blockSignals(False)
         visible = bool(choices)

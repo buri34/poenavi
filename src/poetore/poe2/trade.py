@@ -167,6 +167,34 @@ def available_virtual_augments(item: ParsedItem) -> tuple[dict, ...]:
     return tuple(choices)
 
 
+def _virtual_augment_effect_text(effect: dict, socket_count: int) -> str:
+    texts = effect.get("text") or {}
+    text = str(texts.get("ja") or texts.get("en") or "")
+    values = iter(float(value) * socket_count for value in effect.get("values") or ())
+
+    def replace_value(match: re.Match[str]) -> str:
+        value = next(values, None)
+        if value is None:
+            return match.group()
+        return str(int(value)) if value.is_integer() else f"{value:g}"
+
+    return re.sub(r"#", replace_value, text)
+
+
+def virtual_augment_choice_label(item: ParsedItem, choice: dict) -> str:
+    """Return an effect-first label matching the virtual stats sent to Trade2."""
+    socket_count = empty_augment_socket_count(item)
+    names = choice.get("names") or {}
+    name = str(names.get("ja") or names.get("en") or choice.get("ref_name") or "")
+    effects = tuple(
+        _virtual_augment_effect_text(effect, socket_count)
+        for effect in choice.get("effects") or ()
+    )
+    effect_text = " / ".join(text for text in effects if text)
+    count_text = f" ×{socket_count}" if socket_count > 1 else ""
+    return f"{effect_text}（{name}{count_text}）" if effect_text else f"{name}{count_text}"
+
+
 def virtual_augment_filters(item: ParsedItem, ref_name: str | None) -> tuple[TradeStatFilter, ...]:
     """Build disabled-by-default Rune stat rows for one user-selected virtual augment."""
     if not ref_name:
