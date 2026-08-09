@@ -114,3 +114,17 @@ def test_reported_rare_spear_sends_flat_damage_average_and_optional_quality():
     assert with_quality["query"]["filters"]["misc_filters"]["filters"]["quality"] == {
         "min": 20
     }
+
+
+def test_reported_rare_body_armour_sends_local_evasion_stat_to_trade2():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_body_armour_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    payload = build_search_query(parse_item_text(text))
+    filters = payload["query"]["stats"][0]["filters"]
+    evasion = [row for row in filters if row["id"] == "explicit.stat_124859000"]
+    assert evasion == [
+        {"id": "explicit.stat_124859000", "value": {"min": 105.0}},
+        {"id": "explicit.stat_124859000", "value": {"min": 40.0}},
+    ]
+    assert all(row["id"] != "explicit.stat_2106365538" for row in filters)

@@ -72,6 +72,12 @@ TRADE_CATEGORY_BY_CATEGORY = {
     "quiver": "armour.quiver", "ring": "accessory.ring", "amulet": "accessory.amulet",
     "belt": "accessory.belt",
 }
+_LOCAL_AFFIX_CATEGORIES = {
+    "bow", "focus", "crossbow", "spear", "flail", "staff", "quarterstaff",
+    "wand", "sceptre", "one_mace", "two_mace", "one_sword", "two_sword",
+    "one_axe", "two_axe", "dagger", "buckler", "shield", "body_armour",
+    "helmet", "gloves", "boots", "quiver",
+}
 _RARITIES = {
     "Currency": "currency",
     "カレンシー": "currency",
@@ -181,7 +187,12 @@ def parse_item_text(text: str) -> ParsedItem:
         if any(line.startswith(f"{label}:") for label in _LABELS):
             continue
         line_kind = "augment" if re.search(r"\(rune\)\s*$", line, re.IGNORECASE) else current_kind
-        resolved = resolve_stat_line(line, line_kind)
+        prefer_local = (
+            rarity != "unique"
+            and category in _LOCAL_AFFIX_CATEGORIES
+            and line_kind in {"explicit", "fractured", "crafted", "desecrated"}
+        )
+        resolved = resolve_stat_line(line, line_kind, prefer_local=prefer_local)
         if resolved is not None:
             entry, values = resolved
             raw_stat_id = str(entry.get("id", ""))

@@ -100,3 +100,15 @@ def test_reported_japanese_rare_spear_keeps_quality_and_both_flat_damage_values(
     flat = next(mod for mod in item.modifiers if "物理ダメージを追加" in mod.text)
     assert flat.stat_id == "explicit.stat_1940865751"
     assert flat.values == (25.0, 39.0)
+
+
+def test_reported_japanese_rare_body_armour_prefers_local_evasion_stats():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_body_armour_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+    increased = [mod for mod in item.modifiers if mod.text.startswith("回避力が")]
+    assert [(mod.stat_id, mod.values) for mod in increased] == [
+        ("explicit.stat_124859000", (105.0,)),
+        ("explicit.stat_124859000", (40.0,)),
+    ]

@@ -1357,6 +1357,26 @@ def test_reported_poe2_rare_gloves_show_chaos_resistance_without_warning(qapp):
         window.close()
 
 
+def test_reported_poe2_rare_body_armour_shows_local_evasion_filter(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_body_armour_ja.txt").read_text(
+            encoding="utf-8"
+        )
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+
+        selected = window._selected_stat_filters()
+        evasion = [row for row in selected if row.text.startswith("回避力が")]
+        assert [(row.stat_id, row.min_value) for row in evasion] == [
+            ("explicit.stat_124859000", 105),
+            ("explicit.stat_124859000", 40),
+        ]
+        assert window.mod_warning.isHidden()
+    finally:
+        window.close()
+
+
 def test_poetore_search_range_is_persisted(qapp):
     config = {"poetore": {"search_stat_range": 20}}
     saved = Mock()
