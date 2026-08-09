@@ -137,7 +137,12 @@ fixture / Stat候補
 監査状態はcandidate ID、段階、query ID、件数、代表出品ID、最終呼出時刻、再開可能時刻を
 原子的に保存する。CronやMacが停止しても次回は保存位置から再開し、同じ段階を重複送信しない。
 監査対象を使い切ったらCronを自動無効化し、件数差・実Mod照合・未判定理由をCSV／JSONへ出力する。
-Cron作成は監査CLIとモックテスト完成後に別作業として行い、この計画記録だけでは起動しない。
+監査CLIは`scripts/audit_poetore_poe2_local_global.py`として実装した。固定Stat metadataと
+日英実コピーfixtureからLocal／Global候補を抽出し、状態・途中結果を
+`~/.openclaw/data/poenavi-audits/poe2-local-global/`へ原子的に保存する。2026-08-09 JSTに
+OpenClaw Cron `28f3db2b-dd66-4ef2-8a17-21ab6535b15b`を30秒間隔で起動した。
+CronはCLIを1ステップだけ呼び、完了時に自身を削除する。監査結果から本番のStat選択規則を
+自動変更せず、`report.json`／`report.csv`を人間が確認してから反映する。
 
 ### 日本語公式Trade2への遷移
 
