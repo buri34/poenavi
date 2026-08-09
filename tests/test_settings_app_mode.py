@@ -55,6 +55,19 @@ def test_general_group_titles_are_center_aligned(qapp):
     dialog.close()
 
 
+def test_poe_version_group_is_above_startup_mode_group(qapp):
+    dialog = SettingsDialog(current_config={})
+    groups = {
+        group.title(): group
+        for group in dialog.findChildren(QGroupBox)
+        if group.title() in {"PoEバージョン", "起動モード"}
+    }
+    layout = groups["PoEバージョン"].parentWidget().layout()
+
+    assert layout.indexOf(groups["PoEバージョン"]) < layout.indexOf(groups["起動モード"])
+    dialog.close()
+
+
 def test_startup_mode_note_is_directly_below_selector_checkbox(qapp):
     dialog = SettingsDialog(current_config={})
     note = dialog.findChild(QLabel, "startupModeSelectorNote")

@@ -1837,41 +1837,6 @@ class SettingsDialog(QDialog):
 
         general_layout.addWidget(log_group)
 
-        startup_group = QGroupBox("起動モード")
-        startup_group.setStyleSheet(group_style)
-        startup_layout = QVBoxLayout(startup_group)
-        self.show_mode_selector_cb = QCheckBox("起動時に「ぽえなび／ぽえとれ」を毎回選択する")
-        startup_config = self.current_config.get("startup")
-        if not isinstance(startup_config, dict):
-            startup_config = {}
-        self.show_mode_selector_cb.setChecked(
-            bool(startup_config.get("show_mode_selector", True))
-        )
-        self.show_mode_selector_cb.setStyleSheet(checkbox_style)
-        startup_layout.addWidget(self.show_mode_selector_cb)
-        startup_note = QLabel("OFFにすると、次回から前回選んだモードで直接起動します。")
-        startup_note.setObjectName("startupModeSelectorNote")
-        startup_note.setStyleSheet("color: #aaaaaa; font-size: 11px;")
-        startup_note.setWordWrap(True)
-        startup_layout.addWidget(startup_note)
-        preferred_mode_row = QHBoxLayout()
-        preferred_mode_label = QLabel("次回起動するモード:")
-        preferred_mode_label.setStyleSheet(
-            f"color: {Styles.TEXT_COLOR}; font-size: 12px;"
-        )
-        preferred_mode_row.addWidget(preferred_mode_label)
-        self.preferred_mode_combo = QComboBox()
-        self.preferred_mode_combo.addItem("ぽえなび", POENAVI_MODE)
-        self.preferred_mode_combo.addItem("ぽえとれ", POETORE_MODE)
-        preferred_mode = normalize_app_mode(
-            startup_config.get("preferred_mode", POENAVI_MODE)
-        )
-        preferred_index = self.preferred_mode_combo.findData(preferred_mode)
-        self.preferred_mode_combo.setCurrentIndex(max(0, preferred_index))
-        preferred_mode_row.addWidget(self.preferred_mode_combo, 1)
-        startup_layout.addLayout(preferred_mode_row)
-        general_layout.addWidget(startup_group)
-
         # ━━━━━ PoEバージョン ━━━━━
         poe_group = QGroupBox("PoEバージョン")
         poe_group.setStyleSheet(group_style)
@@ -1912,6 +1877,41 @@ class SettingsDialog(QDialog):
         poe_layout.addLayout(mode_row)
 
         general_layout.addWidget(poe_group)
+
+        startup_group = QGroupBox("起動モード")
+        startup_group.setStyleSheet(group_style)
+        startup_layout = QVBoxLayout(startup_group)
+        self.show_mode_selector_cb = QCheckBox("起動時に「ぽえなび／ぽえとれ」を毎回選択する")
+        startup_config = self.current_config.get("startup")
+        if not isinstance(startup_config, dict):
+            startup_config = {}
+        self.show_mode_selector_cb.setChecked(
+            bool(startup_config.get("show_mode_selector", True))
+        )
+        self.show_mode_selector_cb.setStyleSheet(checkbox_style)
+        startup_layout.addWidget(self.show_mode_selector_cb)
+        startup_note = QLabel("OFFにすると、次回から前回選んだモードで直接起動します。")
+        startup_note.setObjectName("startupModeSelectorNote")
+        startup_note.setStyleSheet("color: #aaaaaa; font-size: 11px;")
+        startup_note.setWordWrap(True)
+        startup_layout.addWidget(startup_note)
+        preferred_mode_row = QHBoxLayout()
+        preferred_mode_label = QLabel("次回起動するモード:")
+        preferred_mode_label.setStyleSheet(
+            f"color: {Styles.TEXT_COLOR}; font-size: 12px;"
+        )
+        preferred_mode_row.addWidget(preferred_mode_label)
+        self.preferred_mode_combo = QComboBox()
+        self.preferred_mode_combo.addItem("ぽえなび", POENAVI_MODE)
+        self.preferred_mode_combo.addItem("ぽえとれ", POETORE_MODE)
+        preferred_mode = normalize_app_mode(
+            startup_config.get("preferred_mode", POENAVI_MODE)
+        )
+        preferred_index = self.preferred_mode_combo.findData(preferred_mode)
+        self.preferred_mode_combo.setCurrentIndex(max(0, preferred_index))
+        preferred_mode_row.addWidget(self.preferred_mode_combo, 1)
+        startup_layout.addLayout(preferred_mode_row)
+        general_layout.addWidget(startup_group)
         
         # ━━━━━ 2. ホットキー ━━━━━
         group = QGroupBox("ホットキー")

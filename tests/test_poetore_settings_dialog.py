@@ -2,7 +2,14 @@ from unittest.mock import patch
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeyEvent
-from PySide6.QtWidgets import QApplication, QDialog, QLabel, QPushButton, QTabWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QGroupBox,
+    QLabel,
+    QPushButton,
+    QTabWidget,
+)
 
 from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 from src.poetore.trade import TradeLeague
@@ -175,6 +182,22 @@ def test_poetore_settings_saves_same_poe_version_controls_as_poenavi():
     settings = dialog.get_settings()
     assert settings["poe_version"] == "poe2"
     assert settings["poe_version_mode"] == "poe2"
+    dialog.close()
+
+
+def test_poetore_poe_version_group_is_visible_and_above_startup_mode():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={"poe_version": "poe2"})
+    groups = {
+        group.title(): group
+        for group in dialog.findChildren(QGroupBox)
+        if group.title() in {"PoEバージョン", "起動モード"}
+    }
+    layout = groups["PoEバージョン"].parentWidget().layout()
+
+    assert layout.indexOf(groups["PoEバージョン"]) < layout.indexOf(groups["起動モード"])
+    assert "QRadioButton" in dialog.styleSheet()
+    assert all(radio.text() in {"PoE1", "PoE2"} for radio in dialog.poe_version_radios.values())
     dialog.close()
 
 
