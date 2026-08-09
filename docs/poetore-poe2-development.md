@@ -153,6 +153,17 @@ Sanctified／Desecrated／Fractured／Craftedも見出しから由来を判別�
 - 固定EE2由来の日英fixtureは実クライアント採取と混同しない。実コピー全文を継続追加する。
 - Deflection等の個別StatとLocal／Global単一選択は、低頻度監査で件数と実出品を照合する。
 
+### Magic Waystone実コピー追補
+
+日本語Magic Waystoneは`破壊する 感電する ウェイストーン (ティア15)`のように、Affix名を
+Tier付きベース名の前へ連結する。末尾の`ウェイストーン (ティアN)`を公式base identityへ
+正規化し、Affix名をtypeへ混ぜない。実コピー表記の`パックサイズ`と
+`ウェイストーンドロップ確率`は、それぞれ`map_packsize`と`map_bonus`へ変換する。
+
+提供全文のクリティカル率、クリティカルダメージ、感電領域の3 Modを公式Stat IDへ解決し、
+説明文は未解決Mod警告へ入れない。Runes of AldurへTier／復活／Pack Size／Drop Chanceと
+3 Modを送信し、HTTP 200、30件を確認した。
+
 ## 公式API検証記録
 
 2026-08-09 JST、リーグ`Runes of Aldur`へ以下を送信した。

@@ -321,6 +321,34 @@ def test_phase45_waystone_properties_use_official_map_and_misc_filters():
     }
 
 
+def test_reported_magic_waystone_uses_tier_packsize_bonus_and_three_mods():
+    item = _phase45_item("magic_waystone_ja.txt")
+    modifier_rows = tuple(
+        TradeStatFilter(
+            mod.stat_id, mod.text, trade_stat_value(mod.values), mod.kind,
+            enabled=True, ref=mod.ref, confidence=mod.confidence,
+        )
+        for mod in item.modifiers
+    )
+    property_rows = tuple(
+        row.__class__(**{**row.__dict__, "enabled": True})
+        for row in poe2_search_filters(item)
+    )
+    payload = build_search_query(item, stat_filters=modifier_rows + property_rows)
+    assert payload["query"]["type"] == "Waystone (Tier 15)"
+    assert payload["query"]["filters"]["map_filters"]["filters"] == {
+        "map_revives": {"min": 4.0},
+        "map_packsize": {"min": 16.0},
+        "map_bonus": {"min": 30.0},
+        "map_tier": {"min": 15.0, "max": 15.0},
+    }
+    assert [row["id"] for row in payload["query"]["stats"][0]["filters"]] == [
+        "explicit.stat_2753083623",
+        "explicit.stat_57326096",
+        "explicit.stat_3477720557",
+    ]
+
+
 def test_phase45_runemastered_desecrated_and_fractured_filters_are_distinct():
     item = _phase45_item("phase45_runemastered_ja.txt")
     rows = _phase45_rows(item)

@@ -113,7 +113,9 @@ _PROPERTY_LABELS = {
     "Requirements", "装備条件",
     "Runic Ward", "ルーンワード", "Deflection Rating", "受け流し力",
     "Waystone Tier", "ウェイストーンティア", "Revives Available", "復活が利用可能",
-    "Monster Pack Size", "モンスターパックサイズ", "Magic Monsters", "モンスターエフェクティブ",
+    "Monster Pack Size", "モンスターパックサイズ", "Pack Size", "パックサイズ",
+    "Waystone Drop Chance", "ウェイストーンドロップ確率", "ウェイストーンドロップ率",
+    "Magic Monsters", "モンスターエフェクティブ",
     "Rare Monsters", "モンスターレアリティ", "Area Level", "エリアレベル",
     "Unidentified Tier", "未鑑定ティア",
 }
@@ -125,6 +127,9 @@ _STATE_LINES = {
     "Desecrated": "desecrated", "冒涜": "desecrated", "冒涜アイテム": "desecrated",
     "Fractured Item": "fractured", "フラクチャーアイテム": "fractured",
 }
+_DESCRIPTION_PREFIXES = (
+    "Can be used in a Map Device", "マップデバイスで使用すると",
+)
 def _mod_kind_from_heading(heading: str, previous: str | None) -> str | None:
     lowered = heading.casefold()
     if "冒涜" in heading or "desecrated" in lowered:
@@ -165,6 +170,17 @@ def _header(text: str) -> tuple[dict[str, str], list[str]]:
     return labels, identity_lines
 
 
+def _waystone_base_identity(raw_base: str) -> str:
+    match = re.search(
+        r"(?:Waystone\s*\(\s*Tier\s*|ウェイストーン\s*\(\s*ティア\s*)(\d+)\s*\)\s*$",
+        raw_base, re.IGNORECASE,
+    )
+    if not match:
+        return raw_base
+    tier = match.group(1)
+    return f"Waystone (Tier {tier})" if "waystone" in match.group(0).casefold() else f"ウェイストーン (ティア{tier})"
+
+
 def parse_item_text(text: str) -> ParsedItem:
     labels, identity_lines = _header(text)
     item_class = labels.get("item_class", "")
@@ -174,6 +190,8 @@ def parse_item_text(text: str) -> ParsedItem:
         raise Poe2ItemParseError("PoE2アイテムのclass、rarity、identityを解決できません")
 
     raw_base = identity_lines[-1]
+    if category == "waystone":
+        raw_base = _waystone_base_identity(raw_base)
     identity_namespace = "GEM" if category == "gem" or rarity == "gem" else "ITEM"
     base_identity = resolve_identity(raw_base, identity_namespace)
     if base_identity is None:
@@ -236,6 +254,8 @@ def parse_item_text(text: str) -> ParsedItem:
             properties[key.strip()] = value.strip()
             continue
         if not line or line == "--------" or line in identity_lines:
+            continue
+        if line.startswith(_DESCRIPTION_PREFIXES):
             continue
         if any(line.startswith(f"{label}:") for label in _LABELS):
             continue

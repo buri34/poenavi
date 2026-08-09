@@ -147,6 +147,25 @@ def test_phase45_waystone_parses_all_dedicated_properties():
     assert item.properties["モンスターパックサイズ"] == "+42%"
 
 
+def test_reported_magic_waystone_extracts_affixed_base_and_resolves_all_mods():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "magic_waystone_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+    assert item.rarity == "magic"
+    assert item.category == "waystone"
+    assert item.base_type == "Waystone (Tier 15)"
+    assert item.properties["復活が利用可能"] == "4 (augmented)"
+    assert item.properties["パックサイズ"] == "+16% (augmented)"
+    assert item.properties["ウェイストーンドロップ確率"] == "+30% (augmented)"
+    assert [(mod.stat_id, mod.values) for mod in item.modifiers] == [
+        ("explicit.stat_2753083623", (224.0,)),
+        ("explicit.stat_57326096", (25.0,)),
+        ("explicit.stat_3477720557", ()),
+    ]
+    assert all(mod.confidence == 1.0 for mod in item.modifiers)
+
+
 def test_phase45_runemastered_base_and_desecrated_state_are_not_collapsed():
     text = (Path(__file__).parent / "fixtures" / "poe2" / "phase45_runemastered_ja.txt").read_text(
         encoding="utf-8"
