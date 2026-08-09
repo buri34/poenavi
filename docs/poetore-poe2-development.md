@@ -114,6 +114,17 @@ Trade2 Stat IDを1つ選んで送る。EE2式のOR検索はPoE2の仕様変化�
       通常検索中には追加API呼び出しを行わない
 - [ ] 監査済みのカテゴリ・Mod規則をデータ化し、未監査範囲と最終確認日をレポートする
 
+### 日本語公式Trade2への遷移
+
+内部の価格取得は完全性の高い英語Trade2 APIと英語identityを正本にする。「公式トレード」
+ボタンでは、実検索に使った最終JSONを複製し、`name`と`type`だけを固定日英identity indexで
+日本語化して、`jp.pathofexile.com/trade2/search/poe2/<league>?q=<JSON>`を開く。
+Stat ID、`stat_id|option`、filter option ID、数値条件は日英で共通のため変更しない。
+
+英語3,880件に対して日本語itemsは3,873件で、防具groupに7件の差がある。日本語identityを
+確認できない場合は日本語サイトへ英語名を推測送信せず、英語APIが発行したquery IDの
+`www.pathofexile.com/trade2/...` URLへフォールバックする。
+
 ## 公式API検証記録
 
 2026-08-09 JST、リーグ`Runes of Aldur`へ以下を送信した。

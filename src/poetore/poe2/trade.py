@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from copy import deepcopy
 import json
 import re
 from urllib.parse import quote
@@ -12,6 +13,7 @@ from ..trade import (
     _group_price_listings,
 )
 from .parser import TRADE_CATEGORY_BY_CATEGORY
+from .metadata import resolve_identity
 
 
 API_ROOT = "https://www.pathofexile.com/api/trade2"
@@ -119,6 +121,43 @@ def build_search_query(
     return {"query": query, "sort": {"price": "asc"}}
 
 
+def _localized_identity(ref_name: str, namespace: str) -> str | None:
+    entry = resolve_identity(ref_name, namespace)
+    if entry is None:
+        return None
+    localized = str((entry.get("names") or {}).get("ja", "")).strip()
+    return localized or None
+
+
+def build_web_trade_url(
+    item: ParsedItem, league: str, payload: dict, query_id: str,
+) -> str:
+    """Build a Japanese Trade2 URL, falling back when identity is unverified."""
+    localized_type = _localized_identity(item.base_type, "ITEM")
+    localized_name = (
+        _localized_identity(item.name, "UNIQUE") if item.rarity == "unique" else None
+    )
+    if localized_type is None or (item.rarity == "unique" and localized_name is None):
+        return (
+            f"https://www.pathofexile.com/trade2/search/poe2/"
+            f"{quote(league, safe='')}/{quote(query_id, safe='')}"
+        )
+
+    web_payload = deepcopy(payload)
+    web_query = web_payload["query"]
+    if "type" in web_query:
+        web_query["type"] = localized_type
+    if item.rarity == "unique" and "name" in web_query:
+        web_query["name"] = localized_name
+    encoded_query = quote(
+        json.dumps(web_payload, ensure_ascii=False, separators=(",", ":")), safe="",
+    )
+    return (
+        f"https://jp.pathofexile.com/trade2/search/poe2/{quote(league, safe='')}"
+        f"?q={encoded_query}"
+    )
+
+
 def _request_json(request: Request) -> dict:
     with urlopen(request, timeout=30) as response:
         return json.loads(response.read())
@@ -171,6 +210,7 @@ def search_prices(
     ids = list(search.get("result", ()))
     if not query_id:
         raise TradeApiError("PoE2 Trade APIから検索IDを取得できませんでした。")
+    web_url = build_web_trade_url(item, league, payload, query_id)
 
     raw: list[PriceListing] = []
     fetch_cached = False
@@ -209,7 +249,7 @@ def search_prices(
             partial_result_callback(PriceResult(
                 league, query_id, len(ids), grouped,
                 headers.get("X-Rate-Limit-Ip-State", "") if headers else "",
-                f"https://www.pathofexile.com/trade2/search/poe2/{quote(league, safe='')}/{query_id}",
+                web_url,
                 search_cached or fetch_cached,
             ))
         independent = sum(row.listed_times <= 2 for row in grouped)
@@ -219,7 +259,7 @@ def search_prices(
     return PriceResult(
         league, query_id, len(ids), _group_price_listings(raw),
         headers.get("X-Rate-Limit-Ip-State", "") if headers else "",
-        f"https://www.pathofexile.com/trade2/search/poe2/{quote(league, safe='')}/{query_id}",
+        web_url,
         search_cached or fetch_cached,
     )
 

@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
 
 from src.poetore.poe2 import build_search_query, fetch_listings, parse_item_text, search_items
 from src.poetore.poe2.trade import (
-    _stat_groups_from_filters, available_pc_leagues, default_pc_league, trade_stat_value,
+    _stat_groups_from_filters, available_pc_leagues, build_web_trade_url,
+    default_pc_league, search_prices, trade_stat_value,
 )
+from src.poetore.models import ParsedItem
 from src.poetore.trade import TradeStatFilter
 
 
@@ -16,6 +19,11 @@ FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
 def _unique_fixture():
     rows = json.loads(FIXTURES.read_text(encoding="utf-8"))["fixtures"]
     return next(row for row in rows if row["id"] == "unique_focus_en")
+
+
+def _web_payload(url: str) -> dict:
+    encoded = parse_qs(urlparse(url).query)["q"][0]
+    return json.loads(unquote(encoded))
 
 
 def test_unique_query_contains_only_minimal_identity_filters():
@@ -50,6 +58,94 @@ def test_mock_search_and_fetch_complete_the_minimal_vertical_slice():
     assert len(seen) == 2
     assert "/api/trade2/search/Standard" in seen[0].full_url
     assert "/api/trade2/fetch/listing-id?query=query-id" in seen[1].full_url
+
+
+def test_poe2_web_trade_localizes_unique_identity_and_keeps_option_stat_ids():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "mageblood_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+    payload = build_search_query(item)
+    url = build_web_trade_url(item, "Runes of Aldur", payload, "english-query-id")
+    parsed = urlparse(url)
+    assert parsed.netloc == "jp.pathofexile.com"
+    assert parsed.path == "/trade2/search/poe2/Runes%20of%20Aldur"
+    query = _web_payload(url)["query"]
+    assert query["name"] == "メイジブラッド"
+    assert query["type"] == "実用的なベルト"
+    option_ids = [
+        row["id"] for row in query["stats"][0]["filters"]
+        if row["id"].startswith("explicit.stat_264262054|")
+    ]
+    assert option_ids == [
+        "explicit.stat_264262054|3", "explicit.stat_264262054|11",
+        "explicit.stat_264262054|4", "explicit.stat_264262054|8",
+    ]
+
+
+def test_poe2_web_trade_localizes_taming_name_and_base_type():
+    item = ParsedItem(
+        item_class="Rings", rarity="unique", name="The Taming",
+        base_type="Prismatic Ring", category="ring",
+    )
+    query = _web_payload(build_web_trade_url(
+        item, "Standard", build_search_query(item), "english-query-id",
+    ))["query"]
+    assert query["name"] == "テイミング"
+    assert query["type"] == "プリズムの指輪"
+
+
+def test_poe2_web_trade_localizes_rare_weapon_and_armour_bases():
+    fixtures = (
+        ("rare_spear_ja.txt", "飛翔のスピア"),
+        ("rare_body_armour_ja.txt", "スリップストライクベスト"),
+    )
+    for filename, expected_type in fixtures:
+        text = (Path(__file__).parent / "fixtures" / "poe2" / filename).read_text(
+            encoding="utf-8"
+        )
+        item = parse_item_text(text)
+        query = _web_payload(build_web_trade_url(
+            item, "Standard", build_search_query(item), "english-query-id",
+        ))["query"]
+        assert query["type"] == expected_type
+        assert "name" not in query
+
+
+def test_poe2_web_trade_falls_back_to_english_query_id_when_identity_is_missing(
+    monkeypatch,
+):
+    item = parse_item_text(_unique_fixture()["text"])
+    monkeypatch.setattr(
+        "src.poetore.poe2.trade._localized_identity", lambda *_args: None,
+    )
+    url = build_web_trade_url(item, "Standard", build_search_query(item), "query/id")
+    assert url == (
+        "https://www.pathofexile.com/trade2/search/poe2/Standard/query%2Fid"
+    )
+
+
+def test_poe2_price_result_exposes_japanese_web_trade_url(monkeypatch):
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "mageblood_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+
+    def fake_cached_request(url, payload=None):
+        assert "/api/trade2/search/Runes%20of%20Aldur" in url
+        assert payload["query"]["name"] == "Mageblood"
+        return {"id": "english-query-id", "result": []}, {}, False
+
+    monkeypatch.setattr(
+        "src.poetore.poe2.trade._cached_request_json", fake_cached_request,
+    )
+    result = search_prices(item, "Runes of Aldur")
+    assert result.web_url.startswith(
+        "https://jp.pathofexile.com/trade2/search/poe2/Runes%20of%20Aldur?q="
+    )
+    query = _web_payload(result.web_url)["query"]
+    assert query["name"] == "メイジブラッド"
+    assert query["type"] == "実用的なベルト"
 
 
 def test_poe2_leagues_are_filtered_and_auto_selects_current_softcore(monkeypatch):
