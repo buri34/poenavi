@@ -151,6 +151,73 @@ def empty_augment_socket_count(item: ParsedItem) -> int:
     return max(0, total - installed)
 
 
+def _virtual_augment_effect_family(effect: dict) -> tuple[int, int, str]:
+    """Group virtual augments by player-facing effect before rune series.
+
+    Elemental siblings intentionally share one family so fire/cold/lightning
+    candidates stay adjacent instead of being scattered by augment name.
+    """
+    texts = effect.get("text") or {}
+    text = f"{texts.get('ja', '')} {texts.get('en', '')}".casefold()
+    families = (
+        (10, 0, ("アーマー、回避力およびエナジーシールド", "armour, evasion and energy shield")),
+        (11, 0, ("ルーンワード", "runic ward")),
+        (20, 0, ("最大ライフ", "maximum life")),
+        (21, 0, ("最大マナ", "maximum mana")),
+        (30, 0, ("火耐性", "fire resistance")),
+        (30, 1, ("冷気耐性", "cold resistance")),
+        (30, 2, ("雷耐性", "lightning resistance")),
+        (30, 3, ("混沌耐性", "chaos resistance")),
+        (31, 0, ("全ての元素耐性", "all elemental resistances")),
+        (40, 0, ("物理ダメージ", "physical damage")),
+        (41, 0, ("火ダメージ", "fire damage")),
+        (41, 1, ("冷気ダメージ", "cold damage")),
+        (41, 2, ("雷ダメージ", "lightning damage")),
+        (41, 3, ("混沌ダメージ", "chaos damage")),
+        (50, 0, ("アタックスピード", "attack speed")),
+        (50, 1, ("キャストスピード", "cast speed")),
+        (60, 0, ("筋力", "strength")),
+        (60, 1, ("器用さ", "dexterity")),
+        (60, 2, ("知性", "intelligence")),
+    )
+    for rank, sibling_rank, needles in families:
+        if any(needle in text for needle in needles):
+            return rank, sibling_rank, ""
+    normalized = re.sub(r"[#\d.+%(),—-]+", " ", text)
+    return 999, 0, " ".join(normalized.split())
+
+
+def _virtual_augment_series(ref_name: str) -> str:
+    return re.sub(r"^(?:Perfect|Greater|Lesser)\s+", "", ref_name, flags=re.IGNORECASE).casefold()
+
+
+def _virtual_augment_tier(ref_name: str) -> int:
+    lowered = ref_name.casefold()
+    if lowered.startswith("perfect "):
+        return 4
+    if lowered.startswith("greater "):
+        return 3
+    if lowered.startswith("lesser "):
+        return 1
+    return 2
+
+
+def _virtual_augment_sort_key(choice: dict) -> tuple:
+    effects = tuple(choice.get("effects") or ())
+    primary = effects[0] if effects else {}
+    ref_name = str(choice.get("ref_name") or "")
+    values = tuple(float(value) for value in primary.get("values") or ())
+    strength = trade_stat_value(values) or 0.0
+    names = choice.get("names") or {}
+    return (
+        _virtual_augment_effect_family(primary),
+        _virtual_augment_series(ref_name),
+        -_virtual_augment_tier(ref_name),
+        -strength,
+        str(names.get("ja") or names.get("en") or ref_name).casefold(),
+    )
+
+
 def available_virtual_augments(item: ParsedItem) -> tuple[dict, ...]:
     """Return bilingual augment choices applicable to the copied item category."""
     category = _EE2_CATEGORY_BY_CATEGORY.get(item.category)
@@ -164,7 +231,7 @@ def available_virtual_augments(item: ParsedItem) -> tuple[dict, ...]:
         )
         if effects:
             choices.append({**entry, "effects": effects})
-    return tuple(choices)
+    return tuple(sorted(choices, key=_virtual_augment_sort_key))
 
 
 def _virtual_augment_effect_text(effect: dict, socket_count: int) -> str:

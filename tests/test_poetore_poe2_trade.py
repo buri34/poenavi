@@ -504,6 +504,30 @@ def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
     assert len(alternate["filters"]) == 2
 
 
+def test_virtual_augments_group_elemental_resistances_and_sort_tiers_descending():
+    item = _phase45_item("phase45_sceptre_ja.txt")
+    body = item.__class__(**{
+        **item.__dict__,
+        "category": "body_armour",
+        "properties": {**item.properties, "Sockets": "S S"},
+        "augment_count": 0,
+    })
+    refs = [row["ref_name"] for row in available_virtual_augments(body)]
+
+    iron = [
+        "Perfect Iron Rune", "Greater Iron Rune", "Iron Rune", "Lesser Iron Rune",
+    ]
+    elemental = [
+        "Perfect Desert Rune", "Greater Desert Rune", "Desert Rune", "Lesser Desert Rune",
+        "Perfect Glacial Rune", "Greater Glacial Rune", "Glacial Rune", "Lesser Glacial Rune",
+        "Perfect Storm Rune", "Greater Storm Rune", "Storm Rune", "Lesser Storm Rune",
+    ]
+    assert [ref for ref in refs if ref in iron] == iron
+    assert [ref for ref in refs if ref in elemental] == elemental
+    positions = [refs.index(ref) for ref in elemental]
+    assert positions == list(range(min(positions), max(positions) + 1))
+
+
 def test_phase7_unique_roll_range_reaches_shared_editable_filter_model():
     item = parse_item_text(
         (Path(__file__).parent / "fixtures" / "poe2" / "mageblood_ja.txt").read_text(
