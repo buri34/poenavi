@@ -14,6 +14,7 @@ from urllib.parse import quote
 
 import urllib3
 
+from .categories import is_armour_category, is_equipment_category, is_weapon_category
 from .models import ParsedItem
 from .performance import SearchPerformanceTrace
 from .metadata import (
@@ -76,6 +77,12 @@ _ITEM_CLASS_TRADE_CATEGORIES = {
     "Quivers": "accessory.quiver", "矢筒": "accessory.quiver",
     "Jewels": "jewel.base", "ジュエル": "jewel.base",
     "Abyss Jewels": "jewel.abyss", "アビスジュエル": "jewel.abyss",
+    "Crossbows": "weapon.crossbow", "クロスボウ": "weapon.crossbow",
+    "Spears": "weapon.spear", "槍": "weapon.spear",
+    "Flails": "weapon.flail", "フレイル": "weapon.flail",
+    "Quarterstaves": "weapon.warstaff", "クォータースタッフ": "weapon.warstaff",
+    "Foci": "armour.focus", "Focus": "armour.focus", "フォーカス": "armour.focus",
+    "Bucklers": "armour.buckler", "バックラー": "armour.buckler",
 }
 
 
@@ -447,6 +454,8 @@ def apply_search_range(
     discrete_socket_stats = {
         "property.sockets",
         "property.links",
+        "property.augment_sockets",
+        "property.gem_sockets",
     }
     for row in filters:
         if (
@@ -779,14 +788,17 @@ def _base_defence_percentile(item: ParsedItem, trade_base_type: str | None) -> f
 def available_trade_presets(item: ParsedItem) -> tuple[str, ...]:
     """完成品を基本とし、未完成でクラフト価値がある装備だけベース検索を追加する。"""
     rarity = item.rarity.casefold()
-    if (item.category not in {"weapon", "armour", "accessory", "cluster_jewel", "jewel", "abyss_jewel"}
+    if (not (is_equipment_category(item.category)
+             or item.category in {"cluster_jewel", "jewel", "abyss_jewel"})
             or _is_unique(item) or rarity in {"normal", "ノーマル"}
             or "unidentified" in item.flags):
         return (PRESET_FINISHED,)
     quality = _property_value(item, "品質", "Quality")
     likely_finished = (
         any(modifier.kind == "crafted" for modifier in item.modifiers)
-        or (quality == 20 and item.category in {"weapon", "armour"}
+        or (quality == 20 and (
+            is_weapon_category(item.category) or is_armour_category(item.category)
+        )
             and _memory_strands(item) is None)
     )
     is_unmodifiable = "corrupted" in item.flags or "mirrored" in item.flags

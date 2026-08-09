@@ -9,9 +9,10 @@ from urllib.request import Request, urlopen
 
 from ..models import ParsedItem
 from ..trade import (
+    LISTED_WITHIN_OPTIONS, PRESET_BASE, PRESET_FINISHED,
     PriceListing, PriceResult, TradeApiError, TradeLeague, TradeStatFilter, _cached_request_json,
-    _defence_at_20_quality, _group_price_listings, _property_value, _relaxed,
-    _relaxed_decimal, elemental_dps, physical_dps_at_20_quality,
+    _defence_at_20_quality, _group_price_listings, _property_value,
+    elemental_dps, physical_dps_at_20_quality,
 )
 from .parser import TRADE_CATEGORY_BY_CATEGORY
 from .metadata import augment_entries, resolve_identity
@@ -305,29 +306,29 @@ def _poe2_item_property_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]
         total = pdps + edps
         if pdps and edps:
             rows.append(TradeStatFilter(
-                "property.total_dps", "合計DPS", _relaxed(total), "property", True,
+                "property.total_dps", "合計DPS", total, "property", True,
                 read_value=total,
             ))
         if pdps:
             rows.append(TradeStatFilter(
-                "property.physical_dps", "物理DPS（品質20%換算）", _relaxed(pdps),
+                "property.physical_dps", "物理DPS（品質20%換算）", pdps,
                 "property", not edps or pdps / total >= 0.67, read_value=pdps,
             ))
         if edps:
             rows.append(TradeStatFilter(
-                "property.elemental_dps", "元素DPS", _relaxed(edps), "property",
+                "property.elemental_dps", "元素DPS", edps, "property",
                 not pdps or edps / total >= 0.67, read_value=edps,
             ))
         aps = _property_value(item, "秒間アタック回数", "Attacks per Second")
         if aps is not None:
             rows.append(TradeStatFilter(
-                "property.aps", "秒間アタック回数", _relaxed_decimal(aps), "property",
+                "property.aps", "秒間アタック回数", aps, "property",
                 False, read_value=aps, decimal=True,
             ))
         crit = _property_value(item, "クリティカルヒット率", "Critical Hit Chance")
         if crit is not None:
             rows.append(TradeStatFilter(
-                "property.crit", "クリティカルヒット率", _relaxed_decimal(crit),
+                "property.crit", "クリティカルヒット率", crit,
                 "property", False, read_value=crit, decimal=True,
             ))
     elif item.category in _ARMOUR_CATEGORIES:
@@ -342,12 +343,12 @@ def _poe2_item_property_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]
                 continue
             q20 = _defence_at_20_quality(value, item, defence)
             rows.append(TradeStatFilter(
-                stat_id, label, _relaxed(q20), "property", True, read_value=q20,
+                stat_id, label, q20, "property", True, read_value=q20,
             ))
         block = _property_value(item, "ブロック率", "Block Chance", "Chance to Block")
         if block is not None:
             rows.append(TradeStatFilter(
-                "property.block", "ブロック率", _relaxed(block), "property", False,
+                "property.block", "ブロック率", block, "property", False,
                 read_value=block,
             ))
     return tuple(rows)
@@ -536,6 +537,7 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
 
 def poe2_trade_filters(
     item: ParsedItem, virtual_augment_ref: str | None = None,
+    preset: str = PRESET_FINISHED,
 ) -> tuple[TradeStatFilter, ...]:
     """Return the complete editable PoE2 filter set, including Phase 7 aggregates."""
     pseudos, replaced_ids = _poe2_pseudo_filters(item)
@@ -551,10 +553,16 @@ def poe2_trade_filters(
         )
         for modifier in item.modifiers if modifier.stat_id
     )
-    return (
+    filters = (
         modifier_rows + pseudos + _poe2_item_property_filters(item)
         + poe2_search_filters(item) + virtual_augment_filters(item, virtual_augment_ref)
     )
+    if preset == PRESET_BASE:
+        return tuple(
+            row for row in filters
+            if row.kind == "state" or row.kind == "fractured"
+        )
+    return filters
 
 
 _POE2_FILTER_TARGETS = {
@@ -620,7 +628,14 @@ def build_search_query(
     status: str = "online",
     *,
     quality_min: int | None = None,
-    stat_filters: tuple = (),
+    stat_filters: tuple | None = None,
+    item_level_min: int | None = None,
+    item_level_max: int | None = None,
+    gem_level_min: int | None = None,
+    gem_sockets_min: int | None = None,
+    exact_base_type: bool = True,
+    trade_currency: str = "any",
+    listed_within: str = "any",
 ) -> dict:
     trade_category = TRADE_CATEGORY_BY_CATEGORY.get(item.category)
     if trade_category is None:
@@ -628,16 +643,20 @@ def build_search_query(
     type_filters = {"category": {"option": trade_category}}
     query = {
         "status": {"option": _STATUS_OPTIONS.get(status, status)},
-        "type": item.base_type,
         "stats": (
             _stat_groups_from_filters(stat_filters)
-            if stat_filters else _stat_groups_from_modifiers(item.modifiers)
+            if stat_filters is not None else _stat_groups_from_modifiers(item.modifiers)
         ),
         "filters": {"type_filters": {"filters": type_filters}},
     }
+    if exact_base_type:
+        query["type"] = item.base_type
     type_filter_values = query["filters"]["type_filters"]["filters"]
-    if item.item_level is not None and item.rarity == "rare":
-        type_filter_values["ilvl"] = {"min": item.item_level}
+    if item_level_min is not None or item_level_max is not None:
+        type_filter_values["ilvl"] = {
+            **({"min": item_level_min} if item_level_min is not None else {}),
+            **({"max": item_level_max} if item_level_max is not None else {}),
+        }
     if quality_min is not None:
         type_filter_values["quality"] = {"min": quality_min}
     if item.rarity == "unique":
@@ -645,8 +664,23 @@ def build_search_query(
             query["name"] = item.name
         else:
             type_filter_values["rarity"] = {"option": "unique"}
-    if stat_filters:
+    elif item.rarity.casefold() in {"normal", "ノーマル", "magic", "マジック", "rare", "レア"}:
+        type_filter_values["rarity"] = {"option": "nonunique"}
+    if stat_filters is not None:
         _apply_poe2_filter_rows(query, stat_filters)
+    if gem_level_min is not None or gem_sockets_min is not None:
+        misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
+        if gem_level_min is not None:
+            misc["gem_level"] = {"min": gem_level_min}
+        if gem_sockets_min is not None:
+            misc["gem_sockets"] = {"min": gem_sockets_min}
+    indexed = LISTED_WITHIN_OPTIONS.get(listed_within)
+    if trade_currency != "any" or indexed is not None:
+        trade = query["filters"].setdefault("trade_filters", {"filters": {}})["filters"]
+        if trade_currency != "any":
+            trade["price"] = {"option": trade_currency}
+        if indexed is not None:
+            trade["indexed"] = {"option": indexed}
     return {"query": query, "sort": {"price": "asc"}}
 
 
@@ -730,8 +764,15 @@ def search_prices(
     league: str,
     *,
     status: str = "online",
-    stat_filters: tuple = (),
+    stat_filters: tuple | None = None,
     quality_min: int | None = None,
+    item_level_min: int | None = None,
+    item_level_max: int | None = None,
+    gem_level_min: int | None = None,
+    gem_sockets_min: int | None = None,
+    exact_base_type: bool = True,
+    trade_currency: str = "any",
+    listed_within: str = "any",
     include_corrupted=None,
     include_mirrored: bool | None = None,
     partial_result_callback: Callable[[PriceResult], None] | None = None,
@@ -739,6 +780,10 @@ def search_prices(
     """Search Trade2 and adapt its rows to the existing shared price UI model."""
     payload = build_search_query(
         item, status=status, quality_min=quality_min, stat_filters=stat_filters,
+        item_level_min=item_level_min, item_level_max=item_level_max,
+        gem_level_min=gem_level_min, gem_sockets_min=gem_sockets_min,
+        exact_base_type=exact_base_type, trade_currency=trade_currency,
+        listed_within=listed_within,
     )
     misc = payload["query"]["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
     if include_corrupted == "only":

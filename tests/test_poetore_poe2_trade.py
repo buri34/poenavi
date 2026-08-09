@@ -273,7 +273,13 @@ def test_reported_rare_spear_sends_flat_damage_average_and_optional_quality():
     )
     assert flat["value"] == {"min": 32.0}
     type_filters = without_quality["query"]["filters"]["type_filters"]["filters"]
-    assert type_filters["ilvl"] == {"min": 81}
+    assert "ilvl" not in type_filters
+    assert type_filters["rarity"] == {"option": "nonunique"}
+
+    with_item_level = build_search_query(item, item_level_min=80, item_level_max=84)
+    assert with_item_level["query"]["filters"]["type_filters"]["filters"]["ilvl"] == {
+        "min": 80, "max": 84,
+    }
 
     with_quality = build_search_query(item, quality_min=20)
     assert with_quality["query"]["filters"]["type_filters"]["filters"]["quality"] == {
@@ -393,11 +399,11 @@ def test_phase7_weapon_and_armour_calculated_properties_use_trade2_equipment_fil
     by_id = {row.stat_id: row for row in spear_rows}
     assert by_id["property.physical_dps"].enabled
     assert by_id["property.physical_dps"].read_value == pytest.approx(241.325)
-    assert by_id["property.physical_dps"].min_value == 217.0
+    assert by_id["property.physical_dps"].min_value == pytest.approx(241.325)
     assert not by_id["property.aps"].enabled
     spear_query = build_search_query(spear, stat_filters=spear_rows)
     equipment = spear_query["query"]["filters"]["equipment_filters"]["filters"]
-    assert equipment["pdps"] == {"min": 217.0}
+    assert equipment["pdps"]["min"] == pytest.approx(241.325)
     assert "aps" not in equipment
 
     armour = parse_item_text((fixtures / "rare_body_armour_ja.txt").read_text(encoding="utf-8"))
@@ -406,9 +412,10 @@ def test_phase7_weapon_and_armour_calculated_properties_use_trade2_equipment_fil
     assert evasion.enabled
     assert evasion.read_value == pytest.approx(3090.0)
     armour_query = build_search_query(armour, stat_filters=armour_rows)
-    assert armour_query["query"]["filters"]["equipment_filters"]["filters"]["ev"] == {
-        "min": 2781.0,
-    }
+    assert (
+        armour_query["query"]["filters"]["equipment_filters"]["filters"]["ev"]["min"]
+        == pytest.approx(3090.0)
+    )
 
 
 def test_phase7_pseudo_replaces_direct_chaos_filter_without_duplicate_constraint():
@@ -694,3 +701,35 @@ def test_phase45_gem_socket_uses_official_misc_filter():
     assert payload["query"]["filters"]["misc_filters"]["filters"]["gem_sockets"] == {
         "min": 2.0
     }
+
+
+def test_shared_trade_options_are_sent_to_trade2_query():
+    item = _phase45_item("phase45_gem_ja.txt")
+    payload = build_search_query(
+        item,
+        quality_min=20,
+        gem_level_min=19,
+        gem_sockets_min=3,
+        exact_base_type=False,
+        trade_currency="exalted_divine",
+        listed_within="3days",
+    )
+    query = payload["query"]
+    assert "type" not in query
+    assert query["filters"]["type_filters"]["filters"]["quality"] == {"min": 20}
+    assert query["filters"]["misc_filters"]["filters"] == {
+        "gem_level": {"min": 19},
+        "gem_sockets": {"min": 3},
+    }
+    assert query["filters"]["trade_filters"]["filters"] == {
+        "price": {"option": "exalted_divine"},
+        "indexed": {"option": "3days"},
+    }
+
+
+def test_explicit_empty_filter_set_does_not_restore_item_modifiers():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    query = build_search_query(parse_item_text(text), stat_filters=())["query"]
+    assert query["stats"] == [{"type": "and", "filters": []}]

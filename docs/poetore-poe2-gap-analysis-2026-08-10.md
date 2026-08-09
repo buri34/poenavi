@@ -2,6 +2,10 @@
 
 監査日: 2026-08-10
 
+実装状況: 本レポートの高優先度6件と、Gem Socket／Charm Qualityチップは
+2026-08-10の共通検索UI parity修正で対応済み。閾値はEE2準拠でGem Level 19、
+Gem Quality 16、Gem Socket 3、Charm Quality 10以上を初期ONとする。
+
 ## 1. 監査対象
 
 - ぽえとれPoE2: `feature/poe2-foundation` / `1ceab69bb8bddaa720947f927483cb84a3072d79`

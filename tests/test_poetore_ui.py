@@ -21,6 +21,7 @@ from src.poetore.trade import (
     build_search_query, resolve_trade_stat_filters,
 )
 from src.poetore.parser import parse_item_text
+from src.poetore.poe2.parser import parse_item_text as parse_poe2_item_text
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.poe_ninja import PoeNinjaPrice
 from src.ui.settings_dialog import SettingsDialog
@@ -1369,7 +1370,7 @@ def test_reported_poe2_rare_gloves_show_chaos_resistance_without_warning(qapp):
             if row.stat_id == "pseudo.pseudo_total_chaos_resistance"
         )
         assert chaos.text == "混沌耐性合計"
-        assert chaos.min_value == 15
+        assert chaos.min_value == 13
         direct = next(row for row in selected if row.stat_id == "explicit.stat_2923486259")
         assert not direct.enabled
         assert any(row.stat_id == "property.evasion" for row in selected)
@@ -1391,8 +1392,8 @@ def test_reported_poe2_rare_body_armour_shows_local_evasion_filter(qapp):
         selected = window._selected_stat_filters()
         evasion = [row for row in selected if row.text.startswith("回避力が")]
         assert [(row.stat_id, row.min_value) for row in evasion] == [
-            ("explicit.stat_124859000", 105),
-            ("explicit.stat_124859000", 40),
+            ("explicit.stat_124859000", 104),
+            ("explicit.stat_124859000", 39),
         ]
         assert all(not row.alternative_stat_ids for row in evasion)
         assert window.mod_warning.isHidden()
@@ -3986,7 +3987,7 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
             "links", "nightmare_map", "map_tier", "completion_reward", "area_level", "heist_wings",
             "heist_job", "heist_target", "cluster_enchant",
             "cluster_passives", "cluster_sockets", "blighted", "item_level",
-            "base_percentile", "gem_variant", "gem_level", "quality",
+            "base_percentile", "gem_variant", "gem_level", "quality", "gem_sockets",
             "influence_shaper", "influence_elder", "influence_crusader",
             "influence_hunter", "influence_redeemer", "influence_warlord",
             "influence_eater", "influence_exarch",
@@ -4168,6 +4169,42 @@ def test_poe2_exchange_item_skips_trade2_and_uses_exalted_price_icon(qapp):
             Path(__file__).resolve().parents[1] / "assets" / "icons" / "ExaltedOrb2.png"
         )).scaled(26, 26, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         assert window.poe_ninja_currency_icon.pixmap().toImage() == expected.toImage()
+    finally:
+        window.close()
+
+
+def test_poe2_shared_search_controls_reach_trade_adapter(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        text = (Path(__file__).parent / "fixtures" / "poe2" / "phase45_gem_ja.txt").read_text(
+            encoding="utf-8"
+        )
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+        window.trade_currency_combo.setCurrentIndex(
+            window.trade_currency_combo.findData("exalted_divine")
+        )
+        window.listed_within_combo.setCurrentIndex(
+            window.listed_within_combo.findData("3days")
+        )
+        window.gem_socket_toggle.click()
+
+        result = PriceResult("Standard", "qid", 0, ())
+        with patch("src.poetore.poe2.trade.search_prices", return_value=result) as search:
+            window.search_current_item()
+            for _ in range(50):
+                qapp.processEvents()
+                if search.called:
+                    break
+                QTest.qWait(10)
+
+        assert search.called
+        kwargs = search.call_args.kwargs
+        assert kwargs["trade_currency"] == "exalted_divine"
+        assert kwargs["listed_within"] == "3days"
+        assert kwargs["gem_level_min"] == 20
+        assert kwargs["quality_min"] == 20
+        assert kwargs["gem_sockets_min"] == 2
     finally:
         window.close()
 
@@ -4447,6 +4484,90 @@ def test_gem_quality_chip_uses_read_quality_and_can_be_toggled_and_edited(qapp):
         window.close()
 
 
+@pytest.mark.parametrize(("level", "enabled"), [(18, False), (19, True)])
+def test_poe2_gem_level_chip_matches_ee2_threshold(qapp, level, enabled):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        item = parse_poe2_item_text(
+            f"アイテムクラス: スキルジェム\nレアリティ: ジェム\nアーク\n"
+            f"--------\nレベル: {level}\n品質: +20%\nソケット: S S S\n"
+        )
+        window._configure_gem_level(item)
+        assert not window.gem_level_tag.isHidden()
+        assert window._selected_gem_level() == (level if enabled else None)
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(("sockets", "enabled"), [(2, False), (3, True)])
+def test_poe2_gem_socket_chip_matches_ee2_threshold(qapp, sockets, enabled):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        item = parse_poe2_item_text(
+            "アイテムクラス: スキルジェム\nレアリティ: ジェム\nアーク\n--------\n"
+            f"レベル: 20\n品質: +20%\nソケット: {' '.join('S' for _ in range(sockets))}\n"
+        )
+        window._parsed_item = item
+        window._configure_gem_sockets(item)
+        assert not window.gem_socket_tag.isHidden()
+        assert window._selected_gem_sockets() == (sockets if enabled else None)
+        window._populate_stat_filters(window._resolved_trade_filters(item, PRESET_FINISHED))
+        assert all(
+            window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole)
+            != "property.gem_sockets"
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        )
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(("quality", "enabled"), [(9, False), (10, True)])
+def test_poe2_charm_quality_chip_matches_ee2_threshold(qapp, quality, enabled):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        item = ParsedItem(
+            item_class="Charms", rarity="magic", name="Test Charm",
+            base_type="Topaz Charm", category="charm",
+            properties={"Quality": f"+{quality}%"}, raw_text=f"charm-{quality}",
+        )
+        window._parsed_item = item
+        window._configure_quality(item)
+        assert not window.gem_quality_tag.isHidden()
+        assert window._selected_quality() == (quality if enabled else None)
+    finally:
+        window.close()
+
+
+def test_poe2_rare_equipment_uses_shared_header_presets_and_item_level_chip(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        item = replace(
+            parse_poe2_item_text(
+                (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(
+                    encoding="utf-8"
+                )
+            ),
+            item_level=89,
+            raw_text="poe2-rare-spear-ilvl-89",
+        )
+        window._parsed_item = item
+        window._trade_base_type = item.base_type
+        window._configure_trade_presets(item)
+        window._update_item_header(item)
+        window._configure_item_level(item, force=True)
+        assert not window.base_scope_toggle.isHidden()
+        assert window.trade_preset_combo.isEnabled()
+        assert window.trade_preset_combo.currentData() == PRESET_FINISHED
+        assert not window.item_level_tag.isHidden()
+        assert window._selected_item_level() is None
+
+        window.trade_preset_combo.setCurrentIndex(1)
+        assert window.trade_preset_combo.currentData() == PRESET_BASE
+        assert window._selected_item_level() == 86
+    finally:
+        window.close()
+
+
 @pytest.mark.parametrize(("quality", "metadata", "visible", "enabled"), [
     (0, {"max_level": 20}, False, False),
     (15, {"max_level": 20}, True, False),
@@ -4567,7 +4688,7 @@ def test_poe2_weapon_quality_20_is_visible_but_initially_disabled(qapp):
         assert window.gem_quality_edit.text() == "20"
         assert window._selected_quality() is None
         assert window.gem_quality_toggle.text() == "☐ 品質："
-        assert flat.min_value == 32.0
+        assert flat.min_value == 30.0
         assert flat.read_value == 32.0
 
         window.gem_quality_toggle.click()
@@ -4587,7 +4708,7 @@ def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
         window.parse_current_text()
         filters = window._resolved_trade_filters(item, "finished")
         by_id = {row.stat_id: row for row in filters}
-        assert by_id["property.spirit"].min_value == 100
+        assert by_id["property.spirit"].min_value == 90
         assert not by_id["property.spirit"].enabled
         assert by_id["property.augment_sockets"].min_value == 2
         assert not by_id["property.augment_sockets"].enabled
@@ -4603,7 +4724,7 @@ def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
         window.virtual_augment_combo.setCurrentIndex(index)
         selected = window._selected_stat_filters()
         virtual = next(row for row in selected if row.kind == "virtual-rune")
-        assert virtual.min_value == 9.0
+        assert virtual.min_value == 8.0
         assert "仮想:" in virtual.text
 
         corrupted = item.__class__(**{**item.__dict__, "flags": (*item.flags, "corrupted")})

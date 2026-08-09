@@ -31,6 +31,9 @@ from src.utils.poe_version_data import POE1, POE2
 
 from .parser import ItemParseError, parse_item_text
 from .clipboard import clipboard_change_token, read_item_clipboard
+from .categories import (
+    is_armour_category, is_equipment_category, is_gem_category, is_weapon_category,
+)
 from .window_position import PlacementContext, capture_placement_context, position_for_context
 from .trade import (
     PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
@@ -1055,11 +1058,18 @@ class PoetoreWindow(QWidget):
         self.trade_status_combo.addItem("オフライン出品も含む", "offline")
         self.trade_currency_combo = QComboBox()
         self.trade_currency_combo.addItem("すべての通貨", "any")
-        self.trade_currency_combo.addItem("カオスオーブのみ", "chaos")
-        self.trade_currency_combo.addItem("神のオーブのみ", "divine")
-        self.trade_currency_combo.addItem(
-            "カオスまたは神のオーブ", "chaos_divine"
-        )
+        if self.poe_version == POE2:
+            self.trade_currency_combo.addItem("高貴なオーブのみ", "exalted")
+            self.trade_currency_combo.addItem("神のオーブのみ", "divine")
+            self.trade_currency_combo.addItem(
+                "高貴なオーブまたは神のオーブ", "exalted_divine"
+            )
+        else:
+            self.trade_currency_combo.addItem("カオスオーブのみ", "chaos")
+            self.trade_currency_combo.addItem("神のオーブのみ", "divine")
+            self.trade_currency_combo.addItem(
+                "カオスまたは神のオーブ", "chaos_divine"
+            )
         self.listed_within_combo = QComboBox()
         for label, value in (
             ("期間指定なし", "any"), ("24時間以内", "1day"), ("3日以内", "3days"),
@@ -1187,6 +1197,24 @@ class PoetoreWindow(QWidget):
         self.gem_quality_edit.textEdited.connect(self._enable_gem_quality_filter)
         gem_quality_layout.addWidget(self.gem_quality_edit)
         self.gem_quality_tag.hide()
+        self.gem_socket_tag = QFrame()
+        self.gem_socket_tag.setObjectName("gemSocketTag")
+        self.gem_socket_tag.setFixedWidth(150)
+        gem_socket_layout = QHBoxLayout(self.gem_socket_tag)
+        gem_socket_layout.setContentsMargins(8, 2, 6, 2)
+        gem_socket_layout.setSpacing(1)
+        self.gem_socket_toggle = QPushButton("☑ Gem Socket：")
+        self.gem_socket_toggle.setObjectName("gemSocketToggle")
+        self.gem_socket_toggle.clicked.connect(self._toggle_gem_socket_filter)
+        gem_socket_layout.addWidget(self.gem_socket_toggle)
+        self.gem_socket_edit = QLineEdit()
+        self.gem_socket_edit.setObjectName("gemSocketEdit")
+        self.gem_socket_edit.setValidator(QIntValidator(1, 10, self.gem_socket_edit))
+        self.gem_socket_edit.setAlignment(Qt.AlignCenter)
+        self.gem_socket_edit.setFixedWidth(24)
+        self.gem_socket_edit.textEdited.connect(self._enable_gem_socket_filter)
+        gem_socket_layout.addWidget(self.gem_socket_edit)
+        self.gem_socket_tag.hide()
         self.links_tag = QFrame()
         self.links_tag.setObjectName("linksTag")
         self.links_tag.setFixedWidth(116)
@@ -1307,6 +1335,7 @@ class PoetoreWindow(QWidget):
             ("gem_variant", self.gem_variant_chip),
             ("gem_level", self.gem_level_tag),
             ("quality", self.gem_quality_tag),
+            ("gem_sockets", self.gem_socket_tag),
             *((f"influence_{name}", self.influence_chips[name]) for name in _INFLUENCE_CHIPS),
             ("magic_rarity", self.magic_rarity_toggle),
             ("unidentified", self.unidentified_chip),
@@ -1514,12 +1543,13 @@ class PoetoreWindow(QWidget):
             control.currentIndexChanged.connect(self._mark_search_dirty)
         for button in (
             self.item_level_toggle, self.gem_level_toggle, self.gem_quality_toggle,
+            self.gem_socket_toggle,
             self.links_toggle, *self.influence_chips.values(),
         ):
             button.clicked.connect(self._mark_search_dirty)
         for editor in (
             self.item_level_edit, self.item_level_max_edit, self.gem_level_edit,
-            self.gem_quality_edit, self.links_edit,
+            self.gem_quality_edit, self.gem_socket_edit, self.links_edit,
         ):
             editor.textEdited.connect(self._mark_search_dirty)
         for chip in (
@@ -1714,7 +1744,7 @@ class PoetoreWindow(QWidget):
                 border: 1px solid #db86ef;
                 border-radius: 3px;
             }
-            QFrame#gemQualityTag {
+            QFrame#gemQualityTag, QFrame#gemSocketTag {
                 background: rgba(91, 53, 102, 210);
                 border: 1px solid #db86ef;
                 border-radius: 3px;
@@ -1728,14 +1758,14 @@ class PoetoreWindow(QWidget):
                 color: #f2e7f5;
                 font-weight: 700;
             }
-            QPushButton#itemLevelToggle, QPushButton#gemLevelToggle, QPushButton#gemQualityToggle, QPushButton#linksToggle {
+            QPushButton#itemLevelToggle, QPushButton#gemLevelToggle, QPushButton#gemQualityToggle, QPushButton#gemSocketToggle, QPushButton#linksToggle {
                 background: transparent;
                 color: #f2e7f5;
                 border: none;
                 padding: 0;
                 font-weight: 700;
             }
-            QLineEdit#itemLevelEdit, QLineEdit#itemLevelMaxEdit, QLineEdit#gemLevelEdit, QLineEdit#gemQualityEdit, QLineEdit#linksEdit {
+            QLineEdit#itemLevelEdit, QLineEdit#itemLevelMaxEdit, QLineEdit#gemLevelEdit, QLineEdit#gemQualityEdit, QLineEdit#gemSocketEdit, QLineEdit#linksEdit {
                 background: transparent;
                 color: #f2e7f5;
                 border: none;
@@ -1743,7 +1773,7 @@ class PoetoreWindow(QWidget):
                 min-height: 20px;
                 font-weight: 700;
             }
-            QLineEdit#itemLevelEdit:focus, QLineEdit#itemLevelMaxEdit:focus, QLineEdit#gemLevelEdit:focus, QLineEdit#gemQualityEdit:focus, QLineEdit#linksEdit:focus {
+            QLineEdit#itemLevelEdit:focus, QLineEdit#itemLevelMaxEdit:focus, QLineEdit#gemLevelEdit:focus, QLineEdit#gemQualityEdit:focus, QLineEdit#gemSocketEdit:focus, QLineEdit#linksEdit:focus {
                 border: none;
                 color: #ebd0f2;
             }
@@ -1755,7 +1785,7 @@ class PoetoreWindow(QWidget):
                 border: 1px dashed rgba(156, 137, 161, 150);
                 background: rgba(20, 20, 20, 180);
             }
-            QFrame#gemQualityTag[active="false"] {
+            QFrame#gemQualityTag[active="false"], QFrame#gemSocketTag[active="false"] {
                 border: 1px dashed rgba(156, 137, 161, 150);
                 background: rgba(20, 20, 20, 180);
             }
@@ -1774,6 +1804,10 @@ class PoetoreWindow(QWidget):
             }
             QFrame#gemQualityTag[active="false"] QPushButton,
             QFrame#gemQualityTag[active="false"] QLineEdit {
+                color: #766a79;
+            }
+            QFrame#gemSocketTag[active="false"] QPushButton,
+            QFrame#gemSocketTag[active="false"] QLineEdit {
                 color: #766a79;
             }
             QFrame#linksTag[active="false"] QPushButton,
@@ -2071,7 +2105,7 @@ class PoetoreWindow(QWidget):
 
     def _update_item_header(self, item):
         is_nonunique_equipment = (
-            item.category in {"weapon", "armour", "accessory"}
+            is_equipment_category(item.category)
             and item.rarity.casefold() not in {"unique", "ユニーク"}
         )
         display_name = (
@@ -2095,7 +2129,7 @@ class PoetoreWindow(QWidget):
                 self._base_scope_item_key = key
                 self.base_scope_toggle.setCurrentIndex(0)
         self.weapon_property_label.setText(
-            "武器性能・検索Mod" if item.category == "weapon" else "検索条件一覧"
+            "武器性能・検索Mod" if is_weapon_category(item.category) else "検索条件一覧"
         )
         self._update_weapon_dps_summary(item)
 
@@ -2112,7 +2146,7 @@ class PoetoreWindow(QWidget):
                 return f"透視のオーブ ({area})"
 
         identity = str(item.base_type or item.name or "").strip()
-        if item.category == "gem" and identity.casefold().startswith("vaal "):
+        if is_gem_category(item.category) and identity.casefold().startswith("vaal "):
             from src.utils.gem_resolver import load_gem_names_ja
 
             normal_english = identity[5:].strip()
@@ -2123,7 +2157,7 @@ class PoetoreWindow(QWidget):
         return item.name or item.base_type or "名称不明"
 
     def _update_weapon_dps_summary(self, item):
-        if item.category != "weapon":
+        if not is_weapon_category(item.category):
             self.weapon_dps_label.clear()
             self.weapon_dps_label.hide()
             return
@@ -2179,7 +2213,9 @@ class PoetoreWindow(QWidget):
             "Two Hand Maces": "両手メイス", "Two Hand Swords": "両手剣",
             "Wands": "ワンド", "Rings": "指輪", "Amulets": "アミュレット",
             "Belts": "ベルト", "指輪": "指輪", "アミュレット": "アミュレット",
-            "ベルト": "ベルト",
+            "ベルト": "ベルト", "Crossbows": "クロスボウ", "Spears": "槍",
+            "Flails": "フレイル", "Quarterstaves": "クォータースタッフ",
+            "Foci": "フォーカス", "Focus": "フォーカス", "Bucklers": "バックラー",
         }
         return labels.get(item_class.strip(), item_class.strip() or "同一クラス")
 
@@ -2385,7 +2421,11 @@ class PoetoreWindow(QWidget):
                 self.virtual_augment_combo.currentData()
                 if not self.virtual_augment_combo.isHidden() else None
             )
-            return poe2_trade_filters(item, virtual_ref)
+            return apply_search_range(
+                poe2_trade_filters(item, virtual_ref, preset),
+                self._selected_search_range(),
+                item,
+            )
         return apply_search_range(
             resolve_trade_stat_filters(
                 item, preset, self._trade_base_type, self._trade_item_name,
@@ -2552,7 +2592,7 @@ class PoetoreWindow(QWidget):
     def _lookup_related_items(self, item, league, primary_price=None):
         namespace = (
             "UNIQUE" if item.rarity.casefold() in {"unique", "ユニーク"}
-            else "GEM" if item.category == "gem"
+            else "GEM" if is_gem_category(item.category)
             else "DIVINATION_CARD" if item.category == "divination_card"
             else "ITEM"
         )
@@ -3185,6 +3225,7 @@ class PoetoreWindow(QWidget):
         self._configure_item_level(item, force=is_new_item)
         self._configure_gem_level(item)
         self._configure_quality(item)
+        self._configure_gem_sockets(item)
         self._configure_links(item)
         self._configure_influence_chips(item)
         self._configure_special_filter_chips(item)
@@ -3335,6 +3376,7 @@ class PoetoreWindow(QWidget):
         item_level_min, item_level_max = self._selected_item_level_range()
         gem_level_min = self._selected_gem_level()
         quality_min = self._selected_quality()
+        gem_sockets_min = self._selected_gem_sockets()
         links_min = self._selected_links()
         links_chip_visible = not self.links_tag.isHidden()
         influence_filters = self._selected_influence_filters()
@@ -3382,10 +3424,13 @@ class PoetoreWindow(QWidget):
                     row for row in effective_filters
                     if row.stat_id != "property.item_level"
                 )
-                if item.category in {"gem", "weapon", "armour", "flask", "tincture"}:
+                if (is_gem_category(item.category) or is_equipment_category(item.category)
+                        or item.category in {"flask", "tincture", "charm"}):
                     effective_filters = tuple(
                         row for row in effective_filters
-                        if row.stat_id not in {"property.gem_level", "property.quality"}
+                        if row.stat_id not in {
+                            "property.gem_level", "property.quality", "property.gem_sockets",
+                        }
                     )
                 if links_chip_visible:
                     effective_filters = tuple(
@@ -3428,6 +3473,13 @@ class PoetoreWindow(QWidget):
                         status=trade_status,
                         stat_filters=effective_filters,
                         quality_min=quality_min,
+                        item_level_min=item_level_min,
+                        item_level_max=item_level_max,
+                        gem_level_min=gem_level_min,
+                        gem_sockets_min=gem_sockets_min,
+                        exact_base_type=self._searches_exact_base_type(item),
+                        trade_currency=trade_currency,
+                        listed_within=listed_within,
                         include_corrupted=include_corrupted,
                         include_mirrored=include_mirrored,
                         partial_result_callback=lambda partial: (
@@ -3513,9 +3565,8 @@ class PoetoreWindow(QWidget):
             item is not None
             and self.trade_preset_combo.currentData() == PRESET_BASE
             and item.rarity.casefold() in {"magic", "マジック"}
-            and item.category in {
-                "weapon", "armour", "accessory", "cluster_jewel", "jewel", "abyss_jewel",
-            }
+            and (is_equipment_category(item.category)
+                 or item.category in {"cluster_jewel", "jewel", "abyss_jewel"})
         )
         self.magic_rarity_toggle.setVisible(show)
         if show:
@@ -3613,7 +3664,8 @@ class PoetoreWindow(QWidget):
         # Exact／クラフトベースはpreset_filterの値・初期状態を正本にする。
         optional_finished = (
             preset == PRESET_FINISHED
-            and item.category in {"weapon", "armour", "accessory", "flask", "tincture"}
+            and (is_equipment_category(item.category)
+                 or item.category in {"flask", "tincture"})
             and item.rarity.casefold() not in {"unique", "ユニーク"}
         )
         has_item_level = item.item_level is not None and (
@@ -3677,12 +3729,20 @@ class PoetoreWindow(QWidget):
         if key == getattr(self, "_gem_level_item_key", None):
             return
         self._gem_level_item_key = key
-        raw_level = item.properties.get("ジェムレベル") if item.category == "gem" else None
+        raw_level = (
+            item.properties.get("ジェムレベル")
+            or item.properties.get("Gem Level")
+            or item.properties.get("レベル")
+            or item.properties.get("Level")
+        ) if is_gem_category(item.category) else None
         match = re.search(r"\d+", str(raw_level or ""))
         level = int(match.group()) if match else None
         self.gem_level_tag.setVisible(level is not None)
         self.gem_level_edit.setText(str(level) if level is not None else "")
-        self._set_gem_level_filter_enabled(level is not None)
+        enabled = level is not None and (
+            self.poe_version != POE2 or level >= 19
+        )
+        self._set_gem_level_filter_enabled(enabled)
 
     def _toggle_gem_level_filter(self):
         self._set_gem_level_filter_enabled(not getattr(self, "_gem_level_filter_enabled", False))
@@ -3733,9 +3793,11 @@ class PoetoreWindow(QWidget):
             poe2_equipment = False
         if poe2_equipment:
             visible = quality is not None and quality > 0
-        elif item.category == "gem":
+        elif is_gem_category(item.category):
             visible = quality is not None and quality > 0
-        elif item.category in {"weapon", "armour", "accessory"}:
+        elif self.poe_version == POE2 and item.category == "charm":
+            visible = quality is not None and quality > 0
+        elif is_equipment_category(item.category):
             visible = quality is not None and (
                 quality > 20
                 or (preset == PRESET_BASE and quality >= 20)
@@ -3745,14 +3807,19 @@ class PoetoreWindow(QWidget):
         self.gem_quality_tag.setVisible(visible)
         self.gem_quality_edit.setText(str(quality) if quality is not None else "")
         enabled = False
-        if visible and item.category == "gem":
-            info = gem_metadata(self._trade_base_type or item.base_type)
-            maximum = int(info.get("max_level", 20))
-            enabled = (
-                maximum == 1
-                or (maximum == 20 and not info.get("transfigured") and quality >= 16)
-                or ((maximum != 20 or info.get("transfigured")) and quality >= 20)
-            )
+        if visible and is_gem_category(item.category):
+            if self.poe_version == POE2:
+                enabled = quality >= 16
+            else:
+                info = gem_metadata(self._trade_base_type or item.base_type)
+                maximum = int(info.get("max_level", 20))
+                enabled = (
+                    maximum == 1
+                    or (maximum == 20 and not info.get("transfigured") and quality >= 16)
+                    or ((maximum != 20 or info.get("transfigured")) and quality >= 20)
+                )
+        elif visible and self.poe_version == POE2 and item.category == "charm":
+            enabled = quality >= 10
         elif visible:
             enabled = quality > 20
         self._set_gem_quality_filter_enabled(enabled)
@@ -3784,6 +3851,46 @@ class PoetoreWindow(QWidget):
         if self.gem_quality_tag.isHidden() or not getattr(self, "_gem_quality_filter_enabled", False):
             return None
         text = self.gem_quality_edit.text().strip()
+        return int(text) if text else None
+
+    def _configure_gem_sockets(self, item):
+        key = item.raw_text
+        if key == getattr(self, "_gem_socket_item_key", None):
+            return
+        self._gem_socket_item_key = key
+        raw_sockets = item.properties.get("Sockets") or item.properties.get("ソケット") or ""
+        sockets = len(re.findall(r"(?<![A-Za-z])S(?![A-Za-z])", str(raw_sockets), re.I))
+        visible = self.poe_version == POE2 and is_gem_category(item.category) and sockets > 0
+        self.gem_socket_tag.setVisible(visible)
+        self.gem_socket_edit.setText(str(sockets) if visible else "")
+        self._set_gem_socket_filter_enabled(visible and sockets >= 3)
+
+    def _toggle_gem_socket_filter(self):
+        self._set_gem_socket_filter_enabled(
+            not getattr(self, "_gem_socket_filter_enabled", False)
+        )
+
+    def _enable_gem_socket_filter(self, _text: str = ""):
+        self._set_gem_socket_filter_enabled(True)
+
+    def _set_gem_socket_filter_enabled(self, enabled: bool):
+        self._gem_socket_filter_enabled = bool(enabled)
+        self.gem_socket_tag.setProperty("active", self._gem_socket_filter_enabled)
+        self.gem_socket_toggle.setText(
+            "☑ Gem Socket：" if self._gem_socket_filter_enabled else "☐ Gem Socket："
+        )
+        font = self.gem_socket_edit.font()
+        font.setStrikeOut(not self._gem_socket_filter_enabled)
+        self.gem_socket_edit.setFont(font)
+        self.gem_socket_tag.style().unpolish(self.gem_socket_tag)
+        self.gem_socket_tag.style().polish(self.gem_socket_tag)
+
+    def _selected_gem_sockets(self) -> int | None:
+        if self.gem_socket_tag.isHidden() or not getattr(
+            self, "_gem_socket_filter_enabled", False
+        ):
+            return None
+        text = self.gem_socket_edit.text().strip()
         return int(text) if text else None
 
     def _configure_links(self, item):
@@ -3900,8 +4007,9 @@ class PoetoreWindow(QWidget):
         self.foil_chip.setVisible("foil" in item.flags)
         self.foil_chip.setCurrentIndex(0)
 
-        self.gem_variant_chip.setVisible(item.category == "gem")
-        if item.category == "gem":
+        show_poe1_gem_variant = self.poe_version != POE2 and is_gem_category(item.category)
+        self.gem_variant_chip.setVisible(show_poe1_gem_variant)
+        if show_poe1_gem_variant:
             info = gem_metadata(self._trade_base_type or item.base_type)
             identity = f"{item.name} {item.base_type}".casefold()
             if info.get("transfigured"):
@@ -4083,6 +4191,7 @@ class PoetoreWindow(QWidget):
             self._refresh_hidden_split_default(item)
             self._configure_item_level(item, force=True)
             self._configure_quality(item)
+            self._configure_gem_sockets(item)
             self._configure_influence_chips(item)
             self._configure_special_filter_chips(item)
             self._populate_stat_filters(self._resolved_trade_filters(item, preset))
@@ -4247,9 +4356,11 @@ class PoetoreWindow(QWidget):
                 continue
             if (stat_filter.stat_id == "property.quality"
                     and getattr(self, "_parsed_item", None) is not None
-                    and self._parsed_item.category in {
-                        "gem", "weapon", "armour", "accessory", "flask", "tincture",
-                    }):
+                    and (is_gem_category(self._parsed_item.category)
+                         or is_equipment_category(self._parsed_item.category)
+                         or self._parsed_item.category in {"flask", "tincture", "charm"})):
+                continue
+            if stat_filter.stat_id == "property.gem_sockets" and not self.gem_socket_tag.isHidden():
                 continue
             if stat_filter.stat_id == "property.links" and not self.links_tag.isHidden():
                 continue
@@ -4587,12 +4698,13 @@ class PoetoreWindow(QWidget):
         show_stock = any(row.stack_size is not None for row in result.listings)
         # 検索条件が初期OFFでも、参照アイテムと出品のilvl比較には価値がある。
         show_ilvl = (
-            item is not None and item.category != "gem"
+            item is not None and not is_gem_category(item.category)
             and not self.item_level_tag.isHidden()
         )
-        show_gem = item is not None and item.category == "gem"
+        show_gem = item is not None and is_gem_category(item.category)
         show_quality = show_gem or (
-            item is not None and item.category != "gem" and self._selected_quality() is not None
+            item is not None and not is_gem_category(item.category)
+            and self._selected_quality() is not None
         )
         columns = ["価格"]
         if show_stock:
