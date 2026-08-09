@@ -228,10 +228,29 @@ EE2固定の日英itemsから259アイテム・475カテゴリ別効果を`augme
 
 ### 公式仕様上の境界
 
-EE2のBase Defence Percentileは内部表示値を計算するが、現行Trade2送信処理はコメントアウト
-されており、公式Trade2 filtersにも対応filterがない。このため検索できるように見せる行は
-追加しない。Exact／Count／Notの一般編集UIも、今回必要な仮想Runeの限定OR以外は導入しない。
+Exact／Count／Notの一般編集UIは、今回必要な仮想Runeの限定OR以外は導入しない。
 PoE2 Trade2側へ正式filterが追加された時点でmetadata差分監査から再評価する。
+
+### Base Defence PercentileはPoE2で対応不要（2026-08-09調査）
+
+Base Defence Percentileは「公式仕様待ち」ではなく、PoE2の一般仕様ではないと判断し、実装対象・
+残タスクから除外する。判断根拠は次のとおり。
+
+- PoE2公式`/api/trade2/data/filters`のEquipment FiltersにはAR、EV、ES、Runic Ward等の実数値は
+  あるが、`base_defence_percentile`は存在しない。
+- EE2固定revisionの通常フィルター生成では`filterBasePercentile(ctx)`がコメントアウトされ、
+  Trade2 JSONへ`equipment_filters.filters.base_defence_percentile`を送る処理もコメントアウトされている。
+- EE2 ParserにはPoE1由来と見られる計算コードが残るが、`no ward since base percent isn't used anymore`
+  と明記されている。汎用検索で有効な機能ではない。
+- PoENaviが固定したEE2由来PoE2 identity全件を監査した結果、AR／EV／ES／Wardの基礎値範囲で
+  `min != max`となるベースは0件だった。Percentileを計算するランダムな基礎防御値幅がない。
+
+参照先：
+
+- <https://www.pathofexile.com/api/trade2/data/filters>
+- <https://github.com/Kvan7/Exiled-Exchange-2/blob/d72afb83bc0888919a89d3c3744acee2c597e9c8/renderer/src/web/price-check/filters/create-stat-filters.ts#L109-L114>
+- <https://github.com/Kvan7/Exiled-Exchange-2/blob/d72afb83bc0888919a89d3c3744acee2c597e9c8/renderer/src/web/price-check/trade/pathofexile-trade.ts#L943-L956>
+- <https://github.com/Kvan7/Exiled-Exchange-2/blob/d72afb83bc0888919a89d3c3744acee2c597e9c8/renderer/src/parser/Parser.ts#L1906-L1940>
 
 `augment_index.json`はEE2のMIT対象データを由来として固定revisionを明記する。更新時は
 `build_poetore_poe2_indexes.py --ee2-root <固定checkout> --augment-only`でcandidateを生成し、
