@@ -2037,7 +2037,8 @@ class PoetoreWindow(QWidget):
         )
         display_name = (
             self._display_base_type(item)
-            if is_nonunique_equipment or item.category == "captured_beast"
+            if is_nonunique_equipment
+            or item.category in {"captured_beast", "waystone"}
             else self._display_item_name(item)
         )
         if item.name.strip() == "傭兵の召喚状":
@@ -2113,6 +2114,13 @@ class PoetoreWindow(QWidget):
         candidate = str(item.base_type or item.name or "").strip()
         if not candidate:
             return "ベース名"
+        if item.category == "waystone":
+            match = re.fullmatch(
+                r"Waystone\s*\(\s*Tier\s*(\d+)\s*\)", candidate,
+                flags=re.IGNORECASE,
+            )
+            if match:
+                return f"ウェイストーン (ティア{match.group(1)})"
         if re.search(r"[\u3040-\u30ff\u3400-\u9fff]", candidate):
             return candidate.split()[-1]
         if item.name == item.base_type and self._trade_base_type:

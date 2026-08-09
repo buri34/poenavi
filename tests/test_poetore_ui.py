@@ -4963,6 +4963,23 @@ def test_header_removes_affixes_only_for_nonunique_equipment(qapp):
         window.close()
 
 
+def test_header_shows_rare_waystone_base_instead_of_affix_name(qapp):
+    from src.poetore.poe2.parser import parse_item_text as parse_poe2_item_text
+
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_waystone_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_poe2_item_text(text)
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window._update_item_header(item)
+
+        assert window.item_name_label.text() == "ウェイストーン (ティア15)"
+        assert "先祖の突撃" not in window.item_name_label.text()
+    finally:
+        window.close()
+
+
 def test_nonunique_jewels_use_category_search_but_cluster_and_unique_stay_exact(qapp):
     window = PoetoreWindow()
     try:

@@ -349,6 +349,15 @@ def test_reported_magic_waystone_uses_tier_packsize_bonus_and_three_mods():
     ]
 
 
+def test_reported_rare_waystone_sends_tier_base_instead_of_affix_name():
+    item = _phase45_item("rare_waystone_ja.txt")
+    rows = _phase45_rows(item)
+    payload = build_search_query(item, stat_filters=rows)
+
+    assert payload["query"]["type"] == "Waystone (Tier 15)"
+    assert payload["query"].get("name") != "先祖の突撃"
+
+
 def test_phase45_runemastered_desecrated_and_fractured_filters_are_distinct():
     item = _phase45_item("phase45_runemastered_ja.txt")
     rows = _phase45_rows(item)

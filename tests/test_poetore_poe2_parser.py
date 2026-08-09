@@ -166,6 +166,18 @@ def test_reported_magic_waystone_extracts_affixed_base_and_resolves_all_mods():
     assert all(mod.confidence == 1.0 for mod in item.modifiers)
 
 
+def test_reported_rare_waystone_keeps_affix_name_separate_from_trade_base():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_waystone_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_item_text(text)
+
+    assert item.rarity == "rare"
+    assert item.category == "waystone"
+    assert item.name == "先祖の突撃"
+    assert item.base_type == "Waystone (Tier 15)"
+
+
 def test_phase45_runemastered_base_and_desecrated_state_are_not_collapsed():
     text = (Path(__file__).parent / "fixtures" / "poe2" / "phase45_runemastered_ja.txt").read_text(
         encoding="utf-8"
