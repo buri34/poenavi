@@ -1866,7 +1866,7 @@ def test_mod_filter_tier_and_condition_columns_use_compact_scaled_widths(
 
 @pytest.mark.parametrize(
     ("setting", "expected_width", "expected_font_size"),
-    (("small", 60, 11), ("medium", 70, 12), ("large", 80, 14)),
+    (("small", 48, 11), ("medium", 56, 12), ("large", 64, 14)),
 )
 def test_mod_filter_minimum_and_maximum_editors_use_narrow_width_and_smaller_font(
     qapp, setting, expected_width, expected_font_size,
