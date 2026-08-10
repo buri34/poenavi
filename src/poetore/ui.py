@@ -1950,7 +1950,11 @@ class PoetoreWindow(QWidget):
             metrics = QFontMetrics(font)
             text_width = metrics.horizontalAdvance(combo.currentText())
             # コンパクト操作列用の左右パディング、矢印、境界分を確保する。
-            combo.setFixedWidth(text_width + 12)
+            compact_width = text_width + 12
+            if combo is self.trade_currency_combo:
+                # 選択肢に長い通貨名があるため、ポップアップの可読幅を確保する。
+                compact_width = round(compact_width * 1.4)
+            combo.setFixedWidth(compact_width)
 
         button_font = self.trade_url_button.font()
         button_font.setPixelSize(profile["mod_value_font"])

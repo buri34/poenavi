@@ -125,11 +125,15 @@ def test_poetore_result_display_size_can_change_on_existing_window(qapp):
 
 
 @pytest.mark.parametrize(
-    ("setting", "compact_font", "search_button_width"),
-    (("small", 11, 105), ("medium", 12, 122), ("large", 14, 140)),
+    ("setting", "compact_font", "search_button_width", "currency_width"),
+    (
+        ("small", 11, 105, 105),
+        ("medium", 12, 122, 112),
+        ("large", 14, 140, 129),
+    ),
 )
 def test_trade_action_row_uses_compact_fonts_and_fits_window(
-    qapp, setting, compact_font, search_button_width,
+    qapp, setting, compact_font, search_button_width, currency_width,
 ):
     window = PoetoreWindow(
         app_config={"poetore": {"result_font_size": setting}}
@@ -151,6 +155,7 @@ def test_trade_action_row_uses_compact_fonts_and_fits_window(
         assert controls[-1].geometry().right() < window._panel.width()
         assert all(combo.minimumWidth() == combo.maximumWidth() for combo in controls[:3])
         assert window.price_button.width() == search_button_width
+        assert window.trade_currency_combo.width() == currency_width
         assert window.trade_action_layout.alignment() == Qt.AlignLeft
         assert (
             window.search_range_combo.minimumWidth()
