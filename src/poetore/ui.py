@@ -105,23 +105,23 @@ _RELATED_ITEMS_TREE_HEIGHT = 180
 _RELATED_ITEMS_PRICE_HEIGHT_REDUCTION = 180
 _DISPLAY_SIZE_PROFILES = {
     "small": {
-        "font": 12, "width": 660, "height": 1039,
+        "font": 12, "width": 620, "height": 1039,
         "mod_value_font": 11,
-        "minimum_width": 630, "minimum_height": 620,
+        "minimum_width": 600, "minimum_height": 620,
         "mod_height": 230, "price_height": 434,
         "button_v_padding": 5, "button_h_padding": 9,
     },
     "medium": {
-        "font": 14, "width": 770, "height": 1039,
+        "font": 14, "width": 720, "height": 1039,
         "mod_value_font": 12,
-        "minimum_width": 700, "minimum_height": 620,
+        "minimum_width": 680, "minimum_height": 620,
         "mod_height": 250, "price_height": 434,
         "button_v_padding": 6, "button_h_padding": 11,
     },
     "large": {
-        "font": 16, "width": 880, "height": 1039,
+        "font": 16, "width": 820, "height": 1039,
         "mod_value_font": 14,
-        "minimum_width": 780, "minimum_height": 620,
+        "minimum_width": 760, "minimum_height": 620,
         "mod_height": 270, "price_height": 434,
         "button_v_padding": 7, "button_h_padding": 13,
     },
@@ -4443,21 +4443,10 @@ class PoetoreWindow(QWidget):
                 "価格付き出品は取得できませんでした。"
             )
             return
-        medians = " / ".join(
-            f"{value:g} {currency}" for currency, value in result.median_by_currency().items()
-        ) or "価格付き出品なし"
-        priced = [
-            row for row in result.listings
-            if row.pricing_method != "unpriced"
-        ]
-        samples = ", ".join(
-            f"{row.amount:g} {row.currency}" for row in priced[:5]
-        ) or "なし"
         progress_note = "取得中 / " if partial else ""
         self.price_status.setText(
             f"{result.league}: {progress_note}候補{result.total}件 / "
-            f"取得{len(result.listings)}件{cache_note} | "
-            f"中央値 {medians} | 安値例 {samples}"
+            f"取得{len(result.listings)}件{cache_note}"
         )
         item = getattr(self, "_parsed_item", None)
         show_stock = any(row.stack_size is not None for row in result.listings)

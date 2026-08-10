@@ -71,8 +71,8 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
         assert not hasattr(window, "disclaimer_label")
         assert window.trade_league_combo.currentData() == "auto"
         assert window._selected_trade_league() is None
-        assert window.width() == 770
-        assert window.minimumWidth() == 700
+        assert window.width() == 720
+        assert window.minimumWidth() == 680
         assert window.height() == 1039
         assert window.price_list.minimumHeight() == 434
         assert window.trade_url_button.text() == "公式トレード  ↗"
@@ -85,9 +85,9 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
 @pytest.mark.parametrize(
     ("setting", "font_px", "width", "height", "minimum_width"),
     (
-        ("small", 12, 660, 1039, 630),
-        ("medium", 14, 770, 1039, 700),
-        ("large", 16, 880, 1039, 780),
+        ("small", 12, 620, 1039, 600),
+        ("medium", 14, 720, 1039, 680),
+        ("large", 16, 820, 1039, 760),
     ),
 )
 def test_poetore_result_display_size_scales_window_and_controls(
@@ -117,7 +117,7 @@ def test_poetore_result_display_size_can_change_on_existing_window(qapp):
         window.apply_result_display_size()
 
         assert window._result_font_size == "large"
-        assert window.width() == 880
+        assert window.width() == 820
         assert window.height() == 1039
         assert "font-size: 16px" in window.styleSheet()
     finally:
@@ -403,7 +403,7 @@ def test_show_at_context_places_window_inward_from_cursor_side(qapp):
             window, "activateWindow"
         ):
             window.show_at_context(context)
-        assert window.pos() == QPoint(584, 50)
+        assert window.pos() == QPoint(634, 50)
     finally:
         window.close()
 
@@ -1229,7 +1229,7 @@ def test_foulborn_xoph_uses_mutated_unique_returning_projectiles_stat(qapp):
 def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
     window = PoetoreWindow()
     try:
-        assert window.size().width() == 770
+        assert window.size().width() == 720
         assert window._panel.objectName() == "poetorePanel"
         assert not window._debug_parse_area.isVisible()
         assert window.mod_filter_tree.columnCount() == 6
@@ -1687,7 +1687,9 @@ def test_price_result_is_rendered_in_japanese(qapp):
     )))
     assert "Mirage" in window.price_status.text()
     assert "候補42件" in window.price_status.text()
-    assert "中央値 5 chaos" in window.price_status.text()
+    assert window.price_status.text() == "Mirage: 候補42件 / 取得2件"
+    assert "中央値" not in window.price_status.text()
+    assert "安値例" not in window.price_status.text()
     assert window.price_list.topLevelItemCount() == 2
     assert [window.price_list.headerItem().text(i) for i in range(4)] == [
         "価格", "ilvl", "出品日時", "取引方式",
@@ -1707,6 +1709,12 @@ def test_price_result_is_rendered_in_japanese(qapp):
         "QTreeWidget#priceList QHeaderView::section { padding: 5px 7px; }"
         in window.styleSheet()
     )
+    window._show_price_result(PriceResult(
+        "Mirage", "q", 42, (
+            PriceListing(4, "chaos"), PriceListing(6, "chaos"),
+        ), cached=True,
+    ))
+    assert window.price_status.text() == "Mirage: 候補42件 / 取得2件 / キャッシュ"
     window.close()
 
 
@@ -1751,7 +1759,7 @@ def test_price_result_shows_pricing_method_in_rightmost_column(qapp):
             for index in range(3)
         ] == ["対面", "インスタント", "値段なし"]
         assert window.price_list.topLevelItem(2).text(0) == "値段なし"
-        assert "中央値 4.5 chaos" in window.price_status.text()
+        assert window.price_status.text() == "Mirage: 候補3件 / 取得3件"
     finally:
         window.close()
 
@@ -1780,7 +1788,10 @@ def test_japanese_trade_url_button_opens_result_url(qapp):
             "Standard", "q", 0, (), web_url=url, cached=True,
         ))
         assert window.trade_url_button.isEnabled()
-        assert "キャッシュ" in window.price_status.text()
+        assert window.price_status.text() == (
+            "Standard: 検索候補0件 / キャッシュ。"
+            "価格付き出品は取得できませんでした。"
+        )
         with patch("src.poetore.ui.QDesktopServices.openUrl") as opened:
             window._open_trade_url()
         assert opened.call_args.args[0].toString() == url
