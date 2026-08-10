@@ -188,7 +188,7 @@ class TriggerKeyButton(HotkeyButton):
 class AutoHideHotkeyWidget(QWidget):
     """AUTO-HIDE専用の保持キー選択＋通常キー入力。"""
 
-    def __init__(self, hotkey="ctrl+d", parent=None):
+    def __init__(self, hotkey="ctrl+d", parent=None, theme=POETORE_THEME):
         super().__init__(parent)
         modifier, trigger = self._split_hotkey(hotkey)
 
@@ -203,15 +203,15 @@ class AutoHideHotkeyWidget(QWidget):
         for name, button in (("ctrl", self.ctrl_button), ("alt", self.alt_button)):
             button.setObjectName(f"autoHide{name.title()}Modifier")
             button.setCheckable(True)
-            button.setMinimumWidth(48)
+            button.setFixedWidth(48)
             button.setStyleSheet(
-                f"QPushButton {{ background-color: {POETORE_THEME.panel}; "
-                f"color: {POETORE_THEME.accent}; "
-                f"border: 1px solid {POETORE_THEME.accent}; "
+                f"QPushButton {{ background-color: {theme.panel}; "
+                f"color: {theme.accent}; "
+                f"border: 1px solid {theme.accent}; "
                 "border-radius: 4px; padding: 5px 10px; font-weight: bold; }"
-                f"QPushButton:hover {{ border-color: {POETORE_THEME.text}; }}"
-                f"QPushButton:checked {{ background-color: {POETORE_THEME.accent}; "
-                f"color: {POETORE_THEME.background}; }}"
+                f"QPushButton:hover {{ border-color: {theme.text}; }}"
+                f"QPushButton:checked {{ background-color: {theme.accent}; "
+                f"color: {theme.background}; }}"
             )
             button.setProperty("modifier", name)
             self.modifier_group.addButton(button)
@@ -1966,22 +1966,11 @@ class SettingsDialog(QDialog):
         poetore_auto_hide_layout = QHBoxLayout()
         poetore_auto_hide_layout.addWidget(QLabel("ぽえとれ検索（AUTO-HIDE）:"))
         self.poetore_auto_hide_btn = AutoHideHotkeyWidget(
-            self.hotkeys.get("poetore_auto_hide", "ctrl+d")
+            self.hotkeys.get("poetore_auto_hide", "ctrl+d"),
+            theme=POENAVI_THEME,
         )
         poetore_auto_hide_layout.addWidget(self.poetore_auto_hide_btn)
         group_layout.addLayout(poetore_auto_hide_layout)
-
-        poetore_position_layout = QHBoxLayout()
-        poetore_position_layout.addWidget(QLabel("ぽえとれ検索結果の位置:"))
-        self._reset_poetore_result_positions = False
-        self.reset_poetore_result_positions_button = QPushButton("手動位置をリセット")
-        self.reset_poetore_result_positions_button.clicked.connect(
-            self._mark_poetore_result_positions_for_reset
-        )
-        poetore_position_layout.addWidget(self.reset_poetore_result_positions_button)
-        self.poetore_result_positions_reset_note = QLabel("")
-        poetore_position_layout.addWidget(self.poetore_result_positions_reset_note)
-        group_layout.addLayout(poetore_position_layout)
 
         map_check_layout = QHBoxLayout()
         map_check_layout.addWidget(QLabel("Map Modチェック:"))
@@ -3077,8 +3066,6 @@ class SettingsDialog(QDialog):
             self.preferred_mode_combo.currentData()
         )
         poetore_config = dict(self.current_config.get("poetore", {}))
-        if self._reset_poetore_result_positions:
-            poetore_config.pop("result_positions", None)
 
         return {
             "startup": startup_config,
@@ -3126,8 +3113,3 @@ class SettingsDialog(QDialog):
             "poe1_route_act8": self.poe1_route_act8_combo.currentData(),
             "mini_guide_overlay": mini_navi_overlay_config,
         }
-
-    def _mark_poetore_result_positions_for_reset(self):
-        self._reset_poetore_result_positions = True
-        self.poetore_result_positions_reset_note.setText("保存時にリセットします")
-        self.reset_poetore_result_positions_button.setEnabled(False)

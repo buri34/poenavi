@@ -51,6 +51,9 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert isinstance(dialog.auto_hide_hotkey, AutoHideHotkeyWidget)
     assert dialog.auto_hide_hotkey.ctrl_button.isChecked()
     assert dialog.auto_hide_hotkey.key_button.key_text == "d"
+    assert dialog.auto_hide_hotkey.ctrl_button.width() == 48
+    assert dialog.auto_hide_hotkey.alt_button.width() == 48
+    assert "#DB86EF" in dialog.auto_hide_hotkey.ctrl_button.styleSheet()
     assert settings["window_opacity"] == 80
     assert settings["text_opacity"] == 70
     assert settings["window_locked"] is True
