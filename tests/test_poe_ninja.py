@@ -120,6 +120,59 @@ def test_unique_price_uses_name_and_formats_divines():
     assert price.source_type == "UniqueAccessory"
 
 
+def test_mageblood_price_matches_japanese_flask_count_variant():
+    payload = _payload()
+    payload["itemOverviews"][0]["lines"] = [
+        {"name": "Mageblood", "variant": f"{count} Flasks, Heavy Belt", "chaos": chaos}
+        for count, chaos in ((2, 2000), (3, 3000), (4, 4000), (5, 5000))
+    ]
+    item = ParsedItem(
+        "ベルト", "ユニーク", "メイジブラッド", "重厚なベルト", "accessory",
+        raw_text="左から4個のマジックユーティリティフラスコのフラスコ効果が常にプレイヤーに適用される",
+    )
+
+    price = match_poe_ninja_price(
+        payload, item, "Standard", trade_name="Mageblood", trade_base_type="Heavy Belt",
+    )
+
+    assert price is not None
+    assert price.variant == "4 Flasks, Heavy Belt"
+    assert price.chaos == 4000
+
+
+def test_mageblood_price_matches_english_flask_count_variant():
+    payload = _payload()
+    payload["itemOverviews"][0]["lines"] = [
+        {"name": "Mageblood", "variant": f"{count} Flasks, Heavy Belt", "chaos": chaos}
+        for count, chaos in ((2, 2000), (3, 3000), (4, 4000), (5, 5000))
+    ]
+    item = ParsedItem(
+        "Belts", "Unique", "Mageblood", "Heavy Belt", "accessory",
+        raw_text="Leftmost 3 Magic Utility Flasks constantly apply their Flask Effects to you",
+    )
+
+    price = match_poe_ninja_price(
+        payload, item, "Standard", trade_name="Mageblood", trade_base_type="Heavy Belt",
+    )
+
+    assert price is not None
+    assert price.variant == "3 Flasks, Heavy Belt"
+    assert price.chaos == 3000
+
+
+def test_mageblood_price_stays_hidden_when_flask_count_is_unknown():
+    payload = _payload()
+    payload["itemOverviews"][0]["lines"] = [
+        {"name": "Mageblood", "variant": f"{count} Flasks, Heavy Belt", "chaos": chaos}
+        for count, chaos in ((2, 2000), (3, 3000), (4, 4000), (5, 5000))
+    ]
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Heavy Belt", "accessory")
+
+    assert match_poe_ninja_price(
+        payload, item, "Standard", trade_name="Mageblood", trade_base_type="Heavy Belt",
+    ) is None
+
+
 def test_small_price_uses_chaos_display_parts():
     price = PoeNinjaPrice("Arc", None, 8.5, (), "https://example.com", 200)
     assert price.display_price_parts() == ("8.5", "chaos")

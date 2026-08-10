@@ -330,6 +330,14 @@ def _best_unique_line(lines: list[dict], name: str, item: ParsedItem, base_type:
         return matches[0]
     if not matches:
         return None
+    variant_hint = _unique_variant_hint(name, item)
+    if variant_hint:
+        variant_matches = [
+            line for line in matches
+            if variant_hint.casefold() in str(line.get("variant", "")).casefold()
+        ]
+        if len(variant_matches) == 1:
+            return variant_matches[0]
     base = (base_type or item.base_type or "").casefold()
     links = "6L" if re.search(r"(?:^|\s)(?:[RGBWAB]-){5}[RGBWAB](?:\s|$)", item.properties.get("ソケット", "") or item.properties.get("Sockets", "")) else ""
     scored = []
@@ -340,6 +348,22 @@ def _best_unique_line(lines: list[dict], name: str, item: ParsedItem, base_type:
     best_score = max(score for score, _line in scored)
     best = [line for score, line in scored if score == best_score]
     return best[0] if best_score > 0 and len(best) == 1 else None
+
+
+def _unique_variant_hint(name: str, item: ParsedItem) -> str | None:
+    """詳細コピーからpoe.ninja固有のUnique variant識別子を返す。"""
+    if name.casefold() != "mageblood":
+        return None
+    match = re.search(
+        r"(?:Leftmost\s+(\d+)\s+Magic Utility Flasks?"
+        r"|左から\s*(\d+)\s*個のマジックユーティリティフラスコ)",
+        item.raw_text,
+        re.IGNORECASE,
+    )
+    if match is None:
+        return None
+    flask_count = next((value for value in match.groups() if value is not None), None)
+    return f"{flask_count} Flasks" if flask_count else None
 
 
 def _current_map_generation(overviews: dict[str, list[dict]]) -> int | None:
