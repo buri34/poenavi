@@ -107,6 +107,7 @@ _DISPLAY_SIZE_PROFILES = {
     "small": {
         "font": 12, "width": 560, "height": 1039,
         "mod_value_font": 11,
+        "search_button_width": 105,
         "minimum_width": 540, "minimum_height": 620,
         "mod_height": 230, "price_height": 434,
         "button_v_padding": 5, "button_h_padding": 9,
@@ -114,6 +115,7 @@ _DISPLAY_SIZE_PROFILES = {
     "medium": {
         "font": 14, "width": 650, "height": 1039,
         "mod_value_font": 12,
+        "search_button_width": 122,
         "minimum_width": 610, "minimum_height": 620,
         "mod_height": 250, "price_height": 434,
         "button_v_padding": 6, "button_h_padding": 11,
@@ -121,6 +123,7 @@ _DISPLAY_SIZE_PROFILES = {
     "large": {
         "font": 16, "width": 740, "height": 1039,
         "mod_value_font": 14,
+        "search_button_width": 140,
         "minimum_width": 680, "minimum_height": 620,
         "mod_height": 270, "price_height": 434,
         "button_v_padding": 7, "button_h_padding": 13,
@@ -1015,6 +1018,7 @@ class PoetoreWindow(QWidget):
         self.trade_preset_placeholder = QWidget()
         self.trade_preset_placeholder.hide()
         top_options.addWidget(self.trade_preset_placeholder, 1)
+        top_options.addStretch(1)
         self.search_range_combo = QComboBox()
         self.search_range_combo.setObjectName("filterControl")
         for percent in (0, 5, 10, 15, 20, 30, 50):
@@ -1037,7 +1041,7 @@ class PoetoreWindow(QWidget):
             "ユニーク品はModの可変範囲を基準に調整します。"
         )
         self.search_range_combo.currentIndexChanged.connect(self._search_range_changed)
-        top_options.addWidget(self.search_range_combo, 1)
+        top_options.addWidget(self.search_range_combo)
         self.magic_rarity_toggle = _BinaryToggle(
             ("ユニーク以外", False), ("マジック完全一致", True),
         )
@@ -1537,6 +1541,7 @@ class PoetoreWindow(QWidget):
             self.trade_status_combo, self.trade_currency_combo, self.listed_within_combo,
         ):
             combo.currentIndexChanged.connect(self._auto_search_after_trade_option_change)
+            combo.currentIndexChanged.connect(self._fit_compact_action_widths)
         self.trade_league_combo.currentIndexChanged.connect(
             self._auto_search_after_trade_option_change
         )
@@ -1805,7 +1810,7 @@ class PoetoreWindow(QWidget):
                 background: rgba(35, 118, 100, 225);
                 color: #E6ECEA;
                 font-weight: 700;
-                min-width: 76px;
+                min-width: 0;
             }
             QComboBox, QLineEdit {
                 background: rgba(26, 31, 33, 235);
@@ -1826,11 +1831,11 @@ class PoetoreWindow(QWidget):
             }
             QComboBox#filterControl[compactAction="true"] {
                 font-size: __COMPACT_ACTION_FONT__px;
-                padding: 2px 3px;
+                padding: 2px 1px;
                 min-height: 18px;
             }
             QComboBox#filterControl[compactAction="true"]::drop-down {
-                width: 14px;
+                width: 8px;
             }
             QPushButton#filterActionButton[compactAction="true"] {
                 font-size: __COMPACT_ACTION_FONT__px;
@@ -1914,11 +1919,25 @@ class PoetoreWindow(QWidget):
             self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH) + gap
         )
         editor.setStyleSheet(
-            f"font-size: {profile['mod_value_font']}px; margin-left: {gap}px;"
+            f"font-size: {profile['mod_value_font']}px;"
+            + (f" border-left: {gap}px solid #111416;" if gap else "")
         )
 
-    def _fit_compact_action_widths(self):
-        """検索操作列を、全選択肢が欠けない最小幅へ揃える。"""
+    def _fit_search_range_width(self):
+        """Mod数値コンボを全選択肢が収まる内容幅へ詰める。"""
+        profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
+        font = self.search_range_combo.font()
+        font.setPixelSize(profile["font"])
+        metrics = QFontMetrics(font)
+        text_width = max(
+            (metrics.horizontalAdvance(self.search_range_combo.itemText(index))
+             for index in range(self.search_range_combo.count())),
+            default=0,
+        )
+        self.search_range_combo.setFixedWidth(text_width + 28)
+
+    def _fit_compact_action_widths(self, *_args):
+        """検索操作列を、現在表示中の文言に合う最小幅へ揃える。"""
         profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
         for combo in (
             self.trade_status_combo,
@@ -1928,13 +1947,9 @@ class PoetoreWindow(QWidget):
             font = combo.font()
             font.setPixelSize(profile["mod_value_font"])
             metrics = QFontMetrics(font)
-            text_width = max(
-                (metrics.horizontalAdvance(combo.itemText(index))
-                 for index in range(combo.count())),
-                default=0,
-            )
-            # 左右パディング6px、ドロップダウン14px、境界分を確保する。
-            combo.setFixedWidth(text_width + 24)
+            text_width = metrics.horizontalAdvance(combo.currentText())
+            # コンパクト操作列用の左右パディング、矢印、境界分を確保する。
+            combo.setFixedWidth(text_width + 12)
 
         button_font = self.trade_url_button.font()
         button_font.setPixelSize(profile["mod_value_font"])
@@ -1966,6 +1981,7 @@ class PoetoreWindow(QWidget):
         self.poe_ninja_currency_icon.setFixedSize(
             self._scaled_display_value(28), self._scaled_display_value(28)
         )
+        self._fit_search_range_width()
         self._fit_compact_action_widths()
         self.mod_filter_tree.setColumnWidth(
             _MOD_COLUMN_CHECK, self._scaled_display_value(_MOD_CHECK_COLUMN_WIDTH)
@@ -1983,6 +1999,8 @@ class PoetoreWindow(QWidget):
                         editor, leading_gap=column == _MOD_COLUMN_MIN,
                     )
         self._apply_poetore_style()
+        # スタイルのmin-width適用後に固定し、レイアウトによる再拡張を防ぐ。
+        self.price_button.setFixedWidth(profile["search_button_width"])
         self._adjust_window_height_to_mod_rows()
     def _toggle_mod_conditions(self):
         collapsed = self.mod_filter_tree.isVisible()

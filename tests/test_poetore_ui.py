@@ -125,11 +125,11 @@ def test_poetore_result_display_size_can_change_on_existing_window(qapp):
 
 
 @pytest.mark.parametrize(
-    ("setting", "compact_font"),
-    (("small", 11), ("medium", 12), ("large", 14)),
+    ("setting", "compact_font", "search_button_width"),
+    (("small", 11, 105), ("medium", 12, 122), ("large", 14, 140)),
 )
 def test_trade_action_row_uses_compact_fonts_and_fits_window(
-    qapp, setting, compact_font,
+    qapp, setting, compact_font, search_button_width,
 ):
     window = PoetoreWindow(
         app_config={"poetore": {"result_font_size": setting}}
@@ -145,11 +145,16 @@ def test_trade_action_row_uses_compact_fonts_and_fits_window(
         )
         assert all(control.property("compactAction") for control in controls)
         assert (
-            f"font-size: {compact_font}px;\n                padding: 2px 3px;"
+            f"font-size: {compact_font}px;\n                padding: 2px 1px;"
             in window.styleSheet()
         )
         assert controls[-1].geometry().right() < window._panel.width()
         assert all(combo.minimumWidth() == combo.maximumWidth() for combo in controls[:3])
+        assert window.price_button.width() == search_button_width
+        assert (
+            window.search_range_combo.minimumWidth()
+            == window.search_range_combo.maximumWidth()
+        )
     finally:
         window.close()
 
@@ -1995,8 +2000,11 @@ def test_mod_filter_minimum_and_maximum_editors_use_narrow_width_and_smaller_fon
         maximum_editor = window.mod_filter_tree.itemWidget(row, 5)
         assert minimum_editor.width() == expected_min_width
         assert maximum_editor.width() == expected_max_width
-        assert f"margin-left: {expected_gap}px" in minimum_editor.styleSheet()
-        assert "margin-left: 0px" in maximum_editor.styleSheet()
+        assert (
+            f"border-left: {expected_gap}px solid #111416"
+            in minimum_editor.styleSheet()
+        )
+        assert "border-left:" not in maximum_editor.styleSheet()
         assert f"font-size: {expected_font_size}px" in minimum_editor.styleSheet()
         assert f"font-size: {expected_font_size}px" in maximum_editor.styleSheet()
     finally:
