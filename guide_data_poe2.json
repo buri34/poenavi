@@ -455,18 +455,6 @@
         "text": "<span style='color:#ffffff'>▸[boss]ボス「マイティ・シルバーフィスト」を倒す（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n▸毒の地下聖堂の近くにある[wp]WPを取る\n▸[move]</span><span style='color:#dddd44'>毒の地下聖堂</span><span style='color:#ffffff'>に行く</span>\n<span style='color:#ffffff'>▸【毒の地下聖堂クリア後】[move]</span><span style='color:#dddd44'>害虫の荒れ地</span><span style='color:#ffffff'>へ行く</span>"
       }
     },
-    "flags": {}
-  },
-  "poe2_act3_area04": {
-    "default": {
-      "objective": "「キメラル湿地」へ行く",
-      "layout": "<span style='color:#ffffff'>・大きな長方形のエリア。</span>\n<span style='color:#ffffff'>・ワールドマップの位置関係を参考にして、キメラル湿地を目指して外周を辿ること。</span>",
-      "tips": "<span style='color:#ffffff'>・エリア内の外周沿いのどこかにあるキャンプにおいて、NPCの近くにある白チェストからは、確定で4mod付きのレアの靴がドロップする。</span>\n<span style='color:#ffffff'>・また、このNPCは次のエリアの場所を教えてくれる</span>",
-      "summary": "<span style='color:#ffffff'>「キメラル湿地」へ行く</span>\n\n<span style='color:#ffffff'>ワールドマップの位置関係を参考にして、キメラル湿地を目指して外周を辿ること。</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプの白チェストから4mod付きのレアの靴</span>\n<span style='color:#ffffff'>このNPCは次のエリアの場所を教えてくれる</span>",
-      "mini_navi": {
-        "text": "<span style='color:#ffffff'>▸[move]</span><span style='color:#dddd44'>キメラル湿地</span><span style='color:#ffffff'>へ行く</span>\n<span style='color:#ffffff'>（ワールドマップの位置関係を参考にして、キメラル湿地を目指して外周を辿る）</span>"
-      }
-    },
     "flags": {
       "act3_zicoatl_dead": {
         "objective": "・「石の祭壇」を起動する\n・「マトラン水路」へ行く",
@@ -478,6 +466,18 @@
         }
       }
     }
+  },
+  "poe2_act3_area04": {
+    "default": {
+      "objective": "「キメラル湿地」へ行く",
+      "layout": "<span style='color:#ffffff'>・大きな長方形のエリア。</span>\n<span style='color:#ffffff'>・ワールドマップの位置関係を参考にして、キメラル湿地を目指して外周を辿ること。</span>",
+      "tips": "<span style='color:#ffffff'>・エリア内の外周沿いのどこかにあるキャンプにおいて、NPCの近くにある白チェストからは、確定で4mod付きのレアの靴がドロップする。</span>\n<span style='color:#ffffff'>・また、このNPCは次のエリアの場所を教えてくれる</span>",
+      "summary": "<span style='color:#ffffff'>「キメラル湿地」へ行く</span>\n\n<span style='color:#ffffff'>ワールドマップの位置関係を参考にして、キメラル湿地を目指して外周を辿ること。</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプの白チェストから4mod付きのレアの靴</span>\n<span style='color:#ffffff'>このNPCは次のエリアの場所を教えてくれる</span>",
+      "mini_navi": {
+        "text": "<span style='color:#ffffff'>▸[move]</span><span style='color:#dddd44'>キメラル湿地</span><span style='color:#ffffff'>へ行く</span>\n<span style='color:#ffffff'>（ワールドマップの位置関係を参考にして、キメラル湿地を目指して外周を辿る）</span>"
+      }
+    },
+    "flags": {}
   },
   "poe2_act3_area03": {
     "default": {
