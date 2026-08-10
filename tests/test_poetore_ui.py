@@ -1856,15 +1856,27 @@ def test_mod_filter_check_and_condition_columns_fit_without_clipping(qapp):
         window.close()
 
 
-def test_mod_filter_minimum_and_maximum_editors_use_narrow_width(qapp):
-    window = PoetoreWindow()
+@pytest.mark.parametrize(
+    ("setting", "expected_width", "expected_font_size"),
+    (("small", 60, 11), ("medium", 70, 12), ("large", 80, 14)),
+)
+def test_mod_filter_minimum_and_maximum_editors_use_narrow_width_and_smaller_font(
+    qapp, setting, expected_width, expected_font_size,
+):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
     window._populate_stat_filters((TradeStatFilter(
         "explicit.stat_1", "命中力 +55", 55, "prefix", False, max_value=100,
     ),))
     try:
         row = window.mod_filter_tree.topLevelItem(0)
-        assert window.mod_filter_tree.itemWidget(row, 4).width() == 84
-        assert window.mod_filter_tree.itemWidget(row, 5).width() == 84
+        minimum_editor = window.mod_filter_tree.itemWidget(row, 4)
+        maximum_editor = window.mod_filter_tree.itemWidget(row, 5)
+        assert minimum_editor.width() == expected_width
+        assert maximum_editor.width() == expected_width
+        assert f"font-size: {expected_font_size}px" in minimum_editor.styleSheet()
+        assert f"font-size: {expected_font_size}px" in maximum_editor.styleSheet()
     finally:
         window.close()
 

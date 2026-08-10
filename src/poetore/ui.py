@@ -90,7 +90,7 @@ _MOD_COLUMN_MAX = 5
 _MOD_CHECK_COLUMN_WIDTH = 40
 _MOD_TIER_COLUMN_WIDTH = 75
 _MOD_TEXT_COLUMN_WIDTH = 346
-_MOD_VALUE_EDITOR_WIDTH = 72
+_MOD_VALUE_EDITOR_WIDTH = 60
 _MOD_ROW_HEIGHT = 36
 _UNIQUE_ROLL_ROW_HEIGHT = 62
 _UNIQUE_CANDIDATE_ROW_HEIGHT = 64
@@ -105,18 +105,21 @@ _RELATED_ITEMS_PRICE_HEIGHT_REDUCTION = 180
 _DISPLAY_SIZE_PROFILES = {
     "small": {
         "font": 12, "width": 720, "height": 1039,
+        "mod_value_font": 11,
         "minimum_width": 680, "minimum_height": 620,
         "mod_height": 230, "price_height": 434,
         "button_v_padding": 5, "button_h_padding": 9,
     },
     "medium": {
         "font": 14, "width": 840, "height": 1039,
+        "mod_value_font": 12,
         "minimum_width": 760, "minimum_height": 620,
         "mod_height": 250, "price_height": 434,
         "button_v_padding": 6, "button_h_padding": 11,
     },
     "large": {
         "font": 16, "width": 960, "height": 1039,
+        "mod_value_font": 14,
         "minimum_width": 840, "minimum_height": 620,
         "mod_height": 270, "price_height": 434,
         "button_v_padding": 7, "button_h_padding": 13,
@@ -1872,6 +1875,11 @@ class PoetoreWindow(QWidget):
     def _scaled_display_value(self, value: int) -> int:
         return round(value * self._display_scale())
 
+    def _apply_mod_value_editor_size(self, editor: QLineEdit):
+        profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
+        editor.setFixedWidth(self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH))
+        editor.setStyleSheet(f"font-size: {profile['mod_value_font']}px;")
+
     def apply_result_display_size(self):
         """設定済みの小／中／大を既存の検索画面へ即時反映する。"""
         selected = normalize_result_font_size(
@@ -1910,9 +1918,7 @@ class PoetoreWindow(QWidget):
                     self.mod_filter_tree.topLevelItem(index), column
                 )
                 if isinstance(editor, QLineEdit):
-                    editor.setFixedWidth(
-                        self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH)
-                    )
+                    self._apply_mod_value_editor_size(editor)
         self._apply_poetore_style()
         self._adjust_window_height_to_mod_rows()
     def _toggle_mod_conditions(self):
@@ -4286,18 +4292,14 @@ class PoetoreWindow(QWidget):
             editor = QLineEdit(value)
             editor.installEventFilter(self)
             editor.setPlaceholderText("最小")
-            editor.setFixedWidth(
-                self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH)
-            )
+            self._apply_mod_value_editor_size(editor)
             editor.setEnabled(stat_filter.option_value is None)
             editor.textEdited.connect(self._mark_search_dirty)
             self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_MIN, editor)
             max_editor = QLineEdit(maximum)
             max_editor.installEventFilter(self)
             max_editor.setPlaceholderText("最大")
-            max_editor.setFixedWidth(
-                self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH)
-            )
+            self._apply_mod_value_editor_size(max_editor)
             max_editor.setEnabled(stat_filter.option_value is None)
             max_editor.textEdited.connect(self._mark_search_dirty)
             self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_MAX, max_editor)
