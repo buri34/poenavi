@@ -1869,6 +1869,32 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
     window.close()
 
 
+def test_mod_filter_tooltip_starts_with_full_text_and_keeps_selection_details(qapp):
+    window = PoetoreWindow()
+    full_text = "品質4%ごとに効果範囲1%増加する長いMod文章"
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1",
+        full_text,
+        3,
+        "suffix",
+        False,
+        read_value=7,
+        tier=1,
+        roll_min=3,
+        roll_max=7,
+        selection_reason="候補として表示（初期未選択）",
+        confidence=1.0,
+    ),))
+
+    row = window.mod_filter_tree.topLevelItem(0)
+    tooltip = row.toolTip(_MOD_COLUMN_TEXT)
+    assert tooltip.startswith(full_text + "\n\n")
+    assert "候補として表示（初期未選択）" in tooltip
+    assert "読取 7" in tooltip
+    assert "範囲 3–7" in tooltip
+    window.close()
+
+
 @pytest.mark.parametrize(
     ("setting", "expected_tier_width"),
     (("small", 62), ("medium", 72), ("large", 83)),

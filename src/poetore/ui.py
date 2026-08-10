@@ -4200,6 +4200,9 @@ class PoetoreWindow(QWidget):
             else:
                 confidence = ""
             summary = " / ".join(filter(None, [stat_filter.selection_reason, *details, confidence]))
+            mod_tooltip = stat_filter.text
+            if summary:
+                mod_tooltip = f"{stat_filter.text}\n\n{summary}"
             tier_tags = stat_filter.tier_tags
             tier_text = " / ".join(f"T{tier}" for tier in tier_tags)
             if not tier_text and stat_filter.tier is not None:
@@ -4215,7 +4218,7 @@ class PoetoreWindow(QWidget):
             row.setData(0, Qt.UserRole + 3, stat_filter.inverted)
             row.setData(0, Qt.UserRole + 4, stat_filter)
             row.setData(0, Qt.UserRole + 5, stat_filter.enabled)
-            row.setToolTip(_MOD_COLUMN_TEXT, summary)
+            row.setToolTip(_MOD_COLUMN_TEXT, mod_tooltip)
             row.setSizeHint(
                 _MOD_COLUMN_TEXT,
                 QSize(0, self._scaled_display_value(_MOD_ROW_HEIGHT)),
@@ -4347,7 +4350,7 @@ class PoetoreWindow(QWidget):
                 text_layout.setContentsMargins(2, 3, 2, 3)
                 text_layout.setSpacing(3)
                 text_label = QLabel(stat_filter.text)
-                text_label.setToolTip(summary)
+                text_label.setToolTip(mod_tooltip)
                 text_label.setCursor(Qt.PointingHandCursor)
                 text_label._mod_condition_checkbox = checkbox
                 text_label.installEventFilter(self)
