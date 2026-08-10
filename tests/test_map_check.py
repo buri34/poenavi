@@ -249,6 +249,36 @@ Map (Tier 16)
     window.close()
 
 
+def test_reported_map_chaos_and_implicit_wither_aliases_resolve_in_ui():
+    parsed = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+Reported Alias Test 3
+マップ (ティア 16)
+--------
+アイテムレベル: 83
+--------
+{ プレフィックスモッド (ティア: 1) — ダメージ, 物理, 混沌 }
+モンスターは物理ダメージの34(31-35)%を追加混沌ダメージとして獲得する
+{ サフィックスモッド (ティア: 1) — 混沌, 状態異常 }
+モンスターによるヒット時に衰弱を2秒間付与する
+""")
+    catalog_ids = {
+        stat_id for row in load_map_mod_catalog() for stat_id in row.stat_ids
+    }
+    assert [(modifier.stat_id, modifier.values) for modifier in parsed.modifiers] == [
+        ("explicit.stat_1840747977", (34.0, 31.0, -35.0)),
+        ("explicit.stat_3044826007", (100.0,)),
+    ]
+    assert all(modifier.stat_id in catalog_ids for modifier in parsed.modifiers)
+
+    QApplication.instance() or QApplication([])
+    window = MapCheckWindow(default_map_check_config())
+    window._render(parsed)
+    labels = [label.text() for label in window.body.findChildren(QLabel)]
+    assert not any(text.startswith("未認識Mod") for text in labels)
+    window.close()
+
+
 def test_manager_orders_decision_columns_by_severity():
     QApplication.instance() or QApplication([])
     dialog = MapModManagerDialog(default_map_check_config())
