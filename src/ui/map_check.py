@@ -76,7 +76,7 @@ class MapModManagerDialog(QDialog):
         self.count_label = QLabel()
         root.addWidget(self.count_label)
         self.table = QTableWidget(0, 5)
-        self.table.setHorizontalHeaderLabels(["Map Mod", "警告", "危険", "有利", "解除"])
+        self.table.setHorizontalHeaderLabels(["Map Mod", "危険", "警告", "有利", "解除"])
         self.table.horizontalHeader().setStretchLastSection(False)
         self.table.horizontalHeader().setSectionResizeMode(
             0, QHeaderView.ResizeMode.Stretch,
@@ -136,7 +136,7 @@ class MapModManagerDialog(QDialog):
             self.table.setItem(row, 0, QTableWidgetItem(text))
             current = decision_for(self.config, entry.key)
             for column, (label, value, color) in enumerate((
-                ("⚠", "w", "#a85a13"), ("☠", "d", "#8b1e25"),
+                ("☠", "d", "#8b1e25"), ("⚠", "w", "#a85a13"),
                 ("✓", "g", "#27633a"), ("×", "-", "#241929"),
             ), 1):
                 button = QPushButton(label)

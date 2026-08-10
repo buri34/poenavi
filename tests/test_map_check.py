@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from PySide6.QtWidgets import QApplication, QPushButton
+from PySide6.QtWidgets import QApplication, QLabel, QPushButton
 from PySide6.QtCore import QPoint, QRect, QSize
 
 from src.poetore.map_check import (
@@ -211,6 +211,57 @@ Map (Tier 16)
     ]
     assert all(modifier.stat_id in catalog_ids for modifier in parsed.modifiers)
     assert parsed.modifiers[2].inverted is True
+
+
+def test_reported_uber_map_copy_aliases_resolve_to_area_mods():
+    parsed = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+Uber Alias Test
+Map (Tier 16)
+--------
+アイテムレベル: 83
+--------
+{ プレフィックスモッド (ティア: 1) }
+それぞれのレアモンスターはモッドを追加で1個持つ
+{ プレフィックスモッド (ティア: 1) }
+プレイヤーは適用されるフラスコの効果が40%低下する
+{ サフィックスモッド (ティア: 1) }
+モンスターはヒットを受けた時にエンデュランスチャージを1個獲得する
+{ サフィックスモッド (ティア: 1) }
+モンスターの投射物は地形と衝突した時に連鎖することができる
+""")
+    catalog_ids = {
+        stat_id for row in load_map_mod_catalog() for stat_id in row.stat_ids
+    }
+    assert [(modifier.stat_id, modifier.values) for modifier in parsed.modifiers] == [
+        ("explicit.stat_2550456553", (1.0,)),
+        ("explicit.stat_1207482628", (40.0,)),
+        ("explicit.stat_3707756896", (100.0,)),
+        ("explicit.stat_2753403220", (100.0,)),
+    ]
+    assert all(modifier.stat_id in catalog_ids for modifier in parsed.modifiers)
+    assert parsed.modifiers[1].inverted is True
+    QApplication.instance() or QApplication([])
+    window = MapCheckWindow(default_map_check_config())
+    window._render(parsed)
+    labels = [label.text() for label in window.body.findChildren(QLabel)]
+    assert not any(text.startswith("未認識Mod") for text in labels)
+    window.close()
+
+
+def test_manager_orders_decision_columns_by_severity():
+    QApplication.instance() or QApplication([])
+    dialog = MapModManagerDialog(default_map_check_config())
+    headers = [
+        dialog.table.horizontalHeaderItem(column).text()
+        for column in range(dialog.table.columnCount())
+    ]
+    assert headers == ["Map Mod", "危険", "警告", "有利", "解除"]
+    assert [
+        dialog.table.cellWidget(0, column).text()
+        for column in range(1, dialog.table.columnCount())
+    ] == ["☠", "⚠", "✓", "×"]
+    dialog.close()
 
 
 def test_seen_column_is_hidden_when_new_mod_notifications_are_disabled():
