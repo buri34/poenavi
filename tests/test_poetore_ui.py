@@ -127,9 +127,9 @@ def test_poetore_result_display_size_can_change_on_existing_window(qapp):
 @pytest.mark.parametrize(
     ("setting", "compact_font", "search_button_width", "currency_width"),
     (
-        ("small", 11, 105, 105),
-        ("medium", 12, 122, 112),
-        ("large", 14, 140, 129),
+        ("small", 11, 105, 126),
+        ("medium", 12, 122, 134),
+        ("large", 14, 140, 155),
     ),
 )
 def test_trade_action_row_uses_compact_fonts_and_fits_window(

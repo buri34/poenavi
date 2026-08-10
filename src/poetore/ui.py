@@ -1980,7 +1980,7 @@ class PoetoreWindow(QWidget):
             compact_width = text_width + 12
             if combo is self.trade_currency_combo:
                 # 選択肢に長い通貨名があるため、ポップアップの可読幅を確保する。
-                compact_width = round(compact_width * 1.4)
+                compact_width = round(compact_width * 1.68)
             combo.setFixedWidth(compact_width)
 
         button_font = self.trade_url_button.font()
