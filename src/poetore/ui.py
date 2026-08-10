@@ -1008,6 +1008,7 @@ class PoetoreWindow(QWidget):
         # 単独表示時は空の第2セグメントも維持するため、ボタン自体は従来の半幅になる。
         top_options.addWidget(self.trade_preset_combo, 1)
         self.search_range_combo = QComboBox()
+        self.search_range_combo.setObjectName("filterControl")
         for percent in (0, 5, 10, 15, 20, 30, 50):
             label = (
                 "Mod数値：完全一致"
@@ -1038,11 +1039,13 @@ class PoetoreWindow(QWidget):
         self.magic_rarity_toggle.hide()
 
         self.trade_status_combo = QComboBox()
+        self.trade_status_combo.setObjectName("filterControl")
         self.trade_status_combo.addItem("インスタントバイアウトのみ", "instant")
         self.trade_status_combo.addItem("インスタント＋対面", "available")
         self.trade_status_combo.addItem("対面トレードのみ", "online")
         self.trade_status_combo.addItem("オフライン出品も含む", "offline")
         self.trade_currency_combo = QComboBox()
+        self.trade_currency_combo.setObjectName("filterControl")
         self.trade_currency_combo.addItem("すべての通貨", "any")
         self.trade_currency_combo.addItem("カオスオーブのみ", "chaos")
         self.trade_currency_combo.addItem("神のオーブのみ", "divine")
@@ -1050,6 +1053,7 @@ class PoetoreWindow(QWidget):
             "カオスまたは神のオーブ", "chaos_divine"
         )
         self.listed_within_combo = QComboBox()
+        self.listed_within_combo.setObjectName("filterControl")
         for label, value in (
             ("期間指定なし", "any"), ("24時間以内", "1day"), ("3日以内", "3days"),
             ("1週間以内", "1week"), ("2週間以内", "2weeks"),
@@ -1309,7 +1313,7 @@ class PoetoreWindow(QWidget):
         weapon_property_header.addStretch(1)
         panel_layout.addLayout(weapon_property_header)
         self.clear_mod_conditions_button = QPushButton("一覧のチェックを全て選択")
-        self.clear_mod_conditions_button.setObjectName("clearModConditionsButton")
+        self.clear_mod_conditions_button.setObjectName("secondaryActionButton")
         self.clear_mod_conditions_button.setToolTip(
             "上の条件一覧のみ。ilvlなどの基本条件は変更しません"
         )
@@ -1362,10 +1366,11 @@ class PoetoreWindow(QWidget):
         )
         panel_layout.addWidget(self.mod_filter_tree, stretch=3)
         self.mod_conditions_toggle = QPushButton("mod条件をたたむ∧")
-        self.mod_conditions_toggle.setObjectName("modConditionsToggle")
+        self.mod_conditions_toggle.setObjectName("secondaryActionButton")
         self.mod_conditions_toggle.setToolTip("Mod検索条件の一覧を折りたたむ")
         self.mod_conditions_toggle.clicked.connect(self._toggle_mod_conditions)
         self.hidden_mods_toggle = QPushButton("隠し候補を表示")
+        self.hidden_mods_toggle.setObjectName("secondaryActionButton")
         self.hidden_mods_toggle.setCheckable(True)
         self.hidden_mods_toggle.setToolTip(
             "数値が固定され、同じアイテム同士の価格比較に影響しないため、\n"
@@ -1373,6 +1378,7 @@ class PoetoreWindow(QWidget):
         )
         self.hidden_mods_toggle.toggled.connect(self._toggle_hidden_mods)
         self.mod_sources_toggle = QPushButton("Mod構成を表示")
+        self.mod_sources_toggle.setObjectName("secondaryActionButton")
         self.mod_sources_toggle.setCheckable(True)
         self.mod_sources_toggle.setToolTip(
             "合計ライフや防御力など、複数の数値をまとめた検索条件について、\n"
@@ -1417,6 +1423,7 @@ class PoetoreWindow(QWidget):
         action_row.addWidget(self.trade_currency_combo, stretch=2)
         action_row.addWidget(self.listed_within_combo, stretch=1)
         self.trade_url_button = QPushButton("公式トレード  ↗")
+        self.trade_url_button.setObjectName("filterActionButton")
         self.trade_url_button.setToolTip("日本語公式Tradeをブラウザで開く")
         self.trade_url_button.setEnabled(False)
         self.trade_url_button.clicked.connect(self._open_trade_url)
@@ -1621,6 +1628,21 @@ class PoetoreWindow(QWidget):
             QPushButton:hover { background: rgba(37, 51, 47, 230); }
             QPushButton:pressed { background: #111; }
             QPushButton:disabled { color: #66706C; background: rgba(23, 27, 29, 180); }
+            QPushButton#secondaryActionButton,
+            QPushButton#filterActionButton {
+                border: 1px solid #465154;
+            }
+            QPushButton#secondaryActionButton:hover,
+            QPushButton#filterActionButton:hover {
+                border-color: #49D6B0;
+            }
+            QPushButton#secondaryActionButton:checked {
+                background: rgba(35, 118, 100, 135);
+                border-color: #49D6B0;
+            }
+            QPushButton#filterActionButton:disabled {
+                border-color: #343B3E;
+            }
             QPushButton#binaryToggle {
                 border-radius: 0;
                 padding: 4px 7px;
@@ -1770,6 +1792,13 @@ class PoetoreWindow(QWidget):
                 selection-background-color: rgba(35, 118, 100, 220);
             }
             QComboBox:hover, QLineEdit:focus { border-color: #49D6B0; }
+            QComboBox#filterControl {
+                border: 1px solid #465154;
+            }
+            QComboBox#filterControl:hover,
+            QComboBox#filterControl:on {
+                border-color: #49D6B0;
+            }
             QComboBox::drop-down { border: none; width: 18px; }
             QComboBox QAbstractItemView {
                 background: #1b1b1b;
