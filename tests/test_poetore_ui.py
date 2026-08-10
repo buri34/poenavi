@@ -71,8 +71,8 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
         assert not hasattr(window, "disclaimer_label")
         assert window.trade_league_combo.currentData() == "auto"
         assert window._selected_trade_league() is None
-        assert window.width() == 700
-        assert window.minimumWidth() == 660
+        assert window.width() == 650
+        assert window.minimumWidth() == 610
         assert window.height() == 1039
         assert window.price_list.minimumHeight() == 434
         assert window.trade_url_button.text() == "公式トレード  ↗"
@@ -85,9 +85,9 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
 @pytest.mark.parametrize(
     ("setting", "font_px", "width", "height", "minimum_width"),
     (
-        ("small", 12, 600, 1039, 580),
-        ("medium", 14, 700, 1039, 660),
-        ("large", 16, 800, 1039, 740),
+        ("small", 12, 560, 1039, 540),
+        ("medium", 14, 650, 1039, 610),
+        ("large", 16, 740, 1039, 680),
     ),
 )
 def test_poetore_result_display_size_scales_window_and_controls(
@@ -117,7 +117,7 @@ def test_poetore_result_display_size_can_change_on_existing_window(qapp):
         window.apply_result_display_size()
 
         assert window._result_font_size == "large"
-        assert window.width() == 800
+        assert window.width() == 740
         assert window.height() == 1039
         assert "font-size: 16px" in window.styleSheet()
     finally:
@@ -149,6 +149,7 @@ def test_trade_action_row_uses_compact_fonts_and_fits_window(
             in window.styleSheet()
         )
         assert controls[-1].geometry().right() < window._panel.width()
+        assert all(combo.minimumWidth() == combo.maximumWidth() for combo in controls[:3])
     finally:
         window.close()
 
@@ -432,7 +433,7 @@ def test_show_at_context_places_window_inward_from_cursor_side(qapp):
             window, "activateWindow"
         ):
             window.show_at_context(context)
-        assert window.pos() == QPoint(654, 50)
+        assert window.pos() == QPoint(704, 50)
     finally:
         window.close()
 
@@ -1258,7 +1259,7 @@ def test_foulborn_xoph_uses_mutated_unique_returning_projectiles_stat(qapp):
 def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
     window = PoetoreWindow()
     try:
-        assert window.size().width() == 700
+        assert window.size().width() == 650
         assert window._panel.objectName() == "poetorePanel"
         assert not window._debug_parse_area.isVisible()
         assert window.mod_filter_tree.columnCount() == 6

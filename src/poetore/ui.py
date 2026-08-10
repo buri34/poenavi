@@ -11,7 +11,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRect, QSize, Qt, QTimer, Signal, QUrl
 from PySide6.QtGui import (
-    QColor, QCursor, QDesktopServices, QIcon, QIntValidator, QLinearGradient, QPainter,
+    QColor, QCursor, QDesktopServices, QFontMetrics, QIcon, QIntValidator, QLinearGradient, QPainter,
     QPalette, QPen, QPixmap, QPolygonF,
 )
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
@@ -105,23 +105,23 @@ _RELATED_ITEMS_TREE_HEIGHT = 180
 _RELATED_ITEMS_PRICE_HEIGHT_REDUCTION = 180
 _DISPLAY_SIZE_PROFILES = {
     "small": {
-        "font": 12, "width": 600, "height": 1039,
+        "font": 12, "width": 560, "height": 1039,
         "mod_value_font": 11,
-        "minimum_width": 580, "minimum_height": 620,
+        "minimum_width": 540, "minimum_height": 620,
         "mod_height": 230, "price_height": 434,
         "button_v_padding": 5, "button_h_padding": 9,
     },
     "medium": {
-        "font": 14, "width": 700, "height": 1039,
+        "font": 14, "width": 650, "height": 1039,
         "mod_value_font": 12,
-        "minimum_width": 660, "minimum_height": 620,
+        "minimum_width": 610, "minimum_height": 620,
         "mod_height": 250, "price_height": 434,
         "button_v_padding": 6, "button_h_padding": 11,
     },
     "large": {
-        "font": 16, "width": 800, "height": 1039,
+        "font": 16, "width": 740, "height": 1039,
         "mod_value_font": 14,
-        "minimum_width": 740, "minimum_height": 620,
+        "minimum_width": 680, "minimum_height": 620,
         "mod_height": 270, "price_height": 434,
         "button_v_padding": 7, "button_h_padding": 13,
     },
@@ -1434,9 +1434,9 @@ class PoetoreWindow(QWidget):
         self.price_button.setObjectName("primaryButton")
         self.price_button.clicked.connect(self.search_current_item)
         action_row.addWidget(self.price_button)
-        action_row.addWidget(self.trade_status_combo, stretch=2)
-        action_row.addWidget(self.trade_currency_combo, stretch=2)
-        action_row.addWidget(self.listed_within_combo, stretch=1)
+        action_row.addWidget(self.trade_status_combo)
+        action_row.addWidget(self.trade_currency_combo)
+        action_row.addWidget(self.listed_within_combo)
         self.trade_url_button = QPushButton("公式トレード  ↗")
         self.trade_url_button.setObjectName("filterActionButton")
         self.trade_url_button.setProperty("compactAction", True)
@@ -1914,6 +1914,32 @@ class PoetoreWindow(QWidget):
             f"font-size: {profile['mod_value_font']}px; margin-left: {gap}px;"
         )
 
+    def _fit_compact_action_widths(self):
+        """検索操作列を、全選択肢が欠けない最小幅へ揃える。"""
+        profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
+        for combo in (
+            self.trade_status_combo,
+            self.trade_currency_combo,
+            self.listed_within_combo,
+        ):
+            font = combo.font()
+            font.setPixelSize(profile["mod_value_font"])
+            metrics = QFontMetrics(font)
+            text_width = max(
+                (metrics.horizontalAdvance(combo.itemText(index))
+                 for index in range(combo.count())),
+                default=0,
+            )
+            # 左右パディング6px、ドロップダウン14px、境界分を確保する。
+            combo.setFixedWidth(text_width + 24)
+
+        button_font = self.trade_url_button.font()
+        button_font.setPixelSize(profile["mod_value_font"])
+        button_metrics = QFontMetrics(button_font)
+        self.trade_url_button.setFixedWidth(
+            button_metrics.horizontalAdvance(self.trade_url_button.text()) + 12
+        )
+
     def apply_result_display_size(self):
         """設定済みの小／中／大を既存の検索画面へ即時反映する。"""
         selected = normalize_result_font_size(
@@ -1937,6 +1963,7 @@ class PoetoreWindow(QWidget):
         self.poe_ninja_currency_icon.setFixedSize(
             self._scaled_display_value(28), self._scaled_display_value(28)
         )
+        self._fit_compact_action_widths()
         self.mod_filter_tree.setColumnWidth(
             _MOD_COLUMN_CHECK, self._scaled_display_value(_MOD_CHECK_COLUMN_WIDTH)
         )
@@ -4272,12 +4299,12 @@ class PoetoreWindow(QWidget):
                     tag.setAlignment(Qt.AlignCenter)
                     if tier == 1:
                         tag.setStyleSheet(
-                            "background: #eab308; color: #111111; border-radius: 3px;"
+                            "background: #D8C47A; color: #292416; border-radius: 3px;"
                             " padding: 1px 4px; font-weight: 600;"
                         )
                     else:
                         tag.setStyleSheet(
-                            "color: #eab308; border: 1px solid #eab308; border-radius: 3px;"
+                            "color: #CDBB78; border: 1px solid #9F9162; border-radius: 3px;"
                             " padding: 0px 3px; font-weight: 600;"
                         )
                     tier_layout.addWidget(tag)
