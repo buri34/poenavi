@@ -18,6 +18,17 @@ NON_MAP_AREA_STAT_IDS = {
     "implicit.stat_1953432004",
 }
 
+# Nightmare Mapの詳細コピーにのみ現れ、固定Awakened revision／公式Tradeの
+# Area Mod一覧には独立Statがない項目。類似する確率付きStatへ統合せず、
+# Map Checkの危険度設定を個別に保持する。
+POETORE_NIGHTMARE_MAP_STATS = ({
+    "key": "nightmare.stat_monsters_inflict_withered_on_hit",
+    "ref": "Monsters inflict Withered for 2 seconds on Hit",
+    "japanese": "モンスターによるヒット時に衰弱を2秒間付与する",
+    "scope": "normal",
+    "stat_ids": ["nightmare.stat_monsters_inflict_withered_on_hit"],
+},)
+
 
 def _flatten_stats(rows: list[dict]) -> list[dict]:
     flattened = []
@@ -87,6 +98,7 @@ def build_catalog(archive: Path, metadata_path: Path) -> dict:
             }[scope],
             "stat_ids": sorted({stat_id for _kind, stat_id in pairs}),
         })
+    entries.extend(dict(row) for row in POETORE_NIGHTMARE_MAP_STATS)
     entries.sort(key=lambda row: (row["scope"], row["japanese"], row["key"]))
     return {
         "schema_version": 1,

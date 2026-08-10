@@ -45,8 +45,8 @@ def test_map_check_position_keeps_side_and_centers_at_cursor_y_with_clamping():
 
 def test_catalog_matches_locked_awakened_area_mod_population():
     catalog = load_map_mod_catalog()
-    assert len(catalog) == 229
-    assert sum(row.scope == "normal" for row in catalog) == 169
+    assert len(catalog) == 230
+    assert sum(row.scope == "normal" for row in catalog) == 170
     assert sum(row.scope == "heist_exclusive" for row in catalog) == 27
     assert sum(row.scope == "ubermap_exclusive" for row in catalog) == 33
     assert all(row.stat_ids and row.japanese for row in catalog)
@@ -267,9 +267,68 @@ Reported Alias Test 3
     }
     assert [(modifier.stat_id, modifier.values) for modifier in parsed.modifiers] == [
         ("explicit.stat_1840747977", (34.0, 31.0, -35.0)),
-        ("explicit.stat_3044826007", (100.0,)),
+        ("nightmare.stat_monsters_inflict_withered_on_hit", (2.0,)),
     ]
     assert all(modifier.stat_id in catalog_ids for modifier in parsed.modifiers)
+
+    QApplication.instance() or QApplication([])
+    window = MapCheckWindow(default_map_check_config())
+    window._render(parsed)
+    labels = [label.text() for label in window.body.findChildren(QLabel)]
+    assert not any(text.startswith("未認識Mod") for text in labels)
+    window.close()
+
+
+def test_reported_nightmare_map_full_copy_resolves_chaos_and_guaranteed_wither():
+    parsed = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+禁断の術策
+ナイトメアマップ
+--------
+アイテム数量: +90% (augmented)
+アイテムレアリティ: +101% (augmented)
+モンスターパックサイズ: +62% (augmented)
+スカラベ量が上昇: +35% (augmented)
+--------
+アイテムレベル: 85
+--------
+モンスターレベル：83
+--------
+{ プレフィックスモッド「飢える」 (ティア: 1) }
+エリアには溺死のオーブが出現する
+{ プレフィックスモッド「冒涜的な」 — ダメージ, 物理, 混沌 }
+モンスターはその物理ダメージの34(31-35)%を追加混沌ダメージとして獲得する
+モンスターによるヒット時に衰弱を2秒間付与する
+(Withered: 衰弱は、受ける混沌ダメージ6%増加させる。最大15スタックまで与えられる)
+{ プレフィックスモッド「防呪された」 — キャスター, 呪い }
+モンスターに対する呪いの効果が60%低下する
+{ サフィックスモッド 「腐敗する」 (ティア: 1) }
+エリアには不安定な触手の悪魔が出現する
+{ サフィックスモッド 「呪いの」 (ティア: 1) }
+プレイヤーはヴァルネラビリティの呪いを受ける
+(ヴァルネラビリティは呪術の一種で、対象が受ける物理ダメージが15%増加、対象がヒットを受けた際の出血確率を+20%する。持続時間は8秒)
+プレイヤーはテンポラルチェーンの呪いを受ける
+(テンポラルチェーンは呪術の一種で、対象のアクションスピードを15%減少させる。レアやユニークの敵は9%減少させる。また対象の他のエフェクトの消失を40%遅くする。プレイヤーに対しては効果が50%低下する。持続時間は5秒)
+プレイヤーはエレメンタルウィークネスの呪いを受ける
+(エレメンタルウィークネスは呪術の一種で、全ての元素耐性を-15%する。持続時間は8秒)
+{ サフィックスモッド 「裏切りの」 (ティア: 1) }
+味方に影響する、プレイヤースキルによるオーラは敵にも影響する
+--------
+自身のマップデバイスで使用することでこのティアまたはそれよりティアの低いマップに移動する。マップは一度のみ使用できる。
+--------
+カオスオーブ、ヴァールオーブ、デリリウムオーブおよびチゼルでのみ修正可能
+""")
+    relevant = [
+        (modifier.stat_id, modifier.text)
+        for modifier in parsed.modifiers
+        if "追加混沌ダメージ" in modifier.text or "衰弱を2秒間" in modifier.text
+    ]
+    assert [stat_id for stat_id, _text in relevant] == [
+        "explicit.stat_1840747977",
+        "nightmare.stat_monsters_inflict_withered_on_hit",
+    ]
+    unresolved = [modifier.text for modifier in parsed.modifiers if modifier.stat_id is None]
+    assert unresolved == []
 
     QApplication.instance() or QApplication([])
     window = MapCheckWindow(default_map_check_config())
@@ -399,8 +458,8 @@ def test_manager_uses_numeric_profiles_without_removed_reflect_defaults():
     QApplication.instance() or QApplication([])
     dialog = MapModManagerDialog(default_map_check_config())
     assert [button.text() for button in dialog.profile_buttons] == ["1", "2", "3"]
-    assert dialog.table.rowCount() == 229
-    assert "全229件" in dialog.count_label.text()
+    assert dialog.table.rowCount() == 230
+    assert "全230件" in dialog.count_label.text()
     assert all(entry.scope != "outdated" for entry, _tag in dialog._rows())
     dialog.close()
 

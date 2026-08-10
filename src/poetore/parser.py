@@ -259,10 +259,6 @@ _STAT_TEXT_ALIASES = {
     # 所有格の「その」が省略される。
     normalize_stat_text("モンスターは物理ダメージの#%を追加混沌ダメージとして獲得する"):
         "モンスターはその物理ダメージの#%を追加混沌ダメージとして獲得する",
-    # 確率100%のWithered Modはゲーム内コピーで確率部分が省略される。
-    # 固定持続時間の「2秒」は検索値ではないため、値は下のoverrideで補う。
-    normalize_stat_text("モンスターによるヒット時に衰弱を2秒間付与する"):
-        "モンスターによるヒット時に100%の確率で衰弱を2秒間付与する",
     # 詳細コピーと公式Trade statで語順が異なる同一Mod。
     normalize_stat_text("全てのプレイヤーはスペルダメージを抑制して防ぐダメージ割合が#%される"):
         "全てのプレイヤーはスペルダメージを抑制すると#%のダメージを防ぐ",
@@ -281,7 +277,14 @@ _STAT_VALUE_OVERRIDES = {
     normalize_stat_text("モンスターはスペルによるヒット時に阻害を付与する"): (100.0,),
     normalize_stat_text("モンスターはヒットを受けた時にエンデュランスチャージを1個獲得する"): (100.0,),
     normalize_stat_text("モンスターの投射物は地形と衝突した時に連鎖することができる"): (100.0,),
-    normalize_stat_text("モンスターによるヒット時に衰弱を2秒間付与する"): (100.0,),
+}
+# 公式Tradeに同一文面のStatがないNightmare Map専用Mod。
+# 確率付きWitheredとは危険度が異なるため、Map Checkでは別項目として扱う。
+_MAP_CHECK_EXACT_STATS = {
+    normalize_stat_text("モンスターによるヒット時に衰弱を2秒間付与する"): {
+        "stat_id": "nightmare.stat_monsters_inflict_withered_on_hit",
+        "ref": "Monsters inflict Withered for 2 seconds on Hit",
+    },
 }
 # 固定文言中にも数値がある場合、検索値に対応する数値の位置を明示する。
 # 「敵1体」の1ではなく、その後のMana値を使う。
@@ -927,6 +930,10 @@ def parse_item_text(text: str) -> ParsedItem:
                     )
                     direction_inverted = metadata is not None
             stat_alias_key = normalize_stat_text(metadata_text)
+            map_check_exact = (
+                _MAP_CHECK_EXACT_STATS.get(stat_alias_key)
+                if item_category == "map" else None
+            )
             if metadata is None and kind == "explicit":
                 random_skill = _JAPANESE_RANDOM_SKILL_GEM_LEVEL.fullmatch(
                     metadata_text
@@ -973,6 +980,17 @@ def parse_item_text(text: str) -> ParsedItem:
                 metadata, option, confidence = default_metadata_index().match_with_option(
                     _STAT_TEXT_ALIASES[stat_alias_key], kind,
                 )
+            if (
+                metadata is None
+                and kind == "desecrated"
+                and item_category == "map"
+            ):
+                # Nightmare Mapの高度なModヘッダーはdesecrated生成だが、
+                # 公式Trade APIは対応Statをexplicit名前空間で公開している。
+                explicit_text = _STAT_TEXT_ALIASES.get(stat_alias_key, metadata_text)
+                metadata, option, confidence = default_metadata_index().match_with_option(
+                    explicit_text, "explicit",
+                )
             if metadata is None and kind == "veiled" and current_header_name:
                 metadata, confidence = default_metadata_index().match_ref(
                     current_header_name, kind,
@@ -1010,9 +1028,13 @@ def parse_item_text(text: str) -> ParsedItem:
                 ),
                 group=(current_modifier_group if from_header else
                        section_index if item_category == "expedition_logbook" else None),
-                ref=metadata.ref if metadata else None,
-                stat_id=metadata.stat_id if metadata else None,
-                confidence=confidence,
+                ref=metadata.ref if metadata else (
+                    map_check_exact["ref"] if map_check_exact else None
+                ),
+                stat_id=metadata.stat_id if metadata else (
+                    map_check_exact["stat_id"] if map_check_exact else None
+                ),
+                confidence=confidence if metadata else (1.0 if map_check_exact else confidence),
                 roll_min=roll_min,
                 roll_max=roll_max,
                 better=(metadata.better * (-1 if matcher_negated else 1)) if metadata else None,

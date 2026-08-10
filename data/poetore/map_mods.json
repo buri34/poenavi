@@ -1263,6 +1263,15 @@
       ]
     },
     {
+      "key": "nightmare.stat_monsters_inflict_withered_on_hit",
+      "ref": "Monsters inflict Withered for 2 seconds on Hit",
+      "japanese": "モンスターによるヒット時に衰弱を2秒間付与する",
+      "scope": "normal",
+      "stat_ids": [
+        "nightmare.stat_monsters_inflict_withered_on_hit"
+      ]
+    },
+    {
       "key": "explicit.stat_3796523155",
       "ref": "#% less effect of Curses on Monsters",
       "japanese": "モンスターに対する呪いの効果が#%低下する",
