@@ -180,7 +180,7 @@ def test_capture_error_dialog_uses_readable_dark_theme(qapp):
         )
         assert "background-color: #111111" in style
         assert "color: #E6ECEA" in style
-        assert "color: #49D6B0" in style
+        assert "color: #65FFCA" in style
         assert "min-width: 290px" not in style
         assert dialog.standardButtons() == QMessageBox.StandardButton.Ok
         dialog.ensurePolished()
@@ -1282,7 +1282,7 @@ def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
         ]
         assert "rgba(17, 20, 22, 246)" in window.styleSheet()
         assert "#343B3E" in window.styleSheet()
-        assert "#49D6B0" in window.styleSheet()
+        assert "#65FFCA" in window.styleSheet()
         assert "QFrame#itemHeader {\n                background: rgba(20, 24, 26, 220);\n                border: none;" in window.styleSheet()
         assert "QPushButton {\n                background: rgba(26, 31, 33, 225);\n                color: #E6ECEA;\n                border: none;" in window.styleSheet()
         assert "QPushButton#secondaryActionButton" in window.styleSheet()

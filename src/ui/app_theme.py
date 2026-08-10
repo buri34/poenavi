@@ -23,7 +23,7 @@ POENAVI_THEME = AppTheme(
 )
 
 POETORE_THEME = AppTheme(
-    accent="#49D6B0",
+    accent="#65FFCA",
     text="#E6ECEA",
     muted_text="#98A39F",
     background="#111416",

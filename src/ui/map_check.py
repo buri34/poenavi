@@ -49,8 +49,8 @@ class MapModManagerDialog(QDialog):
             "QDialog,QWidget{background:#111416;color:#E6ECEA;}"
             "QLineEdit,QTableWidget{background:#1A1F21;color:#E6ECEA;border:1px solid #3A4245;}"
             "QPushButton{padding:5px;background:#1A1F21;color:#E6ECEA;border:1px solid #3A4245;}"
-            "QPushButton:hover{border-color:#49D6B0;}"
-            "QPushButton:checked{border:2px solid #49D6B0;}"
+            "QPushButton:hover{border-color:#65FFCA;}"
+            "QPushButton:checked{border:2px solid #65FFCA;}"
         )
         root = QVBoxLayout(self)
         controls = QHBoxLayout()
@@ -179,8 +179,8 @@ class MapCheckWindow(QDialog):
         self.setStyleSheet(
             "QDialog,QWidget{background:#111416;color:#E6ECEA;}"
             "QPushButton{padding:7px;background:#1A1F21;color:#E6ECEA;border:1px solid #3A4245;}"
-            "QPushButton:hover{border-color:#49D6B0;}"
-            "QPushButton:checked{border:2px solid #49D6B0;}"
+            "QPushButton:hover{border-color:#65FFCA;}"
+            "QPushButton:checked{border:2px solid #65FFCA;}"
         )
         self._apply_font_size()
         self.root = QVBoxLayout(self)

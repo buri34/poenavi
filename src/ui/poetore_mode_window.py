@@ -204,7 +204,7 @@ class _PoetoreModeTitleBar(QWidget):
                 padding: 2px 8px;
             }}
             QPushButton:hover {{
-                background: rgba(73, 214, 176, 0.20);
+                background: rgba(101, 255, 202, 0.20);
                 border-radius: 3px;
             }}
         """
