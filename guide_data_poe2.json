@@ -224,8 +224,8 @@
     "flags": {
       "act2_traitor_clear": {
         "objective": "・アサラを呼ぶ\n・道なりに進んで、ボス「復活した王、ヤマンラ」を倒す。\n・階段を降りる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・アサラに話して、次のエリアへ行く",
-        "layout": "<span style=\" color:#ffffff;\">・極めて固定的なレイアウトで、プレイヤーをまっすぐ出口へと導く細い一本道のような構造\n・基本的には、「エリアに入ってきた方向と逆に向かって橋を渡り続ける」だけで、迷うことなくボスエリアと出口にたどり着ける</span>",
-        "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n復活した王、ヤマンラ\n属性：物理、雷\n耐性：物理、火、雷\n弱点：冷気\n攻略：雷耐性を積む。持っていればトパーズチャームをはめる。\n\n</span><span style=\" color:#dddd44;\">【ここからのルート分岐について】\n・ここから先は攻略順序を選べる。\n・通常は「ケス」か「マストドンの不毛地帯」のどちらかへ行く。それぞれのメリットは以下。\n  －ケス先攻: カバラを倒して「スキルポイント+2」を早く入手できる。\n  －マストドン先攻: レベルが高い状態でカバラを倒せるため、確定ドロップのジェムレベルが7になり、進行がスムーズになる。</span>",
+        "layout": "<span style=\" color:#ffffff;\">・極めて固定的なレイアウトで、プレイヤーをまっすぐ出口へと導く細い一本道のような構造\n・基本的には、「エリアに入ってきた方向と逆に向かって橋を渡り続ける」だけで、迷うことなくボスエリアと出口にたどり着ける</span>\n\n<span style=\" color:#dddd44;\">【ここからのルート分岐について】\n・ここから先は攻略順序を選べる。\n・通常は「ケス」か「マストドンの不毛地帯」のどちらかへ行く。それぞれのメリットは以下。\n  －ケス先攻: カバラを倒して「スキルポイント+2」を早く入手できる。\n  －マストドン先攻: レベルが高い状態でカバラを倒せるため、確定ドロップのジェムレベルが7になり、進行がスムーズになる。</span>",
+        "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n復活した王、ヤマンラ\n属性：物理、雷\n耐性：物理、火、雷\n弱点：冷気\n攻略：雷耐性を積む。持っていればトパーズチャームをはめる。</span>",
         "summary": "<span style=\" color:#ffffff;\">・アサラを呼ぶ\n・道なりに進んで、ボス「復活した王、ヤマンラ」を倒す。\n・階段を降りる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・アサラに話して、次のエリアへ行く</span>",
         "mini_navi": {
           "text": "<span style=\" color:#ffffff;\">▸道なりに進んで、アサラを呼び、[boss]ボス「復活した王、ヤマンラ」を倒す。\n▸階段を降り、イベント発生後、ポータルで[town]</span><span style='color:#dddd44'>街</span><span style=\" color:#ffffff;\">へ戻る\n▸【街】[quest]ザーカにクエストを提出する\n▸【街】アサラに話して、[move]次のエリアへ行く</span>"
@@ -312,7 +312,7 @@
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n見捨てられた息子、アザリアン\n属性：物理、火\n耐性：物理、火\n弱点：－</span>",
       "summary": "<span style=\" color:#ffffff;\">・ボス「見捨てられた息子、アザリアン」を倒す\n・「水の精髄」を手に入れる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く</span>",
       "mini_navi": {
-        "text": "<span style=\" color:#ffffff;\">・ボス「見捨てられた息子、アザリアン」を倒す\n・「水の精髄」を手に入れる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・砂漠の地図を操作して、次のエリアへ行く</span>"
+        "text": "<span style=\" color:#ffffff;\">▸[boss]ボス「見捨てられた息子、アザリアン」を倒す\n▸「水の精髄」を手に入れ、ポータルで[town]</span><span style='color:#dddd44'>街</span><span style=\" color:#ffffff;\">へ戻る\n▸【街】ザーカにクエストを提出する\n▸【街】砂漠の地図を操作して、[move]</span><span style='color:#dddd44'>次のエリア</span><span style='color:#ffffff'>へ行く</span>"
       }
     },
     "flags": {}
@@ -732,7 +732,7 @@
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\nプリズナー\n属性：物理、冷気\n耐性：物理、冷気\n弱点：－</span>",
       "summary": "<span style=\" color:#ffffff;\">・ボス「プリズナー」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ワーカパヌ島」へ行く</span>\n\n<span style='color:#ffffff'>波が打ち寄せてくる側の壁を伝っていけば、必ず出口にたどり着く</span>\n\n<span style='color:#ffffff'>柵の壁部分は、リープスラムやパウンスで飛び越えることができるので、ショートカットが可能</span>",
       "mini_navi": {
-        "text": "<span style=\" color:#ffffff;\">・ボス「プリズナー」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ワーカパヌ島」へ行く</span>\n\n<span style='color:#ffffff'>波が打ち寄せてくる側の壁を伝っていけば、必ず出口にたどり着く</span>\n\n<span style='color:#ffffff'>柵の壁部分は、リープスラムやパウンスで飛び越えることができるので、ショートカットが可能</span>"
+        "text": "<span style=\" color:#ffffff;\">▸[boss]ボス「プリズナー」を倒す\n▸ポータルで[town]</span><span style='color:#dddd44'>街</span><span style=\" color:#ffffff;\">へ戻る\n▸【街】マコルに話して、船で[move]</span><span style='color:#dddd44'>ワーカパヌ島</span><span style='color:#ffffff'>へ行く</span>"
       }
     },
     "flags": {}
@@ -898,7 +898,7 @@
       "tips": "<span style='color:#ffffff'>・エリア内でドロップする２種のバリャは、エリア内にあるオブジェクトで使用すると、</span><span style='color:#dddd44'>レアのリング/アミュレット/ジュエル</span><span style=\" color:#ffffff;\">が手に入る。\n\n【ボス情報】\nコブラの王、エルザラ\n属性：物理、火、雷\n耐性：物理、雷\n弱点：－</span>",
       "summary": "<span style=\" color:#ffffff;\">・ボス「コブラの王、エルザラ」を倒す\n・ポータルで街へ戻る\n\n（街）\n「ガライの門」へ行く</span>\n\n<span style='color:#ffffff'>入口のまっすぐ反対側のところにボスエリアがある。</span>\n\n<span style='color:#ffffff'>エリア内ドロップの２種のバリャは、エリア内のオブジェクトで使用すると、</span><span style='color:#dddd44'>レアのリングorアミュレットorジュエル</span><span style='color:#ffffff'>に</span>",
       "mini_navi": {
-        "text": "<span style=\" color:#ffffff;\">・ボス「コブラの王、エルザラ」を倒す\n・ポータルで街へ戻る\n\n（街）\n「ガライの門」へ行く</span>\n\n<span style='color:#ffffff'>入口のまっすぐ反対側のところにボスエリアがある。</span>\n\n<span style='color:#ffffff'>エリア内ドロップの２種のバリャは、エリア内のオブジェクトで使用すると、</span><span style='color:#dddd44'>レアのリングorアミュレットorジュエル</span><span style='color:#ffffff'>に</span>"
+        "text": "<span style=\" color:#ffffff;\">▸[boss]ボス「コブラの王、エルザラ」を倒す\n▸ポータルで[town]</span><span style='color:#dddd44'>街</span><span style=\" color:#ffffff;\">へ戻る\n▸【街】[move]</span><span style='color:#dddd44'>ガライの門</span><span style='color:#ffffff'>へ行く</span>"
       }
     },
     "flags": {}
@@ -958,7 +958,7 @@
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n流浪の槍、リサラ\n属性：物理、火、雷、混沌\n耐性：物理、火、冷気、雷\n弱点：－</span>",
       "summary": "<span style='color:#ffffff'>・ボス「流浪の槍、リサラ」を倒す（</span><span style='color:#dddd44'>スピリット+40</span><span style=\" color:#ffffff;\">）\n・「氷河の湖」へ行く</span>\n\n<span style='color:#ffffff'>一本道のシンプルな構造</span>",
       "mini_navi": {
-        "text": "<span style='color:#ffffff'>・ボス「流浪の槍、リサラ」を倒す（</span><span style='color:#dddd44'>スピリット+40</span><span style=\" color:#ffffff;\">）\n・「氷河の湖」へ行く</span>\n\n<span style='color:#ffffff'>一本道のシンプルな構造</span>"
+        "text": "<span style='color:#ffffff'>▸[boss]ボス「流浪の槍、リサラ」を倒す（</span><span style='color:#dddd44'>スピリット+40</span><span style='color:#ffffff'>）</span>\n<span style='color:#ffffff'>（ボスまで一本道のシンプルな構造）</span>\n<span style='color:#ffffff'>▸[move]</span><span style='color:#dddd44'>氷河の湖</span><span style='color:#ffffff'>へ行く</span>"
       }
     },
     "flags": {}
@@ -992,7 +992,7 @@
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\nアボミネーションのイエティ\n属性：物理、冷気\n耐性：物理\n弱点：－</span>",
       "summary": "<span style=\" color:#ffffff;\">・ボス「アボミネーションのイエティ」を倒す\n・ポータルで街へ戻る\n\n（街）\n・ヒルダにクエストを提出する（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・「氷河の湖」へ行く</span>\n\n<span style='color:#ffffff'>縦に長い一本道の構造。チェックポイントが少ないので注意</span>",
       "mini_navi": {
-        "text": "<span style=\" color:#ffffff;\">・ボス「アボミネーションのイエティ」を倒す\n・ポータルで街へ戻る\n\n（街）\n・ヒルダにクエストを提出する（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・「氷河の湖」へ行く</span>\n\n<span style='color:#ffffff'>縦に長い一本道の構造。チェックポイントが少ないので注意</span>"
+        "text": "<span style=\" color:#ffffff;\">▸[boss]ボス「アボミネーションのイエティ」を倒す\n▸ポータルで[town]</span><span style='color:#dddd44'>街</span><span style=\" color:#ffffff;\">へ戻る\n▸【街】[quest]ヒルダにクエストを提出する（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n▸【街】[move]</span><span style='color:#dddd44'>氷河の湖</span><span style='color:#ffffff'>へ行く</span>"
       }
     },
     "flags": {}
