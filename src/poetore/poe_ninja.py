@@ -355,8 +355,9 @@ def _unique_variant_hint(name: str, item: ParsedItem) -> str | None:
     if name.casefold() != "mageblood":
         return None
     match = re.search(
-        r"(?:Leftmost\s+(\d+)\s+Magic Utility Flasks?"
-        r"|左から\s*(\d+)\s*個のマジックユーティリティフラスコ)",
+        r"(?:Leftmost\s+(\d+)(?:\s*\(\s*\d+\s*-\s*\d+\s*\))?\s+Magic Utility Flasks?"
+        r"|左から\s*(\d+)(?:\s*\(\s*\d+\s*-\s*\d+\s*\))?"
+        r"\s*個のマジックユーティリティフラスコ)",
         item.raw_text,
         re.IGNORECASE,
     )
