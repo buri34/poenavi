@@ -280,6 +280,9 @@ def test_poetore_mode_renders_divine_chaos_rate():
     assert rate_layout.itemAt(2).widget() is chaos_icon
     assert rate_layout.itemAt(3).spacerItem() is not None
     assert window.rate_status.text() == "Mirage ・ poe.ninja ・ 31分ごとに自動更新"
-    assert "#DB86EF" in window.centralWidget().styleSheet()
+    style = window.centralWidget().styleSheet()
+    assert "#49D6B0" in style
+    assert "#343B3E" in style
+    assert "#DB86EF" not in style.upper()
     window.close()
     app.processEvents()

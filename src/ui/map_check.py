@@ -29,8 +29,8 @@ _COLORS = {
     "d": ("☠", "#8b1e25"),
     "w": ("⚠", "#a85a13"),
     "g": ("✓", "#27633a"),
-    "-": ("", "#241929"),
-    "s": ("", "#241929"),
+    "-": ("", "#1A1F21"),
+    "s": ("", "#1A1F21"),
 }
 
 _FONT_SIZES = {"small": 11, "medium": 13, "large": 16}
@@ -46,10 +46,11 @@ class MapModManagerDialog(QDialog):
         self.setWindowTitle("Map Mod管理")
         self.resize(820, 680)
         self.setStyleSheet(
-            "QDialog,QWidget{background:#111;color:#f2e7f5;}"
-            "QLineEdit,QTableWidget{background:#18121b;color:#f2e7f5;border:1px solid #6f4778;}"
-            "QPushButton{padding:5px;background:#241929;color:#f2e7f5;border:1px solid #6f4778;}"
-            "QPushButton:checked{border:2px solid #db86ef;}"
+            "QDialog,QWidget{background:#111416;color:#E6ECEA;}"
+            "QLineEdit,QTableWidget{background:#1A1F21;color:#E6ECEA;border:1px solid #3A4245;}"
+            "QPushButton{padding:5px;background:#1A1F21;color:#E6ECEA;border:1px solid #3A4245;}"
+            "QPushButton:hover{border-color:#49D6B0;}"
+            "QPushButton:checked{border:2px solid #49D6B0;}"
         )
         root = QVBoxLayout(self)
         controls = QHBoxLayout()
@@ -137,7 +138,7 @@ class MapModManagerDialog(QDialog):
             current = decision_for(self.config, entry.key)
             for column, (label, value, color) in enumerate((
                 ("☠", "d", "#8b1e25"), ("⚠", "w", "#a85a13"),
-                ("✓", "g", "#27633a"), ("×", "-", "#241929"),
+                ("✓", "g", "#27633a"), ("×", "-", "#1A1F21"),
             ), 1):
                 button = QPushButton(label)
                 button.setCheckable(True)
@@ -176,9 +177,10 @@ class MapCheckWindow(QDialog):
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.resize(self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT)
         self.setStyleSheet(
-            "QDialog,QWidget{background:#111;color:#f2e7f5;}"
-            "QPushButton{padding:7px;background:#241929;color:#f2e7f5;border:1px solid #6f4778;}"
-            "QPushButton:checked{border:2px solid #db86ef;}"
+            "QDialog,QWidget{background:#111416;color:#E6ECEA;}"
+            "QPushButton{padding:7px;background:#1A1F21;color:#E6ECEA;border:1px solid #3A4245;}"
+            "QPushButton:hover{border-color:#49D6B0;}"
+            "QPushButton:checked{border:2px solid #49D6B0;}"
         )
         self._apply_font_size()
         self.root = QVBoxLayout(self)

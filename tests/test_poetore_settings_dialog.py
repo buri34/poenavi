@@ -32,7 +32,8 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
         }
     )
 
-    assert "#DB86EF" in dialog.styleSheet()
+    assert "#49D6B0" in dialog.styleSheet()
+    assert "#343B3E" in dialog.styleSheet()
     assert not hasattr(dialog, "log_path_edits")
     assert not hasattr(dialog, "timer_size_combo")
     labels = [label.text() for label in dialog.findChildren(QLabel)]
@@ -53,7 +54,7 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert dialog.auto_hide_hotkey.key_button.key_text == "d"
     assert dialog.auto_hide_hotkey.ctrl_button.width() == 48
     assert dialog.auto_hide_hotkey.alt_button.width() == 48
-    assert "#DB86EF" in dialog.auto_hide_hotkey.ctrl_button.styleSheet()
+    assert "#49D6B0" in dialog.auto_hide_hotkey.ctrl_button.styleSheet()
     assert settings["window_opacity"] == 80
     assert settings["text_opacity"] == 70
     assert settings["window_locked"] is True

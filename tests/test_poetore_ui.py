@@ -138,8 +138,8 @@ def test_capture_error_dialog_uses_readable_dark_theme(qapp):
             "もう一度 Alt+D を押してください。"
         )
         assert "background-color: #111111" in style
-        assert "color: #f2e7f5" in style
-        assert "color: #db86ef" in style
+        assert "color: #E6ECEA" in style
+        assert "color: #49D6B0" in style
         assert "min-width: 290px" not in style
         assert dialog.standardButtons() == QMessageBox.StandardButton.Ok
         dialog.ensurePolished()
@@ -1239,8 +1239,10 @@ def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
             window.mod_filter_tree.headerItem().text(index)
             for index in range(window.mod_filter_tree.columnCount())
         ]
-        assert "rgba(14, 14, 14, 246)" in window.styleSheet()
-        assert "#db86ef" in window.styleSheet()
+        assert "rgba(17, 20, 22, 246)" in window.styleSheet()
+        assert "#343B3E" in window.styleSheet()
+        assert "#49D6B0" in window.styleSheet()
+        assert "#DB86EF" not in window.styleSheet().upper()
         assert "#b0ff7b" not in window.styleSheet()
     finally:
         window.close()
@@ -2980,7 +2982,7 @@ def test_many_unidentified_unique_candidates_are_scrollable(qapp):
         assert window.unique_name_scroll.verticalScrollBar().maximum() > 0
         assert window.unique_name_scroll.viewport().palette().color(
             window.unique_name_scroll.viewport().backgroundRole()
-        ).name() == "#121212"
+        ).name() == "#111416"
     finally:
         window.close()
 
