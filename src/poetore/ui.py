@@ -1561,12 +1561,12 @@ class PoetoreWindow(QWidget):
             }
             QFrame#itemHeader {
                 background: rgba(20, 24, 26, 220);
-                border: 1px solid #343B3E;
+                border: none;
                 border-radius: 4px;
             }
             QFrame#poeNinjaPricePanel {
                 background: rgba(26, 31, 33, 220);
-                border: 1px solid #343B3E;
+                border: none;
                 border-radius: 4px;
             }
             QLabel#poeNinjaPriceLabel { color: #98A39F; font-weight: 700; }
@@ -1578,7 +1578,7 @@ class PoetoreWindow(QWidget):
                 color: #E6ECEA;
                 padding: 2px 7px;
                 font-weight: 700;
-                border-color: #3A4245;
+                border: none;
             }
             QMenu#divineRateMenu {
                 background: #1A1F21;
@@ -1592,7 +1592,7 @@ class PoetoreWindow(QWidget):
                 color: #D8E3DF;
                 padding: 0;
                 font-size: 11px;
-                border-color: #3A4245;
+                border: none;
             }
             QLabel#itemName {
                 color: #D8E3DF;
@@ -1614,13 +1614,13 @@ class PoetoreWindow(QWidget):
             QPushButton {
                 background: rgba(26, 31, 33, 225);
                 color: #E6ECEA;
-                border: 1px solid #3A4245;
+                border: none;
                 border-radius: 3px;
                 padding: 5px 9px;
             }
-            QPushButton:hover { background: rgba(37, 51, 47, 230); border-color: #D8E3DF; }
+            QPushButton:hover { background: rgba(37, 51, 47, 230); }
             QPushButton:pressed { background: #111; }
-            QPushButton:disabled { color: #66706C; border-color: #3A4245; }
+            QPushButton:disabled { color: #66706C; background: rgba(23, 27, 29, 180); }
             QPushButton#binaryToggle {
                 border-radius: 0;
                 padding: 4px 7px;
@@ -1630,13 +1630,12 @@ class PoetoreWindow(QWidget):
             QPushButton#binaryToggle:checked {
                 background: rgba(35, 118, 100, 225);
                 color: #E6ECEA;
-                border-color: #D8E3DF;
                 font-weight: 700;
             }
             QPushButton#cycleToggle {
                 background: rgba(28, 83, 73, 210);
                 color: #E6ECEA;
-                border: 1px solid #49D6B0;
+                border: none;
                 min-width: 112px;
                 font-weight: 700;
             }
@@ -1644,7 +1643,7 @@ class PoetoreWindow(QWidget):
             QPushButton#influenceChip {
                 background: rgba(20, 20, 20, 180);
                 color: #737D79;
-                border: 1px dashed rgba(112, 123, 119, 150);
+                border: none;
                 padding: 3px 7px;
                 font-weight: 700;
             }
@@ -1660,7 +1659,7 @@ class PoetoreWindow(QWidget):
             }
             QFrame#numericFilterTag[active="false"] {
                 background: rgba(20, 20, 20, 180);
-                border: 1px dashed rgba(112, 123, 119, 150);
+                border: none;
             }
             QPushButton#numericFilterToggle, QLineEdit#numericFilterEdit {
                 background: transparent;
@@ -1723,19 +1722,19 @@ class PoetoreWindow(QWidget):
                 color: #D8E3DF;
             }
             QFrame#itemLevelTag[active="false"] {
-                border: 1px dashed rgba(112, 123, 119, 150);
+                border: none;
                 background: rgba(20, 20, 20, 180);
             }
             QFrame#gemLevelTag[active="false"] {
-                border: 1px dashed rgba(112, 123, 119, 150);
+                border: none;
                 background: rgba(20, 20, 20, 180);
             }
             QFrame#gemQualityTag[active="false"] {
-                border: 1px dashed rgba(112, 123, 119, 150);
+                border: none;
                 background: rgba(20, 20, 20, 180);
             }
             QFrame#linksTag[active="false"] {
-                border: 1px dashed rgba(112, 123, 119, 150);
+                border: none;
                 background: rgba(20, 20, 20, 180);
             }
             QFrame#itemLevelTag[active="false"] QPushButton,
@@ -1764,7 +1763,7 @@ class PoetoreWindow(QWidget):
             QComboBox, QLineEdit {
                 background: rgba(26, 31, 33, 235);
                 color: #D8E3DF;
-                border: 1px solid #3A4245;
+                border: 1px solid transparent;
                 border-radius: 3px;
                 padding: 4px 6px;
                 min-height: 20px;
@@ -1782,7 +1781,7 @@ class PoetoreWindow(QWidget):
                 background: rgba(17, 20, 22, 235);
                 alternate-background-color: rgba(25, 30, 32, 205);
                 color: #D5DDDA;
-                border: 1px solid #343B3E;
+                border: none;
                 border-radius: 3px;
                 gridline-color: #2A3033;
                 outline: none;
@@ -1798,7 +1797,7 @@ class PoetoreWindow(QWidget):
                 background: rgba(28, 34, 36, 245);
                 color: #D5DDDA;
                 border: none;
-                border-right: 1px solid #343B3E;
+                border-right: none;
                 border-bottom: 1px solid #343B3E;
                 padding: 5px 4px;
                 font-weight: 600;

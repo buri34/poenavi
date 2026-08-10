@@ -1242,6 +1242,10 @@ def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
         assert "rgba(17, 20, 22, 246)" in window.styleSheet()
         assert "#343B3E" in window.styleSheet()
         assert "#49D6B0" in window.styleSheet()
+        assert "QFrame#itemHeader {\n                background: rgba(20, 24, 26, 220);\n                border: none;" in window.styleSheet()
+        assert "QPushButton {\n                background: rgba(26, 31, 33, 225);\n                color: #E6ECEA;\n                border: none;" in window.styleSheet()
+        assert "QTreeWidget {\n                background: rgba(17, 20, 22, 235);" in window.styleSheet()
+        assert "QTreeWidget {\n                background: rgba(17, 20, 22, 235);\n                alternate-background-color: rgba(25, 30, 32, 205);\n                color: #D5DDDA;\n                border: none;" in window.styleSheet()
         assert "#DB86EF" not in window.styleSheet().upper()
         assert "#b0ff7b" not in window.styleSheet()
     finally:
