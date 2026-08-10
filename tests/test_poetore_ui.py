@@ -1489,6 +1489,7 @@ def test_search_range_change_keeps_checkboxes_but_recalculates_edited_values(qap
 def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
     window = PoetoreWindow()
     try:
+        assert window.mod_sources_toggle.text() == "計算元Modを表示"
         assert "価格比較に影響しないため" in window.hidden_mods_toggle.toolTip()
         assert "影響しにくい" not in window.hidden_mods_toggle.toolTip()
         assert "Pseudo" not in window.mod_sources_toggle.toolTip()
@@ -1534,8 +1535,10 @@ def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
         assert not hidden.isHidden()
 
         window.mod_sources_toggle.setChecked(True)
+        assert window.mod_sources_toggle.text() == "計算元Modを隠す"
         assert normal.isExpanded()
         window.mod_sources_toggle.setChecked(False)
+        assert window.mod_sources_toggle.text() == "計算元Modを表示"
         assert not normal.isExpanded()
     finally:
         window.close()

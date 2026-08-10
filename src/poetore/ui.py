@@ -1402,7 +1402,7 @@ class PoetoreWindow(QWidget):
             "通常は隠している検索候補を表示します。"
         )
         self.hidden_mods_toggle.toggled.connect(self._toggle_hidden_mods)
-        self.mod_sources_toggle = QPushButton("Mod構成を表示")
+        self.mod_sources_toggle = QPushButton("計算元Modを表示")
         self.mod_sources_toggle.setObjectName("secondaryActionButton")
         self.mod_sources_toggle.setCheckable(True)
         self.mod_sources_toggle.setToolTip(
@@ -2111,7 +2111,7 @@ class PoetoreWindow(QWidget):
 
     def _toggle_mod_sources(self, visible: bool):
         self.mod_sources_toggle.setText(
-            "Mod構成を隠す" if visible else "Mod構成を表示"
+            "計算元Modを隠す" if visible else "計算元Modを表示"
         )
         for index in range(self.mod_filter_tree.topLevelItemCount()):
             row = self.mod_filter_tree.topLevelItem(index)
