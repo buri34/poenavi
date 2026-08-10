@@ -1437,6 +1437,8 @@ class PoetoreWindow(QWidget):
 
         action_row = QHBoxLayout()
         action_row.setSpacing(4)
+        action_row.setAlignment(Qt.AlignLeft)
+        self.trade_action_layout = action_row
         self.price_button = QPushButton("検索")
         self.price_button.setObjectName("primaryButton")
         self.price_button.clicked.connect(self.search_current_item)
@@ -1919,8 +1921,7 @@ class PoetoreWindow(QWidget):
             self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH) + gap
         )
         editor.setStyleSheet(
-            f"font-size: {profile['mod_value_font']}px;"
-            + (f" border-left: {gap}px solid #111416;" if gap else "")
+            f"font-size: {profile['mod_value_font']}px; margin-left: {gap}px;"
         )
 
     def _fit_search_range_width(self):
@@ -1934,7 +1935,7 @@ class PoetoreWindow(QWidget):
              for index in range(self.search_range_combo.count())),
             default=0,
         )
-        self.search_range_combo.setFixedWidth(text_width + 28)
+        self.search_range_combo.setFixedWidth(text_width + 34)
 
     def _fit_compact_action_widths(self, *_args):
         """検索操作列を、現在表示中の文言に合う最小幅へ揃える。"""
@@ -2000,7 +2001,14 @@ class PoetoreWindow(QWidget):
                     )
         self._apply_poetore_style()
         # スタイルのmin-width適用後に固定し、レイアウトによる再拡張を防ぐ。
-        self.price_button.setFixedWidth(profile["search_button_width"])
+        search_button_width = profile["search_button_width"]
+        search_button_content_width = max(
+            1, search_button_width - 2 * profile["button_h_padding"]
+        )
+        self.price_button.setStyleSheet(
+            f"min-width: {search_button_content_width}px;"
+            f" max-width: {search_button_content_width}px;"
+        )
         self._adjust_window_height_to_mod_rows()
     def _toggle_mod_conditions(self):
         collapsed = self.mod_filter_tree.isVisible()

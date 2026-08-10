@@ -151,6 +151,7 @@ def test_trade_action_row_uses_compact_fonts_and_fits_window(
         assert controls[-1].geometry().right() < window._panel.width()
         assert all(combo.minimumWidth() == combo.maximumWidth() for combo in controls[:3])
         assert window.price_button.width() == search_button_width
+        assert window.trade_action_layout.alignment() == Qt.AlignLeft
         assert (
             window.search_range_combo.minimumWidth()
             == window.search_range_combo.maximumWidth()
@@ -2000,11 +2001,8 @@ def test_mod_filter_minimum_and_maximum_editors_use_narrow_width_and_smaller_fon
         maximum_editor = window.mod_filter_tree.itemWidget(row, 5)
         assert minimum_editor.width() == expected_min_width
         assert maximum_editor.width() == expected_max_width
-        assert (
-            f"border-left: {expected_gap}px solid #111416"
-            in minimum_editor.styleSheet()
-        )
-        assert "border-left:" not in maximum_editor.styleSheet()
+        assert f"margin-left: {expected_gap}px" in minimum_editor.styleSheet()
+        assert "margin-left: 0px" in maximum_editor.styleSheet()
         assert f"font-size: {expected_font_size}px" in minimum_editor.styleSheet()
         assert f"font-size: {expected_font_size}px" in maximum_editor.styleSheet()
     finally:
