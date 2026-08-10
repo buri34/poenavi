@@ -1648,13 +1648,18 @@ class PoetoreWindow(QWidget):
                 border-color: #343B3E;
             }
             QPushButton#binaryToggle {
+                border: 1px solid #465154;
                 border-radius: 0;
                 padding: 4px 7px;
+            }
+            QPushButton#binaryToggle:hover {
+                border-color: #49D6B0;
             }
             QPushButton#binaryToggle:first-child { border-radius: 3px 0 0 3px; }
             QPushButton#binaryToggle:last-child { border-radius: 0 3px 3px 0; }
             QPushButton#binaryToggle:checked {
                 background: rgba(35, 118, 100, 225);
+                border-color: #49D6B0;
                 color: #E6ECEA;
                 font-weight: 700;
             }

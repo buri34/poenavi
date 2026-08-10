@@ -3161,6 +3161,9 @@ Item Level: 85
         assert window.trade_preset_combo.count() == 2
         assert not window.trade_preset_combo.isHidden()
         assert window.trade_preset_placeholder.isHidden()
+        assert "QPushButton#binaryToggle" in window.styleSheet()
+        assert "border: 1px solid #465154" in window.styleSheet()
+        assert "QPushButton#binaryToggle:hover" in window.styleSheet()
     finally:
         window.close()
 
