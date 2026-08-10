@@ -1922,6 +1922,14 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
     window.close()
 
 
+def test_mod_filter_rows_do_not_use_alternating_backgrounds(qapp):
+    window = PoetoreWindow()
+    try:
+        assert window.mod_filter_tree.alternatingRowColors() is False
+    finally:
+        window.close()
+
+
 def test_mod_filter_tooltip_contains_only_full_mod_text(qapp):
     window = PoetoreWindow()
     full_text = "品質4%ごとに効果範囲1%増加する長いMod文章"

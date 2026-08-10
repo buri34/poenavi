@@ -1361,7 +1361,8 @@ class PoetoreWindow(QWidget):
             "", "種別", "ティア", "検索条件", "最小", "最大",
         ])
         self.mod_filter_tree.setRootIsDecorated(False)
-        self.mod_filter_tree.setAlternatingRowColors(True)
+        # 検索条件は行ごとの色分けをせず、同じ暗色背景で一覧性を保つ。
+        self.mod_filter_tree.setAlternatingRowColors(False)
         # 行選択は使わない。Mod文章クリックはチェック切替だけを行い、
         # セルウィジェット（最小・最大欄）と選択背景の見た目が分離しないようにする。
         self.mod_filter_tree.setSelectionMode(QAbstractItemView.NoSelection)
