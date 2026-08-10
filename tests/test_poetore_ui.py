@@ -1701,6 +1701,12 @@ def test_price_result_is_rendered_in_japanese(qapp):
     assert header.sectionResizeMode(1) == QHeaderView.ResizeToContents
     assert header.sectionResizeMode(2) == QHeaderView.ResizeToContents
     assert header.sectionResizeMode(3) == QHeaderView.Stretch
+    assert window.price_list.objectName() == "priceList"
+    assert "QTreeWidget#priceList::item { padding: 4px 7px; }" in window.styleSheet()
+    assert (
+        "QTreeWidget#priceList QHeaderView::section { padding: 5px 7px; }"
+        in window.styleSheet()
+    )
     window.close()
 
 

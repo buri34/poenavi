@@ -1442,6 +1442,7 @@ class PoetoreWindow(QWidget):
         self.price_status.setObjectName("priceStatus")
         panel_layout.addWidget(self.price_status)
         self.price_list = QTreeWidget()
+        self.price_list.setObjectName("priceList")
         self.price_list.setHeaderLabels(["価格", "出品日時"])
         self.price_list.setRootIsDecorated(False)
         self.price_list.setAlternatingRowColors(True)
@@ -1829,6 +1830,7 @@ class PoetoreWindow(QWidget):
             }
             QTreeWidget::item { padding: 4px 2px; border-bottom: 1px solid #272D30; }
             QTreeWidget::item:selected { background: rgba(35, 118, 100, 125); color: white; }
+            QTreeWidget#priceList::item { padding: 4px 7px; }
             QScrollArea#uniqueCandidateScroll,
             QScrollArea#uniqueCandidateScroll > QWidget > QWidget,
             QWidget#uniqueCandidateContainer {
@@ -1843,6 +1845,7 @@ class PoetoreWindow(QWidget):
                 padding: 5px 4px;
                 font-weight: 600;
             }
+            QTreeWidget#priceList QHeaderView::section { padding: 5px 7px; }
             QScrollBar:vertical { background: #15191B; width: 10px; margin: 0; }
             QScrollBar::handle:vertical { background: rgba(73, 214, 176, 125); min-height: 26px; border-radius: 4px; }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
