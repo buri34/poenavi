@@ -4157,52 +4157,10 @@ class PoetoreWindow(QWidget):
                 continue
             value = "" if stat_filter.min_value is None else f"{stat_filter.min_value:g}"
             maximum = "" if stat_filter.max_value is None else f"{stat_filter.max_value:g}"
-            details = []
-            if stat_filter.read_value is not None:
-                details.append(f"読取 {stat_filter.read_value:g}")
-            if stat_filter.tier is not None:
-                details.append(f"T{stat_filter.tier}")
-            if stat_filter.roll_min is not None and stat_filter.roll_max is not None:
-                details.append(f"範囲 {stat_filter.roll_min:g}–{stat_filter.roll_max:g}")
-            if stat_filter.affix:
-                details.append(_FILTER_KIND_LABELS.get(stat_filter.affix, "特殊枠"))
-            if stat_filter.generation and stat_filter.generation != stat_filter.kind:
-                details.append(_FILTER_KIND_LABELS.get(stat_filter.generation, "特殊生成"))
-            if stat_filter.exact:
-                details.append("完全一致")
-            elif stat_filter.better == -1:
-                details.append("低いほど良い")
-            if stat_filter.inverted:
-                details.append("API符号反転")
-            if stat_filter.option_text:
-                details.append(f"選択肢 {stat_filter.option_text}")
-            if stat_filter.oils:
-                oil_names = (
-                    "プリズマチック", "澄んだ", "セピア色", "琥珀色", "新緑色", "青緑色",
-                    "淡青色", "藍色", "スミレ色", "深紅色", "黒色", "乳白色", "銀色", "金色",
-                )
-                details.append("Oil " + " + ".join(oil_names[index] for index in stat_filter.oils))
-            if stat_filter.group_type != "and":
-                details.append(stat_filter.group_type.upper())
-            if stat_filter.hidden_reason:
-                details.append(f"非表示理由: {stat_filter.hidden_reason}")
-            if stat_filter.source_texts:
-                details.append("構成元: " + " / ".join(stat_filter.source_texts))
-            is_mod = stat_filter.kind in {
-                "explicit", "prefix", "suffix", "crafted", "fractured", "implicit", "enchant", "veiled"
-            }
-            if is_mod and stat_filter.confidence:
-                confidence = f"一致 {stat_filter.confidence:.0%}"
-                if stat_filter.confidence < 1:
-                    confidence = f"⚠ {confidence}"
-            elif is_mod:
-                confidence = "⚠ 一致未確認"
-            else:
-                confidence = ""
-            summary = " / ".join(filter(None, [stat_filter.selection_reason, *details, confidence]))
+            # The tooltip exists only to reveal text truncated by the compact
+            # condition column. Internal matching and selection diagnostics do
+            # not help normal price-search operation and make it harder to scan.
             mod_tooltip = stat_filter.text
-            if summary:
-                mod_tooltip = f"{stat_filter.text}\n\n{summary}"
             tier_tags = stat_filter.tier_tags
             tier_text = " / ".join(f"T{tier}" for tier in tier_tags)
             if not tier_text and stat_filter.tier is not None:
