@@ -1664,7 +1664,7 @@ class PoetoreWindow(QWidget):
                 border-color: #65FFCA;
             }
             QPushButton#secondaryActionButton:checked {
-                background: rgba(35, 118, 100, 135);
+                background: rgba(37, 122, 100, 135);
                 border-color: #65FFCA;
             }
             QPushButton#filterActionButton:disabled {
@@ -1681,7 +1681,7 @@ class PoetoreWindow(QWidget):
             QPushButton#binaryToggle:first-child { border-radius: 3px 0 0 3px; }
             QPushButton#binaryToggle:last-child { border-radius: 0 3px 3px 0; }
             QPushButton#binaryToggle:checked {
-                background: rgba(35, 118, 100, 225);
+                background: rgba(37, 122, 100, 225);
                 border-color: #65FFCA;
                 color: #E6ECEA;
                 font-weight: 700;
@@ -1809,7 +1809,7 @@ class PoetoreWindow(QWidget):
                 color: #737D79;
             }
             QPushButton#primaryButton {
-                background: rgba(35, 118, 100, 225);
+                background: rgba(37, 122, 100, 225);
                 color: #E6ECEA;
                 font-weight: 700;
                 min-width: 0;
@@ -1821,7 +1821,7 @@ class PoetoreWindow(QWidget):
                 border-radius: 3px;
                 padding: 4px 6px;
                 min-height: 20px;
-                selection-background-color: rgba(35, 118, 100, 220);
+                selection-background-color: rgba(37, 122, 100, 220);
             }
             QComboBox:hover, QLineEdit:focus { border-color: #65FFCA; }
             QComboBox#filterControl {
@@ -1860,7 +1860,7 @@ class PoetoreWindow(QWidget):
                 outline: none;
             }
             QTreeWidget::item { padding: 4px 2px; border-bottom: 1px solid #272D30; }
-            QTreeWidget::item:selected { background: rgba(35, 118, 100, 125); color: white; }
+            QTreeWidget::item:selected { background: rgba(37, 122, 100, 125); color: white; }
             QTreeWidget#priceList::item { padding: 4px 7px; }
             QScrollArea#uniqueCandidateScroll,
             QScrollArea#uniqueCandidateScroll > QWidget > QWidget,

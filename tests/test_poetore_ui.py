@@ -165,6 +165,17 @@ def test_trade_action_row_uses_compact_fonts_and_fits_window(
         window.close()
 
 
+def test_selected_controls_use_dark_variant_of_current_accent(qapp):
+    window = PoetoreWindow()
+    try:
+        style = window.styleSheet()
+        assert "#65FFCA" in style
+        assert "rgba(37, 122, 100, 225)" in style
+        assert "rgba(35, 118, 100" not in style
+    finally:
+        window.close()
+
+
 def test_capture_error_dialog_uses_readable_dark_theme(qapp):
     window = PoetoreWindow()
     try:
