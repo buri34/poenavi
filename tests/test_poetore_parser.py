@@ -392,6 +392,60 @@ Corsair Sword
         self.assertEqual(item.name, "地獄の破滅")
         self.assertEqual(item.base_type, "略奪者の剣")
 
+    def test_ignores_unmet_requirements_warning_before_rare_name(self):
+        item = parse_item_text("""アイテムクラス: 鎧
+レアリティ: レア
+このアイテムを使用できません。アイテムの効果は無視されます
+--------
+ゴーレムの甲羅
+黄昏のレガリア
+--------
+品質: +20% (augmented)
+エナジーシールド: 560 (augmented)
+幽体化度: 39%
+--------
+装備要求:
+レベル: 84
+筋力: 111
+器用さ: 159 (unmet)
+知性: 293 (unmet)
+--------
+ソケット: B-B-B-G-W-W
+--------
+アイテムレベル: 86
+--------
+明示防御力モッドの強さが8%増加する (enchant)
+--------
+{ シアリング・エグザーク 暗黙モッド 「特大」 }
+雷耐性の最大値 +2%
+(Maximum Resistance: 耐性の最大値は90%より大きい値にはならない)
+{ イーター・オブ・ワールズ 暗黙モッド 「特大」 }
+アタックブロック率が7%
+--------
+{ プレフィックスモッド「きらびやかな」 (ティア: 1) — 防御, エナジーシールド - 8%増加 }
+最大エナジーシールド +92(91-100)
+{ プレフィックスモッド「極上の」 (ティア: 1) — ライフ }
+最大ライフ +180(175-189)
+{ マスタークラフト プレフィックスモッド「上級」 — ライフ, 防御, エナジーシールド - 8%増加 }
+エナジーシールドが19(18-21)%増加する
+最大ライフ +18(17-19)
+{ サフィックスモッド 「バメスの」 (ティア: 1) — 混沌, 耐性 }
+混沌耐性 +35(31-35)%
+{ サフィックスモッド 「ハーストの」 (ティア: 1) — 元素, 冷気, 耐性 }
+冷気耐性 +48(46-48)%
+{ サフィックスモッド 「火山の」 (ティア: 3) — 元素, 火, 耐性 }
+火耐性 +40(36-41)%
+シアリング・エグザークのアイテム
+イーター・オブ・ワールズのアイテム
+""")
+
+        self.assertEqual(item.name, "ゴーレムの甲羅")
+        self.assertEqual(item.base_type, "黄昏のレガリア")
+        self.assertEqual(item.category, "armour")
+        self.assertEqual(item.item_level, 86)
+        self.assertIn("searing_item", item.flags)
+        self.assertIn("tangled_item", item.flags)
+
     def test_rejects_non_item_text(self):
         with self.assertRaises(ItemParseError):
             parse_item_text("ただの文章です")

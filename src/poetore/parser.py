@@ -135,6 +135,14 @@ _VESTIGIAL_BASE_PREFIX = re.compile(
     r"^(?:Vestigial|痕跡)\s+(.+)$",
     re.IGNORECASE,
 )
+_ITEM_USABILITY_WARNING = re.compile(
+    r"^(?:"
+    r"このアイテムを使用できません。アイテムの効果は無視されます"
+    r"|(?:You cannot use|This item cannot be used).*?"
+    r"(?:stats?|effects?).*?ignored"
+    r")\.?$",
+    re.IGNORECASE,
+)
 _GLOSSARY_HELP_LINE = re.compile(
     r"^[（(]\s*[^()（）:：\r\n]{1,80}\s*[:：].*[）)]$",
 )
@@ -734,13 +742,26 @@ def parse_item_text(text: str) -> ParsedItem:
 
     header: dict[str, str] = {}
     name_lines: list[str] = []
+    usability_warning_seen = False
     for line in sections[0]:
         pair = _split_label(line)
         key = _LABELS.get(pair[0]) if pair else None
         if key:
             header[key] = pair[1]
+        elif _ITEM_USABILITY_WARNING.fullmatch(line.strip()):
+            usability_warning_seen = True
         else:
             name_lines.append(line)
+    if usability_warning_seen and not name_lines and len(sections) > 1:
+        # 装備要求を満たさないアイテムは、警告文の直後にも区切り線が入り、
+        # 通常はヘッダー内にある固有名／ベース名が次の区画へ押し出される。
+        name_lines = [
+            line for line in sections[1]
+            if not _split_label(line)
+            and not _ITEM_USABILITY_WARNING.fullmatch(line.strip())
+        ]
+        if name_lines:
+            sections = [sections[0], *sections[2:]]
     if not header.get("rarity") or not name_lines:
         raise ItemParseError("レアリティまたはアイテム名を取得できませんでした。")
 
