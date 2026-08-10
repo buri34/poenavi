@@ -1938,6 +1938,7 @@ def test_mod_filter_tier_is_compact_and_condition_column_uses_remaining_width(
             window.mod_filter_tree.header().sectionResizeMode(_MOD_COLUMN_TEXT)
             == QHeaderView.Stretch
         )
+        assert not window.mod_filter_tree.header().stretchLastSection()
     finally:
         window.close()
 

@@ -1361,6 +1361,9 @@ class PoetoreWindow(QWidget):
         self.mod_filter_tree.setMinimumHeight(profile["mod_height"])
         mod_header = self.mod_filter_tree.header()
         mod_header.hide()
+        # Qtは既定で最終列を余白まで伸ばす。最大欄ではなくMod文章欄へ
+        # 余った幅を渡すため、最終列の自動伸長を無効化する。
+        mod_header.setStretchLastSection(False)
         mod_header.setSectionResizeMode(_MOD_COLUMN_CHECK, QHeaderView.Fixed)
         self.mod_filter_tree.setColumnWidth(
             _MOD_COLUMN_CHECK, _MOD_CHECK_COLUMN_WIDTH
