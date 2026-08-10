@@ -111,6 +111,23 @@ def stat_matchers() -> tuple[tuple[dict, re.Pattern], ...]:
 
 
 @lru_cache(maxsize=1)
+def stat_ids() -> frozenset[str]:
+    payload = json.loads(STAT_PATH.read_text(encoding="utf-8"))
+    return frozenset(str(entry.get("id", "")) for entry in payload.get("entries", ()))
+
+
+def explicit_variant_id(stat_id: str | None) -> str | None:
+    """Return the Trade2 explicit counterpart used by EE2's finished preset."""
+    if not stat_id or "." not in stat_id:
+        return None
+    prefix, suffix = stat_id.split(".", 1)
+    if prefix not in {"crafted", "fractured", "desecrated"}:
+        return None
+    candidate = f"explicit.{suffix}"
+    return candidate if candidate in stat_ids() else None
+
+
+@lru_cache(maxsize=1)
 def local_stat_matchers() -> tuple[tuple[dict, re.Pattern], ...]:
     rows = []
     for entry, _pattern in stat_matchers():

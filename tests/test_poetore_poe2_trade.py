@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import json
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
@@ -14,7 +15,7 @@ from src.poetore.poe2.trade import (
     virtual_augment_choice_label, virtual_augment_filters,
 )
 from src.poetore.models import ItemModifier, ParsedItem
-from src.poetore.trade import TradeStatFilter
+from src.poetore.trade import PRESET_BASE, TradeStatFilter
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
@@ -81,6 +82,87 @@ def test_unidentified_unique_searches_base_with_unique_and_unidentified_filters(
     )["query"]
     assert web_query["type"] == "イラクサのタリスマン"
     assert "name" not in web_query
+
+
+@pytest.mark.parametrize("state", ["crafted", "fractured", "desecrated"])
+def test_finished_preset_does_not_require_special_item_state_like_ee2(state):
+    item = ParsedItem(
+        item_class="Gloves", rarity="rare", name="Test", base_type="Grand Bracers",
+        category="gloves", flags=(state,),
+    )
+    state_row = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == f"property.state.{state}"
+    )
+    assert state_row.enabled is False
+    query = build_search_query(item, stat_filters=poe2_trade_filters(item))
+    misc = query["query"]["filters"].get("misc_filters", {}).get("filters", {})
+    assert {"crafted", "fractured_item", "desecrated"}.isdisjoint(misc)
+
+
+@pytest.mark.parametrize("kind", ["crafted", "fractured", "desecrated"])
+def test_finished_preset_uses_explicit_counterpart_for_special_mod_like_ee2(kind):
+    item = ParsedItem(
+        item_class="Gloves", rarity="rare", name="Test", base_type="Grand Bracers",
+        category="gloves", flags=(kind,), modifiers=(
+            ItemModifier(
+                "Chaos Resistance", (21.0,), kind=kind,
+                stat_id=f"{kind}.stat_2923486259",
+            ),
+        ),
+    )
+    rows = poe2_trade_filters(item)
+    direct = next(row for row in rows if row.text == "Chaos Resistance")
+    assert (direct.stat_id, direct.kind, direct.enabled) == (
+        "explicit.stat_2923486259", "explicit", True,
+    )
+    sent = build_search_query(item, stat_filters=rows)["query"]["stats"][0]["filters"]
+    assert sent == [{"id": "explicit.stat_2923486259", "value": {"min": 21.0}}]
+
+
+def test_finished_preset_keeps_special_stat_without_explicit_counterpart():
+    item = ParsedItem(
+        item_class="Gloves", rarity="rare", name="Test", base_type="Grand Bracers",
+        category="gloves", flags=("desecrated",), modifiers=(
+            ItemModifier("Special", (12.0,), kind="desecrated", stat_id="desecrated.missing"),
+        ),
+    )
+    direct = next(row for row in poe2_trade_filters(item) if row.text == "Special")
+    assert (direct.stat_id, direct.kind, direct.enabled) == (
+        "desecrated.missing", "desecrated", True,
+    )
+
+
+def test_base_and_unmodifiable_presets_keep_original_special_stat_type():
+    modifier = ItemModifier(
+        "Chaos Resistance", (21.0,), kind="crafted",
+        stat_id="crafted.stat_2923486259",
+    )
+    item = ParsedItem(
+        item_class="Gloves", rarity="rare", name="Test", base_type="Grand Bracers",
+        category="gloves", flags=("crafted",), modifiers=(modifier,),
+    )
+    base = next(row for row in poe2_trade_filters(item, preset=PRESET_BASE) if row.kind != "state")
+    assert base.stat_id == "crafted.stat_2923486259"
+    corrupted = replace(item, flags=("crafted", "corrupted"))
+    finished = next(row for row in poe2_trade_filters(corrupted) if row.text == "Chaos Resistance")
+    assert finished.stat_id == "crafted.stat_2923486259"
+
+
+def test_finished_preset_merges_natural_and_normalized_special_sources():
+    item = ParsedItem(
+        item_class="Gloves", rarity="rare", name="Test", base_type="Grand Bracers",
+        category="gloves", flags=("crafted",), modifiers=(
+            ItemModifier("Chaos Resistance", (15.0,), stat_id="explicit.stat_2923486259"),
+            ItemModifier(
+                "Crafted Chaos Resistance", (6.0,), kind="crafted",
+                stat_id="crafted.stat_2923486259",
+            ),
+        ),
+    )
+    rows = [row for row in poe2_trade_filters(item) if row.stat_id == "explicit.stat_2923486259"]
+    assert len(rows) == 1
+    assert (rows[0].min_value, rows[0].read_value, rows[0].enabled) == (21.0, 21.0, True)
 
 
 def test_mock_search_and_fetch_complete_the_minimal_vertical_slice():

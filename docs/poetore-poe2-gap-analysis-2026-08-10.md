@@ -156,16 +156,17 @@ PoE2で「同じ性能の別ベース」を探せないことはゲーム仕様�
 - EE2 `renderer/src/web/price-check/filters/create-presets.ts:78`
 - EE2 `renderer/src/web/price-check/filters/create-item-filters.ts:195`
 
-### 3.7 中優先度: 一部Propertyの既定ON／OFFがEE2と異なる
+### 3.7 中優先度: 一部Propertyの既定ON／OFF
 
-- Charm QualityはPoE2共通UIで表示されない。EE2はQuality 10以上を初期ONにする
-- Gem Socketはぽえとれで常に初期OFF。EE2は3個以上を初期ONにする
-- Requirement LevelはぽえとれPoE2で条件化しない。EE2は低レベルRare完成品で候補を用意する
-- Crafted／Fractured／Desecrated状態はぽえとれで初期ONになるが、EE2は主に対応Statそのものを使い、
-  完成品検索で同じ状態を必須にしない場合がある
+- Charm Qualityは10以上、Gem Socketは3個以上をEE2準拠で初期ONとして実装済み
+- Requirement LevelはぽえとれPoE2で条件化しない。EE2は低レベルRare完成品で候補を用意するため、
+  採否を別タスクで検討する
+- Crafted／Fractured／Desecratedは固定EE2の分岐を実装済み。完成品では状態チップを初期OFFとし、
+  対応する通常Explicit Statがあれば同じ完成性能の条件へ置換する。通常版がない特殊Stat、
+  ベース検索、Corrupted／Mirrored／Sanctified品では元のStat種別を維持する
 
-最後の状態条件は、現在のぽえとれがEE2より「同じ作り方・同じ状態」を強く求める方向である。
-価格比較として完成性能を優先するなら、Mod条件と状態条件を別々に初期ONにするか再検討する。
+これにより完成品検索は作り方・状態を強制せず、特殊効果そのものの価値と、ベース検索時の
+Crafted／Fractured／Desecrated由来Statは失わない。
 
 ### 3.8 中優先度: 未対応カテゴリが残る
 

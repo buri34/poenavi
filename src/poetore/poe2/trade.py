@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from copy import deepcopy
+from dataclasses import replace
 import json
 import re
 from urllib.parse import quote
@@ -15,7 +16,7 @@ from ..trade import (
     elemental_dps, physical_dps_at_20_quality,
 )
 from .parser import TRADE_CATEGORY_BY_CATEGORY
-from .metadata import augment_entries, resolve_identity
+from .metadata import augment_entries, explicit_variant_id, resolve_identity
 
 
 API_ROOT = "https://www.pathofexile.com/api/trade2"
@@ -530,8 +531,65 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
     for flag, label in _POE2_STATE_LABELS.items():
         if flag in item.flags:
             rows.append(TradeStatFilter(
-                f"property.state.{flag}", label, None, "state", True,
+                f"property.state.{flag}", label, None, "state",
+                flag not in {"crafted", "fractured", "desecrated"},
             ))
+    return tuple(rows)
+
+
+def _poe2_item_is_modifiable(item: ParsedItem) -> bool:
+    """Mirror the EE2 guard relevant to finished-preset stat normalization."""
+    return not ({"corrupted", "mirrored", "sanctified"} & set(item.flags))
+
+
+def _poe2_modifier_rows(
+    item: ParsedItem, replaced_ids: set[str], preset: str,
+) -> tuple[TradeStatFilter, ...]:
+    rows: list[TradeStatFilter] = []
+    positions: dict[str, int] = {}
+    normalized_ids: set[str] = set()
+    normalize_special = preset == PRESET_FINISHED and _poe2_item_is_modifiable(item)
+    for modifier in item.modifiers:
+        if not modifier.stat_id:
+            continue
+        original_id = modifier.stat_id
+        converted = explicit_variant_id(original_id) if normalize_special else None
+        stat_id = converted or original_id
+        value = trade_stat_value(modifier.values)
+        row = TradeStatFilter(
+            stat_id, modifier.text,
+            None if modifier.better == -1 else value,
+            "explicit" if converted else modifier.kind,
+            enabled=original_id not in replaced_ids,
+            max_value=(value if modifier.better == -1 else None),
+            ref=modifier.ref, confidence=modifier.confidence,
+            read_value=value, roll_min=modifier.roll_min,
+            roll_max=modifier.roll_max, better=modifier.better,
+        )
+        position = positions.get(stat_id)
+        if (
+            position is not None
+            and (converted or stat_id in normalized_ids)
+            and row.better != -1
+            and rows[position].better != -1
+        ):
+            previous = rows[position]
+            rows[position] = replace(
+                previous,
+                min_value=(previous.min_value or 0.0) + (row.min_value or 0.0),
+                read_value=(previous.read_value or 0.0) + (row.read_value or 0.0),
+                enabled=previous.enabled or row.enabled,
+            )
+            if converted:
+                normalized_ids.add(stat_id)
+            continue
+        rows.append(row)
+        # Only merge equal IDs when at least one source was normalized. Natural
+        # duplicate explicit rows retain PoENavi's existing independent controls.
+        if converted:
+            normalized_ids.add(stat_id)
+        if converted or stat_id.startswith("explicit."):
+            positions.setdefault(stat_id, len(rows) - 1)
     return tuple(rows)
 
 
@@ -541,18 +599,7 @@ def poe2_trade_filters(
 ) -> tuple[TradeStatFilter, ...]:
     """Return the complete editable PoE2 filter set, including Phase 7 aggregates."""
     pseudos, replaced_ids = _poe2_pseudo_filters(item)
-    modifier_rows = tuple(
-        TradeStatFilter(
-            modifier.stat_id, modifier.text,
-            None if modifier.better == -1 else trade_stat_value(modifier.values),
-            modifier.kind, enabled=bool(modifier.stat_id) and modifier.stat_id not in replaced_ids,
-            max_value=(trade_stat_value(modifier.values) if modifier.better == -1 else None),
-            ref=modifier.ref, confidence=modifier.confidence,
-            read_value=trade_stat_value(modifier.values), roll_min=modifier.roll_min,
-            roll_max=modifier.roll_max, better=modifier.better,
-        )
-        for modifier in item.modifiers if modifier.stat_id
-    )
+    modifier_rows = _poe2_modifier_rows(item, set(replaced_ids), preset)
     filters = (
         modifier_rows + pseudos + _poe2_item_property_filters(item)
         + poe2_search_filters(item) + virtual_augment_filters(item, virtual_augment_ref)
@@ -560,7 +607,7 @@ def poe2_trade_filters(
     if preset == PRESET_BASE:
         return tuple(
             row for row in filters
-            if row.kind == "state" or row.kind == "fractured"
+            if row.kind == "state" or row.kind in {"crafted", "fractured", "desecrated"}
         )
     return filters
 

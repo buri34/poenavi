@@ -44,8 +44,9 @@ EE2比較基準: `d72afb83bc0888919a89d3c3744acee2c597e9c8`
       日英通常コピー／詳細コピーを収集し、Item Class、Magic名、Property区切りを固定する
 - [ ] Crossbow、Spear、Flail、Focus、Buckler、Gem、Waystoneの実コピーfixtureを追加し、
       advanced Mod header、Tier、roll範囲、Mod種別を確認する
-- [ ] Crafted／Fractured／Desecrated条件を完成品検索で初期ONにする範囲をEE2と比較し、
-      完成性能が同じ候補を除外しすぎない既定値へ整理する
+- [x] Crafted／Fractured／Desecrated条件を固定EE2と比較し、完成品では状態チップを初期OFF、
+      通常Explicit版があるModは性能条件へ正規化し、特殊版しかないMod・ベース検索・変更不可品は
+      元のStat種別を維持する
 - [ ] Normal／Magic／Rare／Unique × 完成品／ベース × exact base／同一classの組合せで、
       UI表示値と最終Trade2 JSONを総当たり監査する
 
