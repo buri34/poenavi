@@ -21,7 +21,7 @@ from src.version import APP_VERSION
 __version__ = APP_VERSION
 
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication, QDialog
+from PySide6.QtWidgets import QApplication, QDialog, QMessageBox
 
 from src.single_instance import (
     SingleInstanceGuard,
@@ -90,6 +90,12 @@ def run():
     app = QApplication(sys.argv)
     single_instance = SingleInstanceGuard(parent=app)
     if not single_instance.start():
+        QMessageBox.information(
+            None,
+            "ぽえなびは起動済みです",
+            "ぽえなびはすでに起動しています。\n"
+            "起動中の画面を前面に表示します。",
+        )
         return 0
     config = ConfigManager.load_config()
 

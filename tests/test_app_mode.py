@@ -219,9 +219,16 @@ class AppModeTest(unittest.TestCase):
 
         with patch.object(main, "QApplication", return_value=app), \
              patch.object(main, "SingleInstanceGuard", return_value=single_instance), \
+             patch.object(main.QMessageBox, "information") as information, \
              patch.object(main.ConfigManager, "load_config") as load_config:
             self.assertEqual(main.run(), 0)
 
+        information.assert_called_once_with(
+            None,
+            "ぽえなびは起動済みです",
+            "ぽえなびはすでに起動しています。\n"
+            "起動中の画面を前面に表示します。",
+        )
         load_config.assert_not_called()
         app.exec.assert_not_called()
 
