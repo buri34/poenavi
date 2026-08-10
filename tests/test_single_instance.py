@@ -1,0 +1,142 @@
+import os
+from unittest.mock import MagicMock, patch
+from uuid import uuid4
+
+from PySide6.QtWidgets import QApplication
+
+from src.single_instance import (
+    ACTIVATE_MESSAGE,
+    RESTART_PID_PREFIX,
+    SingleInstanceGuard,
+    consume_restart_pid,
+    wait_for_previous_instance,
+)
+
+
+def _app():
+    return QApplication.instance() or QApplication([])
+
+
+def test_restart_pid_is_consumed_without_forwarding_internal_argument():
+    arguments = [
+        "PoENavi.exe",
+        "--sample",
+        f"{RESTART_PID_PREFIX}4321",
+    ]
+
+    assert consume_restart_pid(arguments) == 4321
+    assert arguments == ["PoENavi.exe", "--sample"]
+
+
+def test_invalid_restart_pid_is_removed_and_ignored():
+    arguments = ["PoENavi.exe", f"{RESTART_PID_PREFIX}invalid"]
+
+    assert consume_restart_pid(arguments) is None
+    assert arguments == ["PoENavi.exe"]
+
+
+def test_restart_waits_until_previous_process_exits():
+    with (
+        patch("src.single_instance.process_exists", side_effect=[True, True, False]),
+        patch("src.single_instance.time.sleep") as sleep,
+    ):
+        assert wait_for_previous_instance(4321, timeout_seconds=1) is True
+
+    assert sleep.call_count == 2
+
+
+def test_restart_does_not_wait_for_current_process():
+    with patch("src.single_instance.process_exists") as exists:
+        assert wait_for_previous_instance(os.getpid()) is True
+    exists.assert_not_called()
+
+
+def test_windows_process_check_uses_non_destructive_wait_handle():
+    kernel32 = MagicMock()
+    kernel32.OpenProcess.return_value = 99
+    kernel32.WaitForSingleObject.return_value = 0x00000102
+    fake_ctypes = MagicMock()
+    fake_ctypes.windll.kernel32 = kernel32
+
+    with (
+        patch("src.single_instance.sys.platform", "win32"),
+        patch.dict("sys.modules", {"ctypes": fake_ctypes}),
+        patch("src.single_instance.os.kill") as kill,
+    ):
+        from src.single_instance import process_exists
+
+        assert process_exists(4321) is True
+
+    kernel32.OpenProcess.assert_called_once_with(0x00100000, False, 4321)
+    kernel32.WaitForSingleObject.assert_called_once_with(99, 0)
+    kernel32.CloseHandle.assert_called_once_with(99)
+    kill.assert_not_called()
+
+
+def test_second_instance_notifies_first_and_first_activates_window():
+    app = _app()
+    server_name = f"PoENavi-test-{uuid4().hex}"
+    primary = SingleInstanceGuard(server_name)
+    secondary = SingleInstanceGuard(server_name)
+    window = MagicMock()
+    window.isMinimized.return_value = False
+    primary.set_window(window)
+
+    try:
+        assert primary.start() is True
+        assert secondary.start() is False
+        for _ in range(4):
+            app.processEvents()
+
+        window.show.assert_called_once_with()
+        window.raise_.assert_called_once_with()
+        window.activateWindow.assert_called_once_with()
+    finally:
+        secondary.close()
+        primary.close()
+
+
+def test_activation_restores_minimized_window():
+    guard = SingleInstanceGuard(f"PoENavi-test-{uuid4().hex}")
+    window = MagicMock()
+    window.isMinimized.return_value = True
+    guard.set_window(window)
+
+    guard._read_message(MagicMock(readAll=lambda: ACTIVATE_MESSAGE))
+
+    window.showNormal.assert_called_once_with()
+    window.show.assert_not_called()
+    window.raise_.assert_called_once_with()
+    window.activateWindow.assert_called_once_with()
+
+
+def test_activation_is_deferred_until_window_is_available():
+    guard = SingleInstanceGuard(f"PoENavi-test-{uuid4().hex}")
+    window = MagicMock()
+    window.isMinimized.return_value = False
+
+    with (
+        patch.object(QApplication, "activeWindow", return_value=None),
+        patch.object(QApplication, "topLevelWidgets", return_value=[]),
+    ):
+        guard._activate_window()
+
+    assert guard.activation_pending is True
+    guard.set_window(window)
+    assert guard.activation_pending is False
+    window.activateWindow.assert_called_once_with()
+
+
+def test_stale_endpoint_is_removed_and_listen_is_retried():
+    guard = SingleInstanceGuard(f"PoENavi-test-{uuid4().hex}")
+    guard.server = MagicMock()
+    guard.server.listen.side_effect = [False, True]
+
+    with (
+        patch.object(guard, "_notify_running_instance", return_value=False),
+        patch("src.single_instance.QLocalServer.removeServer") as remove,
+    ):
+        assert guard.start() is True
+
+    remove.assert_called_once_with(guard.server_name)
+    assert guard.server.listen.call_count == 2

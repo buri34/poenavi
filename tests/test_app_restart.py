@@ -91,12 +91,30 @@ def test_development_restart_command_runs_main_script():
     with (
         patch("src.app_restart.sys.frozen", False, create=True),
         patch("src.app_restart.sys.argv", ["main.py", "--sample"]),
+        patch("src.app_restart.os.getpid", return_value=4321),
     ):
         program, arguments = _restart_command()
 
     assert program
     assert arguments[0].endswith("main.py")
-    assert arguments[1:] == ["--sample"]
+    assert arguments[1:] == [
+        "--sample",
+        "--single-instance-restart-pid=4321",
+    ]
+
+
+def test_restart_command_replaces_existing_internal_pid_argument():
+    with (
+        patch("src.app_restart.sys.frozen", True, create=True),
+        patch(
+            "src.app_restart.sys.argv",
+            ["PoENavi.exe", "--single-instance-restart-pid=111"],
+        ),
+        patch("src.app_restart.os.getpid", return_value=4321),
+    ):
+        _program, arguments = _restart_command()
+
+    assert arguments == ["--single-instance-restart-pid=4321"]
 
 
 def test_restart_does_not_quit_when_detached_process_fails():

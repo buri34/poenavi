@@ -185,7 +185,10 @@ class AppModeTest(unittest.TestCase):
         composition_module = SimpleNamespace(
             create_mode_window=lambda _mode: window
         )
+        single_instance = MagicMock()
+        single_instance.start.return_value = True
         with patch.object(main, "QApplication", return_value=app), \
+             patch.object(main, "SingleInstanceGuard", return_value=single_instance), \
              patch.object(main.ConfigManager, "load_config", side_effect=load_config), \
              patch.object(main, "select_poe_version", side_effect=select_version), \
              patch.object(main, "select_app_mode", side_effect=select_mode), \
@@ -206,7 +209,21 @@ class AppModeTest(unittest.TestCase):
         app.setProperty.assert_any_call("startupUpdateChecked", True)
         app.setProperty.assert_any_call("startupPoeVersionSelected", True)
         app.setProperty.assert_any_call("appMode", POENAVI_MODE)
+        single_instance.set_window.assert_called_once_with(window)
         window.show.assert_called_once_with()
+
+    def test_second_instance_exits_before_loading_config(self):
+        app = MagicMock()
+        single_instance = MagicMock()
+        single_instance.start.return_value = False
+
+        with patch.object(main, "QApplication", return_value=app), \
+             patch.object(main, "SingleInstanceGuard", return_value=single_instance), \
+             patch.object(main.ConfigManager, "load_config") as load_config:
+            self.assertEqual(main.run(), 0)
+
+        load_config.assert_not_called()
+        app.exec.assert_not_called()
 
     def test_mode_selection_dialog_uses_act_support_label(self):
         dialog = AppModeSelectionDialog()
