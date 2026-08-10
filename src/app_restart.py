@@ -8,15 +8,21 @@ from PySide6.QtCore import QProcess
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from src.app_mode import POETORE_MODE, normalize_app_mode, startup_preferences
+from src.single_instance import RESTART_PID_PREFIX
 from src.ui.app_theme import POETORE_THEME
 
 
 def _restart_command():
     """開発実行とPyInstaller版のそれぞれに合う再起動コマンドを返す。"""
+    forwarded_arguments = [
+        argument for argument in sys.argv[1:]
+        if not argument.startswith(RESTART_PID_PREFIX)
+    ]
+    forwarded_arguments.append(f"{RESTART_PID_PREFIX}{os.getpid()}")
     if getattr(sys, "frozen", False):
-        return sys.executable, sys.argv[1:]
+        return sys.executable, forwarded_arguments
     main_script = str(Path(__file__).resolve().parents[1] / "main.py")
-    return sys.executable, [main_script, *sys.argv[1:]]
+    return sys.executable, [main_script, *forwarded_arguments]
 
 
 def restart_application():

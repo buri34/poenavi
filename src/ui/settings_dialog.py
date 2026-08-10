@@ -193,7 +193,7 @@ class TriggerKeyButton(HotkeyButton):
 class AutoHideHotkeyWidget(QWidget):
     """AUTO-HIDE専用の保持キー選択＋通常キー入力。"""
 
-    def __init__(self, hotkey="ctrl+d", parent=None):
+    def __init__(self, hotkey="ctrl+d", parent=None, theme=POETORE_THEME):
         super().__init__(parent)
         modifier, trigger = self._split_hotkey(hotkey)
 
@@ -208,15 +208,15 @@ class AutoHideHotkeyWidget(QWidget):
         for name, button in (("ctrl", self.ctrl_button), ("alt", self.alt_button)):
             button.setObjectName(f"autoHide{name.title()}Modifier")
             button.setCheckable(True)
-            button.setMinimumWidth(48)
+            button.setFixedWidth(48)
             button.setStyleSheet(
-                f"QPushButton {{ background-color: {POETORE_THEME.panel}; "
-                f"color: {POETORE_THEME.accent}; "
-                f"border: 1px solid {POETORE_THEME.accent}; "
+                f"QPushButton {{ background-color: {theme.panel}; "
+                f"color: {theme.accent}; "
+                f"border: 1px solid {theme.accent}; "
                 "border-radius: 4px; padding: 5px 10px; font-weight: bold; }"
-                f"QPushButton:hover {{ border-color: {POETORE_THEME.text}; }}"
-                f"QPushButton:checked {{ background-color: {POETORE_THEME.accent}; "
-                f"color: {POETORE_THEME.background}; }}"
+                f"QPushButton:hover {{ border-color: {theme.text}; }}"
+                f"QPushButton:checked {{ background-color: {theme.accent}; "
+                f"color: {theme.background}; }}"
             )
             button.setProperty("modifier", name)
             self.modifier_group.addButton(button)
@@ -1998,7 +1998,8 @@ class SettingsDialog(QDialog):
         poetore_auto_hide_layout = QHBoxLayout()
         poetore_auto_hide_layout.addWidget(QLabel("ぽえとれ検索（AUTO-HIDE）:"))
         self.poetore_auto_hide_btn = AutoHideHotkeyWidget(
-            self.hotkeys.get("poetore_auto_hide", "ctrl+d")
+            self.hotkeys.get("poetore_auto_hide", "ctrl+d"),
+            theme=POENAVI_THEME,
         )
         poetore_auto_hide_layout.addWidget(self.poetore_auto_hide_btn)
         group_layout.addLayout(poetore_auto_hide_layout)
@@ -3182,6 +3183,7 @@ class SettingsDialog(QDialog):
         startup_config["preferred_mode"] = normalize_app_mode(
             selected_app_mode if startup_mode == "ask" else startup_mode
         )
+        poetore_config = dict(self.current_config.get("poetore", {}))
 
         return {
             "startup": startup_config,
@@ -3202,6 +3204,7 @@ class SettingsDialog(QDialog):
                 "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,
             },
             "custom_commands": self.custom_commands_widget.commands(),
+            "poetore": poetore_config,
             "logout_enabled": self.logout_enabled_cb.isChecked(),
             "gem_shop_search_include_reward_purchases": self.gem_shop_search_include_reward_purchases_cb.isChecked(),
             "gem_shop_search_hold_seconds": self.gem_shop_search_hold_seconds_spin.value(),

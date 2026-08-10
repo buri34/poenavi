@@ -53,7 +53,8 @@
     "poetore": {
         "league": "auto",
         "search_stat_range": 10,
-        "result_font_size": "medium"
+        "result_font_size": "medium",
+        "result_positions": {}
     },
     "map_check": {
         "profile": 1,

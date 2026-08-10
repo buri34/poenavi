@@ -436,7 +436,7 @@ def create_refresh_candidate(official: dict, official_mods_only: bool = False) -
         shutil.copy2(ROOT / source, CANDIDATE_DIR / source.name)
     _run(_metadata_command(candidate=True, official_mods_only=official_mods_only))
     map_payload = build_catalog(
-        ROOT / "vendor-sources/awakened-poe-trade-31b3e0e8.tar.gz",
+        ROOT / "vendor-sources/awakened-poe-trade-1e2225af.tar.gz",
         CANDIDATE_DIR / "mod_metadata.json",
     )
     (CANDIDATE_DIR / "map_mods.json").write_text(
@@ -445,7 +445,7 @@ def create_refresh_candidate(official: dict, official_mods_only: bool = False) -
     lock = load_json(CANDIDATE_DIR / "poetore-sources.lock.json")
     awakened_revision = str(lock["sources"]["awakened_poe_trade"]["revision"])
     pseudo_payload = build_pseudo_relations_candidate(
-        ROOT / "vendor-sources/awakened-poe-trade-31b3e0e8.tar.gz",
+        ROOT / "vendor-sources/awakened-poe-trade-1e2225af.tar.gz",
         awakened_revision,
     )
     (CANDIDATE_DIR / "pseudo_relations.json").write_text(
@@ -544,7 +544,7 @@ def run_audit(
         manifest = None
         with tempfile.TemporaryDirectory(prefix="poetore-map-audit-"):
             generated = build_catalog(
-                ROOT / "vendor-sources/awakened-poe-trade-31b3e0e8.tar.gz",
+                ROOT / "vendor-sources/awakened-poe-trade-1e2225af.tar.gz",
                 ROOT / AUTHORITATIVE["mod_metadata"],
             )
             current = load_json(ROOT / AUTHORITATIVE["map_mods"])
@@ -552,7 +552,7 @@ def run_audit(
                 failures.append("Map Mod派生データが固定入力からの再生成結果と一致しない")
             source_lock = load_json(ROOT / AUTHORITATIVE["source_lock"])
             pseudo_generated = build_pseudo_relations_candidate(
-                ROOT / "vendor-sources/awakened-poe-trade-31b3e0e8.tar.gz",
+                ROOT / "vendor-sources/awakened-poe-trade-1e2225af.tar.gz",
                 str(source_lock["sources"]["awakened_poe_trade"]["revision"]),
             )
             pseudo_current = load_json(ROOT / AUTHORITATIVE["pseudo_relations"])

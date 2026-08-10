@@ -21,7 +21,13 @@ from src.version import APP_VERSION
 __version__ = APP_VERSION
 
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication, QDialog
+from PySide6.QtWidgets import QApplication, QDialog, QMessageBox
+
+from src.single_instance import (
+    SingleInstanceGuard,
+    consume_restart_pid,
+    wait_for_previous_instance,
+)
 
 
 def select_poe_version(config):
@@ -79,7 +85,18 @@ def select_app_mode(config):
 
 def run():
     started_at = perf_counter()
+    restart_pid = consume_restart_pid(sys.argv)
+    wait_for_previous_instance(restart_pid)
     app = QApplication(sys.argv)
+    single_instance = SingleInstanceGuard(parent=app)
+    if not single_instance.start():
+        QMessageBox.information(
+            None,
+            "ぽえなびは起動済みです",
+            "ぽえなびはすでに起動しています。\n"
+            "起動中の画面を前面に表示します。",
+        )
+        return 0
     config = ConfigManager.load_config()
 
     from src.update.startup_gate import run_startup_update_gate
@@ -101,6 +118,7 @@ def run():
 
     app.setProperty("appMode", app_mode)
     window = create_mode_window(app_mode)
+    single_instance.set_window(window)
     window.show()
 
     def report_runtime():

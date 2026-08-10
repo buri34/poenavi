@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "31b3e0e8",
+  "source_revision": "1e2225af",
   "entries": [
     {
       "key": "explicit.stat_2787931289",
@@ -847,6 +847,25 @@
       ]
     },
     {
+      "key": "explicit.stat_918884277",
+      "ref": "#% increased Rarity of Items found in this Area",
+      "japanese": "マップで見つかるアイテムのレアリティが#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_918884277"
+      ]
+    },
+    {
+      "key": "explicit.stat_2998191728",
+      "ref": "#% increased Quantity of Items found in this Area",
+      "japanese": "マップで見つかるアイテムの数量が#%増加する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_2998191728",
+        "implicit.stat_2998191728"
+      ]
+    },
+    {
       "key": "explicit.stat_728267040",
       "ref": "Found Items have #% chance to drop Corrupted in Area",
       "japanese": "マップで見つかるアイテムは#%の確率でコラプト状態になる",
@@ -1263,6 +1282,15 @@
       ]
     },
     {
+      "key": "nightmare.stat_monsters_inflict_withered_on_hit",
+      "ref": "Monsters inflict Withered for 2 seconds on Hit",
+      "japanese": "モンスターによるヒット時に衰弱を2秒間付与する",
+      "scope": "normal",
+      "stat_ids": [
+        "nightmare.stat_monsters_inflict_withered_on_hit"
+      ]
+    },
+    {
       "key": "explicit.stat_3796523155",
       "ref": "#% less effect of Curses on Monsters",
       "japanese": "モンスターに対する呪いの効果が#%低下する",
@@ -1350,6 +1378,16 @@
       "stat_ids": [
         "explicit.stat_1890519597",
         "fractured.stat_1890519597"
+      ]
+    },
+    {
+      "key": "explicit.stat_1898978455",
+      "ref": "Monster Damage Penetrates #% Elemental Resistances",
+      "japanese": "モンスターのダメージは#%の元素耐性を貫通する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1898978455",
+        "fractured.stat_1898978455"
       ]
     },
     {
@@ -1553,6 +1591,16 @@
       "stat_ids": [
         "explicit.stat_1629869774",
         "fractured.stat_1629869774"
+      ]
+    },
+    {
+      "key": "explicit.stat_1751584857",
+      "ref": "Monsters inflict # Grasping Vine on Hit",
+      "japanese": "モンスターはヒット時に束縛する蔓を#スタック付与する",
+      "scope": "normal",
+      "stat_ids": [
+        "explicit.stat_1751584857",
+        "fractured.stat_1751584857"
       ]
     },
     {
@@ -2173,16 +2221,6 @@
       ]
     },
     {
-      "key": "explicit.stat_1898978455",
-      "ref": "Monster Damage Penetrates #% Elemental Resistances",
-      "japanese": "モンスターのダメージは#%の元素耐性を貫通する",
-      "scope": "ubermap_exclusive",
-      "stat_ids": [
-        "explicit.stat_1898978455",
-        "fractured.stat_1898978455"
-      ]
-    },
-    {
       "key": "explicit.stat_2753403220",
       "ref": "Monsters' Projectiles have #% chance to be able to Chain when colliding with Terrain",
       "japanese": "モンスターの投射物は地形と衝突した時に#%の確率で連鎖することができる",
@@ -2250,16 +2288,6 @@
       "stat_ids": [
         "explicit.stat_3707756896",
         "fractured.stat_3707756896"
-      ]
-    },
-    {
-      "key": "explicit.stat_1751584857",
-      "ref": "Monsters inflict # Grasping Vine on Hit",
-      "japanese": "モンスターはヒット時に束縛する蔓を#スタック付与する",
-      "scope": "ubermap_exclusive",
-      "stat_ids": [
-        "explicit.stat_1751584857",
-        "fractured.stat_1751584857"
       ]
     },
     {

@@ -109,3 +109,26 @@ def test_general_settings_save_note_is_at_bottom(qapp):
     assert layout.indexOf(note) == layout.count() - 2
     assert layout.itemAt(layout.count() - 1).spacerItem() is not None
     dialog.close()
+
+
+def test_general_settings_does_not_expose_poetore_result_position_reset(monkeypatch, qapp):
+    monkeypatch.setattr("src.ui.settings_dialog.save_zone_master_data", lambda *_args: None)
+    dialog = SettingsDialog(current_config={
+        "poetore": {
+            "league": "Standard",
+            "result_positions": {
+                "stash": {"x_ratio": 0.2, "y_ratio": 0.3},
+                "inventory": {"x_ratio": 0.8, "y_ratio": 0.4},
+            },
+        }
+    })
+
+    poetore = dialog.get_settings()["poetore"]
+
+    assert poetore["league"] == "Standard"
+    assert poetore["result_positions"] == {
+        "stash": {"x_ratio": 0.2, "y_ratio": 0.3},
+        "inventory": {"x_ratio": 0.8, "y_ratio": 0.4},
+    }
+    assert not hasattr(dialog, "reset_poetore_result_positions_button")
+    dialog.close()

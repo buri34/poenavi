@@ -60,6 +60,9 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert isinstance(dialog.auto_hide_hotkey, AutoHideHotkeyWidget)
     assert dialog.auto_hide_hotkey.ctrl_button.isChecked()
     assert dialog.auto_hide_hotkey.key_button.key_text == "d"
+    assert dialog.auto_hide_hotkey.ctrl_button.width() == 48
+    assert dialog.auto_hide_hotkey.alt_button.width() == 48
+    assert "#DB86EF" in dialog.auto_hide_hotkey.ctrl_button.styleSheet()
     assert settings["window_opacity"] == 80
     assert settings["text_opacity"] == 70
     assert settings["window_locked"] is True
@@ -255,6 +258,27 @@ def test_poetore_settings_defaults_unknown_result_font_size_to_medium():
     )
 
     assert dialog.result_font_size_combo.currentData() == "medium"
+    dialog.close()
+
+
+def test_poetore_settings_can_reset_both_saved_result_positions():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(
+        current_config={
+            "poetore": {
+                "result_positions": {
+                    "stash": {"x_ratio": 0.2, "y_ratio": 0.3},
+                    "inventory": {"x_ratio": 0.8, "y_ratio": 0.4},
+                }
+            }
+        }
+    )
+
+    dialog.reset_result_positions_button.click()
+
+    assert "result_positions" not in dialog.get_settings()["poetore"]
+    assert dialog.result_positions_reset_note.text() == "保存時にリセットします"
+    assert not dialog.reset_result_positions_button.isEnabled()
     dialog.close()
 
 

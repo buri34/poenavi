@@ -1,36 +1,36 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-04T07:13:40.264702+00:00",
+  "generated_at": "2026-08-10T08:10:47.036037+00:00",
   "sources": {
     "awakened_poe_trade": {
-      "url": "https://raw.githubusercontent.com/SnosMe/awakened-poe-trade/31b3e0e8ba0a6bac2266603c2e170925c8f02b81/renderer/public/data/en/stats.ndjson",
-      "revision": "31b3e0e8ba0a6bac2266603c2e170925c8f02b81",
-      "sha256": "4ca2a726cad50fbde302a525bd87905adb01db757e3778b276ac219ba838d987"
+      "url": "https://raw.githubusercontent.com/SnosMe/awakened-poe-trade/1e2225af8cfe04ccc5676d00eede81d7ee071240/renderer/public/data/en/stats.ndjson",
+      "revision": "1e2225af8cfe04ccc5676d00eede81d7ee071240",
+      "sha256": "6aa8d86e738c0d4e44436e2b9443fec09e5e7f375fb3c4fe81c8cf81f873899a"
     },
     "awakened_items": {
-      "url": "https://raw.githubusercontent.com/SnosMe/awakened-poe-trade/31b3e0e8ba0a6bac2266603c2e170925c8f02b81/renderer/public/data/en/items.ndjson",
-      "revision": "31b3e0e8ba0a6bac2266603c2e170925c8f02b81",
-      "sha256": "7a024a4a579580c09a9b879a4d71ecf942636c9d960bfd6fa84772b58d365b54"
+      "url": "https://raw.githubusercontent.com/SnosMe/awakened-poe-trade/1e2225af8cfe04ccc5676d00eede81d7ee071240/renderer/public/data/en/items.ndjson",
+      "revision": "1e2225af8cfe04ccc5676d00eede81d7ee071240",
+      "sha256": "13674ed21a381f0a9b61a4552fe5e70bfd59e3723e838818f07e5e2f3ebc4398"
     },
     "awakened_item_drops": {
-      "url": "https://raw.githubusercontent.com/SnosMe/awakened-poe-trade/31b3e0e8ba0a6bac2266603c2e170925c8f02b81/renderer/public/data/item-drop.json",
-      "revision": "31b3e0e8ba0a6bac2266603c2e170925c8f02b81",
+      "url": "https://raw.githubusercontent.com/SnosMe/awakened-poe-trade/1e2225af8cfe04ccc5676d00eede81d7ee071240/renderer/public/data/item-drop.json",
+      "revision": "1e2225af8cfe04ccc5676d00eede81d7ee071240",
       "sha256": "86cc1de4a4f0b5810f7c7887c8264725033c6fa17490eb857251e09d84e97cd8"
     },
     "jp_trade_api": {
       "url": "https://jp.pathofexile.com/api/trade/data/stats",
-      "version": "snapshot-2026-08-04",
-      "sha256": "dbf10ad230d61d49be1ebb07bd42568669860620217adae6167b619902b28e6f"
+      "version": "snapshot-2026-08-10",
+      "sha256": "05862775291d43683a987f9af0d5c93ad5291f042f04c0b1bab036ac21df65b5"
     },
     "repoe_stats": {
       "url": "https://repoe-fork.github.io/stats.min.json",
-      "version": "snapshot-2026-08-04",
-      "sha256": "9d8d1900ad89e81c0c23353bbb8decdade329aab51510e124c27fb59c75d4061"
+      "version": "snapshot-2026-08-10",
+      "sha256": "abd191e2a874d89ffffb8fe9ddb4a45381196b061d7ae01ba1a5c9fb3c08ae2f"
     },
     "repoe_mods": {
       "url": "https://repoe-fork.github.io/mods.min.json",
-      "version": "snapshot-2026-08-04",
-      "sha256": "db55aa740db9878df679ff1b6c2753d3d2c529e6d8012d2e97de3422d49ddeb3"
+      "version": "snapshot-2026-08-10",
+      "sha256": "2a6328153939f46c781dbbc2a8531f2290000bc1ed468f80d9beda177d399815"
     }
   }
 }

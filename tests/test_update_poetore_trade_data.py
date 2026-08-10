@@ -159,8 +159,8 @@ def test_representative_api_verifier_reports_success_and_failure():
 def test_fixed_awakened_archive_reproduces_pseudo_relations():
     root = Path(__file__).parents[1]
     generated = build_pseudo_relations_candidate(
-        root / "vendor-sources/awakened-poe-trade-31b3e0e8.tar.gz",
-        "31b3e0e8ba0a6bac2266603c2e170925c8f02b81",
+        root / "vendor-sources/awakened-poe-trade-1e2225af.tar.gz",
+        "1e2225af8cfe04ccc5676d00eede81d7ee071240",
     )
     current = json.loads(
         (root / "data/poetore/pseudo_relations.json").read_text(encoding="utf-8")

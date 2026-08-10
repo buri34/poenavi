@@ -6,7 +6,7 @@
 
 開発版基準: `feature/poe2-foundation`（`c296ea0`）
 
-Awakened比較基準: `31b3e0e8ba0a6bac2266603c2e170925c8f02b81`（v3.29.103）
+Awakened比較基準: `1e2225af8cfe04ccc5676d00eede81d7ee071240`（2026-08-10時点master）
 
 EE2比較基準: `d72afb83bc0888919a89d3c3744acee2c597e9c8`
 

@@ -18169,7 +18169,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1455353008",
-      "japanese": "モンスターはヒット時にプレイヤーのパワーチャージ、フレンジーチャージまたはエンデュランスチャージを盗めない"
+      "japanese": "Monsters cannot steal or remove your Power, Frenzy or Endurance charges on Hit"
     },
     {
       "kind": "explicit",
@@ -23069,7 +23069,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2084152132",
-      "japanese": "Draugurflames burn enemies around you for 8 seconds after you Ignite a target"
+      "japanese": "プレイヤーが対象を発火させた後8秒間ドラウグルの炎はプレイヤーの周囲の敵を燃やす"
     },
     {
       "kind": "explicit",
@@ -50578,6 +50578,11 @@
     },
     {
       "kind": "fractured",
+      "stat_id": "fractured.stat_1195705739",
+      "japanese": "アタックは投射物を追加で1個放つ"
+    },
+    {
+      "kind": "fractured",
       "stat_id": "fractured.stat_1195895224",
       "japanese": "怪力を使い宝箱を開けた時に#%の確率でアラートレベルを上げない"
     },
@@ -50975,6 +50980,11 @@
       "kind": "fractured",
       "stat_id": "fractured.stat_1352418057",
       "japanese": "ヒット時に#%の確率でソケットされた呪術呪いスキルジェムで敵を呪う"
+    },
+    {
+      "kind": "fractured",
+      "stat_id": "fractured.stat_1353128245",
+      "japanese": "燃焼状態の間近接ダメージが#%上昇する"
     },
     {
       "kind": "fractured",
@@ -52660,6 +52670,11 @@
       "kind": "fractured",
       "stat_id": "fractured.stat_2129392647",
       "japanese": "パッシブスキルを1個追加: 繰り返す忘却"
+    },
+    {
+      "kind": "fractured",
+      "stat_id": "fractured.stat_2130824945",
+      "japanese": "二刀流であれば追加で最大#個のトラップを投げる"
     },
     {
       "kind": "fractured",
@@ -57918,6 +57933,11 @@
     },
     {
       "kind": "fractured",
+      "stat_id": "fractured.stat_497716276",
+      "japanese": "トラップ作動の効果範囲が#%増加する"
+    },
+    {
+      "kind": "fractured",
       "stat_id": "fractured.stat_498214257",
       "japanese": "敵を倒した時に#%の確率でパワーチャージ、フレンジーチャージまたはエンデュランスチャージを1個獲得する"
     },
@@ -58665,6 +58685,11 @@
       "kind": "fractured",
       "stat_id": "fractured.stat_78985352",
       "japanese": "ヒット時に#%の確率で近くの敵を4秒間威嚇する"
+    },
+    {
+      "kind": "fractured",
+      "stat_id": "fractured.stat_790453126",
+      "japanese": "バナーの近くにいるプレイヤーと味方は\nそのバナーが消費した勇猛2ごとに継続ダメージ倍率 +#%"
     },
     {
       "kind": "fractured",
@@ -59735,6 +59760,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1237693206",
       "japanese": "毒持続時間が#%低下する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1238227257",
+      "japanese": "プレイヤーに対するデバフは#%速く消える"
     },
     {
       "kind": "implicit",
@@ -60938,6 +60968,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1881314095",
+      "japanese": "近くのパーティメンバーとエンデュランスチャージを共有する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1892084828",
       "japanese": "装備するとレベル#物理のイージスをトリガーする"
     },
@@ -61349,7 +61384,7 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_2084152132",
-      "japanese": "Draugurflames burn enemies around you for 8 seconds after you Ignite a target"
+      "japanese": "プレイヤーが対象を発火させた後8秒間ドラウグルの炎はプレイヤーの周囲の敵を燃やす"
     },
     {
       "kind": "implicit",
@@ -62468,6 +62503,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2603798371",
+      "japanese": "ヒットを受けた時にレベル30シェードフォームをトリガーする"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2604619892",
       "japanese": "敵に対する元素系状態異常の持続時間が#%増加する"
     },
@@ -62675,6 +62715,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2714750784",
       "japanese": "アトラスのピナクルボスが付近にいる場合、#%の確率で毒を無効化する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2716882575",
+      "japanese": "最大ライフと最大マナの差が500以内であれば発火および感電の影響を受けない"
     },
     {
       "kind": "implicit",
@@ -63080,6 +63125,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2894476716",
       "japanese": "直近ヒットを受けていれば毎秒エンデュランスチャージを1個獲得する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2894704558",
+      "japanese": "クラブバリアの最大数 +#"
     },
     {
       "kind": "implicit",
@@ -66795,6 +66845,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_850729424",
       "japanese": "装備するとレベル#雷のイージスをトリガーする"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_855634301",
+      "japanese": "鳥の力がある時に#から#の雷ダメージを追加する"
     },
     {
       "kind": "implicit",
