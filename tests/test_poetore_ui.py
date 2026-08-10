@@ -1847,11 +1847,19 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
     window.close()
 
 
-def test_mod_filter_check_and_condition_columns_fit_without_clipping(qapp):
-    window = PoetoreWindow()
+@pytest.mark.parametrize(
+    ("setting", "expected_tier_width", "expected_text_width"),
+    (("small", 62, 320), ("medium", 72, 373), ("large", 83, 427)),
+)
+def test_mod_filter_tier_and_condition_columns_use_compact_scaled_widths(
+    qapp, setting, expected_tier_width, expected_text_width,
+):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
     try:
-        assert window.mod_filter_tree.columnWidth(0) == 47
-        assert window.mod_filter_tree.columnWidth(3) == 404
+        assert window.mod_filter_tree.columnWidth(2) == expected_tier_width
+        assert window.mod_filter_tree.columnWidth(3) == expected_text_width
     finally:
         window.close()
 
@@ -2313,7 +2321,7 @@ Imbued Wand
         )
         tier_widget = window.mod_filter_tree.itemWidget(accuracy_row, 2)
 
-        assert window.mod_filter_tree.columnWidth(2) == 88
+        assert window.mod_filter_tree.columnWidth(2) == 72
         assert accuracy_row.text(2) == ""
         assert tier_widget is not None
         assert [label.text() for label in tier_widget.findChildren(QLabel)] == ["T2", "T2"]
