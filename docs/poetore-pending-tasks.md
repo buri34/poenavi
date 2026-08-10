@@ -1,10 +1,14 @@
 # ぽえとれ 残タスク正本
 
-更新日: 2026-08-08
+更新日: 2026-08-10
 
-基準バージョン: `v3.2.0`（`cf5ac2e`）
+公開版基準: `APP_VERSION 3.2.1`
+
+開発版基準: `feature/poe2-foundation`（`c296ea0`）
 
 Awakened比較基準: `31b3e0e8ba0a6bac2266603c2e170925c8f02b81`（v3.29.103）
+
+EE2比較基準: `d72afb83bc0888919a89d3c3744acee2c597e9c8`
 
 ## この文書の扱い
 
@@ -12,22 +16,47 @@ Awakened比較基準: `31b3e0e8ba0a6bac2266603c2e170925c8f02b81`（v3.29.103）
 過去の監査文書、`docs/poetore-resume.md`、workspaceや旧SMB作業コピーの
 `tasks/todo.md`に残る未チェック項目より、本書を優先する。
 
-項目は次の4区分で管理する。
+項目は次の5区分で管理する。
 
-- **完了**: v3.2.0までに実装・検証・公開済み
+- **検証済み**: 開発ブランチで実装・自動テスト済みだが未公開
+- **完了**: 公開版までに実装・検証・公開済み
 - **継続**: 実装または検証を進める残タスク
 - **保留**: 外部環境、実物、採用判断が整うまで着手しない
 - **対象外**: 現在の製品方針として実装しない
 
 ## 再開時の推奨順
 
-1. Valdo Mapの報酬条件検索
-2. ぽえとれの実機性能比較と残るボトルネックの改善
-3. 公式Trade・Awakenedデータ更新作業の自動化
+1. PoE2実コピーfixtureと状態条件の検索精度監査
+2. Valdo Mapの報酬条件検索
+3. ぽえとれの実機性能比較と残るボトルネックの改善
 4. 通信切断・復旧の実機確認
 5. 価格結果UIと特殊カテゴリの任意改善
 
 ## 継続
+
+### P0: PoE2実コピーと状態条件の検索精度監査
+
+自動テストは固定EE2 identityと公式Trade2 metadataを中心に整備済みだが、特殊カテゴリには
+合成コピーfixtureも残る。日本語PoE2クライアントの実コピーと最終Trade2 JSONを正本として、
+検索候補を狭めすぎないことまで確認する。
+
+- [ ] Life／Mana Flask、Wombgift、Map Fragment、Pinnacle Key、Vault Key、Expedition Logbookの
+      日英通常コピー／詳細コピーを収集し、Item Class、Magic名、Property区切りを固定する
+- [ ] Crossbow、Spear、Flail、Focus、Buckler、Gem、Waystoneの実コピーfixtureを追加し、
+      advanced Mod header、Tier、roll範囲、Mod種別を確認する
+- [ ] Crafted／Fractured／Desecrated条件を完成品検索で初期ONにする範囲をEE2と比較し、
+      完成性能が同じ候補を除外しすぎない既定値へ整理する
+- [ ] Normal／Magic／Rare／Unique × 完成品／ベース × exact base／同一classの組合せで、
+      UI表示値と最終Trade2 JSONを総当たり監査する
+
+### P1: PoE2 Requirement Levelと比較監査の継続
+
+- [ ] EE2が低レベルRareへ提示するRequirement Level条件について、実需要とTrade2件数を確認し、
+      検索チップとして採用するか製品判断する
+- [ ] PoE1 parity、固定EE2、最新EE2、公式Trade2 metadata、実装済みコードを再照合し、
+      差分監査文書の「未実装」「意図的差分」「実装済み」を現状へ更新する
+- [ ] Price trend、Related Items、結果Tooltip等の補助機能をコードと文書で再棚卸しし、
+      既に実装済みの項目を残タスクから除外する
 
 ### P0: Valdo Mapの報酬条件検索
 
@@ -72,7 +101,7 @@ v3.0.1までに検索区間別のJSONL性能トレース、クリップボード
 
 ### 継続運用: 次回リリース
 
-以下はv3.2.0では完了済み。次回バージョンごとに再実施する。
+以下は過去リリースで完了済み。次回バージョンごとに再実施する。
 
 - [ ] 最新コミットからWindows配布ZIPを生成し、ZIP監査と展開後の起動を確認する
 - [ ] README・更新履歴へ公開分の変更点を追加する
@@ -87,6 +116,17 @@ v3.0.1までに検索区間別のJSONL性能トレース、クリップボード
 - [ ] Private League参加環境で、対象リーグ検索とpoe.ninja欄の扱いを確認する
 - [ ] Filled Coffin固有のNecropolis Modを製品対象にするか、実物需要と公式Trade仕様を見て判断する
 - [ ] poeprices.infoのレア装備価格予測を製品対象にするか、精度・説明責任・障害時分離を評価して判断する
+
+## 検証済み・未公開
+
+`feature/poe2-foundation`で自動テストとWindows確認用ミラー同期まで完了しているが、
+GitHub push／公開リリースは未実施。
+
+- [x] PoE1／PoE2カテゴリの共通UI判定、Mod検索範囲、価格通貨、出品期間をTrade2へ接続
+- [x] Gem Level／Quality／Socket、Charm Quality、Rare Item Level、nonunique条件をEE2準拠で実装
+- [x] PoE2のベース名／同一class、完成品／ベース、武器DPSヘッダー要約を実装
+- [x] Map Fragment 8種、Pinnacle Key 7種、Vault Key 9種をpoe.ninja `Fragments`価格へ接続
+- [x] Expedition Logbook、Life／Mana Flask 18ベース、Wombgift 5種をTrade2検索へ接続
 
 ## 完了
 
@@ -144,6 +184,11 @@ v3.0.1までに検索区間別のJSONL性能トレース、クリップボード
   - 非ユニークGemを`カオスまたは神のオーブ`で検索するのはAwakened準拠の意図的仕様
 
 ## 棚卸し記録
+
+- 2026-08-10: 公開版と`feature/poe2-foundation`の基準を分離。PoE2共通UI parity、
+  特殊カテゴリのNinja／Trade2振り分けを「検証済み・未公開」へ追加した。実コピーfixture、
+  状態条件、Requirement Level、カテゴリ×レアリティ総当たり、比較監査文書更新を継続へ追加。
+  完了済みデータ更新作業を推奨順から除外した。
 
 - 2026-08-08: 基準をv3.2.0へ更新。AUTO-HIDE、最大化維持、傭兵の召喚状検索と
   専用UIを完了へ追加した。継続・保留・対象外の既存項目は引き続き有効。
