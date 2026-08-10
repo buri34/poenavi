@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 import textwrap
+import time
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
@@ -103,8 +104,10 @@ def test_second_instance_notifies_first_and_first_activates_window():
     try:
         assert primary.start() is True
         assert secondary.start() is False
-        for _ in range(4):
+        deadline = time.monotonic() + 1.0
+        while window.show.call_count == 0 and time.monotonic() < deadline:
             app.processEvents()
+            time.sleep(0.01)
 
         window.show.assert_called_once_with()
         window.raise_.assert_called_once_with()
