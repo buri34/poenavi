@@ -3339,6 +3339,7 @@ class PoetoreWindow(QWidget):
         self.trade_url_button.setEnabled(False)
         self.price_list.clear()
         trade_status = str(self.trade_status_combo.currentData())
+        self._active_trade_status = trade_status
         trade_status_label = self.trade_status_combo.currentText()
         trade_currency = str(self.trade_currency_combo.currentData())
         trade_currency_label = self.trade_currency_combo.currentText()
@@ -4540,6 +4541,10 @@ class PoetoreWindow(QWidget):
         show_quality = show_gem or (
             item is not None and item.category != "gem" and self._selected_quality() is not None
         )
+        trade_status = str(getattr(
+            self, "_active_trade_status", self.trade_status_combo.currentData()
+        ))
+        show_pricing_method = trade_status not in {"instant", "online"}
         columns = ["価格"]
         if show_stock:
             columns.append("在庫")
@@ -4549,7 +4554,9 @@ class PoetoreWindow(QWidget):
             columns.append("ジェムLv")
         if show_quality:
             columns.append("品質")
-        columns.extend(("出品日時", "取引方式"))
+        columns.append("出品日時")
+        if show_pricing_method:
+            columns.append("取引方式")
         # QTreeWidget#setHeaderLabels()は既存より列数が少ない場合に、
         # 余った末尾列を削除しない。Gem→武器などで固有列が減る時は
         # 先に列数を確定し、前カテゴリのヘッダーを残さない。
@@ -4582,10 +4589,11 @@ class PoetoreWindow(QWidget):
             if show_quality:
                 values.append(str(listing.quality) if listing.quality is not None else "-")
             values.append(self._relative_listing_time(listing.indexed))
-            values.append({
-                "instant": "インスタント",
-                "unpriced": "値段なし",
-            }.get(listing.pricing_method, "対面"))
+            if show_pricing_method:
+                values.append({
+                    "instant": "インスタント",
+                    "unpriced": "値段なし",
+                }.get(listing.pricing_method, "対面"))
             QTreeWidgetItem(self.price_list, values)
 
     @staticmethod

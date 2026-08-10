@@ -1726,6 +1726,9 @@ def test_poetore_private_league_is_kept_and_ended_public_league_falls_back(qapp)
 
 def test_price_result_is_rendered_in_japanese(qapp):
     window = PoetoreWindow()
+    window.trade_status_combo.setCurrentIndex(
+        window.trade_status_combo.findData("available")
+    )
     window._parsed_item = ParsedItem(
         "剣", "レア", "Doom Sever", "Reaver Sword", "weapon", item_level=86,
     )
@@ -1800,6 +1803,9 @@ def test_relative_listing_time_is_shown_without_online_status(qapp):
 def test_price_result_shows_pricing_method_in_rightmost_column(qapp):
     window = PoetoreWindow()
     try:
+        window.trade_status_combo.setCurrentIndex(
+            window.trade_status_combo.findData("available")
+        )
         window._show_price_result(PriceResult("Mirage", "q", 3, (
             PriceListing(4, "chaos", pricing_method="face_to_face"),
             PriceListing(5, "chaos", pricing_method="instant"),
@@ -1821,6 +1827,9 @@ def test_gem_result_adds_gem_level_and_quality_columns(qapp):
     window = PoetoreWindow()
     window._parsed_item = ParsedItem("ジェム", "ジェム", "Arc", "Arc", "gem")
     try:
+        window.trade_status_combo.setCurrentIndex(
+            window.trade_status_combo.findData("available")
+        )
         window._show_price_result(PriceResult("Mirage", "q", 1, (
             PriceListing(2, "chaos", indexed="2026-07-22T09:21:00Z", gem_level=20, quality=23),
         )))
@@ -1855,6 +1864,9 @@ def test_japanese_trade_url_button_opens_result_url(qapp):
 def test_price_result_columns_reset_when_switching_from_gem_to_weapon(qapp):
     window = PoetoreWindow()
     try:
+        window.trade_status_combo.setCurrentIndex(
+            window.trade_status_combo.findData("available")
+        )
         gem = parse_item_text("""アイテムクラス: スキルジェム
 レアリティ: ジェム
 Arc
@@ -1896,6 +1908,25 @@ Imbued Wand
             window.price_list.headerItem().text(index)
             for index in range(window.price_list.columnCount())
         ] == ["価格", "ilvl", "出品日時", "取引方式"]
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize("trade_status", ("instant", "online"))
+def test_price_result_hides_redundant_pricing_method_column(qapp, trade_status):
+    window = PoetoreWindow()
+    try:
+        window.trade_status_combo.setCurrentIndex(
+            window.trade_status_combo.findData(trade_status)
+        )
+        window._show_price_result(PriceResult("Mirage", "q", 1, (
+            PriceListing(4, "chaos", pricing_method="instant"),
+        )))
+
+        assert [
+            window.price_list.headerItem().text(index)
+            for index in range(window.price_list.columnCount())
+        ] == ["価格", "出品日時"]
     finally:
         window.close()
 
