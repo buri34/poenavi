@@ -2051,7 +2051,7 @@ class PoetoreWindow(QWidget):
         )
         display_name = (
             self._display_base_type(item)
-            if is_nonunique_equipment or item.category == "captured_beast"
+            if is_nonunique_equipment or item.category in {"captured_beast", "chart"}
             else self._display_item_name(item)
         )
         if item.name.strip() == "傭兵の召喚状":
@@ -2059,12 +2059,18 @@ class PoetoreWindow(QWidget):
             if build:
                 display_name = f"{display_name} ({build})"
         self.item_name_label.setText(display_name)
-        self.item_name_label.setVisible(not is_nonunique_equipment)
-        self.base_scope_toggle.setVisible(is_nonunique_equipment)
-        if is_nonunique_equipment:
+        show_base_scope = is_nonunique_equipment or item.category == "chart"
+        self.item_name_label.setVisible(not show_base_scope)
+        self.base_scope_toggle.setVisible(show_base_scope)
+        if show_base_scope:
             key = item.raw_text
             self.base_scope_toggle.setItemText(0, display_name)
-            self.base_scope_toggle.setItemText(1, f"すべての{self._item_class_label(item.item_class)}")
+            self.base_scope_toggle.setItemText(
+                1,
+                f"同じ海域（{item.properties.get('マップエリア', '海域不明')}）"
+                if item.category == "chart"
+                else f"すべての{self._item_class_label(item.item_class)}",
+            )
             if key != self._base_scope_item_key:
                 self._base_scope_item_key = key
                 self.base_scope_toggle.setCurrentIndex(0)

@@ -188,7 +188,7 @@ def test_default_metadata_uses_latest_reviewed_awakened_snapshot():
     payload = json.loads(Path("data/poetore/mod_metadata.json").read_text(encoding="utf-8"))
 
     assert payload["sources"]["awakened_poe_trade"]["revision"] == (
-        "31b3e0e8ba0a6bac2266603c2e170925c8f02b81"
+        "1e2225af8cfe04ccc5676d00eede81d7ee071240"
     )
     assert payload["gems"]["coursing current support"]["max_level"] == 3
     assert payload["unique_fixed_stats"]["heroic tragedy"] == ["Historic"]
@@ -372,7 +372,7 @@ def test_builder_restores_official_cluster_option_entries_to_base_stat():
 def test_pseudo_relations_are_fixed_to_audited_awakened_source():
     path = Path("data/poetore/pseudo_relations.json")
     payload = json.loads(path.read_text(encoding="utf-8"))
-    assert payload["source_revision"] == "31b3e0e8ba0a6bac2266603c2e170925c8f02b81"
+    assert payload["source_revision"] == "1e2225af8cfe04ccc5676d00eede81d7ee071240"
     assert payload["source_sha256"] == "50209531e87e8d3d2f87d98b51ca6371dd4c2c2e4dce9c37302333e44c0a4b70"
     relations = pseudo_relations(path)
     assert len(relations) == 19

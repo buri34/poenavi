@@ -4,7 +4,7 @@
 
 基準バージョン: `v3.1.1`（`2dae3fc`）
 
-Awakened比較基準: `31b3e0e8ba0a6bac2266603c2e170925c8f02b81`（v3.29.103）
+Awakened比較基準: `1e2225af8cfe04ccc5676d00eede81d7ee071240`（2026-08-10時点master）
 
 ## この文書の扱い
 

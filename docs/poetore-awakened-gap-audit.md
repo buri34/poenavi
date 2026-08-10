@@ -166,10 +166,10 @@ Cluster Jewelはitem level帯、最適Passive数、Jewel Socket Mod非表示に�
 
 この監査はソース比較であり、Windows実機の配布ZIP／Alt+D最終確認は別の未完了項目として残す。
 
-## 2026-08-04 追加同期
+## 2026-08-10 追加同期
 
-リリース前監査としてAwakened PoE Trade `31b3e0e8ba0a6bac2266603c2e170925c8f02b81`
-（v3.29.103）までを再比較した。内蔵WebView／Captcha、開発文書、中国語専用解析、
+リリース前監査としてAwakened PoE Trade `1e2225af8cfe04ccc5676d00eede81d7ee071240`
+（同日時点master）までを再比較した。内蔵WebView／Captcha、開発文書、中国語専用解析、
 内部リファクタリングはぽえとれへ直接移植する対象外とした。
 
 価格検索へ影響する差分は次のとおり反映した。
@@ -182,4 +182,8 @@ Cluster Jewelはitem level帯、最適Passive数、Jewel Socket Mod非表示に�
 - Standardの完成品検索だけSplit品を自動除外せず、Exact相当のベース検索は非Splitへ限定
 
 入力commit、取得URL、SHA-256は`scripts/poetore-sources.lock.json`へ固定し、復旧用原本は
-`vendor-sources/awakened-poe-trade-31b3e0e8.tar.gz`へ更新した。
+`vendor-sources/awakened-poe-trade-1e2225af.tar.gz`へ更新した。
+
+この同期ではChartを追加し、3種の海図、公式Tradeの全16海域、Area Level、数量、
+レアリティ、Pack Size、死人の硫黄、未鑑定、海図種別完全一致／同一海域検索へ対応した。
+Map／Chart BulkプリセットとMerchant出品集約は今回の対象外として維持する。

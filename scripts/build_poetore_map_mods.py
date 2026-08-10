@@ -6,7 +6,7 @@ from pathlib import Path
 import tarfile
 
 
-DEFAULT_ARCHIVE = Path("vendor-sources/awakened-poe-trade-31b3e0e8.tar.gz")
+DEFAULT_ARCHIVE = Path("vendor-sources/awakened-poe-trade-1e2225af.tar.gz")
 DEFAULT_METADATA = Path("data/poetore/mod_metadata.json")
 DEFAULT_OUTPUT = Path("data/poetore/map_mods.json")
 
@@ -16,6 +16,9 @@ DEFAULT_OUTPUT = Path("data/poetore/map_mods.json")
 NON_MAP_AREA_STAT_IDS = {
     "explicit.stat_1953432004",
     "implicit.stat_1953432004",
+    # Chart専用の死人の硫黄量。Map CheckではなくChart property filterで扱う。
+    "explicit.stat_1605192338",
+    "implicit.stat_3582759801",
 }
 
 # Nightmare Mapの詳細コピーにのみ現れ、固定Awakened revision／公式Tradeの
@@ -102,7 +105,7 @@ def build_catalog(archive: Path, metadata_path: Path) -> dict:
     entries.sort(key=lambda row: (row["scope"], row["japanese"], row["key"]))
     return {
         "schema_version": 1,
-        "source_revision": "31b3e0e8",
+        "source_revision": "1e2225af",
         "entries": entries,
     }
 

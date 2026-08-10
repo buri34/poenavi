@@ -33,7 +33,7 @@ _PROPERTY_LABELS = {
     "ルーンソケット", "Rune Sockets",
     "アイテム数量", "Item Quantity", "アイテムレアリティ", "Item Rarity",
     "モンスターパックサイズ", "Monster Pack Size", "モンスターレベル", "Monster Level",
-    "エリアレベル", "Area Level",
+    "エリアレベル", "Area Level", "死人の硫黄", "Dead Man's Sulphur",
     "情報を聞いた区画", "情報を聞いた区画数", "Wings Revealed",
     "合計区画数", "Total Wings",
     "依頼書目標の価値", "ハイスト目標", "Heist Target",
@@ -86,6 +86,7 @@ _CATEGORY_WORDS = (
     (("アビスジュエル", "Abyss Jewel"), "abyss_jewel"),
     (("ジュエル", "Jewel"), "jewel"),
     (("ジェム", "Gem"), "gem"),
+    (("海図", "Chart"), "chart"),
     (("マップ", "Map"), "map"),
     (("設計図", "計画書", "Blueprint"), "heist_blueprint"),
     (("契約書", "依頼書", "Contract"), "heist_contract"),
@@ -787,6 +788,17 @@ def parse_item_text(text: str) -> ParsedItem:
         for section in sections[1:]
         for line in section
     )
+    if item_category == "chart":
+        for section in sections[1:]:
+            labels = {
+                pair[0] for line in section
+                if (pair := _split_label(line)) is not None
+            }
+            if labels & {"エリアレベル", "Area Level"}:
+                first = section[0].strip()
+                if _split_label(first) is None:
+                    properties["マップエリア"] = first
+                break
     for section_index, section in enumerate(sections[1:], start=1):
         # Mod見出しの効果範囲は同一区画内だけ。次の区切り以降へ持ち越さない。
         current_header_kind = None

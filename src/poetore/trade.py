@@ -82,14 +82,14 @@ _ITEM_CLASS_TRADE_CATEGORIES = {
 def item_class_trade_category(item_class: str) -> str | None:
     return _ITEM_CLASS_TRADE_CATEGORIES.get(item_class.strip())
 CONSUMABLE_CRAFTABLE_CATEGORIES = {
-    "map", "heist_blueprint", "heist_contract", "invitation",
+    "map", "chart", "heist_blueprint", "heist_contract", "invitation",
     "memory_line", "expedition_logbook",
 }
 NON_CRAFTABLE_CATEGORIES = {
     "gem", "flask", "currency", "divination_card", "corpse", "incubator",
 }
 DEDICATED_EXACT_CATEGORIES = {
-    "gem", "captured_beast", "map", "memory_line", "invitation",
+    "gem", "captured_beast", "map", "chart", "memory_line", "invitation",
     "heist_contract", "heist_blueprint", "charm", "corpse", "incubator",
 }
 PRESET_FINISHED = "finished"
@@ -99,6 +99,33 @@ _INSCRIBED_ULTIMATUM_NAMES = {
     "inscribed ultimatum", "アルティメイタムの刻印",
 }
 _JEWEL_AFFIX_CATEGORIES = {"jewel", "abyss_jewel", "cluster_jewel"}
+_CHART_AREA_TRADE_TYPES = {
+    "深海平原": "AbyssalPlain", "Abyssal Plain": "AbyssalPlain",
+    "錨海域": "Anchorfield", "Anchorfield": "Anchorfield",
+    "ブラインキングの領域": "BrineKingsDomain", "Brine King's Domain": "BrineKingsDomain",
+    "貝が群生する海棚": "ClamInfestedShelf", "Clam-infested Shelf": "ClamInfestedShelf",
+    "潜水の浅瀬": "DivingShoals", "Diving Shoals": "DivingShoals",
+    "エルドリッチの深み": "EldritchDepths", "Eldritch Depths": "EldritchDepths",
+    "危険な深み": "HazardousDepths", "Hazardous Depths": "HazardousDepths",
+    "寄生された潜水球": "InfestedBathyspheres", "Infested Bathyspheres": "InfestedBathyspheres",
+    "キシャラの安息所": "KisharasRest", "Kishara's Rest": "KisharasRest",
+    "失われた遺跡": "LostRuins", "Lost Ruins": "LostRuins",
+    "外洋のアビス": "PelagicAbyss", "Pelagic Abyss": "PelagicAbyss",
+    "海底の尾根": "SeafloorRidges", "Seafloor Ridges": "SeafloorRidges",
+    "海の柱": "SeaPillars", "Sea Pillars": "SeaPillars",
+    "沈んだトーテム": "SunkenTotems", "Sunken Totems": "SunkenTotems",
+    "海底の木立": "UnderseaGroves", "Undersea Groves": "UnderseaGroves",
+    "特徴のない海底": "UnremarkableSeabed", "Unremarkable Seabed": "UnremarkableSeabed",
+}
+
+
+def _chart_area_trade_type(value: str) -> str | None:
+    wanted = value.strip().casefold()
+    return next(
+        (trade_type for label, trade_type in _CHART_AREA_TRADE_TYPES.items()
+         if label.casefold() == wanted),
+        None,
+    )
 # Experimental bases whose implicits change the normal rare-item 3/3 limits.
 # Values come from RePoE's local_maximum_prefixes_allowed_+ /
 # local_maximum_suffixes_allowed_+ stats.
@@ -156,6 +183,7 @@ _PROPERTY_FILTERS = {
     "property.map_rarity": ("map_filters", "map_iir"),
     "property.map_pack_size": ("map_filters", "map_packsize"),
     "property.area_level": ("map_filters", "area_level"),
+    "property.chart_sulphur": ("map_filters", "chart_sulphur"),
     "property.heist_wings": ("heist_filters", "heist_wings"),
     "property.heist_lockpicking": ("heist_filters", "heist_lockpicking"),
     "property.heist_brute_force": ("heist_filters", "heist_brute_force"),
@@ -856,7 +884,7 @@ def _apply_dedicated_exact_rules(
         keep_modifier_kinds.update({"prefix", "suffix", "explicit"})
     if item.category == "flask":
         keep_modifier_kinds.add("crafted")
-    if item.category in {"map", "invitation"} and not _is_unique(item):
+    if item.category in {"map", "chart", "invitation"} and not _is_unique(item):
         keep_modifier_kinds.update({"prefix", "suffix", "explicit"})
 
     property_ids = {
@@ -867,7 +895,7 @@ def _apply_dedicated_exact_rules(
     }
     special_kinds = {
         "map", "map pseudo", "map safety", "cluster", "heist", "expedition",
-        "special", "sanctum", "flask hybrid", "unique exception",
+        "special", "chart", "sanctum", "flask hybrid", "unique exception",
     }
     result = []
     logbook_faction_seen = False
@@ -944,7 +972,7 @@ def _dedicated_exact_identity_filters(item: ParsedItem) -> tuple[TradeStatFilter
     """createFilters(exact=true)で表示されるilvl/Influenceの候補。"""
     filters: list[TradeStatFilter] = []
     excluded_ilvl = {
-        "map", "jewel", "heist_blueprint", "heist_contract", "memory_line",
+        "map", "chart", "jewel", "heist_blueprint", "heist_contract", "memory_line",
         "sanctum_relic", "charm", "idol", "expedition_logbook",
     }
     if (item.item_level is not None and not _is_unique(item)
@@ -1265,6 +1293,19 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                     "map pseudo", True, max_value=8.0,
                     selection_reason="Awakenedの8 Mod Map条件",
                 ))
+    elif item.category == "chart" and area_level is not None:
+        filters.append(TradeStatFilter(
+            "property.area_level", "エリアレベル", area_level, "chart", True,
+        ))
+        for stat_id, label, labels in (
+            ("property.map_quantity", "アイテム数量", ("アイテム数量", "Item Quantity")),
+            ("property.map_rarity", "アイテムレアリティ", ("アイテムレアリティ", "Item Rarity")),
+            ("property.map_pack_size", "モンスターパックサイズ", ("モンスターパックサイズ", "Monster Pack Size")),
+            ("property.chart_sulphur", "死人の硫黄", ("死人の硫黄", "Dead Man's Sulphur")),
+        ):
+            value = _property_value(item, *labels)
+            if value is not None:
+                filters.append(TradeStatFilter(stat_id, label, value, "chart", True))
     elif item.category == "expedition_logbook" and area_level is not None:
         filters.append(TradeStatFilter(
             "property.area_level", "エリアレベル帯",
@@ -3368,7 +3409,7 @@ def build_search_query(
         raise ValueError(f"未対応の価格通貨です: {trade_currency}")
     if listed_within not in LISTED_WITHIN_OPTIONS:
         raise ValueError(f"未対応の出品期間です: {listed_within}")
-    if item.category == "map":
+    if item.category in {"map", "chart"}:
         # Awakened準拠: MapはTier・種類・固有条件で検索し、ilvlは使わない。
         # UIの古い状態や直接呼び出しから渡されてもクエリへ混入させない。
         item_level_min = None
@@ -3437,12 +3478,18 @@ def build_search_query(
         query_type = {"option": query_type, "discriminator": gem_info["discriminator"]}
     elif item.category == "map" and base_type == "Map":
         query_type = {"option": query_type, "discriminator": "map"}
+    elif item.category == "chart" and not exact_base_type:
+        area = item.properties.get("マップエリア") or item.properties.get("Map Area")
+        area_type = _chart_area_trade_type(area or "")
+        if not area_type:
+            raise ValueError("海図の海域を公式Tradeデータで解決できませんでした。")
+        query_type = {"option": area_type, "discriminator": "chart"}
     query: dict = {
         "status": {"option": TRADE_STATUS_OPTIONS[trade_status]},
         "stats": [{"type": "and", "filters": []}],
         "filters": {},
     }
-    if exact_base_type and not _is_generic_map_copy_type(item, base_type):
+    if (exact_base_type or item.category == "chart") and not _is_generic_map_copy_type(item, base_type):
         query["type"] = query_type
     currency_option = TRADE_CURRENCY_OPTIONS[trade_currency]
     if currency_option is not None:
@@ -3510,7 +3557,7 @@ def build_search_query(
         rarity_option = "uniquefoil"
     if rarity_option and item.category != "captured_beast":
         query["filters"]["type_filters"] = {"filters": {"rarity": {"option": rarity_option}}}
-    if not exact_base_type:
+    if not exact_base_type and item.category != "chart":
         category = item_class_trade_category(item.item_class)
         if category is None:
             raise ValueError("このアイテムクラスではベースを限定しない検索を利用できません。")
