@@ -2,8 +2,8 @@
 
 監査日: 2026-08-10
 
-実装状況: 本レポートの高優先度6件と、Gem Socket／Charm Qualityチップは
-2026-08-10の共通検索UI parity修正で対応済み。閾値はEE2準拠でGem Level 19、
+実装状況: 本レポートの高優先度6件、Gem Socket／Charm Qualityチップ、
+PoE2武器DPSヘッダー要約は2026-08-10の共通UI修正で対応済み。閾値はEE2準拠でGem Level 19、
 Gem Quality 16、Gem Socket 3、Charm Quality 10以上を初期ONとする。
 
 ## 1. 監査対象
@@ -173,11 +173,21 @@ PoE2で「同じ性能の別ベース」を探せないことはゲーム仕様�
 Ultimatum、Waystone、Rune／Soul Core、Gem、Jewel等は対応している。
 
 一方、EE2と固定identityには存在するが、PoE2 ParserのItem Class／Category mappingがないものがある。
+固定Trade2／identity（2026-08-09）で確認できる内訳は次の通り。
 
-- Life／Mana Flask系
-- 一般Map Fragment、Pinnacle Key、Vault Key系
-- Wombgift系
-- Waystone以外の一般Map系identity
+- Life／Mana Flask: Lesser、Medium、Greater、Grand、Giant、Colossal、Gargantuan、
+  Transcendent、Ultimateの各Life／Mana、計18ベース。Charmは対応済み
+- Map Fragment: An Audience with the King、Breachlord Sac、Cowardly／Deadly／Victorious Fate、
+  Expedition Logbook、Head of the King、Idol of Estazunti、Kulemak's Invitation、
+  Raven's Reflection、Simulacrum、The Triskelion Reforgedの12種
+- Pinnacle Key: Ancient／Faded／Weathered Crisis Fragment、Primary／Secondary／Tertiary
+  Calamity Fragment、Call of the Shadows、Origin Core／Cradle／Sparkの10種
+- Vault Key: Azmeri、Olroth、Ritualistic、Tangmazu、Arbiter、Trialmaster、Twilight、Xesht、
+  Zarokh 2種のReliquary Key、計10種
+- Wombgift: Ornate、Banded、Revelatory、Lavish、Signetの5種。identity上のカテゴリ名は
+  `BrequelFruit`で、Trade2 itemsの独立groupは`wombgift`
+- その他のEndgame Item: BreachstoneとExpedition LogbookはTrade2で独立カテゴリを持つ。
+  Waystone、Barya、Ultimatum、Tabletは対応済み
 
 これらは実コピーfixtureがなく、現状はParserでカテゴリ未解決になる可能性が高い。
 まず現行リーグで実在・Trade対象かを確認し、対象なら日英実コピーを収集して追加する。

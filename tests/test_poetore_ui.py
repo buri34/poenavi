@@ -4671,6 +4671,21 @@ Item Level: 84
         window.close()
 
 
+def test_poe2_weapon_parse_shows_dps_summary_in_header(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(
+            encoding="utf-8"
+        )
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+
+        assert window.weapon_dps_label.text() == "pDPS：241.3（品質20%換算）"
+        assert not window.weapon_dps_label.isHidden()
+    finally:
+        window.close()
+
+
 def test_poe2_weapon_quality_20_is_visible_but_initially_disabled(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:
