@@ -4523,6 +4523,113 @@ Valdo Map
     assert unresolved_modifier_warnings(item, filters) == ()
 
 
+CONQUEROR_CITADEL_STATS = (
+    (
+        "バラン",
+        "implicit.stat_2563183002|1",
+        "エリアにはバランの砦が出現する\n"
+        "アイテムの数量はその数値の20%がバランのドロップするアイテムの量を増加させる",
+    ),
+    (
+        "ヴェリタニア",
+        "implicit.stat_2563183002|2",
+        "エリアにはヴェリタニアの砦が出現する\n"
+        "アイテムの数量はその数値の20%がヴェリタニアのドロップするアイテムの量を増加させる",
+    ),
+    (
+        "アル・ヘズミン",
+        "implicit.stat_2563183002|3",
+        "エリアにはアル・ヘズミンの砦が出現する\n"
+        "アイテムの数量はその数値の20%がアル・ヘズミンのドロップするアイテムの量を増加させる",
+    ),
+    (
+        "ドロックス",
+        "implicit.stat_2563183002|4",
+        "エリアにはドロックスの砦が出現する\n"
+        "アイテムの数量はその数値の20%がドロックスのドロップするアイテムの量を増加させる",
+    ),
+)
+
+
+@pytest.mark.parametrize(("conqueror", "stat_id", "stat_text"), CONQUEROR_CITADEL_STATS)
+def test_conqueror_citadel_multiline_implicit_uses_single_official_filter(
+    conqueror, stat_id, stat_text,
+):
+    item = parse_item_text(f"""アイテムクラス: マップ
+レアリティ: レア
+悪夢の努力
+マップ (ティア 16)
+--------
+アイテム数量: +49% (augmented)
+アイテムレアリティ: +29% (augmented)
+モンスターパックサイズ: +19% (augmented)
+--------
+アイテムレベル: 83
+--------
+モンスターレベル：83
+--------
+{{ 暗黙モッド }}
+エリアには{conqueror}の砦が出現する
+アイテムの数量はその数値の20%が{conqueror}のドロップするアイテムの量を増加させる
+--------
+""")
+    entries = ({"id": stat_id, "text": stat_text, "type": "implicit"},)
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item)
+
+    citadel = next(row for row in filters if row.stat_id == stat_id)
+    assert citadel.text == stat_text
+    assert citadel.enabled is True
+    assert unresolved_modifier_warnings(item, filters) == ()
+    query = build_search_query(item, stat_filters=filters)
+    query_ids = {
+        row["id"]
+        for group in query["query"]["stats"]
+        for row in group["filters"]
+    }
+    assert stat_id in query_ids
+
+
+def test_veritania_citadel_full_japanese_copy_has_no_unresolved_warning():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+悪夢の努力
+マップ (ティア 16)
+--------
+アイテム数量: +49% (augmented)
+アイテムレアリティ: +29% (augmented)
+モンスターパックサイズ: +19% (augmented)
+--------
+アイテムレベル: 83
+--------
+モンスターレベル：83
+--------
+{ 暗黙モッド }
+エリアにはヴェリタニアの砦が出現する
+アイテムの数量はその数値の20%がヴェリタニアのドロップするアイテムの量を増加させる
+--------
+{ プレフィックスモッド「鏡の」 (ティア: 1) — ダメージ, 元素 }
+レアモンスターは元素の棘を持ち1500の元素ダメージを反射する
+{ プレフィックスモッド「燃える」 (ティア: 1) — ダメージ, 物理, 元素, 火 }
+モンスターは物理ダメージの107(90-110)%を追加火ダメージとして与える
+{ プレフィックスモッド「力ある」 (ティア: 1) — 元素, 火, 冷気, 雷, 状態異常 }
+モンスターはヒット時に20%の確率で発火、凍結および感電を付与する
+{ サフィックスモッド 「均衡の」 (ティア: 1) — ダメージ, 元素 }
+プレイヤーは曝露を付与することができない
+--------
+自身のマップデバイスで使用することでこのティアまたはそれよりティアの低いマップに移動する。マップは一度のみ使用できる。
+""")
+    _, stat_id, stat_text = CONQUEROR_CITADEL_STATS[1]
+    entries = ({"id": stat_id, "text": stat_text, "type": "implicit"},)
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item)
+
+    assert any(row.stat_id == stat_id and row.enabled for row in filters)
+    assert unresolved_modifier_warnings(item, filters) == ()
+
+
 def test_valdo_reward_uses_english_api_value_and_japanese_web_value():
     item = parse_item_text("""アイテムクラス: マップ
 レアリティ: レア

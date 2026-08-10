@@ -1928,6 +1928,11 @@ def _trade_stat_entry_indexes(entries: tuple[dict, ...]):
     return by_id, by_text
 
 
+_CONQUEROR_CITADEL_STAT_IDS = {
+    f"implicit.stat_2563183002|{option}" for option in range(1, 5)
+}
+
+
 def _trade_item_entries() -> tuple[dict, ...]:
     global _item_entries_cache
     if _item_entries_cache is None:
@@ -2786,7 +2791,7 @@ def resolve_trade_stat_filters(
     fixed_unique_refs = unique_fixed_stats(
         trade_name or item.name
     ) if unique_item else None
-    modifiers = _combine_valdo_multiline_modifiers(item, entries)
+    modifiers = _combine_map_multiline_modifiers(item, entries)
     for modifier in modifiers:
         hidden_reason = ""
         if (
@@ -2935,9 +2940,13 @@ def resolve_trade_stat_filters(
             if unique_item and roll_bounds is not None and modifier.stat_id != str(entry["id"]):
                 value = _unique_minimum(value, roll_bounds)
             valdo_exact = item.category == "map" and item.base_type.casefold() == "valdo map"
+            conqueror_citadel = (
+                item.category == "map"
+                and str(entry["id"]) in _CONQUEROR_CITADEL_STAT_IDS
+            )
             resolved.append(TradeStatFilter(
                 str(entry["id"]), modifier.text, value, modifier.kind,
-                unique_variant or valdo_exact or (modifier.ref == "Allocates #" and (
+                unique_variant or valdo_exact or conqueror_citadel or (modifier.ref == "Allocates #" and (
                     "talisman" in item.item_class.casefold() or "タリスマン" in item.item_class
                 )),
                 maximum, modifier.ref, modifier.confidence, modifier_inverted,
@@ -3288,23 +3297,25 @@ def resolve_trade_stat_filters(
     return tuple(decorated)
 
 
-def _combine_valdo_multiline_modifiers(item: ParsedItem, entries: tuple[dict, ...]) -> tuple:
-    """Valdo固有の複数行statを、公式Tradeの改行テンプレート単位へ戻す。"""
-    if item.category != "map" or item.base_type.casefold() != "valdo map":
+def _combine_map_multiline_modifiers(item: ParsedItem, entries: tuple[dict, ...]) -> tuple:
+    """Mapの複数行statを、公式Tradeの改行テンプレート単位へ戻す。"""
+    if item.category != "map":
         return item.modifiers
     official = {
         _normalized_stat_text(str(entry.get("text", ""))): entry
         for entry in entries
-        if entry.get("type") == "explicit" and "\n" in str(entry.get("text", ""))
+        if "\n" in str(entry.get("text", ""))
     }
     result, index = [], 0
     while index < len(item.modifiers):
         matched = None
         for size in range(min(3, len(item.modifiers) - index), 1, -1):
             group = item.modifiers[index:index + size]
+            if len({row.group for row in group}) != 1:
+                continue
             text = "\n".join(row.text for row in group)
             entry = official.get(_normalized_stat_text(text))
-            if entry:
+            if entry and all(row.kind == entry.get("type") for row in group):
                 matched = replace(
                     group[0], text=text, values=tuple(
                         value for row in group for value in row.values
