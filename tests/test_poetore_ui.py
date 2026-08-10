@@ -1876,11 +1876,16 @@ def test_mod_filter_tier_and_condition_columns_use_compact_scaled_widths(
 
 
 @pytest.mark.parametrize(
-    ("setting", "expected_width", "expected_font_size"),
-    (("small", 48, 11), ("medium", 56, 12), ("large", 64, 14)),
+    ("setting", "expected_min_width", "expected_max_width", "expected_gap", "expected_font_size"),
+    (
+        ("small", 56, 48, 8, 11),
+        ("medium", 65, 56, 9, 12),
+        ("large", 75, 64, 11, 14),
+    ),
 )
 def test_mod_filter_minimum_and_maximum_editors_use_narrow_width_and_smaller_font(
-    qapp, setting, expected_width, expected_font_size,
+    qapp, setting, expected_min_width, expected_max_width, expected_gap,
+    expected_font_size,
 ):
     window = PoetoreWindow(
         app_config={"poetore": {"result_font_size": setting}}
@@ -1892,8 +1897,10 @@ def test_mod_filter_minimum_and_maximum_editors_use_narrow_width_and_smaller_fon
         row = window.mod_filter_tree.topLevelItem(0)
         minimum_editor = window.mod_filter_tree.itemWidget(row, 4)
         maximum_editor = window.mod_filter_tree.itemWidget(row, 5)
-        assert minimum_editor.width() == expected_width
-        assert maximum_editor.width() == expected_width
+        assert minimum_editor.width() == expected_min_width
+        assert maximum_editor.width() == expected_max_width
+        assert f"margin-left: {expected_gap}px" in minimum_editor.styleSheet()
+        assert "margin-left: 0px" in maximum_editor.styleSheet()
         assert f"font-size: {expected_font_size}px" in minimum_editor.styleSheet()
         assert f"font-size: {expected_font_size}px" in maximum_editor.styleSheet()
     finally:

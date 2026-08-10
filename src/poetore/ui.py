@@ -91,6 +91,7 @@ _MOD_CHECK_COLUMN_WIDTH = 40
 _MOD_TIER_COLUMN_WIDTH = 62
 _MOD_TEXT_COLUMN_WIDTH = 320
 _MOD_VALUE_EDITOR_WIDTH = 48
+_MOD_VALUE_LEADING_GAP = 8
 _MOD_ROW_HEIGHT = 36
 _UNIQUE_ROLL_ROW_HEIGHT = 62
 _UNIQUE_CANDIDATE_ROW_HEIGHT = 64
@@ -1878,10 +1879,17 @@ class PoetoreWindow(QWidget):
     def _scaled_display_value(self, value: int) -> int:
         return round(value * self._display_scale())
 
-    def _apply_mod_value_editor_size(self, editor: QLineEdit):
+    def _apply_mod_value_editor_size(
+        self, editor: QLineEdit, *, leading_gap: bool = False,
+    ):
         profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
-        editor.setFixedWidth(self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH))
-        editor.setStyleSheet(f"font-size: {profile['mod_value_font']}px;")
+        gap = self._scaled_display_value(_MOD_VALUE_LEADING_GAP) if leading_gap else 0
+        editor.setFixedWidth(
+            self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH) + gap
+        )
+        editor.setStyleSheet(
+            f"font-size: {profile['mod_value_font']}px; margin-left: {gap}px;"
+        )
 
     def apply_result_display_size(self):
         """設定済みの小／中／大を既存の検索画面へ即時反映する。"""
@@ -1921,7 +1929,9 @@ class PoetoreWindow(QWidget):
                     self.mod_filter_tree.topLevelItem(index), column
                 )
                 if isinstance(editor, QLineEdit):
-                    self._apply_mod_value_editor_size(editor)
+                    self._apply_mod_value_editor_size(
+                        editor, leading_gap=column == _MOD_COLUMN_MIN,
+                    )
         self._apply_poetore_style()
         self._adjust_window_height_to_mod_rows()
     def _toggle_mod_conditions(self):
@@ -4295,7 +4305,7 @@ class PoetoreWindow(QWidget):
             editor = QLineEdit(value)
             editor.installEventFilter(self)
             editor.setPlaceholderText("最小")
-            self._apply_mod_value_editor_size(editor)
+            self._apply_mod_value_editor_size(editor, leading_gap=True)
             editor.setEnabled(stat_filter.option_value is None)
             editor.textEdited.connect(self._mark_search_dirty)
             self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_MIN, editor)
