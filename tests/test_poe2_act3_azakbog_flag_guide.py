@@ -1,5 +1,6 @@
 import copy
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -31,11 +32,12 @@ def test_azak_bog_entry_sets_progress_flag():
     assert 'self.set_progress_flag("act3_azakbog_enter")' in source
 
 
-def test_matlan_waterways_has_all_three_empty_editor_frames(guide_data):
+def test_matlan_waterways_has_all_three_authored_editor_frames(guide_data):
     frame = guide_data[MATLAN_ZONE_ID]["flags"][FLAG_KEY]
 
     assert {"objective", "layout", "tips", "summary", "mini_navi"} <= frame.keys()
-    assert frame["mini_navi"] == {"text": ""}
+    assert all(frame[key].strip() for key in ("objective", "layout", "tips", "summary"))
+    assert frame["mini_navi"]["text"].strip()
 
 
 def test_detail_and_summary_editors_expose_azak_bog_flag_frame(qapp, guide_data):
@@ -94,3 +96,17 @@ def test_authored_flag_content_is_selected_for_matlan_waterways(guide_data):
     )
 
     assert guide["objective"] == "アザク湿原到達後"
+
+
+def test_mini_navi_markers_are_not_split_by_html(guide_data):
+    split_marker = re.compile(
+        r"\[(?:move|boss|town|wp|quest|dialogue)(?:</?[^>]+>)+\]"
+    )
+
+    for zone_id, entry in guide_data.items():
+        guides = [("default", entry.get("default", {}))]
+        guides.extend((f"flag:{key}", value) for key, value in entry.get("flags", {}).items())
+        for section, guide in guides:
+            mini_navi = guide.get("mini_navi", {}) if isinstance(guide, dict) else {}
+            text = mini_navi.get("text", "") if isinstance(mini_navi, dict) else ""
+            assert not split_marker.search(text), f"{zone_id} {section}"
