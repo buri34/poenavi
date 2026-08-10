@@ -1005,8 +1005,12 @@ class PoetoreWindow(QWidget):
         )
         self.trade_preset_combo.currentIndexChanged.connect(self._trade_preset_changed)
         # 検索プリセットは左半分だけを使い、下のMod表との視線移動を短くする。
-        # 単独表示時は空の第2セグメントも維持するため、ボタン自体は従来の半幅になる。
+        # 切替候補がない場合は固定状態を説明するだけのボタンを出さず、同じ幅の空白を
+        # 残して右側のMod数値コントロールの位置を動かさない。
         top_options.addWidget(self.trade_preset_combo, 1)
+        self.trade_preset_placeholder = QWidget()
+        self.trade_preset_placeholder.hide()
+        top_options.addWidget(self.trade_preset_placeholder, 1)
         self.search_range_combo = QComboBox()
         self.search_range_combo.setObjectName("filterControl")
         for percent in (0, 5, 10, 15, 20, 30, 50):
@@ -3359,7 +3363,10 @@ class PoetoreWindow(QWidget):
         self.trade_preset_combo.setItemText(0, primary_label)
         self.trade_preset_combo.setSecondAvailable(PRESET_BASE in presets)
         self.trade_preset_combo.setCurrentIndex(0)
-        self.trade_preset_combo.setEnabled(len(presets) > 1)
+        has_choice = len(presets) > 1
+        self.trade_preset_combo.setEnabled(has_choice)
+        self.trade_preset_combo.setVisible(has_choice)
+        self.trade_preset_placeholder.setVisible(not has_choice)
         if dedicated_exact:
             self.trade_preset_combo.setToolTip(
                 "このアイテム種別に必要な条件だけを使う専用検索です。"

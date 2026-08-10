@@ -3111,17 +3111,18 @@ Item Level: 85
         window._configure_trade_presets(low_level)
         assert window.trade_preset_combo.count() == 1
         assert not window.trade_preset_combo.isEnabled()
+        assert window.trade_preset_combo.isHidden()
+        assert not window.trade_preset_placeholder.isHidden()
         window.resize(720, window.height())
         window.show()
         qapp.processEvents()
-        assert window.trade_preset_combo.width() <= window._panel.width() / 2
-        single_width = window.trade_preset_combo._buttons[0].width()
-        assert window.trade_preset_combo._empty_segment.isVisible()
+        assert window.trade_preset_placeholder.width() <= window._panel.width() / 2
 
         window._configure_trade_presets(high_level)
         qapp.processEvents()
+        assert not window.trade_preset_combo.isHidden()
+        assert window.trade_preset_placeholder.isHidden()
         assert not window.trade_preset_combo._empty_segment.isVisible()
-        assert abs(window.trade_preset_combo._buttons[0].width() - single_width) <= 1
     finally:
         window.close()
 
@@ -3139,6 +3140,8 @@ def test_dedicated_exact_preset_is_labeled_as_dedicated_search_and_restores_fini
         assert window.trade_preset_combo.currentData() == "finished"
         assert window.trade_preset_combo.currentText() == "専用検索"
         assert window.trade_preset_combo._buttons[0].text() == "専用検索"
+        assert window.trade_preset_combo.isHidden()
+        assert not window.trade_preset_placeholder.isHidden()
         window._trade_preset_changed()
         assert "専用条件" in window.price_status.text()
 
@@ -3156,6 +3159,8 @@ Item Level: 85
         assert window.trade_preset_combo.currentText() == "完成品"
         assert window.trade_preset_combo.itemText(1) == "ベースアイテム"
         assert window.trade_preset_combo.count() == 2
+        assert not window.trade_preset_combo.isHidden()
+        assert window.trade_preset_placeholder.isHidden()
     finally:
         window.close()
 
@@ -3181,6 +3186,8 @@ Superior Imbued Wand
         assert window.trade_preset_combo.currentData() == "finished"
         assert window.trade_preset_combo.currentText() == "ベースアイテム"
         assert window.trade_preset_combo._buttons[0].text() == "ベースアイテム"
+        assert window.trade_preset_combo.isHidden()
+        assert not window.trade_preset_placeholder.isHidden()
     finally:
         window.close()
 
