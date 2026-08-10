@@ -449,8 +449,8 @@
     "default": {
       "objective": "・ボス「マイティ・シルバーフィスト」を倒す\n・毒の地下聖堂の近くにあるWPを取る\n・毒の地下聖堂に行く\n・【毒の地下聖堂クリア後】害虫の荒れ地へ行く",
       "layout": "<span style='color:#ffffff'>・大きな正方形のようなエリア。３つの重要ポイントがあるが、外周を走るのが鉄則。</span>\n\n<span style='color:#ffffff'>・３つの重要ポイント</span>\n<span style='color:#ffffff'>  ①毒の地下聖堂：WPが近くにある。永続バフが得られるクエスト報酬がある場所。</span>\n<span style='color:#ffffff'>  ②マイティ・シルバーフィスト：ボス。</span><span style='color:#dddd44'>倒すとスキルポイント+2</span><span style='color:#ffffff'>を獲得。</span>\n<span style='color:#ffffff'>  ③害虫の荒れ地（出口）</span>\n\n<span style='color:#ffffff'>①は、外周沿いにある。</span>\n<span style='color:#ffffff'>②は、エリアの中央にいる。</span>\n<span style='color:#ffffff'>③は、スタート地点の反対側の壁沿いにある確率が高い。ワールドマップでみて害虫の荒れ地の方向を確認して進めば外れが少ない。</span>",
-      "tips": "<span style='color:#ffffff'>・エリア内の外周沿いのどこかにある</span><span style='color:#dddd44'>「物騒なキャンプ」において、NPCの近くにある白チェストからは、確定で4mod付きのレアの手袋がドロップ</span><span style=\" color:#ffffff;\">する。また、このNPCが次のエリアの場所を教えてくれる\n・また、「破壊された死体」のオブジェクトをクリックすると、</span><span style='color:#dddd44'>セルヴィからレアベルトをもらえる</span><span style=\" color:#ffffff;\">。\n\n・毒の地下聖堂は、一旦後回しにして、この先のどこかのエリアでWPを取得したタイミングで飛んできても良い。\n\n【ボス情報】\nマイティ・シルバーフィスト \n属性：物理、冷気\n耐性：冷気\n弱点：火</span>",
-      "summary": "<span style='color:#ffffff'>・ボス「マイティ・シルバーフィスト」を倒す（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・毒の地下聖堂の近くにあるWPを取る\n・</span><span style='color:#dddd44'>毒の地下聖堂</span><span style='color:#ffffff'>に行く</span>\n・<span style='color:#ffffff'>【毒の地下聖堂クリア後】[move]</span><span style='color:#dddd44'>害虫の荒れ地</span><span style='color:#ffffff'>へ行く</span>\n\n<span style=\" color:#ffffff;\">ゴリラはエリアの中央にいる\n「物騒なキャンプ」のNPCが次のエリアの場所を教えてくれる</span>\n\n<span style='color:#ffffff'>「物騒なキャンプ」の白チェストから</span><span style='color:#dddd44'>4mod付きのレアの手袋</span>\n\n<span style='color:#ffffff'>「破壊された死体」のオブジェクトをクリックでNPCから</span><span style='color:#dddd44'>レアベルト</span>",
+      "tips": "<span style='color:#ffffff'>・エリア内の外周沿いのどこかにある</span><span style='color:#dddd44'>「物騒なキャンプ」において、NPCの近くにある白チェストからは、確定で4mod付きのレアの手袋がドロップ</span><span style=\" color:#ffffff;\">する。また、このNPCが次のエリアの場所を教えてくれる\n・「破壊された死体」のオブジェクトをクリックすると、</span><span style='color:#dddd44'>セルヴィからレアベルトをもらえる</span><span style=\" color:#ffffff;\">。\n\n・毒の地下聖堂は、一旦後回しにして、この先のどこかのエリアでWPを取得したタイミングで飛んできても良い。\n\n【ボス情報】\nマイティ・シルバーフィスト \n属性：物理、冷気\n耐性：冷気\n弱点：火</span>",
+      "summary": "<span style='color:#ffffff'>・ボス「マイティ・シルバーフィスト」を倒す（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n・毒の地下聖堂の近くにあるWPを取る\n・</span><span style='color:#dddd44'>毒の地下聖堂</span><span style='color:#ffffff'>に行く</span>\n・<span style='color:#ffffff'>【毒の地下聖堂クリア後】</span><span style='color:#dddd44'>害虫の荒れ地</span><span style='color:#ffffff'>へ行く</span>\n\n<span style=\" color:#ffffff;\">ゴリラはエリアの中央にいる\n「物騒なキャンプ」のNPCが次のエリアの場所を教えてくれる</span>\n\n<span style='color:#ffffff'>「物騒なキャンプ」の白チェストから</span><span style='color:#dddd44'>4mod付きのレアの手袋</span>\n\n<span style='color:#ffffff'>「破壊された死体」のオブジェクトをクリックでNPCから</span><span style='color:#dddd44'>レアベルト</span>",
       "mini_navi": {
         "text": "<span style='color:#ffffff'>▸[boss]ボス「マイティ・シルバーフィスト」を倒す（</span><span style='color:#dddd44'>スキルポイント+2</span><span style=\" color:#ffffff;\">）\n▸毒の地下聖堂の近くにある[wp]WPを取る\n▸[move]</span><span style='color:#dddd44'>毒の地下聖堂</span><span style='color:#ffffff'>に行く</span>\n<span style='color:#ffffff'>▸【毒の地下聖堂クリア後】[move]</span><span style='color:#dddd44'>害虫の荒れ地</span><span style='color:#ffffff'>へ行く</span>"
       }
@@ -459,12 +459,12 @@
   },
   "poe2_act3_area04": {
     "default": {
-      "objective": "「アザク湿原」へ行く",
-      "layout": "<span style='color:#ffffff'>・大きな長方形のエリア。</span>\n<span style='color:#ffffff'>・重要なポイントはすべてエリアの外周に配置されているため、中央ではなく端を走るのが正解</span>\n\n<span style='color:#dd66ff'>なお、5/14のGGG動画によると、アザク湿原の入り口はマトラン水路に移動する様子。そのため、リーグ0.5からは、このエリアはキメラの湿地だけ意識すればよいはず</span>\n\n<span style='color:#ffffff'>・３つの重要ポイント</span>\n<span style='color:#ffffff'>  ①キメラの湿地</span>\n<span style='color:#ffffff'>  ②アザク湿原</span>\n<span style='color:#ffffff'>  ③マトラン水路</span>\n\n<span style='color:#ffffff'>・推奨の進め方は、</span>\n<span style='color:#ffffff'>  －外周を走り、すべてのチェックポイントとウェイポイントを確保する。</span>\n<span style='color:#ffffff'>  －チェックポイントから「アザク湿原」へ飛び、エリアをクリアしてウェイポイントで戻ってくる</span>\n<span style='color:#ffffff'>  －チェックポイントから「キメラの湿地」へ進む。</span>\n\n<span style='color:#ffffff'>・このエリアおよび隣接エリアは、ワールドマップが示す位置関係とは全く異なる可能性が高い。そのため、</span><span style='color:#dddd44'>ここに限ってはワールドマップを信じない方がいい</span>",
-      "tips": "<span style='color:#ffffff'>・エリア内の外周沿いのどこかにある</span><span style='color:#dddd44'>キャンプにおいて、NPCの近くにある白チェストからは、確定で4mod付きのレアの靴がドロップ</span><span style='color:#ffffff'>する。</span><span style='color:#dd66ff'>また、2026/5/8ライブ配信を踏まえると、おそらく、このNPCも次のエリアの場所を教えてくれるようになる模様</span>",
-      "summary": "<span style=\" color:#ffffff;\">・「アザク湿原」へ行く\n</span>\n<span style='color:#dd66ff'>5/14のGGG動画によると、</span>\n<span style='color:#dd66ff'>・アザク湿原の入り口はマトラン水路に移動する。このエリアはキメラの湿地だけ意識すればよくなるはず</span>\n<span style='color:#dd66ff'>・おそらく、このNPCも次のエリアの場所を教えてくれるように</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプの白チェストから</span><span style='color:#dddd44'>4mod付きのレアの靴</span>",
+      "objective": "「キメラル湿地」へ行く",
+      "layout": "<span style='color:#ffffff'>・大きな長方形のエリア。</span>\n<span style='color:#ffffff'>・ワールドマップの位置関係を参考にして、キメラル湿地を目指して外周を辿ること。</span>",
+      "tips": "<span style='color:#ffffff'>・エリア内の外周沿いのどこかにあるキャンプにおいて、NPCの近くにある白チェストからは、確定で4mod付きのレアの靴がドロップする。</span>\n<span style='color:#ffffff'>・また、このNPCは次のエリアの場所を教えてくれる</span>",
+      "summary": "<span style='color:#ffffff'>「キメラル湿地」へ行く</span>\n\n<span style='color:#ffffff'>ワールドマップの位置関係を参考にして、キメラル湿地を目指して外周を辿ること。</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプの白チェストから4mod付きのレアの靴</span>\n<span style='color:#ffffff'>このNPCは次のエリアの場所を教えてくれる</span>",
       "mini_navi": {
-        "text": "<span style=\" color:#ffffff;\">・「アザク湿原」へ行く\n</span>\n<span style='color:#dd66ff'>5/14のGGG動画によると、</span>\n<span style='color:#dd66ff'>・アザク湿原の入り口はマトラン水路に移動する。このエリアはキメラの湿地だけ意識すればよくなるはず</span>\n<span style='color:#dd66ff'>・おそらく、このNPCも次のエリアの場所を教えてくれるように</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプの白チェストから</span><span style='color:#dddd44'>4mod付きのレアの靴</span>"
+        "text": "<span style='color:#ffffff'>▸[move]</span><span style='color:#dddd44'>キメラル湿地</span><span style='color:#ffffff'>へ行く</span>\n<span style='color:#ffffff'>（ワールドマップの位置関係を参考にして、キメラル湿地を目指して外周を辿る）</span>"
       }
     },
     "flags": {
@@ -481,10 +481,10 @@
   },
   "poe2_act3_area03": {
     "default": {
-      "objective": "・「死体」を見つけてクエストアイテムを獲得する\n・ポータルで街へ戻る\n\n（街）\n・セルヴィにクエストを提出する\n・WPから「ジャングルの遺跡」へ飛び、チェックポイントから「害虫の荒れ地」へ行く",
+      "objective": "・「死体」を見つけてクエストアイテムを獲得する\n・近くにある出口から「ジャングルの遺跡」へ行く",
       "layout": "<span style='color:#ffffff'>・かなりランダム性の高いエリア。</span>\n\n<span style='color:#ffffff'>・このエリアは基本的に円形をしており、死体はほぼどこにでも出現する可能性があるが、</span><span style='color:#dddd44'>もし、入口がエリアの端だった場合（マップ画像参照）、死体は必ずゾーンの中央に</span><span style='color:#ffffff'>あり、そこへは、入口の反対側の壁沿いを進めば良し。</span>\n\n<span style='color:#ffffff'>・推奨の進め方は、</span>\n<span style='color:#ffffff'>  －入口側と同じ壁沿いを進み、中央付近へと回り込んで、そこに死体があることを祈る</span>\n<span style='color:#ffffff'>  －入口側の壁沿いに進めない場合は、それはエリアの端にいるということになるので、代わりに入口と反対側の壁沿いを進めば、中央で死体が見つかる。</span>\n<span style='color:#ffffff'>  －もし、上記のどちらかのパターンで中央にない場合、運が悪い。</span>\n<span style='color:#ffffff'>    死体はエリアのいずれの角にある可能性があり、外周を探すことになる。</span>\n\n<span style='color:#ffffff'>・死体の近くにジャングルの遺跡への出口あり。害虫の荒れ地への近くに出る</span>",
-      "tips": "<span style='color:#ffffff'>・「死体」から獲得したクエストアイテムの報酬で、</span><span style='color:#dddd44'>永続バフを獲得</span><span style=\" color:#ffffff;\">\n</span>\n<span style='color:#ffffff'>・エリア内にある</span><span style='color:#dddd44'>サルコファガス（レア宝箱）から確定でサポートジェムの原石Lv3</span><span style='color:#ffffff'>が手に入る</span>\n<span style=\" color:#ffffff;\">\n・永続バフは、「スタン閾値」が無難な選択。「元素系状態異常閾値」も悪くない。「マナ自動回復レート」は多くのビルドで価値が低い</span>",
-      "summary": "<span style=\" color:#ffffff;\">・「死体」を見つけてクエストアイテムを獲得する\n・ポータルで街へ戻る\n\n（街）\n・セルヴィにクエストを提出する（</span><span style='color:#dddd44'>永続バフ</span><span style=\" color:#ffffff;\">）\n・WPから「ジャングルの遺跡」へ飛び、チェックポイントから「害虫の荒れ地」へ行く</span>\n\n<span style='color:#ffffff'>死体の近くにジャングルの遺跡への出口あり。害虫の荒れ地への近くに出る</span>\n\n<span style='color:#ffffff'>エリア内にあるサルコファガス（レア宝箱）から</span><span style='color:#dddd44'>サポートジェムの原石Lv3</span>",
+      "tips": "<span style='color:#ffffff'>・「死体」から獲得したクエストアイテムの報酬で、</span><span style='color:#dddd44'>永続バフを獲得</span><span style=\" color:#ffffff;\">\n</span>\n<span style='color:#ffffff'>・エリア内にある</span><span style='color:#dddd44'>サルコファガス（レア宝箱）から確定でサポートジェムの原石Lv3</span><span style='color:#ffffff'>が手に入る</span>",
+      "summary": "<span style='color:#ffffff'>・「死体」を見つけてクエストアイテムを獲得する</span>\n<span style=\" color:#ffffff;\">・近くにある出口から「ジャングルの遺跡」へ行く\n</span>\n<span style='color:#ffffff'>死体の近くにジャングルの遺跡への出口あり。害虫の荒れ地への近くに出る</span>\n\n<span style='color:#ffffff'>エリア内にあるサルコファガス（レア宝箱）から</span><span style='color:#dddd44'>サポートジェムの原石Lv3</span>",
       "mini_navi": {
         "text": "<span style=\" color:#ffffff;\">▸「死体」を見つけてクエストアイテムを獲得する\n▸近くにある出口から[move]</span><span style='color:#dddd44'>ジャングルの遺跡</span><span style='color:#ffffff'>へ行き、[move]</span><span style='color:#dddd44'>害虫の荒れ地</span><span style=\" color:#ffffff;\">へ行く\n（エリア内にあるサルコファガス（レア宝箱）からサポートジェムの原石Lv3）</span>"
       }
@@ -506,11 +506,11 @@
   "poe2_act3_area06": {
     "default": {
       "objective": "・ボス「キメラ、ザイクルシアン」を倒す\n・「カオスの寺院」に入って、WPを確保する\n・「ジクアニのマシナリウム」へ行く",
-      "layout": "<span style='color:#ffffff'>・カオスの寺院は、エリアの上辺に生成される。</span>\n<span style='color:#ffffff'>・</span><span style='color:#dddd44'>ボスの場所は、左向きに開いている地形が特徴</span><span style='color:#ffffff'>。そのため左の壁沿いを走り続ければ、いつか辿り着くはず。</span>\n\n<span style='color:#ffffff'>・推奨の進め方は、</span>\n<span style='color:#ffffff'>  －外周の壁に沿って進み、２つの重要ポイントを探す。</span>\n<span style='color:#ffffff'>  －先にボスを見つけたら、ボスを倒してマシナリウムに入ってウェイポイントを確保し、戻ってきてカオスの寺院を探す</span>\n\n<span style='color:#ffffff'>※カオスの寺院は基本的にエリアの上側にできるが、ごく稀にエリアの左右の端の上辺に生成されることもある。（マップ画像２枚目のパターン）</span>\n<span style='color:#ffffff'>※なぜかここだけ40種類以上のレイアウトが存在することから、Actレーサーから呪われたゾーンと呼ばれているらしい。</span>\n\n<span style='color:#dd66ff'>⇒GGGのレベルデザイナーのSunaが最近明かした情報では、もう40種類ものレイアウトパターンはなくなったとのこと。</span><span style='color:#ffffff'>つまりもっとわかりやすくなっているはず。</span>",
+      "layout": "<span style='color:#ffffff'>・カオスの寺院は、エリアの上辺に生成される。</span>\n<span style='color:#ffffff'>・</span><span style='color:#dddd44'>ボスの場所は、左向きに開いている地形が特徴</span><span style='color:#ffffff'>。そのため左の壁沿いを走り続ければ、いつか辿り着くはず。</span>\n\n<span style='color:#ffffff'>・推奨の進め方は、</span>\n<span style='color:#ffffff'>  －外周の壁に沿って進み、２つの重要ポイントを探す。</span>\n<span style='color:#ffffff'>  －先にボスを見つけたら、ボスを倒してマシナリウムに入ってウェイポイントを確保し、戻ってきてカオスの寺院を探す</span>\n\n<span style='color:#ffffff'>※カオスの寺院は基本的にエリアの上側にできるが、ごく稀にエリアの左右の端の上辺に生成されることもある。（マップ画像２枚目のパターン）</span>",
       "tips": "<span style='color:#ffffff'>・エリア内の外周沿いのどこかにある</span><span style='color:#dddd44'>キャンプにおいて、NPCの近くにある白チェストからは、確定で4mod付きのレアの兜がドロップ</span><span style='color:#ffffff'>する。</span>",
       "summary": "<span style=\" color:#ffffff;\">・ボス「キメラ、ザイクルシアン」を倒す\n・「カオスの寺院」に入って、WPを確保する\n・「ジクアニのマシナリウム」へ行く</span>\n\n<span style='color:#ffffff'>カオスの寺院は、エリアの上辺に生成。</span>\n<span style='color:#ffffff'>ボスの場所は、左向きに開いている地形が特徴。そのため左の壁沿いを走り続ければ、いつか辿り着く</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプで白チェストから</span><span style='color:#dddd44'>4mod付きのレアの兜</span>",
       "mini_navi": {
-        "text": "<span style=\" color:#ffffff;\">・ボス「キメラ、ザイクルシアン」を倒す\n・「カオスの寺院」に入って、WPを確保する\n・「ジクアニのマシナリウム」へ行く</span>\n\n<span style='color:#ffffff'>カオスの寺院は、エリアの上辺に生成。</span>\n<span style='color:#ffffff'>ボスの場所は、左向きに開いている地形が特徴。そのため左の壁沿いを走り続ければ、いつか辿り着く</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプで白チェストから</span><span style='color:#dddd44'>4mod付きのレアの兜</span>"
+        "text": "<span style=\" color:#ffffff;\">▸[boss]ボス「キメラ、ザイクルシアン」を倒す\n▸[move]</span><span style='color:#dddd44'>カオスの寺院</span><span style=\" color:#ffffff;\">に入って、[wp]WPを確保する\n▸[move]</span><span style='color:#dddd44'>ジクアニのマシナリウム</span><span style='color:#ffffff'>へ行く</span>\n<span style='color:#ffffff'>（カオスの寺院はエリア上辺に生成。ボスエリアは左向きに開けている地形が特徴）</span>"
       }
     },
     "flags": {}
@@ -522,7 +522,7 @@
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n亡霊、黒き顎\n属性：物理、火\n耐性：物理、火\n弱点：冷気</span>",
       "summary": "<span style='color:#ffffff'>・ボス「亡霊、黒き顎」を倒す（</span><span style='color:#dddd44'>火耐性+10%</span><span style=\" color:#ffffff;\">）\n・「ジクアニの聖所」へ行く</span>\n\n<span style='color:#ffffff'>ジクアニの聖所への入り口は、第2セクションの開始地点から直線を引いた先に最終通路がある</span>",
       "mini_navi": {
-        "text": "<span style='color:#ffffff'>・ボス「亡霊、黒き顎」を倒す（</span><span style='color:#dddd44'>火耐性+10%</span><span style=\" color:#ffffff;\">）\n・「ジクアニの聖所」へ行く</span>\n\n<span style='color:#ffffff'>ジクアニの聖所への入り口は、第2セクションの開始地点から直線を引いた先に最終通路がある</span>"
+        "text": "<span style='color:#ffffff'>▸[boss]ボス「亡霊、黒き顎」を倒す（</span><span style='color:#dddd44'>火耐性+10%</span><span style=\" color:#ffffff;\">）\n▸[move]</span><span style='color:#dddd44'>ジクアニの聖所</span><span style='color:#ffffff'>へ行く</span>\n<span style='color:#ffffff'>（ジクアニの聖所の入口は、第2セクションの開始地点から直線を引いた先に最終通路がある）</span>"
       }
     },
     "flags": {}
@@ -534,7 +534,7 @@
       "tips": "<span style=\" color:#ffffff;\">・ジェネレーターを見つけたものの、コアが見つからない場合、ジェネレーター横のチェックポイントを確保し、「チェックポイントでリスポーン」を使うと、運が良ければコアがすぐ近くに再配置され、ミニマップに「！」マークで表示される。\n  アイテムフィルターを導入していれば、近くにある場合、クエストアイテムのドロップ音が聞こえるため便利。\n  なお、コアを持った状態でリスポーンするとコアが消滅するので、ジェネレーターへの移動手段としては使えない。\n\n・２つのコアをはめた後は、チェックポイントでリスポーンすると床が赤くなる演出をスキップできて早い</span>",
       "summary": "<span style=\" color:#ffffff;\">・２つの中型のソウルコアを見つけて、ジェネレーターを起動する。\n・ボス「コアの番人、ジコアトル」を倒す\n・すぐ近くのWPから、「害虫の荒れ地」へ飛ぶ</span>\n\n<span style='color:#ffffff'>コアが見つからない場合、ジェネレーター横のチェックポイントを確保し、「チェックポイントでリスポーン」を繰り返すと、いつかコアがすぐ近くに再配置され、ミニマップに「！」マークで表示される（音を注意して聞くとよい）</span>\n\n<span style='color:#ffffff'>２つのコアをはめた後は、チェックポイントでリスポーンすると床が赤くなる演出をスキップできて早い</span>",
       "mini_navi": {
-        "text": "<span style=\" color:#ffffff;\">・２つの中型のソウルコアを見つけて、ジェネレーターを起動する。\n・ボス「コアの番人、ジコアトル」を倒す\n・すぐ近くのWPから、「害虫の荒れ地」へ飛ぶ</span>\n\n<span style='color:#ffffff'>コアが見つからない場合、ジェネレーター横のチェックポイントを確保し、「チェックポイントでリスポーン」を繰り返すと、いつかコアがすぐ近くに再配置され、ミニマップに「！」マークで表示される（音を注意して聞くとよい）</span>\n\n<span style='color:#ffffff'>２つのコアをはめた後は、チェックポイントでリスポーンすると床が赤くなる演出をスキップできて早い</span>"
+        "text": "<span style=\" color:#ffffff;\">▸２つの中型のソウルコアを見つけて、ジェネレーターを起動する\n▸[boss]ボス「コアの番人、ジコアトル」を倒す\n▸すぐ近くのWPから、[move]</span><span style='color:#dddd44'>害虫の荒れ地</span><span style='color:#ffffff'>へ飛ぶ</span>"
       }
     },
     "flags": {}
