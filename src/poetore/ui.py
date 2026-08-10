@@ -32,7 +32,8 @@ from src.utils.poe_version_data import POE1, POE2
 from .parser import ItemParseError, parse_item_text
 from .clipboard import clipboard_change_token, read_item_clipboard
 from .categories import (
-    is_armour_category, is_equipment_category, is_gem_category, is_weapon_category,
+    is_armour_category, is_equipment_category, is_flask_category, is_gem_category,
+    is_weapon_category,
 )
 from .window_position import PlacementContext, capture_placement_context, position_for_context
 from .trade import (
@@ -45,7 +46,7 @@ from .trade import (
     unique_variants, unresolved_modifier_warnings, uses_dedicated_exact_preset,
     is_inscribed_ultimatum,
 )
-from .poe_ninja import PoeNinjaPrice, default_poe_ninja_service
+from .poe_ninja import PoeNinjaPrice, default_poe_ninja_service, is_poe2_exchange_price_item
 from .metadata import related_item_group
 from .performance import SearchPerformanceTrace, start_search_trace
 
@@ -410,7 +411,7 @@ def _price_currency_icon_filename(currency: str, poe_version: str) -> str:
 
 
 def _is_poe2_exchange_price_item(item, poe_version: str) -> bool:
-    return poe_version == POE2 and item.category in {"currency", "uncut_gem"}
+    return poe_version == POE2 and is_poe2_exchange_price_item(item)
 
 
 def _asset_icon_path(filename: str) -> Path | None:
@@ -3425,7 +3426,8 @@ class PoetoreWindow(QWidget):
                     if row.stat_id != "property.item_level"
                 )
                 if (is_gem_category(item.category) or is_equipment_category(item.category)
-                        or item.category in {"flask", "tincture", "charm"}):
+                        or is_flask_category(item.category)
+                        or item.category in {"tincture", "charm"}):
                     effective_filters = tuple(
                         row for row in effective_filters
                         if row.stat_id not in {
@@ -3616,7 +3618,8 @@ class PoetoreWindow(QWidget):
         rarity = item.rarity.casefold()
         craftable = (
             rarity not in {"unique", "ユニーク"}
-            and item.category not in {"gem", "flask", "currency", "divination_card", "captured_beast"}
+            and not is_flask_category(item.category)
+            and item.category not in {"gem", "currency", "divination_card", "captured_beast"}
         )
         has_special_state = (
             "corrupted" in item.flags
@@ -3665,7 +3668,7 @@ class PoetoreWindow(QWidget):
         optional_finished = (
             preset == PRESET_FINISHED
             and (is_equipment_category(item.category)
-                 or item.category in {"flask", "tincture"})
+                 or is_flask_category(item.category) or item.category == "tincture")
             and item.rarity.casefold() not in {"unique", "ユニーク"}
         )
         has_item_level = item.item_level is not None and (
@@ -3802,7 +3805,7 @@ class PoetoreWindow(QWidget):
                 quality > 20
                 or (preset == PRESET_BASE and quality >= 20)
             )
-        elif item.category in {"flask", "tincture"}:
+        elif is_flask_category(item.category) or item.category == "tincture":
             visible = quality is not None and quality >= 20
         self.gem_quality_tag.setVisible(visible)
         self.gem_quality_edit.setText(str(quality) if quality is not None else "")
@@ -4358,7 +4361,8 @@ class PoetoreWindow(QWidget):
                     and getattr(self, "_parsed_item", None) is not None
                     and (is_gem_category(self._parsed_item.category)
                          or is_equipment_category(self._parsed_item.category)
-                         or self._parsed_item.category in {"flask", "tincture", "charm"})):
+                         or is_flask_category(self._parsed_item.category)
+                         or self._parsed_item.category in {"tincture", "charm"})):
                 continue
             if stat_filter.stat_id == "property.gem_sockets" and not self.gem_socket_tag.isHidden():
                 continue

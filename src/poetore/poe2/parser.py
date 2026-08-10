@@ -25,6 +25,15 @@ _ITEM_LEVEL = re.compile(r"^(?:Item Level|アイテムレベル):\s*(\d+)\s*$")
 _CLASS_CATEGORY = {
     "Currency": "currency",
     "カレンシー": "currency",
+    "Life Flasks": "flask", "Life Flask": "flask", "ライフフラスコ": "flask",
+    "Mana Flasks": "flask", "Mana Flask": "flask", "マナフラスコ": "flask",
+    "Flask": "flask",
+    "Map Fragments": "map_fragment", "Map Fragment": "map_fragment",
+    "マップフラグメント": "map_fragment",
+    "Expedition Logbooks": "expedition_logbook",
+    "Expedition Logbook": "expedition_logbook", "エクスペディションログブック": "expedition_logbook",
+    "Breachstones": "breachstone", "Breachstone": "breachstone", "ブリーチストーン": "breachstone",
+    "Wombgifts": "wombgift", "Wombgift": "wombgift", "ウォンブギフト": "wombgift",
     "Uncut Skill Gems": "uncut_gem",
     "スキルジェムの原石": "uncut_gem",
     "Bows": "bow",
@@ -92,6 +101,13 @@ TRADE_CATEGORY_BY_CATEGORY = {
     "quiver": "armour.quiver", "ring": "accessory.ring", "amulet": "accessory.amulet",
     "belt": "accessory.belt",
     "charm": "flask.charm",
+    "life_flask": "flask.life",
+    "mana_flask": "flask.mana",
+    "map_fragment": "map.fragment",
+    "pinnacle_key": "map.bosskey",
+    "vault_key": "map.fragment",
+    "expedition_logbook": "map.logbook",
+    "breachstone": "map.breachstone",
     "tablet": "map.tablet",
     "relic": "sanctum.relic",
     "jewel": "jewel",
@@ -323,12 +339,20 @@ def _identity_matches_category(identity: dict, category: str | None) -> bool:
         return identity_category == "Jewel"
     if category == "uncut_gem":
         return identity_category == "UncutSkillGem"
+    if category == "flask":
+        return identity_category == "Flask"
+    if category == "wombgift":
+        return identity_category == "BrequelFruit"
+    if category == "map_fragment":
+        return identity_category == "MapFragment"
+    if category == "expedition_logbook":
+        return identity_category in {"ExpeditionLogbook", "MapFragment"} and "logbook" in ref_name
+    if category == "breachstone":
+        return identity_category == "Breachstone"
     if category == "barya":
         return identity_category in {"MiscMapItem", "MapFragment"} and "barya" in ref_name
     if category == "ultimatum":
-        return identity_category in {"MiscMapItem", "MapFragment"} and (
-            "ultimatum" in ref_name or ref_name.endswith(" fate")
-        )
+        return identity_category == "MiscMapItem" and "ultimatum" in ref_name
     return False
 
 
@@ -570,12 +594,28 @@ def parse_item_text(text: str) -> ParsedItem:
         category = "charm"
     elif identity_category == "Jewel":
         category = "jewel"
+    elif identity_category == "Flask":
+        category = "mana_flask" if "mana flask" in base_type.casefold() else "life_flask"
+    elif identity_category == "PinnacleKey":
+        category = "pinnacle_key"
+    elif identity_category == "VaultKey":
+        category = "vault_key"
+    elif identity_category == "Breachstone":
+        category = "breachstone"
+    elif identity_category == "ExpeditionLogbook":
+        category = "expedition_logbook"
+    elif identity_category == "BrequelFruit":
+        category = "wombgift"
     elif identity_category in {"MiscMapItem", "MapFragment"}:
         folded_base = base_type.casefold()
-        if "barya" in folded_base:
+        if "logbook" in folded_base:
+            category = "expedition_logbook"
+        elif "barya" in folded_base:
             category = "barya"
-        elif "ultimatum" in folded_base or folded_base.endswith(" fate"):
+        elif "ultimatum" in folded_base:
             category = "ultimatum"
+        else:
+            category = "map_fragment"
     if not category:
         raise Poe2ItemParseError(f"PoE2カテゴリ未解決: {item_class} / {base_type}")
 

@@ -1,3 +1,5 @@
+import pytest
+
 from src.poetore.models import ParsedItem
 from src.poetore.parser import parse_item_text
 from src.poetore.poe_ninja import (
@@ -457,3 +459,45 @@ def test_poe2_exchange_matches_regular_currency():
     assert price is not None
     assert price.display_price_parts() == ("0.13", "divine")
     assert price.url.endswith("/currency/chaos-orb")
+
+
+def test_poe2_fragment_exchange_uses_allowlist_and_fragments_overview():
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        payload = _poe2_exchange_payload()
+        payload["items"] = [{
+            "id": "simulacrum", "name": "Simulacrum", "detailsId": "simulacrum",
+        }]
+        payload["lines"] = [{
+            "id": "simulacrum", "primaryValue": 3.33,
+            "maxVolumeCurrency": "divine", "maxVolumeRate": 0.3,
+            "sparkline": {"totalChange": 1.0, "data": [1.0]},
+        }]
+        return payload
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    item = ParsedItem("Map Fragments", "normal", "", "Simulacrum", "map_fragment")
+    price = service.lookup_poe2_exchange(item, "Runes of Aldur")
+    assert price is not None
+    assert price.source_type == "Fragments"
+    assert price.url.endswith("/fragments/simulacrum")
+    assert calls == [("Runes of Aldur", "Fragments")]
+
+
+@pytest.mark.parametrize(
+    "base_type",
+    [
+        "Primary Calamity Fragment", "Secondary Calamity Fragment",
+        "Tertiary Calamity Fragment", "Zarokh's Reliquary Key: Temporalis",
+        "An Audience with the King", "Head of the King", "Idol of Estazunti",
+        "Breachstone", "Expedition Logbook",
+    ],
+)
+def test_poe2_fragment_exchange_excludes_pending_and_trade2_items(base_type):
+    service = PoeNinjaPriceService(
+        poe2_exchange_fetcher=lambda *_args: pytest.fail("exchange fetch must not run")
+    )
+    item = ParsedItem("Special", "normal", "", base_type, "map_fragment")
+    assert service.lookup_poe2_exchange(item, "Runes of Aldur") is None

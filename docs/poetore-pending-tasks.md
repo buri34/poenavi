@@ -65,6 +65,10 @@ v3.0.1までに検索区間別のJSONL性能トレース、クリップボード
 
 - [ ] Cluster Jewelを日英Enchant、パッシブ数、ilvl帯まで高信頼度で対応付け、poe.ninja参考価格を表示する
 - [ ] Gem Variant（Transfigured／Vaal／Awakened等）を読み取り専用チップで明示する
+- [ ] PoE2ゲーム内Currency Exchange対象だがpoe.ninja `Fragments`に未収録の
+      Primary／Secondary／Tertiary Calamity Fragment、Zarokh's Reliquary Key: Temporalis、
+      An Audience with the King、Head of the King、Idol of Estazunti、Breachstoneについて、
+      取得可能な価格APIまたは安全な代替表示を再調査する
 
 ### 継続運用: 次回リリース
 

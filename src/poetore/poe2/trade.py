@@ -638,9 +638,12 @@ def build_search_query(
     listed_within: str = "any",
 ) -> dict:
     trade_category = TRADE_CATEGORY_BY_CATEGORY.get(item.category)
-    if trade_category is None:
+    if trade_category is None and item.category != "wombgift":
         raise ValueError(f"PoE2 Trade category未対応: {item.category}")
-    type_filters = {"category": {"option": trade_category}}
+    type_filters = (
+        {"category": {"option": trade_category}}
+        if trade_category is not None else {}
+    )
     query = {
         "status": {"option": _STATUS_OPTIONS.get(status, status)},
         "stats": (

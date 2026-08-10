@@ -511,3 +511,33 @@ def test_real_uncut_skill_gem_is_exchange_identity_without_description_mods():
         assert item.base_type == "Uncut Skill Gem (Level 18)"
         assert item.category == "uncut_gem"
         assert item.modifiers == ()
+
+
+@pytest.mark.parametrize(
+    ("item_class", "base_type", "category"),
+    [
+        ("Life Flasks", "Ultimate Life Flask", "life_flask"),
+        ("Mana Flasks", "Ultimate Mana Flask", "mana_flask"),
+        ("Wombgifts", "Ornate Wombgift", "wombgift"),
+        ("Map Fragments", "Simulacrum", "map_fragment"),
+        ("Pinnacle Keys", "Ancient Crisis Fragment", "pinnacle_key"),
+        ("Vault Keys", "Zarokh's Reliquary Key: Against the Darkness", "vault_key"),
+        ("Expedition Logbooks", "Expedition Logbook", "expedition_logbook"),
+        ("Breachstones", "Breachstone", "breachstone"),
+    ],
+)
+def test_special_trade_and_exchange_categories_resolve_from_identity(
+    item_class, base_type, category,
+):
+    item = parse_item_text(
+        f"Item Class: {item_class}\nRarity: Normal\n{base_type}\n--------\n"
+    )
+    assert (item.base_type, item.category) == (base_type, category)
+
+
+def test_magic_poe2_flask_resolves_affixed_name_to_base():
+    item = parse_item_text(
+        "Item Class: Life Flasks\nRarity: Magic\nHealthy Ultimate Life Flask\n"
+        "--------\nQuality: +20%\n"
+    )
+    assert (item.base_type, item.category) == ("Ultimate Life Flask", "life_flask")

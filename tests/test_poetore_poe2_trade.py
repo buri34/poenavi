@@ -703,6 +703,39 @@ def test_phase45_gem_socket_uses_official_misc_filter():
     }
 
 
+@pytest.mark.parametrize(
+    ("item_class", "base_type", "category"),
+    [
+        ("Life Flasks", "Ultimate Life Flask", "flask.life"),
+        ("Mana Flasks", "Ultimate Mana Flask", "flask.mana"),
+        ("Expedition Logbooks", "Expedition Logbook", "map.logbook"),
+    ],
+)
+def test_special_poe2_items_use_dedicated_trade2_categories(
+    item_class, base_type, category,
+):
+    item = parse_item_text(
+        f"Item Class: {item_class}\nRarity: Normal\n{base_type}\n--------\n"
+    )
+    query = build_search_query(item)["query"]
+    assert query["type"] == base_type
+    assert query["filters"]["type_filters"]["filters"]["category"] == {
+        "option": category
+    }
+
+
+def test_wombgift_uses_exact_type_without_nonexistent_trade2_category():
+    item = parse_item_text(
+        "Item Class: Wombgifts\nRarity: Normal\nOrnate Wombgift\n--------\n"
+    )
+    query = build_search_query(item)["query"]
+    assert query["type"] == "Ornate Wombgift"
+    assert "category" not in query["filters"]["type_filters"]["filters"]
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "nonunique"
+    }
+
+
 def test_shared_trade_options_are_sent_to_trade2_query():
     item = _phase45_item("phase45_gem_ja.txt")
     payload = build_search_query(

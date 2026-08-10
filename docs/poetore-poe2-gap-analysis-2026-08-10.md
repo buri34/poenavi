@@ -172,11 +172,10 @@ PoE2で「同じ性能の別ベース」を探せないことはゲーム仕様�
 現在の実コピーfixtureで対象にしたCrossbow、Focus、Buckler、Charm、Tablet、Relic、Barya、
 Ultimatum、Waystone、Rune／Soul Core、Gem、Jewel等は対応している。
 
-一方、EE2と固定identityには存在するが、PoE2 ParserのItem Class／Category mappingがないものがある。
-固定Trade2／identity（2026-08-09）で確認できる内訳は次の通り。
+固定Trade2／identity（2026-08-09）で確認した特殊カテゴリの対応状況は次の通り。
 
 - Life／Mana Flask: Lesser、Medium、Greater、Grand、Giant、Colossal、Gargantuan、
-  Transcendent、Ultimateの各Life／Mana、計18ベース。Charmは対応済み
+  Transcendent、Ultimateの各Life／Mana、計18ベースをTrade2完全一致検索へ対応。Charmも対応済み
 - Map Fragment: An Audience with the King、Breachlord Sac、Cowardly／Deadly／Victorious Fate、
   Expedition Logbook、Head of the King、Idol of Estazunti、Kulemak's Invitation、
   Raven's Reflection、Simulacrum、The Triskelion Reforgedの12種
@@ -184,13 +183,15 @@ Ultimatum、Waystone、Rune／Soul Core、Gem、Jewel等は対応している。
   Calamity Fragment、Call of the Shadows、Origin Core／Cradle／Sparkの10種
 - Vault Key: Azmeri、Olroth、Ritualistic、Tangmazu、Arbiter、Trialmaster、Twilight、Xesht、
   Zarokh 2種のReliquary Key、計10種
-- Wombgift: Ornate、Banded、Revelatory、Lavish、Signetの5種。identity上のカテゴリ名は
-  `BrequelFruit`で、Trade2 itemsの独立groupは`wombgift`
+- Wombgift: Ornate、Banded、Revelatory、Lavish、Signetの5種をカテゴリ指定なしのTrade2
+  完全一致検索へ対応。identity上のカテゴリ名は`BrequelFruit`
 - その他のEndgame Item: BreachstoneとExpedition LogbookはTrade2で独立カテゴリを持つ。
-  Waystone、Barya、Ultimatum、Tabletは対応済み
+  Expedition LogbookはTrade2へ対応。Waystone、Barya、Ultimatum、Tabletも対応済み
 
-これらは実コピーfixtureがなく、現状はParserでカテゴリ未解決になる可能性が高い。
-まず現行リーグで実在・Trade対象かを確認し、対象なら日英実コピーを収集して追加する。
+Map Fragment 8種、Pinnacle Key 7種、Vault Key 9種はpoe.ninja Currency Exchangeの
+`Fragments`価格へ対応した。Calamity Fragment 3種、Temporalis Reliquary Key、
+An Audience with the King、Head of the King、Idol of Estazunti、Breachstoneはゲーム内交換対象だが
+poe.ninja未収録のため残タスクとする。実コピーfixtureは引き続き収集する。
 
 ### 3.9 低～中優先度: EE2の補助機能で未実装のもの
 

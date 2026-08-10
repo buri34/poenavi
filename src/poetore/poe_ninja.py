@@ -34,6 +34,16 @@ _EXACT_TYPES_BY_CATEGORY = {
     "scarab": {"Scarab"},
 }
 _MAP_TYPES = {"Map", "BlightedMap", "BlightRavagedMap", "ValdoMap"}
+POE2_FRAGMENT_EXCHANGE_NAMES = frozenset({
+    "Ancient Crisis Fragment", "Azmeri Reliquary Key", "Breachlord Sac",
+    "Call of the Shadows", "Cowardly Fate", "Deadly Fate", "Faded Crisis Fragment",
+    "Kulemak's Invitation", "Olroth's Reliquary Key", "Origin Core", "Origin Cradle",
+    "Origin Spark", "Raven's Reflection", "Ritualistic Reliquary Key", "Simulacrum",
+    "Tangmazu's Reliquary Key", "The Arbiter's Reliquary Key",
+    "The Trialmaster's Reliquary Key", "The Triskelion Reforged",
+    "Twilight Reliquary Key", "Victorious Fate", "Weathered Crisis Fragment",
+    "Xesht's Reliquary Key", "Zarokh's Reliquary Key: Against the Darkness",
+})
 
 
 @dataclass(frozen=True)
@@ -631,7 +641,14 @@ def _poe2_exchange_overview_type(item: ParsedItem) -> str | None:
         return "UncutGems"
     if item.category == "currency":
         return "Currency"
+    identity = str(item.base_type or item.name or "").strip()
+    if identity in POE2_FRAGMENT_EXCHANGE_NAMES:
+        return "Fragments"
     return None
+
+
+def is_poe2_exchange_price_item(item: ParsedItem) -> bool:
+    return _poe2_exchange_overview_type(item) is not None
 
 
 def match_poe2_exchange_price(
@@ -751,6 +768,7 @@ def _poe2_overview_slug(type_name: str) -> str:
         "UniqueArmours": "unique-armours",
         "Currency": "currency",
         "UncutGems": "uncut-gems",
+        "Fragments": "fragments",
     }[type_name]
 
 

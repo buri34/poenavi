@@ -15,6 +15,7 @@ ACCESSORY_CATEGORIES = frozenset({
 GEM_CATEGORIES = frozenset({
     "gem", "active_gem", "support_gem", "meta_gem",
 })
+FLASK_CATEGORIES = frozenset({"flask", "life_flask", "mana_flask"})
 EQUIPMENT_CATEGORIES = WEAPON_CATEGORIES | ARMOUR_CATEGORIES | ACCESSORY_CATEGORIES
 
 
@@ -36,3 +37,7 @@ def is_equipment_category(category: str) -> bool:
 
 def is_gem_category(category: str) -> bool:
     return category in GEM_CATEGORIES
+
+
+def is_flask_category(category: str) -> bool:
+    return category in FLASK_CATEGORIES

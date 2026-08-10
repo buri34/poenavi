@@ -4173,6 +4173,22 @@ def test_poe2_exchange_item_skips_trade2_and_uses_exalted_price_icon(qapp):
         window.close()
 
 
+def test_poe2_fragment_exchange_item_skips_trade2(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.input_edit.setPlainText(
+            "Item Class: Map Fragments\nRarity: Normal\nSimulacrum\n--------\n"
+        )
+        with patch("src.poetore.poe2.trade.search_prices") as trade_search:
+            window.search_current_item()
+        trade_search.assert_not_called()
+        assert window._parsed_item.category == "map_fragment"
+        assert "通常Trade出品検索は行わず" in window.search_scope_notice.text()
+        assert "poe.ninja参考価格のみ" in window.price_status.text()
+    finally:
+        window.close()
+
+
 def test_poe2_shared_search_controls_reach_trade_adapter(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:
