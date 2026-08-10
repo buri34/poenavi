@@ -7,7 +7,7 @@ from pathlib import Path
 from PySide6.QtCore import QEvent, QPoint, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QPalette
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, QLabel, QMessageBox, QPushButton, QWidget
+from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QWidget
 import pytest
 
 from src.poetore.ui import (
@@ -824,6 +824,7 @@ def test_enter_in_changed_mod_value_researches(qapp):
         editor = window.mod_filter_tree.itemWidget(
             window.mod_filter_tree.topLevelItem(0), 4,
         )
+        editor = editor.findChild(QLineEdit)
         editor.setFocus()
         QTest.keyClicks(editor, "8")
         assert window._search_dirty is True
@@ -1461,7 +1462,7 @@ def test_search_range_change_keeps_checkboxes_but_recalculates_edited_values(qap
         ).findChild(QCheckBox, "modFilterCheckbox")
         minimum = window.mod_filter_tree.itemWidget(
             window.mod_filter_tree.topLevelItem(0), _MOD_COLUMN_MIN
-        )
+        ).findChild(QLineEdit)
         checkbox.setChecked(False)
         minimum.setText("30")
 
@@ -1911,7 +1912,7 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
     assert checkbox is not None
     assert not checkbox.isChecked()
     assert "#4488ff" in checkbox.styleSheet()
-    editor = window.mod_filter_tree.itemWidget(row, 4)
+    editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
     assert editor.text() == "55"
     checkbox.click()
     editor.setText("50")
@@ -1981,7 +1982,9 @@ def test_mod_filter_keeps_maximum_editor_visible_without_horizontal_scroll(qapp)
         window.show()
         qapp.processEvents()
         row = window.mod_filter_tree.topLevelItem(0)
-        maximum_editor = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MAX)
+        maximum_editor = window.mod_filter_tree.itemWidget(
+            row, _MOD_COLUMN_MAX
+        ).findChild(QLineEdit)
         maximum_editor.setFocus()
         qapp.processEvents()
 
@@ -1994,10 +1997,10 @@ def test_mod_filter_keeps_maximum_editor_visible_without_horizontal_scroll(qapp)
 
 
 @pytest.mark.parametrize(
-    ("setting", "expected_margin"),
-    (("small", 2), ("medium", 3), ("large", 3)),
+    ("setting", "expected_height"),
+    (("small", 26), ("medium", 30), ("large", 34)),
 )
-def test_mod_value_editors_have_vertical_inset(qapp, setting, expected_margin):
+def test_mod_value_editors_have_vertical_inset(qapp, setting, expected_height):
     window = PoetoreWindow(
         app_config={"poetore": {"result_font_size": setting}}
     )
@@ -2006,12 +2009,15 @@ def test_mod_value_editors_have_vertical_inset(qapp, setting, expected_margin):
         max_value=120,
     ),))
     try:
+        window.show()
+        qapp.processEvents()
         row = window.mod_filter_tree.topLevelItem(0)
-        minimum_editor = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MIN)
-        maximum_editor = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MAX)
-        for editor in (minimum_editor, maximum_editor):
-            assert f"margin-top: {expected_margin}px" in editor.styleSheet()
-            assert f"margin-bottom: {expected_margin}px" in editor.styleSheet()
+        minimum_cell = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MIN)
+        maximum_cell = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MAX)
+        for cell in (minimum_cell, maximum_cell):
+            editor = cell.findChild(QLineEdit)
+            assert editor.height() == expected_height
+            assert editor.height() < window.mod_filter_tree.visualItemRect(row).height()
     finally:
         window.close()
 
@@ -2036,12 +2042,14 @@ def test_mod_filter_minimum_and_maximum_editors_use_narrow_width_and_smaller_fon
     ),))
     try:
         row = window.mod_filter_tree.topLevelItem(0)
-        minimum_editor = window.mod_filter_tree.itemWidget(row, 4)
-        maximum_editor = window.mod_filter_tree.itemWidget(row, 5)
-        assert minimum_editor.width() == expected_min_width
-        assert maximum_editor.width() == expected_max_width
-        assert f"margin-left: {expected_gap}px" in minimum_editor.styleSheet()
-        assert "margin-left: 0px" in maximum_editor.styleSheet()
+        minimum_cell = window.mod_filter_tree.itemWidget(row, 4)
+        maximum_cell = window.mod_filter_tree.itemWidget(row, 5)
+        minimum_editor = minimum_cell.findChild(QLineEdit)
+        maximum_editor = maximum_cell.findChild(QLineEdit)
+        assert minimum_cell.width() == expected_min_width
+        assert maximum_cell.width() == expected_max_width
+        assert minimum_cell.layout().contentsMargins().left() == expected_gap
+        assert maximum_cell.layout().contentsMargins().left() == 0
         assert f"font-size: {expected_font_size}px" in minimum_editor.styleSheet()
         assert f"font-size: {expected_font_size}px" in maximum_editor.styleSheet()
     finally:
@@ -2060,8 +2068,8 @@ def test_mod_text_click_toggles_without_selecting_or_moving_value_editors(qapp):
         checkbox = window.mod_filter_tree.itemWidget(row, 0).findChild(
             QCheckBox, "modFilterCheckbox"
         )
-        minimum_editor = window.mod_filter_tree.itemWidget(row, 4)
-        maximum_editor = window.mod_filter_tree.itemWidget(row, 5)
+        minimum_editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
+        maximum_editor = window.mod_filter_tree.itemWidget(row, 5).findChild(QLineEdit)
         before = (minimum_editor.geometry(), maximum_editor.geometry())
 
         window._toggle_mod_condition_from_text(row, 3)
@@ -2174,7 +2182,7 @@ def test_mod_filter_ui_keeps_diagnostics_internal_and_tooltip_simple(qapp):
         assert row.text(2) == "T1"
         assert row.toolTip(3) == "最大ライフ +100"
 
-        editor = window.mod_filter_tree.itemWidget(row, 4)
+        editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
         editor.setText("95")
         selected = window._selected_stat_filters()[0]
         assert selected.min_value == 95
@@ -2228,8 +2236,8 @@ def test_unique_variable_roll_slider_drag_updates_minimum_and_enables_filter(qap
         QTest.mouseRelease(slider, Qt.LeftButton, pos=QPoint(drag_x, 12))
         assert slider._preview is None
 
-        minimum_editor = window.mod_filter_tree.itemWidget(row, 4)
-        maximum_editor = window.mod_filter_tree.itemWidget(row, 5)
+        minimum_editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
+        maximum_editor = window.mod_filter_tree.itemWidget(row, 5).findChild(QLineEdit)
         checkbox = window.mod_filter_tree.itemWidget(row, 0).findChild(
             QCheckBox, "modFilterCheckbox"
         )
@@ -2271,7 +2279,7 @@ def test_unique_roll_slider_tracks_numeric_input_and_awakened_decimal_precision(
         roll_slider = window.mod_filter_tree.itemWidget(row, 3).findChild(
             _UniqueRollSlider, "uniqueRollSlider"
         )
-        window.mod_filter_tree.itemWidget(row, 4).setText("1.75")
+        window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit).setText("1.75")
         assert roll_slider.searchValues() == (1.75, None)
     finally:
         window.close()
@@ -2298,8 +2306,8 @@ def test_unique_lower_is_better_slider_updates_maximum(qapp):
         expected = slider._value_at(drag_x)
         QTest.mouseClick(slider, Qt.LeftButton, pos=QPoint(drag_x, 12))
 
-        assert window.mod_filter_tree.itemWidget(row, 4).text() == ""
-        assert window.mod_filter_tree.itemWidget(row, 5).text() == f"{expected:g}"
+        assert window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit).text() == ""
+        assert window.mod_filter_tree.itemWidget(row, 5).findChild(QLineEdit).text() == f"{expected:g}"
         selected = window._selected_stat_filters()[0]
         assert selected.enabled is True
         assert selected.min_value is None
@@ -2338,7 +2346,7 @@ def test_mod_text_click_toggles_condition_but_value_editor_does_not(qapp):
 
         minimum_editor = window.mod_filter_tree.itemWidget(
             row, _MOD_COLUMN_MIN
-        )
+        ).findChild(QLineEdit)
         QTest.mouseClick(minimum_editor, Qt.LeftButton)
         assert checkbox.isChecked()
     finally:
@@ -2490,7 +2498,7 @@ def test_mod_conditions_can_be_collapsed_without_losing_values(qapp):
         )
         window._populate_stat_filters((source,))
         row = window.mod_filter_tree.topLevelItem(0)
-        editor = window.mod_filter_tree.itemWidget(row, 4)
+        editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
         editor.setText("95")
 
         window.show()
@@ -3651,8 +3659,12 @@ def test_reduced_curse_effect_flask_shows_awakened_positive_minimum(qapp):
                 target = row
                 break
         assert target is not None
-        minimum = window.mod_filter_tree.itemWidget(target, _MOD_COLUMN_MIN)
-        maximum = window.mod_filter_tree.itemWidget(target, _MOD_COLUMN_MAX)
+        minimum = window.mod_filter_tree.itemWidget(
+            target, _MOD_COLUMN_MIN
+        ).findChild(QLineEdit)
+        maximum = window.mod_filter_tree.itemWidget(
+            target, _MOD_COLUMN_MAX
+        ).findChild(QLineEdit)
         assert minimum.text() == "44"
         assert maximum.text() == ""
     finally:

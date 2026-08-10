@@ -107,7 +107,7 @@ _DISPLAY_SIZE_PROFILES = {
     "small": {
         "font": 12, "width": 560, "height": 1039,
         "mod_value_font": 11,
-        "mod_value_v_margin": 2,
+        "mod_value_height": 26,
         "search_button_width": 105,
         "minimum_width": 540, "minimum_height": 620,
         "mod_height": 230, "price_height": 434,
@@ -116,7 +116,7 @@ _DISPLAY_SIZE_PROFILES = {
     "medium": {
         "font": 14, "width": 650, "height": 1039,
         "mod_value_font": 12,
-        "mod_value_v_margin": 3,
+        "mod_value_height": 30,
         "search_button_width": 122,
         "minimum_width": 610, "minimum_height": 620,
         "mod_height": 250, "price_height": 434,
@@ -125,7 +125,7 @@ _DISPLAY_SIZE_PROFILES = {
     "large": {
         "font": 16, "width": 740, "height": 1039,
         "mod_value_font": 14,
-        "mod_value_v_margin": 3,
+        "mod_value_height": 34,
         "search_button_width": 140,
         "minimum_width": 680, "minimum_height": 620,
         "mod_height": 270, "price_height": 434,
@@ -1919,16 +1919,36 @@ class PoetoreWindow(QWidget):
         self, editor: QLineEdit, *, leading_gap: bool = False,
     ):
         profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
-        gap = self._scaled_display_value(_MOD_VALUE_LEADING_GAP) if leading_gap else 0
-        editor.setFixedWidth(
-            self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH) + gap
-        )
+        editor_height = profile["mod_value_height"]
+        content_height = max(0, editor_height - 4)  # padding上下＋border上下
+        editor.setFixedWidth(self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH))
         editor.setStyleSheet(
             f"font-size: {profile['mod_value_font']}px;"
-            f" margin-top: {profile['mod_value_v_margin']}px;"
-            f" margin-bottom: {profile['mod_value_v_margin']}px;"
-            f" margin-left: {gap}px;"
+            " padding: 1px 4px;"
+            f" min-height: {content_height}px; max-height: {content_height}px;"
         )
+
+    def _make_mod_value_cell(
+        self, editor: QLineEdit, *, leading_gap: bool = False,
+    ) -> QWidget:
+        """入力欄の背景を行全高へ伸ばさず、セル中央へ配置する。"""
+        gap = self._scaled_display_value(_MOD_VALUE_LEADING_GAP) if leading_gap else 0
+        container = QWidget()
+        container.setObjectName("modValueCell")
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(gap, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(editor, 0, Qt.AlignVCenter)
+        container.setFixedWidth(editor.width() + gap)
+        return container
+
+    @staticmethod
+    def _mod_value_editor(widget: QWidget | None) -> QLineEdit | None:
+        if isinstance(widget, QLineEdit):
+            return widget
+        if widget is not None:
+            return widget.findChild(QLineEdit)
+        return None
 
     def _fit_search_range_width(self):
         """Mod数値コンボを全選択肢が収まる内容幅へ詰める。"""
@@ -2002,13 +2022,17 @@ class PoetoreWindow(QWidget):
         )
         for column in (_MOD_COLUMN_MIN, _MOD_COLUMN_MAX):
             for index in range(self.mod_filter_tree.topLevelItemCount()):
-                editor = self.mod_filter_tree.itemWidget(
+                cell = self.mod_filter_tree.itemWidget(
                     self.mod_filter_tree.topLevelItem(index), column
                 )
-                if isinstance(editor, QLineEdit):
+                editor = self._mod_value_editor(cell)
+                if editor is not None:
                     self._apply_mod_value_editor_size(
                         editor, leading_gap=column == _MOD_COLUMN_MIN,
                     )
+                    if cell is not editor:
+                        gap = self._scaled_display_value(_MOD_VALUE_LEADING_GAP) if column == _MOD_COLUMN_MIN else 0
+                        cell.setFixedWidth(editor.width() + gap)
         self._apply_poetore_style()
         # スタイルのmin-width適用後に固定し、レイアウトによる再拡張を防ぐ。
         search_button_width = profile["search_button_width"]
@@ -4166,8 +4190,12 @@ class PoetoreWindow(QWidget):
                 checkbox.isChecked() if checkbox is not None
                 else bool(row.data(_MOD_COLUMN_CHECK, Qt.UserRole + 5))
             )
-            editor = self.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MIN)
-            max_editor = self.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MAX)
+            editor = self._mod_value_editor(
+                self.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MIN)
+            )
+            max_editor = self._mod_value_editor(
+                self.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MAX)
+            )
             value_text = (
                 editor.text().strip() if isinstance(editor, QLineEdit)
                 else row.text(_MOD_COLUMN_MIN).strip()
@@ -4355,14 +4383,19 @@ class PoetoreWindow(QWidget):
             self._apply_mod_value_editor_size(editor, leading_gap=True)
             editor.setEnabled(stat_filter.option_value is None)
             editor.textEdited.connect(self._mark_search_dirty)
-            self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_MIN, editor)
+            self.mod_filter_tree.setItemWidget(
+                row, _MOD_COLUMN_MIN,
+                self._make_mod_value_cell(editor, leading_gap=True),
+            )
             max_editor = QLineEdit(maximum)
             max_editor.installEventFilter(self)
             max_editor.setPlaceholderText("最大")
             self._apply_mod_value_editor_size(max_editor)
             max_editor.setEnabled(stat_filter.option_value is None)
             max_editor.textEdited.connect(self._mark_search_dirty)
-            self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_MAX, max_editor)
+            self.mod_filter_tree.setItemWidget(
+                row, _MOD_COLUMN_MAX, self._make_mod_value_cell(max_editor),
+            )
             parsed_item = getattr(self, "_parsed_item", None)
             show_unique_slider = (
                 parsed_item is not None
