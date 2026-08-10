@@ -105,23 +105,23 @@ _RELATED_ITEMS_TREE_HEIGHT = 180
 _RELATED_ITEMS_PRICE_HEIGHT_REDUCTION = 180
 _DISPLAY_SIZE_PROFILES = {
     "small": {
-        "font": 12, "width": 620, "height": 1039,
+        "font": 12, "width": 600, "height": 1039,
         "mod_value_font": 11,
-        "minimum_width": 600, "minimum_height": 620,
+        "minimum_width": 580, "minimum_height": 620,
         "mod_height": 230, "price_height": 434,
         "button_v_padding": 5, "button_h_padding": 9,
     },
     "medium": {
-        "font": 14, "width": 720, "height": 1039,
+        "font": 14, "width": 700, "height": 1039,
         "mod_value_font": 12,
-        "minimum_width": 680, "minimum_height": 620,
+        "minimum_width": 660, "minimum_height": 620,
         "mod_height": 250, "price_height": 434,
         "button_v_padding": 6, "button_h_padding": 11,
     },
     "large": {
-        "font": 16, "width": 820, "height": 1039,
+        "font": 16, "width": 800, "height": 1039,
         "mod_value_font": 14,
-        "minimum_width": 760, "minimum_height": 620,
+        "minimum_width": 740, "minimum_height": 620,
         "mod_height": 270, "price_height": 434,
         "button_v_padding": 7, "button_h_padding": 13,
     },
@@ -1048,12 +1048,14 @@ class PoetoreWindow(QWidget):
 
         self.trade_status_combo = QComboBox()
         self.trade_status_combo.setObjectName("filterControl")
+        self.trade_status_combo.setProperty("compactAction", True)
         self.trade_status_combo.addItem("インスタントバイアウトのみ", "instant")
         self.trade_status_combo.addItem("インスタント＋対面", "available")
         self.trade_status_combo.addItem("対面トレードのみ", "online")
         self.trade_status_combo.addItem("オフライン出品も含む", "offline")
         self.trade_currency_combo = QComboBox()
         self.trade_currency_combo.setObjectName("filterControl")
+        self.trade_currency_combo.setProperty("compactAction", True)
         self.trade_currency_combo.addItem("すべての通貨", "any")
         self.trade_currency_combo.addItem("カオスオーブのみ", "chaos")
         self.trade_currency_combo.addItem("神のオーブのみ", "divine")
@@ -1062,6 +1064,7 @@ class PoetoreWindow(QWidget):
         )
         self.listed_within_combo = QComboBox()
         self.listed_within_combo.setObjectName("filterControl")
+        self.listed_within_combo.setProperty("compactAction", True)
         for label, value in (
             ("期間指定なし", "any"), ("24時間以内", "1day"), ("3日以内", "3days"),
             ("1週間以内", "1week"), ("2週間以内", "2weeks"),
@@ -1426,6 +1429,7 @@ class PoetoreWindow(QWidget):
         panel_layout.addWidget(self.search_scope_notice)
 
         action_row = QHBoxLayout()
+        action_row.setSpacing(4)
         self.price_button = QPushButton("検索")
         self.price_button.setObjectName("primaryButton")
         self.price_button.clicked.connect(self.search_current_item)
@@ -1435,6 +1439,7 @@ class PoetoreWindow(QWidget):
         action_row.addWidget(self.listed_within_combo, stretch=1)
         self.trade_url_button = QPushButton("公式トレード  ↗")
         self.trade_url_button.setObjectName("filterActionButton")
+        self.trade_url_button.setProperty("compactAction", True)
         self.trade_url_button.setToolTip("日本語公式Tradeをブラウザで開く")
         self.trade_url_button.setEnabled(False)
         self.trade_url_button.clicked.connect(self._open_trade_url)
@@ -1816,6 +1821,18 @@ class PoetoreWindow(QWidget):
             QComboBox#filterControl:on {
                 border-color: #49D6B0;
             }
+            QComboBox#filterControl[compactAction="true"] {
+                font-size: __COMPACT_ACTION_FONT__px;
+                padding: 2px 3px;
+                min-height: 18px;
+            }
+            QComboBox#filterControl[compactAction="true"]::drop-down {
+                width: 14px;
+            }
+            QPushButton#filterActionButton[compactAction="true"] {
+                font-size: __COMPACT_ACTION_FONT__px;
+                padding: 3px 5px;
+            }
             QComboBox::drop-down { border: none; width: 18px; }
             QComboBox QAbstractItemView {
                 background: #1b1b1b;
@@ -1873,6 +1890,9 @@ class PoetoreWindow(QWidget):
             "padding: 5px 9px;",
             f"padding: {profile['button_v_padding']}px "
             f"{profile['button_h_padding']}px;",
+        )
+        style = style.replace(
+            "__COMPACT_ACTION_FONT__", str(profile["mod_value_font"])
         )
         self.setStyleSheet(style)
 
