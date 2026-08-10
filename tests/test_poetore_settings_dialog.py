@@ -173,6 +173,27 @@ def test_poetore_settings_defaults_unknown_result_font_size_to_medium():
     dialog.close()
 
 
+def test_poetore_settings_can_reset_both_saved_result_positions():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(
+        current_config={
+            "poetore": {
+                "result_positions": {
+                    "stash": {"x_ratio": 0.2, "y_ratio": 0.3},
+                    "inventory": {"x_ratio": 0.8, "y_ratio": 0.4},
+                }
+            }
+        }
+    )
+
+    dialog.reset_result_positions_button.click()
+
+    assert "result_positions" not in dialog.get_settings()["poetore"]
+    assert dialog.result_positions_reset_note.text() == "保存時にリセットします"
+    assert not dialog.reset_result_positions_button.isEnabled()
+    dialog.close()
+
+
 def test_poetore_settings_rejects_duplicate_common_hotkeys():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(

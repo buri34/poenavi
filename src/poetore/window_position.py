@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import ctypes
+import math
 import sys
 from ctypes import wintypes
 
@@ -13,6 +14,8 @@ from PySide6.QtGui import QCursor, QGuiApplication
 
 PANEL_MARGIN = 16
 POE_SIDEBAR_WIDTH_RATIO = 370 / 600
+PLACEMENT_STASH = "stash"
+PLACEMENT_INVENTORY = "inventory"
 
 
 @dataclass(frozen=True)
@@ -178,8 +181,61 @@ def fallback_screen_rect(cursor_pos: QPoint) -> QRect:
     return screen.availableGeometry() if screen is not None else QRect(0, 0, 1920, 1080)
 
 
+def placement_target(context: PlacementContext) -> QRect:
+    return context.target_rect or fallback_screen_rect(context.cursor_pos)
+
+
+def placement_side(context: PlacementContext) -> str:
+    """検索開始位置を、従来の左右配置と同じ境界で分類する。"""
+    target = placement_target(context)
+    return (
+        PLACEMENT_STASH
+        if context.cursor_pos.x() < target.center().x()
+        else PLACEMENT_INVENTORY
+    )
+
+
+def relative_panel_position(
+    context: PlacementContext,
+    panel_position: QPoint,
+    panel_size: QSize,
+) -> dict[str, float]:
+    """PoEクライアント内の可動範囲に対する相対位置へ変換する。"""
+    target = placement_target(context)
+    x_span = max(1, target.width() - panel_size.width())
+    y_span = max(1, target.height() - panel_size.height())
+    return {
+        "x_ratio": max(0.0, min(1.0, (panel_position.x() - target.left()) / x_span)),
+        "y_ratio": max(0.0, min(1.0, (panel_position.y() - target.top()) / y_span)),
+    }
+
+
+def position_from_relative(
+    context: PlacementContext,
+    panel_size: QSize,
+    saved_position,
+) -> QPoint | None:
+    """保存位置を現在のPoE矩形へ復元し、必ず表示範囲内へ収める。"""
+    if not isinstance(saved_position, dict):
+        return None
+    try:
+        x_ratio = float(saved_position["x_ratio"])
+        y_ratio = float(saved_position["y_ratio"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not math.isfinite(x_ratio) or not math.isfinite(y_ratio):
+        return None
+
+    target = placement_target(context)
+    x_span = max(0, target.width() - panel_size.width())
+    y_span = max(0, target.height() - panel_size.height())
+    x = target.left() + round(max(0.0, min(1.0, x_ratio)) * x_span)
+    y = target.top() + round(max(0.0, min(1.0, y_ratio)) * y_span)
+    return QPoint(x, y)
+
+
 def position_for_context(context: PlacementContext, panel_size: QSize) -> QPoint:
-    target = context.target_rect or fallback_screen_rect(context.cursor_pos)
+    target = placement_target(context)
     return calculate_panel_position(target, context.cursor_pos, panel_size)
 
 

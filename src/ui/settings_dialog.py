@@ -1971,6 +1971,18 @@ class SettingsDialog(QDialog):
         poetore_auto_hide_layout.addWidget(self.poetore_auto_hide_btn)
         group_layout.addLayout(poetore_auto_hide_layout)
 
+        poetore_position_layout = QHBoxLayout()
+        poetore_position_layout.addWidget(QLabel("ぽえとれ検索結果の位置:"))
+        self._reset_poetore_result_positions = False
+        self.reset_poetore_result_positions_button = QPushButton("手動位置をリセット")
+        self.reset_poetore_result_positions_button.clicked.connect(
+            self._mark_poetore_result_positions_for_reset
+        )
+        poetore_position_layout.addWidget(self.reset_poetore_result_positions_button)
+        self.poetore_result_positions_reset_note = QLabel("")
+        poetore_position_layout.addWidget(self.poetore_result_positions_reset_note)
+        group_layout.addLayout(poetore_position_layout)
+
         map_check_layout = QHBoxLayout()
         map_check_layout.addWidget(QLabel("Map Modチェック:"))
         self.map_check_btn = HotkeyButton(self.hotkeys.get("map_check", "alt+f"))
@@ -3064,6 +3076,9 @@ class SettingsDialog(QDialog):
         startup_config["preferred_mode"] = normalize_app_mode(
             self.preferred_mode_combo.currentData()
         )
+        poetore_config = dict(self.current_config.get("poetore", {}))
+        if self._reset_poetore_result_positions:
+            poetore_config.pop("result_positions", None)
 
         return {
             "startup": startup_config,
@@ -3084,6 +3099,7 @@ class SettingsDialog(QDialog):
                 "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,
             },
             "custom_commands": self.custom_commands_widget.commands(),
+            "poetore": poetore_config,
             "logout_enabled": self.logout_enabled_cb.isChecked(),
             "gem_shop_search_include_reward_purchases": self.gem_shop_search_include_reward_purchases_cb.isChecked(),
             "gem_shop_search_hold_seconds": self.gem_shop_search_hold_seconds_spin.value(),
@@ -3110,3 +3126,8 @@ class SettingsDialog(QDialog):
             "poe1_route_act8": self.poe1_route_act8_combo.currentData(),
             "mini_guide_overlay": mini_navi_overlay_config,
         }
+
+    def _mark_poetore_result_positions_for_reset(self):
+        self._reset_poetore_result_positions = True
+        self.poetore_result_positions_reset_note.setText("保存時にリセットします")
+        self.reset_poetore_result_positions_button.setEnabled(False)

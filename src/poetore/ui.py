@@ -30,7 +30,14 @@ from src.utils.window_focus import (
 
 from .parser import ItemParseError, parse_item_text
 from .clipboard import clipboard_change_token, read_item_clipboard
-from .window_position import PlacementContext, capture_placement_context, position_for_context
+from .window_position import (
+    PlacementContext,
+    capture_placement_context,
+    placement_side,
+    position_for_context,
+    position_from_relative,
+    relative_panel_position,
+)
 from .trade import (
     PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
     available_pc_leagues, available_trade_presets, default_pc_league, default_trade_currency,
@@ -773,6 +780,7 @@ class _PoetoreTitleBar(QWidget):
         self.setObjectName("poetoreTitleBar")
         self._window = window
         self._drag_offset: QPoint | None = None
+        self._drag_start_position: QPoint | None = None
         layout = QHBoxLayout(self)
         layout.setContentsMargins(6, 2, 2, 2)
         title = QLabel("ぽえとれ")
@@ -805,6 +813,7 @@ class _PoetoreTitleBar(QWidget):
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self._drag_offset = event.globalPosition().toPoint() - self._window.frameGeometry().topLeft()
+            self._drag_start_position = self._window.pos()
             event.accept()
             return
         super().mousePressEvent(event)
@@ -817,7 +826,15 @@ class _PoetoreTitleBar(QWidget):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
+        moved = (
+            self._drag_offset is not None
+            and self._drag_start_position is not None
+            and self._window.pos() != self._drag_start_position
+        )
         self._drag_offset = None
+        self._drag_start_position = None
+        if moved:
+            self._window._persist_manual_result_position()
         super().mouseReleaseEvent(event)
 
 
@@ -2909,7 +2926,17 @@ class PoetoreWindow(QWidget):
     def show_at_context(self, context: PlacementContext | None = None, activate: bool = True):
         context = context or capture_placement_context()
         self._placement_context = context
-        self.move(position_for_context(context, self.size()))
+        poetore_config = self._app_config.get("poetore", {})
+        saved_positions = (
+            poetore_config.get("result_positions", {})
+            if isinstance(poetore_config, dict) else {}
+        )
+        saved_position = (
+            saved_positions.get(placement_side(context))
+            if isinstance(saved_positions, dict) else None
+        )
+        position = position_from_relative(context, self.size(), saved_position)
+        self.move(position or position_for_context(context, self.size()))
         self._passive_hotkey_display = not activate
         self.show()
         self.raise_()
@@ -2919,6 +2946,22 @@ class PoetoreWindow(QWidget):
             self.setFocus(Qt.OtherFocusReason)
         else:
             self._start_outside_click_listener()
+
+    def _persist_manual_result_position(self):
+        """タイトルバーのドラッグ終了時だけ、検索元の側へ位置を保存する。"""
+        context = self._placement_context
+        if context is None:
+            return
+        poetore_config = self._app_config.setdefault("poetore", {})
+        positions = poetore_config.setdefault("result_positions", {})
+        if not isinstance(positions, dict):
+            positions = {}
+            poetore_config["result_positions"] = positions
+        positions[placement_side(context)] = relative_panel_position(
+            context, self.pos(), self.size(),
+        )
+        if self._save_app_config is not None:
+            self._save_app_config(self._app_config)
 
     def _start_outside_click_listener(self):
         """Alt+D表示中だけ、ぽえとれ外のクリックを検知する。"""

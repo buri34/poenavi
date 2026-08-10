@@ -7,7 +7,7 @@ from pathlib import Path
 from PySide6.QtCore import QEvent, QPoint, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QPalette
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QLabel, QMessageBox, QPushButton
+from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QLabel, QMessageBox, QPushButton, QWidget
 import pytest
 
 from src.poetore.ui import (
@@ -15,7 +15,7 @@ from src.poetore.ui import (
     _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
     show_poetore_window,
 )
-from src.poetore.window_position import PlacementContext
+from src.poetore.window_position import PlacementContext, position_for_context
 from src.poetore.trade import (
     PRESET_BASE, PRESET_FINISHED, PriceListing, PriceResult, TradeLeague, TradeStatFilter,
     build_search_query, resolve_trade_stat_filters,
@@ -658,6 +658,54 @@ def test_poetore_title_bar_keeps_close_button(qapp):
         window.show()
         close_buttons[0].click()
         assert not window.isVisible()
+    finally:
+        window.close()
+
+
+def test_poetore_restores_only_the_saved_position_for_search_side(qapp):
+    config = {
+        "poetore": {
+            "result_positions": {
+                "stash": {"x_ratio": 0.25, "y_ratio": 0.5},
+            }
+        }
+    }
+    window = PoetoreWindow(app_config=config)
+    target = QRect(100, 50, 1920, 1080)
+    try:
+        stash_context = PlacementContext(target, QPoint(300, 400))
+        window.show_at_context(stash_context)
+        expected_x = target.left() + round((target.width() - window.width()) * 0.25)
+        expected_y = target.top() + round((target.height() - window.height()) * 0.5)
+        assert window.pos() == QPoint(expected_x, expected_y)
+
+        inventory_context = PlacementContext(target, QPoint(1700, 400))
+        window.show_at_context(inventory_context)
+        assert window.pos() == position_for_context(inventory_context, window.size())
+    finally:
+        window.close()
+
+
+def test_poetore_saves_position_only_when_title_bar_drag_finishes(qapp):
+    config = {"poetore": {}}
+    save_config = Mock()
+    window = PoetoreWindow(app_config=config, save_config=save_config)
+    context = PlacementContext(QRect(100, 50, 1920, 1080), QPoint(300, 400))
+    title_bar = window.findChild(QWidget, "poetoreTitleBar")
+    try:
+        window.show_at_context(context)
+        save_config.assert_not_called()
+
+        title_bar._drag_offset = QPoint(5, 5)
+        title_bar._drag_start_position = window.pos()
+        window.move(window.x() + 120, window.y() + 80)
+        QTest.mouseRelease(title_bar, Qt.LeftButton, pos=QPoint(10, 10))
+
+        saved = config["poetore"]["result_positions"]
+        assert set(saved) == {"stash"}
+        assert 0 <= saved["stash"]["x_ratio"] <= 1
+        assert 0 <= saved["stash"]["y_ratio"] <= 1
+        save_config.assert_called_once_with(config)
     finally:
         window.close()
 

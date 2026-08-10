@@ -176,6 +176,21 @@ class PoetoreSettingsDialog(QDialog):
         display_note.setObjectName("resultFontSizeNote")
         display_note.setWordWrap(True)
         display_form.addRow("", display_note)
+        self._reset_result_positions = False
+        self.reset_result_positions_button = QPushButton("手動位置をリセット")
+        self.reset_result_positions_button.setToolTip(
+            "スタッシュ側・インベントリ側に保存した検索結果位置を両方消去します"
+        )
+        self.reset_result_positions_button.clicked.connect(
+            self._mark_result_positions_for_reset
+        )
+        self.result_positions_reset_note = QLabel("")
+        self.result_positions_reset_note.setObjectName("resultPositionsResetNote")
+        reset_row = QHBoxLayout()
+        reset_row.addWidget(self.reset_result_positions_button)
+        reset_row.addWidget(self.result_positions_reset_note)
+        reset_row.addStretch()
+        display_form.addRow("検索結果の位置:", reset_row)
         basic_layout.addWidget(display_group)
 
         window_group = QGroupBox("ウィンドウ設定（本体・共通UI）")
@@ -403,6 +418,8 @@ class PoetoreSettingsDialog(QDialog):
         poetore["result_font_size"] = (
             self.result_font_size_combo.currentData() or "medium"
         )
+        if self._reset_result_positions:
+            poetore.pop("result_positions", None)
         return {
             "startup": startup,
             "hotkeys": hotkeys,
@@ -415,6 +432,11 @@ class PoetoreSettingsDialog(QDialog):
             "display_monitor": self.monitor_combo.currentData(),
             "snap_to_right_edge": self.snap_right_edge_cb.isChecked(),
         }
+
+    def _mark_result_positions_for_reset(self):
+        self._reset_result_positions = True
+        self.result_positions_reset_note.setText("保存時にリセットします")
+        self.reset_result_positions_button.setEnabled(False)
 
     def accept(self):
         hotkeys = {
