@@ -10,8 +10,58 @@ from PySide6.QtWidgets import QApplication
 
 
 SERVER_NAME = "PoENavi-SingleInstance-v1"
+MUTEX_NAME = r"Local\PoENavi-SingleInstance-v1"
 RESTART_PID_PREFIX = "--single-instance-restart-pid="
 ACTIVATE_MESSAGE = b"activate\n"
+ERROR_ALREADY_EXISTS = 183
+
+
+class _WindowsNamedMutex:
+    """WindowsのカーネルMutexをプロセス生存中だけ保持する。"""
+
+    def __init__(self, name: str = MUTEX_NAME):
+        self.name = name
+        self.handle = None
+
+    def acquire(self) -> bool:
+        """Windowsで最初の取得者だけTrue。他OSではQt通信ロックへ委ねる。"""
+        if sys.platform != "win32":
+            return True
+
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CreateMutexW.argtypes = [
+            ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR,
+        ]
+        kernel32.CreateMutexW.restype = wintypes.HANDLE
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel32.CloseHandle.restype = wintypes.BOOL
+
+        ctypes.set_last_error(0)
+        handle = kernel32.CreateMutexW(None, False, self.name)
+        error = ctypes.get_last_error()
+        if not handle:
+            # OSロックを確認できない場合はfail-closedにする。
+            return False
+        if error == ERROR_ALREADY_EXISTS:
+            kernel32.CloseHandle(handle)
+            return False
+        self.handle = handle
+        return True
+
+    def release(self) -> None:
+        if self.handle is None or sys.platform != "win32":
+            return
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel32.CloseHandle.restype = wintypes.BOOL
+        kernel32.CloseHandle(self.handle)
+        self.handle = None
 
 
 def consume_restart_pid(arguments: list[str]) -> int | None:
@@ -80,29 +130,50 @@ def wait_for_previous_instance(
 class SingleInstanceGuard(QObject):
     """最初のプロセスだけをserverにし、後続起動は前面化を依頼する。"""
 
-    def __init__(self, server_name: str = SERVER_NAME, parent=None):
+    def __init__(
+        self, server_name: str = SERVER_NAME, parent=None, mutex=None,
+    ):
         super().__init__(parent)
         self.server_name = server_name
+        self._uses_os_mutex = sys.platform == "win32" or mutex is not None
+        self.mutex = mutex or _WindowsNamedMutex()
         self.server = QLocalServer(self)
         self.server.newConnection.connect(self._accept_connections)
         self.window = None
         self.activation_pending = False
 
     def start(self) -> bool:
-        """最初のプロセスならTrue、起動済みへ通知できたらFalseを返す。"""
-        if self.server.listen(self.server_name):
-            return True
-        if self._notify_running_instance():
+        """OSロックの最初の取得者だけTrueを返す。"""
+        if not self._uses_os_mutex:
+            return self._start_with_local_server_lock()
+
+        if not self.mutex.acquire():
+            # 前面化通知はbest effort。失敗しても後続起動は許可しない。
+            self._notify_running_instance()
             return False
 
-        # 異常終了で残ったendpointだけを除去して、1回だけ取得し直す。
+        if self.server.listen(self.server_name):
+            return True
+
+        # Mutexを取得済みなので、生存中の別PoENaviのendpointではない。
         self.server.close()
         QLocalServer.removeServer(self.server_name)
         if self.server.listen(self.server_name):
             return True
+        # 前面化通知を使えなくても、Mutexが二重起動は防ぐ。
+        return True
+
+    def _start_with_local_server_lock(self) -> bool:
+        """Windows以外の従来互換用ロック。"""
+        if self.server.listen(self.server_name):
+            return True
         if self._notify_running_instance():
             return False
-        return False
+        self.server.close()
+        QLocalServer.removeServer(self.server_name)
+        if self.server.listen(self.server_name):
+            return True
+        return not self._notify_running_instance()
 
     def set_window(self, window) -> None:
         self.window = window
@@ -111,6 +182,7 @@ class SingleInstanceGuard(QObject):
 
     def close(self) -> None:
         self.server.close()
+        self.mutex.release()
 
     def _notify_running_instance(self) -> bool:
         socket = QLocalSocket()

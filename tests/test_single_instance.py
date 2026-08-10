@@ -1,7 +1,11 @@
 import os
+import subprocess
+import sys
+import textwrap
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
+import pytest
 from PySide6.QtWidgets import QApplication
 
 from src.single_instance import (
@@ -11,6 +15,20 @@ from src.single_instance import (
     consume_restart_pid,
     wait_for_previous_instance,
 )
+
+
+class _FakeMutex:
+    def __init__(self, acquired: bool):
+        self.acquired = acquired
+        self.acquire_calls = 0
+        self.release_calls = 0
+
+    def acquire(self):
+        self.acquire_calls += 1
+        return self.acquired
+
+    def release(self):
+        self.release_calls += 1
 
 
 def _app():
@@ -94,6 +112,84 @@ def test_second_instance_notifies_first_and_first_activates_window():
     finally:
         secondary.close()
         primary.close()
+
+
+def test_mutex_owner_is_the_only_instance_allowed_to_start():
+    mutex = _FakeMutex(acquired=True)
+    guard = SingleInstanceGuard(f"PoENavi-test-{uuid4().hex}", mutex=mutex)
+
+    try:
+        assert guard.start() is True
+        assert mutex.acquire_calls == 1
+    finally:
+        guard.close()
+
+    assert mutex.release_calls == 1
+
+
+def test_second_instance_exits_even_when_activation_notification_fails():
+    mutex = _FakeMutex(acquired=False)
+    guard = SingleInstanceGuard(f"PoENavi-test-{uuid4().hex}", mutex=mutex)
+    guard.server = MagicMock()
+
+    with patch.object(guard, "_notify_running_instance", return_value=False) as notify:
+        assert guard.start() is False
+
+    notify.assert_called_once_with()
+    guard.server.listen.assert_not_called()
+    assert mutex.acquire_calls == 1
+
+
+def test_mutex_owner_keeps_running_when_activation_server_cannot_start():
+    mutex = _FakeMutex(acquired=True)
+    guard = SingleInstanceGuard(f"PoENavi-test-{uuid4().hex}", mutex=mutex)
+    guard.server = MagicMock()
+    guard.server.listen.side_effect = [False, False]
+
+    with patch("src.single_instance.QLocalServer.removeServer") as remove:
+        assert guard.start() is True
+
+    remove.assert_called_once_with(guard.server_name)
+    assert guard.server.listen.call_count == 2
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows named Mutex integration")
+def test_named_mutex_rejects_a_second_real_process_on_windows():
+    mutex_name = rf"Local\PoENavi-test-{uuid4().hex}"
+    script = textwrap.dedent(
+        """
+        import sys
+        import time
+        from src.single_instance import _WindowsNamedMutex
+
+        mutex = _WindowsNamedMutex(sys.argv[1])
+        acquired = mutex.acquire()
+        print("acquired" if acquired else "blocked", flush=True)
+        if acquired:
+            time.sleep(30)
+        """
+    )
+    primary = subprocess.Popen(
+        [sys.executable, "-c", script, mutex_name],
+        cwd=os.getcwd(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        assert primary.stdout.readline().strip() == "acquired"
+        secondary = subprocess.run(
+            [sys.executable, "-c", script, mutex_name],
+            cwd=os.getcwd(),
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=True,
+        )
+        assert secondary.stdout.strip() == "blocked"
+    finally:
+        primary.terminate()
+        primary.wait(timeout=10)
 
 
 def test_activation_restores_minimized_window():
