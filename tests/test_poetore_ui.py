@@ -4098,6 +4098,12 @@ def test_poe_ninja_price_panel_renders_price_trend_and_link(qapp):
         assert window.poe_ninja_trend_chart._points == (0, 1, 2, 3, 4, 5, 6)
         assert window._last_poe_ninja_url == "https://poe.ninja/example"
 
+        ninja_layout = window.poe_ninja_price_panel.layout()
+        assert ninja_layout.itemAt(0).spacerItem() is not None
+        assert ninja_layout.indexOf(window.poe_ninja_price_label) == 1
+        assert ninja_layout.indexOf(window.poe_ninja_currency_icon) == 4
+        assert ninja_layout.indexOf(window.poe_ninja_trend_label) == 5
+
         window._hide_poe_ninja_price(key)
         assert window.poe_ninja_price_panel.isHidden()
     finally:
