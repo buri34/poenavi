@@ -4581,14 +4581,16 @@ def test_conqueror_citadel_multiline_implicit_uses_single_official_filter(
     citadel = next(row for row in filters if row.stat_id == stat_id)
     assert citadel.text == stat_text
     assert citadel.enabled is True
+    assert citadel.min_value is None
+    assert citadel.max_value is None
     assert unresolved_modifier_warnings(item, filters) == ()
     query = build_search_query(item, stat_filters=filters)
-    query_ids = {
-        row["id"]
+    query_filters = {
+        row["id"]: row
         for group in query["query"]["stats"]
         for row in group["filters"]
     }
-    assert stat_id in query_ids
+    assert query_filters[stat_id]["value"] == {}
 
 
 def test_veritania_citadel_full_japanese_copy_has_no_unresolved_warning():

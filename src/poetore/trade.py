@@ -2944,6 +2944,11 @@ def resolve_trade_stat_filters(
                 item.category == "map"
                 and str(entry["id"]) in _CONQUEROR_CITADEL_STAT_IDS
             )
+            if conqueror_citadel:
+                # 2行目の「その数値の20%」は可変ロールではなく、
+                # 砦の種類を表す公式Statの固定文言。20をmin/maxへ送ると
+                # Trade側で一致しないため、選択状態だけを検索条件にする。
+                value = maximum = None
             resolved.append(TradeStatFilter(
                 str(entry["id"]), modifier.text, value, modifier.kind,
                 unique_variant or valdo_exact or conqueror_citadel or (modifier.ref == "Allocates #" and (
