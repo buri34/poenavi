@@ -107,6 +107,7 @@ _DISPLAY_SIZE_PROFILES = {
     "small": {
         "font": 12, "width": 560, "height": 1039,
         "mod_value_font": 11,
+        "mod_value_v_margin": 2,
         "search_button_width": 105,
         "minimum_width": 540, "minimum_height": 620,
         "mod_height": 230, "price_height": 434,
@@ -115,6 +116,7 @@ _DISPLAY_SIZE_PROFILES = {
     "medium": {
         "font": 14, "width": 650, "height": 1039,
         "mod_value_font": 12,
+        "mod_value_v_margin": 3,
         "search_button_width": 122,
         "minimum_width": 610, "minimum_height": 620,
         "mod_height": 250, "price_height": 434,
@@ -123,6 +125,7 @@ _DISPLAY_SIZE_PROFILES = {
     "large": {
         "font": 16, "width": 740, "height": 1039,
         "mod_value_font": 14,
+        "mod_value_v_margin": 3,
         "search_button_width": 140,
         "minimum_width": 680, "minimum_height": 620,
         "mod_height": 270, "price_height": 434,
@@ -1921,7 +1924,10 @@ class PoetoreWindow(QWidget):
             self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH) + gap
         )
         editor.setStyleSheet(
-            f"font-size: {profile['mod_value_font']}px; margin-left: {gap}px;"
+            f"font-size: {profile['mod_value_font']}px;"
+            f" margin-top: {profile['mod_value_v_margin']}px;"
+            f" margin-bottom: {profile['mod_value_v_margin']}px;"
+            f" margin-left: {gap}px;"
         )
 
     def _fit_search_range_width(self):

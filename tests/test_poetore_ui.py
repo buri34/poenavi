@@ -1994,6 +1994,29 @@ def test_mod_filter_keeps_maximum_editor_visible_without_horizontal_scroll(qapp)
 
 
 @pytest.mark.parametrize(
+    ("setting", "expected_margin"),
+    (("small", 2), ("medium", 3), ("large", 3)),
+)
+def test_mod_value_editors_have_vertical_inset(qapp, setting, expected_margin):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1", "最大ライフ +#", 100, "prefix", False,
+        max_value=120,
+    ),))
+    try:
+        row = window.mod_filter_tree.topLevelItem(0)
+        minimum_editor = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MIN)
+        maximum_editor = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MAX)
+        for editor in (minimum_editor, maximum_editor):
+            assert f"margin-top: {expected_margin}px" in editor.styleSheet()
+            assert f"margin-bottom: {expected_margin}px" in editor.styleSheet()
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(
     ("setting", "expected_min_width", "expected_max_width", "expected_gap", "expected_font_size"),
     (
         ("small", 56, 48, 8, 11),
