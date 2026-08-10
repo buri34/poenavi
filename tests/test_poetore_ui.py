@@ -1870,18 +1870,49 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
 
 
 @pytest.mark.parametrize(
-    ("setting", "expected_tier_width", "expected_text_width"),
-    (("small", 62, 320), ("medium", 72, 373), ("large", 83, 427)),
+    ("setting", "expected_tier_width"),
+    (("small", 62), ("medium", 72), ("large", 83)),
 )
-def test_mod_filter_tier_and_condition_columns_use_compact_scaled_widths(
-    qapp, setting, expected_tier_width, expected_text_width,
+def test_mod_filter_tier_is_compact_and_condition_column_uses_remaining_width(
+    qapp, setting, expected_tier_width,
 ):
     window = PoetoreWindow(
         app_config={"poetore": {"result_font_size": setting}}
     )
     try:
         assert window.mod_filter_tree.columnWidth(2) == expected_tier_width
-        assert window.mod_filter_tree.columnWidth(3) == expected_text_width
+        assert (
+            window.mod_filter_tree.header().sectionResizeMode(_MOD_COLUMN_TEXT)
+            == QHeaderView.Stretch
+        )
+    finally:
+        window.close()
+
+
+def test_mod_filter_keeps_maximum_editor_visible_without_horizontal_scroll(qapp):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": "small"}}
+    )
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1",
+        "モンスターは物理ダメージの100%を追加混沌ダメージとして獲得する",
+        100,
+        "prefix",
+        False,
+        max_value=100,
+    ),))
+    try:
+        window.show()
+        qapp.processEvents()
+        row = window.mod_filter_tree.topLevelItem(0)
+        maximum_editor = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MAX)
+        maximum_editor.setFocus()
+        qapp.processEvents()
+
+        assert window.mod_filter_tree.horizontalScrollBar().maximum() == 0
+        assert window.mod_filter_tree.visualItemRect(row).right() <= (
+            window.mod_filter_tree.viewport().rect().right()
+        )
     finally:
         window.close()
 

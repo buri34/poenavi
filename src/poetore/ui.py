@@ -1365,10 +1365,13 @@ class PoetoreWindow(QWidget):
         mod_header.setSectionResizeMode(_MOD_COLUMN_KIND, QHeaderView.ResizeToContents)
         mod_header.setSectionResizeMode(_MOD_COLUMN_TIER, QHeaderView.Fixed)
         self.mod_filter_tree.setColumnWidth(_MOD_COLUMN_TIER, _MOD_TIER_COLUMN_WIDTH)
-        mod_header.setSectionResizeMode(_MOD_COLUMN_TEXT, QHeaderView.Fixed)
-        self.mod_filter_tree.setColumnWidth(_MOD_COLUMN_TEXT, _MOD_TEXT_COLUMN_WIDTH)
+        # 操作列を常に表示領域内へ収め、余った幅だけをMod文章へ割り当てる。
+        # 固定幅の文章列は狭い画面で横スクロールを発生させ、最大欄へ
+        # フォーカスした際に一覧全体が右へ移動する原因になる。
+        mod_header.setSectionResizeMode(_MOD_COLUMN_TEXT, QHeaderView.Stretch)
         mod_header.setSectionResizeMode(_MOD_COLUMN_MIN, QHeaderView.ResizeToContents)
         mod_header.setSectionResizeMode(_MOD_COLUMN_MAX, QHeaderView.ResizeToContents)
+        self.mod_filter_tree.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.mod_filter_tree.itemClicked.connect(
             self._toggle_mod_condition_from_text
         )
@@ -1919,9 +1922,6 @@ class PoetoreWindow(QWidget):
         )
         self.mod_filter_tree.setColumnWidth(
             _MOD_COLUMN_TIER, self._scaled_display_value(_MOD_TIER_COLUMN_WIDTH)
-        )
-        self.mod_filter_tree.setColumnWidth(
-            _MOD_COLUMN_TEXT, self._scaled_display_value(_MOD_TEXT_COLUMN_WIDTH)
         )
         for column in (_MOD_COLUMN_MIN, _MOD_COLUMN_MAX):
             for index in range(self.mod_filter_tree.topLevelItemCount()):
