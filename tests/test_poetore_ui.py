@@ -71,8 +71,8 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
         assert not hasattr(window, "disclaimer_label")
         assert window.trade_league_combo.currentData() == "auto"
         assert window._selected_trade_league() is None
-        assert window.width() == 840
-        assert window.minimumWidth() == 760
+        assert window.width() == 770
+        assert window.minimumWidth() == 700
         assert window.height() == 1039
         assert window.price_list.minimumHeight() == 434
         assert window.trade_url_button.text() == "公式トレード  ↗"
@@ -85,9 +85,9 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
 @pytest.mark.parametrize(
     ("setting", "font_px", "width", "height", "minimum_width"),
     (
-        ("small", 12, 720, 1039, 680),
-        ("medium", 14, 840, 1039, 760),
-        ("large", 16, 960, 1039, 840),
+        ("small", 12, 660, 1039, 630),
+        ("medium", 14, 770, 1039, 700),
+        ("large", 16, 880, 1039, 780),
     ),
 )
 def test_poetore_result_display_size_scales_window_and_controls(
@@ -117,7 +117,7 @@ def test_poetore_result_display_size_can_change_on_existing_window(qapp):
         window.apply_result_display_size()
 
         assert window._result_font_size == "large"
-        assert window.width() == 960
+        assert window.width() == 880
         assert window.height() == 1039
         assert "font-size: 16px" in window.styleSheet()
     finally:
@@ -403,7 +403,7 @@ def test_show_at_context_places_window_inward_from_cursor_side(qapp):
             window, "activateWindow"
         ):
             window.show_at_context(context)
-        assert window.pos() == QPoint(514, 50)
+        assert window.pos() == QPoint(584, 50)
     finally:
         window.close()
 
@@ -1229,7 +1229,7 @@ def test_foulborn_xoph_uses_mutated_unique_returning_projectiles_stat(qapp):
 def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
     window = PoetoreWindow()
     try:
-        assert window.size().width() == 840
+        assert window.size().width() == 770
         assert window._panel.objectName() == "poetorePanel"
         assert not window._debug_parse_area.isVisible()
         assert window.mod_filter_tree.columnCount() == 6

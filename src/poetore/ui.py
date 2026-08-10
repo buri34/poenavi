@@ -105,23 +105,23 @@ _RELATED_ITEMS_TREE_HEIGHT = 180
 _RELATED_ITEMS_PRICE_HEIGHT_REDUCTION = 180
 _DISPLAY_SIZE_PROFILES = {
     "small": {
-        "font": 12, "width": 720, "height": 1039,
+        "font": 12, "width": 660, "height": 1039,
         "mod_value_font": 11,
-        "minimum_width": 680, "minimum_height": 620,
+        "minimum_width": 630, "minimum_height": 620,
         "mod_height": 230, "price_height": 434,
         "button_v_padding": 5, "button_h_padding": 9,
     },
     "medium": {
-        "font": 14, "width": 840, "height": 1039,
+        "font": 14, "width": 770, "height": 1039,
         "mod_value_font": 12,
-        "minimum_width": 760, "minimum_height": 620,
+        "minimum_width": 700, "minimum_height": 620,
         "mod_height": 250, "price_height": 434,
         "button_v_padding": 6, "button_h_padding": 11,
     },
     "large": {
-        "font": 16, "width": 960, "height": 1039,
+        "font": 16, "width": 880, "height": 1039,
         "mod_value_font": 14,
-        "minimum_width": 840, "minimum_height": 620,
+        "minimum_width": 780, "minimum_height": 620,
         "mod_height": 270, "price_height": 434,
         "button_v_padding": 7, "button_h_padding": 13,
     },
