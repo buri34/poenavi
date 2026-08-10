@@ -1448,8 +1448,8 @@ class PoetoreWindow(QWidget):
         self.price_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.price_list.setMinimumHeight(profile["price_height"])
         price_header = self.price_list.header()
-        price_header.setSectionResizeMode(0, QHeaderView.Stretch)
-        price_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        price_header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        price_header.setSectionResizeMode(1, QHeaderView.Stretch)
         panel_layout.addWidget(self.price_list, stretch=2)
         resize_row = QHBoxLayout()
         resize_row.addStretch()
@@ -4476,7 +4476,9 @@ class PoetoreWindow(QWidget):
         for column in range(len(columns)):
             header.setSectionResizeMode(
                 column,
-                QHeaderView.Stretch if column == 0 else QHeaderView.ResizeToContents,
+                QHeaderView.Stretch
+                if column == len(columns) - 1
+                else QHeaderView.ResizeToContents,
             )
 
         for listing in result.listings:

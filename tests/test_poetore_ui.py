@@ -7,7 +7,7 @@ from pathlib import Path
 from PySide6.QtCore import QEvent, QPoint, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QPalette
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QLabel, QMessageBox, QPushButton, QWidget
+from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, QLabel, QMessageBox, QPushButton, QWidget
 import pytest
 
 from src.poetore.ui import (
@@ -1696,6 +1696,11 @@ def test_price_result_is_rendered_in_japanese(qapp):
     assert window.price_list.topLevelItem(0).text(1) == "86"
     assert window.price_list.topLevelItem(0).text(2).endswith("前")
     assert window.price_list.topLevelItem(0).text(3) == "対面"
+    header = window.price_list.header()
+    assert header.sectionResizeMode(0) == QHeaderView.ResizeToContents
+    assert header.sectionResizeMode(1) == QHeaderView.ResizeToContents
+    assert header.sectionResizeMode(2) == QHeaderView.ResizeToContents
+    assert header.sectionResizeMode(3) == QHeaderView.Stretch
     window.close()
 
 
