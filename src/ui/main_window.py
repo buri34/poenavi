@@ -3932,6 +3932,8 @@ class MainWindow(QMainWindow):
                     self.set_progress_flag("act2_traitor_clear")
                 if zone_name in ("ジクアニの聖所", "Jiquani's Sanctum"):
                     self.set_progress_flag("act3_zicoatl_dead")
+                if zone_id == "poe2_act3_area05":
+                    self.set_progress_flag("act3_azakbog_enter")
                 if zone_name in ("吠える洞窟", "Howling Caves"):
                     self.set_progress_flag("interlude3_yeti_dead")
         print(f"[DEBUG] zone={zone_name}, id={zone_id}, visit_num={visit_num}, restoring={self._restoring}, counts={self.zone_visit_counts}")

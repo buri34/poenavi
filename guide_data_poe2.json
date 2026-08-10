@@ -462,7 +462,7 @@
         "tips": "",
         "summary": "<span style='color:#ffffff'>・「石の祭壇」を起動する</span>\n<span style='color:#ffffff'>・「マトラン水路」へ行く</span>",
         "mini_navi": {
-          "text": "<span style='color:#ffffff'>・「石の祭壇」を起動する</span>\n<span style='color:#ffffff'>・「マトラン水路」へ行く</span>"
+          "text": "<span style=\" color:#ffffff;\">▸「石の祭壇」を起動する\n▸[move]</span><span style='color:#dddd44'>マトラン水路</span><span style='color:#ffffff'>へ行く</span>"
         }
       }
     }
@@ -529,12 +529,12 @@
   },
   "poe2_act3_area08": {
     "default": {
-      "objective": "・２つの中型のソウルコアを見つけて、ジェネレーターを起動する。\n・ボス「コアの番人、ジコアトル」を倒す\n・すぐ近くのWPから、「害虫の荒れ地」へ飛ぶ",
+      "objective": "・２つの中型のソウルコアを見つけて、ジェネレーターを起動する。\n・ボス「コアの番人、ジコアトル」を倒す\n・すぐ近くのWPから、「ジャングルの遺跡」へ飛ぶ",
       "layout": "<span style='color:#ffffff'>・左右対称の2つのエリアに分かれている</span>",
       "tips": "<span style=\" color:#ffffff;\">・ジェネレーターを見つけたものの、コアが見つからない場合、ジェネレーター横のチェックポイントを確保し、「チェックポイントでリスポーン」を使うと、運が良ければコアがすぐ近くに再配置され、ミニマップに「！」マークで表示される。\n  アイテムフィルターを導入していれば、近くにある場合、クエストアイテムのドロップ音が聞こえるため便利。\n  なお、コアを持った状態でリスポーンするとコアが消滅するので、ジェネレーターへの移動手段としては使えない。\n\n・２つのコアをはめた後は、チェックポイントでリスポーンすると床が赤くなる演出をスキップできて早い</span>",
-      "summary": "<span style=\" color:#ffffff;\">・２つの中型のソウルコアを見つけて、ジェネレーターを起動する。\n・ボス「コアの番人、ジコアトル」を倒す\n・すぐ近くのWPから、「害虫の荒れ地」へ飛ぶ</span>\n\n<span style='color:#ffffff'>コアが見つからない場合、ジェネレーター横のチェックポイントを確保し、「チェックポイントでリスポーン」を繰り返すと、いつかコアがすぐ近くに再配置され、ミニマップに「！」マークで表示される（音を注意して聞くとよい）</span>\n\n<span style='color:#ffffff'>２つのコアをはめた後は、チェックポイントでリスポーンすると床が赤くなる演出をスキップできて早い</span>",
+      "summary": "<span style=\" color:#ffffff;\">・２つの中型のソウルコアを見つけて、ジェネレーターを起動する。\n・ボス「コアの番人、ジコアトル」を倒す\n・すぐ近くのWPから、「ジャングルの遺跡」へ飛ぶ</span>\n\n<span style='color:#ffffff'>コアが見つからない場合、ジェネレーター横のチェックポイントを確保し、「チェックポイントでリスポーン」を繰り返すと、いつかコアがすぐ近くに再配置され、ミニマップに「！」マークで表示される（音を注意して聞くとよい）</span>\n\n<span style='color:#ffffff'>２つのコアをはめた後は、チェックポイントでリスポーンすると床が赤くなる演出をスキップできて早い</span>",
       "mini_navi": {
-        "text": "<span style=\" color:#ffffff;\">▸２つの中型のソウルコアを見つけて、ジェネレーターを起動する\n▸[boss]ボス「コアの番人、ジコアトル」を倒す\n▸すぐ近くのWPから、[move]</span><span style='color:#dddd44'>害虫の荒れ地</span><span style='color:#ffffff'>へ飛ぶ</span>"
+        "text": "<span style=\" color:#ffffff;\">▸２つの中型のソウルコアを見つけて、ジェネレーターを起動する\n▸[boss]ボス「コアの番人、ジコアトル」を倒す\n▸すぐ近くのWPから、[move]</span><span style='color:#dddd44'>ジャングルの遺跡</span><span style='color:#ffffff'>へ飛ぶ</span>"
       }
     },
     "flags": {}
@@ -549,7 +549,17 @@
         "text": "<span style=\" color:#ffffff;\">・最奥の運河のレバーを起動する\n・ポータルで街へ戻る\n\n（街）\n・「沈んだ都市」へ行く（階段を降りて右下へ）</span>\n\n<span style='color:#dd66ff'>5/14のGGG動画によると、アザク湿原の入り口がマトラン水路内にできるはずなのでクリアすること</span>\n\n<span style='color:#ffffff'>狭いエリアに、火属性の敵がわんさか集まることがあるので、火耐性を積むと安全。</span>"
       }
     },
-    "flags": {}
+    "flags": {
+      "act3_azakbog_enter": {
+        "objective": "",
+        "layout": "",
+        "tips": "",
+        "summary": "",
+        "mini_navi": {
+          "text": ""
+        }
+      }
+    }
   },
   "poe2_act3_area10": {
     "default": {
