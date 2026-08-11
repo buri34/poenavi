@@ -5727,6 +5727,33 @@ def test_poe2_nonunique_equipment_scope_uses_japanese_base_name(qapp):
         window.close()
 
 
+def test_poe2_item_header_uses_japanese_identity_for_all_item_kinds(qapp):
+    fixture_dir = Path(__file__).parent / "fixtures" / "poe2"
+    mageblood = parse_poe2_item_text(
+        (fixture_dir / "mageblood_en.txt").read_text(encoding="utf-8")
+    )
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window._update_item_header(mageblood)
+        assert window.item_name_label.text() == "メイジブラッド"
+
+        currency = ParsedItem(
+            item_class="Currency", rarity="Currency", name="Exalted Orb",
+            base_type="Exalted Orb", category="currency", raw_text="currency",
+        )
+        window._update_item_header(currency)
+        assert window.item_name_label.text() == "高貴なオーブ"
+
+        gem = ParsedItem(
+            item_class="Skill Gems", rarity="Gem", name="Arc",
+            base_type="Arc", category="active_gem", raw_text="gem",
+        )
+        window._update_item_header(gem)
+        assert window.item_name_label.text() == "アーク"
+    finally:
+        window.close()
+
+
 def test_nonunique_jewels_use_category_search_but_cluster_and_unique_stay_exact(qapp):
     window = PoetoreWindow()
     try:

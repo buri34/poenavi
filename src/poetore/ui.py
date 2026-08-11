@@ -2365,8 +2365,7 @@ class PoetoreWindow(QWidget):
         )
         self._update_weapon_dps_summary(item)
 
-    @staticmethod
-    def _display_item_name(item) -> str:
+    def _display_item_name(self, item) -> str:
         """検索identityは変えず、コピー元に対応する日本語表示名を返す。"""
         if item.category == "currency" and item.base_type in {"透視のオーブ", "Scrying Orb"}:
             area = str(
@@ -2385,6 +2384,24 @@ class PoetoreWindow(QWidget):
             normal_japanese = load_gem_names_ja().get(normal_english.casefold())
             if normal_japanese:
                 return f"ヴァール{normal_japanese}"
+
+        if self.poe_version == POE2:
+            namespace = (
+                "UNIQUE"
+                if item.rarity.casefold() in {"unique", "ユニーク"}
+                else "GEM" if is_gem_category(item.category)
+                else "ITEM"
+            )
+            candidates = (
+                (item.name, item.base_type)
+                if namespace == "UNIQUE"
+                else (item.base_type, item.name)
+            )
+            for candidate in candidates:
+                entry = resolve_poe2_identity(str(candidate or ""), namespace)
+                localized = str((entry or {}).get("names", {}).get("ja", "")).strip()
+                if localized:
+                    return localized
 
         return item.name or item.base_type or "名称不明"
 
