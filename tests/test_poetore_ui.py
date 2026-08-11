@@ -1815,7 +1815,13 @@ def test_price_result_is_rendered_in_japanese(qapp):
     assert [window.price_list.headerItem().text(i) for i in range(4)] == [
         "価格", "ilvl", "出品日時", "取引方式",
     ]
-    assert window.price_list.topLevelItem(0).text(0) == "4 chaos"
+    first_price = window.price_list.itemWidget(
+        window.price_list.topLevelItem(0), 0,
+    )
+    assert first_price.findChild(QLabel, "priceCurrencyAmount").text() == "4"
+    assert first_price.findChild(QLabel, "priceCurrencyMultiplier").text() == "×"
+    chaos_icon = first_price.findChild(QLabel, "priceCurrencyIcon-chaos")
+    assert chaos_icon is not None and not chaos_icon.pixmap().isNull()
     assert window.price_list.topLevelItem(0).text(1) == "86"
     assert window.price_list.topLevelItem(0).text(2).endswith("前")
     assert window.price_list.topLevelItem(0).text(3) == "対面"
@@ -1884,6 +1890,33 @@ def test_price_result_shows_pricing_method_in_rightmost_column(qapp):
         ] == ["対面", "インスタント", "値段なし"]
         assert window.price_list.topLevelItem(2).text(0) == "値段なし"
         assert window.price_status.text() == "Mirage: 候補3件 / 取得3件"
+    finally:
+        window.close()
+
+
+def test_price_result_uses_currency_icons_and_keeps_text_fallback(qapp):
+    window = PoetoreWindow()
+    try:
+        window._show_price_result(PriceResult("Mirage", "q", 4, (
+            PriceListing(50, "chaos"),
+            PriceListing(1, "divine", listed_times=3),
+            PriceListing(2, "mirror"),
+            PriceListing(0, "", pricing_method="unpriced"),
+        )))
+
+        chaos_row = window.price_list.topLevelItem(0)
+        divine_row = window.price_list.topLevelItem(1)
+        chaos_cell = window.price_list.itemWidget(chaos_row, 0)
+        divine_cell = window.price_list.itemWidget(divine_row, 0)
+        assert chaos_cell.findChild(QLabel, "priceCurrencyAmount").text() == "50"
+        assert not chaos_cell.findChild(QLabel, "priceCurrencyIcon-chaos").pixmap().isNull()
+        assert divine_cell.findChild(QLabel, "priceCurrencyAmount").text() == "1"
+        assert not divine_cell.findChild(QLabel, "priceCurrencyIcon-divine").pixmap().isNull()
+        assert divine_cell.findChild(QLabel, "priceListingCount").text() == "×3"
+        assert window.price_list.itemWidget(window.price_list.topLevelItem(2), 0) is None
+        assert window.price_list.topLevelItem(2).text(0) == "2 mirror"
+        assert window.price_list.itemWidget(window.price_list.topLevelItem(3), 0) is None
+        assert window.price_list.topLevelItem(3).text(0) == "値段なし"
     finally:
         window.close()
 

@@ -416,6 +416,7 @@ _PRICE_CURRENCY_ICONS = {
     "chaos": "ChaosOrb.png",
     "divine": "DivineOrb.png",
 }
+_PRICE_LIST_CURRENCY_ICON_SIZE = 18
 
 
 def _asset_icon_path(filename: str) -> Path | None:
@@ -4632,7 +4633,57 @@ class PoetoreWindow(QWidget):
                     "instant": "インスタント",
                     "unpriced": "値段なし",
                 }.get(listing.pricing_method, "対面"))
-            QTreeWidgetItem(self.price_list, values)
+            row = QTreeWidgetItem(self.price_list, values)
+            price_widget = self._price_list_currency_widget(listing)
+            if price_widget is not None:
+                # 元テキストは列幅計算とアクセシビリティ用に保持しつつ、
+                # カスタムセルの背面には描画しない。
+                row.setForeground(0, QBrush(Qt.transparent))
+                widget_hint = price_widget.sizeHint()
+                row.setSizeHint(0, QSize(widget_hint.width() + 20, widget_hint.height()))
+                self.price_list.setItemWidget(row, 0, price_widget)
+
+    @staticmethod
+    def _price_list_currency_widget(listing) -> QWidget | None:
+        """Chaos/Divine価格を数値 × 通貨アイコンで描画する。"""
+        currency = str(listing.currency or "").lower()
+        icon_filename = _PRICE_CURRENCY_ICONS.get(currency)
+        icon_path = _asset_icon_path(icon_filename) if icon_filename else None
+        if listing.pricing_method == "unpriced" or icon_path is None:
+            return None
+        pixmap = QPixmap(str(icon_path))
+        if pixmap.isNull():
+            return None
+
+        cell = QWidget()
+        cell.setObjectName("priceCurrencyCell")
+        cell.setAttribute(Qt.WA_TransparentForMouseEvents)
+        layout = QHBoxLayout(cell)
+        layout.setContentsMargins(7, 0, 7, 0)
+        layout.setSpacing(4)
+
+        amount = QLabel(f"{listing.amount:g}")
+        amount.setObjectName("priceCurrencyAmount")
+        multiplier = QLabel("×")
+        multiplier.setObjectName("priceCurrencyMultiplier")
+        icon = QLabel()
+        icon.setObjectName(f"priceCurrencyIcon-{currency}")
+        icon.setPixmap(pixmap.scaled(
+            _PRICE_LIST_CURRENCY_ICON_SIZE,
+            _PRICE_LIST_CURRENCY_ICON_SIZE,
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation,
+        ))
+        icon.setToolTip("Chaos Orb" if currency == "chaos" else "Divine Orb")
+        layout.addWidget(amount)
+        layout.addWidget(multiplier)
+        layout.addWidget(icon)
+        if listing.listed_times > 1:
+            repeated = QLabel(f"×{listing.listed_times}")
+            repeated.setObjectName("priceListingCount")
+            layout.addWidget(repeated)
+        layout.addStretch(1)
+        return cell
 
     @staticmethod
     def _relative_listing_time(indexed: str, now: datetime | None = None) -> str:
