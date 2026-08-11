@@ -816,6 +816,25 @@ def test_search_condition_change_clears_stale_results_and_waits(qapp):
         window.close()
 
 
+def test_mod_filter_checkbox_uses_muted_teal_checked_color(qapp):
+    window = PoetoreWindow()
+    try:
+        window._populate_stat_filters((
+            TradeStatFilter("explicit.stat_1", "+# to maximum Life", 70, "explicit"),
+        ))
+        checkbox = window.mod_filter_tree.itemWidget(
+            window.mod_filter_tree.topLevelItem(0), 0,
+        ).findChild(QCheckBox, "modFilterCheckbox")
+
+        style = checkbox.styleSheet().lower()
+        assert "poenavi_check_257a64.png" in style
+        assert "border: 2px solid #257a64" in style
+        assert "width: 18px; height: 18px" in style
+        assert "border-radius: 3px" in style
+    finally:
+        window.close()
+
+
 def test_search_error_replaces_searching_status_and_reenables_button(qapp):
     window = PoetoreWindow()
     try:
@@ -1987,8 +2006,8 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
     )
     assert checkbox is not None
     assert not checkbox.isChecked()
-    assert "#65ffca" in checkbox.styleSheet()
-    assert "poenavi_check_65ffca.png" in checkbox.styleSheet()
+    assert "#257a64" in checkbox.styleSheet()
+    assert "poenavi_check_257a64.png" in checkbox.styleSheet()
     editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
     assert editor.text() == "55"
     checkbox.click()
