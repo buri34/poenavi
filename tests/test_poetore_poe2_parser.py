@@ -139,8 +139,26 @@ def test_meta_gem_without_item_class_requires_meta_tag_and_metadata_identity():
         item = parse_item_text(fixture[language])
         assert (item.base_type, item.category, item.modifiers) == ("Blasphemy", "meta_gem", ())
         without_meta = fixture[language].replace("メタ", "永続").replace("Meta", "Persistent")
-        with pytest.raises(Poe2ItemParseError, match="class、rarity、identity"):
+        with pytest.raises(Poe2ItemParseError, match="Meta Gemタグ未取得"):
             parse_item_text(without_meta)
+
+
+@pytest.mark.parametrize(
+    ("text", "message"),
+    [
+        ("ブラスファミー\n--------\nメタ", "rarity未取得"),
+        ("レアリティ: 未知\nブラスファミー", "rarity未対応: 未知"),
+        ("レアリティ: ジェム\n--------\nメタ", "identity未取得"),
+        ("レアリティ: レア\nテスト品", "item class未取得"),
+        (
+            "レアリティ: ジェム\nアーク\n--------\nスペル, メタ",
+            "identity種別不一致",
+        ),
+    ],
+)
+def test_poe2_header_parse_errors_identify_the_missing_stage(text, message):
+    with pytest.raises(Poe2ItemParseError, match=message):
+        parse_item_text(text)
 
 
 def test_gem_prose_is_not_reported_as_unresolved_item_modifiers():

@@ -273,7 +273,7 @@ def test_capture_failure_preserves_parser_reason_for_diagnostics(qapp):
         ):
             window._capture_item_copy()
 
-        assert "class、rarity、identity" in window._last_capture_parse_error
+        assert "rarity未取得" in window._last_capture_parse_error
     finally:
         window.close()
 

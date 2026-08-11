@@ -541,7 +541,18 @@ def parse_item_text(text: str) -> ParsedItem:
         text = text[1:]
     labels, identity_lines = _header(text)
     item_class = labels.get("item_class", "")
-    rarity = _RARITIES.get(labels.get("rarity", ""), labels.get("rarity", "").casefold())
+    raw_rarity = labels.get("rarity", "")
+    if not raw_rarity:
+        raise Poe2ItemParseError(
+            "PoE2 rarity未取得: 先頭区画にRarity/レアリティ行がありません"
+        )
+    rarity = _RARITIES.get(raw_rarity)
+    if rarity is None:
+        raise Poe2ItemParseError(f"PoE2 rarity未対応: {raw_rarity}")
+    if not identity_lines:
+        raise Poe2ItemParseError(
+            "PoE2 identity未取得: 先頭区画にアイテム名またはベース名がありません"
+        )
     category = _CLASS_CATEGORY.get(item_class)
     unidentified = any(
         line.strip() in {"Unidentified", "未鑑定"} for line in text.splitlines()
@@ -553,15 +564,28 @@ def parse_item_text(text: str) -> ParsedItem:
         tag_section = re.split(r"^--------\s*$", text.strip(), flags=re.MULTILINE)[1:2]
         tag_text = tag_section[0] if tag_section else ""
         candidate = resolve_identity(identity_lines[0], "GEM")
-        if (
-            candidate is not None
-            and candidate.get("category") == "MetaSkillGem"
-            and re.search(r"(?:^|,\s*)(?:Meta|メタ)(?:\s*,|$)", tag_text, re.MULTILINE)
+        if candidate is None:
+            raise Poe2ItemParseError(
+                f"PoE2 Meta Gem identity未解決: {identity_lines[0]}"
+            )
+        candidate_category = str(candidate.get("category", ""))
+        if candidate_category != "MetaSkillGem":
+            raise Poe2ItemParseError(
+                "PoE2 Item Class欠落Gemのidentity種別不一致: "
+                f"{identity_lines[0]} / {candidate_category or '不明'}"
+            )
+        if not re.search(
+            r"(?:^|,\s*)(?:Meta|メタ)(?:\s*,|$)", tag_text, re.MULTILINE
         ):
-            item_class = "Meta Gems"
-            category = "gem"
-    if not item_class or not rarity or not identity_lines:
-        raise Poe2ItemParseError("PoE2アイテムのclass、rarity、identityを解決できません")
+            raise Poe2ItemParseError(
+                f"PoE2 Meta Gemタグ未取得: {identity_lines[0]}のタグ区画にMeta/メタがありません"
+            )
+        item_class = "Meta Gems"
+        category = "gem"
+    if not item_class:
+        raise Poe2ItemParseError(
+            "PoE2 item class未取得: 先頭区画にItem Class/アイテムクラス行がありません"
+        )
 
     raw_base = identity_lines[-1]
     identity_namespace = "GEM" if category == "gem" or rarity == "gem" else "ITEM"
