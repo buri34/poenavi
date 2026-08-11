@@ -11,7 +11,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRect, QSize, Qt, QTimer, Signal, QUrl
 from PySide6.QtGui import (
-    QColor, QCursor, QDesktopServices, QFontMetrics, QIcon, QIntValidator, QLinearGradient, QPainter,
+    QBrush, QColor, QCursor, QDesktopServices, QFontMetrics, QIcon, QIntValidator, QLinearGradient, QPainter,
     QPalette, QPen, QPixmap, QPolygonF,
 )
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
@@ -793,9 +793,6 @@ class _PoetoreTitleBar(QWidget):
         self._drag_start_position: QPoint | None = None
         layout = QHBoxLayout(self)
         layout.setContentsMargins(6, 2, 2, 2)
-        title = QLabel("ぽえとれ")
-        title.setStyleSheet("font-weight: bold;")
-        layout.addWidget(title)
         window.divine_rate_button = QPushButton("⇄ …")
         window.divine_rate_button.setObjectName("divineRateButton")
         window.divine_rate_button.setToolTip("Divine OrbのChaos換算早見表")
@@ -1056,6 +1053,7 @@ class PoetoreWindow(QWidget):
         self.trade_status_combo = QComboBox()
         self.trade_status_combo.setObjectName("filterControl")
         self.trade_status_combo.setProperty("compactAction", True)
+        self.trade_status_combo.setProperty("mutedText", True)
         self.trade_status_combo.addItem("インスタントバイアウトのみ", "instant")
         self.trade_status_combo.addItem("インスタント＋対面", "available")
         self.trade_status_combo.addItem("対面トレードのみ", "online")
@@ -1063,6 +1061,7 @@ class PoetoreWindow(QWidget):
         self.trade_currency_combo = QComboBox()
         self.trade_currency_combo.setObjectName("filterControl")
         self.trade_currency_combo.setProperty("compactAction", True)
+        self.trade_currency_combo.setProperty("mutedText", True)
         self.trade_currency_combo.addItem("すべての通貨", "any")
         self.trade_currency_combo.addItem("カオスオーブのみ", "chaos")
         self.trade_currency_combo.addItem("神のオーブのみ", "divine")
@@ -1072,6 +1071,7 @@ class PoetoreWindow(QWidget):
         self.listed_within_combo = QComboBox()
         self.listed_within_combo.setObjectName("filterControl")
         self.listed_within_combo.setProperty("compactAction", True)
+        self.listed_within_combo.setProperty("mutedText", True)
         for label, value in (
             ("期間指定なし", "any"), ("24時間以内", "1day"), ("3日以内", "3days"),
             ("1週間以内", "1week"), ("2週間以内", "2weeks"),
@@ -1332,6 +1332,7 @@ class PoetoreWindow(QWidget):
         panel_layout.addLayout(weapon_property_header)
         self.clear_mod_conditions_button = QPushButton("一覧のチェックを全て選択")
         self.clear_mod_conditions_button.setObjectName("secondaryActionButton")
+        self.clear_mod_conditions_button.setProperty("mutedText", True)
         self.clear_mod_conditions_button.setToolTip(
             "上の条件一覧のみ。ilvlなどの基本条件は変更しません"
         )
@@ -1392,10 +1393,12 @@ class PoetoreWindow(QWidget):
         panel_layout.addWidget(self.mod_filter_tree, stretch=3)
         self.mod_conditions_toggle = QPushButton("mod条件をたたむ∧")
         self.mod_conditions_toggle.setObjectName("secondaryActionButton")
+        self.mod_conditions_toggle.setProperty("mutedText", True)
         self.mod_conditions_toggle.setToolTip("Mod検索条件の一覧を折りたたむ")
         self.mod_conditions_toggle.clicked.connect(self._toggle_mod_conditions)
         self.hidden_mods_toggle = QPushButton("隠し候補を表示")
         self.hidden_mods_toggle.setObjectName("secondaryActionButton")
+        self.hidden_mods_toggle.setProperty("mutedText", True)
         self.hidden_mods_toggle.setCheckable(True)
         self.hidden_mods_toggle.setToolTip(
             "数値が固定され、同じアイテム同士の価格比較に影響しないため、\n"
@@ -1404,6 +1407,7 @@ class PoetoreWindow(QWidget):
         self.hidden_mods_toggle.toggled.connect(self._toggle_hidden_mods)
         self.mod_sources_toggle = QPushButton("計算元Modを表示")
         self.mod_sources_toggle.setObjectName("secondaryActionButton")
+        self.mod_sources_toggle.setProperty("mutedText", True)
         self.mod_sources_toggle.setCheckable(True)
         self.mod_sources_toggle.setToolTip(
             "合計ライフや防御力など、複数の数値をまとめた検索条件について、\n"
@@ -1453,6 +1457,7 @@ class PoetoreWindow(QWidget):
         self.trade_url_button = QPushButton("公式トレード  ↗")
         self.trade_url_button.setObjectName("filterActionButton")
         self.trade_url_button.setProperty("compactAction", True)
+        self.trade_url_button.setProperty("mutedText", True)
         self.trade_url_button.setToolTip("日本語公式Tradeをブラウザで開く")
         self.trade_url_button.setEnabled(False)
         self.trade_url_button.clicked.connect(self._open_trade_url)
@@ -1847,6 +1852,10 @@ class PoetoreWindow(QWidget):
                 font-size: __COMPACT_ACTION_FONT__px;
                 padding: 3px 5px;
             }
+            QPushButton[mutedText="true"],
+            QComboBox[mutedText="true"] {
+                color: #98A39F;
+            }
             QComboBox::drop-down { border: none; width: 18px; }
             QComboBox QAbstractItemView {
                 background: #1b1b1b;
@@ -1936,6 +1945,7 @@ class PoetoreWindow(QWidget):
             _DISPLAY_SIZE_PROFILES[self._result_font_size]["mod_value_font"]
         )
         row.setFont(_MOD_COLUMN_KIND, font)
+        row.setForeground(_MOD_COLUMN_KIND, QBrush(QColor("#98A39F")))
 
     def _make_mod_value_cell(
         self, editor: QLineEdit, *, leading_gap: bool = False,

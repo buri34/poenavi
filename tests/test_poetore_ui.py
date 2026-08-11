@@ -1308,6 +1308,23 @@ def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
         assert window.trade_currency_combo.objectName() == "filterControl"
         assert window.listed_within_combo.objectName() == "filterControl"
         assert window.trade_url_button.objectName() == "filterActionButton"
+        assert all(
+            label.text() != "ぽえとれ"
+            for label in window.findChildren(QLabel)
+        )
+        muted_controls = (
+            window.mod_conditions_toggle,
+            window.clear_mod_conditions_button,
+            window.hidden_mods_toggle,
+            window.mod_sources_toggle,
+            window.trade_status_combo,
+            window.trade_currency_combo,
+            window.listed_within_combo,
+            window.trade_url_button,
+        )
+        assert all(control.property("mutedText") is True for control in muted_controls)
+        assert 'QPushButton[mutedText="true"]' in window.styleSheet()
+        assert "color: #98A39F;" in window.styleSheet()
         assert "QTreeWidget {\n                background: rgba(17, 20, 22, 235);" in window.styleSheet()
         assert "QTreeWidget {\n                background: rgba(17, 20, 22, 235);\n                alternate-background-color: rgba(25, 30, 32, 205);\n                color: #D5DDDA;\n                border: none;" in window.styleSheet()
         assert "#DB86EF" not in window.styleSheet().upper()
@@ -2117,6 +2134,7 @@ def test_mod_filter_kind_uses_same_compact_font_as_value_editors(
             row, _MOD_COLUMN_MIN
         ).findChild(QLineEdit)
         assert row.font(_MOD_COLUMN_KIND).pixelSize() == expected_font_size
+        assert row.foreground(_MOD_COLUMN_KIND).color().name() == "#98a39f"
         assert (
             f"font-size: {expected_font_size}px"
             in minimum_editor.styleSheet()
