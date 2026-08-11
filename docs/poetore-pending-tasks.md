@@ -1,10 +1,10 @@
 # ぽえとれ 残タスク正本
 
-更新日: 2026-08-10
+更新日: 2026-08-11
 
 公開版基準: `APP_VERSION 3.2.1`
 
-開発版基準: `feature/poe2-foundation`（`c296ea0`）
+開発版基準: `feature/poe2-foundation`（`0087a77`）
 
 Awakened比較基準: `1e2225af8cfe04ccc5676d00eede81d7ee071240`（2026-08-10時点master）
 
@@ -59,8 +59,9 @@ Requirement Levelは別途製品判断するため、この作業票の試験対
 
 - [ ] EE2が低レベルRareへ提示するRequirement Level条件について、実需要とTrade2件数を確認し、
       検索チップとして採用するか製品判断する
-- [ ] PoE1 parity、固定EE2、最新EE2、公式Trade2 metadata、実装済みコードを再照合し、
-      差分監査文書の「未実装」「意図的差分」「実装済み」を現状へ更新する
+- [x] 固定EE2、最新EE2、公式Trade2 metadata、実装済みコードを再照合した。最新EE2 `dev`は
+      固定revisionと同一、公式Trade2はentry順序以外の意味差分0件だった。詳細は
+      `docs/poetore-poe2-upstream-delta-audit-2026-08-11.md`を参照する
 - [ ] Price trend、Related Items、結果Tooltip等の補助機能をコードと文書で再棚卸しし、
       既に実装済みの項目を残タスクから除外する
 
