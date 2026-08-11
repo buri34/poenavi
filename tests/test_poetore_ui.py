@@ -24,6 +24,7 @@ from src.poetore.trade import (
 from src.poetore.parser import parse_item_text
 from src.poetore.poe2.parser import parse_item_text as parse_poe2_item_text
 from src.poetore.poe2.audit import _EQUIPMENT_FIXTURES, _RARITIES, _item as poe2_audit_item
+from src.poetore.poe2.trade import poe2_trade_filters
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.poe_ninja import PoeNinjaPrice
 from src.ui.settings_dialog import SettingsDialog
@@ -2483,6 +2484,72 @@ def test_mod_filter_ui_keeps_diagnostics_internal_and_tooltip_simple(qapp):
         assert selected.min_value == 95
         assert selected.selection_reason == source.selection_reason
         assert selected.tier == 1
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(("provenance", "label", "background"), [
+    ("crafted", "クラフト", "#3182CE"),
+    ("fractured", "フラクチャー", "#F6E05E"),
+    ("desecrated", "冒涜", "#22543D"),
+])
+def test_mod_filter_ui_shows_ee2_style_provenance_tag(
+    qapp, provenance, label, background,
+):
+    window = PoetoreWindow()
+    try:
+        source = TradeStatFilter(
+            "explicit.stat_1", "冷気耐性 +45%", 45, "explicit", True,
+            provenance_tags=(provenance,),
+        )
+        window._populate_stat_filters((source,))
+        row = window.mod_filter_tree.topLevelItem(0)
+        text_widget = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_TEXT)
+        assert text_widget is not None
+        tag = text_widget.findChild(QLabel, f"modProvenanceTag_{provenance}")
+        assert tag is not None
+        assert tag.text() == label
+        assert background in tag.styleSheet()
+        assert row.text(_MOD_COLUMN_TEXT) == source.text
+        assert window._selected_stat_filters()[0] == source
+    finally:
+        window.close()
+
+
+def test_poe2_finished_filter_keeps_special_origin_visible_after_normalization(qapp):
+    window = PoetoreWindow()
+    try:
+        item = ParsedItem(
+            item_class="Gloves", rarity="rare", name="Test",
+            base_type="Grand Bracers", category="gloves",
+            flags=("fractured",), modifiers=(ItemModifier(
+                "冷気耐性 +45%", (45.0,), kind="fractured",
+                stat_id="fractured.stat_2923486259",
+            ),),
+        )
+        filters = poe2_trade_filters(item)
+        normalized = next(
+            row for row in filters if row.stat_id == "explicit.stat_2923486259"
+        )
+        window._populate_stat_filters(filters)
+        rows = [
+            window.mod_filter_tree.topLevelItem(index)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        row = next(
+            row for row in rows
+            if row.data(_MOD_COLUMN_CHECK, Qt.UserRole) == normalized.stat_id
+        )
+        text_widget = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_TEXT)
+        assert text_widget.findChild(
+            QLabel, "modProvenanceTag_fractured"
+        ).text() == "フラクチャー"
+        selected = next(
+            row for row in window._selected_stat_filters()
+            if row.stat_id == normalized.stat_id
+        )
+        assert selected.stat_id == "explicit.stat_2923486259"
+        assert selected.provenance_tags == ("fractured",)
     finally:
         window.close()
 

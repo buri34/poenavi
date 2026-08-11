@@ -49,7 +49,9 @@ Requirement Levelは別途製品判断するため、この作業票の試験対
       advanced Mod header、Tier、roll範囲、Mod種別を確認する
 - [x] Crafted／Fractured／Desecrated条件を固定EE2と比較し、専用状態チップを設けず、
       完成品ではCorrupted／Mirrored／Sanctifiedを含め通常Explicit版があるModを性能条件へ正規化する。
-      特殊版しかないModとベース検索だけ元のStat種別を維持する
+      特殊版しかないModとベース検索だけ元のStat種別を維持する。検索条件一覧では通常Explicitへの
+      正規化後も元Modの由来を失わず、各Mod本文下へクラフト（青）／フラクチャー（黄）／冒涜（緑）の
+      EE2準拠タグを表示する
 - [x] 実コピー待ちだったSanctified、Mirrored、Mageblood、Against the Darkness、
       Ventor's Gambleの日英5組を追加し、全28組の日英identityと最終Trade2 identityを自動検証した
 - [x] Normal／Magic／Rare／Unique × 完成品／ベース × exact base／同一classについて、

@@ -115,6 +115,7 @@ def test_finished_preset_uses_explicit_counterpart_for_special_mod_like_ee2(kind
     assert (direct.stat_id, direct.kind, direct.enabled) == (
         "explicit.stat_2923486259", "explicit", True,
     )
+    assert direct.provenance_tags == (kind,)
     sent = build_search_query(item, stat_filters=rows)["query"]["stats"][0]["filters"]
     assert sent == [{"id": "explicit.stat_2923486259", "value": {"min": 21.0}}]
 
@@ -130,6 +131,7 @@ def test_finished_preset_keeps_special_stat_without_explicit_counterpart():
     assert (direct.stat_id, direct.kind, direct.enabled) == (
         "desecrated.missing", "desecrated", True,
     )
+    assert direct.provenance_tags == ("desecrated",)
 
 
 @pytest.mark.parametrize("kind", ["crafted", "fractured", "desecrated"])
@@ -169,6 +171,28 @@ def test_finished_preset_merges_natural_and_normalized_special_sources():
     rows = [row for row in poe2_trade_filters(item) if row.stat_id == "explicit.stat_2923486259"]
     assert len(rows) == 1
     assert (rows[0].min_value, rows[0].read_value, rows[0].enabled) == (21.0, 21.0, True)
+    assert rows[0].provenance_tags == ("crafted",)
+
+
+def test_finished_preset_preserves_each_special_origin_when_rows_are_merged():
+    item = ParsedItem(
+        item_class="Gloves", rarity="rare", name="Test", base_type="Grand Bracers",
+        category="gloves", flags=("crafted", "fractured"), modifiers=(
+            ItemModifier(
+                "Crafted Chaos Resistance", (6.0,), kind="crafted",
+                stat_id="crafted.stat_2923486259",
+            ),
+            ItemModifier(
+                "Fractured Chaos Resistance", (15.0,), kind="fractured",
+                stat_id="fractured.stat_2923486259",
+            ),
+        ),
+    )
+    row = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "explicit.stat_2923486259"
+    )
+    assert row.provenance_tags == ("crafted", "fractured")
 
 
 def test_mock_search_and_fetch_complete_the_minimal_vertical_slice():

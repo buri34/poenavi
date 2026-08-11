@@ -29,7 +29,8 @@ PoE2クライアントから直接採取した文面とは称さない。実機�
 
 ## 次の残タスク
 
-- [ ] Fractured由来Statの状態行（「特殊／フラクチャー」）を通常の検索チップ風UIで表示し、初期OFFとする
+- [x] Crafted／Fractured／Desecratedの専用状態行は設けず、各Mod行の本文下へ
+      EE2準拠の由来タグを表示する。完成品の通常Explicit正規化後もタグは維持する
 - [ ] 未鑑定、Veiled、Foil Unique、Split、Mirroredの状態切替UIを、循環選択機能を維持したまま
       通常検索チップに近い外観へ統一する（詳細仕様は`docs/poetore-pending-tasks.md`を正本とする）
 - [ ] 実PoE2クライアントからCurrency、Rare武器／防具、Unique、Gem、Waystoneの日英全文を収集

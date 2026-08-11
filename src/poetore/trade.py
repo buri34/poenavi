@@ -421,6 +421,9 @@ class TradeStatFilter:
     # Trade APIやUI表示へは送らない内部情報。
     source_affixes: tuple[str | None, ...] = ()
     source_indexes: tuple[int, ...] = ()
+    # 検索用Statを通常Explicitへ正規化しても、元Modの生成由来をUIで示す。
+    # Trade APIへは送らない表示専用情報。
+    provenance_tags: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

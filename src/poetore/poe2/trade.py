@@ -604,6 +604,11 @@ def _poe2_modifier_rows(
         converted = explicit_variant_id(original_id) if normalize_special else None
         stat_id = converted or original_id
         value = trade_stat_value(modifier.values)
+        provenance_tags = (
+            (modifier.kind,)
+            if modifier.kind in {"crafted", "fractured", "desecrated"}
+            else ()
+        )
         row = TradeStatFilter(
             stat_id, modifier.text,
             None if modifier.better == -1 else value,
@@ -613,6 +618,7 @@ def _poe2_modifier_rows(
             ref=modifier.ref, confidence=modifier.confidence,
             read_value=value, roll_min=modifier.roll_min,
             roll_max=modifier.roll_max, better=modifier.better,
+            provenance_tags=provenance_tags,
         )
         position = positions.get(stat_id)
         if (
@@ -622,11 +628,15 @@ def _poe2_modifier_rows(
             and rows[position].better != -1
         ):
             previous = rows[position]
+            merged_provenance = tuple(dict.fromkeys(
+                previous.provenance_tags + row.provenance_tags
+            ))
             rows[position] = replace(
                 previous,
                 min_value=(previous.min_value or 0.0) + (row.min_value or 0.0),
                 read_value=(previous.read_value or 0.0) + (row.read_value or 0.0),
                 enabled=previous.enabled or row.enabled,
+                provenance_tags=merged_provenance,
             )
             if converted:
                 normalized_ids.add(stat_id)
