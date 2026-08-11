@@ -5183,6 +5183,32 @@ def test_poe2_weapon_parse_shows_dps_summary_in_header(qapp):
         window.close()
 
 
+def test_poe2_weapon_header_uses_individual_elemental_damage_properties(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        text = (
+            Path(__file__).parent
+            / "fixtures"
+            / "poe2"
+            / "rare_spear_physical_fire_ja.txt"
+        ).read_text(encoding="utf-8")
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+
+        assert window.weapon_dps_label.text() == (
+            "合計DPS：117.1（pDPS 78.7 / eDPS 38.4、pDPSは品質20%換算）"
+        )
+        rows = {
+            window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        }
+        assert "property.total_dps" in rows
+        assert "property.physical_dps" in rows
+        assert "property.elemental_dps" in rows
+    finally:
+        window.close()
+
+
 def test_poe2_weapon_quality_20_is_visible_but_initially_disabled(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:

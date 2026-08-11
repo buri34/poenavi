@@ -2411,7 +2411,12 @@ class PoetoreWindow(QWidget):
             self.weapon_dps_label.hide()
             return
         pdps = physical_dps_at_20_quality(item) or 0.0
-        edps = elemental_dps(item) or 0.0
+        if self.poe_version == POE2:
+            from .poe2.trade import poe2_elemental_dps
+
+            edps = poe2_elemental_dps(item) or 0.0
+        else:
+            edps = elemental_dps(item) or 0.0
         if pdps and edps:
             self.weapon_dps_label.setText(
                 f"合計DPS：{pdps + edps:.1f}（pDPS {pdps:.1f} / eDPS {edps:.1f}、"

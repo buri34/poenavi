@@ -136,7 +136,7 @@ def _property_float(item: ParsedItem, *names: str) -> float | None:
     return None
 
 
-def _poe2_elemental_dps(item: ParsedItem) -> float | None:
+def poe2_elemental_dps(item: ParsedItem) -> float | None:
     """Calculate weapon eDPS from PoE2's per-element copied properties."""
     speed = _property_float(item, "秒間アタック回数", "Attacks per Second")
     if speed is None:
@@ -345,7 +345,7 @@ def _poe2_item_property_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]
     rows: list[TradeStatFilter] = []
     if item.category in _WEAPON_CATEGORIES:
         pdps = physical_dps_at_20_quality(item) or 0.0
-        edps = _poe2_elemental_dps(item) or 0.0
+        edps = poe2_elemental_dps(item) or 0.0
         total = pdps + edps
         if pdps and edps:
             rows.append(TradeStatFilter(
