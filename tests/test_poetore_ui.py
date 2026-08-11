@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, Q
 import pytest
 
 from src.poetore.ui import (
-    PoetoreWindow, _MOD_COLUMN_CHECK, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
+    PoetoreWindow, _MOD_COLUMN_CHECK, _MOD_COLUMN_KIND, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
     _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
     show_poetore_window,
 )
@@ -2094,6 +2094,51 @@ def test_mod_filter_minimum_and_maximum_editors_use_narrow_width_and_smaller_fon
         assert maximum_cell.layout().contentsMargins().left() == 0
         assert f"font-size: {expected_font_size}px" in minimum_editor.styleSheet()
         assert f"font-size: {expected_font_size}px" in maximum_editor.styleSheet()
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(
+    ("setting", "expected_font_size"),
+    (("small", 11), ("medium", 12), ("large", 14)),
+)
+def test_mod_filter_kind_uses_same_compact_font_as_value_editors(
+    qapp, setting, expected_font_size,
+):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1", "命中力 +55", 55, "prefix", False,
+    ),))
+    try:
+        row = window.mod_filter_tree.topLevelItem(0)
+        minimum_editor = window.mod_filter_tree.itemWidget(
+            row, _MOD_COLUMN_MIN
+        ).findChild(QLineEdit)
+        assert row.font(_MOD_COLUMN_KIND).pixelSize() == expected_font_size
+        assert (
+            f"font-size: {expected_font_size}px"
+            in minimum_editor.styleSheet()
+        )
+    finally:
+        window.close()
+
+
+def test_mod_filter_kind_font_updates_with_display_size(qapp):
+    config = {"poetore": {"result_font_size": "small"}}
+    window = PoetoreWindow(app_config=config)
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1", "命中力 +55", 55, "prefix", False,
+    ),))
+    try:
+        row = window.mod_filter_tree.topLevelItem(0)
+        assert row.font(_MOD_COLUMN_KIND).pixelSize() == 11
+
+        config["poetore"]["result_font_size"] = "large"
+        window.apply_result_display_size()
+
+        assert row.font(_MOD_COLUMN_KIND).pixelSize() == 14
     finally:
         window.close()
 

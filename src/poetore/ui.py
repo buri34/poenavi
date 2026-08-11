@@ -1929,6 +1929,14 @@ class PoetoreWindow(QWidget):
             f" min-height: {content_height}px; max-height: {content_height}px;"
         )
 
+    def _apply_mod_kind_font_size(self, row: QTreeWidgetItem):
+        """種別列を、コンパクトな最小・最大入力欄と同じ文字サイズにする。"""
+        font = row.font(_MOD_COLUMN_KIND)
+        font.setPixelSize(
+            _DISPLAY_SIZE_PROFILES[self._result_font_size]["mod_value_font"]
+        )
+        row.setFont(_MOD_COLUMN_KIND, font)
+
     def _make_mod_value_cell(
         self, editor: QLineEdit, *, leading_gap: bool = False,
     ) -> QWidget:
@@ -2021,6 +2029,10 @@ class PoetoreWindow(QWidget):
         self.mod_filter_tree.setColumnWidth(
             _MOD_COLUMN_TIER, self._scaled_display_value(_MOD_TIER_COLUMN_WIDTH)
         )
+        for index in range(self.mod_filter_tree.topLevelItemCount()):
+            self._apply_mod_kind_font_size(
+                self.mod_filter_tree.topLevelItem(index)
+            )
         for column in (_MOD_COLUMN_MIN, _MOD_COLUMN_MAX):
             for index in range(self.mod_filter_tree.topLevelItemCount()):
                 cell = self.mod_filter_tree.itemWidget(
@@ -4297,6 +4309,7 @@ class PoetoreWindow(QWidget):
                 _MOD_COLUMN_TEXT,
                 QSize(0, self._scaled_display_value(_MOD_ROW_HEIGHT)),
             )
+            self._apply_mod_kind_font_size(row)
             self.mod_filter_tree.addTopLevelItem(row)
             if stat_filter.source_texts:
                 source_item = QTreeWidgetItem(row)
