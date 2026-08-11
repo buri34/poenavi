@@ -4,7 +4,7 @@
 
 公開版基準: `APP_VERSION 3.2.1`
 
-開発版基準: `feature/poe2-foundation`（`0087a77`）
+開発版基準: `feature/poe2-foundation`（`7e41a4e`）
 
 Awakened比較基準: `1e2225af8cfe04ccc5676d00eede81d7ee071240`（2026-08-10時点master）
 
@@ -73,6 +73,11 @@ Requirement Levelは別途製品判断するため、この作業票の試験対
       ゲーム内風Tooltipを追加する。表示はHover／Shift+Hoverを候補とし、横幅を増やさず詳細確認できる形にする
 - [ ] PoE1／PoE2の検索queryへ公式TradeのAPI Collapseを追加し、検索ID取得時点から同一Sellerの
       大量出品を畳む。現行のfetch後ローカル集約は表示・安全網として維持し、取得Seller数と中央値を比較検証する
+- [ ] PoE2の完成品Mod表示へ、PoE1と同じ「最終性能 → Prefix系統 → Suffix系統 → その他」の
+      並び順を適用する。PoE2専用の`poe2_trade_filters()`経路で、各行へ元Modのaffix、
+      pseudoの寄与元affix、元アイテム内の記載位置を引き継ぎ、各系統内は原文順を維持する。
+      最大ライフ合計・最大マナ合計はPrefix系統、通常affixと暗黙等が混在するpseudoは
+      Prefix、次にSuffixを優先するPoE1既存規則へ揃える
 
 ### P0: Valdo Mapの報酬条件検索
 
