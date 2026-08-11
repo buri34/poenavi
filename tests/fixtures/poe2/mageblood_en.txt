@@ -1,0 +1,27 @@
+Item Class: Belts
+Rarity: Unique
+Mageblood
+Utility Belt
+--------
+Requires: Level 55
+--------
+Item Level: 71
+--------
+{ Implicit Modifier }
+20% of Flask Recovery applied Instantly
+{ Implicit Modifier — Charm }
+Has 2(1-3) Charm Slots
+--------
+{ Unique Modifier }
+Legacy of Bismuth(Amethyst-Topaz) — Unscalable Value
+{ Unique Modifier }
+Legacy of Silver(Amethyst-Topaz) — Unscalable Value
+{ Unique Modifier }
+Legacy of Diamond(Amethyst-Topaz) — Unscalable Value
+{ Unique Modifier }
+Legacy of Quicksilver(Amethyst-Topaz) — Unscalable Value
+{ Unique Modifier }
+All Mage's Legacies have 43(25-50)% increased effect per duplicate Mage's Legacy you have
+--------
+Rivers of power coursed through their veins.
+Now, that power is yours, for good or ill.

@@ -180,7 +180,7 @@ _ULTIMATUM_HINT_LINES = {
 
 _STATE_LINES = {
     "Corrupted": "corrupted", "コラプト状態": "corrupted", "コラプト": "corrupted",
-    "Mirrored": "mirrored", "ミラー化": "mirrored", "ミラー化アイテム": "mirrored",
+    "Mirrored": "mirrored", "ミラー状態": "mirrored", "ミラー化": "mirrored", "ミラー化アイテム": "mirrored",
     "Sanctified": "sanctified", "聖別化": "sanctified", "聖別化アイテム": "sanctified",
     "Desecrated": "desecrated", "冒涜": "desecrated", "冒涜アイテム": "desecrated",
     "Fractured Item": "fractured", "フラクチャーアイテム": "fractured",

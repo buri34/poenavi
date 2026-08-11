@@ -8,6 +8,7 @@ import pytest
 
 from src.poetore.poe2.parser import Poe2ItemParseError, TRADE_CATEGORY_BY_CATEGORY, parse_item_text
 from src.poetore.poe2.trade import build_search_query, poe2_trade_filters
+from src.poetore.poe2.fixture_loader import load_real_copy_rows
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
@@ -31,12 +32,89 @@ def _ambiguous_base_fixtures():
 
 
 def _real_copy_fixtures():
-    with REAL_COPY_FIXTURES.open(encoding="utf-8-sig", newline="") as handle:
-        return tuple(csv.DictReader(handle))
+    return load_real_copy_rows(REAL_COPY_FIXTURES)
 
 
 def _real_copy(fixture_id):
     return next(row for row in _real_copy_fixtures() if row["fixture_id"] == fixture_id)
+
+
+def test_real_copy_fixture_file_references_are_resolved_and_sandboxed(tmp_path):
+    fixture = tmp_path / "copy.txt"
+    fixture.write_text("Item Class: Belts\nRarity: Unique\nMageblood\nUtility Belt\n", encoding="utf-8")
+    csv_source = tmp_path / "fixtures.csv"
+    csv_source.write_text(
+        "fixture_id,日本語設定の詳細コピー全文,英語設定の詳細コピー全文\n"
+        "FX,@copy.txt,@copy.txt\n", encoding="utf-8",
+    )
+    rows = load_real_copy_rows(csv_source)
+    assert rows[0]["日本語設定の詳細コピー全文"].startswith("Item Class: Belts")
+    csv_source.write_text(
+        "fixture_id,日本語設定の詳細コピー全文,英語設定の詳細コピー全文\n"
+        "FX,@../outside.txt,@copy.txt\n", encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="不正なfixture参照"):
+        load_real_copy_rows(csv_source)
+
+
+def test_new_user_captured_special_pairs_preserve_state_stats_and_values():
+    fixtures = {row["fixture_id"]: row for row in _real_copy_fixtures()}
+    expected = {
+        "FX019": ("Anvil Maul", {"crafted", "desecrated", "sanctified"}, {
+            "implicit.stat_1503146834", "explicit.stat_9187492", "desecrated.stat_53386210",
+        }),
+        "FX024": ("Ornate Ringmail", {"mirrored"}, {"explicit.stat_3032590688"}),
+        "FX026": ("Utility Belt", set(), {
+            "implicit.stat_1416292992", "explicit.stat_264262054|3",
+            "explicit.stat_264262054|11", "explicit.stat_264262054|4",
+            "explicit.stat_264262054|8",
+        }),
+        "FX027": ("Time-Lost Diamond", {"corrupted"}, {
+            "explicit.stat_2948688907", "explicit.stat_2217513089",
+        }),
+        "FX028": ("Gold Ring", set(), {
+            "explicit.stat_3372524247", "explicit.stat_4220027924",
+            "explicit.stat_1671376347",
+        }),
+    }
+    for fixture_id, (base_type, flags, expected_ids) in expected.items():
+        parsed = [parse_item_text(fixtures[fixture_id][column]) for column in (
+            "日本語設定の詳細コピー全文", "英語設定の詳細コピー全文",
+        )]
+        assert all(item.base_type == base_type for item in parsed)
+        assert [set(item.flags) for item in parsed] == [flags, flags]
+        assert all(not [modifier for modifier in item.modifiers if not modifier.ref] for item in parsed)
+        filter_ids = [
+            {row.stat_id for row in poe2_trade_filters(item)} for item in parsed
+        ]
+        assert expected_ids <= filter_ids[0] == filter_ids[1]
+
+    sanctified = parse_item_text(fixtures["FX019"]["日本語設定の詳細コピー全文"])
+    sanctified_rows = {row.stat_id: row for row in poe2_trade_filters(sanctified)}
+    assert sanctified_rows["explicit.stat_709508406"].read_value == 118.5
+    assert sanctified_rows["explicit.stat_9187492"].read_value == 4
+    assert sanctified_rows["property.state.sanctified"].enabled is True
+
+    ventor = parse_item_text(fixtures["FX028"]["英語設定の詳細コピー全文"])
+    ventor_rows = {row.stat_id: row for row in poe2_trade_filters(ventor)}
+    assert [ventor_rows[stat_id].read_value for stat_id in (
+        "explicit.stat_3372524247", "explicit.stat_4220027924",
+        "explicit.stat_1671376347",
+    )] == [-22, -21, -2]
+
+    for fixture_id, state, trade_filter in (
+        ("FX019", "sanctified", "sanctified"),
+        ("FX024", "mirrored", "mirrored"),
+        ("FX027", "corrupted", "corrupted"),
+    ):
+        item = parse_item_text(fixtures[fixture_id]["日本語設定の詳細コピー全文"])
+        rows = poe2_trade_filters(item)
+        state_row = next(row for row in rows if row.stat_id == f"property.state.{state}")
+        assert state_row.enabled is True
+        query = build_search_query(item, stat_filters=rows)["query"]
+        assert query["filters"]["misc_filters"]["filters"][trade_filter] == {
+            "option": "true",
+        }
 
 
 @pytest.mark.parametrize(

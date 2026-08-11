@@ -187,6 +187,13 @@ def resolve_stat_line_candidates(
         "", text.strip(), flags=re.IGNORECASE,
     )
     comparable = re.sub(r"\((?:[^()]*)-[^()]*\)", "", comparable)
+    # Detailed copy can show a single-value roll annotation such as +4(5).
+    # It is not part of the official Trade2 template and must be removed just
+    # like a normal (min-max) annotation.
+    comparable = re.sub(r"(?<=\d)\([+-]?\d+(?:\.\d+)?\)", "", comparable)
+    # The English client pluralises this property while Trade2 currently keeps
+    # the official template in singular form (`Has # Charm Slot`).
+    comparable = re.sub(r"\bCharm Slots\b", "Charm Slot", comparable)
     comparable = re.sub(r"\s*[—-]\s*スケールできない値\s*$", "", comparable)
     comparable = re.sub(r"\s*[—-]\s*Unscalable Value\s*$", "", comparable, flags=re.IGNORECASE)
     matchers = stat_matchers()

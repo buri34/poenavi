@@ -471,6 +471,8 @@ _POE2_PROPERTY_SPECS = (
 )
 
 _POE2_STATE_LABELS = {
+    "corrupted": "コラプト状態",
+    "mirrored": "ミラー状態",
     "sanctified": "聖別化",
     "desecrated": "冒涜",
     "fractured": "フラクチャー",
@@ -479,6 +481,8 @@ _POE2_STATE_LABELS = {
 }
 
 _POE2_STATE_FILTER_NAMES = {
+    "corrupted": "corrupted",
+    "mirrored": "mirrored",
     "sanctified": "sanctified",
     "desecrated": "desecrated",
     "fractured": "fractured_item",

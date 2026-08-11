@@ -10,6 +10,7 @@ from ..models import ItemModifier, ParsedItem
 from ..trade import PRESET_BASE, PRESET_FINISHED, available_trade_presets
 from .parser import TRADE_CATEGORY_BY_CATEGORY, parse_item_text
 from .trade import build_search_query, poe2_trade_filters
+from .fixture_loader import load_real_copy_rows
 
 
 _EQUIPMENT_FIXTURES = {
@@ -152,8 +153,7 @@ def build_audit_rows() -> list[AuditRow]:
 
 def audit_real_copy_pairs(csv_source: Path) -> list[dict]:
     audited = []
-    with csv_source.open(encoding="utf-8-sig", newline="") as handle:
-        source_rows = list(csv.DictReader(handle))
+    source_rows = load_real_copy_rows(csv_source)
     for source in source_rows:
         fixture_id = source["fixture_id"]
         ja_text = source["日本語設定の詳細コピー全文"].strip()

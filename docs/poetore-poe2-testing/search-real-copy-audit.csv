@@ -17,13 +17,13 @@ FX015,Rune単体,未収集,自動検証済み,rune,rune,Greater Iron Rune,Greate
 FX016,Soul Core単体,未収集,自動検証済み,soul_core,soul_core,Soul Core of Topotante,Soul Core of Topotante,currency.soulcore,Soul Core of Topotante,日英解析と最終Trade2 identityが一致
 FX017,Rune装着済み装備,未収集,自動検証済み,spear,spear,Soaring Spear,Soaring Spear,weapon.spear,Soaring Spear,日英解析と最終Trade2 identityが一致
 FX018,Soul Core装着済み装備,未収集,自動検証済み,boots,boots,Runeforged Bastion Sabatons,Runeforged Bastion Sabatons,armour.boots,Runeforged Bastion Sabatons,日英解析と最終Trade2 identityが一致
-FX019,Sanctified品,未収集,実コピー待ち,,,,,,,日英いずれかが空欄またはプレースホルダー
+FX019,Sanctified品,収集済み,自動検証済み,two_mace,two_mace,Anvil Maul,Anvil Maul,weapon.twomace,Anvil Maul,日英解析と最終Trade2 identityが一致
 FX020,Desecrated品,未収集,自動検証済み,boots,boots,Daggerfoot Shoes,Daggerfoot Shoes,armour.boots,Daggerfoot Shoes,日英解析と最終Trade2 identityが一致
 FX021,Runeforged品,未収集,自動検証済み,boots,boots,Runeforged Bastion Sabatons,Runeforged Bastion Sabatons,armour.boots,Runeforged Bastion Sabatons,日英解析と最終Trade2 identityが一致
 FX022,Runemastered品,未収集,自動検証済み,body_armour,body_armour,Runemastered Strider Vest,Runemastered Strider Vest,armour.chest,Runemastered Strider Vest,日英解析と最終Trade2 identityが一致
 FX023,Corrupted品,未収集,自動検証済み,body_armour,body_armour,Runemastered Strider Vest,Runemastered Strider Vest,armour.chest,Runemastered Strider Vest,日英解析と最終Trade2 identityが一致
-FX024,Mirrored品,未収集,実コピー待ち,,,,,,,日英いずれかが空欄またはプレースホルダー
+FX024,Mirrored品,収集済み,自動検証済み,body_armour,body_armour,Ornate Ringmail,Ornate Ringmail,armour.chest,Ornate Ringmail,日英解析と最終Trade2 identityが一致
 FX025,未鑑定品,未収集,自動検証済み,talisman,talisman,Nettle Talisman,Nettle Talisman,weapon.talisman,Nettle Talisman,日英解析と最終Trade2 identityが一致
-FX026,Mageblood,未収集,実コピー待ち,,,,,,,日英いずれかが空欄またはプレースホルダー
-FX027,Against the Darkness,未収集,実コピー待ち,,,,,,,日英いずれかが空欄またはプレースホルダー
-FX028,Ventor's Gamble,未収集,実コピー待ち,,,,,,,日英いずれかが空欄またはプレースホルダー
+FX026,Mageblood,収集済み,自動検証済み,belt,belt,Utility Belt,Utility Belt,accessory.belt,Utility Belt,日英解析と最終Trade2 identityが一致
+FX027,Against the Darkness,収集済み,自動検証済み,jewel,jewel,Time-Lost Diamond,Time-Lost Diamond,jewel,Time-Lost Diamond,日英解析と最終Trade2 identityが一致
+FX028,Ventor's Gamble,収集済み,自動検証済み,ring,ring,Gold Ring,Gold Ring,accessory.ring,Gold Ring,日英解析と最終Trade2 identityが一致

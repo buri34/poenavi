@@ -1,0 +1,38 @@
+Item Class: Body Armours
+Rarity: Unique
+Loreweave
+Ornate Ringmail
+--------
+Armour: 749
+Energy Shield: 220
+--------
+Requires: Level 43, 45 Str, 45 Int
+--------
+Sockets: S S
+--------
+Item Level: 74
+--------
+{ Unique Modifier — Damage, Physical, Attack }
+Adds 3(1-4) to 8(8-12) Physical Damage to Attacks
+{ Unique Modifier — Attack }
++300(200-300) to Accuracy Rating
+{ Unique Modifier — Mana }
++29(20-30) to maximum Mana
+{ Unique Modifier }
+56(56-85)% increased Rarity of Items found
+Your other Modifiers to Rarity of Items found do not apply
+{ Unique Modifier — Gem }
++2(2-5)% to Quality of all Skills
+{ Unique Modifier — Caster, Speed }
+9(7-10)% increased Cast Speed
+{ Unique Modifier — Elemental, Chaos, Resistance }
+Your Maximum Resistances are 77(75-80)% — Unscalable Value
+{ Unique Modifier }
+You gain Onslaught for 4 seconds on Kill
+{ Unique Modifier }
+Using a Mana Flask grants Guard equal to 100% of Flask's recovery amount for 4 seconds — Unscalable Value
+--------
+The collector need not even speak. Each ring
+regaled them with tales of his conquest.
+--------
+Mirrored

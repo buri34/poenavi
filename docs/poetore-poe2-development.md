@@ -354,9 +354,9 @@ python3 scripts/snapshot_poetore_poe2_sources.py --verify
 ## 実コピーfixture拡充の残タスク（2026-08-09）
 
 鰤さんが日英同一現物を収集した28ケースのCSVを
-`tests/fixtures/poe2/real_copy_bilingual.csv`へ固定した。実コピーがある23組のうち、Uncut Gemを
-除く22組をParserの日英identity回帰へ利用する。Sanctified、Mirrored、複雑Unique 3件は未収集／
-保留としてCSV内に残し、実物を得た時だけfixture化する。
+`tests/fixtures/poe2/real_copy_bilingual.csv`へ固定した。実コピー28組のうち、Uncut Gemを
+除く27組をParserの日英identity回帰へ利用する。Sanctified、Mirrored、複雑Unique 3件も収集済みで、
+実コピー待ちは0件となった。
 
 Uncut Gemは通常Trade2出品検索ではなくCurrency Exchangeで売買する運用のため、
 `Uncut Skill Gems`／`スキルジェムの原石`を専用`uncut_gem`カテゴリとして解析し、通常Currencyと

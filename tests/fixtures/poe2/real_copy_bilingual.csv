@@ -700,7 +700,7 @@ Item Level: 71
 { Suffix Modifier ""of Dissipation"" (Tier: 2) — Elemental, Cold, Ailment }
 51(51-55)% reduced Chill Duration on you
 ",未収集,装着元の識別／Soul Core由来Mod／通常Modとの分離／Socket数／最終Trade2 JSON,同じ現物を日英でコピー
-FX019,状態区分,Sanctified品,Sanctified由来Modを含む装備,,,未収集,Sanctified状態／Mod由来／可変範囲／最終Trade2 JSON,同じ現物を日英でコピー
+FX019,状態区分,Sanctified品,Sanctified由来Modを含む装備,@sanctified_maul_ja.txt,@sanctified_maul_en.txt,収集済み,Sanctified状態／Mod由来／可変範囲／最終Trade2 JSON,2026-08-11に同じ現物の日英詳細コピーを収集
 FX020,状態区分,Desecrated品,Desecrated由来Modを含む装備,"アイテムクラス: 靴
 レアリティ: レア
 巨大な靴底
@@ -973,7 +973,7 @@ It is suffering that forges the greatest warriors.
 --------
 Corrupted
 ",未収集,Corrupted状態／Mod／仮Rune候補の非表示／最終Trade2 JSON,同じ現物を日英でコピー
-FX024,状態区分,Mirrored品,Rareまたは特殊品・複数Modを含む,,,未収集,Mirrored状態／Mod／仮Rune候補の非表示／最終Trade2 JSON,同じ現物を日英でコピー
+FX024,状態区分,Mirrored品,Rareまたは特殊品・複数Modを含む,@mirrored_loreweave_ja.txt,@mirrored_loreweave_en.txt,収集済み,Mirrored状態／Mod／仮Rune候補の非表示／最終Trade2 JSON,2026-08-11にLoreweaveの同一現物を日英で収集
 FX025,状態区分,未鑑定品,UnidentifiedのRareまたはUnique,"アイテムクラス: タリスマン
 レアリティ: ユニーク
 規格外の イラクサのタリスマン
@@ -1007,6 +1007,6 @@ Grants Skill: Level 18 Sanguine Revelry
 --------
 Unidentified
 ",未収集,Unidentified状態／名前・ベース解決／送信可能条件／最終Trade2 JSON,同じ現物を日英でコピー
-FX026,Unique,Mageblood,Legacyの種類がoption型Statになりスケール不可値も含む,ちょっと一旦保留（まずは残タスク文書に追加して）,ちょっと一旦保留（まずは残タスク文書に追加して）,未収集,Unique名／ベース名／Legacy option型Stat／重複効果の可変範囲／poe.ninja価格／日本語Trade URL,日本語fixtureは収集済み。同じ現物の英語詳細コピーを追加して日英ペアにする
-FX027,Unique,Against the Darkness,ランダムに選ばれる特殊なジュエルStatが2本とRadius Propertyを持つ,ちょっと一旦保留（まずは残タスク文書に追加して）,ちょっと一旦保留（まずは残タスク文書に追加して）,未収集,Unique名／ベース名／Radius／2本の特殊Stat／可変値／最終Trade2 JSON,同じ現物を日英でコピー
-FX028,Unique,Ventor's Gamble,Life・Spirit・Rarity・三属性耐性が正負をまたぐ広い可変範囲を持つ,ちょっと一旦保留（まずは残タスク文書に追加して）,ちょっと一旦保留（まずは残タスク文書に追加して）,未収集,Unique名／ベース名／負値とreduced表記／各可変範囲／最終Trade2 JSON／日本語Trade URL,同じ現物を日英でコピー
+FX026,Unique,Mageblood,Legacyの種類がoption型Statになりスケール不可値も含む,@mageblood_ja.txt,@mageblood_en.txt,収集済み,Unique名／ベース名／Legacy option型Stat／重複効果の可変範囲／poe.ninja価格／日本語Trade URL,2026-08-11に既存日本語fixtureと同一現物の英語詳細コピーを対にした
+FX027,Unique,Against the Darkness,ランダムに選ばれる特殊なジュエルStatが2本とRadius Propertyを持つ,@against_the_darkness_ja.txt,@against_the_darkness_en.txt,収集済み,Unique名／ベース名／Radius／2本の特殊Stat／可変値／最終Trade2 JSON,2026-08-11に同じ現物の日英詳細コピーを収集
+FX028,Unique,Ventor's Gamble,Life・Spirit・Rarity・三属性耐性が正負をまたぐ広い可変範囲を持つ,@ventors_gamble_ja.txt,@ventors_gamble_en.txt,収集済み,Unique名／ベース名／負値とreduced表記／各可変範囲／最終Trade2 JSON／日本語Trade URL,2026-08-11に同じ現物の日英詳細コピーを収集

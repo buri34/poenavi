@@ -98,7 +98,8 @@ def _fixture_texts() -> tuple[tuple[str, str], ...]:
             for row_number, row in enumerate(csv.DictReader(handle), start=2):
                 for key in ("日本語設定の詳細コピー全文", "英語設定の詳細コピー全文"):
                     text = str(row.get(key, "")).strip()
-                    if text:
+                    # Referenced files were already included by the *.txt scan above.
+                    if text and not text.startswith("@"):
                         rows.append((f"{csv_path.name}:{row_number}:{key}", text))
     for path in sorted(FIXTURE_DIR.glob("*.json")):
         payload = json.loads(path.read_text(encoding="utf-8"))

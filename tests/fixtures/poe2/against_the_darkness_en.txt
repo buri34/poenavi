@@ -1,0 +1,20 @@
+Item Class: Jewels
+Rarity: Unique
+Against the Darkness
+Time-Lost Diamond
+--------
+Limited to: 1
+Radius: Small
+--------
+Item Level: 82
+--------
+{ Unique Modifier — Elemental, Fire, Resistance }
+Small Passive Skills in Radius also grant +2(2-4)% to Fire Resistance
+{ Unique Modifier — Elemental, Lightning, Resistance }
+Notable Passive Skills in Radius also grant +1% to Maximum Lightning Resistance
+--------
+After the fires, in the depths of the Winter of the World, all life in the Vastiri banded together. Whether serpent, hyena, human, or golem, hated enemies clasped hand to claw, built refuge, and fought side by side against the Abyssals. Thus, the Third Pact was born.
+--------
+Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.
+--------
+Corrupted

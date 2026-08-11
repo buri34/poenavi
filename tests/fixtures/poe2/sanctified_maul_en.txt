@@ -1,0 +1,32 @@
+Item Class: Two Hand Maces
+Rarity: Rare
+Cataclysm Batter
+Anvil Maul
+--------
+Physical Damage: 152-204 (augmented)
+Fire Damage: 98-139 (fire)
+Critical Hit Chance: 5.00%
+Attacks per Second: 1.05
+--------
+Requires: Level 67, 134 (unmet) Str
+--------
+Item Level: 81
+--------
+{ Implicit Modifier — Physical }
+Crushes Enemies on Hit — Unscalable Value
+--------
+{ Prefix Modifier "Blasting" (Tier: 3) — Damage, Elemental, Fire, Attack }
+Adds 98(73-97) to 139(112-149) Fire Damage
+{ Prefix Modifier "Champion's" (Tier: 4) — Damage, Physical, Attack }
+50(45-54)% increased Physical Damage
++123(98-123) to Accuracy Rating
+{ Crafted Prefix Modifier "Essences" — Damage, Physical }
+Gain 33(25-33)% of Damage as Extra Physical Damage
+{ Suffix Modifier "of War" (Tier: 1) — Attack }
++4(5) to Level of all Melee Skills
+{ Suffix Modifier "of Assimilation" (Tier: 1) — Mana }
+Gain 42(36-45) Mana per enemy killed
+{ Desecrated Suffix Modifier "of Amanamu" (Tier: 1) }
+5(5-10)% increased Spirit Reservation Efficiency of Skills
+--------
+Sanctified
