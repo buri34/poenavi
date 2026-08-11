@@ -4365,7 +4365,7 @@ class PoetoreWindow(QWidget):
             checkbox = QCheckBox()
             checkbox.setObjectName("modFilterCheckbox")
             checkbox.setToolTip("この条件を価格検索に使用する")
-            Styles.apply_checkbox_style(checkbox)
+            Styles.apply_checkbox_style(checkbox, checked_color="#257A64")
             checkbox.setChecked(stat_filter.enabled)
             checkbox.stateChanged.connect(self._mark_search_dirty)
             checkbox.stateChanged.connect(self._update_all_mod_conditions_button)

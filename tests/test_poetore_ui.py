@@ -24,6 +24,7 @@ from src.poetore.parser import parse_item_text
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.poe_ninja import PoeNinjaPrice
 from src.ui.settings_dialog import SettingsDialog
+from src.ui.styles import Styles
 
 
 @pytest.fixture(scope="module")
@@ -1962,7 +1963,8 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
     )
     assert checkbox is not None
     assert not checkbox.isChecked()
-    assert "#4488ff" in checkbox.styleSheet()
+    assert "#257a64" in checkbox.styleSheet()
+    assert "poenavi_check_257a64.png" in checkbox.styleSheet()
     editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
     assert editor.text() == "55"
     checkbox.click()
@@ -1971,6 +1973,13 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
         TradeStatFilter("explicit.stat_1", "命中力 +55", 50, "prefix", True),
     )
     window.close()
+
+
+def test_shared_checkbox_style_keeps_blue_as_default(qapp):
+    checkbox = QCheckBox()
+    Styles.apply_checkbox_style(checkbox)
+    assert "#4488ff" in checkbox.styleSheet()
+    assert "poenavi_check_4488ff.png" in checkbox.styleSheet()
 
 
 def test_mod_filter_rows_do_not_use_alternating_backgrounds(qapp):

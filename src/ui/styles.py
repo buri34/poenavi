@@ -124,14 +124,15 @@ class Styles:
     """
     
     @staticmethod
-    def apply_checkbox_style(checkbox):
+    def apply_checkbox_style(checkbox, checked_color="#4488ff"):
         """Apply checkbox style with a proper checkmark icon."""
         from PySide6.QtGui import QPixmap, QPainter, QPen, QColor, QIcon
         from PySide6.QtCore import Qt, QSize
         # Create checkmark pixmap
         size = 18
         pixmap = QPixmap(size, size)
-        pixmap.fill(QColor("#4488ff"))
+        checked_qcolor = QColor(checked_color)
+        pixmap.fill(checked_qcolor)
         painter = QPainter(pixmap)
         pen = QPen(QColor("white"), 2.5)
         pen.setCapStyle(Qt.RoundCap)
@@ -156,7 +157,8 @@ class Styles:
         # Use stylesheet with image approach
         import tempfile, os
         tmp_dir = tempfile.gettempdir()
-        check_path = os.path.join(tmp_dir, "poenavi_check.png")
+        color_key = checked_qcolor.name().removeprefix("#")
+        check_path = os.path.join(tmp_dir, f"poenavi_check_{color_key}.png")
         pixmap.save(check_path)
         
         checkbox.setStyleSheet(f"""
@@ -171,7 +173,7 @@ class Styles:
             }}
             QCheckBox::indicator:checked {{
                 image: url("{check_path.replace(os.sep, '/')}");
-                border: 2px solid #4488ff;
+                border: 2px solid {checked_qcolor.name()};
             }}
             QCheckBox::indicator:unchecked:hover {{
                 border: 2px solid {Styles.TEXT_COLOR};
