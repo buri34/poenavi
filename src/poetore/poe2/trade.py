@@ -13,7 +13,7 @@ from ..trade import (
     LISTED_WITHIN_OPTIONS, PRESET_BASE, PRESET_FINISHED,
     PriceListing, PriceResult, TradeApiError, TradeLeague, TradeStatFilter, _cached_request_json,
     _defence_at_20_quality, _group_price_listings, _property_value,
-    elemental_dps, physical_dps_at_20_quality,
+    physical_dps_at_20_quality,
 )
 from .parser import TRADE_CATEGORY_BY_CATEGORY
 from .metadata import augment_entries, explicit_variant_id, resolve_identity
@@ -134,6 +134,48 @@ def _property_float(item: ParsedItem, *names: str) -> float | None:
         if match:
             return float(match.group())
     return None
+
+
+def _poe2_elemental_dps(item: ParsedItem) -> float | None:
+    """Calculate weapon eDPS from PoE2's per-element copied properties."""
+    speed = _property_float(item, "秒間アタック回数", "Attacks per Second")
+    if speed is None:
+        return None
+
+    properties = {name.casefold(): raw for name, raw in item.properties.items()}
+    aggregate = properties.get("元素ダメージ".casefold()) or properties.get(
+        "Elemental Damage".casefold()
+    )
+    if aggregate is not None:
+        damage_rows = (aggregate,)
+    else:
+        damage_rows = tuple(
+            raw
+            for names in (
+                ("火ダメージ", "Fire Damage"),
+                ("冷気ダメージ", "Cold Damage"),
+                ("雷ダメージ", "Lightning Damage"),
+            )
+            for raw in (
+                next(
+                    (properties[name.casefold()] for name in names if name.casefold() in properties),
+                    None,
+                ),
+            )
+            if raw is not None
+        )
+
+    average_damage = 0.0
+    found_range = False
+    for raw in damage_rows:
+        values = [
+            float(value)
+            for value in re.findall(r"\d+(?:\.\d+)?", str(raw).replace(",", ""))
+        ]
+        for index in range(0, len(values) - 1, 2):
+            average_damage += (values[index] + values[index + 1]) / 2
+            found_range = True
+    return average_damage * speed if found_range else None
 
 
 def _augment_socket_count(item: ParsedItem) -> int | None:
@@ -303,7 +345,7 @@ def _poe2_item_property_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]
     rows: list[TradeStatFilter] = []
     if item.category in _WEAPON_CATEGORIES:
         pdps = physical_dps_at_20_quality(item) or 0.0
-        edps = elemental_dps(item) or 0.0
+        edps = _poe2_elemental_dps(item) or 0.0
         total = pdps + edps
         if pdps and edps:
             rows.append(TradeStatFilter(

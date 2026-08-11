@@ -56,9 +56,9 @@ Requirement Levelは別途製品判断するため、この作業票の試験対
       装備27カテゴリの構造母集団351ケースを作成し、有効297ケースのUI分岐と最終Trade2 JSONを
       自動監査した（仕様上対象外54、検出不具合0）
 - [ ] 上記297ケースのWindows実機表示・操作を`windows-test-cases.csv`で確認する
-- [ ] `P2-WIN-002`の日本語Rare武器で、`火ダメージ`等の個別属性PropertyをeDPSへ合算できず、
-      合計DPS・eDPSチップとTrade2のeDPS条件が欠落する問題を修正する。英語／日本語、
-      火／冷気／雷の単独・複合Propertyで回帰テストを追加する
+- [x] `P2-WIN-002`で判明した個別属性PropertyのeDPS欠落を修正した。PoE2専用計算で
+      `火／Fire`、`冷気／Cold`、`雷／Lightning Damage`を合算し、日本語・英語、
+      単属性・複合属性、合計DPSとTrade2条件を回帰テストした
 
 ### P1: PoE2 Requirement Levelと比較監査の継続
 

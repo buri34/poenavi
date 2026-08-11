@@ -369,6 +369,67 @@ def test_reported_rare_spear_sends_flat_damage_average_and_optional_quality():
     }
 
 
+@pytest.mark.parametrize(
+    "properties",
+    (
+        {
+            "物理ダメージ": "29-53",
+            "火ダメージ": "19-29 (fire)",
+            "冷気ダメージ": "10-20 (cold)",
+            "雷ダメージ": "1-9 (lightning)",
+            "秒間アタック回数": "1.60",
+        },
+        {
+            "Physical Damage": "29-53",
+            "Fire Damage": "19-29 (fire)",
+            "Cold Damage": "10-20 (cold)",
+            "Lightning Damage": "1-9 (lightning)",
+            "Attacks per Second": "1.60",
+        },
+    ),
+)
+def test_poe2_individual_elemental_damage_properties_build_edps_and_total_dps(
+    properties,
+):
+    item = ParsedItem(
+        item_class="Spears", rarity="rare", name="Test Spear",
+        base_type="Seaglass Spear", category="spear", properties=properties,
+    )
+
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+    assert rows["property.physical_dps"].read_value == pytest.approx(78.72)
+    assert rows["property.elemental_dps"].read_value == pytest.approx(70.4)
+    assert rows["property.total_dps"].read_value == pytest.approx(149.12)
+    assert rows["property.total_dps"].enabled is True
+    assert rows["property.physical_dps"].enabled is False
+    assert rows["property.elemental_dps"].enabled is False
+
+    payload = build_search_query(item, stat_filters=tuple(rows.values()))
+    equipment = payload["query"]["filters"]["equipment_filters"]["filters"]
+    assert equipment["dps"]["min"] == pytest.approx(149.12)
+    assert "pdps" not in equipment
+    assert "edps" not in equipment
+
+
+def test_poe2_single_elemental_damage_property_enables_edps_filter():
+    item = ParsedItem(
+        item_class="Spears", rarity="rare", name="Test Spear",
+        base_type="Seaglass Spear", category="spear",
+        properties={
+            "火ダメージ": "19-29 (fire)",
+            "秒間アタック回数": "1.60",
+        },
+    )
+    rows = poe2_trade_filters(item)
+    edps = next(row for row in rows if row.stat_id == "property.elemental_dps")
+    assert edps.read_value == pytest.approx(38.4)
+    assert edps.enabled is True
+
+    payload = build_search_query(item, stat_filters=rows)
+    equipment = payload["query"]["filters"]["equipment_filters"]["filters"]
+    assert equipment["edps"]["min"] == pytest.approx(38.4)
+
+
 def test_reported_rare_body_armour_sends_only_category_selected_local_stat():
     text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_body_armour_ja.txt").read_text(
         encoding="utf-8"

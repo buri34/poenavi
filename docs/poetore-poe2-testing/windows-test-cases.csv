@@ -1,6 +1,6 @@
 ケースID,優先度,試験グループ,対象アイテム・入手条件,レアリティ・状態,試験モード,事前条件・操作,期待する識別・ヘッダー,期待する検索チップ・初期状態,期待する検索先・クエリ要点,合格基準,日本語設定の詳細コピー全文,英語設定の詳細コピー全文,実施日,ゲーム版・リーグ,PoENaviコミット,実測した識別・ヘッダー,実測したチップ・初期状態,公式Trade URLまたはNinja URL,検索件数・価格表示,判定,不具合・差分・メモ
 P2-WIN-001,必須,基本導線,Rare Spear（物理のみ・品質20未満）,Rare・未破損,完成品,PoE2モードで日本語詳細コピー後に価格検索,Spearの正しい英語base・pDPSヘッダーに「品質20%換算」,物理DPSが初期ON・Item Levelは初期OFF・nonuniqueあり,Trade2・weapon.spear・pDPSは品質20換算値,取込エラーなし・表示値とTrade2条件が一致,,,,,,,,,,未実施,
-P2-WIN-002,必須,基本導線,Rare Spear（物理＋元素）,Rare・未破損,完成品,詳細コピー後に価格検索,Spear・合計DPSとpDPS/eDPS内訳,pDPSとeDPSが初期ON・数値編集可,Trade2・weapon.spear・両DPS条件あり,EE2と同じ性能項目を候補化し検索成功,,,,,,,,,,未実施,
+P2-WIN-002,必須,基本導線,Rare Spear（物理＋元素）,Rare・未破損,完成品,詳細コピー後に価格検索,Spear・合計DPSとpDPS/eDPS内訳,合計DPSが初期ON・pDPS/eDPS内訳を表示して比率に応じて初期条件化,Trade2・weapon.spear・合計DPSと必要な内訳条件,EE2と同じ性能項目を候補化し検索成功,,,,,,,,,,未実施,
 P2-WIN-003,必須,基本導線,Rare Crossbow（Reload Timeを含む）,Rare・未破損,完成品,詳細コピー後に価格検索,Crossbow・DPSヘッダー・Reload Time解析,DPSとReload Timeと検索可能Modを表示,Trade2・weapon.crossbow・正しいLocal Stat,未解決数値行0・検索成功,,,,,,,,,,未実施,
 P2-WIN-004,必須,基本導線,Unique Flail「未完／INCOMPLETE」,Unique・未破損,完成品,収集済みの日英実コピーで価格検索,日本語Unique名「未完」とChain Flail base・DPSヘッダー,DPSとUnique identity,Trade2・weapon.flail・name INCOMPLETE・type Chain Flail,カテゴリ誤認なくUnique Flailを完全一致検索,,,,,,,,,,未実施,
 P2-WIN-005,必須,基本導線,Rare Body Armour（防御値2種以上）,Rare・未破損,完成品,詳細コピー後に価格検索,正しい英語base・防御値要約,Armour/Evasion/ES等該当値が品質20換算で初期ON,Trade2・armour.chest・Local防御Stat,同名日本語baseでも候補を誤らず検索成功,,,,,,,,,,未実施,

@@ -1,6 +1,6 @@
 ﻿実施順,ケースID,優先度,試験グループ,対象アイテム,操作,確認A_識別・ヘッダー,【記入】A結果,確認B_チップ・初期状態,【記入】B結果,確認C_検索先・条件,【記入】C結果,詳細コピー要件,【記入】詳細コピー保存名,【記入】実施日,【記入】PoENaviコミット,【記入】検索応答,【記入】表示件数,【記入】価格表示,【記入】公式Trade・Ninja URL,【記入】画像名,【記入】総合結果,【記入】見えた差分・メモ
 1,P2-WIN-001,必須,基本導線,Rare Spear（物理のみ・品質20未満）,PoE2モードで日本語詳細コピー後に価格検索,Spearの正しい英語base・pDPSヘッダーに「品質20%換算」,未確認,物理DPSが初期ON・Item Levelは初期OFF・nonuniqueあり,未確認,Trade2・weapon.spear・pDPSは品質20換算値,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
-2,P2-WIN-002,必須,基本導線,Rare Spear（物理＋元素）,詳細コピー後に価格検索,Spear・合計DPSとpDPS/eDPS内訳,未確認,pDPSとeDPSが初期ON・数値編集可,未確認,Trade2・weapon.spear・両DPS条件あり,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
+2,P2-WIN-002,必須,基本導線,Rare Spear（物理＋元素）,詳細コピー後に価格検索,Spear・合計DPSとpDPS/eDPS内訳,未確認,合計DPSが初期ON・pDPS/eDPS内訳を表示して比率に応じて初期条件化,未確認,Trade2・weapon.spear・合計DPSと必要な内訳条件,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
 3,P2-WIN-003,必須,基本導線,Rare Crossbow（Reload Timeを含む）,詳細コピー後に価格検索,Crossbow・DPSヘッダー・Reload Time解析,未確認,DPSとReload Timeと検索可能Modを表示,未確認,Trade2・weapon.crossbow・正しいLocal Stat,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
 4,P2-WIN-004,必須,基本導線,Unique Flail「未完／INCOMPLETE」,収集済みの日英実コピーで価格検索,日本語Unique名「未完」とChain Flail base・DPSヘッダー,未確認,DPSとUnique identity,未確認,Trade2・weapon.flail・name INCOMPLETE・type Chain Flail,未確認,収集済みfixtureを使用（日英の新規貼付不要）,,,,未検索,,未確認,,,未実施,
 5,P2-WIN-005,必須,基本導線,Rare Body Armour（防御値2種以上）,詳細コピー後に価格検索,正しい英語base・防御値要約,未確認,Armour/Evasion/ES等該当値が品質20換算で初期ON,未確認,Trade2・armour.chest・Local防御Stat,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
