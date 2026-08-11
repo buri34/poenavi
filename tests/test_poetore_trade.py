@@ -56,6 +56,29 @@ def test_value_for_template_averages_added_damage_range_only():
     ) == 4.0
 
 
+def test_value_for_template_applies_reviewed_stat_rules():
+    assert _value_for_template(
+        "ブロック時に6から12の物理ダメージをアタックしてきた敵に反射する",
+        "ブロック時に#から#の物理ダメージをアタックしてきた敵に反射する",
+        "crafted.stat_1445684883",
+    ) == 6.0
+    assert _value_for_template(
+        "ブロック時に6から12の物理ダメージをアタックしてきた敵に反射する",
+        "ブロック時に#から#の物理ダメージをアタックしてきた敵に反射する",
+        "explicit.stat_1445684883",
+    ) == 9.0
+    assert _value_for_template(
+        "トラップを投げると4秒間移動スピードが20%増加する",
+        "トラップを投げると#秒間移動スピードが#%増加する",
+        "explicit.stat_3102860761",
+    ) == 20.0
+    assert _value_for_template(
+        "移動中に地面に燃焼領域を生成し、毎秒100の火ダメージを4秒間与える",
+        "移動中に地面に燃焼領域を生成し、毎秒#の火ダメージを#秒間与える",
+        "explicit.stat_3595254837",
+    ) is None
+
+
 def test_japanese_trade_item_label_uses_unique_name_and_regular_type():
     with (
         patch(

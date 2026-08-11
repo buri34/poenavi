@@ -13,6 +13,7 @@ from typing import Iterable
 INDEX_PATH = Path(__file__).resolve().parents[2] / "data" / "poetore" / "mod_metadata.json"
 PSEUDO_RELATIONS_PATH = Path(__file__).resolve().parents[2] / "data" / "poetore" / "pseudo_relations.json"
 PSEUDO_DEFINITIONS_PATH = Path(__file__).resolve().parents[2] / "data" / "poetore" / "pseudo_definitions.json"
+MULTI_VALUE_RULES_PATH = Path(__file__).resolve().parents[2] / "data" / "poetore" / "multi_value_rules.json"
 
 
 @lru_cache(maxsize=4)
@@ -102,6 +103,17 @@ def pseudo_definitions(path: Path | None = None) -> tuple[dict, ...]:
     if not path.exists():
         return ()
     return tuple(dict(row) for row in _load_payload(str(path)).get("definitions", ()))
+
+
+def multi_value_rule(stat_id: str, path: Path | None = None) -> dict | None:
+    """レビュー済みの複数可変値Stat解釈ルールを返す。"""
+    path = (path or MULTI_VALUE_RULES_PATH).resolve()
+    if not stat_id or not path.exists():
+        return None
+    for row in _load_payload(str(path)).get("rules", ()):
+        if str(row.get("stat_id", "")) == stat_id:
+            return dict(row)
+    return None
 
 
 def validate_pseudo_payload(payload: dict, official_stat_ids: set[str] | None = None) -> list[str]:

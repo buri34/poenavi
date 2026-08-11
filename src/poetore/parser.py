@@ -5,7 +5,12 @@ from functools import lru_cache
 import re
 
 from .models import ItemModifier, ParsedItem
-from .metadata import default_metadata_index, gem_metadata, normalize_stat_text
+from .metadata import (
+    default_metadata_index,
+    gem_metadata,
+    multi_value_rule,
+    normalize_stat_text,
+)
 
 
 class ItemParseError(ValueError):
@@ -432,6 +437,19 @@ def _modifier_values(line: str, metadata) -> tuple[float, ...]:
     if metadata:
         template_values = _values_for_matched_template(line, metadata.japanese)
         if template_values is not None:
+            rule = multi_value_rule(metadata.stat_id)
+            if rule:
+                operation = rule.get("operation")
+                if operation == "blank":
+                    return ()
+                if operation == "first":
+                    return (template_values[0],)
+                if operation == "mean":
+                    return (sum(template_values) / len(template_values),)
+                if operation == "index":
+                    return (template_values[int(rule["value_index"])],)
+                if operation == "half_second":
+                    return (template_values[1] / 2,)
             matching_templates = tuple(
                 template for template in metadata.japanese
                 if normalize_stat_text(template) == normalize_stat_text(line)

@@ -72,6 +72,41 @@ class PoetoreParserTest(unittest.TestCase):
             (4.0, 20.0),
         )
 
+    def test_reviewed_multiple_placeholder_rules_are_applied(self):
+        cases = (
+            (
+                "crafted.stat_1445684883",
+                "ブロック時に#から#の物理ダメージをアタックしてきた敵に反射する",
+                "ブロック時に6から12の物理ダメージをアタックしてきた敵に反射する",
+                (6.0,),
+            ),
+            (
+                "explicit.stat_1445684883",
+                "ブロック時に#から#の物理ダメージをアタックしてきた敵に反射する",
+                "ブロック時に6から12の物理ダメージをアタックしてきた敵に反射する",
+                (9.0,),
+            ),
+            (
+                "explicit.stat_3102860761",
+                "トラップを投げると#秒間移動スピードが#%増加する",
+                "トラップを投げると4秒間移動スピードが20%増加する",
+                (20.0,),
+            ),
+            (
+                "explicit.stat_3595254837",
+                "移動中に地面に燃焼領域を生成し、毎秒#の火ダメージを#秒間与える",
+                "移動中に地面に燃焼領域を生成し、毎秒100の火ダメージを4秒間与える",
+                (),
+            ),
+        )
+        for stat_id, template, line, expected in cases:
+            metadata = ModMetadata(
+                ref="test", stat_id=stat_id, kind=stat_id.split(".", 1)[0],
+                japanese=(template,),
+            )
+            with self.subTest(stat_id=stat_id):
+                self.assertEqual(_modifier_values(line, metadata), expected)
+
     def test_template_extraction_ignores_roll_range(self):
         self.assertEqual(
             _values_for_matched_template(

@@ -17,7 +17,8 @@ import urllib3
 from .models import ParsedItem
 from .performance import SearchPerformanceTrace
 from .metadata import (
-    base_armour_bounds, default_metadata_index, gem_metadata, normalize_stat_text,
+    base_armour_bounds, default_metadata_index, gem_metadata, multi_value_rule,
+    normalize_stat_text,
     pseudo_definitions, pseudo_relations, unique_fixed_stats, unique_icon_url,
 )
 
@@ -1077,7 +1078,7 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
         candidates = candidates[:1]
         entry = candidates[0]
         entry_text = str(entry.get("text", ""))
-        value = _value_for_template(modifier.text, entry_text)
+        value = _value_for_template(modifier.text, entry_text, modifier.stat_id)
         if value is None and (
             "#" in entry_text
             or modifier.option_value is not None
@@ -1932,21 +1933,37 @@ def _indexed_stat_text(text: str, kind: str) -> str:
     return _normalized_stat_text(text)
 
 
-def _value_for_template(source: str, template: str) -> float | None:
+def _value_for_template(
+    source: str, template: str, stat_id: str | None = None,
+) -> float | None:
     source = re.sub(r"\([^)]*(?:\d|implicit|crafted|enchant)[^)]*\)", "", source, flags=re.IGNORECASE).strip()
     template = template.replace(" (ローカル)", "").strip()
     pattern = re.escape(template).replace(r"\#", r"(-?\d+(?:\.\d+)?)")
     match = re.fullmatch(pattern, source)
     if not match or not match.groups():
         return None
+    values = tuple(float(value) for value in match.groups())
+    rule = multi_value_rule(stat_id or "")
+    if rule:
+        operation = rule.get("operation")
+        if operation == "blank":
+            return None
+        if operation == "first":
+            return values[0]
+        if operation == "mean":
+            return sum(values) / len(values)
+        if operation == "index":
+            return values[int(rule["value_index"])]
+        if operation == "half_second":
+            return values[1] / 2
     if (
         len(match.groups()) == 2
         and "#から#" in template
         and "ダメージ" in template
         and "反射する" not in template
     ):
-        return (float(match.group(1)) + float(match.group(2))) / 2
-    return float(match.group(1))
+        return (values[0] + values[1]) / 2
+    return values[0]
 
 
 def _trade_stat_entries() -> tuple[dict, ...]:
@@ -2954,7 +2971,7 @@ def resolve_trade_stat_filters(
                 # DPS・APS・クリ率・防御値へ反映済みなので二重条件化しない。
                 continue
             entry_text = str(entry.get("text", ""))
-            value = _value_for_template(modifier.text, entry_text)
+            value = _value_for_template(modifier.text, entry_text, modifier.stat_id)
             if value is None and (
                 "#" in entry_text
                 or modifier.option_value is not None

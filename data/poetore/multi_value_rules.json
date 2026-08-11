@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "stat_id": "crafted.stat_1445684883",
+      "operation": "half_second",
+      "decision": "２番目の数字を２で割った値"
+    },
+    {
+      "stat_id": "explicit.stat_2970307386",
+      "operation": "mean",
+      "decision": "平均値でいい"
+    },
+    {
+      "stat_id": "explicit.stat_1243237244",
+      "operation": "mean",
+      "decision": "平均値でいい"
+    },
+    {
+      "stat_id": "explicit.stat_902577520",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "explicit.stat_3128272024",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "explicit.stat_1051688002",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "explicit.stat_1312481589",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "explicit.stat_1381972535",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "explicit.stat_2513998383",
+      "operation": "index",
+      "decision": "「#%」のほうの値を使う",
+      "value_index": 1
+    },
+    {
+      "stat_id": "explicit.stat_144887967",
+      "operation": "index",
+      "decision": "「#%」のほうの値を使う",
+      "value_index": 0
+    },
+    {
+      "stat_id": "explicit.stat_3102860761",
+      "operation": "index",
+      "decision": "「#%」のほうの値を使う",
+      "value_index": 1
+    },
+    {
+      "stat_id": "explicit.stat_3281809492",
+      "operation": "blank",
+      "decision": "検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい"
+    },
+    {
+      "stat_id": "explicit.stat_1445684883",
+      "operation": "mean",
+      "decision": "平均値でいい"
+    },
+    {
+      "stat_id": "explicit.stat_723388324",
+      "operation": "index",
+      "decision": "「#%」のほうの値を使う",
+      "value_index": 1
+    },
+    {
+      "stat_id": "explicit.stat_4031081471",
+      "operation": "blank",
+      "decision": "検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい"
+    },
+    {
+      "stat_id": "explicit.stat_611792282",
+      "operation": "blank",
+      "decision": "検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい"
+    },
+    {
+      "stat_id": "explicit.stat_3869628136",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "explicit.stat_182714578",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "explicit.stat_1156957589",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "explicit.stat_3018691556",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "explicit.stat_3595254837",
+      "operation": "blank",
+      "decision": "検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい"
+    },
+    {
+      "stat_id": "explicit.stat_3430460307",
+      "operation": "mean",
+      "decision": "平均値でいい"
+    },
+    {
+      "stat_id": "explicit.stat_13590525",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "explicit.stat_1563068812",
+      "operation": "blank",
+      "decision": "検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい"
+    },
+    {
+      "stat_id": "fractured.stat_902577520",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "fractured.stat_3128272024",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "fractured.stat_1051688002",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "fractured.stat_1312481589",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "fractured.stat_4031081471",
+      "operation": "blank",
+      "decision": "検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい"
+    },
+    {
+      "stat_id": "fractured.stat_3869628136",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "fractured.stat_182714578",
+      "operation": "first",
+      "decision": "１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい"
+    },
+    {
+      "stat_id": "fractured.stat_3595254837",
+      "operation": "blank",
+      "decision": "検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい"
+    },
+    {
+      "stat_id": "fractured.stat_1563068812",
+      "operation": "blank",
+      "decision": "検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい"
+    },
+    {
+      "stat_id": "implicit.stat_3281809492",
+      "operation": "blank",
+      "decision": "検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい"
+    },
+    {
+      "stat_id": "implicit.stat_1445684883",
+      "operation": "mean",
+      "decision": "平均値でいい"
+    },
+    {
+      "stat_id": "implicit.stat_723388324",
+      "operation": "index",
+      "decision": "「#%」のほうの値を使う",
+      "value_index": 1
+    }
+  ]
+}

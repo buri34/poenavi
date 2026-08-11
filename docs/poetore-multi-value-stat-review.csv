@@ -1,72 +1,72 @@
 ﻿review_id,stat_id,kind,japanese_template,english_ref,placeholder_count,fixed_numbers,current_value_behavior,reviewer_decision,review_notes
-1,crafted.stat_1445684883,crafted,ブロック時に#から#の物理ダメージをアタックしてきた敵に反射する,Reflects # to # Physical Damage to Attackers on Block,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-2,explicit.stat_2970307386,explicit,#から#の物理ダメージを近接アタックしてきた敵に反射する,Reflects # to # Physical Damage to Melee Attackers,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-3,explicit.stat_1243237244,explicit,#から#の雷ダメージを近接アタックしてきた敵に反射する,Reflects # to # Lightning Damage to Melee Attackers,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+1,crafted.stat_1445684883,crafted,ブロック時に#から#の物理ダメージをアタックしてきた敵に反射する,Reflects # to # Physical Damage to Attackers on Block,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,２番目の数字を２で割った値,
+2,explicit.stat_2970307386,explicit,#から#の物理ダメージを近接アタックしてきた敵に反射する,Reflects # to # Physical Damage to Melee Attackers,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,平均値でいい,
+3,explicit.stat_1243237244,explicit,#から#の雷ダメージを近接アタックしてきた敵に反射する,Reflects # to # Lightning Damage to Melee Attackers,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,平均値でいい,
 4,explicit.stat_902577520,explicit,"エリアがロックダウン状態でない時に移動スピードが#%増加する
 エリアがロックダウン状態でない時に全てのプレイヤーの移動スピードが#%増加する","#% increased Movement Speed while area is not in Lockdown
-Players have #% increased Movement Speed while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Players have #% increased Movement Speed while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
 5,explicit.stat_3128272024,explicit,"エリアがロックダウン状態でない時はクリティカルダメージ倍率が+#%になる
 エリアがロックダウン状態でない時は全てのプレイヤーのクリティカルダメージ倍率が+#%になる","+#% to Critical Strike Multiplier while area is not in Lockdown
-Players have +#% to Critical Strike Multiplier while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Players have +#% to Critical Strike Multiplier while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
 6,explicit.stat_1051688002,explicit,"エリアがロックダウン状態でない時はクリティカル率が#%増加する
 エリアがロックダウン状態でない時は全てのプレイヤーのクリティカル率が#%増加する","#% increased Critical Strike Chance while area is not in Lockdown
-Players have #% increased Critical Strike Chance while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Players have #% increased Critical Strike Chance while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
 7,explicit.stat_1312481589,explicit,"エリアがロックダウン状態でない時はダメージが#%増加する
 エリアがロックダウン状態でない時は全てのプレイヤーのダメージが#%増加する","#% increased Damage while area is not in Lockdown
-Players deal #% increased Damage while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-8,explicit.stat_1381972535,explicit,グローバル最大エナジーシールドが#%増加し、雷耐性が#%減少する,#% increased Global maximum Energy Shield and reduced Lightning Resistance,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Players deal #% increased Damage while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
+8,explicit.stat_1381972535,explicit,グローバル最大エナジーシールドが#%増加し、雷耐性が#%減少する,#% increased Global maximum Energy Shield and reduced Lightning Resistance,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
 9,explicit.stat_2513998383,explicit,"スキルの初期コストまたはスキルをトリガーして最低#のライフを使用した時に#%の確率で
 ソケットされたスペルをトリガーする。クールダウンは0.1秒","#% chance to Trigger Socketed Spells when you Spend at least # Life on an
-Upfront Cost to Use or Trigger a Skill, with a 0.1 second Cooldown",2,0.1,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-10,explicit.stat_144887967,explicit,トラップが敵により作動した時に#%の確率で透明化を#秒間獲得する,#% chance to gain Phasing for # seconds when your Trap is triggered by an Enemy,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-11,explicit.stat_3102860761,explicit,トラップを投げると#秒間移動スピードが#%増加する,#% increased Movement Speed for # seconds on Throwing a Trap,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-12,explicit.stat_3281809492,explicit,ヒットを受けた時に再びヒットを受けるまで移動スピードが#%減少した値から#%増加した値の間のランダムな数値になる,"When Hit, gain a random Movement Speed modifier from #% reduced to #% increased, until Hit again",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-13,explicit.stat_1445684883,explicit,ブロック時に#から#の物理ダメージをアタックしてきた敵に反射する,Reflects # to # Physical Damage to Attackers on Block,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Upfront Cost to Use or Trigger a Skill, with a 0.1 second Cooldown",2,0.1,未変更（従来どおり本文の先頭数値を検索値に使用）,「#%」のほうの値を使う,
+10,explicit.stat_144887967,explicit,トラップが敵により作動した時に#%の確率で透明化を#秒間獲得する,#% chance to gain Phasing for # seconds when your Trap is triggered by an Enemy,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,「#%」のほうの値を使う,
+11,explicit.stat_3102860761,explicit,トラップを投げると#秒間移動スピードが#%増加する,#% increased Movement Speed for # seconds on Throwing a Trap,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,「#%」のほうの値を使う,
+12,explicit.stat_3281809492,explicit,ヒットを受けた時に再びヒットを受けるまで移動スピードが#%減少した値から#%増加した値の間のランダムな数値になる,"When Hit, gain a random Movement Speed modifier from #% reduced to #% increased, until Hit again",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい,
+13,explicit.stat_1445684883,explicit,ブロック時に#から#の物理ダメージをアタックしてきた敵に反射する,Reflects # to # Physical Damage to Attackers on Block,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,平均値でいい,
 14,explicit.stat_723388324,explicit,"プレイヤーが#以上のマナをスキルの起動時コストとしてまたはスキルをトリガーするために消費すると
 #%の確率でソケットされたスペルをトリガーする。クールダウンは0.1秒","#% chance to Trigger Socketed Spells when you Spend at least # Mana on an
-Upfront Cost to Use or Trigger a Skill, with a 0.1 second Cooldown",2,0.1,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-15,explicit.stat_4031081471,explicit,プレイヤーは敵を倒した時に#の混沌継続ダメージを#秒間受ける,You take # Chaos Damage per second for # seconds on Kill,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-16,explicit.stat_611792282,explicit,マップに出現する、報酬を持っているリージョンモンスターは#%の確率で追加の報酬を2個持ち、報酬を持っていなければ#%の確率で追加の報酬を1個持つ,"Legion Monsters in your Maps which have Rewards have #% chance to gain two additional Rewards, and if not have #% chance to gain one additional Reward",2,2 | 1,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Upfront Cost to Use or Trigger a Skill, with a 0.1 second Cooldown",2,0.1,未変更（従来どおり本文の先頭数値を検索値に使用）,「#%」のほうの値を使う,
+15,explicit.stat_4031081471,explicit,プレイヤーは敵を倒した時に#の混沌継続ダメージを#秒間受ける,You take # Chaos Damage per second for # seconds on Kill,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい,
+16,explicit.stat_611792282,explicit,マップに出現する、報酬を持っているリージョンモンスターは#%の確率で追加の報酬を2個持ち、報酬を持っていなければ#%の確率で追加の報酬を1個持つ,"Legion Monsters in your Maps which have Rewards have #% chance to gain two additional Rewards, and if not have #% chance to gain one additional Reward",2,2 | 1,未変更（従来どおり本文の先頭数値を検索値に使用）,検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい,
 17,explicit.stat_3869628136,explicit,"冷却状態で使用すると冷却の完全無効化を#秒間付与する
 凍結状態で使用すると凍結の完全無効化を#秒間付与する","Grants Immunity to Chill for # seconds if used while Chilled
-Grants Immunity to Freeze for # seconds if used while Frozen",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Grants Immunity to Freeze for # seconds if used while Frozen",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
 18,explicit.stat_182714578,explicit,"出血状態で使用すると出血の完全無効化を#秒間付与する
 穢れた血の影響下で使用すると穢れた血の完全無効化を#秒間付与する","Grants Immunity to Bleeding for # seconds if used while Bleeding
-Grants Immunity to Corrupted Blood for # seconds if used while affected by Corrupted Blood",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-19,explicit.stat_1156957589,explicit,最大マナが#%増加し、冷気耐性が#%減少する,#% increased maximum Mana and reduced Cold Resistance,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-20,explicit.stat_3018691556,explicit,最大ライフが#%増加し、火耐性が#%減少する,#% increased maximum Life and reduced Fire Resistance,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-21,explicit.stat_3595254837,explicit,移動中に地面に燃焼領域を生成し、毎秒#の火ダメージを#秒間与える,"Drops Burning Ground while moving, dealing # Fire Damage per second for # second",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Grants Immunity to Corrupted Blood for # seconds if used while affected by Corrupted Blood",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
+19,explicit.stat_1156957589,explicit,最大マナが#%増加し、冷気耐性が#%減少する,#% increased maximum Mana and reduced Cold Resistance,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
+20,explicit.stat_3018691556,explicit,最大ライフが#%増加し、火耐性が#%減少する,#% increased maximum Life and reduced Fire Resistance,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
+21,explicit.stat_3595254837,explicit,移動中に地面に燃焼領域を生成し、毎秒#の火ダメージを#秒間与える,"Drops Burning Ground while moving, dealing # Fire Damage per second for # second",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい,
 22,explicit.stat_3430460307,explicit,範囲内のノータブルパッシブスキルは代わりに以下を付与するよう変更: スキルのマナコスト#%増加する、スペルダメージ#%増加する,"Notable Passive Skills in Radius are Transformed to
-instead grant: #% increased Mana Cost of Skills and #% increased Spell Damage",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+instead grant: #% increased Mana Cost of Skills and #% increased Spell Damage",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,平均値でいい,
 23,explicit.stat_13590525,explicit,"聖なるウィスプの最大召喚数 +#体
 聖なるウィスプの召喚数 +#体","+# to maximum number of Sacred Wisps
-+# to number of Sacred Wisps Summoned",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
++# to number of Sacred Wisps Summoned",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
 24,explicit.stat_1563068812,explicit,近接武器によるアタックで生成したそれぞれの投射物のスピードは#%上昇した値から#%低下した値の間のランダムな数値になる,"Each Projectile created by Attacks you make with a Melee Weapon has
-between #% more and #% less Projectile Speed at random",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+between #% more and #% less Projectile Speed at random",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい,
 25,fractured.stat_902577520,fractured,"エリアがロックダウン状態でない時に移動スピードが#%増加する
 エリアがロックダウン状態でない時に全てのプレイヤーの移動スピードが#%増加する","#% increased Movement Speed while area is not in Lockdown
-Players have #% increased Movement Speed while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Players have #% increased Movement Speed while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
 26,fractured.stat_3128272024,fractured,"エリアがロックダウン状態でない時はクリティカルダメージ倍率が+#%になる
 エリアがロックダウン状態でない時は全てのプレイヤーのクリティカルダメージ倍率が+#%になる","+#% to Critical Strike Multiplier while area is not in Lockdown
-Players have +#% to Critical Strike Multiplier while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Players have +#% to Critical Strike Multiplier while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
 27,fractured.stat_1051688002,fractured,"エリアがロックダウン状態でない時はクリティカル率が#%増加する
 エリアがロックダウン状態でない時は全てのプレイヤーのクリティカル率が#%増加する","#% increased Critical Strike Chance while area is not in Lockdown
-Players have #% increased Critical Strike Chance while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Players have #% increased Critical Strike Chance while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
 28,fractured.stat_1312481589,fractured,"エリアがロックダウン状態でない時はダメージが#%増加する
 エリアがロックダウン状態でない時は全てのプレイヤーのダメージが#%増加する","#% increased Damage while area is not in Lockdown
-Players deal #% increased Damage while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-29,fractured.stat_4031081471,fractured,プレイヤーは敵を倒した時に#の混沌継続ダメージを#秒間受ける,You take # Chaos Damage per second for # seconds on Kill,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Players deal #% increased Damage while area is not in Lockdown",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
+29,fractured.stat_4031081471,fractured,プレイヤーは敵を倒した時に#の混沌継続ダメージを#秒間受ける,You take # Chaos Damage per second for # seconds on Kill,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい,
 30,fractured.stat_3869628136,fractured,"冷却状態で使用すると冷却の完全無効化を#秒間付与する
 凍結状態で使用すると凍結の完全無効化を#秒間付与する","Grants Immunity to Chill for # seconds if used while Chilled
-Grants Immunity to Freeze for # seconds if used while Frozen",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Grants Immunity to Freeze for # seconds if used while Frozen",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
 31,fractured.stat_182714578,fractured,"出血状態で使用すると出血の完全無効化を#秒間付与する
 穢れた血の影響下で使用すると穢れた血の完全無効化を#秒間付与する","Grants Immunity to Bleeding for # seconds if used while Bleeding
-Grants Immunity to Corrupted Blood for # seconds if used while affected by Corrupted Blood",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-32,fractured.stat_3595254837,fractured,移動中に地面に燃焼領域を生成し、毎秒#の火ダメージを#秒間与える,"Drops Burning Ground while moving, dealing # Fire Damage per second for # second",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Grants Immunity to Corrupted Blood for # seconds if used while affected by Corrupted Blood",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,１つ目の値と２つ目の値は同じ値になるため、現状と同じ仕様でよい,
+32,fractured.stat_3595254837,fractured,移動中に地面に燃焼領域を生成し、毎秒#の火ダメージを#秒間与える,"Drops Burning Ground while moving, dealing # Fire Damage per second for # second",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい,
 33,fractured.stat_1563068812,fractured,近接武器によるアタックで生成したそれぞれの投射物のスピードは#%上昇した値から#%低下した値の間のランダムな数値になる,"Each Projectile created by Attacks you make with a Melee Weapon has
-between #% more and #% less Projectile Speed at random",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-34,implicit.stat_3281809492,implicit,ヒットを受けた時に再びヒットを受けるまで移動スピードが#%減少した値から#%増加した値の間のランダムな数値になる,"When Hit, gain a random Movement Speed modifier from #% reduced to #% increased, until Hit again",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
-35,implicit.stat_1445684883,implicit,ブロック時に#から#の物理ダメージをアタックしてきた敵に反射する,Reflects # to # Physical Damage to Attackers on Block,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+between #% more and #% less Projectile Speed at random",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい,
+34,implicit.stat_3281809492,implicit,ヒットを受けた時に再びヒットを受けるまで移動スピードが#%減少した値から#%増加した値の間のランダムな数値になる,"When Hit, gain a random Movement Speed modifier from #% reduced to #% increased, until Hit again",2,,未変更（従来どおり本文の先頭数値を検索値に使用）,検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい,
+35,implicit.stat_1445684883,implicit,ブロック時に#から#の物理ダメージをアタックしてきた敵に反射する,Reflects # to # Physical Damage to Attackers on Block,2,,未変更（従来どおり本文の先頭数値を検索値に使用）,平均値でいい,
 36,implicit.stat_723388324,implicit,"プレイヤーが#以上のマナをスキルの起動時コストとしてまたはスキルをトリガーするために消費すると
 #%の確率でソケットされたスペルをトリガーする。クールダウンは0.1秒","#% chance to Trigger Socketed Spells when you Spend at least # Mana on an
-Upfront Cost to Use or Trigger a Skill, with a 0.1 second Cooldown",2,0.1,未変更（従来どおり本文の先頭数値を検索値に使用）,,
+Upfront Cost to Use or Trigger a Skill, with a 0.1 second Cooldown",2,0.1,未変更（従来どおり本文の先頭数値を検索値に使用）,「#%」のほうの値を使う,

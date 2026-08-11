@@ -1,7 +1,7 @@
 import csv
 import json
 
-from scripts.export_poetore_multi_value_review import build_rows, export_review
+from scripts.export_poetore_multi_value_review import build_rows, build_rules, export_review
 
 
 def test_build_rows_excludes_single_and_handled_added_damage_ranges():
@@ -35,3 +35,18 @@ def test_export_review_writes_excel_friendly_csv(tmp_path):
     with output.open(encoding="utf-8-sig", newline="") as handle:
         rows = list(csv.DictReader(handle))
     assert rows[0]["japanese_template"] == "#秒間、効果が#%増加する"
+
+
+def test_build_rules_maps_review_decisions_and_percentage_position():
+    rows = [
+        {"stat_id": "explicit.percent", "japanese_template": "#秒間、効果が#%増加する",
+         "reviewer_decision": "「#%」のほうの値を使う"},
+        {"stat_id": "explicit.blank", "japanese_template": "毎秒#を#秒間与える",
+         "reviewer_decision": "検索条件がまったく意味わからないので、検索値のデフォルトは空白でよい"},
+    ]
+
+    rules = build_rules(rows)["rules"]
+
+    assert rules[0]["operation"] == "index"
+    assert rules[0]["value_index"] == 1
+    assert rules[1]["operation"] == "blank"
