@@ -2726,11 +2726,16 @@ def test_hidden_window_still_sizes_repeated_item_mod_rows_to_content(qapp):
             for index in range(10)
         )
 
-        window._populate_stat_filters(filters)
+        with patch(
+            "src.poetore.ui._auto_mod_layout_sizes",
+            return_value=(500, 180, 800),
+        ) as layout_sizes:
+            window._populate_stat_filters(filters)
 
         assert not window.mod_filter_tree.isHidden()
         assert window._visible_mod_content_height() > 400
-        assert window.mod_filter_tree.maximumHeight() > 400
+        assert layout_sizes.call_args.kwargs["content_height"] > 400
+        assert window.mod_filter_tree.maximumHeight() == 500
     finally:
         window.close()
 
