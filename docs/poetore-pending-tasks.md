@@ -62,8 +62,9 @@ Requirement Levelは別途製品判断するため、この作業票の試験対
 - [x] 固定EE2、最新EE2、公式Trade2 metadata、実装済みコードを再照合した。最新EE2 `dev`は
       固定revisionと同一、公式Trade2はentry順序以外の意味差分0件だった。詳細は
       `docs/poetore-poe2-upstream-delta-audit-2026-08-11.md`を参照する
-- [ ] Price trend、Related Items、結果Tooltip等の補助機能をコードと文書で再棚卸しし、
-      既に実装済みの項目を残タスクから除外する
+- [x] Price trend、Related Items、結果Tooltip等の補助機能を再棚卸しした。Price trendは実装済み、
+      Related Itemsと結果Tooltipは未実装、結果一覧は一部実装、poeprices.infoは最新EE2でも無効のため
+      parity対象外と整理した。詳細は`docs/poetore-poe2-auxiliary-features-audit-2026-08-11.md`を参照する
 
 ### P0: Valdo Mapの報酬条件検索
 

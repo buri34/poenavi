@@ -194,19 +194,14 @@ Map Fragment 8種、Pinnacle Key 7種、Vault Key 9種はpoe.ninja Currency Exch
 An Audience with the King、Head of the King、Idol of Estazunti、Breachstoneはゲーム内交換対象だが
 poe.ninja未収録のため残タスクとする。実コピーfixtureは引き続き収集する。
 
-### 3.9 低～中優先度: EE2の補助機能で未実装のもの
+### 3.9 低～中優先度: EE2の補助機能
 
-価格検索コアとは別に、EE2には次の機能がある。
+2026-08-11に再棚卸しした結果、Price trendと結果一覧の主要情報はPoE2へ実装済みだった。
+poeprices.info予測は最新EE2でも無効化されており、PoE2 parityの残タスクにはしない。
 
-- Price trend表示
-- Related Items
-- poeprices.info予測
-- ゲーム内風Tooltip
-- Seller account、Gold fee、Sale type、API側Collapse等の詳細条件
-- より豊富な結果表示
-
-これらはPoE2仕様への必須追従ではなく、製品機能差である。現状の検索正確性を直した後に、
-必要性があるものだけ個別判断すればよい。
+残る主要差分はRelated Items、検索結果のゲーム内風Tooltip、Seller／出品状態の追加表示である。
+API Collapse、Stack総額、Wiki／PoE2DB導線は低優先度の個別判断とする。詳細は
+`docs/poetore-poe2-auxiliary-features-audit-2026-08-11.md`を参照する。
 
 ## 4. PoE1 v3.2.2との差分
 
