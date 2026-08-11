@@ -179,6 +179,8 @@ def test_action_cluster_uses_consistent_spacing_at_every_display_size(
         qapp.processEvents()
         zero_margins = (0, 0, 0, 0)
 
+        assert _ACTION_CLUSTER_HORIZONTAL_GAP == 6
+        assert _ACTION_CLUSTER_VERTICAL_GAP == 10
         assert window.action_cluster_layout.spacing() == _ACTION_CLUSTER_VERTICAL_GAP
         assert window.mod_conditions_actions_layout.spacing() == _ACTION_CLUSTER_HORIZONTAL_GAP
         assert window.trade_action_layout.spacing() == _ACTION_CLUSTER_HORIZONTAL_GAP
