@@ -122,6 +122,7 @@ PoENaviのPoE2 fetch処理は、一覧表示に必要な値へ変換した後、
 Fractured／Explicit／Desecrated／Mutated／Veiled ModをHoverまたはShift+Hoverで表示する。
 
 価値は高いが、表示UIだけでなくfetchモデルと日英表示処理の拡張が必要。優先度は中～高。
+2026-08-11、鰤さん判断により正式な残タスクへ追加した。
 
 ### Seller表示と出品状態
 

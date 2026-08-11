@@ -65,6 +65,8 @@ Requirement Levelは別途製品判断するため、この作業票の試験対
 - [x] Price trend、Related Items、結果Tooltip等の補助機能を再棚卸しした。Price trendは実装済み、
       Related Itemsと結果Tooltipは未実装、結果一覧は一部実装、poeprices.infoは最新EE2でも無効のため
       parity対象外と整理した。詳細は`docs/poetore-poe2-auxiliary-features-audit-2026-08-11.md`を参照する
+- [ ] PoE2検索結果の各出品へ、実ItemのProperty、Socket、Implicit、Explicit、Tier、状態を確認できる
+      ゲーム内風Tooltipを追加する。表示はHover／Shift+Hoverを候補とし、横幅を増やさず詳細確認できる形にする
 
 ### P0: Valdo Mapの報酬条件検索
 
