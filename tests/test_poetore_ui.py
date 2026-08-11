@@ -5705,6 +5705,28 @@ def test_header_shows_rare_waystone_base_instead_of_affix_name(qapp):
         window.close()
 
 
+def test_poe2_nonunique_equipment_scope_uses_japanese_base_name(qapp):
+    from src.poetore.poe2.parser import parse_item_text as parse_poe2_item_text
+
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    item = parse_poe2_item_text(text)
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window._update_item_header(item)
+
+        assert item.base_type == "Soaring Spear"
+        assert window.base_scope_toggle.itemText(0) == "飛翔のスピア"
+        assert window.base_scope_toggle.itemText(1) == "すべてのスピア"
+
+        flying = replace(item, base_type="Flying Spear", raw_text="flying-spear")
+        window._update_item_header(flying)
+        assert window.base_scope_toggle.itemText(0) == "フレイングスピア"
+    finally:
+        window.close()
+
+
 def test_nonunique_jewels_use_category_search_but_cluster_and_unique_stay_exact(qapp):
     window = PoetoreWindow()
     try:

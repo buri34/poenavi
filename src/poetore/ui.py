@@ -55,7 +55,10 @@ from .trade import (
 )
 from .poe_ninja import PoeNinjaPrice, default_poe_ninja_service, is_poe2_exchange_price_item
 from .metadata import related_item_group
-from .poe2.metadata import related_item_group as poe2_related_item_group
+from .poe2.metadata import (
+    related_item_group as poe2_related_item_group,
+    resolve_identity as resolve_poe2_identity,
+)
 from .performance import SearchPerformanceTrace, start_search_trace
 
 
@@ -2425,6 +2428,11 @@ class PoetoreWindow(QWidget):
                 return f"ウェイストーン (ティア{match.group(1)})"
         if re.search(r"[\u3040-\u30ff\u3400-\u9fff]", candidate):
             return candidate.split()[-1]
+        if self.poe_version == POE2:
+            identity = resolve_poe2_identity(candidate, "ITEM")
+            localized = str((identity or {}).get("names", {}).get("ja", "")).strip()
+            if localized:
+                return localized
         if item.name == item.base_type and self._trade_base_type:
             return self._trade_base_type
         return candidate
