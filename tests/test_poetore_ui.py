@@ -2714,6 +2714,27 @@ def test_mod_conditions_default_is_reset_for_each_new_item(qapp):
         window.close()
 
 
+def test_hidden_window_still_sizes_repeated_item_mod_rows_to_content(qapp):
+    window = PoetoreWindow()
+    try:
+        window.hide()
+        filters = tuple(
+            TradeStatFilter(
+                f"explicit.stat_{index}", f"テストMod {index}", index,
+                "prefix", index < 3,
+            )
+            for index in range(10)
+        )
+
+        window._populate_stat_filters(filters)
+
+        assert not window.mod_filter_tree.isHidden()
+        assert window._visible_mod_content_height() > 400
+        assert window.mod_filter_tree.maximumHeight() > 400
+    finally:
+        window.close()
+
+
 def test_mod_condition_checks_toggle_all_without_changing_item_level(qapp):
     window = PoetoreWindow()
     try:

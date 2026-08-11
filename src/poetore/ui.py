@@ -2152,7 +2152,11 @@ class PoetoreWindow(QWidget):
         self._adjust_window_height_to_mod_rows()
 
     def _visible_mod_content_height(self) -> int:
-        if not self.mod_filter_tree.isVisible():
+        # Alt+Dの再取得中はトップレベルウィンドウが一時的に非表示でも、
+        # Mod一覧そのものが折り畳まれていなければ全行分の高さを計算する。
+        # QWidget.isVisible() は親ウィンドウの非表示まで反映するため、
+        # 同一アイテムの連続検索だけ既定高へ縮む原因になっていた。
+        if self.mod_filter_tree.isHidden():
             return 0
         height = self.mod_filter_tree.frameWidth() * 2 + 4
         default_row_height = self._scaled_display_value(_MOD_ROW_HEIGHT)
@@ -2181,7 +2185,7 @@ class PoetoreWindow(QWidget):
         available = screen.availableGeometry() if screen is not None else self.screen().availableGeometry()
         content_height = (
             self._visible_mod_content_height()
-            if self.mod_filter_tree.isVisible() else profile["mod_height"]
+            if not self.mod_filter_tree.isHidden() else profile["mod_height"]
         )
         related_visible = not self.related_items_panel.isHidden()
         price_height = profile["price_height"]
