@@ -2386,9 +2386,12 @@ class PoetoreWindow(QWidget):
                 return f"ヴァール{normal_japanese}"
 
         if self.poe_version == POE2:
+            is_unique = item.rarity.casefold() in {"unique", "ユニーク"}
+            is_unidentified_unique = is_unique and "unidentified" in item.flags
             namespace = (
-                "UNIQUE"
-                if item.rarity.casefold() in {"unique", "ユニーク"}
+                "ITEM"
+                if is_unidentified_unique
+                else "UNIQUE" if is_unique
                 else "GEM" if is_gem_category(item.category)
                 else "ITEM"
             )

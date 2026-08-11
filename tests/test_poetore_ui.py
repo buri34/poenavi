@@ -5780,6 +5780,24 @@ def test_poe2_item_header_uses_japanese_identity_for_all_item_kinds(qapp):
         window.close()
 
 
+def test_poe2_unidentified_unique_header_uses_japanese_base_name(qapp):
+    item = ParsedItem(
+        item_class="Talismans",
+        rarity="unique",
+        name="",
+        base_type="Nettle Talisman",
+        category="talisman",
+        flags=("unidentified",),
+        raw_text="unidentified unique talisman",
+    )
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window._update_item_header(item)
+        assert window.item_name_label.text() == "イラクサのタリスマン"
+    finally:
+        window.close()
+
+
 def test_nonunique_jewels_use_category_search_but_cluster_and_unique_stay_exact(qapp):
     window = PoetoreWindow()
     try:
