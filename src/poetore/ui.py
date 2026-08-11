@@ -3199,7 +3199,6 @@ class PoetoreWindow(QWidget):
             foreground if is_path_of_exile_window(foreground) else None
         )
         self._capture_keyboard = Controller()
-        self._capture_advanced_retry_started = False
         generation = getattr(self, "_capture_release_generation", 0) + 1
         self._capture_release_generation = generation
         self._capture_copy_started = False
@@ -3375,20 +3374,6 @@ class PoetoreWindow(QWidget):
         except (ItemParseError, ValueError) as error:
             if trace is not None:
                 trace.mark("clipboard_parse_failed")
-            if (
-                self.poe_version == POE2
-                and not getattr(self, "_capture_advanced_retry_started", False)
-            ):
-                # Some PoE2 Meta Gem surfaces do not place an item header on
-                # the clipboard for ordinary Ctrl+C. Retry once with the
-                # game's detailed-copy shortcut while PoE still has focus.
-                from pynput.keyboard import Key
-
-                self._capture_advanced_retry_started = True
-                if trace is not None:
-                    trace.mark("advanced_clipboard_retry_started")
-                self._send_copy((Key.ctrl, Key.alt, "c"), self._capture_item_copy)
-                return
             self._last_capture_parse_error = str(error)
             self._pending_performance_trace = None
             self._build_capture_error_dialog().exec()

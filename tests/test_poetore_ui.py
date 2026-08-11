@@ -268,63 +268,12 @@ def test_capture_failure_preserves_parser_reason_for_diagnostics(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     dialog = Mock()
     try:
-        window._capture_advanced_retry_started = True
         with patch("src.poetore.ui.read_item_clipboard", return_value="not an item"), patch.object(
             window, "_build_capture_error_dialog", return_value=dialog
         ):
             window._capture_item_copy()
 
         assert "class、rarity、identity" in window._last_capture_parse_error
-    finally:
-        window.close()
-
-
-def test_poe2_alt_d_retries_failed_normal_copy_with_detailed_copy(qapp):
-    window = PoetoreWindow(app_config={"poe_version": "poe2"})
-    try:
-        window._capture_advanced_retry_started = False
-        with patch("src.poetore.ui.read_item_clipboard", return_value="not an item"), patch.object(
-            window, "_send_copy"
-        ) as send_copy, patch.object(window, "_build_capture_error_dialog") as error_dialog:
-            window._capture_item_copy()
-
-        error_dialog.assert_not_called()
-        send_copy.assert_called_once()
-        keys, callback = send_copy.call_args.args
-        assert len(keys) == 3
-        assert keys[-1] == "c"
-        assert callback == window._capture_item_copy
-        assert window._capture_advanced_retry_started is True
-    finally:
-        window.close()
-
-
-def test_poe2_alt_d_applies_meta_gem_from_detailed_copy_retry(qapp):
-    window = PoetoreWindow(app_config={"poe_version": "poe2"})
-    copied = """レアリティ: ジェム
-ブラスファミー
---------
-バフ, 永続, 範囲効果, オーラ, メタ
-レベル: 10
---------
-装備条件：レベル 36, 65 知性
---------
-ソケット: G G
---------
-ソケットされたすべての呪いスキルを凶悪なオーラに変化させる。
-"""
-    try:
-        window._capture_advanced_retry_started = False
-        with patch(
-            "src.poetore.ui.read_item_clipboard", side_effect=["not an item", copied]
-        ), patch.object(
-            window, "_send_copy", side_effect=lambda _keys, callback: callback()
-        ), patch.object(window, "_build_capture_error_dialog") as error_dialog:
-            window._capture_item_copy()
-
-        error_dialog.assert_not_called()
-        assert window._parsed_item.category == "meta_gem"
-        assert window._parsed_item.base_type == "Blasphemy"
     finally:
         window.close()
 
