@@ -102,7 +102,6 @@ _MOD_TEXT_COLUMN_WIDTH = 320
 _MOD_VALUE_EDITOR_WIDTH = 48
 _MOD_VALUE_LEADING_GAP = 8
 _MOD_ROW_HEIGHT = 36
-_MOD_PROVENANCE_ROW_HEIGHT = 50
 _UNIQUE_ROLL_ROW_HEIGHT = 62
 _UNIQUE_CANDIDATE_ROW_HEIGHT = 64
 _UNIQUE_CANDIDATE_ROW_SPACING = 6
@@ -381,14 +380,14 @@ _FILTER_KIND_LABELS = {
     "mercenary": "MERCENARY",
 }
 
-_MOD_PROVENANCE_TAGS = {
-    "crafted": ("クラフト", "#3182CE", "#EBF8FF"),
-    "fractured": ("フラクチャー", "#F6E05E", "#171717"),
-    "desecrated": ("冒涜", "#22543D", "#C6F6D5"),
-}
-
-
 def _filter_kind_label(stat_filter: TradeStatFilter) -> str:
+    provenance_labels = tuple(
+        _FILTER_KIND_LABELS[provenance]
+        for provenance in stat_filter.provenance_tags
+        if provenance in {"crafted", "fractured", "desecrated"}
+    )
+    if provenance_labels:
+        return "／".join(dict.fromkeys(provenance_labels))
     kind = (
         stat_filter.generation
         if stat_filter.generation in _FILTER_KIND_LABELS
@@ -2045,60 +2044,6 @@ class PoetoreWindow(QWidget):
         )
         row.setFont(_MOD_COLUMN_KIND, font)
         row.setForeground(_MOD_COLUMN_KIND, QBrush(QColor("#98A39F")))
-
-    def _make_mod_text_with_provenance(
-        self,
-        stat_filter: TradeStatFilter,
-        checkbox: QCheckBox,
-        tooltip: str,
-    ) -> QWidget:
-        """EE2同様、Mod本文の下へ検索とは独立した生成由来タグを置く。"""
-        container = QWidget()
-        container.setObjectName("modTextWithProvenance")
-        container.setAutoFillBackground(True)
-        palette = container.palette()
-        palette.setColor(QPalette.Window, QColor("#121212"))
-        container.setPalette(palette)
-        container.setStyleSheet(
-            "QWidget#modTextWithProvenance { background-color: #121212; }"
-            "QWidget#modTextWithProvenance QLabel#modConditionText {"
-            " background-color: #121212; color: #d8ded4;"
-            "}"
-        )
-        layout = QVBoxLayout(container)
-        layout.setContentsMargins(2, 2, 2, 2)
-        layout.setSpacing(2)
-
-        text_label = QLabel(stat_filter.text)
-        text_label.setObjectName("modConditionText")
-        text_label.setToolTip(tooltip)
-        text_label.setCursor(Qt.PointingHandCursor)
-        text_label._mod_condition_checkbox = checkbox
-        text_label.installEventFilter(self)
-        layout.addWidget(text_label)
-
-        tags_widget = QWidget()
-        tags_widget.setObjectName("modProvenanceTags")
-        tags_layout = QHBoxLayout(tags_widget)
-        tags_layout.setContentsMargins(0, 0, 0, 0)
-        tags_layout.setSpacing(4)
-        for provenance in stat_filter.provenance_tags:
-            tag_data = _MOD_PROVENANCE_TAGS.get(provenance)
-            if tag_data is None:
-                continue
-            label, background, foreground = tag_data
-            tag = QLabel(label)
-            tag.setObjectName(f"modProvenanceTag_{provenance}")
-            tag.setAlignment(Qt.AlignCenter)
-            tag.setStyleSheet(
-                f"background: {background}; color: {foreground};"
-                " border-radius: 2px; padding: 0px 4px;"
-                " font-size: 10px; font-weight: 600;"
-            )
-            tags_layout.addWidget(tag)
-        tags_layout.addStretch(1)
-        layout.addWidget(tags_widget)
-        return container
 
     def _make_mod_value_cell(
         self, editor: QLineEdit, *, leading_gap: bool = False,
@@ -4886,20 +4831,6 @@ class PoetoreWindow(QWidget):
             self.mod_filter_tree.setItemWidget(
                 row, _MOD_COLUMN_CHECK, checkbox_container
             )
-            if stat_filter.provenance_tags:
-                text_widget = self._make_mod_text_with_provenance(
-                    stat_filter, checkbox, mod_tooltip,
-                )
-                self.mod_filter_tree.setItemWidget(
-                    row, _MOD_COLUMN_TEXT, text_widget,
-                )
-                row.setSizeHint(
-                    _MOD_COLUMN_TEXT,
-                    QSize(
-                        0,
-                        self._scaled_display_value(_MOD_PROVENANCE_ROW_HEIGHT),
-                    ),
-                )
             if tier_tags:
                 tier_widget = QWidget()
                 tier_layout = QHBoxLayout(tier_widget)

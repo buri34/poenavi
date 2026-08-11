@@ -2488,14 +2488,12 @@ def test_mod_filter_ui_keeps_diagnostics_internal_and_tooltip_simple(qapp):
         window.close()
 
 
-@pytest.mark.parametrize(("provenance", "label", "background"), [
-    ("crafted", "クラフト", "#3182CE"),
-    ("fractured", "フラクチャー", "#F6E05E"),
-    ("desecrated", "冒涜", "#22543D"),
+@pytest.mark.parametrize(("provenance", "label"), [
+    ("crafted", "クラフト"),
+    ("fractured", "フラクチャー"),
+    ("desecrated", "冒涜"),
 ])
-def test_mod_filter_ui_shows_ee2_style_provenance_tag(
-    qapp, provenance, label, background,
-):
+def test_mod_filter_ui_shows_provenance_in_kind_column(qapp, provenance, label):
     window = PoetoreWindow()
     try:
         source = TradeStatFilter(
@@ -2504,12 +2502,8 @@ def test_mod_filter_ui_shows_ee2_style_provenance_tag(
         )
         window._populate_stat_filters((source,))
         row = window.mod_filter_tree.topLevelItem(0)
-        text_widget = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_TEXT)
-        assert text_widget is not None
-        tag = text_widget.findChild(QLabel, f"modProvenanceTag_{provenance}")
-        assert tag is not None
-        assert tag.text() == label
-        assert background in tag.styleSheet()
+        assert row.text(_MOD_COLUMN_KIND) == label
+        assert window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_TEXT) is None
         assert row.text(_MOD_COLUMN_TEXT) == source.text
         assert window._selected_stat_filters()[0] == source
     finally:
@@ -2540,16 +2534,28 @@ def test_poe2_finished_filter_keeps_special_origin_visible_after_normalization(q
             row for row in rows
             if row.data(_MOD_COLUMN_CHECK, Qt.UserRole) == normalized.stat_id
         )
-        text_widget = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_TEXT)
-        assert text_widget.findChild(
-            QLabel, "modProvenanceTag_fractured"
-        ).text() == "フラクチャー"
+        assert row.text(_MOD_COLUMN_KIND) == "フラクチャー"
+        assert window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_TEXT) is None
         selected = next(
             row for row in window._selected_stat_filters()
             if row.stat_id == normalized.stat_id
         )
         assert selected.stat_id == "explicit.stat_2923486259"
         assert selected.provenance_tags == ("fractured",)
+    finally:
+        window.close()
+
+
+def test_mod_filter_ui_lists_merged_special_origins_in_kind_column(qapp):
+    window = PoetoreWindow()
+    try:
+        source = TradeStatFilter(
+            "explicit.stat_1", "混沌耐性 +21%", 21, "explicit", True,
+            provenance_tags=("crafted", "fractured"),
+        )
+        window._populate_stat_filters((source,))
+        row = window.mod_filter_tree.topLevelItem(0)
+        assert row.text(_MOD_COLUMN_KIND) == "クラフト／フラクチャー"
     finally:
         window.close()
 
