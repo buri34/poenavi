@@ -5,6 +5,9 @@
 ## 作業ファイル
 
 - `windows-test-cases.csv`: Windows実機の受入作業票（60ケース）
+- `search-matrix-audit.csv`: 装備27カテゴリのレアリティ／プリセット／検索範囲の構造監査結果
+- `search-matrix-audit.json`: 上記監査の機械可読サマリーと全行
+- `search-real-copy-audit.csv`: 日英実コピーfixtureの解析・最終Trade2 identity監査結果
 - `../../tests/fixtures/poe2/real_copy_bilingual.csv`: 収集済み日英実コピーの自動テスト用fixture台帳
 - `../poetore-pending-tasks.md`: ぽえとれ全体の残タスク正本
 - `../poetore-poe2-development.md`: PoE2版の実装・検証履歴
@@ -27,6 +30,25 @@
 - 推奨15件
 - 入手できた時2件
 - 2026-08-11時点では全件未実施
+
+## P0自動監査（2026-08-11）
+
+- 構造母集団351ケース
+- 自動検証済み297ケース
+- 仕様上対象外54ケース
+- 検出不具合0件
+- 日英実コピー台帳28組のうち22組を自動検証済み、6組は実コピー待ち
+
+構造監査は合成fixtureで分岐と最終Trade2 JSONを総当たりする。翻訳・identity・ゲーム内コピー固有の
+差異を合成fixtureだけで検証済みとは扱わない。UIは同じ27カテゴリをQt offscreenで自動監査し、
+Windowsでの見た目・操作感は`windows-test-cases.csv`に残す。
+
+再生成コマンド:
+
+```bash
+PYTHONPATH=. uv run --python 3.12 --with-requirements requirements.txt -- \
+  python -m src.poetore.poe2.audit
+```
 
 ## Windowsでの作業方法
 

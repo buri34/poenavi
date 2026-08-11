@@ -1,0 +1,29 @@
+﻿fixture_id,target,source_status,audit_status,ja_category,en_category,ja_base_type,en_base_type,trade_category,exact_type,notes
+FX001,Crossbow,未収集,自動検証済み,crossbow,crossbow,Flexed Crossbow,Flexed Crossbow,weapon.crossbow,Flexed Crossbow,日英解析と最終Trade2 identityが一致
+FX002,Flail,未収集,実コピー待ち,,,,,,,日英いずれかが空欄またはプレースホルダー
+FX003,Focus,未収集,自動検証済み,focus,focus,Hallowed Focus,Hallowed Focus,armour.focus,Hallowed Focus,日英解析と最終Trade2 identityが一致
+FX004,Buckler,未収集,自動検証済み,buckler,buckler,Ancient Buckler,Ancient Buckler,armour.buckler,Ancient Buckler,日英解析と最終Trade2 identityが一致
+FX005,Active Gem,未収集,自動検証済み,active_gem,active_gem,Freezing Mark,Freezing Mark,gem.activegem,Freezing Mark,日英解析と最終Trade2 identityが一致
+FX006,Support Gem,未収集,自動検証済み,support_gem,support_gem,Olroth's Conviction,Olroth's Conviction,gem.supportgem,Olroth's Conviction,日英解析と最終Trade2 identityが一致
+FX007,Meta Gem,未収集,自動検証済み,meta_gem,meta_gem,Blasphemy,Blasphemy,gem.metagem,Blasphemy,日英解析と最終Trade2 identityが一致
+FX008,Uncut Gem,未収集,自動検証済み,uncut_gem,uncut_gem,Uncut Skill Gem (Level 18),Uncut Skill Gem (Level 18),currency,Uncut Skill Gem (Level 18),日英解析と最終Trade2 identityが一致
+FX009,Charm,未収集,自動検証済み,charm,charm,Thawing Charm,Thawing Charm,flask.charm,Thawing Charm,日英解析と最終Trade2 identityが一致
+FX010,Tablet,未収集,自動検証済み,tablet,tablet,Irradiated Tablet,Irradiated Tablet,map.tablet,Irradiated Tablet,日英解析と最終Trade2 identityが一致
+FX011,RelicまたはSanctum Relic,未収集,自動検証済み,relic,relic,Urn Relic,Urn Relic,sanctum.relic,Urn Relic,日英解析と最終Trade2 identityが一致
+FX012,Djinn Barya,未収集,自動検証済み,barya,barya,Djinn Barya,Djinn Barya,map.barya,Djinn Barya,日英解析と最終Trade2 identityが一致
+FX013,Inscribed Ultimatum,未収集,自動検証済み,ultimatum,ultimatum,Inscribed Ultimatum,Inscribed Ultimatum,map.ultimatum,Inscribed Ultimatum,日英解析と最終Trade2 identityが一致
+FX014,Time-Lost Jewel,未収集,自動検証済み,jewel,jewel,Time-Lost Emerald,Time-Lost Emerald,jewel,Time-Lost Emerald,日英解析と最終Trade2 identityが一致
+FX015,Rune単体,未収集,自動検証済み,rune,rune,Greater Iron Rune,Greater Iron Rune,currency.rune,Greater Iron Rune,日英解析と最終Trade2 identityが一致
+FX016,Soul Core単体,未収集,自動検証済み,soul_core,soul_core,Soul Core of Topotante,Soul Core of Topotante,currency.soulcore,Soul Core of Topotante,日英解析と最終Trade2 identityが一致
+FX017,Rune装着済み装備,未収集,自動検証済み,spear,spear,Soaring Spear,Soaring Spear,weapon.spear,Soaring Spear,日英解析と最終Trade2 identityが一致
+FX018,Soul Core装着済み装備,未収集,自動検証済み,boots,boots,Runeforged Bastion Sabatons,Runeforged Bastion Sabatons,armour.boots,Runeforged Bastion Sabatons,日英解析と最終Trade2 identityが一致
+FX019,Sanctified品,未収集,実コピー待ち,,,,,,,日英いずれかが空欄またはプレースホルダー
+FX020,Desecrated品,未収集,自動検証済み,boots,boots,Daggerfoot Shoes,Daggerfoot Shoes,armour.boots,Daggerfoot Shoes,日英解析と最終Trade2 identityが一致
+FX021,Runeforged品,未収集,自動検証済み,boots,boots,Runeforged Bastion Sabatons,Runeforged Bastion Sabatons,armour.boots,Runeforged Bastion Sabatons,日英解析と最終Trade2 identityが一致
+FX022,Runemastered品,未収集,自動検証済み,body_armour,body_armour,Runemastered Strider Vest,Runemastered Strider Vest,armour.chest,Runemastered Strider Vest,日英解析と最終Trade2 identityが一致
+FX023,Corrupted品,未収集,自動検証済み,body_armour,body_armour,Runemastered Strider Vest,Runemastered Strider Vest,armour.chest,Runemastered Strider Vest,日英解析と最終Trade2 identityが一致
+FX024,Mirrored品,未収集,実コピー待ち,,,,,,,日英いずれかが空欄またはプレースホルダー
+FX025,未鑑定品,未収集,自動検証済み,talisman,talisman,Nettle Talisman,Nettle Talisman,weapon.talisman,Nettle Talisman,日英解析と最終Trade2 identityが一致
+FX026,複雑なUnique 1,未収集,実コピー待ち,,,,,,,日英いずれかが空欄またはプレースホルダー
+FX027,複雑なUnique 2,未収集,実コピー待ち,,,,,,,日英いずれかが空欄またはプレースホルダー
+FX028,複雑なUnique 3,未収集,実コピー待ち,,,,,,,日英いずれかが空欄またはプレースホルダー

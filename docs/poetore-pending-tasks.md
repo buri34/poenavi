@@ -50,8 +50,10 @@ Requirement Levelは別途製品判断するため、この作業票の試験対
 - [x] Crafted／Fractured／Desecrated条件を固定EE2と比較し、完成品では状態チップを初期OFF、
       通常Explicit版があるModは性能条件へ正規化し、特殊版しかないMod・ベース検索・変更不可品は
       元のStat種別を維持する
-- [ ] Normal／Magic／Rare／Unique × 完成品／ベース × exact base／同一classの組合せで、
-      UI表示値と最終Trade2 JSONを総当たり監査する
+- [x] Normal／Magic／Rare／Unique × 完成品／ベース × exact base／同一classについて、
+      装備27カテゴリの構造母集団351ケースを作成し、有効297ケースのUI分岐と最終Trade2 JSONを
+      自動監査した（仕様上対象外54、検出不具合0）
+- [ ] 上記297ケースのWindows実機表示・操作を`windows-test-cases.csv`で確認する
 
 ### P1: PoE2 Requirement Levelと比較監査の継続
 

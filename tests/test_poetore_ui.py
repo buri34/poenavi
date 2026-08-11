@@ -18,10 +18,11 @@ from src.poetore.ui import (
 from src.poetore.window_position import PlacementContext, position_for_context
 from src.poetore.trade import (
     PRESET_BASE, PRESET_FINISHED, PriceListing, PriceResult, TradeLeague, TradeStatFilter,
-    build_search_query, resolve_trade_stat_filters,
+    available_trade_presets, build_search_query, resolve_trade_stat_filters,
 )
 from src.poetore.parser import parse_item_text
 from src.poetore.poe2.parser import parse_item_text as parse_poe2_item_text
+from src.poetore.poe2.audit import _EQUIPMENT_FIXTURES, _RARITIES, _item as poe2_audit_item
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.poe_ninja import PoeNinjaPrice
 from src.ui.settings_dialog import SettingsDialog
@@ -4631,6 +4632,34 @@ def test_poe2_rare_equipment_uses_shared_header_presets_and_item_level_chip(qapp
         window.trade_preset_combo.setCurrentIndex(1)
         assert window.trade_preset_combo.currentData() == PRESET_BASE
         assert window._selected_item_level() == 86
+    finally:
+        window.close()
+
+
+def test_poe2_equipment_search_matrix_ui_contract(qapp):
+    """All equipment classes share the intended rarity/preset/scope UI branches."""
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.show()
+        qapp.processEvents()
+        for category in _EQUIPMENT_FIXTURES:
+            for rarity in _RARITIES:
+                item = poe2_audit_item(category, rarity)
+                window._parsed_item = item
+                window._trade_base_type = item.base_type
+                window._configure_trade_presets(item)
+                window._update_item_header(item)
+                presets = available_trade_presets(item)
+                assert window.trade_preset_combo.isEnabled() == (PRESET_BASE in presets)
+                if rarity == "unique":
+                    assert window.base_scope_toggle.isHidden()
+                    assert window._searches_exact_base_type(item) is True
+                else:
+                    assert not window.base_scope_toggle.isHidden()
+                    window.base_scope_toggle.setCurrentIndex(0)
+                    assert window._searches_exact_base_type(item) is True
+                    window.base_scope_toggle.setCurrentIndex(1)
+                    assert window._searches_exact_base_type(item) is False
     finally:
         window.close()
 
