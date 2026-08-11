@@ -1274,6 +1274,102 @@ Enemies you Kill Explode, dealing 3% of their Life as Physical Damage
     assert ids.index("pseudo.pseudo_total_elemental_resistance") < ids.index("explicit.explode")
 
 
+def test_finished_gear_orders_affix_families_by_original_modifier_position():
+    item = ParsedItem(
+        item_class="Helmets", rarity="Rare", name="Test Helmet",
+        base_type="Conqueror Helmet", category="armour",
+        properties={"Armour": "956"},
+        modifiers=(
+            ItemModifier(
+                "10% increased Area of Effect", (10,), kind="implicit",
+                stat_id="implicit.area", ref="#% increased Area of Effect",
+            ),
+            ItemModifier(
+                "Crafted Prefix", (8,), kind="crafted", affix="prefix",
+                stat_id="crafted.prefix", ref="Crafted Prefix",
+            ),
+            ItemModifier(
+                "+2 to Level of Socketed Area of Effect Gems", (2,),
+                kind="prefix", affix="prefix", stat_id="explicit.gem",
+                ref="+# to Level of Socketed Area of Effect Gems",
+            ),
+            ItemModifier(
+                "+100 to maximum Life", (100,), kind="prefix", affix="prefix",
+                stat_id="explicit.life", ref="+# to maximum Life",
+            ),
+            ItemModifier(
+                "+570 to Accuracy Rating", (570,), kind="fractured", affix="suffix",
+                stat_id="fractured.accuracy", ref="+# to Accuracy Rating",
+            ),
+            ItemModifier(
+                "Crafted Suffix", (9,), kind="crafted", affix="suffix",
+                stat_id="crafted.suffix", ref="Crafted Suffix",
+            ),
+            ItemModifier(
+                "+34% to Chaos Resistance", (34,), kind="suffix", affix="suffix",
+                stat_id="explicit.chaos", ref="+#% to Chaos Resistance",
+            ),
+            ItemModifier(
+                "Regenerate 104.7 Life per second", (104.7,),
+                kind="suffix", affix="suffix", stat_id="explicit.regen",
+                ref="Regenerate # Life per second",
+            ),
+        ),
+    )
+    entries = (
+        {"id": "implicit.area", "text": "#% increased Area of Effect", "type": "implicit"},
+        {"id": "crafted.prefix", "text": "Crafted Prefix", "type": "crafted"},
+        {"id": "explicit.gem", "text": "+# to Level of Socketed Area of Effect Gems", "type": "explicit"},
+        {"id": "fractured.accuracy", "text": "+# to Accuracy Rating", "type": "fractured"},
+        {"id": "crafted.suffix", "text": "Crafted Suffix", "type": "crafted"},
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        rows = resolve_trade_stat_filters(item)
+    relevant = {
+        "property.armour", "crafted.prefix", "explicit.gem", "pseudo.pseudo_total_life",
+        "fractured.accuracy", "crafted.suffix", "pseudo.pseudo_total_chaos_resistance",
+        "pseudo.pseudo_total_life_regen", "implicit.area",
+    }
+    assert [row.stat_id for row in rows if row.stat_id in relevant] == [
+        "property.armour",
+        "crafted.prefix",
+        "explicit.gem",
+        "pseudo.pseudo_total_life",
+        "fractured.accuracy",
+        "crafted.suffix",
+        "pseudo.pseudo_total_chaos_resistance",
+        "pseudo.pseudo_total_life_regen",
+        "implicit.area",
+    ]
+
+
+def test_pseudo_with_suffix_and_implicit_sources_uses_suffix_group():
+    item = _pseudo_test_item((
+        ItemModifier(
+            "+30% to Fire Resistance", (30,), kind="suffix", affix="suffix",
+            stat_id="explicit.fire", ref="+#% to Fire Resistance",
+        ),
+        ItemModifier(
+            "+10% to all Elemental Resistances", (10,), kind="implicit",
+            stat_id="implicit.all_res", ref="+#% to all Elemental Resistances",
+        ),
+        ItemModifier(
+            "Other implicit", (1,), kind="implicit",
+            stat_id="implicit.other", ref="Other implicit",
+        ),
+    ))
+    entries = ({"id": "implicit.other", "text": "Other implicit", "type": "implicit"},)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        rows = resolve_trade_stat_filters(item)
+    ids = [row.stat_id for row in rows]
+    elemental = next(
+        row for row in rows
+        if row.stat_id == "pseudo.pseudo_total_elemental_resistance"
+    )
+    assert elemental.source_affixes == ("suffix", None)
+    assert ids.index(elemental.stat_id) < ids.index("implicit.other")
+
+
 def test_weapon_base_preset_shows_performance_properties_but_keeps_them_off():
     item = parse_item_text(ITEM.replace("Item Level: 67", "Item Level: 85"))
     with patch("src.poetore.trade._trade_stat_entries", return_value=()):
@@ -2013,7 +2109,7 @@ Item Level: 85
     assert "pseudo.pseudo_total_mana" not in rows
 
 
-def test_accessory_finished_filters_use_requested_awakened_based_order():
+def test_accessory_finished_filters_use_affix_groups_and_source_order():
     item = parse_item_text("""Item Class: Amulets
 Rarity: Rare
 Test Amulet
@@ -2031,13 +2127,15 @@ Item Level: 85
 """)
     filters = resolve_trade_stat_filters(item)
     ids = [row.stat_id for row in filters]
+    # Plain copy has no affix headers, but Life/Mana are explicitly assigned to
+    # the Prefix group. Remaining pseudos stay in source order under Other.
     expected = [
         "pseudo.pseudo_total_life",
+        "pseudo.pseudo_total_mana",
         "pseudo.pseudo_total_energy_shield",
         "pseudo.pseudo_total_elemental_resistance",
         "pseudo.pseudo_total_chaos_resistance",
         "pseudo.pseudo_total_all_attributes",
-        "pseudo.pseudo_total_mana",
         "pseudo.pseudo_total_cast_speed",
     ]
     assert [stat_id for stat_id in ids if stat_id in expected] == expected
@@ -2141,7 +2239,7 @@ def test_new_relational_pseudos_parse_from_japanese_detail_copy():
     assert rows["pseudo.pseudo_increased_burning_damage"].min_value == 36.0
 
 
-def test_pseudo_group_output_is_independent_of_modifier_input_order():
+def test_pseudo_group_values_are_independent_of_modifier_input_order():
     modifiers = (
         ItemModifier("", (20,), ref="+#% to Fire Resistance"),
         ItemModifier("", (35,), ref="+#% to Cold Resistance"),
@@ -2152,7 +2250,9 @@ def test_pseudo_group_output_is_independent_of_modifier_input_order():
     )
     forward = resolve_trade_stat_filters(_pseudo_test_item(modifiers))
     backward = resolve_trade_stat_filters(_pseudo_test_item(reversed(modifiers)))
-    signature = lambda rows: tuple((row.stat_id, row.min_value, row.enabled) for row in rows)
+    signature = lambda rows: {
+        row.stat_id: (row.min_value, row.enabled) for row in rows
+    }
     assert signature(forward) == signature(backward)
     ids = {row.stat_id for row in forward}
     assert ids & {
