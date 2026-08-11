@@ -86,6 +86,10 @@ Requirement Levelは別途製品判断するため、この作業票の試験対
       「ミラー化／非ミラー化」を、検索ボタンに似た塗りつぶしの`cycleToggle`から
       通常検索チップに近い外観へ再設計する。複数状態を循環選択する機能と選択状態の判別性は維持し、
       通常チップ、未選択状態、検索ボタンとの視覚的な役割差が分かることを日英表示で確認する
+- [ ] PoE2のSanctified品では、固定EE2と同様に「聖別化」をMirroredと同じ上部の専用検索チップとして
+      表示し、初期ONにする。現在のMod条件一覧にある状態行から専用チップへ移し、選択時は
+      `misc_filters.filters.sanctified.option=true`、解除時はEE2と同じ非Sanctified条件を送ることを
+      `P2-WIN-035`の日英Sanctified Anvil Maulで確認する
 
 ### P0: Valdo Mapの報酬条件検索
 
