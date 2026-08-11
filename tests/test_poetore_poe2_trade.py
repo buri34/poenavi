@@ -85,16 +85,15 @@ def test_unidentified_unique_searches_base_with_unique_and_unidentified_filters(
 
 
 @pytest.mark.parametrize("state", ["crafted", "fractured", "desecrated"])
-def test_finished_preset_does_not_require_special_item_state_like_ee2(state):
+def test_special_mod_provenance_does_not_create_a_dedicated_state_row(state):
     item = ParsedItem(
         item_class="Gloves", rarity="rare", name="Test", base_type="Grand Bracers",
         category="gloves", flags=(state,),
     )
-    state_row = next(
-        row for row in poe2_trade_filters(item)
-        if row.stat_id == f"property.state.{state}"
+    assert not any(
+        row.stat_id == f"property.state.{state}"
+        for row in poe2_trade_filters(item)
     )
-    assert state_row.enabled is False
     query = build_search_query(item, stat_filters=poe2_trade_filters(item))
     misc = query["query"]["filters"].get("misc_filters", {}).get("filters", {})
     assert {"crafted", "fractured_item", "desecrated"}.isdisjoint(misc)
@@ -133,20 +132,27 @@ def test_finished_preset_keeps_special_stat_without_explicit_counterpart():
     )
 
 
-def test_base_and_unmodifiable_presets_keep_original_special_stat_type():
+@pytest.mark.parametrize("kind", ["crafted", "fractured", "desecrated"])
+@pytest.mark.parametrize("immutable_state", ["corrupted", "mirrored", "sanctified"])
+def test_base_keeps_provenance_but_finished_normalizes_immutable_items(
+    kind, immutable_state,
+):
     modifier = ItemModifier(
-        "Chaos Resistance", (21.0,), kind="crafted",
-        stat_id="crafted.stat_2923486259",
+        "Chaos Resistance", (21.0,), kind=kind,
+        stat_id=f"{kind}.stat_2923486259",
     )
     item = ParsedItem(
         item_class="Gloves", rarity="rare", name="Test", base_type="Grand Bracers",
-        category="gloves", flags=("crafted",), modifiers=(modifier,),
+        category="gloves", flags=(kind,), modifiers=(modifier,),
     )
     base = next(row for row in poe2_trade_filters(item, preset=PRESET_BASE) if row.kind != "state")
-    assert base.stat_id == "crafted.stat_2923486259"
-    corrupted = replace(item, flags=("crafted", "corrupted"))
-    finished = next(row for row in poe2_trade_filters(corrupted) if row.text == "Chaos Resistance")
-    assert finished.stat_id == "crafted.stat_2923486259"
+    assert base.stat_id == f"{kind}.stat_2923486259"
+    immutable = replace(item, flags=(kind, immutable_state))
+    finished = next(
+        row for row in poe2_trade_filters(immutable)
+        if row.text == "Chaos Resistance"
+    )
+    assert finished.stat_id == "explicit.stat_2923486259"
 
 
 def test_finished_preset_merges_natural_and_normalized_special_sources():
@@ -273,15 +279,17 @@ def test_poe2_price_result_exposes_japanese_web_trade_url(monkeypatch):
     assert query["type"] == "実用的なベルト"
 
 
-def test_phase45_search_prices_sends_corrupted_and_mirrored_state_filters(monkeypatch):
+def test_phase45_search_prices_omits_mod_provenance_state_filters(monkeypatch):
     item = _phase45_item("phase45_runemastered_ja.txt")
-    rows = _phase45_rows(item)
+    rows = tuple(
+        replace(row, enabled=True) for row in poe2_trade_filters(item)
+    )
 
     def fake_cached_request(url, payload=None):
         assert "/api/trade2/search/Standard" in url
         misc = payload["query"]["filters"]["misc_filters"]["filters"]
-        assert misc["desecrated"] == {"option": "true"}
-        assert misc["fractured_item"] == {"option": "true"}
+        assert "desecrated" not in misc
+        assert "fractured_item" not in misc
         assert misc["corrupted"] == {"option": "true"}
         assert misc["mirrored"] == {"option": "false"}
         return {"id": "phase45-query", "result": []}, {}, False
@@ -568,7 +576,7 @@ def test_phase7_pseudo_replaces_direct_chaos_filter_without_duplicate_constraint
         )
     )
     rows = poe2_trade_filters(item)
-    direct = next(row for row in rows if row.stat_id == "crafted.stat_2923486259")
+    direct = next(row for row in rows if row.stat_id == "explicit.stat_2923486259")
     pseudo = next(row for row in rows if row.stat_id == "pseudo.pseudo_total_chaos_resistance")
     assert not direct.enabled
     assert pseudo.enabled and pseudo.min_value == 21.0
@@ -799,21 +807,24 @@ def test_magic_trade_query_never_sends_affixed_display_name_as_type(
     assert payload["query"]["type"] != affixed_name
 
 
-def test_phase45_runemastered_desecrated_and_fractured_filters_are_distinct():
+def test_phase45_runemastered_normalizes_special_mods_without_state_filters():
     item = _phase45_item("phase45_runemastered_ja.txt")
-    rows = _phase45_rows(item)
+    rows = tuple(
+        replace(row, enabled=True) for row in poe2_trade_filters(item)
+    )
     payload = build_search_query(item, stat_filters=rows)
     assert payload["query"]["type"] == "Runemastered Vaal Cuirass"
     assert payload["query"]["filters"]["equipment_filters"]["filters"]["ward"] == {
         "min": 500.0
     }
-    assert payload["query"]["filters"]["misc_filters"]["filters"] == {
-        "desecrated": {"option": "true"},
-        "fractured_item": {"option": "true"},
-    }
-    assert payload["query"]["stats"][0]["filters"] == [{
-        "id": "desecrated.stat_2923486259", "value": {"min": 21.0},
-    }]
+    misc = payload["query"]["filters"].get("misc_filters", {}).get("filters", {})
+    assert "desecrated" not in misc
+    assert "fractured_item" not in misc
+    sent = payload["query"]["stats"][0]["filters"]
+    assert {
+        "id": "explicit.stat_2923486259", "value": {"min": 21.0},
+    } in sent
+    assert not any(row["id"].startswith(("desecrated.", "fractured.")) for row in sent)
 
 
 def test_phase45_rune_and_soul_core_queries_use_separate_categories():

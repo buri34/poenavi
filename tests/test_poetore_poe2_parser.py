@@ -61,7 +61,7 @@ def test_new_user_captured_special_pairs_preserve_state_stats_and_values():
     fixtures = {row["fixture_id"]: row for row in _real_copy_fixtures()}
     expected = {
         "FX019": ("Anvil Maul", {"crafted", "desecrated", "sanctified"}, {
-            "implicit.stat_1503146834", "explicit.stat_9187492", "desecrated.stat_53386210",
+            "implicit.stat_1503146834", "explicit.stat_9187492", "explicit.stat_53386210",
         }),
         "FX024": ("Ornate Ringmail", {"mirrored"}, {"explicit.stat_3032590688"}),
         "FX026": ("Utility Belt", set(), {

@@ -1585,7 +1585,7 @@ def test_reported_poe2_rare_gloves_show_chaos_resistance_without_warning(qapp):
         window.input_edit.setPlainText(text)
         window.parse_current_text()
 
-        assert window.mod_filter_tree.topLevelItemCount() == 11
+        assert window.mod_filter_tree.topLevelItemCount() == 10
         assert window.mod_warning.isHidden()
         selected = window._selected_stat_filters()
         chaos = next(
@@ -1598,10 +1598,9 @@ def test_reported_poe2_rare_gloves_show_chaos_resistance_without_warning(qapp):
         assert not direct.enabled
         assert any(row.stat_id == "property.evasion" for row in selected)
         assert any(row.stat_id == "property.augment_sockets" for row in selected)
-        desecrated = next(
-            row for row in selected if row.stat_id == "property.state.desecrated"
+        assert not any(
+            row.stat_id == "property.state.desecrated" for row in selected
         )
-        assert desecrated.enabled is False
     finally:
         window.close()
 

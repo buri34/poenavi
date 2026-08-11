@@ -47,9 +47,9 @@ Requirement Levelは別途製品判断するため、この作業票の試験対
       日英通常コピー／詳細コピーを収集し、Item Class、Magic名、Property区切りを固定する
 - [ ] Crossbow、Spear、Flail、Focus、Buckler、Gem、Waystoneの実コピーfixtureを追加し、
       advanced Mod header、Tier、roll範囲、Mod種別を確認する
-- [x] Crafted／Fractured／Desecrated条件を固定EE2と比較し、完成品では状態チップを初期OFF、
-      通常Explicit版があるModは性能条件へ正規化し、特殊版しかないMod・ベース検索・変更不可品は
-      元のStat種別を維持する
+- [x] Crafted／Fractured／Desecrated条件を固定EE2と比較し、専用状態チップを設けず、
+      完成品ではCorrupted／Mirrored／Sanctifiedを含め通常Explicit版があるModを性能条件へ正規化する。
+      特殊版しかないModとベース検索だけ元のStat種別を維持する
 - [x] 実コピー待ちだったSanctified、Mirrored、Mageblood、Against the Darkness、
       Ventor's Gambleの日英5組を追加し、全28組の日英identityと最終Trade2 identityを自動検証した
 - [x] Normal／Magic／Rare／Unique × 完成品／ベース × exact base／同一classについて、

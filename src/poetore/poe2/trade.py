@@ -525,9 +525,6 @@ _POE2_STATE_LABELS = {
     "corrupted": "コラプト状態",
     "mirrored": "ミラー状態",
     "sanctified": "聖別化",
-    "desecrated": "冒涜",
-    "fractured": "フラクチャー",
-    "crafted": "クラフト済み",
     "unidentified": "未鑑定",
 }
 
@@ -535,9 +532,6 @@ _POE2_STATE_FILTER_NAMES = {
     "corrupted": "corrupted",
     "mirrored": "mirrored",
     "sanctified": "sanctified",
-    "desecrated": "desecrated",
-    "fractured": "fractured_item",
-    "crafted": "crafted",
     "unidentified": "identified",
 }
 
@@ -592,18 +586,17 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
     return tuple(rows)
 
 
-def _poe2_item_is_modifiable(item: ParsedItem) -> bool:
-    """Mirror the EE2 guard relevant to finished-preset stat normalization."""
-    return not ({"corrupted", "mirrored", "sanctified"} & set(item.flags))
-
-
 def _poe2_modifier_rows(
     item: ParsedItem, replaced_ids: set[str], preset: str,
 ) -> tuple[TradeStatFilter, ...]:
     rows: list[TradeStatFilter] = []
     positions: dict[str, int] = {}
     normalized_ids: set[str] = set()
-    normalize_special = preset == PRESET_FINISHED and _poe2_item_is_modifiable(item)
+    # Finished-item searches compare obtainable performance rather than Mod
+    # provenance.  Normalize every Crafted/Fractured/Desecrated Stat that has
+    # an official explicit counterpart, even when the item is immutable
+    # (Corrupted, Mirrored, or Sanctified).  Base searches retain provenance.
+    normalize_special = preset == PRESET_FINISHED
     for modifier in item.modifiers:
         if not modifier.stat_id:
             continue
