@@ -558,11 +558,10 @@ def parse_item_text(text: str) -> ParsedItem:
         line.strip() in {"Unidentified", "未鑑定"} for line in text.splitlines()
     )
     if not item_class and rarity == "gem" and len(identity_lines) == 1:
-        # PoE2 omits Item Class for Meta Gems.  EE2 handles that omission as a
-        # dedicated special case; require both the copied Meta tag and the GEM
-        # identity category so an arbitrary malformed Gem cannot enter it.
-        tag_section = re.split(r"^--------\s*$", text.strip(), flags=re.MULTILINE)[1:2]
-        tag_text = tag_section[0] if tag_section else ""
+        # PoE2 omits Item Class for Meta Gems. EE2 accepts this nameplate shape
+        # without inspecting the later tag section. Keep the identity lookup
+        # stricter than that shape check: only a GEM identity whose fixed
+        # metadata category is MetaSkillGem may enter the special case.
         candidate = resolve_identity(identity_lines[0], "GEM")
         if candidate is None:
             raise Poe2ItemParseError(
@@ -573,12 +572,6 @@ def parse_item_text(text: str) -> ParsedItem:
             raise Poe2ItemParseError(
                 "PoE2 Item Class欠落Gemのidentity種別不一致: "
                 f"{identity_lines[0]} / {candidate_category or '不明'}"
-            )
-        if not re.search(
-            r"(?:^|,\s*)(?:Meta|メタ)(?:\s*,|$)", tag_text, re.MULTILINE
-        ):
-            raise Poe2ItemParseError(
-                f"PoE2 Meta Gemタグ未取得: {identity_lines[0]}のタグ区画にMeta/メタがありません"
             )
         item_class = "Meta Gems"
         category = "gem"

@@ -133,14 +133,16 @@ def test_user_captured_real_copy_pairs_resolve_to_same_identity(fixture):
     assert (ja.base_type, ja.category, ja.rarity) == (en.base_type, en.category, en.rarity)
 
 
-def test_meta_gem_without_item_class_requires_meta_tag_and_metadata_identity():
+def test_meta_gem_without_item_class_uses_metadata_identity_like_ee2():
     fixture = _real_copy("FX007")
     for language in ("日本語設定の詳細コピー全文", "英語設定の詳細コピー全文"):
         item = parse_item_text(fixture[language])
         assert (item.base_type, item.category, item.modifiers) == ("Blasphemy", "meta_gem", ())
         without_meta = fixture[language].replace("メタ", "永続").replace("Meta", "Persistent")
-        with pytest.raises(Poe2ItemParseError, match="Meta Gemタグ未取得"):
-            parse_item_text(without_meta)
+        without_meta_item = parse_item_text(without_meta)
+        assert (without_meta_item.base_type, without_meta_item.category) == (
+            "Blasphemy", "meta_gem",
+        )
 
 
 @pytest.mark.parametrize(
