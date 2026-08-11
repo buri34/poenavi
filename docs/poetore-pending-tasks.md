@@ -67,6 +67,8 @@ Requirement Levelは別途製品判断するため、この作業票の試験対
       parity対象外と整理した。詳細は`docs/poetore-poe2-auxiliary-features-audit-2026-08-11.md`を参照する
 - [ ] PoE2検索結果の各出品へ、実ItemのProperty、Socket、Implicit、Explicit、Tier、状態を確認できる
       ゲーム内風Tooltipを追加する。表示はHover／Shift+Hoverを候補とし、横幅を増やさず詳細確認できる形にする
+- [ ] PoE1／PoE2の検索queryへ公式TradeのAPI Collapseを追加し、検索ID取得時点から同一Sellerの
+      大量出品を畳む。現行のfetch後ローカル集約は表示・安全網として維持し、取得Seller数と中央値を比較検証する
 
 ### P0: Valdo Mapの報酬条件検索
 
