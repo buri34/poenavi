@@ -4395,8 +4395,8 @@ class PoetoreWindow(QWidget):
             if tier_tags:
                 tier_widget = QWidget()
                 tier_layout = QHBoxLayout(tier_widget)
-                tier_layout.setContentsMargins(2, 0, 2, 0)
-                tier_layout.setSpacing(3)
+                tier_layout.setContentsMargins(1, 0, 1, 0)
+                tier_layout.setSpacing(2)
                 for tier in tier_tags:
                     tag = QLabel(f"T{tier}")
                     tag.setAlignment(Qt.AlignCenter)
@@ -4408,7 +4408,7 @@ class PoetoreWindow(QWidget):
                     else:
                         tag.setStyleSheet(
                             "color: #CDBB78; border: 1px solid #9F9162; border-radius: 3px;"
-                            " padding: 0px 3px; font-weight: 600;"
+                            " padding: 0px 2px; font-weight: 600;"
                         )
                     tier_layout.addWidget(tag)
                 tier_layout.addStretch(1)
