@@ -52,7 +52,7 @@ Leeches 6.08(6-6.9)% of Physical Damage as Mana
 { Suffix Modifier ""of the Skilled"" (Tier: 2) }
 30% reduced Attribute Requirements
 ",未収集,Item Class／ベース名／Reload Time／物理DPS／元素DPS／合計DPS／APS／品質20%換算／Local Mod／Trade2 type,同じ現物を日英でコピー
-FX002,武器,Flail,Rare・物理または元素フラットと速度Modを含む,"アイテムクラス: フレイル
+FX002,武器,Unique Flail,現行で存在するUnique Flail・固有Modと武器Propertyを含む,"アイテムクラス: フレイル
 レアリティ: ユニーク
 未完
 チェインフレイル
@@ -1007,6 +1007,6 @@ Grants Skill: Level 18 Sanguine Revelry
 --------
 Unidentified
 ",未収集,Unidentified状態／名前・ベース解決／送信可能条件／最終Trade2 JSON,同じ現物を日英でコピー
-FX026,Unique,複雑なUnique 1,option型Statまたは選択肢型Modを含む,ちょっと一旦保留（まずは残タスク文書に追加して）,ちょっと一旦保留（まずは残タスク文書に追加して）,未収集,Unique名／ベース名／option型Stat／可変範囲／poe.ninja価格／日本語Trade URL,同じ現物を日英でコピー。アイテム名をメモ欄へ記入
-FX027,Unique,複雑なUnique 2,複数行Modまたはスケール不可値を含む,ちょっと一旦保留（まずは残タスク文書に追加して）,ちょっと一旦保留（まずは残タスク文書に追加して）,未収集,Unique名／ベース名／複数行Mod／スケール不可値／可変範囲／日本語Trade URL,同じ現物を日英でコピー。アイテム名をメモ欄へ記入
-FX028,Unique,複雑なUnique 3,特殊Property・特殊可変値・状態区分のいずれかを含む,ちょっと一旦保留（まずは残タスク文書に追加して）,ちょっと一旦保留（まずは残タスク文書に追加して）,未収集,Unique名／ベース名／特殊Property／可変範囲／最終Trade2 JSON／日本語Trade URL,同じ現物を日英でコピー。アイテム名をメモ欄へ記入
+FX026,Unique,Mageblood,Legacyの種類がoption型Statになりスケール不可値も含む,ちょっと一旦保留（まずは残タスク文書に追加して）,ちょっと一旦保留（まずは残タスク文書に追加して）,未収集,Unique名／ベース名／Legacy option型Stat／重複効果の可変範囲／poe.ninja価格／日本語Trade URL,日本語fixtureは収集済み。同じ現物の英語詳細コピーを追加して日英ペアにする
+FX027,Unique,Against the Darkness,ランダムに選ばれる特殊なジュエルStatが2本とRadius Propertyを持つ,ちょっと一旦保留（まずは残タスク文書に追加して）,ちょっと一旦保留（まずは残タスク文書に追加して）,未収集,Unique名／ベース名／Radius／2本の特殊Stat／可変値／最終Trade2 JSON,同じ現物を日英でコピー
+FX028,Unique,Ventor's Gamble,Life・Spirit・Rarity・三属性耐性が正負をまたぐ広い可変範囲を持つ,ちょっと一旦保留（まずは残タスク文書に追加して）,ちょっと一旦保留（まずは残タスク文書に追加して）,未収集,Unique名／ベース名／負値とreduced表記／各可変範囲／最終Trade2 JSON／日本語Trade URL,同じ現物を日英でコピー
