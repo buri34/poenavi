@@ -203,6 +203,33 @@ def test_charm_properties_and_searchable_mods_resolve_equally_in_both_languages(
         assert charge_filter["value"] == {"max": -20.0}
 
 
+@pytest.mark.parametrize(
+    ("duration_line", "expected"),
+    [
+        ("3.20 (augmented)秒間持続", "3.20"),
+        ("Lasts 3.30 (augmented) Seconds", "3.30"),
+    ],
+)
+def test_charm_augmented_duration_is_property_not_unresolved_modifier(
+    duration_line, expected,
+):
+    item = parse_item_text(
+        "アイテムクラス: チャーム\n"
+        "レアリティ: ユニーク\n"
+        "ベイラの苦悶\n"
+        "消火のチャーム\n"
+        "--------\n"
+        f"{duration_line}\n"
+        "使用時に40中30チャージを消費\n"
+        "現在0チャージ\n"
+        "発火への完全無効化を付与する\n"
+        "--------\n"
+        "アイテムレベル: 81\n"
+    )
+    assert item.properties["持続時間"] == expected
+    assert item.modifiers == ()
+
+
 def test_timelost_unscalable_suffixes_resolve_equally_in_both_languages():
 
     jewel = _real_copy("FX014")
@@ -321,6 +348,31 @@ def test_poe2_roll_ranges_are_averaged_and_only_safe_ranges_get_better_direction
 """
     reduced = parse_item_text(text).modifiers[0]
     assert (reduced.roll_min, reduced.roll_max, reduced.better) == (26.0, 30.0, None)
+
+
+def test_waystone_players_cooldown_recovery_reduction_uses_negated_trade_stat():
+    item = parse_item_text("""アイテムクラス: ウェイストーン
+レアリティ: レア
+埋もれた方向
+ウェイストーン (ティア15)
+--------
+アイテムレベル: 82
+--------
+{ サフィックスモッド 「疲労の」 (ティア: 1) }
+全てのプレイヤーのクールダウン解消レートが27(30-25)%低下する
+""")
+    modifier = item.modifiers[0]
+    assert modifier.stat_id == "explicit.stat_941368244"
+    assert modifier.values == (-27.0,)
+    assert (modifier.roll_min, modifier.roll_max, modifier.better) == (-30.0, -25.0, -1)
+    payload = build_search_query(item, stat_filters=poe2_trade_filters(item))
+    sent = next(
+        row
+        for group in payload["query"]["stats"]
+        for row in group["filters"]
+        if row["id"] == "explicit.stat_941368244"
+    )
+    assert sent["value"] == {"max": -27.0}
 
 
 def test_poe2_standalone_rune_line_counts_one_installed_augment():

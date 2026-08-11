@@ -235,6 +235,7 @@ def resolve_stat_line_candidates(
         # keeps only the canonical template, so reproduce that rule here.
         inverted = re.sub(r"\breduced\b", "increased", comparable, flags=re.IGNORECASE)
         inverted = inverted.replace("減少する", "増加する")
+        inverted = inverted.replace("低下する", "上昇する")
         if inverted != comparable:
             resolved = collect(inverted, -1.0)
     if not resolved:
