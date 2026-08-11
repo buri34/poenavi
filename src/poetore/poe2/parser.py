@@ -718,7 +718,10 @@ def parse_item_text(text: str) -> ParsedItem:
             and line_kind in {"explicit", "fractured", "crafted", "desecrated"}
             and (rarity != "unique" or category in _ARMOUR_LOCAL_AFFIX_CATEGORIES)
         )
-        preferred_stat_type = "rune" if line_kind == "augment" else line_kind
+        # Compact Stat metadata uses `type=augment` for IDs in the `rune.*`
+        # namespace. Prefer by metadata type, not by ID namespace; using
+        # `rune` here silently fell back to the same-text explicit Stat.
+        preferred_stat_type = line_kind
         candidates = resolve_stat_line_candidates(
             line, preferred_stat_type, include_local_variants=scoped_affix,
         )

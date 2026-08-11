@@ -384,6 +384,36 @@ def test_poe2_standalone_rune_line_counts_one_installed_augment():
     assert item.augment_count == 1
 
 
+def test_poe2_standalone_rune_prefers_augment_stat_over_same_text_explicit():
+    item = parse_item_text("""アイテムクラス: 靴
+レアリティ: レア
+巨大な靴底
+ダガーフットシューズ
+--------
+ソケット: S
+--------
+アイテムレベル: 82
+--------
+プレイヤーのスピードは減速の影響を受けない (rune)
+""")
+    assert item.augment_count == 1
+    assert len(item.modifiers) == 1
+    modifier = item.modifiers[0]
+    assert (modifier.kind, modifier.stat_id) == ("augment", "rune.stat_50721145")
+    rows = poe2_trade_filters(item)
+    assert [(row.kind, row.stat_id) for row in rows if row.stat_id.endswith("50721145")] == [
+        ("augment", "rune.stat_50721145"),
+    ]
+    payload = build_search_query(item, stat_filters=rows)
+    sent_ids = {
+        row["id"]
+        for group in payload["query"]["stats"]
+        for row in group["filters"]
+    }
+    assert "rune.stat_50721145" in sent_ids
+    assert "explicit.stat_50721145" not in sent_ids
+
+
 def test_unknown_base_is_not_silently_guessed():
     with pytest.raises(Poe2ItemParseError, match="base identity未解決"):
         parse_item_text("Item Class: Bows\nRarity: Rare\nTest Name\nUnknown Bow\n")
