@@ -1963,8 +1963,8 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
     )
     assert checkbox is not None
     assert not checkbox.isChecked()
-    assert "#257a64" in checkbox.styleSheet()
-    assert "poenavi_check_257a64.png" in checkbox.styleSheet()
+    assert "#65ffca" in checkbox.styleSheet()
+    assert "poenavi_check_65ffca.png" in checkbox.styleSheet()
     editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
     assert editor.text() == "55"
     checkbox.click()
