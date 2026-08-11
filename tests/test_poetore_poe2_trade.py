@@ -875,7 +875,30 @@ def test_wombgift_uses_exact_type_without_nonexistent_trade2_category():
     assert query["type"] == "Ornate Wombgift"
     assert "category" not in query["filters"]["type_filters"]["filters"]
     assert query["filters"]["type_filters"]["filters"]["rarity"] == {
-        "option": "nonunique"
+        "option": "normal"
+    }
+
+
+@pytest.mark.parametrize(
+    ("rarity", "exact_base_type", "expected"),
+    [
+        ("Normal", True, "normal"),
+        ("Magic", True, "magic"),
+        ("Rare", True, "nonunique"),
+        ("Normal", False, "nonunique"),
+        ("Magic", False, "nonunique"),
+        ("Rare", False, "nonunique"),
+    ],
+)
+def test_poe2_nonunique_rarity_matches_ee2_exact_scope_rules(
+    rarity, exact_base_type, expected,
+):
+    item = parse_item_text(
+        f"Item Class: Belts\nRarity: {rarity}\nHeavy Belt\n--------\n"
+    )
+    query = build_search_query(item, exact_base_type=exact_base_type)["query"]
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": expected
     }
 
 

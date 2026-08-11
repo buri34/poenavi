@@ -760,8 +760,14 @@ def build_search_query(
             query["name"] = item.name
         else:
             type_filter_values["rarity"] = {"option": "unique"}
-    elif item.rarity.casefold() in {"normal", "ノーマル", "magic", "マジック", "rare", "レア"}:
-        type_filter_values["rarity"] = {"option": "nonunique"}
+    else:
+        rarity = item.rarity.casefold()
+        if exact_base_type and rarity in {"normal", "ノーマル"}:
+            type_filter_values["rarity"] = {"option": "normal"}
+        elif exact_base_type and rarity in {"magic", "マジック"}:
+            type_filter_values["rarity"] = {"option": "magic"}
+        elif rarity in {"normal", "ノーマル", "magic", "マジック", "rare", "レア"}:
+            type_filter_values["rarity"] = {"option": "nonunique"}
     if stat_filters is not None:
         _apply_poe2_filter_rows(query, stat_filters)
     if gem_level_min is not None or gem_sockets_min is not None:

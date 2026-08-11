@@ -127,7 +127,11 @@ def build_audit_rows() -> list[AuditRow]:
                     observed_name = str(query.get("name", ""))
                     # Named uniques are already fully identified by name + type, so
                     # Trade2's minimal query intentionally omits a redundant rarity.
-                    expected_rarity = "" if rarity == "unique" else "nonunique"
+                    expected_rarity = (
+                        "" if rarity == "unique"
+                        else rarity if scope == "exact" and rarity in {"normal", "magic"}
+                        else "nonunique"
+                    )
                     observed_rarity = _observed_rarity(query)
                     expected_stats = 1 if preset == PRESET_FINISHED and rarity != "normal" else 0
                     observed_stats = _stat_count(query)

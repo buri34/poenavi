@@ -1,10 +1,10 @@
 ﻿case_id,category,item_class,rarity,preset,scope,fixture_kind,status,ui_status,expected_trade_category,observed_trade_category,expected_type,observed_type,expected_name,observed_name,expected_rarity,observed_rarity,expected_stat_count,observed_stat_count,notes
-bow:normal:finished:exact,bow,Bows,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,Rider Bow,Rider Bow,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+bow:normal:finished:exact,bow,Bows,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,Rider Bow,Rider Bow,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 bow:normal:finished:class,bow,Bows,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 bow:normal:base:n/a,bow,Bows,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.bow,,Rider Bow,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-bow:magic:finished:exact,bow,Bows,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,Rider Bow,Rider Bow,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+bow:magic:finished:exact,bow,Bows,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,Rider Bow,Rider Bow,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 bow:magic:finished:class,bow,Bows,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-bow:magic:base:exact,bow,Bows,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,Rider Bow,Rider Bow,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+bow:magic:base:exact,bow,Bows,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,Rider Bow,Rider Bow,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 bow:magic:base:class,bow,Bows,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 bow:rare:finished:exact,bow,Bows,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,Rider Bow,Rider Bow,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 bow:rare:finished:class,bow,Bows,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -12,12 +12,12 @@ bow:rare:base:exact,bow,Bows,rare,base,exact,synthetic,自動検証済み,自動
 bow:rare:base:class,bow,Bows,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 bow:unique:finished:exact,bow,Bows,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.bow,weapon.bow,Rider Bow,Rider Bow,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 bow:unique:base:n/a,bow,Bows,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.bow,,Rider Bow,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-crossbow:normal:finished:exact,crossbow,Crossbows,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,Advanced Crossbow,Advanced Crossbow,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+crossbow:normal:finished:exact,crossbow,Crossbows,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,Advanced Crossbow,Advanced Crossbow,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 crossbow:normal:finished:class,crossbow,Crossbows,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 crossbow:normal:base:n/a,crossbow,Crossbows,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.crossbow,,Advanced Crossbow,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-crossbow:magic:finished:exact,crossbow,Crossbows,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,Advanced Crossbow,Advanced Crossbow,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+crossbow:magic:finished:exact,crossbow,Crossbows,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,Advanced Crossbow,Advanced Crossbow,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 crossbow:magic:finished:class,crossbow,Crossbows,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-crossbow:magic:base:exact,crossbow,Crossbows,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,Advanced Crossbow,Advanced Crossbow,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+crossbow:magic:base:exact,crossbow,Crossbows,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,Advanced Crossbow,Advanced Crossbow,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 crossbow:magic:base:class,crossbow,Crossbows,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 crossbow:rare:finished:exact,crossbow,Crossbows,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,Advanced Crossbow,Advanced Crossbow,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 crossbow:rare:finished:class,crossbow,Crossbows,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -25,12 +25,12 @@ crossbow:rare:base:exact,crossbow,Crossbows,rare,base,exact,synthetic,自動検�
 crossbow:rare:base:class,crossbow,Crossbows,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 crossbow:unique:finished:exact,crossbow,Crossbows,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.crossbow,weapon.crossbow,Advanced Crossbow,Advanced Crossbow,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 crossbow:unique:base:n/a,crossbow,Crossbows,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.crossbow,,Advanced Crossbow,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-spear:normal:finished:exact,spear,Spears,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,Flying Spear,Flying Spear,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+spear:normal:finished:exact,spear,Spears,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,Flying Spear,Flying Spear,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 spear:normal:finished:class,spear,Spears,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 spear:normal:base:n/a,spear,Spears,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.spear,,Flying Spear,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-spear:magic:finished:exact,spear,Spears,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,Flying Spear,Flying Spear,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+spear:magic:finished:exact,spear,Spears,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,Flying Spear,Flying Spear,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 spear:magic:finished:class,spear,Spears,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-spear:magic:base:exact,spear,Spears,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,Flying Spear,Flying Spear,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+spear:magic:base:exact,spear,Spears,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,Flying Spear,Flying Spear,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 spear:magic:base:class,spear,Spears,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 spear:rare:finished:exact,spear,Spears,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,Flying Spear,Flying Spear,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 spear:rare:finished:class,spear,Spears,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -38,12 +38,12 @@ spear:rare:base:exact,spear,Spears,rare,base,exact,synthetic,自動検証済み,
 spear:rare:base:class,spear,Spears,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 spear:unique:finished:exact,spear,Spears,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.spear,weapon.spear,Flying Spear,Flying Spear,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 spear:unique:base:n/a,spear,Spears,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.spear,,Flying Spear,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-flail:normal:finished:exact,flail,Flails,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,Advanced Flail,Advanced Flail,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+flail:normal:finished:exact,flail,Flails,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,Advanced Flail,Advanced Flail,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 flail:normal:finished:class,flail,Flails,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 flail:normal:base:n/a,flail,Flails,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.flail,,Advanced Flail,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-flail:magic:finished:exact,flail,Flails,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,Advanced Flail,Advanced Flail,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+flail:magic:finished:exact,flail,Flails,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,Advanced Flail,Advanced Flail,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 flail:magic:finished:class,flail,Flails,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-flail:magic:base:exact,flail,Flails,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,Advanced Flail,Advanced Flail,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+flail:magic:base:exact,flail,Flails,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,Advanced Flail,Advanced Flail,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 flail:magic:base:class,flail,Flails,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 flail:rare:finished:exact,flail,Flails,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,Advanced Flail,Advanced Flail,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 flail:rare:finished:class,flail,Flails,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -51,12 +51,12 @@ flail:rare:base:exact,flail,Flails,rare,base,exact,synthetic,自動検証済み,
 flail:rare:base:class,flail,Flails,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 flail:unique:finished:exact,flail,Flails,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.flail,weapon.flail,Advanced Flail,Advanced Flail,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 flail:unique:base:n/a,flail,Flails,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.flail,,Advanced Flail,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-staff:normal:finished:exact,staff,Staves,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,Advanced Staff,Advanced Staff,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+staff:normal:finished:exact,staff,Staves,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,Advanced Staff,Advanced Staff,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 staff:normal:finished:class,staff,Staves,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 staff:normal:base:n/a,staff,Staves,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.staff,,Advanced Staff,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-staff:magic:finished:exact,staff,Staves,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,Advanced Staff,Advanced Staff,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+staff:magic:finished:exact,staff,Staves,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,Advanced Staff,Advanced Staff,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 staff:magic:finished:class,staff,Staves,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-staff:magic:base:exact,staff,Staves,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,Advanced Staff,Advanced Staff,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+staff:magic:base:exact,staff,Staves,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,Advanced Staff,Advanced Staff,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 staff:magic:base:class,staff,Staves,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 staff:rare:finished:exact,staff,Staves,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,Advanced Staff,Advanced Staff,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 staff:rare:finished:class,staff,Staves,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -64,12 +64,12 @@ staff:rare:base:exact,staff,Staves,rare,base,exact,synthetic,自動検証済み,
 staff:rare:base:class,staff,Staves,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 staff:unique:finished:exact,staff,Staves,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.staff,weapon.staff,Advanced Staff,Advanced Staff,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 staff:unique:base:n/a,staff,Staves,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.staff,,Advanced Staff,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-quarterstaff:normal:finished:exact,quarterstaff,Quarterstaves,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,Advanced Quarterstaff,Advanced Quarterstaff,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+quarterstaff:normal:finished:exact,quarterstaff,Quarterstaves,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,Advanced Quarterstaff,Advanced Quarterstaff,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 quarterstaff:normal:finished:class,quarterstaff,Quarterstaves,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 quarterstaff:normal:base:n/a,quarterstaff,Quarterstaves,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.warstaff,,Advanced Quarterstaff,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-quarterstaff:magic:finished:exact,quarterstaff,Quarterstaves,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,Advanced Quarterstaff,Advanced Quarterstaff,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+quarterstaff:magic:finished:exact,quarterstaff,Quarterstaves,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,Advanced Quarterstaff,Advanced Quarterstaff,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 quarterstaff:magic:finished:class,quarterstaff,Quarterstaves,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-quarterstaff:magic:base:exact,quarterstaff,Quarterstaves,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,Advanced Quarterstaff,Advanced Quarterstaff,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+quarterstaff:magic:base:exact,quarterstaff,Quarterstaves,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,Advanced Quarterstaff,Advanced Quarterstaff,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 quarterstaff:magic:base:class,quarterstaff,Quarterstaves,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 quarterstaff:rare:finished:exact,quarterstaff,Quarterstaves,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,Advanced Quarterstaff,Advanced Quarterstaff,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 quarterstaff:rare:finished:class,quarterstaff,Quarterstaves,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -77,12 +77,12 @@ quarterstaff:rare:base:exact,quarterstaff,Quarterstaves,rare,base,exact,syntheti
 quarterstaff:rare:base:class,quarterstaff,Quarterstaves,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 quarterstaff:unique:finished:exact,quarterstaff,Quarterstaves,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.warstaff,weapon.warstaff,Advanced Quarterstaff,Advanced Quarterstaff,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 quarterstaff:unique:base:n/a,quarterstaff,Quarterstaves,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.warstaff,,Advanced Quarterstaff,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-wand:normal:finished:exact,wand,Wands,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,Imbued Wand,Imbued Wand,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+wand:normal:finished:exact,wand,Wands,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,Imbued Wand,Imbued Wand,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 wand:normal:finished:class,wand,Wands,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 wand:normal:base:n/a,wand,Wands,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.wand,,Imbued Wand,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-wand:magic:finished:exact,wand,Wands,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,Imbued Wand,Imbued Wand,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+wand:magic:finished:exact,wand,Wands,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,Imbued Wand,Imbued Wand,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 wand:magic:finished:class,wand,Wands,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-wand:magic:base:exact,wand,Wands,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,Imbued Wand,Imbued Wand,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+wand:magic:base:exact,wand,Wands,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,Imbued Wand,Imbued Wand,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 wand:magic:base:class,wand,Wands,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 wand:rare:finished:exact,wand,Wands,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,Imbued Wand,Imbued Wand,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 wand:rare:finished:class,wand,Wands,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -90,12 +90,12 @@ wand:rare:base:exact,wand,Wands,rare,base,exact,synthetic,自動検証済み,自
 wand:rare:base:class,wand,Wands,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 wand:unique:finished:exact,wand,Wands,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.wand,weapon.wand,Imbued Wand,Imbued Wand,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 wand:unique:base:n/a,wand,Wands,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.wand,,Imbued Wand,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-sceptre:normal:finished:exact,sceptre,Sceptres,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,Advanced Sceptre,Advanced Sceptre,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+sceptre:normal:finished:exact,sceptre,Sceptres,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,Advanced Sceptre,Advanced Sceptre,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 sceptre:normal:finished:class,sceptre,Sceptres,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 sceptre:normal:base:n/a,sceptre,Sceptres,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.sceptre,,Advanced Sceptre,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-sceptre:magic:finished:exact,sceptre,Sceptres,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,Advanced Sceptre,Advanced Sceptre,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+sceptre:magic:finished:exact,sceptre,Sceptres,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,Advanced Sceptre,Advanced Sceptre,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 sceptre:magic:finished:class,sceptre,Sceptres,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-sceptre:magic:base:exact,sceptre,Sceptres,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,Advanced Sceptre,Advanced Sceptre,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+sceptre:magic:base:exact,sceptre,Sceptres,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,Advanced Sceptre,Advanced Sceptre,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 sceptre:magic:base:class,sceptre,Sceptres,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 sceptre:rare:finished:exact,sceptre,Sceptres,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,Advanced Sceptre,Advanced Sceptre,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 sceptre:rare:finished:class,sceptre,Sceptres,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -103,12 +103,12 @@ sceptre:rare:base:exact,sceptre,Sceptres,rare,base,exact,synthetic,自動検証�
 sceptre:rare:base:class,sceptre,Sceptres,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 sceptre:unique:finished:exact,sceptre,Sceptres,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.sceptre,weapon.sceptre,Advanced Sceptre,Advanced Sceptre,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 sceptre:unique:base:n/a,sceptre,Sceptres,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.sceptre,,Advanced Sceptre,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-one_mace:normal:finished:exact,one_mace,One Hand Maces,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,Advanced Mace,Advanced Mace,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+one_mace:normal:finished:exact,one_mace,One Hand Maces,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,Advanced Mace,Advanced Mace,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_mace:normal:finished:class,one_mace,One Hand Maces,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_mace:normal:base:n/a,one_mace,One Hand Maces,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.onemace,,Advanced Mace,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-one_mace:magic:finished:exact,one_mace,One Hand Maces,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,Advanced Mace,Advanced Mace,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+one_mace:magic:finished:exact,one_mace,One Hand Maces,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,Advanced Mace,Advanced Mace,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_mace:magic:finished:class,one_mace,One Hand Maces,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-one_mace:magic:base:exact,one_mace,One Hand Maces,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,Advanced Mace,Advanced Mace,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+one_mace:magic:base:exact,one_mace,One Hand Maces,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,Advanced Mace,Advanced Mace,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_mace:magic:base:class,one_mace,One Hand Maces,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_mace:rare:finished:exact,one_mace,One Hand Maces,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,Advanced Mace,Advanced Mace,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_mace:rare:finished:class,one_mace,One Hand Maces,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -116,12 +116,12 @@ one_mace:rare:base:exact,one_mace,One Hand Maces,rare,base,exact,synthetic,自�
 one_mace:rare:base:class,one_mace,One Hand Maces,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_mace:unique:finished:exact,one_mace,One Hand Maces,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onemace,weapon.onemace,Advanced Mace,Advanced Mace,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_mace:unique:base:n/a,one_mace,One Hand Maces,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.onemace,,Advanced Mace,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-two_mace:normal:finished:exact,two_mace,Two Hand Maces,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,Advanced Great Mace,Advanced Great Mace,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+two_mace:normal:finished:exact,two_mace,Two Hand Maces,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,Advanced Great Mace,Advanced Great Mace,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_mace:normal:finished:class,two_mace,Two Hand Maces,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_mace:normal:base:n/a,two_mace,Two Hand Maces,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.twomace,,Advanced Great Mace,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-two_mace:magic:finished:exact,two_mace,Two Hand Maces,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,Advanced Great Mace,Advanced Great Mace,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+two_mace:magic:finished:exact,two_mace,Two Hand Maces,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,Advanced Great Mace,Advanced Great Mace,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_mace:magic:finished:class,two_mace,Two Hand Maces,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-two_mace:magic:base:exact,two_mace,Two Hand Maces,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,Advanced Great Mace,Advanced Great Mace,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+two_mace:magic:base:exact,two_mace,Two Hand Maces,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,Advanced Great Mace,Advanced Great Mace,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_mace:magic:base:class,two_mace,Two Hand Maces,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_mace:rare:finished:exact,two_mace,Two Hand Maces,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,Advanced Great Mace,Advanced Great Mace,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_mace:rare:finished:class,two_mace,Two Hand Maces,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -129,12 +129,12 @@ two_mace:rare:base:exact,two_mace,Two Hand Maces,rare,base,exact,synthetic,自�
 two_mace:rare:base:class,two_mace,Two Hand Maces,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_mace:unique:finished:exact,two_mace,Two Hand Maces,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twomace,weapon.twomace,Advanced Great Mace,Advanced Great Mace,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_mace:unique:base:n/a,two_mace,Two Hand Maces,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.twomace,,Advanced Great Mace,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-one_sword:normal:finished:exact,one_sword,One Hand Swords,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,Advanced Sword,Advanced Sword,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+one_sword:normal:finished:exact,one_sword,One Hand Swords,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,Advanced Sword,Advanced Sword,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_sword:normal:finished:class,one_sword,One Hand Swords,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_sword:normal:base:n/a,one_sword,One Hand Swords,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.onesword,,Advanced Sword,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-one_sword:magic:finished:exact,one_sword,One Hand Swords,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,Advanced Sword,Advanced Sword,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+one_sword:magic:finished:exact,one_sword,One Hand Swords,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,Advanced Sword,Advanced Sword,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_sword:magic:finished:class,one_sword,One Hand Swords,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-one_sword:magic:base:exact,one_sword,One Hand Swords,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,Advanced Sword,Advanced Sword,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+one_sword:magic:base:exact,one_sword,One Hand Swords,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,Advanced Sword,Advanced Sword,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_sword:magic:base:class,one_sword,One Hand Swords,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_sword:rare:finished:exact,one_sword,One Hand Swords,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,Advanced Sword,Advanced Sword,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_sword:rare:finished:class,one_sword,One Hand Swords,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -142,12 +142,12 @@ one_sword:rare:base:exact,one_sword,One Hand Swords,rare,base,exact,synthetic,�
 one_sword:rare:base:class,one_sword,One Hand Swords,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_sword:unique:finished:exact,one_sword,One Hand Swords,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.onesword,weapon.onesword,Advanced Sword,Advanced Sword,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_sword:unique:base:n/a,one_sword,One Hand Swords,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.onesword,,Advanced Sword,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-two_sword:normal:finished:exact,two_sword,Two Hand Swords,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,Advanced Greatsword,Advanced Greatsword,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+two_sword:normal:finished:exact,two_sword,Two Hand Swords,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,Advanced Greatsword,Advanced Greatsword,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_sword:normal:finished:class,two_sword,Two Hand Swords,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_sword:normal:base:n/a,two_sword,Two Hand Swords,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.twosword,,Advanced Greatsword,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-two_sword:magic:finished:exact,two_sword,Two Hand Swords,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,Advanced Greatsword,Advanced Greatsword,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+two_sword:magic:finished:exact,two_sword,Two Hand Swords,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,Advanced Greatsword,Advanced Greatsword,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_sword:magic:finished:class,two_sword,Two Hand Swords,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-two_sword:magic:base:exact,two_sword,Two Hand Swords,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,Advanced Greatsword,Advanced Greatsword,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+two_sword:magic:base:exact,two_sword,Two Hand Swords,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,Advanced Greatsword,Advanced Greatsword,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_sword:magic:base:class,two_sword,Two Hand Swords,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_sword:rare:finished:exact,two_sword,Two Hand Swords,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,Advanced Greatsword,Advanced Greatsword,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_sword:rare:finished:class,two_sword,Two Hand Swords,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -155,12 +155,12 @@ two_sword:rare:base:exact,two_sword,Two Hand Swords,rare,base,exact,synthetic,�
 two_sword:rare:base:class,two_sword,Two Hand Swords,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_sword:unique:finished:exact,two_sword,Two Hand Swords,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twosword,weapon.twosword,Advanced Greatsword,Advanced Greatsword,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_sword:unique:base:n/a,two_sword,Two Hand Swords,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.twosword,,Advanced Greatsword,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-one_axe:normal:finished:exact,one_axe,One Hand Axes,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,Advanced Axe,Advanced Axe,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+one_axe:normal:finished:exact,one_axe,One Hand Axes,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,Advanced Axe,Advanced Axe,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_axe:normal:finished:class,one_axe,One Hand Axes,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_axe:normal:base:n/a,one_axe,One Hand Axes,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.oneaxe,,Advanced Axe,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-one_axe:magic:finished:exact,one_axe,One Hand Axes,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,Advanced Axe,Advanced Axe,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+one_axe:magic:finished:exact,one_axe,One Hand Axes,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,Advanced Axe,Advanced Axe,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_axe:magic:finished:class,one_axe,One Hand Axes,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-one_axe:magic:base:exact,one_axe,One Hand Axes,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,Advanced Axe,Advanced Axe,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+one_axe:magic:base:exact,one_axe,One Hand Axes,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,Advanced Axe,Advanced Axe,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_axe:magic:base:class,one_axe,One Hand Axes,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_axe:rare:finished:exact,one_axe,One Hand Axes,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,Advanced Axe,Advanced Axe,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_axe:rare:finished:class,one_axe,One Hand Axes,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -168,12 +168,12 @@ one_axe:rare:base:exact,one_axe,One Hand Axes,rare,base,exact,synthetic,自動�
 one_axe:rare:base:class,one_axe,One Hand Axes,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_axe:unique:finished:exact,one_axe,One Hand Axes,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.oneaxe,weapon.oneaxe,Advanced Axe,Advanced Axe,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 one_axe:unique:base:n/a,one_axe,One Hand Axes,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.oneaxe,,Advanced Axe,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-two_axe:normal:finished:exact,two_axe,Two Hand Axes,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,Advanced Greataxe,Advanced Greataxe,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+two_axe:normal:finished:exact,two_axe,Two Hand Axes,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,Advanced Greataxe,Advanced Greataxe,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_axe:normal:finished:class,two_axe,Two Hand Axes,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_axe:normal:base:n/a,two_axe,Two Hand Axes,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.twoaxe,,Advanced Greataxe,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-two_axe:magic:finished:exact,two_axe,Two Hand Axes,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,Advanced Greataxe,Advanced Greataxe,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+two_axe:magic:finished:exact,two_axe,Two Hand Axes,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,Advanced Greataxe,Advanced Greataxe,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_axe:magic:finished:class,two_axe,Two Hand Axes,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-two_axe:magic:base:exact,two_axe,Two Hand Axes,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,Advanced Greataxe,Advanced Greataxe,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+two_axe:magic:base:exact,two_axe,Two Hand Axes,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,Advanced Greataxe,Advanced Greataxe,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_axe:magic:base:class,two_axe,Two Hand Axes,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_axe:rare:finished:exact,two_axe,Two Hand Axes,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,Advanced Greataxe,Advanced Greataxe,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_axe:rare:finished:class,two_axe,Two Hand Axes,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -181,12 +181,12 @@ two_axe:rare:base:exact,two_axe,Two Hand Axes,rare,base,exact,synthetic,自動�
 two_axe:rare:base:class,two_axe,Two Hand Axes,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_axe:unique:finished:exact,two_axe,Two Hand Axes,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.twoaxe,weapon.twoaxe,Advanced Greataxe,Advanced Greataxe,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 two_axe:unique:base:n/a,two_axe,Two Hand Axes,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.twoaxe,,Advanced Greataxe,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-dagger:normal:finished:exact,dagger,Daggers,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,Advanced Dagger,Advanced Dagger,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+dagger:normal:finished:exact,dagger,Daggers,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,Advanced Dagger,Advanced Dagger,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 dagger:normal:finished:class,dagger,Daggers,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 dagger:normal:base:n/a,dagger,Daggers,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.dagger,,Advanced Dagger,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-dagger:magic:finished:exact,dagger,Daggers,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,Advanced Dagger,Advanced Dagger,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+dagger:magic:finished:exact,dagger,Daggers,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,Advanced Dagger,Advanced Dagger,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 dagger:magic:finished:class,dagger,Daggers,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-dagger:magic:base:exact,dagger,Daggers,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,Advanced Dagger,Advanced Dagger,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+dagger:magic:base:exact,dagger,Daggers,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,Advanced Dagger,Advanced Dagger,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 dagger:magic:base:class,dagger,Daggers,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 dagger:rare:finished:exact,dagger,Daggers,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,Advanced Dagger,Advanced Dagger,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 dagger:rare:finished:class,dagger,Daggers,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -194,12 +194,12 @@ dagger:rare:base:exact,dagger,Daggers,rare,base,exact,synthetic,自動検証済�
 dagger:rare:base:class,dagger,Daggers,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 dagger:unique:finished:exact,dagger,Daggers,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.dagger,weapon.dagger,Advanced Dagger,Advanced Dagger,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 dagger:unique:base:n/a,dagger,Daggers,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.dagger,,Advanced Dagger,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-talisman:normal:finished:exact,talisman,Talismans,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,Nettle Talisman,Nettle Talisman,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+talisman:normal:finished:exact,talisman,Talismans,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,Nettle Talisman,Nettle Talisman,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 talisman:normal:finished:class,talisman,Talismans,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 talisman:normal:base:n/a,talisman,Talismans,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.talisman,,Nettle Talisman,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-talisman:magic:finished:exact,talisman,Talismans,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,Nettle Talisman,Nettle Talisman,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+talisman:magic:finished:exact,talisman,Talismans,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,Nettle Talisman,Nettle Talisman,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 talisman:magic:finished:class,talisman,Talismans,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-talisman:magic:base:exact,talisman,Talismans,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,Nettle Talisman,Nettle Talisman,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+talisman:magic:base:exact,talisman,Talismans,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,Nettle Talisman,Nettle Talisman,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 talisman:magic:base:class,talisman,Talismans,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 talisman:rare:finished:exact,talisman,Talismans,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,Nettle Talisman,Nettle Talisman,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 talisman:rare:finished:class,talisman,Talismans,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -207,12 +207,12 @@ talisman:rare:base:exact,talisman,Talismans,rare,base,exact,synthetic,自動検�
 talisman:rare:base:class,talisman,Talismans,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 talisman:unique:finished:exact,talisman,Talismans,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,weapon.talisman,weapon.talisman,Nettle Talisman,Nettle Talisman,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 talisman:unique:base:n/a,talisman,Talismans,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,weapon.talisman,,Nettle Talisman,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-focus:normal:finished:exact,focus,Foci,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,Crystal Focus,Crystal Focus,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+focus:normal:finished:exact,focus,Foci,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,Crystal Focus,Crystal Focus,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 focus:normal:finished:class,focus,Foci,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 focus:normal:base:n/a,focus,Foci,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.focus,,Crystal Focus,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-focus:magic:finished:exact,focus,Foci,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,Crystal Focus,Crystal Focus,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+focus:magic:finished:exact,focus,Foci,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,Crystal Focus,Crystal Focus,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 focus:magic:finished:class,focus,Foci,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-focus:magic:base:exact,focus,Foci,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,Crystal Focus,Crystal Focus,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+focus:magic:base:exact,focus,Foci,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,Crystal Focus,Crystal Focus,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 focus:magic:base:class,focus,Foci,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 focus:rare:finished:exact,focus,Foci,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,Crystal Focus,Crystal Focus,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 focus:rare:finished:class,focus,Foci,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -220,12 +220,12 @@ focus:rare:base:exact,focus,Foci,rare,base,exact,synthetic,自動検証済み,�
 focus:rare:base:class,focus,Foci,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 focus:unique:finished:exact,focus,Foci,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.focus,armour.focus,Crystal Focus,Crystal Focus,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 focus:unique:base:n/a,focus,Foci,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.focus,,Crystal Focus,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-buckler:normal:finished:exact,buckler,Bucklers,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,Advanced Buckler,Advanced Buckler,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+buckler:normal:finished:exact,buckler,Bucklers,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,Advanced Buckler,Advanced Buckler,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 buckler:normal:finished:class,buckler,Bucklers,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 buckler:normal:base:n/a,buckler,Bucklers,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.buckler,,Advanced Buckler,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-buckler:magic:finished:exact,buckler,Bucklers,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,Advanced Buckler,Advanced Buckler,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+buckler:magic:finished:exact,buckler,Bucklers,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,Advanced Buckler,Advanced Buckler,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 buckler:magic:finished:class,buckler,Bucklers,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-buckler:magic:base:exact,buckler,Bucklers,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,Advanced Buckler,Advanced Buckler,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+buckler:magic:base:exact,buckler,Bucklers,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,Advanced Buckler,Advanced Buckler,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 buckler:magic:base:class,buckler,Bucklers,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 buckler:rare:finished:exact,buckler,Bucklers,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,Advanced Buckler,Advanced Buckler,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 buckler:rare:finished:class,buckler,Bucklers,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -233,12 +233,12 @@ buckler:rare:base:exact,buckler,Bucklers,rare,base,exact,synthetic,自動検証�
 buckler:rare:base:class,buckler,Bucklers,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 buckler:unique:finished:exact,buckler,Bucklers,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.buckler,armour.buckler,Advanced Buckler,Advanced Buckler,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 buckler:unique:base:n/a,buckler,Bucklers,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.buckler,,Advanced Buckler,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-shield:normal:finished:exact,shield,Shields,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,Advanced Shield,Advanced Shield,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+shield:normal:finished:exact,shield,Shields,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,Advanced Shield,Advanced Shield,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 shield:normal:finished:class,shield,Shields,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 shield:normal:base:n/a,shield,Shields,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.shield,,Advanced Shield,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-shield:magic:finished:exact,shield,Shields,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,Advanced Shield,Advanced Shield,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+shield:magic:finished:exact,shield,Shields,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,Advanced Shield,Advanced Shield,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 shield:magic:finished:class,shield,Shields,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-shield:magic:base:exact,shield,Shields,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,Advanced Shield,Advanced Shield,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+shield:magic:base:exact,shield,Shields,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,Advanced Shield,Advanced Shield,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 shield:magic:base:class,shield,Shields,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 shield:rare:finished:exact,shield,Shields,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,Advanced Shield,Advanced Shield,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 shield:rare:finished:class,shield,Shields,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -246,12 +246,12 @@ shield:rare:base:exact,shield,Shields,rare,base,exact,synthetic,自動検証済�
 shield:rare:base:class,shield,Shields,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 shield:unique:finished:exact,shield,Shields,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.shield,armour.shield,Advanced Shield,Advanced Shield,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 shield:unique:base:n/a,shield,Shields,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.shield,,Advanced Shield,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-body_armour:normal:finished:exact,body_armour,Body Armours,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,Sacred Chainmail,Sacred Chainmail,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+body_armour:normal:finished:exact,body_armour,Body Armours,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,Sacred Chainmail,Sacred Chainmail,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 body_armour:normal:finished:class,body_armour,Body Armours,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 body_armour:normal:base:n/a,body_armour,Body Armours,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.chest,,Sacred Chainmail,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-body_armour:magic:finished:exact,body_armour,Body Armours,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,Sacred Chainmail,Sacred Chainmail,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+body_armour:magic:finished:exact,body_armour,Body Armours,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,Sacred Chainmail,Sacred Chainmail,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 body_armour:magic:finished:class,body_armour,Body Armours,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-body_armour:magic:base:exact,body_armour,Body Armours,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,Sacred Chainmail,Sacred Chainmail,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+body_armour:magic:base:exact,body_armour,Body Armours,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,Sacred Chainmail,Sacred Chainmail,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 body_armour:magic:base:class,body_armour,Body Armours,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 body_armour:rare:finished:exact,body_armour,Body Armours,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,Sacred Chainmail,Sacred Chainmail,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 body_armour:rare:finished:class,body_armour,Body Armours,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -259,12 +259,12 @@ body_armour:rare:base:exact,body_armour,Body Armours,rare,base,exact,synthetic,�
 body_armour:rare:base:class,body_armour,Body Armours,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 body_armour:unique:finished:exact,body_armour,Body Armours,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.chest,armour.chest,Sacred Chainmail,Sacred Chainmail,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 body_armour:unique:base:n/a,body_armour,Body Armours,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.chest,,Sacred Chainmail,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-helmet:normal:finished:exact,helmet,Helmets,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,Advanced Helmet,Advanced Helmet,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+helmet:normal:finished:exact,helmet,Helmets,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,Advanced Helmet,Advanced Helmet,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 helmet:normal:finished:class,helmet,Helmets,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 helmet:normal:base:n/a,helmet,Helmets,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.helmet,,Advanced Helmet,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-helmet:magic:finished:exact,helmet,Helmets,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,Advanced Helmet,Advanced Helmet,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+helmet:magic:finished:exact,helmet,Helmets,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,Advanced Helmet,Advanced Helmet,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 helmet:magic:finished:class,helmet,Helmets,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-helmet:magic:base:exact,helmet,Helmets,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,Advanced Helmet,Advanced Helmet,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+helmet:magic:base:exact,helmet,Helmets,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,Advanced Helmet,Advanced Helmet,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 helmet:magic:base:class,helmet,Helmets,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 helmet:rare:finished:exact,helmet,Helmets,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,Advanced Helmet,Advanced Helmet,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 helmet:rare:finished:class,helmet,Helmets,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -272,12 +272,12 @@ helmet:rare:base:exact,helmet,Helmets,rare,base,exact,synthetic,自動検証済�
 helmet:rare:base:class,helmet,Helmets,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 helmet:unique:finished:exact,helmet,Helmets,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.helmet,armour.helmet,Advanced Helmet,Advanced Helmet,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 helmet:unique:base:n/a,helmet,Helmets,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.helmet,,Advanced Helmet,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-gloves:normal:finished:exact,gloves,Gloves,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,Grand Bracers,Grand Bracers,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+gloves:normal:finished:exact,gloves,Gloves,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,Grand Bracers,Grand Bracers,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 gloves:normal:finished:class,gloves,Gloves,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 gloves:normal:base:n/a,gloves,Gloves,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.gloves,,Grand Bracers,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-gloves:magic:finished:exact,gloves,Gloves,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,Grand Bracers,Grand Bracers,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+gloves:magic:finished:exact,gloves,Gloves,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,Grand Bracers,Grand Bracers,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 gloves:magic:finished:class,gloves,Gloves,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-gloves:magic:base:exact,gloves,Gloves,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,Grand Bracers,Grand Bracers,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+gloves:magic:base:exact,gloves,Gloves,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,Grand Bracers,Grand Bracers,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 gloves:magic:base:class,gloves,Gloves,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 gloves:rare:finished:exact,gloves,Gloves,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,Grand Bracers,Grand Bracers,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 gloves:rare:finished:class,gloves,Gloves,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -285,12 +285,12 @@ gloves:rare:base:exact,gloves,Gloves,rare,base,exact,synthetic,自動検証済�
 gloves:rare:base:class,gloves,Gloves,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 gloves:unique:finished:exact,gloves,Gloves,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.gloves,armour.gloves,Grand Bracers,Grand Bracers,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 gloves:unique:base:n/a,gloves,Gloves,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.gloves,,Grand Bracers,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-boots:normal:finished:exact,boots,Boots,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,Advanced Greaves,Advanced Greaves,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+boots:normal:finished:exact,boots,Boots,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,Advanced Greaves,Advanced Greaves,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 boots:normal:finished:class,boots,Boots,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 boots:normal:base:n/a,boots,Boots,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.boots,,Advanced Greaves,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-boots:magic:finished:exact,boots,Boots,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,Advanced Greaves,Advanced Greaves,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+boots:magic:finished:exact,boots,Boots,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,Advanced Greaves,Advanced Greaves,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 boots:magic:finished:class,boots,Boots,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-boots:magic:base:exact,boots,Boots,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,Advanced Greaves,Advanced Greaves,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+boots:magic:base:exact,boots,Boots,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,Advanced Greaves,Advanced Greaves,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 boots:magic:base:class,boots,Boots,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 boots:rare:finished:exact,boots,Boots,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,Advanced Greaves,Advanced Greaves,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 boots:rare:finished:class,boots,Boots,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -298,12 +298,12 @@ boots:rare:base:exact,boots,Boots,rare,base,exact,synthetic,自動検証済み,�
 boots:rare:base:class,boots,Boots,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 boots:unique:finished:exact,boots,Boots,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.boots,armour.boots,Advanced Greaves,Advanced Greaves,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 boots:unique:base:n/a,boots,Boots,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.boots,,Advanced Greaves,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-quiver:normal:finished:exact,quiver,Quivers,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,Advanced Quiver,Advanced Quiver,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+quiver:normal:finished:exact,quiver,Quivers,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,Advanced Quiver,Advanced Quiver,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 quiver:normal:finished:class,quiver,Quivers,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 quiver:normal:base:n/a,quiver,Quivers,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.quiver,,Advanced Quiver,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-quiver:magic:finished:exact,quiver,Quivers,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,Advanced Quiver,Advanced Quiver,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+quiver:magic:finished:exact,quiver,Quivers,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,Advanced Quiver,Advanced Quiver,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 quiver:magic:finished:class,quiver,Quivers,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-quiver:magic:base:exact,quiver,Quivers,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,Advanced Quiver,Advanced Quiver,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+quiver:magic:base:exact,quiver,Quivers,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,Advanced Quiver,Advanced Quiver,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 quiver:magic:base:class,quiver,Quivers,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 quiver:rare:finished:exact,quiver,Quivers,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,Advanced Quiver,Advanced Quiver,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 quiver:rare:finished:class,quiver,Quivers,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -311,12 +311,12 @@ quiver:rare:base:exact,quiver,Quivers,rare,base,exact,synthetic,自動検証済�
 quiver:rare:base:class,quiver,Quivers,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 quiver:unique:finished:exact,quiver,Quivers,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,armour.quiver,armour.quiver,Advanced Quiver,Advanced Quiver,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 quiver:unique:base:n/a,quiver,Quivers,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,armour.quiver,,Advanced Quiver,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-ring:normal:finished:exact,ring,Rings,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,Prismatic Ring,Prismatic Ring,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+ring:normal:finished:exact,ring,Rings,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,Prismatic Ring,Prismatic Ring,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 ring:normal:finished:class,ring,Rings,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 ring:normal:base:n/a,ring,Rings,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,accessory.ring,,Prismatic Ring,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-ring:magic:finished:exact,ring,Rings,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,Prismatic Ring,Prismatic Ring,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+ring:magic:finished:exact,ring,Rings,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,Prismatic Ring,Prismatic Ring,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 ring:magic:finished:class,ring,Rings,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-ring:magic:base:exact,ring,Rings,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,Prismatic Ring,Prismatic Ring,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+ring:magic:base:exact,ring,Rings,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,Prismatic Ring,Prismatic Ring,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 ring:magic:base:class,ring,Rings,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 ring:rare:finished:exact,ring,Rings,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,Prismatic Ring,Prismatic Ring,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 ring:rare:finished:class,ring,Rings,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -324,12 +324,12 @@ ring:rare:base:exact,ring,Rings,rare,base,exact,synthetic,自動検証済み,自
 ring:rare:base:class,ring,Rings,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 ring:unique:finished:exact,ring,Rings,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.ring,accessory.ring,Prismatic Ring,Prismatic Ring,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 ring:unique:base:n/a,ring,Rings,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,accessory.ring,,Prismatic Ring,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-amulet:normal:finished:exact,amulet,Amulets,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,Gold Amulet,Gold Amulet,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+amulet:normal:finished:exact,amulet,Amulets,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,Gold Amulet,Gold Amulet,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 amulet:normal:finished:class,amulet,Amulets,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 amulet:normal:base:n/a,amulet,Amulets,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,accessory.amulet,,Gold Amulet,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-amulet:magic:finished:exact,amulet,Amulets,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,Gold Amulet,Gold Amulet,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+amulet:magic:finished:exact,amulet,Amulets,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,Gold Amulet,Gold Amulet,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 amulet:magic:finished:class,amulet,Amulets,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-amulet:magic:base:exact,amulet,Amulets,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,Gold Amulet,Gold Amulet,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+amulet:magic:base:exact,amulet,Amulets,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,Gold Amulet,Gold Amulet,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 amulet:magic:base:class,amulet,Amulets,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 amulet:rare:finished:exact,amulet,Amulets,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,Gold Amulet,Gold Amulet,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 amulet:rare:finished:class,amulet,Amulets,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
@@ -337,12 +337,12 @@ amulet:rare:base:exact,amulet,Amulets,rare,base,exact,synthetic,自動検証済�
 amulet:rare:base:class,amulet,Amulets,rare,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 amulet:unique:finished:exact,amulet,Amulets,unique,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.amulet,accessory.amulet,Gold Amulet,Gold Amulet,Synthetic Unique,Synthetic Unique,,,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 amulet:unique:base:n/a,amulet,Amulets,unique,base,n/a,synthetic,仕様上対象外,仕様上対象外,accessory.amulet,,Gold Amulet,,Synthetic Unique,,unique,,0,0,このレアリティではベースプリセットを提供しない
-belt:normal:finished:exact,belt,Belts,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.belt,accessory.belt,Utility Belt,Utility Belt,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+belt:normal:finished:exact,belt,Belts,normal,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.belt,accessory.belt,Utility Belt,Utility Belt,,,normal,normal,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 belt:normal:finished:class,belt,Belts,normal,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.belt,accessory.belt,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 belt:normal:base:n/a,belt,Belts,normal,base,n/a,synthetic,仕様上対象外,仕様上対象外,accessory.belt,,Utility Belt,,,,nonunique,,0,0,このレアリティではベースプリセットを提供しない
-belt:magic:finished:exact,belt,Belts,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.belt,accessory.belt,Utility Belt,Utility Belt,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
+belt:magic:finished:exact,belt,Belts,magic,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.belt,accessory.belt,Utility Belt,Utility Belt,,,magic,magic,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 belt:magic:finished:class,belt,Belts,magic,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.belt,accessory.belt,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
-belt:magic:base:exact,belt,Belts,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.belt,accessory.belt,Utility Belt,Utility Belt,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
+belt:magic:base:exact,belt,Belts,magic,base,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.belt,accessory.belt,Utility Belt,Utility Belt,,,magic,magic,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 belt:magic:base:class,belt,Belts,magic,base,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.belt,accessory.belt,,,,,nonunique,nonunique,0,0,構造総当たり。実コピー固有の翻訳・同定は別監査
 belt:rare:finished:exact,belt,Belts,rare,finished,exact,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.belt,accessory.belt,Utility Belt,Utility Belt,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
 belt:rare:finished:class,belt,Belts,rare,finished,class,synthetic,自動検証済み,自動UI監査対象・Windows実機確認待ち,accessory.belt,accessory.belt,,,,,nonunique,nonunique,1,1,構造総当たり。実コピー固有の翻訳・同定は別監査
