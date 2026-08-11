@@ -23,6 +23,7 @@ from src.poetore.trade import (
 from src.poetore.trade import _request_json
 from src.poetore.trade import _base_defence_percentile
 from src.poetore.trade import _trade_response_cache
+from src.poetore.trade import _value_for_template
 from src.poetore.trade import _awakened_tier_tags
 from src.poetore.trade import _apply_atzoatl_room_rules
 from src.poetore.trade import _group_price_listings
@@ -35,6 +36,24 @@ from src.poetore.trade import (
     _japanese_trade_item_name,
     _japanese_trade_item_type,
 )
+
+
+def test_value_for_template_uses_single_placeholder_not_fixed_number():
+    assert _value_for_template(
+        "エンデュランスチャージ1個ごとに毎秒ライフの0.2%を自動回復する",
+        "エンデュランスチャージ1個ごとに毎秒ライフの#%を自動回復する",
+    ) == 0.2
+
+
+def test_value_for_template_averages_added_damage_range_only():
+    assert _value_for_template(
+        "プレイヤーおよび近くの味方は青ソケット1個ごとに3から60の追加雷ダメージを獲得する",
+        "プレイヤーおよび近くの味方は青ソケット1個ごとに#から#の追加雷ダメージを獲得する",
+    ) == 31.5
+    assert _value_for_template(
+        "効果は4秒間持続し効果が20%増加する",
+        "効果は#秒間持続し効果が#%増加する",
+    ) == 4.0
 
 
 def test_japanese_trade_item_label_uses_unique_name_and_regular_type():

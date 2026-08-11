@@ -1,7 +1,12 @@
 import unittest
 
 from src.poetore import ItemParseError, parse_item_text
-from src.poetore.parser import _modifier_header_details
+from src.poetore.parser import (
+    _modifier_header_details,
+    _modifier_values,
+    _values_for_matched_template,
+)
+from src.poetore.metadata import ModMetadata
 
 
 RARE_JP = """アイテムクラス: 指輪
@@ -23,6 +28,58 @@ RARE_JP = """アイテムクラス: 指輪
 
 
 class PoetoreParserTest(unittest.TestCase):
+    def test_single_placeholder_ignores_fixed_number_before_roll(self):
+        item = parse_item_text("""アイテムクラス: 靴
+レアリティ: レア
+狂喜の要請
+リヴァイアサングリーヴ
+--------
+アイテムレベル: 86
+--------
+{ イーター・オブ・ワールズ 暗黙モッド 「特大」 — ライフ }
+エンデュランスチャージ1個ごとに毎秒ライフの0.2%を自動回復する
+--------
+""")
+
+        modifier = item.modifiers[0]
+        self.assertEqual(modifier.stat_id, "implicit.stat_989800292")
+        self.assertEqual(modifier.values, (0.2,))
+
+    def test_added_damage_range_uses_average_of_placeholders(self):
+        template = "プレイヤーおよび近くの味方は青ソケット1個ごとに#から#の追加雷ダメージを獲得する"
+        metadata = ModMetadata(
+            ref="test", stat_id="explicit.test", kind="explicit",
+            japanese=(template,),
+        )
+
+        self.assertEqual(
+            _modifier_values(
+                "プレイヤーおよび近くの味方は青ソケット1個ごとに3から60の追加雷ダメージを獲得する",
+                metadata,
+            ),
+            (31.5,),
+        )
+
+    def test_other_multiple_placeholders_keep_legacy_values_until_reviewed(self):
+        template = "効果は#秒間持続し効果が#%増加する"
+        metadata = ModMetadata(
+            ref="test", stat_id="explicit.test", kind="explicit",
+            japanese=(template,),
+        )
+
+        self.assertEqual(
+            _modifier_values("効果は4秒間持続し効果が20%増加する", metadata),
+            (4.0, 20.0),
+        )
+
+    def test_template_extraction_ignores_roll_range(self):
+        self.assertEqual(
+            _values_for_matched_template(
+                "最大ライフ +99(85-99)", ("最大ライフ +#",),
+            ),
+            (99.0,),
+        )
+
     def test_japanese_forbidden_shako_random_support_mods_use_indexable_stats(self):
         for name in ("禁断のシャコー帽", "禁断のシャコー帽（レプリカ）"):
             item = parse_item_text(f"""アイテムクラス: 兜

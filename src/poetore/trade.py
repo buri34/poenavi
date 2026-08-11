@@ -1939,6 +1939,13 @@ def _value_for_template(source: str, template: str) -> float | None:
     match = re.fullmatch(pattern, source)
     if not match or not match.groups():
         return None
+    if (
+        len(match.groups()) == 2
+        and "#から#" in template
+        and "ダメージ" in template
+        and "反射する" not in template
+    ):
+        return (float(match.group(1)) + float(match.group(2))) / 2
     return float(match.group(1))
 
 

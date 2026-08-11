@@ -402,6 +402,51 @@ def _numbers(text: str) -> tuple[float, ...]:
     return tuple(values)
 
 
+def _values_for_matched_template(
+    text: str, japanese_templates: tuple[str, ...],
+) -> tuple[float, ...] | None:
+    """公式Tradeテンプレートの#に対応する表示値だけを抽出する。"""
+    normalized_text = normalize_stat_text(text)
+    number = r"[-+]?\d[\d,]*(?:\.\d+)?"
+    for template in japanese_templates:
+        if normalize_stat_text(template) != normalized_text:
+            continue
+        parts = template.split("#")
+        pattern = re.escape(parts[0])
+        for suffix in parts[1:]:
+            # 詳細コピーのroll範囲 ``99(85-99)`` は表示値に含めない。
+            pattern += rf"({number})(?:\([^)]*\))?" + re.escape(suffix)
+        match = re.fullmatch(pattern, text.strip())
+        if match:
+            return tuple(float(value.replace(",", "")) for value in match.groups())
+    return None
+
+
+def _is_added_damage_range_template(template: str) -> bool:
+    """追加ダメージの下限・上限として平均できる文型を判定する。"""
+    return "#から#" in template and "ダメージ" in template and "反射する" not in template
+
+
+def _modifier_values(line: str, metadata) -> tuple[float, ...]:
+    """安全に意味が確定している公式テンプレートだけ値解釈へ利用する。"""
+    if metadata:
+        template_values = _values_for_matched_template(line, metadata.japanese)
+        if template_values is not None:
+            matching_templates = tuple(
+                template for template in metadata.japanese
+                if normalize_stat_text(template) == normalize_stat_text(line)
+            )
+            if any(template.count("#") == 1 for template in matching_templates):
+                return template_values
+            if len(template_values) == 2 and any(
+                _is_added_damage_range_template(template)
+                for template in matching_templates
+            ):
+                return ((template_values[0] + template_values[1]) / 2,)
+    # その他の複数可変値は意味のレビューが済むまで従来挙動を維持する。
+    return _numbers(line)
+
+
 def _normalized_modifier_line(line: str, item_category: str | None = None) -> str | None:
     """詳細コピー固有の注釈を除き、検索対象となるMod本文だけを返す。"""
     if item_category == "incubator" and (
@@ -1043,7 +1088,7 @@ def parse_item_text(text: str) -> ParsedItem:
                                if tier.generation in {"prefix", "suffix"}}
                 if len(generations) == 1:
                     inferred_affix = generations.pop()
-            values = _numbers(line)
+            values = _modifier_values(line, metadata)
             if stat_alias_key in _STAT_VALUE_OVERRIDES:
                 values = _STAT_VALUE_OVERRIDES[stat_alias_key]
             value_index = _DIRECTIONAL_STAT_VALUE_INDEX.get(direction_alias_key)
