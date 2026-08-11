@@ -4,7 +4,7 @@
 
 ## 作業ファイル
 
-- `windows-test-cases.csv`: Windows実機の受入作業票（60ケース）
+- `windows-test-cases.csv`: Windows実機の受入作業票（64ケース）
 - `search-matrix-audit.csv`: 装備27カテゴリのレアリティ／プリセット／検索範囲の構造監査結果
 - `search-matrix-audit.json`: 上記監査の機械可読サマリーと全行
 - `search-real-copy-audit.csv`: 日英実コピーfixtureの解析・最終Trade2 identity監査結果
@@ -25,10 +25,10 @@
 
 ## 現在の件数
 
-- 全60ケース
-- 必須43件
-- 推奨15件
-- 入手できた時2件
+- 全64ケース
+- 必須49件
+- 推奨14件
+- 入手できた時1件
 - 2026-08-11時点では全件未実施
 
 ## P0自動監査（2026-08-11）
