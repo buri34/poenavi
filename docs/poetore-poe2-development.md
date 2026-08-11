@@ -29,6 +29,7 @@ PoE2クライアントから直接採取した文面とは称さない。実機�
 
 ## 次の残タスク
 
+- [ ] Fractured由来Statの状態行（「特殊／フラクチャー」）を通常の検索チップ風UIで表示し、初期OFFとする
 - [ ] 実PoE2クライアントからCurrency、Rare武器／防具、Unique、Gem、Waystoneの日英全文を収集
 - [x] identity indexをEE2固定revisionの日英全identityへ拡張
 - [x] 基本property、公式Stat ID、数値、未解決Mod保持を実装

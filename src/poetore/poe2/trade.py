@@ -178,8 +178,17 @@ def poe2_elemental_dps(item: ParsedItem) -> float | None:
     return average_damage * speed if found_range else None
 
 
+def gem_socket_count(item: ParsedItem) -> int | None:
+    """Count PoE2 Gem sockets using EE2's colour-agnostic rule."""
+    raw = item.properties.get("Sockets") or item.properties.get("ソケット") or ""
+    count = len(re.sub(r"[\s-]", "", str(raw)))
+    return count or None
+
+
 def _augment_socket_count(item: ParsedItem) -> int | None:
     raw = item.properties.get("Sockets") or item.properties.get("ソケット") or ""
+    if item.category in {"active_gem", "support_gem", "meta_gem"}:
+        return gem_socket_count(item)
     count = len(re.findall(r"(?<![A-Za-z])S(?![A-Za-z])", str(raw), re.IGNORECASE))
     return count or None
 

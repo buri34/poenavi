@@ -4194,12 +4194,13 @@ class PoetoreWindow(QWidget):
         return int(text) if text else None
 
     def _configure_gem_sockets(self, item):
+        from .poe2.trade import gem_socket_count
+
         key = item.raw_text
         if key == getattr(self, "_gem_socket_item_key", None):
             return
         self._gem_socket_item_key = key
-        raw_sockets = item.properties.get("Sockets") or item.properties.get("ソケット") or ""
-        sockets = len(re.findall(r"(?<![A-Za-z])S(?![A-Za-z])", str(raw_sockets), re.I))
+        sockets = gem_socket_count(item) or 0
         visible = self.poe_version == POE2 and is_gem_category(item.category) and sockets > 0
         self.gem_socket_tag.setVisible(visible)
         self.gem_socket_edit.setText(str(sockets) if visible else "")

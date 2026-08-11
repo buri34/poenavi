@@ -846,6 +846,18 @@ def test_phase45_gem_socket_uses_official_misc_filter():
     }
 
 
+def test_poe2_gem_socket_property_counts_g_markers_like_ee2():
+    item = parse_item_text("""アイテムクラス: スキルジェム
+レアリティ: ジェム
+アーク
+--------
+レベル: 20
+ソケット: G G G G
+""")
+    row = next(row for row in poe2_search_filters(item) if row.stat_id == "property.gem_sockets")
+    assert row.min_value == 4
+
+
 @pytest.mark.parametrize(
     ("item_class", "base_type", "category"),
     [

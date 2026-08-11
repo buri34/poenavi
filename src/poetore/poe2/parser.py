@@ -526,6 +526,10 @@ def _select_scoped_stat_candidate(candidates, category: str, line_kind: str):
 
 
 def parse_item_text(text: str) -> ParsedItem:
+    # Some Windows clipboard paths preserve an invisible marker before the
+    # first label.  Meta Gems omit Item Class, so losing that first Rarity
+    # label makes only this category impossible to identify.
+    text = text.lstrip("\ufeff\u200b\u2060")
     labels, identity_lines = _header(text)
     item_class = labels.get("item_class", "")
     rarity = _RARITIES.get(labels.get("rarity", ""), labels.get("rarity", "").casefold())

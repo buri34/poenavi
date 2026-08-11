@@ -4974,7 +4974,7 @@ def test_poe2_gem_socket_chip_matches_ee2_threshold(qapp, sockets, enabled):
     try:
         item = parse_poe2_item_text(
             "アイテムクラス: スキルジェム\nレアリティ: ジェム\nアーク\n--------\n"
-            f"レベル: 20\n品質: +20%\nソケット: {' '.join('S' for _ in range(sockets))}\n"
+            f"レベル: 20\n品質: +20%\nソケット: {' '.join('G' for _ in range(sockets))}\n"
         )
         window._parsed_item = item
         window._configure_gem_sockets(item)

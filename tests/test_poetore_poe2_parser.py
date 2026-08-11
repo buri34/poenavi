@@ -576,6 +576,24 @@ def test_phase45_gem_identity_and_socket_property():
     assert item.base_type == "Arc"
     assert item.category == "active_gem"
     assert item.properties["ソケット"] == "S S"
+
+
+def test_real_meta_gem_without_item_class_accepts_windows_leading_marker():
+    item = parse_item_text("""\ufeffレアリティ: ジェム
+ブラスファミー
+--------
+バフ, 永続, 範囲効果, オーラ, メタ
+レベル: 10
+--------
+装備条件：レベル 36, 65 知性
+--------
+ソケット: G G
+--------
+ソケットされたすべての呪いスキルをオーラに変化させる。
+""")
+    assert item.category == "meta_gem"
+    assert item.base_type == "Blasphemy"
+    assert item.properties["ソケット"] == "G G"
 def test_real_uncut_skill_gem_is_exchange_identity_without_description_mods():
     import csv
     from pathlib import Path
