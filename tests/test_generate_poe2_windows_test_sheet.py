@@ -21,6 +21,11 @@ def test_build_rows_preserves_all_detailed_cases() -> None:
     assert rows[-1]["ケースID"] == "P2-WIN-064"
     assert list(rows[0]) == FIELDNAMES
 
+    flail = next(row for row in rows if row["ケースID"] == "P2-WIN-004")
+    assert "Unique Flail" in flail["対象アイテム"]
+    assert "Rare Flail" not in flail["対象アイテム"]
+    assert "weapon.flail" in flail["確認C_検索先・条件"]
+
 
 def test_copy_requirements_are_explicit() -> None:
     assert copy_requirement(
