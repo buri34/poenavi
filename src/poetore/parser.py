@@ -5,7 +5,12 @@ from functools import lru_cache
 import re
 
 from .models import ItemModifier, ParsedItem
-from .metadata import default_metadata_index, gem_metadata, normalize_stat_text
+from .metadata import (
+    default_metadata_index,
+    gem_metadata,
+    multi_value_rule,
+    normalize_stat_text,
+)
 
 
 class ItemParseError(ValueError):
@@ -133,6 +138,14 @@ _FOULBORN_NAME_PREFIX = re.compile(
 )
 _VESTIGIAL_BASE_PREFIX = re.compile(
     r"^(?:Vestigial|痕跡)\s+(.+)$",
+    re.IGNORECASE,
+)
+_ITEM_USABILITY_WARNING = re.compile(
+    r"^(?:"
+    r"このアイテムを使用できません。アイテムの効果は無視されます"
+    r"|(?:You cannot use|This item cannot be used).*?"
+    r"(?:stats?|effects?).*?ignored"
+    r")\.?$",
     re.IGNORECASE,
 )
 _GLOSSARY_HELP_LINE = re.compile(
@@ -392,6 +405,64 @@ def _numbers(text: str) -> tuple[float, ...]:
     for match in _NUMBER.findall(text.replace(",", "")):
         values.append(float(match))
     return tuple(values)
+
+
+def _values_for_matched_template(
+    text: str, japanese_templates: tuple[str, ...],
+) -> tuple[float, ...] | None:
+    """公式Tradeテンプレートの#に対応する表示値だけを抽出する。"""
+    normalized_text = normalize_stat_text(text)
+    number = r"[-+]?\d[\d,]*(?:\.\d+)?"
+    for template in japanese_templates:
+        if normalize_stat_text(template) != normalized_text:
+            continue
+        parts = template.split("#")
+        pattern = re.escape(parts[0])
+        for suffix in parts[1:]:
+            # 詳細コピーのroll範囲 ``99(85-99)`` は表示値に含めない。
+            pattern += rf"({number})(?:\([^)]*\))?" + re.escape(suffix)
+        match = re.fullmatch(pattern, text.strip())
+        if match:
+            return tuple(float(value.replace(",", "")) for value in match.groups())
+    return None
+
+
+def _is_added_damage_range_template(template: str) -> bool:
+    """追加ダメージの下限・上限として平均できる文型を判定する。"""
+    return "#から#" in template and "ダメージ" in template and "反射する" not in template
+
+
+def _modifier_values(line: str, metadata) -> tuple[float, ...]:
+    """安全に意味が確定している公式テンプレートだけ値解釈へ利用する。"""
+    if metadata:
+        template_values = _values_for_matched_template(line, metadata.japanese)
+        if template_values is not None:
+            rule = multi_value_rule(metadata.stat_id)
+            if rule:
+                operation = rule.get("operation")
+                if operation == "blank":
+                    return ()
+                if operation == "first":
+                    return (template_values[0],)
+                if operation == "mean":
+                    return (sum(template_values) / len(template_values),)
+                if operation == "index":
+                    return (template_values[int(rule["value_index"])],)
+                if operation == "half_second":
+                    return (template_values[1] / 2,)
+            matching_templates = tuple(
+                template for template in metadata.japanese
+                if normalize_stat_text(template) == normalize_stat_text(line)
+            )
+            if any(template.count("#") == 1 for template in matching_templates):
+                return template_values
+            if len(template_values) == 2 and any(
+                _is_added_damage_range_template(template)
+                for template in matching_templates
+            ):
+                return ((template_values[0] + template_values[1]) / 2,)
+    # その他の複数可変値は意味のレビューが済むまで従来挙動を維持する。
+    return _numbers(line)
 
 
 def _normalized_modifier_line(line: str, item_category: str | None = None) -> str | None:
@@ -734,13 +805,26 @@ def parse_item_text(text: str) -> ParsedItem:
 
     header: dict[str, str] = {}
     name_lines: list[str] = []
+    usability_warning_seen = False
     for line in sections[0]:
         pair = _split_label(line)
         key = _LABELS.get(pair[0]) if pair else None
         if key:
             header[key] = pair[1]
+        elif _ITEM_USABILITY_WARNING.fullmatch(line.strip()):
+            usability_warning_seen = True
         else:
             name_lines.append(line)
+    if usability_warning_seen and not name_lines and len(sections) > 1:
+        # 装備要求を満たさないアイテムは、警告文の直後にも区切り線が入り、
+        # 通常はヘッダー内にある固有名／ベース名が次の区画へ押し出される。
+        name_lines = [
+            line for line in sections[1]
+            if not _split_label(line)
+            and not _ITEM_USABILITY_WARNING.fullmatch(line.strip())
+        ]
+        if name_lines:
+            sections = [sections[0], *sections[2:]]
     if not header.get("rarity") or not name_lines:
         raise ItemParseError("レアリティまたはアイテム名を取得できませんでした。")
 
@@ -1022,7 +1106,7 @@ def parse_item_text(text: str) -> ParsedItem:
                                if tier.generation in {"prefix", "suffix"}}
                 if len(generations) == 1:
                     inferred_affix = generations.pop()
-            values = _numbers(line)
+            values = _modifier_values(line, metadata)
             if stat_alias_key in _STAT_VALUE_OVERRIDES:
                 values = _STAT_VALUE_OVERRIDES[stat_alias_key]
             value_index = _DIRECTIONAL_STAT_VALUE_INDEX.get(direction_alias_key)

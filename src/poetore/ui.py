@@ -11,7 +11,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRect, QSize, Qt, QTimer, Signal, QUrl
 from PySide6.QtGui import (
-    QColor, QCursor, QDesktopServices, QIcon, QIntValidator, QLinearGradient, QPainter,
+    QBrush, QColor, QCursor, QDesktopServices, QFontMetrics, QIcon, QIntValidator, QLinearGradient, QPainter,
     QKeySequence, QPalette, QPen, QPixmap, QPolygonF,
 )
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
@@ -94,9 +94,10 @@ _MOD_COLUMN_TEXT = 3
 _MOD_COLUMN_MIN = 4
 _MOD_COLUMN_MAX = 5
 _MOD_CHECK_COLUMN_WIDTH = 40
-_MOD_TIER_COLUMN_WIDTH = 75
-_MOD_TEXT_COLUMN_WIDTH = 346
-_MOD_VALUE_EDITOR_WIDTH = 72
+_MOD_TIER_COLUMN_WIDTH = 62
+_MOD_TEXT_COLUMN_WIDTH = 320
+_MOD_VALUE_EDITOR_WIDTH = 48
+_MOD_VALUE_LEADING_GAP = 8
 _MOD_ROW_HEIGHT = 36
 _UNIQUE_ROLL_ROW_HEIGHT = 62
 _UNIQUE_CANDIDATE_ROW_HEIGHT = 64
@@ -106,24 +107,35 @@ _UNIQUE_CANDIDATE_VIEWPORT_HEIGHT = (
     _UNIQUE_CANDIDATE_ROW_HEIGHT * _UNIQUE_CANDIDATE_VISIBLE_ROWS
     + _UNIQUE_CANDIDATE_ROW_SPACING * (_UNIQUE_CANDIDATE_VISIBLE_ROWS - 1)
 )
+_ACTION_CLUSTER_HORIZONTAL_GAP = 6
+_ACTION_CLUSTER_VERTICAL_GAP = 10
 _RELATED_ITEMS_TREE_HEIGHT = 180
 _RELATED_ITEMS_PRICE_HEIGHT_REDUCTION = 180
 _DISPLAY_SIZE_PROFILES = {
     "small": {
-        "font": 12, "width": 720, "height": 1039,
-        "minimum_width": 680, "minimum_height": 620,
+        "font": 12, "width": 560, "height": 1039,
+        "mod_value_font": 11,
+        "mod_value_height": 26,
+        "search_button_width": 105,
+        "minimum_width": 540, "minimum_height": 620,
         "mod_height": 230, "price_height": 434,
         "button_v_padding": 5, "button_h_padding": 9,
     },
     "medium": {
-        "font": 14, "width": 840, "height": 1039,
-        "minimum_width": 760, "minimum_height": 620,
+        "font": 14, "width": 650, "height": 1039,
+        "mod_value_font": 12,
+        "mod_value_height": 30,
+        "search_button_width": 122,
+        "minimum_width": 610, "minimum_height": 620,
         "mod_height": 250, "price_height": 434,
         "button_v_padding": 6, "button_h_padding": 11,
     },
     "large": {
-        "font": 16, "width": 960, "height": 1039,
-        "minimum_width": 840, "minimum_height": 620,
+        "font": 16, "width": 740, "height": 1039,
+        "mod_value_font": 14,
+        "mod_value_height": 34,
+        "search_button_width": 140,
+        "minimum_width": 680, "minimum_height": 620,
         "mod_height": 270, "price_height": 434,
         "button_v_padding": 7, "button_h_padding": 13,
     },
@@ -271,8 +283,8 @@ class _UniqueRollSlider(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         rect = self.rect().adjusted(0, 3, -1, -3)
-        painter.setPen(QPen(QColor("#5f5363"), 1))
-        painter.setBrush(QColor("#2a222d"))
+        painter.setPen(QPen(QColor("#46504D"), 1))
+        painter.setBrush(QColor("#202628"))
         painter.drawRoundedRect(rect, 3, 3)
 
         active = self._preview
@@ -396,7 +408,7 @@ def _influence_chip_icon(label: str, active: bool) -> QIcon:
     result.fill(Qt.transparent)
     painter = QPainter(result)
     painter.setRenderHint(QPainter.Antialiasing)
-    painter.setPen(QColor("#f2e7f5" if active else "#766a79"))
+    painter.setPen(QColor("#E6ECEA" if active else "#737D79"))
     painter.drawText(QRect(0, 0, 16, 20), Qt.AlignCenter, "☑" if active else "☐")
     icon_path = Path(__file__).resolve().parents[2] / "assets" / "icons" / f"{label}.png"
     influence = QPixmap(str(icon_path))
@@ -771,7 +783,7 @@ class _SparklineWidget(QWidget):
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(QPen(QColor("#66566b"), 1, Qt.DashLine))
+        painter.setPen(QPen(QColor("#56615D"), 1, Qt.DashLine))
         middle = self.height() / 2
         painter.drawLine(0, round(middle), self.width(), round(middle))
         if len(self._points) < 2:
@@ -783,7 +795,7 @@ class _SparklineWidget(QWidget):
             x = index * (self.width() - 2) / (len(self._points) - 1) + 1
             y = 1 + (high - value) * (self.height() - 2) / spread
             polygon.append(QPointF(x, y))
-        color = "#db86ef" if self._points[-1] >= self._points[0] else "#ff6b6b"
+        color = "#65FFCA" if self._points[-1] >= self._points[0] else "#ff6b6b"
         painter.setPen(QPen(QColor(color), 1.5))
         painter.drawPolyline(polygon)
 
@@ -799,9 +811,6 @@ class _PoetoreTitleBar(QWidget):
         self._drag_start_position: QPoint | None = None
         layout = QHBoxLayout(self)
         layout.setContentsMargins(6, 2, 2, 2)
-        title = QLabel("ぽえとれ")
-        title.setStyleSheet("font-weight: bold;")
-        layout.addWidget(title)
         window.divine_rate_button = QPushButton("⇄ …")
         window.divine_rate_button.setObjectName("divineRateButton")
         window.divine_rate_button.setToolTip("Divine OrbのChaos換算早見表")
@@ -998,11 +1007,11 @@ class PoetoreWindow(QWidget):
         self.poe_ninja_open_button = QPushButton("poe.ninja  ↗")
         self.poe_ninja_open_button.setObjectName("poeNinjaOpenButton")
         self.poe_ninja_open_button.clicked.connect(self._open_poe_ninja_url)
+        ninja_layout.addStretch()
         ninja_layout.addWidget(self.poe_ninja_price_label)
         ninja_layout.addWidget(self.poe_ninja_price_value)
         ninja_layout.addWidget(self.poe_ninja_price_multiplier)
         ninja_layout.addWidget(self.poe_ninja_currency_icon)
-        ninja_layout.addStretch()
         ninja_layout.addWidget(self.poe_ninja_trend_label)
         ninja_layout.addWidget(self.poe_ninja_trend_chart)
         ninja_layout.addWidget(self.poe_ninja_open_button)
@@ -1038,9 +1047,15 @@ class PoetoreWindow(QWidget):
         )
         self.trade_preset_combo.currentIndexChanged.connect(self._trade_preset_changed)
         # 検索プリセットは左半分だけを使い、下のMod表との視線移動を短くする。
-        # 単独表示時は空の第2セグメントも維持するため、ボタン自体は従来の半幅になる。
+        # 切替候補がない場合は固定状態を説明するだけのボタンを出さず、同じ幅の空白を
+        # 残して右側のMod数値コントロールの位置を動かさない。
         top_options.addWidget(self.trade_preset_combo, 1)
+        self.trade_preset_placeholder = QWidget()
+        self.trade_preset_placeholder.hide()
+        top_options.addWidget(self.trade_preset_placeholder, 1)
+        top_options.addStretch(1)
         self.search_range_combo = QComboBox()
+        self.search_range_combo.setObjectName("filterControl")
         for percent in (0, 5, 10, 15, 20, 30, 50):
             label = (
                 "Mod数値：完全一致"
@@ -1061,7 +1076,7 @@ class PoetoreWindow(QWidget):
             "ユニーク品はModの可変範囲を基準に調整します。"
         )
         self.search_range_combo.currentIndexChanged.connect(self._search_range_changed)
-        top_options.addWidget(self.search_range_combo, 1)
+        top_options.addWidget(self.search_range_combo)
         self.magic_rarity_toggle = _BinaryToggle(
             ("ユニーク以外", False), ("マジック完全一致", True),
         )
@@ -1071,11 +1086,17 @@ class PoetoreWindow(QWidget):
         self.magic_rarity_toggle.hide()
 
         self.trade_status_combo = QComboBox()
+        self.trade_status_combo.setObjectName("filterControl")
+        self.trade_status_combo.setProperty("compactAction", True)
+        self.trade_status_combo.setProperty("mutedText", True)
         self.trade_status_combo.addItem("インスタントバイアウトのみ", "instant")
         self.trade_status_combo.addItem("インスタント＋対面", "available")
         self.trade_status_combo.addItem("対面トレードのみ", "online")
         self.trade_status_combo.addItem("オフライン出品も含む", "offline")
         self.trade_currency_combo = QComboBox()
+        self.trade_currency_combo.setObjectName("filterControl")
+        self.trade_currency_combo.setProperty("compactAction", True)
+        self.trade_currency_combo.setProperty("mutedText", True)
         self.trade_currency_combo.addItem("すべての通貨", "any")
         if self.poe_version == POE2:
             self.trade_currency_combo.addItem("高貴なオーブのみ", "exalted")
@@ -1090,6 +1111,9 @@ class PoetoreWindow(QWidget):
                 "カオスまたは神のオーブ", "chaos_divine"
             )
         self.listed_within_combo = QComboBox()
+        self.listed_within_combo.setObjectName("filterControl")
+        self.listed_within_combo.setProperty("compactAction", True)
+        self.listed_within_combo.setProperty("mutedText", True)
         for label, value in (
             ("期間指定なし", "any"), ("24時間以内", "1day"), ("3日以内", "3days"),
             ("1週間以内", "1week"), ("2週間以内", "2weeks"),
@@ -1382,7 +1406,8 @@ class PoetoreWindow(QWidget):
         weapon_property_header.addStretch(1)
         panel_layout.addLayout(weapon_property_header)
         self.clear_mod_conditions_button = QPushButton("一覧のチェックを全て選択")
-        self.clear_mod_conditions_button.setObjectName("clearModConditionsButton")
+        self.clear_mod_conditions_button.setObjectName("secondaryActionButton")
+        self.clear_mod_conditions_button.setProperty("mutedText", True)
         self.clear_mod_conditions_button.setToolTip(
             "上の条件一覧のみ。ilvlなどの基本条件は変更しません"
         )
@@ -1412,13 +1437,17 @@ class PoetoreWindow(QWidget):
             "", "種別", "ティア", "検索条件", "最小", "最大",
         ])
         self.mod_filter_tree.setRootIsDecorated(False)
-        self.mod_filter_tree.setAlternatingRowColors(True)
+        # 検索条件は行ごとの色分けをせず、同じ暗色背景で一覧性を保つ。
+        self.mod_filter_tree.setAlternatingRowColors(False)
         # 行選択は使わない。Mod文章クリックはチェック切替だけを行い、
         # セルウィジェット（最小・最大欄）と選択背景の見た目が分離しないようにする。
         self.mod_filter_tree.setSelectionMode(QAbstractItemView.NoSelection)
         self.mod_filter_tree.setMinimumHeight(profile["mod_height"])
         mod_header = self.mod_filter_tree.header()
         mod_header.hide()
+        # Qtは既定で最終列を余白まで伸ばす。最大欄ではなくMod文章欄へ
+        # 余った幅を渡すため、最終列の自動伸長を無効化する。
+        mod_header.setStretchLastSection(False)
         mod_header.setSectionResizeMode(_MOD_COLUMN_CHECK, QHeaderView.Fixed)
         self.mod_filter_tree.setColumnWidth(
             _MOD_COLUMN_CHECK, _MOD_CHECK_COLUMN_WIDTH
@@ -1426,26 +1455,34 @@ class PoetoreWindow(QWidget):
         mod_header.setSectionResizeMode(_MOD_COLUMN_KIND, QHeaderView.ResizeToContents)
         mod_header.setSectionResizeMode(_MOD_COLUMN_TIER, QHeaderView.Fixed)
         self.mod_filter_tree.setColumnWidth(_MOD_COLUMN_TIER, _MOD_TIER_COLUMN_WIDTH)
-        mod_header.setSectionResizeMode(_MOD_COLUMN_TEXT, QHeaderView.Fixed)
-        self.mod_filter_tree.setColumnWidth(_MOD_COLUMN_TEXT, _MOD_TEXT_COLUMN_WIDTH)
+        # 操作列を常に表示領域内へ収め、余った幅だけをMod文章へ割り当てる。
+        # 固定幅の文章列は狭い画面で横スクロールを発生させ、最大欄へ
+        # フォーカスした際に一覧全体が右へ移動する原因になる。
+        mod_header.setSectionResizeMode(_MOD_COLUMN_TEXT, QHeaderView.Stretch)
         mod_header.setSectionResizeMode(_MOD_COLUMN_MIN, QHeaderView.ResizeToContents)
         mod_header.setSectionResizeMode(_MOD_COLUMN_MAX, QHeaderView.ResizeToContents)
+        self.mod_filter_tree.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.mod_filter_tree.itemClicked.connect(
             self._toggle_mod_condition_from_text
         )
         panel_layout.addWidget(self.mod_filter_tree, stretch=3)
         self.mod_conditions_toggle = QPushButton("mod条件をたたむ∧")
-        self.mod_conditions_toggle.setObjectName("modConditionsToggle")
+        self.mod_conditions_toggle.setObjectName("secondaryActionButton")
+        self.mod_conditions_toggle.setProperty("mutedText", True)
         self.mod_conditions_toggle.setToolTip("Mod検索条件の一覧を折りたたむ")
         self.mod_conditions_toggle.clicked.connect(self._toggle_mod_conditions)
         self.hidden_mods_toggle = QPushButton("隠し候補を表示")
+        self.hidden_mods_toggle.setObjectName("secondaryActionButton")
+        self.hidden_mods_toggle.setProperty("mutedText", True)
         self.hidden_mods_toggle.setCheckable(True)
         self.hidden_mods_toggle.setToolTip(
             "数値が固定され、同じアイテム同士の価格比較に影響しないため、\n"
             "通常は隠している検索候補を表示します。"
         )
         self.hidden_mods_toggle.toggled.connect(self._toggle_hidden_mods)
-        self.mod_sources_toggle = QPushButton("Mod構成を表示")
+        self.mod_sources_toggle = QPushButton("計算元Modを表示")
+        self.mod_sources_toggle.setObjectName("secondaryActionButton")
+        self.mod_sources_toggle.setProperty("mutedText", True)
         self.mod_sources_toggle.setCheckable(True)
         self.mod_sources_toggle.setToolTip(
             "合計ライフや防御力など、複数の数値をまとめた検索条件について、\n"
@@ -1463,13 +1500,15 @@ class PoetoreWindow(QWidget):
         )
         self.mercenary_supports_toggle.hide()
         mod_conditions_actions = QHBoxLayout()
+        mod_conditions_actions.setContentsMargins(0, 0, 0, 0)
+        mod_conditions_actions.setSpacing(_ACTION_CLUSTER_HORIZONTAL_GAP)
         mod_conditions_actions.addWidget(self.mod_conditions_toggle)
         mod_conditions_actions.addWidget(self.clear_mod_conditions_button)
         mod_conditions_actions.addWidget(self.hidden_mods_toggle)
         mod_conditions_actions.addWidget(self.mod_sources_toggle)
         mod_conditions_actions.addWidget(self.mercenary_supports_toggle)
         mod_conditions_actions.addStretch()
-        panel_layout.addLayout(mod_conditions_actions)
+        self.mod_conditions_actions_layout = mod_conditions_actions
         self.mod_warning = QLabel("")
         self.mod_warning.setWordWrap(True)
         self.mod_warning.setStyleSheet("color: #d6a84b;")
@@ -1482,33 +1521,47 @@ class PoetoreWindow(QWidget):
         panel_layout.addWidget(self.search_scope_notice)
 
         action_row = QHBoxLayout()
+        action_row.setContentsMargins(0, 0, 0, 0)
+        action_row.setSpacing(_ACTION_CLUSTER_HORIZONTAL_GAP)
+        action_row.setAlignment(Qt.AlignLeft)
+        self.trade_action_layout = action_row
         self.price_button = QPushButton("検索")
         self.price_button.setObjectName("primaryButton")
         self.price_button.clicked.connect(self.search_current_item)
         action_row.addWidget(self.price_button)
-        action_row.addWidget(self.trade_status_combo, stretch=2)
-        action_row.addWidget(self.trade_currency_combo, stretch=2)
-        action_row.addWidget(self.listed_within_combo, stretch=1)
+        action_row.addWidget(self.trade_status_combo)
+        action_row.addWidget(self.trade_currency_combo)
+        action_row.addWidget(self.listed_within_combo)
         self.trade_url_button = QPushButton("公式トレード  ↗")
+        self.trade_url_button.setObjectName("filterActionButton")
+        self.trade_url_button.setProperty("compactAction", True)
+        self.trade_url_button.setProperty("mutedText", True)
         self.trade_url_button.setToolTip("日本語公式Tradeをブラウザで開く")
         self.trade_url_button.setEnabled(False)
         self.trade_url_button.clicked.connect(self._open_trade_url)
         action_row.addWidget(self.trade_url_button)
-        panel_layout.addLayout(action_row)
 
         self.price_status = QLabel("検索条件を読み取っています…")
         self.price_status.setWordWrap(True)
         self.price_status.setObjectName("priceStatus")
-        panel_layout.addWidget(self.price_status)
+        action_cluster = QVBoxLayout()
+        action_cluster.setContentsMargins(0, 0, 0, 0)
+        action_cluster.setSpacing(_ACTION_CLUSTER_VERTICAL_GAP)
+        action_cluster.addLayout(mod_conditions_actions)
+        action_cluster.addLayout(action_row)
+        action_cluster.addWidget(self.price_status)
+        self.action_cluster_layout = action_cluster
+        panel_layout.addLayout(action_cluster)
         self.price_list = QTreeWidget()
+        self.price_list.setObjectName("priceList")
         self.price_list.setHeaderLabels(["価格", "出品日時"])
         self.price_list.setRootIsDecorated(False)
         self.price_list.setAlternatingRowColors(True)
         self.price_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.price_list.setMinimumHeight(profile["price_height"])
         price_header = self.price_list.header()
-        price_header.setSectionResizeMode(0, QHeaderView.Stretch)
-        price_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        price_header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        price_header.setSectionResizeMode(1, QHeaderView.Stretch)
         panel_layout.addWidget(self.price_list, stretch=2)
         resize_row = QHBoxLayout()
         resize_row.addStretch()
@@ -1584,6 +1637,7 @@ class PoetoreWindow(QWidget):
             self.trade_status_combo, self.trade_currency_combo, self.listed_within_combo,
         ):
             combo.currentIndexChanged.connect(self._auto_search_after_trade_option_change)
+            combo.currentIndexChanged.connect(self._fit_compact_action_widths)
         self.trade_league_combo.currentIndexChanged.connect(
             self._auto_search_after_trade_option_change
         )
@@ -1620,173 +1674,192 @@ class PoetoreWindow(QWidget):
         self.search_current_item()
 
     def _apply_poetore_style(self):
-        """Awakenedの情報密度を、ぽえとれの黒＋紫テーマで表現する。"""
+        """情報はニュートラル面に載せ、選択・操作だけ青緑で示す。"""
         profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
         style = """
             QWidget {
-                color: #db86ef;
+                color: #E6ECEA;
                 font-family: "Segoe UI", sans-serif;
                 font-size: 12px;
             }
             QFrame#poetorePanel {
-                background: rgba(14, 14, 14, 246);
-                border: 1px solid rgba(219, 134, 239, 120);
+                background: rgba(17, 20, 22, 246);
+                border: 1px solid #343B3E;
                 border-radius: 5px;
             }
             QFrame#itemHeader {
-                background: rgba(5, 5, 5, 205);
-                border: 1px solid rgba(219, 134, 239, 80);
+                background: rgba(20, 24, 26, 220);
+                border: none;
                 border-radius: 4px;
             }
             QFrame#poeNinjaPricePanel {
-                background: rgba(33, 24, 37, 205);
-                border: 1px solid rgba(219, 134, 239, 65);
+                background: rgba(26, 31, 33, 220);
+                border: none;
                 border-radius: 4px;
             }
-            QLabel#poeNinjaPriceLabel { color: #b9a9be; font-weight: 700; }
-            QLabel#poeNinjaPriceValue { color: #f2e7f5; font-size: 14px; font-weight: 700; }
-            QLabel#poeNinjaPriceMultiplier { color: #f2e7f5; font-size: 13px; }
-            QLabel#poeNinjaTrendLabel { color: #b9a9be; font-size: 10px; }
+            QLabel#poeNinjaPriceLabel { color: #98A39F; font-weight: 700; }
+            QLabel#poeNinjaPriceValue { color: #E6ECEA; font-size: 14px; font-weight: 700; }
+            QLabel#poeNinjaPriceMultiplier { color: #E6ECEA; font-size: 13px; }
+            QLabel#poeNinjaTrendLabel { color: #98A39F; font-size: 10px; }
             QPushButton#poeNinjaOpenButton { padding: 3px 7px; }
             QPushButton#divineRateButton {
-                color: #f2e7f5;
+                color: #E6ECEA;
                 padding: 2px 7px;
                 font-weight: 700;
-                border-color: rgba(219, 134, 239, 100);
+                border: none;
             }
             QMenu#divineRateMenu {
-                background: #161616;
-                color: #f2e7f5;
-                border: 1px solid rgba(219, 134, 239, 120);
+                background: #1A1F21;
+                color: #E6ECEA;
+                border: 1px solid #3A4245;
                 padding: 4px;
             }
             QMenu#divineRateMenu::item { padding: 4px 18px 4px 10px; }
-            QMenu#divineRateMenu::item:selected { background: rgba(219, 134, 239, 45); }
+            QMenu#divineRateMenu::item:selected { background: rgba(101, 255, 202, 45); }
             QPushButton#leaguePopupButton {
-                color: #ebd0f2;
+                color: #D8E3DF;
                 padding: 0;
                 font-size: 11px;
-                border-color: rgba(219, 134, 239, 150);
+                border: none;
             }
             QLabel#itemName {
-                color: #ebd0f2;
+                color: #D8E3DF;
                 font-size: 15px;
                 font-weight: 700;
             }
-            QLabel#itemBase { color: #b9a9be; font-size: 11px; }
+            QLabel#itemBase { color: #98A39F; font-size: 11px; }
             QLabel#sectionTitle {
-                color: #db86ef;
+                color: #65FFCA;
                 font-weight: 700;
-                border-bottom: 1px solid rgba(219, 134, 239, 70);
+                border-bottom: 1px solid rgba(101, 255, 202, 70);
                 padding: 4px 2px;
             }
             QLabel#weaponDpsSummary {
-                color: #f2e7f5;
+                color: #E6ECEA;
                 padding: 4px 2px;
             }
-            QLabel#priceStatus { color: #b9a9be; padding: 1px 2px; }
+            QLabel#priceStatus { color: #98A39F; padding: 1px 0; }
             QPushButton {
-                background: rgba(26, 26, 26, 225);
-                color: #db86ef;
-                border: 1px solid rgba(219, 134, 239, 150);
+                background: rgba(26, 31, 33, 225);
+                color: #E6ECEA;
+                border: none;
                 border-radius: 3px;
                 padding: 5px 9px;
             }
-            QPushButton:hover { background: rgba(56, 36, 64, 230); border-color: #ebd0f2; }
+            QPushButton:hover { background: rgba(37, 51, 47, 230); }
             QPushButton:pressed { background: #111; }
-            QPushButton:disabled { color: #665a69; border-color: #463b49; }
+            QPushButton:disabled { color: #66706C; background: rgba(23, 27, 29, 180); }
+            QPushButton#secondaryActionButton,
+            QPushButton#filterActionButton {
+                border: 1px solid #465154;
+            }
+            QPushButton#secondaryActionButton:hover,
+            QPushButton#filterActionButton:hover {
+                border-color: #65FFCA;
+            }
+            QPushButton#secondaryActionButton:checked {
+                background: rgba(37, 122, 100, 135);
+                border-color: #65FFCA;
+            }
+            QPushButton#filterActionButton:disabled {
+                border-color: #343B3E;
+            }
             QPushButton#binaryToggle {
+                border: 1px solid #465154;
                 border-radius: 0;
                 padding: 4px 7px;
+            }
+            QPushButton#binaryToggle:hover {
+                border-color: #65FFCA;
             }
             QPushButton#binaryToggle:first-child { border-radius: 3px 0 0 3px; }
             QPushButton#binaryToggle:last-child { border-radius: 0 3px 3px 0; }
             QPushButton#binaryToggle:checked {
-                background: rgba(126, 71, 139, 225);
-                color: #f2e7f5;
-                border-color: #ebd0f2;
+                background: rgba(37, 122, 100, 225);
+                border-color: #65FFCA;
+                color: #E6ECEA;
                 font-weight: 700;
             }
             QPushButton#cycleToggle {
-                background: rgba(91, 53, 102, 210);
-                color: #f2e7f5;
-                border: 1px solid #db86ef;
+                background: rgba(28, 83, 73, 210);
+                color: #E6ECEA;
+                border: none;
                 min-width: 112px;
                 font-weight: 700;
             }
             QPushButton#cycleToggle[alert="true"] { color: #ff5757; }
             QPushButton#influenceChip {
                 background: rgba(20, 20, 20, 180);
-                color: #766a79;
-                border: 1px dashed rgba(156, 137, 161, 150);
+                color: #737D79;
+                border: none;
                 padding: 3px 7px;
                 font-weight: 700;
             }
             QPushButton#influenceChip[active="true"] {
-                background: rgba(91, 53, 102, 210);
-                color: #f2e7f5;
-                border: 1px solid #db86ef;
+                background: rgba(28, 83, 73, 210);
+                color: #E6ECEA;
+                border: 1px solid #65FFCA;
             }
             QFrame#numericFilterTag {
-                background: rgba(91, 53, 102, 210);
-                border: 1px solid #db86ef;
+                background: rgba(28, 83, 73, 210);
+                border: 1px solid #65FFCA;
                 border-radius: 3px;
             }
             QFrame#numericFilterTag[active="false"] {
                 background: rgba(20, 20, 20, 180);
-                border: 1px dashed rgba(156, 137, 161, 150);
+                border: none;
             }
             QPushButton#numericFilterToggle, QLineEdit#numericFilterEdit {
                 background: transparent;
-                color: #f2e7f5;
+                color: #E6ECEA;
                 border: none;
                 padding: 0;
                 font-weight: 700;
             }
             QFrame#numericFilterTag[active="false"] QPushButton,
             QFrame#numericFilterTag[active="false"] QLineEdit,
-            QFrame#numericFilterTag[active="false"] QLabel { color: #766a79; }
+            QFrame#numericFilterTag[active="false"] QLabel { color: #737D79; }
             QPushButton#readonlyFilterChip {
-                background: rgba(91, 53, 102, 210);
-                color: #f2e7f5;
-                border: 1px solid #db86ef;
+                background: rgba(28, 83, 73, 210);
+                color: #E6ECEA;
+                border: 1px solid #65FFCA;
                 padding: 3px 7px;
                 font-weight: 700;
             }
             QFrame#itemLevelTag {
-                background: rgba(91, 53, 102, 210);
-                border: 1px solid #db86ef;
+                background: rgba(28, 83, 73, 210);
+                border: 1px solid #65FFCA;
                 border-radius: 3px;
             }
             QFrame#gemLevelTag {
-                background: rgba(91, 53, 102, 210);
-                border: 1px solid #db86ef;
+                background: rgba(28, 83, 73, 210);
+                border: 1px solid #65FFCA;
                 border-radius: 3px;
             }
             QFrame#gemQualityTag, QFrame#gemSocketTag {
-                background: rgba(91, 53, 102, 210);
-                border: 1px solid #db86ef;
+                background: rgba(28, 83, 73, 210);
+                border: 1px solid #65FFCA;
                 border-radius: 3px;
             }
             QFrame#linksTag {
-                background: rgba(91, 53, 102, 210);
-                border: 1px solid #db86ef;
+                background: rgba(28, 83, 73, 210);
+                border: 1px solid #65FFCA;
                 border-radius: 3px;
             }
             QFrame#itemLevelTag QLabel {
-                color: #f2e7f5;
+                color: #E6ECEA;
                 font-weight: 700;
             }
             QPushButton#itemLevelToggle, QPushButton#gemLevelToggle, QPushButton#gemQualityToggle, QPushButton#gemSocketToggle, QPushButton#linksToggle {
                 background: transparent;
-                color: #f2e7f5;
+                color: #E6ECEA;
                 border: none;
                 padding: 0;
                 font-weight: 700;
             }
             QLineEdit#itemLevelEdit, QLineEdit#itemLevelMaxEdit, QLineEdit#gemLevelEdit, QLineEdit#gemQualityEdit, QLineEdit#gemSocketEdit, QLineEdit#linksEdit {
                 background: transparent;
-                color: #f2e7f5;
+                color: #E6ECEA;
                 border: none;
                 padding: 0;
                 min-height: 20px;
@@ -1794,36 +1867,36 @@ class PoetoreWindow(QWidget):
             }
             QLineEdit#itemLevelEdit:focus, QLineEdit#itemLevelMaxEdit:focus, QLineEdit#gemLevelEdit:focus, QLineEdit#gemQualityEdit:focus, QLineEdit#gemSocketEdit:focus, QLineEdit#linksEdit:focus {
                 border: none;
-                color: #ebd0f2;
+                color: #D8E3DF;
             }
             QFrame#itemLevelTag[active="false"] {
-                border: 1px dashed rgba(156, 137, 161, 150);
+                border: none;
                 background: rgba(20, 20, 20, 180);
             }
             QFrame#gemLevelTag[active="false"] {
-                border: 1px dashed rgba(156, 137, 161, 150);
+                border: none;
                 background: rgba(20, 20, 20, 180);
             }
             QFrame#gemQualityTag[active="false"], QFrame#gemSocketTag[active="false"] {
-                border: 1px dashed rgba(156, 137, 161, 150);
+                border: none;
                 background: rgba(20, 20, 20, 180);
             }
             QFrame#linksTag[active="false"] {
-                border: 1px dashed rgba(156, 137, 161, 150);
+                border: none;
                 background: rgba(20, 20, 20, 180);
             }
             QFrame#itemLevelTag[active="false"] QPushButton,
             QFrame#itemLevelTag[active="false"] QLineEdit,
             QFrame#itemLevelTag[active="false"] QLabel {
-                color: #766a79;
+                color: #737D79;
             }
             QFrame#gemLevelTag[active="false"] QPushButton,
             QFrame#gemLevelTag[active="false"] QLineEdit {
-                color: #766a79;
+                color: #737D79;
             }
             QFrame#gemQualityTag[active="false"] QPushButton,
             QFrame#gemQualityTag[active="false"] QLineEdit {
-                color: #766a79;
+                color: #737D79;
             }
             QFrame#gemSocketTag[active="false"] QPushButton,
             QFrame#gemSocketTag[active="false"] QLineEdit {
@@ -1831,58 +1904,83 @@ class PoetoreWindow(QWidget):
             }
             QFrame#linksTag[active="false"] QPushButton,
             QFrame#linksTag[active="false"] QLineEdit {
-                color: #766a79;
+                color: #737D79;
             }
             QPushButton#primaryButton {
-                background: rgba(126, 71, 139, 225);
-                color: #f2e7f5;
+                background: rgba(37, 122, 100, 225);
+                color: #E6ECEA;
                 font-weight: 700;
-                min-width: 76px;
+                min-width: 0;
             }
             QComboBox, QLineEdit {
-                background: rgba(25, 25, 25, 235);
-                color: #ebd0f2;
-                border: 1px solid rgba(219, 134, 239, 105);
+                background: rgba(26, 31, 33, 235);
+                color: #D8E3DF;
+                border: 1px solid transparent;
                 border-radius: 3px;
                 padding: 4px 6px;
                 min-height: 20px;
-                selection-background-color: rgba(126, 76, 139, 220);
+                selection-background-color: rgba(37, 122, 100, 220);
             }
-            QComboBox:hover, QLineEdit:focus { border-color: #db86ef; }
+            QComboBox:hover, QLineEdit:focus { border-color: #65FFCA; }
+            QComboBox#filterControl {
+                border: 1px solid #465154;
+            }
+            QComboBox#filterControl:hover,
+            QComboBox#filterControl:on {
+                border-color: #65FFCA;
+            }
+            QComboBox#filterControl[compactAction="true"] {
+                font-size: __COMPACT_ACTION_FONT__px;
+                padding: 2px 1px;
+                min-height: 18px;
+            }
+            QComboBox#filterControl[compactAction="true"]::drop-down {
+                width: 8px;
+            }
+            QPushButton#filterActionButton[compactAction="true"] {
+                font-size: __COMPACT_ACTION_FONT__px;
+                padding: 3px 5px;
+            }
+            QPushButton[mutedText="true"],
+            QComboBox[mutedText="true"] {
+                color: #98A39F;
+            }
             QComboBox::drop-down { border: none; width: 18px; }
             QComboBox QAbstractItemView {
                 background: #1b1b1b;
-                color: #ebd0f2;
-                border: 1px solid #9c5eaa;
-                selection-background-color: #70427a;
+                color: #D8E3DF;
+                border: 1px solid #3D8F7B;
+                selection-background-color: #286C5D;
             }
             QTreeWidget {
-                background: rgba(18, 18, 18, 222);
-                alternate-background-color: rgba(35, 26, 39, 205);
-                color: #e2d8e5;
-                border: 1px solid rgba(219, 134, 239, 65);
+                background: rgba(17, 20, 22, 235);
+                alternate-background-color: rgba(25, 30, 32, 205);
+                color: #D5DDDA;
+                border: none;
                 border-radius: 3px;
-                gridline-color: rgba(219, 134, 239, 35);
+                gridline-color: #2A3033;
                 outline: none;
             }
-            QTreeWidget::item { padding: 4px 2px; border-bottom: 1px solid rgba(219, 134, 239, 24); }
-            QTreeWidget::item:selected { background: rgba(126, 76, 139, 125); color: white; }
+            QTreeWidget::item { padding: 4px 2px; border-bottom: 1px solid #272D30; }
+            QTreeWidget::item:selected { background: rgba(37, 122, 100, 125); color: white; }
+            QTreeWidget#priceList::item { padding: 4px 7px; }
             QScrollArea#uniqueCandidateScroll,
             QScrollArea#uniqueCandidateScroll > QWidget > QWidget,
             QWidget#uniqueCandidateContainer {
-                background: #121212;
+                background: #111416;
             }
             QHeaderView::section {
-                background: rgba(39, 29, 43, 245);
-                color: #db86ef;
+                background: rgba(28, 34, 36, 245);
+                color: #D5DDDA;
                 border: none;
-                border-right: 1px solid rgba(219, 134, 239, 45);
-                border-bottom: 1px solid rgba(219, 134, 239, 70);
+                border-right: none;
+                border-bottom: 1px solid #343B3E;
                 padding: 5px 4px;
                 font-weight: 600;
             }
-            QScrollBar:vertical { background: #181818; width: 10px; margin: 0; }
-            QScrollBar::handle:vertical { background: rgba(219, 134, 239, 125); min-height: 26px; border-radius: 4px; }
+            QTreeWidget#priceList QHeaderView::section { padding: 5px 7px; }
+            QScrollBar:vertical { background: #15191B; width: 10px; margin: 0; }
+            QScrollBar::handle:vertical { background: rgba(101, 255, 202, 125); min-height: 26px; border-radius: 4px; }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
             QSizeGrip { background: transparent; }
         """
@@ -1905,6 +2003,9 @@ class PoetoreWindow(QWidget):
             f"padding: {profile['button_v_padding']}px "
             f"{profile['button_h_padding']}px;",
         )
+        style = style.replace(
+            "__COMPACT_ACTION_FONT__", str(profile["mod_value_font"])
+        )
         self.setStyleSheet(style)
 
     def _display_scale(self) -> float:
@@ -1912,6 +2013,89 @@ class PoetoreWindow(QWidget):
 
     def _scaled_display_value(self, value: int) -> int:
         return round(value * self._display_scale())
+
+    def _apply_mod_value_editor_size(
+        self, editor: QLineEdit, *, leading_gap: bool = False,
+    ):
+        profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
+        editor_height = profile["mod_value_height"]
+        content_height = max(0, editor_height - 4)  # padding上下＋border上下
+        editor.setFixedWidth(self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH))
+        editor.setStyleSheet(
+            f"font-size: {profile['mod_value_font']}px;"
+            " padding: 1px 4px;"
+            f" min-height: {content_height}px; max-height: {content_height}px;"
+        )
+
+    def _apply_mod_kind_font_size(self, row: QTreeWidgetItem):
+        """種別列を、コンパクトな最小・最大入力欄と同じ文字サイズにする。"""
+        font = row.font(_MOD_COLUMN_KIND)
+        font.setPixelSize(
+            _DISPLAY_SIZE_PROFILES[self._result_font_size]["mod_value_font"]
+        )
+        row.setFont(_MOD_COLUMN_KIND, font)
+        row.setForeground(_MOD_COLUMN_KIND, QBrush(QColor("#98A39F")))
+
+    def _make_mod_value_cell(
+        self, editor: QLineEdit, *, leading_gap: bool = False,
+    ) -> QWidget:
+        """入力欄の背景を行全高へ伸ばさず、セル中央へ配置する。"""
+        gap = self._scaled_display_value(_MOD_VALUE_LEADING_GAP) if leading_gap else 0
+        container = QWidget()
+        container.setObjectName("modValueCell")
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(gap, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(editor, 0, Qt.AlignVCenter)
+        container.setFixedWidth(editor.width() + gap)
+        return container
+
+    @staticmethod
+    def _mod_value_editor(widget: QWidget | None) -> QLineEdit | None:
+        if isinstance(widget, QLineEdit):
+            return widget
+        if widget is not None:
+            return widget.findChild(QLineEdit)
+        return None
+
+    def _fit_search_range_width(self):
+        """Mod数値コンボを全選択肢が収まる内容幅へ詰める。"""
+        profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
+        font = self.search_range_combo.font()
+        font.setPixelSize(profile["font"])
+        metrics = QFontMetrics(font)
+        text_width = max(
+            (metrics.horizontalAdvance(self.search_range_combo.itemText(index))
+             for index in range(self.search_range_combo.count())),
+            default=0,
+        )
+        self.search_range_combo.setFixedWidth(text_width + 34)
+
+    def _fit_compact_action_widths(self, *_args):
+        """検索操作列を、現在表示中の文言に合う最小幅へ揃える。"""
+        profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
+        for combo in (
+            self.trade_status_combo,
+            self.trade_currency_combo,
+            self.listed_within_combo,
+        ):
+            font = combo.font()
+            font.setPixelSize(profile["mod_value_font"])
+            metrics = QFontMetrics(font)
+            text_width = metrics.horizontalAdvance(combo.currentText())
+            # コンパクト操作列用の左右パディング、矢印、境界分を確保する。
+            compact_width = text_width + 12
+            if combo is self.trade_currency_combo:
+                # 選択肢に長い通貨名があるため、ポップアップの可読幅を確保する。
+                compact_width = round(compact_width * 1.68)
+            combo.setFixedWidth(compact_width)
+
+        button_font = self.trade_url_button.font()
+        button_font.setPixelSize(profile["mod_value_font"])
+        button_metrics = QFontMetrics(button_font)
+        self.trade_url_button.setFixedWidth(
+            button_metrics.horizontalAdvance(self.trade_url_button.text()) + 12
+        )
 
     def apply_result_display_size(self):
         """設定済みの小／中／大を既存の検索画面へ即時反映する。"""
@@ -1936,25 +2120,41 @@ class PoetoreWindow(QWidget):
         self.poe_ninja_currency_icon.setFixedSize(
             self._scaled_display_value(28), self._scaled_display_value(28)
         )
+        self._fit_search_range_width()
+        self._fit_compact_action_widths()
         self.mod_filter_tree.setColumnWidth(
             _MOD_COLUMN_CHECK, self._scaled_display_value(_MOD_CHECK_COLUMN_WIDTH)
         )
         self.mod_filter_tree.setColumnWidth(
             _MOD_COLUMN_TIER, self._scaled_display_value(_MOD_TIER_COLUMN_WIDTH)
         )
-        self.mod_filter_tree.setColumnWidth(
-            _MOD_COLUMN_TEXT, self._scaled_display_value(_MOD_TEXT_COLUMN_WIDTH)
-        )
+        for index in range(self.mod_filter_tree.topLevelItemCount()):
+            self._apply_mod_kind_font_size(
+                self.mod_filter_tree.topLevelItem(index)
+            )
         for column in (_MOD_COLUMN_MIN, _MOD_COLUMN_MAX):
             for index in range(self.mod_filter_tree.topLevelItemCount()):
-                editor = self.mod_filter_tree.itemWidget(
+                cell = self.mod_filter_tree.itemWidget(
                     self.mod_filter_tree.topLevelItem(index), column
                 )
-                if isinstance(editor, QLineEdit):
-                    editor.setFixedWidth(
-                        self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH)
+                editor = self._mod_value_editor(cell)
+                if editor is not None:
+                    self._apply_mod_value_editor_size(
+                        editor, leading_gap=column == _MOD_COLUMN_MIN,
                     )
+                    if cell is not editor:
+                        gap = self._scaled_display_value(_MOD_VALUE_LEADING_GAP) if column == _MOD_COLUMN_MIN else 0
+                        cell.setFixedWidth(editor.width() + gap)
         self._apply_poetore_style()
+        # スタイルのmin-width適用後に固定し、レイアウトによる再拡張を防ぐ。
+        search_button_width = profile["search_button_width"]
+        search_button_content_width = max(
+            1, search_button_width - 2 * profile["button_h_padding"]
+        )
+        self.price_button.setStyleSheet(
+            f"min-width: {search_button_content_width}px;"
+            f" max-width: {search_button_content_width}px;"
+        )
         self._adjust_window_height_to_mod_rows()
     def _toggle_mod_conditions(self):
         collapsed = self.mod_filter_tree.isVisible()
@@ -2022,7 +2222,7 @@ class PoetoreWindow(QWidget):
 
     def _toggle_mod_sources(self, visible: bool):
         self.mod_sources_toggle.setText(
-            "Mod構成を隠す" if visible else "Mod構成を表示"
+            "計算元Modを隠す" if visible else "計算元Modを表示"
         )
         for index in range(self.mod_filter_tree.topLevelItemCount()):
             row = self.mod_filter_tree.topLevelItem(index)
@@ -2030,7 +2230,11 @@ class PoetoreWindow(QWidget):
         self._adjust_window_height_to_mod_rows()
 
     def _visible_mod_content_height(self) -> int:
-        if not self.mod_filter_tree.isVisible():
+        # Alt+Dの再取得中はトップレベルウィンドウが一時的に非表示でも、
+        # Mod一覧そのものが折り畳まれていなければ全行分の高さを計算する。
+        # QWidget.isVisible() は親ウィンドウの非表示まで反映するため、
+        # 同一アイテムの連続検索だけ既定高へ縮む原因になっていた。
+        if self.mod_filter_tree.isHidden():
             return 0
         height = self.mod_filter_tree.frameWidth() * 2 + 4
         default_row_height = self._scaled_display_value(_MOD_ROW_HEIGHT)
@@ -2059,7 +2263,7 @@ class PoetoreWindow(QWidget):
         available = screen.availableGeometry() if screen is not None else self.screen().availableGeometry()
         content_height = (
             self._visible_mod_content_height()
-            if self.mod_filter_tree.isVisible() else profile["mod_height"]
+            if not self.mod_filter_tree.isHidden() else profile["mod_height"]
         )
         related_visible = not self.related_items_panel.isHidden()
         price_height = profile["price_height"]
@@ -2787,7 +2991,7 @@ class PoetoreWindow(QWidget):
                     ))
                     layout.addWidget(icon)
                 label = QLabel(text)
-                label.setStyleSheet("color: #f2e7f5; background: transparent;")
+                label.setStyleSheet("color: #E6ECEA; background: transparent;")
                 layout.addWidget(label)
             action.setDefaultWidget(row)
             self.divine_rate_menu.addAction(action)
@@ -3097,11 +3301,11 @@ class PoetoreWindow(QWidget):
         message.setStyleSheet("""
             QMessageBox {
                 background-color: #111111;
-                color: #f2e7f5;
+                color: #E6ECEA;
             }
             QMessageBox QLabel {
                 background-color: transparent;
-                color: #f2e7f5;
+                color: #E6ECEA;
                 font-family: "Segoe UI", sans-serif;
                 font-size: 12px;
             }
@@ -3109,8 +3313,8 @@ class PoetoreWindow(QWidget):
                 min-width: 54px;
                 padding: 5px 12px;
                 background-color: #1a1a1a;
-                color: #db86ef;
-                border: 1px solid #db86ef;
+                color: #65FFCA;
+                border: 1px solid #65FFCA;
                 border-radius: 3px;
                 font-weight: 700;
             }
@@ -3449,6 +3653,7 @@ class PoetoreWindow(QWidget):
         self.trade_url_button.setEnabled(False)
         self.price_list.clear()
         trade_status = str(self.trade_status_combo.currentData())
+        self._active_trade_status = trade_status
         trade_status_label = self.trade_status_combo.currentText()
         trade_currency = str(self.trade_currency_combo.currentData())
         trade_currency_label = self.trade_currency_combo.currentText()
@@ -3644,7 +3849,10 @@ class PoetoreWindow(QWidget):
         self.trade_preset_combo.setItemText(0, primary_label)
         self.trade_preset_combo.setSecondAvailable(PRESET_BASE in presets)
         self.trade_preset_combo.setCurrentIndex(0)
-        self.trade_preset_combo.setEnabled(len(presets) > 1)
+        has_choice = len(presets) > 1
+        self.trade_preset_combo.setEnabled(has_choice)
+        self.trade_preset_combo.setVisible(has_choice)
+        self.trade_preset_placeholder.setVisible(not has_choice)
         if dedicated_exact:
             self.trade_preset_combo.setToolTip(
                 "このアイテム種別に必要な条件だけを使う専用検索です。"
@@ -4341,9 +4549,9 @@ class PoetoreWindow(QWidget):
                 "QPushButton#uniqueCandidateButton {"
                 " text-align: left; padding: 6px; border: 1px solid #555; border-radius: 4px;"
                 "}"
-                "QPushButton#uniqueCandidateButton:hover { border-color: #a78bfa; }"
+                "QPushButton#uniqueCandidateButton:hover { border-color: #65FFCA; }"
                 "QPushButton#uniqueCandidateButton:checked {"
-                " border: 2px solid #a78bfa; background: #33294d;"
+                " border: 2px solid #65FFCA; background: #183B34;"
                 "}"
             )
             self.unique_name_group.addButton(button)
@@ -4408,8 +4616,12 @@ class PoetoreWindow(QWidget):
                 checkbox.isChecked() if checkbox is not None
                 else bool(row.data(_MOD_COLUMN_CHECK, Qt.UserRole + 5))
             )
-            editor = self.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MIN)
-            max_editor = self.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MAX)
+            editor = self._mod_value_editor(
+                self.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MIN)
+            )
+            max_editor = self._mod_value_editor(
+                self.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MAX)
+            )
             value_text = (
                 editor.text().strip() if isinstance(editor, QLineEdit)
                 else row.text(_MOD_COLUMN_MIN).strip()
@@ -4488,49 +4700,10 @@ class PoetoreWindow(QWidget):
                 continue
             value = "" if stat_filter.min_value is None else f"{stat_filter.min_value:g}"
             maximum = "" if stat_filter.max_value is None else f"{stat_filter.max_value:g}"
-            details = []
-            if stat_filter.read_value is not None:
-                details.append(f"読取 {stat_filter.read_value:g}")
-            if stat_filter.tier is not None:
-                details.append(f"T{stat_filter.tier}")
-            if stat_filter.roll_min is not None and stat_filter.roll_max is not None:
-                details.append(f"範囲 {stat_filter.roll_min:g}–{stat_filter.roll_max:g}")
-            if stat_filter.affix:
-                details.append(_FILTER_KIND_LABELS.get(stat_filter.affix, "特殊枠"))
-            if stat_filter.generation and stat_filter.generation != stat_filter.kind:
-                details.append(_FILTER_KIND_LABELS.get(stat_filter.generation, "特殊生成"))
-            if stat_filter.exact:
-                details.append("完全一致")
-            elif stat_filter.better == -1:
-                details.append("低いほど良い")
-            if stat_filter.inverted:
-                details.append("API符号反転")
-            if stat_filter.option_text:
-                details.append(f"選択肢 {stat_filter.option_text}")
-            if stat_filter.oils:
-                oil_names = (
-                    "プリズマチック", "澄んだ", "セピア色", "琥珀色", "新緑色", "青緑色",
-                    "淡青色", "藍色", "スミレ色", "深紅色", "黒色", "乳白色", "銀色", "金色",
-                )
-                details.append("Oil " + " + ".join(oil_names[index] for index in stat_filter.oils))
-            if stat_filter.group_type != "and":
-                details.append(stat_filter.group_type.upper())
-            if stat_filter.hidden_reason:
-                details.append(f"非表示理由: {stat_filter.hidden_reason}")
-            if stat_filter.source_texts:
-                details.append("構成元: " + " / ".join(stat_filter.source_texts))
-            is_mod = stat_filter.kind in {
-                "explicit", "prefix", "suffix", "crafted", "fractured", "implicit", "enchant", "veiled"
-            }
-            if is_mod and stat_filter.confidence:
-                confidence = f"一致 {stat_filter.confidence:.0%}"
-                if stat_filter.confidence < 1:
-                    confidence = f"⚠ {confidence}"
-            elif is_mod:
-                confidence = "⚠ 一致未確認"
-            else:
-                confidence = ""
-            summary = " / ".join(filter(None, [stat_filter.selection_reason, *details, confidence]))
+            # The tooltip exists only to reveal text truncated by the compact
+            # condition column. Internal matching and selection diagnostics do
+            # not help normal price-search operation and make it harder to scan.
+            mod_tooltip = stat_filter.text
             tier_tags = stat_filter.tier_tags
             tier_text = " / ".join(f"T{tier}" for tier in tier_tags)
             if not tier_text and stat_filter.tier is not None:
@@ -4546,11 +4719,12 @@ class PoetoreWindow(QWidget):
             row.setData(0, Qt.UserRole + 3, stat_filter.inverted)
             row.setData(0, Qt.UserRole + 4, stat_filter)
             row.setData(0, Qt.UserRole + 5, stat_filter.enabled)
-            row.setToolTip(_MOD_COLUMN_TEXT, summary)
+            row.setToolTip(_MOD_COLUMN_TEXT, mod_tooltip)
             row.setSizeHint(
                 _MOD_COLUMN_TEXT,
                 QSize(0, self._scaled_display_value(_MOD_ROW_HEIGHT)),
             )
+            self._apply_mod_kind_font_size(row)
             self.mod_filter_tree.addTopLevelItem(row)
             if stat_filter.source_texts:
                 source_item = QTreeWidgetItem(row)
@@ -4562,9 +4736,9 @@ class PoetoreWindow(QWidget):
                 source_layout.setSpacing(2)
                 source_widget.setStyleSheet(
                     "QWidget#modSourceDetails {"
-                    " color: #c5b8c9;"
+                    " color: #B8C2BE;"
                     " background: rgba(31, 23, 34, 220);"
-                    " border-left: 2px solid rgba(219, 134, 239, 90);"
+                    " border-left: 2px solid rgba(101, 255, 202, 90);"
                     "}"
                 )
                 for source_index, source_text in enumerate(stat_filter.source_texts):
@@ -4574,7 +4748,7 @@ class PoetoreWindow(QWidget):
                         else "元Mod"
                     )
                     heading.setStyleSheet(
-                        "color: #8d7d92; font-style: italic;"
+                        "color: #7F8A86; font-style: italic;"
                     )
                     source_layout.addWidget(heading)
                     source_label = QLabel(source_text)
@@ -4596,7 +4770,7 @@ class PoetoreWindow(QWidget):
             checkbox = QCheckBox()
             checkbox.setObjectName("modFilterCheckbox")
             checkbox.setToolTip("この条件を価格検索に使用する")
-            Styles.apply_checkbox_style(checkbox)
+            Styles.apply_checkbox_style(checkbox, checked_color="#257A64")
             checkbox.setChecked(stat_filter.enabled)
             checkbox.stateChanged.connect(self._mark_search_dirty)
             checkbox.stateChanged.connect(self._update_all_mod_conditions_button)
@@ -4615,20 +4789,20 @@ class PoetoreWindow(QWidget):
             if tier_tags:
                 tier_widget = QWidget()
                 tier_layout = QHBoxLayout(tier_widget)
-                tier_layout.setContentsMargins(2, 0, 2, 0)
-                tier_layout.setSpacing(3)
+                tier_layout.setContentsMargins(1, 0, 1, 0)
+                tier_layout.setSpacing(2)
                 for tier in tier_tags:
                     tag = QLabel(f"T{tier}")
                     tag.setAlignment(Qt.AlignCenter)
                     if tier == 1:
                         tag.setStyleSheet(
-                            "background: #eab308; color: #111111; border-radius: 3px;"
+                            "background: #D8C47A; color: #292416; border-radius: 3px;"
                             " padding: 1px 4px; font-weight: 600;"
                         )
                     else:
                         tag.setStyleSheet(
-                            "color: #eab308; border: 1px solid #eab308; border-radius: 3px;"
-                            " padding: 0px 3px; font-weight: 600;"
+                            "color: #CDBB78; border: 1px solid #9F9162; border-radius: 3px;"
+                            " padding: 0px 2px; font-weight: 600;"
                         )
                     tier_layout.addWidget(tag)
                 tier_layout.addStretch(1)
@@ -4636,21 +4810,22 @@ class PoetoreWindow(QWidget):
             editor = QLineEdit(value)
             editor.installEventFilter(self)
             editor.setPlaceholderText("最小")
-            editor.setFixedWidth(
-                self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH)
-            )
+            self._apply_mod_value_editor_size(editor, leading_gap=True)
             editor.setEnabled(stat_filter.option_value is None)
             editor.textEdited.connect(self._mark_search_dirty)
-            self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_MIN, editor)
+            self.mod_filter_tree.setItemWidget(
+                row, _MOD_COLUMN_MIN,
+                self._make_mod_value_cell(editor, leading_gap=True),
+            )
             max_editor = QLineEdit(maximum)
             max_editor.installEventFilter(self)
             max_editor.setPlaceholderText("最大")
-            max_editor.setFixedWidth(
-                self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH)
-            )
+            self._apply_mod_value_editor_size(max_editor)
             max_editor.setEnabled(stat_filter.option_value is None)
             max_editor.textEdited.connect(self._mark_search_dirty)
-            self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_MAX, max_editor)
+            self.mod_filter_tree.setItemWidget(
+                row, _MOD_COLUMN_MAX, self._make_mod_value_cell(max_editor),
+            )
             parsed_item = getattr(self, "_parsed_item", None)
             show_unique_slider = (
                 parsed_item is not None
@@ -4682,7 +4857,7 @@ class PoetoreWindow(QWidget):
                 text_layout.setContentsMargins(2, 3, 2, 3)
                 text_layout.setSpacing(3)
                 text_label = QLabel(stat_filter.text)
-                text_label.setToolTip(summary)
+                text_label.setToolTip(mod_tooltip)
                 text_label.setCursor(Qt.PointingHandCursor)
                 text_label._mod_condition_checkbox = checkbox
                 text_label.installEventFilter(self)
@@ -4778,21 +4953,10 @@ class PoetoreWindow(QWidget):
                 "価格付き出品は取得できませんでした。"
             )
             return
-        medians = " / ".join(
-            f"{value:g} {currency}" for currency, value in result.median_by_currency().items()
-        ) or "価格付き出品なし"
-        priced = [
-            row for row in result.listings
-            if row.pricing_method != "unpriced"
-        ]
-        samples = ", ".join(
-            f"{row.amount:g} {row.currency}" for row in priced[:5]
-        ) or "なし"
         progress_note = "取得中 / " if partial else ""
         self.price_status.setText(
             f"{result.league}: {progress_note}候補{result.total}件 / "
-            f"取得{len(result.listings)}件{cache_note} | "
-            f"中央値 {medians} | 安値例 {samples}"
+            f"取得{len(result.listings)}件{cache_note}"
         )
         item = getattr(self, "_parsed_item", None)
         show_stock = any(row.stack_size is not None for row in result.listings)
@@ -4806,6 +4970,10 @@ class PoetoreWindow(QWidget):
             item is not None and not is_gem_category(item.category)
             and self._selected_quality() is not None
         )
+        trade_status = str(getattr(
+            self, "_active_trade_status", self.trade_status_combo.currentData()
+        ))
+        show_pricing_method = trade_status not in {"instant", "online"}
         columns = ["価格"]
         if show_stock:
             columns.append("在庫")
@@ -4815,7 +4983,9 @@ class PoetoreWindow(QWidget):
             columns.append("ジェムLv")
         if show_quality:
             columns.append("品質")
-        columns.extend(("出品日時", "取引方式"))
+        columns.append("出品日時")
+        if show_pricing_method:
+            columns.append("取引方式")
         # QTreeWidget#setHeaderLabels()は既存より列数が少ない場合に、
         # 余った末尾列を削除しない。Gem→武器などで固有列が減る時は
         # 先に列数を確定し、前カテゴリのヘッダーを残さない。
@@ -4825,7 +4995,9 @@ class PoetoreWindow(QWidget):
         for column in range(len(columns)):
             header.setSectionResizeMode(
                 column,
-                QHeaderView.Stretch if column == 0 else QHeaderView.ResizeToContents,
+                QHeaderView.Stretch
+                if column == len(columns) - 1
+                else QHeaderView.ResizeToContents,
             )
 
         for listing in result.listings:
@@ -4846,10 +5018,11 @@ class PoetoreWindow(QWidget):
             if show_quality:
                 values.append(str(listing.quality) if listing.quality is not None else "-")
             values.append(self._relative_listing_time(listing.indexed))
-            values.append({
-                "instant": "インスタント",
-                "unpriced": "値段なし",
-            }.get(listing.pricing_method, "対面"))
+            if show_pricing_method:
+                values.append({
+                    "instant": "インスタント",
+                    "unpriced": "値段なし",
+                }.get(listing.pricing_method, "対面"))
             QTreeWidgetItem(self.price_list, values)
 
     @staticmethod

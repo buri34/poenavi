@@ -11,7 +11,7 @@ def test_poetore_distribution_contains_only_minimal_derived_data():
     names = {path.name for path in data_dir.iterdir() if path.is_file()}
     expected = {
         "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json",
-        "map_mods.json", "divination_cards_ja.json",
+        "map_mods.json", "divination_cards_ja.json", "multi_value_rules.json",
     }
     if os.environ.get("POETORE_CANDIDATE_BUILD") == "1":
         expected.add(".mod_metadata.json.candidate")

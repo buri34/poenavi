@@ -79,11 +79,11 @@ def test_changed_mode_with_selector_explains_mode_will_be_selected_again():
     restart.assert_not_called()
 
 
-def test_poetore_restart_prompt_uses_purple_theme():
+def test_poetore_restart_prompt_uses_teal_neutral_theme():
     style = _poetore_message_box_style()
 
-    assert "#DB86EF" in style
-    assert "#151119" in style
+    assert "#65FFCA" in style
+    assert "#111416" in style
     assert "QMessageBox QPushButton" in style
 
 

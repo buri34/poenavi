@@ -7,11 +7,12 @@ from pathlib import Path
 from PySide6.QtCore import QEvent, QPoint, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QPalette, QPixmap
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QLabel, QMessageBox, QPushButton, QWidget
+from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QWidget
 import pytest
 
 from src.poetore.ui import (
-    PoetoreWindow, _MOD_COLUMN_CHECK, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
+    PoetoreWindow, _ACTION_CLUSTER_HORIZONTAL_GAP, _ACTION_CLUSTER_VERTICAL_GAP,
+    _MOD_COLUMN_CHECK, _MOD_COLUMN_KIND, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
     _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
     show_poetore_window, _price_currency_icon_filename,
 )
@@ -26,6 +27,7 @@ from src.poetore.poe2.audit import _EQUIPMENT_FIXTURES, _RARITIES, _item as poe2
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.poe_ninja import PoeNinjaPrice
 from src.ui.settings_dialog import SettingsDialog
+from src.ui.styles import Styles
 
 
 @pytest.fixture(scope="module")
@@ -73,8 +75,8 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
         assert not hasattr(window, "disclaimer_label")
         assert window.trade_league_combo.currentData() == "auto"
         assert window._selected_trade_league() is None
-        assert window.width() == 840
-        assert window.minimumWidth() == 760
+        assert window.width() == 650
+        assert window.minimumWidth() == 610
         assert window.height() == 1039
         assert window.price_list.minimumHeight() == 434
         assert window.trade_url_button.text() == "公式トレード  ↗"
@@ -87,9 +89,9 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
 @pytest.mark.parametrize(
     ("setting", "font_px", "width", "height", "minimum_width"),
     (
-        ("small", 12, 720, 1039, 680),
-        ("medium", 14, 840, 1039, 760),
-        ("large", 16, 960, 1039, 840),
+        ("small", 12, 560, 1039, 540),
+        ("medium", 14, 650, 1039, 610),
+        ("large", 16, 740, 1039, 680),
     ),
 )
 def test_poetore_result_display_size_scales_window_and_controls(
@@ -119,9 +121,85 @@ def test_poetore_result_display_size_can_change_on_existing_window(qapp):
         window.apply_result_display_size()
 
         assert window._result_font_size == "large"
-        assert window.width() == 960
+        assert window.width() == 740
         assert window.height() == 1039
         assert "font-size: 16px" in window.styleSheet()
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(
+    ("setting", "compact_font", "search_button_width"),
+    (
+        ("small", 11, 105),
+        ("medium", 12, 122),
+        ("large", 14, 140),
+    ),
+)
+def test_trade_action_row_uses_compact_fonts_and_fits_window(
+    qapp, setting, compact_font, search_button_width,
+):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
+    try:
+        window.show()
+        qapp.processEvents()
+        controls = (
+            window.trade_status_combo,
+            window.trade_currency_combo,
+            window.listed_within_combo,
+            window.trade_url_button,
+        )
+        assert all(control.property("compactAction") for control in controls)
+        assert (
+            f"font-size: {compact_font}px;\n                padding: 2px 1px;"
+            in window.styleSheet()
+        )
+        assert controls[-1].geometry().right() < window._panel.width()
+        assert all(combo.minimumWidth() == combo.maximumWidth() for combo in controls[:3])
+        assert window.price_button.width() == search_button_width
+        assert window.trade_action_layout.alignment() == Qt.AlignLeft
+        assert (
+            window.search_range_combo.minimumWidth()
+            == window.search_range_combo.maximumWidth()
+        )
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize("setting", ("small", "medium", "large"))
+def test_action_cluster_uses_consistent_spacing_at_every_display_size(
+    qapp, setting,
+):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
+    try:
+        window.show()
+        qapp.processEvents()
+        zero_margins = (0, 0, 0, 0)
+
+        assert _ACTION_CLUSTER_HORIZONTAL_GAP == 6
+        assert _ACTION_CLUSTER_VERTICAL_GAP == 10
+        assert window.action_cluster_layout.spacing() == _ACTION_CLUSTER_VERTICAL_GAP
+        assert window.mod_conditions_actions_layout.spacing() == _ACTION_CLUSTER_HORIZONTAL_GAP
+        assert window.trade_action_layout.spacing() == _ACTION_CLUSTER_HORIZONTAL_GAP
+        assert window.action_cluster_layout.getContentsMargins() == zero_margins
+        assert window.mod_conditions_actions_layout.getContentsMargins() == zero_margins
+        assert window.trade_action_layout.getContentsMargins() == zero_margins
+        assert "QLabel#priceStatus { color: #98A39F; padding: 1px 0; }" in window.styleSheet()
+    finally:
+        window.close()
+
+
+def test_selected_controls_use_dark_variant_of_current_accent(qapp):
+    window = PoetoreWindow()
+    try:
+        style = window.styleSheet()
+        assert "#65FFCA" in style
+        assert "rgba(37, 122, 100, 225)" in style
+        assert "rgba(35, 118, 100" not in style
     finally:
         window.close()
 
@@ -140,8 +218,8 @@ def test_capture_error_dialog_uses_readable_dark_theme(qapp):
             "もう一度 Alt + D を押してください。"
         )
         assert "background-color: #111111" in style
-        assert "color: #f2e7f5" in style
-        assert "color: #db86ef" in style
+        assert "color: #E6ECEA" in style
+        assert "color: #65FFCA" in style
         assert "min-width: 290px" not in style
         assert dialog.standardButtons() == QMessageBox.StandardButton.Ok
         dialog.ensurePolished()
@@ -419,7 +497,7 @@ def test_show_at_context_places_window_inward_from_cursor_side(qapp):
             window, "activateWindow"
         ):
             window.show_at_context(context)
-        assert window.pos() == QPoint(514, 50)
+        assert window.pos() == QPoint(704, 50)
     finally:
         window.close()
 
@@ -755,6 +833,25 @@ def test_search_condition_change_clears_stale_results_and_waits(qapp):
         window.close()
 
 
+def test_mod_filter_checkbox_uses_muted_teal_checked_color(qapp):
+    window = PoetoreWindow()
+    try:
+        window._populate_stat_filters((
+            TradeStatFilter("explicit.stat_1", "+# to maximum Life", 70, "explicit"),
+        ))
+        checkbox = window.mod_filter_tree.itemWidget(
+            window.mod_filter_tree.topLevelItem(0), 0,
+        ).findChild(QCheckBox, "modFilterCheckbox")
+
+        style = checkbox.styleSheet().lower()
+        assert "poenavi_check_257a64.png" in style
+        assert "border: 2px solid #257a64" in style
+        assert "width: 18px; height: 18px" in style
+        assert "border-radius: 3px" in style
+    finally:
+        window.close()
+
+
 def test_search_error_replaces_searching_status_and_reenables_button(qapp):
     window = PoetoreWindow()
     try:
@@ -788,6 +885,7 @@ def test_enter_in_changed_mod_value_researches(qapp):
         editor = window.mod_filter_tree.itemWidget(
             window.mod_filter_tree.topLevelItem(0), 4,
         )
+        editor = editor.findChild(QLineEdit)
         editor.setFocus()
         QTest.keyClicks(editor, "8")
         assert window._search_dirty is True
@@ -1245,7 +1343,7 @@ def test_foulborn_xoph_uses_mutated_unique_returning_projectiles_stat(qapp):
 def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
     window = PoetoreWindow()
     try:
-        assert window.size().width() == 840
+        assert window.size().width() == 650
         assert window._panel.objectName() == "poetorePanel"
         assert not window._debug_parse_area.isVisible()
         assert window.mod_filter_tree.columnCount() == 6
@@ -1255,8 +1353,42 @@ def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
             window.mod_filter_tree.headerItem().text(index)
             for index in range(window.mod_filter_tree.columnCount())
         ]
-        assert "rgba(14, 14, 14, 246)" in window.styleSheet()
-        assert "#db86ef" in window.styleSheet()
+        assert "rgba(17, 20, 22, 246)" in window.styleSheet()
+        assert "#343B3E" in window.styleSheet()
+        assert "#65FFCA" in window.styleSheet()
+        assert "QFrame#itemHeader {\n                background: rgba(20, 24, 26, 220);\n                border: none;" in window.styleSheet()
+        assert "QPushButton {\n                background: rgba(26, 31, 33, 225);\n                color: #E6ECEA;\n                border: none;" in window.styleSheet()
+        assert "QPushButton#secondaryActionButton" in window.styleSheet()
+        assert "QComboBox#filterControl" in window.styleSheet()
+        assert window.mod_conditions_toggle.objectName() == "secondaryActionButton"
+        assert window.clear_mod_conditions_button.objectName() == "secondaryActionButton"
+        assert window.hidden_mods_toggle.objectName() == "secondaryActionButton"
+        assert window.mod_sources_toggle.objectName() == "secondaryActionButton"
+        assert window.search_range_combo.objectName() == "filterControl"
+        assert window.trade_status_combo.objectName() == "filterControl"
+        assert window.trade_currency_combo.objectName() == "filterControl"
+        assert window.listed_within_combo.objectName() == "filterControl"
+        assert window.trade_url_button.objectName() == "filterActionButton"
+        assert all(
+            label.text() != "ぽえとれ"
+            for label in window.findChildren(QLabel)
+        )
+        muted_controls = (
+            window.mod_conditions_toggle,
+            window.clear_mod_conditions_button,
+            window.hidden_mods_toggle,
+            window.mod_sources_toggle,
+            window.trade_status_combo,
+            window.trade_currency_combo,
+            window.listed_within_combo,
+            window.trade_url_button,
+        )
+        assert all(control.property("mutedText") is True for control in muted_controls)
+        assert 'QPushButton[mutedText="true"]' in window.styleSheet()
+        assert "color: #98A39F;" in window.styleSheet()
+        assert "QTreeWidget {\n                background: rgba(17, 20, 22, 235);" in window.styleSheet()
+        assert "QTreeWidget {\n                background: rgba(17, 20, 22, 235);\n                alternate-background-color: rgba(25, 30, 32, 205);\n                color: #D5DDDA;\n                border: none;" in window.styleSheet()
+        assert "#DB86EF" not in window.styleSheet().upper()
         assert "#b0ff7b" not in window.styleSheet()
     finally:
         window.close()
@@ -1488,7 +1620,7 @@ def test_search_range_change_keeps_checkboxes_but_recalculates_edited_values(qap
         ).findChild(QCheckBox, "modFilterCheckbox")
         minimum = window.mod_filter_tree.itemWidget(
             window.mod_filter_tree.topLevelItem(0), _MOD_COLUMN_MIN
-        )
+        ).findChild(QLineEdit)
         checkbox.setChecked(False)
         minimum.setText("30")
 
@@ -1515,6 +1647,7 @@ def test_search_range_change_keeps_checkboxes_but_recalculates_edited_values(qap
 def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
     window = PoetoreWindow()
     try:
+        assert window.mod_sources_toggle.text() == "計算元Modを表示"
         assert "価格比較に影響しないため" in window.hidden_mods_toggle.toolTip()
         assert "影響しにくい" not in window.hidden_mods_toggle.toolTip()
         assert "Pseudo" not in window.mod_sources_toggle.toolTip()
@@ -1560,8 +1693,10 @@ def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
         assert not hidden.isHidden()
 
         window.mod_sources_toggle.setChecked(True)
+        assert window.mod_sources_toggle.text() == "計算元Modを隠す"
         assert normal.isExpanded()
         window.mod_sources_toggle.setChecked(False)
+        assert window.mod_sources_toggle.text() == "計算元Modを表示"
         assert not normal.isExpanded()
     finally:
         window.close()
@@ -1752,6 +1887,9 @@ def test_poetore_private_league_is_kept_and_ended_public_league_falls_back(qapp)
 
 def test_price_result_is_rendered_in_japanese(qapp):
     window = PoetoreWindow()
+    window.trade_status_combo.setCurrentIndex(
+        window.trade_status_combo.findData("available")
+    )
     window._parsed_item = ParsedItem(
         "剣", "レア", "Doom Sever", "Reaver Sword", "weapon", item_level=86,
     )
@@ -1766,7 +1904,9 @@ def test_price_result_is_rendered_in_japanese(qapp):
     )))
     assert "Mirage" in window.price_status.text()
     assert "候補42件" in window.price_status.text()
-    assert "中央値 5 chaos" in window.price_status.text()
+    assert window.price_status.text() == "Mirage: 候補42件 / 取得2件"
+    assert "中央値" not in window.price_status.text()
+    assert "安値例" not in window.price_status.text()
     assert window.price_list.topLevelItemCount() == 2
     assert [window.price_list.headerItem().text(i) for i in range(4)] == [
         "価格", "ilvl", "出品日時", "取引方式",
@@ -1775,6 +1915,23 @@ def test_price_result_is_rendered_in_japanese(qapp):
     assert window.price_list.topLevelItem(0).text(1) == "86"
     assert window.price_list.topLevelItem(0).text(2).endswith("前")
     assert window.price_list.topLevelItem(0).text(3) == "対面"
+    header = window.price_list.header()
+    assert header.sectionResizeMode(0) == QHeaderView.ResizeToContents
+    assert header.sectionResizeMode(1) == QHeaderView.ResizeToContents
+    assert header.sectionResizeMode(2) == QHeaderView.ResizeToContents
+    assert header.sectionResizeMode(3) == QHeaderView.Stretch
+    assert window.price_list.objectName() == "priceList"
+    assert "QTreeWidget#priceList::item { padding: 4px 7px; }" in window.styleSheet()
+    assert (
+        "QTreeWidget#priceList QHeaderView::section { padding: 5px 7px; }"
+        in window.styleSheet()
+    )
+    window._show_price_result(PriceResult(
+        "Mirage", "q", 42, (
+            PriceListing(4, "chaos"), PriceListing(6, "chaos"),
+        ), cached=True,
+    ))
+    assert window.price_status.text() == "Mirage: 候補42件 / 取得2件 / キャッシュ"
     window.close()
 
 
@@ -1807,6 +1964,9 @@ def test_relative_listing_time_is_shown_without_online_status(qapp):
 def test_price_result_shows_pricing_method_in_rightmost_column(qapp):
     window = PoetoreWindow()
     try:
+        window.trade_status_combo.setCurrentIndex(
+            window.trade_status_combo.findData("available")
+        )
         window._show_price_result(PriceResult("Mirage", "q", 3, (
             PriceListing(4, "chaos", pricing_method="face_to_face"),
             PriceListing(5, "chaos", pricing_method="instant"),
@@ -1819,7 +1979,7 @@ def test_price_result_shows_pricing_method_in_rightmost_column(qapp):
             for index in range(3)
         ] == ["対面", "インスタント", "値段なし"]
         assert window.price_list.topLevelItem(2).text(0) == "値段なし"
-        assert "中央値 4.5 chaos" in window.price_status.text()
+        assert window.price_status.text() == "Mirage: 候補3件 / 取得3件"
     finally:
         window.close()
 
@@ -1828,6 +1988,9 @@ def test_gem_result_adds_gem_level_and_quality_columns(qapp):
     window = PoetoreWindow()
     window._parsed_item = ParsedItem("ジェム", "ジェム", "Arc", "Arc", "gem")
     try:
+        window.trade_status_combo.setCurrentIndex(
+            window.trade_status_combo.findData("available")
+        )
         window._show_price_result(PriceResult("Mirage", "q", 1, (
             PriceListing(2, "chaos", indexed="2026-07-22T09:21:00Z", gem_level=20, quality=23),
         )))
@@ -1848,7 +2011,10 @@ def test_japanese_trade_url_button_opens_result_url(qapp):
             "Standard", "q", 0, (), web_url=url, cached=True,
         ))
         assert window.trade_url_button.isEnabled()
-        assert "キャッシュ" in window.price_status.text()
+        assert window.price_status.text() == (
+            "Standard: 検索候補0件 / キャッシュ。"
+            "価格付き出品は取得できませんでした。"
+        )
         with patch("src.poetore.ui.QDesktopServices.openUrl") as opened:
             window._open_trade_url()
         assert opened.call_args.args[0].toString() == url
@@ -1859,6 +2025,9 @@ def test_japanese_trade_url_button_opens_result_url(qapp):
 def test_price_result_columns_reset_when_switching_from_gem_to_weapon(qapp):
     window = PoetoreWindow()
     try:
+        window.trade_status_combo.setCurrentIndex(
+            window.trade_status_combo.findData("available")
+        )
         gem = parse_item_text("""アイテムクラス: スキルジェム
 レアリティ: ジェム
 Arc
@@ -1904,6 +2073,25 @@ Imbued Wand
         window.close()
 
 
+@pytest.mark.parametrize("trade_status", ("instant", "online"))
+def test_price_result_hides_redundant_pricing_method_column(qapp, trade_status):
+    window = PoetoreWindow()
+    try:
+        window.trade_status_combo.setCurrentIndex(
+            window.trade_status_combo.findData(trade_status)
+        )
+        window._show_price_result(PriceResult("Mirage", "q", 1, (
+            PriceListing(4, "chaos", pricing_method="instant"),
+        )))
+
+        assert [
+            window.price_list.headerItem().text(index)
+            for index in range(window.price_list.columnCount())
+        ] == ["価格", "出品日時"]
+    finally:
+        window.close()
+
+
 def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
     window = PoetoreWindow()
     window._populate_stat_filters((TradeStatFilter(
@@ -1915,8 +2103,9 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
     )
     assert checkbox is not None
     assert not checkbox.isChecked()
-    assert "#4488ff" in checkbox.styleSheet()
-    editor = window.mod_filter_tree.itemWidget(row, 4)
+    assert "#257a64" in checkbox.styleSheet()
+    assert "poenavi_check_257a64.png" in checkbox.styleSheet()
+    editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
     assert editor.text() == "55"
     checkbox.click()
     editor.setText("50")
@@ -1926,24 +2115,197 @@ def test_mod_filters_are_checkable_and_minimum_is_editable(qapp):
     window.close()
 
 
-def test_mod_filter_check_and_condition_columns_fit_without_clipping(qapp):
+def test_shared_checkbox_style_keeps_blue_as_default(qapp):
+    checkbox = QCheckBox()
+    Styles.apply_checkbox_style(checkbox)
+    assert "#4488ff" in checkbox.styleSheet()
+    assert "poenavi_check_4488ff.png" in checkbox.styleSheet()
+
+
+def test_mod_filter_rows_do_not_use_alternating_backgrounds(qapp):
     window = PoetoreWindow()
     try:
-        assert window.mod_filter_tree.columnWidth(0) == 47
-        assert window.mod_filter_tree.columnWidth(3) == 404
+        assert window.mod_filter_tree.alternatingRowColors() is False
     finally:
         window.close()
 
 
-def test_mod_filter_minimum_and_maximum_editors_use_narrow_width(qapp):
+def test_mod_filter_tooltip_contains_only_full_mod_text(qapp):
     window = PoetoreWindow()
+    full_text = "品質4%ごとに効果範囲1%増加する長いMod文章"
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1",
+        full_text,
+        3,
+        "suffix",
+        False,
+        read_value=7,
+        tier=1,
+        roll_min=3,
+        roll_max=7,
+        selection_reason="候補として表示（初期未選択）",
+        confidence=1.0,
+    ),))
+
+    row = window.mod_filter_tree.topLevelItem(0)
+    tooltip = row.toolTip(_MOD_COLUMN_TEXT)
+    assert tooltip == full_text
+    window.close()
+
+
+@pytest.mark.parametrize(
+    ("setting", "expected_tier_width"),
+    (("small", 62), ("medium", 72), ("large", 83)),
+)
+def test_mod_filter_tier_is_compact_and_condition_column_uses_remaining_width(
+    qapp, setting, expected_tier_width,
+):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
+    try:
+        assert window.mod_filter_tree.columnWidth(2) == expected_tier_width
+        assert (
+            window.mod_filter_tree.header().sectionResizeMode(_MOD_COLUMN_TEXT)
+            == QHeaderView.Stretch
+        )
+        assert not window.mod_filter_tree.header().stretchLastSection()
+    finally:
+        window.close()
+
+
+def test_mod_filter_keeps_maximum_editor_visible_without_horizontal_scroll(qapp):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": "small"}}
+    )
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1",
+        "モンスターは物理ダメージの100%を追加混沌ダメージとして獲得する",
+        100,
+        "prefix",
+        False,
+        max_value=100,
+    ),))
+    try:
+        window.show()
+        qapp.processEvents()
+        row = window.mod_filter_tree.topLevelItem(0)
+        maximum_editor = window.mod_filter_tree.itemWidget(
+            row, _MOD_COLUMN_MAX
+        ).findChild(QLineEdit)
+        maximum_editor.setFocus()
+        qapp.processEvents()
+
+        assert window.mod_filter_tree.horizontalScrollBar().maximum() == 0
+        assert window.mod_filter_tree.visualItemRect(row).right() <= (
+            window.mod_filter_tree.viewport().rect().right()
+        )
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(
+    ("setting", "expected_height"),
+    (("small", 26), ("medium", 30), ("large", 34)),
+)
+def test_mod_value_editors_have_vertical_inset(qapp, setting, expected_height):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1", "最大ライフ +#", 100, "prefix", False,
+        max_value=120,
+    ),))
+    try:
+        window.show()
+        qapp.processEvents()
+        row = window.mod_filter_tree.topLevelItem(0)
+        minimum_cell = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MIN)
+        maximum_cell = window.mod_filter_tree.itemWidget(row, _MOD_COLUMN_MAX)
+        for cell in (minimum_cell, maximum_cell):
+            editor = cell.findChild(QLineEdit)
+            assert editor.height() == expected_height
+            assert editor.height() < window.mod_filter_tree.visualItemRect(row).height()
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(
+    ("setting", "expected_min_width", "expected_max_width", "expected_gap", "expected_font_size"),
+    (
+        ("small", 56, 48, 8, 11),
+        ("medium", 65, 56, 9, 12),
+        ("large", 75, 64, 11, 14),
+    ),
+)
+def test_mod_filter_minimum_and_maximum_editors_use_narrow_width_and_smaller_font(
+    qapp, setting, expected_min_width, expected_max_width, expected_gap,
+    expected_font_size,
+):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
     window._populate_stat_filters((TradeStatFilter(
         "explicit.stat_1", "命中力 +55", 55, "prefix", False, max_value=100,
     ),))
     try:
         row = window.mod_filter_tree.topLevelItem(0)
-        assert window.mod_filter_tree.itemWidget(row, 4).width() == 84
-        assert window.mod_filter_tree.itemWidget(row, 5).width() == 84
+        minimum_cell = window.mod_filter_tree.itemWidget(row, 4)
+        maximum_cell = window.mod_filter_tree.itemWidget(row, 5)
+        minimum_editor = minimum_cell.findChild(QLineEdit)
+        maximum_editor = maximum_cell.findChild(QLineEdit)
+        assert minimum_cell.width() == expected_min_width
+        assert maximum_cell.width() == expected_max_width
+        assert minimum_cell.layout().contentsMargins().left() == expected_gap
+        assert maximum_cell.layout().contentsMargins().left() == 0
+        assert f"font-size: {expected_font_size}px" in minimum_editor.styleSheet()
+        assert f"font-size: {expected_font_size}px" in maximum_editor.styleSheet()
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(
+    ("setting", "expected_font_size"),
+    (("small", 11), ("medium", 12), ("large", 14)),
+)
+def test_mod_filter_kind_uses_same_compact_font_as_value_editors(
+    qapp, setting, expected_font_size,
+):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1", "命中力 +55", 55, "prefix", False,
+    ),))
+    try:
+        row = window.mod_filter_tree.topLevelItem(0)
+        minimum_editor = window.mod_filter_tree.itemWidget(
+            row, _MOD_COLUMN_MIN
+        ).findChild(QLineEdit)
+        assert row.font(_MOD_COLUMN_KIND).pixelSize() == expected_font_size
+        assert row.foreground(_MOD_COLUMN_KIND).color().name() == "#98a39f"
+        assert (
+            f"font-size: {expected_font_size}px"
+            in minimum_editor.styleSheet()
+        )
+    finally:
+        window.close()
+
+
+def test_mod_filter_kind_font_updates_with_display_size(qapp):
+    config = {"poetore": {"result_font_size": "small"}}
+    window = PoetoreWindow(app_config=config)
+    window._populate_stat_filters((TradeStatFilter(
+        "explicit.stat_1", "命中力 +55", 55, "prefix", False,
+    ),))
+    try:
+        row = window.mod_filter_tree.topLevelItem(0)
+        assert row.font(_MOD_COLUMN_KIND).pixelSize() == 11
+
+        config["poetore"]["result_font_size"] = "large"
+        window.apply_result_display_size()
+
+        assert row.font(_MOD_COLUMN_KIND).pixelSize() == 14
     finally:
         window.close()
 
@@ -1960,8 +2322,8 @@ def test_mod_text_click_toggles_without_selecting_or_moving_value_editors(qapp):
         checkbox = window.mod_filter_tree.itemWidget(row, 0).findChild(
             QCheckBox, "modFilterCheckbox"
         )
-        minimum_editor = window.mod_filter_tree.itemWidget(row, 4)
-        maximum_editor = window.mod_filter_tree.itemWidget(row, 5)
+        minimum_editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
+        maximum_editor = window.mod_filter_tree.itemWidget(row, 5).findChild(QLineEdit)
         before = (minimum_editor.geometry(), maximum_editor.geometry())
 
         window._toggle_mod_condition_from_text(row, 3)
@@ -2060,7 +2422,7 @@ def test_mod_filter_ui_preserves_internal_logic_without_user_logic_column(
         window.close()
 
 
-def test_mod_filter_ui_shows_reason_tier_range_generation_and_matching(qapp):
+def test_mod_filter_ui_keeps_diagnostics_internal_and_tooltip_simple(qapp):
     window = PoetoreWindow()
     try:
         source = TradeStatFilter(
@@ -2072,16 +2434,9 @@ def test_mod_filter_ui_shows_reason_tier_range_generation_and_matching(qapp):
         window._populate_stat_filters((source,))
         row = window.mod_filter_tree.topLevelItem(0)
         assert row.text(2) == "T1"
-        detail = row.toolTip(3)
-        assert "ベースアイテム向けT1 Mod" in detail
-        assert "読取 100" in detail
-        assert "T1" in detail
-        assert "範囲 90–100" in detail
-        assert "プレフィックス" in detail
-        assert "フラクチャー" in detail
-        assert "一致 100%" in detail
+        assert row.toolTip(3) == "最大ライフ +100"
 
-        editor = window.mod_filter_tree.itemWidget(row, 4)
+        editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
         editor.setText("95")
         selected = window._selected_stat_filters()[0]
         assert selected.min_value == 95
@@ -2135,8 +2490,8 @@ def test_unique_variable_roll_slider_drag_updates_minimum_and_enables_filter(qap
         QTest.mouseRelease(slider, Qt.LeftButton, pos=QPoint(drag_x, 12))
         assert slider._preview is None
 
-        minimum_editor = window.mod_filter_tree.itemWidget(row, 4)
-        maximum_editor = window.mod_filter_tree.itemWidget(row, 5)
+        minimum_editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
+        maximum_editor = window.mod_filter_tree.itemWidget(row, 5).findChild(QLineEdit)
         checkbox = window.mod_filter_tree.itemWidget(row, 0).findChild(
             QCheckBox, "modFilterCheckbox"
         )
@@ -2178,7 +2533,7 @@ def test_unique_roll_slider_tracks_numeric_input_and_awakened_decimal_precision(
         roll_slider = window.mod_filter_tree.itemWidget(row, 3).findChild(
             _UniqueRollSlider, "uniqueRollSlider"
         )
-        window.mod_filter_tree.itemWidget(row, 4).setText("1.75")
+        window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit).setText("1.75")
         assert roll_slider.searchValues() == (1.75, None)
     finally:
         window.close()
@@ -2205,8 +2560,8 @@ def test_unique_lower_is_better_slider_updates_maximum(qapp):
         expected = slider._value_at(drag_x)
         QTest.mouseClick(slider, Qt.LeftButton, pos=QPoint(drag_x, 12))
 
-        assert window.mod_filter_tree.itemWidget(row, 4).text() == ""
-        assert window.mod_filter_tree.itemWidget(row, 5).text() == f"{expected:g}"
+        assert window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit).text() == ""
+        assert window.mod_filter_tree.itemWidget(row, 5).findChild(QLineEdit).text() == f"{expected:g}"
         selected = window._selected_stat_filters()[0]
         assert selected.enabled is True
         assert selected.min_value is None
@@ -2245,7 +2600,7 @@ def test_mod_text_click_toggles_condition_but_value_editor_does_not(qapp):
 
         minimum_editor = window.mod_filter_tree.itemWidget(
             row, _MOD_COLUMN_MIN
-        )
+        ).findChild(QLineEdit)
         QTest.mouseClick(minimum_editor, Qt.LeftButton)
         assert checkbox.isChecked()
     finally:
@@ -2380,7 +2735,7 @@ Imbued Wand
         )
         tier_widget = window.mod_filter_tree.itemWidget(accuracy_row, 2)
 
-        assert window.mod_filter_tree.columnWidth(2) == 88
+        assert window.mod_filter_tree.columnWidth(2) == 72
         assert accuracy_row.text(2) == ""
         assert tier_widget is not None
         assert [label.text() for label in tier_widget.findChildren(QLabel)] == ["T2", "T2"]
@@ -2397,7 +2752,7 @@ def test_mod_conditions_can_be_collapsed_without_losing_values(qapp):
         )
         window._populate_stat_filters((source,))
         row = window.mod_filter_tree.topLevelItem(0)
-        editor = window.mod_filter_tree.itemWidget(row, 4)
+        editor = window.mod_filter_tree.itemWidget(row, 4).findChild(QLineEdit)
         editor.setText("95")
 
         window.show()
@@ -2451,6 +2806,32 @@ def test_mod_conditions_default_is_reset_for_each_new_item(qapp):
         assert window.mod_filter_tree.topLevelItemCount() > 0
         assert not window.mod_filter_tree.isHidden()
         assert window.mod_conditions_toggle.text() == "mod条件をたたむ∧"
+    finally:
+        window.close()
+
+
+def test_hidden_window_still_sizes_repeated_item_mod_rows_to_content(qapp):
+    window = PoetoreWindow()
+    try:
+        window.hide()
+        filters = tuple(
+            TradeStatFilter(
+                f"explicit.stat_{index}", f"テストMod {index}", index,
+                "prefix", index < 3,
+            )
+            for index in range(10)
+        )
+
+        with patch(
+            "src.poetore.ui._auto_mod_layout_sizes",
+            return_value=(500, 180, 800),
+        ) as layout_sizes:
+            window._populate_stat_filters(filters)
+
+        assert not window.mod_filter_tree.isHidden()
+        assert window._visible_mod_content_height() > 400
+        assert layout_sizes.call_args.kwargs["content_height"] > 400
+        assert window.mod_filter_tree.maximumHeight() == 500
     finally:
         window.close()
 
@@ -3076,7 +3457,7 @@ def test_many_unidentified_unique_candidates_are_scrollable(qapp):
         assert window.unique_name_scroll.verticalScrollBar().maximum() > 0
         assert window.unique_name_scroll.viewport().palette().color(
             window.unique_name_scroll.viewport().backgroundRole()
-        ).name() == "#121212"
+        ).name() == "#111416"
     finally:
         window.close()
 
@@ -3190,17 +3571,18 @@ Item Level: 85
         window._configure_trade_presets(low_level)
         assert window.trade_preset_combo.count() == 1
         assert not window.trade_preset_combo.isEnabled()
+        assert window.trade_preset_combo.isHidden()
+        assert not window.trade_preset_placeholder.isHidden()
         window.resize(720, window.height())
         window.show()
         qapp.processEvents()
-        assert window.trade_preset_combo.width() <= window._panel.width() / 2
-        single_width = window.trade_preset_combo._buttons[0].width()
-        assert window.trade_preset_combo._empty_segment.isVisible()
+        assert window.trade_preset_placeholder.width() <= window._panel.width() / 2
 
         window._configure_trade_presets(high_level)
         qapp.processEvents()
+        assert not window.trade_preset_combo.isHidden()
+        assert window.trade_preset_placeholder.isHidden()
         assert not window.trade_preset_combo._empty_segment.isVisible()
-        assert abs(window.trade_preset_combo._buttons[0].width() - single_width) <= 1
     finally:
         window.close()
 
@@ -3218,6 +3600,8 @@ def test_dedicated_exact_preset_is_labeled_as_dedicated_search_and_restores_fini
         assert window.trade_preset_combo.currentData() == "finished"
         assert window.trade_preset_combo.currentText() == "専用検索"
         assert window.trade_preset_combo._buttons[0].text() == "専用検索"
+        assert window.trade_preset_combo.isHidden()
+        assert not window.trade_preset_placeholder.isHidden()
         window._trade_preset_changed()
         assert "専用条件" in window.price_status.text()
 
@@ -3235,6 +3619,11 @@ Item Level: 85
         assert window.trade_preset_combo.currentText() == "完成品"
         assert window.trade_preset_combo.itemText(1) == "ベースアイテム"
         assert window.trade_preset_combo.count() == 2
+        assert not window.trade_preset_combo.isHidden()
+        assert window.trade_preset_placeholder.isHidden()
+        assert "QPushButton#binaryToggle" in window.styleSheet()
+        assert "border: 1px solid #465154" in window.styleSheet()
+        assert "QPushButton#binaryToggle:hover" in window.styleSheet()
     finally:
         window.close()
 
@@ -3260,6 +3649,8 @@ Superior Imbued Wand
         assert window.trade_preset_combo.currentData() == "finished"
         assert window.trade_preset_combo.currentText() == "ベースアイテム"
         assert window.trade_preset_combo._buttons[0].text() == "ベースアイテム"
+        assert window.trade_preset_combo.isHidden()
+        assert not window.trade_preset_placeholder.isHidden()
     finally:
         window.close()
 
@@ -3548,8 +3939,12 @@ def test_reduced_curse_effect_flask_shows_awakened_positive_minimum(qapp):
                 target = row
                 break
         assert target is not None
-        minimum = window.mod_filter_tree.itemWidget(target, _MOD_COLUMN_MIN)
-        maximum = window.mod_filter_tree.itemWidget(target, _MOD_COLUMN_MAX)
+        minimum = window.mod_filter_tree.itemWidget(
+            target, _MOD_COLUMN_MIN
+        ).findChild(QLineEdit)
+        maximum = window.mod_filter_tree.itemWidget(
+            target, _MOD_COLUMN_MAX
+        ).findChild(QLineEdit)
         assert minimum.text() == "44"
         assert maximum.text() == ""
     finally:
@@ -4141,6 +4536,12 @@ def test_poe_ninja_price_panel_renders_price_trend_and_link(qapp):
         assert "7日推移" in window.poe_ninja_trend_label.text()
         assert window.poe_ninja_trend_chart._points == (0, 1, 2, 3, 4, 5, 6)
         assert window._last_poe_ninja_url == "https://poe.ninja/example"
+
+        ninja_layout = window.poe_ninja_price_panel.layout()
+        assert ninja_layout.itemAt(0).spacerItem() is not None
+        assert ninja_layout.indexOf(window.poe_ninja_price_label) == 1
+        assert ninja_layout.indexOf(window.poe_ninja_currency_icon) == 4
+        assert ninja_layout.indexOf(window.poe_ninja_trend_label) == 5
 
         window._hide_poe_ninja_price(key)
         assert window.poe_ninja_price_panel.isHidden()

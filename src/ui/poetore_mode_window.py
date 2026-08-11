@@ -68,7 +68,7 @@ def _memo_icon() -> QIcon:
     """Return a compact note page with a folded corner."""
     pixmap, painter = _icon_canvas()
     accent = QColor(POETORE_ACCENT)
-    dark = QColor("#211425")
+    dark = QColor("#15201D")
     page = QPainterPath(QPointF(5.0, 2.8))
     page.lineTo(15.8, 2.8)
     page.lineTo(20.0, 7.0)
@@ -76,7 +76,7 @@ def _memo_icon() -> QIcon:
     page.lineTo(5.0, 21.0)
     page.closeSubpath()
     painter.setPen(QPen(accent, 1.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    painter.setBrush(QColor(60, 38, 68))
+    painter.setBrush(QColor(32, 72, 62))
     painter.drawPath(page)
     painter.drawLine(QPointF(15.8, 3.1), QPointF(15.8, 7.0))
     painter.drawLine(QPointF(15.8, 7.0), QPointF(19.7, 7.0))
@@ -91,11 +91,11 @@ def _image_manager_icon() -> QIcon:
     """Return stacked picture cards to convey image management."""
     pixmap, painter = _icon_canvas()
     accent = QColor(POETORE_ACCENT)
-    painter.setPen(QPen(QColor(126, 78, 139), 1.3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    painter.setBrush(QColor(47, 30, 53))
+    painter.setPen(QPen(QColor(61, 143, 123), 1.3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+    painter.setBrush(QColor(24, 49, 43))
     painter.drawRoundedRect(2.8, 3.2, 15.5, 14.5, 2.0, 2.0)
     painter.setPen(QPen(accent, 1.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    painter.setBrush(QColor(60, 38, 68))
+    painter.setBrush(QColor(32, 72, 62))
     painter.drawRoundedRect(5.5, 6.0, 15.5, 14.5, 2.0, 2.0)
     painter.setBrush(accent)
     painter.setPen(Qt.NoPen)
@@ -106,7 +106,7 @@ def _image_manager_icon() -> QIcon:
     mountain.lineTo(16.1, 14.3)
     mountain.lineTo(19.2, 18.4)
     mountain.closeSubpath()
-    painter.setBrush(QColor(151, 86, 169))
+    painter.setBrush(QColor(52, 166, 137))
     painter.drawPath(mountain)
     return _finish_icon(pixmap, painter)
 
@@ -119,7 +119,7 @@ def _draw_gear(
     stroke_color=None,
     fill_color=None,
 ):
-    dark = QColor("#211425")
+    dark = QColor("#15201D")
     stroke = QColor(stroke_color) if stroke_color else dark
     fill = QColor(fill_color) if fill_color else QColor(POETORE_ACCENT)
     cx, cy = center.x(), center.y()
@@ -152,7 +152,7 @@ def _settings_icon() -> QIcon:
         radius=5.5,
         tooth_length=2.4,
         stroke_color=POETORE_ACCENT,
-        fill_color="#3C2644",
+        fill_color="#20483E",
     )
     return _finish_icon(pixmap, painter)
 
@@ -171,7 +171,7 @@ def _map_mod_manager_icon() -> QIcon:
     map_path.lineTo(2.5, 18.5)
     map_path.closeSubpath()
     painter.setPen(QPen(QColor(POETORE_ACCENT), 1.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    painter.setBrush(QColor(60, 38, 68))
+    painter.setBrush(QColor(32, 72, 62))
     painter.drawPath(map_path)
     painter.drawLine(QPointF(8.5, 2.8), QPointF(8.5, 16.2))
     painter.drawLine(QPointF(14.5, 4.8), QPointF(14.5, 18.0))
@@ -210,7 +210,7 @@ class _PoetoreModeTitleBar(QWidget):
                 padding: 2px 8px;
             }}
             QPushButton:hover {{
-                background: rgba(219, 134, 239, 0.20);
+                background: rgba(101, 255, 202, 0.20);
                 border-radius: 3px;
             }}
         """
@@ -388,25 +388,25 @@ class PoetoreModeWindow(QMainWindow):
             QWidget#poetoreModeRoot {{
                 background: {POETORE_THEME.background};
                 color: {POETORE_TEXT};
-                border: 1px solid {POETORE_ACCENT};
+                border: 1px solid #343B3E;
                 border-radius: 10px;
             }}
             QWidget#poetoreModeTitleBar {{ border: none; background: transparent; }}
             QFrame#rateCard {{
                 background: {POETORE_THEME.panel};
-                border: 1px solid rgba(219, 134, 239, 0.42);
+                border: 1px solid #343B3E;
                 border-radius: 10px;
             }}
             QPushButton {{
-                background: #241929;
-                color: {POETORE_ACCENT};
-                border: 1px solid rgba(219, 134, 239, 0.55);
+                background: #1A1F21;
+                color: {POETORE_TEXT};
+                border: 1px solid #3A4245;
                 border-radius: 7px;
                 padding: 7px 12px;
                 font-weight: bold;
             }}
-            QPushButton:hover {{ background: #382440; border-color: {POETORE_ACCENT}; }}
-            QPushButton:pressed {{ background: #4A2D54; }}
+            QPushButton:hover {{ background: #25332F; border-color: {POETORE_ACCENT}; }}
+            QPushButton:pressed {{ background: #276B5A; }}
         """)
         root = QVBoxLayout(central)
         root.setContentsMargins(0, 0, 0, 0)
@@ -472,7 +472,7 @@ class PoetoreModeWindow(QMainWindow):
 
         footer = QHBoxLayout()
         self.rate_status = QLabel("poe.ninjaから現在のレートを取得しています")
-        self.rate_status.setStyleSheet("color: #A897AE; font-size: 11px;")
+        self.rate_status.setStyleSheet("color: #98A39F; font-size: 11px;")
         self.rate_status.setWordWrap(True)
         footer.addWidget(self.rate_status, 1)
         self.rate_refresh_button = QPushButton("更新")

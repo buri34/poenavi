@@ -18,7 +18,8 @@ from .categories import is_armour_category, is_equipment_category, is_weapon_cat
 from .models import ParsedItem
 from .performance import SearchPerformanceTrace
 from .metadata import (
-    base_armour_bounds, default_metadata_index, gem_metadata, normalize_stat_text,
+    base_armour_bounds, default_metadata_index, gem_metadata, multi_value_rule,
+    normalize_stat_text,
     pseudo_definitions, pseudo_relations, unique_fixed_stats, unique_icon_url,
 )
 
@@ -416,6 +417,10 @@ class TradeStatFilter:
     source_contributions: tuple[float | None, ...] = ()
     source_headings: tuple[str, ...] = ()
     alternative_stat_ids: tuple[str, ...] = ()
+    # 完成品の表示順を、集約後も元アイテムのaffix系統・記載順へ戻せるようにする。
+    # Trade APIやUI表示へは送らない内部情報。
+    source_affixes: tuple[str | None, ...] = ()
+    source_indexes: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -1086,7 +1091,7 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
         candidates = candidates[:1]
         entry = candidates[0]
         entry_text = str(entry.get("text", ""))
-        value = _value_for_template(modifier.text, entry_text)
+        value = _value_for_template(modifier.text, entry_text, modifier.stat_id)
         if value is None and (
             "#" in entry_text
             or modifier.option_value is not None
@@ -1941,14 +1946,37 @@ def _indexed_stat_text(text: str, kind: str) -> str:
     return _normalized_stat_text(text)
 
 
-def _value_for_template(source: str, template: str) -> float | None:
+def _value_for_template(
+    source: str, template: str, stat_id: str | None = None,
+) -> float | None:
     source = re.sub(r"\([^)]*(?:\d|implicit|crafted|enchant)[^)]*\)", "", source, flags=re.IGNORECASE).strip()
     template = template.replace(" (ローカル)", "").strip()
     pattern = re.escape(template).replace(r"\#", r"(-?\d+(?:\.\d+)?)")
     match = re.fullmatch(pattern, source)
     if not match or not match.groups():
         return None
-    return float(match.group(1))
+    values = tuple(float(value) for value in match.groups())
+    rule = multi_value_rule(stat_id or "")
+    if rule:
+        operation = rule.get("operation")
+        if operation == "blank":
+            return None
+        if operation == "first":
+            return values[0]
+        if operation == "mean":
+            return sum(values) / len(values)
+        if operation == "index":
+            return values[int(rule["value_index"])]
+        if operation == "half_second":
+            return values[1] / 2
+    if (
+        len(match.groups()) == 2
+        and "#から#" in template
+        and "ダメージ" in template
+        and "反射する" not in template
+    ):
+        return (values[0] + values[1]) / 2
+    return values[0]
 
 
 def _trade_stat_entries() -> tuple[dict, ...]:
@@ -2783,6 +2811,11 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
         if read_value is None and row.kind == "pseudo" and row.min_value is not None:
             read_value = round(row.min_value / (1 - DEFAULT_SEARCH_RANGE), 2)
         contributing_sources = property_sources or pseudo_sources or sources
+        contributing_source_ids = {id(modifier) for modifier in contributing_sources}
+        contributing_indexes = tuple(
+            index for index, modifier in enumerate(item.modifiers)
+            if id(modifier) in contributing_source_ids
+        )
         unique_sources = tuple(dict.fromkeys(
             modifier
             for modifier in contributing_sources
@@ -2813,6 +2846,10 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
             source_headings=tuple(
                 source_heading(modifier) for modifier in unique_sources
             ),
+            source_affixes=tuple(
+                item.modifiers[index].affix for index in contributing_indexes
+            ),
+            source_indexes=contributing_indexes,
         ))
     return tuple(decorated)
 
@@ -2947,7 +2984,7 @@ def resolve_trade_stat_filters(
                 # DPS・APS・クリ率・防御値へ反映済みなので二重条件化しない。
                 continue
             entry_text = str(entry.get("text", ""))
-            value = _value_for_template(modifier.text, entry_text)
+            value = _value_for_template(modifier.text, entry_text, modifier.stat_id)
             if value is None and (
                 "#" in entry_text
                 or modifier.option_value is not None
@@ -3206,8 +3243,8 @@ def resolve_trade_stat_filters(
             enumerate(decorated), key=accessory_sort_key,
         )]
     if item.category in {"weapon", "armour", "accessory"}:
-        # 完成品はPrefix/Suffixの生成順ではなく、最終性能→集約pseudo→
-        # 集約できない特殊Modの順で読む。元の構成はsource_textsからUIで確認する。
+        # 完成品は最終性能を先頭に置き、その後を元Modのaffix系統で
+        # Prefix→Suffix→その他へ整理する。各系統内は元アイテムの記載順を保つ。
         major_property_order = {
             "weapon": (
                 "property.total_dps", "property.physical_dps",
@@ -3222,28 +3259,40 @@ def resolve_trade_stat_filters(
         property_priority = {
             stat_id: index for index, stat_id in enumerate(major_property_order)
         }
-        pseudo_order = (
+        prefix_mixed_pseudos = {
             "pseudo.pseudo_total_life",
-            "pseudo.pseudo_total_energy_shield",
-            "pseudo.pseudo_total_elemental_resistance",
-            "pseudo.pseudo_total_chaos_resistance",
-            "pseudo.pseudo_total_all_attributes",
-            "pseudo.pseudo_total_strength",
-            "pseudo.pseudo_total_dexterity",
-            "pseudo.pseudo_total_intelligence",
             "pseudo.pseudo_total_mana",
-        )
-        pseudo_priority = {
-            stat_id: index for index, stat_id in enumerate(pseudo_order)
         }
+
+        def source_order(row: TradeStatFilter, fallback: int) -> int:
+            if row.source_indexes:
+                return min(row.source_indexes)
+            for source_index, modifier in enumerate(item.modifiers):
+                if row.stat_id and modifier.stat_id == row.stat_id:
+                    return source_index
+                if row.ref and modifier.ref == row.ref:
+                    return source_index
+            return len(item.modifiers) + fallback
+
+        def affix_group(row: TradeStatFilter) -> int:
+            if row.stat_id in prefix_mixed_pseudos:
+                return 1
+            affixes = {
+                affix for affix in (*row.source_affixes, row.affix)
+                if affix in {"prefix", "suffix"}
+            }
+            # 通常affixと暗黙等が混在するpseudoも、通常affixを優先する。
+            if "prefix" in affixes:
+                return 1
+            if "suffix" in affixes:
+                return 2
+            return 3
 
         def finished_gear_sort_key(pair):
             index, row = pair
             if row.stat_id in property_priority:
                 return (0, property_priority[row.stat_id], index)
-            if row.kind == "pseudo":
-                return (1, pseudo_priority.get(row.stat_id, len(pseudo_priority)), index)
-            return (2, 0, index)
+            return (affix_group(row), source_order(row, index), index)
 
         decorated = [row for _, row in sorted(
             enumerate(decorated), key=finished_gear_sort_key,

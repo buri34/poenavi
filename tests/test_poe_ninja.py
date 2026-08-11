@@ -124,6 +124,86 @@ def test_unique_price_uses_name_and_formats_divines():
     assert price.source_type == "UniqueAccessory"
 
 
+def test_mageblood_price_matches_japanese_flask_count_variant():
+    payload = _payload()
+    payload["itemOverviews"][0]["lines"] = [
+        {"name": "Mageblood", "variant": f"{count} Flasks, Heavy Belt", "chaos": chaos}
+        for count, chaos in ((2, 2000), (3, 3000), (4, 4000), (5, 5000))
+    ]
+    item = parse_item_text("""アイテムクラス: ベルト
+レアリティ: ユニーク
+メイジブラッド
+ヘビーベルト
+--------
+品質 (耐性モッド): +10% (augmented)
+幽体化度: 21%
+--------
+装備要求:
+レベル: 44
+--------
+アイテムレベル: 80
+--------
+{ 暗黙モッド — 能力値 }
+筋力 +35(25-35)
+--------
+{ ユニークモッド — 能力値 }
+器用さ +39(30-50)
+{ ユニークモッド — 元素, 火, 耐性 - 10%増加 }
+火耐性 +23(15-25)%
+{ ユニークモッド — 元素, 冷気, 耐性 - 10%増加 }
+冷気耐性 +23(15-25)%
+{ ユニークモッド }
+マジックのユーティリティフラスコを使用することができない
+{ ユニークモッド }
+左から4(2-4)個のマジックユーティリティフラスコのフラスコ効果が常にプレイヤーに適用される
+{ ユニークモッド }
+マジックユーティリティフラスコの効果が取り除かれることがない
+--------
+お前の血管には力の川が流れている。
+""")
+
+    price = match_poe_ninja_price(
+        payload, item, "Standard", trade_name="Mageblood", trade_base_type="Heavy Belt",
+    )
+
+    assert price is not None
+    assert price.variant == "4 Flasks, Heavy Belt"
+    assert price.chaos == 4000
+
+
+def test_mageblood_price_matches_english_flask_count_variant():
+    payload = _payload()
+    payload["itemOverviews"][0]["lines"] = [
+        {"name": "Mageblood", "variant": f"{count} Flasks, Heavy Belt", "chaos": chaos}
+        for count, chaos in ((2, 2000), (3, 3000), (4, 4000), (5, 5000))
+    ]
+    item = ParsedItem(
+        "Belts", "Unique", "Mageblood", "Heavy Belt", "accessory",
+        raw_text="Leftmost 3 Magic Utility Flasks constantly apply their Flask Effects to you",
+    )
+
+    price = match_poe_ninja_price(
+        payload, item, "Standard", trade_name="Mageblood", trade_base_type="Heavy Belt",
+    )
+
+    assert price is not None
+    assert price.variant == "3 Flasks, Heavy Belt"
+    assert price.chaos == 3000
+
+
+def test_mageblood_price_stays_hidden_when_flask_count_is_unknown():
+    payload = _payload()
+    payload["itemOverviews"][0]["lines"] = [
+        {"name": "Mageblood", "variant": f"{count} Flasks, Heavy Belt", "chaos": chaos}
+        for count, chaos in ((2, 2000), (3, 3000), (4, 4000), (5, 5000))
+    ]
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Heavy Belt", "accessory")
+
+    assert match_poe_ninja_price(
+        payload, item, "Standard", trade_name="Mageblood", trade_base_type="Heavy Belt",
+    ) is None
+
+
 def test_small_price_uses_chaos_display_parts():
     price = PoeNinjaPrice("Arc", None, 8.5, (), "https://example.com", 200)
     assert price.display_price_parts() == ("8.5", "chaos")

@@ -318,7 +318,7 @@ class PoetoreSettingsDialog(QDialog):
             }}
             QLabel, QCheckBox, QRadioButton, QGroupBox {{ color: {POETORE_THEME.text}; }}
             QGroupBox {{
-                border: 1px solid rgba(219, 134, 239, 0.5);
+                border: 1px solid #343B3E;
                 border-radius: 7px;
                 margin-top: 10px;
                 padding-top: 7px;
@@ -332,14 +332,14 @@ class PoetoreSettingsDialog(QDialog):
             QLineEdit, QComboBox {{
                 background: {POETORE_THEME.panel};
                 color: {POETORE_THEME.text};
-                border: 1px solid rgba(219, 134, 239, 0.55);
+                border: 1px solid #3A4245;
                 border-radius: 5px;
                 padding: 5px;
             }}
             QComboBox QAbstractItemView {{
                 background: {POETORE_THEME.panel};
                 color: {POETORE_THEME.text};
-                selection-background-color: #4A2D54;
+                selection-background-color: #276B5A;
                 selection-color: #ffffff;
             }}
             QTabWidget::pane {{ border: 1px solid {POETORE_THEME.accent}; }}
@@ -355,14 +355,14 @@ class PoetoreSettingsDialog(QDialog):
                 margin: -5px 0; border-radius: 8px;
             }}
             QPushButton {{
-                background: #241929;
-                color: {POETORE_THEME.accent};
-                border: 1px solid rgba(219, 134, 239, 0.65);
+                background: #1A1F21;
+                color: {POETORE_THEME.text};
+                border: 1px solid #3A4245;
                 border-radius: 5px;
                 padding: 6px 12px;
                 font-weight: bold;
             }}
-            QPushButton:hover {{ background: #382440; }}
+            QPushButton:hover {{ background: #25332F; border-color: {POETORE_THEME.accent}; }}
             QLabel#settingsNote {{ color: {POETORE_THEME.muted_text}; font-size: 11px; }}
             QLabel#privateLeagueNote {{
                 color: {POETORE_THEME.muted_text};

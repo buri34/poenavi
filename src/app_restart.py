@@ -51,15 +51,16 @@ def _poetore_message_box_style():
             min-width: 72px;
             padding: 5px 12px;
             background-color: {POETORE_THEME.panel};
-            color: {POETORE_THEME.accent};
-            border: 1px solid {POETORE_THEME.accent};
+            color: {POETORE_THEME.text};
+            border: 1px solid #3A4245;
             border-radius: 4px;
         }}
         QMessageBox QPushButton:hover {{
-            background-color: #382440;
+            background-color: #25332F;
+            border-color: {POETORE_THEME.accent};
         }}
         QMessageBox QPushButton:pressed {{
-            background-color: #4A2D54;
+            background-color: #276B5A;
         }}
     """
 

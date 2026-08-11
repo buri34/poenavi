@@ -1,7 +1,12 @@
 import unittest
 
 from src.poetore import ItemParseError, parse_item_text
-from src.poetore.parser import _modifier_header_details
+from src.poetore.parser import (
+    _modifier_header_details,
+    _modifier_values,
+    _values_for_matched_template,
+)
+from src.poetore.metadata import ModMetadata
 
 
 RARE_JP = """アイテムクラス: 指輪
@@ -23,6 +28,93 @@ RARE_JP = """アイテムクラス: 指輪
 
 
 class PoetoreParserTest(unittest.TestCase):
+    def test_single_placeholder_ignores_fixed_number_before_roll(self):
+        item = parse_item_text("""アイテムクラス: 靴
+レアリティ: レア
+狂喜の要請
+リヴァイアサングリーヴ
+--------
+アイテムレベル: 86
+--------
+{ イーター・オブ・ワールズ 暗黙モッド 「特大」 — ライフ }
+エンデュランスチャージ1個ごとに毎秒ライフの0.2%を自動回復する
+--------
+""")
+
+        modifier = item.modifiers[0]
+        self.assertEqual(modifier.stat_id, "implicit.stat_989800292")
+        self.assertEqual(modifier.values, (0.2,))
+
+    def test_added_damage_range_uses_average_of_placeholders(self):
+        template = "プレイヤーおよび近くの味方は青ソケット1個ごとに#から#の追加雷ダメージを獲得する"
+        metadata = ModMetadata(
+            ref="test", stat_id="explicit.test", kind="explicit",
+            japanese=(template,),
+        )
+
+        self.assertEqual(
+            _modifier_values(
+                "プレイヤーおよび近くの味方は青ソケット1個ごとに3から60の追加雷ダメージを獲得する",
+                metadata,
+            ),
+            (31.5,),
+        )
+
+    def test_other_multiple_placeholders_keep_legacy_values_until_reviewed(self):
+        template = "効果は#秒間持続し効果が#%増加する"
+        metadata = ModMetadata(
+            ref="test", stat_id="explicit.test", kind="explicit",
+            japanese=(template,),
+        )
+
+        self.assertEqual(
+            _modifier_values("効果は4秒間持続し効果が20%増加する", metadata),
+            (4.0, 20.0),
+        )
+
+    def test_reviewed_multiple_placeholder_rules_are_applied(self):
+        cases = (
+            (
+                "crafted.stat_1445684883",
+                "ブロック時に#から#の物理ダメージをアタックしてきた敵に反射する",
+                "ブロック時に6から12の物理ダメージをアタックしてきた敵に反射する",
+                (6.0,),
+            ),
+            (
+                "explicit.stat_1445684883",
+                "ブロック時に#から#の物理ダメージをアタックしてきた敵に反射する",
+                "ブロック時に6から12の物理ダメージをアタックしてきた敵に反射する",
+                (9.0,),
+            ),
+            (
+                "explicit.stat_3102860761",
+                "トラップを投げると#秒間移動スピードが#%増加する",
+                "トラップを投げると4秒間移動スピードが20%増加する",
+                (20.0,),
+            ),
+            (
+                "explicit.stat_3595254837",
+                "移動中に地面に燃焼領域を生成し、毎秒#の火ダメージを#秒間与える",
+                "移動中に地面に燃焼領域を生成し、毎秒100の火ダメージを4秒間与える",
+                (),
+            ),
+        )
+        for stat_id, template, line, expected in cases:
+            metadata = ModMetadata(
+                ref="test", stat_id=stat_id, kind=stat_id.split(".", 1)[0],
+                japanese=(template,),
+            )
+            with self.subTest(stat_id=stat_id):
+                self.assertEqual(_modifier_values(line, metadata), expected)
+
+    def test_template_extraction_ignores_roll_range(self):
+        self.assertEqual(
+            _values_for_matched_template(
+                "最大ライフ +99(85-99)", ("最大ライフ +#",),
+            ),
+            (99.0,),
+        )
+
     def test_japanese_forbidden_shako_random_support_mods_use_indexable_stats(self):
         for name in ("禁断のシャコー帽", "禁断のシャコー帽（レプリカ）"):
             item = parse_item_text(f"""アイテムクラス: 兜
@@ -391,6 +483,60 @@ Corsair Sword
 """)
         self.assertEqual(item.name, "地獄の破滅")
         self.assertEqual(item.base_type, "略奪者の剣")
+
+    def test_ignores_unmet_requirements_warning_before_rare_name(self):
+        item = parse_item_text("""アイテムクラス: 鎧
+レアリティ: レア
+このアイテムを使用できません。アイテムの効果は無視されます
+--------
+ゴーレムの甲羅
+黄昏のレガリア
+--------
+品質: +20% (augmented)
+エナジーシールド: 560 (augmented)
+幽体化度: 39%
+--------
+装備要求:
+レベル: 84
+筋力: 111
+器用さ: 159 (unmet)
+知性: 293 (unmet)
+--------
+ソケット: B-B-B-G-W-W
+--------
+アイテムレベル: 86
+--------
+明示防御力モッドの強さが8%増加する (enchant)
+--------
+{ シアリング・エグザーク 暗黙モッド 「特大」 }
+雷耐性の最大値 +2%
+(Maximum Resistance: 耐性の最大値は90%より大きい値にはならない)
+{ イーター・オブ・ワールズ 暗黙モッド 「特大」 }
+アタックブロック率が7%
+--------
+{ プレフィックスモッド「きらびやかな」 (ティア: 1) — 防御, エナジーシールド - 8%増加 }
+最大エナジーシールド +92(91-100)
+{ プレフィックスモッド「極上の」 (ティア: 1) — ライフ }
+最大ライフ +180(175-189)
+{ マスタークラフト プレフィックスモッド「上級」 — ライフ, 防御, エナジーシールド - 8%増加 }
+エナジーシールドが19(18-21)%増加する
+最大ライフ +18(17-19)
+{ サフィックスモッド 「バメスの」 (ティア: 1) — 混沌, 耐性 }
+混沌耐性 +35(31-35)%
+{ サフィックスモッド 「ハーストの」 (ティア: 1) — 元素, 冷気, 耐性 }
+冷気耐性 +48(46-48)%
+{ サフィックスモッド 「火山の」 (ティア: 3) — 元素, 火, 耐性 }
+火耐性 +40(36-41)%
+シアリング・エグザークのアイテム
+イーター・オブ・ワールズのアイテム
+""")
+
+        self.assertEqual(item.name, "ゴーレムの甲羅")
+        self.assertEqual(item.base_type, "黄昏のレガリア")
+        self.assertEqual(item.category, "armour")
+        self.assertEqual(item.item_level, 86)
+        self.assertIn("searing_item", item.flags)
+        self.assertIn("tangled_item", item.flags)
 
     def test_rejects_non_item_text(self):
         with self.assertRaises(ItemParseError):
