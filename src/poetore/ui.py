@@ -55,6 +55,7 @@ from .trade import (
 )
 from .poe_ninja import PoeNinjaPrice, default_poe_ninja_service, is_poe2_exchange_price_item
 from .metadata import related_item_group
+from .poe2.metadata import related_item_group as poe2_related_item_group
 from .performance import SearchPerformanceTrace, start_search_trace
 
 
@@ -2582,7 +2583,12 @@ class PoetoreWindow(QWidget):
                             trade_name=self._trade_item_name,
                             trade_base_type=self._trade_base_type,
                         )
-                    related = ()
+                    try:
+                        related = self._lookup_poe2_related_items(item, league, result)
+                    except Exception:
+                        # Related Items is optional; keep the primary price when one
+                        # category is temporarily unavailable.
+                        related = ()
                 else:
                     result = default_poe_ninja_service.lookup(
                         item, league,
@@ -2668,6 +2674,47 @@ class PoetoreWindow(QWidget):
             "query": priced(group.get("query", ())),
             "items": priced(group.get("items", ())),
             "query_label": str(group.get("query_label") or "関連素材・同系統"),
+            "current": (namespace, names[0].casefold()),
+        }
+
+    def _lookup_poe2_related_items(self, item, league, primary_price=None):
+        namespace = (
+            "UNIQUE" if item.rarity.casefold() in {"unique", "ユニーク"}
+            else "GEM" if is_gem_category(item.category)
+            else "ITEM"
+        )
+        names = tuple(dict.fromkeys(
+            str(value).strip() for value in (
+                self._trade_item_name, self._trade_base_type,
+                getattr(primary_price, "name", None), item.name, item.base_type,
+            ) if value and str(value).strip()
+        ))
+        variant = str(
+            self._trade_base_type or item.base_type
+            or getattr(primary_price, "variant", None) or ""
+        ) if namespace == "UNIQUE" else None
+        group = next(
+            (found for name in names
+             if (found := poe2_related_item_group(namespace, name, variant)) is not None),
+            None,
+        )
+        if group is None:
+            return None
+        all_rows = tuple(group.get("query", ())) + tuple(group.get("items", ()))
+        identities = tuple((
+            str(row.get("namespace", "")), str(row.get("name", "")),
+            row.get("variant"), row.get("ninja_type"),
+        ) for row in all_rows)
+        prices = default_poe_ninja_service.lookup_poe2_identities(identities, league)
+        price_by_id = {
+            str(row.get("id", "")): price for row, price in zip(all_rows, prices)
+        }
+        return {
+            "query": tuple((row, price_by_id.get(str(row.get("id", ""))))
+                           for row in group.get("query", ())),
+            "items": tuple((row, price_by_id.get(str(row.get("id", ""))))
+                           for row in group.get("items", ())),
+            "query_label": "関連素材・同系統",
             "current": (namespace, names[0].casefold()),
         }
 

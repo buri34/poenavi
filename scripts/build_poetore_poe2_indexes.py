@@ -171,16 +171,124 @@ def build_augment_index(ee2_root: Path) -> dict:
     }
 
 
+def _related_identity(value: str) -> dict:
+    namespace, identity = value.split("::", 1)
+    name, separator, variant = identity.partition(" // ")
+    row = {"id": value, "namespace": namespace, "name": name}
+    if separator:
+        row["variant"] = variant
+    return row
+
+
+def _poe2_ninja_type(row: dict, identities: dict[tuple[str, str], list[dict]]) -> str | None:
+    namespace, name = row["namespace"], row["name"]
+    matches = identities.get((namespace, name), ())
+    if namespace == "GEM":
+        return "LineageSupportGems"
+    if namespace == "UNIQUE":
+        base = row.get("variant") or next(
+            (match.get("unique", {}).get("base") for match in matches if match.get("unique")), ""
+        )
+        bases = identities.get(("ITEM", base), ())
+        category = next(
+            ((match.get("craftable") or {}).get("category") for match in bases
+             if (match.get("craftable") or {}).get("category")), ""
+        )
+        if category in {"Ring", "Amulet", "Belt", "Talisman"}:
+            return "UniqueAccessories"
+        if category in {"Flask"}:
+            return "UniqueFlasks"
+        if category in {"Jewel"}:
+            return "UniqueJewels"
+        if category in {"Tablet"}:
+            return "UniqueTablets"
+        if category in {"SanctumRelic", "Relic"}:
+            return "UniqueSanctumRelics"
+        if category in {
+            "Bow", "Crossbow", "Spear", "Flail", "Staff", "Quarterstaff", "Warstaff",
+            "Wand", "Sceptre", "OneHandMace", "TwoHandMace", "One Hand Mace",
+            "Two Hand Mace", "OneHandSword", "TwoHandSword", "One Hand Sword",
+            "Two Hand Sword", "OneHandAxe", "TwoHandAxe", "One Hand Axe",
+            "Two Hand Axe", "Dagger",
+        }:
+            return "UniqueWeapons"
+        return "UniqueArmours" if category else None
+    if namespace != "ITEM":
+        return None
+    category = next(
+        ((match.get("craftable") or {}).get("category") for match in matches
+         if (match.get("craftable") or {}).get("category")), ""
+    )
+    tags = {tag for match in matches for tag in match.get("tags", ())}
+    if category == "SoulCore":
+        return "Ultimatum"
+    if category == "Omen":
+        return "Ritual"
+    if category in {"VaultKey", "MapFragment", "PinnacleKey", "MiscMapItem"}:
+        return "Fragments"
+    if "catalyst" in tags or "breachstone_splinter" in tags:
+        return "Breach"
+    if "mushrune" in tags or "affliction_orb" in tags:
+        return "Delirium"
+    if any(tag.startswith("expedition_currency") for tag in tags):
+        return "Expedition"
+    if not tags and any(token in name for token in ("Collarbone", "Jawbone", "Rib", "Cranium", "Vertebrae")):
+        return "Abyss"
+    return "Currency" if category == "Currency" else None
+
+
+def build_related_item_groups(ee2_root: Path) -> dict:
+    data_root = ee2_root / "renderer" / "public" / "data"
+    localized = {}
+    identity_rows: dict[tuple[str, str], list[dict]] = {}
+    for language in ("en", "ja"):
+        localized[language] = [
+            json.loads(line) for line in (data_root / language / "items.ndjson").read_text(
+                encoding="utf-8"
+            ).splitlines() if line
+        ]
+    for row in localized["en"]:
+        identity_rows.setdefault((row.get("namespace", ""), row.get("refName", "")), []).append(row)
+    japanese = {
+        (row.get("namespace", ""), row.get("refName", "")): row.get("name", "")
+        for row in localized["ja"]
+    }
+
+    def enrich(value: str) -> dict:
+        row = _related_identity(value)
+        display = japanese.get((row["namespace"], row["name"]))
+        if display:
+            row["display_name"] = display
+        ninja_type = _poe2_ninja_type(row, identity_rows)
+        if ninja_type:
+            row["ninja_type"] = ninja_type
+        return row
+
+    raw_groups = json.loads((data_root / "item-drop.json").read_text(encoding="utf-8"))
+    groups = [{
+        "query": [enrich(value) for value in group.get("query", ())],
+        "items": [enrich(value) for value in group.get("items", ())],
+    } for group in raw_groups]
+    return {
+        "schema_version": 1,
+        "source": "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8",
+        "groups": groups,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ee2-root", type=Path)
     parser.add_argument("--augment-only", action="store_true")
+    parser.add_argument("--related-only", action="store_true")
     args = parser.parse_args()
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    if args.augment_only:
+    if args.augment_only or args.related_only:
         if args.ee2_root is None:
-            parser.error("--augment-only requires --ee2-root")
-        payloads = (("augment_index.json", build_augment_index(args.ee2_root)),)
+            parser.error("--augment-only/--related-only requires --ee2-root")
+        payloads = (("augment_index.json", build_augment_index(args.ee2_root)),) if args.augment_only else (
+            ("related_item_groups.json", build_related_item_groups(args.ee2_root)),
+        )
     else:
         payloads = (
             ("identity_index.json", build_identity_index(args.ee2_root)),

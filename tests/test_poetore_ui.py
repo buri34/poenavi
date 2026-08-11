@@ -5550,3 +5550,31 @@ def test_scrying_orb_header_includes_the_searched_map_area(qapp):
         assert window.item_name_label.text() == "透視のオーブ (岸辺)"
     finally:
         window.close()
+
+
+def test_poe2_related_items_resolve_ee2_group_and_keep_unpriced_rows(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2", "poetore": {}})
+    item = ParsedItem(
+        "Map Fragments", "normal", "", "Primary Calamity Fragment", "map_fragment",
+    )
+    try:
+        window._trade_base_type = "Primary Calamity Fragment"
+        with patch.object(
+            __import__("src.poetore.ui", fromlist=["default_poe_ninja_service"])
+            .default_poe_ninja_service,
+            "lookup_poe2_identities",
+            return_value=tuple(None for _ in range(11)),
+        ) as lookup:
+            related = window._lookup_poe2_related_items(item, "Runes of Aldur")
+        assert related is not None
+        assert [row[0]["name"] for row in related["query"]] == [
+            "Primary Calamity Fragment", "Secondary Calamity Fragment",
+            "Tertiary Calamity Fragment",
+        ]
+        assert all(price is None for _row, price in related["items"])
+        assert related["items"][2][0]["display_name"] == "信仰のプリズム"
+        assert lookup.call_args.args[0][0] == (
+            "ITEM", "Primary Calamity Fragment", None, "Fragments",
+        )
+    finally:
+        window.close()

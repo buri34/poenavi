@@ -34,8 +34,8 @@ SOFTWARE.
 
 ## Exiled Exchange 2
 
-ぽえとれPoE2モードのParser fixture、カテゴリ、検索クエリ境界の検討時に、
-Exiled Exchange 2の公開ソースコードとデータを参照しています。PoENavi側は
+ぽえとれPoE2モードのParser fixture、カテゴリ、検索クエリ境界の検討、および
+Related Items台帳（`item-drop.json`）に、Exiled Exchange 2の公開ソースコードとデータを参照しています。PoENavi側は
 公式Trade2 APIと固定fixtureで検証し、Pythonで独立実装しています。
 
 MIT License — Copyright (c) 2020 Alexander Drozdov

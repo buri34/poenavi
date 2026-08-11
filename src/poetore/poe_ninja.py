@@ -251,6 +251,33 @@ class PoeNinjaPriceService:
             source_type=type_name,
         )
 
+    def lookup_poe2_identities(
+        self, identities: tuple[tuple[str, str, str | None, str | None], ...], league: str,
+    ) -> tuple[PoeNinjaPrice | None, ...]:
+        """Resolve Related Items using only each row's pinned poe.ninja category."""
+        if not league or re.search(r"\(PL\d+\)$", league):
+            return tuple(None for _identity in identities)
+        results = []
+        for namespace, name, variant, type_name in identities:
+            if not type_name:
+                results.append(None)
+                continue
+            try:
+                if namespace.upper() == "UNIQUE":
+                    payload = self._poe2_payload(league, type_name)
+                    results.append(match_poe2_unique_identity(
+                        payload, name, variant, league, type_name,
+                    ))
+                else:
+                    payload = self._poe2_exchange_payload(league, type_name)
+                    results.append(match_poe2_exchange_identity(
+                        payload, name, league, type_name,
+                    ))
+            except Exception:
+                # One optional price category must not hide the relationship list.
+                results.append(None)
+        return tuple(results)
+
     def lookup(
         self,
         item: ParsedItem,
@@ -726,6 +753,7 @@ def match_poe2_unique_price(
     trade_name: str | None = None,
     trade_base_type: str | None = None,
     source_type: str = "UniqueAccessories",
+    include_corrupted: bool = False,
 ) -> PoeNinjaPrice | None:
     name = str(trade_name or item.name or "").strip()
     base_type = str(trade_base_type or item.base_type or "").strip()
@@ -733,7 +761,7 @@ def match_poe2_unique_price(
         row for row in payload.get("lines", ())
         if str(row.get("name", "")).casefold() == name.casefold()
         and (not base_type or str(row.get("baseType", "")).casefold() == base_type.casefold())
-        and not bool(row.get("corrupted"))
+        and (include_corrupted or not bool(row.get("corrupted")))
     ]
     if len(matches) != 1:
         return None
@@ -761,14 +789,50 @@ def match_poe2_unique_price(
     )
 
 
+def match_poe2_exchange_identity(
+    payload: dict, name: str, league: str, source_type: str,
+) -> PoeNinjaPrice | None:
+    item = ParsedItem("", "normal", name, name, "currency")
+    return match_poe2_exchange_price(
+        payload, item, league, trade_name=name, source_type=source_type,
+    )
+
+
+def match_poe2_unique_identity(
+    payload: dict, name: str, base_type: str | None, league: str, source_type: str,
+) -> PoeNinjaPrice | None:
+    item = ParsedItem("", "Unique", name, str(base_type or ""), "")
+    return match_poe2_unique_price(
+        payload, item, league, trade_name=name, trade_base_type=base_type,
+        source_type=source_type, include_corrupted=True,
+    )
+
+
 def _poe2_overview_slug(type_name: str) -> str:
     return {
         "UniqueAccessories": "unique-accessories",
         "UniqueWeapons": "unique-weapons",
         "UniqueArmours": "unique-armours",
+        "UniqueFlasks": "unique-flasks",
+        "UniqueCharms": "unique-charms",
+        "UniqueJewels": "unique-jewels",
+        "UniqueTablets": "unique-tablets",
+        "UniqueSanctumRelics": "unique-relics",
         "Currency": "currency",
         "UncutGems": "uncut-gems",
         "Fragments": "fragments",
+        "Abyss": "abyssal-bones",
+        "LineageSupportGems": "lineage-support-gems",
+        "Essences": "essences",
+        "Ultimatum": "soul-cores",
+        "Idols": "idols",
+        "Runes": "runes",
+        "Ritual": "omens",
+        "Expedition": "expedition",
+        "Delirium": "distilled-emotions",
+        "Breach": "breach-catalyst",
+        "Verisium": "verisium",
+        "PrecursorTablets": "precursor-tablets",
     }[type_name]
 
 

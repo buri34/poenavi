@@ -446,6 +446,41 @@ def test_poe2_exchange_service_uses_exchange_category_and_cache():
     assert calls == [("Runes of Aldur", "UncutGems")]
 
 
+def test_poe2_related_identities_use_pinned_categories_and_share_cache():
+    exchange_calls = []
+    unique_calls = []
+
+    def exchange_fetcher(league, type_name):
+        exchange_calls.append((league, type_name))
+        payload = _poe2_exchange_payload()
+        payload["items"] = [{"id": "fragment", "name": "Primary Calamity Fragment",
+                             "detailsId": "primary-calamity-fragment"}]
+        payload["lines"] = [{"id": "fragment", "primaryValue": 1.0,
+                             "maxVolumeCurrency": "divine", "maxVolumeRate": 1.0,
+                             "sparkline": {"data": [], "totalChange": 0}}]
+        return payload
+
+    def unique_fetcher(league, type_name):
+        unique_calls.append((league, type_name))
+        payload = _poe2_unique_payload()
+        payload["lines"][0].update({"name": "Prism of Belief", "baseType": "Diamond"})
+        return payload
+
+    service = PoeNinjaPriceService(
+        poe2_fetcher=unique_fetcher, poe2_exchange_fetcher=exchange_fetcher,
+    )
+    identities = (
+        ("ITEM", "Primary Calamity Fragment", None, "Fragments"),
+        ("ITEM", "Primary Calamity Fragment", None, "Fragments"),
+        ("UNIQUE", "Prism of Belief", "Diamond", "UniqueJewels"),
+        ("GEM", "Unavailable Reward", None, None),
+    )
+    prices = service.lookup_poe2_identities(identities, "Runes of Aldur")
+    assert [price is not None for price in prices] == [True, True, True, False]
+    assert exchange_calls == [("Runes of Aldur", "Fragments")]
+    assert unique_calls == [("Runes of Aldur", "UniqueJewels")]
+
+
 def test_poe2_exchange_matches_regular_currency():
     payload = _poe2_exchange_payload()
     payload["items"] = [{"id": "chaos", "name": "Chaos Orb", "detailsId": "chaos-orb"}]

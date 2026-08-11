@@ -11,6 +11,7 @@ IDENTITY_PATH = (
 )
 STAT_PATH = IDENTITY_PATH.with_name("stat_index.json")
 AUGMENT_PATH = IDENTITY_PATH.with_name("augment_index.json")
+RELATED_ITEMS_PATH = IDENTITY_PATH.with_name("related_item_groups.json")
 
 
 @lru_cache(maxsize=1)
@@ -41,6 +42,30 @@ def resolve_identity_candidates(
 def resolve_identity(name: str, namespace: str | None = None) -> dict | None:
     candidates = resolve_identity_candidates(name, namespace)
     return candidates[0] if candidates else None
+
+
+@lru_cache(maxsize=1)
+def related_item_groups() -> tuple[dict, ...]:
+    payload = json.loads(RELATED_ITEMS_PATH.read_text(encoding="utf-8"))
+    return tuple(payload.get("groups", ()))
+
+
+def related_item_group(
+    namespace: str, name: str, variant: str | None = None,
+) -> dict | None:
+    comparable_name = name.strip().casefold()
+    comparable_variant = str(variant or "").strip().casefold()
+    for group in related_item_groups():
+        for row in group.get("query", ()):
+            if str(row.get("namespace", "")).upper() != namespace.upper():
+                continue
+            if str(row.get("name", "")).casefold() != comparable_name:
+                continue
+            expected_variant = str(row.get("variant") or "").casefold()
+            if expected_variant and comparable_variant and expected_variant != comparable_variant:
+                continue
+            return group
+    return None
 
 
 @lru_cache(maxsize=1)

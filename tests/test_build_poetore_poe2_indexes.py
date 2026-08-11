@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import pytest
+from src.poetore.poe2.metadata import related_item_group
 
 from scripts.build_poetore_poe2_indexes import (
-    OUTPUT, _aligned, build_augment_index, build_identity_index, build_stat_index,
+    OUTPUT, _aligned, build_augment_index, build_identity_index,
+    build_related_item_groups, build_stat_index,
 )
 
 
@@ -100,3 +103,31 @@ def test_build_identity_index_keeps_duplicate_variant_tags_and_base_armour(tmp_p
     assert entries[0]["tags"] == ["str_dex_armour"]
     assert entries[0]["armour"] == {"ar": [123, 123], "ev": [111, 111]}
     assert entries[1]["armour"] == {"ar": [147, 147], "ev": [134, 134]}
+
+
+def test_generated_related_items_match_locked_ee2_and_have_price_hints():
+    generated = json.loads((OUTPUT / "related_item_groups.json").read_text(encoding="utf-8"))
+    assert generated["source"].endswith("d72afb83bc0888919a89d3c3744acee2c597e9c8")
+    assert len(generated["groups"]) == 115
+    first = generated["groups"][0]
+    assert first["query"][0] == {
+        "id": "ITEM::Primary Calamity Fragment", "namespace": "ITEM",
+        "name": "Primary Calamity Fragment", "display_name": "第一の災厄のフラグメント",
+        "ninja_type": "Fragments",
+    }
+    prism = next(row for row in first["items"] if row["name"] == "Prism of Belief")
+    assert prism["variant"] == "Diamond"
+    assert prism["ninja_type"] == "UniqueJewels"
+
+
+def test_build_related_items_is_reproducible_from_locked_ee2():
+    ee2_root = __import__("pathlib").Path("/tmp/poe2-upstream-audit.SsKQia/ee2")
+    if not ee2_root.exists():
+        pytest.skip("locked EE2 checkout is not available")
+    generated = json.loads((OUTPUT / "related_item_groups.json").read_text(encoding="utf-8"))
+    assert generated == build_related_item_groups(ee2_root)
+
+
+def test_related_item_group_requires_the_unique_base_variant_when_known():
+    assert related_item_group("UNIQUE", "The Last Flame", "Incense Relic") is not None
+    assert related_item_group("UNIQUE", "The Last Flame", "Vase Relic") is None

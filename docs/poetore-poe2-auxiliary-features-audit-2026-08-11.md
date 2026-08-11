@@ -94,23 +94,24 @@ PoENaviは同一Seller・同一価格を取得後にローカル集約する。E
 畳むかが異なる。現状のPoENavi方式は中央値と安値例の偏りを抑えられているため、API Collapseは
 必須差分ではない。2026-08-11、鰤さん判断によりPoE1／PoE2共通の残タスクへ追加した。
 
-## 未実装
+## 実装後更新（2026-08-11）
 
 ### Related Items
 
-PoE1ではAwakened由来の関連品123グループを表示するが、PoE2処理は`related = ()`として明示的に
-無効化されている。
+固定EE2のPoE2用`item-drop.json` 115グループを専用台帳へ取り込み、PoE2モードでも表示するよう
+実装した。PoE1台帳とは分離し、日英identityとpoe.ninja PoE2カテゴリを各行に保持する。
 
 最新EE2にはPoE2用`item-drop.json`が115グループあり、Boss Fragment一式、Key、Gem、Unique報酬などを
-関連表示する。PoE2で実装する場合は、PoE1台帳の流用ではなく、このPoE2 identityとpoe.ninja PoE2
-カテゴリへ対応した専用台帳が必要である。
+関連表示する。価格カテゴリに現行リーグのデータがない品も関係行は保持し、価格のみ`—`とする。
 
 価値:
 
 - Fragment一式とBoss報酬の価格を同時に見られる
 - Key／Invitation／Reliquary品の費用対効果を判断しやすい
 
-優先度は中。検索精度には影響しないが、PoE2固有コンテンツとの相性がよい。
+Windows実機確認項目は`P2-WIN-061`へ追加した。
+
+## 未実装
 
 ### 検索結果のゲーム内風Tooltip
 
