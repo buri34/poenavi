@@ -12,8 +12,8 @@
     "不具合": 0
   },
   "real_copy_counts": {
-    "自動検証済み": 22,
-    "実コピー待ち": 6,
+    "自動検証済み": 23,
+    "実コピー待ち": 5,
     "不具合": 0
   },
   "real_copy_report": "search-real-copy-audit.csv",

@@ -47,8 +47,8 @@ def test_poe2_search_matrix_reports_are_machine_readable(tmp_path):
     }
     assert len(payload["rows"]) == len(rows)
     assert payload["real_copy_counts"] == {
-        "自動検証済み": 22,
-        "実コピー待ち": 6,
+        "自動検証済み": 23,
+        "実コピー待ち": 5,
         "不具合": 0,
     }
 
@@ -56,6 +56,11 @@ def test_poe2_search_matrix_reports_are_machine_readable(tmp_path):
 def test_poe2_real_copy_pairs_are_audited_without_overclaiming_missing_samples():
     rows = audit_real_copy_pairs(REAL_COPY_FIXTURES)
     assert len(rows) == 28
-    assert sum(row["audit_status"] == "自動検証済み" for row in rows) == 22
-    assert sum(row["audit_status"] == "実コピー待ち" for row in rows) == 6
+    assert sum(row["audit_status"] == "自動検証済み" for row in rows) == 23
+    assert sum(row["audit_status"] == "実コピー待ち" for row in rows) == 5
     assert not any(row["audit_status"] == "不具合" for row in rows)
+    flail = next(row for row in rows if row["fixture_id"] == "FX002")
+    assert flail["audit_status"] == "自動検証済み"
+    assert (flail["ja_base_type"], flail["en_base_type"]) == (
+        "Chain Flail", "Chain Flail",
+    )

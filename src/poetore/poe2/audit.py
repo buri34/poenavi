@@ -158,10 +158,9 @@ def audit_real_copy_pairs(csv_source: Path) -> list[dict]:
         fixture_id = source["fixture_id"]
         ja_text = source["日本語設定の詳細コピー全文"].strip()
         en_text = source["英語設定の詳細コピー全文"].strip()
-        placeholder = any(
-            marker in f"{ja_text}\n{en_text}".upper()
-            for marker in ("INCOMPLETE", "未完", "WIP", "保留")
-        )
+        # 「未完 / INCOMPLETE / WIP」は現行Unique Flailの実際のidentity・本文にも
+        # 現れるため、収集票が明示的に保留としているセルだけをplaceholder扱いする。
+        placeholder = "保留" in f"{ja_text}\n{en_text}"
         row = {
             "fixture_id": fixture_id,
             "target": source["収集対象"],

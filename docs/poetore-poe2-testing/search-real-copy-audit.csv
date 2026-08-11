@@ -1,6 +1,6 @@
 ﻿fixture_id,target,source_status,audit_status,ja_category,en_category,ja_base_type,en_base_type,trade_category,exact_type,notes
 FX001,Crossbow,未収集,自動検証済み,crossbow,crossbow,Flexed Crossbow,Flexed Crossbow,weapon.crossbow,Flexed Crossbow,日英解析と最終Trade2 identityが一致
-FX002,Unique Flail,未収集,実コピー待ち,,,,,,,日英いずれかが空欄またはプレースホルダー
+FX002,Unique Flail,未収集,自動検証済み,flail,flail,Chain Flail,Chain Flail,weapon.flail,Chain Flail,日英解析と最終Trade2 identityが一致
 FX003,Focus,未収集,自動検証済み,focus,focus,Hallowed Focus,Hallowed Focus,armour.focus,Hallowed Focus,日英解析と最終Trade2 identityが一致
 FX004,Buckler,未収集,自動検証済み,buckler,buckler,Ancient Buckler,Ancient Buckler,armour.buckler,Ancient Buckler,日英解析と最終Trade2 identityが一致
 FX005,Active Gem,未収集,自動検証済み,active_gem,active_gem,Freezing Mark,Freezing Mark,gem.activegem,Freezing Mark,日英解析と最終Trade2 identityが一致
