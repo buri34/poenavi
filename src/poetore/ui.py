@@ -3329,6 +3329,9 @@ class PoetoreWindow(QWidget):
             f"もう一度 {hotkey} を押してください。"
         )
         message.setStandardButtons(QMessageBox.StandardButton.Ok)
+        parse_error = str(getattr(self, "_last_capture_parse_error", "") or "").strip()
+        if parse_error:
+            message.setDetailedText(f"解析エラー: {parse_error}")
         # QMessageBox may reset an empty application title while configuring its buttons.
         message.setWindowTitle("取り込めませんでした")
         message.setStyleSheet("""
@@ -3368,12 +3371,14 @@ class PoetoreWindow(QWidget):
             trace.mark("clipboard_read", characters=len(copied_text))
         try:
             item = self._parse_item_text(copied_text)
-        except (ItemParseError, ValueError):
+        except (ItemParseError, ValueError) as error:
             if trace is not None:
                 trace.mark("clipboard_parse_failed")
+            self._last_capture_parse_error = str(error)
             self._pending_performance_trace = None
             self._build_capture_error_dialog().exec()
             return
+        self._last_capture_parse_error = ""
         if trace is not None:
             trace.mark(
                 "clipboard_parsed", category=item.category, modifiers=len(item.modifiers),

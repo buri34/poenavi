@@ -264,6 +264,48 @@ def test_capture_failure_opens_the_dark_error_dialog(qapp):
         window.close()
 
 
+def test_capture_failure_preserves_parser_reason_for_diagnostics(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    dialog = Mock()
+    try:
+        with patch("src.poetore.ui.read_item_clipboard", return_value="not an item"), patch.object(
+            window, "_build_capture_error_dialog", return_value=dialog
+        ):
+            window._capture_item_copy()
+
+        assert "class、rarity、identity" in window._last_capture_parse_error
+    finally:
+        window.close()
+
+
+def test_poe2_alt_d_capture_accepts_meta_gem_with_windows_bidi_marker(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    copied = """\u202aレアリティ: ジェム
+ブラスファミー
+--------
+バフ, 永続, 範囲効果, オーラ, メタ
+レベル: 10
+--------
+装備条件：レベル 36, 65 知性
+--------
+ソケット: G G
+--------
+ソケットされたすべての呪いスキルを凶悪なオーラに変化させる。
+"""
+    try:
+        with patch("src.poetore.ui.read_item_clipboard", return_value=copied), patch.object(
+            window, "_build_capture_error_dialog"
+        ) as error_dialog:
+            window._capture_item_copy()
+
+        error_dialog.assert_not_called()
+        assert window._parsed_item.category == "meta_gem"
+        assert window._parsed_item.base_type == "Blasphemy"
+        assert window._parsed_item.properties["ソケット"] == "G G"
+    finally:
+        window.close()
+
+
 def test_capture_from_poe_remembers_the_verified_game_window(qapp):
     window = PoetoreWindow()
     try:

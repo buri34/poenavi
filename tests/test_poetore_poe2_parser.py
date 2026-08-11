@@ -578,8 +578,9 @@ def test_phase45_gem_identity_and_socket_property():
     assert item.properties["ソケット"] == "S S"
 
 
-def test_real_meta_gem_without_item_class_accepts_windows_leading_marker():
-    item = parse_item_text("""\ufeffレアリティ: ジェム
+@pytest.mark.parametrize("marker", ["\ufeff", "\u200b", "\u2060", "\u202a", "\x00"])
+def test_real_meta_gem_without_item_class_accepts_windows_leading_marker(marker):
+    item = parse_item_text(marker + """レアリティ: ジェム
 ブラスファミー
 --------
 バフ, 永続, 範囲効果, オーラ, メタ

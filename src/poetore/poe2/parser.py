@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 
 from ..models import ItemModifier, ParsedItem
 from .metadata import (
@@ -529,7 +530,15 @@ def parse_item_text(text: str) -> ParsedItem:
     # Some Windows clipboard paths preserve an invisible marker before the
     # first label.  Meta Gems omit Item Class, so losing that first Rarity
     # label makes only this category impossible to identify.
-    text = text.lstrip("\ufeff\u200b\u2060")
+    # Windows clipboard providers can prepend BOM, zero-width marks, bidi
+    # controls, or NUL before the first visible label. Meta Gems omit Item
+    # Class, so retaining even one such character on the Rarity line makes
+    # this category impossible to identify. Remove only leading whitespace
+    # and Unicode control/format characters; item content is left untouched.
+    while text and (
+        text[0].isspace() or unicodedata.category(text[0]) in {"Cc", "Cf"}
+    ):
+        text = text[1:]
     labels, identity_lines = _header(text)
     item_class = labels.get("item_class", "")
     rarity = _RARITIES.get(labels.get("rarity", ""), labels.get("rarity", "").casefold())
