@@ -11,7 +11,8 @@ from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, Q
 import pytest
 
 from src.poetore.ui import (
-    PoetoreWindow, _MOD_COLUMN_CHECK, _MOD_COLUMN_KIND, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
+    PoetoreWindow, _ACTION_CLUSTER_HORIZONTAL_GAP, _ACTION_CLUSTER_VERTICAL_GAP,
+    _MOD_COLUMN_CHECK, _MOD_COLUMN_KIND, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
     _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
     show_poetore_window,
 )
@@ -162,6 +163,29 @@ def test_trade_action_row_uses_compact_fonts_and_fits_window(
             window.search_range_combo.minimumWidth()
             == window.search_range_combo.maximumWidth()
         )
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize("setting", ("small", "medium", "large"))
+def test_action_cluster_uses_consistent_spacing_at_every_display_size(
+    qapp, setting,
+):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
+    try:
+        window.show()
+        qapp.processEvents()
+        zero_margins = (0, 0, 0, 0)
+
+        assert window.action_cluster_layout.spacing() == _ACTION_CLUSTER_VERTICAL_GAP
+        assert window.mod_conditions_actions_layout.spacing() == _ACTION_CLUSTER_HORIZONTAL_GAP
+        assert window.trade_action_layout.spacing() == _ACTION_CLUSTER_HORIZONTAL_GAP
+        assert window.action_cluster_layout.getContentsMargins() == zero_margins
+        assert window.mod_conditions_actions_layout.getContentsMargins() == zero_margins
+        assert window.trade_action_layout.getContentsMargins() == zero_margins
+        assert "QLabel#priceStatus { color: #98A39F; padding: 1px 0; }" in window.styleSheet()
     finally:
         window.close()
 

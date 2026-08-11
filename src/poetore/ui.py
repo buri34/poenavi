@@ -101,6 +101,8 @@ _UNIQUE_CANDIDATE_VIEWPORT_HEIGHT = (
     _UNIQUE_CANDIDATE_ROW_HEIGHT * _UNIQUE_CANDIDATE_VISIBLE_ROWS
     + _UNIQUE_CANDIDATE_ROW_SPACING * (_UNIQUE_CANDIDATE_VISIBLE_ROWS - 1)
 )
+_ACTION_CLUSTER_HORIZONTAL_GAP = 4
+_ACTION_CLUSTER_VERTICAL_GAP = 6
 _RELATED_ITEMS_TREE_HEIGHT = 180
 _RELATED_ITEMS_PRICE_HEIGHT_REDUCTION = 180
 _DISPLAY_SIZE_PROFILES = {
@@ -1425,13 +1427,15 @@ class PoetoreWindow(QWidget):
         )
         self.mercenary_supports_toggle.hide()
         mod_conditions_actions = QHBoxLayout()
+        mod_conditions_actions.setContentsMargins(0, 0, 0, 0)
+        mod_conditions_actions.setSpacing(_ACTION_CLUSTER_HORIZONTAL_GAP)
         mod_conditions_actions.addWidget(self.mod_conditions_toggle)
         mod_conditions_actions.addWidget(self.clear_mod_conditions_button)
         mod_conditions_actions.addWidget(self.hidden_mods_toggle)
         mod_conditions_actions.addWidget(self.mod_sources_toggle)
         mod_conditions_actions.addWidget(self.mercenary_supports_toggle)
         mod_conditions_actions.addStretch()
-        panel_layout.addLayout(mod_conditions_actions)
+        self.mod_conditions_actions_layout = mod_conditions_actions
         self.mod_warning = QLabel("")
         self.mod_warning.setWordWrap(True)
         self.mod_warning.setStyleSheet("color: #d6a84b;")
@@ -1444,7 +1448,8 @@ class PoetoreWindow(QWidget):
         panel_layout.addWidget(self.search_scope_notice)
 
         action_row = QHBoxLayout()
-        action_row.setSpacing(4)
+        action_row.setContentsMargins(0, 0, 0, 0)
+        action_row.setSpacing(_ACTION_CLUSTER_HORIZONTAL_GAP)
         action_row.setAlignment(Qt.AlignLeft)
         self.trade_action_layout = action_row
         self.price_button = QPushButton("検索")
@@ -1462,12 +1467,18 @@ class PoetoreWindow(QWidget):
         self.trade_url_button.setEnabled(False)
         self.trade_url_button.clicked.connect(self._open_trade_url)
         action_row.addWidget(self.trade_url_button)
-        panel_layout.addLayout(action_row)
 
         self.price_status = QLabel("検索条件を読み取っています…")
         self.price_status.setWordWrap(True)
         self.price_status.setObjectName("priceStatus")
-        panel_layout.addWidget(self.price_status)
+        action_cluster = QVBoxLayout()
+        action_cluster.setContentsMargins(0, 0, 0, 0)
+        action_cluster.setSpacing(_ACTION_CLUSTER_VERTICAL_GAP)
+        action_cluster.addLayout(mod_conditions_actions)
+        action_cluster.addLayout(action_row)
+        action_cluster.addWidget(self.price_status)
+        self.action_cluster_layout = action_cluster
+        panel_layout.addLayout(action_cluster)
         self.price_list = QTreeWidget()
         self.price_list.setObjectName("priceList")
         self.price_list.setHeaderLabels(["価格", "出品日時"])
@@ -1653,7 +1664,7 @@ class PoetoreWindow(QWidget):
                 color: #E6ECEA;
                 padding: 4px 2px;
             }
-            QLabel#priceStatus { color: #98A39F; padding: 1px 2px; }
+            QLabel#priceStatus { color: #98A39F; padding: 1px 0; }
             QPushButton {
                 background: rgba(26, 31, 33, 225);
                 color: #E6ECEA;
