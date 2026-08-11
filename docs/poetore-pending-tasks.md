@@ -40,7 +40,7 @@ EE2比較基準: `d72afb83bc0888919a89d3c3744acee2c597e9c8`
 合成コピーfixtureも残る。日本語PoE2クライアントの実コピーと最終Trade2 JSONを正本として、
 検索候補を狭めすぎないことまで確認する。
 
-Windows実機の作業票は`docs/poetore-poe2-windows-test-cases.csv`を使用する。
+Windows実機の作業票は`docs/poetore-poe2-testing/windows-test-cases.csv`を使用する。
 Requirement Levelは別途製品判断するため、この作業票の試験対象には含めない。
 
 - [ ] Life／Mana Flask、Wombgift、Map Fragment、Pinnacle Key、Vault Key、Expedition Logbookの
