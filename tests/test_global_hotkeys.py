@@ -29,6 +29,7 @@ class FakeKeyboardBackend:
     def __init__(self):
         self.registrations = []
         self.removed = []
+        self.pressed = False
 
     def add_hotkey(self, hotkey, callback, **options):
         registration = SimpleNamespace(
@@ -39,6 +40,9 @@ class FakeKeyboardBackend:
 
     def remove_hotkey(self, registration):
         self.removed.append(registration)
+
+    def is_pressed(self, _hotkey):
+        return self.pressed
 
 
 def test_ctrl_control_character_is_normalized_to_letter():
@@ -282,7 +286,7 @@ def test_service_ignores_keys_sent_by_the_application():
     assert emitted == ["custom_command:0"]
 
 
-def test_suppressed_hotkey_is_registered_only_while_poe_is_foreground():
+def test_suppressed_hotkey_stays_registered_and_passes_through_outside_poe():
     backend = FakeKeyboardBackend()
     foreground = {"hwnd": 10}
     service = ForegroundSuppressedHotkeyService(
@@ -298,17 +302,18 @@ def test_suppressed_hotkey_is_registered_only_while_poe_is_foreground():
     assert service.is_registered
     assert registration.hotkey == "c"
     assert registration.options == {
-        "suppress": True, "trigger_on_release": True,
+        "suppress": True, "trigger_on_release": False,
     }
 
     foreground["hwnd"] = 20
-    service.refresh()
-    assert not service.is_registered
-    assert backend.removed == [registration]
+    assert registration.callback() is True
+    assert service.is_registered
+    assert backend.removed == []
     service.stop()
+    assert backend.removed == [registration]
 
 
-def test_suppressed_hotkey_releases_registration_before_dispatch():
+def test_suppressed_hotkey_blocks_in_poe_and_dispatches_after_release():
     backend = FakeKeyboardBackend()
     service = ForegroundSuppressedHotkeyService(
         "poetore_capture", "alt+d",
@@ -322,11 +327,47 @@ def test_suppressed_hotkey_releases_registration_before_dispatch():
     service.start()
     registration = backend.registrations[-1]
 
-    registration.callback()
+    backend.pressed = True
+    assert registration.callback() is False
 
-    assert backend.removed == [registration]
-    assert not service.is_registered
+    assert backend.removed == []
+    assert service.is_registered
+    assert emitted == ["poetore_capture"]
+    service._poll_release()
+    assert emitted == ["poetore_capture"]
+    backend.pressed = False
+    service._poll_release()
     assert emitted == ["poetore_capture", "poetore_capture_released"]
+    service.stop()
+
+
+def test_suppressed_hotkey_remains_usable_for_repeated_searches():
+    backend = FakeKeyboardBackend()
+    service = ForegroundSuppressedHotkeyService(
+        "poetore_capture", "alt+d",
+        keyboard_backend=backend,
+        foreground_getter=lambda: 10,
+        poe_window_checker=lambda hwnd: hwnd == 10,
+        platform="win32",
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+    registration = backend.registrations[-1]
+
+    for _ in range(3):
+        backend.pressed = True
+        assert registration.callback() is False
+        backend.pressed = False
+        service._poll_release()
+
+    assert emitted == [
+        "poetore_capture", "poetore_capture_released",
+        "poetore_capture", "poetore_capture_released",
+        "poetore_capture", "poetore_capture_released",
+    ]
+    assert service.is_registered
+    assert backend.removed == []
     service.stop()
 
 

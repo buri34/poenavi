@@ -1,8 +1,6 @@
 """モード間で共有するグローバルホットキー監視。"""
 
 import sys
-import time
-
 from PySide6.QtCore import QObject, QTimer, Signal
 
 from src.utils.internal_key_input import is_internal_key_input
@@ -205,6 +203,7 @@ class ForegroundSuppressedHotkeyService(QObject):
     """PoEが前面の間だけ、Windowsで元キーを通さずホットキーを発火する。"""
 
     command = Signal(str)
+    _triggered_in_poe = Signal()
 
     def __init__(
         self,
@@ -228,10 +227,14 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._poll_interval_ms = poll_interval_ms
         self._registration = None
         self._running = False
-        self._rearm_after = 0.0
         self._timer = QTimer(self)
         self._timer.setInterval(self._poll_interval_ms)
-        self._timer.timeout.connect(self.refresh)
+        self._timer.timeout.connect(self._poll_release)
+        self._retry_timer = QTimer(self)
+        self._retry_timer.setInterval(2000)
+        self._retry_timer.timeout.connect(self.refresh)
+        self._waiting_for_release = False
+        self._triggered_in_poe.connect(self._begin_release_watch)
 
     @property
     def is_running(self):
@@ -254,23 +257,20 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._running = True
         if not self.is_supported:
             return
-        self._timer.start()
-        self.refresh()
+        self._register()
 
     def stop(self):
         self._running = False
         self._timer.stop()
+        self._retry_timer.stop()
+        self._waiting_for_release = False
         self._unregister()
 
     def refresh(self):
+        """Compatibility hook; registration is intentionally kept alive."""
         if not self._running or not self.is_supported:
             return
-        foreground = self._foreground_getter()
-        poe_active = bool(foreground and self._poe_window_checker(foreground))
-        if not poe_active:
-            self._unregister()
-            return
-        if self._registration is None and time.monotonic() >= self._rearm_after:
+        if self._registration is None:
             self._register()
 
     def _backend(self):
@@ -284,13 +284,14 @@ class ForegroundSuppressedHotkeyService(QObject):
         try:
             self._registration = self._backend().add_hotkey(
                 self._hotkey,
-                self._on_hotkey_released,
+                self._on_hotkey_pressed,
                 suppress=True,
-                trigger_on_release=True,
+                trigger_on_release=False,
             )
+            self._retry_timer.stop()
         except Exception as exc:
             self._registration = None
-            self._rearm_after = time.monotonic() + 2.0
+            self._retry_timer.start()
             print(f"Failed to register suppressed hotkey {self._hotkey}: {exc}")
 
     def _unregister(self):
@@ -303,16 +304,39 @@ class ForegroundSuppressedHotkeyService(QObject):
         except Exception as exc:
             print(f"Failed to unregister suppressed hotkey {self._hotkey}: {exc}")
 
-    def _on_hotkey_released(self):
+    def _on_hotkey_pressed(self):
+        """Return True to pass the key through, False to suppress it."""
         if not self._running:
-            return
+            return True
         foreground = self._foreground_getter()
         if not foreground or not self._poe_window_checker(foreground):
-            return
-        # 自動送信するCtrl+Cまで抑止しないよう、検索処理を始める前に解除する。
-        self._unregister()
-        self._rearm_after = time.monotonic() + 0.5
+            return True
         if is_internal_key_input():
+            return True
+        if self._waiting_for_release:
+            return False
+        self._waiting_for_release = True
+        self._triggered_in_poe.emit()
+        return False
+
+    def _begin_release_watch(self):
+        if not self._running or not self._waiting_for_release:
             return
         self.command.emit(self._action)
-        self.command.emit(f"{self._action}_released")
+        self._timer.start()
+
+    def _poll_release(self):
+        if not self._waiting_for_release:
+            self._timer.stop()
+            return
+        try:
+            still_pressed = bool(self._backend().is_pressed(self._hotkey))
+        except Exception as exc:
+            print(f"Failed to inspect suppressed hotkey {self._hotkey}: {exc}")
+            still_pressed = False
+        if still_pressed:
+            return
+        self._timer.stop()
+        self._waiting_for_release = False
+        if self._running:
+            self.command.emit(f"{self._action}_released")
