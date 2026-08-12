@@ -2111,6 +2111,15 @@ class PoetoreWindow(QWidget):
                         gap = self._scaled_display_value(_MOD_VALUE_LEADING_GAP) if column == _MOD_COLUMN_MIN else 0
                         cell.setFixedWidth(editor.width() + gap)
         self._apply_poetore_style()
+        # Qt/OSのスタイルによって、同じpaddingでもdisabledの読み取り専用
+        # チップと操作可能な状態チップのsizeHintがずれる。表示サイズごとの
+        # 基準高を明示し、Windowsを含む全環境で同じ行高に揃える。
+        filter_chip_height = profile["font"] + 11
+        for _name, chip in self._filter_chips:
+            if isinstance(chip, QPushButton) and chip.objectName() in {
+                "readonlyFilterChip", "cycleToggle",
+            }:
+                chip.setFixedHeight(filter_chip_height)
         # スタイルのmin-width適用後に固定し、レイアウトによる再拡張を防ぐ。
         search_button_width = profile["search_button_width"]
         search_button_content_width = max(

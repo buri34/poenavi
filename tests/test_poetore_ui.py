@@ -4137,14 +4137,12 @@ def test_special_state_chips_for_unidentified_veiled_and_foil(qapp):
 
 
 @pytest.mark.parametrize(
-    ("setting", "expected_min_height"),
-    (("small", 15), ("medium", 17), ("large", 19)),
+    ("setting", "expected_height"),
+    (("small", 23), ("medium", 25), ("large", 27)),
 )
 def test_cycle_state_chips_match_regular_filter_chip_height(
-    qapp, setting, expected_min_height,
+    qapp, setting, expected_height,
 ):
-    previous_app_style = qapp.styleSheet()
-    qapp.setStyleSheet("")
     window = PoetoreWindow(
         app_config={"poetore": {"result_font_size": setting}}
     )
@@ -4159,13 +4157,14 @@ def test_cycle_state_chips_match_regular_filter_chip_height(
         regular_height = window.gem_variant_chip.sizeHint().height()
 
         assert all(chip.objectName() == "cycleToggle" for chip in state_chips)
+        assert regular_height == expected_height
         assert all(chip.sizeHint().height() == regular_height for chip in state_chips)
+        assert all(chip.height() == expected_height for chip in state_chips)
         assert "QPushButton#cycleToggle {" in window.styleSheet()
         assert "border: 1px solid #65FFCA;\n                padding: 3px 7px;" in window.styleSheet()
-        assert f"min-height: {expected_min_height}px;" in window.styleSheet()
+        assert f"min-height: {expected_height - 8}px;" in window.styleSheet()
     finally:
         window.close()
-        qapp.setStyleSheet(previous_app_style)
 
 
 def test_map_and_heist_special_filter_chips(qapp):
