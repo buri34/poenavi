@@ -2958,9 +2958,18 @@ class PoetoreWindow(QWidget):
     def set_obs_streaming_mode(self, enabled: bool):
         """Keep one stable HWND alive and collapse it to its title bar for OBS."""
         enabled = bool(enabled)
+        was_enabled = getattr(self, "_obs_streaming_mode", False)
         self._obs_streaming_mode = enabled
         self.setWindowTitle("ぽえとれ - OBS配信用" if enabled else "ぽえとれ")
         if enabled:
+            if not was_enabled:
+                # OBSはQt.Toolウィンドウを列挙しない環境がある。配信モードへ
+                # 切り替える時だけ通常のトップレベルウィンドウを作成し直し、
+                # 以後の折りたたみ／展開では同じHWNDを維持する。
+                self.setWindowFlags(
+                    Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+                )
+                self.setWindowFlag(Qt.WindowTransparentForInput, False)
             self._restore_obs_geometry()
             self.collapse_for_obs()
             self.show()
@@ -2971,6 +2980,10 @@ class PoetoreWindow(QWidget):
             self._panel.layout().setContentsMargins(10, 5, 10, 9)
             self.setMaximumHeight(16777215)
             self.hide()
+            self.setWindowFlags(
+                Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+            )
+            self.setWindowFlag(Qt.WindowTransparentForInput, False)
 
     def collapse_for_obs(self):
         if not getattr(self, "_obs_streaming_mode", False):
@@ -4783,7 +4796,8 @@ class PoetoreWindow(QWidget):
                 # カスタムセルの背面には描画しない。
                 row.setForeground(0, QBrush(Qt.transparent))
                 widget_hint = price_widget.sizeHint()
-                row.setSizeHint(0, QSize(widget_hint.width() + 20, widget_hint.height()))
+                price_width = math.ceil((widget_hint.width() + 20) * 1.3)
+                row.setSizeHint(0, QSize(price_width, widget_hint.height()))
                 self.price_list.setItemWidget(row, 0, price_widget)
 
     @staticmethod

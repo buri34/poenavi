@@ -2,6 +2,7 @@ from unittest.mock import Mock, patch
 from dataclasses import replace
 from datetime import datetime, timezone
 import csv
+import math
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt, QTimer
@@ -23,13 +24,14 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
     saved = []
     window = PoetoreWindow(app_config=config, save_config=lambda value: saved.append(value))
     try:
-        original_id = int(window.winId())
         expanded_height = window.height()
         window.set_obs_streaming_mode(True)
         qapp.processEvents()
+        obs_window_id = int(window.winId())
 
         assert window.isVisible()
         assert window.windowTitle() == "ぽえとれ - OBS配信用"
+        assert window.windowType() == Qt.Window
         assert window.height() < expanded_height
         assert window.height() == 30
         assert window._title_bar._obs_title_label.text() == "ぽえとれ検索ウィンドウ"
@@ -37,7 +39,7 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
         assert window._obs_content.isHidden()
         assert not window.item_header.isVisible()
         assert not window.trade_preset_combo.isVisible()
-        assert int(window.winId()) == original_id
+        assert int(window.winId()) == obs_window_id
 
         window.show_at_context(activate=False)
         qapp.processEvents()
@@ -46,7 +48,7 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
         assert window._obs_content.isVisible()
         assert window.item_header.isVisible()
         assert window.trade_preset_combo.isVisible()
-        assert int(window.winId()) == original_id
+        assert int(window.winId()) == obs_window_id
 
         window._dismiss_result()
         qapp.processEvents()
@@ -2034,6 +2036,18 @@ def test_price_result_uses_currency_icons_and_keeps_text_fallback(qapp):
         assert window.price_list.topLevelItem(2).text(0) == "2 mirror"
         assert window.price_list.itemWidget(window.price_list.topLevelItem(3), 0) is None
         assert window.price_list.topLevelItem(3).text(0) == "値段なし"
+    finally:
+        window.close()
+
+
+def test_currency_icon_price_column_reserves_30_percent_more_width(qapp):
+    window = PoetoreWindow()
+    try:
+        listing = PriceListing(1234, "chaos")
+        window._show_price_result(PriceResult("Mirage", "q", 1, (listing,)))
+        row = window.price_list.topLevelItem(0)
+        widget = window.price_list.itemWidget(row, 0)
+        assert row.sizeHint(0).width() >= math.ceil(widget.sizeHint().width() * 1.3)
     finally:
         window.close()
 
