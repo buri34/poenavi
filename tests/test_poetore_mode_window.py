@@ -137,6 +137,30 @@ def test_poetore_mode_uses_version_specific_currency_icon_names():
     assert _currency_icon_filename("chaos", "poe1") == "ChaosOrb.png"
 
 
+def test_poetore_mode_starts_obs_window_collapsed_when_enabled():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "poe_version": "poe1",
+        "hotkeys": {},
+        "poetore": {"obs_streaming": {"enabled": True, "geometry": {}}},
+    }
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+        app.processEvents()
+
+    result = window._poetore_window
+    assert result.isVisible()
+    assert result._obs_collapsed
+    assert result.windowTitle() == "ぽえとれ - 検索結果ウィンドウ"
+    window.close()
+    app.processEvents()
+
+
 def test_poetore_mode_minimize_hides_to_tray_and_notifies_once():
     app = QApplication.instance() or QApplication([])
     with patch(

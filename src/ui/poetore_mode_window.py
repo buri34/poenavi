@@ -312,6 +312,7 @@ class PoetoreModeWindow(QMainWindow):
         self._rate_timer.start()
         QTimer.singleShot(0, self.refresh_currency_rate)
         self._prepare_poetore_window()
+        self._apply_obs_streaming_mode()
 
     @staticmethod
     def _asset_path(filename):
@@ -765,6 +766,14 @@ class PoetoreModeWindow(QMainWindow):
 
         return prepare_poetore_window(self)
 
+    def _apply_obs_streaming_mode(self):
+        window = getattr(self, "_poetore_window", None)
+        if window is None:
+            return
+        obs_config = self.config.get("poetore", {}).get("obs_streaming", {})
+        enabled = bool(obs_config.get("enabled", False)) if isinstance(obs_config, dict) else False
+        window.set_obs_streaming_mode(enabled)
+
     def open_memo(self):
         if self._memo_dialog is not None:
             if self._memo_dialog.isVisible():
@@ -805,6 +814,7 @@ class PoetoreModeWindow(QMainWindow):
         self._apply_startup_position()
         if getattr(self, "_poetore_window", None) is not None:
             self._poetore_window.apply_result_display_size()
+            self._apply_obs_streaming_mode()
         self.hotkey_service.stop()
         self._start_hotkeys()
         self._update_capture_hint()

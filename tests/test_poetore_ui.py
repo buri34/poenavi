@@ -2,12 +2,13 @@ from unittest.mock import Mock, patch
 from dataclasses import replace
 from datetime import datetime, timezone
 import csv
+import math
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QPoint, QRect, QSize, Qt, QTimer
-from PySide6.QtGui import QPalette, QPixmap
+from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt, QTimer
+from PySide6.QtGui import QKeyEvent, QMouseEvent, QPalette, QPixmap, QWheelEvent
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QWidget
+from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QTreeWidgetItem, QWidget
 import pytest
 
 from src.poetore.ui import (
@@ -16,6 +17,168 @@ from src.poetore.ui import (
     _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
     show_poetore_window, _price_currency_icon_filename,
 )
+
+
+def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qapp):
+    config = {"poetore": {"obs_streaming": {"enabled": True, "geometry": {}}}}
+    saved = []
+    window = PoetoreWindow(app_config=config, save_config=lambda value: saved.append(value))
+    try:
+        expanded_height = window.height()
+        window.set_obs_streaming_mode(True)
+        qapp.processEvents()
+        obs_window_id = int(window.winId())
+
+        assert window.isVisible()
+        assert window.windowTitle() == "ぽえとれ - 検索結果ウィンドウ"
+        assert window.windowType() == Qt.Window
+        assert window.height() < expanded_height
+        assert window.height() == 30
+        assert window._title_bar._obs_title_label.text() == "ぽえとれ検索ウィンドウ"
+        assert window._title_bar._obs_title_label.isVisible()
+        assert window._title_bar._expanded_controls.isHidden()
+        assert window._obs_content.isHidden()
+        assert not window.item_header.isVisible()
+        assert not window.trade_preset_combo.isVisible()
+        assert int(window.winId()) == obs_window_id
+
+        # ホットキー受付直後に毎回走る表示サイズ反映では、検索結果が完成する
+        # まで30pxの待機バーから拡大しない。
+        window.apply_result_display_size()
+        qapp.processEvents()
+        assert window.height() == 30
+        assert window._title_bar._obs_title_label.isVisible()
+        assert window._obs_content.isHidden()
+
+        # アイテム解析でMod行が組み上がり、高さが再計算されても待機バーの
+        # 実サイズは変えず、展開予定サイズだけを更新する。
+        window.mod_filter_tree.addTopLevelItem(QTreeWidgetItem(["", "", "Explicit", "Test mod"]))
+        window._adjust_window_height_to_mod_rows()
+        qapp.processEvents()
+        assert window.height() == 30
+        assert window._obs_expanded_size.height() > 30
+
+        window.show_at_context(activate=False)
+        qapp.processEvents()
+        assert window.height() == window._obs_expanded_size.height()
+        assert window.height() > 30
+        assert window._title_bar._obs_title_label.isHidden()
+        assert not window._title_bar._expanded_controls.isHidden()
+        assert not window._obs_content.isHidden()
+        assert window.item_header.isVisible()
+        assert window.trade_preset_combo.isVisible()
+        assert window.trade_league_combo.isVisible()
+        assert window.league_popup_button.isVisible()
+        assert window.poetore_close_button.isVisible()
+        assert int(window.winId()) == obs_window_id
+
+        window._dismiss_result()
+        qapp.processEvents()
+        assert window.isVisible()
+        assert window.height() < expanded_height
+        assert saved
+    finally:
+        window.set_obs_streaming_mode(False)
+        window.close()
+
+
+def test_obs_expand_is_hidden_until_show_at_context_finishes(qapp):
+    window = PoetoreWindow(app_config={"poetore": {"obs_streaming": {"enabled": True}}})
+    try:
+        window.set_obs_streaming_mode(True)
+        qapp.processEvents()
+        assert window.isVisible()
+
+        window._expand_for_obs()
+        qapp.processEvents()
+        assert not window.isVisible()
+        assert not window._title_bar._expanded_controls.isHidden()
+        assert not window._obs_content.isHidden()
+
+        window.show_at_context(activate=False)
+        qapp.processEvents()
+        assert window.isVisible()
+        assert not window._obs_collapsed
+    finally:
+        window.set_obs_streaming_mode(False)
+        window.close()
+
+
+def test_obs_streaming_header_drags_and_expanded_result_dismisses(qapp):
+    window = PoetoreWindow(app_config={"poetore": {"obs_streaming": {"enabled": True}}})
+
+    def mouse_event(event_type, global_point, *, button=Qt.NoButton, buttons=Qt.NoButton):
+        return QMouseEvent(
+            event_type, QPointF(10, 10), QPointF(global_point),
+            button, buttons, Qt.NoModifier,
+        )
+
+    try:
+        window.set_obs_streaming_mode(True)
+        qapp.processEvents()
+        start = window.pos()
+        press_at = window.frameGeometry().topLeft() + QPoint(10, 10)
+        window._title_bar.mousePressEvent(
+            mouse_event(
+                QEvent.MouseButtonPress, press_at,
+                button=Qt.LeftButton, buttons=Qt.LeftButton,
+            )
+        )
+        window._title_bar.mouseMoveEvent(
+            mouse_event(
+                QEvent.MouseMove, press_at + QPoint(35, 20), buttons=Qt.LeftButton,
+            )
+        )
+        window._title_bar.mouseReleaseEvent(
+            mouse_event(
+                QEvent.MouseButtonRelease, press_at + QPoint(35, 20),
+                button=Qt.LeftButton,
+            )
+        )
+        assert window.pos() == start + QPoint(35, 20)
+
+        window.show_at_context(activate=True)
+        qapp.processEvents()
+        assert not window._obs_collapsed
+
+        escape = QKeyEvent(QEvent.KeyPress, Qt.Key_Escape, Qt.NoModifier)
+        assert window.eventFilter(window, escape)
+        qapp.processEvents()
+        assert window._obs_collapsed
+
+        window.show_at_context(activate=True)
+        outside = QWidget()
+        window._close_when_focus_leaves_panel(window.item_name_label, outside)
+        qapp.processEvents()
+        assert window._obs_collapsed
+
+        window.show_at_context(activate=True)
+        with patch.object(window, "_close_if_focus_is_still_outside") as close_outside:
+            QApplication.sendEvent(window, QEvent(QEvent.WindowDeactivate))
+            qapp.processEvents()
+            close_outside.assert_called_once_with()
+    finally:
+        window.set_obs_streaming_mode(False)
+        window.close()
+
+
+def test_obs_streaming_mode_restores_saved_position_and_expanded_size(qapp):
+    config = {"poetore": {"obs_streaming": {"enabled": True, "geometry": {
+        "x": 120, "y": 140, "width": 700, "height": 760,
+    }}}}
+    window = PoetoreWindow(app_config=config)
+    try:
+        window.set_obs_streaming_mode(True)
+        qapp.processEvents()
+        assert window.pos() == QPoint(120, 140)
+        assert window._obs_expanded_size == QSize(700, 760)
+        window.show_at_context(activate=False)
+        qapp.processEvents()
+        assert not window._obs_collapsed
+        assert window.height() > window._title_bar.height()
+    finally:
+        window.set_obs_streaming_mode(False)
+        window.close()
 from src.poetore.window_position import PlacementContext, position_for_context
 from src.poetore.trade import (
     PRESET_BASE, PRESET_FINISHED, PriceListing, PriceResult, TradeLeague, TradeStatFilter,
@@ -783,7 +946,8 @@ def test_poetore_combo_popups_are_treated_as_inside_panel(qapp, combo_name):
 def test_poetore_title_bar_keeps_close_button(qapp):
     window = PoetoreWindow()
     try:
-        assert window.trade_league_combo.parentWidget().objectName() == "poetoreTitleBar"
+        assert window.trade_league_combo.parentWidget() is window._title_bar._expanded_controls
+        assert window._title_bar._expanded_controls.parentWidget().objectName() == "poetoreTitleBar"
         assert window.trade_league_combo.width() == 338
         assert window.league_popup_button.text() == "▼"
         assert window.league_popup_button.toolTip() == "リーグ一覧を開く"
@@ -937,6 +1101,49 @@ def test_enter_in_changed_mod_value_researches(qapp):
             QTest.keyClick(editor, Qt.Key_Return)
 
         search.assert_called_once_with()
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(
+    ("column", "start", "delta", "expected"),
+    (
+        (_MOD_COLUMN_MIN, "779", 120, "780"),
+        (_MOD_COLUMN_MAX, "20", -120, "19"),
+        (_MOD_COLUMN_MIN, "1.5", 120, "2.5"),
+        (_MOD_COLUMN_MAX, "", 120, ""),
+    ),
+)
+def test_mod_value_mouse_wheel_changes_nonempty_value_by_one(
+    qapp, column, start, delta, expected,
+):
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            "Rings", "Rare", "Test Ring", "Ruby Ring", "accessory",
+            raw_text="test-ring",
+        )
+        window._has_searched_current_item = True
+        window._populate_stat_filters((
+            TradeStatFilter(
+                "explicit.stat_1", "+# to maximum Life", 70, "explicit",
+                max_value=100,
+            ),
+        ))
+        row = window.mod_filter_tree.topLevelItem(0)
+        editor = window.mod_filter_tree.itemWidget(row, column).findChild(QLineEdit)
+        editor.setText(start)
+        window._search_dirty = False
+        event = QWheelEvent(
+            QPointF(1, 1), QPointF(1, 1), QPoint(0, 0), QPoint(0, delta),
+            Qt.NoButton, Qt.NoModifier, Qt.ScrollUpdate, False,
+        )
+
+        handled = window.eventFilter(editor, event)
+
+        assert editor.text() == expected
+        assert handled is bool(start)
+        assert window._search_dirty is bool(start)
     finally:
         window.close()
 
@@ -1953,7 +2160,13 @@ def test_price_result_is_rendered_in_japanese(qapp):
     assert [window.price_list.headerItem().text(i) for i in range(4)] == [
         "価格", "ilvl", "出品日時", "取引方式",
     ]
-    assert window.price_list.topLevelItem(0).text(0) == "4 chaos"
+    first_price = window.price_list.itemWidget(
+        window.price_list.topLevelItem(0), 0,
+    )
+    assert first_price.findChild(QLabel, "priceCurrencyAmount").text() == "4"
+    assert first_price.findChild(QLabel, "priceCurrencyMultiplier").text() == "×"
+    chaos_icon = first_price.findChild(QLabel, "priceCurrencyIcon-chaos")
+    assert chaos_icon is not None and not chaos_icon.pixmap().isNull()
     assert window.price_list.topLevelItem(0).text(1) == "86"
     assert window.price_list.topLevelItem(0).text(2).endswith("前")
     assert window.price_list.topLevelItem(0).text(3) == "対面"
@@ -2022,6 +2235,45 @@ def test_price_result_shows_pricing_method_in_rightmost_column(qapp):
         ] == ["対面", "インスタント", "値段なし"]
         assert window.price_list.topLevelItem(2).text(0) == "値段なし"
         assert window.price_status.text() == "Mirage: 候補3件 / 取得3件"
+    finally:
+        window.close()
+
+
+def test_price_result_uses_currency_icons_and_keeps_text_fallback(qapp):
+    window = PoetoreWindow()
+    try:
+        window._show_price_result(PriceResult("Mirage", "q", 4, (
+            PriceListing(50, "chaos"),
+            PriceListing(1, "divine", listed_times=3),
+            PriceListing(2, "mirror"),
+            PriceListing(0, "", pricing_method="unpriced"),
+        )))
+
+        chaos_row = window.price_list.topLevelItem(0)
+        divine_row = window.price_list.topLevelItem(1)
+        chaos_cell = window.price_list.itemWidget(chaos_row, 0)
+        divine_cell = window.price_list.itemWidget(divine_row, 0)
+        assert chaos_cell.findChild(QLabel, "priceCurrencyAmount").text() == "50"
+        assert not chaos_cell.findChild(QLabel, "priceCurrencyIcon-chaos").pixmap().isNull()
+        assert divine_cell.findChild(QLabel, "priceCurrencyAmount").text() == "1"
+        assert not divine_cell.findChild(QLabel, "priceCurrencyIcon-divine").pixmap().isNull()
+        assert divine_cell.findChild(QLabel, "priceListingCount").text() == "×3"
+        assert window.price_list.itemWidget(window.price_list.topLevelItem(2), 0) is None
+        assert window.price_list.topLevelItem(2).text(0) == "2 mirror"
+        assert window.price_list.itemWidget(window.price_list.topLevelItem(3), 0) is None
+        assert window.price_list.topLevelItem(3).text(0) == "値段なし"
+    finally:
+        window.close()
+
+
+def test_currency_icon_price_column_reserves_30_percent_more_width(qapp):
+    window = PoetoreWindow()
+    try:
+        listing = PriceListing(1234, "chaos")
+        window._show_price_result(PriceResult("Mirage", "q", 1, (listing,)))
+        row = window.price_list.topLevelItem(0)
+        widget = window.price_list.itemWidget(row, 0)
+        assert row.sizeHint(0).width() >= math.ceil(widget.sizeHint().width() * 1.3)
     finally:
         window.close()
 
@@ -3638,6 +3890,23 @@ def test_split_filter_is_an_awakened_style_cycle_button(qapp):
         window.close()
 
 
+def test_item_state_cycle_buttons_use_clear_search_condition_labels(qapp):
+    window = PoetoreWindow()
+    try:
+        expected_labels = {
+            "unidentified_chip": ("未鑑定のみ", "未鑑定を含む"),
+            "veiled_chip": ("同一Veiled Modあり", "Veiled指定なし"),
+            "foil_chip": ("Foil Unique", "通常Unique"),
+            "mirrored_combo": ("ミラー品含む", "ミラー品を除外"),
+            "split_combo": ("スプリット品含む", "非スプリット"),
+        }
+        for name, labels in expected_labels.items():
+            toggle = getattr(window, name)
+            assert tuple(toggle.itemText(index) for index in range(toggle.count())) == labels
+    finally:
+        window.close()
+
+
 def test_corruption_filter_is_a_three_state_cycle_button(qapp):
     window = PoetoreWindow()
     try:
@@ -3976,10 +4245,10 @@ Mirrored
 """)
         window._configure_item_state_filters(mirrored)
         assert not window.mirrored_combo.isHidden()
-        assert window.mirrored_combo.currentText() == "ミラー化"
+        assert window.mirrored_combo.currentText() == "ミラー品含む"
         assert window.mirrored_combo.currentData() is True
         window.mirrored_combo.click()
-        assert window.mirrored_combo.currentText() == "非ミラー化"
+        assert window.mirrored_combo.currentText() == "ミラー品を除外"
         assert window.mirrored_combo.currentData() is False
 
         plain = replace(mirrored, raw_text="plain", flags=())
@@ -4026,7 +4295,7 @@ Penumbra Ring
         assert by_id["explicit.stat_1368271171"].min_value == 48.0
         assert window.mod_warning.isHidden()
         assert not window.mirrored_combo.isHidden()
-        assert window.mirrored_combo.currentText() == "ミラー化"
+        assert window.mirrored_combo.currentText() == "ミラー品含む"
     finally:
         window.close()
 
@@ -4116,6 +4385,36 @@ def test_special_state_chips_for_unidentified_veiled_and_foil(qapp):
         assert window.unidentified_chip.currentData() is False
         assert window.veiled_chip.isHidden()
         assert window.foil_chip.isHidden()
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(
+    ("setting", "expected_height"),
+    (("small", 23), ("medium", 25), ("large", 27)),
+)
+def test_cycle_state_chips_match_regular_filter_chip_height(
+    qapp, setting, expected_height,
+):
+    window = PoetoreWindow(
+        app_config={"poetore": {"result_font_size": setting}}
+    )
+    try:
+        state_chips = (
+            window.unidentified_chip,
+            window.veiled_chip,
+            window.foil_chip,
+            window.mirrored_combo,
+            window.split_combo,
+        )
+        assert all(chip.objectName() == "cycleToggle" for chip in state_chips)
+        all_chips = (window.gem_variant_chip, *state_chips)
+        assert all(chip.minimumHeight() == expected_height for chip in all_chips)
+        assert all(chip.maximumHeight() == expected_height for chip in all_chips)
+        assert all(chip.height() == expected_height for chip in all_chips)
+        assert "QPushButton#cycleToggle {" in window.styleSheet()
+        assert "border: 1px solid #65FFCA;\n                padding: 3px 7px;" in window.styleSheet()
+        assert f"min-height: {expected_height - 8}px;" in window.styleSheet()
     finally:
         window.close()
 
@@ -4620,7 +4919,7 @@ def test_filter_chip_flow_wraps_visible_chips(qapp):
 def test_poe_ninja_placeholder_sits_between_header_and_filter_chips(qapp):
     window = PoetoreWindow()
     try:
-        panel_layout = window._panel.layout()
+        panel_layout = window._obs_content.layout()
         header_index = panel_layout.indexOf(window.item_header)
         ninja_index = panel_layout.indexOf(window.poe_ninja_price_panel)
         chips_index = panel_layout.indexOf(window.filter_chip_container)
@@ -4943,7 +5242,7 @@ def test_logbook_area_switch_has_dedicated_row_and_fits_long_labels(qapp):
         )
         window.logbook_area_container.show()
 
-        panel_layout = window._panel.layout()
+        panel_layout = window._obs_content.layout()
         chip_index = panel_layout.indexOf(window.filter_chip_container)
         area_index = panel_layout.indexOf(window.logbook_area_container)
         assert area_index == chip_index + 2

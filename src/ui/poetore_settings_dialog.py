@@ -234,6 +234,27 @@ class PoetoreSettingsDialog(QDialog):
         display_form.addRow("検索結果の位置:", reset_row)
         basic_layout.addWidget(display_group)
 
+        obs_streaming = poetore.get("obs_streaming", {})
+        obs_streaming = obs_streaming if isinstance(obs_streaming, dict) else {}
+        obs_group = QGroupBox("OBS配信")
+        obs_layout = QVBoxLayout(obs_group)
+        self.obs_streaming_enabled_cb = QCheckBox(
+            "検索結果ウィンドウをOBS配信用にする"
+        )
+        self.obs_streaming_enabled_cb.setObjectName("obsStreamingEnabled")
+        self.obs_streaming_enabled_cb.setChecked(
+            bool(obs_streaming.get("enabled", False))
+        )
+        obs_layout.addWidget(self.obs_streaming_enabled_cb)
+        obs_note = QLabel(
+            "待機中はタイトルバーだけを表示し、検索すると検索結果を当該タイトルバーの下に"
+            "展開します。OBSでは「ぽえとれ - 検索結果ウィンドウ」として認識されます。"
+        )
+        obs_note.setObjectName("obsStreamingNote")
+        obs_note.setWordWrap(True)
+        obs_layout.addWidget(obs_note)
+        basic_layout.addWidget(obs_group)
+
         window_group = QGroupBox("ウィンドウ設定（本体・共通UI）")
         window_layout = QVBoxLayout(window_group)
         self.opacity_slider = self._slider_row(
@@ -483,6 +504,9 @@ class PoetoreSettingsDialog(QDialog):
             ),
             self.poe_version,
         )
+        obs_streaming = dict(poetore.get("obs_streaming", {}))
+        obs_streaming["enabled"] = self.obs_streaming_enabled_cb.isChecked()
+        poetore["obs_streaming"] = obs_streaming
         if self._reset_result_positions:
             poetore.pop("result_positions", None)
         return {

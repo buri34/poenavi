@@ -432,6 +432,7 @@ _PRICE_CURRENCY_ICON_STEMS = {
     "divine": "DivineOrb",
     "exalted": "ExaltedOrb",
 }
+_PRICE_LIST_CURRENCY_ICON_SIZE = 18
 
 
 def _price_currency_icon_filename(currency: str, poe_version: str) -> str:
@@ -820,7 +821,17 @@ class _PoetoreTitleBar(QWidget):
         self._drag_start_position: QPoint | None = None
         layout = QHBoxLayout(self)
         layout.setContentsMargins(6, 2, 2, 2)
-        window.divine_rate_button = QPushButton("⇄ …")
+        self._obs_title_label = QLabel("ぽえとれ検索ウィンドウ")
+        self._obs_title_label.setObjectName("obsSearchWindowTitle")
+        self._obs_title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self._obs_title_label.hide()
+        layout.addWidget(self._obs_title_label)
+        self._expanded_controls = QWidget(self)
+        controls_layout = QHBoxLayout(self._expanded_controls)
+        controls_layout.setContentsMargins(0, 0, 0, 0)
+        controls_layout.setSpacing(0)
+        layout.addWidget(self._expanded_controls, 1)
+        window.divine_rate_button = QPushButton("⇄ …", self._expanded_controls)
         window.divine_rate_button.setObjectName("divineRateButton")
         window.divine_rate_button.setToolTip("Divine OrbのChaos換算早見表")
         window.divine_rate_button.setEnabled(False)
@@ -828,21 +839,32 @@ class _PoetoreTitleBar(QWidget):
         window.divine_rate_menu = QMenu(window.divine_rate_button)
         window.divine_rate_menu.setObjectName("divineRateMenu")
         window.divine_rate_button.setMenu(window.divine_rate_menu)
-        layout.addWidget(window.divine_rate_button)
-        layout.addStretch()
-        layout.addWidget(window.trade_league_combo)
-        window.league_popup_button = QPushButton("▼")
+        controls_layout.addWidget(window.divine_rate_button)
+        controls_layout.addStretch()
+        controls_layout.addWidget(window.trade_league_combo)
+        window.league_popup_button = QPushButton("▼", self._expanded_controls)
         window.league_popup_button.setObjectName("leaguePopupButton")
         window.league_popup_button.setToolTip("リーグ一覧を開く")
         window.league_popup_button.setFixedSize(28, 28)
         window.league_popup_button.clicked.connect(window.trade_league_combo.showPopup)
-        layout.addWidget(window.league_popup_button)
-        layout.addStretch()
-        window.poetore_close_button = QPushButton("×")
+        controls_layout.addWidget(window.league_popup_button)
+        controls_layout.addStretch()
+        window.poetore_close_button = QPushButton("×", self._expanded_controls)
         window.poetore_close_button.setToolTip("閉じる")
         window.poetore_close_button.setFixedSize(28, 24)
         window.poetore_close_button.clicked.connect(window._close_and_return_to_poe)
-        layout.addWidget(window.poetore_close_button)
+        controls_layout.addWidget(window.poetore_close_button)
+
+    def set_obs_collapsed(self, collapsed: bool):
+        if collapsed:
+            self._expanded_controls.hide()
+            self._obs_title_label.show()
+            self.setFixedHeight(24)
+            return
+        self._obs_title_label.hide()
+        self._expanded_controls.show()
+        self.setMinimumHeight(0)
+        self.setMaximumHeight(16777215)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -951,6 +973,9 @@ class PoetoreWindow(QWidget):
         self._auto_hide_hotkey_released = False
         self._auto_hide_origin: QPoint | None = None
         self._auto_hide_interactive = False
+        self._obs_streaming_mode = False
+        self._obs_collapsed = False
+        self._obs_transitioning = False
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -959,7 +984,14 @@ class PoetoreWindow(QWidget):
         panel_layout = QVBoxLayout(self._panel)
         panel_layout.setContentsMargins(10, 5, 10, 9)
         panel_layout.setSpacing(7)
-        panel_layout.addWidget(_PoetoreTitleBar(self))
+        self._title_bar = _PoetoreTitleBar(self)
+        panel_layout.addWidget(self._title_bar)
+        self._obs_content = QWidget(self._panel)
+        self._obs_content.setObjectName("poetoreSearchContent")
+        content_layout = QVBoxLayout(self._obs_content)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(7)
+        panel_layout.addWidget(self._obs_content)
         layout.addWidget(self._panel)
 
         self.item_header = QFrame()
@@ -990,7 +1022,7 @@ class PoetoreWindow(QWidget):
         item_scope_layout.addStretch()
         item_scope_layout.addWidget(self.corrupted_combo)
         item_header_layout.addLayout(item_scope_layout)
-        panel_layout.addWidget(self.item_header)
+        content_layout.addWidget(self.item_header)
 
         # poe.ninjaデータ取得は後続タスク。先に共通情報階層と差し込み口を固定する。
         self.poe_ninja_price_panel = QFrame()
@@ -1025,7 +1057,7 @@ class PoetoreWindow(QWidget):
         ninja_layout.addWidget(self.poe_ninja_trend_chart)
         ninja_layout.addWidget(self.poe_ninja_open_button)
         self.poe_ninja_price_panel.hide()
-        panel_layout.addWidget(self.poe_ninja_price_panel)
+        content_layout.addWidget(self.poe_ninja_price_panel)
 
         self.related_items_panel = QFrame()
         self.related_items_panel.setObjectName("relatedItemsPanel")
@@ -1047,7 +1079,7 @@ class PoetoreWindow(QWidget):
         self.related_items_tree.setMaximumHeight(_RELATED_ITEMS_TREE_HEIGHT)
         related_layout.addWidget(self.related_items_tree)
         self.related_items_panel.hide()
-        panel_layout.addWidget(self.related_items_panel)
+        content_layout.addWidget(self.related_items_panel)
 
         top_options = QHBoxLayout()
         top_options.setSpacing(6)
@@ -1176,7 +1208,7 @@ class PoetoreWindow(QWidget):
         variant_options.addWidget(self.virtual_augment_combo)
         variant_options.addStretch()
         unique_options.addLayout(variant_options)
-        panel_layout.addLayout(unique_options)
+        content_layout.addLayout(unique_options)
 
         self.filter_chip_container = QWidget()
         self.filter_chip_container.setObjectName("filterChipContainer")
@@ -1298,11 +1330,11 @@ class PoetoreWindow(QWidget):
             button.hide()
             self.influence_chips[influence] = button
         self.unidentified_chip = _CycleButton(
-            (("未鑑定", True, False), ("未鑑定を含む", False, False)),
+            (("未鑑定のみ", True, False), ("未鑑定を含む", False, False)),
         )
         self.unidentified_chip.hide()
         self.veiled_chip = _CycleButton(
-            (("Veiled", True, False), ("Veiledを含む", False, False)),
+            (("同一Veiled Modあり", True, False), ("Veiled指定なし", False, False)),
         )
         self.veiled_chip.hide()
         self.foil_chip = _CycleButton(
@@ -1366,7 +1398,7 @@ class PoetoreWindow(QWidget):
         )
         self.split_combo.hide()
         self.mirrored_combo = _CycleButton(
-            (("ミラー化", True, False), ("非ミラー化", False, False)),
+            (("ミラー品含む", True, False), ("ミラー品を除外", False, False)),
         )
         self.mirrored_combo.hide()
         self._filter_chips = (
@@ -1398,9 +1430,9 @@ class PoetoreWindow(QWidget):
         )
         for _name, chip in self._filter_chips:
             self.filter_chip_layout.addWidget(chip)
-        panel_layout.addWidget(self.filter_chip_container)
-        panel_layout.addLayout(top_options)
-        panel_layout.addWidget(self.logbook_area_container)
+        content_layout.addWidget(self.filter_chip_container)
+        content_layout.addLayout(top_options)
+        content_layout.addWidget(self.logbook_area_container)
 
         self.weapon_property_label = QLabel("武器性能・検索Mod")
         self.weapon_property_label.setObjectName("sectionTitle")
@@ -1413,7 +1445,7 @@ class PoetoreWindow(QWidget):
         weapon_property_header.addWidget(self.weapon_property_label)
         weapon_property_header.addWidget(self.weapon_dps_label)
         weapon_property_header.addStretch(1)
-        panel_layout.addLayout(weapon_property_header)
+        content_layout.addLayout(weapon_property_header)
         self.clear_mod_conditions_button = QPushButton("一覧のチェックを全て選択")
         self.clear_mod_conditions_button.setObjectName("secondaryActionButton")
         self.clear_mod_conditions_button.setProperty("mutedText", True)
@@ -1440,7 +1472,7 @@ class PoetoreWindow(QWidget):
         debug_layout = QVBoxLayout(self._debug_parse_area)
         debug_layout.addWidget(self.input_edit)
         debug_layout.addWidget(self.result_tree)
-        panel_layout.addWidget(self._debug_parse_area)
+        content_layout.addWidget(self._debug_parse_area)
         self.mod_filter_tree = QTreeWidget()
         self.mod_filter_tree.setHeaderLabels([
             "", "種別", "ティア", "検索条件", "最小", "最大",
@@ -1474,7 +1506,7 @@ class PoetoreWindow(QWidget):
         self.mod_filter_tree.itemClicked.connect(
             self._toggle_mod_condition_from_text
         )
-        panel_layout.addWidget(self.mod_filter_tree, stretch=3)
+        content_layout.addWidget(self.mod_filter_tree, stretch=3)
         self.mod_conditions_toggle = QPushButton("mod条件をたたむ∧")
         self.mod_conditions_toggle.setObjectName("secondaryActionButton")
         self.mod_conditions_toggle.setProperty("mutedText", True)
@@ -1522,12 +1554,12 @@ class PoetoreWindow(QWidget):
         self.mod_warning.setWordWrap(True)
         self.mod_warning.setStyleSheet("color: #d6a84b;")
         self.mod_warning.hide()
-        panel_layout.addWidget(self.mod_warning)
+        content_layout.addWidget(self.mod_warning)
         self.search_scope_notice = QLabel("")
         self.search_scope_notice.setWordWrap(True)
         self.search_scope_notice.setStyleSheet("color: #d6a84b;")
         self.search_scope_notice.hide()
-        panel_layout.addWidget(self.search_scope_notice)
+        content_layout.addWidget(self.search_scope_notice)
 
         action_row = QHBoxLayout()
         action_row.setContentsMargins(0, 0, 0, 0)
@@ -1560,7 +1592,7 @@ class PoetoreWindow(QWidget):
         action_cluster.addLayout(action_row)
         action_cluster.addWidget(self.price_status)
         self.action_cluster_layout = action_cluster
-        panel_layout.addLayout(action_cluster)
+        content_layout.addLayout(action_cluster)
         self.price_list = QTreeWidget()
         self.price_list.setObjectName("priceList")
         self.price_list.setHeaderLabels(["価格", "出品日時"])
@@ -1571,11 +1603,11 @@ class PoetoreWindow(QWidget):
         price_header = self.price_list.header()
         price_header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
         price_header.setSectionResizeMode(1, QHeaderView.Stretch)
-        panel_layout.addWidget(self.price_list, stretch=2)
+        content_layout.addWidget(self.price_list, stretch=2)
         resize_row = QHBoxLayout()
         resize_row.addStretch()
         resize_row.addWidget(QSizeGrip(self))
-        panel_layout.addLayout(resize_row)
+        content_layout.addLayout(resize_row)
         self.apply_result_display_size()
         self._trade_signals = _TradeSignals(self)
         self._trade_signals.completed.connect(self._search_completed)
@@ -1792,8 +1824,9 @@ class PoetoreWindow(QWidget):
             QPushButton#cycleToggle {
                 background: rgba(28, 83, 73, 210);
                 color: #E6ECEA;
-                border: none;
-                min-width: 112px;
+                border: 1px solid #65FFCA;
+                padding: 3px 7px;
+                min-height: __FILTER_CHIP_MIN_HEIGHT__px;
                 font-weight: 700;
             }
             QPushButton#cycleToggle[alert="true"] { color: #ff5757; }
@@ -2013,6 +2046,9 @@ class PoetoreWindow(QWidget):
             f"{profile['button_h_padding']}px;",
         )
         style = style.replace(
+            "__FILTER_CHIP_MIN_HEIGHT__", str(profile["font"] + 3)
+        )
+        style = style.replace(
             "__COMPACT_ACTION_FONT__", str(profile["mod_value_font"])
         )
         self.setStyleSheet(style)
@@ -2113,8 +2149,15 @@ class PoetoreWindow(QWidget):
         )
         profile = _DISPLAY_SIZE_PROFILES[selected]
         self._result_font_size = selected
-        self.setMinimumSize(profile["minimum_width"], profile["minimum_height"])
-        self.resize(profile["width"], profile["height"])
+        if getattr(self, "_obs_collapsed", False):
+            # ホットキー受付時にもこの処理が走る。待機バーの実サイズは30pxの
+            # まま維持し、完成後に使う展開サイズだけを更新する。
+            self.setMinimumWidth(profile["minimum_width"])
+            self.setMinimumHeight(0)
+            self._obs_expanded_size = QSize(profile["width"], profile["height"])
+        else:
+            self.setMinimumSize(profile["minimum_width"], profile["minimum_height"])
+            self.resize(profile["width"], profile["height"])
         self.mod_filter_tree.setMinimumHeight(profile["mod_height"])
         self._apply_related_items_layout(
             not self.related_items_panel.isHidden()
@@ -2155,6 +2198,15 @@ class PoetoreWindow(QWidget):
                         gap = self._scaled_display_value(_MOD_VALUE_LEADING_GAP) if column == _MOD_COLUMN_MIN else 0
                         cell.setFixedWidth(editor.width() + gap)
         self._apply_poetore_style()
+        # Qt/OSのスタイルによって、同じpaddingでもdisabledの読み取り専用
+        # チップと操作可能な状態チップのsizeHintがずれる。表示サイズごとの
+        # 基準高を明示し、Windowsを含む全環境で同じ行高に揃える。
+        filter_chip_height = profile["font"] + 11
+        for _name, chip in self._filter_chips:
+            if isinstance(chip, QPushButton) and chip.objectName() in {
+                "readonlyFilterChip", "cycleToggle",
+            }:
+                chip.setFixedHeight(filter_chip_height)
         # スタイルのmin-width適用後に固定し、レイアウトによる再拡張を防ぐ。
         search_button_width = profile["search_button_width"]
         search_button_content_width = max(
@@ -2294,6 +2346,13 @@ class PoetoreWindow(QWidget):
         self.mod_filter_tree.setMinimumHeight(mod_height)
         self.mod_filter_tree.setMaximumHeight(mod_height)
         self.price_list.setMinimumHeight(price_height)
+        if getattr(self, "_obs_collapsed", False):
+            # 解析中は待機ラベルだけが見えている。ここで実ウィンドウを
+            # resizeすると、結果完成前に大きな空タイルが描画される。
+            self._obs_expanded_size = QSize(
+                max(self.width(), profile["width"]), window_height,
+            )
+            return
         self.resize(max(self.width(), profile["width"]), window_height)
         if self.y() < available.top():
             self.move(self.x(), available.top())
@@ -2508,6 +2567,24 @@ class PoetoreWindow(QWidget):
         return not nonunique_jewel_group
 
     def eventFilter(self, watched, event):
+        if (
+            event.type() == QEvent.Wheel
+            and isinstance(watched, QLineEdit)
+            and watched.property("wheelStepNumeric")
+            and watched.isEnabled()
+        ):
+            text = watched.text().strip()
+            delta = event.angleDelta().y()
+            if text and delta:
+                try:
+                    value = float(text) + (1 if delta > 0 else -1)
+                except ValueError:
+                    pass
+                else:
+                    watched.setText(f"{value:g}")
+                    self._mark_search_dirty()
+                    event.accept()
+                    return True
         condition_checkbox = getattr(
             watched, "_mod_condition_checkbox", None
         )
@@ -2561,13 +2638,15 @@ class PoetoreWindow(QWidget):
             checkbox.toggle()
 
     def _close_when_focus_leaves_panel(self, old, new):
+        if getattr(self, "_obs_transitioning", False):
+            return
         old_belongs = self._widget_belongs_to_panel(old)
         new_belongs = self._widget_belongs_to_panel(new)
         if new is None and self._widget_is_panel_popup(old):
             return
         if self.isVisible() and old_belongs and not new_belongs:
             if new is not None:
-                self.close()
+                self._dismiss_result()
                 return
             # Popupを閉じる瞬間は一時的にnew=Noneになる。次のイベントループで
             # 実際のフォーカス先がパネル外かを確定する。
@@ -2575,6 +2654,8 @@ class PoetoreWindow(QWidget):
 
     def _close_if_focus_is_still_outside(self):
         app = QApplication.instance()
+        if getattr(self, "_obs_transitioning", False):
+            return
         if not self.isVisible():
             return
         if self._widget_belongs_to_panel(app.focusWidget()):
@@ -2583,7 +2664,7 @@ class PoetoreWindow(QWidget):
             return
         if app.activeWindow() is self:
             return
-        self.close()
+        self._dismiss_result()
 
     def _widget_belongs_to_panel(self, widget) -> bool:
         """QComboBoxの別ウィンドウPopupも、親コンボ経由でパネル内とみなす。"""
@@ -3164,6 +3245,18 @@ class PoetoreWindow(QWidget):
             self._queue_poe_ninja_price(item)
         super().showEvent(event)
 
+    def event(self, event):
+        if (
+            event.type() == QEvent.WindowDeactivate
+            and self.isVisible()
+            and not getattr(self, "_obs_collapsed", False)
+            and not getattr(self, "_obs_transitioning", False)
+        ):
+            # Windows上でPoEなど別プロセスをクリックした場合、Qt内の
+            # focusChangedが発生しないことがあるため非アクティブ化も拾う。
+            QTimer.singleShot(0, self._close_if_focus_is_still_outside)
+        return super().event(event)
+
     def closeEvent(self, event):
         self._passive_hotkey_display = False
         self._auto_hide_interactive = False
@@ -3172,6 +3265,107 @@ class PoetoreWindow(QWidget):
             QApplication.instance().focusChanged.disconnect(self._close_when_focus_leaves_panel)
             self._focus_signal_connected = False
         super().closeEvent(event)
+
+    def set_obs_streaming_mode(self, enabled: bool):
+        """Keep one stable HWND alive and collapse it to its title bar for OBS."""
+        enabled = bool(enabled)
+        was_enabled = getattr(self, "_obs_streaming_mode", False)
+        self._obs_streaming_mode = enabled
+        self.setWindowTitle("ぽえとれ - 検索結果ウィンドウ" if enabled else "ぽえとれ")
+        if enabled:
+            if not was_enabled:
+                # OBSはQt.Toolウィンドウを列挙しない環境がある。配信モードへ
+                # 切り替える時だけ通常のトップレベルウィンドウを作成し直し、
+                # 以後の折りたたみ／展開では同じHWNDを維持する。
+                self.setWindowFlags(
+                    Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+                )
+                self.setWindowFlag(Qt.WindowTransparentForInput, False)
+            self._restore_obs_geometry()
+            self.collapse_for_obs()
+            self.show()
+        elif self.isVisible():
+            self._obs_collapsed = False
+            self._title_bar.set_obs_collapsed(False)
+            self._obs_content.show()
+            self._panel.layout().setContentsMargins(10, 5, 10, 9)
+            self.setMaximumHeight(16777215)
+            self.hide()
+            self.setWindowFlags(
+                Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+            )
+            self.setWindowFlag(Qt.WindowTransparentForInput, False)
+
+    def collapse_for_obs(self):
+        if not getattr(self, "_obs_streaming_mode", False):
+            self.close()
+            return
+        if not getattr(self, "_obs_collapsed", False) and (
+            self.isVisible() or not hasattr(self, "_obs_expanded_size")
+        ):
+            self._obs_expanded_size = self.size()
+        self._obs_collapsed = True
+        self._obs_content.hide()
+        self._title_bar.set_obs_collapsed(True)
+        self._panel.layout().setContentsMargins(6, 2, 6, 2)
+        collapsed_height = 30
+        self.setMinimumHeight(0)
+        self.setMaximumHeight(collapsed_height)
+        self.resize(self.width(), collapsed_height)
+        self.show()
+        self.raise_()
+        self._persist_obs_geometry()
+
+    def _expand_for_obs(self):
+        if not getattr(self, "_obs_streaming_mode", False):
+            return
+        # 折りたたみ高の上限を解除した瞬間に、空の大きな中間フレームが
+        # Windowsへ描画されないよう、完成状態まで非表示で組み替える。
+        self._obs_transitioning = True
+        self.hide()
+        self._obs_collapsed = False
+        self._title_bar.set_obs_collapsed(False)
+        self._obs_content.show()
+        self._panel.layout().setContentsMargins(10, 5, 10, 9)
+        self.setMaximumHeight(16777215)
+        target = getattr(self, "_obs_expanded_size", None)
+        if target is not None:
+            self.resize(target)
+
+    def _dismiss_result(self):
+        if getattr(self, "_obs_streaming_mode", False):
+            self.collapse_for_obs()
+        else:
+            self.close()
+
+    def _obs_config(self):
+        poetore = self._app_config.setdefault("poetore", {})
+        return poetore.setdefault("obs_streaming", {})
+
+    def _restore_obs_geometry(self):
+        geometry = self._obs_config().get("geometry", {})
+        if not isinstance(geometry, dict):
+            return
+        try:
+            if geometry.get("width") and geometry.get("height"):
+                self._obs_expanded_size = QSize(
+                    int(geometry["width"]), int(geometry["height"])
+                )
+            if geometry.get("x") is not None and geometry.get("y") is not None:
+                self.move(int(geometry["x"]), int(geometry["y"]))
+        except (TypeError, ValueError):
+            return
+
+    def _persist_obs_geometry(self):
+        if not getattr(self, "_obs_streaming_mode", False):
+            return
+        size = getattr(self, "_obs_expanded_size", self.size())
+        self._obs_config()["geometry"] = {
+            "x": self.x(), "y": self.y(),
+            "width": size.width(), "height": size.height(),
+        }
+        if self._save_app_config is not None:
+            self._save_app_config(self._app_config)
 
     def capture_from_poe(
         self,
@@ -3420,7 +3614,7 @@ class PoetoreWindow(QWidget):
         """操作可能なぽえとれを閉じ、Alt+D取得元のPoEへ戻る。"""
         target_hwnd = self._poe_window_hwnd
         self._poe_window_hwnd = None
-        self.close()
+        self._dismiss_result()
         if target_hwnd is not None:
             QTimer.singleShot(0, lambda: focus_window(target_hwnd))
 
@@ -3436,10 +3630,14 @@ class PoetoreWindow(QWidget):
             saved_positions.get(placement_side(context))
             if isinstance(saved_positions, dict) else None
         )
-        position = position_from_relative(context, self.size(), saved_position)
-        self.move(position or position_for_context(context, self.size()))
+        if getattr(self, "_obs_streaming_mode", False):
+            self._expand_for_obs()
+        else:
+            position = position_from_relative(context, self.size(), saved_position)
+            self.move(position or position_for_context(context, self.size()))
         self._passive_hotkey_display = not activate
         self.show()
+        self._obs_transitioning = False
         self.raise_()
         if activate:
             self._stop_outside_click_listener()
@@ -3450,6 +3648,9 @@ class PoetoreWindow(QWidget):
 
     def _persist_manual_result_position(self):
         """タイトルバーのドラッグ終了時だけ、検索元の側へ位置を保存する。"""
+        if getattr(self, "_obs_streaming_mode", False):
+            self._persist_obs_geometry()
+            return
         context = self._placement_context
         if context is None:
             return
@@ -3495,7 +3696,7 @@ class PoetoreWindow(QWidget):
             if self._capture_auto_hide:
                 self._enter_auto_hide_interactive()
         else:
-            self.close()
+            self._dismiss_result()
 
     def _handle_global_mouse_move(self, x: int, y: int):
         """Mirror Awakened's AUTO-HIDE behavior without stealing PoE focus."""
@@ -3517,7 +3718,7 @@ class PoetoreWindow(QWidget):
         if origin is not None and (
             (point.x() - origin.x()) ** 2 + (point.y() - origin.y()) ** 2
         ) >= 40 ** 2:
-            self.close()
+            self._dismiss_result()
 
     def _enter_auto_hide_interactive(self):
         self._passive_hotkey_display = False
@@ -4853,6 +5054,7 @@ class PoetoreWindow(QWidget):
                 tier_layout.addStretch(1)
                 self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_TIER, tier_widget)
             editor = QLineEdit(value)
+            editor.setProperty("wheelStepNumeric", True)
             editor.installEventFilter(self)
             editor.setPlaceholderText("最小")
             self._apply_mod_value_editor_size(editor, leading_gap=True)
@@ -4863,6 +5065,7 @@ class PoetoreWindow(QWidget):
                 self._make_mod_value_cell(editor, leading_gap=True),
             )
             max_editor = QLineEdit(maximum)
+            max_editor.setProperty("wheelStepNumeric", True)
             max_editor.installEventFilter(self)
             max_editor.setPlaceholderText("最大")
             self._apply_mod_value_editor_size(max_editor)
@@ -5068,7 +5271,61 @@ class PoetoreWindow(QWidget):
                     "instant": "インスタント",
                     "unpriced": "値段なし",
                 }.get(listing.pricing_method, "対面"))
-            QTreeWidgetItem(self.price_list, values)
+            row = QTreeWidgetItem(self.price_list, values)
+            price_widget = self._price_list_currency_widget(listing)
+            if price_widget is not None:
+                # 元テキストは列幅計算とアクセシビリティ用に保持しつつ、
+                # カスタムセルの背面には描画しない。
+                row.setForeground(0, QBrush(Qt.transparent))
+                widget_hint = price_widget.sizeHint()
+                price_width = math.ceil((widget_hint.width() + 20) * 1.3)
+                row.setSizeHint(0, QSize(price_width, widget_hint.height()))
+                self.price_list.setItemWidget(row, 0, price_widget)
+
+    def _price_list_currency_widget(self, listing) -> QWidget | None:
+        """Chaos/Divine価格を数値 × 通貨アイコンで描画する。"""
+        currency = str(listing.currency or "").lower()
+        icon_filename = (
+            _price_currency_icon_filename(currency, self.poe_version)
+            if currency in _PRICE_CURRENCY_ICON_STEMS
+            else None
+        )
+        icon_path = _asset_icon_path(icon_filename) if icon_filename else None
+        if listing.pricing_method == "unpriced" or icon_path is None:
+            return None
+        pixmap = QPixmap(str(icon_path))
+        if pixmap.isNull():
+            return None
+
+        cell = QWidget()
+        cell.setObjectName("priceCurrencyCell")
+        cell.setAttribute(Qt.WA_TransparentForMouseEvents)
+        layout = QHBoxLayout(cell)
+        layout.setContentsMargins(7, 0, 7, 0)
+        layout.setSpacing(4)
+
+        amount = QLabel(f"{listing.amount:g}")
+        amount.setObjectName("priceCurrencyAmount")
+        multiplier = QLabel("×")
+        multiplier.setObjectName("priceCurrencyMultiplier")
+        icon = QLabel()
+        icon.setObjectName(f"priceCurrencyIcon-{currency}")
+        icon.setPixmap(pixmap.scaled(
+            _PRICE_LIST_CURRENCY_ICON_SIZE,
+            _PRICE_LIST_CURRENCY_ICON_SIZE,
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation,
+        ))
+        icon.setToolTip("Chaos Orb" if currency == "chaos" else "Divine Orb")
+        layout.addWidget(amount)
+        layout.addWidget(multiplier)
+        layout.addWidget(icon)
+        if listing.listed_times > 1:
+            repeated = QLabel(f"×{listing.listed_times}")
+            repeated.setObjectName("priceListingCount")
+            layout.addWidget(repeated)
+        layout.addStretch(1)
+        return cell
 
     @staticmethod
     def _relative_listing_time(indexed: str, now: datetime | None = None) -> str:
