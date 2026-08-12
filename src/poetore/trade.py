@@ -3536,7 +3536,13 @@ def build_search_query(
     query: dict = {
         "status": {"option": TRADE_STATUS_OPTIONS[trade_status]},
         "stats": [{"type": "and", "filters": []}],
-        "filters": {},
+        # Official Trade API側で同一Sellerの大量出品を検索候補の段階から畳む。
+        # 取得後のローカル集約も、古い応答や例外的な重複への保険として残す。
+        "filters": {
+            "trade_filters": {
+                "filters": {"collapse": {"option": "true"}},
+            },
+        },
     }
     if (exact_base_type or item.category == "chart") and not _is_generic_map_copy_type(item, base_type):
         query["type"] = query_type

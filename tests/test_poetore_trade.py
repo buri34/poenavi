@@ -597,7 +597,9 @@ def test_normal_equipment_defaults_to_any_currency():
     item = parse_item_text(ITEM)
     assert default_trade_currency(item) == "any"
     query = build_search_query(item, "Reaver Sword")["query"]
-    assert "trade_filters" not in query["filters"]
+    trade_filters = query["filters"]["trade_filters"]["filters"]
+    assert trade_filters == {"collapse": {"option": "true"}}
+    assert "price" not in trade_filters
 
 
 def test_consumable_craftable_item_defaults_to_chaos_and_divine():
@@ -3428,7 +3430,9 @@ Farric Lynx Alpha
 
     web_query = json.loads(parse_qs(urlsplit(result.web_url).query)["q"][0])["query"]
     assert web_query["type"] == "ファルウルのリンクス・アルファ"
-    assert web_query["filters"] == {}
+    assert web_query["filters"] == {
+        "trade_filters": {"filters": {"collapse": {"option": "true"}}},
+    }
     assert web_query["stats"] == [{"type": "and", "filters": []}]
 
 
@@ -3645,6 +3649,31 @@ def test_search_prices_keeps_item_and_seller_for_list_display():
     ]
     assert trace.events[4][1]["candidates"] == 1
     assert trace.events[6][1]["rows"] == 1
+
+
+def test_search_query_collapses_same_seller_at_official_trade_api():
+    payload = build_search_query(
+        parse_item_text(ITEM), "Reaver Sword", trade_status="available",
+    )
+
+    assert payload["query"]["filters"]["trade_filters"]["filters"]["collapse"] == {
+        "option": "true",
+    }
+
+
+def test_search_and_japanese_trade_link_keep_seller_collapse_enabled():
+    _trade_response_cache.clear()
+    response = ({"id": "qid", "result": [], "total": 0}, {})
+    with patch("src.poetore.trade._request_json", return_value=response) as request:
+        result = search_prices(
+            parse_item_text(ITEM), "Reaver Sword", "Standard",
+        )
+
+    api_payload = request.call_args.args[1]
+    web_payload = json.loads(parse_qs(urlsplit(result.web_url).query)["q"][0])
+    expected = {"option": "true"}
+    assert api_payload["query"]["filters"]["trade_filters"]["filters"]["collapse"] == expected
+    assert web_payload["query"]["filters"]["trade_filters"]["filters"]["collapse"] == expected
 
 
 def test_search_prices_classifies_face_to_face_instant_and_unpriced_listings():
@@ -5153,7 +5182,9 @@ def test_inscribed_ultimatum_uses_name_only_without_detail_filters():
     query = build_search_query(item, "Inscribed Ultimatum")["query"]
     assert query["type"] == "Inscribed Ultimatum"
     assert query["stats"] == [{"type": "and", "filters": []}]
-    assert query["filters"] == {}
+    assert query["filters"] == {
+        "trade_filters": {"filters": {"collapse": {"option": "true"}}},
+    }
 
 
 def test_heist_blueprint_contract_and_logbook_rules():
