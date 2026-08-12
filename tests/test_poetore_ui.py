@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 import csv
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QPoint, QRect, QSize, Qt, QTimer
-from PySide6.QtGui import QPalette
+from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt, QTimer
+from PySide6.QtGui import QKeyEvent, QMouseEvent, QPalette
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QWidget
 import pytest
@@ -31,11 +31,21 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
         assert window.isVisible()
         assert window.windowTitle() == "ぽえとれ - OBS配信用"
         assert window.height() < expanded_height
+        assert window.height() == 30
+        assert window._title_bar._obs_title_label.text() == "ぽえとれ検索ウィンドウ"
+        assert window._title_bar._obs_title_label.isVisible()
+        assert window._obs_content.isHidden()
+        assert not window.item_header.isVisible()
+        assert not window.trade_preset_combo.isVisible()
         assert int(window.winId()) == original_id
 
         window.show_at_context(activate=False)
         qapp.processEvents()
         assert window.height() == expanded_height
+        assert window._title_bar._obs_title_label.isHidden()
+        assert window._obs_content.isVisible()
+        assert window.item_header.isVisible()
+        assert window.trade_preset_combo.isVisible()
         assert int(window.winId()) == original_id
 
         window._dismiss_result()
@@ -43,6 +53,64 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
         assert window.isVisible()
         assert window.height() < expanded_height
         assert saved
+    finally:
+        window.set_obs_streaming_mode(False)
+        window.close()
+
+
+def test_obs_streaming_header_drags_and_expanded_result_dismisses(qapp):
+    window = PoetoreWindow(app_config={"poetore": {"obs_streaming": {"enabled": True}}})
+
+    def mouse_event(event_type, global_point, *, button=Qt.NoButton, buttons=Qt.NoButton):
+        return QMouseEvent(
+            event_type, QPointF(10, 10), QPointF(global_point),
+            button, buttons, Qt.NoModifier,
+        )
+
+    try:
+        window.set_obs_streaming_mode(True)
+        qapp.processEvents()
+        start = window.pos()
+        press_at = window.frameGeometry().topLeft() + QPoint(10, 10)
+        window._title_bar.mousePressEvent(
+            mouse_event(
+                QEvent.MouseButtonPress, press_at,
+                button=Qt.LeftButton, buttons=Qt.LeftButton,
+            )
+        )
+        window._title_bar.mouseMoveEvent(
+            mouse_event(
+                QEvent.MouseMove, press_at + QPoint(35, 20), buttons=Qt.LeftButton,
+            )
+        )
+        window._title_bar.mouseReleaseEvent(
+            mouse_event(
+                QEvent.MouseButtonRelease, press_at + QPoint(35, 20),
+                button=Qt.LeftButton,
+            )
+        )
+        assert window.pos() == start + QPoint(35, 20)
+
+        window.show_at_context(activate=True)
+        qapp.processEvents()
+        assert not window._obs_collapsed
+
+        escape = QKeyEvent(QEvent.KeyPress, Qt.Key_Escape, Qt.NoModifier)
+        assert window.eventFilter(window, escape)
+        qapp.processEvents()
+        assert window._obs_collapsed
+
+        window.show_at_context(activate=True)
+        outside = QWidget()
+        window._close_when_focus_leaves_panel(window.item_name_label, outside)
+        qapp.processEvents()
+        assert window._obs_collapsed
+
+        window.show_at_context(activate=True)
+        with patch.object(window, "_close_if_focus_is_still_outside") as close_outside:
+            QApplication.sendEvent(window, QEvent(QEvent.WindowDeactivate))
+            qapp.processEvents()
+            close_outside.assert_called_once_with()
     finally:
         window.set_obs_streaming_mode(False)
         window.close()
@@ -4522,7 +4590,7 @@ def test_filter_chip_flow_wraps_visible_chips(qapp):
 def test_poe_ninja_placeholder_sits_between_header_and_filter_chips(qapp):
     window = PoetoreWindow()
     try:
-        panel_layout = window._panel.layout()
+        panel_layout = window._obs_content.layout()
         header_index = panel_layout.indexOf(window.item_header)
         ninja_index = panel_layout.indexOf(window.poe_ninja_price_panel)
         chips_index = panel_layout.indexOf(window.filter_chip_container)
@@ -4732,7 +4800,7 @@ def test_logbook_area_switch_has_dedicated_row_and_fits_long_labels(qapp):
         )
         window.logbook_area_container.show()
 
-        panel_layout = window._panel.layout()
+        panel_layout = window._obs_content.layout()
         chip_index = panel_layout.indexOf(window.filter_chip_container)
         area_index = panel_layout.indexOf(window.logbook_area_container)
         assert area_index == chip_index + 2
