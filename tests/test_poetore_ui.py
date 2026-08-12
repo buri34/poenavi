@@ -4143,6 +4143,8 @@ def test_special_state_chips_for_unidentified_veiled_and_foil(qapp):
 def test_cycle_state_chips_match_regular_filter_chip_height(
     qapp, setting, expected_min_height,
 ):
+    previous_app_style = qapp.styleSheet()
+    qapp.setStyleSheet("")
     window = PoetoreWindow(
         app_config={"poetore": {"result_font_size": setting}}
     )
@@ -4163,6 +4165,7 @@ def test_cycle_state_chips_match_regular_filter_chip_height(
         assert f"min-height: {expected_min_height}px;" in window.styleSheet()
     finally:
         window.close()
+        qapp.setStyleSheet(previous_app_style)
 
 
 def test_map_and_heist_special_filter_chips(qapp):
