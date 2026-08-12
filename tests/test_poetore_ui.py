@@ -30,7 +30,7 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
         obs_window_id = int(window.winId())
 
         assert window.isVisible()
-        assert window.windowTitle() == "ぽえとれ - OBS配信用"
+        assert window.windowTitle() == "ぽえとれ - 検索結果ウィンドウ"
         assert window.windowType() == Qt.Window
         assert window.height() < expanded_height
         assert window.height() == 30
@@ -3620,6 +3620,23 @@ def test_split_filter_is_an_awakened_style_cycle_button(qapp):
         window.close()
 
 
+def test_item_state_cycle_buttons_use_clear_search_condition_labels(qapp):
+    window = PoetoreWindow()
+    try:
+        expected_labels = {
+            "unidentified_chip": ("未鑑定のみ", "未鑑定を含む"),
+            "veiled_chip": ("同一Veiled Modあり", "Veiled指定なし"),
+            "foil_chip": ("Foil Unique", "通常Unique"),
+            "mirrored_combo": ("ミラー品含む", "ミラー品を除外"),
+            "split_combo": ("スプリット品含む", "非スプリット"),
+        }
+        for name, labels in expected_labels.items():
+            toggle = getattr(window, name)
+            assert tuple(toggle.itemText(index) for index in range(toggle.count())) == labels
+    finally:
+        window.close()
+
+
 def test_corruption_filter_is_a_three_state_cycle_button(qapp):
     window = PoetoreWindow()
     try:
@@ -3958,10 +3975,10 @@ Mirrored
 """)
         window._configure_item_state_filters(mirrored)
         assert not window.mirrored_combo.isHidden()
-        assert window.mirrored_combo.currentText() == "ミラー化"
+        assert window.mirrored_combo.currentText() == "ミラー品含む"
         assert window.mirrored_combo.currentData() is True
         window.mirrored_combo.click()
-        assert window.mirrored_combo.currentText() == "非ミラー化"
+        assert window.mirrored_combo.currentText() == "ミラー品を除外"
         assert window.mirrored_combo.currentData() is False
 
         plain = replace(mirrored, raw_text="plain", flags=())
@@ -4008,7 +4025,7 @@ Penumbra Ring
         assert by_id["explicit.stat_1368271171"].min_value == 48.0
         assert window.mod_warning.isHidden()
         assert not window.mirrored_combo.isHidden()
-        assert window.mirrored_combo.currentText() == "ミラー化"
+        assert window.mirrored_combo.currentText() == "ミラー品含む"
     finally:
         window.close()
 

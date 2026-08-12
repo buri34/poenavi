@@ -139,7 +139,7 @@ def test_poetore_mode_starts_obs_window_collapsed_when_enabled():
     result = window._poetore_window
     assert result.isVisible()
     assert result._obs_collapsed
-    assert result.windowTitle() == "ぽえとれ - OBS配信用"
+    assert result.windowTitle() == "ぽえとれ - 検索結果ウィンドウ"
     window.close()
     app.processEvents()
 

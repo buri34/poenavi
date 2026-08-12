@@ -1249,11 +1249,11 @@ class PoetoreWindow(QWidget):
             button.hide()
             self.influence_chips[influence] = button
         self.unidentified_chip = _CycleButton(
-            (("未鑑定", True, False), ("未鑑定を含む", False, False)),
+            (("未鑑定のみ", True, False), ("未鑑定を含む", False, False)),
         )
         self.unidentified_chip.hide()
         self.veiled_chip = _CycleButton(
-            (("Veiled", True, False), ("Veiledを含む", False, False)),
+            (("同一Veiled Modあり", True, False), ("Veiled指定なし", False, False)),
         )
         self.veiled_chip.hide()
         self.foil_chip = _CycleButton(
@@ -1317,7 +1317,7 @@ class PoetoreWindow(QWidget):
         )
         self.split_combo.hide()
         self.mirrored_combo = _CycleButton(
-            (("ミラー化", True, False), ("非ミラー化", False, False)),
+            (("ミラー品含む", True, False), ("ミラー品を除外", False, False)),
         )
         self.mirrored_combo.hide()
         self._filter_chips = (
@@ -2958,7 +2958,7 @@ class PoetoreWindow(QWidget):
         enabled = bool(enabled)
         was_enabled = getattr(self, "_obs_streaming_mode", False)
         self._obs_streaming_mode = enabled
-        self.setWindowTitle("ぽえとれ - OBS配信用" if enabled else "ぽえとれ")
+        self.setWindowTitle("ぽえとれ - 検索結果ウィンドウ" if enabled else "ぽえとれ")
         if enabled:
             if not was_enabled:
                 # OBSはQt.Toolウィンドウを列挙しない環境がある。配信モードへ
