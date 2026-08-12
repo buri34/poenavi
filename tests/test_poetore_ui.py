@@ -6,7 +6,7 @@ import math
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt, QTimer
-from PySide6.QtGui import QKeyEvent, QMouseEvent, QPalette
+from PySide6.QtGui import QKeyEvent, QMouseEvent, QPalette, QWheelEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QTreeWidgetItem, QWidget
 import pytest
@@ -1042,6 +1042,49 @@ def test_enter_in_changed_mod_value_researches(qapp):
             QTest.keyClick(editor, Qt.Key_Return)
 
         search.assert_called_once_with()
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(
+    ("column", "start", "delta", "expected"),
+    (
+        (_MOD_COLUMN_MIN, "779", 120, "780"),
+        (_MOD_COLUMN_MAX, "20", -120, "19"),
+        (_MOD_COLUMN_MIN, "1.5", 120, "2.5"),
+        (_MOD_COLUMN_MAX, "", 120, ""),
+    ),
+)
+def test_mod_value_mouse_wheel_changes_nonempty_value_by_one(
+    qapp, column, start, delta, expected,
+):
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            "Rings", "Rare", "Test Ring", "Ruby Ring", "accessory",
+            raw_text="test-ring",
+        )
+        window._has_searched_current_item = True
+        window._populate_stat_filters((
+            TradeStatFilter(
+                "explicit.stat_1", "+# to maximum Life", 70, "explicit",
+                max_value=100,
+            ),
+        ))
+        row = window.mod_filter_tree.topLevelItem(0)
+        editor = window.mod_filter_tree.itemWidget(row, column).findChild(QLineEdit)
+        editor.setText(start)
+        window._search_dirty = False
+        event = QWheelEvent(
+            QPointF(1, 1), QPointF(1, 1), QPoint(0, 0), QPoint(0, delta),
+            Qt.NoButton, Qt.NoModifier, Qt.ScrollUpdate, False,
+        )
+
+        handled = window.eventFilter(editor, event)
+
+        assert editor.text() == expected
+        assert handled is bool(start)
+        assert window._search_dirty is bool(start)
     finally:
         window.close()
 

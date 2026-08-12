@@ -2440,6 +2440,24 @@ class PoetoreWindow(QWidget):
         return not nonunique_jewel_group
 
     def eventFilter(self, watched, event):
+        if (
+            event.type() == QEvent.Wheel
+            and isinstance(watched, QLineEdit)
+            and watched.property("wheelStepNumeric")
+            and watched.isEnabled()
+        ):
+            text = watched.text().strip()
+            delta = event.angleDelta().y()
+            if text and delta:
+                try:
+                    value = float(text) + (1 if delta > 0 else -1)
+                except ValueError:
+                    pass
+                else:
+                    watched.setText(f"{value:g}")
+                    self._mark_search_dirty()
+                    event.accept()
+                    return True
         condition_checkbox = getattr(
             watched, "_mod_condition_checkbox", None
         )
@@ -4601,6 +4619,7 @@ class PoetoreWindow(QWidget):
                 tier_layout.addStretch(1)
                 self.mod_filter_tree.setItemWidget(row, _MOD_COLUMN_TIER, tier_widget)
             editor = QLineEdit(value)
+            editor.setProperty("wheelStepNumeric", True)
             editor.installEventFilter(self)
             editor.setPlaceholderText("最小")
             self._apply_mod_value_editor_size(editor, leading_gap=True)
@@ -4611,6 +4630,7 @@ class PoetoreWindow(QWidget):
                 self._make_mod_value_cell(editor, leading_gap=True),
             )
             max_editor = QLineEdit(maximum)
+            max_editor.setProperty("wheelStepNumeric", True)
             max_editor.installEventFilter(self)
             max_editor.setPlaceholderText("最大")
             self._apply_mod_value_editor_size(max_editor)
