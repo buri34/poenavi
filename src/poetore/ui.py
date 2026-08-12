@@ -3002,6 +3002,21 @@ class PoetoreWindow(QWidget):
         if item is not None:
             self._queue_poe_ninja_price(item)
         super().showEvent(event)
+        self._notify_native_hwnd_changed()
+        # Qt may recreate the native window immediately after showEvent,
+        # especially after hide/show or a window-flag change. Refresh once
+        # more after the event queue settles so the owner never keeps the
+        # previous HWND.
+        QTimer.singleShot(0, self._notify_native_hwnd_changed)
+
+    def _notify_native_hwnd_changed(self):
+        callback = getattr(self, "_native_hwnd_changed", None)
+        if callback is None:
+            return
+        try:
+            callback(int(self.winId()))
+        except (RuntimeError, TypeError, ValueError):
+            callback(None)
 
     def event(self, event):
         if (
@@ -3023,16 +3038,6 @@ class PoetoreWindow(QWidget):
             QApplication.instance().focusChanged.disconnect(self._close_when_focus_leaves_panel)
             self._focus_signal_connected = False
         super().closeEvent(event)
-
-    def showEvent(self, event):
-        super().showEvent(event)
-        callback = getattr(self, "_native_hwnd_changed", None)
-        if callback is None:
-            return
-        try:
-            callback(int(self.winId()))
-        except (RuntimeError, TypeError, ValueError):
-            callback(None)
 
     def set_obs_streaming_mode(self, enabled: bool):
         """Keep one stable HWND alive and collapse it to its title bar for OBS."""
