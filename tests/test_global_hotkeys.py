@@ -509,6 +509,53 @@ def test_suppressed_hotkey_callback_uses_cached_context_only():
     service.stop()
 
 
+def test_suppressed_hotkey_rearms_when_returning_from_outside_to_poe():
+    backend = FakeKeyboardBackend()
+    foreground = {"hwnd": 20}
+    service = ForegroundSuppressedHotkeyService(
+        "poetore_capture", "alt+d",
+        keyboard_backend=backend,
+        foreground_getter=lambda: foreground["hwnd"],
+        poe_window_checker=lambda hwnd: hwnd == 10,
+        platform="win32",
+    )
+    service.start()
+    original = backend.registrations[-1]
+
+    foreground["hwnd"] = 10
+    service._refresh_foreground_context()
+    service._rearm_after_foreground_return()
+
+    assert backend.removed == [original]
+    assert len(backend.registrations) == 2
+    assert service.is_registered
+    service.stop()
+
+
+def test_suppressed_hotkey_rearm_waits_for_alt_tab_release():
+    backend = FakeKeyboardBackend()
+    foreground = {"hwnd": 20}
+    service = ForegroundSuppressedHotkeyService(
+        "poetore_capture", "alt+d",
+        keyboard_backend=backend,
+        foreground_getter=lambda: foreground["hwnd"],
+        poe_window_checker=lambda hwnd: hwnd == 10,
+        platform="win32",
+    )
+    service.start()
+    backend.pressed_keys = {"alt"}
+    foreground["hwnd"] = 10
+    service._refresh_foreground_context()
+    service._rearm_after_foreground_return()
+    assert backend.removed == []
+
+    backend.pressed_keys.clear()
+    service._rearm_after_foreground_return()
+    assert len(backend.removed) == 1
+    assert len(backend.registrations) == 2
+    service.stop()
+
+
 def test_suppressed_hotkey_is_disabled_on_non_windows():
     backend = FakeKeyboardBackend()
     service = ForegroundSuppressedHotkeyService(

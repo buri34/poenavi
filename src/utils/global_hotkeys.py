@@ -243,6 +243,10 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._foreground_timer = QTimer(self)
         self._foreground_timer.setInterval(self._poll_interval_ms)
         self._foreground_timer.timeout.connect(self._refresh_foreground_context)
+        self._rearm_timer = QTimer(self)
+        self._rearm_timer.setSingleShot(True)
+        self._rearm_timer.setInterval(150)
+        self._rearm_timer.timeout.connect(self._rearm_after_foreground_return)
         self._retry_timer = QTimer(self)
         self._retry_timer.setInterval(2000)
         self._retry_timer.timeout.connect(self.refresh)
@@ -283,6 +287,7 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._running = False
         self._timer.stop()
         self._foreground_timer.stop()
+        self._rearm_timer.stop()
         self._retry_timer.stop()
         self._waiting_for_release = False
         self._pending_focus_target = None
@@ -328,6 +333,27 @@ class ForegroundSuppressedHotkeyService(QObject):
         except Exception as exc:
             print(f"Failed to unregister suppressed hotkey {self._hotkey}: {exc}")
 
+    def _schedule_rearm(self):
+        """Recreate a hook that Windows may have silently removed while unfocused."""
+        if not self._running or not self.is_supported or self._waiting_for_release:
+            return
+        self._rearm_timer.start()
+
+    def _rearm_after_foreground_return(self):
+        if not self._running or not self.is_supported or self._waiting_for_release:
+            return
+        try:
+            if any(self._backend().is_pressed(part) for part in self._hotkey_parts):
+                # Alt+Tabなどの修飾キーが残っている間はフックを触らない。
+                self._rearm_timer.start()
+                return
+        except Exception as exc:
+            record_hotkey_event("rearm_key_check_failed", error=str(exc))
+        self._unregister()
+        self._register()
+        if self._registration is not None:
+            record_hotkey_event("rearmed", hotkey=self._hotkey)
+
     def _on_hotkey_pressed(self):
         """Return True to pass the key through, False to suppress it."""
         if not self._running:
@@ -350,6 +376,7 @@ class ForegroundSuppressedHotkeyService(QObject):
 
     def _refresh_foreground_context(self):
         """Resolve the active app outside the low-level keyboard-hook callback."""
+        previous_context = self._foreground_context
         context = "outside"
         focus_target = None
         try:
@@ -379,6 +406,11 @@ class ForegroundSuppressedHotkeyService(QObject):
                 "context_changed", context=context,
                 has_focus_target=bool(focus_target),
             )
+        # Windowsは低レベルキーボードフックを通知なしで外す場合があり、
+        # 登録ハンドルだけでは生存判定できない。別アプリからPoEへ戻った時だけ
+        # 安全に作り直し、普段の検索中には登録を揺らさない。
+        if previous_context == "outside" and context == "poe":
+            self._schedule_rearm()
 
     def _begin_release_watch(self):
         if not self._running or not self._waiting_for_release:

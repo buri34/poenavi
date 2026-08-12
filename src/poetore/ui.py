@@ -1401,6 +1401,8 @@ class PoetoreWindow(QWidget):
         # 行選択は使わない。Mod文章クリックはチェック切替だけを行い、
         # セルウィジェット（最小・最大欄）と選択背景の見た目が分離しないようにする。
         self.mod_filter_tree.setSelectionMode(QAbstractItemView.NoSelection)
+        self.mod_filter_tree.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.mod_filter_tree.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
         self.mod_filter_tree.setMinimumHeight(profile["mod_height"])
         mod_header = self.mod_filter_tree.header()
         mod_header.hide()
@@ -2256,6 +2258,13 @@ class PoetoreWindow(QWidget):
             available_height=available.height(),
             minimum_height=profile["minimum_height"],
         )
+        if content_height > mod_height and not self.mod_filter_tree.isHidden():
+            # 画面高が足りない時だけ、末尾に半端な行を見せず一覧内スクロールへ
+            # 切り替える。セルWidgetが直下の操作ボタンへ重なって見えるのを防ぐ。
+            frame_height = self.mod_filter_tree.frameWidth() * 2 + 4
+            row_height = self._scaled_display_value(_MOD_ROW_HEIGHT)
+            visible_rows = max(2, (mod_height - frame_height) // row_height)
+            mod_height = frame_height + visible_rows * row_height
         self.mod_filter_tree.setMinimumHeight(mod_height)
         self.mod_filter_tree.setMaximumHeight(mod_height)
         self.price_list.setMinimumHeight(price_height)

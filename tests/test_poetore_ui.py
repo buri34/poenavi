@@ -8,12 +8,13 @@ from pathlib import Path
 from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QKeyEvent, QMouseEvent, QPalette, QWheelEvent
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QTreeWidgetItem, QWidget
+from PySide6.QtWidgets import QApplication, QAbstractItemView, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QTreeWidgetItem, QWidget
 import pytest
 
 from src.poetore.ui import (
     PoetoreWindow, _ACTION_CLUSTER_HORIZONTAL_GAP, _ACTION_CLUSTER_VERTICAL_GAP,
     _MOD_COLUMN_CHECK, _MOD_COLUMN_KIND, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
+    _MOD_ROW_HEIGHT,
     _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
     show_poetore_window,
 )
@@ -3008,6 +3009,33 @@ def test_hidden_window_still_sizes_repeated_item_mod_rows_to_content(qapp):
         assert window._visible_mod_content_height() > 400
         assert layout_sizes.call_args.kwargs["content_height"] > 400
         assert window.mod_filter_tree.maximumHeight() == 500
+    finally:
+        window.close()
+
+
+def test_overflowing_mod_rows_use_complete_scrollable_rows(qapp, monkeypatch):
+    window = PoetoreWindow()
+    try:
+        filters = tuple(
+            TradeStatFilter(
+                f"explicit.stat_{index}", f"Nebulis相当Mod {index}", index,
+                "implicit" if index < 4 else "unique", True,
+            )
+            for index in range(12)
+        )
+        monkeypatch.setattr(window, "_visible_mod_content_height", lambda: 900)
+        with patch(
+            "src.poetore.ui._auto_mod_layout_sizes",
+            return_value=(317, 120, 760),
+        ):
+            window._populate_stat_filters(filters)
+
+        frame_height = window.mod_filter_tree.frameWidth() * 2 + 4
+        row_height = window._scaled_display_value(_MOD_ROW_HEIGHT)
+        assert (window.mod_filter_tree.maximumHeight() - frame_height) % row_height == 0
+        assert window.mod_filter_tree.maximumHeight() < 317
+        assert window.mod_filter_tree.verticalScrollBarPolicy() == Qt.ScrollBarAsNeeded
+        assert window.mod_filter_tree.verticalScrollMode() == QAbstractItemView.ScrollPerItem
     finally:
         window.close()
 
