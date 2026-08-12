@@ -170,7 +170,7 @@ def test_f2_starts_and_releases_gem_shop_hold(monkeypatch):
     assert emitted == ["gem_shop_search_pressed", "gem_shop_search_released"]
 
 
-def test_main_mode_waits_for_all_poetore_hotkey_keys_to_be_released(monkeypatch):
+def test_main_mode_uses_suppressed_service_for_capture_hotkey(monkeypatch):
     callbacks = {}
 
     class FakeListener:
@@ -185,6 +185,29 @@ def test_main_mode_waits_for_all_poetore_hotkey_keys_to_be_released(monkeypatch)
             pass
 
     emitted = []
+    suppressed_instances = []
+
+    class FakeSignal:
+        def __init__(self):
+            self.connected = None
+
+        def connect(self, callback):
+            self.connected = callback
+
+    class FakeSuppressedService:
+        def __init__(self, action, hotkey, parent=None):
+            self.action = action
+            self.hotkey = hotkey
+            self.parent = parent
+            self.command = FakeSignal()
+            self.started = False
+            suppressed_instances.append(self)
+
+        def start(self):
+            self.started = True
+
+        def stop(self):
+            pass
     window = SimpleNamespace(
         config={"hotkeys": {"poetore_capture": "alt+d"}},
         keyboard_listener=None,
@@ -192,16 +215,23 @@ def test_main_mode_waits_for_all_poetore_hotkey_keys_to_be_released(monkeypatch)
         _hotkey_action_allowed=lambda _action: True,
     )
     monkeypatch.setattr("src.ui.main_window.pynput_keyboard.Listener", FakeListener)
+    monkeypatch.setattr(
+        "src.ui.main_window.ForegroundSuppressedHotkeyService",
+        FakeSuppressedService,
+    )
+    monkeypatch.setattr(
+        "src.ui.main_window.suppressed_hotkeys_supported", lambda: True,
+    )
 
     MainWindow.register_hotkeys(window)
-    alt = SimpleNamespace(name="alt")
-    d_key = SimpleNamespace(char="d", vk=ord("D"))
-    callbacks["on_press"](alt)
-    callbacks["on_press"](d_key)
-    callbacks["on_release"](alt)
-    assert emitted == ["poetore_capture"]
-    callbacks["on_release"](d_key)
-    assert emitted == ["poetore_capture", "poetore_capture_released"]
+    assert "poetore_capture" not in window.hotkey_map.values()
+    assert len(suppressed_instances) == 1
+    service = suppressed_instances[0]
+    assert (service.action, service.hotkey, service.parent) == (
+        "poetore_capture", "alt+d", None,
+    )
+    assert service.command.connected is window.hotkey_signal.emit
+    assert service.started
 
 
 def test_main_mode_does_not_register_poetore_hotkeys_in_poe2(monkeypatch):

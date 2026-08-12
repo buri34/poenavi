@@ -33,7 +33,12 @@ from src.ui.app_theme import POETORE_THEME
 from src.utils.chat_command import send_chat_command
 from src.ui.custom_command_settings import custom_command_hotkeys, normalized_custom_commands
 from src.utils.config_manager import ConfigManager
-from src.utils.global_hotkeys import GlobalHotkeyService, is_hotkey_action_allowed
+from src.utils.global_hotkeys import (
+    ForegroundSuppressedHotkeyService,
+    GlobalHotkeyService,
+    is_hotkey_action_allowed,
+    suppressed_hotkeys_supported,
+)
 from src.utils.poe_version_data import POE1, POE2
 from src.utils.feature_support import POETORE, is_feature_hotkey_supported, is_feature_supported
 
@@ -569,11 +574,22 @@ class PoetoreModeWindow(QMainWindow):
             if is_feature_hotkey_supported(action, poe_version)
         }
         mode_hotkeys.update(custom_command_hotkeys(self.config.get("custom_commands", [])))
+        capture_hotkey = mode_hotkeys.get("poetore_capture", "none")
+        use_suppression = suppressed_hotkeys_supported()
+        if use_suppression:
+            mode_hotkeys.pop("poetore_capture", None)
         self.hotkey_service = GlobalHotkeyService(
             mode_hotkeys, action_filter=is_hotkey_action_allowed, parent=self,
         )
         self.hotkey_service.command.connect(self.handle_hotkey)
         self.hotkey_service.start()
+        self.suppressed_capture_hotkey = None
+        if use_suppression:
+            self.suppressed_capture_hotkey = ForegroundSuppressedHotkeyService(
+                "poetore_capture", capture_hotkey, parent=self,
+            )
+            self.suppressed_capture_hotkey.command.connect(self.handle_hotkey)
+            self.suppressed_capture_hotkey.start()
 
     @staticmethod
     def _display_hotkey(hotkey):
@@ -802,6 +818,8 @@ class PoetoreModeWindow(QMainWindow):
             self._poetore_window.apply_result_display_size()
             self._apply_obs_streaming_mode()
         self.hotkey_service.stop()
+        if self.suppressed_capture_hotkey is not None:
+            self.suppressed_capture_hotkey.stop()
         self._start_hotkeys()
         self._update_capture_hint()
         self.refresh_currency_rate()
@@ -858,6 +876,8 @@ class PoetoreModeWindow(QMainWindow):
         self.tray_icon.hide()
         self._rate_timer.stop()
         self.hotkey_service.stop()
+        if self.suppressed_capture_hotkey is not None:
+            self.suppressed_capture_hotkey.stop()
         if self._memo_dialog is not None:
             self._memo_dialog.close()
         if self._cheat_sheet_overlay is not None:

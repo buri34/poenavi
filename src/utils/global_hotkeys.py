@@ -1,6 +1,9 @@
 """モード間で共有するグローバルホットキー監視。"""
 
-from PySide6.QtCore import QObject, Signal
+import sys
+import time
+
+from PySide6.QtCore import QObject, QTimer, Signal
 
 from src.utils.internal_key_input import is_internal_key_input
 from src.utils.window_focus import get_foreground_window, is_path_of_exile_window
@@ -13,6 +16,11 @@ HOTKEY_ACTIONS_ALLOWED_OUTSIDE_POE = frozenset({
     "cheat_sheets_toggle",
     "cheat_sheets_escape",
 })
+
+
+def suppressed_hotkeys_supported(platform=None) -> bool:
+    """Return whether the native key-suppression backend is available."""
+    return (sys.platform if platform is None else platform) == "win32"
 
 
 def is_hotkey_action_allowed(action: str, foreground_window=None) -> bool:
@@ -191,3 +199,120 @@ class GlobalHotkeyService(QObject):
         if key_name in {"shift", "shift_l", "shift_r"}:
             return "shift"
         return None
+
+
+class ForegroundSuppressedHotkeyService(QObject):
+    """PoEが前面の間だけ、Windowsで元キーを通さずホットキーを発火する。"""
+
+    command = Signal(str)
+
+    def __init__(
+        self,
+        action: str,
+        hotkey: str,
+        *,
+        keyboard_backend=None,
+        foreground_getter=None,
+        poe_window_checker=None,
+        platform=None,
+        poll_interval_ms=100,
+        parent=None,
+    ):
+        super().__init__(parent)
+        self._action = action
+        self._hotkey = str(hotkey or "").strip()
+        self._keyboard_backend = keyboard_backend
+        self._foreground_getter = foreground_getter or get_foreground_window
+        self._poe_window_checker = poe_window_checker or is_path_of_exile_window
+        self._platform = sys.platform if platform is None else platform
+        self._poll_interval_ms = poll_interval_ms
+        self._registration = None
+        self._running = False
+        self._rearm_after = 0.0
+        self._timer = QTimer(self)
+        self._timer.setInterval(self._poll_interval_ms)
+        self._timer.timeout.connect(self.refresh)
+
+    @property
+    def is_running(self):
+        return self._running
+
+    @property
+    def is_registered(self):
+        return self._registration is not None
+
+    @property
+    def is_supported(self):
+        return (
+            suppressed_hotkeys_supported(self._platform)
+            and bool(self._hotkey)
+            and self._hotkey.casefold() != "none"
+        )
+
+    def start(self):
+        self.stop()
+        self._running = True
+        if not self.is_supported:
+            return
+        self._timer.start()
+        self.refresh()
+
+    def stop(self):
+        self._running = False
+        self._timer.stop()
+        self._unregister()
+
+    def refresh(self):
+        if not self._running or not self.is_supported:
+            return
+        foreground = self._foreground_getter()
+        poe_active = bool(foreground and self._poe_window_checker(foreground))
+        if not poe_active:
+            self._unregister()
+            return
+        if self._registration is None and time.monotonic() >= self._rearm_after:
+            self._register()
+
+    def _backend(self):
+        if self._keyboard_backend is None:
+            import keyboard
+
+            self._keyboard_backend = keyboard
+        return self._keyboard_backend
+
+    def _register(self):
+        try:
+            self._registration = self._backend().add_hotkey(
+                self._hotkey,
+                self._on_hotkey_released,
+                suppress=True,
+                trigger_on_release=True,
+            )
+        except Exception as exc:
+            self._registration = None
+            self._rearm_after = time.monotonic() + 2.0
+            print(f"Failed to register suppressed hotkey {self._hotkey}: {exc}")
+
+    def _unregister(self):
+        registration = self._registration
+        self._registration = None
+        if registration is None:
+            return
+        try:
+            self._backend().remove_hotkey(registration)
+        except Exception as exc:
+            print(f"Failed to unregister suppressed hotkey {self._hotkey}: {exc}")
+
+    def _on_hotkey_released(self):
+        if not self._running:
+            return
+        foreground = self._foreground_getter()
+        if not foreground or not self._poe_window_checker(foreground):
+            return
+        # 自動送信するCtrl+Cまで抑止しないよう、検索処理を始める前に解除する。
+        self._unregister()
+        self._rearm_after = time.monotonic() + 0.5
+        if is_internal_key_input():
+            return
+        self.command.emit(self._action)
+        self.command.emit(f"{self._action}_released")
