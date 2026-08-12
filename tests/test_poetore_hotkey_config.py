@@ -195,10 +195,11 @@ def test_main_mode_uses_suppressed_service_for_capture_hotkey(monkeypatch):
             self.connected = callback
 
     class FakeSuppressedService:
-        def __init__(self, action, hotkey, parent=None):
+        def __init__(self, action, hotkey, parent=None, **kwargs):
             self.action = action
             self.hotkey = hotkey
             self.parent = parent
+            self.options = kwargs
             self.command = FakeSignal()
             self.started = False
             suppressed_instances.append(self)
@@ -230,6 +231,8 @@ def test_main_mode_uses_suppressed_service_for_capture_hotkey(monkeypatch):
     assert (service.action, service.hotkey, service.parent) == (
         "poetore_capture", "alt+d", None,
     )
+    assert callable(service.options["result_window_checker"])
+    assert callable(service.options["poe_target_getter"])
     assert service.command.connected is window.hotkey_signal.emit
     assert service.started
 

@@ -3086,6 +3086,8 @@ class MainWindow(QMainWindow):
             ):
                 self.suppressed_capture_hotkey = ForegroundSuppressedHotkeyService(
                     "poetore_capture", capture_hotkey,
+                    result_window_checker=lambda hwnd: MainWindow._is_poetore_result_window(self, hwnd),
+                    poe_target_getter=lambda: MainWindow._poetore_poe_target(self),
                     parent=self if isinstance(self, QObject) else None,
                 )
                 self.suppressed_capture_hotkey.command.connect(self.hotkey_signal.emit)
@@ -3214,6 +3216,16 @@ class MainWindow(QMainWindow):
             
         except Exception as e:
             print(f"Failed to register hotkeys: {e}")
+
+    def _is_poetore_result_window(self, hwnd):
+        try:
+            return int(getattr(self, "_poetore_result_hwnd", 0) or 0) == int(hwnd)
+        except (TypeError, ValueError):
+            return False
+
+    def _poetore_poe_target(self):
+        window = getattr(self, "_poetore_window", None)
+        return getattr(window, "_poe_window_hwnd", None) if window is not None else None
 
     def handle_hotkey(self, command):
         print(f"[HOTKEY DEBUG] handle command={command} search_in_progress={getattr(self, '_search_paste_in_progress', False)}")

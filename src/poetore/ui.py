@@ -4947,6 +4947,12 @@ def prepare_poetore_window(owner):
             save_config=ConfigManager.save_config if isinstance(app_config, dict) else None,
         )
         owner._poetore_window = window
+        # Native HWND is cached on the GUI thread so the keyboard-hook thread
+        # never needs to call QWidget.winId().
+        try:
+            owner._poetore_result_hwnd = int(window.winId())
+        except (RuntimeError, TypeError, ValueError):
+            owner._poetore_result_hwnd = None
     return window
 
 

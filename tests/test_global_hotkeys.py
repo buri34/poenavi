@@ -371,6 +371,73 @@ def test_suppressed_hotkey_remains_usable_for_repeated_searches():
     service.stop()
 
 
+def test_suppressed_hotkey_focuses_poe_from_result_window_before_dispatch():
+    backend = FakeKeyboardBackend()
+    foreground = {"hwnd": 20}
+    focused = []
+    service = ForegroundSuppressedHotkeyService(
+        "poetore_capture", "alt+d",
+        keyboard_backend=backend,
+        foreground_getter=lambda: foreground["hwnd"],
+        poe_window_checker=lambda hwnd: hwnd == 10,
+        result_window_checker=lambda hwnd: hwnd == 20,
+        poe_target_getter=lambda: 10,
+        focus_target=lambda hwnd: focused.append(hwnd) or True,
+        platform="win32",
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+
+    assert backend.registrations[-1].callback() is False
+
+    assert focused == [10]
+    assert emitted == ["poetore_capture"]
+    service.stop()
+
+
+def test_suppressed_hotkey_passes_through_when_result_has_no_valid_poe_target():
+    backend = FakeKeyboardBackend()
+    service = ForegroundSuppressedHotkeyService(
+        "poetore_capture", "alt+d",
+        keyboard_backend=backend,
+        foreground_getter=lambda: 20,
+        poe_window_checker=lambda hwnd: hwnd == 10,
+        result_window_checker=lambda hwnd: hwnd == 20,
+        poe_target_getter=lambda: None,
+        platform="win32",
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+
+    assert backend.registrations[-1].callback() is True
+    assert emitted == []
+    service.stop()
+
+
+def test_suppressed_hotkey_does_not_dispatch_when_poe_focus_fails():
+    backend = FakeKeyboardBackend()
+    service = ForegroundSuppressedHotkeyService(
+        "poetore_capture", "alt+d",
+        keyboard_backend=backend,
+        foreground_getter=lambda: 20,
+        poe_window_checker=lambda hwnd: hwnd == 10,
+        result_window_checker=lambda hwnd: hwnd == 20,
+        poe_target_getter=lambda: 10,
+        focus_target=lambda _hwnd: False,
+        platform="win32",
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+
+    assert backend.registrations[-1].callback() is False
+    assert emitted == []
+    assert service._waiting_for_release is False
+    service.stop()
+
+
 def test_suppressed_hotkey_is_disabled_on_non_windows():
     backend = FakeKeyboardBackend()
     service = ForegroundSuppressedHotkeyService(

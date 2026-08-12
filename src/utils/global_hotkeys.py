@@ -4,7 +4,7 @@ import sys
 from PySide6.QtCore import QObject, QTimer, Signal
 
 from src.utils.internal_key_input import is_internal_key_input
-from src.utils.window_focus import get_foreground_window, is_path_of_exile_window
+from src.utils.window_focus import focus_window, get_foreground_window, is_path_of_exile_window
 
 
 HOTKEY_ACTIONS_ALLOWED_OUTSIDE_POE = frozenset({
@@ -213,6 +213,9 @@ class ForegroundSuppressedHotkeyService(QObject):
         keyboard_backend=None,
         foreground_getter=None,
         poe_window_checker=None,
+        result_window_checker=None,
+        poe_target_getter=None,
+        focus_target=None,
         platform=None,
         poll_interval_ms=100,
         parent=None,
@@ -223,6 +226,9 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._keyboard_backend = keyboard_backend
         self._foreground_getter = foreground_getter or get_foreground_window
         self._poe_window_checker = poe_window_checker or is_path_of_exile_window
+        self._result_window_checker = result_window_checker
+        self._poe_target_getter = poe_target_getter
+        self._focus_target = focus_target or focus_window
         self._platform = sys.platform if platform is None else platform
         self._poll_interval_ms = poll_interval_ms
         self._registration = None
@@ -234,6 +240,7 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._retry_timer.setInterval(2000)
         self._retry_timer.timeout.connect(self.refresh)
         self._waiting_for_release = False
+        self._pending_focus_target = None
         self._triggered_in_poe.connect(self._begin_release_watch)
 
     @property
@@ -264,6 +271,7 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._timer.stop()
         self._retry_timer.stop()
         self._waiting_for_release = False
+        self._pending_focus_target = None
         self._unregister()
 
     def refresh(self):
@@ -309,18 +317,36 @@ class ForegroundSuppressedHotkeyService(QObject):
         if not self._running:
             return True
         foreground = self._foreground_getter()
-        if not foreground or not self._poe_window_checker(foreground):
+        if not foreground:
             return True
+        focus_target = None
+        if not self._poe_window_checker(foreground):
+            if (
+                self._result_window_checker is None
+                or not self._result_window_checker(foreground)
+                or self._poe_target_getter is None
+            ):
+                return True
+            candidate = self._poe_target_getter()
+            if not candidate or not self._poe_window_checker(candidate):
+                return True
+            focus_target = candidate
         if is_internal_key_input():
             return True
         if self._waiting_for_release:
             return False
         self._waiting_for_release = True
+        self._pending_focus_target = focus_target
         self._triggered_in_poe.emit()
         return False
 
     def _begin_release_watch(self):
         if not self._running or not self._waiting_for_release:
+            return
+        focus_target = self._pending_focus_target
+        self._pending_focus_target = None
+        if focus_target is not None and not self._focus_target(focus_target):
+            self._waiting_for_release = False
             return
         self.command.emit(self._action)
         self._timer.start()

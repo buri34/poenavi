@@ -47,9 +47,13 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
         "map_check": "alt+f",
         "cheat_sheets_toggle": "shift+space",
     }
-    suppressed_class.assert_called_once_with(
-        "poetore_capture", "alt+d", parent=window,
-    )
+    suppressed_class.assert_called_once()
+    args = suppressed_class.call_args.args
+    kwargs = suppressed_class.call_args.kwargs
+    assert args == ("poetore_capture", "alt+d")
+    assert kwargs["parent"] is window
+    assert callable(kwargs["result_window_checker"])
+    assert callable(kwargs["poe_target_getter"])
     suppressed_class.return_value.start.assert_called_once_with()
     assert not hasattr(window, "log_watcher")
     assert not hasattr(window, "mini_navi_overlay")

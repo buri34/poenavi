@@ -586,10 +586,23 @@ class PoetoreModeWindow(QMainWindow):
         self.suppressed_capture_hotkey = None
         if use_suppression:
             self.suppressed_capture_hotkey = ForegroundSuppressedHotkeyService(
-                "poetore_capture", capture_hotkey, parent=self,
+                "poetore_capture", capture_hotkey,
+                result_window_checker=self._is_poetore_result_window,
+                poe_target_getter=self._poetore_poe_target,
+                parent=self,
             )
             self.suppressed_capture_hotkey.command.connect(self.handle_hotkey)
             self.suppressed_capture_hotkey.start()
+
+    def _is_poetore_result_window(self, hwnd):
+        try:
+            return int(getattr(self, "_poetore_result_hwnd", 0) or 0) == int(hwnd)
+        except (TypeError, ValueError):
+            return False
+
+    def _poetore_poe_target(self):
+        window = getattr(self, "_poetore_window", None)
+        return getattr(window, "_poe_window_hwnd", None) if window is not None else None
 
     @staticmethod
     def _display_hotkey(hotkey):
