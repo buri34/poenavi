@@ -103,7 +103,9 @@ class PoetoreSettingsDialog(QDialog):
         hotkey_form = QFormLayout(hotkey_group)
         self.exit_hotkey = HotkeyButton(hotkeys.get("exit", "F5"))
         self.monastery_hotkey = HotkeyButton(hotkeys.get("monastery", "F12"))
-        self.capture_hotkey = HotkeyButton(hotkeys.get("poetore_capture", "alt+d"))
+        self.capture_hotkey = AutoHideHotkeyWidget(
+            hotkeys.get("poetore_capture", "alt+d")
+        )
         self.auto_hide_hotkey = AutoHideHotkeyWidget(
             hotkeys.get("poetore_auto_hide", "ctrl+d")
         )
@@ -112,11 +114,12 @@ class PoetoreSettingsDialog(QDialog):
             hotkeys.get("cheat_sheets_toggle", "shift+space")
         )
         for button in (
-            self.exit_hotkey, self.monastery_hotkey, self.capture_hotkey,
+            self.exit_hotkey, self.monastery_hotkey,
             self.map_check_hotkey, self.cheat_hotkey,
         ):
             # ぽえとれ画面の親スタイルを使い、操作だけぽえなびと共通化する。
             button.setStyleSheet("")
+        self.capture_hotkey.key_button.setStyleSheet("")
         self.auto_hide_hotkey.key_button.setStyleSheet("")
         hotkey_form.addRow("キャラクター選択へ戻る:", self.exit_hotkey)
         hotkey_form.addRow(

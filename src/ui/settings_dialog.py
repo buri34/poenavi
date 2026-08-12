@@ -1957,8 +1957,9 @@ class SettingsDialog(QDialog):
 
         h_layout10 = QHBoxLayout()
         h_layout10.addWidget(QLabel("ぽえとれ検索（操作モード）:"))
-        self.poetore_capture_btn = HotkeyButton(
-            self.hotkeys.get("poetore_capture", "alt+d")
+        self.poetore_capture_btn = AutoHideHotkeyWidget(
+            self.hotkeys.get("poetore_capture", "alt+d"),
+            theme=POENAVI_THEME,
         )
         h_layout10.addWidget(self.poetore_capture_btn)
         group_layout.addLayout(h_layout10)
