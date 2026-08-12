@@ -593,6 +593,26 @@ def test_prepare_poetore_window_has_no_trade_api_side_effect(qapp):
         window.close()
 
 
+def test_poetore_window_refreshes_owner_hwnd_each_time_it_is_shown(qapp):
+    owner = Mock()
+    owner._poetore_window = None
+    owner.config = {}
+    window = prepare_poetore_window(owner)
+    try:
+        owner._poetore_result_hwnd = -1
+        window.show()
+        qapp.processEvents()
+        assert owner._poetore_result_hwnd == int(window.winId())
+
+        owner._poetore_result_hwnd = -1
+        window.hide()
+        window.show()
+        qapp.processEvents()
+        assert owner._poetore_result_hwnd == int(window.winId())
+    finally:
+        window.close()
+
+
 def test_329_single_copy_is_parsed_without_normal_and_detailed_merge(qapp):
     copied = """アイテムクラス: 靴
 レアリティ: ユニーク

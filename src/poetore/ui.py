@@ -2994,6 +2994,16 @@ class PoetoreWindow(QWidget):
             self._focus_signal_connected = False
         super().closeEvent(event)
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        callback = getattr(self, "_native_hwnd_changed", None)
+        if callback is None:
+            return
+        try:
+            callback(int(self.winId()))
+        except (RuntimeError, TypeError, ValueError):
+            callback(None)
+
     def set_obs_streaming_mode(self, enabled: bool):
         """Keep one stable HWND alive and collapse it to its title bar for OBS."""
         enabled = bool(enabled)
@@ -4947,8 +4957,11 @@ def prepare_poetore_window(owner):
             save_config=ConfigManager.save_config if isinstance(app_config, dict) else None,
         )
         owner._poetore_window = window
-        # Native HWND is cached on the GUI thread so the keyboard-hook thread
-        # never needs to call QWidget.winId().
+        # Qt may recreate a native HWND after close/show or window-flag changes.
+        # Refresh it on every show, always from the GUI thread.
+        window._native_hwnd_changed = lambda hwnd: setattr(
+            owner, "_poetore_result_hwnd", hwnd,
+        )
         try:
             owner._poetore_result_hwnd = int(window.winId())
         except (RuntimeError, TypeError, ValueError):
