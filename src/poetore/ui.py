@@ -81,6 +81,18 @@ _INFLUENCE_CHIPS = {
     "exarch": ("Exarch", None, "searing_item"),
 }
 
+_HEIST_JOB_LABELS = {
+    "property.heist_lockpicking": "錠前破り",
+    "property.heist_brute_force": "怪力",
+    "property.heist_perception": "知覚能力",
+    "property.heist_demolition": "爆破",
+    "property.heist_counter_thaumaturgy": "対魔術",
+    "property.heist_trap_disarmament": "罠解除",
+    "property.heist_agility": "敏捷性",
+    "property.heist_deception": "欺瞞",
+    "property.heist_engineering": "工作",
+}
+
 _MOD_COLUMN_CHECK = 0
 _MOD_COLUMN_KIND = 1
 _MOD_COLUMN_TIER = 2
@@ -726,6 +738,10 @@ class _NumericFilterChip(QFrame):
         self.minimum_edit.setText("" if minimum is None else f"{minimum:g}")
         self.maximum_edit.setText("" if maximum is None else f"{maximum:g}")
         self.setRangeVisible(maximum is not None)
+
+    def setLabel(self, label: str):
+        self._label = str(label)
+        self.setActive(self._active)
 
     def values(self) -> tuple[float | None, float | None]:
         minimum = self.minimum_edit.text().strip()
@@ -4225,6 +4241,10 @@ class PoetoreWindow(QWidget):
         self._heist_job_row = job
         self.heist_job_chip.setVisible(job is not None)
         if job is not None:
+            job_name = _HEIST_JOB_LABELS.get(job.stat_id)
+            self.heist_job_chip.setLabel(
+                f"Job Lv（{job_name}）" if job_name else "Job Lv"
+            )
             self.heist_job_chip.setValues(job.min_value, job.max_value)
             self.heist_job_chip.setActive(job.enabled)
         target = by_id.get("property.heist_objective_value")

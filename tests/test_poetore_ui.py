@@ -3500,6 +3500,7 @@ Contract: Underbelly
         assert not window.heist_job_chip.isHidden()
         assert window.heist_job_chip.values() == (1.0, None)
         assert window.heist_job_chip.isActive()
+        assert "Job Lv（工作）" in window.heist_job_chip.toggle.text()
         assert window.area_level_chip.values() == (49.0, None)
         assert window.mod_warning.isHidden()
         rows = [
@@ -3507,6 +3508,34 @@ Contract: Underbelly
             for index in range(window.mod_filter_tree.topLevelItemCount())
         ]
         assert rows == []
+    finally:
+        window.close()
+
+
+def test_japanese_contract_required_deception_is_visible_in_job_chip(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 依頼書
+レアリティ: レア
+崇高な宣誓書
+依頼書: 研究所
+--------
+依頼人: 真夜中の修理人
+ハイスト目標: イノセンスの血 (貴重)
+エリアレベル: 83
+必要ジョブ 欺瞞 (レベル 1 (unmet))
+アイテム数量: +52% (augmented)
+--------
+アイテムレベル: 83
+""")
+        window.parse_current_text()
+
+        assert not window.heist_job_chip.isHidden()
+        assert window.heist_job_chip.values() == (1.0, None)
+        assert "Job Lv（欺瞞）" in window.heist_job_chip.toggle.text()
+        selected = window._selected_special_chip_filters()
+        deception = next(row for row in selected if row.stat_id == "property.heist_deception")
+        assert deception.min_value == 1.0
     finally:
         window.close()
 
