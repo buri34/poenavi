@@ -2062,8 +2062,15 @@ class PoetoreWindow(QWidget):
         )
         profile = _DISPLAY_SIZE_PROFILES[selected]
         self._result_font_size = selected
-        self.setMinimumSize(profile["minimum_width"], profile["minimum_height"])
-        self.resize(profile["width"], profile["height"])
+        if getattr(self, "_obs_collapsed", False):
+            # ホットキー受付時にもこの処理が走る。待機バーの実サイズは30pxの
+            # まま維持し、完成後に使う展開サイズだけを更新する。
+            self.setMinimumWidth(profile["minimum_width"])
+            self.setMinimumHeight(0)
+            self._obs_expanded_size = QSize(profile["width"], profile["height"])
+        else:
+            self.setMinimumSize(profile["minimum_width"], profile["minimum_height"])
+            self.resize(profile["width"], profile["height"])
         self.mod_filter_tree.setMinimumHeight(profile["mod_height"])
         self._apply_related_items_layout(
             not self.related_items_panel.isHidden()
@@ -2243,6 +2250,13 @@ class PoetoreWindow(QWidget):
         self.mod_filter_tree.setMinimumHeight(mod_height)
         self.mod_filter_tree.setMaximumHeight(mod_height)
         self.price_list.setMinimumHeight(price_height)
+        if getattr(self, "_obs_collapsed", False):
+            # 解析中は待機ラベルだけが見えている。ここで実ウィンドウを
+            # resizeすると、結果完成前に大きな空タイルが描画される。
+            self._obs_expanded_size = QSize(
+                max(self.width(), profile["width"]), window_height,
+            )
+            return
         self.resize(max(self.width(), profile["width"]), window_height)
         if self.y() < available.top():
             self.move(self.x(), available.top())

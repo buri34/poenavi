@@ -167,6 +167,21 @@ def test_poetore_settings_saves_result_font_size():
     dialog.close()
 
 
+def test_poetore_settings_describes_obs_result_window_behavior():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={"poetore": {}})
+
+    assert dialog.obs_streaming_enabled_cb.text() == (
+        "検索結果ウィンドウをOBS配信用にする"
+    )
+    note = dialog.findChild(QLabel, "obsStreamingNote")
+    assert note.text() == (
+        "待機中はタイトルバーだけを表示し、検索すると検索結果を当該タイトルバーの下に"
+        "展開します。OBSでは「ぽえとれ - 検索結果ウィンドウ」として認識されます。"
+    )
+    dialog.close()
+
+
 def test_poetore_settings_defaults_unknown_result_font_size_to_medium():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(

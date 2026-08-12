@@ -198,15 +198,18 @@ class PoetoreSettingsDialog(QDialog):
         obs_group = QGroupBox("OBS配信")
         obs_layout = QVBoxLayout(obs_group)
         self.obs_streaming_enabled_cb = QCheckBox(
-            "OBS配信用ウィンドウを表示する"
+            "検索結果ウィンドウをOBS配信用にする"
         )
+        self.obs_streaming_enabled_cb.setObjectName("obsStreamingEnabled")
         self.obs_streaming_enabled_cb.setChecked(
             bool(obs_streaming.get("enabled", False))
         )
         obs_layout.addWidget(self.obs_streaming_enabled_cb)
         obs_note = QLabel(
-            "待機中はタイトルバーだけを表示し、検索すると同じウィンドウが下へ展開します。"
+            "待機中はタイトルバーだけを表示し、検索すると検索結果を当該タイトルバーの下に"
+            "展開します。OBSでは「ぽえとれ - 検索結果ウィンドウ」として認識されます。"
         )
+        obs_note.setObjectName("obsStreamingNote")
         obs_note.setWordWrap(True)
         obs_layout.addWidget(obs_note)
         basic_layout.addWidget(obs_group)

@@ -8,7 +8,7 @@ from pathlib import Path
 from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QKeyEvent, QMouseEvent, QPalette
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QWidget
+from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QTreeWidgetItem, QWidget
 import pytest
 
 from src.poetore.ui import (
@@ -42,9 +42,26 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
         assert not window.trade_preset_combo.isVisible()
         assert int(window.winId()) == obs_window_id
 
+        # ホットキー受付直後に毎回走る表示サイズ反映では、検索結果が完成する
+        # まで30pxの待機バーから拡大しない。
+        window.apply_result_display_size()
+        qapp.processEvents()
+        assert window.height() == 30
+        assert window._title_bar._obs_title_label.isVisible()
+        assert window._obs_content.isHidden()
+
+        # アイテム解析でMod行が組み上がり、高さが再計算されても待機バーの
+        # 実サイズは変えず、展開予定サイズだけを更新する。
+        window.mod_filter_tree.addTopLevelItem(QTreeWidgetItem(["", "", "Explicit", "Test mod"]))
+        window._adjust_window_height_to_mod_rows()
+        qapp.processEvents()
+        assert window.height() == 30
+        assert window._obs_expanded_size.height() > 30
+
         window.show_at_context(activate=False)
         qapp.processEvents()
-        assert window.height() == expanded_height
+        assert window.height() == window._obs_expanded_size.height()
+        assert window.height() > 30
         assert window._title_bar._obs_title_label.isHidden()
         assert not window._title_bar._expanded_controls.isHidden()
         assert not window._obs_content.isHidden()
