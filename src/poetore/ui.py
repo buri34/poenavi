@@ -1710,8 +1710,9 @@ class PoetoreWindow(QWidget):
             QPushButton#cycleToggle {
                 background: rgba(28, 83, 73, 210);
                 color: #E6ECEA;
-                border: none;
-                min-width: 112px;
+                border: 1px solid #65FFCA;
+                padding: 3px 7px;
+                min-height: __FILTER_CHIP_MIN_HEIGHT__px;
                 font-weight: 700;
             }
             QPushButton#cycleToggle[alert="true"] { color: #ff5757; }
@@ -1925,6 +1926,9 @@ class PoetoreWindow(QWidget):
             "padding: 5px 9px;",
             f"padding: {profile['button_v_padding']}px "
             f"{profile['button_h_padding']}px;",
+        )
+        style = style.replace(
+            "__FILTER_CHIP_MIN_HEIGHT__", str(profile["font"] + 3)
         )
         style = style.replace(
             "__COMPACT_ACTION_FONT__", str(profile["mod_value_font"])
