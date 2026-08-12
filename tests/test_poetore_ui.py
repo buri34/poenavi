@@ -4154,12 +4154,11 @@ def test_cycle_state_chips_match_regular_filter_chip_height(
             window.mirrored_combo,
             window.split_combo,
         )
-        regular_height = window.gem_variant_chip.sizeHint().height()
-
         assert all(chip.objectName() == "cycleToggle" for chip in state_chips)
-        assert regular_height == expected_height
-        assert all(chip.sizeHint().height() == regular_height for chip in state_chips)
-        assert all(chip.height() == expected_height for chip in state_chips)
+        all_chips = (window.gem_variant_chip, *state_chips)
+        assert all(chip.minimumHeight() == expected_height for chip in all_chips)
+        assert all(chip.maximumHeight() == expected_height for chip in all_chips)
+        assert all(chip.height() == expected_height for chip in all_chips)
         assert "QPushButton#cycleToggle {" in window.styleSheet()
         assert "border: 1px solid #65FFCA;\n                padding: 3px 7px;" in window.styleSheet()
         assert f"min-height: {expected_height - 8}px;" in window.styleSheet()
