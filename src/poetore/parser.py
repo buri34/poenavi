@@ -217,6 +217,11 @@ _CATEGORY_HELP_LINES = {
 # 方向語だけでは扱えない不規則な反転表現を明示的に正規化する。
 # 「減少する／低下する」はMetadataIndexの一意照合で汎用的に扱う。
 _DIRECTIONAL_STAT_ALIASES = {
+    # Doppelgänger's Guiseはゲーム内コピーが「低下する」だが、公式Tradeの
+    # 対応statはmore Damage Takenの負数を受け取る「上昇する」表記である。
+    normalize_stat_text(
+        "正気状態の時に受ける物理ダメージおよび混沌ダメージが#%低下する"
+    ): "正気状態の時に受ける物理ダメージおよび混沌ダメージが#%上昇する",
     normalize_stat_text("倒した敵1体ごとに#のマナを失う"):
         "倒した敵1体ごとに#のマナを獲得する",
     normalize_stat_text("プレイヤーの防御力が#%低下する"):
