@@ -685,6 +685,56 @@ def test_infamous_slower_rage_loss_uses_negative_faster_value():
     }]
 
 
+def test_doppelgangers_guise_reduced_damage_taken_resolves_more_stat():
+    item = parse_item_text("""アイテムクラス: 鎧
+レアリティ: ユニーク
+ドッペルゲンガーの装い
+サディストの服
+--------
+品質: +20% (augmented)
+回避力: 564 (augmented)
+エナジーシールド: 122 (augmented)
+--------
+装備要求:
+レベル: 72
+筋力: 72
+器用さ: 103 (unmet)
+知性: 159 (unmet)
+--------
+ソケット: W-B-R-G-W-B
+--------
+アイテムレベル: 86
+--------
+{ ユニークモッド }
+レベル20錯乱スキルを付与する
+{ ユニークモッド — クリティカル }
+狂気状態の時にクリティカル率が58(40-60)%上昇する
+{ ユニークモッド }
+狂気状態の時にプレイヤーのヒットにより倒された敵は破壊される
+{ ユニークモッド — 物理, 混沌 }
+正気状態の時に受ける物理ダメージおよび混沌ダメージが40(40-30)%低下する
+{ ユニークモッド — ライフ }
+正気状態の時にヒットを受けるとライフの10%を1秒かけて自動回復する
+--------
+我らの内には純粋なる悪意の存在がおり、
+我らが己に言い聞かせる嘘によってのみ抑えられている。""")
+    filters = resolve_trade_stat_filters(item)
+    sane = next(
+        row for row in filters if row.stat_id == "explicit.stat_388639924"
+    )
+
+    assert sane.inverted is True
+    assert sane.read_value == 40.0
+    assert unresolved_modifier_warnings(item, filters) == ()
+    query = build_search_query(
+        item, stat_filters=(replace(sane, enabled=True),),
+    )["query"]
+    assert query["stats"][0]["filters"] == [{
+        "id": "explicit.stat_388639924",
+        "value": {"max": -40.0},
+    }]
+
+
 def test_reduced_curse_effect_flask_uses_awakened_positive_minimum():
     item = parse_item_text("""アイテムクラス: ユーティリティフラスコ
 レアリティ: マジック

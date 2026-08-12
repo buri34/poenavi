@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QLabel, QPushButton, QMenu, QFrame, QScrollArea, QSplitter,
                                QSizeGrip, QSizePolicy, QMessageBox, QRadioButton, QButtonGroup, QApplication,
                                QToolTip)
-from PySide6.QtCore import Qt, QTimer, Signal, QRect, QEvent, QEventLoop, QPoint, QSize, QUrl
+from PySide6.QtCore import QObject, Qt, QTimer, Signal, QRect, QEvent, QEventLoop, QPoint, QSize, QUrl
 from PySide6.QtGui import QCursor, QMouseEvent, QIcon, QDesktopServices, QKeySequence
 from src.ui.styles import Styles
 from src.ui.detached_panel import DetachedPanelWindow
@@ -25,9 +25,11 @@ from src.utils.window_focus import (
     is_path_of_exile_window,
 )
 from src.utils.global_hotkeys import (
+    ForegroundSuppressedHotkeyService,
     hotkey_key_name,
     is_hotkey_action_allowed,
     listener_hotkey_name,
+    suppressed_hotkeys_supported,
 )
 from src.utils.chat_command import send_chat_command
 from src.ui.custom_command_settings import custom_command_hotkeys, normalized_custom_commands
@@ -667,6 +669,7 @@ class MainWindow(QMainWindow):
         # ホットキー初期化
         self.hotkey_signal.connect(self.handle_hotkey)
         self.keyboard_listener = None
+        self.suppressed_capture_hotkey = None
         self._gem_shop_search_hold = HoldTrigger()
         self.register_hotkeys()
         
@@ -3047,6 +3050,9 @@ class MainWindow(QMainWindow):
             if self.keyboard_listener:
                 self.keyboard_listener.stop()
                 self.keyboard_listener = None
+            if getattr(self, "suppressed_capture_hotkey", None) is not None:
+                self.suppressed_capture_hotkey.stop()
+                self.suppressed_capture_hotkey = None
             
             hotkeys = self.config.get("hotkeys", {})
             
@@ -3064,6 +3070,8 @@ class MainWindow(QMainWindow):
                     continue
                 key = hotkeys.get(action, default)
                 if key and key != "none":
+                    if action == "poetore_capture" and suppressed_hotkeys_supported():
+                        continue
                     self.hotkey_map[_listener_hotkey_name(key)] = action
             for action, key in custom_command_hotkeys(self.config.get("custom_commands", [])).items():
                 self.hotkey_map[_listener_hotkey_name(key)] = action
@@ -3072,6 +3080,20 @@ class MainWindow(QMainWindow):
             )
             
             print(f"Registering hotkeys: {self.hotkey_map}")
+
+            capture_hotkey = hotkeys.get("poetore_capture", "alt+d")
+            if (
+                suppressed_hotkeys_supported()
+                and is_feature_hotkey_supported("poetore_capture", active_version)
+            ):
+                self.suppressed_capture_hotkey = ForegroundSuppressedHotkeyService(
+                    "poetore_capture", capture_hotkey,
+                    result_window_checker=lambda hwnd: MainWindow._is_poetore_result_window(self, hwnd),
+                    poe_target_getter=lambda: MainWindow._poetore_poe_target(self),
+                    parent=self if isinstance(self, QObject) else None,
+                )
+                self.suppressed_capture_hotkey.command.connect(self.hotkey_signal.emit)
+                self.suppressed_capture_hotkey.start()
             
             pressed_modifiers = set()
             pressed_keys = set()
@@ -3196,6 +3218,16 @@ class MainWindow(QMainWindow):
             
         except Exception as e:
             print(f"Failed to register hotkeys: {e}")
+
+    def _is_poetore_result_window(self, hwnd):
+        try:
+            return int(getattr(self, "_poetore_result_hwnd", 0) or 0) == int(hwnd)
+        except (TypeError, ValueError):
+            return False
+
+    def _poetore_poe_target(self):
+        window = getattr(self, "_poetore_window", None)
+        return getattr(window, "_poe_window_hwnd", None) if window is not None else None
 
     def handle_hotkey(self, command):
         print(f"[HOTKEY DEBUG] handle command={command} search_in_progress={getattr(self, '_search_paste_in_progress', False)}")
@@ -4834,6 +4866,9 @@ class MainWindow(QMainWindow):
         keyboard_listener = getattr(self, "keyboard_listener", None)
         if keyboard_listener:
             keyboard_listener.stop()
+        suppressed_capture_hotkey = getattr(self, "suppressed_capture_hotkey", None)
+        if suppressed_capture_hotkey is not None:
+            suppressed_capture_hotkey.stop()
         log_watcher = getattr(self, "log_watcher", None)
         if log_watcher is not None:
             log_watcher.stop()

@@ -90,6 +90,18 @@ _INFLUENCE_CHIPS = {
     "exarch": ("Exarch", None, "searing_item"),
 }
 
+_HEIST_JOB_LABELS = {
+    "property.heist_lockpicking": "錠前破り",
+    "property.heist_brute_force": "怪力",
+    "property.heist_perception": "知覚能力",
+    "property.heist_demolition": "爆破",
+    "property.heist_counter_thaumaturgy": "対魔術",
+    "property.heist_trap_disarmament": "罠解除",
+    "property.heist_agility": "敏捷性",
+    "property.heist_deception": "欺瞞",
+    "property.heist_engineering": "工作",
+}
+
 _MOD_COLUMN_CHECK = 0
 _MOD_COLUMN_KIND = 1
 _MOD_COLUMN_TIER = 2
@@ -728,6 +740,7 @@ class _NumericFilterChip(QFrame):
         self.minimum_edit = QLineEdit()
         self.minimum_edit.setObjectName("numericFilterEdit")
         self.minimum_edit.setValidator(QIntValidator(minimum, maximum, self.minimum_edit))
+        self.minimum_edit.setProperty("wheelStepNumeric", True)
         self.minimum_edit.setAlignment(Qt.AlignCenter)
         self.minimum_edit.setFixedWidth(30)
         self.minimum_edit.textEdited.connect(lambda _text: self.setActive(True))
@@ -736,6 +749,7 @@ class _NumericFilterChip(QFrame):
         self.maximum_edit = QLineEdit()
         self.maximum_edit.setObjectName("numericFilterEdit")
         self.maximum_edit.setValidator(QIntValidator(minimum, maximum, self.maximum_edit))
+        self.maximum_edit.setProperty("wheelStepNumeric", True)
         self.maximum_edit.setAlignment(Qt.AlignCenter)
         self.maximum_edit.setFixedWidth(30)
         self.maximum_edit.textEdited.connect(lambda _text: self.setActive(True))
@@ -751,6 +765,10 @@ class _NumericFilterChip(QFrame):
         self.minimum_edit.setText("" if minimum is None else f"{minimum:g}")
         self.maximum_edit.setText("" if maximum is None else f"{maximum:g}")
         self.setRangeVisible(maximum is not None)
+
+    def setLabel(self, label: str):
+        self._label = str(label)
+        self.setActive(self._active)
 
     def values(self) -> tuple[float | None, float | None]:
         minimum = self.minimum_edit.text().strip()
@@ -1227,6 +1245,7 @@ class PoetoreWindow(QWidget):
         self.item_level_edit = QLineEdit()
         self.item_level_edit.setObjectName("itemLevelEdit")
         self.item_level_edit.setValidator(QIntValidator(1, 100, self.item_level_edit))
+        self.item_level_edit.setProperty("wheelStepNumeric", True)
         self.item_level_edit.setAlignment(Qt.AlignCenter)
         self.item_level_edit.setFixedWidth(34)
         self.item_level_edit.setToolTip("検索対象の最小アイテムレベル（1～100）")
@@ -1238,6 +1257,7 @@ class PoetoreWindow(QWidget):
         self.item_level_max_edit = QLineEdit()
         self.item_level_max_edit.setObjectName("itemLevelMaxEdit")
         self.item_level_max_edit.setValidator(QIntValidator(1, 100, self.item_level_max_edit))
+        self.item_level_max_edit.setProperty("wheelStepNumeric", True)
         self.item_level_max_edit.setAlignment(Qt.AlignCenter)
         self.item_level_max_edit.setFixedWidth(34)
         self.item_level_max_edit.setToolTip("検索対象の最大アイテムレベル（1～100）")
@@ -1258,6 +1278,7 @@ class PoetoreWindow(QWidget):
         self.gem_level_edit = QLineEdit()
         self.gem_level_edit.setObjectName("gemLevelEdit")
         self.gem_level_edit.setValidator(QIntValidator(1, 40, self.gem_level_edit))
+        self.gem_level_edit.setProperty("wheelStepNumeric", True)
         self.gem_level_edit.setAlignment(Qt.AlignCenter)
         self.gem_level_edit.setFixedWidth(30)
         self.gem_level_edit.textEdited.connect(self._enable_gem_level_filter)
@@ -1276,6 +1297,7 @@ class PoetoreWindow(QWidget):
         self.gem_quality_edit = QLineEdit()
         self.gem_quality_edit.setObjectName("gemQualityEdit")
         self.gem_quality_edit.setValidator(QIntValidator(0, 100, self.gem_quality_edit))
+        self.gem_quality_edit.setProperty("wheelStepNumeric", True)
         self.gem_quality_edit.setAlignment(Qt.AlignCenter)
         self.gem_quality_edit.setFixedWidth(30)
         self.gem_quality_edit.textEdited.connect(self._enable_gem_quality_filter)
@@ -1312,6 +1334,7 @@ class PoetoreWindow(QWidget):
         self.links_edit = QLineEdit()
         self.links_edit.setObjectName("linksEdit")
         self.links_edit.setValidator(QIntValidator(1, 6, self.links_edit))
+        self.links_edit.setProperty("wheelStepNumeric", True)
         self.links_edit.setAlignment(Qt.AlignCenter)
         self.links_edit.setFixedWidth(24)
         self.links_edit.textEdited.connect(self._enable_links_filter)
@@ -1483,6 +1506,8 @@ class PoetoreWindow(QWidget):
         # 行選択は使わない。Mod文章クリックはチェック切替だけを行い、
         # セルウィジェット（最小・最大欄）と選択背景の見た目が分離しないようにする。
         self.mod_filter_tree.setSelectionMode(QAbstractItemView.NoSelection)
+        self.mod_filter_tree.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.mod_filter_tree.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
         self.mod_filter_tree.setMinimumHeight(profile["mod_height"])
         mod_header = self.mod_filter_tree.header()
         mod_header.hide()
@@ -2310,6 +2335,26 @@ class PoetoreWindow(QWidget):
                     height += max(child.sizeHint(0).height(), default_row_height)
         return height
 
+    def _fixed_layout_height(self, profile: dict, price_height: int) -> int:
+        """Return the real height required outside the two flexible trees.
+
+        The display profile predates several action rows.  Deriving this value
+        from the current Qt layout prevents those rows from being squeezed on
+        top of the final Mod row when the screen is short.
+        """
+        for layout in (
+            self.layout(), self._panel.layout(), self._obs_content.layout(),
+        ):
+            if layout is not None:
+                layout.activate()
+        measured = (
+            self.minimumSizeHint().height()
+            - self.mod_filter_tree.minimumHeight()
+            - self.price_list.minimumHeight()
+        )
+        profile_fixed = profile["height"] - profile["mod_height"] - price_height
+        return max(profile_fixed, measured)
+
     def _adjust_window_height_to_mod_rows(self):
         """通常候補が収まる分だけ縦へ拡張し、画面超過時だけスクロールを残す。"""
         if not hasattr(self, "mod_filter_tree"):
@@ -2334,8 +2379,9 @@ class PoetoreWindow(QWidget):
                 price_height
                 - self._scaled_display_value(_RELATED_ITEMS_PRICE_HEIGHT_REDUCTION),
             )
+        fixed_height = self._fixed_layout_height(profile, price_height)
         mod_height, price_height, window_height = _auto_mod_layout_sizes(
-            profile_height=profile["height"],
+            profile_height=fixed_height + profile["mod_height"] + price_height,
             profile_mod_height=profile["mod_height"],
             profile_price_height=price_height,
             minimum_price_height=self._scaled_display_value(120),
@@ -2343,6 +2389,13 @@ class PoetoreWindow(QWidget):
             available_height=available.height(),
             minimum_height=profile["minimum_height"],
         )
+        if content_height > mod_height and not self.mod_filter_tree.isHidden():
+            # 画面高が足りない時だけ、末尾に半端な行を見せず一覧内スクロールへ
+            # 切り替える。セルWidgetが直下の操作ボタンへ重なって見えるのを防ぐ。
+            frame_height = self.mod_filter_tree.frameWidth() * 2 + 4
+            row_height = self._scaled_display_value(_MOD_ROW_HEIGHT)
+            visible_rows = max(2, (mod_height - frame_height) // row_height)
+            mod_height = frame_height + visible_rows * row_height
         self.mod_filter_tree.setMinimumHeight(mod_height)
         self.mod_filter_tree.setMaximumHeight(mod_height)
         self.price_list.setMinimumHeight(price_height)
@@ -2581,6 +2634,9 @@ class PoetoreWindow(QWidget):
                 except ValueError:
                     pass
                 else:
+                    validator = watched.validator()
+                    if isinstance(validator, QIntValidator):
+                        value = max(validator.bottom(), min(validator.top(), value))
                     watched.setText(f"{value:g}")
                     self._mark_search_dirty()
                     event.accept()
@@ -3244,6 +3300,21 @@ class PoetoreWindow(QWidget):
         if item is not None:
             self._queue_poe_ninja_price(item)
         super().showEvent(event)
+        self._notify_native_hwnd_changed()
+        # Qt may recreate the native window immediately after showEvent,
+        # especially after hide/show or a window-flag change. Refresh once
+        # more after the event queue settles so the owner never keeps the
+        # previous HWND.
+        QTimer.singleShot(0, self._notify_native_hwnd_changed)
+
+    def _notify_native_hwnd_changed(self):
+        callback = getattr(self, "_native_hwnd_changed", None)
+        if callback is None:
+            return
+        try:
+            callback(int(self.winId()))
+        except (RuntimeError, TypeError, ValueError):
+            callback(None)
 
     def event(self, event):
         if (
@@ -4611,6 +4682,10 @@ class PoetoreWindow(QWidget):
         self._heist_job_row = job
         self.heist_job_chip.setVisible(job is not None)
         if job is not None:
+            job_name = _HEIST_JOB_LABELS.get(job.stat_id)
+            self.heist_job_chip.setLabel(
+                f"Job Lv（{job_name}）" if job_name else "Job Lv"
+            )
             self.heist_job_chip.setValues(job.min_value, job.max_value)
             self.heist_job_chip.setActive(job.enabled)
         target = by_id.get("property.heist_objective_value")
@@ -5386,6 +5461,15 @@ def prepare_poetore_window(owner):
             save_config=ConfigManager.save_config if isinstance(app_config, dict) else None,
         )
         owner._poetore_window = window
+        # Qt may recreate a native HWND after close/show or window-flag changes.
+        # Refresh it on every show, always from the GUI thread.
+        window._native_hwnd_changed = lambda hwnd: setattr(
+            owner, "_poetore_result_hwnd", hwnd,
+        )
+        try:
+            owner._poetore_result_hwnd = int(window.winId())
+        except (RuntimeError, TypeError, ValueError):
+            owner._poetore_result_hwnd = None
     return window
 
 

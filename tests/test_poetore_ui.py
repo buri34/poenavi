@@ -8,12 +8,13 @@ from pathlib import Path
 from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QKeyEvent, QMouseEvent, QPalette, QPixmap, QWheelEvent
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QTreeWidgetItem, QWidget
+from PySide6.QtWidgets import QApplication, QAbstractItemView, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QTreeWidgetItem, QWidget
 import pytest
 
 from src.poetore.ui import (
     PoetoreWindow, _ACTION_CLUSTER_HORIZONTAL_GAP, _ACTION_CLUSTER_VERTICAL_GAP,
     _MOD_COLUMN_CHECK, _MOD_COLUMN_KIND, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
+    _MOD_ROW_HEIGHT,
     _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
     show_poetore_window, _price_currency_icon_filename,
 )
@@ -652,6 +653,26 @@ def test_prepare_poetore_window_has_no_trade_api_side_effect(qapp):
         window.close()
 
 
+def test_poetore_window_refreshes_owner_hwnd_each_time_it_is_shown(qapp):
+    owner = Mock()
+    owner._poetore_window = None
+    owner.config = {}
+    window = prepare_poetore_window(owner)
+    try:
+        owner._poetore_result_hwnd = -1
+        window.show()
+        qapp.processEvents()
+        assert owner._poetore_result_hwnd == int(window.winId())
+
+        owner._poetore_result_hwnd = -1
+        window.hide()
+        window.show()
+        qapp.processEvents()
+        assert owner._poetore_result_hwnd == int(window.winId())
+    finally:
+        window.close()
+
+
 def test_329_single_copy_is_parsed_without_normal_and_detailed_merge(qapp):
     copied = """アイテムクラス: 靴
 レアリティ: ユニーク
@@ -1144,6 +1165,62 @@ def test_mod_value_mouse_wheel_changes_nonempty_value_by_one(
         assert editor.text() == expected
         assert handled is bool(start)
         assert window._search_dirty is bool(start)
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(
+    "editor_path",
+    (
+        "links_edit",
+        "item_level_edit",
+        "gem_level_edit",
+        "gem_quality_edit",
+        "map_tier_chip.minimum_edit",
+        "base_percentile_chip.minimum_edit",
+        "area_level_chip.minimum_edit",
+        "heist_wings_chip.minimum_edit",
+        "heist_job_chip.minimum_edit",
+        "cluster_passives_chip.minimum_edit",
+    ),
+)
+def test_search_chip_numeric_editors_support_mouse_wheel(qapp, editor_path):
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            "Rings", "Rare", "Test Ring", "Ruby Ring", "accessory",
+            raw_text="test-ring",
+        )
+        window._has_searched_current_item = True
+        editor = window
+        for attribute in editor_path.split("."):
+            editor = getattr(editor, attribute)
+        editor.setText("2")
+        window._search_dirty = False
+        event = QWheelEvent(
+            QPointF(1, 1), QPointF(1, 1), QPoint(0, 0), QPoint(0, 120),
+            Qt.NoButton, Qt.NoModifier, Qt.ScrollUpdate, False,
+        )
+
+        assert window.eventFilter(editor, event)
+        assert editor.text() == "3"
+        assert window._search_dirty
+    finally:
+        window.close()
+
+
+def test_search_chip_mouse_wheel_respects_numeric_editor_limits(qapp):
+    window = PoetoreWindow()
+    try:
+        editor = window.links_edit
+        editor.setText("6")
+        event = QWheelEvent(
+            QPointF(1, 1), QPointF(1, 1), QPoint(0, 0), QPoint(0, 120),
+            Qt.NoButton, Qt.NoModifier, Qt.ScrollUpdate, False,
+        )
+
+        assert window.eventFilter(editor, event)
+        assert editor.text() == "6"
     finally:
         window.close()
 
@@ -3202,6 +3279,67 @@ def test_hidden_window_still_sizes_repeated_item_mod_rows_to_content(qapp):
         window.close()
 
 
+def test_overflowing_mod_rows_use_complete_scrollable_rows(qapp, monkeypatch):
+    window = PoetoreWindow()
+    try:
+        filters = tuple(
+            TradeStatFilter(
+                f"explicit.stat_{index}", f"Nebulis相当Mod {index}", index,
+                "implicit" if index < 4 else "unique", True,
+            )
+            for index in range(12)
+        )
+        monkeypatch.setattr(window, "_visible_mod_content_height", lambda: 900)
+        with patch(
+            "src.poetore.ui._auto_mod_layout_sizes",
+            return_value=(317, 120, 760),
+        ):
+            window._populate_stat_filters(filters)
+
+        frame_height = window.mod_filter_tree.frameWidth() * 2 + 4
+        row_height = window._scaled_display_value(_MOD_ROW_HEIGHT)
+        assert (window.mod_filter_tree.maximumHeight() - frame_height) % row_height == 0
+        assert window.mod_filter_tree.maximumHeight() < 317
+        assert window.mod_filter_tree.verticalScrollBarPolicy() == Qt.ScrollBarAsNeeded
+        assert window.mod_filter_tree.verticalScrollMode() == QAbstractItemView.ScrollPerItem
+    finally:
+        window.close()
+
+
+def test_overflowing_mod_rows_reserve_real_action_area(qapp, monkeypatch):
+    window = PoetoreWindow()
+    try:
+        window.show()
+        # Reproduce a fixed action area taller than the original display
+        # profile anticipated. Nebulis exposed this after action controls grew.
+        window.price_status.setMinimumHeight(70)
+        filters = tuple(
+            TradeStatFilter(
+                f"explicit.stat_{index}", f"Nebulis実表示Mod {index}", index,
+                "implicit" if index < 4 else "unique", True,
+            )
+            for index in range(12)
+        )
+        monkeypatch.setattr(window, "_visible_mod_content_height", lambda: 900)
+
+        with patch(
+            "src.poetore.ui._auto_mod_layout_sizes",
+            wraps=_auto_mod_layout_sizes,
+        ) as layout_sizes:
+            window._populate_stat_filters(filters)
+        qapp.processEvents()
+
+        assert layout_sizes.call_args.kwargs["profile_height"] > 900
+        tree_bottom = (
+            window.mod_filter_tree.mapTo(window, QPoint(0, 0)).y()
+            + window.mod_filter_tree.height()
+        )
+        actions_top = window.mod_conditions_toggle.mapTo(window, QPoint(0, 0)).y()
+        assert tree_bottom <= actions_top
+    finally:
+        window.close()
+
+
 def test_mod_condition_checks_toggle_all_without_changing_item_level(qapp):
     window = PoetoreWindow()
     try:
@@ -3628,6 +3766,7 @@ Contract: Underbelly
         assert not window.heist_job_chip.isHidden()
         assert window.heist_job_chip.values() == (1.0, None)
         assert window.heist_job_chip.isActive()
+        assert "Job Lv（工作）" in window.heist_job_chip.toggle.text()
         assert window.area_level_chip.values() == (49.0, None)
         assert window.mod_warning.isHidden()
         rows = [
@@ -3635,6 +3774,34 @@ Contract: Underbelly
             for index in range(window.mod_filter_tree.topLevelItemCount())
         ]
         assert rows == []
+    finally:
+        window.close()
+
+
+def test_japanese_contract_required_deception_is_visible_in_job_chip(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 依頼書
+レアリティ: レア
+崇高な宣誓書
+依頼書: 研究所
+--------
+依頼人: 真夜中の修理人
+ハイスト目標: イノセンスの血 (貴重)
+エリアレベル: 83
+必要ジョブ 欺瞞 (レベル 1 (unmet))
+アイテム数量: +52% (augmented)
+--------
+アイテムレベル: 83
+""")
+        window.parse_current_text()
+
+        assert not window.heist_job_chip.isHidden()
+        assert window.heist_job_chip.values() == (1.0, None)
+        assert "Job Lv（欺瞞）" in window.heist_job_chip.toggle.text()
+        selected = window._selected_special_chip_filters()
+        deception = next(row for row in selected if row.stat_id == "property.heist_deception")
+        assert deception.min_value == 1.0
     finally:
         window.close()
 

@@ -58,6 +58,9 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert settings["hotkeys"]["monastery"] == "F12"
     assert settings["hotkeys"]["poetore_capture"] == "alt+d"
     assert settings["hotkeys"]["poetore_auto_hide"] == "ctrl+d"
+    assert isinstance(dialog.capture_hotkey, AutoHideHotkeyWidget)
+    assert dialog.capture_hotkey.alt_button.isChecked()
+    assert dialog.capture_hotkey.key_button.key_text == "d"
     assert isinstance(dialog.auto_hide_hotkey, AutoHideHotkeyWidget)
     assert dialog.auto_hide_hotkey.ctrl_button.isChecked()
     assert dialog.auto_hide_hotkey.key_button.key_text == "d"
@@ -127,6 +130,21 @@ def test_auto_hide_hotkey_uses_selected_modifier_and_plain_trigger_key():
 
     assert dialog.auto_hide_hotkey.key_button.key_text == "R"
     assert dialog.get_settings()["hotkeys"]["poetore_auto_hide"] == "alt+R"
+    dialog.close()
+
+
+def test_capture_hotkey_requires_ctrl_or_alt_and_plain_trigger_key():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(
+        current_config={"hotkeys": {"poetore_capture": "Ctrl+Shift+P"}}
+    )
+    assert dialog.capture_hotkey.ctrl_button.isChecked()
+    assert dialog.capture_hotkey.key_button.key_text == "P"
+
+    dialog.capture_hotkey.set_modifier("alt")
+    dialog.capture_hotkey.set_key("Q")
+
+    assert dialog.get_settings()["hotkeys"]["poetore_capture"] == "alt+Q"
     dialog.close()
 
 
@@ -303,9 +321,9 @@ def test_poetore_settings_rejects_duplicate_common_hotkeys():
     dialog = PoetoreSettingsDialog(
         current_config={
             "hotkeys": {
-                "exit": "F5",
+                "exit": "ctrl+F5",
                 "monastery": "F12",
-                "poetore_capture": "F5",
+                "poetore_capture": "ctrl+F5",
                 "cheat_sheets_toggle": "shift+space",
             }
         }
