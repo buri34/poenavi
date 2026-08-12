@@ -2225,6 +2225,26 @@ class PoetoreWindow(QWidget):
                     height += max(child.sizeHint(0).height(), default_row_height)
         return height
 
+    def _fixed_layout_height(self, profile: dict, price_height: int) -> int:
+        """Return the real height required outside the two flexible trees.
+
+        The display profile predates several action rows.  Deriving this value
+        from the current Qt layout prevents those rows from being squeezed on
+        top of the final Mod row when the screen is short.
+        """
+        for layout in (
+            self.layout(), self._panel.layout(), self._obs_content.layout(),
+        ):
+            if layout is not None:
+                layout.activate()
+        measured = (
+            self.minimumSizeHint().height()
+            - self.mod_filter_tree.minimumHeight()
+            - self.price_list.minimumHeight()
+        )
+        profile_fixed = profile["height"] - profile["mod_height"] - price_height
+        return max(profile_fixed, measured)
+
     def _adjust_window_height_to_mod_rows(self):
         """通常候補が収まる分だけ縦へ拡張し、画面超過時だけスクロールを残す。"""
         if not hasattr(self, "mod_filter_tree"):
@@ -2249,8 +2269,9 @@ class PoetoreWindow(QWidget):
                 price_height
                 - self._scaled_display_value(_RELATED_ITEMS_PRICE_HEIGHT_REDUCTION),
             )
+        fixed_height = self._fixed_layout_height(profile, price_height)
         mod_height, price_height, window_height = _auto_mod_layout_sizes(
-            profile_height=profile["height"],
+            profile_height=fixed_height + profile["mod_height"] + price_height,
             profile_mod_height=profile["mod_height"],
             profile_price_height=price_height,
             minimum_price_height=self._scaled_display_value(120),

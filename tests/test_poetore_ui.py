@@ -3040,6 +3040,40 @@ def test_overflowing_mod_rows_use_complete_scrollable_rows(qapp, monkeypatch):
         window.close()
 
 
+def test_overflowing_mod_rows_reserve_real_action_area(qapp, monkeypatch):
+    window = PoetoreWindow()
+    try:
+        window.show()
+        # Reproduce a fixed action area taller than the original display
+        # profile anticipated. Nebulis exposed this after action controls grew.
+        window.price_status.setMinimumHeight(70)
+        filters = tuple(
+            TradeStatFilter(
+                f"explicit.stat_{index}", f"Nebulis実表示Mod {index}", index,
+                "implicit" if index < 4 else "unique", True,
+            )
+            for index in range(12)
+        )
+        monkeypatch.setattr(window, "_visible_mod_content_height", lambda: 900)
+
+        with patch(
+            "src.poetore.ui._auto_mod_layout_sizes",
+            wraps=_auto_mod_layout_sizes,
+        ) as layout_sizes:
+            window._populate_stat_filters(filters)
+        qapp.processEvents()
+
+        assert layout_sizes.call_args.kwargs["profile_height"] > 900
+        tree_bottom = (
+            window.mod_filter_tree.mapTo(window, QPoint(0, 0)).y()
+            + window.mod_filter_tree.height()
+        )
+        actions_top = window.mod_conditions_toggle.mapTo(window, QPoint(0, 0)).y()
+        assert tree_bottom <= actions_top
+    finally:
+        window.close()
+
+
 def test_mod_condition_checks_toggle_all_without_changing_item_level(qapp):
     window = PoetoreWindow()
     try:
