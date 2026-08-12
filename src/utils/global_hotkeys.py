@@ -223,6 +223,9 @@ class ForegroundSuppressedHotkeyService(QObject):
         super().__init__(parent)
         self._action = action
         self._hotkey = str(hotkey or "").strip()
+        self._hotkey_parts = tuple(
+            part.strip() for part in self._hotkey.split("+") if part.strip()
+        )
         self._keyboard_backend = keyboard_backend
         self._foreground_getter = foreground_getter or get_foreground_window
         self._poe_window_checker = poe_window_checker or is_path_of_exile_window
@@ -343,12 +346,6 @@ class ForegroundSuppressedHotkeyService(QObject):
     def _begin_release_watch(self):
         if not self._running or not self._waiting_for_release:
             return
-        focus_target = self._pending_focus_target
-        self._pending_focus_target = None
-        if focus_target is not None and not self._focus_target(focus_target):
-            self._waiting_for_release = False
-            return
-        self.command.emit(self._action)
         self._timer.start()
 
     def _poll_release(self):
@@ -356,7 +353,9 @@ class ForegroundSuppressedHotkeyService(QObject):
             self._timer.stop()
             return
         try:
-            still_pressed = bool(self._backend().is_pressed(self._hotkey))
+            still_pressed = any(
+                self._backend().is_pressed(part) for part in self._hotkey_parts
+            )
         except Exception as exc:
             print(f"Failed to inspect suppressed hotkey {self._hotkey}: {exc}")
             still_pressed = False
@@ -364,5 +363,13 @@ class ForegroundSuppressedHotkeyService(QObject):
             return
         self._timer.stop()
         self._waiting_for_release = False
-        if self._running:
-            self.command.emit(f"{self._action}_released")
+        focus_target = self._pending_focus_target
+        self._pending_focus_target = None
+        if not self._running:
+            return
+        # Altなどの実キーを離してから前面化する。押下中にfocus_window()の
+        # Altフォールバックが重なると、Windows側で修飾キー状態が残る。
+        if focus_target is not None and not self._focus_target(focus_target):
+            return
+        self.command.emit(self._action)
+        self.command.emit(f"{self._action}_released")

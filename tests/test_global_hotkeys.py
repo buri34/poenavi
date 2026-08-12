@@ -30,6 +30,7 @@ class FakeKeyboardBackend:
         self.registrations = []
         self.removed = []
         self.pressed = False
+        self.pressed_keys = set()
 
     def add_hotkey(self, hotkey, callback, **options):
         registration = SimpleNamespace(
@@ -41,8 +42,8 @@ class FakeKeyboardBackend:
     def remove_hotkey(self, registration):
         self.removed.append(registration)
 
-    def is_pressed(self, _hotkey):
-        return self.pressed
+    def is_pressed(self, hotkey):
+        return self.pressed or hotkey in self.pressed_keys
 
 
 def test_ctrl_control_character_is_normalized_to_letter():
@@ -332,9 +333,9 @@ def test_suppressed_hotkey_blocks_in_poe_and_dispatches_after_release():
 
     assert backend.removed == []
     assert service.is_registered
-    assert emitted == ["poetore_capture"]
+    assert emitted == []
     service._poll_release()
-    assert emitted == ["poetore_capture"]
+    assert emitted == []
     backend.pressed = False
     service._poll_release()
     assert emitted == ["poetore_capture", "poetore_capture_released"]
@@ -389,10 +390,44 @@ def test_suppressed_hotkey_focuses_poe_from_result_window_before_dispatch():
     service.command.connect(emitted.append)
     service.start()
 
+    backend.pressed = True
     assert backend.registrations[-1].callback() is False
-
+    assert focused == []
+    assert emitted == []
+    backend.pressed = False
+    service._poll_release()
     assert focused == [10]
-    assert emitted == ["poetore_capture"]
+    assert emitted == ["poetore_capture", "poetore_capture_released"]
+    service.stop()
+
+
+def test_suppressed_hotkey_waits_until_every_modifier_is_released():
+    backend = FakeKeyboardBackend()
+    focused = []
+    service = ForegroundSuppressedHotkeyService(
+        "poetore_capture", "alt+d",
+        keyboard_backend=backend,
+        foreground_getter=lambda: 20,
+        poe_window_checker=lambda hwnd: hwnd == 10,
+        result_window_checker=lambda hwnd: hwnd == 20,
+        poe_target_getter=lambda: 10,
+        focus_target=lambda hwnd: focused.append(hwnd) or True,
+        platform="win32",
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+
+    backend.pressed_keys = {"alt", "d"}
+    assert backend.registrations[-1].callback() is False
+    backend.pressed_keys = {"alt"}
+    service._poll_release()
+    assert focused == []
+    assert emitted == []
+    backend.pressed_keys.clear()
+    service._poll_release()
+    assert focused == [10]
+    assert emitted == ["poetore_capture", "poetore_capture_released"]
     service.stop()
 
 
@@ -432,7 +467,10 @@ def test_suppressed_hotkey_does_not_dispatch_when_poe_focus_fails():
     service.command.connect(emitted.append)
     service.start()
 
+    backend.pressed = True
     assert backend.registrations[-1].callback() is False
+    backend.pressed = False
+    service._poll_release()
     assert emitted == []
     assert service._waiting_for_release is False
     service.stop()
