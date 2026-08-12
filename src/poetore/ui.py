@@ -910,6 +910,8 @@ class PoetoreWindow(QWidget):
         self._auto_hide_hotkey_released = False
         self._auto_hide_origin: QPoint | None = None
         self._auto_hide_interactive = False
+        self._obs_streaming_mode = False
+        self._obs_collapsed = False
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -918,7 +920,8 @@ class PoetoreWindow(QWidget):
         panel_layout = QVBoxLayout(self._panel)
         panel_layout.setContentsMargins(10, 5, 10, 9)
         panel_layout.setSpacing(7)
-        panel_layout.addWidget(_PoetoreTitleBar(self))
+        self._title_bar = _PoetoreTitleBar(self)
+        panel_layout.addWidget(self._title_bar)
         layout.addWidget(self._panel)
 
         self.item_header = QFrame()
@@ -2445,7 +2448,7 @@ class PoetoreWindow(QWidget):
             return
         if self.isVisible() and old_belongs and not new_belongs:
             if new is not None:
-                self.close()
+                self._dismiss_result()
                 return
             # Popupを閉じる瞬間は一時的にnew=Noneになる。次のイベントループで
             # 実際のフォーカス先がパネル外かを確定する。
@@ -2461,7 +2464,7 @@ class PoetoreWindow(QWidget):
             return
         if app.activeWindow() is self:
             return
-        self.close()
+        self._dismiss_result()
 
     def _widget_belongs_to_panel(self, widget) -> bool:
         """QComboBoxの別ウィンドウPopupも、親コンボ経由でパネル内とみなす。"""
@@ -2906,6 +2909,81 @@ class PoetoreWindow(QWidget):
             self._focus_signal_connected = False
         super().closeEvent(event)
 
+    def set_obs_streaming_mode(self, enabled: bool):
+        """Keep one stable HWND alive and collapse it to its title bar for OBS."""
+        enabled = bool(enabled)
+        self._obs_streaming_mode = enabled
+        self.setWindowTitle("ぽえとれ - OBS配信用" if enabled else "ぽえとれ")
+        if enabled:
+            self._restore_obs_geometry()
+            self.collapse_for_obs()
+            self.show()
+        elif self.isVisible():
+            self._obs_collapsed = False
+            self.setMaximumHeight(16777215)
+            self.hide()
+
+    def collapse_for_obs(self):
+        if not getattr(self, "_obs_streaming_mode", False):
+            self.close()
+            return
+        if not getattr(self, "_obs_collapsed", False) and (
+            self.isVisible() or not hasattr(self, "_obs_expanded_size")
+        ):
+            self._obs_expanded_size = self.size()
+        self._obs_collapsed = True
+        collapsed_height = max(34, self._title_bar.sizeHint().height() + 10)
+        self.setMinimumHeight(0)
+        self.setMaximumHeight(collapsed_height)
+        self.resize(self.width(), collapsed_height)
+        self.show()
+        self.raise_()
+        self._persist_obs_geometry()
+
+    def _expand_for_obs(self):
+        if not getattr(self, "_obs_streaming_mode", False):
+            return
+        self._obs_collapsed = False
+        self.setMaximumHeight(16777215)
+        target = getattr(self, "_obs_expanded_size", None)
+        if target is not None:
+            self.resize(target)
+
+    def _dismiss_result(self):
+        if getattr(self, "_obs_streaming_mode", False):
+            self.collapse_for_obs()
+        else:
+            self.close()
+
+    def _obs_config(self):
+        poetore = self._app_config.setdefault("poetore", {})
+        return poetore.setdefault("obs_streaming", {})
+
+    def _restore_obs_geometry(self):
+        geometry = self._obs_config().get("geometry", {})
+        if not isinstance(geometry, dict):
+            return
+        try:
+            if geometry.get("width") and geometry.get("height"):
+                self._obs_expanded_size = QSize(
+                    int(geometry["width"]), int(geometry["height"])
+                )
+            if geometry.get("x") is not None and geometry.get("y") is not None:
+                self.move(int(geometry["x"]), int(geometry["y"]))
+        except (TypeError, ValueError):
+            return
+
+    def _persist_obs_geometry(self):
+        if not getattr(self, "_obs_streaming_mode", False):
+            return
+        size = getattr(self, "_obs_expanded_size", self.size())
+        self._obs_config()["geometry"] = {
+            "x": self.x(), "y": self.y(),
+            "width": size.width(), "height": size.height(),
+        }
+        if self._save_app_config is not None:
+            self._save_app_config(self._app_config)
+
     def capture_from_poe(
         self,
         performance_trace: SearchPerformanceTrace | None = None,
@@ -3134,7 +3212,7 @@ class PoetoreWindow(QWidget):
         """操作可能なぽえとれを閉じ、Alt+D取得元のPoEへ戻る。"""
         target_hwnd = self._poe_window_hwnd
         self._poe_window_hwnd = None
-        self.close()
+        self._dismiss_result()
         if target_hwnd is not None:
             QTimer.singleShot(0, lambda: focus_window(target_hwnd))
 
@@ -3150,8 +3228,11 @@ class PoetoreWindow(QWidget):
             saved_positions.get(placement_side(context))
             if isinstance(saved_positions, dict) else None
         )
-        position = position_from_relative(context, self.size(), saved_position)
-        self.move(position or position_for_context(context, self.size()))
+        if getattr(self, "_obs_streaming_mode", False):
+            self._expand_for_obs()
+        else:
+            position = position_from_relative(context, self.size(), saved_position)
+            self.move(position or position_for_context(context, self.size()))
         self._passive_hotkey_display = not activate
         self.show()
         self.raise_()
@@ -3164,6 +3245,9 @@ class PoetoreWindow(QWidget):
 
     def _persist_manual_result_position(self):
         """タイトルバーのドラッグ終了時だけ、検索元の側へ位置を保存する。"""
+        if getattr(self, "_obs_streaming_mode", False):
+            self._persist_obs_geometry()
+            return
         context = self._placement_context
         if context is None:
             return
@@ -3209,7 +3293,7 @@ class PoetoreWindow(QWidget):
             if self._capture_auto_hide:
                 self._enter_auto_hide_interactive()
         else:
-            self.close()
+            self._dismiss_result()
 
     def _handle_global_mouse_move(self, x: int, y: int):
         """Mirror Awakened's AUTO-HIDE behavior without stealing PoE focus."""
@@ -3231,7 +3315,7 @@ class PoetoreWindow(QWidget):
         if origin is not None and (
             (point.x() - origin.x()) ** 2 + (point.y() - origin.y()) ** 2
         ) >= 40 ** 2:
-            self.close()
+            self._dismiss_result()
 
     def _enter_auto_hide_interactive(self):
         self._passive_hotkey_display = False

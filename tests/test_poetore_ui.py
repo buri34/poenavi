@@ -16,6 +16,55 @@ from src.poetore.ui import (
     _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
     show_poetore_window,
 )
+
+
+def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qapp):
+    config = {"poetore": {"obs_streaming": {"enabled": True, "geometry": {}}}}
+    saved = []
+    window = PoetoreWindow(app_config=config, save_config=lambda value: saved.append(value))
+    try:
+        original_id = int(window.winId())
+        expanded_height = window.height()
+        window.set_obs_streaming_mode(True)
+        qapp.processEvents()
+
+        assert window.isVisible()
+        assert window.windowTitle() == "ぽえとれ - OBS配信用"
+        assert window.height() < expanded_height
+        assert int(window.winId()) == original_id
+
+        window.show_at_context(activate=False)
+        qapp.processEvents()
+        assert window.height() == expanded_height
+        assert int(window.winId()) == original_id
+
+        window._dismiss_result()
+        qapp.processEvents()
+        assert window.isVisible()
+        assert window.height() < expanded_height
+        assert saved
+    finally:
+        window.set_obs_streaming_mode(False)
+        window.close()
+
+
+def test_obs_streaming_mode_restores_saved_position_and_expanded_size(qapp):
+    config = {"poetore": {"obs_streaming": {"enabled": True, "geometry": {
+        "x": 120, "y": 140, "width": 700, "height": 760,
+    }}}}
+    window = PoetoreWindow(app_config=config)
+    try:
+        window.set_obs_streaming_mode(True)
+        qapp.processEvents()
+        assert window.pos() == QPoint(120, 140)
+        assert window._obs_expanded_size == QSize(700, 760)
+        window.show_at_context(activate=False)
+        qapp.processEvents()
+        assert not window._obs_collapsed
+        assert window.height() > window._title_bar.height()
+    finally:
+        window.set_obs_streaming_mode(False)
+        window.close()
 from src.poetore.window_position import PlacementContext, position_for_context
 from src.poetore.trade import (
     PRESET_BASE, PRESET_FINISHED, PriceListing, PriceResult, TradeLeague, TradeStatFilter,
