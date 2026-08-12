@@ -1110,6 +1110,62 @@ def test_mod_value_mouse_wheel_changes_nonempty_value_by_one(
         window.close()
 
 
+@pytest.mark.parametrize(
+    "editor_path",
+    (
+        "links_edit",
+        "item_level_edit",
+        "gem_level_edit",
+        "gem_quality_edit",
+        "map_tier_chip.minimum_edit",
+        "base_percentile_chip.minimum_edit",
+        "area_level_chip.minimum_edit",
+        "heist_wings_chip.minimum_edit",
+        "heist_job_chip.minimum_edit",
+        "cluster_passives_chip.minimum_edit",
+    ),
+)
+def test_search_chip_numeric_editors_support_mouse_wheel(qapp, editor_path):
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            "Rings", "Rare", "Test Ring", "Ruby Ring", "accessory",
+            raw_text="test-ring",
+        )
+        window._has_searched_current_item = True
+        editor = window
+        for attribute in editor_path.split("."):
+            editor = getattr(editor, attribute)
+        editor.setText("2")
+        window._search_dirty = False
+        event = QWheelEvent(
+            QPointF(1, 1), QPointF(1, 1), QPoint(0, 0), QPoint(0, 120),
+            Qt.NoButton, Qt.NoModifier, Qt.ScrollUpdate, False,
+        )
+
+        assert window.eventFilter(editor, event)
+        assert editor.text() == "3"
+        assert window._search_dirty
+    finally:
+        window.close()
+
+
+def test_search_chip_mouse_wheel_respects_numeric_editor_limits(qapp):
+    window = PoetoreWindow()
+    try:
+        editor = window.links_edit
+        editor.setText("6")
+        event = QWheelEvent(
+            QPointF(1, 1), QPointF(1, 1), QPoint(0, 0), QPoint(0, 120),
+            Qt.NoButton, Qt.NoModifier, Qt.ScrollUpdate, False,
+        )
+
+        assert window.eventFilter(editor, event)
+        assert editor.text() == "6"
+    finally:
+        window.close()
+
+
 def test_hovering_search_button_researches_when_conditions_changed(qapp):
     window = PoetoreWindow()
     try:
