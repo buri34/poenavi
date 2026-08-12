@@ -299,6 +299,7 @@ def test_suppressed_hotkey_stays_registered_and_passes_through_outside_poe():
     )
 
     service.start()
+    service._refresh_foreground_context()
     registration = backend.registrations[-1]
     assert service.is_registered
     assert registration.hotkey == "c"
@@ -307,6 +308,7 @@ def test_suppressed_hotkey_stays_registered_and_passes_through_outside_poe():
     }
 
     foreground["hwnd"] = 20
+    service._refresh_foreground_context()
     assert registration.callback() is True
     assert service.is_registered
     assert backend.removed == []
@@ -389,6 +391,7 @@ def test_suppressed_hotkey_focuses_poe_from_result_window_before_dispatch():
     emitted = []
     service.command.connect(emitted.append)
     service.start()
+    service._refresh_foreground_context()
 
     backend.pressed = True
     assert backend.registrations[-1].callback() is False
@@ -417,6 +420,7 @@ def test_suppressed_hotkey_waits_until_every_modifier_is_released():
     emitted = []
     service.command.connect(emitted.append)
     service.start()
+    service._refresh_foreground_context()
 
     backend.pressed_keys = {"alt", "d"}
     assert backend.registrations[-1].callback() is False
@@ -445,6 +449,7 @@ def test_suppressed_hotkey_passes_through_when_result_has_no_valid_poe_target():
     emitted = []
     service.command.connect(emitted.append)
     service.start()
+    service._refresh_foreground_context()
 
     assert backend.registrations[-1].callback() is True
     assert emitted == []
@@ -466,6 +471,7 @@ def test_suppressed_hotkey_does_not_dispatch_when_poe_focus_fails():
     emitted = []
     service.command.connect(emitted.append)
     service.start()
+    service._refresh_foreground_context()
 
     backend.pressed = True
     assert backend.registrations[-1].callback() is False
@@ -473,6 +479,33 @@ def test_suppressed_hotkey_does_not_dispatch_when_poe_focus_fails():
     service._poll_release()
     assert emitted == []
     assert service._waiting_for_release is False
+    service.stop()
+
+
+def test_suppressed_hotkey_callback_uses_cached_context_only():
+    backend = FakeKeyboardBackend()
+    foreground_calls = []
+    foreground = {"hwnd": 20}
+    service = ForegroundSuppressedHotkeyService(
+        "poetore_capture", "alt+d",
+        keyboard_backend=backend,
+        foreground_getter=lambda: foreground_calls.append(True) or foreground["hwnd"],
+        poe_window_checker=lambda hwnd: hwnd == 10,
+        platform="win32",
+    )
+    service.start()
+    initial_calls = len(foreground_calls)
+
+    # Browser context is cached; the low-level callback performs no Win32 lookup.
+    assert backend.registrations[-1].callback() is True
+    assert len(foreground_calls) == initial_calls
+
+    foreground["hwnd"] = 10
+    service._refresh_foreground_context()
+    refreshed_calls = len(foreground_calls)
+    backend.pressed = True
+    assert backend.registrations[-1].callback() is False
+    assert len(foreground_calls) == refreshed_calls
     service.stop()
 
 

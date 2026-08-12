@@ -5,6 +5,7 @@ from PySide6.QtCore import QObject, QTimer, Signal
 
 from src.utils.internal_key_input import is_internal_key_input
 from src.utils.window_focus import focus_window, get_foreground_window, is_path_of_exile_window
+from src.poetore.performance import record_hotkey_event
 
 
 HOTKEY_ACTIONS_ALLOWED_OUTSIDE_POE = frozenset({
@@ -239,11 +240,16 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._timer = QTimer(self)
         self._timer.setInterval(self._poll_interval_ms)
         self._timer.timeout.connect(self._poll_release)
+        self._foreground_timer = QTimer(self)
+        self._foreground_timer.setInterval(self._poll_interval_ms)
+        self._foreground_timer.timeout.connect(self._refresh_foreground_context)
         self._retry_timer = QTimer(self)
         self._retry_timer.setInterval(2000)
         self._retry_timer.timeout.connect(self.refresh)
         self._waiting_for_release = False
         self._pending_focus_target = None
+        self._foreground_context = "outside"
+        self._cached_focus_target = None
         self._triggered_in_poe.connect(self._begin_release_watch)
 
     @property
@@ -267,11 +273,16 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._running = True
         if not self.is_supported:
             return
+        # Win32の低レベルキーボードフック内ではプロセス照会を行わない。
+        # Qt側で先読みし、フックはキャッシュを読むだけにする。
+        self._refresh_foreground_context()
+        self._foreground_timer.start()
         self._register()
 
     def stop(self):
         self._running = False
         self._timer.stop()
+        self._foreground_timer.stop()
         self._retry_timer.stop()
         self._waiting_for_release = False
         self._pending_focus_target = None
@@ -300,9 +311,11 @@ class ForegroundSuppressedHotkeyService(QObject):
                 trigger_on_release=False,
             )
             self._retry_timer.stop()
+            record_hotkey_event("registered", hotkey=self._hotkey)
         except Exception as exc:
             self._registration = None
             self._retry_timer.start()
+            record_hotkey_event("registration_failed", hotkey=self._hotkey, error=str(exc))
             print(f"Failed to register suppressed hotkey {self._hotkey}: {exc}")
 
     def _unregister(self):
@@ -319,21 +332,13 @@ class ForegroundSuppressedHotkeyService(QObject):
         """Return True to pass the key through, False to suppress it."""
         if not self._running:
             return True
-        foreground = self._foreground_getter()
-        if not foreground:
+        context = self._foreground_context
+        focus_target = self._cached_focus_target if context == "result" else None
+        record_hotkey_event("pressed", hotkey=self._hotkey, context=context)
+        if context not in {"poe", "result"}:
             return True
-        focus_target = None
-        if not self._poe_window_checker(foreground):
-            if (
-                self._result_window_checker is None
-                or not self._result_window_checker(foreground)
-                or self._poe_target_getter is None
-            ):
-                return True
-            candidate = self._poe_target_getter()
-            if not candidate or not self._poe_window_checker(candidate):
-                return True
-            focus_target = candidate
+        if context == "result" and not focus_target:
+            return True
         if is_internal_key_input():
             return True
         if self._waiting_for_release:
@@ -342,6 +347,38 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._pending_focus_target = focus_target
         self._triggered_in_poe.emit()
         return False
+
+    def _refresh_foreground_context(self):
+        """Resolve the active app outside the low-level keyboard-hook callback."""
+        context = "outside"
+        focus_target = None
+        try:
+            foreground = self._foreground_getter()
+            if foreground and self._poe_window_checker(foreground):
+                context = "poe"
+            elif (
+                foreground
+                and self._result_window_checker is not None
+                and self._result_window_checker(foreground)
+                and self._poe_target_getter is not None
+            ):
+                candidate = self._poe_target_getter()
+                if candidate and self._poe_window_checker(candidate):
+                    context = "result"
+                    focus_target = candidate
+        except Exception as exc:
+            record_hotkey_event("context_check_failed", error=str(exc))
+        changed = (
+            context != self._foreground_context
+            or focus_target != self._cached_focus_target
+        )
+        self._foreground_context = context
+        self._cached_focus_target = focus_target
+        if changed:
+            record_hotkey_event(
+                "context_changed", context=context,
+                has_focus_target=bool(focus_target),
+            )
 
     def _begin_release_watch(self):
         if not self._running or not self._waiting_for_release:
@@ -370,6 +407,8 @@ class ForegroundSuppressedHotkeyService(QObject):
         # Altなどの実キーを離してから前面化する。押下中にfocus_window()の
         # Altフォールバックが重なると、Windows側で修飾キー状態が残る。
         if focus_target is not None and not self._focus_target(focus_target):
+            record_hotkey_event("focus_failed", hotkey=self._hotkey)
             return
+        record_hotkey_event("dispatched", hotkey=self._hotkey)
         self.command.emit(self._action)
         self.command.emit(f"{self._action}_released")

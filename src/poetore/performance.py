@@ -77,6 +77,16 @@ def _queue_record(record: dict) -> None:
     _write_queue.put(record)
 
 
+def record_hotkey_event(event: str, **details) -> None:
+    """Write suppressed-hotkey diagnostics without blocking the hook thread."""
+    _queue_record({
+        "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+        "source": "suppressed_hotkey",
+        "event": event,
+        **details,
+    })
+
+
 class SearchPerformanceTrace:
     """Record elapsed and inter-stage time without blocking the UI on file I/O."""
 
