@@ -204,14 +204,15 @@ class ForegroundSuppressedHotkeyService(QObject):
     """PoEが前面の間だけ、Windowsで元キーを通さずホットキーを発火する。"""
 
     command = Signal(str)
-    _triggered_in_poe = Signal()
+    _native_pressed = Signal()
+    _native_released = Signal()
 
     def __init__(
         self,
         action: str,
         hotkey: str,
         *,
-        keyboard_backend=None,
+        native_hook_factory=None,
         foreground_getter=None,
         poe_window_checker=None,
         result_window_checker=None,
@@ -224,10 +225,7 @@ class ForegroundSuppressedHotkeyService(QObject):
         super().__init__(parent)
         self._action = action
         self._hotkey = str(hotkey or "").strip()
-        self._hotkey_parts = tuple(
-            part.strip() for part in self._hotkey.split("+") if part.strip()
-        )
-        self._keyboard_backend = keyboard_backend
+        self._native_hook_factory = native_hook_factory
         self._foreground_getter = foreground_getter or get_foreground_window
         self._poe_window_checker = poe_window_checker or is_path_of_exile_window
         self._result_window_checker = result_window_checker
@@ -235,26 +233,17 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._focus_target = focus_target or focus_window
         self._platform = sys.platform if platform is None else platform
         self._poll_interval_ms = poll_interval_ms
-        self._registration = None
+        self._native_hook = None
         self._running = False
-        self._timer = QTimer(self)
-        self._timer.setInterval(self._poll_interval_ms)
-        self._timer.timeout.connect(self._poll_release)
         self._foreground_timer = QTimer(self)
         self._foreground_timer.setInterval(self._poll_interval_ms)
         self._foreground_timer.timeout.connect(self._refresh_foreground_context)
-        self._rearm_timer = QTimer(self)
-        self._rearm_timer.setSingleShot(True)
-        self._rearm_timer.setInterval(150)
-        self._rearm_timer.timeout.connect(self._rearm_after_foreground_return)
-        self._retry_timer = QTimer(self)
-        self._retry_timer.setInterval(2000)
-        self._retry_timer.timeout.connect(self.refresh)
         self._waiting_for_release = False
         self._pending_focus_target = None
         self._foreground_context = "outside"
         self._cached_focus_target = None
-        self._triggered_in_poe.connect(self._begin_release_watch)
+        self._native_pressed.connect(self._on_native_pressed)
+        self._native_released.connect(self._on_native_released)
 
     @property
     def is_running(self):
@@ -262,7 +251,7 @@ class ForegroundSuppressedHotkeyService(QObject):
 
     @property
     def is_registered(self):
-        return self._registration is not None
+        return bool(self._native_hook and self._native_hook.is_running)
 
     @property
     def is_supported(self):
@@ -277,106 +266,99 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._running = True
         if not self.is_supported:
             return
-        # Win32の低レベルキーボードフック内ではプロセス照会を行わない。
-        # Qt側で先読みし、フックはキャッシュを読むだけにする。
         self._refresh_foreground_context()
         self._foreground_timer.start()
         self._register()
 
     def stop(self):
         self._running = False
-        self._timer.stop()
         self._foreground_timer.stop()
-        self._rearm_timer.stop()
-        self._retry_timer.stop()
         self._waiting_for_release = False
         self._pending_focus_target = None
         self._unregister()
 
     def refresh(self):
-        """Compatibility hook; registration is intentionally kept alive."""
+        """Restart only when the native hook thread has actually stopped."""
         if not self._running or not self.is_supported:
             return
-        if self._registration is None:
+        if not self.is_registered:
             self._register()
-
-    def _backend(self):
-        if self._keyboard_backend is None:
-            import keyboard
-
-            self._keyboard_backend = keyboard
-        return self._keyboard_backend
 
     def _register(self):
         try:
-            self._registration = self._backend().add_hotkey(
+            factory = self._native_hook_factory
+            if factory is None:
+                from src.utils.win32_suppressed_hotkey import Win32SuppressedHotkeyHook
+                factory = Win32SuppressedHotkeyHook
+            hook = factory(
                 self._hotkey,
-                self._on_hotkey_pressed,
-                suppress=True,
-                trigger_on_release=False,
+                should_suppress=self._should_suppress_native_event,
+                on_event=self._receive_native_event,
             )
-            self._retry_timer.stop()
+            hook.start()
+            self._native_hook = hook
             record_hotkey_event("registered", hotkey=self._hotkey)
         except Exception as exc:
-            self._registration = None
-            self._retry_timer.start()
+            self._native_hook = None
             record_hotkey_event("registration_failed", hotkey=self._hotkey, error=str(exc))
             print(f"Failed to register suppressed hotkey {self._hotkey}: {exc}")
 
     def _unregister(self):
-        registration = self._registration
-        self._registration = None
-        if registration is None:
+        hook = self._native_hook
+        self._native_hook = None
+        if hook is None:
             return
         try:
-            self._backend().remove_hotkey(registration)
+            hook.stop()
         except Exception as exc:
             print(f"Failed to unregister suppressed hotkey {self._hotkey}: {exc}")
 
-    def _schedule_rearm(self):
-        """Recreate a hook that Windows may have silently removed while unfocused."""
-        if not self._running or not self.is_supported or self._waiting_for_release:
-            return
-        self._rearm_timer.start()
-
-    def _rearm_after_foreground_return(self):
-        if not self._running or not self.is_supported or self._waiting_for_release:
-            return
-        try:
-            if any(self._backend().is_pressed(part) for part in self._hotkey_parts):
-                # Alt+Tabなどの修飾キーが残っている間はフックを触らない。
-                self._rearm_timer.start()
-                return
-        except Exception as exc:
-            record_hotkey_event("rearm_key_check_failed", error=str(exc))
-        self._unregister()
-        self._register()
-        if self._registration is not None:
-            record_hotkey_event("rearmed", hotkey=self._hotkey)
-
-    def _on_hotkey_pressed(self):
-        """Return True to pass the key through, False to suppress it."""
+    def _should_suppress_native_event(self):
+        """Called in the hook thread; only read precomputed state."""
         if not self._running:
-            return True
-        context = self._foreground_context
-        focus_target = self._cached_focus_target if context == "result" else None
-        record_hotkey_event("pressed", hotkey=self._hotkey, context=context)
-        if context not in {"poe", "result"}:
-            return True
-        if context == "result" and not focus_target:
-            return True
-        if is_internal_key_input():
-            return True
-        if self._waiting_for_release:
             return False
+        context = self._foreground_context
+        if context not in {"poe", "result"}:
+            return False
+        if context == "result" and not self._cached_focus_target:
+            return False
+        if is_internal_key_input():
+            return False
+        return True
+
+    def _receive_native_event(self, event):
+        if event == "pressed":
+            self._native_pressed.emit()
+        elif event == "released":
+            self._native_released.emit()
+
+    def _on_native_pressed(self):
+        if not self._running or self._waiting_for_release:
+            return
+        context = self._foreground_context
+        record_hotkey_event("pressed", hotkey=self._hotkey, context=context)
         self._waiting_for_release = True
-        self._pending_focus_target = focus_target
-        self._triggered_in_poe.emit()
-        return False
+        self._pending_focus_target = (
+            self._cached_focus_target if context == "result" else None
+        )
+
+    def _on_native_released(self):
+        if not self._waiting_for_release:
+            return
+        self._waiting_for_release = False
+        focus_target = self._pending_focus_target
+        self._pending_focus_target = None
+        if not self._running:
+            return
+        if focus_target is not None and not self._focus_target(focus_target):
+            record_hotkey_event("focus_failed", hotkey=self._hotkey)
+            return
+        record_hotkey_event("dispatched", hotkey=self._hotkey)
+        self.command.emit(self._action)
+        self.command.emit(f"{self._action}_released")
 
     def _refresh_foreground_context(self):
         """Resolve the active app outside the low-level keyboard-hook callback."""
-        previous_context = self._foreground_context
         context = "outside"
         focus_target = None
         try:
@@ -406,41 +388,3 @@ class ForegroundSuppressedHotkeyService(QObject):
                 "context_changed", context=context,
                 has_focus_target=bool(focus_target),
             )
-        # Windowsは低レベルキーボードフックを通知なしで外す場合があり、
-        # 登録ハンドルだけでは生存判定できない。別アプリからPoEへ戻った時だけ
-        # 安全に作り直し、普段の検索中には登録を揺らさない。
-        if previous_context == "outside" and context == "poe":
-            self._schedule_rearm()
-
-    def _begin_release_watch(self):
-        if not self._running or not self._waiting_for_release:
-            return
-        self._timer.start()
-
-    def _poll_release(self):
-        if not self._waiting_for_release:
-            self._timer.stop()
-            return
-        try:
-            still_pressed = any(
-                self._backend().is_pressed(part) for part in self._hotkey_parts
-            )
-        except Exception as exc:
-            print(f"Failed to inspect suppressed hotkey {self._hotkey}: {exc}")
-            still_pressed = False
-        if still_pressed:
-            return
-        self._timer.stop()
-        self._waiting_for_release = False
-        focus_target = self._pending_focus_target
-        self._pending_focus_target = None
-        if not self._running:
-            return
-        # Altなどの実キーを離してから前面化する。押下中にfocus_window()の
-        # Altフォールバックが重なると、Windows側で修飾キー状態が残る。
-        if focus_target is not None and not self._focus_target(focus_target):
-            record_hotkey_event("focus_failed", hotkey=self._hotkey)
-            return
-        record_hotkey_event("dispatched", hotkey=self._hotkey)
-        self.command.emit(self._action)
-        self.command.emit(f"{self._action}_released")

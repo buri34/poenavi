@@ -25,27 +25,6 @@ class FakeListener:
         self.stopped = True
 
 
-class FakeKeyboardBackend:
-    def __init__(self):
-        self.registrations = []
-        self.removed = []
-        self.pressed = False
-        self.pressed_keys = set()
-
-    def add_hotkey(self, hotkey, callback, **options):
-        registration = SimpleNamespace(
-            hotkey=hotkey, callback=callback, options=options,
-        )
-        self.registrations.append(registration)
-        return registration
-
-    def remove_hotkey(self, registration):
-        self.removed.append(registration)
-
-    def is_pressed(self, hotkey):
-        return self.pressed or hotkey in self.pressed_keys
-
-
 def test_ctrl_control_character_is_normalized_to_letter():
     key = SimpleNamespace(char="\x04", vk=ord("D"))
     assert hotkey_key_name(key) == "d"
@@ -287,282 +266,131 @@ def test_service_ignores_keys_sent_by_the_application():
     assert emitted == ["custom_command:0"]
 
 
-def test_suppressed_hotkey_stays_registered_and_passes_through_outside_poe():
-    backend = FakeKeyboardBackend()
-    foreground = {"hwnd": 10}
-    service = ForegroundSuppressedHotkeyService(
-        "poetore_capture", "c",
-        keyboard_backend=backend,
-        foreground_getter=lambda: foreground["hwnd"],
-        poe_window_checker=lambda hwnd: hwnd == 10,
-        platform="win32",
+
+class FakeNativeHook:
+    def __init__(self, hotkey, *, should_suppress, on_event):
+        self.hotkey = hotkey
+        self.should_suppress = should_suppress
+        self.on_event = on_event
+        self.is_running = False
+
+    def start(self): self.is_running = True
+    def stop(self): self.is_running = False
+    def press(self):
+        if not self.should_suppress(): return False
+        self.on_event("pressed")
+        return True
+    def release(self): self.on_event("released")
+
+
+class FakeNativeHookFactory:
+    def __init__(self): self.hooks = []
+    def __call__(self, *args, **kwargs):
+        hook = FakeNativeHook(*args, **kwargs)
+        self.hooks.append(hook)
+        return hook
+
+
+def make_suppressed(factory, foreground, **kwargs):
+    return ForegroundSuppressedHotkeyService(
+        "poetore_capture", "alt+d", native_hook_factory=factory,
+        foreground_getter=lambda: foreground["hwnd"], platform="win32", **kwargs,
     )
 
-    service.start()
-    service._refresh_foreground_context()
-    registration = backend.registrations[-1]
-    assert service.is_registered
-    assert registration.hotkey == "c"
-    assert registration.options == {
-        "suppress": True, "trigger_on_release": False,
-    }
 
-    foreground["hwnd"] = 20
-    service._refresh_foreground_context()
-    assert registration.callback() is True
-    assert service.is_registered
-    assert backend.removed == []
-    service.stop()
-    assert backend.removed == [registration]
-
-
-def test_suppressed_hotkey_blocks_in_poe_and_dispatches_after_release():
-    backend = FakeKeyboardBackend()
-    service = ForegroundSuppressedHotkeyService(
-        "poetore_capture", "alt+d",
-        keyboard_backend=backend,
-        foreground_getter=lambda: 10,
-        poe_window_checker=lambda hwnd: hwnd == 10,
-        platform="win32",
-    )
+def test_suppressed_hotkey_passes_outside_and_dispatches_in_poe():
+    factory, foreground = FakeNativeHookFactory(), {"hwnd": 20}
+    service = make_suppressed(factory, foreground, poe_window_checker=lambda h: h == 10)
     emitted = []
     service.command.connect(emitted.append)
     service.start()
-    registration = backend.registrations[-1]
-
-    backend.pressed = True
-    assert registration.callback() is False
-
-    assert backend.removed == []
-    assert service.is_registered
-    assert emitted == []
-    service._poll_release()
-    assert emitted == []
-    backend.pressed = False
-    service._poll_release()
+    hook = factory.hooks[-1]
+    assert hook.press() is False
+    foreground["hwnd"] = 10
+    service._refresh_foreground_context()
+    assert hook.press() is True
+    hook.release()
     assert emitted == ["poetore_capture", "poetore_capture_released"]
     service.stop()
+    assert not hook.is_running
 
 
 def test_suppressed_hotkey_remains_usable_for_repeated_searches():
-    backend = FakeKeyboardBackend()
-    service = ForegroundSuppressedHotkeyService(
-        "poetore_capture", "alt+d",
-        keyboard_backend=backend,
-        foreground_getter=lambda: 10,
-        poe_window_checker=lambda hwnd: hwnd == 10,
-        platform="win32",
-    )
+    factory, foreground = FakeNativeHookFactory(), {"hwnd": 10}
+    service = make_suppressed(factory, foreground, poe_window_checker=lambda h: h == 10)
     emitted = []
     service.command.connect(emitted.append)
     service.start()
-    registration = backend.registrations[-1]
-
+    hook = factory.hooks[-1]
     for _ in range(3):
-        backend.pressed = True
-        assert registration.callback() is False
-        backend.pressed = False
-        service._poll_release()
-
-    assert emitted == [
-        "poetore_capture", "poetore_capture_released",
-        "poetore_capture", "poetore_capture_released",
-        "poetore_capture", "poetore_capture_released",
-    ]
-    assert service.is_registered
-    assert backend.removed == []
+        assert hook.press() is True
+        hook.release()
+    assert emitted == ["poetore_capture", "poetore_capture_released"] * 3
+    assert len(factory.hooks) == 1
     service.stop()
 
 
-def test_suppressed_hotkey_focuses_poe_from_result_window_before_dispatch():
-    backend = FakeKeyboardBackend()
-    foreground = {"hwnd": 20}
-    focused = []
-    service = ForegroundSuppressedHotkeyService(
-        "poetore_capture", "alt+d",
-        keyboard_backend=backend,
-        foreground_getter=lambda: foreground["hwnd"],
-        poe_window_checker=lambda hwnd: hwnd == 10,
-        result_window_checker=lambda hwnd: hwnd == 20,
-        poe_target_getter=lambda: 10,
-        focus_target=lambda hwnd: focused.append(hwnd) or True,
-        platform="win32",
+def test_suppressed_hotkey_focuses_poe_from_result_before_dispatch():
+    factory, foreground, focused = FakeNativeHookFactory(), {"hwnd": 20}, []
+    service = make_suppressed(
+        factory, foreground, poe_window_checker=lambda h: h == 10,
+        result_window_checker=lambda h: h == 20, poe_target_getter=lambda: 10,
+        focus_target=lambda h: focused.append(h) or True,
     )
     emitted = []
     service.command.connect(emitted.append)
     service.start()
-    service._refresh_foreground_context()
-
-    backend.pressed = True
-    assert backend.registrations[-1].callback() is False
-    assert focused == []
-    assert emitted == []
-    backend.pressed = False
-    service._poll_release()
+    hook = factory.hooks[-1]
+    assert hook.press() is True
+    hook.release()
     assert focused == [10]
     assert emitted == ["poetore_capture", "poetore_capture_released"]
     service.stop()
 
 
-def test_suppressed_hotkey_waits_until_every_modifier_is_released():
-    backend = FakeKeyboardBackend()
-    focused = []
-    service = ForegroundSuppressedHotkeyService(
-        "poetore_capture", "alt+d",
-        keyboard_backend=backend,
-        foreground_getter=lambda: 20,
-        poe_window_checker=lambda hwnd: hwnd == 10,
-        result_window_checker=lambda hwnd: hwnd == 20,
-        poe_target_getter=lambda: 10,
-        focus_target=lambda hwnd: focused.append(hwnd) or True,
-        platform="win32",
+def test_suppressed_hotkey_does_not_dispatch_when_focus_fails():
+    factory, foreground = FakeNativeHookFactory(), {"hwnd": 20}
+    service = make_suppressed(
+        factory, foreground, poe_window_checker=lambda h: h == 10,
+        result_window_checker=lambda h: h == 20, poe_target_getter=lambda: 10,
+        focus_target=lambda _h: False,
     )
     emitted = []
     service.command.connect(emitted.append)
     service.start()
-    service._refresh_foreground_context()
-
-    backend.pressed_keys = {"alt", "d"}
-    assert backend.registrations[-1].callback() is False
-    backend.pressed_keys = {"alt"}
-    service._poll_release()
-    assert focused == []
+    hook = factory.hooks[-1]
+    assert hook.press() is True
+    hook.release()
     assert emitted == []
-    backend.pressed_keys.clear()
-    service._poll_release()
-    assert focused == [10]
-    assert emitted == ["poetore_capture", "poetore_capture_released"]
-    service.stop()
-
-
-def test_suppressed_hotkey_passes_through_when_result_has_no_valid_poe_target():
-    backend = FakeKeyboardBackend()
-    service = ForegroundSuppressedHotkeyService(
-        "poetore_capture", "alt+d",
-        keyboard_backend=backend,
-        foreground_getter=lambda: 20,
-        poe_window_checker=lambda hwnd: hwnd == 10,
-        result_window_checker=lambda hwnd: hwnd == 20,
-        poe_target_getter=lambda: None,
-        platform="win32",
-    )
-    emitted = []
-    service.command.connect(emitted.append)
-    service.start()
-    service._refresh_foreground_context()
-
-    assert backend.registrations[-1].callback() is True
-    assert emitted == []
-    service.stop()
-
-
-def test_suppressed_hotkey_does_not_dispatch_when_poe_focus_fails():
-    backend = FakeKeyboardBackend()
-    service = ForegroundSuppressedHotkeyService(
-        "poetore_capture", "alt+d",
-        keyboard_backend=backend,
-        foreground_getter=lambda: 20,
-        poe_window_checker=lambda hwnd: hwnd == 10,
-        result_window_checker=lambda hwnd: hwnd == 20,
-        poe_target_getter=lambda: 10,
-        focus_target=lambda _hwnd: False,
-        platform="win32",
-    )
-    emitted = []
-    service.command.connect(emitted.append)
-    service.start()
-    service._refresh_foreground_context()
-
-    backend.pressed = True
-    assert backend.registrations[-1].callback() is False
-    backend.pressed = False
-    service._poll_release()
-    assert emitted == []
-    assert service._waiting_for_release is False
     service.stop()
 
 
 def test_suppressed_hotkey_callback_uses_cached_context_only():
-    backend = FakeKeyboardBackend()
-    foreground_calls = []
-    foreground = {"hwnd": 20}
-    service = ForegroundSuppressedHotkeyService(
-        "poetore_capture", "alt+d",
-        keyboard_backend=backend,
-        foreground_getter=lambda: foreground_calls.append(True) or foreground["hwnd"],
-        poe_window_checker=lambda hwnd: hwnd == 10,
-        platform="win32",
+    factory, foreground, calls = FakeNativeHookFactory(), {"hwnd": 20}, []
+    service = make_suppressed(
+        factory, foreground,
+        poe_window_checker=lambda h: h == 10,
     )
+    original_getter = service._foreground_getter
+    service._foreground_getter = lambda: calls.append(True) or original_getter()
     service.start()
-    initial_calls = len(foreground_calls)
-
-    # Browser context is cached; the low-level callback performs no Win32 lookup.
-    assert backend.registrations[-1].callback() is True
-    assert len(foreground_calls) == initial_calls
-
+    initial_calls = len(calls)
+    assert factory.hooks[-1].press() is False
+    assert len(calls) == initial_calls
     foreground["hwnd"] = 10
     service._refresh_foreground_context()
-    refreshed_calls = len(foreground_calls)
-    backend.pressed = True
-    assert backend.registrations[-1].callback() is False
-    assert len(foreground_calls) == refreshed_calls
-    service.stop()
-
-
-def test_suppressed_hotkey_rearms_when_returning_from_outside_to_poe():
-    backend = FakeKeyboardBackend()
-    foreground = {"hwnd": 20}
-    service = ForegroundSuppressedHotkeyService(
-        "poetore_capture", "alt+d",
-        keyboard_backend=backend,
-        foreground_getter=lambda: foreground["hwnd"],
-        poe_window_checker=lambda hwnd: hwnd == 10,
-        platform="win32",
-    )
-    service.start()
-    original = backend.registrations[-1]
-
-    foreground["hwnd"] = 10
-    service._refresh_foreground_context()
-    service._rearm_after_foreground_return()
-
-    assert backend.removed == [original]
-    assert len(backend.registrations) == 2
-    assert service.is_registered
-    service.stop()
-
-
-def test_suppressed_hotkey_rearm_waits_for_alt_tab_release():
-    backend = FakeKeyboardBackend()
-    foreground = {"hwnd": 20}
-    service = ForegroundSuppressedHotkeyService(
-        "poetore_capture", "alt+d",
-        keyboard_backend=backend,
-        foreground_getter=lambda: foreground["hwnd"],
-        poe_window_checker=lambda hwnd: hwnd == 10,
-        platform="win32",
-    )
-    service.start()
-    backend.pressed_keys = {"alt"}
-    foreground["hwnd"] = 10
-    service._refresh_foreground_context()
-    service._rearm_after_foreground_return()
-    assert backend.removed == []
-
-    backend.pressed_keys.clear()
-    service._rearm_after_foreground_return()
-    assert len(backend.removed) == 1
-    assert len(backend.registrations) == 2
+    refreshed_calls = len(calls)
+    assert factory.hooks[-1].press() is True
+    assert len(calls) == refreshed_calls
     service.stop()
 
 
 def test_suppressed_hotkey_is_disabled_on_non_windows():
-    backend = FakeKeyboardBackend()
+    factory = FakeNativeHookFactory()
     service = ForegroundSuppressedHotkeyService(
-        "poetore_capture", "alt+d", keyboard_backend=backend, platform="darwin",
+        "poetore_capture", "alt+d", native_hook_factory=factory, platform="darwin",
     )
     service.start()
-    assert service.is_running
-    assert not service.is_registered
-    assert backend.registrations == []
+    assert service.is_running and not service.is_registered
+    assert factory.hooks == []
     service.stop()
