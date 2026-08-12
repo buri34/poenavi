@@ -36,6 +36,7 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
         assert window.height() == 30
         assert window._title_bar._obs_title_label.text() == "ぽえとれ検索ウィンドウ"
         assert window._title_bar._obs_title_label.isVisible()
+        assert window._title_bar._expanded_controls.isHidden()
         assert window._obs_content.isHidden()
         assert not window.item_header.isVisible()
         assert not window.trade_preset_combo.isVisible()
@@ -45,9 +46,13 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
         qapp.processEvents()
         assert window.height() == expanded_height
         assert window._title_bar._obs_title_label.isHidden()
-        assert window._obs_content.isVisible()
+        assert not window._title_bar._expanded_controls.isHidden()
+        assert not window._obs_content.isHidden()
         assert window.item_header.isVisible()
         assert window.trade_preset_combo.isVisible()
+        assert window.trade_league_combo.isVisible()
+        assert window.league_popup_button.isVisible()
+        assert window.poetore_close_button.isVisible()
         assert int(window.winId()) == obs_window_id
 
         window._dismiss_result()
@@ -55,6 +60,28 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
         assert window.isVisible()
         assert window.height() < expanded_height
         assert saved
+    finally:
+        window.set_obs_streaming_mode(False)
+        window.close()
+
+
+def test_obs_expand_is_hidden_until_show_at_context_finishes(qapp):
+    window = PoetoreWindow(app_config={"poetore": {"obs_streaming": {"enabled": True}}})
+    try:
+        window.set_obs_streaming_mode(True)
+        qapp.processEvents()
+        assert window.isVisible()
+
+        window._expand_for_obs()
+        qapp.processEvents()
+        assert not window.isVisible()
+        assert not window._title_bar._expanded_controls.isHidden()
+        assert not window._obs_content.isHidden()
+
+        window.show_at_context(activate=False)
+        qapp.processEvents()
+        assert window.isVisible()
+        assert not window._obs_collapsed
     finally:
         window.set_obs_streaming_mode(False)
         window.close()
@@ -843,7 +870,8 @@ def test_poetore_combo_popups_are_treated_as_inside_panel(qapp, combo_name):
 def test_poetore_title_bar_keeps_close_button(qapp):
     window = PoetoreWindow()
     try:
-        assert window.trade_league_combo.parentWidget().objectName() == "poetoreTitleBar"
+        assert window.trade_league_combo.parentWidget() is window._title_bar._expanded_controls
+        assert window._title_bar._expanded_controls.parentWidget().objectName() == "poetoreTitleBar"
         assert window.trade_league_combo.width() == 338
         assert window.league_popup_button.text() == "▼"
         assert window.league_popup_button.toolTip() == "リーグ一覧を開く"

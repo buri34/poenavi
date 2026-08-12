@@ -794,7 +794,6 @@ class _PoetoreTitleBar(QWidget):
         self._window = window
         self._drag_offset: QPoint | None = None
         self._drag_start_position: QPoint | None = None
-        self._obs_control_visibility: dict[QWidget, bool] = {}
         layout = QHBoxLayout(self)
         layout.setContentsMargins(6, 2, 2, 2)
         self._obs_title_label = QLabel("ぽえとれ検索ウィンドウ")
@@ -802,7 +801,12 @@ class _PoetoreTitleBar(QWidget):
         self._obs_title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self._obs_title_label.hide()
         layout.addWidget(self._obs_title_label)
-        window.divine_rate_button = QPushButton("⇄ …")
+        self._expanded_controls = QWidget(self)
+        controls_layout = QHBoxLayout(self._expanded_controls)
+        controls_layout.setContentsMargins(0, 0, 0, 0)
+        controls_layout.setSpacing(0)
+        layout.addWidget(self._expanded_controls, 1)
+        window.divine_rate_button = QPushButton("⇄ …", self._expanded_controls)
         window.divine_rate_button.setObjectName("divineRateButton")
         window.divine_rate_button.setToolTip("Divine OrbのChaos換算早見表")
         window.divine_rate_button.setEnabled(False)
@@ -810,44 +814,32 @@ class _PoetoreTitleBar(QWidget):
         window.divine_rate_menu = QMenu(window.divine_rate_button)
         window.divine_rate_menu.setObjectName("divineRateMenu")
         window.divine_rate_button.setMenu(window.divine_rate_menu)
-        layout.addWidget(window.divine_rate_button)
-        layout.addStretch()
-        layout.addWidget(window.trade_league_combo)
-        window.league_popup_button = QPushButton("▼")
+        controls_layout.addWidget(window.divine_rate_button)
+        controls_layout.addStretch()
+        controls_layout.addWidget(window.trade_league_combo)
+        window.league_popup_button = QPushButton("▼", self._expanded_controls)
         window.league_popup_button.setObjectName("leaguePopupButton")
         window.league_popup_button.setToolTip("リーグ一覧を開く")
         window.league_popup_button.setFixedSize(28, 28)
         window.league_popup_button.clicked.connect(window.trade_league_combo.showPopup)
-        layout.addWidget(window.league_popup_button)
-        layout.addStretch()
-        window.poetore_close_button = QPushButton("×")
+        controls_layout.addWidget(window.league_popup_button)
+        controls_layout.addStretch()
+        window.poetore_close_button = QPushButton("×", self._expanded_controls)
         window.poetore_close_button.setToolTip("閉じる")
         window.poetore_close_button.setFixedSize(28, 24)
         window.poetore_close_button.clicked.connect(window._close_and_return_to_poe)
-        layout.addWidget(window.poetore_close_button)
+        controls_layout.addWidget(window.poetore_close_button)
 
     def set_obs_collapsed(self, collapsed: bool):
-        controls = (
-            self._window.divine_rate_button,
-            self._window.trade_league_combo,
-            self._window.league_popup_button,
-            self._window.poetore_close_button,
-        )
         if collapsed:
-            self._obs_control_visibility = {
-                control: not control.isHidden() for control in controls
-            }
-            for control in controls:
-                control.hide()
+            self._expanded_controls.hide()
             self._obs_title_label.show()
             self.setFixedHeight(24)
             return
         self._obs_title_label.hide()
+        self._expanded_controls.show()
         self.setMinimumHeight(0)
         self.setMaximumHeight(16777215)
-        for control in controls:
-            control.setVisible(self._obs_control_visibility.get(control, True))
-        self._obs_control_visibility = {}
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -941,6 +933,7 @@ class PoetoreWindow(QWidget):
         self._auto_hide_interactive = False
         self._obs_streaming_mode = False
         self._obs_collapsed = False
+        self._obs_transitioning = False
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -2477,6 +2470,8 @@ class PoetoreWindow(QWidget):
             checkbox.toggle()
 
     def _close_when_focus_leaves_panel(self, old, new):
+        if getattr(self, "_obs_transitioning", False):
+            return
         old_belongs = self._widget_belongs_to_panel(old)
         new_belongs = self._widget_belongs_to_panel(new)
         if new is None and self._widget_is_panel_popup(old):
@@ -2491,6 +2486,8 @@ class PoetoreWindow(QWidget):
 
     def _close_if_focus_is_still_outside(self):
         app = QApplication.instance()
+        if getattr(self, "_obs_transitioning", False):
+            return
         if not self.isVisible():
             return
         if self._widget_belongs_to_panel(app.focusWidget()):
@@ -2940,6 +2937,7 @@ class PoetoreWindow(QWidget):
             event.type() == QEvent.WindowDeactivate
             and self.isVisible()
             and not getattr(self, "_obs_collapsed", False)
+            and not getattr(self, "_obs_transitioning", False)
         ):
             # Windows上でPoEなど別プロセスをクリックした場合、Qt内の
             # focusChangedが発生しないことがあるため非アクティブ化も拾う。
@@ -3008,6 +3006,10 @@ class PoetoreWindow(QWidget):
     def _expand_for_obs(self):
         if not getattr(self, "_obs_streaming_mode", False):
             return
+        # 折りたたみ高の上限を解除した瞬間に、空の大きな中間フレームが
+        # Windowsへ描画されないよう、完成状態まで非表示で組み替える。
+        self._obs_transitioning = True
+        self.hide()
         self._obs_collapsed = False
         self._title_bar.set_obs_collapsed(False)
         self._obs_content.show()
@@ -3303,6 +3305,7 @@ class PoetoreWindow(QWidget):
             self.move(position or position_for_context(context, self.size()))
         self._passive_hotkey_display = not activate
         self.show()
+        self._obs_transitioning = False
         self.raise_()
         if activate:
             self._stop_outside_click_listener()
