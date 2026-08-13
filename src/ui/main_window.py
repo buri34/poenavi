@@ -1294,6 +1294,7 @@ class MainWindow(QMainWindow):
         self.segment_summary_label.setStyleSheet(
             f"color: {Styles.TEXT_COLOR}; font-size: 14px; padding: 2px 0;"
         )
+        self._configure_segment_summary_label()
 
         # フォント読み込みと適用
         self._custom_font_family = self.load_custom_font()
@@ -2977,6 +2978,13 @@ class MainWindow(QMainWindow):
         self.segment_summary_label.setText(
             f"{latest_text}\n遅い区間: {slowest_text}"
         )
+
+    def _configure_segment_summary_label(self):
+        """2行の区間サマリーが縦方向に圧縮されないようにする。"""
+        line_height = self.segment_summary_label.fontMetrics().lineSpacing()
+        vertical_padding = 4
+        self.segment_summary_label.setMinimumHeight(line_height * 2 + vertical_padding)
+        self.segment_summary_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
 
     def update_lap_display(self):
         """ラップタイム表示を更新"""

@@ -3,7 +3,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QPoint, QRect
-from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QSizePolicy, QVBoxLayout, QWidget
 
 from src.ui.main_window import MainWindow
 
@@ -58,3 +58,16 @@ def test_rebuild_lap_ui_keeps_segment_summary_inside_collapsible_lap_content():
 
     assert window.lap_content_layout.indexOf(window.segment_summary_label) == window.lap_content_layout.count() - 1
     lap_content.deleteLater()
+
+
+def test_segment_summary_reserves_two_lines_and_cannot_shrink_vertically():
+    _app()
+    window = MainWindow.__new__(MainWindow)
+    window.segment_summary_label = QLabel()
+
+    window._configure_segment_summary_label()
+
+    expected_height = window.segment_summary_label.fontMetrics().lineSpacing() * 2 + 4
+    assert window.segment_summary_label.minimumHeight() == expected_height
+    assert window.segment_summary_label.sizePolicy().verticalPolicy() == QSizePolicy.Fixed
+    window.segment_summary_label.deleteLater()
