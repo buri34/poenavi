@@ -108,6 +108,28 @@ def test_restore_detached_panels_uses_saved_geometry(monkeypatch):
     assert window.detached_panel_windows["timer"].geometry().getRect() == (41, 52, 420, 280)
 
 
+def test_restore_expanded_detached_timer_grows_past_stale_saved_height(monkeypatch):
+    window, content, _layout = _window()
+    content.setFixedHeight(400)
+    window.timer_expanded = True
+    window.lap_expanded = True
+    monkeypatch.setattr(ConfigManager, "save_config", lambda _config: None)
+    monkeypatch.setattr(window, "_keep_detached_panel_header_on_screen", lambda _panel: None)
+    window.config["detached_panels"]["timer"] = {
+        "detached": True,
+        "x": 41,
+        "y": 52,
+        "width": 420,
+        "height": 280,
+    }
+
+    window._restore_detached_panels()
+
+    panel_window = window.detached_panel_windows["timer"]
+    assert panel_window.height() >= panel_window.header.height() + content.height()
+    assert panel_window.minimumHeight() == panel_window.height()
+
+
 def test_visible_header_geometry_clamps_top_and_right_edges():
     corrected = MainWindow._geometry_with_visible_header(
         QRect(1700, -80, 500, 600),
@@ -285,6 +307,7 @@ def test_expanding_lap_content_grows_the_detached_timer_without_shrinking_it():
     MainWindow._adjust_detached_panel_height(window, "timer")
 
     assert panel_window.height() >= initial_height + 100
+    assert panel_window.minimumHeight() == panel_window.height()
     panel_window.close()
 
 
@@ -306,6 +329,7 @@ def test_collapsing_lap_content_shrinks_the_detached_timer_to_its_contents():
     MainWindow._fit_detached_panel_height(window, "timer")
 
     assert panel_window.height() < 720
+    assert panel_window.minimumHeight() == panel_window.height()
     panel_window.close()
 
 

@@ -384,6 +384,12 @@ class MainWindow(QMainWindow):
             ):
                 saved_geometry = QRect(x, y, width, height)
                 panel_window.setGeometry(saved_geometry)
+                if (
+                    panel_id == "timer"
+                    and getattr(self, "timer_expanded", False)
+                    and getattr(self, "lap_expanded", False)
+                ):
+                    self._adjust_detached_panel_height(panel_id)
                 self._keep_detached_panel_header_on_screen(panel_window)
 
     @staticmethod
@@ -604,6 +610,7 @@ class MainWindow(QMainWindow):
         self.setup_ui()
         self._restore_detached_panels()
         self._restore_minimized_panels()
+        self._refresh_main_window_minimum_height()
         self.map_thumbnail.auto_open = self.config.get("auto_open_map", False)
         self.map_thumbnail.auto_position = self.config.get("auto_position_map", True)
         self.setMouseTracking(True)
@@ -1947,7 +1954,7 @@ class MainWindow(QMainWindow):
             # レイアウト更新後にも同じ縮小を適用する。
             QTimer.singleShot(0, self._collapse_main_window_to_controls)
             return
-        self.setMinimumHeight(self.MIN_HEIGHT)
+        self._refresh_main_window_minimum_height()
         self._adjust_height_keep_width()
 
     def _collapse_main_window_to_controls(self):
@@ -1971,7 +1978,16 @@ class MainWindow(QMainWindow):
 
         panel_window.content.updateGeometry()
         panel_window.layout().activate()
-        required_height = max(panel_window.minimumHeight(), panel_window.sizeHint().height())
+        required_height = max(
+            180,
+            panel_window.header.sizeHint().height()
+            + max(
+                panel_window.content.sizeHint().height(),
+                panel_window.content.minimumSizeHint().height(),
+                panel_window.content.minimumHeight(),
+            ),
+        )
+        panel_window.setMinimumHeight(required_height)
         if required_height > panel_window.height():
             panel_window.resize(panel_window.width(), required_height)
 
@@ -1982,8 +1998,18 @@ class MainWindow(QMainWindow):
             return
 
         panel_window.content.updateGeometry()
+        panel_window.setMinimumHeight(180)
         panel_window.layout().activate()
-        required_height = max(panel_window.minimumHeight(), panel_window.sizeHint().height())
+        required_height = max(
+            180,
+            panel_window.header.sizeHint().height()
+            + max(
+                panel_window.content.sizeHint().height(),
+                panel_window.content.minimumSizeHint().height(),
+                panel_window.content.minimumHeight(),
+            ),
+        )
+        panel_window.setMinimumHeight(required_height)
         panel_window.resize(panel_window.width(), required_height)
 
     def _adjust_panel_or_main(self, panel_id: str):
@@ -2214,6 +2240,8 @@ class MainWindow(QMainWindow):
             self.timer_size = restored_size
             self._apply_timer_size()
         ConfigManager.save_config(self.config)
+        if not self._is_panel_detached("timer"):
+            self._refresh_main_window_minimum_height()
         self._adjust_panel_or_main("timer")
     
     def toggle_lap(self):
@@ -2223,6 +2251,8 @@ class MainWindow(QMainWindow):
         self.lap_toggle_btn.setText("▼ ラップタイム" if self.lap_expanded else "▶ ラップタイム")
         self.config["lap_expanded"] = self.lap_expanded
         ConfigManager.save_config(self.config)
+        if not self._is_panel_detached("timer"):
+            self._refresh_main_window_minimum_height()
         if self._is_panel_detached("timer"):
             if self.lap_expanded:
                 self._adjust_detached_panel_height("timer")
@@ -4241,6 +4271,7 @@ class MainWindow(QMainWindow):
     
     # --- ウィンドウ移動 & 下端リサイズ ---
     MIN_HEIGHT = 400
+    EXPANDED_TIMER_MIN_HEIGHT = 460
     DETACHED_ONLY_MIN_HEIGHT = 90
 
     def _are_all_visible_panels_detached(self) -> bool:
@@ -4272,10 +4303,21 @@ class MainWindow(QMainWindow):
         return bool(relevant_panels and relevant_panels.issubset(detached_panels | minimized_panels))
 
     def _main_window_min_height(self) -> int:
-        """全パネルが本体外なら、操作列相当まで縮小可能にする。"""
+        """表示中の固定コンテンツが見切れない本体最小高を返す。"""
         if self._are_all_visible_panels_outside_main():
             return self.DETACHED_ONLY_MIN_HEIGHT
+        timer_attached = not self._is_panel_detached("timer")
+        if (
+            timer_attached
+            and getattr(self, "timer_expanded", False)
+            and getattr(self, "lap_expanded", False)
+        ):
+            return self.EXPANDED_TIMER_MIN_HEIGHT
         return self.MIN_HEIGHT
+
+    def _refresh_main_window_minimum_height(self):
+        """パネルの展開・切り離し状態に合わせて本体最小高を更新する。"""
+        self.setMinimumHeight(self._main_window_min_height())
     
     def _detect_edge(self, pos):
         """マウス位置からリサイズ方向を検出"""
