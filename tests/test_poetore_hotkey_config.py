@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from PySide6.QtWidgets import QApplication
 
 from src.ui.main_window import MainWindow, _hotkey_key_name
-from src.ui.settings_dialog import SettingsDialog
+from src.ui.settings_dialog import AutoHideHotkeyWidget, SettingsDialog
 from src.utils.poe_version_data import POE2
 
 
@@ -361,6 +361,8 @@ def test_settings_dialog_can_change_poetore_capture_hotkey(monkeypatch):
         assert dialog.poetore_auto_hide_btn.key_button.key_text == "d"
         assert dialog.poetore_auto_hide_btn.ctrl_button.width() == 48
         assert dialog.poetore_auto_hide_btn.alt_button.width() == 48
+        assert dialog.poetore_capture_btn.width() == AutoHideHotkeyWidget.INPUT_WIDTH
+        assert dialog.poetore_auto_hide_btn.width() == AutoHideHotkeyWidget.INPUT_WIDTH
         assert "#B0FF7B" in dialog.poetore_auto_hide_btn.ctrl_button.styleSheet()
         assert "#49D6B0" not in dialog.poetore_auto_hide_btn.ctrl_button.styleSheet()
         assert (

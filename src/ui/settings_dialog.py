@@ -188,8 +188,11 @@ class TriggerKeyButton(HotkeyButton):
 class AutoHideHotkeyWidget(QWidget):
     """AUTO-HIDE専用の保持キー選択＋通常キー入力。"""
 
+    INPUT_WIDTH = 275
+
     def __init__(self, hotkey="ctrl+d", parent=None, theme=POETORE_THEME):
         super().__init__(parent)
+        self.setFixedWidth(self.INPUT_WIDTH)
         modifier, trigger = self._split_hotkey(hotkey)
 
         layout = QHBoxLayout(self)
