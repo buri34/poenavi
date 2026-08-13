@@ -5860,3 +5860,34 @@ def test_corrupted_eight_mod_map_enables_modifier_count_pseudo():
         "id": "pseudo.pseudo_number_of_affix_mods",
         "value": {"min": 8.0, "max": 8.0},
     } in query["stats"][0]["filters"]
+
+
+def test_japanese_elegant_hubris_advanced_copy_uses_exact_caspiro_seed():
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: ユニーク
+上品な慢心
+タイムレスジュエル
+--------
+アイテムレベル: 80
+--------
+カスピロの記念コインを18920個鋳造した (カディーロ-ヴィクタリオ)
+範囲内のパッシブスキルは永遠なる帝国により征服される
+--------
+パッシブツリーで割り当てられたジュエルソケットにはめる。右クリックしてソケットから取り外すことができる。
+""")
+
+    rows = resolve_trade_stat_filters(item, trade_name="Elegant Hubris")
+    caspiro = next(
+        row for row in rows
+        if row.stat_id == "explicit.pseudo_timeless_jewel_caspiro"
+    )
+    assert caspiro.enabled is True
+    assert caspiro.min_value == 18920
+    assert caspiro.max_value == 18920
+    assert unresolved_modifier_warnings(item, rows) == ()
+
+    query = build_search_query(item, "Timeless Jewel", rows)["query"]
+    assert {
+        "id": "explicit.pseudo_timeless_jewel_caspiro",
+        "value": {"min": 18920.0, "max": 18920.0},
+    } in query["stats"][0]["filters"]
