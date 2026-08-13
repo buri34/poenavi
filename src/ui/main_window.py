@@ -316,7 +316,7 @@ class MainWindow(QMainWindow):
 
     def _register_detachable_panel(
         self, panel_id: str, title: str, widgets: list[QWidget], layout, expand_widgets=(),
-        header_widgets=(),
+        header_widgets=(), header_right_margin=0,
     ):
         """連続したUIを、初期化時に一つの移動可能なコンテナへまとめる。"""
         index = layout.indexOf(widgets[0])
@@ -329,7 +329,7 @@ class MainWindow(QMainWindow):
 
         header_widget = QWidget()
         header_layout = QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setContentsMargins(0, 0, header_right_margin, 0)
         header_layout.setSpacing(6)
 
         title_widget = widgets[0]
@@ -384,6 +384,12 @@ class MainWindow(QMainWindow):
             ):
                 saved_geometry = QRect(x, y, width, height)
                 panel_window.setGeometry(saved_geometry)
+                if (
+                    panel_id == "timer"
+                    and getattr(self, "timer_expanded", False)
+                    and getattr(self, "lap_expanded", False)
+                ):
+                    self._adjust_detached_panel_height(panel_id)
                 self._keep_detached_panel_header_on_screen(panel_window)
 
     @staticmethod
@@ -604,6 +610,7 @@ class MainWindow(QMainWindow):
         self.setup_ui()
         self._restore_detached_panels()
         self._restore_minimized_panels()
+        self._refresh_main_window_minimum_height()
         self.map_thumbnail.auto_open = self.config.get("auto_open_map", False)
         self.map_thumbnail.auto_position = self.config.get("auto_position_map", True)
         self.setMouseTracking(True)
@@ -1294,6 +1301,7 @@ class MainWindow(QMainWindow):
         self.segment_summary_label.setStyleSheet(
             f"color: {Styles.TEXT_COLOR}; font-size: 14px; padding: 2px 0;"
         )
+        self._configure_segment_summary_label()
 
         # フォント読み込みと適用
         self._custom_font_family = self.load_custom_font()
@@ -1895,10 +1903,12 @@ class MainWindow(QMainWindow):
 
         self._register_detachable_panel(
             "timer", "タイマー", [self.timer_toggle_btn, self.timer_container], layout,
+            header_right_margin=10,
         )
         self._register_detachable_panel(
             "guide", "ガイド", [self.guide_toggle_btn, self.guide_container], layout,
             expand_widgets=(self.guide_container,), header_widgets=(self.guide_mode_controls,),
+            header_right_margin=10,
         )
         self._register_detachable_panel(
             "map", "マップ", [self.map_toggle_btn, self.map_thumbnail], guide_lower_layout,
@@ -1944,7 +1954,7 @@ class MainWindow(QMainWindow):
             # レイアウト更新後にも同じ縮小を適用する。
             QTimer.singleShot(0, self._collapse_main_window_to_controls)
             return
-        self.setMinimumHeight(self.MIN_HEIGHT)
+        self._refresh_main_window_minimum_height()
         self._adjust_height_keep_width()
 
     def _collapse_main_window_to_controls(self):
@@ -1968,7 +1978,16 @@ class MainWindow(QMainWindow):
 
         panel_window.content.updateGeometry()
         panel_window.layout().activate()
-        required_height = max(panel_window.minimumHeight(), panel_window.sizeHint().height())
+        required_height = max(
+            180,
+            panel_window.header.sizeHint().height()
+            + max(
+                panel_window.content.sizeHint().height(),
+                panel_window.content.minimumSizeHint().height(),
+                panel_window.content.minimumHeight(),
+            ),
+        )
+        panel_window.setMinimumHeight(required_height)
         if required_height > panel_window.height():
             panel_window.resize(panel_window.width(), required_height)
 
@@ -1979,8 +1998,18 @@ class MainWindow(QMainWindow):
             return
 
         panel_window.content.updateGeometry()
+        panel_window.setMinimumHeight(180)
         panel_window.layout().activate()
-        required_height = max(panel_window.minimumHeight(), panel_window.sizeHint().height())
+        required_height = max(
+            180,
+            panel_window.header.sizeHint().height()
+            + max(
+                panel_window.content.sizeHint().height(),
+                panel_window.content.minimumSizeHint().height(),
+                panel_window.content.minimumHeight(),
+            ),
+        )
+        panel_window.setMinimumHeight(required_height)
         panel_window.resize(panel_window.width(), required_height)
 
     def _adjust_panel_or_main(self, panel_id: str):
@@ -2211,6 +2240,8 @@ class MainWindow(QMainWindow):
             self.timer_size = restored_size
             self._apply_timer_size()
         ConfigManager.save_config(self.config)
+        if not self._is_panel_detached("timer"):
+            self._refresh_main_window_minimum_height()
         self._adjust_panel_or_main("timer")
     
     def toggle_lap(self):
@@ -2220,6 +2251,8 @@ class MainWindow(QMainWindow):
         self.lap_toggle_btn.setText("▼ ラップタイム" if self.lap_expanded else "▶ ラップタイム")
         self.config["lap_expanded"] = self.lap_expanded
         ConfigManager.save_config(self.config)
+        if not self._is_panel_detached("timer"):
+            self._refresh_main_window_minimum_height()
         if self._is_panel_detached("timer"):
             if self.lap_expanded:
                 self._adjust_detached_panel_height("timer")
@@ -2507,8 +2540,14 @@ class MainWindow(QMainWindow):
         overlay_config["enabled"] = not bool(overlay_config.get("enabled", False))
         ConfigManager.save_config(self.config)
         if hasattr(self, "mini_navi_overlay"):
-            self.mini_navi_overlay.apply_settings(refresh_window_flags=True)
+            # ON/OFFではネイティブウィンドウを作り直さず、OBSが選択中の
+            # 同じウィンドウIDを維持する。
+            self.mini_navi_overlay.apply_settings(refresh_window_flags=False)
+            if not overlay_config["enabled"]:
+                self.mini_navi_overlay.collapse_for_obs()
         self._refresh_mini_navi_toggle()
+        if not overlay_config["enabled"]:
+            return
         if self.current_zone:
             if self._is_town_zone(self.current_zone):
                 self.mini_navi_overlay.show_last_content_or_waiting()
@@ -2516,6 +2555,8 @@ class MainWindow(QMainWindow):
             zone_id = self._get_zone_id(self.current_zone)
             visit_num = self.zone_visit_counts.get(zone_id or self.current_zone, 1)
             self._update_guide_and_map(self.current_zone, zone_id, visit_num)
+            return
+        self.mini_navi_overlay.show_last_content_or_waiting()
 
     def _guide_detail_level_toggle_text(self):
         """現在のガイド表示レベルからトグルボタン文言を返す。"""
@@ -2977,6 +3018,13 @@ class MainWindow(QMainWindow):
         self.segment_summary_label.setText(
             f"{latest_text}\n遅い区間: {slowest_text}"
         )
+
+    def _configure_segment_summary_label(self):
+        """2行の区間サマリーが縦方向に圧縮されないようにする。"""
+        line_height = self.segment_summary_label.fontMetrics().lineSpacing()
+        vertical_padding = 4
+        self.segment_summary_label.setMinimumHeight(line_height * 2 + vertical_padding)
+        self.segment_summary_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
 
     def update_lap_display(self):
         """ラップタイム表示を更新"""
@@ -4075,7 +4123,10 @@ class MainWindow(QMainWindow):
             self.guide_text_label.setText(f"「{zone_name}」のガイドデータはありません")
             self.guide_text_label.setStyleSheet(f"color: #666666; font-size: {self.guide_font_size}px; background: transparent;")
             if hasattr(self, "mini_navi_overlay"):
-                self.mini_navi_overlay.hide()
+                if self._is_mini_navi_available():
+                    self.mini_navi_overlay.collapse_for_obs()
+                else:
+                    self.mini_navi_overlay.hide()
         
         # マップ画像は日本語フォルダ名で検索（英語クライアント対応）
         map_zone_name = zone_name
@@ -4235,6 +4286,7 @@ class MainWindow(QMainWindow):
     
     # --- ウィンドウ移動 & 下端リサイズ ---
     MIN_HEIGHT = 400
+    EXPANDED_TIMER_MIN_HEIGHT = 460
     DETACHED_ONLY_MIN_HEIGHT = 90
 
     def _are_all_visible_panels_detached(self) -> bool:
@@ -4266,10 +4318,21 @@ class MainWindow(QMainWindow):
         return bool(relevant_panels and relevant_panels.issubset(detached_panels | minimized_panels))
 
     def _main_window_min_height(self) -> int:
-        """全パネルが本体外なら、操作列相当まで縮小可能にする。"""
+        """表示中の固定コンテンツが見切れない本体最小高を返す。"""
         if self._are_all_visible_panels_outside_main():
             return self.DETACHED_ONLY_MIN_HEIGHT
+        timer_attached = not self._is_panel_detached("timer")
+        if (
+            timer_attached
+            and getattr(self, "timer_expanded", False)
+            and getattr(self, "lap_expanded", False)
+        ):
+            return self.EXPANDED_TIMER_MIN_HEIGHT
         return self.MIN_HEIGHT
+
+    def _refresh_main_window_minimum_height(self):
+        """パネルの展開・切り離し状態に合わせて本体最小高を更新する。"""
+        self.setMinimumHeight(self._main_window_min_height())
     
     def _detect_edge(self, pos):
         """マウス位置からリサイズ方向を検出"""

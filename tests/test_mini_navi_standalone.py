@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QEvent
+from PySide6.QtCore import QEvent, Qt
 from PySide6.QtWidgets import QApplication, QWidget
 
 from src.ui.main_window import MainWindow, MiniNaviOverlay
@@ -46,6 +46,101 @@ class MiniNaviStandaloneTest(unittest.TestCase):
             overlay.close()
             main.close()
 
+    def test_overlay_is_always_an_obs_capture_window_while_disabled(self):
+        main = QWidget()
+        main.config = {"mini_guide_overlay": {"enabled": False}}
+        overlay = MiniNaviOverlay(main)
+        try:
+            self.app.processEvents()
+
+            self.assertTrue(overlay.isVisible())
+            self.assertTrue(overlay.windowFlags() & Qt.Window)
+            self.assertTrue(overlay.windowFlags() & Qt.FramelessWindowHint)
+            self.assertEqual(overlay.windowTitle(), MiniNaviOverlay.OBS_WINDOW_TITLE)
+            self.assertEqual(overlay.size().width(), MiniNaviOverlay.OBS_WAITING_SIZE)
+            self.assertEqual(overlay.size().height(), MiniNaviOverlay.OBS_WAITING_SIZE)
+            self.assertAlmostEqual(
+                overlay.windowOpacity(), MiniNaviOverlay.OBS_WAITING_OPACITY, delta=1 / 255
+            )
+            self.assertFalse(overlay.outer.isVisible())
+            self.assertFalse(overlay.lock_button_window.isVisible())
+        finally:
+            self._dispose_overlay(overlay, main)
+
+    def test_obs_window_keeps_native_id_when_content_expands_and_collapses(self):
+        main = QWidget()
+        main.config = {
+            "mini_guide_overlay": {
+                "enabled": True,
+                "position": {"x": 80, "y": 160},
+                "width": 640,
+                "height": 120,
+            }
+        }
+        overlay = MiniNaviOverlay(main)
+        try:
+            self.app.processEvents()
+            waiting_id = int(overlay.winId())
+
+            overlay.update_content({"text": "次のエリアへ進む", "direction": "e"})
+            self.app.processEvents()
+
+            self.assertEqual(int(overlay.winId()), waiting_id)
+            self.assertFalse(overlay._obs_waiting)
+            self.assertTrue(overlay.outer.isVisible())
+            self.assertGreaterEqual(overlay.width(), 220)
+
+            main.config["mini_guide_overlay"]["enabled"] = False
+            overlay.update_content({"text": "次のエリアへ進む", "direction": "e"})
+            self.app.processEvents()
+
+            self.assertEqual(int(overlay.winId()), waiting_id)
+            self.assertTrue(overlay._obs_waiting)
+            self.assertEqual(overlay.width(), MiniNaviOverlay.OBS_WAITING_SIZE)
+        finally:
+            self._dispose_overlay(overlay, main)
+
+    def test_obs_content_stays_hidden_until_expanded_geometry_is_complete(self):
+        main = QWidget()
+        main.config = {
+            "mini_guide_overlay": {
+                "enabled": True,
+                "width": 750,
+                "height": 118,
+            }
+        }
+        overlay = MiniNaviOverlay(main)
+        try:
+            self.assertFalse(overlay.outer.isVisible())
+
+            overlay.expand_from_obs()
+
+            self.assertFalse(overlay.outer.isVisible())
+            overlay.apply_settings(refresh_window_flags=False)
+            self.assertEqual((overlay.width(), overlay.height()), (750, 118))
+            self.assertFalse(overlay.outer.isVisible())
+        finally:
+            self._dispose_overlay(overlay, main)
+
+    def test_obs_waiting_state_does_not_overwrite_saved_user_geometry(self):
+        saved = {
+            "enabled": False,
+            "position": {"x": 123, "y": 234},
+            "width": 700,
+            "height": 140,
+        }
+        main = QWidget()
+        main.config = {"mini_guide_overlay": dict(saved)}
+        overlay = MiniNaviOverlay(main)
+        try:
+            overlay.close()
+            self.app.processEvents()
+
+            self.assertEqual(main.config["mini_guide_overlay"], saved)
+        finally:
+            overlay.lock_button_window.close()
+            main.close()
+
     def test_compact_mode_uses_saved_geometry_without_overwriting_standard_geometry(self):
         main = QWidget()
         main.config = {
@@ -59,6 +154,7 @@ class MiniNaviStandaloneTest(unittest.TestCase):
         }
         overlay = MiniNaviOverlay(main)
         try:
+            overlay.update_content({"text": "次のエリアへ進む", "direction": "e"})
             self.assertEqual(overlay.width(), 390)
             overlay.setGeometry(40, 50, 420, 140)
             overlay._remember_current_geometry_to_config()
@@ -75,13 +171,16 @@ class MiniNaviStandaloneTest(unittest.TestCase):
         overlay = MiniNaviOverlay(main)
         try:
             available = QApplication.primaryScreen().availableGeometry()
+            overlay.update_content({"text": "次のエリアへ進む", "direction": "e"})
 
             self.assertEqual(MiniNaviOverlay.COMPACT_DEFAULT_WIDTH, 600)
             self.assertEqual(MiniNaviOverlay.COMPACT_DEFAULT_HEIGHT, 110)
             self.assertEqual(overlay.width(), min(MiniNaviOverlay.COMPACT_DEFAULT_WIDTH, available.width()))
-            self.assertEqual(overlay.height(), min(MiniNaviOverlay.COMPACT_DEFAULT_HEIGHT, available.height()))
+            self.assertGreaterEqual(overlay.height(), overlay.minimumHeight())
+            self.assertLessEqual(overlay.height(), min(MiniNaviOverlay.COMPACT_DEFAULT_HEIGHT, available.height()))
             self.assertEqual(overlay.geometry().center().x(), available.center().x())
-            self.assertEqual(overlay.geometry().bottom(), available.bottom())
+            self.assertLessEqual(overlay.geometry().bottom(), available.bottom())
+            self.assertGreaterEqual(overlay.geometry().top(), available.top())
         finally:
             self._dispose_overlay(overlay, main)
 

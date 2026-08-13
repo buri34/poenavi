@@ -3,7 +3,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QPoint, QRect
-from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QSizePolicy, QVBoxLayout, QWidget
 
 from src.ui.main_window import MainWindow
 
@@ -58,3 +58,39 @@ def test_rebuild_lap_ui_keeps_segment_summary_inside_collapsible_lap_content():
 
     assert window.lap_content_layout.indexOf(window.segment_summary_label) == window.lap_content_layout.count() - 1
     lap_content.deleteLater()
+
+
+def test_segment_summary_reserves_two_lines_and_cannot_shrink_vertically():
+    _app()
+    window = MainWindow.__new__(MainWindow)
+    window.segment_summary_label = QLabel()
+
+    window._configure_segment_summary_label()
+
+    expected_height = window.segment_summary_label.fontMetrics().lineSpacing() * 2 + 4
+    assert window.segment_summary_label.minimumHeight() == expected_height
+    assert window.segment_summary_label.sizePolicy().verticalPolicy() == QSizePolicy.Fixed
+    window.segment_summary_label.deleteLater()
+
+
+def test_expanded_attached_timer_uses_taller_main_window_minimum():
+    window = MainWindow.__new__(MainWindow)
+    window.timer_expanded = True
+    window.lap_expanded = True
+    window._are_all_visible_panels_outside_main = lambda: False
+    window._is_panel_detached = lambda panel_id: False
+
+    assert window._main_window_min_height() == window.EXPANDED_TIMER_MIN_HEIGHT
+
+
+def test_collapsed_or_detached_timer_keeps_normal_main_window_minimum():
+    window = MainWindow.__new__(MainWindow)
+    window.timer_expanded = True
+    window.lap_expanded = False
+    window._are_all_visible_panels_outside_main = lambda: False
+    window._is_panel_detached = lambda panel_id: False
+    assert window._main_window_min_height() == window.MIN_HEIGHT
+
+    window.lap_expanded = True
+    window._is_panel_detached = lambda panel_id: panel_id == "timer"
+    assert window._main_window_min_height() == window.MIN_HEIGHT

@@ -153,6 +153,10 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
 
             self.assertFalse(window.config["mini_guide_overlay"]["enabled"])
             self.assertEqual(window.config["mini_guide_overlay"]["locked"], locked)
+            window.mini_navi_overlay.collapse_for_obs.assert_called_once_with()
+            window.mini_navi_overlay.apply_settings.assert_called_once_with(
+                refresh_window_flags=False
+            )
 
     def test_mini_navi_remembers_current_geometry_before_lock_toggle(self):
         class FakeOverlay:
@@ -244,6 +248,19 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
 
         self.assertTrue(window.config["mini_guide_overlay"]["enabled"])
         save_config.assert_called_once_with(window.config)
+        window.mini_navi_overlay.show_last_content_or_waiting.assert_called_once_with()
+
+    def test_enabling_mini_navi_without_current_zone_expands_waiting_content(self):
+        window = MainWindow.__new__(MainWindow)
+        window.config = {"mini_guide_overlay": {"enabled": False, "locked": True}}
+        window.current_zone = None
+        window.mini_navi_overlay = Mock()
+        window._is_mini_navi_available = Mock(return_value=True)
+        window._refresh_mini_navi_toggle = Mock()
+
+        with patch("src.ui.main_window.ConfigManager.save_config"):
+            window.toggle_mini_navi_overlay()
+
         window.mini_navi_overlay.show_last_content_or_waiting.assert_called_once_with()
 
 
