@@ -1868,6 +1868,46 @@ def test_cluster_base_option_enchant_does_not_treat_fixed_text_number_as_minimum
     assert area_damage.max_value is None
 
 
+@pytest.mark.parametrize("percent", [0, 10, 20, 50])
+def test_cluster_base_passive_count_uses_cluster_rule_without_numeric_tolerance(percent):
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: レア
+蛍光する石
+クラスタージュエル (中)
+--------
+アイテムレベル: 83
+--------
+パッシブスキルを4個追加する (enchant)
+ジュエルソケット1個がパッシブスキルに追加される (enchant)
+追加される通常パッシブスキルは付与: 範囲ダメージが10%増加する (enchant)
+""")
+
+    filters = resolve_trade_stat_filters(
+        item, PRESET_BASE, "Medium Cluster Jewel",
+    )
+    ranged = apply_search_range(filters, percent, item)
+    passive = next(
+        row for row in ranged
+        if row.stat_id == "enchant.stat_3086156145"
+    )
+
+    assert passive.ref == "Adds # Passive Skills"
+    assert (passive.min_value, passive.max_value, passive.enabled) == (
+        None, 5.0, True,
+    )
+    query = build_search_query(
+        item, "Medium Cluster Jewel", ranged, preset=PRESET_BASE,
+    )["query"]
+    sent = next(
+        row for group in query["stats"] for row in group["filters"]
+        if row["id"] == "enchant.stat_3086156145"
+    )
+    assert sent == {
+        "id": "enchant.stat_3086156145",
+        "value": {"max": 5.0},
+    }
+
+
 def test_rare_cluster_notables_are_visible_off_for_finished_and_absent_from_base():
     item = parse_item_text("""アイテムクラス: ジュエル
 レアリティ: レア
