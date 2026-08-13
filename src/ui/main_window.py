@@ -316,7 +316,7 @@ class MainWindow(QMainWindow):
 
     def _register_detachable_panel(
         self, panel_id: str, title: str, widgets: list[QWidget], layout, expand_widgets=(),
-        header_widgets=(),
+        header_widgets=(), header_right_margin=0,
     ):
         """連続したUIを、初期化時に一つの移動可能なコンテナへまとめる。"""
         index = layout.indexOf(widgets[0])
@@ -329,7 +329,7 @@ class MainWindow(QMainWindow):
 
         header_widget = QWidget()
         header_layout = QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setContentsMargins(0, 0, header_right_margin, 0)
         header_layout.setSpacing(6)
 
         title_widget = widgets[0]
@@ -1895,10 +1895,12 @@ class MainWindow(QMainWindow):
 
         self._register_detachable_panel(
             "timer", "タイマー", [self.timer_toggle_btn, self.timer_container], layout,
+            header_right_margin=10,
         )
         self._register_detachable_panel(
             "guide", "ガイド", [self.guide_toggle_btn, self.guide_container], layout,
             expand_widgets=(self.guide_container,), header_widgets=(self.guide_mode_controls,),
+            header_right_margin=10,
         )
         self._register_detachable_panel(
             "map", "マップ", [self.map_toggle_btn, self.map_thumbnail], guide_lower_layout,

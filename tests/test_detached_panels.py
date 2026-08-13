@@ -359,6 +359,7 @@ def test_register_detachable_panel_places_button_on_title_row():
     window.panel_registry = {}
     window._register_detachable_panel(
         "timer", "タイマー", [title, body], layout, header_widgets=(panel_controls,),
+        header_right_margin=10,
     )
 
     record = window.panel_registry["timer"]
@@ -368,6 +369,7 @@ def test_register_detachable_panel_places_button_on_title_row():
     assert header_layout.indexOf(record["detach_button"]) >= 0
     assert header_layout.indexOf(record["minimize_button"]) < header_layout.indexOf(record["detach_button"])
     assert record["minimize_button"].text() == "─ 最小化"
+    assert header_layout.contentsMargins().right() == 10
     assert record["content"].layout().count() == 2
 
 
