@@ -1,0 +1,25 @@
+name: Security Scan
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tracked-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install pytest
+      - name: Scan secrets and invisible Unicode
+        run: python scripts/security_scan.py
+      - name: Test the security scanner
+        run: python -m pytest -q tests/test_security_scan.py
