@@ -1195,6 +1195,47 @@ Item Level: 84
         assert available_trade_presets(item) == (PRESET_FINISHED,)
 
 
+@pytest.mark.parametrize(("item_class", "base_type", "category"), (
+    ("Two Hand Swords", "Reaver Sword", "weapon"),
+    ("Body Armours", "Vaal Regalia", "armour"),
+    ("Rings", "Ruby Ring", "accessory"),
+    ("Jewels", "Crimson Jewel", "jewel"),
+    ("Abyss Jewels", "Searching Eye Jewel", "abyss_jewel"),
+    ("Cluster Jewels", "Large Cluster Jewel", "cluster_jewel"),
+))
+def test_normal_craftable_items_exclude_fractured_results(
+    item_class, base_type, category,
+):
+    item = ParsedItem(
+        item_class, "Normal", "", base_type, category, item_level=84,
+    )
+
+    assert available_trade_presets(item) == (PRESET_FINISHED,)
+    query = build_search_query(item, base_type, preset=PRESET_FINISHED)["query"]
+    misc = query["filters"]["misc_filters"]["filters"]
+
+    assert misc["fractured_item"] == {"option": "false"}
+
+
+@pytest.mark.parametrize(("flags", "modifiers"), (
+    (("corrupted",), ()),
+    (("mirrored",), ()),
+    ((), (ItemModifier("+10 to Strength", (10,), kind="fractured"),)),
+))
+def test_awakened_fractured_exclusion_skips_unmodifiable_or_fractured_source(
+    flags, modifiers,
+):
+    item = ParsedItem(
+        "Rings", "Normal", "", "Ruby Ring", "accessory",
+        item_level=84, flags=flags, modifiers=modifiers,
+    )
+
+    query = build_search_query(item, "Ruby Ring", preset=PRESET_FINISHED)["query"]
+    misc = query["filters"].get("misc_filters", {}).get("filters", {})
+
+    assert "fractured_item" not in misc
+
+
 @pytest.mark.parametrize(("strands", "expected_enabled"), (
     (59, False),
     (60, True),
@@ -1245,7 +1286,7 @@ Item Level: 86
     assert strands.hidden_reason
 
 
-def test_finished_preset_does_not_force_special_base_state():
+def test_finished_preset_keeps_awakened_fractured_exclusion_only():
     item = parse_item_text(ITEM.replace(
         "74% increased Physical Damage", "74% increased Physical Damage\nHunter Item",
     ))
@@ -1254,7 +1295,7 @@ def test_finished_preset_does_not_force_special_base_state():
     query = build_search_query(item, "Reaver Sword", filters, preset=PRESET_FINISHED)["query"]
     misc = query["filters"].get("misc_filters", {}).get("filters", {})
     assert "synthesised_item" not in misc
-    assert "fractured_item" not in misc
+    assert misc["fractured_item"] == {"option": "false"}
     assert not any(
         row.get("id") == "pseudo.pseudo_has_hunter_influence"
         for row in query["stats"][0]["filters"]

@@ -3660,6 +3660,15 @@ def build_search_query(
             misc["corrupted"] = {
                 "option": "true" if "corrupted" in item.flags else "false"
             }
+    # Awakenedの共通規則: クラフト可能な通常状態の品を検索する時は、
+    # プリセットやレアリティにかかわらずフラクチャー失敗品を除外する。
+    # 元からフラクチャー／コラプト／ミラー状態の品には適用しない。
+    if (craftable
+            and "corrupted" not in item.flags
+            and "mirrored" not in item.flags
+            and not any(modifier.kind == "fractured" for modifier in item.modifiers)):
+        misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
+        misc["fractured_item"] = {"option": "false"}
     if corruption_mode_explicit and include_corrupted != True:
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
         misc["corrupted"] = {
