@@ -1836,6 +1836,38 @@ Item Level: 72
     assert query["filters"]["misc_filters"]["filters"]["ilvl"] == {"min": 68.0, "max": 74.0}
 
 
+def test_cluster_base_option_enchant_does_not_treat_fixed_text_number_as_minimum():
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: レア
+蛍光する石
+クラスタージュエル (中)
+--------
+アイテムレベル: 83
+--------
+パッシブスキルを4個追加する (enchant)
+ジュエルソケット1個がパッシブスキルに追加される (enchant)
+追加される通常パッシブスキルは付与: 範囲ダメージが10%増加する (enchant)
+""")
+    entries = ({
+        "id": "enchant.stat_3948993189|31",
+        "text": "追加される通常パッシブスキルは付与: 範囲ダメージが10%増加する",
+        "type": "enchant",
+    },)
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(
+            item, PRESET_BASE, "Medium Cluster Jewel",
+        )
+
+    area_damage = next(
+        row for row in filters
+        if row.stat_id == "enchant.stat_3948993189|31"
+    )
+    assert area_damage.enabled
+    assert area_damage.min_value is None
+    assert area_damage.max_value is None
+
+
 def test_rare_cluster_notables_are_visible_off_for_finished_and_absent_from_base():
     item = parse_item_text("""アイテムクラス: ジュエル
 レアリティ: レア

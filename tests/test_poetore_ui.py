@@ -701,12 +701,45 @@ def test_show_at_context_can_display_without_activating(qapp):
         window.close()
 
 
+def test_show_at_context_interactive_starts_outside_click_listener(qapp):
+    window = PoetoreWindow()
+    try:
+        context = PlacementContext(QRect(0, 0, 1920, 1080), QPoint(500, 400))
+        with patch.object(window, "show"), patch.object(window, "raise_"), patch.object(
+            window, "_start_outside_click_listener",
+        ) as start_listener:
+            window.show_at_context(context, activate=True)
+
+        start_listener.assert_called_once_with()
+    finally:
+        window.close()
+
+
 def test_passive_hotkey_display_closes_only_for_outside_click(qapp, deterministic_global_cursor):
     window = PoetoreWindow()
     try:
         window.setGeometry(100, 100, 720, 1039)
         window.show()
         window._passive_hotkey_display = True
+        qapp.processEvents()
+
+        window._handle_global_mouse_press(200, 200)
+        assert window.isVisible()
+
+        window._handle_global_mouse_press(50, 50)
+        assert not window.isVisible()
+    finally:
+        window.close()
+
+
+def test_interactive_display_also_closes_for_outside_global_click(
+    qapp, deterministic_global_cursor,
+):
+    window = PoetoreWindow()
+    try:
+        window.setGeometry(100, 100, 720, 1039)
+        window.show()
+        window._passive_hotkey_display = False
         qapp.processEvents()
 
         window._handle_global_mouse_press(200, 200)

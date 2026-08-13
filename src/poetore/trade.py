@@ -1079,10 +1079,18 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
         entry = candidates[0]
         entry_text = str(entry.get("text", ""))
         value = _value_for_template(modifier.text, entry_text, modifier.stat_id)
+        # Trade Stat IDの`|option`部分が値そのものを表す選択肢型Statでは、
+        # 表示文中の固定数値をmin/maxとして送らない。Cluster Jewelの
+        # 「Added Small Passive Skills grant: 10% ...」などが該当する。
+        option_stat = "|" in str(entry.get("id", ""))
+        if option_stat:
+            value = None
         if value is None and (
-            "#" in entry_text
-            or modifier.option_value is not None
-            or str(entry["id"]) not in _API_VERIFIED_VALUELESS_FIXED_STAT_IDS
+            not option_stat and (
+                "#" in entry_text
+                or modifier.option_value is not None
+                or str(entry["id"]) not in _API_VERIFIED_VALUELESS_FIXED_STAT_IDS
+            )
         ):
             value = modifier.values[0] if modifier.values else None
         enabled = modifier.kind not in {"prefix", "suffix"} or modifier.tier in {1, 2}
