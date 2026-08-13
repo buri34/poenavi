@@ -2538,8 +2538,14 @@ class MainWindow(QMainWindow):
         overlay_config["enabled"] = not bool(overlay_config.get("enabled", False))
         ConfigManager.save_config(self.config)
         if hasattr(self, "mini_navi_overlay"):
-            self.mini_navi_overlay.apply_settings(refresh_window_flags=True)
+            # ON/OFFではネイティブウィンドウを作り直さず、OBSが選択中の
+            # 同じウィンドウIDを維持する。
+            self.mini_navi_overlay.apply_settings(refresh_window_flags=False)
+            if not overlay_config["enabled"]:
+                self.mini_navi_overlay.collapse_for_obs()
         self._refresh_mini_navi_toggle()
+        if not overlay_config["enabled"]:
+            return
         if self.current_zone:
             if self._is_town_zone(self.current_zone):
                 self.mini_navi_overlay.show_last_content_or_waiting()
@@ -2547,6 +2553,8 @@ class MainWindow(QMainWindow):
             zone_id = self._get_zone_id(self.current_zone)
             visit_num = self.zone_visit_counts.get(zone_id or self.current_zone, 1)
             self._update_guide_and_map(self.current_zone, zone_id, visit_num)
+            return
+        self.mini_navi_overlay.show_last_content_or_waiting()
 
     def _guide_detail_level_toggle_text(self):
         """現在のガイド表示レベルからトグルボタン文言を返す。"""
@@ -4111,7 +4119,10 @@ class MainWindow(QMainWindow):
             self.guide_text_label.setText(f"「{zone_name}」のガイドデータはありません")
             self.guide_text_label.setStyleSheet(f"color: #666666; font-size: {self.guide_font_size}px; background: transparent;")
             if hasattr(self, "mini_navi_overlay"):
-                self.mini_navi_overlay.hide()
+                if self._is_mini_navi_available():
+                    self.mini_navi_overlay.collapse_for_obs()
+                else:
+                    self.mini_navi_overlay.hide()
         
         # マップ画像は日本語フォルダ名で検索（英語クライアント対応）
         map_zone_name = zone_name

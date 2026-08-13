@@ -106,6 +106,9 @@ class MiniNaviOverlay(QWidget):
     """みになび表示ウィンドウ。"""
 
     WAITING_FOR_AREA_TEXT = "エリアに入場すると攻略ガイドが表示されます"
+    OBS_WINDOW_TITLE = "みになび - OBSキャプチャ"
+    OBS_WAITING_SIZE = 8
+    OBS_WAITING_OPACITY = 0.01
     COMPACT_DEFAULT_WIDTH = 600
     COMPACT_DEFAULT_HEIGHT = 110
 
@@ -154,7 +157,10 @@ class MiniNaviOverlay(QWidget):
         # 独立したトップレベルウィンドウにする。
         super().__init__(None)
         self.main_window = parent
-        self.setWindowFlags(_with_optional_mini_always_on_top(Qt.Tool | Qt.FramelessWindowHint, self.main_window))
+        # OBSが通常のウィンドウキャプチャ候補として安定して列挙できるよう、
+        # Qt.Toolではなく通常のトップレベルウィンドウを常設する。
+        self.setWindowFlags(_with_optional_mini_always_on_top(Qt.Window | Qt.FramelessWindowHint, self.main_window))
+        self.setWindowTitle(self.OBS_WINDOW_TITLE)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WA_ShowWithoutActivating, True)
 
@@ -169,6 +175,7 @@ class MiniNaviOverlay(QWidget):
         self._current_has_area_note = False
         self._muted_content = False
         self._lock_button_hidden_for_drag = False
+        self._obs_waiting = False
         self._fade_timer = QTimer(self)
         self._fade_timer.setSingleShot(True)
         self._fade_timer.timeout.connect(self._fade_to_idle_opacity)
@@ -236,7 +243,7 @@ class MiniNaviOverlay(QWidget):
         root.addWidget(self.outer)
         self.lock_button_window = MiniNaviLockButtonWindow(self)
         self.apply_settings(refresh_window_flags=False)
-        self.hide()
+        self.collapse_for_obs()
 
     def config(self) -> dict:
         parent_config = getattr(self.main_window, "config", {}) if self.main_window else {}
@@ -319,12 +326,10 @@ class MiniNaviOverlay(QWidget):
         self._current_has_area_note = bool(has_area_note)
         cfg = self.config()
         if not cfg.get("enabled", False):
-            self.hide()
-            self.lock_button_window.hide()
+            self.collapse_for_obs()
             return
         if not isinstance(mini_navi, dict):
-            self.hide()
-            self.lock_button_window.hide()
+            self.collapse_for_obs()
             return
         text = mini_navi.get("text", "") or ""
         direction = mini_navi.get("direction", "none") or "none"
@@ -334,8 +339,7 @@ class MiniNaviOverlay(QWidget):
             max_lines = max(4, min(int(cfg.get("max_lines", 4)), 6))
             lines = lines[:max_lines]
         if not lines and direction not in self.DIRECTION_ARROWS:
-            self.hide()
-            self.lock_button_window.hide()
+            self.collapse_for_obs()
             return
 
         arrow = self.DIRECTION_ARROWS.get(direction, "")
@@ -346,6 +350,7 @@ class MiniNaviOverlay(QWidget):
         self.text_label.setAlignment(Qt.AlignCenter if muted else Qt.AlignVCenter | Qt.AlignLeft)
         self.text_label.setText("<br>".join(self._render_line(line) for line in lines))
         self.area_note_badge.setVisible(bool(has_area_note) and not muted)
+        self.expand_from_obs()
         self.apply_settings(refresh_window_flags=False)
         self._fit_height_to_content()
         self.show()
@@ -353,6 +358,29 @@ class MiniNaviOverlay(QWidget):
         self._apply_click_through()
         self._sync_lock_button()
         self._show_strong_opacity(restart_fade=True)
+
+    def collapse_for_obs(self):
+        """同じネイティブウィンドウを維持したまま、画面端へ極小透明で収納する。"""
+        self._fade_timer.stop()
+        self._obs_waiting = True
+        self.lock_button_window.hide()
+        self.outer.hide()
+        self.setMinimumSize(0, 0)
+        self.setMaximumSize(self.OBS_WAITING_SIZE, self.OBS_WAITING_SIZE)
+        available = self._available_screen_geometry()
+        self.resize(self.OBS_WAITING_SIZE, self.OBS_WAITING_SIZE)
+        self.move(available.right() - self.OBS_WAITING_SIZE + 1, available.bottom() - self.OBS_WAITING_SIZE + 1)
+        self.setWindowOpacity(self.OBS_WAITING_OPACITY)
+        self.show()
+
+    def expand_from_obs(self):
+        """OBS待機状態を解除し、保存済みのみになび表示へ戻す。"""
+        if not self._obs_waiting:
+            return
+        self._obs_waiting = False
+        self.setMaximumSize(16777215, 16777215)
+        self.setMinimumSize(220, 70)
+        self.outer.show()
 
     def show_waiting_for_area(self):
         """街エリアでは、起動済みと分かる待機メッセージを表示する。"""
@@ -565,14 +593,16 @@ class MiniNaviOverlay(QWidget):
         super().hideEvent(event)
 
     def closeEvent(self, event):
-        self._save_geometry_to_config()
+        if not self._obs_waiting:
+            self._save_geometry_to_config()
         self.lock_button_window.close()
         super().closeEvent(event)
 
     def _apply_window_flags(self):
         was_visible = self.isVisible()
         lock_was_visible = self.lock_button_window.isVisible()
-        self.setWindowFlags(_with_optional_mini_always_on_top(Qt.Tool | Qt.FramelessWindowHint, self.main_window))
+        self.setWindowFlags(_with_optional_mini_always_on_top(Qt.Window | Qt.FramelessWindowHint, self.main_window))
+        self.setWindowTitle(self.OBS_WINDOW_TITLE)
         self.lock_button_window.setWindowFlags(_with_optional_mini_always_on_top(Qt.Tool | Qt.FramelessWindowHint, self.main_window))
         if was_visible:
             self.show()
