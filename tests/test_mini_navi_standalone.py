@@ -100,6 +100,28 @@ class MiniNaviStandaloneTest(unittest.TestCase):
         finally:
             self._dispose_overlay(overlay, main)
 
+    def test_obs_content_stays_hidden_until_expanded_geometry_is_complete(self):
+        main = QWidget()
+        main.config = {
+            "mini_guide_overlay": {
+                "enabled": True,
+                "width": 750,
+                "height": 118,
+            }
+        }
+        overlay = MiniNaviOverlay(main)
+        try:
+            self.assertFalse(overlay.outer.isVisible())
+
+            overlay.expand_from_obs()
+
+            self.assertFalse(overlay.outer.isVisible())
+            overlay.apply_settings(refresh_window_flags=False)
+            self.assertEqual((overlay.width(), overlay.height()), (750, 118))
+            self.assertFalse(overlay.outer.isVisible())
+        finally:
+            self._dispose_overlay(overlay, main)
+
     def test_obs_waiting_state_does_not_overwrite_saved_user_geometry(self):
         saved = {
             "enabled": False,

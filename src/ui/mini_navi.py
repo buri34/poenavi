@@ -353,6 +353,9 @@ class MiniNaviOverlay(QWidget):
         self.expand_from_obs()
         self.apply_settings(refresh_window_flags=False)
         self._fit_height_to_content()
+        # 8px待機状態の上限を解除した直後に、Qtの大きなsizeHintが一瞬
+        # 描画されないよう、完成geometryになってから本文を表示する。
+        self.outer.show()
         self.show()
         self.raise_()
         self._apply_click_through()
@@ -380,7 +383,6 @@ class MiniNaviOverlay(QWidget):
         self._obs_waiting = False
         self.setMaximumSize(16777215, 16777215)
         self.setMinimumSize(220, 70)
-        self.outer.show()
 
     def show_waiting_for_area(self):
         """街エリアでは、起動済みと分かる待機メッセージを表示する。"""
