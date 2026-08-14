@@ -21,7 +21,7 @@ Path of Exile 1 / Path of Exile 2向けの、Windows用レベリング支援ツ�
 詳しい機能説明と画像付きの使い方は、以下の記事へまとめています。
 
 - [ぽえなびの使い方を解説](https://note.com/buri8857/n/nd1e6a07b8a29)
-- ぽえとれの詳しい使い方：準備中
+- [ぽえとれの使い方を解説](https://note.com/buri8857/n/n8a5047edab08)
 
 ## ダウンロード
 
