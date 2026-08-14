@@ -36,6 +36,12 @@ Pythonのインストールは不要です。設定やメモは`%APPDATA%\PoENav
 >
 > SmartScreenが表示された場合は、発行元とダウンロード元がこのリポジトリであることを確認したうえで、「詳細情報」から実行できます。不安な場合は実行せず、公開ソースから直接起動してください。
 
+### コード署名
+
+Free code signing provided by [SignPath.io](https://signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
+
+PoENaviは、今後のWindows向けリリースを署名するためSignPath Foundationのオープンソース向けコード署名プログラムへ申請しています。審査・導入が完了するまで、現在の配布版は未署名です。
+
 ## 最初に行う設定
 
 1. 起動時に「ぽえなび」または「ぽえとれ」を選択
