@@ -41,6 +41,8 @@ Invoke-Python scripts\generate_windows_version_info.py `
     --description "PoENavi Updater" `
     --filename "PoENaviUpdater.exe" `
     --output "build\version\PoENaviUpdater-version.txt"
+Invoke-Python scripts\collect_third_party_licenses.py `
+    --output "build\third-party-licenses"
 
 $appArgs = @(
     "-m", "PyInstaller",
@@ -58,6 +60,7 @@ $appArgs = @(
     "--add-data", "LICENSE;.",
     "--add-data", "README.md;.",
     "--add-data", "THIRD_PARTY_NOTICES.md;.",
+    "--add-data", "build\third-party-licenses;THIRD_PARTY_LICENSES",
     "--add-data", "data;data",
     "--add-data", "assets;assets",
     "--add-data", "maps;maps",
@@ -125,10 +128,16 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path PoENavi.zip))
 try {
     $entryNames = @($archive.Entries | ForEach-Object { $_.FullName.Replace("\", "/") })
-    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json", "map_mods.json")) {
+    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES/README.md", "THIRD_PARTY_LICENSES/Python-LICENSE.txt", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json", "map_mods.json")) {
         if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {
             throw "Release audit failed: missing $requiredName"
         }
+    }
+    $thirdPartyLicenseFiles = @($entryNames | Where-Object {
+        $_ -match "(^|/)THIRD_PARTY_LICENSES/.+/(LICENSE|LICENCE|COPYING|NOTICE)"
+    })
+    if ($thirdPartyLicenseFiles.Count -lt 10) {
+        throw "Release audit failed: expected complete third-party license texts, found $($thirdPartyLicenseFiles.Count)"
     }
     $forbidden = @($entryNames | Where-Object {
         $_ -match "(^|/)(tests|build|__pycache__)/" -or

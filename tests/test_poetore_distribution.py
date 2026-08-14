@@ -42,6 +42,9 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     script = (ROOT / "scripts" / "build_release.ps1").read_text(encoding="utf-8")
     for filename in ("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md"):
         assert f'"--add-data", "{filename};."' in script
+    assert '"--add-data", "build\\third-party-licenses;THIRD_PARTY_LICENSES"' in script
+    assert "collect_third_party_licenses.py" in script
+    assert "THIRD_PARTY_LICENSES/Python-LICENSE.txt" in script
     assert '"--add-data", "data;data"' in script
     assert '"--add-data", "tests;' not in script
     assert '"--add-data", "build;' not in script

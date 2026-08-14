@@ -31,7 +31,7 @@ This checklist tracks PoENavi's preparation for a SignPath Foundation OSS code-s
 - [x] Runtime components and license families are documented in `THIRD_PARTY_NOTICES.md`
 - [x] Application draft discloses bundled upstream runtime binaries
 - [x] Application draft discloses Path of Exile metadata and user-created map-reference images
-- [ ] Confirm that the release archive includes all complete license texts required by packaged dependencies
+- [x] Generate and audit `THIRD_PARTY_LICENSES/` with complete license texts from the exact release environment
 - [ ] Ask SignPath Foundation to confirm that non-executable game data does not prevent OSS eligibility
 
 ## External actions requiring maintainer review
