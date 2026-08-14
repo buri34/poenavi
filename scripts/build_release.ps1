@@ -21,16 +21,35 @@ if ($Python -eq ".venv-build\Scripts\python.exe" -and -not (Test-Path $Python)) 
     }
 }
 
-Invoke-Python -m pip install --upgrade pip setuptools wheel
-Invoke-Python -m pip install --upgrade -r requirements.txt pyinstaller pytest
+Invoke-Python -m pip install -r requirements-build.txt
 
 Remove-Item -Recurse -Force build, dist -ErrorAction SilentlyContinue
+
+$appVersion = & $Python -c "from src.version import APP_VERSION; print(APP_VERSION)"
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($appVersion)) {
+    throw "Failed to read APP_VERSION"
+}
+$appVersion = $appVersion.Trim()
+
+Invoke-Python scripts\generate_windows_version_info.py `
+    --version $appVersion `
+    --description "PoENavi" `
+    --filename "PoENavi.exe" `
+    --output "build\version\PoENavi-version.txt"
+Invoke-Python scripts\generate_windows_version_info.py `
+    --version $appVersion `
+    --description "PoENavi Updater" `
+    --filename "PoENaviUpdater.exe" `
+    --output "build\version\PoENaviUpdater-version.txt"
+Invoke-Python scripts\collect_third_party_licenses.py `
+    --output "build\third-party-licenses"
 
 $appArgs = @(
     "-m", "PyInstaller",
     "--noconfirm", "--clean", "--noupx", "--onedir", "--windowed",
     "--name", "PoENavi",
     "--icon", "assets\app\icon.ico",
+    "--version-file", "build\version\PoENavi-version.txt",
     "--distpath", "dist",
     "--workpath", "build\app",
     "--add-data", "assets\app\icon.ico;.",
@@ -41,6 +60,7 @@ $appArgs = @(
     "--add-data", "LICENSE;.",
     "--add-data", "README.md;.",
     "--add-data", "THIRD_PARTY_NOTICES.md;.",
+    "--add-data", "build\third-party-licenses;THIRD_PARTY_LICENSES",
     "--add-data", "data;data",
     "--add-data", "assets;assets",
     "--add-data", "maps;maps",
@@ -50,7 +70,6 @@ $appArgs = @(
     "--hidden-import", "pynput",
     "--hidden-import", "pynput.keyboard",
     "--hidden-import", "pynput.keyboard._win32",
-    "--hidden-import", "keyboard",
     "main.py"
 )
 Invoke-Python @appArgs
@@ -60,6 +79,7 @@ $updaterArgs = @(
     "--noconfirm", "--clean", "--noupx", "--onefile", "--windowed",
     "--name", "PoENaviUpdater",
     "--icon", "assets\app\updater.ico",
+    "--version-file", "build\version\PoENaviUpdater-version.txt",
     "--distpath", "dist\PoENavi",
     "--workpath", "build\updater",
     "--hidden-import", "PySide6.QtWidgets",
@@ -108,10 +128,16 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path PoENavi.zip))
 try {
     $entryNames = @($archive.Entries | ForEach-Object { $_.FullName.Replace("\", "/") })
-    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json", "map_mods.json")) {
+    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES/README.md", "THIRD_PARTY_LICENSES/Python-LICENSE.txt", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json", "map_mods.json")) {
         if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {
             throw "Release audit failed: missing $requiredName"
         }
+    }
+    $thirdPartyLicenseFiles = @($entryNames | Where-Object {
+        $_ -match "(^|/)THIRD_PARTY_LICENSES/.+/(LICENSE|LICENCE|COPYING|NOTICE)"
+    })
+    if ($thirdPartyLicenseFiles.Count -lt 10) {
+        throw "Release audit failed: expected complete third-party license texts, found $($thirdPartyLicenseFiles.Count)"
     }
     $forbidden = @($entryNames | Where-Object {
         $_ -match "(^|/)(tests|build|__pycache__)/" -or
