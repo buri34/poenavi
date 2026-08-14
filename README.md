@@ -95,6 +95,12 @@ PoENaviはゲームとは独立して動作し、処理内容をこのリポジ�
 
 手動確認は、設定画面の「アプリ情報 → アップデートを確認」から行えます。
 
+## アンインストール
+
+PoENaviはインストーラーやWindowsサービスを使用しません。アンインストールするには、PoENaviを終了して、展開した`PoENavi`フォルダを削除してください。
+
+設定、メモ、タイマー記録なども削除する場合は、`%APPDATA%\PoENavi\`を削除してください。必要な記録がある場合は、先にバックアップしてください。
+
 ## 不具合報告・要望
 
 [GitHub Issues](../../issues)へ、次の情報を添えて報告してください。
@@ -133,6 +139,8 @@ python -m pytest -q
 
 - [MIT License](LICENSE)
 - [第三者ライセンス・データ出典](THIRD_PARTY_NOTICES.md)
+- [Privacy policy](PRIVACY.md)
+- [Code signing policy](docs/CODE_SIGNING_POLICY.md)
 - [Path of Exile](https://www.pathofexile.com/) by Grinding Gear Games
 - Built with ❤️ by [Buri](https://github.com/buri34)
 

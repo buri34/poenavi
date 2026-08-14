@@ -21,16 +21,33 @@ if ($Python -eq ".venv-build\Scripts\python.exe" -and -not (Test-Path $Python)) 
     }
 }
 
-Invoke-Python -m pip install --upgrade pip setuptools wheel
-Invoke-Python -m pip install --upgrade -r requirements.txt pyinstaller pytest
+Invoke-Python -m pip install -r requirements-build.txt
 
 Remove-Item -Recurse -Force build, dist -ErrorAction SilentlyContinue
+
+$appVersion = & $Python -c "from src.version import APP_VERSION; print(APP_VERSION)"
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($appVersion)) {
+    throw "Failed to read APP_VERSION"
+}
+$appVersion = $appVersion.Trim()
+
+Invoke-Python scripts\generate_windows_version_info.py `
+    --version $appVersion `
+    --description "PoENavi" `
+    --filename "PoENavi.exe" `
+    --output "build\version\PoENavi-version.txt"
+Invoke-Python scripts\generate_windows_version_info.py `
+    --version $appVersion `
+    --description "PoENavi Updater" `
+    --filename "PoENaviUpdater.exe" `
+    --output "build\version\PoENaviUpdater-version.txt"
 
 $appArgs = @(
     "-m", "PyInstaller",
     "--noconfirm", "--clean", "--noupx", "--onedir", "--windowed",
     "--name", "PoENavi",
     "--icon", "assets\app\icon.ico",
+    "--version-file", "build\version\PoENavi-version.txt",
     "--distpath", "dist",
     "--workpath", "build\app",
     "--add-data", "assets\app\icon.ico;.",
@@ -50,7 +67,6 @@ $appArgs = @(
     "--hidden-import", "pynput",
     "--hidden-import", "pynput.keyboard",
     "--hidden-import", "pynput.keyboard._win32",
-    "--hidden-import", "keyboard",
     "main.py"
 )
 Invoke-Python @appArgs
@@ -60,6 +76,7 @@ $updaterArgs = @(
     "--noconfirm", "--clean", "--noupx", "--onefile", "--windowed",
     "--name", "PoENaviUpdater",
     "--icon", "assets\app\updater.ico",
+    "--version-file", "build\version\PoENaviUpdater-version.txt",
     "--distpath", "dist\PoENavi",
     "--workpath", "build\updater",
     "--hidden-import", "PySide6.QtWidgets",
