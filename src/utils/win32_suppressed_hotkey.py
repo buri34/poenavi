@@ -64,8 +64,6 @@ class HotkeyEventProcessor:
         self.suppressing_target = False
 
     def process(self, vk_code: int, is_down: bool, *, injected: bool = False) -> bool:
-        if injected:
-            return False
         if vk_code in self.modifier_vks:
             self.modifier_down = is_down
             return False

@@ -3720,7 +3720,9 @@ class PoetoreWindow(QWidget):
         self._obs_transitioning = False
         self.raise_()
         if activate:
-            self._stop_outside_click_listener()
+            # QtのWindowDeactivateはWindows上でまれに届かないため、
+            # 操作モードでも外側クリック監視を保険として併用する。
+            self._start_outside_click_listener()
             self.activateWindow()
             self.setFocus(Qt.OtherFocusReason)
         else:
@@ -3770,10 +3772,10 @@ class PoetoreWindow(QWidget):
             listener.stop()
 
     def _handle_global_mouse_press(self, x: int, y: int):
-        if not self.isVisible() or not self._passive_hotkey_display:
+        if not self.isVisible():
             return
         if self._auto_hide_area_contains(self._global_cursor_point(x, y)):
-            if self._capture_auto_hide:
+            if self._passive_hotkey_display and self._capture_auto_hide:
                 self._enter_auto_hide_interactive()
         else:
             self._dismiss_result()

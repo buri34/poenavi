@@ -44,13 +44,39 @@ def test_processor_suppresses_target_only_in_allowed_context():
     assert events == ["pressed", "released"]
 
 
-def test_processor_ignores_injected_copy_input():
+def test_processor_recognizes_injected_modifier_from_external_software():
     events = []
     processor = HotkeyEventProcessor(
-        VK_CONTROL, ord("C"), lambda: True, events.append,
+        VK_MENU, ord("D"), lambda: True, events.append,
     )
-    processor.process(VK_CONTROL, True, injected=True)
+    assert processor.process(VK_MENU, True, injected=True) is False
+    assert processor.process(ord("D"), True) is True
+    assert processor.process(ord("D"), False) is True
+    assert processor.process(VK_MENU, False, injected=True) is False
+    assert events == ["pressed", "released"]
+
+
+def test_processor_recognizes_fully_injected_hotkey_from_external_software():
+    events = []
+    processor = HotkeyEventProcessor(
+        VK_MENU, ord("D"), lambda: True, events.append,
+    )
+    assert processor.process(VK_MENU, True, injected=True) is False
+    assert processor.process(ord("D"), True, injected=True) is True
+    assert processor.process(ord("D"), False, injected=True) is True
+    assert processor.process(VK_MENU, False, injected=True) is False
+    assert events == ["pressed", "released"]
+
+
+def test_processor_leaves_internal_input_unsuppressed_when_callback_rejects_it():
+    events = []
+    processor = HotkeyEventProcessor(
+        VK_CONTROL, ord("C"), lambda: False, events.append,
+    )
+    assert processor.process(VK_CONTROL, True, injected=True) is False
     assert processor.process(ord("C"), True, injected=True) is False
+    assert processor.process(ord("C"), False, injected=True) is False
+    assert processor.process(VK_CONTROL, False, injected=True) is False
     assert events == []
 
 

@@ -500,8 +500,10 @@ def apply_search_range(
             or (
                 item is not None
                 and item.category == "cluster_jewel"
-                and row.ref == "Adds # Passive Skills"
-                and row.read_value in {2, 8, 9}
+                and (
+                    row.ref == "Adds # Passive Skills"
+                    or row.stat_id == "enchant.stat_3086156145"
+                )
             )
             or row.option_value is not None
             or row.exact
@@ -1095,10 +1097,18 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
         entry = candidates[0]
         entry_text = str(entry.get("text", ""))
         value = _value_for_template(modifier.text, entry_text, modifier.stat_id)
+        # Trade Stat IDの`|option`部分が値そのものを表す選択肢型Statでは、
+        # 表示文中の固定数値をmin/maxとして送らない。Cluster Jewelの
+        # 「Added Small Passive Skills grant: 10% ...」などが該当する。
+        option_stat = "|" in str(entry.get("id", ""))
+        if option_stat:
+            value = None
         if value is None and (
-            "#" in entry_text
-            or modifier.option_value is not None
-            or str(entry["id"]) not in _API_VERIFIED_VALUELESS_FIXED_STAT_IDS
+            not option_stat and (
+                "#" in entry_text
+                or modifier.option_value is not None
+                or str(entry["id"]) not in _API_VERIFIED_VALUELESS_FIXED_STAT_IDS
+            )
         ):
             value = modifier.values[0] if modifier.values else None
         enabled = modifier.kind not in {"prefix", "suffix"} or modifier.tier in {1, 2}
@@ -1106,6 +1116,7 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
             str(entry["id"]), modifier.text, value,
             (modifier.kind if modifier.kind not in {"prefix", "suffix"}
              else f"T{modifier.tier}" if modifier.tier else "explicit"), enabled,
+            ref=modifier.ref,
         ))
     base_property_ids = {
         "property.total_dps", "property.physical_dps", "property.elemental_dps",
@@ -2857,6 +2868,39 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
     return tuple(decorated)
 
 
+def _apply_cluster_passive_count_rules(
+    item: ParsedItem, filters: tuple[TradeStatFilter, ...] | list[TradeStatFilter],
+) -> tuple[TradeStatFilter, ...]:
+    if item.category != "cluster_jewel":
+        return tuple(filters)
+    adjusted = []
+    for row in filters:
+        if row.ref == "# Added Passive Skills are Jewel Sockets":
+            continue
+        is_passive_count = (
+            row.ref == "Adds # Passive Skills"
+            or row.stat_id == "enchant.stat_3086156145"
+        )
+        if is_passive_count and row.read_value is not None:
+            value = row.read_value
+            minimum, maximum = row.min_value, row.max_value
+            if value in {2, 8}:
+                minimum, maximum = None, value
+            elif value == 4:
+                minimum, maximum = None, 5.0
+            elif value == 5:
+                minimum, maximum = 5.0, 5.0
+            elif value in {3, 6, 9, 10, 11, 12}:
+                minimum, maximum = value, None
+            adjusted.append(replace(
+                row, min_value=minimum, max_value=maximum, enabled=True,
+                selection_reason="Cluster Jewelの最適Passive数へ正規化",
+            ))
+        else:
+            adjusted.append(row)
+    return tuple(adjusted)
+
+
 def resolve_trade_stat_filters(
     item: ParsedItem, preset: str = PRESET_FINISHED,
     trade_base_type: str | None = None,
@@ -2867,7 +2911,10 @@ def resolve_trade_stat_filters(
     if preset == PRESET_BASE:
         if PRESET_BASE not in available_trade_presets(item):
             raise ValueError("このアイテムはベースアイテム検索の対象外です。")
-        return _decorate_filters(item, _base_item_filters(item, trade_base_type))
+        return _apply_cluster_passive_count_rules(
+            item,
+            _decorate_filters(item, _base_item_filters(item, trade_base_type)),
+        )
     if is_inscribed_ultimatum(item):
         # Awakenedと同じく名前完全一致だけを使う。供物・報酬・試練Modは
         # Trade API上で高信頼に個体照合できないため、曖昧な条件へ変換しない。
@@ -3371,29 +3418,7 @@ def resolve_trade_stat_filters(
         decorated = [replace(
             row, enabled=True, selection_reason="高価値Reflection"
         ) if row.ref and any(name in row.ref for name in premium) else row for row in decorated]
-    if item.category == "cluster_jewel":
-        adjusted = []
-        for row in decorated:
-            if row.ref == "# Added Passive Skills are Jewel Sockets":
-                continue
-            if row.ref == "Adds # Passive Skills" and row.read_value is not None:
-                value = row.read_value
-                minimum, maximum = row.min_value, row.max_value
-                if value in {2, 8}:
-                    minimum, maximum = None, value
-                elif value == 4:
-                    minimum, maximum = None, 5.0
-                elif value == 5:
-                    minimum, maximum = 5.0, 5.0
-                elif value in {3, 6, 9, 10, 11, 12}:
-                    minimum, maximum = value, None
-                adjusted.append(replace(
-                    row, min_value=minimum, max_value=maximum, enabled=True,
-                    selection_reason="Cluster Jewelの最適Passive数へ正規化",
-                ))
-            else:
-                adjusted.append(row)
-        decorated = adjusted
+    decorated = list(_apply_cluster_passive_count_rules(item, decorated))
     if uses_dedicated_exact_preset(item):
         decorated = list(_apply_dedicated_exact_rules(item, tuple(decorated)))
         existing_ids = {row.stat_id for row in decorated}
@@ -3676,6 +3701,15 @@ def build_search_query(
             misc["corrupted"] = {
                 "option": "true" if "corrupted" in item.flags else "false"
             }
+    # Awakenedの共通規則: クラフト可能な通常状態の品を検索する時は、
+    # プリセットやレアリティにかかわらずフラクチャー失敗品を除外する。
+    # 元からフラクチャー／コラプト／ミラー状態の品には適用しない。
+    if (craftable
+            and "corrupted" not in item.flags
+            and "mirrored" not in item.flags
+            and not any(modifier.kind == "fractured" for modifier in item.modifiers)):
+        misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
+        misc["fractured_item"] = {"option": "false"}
     if corruption_mode_explicit and include_corrupted != True:
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
         misc["corrupted"] = {

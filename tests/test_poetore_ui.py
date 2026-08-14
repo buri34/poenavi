@@ -760,12 +760,45 @@ def test_show_at_context_can_display_without_activating(qapp):
         window.close()
 
 
+def test_show_at_context_interactive_starts_outside_click_listener(qapp):
+    window = PoetoreWindow()
+    try:
+        context = PlacementContext(QRect(0, 0, 1920, 1080), QPoint(500, 400))
+        with patch.object(window, "show"), patch.object(window, "raise_"), patch.object(
+            window, "_start_outside_click_listener",
+        ) as start_listener:
+            window.show_at_context(context, activate=True)
+
+        start_listener.assert_called_once_with()
+    finally:
+        window.close()
+
+
 def test_passive_hotkey_display_closes_only_for_outside_click(qapp, deterministic_global_cursor):
     window = PoetoreWindow()
     try:
         window.setGeometry(100, 100, 720, 1039)
         window.show()
         window._passive_hotkey_display = True
+        qapp.processEvents()
+
+        window._handle_global_mouse_press(200, 200)
+        assert window.isVisible()
+
+        window._handle_global_mouse_press(50, 50)
+        assert not window.isVisible()
+    finally:
+        window.close()
+
+
+def test_interactive_display_also_closes_for_outside_global_click(
+    qapp, deterministic_global_cursor,
+):
+    window = PoetoreWindow()
+    try:
+        window.setGeometry(100, 100, 720, 1039)
+        window.show()
+        window._passive_hotkey_display = False
         qapp.processEvents()
 
         window._handle_global_mouse_press(200, 200)
@@ -4901,6 +4934,36 @@ def test_large_cluster_eight_passives_stays_at_eight_in_ui_with_search_range(qap
         selected = window._selected_special_chip_filters()
         passive = next(row for row in selected if row.ref == "Adds # Passive Skills")
         assert (passive.min_value, passive.max_value) == (None, 8.0)
+    finally:
+        window.close()
+
+
+def test_medium_cluster_base_preset_keeps_passive_rule_with_search_range(qapp):
+    window = PoetoreWindow(app_config={"poetore": {"search_stat_range": 20}})
+    try:
+        item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: レア
+蛍光する石
+クラスタージュエル (中)
+--------
+アイテムレベル: 83
+--------
+パッシブスキルを4個追加する (enchant)
+ジュエルソケット1個がパッシブスキルに追加される (enchant)
+追加される通常パッシブスキルは付与: 範囲ダメージが10%増加する (enchant)
+""")
+        window._parsed_item = item
+        window._trade_base_type = "Medium Cluster Jewel"
+        window.trade_preset_combo.setCurrentIndex(1)
+        window._configure_special_filter_chips(item)
+
+        assert window.cluster_passives_chip.values() == (None, 5.0)
+        selected = window._selected_special_chip_filters()
+        passive = next(
+            row for row in selected
+            if row.stat_id == "enchant.stat_3086156145"
+        )
+        assert (passive.min_value, passive.max_value) == (None, 5.0)
     finally:
         window.close()
 

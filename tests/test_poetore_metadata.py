@@ -202,6 +202,47 @@ def test_default_metadata_uses_latest_reviewed_awakened_snapshot():
     )
 
 
+def test_all_awakened_timeless_jewel_people_match_japanese_advanced_copy_exactly():
+    payload = json.loads(Path("data/poetore/mod_metadata.json").read_text(encoding="utf-8"))
+    rows = [
+        row for row in payload["mods"]
+        if row["stat_id"].startswith("explicit.pseudo_timeless_jewel_")
+    ]
+    # Awakened 14926ee時点の現行人物23名を一括監査する。
+    assert len(rows) == 23
+    ranges = {
+        "ahuana": "（アフアナ－シバクア）",
+        "doryani": "（アフアナ－シバクア）",
+        "xibaqua": "（アフアナ－シバクア）",
+        "akoya": "（アコヤ－ラキアタ）",
+        "kaom": "（アコヤ－ラキアタ）",
+        "rakiata": "（アコヤ－ラキアタ）",
+        "cadiro": "（カディーロ－ヴィクタリオ）",
+        "caspiro": "（カディーロ－ヴィクタリオ）",
+        "victario": "（カディーロ－ヴィクタリオ）",
+        "asenath": "（アセナス－ナシマ）",
+        "balbala": "（アセナス－ナシマ）",
+        "nasima": "（アセナス－ナシマ）",
+        "avarius": "（アヴァリウス－マクサリウス）",
+        "dominus": "（アヴァリウス－マクサリウス）",
+        "maxarius": "（アヴァリウス－マクサリウス）",
+        "medved": "（ヴォラナ－メドヴェッド）",
+        "uhtred": "（ヴォラナ－メドヴェッド）",
+        "vorana": "（ヴォラナ－メドヴェッド）",
+    }
+    index = MetadataIndex.load()
+    for offset, row in enumerate(rows, start=10001):
+        person = row["stat_id"].removeprefix("explicit.pseudo_timeless_jewel_")
+        text = row["japanese"][0].replace("#", str(offset)) + ranges.get(person, "")
+        metadata, confidence = index.match(text, "explicit")
+        assert metadata is not None, row["stat_id"]
+        assert metadata.stat_id == row["stat_id"]
+        assert confidence == 1.0
+        assert metadata.search_bounds(float(offset), relaxation=0.50) == (
+            float(offset), float(offset),
+        )
+
+
 def test_builder_joins_awakened_and_japanese_by_trade_id_and_keeps_minimal_fields():
     awakened = [json.dumps({
         "ref": "+# to maximum Life", "better": 1,

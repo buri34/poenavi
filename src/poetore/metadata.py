@@ -16,6 +16,18 @@ PSEUDO_DEFINITIONS_PATH = Path(__file__).resolve().parents[2] / "data" / "poetor
 MULTI_VALUE_RULES_PATH = Path(__file__).resolve().parents[2] / "data" / "poetore" / "multi_value_rules.json"
 
 
+# Timeless Jewelの詳細コピーは人物名の後ろへ、そのジュエルで取り得る
+# 人物範囲を括弧書きする。公式Tradeの日本語statにはこの注記がないため、
+# Awakenedのadvanced matcherと同じく照合時だけ取り除く。
+_TIMELESS_JEWEL_ADVANCED_RANGE = re.compile(
+    r"\s*[（(](?:"
+    r"アフアナ|アコヤ|アセナス|アヴァリウス|カディロ|カディーロ|ヴォラナ"
+    r")[\-‐‑‒–—―−ー－](?:"
+    r"シバクア|ラキアタ|ナシマ|マクサリウス|ヴィクタリオ|メドヴェッド"
+    r")[）)]"
+)
+
+
 @lru_cache(maxsize=4)
 def _load_payload(path: str) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
@@ -162,6 +174,7 @@ def diff_pseudo_payloads(previous: dict, candidate: dict) -> dict[str, int]:
 
 def normalize_stat_text(text: str) -> str:
     text = text.replace("（", "(").replace("）", ")")
+    text = _TIMELESS_JEWEL_ADVANCED_RANGE.sub("", text)
     text = re.sub(r"\([^)]*(?:\d|implicit|crafted|enchant|ローカル)[^)]*\)", "", text, flags=re.I)
     text = re.sub(r"(?<![A-Za-z])[-+]?\d+(?:\.\d+)?", "#", text)
     text = text.replace("+#", "#").replace("-#", "#")

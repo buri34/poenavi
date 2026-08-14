@@ -1195,6 +1195,47 @@ Item Level: 84
         assert available_trade_presets(item) == (PRESET_FINISHED,)
 
 
+@pytest.mark.parametrize(("item_class", "base_type", "category"), (
+    ("Two Hand Swords", "Reaver Sword", "weapon"),
+    ("Body Armours", "Vaal Regalia", "armour"),
+    ("Rings", "Ruby Ring", "accessory"),
+    ("Jewels", "Crimson Jewel", "jewel"),
+    ("Abyss Jewels", "Searching Eye Jewel", "abyss_jewel"),
+    ("Cluster Jewels", "Large Cluster Jewel", "cluster_jewel"),
+))
+def test_normal_craftable_items_exclude_fractured_results(
+    item_class, base_type, category,
+):
+    item = ParsedItem(
+        item_class, "Normal", "", base_type, category, item_level=84,
+    )
+
+    assert available_trade_presets(item) == (PRESET_FINISHED,)
+    query = build_search_query(item, base_type, preset=PRESET_FINISHED)["query"]
+    misc = query["filters"]["misc_filters"]["filters"]
+
+    assert misc["fractured_item"] == {"option": "false"}
+
+
+@pytest.mark.parametrize(("flags", "modifiers"), (
+    (("corrupted",), ()),
+    (("mirrored",), ()),
+    ((), (ItemModifier("+10 to Strength", (10,), kind="fractured"),)),
+))
+def test_awakened_fractured_exclusion_skips_unmodifiable_or_fractured_source(
+    flags, modifiers,
+):
+    item = ParsedItem(
+        "Rings", "Normal", "", "Ruby Ring", "accessory",
+        item_level=84, flags=flags, modifiers=modifiers,
+    )
+
+    query = build_search_query(item, "Ruby Ring", preset=PRESET_FINISHED)["query"]
+    misc = query["filters"].get("misc_filters", {}).get("filters", {})
+
+    assert "fractured_item" not in misc
+
+
 @pytest.mark.parametrize(("strands", "expected_enabled"), (
     (59, False),
     (60, True),
@@ -1245,7 +1286,7 @@ Item Level: 86
     assert strands.hidden_reason
 
 
-def test_finished_preset_does_not_force_special_base_state():
+def test_finished_preset_keeps_awakened_fractured_exclusion_only():
     item = parse_item_text(ITEM.replace(
         "74% increased Physical Damage", "74% increased Physical Damage\nHunter Item",
     ))
@@ -1254,7 +1295,7 @@ def test_finished_preset_does_not_force_special_base_state():
     query = build_search_query(item, "Reaver Sword", filters, preset=PRESET_FINISHED)["query"]
     misc = query["filters"].get("misc_filters", {}).get("filters", {})
     assert "synthesised_item" not in misc
-    assert "fractured_item" not in misc
+    assert misc["fractured_item"] == {"option": "false"}
     assert not any(
         row.get("id") == "pseudo.pseudo_has_hunter_influence"
         for row in query["stats"][0]["filters"]
@@ -1793,6 +1834,78 @@ Item Level: 72
     assert (level.min_value, level.max_value) == (68.0, 74.0)
     query = build_search_query(item, "Large Cluster Jewel", filters, preset=PRESET_BASE)["query"]
     assert query["filters"]["misc_filters"]["filters"]["ilvl"] == {"min": 68.0, "max": 74.0}
+
+
+def test_cluster_base_option_enchant_does_not_treat_fixed_text_number_as_minimum():
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: レア
+蛍光する石
+クラスタージュエル (中)
+--------
+アイテムレベル: 83
+--------
+パッシブスキルを4個追加する (enchant)
+ジュエルソケット1個がパッシブスキルに追加される (enchant)
+追加される通常パッシブスキルは付与: 範囲ダメージが10%増加する (enchant)
+""")
+    entries = ({
+        "id": "enchant.stat_3948993189|31",
+        "text": "追加される通常パッシブスキルは付与: 範囲ダメージが10%増加する",
+        "type": "enchant",
+    },)
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(
+            item, PRESET_BASE, "Medium Cluster Jewel",
+        )
+
+    area_damage = next(
+        row for row in filters
+        if row.stat_id == "enchant.stat_3948993189|31"
+    )
+    assert area_damage.enabled
+    assert area_damage.min_value is None
+    assert area_damage.max_value is None
+
+
+@pytest.mark.parametrize("percent", [0, 10, 20, 50])
+def test_cluster_base_passive_count_uses_cluster_rule_without_numeric_tolerance(percent):
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: レア
+蛍光する石
+クラスタージュエル (中)
+--------
+アイテムレベル: 83
+--------
+パッシブスキルを4個追加する (enchant)
+ジュエルソケット1個がパッシブスキルに追加される (enchant)
+追加される通常パッシブスキルは付与: 範囲ダメージが10%増加する (enchant)
+""")
+
+    filters = resolve_trade_stat_filters(
+        item, PRESET_BASE, "Medium Cluster Jewel",
+    )
+    ranged = apply_search_range(filters, percent, item)
+    passive = next(
+        row for row in ranged
+        if row.stat_id == "enchant.stat_3086156145"
+    )
+
+    assert passive.ref == "Adds # Passive Skills"
+    assert (passive.min_value, passive.max_value, passive.enabled) == (
+        None, 5.0, True,
+    )
+    query = build_search_query(
+        item, "Medium Cluster Jewel", ranged, preset=PRESET_BASE,
+    )["query"]
+    sent = next(
+        row for group in query["stats"] for row in group["filters"]
+        if row["id"] == "enchant.stat_3086156145"
+    )
+    assert sent == {
+        "id": "enchant.stat_3086156145",
+        "value": {"max": 5.0},
+    }
 
 
 def test_rare_cluster_notables_are_visible_off_for_finished_and_absent_from_base():
@@ -5746,4 +5859,35 @@ def test_corrupted_eight_mod_map_enables_modifier_count_pseudo():
     assert {
         "id": "pseudo.pseudo_number_of_affix_mods",
         "value": {"min": 8.0, "max": 8.0},
+    } in query["stats"][0]["filters"]
+
+
+def test_japanese_elegant_hubris_advanced_copy_uses_exact_caspiro_seed():
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: ユニーク
+上品な慢心
+タイムレスジュエル
+--------
+アイテムレベル: 80
+--------
+カスピロの記念コインを18920個鋳造した (カディーロ-ヴィクタリオ)
+範囲内のパッシブスキルは永遠なる帝国により征服される
+--------
+パッシブツリーで割り当てられたジュエルソケットにはめる。右クリックしてソケットから取り外すことができる。
+""")
+
+    rows = resolve_trade_stat_filters(item, trade_name="Elegant Hubris")
+    caspiro = next(
+        row for row in rows
+        if row.stat_id == "explicit.pseudo_timeless_jewel_caspiro"
+    )
+    assert caspiro.enabled is True
+    assert caspiro.min_value == 18920
+    assert caspiro.max_value == 18920
+    assert unresolved_modifier_warnings(item, rows) == ()
+
+    query = build_search_query(item, "Timeless Jewel", rows)["query"]
+    assert {
+        "id": "explicit.pseudo_timeless_jewel_caspiro",
+        "value": {"min": 18920.0, "max": 18920.0},
     } in query["stats"][0]["filters"]
