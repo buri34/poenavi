@@ -1424,6 +1424,13 @@ class PoetoreWindow(QWidget):
             (("ミラー品含む", True, False), ("ミラー品を除外", False, False)),
         )
         self.mirrored_combo.hide()
+        self.sanctified_combo = _CycleButton((
+            ("聖別品のみ", "only", False),
+            ("非聖別品のみ", False, False),
+            ("聖別品含む", True, False),
+        ))
+        self.sanctified_combo.setToolTip("クリックするたびに聖別化条件を切り替えます")
+        self.sanctified_combo.hide()
         self._filter_chips = (
             ("links", self.links_tag),
             ("nightmare_map", self.nightmare_map_chip),
@@ -1449,6 +1456,7 @@ class PoetoreWindow(QWidget):
             ("veiled", self.veiled_chip),
             ("foil", self.foil_chip),
             ("mirrored", self.mirrored_combo),
+            ("sanctified", self.sanctified_combo),
             ("split", self.split_combo),
         )
         for _name, chip in self._filter_chips:
@@ -1676,6 +1684,7 @@ class PoetoreWindow(QWidget):
             self.trade_preset_combo, self.base_scope_toggle, self.magic_rarity_toggle,
             self.corrupted_combo, self.unidentified_chip, self.veiled_chip,
             self.foil_chip, self.split_combo, self.mirrored_combo,
+            self.sanctified_combo,
             self.logbook_area_selector,
         ):
             control.currentIndexChanged.connect(self._mark_search_dirty)
@@ -3991,6 +4000,10 @@ class PoetoreWindow(QWidget):
             if not self.mirrored_combo.isHidden()
             else bool(getattr(self, "_hidden_include_mirrored", True))
         )
+        include_sanctified = (
+            self.sanctified_combo.currentData()
+            if not self.sanctified_combo.isHidden() else None
+        )
         item_level_min, item_level_max = self._selected_item_level_range()
         gem_level_min = self._selected_gem_level()
         quality_min = self._selected_quality()
@@ -4101,6 +4114,7 @@ class PoetoreWindow(QWidget):
                         listed_within=listed_within,
                         include_corrupted=include_corrupted,
                         include_mirrored=include_mirrored,
+                        include_sanctified=include_sanctified,
                         partial_result_callback=lambda partial: (
                             self._trade_signals.partial_completed.emit(
                                 partial, search_generation,
@@ -4255,6 +4269,9 @@ class PoetoreWindow(QWidget):
         self.mirrored_combo.setCurrentIndex(0)
         self.mirrored_combo.setVisible(is_mirrored)
         self._hidden_include_mirrored = not (craftable and "corrupted" not in item.flags)
+        is_sanctified = self.poe_version == POE2 and "sanctified" in item.flags
+        self.sanctified_combo.setCurrentIndex(0)
+        self.sanctified_combo.setVisible(is_sanctified)
 
     def _refresh_hidden_split_default(self, item):
         """Awakened準拠で、非表示のSplit条件をリーグ・プリセット別に決める。"""

@@ -33,7 +33,7 @@
 32,P2-WIN-032,必須,特殊状態,Crafted/Fractured/Desecrated品,完成品からベースへ切替,正しいbase,未確認,特殊Statを通常版へ置換せず元Stat維持,未確認,Trade2・ベース検索仕様＋元の特殊Stat,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
 33,P2-WIN-033,推奨,特殊状態,Corruptedかつ特殊Mod付きRare,詳細コピー後に検索,両状態を解析,未確認,通常Explicit版がある特殊Modは性能条件へ置換,未確認,Trade2・corrupted条件＋通常Explicit Stat,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
 34,P2-WIN-034,必須,特殊状態,Mirrored Loreweave,mirrored_loreweave_ja/en.txtを詳細コピー後に検索,Loreweave／Ornate Ringmailを日英で同定,未確認,Mirrored ON・全9 Unique Mod,未確認,Trade2・mirrored=true＋元Stat,未確認,収集済みfixtureを使用（日英の新規貼付不要）,,,,未検索,,未確認,,,未実施,
-35,P2-WIN-035,必須,特殊状態,Sanctified Anvil Maul,sanctified_maul_ja/en.txtを詳細コピー後に検索,Anvil Maulを日英で同定,未確認,Sanctified ON・Desecrated/Crafted専用状態チップなし・全8 Mod,未確認,Trade2・sanctified=true＋通常Explicit性能条件・追加火平均118.5,未確認,収集済みfixtureを使用（日英の新規貼付不要）,,,,未検索,,未確認,,,未実施,
+35,P2-WIN-035,必須,特殊状態,Sanctified Anvil Maul,sanctified_maul_ja/en.txtを詳細コピー後に検索,Anvil Maulを日英で同定,未確認,聖別化3状態チップは初期「聖別品のみ」・警告色なし・Desecrated/Crafted専用状態チップなし・全8 Mod,未確認,Trade2・3状態でsanctified=true／false／条件なし＋通常Explicit性能条件・追加火平均118.5,未確認,収集済みfixtureを使用（日英の新規貼付不要）,,,,未検索,,未確認,,,未実施,
 36,P2-WIN-036,推奨,特殊状態,Runeforged装備,詳細コピー後に検索,Runeforgedを別baseとして識別,未確認,通常baseへ丸めない,未確認,Trade2・Runeforgedのtype,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
 37,P2-WIN-037,入手できた時,特殊状態,Runemastered Unique防具,詳細コピー後に検索,Runemasteredを別baseとして識別,未確認,Unique名/type・防御値,未確認,Trade2・Runemasteredのtype,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
 38,P2-WIN-038,必須,Augment,RuneまたはSoul Core装着装備,詳細コピー後に検索,Socket数とRune/Soul Core由来を解析,未確認,Augment Socket数・rune由来Statをexplicitへ混ぜない,未確認,Trade2・socket filter＋rune系Stat,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,

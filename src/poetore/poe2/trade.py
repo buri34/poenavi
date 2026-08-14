@@ -889,6 +889,7 @@ def search_prices(
     listed_within: str = "any",
     include_corrupted=None,
     include_mirrored: bool | None = None,
+    include_sanctified=None,
     partial_result_callback: Callable[[PriceResult], None] | None = None,
 ) -> PriceResult:
     """Search Trade2 and adapt its rows to the existing shared price UI model."""
@@ -906,6 +907,10 @@ def search_prices(
         misc["corrupted"] = {"option": "false"}
     if include_mirrored is False:
         misc["mirrored"] = {"option": "false"}
+    if include_sanctified == "only":
+        misc["sanctified"] = {"option": "true"}
+    elif include_sanctified is False:
+        misc["sanctified"] = {"option": "false"}
     if not misc:
         payload["query"]["filters"].pop("misc_filters", None)
     search_url = f"{API_ROOT}/search/{quote(league, safe='')}"

@@ -4065,6 +4065,7 @@ def test_item_state_cycle_buttons_use_clear_search_condition_labels(qapp):
             "veiled_chip": ("同一Veiled Modあり", "Veiled指定なし"),
             "foil_chip": ("Foil Unique", "通常Unique"),
             "mirrored_combo": ("ミラー品含む", "ミラー品を除外"),
+            "sanctified_combo": ("聖別品のみ", "非聖別品のみ", "聖別品含む"),
             "split_combo": ("スプリット品含む", "非スプリット"),
         }
         for name, labels in expected_labels.items():
@@ -4431,6 +4432,39 @@ Mirrored
         window.close()
 
 
+def test_poe2_sanctified_chip_is_three_state_without_warning_color(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        sanctified = ParsedItem(
+            item_class="Two Hand Maces", rarity="Rare", name="Test Maul",
+            base_type="Anvil Maul", category="two_hand_mace",
+            flags=("sanctified",), raw_text="sanctified item",
+        )
+        window._configure_item_state_filters(sanctified)
+
+        toggle = window.sanctified_combo
+        assert not toggle.isHidden()
+        assert toggle.currentText() == "聖別品のみ"
+        assert toggle.currentData() == "only"
+        assert toggle.property("alert") is False
+
+        toggle.click()
+        assert toggle.currentText() == "非聖別品のみ"
+        assert toggle.currentData() is False
+        assert toggle.property("alert") is False
+
+        toggle.click()
+        assert toggle.currentText() == "聖別品含む"
+        assert toggle.currentData() is True
+        assert toggle.property("alert") is False
+
+        plain = replace(sanctified, flags=(), raw_text="plain item")
+        window._configure_item_state_filters(plain)
+        assert toggle.isHidden()
+    finally:
+        window.close()
+
+
 def test_mirrored_penumbra_ring_resolves_all_visible_mods_without_warning(qapp):
     window = PoetoreWindow()
     try:
@@ -4572,6 +4606,7 @@ def test_cycle_state_chips_match_regular_filter_chip_height(
             window.veiled_chip,
             window.foil_chip,
             window.mirrored_combo,
+            window.sanctified_combo,
             window.split_combo,
         )
         assert all(chip.objectName() == "cycleToggle" for chip in state_chips)
@@ -5018,7 +5053,7 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
             "influence_shaper", "influence_elder", "influence_crusader",
             "influence_hunter", "influence_redeemer", "influence_warlord",
             "influence_eater", "influence_exarch",
-            "magic_rarity", "unidentified", "veiled", "foil", "mirrored", "split",
+            "magic_rarity", "unidentified", "veiled", "foil", "mirrored", "sanctified", "split",
         )
         assert window.filter_chip_layout.ordered_widgets() == tuple(
             widget for _name, widget in window._filter_chips

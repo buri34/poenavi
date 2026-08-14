@@ -328,6 +328,32 @@ def test_phase45_search_prices_omits_mod_provenance_state_filters(monkeypatch):
     assert result.query_id == "phase45-query"
 
 
+@pytest.mark.parametrize(("selection", "expected"), [
+    ("only", {"option": "true"}),
+    (False, {"option": "false"}),
+    (True, None),
+])
+def test_search_prices_sends_three_state_sanctified_filter(
+    monkeypatch, selection, expected,
+):
+    item = _phase45_item("phase45_sceptre_ja.txt")
+
+    def fake_cached_request(_url, payload=None):
+        misc = payload["query"].get("filters", {}).get(
+            "misc_filters", {},
+        ).get("filters", {})
+        assert misc.get("sanctified") == expected
+        return {"id": "sanctified-query", "result": []}, {}, False
+
+    monkeypatch.setattr(
+        "src.poetore.poe2.trade._cached_request_json", fake_cached_request,
+    )
+    result = search_prices(
+        item, "Standard", include_sanctified=selection,
+    )
+    assert result.query_id == "sanctified-query"
+
+
 def test_poe2_leagues_are_filtered_and_auto_selects_current_softcore(monkeypatch):
     monkeypatch.setattr(
         "src.poetore.poe2.trade._cached_request_json",
