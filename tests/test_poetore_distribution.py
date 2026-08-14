@@ -82,6 +82,15 @@ def test_signpath_policy_and_privacy_documents_are_linked_and_complete():
     assert "%APPDATA%\\PoENavi\\" in privacy
 
 
+def test_windows_build_verifies_executable_product_and_version_metadata():
+    workflow = (ROOT / ".github" / "workflows" / "windows-build.yml").read_text(encoding="utf-8")
+    assert "workflow_dispatch:" in workflow
+    assert 'python-version: "3.12.10"' in workflow
+    assert "ProductName" in workflow and '"PoENavi"' in workflow
+    assert "ProductVersion" in workflow and "FileVersion" in workflow
+    assert "PoENavi.exe" in workflow and "PoENaviUpdater.exe" in workflow
+
+
 def test_source_lock_is_development_only_and_pins_revision_and_hashes():
     lock = json.loads((ROOT / "scripts" / "poetore-sources.lock.json").read_text(encoding="utf-8"))
     sources = lock["sources"]
