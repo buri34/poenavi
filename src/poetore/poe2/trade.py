@@ -522,9 +522,6 @@ _POE2_PROPERTY_SPECS = (
 )
 
 _POE2_STATE_LABELS = {
-    "corrupted": "コラプト状態",
-    "mirrored": "ミラー状態",
-    "sanctified": "聖別化",
     "unidentified": "未鑑定",
 }
 
@@ -577,6 +574,8 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                 "pseudo.pseudo_number_of_uses_remaining", "石板の残り使用回数",
                 uses, "pseudo", True, read_value=uses, exact=True,
             ))
+    # Corrupted, Mirrored, and Sanctified are controlled by the shared
+    # top-level state chips.  Keep only states that still need an inline row.
     for flag, label in _POE2_STATE_LABELS.items():
         if flag in item.flags:
             rows.append(TradeStatFilter(

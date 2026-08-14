@@ -5865,7 +5865,7 @@ def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
         assert not by_id["property.spirit"].enabled
         assert by_id["property.augment_sockets"].min_value == 2
         assert not by_id["property.augment_sockets"].enabled
-        assert by_id["property.state.sanctified"].enabled
+        assert "property.state.sanctified" not in by_id
         assert any(row.stat_id.startswith("rune.") for row in filters)
         assert not window.virtual_augment_combo.isHidden()
         index = window.virtual_augment_combo.findData("Adept Rune")

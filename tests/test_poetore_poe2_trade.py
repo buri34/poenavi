@@ -767,7 +767,7 @@ def test_phase6_special_items_open_japanese_trade_with_localized_identity():
         assert query["type"] == base_type
 
 
-def test_phase45_equipment_properties_and_states_use_official_filter_groups():
+def test_phase45_equipment_properties_use_official_filter_groups_without_inline_state():
     item = _phase45_item("phase45_sceptre_ja.txt")
     rows = _phase45_rows(item)
     payload = build_search_query(item, stat_filters=rows)
@@ -776,7 +776,7 @@ def test_phase45_equipment_properties_and_states_use_official_filter_groups():
         "spirit": {"min": 100.0},
         "rune_sockets": {"min": 2.0},
     }
-    assert filters["misc_filters"]["filters"]["sanctified"] == {"option": "true"}
+    assert "misc_filters" not in filters
     assert any(row["id"].startswith("rune.") for row in payload["query"]["stats"][0]["filters"])
 
 

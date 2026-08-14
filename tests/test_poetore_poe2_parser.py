@@ -93,7 +93,7 @@ def test_new_user_captured_special_pairs_preserve_state_stats_and_values():
     sanctified_rows = {row.stat_id: row for row in poe2_trade_filters(sanctified)}
     assert sanctified_rows["explicit.stat_709508406"].read_value == 118.5
     assert sanctified_rows["explicit.stat_9187492"].read_value == 4
-    assert sanctified_rows["property.state.sanctified"].enabled is True
+    assert "property.state.sanctified" not in sanctified_rows
 
     ventor = parse_item_text(fixtures["FX028"]["英語設定の詳細コピー全文"])
     ventor_rows = {row.stat_id: row for row in poe2_trade_filters(ventor)}
@@ -102,19 +102,14 @@ def test_new_user_captured_special_pairs_preserve_state_stats_and_values():
         "explicit.stat_1671376347",
     )] == [-22, -21, -2]
 
-    for fixture_id, state, trade_filter in (
-        ("FX019", "sanctified", "sanctified"),
-        ("FX024", "mirrored", "mirrored"),
-        ("FX027", "corrupted", "corrupted"),
+    for fixture_id, state in (
+        ("FX019", "sanctified"),
+        ("FX024", "mirrored"),
+        ("FX027", "corrupted"),
     ):
         item = parse_item_text(fixtures[fixture_id]["日本語設定の詳細コピー全文"])
         rows = poe2_trade_filters(item)
-        state_row = next(row for row in rows if row.stat_id == f"property.state.{state}")
-        assert state_row.enabled is True
-        query = build_search_query(item, stat_filters=rows)["query"]
-        assert query["filters"]["misc_filters"]["filters"][trade_filter] == {
-            "option": "true",
-        }
+        assert all(row.stat_id != f"property.state.{state}" for row in rows)
 
 
 @pytest.mark.parametrize(
