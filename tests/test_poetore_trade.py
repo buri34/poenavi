@@ -27,6 +27,7 @@ from src.poetore.trade import _value_for_template
 from src.poetore.trade import _awakened_tier_tags
 from src.poetore.trade import _apply_atzoatl_room_rules
 from src.poetore.trade import _group_price_listings
+from src.poetore.trade import _prevent_trade_queue, _trade_rate_limiter
 from src.poetore.trade import (
     _divination_card_identities,
     _english_divination_card_type,
@@ -3880,7 +3881,7 @@ def test_search_prices_classifies_face_to_face_instant_and_unpriced_listings():
     assert result.median_by_currency() == {"chaos": 4.5}
 
 
-def test_search_prices_fetches_at_least_twenty_results():
+def test_search_prices_fetches_exactly_twenty_results():
     _trade_response_cache.clear()
     search = ({"id": "query1", "result": [f"item{i}" for i in range(30)]}, {})
 
@@ -3911,6 +3912,79 @@ def test_search_prices_fetches_at_least_twenty_results():
     assert len(partial_results[0].listings) == 10
     assert partial_results[0].web_url == ""
     assert len(result.listings) == 20
+
+
+def test_search_prices_stops_at_twenty_even_when_sellers_are_grouped():
+    _trade_response_cache.clear()
+    search = ({"id": "query1", "result": [f"item{i}" for i in range(100)]}, {})
+
+    def block(start):
+        return ({"result": [{
+            "listing": {
+                "price": {"amount": 10, "currency": "divine"},
+                "account": {"name": "same-seller"},
+            },
+            "item": {"baseType": "Reaver Sword"},
+        } for _index in range(10)]}, {})
+
+    with patch(
+        "src.poetore.trade._request_json",
+        side_effect=[search, block(0), block(10)],
+    ) as request, patch(
+        "src.poetore.trade._japanese_trade_item_type",
+        return_value="略奪者の剣",
+    ):
+        result = search_prices(
+            parse_item_text(ITEM), "Reaver Sword", "Mirage",
+        )
+
+    assert request.call_count == 3
+    assert len(result.listings) == 1
+    assert result.listings[0].listed_times == 20
+
+
+def test_awakened_style_rate_limit_rejects_new_queue_without_sleeping():
+    _trade_rate_limiter.reset()
+    try:
+        _trade_rate_limiter.adjust("search", {
+            "X-Rate-Limit-Rules": "trade-search-request-limit",
+            "X-Rate-Limit-trade-search-request-limit": "1:10:60",
+            "X-Rate-Limit-trade-search-request-limit-State": "1:10:0",
+        })
+
+        with pytest.raises(TradeApiError, match=r"約12秒後"):
+            _prevent_trade_queue()
+    finally:
+        _trade_rate_limiter.reset()
+
+
+def test_awakened_style_rate_limit_does_not_delay_available_requests():
+    _trade_rate_limiter.reset()
+    response = SimpleNamespace(
+        status=200,
+        headers={
+            "X-Rate-Limit-Rules": "trade-search-request-limit",
+            "X-Rate-Limit-trade-search-request-limit": "10:10:60",
+            "X-Rate-Limit-trade-search-request-limit-State": "1:10:0",
+        },
+        data=b'{"id":"query1","result":[]}',
+    )
+    try:
+        with patch(
+            "src.poetore.trade._trade_http_pool.request",
+            return_value=response,
+        ), patch("src.poetore.trade.time.sleep") as sleep:
+            _request_json(
+                "https://www.pathofexile.com/api/trade/search/Standard",
+                {"query": {}},
+            )
+            _request_json(
+                "https://www.pathofexile.com/api/trade/search/Standard",
+                {"query": {}},
+            )
+        sleep.assert_not_called()
+    finally:
+        _trade_rate_limiter.reset()
 
 
 def test_search_prices_logs_request_payload_and_response_summary(capsys):

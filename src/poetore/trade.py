@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from collections import OrderedDict
 from collections.abc import Callable
 import json
@@ -10,7 +10,7 @@ import re
 from statistics import median
 import threading
 import time
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import urllib3
 
@@ -348,6 +348,156 @@ class TradeApiError(RuntimeError):
     pass
 
 
+@dataclass
+class _RateLimitRule:
+    maximum: int
+    window_seconds: float
+    borrowed_at: list[float] = field(default_factory=list)
+
+    def prune(self, now: float) -> None:
+        threshold = now - self.window_seconds
+        self.borrowed_at[:] = [value for value in self.borrowed_at if value > threshold]
+
+    def wait_seconds(self, now: float) -> float:
+        self.prune(now)
+        if len(self.borrowed_at) < self.maximum:
+            return 0.0
+        return max(0.0, self.borrowed_at[0] + self.window_seconds - now)
+
+
+class _TradeRateLimiter:
+    """Awakened同様、公式Trade APIの複数制限窓をクライアント側で追跡する。"""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._rules: dict[str, list[_RateLimitRule]] = {
+            "search": [_RateLimitRule(1, 5.0)],
+            "fetch": [_RateLimitRule(1, 5.0)],
+        }
+
+    def reset(self) -> None:
+        with self._lock:
+            self._rules = {
+                "search": [_RateLimitRule(1, 5.0)],
+                "fetch": [_RateLimitRule(1, 5.0)],
+            }
+
+    def estimate_wait(self, policy: str, count: int = 1) -> float:
+        with self._lock:
+            now = time.monotonic()
+            waits = []
+            for rule in self._rules[policy]:
+                rule.prune(now)
+                simulated = list(rule.borrowed_at)
+                elapsed = 0.0
+                for _ in range(count):
+                    simulated = [
+                        value for value in simulated
+                        if value + rule.window_seconds > now + elapsed
+                    ]
+                    if len(simulated) >= rule.maximum:
+                        elapsed = max(
+                            elapsed,
+                            simulated[0] + rule.window_seconds - now,
+                        )
+                        simulated = [
+                            value for value in simulated
+                            if value + rule.window_seconds > now + elapsed
+                        ]
+                    simulated.append(now + elapsed)
+                waits.append(elapsed)
+            return max(waits, default=0.0)
+
+    def wait_and_borrow(self, policy: str) -> float:
+        waited = 0.0
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                wait_for = max(
+                    (rule.wait_seconds(now) for rule in self._rules[policy]),
+                    default=0.0,
+                )
+                if wait_for <= 0:
+                    for rule in self._rules[policy]:
+                        rule.borrowed_at.append(now)
+                    return waited
+            time.sleep(wait_for)
+            waited += wait_for
+
+    def adjust(self, policy: str, headers: object) -> None:
+        try:
+            rule_names = str(headers.get("X-Rate-Limit-Rules", "")).strip()
+        except AttributeError:
+            return
+        if not rule_names:
+            return
+
+        parsed: list[tuple[int, float, int]] = []
+        for rule_name in rule_names.split(","):
+            rule_name = rule_name.strip()
+            limit_text = str(headers.get(f"X-Rate-Limit-{rule_name}", ""))
+            state_text = str(headers.get(f"X-Rate-Limit-{rule_name}-State", ""))
+            limits = [part.split(":") for part in limit_text.split(",")]
+            states = [part.split(":") for part in state_text.split(",")]
+            for index, parts in enumerate(limits):
+                if len(parts) < 2:
+                    continue
+                try:
+                    maximum = int(parts[0])
+                    # Awakenedの既定値と同じ2秒を通信状態ずれの余裕として加える。
+                    window_seconds = float(parts[1]) + 2.0
+                    active = int(states[index][0]) if index < len(states) else 0
+                except (TypeError, ValueError):
+                    continue
+                if maximum <= 0 or window_seconds <= 0:
+                    continue
+                parsed.append((maximum, window_seconds, max(0, active)))
+        if parsed:
+            with self._lock:
+                now = time.monotonic()
+                existing = self._rules[policy]
+                synchronized: list[_RateLimitRule] = []
+                for maximum, window_seconds, active in parsed:
+                    current = next((
+                        rule for rule in existing
+                        if rule.maximum == maximum
+                        and rule.window_seconds == window_seconds
+                    ), None)
+                    if current is None:
+                        current = _RateLimitRule(maximum, window_seconds)
+                    current.prune(now)
+                    missing = min(maximum, active) - len(current.borrowed_at)
+                    if missing > 0:
+                        current.borrowed_at.extend([now] * missing)
+                    synchronized.append(current)
+                self._rules[policy] = synchronized
+
+
+_trade_rate_limiter = _TradeRateLimiter()
+
+
+def _trade_rate_policy(url: str) -> str | None:
+    path = urlsplit(url).path
+    if "/api/trade/search/" in path:
+        return "search"
+    if "/api/trade/fetch/" in path:
+        return "fetch"
+    return None
+
+
+def _prevent_trade_queue() -> None:
+    wait_seconds = max(
+        _trade_rate_limiter.estimate_wait("search"),
+        _trade_rate_limiter.estimate_wait("fetch"),
+    )
+    # Awakenedと同じく、長い待ちになる新規検索は予約せず即座に返す。
+    if wait_seconds >= 1.5:
+        raise TradeApiError(
+            f"PoE Trade APIの通信間隔を調整中です。"
+            f"約{max(1, round(wait_seconds))}秒後に、もう一度検索してください。"
+        )
+
+
 def default_trade_currency(item: ParsedItem) -> str:
     """Awakened PoE Trade相当の、アイテム種別別の初期通貨条件。"""
     if _is_unique(item):
@@ -563,12 +713,19 @@ _trade_http_pool = urllib3.PoolManager(num_pools=2, maxsize=1, block=True)
 _trade_http_request_lock = threading.Lock()
 
 
-def _cached_request_json(url: str, payload: dict | None = None) -> tuple[dict, object, bool]:
+def _cached_request_json(
+    url: str,
+    payload: dict | None = None,
+    *,
+    prevent_queue: bool = False,
+) -> tuple[dict, object, bool]:
     key = json.dumps([url, payload], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     cached = _trade_response_cache.get(key)
     if cached is not None:
         data, headers = cached
         return data, headers, True
+    if prevent_queue:
+        _prevent_trade_queue()
     data, headers = _request_json(url, payload)
     _trade_response_cache.set(key, (data, headers))
     return data, headers, False
@@ -580,10 +737,17 @@ def _request_json(url: str, payload: dict | None = None) -> tuple[dict, object]:
     if data is not None:
         headers["Content-Type"] = "application/json"
     method = "POST" if data is not None else "GET"
+    rate_policy = _trade_rate_policy(url)
     try:
         # retries=False keeps the request count exactly one per call. The lock
         # preserves sequential API use; PoolManager only reuses its TCP/TLS link.
         with _trade_http_request_lock:
+            if rate_policy is not None:
+                waited = _trade_rate_limiter.wait_and_borrow(rate_policy)
+                if waited > 0:
+                    _trade_log(
+                        f"rate limit wait: policy={rate_policy} seconds={waited:.3f}"
+                    )
             response = _trade_http_pool.request(
                 method, url, body=data, headers=headers,
                 timeout=urllib3.Timeout(total=15), retries=False,
@@ -591,6 +755,8 @@ def _request_json(url: str, payload: dict | None = None) -> tuple[dict, object]:
     except Exception as exc:
         _trade_log(f"request failed: {method} {url} error={exc!r}")
         raise TradeApiError(f"PoE Trade APIへの接続に失敗しました: {exc}") from exc
+    if rate_policy is not None:
+        _trade_rate_limiter.adjust(rate_policy, response.headers)
     body = response.data.decode("utf-8", errors="replace")
     if response.status == 429:
         try:
@@ -3970,7 +4136,7 @@ def search_prices(
     if performance_trace is not None:
         performance_trace.mark("trade_search_request_started")
     search, headers, search_cached = _cached_request_json(
-        search_url, payload,
+        search_url, payload, prevent_queue=True,
     )
     query_id = str(search.get("id", ""))
     ids = list(search.get("result", ()))
@@ -3987,7 +4153,7 @@ def search_prices(
     raw_listings: list[PriceListing] = []
     fetch_cached = False
     fetched_count = 0
-    while fetched_count < min(len(ids), 100):
+    while fetched_count < min(len(ids), 20):
         block_number = fetched_count // 10 + 1
         fetch_ids = ",".join(ids[fetched_count:fetched_count + 10])
         fetch_url = f"{API_ROOT}/fetch/{fetch_ids}?query={quote(query_id)}"
@@ -4067,11 +4233,6 @@ def search_prices(
                 performance_trace.mark(
                     "trade_partial_result_emitted", listings=len(grouped),
                 )
-        ungrouped = sum(row.listed_times <= 2 for row in grouped)
-        # Awakened準拠: 最初の20件は必ず確認し、価格操作らしい同一出品者の
-        # 連投が多い時だけ、十分な独立サンプルが得られるまで最大100件取得する。
-        if fetched_count >= 20 and len(grouped) >= 10 and ungrouped >= 7:
-            break
     listings = _group_price_listings(raw_listings)
     rate_limit = headers.get("X-Rate-Limit-Ip-State", "") if headers else ""
     _trade_log(
