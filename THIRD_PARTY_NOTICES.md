@@ -88,3 +88,23 @@ SOFTWARE.
 RePoEの生成データはGrinding Gear Gamesが権利を保有し、同社の利用規約に従います。
 
 <https://github.com/repoe-fork/repoe>
+
+## Packaged open-source runtime components
+
+PoENavi's Windows distribution is created with PyInstaller and includes upstream runtime libraries. These upstream binaries are not developed or represented as PoENavi project binaries.
+
+- **Python 3.12** — Python Software Foundation License Version 2
+  - <https://docs.python.org/3/license.html>
+- **PySide6 / Shiboken6 / Qt 6** — GNU Lesser General Public License v3, GNU General Public License v2, or GNU General Public License v3, as offered by the respective packages
+  - <https://www.qt.io/licensing/open-source-lgpl-obligations>
+  - <https://code.qt.io/cgit/pyside/pyside-setup.git/tree/LICENSES>
+- **pynput** — GNU Lesser General Public License v3
+  - <https://github.com/moses-palmer/pynput>
+- **urllib3** — MIT License
+  - <https://github.com/urllib3/urllib3>
+- **PyInstaller bootloader** — GNU General Public License v2 or later with the PyInstaller bootloader exception
+  - <https://pyinstaller.org/en/stable/license.html>
+- **OpenSSL runtime libraries** — Apache License 2.0
+  - <https://www.openssl.org/source/license.html>
+
+Exact versions used for an official release are pinned in `requirements.txt` and `requirements-build.txt`, and are recorded in the public GitHub Actions build log.
