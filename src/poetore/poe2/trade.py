@@ -913,7 +913,9 @@ def search_prices(
     if not misc:
         payload["query"]["filters"].pop("misc_filters", None)
     search_url = f"{API_ROOT}/search/{quote(league, safe='')}"
-    search, headers, search_cached = _cached_request_json(search_url, payload)
+    search, headers, search_cached = _cached_request_json(
+        search_url, payload, prevent_queue=True,
+    )
     query_id = str(search.get("id", ""))
     ids = list(search.get("result", ()))
     if not query_id:
@@ -923,7 +925,7 @@ def search_prices(
     raw: list[PriceListing] = []
     fetch_cached = False
     fetched_count = 0
-    while fetched_count < min(len(ids), 100):
+    while fetched_count < min(len(ids), 20):
         fetch_ids = ",".join(ids[fetched_count:fetched_count + 10])
         fetched, _, block_cached = _cached_request_json(
             f"{API_ROOT}/fetch/{fetch_ids}?query={quote(query_id)}"
@@ -960,10 +962,6 @@ def search_prices(
                 web_url,
                 search_cached or fetch_cached,
             ))
-        independent = sum(row.listed_times <= 2 for row in grouped)
-        if fetched_count >= 20 and len(grouped) >= 10 and independent >= 7:
-            break
-
     return PriceResult(
         league, query_id, len(ids), _group_price_listings(raw),
         headers.get("X-Rate-Limit-Ip-State", "") if headers else "",

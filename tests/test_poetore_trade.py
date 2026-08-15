@@ -27,7 +27,9 @@ from src.poetore.trade import _value_for_template
 from src.poetore.trade import _awakened_tier_tags
 from src.poetore.trade import _apply_atzoatl_room_rules
 from src.poetore.trade import _group_price_listings
-from src.poetore.trade import _prevent_trade_queue, _trade_rate_limiter
+from src.poetore.trade import (
+    _prevent_trade_queue, _trade2_rate_limiter, _trade_rate_limiter,
+)
 from src.poetore.trade import (
     _divination_card_identities,
     _english_divination_card_type,
@@ -3985,6 +3987,28 @@ def test_awakened_style_rate_limit_does_not_delay_available_requests():
         sleep.assert_not_called()
     finally:
         _trade_rate_limiter.reset()
+
+
+def test_trade2_rate_limit_is_separate_from_poe1_trade_limit():
+    _trade_rate_limiter.reset()
+    _trade2_rate_limiter.reset()
+    try:
+        _trade2_rate_limiter.adjust("search", {
+            "X-Rate-Limit-Rules": "trade2-search-request-limit",
+            "X-Rate-Limit-trade2-search-request-limit": "1:10:60",
+            "X-Rate-Limit-trade2-search-request-limit-State": "1:10:0",
+        })
+
+        _prevent_trade_queue(
+            "https://www.pathofexile.com/api/trade/search/Standard"
+        )
+        with pytest.raises(TradeApiError, match=r"約12秒後"):
+            _prevent_trade_queue(
+                "https://www.pathofexile.com/api/trade2/search/Standard"
+            )
+    finally:
+        _trade_rate_limiter.reset()
+        _trade2_rate_limiter.reset()
 
 
 def test_search_prices_logs_request_payload_and_response_summary(capsys):

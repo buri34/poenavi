@@ -286,9 +286,10 @@ def test_poe2_price_result_exposes_japanese_web_trade_url(monkeypatch):
     )
     item = parse_item_text(text)
 
-    def fake_cached_request(url, payload=None):
+    def fake_cached_request(url, payload=None, **kwargs):
         assert "/api/trade2/search/Runes%20of%20Aldur" in url
         assert payload["query"]["name"] == "Mageblood"
+        assert kwargs == {"prevent_queue": True}
         return {"id": "english-query-id", "result": []}, {}, False
 
     monkeypatch.setattr(
@@ -309,8 +310,9 @@ def test_phase45_search_prices_omits_mod_provenance_state_filters(monkeypatch):
         replace(row, enabled=True) for row in poe2_trade_filters(item)
     )
 
-    def fake_cached_request(url, payload=None):
+    def fake_cached_request(url, payload=None, **kwargs):
         assert "/api/trade2/search/Standard" in url
+        assert kwargs == {"prevent_queue": True}
         misc = payload["query"]["filters"]["misc_filters"]["filters"]
         assert "desecrated" not in misc
         assert "fractured_item" not in misc
@@ -338,7 +340,8 @@ def test_search_prices_sends_three_state_sanctified_filter(
 ):
     item = _phase45_item("phase45_sceptre_ja.txt")
 
-    def fake_cached_request(_url, payload=None):
+    def fake_cached_request(_url, payload=None, **kwargs):
+        assert kwargs == {"prevent_queue": True}
         misc = payload["query"].get("filters", {}).get(
             "misc_filters", {},
         ).get("filters", {})
@@ -352,6 +355,37 @@ def test_search_prices_sends_three_state_sanctified_filter(
         item, "Standard", include_sanctified=selection,
     )
     assert result.query_id == "sanctified-query"
+
+
+def test_poe2_price_search_fetches_only_top_twenty_even_for_one_seller(monkeypatch):
+    item = parse_item_text(_unique_fixture()["text"])
+    ids = [f"listing-{index}" for index in range(30)]
+    calls = []
+
+    def fake_cached_request(url, payload=None, **kwargs):
+        calls.append((url, kwargs))
+        if "/search/" in url:
+            assert kwargs == {"prevent_queue": True}
+            return {"id": "query-id", "result": ids}, {}, False
+        assert kwargs == {}
+        fetched_ids = url.split("/fetch/", 1)[1].split("?", 1)[0].split(",")
+        return {"result": [{
+            "listing": {
+                "price": {"amount": 10, "currency": "divine"},
+                "account": {"name": "same-seller"},
+            },
+            "item": {"baseType": "Utility Belt"},
+        } for _item_id in fetched_ids]}, {}, False
+
+    monkeypatch.setattr(
+        "src.poetore.poe2.trade._cached_request_json", fake_cached_request,
+    )
+    result = search_prices(item, "Standard")
+
+    assert len(calls) == 3
+    assert sum("/fetch/" in url for url, _kwargs in calls) == 2
+    assert len(result.listings) == 1
+    assert result.listings[0].listed_times == 20
 
 
 def test_poe2_leagues_are_filtered_and_auto_selects_current_softcore(monkeypatch):

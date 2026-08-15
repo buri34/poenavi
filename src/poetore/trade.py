@@ -481,6 +481,7 @@ class _TradeRateLimiter:
 
 
 _trade_rate_limiter = _TradeRateLimiter()
+_trade2_rate_limiter = _TradeRateLimiter()
 
 
 def _trade_rate_policy(url: str) -> str | None:
@@ -492,10 +493,34 @@ def _trade_rate_policy(url: str) -> str | None:
     return None
 
 
-def _prevent_trade_queue() -> None:
+def _trade2_rate_policy(url: str) -> str | None:
+    path = urlsplit(url).path
+    if "/api/trade2/search/" in path:
+        return "search"
+    if "/api/trade2/fetch/" in path:
+        return "fetch"
+    return None
+
+
+def _rate_limit_context(url: str) -> tuple[_TradeRateLimiter | None, str | None]:
+    policy = _trade_rate_policy(url)
+    if policy is not None:
+        return _trade_rate_limiter, policy
+    policy = _trade2_rate_policy(url)
+    if policy is not None:
+        return _trade2_rate_limiter, policy
+    return None, None
+
+
+def _prevent_trade_queue(url: str | None = None) -> None:
+    limiter = _trade_rate_limiter
+    if url is not None:
+        limiter, _ = _rate_limit_context(url)
+        if limiter is None:
+            return
     wait_seconds = max(
-        _trade_rate_limiter.estimate_wait("search"),
-        _trade_rate_limiter.estimate_wait("fetch"),
+        limiter.estimate_wait("search"),
+        limiter.estimate_wait("fetch"),
     )
     # Awakenedと同じく、長い待ちになる新規検索は予約せず即座に返す。
     if wait_seconds >= 1.5:
@@ -738,7 +763,7 @@ def _cached_request_json(
         data, headers = cached
         return data, headers, True
     if prevent_queue:
-        _prevent_trade_queue()
+        _prevent_trade_queue(url)
     data, headers = _request_json(url, payload)
     _trade_response_cache.set(key, (data, headers))
     return data, headers, False
@@ -750,13 +775,13 @@ def _request_json(url: str, payload: dict | None = None) -> tuple[dict, object]:
     if data is not None:
         headers["Content-Type"] = "application/json"
     method = "POST" if data is not None else "GET"
-    rate_policy = _trade_rate_policy(url)
+    rate_limiter, rate_policy = _rate_limit_context(url)
     try:
         # retries=False keeps the request count exactly one per call. The lock
         # preserves sequential API use; PoolManager only reuses its TCP/TLS link.
         with _trade_http_request_lock:
-            if rate_policy is not None:
-                waited = _trade_rate_limiter.wait_and_borrow(rate_policy)
+            if rate_limiter is not None and rate_policy is not None:
+                waited = rate_limiter.wait_and_borrow(rate_policy)
                 if waited > 0:
                     _trade_log(
                         f"rate limit wait: policy={rate_policy} seconds={waited:.3f}"
@@ -768,8 +793,8 @@ def _request_json(url: str, payload: dict | None = None) -> tuple[dict, object]:
     except Exception as exc:
         _trade_log(f"request failed: {method} {url} error={exc!r}")
         raise TradeApiError(f"PoE Trade APIへの接続に失敗しました: {exc}") from exc
-    if rate_policy is not None:
-        _trade_rate_limiter.adjust(rate_policy, response.headers)
+    if rate_limiter is not None and rate_policy is not None:
+        rate_limiter.adjust(rate_policy, response.headers)
     body = response.data.decode("utf-8", errors="replace")
     if response.status == 429:
         try:
