@@ -1706,6 +1706,8 @@ def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
         assert window.clear_mod_conditions_button.objectName() == "secondaryActionButton"
         assert window.hidden_mods_toggle.objectName() == "secondaryActionButton"
         assert window.mod_sources_toggle.objectName() == "secondaryActionButton"
+        assert window.mercenary_supports_toggle.objectName() == "secondaryActionButton"
+        assert window.mercenary_supports_toggle.property("mutedText") is True
         assert window.search_range_combo.objectName() == "filterControl"
         assert window.trade_status_combo.objectName() == "filterControl"
         assert window.trade_currency_combo.objectName() == "filterControl"

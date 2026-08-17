@@ -245,6 +245,8 @@ def test_warrant_ui_reveals_supports_without_losing_selected_skills(
         assert all(row.isHidden() for row in six_link_rows)
         assert not window.mercenary_supports_toggle.isHidden()
         assert window.mercenary_supports_toggle.text() == "傭兵のサポートジェムを表示"
+        assert window.mercenary_supports_toggle.objectName() == "secondaryActionButton"
+        assert window.mercenary_supports_toggle.property("mutedText") is True
         window.show()
         qapp.processEvents()
         mod_actions_bottom = max(
@@ -272,6 +274,8 @@ def test_warrant_ui_reveals_supports_without_losing_selected_skills(
         window.mercenary_supports_toggle.click()
 
         assert all(not row.isHidden() for row in main_rows + support_rows + six_link_rows)
+        assert window.mercenary_supports_toggle.isChecked()
+        assert window.mercenary_supports_toggle.text() == "傭兵のサポートジェムを隠す"
         assert main_checkbox.isChecked()
         selected = {
             row.stat_id for row in window._selected_stat_filters() if row.enabled

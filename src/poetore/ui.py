@@ -1509,7 +1509,8 @@ class PoetoreWindow(QWidget):
         )
         self.mod_sources_toggle.toggled.connect(self._toggle_mod_sources)
         self.mercenary_supports_toggle = QPushButton("傭兵のサポートジェムを表示")
-        self.mercenary_supports_toggle.setObjectName("mercenarySupportsToggle")
+        self.mercenary_supports_toggle.setObjectName("secondaryActionButton")
+        self.mercenary_supports_toggle.setProperty("mutedText", True)
         self.mercenary_supports_toggle.setCheckable(True)
         self.mercenary_supports_toggle.setToolTip(
             "傭兵の召喚状に含まれるサポートジェムの検索条件を表示します"
