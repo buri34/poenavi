@@ -78,6 +78,14 @@ def test_chart_exact_and_same_area_queries_use_official_trade_shape():
     chart_filters = relaxed["filters"]["map_filters"]["filters"]
     assert chart_filters["area_level"] == {"min": 82.0}
     assert chart_filters["chart_sulphur"] == {"min": 60.0}
+    all_charts = build_search_query(
+        item, "Coral Forest Chart", rows,
+        exact_base_type=False, chart_area_exact=False,
+    )["query"]
+    assert "type" not in all_charts
+    assert all_charts["filters"]["type_filters"]["filters"]["category"] == {
+        "option": "chart",
+    }
 
 
 def test_special_chart_uses_bulk_same_area_query_without_copy_properties():
@@ -88,10 +96,12 @@ def test_special_chart_uses_bulk_same_area_query_without_copy_properties():
     assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BULK)
     query = build_search_query(
         item, "Anchorfield Chart", resolve_trade_stat_filters(item),
-        preset=PRESET_BULK,
+        preset=PRESET_BULK, exact_base_type=False,
     )["query"]
     assert query["type"] == {"option": "Anchorfield", "discriminator": "chart"}
-    assert "map_filters" not in query["filters"]
+    assert query["filters"]["map_filters"]["filters"] == {
+        "area_level": {"min": 83.0},
+    }
 
 
 def test_regular_chart_is_not_special():
@@ -101,7 +111,41 @@ def test_regular_chart_is_not_special():
     assert not is_special_chart_area(item)
 
 
-def test_special_chart_defaults_to_same_area_while_regular_chart_stays_exact(qapp):
+@pytest.mark.parametrize("exact_base,area_exact,expected_scope", (
+    (True, True, "base"),
+    (False, True, "area"),
+    (False, False, "all"),
+))
+@pytest.mark.parametrize("preset,uses_numbers", (
+    (PRESET_FINISHED, True),
+    (PRESET_BULK, False),
+))
+def test_chart_scope_and_numeric_conditions_are_independent(
+    exact_base, area_exact, expected_scope, preset, uses_numbers,
+):
+    item = parse_item_text(chart_text(
+        "サンゴの森の海図", "海底の木立", 82, 64, 20, 18, 60,
+    ))
+    rows = resolve_trade_stat_filters(item, preset)
+    query = build_search_query(
+        item, "Coral Forest Chart", rows, preset=preset,
+        exact_base_type=exact_base, chart_area_exact=area_exact,
+    )["query"]
+    if expected_scope == "base":
+        assert query["type"] == "Coral Forest Chart"
+    elif expected_scope == "area":
+        assert query["type"] == {"option": "UnderseaGroves", "discriminator": "chart"}
+    else:
+        assert "type" not in query
+        assert query["filters"]["type_filters"]["filters"]["category"] == {
+            "option": "chart",
+        }
+    chart_filters = query["filters"]["map_filters"]["filters"]
+    assert chart_filters["area_level"] == {"min": 82.0}
+    assert ("chart_sulphur" in chart_filters) is uses_numbers
+
+
+def test_chart_scope_and_numeric_presets_have_independent_defaults(qapp):
     window = PoetoreWindow()
     try:
         special = parse_item_text(chart_text(
@@ -109,17 +153,23 @@ def test_special_chart_defaults_to_same_area_while_regular_chart_stays_exact(qap
         ))
         window._configure_trade_presets(special)
         window._update_item_header(special)
-        assert window.base_scope_toggle.isHidden()
+        assert not window.base_scope_toggle.isHidden()
+        assert window.base_scope_toggle.currentData() is False
+        assert not window.chart_area_chip.isHidden()
+        assert window.chart_area_chip.isChecked()
+        assert window.chart_area_chip.text() == "錨海域"
         assert window.trade_preset_combo.currentData() == PRESET_BULK
-        assert window.trade_preset_combo.currentText() == "同じ海域"
+        assert window.trade_preset_combo.currentText() == "数値を問わない"
 
         regular = parse_item_text(chart_text(
             "サンゴの森の海図", "海底の木立", 82, 64, 20, None, 60,
         ))
         window._configure_trade_presets(regular)
         window._update_item_header(regular)
+        assert window.base_scope_toggle.currentData() is False
+        assert window.chart_area_chip.isChecked()
         assert window.trade_preset_combo.currentData() == PRESET_FINISHED
-        assert window.trade_preset_combo.currentText() == "個体条件"
+        assert window.trade_preset_combo.currentText() == "数値で絞る"
     finally:
         window.close()
 
@@ -145,10 +195,19 @@ def test_chart_preset_switch_regenerates_bulk_and_property_filters(qapp, monkeyp
             "property.map_quantity", "property.map_rarity",
             "property.map_pack_size", "property.chart_sulphur",
         }
-        assert window.price_status.text() == "この海図を個体条件付きで検索します。"
+        assert window.price_status.text() == "海図の数量・レアリティなどを検索条件に含めます。"
 
         window.trade_preset_combo.setCurrentIndex(1)
         assert window.mod_filter_tree.topLevelItemCount() == 0
-        assert window.price_status.text() == "同じ海域の海図をまとめて検索します。"
+        assert window.price_status.text() == "海図の数量・レアリティなどを指定せずに検索します。"
+
+        window.base_scope_toggle.setCurrentIndex(0)
+        assert window._searches_exact_base_type(item)
+        assert window.chart_area_chip.isHidden()
+        window.base_scope_toggle.setCurrentIndex(1)
+        assert window._searches_exact_chart_area(item)
+        window.chart_area_chip.setChecked(False)
+        assert not window._searches_exact_chart_area(item)
+        assert window.price_status.text() == "すべての海図を検索します。"
     finally:
         window.close()

@@ -1007,6 +1007,15 @@ class PoetoreWindow(QWidget):
         )
         self.base_scope_toggle.currentIndexChanged.connect(self._base_scope_changed)
         self.base_scope_toggle.hide()
+        self.chart_area_chip = QPushButton()
+        self.chart_area_chip.setObjectName("filterChip")
+        self.chart_area_chip.setCheckable(True)
+        self.chart_area_chip.setChecked(True)
+        self.chart_area_chip.setToolTip(
+            "ONなら同じ海域、OFFならすべての海図を検索します。"
+        )
+        self.chart_area_chip.toggled.connect(self._chart_area_changed)
+        self.chart_area_chip.hide()
         self.corrupted_combo = _CycleButton((
             ("コラプトのみ", "only", True),
             ("非コラプトのみ", False, False),
@@ -1020,6 +1029,7 @@ class PoetoreWindow(QWidget):
         item_scope_layout.setSpacing(6)
         item_scope_layout.addWidget(self.base_scope_toggle, stretch=1)
         item_scope_layout.addStretch()
+        item_scope_layout.addWidget(self.chart_area_chip)
         item_scope_layout.addWidget(self.corrupted_combo)
         item_header_layout.addLayout(item_scope_layout)
         content_layout.addWidget(self.item_header)
@@ -2408,6 +2418,7 @@ class PoetoreWindow(QWidget):
         self.item_name_label.setText(display_name)
         show_base_scope = (
             is_nonunique_equipment or is_nonunique_abyss_jewel
+            or item.category == "chart"
         )
         self.item_name_label.setVisible(not show_base_scope)
         self.base_scope_toggle.setVisible(show_base_scope)
@@ -2416,7 +2427,9 @@ class PoetoreWindow(QWidget):
             self.base_scope_toggle.setItemText(0, display_name)
             self.base_scope_toggle.setItemText(
                 1,
-                "すべてのアビスジュエル"
+                "すべての海図"
+                if item.category == "chart"
+                else "すべてのアビスジュエル"
                 if is_nonunique_abyss_jewel
                 else f"すべての{self._item_class_label(item.item_class)}",
             )
@@ -2425,8 +2438,18 @@ class PoetoreWindow(QWidget):
                 # 非ユニークのアビスジュエルは従来のカテゴリ検索を初期値にし、
                 # 必要な時だけコピー元の基底へ限定できるようにする。
                 self.base_scope_toggle.setCurrentIndex(
-                    1 if is_nonunique_abyss_jewel else 0
+                    1 if is_nonunique_abyss_jewel or item.category == "chart" else 0
                 )
+        chart_relaxed = bool(
+            item.category == "chart" and not self.base_scope_toggle.currentData()
+        )
+        self.chart_area_chip.blockSignals(True)
+        self.chart_area_chip.setText(
+            item.properties.get("マップエリア", "海域不明")
+        )
+        self.chart_area_chip.setChecked(True)
+        self.chart_area_chip.setVisible(chart_relaxed)
+        self.chart_area_chip.blockSignals(False)
         self.weapon_property_label.setText(
             "武器性能・検索Mod" if item.category == "weapon" else "検索条件一覧"
         )
@@ -2514,15 +2537,40 @@ class PoetoreWindow(QWidget):
             return
         self.price_list.clear()
         self.trade_url_button.setEnabled(False)
+        item = getattr(self, "_parsed_item", None)
+        if item is not None and item.category == "chart":
+            relaxed = not bool(self.base_scope_toggle.currentData())
+            self.chart_area_chip.setVisible(relaxed)
+            self.price_status.setText(
+                "同じ海域の海図を検索します。"
+                if relaxed and self.chart_area_chip.isChecked()
+                else "すべての海図を検索します。"
+                if relaxed
+                else "この海図のベースタイプだけを検索します。"
+            )
+            self._mark_search_dirty()
+            return
         self.price_status.setText(
             "ベースタイプを限定して検索します。"
             if self.base_scope_toggle.currentData()
             else "同じアイテムクラスの全ベースを対象に検索します。"
         )
 
+    def _chart_area_changed(self, checked: bool):
+        item = getattr(self, "_parsed_item", None)
+        if item is None or item.category != "chart":
+            return
+        self.price_list.clear()
+        self.trade_url_button.setEnabled(False)
+        self.price_status.setText(
+            "同じ海域の海図を検索します。"
+            if checked else "すべての海図を検索します。"
+        )
+        self._mark_search_dirty()
+
     def _searches_exact_base_type(self, item) -> bool:
         if item.category == "chart":
-            return self.trade_preset_combo.currentData() != PRESET_BULK
+            return bool(self.base_scope_toggle.currentData())
         # isVisible() は親ウィンドウがまだ表示されていない初期化中にもFalseとなる。
         # ここではアイテム種別に応じて明示的に隠したかどうかを判定する。
         if not self.base_scope_toggle.isHidden():
@@ -2532,6 +2580,13 @@ class PoetoreWindow(QWidget):
             and item.rarity.casefold() not in {"unique", "ユニーク"}
         )
         return not nonunique_jewel_group
+
+    def _searches_exact_chart_area(self, item) -> bool:
+        return bool(
+            item.category == "chart"
+            and not self._searches_exact_base_type(item)
+            and self.chart_area_chip.isChecked()
+        )
 
     def eventFilter(self, watched, event):
         if (
@@ -3748,6 +3803,8 @@ class PoetoreWindow(QWidget):
         selected_discriminator = (
             self.unique_variant_combo.currentData() if self.unique_variant_combo.isVisible() else None
         )
+        exact_base_type = self._searches_exact_base_type(item)
+        chart_area_exact = self._searches_exact_chart_area(item)
 
         def run():
             try:
@@ -3805,7 +3862,7 @@ class PoetoreWindow(QWidget):
                     trade_discriminator=str(selected_discriminator) if selected_discriminator else None,
                     listed_within=listed_within,
                     magic_exact=magic_exact,
-                    exact_base_type=self._searches_exact_base_type(item),
+                    exact_base_type=exact_base_type,
                     item_level_min=item_level_min,
                     item_level_max=item_level_max,
                     gem_level_min=gem_level_min,
@@ -3816,6 +3873,7 @@ class PoetoreWindow(QWidget):
                     include_foil=include_foil,
                     include_searing=include_searing,
                     include_tangled=include_tangled,
+                    chart_area_exact=chart_area_exact,
                     performance_trace=trace,
                     partial_result_callback=lambda partial: (
                         self._trade_signals.partial_completed.emit(
@@ -3844,16 +3902,16 @@ class PoetoreWindow(QWidget):
         rarity = (item.rarity or "").strip().casefold()
         if item.category == "chart":
             has_props = PRESET_FINISHED in presets
-            self.trade_preset_combo.setItemText(0, "個体条件" if has_props else "同じ海域")
+            self.trade_preset_combo.setItemText(0, "数値で絞る" if has_props else "数値を問わない")
             self.trade_preset_combo.setItemData(0, PRESET_FINISHED if has_props else PRESET_BULK)
-            self.trade_preset_combo.setItemText(1, "同じ海域")
+            self.trade_preset_combo.setItemText(1, "数値を問わない")
             self.trade_preset_combo.setItemData(1, PRESET_BULK)
             self.trade_preset_combo.setSecondAvailable(has_props)
             self.trade_preset_combo.setCurrentIndex(
                 1 if has_props and is_special_chart_area(item) else 0
             )
             self.trade_preset_combo.setToolTip(
-                "海図の個体条件を含めるか、同じ海域をまとめて探すかを切り替えます。"
+                "コピーした海図の数量・レアリティなどを検索条件に含めるかを切り替えます。"
             )
         else:
             self.trade_preset_combo.setItemData(0, PRESET_FINISHED)
@@ -4452,9 +4510,9 @@ class PoetoreWindow(QWidget):
             self._configure_special_filter_chips(item)
             self._populate_stat_filters(self._resolved_trade_filters(item, preset))
         if preset == PRESET_BULK:
-            self.price_status.setText("同じ海域の海図をまとめて検索します。")
+            self.price_status.setText("海図の数量・レアリティなどを指定せずに検索します。")
         elif item is not None and item.category == "chart":
-            self.price_status.setText("この海図を個体条件付きで検索します。")
+            self.price_status.setText("海図の数量・レアリティなどを検索条件に含めます。")
         elif preset == PRESET_BASE:
             self.price_status.setText(
                 "ベースアイテムとして、ベースタイプとアイテムレベルを中心に検索します。"
