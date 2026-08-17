@@ -2022,6 +2022,19 @@ class SettingsDialog(QDialog):
         Styles.apply_checkbox_style(self.logout_enabled_cb)
         group_layout.addWidget(self.logout_enabled_cb)
 
+        self.stash_tab_scroll_enabled_cb = QCheckBox(
+            "Ctrl＋マウスホイールでスタッシュタブを切り替える（スタッシュ外）"
+        )
+        self.stash_tab_scroll_enabled_cb.setChecked(
+            self.current_config.get("stash_tab_scroll_enabled", True)
+        )
+        self.stash_tab_scroll_enabled_cb.setToolTip(
+            "Awakened PoE Tradeと同じ補助機能です。スタッシュ内ではPoE本体の操作に任せ、\n"
+            "カーソルがスタッシュ外にある時だけ左右キーを送信します。PoE1が最前面の時だけ有効です。"
+        )
+        Styles.apply_checkbox_style(self.stash_tab_scroll_enabled_cb)
+        group_layout.addWidget(self.stash_tab_scroll_enabled_cb)
+
         general_layout.addWidget(group)
         
         # ━━━━━ 3. タイマー表示 ━━━━━
@@ -3092,6 +3105,7 @@ class SettingsDialog(QDialog):
             "custom_commands": self.custom_commands_widget.commands(),
             "poetore": poetore_config,
             "logout_enabled": self.logout_enabled_cb.isChecked(),
+            "stash_tab_scroll_enabled": self.stash_tab_scroll_enabled_cb.isChecked(),
             "gem_shop_search_include_reward_purchases": self.gem_shop_search_include_reward_purchases_cb.isChecked(),
             "gem_shop_search_hold_seconds": self.gem_shop_search_hold_seconds_spin.value(),
             "gem_shop_search_term_overrides": self.gem_shop_search_term_review.get_term_overrides(),

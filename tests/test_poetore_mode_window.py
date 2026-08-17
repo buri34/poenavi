@@ -27,6 +27,8 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     ), patch(
         "src.ui.poetore_mode_window.GlobalHotkeyService"
     ) as hotkey_class, patch(
+        "src.ui.poetore_mode_window.StashTabScrollController"
+    ) as stash_class, patch(
         "src.ui.poetore_mode_window.ForegroundSuppressedHotkeyService"
     ) as suppressed_class, patch(
         "src.ui.poetore_mode_window.suppressed_hotkeys_supported",
@@ -55,10 +57,13 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert callable(kwargs["result_window_checker"])
     assert callable(kwargs["poe_target_getter"])
     suppressed_class.return_value.start.assert_called_once_with()
+    stash_class.assert_called_once_with(enabled=True)
+    stash_class.return_value.start.assert_called_once_with()
     assert not hasattr(window, "log_watcher")
     assert not hasattr(window, "mini_navi_overlay")
     assert not hasattr(window, "timer")
     assert "currency_rate_refresh" in window.active_service_names
+    assert "stash_tab_scroll" in window.active_service_names
     header_buttons = (
         window.memo_button,
         window.map_mods_button,
@@ -98,6 +103,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     hotkey_service.start.assert_called_once()
     window.close()
     app.processEvents()
+    stash_class.return_value.stop.assert_called_once_with()
 
 
 def test_poetore_mode_does_not_start_capture_services_for_poe2():
@@ -116,7 +122,9 @@ def test_poetore_mode_does_not_start_capture_services_for_poe2():
         return_value=config,
     ), patch(
         "src.ui.poetore_mode_window.GlobalHotkeyService"
-    ) as hotkey_class, patch.object(
+    ) as hotkey_class, patch(
+        "src.ui.poetore_mode_window.StashTabScrollController"
+    ) as stash_class, patch.object(
         PoetoreModeWindow, "refresh_currency_rate"
     ), patch(
         "src.poetore.ui.prepare_poetore_window"
@@ -127,6 +135,7 @@ def test_poetore_mode_does_not_start_capture_services_for_poe2():
     assert "poetore_capture" not in supplied_hotkeys
     assert "poetore_auto_hide" not in supplied_hotkeys
     assert supplied_hotkeys["map_check"] == "alt+f"
+    stash_class.assert_called_once_with(enabled=False)
     prepare_window.assert_not_called()
     window.close()
     app.processEvents()
