@@ -1073,6 +1073,45 @@ def test_search_error_replaces_searching_status_and_reenables_button(qapp):
         window.close()
 
 
+def test_complex_query_error_is_localized_for_normal_item(qapp):
+    window = PoetoreWindow()
+    try:
+        window._search_generation = 4
+        window._parsed_item = ParsedItem(
+            "指輪", "レア", "", "アメジストの指輪", "accessory",
+        )
+        window._show_price_error(
+            "PoE Trade APIが検索条件を受理しませんでした: HTTP 400"
+            "（Query is too complex. Please reduce the amount of filters used.）",
+            4,
+        )
+        assert window.price_status.text() == (
+            "検索条件が多すぎます。条件を減らして、もう一度検索してください。"
+        )
+    finally:
+        window.close()
+
+
+def test_complex_query_error_adds_mercenary_hint(qapp):
+    window = PoetoreWindow()
+    try:
+        window._search_generation = 5
+        window._parsed_item = ParsedItem(
+            "マップフラグメント", "ノーマル", "傭兵の召喚状", "", "invitation",
+        )
+        window._show_price_error(
+            "PoE Trade APIが検索条件を受理しませんでした: HTTP 400"
+            "（検索条件が複雑過ぎます。使用フィルターの量を減らしてください。）",
+            5,
+        )
+        assert window.price_status.text() == (
+            "検索条件が多すぎます。条件を減らして、もう一度検索してください。 "
+            "6リンクまたはTier 3条件を減らすと検索できる場合があります。"
+        )
+    finally:
+        window.close()
+
+
 def test_enter_in_changed_mod_value_researches(qapp):
     window = PoetoreWindow()
     try:

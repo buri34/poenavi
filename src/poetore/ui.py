@@ -81,6 +81,23 @@ _INFLUENCE_CHIPS = {
     "exarch": ("Exarch", None, "searing_item"),
 }
 
+
+def _user_facing_trade_error(message: str, item=None) -> str:
+    normalized = message.casefold()
+    too_complex = (
+        "query is too complex" in normalized
+        or "検索条件が複雑過ぎ" in message
+        or "検索条件が複雑すぎ" in message
+    )
+    if not too_complex:
+        return message
+    result = "検索条件が多すぎます。条件を減らして、もう一度検索してください。"
+    if item is not None and str(getattr(item, "name", "")).strip() in {
+        "傭兵の召喚状", "Mercenary's Warrant", "Mercenary Warrant",
+    }:
+        result += " 6リンクまたはTier 3条件を減らすと検索できる場合があります。"
+    return result
+
 _HEIST_JOB_LABELS = {
     "property.heist_lockpicking": "錠前破り",
     "property.heist_brute_force": "怪力",
@@ -5021,7 +5038,9 @@ class PoetoreWindow(QWidget):
             return
         self.price_button.setEnabled(True)
         self.price_list.clear()
-        self.price_status.setText(message)
+        self.price_status.setText(_user_facing_trade_error(
+            message, getattr(self, "_parsed_item", None),
+        ))
         if trace is not None:
             trace.mark("search_error_displayed")
 
