@@ -106,7 +106,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     stash_class.return_value.stop.assert_called_once_with()
 
 
-def test_poetore_mode_does_not_start_capture_services_for_poe2():
+def test_poetore_mode_enables_stash_scroll_but_not_capture_services_for_poe2():
     app = QApplication.instance() or QApplication([])
     config = {
         "poe_version": POE2,
@@ -135,8 +135,33 @@ def test_poetore_mode_does_not_start_capture_services_for_poe2():
     assert "poetore_capture" not in supplied_hotkeys
     assert "poetore_auto_hide" not in supplied_hotkeys
     assert supplied_hotkeys["map_check"] == "alt+f"
-    stash_class.assert_called_once_with(enabled=False)
+    stash_class.assert_called_once_with(enabled=True)
     prepare_window.assert_not_called()
+    window.close()
+    app.processEvents()
+
+
+def test_poetore_mode_respects_disabled_stash_scroll_for_poe2():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "poe_version": POE2,
+        "stash_tab_scroll_enabled": False,
+        "hotkeys": {},
+    }
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch(
+        "src.ui.poetore_mode_window.StashTabScrollController"
+    ) as stash_class, patch.object(
+        PoetoreModeWindow, "refresh_currency_rate"
+    ):
+        window = PoetoreModeWindow()
+
+    stash_class.assert_called_once_with(enabled=False)
     window.close()
     app.processEvents()
 

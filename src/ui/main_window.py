@@ -679,10 +679,7 @@ class MainWindow(QMainWindow):
         self.keyboard_listener = None
         self.suppressed_capture_hotkey = None
         self.stash_tab_scroll = StashTabScrollController(
-            enabled=(
-                self.poe_version == POE1
-                and self.config.get("stash_tab_scroll_enabled", True)
-            )
+            enabled=self.config.get("stash_tab_scroll_enabled", True)
         )
         self.stash_tab_scroll.start()
         self._gem_shop_search_hold = HoldTrigger()
@@ -4597,8 +4594,7 @@ class MainWindow(QMainWindow):
             self.config.update(new_settings)
             ConfigManager.save_config(self.config)
             self.stash_tab_scroll.set_enabled(
-                self.config.get("poe_version", POE1) == POE1
-                and self.config.get("stash_tab_scroll_enabled", True)
+                self.config.get("stash_tab_scroll_enabled", True)
             )
             from src.app_restart import confirm_mode_switch_restart
 

@@ -305,10 +305,7 @@ class PoetoreModeWindow(QMainWindow):
         QTimer.singleShot(0, self._apply_startup_position)
 
         self.stash_tab_scroll = StashTabScrollController(
-            enabled=(
-                self.config.get("poe_version", POE1) == POE1
-                and self.config.get("stash_tab_scroll_enabled", True)
-            )
+            enabled=self.config.get("stash_tab_scroll_enabled", True)
         )
         self.stash_tab_scroll.start()
         self._start_hotkeys()
@@ -839,8 +836,7 @@ class PoetoreModeWindow(QMainWindow):
             self._poetore_window.apply_result_display_size()
             self._apply_obs_streaming_mode()
         self.stash_tab_scroll.set_enabled(
-            self.config.get("poe_version", POE1) == POE1
-            and self.config.get("stash_tab_scroll_enabled", True)
+            self.config.get("stash_tab_scroll_enabled", True)
         )
         self.hotkey_service.stop()
         if self.suppressed_capture_hotkey is not None:
