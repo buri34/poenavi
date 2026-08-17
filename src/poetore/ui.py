@@ -2208,7 +2208,9 @@ class PoetoreWindow(QWidget):
         stat_filter = row.data(_MOD_COLUMN_CHECK, Qt.UserRole + 4)
         return bool(
             isinstance(stat_filter, TradeStatFilter)
-            and stat_filter.stat_id.startswith("mercenary.support")
+            and stat_filter.mercenary_role in {
+                "support", "six_link", "not_support", "missing_skill",
+            }
             and not self.mercenary_supports_toggle.isChecked()
         )
 
@@ -4564,7 +4566,9 @@ class PoetoreWindow(QWidget):
     def _populate_stat_filters(self, filters: tuple[TradeStatFilter, ...]):
         self.mod_filter_tree.clear()
         has_mercenary_supports = any(
-            stat_filter.stat_id.startswith("mercenary.support")
+            stat_filter.mercenary_role in {
+                "support", "six_link", "not_support", "missing_skill",
+            }
             for stat_filter in filters
         )
         self.mercenary_supports_toggle.setChecked(False)

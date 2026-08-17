@@ -29,6 +29,9 @@ LEAGUES_API_URL = "https://www.pathofexile.com/api/leagues?type=main&realm=pc"
 DIVINATION_CARD_IDENTITIES_PATH = (
     Path(__file__).resolve().parents[2] / "data" / "poetore" / "divination_cards_ja.json"
 )
+MERCENARY_DATA_PATH = (
+    Path(__file__).resolve().parents[2] / "data" / "poetore" / "mercenary.json"
+)
 USER_AGENT = "PoENavi/poetore-local-spike (github.com/buri34/poenavi)"
 DEFAULT_SEARCH_RANGE = 0.10
 TRADE_STATUS_OPTIONS = {
@@ -563,6 +566,13 @@ class TradeStatFilter:
     # Trade APIやUI表示へは送らない内部情報。
     source_affixes: tuple[str | None, ...] = ()
     source_indexes: tuple[int, ...] = ()
+    # AwakenedのMercenary Warrant検索専用情報。同じリンクグループを
+    # Trade APIの`mercenary` groupへ復元するため、UI編集後も保持する。
+    mercenary_group: int | None = None
+    mercenary_role: str = ""
+    mercenary_ids: tuple[str, ...] = ()
+    mercenary_families: tuple[tuple[str, ...], ...] = ()
+    mercenary_tier3_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -2093,6 +2103,204 @@ _item_entries_cache: tuple[dict, ...] | None = None
 _jp_item_entries_cache: tuple[dict, ...] | None = None
 _item_groups_cache: tuple[tuple[str, tuple[dict, ...]], ...] | None = None
 _jp_item_groups_cache: tuple[tuple[str, tuple[dict, ...]], ...] | None = None
+_mercenary_data_cache: dict | None = None
+
+
+def _mercenary_data() -> dict:
+    global _mercenary_data_cache
+    if _mercenary_data_cache is None:
+        _mercenary_data_cache = json.loads(MERCENARY_DATA_PATH.read_text(encoding="utf-8"))
+    return _mercenary_data_cache
+
+
+def _mercenary_indexes() -> tuple[dict[str, dict], dict[str, dict]]:
+    rows = _mercenary_data().get("stats", ())
+    by_ref = {str(row["ref"]): row for row in rows}
+    by_id = {
+        str(stat_id): row
+        for row in rows
+        for stat_id in row.get("ids", ())
+    }
+    return by_ref, by_id
+
+
+def _mercenary_build_name(item: ParsedItem) -> str:
+    identity = _mercenary_warrant_trade_identity(item)
+    if identity:
+        option = identity[0]
+        for entry in _trade_item_entries():
+            if str(entry.get("type", "")).strip() != option:
+                continue
+            match = re.search(r"\(([^()]*)\)\s*$", str(entry.get("text", "")))
+            if match:
+                return match.group(1)
+    return item.properties.get("ビルド", "")
+
+
+def _mercenary_family(by_ref: dict[str, dict], ref: str) -> tuple[dict, ...]:
+    row = by_ref.get(ref)
+    if not row:
+        return ()
+    family = row.get("mod_family") or [ref]
+    return tuple(by_ref[name] for name in family if name in by_ref)
+
+
+def _mercenary_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
+    """Awakened準拠のリンクグループ・Tier・除外候補を生成する。"""
+    entries_by_id, entries_by_text = _trade_stat_entry_indexes(_trade_stat_entries())
+    by_ref, by_id = _mercenary_indexes()
+    resolved: list[TradeStatFilter] = []
+    present_skill_refs: set[str] = set()
+    grouped: dict[int, list[tuple[object, dict, dict]]] = {}
+
+    for modifier in item.modifiers:
+        source = _indexed_stat_text(modifier.text, "mercenary")
+        candidates = [row for _, row in entries_by_text.get(("mercenary", source), ())]
+        if not candidates:
+            continue
+        entry = candidates[0]
+        stat_id = str(entry["id"])
+        metadata = by_id.get(stat_id, {})
+        grouped.setdefault(modifier.group or 0, []).append((modifier, entry, metadata))
+
+    group_skill_refs = [
+        str(rows[0][2].get("ref") or rows[0][0].text)
+        for _, rows in sorted(grouped.items()) if rows
+    ]
+    build = next((
+        candidate for candidate in _mercenary_data().get("builds", ())
+        if (
+            (primary := [
+                str(row["name"]) for row in candidate.get("skills", ())
+                if row.get("type") == "primary"
+            ])
+            and set(primary) <= set(group_skill_refs[:len(primary)])
+        )
+    ), None)
+    build_name = str((build or {}).get("name") or _mercenary_build_name(item))
+    build_skill_types = {
+        str(row["name"]): str(row["type"])
+        for row in (build or {}).get("skills", ())
+    }
+
+    for group_index, rows in grouped.items():
+        skill_modifier, skill_entry, skill_meta = rows[0]
+        skill_id = str(skill_entry["id"])
+        skill_ref = str(skill_meta.get("ref") or skill_modifier.text)
+        present_skill_refs.add(skill_ref)
+        resolved.append(TradeStatFilter(
+            skill_id, skill_modifier.text, None, "mercenary", False,
+            ref=skill_ref, confidence=1.0,
+            mercenary_group=group_index,
+            mercenary_role=(
+                "primary_skill" if build_skill_types.get(skill_ref) == "primary" else "skill"
+            ),
+            mercenary_ids=(skill_id,),
+        ))
+
+        raw_supports = rows[1:]
+        supports = [row for row in raw_supports if (
+            not row[2].get("synthetic_family") or row[2].get("tier") == 3
+        )]
+        for modifier, entry, metadata in supports:
+            stat_id = str(entry["id"])
+            tier = metadata.get("tier", modifier.tier)
+            family = _mercenary_family(by_ref, str(metadata.get("ref", "")))
+            if metadata.get("mod_family") and tier != 3:
+                ids = tuple(
+                    stat_id
+                    for family_row in family
+                    if int(family_row.get("tier") or 0) >= int(tier or 0)
+                    for stat_id in family_row.get("ids", ())
+                )
+            else:
+                ids = tuple(metadata.get("ids") or (stat_id,))
+            canonical = metadata.get("canonical")
+            canonical_row = by_ref.get(canonical, metadata) if canonical else metadata
+            resolved.append(TradeStatFilter(
+                stat_id, modifier.text, None, "mercenary", False,
+                ref=str(canonical_row.get("ref") or modifier.text), confidence=1.0,
+                tier=tier, mercenary_group=group_index,
+                mercenary_role="support", mercenary_ids=ids,
+            ))
+
+        possible_specs = tuple(
+            (ref, tuple(
+                stat_id
+                for family in [_mercenary_family(by_ref, ref)]
+                for family_row in family
+                for stat_id in family_row.get("ids", ())
+                if (
+                    not family_row.get("synthetic_family")
+                    and (len(family) <= 2 or int(family_row.get("tier") or 0) >= 2)
+                ) or (
+                    family_row.get("synthetic_family")
+                    and int(family_row.get("tier") or 0) >= 3
+                )
+            ))
+            for ref in skill_meta.get("supports", ())
+        )
+        possible_specs = tuple((ref, family) for ref, family in possible_specs if family)
+        possible_families = tuple(family for _, family in possible_specs)
+        tier3_ids = tuple(
+            family_row.get("ids", [""])[-1]
+            for ref in skill_meta.get("supports", ())
+            for family in [_mercenary_family(by_ref, ref)]
+            if family
+            for family_row in [family[-1]]
+            if family_row.get("ids")
+        )
+        if len(raw_supports) == 5 and possible_families:
+            tier3_count = sum(
+                int(metadata.get("tier") or modifier.tier or 0) >= 3
+                for modifier, _, metadata in supports
+            )
+            resolved.append(TradeStatFilter(
+                "item.mercenary_6link", "6リンク", float(tier3_count),
+                "mercenary", False, confidence=1.0,
+                mercenary_group=group_index, mercenary_role="six_link",
+                mercenary_families=possible_families,
+                mercenary_tier3_ids=tier3_ids,
+            ))
+            linked_refs = {
+                str(metadata.get("canonical") or metadata.get("ref") or "")
+                for _, _, metadata in raw_supports
+            }
+            for ref, family_ids in possible_specs:
+                family_rows = _mercenary_family(by_ref, ref)
+                canonical = str(
+                    (family_rows[0].get("canonical") if family_rows else None) or ref
+                )
+                if canonical in linked_refs or ref in linked_refs:
+                    continue
+                display_row = by_ref.get(canonical) or (family_rows[0] if family_rows else {})
+                resolved.append(TradeStatFilter(
+                    family_ids[0], f"含まない: {display_row.get('text', canonical)}",
+                    None, "mercenary", False, ref=canonical, confidence=1.0,
+                    mercenary_group=group_index, mercenary_role="not_support",
+                    mercenary_ids=family_ids,
+                ))
+
+    bad_skills = {
+        "Kineticist": {"Kinetic Bolt"},
+        "Manyshot": {"Icicle Rain"},
+        "Combatant": {"Wild Strike", "Spectral Helix"},
+    }.get(build_name, set())
+    if build:
+        for skill in build.get("skills", ()):
+            ref = str(skill["name"])
+            if ref in present_skill_refs or ref not in by_ref:
+                continue
+            ids = tuple(by_ref[ref].get("ids", ()))
+            if not ids:
+                continue
+            resolved.append(TradeStatFilter(
+                ids[0], f"含まない: {by_ref[ref].get('text', ref)}", None,
+                "mercenary", ref in bad_skills, ref=ref, confidence=1.0,
+                group_type="not", group_key="mercenary-build",
+                mercenary_role="missing_skill", mercenary_ids=ids,
+            ))
+    return tuple(resolved)
 
 
 def _normalized_stat_text(text: str) -> str:
@@ -3075,6 +3283,8 @@ def resolve_trade_stat_filters(
         return ()
     if item.category == "gem":
         return _gem_filters(item, trade_base_type)
+    if item.name.strip() in {"傭兵の召喚状", "Mercenary's Warrant", "Mercenary Warrant"}:
+        return _mercenary_filters(item)
     entries = _trade_stat_entries()
     entries_by_id, entries_by_text = _trade_stat_entry_indexes(entries)
     resolved: list[TradeStatFilter] = []
@@ -3616,6 +3826,100 @@ def _combine_map_multiline_modifiers(item: ParsedItem, entries: tuple[dict, ...]
     return tuple(result)
 
 
+def _weighted_mercenary_group(
+    all_of: tuple[tuple[str, ...], ...],
+    some_of: tuple[tuple[str, ...], ...], minimum: int,
+) -> dict:
+    surplus = max(0, len(some_of) - minimum)
+    weight = surplus + 1
+    ids = [stat_id for family in some_of for stat_id in family]
+    for family in all_of:
+        for stat_id in family:
+            ids.extend([stat_id] * weight)
+    return {
+        "type": "mercenary",
+        "value": {"min": minimum + len(all_of) * weight},
+        "filters": [{"id": stat_id, "value": {}} for stat_id in ids],
+    }
+
+
+def _append_mercenary_query_groups(query: dict, filters: tuple[TradeStatFilter, ...]) -> None:
+    grouped: dict[int, list[TradeStatFilter]] = {}
+    missing_skills = []
+    for row in filters:
+        if row.mercenary_role == "missing_skill":
+            if row.enabled:
+                missing_skills.extend(row.mercenary_ids or (row.stat_id,))
+        elif row.mercenary_group is not None:
+            grouped.setdefault(row.mercenary_group, []).append(row)
+
+    for rows in grouped.values():
+        skill = next((row for row in rows if row.mercenary_role in {"skill", "primary_skill"}), None)
+        if skill is None:
+            continue
+        skill_ids = skill.mercenary_ids or (skill.stat_id,)
+        selected_supports = [
+            row for row in rows if row.mercenary_role == "support" and row.enabled
+        ]
+        six_link = next((row for row in rows if row.mercenary_role == "six_link"), None)
+        excluded_supports = [
+            row for row in rows if row.mercenary_role == "not_support" and row.enabled
+        ]
+
+        skill_is_already_required = bool(
+            (six_link and (six_link.enabled or excluded_supports))
+            or (skill.enabled and selected_supports)
+        )
+        if (
+            skill.enabled or skill.mercenary_role == "primary_skill"
+        ) and not skill_is_already_required:
+            query["stats"][0]["filters"].extend(
+                {"id": stat_id, "value": {}} for stat_id in skill_ids
+            )
+
+        if six_link and (six_link.enabled or excluded_supports):
+            excluded_ids = {
+                stat_id for row in excluded_supports for stat_id in row.mercenary_ids
+            }
+            possible_families = tuple(
+                family for family in six_link.mercenary_families
+                if not excluded_ids.intersection(family)
+            )
+            tier3_count = (
+                0 if excluded_supports
+                else max(0, min(5, int(six_link.min_value or 0)))
+            )
+            if tier3_count < 5:
+                query["stats"].append(_weighted_mercenary_group(
+                    (skill_ids,), possible_families, 5,
+                ))
+            if tier3_count:
+                query["stats"].append(_weighted_mercenary_group(
+                    (skill_ids,), tuple((stat_id,) for stat_id in six_link.mercenary_tier3_ids),
+                    tier3_count,
+                ))
+
+        if skill.enabled and selected_supports:
+            query["stats"].append({
+                "type": "mercenary",
+                "value": {"min": 1 + len(selected_supports)},
+                "filters": [
+                    *({"id": stat_id, "value": {}} for stat_id in skill_ids),
+                    *(
+                        {"id": stat_id, "value": {}}
+                        for support in selected_supports
+                        for stat_id in (support.mercenary_ids or (support.stat_id,))
+                    ),
+                ],
+            })
+
+    if missing_skills:
+        query["stats"].append({
+            "type": "not",
+            "filters": [{"id": stat_id, "value": {}} for stat_id in missing_skills],
+        })
+
+
 def build_search_query(
     item: ParsedItem, trade_base_type: str | None = None,
     stat_filters: tuple[TradeStatFilter, ...] = (),
@@ -3897,6 +4201,12 @@ def build_search_query(
                 selection_reason="読み取ったVeiled Mod種別と一致",
             ))
         stat_filters += tuple(veiled_filters)
+    mercenary_filters = tuple(
+        row for row in stat_filters if row.mercenary_role
+    )
+    if mercenary_filters:
+        _append_mercenary_query_groups(query, mercenary_filters)
+    stat_filters = tuple(row for row in stat_filters if not row.mercenary_role)
     stat_groups: dict[tuple[str, str], dict] = {("and", ""): query["stats"][0]}
     for stat_filter in stat_filters:
         if not stat_filter.enabled:

@@ -12,6 +12,7 @@ def test_poetore_distribution_contains_only_minimal_derived_data():
     expected = {
         "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json",
         "map_mods.json", "divination_cards_ja.json", "multi_value_rules.json",
+        "mercenary.json",
     }
     if os.environ.get("POETORE_CANDIDATE_BUILD") == "1":
         expected.add(".mod_metadata.json.candidate")
@@ -33,6 +34,10 @@ def test_poetore_distribution_contains_only_minimal_derived_data():
     )
     assert all(isinstance(row["negated"], bool) for row in payload["mods"])
     assert sum(row["negated"] for row in payload["mods"]) == 145
+    mercenary = json.loads((data_dir / "mercenary.json").read_text(encoding="utf-8"))
+    assert mercenary["source"]["revision"] == "037015480c82bd183a6a4c9415d43cde269c2c2c"
+    assert len(mercenary["builds"]) >= 20
+    assert len(mercenary["stats"]) >= 500
     relations = json.loads((data_dir / "pseudo_relations.json").read_text(encoding="utf-8"))
     assert relations["source_revision"] and len(relations["source_sha256"]) == 64
     assert 10 <= len(relations["relations"]) <= 30
