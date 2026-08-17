@@ -32,6 +32,7 @@ from src.utils.global_hotkeys import (
     suppressed_hotkeys_supported,
 )
 from src.utils.chat_command import send_chat_command
+from src.utils.stash_tab_scroll import StashTabScrollController
 from src.ui.custom_command_settings import custom_command_hotkeys, normalized_custom_commands
 from src.utils.log_path_detector import fill_missing_client_log_paths
 from src.utils.performance_metrics import measure
@@ -677,6 +678,10 @@ class MainWindow(QMainWindow):
         self.hotkey_signal.connect(self.handle_hotkey)
         self.keyboard_listener = None
         self.suppressed_capture_hotkey = None
+        self.stash_tab_scroll = StashTabScrollController(
+            enabled=self.config.get("stash_tab_scroll_enabled", True)
+        )
+        self.stash_tab_scroll.start()
         self._gem_shop_search_hold = HoldTrigger()
         self.register_hotkeys()
         
@@ -4588,6 +4593,9 @@ class MainWindow(QMainWindow):
             new_settings = dialog.get_settings()
             self.config.update(new_settings)
             ConfigManager.save_config(self.config)
+            self.stash_tab_scroll.set_enabled(
+                self.config.get("stash_tab_scroll_enabled", True)
+            )
             from src.app_restart import confirm_mode_switch_restart
 
             if confirm_mode_switch_restart(self, self.config):
@@ -4868,6 +4876,8 @@ class MainWindow(QMainWindow):
             names.add("update_controller")
         if getattr(self, "keyboard_listener", None) is not None:
             names.add("global_hotkeys")
+        if getattr(self, "stash_tab_scroll", None) is not None:
+            names.add("stash_tab_scroll")
         if getattr(self, "log_watcher", None) is not None:
             names.add("log_watcher")
         if getattr(self, "timer", None) is not None:
@@ -4927,6 +4937,9 @@ class MainWindow(QMainWindow):
         keyboard_listener = getattr(self, "keyboard_listener", None)
         if keyboard_listener:
             keyboard_listener.stop()
+        stash_tab_scroll = getattr(self, "stash_tab_scroll", None)
+        if stash_tab_scroll is not None:
+            stash_tab_scroll.stop()
         suppressed_capture_hotkey = getattr(self, "suppressed_capture_hotkey", None)
         if suppressed_capture_hotkey is not None:
             suppressed_capture_hotkey.stop()

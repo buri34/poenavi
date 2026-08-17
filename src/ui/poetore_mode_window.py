@@ -40,6 +40,7 @@ from src.utils.global_hotkeys import (
     suppressed_hotkeys_supported,
 )
 from src.utils.poe_version_data import POE1, POE2
+from src.utils.stash_tab_scroll import StashTabScrollController
 from src.utils.feature_support import POETORE, is_feature_hotkey_supported, is_feature_supported
 
 
@@ -309,6 +310,10 @@ class PoetoreModeWindow(QMainWindow):
         self._apply_window_settings()
         QTimer.singleShot(0, self._apply_startup_position)
 
+        self.stash_tab_scroll = StashTabScrollController(
+            enabled=self.config.get("stash_tab_scroll_enabled", True)
+        )
+        self.stash_tab_scroll.start()
         self._start_hotkeys()
 
         self._rate_timer = QTimer(self)
@@ -645,7 +650,7 @@ class PoetoreModeWindow(QMainWindow):
 
     @property
     def active_service_names(self):
-        names = {"global_hotkeys", "currency_rate_refresh"}
+        names = {"global_hotkeys", "stash_tab_scroll", "currency_rate_refresh"}
         if self._cheat_sheet_overlay is not None:
             names.add("cheat_sheets")
         return frozenset(names)
@@ -844,6 +849,9 @@ class PoetoreModeWindow(QMainWindow):
         if getattr(self, "_poetore_window", None) is not None:
             self._poetore_window.apply_result_display_size()
             self._apply_obs_streaming_mode()
+        self.stash_tab_scroll.set_enabled(
+            self.config.get("stash_tab_scroll_enabled", True)
+        )
         self.hotkey_service.stop()
         if self.suppressed_capture_hotkey is not None:
             self.suppressed_capture_hotkey.stop()
@@ -903,6 +911,7 @@ class PoetoreModeWindow(QMainWindow):
         self.tray_icon.hide()
         self._rate_timer.stop()
         self.hotkey_service.stop()
+        self.stash_tab_scroll.stop()
         if self.suppressed_capture_hotkey is not None:
             self.suppressed_capture_hotkey.stop()
         if self._memo_dialog is not None:

@@ -50,6 +50,7 @@
     "poe1_route_act8": "",
     "text_opacity": 100,
     "logout_enabled": true,
+    "stash_tab_scroll_enabled": true,
     "poetore": {
         "league": "auto",
         "search_stat_range": 10,

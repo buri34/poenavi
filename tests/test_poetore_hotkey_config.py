@@ -32,6 +32,12 @@ def test_shift_space_is_default_cheat_sheets_toggle_hotkey():
     assert config["hotkeys"]["cheat_sheets_toggle"] == "shift+space"
 
 
+def test_stash_tab_scroll_is_enabled_by_default():
+    with open("default_config.json", encoding="utf-8") as file:
+        config = json.load(file)
+    assert config["stash_tab_scroll_enabled"] is True
+
+
 def test_default_hotkeys_prioritize_vendor_search_and_chat_exit():
     with open("default_config.json", encoding="utf-8") as file:
         config = json.load(file)
@@ -373,16 +379,22 @@ def test_settings_dialog_can_change_poetore_capture_hotkey(monkeypatch):
         assert dialog.cheat_sheets_toggle_btn.key_text == "shift+space"
         assert dialog.exit_btn.key_text == "F5"
         assert dialog.undo_lap_btn.key_text == "none"
+        assert dialog.stash_tab_scroll_enabled_cb.isChecked()
+        assert dialog.stash_tab_scroll_enabled_cb.text() == (
+            "Ctrl＋マウスホイールでスタッシュタブを切り替える"
+        )
         dialog.poetore_capture_btn.set_modifier("alt")
         dialog.poetore_capture_btn.set_key("Q")
         dialog.poetore_auto_hide_btn.set_modifier("alt")
         dialog.poetore_auto_hide_btn.set_key("Q")
         dialog.cheat_sheets_toggle_btn.key_text = "Ctrl+Space"
         dialog.exit_btn.key_text = "Ctrl+F5"
+        dialog.stash_tab_scroll_enabled_cb.setChecked(False)
         assert dialog.get_settings()["hotkeys"]["poetore_capture"] == "alt+Q"
         assert dialog.get_settings()["hotkeys"]["poetore_auto_hide"] == "alt+Q"
         assert dialog.get_settings()["hotkeys"]["cheat_sheets_toggle"] == "Ctrl+Space"
         assert dialog.get_settings()["hotkeys"]["exit"] == "Ctrl+F5"
+        assert dialog.get_settings()["stash_tab_scroll_enabled"] is False
     finally:
         dialog.close()
         app.processEvents()

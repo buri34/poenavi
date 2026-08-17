@@ -557,6 +557,34 @@ def test_nonunique_jewels_can_search_their_whole_jewel_category(
     }
 
 
+@pytest.mark.parametrize("preset", [PRESET_FINISHED, PRESET_BASE])
+def test_fractured_abyss_jewel_can_switch_between_category_and_exact_base(preset):
+    item = ParsedItem(
+        item_class="Abyss Jewels", rarity="Rare", name="Test Jewel",
+        base_type="Ghastly Eye Jewel", category="abyss_jewel", item_level=84,
+        modifiers=(ItemModifier(
+            "+35 to maximum Life", (35.0,), kind="fractured",
+            stat_id="fractured.stat_3299347043",
+        ),),
+        raw_text="fractured abyss jewel",
+    )
+    assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BASE)
+
+    broad = build_search_query(
+        item, item.base_type, (), preset=preset, exact_base_type=False,
+    )["query"]
+    assert "type" not in broad
+    assert broad["filters"]["type_filters"]["filters"]["category"] == {
+        "option": "jewel.abyss"
+    }
+
+    exact = build_search_query(
+        item, item.base_type, (), preset=preset, exact_base_type=True,
+    )["query"]
+    assert exact["type"] == "Ghastly Eye Jewel"
+    assert "category" not in exact["filters"].get("type_filters", {}).get("filters", {})
+
+
 def test_magic_single_line_affixed_name_resolves_longest_official_base():
     entries = (
         {"type": "Wand", "flags": {}},

@@ -36,6 +36,7 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
             "window_locked": True,
             "always_on_top": False,
             "snap_to_right_edge": True,
+            "stash_tab_scroll_enabled": True,
         }
     )
 
@@ -58,6 +59,12 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert settings["hotkeys"]["monastery"] == "F12"
     assert settings["hotkeys"]["poetore_capture"] == "alt+d"
     assert settings["hotkeys"]["poetore_auto_hide"] == "ctrl+d"
+    assert settings["stash_tab_scroll_enabled"] is True
+    assert dialog.stash_tab_scroll_cb.text() == (
+        "Ctrl＋マウスホイールでスタッシュタブを切り替える"
+    )
+    dialog.stash_tab_scroll_cb.setChecked(False)
+    assert dialog.get_settings()["stash_tab_scroll_enabled"] is False
     assert isinstance(dialog.capture_hotkey, AutoHideHotkeyWidget)
     assert dialog.capture_hotkey.alt_button.isChecked()
     assert dialog.capture_hotkey.key_button.key_text == "d"

@@ -6493,7 +6493,15 @@ def test_nonunique_jewels_use_category_search_but_cluster_and_unique_stay_exact(
         )
         unique = replace(jewel, rarity="Unique", raw_text="unique")
         assert window._searches_exact_base_type(jewel) is False
+        window._update_item_header(abyss)
+        assert not window.base_scope_toggle.isHidden()
+        assert window.base_scope_toggle.itemText(0) == "Ghastly Eye Jewel"
+        assert window.base_scope_toggle.itemText(1) == "すべてのアビスジュエル"
+        assert window.base_scope_toggle.currentData() is False
         assert window._searches_exact_base_type(abyss) is False
+
+        window.base_scope_toggle.setCurrentIndex(0)
+        assert window._searches_exact_base_type(abyss) is True
         assert window._searches_exact_base_type(cluster) is True
         assert window._searches_exact_base_type(unique) is True
     finally:

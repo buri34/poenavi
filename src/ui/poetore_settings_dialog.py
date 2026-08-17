@@ -162,6 +162,21 @@ class PoetoreSettingsDialog(QDialog):
         hotkey_form.addRow("Cheat sheets表示:", self.cheat_hotkey)
         basic_layout.addWidget(hotkey_group)
 
+        common_group = QGroupBox("共通機能")
+        common_layout = QVBoxLayout(common_group)
+        self.stash_tab_scroll_cb = QCheckBox(
+            "Ctrl＋マウスホイールでスタッシュタブを切り替える"
+        )
+        self.stash_tab_scroll_cb.setChecked(
+            bool(self.current_config.get("stash_tab_scroll_enabled", True))
+        )
+        self.stash_tab_scroll_cb.setToolTip(
+            "Awakened PoE Tradeと同じ補助機能です。スタッシュ内ではPoE本体の操作に任せ、\n"
+            "カーソルがスタッシュ外にある時だけ左右キーを送信します。PoEが最前面の時だけ有効です。"
+        )
+        common_layout.addWidget(self.stash_tab_scroll_cb)
+        basic_layout.addWidget(common_group)
+
         poetore = self.current_config.get("poetore")
         poetore = poetore if isinstance(poetore, dict) else {}
         trade_group = QGroupBox("価格データ")
@@ -516,6 +531,7 @@ class PoetoreSettingsDialog(QDialog):
             "startup": startup,
             "hotkeys": hotkeys,
             "custom_commands": self.custom_commands_widget.commands(),
+            "stash_tab_scroll_enabled": self.stash_tab_scroll_cb.isChecked(),
             "poetore": poetore,
             "poe_version": selected_poe_version,
             "poe_version_mode": self.poe_version_mode_combo.currentData(),

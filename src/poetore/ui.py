@@ -2461,10 +2461,14 @@ class PoetoreWindow(QWidget):
             is_equipment_category(item.category)
             and item.rarity.casefold() not in {"unique", "ユニーク"}
         )
+        is_nonunique_abyss_jewel = (
+            item.category == "abyss_jewel"
+            and item.rarity.casefold() not in {"unique", "ユニーク"}
+        )
         display_name = (
             self._display_base_type(item)
-            if is_nonunique_equipment
-            or item.category in {"captured_beast", "waystone", "chart"}
+            if (is_nonunique_equipment or is_nonunique_abyss_jewel
+                or item.category in {"captured_beast", "waystone", "chart"})
             else self._display_item_name(item)
         )
         if item.name.strip() == "傭兵の召喚状":
@@ -2472,7 +2476,10 @@ class PoetoreWindow(QWidget):
             if build:
                 display_name = f"{display_name} ({build})"
         self.item_name_label.setText(display_name)
-        show_base_scope = is_nonunique_equipment or item.category == "chart"
+        show_base_scope = (
+            is_nonunique_equipment or is_nonunique_abyss_jewel
+            or item.category == "chart"
+        )
         self.item_name_label.setVisible(not show_base_scope)
         self.base_scope_toggle.setVisible(show_base_scope)
         if show_base_scope:
@@ -2482,11 +2489,17 @@ class PoetoreWindow(QWidget):
                 1,
                 f"同じ海域（{item.properties.get('マップエリア', '海域不明')}）"
                 if item.category == "chart"
+                else "すべてのアビスジュエル"
+                if is_nonunique_abyss_jewel
                 else f"すべての{self._item_class_label(item.item_class)}",
             )
             if key != self._base_scope_item_key:
                 self._base_scope_item_key = key
-                self.base_scope_toggle.setCurrentIndex(0)
+                # 非ユニークのアビスジュエルは従来のカテゴリ検索を初期値にし、
+                # 必要な時だけコピー元の基底へ限定できるようにする。
+                self.base_scope_toggle.setCurrentIndex(
+                    1 if is_nonunique_abyss_jewel else 0
+                )
         self.weapon_property_label.setText(
             "武器性能・検索Mod" if is_weapon_category(item.category) else "検索条件一覧"
         )
@@ -2620,7 +2633,9 @@ class PoetoreWindow(QWidget):
         )
 
     def _searches_exact_base_type(self, item) -> bool:
-        if self.base_scope_toggle.isVisible():
+        # isVisible() は親ウィンドウがまだ表示されていない初期化中にもFalseとなる。
+        # ここではアイテム種別に応じて明示的に隠したかどうかを判定する。
+        if not self.base_scope_toggle.isHidden():
             return bool(self.base_scope_toggle.currentData())
         nonunique_jewel_group = (
             item.category in {"jewel", "abyss_jewel"}
