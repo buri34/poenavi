@@ -1008,7 +1008,8 @@ class PoetoreWindow(QWidget):
         self.base_scope_toggle.currentIndexChanged.connect(self._base_scope_changed)
         self.base_scope_toggle.hide()
         self.chart_area_chip = QPushButton()
-        self.chart_area_chip.setObjectName("filterChip")
+        self.chart_area_chip.setObjectName("secondaryActionButton")
+        self.chart_area_chip.setProperty("mutedText", True)
         self.chart_area_chip.setCheckable(True)
         self.chart_area_chip.setChecked(True)
         self.chart_area_chip.setToolTip(

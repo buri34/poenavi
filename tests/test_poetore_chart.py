@@ -1,4 +1,6 @@
 import pytest
+from PySide6.QtCore import Qt
+from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
 from src.poetore.parser import parse_item_text
@@ -55,6 +57,11 @@ def test_chart_copy_parses_properties_and_search_filters(base, area, level, quan
         ("property.map_pack_size", pack), ("property.chart_sulphur", sulphur),
     ):
         assert (rows.get(stat_id).min_value if stat_id in rows else None) == expected
+    assert all(
+        modifier.text != "海図作成すると航海モッドが公開される"
+        for modifier in item.modifiers
+    )
+    assert trade.unresolved_modifier_warnings(item, tuple(rows.values())) == ()
 
 
 def test_unidentified_chart_has_only_area_level_property_filter():
@@ -170,6 +177,41 @@ def test_chart_scope_and_numeric_presets_have_independent_defaults(qapp):
         assert window.chart_area_chip.isChecked()
         assert window.trade_preset_combo.currentData() == PRESET_FINISHED
         assert window.trade_preset_combo.currentText() == "数値で絞る"
+    finally:
+        window.close()
+
+
+def test_chart_area_chip_click_switches_from_area_to_all_charts(qapp):
+    window = PoetoreWindow()
+    try:
+        item = parse_item_text(chart_text(
+            "サンゴの森の海図", "海底の木立", 83, 90, 50, None, 45,
+        ))
+        window._parsed_item = item
+        window._trade_base_type = "Coral Forest Chart"
+        window._update_item_header(item)
+        window.show()
+        qapp.processEvents()
+
+        assert window.chart_area_chip.isChecked()
+        assert window._searches_exact_chart_area(item)
+        assert window.chart_area_chip.objectName() == "secondaryActionButton"
+
+        QTest.mouseClick(window.chart_area_chip, Qt.LeftButton)
+        qapp.processEvents()
+
+        assert not window.chart_area_chip.isChecked()
+        assert not window._searches_exact_chart_area(item)
+        assert window.price_status.text() == "すべての海図を検索します。"
+        query = build_search_query(
+            item, window._trade_base_type, resolve_trade_stat_filters(item),
+            exact_base_type=window._searches_exact_base_type(item),
+            chart_area_exact=window._searches_exact_chart_area(item),
+        )["query"]
+        assert "type" not in query
+        assert query["filters"]["type_filters"]["filters"]["category"] == {
+            "option": "chart",
+        }
     finally:
         window.close()
 
