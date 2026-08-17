@@ -121,6 +121,12 @@ _CHART_AREA_TRADE_TYPES = {
     "海底の木立": "UnderseaGroves", "Undersea Groves": "UnderseaGroves",
     "特徴のない海底": "UnremarkableSeabed", "Unremarkable Seabed": "UnremarkableSeabed",
 }
+_SPECIAL_CHART_AREA_TYPES = {
+    "Anchorfield", "BrineKingsDomain", "ClamInfestedShelf", "DivingShoals",
+    "EldritchDepths", "HazardousDepths", "InfestedBathyspheres",
+    "KisharasRest", "LostRuins", "PelagicAbyss", "SeaPillars",
+    "SunkenTotems", "UnremarkableSeabed",
+}
 
 
 def _chart_area_trade_type(value: str) -> str | None:
@@ -130,6 +136,13 @@ def _chart_area_trade_type(value: str) -> str | None:
          if label.casefold() == wanted),
         None,
     )
+
+
+def is_special_chart_area(item: ParsedItem) -> bool:
+    if item.category != "chart":
+        return False
+    area = item.properties.get("マップエリア") or item.properties.get("Map Area") or ""
+    return _chart_area_trade_type(area) in _SPECIAL_CHART_AREA_TYPES
 # Experimental bases whose implicits change the normal rare-item 3/3 limits.
 # Values come from RePoE's local_maximum_prefixes_allowed_+ /
 # local_maximum_suffixes_allowed_+ stats.

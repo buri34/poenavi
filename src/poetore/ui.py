@@ -46,7 +46,7 @@ from .trade import (
     japanese_trade_item_label,
     preset_item_level_filter, resolve_trade_stat_filters, search_prices, unique_candidate_details,
     unique_variants, unresolved_modifier_warnings, uses_dedicated_exact_preset,
-    is_inscribed_ultimatum,
+    is_inscribed_ultimatum, is_special_chart_area,
 )
 from .poe_ninja import PoeNinjaPrice, default_poe_ninja_service
 from .metadata import related_item_group
@@ -2421,7 +2421,7 @@ class PoetoreWindow(QWidget):
                 # 非ユニークのアビスジュエルは従来のカテゴリ検索を初期値にし、
                 # 必要な時だけコピー元の基底へ限定できるようにする。
                 self.base_scope_toggle.setCurrentIndex(
-                    1 if is_nonunique_abyss_jewel else 0
+                    1 if is_nonunique_abyss_jewel or is_special_chart_area(item) else 0
                 )
         self.weapon_property_label.setText(
             "武器性能・検索Mod" if item.category == "weapon" else "検索条件一覧"
@@ -2510,6 +2510,17 @@ class PoetoreWindow(QWidget):
             return
         self.price_list.clear()
         self.trade_url_button.setEnabled(False)
+        item = getattr(self, "_parsed_item", None)
+        if item is not None and item.category == "chart":
+            self.price_status.setText(
+                "この海図を個体条件付きで検索します。"
+                if self.base_scope_toggle.currentData()
+                else "同じ海域の海図をまとめて検索します。"
+            )
+            preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
+            self._populate_stat_filters(self._resolved_trade_filters(item, preset))
+            self._mark_search_dirty()
+            return
         self.price_status.setText(
             "ベースタイプを限定して検索します。"
             if self.base_scope_toggle.currentData()
@@ -2707,13 +2718,22 @@ class PoetoreWindow(QWidget):
         return int(self.search_range_combo.currentData() or 0)
 
     def _resolved_trade_filters(self, item, preset):
-        return apply_search_range(
+        filters = apply_search_range(
             resolve_trade_stat_filters(
                 item, preset, self._trade_base_type, self._trade_item_name,
             ),
             self._selected_search_range(),
             item,
         )
+        # AwakenedのChart Bulk preset相当。同じ海域を探す場合は、コピー元の
+        # 数量・レアリティ・パックサイズ・硫黄を個体条件として送らない。
+        if (
+            item.category == "chart"
+            and not self.base_scope_toggle.isHidden()
+            and not bool(self.base_scope_toggle.currentData())
+        ):
+            return ()
+        return filters
 
     def _search_range_changed(self):
         value = self._selected_search_range()
