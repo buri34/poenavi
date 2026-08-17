@@ -253,3 +253,31 @@ def test_chart_preset_switch_regenerates_bulk_and_property_filters(qapp, monkeyp
         assert window.price_status.text() == "すべての海図を検索します。"
     finally:
         window.close()
+
+
+def test_chart_bulk_preset_hides_irrelevant_unresolved_mod_warning(qapp):
+    text = chart_text(
+        "サンゴの森の海図", "海底の木立", 83, 90, 50, None, 45,
+    ).replace(
+        "モンスターは物理ダメージの29(21-35)%を追加雷ダメージとして与える",
+        "このエリアで見つかる死人の硫黄が30%増加する",
+    )
+    item = parse_item_text(text)
+    assert trade.unresolved_modifier_warnings(item)
+
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = item
+        window._configure_trade_presets(item)
+        window._update_mod_warning(item)
+        assert window.trade_preset_combo.currentData() == PRESET_FINISHED
+        assert not window.mod_warning.isHidden()
+
+        window.trade_preset_combo.setCurrentIndex(1)
+
+        assert window.trade_preset_combo.currentData() == PRESET_BULK
+        assert window.mod_warning.isHidden()
+        assert window.mod_warning.text() == ""
+
+    finally:
+        window.close()

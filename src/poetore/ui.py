@@ -3695,19 +3695,7 @@ class PoetoreWindow(QWidget):
             self._populate_stat_filters(initial_filters)
         if is_new_item:
             self._reset_mod_conditions_for_item()
-        warnings = unresolved_modifier_warnings(
-            item, tuple(getattr(self, "_special_chip_rows", {}).values()),
-        )
-        if warnings:
-            preview = " / ".join(warnings[:3])
-            suffix = f" ほか{len(warnings) - 3}件" if len(warnings) > 3 else ""
-            self.mod_warning.setText(
-                f"⚠ メタデータ未解決 {len(warnings)}件（検索時に公式API照合を試行）: {preview}{suffix}"
-            )
-            self.mod_warning.show()
-        else:
-            self.mod_warning.clear()
-            self.mod_warning.hide()
+        self._update_mod_warning(item)
         if _is_valdo_map(item) and (
             item.properties.get("報酬") or item.properties.get("Reward")
             or item.properties.get("マップ完了報酬")
@@ -3733,6 +3721,26 @@ class PoetoreWindow(QWidget):
             self._queue_poe_ninja_price(item)
         if trace is not None:
             trace.mark("ui_parse_applied")
+
+    def _update_mod_warning(self, item):
+        preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
+        warnings = (
+            ()
+            if item.category == "chart" and preset == PRESET_BULK
+            else unresolved_modifier_warnings(
+                item, tuple(getattr(self, "_special_chip_rows", {}).values()),
+            )
+        )
+        if warnings:
+            preview = " / ".join(warnings[:3])
+            suffix = f" ほか{len(warnings) - 3}件" if len(warnings) > 3 else ""
+            self.mod_warning.setText(
+                f"⚠ メタデータ未解決 {len(warnings)}件（検索時に公式API照合を試行）: {preview}{suffix}"
+            )
+            self.mod_warning.show()
+        else:
+            self.mod_warning.clear()
+            self.mod_warning.hide()
 
     def search_current_item(self):
         trace = self._pending_performance_trace or start_search_trace("manual_search")
@@ -4521,6 +4529,7 @@ class PoetoreWindow(QWidget):
             self._configure_influence_chips(item)
             self._configure_special_filter_chips(item)
             self._populate_stat_filters(self._resolved_trade_filters(item, preset))
+            self._update_mod_warning(item)
         if preset == PRESET_BULK:
             self.price_status.setText("海図の数量・レアリティなどを指定せずに検索します。")
         elif item is not None and item.category == "chart":
