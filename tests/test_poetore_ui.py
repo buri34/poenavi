@@ -1094,7 +1094,7 @@ def test_complex_query_error_is_localized_for_normal_item(qapp):
         window.close()
 
 
-def test_complex_query_error_adds_mercenary_hint(qapp):
+def test_complex_query_error_is_localized_for_mercenary_warrant(qapp):
     window = PoetoreWindow()
     try:
         window._search_generation = 5
@@ -1107,8 +1107,7 @@ def test_complex_query_error_adds_mercenary_hint(qapp):
             5,
         )
         assert window.price_status.text() == (
-            "検索条件が多すぎます。条件を減らして、もう一度検索してください。 "
-            "6リンクまたはTier 3条件を減らすと検索できる場合があります。"
+            "検索条件が多すぎます。条件を減らして、もう一度検索してください。"
         )
     finally:
         window.close()

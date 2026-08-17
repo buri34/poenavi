@@ -82,7 +82,7 @@ _INFLUENCE_CHIPS = {
 }
 
 
-def _user_facing_trade_error(message: str, item=None) -> str:
+def _user_facing_trade_error(message: str) -> str:
     normalized = message.casefold()
     too_complex = (
         "query is too complex" in normalized
@@ -91,12 +91,7 @@ def _user_facing_trade_error(message: str, item=None) -> str:
     )
     if not too_complex:
         return message
-    result = "検索条件が多すぎます。条件を減らして、もう一度検索してください。"
-    if item is not None and str(getattr(item, "name", "")).strip() in {
-        "傭兵の召喚状", "Mercenary's Warrant", "Mercenary Warrant",
-    }:
-        result += " 6リンクまたはTier 3条件を減らすと検索できる場合があります。"
-    return result
+    return "検索条件が多すぎます。条件を減らして、もう一度検索してください。"
 
 _HEIST_JOB_LABELS = {
     "property.heist_lockpicking": "錠前破り",
@@ -2254,9 +2249,7 @@ class PoetoreWindow(QWidget):
         stat_filter = row.data(_MOD_COLUMN_CHECK, Qt.UserRole + 4)
         return bool(
             isinstance(stat_filter, TradeStatFilter)
-            and stat_filter.mercenary_role in {
-                "support", "six_link", "not_support", "missing_skill",
-            }
+            and stat_filter.stat_id.startswith("mercenary.support")
             and not self.mercenary_supports_toggle.isChecked()
         )
 
@@ -4689,9 +4682,7 @@ class PoetoreWindow(QWidget):
     def _populate_stat_filters(self, filters: tuple[TradeStatFilter, ...]):
         self.mod_filter_tree.clear()
         has_mercenary_supports = any(
-            stat_filter.mercenary_role in {
-                "support", "six_link", "not_support", "missing_skill",
-            }
+            stat_filter.stat_id.startswith("mercenary.support")
             for stat_filter in filters
         )
         self.mercenary_supports_toggle.setChecked(False)
@@ -5145,9 +5136,7 @@ class PoetoreWindow(QWidget):
             return
         self.price_button.setEnabled(True)
         self.price_list.clear()
-        self.price_status.setText(_user_facing_trade_error(
-            message, getattr(self, "_parsed_item", None),
-        ))
+        self.price_status.setText(_user_facing_trade_error(message))
         if trace is not None:
             trace.mark("search_error_displayed")
 
