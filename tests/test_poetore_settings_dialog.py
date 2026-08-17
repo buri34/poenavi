@@ -51,7 +51,9 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert settings["hotkeys"]["poetore_capture"] == "alt+d"
     assert settings["hotkeys"]["poetore_auto_hide"] == "ctrl+d"
     assert settings["stash_tab_scroll_enabled"] is True
-    assert "スタッシュ外" in dialog.stash_tab_scroll_cb.text()
+    assert dialog.stash_tab_scroll_cb.text() == (
+        "Ctrl＋マウスホイールでスタッシュタブを切り替える"
+    )
     dialog.stash_tab_scroll_cb.setChecked(False)
     assert dialog.get_settings()["stash_tab_scroll_enabled"] is False
     assert isinstance(dialog.capture_hotkey, AutoHideHotkeyWidget)

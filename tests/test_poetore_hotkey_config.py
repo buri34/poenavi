@@ -380,7 +380,9 @@ def test_settings_dialog_can_change_poetore_capture_hotkey(monkeypatch):
         assert dialog.exit_btn.key_text == "F5"
         assert dialog.undo_lap_btn.key_text == "none"
         assert dialog.stash_tab_scroll_enabled_cb.isChecked()
-        assert "スタッシュ外" in dialog.stash_tab_scroll_enabled_cb.text()
+        assert dialog.stash_tab_scroll_enabled_cb.text() == (
+            "Ctrl＋マウスホイールでスタッシュタブを切り替える"
+        )
         dialog.poetore_capture_btn.set_modifier("alt")
         dialog.poetore_capture_btn.set_key("Q")
         dialog.poetore_auto_hide_btn.set_modifier("alt")

@@ -2023,7 +2023,7 @@ class SettingsDialog(QDialog):
         group_layout.addWidget(self.logout_enabled_cb)
 
         self.stash_tab_scroll_enabled_cb = QCheckBox(
-            "Ctrl＋マウスホイールでスタッシュタブを切り替える（スタッシュ外）"
+            "Ctrl＋マウスホイールでスタッシュタブを切り替える"
         )
         self.stash_tab_scroll_enabled_cb.setChecked(
             self.current_config.get("stash_tab_scroll_enabled", True)

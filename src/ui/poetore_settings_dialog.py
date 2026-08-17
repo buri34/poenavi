@@ -134,7 +134,7 @@ class PoetoreSettingsDialog(QDialog):
         common_group = QGroupBox("共通機能")
         common_layout = QVBoxLayout(common_group)
         self.stash_tab_scroll_cb = QCheckBox(
-            "Ctrl＋マウスホイールでスタッシュタブを切り替える（スタッシュ外）"
+            "Ctrl＋マウスホイールでスタッシュタブを切り替える"
         )
         self.stash_tab_scroll_cb.setChecked(
             bool(self.current_config.get("stash_tab_scroll_enabled", True))
