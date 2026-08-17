@@ -346,9 +346,11 @@ def test_action_cluster_uses_consistent_spacing_at_every_display_size(
         assert _ACTION_CLUSTER_VERTICAL_GAP == 10
         assert window.action_cluster_layout.spacing() == _ACTION_CLUSTER_VERTICAL_GAP
         assert window.mod_conditions_actions_layout.spacing() == _ACTION_CLUSTER_HORIZONTAL_GAP
+        assert window.mercenary_supports_actions_layout.spacing() == _ACTION_CLUSTER_HORIZONTAL_GAP
         assert window.trade_action_layout.spacing() == _ACTION_CLUSTER_HORIZONTAL_GAP
         assert window.action_cluster_layout.getContentsMargins() == zero_margins
         assert window.mod_conditions_actions_layout.getContentsMargins() == zero_margins
+        assert window.mercenary_supports_actions_layout.getContentsMargins() == zero_margins
         assert window.trade_action_layout.getContentsMargins() == zero_margins
         assert "QLabel#priceStatus { color: #98A39F; padding: 1px 0; }" in window.styleSheet()
     finally:

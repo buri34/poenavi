@@ -1524,9 +1524,18 @@ class PoetoreWindow(QWidget):
         mod_conditions_actions.addWidget(self.clear_mod_conditions_button)
         mod_conditions_actions.addWidget(self.hidden_mods_toggle)
         mod_conditions_actions.addWidget(self.mod_sources_toggle)
-        mod_conditions_actions.addWidget(self.mercenary_supports_toggle)
         mod_conditions_actions.addStretch()
         self.mod_conditions_actions_layout = mod_conditions_actions
+        self.mercenary_supports_actions_widget = QWidget()
+        mercenary_supports_actions = QHBoxLayout(
+            self.mercenary_supports_actions_widget
+        )
+        mercenary_supports_actions.setContentsMargins(0, 0, 0, 0)
+        mercenary_supports_actions.setSpacing(_ACTION_CLUSTER_HORIZONTAL_GAP)
+        mercenary_supports_actions.addWidget(self.mercenary_supports_toggle)
+        mercenary_supports_actions.addStretch()
+        self.mercenary_supports_actions_widget.hide()
+        self.mercenary_supports_actions_layout = mercenary_supports_actions
         self.mod_warning = QLabel("")
         self.mod_warning.setWordWrap(True)
         self.mod_warning.setStyleSheet("color: #d6a84b;")
@@ -1566,6 +1575,7 @@ class PoetoreWindow(QWidget):
         action_cluster.setContentsMargins(0, 0, 0, 0)
         action_cluster.setSpacing(_ACTION_CLUSTER_VERTICAL_GAP)
         action_cluster.addLayout(mod_conditions_actions)
+        action_cluster.addWidget(self.mercenary_supports_actions_widget)
         action_cluster.addLayout(action_row)
         action_cluster.addWidget(self.price_status)
         self.action_cluster_layout = action_cluster
@@ -4675,6 +4685,7 @@ class PoetoreWindow(QWidget):
         )
         self.mercenary_supports_toggle.setChecked(False)
         self.mercenary_supports_toggle.setVisible(has_mercenary_supports)
+        self.mercenary_supports_actions_widget.setVisible(has_mercenary_supports)
         for stat_filter in filters:
             if stat_filter.stat_id in {"property.item_level", "property.gem_level"}:
                 continue
