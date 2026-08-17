@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QApplication
 from src.poetore.parser import parse_item_text
 from src.poetore import trade
 from src.poetore.trade import (
+    PRESET_BULK, PRESET_FINISHED, available_trade_presets,
     build_search_query, is_special_chart_area, resolve_trade_stat_filters,
 )
 from src.poetore.ui import PoetoreWindow
@@ -84,8 +85,10 @@ def test_special_chart_uses_bulk_same_area_query_without_copy_properties():
         "錨海域の海図", "錨海域", 83, 64, 20, 18, 60,
     ))
     assert is_special_chart_area(item)
+    assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BULK)
     query = build_search_query(
-        item, "Anchorfield Chart", (), exact_base_type=False,
+        item, "Anchorfield Chart", resolve_trade_stat_filters(item),
+        preset=PRESET_BULK,
     )["query"]
     assert query["type"] == {"option": "Anchorfield", "discriminator": "chart"}
     assert "map_filters" not in query["filters"]
@@ -104,20 +107,24 @@ def test_special_chart_defaults_to_same_area_while_regular_chart_stays_exact(qap
         special = parse_item_text(chart_text(
             "錨海域の海図", "錨海域", 83, 64, 20, 18, 60,
         ))
+        window._configure_trade_presets(special)
         window._update_item_header(special)
-        assert window.base_scope_toggle.currentData() is False
-        assert window.base_scope_toggle.currentText() == "同じ海域（錨海域）"
+        assert window.base_scope_toggle.isHidden()
+        assert window.trade_preset_combo.currentData() == PRESET_BULK
+        assert window.trade_preset_combo.currentText() == "同じ海域"
 
         regular = parse_item_text(chart_text(
             "サンゴの森の海図", "海底の木立", 82, 64, 20, None, 60,
         ))
+        window._configure_trade_presets(regular)
         window._update_item_header(regular)
-        assert window.base_scope_toggle.currentData() is True
+        assert window.trade_preset_combo.currentData() == PRESET_FINISHED
+        assert window.trade_preset_combo.currentText() == "個体条件"
     finally:
         window.close()
 
 
-def test_chart_scope_switch_regenerates_bulk_and_property_filters(qapp, monkeypatch):
+def test_chart_preset_switch_regenerates_bulk_and_property_filters(qapp, monkeypatch):
     monkeypatch.setattr(trade, "_stat_entries_cache", ())
     monkeypatch.setattr(trade, "_stat_entry_indexes_cache", None)
     item = parse_item_text(chart_text(
@@ -127,11 +134,12 @@ def test_chart_scope_switch_regenerates_bulk_and_property_filters(qapp, monkeypa
     try:
         window._parsed_item = item
         window._trade_base_type = "Anchorfield Chart"
+        window._configure_trade_presets(item)
         window._update_item_header(item)
-        assert window.base_scope_toggle.currentData() is False
+        assert window.trade_preset_combo.currentData() == PRESET_BULK
         assert window.mod_filter_tree.topLevelItemCount() == 0
 
-        window.base_scope_toggle.setCurrentIndex(0)
+        window.trade_preset_combo.setCurrentIndex(0)
         filters = window._selected_stat_filters()
         assert {row.stat_id for row in filters} >= {
             "property.map_quantity", "property.map_rarity",
@@ -139,7 +147,7 @@ def test_chart_scope_switch_regenerates_bulk_and_property_filters(qapp, monkeypa
         }
         assert window.price_status.text() == "この海図を個体条件付きで検索します。"
 
-        window.base_scope_toggle.setCurrentIndex(1)
+        window.trade_preset_combo.setCurrentIndex(1)
         assert window.mod_filter_tree.topLevelItemCount() == 0
         assert window.price_status.text() == "同じ海域の海図をまとめて検索します。"
     finally:
