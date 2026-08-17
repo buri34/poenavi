@@ -250,6 +250,38 @@ def test_exact_name_item_price_is_supported():
     assert price is not None and price.chaos == 1800
 
 
+def test_new_awakened_currency_categories_are_supported():
+    payload = {
+        "itemOverviews": [
+            {"type": "Ducat", "lines": [{
+                "name": "Merrick's Ducat", "chaos": 14.43,
+                "graph": [], "sparkLine": {"totalChange": 2},
+            }]},
+            {"type": "EnshroudingCrystal", "lines": [{
+                "name": "Imperial Enshrouding Crystal", "chaos": 1.12,
+                "graph": [], "sparkLine": {"totalChange": -1},
+            }]},
+        ],
+    }
+
+    cases = (
+        ("Merrick's Ducat", "Ducat", 14.43, "/ducats/merricks-ducat"),
+        (
+            "Imperial Enshrouding Crystal", "EnshroudingCrystal", 1.12,
+            "/enshrouding-crystals/imperial-enshrouding-crystal",
+        ),
+    )
+    for name, source_type, chaos, url_path in cases:
+        item = ParsedItem("Stackable Currency", "Currency", name, name, "currency")
+        price = match_poe_ninja_price(
+            payload, item, "Allflame", trade_base_type=name,
+        )
+        assert price is not None
+        assert price.source_type == source_type
+        assert price.chaos == chaos
+        assert url_path in price.url
+
+
 def test_scarab_price_uses_only_scarab_overview():
     payload = {
         "itemOverviews": [
