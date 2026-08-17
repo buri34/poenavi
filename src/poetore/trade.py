@@ -95,8 +95,7 @@ DEDICATED_EXACT_CATEGORIES = {
 }
 PRESET_FINISHED = "finished"
 PRESET_BASE = "base"
-PRESET_BULK = "bulk"
-TRADE_PRESETS = (PRESET_FINISHED, PRESET_BASE, PRESET_BULK)
+TRADE_PRESETS = (PRESET_FINISHED, PRESET_BASE)
 _INSCRIBED_ULTIMATUM_NAMES = {
     "inscribed ultimatum", "アルティメイタムの刻印",
 }
@@ -993,10 +992,6 @@ def _base_defence_percentile(item: ParsedItem, trade_base_type: str | None) -> f
 def available_trade_presets(item: ParsedItem) -> tuple[str, ...]:
     """完成品を基本とし、未完成でクラフト価値がある装備だけベース検索を追加する。"""
     rarity = item.rarity.casefold()
-    if item.category == "chart":
-        if rarity in {"rare", "レア"} and "unidentified" not in item.flags:
-            return (PRESET_FINISHED, PRESET_BULK)
-        return (PRESET_BULK,)
     if (item.category not in {"weapon", "armour", "accessory", "cluster_jewel", "jewel", "abyss_jewel"}
             or _is_unique(item) or rarity in {"normal", "ノーマル"}
             or "unidentified" in item.flags):
@@ -3076,10 +3071,6 @@ def resolve_trade_stat_filters(
 ) -> tuple[TradeStatFilter, ...]:
     if preset not in TRADE_PRESETS:
         raise ValueError(f"未対応の検索プリセットです: {preset}")
-    if preset == PRESET_BULK:
-        if item.category != "chart":
-            raise ValueError("Bulk検索は海図だけで利用できます。")
-        return ()
     if preset == PRESET_BASE:
         if PRESET_BASE not in available_trade_presets(item):
             raise ValueError("このアイテムはベースアイテム検索の対象外です。")
@@ -3668,10 +3659,6 @@ def build_search_query(
         raise ValueError(f"未対応の取引方式です: {trade_status}")
     if preset not in TRADE_PRESETS:
         raise ValueError(f"未対応の検索プリセットです: {preset}")
-    if preset == PRESET_BULK:
-        if item.category != "chart":
-            raise ValueError("Bulk検索は海図だけで利用できます。")
-        stat_filters = ()
     if trade_currency not in TRADE_CURRENCY_OPTIONS:
         raise ValueError(f"未対応の価格通貨です: {trade_currency}")
     if listed_within not in LISTED_WITHIN_OPTIONS:

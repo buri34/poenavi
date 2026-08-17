@@ -39,7 +39,7 @@ from .window_position import (
     relative_panel_position,
 )
 from .trade import (
-    PRESET_BASE, PRESET_BULK, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
+    PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
     available_pc_leagues, available_trade_presets, default_pc_league, default_trade_currency,
     apply_search_range, english_trade_identity, gem_metadata,
     elemental_dps, physical_dps_at_20_quality,
@@ -3716,13 +3716,8 @@ class PoetoreWindow(QWidget):
             trace.mark("ui_parse_applied")
 
     def _update_mod_warning(self, item):
-        preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
-        warnings = (
-            ()
-            if item.category == "chart" and preset == PRESET_BULK
-            else unresolved_modifier_warnings(
-                item, tuple(getattr(self, "_special_chip_rows", {}).values()),
-            )
+        warnings = unresolved_modifier_warnings(
+            item, tuple(getattr(self, "_special_chip_rows", {}).values()),
         )
         if warnings:
             preview = " / ".join(warnings[:3])
@@ -3913,40 +3908,26 @@ class PoetoreWindow(QWidget):
         dedicated_exact = uses_dedicated_exact_preset(item)
         self.trade_preset_combo.blockSignals(True)
         rarity = (item.rarity or "").strip().casefold()
-        if item.category == "chart":
-            has_props = PRESET_FINISHED in presets
-            self.trade_preset_combo.setItemText(0, "数値で絞る" if has_props else "数値を問わない")
-            self.trade_preset_combo.setItemData(0, PRESET_FINISHED if has_props else PRESET_BULK)
-            self.trade_preset_combo.setItemText(1, "数値を問わない")
-            self.trade_preset_combo.setItemData(1, PRESET_BULK)
-            self.trade_preset_combo.setSecondAvailable(has_props)
-            self.trade_preset_combo.setCurrentIndex(
-                1 if has_props and is_special_chart_area(item) else 0
-            )
+        self.trade_preset_combo.setItemData(0, PRESET_FINISHED)
+        self.trade_preset_combo.setItemData(1, PRESET_BASE)
+        self.trade_preset_combo.setItemText(1, "ベースアイテム")
+        if dedicated_exact and rarity in {"normal", "ノーマル"}:
+            primary_label = "ベースアイテム"
+        elif dedicated_exact:
+            primary_label = "専用検索"
+        else:
+            primary_label = "完成品"
+        self.trade_preset_combo.setItemText(0, primary_label)
+        self.trade_preset_combo.setSecondAvailable(PRESET_BASE in presets)
+        self.trade_preset_combo.setCurrentIndex(0)
+        if dedicated_exact:
             self.trade_preset_combo.setToolTip(
-                "コピーした海図の数量・レアリティなどを検索条件に含めるかを切り替えます。"
+                "このアイテム種別に必要な条件だけを使う専用検索です。"
             )
         else:
-            self.trade_preset_combo.setItemData(0, PRESET_FINISHED)
-            self.trade_preset_combo.setItemData(1, PRESET_BASE)
-            self.trade_preset_combo.setItemText(1, "ベースアイテム")
-            if dedicated_exact and rarity in {"normal", "ノーマル"}:
-                primary_label = "ベースアイテム"
-            elif dedicated_exact:
-                primary_label = "専用検索"
-            else:
-                primary_label = "完成品"
-            self.trade_preset_combo.setItemText(0, primary_label)
-            self.trade_preset_combo.setSecondAvailable(PRESET_BASE in presets)
-            self.trade_preset_combo.setCurrentIndex(0)
-            if dedicated_exact:
-                self.trade_preset_combo.setToolTip(
-                    "このアイテム種別に必要な条件だけを使う専用検索です。"
-                )
-            else:
-                self.trade_preset_combo.setToolTip(
-                    "未完成でクラフト価値がある装備は、完成品とベースアイテムを切り替えて検索できます。"
-                )
+            self.trade_preset_combo.setToolTip(
+                "未完成でクラフト価値がある装備は、完成品とベースアイテムを切り替えて検索できます。"
+            )
         has_choice = len(presets) > 1
         self.trade_preset_combo.setEnabled(has_choice)
         self.trade_preset_combo.setVisible(has_choice)
@@ -4523,11 +4504,7 @@ class PoetoreWindow(QWidget):
             self._configure_special_filter_chips(item)
             self._populate_stat_filters(self._resolved_trade_filters(item, preset))
             self._update_mod_warning(item)
-        if preset == PRESET_BULK:
-            self.price_status.setText("海図の数量・レアリティなどを指定せずに検索します。")
-        elif item is not None and item.category == "chart":
-            self.price_status.setText("海図の数量・レアリティなどを検索条件に含めます。")
-        elif preset == PRESET_BASE:
+        if preset == PRESET_BASE:
             self.price_status.setText(
                 "ベースアイテムとして、ベースタイプとアイテムレベルを中心に検索します。"
             )

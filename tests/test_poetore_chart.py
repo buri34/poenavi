@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
@@ -6,7 +8,7 @@ from PySide6.QtWidgets import QApplication
 from src.poetore.parser import parse_item_text
 from src.poetore import trade
 from src.poetore.trade import (
-    PRESET_BULK, PRESET_FINISHED, available_trade_presets,
+    PRESET_FINISHED, available_trade_presets,
     build_search_query, is_special_chart_area, resolve_trade_stat_filters,
 )
 from src.poetore.ui import PoetoreWindow
@@ -95,15 +97,18 @@ def test_chart_exact_and_same_area_queries_use_official_trade_shape():
     }
 
 
-def test_special_chart_uses_bulk_same_area_query_without_copy_properties():
+def test_special_chart_can_search_same_area_without_copy_properties():
     item = parse_item_text(chart_text(
         "錨海域の海図", "錨海域", 83, 64, 20, 18, 60,
     ))
     assert is_special_chart_area(item)
-    assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BULK)
+    assert available_trade_presets(item) == (PRESET_FINISHED,)
+    rows = tuple(
+        replace(row, enabled=False)
+        for row in resolve_trade_stat_filters(item)
+    )
     query = build_search_query(
-        item, "Anchorfield Chart", resolve_trade_stat_filters(item),
-        preset=PRESET_BULK, exact_base_type=False,
+        item, "Anchorfield Chart", rows, exact_base_type=False,
     )["query"]
     assert query["type"] == {"option": "Anchorfield", "discriminator": "chart"}
     assert query["filters"]["map_filters"]["filters"] == {
@@ -123,19 +128,15 @@ def test_regular_chart_is_not_special():
     (False, True, "area"),
     (False, False, "all"),
 ))
-@pytest.mark.parametrize("preset,uses_numbers", (
-    (PRESET_FINISHED, True),
-    (PRESET_BULK, False),
-))
-def test_chart_scope_and_numeric_conditions_are_independent(
-    exact_base, area_exact, expected_scope, preset, uses_numbers,
+def test_chart_scope_is_independent_from_selected_mod_conditions(
+    exact_base, area_exact, expected_scope,
 ):
     item = parse_item_text(chart_text(
         "サンゴの森の海図", "海底の木立", 82, 64, 20, 18, 60,
     ))
-    rows = resolve_trade_stat_filters(item, preset)
+    rows = resolve_trade_stat_filters(item)
     query = build_search_query(
-        item, "Coral Forest Chart", rows, preset=preset,
+        item, "Coral Forest Chart", rows,
         exact_base_type=exact_base, chart_area_exact=area_exact,
     )["query"]
     if expected_scope == "base":
@@ -149,10 +150,10 @@ def test_chart_scope_and_numeric_conditions_are_independent(
         }
     chart_filters = query["filters"]["map_filters"]["filters"]
     assert chart_filters["area_level"] == {"min": 82.0}
-    assert ("chart_sulphur" in chart_filters) is uses_numbers
+    assert "chart_sulphur" in chart_filters
 
 
-def test_chart_scope_and_numeric_presets_have_independent_defaults(qapp):
+def test_chart_scope_defaults_do_not_add_a_numeric_preset(qapp):
     window = PoetoreWindow()
     try:
         special = parse_item_text(chart_text(
@@ -165,8 +166,9 @@ def test_chart_scope_and_numeric_presets_have_independent_defaults(qapp):
         assert not window.chart_area_chip.isHidden()
         assert window.chart_area_chip.isChecked()
         assert window.chart_area_chip.text() == "錨海域"
-        assert window.trade_preset_combo.currentData() == PRESET_BULK
-        assert window.trade_preset_combo.currentText() == "数値を問わない"
+        assert window.trade_preset_combo.currentData() == PRESET_FINISHED
+        assert window.trade_preset_combo.currentText() == "専用検索"
+        assert window.trade_preset_combo.isHidden()
 
         regular = parse_item_text(chart_text(
             "サンゴの森の海図", "海底の木立", 82, 64, 20, None, 60,
@@ -176,7 +178,8 @@ def test_chart_scope_and_numeric_presets_have_independent_defaults(qapp):
         assert window.base_scope_toggle.currentData() is False
         assert window.chart_area_chip.isChecked()
         assert window.trade_preset_combo.currentData() == PRESET_FINISHED
-        assert window.trade_preset_combo.currentText() == "数値で絞る"
+        assert window.trade_preset_combo.currentText() == "専用検索"
+        assert window.trade_preset_combo.isHidden()
     finally:
         window.close()
 
@@ -216,7 +219,7 @@ def test_chart_area_chip_click_switches_from_area_to_all_charts(qapp):
         window.close()
 
 
-def test_chart_preset_switch_regenerates_bulk_and_property_filters(qapp, monkeypatch):
+def test_chart_clear_all_removes_mod_conditions_but_keeps_scope(qapp, monkeypatch):
     monkeypatch.setattr(trade, "_stat_entries_cache", ())
     monkeypatch.setattr(trade, "_stat_entry_indexes_cache", None)
     item = parse_item_text(chart_text(
@@ -224,24 +227,31 @@ def test_chart_preset_switch_regenerates_bulk_and_property_filters(qapp, monkeyp
     ))
     window = PoetoreWindow()
     try:
-        window._parsed_item = item
+        window.input_edit.setPlainText(item.raw_text)
+        window.parse_current_text()
         window._trade_base_type = "Anchorfield Chart"
-        window._configure_trade_presets(item)
-        window._update_item_header(item)
-        assert window.trade_preset_combo.currentData() == PRESET_BULK
-        assert window.mod_filter_tree.topLevelItemCount() == 0
-
-        window.trade_preset_combo.setCurrentIndex(0)
+        assert window.trade_preset_combo.currentData() == PRESET_FINISHED
+        assert window.trade_preset_combo.currentText() == "専用検索"
         filters = window._selected_stat_filters()
         assert {row.stat_id for row in filters} >= {
             "property.map_quantity", "property.map_rarity",
             "property.map_pack_size", "property.chart_sulphur",
         }
-        assert window.price_status.text() == "海図の数量・レアリティなどを検索条件に含めます。"
 
-        window.trade_preset_combo.setCurrentIndex(1)
-        assert window.mod_filter_tree.topLevelItemCount() == 0
-        assert window.price_status.text() == "海図の数量・レアリティなどを指定せずに検索します。"
+        window.clear_mod_conditions_button.click()
+        cleared = window._selected_stat_filters()
+        assert cleared
+        assert all(not row.enabled for row in cleared)
+        assert window.clear_mod_conditions_button.text() == "一覧のチェックを全て選択"
+        query = build_search_query(
+            item, window._trade_base_type, cleared,
+            exact_base_type=window._searches_exact_base_type(item),
+            chart_area_exact=window._searches_exact_chart_area(item),
+        )["query"]
+        assert all(not group["filters"] for group in query["stats"])
+        assert query["filters"]["map_filters"]["filters"] == {
+            "area_level": {"min": 83.0},
+        }
 
         window.base_scope_toggle.setCurrentIndex(0)
         assert window._searches_exact_base_type(item)
@@ -251,33 +261,5 @@ def test_chart_preset_switch_regenerates_bulk_and_property_filters(qapp, monkeyp
         window.chart_area_chip.setChecked(False)
         assert not window._searches_exact_chart_area(item)
         assert window.price_status.text() == "すべての海図を検索します。"
-    finally:
-        window.close()
-
-
-def test_chart_bulk_preset_hides_irrelevant_unresolved_mod_warning(qapp):
-    text = chart_text(
-        "サンゴの森の海図", "海底の木立", 83, 90, 50, None, 45,
-    ).replace(
-        "モンスターは物理ダメージの29(21-35)%を追加雷ダメージとして与える",
-        "このエリアで見つかる死人の硫黄が30%増加する",
-    )
-    item = parse_item_text(text)
-    assert trade.unresolved_modifier_warnings(item)
-
-    window = PoetoreWindow()
-    try:
-        window._parsed_item = item
-        window._configure_trade_presets(item)
-        window._update_mod_warning(item)
-        assert window.trade_preset_combo.currentData() == PRESET_FINISHED
-        assert not window.mod_warning.isHidden()
-
-        window.trade_preset_combo.setCurrentIndex(1)
-
-        assert window.trade_preset_combo.currentData() == PRESET_BULK
-        assert window.mod_warning.isHidden()
-        assert window.mod_warning.text() == ""
-
     finally:
         window.close()
