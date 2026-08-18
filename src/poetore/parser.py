@@ -954,6 +954,13 @@ def parse_item_text(text: str) -> ParsedItem:
             line = _normalized_modifier_line(line, item_category)
             if line is None:
                 continue
+            if (
+                item_category == "chart"
+                and line == "海図作成すると航海モッドが公開される"
+            ):
+                # すべての海図に表示される固定説明文。個体差のあるStatではなく、
+                # 公式Trade検索条件にも使わないためModとして解析しない。
+                continue
             if logbook_area_section and line == section[0] and line not in _LOGBOOK_FACTIONS:
                 # Logbookの各区画先頭はエリア名であり、検索Modではない。
                 continue

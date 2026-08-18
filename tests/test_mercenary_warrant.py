@@ -1,7 +1,7 @@
 from dataclasses import replace
 
 import pytest
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QPoint, Qt
 from PySide6.QtWidgets import QApplication, QCheckBox
 
 from src.poetore.parser import parse_item_text
@@ -140,6 +140,27 @@ def test_warrant_ui_reveals_supports_without_losing_selected_skills(
         assert all(row.isHidden() for row in support_rows)
         assert not window.mercenary_supports_toggle.isHidden()
         assert window.mercenary_supports_toggle.text() == "傭兵のサポートジェムを表示"
+        assert window.mercenary_supports_toggle.objectName() == "secondaryActionButton"
+        assert window.mercenary_supports_toggle.property("mutedText") is True
+        window.show()
+        qapp.processEvents()
+        mod_actions_bottom = max(
+            widget.mapTo(window, QPoint(0, 0)).y() + widget.height()
+            for widget in (
+                window.mod_conditions_toggle,
+                window.clear_mod_conditions_button,
+                window.hidden_mods_toggle,
+                window.mod_sources_toggle,
+            )
+        )
+        support_button_top = window.mercenary_supports_toggle.mapTo(
+            window, QPoint(0, 0),
+        ).y()
+        assert support_button_top > mod_actions_bottom
+        assert (
+            window.mercenary_supports_toggle.width()
+            >= window.mercenary_supports_toggle.sizeHint().width()
+        )
 
         main_checkbox = window.mod_filter_tree.itemWidget(
             main_rows[0], _MOD_COLUMN_CHECK,
@@ -148,6 +169,8 @@ def test_warrant_ui_reveals_supports_without_losing_selected_skills(
         window.mercenary_supports_toggle.click()
 
         assert all(not row.isHidden() for row in main_rows + support_rows)
+        assert window.mercenary_supports_toggle.isChecked()
+        assert window.mercenary_supports_toggle.text() == "傭兵のサポートジェムを隠す"
         assert main_checkbox.isChecked()
         selected = {
             row.stat_id for row in window._selected_stat_filters() if row.enabled
@@ -162,5 +185,6 @@ def test_mercenary_support_toggle_is_hidden_for_other_items(qapp):
     try:
         window._populate_stat_filters(())
         assert window.mercenary_supports_toggle.isHidden()
+        assert window.mercenary_supports_actions_widget.isHidden()
     finally:
         window.close()

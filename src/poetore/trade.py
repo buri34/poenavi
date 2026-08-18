@@ -125,6 +125,12 @@ _CHART_AREA_TRADE_TYPES = {
     "海底の木立": "UnderseaGroves", "Undersea Groves": "UnderseaGroves",
     "特徴のない海底": "UnremarkableSeabed", "Unremarkable Seabed": "UnremarkableSeabed",
 }
+_SPECIAL_CHART_AREA_TYPES = {
+    "Anchorfield", "BrineKingsDomain", "ClamInfestedShelf", "DivingShoals",
+    "EldritchDepths", "HazardousDepths", "InfestedBathyspheres",
+    "KisharasRest", "LostRuins", "PelagicAbyss", "SeaPillars",
+    "SunkenTotems", "UnremarkableSeabed",
+}
 
 
 def _chart_area_trade_type(value: str) -> str | None:
@@ -134,6 +140,13 @@ def _chart_area_trade_type(value: str) -> str | None:
          if label.casefold() == wanted),
         None,
     )
+
+
+def is_special_chart_area(item: ParsedItem) -> bool:
+    if item.category != "chart":
+        return False
+    area = item.properties.get("マップエリア") or item.properties.get("Map Area") or ""
+    return _chart_area_trade_type(area) in _SPECIAL_CHART_AREA_TYPES
 # Experimental bases whose implicits change the normal rare-item 3/3 limits.
 # Values come from RePoE's local_maximum_prefixes_allowed_+ /
 # local_maximum_suffixes_allowed_+ stats.
@@ -3681,6 +3694,7 @@ def build_search_query(
     include_foil: bool | None = None,
     include_searing: bool | None = None,
     include_tangled: bool | None = None,
+    chart_area_exact: bool = True,
 ) -> dict:
     if trade_status not in TRADE_STATUS_OPTIONS:
         raise ValueError(f"未対応の取引方式です: {trade_status}")
@@ -3759,7 +3773,7 @@ def build_search_query(
         query_type = {"option": query_type, "discriminator": gem_info["discriminator"]}
     elif item.category == "map" and base_type == "Map":
         query_type = {"option": query_type, "discriminator": "map"}
-    elif item.category == "chart" and not exact_base_type:
+    elif item.category == "chart" and not exact_base_type and chart_area_exact:
         area = item.properties.get("マップエリア") or item.properties.get("Map Area")
         area_type = _chart_area_trade_type(area or "")
         if not area_type:
@@ -3776,7 +3790,9 @@ def build_search_query(
             },
         },
     }
-    if (exact_base_type or item.category == "chart") and not _is_generic_map_copy_type(item, base_type):
+    if (
+        exact_base_type or (item.category == "chart" and chart_area_exact)
+    ) and not _is_generic_map_copy_type(item, base_type):
         query["type"] = query_type
     currency_option = TRADE_CURRENCY_OPTIONS[trade_currency]
     if currency_option is not None:
@@ -3788,6 +3804,15 @@ def build_search_query(
         query["filters"].setdefault("trade_filters", {"filters": {}})["filters"]["indexed"] = {
             "option": listed_option
         }
+    if item.category == "chart":
+        area_level = _property_value(item, "エリアレベル", "Area Level")
+        if area_level is not None:
+            query["filters"].setdefault("map_filters", {"filters": {}})["filters"]["area_level"] = {
+                "min": area_level,
+            }
+        stat_filters = tuple(
+            row for row in stat_filters if row.stat_id != "property.area_level"
+        )
     if _is_unique(item) and trade_name and trade_name.strip():
         name_discriminator = trade_discriminator
         if name_discriminator is None and item.category == "map" and base_type == "Map":
@@ -3844,8 +3869,11 @@ def build_search_query(
         rarity_option = "uniquefoil"
     if rarity_option and item.category != "captured_beast":
         query["filters"]["type_filters"] = {"filters": {"rarity": {"option": rarity_option}}}
-    if not exact_base_type and item.category != "chart":
-        category = item_class_trade_category(item.item_class)
+    if not exact_base_type and (item.category != "chart" or not chart_area_exact):
+        category = (
+            "chart" if item.category == "chart"
+            else item_class_trade_category(item.item_class)
+        )
         if category is None:
             raise ValueError("このアイテムクラスではベースを限定しない検索を利用できません。")
         type_filters = query["filters"].setdefault("type_filters", {"filters": {}})["filters"]
@@ -4136,6 +4164,7 @@ def search_prices(
     include_tangled: bool | None = None,
     performance_trace: SearchPerformanceTrace | None = None,
     partial_result_callback: Callable[[PriceResult], None] | None = None,
+    chart_area_exact: bool = True,
 ) -> PriceResult:
     if performance_trace is not None:
         performance_trace.mark("trade_worker_started")
@@ -4159,6 +4188,7 @@ def search_prices(
         links_min,
         include_unidentified, include_veiled, include_foil,
         include_searing, include_tangled,
+        chart_area_exact,
     )
     if performance_trace is not None:
         performance_trace.mark(

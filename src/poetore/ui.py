@@ -51,7 +51,7 @@ from .trade import (
     japanese_trade_item_label,
     preset_item_level_filter, resolve_trade_stat_filters, search_prices, unique_candidate_details,
     unique_variants, unresolved_modifier_warnings, uses_dedicated_exact_preset,
-    is_inscribed_ultimatum,
+    is_inscribed_ultimatum, is_special_chart_area,
 )
 from .poe_ninja import PoeNinjaPrice, default_poe_ninja_service, is_poe2_exchange_price_item
 from .metadata import related_item_group
@@ -89,6 +89,18 @@ _INFLUENCE_CHIPS = {
     "eater": ("Eater", None, "tangled_item"),
     "exarch": ("Exarch", None, "searing_item"),
 }
+
+
+def _user_facing_trade_error(message: str) -> str:
+    normalized = message.casefold()
+    too_complex = (
+        "query is too complex" in normalized
+        or "検索条件が複雑過ぎ" in message
+        or "検索条件が複雑すぎ" in message
+    )
+    if not too_complex:
+        return message
+    return "検索条件が多すぎます。条件を減らして、もう一度検索してください。"
 
 _HEIST_JOB_LABELS = {
     "property.heist_lockpicking": "錠前破り",
@@ -605,6 +617,13 @@ class _BinaryToggle(QWidget):
         self._options = tuple(options)
         self._buttons[index].setText(str(text))
 
+    def setItemData(self, index: int, data):
+        if index not in (0, 1):
+            raise IndexError(index)
+        options = list(self._options)
+        options[index] = (options[index][0], data)
+        self._options = tuple(options)
+
     def count(self) -> int:
         return 2 if self._second_available else 1
 
@@ -1025,6 +1044,16 @@ class PoetoreWindow(QWidget):
         )
         self.base_scope_toggle.currentIndexChanged.connect(self._base_scope_changed)
         self.base_scope_toggle.hide()
+        self.chart_area_chip = QPushButton()
+        self.chart_area_chip.setObjectName("secondaryActionButton")
+        self.chart_area_chip.setProperty("mutedText", True)
+        self.chart_area_chip.setCheckable(True)
+        self.chart_area_chip.setChecked(True)
+        self.chart_area_chip.setToolTip(
+            "ONなら同じ海域、OFFならすべての海図を検索します。"
+        )
+        self.chart_area_chip.toggled.connect(self._chart_area_changed)
+        self.chart_area_chip.hide()
         self.corrupted_combo = _CycleButton((
             ("コラプトのみ", "only", True),
             ("非コラプトのみ", False, False),
@@ -1038,6 +1067,7 @@ class PoetoreWindow(QWidget):
         item_scope_layout.setSpacing(6)
         item_scope_layout.addWidget(self.base_scope_toggle, stretch=1)
         item_scope_layout.addStretch()
+        item_scope_layout.addWidget(self.chart_area_chip)
         item_scope_layout.addWidget(self.corrupted_combo)
         item_header_layout.addLayout(item_scope_layout)
         content_layout.addWidget(self.item_header)
@@ -1564,7 +1594,8 @@ class PoetoreWindow(QWidget):
         )
         self.mod_sources_toggle.toggled.connect(self._toggle_mod_sources)
         self.mercenary_supports_toggle = QPushButton("傭兵のサポートジェムを表示")
-        self.mercenary_supports_toggle.setObjectName("mercenarySupportsToggle")
+        self.mercenary_supports_toggle.setObjectName("secondaryActionButton")
+        self.mercenary_supports_toggle.setProperty("mutedText", True)
         self.mercenary_supports_toggle.setCheckable(True)
         self.mercenary_supports_toggle.setToolTip(
             "傭兵の召喚状に含まれるサポートジェムの検索条件を表示します"
@@ -1580,9 +1611,18 @@ class PoetoreWindow(QWidget):
         mod_conditions_actions.addWidget(self.clear_mod_conditions_button)
         mod_conditions_actions.addWidget(self.hidden_mods_toggle)
         mod_conditions_actions.addWidget(self.mod_sources_toggle)
-        mod_conditions_actions.addWidget(self.mercenary_supports_toggle)
         mod_conditions_actions.addStretch()
         self.mod_conditions_actions_layout = mod_conditions_actions
+        self.mercenary_supports_actions_widget = QWidget()
+        mercenary_supports_actions = QHBoxLayout(
+            self.mercenary_supports_actions_widget
+        )
+        mercenary_supports_actions.setContentsMargins(0, 0, 0, 0)
+        mercenary_supports_actions.setSpacing(_ACTION_CLUSTER_HORIZONTAL_GAP)
+        mercenary_supports_actions.addWidget(self.mercenary_supports_toggle)
+        mercenary_supports_actions.addStretch()
+        self.mercenary_supports_actions_widget.hide()
+        self.mercenary_supports_actions_layout = mercenary_supports_actions
         self.mod_warning = QLabel("")
         self.mod_warning.setWordWrap(True)
         self.mod_warning.setStyleSheet("color: #d6a84b;")
@@ -1622,6 +1662,7 @@ class PoetoreWindow(QWidget):
         action_cluster.setContentsMargins(0, 0, 0, 0)
         action_cluster.setSpacing(_ACTION_CLUSTER_VERTICAL_GAP)
         action_cluster.addLayout(mod_conditions_actions)
+        action_cluster.addWidget(self.mercenary_supports_actions_widget)
         action_cluster.addLayout(action_row)
         action_cluster.addWidget(self.price_status)
         self.action_cluster_layout = action_cluster
@@ -2487,7 +2528,7 @@ class PoetoreWindow(QWidget):
             self.base_scope_toggle.setItemText(0, display_name)
             self.base_scope_toggle.setItemText(
                 1,
-                f"同じ海域（{item.properties.get('マップエリア', '海域不明')}）"
+                "すべての海図"
                 if item.category == "chart"
                 else "すべてのアビスジュエル"
                 if is_nonunique_abyss_jewel
@@ -2498,8 +2539,18 @@ class PoetoreWindow(QWidget):
                 # 非ユニークのアビスジュエルは従来のカテゴリ検索を初期値にし、
                 # 必要な時だけコピー元の基底へ限定できるようにする。
                 self.base_scope_toggle.setCurrentIndex(
-                    1 if is_nonunique_abyss_jewel else 0
+                    1 if is_nonunique_abyss_jewel or item.category == "chart" else 0
                 )
+        chart_relaxed = bool(
+            item.category == "chart" and not self.base_scope_toggle.currentData()
+        )
+        self.chart_area_chip.blockSignals(True)
+        self.chart_area_chip.setText(
+            item.properties.get("マップエリア", "海域不明")
+        )
+        self.chart_area_chip.setChecked(True)
+        self.chart_area_chip.setVisible(chart_relaxed)
+        self.chart_area_chip.blockSignals(False)
         self.weapon_property_label.setText(
             "武器性能・検索Mod" if is_weapon_category(item.category) else "検索条件一覧"
         )
@@ -2626,13 +2677,40 @@ class PoetoreWindow(QWidget):
             return
         self.price_list.clear()
         self.trade_url_button.setEnabled(False)
+        item = getattr(self, "_parsed_item", None)
+        if item is not None and item.category == "chart":
+            relaxed = not bool(self.base_scope_toggle.currentData())
+            self.chart_area_chip.setVisible(relaxed)
+            self.price_status.setText(
+                "同じ海域の海図を検索します。"
+                if relaxed and self.chart_area_chip.isChecked()
+                else "すべての海図を検索します。"
+                if relaxed
+                else "この海図のベースタイプだけを検索します。"
+            )
+            self._mark_search_dirty()
+            return
         self.price_status.setText(
             "ベースタイプを限定して検索します。"
             if self.base_scope_toggle.currentData()
             else "同じアイテムクラスの全ベースを対象に検索します。"
         )
 
+    def _chart_area_changed(self, checked: bool):
+        item = getattr(self, "_parsed_item", None)
+        if item is None or item.category != "chart":
+            return
+        self.price_list.clear()
+        self.trade_url_button.setEnabled(False)
+        self.price_status.setText(
+            "同じ海域の海図を検索します。"
+            if checked else "すべての海図を検索します。"
+        )
+        self._mark_search_dirty()
+
     def _searches_exact_base_type(self, item) -> bool:
+        if item.category == "chart":
+            return bool(self.base_scope_toggle.currentData())
         # isVisible() は親ウィンドウがまだ表示されていない初期化中にもFalseとなる。
         # ここではアイテム種別に応じて明示的に隠したかどうかを判定する。
         if not self.base_scope_toggle.isHidden():
@@ -2642,6 +2720,13 @@ class PoetoreWindow(QWidget):
             and item.rarity.casefold() not in {"unique", "ユニーク"}
         )
         return not nonunique_jewel_group
+
+    def _searches_exact_chart_area(self, item) -> bool:
+        return bool(
+            item.category == "chart"
+            and not self._searches_exact_base_type(item)
+            and self.chart_area_chip.isChecked()
+        )
 
     def eventFilter(self, watched, event):
         if (
@@ -3907,17 +3992,16 @@ class PoetoreWindow(QWidget):
         if self.poe_version == POE2:
             warnings = tuple(mod.text for mod in item.modifiers if not mod.stat_id)
         else:
-            warnings = unresolved_modifier_warnings(
-                item, tuple(getattr(self, "_special_chip_rows", {}).values()),
-            )
-        if warnings:
+            self._update_mod_warning(item)
+            warnings = ()
+        if self.poe_version == POE2 and warnings:
             preview = " / ".join(warnings[:3])
             suffix = f" ほか{len(warnings) - 3}件" if len(warnings) > 3 else ""
             self.mod_warning.setText(
                 f"⚠ メタデータ未解決 {len(warnings)}件（検索時に公式API照合を試行）: {preview}{suffix}"
             )
             self.mod_warning.show()
-        else:
+        elif self.poe_version == POE2:
             self.mod_warning.clear()
             self.mod_warning.hide()
         if _is_poe2_exchange_price_item(item, self.poe_version):
@@ -3958,6 +4042,21 @@ class PoetoreWindow(QWidget):
             from .poe2.parser import parse_item_text as parse_poe2_item_text
             return parse_poe2_item_text(text)
         return parse_item_text(text)
+
+    def _update_mod_warning(self, item):
+        warnings = unresolved_modifier_warnings(
+            item, tuple(getattr(self, "_special_chip_rows", {}).values()),
+        )
+        if warnings:
+            preview = " / ".join(warnings[:3])
+            suffix = f" ほか{len(warnings) - 3}件" if len(warnings) > 3 else ""
+            self.mod_warning.setText(
+                f"⚠ メタデータ未解決 {len(warnings)}件（検索時に公式API照合を試行）: {preview}{suffix}"
+            )
+            self.mod_warning.show()
+        else:
+            self.mod_warning.clear()
+            self.mod_warning.hide()
 
     def search_current_item(self):
         trace = self._pending_performance_trace or start_search_trace("manual_search")
@@ -4057,6 +4156,8 @@ class PoetoreWindow(QWidget):
         selected_discriminator = (
             self.unique_variant_combo.currentData() if self.unique_variant_combo.isVisible() else None
         )
+        exact_base_type = self._searches_exact_base_type(item)
+        chart_area_exact = self._searches_exact_chart_area(item)
 
         def run():
             try:
@@ -4126,7 +4227,7 @@ class PoetoreWindow(QWidget):
                         item_level_max=item_level_max,
                         gem_level_min=gem_level_min,
                         gem_sockets_min=gem_sockets_min,
-                        exact_base_type=self._searches_exact_base_type(item),
+                        exact_base_type=exact_base_type,
                         trade_currency=trade_currency,
                         listed_within=listed_within,
                         include_corrupted=include_corrupted,
@@ -4150,7 +4251,7 @@ class PoetoreWindow(QWidget):
                         trade_discriminator=str(selected_discriminator) if selected_discriminator else None,
                         listed_within=listed_within,
                         magic_exact=magic_exact,
-                        exact_base_type=self._searches_exact_base_type(item),
+                        exact_base_type=exact_base_type,
                         item_level_min=item_level_min,
                         item_level_max=item_level_max,
                         gem_level_min=gem_level_min,
@@ -4161,6 +4262,7 @@ class PoetoreWindow(QWidget):
                         include_foil=include_foil,
                         include_searing=include_searing,
                         include_tangled=include_tangled,
+                        chart_area_exact=chart_area_exact,
                         performance_trace=trace,
                         partial_result_callback=lambda partial: (
                             self._trade_signals.partial_completed.emit(
@@ -4187,6 +4289,9 @@ class PoetoreWindow(QWidget):
         dedicated_exact = uses_dedicated_exact_preset(item)
         self.trade_preset_combo.blockSignals(True)
         rarity = (item.rarity or "").strip().casefold()
+        self.trade_preset_combo.setItemData(0, PRESET_FINISHED)
+        self.trade_preset_combo.setItemData(1, PRESET_BASE)
+        self.trade_preset_combo.setItemText(1, "ベースアイテム")
         if dedicated_exact and rarity in {"normal", "ノーマル"}:
             primary_label = "ベースアイテム"
         elif dedicated_exact:
@@ -4196,10 +4301,6 @@ class PoetoreWindow(QWidget):
         self.trade_preset_combo.setItemText(0, primary_label)
         self.trade_preset_combo.setSecondAvailable(PRESET_BASE in presets)
         self.trade_preset_combo.setCurrentIndex(0)
-        has_choice = len(presets) > 1
-        self.trade_preset_combo.setEnabled(has_choice)
-        self.trade_preset_combo.setVisible(has_choice)
-        self.trade_preset_placeholder.setVisible(not has_choice)
         if dedicated_exact:
             self.trade_preset_combo.setToolTip(
                 "このアイテム種別に必要な条件だけを使う専用検索です。"
@@ -4208,6 +4309,10 @@ class PoetoreWindow(QWidget):
             self.trade_preset_combo.setToolTip(
                 "未完成でクラフト価値がある装備は、完成品とベースアイテムを切り替えて検索できます。"
             )
+        has_choice = len(presets) > 1
+        self.trade_preset_combo.setEnabled(has_choice)
+        self.trade_preset_combo.setVisible(has_choice)
+        self.trade_preset_placeholder.setVisible(not has_choice)
         self.trade_preset_combo.blockSignals(False)
         self._configure_magic_rarity_toggle(item)
         self.mod_filter_tree.clear()
@@ -4857,6 +4962,7 @@ class PoetoreWindow(QWidget):
             self._configure_influence_chips(item)
             self._configure_special_filter_chips(item)
             self._populate_stat_filters(self._resolved_trade_filters(item, preset))
+            self._update_mod_warning(item)
         if preset == PRESET_BASE:
             self.price_status.setText(
                 "ベースアイテムとして、ベースタイプとアイテムレベルを中心に検索します。"
@@ -5017,6 +5123,7 @@ class PoetoreWindow(QWidget):
         )
         self.mercenary_supports_toggle.setChecked(False)
         self.mercenary_supports_toggle.setVisible(has_mercenary_supports)
+        self.mercenary_supports_actions_widget.setVisible(has_mercenary_supports)
         for stat_filter in filters:
             if stat_filter.stat_id in {"property.item_level", "property.gem_level"}:
                 continue
@@ -5472,7 +5579,7 @@ class PoetoreWindow(QWidget):
             return
         self.price_button.setEnabled(True)
         self.price_list.clear()
-        self.price_status.setText(message)
+        self.price_status.setText(_user_facing_trade_error(message))
         if trace is not None:
             trace.mark("search_error_displayed")
 

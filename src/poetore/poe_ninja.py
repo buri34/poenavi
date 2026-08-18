@@ -26,7 +26,7 @@ _UNIQUE_TYPES = {
 _EXACT_TYPES_BY_CATEGORY = {
     "currency": {"Currency", "Fragment", "Essence", "Fossil", "Resonator", "Scarab", "Oil",
                  "DeliriumOrb", "Artifact", "Tattoo", "Omen", "Vial", "Incubator", "Runegraft",
-                 "DjinnCoin", "Astrolabe", "AllflameEmber"},
+                 "DjinnCoin", "Astrolabe", "Ducat", "EnshroudingCrystal", "AllflameEmber"},
     "divination_card": {"DivinationCard"},
     "captured_beast": {"Beast"},
     "invitation": {"Invitation"},
@@ -164,7 +164,8 @@ _URL_BY_TYPE = {
     "Scarab": "scarabs", "Oil": "oils", "DeliriumOrb": "delirium-orbs",
     "Artifact": "artifacts", "Tattoo": "tattoos", "Omen": "omens", "Vial": "vials",
     "Incubator": "incubators", "Runegraft": "runegrafts", "DjinnCoin": "djinn-coins",
-    "Astrolabe": "astrolabes", "AllflameEmber": "allflame-embers", "Beast": "beasts",
+    "Astrolabe": "astrolabes", "Ducat": "ducats",
+    "EnshroudingCrystal": "enshrouding-crystals", "AllflameEmber": "allflame-embers", "Beast": "beasts",
     "Invitation": "invitations", "Map": "maps", "BlightedMap": "blighted-maps",
     "BlightRavagedMap": "blight-ravaged-maps", "ValdoMap": "valdo-maps",
     "IncursionTemple": "incursion-temples", "UniqueJewel": "unique-jewels",

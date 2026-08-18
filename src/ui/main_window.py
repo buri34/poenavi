@@ -2,6 +2,7 @@ import json
 import os
 import re
 import sys
+import threading
 import time
 from pynput import keyboard as pynput_keyboard
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
@@ -18,6 +19,12 @@ from src.utils.config_manager import ConfigManager
 from src.utils.lap_recorder import LapRecorder
 from src.utils.segment_recorder import SegmentRecorder
 from src.utils.log_watcher import LogWatcher
+from src.utils.new_character_history import (
+    NewCharacterHistoryResult,
+    RIVERBANK_NAMES,
+    TWILIGHT_STRAND_NAMES,
+    inspect_client_log_history,
+)
 from src.utils.window_focus import (
     get_foreground_window,
     focus_window,
@@ -126,6 +133,7 @@ class MainWindow(QMainWindow):
     hotkey_signal = Signal(str)
     poelab_url_resolved = Signal(str)
     poelab_url_failed = Signal(str)
+    historical_progress_check_finished = Signal(object)
 
     def _detached_panel_config(self, panel_id: str) -> dict:
         panels = self.config.setdefault("detached_panels", {})
@@ -635,6 +643,9 @@ class MainWindow(QMainWindow):
         self.mini_navi_overlay = MiniNaviOverlay(self)
         self.poelab_url_resolved.connect(self._open_resolved_poelab_url)
         self.poelab_url_failed.connect(self._handle_poelab_url_error)
+        self.historical_progress_check_finished.connect(
+            self._handle_historical_progress_check_result
+        )
         
         # monster_levels.json 読み込み
         if getattr(sys, 'frozen', False):
@@ -690,6 +701,7 @@ class MainWindow(QMainWindow):
             self._restoring = True
             self.log_watcher.start()
             self._restoring = False
+            self._start_historical_progress_check(current_log_path)
         
         # タイマー状態復元
         self._restore_timer_state()
@@ -3708,6 +3720,122 @@ class MainWindow(QMainWindow):
         """街エリアかどうか判定"""
         town_zones = self.town_zones_by_version.get(self.poe_version, [])
         return zone_name in town_zones
+
+    def _known_zone_names(self) -> set[str]:
+        names = set()
+        for zones in self.zone_data.values():
+            for zone in zones:
+                for key in ("zone", "zone_en"):
+                    if zone.get(key):
+                        names.add(zone[key])
+        names.update(self.town_zones_by_version.get(self.poe_version, []))
+        return names
+
+    def _start_historical_progress_check(self, log_path: str):
+        """Client.txtの末尾128MiBをモード別の開始条件で検査する。"""
+        if self.poe_version not in (POE1, POE2) or not log_path or not os.path.exists(log_path):
+            return
+        inspected_version = self.poe_version
+        anchor_zone = getattr(self, "_last_log_zone", None)
+        known_zones = self._known_zone_names()
+        town_zones = set(self.town_zones_by_version.get(inspected_version, []))
+        if inspected_version == POE2:
+            start_zones = RIVERBANK_NAMES
+            require_level_two = False
+        else:
+            start_zones = TWILIGHT_STRAND_NAMES
+            require_level_two = True
+
+        def inspect_history():
+            result = inspect_client_log_history(
+                log_path,
+                anchor_zone,
+                known_zones,
+                town_zones,
+                start_zone_names=start_zones,
+                require_level_two=require_level_two,
+            )
+            self.historical_progress_check_finished.emit(
+                (inspected_version, anchor_zone, result)
+            )
+
+        threading.Thread(
+            target=inspect_history,
+            name="poenavi-client-history",
+            daemon=True,
+        ).start()
+
+    def _has_guide_progress(self) -> bool:
+        return bool(
+            self.progress_flags
+            or self.zone_visit_counts
+            or getattr(self, "_last_visit_key", None)
+            or getattr(self, "_in_act10", False)
+            or getattr(self, "part2_mode", False)
+        )
+
+    def _track_live_new_character_candidate(self, zone_name: str):
+        """ライブ入場が岸辺なら候補開始、既知の別エリアなら候補解除する。"""
+        if self.poe_version != POE1 or self._restoring:
+            return
+        if zone_name in ("黄昏の岸辺", "The Twilight Strand"):
+            self._twilight_strand_entered = True
+        elif zone_name in self._known_zone_names():
+            self._twilight_strand_entered = False
+
+    def _record_last_non_town_zone(self, zone_name: str):
+        """ライブ中に確認した既知の非街エリアだけをモード別に保存する。"""
+        if (
+            self.poe_version not in (POE1, POE2)
+            or self._restoring
+            or self._is_town_zone(zone_name)
+            or zone_name not in self._known_zone_names()
+        ):
+            return
+        self._last_log_zone = zone_name
+        self._save_progress_flags()
+
+    def _handle_historical_progress_check_result(self, payload):
+        inspected_version, anchor_zone, result = payload
+        if (
+            not isinstance(result, NewCharacterHistoryResult)
+            or self.poe_version != inspected_version
+        ):
+            return
+
+        should_reset = False
+        if (
+            anchor_zone
+            and result.anchor_found
+            and result.new_character_start_found
+            and self._has_guide_progress()
+        ):
+            message_box = QMessageBox(self)
+            message_box.setIcon(QMessageBox.Question)
+            message_box.setWindowTitle("ガイド進行の確認")
+            message_box.setText(
+                "保存された進行状況と異なる進行状況を検知しました。\n"
+                "新キャラクターに合わせるため、ガイド進行をリセットしますか？"
+            )
+            evidence = (
+                "その後のログ：「川岸」への入場を検知"
+                if inspected_version == POE2
+                else "その後のログ：「黄昏の岸辺 → Lv2」を検知"
+            )
+            message_box.setInformativeText(
+                f"前回最後に確認したエリア：{anchor_zone}\n{evidence}"
+            )
+            message_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            message_box.setDefaultButton(QMessageBox.Yes)
+            should_reset = message_box.exec() == QMessageBox.Yes
+
+        if should_reset:
+            self._reset_guide_progress_from_settings()
+
+        # 検査中に新しいライブ入場が記録されていたら、そちらを優先する。
+        if getattr(self, "_last_log_zone", None) == anchor_zone:
+            self._last_log_zone = result.latest_non_town_zone
+        self._save_progress_flags()
     
     def _get_zone_id(self, zone_name: str) -> str | None:
         """zone_dataからエリア名でIDを検索。part2_modeに応じてAct6-10/Act1-5を優先"""
@@ -3767,6 +3895,9 @@ class MainWindow(QMainWindow):
             f"visited_town_before={getattr(self, '_visited_town', False)}"
         )
         self.current_zone = zone_name
+        if actual_entry:
+            self._track_live_new_character_candidate(zone_name)
+            self._record_last_non_town_zone(zone_name)
         if actual_entry and self.is_running and not self._restoring:
             self.segment_recorder.record_entry(
                 self._get_zone_id(zone_name) or zone_name,
@@ -3833,17 +3964,13 @@ class MainWindow(QMainWindow):
         if actual_entry and zone_name in ("荒廃した広場", "The Ravaged Square") and not self._restoring:
             self._in_act10 = True
         
-        # 黄昏の岸辺入場 → 新キャラ判定フラグON（Lv2検知でリセット確定）
-        if actual_entry and zone_name in ("黄昏の岸辺", "The Twilight Strand") and not self._restoring:
-            self._twilight_strand_entered = True
-        
         # C: Part2固有エリアに入場 → 自動切替
         if actual_entry and not self.part2_mode and zone_name in self.part2_only_zones:
             self._set_part2(True)
         
         # zone_id検索
         zone_id = self._get_zone_id(zone_name)
-        
+
         # Lab処理: 志す者の広場に入場 → Labフラグ設定
         _lab_zone_ids = {"act4_area3", "act8_area2", "act10_area8"}
         if actual_entry and zone_id in _lab_zone_ids and not self._restoring:
@@ -4206,6 +4333,7 @@ class MainWindow(QMainWindow):
             "last_visit_key": getattr(self, "_last_visit_key", None),
             "visited_town": getattr(self, "_visited_town", False),
         }
+        data["last_log_zone"] = getattr(self, "_last_log_zone", None)
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
@@ -4222,6 +4350,7 @@ class MainWindow(QMainWindow):
         self.zone_visit_counts = {}
         self._last_visit_key = None
         self._visited_town = False
+        self._last_log_zone = None
         path = self._progress_flags_path()
         if not path or not os.path.exists(path):
             return
@@ -4233,12 +4362,15 @@ class MainWindow(QMainWindow):
             self.zone_visit_counts = counts if isinstance(counts, dict) else {}
             self._last_visit_key = data.get('last_visit_key')
             self._visited_town = bool(data.get('visited_town', False))
+            last_log_zone = data.get('last_log_zone')
+            self._last_log_zone = last_log_zone if isinstance(last_log_zone, str) else None
         except Exception as e:
             print(f"[WARN] progress flags load failed [{self.poe_version}]: {e}")
             self.progress_flags = set()
             self.zone_visit_counts = {}
             self._last_visit_key = None
             self._visited_town = False
+            self._last_log_zone = None
 
     def set_progress_flag(self, flag_name: str, enabled: bool = True):
         """進行フラグを更新し、必要ならガイド再評価する"""
@@ -4266,12 +4398,8 @@ class MainWindow(QMainWindow):
         # 新キャラ判定: 黄昏の岸辺入場済み + Lv2 = ヒロック討伐 → visitカウントリセット
         if level == 2 and getattr(self, '_twilight_strand_entered', False):
             print("[INFO] 新キャラ確定（黄昏の岸辺 + Lv2）— visitカウント/進行フラグをリセット")
-            self.clear_progress_flags()
+            self._reset_guide_progress_state()
             self._twilight_strand_entered = False
-            self.visit_override = None
-            self._update_visit_btn()
-            self._in_act10 = False
-            self._set_part2(False)  # Act 1-5に戻す
         
         # 現在のゾーン情報があれば再評価
         if self.current_zone:
@@ -4719,21 +4847,24 @@ class MainWindow(QMainWindow):
             filename = get_progress_flags_filename(target_version)
             if filename:
                 path = ConfigManager.get_user_data_path(filename)
+                existing = {}
+                if os.path.exists(path):
+                    try:
+                        with open(path, 'r', encoding='utf-8') as f:
+                            existing = json.load(f)
+                    except (OSError, ValueError, TypeError):
+                        existing = {}
                 with open(path, 'w', encoding='utf-8') as f:
                     json.dump({
                         "active_flags": [],
                         "zone_visit_counts": {},
                         "last_visit_key": None,
                         "visited_town": False,
+                        "last_log_zone": existing.get("last_log_zone"),
                     }, f, ensure_ascii=False, indent=2)
             return
 
-        self.clear_progress_flags()
-        self.visit_override = None
-        self._update_visit_btn()
-        if self.poe_version == POE1:
-            self._in_act10 = False
-            self._set_part2(False)
+        self._reset_guide_progress_state()
         if self.current_zone:
             zone_id = self._get_zone_id(self.current_zone)
             self._update_guide_and_map(
@@ -4742,6 +4873,16 @@ class MainWindow(QMainWindow):
                 self.zone_visit_counts.get(zone_id or self.current_zone, 1)
                 if self.poe_version == POE1 else 1,
             )
+
+    def _reset_guide_progress_state(self):
+        """タイマーと最終ログエリアを保持したまま、ガイド進行だけ初期化する。"""
+        self.clear_progress_flags()
+        self.visit_override = None
+        self._update_visit_btn()
+        self._in_act10 = False
+        self._in_lab = False
+        self._lab_zone_id = None
+        self._set_part2(False)
 
     def _check_for_updates_from_settings(self, parent):
         """設定のアプリ情報タブから、通知済みバージョンも含めて確認する。"""

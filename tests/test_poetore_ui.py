@@ -349,9 +349,11 @@ def test_action_cluster_uses_consistent_spacing_at_every_display_size(
         assert _ACTION_CLUSTER_VERTICAL_GAP == 10
         assert window.action_cluster_layout.spacing() == _ACTION_CLUSTER_VERTICAL_GAP
         assert window.mod_conditions_actions_layout.spacing() == _ACTION_CLUSTER_HORIZONTAL_GAP
+        assert window.mercenary_supports_actions_layout.spacing() == _ACTION_CLUSTER_HORIZONTAL_GAP
         assert window.trade_action_layout.spacing() == _ACTION_CLUSTER_HORIZONTAL_GAP
         assert window.action_cluster_layout.getContentsMargins() == zero_margins
         assert window.mod_conditions_actions_layout.getContentsMargins() == zero_margins
+        assert window.mercenary_supports_actions_layout.getContentsMargins() == zero_margins
         assert window.trade_action_layout.getContentsMargins() == zero_margins
         assert "QLabel#priceStatus { color: #98A39F; padding: 1px 0; }" in window.styleSheet()
     finally:
@@ -1132,6 +1134,44 @@ def test_search_error_replaces_searching_status_and_reenables_button(qapp):
         window.close()
 
 
+def test_complex_query_error_is_localized_for_normal_item(qapp):
+    window = PoetoreWindow()
+    try:
+        window._search_generation = 4
+        window._parsed_item = ParsedItem(
+            "指輪", "レア", "", "アメジストの指輪", "accessory",
+        )
+        window._show_price_error(
+            "PoE Trade APIが検索条件を受理しませんでした: HTTP 400"
+            "（Query is too complex. Please reduce the amount of filters used.）",
+            4,
+        )
+        assert window.price_status.text() == (
+            "検索条件が多すぎます。条件を減らして、もう一度検索してください。"
+        )
+    finally:
+        window.close()
+
+
+def test_complex_query_error_is_localized_for_mercenary_warrant(qapp):
+    window = PoetoreWindow()
+    try:
+        window._search_generation = 5
+        window._parsed_item = ParsedItem(
+            "マップフラグメント", "ノーマル", "傭兵の召喚状", "", "invitation",
+        )
+        window._show_price_error(
+            "PoE Trade APIが検索条件を受理しませんでした: HTTP 400"
+            "（検索条件が複雑過ぎます。使用フィルターの量を減らしてください。）",
+            5,
+        )
+        assert window.price_status.text() == (
+            "検索条件が多すぎます。条件を減らして、もう一度検索してください。"
+        )
+    finally:
+        window.close()
+
+
 def test_enter_in_changed_mod_value_researches(qapp):
     window = PoetoreWindow()
     try:
@@ -1724,6 +1764,8 @@ def test_poetore_uses_wide_poena_theme_and_hides_debug_parse_area(qapp):
         assert window.clear_mod_conditions_button.objectName() == "secondaryActionButton"
         assert window.hidden_mods_toggle.objectName() == "secondaryActionButton"
         assert window.mod_sources_toggle.objectName() == "secondaryActionButton"
+        assert window.mercenary_supports_toggle.objectName() == "secondaryActionButton"
+        assert window.mercenary_supports_toggle.property("mutedText") is True
         assert window.search_range_combo.objectName() == "filterControl"
         assert window.trade_status_combo.objectName() == "filterControl"
         assert window.trade_currency_combo.objectName() == "filterControl"
