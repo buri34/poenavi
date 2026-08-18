@@ -3912,7 +3912,7 @@ class MainWindow(QMainWindow):
                 f"set_visited_town={actual_entry}, last_kept={getattr(self, '_last_visit_key', None)}, "
                 f"counts={self.zone_visit_counts}"
             )
-            if actual_entry and self.poe_version == POE1:
+            if actual_entry:
                 self._save_progress_flags()
             self.zone_label.setText(f"🏠 {display_zone_name}")
             if hasattr(self, "mini_navi_overlay") and self._is_mini_navi_available():
@@ -4010,8 +4010,7 @@ class MainWindow(QMainWindow):
             if visit_key not in self.zone_visit_counts:
                 self.zone_visit_counts[visit_key] = 1
             visit_num = self.zone_visit_counts.get(visit_key, 1)
-            if self.poe_version == POE1:
-                self._save_progress_flags()
+            self._save_progress_flags()
         elif not actual_entry:
             # レベルアップ等の表示再評価では、訪問回数や街通過フラグを変更しない
             visit_num = self.zone_visit_counts.get(visit_key, 1)
@@ -4047,8 +4046,7 @@ class MainWindow(QMainWindow):
                 f"last_after={self._last_visit_key}, visited_town_after={self._visited_town}, "
                 f"visit_num={visit_num}, counts_after={self.zone_visit_counts}"
             )
-            if self.poe_version == POE1:
-                self._save_progress_flags()
+            self._save_progress_flags()
         if actual_entry and self.poe_version == POE1:
             # Act1 海底通路 到達フラグ。海岸へ戻った後のガイド切替に使う。
             if zone_id == "act1_area4":
@@ -4305,32 +4303,31 @@ class MainWindow(QMainWindow):
         path = self._progress_flags_path()
         if not path:
             return
-        data = {"active_flags": sorted(self.progress_flags)}
+        data = {
+            "active_flags": sorted(self.progress_flags),
+            "zone_visit_counts": self.zone_visit_counts,
+            "last_visit_key": getattr(self, "_last_visit_key", None),
+            "visited_town": getattr(self, "_visited_town", False),
+        }
         if self.poe_version == POE1:
-            data.update({
-                "zone_visit_counts": self.zone_visit_counts,
-                "last_visit_key": getattr(self, "_last_visit_key", None),
-                "visited_town": getattr(self, "_visited_town", False),
-                "last_log_zone": getattr(self, "_last_log_zone", None),
-            })
+            data["last_log_zone"] = getattr(self, "_last_log_zone", None)
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     def clear_progress_flags(self):
         self.progress_flags = set()
         self.interlude_ready = set()
-        if self.poe_version == POE1:
-            self.zone_visit_counts = {}
-            self._last_visit_key = None
-            self._visited_town = False
+        self.zone_visit_counts = {}
+        self._last_visit_key = None
+        self._visited_town = False
         self._save_progress_flags()
 
     def _restore_progress_flags(self):
         self.progress_flags = set()
+        self.zone_visit_counts = {}
+        self._last_visit_key = None
+        self._visited_town = False
         if self.poe_version == POE1:
-            self.zone_visit_counts = {}
-            self._last_visit_key = None
-            self._visited_town = False
             self._last_log_zone = None
         path = self._progress_flags_path()
         if not path or not os.path.exists(path):
@@ -4339,20 +4336,20 @@ class MainWindow(QMainWindow):
             with open(path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             self.progress_flags = set(data.get('active_flags', []))
+            counts = data.get('zone_visit_counts', {})
+            self.zone_visit_counts = counts if isinstance(counts, dict) else {}
+            self._last_visit_key = data.get('last_visit_key')
+            self._visited_town = bool(data.get('visited_town', False))
             if self.poe_version == POE1:
-                counts = data.get('zone_visit_counts', {})
-                self.zone_visit_counts = counts if isinstance(counts, dict) else {}
-                self._last_visit_key = data.get('last_visit_key')
-                self._visited_town = bool(data.get('visited_town', False))
                 last_log_zone = data.get('last_log_zone')
                 self._last_log_zone = last_log_zone if isinstance(last_log_zone, str) else None
         except Exception as e:
             print(f"[WARN] progress flags load failed [{self.poe_version}]: {e}")
             self.progress_flags = set()
+            self.zone_visit_counts = {}
+            self._last_visit_key = None
+            self._visited_town = False
             if self.poe_version == POE1:
-                self.zone_visit_counts = {}
-                self._last_visit_key = None
-                self._visited_town = False
                 self._last_log_zone = None
 
     def set_progress_flag(self, flag_name: str, enabled: bool = True):
