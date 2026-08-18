@@ -8,7 +8,8 @@ from PySide6.QtWidgets import QApplication, QLabel, QMessageBox, QPushButton, QT
 
 from src.ui.main_window import MainWindow
 from src.ui.settings_dialog import SettingsDialog
-from src.utils.poe_version_data import POE1
+from src.utils.new_character_history import NewCharacterHistoryResult
+from src.utils.poe_version_data import POE1, POE2
 
 
 class GuideProgressResetTest(unittest.TestCase):
@@ -79,6 +80,7 @@ class GuideProgressResetTest(unittest.TestCase):
             window.zone_visit_counts = {"act7_area2": 2}
             window._last_visit_key = "act7_area2"
             window._visited_town = True
+            window._last_log_zone = "西の森"
             window._progress_flags_path = Mock(return_value=str(progress_path))
             window._twilight_strand_entered = True
             window.player_level = 1
@@ -103,8 +105,125 @@ class GuideProgressResetTest(unittest.TestCase):
                     "zone_visit_counts": {},
                     "last_visit_key": None,
                     "visited_town": False,
+                    "last_log_zone": "西の森",
                 },
             )
+
+    def test_live_candidate_is_cancelled_after_leaving_twilight_strand(self):
+        window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE1
+        window._restoring = False
+        window._twilight_strand_entered = False
+        window._known_zone_names = Mock(return_value={"黄昏の岸辺", "海岸"})
+
+        MainWindow._track_live_new_character_candidate(window, "黄昏の岸辺")
+        self.assertTrue(window._twilight_strand_entered)
+        MainWindow._track_live_new_character_candidate(window, "海岸")
+        self.assertFalse(window._twilight_strand_entered)
+
+    def test_last_log_zone_excludes_towns_and_restoring(self):
+        window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE1
+        window._restoring = False
+        window._last_log_zone = "西の森"
+        window._known_zone_names = Mock(return_value={"西の森", "海岸", "ライオンアイの見張り場"})
+        window._is_town_zone = Mock(side_effect=lambda zone: zone == "ライオンアイの見張り場")
+        window._save_progress_flags = Mock()
+
+        MainWindow._record_last_non_town_zone(window, "ライオンアイの見張り場")
+        self.assertEqual(window._last_log_zone, "西の森")
+        window._restoring = True
+        MainWindow._record_last_non_town_zone(window, "海岸")
+        self.assertEqual(window._last_log_zone, "西の森")
+        window._restoring = False
+        MainWindow._record_last_non_town_zone(window, "海岸")
+        self.assertEqual(window._last_log_zone, "海岸")
+        window._save_progress_flags.assert_called_once_with()
+
+    def test_last_log_zone_is_restored_from_poe1_progress_file(self):
+        with TemporaryDirectory() as temp_dir:
+            progress_path = Path(temp_dir) / "progress_flags_poe1.json"
+            progress_path.write_text(
+                json.dumps({
+                    "active_flags": [],
+                    "zone_visit_counts": {"act2_area8": 1},
+                    "last_visit_key": "act2_area8",
+                    "visited_town": False,
+                    "last_log_zone": "西の森",
+                }),
+                encoding="utf-8",
+            )
+            window = MainWindow.__new__(MainWindow)
+            window.poe_version = POE1
+            window._progress_flags_path = Mock(return_value=str(progress_path))
+
+            MainWindow._restore_progress_flags(window)
+
+            self.assertEqual(window._last_log_zone, "西の森")
+
+    def test_historical_check_is_not_started_in_poe2_mode(self):
+        window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE2
+
+        with patch("src.ui.main_window.threading.Thread") as thread:
+            MainWindow._start_historical_progress_check(window, __file__)
+
+        thread.assert_not_called()
+
+    def test_historical_match_confirms_reset_and_rebases_anchor(self):
+        class FakeMessageBox:
+            Question = 1
+            Yes = 2
+            No = 4
+            shown_text = None
+            shown_info = None
+
+            def __init__(self, parent):
+                pass
+
+            def setIcon(self, value):
+                pass
+
+            def setWindowTitle(self, value):
+                pass
+
+            def setText(self, value):
+                type(self).shown_text = value
+
+            def setInformativeText(self, value):
+                type(self).shown_info = value
+
+            def setStandardButtons(self, value):
+                pass
+
+            def setDefaultButton(self, value):
+                pass
+
+            def exec(self):
+                return self.Yes
+
+        window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE1
+        window._last_log_zone = "西の森"
+        window._has_guide_progress = Mock(return_value=True)
+        window._reset_guide_progress_from_settings = Mock()
+        window._save_progress_flags = Mock()
+        result = NewCharacterHistoryResult(True, True, "黄昏の岸辺")
+
+        with patch("src.ui.main_window.QMessageBox", FakeMessageBox):
+            MainWindow._handle_historical_progress_check_result(
+                window, ("西の森", result)
+            )
+
+        self.assertEqual(
+            FakeMessageBox.shown_text,
+            "保存された進行状況と異なる進行状況を検知しました。\n"
+            "新キャラクターに合わせるため、ガイド進行をリセットしますか？",
+        )
+        self.assertIn("前回最後に確認したエリア：西の森", FakeMessageBox.shown_info)
+        window._reset_guide_progress_from_settings.assert_called_once_with()
+        self.assertEqual(window._last_log_zone, "黄昏の岸辺")
+        window._save_progress_flags.assert_called_once_with()
 
 
 if __name__ == "__main__":
