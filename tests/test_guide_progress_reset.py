@@ -161,14 +161,32 @@ class GuideProgressResetTest(unittest.TestCase):
 
             self.assertEqual(window._last_log_zone, "西の森")
 
-    def test_historical_check_is_not_started_in_poe2_mode(self):
+    def test_historical_check_uses_riverbank_rule_in_poe2_mode(self):
         window = MainWindow.__new__(MainWindow)
         window.poe_version = POE2
+        window._last_log_zone = "オガムの農地"
+        window._known_zone_names = Mock(return_value={"オガムの農地", "川岸"})
+        window.town_zones_by_version = {POE2: []}
+        window.historical_progress_check_finished = Mock()
 
-        with patch("src.ui.main_window.threading.Thread") as thread:
+        with (
+            patch("src.ui.main_window.threading.Thread") as thread,
+            patch("src.ui.main_window.os.path.exists", return_value=True),
+        ):
             MainWindow._start_historical_progress_check(window, __file__)
 
-        thread.assert_not_called()
+        thread.assert_called_once()
+        target = thread.call_args.kwargs["target"]
+        with patch(
+            "src.ui.main_window.inspect_client_log_history",
+            return_value=NewCharacterHistoryResult(True, True, "川岸"),
+        ) as inspect:
+            target()
+        self.assertEqual(inspect.call_args.kwargs["start_zone_names"], {"川岸", "The Riverbank"})
+        self.assertFalse(inspect.call_args.kwargs["require_level_two"])
+        window.historical_progress_check_finished.emit.assert_called_once_with(
+            (POE2, "オガムの農地", NewCharacterHistoryResult(True, True, "川岸"))
+        )
 
     def test_historical_match_confirms_reset_and_rebases_anchor(self):
         class FakeMessageBox:
@@ -212,7 +230,7 @@ class GuideProgressResetTest(unittest.TestCase):
 
         with patch("src.ui.main_window.QMessageBox", FakeMessageBox):
             MainWindow._handle_historical_progress_check_result(
-                window, ("西の森", result)
+                window, (POE1, "西の森", result)
             )
 
         self.assertEqual(
@@ -234,6 +252,7 @@ class GuideProgressResetTest(unittest.TestCase):
             window.zone_visit_counts = {"poe2_act2_area06": 2}
             window._last_visit_key = "poe2_act2_area06"
             window._visited_town = True
+            window._last_log_zone = "オガムの農地"
             window._progress_flags_path = Mock(return_value=str(progress_path))
 
             MainWindow._save_progress_flags(window)
@@ -244,6 +263,7 @@ class GuideProgressResetTest(unittest.TestCase):
                     "zone_visit_counts": {"poe2_act2_area06": 2},
                     "last_visit_key": "poe2_act2_area06",
                     "visited_town": True,
+                    "last_log_zone": "オガムの農地",
                 },
             )
 
@@ -256,6 +276,7 @@ class GuideProgressResetTest(unittest.TestCase):
             self.assertEqual(restored.zone_visit_counts, {"poe2_act2_area06": 2})
             self.assertEqual(restored._last_visit_key, "poe2_act2_area06")
             self.assertTrue(restored._visited_town)
+            self.assertEqual(restored._last_log_zone, "オガムの農地")
 
     def test_legacy_poe2_flags_file_restores_with_empty_visit_state(self):
         with TemporaryDirectory() as temp_dir:
@@ -274,6 +295,7 @@ class GuideProgressResetTest(unittest.TestCase):
             self.assertEqual(window.zone_visit_counts, {})
             self.assertIsNone(window._last_visit_key)
             self.assertFalse(window._visited_town)
+            self.assertIsNone(window._last_log_zone)
 
     def test_clearing_poe2_progress_also_clears_visit_state(self):
         with TemporaryDirectory() as temp_dir:
@@ -285,6 +307,7 @@ class GuideProgressResetTest(unittest.TestCase):
             window.zone_visit_counts = {"poe2_act2_area06": 2}
             window._last_visit_key = "poe2_act2_area06"
             window._visited_town = True
+            window._last_log_zone = "オガムの農地"
             window._progress_flags_path = Mock(return_value=str(progress_path))
 
             MainWindow.clear_progress_flags(window)
@@ -300,8 +323,43 @@ class GuideProgressResetTest(unittest.TestCase):
                     "zone_visit_counts": {},
                     "last_visit_key": None,
                     "visited_town": False,
+                    "last_log_zone": "オガムの農地",
                 },
             )
+
+    def test_poe2_historical_match_shows_riverbank_evidence(self):
+        class FakeMessageBox:
+            Question = 1
+            Yes = 2
+            No = 4
+            shown_info = None
+
+            def __init__(self, parent): pass
+            def setIcon(self, value): pass
+            def setWindowTitle(self, value): pass
+            def setText(self, value): pass
+            def setInformativeText(self, value): type(self).shown_info = value
+            def setStandardButtons(self, value): pass
+            def setDefaultButton(self, value): pass
+            def exec(self): return self.No
+
+        window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE2
+        window._last_log_zone = "オガムの農地"
+        window._has_guide_progress = Mock(return_value=True)
+        window._reset_guide_progress_from_settings = Mock()
+        window._save_progress_flags = Mock()
+        result = NewCharacterHistoryResult(True, True, "川岸")
+
+        with patch("src.ui.main_window.QMessageBox", FakeMessageBox):
+            MainWindow._handle_historical_progress_check_result(
+                window, (POE2, "オガムの農地", result)
+            )
+
+        self.assertIn("その後のログ：「川岸」への入場を検知", FakeMessageBox.shown_info)
+        window._reset_guide_progress_from_settings.assert_not_called()
+        self.assertEqual(window._last_log_zone, "川岸")
+        window._save_progress_flags.assert_called_once_with()
 
 
 if __name__ == "__main__":

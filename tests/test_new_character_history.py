@@ -10,6 +10,9 @@ KNOWN_ZONES = {
     "西の森",
     "The Western Forest",
     "ライオンアイの見張り場",
+    "川岸",
+    "The Riverbank",
+    "オガムの農地",
 }
 TOWNS = {"ライオンアイの見張り場"}
 
@@ -19,10 +22,22 @@ def _inspect(
     lines: list[str],
     anchor="西の森",
     max_bytes=128 * 1024 * 1024,
+    start_zone_names=None,
+    require_level_two=True,
 ):
     log_path = tmp_path / "Client.txt"
     log_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return inspect_client_log_history(log_path, anchor, KNOWN_ZONES, TOWNS, max_bytes)
+    kwargs = {"require_level_two": require_level_two}
+    if start_zone_names is not None:
+        kwargs["start_zone_names"] = start_zone_names
+    return inspect_client_log_history(
+        log_path,
+        anchor,
+        KNOWN_ZONES,
+        TOWNS,
+        max_bytes,
+        **kwargs,
+    )
 
 
 def test_detects_twilight_then_level_two_after_last_anchor(tmp_path):
@@ -107,3 +122,46 @@ def test_no_anchor_establishes_baseline_without_historical_detection(tmp_path):
     assert not result.anchor_found
     assert not result.new_character_start_found
     assert result.latest_non_town_zone == "黄昏の岸辺"
+
+
+def test_poe2_detects_riverbank_without_level_two(tmp_path):
+    result = _inspect(
+        tmp_path,
+        [
+            "あなたはオガムの農地に入場しました。",
+            "あなたは川岸に入場しました。",
+        ],
+        anchor="オガムの農地",
+        start_zone_names={"川岸", "The Riverbank"},
+        require_level_two=False,
+    )
+    assert result.anchor_found
+    assert result.new_character_start_found
+    assert result.latest_non_town_zone == "川岸"
+
+
+def test_poe2_does_not_treat_plain_riverbank_chat_as_zone_entry(tmp_path):
+    result = _inspect(
+        tmp_path,
+        [
+            "あなたはオガムの農地に入場しました。",
+            "# 誰か: 川岸",
+        ],
+        anchor="オガムの農地",
+        start_zone_names={"川岸", "The Riverbank"},
+        require_level_two=False,
+    )
+    assert result.anchor_found
+    assert not result.new_character_start_found
+
+
+def test_poe2_does_not_treat_riverbank_anchor_itself_as_new_start(tmp_path):
+    result = _inspect(
+        tmp_path,
+        ["あなたは川岸に入場しました。"],
+        anchor="川岸",
+        start_zone_names={"川岸", "The Riverbank"},
+        require_level_two=False,
+    )
+    assert result.anchor_found
+    assert not result.new_character_start_found

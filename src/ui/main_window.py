@@ -21,6 +21,8 @@ from src.utils.segment_recorder import SegmentRecorder
 from src.utils.log_watcher import LogWatcher
 from src.utils.new_character_history import (
     NewCharacterHistoryResult,
+    RIVERBANK_NAMES,
+    TWILIGHT_STRAND_NAMES,
     inspect_client_log_history,
 )
 from src.utils.window_focus import (
@@ -3728,12 +3730,19 @@ class MainWindow(QMainWindow):
         return names
 
     def _start_historical_progress_check(self, log_path: str):
-        """PoE1起動時だけ、Client.txtの末尾128MiBを別スレッドで検査する。"""
-        if self.poe_version != POE1 or not log_path or not os.path.exists(log_path):
+        """Client.txtの末尾128MiBをモード別の開始条件で検査する。"""
+        if self.poe_version not in (POE1, POE2) or not log_path or not os.path.exists(log_path):
             return
+        inspected_version = self.poe_version
         anchor_zone = getattr(self, "_last_log_zone", None)
         known_zones = self._known_zone_names()
-        town_zones = set(self.town_zones_by_version.get(POE1, []))
+        town_zones = set(self.town_zones_by_version.get(inspected_version, []))
+        if inspected_version == POE2:
+            start_zones = RIVERBANK_NAMES
+            require_level_two = False
+        else:
+            start_zones = TWILIGHT_STRAND_NAMES
+            require_level_two = True
 
         def inspect_history():
             result = inspect_client_log_history(
@@ -3741,8 +3750,12 @@ class MainWindow(QMainWindow):
                 anchor_zone,
                 known_zones,
                 town_zones,
+                start_zone_names=start_zones,
+                require_level_two=require_level_two,
             )
-            self.historical_progress_check_finished.emit((anchor_zone, result))
+            self.historical_progress_check_finished.emit(
+                (inspected_version, anchor_zone, result)
+            )
 
         threading.Thread(
             target=inspect_history,
@@ -3769,9 +3782,9 @@ class MainWindow(QMainWindow):
             self._twilight_strand_entered = False
 
     def _record_last_non_town_zone(self, zone_name: str):
-        """PoE1ライブ中に確認した既知の非街エリアだけを保存する。"""
+        """ライブ中に確認した既知の非街エリアだけをモード別に保存する。"""
         if (
-            self.poe_version != POE1
+            self.poe_version not in (POE1, POE2)
             or self._restoring
             or self._is_town_zone(zone_name)
             or zone_name not in self._known_zone_names()
@@ -3781,8 +3794,11 @@ class MainWindow(QMainWindow):
         self._save_progress_flags()
 
     def _handle_historical_progress_check_result(self, payload):
-        anchor_zone, result = payload
-        if not isinstance(result, NewCharacterHistoryResult) or self.poe_version != POE1:
+        inspected_version, anchor_zone, result = payload
+        if (
+            not isinstance(result, NewCharacterHistoryResult)
+            or self.poe_version != inspected_version
+        ):
             return
 
         should_reset = False
@@ -3799,9 +3815,13 @@ class MainWindow(QMainWindow):
                 "保存された進行状況と異なる進行状況を検知しました。\n"
                 "新キャラクターに合わせるため、ガイド進行をリセットしますか？"
             )
+            evidence = (
+                "その後のログ：「川岸」への入場を検知"
+                if inspected_version == POE2
+                else "その後のログ：「黄昏の岸辺 → Lv2」を検知"
+            )
             message_box.setInformativeText(
-                f"前回最後に確認したエリア：{anchor_zone}\n"
-                "その後のログ：「黄昏の岸辺 → Lv2」を検知"
+                f"前回最後に確認したエリア：{anchor_zone}\n{evidence}"
             )
             message_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
             message_box.setDefaultButton(QMessageBox.Yes)
@@ -4309,8 +4329,7 @@ class MainWindow(QMainWindow):
             "last_visit_key": getattr(self, "_last_visit_key", None),
             "visited_town": getattr(self, "_visited_town", False),
         }
-        if self.poe_version == POE1:
-            data["last_log_zone"] = getattr(self, "_last_log_zone", None)
+        data["last_log_zone"] = getattr(self, "_last_log_zone", None)
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
@@ -4327,8 +4346,7 @@ class MainWindow(QMainWindow):
         self.zone_visit_counts = {}
         self._last_visit_key = None
         self._visited_town = False
-        if self.poe_version == POE1:
-            self._last_log_zone = None
+        self._last_log_zone = None
         path = self._progress_flags_path()
         if not path or not os.path.exists(path):
             return
@@ -4340,17 +4358,15 @@ class MainWindow(QMainWindow):
             self.zone_visit_counts = counts if isinstance(counts, dict) else {}
             self._last_visit_key = data.get('last_visit_key')
             self._visited_town = bool(data.get('visited_town', False))
-            if self.poe_version == POE1:
-                last_log_zone = data.get('last_log_zone')
-                self._last_log_zone = last_log_zone if isinstance(last_log_zone, str) else None
+            last_log_zone = data.get('last_log_zone')
+            self._last_log_zone = last_log_zone if isinstance(last_log_zone, str) else None
         except Exception as e:
             print(f"[WARN] progress flags load failed [{self.poe_version}]: {e}")
             self.progress_flags = set()
             self.zone_visit_counts = {}
             self._last_visit_key = None
             self._visited_town = False
-            if self.poe_version == POE1:
-                self._last_log_zone = None
+            self._last_log_zone = None
 
     def set_progress_flag(self, flag_name: str, enabled: bool = True):
         """進行フラグを更新し、必要ならガイド再評価する"""

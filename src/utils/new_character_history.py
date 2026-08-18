@@ -1,4 +1,4 @@
-"""Client.txtの過去ログからPoE1の新キャラクター開始を補助判定する。"""
+"""Client.txtの過去ログから新キャラクター開始を補助判定する。"""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from dataclasses import dataclass
 
 MAX_HISTORY_BYTES = 128 * 1024 * 1024
 TWILIGHT_STRAND_NAMES = {"黄昏の岸辺", "The Twilight Strand"}
+RIVERBANK_NAMES = {"川岸", "The Riverbank"}
 _INVALID_ZONE_NAMES = {"(null)", "(unknown)"}
 
 _ZONE_PATTERNS = (
@@ -56,6 +57,8 @@ def inspect_client_log_history(
     known_zones: Collection[str],
     town_zones: Collection[str],
     max_bytes: int = MAX_HISTORY_BYTES,
+    start_zone_names: Collection[str] = TWILIGHT_STRAND_NAMES,
+    require_level_two: bool = True,
 ) -> NewCharacterHistoryResult:
     """末尾から最大max_bytesを読み、最後のanchor以降を時系列で検査する。
 
@@ -63,6 +66,7 @@ def inspect_client_log_history(
     """
     known = set(known_zones)
     towns = set(town_zones)
+    start_zones = set(start_zone_names)
     anchor_found = False
     candidate_active = False
     new_character_start_found = False
@@ -92,15 +96,24 @@ def inspect_client_log_history(
             if anchor_zone and zone_name == anchor_zone:
                 # 同名エリアが複数回あれば最後のものを基準にし直す。
                 anchor_found = True
-                candidate_active = zone_name in TWILIGHT_STRAND_NAMES
+                # anchor行自体は「保存後」のイベントではない。PoE1だけは
+                # 直後のLv2を拾えるよう、開始エリア滞在候補を維持する。
+                candidate_active = require_level_two and zone_name in start_zones
                 new_character_start_found = False
                 continue
 
             if anchor_found:
-                candidate_active = zone_name in TWILIGHT_STRAND_NAMES
+                candidate_active = zone_name in start_zones
+                if candidate_active and not require_level_two:
+                    new_character_start_found = True
             continue
 
-        if anchor_found and candidate_active and _extract_level(line) == 2:
+        if (
+            require_level_two
+            and anchor_found
+            and candidate_active
+            and _extract_level(line) == 2
+        ):
             new_character_start_found = True
 
     return NewCharacterHistoryResult(
