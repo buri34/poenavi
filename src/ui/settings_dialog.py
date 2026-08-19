@@ -2219,6 +2219,43 @@ class SettingsDialog(QDialog):
         map_layout.addWidget(self.auto_position_map_check)
 
         general_layout.addWidget(map_group)
+
+        self.voicevox_group = QGroupBox("VOICEVOX読み上げ")
+        self.voicevox_group.setStyleSheet(group_style)
+        voicevox_layout = QVBoxLayout(self.voicevox_group)
+        voicevox_config = self.current_config.get("voicevox", {})
+        if not isinstance(voicevox_config, dict):
+            voicevox_config = {}
+        self.voicevox_enabled_cb = QCheckBox("エリアのガイドをVOICEVOXで読み上げる")
+        Styles.apply_checkbox_style(self.voicevox_enabled_cb)
+        self.voicevox_enabled_cb.setChecked(voicevox_config.get("enabled", False))
+        voicevox_layout.addWidget(self.voicevox_enabled_cb)
+        for label_text, attr_name, minimum, maximum, default in (
+            ("読み上げ速度:", "voicevox_speed_spin", 0.5, 2.0, 1.0),
+            ("読み上げ音量:", "voicevox_volume_spin", 0.0, 2.0, 1.0),
+        ):
+            row = QHBoxLayout()
+            label = QLabel(label_text)
+            label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+            row.addWidget(label)
+            spin = QDoubleSpinBox()
+            spin.setRange(minimum, maximum)
+            spin.setSingleStep(0.1)
+            spin.setDecimals(1)
+            spin.setSuffix(" 倍")
+            key = "speed_scale" if "speed" in attr_name else "volume_scale"
+            spin.setValue(voicevox_config.get(key, default))
+            spin.setStyleSheet(_spinbox_style(width=75))
+            setattr(self, attr_name, spin)
+            row.addWidget(spin)
+            row.addStretch()
+            voicevox_layout.addLayout(row)
+        note = QLabel("VOICEVOXを起動してから使用してください。接続できない場合、読み上げだけをスキップします。")
+        note.setWordWrap(True)
+        note.setStyleSheet("color: #aaaaaa; font-size: 11px;")
+        voicevox_layout.addWidget(note)
+        self.voicevox_group.setVisible(self.poe_version == POE2)
+        general_layout.addWidget(self.voicevox_group)
         
         # ━━━━━ 6. ウィンドウ設定 ━━━━━
         window_group = QGroupBox("ウィンドウ設定（本体）")
@@ -3118,6 +3155,7 @@ class SettingsDialog(QDialog):
         self.zone_data = self.zone_data_by_version.get(poe_version, self._default_zone_data_for_version(poe_version))
         self.guide_data = load_guide_data(self.poe_version)
         self.town_zones_edit.setPlainText("\n".join(self.town_zones_by_version.get(self.poe_version, get_town_zones(self.poe_version))))
+        self.voicevox_group.setVisible(self.poe_version == POE2)
         self._rebuild_zone_tab()
         self._refresh_version_specific_tabs()
 
@@ -3201,6 +3239,15 @@ class SettingsDialog(QDialog):
             selected_app_mode if startup_mode == "ask" else startup_mode
         )
         poetore_config = dict(self.current_config.get("poetore", {}))
+        voicevox_config = self.current_config.get("voicevox", {})
+        voicevox_config = dict(voicevox_config) if isinstance(voicevox_config, dict) else {}
+        if self.poe_version == POE2:
+            voicevox_config.update({
+                "enabled": self.voicevox_enabled_cb.isChecked(),
+                "speaker_id": int(voicevox_config.get("speaker_id", 3)),
+                "speed_scale": self.voicevox_speed_spin.value(),
+                "volume_scale": self.voicevox_volume_spin.value(),
+            })
 
         return {
             "startup": startup_config,
@@ -3222,6 +3269,7 @@ class SettingsDialog(QDialog):
             },
             "custom_commands": self.custom_commands_widget.commands(),
             "poetore": poetore_config,
+            "voicevox": voicevox_config,
             "logout_enabled": self.logout_enabled_cb.isChecked(),
             "stash_tab_scroll_enabled": self.stash_tab_scroll_enabled_cb.isChecked(),
             "gem_shop_search_include_reward_purchases": self.gem_shop_search_include_reward_purchases_cb.isChecked(),

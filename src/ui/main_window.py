@@ -64,6 +64,7 @@ from src.utils.gem_shop_search import (
     get_gem_shop_search_feedback,
 )
 from src.utils.poelab_links import POELAB_HOME
+from src.utils.voicevox_tts import VoicevoxTtsService, guide_to_speech_text
 from src.utils.area_notes import get_area_note, set_area_note
 from src.ui.gem_tracker_widget import GemTrackerWidget, PoBImportDialog, PoBSkillSetSelectionDialog
 from src.ui.update_dialogs import UpdateAvailableDialog, UpdateProgressDialog
@@ -520,6 +521,8 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(0, QApplication.instance().quit)
             return
         self.poe_version = self.config.get("poe_version", POE1)
+        self.voicevox_tts = None
+        self._sync_voicevox_service()
         
         self.drag_position = None
         self.resize_edge = None  # None or combination of 'left','right','top','bottom'
@@ -4209,7 +4212,42 @@ class MainWindow(QMainWindow):
             status = "🟡 ペナなし"
         return {"player_level": player_level, "enemy_level": int(enemy_level), "status": status}
 
-    def _update_guide_and_map(self, zone_name: str, zone_id: str | None, visit_num: int, zone_changed: bool = False, exp_level: int | None = None):
+    def _voicevox_config(self) -> dict:
+        config = self.config.get("voicevox", {})
+        return config if isinstance(config, dict) else {}
+
+    def _sync_voicevox_service(self):
+        """PoE2かつ有効時だけVOICEVOXサービスを維持する。"""
+        config = self._voicevox_config()
+        should_run = self.poe_version == POE2 and config.get("enabled", False)
+        service = getattr(self, "voicevox_tts", None)
+        if not should_run:
+            if service is not None:
+                service.stop()
+            self.voicevox_tts = None
+            return
+        if service is None:
+            self.voicevox_tts = VoicevoxTtsService(
+                speaker_id=config.get("speaker_id", 3),
+                speed_scale=config.get("speed_scale", 1.0),
+                volume_scale=config.get("volume_scale", 1.0),
+            )
+            return
+        service.speaker_id = int(config.get("speaker_id", 3))
+        service.speed_scale = service.normalize_speed_scale(config.get("speed_scale", 1.0))
+        service.volume_scale = service.normalize_volume_scale(config.get("volume_scale", 1.0))
+
+    def _speak_poe2_guide(self, guide: dict | None):
+        if self.poe_version != POE2 or not self._voicevox_config().get("enabled", False):
+            return
+        service = getattr(self, "voicevox_tts", None)
+        if service is None:
+            return
+        text = guide_to_speech_text(guide)
+        if text:
+            service.speak_latest(text)
+
+    def _update_guide_and_map(self, zone_name: str, zone_id: str | None, visit_num: int, zone_changed: bool = False, exp_level: int | None = None, voice_text_changed: bool = False):
         """攻略ガイドとマップ画像を更新"""
         self._update_area_note(zone_name, zone_id)
         self._update_poelab_link_visibility(zone_id)
@@ -4236,6 +4274,8 @@ class MainWindow(QMainWindow):
             )
             self.guide_text_label.setText(html)
             self.guide_text_label.setStyleSheet(f"color: #dddddd; font-size: {self.guide_font_size}px; background: transparent;")
+            if (zone_changed and not self._restoring) or voice_text_changed:
+                self._speak_poe2_guide(guide)
             if hasattr(self, "mini_navi_overlay"):
                 if self._is_mini_navi_available():
                     overlay_config = self.config.get("mini_guide_overlay", {})
@@ -4374,6 +4414,13 @@ class MainWindow(QMainWindow):
 
     def set_progress_flag(self, flag_name: str, enabled: bool = True):
         """進行フラグを更新し、必要ならガイド再評価する"""
+        zone_id = self._get_zone_id(self.current_zone) if self.current_zone else None
+        visit_num = self.zone_visit_counts.get(zone_id or self.current_zone, 1)
+        previous_guide = get_zone_guide(
+            self.guide_data, zone_id, visit=visit_num,
+            config=self.config, active_flags=self.progress_flags,
+        ) if zone_id else None
+        previous_voice_text = guide_to_speech_text(previous_guide)
         changed = False
         if enabled:
             if flag_name not in self.progress_flags:
@@ -4386,9 +4433,17 @@ class MainWindow(QMainWindow):
         if changed:
             self._save_progress_flags()
         if self.current_zone:
-            zone_id = self._get_zone_id(self.current_zone)
-            visit_num = self.zone_visit_counts.get(zone_id or self.current_zone, 1)
-            self._update_guide_and_map(self.current_zone, zone_id, visit_num)
+            next_guide = get_zone_guide(
+                self.guide_data, zone_id, visit=visit_num,
+                config=self.config, active_flags=self.progress_flags,
+            ) if zone_id else None
+            next_voice_text = guide_to_speech_text(next_guide)
+            self._update_guide_and_map(
+                self.current_zone, zone_id, visit_num,
+                voice_text_changed=(
+                    changed and next_voice_text != previous_voice_text
+                ),
+            )
 
     def on_level_up(self, char_name: str, level: int):
         """レベルアップ検知"""
@@ -4753,6 +4808,7 @@ class MainWindow(QMainWindow):
             # ゾーンデータ・ガイドデータ更新
             prev_version = self.poe_version
             self.poe_version = self.config.get("poe_version", POE1)
+            self._sync_voicevox_service()
             self.lap_labels = get_lap_labels(self.poe_version)
             zone_master_data = load_zone_master_data()
             self.zone_data_by_version = zone_master_data["zone_data_by_version"]
@@ -5027,6 +5083,8 @@ class MainWindow(QMainWindow):
             names.add("mini_navi")
         if getattr(self, "_cheat_sheet_overlay", None) is not None:
             names.add("cheat_sheets")
+        if getattr(self, "voicevox_tts", None) is not None:
+            names.add("voicevox_tts")
         return frozenset(names)
 
     def closeEvent(self, event):
@@ -5087,4 +5145,7 @@ class MainWindow(QMainWindow):
         log_watcher = getattr(self, "log_watcher", None)
         if log_watcher is not None:
             log_watcher.stop()
+        voicevox_tts = getattr(self, "voicevox_tts", None)
+        if voicevox_tts is not None:
+            voicevox_tts.stop()
         super().closeEvent(event)

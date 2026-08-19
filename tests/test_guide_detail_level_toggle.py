@@ -129,6 +129,89 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
             zone_id="poe2_act1_area04",
             has_area_note=False,
         )
+
+    def test_poe2_actual_entry_reads_voice_text_once(self):
+        window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE2
+        window.config = {"guide_detail_level": "beginner", "voicevox": {"enabled": True}}
+        window.guide_data = {
+            "poe2_act4_area16": {
+                "objective": "表示本文",
+                "mini_navi": {"text": "表示用", "voice_text": "入場時の案内"},
+            }
+        }
+        window.progress_flags = set()
+        window.visit_override = None
+        window.zone_data = {}
+        window.part2_mode = False
+        window.guide_font_size = 18
+        window.player_level = 1
+        window._restoring = False
+        window.guide_text_label = Mock()
+        window.map_thumbnail = Mock()
+        window._update_area_note = Mock()
+        window._update_poelab_link_visibility = Mock()
+        window._speak_poe2_guide = Mock()
+
+        window._update_guide_and_map("部族の中心", "poe2_act4_area16", 1, zone_changed=True)
+        window._speak_poe2_guide.assert_called_once()
+        window._speak_poe2_guide.reset_mock()
+        window._update_guide_and_map("部族の中心", "poe2_act4_area16", 1)
+        window._speak_poe2_guide.assert_not_called()
+
+    def test_progress_flag_reads_only_when_selected_voice_text_changes(self):
+        window = MainWindow.__new__(MainWindow)
+        window.current_zone = "部族の中心"
+        window.guide_data = {
+            "poe2_act4_area16": {
+                "default": {"mini_navi": {"text": "表示", "voice_text": "ボスを倒します"}},
+                "flags": {
+                    "act4_tavakai_dead": {
+                        "mini_navi": {"text": "表示後", "voice_text": "街へ戻ります"}
+                    }
+                },
+            }
+        }
+        window.progress_flags = set()
+        window.zone_visit_counts = {"poe2_act4_area16": 1}
+        window.config = {}
+        window._get_zone_id = Mock(return_value="poe2_act4_area16")
+        window._save_progress_flags = Mock()
+        window._update_guide_and_map = Mock()
+
+        window.set_progress_flag("act4_tavakai_dead")
+        assert "act4_tavakai_dead" in window.progress_flags
+        assert window._update_guide_and_map.call_args.kwargs["voice_text_changed"] is True
+        window._update_guide_and_map.reset_mock()
+        window.set_progress_flag("act4_tavakai_dead")
+        assert window._update_guide_and_map.call_args.kwargs["voice_text_changed"] is False
+
+    @patch("src.ui.main_window.VoicevoxTtsService")
+    def test_voicevox_service_exists_only_in_enabled_poe2_mode(self, service_class):
+        window = MainWindow.__new__(MainWindow)
+        window.voicevox_tts = None
+        window.poe_version = POE1
+        window.config = {"voicevox": {"enabled": True}}
+        window._sync_voicevox_service()
+        service_class.assert_not_called()
+
+        window.poe_version = POE2
+        window._sync_voicevox_service()
+        service_class.assert_called_once()
+        assert window.voicevox_tts is service_class.return_value
+
+        window.poe_version = POE1
+        window._sync_voicevox_service()
+        service_class.return_value.stop.assert_called_once()
+        assert window.voicevox_tts is None
+
+    def test_poe1_never_sends_voicevox_request(self):
+        window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE1
+        window.config = {"voicevox": {"enabled": True}}
+        window.voicevox_tts = Mock()
+        window._speak_poe2_guide({"mini_navi": {"voice_text": "読まない"}})
+        window.voicevox_tts.speak_latest.assert_not_called()
     def test_mini_navi_toggle_text_only_reflects_enabled_state(self):
         window = MainWindow.__new__(MainWindow)
 

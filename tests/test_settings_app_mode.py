@@ -2,6 +2,7 @@ import pytest
 from PySide6.QtWidgets import QApplication, QGroupBox, QLabel
 
 from src.ui.settings_dialog import SettingsDialog
+from src.utils.poe_version_data import POE1, POE2
 
 
 @pytest.fixture(scope="module")
@@ -131,4 +132,29 @@ def test_general_settings_does_not_expose_poetore_result_position_reset(monkeypa
         "inventory": {"x_ratio": 0.8, "y_ratio": 0.4},
     }
     assert not hasattr(dialog, "reset_poetore_result_positions_button")
+    dialog.close()
+
+
+def test_voicevox_is_off_by_default_and_visible_only_for_poe2(monkeypatch, qapp):
+    monkeypatch.setattr("src.ui.settings_dialog.save_zone_master_data", lambda *_args: None)
+    dialog = SettingsDialog(current_config={"poe_version": POE2})
+    assert dialog.voicevox_group.isVisibleTo(dialog)
+    assert not dialog.voicevox_enabled_cb.isChecked()
+    assert dialog.get_settings()["voicevox"] == {
+        "enabled": False,
+        "speaker_id": 3,
+        "speed_scale": 1.0,
+        "volume_scale": 1.0,
+    }
+    dialog._on_poe_version_changed(POE1, True)
+    assert not dialog.voicevox_group.isVisible()
+    dialog.close()
+
+
+def test_poe1_settings_preserve_voicevox_without_exposing_it(monkeypatch, qapp):
+    monkeypatch.setattr("src.ui.settings_dialog.save_zone_master_data", lambda *_args: None)
+    existing = {"enabled": True, "speaker_id": 8, "speed_scale": 1.3, "volume_scale": 0.7}
+    dialog = SettingsDialog(current_config={"poe_version": POE1, "voicevox": existing})
+    assert not dialog.voicevox_group.isVisibleTo(dialog)
+    assert dialog.get_settings()["voicevox"] == existing
     dialog.close()

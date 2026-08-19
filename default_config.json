@@ -45,6 +45,12 @@
     "display_monitor": 0,
     "auto_open_map": false,
     "auto_position_map": false,
+    "voicevox": {
+        "enabled": false,
+        "speaker_id": 3,
+        "speed_scale": 1.0,
+        "volume_scale": 1.0
+    },
     "confirm_reset": true,
     "poe1_route_act3": "",
     "poe1_route_act8": "",
