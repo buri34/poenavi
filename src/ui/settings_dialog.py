@@ -2230,9 +2230,9 @@ class SettingsDialog(QDialog):
         Styles.apply_checkbox_style(self.voicevox_enabled_cb)
         self.voicevox_enabled_cb.setChecked(voicevox_config.get("enabled", False))
         voicevox_layout.addWidget(self.voicevox_enabled_cb)
-        for label_text, attr_name, minimum, maximum, default in (
-            ("読み上げ速度:", "voicevox_speed_spin", 0.5, 2.0, 1.2),
-            ("読み上げ音量:", "voicevox_volume_spin", 0.0, 2.0, 1.0),
+        for label_text, attr_name, minimum, maximum, default, step, decimals in (
+            ("読み上げ速度:", "voicevox_speed_spin", 0.5, 2.0, 1.2, 0.05, 2),
+            ("読み上げ音量:", "voicevox_volume_spin", 0.0, 2.0, 1.0, 0.1, 1),
         ):
             row = QHBoxLayout()
             label = QLabel(label_text)
@@ -2240,8 +2240,8 @@ class SettingsDialog(QDialog):
             row.addWidget(label)
             spin = QDoubleSpinBox()
             spin.setRange(minimum, maximum)
-            spin.setSingleStep(0.1)
-            spin.setDecimals(1)
+            spin.setSingleStep(step)
+            spin.setDecimals(decimals)
             spin.setSuffix(" 倍")
             key = "speed_scale" if "speed" in attr_name else "volume_scale"
             spin.setValue(voicevox_config.get(key, default))

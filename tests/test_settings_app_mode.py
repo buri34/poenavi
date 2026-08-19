@@ -140,6 +140,11 @@ def test_voicevox_is_off_by_default_and_visible_only_for_poe2(monkeypatch, qapp)
     dialog = SettingsDialog(current_config={"poe_version": POE2})
     assert dialog.voicevox_group.isVisibleTo(dialog)
     assert not dialog.voicevox_enabled_cb.isChecked()
+    assert dialog.voicevox_speed_spin.value() == 1.2
+    assert dialog.voicevox_speed_spin.singleStep() == 0.05
+    assert dialog.voicevox_speed_spin.decimals() == 2
+    assert dialog.voicevox_volume_spin.singleStep() == 0.1
+    assert dialog.voicevox_volume_spin.decimals() == 1
     assert dialog.get_settings()["voicevox"] == {
         "enabled": False,
         "speaker_id": 3,
