@@ -551,7 +551,7 @@
   "poe2_act3_area06": {
     "default": {
       "objective": "・ボス「キメラ、ザイクルシアン」を倒す\n・「カオスの寺院」に入って、WPを確保する\n・「ジクアニのマシナリウム」へ行く",
-      "layout": "<span style='color:#ffffff'>・カオスの寺院は、エリアの上辺に生成される。</span>\n<span style='color:#ffffff'>・</span><span style='color:#dddd44'>ボスの場所は、左向きに開いている地形が特徴</span><span style='color:#ffffff'>。そのため左の壁沿いを走り続ければ、いつか辿り着くはず。</span>\n\n<span style='color:#ffffff'>・推奨の進め方は、</span>\n<span style='color:#ffffff'>  －外周の壁に沿って進み、２つの重要ポイントを探す。</span>\n<span style='color:#ffffff'>  －先にボスを見つけたら、ボスを倒してマシナリウムに入ってウェイポイントを確保し、戻ってきてカオスの寺院を探す</span>\n\n<span style='color:#ffffff'>・キャンプにある「失われた神殿の探検記録」を触るとカオスの寺院の場所がわかる</span>",
+      "layout": "<span style='color:#ffffff'>・カオスの寺院は、エリアの上辺に生成される。</span>\n<span style='color:#ffffff'>・キャンプにある「失われた神殿の探検記録」を触るとカオスの寺院の場所がわかる</span>\n\n<span style='color:#ffffff'>・推奨の進め方は、</span>\n<span style='color:#ffffff'>  －外周の壁に沿って進み、２つの重要ポイントを探す。</span>\n<span style='color:#ffffff'>  －先にボスを見つけたら、ボスを倒してマシナリウムに入ってウェイポイントを確保し、戻ってきてカオスの寺院を探す</span>",
       "tips": "<span style='color:#ffffff'>・エリア内の外周沿いのどこかにある</span><span style='color:#dddd44'>キャンプにおいて、NPCの近くにある白チェストからは、確定で4mod付きのレアの兜がドロップ</span><span style='color:#ffffff'>する。</span>",
       "summary": "<span style=\" color:#ffffff;\">・ボス「キメラ、ザイクルシアン」を倒す\n・「カオスの寺院」に入って、WPを確保する\n・「ジクアニのマシナリウム」へ行く</span>\n\n<span style='color:#ffffff'>カオスの寺院は、エリアの上辺に生成。</span>\n<span style='color:#ffffff'>ボスの場所は、左向きに開いている地形が特徴。そのため左の壁沿いを走り続ければ、いつか辿り着く</span>\n\n<span style='color:#ffffff'>エリア内の外周沿いのどこかにあるキャンプで白チェストから</span><span style='color:#dddd44'>4mod付きのレアの兜</span>\n\n<span style='color:#ffffff'>キャンプにある「失われた神殿の探検記録」を触るとカオスの寺院の場所がわかる</span>",
       "mini_navi": {
