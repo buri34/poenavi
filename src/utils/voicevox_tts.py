@@ -46,7 +46,7 @@ class VoicevoxTtsService:
     def __init__(
         self,
         speaker_id: int = 3,
-        speed_scale: float = 1.0,
+        speed_scale: float = 1.2,
         volume_scale: float = 1.0,
         base_url: str = VOICEVOX_BASE_URL,
         query_timeout_seconds: float = 10.0,
@@ -197,7 +197,7 @@ class VoicevoxTtsService:
         try:
             return max(0.5, min(2.0, float(value)))
         except (TypeError, ValueError):
-            return 1.0
+            return 1.2
 
     @staticmethod
     def normalize_volume_scale(value) -> float:

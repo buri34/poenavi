@@ -143,7 +143,7 @@ def test_voicevox_is_off_by_default_and_visible_only_for_poe2(monkeypatch, qapp)
     assert dialog.get_settings()["voicevox"] == {
         "enabled": False,
         "speaker_id": 3,
-        "speed_scale": 1.0,
+        "speed_scale": 1.2,
         "volume_scale": 1.0,
     }
     dialog._on_poe_version_changed(POE1, True)

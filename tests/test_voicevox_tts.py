@@ -96,6 +96,6 @@ def test_new_request_discards_old_audio_before_playback():
 
 def test_scale_normalization():
     assert VoicevoxTtsService.normalize_speed_scale(9) == 2.0
-    assert VoicevoxTtsService.normalize_speed_scale("invalid") == 1.0
+    assert VoicevoxTtsService.normalize_speed_scale("invalid") == 1.2
     assert VoicevoxTtsService.normalize_volume_scale(-1) == 0.0
     assert VoicevoxTtsService.normalize_volume_scale(9) == 2.0

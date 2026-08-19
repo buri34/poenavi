@@ -2231,7 +2231,7 @@ class SettingsDialog(QDialog):
         self.voicevox_enabled_cb.setChecked(voicevox_config.get("enabled", False))
         voicevox_layout.addWidget(self.voicevox_enabled_cb)
         for label_text, attr_name, minimum, maximum, default in (
-            ("読み上げ速度:", "voicevox_speed_spin", 0.5, 2.0, 1.0),
+            ("読み上げ速度:", "voicevox_speed_spin", 0.5, 2.0, 1.2),
             ("読み上げ音量:", "voicevox_volume_spin", 0.0, 2.0, 1.0),
         ):
             row = QHBoxLayout()
