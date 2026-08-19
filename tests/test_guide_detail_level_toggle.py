@@ -197,7 +197,12 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
 
         window.poe_version = POE2
         window._sync_voicevox_service()
-        service_class.assert_called_once()
+        service_class.assert_called_once_with(
+            speaker_id=3,
+            speed_scale=1.2,
+            pause_length_scale=1.0,
+            volume_scale=1.0,
+        )
         assert window.voicevox_tts is service_class.return_value
 
         window.poe_version = POE1
