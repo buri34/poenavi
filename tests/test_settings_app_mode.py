@@ -143,10 +143,10 @@ def test_voicevox_is_off_by_default_and_visible_only_for_poe2(monkeypatch, qapp)
     assert dialog.voicevox_speed_spin.value() == 1.2
     assert dialog.voicevox_speed_spin.singleStep() == 0.05
     assert dialog.voicevox_speed_spin.decimals() == 2
-    assert dialog.voicevox_pause_length_spin.value() == 1.0
+    assert dialog.voicevox_pause_length_spin.value() == 1.5
     assert dialog.voicevox_pause_length_spin.singleStep() == 0.05
     assert dialog.voicevox_pause_length_spin.decimals() == 2
-    assert dialog.voicevox_post_phoneme_spin.value() == 0.1
+    assert dialog.voicevox_post_phoneme_spin.value() == 0.3
     assert dialog.voicevox_post_phoneme_spin.singleStep() == 0.01
     assert dialog.voicevox_post_phoneme_spin.decimals() == 2
     labels = {label.text() for label in dialog.voicevox_group.findChildren(QLabel)}
@@ -159,8 +159,8 @@ def test_voicevox_is_off_by_default_and_visible_only_for_poe2(monkeypatch, qapp)
         "enabled": False,
         "speaker_id": 3,
         "speed_scale": 1.2,
-        "pause_length_scale": 1.0,
-        "post_phoneme_length": 0.1,
+        "pause_length_scale": 1.5,
+        "post_phoneme_length": 0.3,
         "volume_scale": 1.0,
     }
     dialog._on_poe_version_changed(POE1, True)

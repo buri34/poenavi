@@ -47,8 +47,8 @@ class VoicevoxTtsService:
         self,
         speaker_id: int = 3,
         speed_scale: float = 1.2,
-        pause_length_scale: float = 1.0,
-        post_phoneme_length: float = 0.1,
+        pause_length_scale: float = 1.5,
+        post_phoneme_length: float = 0.3,
         volume_scale: float = 1.0,
         base_url: str = VOICEVOX_BASE_URL,
         query_timeout_seconds: float = 10.0,
@@ -219,14 +219,14 @@ class VoicevoxTtsService:
         try:
             return max(0.0, min(2.0, float(value)))
         except (TypeError, ValueError):
-            return 1.0
+            return 1.5
 
     @staticmethod
     def normalize_post_phoneme_length(value) -> float:
         try:
             return max(0.0, min(1.5, float(value)))
         except (TypeError, ValueError):
-            return 0.1
+            return 0.3
 
     @staticmethod
     def _play_wav(path: str):

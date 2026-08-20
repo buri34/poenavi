@@ -105,9 +105,9 @@ def test_scale_normalization():
     assert VoicevoxTtsService.normalize_speed_scale("invalid") == 1.2
     assert VoicevoxTtsService.normalize_pause_length_scale(-1) == 0.0
     assert VoicevoxTtsService.normalize_pause_length_scale(9) == 2.0
-    assert VoicevoxTtsService.normalize_pause_length_scale("invalid") == 1.0
+    assert VoicevoxTtsService.normalize_pause_length_scale("invalid") == 1.5
     assert VoicevoxTtsService.normalize_post_phoneme_length(-1) == 0.0
     assert VoicevoxTtsService.normalize_post_phoneme_length(9) == 1.5
-    assert VoicevoxTtsService.normalize_post_phoneme_length("invalid") == 0.1
+    assert VoicevoxTtsService.normalize_post_phoneme_length("invalid") == 0.3
     assert VoicevoxTtsService.normalize_volume_scale(-1) == 0.0
     assert VoicevoxTtsService.normalize_volume_scale(9) == 2.0
