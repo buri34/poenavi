@@ -4231,6 +4231,7 @@ class MainWindow(QMainWindow):
                 speaker_id=config.get("speaker_id", 3),
                 speed_scale=config.get("speed_scale", 1.2),
                 pause_length_scale=config.get("pause_length_scale", 1.0),
+                post_phoneme_length=config.get("post_phoneme_length", 0.1),
                 volume_scale=config.get("volume_scale", 1.0),
             )
             return
@@ -4238,6 +4239,9 @@ class MainWindow(QMainWindow):
         service.speed_scale = service.normalize_speed_scale(config.get("speed_scale", 1.2))
         service.pause_length_scale = service.normalize_pause_length_scale(
             config.get("pause_length_scale", 1.0)
+        )
+        service.post_phoneme_length = service.normalize_post_phoneme_length(
+            config.get("post_phoneme_length", 0.1)
         )
         service.volume_scale = service.normalize_volume_scale(config.get("volume_scale", 1.0))
 

@@ -201,6 +201,7 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
             speaker_id=3,
             speed_scale=1.2,
             pause_length_scale=1.0,
+            post_phoneme_length=0.1,
             volume_scale=1.0,
         )
         assert window.voicevox_tts is service_class.return_value

@@ -2230,10 +2230,10 @@ class SettingsDialog(QDialog):
         Styles.apply_checkbox_style(self.voicevox_enabled_cb)
         self.voicevox_enabled_cb.setChecked(voicevox_config.get("enabled", False))
         voicevox_layout.addWidget(self.voicevox_enabled_cb)
-        for label_text, attr_name, key, minimum, maximum, default, step, decimals in (
-            ("読み上げ速度:", "voicevox_speed_spin", "speed_scale", 0.5, 2.0, 1.2, 0.05, 2),
+        for label_text, attr_name, key, minimum, maximum, default, step, decimals, suffix in (
+            ("読み上げ速度:", "voicevox_speed_spin", "speed_scale", 0.5, 2.0, 1.2, 0.05, 2, " 倍"),
             (
-                "読点等の無音時間の長さ:",
+                "読点の無音時間の長さ:",
                 "voicevox_pause_length_spin",
                 "pause_length_scale",
                 0.0,
@@ -2241,8 +2241,20 @@ class SettingsDialog(QDialog):
                 1.0,
                 0.05,
                 2,
+                " 倍",
             ),
-            ("読み上げ音量:", "voicevox_volume_spin", "volume_scale", 0.0, 2.0, 1.0, 0.1, 1),
+            (
+                "文末の無音時間の長さ:",
+                "voicevox_post_phoneme_spin",
+                "post_phoneme_length",
+                0.0,
+                1.5,
+                0.1,
+                0.01,
+                2,
+                " 秒",
+            ),
+            ("読み上げ音量:", "voicevox_volume_spin", "volume_scale", 0.0, 2.0, 1.0, 0.1, 1, " 倍"),
         ):
             row = QHBoxLayout()
             label = QLabel(label_text)
@@ -2252,7 +2264,7 @@ class SettingsDialog(QDialog):
             spin.setRange(minimum, maximum)
             spin.setSingleStep(step)
             spin.setDecimals(decimals)
-            spin.setSuffix(" 倍")
+            spin.setSuffix(suffix)
             spin.setValue(voicevox_config.get(key, default))
             spin.setStyleSheet(_spinbox_style(width=75))
             setattr(self, attr_name, spin)
@@ -3256,6 +3268,7 @@ class SettingsDialog(QDialog):
                 "speaker_id": int(voicevox_config.get("speaker_id", 3)),
                 "speed_scale": self.voicevox_speed_spin.value(),
                 "pause_length_scale": self.voicevox_pause_length_spin.value(),
+                "post_phoneme_length": self.voicevox_post_phoneme_spin.value(),
                 "volume_scale": self.voicevox_volume_spin.value(),
             })
 

@@ -146,9 +146,13 @@ def test_voicevox_is_off_by_default_and_visible_only_for_poe2(monkeypatch, qapp)
     assert dialog.voicevox_pause_length_spin.value() == 1.0
     assert dialog.voicevox_pause_length_spin.singleStep() == 0.05
     assert dialog.voicevox_pause_length_spin.decimals() == 2
-    assert "読点等の無音時間の長さ:" in {
-        label.text() for label in dialog.voicevox_group.findChildren(QLabel)
-    }
+    assert dialog.voicevox_post_phoneme_spin.value() == 0.1
+    assert dialog.voicevox_post_phoneme_spin.singleStep() == 0.01
+    assert dialog.voicevox_post_phoneme_spin.decimals() == 2
+    labels = {label.text() for label in dialog.voicevox_group.findChildren(QLabel)}
+    assert "読点の無音時間の長さ:" in labels
+    assert "読点等の無音時間の長さ:" not in labels
+    assert "文末の無音時間の長さ:" in labels
     assert dialog.voicevox_volume_spin.singleStep() == 0.1
     assert dialog.voicevox_volume_spin.decimals() == 1
     assert dialog.get_settings()["voicevox"] == {
@@ -156,6 +160,7 @@ def test_voicevox_is_off_by_default_and_visible_only_for_poe2(monkeypatch, qapp)
         "speaker_id": 3,
         "speed_scale": 1.2,
         "pause_length_scale": 1.0,
+        "post_phoneme_length": 0.1,
         "volume_scale": 1.0,
     }
     dialog._on_poe_version_changed(POE1, True)

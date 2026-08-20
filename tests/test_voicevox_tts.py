@@ -47,7 +47,8 @@ def test_service_posts_query_and_synthesis_with_speed_and_volume():
         return FakeResponse(b"RIFF-test-wave")
 
     service = VoicevoxTtsService(
-        speed_scale=1.6, pause_length_scale=0.75, volume_scale=1.4, opener=opener,
+        speed_scale=1.6, pause_length_scale=0.75, post_phoneme_length=0.35,
+        volume_scale=1.4, opener=opener,
         player=lambda path: played.put(open(path, "rb").read()), stop_player=Mock(),
     )
     try:
@@ -57,7 +58,12 @@ def test_service_posts_query_and_synthesis_with_speed_and_volume():
         service.stop()
 
     payload = json.loads(requests[1][0].data.decode("utf-8"))
-    assert payload == {"speedScale": 1.6, "pauseLengthScale": 0.75, "volumeScale": 1.4}
+    assert payload == {
+        "speedScale": 1.6,
+        "pauseLengthScale": 0.75,
+        "postPhonemeLength": 0.35,
+        "volumeScale": 1.4,
+    }
     assert [item[1] for item in requests] == [10.0, 30.0]
 
 
@@ -100,5 +106,8 @@ def test_scale_normalization():
     assert VoicevoxTtsService.normalize_pause_length_scale(-1) == 0.0
     assert VoicevoxTtsService.normalize_pause_length_scale(9) == 2.0
     assert VoicevoxTtsService.normalize_pause_length_scale("invalid") == 1.0
+    assert VoicevoxTtsService.normalize_post_phoneme_length(-1) == 0.0
+    assert VoicevoxTtsService.normalize_post_phoneme_length(9) == 1.5
+    assert VoicevoxTtsService.normalize_post_phoneme_length("invalid") == 0.1
     assert VoicevoxTtsService.normalize_volume_scale(-1) == 0.0
     assert VoicevoxTtsService.normalize_volume_scale(9) == 2.0

@@ -48,6 +48,7 @@ class VoicevoxTtsService:
         speaker_id: int = 3,
         speed_scale: float = 1.2,
         pause_length_scale: float = 1.0,
+        post_phoneme_length: float = 0.1,
         volume_scale: float = 1.0,
         base_url: str = VOICEVOX_BASE_URL,
         query_timeout_seconds: float = 10.0,
@@ -59,6 +60,7 @@ class VoicevoxTtsService:
         self.speaker_id = int(speaker_id)
         self.speed_scale = self.normalize_speed_scale(speed_scale)
         self.pause_length_scale = self.normalize_pause_length_scale(pause_length_scale)
+        self.post_phoneme_length = self.normalize_post_phoneme_length(post_phoneme_length)
         self.volume_scale = self.normalize_volume_scale(volume_scale)
         self.base_url = base_url.rstrip("/")
         self.query_timeout_seconds = float(query_timeout_seconds)
@@ -181,6 +183,9 @@ class VoicevoxTtsService:
             query = json.loads(response.read().decode("utf-8"))
         query["speedScale"] = self.normalize_speed_scale(self.speed_scale)
         query["pauseLengthScale"] = self.normalize_pause_length_scale(self.pause_length_scale)
+        query["postPhonemeLength"] = self.normalize_post_phoneme_length(
+            self.post_phoneme_length
+        )
         query["volumeScale"] = self.normalize_volume_scale(self.volume_scale)
 
         synthesis_params = urllib.parse.urlencode({"speaker": self.speaker_id})
@@ -215,6 +220,13 @@ class VoicevoxTtsService:
             return max(0.0, min(2.0, float(value)))
         except (TypeError, ValueError):
             return 1.0
+
+    @staticmethod
+    def normalize_post_phoneme_length(value) -> float:
+        try:
+            return max(0.0, min(1.5, float(value)))
+        except (TypeError, ValueError):
+            return 0.1
 
     @staticmethod
     def _play_wav(path: str):
