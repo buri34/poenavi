@@ -20,7 +20,7 @@
       "summary": "<span style='color:#ffffff'>道なりに進むだけ。</span>\n\n<span style='color:#ffffff'>ボスを倒すときは、クリアフェルの野営地が画面外になっている位置で倒すと、ゲートが開くシーンがスキップされて、ちょっとだけ早く街に入れる。</span>",
       "mini_navi": {
         "text": "<span style='color:#ffffff'>▸道なりに進んで、初期ジェムを入手し、[boss]ボスを倒して[town]</span><span style='color:#dddd44'>街</span><span style='color:#ffffff'>へ入る</span>",
-        "voice_text": "いよいよゲームスタートです。\nここでは、道なりに進みながら装備や初期ジェムを入手したあと、\nボスを倒したら終わりです。"
+        "voice_text": "ゲームスタートです。\nここでは、道なりに進みながら装備や初期ジェムを入手したあと、\nボスを倒したら終わりです。"
       }
     },
     "flags": {}
