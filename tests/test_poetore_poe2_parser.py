@@ -538,6 +538,45 @@ def test_audited_crossbow_accuracy_keeps_local_scope_when_both_ids_have_results(
 
 
 @pytest.mark.parametrize(
+    "text",
+    (
+        """アイテムクラス: 手袋
+レアリティ: ノーマル
+規格外の 磨かれた弓籠手
+--------
+回避力: 170
+--------
+装備条件：レベル 80, 101 器用さ
+--------
+ソケット: S S
+--------
+アイテムレベル: 82""",
+        """Item Class: Gloves
+Rarity: Normal
+Exceptional Polished Bracers
+--------
+Evasion Rating: 170
+--------
+Requires: Level 80, 101 Dex
+--------
+Sockets: S S
+--------
+Item Level: 82""",
+    ),
+)
+def test_reported_exceptional_normal_base_is_normalized_for_trade2(text):
+    item = parse_item_text(text)
+    assert item.rarity == "normal"
+    assert item.category == "gloves"
+    assert item.base_type == "Polished Bracers"
+    assert item.item_level == 82
+
+    query = build_search_query(item, stat_filters=poe2_trade_filters(item))["query"]
+    assert query["type"] == "Polished Bracers"
+    assert query["filters"]["type_filters"]["filters"]["rarity"]["option"] == "normal"
+
+
+@pytest.mark.parametrize(
     ("base_type", "needle", "expected_id"),
     (
         ("Swathed Cap", "Accuracy", "explicit.stat_803737631"),

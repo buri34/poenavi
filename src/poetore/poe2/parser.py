@@ -369,6 +369,23 @@ def _base_identity_candidates(
     )
     if exact:
         return exact
+    # PoE2 labels exceptional normal items as part of the displayed name even
+    # though Trade2 keeps the underlying base unchanged. Match EE2's
+    # parseExceptional behavior before falling back to magic-name fragments.
+    exceptional_prefixes = ("Exceptional ", "規格外の ")
+    normalized_base = next((
+        raw_base[len(prefix):].strip()
+        for prefix in exceptional_prefixes
+        if raw_base.startswith(prefix)
+    ), None)
+    if normalized_base:
+        exceptional = tuple(
+            identity
+            for identity in resolve_identity_candidates(normalized_base, "ITEM")
+            if _identity_matches_category(identity, category)
+        )
+        if exceptional:
+            return exceptional
     if rarity != "magic":
         return ()
     fragments = tuple(
