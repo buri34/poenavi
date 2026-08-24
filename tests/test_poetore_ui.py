@@ -188,7 +188,7 @@ from src.poetore.trade import (
 from src.poetore.parser import parse_item_text
 from src.poetore.poe2.parser import parse_item_text as parse_poe2_item_text
 from src.poetore.poe2.audit import _EQUIPMENT_FIXTURES, _RARITIES, _item as poe2_audit_item
-from src.poetore.poe2.trade import poe2_trade_filters
+from src.poetore.poe2.trade import build_search_query as build_poe2_search_query, poe2_trade_filters
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.poe_ninja import PoeNinjaPrice
 from src.ui.settings_dialog import SettingsDialog
@@ -5753,6 +5753,39 @@ def test_poe2_rare_equipment_uses_shared_header_presets_and_item_level_chip(qapp
         window.trade_preset_combo.setCurrentIndex(1)
         assert window.trade_preset_combo.currentData() == PRESET_BASE
         assert window._selected_item_level() == 86
+    finally:
+        window.close()
+
+
+def test_poe2_runemastered_chip_defaults_on_and_switches_trade_type(qapp):
+    fixture = Path(__file__).parent / "fixtures" / "poe2" / "real_copy_bilingual.csv"
+    with fixture.open(encoding="utf-8-sig", newline="") as handle:
+        row = next(row for row in csv.DictReader(handle) if row["fixture_id"] == "FX022")
+    item = parse_poe2_item_text(row["英語設定の詳細コピー全文"])
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window._parsed_item = item
+        window._update_item_header(item)
+
+        assert not window.runemastered_chip.isHidden()
+        assert window.runemastered_chip.isChecked()
+        selected = window._poe2_search_item(item)
+        assert build_poe2_search_query(selected)["query"]["type"] == (
+            "Runemastered Strider Vest"
+        )
+        assert build_poe2_search_query(selected)["query"]["name"] == "Yriel's Fostering"
+
+        window.runemastered_chip.setChecked(False)
+        selected = window._poe2_search_item(item)
+        query = build_poe2_search_query(selected)["query"]
+        assert query["type"] == "Strider Vest"
+        assert query["name"] == "Yriel's Fostering"
+        assert window.price_status.text() == "通常版のベースを検索します。"
+
+        # 検索直前の再解析でも、同じアイテムならユーザー選択を維持する。
+        window._update_item_header(item)
+        assert not window.runemastered_chip.isChecked()
+        assert window._poe2_search_item(item).base_type == "Strider Vest"
     finally:
         window.close()
 

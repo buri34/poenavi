@@ -1054,6 +1054,15 @@ class PoetoreWindow(QWidget):
         )
         self.chart_area_chip.toggled.connect(self._chart_area_changed)
         self.chart_area_chip.hide()
+        self.runemastered_chip = QPushButton("ルーンマスター")
+        self.runemastered_chip.setObjectName("secondaryActionButton")
+        self.runemastered_chip.setCheckable(True)
+        self.runemastered_chip.setChecked(True)
+        self.runemastered_chip.setToolTip(
+            "ONならルーンマスター版、OFFなら通常版のベースを検索します。"
+        )
+        self.runemastered_chip.toggled.connect(self._runemastered_changed)
+        self.runemastered_chip.hide()
         self.corrupted_combo = _CycleButton((
             ("コラプトのみ", "only", True),
             ("非コラプトのみ", False, False),
@@ -1068,6 +1077,7 @@ class PoetoreWindow(QWidget):
         item_scope_layout.addWidget(self.base_scope_toggle, stretch=1)
         item_scope_layout.addStretch()
         item_scope_layout.addWidget(self.chart_area_chip)
+        item_scope_layout.addWidget(self.runemastered_chip)
         item_scope_layout.addWidget(self.corrupted_combo)
         item_header_layout.addLayout(item_scope_layout)
         content_layout.addWidget(self.item_header)
@@ -1704,6 +1714,7 @@ class PoetoreWindow(QWidget):
         self._currency_item_key = None
         self._state_item_key = None
         self._base_scope_item_key = None
+        self._runemastered_item_key = None
         self._unique_selector_item_key = None
         self._last_trade_url = ""
         self._last_poe_ninja_url = ""
@@ -2551,6 +2562,13 @@ class PoetoreWindow(QWidget):
         self.chart_area_chip.setChecked(True)
         self.chart_area_chip.setVisible(chart_relaxed)
         self.chart_area_chip.blockSignals(False)
+        is_runemastered = self.poe_version == POE2 and "runemastered" in item.flags
+        self.runemastered_chip.blockSignals(True)
+        if item.raw_text != self._runemastered_item_key:
+            self._runemastered_item_key = item.raw_text
+            self.runemastered_chip.setChecked(True)
+        self.runemastered_chip.setVisible(is_runemastered)
+        self.runemastered_chip.blockSignals(False)
         self.weapon_property_label.setText(
             "武器性能・検索Mod" if is_weapon_category(item.category) else "検索条件一覧"
         )
@@ -2707,6 +2725,33 @@ class PoetoreWindow(QWidget):
             if checked else "すべての海図を検索します。"
         )
         self._mark_search_dirty()
+
+    def _runemastered_changed(self, checked: bool):
+        item = getattr(self, "_parsed_item", None)
+        if item is None or "runemastered" not in item.flags:
+            return
+        self.price_list.clear()
+        self.trade_url_button.setEnabled(False)
+        self.price_status.setText(
+            "ルーンマスター版を検索します。"
+            if checked else "通常版のベースを検索します。"
+        )
+        self._mark_search_dirty()
+
+    def _poe2_search_item(self, item):
+        """Runemasteredチップの選択をTrade2のtypeへ反映する。"""
+        if (
+            self.poe_version == POE2
+            and "runemastered" in item.flags
+            and not self.runemastered_chip.isHidden()
+            and not self.runemastered_chip.isChecked()
+        ):
+            base_type = re.sub(
+                r"^Runemastered\s+", "", item.base_type, flags=re.IGNORECASE,
+            ).strip()
+            if base_type and base_type != item.base_type:
+                return replace(item, base_type=base_type)
+        return item
 
     def _searches_exact_base_type(self, item) -> bool:
         if item.category == "chart":
@@ -4218,8 +4263,9 @@ class PoetoreWindow(QWidget):
                         return
                 if self.poe_version == POE2:
                     from .poe2.trade import search_prices as search_poe2_prices
+                    search_item = self._poe2_search_item(item)
                     result = search_poe2_prices(
-                        item, league,
+                        search_item, league,
                         status=trade_status,
                         stat_filters=effective_filters,
                         quality_min=quality_min,
