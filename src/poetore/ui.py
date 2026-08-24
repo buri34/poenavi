@@ -3038,6 +3038,10 @@ class PoetoreWindow(QWidget):
                     replace(row, enabled=states.pop(0)) if states else row
                 )
             self._populate_stat_filters(tuple(adjusted_filters))
+            # Area Lv等の上部チップも共通許容幅から再生成する。以前はMod一覧
+            # だけが更新され、表示と実際の送信値に古い値が残っていた。
+            self._special_chip_item_key = None
+            self._configure_special_filter_chips(item, resolved_filters)
             self._mark_search_dirty()
 
     def _configure_virtual_augments(self, item):
@@ -4826,13 +4830,16 @@ class PoetoreWindow(QWidget):
             )
         return tuple(selected)
 
-    def _configure_special_filter_chips(self, item):
+    def _configure_special_filter_chips(self, item, resolved_rows=None):
         preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
         key = (item.raw_text, preset)
         if key == getattr(self, "_special_chip_item_key", None):
             return
         self._special_chip_item_key = key
-        rows = self._resolved_trade_filters(item, preset)
+        rows = (
+            tuple(resolved_rows) if resolved_rows is not None
+            else self._resolved_trade_filters(item, preset)
+        )
         by_id = {row.stat_id: row for row in rows}
         self._special_chip_rows = by_id
 

@@ -599,7 +599,9 @@ def test_phase6_relic_barya_and_ultimatum_send_dedicated_filters():
     ]
 
     barya_rows = poe2_search_filters(items["djinn_barya"])
-    assert next(row for row in barya_rows if row.stat_id == "property.area_level").enabled
+    barya_area = next(row for row in barya_rows if row.stat_id == "property.area_level")
+    assert barya_area.enabled
+    assert barya_area.exact
     barya = build_search_query(items["djinn_barya"], stat_filters=barya_rows)
     assert barya["query"]["filters"]["misc_filters"]["filters"]["area_level"] == {
         "min": 80.0,

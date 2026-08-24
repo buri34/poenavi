@@ -543,7 +543,15 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                 enabled = True
             rows.append(TradeStatFilter(
                 stat_id, label, value, kind, enabled=enabled, read_value=value,
-                exact=stat_id == "property.unidentified_tier",
+                # ジンのバリャ／刻まれたアルティメイタムはエリアレベル自体が
+                # 報酬段階を決めるため、共通のMod許容幅で80→72のように緩めない。
+                exact=(
+                    stat_id == "property.unidentified_tier"
+                    or (
+                        stat_id == "property.area_level"
+                        and item.category in {"barya", "ultimatum"}
+                    )
+                ),
             ))
     sockets = _augment_socket_count(item)
     if sockets is not None:

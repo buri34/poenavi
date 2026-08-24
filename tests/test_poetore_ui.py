@@ -3879,6 +3879,43 @@ Contract: Underbelly
         window.close()
 
 
+def test_poe2_djinn_barya_keeps_exact_area_level_across_mod_range_changes(qapp):
+    window = PoetoreWindow(app_config={
+        "poe_version": "poe2",
+        "poetore": {"search_stat_range": 10},
+    })
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 試練のコイン
+レアリティ: カレンシー
+ジンのバリャ
+--------
+エリアレベル: 80
+試練数: 4
+--------
+アイテムレベル: 80
+--------
+「セケマの試練へ連れて行ってくれ。
+仕えよう。」
+--------
+このアイテムをセケマの試練のレリックの祭壇に持っていく。""")
+        window.parse_current_text()
+
+        assert window._parsed_item.category == "barya"
+        assert window._parsed_item.item_level == 80
+        assert window.area_level_chip.values() == (80.0, None)
+        assert window.area_level_chip.isActive()
+
+        window.search_range_combo.setCurrentIndex(
+            window.search_range_combo.findData(0)
+        )
+        assert window.area_level_chip.values() == (80.0, None)
+        selected = window._selected_special_chip_filters()
+        area = next(row for row in selected if row.stat_id == "property.area_level")
+        assert (area.min_value, area.max_value) == (80.0, None)
+    finally:
+        window.close()
+
+
 def test_japanese_contract_required_deception_is_visible_in_job_chip(qapp):
     window = PoetoreWindow()
     try:
