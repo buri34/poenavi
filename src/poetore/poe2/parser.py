@@ -791,6 +791,10 @@ def parse_item_text(text: str) -> ParsedItem:
             continue
         standalone_augment = bool(re.search(r"\(rune\)\s*$", line, re.IGNORECASE))
         line_kind = "augment" if standalone_augment else current_kind
+        # RelicのPrefix/Suffix見出しは通常装備と同じ形だが、Trade2では
+        # 全Modがsanctum名前空間に属する。
+        if category == "relic" and line_kind == "explicit":
+            line_kind = "sanctum"
         if standalone_augment and current_kind != "augment":
             augment_count += 1
         scoped_affix = (

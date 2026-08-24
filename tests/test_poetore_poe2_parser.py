@@ -370,6 +370,26 @@ def test_phase6_relic_trial_and_timelost_properties_are_preserved():
     assert fixtures["normal_tablet"].properties["残り使用回数"] == "10"
 
 
+def test_magic_relic_prefix_and_suffix_use_sanctum_stat_namespace():
+    item = parse_item_text("""アイテムクラス: レリック
+レアリティ: マジック
+補強された 浸漬の 壷のレリック
+--------
+アイテムレベル: 62
+--------
+{ プレフィックスモッド「補強された」 (ティア: 4) }
+アーマー、回避力およびエナジーシールドが21(20-29)%増加する
+{ サフィックスモッド 「浸漬の」 (ティア: 3) }
+モンスターは7(7-8)%の確率で二倍の神聖な水をドロップする
+--------
+セケマの試練開始時にこのアイテムをレリックの祭壇に置く""")
+
+    assert item.category == "relic"
+    assert len(item.modifiers) == 2
+    assert all(mod.kind == "sanctum" for mod in item.modifiers)
+    assert all(mod.stat_id.startswith("sanctum.") for mod in item.modifiers)
+
+
 def test_poe2_roll_ranges_are_averaged_and_only_safe_ranges_get_better_direction():
     spear = parse_item_text(
         (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(

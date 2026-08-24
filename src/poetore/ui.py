@@ -1256,19 +1256,29 @@ class PoetoreWindow(QWidget):
         self.unique_variant_combo.hide()
         variant_options.addWidget(self.unique_variant_label)
         variant_options.addWidget(self.unique_variant_combo)
-        self.virtual_augment_label = QLabel("空きソケット仮Rune／Soul Core:")
+        self.virtual_augment_label = QLabel("Rune／Soul Core構成:")
+        self.virtual_augment_count_combo = QComboBox()
+        self.virtual_augment_count_combo.setObjectName("filterControl")
+        self.virtual_augment_count_combo.setToolTip(
+            "空きソケットへの追加、または装着済みを含む全ソケットの置換を選びます。"
+        )
         self.virtual_augment_combo = QComboBox()
         self.virtual_augment_combo.setMinimumWidth(220)
         self.virtual_augment_combo.setToolTip(
-            "空きオーグメントソケットへRune／Soul Coreを仮挿入した性能で検索します。\n"
+            "空きソケットへの追加、または全ソケットを置換した性能で検索します。\n"
             "実際のアイテムやゲーム内ソケットは変更しません。"
         )
         self.virtual_augment_label.hide()
+        self.virtual_augment_count_combo.hide()
         self.virtual_augment_combo.hide()
+        self.virtual_augment_count_combo.currentIndexChanged.connect(
+            self._virtual_augment_count_changed
+        )
         self.virtual_augment_combo.currentIndexChanged.connect(
             self._virtual_augment_changed
         )
         variant_options.addWidget(self.virtual_augment_label)
+        variant_options.addWidget(self.virtual_augment_count_combo)
         variant_options.addWidget(self.virtual_augment_combo)
         variant_options.addStretch()
         unique_options.addLayout(variant_options)
@@ -3004,8 +3014,12 @@ class PoetoreWindow(QWidget):
                 self.virtual_augment_combo.currentData()
                 if not self.virtual_augment_combo.isHidden() else None
             )
+            virtual_count = (
+                self.virtual_augment_count_combo.currentData()
+                if not self.virtual_augment_count_combo.isHidden() else None
+            )
             return apply_search_range(
-                poe2_trade_filters(item, virtual_ref, preset),
+                poe2_trade_filters(item, virtual_ref, preset, virtual_count),
                 self._selected_search_range(),
                 item,
             )
@@ -3047,18 +3061,27 @@ class PoetoreWindow(QWidget):
     def _configure_virtual_augments(self, item):
         if self.poe_version != POE2:
             self.virtual_augment_label.hide()
+            self.virtual_augment_count_combo.hide()
             self.virtual_augment_combo.hide()
             return
         from .poe2.trade import (
-            available_virtual_augments, empty_augment_socket_count,
+            available_virtual_augments, augment_socket_edit_counts,
             virtual_augment_choice_label,
         )
         choices = available_virtual_augments(item)
+        counts = augment_socket_edit_counts(item)
+        self.virtual_augment_count_combo.blockSignals(True)
+        self.virtual_augment_count_combo.clear()
+        for count, label in counts:
+            self.virtual_augment_count_combo.addItem(label, count)
+        self.virtual_augment_count_combo.setCurrentIndex(0)
+        self.virtual_augment_count_combo.blockSignals(False)
+        selected_count = self.virtual_augment_count_combo.currentData()
         self.virtual_augment_combo.blockSignals(True)
         self.virtual_augment_combo.clear()
         self.virtual_augment_combo.addItem("仮挿入しない", None)
         for choice in choices:
-            label = virtual_augment_choice_label(item, choice)
+            label = virtual_augment_choice_label(item, choice, selected_count)
             self.virtual_augment_combo.addItem(
                 label, choice["ref_name"],
             )
@@ -3071,11 +3094,29 @@ class PoetoreWindow(QWidget):
         self.virtual_augment_combo.blockSignals(False)
         visible = bool(choices)
         self.virtual_augment_label.setVisible(visible)
+        self.virtual_augment_count_combo.setVisible(visible)
         self.virtual_augment_combo.setVisible(visible)
-        if visible:
-            self.virtual_augment_label.setText(
-                f"空きソケット{empty_augment_socket_count(item)}個 仮Rune／Soul Core:"
+
+    def _virtual_augment_count_changed(self, _index):
+        item = getattr(self, "_parsed_item", None)
+        if item is None:
+            return
+        from .poe2.trade import available_virtual_augments, virtual_augment_choice_label
+        selected_ref = self.virtual_augment_combo.currentData()
+        selected_count = self.virtual_augment_count_combo.currentData()
+        self.virtual_augment_combo.blockSignals(True)
+        self.virtual_augment_combo.clear()
+        self.virtual_augment_combo.addItem("仮挿入しない", None)
+        for choice in available_virtual_augments(item):
+            label = virtual_augment_choice_label(item, choice, selected_count)
+            self.virtual_augment_combo.addItem(label, choice["ref_name"])
+            self.virtual_augment_combo.setItemData(
+                self.virtual_augment_combo.count() - 1, label, Qt.ToolTipRole,
             )
+        index = self.virtual_augment_combo.findData(selected_ref)
+        self.virtual_augment_combo.setCurrentIndex(max(index, 0))
+        self.virtual_augment_combo.blockSignals(False)
+        self._virtual_augment_changed(0)
 
     def _virtual_augment_changed(self, _index):
         item = getattr(self, "_parsed_item", None)
@@ -4079,7 +4120,7 @@ class PoetoreWindow(QWidget):
             self.mod_warning.hide()
         if _is_poe2_exchange_price_item(item, self.poe_version):
             self.search_scope_notice.setText(
-                "ℹ Currency Exchange対象品です。通常Trade出品検索は行わず、"
+                "ℹ 「カレンシー交換」の対象品です。通常トレード出品検索は行わず、"
                 "poe.ninja参考価格を表示します。"
             )
             self.search_scope_notice.show()
@@ -4153,7 +4194,7 @@ class PoetoreWindow(QWidget):
             self.trade_url_button.setEnabled(False)
             self.price_list.clear()
             self.price_status.setText(
-                "Currency Exchange対象品のため、poe.ninja参考価格のみ表示します。"
+                "「カレンシー交換」の対象品のため、poe.ninja参考価格のみ表示します。"
             )
             self._current_performance_trace = None
             return
@@ -4442,7 +4483,7 @@ class PoetoreWindow(QWidget):
             trade_category = TRADE_CATEGORY_BY_CATEGORY.get(item.category, "")
             supports_corruption_filter = trade_category.startswith((
                 "weapon.", "armour.", "accessory.", "map.", "gem", "flask.",
-            ))
+            )) or trade_category == "jewel"
         self.corrupted_combo.setVisible(supports_corruption_filter)
         self.corrupted_combo.setEnabled(supports_corruption_filter)
         rarity = item.rarity.casefold()

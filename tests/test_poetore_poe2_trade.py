@@ -10,12 +10,13 @@ import pytest
 from src.poetore.poe2 import build_search_query, fetch_listings, parse_item_text, search_items
 from src.poetore.poe2.trade import (
     _stat_groups_from_filters, available_pc_leagues, build_web_trade_url,
-    available_virtual_augments, default_pc_league, empty_augment_socket_count,
+    augment_socket_edit_counts, available_virtual_augments, default_pc_league,
+    empty_augment_socket_count,
     poe2_search_filters, poe2_trade_filters, search_prices, trade_stat_value,
     virtual_augment_choice_label, virtual_augment_filters,
 )
 from src.poetore.models import ItemModifier, ParsedItem
-from src.poetore.trade import PRESET_BASE, TradeStatFilter
+from src.poetore.trade import PRESET_BASE, PRESET_FINISHED, TradeStatFilter
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
@@ -697,6 +698,9 @@ def test_phase7_elemental_and_life_pseudos_sum_shared_sources_once():
 def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
     item = _phase45_item("phase45_sceptre_ja.txt")
     assert empty_augment_socket_count(item) == 1
+    assert augment_socket_edit_counts(item) == (
+        (1, "空き1個に追加"), (2, "全2個を置換"),
+    )
     choices = available_virtual_augments(item)
     adept = next(row for row in choices if row["ref_name"] == "Adept Rune")
     assert adept["names"]["ja"]
@@ -707,6 +711,11 @@ def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
     payload = build_search_query(item, stat_filters=poe2_trade_filters(item, "Adept Rune"))
     sent = payload["query"]["stats"][0]["filters"]
     assert any(row["id"].startswith("rune.") and row.get("value") == {"min": 9.0} for row in sent)
+
+    replacement = poe2_trade_filters(item, "Adept Rune", PRESET_FINISHED, 2)
+    assert all(not row.enabled for row in replacement if row.kind == "augment")
+    replacement_virtual = next(row for row in replacement if row.kind == "virtual-rune")
+    assert replacement_virtual.min_value == 18.0
 
     body = item.__class__(**{
         **item.__dict__,

@@ -5387,7 +5387,10 @@ def test_poe2_exchange_item_skips_trade2_and_uses_exalted_price_icon(qapp):
             window.search_current_item()
         trade_search.assert_not_called()
         assert window._parsed_item.category == "uncut_gem"
-        assert "通常Trade出品検索は行わず" in window.search_scope_notice.text()
+        assert window.search_scope_notice.text() == (
+            "ℹ 「カレンシー交換」の対象品です。通常トレード出品検索は行わず、"
+            "poe.ninja参考価格を表示します。"
+        )
         assert "poe.ninja参考価格のみ" in window.price_status.text()
 
         key = ("uncut",)
@@ -5420,8 +5423,28 @@ def test_poe2_fragment_exchange_item_skips_trade2(qapp):
             window.search_current_item()
         trade_search.assert_not_called()
         assert window._parsed_item.category == "map_fragment"
-        assert "通常Trade出品検索は行わず" in window.search_scope_notice.text()
+        assert "通常トレード出品検索は行わず" in window.search_scope_notice.text()
         assert "poe.ninja参考価格のみ" in window.price_status.text()
+    finally:
+        window.close()
+
+
+def test_poe2_logbook_uses_exchange_price_without_trade2_filters(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.input_edit.setPlainText(
+            "Item Class: Expedition Logbooks\nRarity: Normal\n"
+            "Expedition Logbook\n--------\nArea Level: 80\n"
+        )
+        with patch("src.poetore.poe2.trade.search_prices") as trade_search:
+            window.search_current_item()
+        trade_search.assert_not_called()
+        assert window._parsed_item.category == "expedition_logbook"
+        assert window._parsed_item.base_type == "Expedition Logbook"
+        assert window.logbook_area_container.isHidden()
+        assert window.mod_filter_tree.topLevelItemCount() == 0
+        assert "「カレンシー交換」の対象品" in window.search_scope_notice.text()
+        assert not window.trade_url_button.isEnabled()
     finally:
         window.close()
 
@@ -6146,6 +6169,9 @@ def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
         assert "property.state.sanctified" not in by_id
         assert any(row.stat_id.startswith("rune.") for row in filters)
         assert not window.virtual_augment_combo.isHidden()
+        assert not window.virtual_augment_count_combo.isHidden()
+        assert window.virtual_augment_count_combo.itemText(0) == "空き1個に追加"
+        assert window.virtual_augment_count_combo.itemText(1) == "全2個を置換"
         index = window.virtual_augment_combo.findData("Adept Rune")
         assert index >= 0
         label = window.virtual_augment_combo.itemText(index)
@@ -6157,6 +6183,12 @@ def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
         virtual = next(row for row in selected if row.kind == "virtual-rune")
         assert virtual.min_value == 8.0
         assert "仮想:" in virtual.text
+
+        window.virtual_augment_count_combo.setCurrentIndex(1)
+        selected = window._selected_stat_filters()
+        virtual = next(row for row in selected if row.kind == "virtual-rune")
+        assert virtual.min_value == 16.0
+        assert all(not row.enabled for row in selected if row.kind == "augment")
 
         corrupted = item.__class__(**{**item.__dict__, "flags": (*item.flags, "corrupted")})
         window._configure_virtual_augments(corrupted)
@@ -6425,6 +6457,21 @@ Corrupted
         assert window.corrupted_combo.currentText() == "コラプトのみ"
         assert window.corrupted_combo.currentData() == "only"
         assert window.corrupted_combo.property("alert") is True
+    finally:
+        window.close()
+
+
+def test_poe2_against_the_darkness_defaults_to_corrupted_only(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        fixture = Path(__file__).parent / "fixtures" / "poe2" / "against_the_darkness_ja.txt"
+        window.input_edit.setPlainText(fixture.read_text(encoding="utf-8"))
+        window.parse_current_text()
+
+        assert window._parsed_item.category == "jewel"
+        assert "corrupted" in window._parsed_item.flags
+        assert not window.corrupted_combo.isHidden()
+        assert window.corrupted_combo.currentData() == "only"
     finally:
         window.close()
 

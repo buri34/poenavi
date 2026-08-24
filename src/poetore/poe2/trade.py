@@ -204,6 +204,20 @@ def empty_augment_socket_count(item: ParsedItem) -> int:
     return max(0, total - installed)
 
 
+def augment_socket_edit_counts(item: ParsedItem) -> tuple[tuple[int, str], ...]:
+    """Return unambiguous virtual edit modes for augment sockets."""
+    total = _augment_socket_count(item) or 0
+    if total <= 0 or item.rarity == "unique" or "mirrored" in item.flags:
+        return ()
+    empty = empty_augment_socket_count(item)
+    rows = []
+    if empty:
+        rows.append((empty, f"空き{empty}個に追加"))
+    if item.augment_count:
+        rows.append((total, f"全{total}個を置換"))
+    return tuple(rows)
+
+
 def _virtual_augment_effect_family(effect: dict) -> tuple[int, int, str]:
     """Group virtual augments by player-facing effect before rune series.
 
@@ -274,7 +288,7 @@ def _virtual_augment_sort_key(choice: dict) -> tuple:
 def available_virtual_augments(item: ParsedItem) -> tuple[dict, ...]:
     """Return bilingual augment choices applicable to the copied item category."""
     category = _EE2_CATEGORY_BY_CATEGORY.get(item.category)
-    if category is None or empty_augment_socket_count(item) <= 0:
+    if category is None or not augment_socket_edit_counts(item):
         return ()
     choices = []
     for entry in augment_entries():
@@ -301,9 +315,11 @@ def _virtual_augment_effect_text(effect: dict, socket_count: int) -> str:
     return re.sub(r"#", replace_value, text)
 
 
-def virtual_augment_choice_label(item: ParsedItem, choice: dict) -> str:
+def virtual_augment_choice_label(
+    item: ParsedItem, choice: dict, socket_count: int | None = None,
+) -> str:
     """Return an effect-first label matching the virtual stats sent to Trade2."""
-    socket_count = empty_augment_socket_count(item)
+    socket_count = int(socket_count or empty_augment_socket_count(item))
     names = choice.get("names") or {}
     name = str(names.get("ja") or names.get("en") or choice.get("ref_name") or "")
     effects = tuple(
@@ -315,17 +331,20 @@ def virtual_augment_choice_label(item: ParsedItem, choice: dict) -> str:
     return f"{effect_text}（{name}{count_text}）" if effect_text else f"{name}{count_text}"
 
 
-def virtual_augment_filters(item: ParsedItem, ref_name: str | None) -> tuple[TradeStatFilter, ...]:
+def virtual_augment_filters(
+    item: ParsedItem, ref_name: str | None, socket_count: int | None = None,
+) -> tuple[TradeStatFilter, ...]:
     """Build disabled-by-default Rune stat rows for one user-selected virtual augment."""
     if not ref_name:
         return ()
-    empty = empty_augment_socket_count(item)
+    allowed_counts = {count for count, _label in augment_socket_edit_counts(item)}
+    selected_count = int(socket_count or empty_augment_socket_count(item))
     choice = next((row for row in available_virtual_augments(item) if row["ref_name"] == ref_name), None)
-    if choice is None or empty <= 0:
+    if choice is None or selected_count not in allowed_counts:
         return ()
     rows = []
     for effect in choice["effects"]:
-        values = tuple(float(value) * empty for value in effect.get("values") or ())
+        values = tuple(float(value) * selected_count for value in effect.get("values") or ())
         value = trade_stat_value(values)
         names = choice.get("names") or {}
         text = str((effect.get("text") or {}).get("ja") or (effect.get("text") or {}).get("en") or "")
@@ -334,7 +353,7 @@ def virtual_augment_filters(item: ParsedItem, ref_name: str | None) -> tuple[Tra
             rows.append(TradeStatFilter(
                 str(trade_ids[0]), f"仮想: {names.get('ja') or names.get('en')} — {text}", value,
                 "virtual-rune", True, read_value=value, source_texts=(
-                    f"空きソケット{empty}個へ仮挿入（実アイテムは変更しません）",
+                    f"ソケット{selected_count}個を仮編集（実アイテムは変更しません）",
                 ),
                 alternative_stat_ids=tuple(str(stat_id) for stat_id in trade_ids[1:]),
             ))
@@ -665,13 +684,24 @@ def _poe2_modifier_rows(
 def poe2_trade_filters(
     item: ParsedItem, virtual_augment_ref: str | None = None,
     preset: str = PRESET_FINISHED,
+    virtual_augment_count: int | None = None,
 ) -> tuple[TradeStatFilter, ...]:
     """Return the complete editable PoE2 filter set, including Phase 7 aggregates."""
     pseudos, replaced_ids = _poe2_pseudo_filters(item)
     modifier_rows = _poe2_modifier_rows(item, set(replaced_ids), preset)
+    total_sockets = _augment_socket_count(item) or 0
+    if (
+        virtual_augment_ref and virtual_augment_count == total_sockets
+        and item.augment_count
+    ):
+        modifier_rows = tuple(
+            replace(row, enabled=False) if row.kind == "augment" else row
+            for row in modifier_rows
+        )
     filters = (
         modifier_rows + pseudos + _poe2_item_property_filters(item)
-        + poe2_search_filters(item) + virtual_augment_filters(item, virtual_augment_ref)
+        + poe2_search_filters(item)
+        + virtual_augment_filters(item, virtual_augment_ref, virtual_augment_count)
     )
     if preset == PRESET_BASE:
         return tuple(

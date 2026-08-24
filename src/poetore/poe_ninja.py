@@ -694,6 +694,8 @@ def _poe2_exchange_overview_type(item: ParsedItem) -> str | None:
         return "UncutGems"
     if item.category == "currency":
         return "Currency"
+    if item.category == "expedition_logbook":
+        return "Expedition"
     identity = str(item.base_type or item.name or "").strip()
     if identity in POE2_FRAGMENT_EXCHANGE_NAMES:
         return "Fragments"

@@ -49,7 +49,7 @@ P2-WIN-047,推奨,Wombgift,Wombgift 5種を連続確認,Wombgift,完成品,5種�
 P2-WIN-048,必須,Map Fragment,SimulacrumまたはFate等Ninja対応品,Map Fragment,Ninja価格,詳細コピー後に価格確認,正しい英語identity,Trade2用Modなし,poe.ninja Fragments・リーグ一致,通常Trade2を呼ばず価格とURLを表示,,,,,,,,,,未実施,
 P2-WIN-049,必須,Pinnacle Key,Crisis FragmentまたはOrigin系等Ninja対応品,Pinnacle Key,Ninja価格,詳細コピー後に価格確認,正しい英語identity,Trade2用Modなし,poe.ninja Fragments・リーグ一致,map.fragment等へ誤検索せず価格表示,,,,,,,,,,未実施,
 P2-WIN-050,必須,Vault Key,Reliquary KeyのNinja対応品,Vault Key,Ninja価格,詳細コピー後に価格確認,コロン以降を含む完全identity,Trade2用Modなし,poe.ninja Fragments・リーグ一致,別のVault Key価格を誤表示しない,,,,,,,,,,未実施,
-P2-WIN-051,必須,Expedition Logbook,Expedition Logbook（Area Levelと明示Modを含む）,Magic/Rare相当,完成品,詳細コピー後に価格検索,Logbook base・Faction/Property区画を解析,Area Levelと検索可能Mod,Trade2・map.logbook・nonunique,poe.ninjaへ送らずTrade2検索成功,,,,,,,,,,未実施,
+P2-WIN-051,必須,Expedition Logbook,エクスペディションログブック,Normal,Currency Exchange価格,詳細コピー後に価格確認,Expedition Logbookへ正規化,Trade2用Area/Faction/明示Mod条件を表示しない,poe.ninja Expedition・リーグ一致,通常Trade2を呼ばずLogbookの参考価格とURLを表示,,,,,,,,,,未実施,
 P2-WIN-052,推奨,Tablet,Magic Tablet（残り使用回数あり）,Magic,完成品,詳細コピー後に価格検索,Tablet base,残り使用回数Pseudo・明示Mod,Trade2・map.tablet,Propertyを未解決Modにせず検索成功,,,,,,,,,,未実施,
 P2-WIN-053,推奨,Relic,Normal/Magic Relic,Normal/Magic,完成品,詳細コピー後に価格検索,Relic base,検索可能Modとコピー元rarity,Trade2・sanctum.relic・rarityはnormalまたはmagic,同rarityでHTTP成功・0件も正常表示,,,,,,,,,,未実施,
 P2-WIN-054,推奨,Jewel,Time-Lost Jewel（Radius表記あり）,任意,完成品,詳細コピー後に価格検索,Time-Lost Jewel identity,Radiusは解析保持・直接filterがなければ送らない,Trade2・jewel,Radiusを誤Stat化せず検索成功,,,,,,,,,,未実施,

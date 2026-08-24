@@ -26,6 +26,11 @@ def test_build_rows_preserves_all_detailed_cases() -> None:
     assert "Rare Flail" not in flail["対象アイテム"]
     assert "weapon.flail" in flail["確認C_検索先・条件"]
 
+    logbook = next(row for row in rows if row["ケースID"] == "P2-WIN-051")
+    assert logbook["対象アイテム"] == "エクスペディションログブック"
+    assert "Area/Faction/明示Mod条件を表示しない" in logbook["確認B_チップ・初期状態"]
+    assert "poe.ninja Expedition" in logbook["確認C_検索先・条件"]
+
 
 def test_copy_requirements_are_explicit() -> None:
     assert copy_requirement(

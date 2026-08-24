@@ -49,7 +49,7 @@
 48,P2-WIN-048,必須,Map Fragment,SimulacrumまたはFate等Ninja対応品,詳細コピー後に価格確認,正しい英語identity,未確認,Trade2用Modなし,未確認,poe.ninja Fragments・リーグ一致,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
 49,P2-WIN-049,必須,Pinnacle Key,Crisis FragmentまたはOrigin系等Ninja対応品,詳細コピー後に価格確認,正しい英語identity,未確認,Trade2用Modなし,未確認,poe.ninja Fragments・リーグ一致,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
 50,P2-WIN-050,必須,Vault Key,Reliquary KeyのNinja対応品,詳細コピー後に価格確認,コロン以降を含む完全identity,未確認,Trade2用Modなし,未確認,poe.ninja Fragments・リーグ一致,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
-51,P2-WIN-051,必須,Expedition Logbook,Expedition Logbook（Area Levelと明示Modを含む）,詳細コピー後に価格検索,Logbook base・Faction/Property区画を解析,未確認,Area Levelと検索可能Mod,未確認,Trade2・map.logbook・nonunique,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
+51,P2-WIN-051,必須,Expedition Logbook,エクスペディションログブック,詳細コピー後に価格確認,Expedition Logbookへ正規化,未確認,Trade2用Area/Faction/明示Mod条件を表示しない,未確認,poe.ninja Expedition・リーグ一致,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
 52,P2-WIN-052,推奨,Tablet,Magic Tablet（残り使用回数あり）,詳細コピー後に価格検索,Tablet base,未確認,残り使用回数Pseudo・明示Mod,未確認,Trade2・map.tablet,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
 53,P2-WIN-053,推奨,Relic,Normal/Magic Relic,詳細コピー後に価格検索,Relic base,未確認,検索可能Modとコピー元rarity,未確認,Trade2・sanctum.relic・rarityはnormalまたはmagic,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,
 54,P2-WIN-054,推奨,Jewel,Time-Lost Jewel（Radius表記あり）,詳細コピー後に価格検索,Time-Lost Jewel identity,未確認,Radiusは解析保持・直接filterがなければ送らない,未確認,Trade2・jewel,未確認,使用した現物の日本語を保存（英語は差分発生時に追加依頼）,,,,未検索,,未確認,,,未実施,

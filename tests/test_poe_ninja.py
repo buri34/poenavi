@@ -667,7 +667,7 @@ def test_poe2_fragment_exchange_uses_allowlist_and_fragments_overview():
         "Primary Calamity Fragment", "Secondary Calamity Fragment",
         "Tertiary Calamity Fragment", "Zarokh's Reliquary Key: Temporalis",
         "An Audience with the King", "Head of the King", "Idol of Estazunti",
-        "Breachstone", "Expedition Logbook",
+        "Breachstone",
     ],
 )
 def test_poe2_fragment_exchange_excludes_pending_and_trade2_items(base_type):
@@ -676,3 +676,34 @@ def test_poe2_fragment_exchange_excludes_pending_and_trade2_items(base_type):
     )
     item = ParsedItem("Special", "normal", "", base_type, "map_fragment")
     assert service.lookup_poe2_exchange(item, "Runes of Aldur") is None
+
+
+def test_poe2_expedition_logbook_uses_expedition_exchange_overview():
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        return {
+            "core": {"primary": "divine", "rates": {"chaos": 100}},
+            "items": [{
+                "id": "expedition-logbook", "name": "Expedition Logbook",
+                "detailsId": "expedition-logbook",
+            }],
+            "lines": [{
+                "id": "expedition-logbook", "primaryValue": 1.43,
+                "maxVolumeCurrency": "divine", "maxVolumeRate": 0.7,
+                "sparkline": {"data": [], "totalChange": 0},
+            }],
+        }
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    item = ParsedItem(
+        "Expedition Logbooks", "normal", "", "Expedition Logbook",
+        "expedition_logbook",
+    )
+    price = service.lookup_poe2_exchange(item, "Runes of Aldur")
+
+    assert price is not None
+    assert price.source_type == "Expedition"
+    assert price.url.endswith("/expedition/expedition-logbook")
+    assert calls == [("Runes of Aldur", "Expedition")]
