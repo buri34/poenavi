@@ -826,6 +826,18 @@ def test_special_trade_and_exchange_categories_resolve_from_identity(
     assert (item.base_type, item.category) == (base_type, category)
 
 
+def test_normal_map_fragment_help_text_is_not_an_unresolved_modifier_like_ee2():
+    text = (
+        Path(__file__).parent / "fixtures" / "poe2" / "simulacrum_ja.txt"
+    ).read_text(encoding="utf-8")
+    item = parse_item_text(text)
+
+    assert (item.base_type, item.category, item.rarity) == (
+        "Simulacrum", "map_fragment", "normal",
+    )
+    assert item.modifiers == ()
+
+
 def test_magic_poe2_flask_resolves_affixed_name_to_base():
     item = parse_item_text(
         "Item Class: Life Flasks\nRarity: Magic\nHealthy Ultimate Life Flask\n"

@@ -783,6 +783,12 @@ def parse_item_text(text: str) -> ParsedItem:
         # prose and skill effects are not item modifiers.
         if category in {"active_gem", "support_gem", "meta_gem", "uncut_gem"}:
             continue
+        # Normal Map Fragments such as Simulacrum are identity-only exchange
+        # items.  Their flavour/help sections may contain numeric prose (for
+        # example "at least 100% Delirious") but do not contain searchable
+        # item modifiers. EE2 leaves those unparsed after identity detection.
+        if category == "map_fragment" and rarity == "normal":
+            continue
         standalone_augment = bool(re.search(r"\(rune\)\s*$", line, re.IGNORECASE))
         line_kind = "augment" if standalone_augment else current_kind
         if standalone_augment and current_kind != "augment":
