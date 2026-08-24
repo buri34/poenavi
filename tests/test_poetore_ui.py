@@ -1965,6 +1965,32 @@ def test_reported_poe2_rare_gloves_show_chaos_resistance_without_warning(qapp):
         window.close()
 
 
+def test_poe2_exceptional_item_enables_augment_socket_row_by_default(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 手袋
+レアリティ: ノーマル
+規格外の 磨かれた弓籠手
+--------
+回避力: 170
+--------
+装備条件：レベル 80, 101 器用さ
+--------
+ソケット: S S
+--------
+アイテムレベル: 82""")
+        window.parse_current_text()
+
+        row = next(
+            row for row in window._selected_stat_filters()
+            if row.stat_id == "property.augment_sockets"
+        )
+        assert row.enabled
+        assert row.min_value == 2
+    finally:
+        window.close()
+
+
 def test_reported_poe2_rare_body_armour_shows_local_evasion_filter(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:

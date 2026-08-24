@@ -550,7 +550,11 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         is_gem = item.category in {"active_gem", "support_gem", "meta_gem"}
         stat_id = "property.gem_sockets" if is_gem else "property.augment_sockets"
         label = "ジェムソケット" if is_gem else "オーグメントソケット"
-        rows.append(TradeStatFilter(stat_id, label, float(sockets), "property", False, read_value=float(sockets)))
+        enabled = not is_gem and "exceptional" in item.flags
+        rows.append(TradeStatFilter(
+            stat_id, label, float(sockets), "property", enabled,
+            read_value=float(sockets),
+        ))
     if item.category == "waystone":
         tier = _waystone_tier(item)
         if tier is not None:

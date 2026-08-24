@@ -680,6 +680,8 @@ def parse_item_text(text: str) -> ParsedItem:
     properties = {}
     modifiers = []
     flags = {"unidentified"} if unidentified else set()
+    if raw_base.startswith(("Exceptional ", "規格外の ")):
+        flags.add("exceptional")
     augment_count = 0
     if base_type.casefold().startswith("runemastered "):
         flags.add("runemastered")

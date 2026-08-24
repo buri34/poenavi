@@ -746,6 +746,15 @@ def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
     assert len(alternate["filters"]) == 2
 
 
+def test_augment_socket_filter_stays_off_for_non_exceptional_equipment():
+    item = _phase45_item("phase45_sceptre_ja.txt")
+    row = next(
+        row for row in poe2_search_filters(item)
+        if row.stat_id == "property.augment_sockets"
+    )
+    assert not row.enabled
+
+
 def test_virtual_augments_group_elemental_resistances_and_sort_tiers_descending():
     item = _phase45_item("phase45_sceptre_ja.txt")
     body = item.__class__(**{

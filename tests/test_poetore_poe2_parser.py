@@ -570,10 +570,21 @@ def test_reported_exceptional_normal_base_is_normalized_for_trade2(text):
     assert item.category == "gloves"
     assert item.base_type == "Polished Bracers"
     assert item.item_level == 82
+    assert "exceptional" in item.flags
 
-    query = build_search_query(item, stat_filters=poe2_trade_filters(item))["query"]
+    filters = poe2_trade_filters(item)
+    augment_sockets = next(
+        row for row in filters if row.stat_id == "property.augment_sockets"
+    )
+    assert augment_sockets.enabled
+    assert augment_sockets.min_value == 2
+
+    query = build_search_query(item, stat_filters=filters)["query"]
     assert query["type"] == "Polished Bracers"
     assert query["filters"]["type_filters"]["filters"]["rarity"]["option"] == "normal"
+    assert query["filters"]["equipment_filters"]["filters"]["rune_sockets"] == {
+        "min": 2,
+    }
 
 
 @pytest.mark.parametrize(
