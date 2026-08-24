@@ -259,6 +259,19 @@ def test_life_flask_properties_are_consumed_like_ee2_and_affixes_stay_searchable
         }
 
 
+def test_wombgift_hiveblood_cost_is_property_not_search_modifier_like_ee2():
+    text = (
+        Path(__file__).parent / "fixtures" / "poe2" / "signet_wombgift_ja.txt"
+    ).read_text(encoding="utf-8")
+    item = parse_item_text(text)
+
+    assert (item.base_type, item.category, item.item_level) == (
+        "Signet Wombgift", "wombgift", 80,
+    )
+    assert item.properties["必要ハイヴブラッド"] == "1023"
+    assert item.modifiers == ()
+
+
 def test_timelost_unscalable_suffixes_resolve_equally_in_both_languages():
 
     jewel = _real_copy("FX014")

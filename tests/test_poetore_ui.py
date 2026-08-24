@@ -5994,6 +5994,22 @@ def test_poe2_life_flask_properties_do_not_show_metadata_warning(qapp):
         window.close()
 
 
+def test_poe2_wombgift_hiveblood_cost_does_not_show_metadata_warning(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        text = (
+            Path(__file__).parent / "fixtures" / "poe2" / "signet_wombgift_ja.txt"
+        ).read_text(encoding="utf-8")
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+
+        assert window.mod_warning.isHidden()
+        assert window.mod_filter_tree.topLevelItemCount() == 0
+        assert window.item_name_label.text() == "印章の母胎ギフト"
+    finally:
+        window.close()
+
+
 def test_poe2_weapon_header_uses_individual_elemental_damage_properties(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:

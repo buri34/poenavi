@@ -34,7 +34,8 @@ _CLASS_CATEGORY = {
     "Expedition Logbooks": "expedition_logbook",
     "Expedition Logbook": "expedition_logbook", "エクスペディションログブック": "expedition_logbook",
     "Breachstones": "breachstone", "Breachstone": "breachstone", "ブリーチストーン": "breachstone",
-    "Wombgifts": "wombgift", "Wombgift": "wombgift", "ウォンブギフト": "wombgift",
+    "Wombgifts": "wombgift", "Wombgift": "wombgift",
+    "ウォンブギフト": "wombgift", "母胎ギフト": "wombgift",
     "Uncut Skill Gems": "uncut_gem",
     "スキルジェムの原石": "uncut_gem",
     "Bows": "bow",
@@ -237,6 +238,11 @@ _FLASK_CONSUMPTION = (
     re.compile(r"^使用時に(\d+)中(\d+)チャージを消費$"),
 )
 _FLASK_CURRENT = _CHARM_CURRENT
+_WOMBGIFT_HIVEBLOOD = (
+    re.compile(r"^(\d+)のハイヴブラッドが必要$"),
+    re.compile(r"^Requires\s+(\d+)\s+Hiveblood$", re.IGNORECASE),
+    re.compile(r"^(\d+)\s+Hiveblood Required$", re.IGNORECASE),
+)
 
 
 def _consume_special_property(category: str, line: str, properties: dict[str, str]) -> bool:
@@ -274,6 +280,12 @@ def _consume_special_property(category: str, line: str, properties: dict[str, st
             match = pattern.fullmatch(line)
             if match:
                 properties["現在チャージ"] = match.group(1)
+                return True
+    if category == "wombgift":
+        for pattern in _WOMBGIFT_HIVEBLOOD:
+            match = pattern.fullmatch(line)
+            if match:
+                properties["必要ハイヴブラッド"] = match.group(1)
                 return True
     if category != "charm":
         return False
