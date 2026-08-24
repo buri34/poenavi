@@ -217,6 +217,27 @@ _CHARM_EFFECT = (
     re.compile(r"^(.+)を付与する$"),
 )
 
+_FLASK_RECOVERY = (
+    re.compile(
+        r"^Recovers\s+(?P<amount>\d+(?:\.\d+)?)\s*(?:\(augmented\)\s*)?"
+        r"(?:Life|Mana)\s+over\s+(?P<duration>\d+(?:\.\d+)?)\s+Seconds?$",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"^(?P<duration>\d+(?:\.\d+)?)秒間かけて"
+        r"(?P<amount>\d+(?:\.\d+)?)\s*(?:\(augmented\)\s*)?"
+        r"の(?:ライフ|マナ)を回復$"
+    ),
+)
+_FLASK_CONSUMPTION = (
+    re.compile(
+        r"^Consumes\s+(\d+)\s+of\s+(\d+)\s+Charges on use$",
+        re.IGNORECASE,
+    ),
+    re.compile(r"^使用時に(\d+)中(\d+)チャージを消費$"),
+)
+_FLASK_CURRENT = _CHARM_CURRENT
+
 
 def _consume_special_property(category: str, line: str, properties: dict[str, str]) -> bool:
     """Consume non-Trade item properties using stable bilingual keys.
@@ -231,6 +252,28 @@ def _consume_special_property(category: str, line: str, properties: dict[str, st
             match = pattern.fullmatch(line)
             if match:
                 properties["残り使用回数"] = match.group(1)
+                return True
+    if category in {"life_flask", "mana_flask"}:
+        for pattern in _FLASK_RECOVERY:
+            match = pattern.fullmatch(line)
+            if match:
+                properties["回復量"] = match.group("amount")
+                properties["回復時間"] = match.group("duration")
+                return True
+        for pattern in _FLASK_CONSUMPTION:
+            match = pattern.fullmatch(line)
+            if match:
+                if line.startswith("使用時に"):
+                    properties["最大チャージ"] = match.group(1)
+                    properties["使用チャージ"] = match.group(2)
+                else:
+                    properties["使用チャージ"] = match.group(1)
+                    properties["最大チャージ"] = match.group(2)
+                return True
+        for pattern in _FLASK_CURRENT:
+            match = pattern.fullmatch(line)
+            if match:
+                properties["現在チャージ"] = match.group(1)
                 return True
     if category != "charm":
         return False

@@ -225,6 +225,40 @@ def test_charm_augmented_duration_is_property_not_unresolved_modifier(
     assert item.modifiers == ()
 
 
+def test_life_flask_properties_are_consumed_like_ee2_and_affixes_stay_searchable():
+    text = (
+        Path(__file__).parent / "fixtures" / "poe2" / "magic_life_flask_ja.txt"
+    ).read_text(encoding="utf-8")
+    items = [
+        parse_item_text(text),
+        parse_item_text(
+            text.replace(
+                "3秒間かけて1877 (augmented)のライフを回復",
+                "Recovers 1877 (augmented) Life over 3 Seconds",
+            ).replace(
+                "使用時に75中10チャージを消費",
+                "Consumes 10 of 75 Charges on use",
+            ).replace("現在75チャージ", "Currently has 75 Charges")
+        ),
+    ]
+
+    for item in items:
+        assert (item.base_type, item.category, item.item_level) == (
+            "Ultimate Life Flask", "life_flask", 78,
+        )
+        assert item.properties["回復量"] == "1877"
+        assert item.properties["回復時間"] == "3"
+        assert item.properties["使用チャージ"] == "10"
+        assert item.properties["最大チャージ"] == "75"
+        assert item.properties["現在チャージ"] == "75"
+        assert len(item.modifiers) == 2
+        assert all(modifier.stat_id for modifier in item.modifiers)
+        assert {modifier.text for modifier in item.modifiers} == {
+            "回復量が70(66-70)%増加する",
+            "毎秒チャージを0.20獲得する",
+        }
+
+
 def test_timelost_unscalable_suffixes_resolve_equally_in_both_languages():
 
     jewel = _real_copy("FX014")

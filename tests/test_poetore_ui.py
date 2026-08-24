@@ -5972,6 +5972,28 @@ def test_poe2_weapon_parse_shows_dps_summary_in_header(qapp):
         window.close()
 
 
+def test_poe2_life_flask_properties_do_not_show_metadata_warning(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        text = (
+            Path(__file__).parent / "fixtures" / "poe2" / "magic_life_flask_ja.txt"
+        ).read_text(encoding="utf-8")
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+
+        assert window.mod_warning.isHidden()
+        assert window.mod_filter_tree.topLevelItemCount() == 2
+        assert {
+            window.mod_filter_tree.topLevelItem(index).text(_MOD_COLUMN_TEXT)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        } == {
+            "回復量が70(66-70)%増加する",
+            "毎秒チャージを0.20獲得する",
+        }
+    finally:
+        window.close()
+
+
 def test_poe2_weapon_header_uses_individual_elemental_damage_properties(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:
