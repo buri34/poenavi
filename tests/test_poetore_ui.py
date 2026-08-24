@@ -6006,6 +6006,35 @@ def test_poe2_wombgift_hiveblood_cost_does_not_show_metadata_warning(qapp):
         assert window.mod_warning.isHidden()
         assert window.mod_filter_tree.topLevelItemCount() == 0
         assert window.item_name_label.text() == "印章の母胎ギフト"
+        assert not window.item_level_tag.isHidden()
+        assert window.item_level_edit.text() == "80"
+        assert window._selected_item_level_range() == (80, None)
+        assert window.item_level_toggle.text() == "☑ ilvl："
+    finally:
+        window.close()
+
+
+def test_poe2_wombgift_item_level_chip_reaches_trade2_search(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        text = (
+            Path(__file__).parent / "fixtures" / "poe2" / "signet_wombgift_ja.txt"
+        ).read_text(encoding="utf-8")
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+
+        result = PriceResult("Standard", "qid", 0, ())
+        with patch("src.poetore.poe2.trade.search_prices", return_value=result) as search:
+            window.search_current_item()
+            for _ in range(50):
+                qapp.processEvents()
+                if search.called:
+                    break
+                QTest.qWait(10)
+
+        assert search.called
+        assert search.call_args.kwargs["item_level_min"] == 80
+        assert search.call_args.kwargs["item_level_max"] is None
     finally:
         window.close()
 

@@ -4493,10 +4493,12 @@ class PoetoreWindow(QWidget):
             item, preset, self._trade_base_type,
         )
         # 完成品の通常装備とFlask/Tinctureは任意条件として表示するが初期OFF。
+        # 母胎ギフトは価値への影響が大きいため初期ONにする。
         # Exact／クラフトベースはpreset_filterの値・初期状態を正本にする。
+        is_wombgift = self.poe_version == POE2 and item.category == "wombgift"
         optional_finished = (
             preset == PRESET_FINISHED
-            and (is_equipment_category(item.category)
+            and (is_equipment_category(item.category) or is_wombgift
                  or is_flask_category(item.category) or item.category == "tincture")
             and item.rarity.casefold() not in {"unique", "ユニーク"}
         )
@@ -4505,7 +4507,10 @@ class PoetoreWindow(QWidget):
         )
         self.item_level_tag.setVisible(has_item_level)
         self._set_item_level_filter_enabled(
-            has_item_level and preset_filter is not None and preset_filter.enabled
+            has_item_level and (
+                is_wombgift
+                or (preset_filter is not None and preset_filter.enabled)
+            )
         )
         is_cluster = has_item_level and item.category == "cluster_jewel"
         self.item_level_range_separator.setVisible(is_cluster)
