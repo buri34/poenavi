@@ -5154,7 +5154,8 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
             "links", "nightmare_map", "map_tier", "completion_reward", "area_level", "heist_wings",
             "heist_job", "heist_target", "cluster_enchant",
             "cluster_passives", "cluster_sockets", "blighted", "item_level",
-            "base_percentile", "gem_variant", "gem_level", "quality", "gem_sockets",
+            "base_percentile", "gem_variant", "gem_level", "quality", "runemastered",
+            "gem_sockets",
             "influence_shaper", "influence_elder", "influence_crusader",
             "influence_hunter", "influence_redeemer", "influence_warlord",
             "influence_eater", "influence_exarch",
@@ -5766,9 +5767,16 @@ def test_poe2_runemastered_chip_defaults_on_and_switches_trade_type(qapp):
     try:
         window._parsed_item = item
         window._update_item_header(item)
+        window.show()
+        qapp.processEvents()
 
-        assert not window.runemastered_chip.isHidden()
+        assert not window.runemastered_tag.isHidden()
         assert window.runemastered_chip.isChecked()
+        assert window.runemastered_chip.text() == "☑ ルーンマスター"
+        assert window.runemastered_tag.parentWidget() is window.filter_chip_container
+        chips = [chip for _name, chip in window._filter_chips]
+        assert chips.index(window.runemastered_tag) == chips.index(window.gem_quality_tag) + 1
+        assert window.runemastered_tag.height() == window.gem_quality_tag.sizeHint().height()
         selected = window._poe2_search_item(item)
         assert build_poe2_search_query(selected)["query"]["type"] == (
             "Runemastered Strider Vest"
@@ -5776,6 +5784,8 @@ def test_poe2_runemastered_chip_defaults_on_and_switches_trade_type(qapp):
         assert build_poe2_search_query(selected)["query"]["name"] == "Yriel's Fostering"
 
         window.runemastered_chip.setChecked(False)
+        assert window.runemastered_chip.text() == "☐ ルーンマスター"
+        assert window.runemastered_tag.property("active") is False
         selected = window._poe2_search_item(item)
         query = build_poe2_search_query(selected)["query"]
         assert query["type"] == "Strider Vest"

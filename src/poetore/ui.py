@@ -1054,15 +1054,22 @@ class PoetoreWindow(QWidget):
         )
         self.chart_area_chip.toggled.connect(self._chart_area_changed)
         self.chart_area_chip.hide()
-        self.runemastered_chip = QPushButton("ルーンマスター")
-        self.runemastered_chip.setObjectName("secondaryActionButton")
+        self.runemastered_tag = QFrame()
+        self.runemastered_tag.setObjectName("runemasteredTag")
+        self.runemastered_tag.setFixedWidth(126)
+        runemastered_layout = QHBoxLayout(self.runemastered_tag)
+        runemastered_layout.setContentsMargins(8, 2, 6, 2)
+        runemastered_layout.setSpacing(1)
+        self.runemastered_chip = QPushButton("☑ ルーンマスター")
+        self.runemastered_chip.setObjectName("runemasteredToggle")
         self.runemastered_chip.setCheckable(True)
         self.runemastered_chip.setChecked(True)
         self.runemastered_chip.setToolTip(
             "ONならルーンマスター版、OFFなら通常版のベースを検索します。"
         )
         self.runemastered_chip.toggled.connect(self._runemastered_changed)
-        self.runemastered_chip.hide()
+        runemastered_layout.addWidget(self.runemastered_chip)
+        self.runemastered_tag.hide()
         self.corrupted_combo = _CycleButton((
             ("コラプトのみ", "only", True),
             ("非コラプトのみ", False, False),
@@ -1077,7 +1084,6 @@ class PoetoreWindow(QWidget):
         item_scope_layout.addWidget(self.base_scope_toggle, stretch=1)
         item_scope_layout.addStretch()
         item_scope_layout.addWidget(self.chart_area_chip)
-        item_scope_layout.addWidget(self.runemastered_chip)
         item_scope_layout.addWidget(self.corrupted_combo)
         item_header_layout.addLayout(item_scope_layout)
         content_layout.addWidget(self.item_header)
@@ -1489,6 +1495,7 @@ class PoetoreWindow(QWidget):
             ("gem_variant", self.gem_variant_chip),
             ("gem_level", self.gem_level_tag),
             ("quality", self.gem_quality_tag),
+            ("runemastered", self.runemastered_tag),
             ("gem_sockets", self.gem_socket_tag),
             *((f"influence_{name}", self.influence_chips[name]) for name in _INFLUENCE_CHIPS),
             ("magic_rarity", self.magic_rarity_toggle),
@@ -1964,7 +1971,7 @@ class PoetoreWindow(QWidget):
                 border: 1px solid #65FFCA;
                 border-radius: 3px;
             }
-            QFrame#gemQualityTag, QFrame#gemSocketTag {
+            QFrame#gemQualityTag, QFrame#runemasteredTag, QFrame#gemSocketTag {
                 background: rgba(28, 83, 73, 210);
                 border: 1px solid #65FFCA;
                 border-radius: 3px;
@@ -1978,7 +1985,7 @@ class PoetoreWindow(QWidget):
                 color: #E6ECEA;
                 font-weight: 700;
             }
-            QPushButton#itemLevelToggle, QPushButton#gemLevelToggle, QPushButton#gemQualityToggle, QPushButton#gemSocketToggle, QPushButton#linksToggle {
+            QPushButton#itemLevelToggle, QPushButton#gemLevelToggle, QPushButton#gemQualityToggle, QPushButton#runemasteredToggle, QPushButton#gemSocketToggle, QPushButton#linksToggle {
                 background: transparent;
                 color: #E6ECEA;
                 border: none;
@@ -2005,7 +2012,7 @@ class PoetoreWindow(QWidget):
                 border: none;
                 background: rgba(20, 20, 20, 180);
             }
-            QFrame#gemQualityTag[active="false"], QFrame#gemSocketTag[active="false"] {
+            QFrame#gemQualityTag[active="false"], QFrame#runemasteredTag[active="false"], QFrame#gemSocketTag[active="false"] {
                 border: none;
                 background: rgba(20, 20, 20, 180);
             }
@@ -2024,6 +2031,9 @@ class PoetoreWindow(QWidget):
             }
             QFrame#gemQualityTag[active="false"] QPushButton,
             QFrame#gemQualityTag[active="false"] QLineEdit {
+                color: #737D79;
+            }
+            QFrame#runemasteredTag[active="false"] QPushButton {
                 color: #737D79;
             }
             QFrame#gemSocketTag[active="false"] QPushButton,
@@ -2293,6 +2303,9 @@ class PoetoreWindow(QWidget):
                 "readonlyFilterChip", "cycleToggle",
             }:
                 chip.setFixedHeight(filter_chip_height)
+        # テキストだけのRunemastered条件も、編集欄を持つ品質チップと
+        # 同じ行高に固定してFlow内の上下位置を揃える。
+        self.runemastered_tag.setFixedHeight(self.gem_quality_tag.sizeHint().height())
         # スタイルのmin-width適用後に固定し、レイアウトによる再拡張を防ぐ。
         search_button_width = profile["search_button_width"]
         search_button_content_width = max(
@@ -2567,7 +2580,8 @@ class PoetoreWindow(QWidget):
         if item.raw_text != self._runemastered_item_key:
             self._runemastered_item_key = item.raw_text
             self.runemastered_chip.setChecked(True)
-        self.runemastered_chip.setVisible(is_runemastered)
+        self.runemastered_tag.setVisible(is_runemastered)
+        self._refresh_runemastered_chip_style()
         self.runemastered_chip.blockSignals(False)
         self.weapon_property_label.setText(
             "武器性能・検索Mod" if is_weapon_category(item.category) else "検索条件一覧"
@@ -2727,6 +2741,7 @@ class PoetoreWindow(QWidget):
         self._mark_search_dirty()
 
     def _runemastered_changed(self, checked: bool):
+        self._refresh_runemastered_chip_style()
         item = getattr(self, "_parsed_item", None)
         if item is None or "runemastered" not in item.flags:
             return
@@ -2738,12 +2753,21 @@ class PoetoreWindow(QWidget):
         )
         self._mark_search_dirty()
 
+    def _refresh_runemastered_chip_style(self):
+        checked = self.runemastered_chip.isChecked()
+        self.runemastered_chip.setText(
+            "☑ ルーンマスター" if checked else "☐ ルーンマスター"
+        )
+        self.runemastered_tag.setProperty("active", checked)
+        self.runemastered_tag.style().unpolish(self.runemastered_tag)
+        self.runemastered_tag.style().polish(self.runemastered_tag)
+
     def _poe2_search_item(self, item):
         """Runemasteredチップの選択をTrade2のtypeへ反映する。"""
         if (
             self.poe_version == POE2
             and "runemastered" in item.flags
-            and not self.runemastered_chip.isHidden()
+            and not self.runemastered_tag.isHidden()
             and not self.runemastered_chip.isChecked()
         ):
             base_type = re.sub(
