@@ -146,8 +146,8 @@ def _league_slug(league: str) -> str:
         return "standard"
     if league == "Hardcore":
         return "hardcore"
-    hardcore = league.startswith("Hardcore ")
-    value = league.removeprefix("Hardcore ").lower().replace(" ", "")
+    hardcore = league.startswith(("Hardcore ", "HC "))
+    value = league.removeprefix("Hardcore ").removeprefix("HC ").lower().replace(" ", "")
     return f"{value}hc" if hardcore else value
 
 

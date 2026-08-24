@@ -489,6 +489,19 @@ def test_poe2_unique_overview_matches_name_base_and_divine_value():
     )
 
 
+def test_poe2_unique_hc_overview_uses_poe_ninja_suffix_slug():
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
+    price = match_poe2_unique_price(
+        _poe2_unique_payload(), item, "HC Runes of Aldur",
+        trade_name="Mageblood", trade_base_type="Utility Belt",
+    )
+    assert price is not None
+    assert price.url == (
+        "https://poe.ninja/poe2/economy/runesofaldurhc/"
+        "unique-accessories/mageblood-utility-belt"
+    )
+
+
 def test_poe2_unique_service_uses_plural_overview_type_and_cache():
     calls = []
 
@@ -537,6 +550,21 @@ def test_poe2_exchange_matches_uncut_gem_and_uses_most_traded_quote_currency():
     assert price.display_price_parts() == ("0.56", "exalted")
     assert price.url == (
         "https://poe.ninja/poe2/economy/runesofaldur/"
+        "uncut-gems/uncut-skill-gem-level-18"
+    )
+
+
+def test_poe2_exchange_hc_overview_uses_poe_ninja_suffix_slug():
+    item = ParsedItem(
+        "Uncut Skill Gems", "currency", "Uncut Skill Gem (Level 18)",
+        "Uncut Skill Gem (Level 18)", "uncut_gem",
+    )
+    price = match_poe2_exchange_price(
+        _poe2_exchange_payload(), item, "HC Runes of Aldur", source_type="UncutGems",
+    )
+    assert price is not None
+    assert price.url == (
+        "https://poe.ninja/poe2/economy/runesofaldurhc/"
         "uncut-gems/uncut-skill-gem-level-18"
     )
 
