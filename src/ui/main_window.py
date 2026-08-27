@@ -1606,7 +1606,7 @@ class MainWindow(QMainWindow):
         self.mini_navi_toggle_btn = QPushButton()
         self.mini_navi_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.mini_navi_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self.mini_navi_toggle_btn.setToolTip("みになびのON/OFFを切り替えます。ロック操作はみになび側の鍵ボタンで行えます。")
+        self.mini_navi_toggle_btn.setToolTip("ボタンに表示された動作でみになびを切り替えます。ロック操作はみになび側の鍵ボタンで行えます。")
         self.mini_navi_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: rgba(20, 30, 20, 160);
@@ -2491,7 +2491,7 @@ class MainWindow(QMainWindow):
     def _mini_navi_toggle_text(self):
         overlay_config = self.config.get("mini_guide_overlay", {})
         enabled = bool(overlay_config.get("enabled", False))
-        return "みになび ON" if enabled else "みになび OFF"
+        return "みになびをOFF" if enabled else "みになびをON"
 
     def _refresh_mini_navi_toggle(self):
         if not hasattr(self, "mini_navi_toggle_btn"):

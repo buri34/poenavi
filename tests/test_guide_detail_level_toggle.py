@@ -24,7 +24,7 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
 
         window._refresh_mini_navi_toggle()
 
-        window.mini_navi_toggle_btn.setText.assert_called_with("みになび OFF")
+        window.mini_navi_toggle_btn.setText.assert_called_with("みになびをON")
         window.mini_navi_toggle_btn.setVisible.assert_called_once_with(True)
 
     def test_mini_navi_toggle_is_visible_in_poe1_when_guide_expanded(self):
@@ -36,6 +36,7 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
 
         window._refresh_mini_navi_toggle()
 
+        window.mini_navi_toggle_btn.setText.assert_called_with("みになびをON")
         window.mini_navi_toggle_btn.setVisible.assert_called_once_with(True)
 
     def test_switching_to_poe2_keeps_mini_navi_and_recreates_old_poe1_poetore(self):
@@ -195,15 +196,17 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
         window.voicevox_tts = Mock()
         window._speak_poe2_guide({"mini_navi": {"voice_text": "読まない"}})
         window.voicevox_tts.speak_latest.assert_not_called()
-    def test_mini_navi_toggle_text_only_reflects_enabled_state(self):
+    def test_mini_navi_toggle_text_shows_action_for_both_poe_versions(self):
         window = MainWindow.__new__(MainWindow)
 
-        for locked in (True, False):
-            window.config = {"mini_guide_overlay": {"enabled": True, "locked": locked}}
-            self.assertEqual(window._mini_navi_toggle_text(), "みになび ON")
+        for poe_version in (POE1, POE2):
+            window.poe_version = poe_version
+            for locked in (True, False):
+                window.config = {"mini_guide_overlay": {"enabled": True, "locked": locked}}
+                self.assertEqual(window._mini_navi_toggle_text(), "みになびをOFF")
 
-            window.config["mini_guide_overlay"]["enabled"] = False
-            self.assertEqual(window._mini_navi_toggle_text(), "みになび OFF")
+                window.config["mini_guide_overlay"]["enabled"] = False
+                self.assertEqual(window._mini_navi_toggle_text(), "みになびをON")
 
     def test_mini_navi_main_toggle_does_not_change_lock_state(self):
         for locked in (True, False):
