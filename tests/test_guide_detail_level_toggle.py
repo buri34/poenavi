@@ -15,39 +15,6 @@ from src.utils.poe_version_data import POE1, POE2
 
 @unittest.skipIf(MainWindow is None, f"GUI dependencies unavailable: {IMPORT_ERROR}")
 class GuideDetailLevelToggleTest(unittest.TestCase):
-    def make_window(self):
-        window = MainWindow.__new__(MainWindow)
-        window.config = {"guide_detail_level": "beginner"}
-        window.poe_version = POE2
-        window.current_zone = "The Grelwood"
-        window.zone_visit_counts = {"poe2_act1_area04": 2}
-        window.guide_expanded = True
-        window.guide_detail_level_toggle_btn = Mock()
-        window._get_zone_id = Mock(return_value="poe2_act1_area04")
-        window._update_guide_and_map = Mock()
-        return window
-
-    def test_toggle_guide_detail_level_saves_and_refreshes_current_guide(self):
-        window = self.make_window()
-
-        with patch("src.ui.main_window.ConfigManager.save_config") as save_config:
-            window.toggle_guide_detail_level()
-
-        self.assertEqual(window.config["guide_detail_level"], "intermediate")
-        self.assertTrue(window.config["guide_detail_level_selected"])
-        save_config.assert_called_once_with(window.config)
-        window.guide_detail_level_toggle_btn.setText.assert_called_with("要点版ガイド")
-        window._update_guide_and_map.assert_called_once_with(
-            "The Grelwood", "poe2_act1_area04", 2
-        )
-
-    def test_detail_level_toggle_stays_hidden_in_expanded_poe2_guide(self):
-        window = self.make_window()
-
-        window._refresh_guide_detail_level_toggle()
-
-        window.guide_detail_level_toggle_btn.setVisible.assert_called_once_with(False)
-
     def test_mini_navi_toggle_is_visible_in_poe2_when_guide_expanded(self):
         window = MainWindow.__new__(MainWindow)
         window.config = {"mini_guide_overlay": {"enabled": False}}
@@ -102,12 +69,12 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
         window = MainWindow.__new__(MainWindow)
         window.poe_version = POE2
         window.config = {
-            "guide_detail_level": "beginner",
             "mini_guide_overlay": {"enabled": True, "display_mode": "standard"},
         }
         window.guide_data = {
             "poe2_act1_area04": {
                 "objective": "詳細版本文",
+                "summary": "旧要点版本文",
                 "mini_navi": {"text": "PoE2みになび本文"},
             }
         }
@@ -130,6 +97,9 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
             "グレルウッド", "poe2_act1_area04", 1, exp_level=None
         )
 
+        rendered_html = window.guide_text_label.setText.call_args.args[0]
+        self.assertIn("詳細版本文", rendered_html)
+        self.assertNotIn("旧要点版本文", rendered_html)
         window.mini_navi_overlay.update_content.assert_called_once_with(
             {"text": "PoE2みになび本文", "direction": "none"},
             None,
@@ -140,7 +110,7 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
     def test_poe2_actual_entry_reads_voice_text_once(self):
         window = MainWindow.__new__(MainWindow)
         window.poe_version = POE2
-        window.config = {"guide_detail_level": "beginner", "voicevox": {"enabled": True}}
+        window.config = {"voicevox": {"enabled": True}}
         window.guide_data = {
             "poe2_act4_area16": {
                 "objective": "表示本文",

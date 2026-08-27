@@ -2123,35 +2123,6 @@ class SettingsDialog(QDialog):
         font_row.addStretch()
         font_group_layout.addLayout(font_row)
         
-        from PySide6.QtWidgets import QComboBox as _QComboBox
-        guide_level_row = QHBoxLayout()
-        guide_level_tag = QLabel("PoE2専用")
-        guide_level_tag.setStyleSheet("""
-            QLabel {
-                color: #111111;
-                background: #b0ff7b;
-                border-radius: 4px;
-                padding: 2px 6px;
-                font-size: 10px;
-                font-weight: bold;
-            }
-        """)
-        guide_level_row.addWidget(guide_level_tag)
-        guide_level_label = QLabel("ガイド表示:")
-        guide_level_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
-        guide_level_row.addWidget(guide_level_label)
-        self.guide_detail_level_combo = _QComboBox()
-        self.guide_detail_level_combo.addItem("初心者向け（詳細）", "beginner")
-        self.guide_detail_level_combo.addItem("中級者向け（要点）", "intermediate")
-        self.guide_detail_level_combo.setStyleSheet(combo_style)
-        cur_guide_level = self.current_config.get("guide_detail_level", "beginner")
-        idx_level = self.guide_detail_level_combo.findData(cur_guide_level)
-        if idx_level >= 0:
-            self.guide_detail_level_combo.setCurrentIndex(idx_level)
-        guide_level_row.addWidget(self.guide_detail_level_combo)
-        guide_level_row.addStretch()
-        font_group_layout.addLayout(guide_level_row)
-        
         # ルート選択
         poe1_only_tag_style = """
             QLabel {
@@ -2170,7 +2141,7 @@ class SettingsDialog(QDialog):
         poe1_route_act3_label = QLabel("Act3 ルート:")
         poe1_route_act3_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
         poe1_route_act3_row.addWidget(poe1_route_act3_label)
-        self.poe1_route_act3_combo = _QComboBox()
+        self.poe1_route_act3_combo = QComboBox()
         self.poe1_route_act3_combo.addItem("通常ルート（図書館スキップ）", "standard")
         self.poe1_route_act3_combo.addItem("図書館寄り道ルート", "library_detour")
         self.poe1_route_act3_combo.setStyleSheet(combo_style)
@@ -2189,7 +2160,7 @@ class SettingsDialog(QDialog):
         poe1_route_act8_label = QLabel("Act8 ルート:")
         poe1_route_act8_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
         poe1_route_act8_row.addWidget(poe1_route_act8_label)
-        self.poe1_route_act8_combo = _QComboBox()
+        self.poe1_route_act8_combo = QComboBox()
         self.poe1_route_act8_combo.addItem("通常ルート", "standard")
         self.poe1_route_act8_combo.addItem("隠れた裏道（The Hidden Underbelly）ルート", "underbelly")
         self.poe1_route_act8_combo.setStyleSheet(combo_style)
@@ -3305,7 +3276,6 @@ class SettingsDialog(QDialog):
             "poe_version": self.poe_version,
             "poe_version_mode": self.poe_version_mode_combo.currentData(),
             "guide_font_size": self.guide_font_spin.value(),
-            "guide_detail_level": self.guide_detail_level_combo.currentData(),
             "timer_size": self.timer_size_combo.currentData(),
             "confirm_reset": self.confirm_reset_cb.isChecked(),
             "window_opacity": self.opacity_slider.value(),

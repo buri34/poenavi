@@ -28,8 +28,6 @@
     "text_color": "#e9ffbd",
     "guide_expanded": true,
     "guide_font_size": 18,
-    "guide_detail_level": "beginner",
-    "guide_detail_level_selected": false,
     "area_note_migration_notice_shown": true,
     "part2_mode": false,
     "timer_expanded": true,

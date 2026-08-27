@@ -26,8 +26,6 @@ def write_default_config(app_dir: Path, overrides=None):
         "poe_version": "poe1",
         "poe_version_mode": "ask",
         "text_color": "#e9ffbd",
-        "guide_detail_level": "beginner",
-        "guide_detail_level_selected": False,
         "always_on_top": True,
         "notified_update_version": "",
     }
@@ -44,6 +42,17 @@ def write_default_config(app_dir: Path, overrides=None):
 
 
 class ConfigManagerTest(unittest.TestCase):
+    def test_schema_v11_removes_retired_guide_detail_selection(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 10,
+            "guide_detail_level": "intermediate",
+            "guide_detail_level_selected": True,
+        })
+
+        self.assertNotIn("guide_detail_level", migrated)
+        self.assertNotIn("guide_detail_level_selected", migrated)
+        self.assertEqual(migrated["schemaVersion"], 11)
+
     def test_schema_v10_removes_retired_hideout_hotkey(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 9,
@@ -326,8 +335,6 @@ class ConfigManagerTest(unittest.TestCase):
                 self.assertEqual(loaded["hotkeys"]["start_stop"], "F7")
                 self.assertEqual(loaded["hotkeys"]["reset"], "F2")
                 self.assertEqual(loaded["text_color"], "#abcdef")
-                self.assertEqual(loaded["guide_detail_level"], "beginner")
-                self.assertFalse(loaded["guide_detail_level_selected"])
                 self.assertTrue(loaded["always_on_top"])
                 self.assertEqual(loaded["notified_update_version"], "")
                 self.assertEqual(loaded["schemaVersion"], ConfigManager.CURRENT_SCHEMA_VERSION)

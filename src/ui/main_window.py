@@ -72,7 +72,6 @@ from src.update.qt_controller import UpdateController
 from PySide6.QtWidgets import QComboBox, QDialog, QFormLayout
 
 from src.ui.startup_dialogs import (
-    GuideDetailLevelSelectionDialog,
     PoeVersionSelectionDialog,
     RouteSelectionDialog,
 )
@@ -834,31 +833,16 @@ class MainWindow(QMainWindow):
     def _ensure_poe_version_selected(self):
         app = QApplication.instance()
         if bool(app and app.property("startupPoeVersionSelected")):
-            return self._ensure_guide_detail_level_selected_if_needed()
+            return True
 
         mode = self.config.get("poe_version_mode", "ask")
         if mode in (POE1, POE2):
             self.config["poe_version"] = mode
-            return self._ensure_guide_detail_level_selected_if_needed()
+            return True
 
         dialog = PoeVersionSelectionDialog(self, self.config.get("poe_version", POE1))
         if dialog.exec():
             self.config["poe_version"] = dialog.selected_version
-            ConfigManager.save_config(self.config)
-            return self._ensure_guide_detail_level_selected_if_needed()
-        return False
-
-    def _ensure_guide_detail_level_selected_if_needed(self):
-        """PoE2選択後、初回だけガイド表示レベルを選ばせる。"""
-        if self.config.get("poe_version") != POE2:
-            return True
-        if self.config.get("guide_detail_level_selected"):
-            return True
-
-        dialog = GuideDetailLevelSelectionDialog(self, self.config.get("guide_detail_level", "beginner"))
-        if dialog.exec():
-            self.config["guide_detail_level"] = dialog.selected_level
-            self.config["guide_detail_level_selected"] = True
             ConfigManager.save_config(self.config)
             return True
         return False
@@ -1619,25 +1603,6 @@ class MainWindow(QMainWindow):
         self.area_note_edit_button.setEnabled(False)
         guide_text_header_layout.addWidget(self.area_note_edit_button)
 
-        self.guide_detail_level_toggle_btn = QPushButton()
-        self.guide_detail_level_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.guide_detail_level_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self.guide_detail_level_toggle_btn.setToolTip("詳細版ガイド / 要点版ガイドを切り替えます")
-        self.guide_detail_level_toggle_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: rgba(20, 30, 20, 160);
-                color: {Styles.TEXT_COLOR};
-                border: 1px solid rgba(176, 255, 123, 0.75);
-                border-radius: 5px;
-                padding: 3px 9px;
-                font-size: 11px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background: rgba(73, 110, 50, 180);
-                color: #ffffff;
-            }}
-        """)
         self.mini_navi_toggle_btn = QPushButton()
         self.mini_navi_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.mini_navi_toggle_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
@@ -1660,12 +1625,8 @@ class MainWindow(QMainWindow):
         self.mini_navi_toggle_btn.clicked.connect(self.toggle_mini_navi_overlay)
         guide_text_header_layout.addWidget(self.mini_navi_toggle_btn)
 
-        # PoE2のガイド詳細度は初回選択を維持し、本画面からは切り替えない。
-        # 互換性のためWidget自体は残すが、レイアウトにも操作経路にも接続しない。
-        self.guide_detail_level_toggle_btn.hide()
         guide_container_layout.addLayout(guide_text_header_layout)
         self._refresh_mini_navi_toggle()
-        self._refresh_guide_detail_level_toggle()
         
         # ── 攻略ガイド表示エリア（本体） ──
         guide_text_frame = QFrame()
@@ -2579,32 +2540,6 @@ class MainWindow(QMainWindow):
             return
         self.mini_navi_overlay.show_last_content_or_waiting()
 
-    def _guide_detail_level_toggle_text(self):
-        """現在のガイド表示レベルからトグルボタン文言を返す。"""
-        if self.config.get("guide_detail_level", "beginner") == "intermediate":
-            return "要点版ガイド"
-        return "詳細版ガイド"
-
-    def _refresh_guide_detail_level_toggle(self):
-        """廃止済みのガイド表示レベルトグルを常に非表示にする。"""
-        if not hasattr(self, "guide_detail_level_toggle_btn"):
-            return
-        self.guide_detail_level_toggle_btn.setText(self._guide_detail_level_toggle_text())
-        self.guide_detail_level_toggle_btn.setVisible(False)
-
-    def toggle_guide_detail_level(self):
-        """詳細版ガイド / 要点版ガイドを即時切り替えする。"""
-        current = self.config.get("guide_detail_level", "beginner")
-        self.config["guide_detail_level"] = "intermediate" if current != "intermediate" else "beginner"
-        self.config["guide_detail_level_selected"] = True
-        ConfigManager.save_config(self.config)
-        self._refresh_guide_detail_level_toggle()
-
-        if self.current_zone:
-            zone_id = self._get_zone_id(self.current_zone)
-            visit_num = self.zone_visit_counts.get(zone_id or self.current_zone, 1)
-            self._update_guide_and_map(self.current_zone, zone_id, visit_num)
-
     
     def toggle_map_section(self):
         """マップセクションの折りたたみ/展開"""
@@ -2626,7 +2561,6 @@ class MainWindow(QMainWindow):
             # サブトグルボタンも表示
             self.zone_header_toggle_btn.setVisible(True)
             self.guide_text_toggle_btn.setVisible(True)
-            self._refresh_guide_detail_level_toggle()
         else:
             # 全体折りたたみ時はガイド配下のセクションだけを非表示にする。
             self.guide_info_frame.setVisible(False)
@@ -2634,8 +2568,6 @@ class MainWindow(QMainWindow):
             # サブトグルボタンも非表示
             self.zone_header_toggle_btn.setVisible(False)
             self.guide_text_toggle_btn.setVisible(False)
-            if hasattr(self, "guide_detail_level_toggle_btn"):
-                self.guide_detail_level_toggle_btn.setVisible(False)
         # 背景も連動
         if self.guide_expanded:
             self.guide_container.setStyleSheet("""
@@ -4277,7 +4209,6 @@ class MainWindow(QMainWindow):
                 guide,
                 font_size=self.guide_font_size,
                 show_direction=(self.poe_version == POE1),
-                guide_detail_level=self.config.get("guide_detail_level", "beginner") if self.poe_version == POE2 else "beginner",
             )
             self.guide_text_label.setText(html)
             self.guide_text_label.setStyleSheet(f"color: #dddddd; font-size: {self.guide_font_size}px; background: transparent;")
@@ -4852,7 +4783,6 @@ class MainWindow(QMainWindow):
                 self.panel_registry["gem"]["content"].setVisible(self.poe_version == POE1)
             self.part2_btn.setVisible(self.poe_version == POE1)
             self._refresh_mini_navi_toggle()
-            self._refresh_guide_detail_level_toggle()
             self._enforce_feature_support()
             
             # タイマーサイズ更新

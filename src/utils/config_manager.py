@@ -14,7 +14,7 @@ class ConfigManager:
     DEFAULT_CONFIG_FILE = "default_config.json"
     APP_NAME = "PoENavi"
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
-    CURRENT_SCHEMA_VERSION = 10
+    CURRENT_SCHEMA_VERSION = 11
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -457,6 +457,11 @@ class ConfigManager:
             if isinstance(hotkeys, dict):
                 # PoEクライアント本体で隠れ家ホットキーが利用可能になったため廃止。
                 hotkeys.pop("hideout", None)
+
+        if schema_version < 11:
+            # PoE2ガイドは詳細版へ統一したため、旧選択状態をconfigから撤去する。
+            migrated.pop("guide_detail_level", None)
+            migrated.pop("guide_detail_level_selected", None)
 
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)

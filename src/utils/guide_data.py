@@ -464,22 +464,10 @@ def _safe_html(text: str) -> str:
     return escaped
 
 
-def format_guide_html(guide: dict, font_size: int = 12, show_direction: bool = True, guide_detail_level: str = "beginner") -> str:
+def format_guide_html(guide: dict, font_size: int = 12, show_direction: bool = True) -> str:
     """ガイドデータをHTML形式にフォーマット"""
     if not guide:
         return ""
-    
-    summary = guide.get("summary", "")
-    if guide_detail_level == "intermediate" and summary:
-        summary_html = _safe_html(summary.strip()).replace("\n", "<br>")
-        summary_html = summary_html.replace("　", "&nbsp;&nbsp;")
-        summary_html = summary_html.replace("  ", "&nbsp;&nbsp;")
-        return (
-            f"<p style='margin:0;'>"
-            f"<b style='color:#b0ff7b; font-size:{font_size}px;'>📋 要点版ガイド（次の目標、重要ポイント等）</b><br>"
-            f"<span style='color:#ffffff;'>{summary_html}</span>"
-            f"</p>"
-        )
     
     parts = []
     

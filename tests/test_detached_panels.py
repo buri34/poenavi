@@ -471,7 +471,6 @@ def test_collapsing_guide_does_not_hide_the_attached_map_panel():
     window.guide_text_frame = QWidget()
     window.zone_header_toggle_btn = QPushButton()
     window.guide_text_toggle_btn = QPushButton()
-    window.guide_detail_level_toggle_btn = QPushButton()
     window.guide_container = QWidget()
     window.guide_container.setObjectName("guideContainer")
     window.guide_toggle_btn = QPushButton()
