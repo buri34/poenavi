@@ -5,11 +5,60 @@ import unicodedata
 
 from ..models import ItemModifier, ParsedItem
 from .metadata import (
+    augment_entries,
     resolve_identity,
     resolve_identity_candidates,
     resolve_identity_fragments,
     resolve_stat_line_candidates,
 )
+
+
+_AUGMENT_CATEGORY_BY_CATEGORY = {
+    "bow": "Bow", "crossbow": "Crossbow", "spear": "Spear", "flail": "Flail",
+    "staff": "Staff", "quarterstaff": "Warstaff", "wand": "Wand",
+    "sceptre": "Sceptre", "one_mace": "One Hand Mace", "two_mace": "Two Hand Mace",
+    "one_sword": "One Hand Sword", "two_sword": "Two Hand Sword",
+    "one_axe": "One Hand Axe", "two_axe": "Two Hand Axe", "dagger": "Dagger",
+    "focus": "Focus", "buckler": "Buckler", "shield": "Shield",
+    "body_armour": "Body Armour", "helmet": "Helmet", "gloves": "Gloves",
+    "boots": "Boots",
+}
+
+
+def _aggregate_augment_count(
+    modifiers: list[ItemModifier], category: str, socket_count: int,
+) -> int:
+    """Infer repeated identical augments collapsed into one summed Stat line."""
+    if socket_count <= 1:
+        return 0
+    augment_category = _AUGMENT_CATEGORY_BY_CATEGORY.get(category)
+    if augment_category is None:
+        return 0
+    inferred = 0
+    for modifier in modifiers:
+        if modifier.kind != "augment" or not modifier.stat_id or not modifier.values:
+            continue
+        for entry in augment_entries():
+            for effect in entry.get("effects", ()):
+                base_values = tuple(float(value) for value in effect.get("values", ()))
+                if (
+                    augment_category not in (effect.get("categories") or ())
+                    or modifier.stat_id not in (effect.get("trade_ids") or ())
+                    or len(base_values) != len(modifier.values)
+                    or not all(base_values)
+                ):
+                    continue
+                ratios = tuple(
+                    observed / base
+                    for observed, base in zip(modifier.values, base_values)
+                )
+                rounded = round(ratios[0])
+                if (
+                    2 <= rounded <= socket_count
+                    and all(abs(ratio - rounded) < 1e-9 for ratio in ratios)
+                ):
+                    inferred = max(inferred, rounded)
+    return inferred
 
 
 class Poe2ItemParseError(ValueError):
@@ -833,6 +882,12 @@ def parse_item_text(text: str) -> ParsedItem:
         elif re.search(r"\d", line) and not separator:
             # Keep suspicious numeric lines visible to the user instead of silently dropping them.
             modifiers.append(ItemModifier(text=line, confidence=0.0))
+    socket_text = str(properties.get("Sockets") or properties.get("ソケット") or "")
+    socket_count = len(re.findall(r"(?<![A-Za-z])S(?![A-Za-z])", socket_text, re.IGNORECASE))
+    augment_count = min(
+        socket_count,
+        max(augment_count, _aggregate_augment_count(modifiers, category, socket_count)),
+    ) if socket_count else augment_count
     item = ParsedItem(
         item_class=item_class,
         rarity=rarity,

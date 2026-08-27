@@ -757,6 +757,15 @@ def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
     assert len(alternate["filters"]) == 2
 
 
+def test_two_identical_runes_leave_no_empty_augment_socket():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2"
+         / "rare_body_armour_two_identical_runes_ja.txt").read_text(encoding="utf-8")
+    )
+    assert empty_augment_socket_count(item) == 0
+    assert augment_socket_edit_counts(item) == ((2, "全2個を置換"),)
+
+
 def test_augment_socket_filter_stays_off_for_non_exceptional_equipment():
     item = _phase45_item("phase45_sceptre_ja.txt")
     row = next(

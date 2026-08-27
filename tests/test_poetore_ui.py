@@ -6228,6 +6228,23 @@ def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
         window.close()
 
 
+def test_poe2_two_identical_runes_show_only_replace_all_mode(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        item = parse_poe2_item_text(
+            (Path(__file__).parent / "fixtures" / "poe2"
+             / "rare_body_armour_two_identical_runes_ja.txt").read_text(encoding="utf-8")
+        )
+        window.input_edit.setPlainText(item.raw_text)
+        window.parse_current_text()
+
+        assert window.virtual_augment_count_combo.count() == 1
+        assert window.virtual_augment_count_combo.itemText(0) == "全2個を置換"
+        assert window.virtual_augment_count_combo.findText("空き1個に追加") == -1
+    finally:
+        window.close()
+
+
 def test_armour_base_percentile_is_an_editable_base_only_chip(qapp):
     window = PoetoreWindow()
     try:

@@ -446,6 +446,18 @@ def test_poe2_standalone_rune_line_counts_one_installed_augment():
     assert item.augment_count == 1
 
 
+def test_two_identical_runes_collapsed_into_one_line_count_as_two_augments():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2"
+         / "rare_body_armour_two_identical_runes_ja.txt").read_text(encoding="utf-8")
+    )
+    assert item.properties["ソケット"] == "S S"
+    assert item.augment_count == 2
+    augment = next(modifier for modifier in item.modifiers if modifier.kind == "augment")
+    assert augment.stat_id == "rune.stat_3523867985"
+    assert augment.values == (36.0,)
+
+
 def test_poe2_standalone_rune_prefers_augment_stat_over_same_text_explicit():
     item = parse_item_text("""アイテムクラス: 靴
 レアリティ: レア
