@@ -18,6 +18,7 @@ from src.poetore.ui import (
     _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
     show_poetore_window, _price_currency_icon_filename,
 )
+from src.utils.poe_version_data import POE2
 
 
 def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qapp):
@@ -5583,6 +5584,32 @@ def test_divine_rate_button_builds_awakened_style_conversion_menu(qapp):
                 if not label.pixmap().isNull()
             ]
             assert len(icons) == 2
+    finally:
+        window.close()
+
+
+def test_poe2_divine_rate_button_builds_exalted_conversion_menu(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    try:
+        window._divine_rate_key = "Runes of Aldur"
+        window._show_divine_rate("Runes of Aldur", 364.9)
+
+        assert not window.divine_rate_button.isHidden()
+        assert window.divine_rate_button.text() == "⇄ 365"
+        assert window.divine_rate_button.toolTip() == (
+            "Divine OrbのExalted換算早見表"
+        )
+        assert [action.text() for action in window.divine_rate_menu.actions()] == [
+            "0.1 div  →  36 ex",
+            "0.2 div  →  73 ex",
+            "0.3 div  →  109 ex",
+            "0.4 div  →  146 ex",
+            "0.5 div  →  182 ex",
+            "0.6 div  →  219 ex",
+            "0.7 div  →  255 ex",
+            "0.8 div  →  292 ex",
+            "0.9 div  →  328 ex",
+        ]
     finally:
         window.close()
 

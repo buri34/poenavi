@@ -140,7 +140,7 @@ def test_poetore_mode_starts_capture_and_stash_scroll_services_for_poe2():
     prepare_window.assert_called_once_with(window)
     for object_name, filename, size in (
         ("divineCurrencyIcon", "DivineOrb2.png", 52),
-        ("chaosCurrencyIcon", "ChaosOrb2.png", 46),
+        ("exaltedCurrencyIcon", "ExaltedOrb2.png", 46),
     ):
         label = window.findChild(QLabel, object_name)
         expected = QPixmap(str(window._asset_path(filename))).scaled(
@@ -392,5 +392,25 @@ def test_poetore_mode_renders_divine_chaos_rate():
     assert "#65FFCA" in style
     assert "#343B3E" in style
     assert "#DB86EF" not in style.upper()
+    window.close()
+    app.processEvents()
+
+
+def test_poe2_poetore_mode_renders_divine_exalted_rate():
+    app = QApplication.instance() or QApplication([])
+    config = {"poe_version": POE2, "hotkeys": {}}
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    window._show_rate("Runes of Aldur", 364.9)
+    assert window.divine_rate_value.text() == "1 = 364.9 Exalted"
+    assert window.findChild(QLabel, "exaltedCurrencyIcon") is not None
+    assert window.findChild(QLabel, "chaosCurrencyIcon") is None
     window.close()
     app.processEvents()

@@ -393,6 +393,10 @@ class PoetoreModeWindow(QMainWindow):
             self.restore_from_tray()
 
     def _build_ui(self):
+        self.rate_quote_currency = (
+            "exalted" if self.config.get("poe_version", POE1) == POE2 else "chaos"
+        )
+        self.rate_quote_label = self.rate_quote_currency.title()
         central = QWidget()
         central.setObjectName("poetoreModeRoot")
         central.setStyleSheet(f"""
@@ -472,7 +476,7 @@ class PoetoreModeWindow(QMainWindow):
         header.addWidget(self.settings_button)
         body_layout.addLayout(header)
 
-        section_title = QLabel("Divine / Chaos 換算")
+        section_title = QLabel(f"Divine / {self.rate_quote_label} 換算")
         section_title.setStyleSheet(
             f"color: {POETORE_ACCENT}; font-size: 15px; font-weight: bold;"
         )
@@ -565,19 +569,19 @@ class PoetoreModeWindow(QMainWindow):
             f"color: {POETORE_TEXT}; font-size: 20px; font-weight: bold;"
         )
         layout.addWidget(value_label)
-        chaos_icon = QLabel()
-        chaos_icon.setObjectName("chaosCurrencyIcon")
-        chaos_pixmap = QPixmap(str(self._asset_path(
-            _currency_icon_filename("chaos", poe_version)
+        quote_icon = QLabel()
+        quote_icon.setObjectName(f"{self.rate_quote_currency}CurrencyIcon")
+        quote_pixmap = QPixmap(str(self._asset_path(
+            _currency_icon_filename(self.rate_quote_currency, poe_version)
         )))
-        chaos_icon.setPixmap(chaos_pixmap.scaled(
+        quote_icon.setPixmap(quote_pixmap.scaled(
             QSize(46, 46),
             Qt.KeepAspectRatio,
             Qt.SmoothTransformation,
         ))
-        chaos_icon.setFixedSize(46, 46)
-        chaos_icon.setToolTip("Chaos Orb")
-        layout.addWidget(chaos_icon)
+        quote_icon.setFixedSize(46, 46)
+        quote_icon.setToolTip(f"{self.rate_quote_label} Orb")
+        layout.addWidget(quote_icon)
         layout.addStretch()
         return card
 
@@ -656,7 +660,8 @@ class PoetoreModeWindow(QMainWindow):
         return frozenset(names)
 
     def _configured_league(self):
-        return str(self.config.get("poetore", {}).get("league", "auto"))
+        key = "league_poe2" if self.config.get("poe_version", POE1) == POE2 else "league"
+        return str(self.config.get("poetore", {}).get(key, "auto"))
 
     def refresh_currency_rate(self):
         if self._rate_request_running:
@@ -667,7 +672,10 @@ class PoetoreModeWindow(QMainWindow):
         def run():
             try:
                 from src.poetore.poe_ninja import default_poe_ninja_service
-                from src.poetore.trade import available_pc_leagues, default_pc_league
+                if self.config.get("poe_version", POE1) == POE2:
+                    from src.poetore.poe2.trade import available_pc_leagues, default_pc_league
+                else:
+                    from src.poetore.trade import available_pc_leagues, default_pc_league
 
                 configured = self._configured_league()
                 league = (
@@ -675,7 +683,10 @@ class PoetoreModeWindow(QMainWindow):
                     if configured == "auto"
                     else configured
                 )
-                rate = default_poe_ninja_service.divine_chaos_rate(league)
+                if self.config.get("poe_version", POE1) == POE2:
+                    rate = default_poe_ninja_service.divine_exalted_rate(league)
+                else:
+                    rate = default_poe_ninja_service.divine_chaos_rate(league)
                 if rate is None:
                     raise ValueError("Divine Orbの換算レートが見つかりませんでした。")
                 self._rate_signals.ready.emit(league, rate)
@@ -686,7 +697,7 @@ class PoetoreModeWindow(QMainWindow):
 
     def _show_rate(self, league, rate):
         self._rate_request_running = False
-        self.divine_rate_value.setText(f"1 = {rate:,.1f} Chaos")
+        self.divine_rate_value.setText(f"1 = {rate:,.1f} {self.rate_quote_label}")
         self.rate_status.setText(f"{league} ・ poe.ninja ・ 31分ごとに自動更新")
 
     def _show_rate_error(self, message):

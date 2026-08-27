@@ -538,6 +538,19 @@ def _poe2_exchange_payload():
     }
 
 
+def test_poe2_divine_exalted_rate_uses_currency_exchange_core_and_cache():
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        return _poe2_exchange_payload()
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    assert service.divine_exalted_rate("Runes of Aldur") == 364.9
+    assert service.divine_exalted_rate("Runes of Aldur") == 364.9
+    assert calls == [("Runes of Aldur", "Currency")]
+
+
 def test_poe2_exchange_matches_uncut_gem_and_uses_most_traded_quote_currency():
     item = ParsedItem(
         "Uncut Skill Gems", "currency", "Uncut Skill Gem (Level 18)",

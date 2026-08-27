@@ -308,6 +308,17 @@ class PoeNinjaPriceService:
             return None
         return divine_chaos_rate(self._payload(league))
 
+    def divine_exalted_rate(self, league: str) -> float | None:
+        """Return the PoE2 league's current Divine Orb value in Exalted Orbs."""
+        if not league or re.search(r"\(PL\d+\)$", league):
+            return None
+        payload = self._poe2_exchange_payload(league, "Currency")
+        core = payload.get("core") or {}
+        if core.get("primary") != "divine":
+            return None
+        rate = float((core.get("rates") or {}).get("exalted", 0))
+        return rate if rate > 0 else None
+
     def lookup_identity(
         self, namespace: str, name: str, variant: str | None, league: str,
     ) -> PoeNinjaPrice | None:

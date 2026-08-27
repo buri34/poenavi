@@ -870,7 +870,8 @@ class _PoetoreTitleBar(QWidget):
         layout.addWidget(self._expanded_controls, 1)
         window.divine_rate_button = QPushButton("⇄ …", self._expanded_controls)
         window.divine_rate_button.setObjectName("divineRateButton")
-        window.divine_rate_button.setToolTip("Divine OrbのChaos換算早見表")
+        quote_name = "Exalted" if window.poe_version == POE2 else "Chaos"
+        window.divine_rate_button.setToolTip(f"Divine Orbの{quote_name}換算早見表")
         window.divine_rate_button.setEnabled(False)
         window.divine_rate_button.hide()
         window.divine_rate_menu = QMenu(window.divine_rate_button)
@@ -3161,8 +3162,7 @@ class PoetoreWindow(QWidget):
         trace = self._current_performance_trace
         self._hide_poe_ninja_price(key)
         self._hide_related_items(key)
-        if self.poe_version != POE2:
-            self._queue_divine_rate(league)
+        self._queue_divine_rate(league)
         if trace is not None:
             self._poe_ninja_performance_traces[key] = trace
             trace.mark("poe_ninja_queued", league=league)
@@ -3339,7 +3339,10 @@ class PoetoreWindow(QWidget):
 
         def run():
             try:
-                rate = default_poe_ninja_service.divine_chaos_rate(league)
+                if self.poe_version == POE2:
+                    rate = default_poe_ninja_service.divine_exalted_rate(league)
+                else:
+                    rate = default_poe_ninja_service.divine_chaos_rate(league)
             except Exception:
                 self._trade_signals.divine_rate_failed.emit(key)
             else:
@@ -3365,14 +3368,18 @@ class PoetoreWindow(QWidget):
         divine_icon_path = _asset_icon_path(
             _price_currency_icon_filename("divine", self.poe_version)
         )
-        chaos_icon_path = _asset_icon_path(
-            _price_currency_icon_filename("chaos", self.poe_version)
+        quote_currency = "exalted" if self.poe_version == POE2 else "chaos"
+        quote_abbreviation = "ex" if self.poe_version == POE2 else "c"
+        quote_icon_path = _asset_icon_path(
+            _price_currency_icon_filename(quote_currency, self.poe_version)
         )
         for step in range(1, 10):
             divine = step / 10
-            chaos = self._awakened_round(rate * divine)
+            quote_amount = self._awakened_round(rate * divine)
             action = QWidgetAction(self.divine_rate_menu)
-            action.setText(f"{divine:.1f} div  →  {chaos} c")
+            action.setText(
+                f"{divine:.1f} div  →  {quote_amount} {quote_abbreviation}"
+            )
             row = QWidget(self.divine_rate_menu)
             layout = QHBoxLayout(row)
             layout.setContentsMargins(10, 3, 14, 3)
@@ -3380,7 +3387,7 @@ class PoetoreWindow(QWidget):
             for icon_path, text in (
                 (divine_icon_path, f"{divine:.1f}"),
                 (None, "→"),
-                (chaos_icon_path, str(chaos)),
+                (quote_icon_path, str(quote_amount)),
             ):
                 if icon_path is not None:
                     icon = QLabel()
