@@ -41,6 +41,13 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
             "The Grelwood", "poe2_act1_area04", 2
         )
 
+    def test_detail_level_toggle_stays_hidden_in_expanded_poe2_guide(self):
+        window = self.make_window()
+
+        window._refresh_guide_detail_level_toggle()
+
+        window.guide_detail_level_toggle_btn.setVisible.assert_called_once_with(False)
+
     def test_mini_navi_toggle_is_visible_in_poe2_when_guide_expanded(self):
         window = MainWindow.__new__(MainWindow)
         window.config = {"mini_guide_overlay": {"enabled": False}}

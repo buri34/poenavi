@@ -1660,8 +1660,9 @@ class MainWindow(QMainWindow):
         self.mini_navi_toggle_btn.clicked.connect(self.toggle_mini_navi_overlay)
         guide_text_header_layout.addWidget(self.mini_navi_toggle_btn)
 
-        self.guide_detail_level_toggle_btn.clicked.connect(self.toggle_guide_detail_level)
-        guide_text_header_layout.addWidget(self.guide_detail_level_toggle_btn)
+        # PoE2のガイド詳細度は初回選択を維持し、本画面からは切り替えない。
+        # 互換性のためWidget自体は残すが、レイアウトにも操作経路にも接続しない。
+        self.guide_detail_level_toggle_btn.hide()
         guide_container_layout.addLayout(guide_text_header_layout)
         self._refresh_mini_navi_toggle()
         self._refresh_guide_detail_level_toggle()
@@ -2585,13 +2586,11 @@ class MainWindow(QMainWindow):
         return "詳細版ガイド"
 
     def _refresh_guide_detail_level_toggle(self):
-        """PoE2専用のガイド表示レベルトグル状態を反映する。"""
+        """廃止済みのガイド表示レベルトグルを常に非表示にする。"""
         if not hasattr(self, "guide_detail_level_toggle_btn"):
             return
         self.guide_detail_level_toggle_btn.setText(self._guide_detail_level_toggle_text())
-        self.guide_detail_level_toggle_btn.setVisible(
-            self.poe_version == POE2 and self.guide_expanded
-        )
+        self.guide_detail_level_toggle_btn.setVisible(False)
 
     def toggle_guide_detail_level(self):
         """詳細版ガイド / 要点版ガイドを即時切り替えする。"""
