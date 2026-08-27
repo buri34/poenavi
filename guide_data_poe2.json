@@ -7,7 +7,7 @@
       "summary": "<span style=\" color:#ffffff;\">・ボス「腐りし群れのベイラ」を倒す\n・「グレルウッド」へ進む</span>\n\n<span style='color:#ffffff'>まずワールドマップを見て、クリアフェル→グレルウッドの位置関係をみてグレルウッドの方向へ進むと期待値が高い。</span>\n<span style='color:#ffffff'>（以降も、</span><span style='color:#dddd44'>基本的にはワールドマップを信じる</span><span style='color:#ffffff'>ことが重要）</span>\n\n<span style='color:#ffffff'>「放棄されたスタッシュ」からスキルジェムの原石Lv1</span>\n\n<span style='color:#ffffff'>泥の巣穴内のデヴァウラーからスキルジェムの原石Lv2＋クエスト報酬でサポートジェムの原石Lv1。（時間がかかるので序盤がつらくてどうしてもすぐにサポジェムが欲しいキャラ以外は非推奨）</span>",
       "mini_navi": {
         "text": "▸[boss]ボス「腐りし群れのベイラ」を倒す\n▸[move]<span style='color:#dddd44'>グレルウッド</span>へ進む\n<span style='color:#ffffff'>（まずワールドマップを見て、クリアフェル→グレルウッドの位置関係をみてグレルウッドの方向へ進むと期待値が高い）</span>",
-        "voice_text": "ここでは、ボスを倒します。\n次に、グレルウッドへ進みます。\nグレルウッドは、ワールドマップを開いてクリアフェルとグレルウッドの位置関係を見て、グレルウッドがある方向へ進むと効率的です。"
+        "voice_text": "ここでは、ボスを倒します。\n次に、グレルウッドへ進みます。\nグレルウッドは、ワールドマップを開いてクリアフェルとグレルウッドの位置関係を見て、グレルウッドがある方向へ進むと期待値が高いです。"
       }
     },
     "flags": {}

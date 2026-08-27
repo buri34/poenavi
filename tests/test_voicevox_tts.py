@@ -1,6 +1,7 @@
 import json
 import queue
 import threading
+from pathlib import Path
 from unittest.mock import Mock
 
 from src.utils.voicevox_tts import VoicevoxTtsService, guide_to_speech_text, split_speech_chunks
@@ -28,6 +29,18 @@ def test_guide_to_speech_text_uses_only_voice_text():
 def test_guide_to_speech_text_does_not_fallback_to_display_text():
     assert guide_to_speech_text({"mini_navi": {"text": "表示用"}}) == ""
     assert guide_to_speech_text({"mini_navi": {"text": "表示用", "voice_text": ""}}) == ""
+
+
+def test_clearfell_voice_text_matches_poe2_mini_navi_csv():
+    guide_data = json.loads(Path("guide_data_poe2.json").read_text(encoding="utf-8"))
+    guide = guide_data["poe2_act1_area02"]["default"]
+
+    assert guide_to_speech_text(guide) == (
+        "ここでは、ボスを倒します。\n"
+        "次に、グレルウッドへ進みます。\n"
+        "グレルウッドは、ワールドマップを開いてクリアフェルとグレルウッドの位置関係を見て、"
+        "グレルウッドがある方向へ進むと期待値が高いです。"
+    )
 
 
 def test_split_speech_chunks_uses_punctuation_and_line_breaks():
