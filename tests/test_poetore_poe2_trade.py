@@ -397,7 +397,7 @@ def test_poe2_leagues_are_filtered_and_auto_selects_current_softcore(monkeypatch
             {"id": "HC Runes of Aldur", "realm": "poe2"},
             {"id": "Standard", "realm": "poe2"},
             {"id": "PoE1 League", "realm": "pc"},
-        ]}, {}),
+        ]}, {}, False),
     )
     leagues = available_pc_leagues()
     assert [row.id for row in leagues] == ["Runes of Aldur", "HC Runes of Aldur", "Standard"]

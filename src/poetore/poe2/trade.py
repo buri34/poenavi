@@ -32,7 +32,7 @@ FALLBACK_LEAGUES = (
 
 def available_pc_leagues() -> tuple[TradeLeague, ...]:
     """Return only official PoE2 trade leagues in display order."""
-    data, _ = _cached_request_json(LEAGUES_URL)
+    data, _, _ = _cached_request_json(LEAGUES_URL)
     rows = data.get("result", ())
     leagues = []
     for row in rows:
