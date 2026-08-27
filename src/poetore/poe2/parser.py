@@ -75,6 +75,7 @@ _ITEM_LEVEL = re.compile(r"^(?:Item Level|アイテムレベル):\s*(\d+)\s*$")
 _CLASS_CATEGORY = {
     "Currency": "currency",
     "カレンシー": "currency",
+    "Omens": "currency", "Omen": "currency", "お告げ": "currency",
     "Life Flasks": "flask", "Life Flask": "flask", "ライフフラスコ": "flask",
     "Mana Flasks": "flask", "Mana Flask": "flask", "マナフラスコ": "flask",
     "Flask": "flask",

@@ -858,6 +858,25 @@ def test_special_trade_and_exchange_categories_resolve_from_identity(
     assert (item.base_type, item.category) == (base_type, category)
 
 
+@pytest.mark.parametrize(
+    ("item_class", "localized_name", "base_type"),
+    [
+        ("Omens", "Aldur's Saga", "Aldur's Saga"),
+        ("Omens", "Medved's Saga", "Medved's Saga"),
+        ("Omens", "Olroth's Saga", "Olroth's Saga"),
+        ("Omens", "Uhtred's Saga", "Uhtred's Saga"),
+        ("お告げ", "ヴォラナの叙事詩", "Vorana's Saga"),
+    ],
+)
+def test_expedition_sagas_parse_as_exchange_currency(item_class, localized_name, base_type):
+    item = parse_item_text(
+        f"Item Class: {item_class}\nRarity: Currency\n{localized_name}\n"
+        "--------\nStack Size: 1/10\n"
+    )
+
+    assert (item.name, item.base_type, item.category) == (base_type, base_type, "currency")
+
+
 def test_normal_map_fragment_help_text_is_not_an_unresolved_modifier_like_ee2():
     text = (
         Path(__file__).parent / "fixtures" / "poe2" / "simulacrum_ja.txt"

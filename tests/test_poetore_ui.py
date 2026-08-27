@@ -5450,6 +5450,32 @@ def test_poe2_logbook_uses_exchange_price_without_trade2_filters(qapp):
         window.close()
 
 
+def test_poe2_vorana_saga_uses_expedition_exchange_price(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: お告げ
+レアリティ: カレンシー
+ヴォラナの叙事詩
+--------
+スタック数: 1/10
+--------
+このアイテムがインベントリー内でアクティブな間、次回使用するログブックは
+公開されたグランドエクスペディションエリアに特別なモッドを追加する
+--------
+インベントリ内で右クリックでアクティブ状態となる。このアイテムはトリガー時に消費される。""")
+        with patch("src.poetore.poe2.trade.search_prices") as trade_search:
+            window.search_current_item()
+
+        trade_search.assert_not_called()
+        assert window._parsed_item.category == "currency"
+        assert window._parsed_item.base_type == "Vorana's Saga"
+        assert "「カレンシー交換」の対象品" in window.search_scope_notice.text()
+        assert "poe.ninja参考価格のみ" in window.price_status.text()
+        assert not window.trade_url_button.isEnabled()
+    finally:
+        window.close()
+
+
 def test_poe2_shared_search_controls_reach_trade_adapter(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:

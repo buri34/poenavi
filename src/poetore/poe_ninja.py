@@ -44,6 +44,10 @@ POE2_FRAGMENT_EXCHANGE_NAMES = frozenset({
     "Twilight Reliquary Key", "Victorious Fate", "Weathered Crisis Fragment",
     "Xesht's Reliquary Key", "Zarokh's Reliquary Key: Against the Darkness",
 })
+POE2_EXPEDITION_SAGA_NAMES = frozenset({
+    "Aldur's Saga", "Medved's Saga", "Olroth's Saga", "Uhtred's Saga",
+    "Vorana's Saga",
+})
 
 
 @dataclass(frozen=True)
@@ -703,11 +707,13 @@ def _poe2_unique_overview_type(category: str) -> str | None:
 def _poe2_exchange_overview_type(item: ParsedItem) -> str | None:
     if item.category == "uncut_gem":
         return "UncutGems"
+    identity = str(item.base_type or item.name or "").strip()
+    if identity in POE2_EXPEDITION_SAGA_NAMES:
+        return "Expedition"
     if item.category == "currency":
         return "Currency"
     if item.category == "expedition_logbook":
         return "Expedition"
-    identity = str(item.base_type or item.name or "").strip()
     if identity in POE2_FRAGMENT_EXCHANGE_NAMES:
         return "Fragments"
     return None

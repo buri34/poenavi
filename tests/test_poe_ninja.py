@@ -720,3 +720,37 @@ def test_poe2_expedition_logbook_uses_expedition_exchange_overview():
     assert price.source_type == "Expedition"
     assert price.url.endswith("/expedition/expedition-logbook")
     assert calls == [("Runes of Aldur", "Expedition")]
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "Aldur's Saga", "Medved's Saga", "Olroth's Saga", "Uhtred's Saga",
+        "Vorana's Saga",
+    ],
+)
+def test_poe2_expedition_sagas_use_expedition_exchange_overview(name):
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        return {
+            "core": {"primary": "divine", "rates": {"chaos": 7.74}},
+            "items": [{"id": "saga", "name": name, "detailsId": "saga"}],
+            "lines": [{
+                "id": "saga", "primaryValue": 0.01,
+                "maxVolumeCurrency": "exalted", "maxVolumeRate": 0.5,
+                "sparkline": {"data": [], "totalChange": 0},
+            }],
+        }
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    item = ParsedItem("Omens", "currency", name, name, "currency")
+    price = service.lookup_poe2_exchange(item, "Runes of Aldur")
+
+    assert price is not None
+    assert price.name == name
+    assert price.source_type == "Expedition"
+    assert price.display_price_parts() == ("2", "exalted")
+    assert price.url.endswith("/expedition/saga")
+    assert calls == [("Runes of Aldur", "Expedition")]
