@@ -754,3 +754,38 @@ def test_poe2_expedition_sagas_use_expedition_exchange_overview(name):
     assert price.display_price_parts() == ("2", "exalted")
     assert price.url.endswith("/expedition/saga")
     assert calls == [("Runes of Aldur", "Expedition")]
+
+
+@pytest.mark.parametrize("item_class", ["Omens", "Omen", "お告げ"])
+def test_poe2_regular_omens_use_ritual_exchange_overview(item_class):
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        return {
+            "core": {"primary": "divine", "rates": {"chaos": 7.74}},
+            "items": [{
+                "id": "omen-of-sanctification",
+                "name": "Omen of Sanctification",
+                "detailsId": "omen-of-sanctification",
+            }],
+            "lines": [{
+                "id": "omen-of-sanctification", "primaryValue": 0.77,
+                "maxVolumeCurrency": "divine", "maxVolumeRate": 1.3,
+                "sparkline": {"data": [], "totalChange": 0},
+            }],
+        }
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    item = ParsedItem(
+        item_class, "currency", "Omen of Sanctification",
+        "Omen of Sanctification", "currency",
+    )
+    price = service.lookup_poe2_exchange(item, "Runes of Aldur")
+
+    assert price is not None
+    assert price.name == "Omen of Sanctification"
+    assert price.source_type == "Ritual"
+    assert price.display_price_parts() == ("0.77", "divine")
+    assert price.url.endswith("/omens/omen-of-sanctification")
+    assert calls == [("Runes of Aldur", "Ritual")]

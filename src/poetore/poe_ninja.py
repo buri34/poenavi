@@ -48,6 +48,7 @@ POE2_EXPEDITION_SAGA_NAMES = frozenset({
     "Aldur's Saga", "Medved's Saga", "Olroth's Saga", "Uhtred's Saga",
     "Vorana's Saga",
 })
+POE2_OMEN_ITEM_CLASSES = frozenset({"Omens", "Omen", "お告げ"})
 
 
 @dataclass(frozen=True)
@@ -710,6 +711,8 @@ def _poe2_exchange_overview_type(item: ParsedItem) -> str | None:
     identity = str(item.base_type or item.name or "").strip()
     if identity in POE2_EXPEDITION_SAGA_NAMES:
         return "Expedition"
+    if item.item_class in POE2_OMEN_ITEM_CLASSES:
+        return "Ritual"
     if item.category == "currency":
         return "Currency"
     if item.category == "expedition_logbook":

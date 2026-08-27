@@ -5476,6 +5476,32 @@ def test_poe2_vorana_saga_uses_expedition_exchange_price(qapp):
         window.close()
 
 
+def test_poe2_sanctification_omen_is_an_exchange_price_item(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: お告げ
+レアリティ: カレンシー
+聖別のお告げ
+--------
+スタック数: 2/10
+--------
+インベントリ内でアクティブ状態の時
+次回レアアイテムに使用する神のオーブはそのアイテムを聖別する
+--------
+インベントリ内で右クリックでアクティブ状態となる。このアイテムはトリガー時に消費される。
+Shift+クリックでスタックから取り出す。""")
+        with patch("src.poetore.poe2.trade.search_prices") as trade_search:
+            window.search_current_item()
+
+        trade_search.assert_not_called()
+        assert window._parsed_item.item_class == "お告げ"
+        assert window._parsed_item.base_type == "Omen of Sanctification"
+        assert "poe.ninja参考価格のみ" in window.price_status.text()
+        assert not window.trade_url_button.isEnabled()
+    finally:
+        window.close()
+
+
 def test_poe2_shared_search_controls_reach_trade_adapter(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:
