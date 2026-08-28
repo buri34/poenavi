@@ -143,6 +143,8 @@ def test_poetore_mode_starts_capture_and_stash_scroll_services_for_poe2():
         "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
     ), patch(
         "src.ui.poetore_mode_window.is_feature_hotkey_supported", return_value=True,
+    ), patch(
+        "src.ui.poetore_mode_window.suppressed_hotkeys_supported", return_value=False,
     ):
         window = PoetoreModeWindow()
 

@@ -58,7 +58,10 @@ def test_build_augment_index_keeps_bilingual_effects_and_trade_ids(tmp_path):
                 "tradeId": ["rune.stat_1"], "socketBound": False,
             }],
         }
-        (target / "items.ndjson").write_text(json.dumps(row, ensure_ascii=False) + "\n")
+        (target / "items.ndjson").write_text(
+            json.dumps(row, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
     payload = build_augment_index(tmp_path)
     assert payload["entries"] == [{
         "ref_name": "Body Rune",
