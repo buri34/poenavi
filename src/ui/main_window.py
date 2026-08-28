@@ -71,10 +71,7 @@ from src.ui.update_dialogs import UpdateAvailableDialog, UpdateProgressDialog
 from src.update.qt_controller import UpdateController
 from PySide6.QtWidgets import QComboBox, QDialog, QFormLayout
 
-from src.ui.startup_dialogs import (
-    PoeVersionSelectionDialog,
-    RouteSelectionDialog,
-)
+from src.ui.startup_dialogs import RouteSelectionDialog
 from src.ui.memo_dialog import MemoDialog
 from src.ui.mini_navi import MiniNaviOverlay
 from src.ui.search_paste_dialog import SearchStringPasteTestDialog
@@ -831,6 +828,7 @@ class MainWindow(QMainWindow):
         return False
         
     def _ensure_poe_version_selected(self):
+        """共通起動フローで確定済みのPoEバージョンを適用する。"""
         app = QApplication.instance()
         if bool(app and app.property("startupPoeVersionSelected")):
             return True
@@ -838,14 +836,9 @@ class MainWindow(QMainWindow):
         mode = self.config.get("poe_version_mode", "ask")
         if mode in (POE1, POE2):
             self.config["poe_version"] = mode
-            return True
-
-        dialog = PoeVersionSelectionDialog(self, self.config.get("poe_version", POE1))
-        if dialog.exec():
-            self.config["poe_version"] = dialog.selected_version
-            ConfigManager.save_config(self.config)
-            return True
-        return False
+        elif self.config.get("poe_version") not in (POE1, POE2):
+            self.config["poe_version"] = POE1
+        return True
 
     def _check_for_updates(self, manual=False):
         """GitHub Releasesから最新バージョンを確認する。"""

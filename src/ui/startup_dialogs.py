@@ -25,31 +25,42 @@ from src.utils.feature_support import POETORE, is_feature_supported
 from src.utils.poe_version_data import POE1, POE2
 
 
-class AppModeSelectionDialog(QDialog):
-    """ぽえなび／ぽえとれの起動モード選択。"""
+class StartupSelectionDialog(QDialog):
+    """PoEバージョンと使用機能を一度に選ぶ起動ダイアログ。"""
 
     def __init__(self, parent=None, current_mode=POENAVI_MODE, poe_version=POE1):
         super().__init__(parent)
+        self.selected_version = poe_version if poe_version in (POE1, POE2) else POE1
         self.selected_mode = normalize_app_mode(current_mode)
-        poetore_supported = is_feature_supported(POETORE, poe_version)
+        poetore_supported = is_feature_supported(POETORE, self.selected_version)
         if self.selected_mode == POETORE_MODE and not poetore_supported:
             self.selected_mode = POENAVI_MODE
-        self.setWindowTitle("起動モード選択")
+        self.setWindowTitle("起動設定")
         self.setModal(True)
-        self.setFixedSize(720, 430)
+        self.setFixedSize(760, 760)
         self.setStyleSheet(Styles.MAIN_WINDOW)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(22, 20, 22, 18)
         layout.setSpacing(14)
 
-        title = QLabel("使う機能を選んでください")
+        title = QLabel("起動するPoEバージョンと機能を選んでください")
         title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 20px; font-weight: bold;")
         layout.addWidget(title)
 
-        description = QLabel("選ばなかったモードの専用機能は起動しません。後から設定で変更できます。")
-        description.setStyleSheet("color: #c9d4c2; font-size: 13px;")
-        layout.addWidget(description)
+        self.version_group = QButtonGroup(self)
+        self.version_group.setExclusive(True)
+        version_cards = QHBoxLayout()
+        version_cards.setSpacing(16)
+        self.poe1_tile = self._create_version_tile(POE1, "PoE1", self.selected_version == POE1)
+        self.poe2_tile = self._create_version_tile(POE2, "PoE2", self.selected_version == POE2)
+        version_cards.addWidget(self.poe1_tile)
+        version_cards.addWidget(self.poe2_tile)
+        layout.addLayout(version_cards)
+
+        feature_title = QLabel("使う機能を選んでください")
+        feature_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 18px; font-weight: bold;")
+        layout.addWidget(feature_title)
 
         self.group = QButtonGroup(self)
         self.group.setExclusive(True)
@@ -78,7 +89,14 @@ class AppModeSelectionDialog(QDialog):
         cards.addWidget(self.poetore_card)
         layout.addLayout(cards)
 
-        self.skip_selector_checkbox = QCheckBox("次回からこのモードで直接起動")
+        notice = QLabel(
+            "※デフォルトでは起動時に毎回確認します。以下のチェックボックスをONにすると固定にもできます。設定画面からも変更可能です。"
+        )
+        notice.setWordWrap(True)
+        notice.setStyleSheet("color: rgba(176, 255, 123, 0.78); font-size: 12px;")
+        layout.addWidget(notice)
+
+        self.skip_selector_checkbox = QCheckBox("次回からこの設定で直接起動")
         self.skip_selector_checkbox.setChecked(False)
         self.skip_selector_checkbox.setStyleSheet(
             f"""
@@ -97,7 +115,7 @@ class AppModeSelectionDialog(QDialog):
 
         buttons = QHBoxLayout()
         buttons.addStretch()
-        start_button = QPushButton("このモードで起動")
+        start_button = QPushButton("この設定で起動")
         start_button.setStyleSheet(Styles.BUTTON)
         start_button.clicked.connect(self._accept_selection)
         cancel_button = QPushButton("キャンセル")
@@ -133,7 +151,7 @@ class AppModeSelectionDialog(QDialog):
         button.setCheckable(True)
         button.setChecked(checked)
         button.setCursor(QCursor(Qt.PointingHandCursor))
-        button.setMinimumHeight(230)
+        button.setMinimumHeight(205)
         button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         button.setStyleSheet(f"""
             QToolButton {{
@@ -157,80 +175,19 @@ class AppModeSelectionDialog(QDialog):
         self.group.addButton(button)
         return button
 
-    def _accept_selection(self):
-        checked = self.group.checkedButton()
-        if checked is not None:
-            self.selected_mode = normalize_app_mode(checked.property("app_mode"))
-        self.accept()
-
-    @property
-    def skip_selector(self):
-        return self.skip_selector_checkbox.isChecked()
-
-
-class PoeVersionSelectionDialog(QDialog):
-    """起動時のPoEバージョン選択ダイアログ"""
-
-    def __init__(self, parent=None, current_version=POE1):
-        super().__init__(parent)
-        self.setWindowTitle("PoEバージョン選択")
-        self.setModal(True)
-        self.setStyleSheet(Styles.MAIN_WINDOW)
-        self.resize(680, 360)
-        self.selected_version = current_version
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 16, 18, 14)
-        layout.setSpacing(12)
-
-        title = QLabel("起動する対象を選んでください")
-        title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 18px; font-weight: bold;")
-        layout.addWidget(title)
-
-        self.group = QButtonGroup(self)
-        self.group.setExclusive(True)
-
-        tile_row = QHBoxLayout()
-        tile_row.setSpacing(14)
-        self.poe1_tile = self._create_version_tile(POE1, "PoE1", current_version == POE1)
-        self.poe2_tile = self._create_version_tile(POE2, "PoE2", current_version == POE2)
-        tile_row.addWidget(self.poe1_tile)
-        tile_row.addWidget(self.poe2_tile)
-        layout.addLayout(tile_row)
-
-        desc2 = QLabel("※ デフォルトでは起動時に毎回確認します。設定画面からPoE1/PoE2固定にもできます。")
-        desc2.setStyleSheet("color: rgba(176, 255, 123, 0.78); font-size: 12px;")
-        desc2.setWordWrap(True)
-        layout.addWidget(desc2)
-
-        button_row = QHBoxLayout()
-        ok_btn = QPushButton("OK")
-        ok_btn.setStyleSheet(Styles.BUTTON)
-        ok_btn.clicked.connect(self._accept)
-        cancel_btn = QPushButton("キャンセル")
-        cancel_btn.setStyleSheet(Styles.BUTTON)
-        cancel_btn.clicked.connect(self.reject)
-        button_row.addStretch()
-        button_row.addWidget(ok_btn)
-        button_row.addWidget(cancel_btn)
-        layout.addStretch()
-        layout.addLayout(button_row)
-
     def _assets_dir(self):
-        """assetsフォルダのパス（exeフォルダ優先 → _MEIPASS）"""
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, "frozen", False):
             exe_dir = os.path.dirname(sys.executable)
             if os.path.isdir(os.path.join(exe_dir, "assets")):
                 return os.path.join(exe_dir, "assets")
-            return os.path.join(getattr(sys, '_MEIPASS', exe_dir), "assets")
+            return os.path.join(getattr(sys, "_MEIPASS", exe_dir), "assets")
         return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "assets")
 
     def _version_icon_path(self, version):
-        """バージョンタイル用アイコン候補を返す"""
         base = self._assets_dir()
         names = {
-            POE1: ["poe1.png", "poe1.jpg", "poe1.ico", os.path.join("icons", "poe1.png"), os.path.join("icons", "poe1.jpg")],
-            POE2: ["poe2.png", "poe2.jpg", "poe2.ico", os.path.join("icons", "poe2.png"), os.path.join("icons", "poe2.jpg")],
+            POE1: ["poe1.png", "poe1.jpg", "poe1.ico", os.path.join("icons", "poe1.png")],
+            POE2: ["poe2.png", "poe2.jpg", "poe2.ico", os.path.join("icons", "poe2.png")],
         }.get(version, [])
         for name in names:
             path = os.path.join(base, name)
@@ -239,44 +196,45 @@ class PoeVersionSelectionDialog(QDialog):
         return None
 
     def _create_version_tile(self, version, title, checked=False):
-        btn = QPushButton(title)
-        btn.setCheckable(True)
-        btn.setChecked(checked)
-        btn.setCursor(QCursor(Qt.PointingHandCursor))
-        btn.setMinimumHeight(180)
-        btn.setStyleSheet(f"""
+        button = QPushButton(title)
+        button.setProperty("poe_version", version)
+        button.setCheckable(True)
+        button.setChecked(checked)
+        button.setCursor(QCursor(Qt.PointingHandCursor))
+        button.setMinimumHeight(155)
+        button.setStyleSheet(f"""
             QPushButton {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                     stop:0 rgba(26, 35, 24, 235), stop:1 rgba(5, 8, 6, 245));
-                color: {Styles.TEXT_COLOR};
-                border: 1px solid rgba(176, 255, 123, 0.28);
-                border-radius: 12px;
-                padding: 16px;
-                text-align: center;
-                font-size: 28px;
-                font-weight: bold;
+                color: {Styles.TEXT_COLOR}; border: 1px solid rgba(176, 255, 123, 0.28);
+                border-radius: 12px; padding: 12px; font-size: 26px; font-weight: bold;
             }}
-            QPushButton:hover {{
-                border: 1px solid rgba(176, 255, 123, 0.72);
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 rgba(40, 58, 34, 245), stop:1 rgba(8, 15, 10, 250));
-            }}
+            QPushButton:hover {{ border: 2px solid rgba(176, 255, 123, 0.72); }}
             QPushButton:checked {{
-                border: 2px solid {Styles.TEXT_COLOR};
+                border: 3px solid {Styles.TEXT_COLOR};
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                     stop:0 rgba(73, 110, 50, 245), stop:1 rgba(15, 27, 16, 250));
             }}
         """)
         icon_path = self._version_icon_path(version)
         if icon_path:
-            btn.setIcon(QIcon(icon_path))
-            btn.setIconSize(QSize(150, 150))
-        self.group.addButton(btn)
-        return btn
+            button.setIcon(QIcon(icon_path))
+            button.setIconSize(QSize(130, 130))
+        self.version_group.addButton(button)
+        return button
 
-    def _accept(self):
-        self.selected_version = POE2 if self.poe2_tile.isChecked() else POE1
+    def _accept_selection(self):
+        checked_version = self.version_group.checkedButton()
+        if checked_version is not None:
+            self.selected_version = checked_version.property("poe_version")
+        checked = self.group.checkedButton()
+        if checked is not None:
+            self.selected_mode = normalize_app_mode(checked.property("app_mode"))
         self.accept()
+
+    @property
+    def skip_selector(self):
+        return self.skip_selector_checkbox.isChecked()
 
 
 class RouteSelectionDialog(QDialog):

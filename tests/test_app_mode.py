@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QApplication, QDialog
+from PySide6.QtWidgets import QApplication, QDialog, QLabel
 
 import main
 from src.app_mode import (
@@ -14,7 +14,7 @@ from src.app_mode import (
     save_startup_preferences,
     startup_preferences,
 )
-from src.ui.startup_dialogs import AppModeSelectionDialog
+from src.ui.startup_dialogs import StartupSelectionDialog
 from src.utils.poe_version_data import POE1, POE2
 
 
@@ -48,7 +48,7 @@ class AppModeTest(unittest.TestCase):
         self.assertEqual(updated["other"], 1)
 
     def test_dialog_uses_previous_mode_but_does_not_skip_by_default(self):
-        dialog = AppModeSelectionDialog(current_mode=POETORE_MODE)
+        dialog = StartupSelectionDialog(current_mode=POETORE_MODE)
 
         self.assertTrue(dialog.poetore_card.isChecked())
         self.assertFalse(dialog.skip_selector)
@@ -56,18 +56,35 @@ class AppModeTest(unittest.TestCase):
         self.assertFalse(dialog.poenavi_card.icon().isNull())
         self.assertFalse(dialog.poetore_card.icon().isNull())
         for icon_name in ("icon.ico", "icon2.ico"):
-            icon_path = Path(AppModeSelectionDialog._app_icon_path(icon_name))
+            icon_path = Path(StartupSelectionDialog._app_icon_path(icon_name))
             self.assertEqual(icon_path.parts[-3:], ("assets", "app", icon_name))
 
     def test_dialog_returns_checked_mode(self):
-        dialog = AppModeSelectionDialog(current_mode=POENAVI_MODE)
+        dialog = StartupSelectionDialog(current_mode=POENAVI_MODE)
+        dialog.poe2_tile.setChecked(True)
         dialog.poetore_card.setChecked(True)
         dialog._accept_selection()
 
+        self.assertEqual(dialog.selected_version, POE2)
         self.assertEqual(dialog.selected_mode, POETORE_MODE)
 
+    def test_dialog_has_one_shared_fix_checkbox_and_requested_notice(self):
+        dialog = StartupSelectionDialog()
+
+        checkboxes = dialog.findChildren(type(dialog.skip_selector_checkbox))
+        self.assertEqual(checkboxes, [dialog.skip_selector_checkbox])
+        self.assertEqual(
+            dialog.skip_selector_checkbox.text(),
+            "次回からこの設定で直接起動",
+        )
+        labels = [label.text() for label in dialog.findChildren(QLabel)]
+        self.assertIn(
+            "※デフォルトでは起動時に毎回確認します。以下のチェックボックスをONにすると固定にもできます。設定画面からも変更可能です。",
+            labels,
+        )
+
     def test_dialog_allows_poetore_when_poe2_is_selected(self):
-        dialog = AppModeSelectionDialog(
+        dialog = StartupSelectionDialog(
             current_mode=POETORE_MODE,
             poe_version=POE2,
         )
@@ -76,7 +93,7 @@ class AppModeTest(unittest.TestCase):
         self.assertTrue(dialog.poetore_card.isChecked())
         self.assertTrue(dialog.poetore_card.isEnabled())
 
-    def test_saved_poetore_mode_can_skip_selector_in_poe2(self):
+    def test_fixed_version_and_mode_skip_combined_selector(self):
         dialog = MagicMock()
         dialog.exec.return_value = QDialog.Accepted
         dialog.selected_mode = POENAVI_MODE
@@ -89,59 +106,70 @@ class AppModeTest(unittest.TestCase):
             },
         }
 
+        config["poe_version_mode"] = POE2
         with patch(
-            "src.ui.startup_dialogs.AppModeSelectionDialog",
+            "src.ui.startup_dialogs.StartupSelectionDialog",
             return_value=dialog,
         ) as dialog_class, patch.object(main.ConfigManager, "save_config"):
-            selected = main.select_app_mode(config)
+            selected_config, selected_mode = main.select_startup_options(config)
 
-        self.assertEqual(selected, POETORE_MODE)
+        self.assertEqual(selected_config["poe_version"], POE2)
+        self.assertEqual(selected_mode, POETORE_MODE)
         dialog_class.assert_not_called()
 
-    def test_fixed_poe_version_is_resolved_before_mode_selection(self):
-        config = {"poe_version": POE1, "poe_version_mode": POE2}
-
-        with patch.object(main.ConfigManager, "save_config") as save_config:
-            selected = main.select_poe_version(config)
-
-        self.assertEqual(selected["poe_version"], POE2)
-        self.assertEqual(config["poe_version"], POE1)
-        save_config.assert_called_once_with(selected)
-
-    def test_ask_poe_version_returns_dialog_selection(self):
+    def test_combined_dialog_saves_both_selections_as_fixed(self):
         dialog = MagicMock()
         dialog.exec.return_value = QDialog.Accepted
         dialog.selected_version = POE2
+        dialog.selected_mode = POETORE_MODE
+        dialog.skip_selector = True
         config = {"poe_version": POE1, "poe_version_mode": "ask"}
 
         with patch(
-            "src.ui.startup_dialogs.PoeVersionSelectionDialog",
+            "src.ui.startup_dialogs.StartupSelectionDialog",
             return_value=dialog,
         ) as dialog_class, patch.object(
             main.ConfigManager, "save_config",
         ) as save_config:
-            selected = main.select_poe_version(config)
+            selected, mode = main.select_startup_options(config)
 
         self.assertEqual(selected["poe_version"], POE2)
-        dialog_class.assert_called_once_with(current_version=POE1)
+        self.assertEqual(selected["poe_version_mode"], POE2)
+        self.assertFalse(selected["startup"]["show_mode_selector"])
+        self.assertEqual(mode, POETORE_MODE)
+        dialog_class.assert_called_once_with(current_mode=POENAVI_MODE, poe_version=POE1)
         save_config.assert_called_once_with(selected)
 
-    def test_cancelling_poe_version_selection_stops_startup(self):
+    def test_unchecked_combined_dialog_keeps_both_selectors_on_ask(self):
+        dialog = MagicMock()
+        dialog.exec.return_value = QDialog.Accepted
+        dialog.selected_version = POE2
+        dialog.selected_mode = POETORE_MODE
+        dialog.skip_selector = False
+
+        with patch("src.ui.startup_dialogs.StartupSelectionDialog", return_value=dialog), \
+             patch.object(main.ConfigManager, "save_config"):
+            selected, _ = main.select_startup_options({"poe_version_mode": POE1})
+
+        self.assertEqual(selected["poe_version_mode"], "ask")
+        self.assertTrue(selected["startup"]["show_mode_selector"])
+
+    def test_cancelling_combined_selection_stops_startup(self):
         dialog = MagicMock()
         dialog.exec.return_value = QDialog.Rejected
 
         with patch(
-            "src.ui.startup_dialogs.PoeVersionSelectionDialog",
+            "src.ui.startup_dialogs.StartupSelectionDialog",
             return_value=dialog,
         ), patch.object(main.ConfigManager, "save_config") as save_config:
-            selected = main.select_poe_version({"poe_version_mode": "ask"})
+            selected = main.select_startup_options({"poe_version_mode": "ask"})
 
         self.assertIsNone(selected)
         save_config.assert_not_called()
 
     def test_mode_icons_have_transparent_corners(self):
         for icon_name in ("icon.ico", "icon2.ico"):
-            pixmap = QPixmap(AppModeSelectionDialog._app_icon_path(icon_name))
+            pixmap = QPixmap(StartupSelectionDialog._app_icon_path(icon_name))
             self.assertFalse(pixmap.isNull())
             image = pixmap.toImage()
             corners = (
@@ -169,13 +197,9 @@ class AppModeTest(unittest.TestCase):
             events.append("update_gate")
             return True
 
-        def select_version(config):
-            events.append("select_version")
-            return config
-
-        def select_mode(_config):
-            events.append("select_mode")
-            return POENAVI_MODE
+        def select_startup(config):
+            events.append("select_startup")
+            return config, POENAVI_MODE
 
         update_module = SimpleNamespace(run_startup_update_gate=update_gate)
         composition_module = SimpleNamespace(
@@ -186,8 +210,7 @@ class AppModeTest(unittest.TestCase):
         with patch.object(main, "QApplication", return_value=app), \
              patch.object(main, "SingleInstanceGuard", return_value=single_instance), \
              patch.object(main.ConfigManager, "load_config", side_effect=load_config), \
-             patch.object(main, "select_poe_version", side_effect=select_version), \
-             patch.object(main, "select_app_mode", side_effect=select_mode), \
+             patch.object(main, "select_startup_options", side_effect=select_startup), \
              patch.object(main.QTimer, "singleShot"), \
              patch.dict(
                  "sys.modules",
@@ -200,7 +223,7 @@ class AppModeTest(unittest.TestCase):
 
         self.assertEqual(
             events,
-            ["load_config", "update_gate", "load_config", "select_version", "select_mode"],
+            ["load_config", "update_gate", "load_config", "select_startup"],
         )
         app.setProperty.assert_any_call("startupUpdateChecked", True)
         app.setProperty.assert_any_call("startupPoeVersionSelected", True)
@@ -229,7 +252,7 @@ class AppModeTest(unittest.TestCase):
         app.exec.assert_not_called()
 
     def test_mode_selection_dialog_uses_act_support_label(self):
-        dialog = AppModeSelectionDialog()
+        dialog = StartupSelectionDialog()
 
         self.assertEqual(dialog.poenavi_card.text(), "ぽえなび\nAct攻略支援")
         self.assertNotIn("レベリング・進行支援", dialog.poenavi_card.text())

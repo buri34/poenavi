@@ -30,57 +30,48 @@ from src.single_instance import (
 )
 
 
-def select_poe_version(config):
-    """機能選択より先に、今回起動するPoEバージョンを確定する。"""
+def select_startup_options(config):
+    """PoEバージョンと使用機能を確定し、必要なら統合選択画面を表示する。"""
     updated = dict(config or {})
     version_mode = updated.get("poe_version_mode", "ask")
-    if version_mode in (POE1, POE2):
-        selected_version = version_mode
-    else:
-        from src.ui.startup_dialogs import PoeVersionSelectionDialog
+    current_version = updated.get("poe_version", POE1)
+    if current_version not in (POE1, POE2):
+        current_version = POE1
+    selected_version = version_mode if version_mode in (POE1, POE2) else current_version
 
-        dialog = PoeVersionSelectionDialog(
-            current_version=updated.get("poe_version", POE1),
-        )
-        if dialog.exec() != QDialog.Accepted:
-            return None
-        selected_version = dialog.selected_version
-
-    if updated.get("poe_version") != selected_version:
-        updated["poe_version"] = selected_version
-        ConfigManager.save_config(updated)
-    return updated
-
-
-def select_app_mode(config):
-    """保存設定に従い、必要な場合だけ起動モード選択画面を表示する。"""
     preferred_mode, show_selector = startup_preferences(config)
-    poe_version = (config or {}).get("poe_version", POE1)
     if (
         preferred_mode == POETORE_MODE
-        and not is_feature_supported(POETORE, poe_version)
+        and not is_feature_supported(POETORE, selected_version)
     ):
         preferred_mode = POENAVI_MODE
         show_selector = True
-    if not show_selector:
-        return preferred_mode
+    if version_mode in (POE1, POE2) and not show_selector:
+        if updated.get("poe_version") != selected_version:
+            updated["poe_version"] = selected_version
+            ConfigManager.save_config(updated)
+        return updated, preferred_mode
 
-    from src.ui.startup_dialogs import AppModeSelectionDialog
+    from src.ui.startup_dialogs import StartupSelectionDialog
 
-    dialog = AppModeSelectionDialog(
+    dialog = StartupSelectionDialog(
         current_mode=preferred_mode,
-        poe_version=poe_version,
+        poe_version=selected_version,
     )
     if dialog.exec() != QDialog.Accepted:
         return None
 
     updated = save_startup_preferences(
-        config,
+        updated,
         dialog.selected_mode,
         dialog.skip_selector,
     )
+    updated["poe_version"] = dialog.selected_version
+    updated["poe_version_mode"] = (
+        dialog.selected_version if dialog.skip_selector else "ask"
+    )
     ConfigManager.save_config(updated)
-    return dialog.selected_mode
+    return updated, dialog.selected_mode
 
 
 def run():
@@ -106,13 +97,11 @@ def run():
     app.setProperty("startupUpdateChecked", True)
 
     config = ConfigManager.load_config()
-    config = select_poe_version(config)
-    if config is None:
+    startup_selection = select_startup_options(config)
+    if startup_selection is None:
         return 0
+    config, app_mode = startup_selection
     app.setProperty("startupPoeVersionSelected", True)
-    app_mode = select_app_mode(config)
-    if app_mode is None:
-        return 0
 
     from src.app_composition import create_mode_window
 
