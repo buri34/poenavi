@@ -78,7 +78,7 @@ class StartupSelectionDialog(QDialog):
             POETORE_MODE,
             "ぽえとれ",
             "価格チェック・トレード支援",
-            theme_for_mode(POETORE_MODE).accent,
+            Styles.TEXT_COLOR,
             "icon2.ico",
             self.selected_mode == POETORE_MODE,
         )

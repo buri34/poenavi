@@ -16,6 +16,7 @@ from src.app_mode import (
     startup_preferences,
 )
 from src.ui.startup_dialogs import StartupSelectionDialog
+from src.ui.styles import Styles
 from src.utils.poe_version_data import POE1, POE2
 
 
@@ -98,6 +99,13 @@ class AppModeTest(unittest.TestCase):
             self.assertEqual(tile.text(), title)
             self.assertEqual(tile.toolButtonStyle(), Qt.ToolButtonTextUnderIcon)
             self.assertEqual(tile.sizePolicy().horizontalPolicy(), tile.sizePolicy().Policy.Expanding)
+
+    def test_feature_cards_use_the_same_text_color(self):
+        dialog = StartupSelectionDialog()
+
+        expected = f"color: {Styles.TEXT_COLOR}".lower()
+        self.assertIn(expected, dialog.poenavi_card.styleSheet().lower())
+        self.assertIn(expected, dialog.poetore_card.styleSheet().lower())
 
     def test_dialog_allows_poetore_when_poe2_is_selected(self):
         dialog = StartupSelectionDialog(
