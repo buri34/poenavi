@@ -54,6 +54,7 @@ class StartupSelectionDialog(QDialog):
         version_cards.setSpacing(16)
         self.poe1_tile = self._create_version_tile(POE1, "PoE1", self.selected_version == POE1)
         self.poe2_tile = self._create_version_tile(POE2, "PoE2", self.selected_version == POE2)
+        self.version_group.buttonToggled.connect(self._on_version_toggled)
         version_cards.addWidget(self.poe1_tile)
         version_cards.addWidget(self.poe2_tile)
         layout.addLayout(version_cards)
@@ -82,9 +83,7 @@ class StartupSelectionDialog(QDialog):
             "icon2.ico",
             self.selected_mode == POETORE_MODE,
         )
-        self.poetore_card.setEnabled(poetore_supported)
-        if not poetore_supported:
-            self.poetore_card.setToolTip("ぽえとれは現在PoE1専用です")
+        self._set_poetore_supported(poetore_supported)
         cards.addWidget(self.poenavi_card)
         cards.addWidget(self.poetore_card)
         layout.addLayout(cards)
@@ -171,9 +170,31 @@ class StartupSelectionDialog(QDialog):
                 border: 3px solid {accent};
                 background-color: rgba(42, 46, 43, 250);
             }}
+            QToolButton:disabled {{
+                color: rgba(176, 255, 123, 0.38);
+                border-color: rgba(190, 200, 190, 0.16);
+                background-color: rgba(15, 18, 17, 170);
+            }}
         """)
         self.group.addButton(button)
         return button
+
+    def _on_version_toggled(self, button, checked):
+        if not checked or not hasattr(self, "poetore_card"):
+            return
+        version = button.property("poe_version")
+        supported = is_feature_supported(POETORE, version)
+        self._set_poetore_supported(supported)
+        if not supported and self.poetore_card.isChecked():
+            self.poenavi_card.setChecked(True)
+
+    def _set_poetore_supported(self, supported):
+        self.poetore_card.setEnabled(supported)
+        self.poetore_card.setToolTip("" if supported else "PoE2版は現在テスト中です")
+        description = "価格チェック・トレード支援"
+        if not supported:
+            description += "\nPoE2版は現在テスト中です"
+        self.poetore_card.setText(f"ぽえとれ\n{description}")
 
     def _assets_dir(self):
         if getattr(sys, "frozen", False):
@@ -234,6 +255,8 @@ class StartupSelectionDialog(QDialog):
         checked = self.group.checkedButton()
         if checked is not None:
             self.selected_mode = normalize_app_mode(checked.property("app_mode"))
+        if not is_feature_supported(POETORE, self.selected_version) and self.selected_mode == POETORE_MODE:
+            self.selected_mode = POENAVI_MODE
         self.accept()
 
     @property

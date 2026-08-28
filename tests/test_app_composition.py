@@ -3,10 +3,11 @@ import sys
 
 from src import app_composition
 from src.app_mode import POENAVI_MODE, POETORE_MODE
+from src.utils.poe_version_data import POE1, POE2
 
 
 def test_poetore_mode_resolves_only_poetore_shell():
-    resolved = app_composition.resolve_window_class(POETORE_MODE)
+    resolved = app_composition.resolve_window_class(POETORE_MODE, POE1)
 
     assert resolved.__module__ == "src.ui.poetore_mode_window"
     assert resolved.__name__ == "PoetoreModeWindow"
@@ -18,11 +19,18 @@ def test_poennavi_mode_resolves_only_existing_main_window():
     assert resolved.__module__ == "src.ui.main_window"
     assert resolved.__name__ == "MainWindow"
 
+
+def test_poetore_mode_fails_closed_for_poe2():
+    import pytest
+
+    with pytest.raises(ValueError, match="では利用できません"):
+        app_composition.resolve_window_class(POETORE_MODE, POE2)
+
 def test_real_poetore_composition_does_not_import_poennavi_runtime_modules():
     script = (
         "import sys;"
         "from src.app_composition import resolve_window_class;"
-        "resolve_window_class('poetore');"
+        "resolve_window_class('poetore', 'poe1');"
         "blocked=['src.ui.main_window','src.utils.log_watcher','src.ui.mini_navi'];"
         "print(','.join(name for name in blocked if name in sys.modules))"
     )

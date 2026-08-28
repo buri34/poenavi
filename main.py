@@ -61,9 +61,16 @@ def select_startup_options(config):
     if dialog.exec() != QDialog.Accepted:
         return None
 
+    selected_mode = dialog.selected_mode
+    if (
+        selected_mode == POETORE_MODE
+        and not is_feature_supported(POETORE, dialog.selected_version)
+    ):
+        selected_mode = POENAVI_MODE
+
     updated = save_startup_preferences(
         updated,
-        dialog.selected_mode,
+        selected_mode,
         dialog.skip_selector,
     )
     updated["poe_version"] = dialog.selected_version
@@ -71,7 +78,7 @@ def select_startup_options(config):
         dialog.selected_version if dialog.skip_selector else "ask"
     )
     ConfigManager.save_config(updated)
-    return updated, dialog.selected_mode
+    return updated, selected_mode
 
 
 def run():
@@ -106,7 +113,7 @@ def run():
     from src.app_composition import create_mode_window
 
     app.setProperty("appMode", app_mode)
-    window = create_mode_window(app_mode)
+    window = create_mode_window(app_mode, config.get("poe_version", POE1))
     single_instance.set_window(window)
     window.show()
 

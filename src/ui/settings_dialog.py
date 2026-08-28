@@ -25,6 +25,7 @@ from src.utils.global_hotkeys import find_duplicate_hotkeys
 import os
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
+from src.utils.feature_support import POETORE, is_feature_supported
 
 
 def _flag_guide_header(zone_id: str) -> str:
@@ -1926,6 +1927,7 @@ class SettingsDialog(QDialog):
         startup_mode_row.addStretch()
         startup_layout.addLayout(startup_mode_row)
         general_layout.addWidget(startup_group)
+        self._refresh_app_mode_availability()
         
         # ━━━━━ 2. ホットキー ━━━━━
         group = QGroupBox("ホットキー")
@@ -3150,6 +3152,24 @@ class SettingsDialog(QDialog):
         self.voicevox_group.setVisible(self.poe_version == POE2)
         self._rebuild_zone_tab()
         self._refresh_version_specific_tabs()
+        self._refresh_app_mode_availability()
+
+    def _refresh_app_mode_availability(self):
+        supported = is_feature_supported(POETORE, self.poe_version)
+        poetore_radio = self.app_mode_radios[POETORE_MODE]
+        poetore_radio.setEnabled(supported)
+        poetore_radio.setToolTip("" if supported else "PoE2版は現在テスト中です")
+        poetore_index = self.app_mode_startup_combo.findData(POETORE_MODE)
+        poetore_item = self.app_mode_startup_combo.model().item(poetore_index)
+        if poetore_item is not None:
+            poetore_item.setEnabled(supported)
+        if not supported:
+            if poetore_radio.isChecked():
+                self.app_mode_radios[POENAVI_MODE].setChecked(True)
+            if self.app_mode_startup_combo.currentData() == POETORE_MODE:
+                self.app_mode_startup_combo.setCurrentIndex(
+                    self.app_mode_startup_combo.findData("ask")
+                )
 
     def accept(self):
         if not self.gem_shop_search_term_review.validate_term_overrides():
@@ -3226,6 +3246,10 @@ class SettingsDialog(QDialog):
             POENAVI_MODE,
         )
         startup_mode = self.app_mode_startup_combo.currentData()
+        if not is_feature_supported(POETORE, self.poe_version):
+            selected_app_mode = POENAVI_MODE
+            if startup_mode == POETORE_MODE:
+                startup_mode = "ask"
         startup_config["show_mode_selector"] = startup_mode == "ask"
         startup_config["preferred_mode"] = normalize_app_mode(
             selected_app_mode if startup_mode == "ask" else startup_mode

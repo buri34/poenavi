@@ -292,6 +292,9 @@ class PoetoreModeWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.config = ConfigManager.load_config()
+        poe_version = self.config.get("poe_version", POE1)
+        if not is_feature_supported(POETORE, poe_version):
+            raise RuntimeError("PoE2版ぽえとれは現在テスト中です")
         self._cheat_sheet_overlay = None
         self._map_check_window = None
         self._memo_dialog = None

@@ -100,6 +100,24 @@ def test_fixed_startup_mode_selects_the_fixed_app(qapp):
     dialog.close()
 
 
+def test_poe2_disables_poetore_mode_and_fixed_startup(qapp):
+    dialog = SettingsDialog(current_config={
+        "poe_version": POE2,
+        "startup": {"preferred_mode": "poetore", "show_mode_selector": False},
+    })
+
+    assert not dialog.app_mode_radios["poetore"].isEnabled()
+    assert dialog.app_mode_radios["poenavi"].isChecked()
+    poetore_index = dialog.app_mode_startup_combo.findData("poetore")
+    assert not dialog.app_mode_startup_combo.model().item(poetore_index).isEnabled()
+    assert dialog.app_mode_startup_combo.currentData() == "ask"
+    assert dialog.get_settings()["startup"] == {
+        "preferred_mode": "poenavi",
+        "show_mode_selector": True,
+    }
+    dialog.close()
+
+
 def test_general_settings_save_note_is_at_bottom(qapp):
     dialog = SettingsDialog(current_config={})
     note = dialog.findChild(QLabel, "generalSettingsSaveNote")

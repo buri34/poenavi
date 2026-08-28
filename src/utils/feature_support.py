@@ -8,7 +8,8 @@ POETORE = "poetore"
 
 FEATURE_SUPPORTED_VERSIONS = {
     MINI_NAVI: frozenset({POE1, POE2}),
-    POETORE: frozenset({POE1, POE2}),
+    # PoE2 backend remains in-tree while the public launch paths stay closed.
+    POETORE: frozenset({POE1}),
 }
 
 FEATURE_HOTKEY_ACTIONS = {

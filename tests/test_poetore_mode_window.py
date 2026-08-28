@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock, call, patch
+import pytest
 
 from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QPixmap
@@ -6,6 +7,15 @@ from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QSystemTrayIcon
 
 from src.ui.poetore_mode_window import PoetoreModeWindow, _currency_icon_filename
 from src.utils.poe_version_data import POE2
+
+
+def test_poetore_mode_fails_closed_for_poe2_config():
+    QApplication.instance() or QApplication([])
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value={"poe_version": POE2},
+    ), pytest.raises(RuntimeError, match="現在テスト中"):
+        PoetoreModeWindow()
 
 
 def test_poetore_mode_starts_only_common_and_poetore_services():
@@ -129,7 +139,11 @@ def test_poetore_mode_starts_capture_and_stash_scroll_services_for_poe2():
         PoetoreModeWindow, "refresh_currency_rate"
     ), patch(
         "src.poetore.ui.prepare_poetore_window"
-    ) as prepare_window:
+    ) as prepare_window, patch(
+        "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
+    ), patch(
+        "src.ui.poetore_mode_window.is_feature_hotkey_supported", return_value=True,
+    ):
         window = PoetoreModeWindow()
 
     supplied_hotkeys = hotkey_class.call_args.args[0]
@@ -175,6 +189,8 @@ def test_poetore_mode_respects_disabled_stash_scroll_for_poe2():
         "src.ui.poetore_mode_window.StashTabScrollController"
     ) as stash_class, patch.object(
         PoetoreModeWindow, "refresh_currency_rate"
+    ), patch(
+        "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
     ):
         window = PoetoreModeWindow()
 
@@ -355,6 +371,8 @@ def test_poetore_mode_passes_configured_interactive_hotkey_to_capture():
         "src.poetore.performance.start_search_trace", return_value=trace,
     ), patch(
         "src.poetore.ui.show_poetore_window", return_value=poetore_window,
+    ), patch(
+        "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
     ):
         PoetoreModeWindow.capture_poetore_item(owner)
 
@@ -406,7 +424,10 @@ def test_poe2_poetore_mode_renders_divine_exalted_rate():
     ), patch(
         "src.ui.poetore_mode_window.GlobalHotkeyService"
     ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
-        window = PoetoreModeWindow()
+        with patch(
+            "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
+        ):
+            window = PoetoreModeWindow()
 
     window._show_rate("Runes of Aldur", 364.9)
     assert window.divine_rate_value.text() == "1 = 364.9 Exalted"

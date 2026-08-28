@@ -36,6 +36,7 @@ from src.utils.global_hotkeys import find_duplicate_hotkeys
 from src.ui.custom_command_settings import CustomCommandSettingsWidget
 from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
 from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_poe_label
+from src.utils.feature_support import POETORE, is_feature_supported
 
 
 class _LeagueSignals(QObject):
@@ -79,6 +80,9 @@ class PoetoreSettingsDialog(QDialog):
             radio.setChecked(version == self.poe_version)
             self.poe_version_group.addButton(radio)
             self.poe_version_radios[version] = radio
+            radio.toggled.connect(
+                lambda checked, selected=version: self._on_poe_version_changed(selected, checked)
+            )
             poe_layout.addWidget(radio)
         version_mode_row = QFormLayout()
         self.poe_version_mode_combo = QComboBox()
@@ -127,6 +131,7 @@ class PoetoreSettingsDialog(QDialog):
         startup_row.addRow("起動時:", self.app_mode_startup_combo)
         startup_layout.addLayout(startup_row)
         basic_layout.addWidget(startup_group)
+        self._refresh_app_mode_availability()
 
         hotkeys = self.current_config.get("hotkeys")
         hotkeys = hotkeys if isinstance(hotkeys, dict) else {}
@@ -484,7 +489,37 @@ class PoetoreSettingsDialog(QDialog):
         layout.addLayout(row)
         return slider
 
+    def _on_poe_version_changed(self, poe_version, checked):
+        if not checked:
+            return
+        self.poe_version = poe_version
+        self._refresh_app_mode_availability()
+
+    def _refresh_app_mode_availability(self):
+        supported = is_feature_supported(POETORE, self.poe_version)
+        poetore_radio = self.app_mode_radios[POETORE_MODE]
+        poetore_radio.setEnabled(supported)
+        poetore_radio.setToolTip("" if supported else "PoE2版は現在テスト中です")
+        poetore_index = self.app_mode_startup_combo.findData(POETORE_MODE)
+        poetore_item = self.app_mode_startup_combo.model().item(poetore_index)
+        if poetore_item is not None:
+            poetore_item.setEnabled(supported)
+        if not supported:
+            if poetore_radio.isChecked():
+                self.app_mode_radios[POENAVI_MODE].setChecked(True)
+            if self.app_mode_startup_combo.currentData() == POETORE_MODE:
+                self.app_mode_startup_combo.setCurrentIndex(
+                    self.app_mode_startup_combo.findData("ask")
+                )
+
     def get_settings(self):
+        selected_poe_version = next(
+            (
+                version for version, radio in self.poe_version_radios.items()
+                if radio.isChecked()
+            ),
+            self.poe_version,
+        )
         startup = dict(self.current_config.get("startup", {}))
         selected_app_mode = next(
             (
@@ -494,6 +529,10 @@ class PoetoreSettingsDialog(QDialog):
             POETORE_MODE,
         )
         startup_mode = self.app_mode_startup_combo.currentData()
+        if not is_feature_supported(POETORE, selected_poe_version):
+            selected_app_mode = POENAVI_MODE
+            if startup_mode == POETORE_MODE:
+                startup_mode = "ask"
         startup["show_mode_selector"] = startup_mode == "ask"
         startup["preferred_mode"] = normalize_app_mode(
             selected_app_mode if startup_mode == "ask" else startup_mode
@@ -514,13 +553,6 @@ class PoetoreSettingsDialog(QDialog):
         poetore[league_key] = self._league_selection_value()
         poetore["result_font_size"] = (
             self.result_font_size_combo.currentData() or "medium"
-        )
-        selected_poe_version = next(
-            (
-                version for version, radio in self.poe_version_radios.items()
-                if radio.isChecked()
-            ),
-            self.poe_version,
         )
         obs_streaming = dict(poetore.get("obs_streaming", {}))
         obs_streaming["enabled"] = self.obs_streaming_enabled_cb.isChecked()
