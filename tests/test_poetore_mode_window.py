@@ -9,15 +9,6 @@ from src.ui.poetore_mode_window import PoetoreModeWindow, _currency_icon_filenam
 from src.utils.poe_version_data import POE2
 
 
-def test_poetore_mode_fails_closed_for_poe2_config():
-    QApplication.instance() or QApplication([])
-    with patch(
-        "src.ui.poetore_mode_window.ConfigManager.load_config",
-        return_value={"poe_version": POE2},
-    ), pytest.raises(RuntimeError, match="現在テスト中"):
-        PoetoreModeWindow()
-
-
 def test_poetore_mode_starts_only_common_and_poetore_services():
     app = QApplication.instance() or QApplication([])
     config = {

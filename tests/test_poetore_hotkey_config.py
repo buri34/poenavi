@@ -243,7 +243,7 @@ def test_main_mode_uses_suppressed_service_for_capture_hotkey(monkeypatch):
     assert service.started
 
 
-def test_main_mode_does_not_register_poetore_hotkeys_in_poe2(monkeypatch):
+def test_main_mode_registers_poetore_hotkeys_in_poe2(monkeypatch):
     class FakeListener:
         def __init__(self, on_press, on_release):
             self.on_press = on_press
@@ -269,11 +269,14 @@ def test_main_mode_does_not_register_poetore_hotkeys_in_poe2(monkeypatch):
         _hotkey_action_allowed=lambda _action: True,
     )
     monkeypatch.setattr("src.ui.main_window.pynput_keyboard.Listener", FakeListener)
+    monkeypatch.setattr(
+        "src.ui.main_window.suppressed_hotkeys_supported", lambda: False,
+    )
 
     MainWindow.register_hotkeys(window)
 
-    assert "poetore_capture" not in window.hotkey_map.values()
-    assert "poetore_auto_hide" not in window.hotkey_map.values()
+    assert "poetore_capture" in window.hotkey_map.values()
+    assert "poetore_auto_hide" in window.hotkey_map.values()
     assert "map_check" in window.hotkey_map.values()
 
 

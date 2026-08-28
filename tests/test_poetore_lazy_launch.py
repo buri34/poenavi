@@ -67,7 +67,7 @@ class PoetoreLazyLaunchTest(unittest.TestCase):
             trace, auto_hide=True, capture_hotkey="ctrl+d",
         )
 
-    def test_poe2_does_not_open_prepare_or_capture_poetore(self):
+    def test_poe2_opens_prepares_and_captures_poetore(self):
         window = MainWindow.__new__(MainWindow)
         window.poe_version = POE2
         window.config = {"poe_version": POE2}
@@ -79,8 +79,8 @@ class PoetoreLazyLaunchTest(unittest.TestCase):
             MainWindow._prepare_poetore_window(window)
             MainWindow.capture_poetore_item(window)
 
-        show_window.assert_not_called()
-        prepare_window.assert_not_called()
+        self.assertEqual(show_window.call_count, 2)
+        prepare_window.assert_called_once_with(window)
 
 
 if __name__ == "__main__":

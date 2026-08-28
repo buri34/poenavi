@@ -61,14 +61,14 @@ class AppModeTest(unittest.TestCase):
             icon_path = Path(StartupSelectionDialog._app_icon_path(icon_name))
             self.assertEqual(icon_path.parts[-3:], ("assets", "app", icon_name))
 
-    def test_dialog_rejects_poetore_when_poe2_is_selected(self):
+    def test_dialog_accepts_poetore_when_poe2_is_selected(self):
         dialog = StartupSelectionDialog(current_mode=POENAVI_MODE)
         dialog.poe2_tile.setChecked(True)
         dialog.poetore_card.setChecked(True)
         dialog._accept_selection()
 
         self.assertEqual(dialog.selected_version, POE2)
-        self.assertEqual(dialog.selected_mode, POENAVI_MODE)
+        self.assertEqual(dialog.selected_mode, POETORE_MODE)
 
     def test_dialog_has_one_shared_fix_checkbox_and_requested_notice(self):
         dialog = StartupSelectionDialog()
@@ -107,19 +107,19 @@ class AppModeTest(unittest.TestCase):
         self.assertIn(expected, dialog.poenavi_card.styleSheet().lower())
         self.assertIn(expected, dialog.poetore_card.styleSheet().lower())
 
-    def test_dialog_disables_poetore_when_poe2_is_selected(self):
+    def test_dialog_enables_poetore_when_poe2_is_selected(self):
         dialog = StartupSelectionDialog(
             current_mode=POETORE_MODE,
             poe_version=POE2,
         )
 
-        self.assertEqual(dialog.selected_mode, POENAVI_MODE)
-        self.assertTrue(dialog.poenavi_card.isChecked())
-        self.assertFalse(dialog.poetore_card.isEnabled())
-        self.assertEqual(dialog.poetore_card.toolTip(), "PoE2版は現在テスト中です")
-        self.assertIn("PoE2版は現在テスト中です", dialog.poetore_card.text())
+        self.assertEqual(dialog.selected_mode, POETORE_MODE)
+        self.assertTrue(dialog.poetore_card.isChecked())
+        self.assertTrue(dialog.poetore_card.isEnabled())
+        self.assertEqual(dialog.poetore_card.toolTip(), "")
+        self.assertNotIn("PoE2版は現在テスト中です", dialog.poetore_card.text())
 
-    def test_switching_from_poe1_poetore_to_poe2_selects_poennavi(self):
+    def test_switching_from_poe1_poetore_to_poe2_keeps_poetore(self):
         dialog = StartupSelectionDialog(
             current_mode=POETORE_MODE,
             poe_version=POE1,
@@ -127,8 +127,8 @@ class AppModeTest(unittest.TestCase):
 
         dialog.poe2_tile.setChecked(True)
 
-        self.assertTrue(dialog.poenavi_card.isChecked())
-        self.assertFalse(dialog.poetore_card.isEnabled())
+        self.assertTrue(dialog.poetore_card.isChecked())
+        self.assertTrue(dialog.poetore_card.isEnabled())
 
     def test_fixed_version_and_mode_skip_combined_selector(self):
         dialog = MagicMock()
@@ -148,11 +148,12 @@ class AppModeTest(unittest.TestCase):
             "src.ui.startup_dialogs.StartupSelectionDialog",
             return_value=dialog,
         ) as dialog_class, patch.object(main.ConfigManager, "save_config"):
-            dialog.exec.return_value = QDialog.Rejected
             result = main.select_startup_options(config)
 
-        self.assertIsNone(result)
-        dialog_class.assert_called_once_with(current_mode=POENAVI_MODE, poe_version=POE2)
+        selected, mode = result
+        self.assertEqual(mode, POETORE_MODE)
+        self.assertEqual(selected["poe_version"], POE2)
+        dialog_class.assert_not_called()
 
     def test_combined_dialog_saves_both_selections_as_fixed(self):
         dialog = MagicMock()
@@ -173,8 +174,8 @@ class AppModeTest(unittest.TestCase):
         self.assertEqual(selected["poe_version"], POE2)
         self.assertEqual(selected["poe_version_mode"], POE2)
         self.assertFalse(selected["startup"]["show_mode_selector"])
-        self.assertEqual(mode, POENAVI_MODE)
-        self.assertEqual(selected["startup"]["preferred_mode"], POENAVI_MODE)
+        self.assertEqual(mode, POETORE_MODE)
+        self.assertEqual(selected["startup"]["preferred_mode"], POETORE_MODE)
         dialog_class.assert_called_once_with(current_mode=POENAVI_MODE, poe_version=POE1)
         save_config.assert_called_once_with(selected)
 

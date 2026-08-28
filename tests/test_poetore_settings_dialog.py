@@ -16,21 +16,21 @@ from src.poetore.trade import TradeLeague
 from src.utils.poe_version_data import POE2
 
 
-def test_poe2_disables_poetore_startup_choices():
+def test_poe2_enables_poetore_startup_choices():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(current_config={
         "poe_version": POE2,
         "startup": {"preferred_mode": "poetore", "show_mode_selector": False},
     })
 
-    assert not dialog.app_mode_radios["poetore"].isEnabled()
-    assert dialog.app_mode_radios["poenavi"].isChecked()
+    assert dialog.app_mode_radios["poetore"].isEnabled()
+    assert dialog.app_mode_radios["poetore"].isChecked()
     poetore_index = dialog.app_mode_startup_combo.findData("poetore")
-    assert not dialog.app_mode_startup_combo.model().item(poetore_index).isEnabled()
-    assert dialog.app_mode_startup_combo.currentData() == "ask"
+    assert dialog.app_mode_startup_combo.model().item(poetore_index).isEnabled()
+    assert dialog.app_mode_startup_combo.currentData() == "poetore"
     assert dialog.get_settings()["startup"] == {
-        "preferred_mode": "poenavi",
-        "show_mode_selector": True,
+        "preferred_mode": "poetore",
+        "show_mode_selector": False,
     }
     dialog.close()
 from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton

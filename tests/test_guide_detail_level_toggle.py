@@ -54,7 +54,7 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
         poetore_window.close.assert_called_once_with()
         self.assertIsNone(window._poetore_window)
 
-    def test_poe2_poetore_closes_even_when_version_matches(self):
+    def test_poe2_poetore_stays_open_when_version_matches(self):
         window = MainWindow.__new__(MainWindow)
         window.poe_version = POE2
         window.config = {"poe_version": POE2}
@@ -65,8 +65,8 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
 
         window._enforce_feature_support()
 
-        poetore_window.close.assert_called_once_with()
-        self.assertIsNone(window._poetore_window)
+        poetore_window.close.assert_not_called()
+        self.assertIs(window._poetore_window, poetore_window)
 
     def test_poe2_guide_updates_mini_navi_content(self):
         window = MainWindow.__new__(MainWindow)
