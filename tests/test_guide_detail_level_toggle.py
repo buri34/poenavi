@@ -136,8 +136,67 @@ class GuideDetailLevelToggleTest(unittest.TestCase):
         window._update_guide_and_map("部族の中心", "poe2_act4_area16", 1, zone_changed=True)
         window._speak_poe2_guide.assert_called_once()
         window._speak_poe2_guide.reset_mock()
-        window._update_guide_and_map("部族の中心", "poe2_act4_area16", 1)
+        window._update_guide_and_map("部族の中心", "poe2_act4_area16", 1, zone_changed=True)
         window._speak_poe2_guide.assert_not_called()
+
+    def test_poe2_restore_records_voice_key_without_reading_on_checkpoint_respawn(self):
+        window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE2
+        window.config = {"voicevox": {"enabled": True}}
+        window.guide_data = {
+            "poe2_act1_area02": {
+                "objective": "表示本文",
+                "mini_navi": {"text": "表示用", "voice_text": "クリアフェルの案内"},
+            }
+        }
+        window.progress_flags = set()
+        window.visit_override = None
+        window.zone_data = {}
+        window.part2_mode = False
+        window.guide_font_size = 18
+        window.player_level = 1
+        window._restoring = True
+        window.guide_text_label = Mock()
+        window.map_thumbnail = Mock()
+        window._update_area_note = Mock()
+        window._update_poelab_link_visibility = Mock()
+        window._speak_poe2_guide = Mock()
+
+        window._update_guide_and_map("クリアフェル", "poe2_act1_area02", 1, zone_changed=True)
+        window._speak_poe2_guide.assert_not_called()
+
+        window._restoring = False
+        window._update_guide_and_map("クリアフェル", "poe2_act1_area02", 1, zone_changed=True)
+        window._speak_poe2_guide.assert_not_called()
+
+    def test_poe2_voice_key_allows_changed_guide_and_combat_area_round_trip(self):
+        window = MainWindow.__new__(MainWindow)
+        window.poe_version = POE2
+        window.config = {"voicevox": {"enabled": True}}
+        window.guide_data = {
+            "area_a": {"mini_navi": {"text": "A", "voice_text": "最初の案内"}},
+            "area_b": {"mini_navi": {"text": "B", "voice_text": "別エリアの案内"}},
+        }
+        window.progress_flags = set()
+        window.visit_override = None
+        window.zone_data = {}
+        window.part2_mode = False
+        window.guide_font_size = 18
+        window.player_level = 1
+        window._restoring = False
+        window.guide_text_label = Mock()
+        window.map_thumbnail = Mock()
+        window._update_area_note = Mock()
+        window._update_poelab_link_visibility = Mock()
+        window._speak_poe2_guide = Mock()
+
+        window._update_guide_and_map("エリアA", "area_a", 1, zone_changed=True)
+        window.guide_data["area_a"]["mini_navi"]["voice_text"] = "更新後の案内"
+        window._update_guide_and_map("エリアA", "area_a", 1, voice_text_changed=True)
+        window._update_guide_and_map("エリアB", "area_b", 1, zone_changed=True)
+        window._update_guide_and_map("エリアA", "area_a", 1, zone_changed=True)
+
+        self.assertEqual(window._speak_poe2_guide.call_count, 4)
 
     def test_progress_flag_reads_only_when_selected_voice_text_changes(self):
         window = MainWindow.__new__(MainWindow)

@@ -518,6 +518,7 @@ class MainWindow(QMainWindow):
             return
         self.poe_version = self.config.get("poe_version", POE1)
         self.voicevox_tts = None
+        self._last_voicevox_guide_key = None
         self._sync_voicevox_service()
         
         self.drag_position = None
@@ -4179,6 +4180,21 @@ class MainWindow(QMainWindow):
         if text:
             service.speak_latest(text)
 
+    def _poe2_voicevox_guide_key(
+        self,
+        zone_name: str,
+        zone_id: str | None,
+        guide: dict | None,
+    ) -> tuple[str, str, str] | None:
+        """同じPoE2ガイドの連続読み上げを識別するキーを返す。"""
+        if self.poe_version != POE2 or not guide:
+            return None
+        return (
+            self.poe_version,
+            zone_id or zone_name.strip(),
+            guide_to_speech_text(guide),
+        )
+
     def _update_guide_and_map(self, zone_name: str, zone_id: str | None, visit_num: int, zone_changed: bool = False, exp_level: int | None = None, voice_text_changed: bool = False):
         """攻略ガイドとマップ画像を更新"""
         self._update_area_note(zone_name, zone_id)
@@ -4196,6 +4212,13 @@ class MainWindow(QMainWindow):
             guide = get_zone_guide(self.guide_data, zone_id, visit=effective_visit, config=self.config, active_flags=self.progress_flags)
         else:
             guide = None
+
+        voicevox_key = self._poe2_voicevox_guide_key(zone_name, zone_id, guide)
+        previous_voicevox_key = getattr(self, "_last_voicevox_guide_key", None)
+        should_process_voicevox = self._restoring or zone_changed or voice_text_changed
+        if should_process_voicevox:
+            # 復元時も現在のキーを覚え、直後の死亡復帰ログで再読しない。
+            self._last_voicevox_guide_key = voicevox_key
         
         if guide:
             html = format_guide_html(
@@ -4205,7 +4228,11 @@ class MainWindow(QMainWindow):
             )
             self.guide_text_label.setText(html)
             self.guide_text_label.setStyleSheet(f"color: #dddddd; font-size: {self.guide_font_size}px; background: transparent;")
-            if (zone_changed and not self._restoring) or voice_text_changed:
+            if (
+                not self._restoring
+                and (zone_changed or voice_text_changed)
+                and voicevox_key != previous_voicevox_key
+            ):
                 self._speak_poe2_guide(guide)
             if hasattr(self, "mini_navi_overlay"):
                 if self._is_mini_navi_available():
