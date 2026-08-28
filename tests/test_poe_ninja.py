@@ -599,6 +599,87 @@ def test_poe2_exchange_service_uses_exchange_category_and_cache():
     assert calls == [("Runes of Aldur", "UncutGems")]
 
 
+@pytest.mark.parametrize(
+    ("category", "name", "source_type", "slug"),
+    [
+        ("soul_core", "Soul Core of Topotante", "SoulCores", "soul-cores"),
+        ("rune", "Greater Iron Rune", "Runes", "runes"),
+    ],
+)
+def test_poe2_augments_use_their_exchange_overviews(
+    category, name, source_type, slug,
+):
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        return {
+            "core": {
+                "primary": "divine", "rates": {"chaos": 7.74, "exalted": 366.6},
+            },
+            "items": [{"id": "augment", "name": name, "detailsId": "augment"}],
+            "lines": [{
+                "id": "augment", "primaryValue": 0.0126,
+                "maxVolumeCurrency": "exalted", "maxVolumeRate": 1 / 4.62,
+                "sparkline": {"data": [], "totalChange": 0},
+            }],
+        }
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    item = ParsedItem(category, "currency", name, name, category)
+    price = service.lookup_poe2_exchange(item, "Runes of Aldur")
+
+    assert price is not None
+    assert price.source_type == source_type
+    assert price.display_price_parts() == ("4.6", "exalted")
+    assert price.url.endswith(f"/{slug}/augment")
+    assert calls == [("Runes of Aldur", source_type)]
+
+
+@pytest.mark.parametrize(
+    ("category", "name", "source_type"),
+    [
+        ("currency", "Greater Essence of Enhancement", "Essences"),
+        ("currency", "Simulacrum Splinter", "Delirium"),
+        ("currency", "Adaptive Catalyst", "Breach"),
+        ("currency", "Adaptive Alloy", "Verisium"),
+        ("rune", "Bear Idol", "Idols"),
+        ("rune", "Ancient Jawbone", "Abyss"),
+    ],
+)
+def test_poe2_dedicated_exchange_categories_are_discovered(
+    category, name, source_type,
+):
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        items = []
+        lines = []
+        if type_name == source_type:
+            items = [{"id": "item", "name": name, "detailsId": "item"}]
+            lines = [{
+                "id": "item", "primaryValue": 0.01,
+                "maxVolumeCurrency": "exalted", "maxVolumeRate": 0.25,
+                "sparkline": {"data": [], "totalChange": 0},
+            }]
+        return {
+            "core": {
+                "primary": "divine", "rates": {"chaos": 7.74, "exalted": 366.6},
+            },
+            "items": items,
+            "lines": lines,
+        }
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    item = ParsedItem("Currency", "currency", name, name, category)
+    price = service.lookup_poe2_exchange(item, "Runes of Aldur")
+
+    assert price is not None
+    assert price.source_type == source_type
+    assert calls[-1] == ("Runes of Aldur", source_type)
+
+
 def test_poe2_related_identities_use_pinned_categories_and_share_cache():
     exchange_calls = []
     unique_calls = []

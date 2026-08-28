@@ -5502,6 +5502,34 @@ Shift+クリックでスタックから取り出す。""")
         window.close()
 
 
+@pytest.mark.parametrize(
+    ("item_class", "localized_name", "category", "base_type"),
+    [
+        ("ソウルコア", "トポタンテのソウルコア", "soul_core", "Soul Core of Topotante"),
+        ("ルーン", "鉄のグレータールーン", "rune", "Greater Iron Rune"),
+    ],
+)
+def test_poe2_augments_are_exchange_price_items(
+    qapp, item_class, localized_name, category, base_type,
+):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.input_edit.setPlainText(
+            f"アイテムクラス: {item_class}\nレアリティ: カレンシー\n"
+            f"{localized_name}\n--------\nスタック数: 1/10\n--------\n"
+        )
+        with patch("src.poetore.poe2.trade.search_prices") as trade_search:
+            window.search_current_item()
+
+        trade_search.assert_not_called()
+        assert window._parsed_item.category == category
+        assert window._parsed_item.base_type == base_type
+        assert "poe.ninja参考価格のみ" in window.price_status.text()
+        assert not window.trade_url_button.isEnabled()
+    finally:
+        window.close()
+
+
 def test_poe2_shared_search_controls_reach_trade_adapter(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:

@@ -244,18 +244,22 @@ class PoeNinjaPriceService:
     ) -> PoeNinjaPrice | None:
         if not league or re.search(r"\(PL\d+\)$", league):
             return None
-        type_name = _poe2_exchange_overview_type(item)
-        if type_name is None:
+        type_names = _poe2_exchange_overview_types(item)
+        if not type_names:
             return None
-        payload = self._poe2_exchange_payload(league, type_name)
-        return match_poe2_exchange_price(
-            payload,
-            item,
-            league,
-            trade_name=trade_name,
-            trade_base_type=trade_base_type,
-            source_type=type_name,
-        )
+        for type_name in type_names:
+            payload = self._poe2_exchange_payload(league, type_name)
+            price = match_poe2_exchange_price(
+                payload,
+                item,
+                league,
+                trade_name=trade_name,
+                trade_base_type=trade_base_type,
+                source_type=type_name,
+            )
+            if price is not None:
+                return price
+        return None
 
     def lookup_poe2_identities(
         self, identities: tuple[tuple[str, str, str | None, str | None], ...], league: str,
@@ -705,25 +709,41 @@ def _poe2_unique_overview_type(category: str) -> str | None:
     return None
 
 
-def _poe2_exchange_overview_type(item: ParsedItem) -> str | None:
+def _poe2_exchange_overview_types(item: ParsedItem) -> tuple[str, ...]:
     if item.category == "uncut_gem":
-        return "UncutGems"
+        return ("UncutGems",)
+    if item.category == "soul_core":
+        return ("SoulCores", "Runes", "Idols", "Abyss")
+    if item.category == "rune":
+        return ("Runes", "Idols", "Abyss", "SoulCores")
     identity = str(item.base_type or item.name or "").strip()
     if identity in POE2_EXPEDITION_SAGA_NAMES:
-        return "Expedition"
+        return ("Expedition",)
     if item.item_class in POE2_OMEN_ITEM_CLASSES:
-        return "Ritual"
+        return ("Ritual",)
     if item.category == "currency":
-        return "Currency"
+        # PoE2のコピー文では専用交換品もCurrencyクラスになる。価格一覧側の
+        # 分類は名前から安定して復元できないため、一覧をキャッシュし完全一致
+        # したカテゴリを採用する。
+        return (
+            "Currency", "Essences", "Delirium", "Breach", "Verisium",
+            "Expedition", "Ritual",
+        )
     if item.category == "expedition_logbook":
-        return "Expedition"
+        return ("Expedition",)
     if identity in POE2_FRAGMENT_EXCHANGE_NAMES:
-        return "Fragments"
-    return None
+        return ("Fragments",)
+    return ()
+
+
+def _poe2_exchange_overview_type(item: ParsedItem) -> str | None:
+    """Return the first candidate for compatibility with category-only callers."""
+    types = _poe2_exchange_overview_types(item)
+    return types[0] if types else None
 
 
 def is_poe2_exchange_price_item(item: ParsedItem) -> bool:
-    return _poe2_exchange_overview_type(item) is not None
+    return bool(_poe2_exchange_overview_types(item))
 
 
 def match_poe2_exchange_price(
@@ -873,6 +893,7 @@ def _poe2_overview_slug(type_name: str) -> str:
         "LineageSupportGems": "lineage-support-gems",
         "Essences": "essences",
         "Ultimatum": "soul-cores",
+        "SoulCores": "soul-cores",
         "Idols": "idols",
         "Runes": "runes",
         "Ritual": "omens",
