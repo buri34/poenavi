@@ -12,7 +12,8 @@ Path of Exile 1 / Path of Exile 2向けの、Windows用レベリング支援ツ�
 - PoE1 / PoE2のエリア移動・レベルアップ・Act進行を自動検知
 - 攻略ガイド、マップ画像、経験値効率の目安を表示
 - 自動ラップ対応のRTAタイマー
-- 小型オーバーレイ「みになび」（PoE1）
+- 小型オーバーレイ「みになび」（PoE1 / PoE2）
+- VOICEVOXによるみになびの音声案内（PoE2）
 - PoBからのジェム取得リスト作成（PoE1）
 - 日本語アイテム価格検索「ぽえとれ」（PoE1）
 - Map Modチェック、検索プリセット、メモ、Cheat sheets
@@ -44,8 +45,8 @@ PoENaviは、今後のWindows向けリリースを署名するためSignPath Fou
 
 ## 最初に行う設定
 
-1. 起動時に「ぽえなび」または「ぽえとれ」を選択
-2. ぽえなびではPoE1 / PoE2を選択
+1. 起動時にPoE1 / PoE2を選択
+2. 「ぽえなび」または「ぽえとれ」を選択（PoE2版ぽえとれは現在テスト中）
 3. 設定画面で`Client.txt`の場所を確認
 4. PoE側のチャット設定で「ローカル」を有効化
 
@@ -60,7 +61,8 @@ PoE2 Steam: C:\Program Files (x86)\Steam\steamapps\common\Path of Exile 2\logs\C
 
 - 正式対応：Windows 10 / 11
 - 対応ゲーム：Path of Exile 1 / Path of Exile 2
-- ぽえとれ、みになび、PoBインポート：PoE1のみ
+- ぽえとれ、PoBインポート：PoE1のみ
+- VOICEVOX読み上げ：PoE2のみ（VOICEVOX本体の起動が必要）
 - Linux：非公式サポート。一部のWindows依存機能は動作保証外
 - PoEのローカルチャットログが無効だと、一部の自動ラップやガイド切替を検知できません
 
