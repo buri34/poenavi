@@ -70,7 +70,7 @@
       "summary": "<span style='color:#ffffff'>・３つの「錆のオベリスク」を見つける</span>\n<span style='color:#ffffff'>・ボス「錆の王」を倒す</span>\n<span style='color:#ffffff'>・ポータルで街へ戻る</span>\n\n<span style='color:#ffffff'>（街）</span>\n<span style='color:#ffffff'>・レンリーにクエストを提出する</span>\n<span style='color:#ffffff'>・WPから「グレルウッド」へ行く</span>\n\n<span style='color:#ffffff'>基本的にはエリアをぐるりと一周するように回る</span>\n\n<span style='color:#ffffff'>敵の攻撃がまあまあ痛いが、近接モブは近づかなければ殴られないので、遠距離モブを優先的に倒すようにすると楽。</span>\n\n<span style='color:#ffffff'>「錆びた武器」や「洗練された武器」から武器がドロップ。個々の中身はランダムだが、エリア内のすべてのオブジェクトを開ければ、すべての武器タイプが少なくとも1つずつ手に入ることが保証されている（ワンドとスタッフを除く）。</span>\n<span style='color:#ffffff'>自分のクラスに適した武器を見つけるために、見かけたら常にクリックする</span>",
       "mini_navi": {
         "text": "<span style='color:#ffffff'>▸３つの「錆のオベリスク」を見つける</span>\n<span style='color:#ffffff'>▸[boss]ボス「錆の王」を倒し、ポータルで[town]</span><span style='color:#dddd44'>街</span><span style='color:#ffffff'>へ戻る</span>\n<span style=\" color:#ffffff;\">▸【街】[quest]レンリーにクエストを提出する\n▸【街】WPから[move]</span><span style='color:#dddd44'>グレルウッド</span><span style='color:#ffffff'>へ行く</span>",
-        "voice_text": "まず、3つの「錆のオベリスク」を見つけます。\n次に、ボスを倒します。\nその後、ポータルで街へ戻ります。\n街では、レンリーにクエストを提出します。\nその後、ウェイポイントからグレルウッドへ行きます。"
+        "voice_text": "このエリアでは、まず、3つの「錆のオベリスク」を見つけます。\n次に、ボスを倒します。\nその後、ポータルで街へ戻ります。\n街では、レンリーにクエストを提出します。\nその後、ウェイポイントからグレルウッドへ行きます。"
       }
     },
     "flags": {}
@@ -83,7 +83,7 @@
       "summary": "<span style='color:#ffffff'>・ウーナに話して、進む。</span>\n<span style='color:#ffffff'>・入口と反対の方向へ進み、「永遠なる帝国の墓地」へ行く。</span>\n\n<span style='color:#ffffff'>ウーナの歌が始まった瞬間に、チェックポイントに体当たりするようにローリングすると、なぜかツタが開く前に通れるようになる</span>\n\n<span style='color:#ffffff'>基本的には、ワールドマップを信じる</span>\n\n<span style='color:#ffffff'>ボスの「腐ったドルイド」は倒すとサポートジェムの原石Lv1</span>",
       "mini_navi": {
         "text": "<span style='color:#ffffff'>▸[quest]ウーナに話して、進む。</span>\n<span style='color:#ffffff'>▸入口と反対の方向へ進み、[move]</span><span style='color:#dddd44'>永遠なる帝国の墓地</span><span style='color:#ffffff'>へ行く。</span>\n<span style='color:#ffffff'>（基本的には、ワールドマップを信じる）</span>\n<span style='color:#ffffff'>▸[任意][boss]ボス「腐ったドルイド」からサポートジェムlvl1</span>",
-        "voice_text": "まず、ウーナに話して先へ進みます。\n次のエリアの永遠なる帝国の墓地については、基本的にはワールドマップの位置関係を見て進むと効率的です。\n任意になりますが、ここのボスを倒すと、サポートジェムレベル1を入手できます。"
+        "voice_text": "ここは、ルーンの封印を解いた後に通れるようになる場所です。\nクエストが進んだら、まず、ウーナに話して先へ進みます。\n次のエリアの永遠なる帝国の墓地については、基本的にはワールドマップの位置関係を見て進むと効率的です。\n任意になりますが、ここのボスを倒すと、サポートジェムレベル1を入手できます。"
       }
     },
     "flags": {}
@@ -248,7 +248,7 @@
         "summary": "<span style=\" color:#ffffff;\">・アサラを呼ぶ\n・道なりに進んで、ボス「復活した王、ヤマンラ」を倒す。\n・階段を降りる\n・ポータルで街へ戻る\n\n（街）\n・ザーカにクエストを提出する\n・アサラに話して、「マストドンの不毛地帯」に行く</span>",
         "mini_navi": {
           "text": "<span style=\" color:#ffffff;\">▸道なりに進んで、アサラを呼び、[boss]ボス「復活した王、ヤマンラ」を倒す。\n▸階段を降り、イベント発生後、ポータルで[town]</span><span style='color:#dddd44'>街</span><span style=\" color:#ffffff;\">へ戻る\n▸【街】[quest]ザーカにクエストを提出する\n▸【街】アサラに話して、[move]マストドンの不毛地帯へ行く</span>",
-          "voice_text": "まず、道なりに進んでアサラを呼び、奥へ進んでいきます。\n最奥にはボスがいるので倒します。\nボス戦の後は階段を降りて、イベント発生後、ポータルで街へ戻ります。\n街では、ザーカにクエストを提出します。\nその後、アサラに話して、マストドンの不毛地帯へ行きます。\nなお、ここからはマストドンかケスのどちらかに行くのが普通ですが、リーグ0.5ではマストドンの不毛地帯のリーグコンテンツの報酬が見習いの宝飾職人のオーブで強力なため、このガイドではマストドンから進めるのをおすすめしています。"
+          "voice_text": "このエリアは、まず、道なりに進んでアサラを呼び、奥へ進んでいきます。\n最奥にはボスがいるので倒します。\nボス戦の後は階段を降りて、イベント発生後、ポータルで街へ戻ります。\n街では、ザーカにクエストを提出します。\nその後、アサラに話して、マストドンの不毛地帯へ行きます。\nなお、ここからはマストドンかケスのどちらかに行くのが普通ですが、リーグ0.5ではマストドンの不毛地帯のリーグコンテンツの報酬が見習いの宝飾職人のオーブで強力なため、このガイドではマストドンから進めるのをおすすめしています。"
         }
       }
     }
