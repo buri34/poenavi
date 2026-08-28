@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from PySide6.QtGui import QPixmap
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QDialog, QLabel
 
 import main
@@ -82,6 +83,21 @@ class AppModeTest(unittest.TestCase):
             "※デフォルトでは起動時に毎回確認します。以下のチェックボックスをONにすると固定にもできます。設定画面からも変更可能です。",
             labels,
         )
+        notice = next(
+            label
+            for label in dialog.findChildren(QLabel)
+            if label.text().startswith("※デフォルトでは")
+        )
+        self.assertIn("font-size: 13px", notice.styleSheet())
+        self.assertIn("font-size: 13px", dialog.skip_selector_checkbox.styleSheet())
+
+    def test_version_labels_are_centered_below_their_logos(self):
+        dialog = StartupSelectionDialog()
+
+        for tile, title in ((dialog.poe1_tile, "PoE1"), (dialog.poe2_tile, "PoE2")):
+            self.assertEqual(tile.text(), title)
+            self.assertEqual(tile.toolButtonStyle(), Qt.ToolButtonTextUnderIcon)
+            self.assertEqual(tile.sizePolicy().horizontalPolicy(), tile.sizePolicy().Policy.Expanding)
 
     def test_dialog_allows_poetore_when_poe2_is_selected(self):
         dialog = StartupSelectionDialog(

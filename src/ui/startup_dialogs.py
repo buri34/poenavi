@@ -93,7 +93,7 @@ class StartupSelectionDialog(QDialog):
             "※デフォルトでは起動時に毎回確認します。以下のチェックボックスをONにすると固定にもできます。設定画面からも変更可能です。"
         )
         notice.setWordWrap(True)
-        notice.setStyleSheet("color: rgba(176, 255, 123, 0.78); font-size: 12px;")
+        notice.setStyleSheet("color: rgba(176, 255, 123, 0.78); font-size: 13px;")
         layout.addWidget(notice)
 
         self.skip_selector_checkbox = QCheckBox("次回からこの設定で直接起動")
@@ -196,21 +196,25 @@ class StartupSelectionDialog(QDialog):
         return None
 
     def _create_version_tile(self, version, title, checked=False):
-        button = QPushButton(title)
+        button = QToolButton()
+        button.setText(title)
+        button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         button.setProperty("poe_version", version)
         button.setCheckable(True)
         button.setChecked(checked)
         button.setCursor(QCursor(Qt.PointingHandCursor))
-        button.setMinimumHeight(155)
+        button.setMinimumHeight(170)
+        button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         button.setStyleSheet(f"""
-            QPushButton {{
+            QToolButton {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                     stop:0 rgba(26, 35, 24, 235), stop:1 rgba(5, 8, 6, 245));
                 color: {Styles.TEXT_COLOR}; border: 1px solid rgba(176, 255, 123, 0.28);
-                border-radius: 12px; padding: 12px; font-size: 26px; font-weight: bold;
+                border-radius: 12px; padding: 8px 12px 10px 12px;
+                font-size: 26px; font-weight: bold;
             }}
-            QPushButton:hover {{ border: 2px solid rgba(176, 255, 123, 0.72); }}
-            QPushButton:checked {{
+            QToolButton:hover {{ border: 2px solid rgba(176, 255, 123, 0.72); }}
+            QToolButton:checked {{
                 border: 3px solid {Styles.TEXT_COLOR};
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                     stop:0 rgba(73, 110, 50, 245), stop:1 rgba(15, 27, 16, 250));
