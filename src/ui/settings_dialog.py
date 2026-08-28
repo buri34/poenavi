@@ -3079,36 +3079,6 @@ class SettingsDialog(QDialog):
                 )
                 row.addWidget(memo_button)
 
-                if _guide_dev_editor_enabled(self.poe_version, zone_id):
-                    guide_label = "詳細版" if self.poe_version == POE2 else "公式ガイド"
-                    guide_tooltip = "詳細版ガイドを編集" if self.poe_version == POE2 else "公式ガイドを編集"
-                    guide_button = self._create_small_action_button(guide_label, guide_tooltip)
-                    guide_button.setFixedWidth(75 if self.poe_version == POE2 else 90)
-                    guide_button.clicked.connect(
-                        lambda checked=False, ne=name_edit, zid=zone_id:
-                        self._open_guide_editor(ne, zid)
-                    )
-                    row.addWidget(guide_button)
-
-                    if self.poe_version == POE2:
-                        summary_button = self._create_small_action_button(
-                            "要約版", "要約版ガイドを編集",
-                        )
-                        summary_button.setFixedWidth(75)
-                        summary_button.clicked.connect(
-                            lambda checked=False, ne=name_edit, zid=zone_id:
-                            self._open_summary_editor(ne, zid)
-                        )
-                        row.addWidget(summary_button)
-
-                    mini_button = self._create_small_action_button("みになび", "みになびを編集")
-                    mini_button.setFixedWidth(75)
-                    mini_button.clicked.connect(
-                        lambda checked=False, ne=name_edit, zid=zone_id:
-                        self._open_mini_navi_editor(ne, zid)
-                    )
-                    row.addWidget(mini_button)
-
                 row.addStretch()
                 act_layout.addLayout(row)
                 act_widgets.append((name_edit, zone_id))

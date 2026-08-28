@@ -31,14 +31,14 @@ def test_act1_guide_editor_is_limited_to_poe1_act1(monkeypatch):
     assert not _act1_guide_dev_editor_enabled(POE2, "poe2_act1_area1")
 
 
-def test_settings_shows_act1_editor_buttons_only_in_dev_mode(monkeypatch, qapp):
+def test_settings_hides_act1_editor_buttons_even_in_dev_mode(monkeypatch, qapp):
     monkeypatch.setenv("POENAVI_ACT1_GUIDE_DEV", "1")
     dialog = SettingsDialog(current_config={"poe_version": POE1})
 
     tooltips = [button.toolTip() for button in dialog.findChildren(QPushButton)]
 
-    assert tooltips.count("公式ガイドを編集") == 15
-    assert tooltips.count("みになびを編集") == 15
+    assert "公式ガイドを編集" not in tooltips
+    assert "みになびを編集" not in tooltips
     dialog.close()
 
 
@@ -53,17 +53,14 @@ def test_settings_hides_official_editor_buttons_in_normal_mode(monkeypatch, qapp
     dialog.close()
 
 
-def test_settings_shows_three_poe2_guide_editors_in_dev_mode(monkeypatch, qapp):
+def test_settings_hides_poe2_guide_editors_even_in_dev_mode(monkeypatch, qapp):
     monkeypatch.setenv("POENAVI_POE2_GUIDE_DEV", "1")
     dialog = SettingsDialog(current_config={"poe_version": POE2})
 
     tooltips = [button.toolTip() for button in dialog.findChildren(QPushButton)]
-    detail_count = tooltips.count("詳細版ガイドを編集")
-    summary_count = tooltips.count("要約版ガイドを編集")
-    mini_count = tooltips.count("みになびを編集")
-
-    assert detail_count > 0
-    assert detail_count == summary_count == mini_count
+    assert "詳細版ガイドを編集" not in tooltips
+    assert "要約版ガイドを編集" not in tooltips
+    assert "みになびを編集" not in tooltips
     dialog.close()
 
 
@@ -121,7 +118,7 @@ def test_poe2_mini_navi_editor_updates_default_and_flag_sections(monkeypatch, qa
     dialog.close()
 
 
-def test_settings_shows_only_requested_act10_guide_editor(monkeypatch, qapp):
+def test_settings_hides_requested_act10_guide_editor(monkeypatch, qapp):
     monkeypatch.delenv("POENAVI_ACT1_GUIDE_DEV", raising=False)
     monkeypatch.setenv("POENAVI_GUIDE_DEV_ZONE_ID", "act10_area12")
 
@@ -133,10 +130,10 @@ def test_settings_shows_only_requested_act10_guide_editor(monkeypatch, qapp):
     tooltips = [button.toolTip() for button in dialog.findChildren(QPushButton)]
     texts = [button.text() for button in dialog.findChildren(QPushButton)]
 
-    assert tooltips.count("公式ガイドを編集") == 1
-    assert tooltips.count("みになびを編集") == 1
-    assert texts.count("公式ガイド") == 1
-    assert texts.count("みになび") == 1
+    assert "公式ガイドを編集" not in tooltips
+    assert "みになびを編集" not in tooltips
+    assert "公式ガイド" not in texts
+    assert "みになび" not in texts
     dialog.close()
 
 
