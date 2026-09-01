@@ -672,7 +672,7 @@ def test_phase7_weapon_and_armour_calculated_properties_use_trade2_equipment_fil
     )
 
 
-def test_phase7_pseudo_replaces_direct_chaos_filter_without_duplicate_constraint():
+def test_phase7_single_chaos_mod_keeps_enabled_direct_without_redundant_pseudo():
     item = parse_item_text(
         (Path(__file__).parent / "fixtures" / "poe2" / "rare_body_armour_ja.txt").read_text(
             encoding="utf-8"
@@ -680,13 +680,13 @@ def test_phase7_pseudo_replaces_direct_chaos_filter_without_duplicate_constraint
     )
     rows = poe2_trade_filters(item)
     direct = next(row for row in rows if row.stat_id == "explicit.stat_2923486259")
-    pseudo = next(row for row in rows if row.stat_id == "pseudo.pseudo_total_chaos_resistance")
-    assert not direct.enabled
-    assert pseudo.enabled and pseudo.min_value == 21.0
+    assert direct.enabled
+    assert not any(
+        row.stat_id == "pseudo.pseudo_total_chaos_resistance" for row in rows
+    )
     query = build_search_query(item, stat_filters=rows)
     sent = query["query"]["stats"][0]["filters"]
-    assert {"id": "pseudo.pseudo_total_chaos_resistance", "value": {"min": 21.0}} in sent
-    assert not any(row["id"] == "crafted.stat_2923486259" for row in sent)
+    assert any(row["id"] == "explicit.stat_2923486259" for row in sent)
 
 
 def test_phase7_elemental_and_life_pseudos_sum_shared_sources_once():
@@ -703,12 +703,12 @@ def test_phase7_elemental_and_life_pseudos_sum_shared_sources_once():
     by_id = {row.stat_id: row for row in rows}
     assert by_id["pseudo.pseudo_total_elemental_resistance"].min_value == 45.0
     assert by_id["pseudo.pseudo_total_life"].min_value == 140.0
-    assert by_id["pseudo.pseudo_total_elemental_resistance"].enabled
-    assert by_id["pseudo.pseudo_total_life"].enabled
-    assert not by_id["explicit.all"].enabled
-    assert not by_id["explicit.fire"].enabled
-    assert not by_id["explicit.life"].enabled
-    assert not by_id["explicit.str"].enabled
+    assert not by_id["pseudo.pseudo_total_elemental_resistance"].enabled
+    assert not by_id["pseudo.pseudo_total_life"].enabled
+    assert by_id["explicit.all"].enabled
+    assert by_id["explicit.fire"].enabled
+    assert by_id["explicit.life"].enabled
+    assert by_id["explicit.str"].enabled
 
 
 def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
@@ -846,7 +846,7 @@ def test_single_direct_attribute_mod_does_not_add_redundant_pseudo_in_poe2():
         }
 
 
-def test_compound_attribute_source_keeps_useful_pseudo_in_poe2():
+def test_single_all_attributes_mod_does_not_expand_to_redundant_pseudos_in_poe2():
     item = ParsedItem(
         item_class="Spear", rarity="rare", name="Test", base_type="Test Spear",
         category="spear",
@@ -855,9 +855,7 @@ def test_compound_attribute_source_keeps_useful_pseudo_in_poe2():
         ),),
     )
     ids = {row.stat_id for row in poe2_trade_filters(item)}
-    assert "pseudo.pseudo_total_strength" in ids
-    assert "pseudo.pseudo_total_dexterity" in ids
-    assert "pseudo.pseudo_total_intelligence" in ids
+    assert not any(stat_id.startswith("pseudo.pseudo_total_") for stat_id in ids)
 
 
 def test_phase6_special_items_open_japanese_trade_with_localized_identity():

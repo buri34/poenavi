@@ -1946,17 +1946,16 @@ def test_reported_poe2_rare_gloves_show_chaos_resistance_without_warning(qapp):
         window.input_edit.setPlainText(text)
         window.parse_current_text()
 
-        assert window.mod_filter_tree.topLevelItemCount() == 10
+        assert window.mod_filter_tree.topLevelItemCount() == 9
         assert window.mod_warning.isHidden()
         selected = window._selected_stat_filters()
-        chaos = next(
-            row for row in selected
-            if row.stat_id == "pseudo.pseudo_total_chaos_resistance"
-        )
-        assert chaos.text == "混沌耐性合計"
-        assert chaos.min_value == 13
         direct = next(row for row in selected if row.stat_id == "explicit.stat_2923486259")
-        assert not direct.enabled
+        assert direct.enabled
+        assert direct.min_value == 13
+        assert not any(
+            row.stat_id == "pseudo.pseudo_total_chaos_resistance"
+            for row in selected
+        )
         assert any(row.stat_id == "property.evasion" for row in selected)
         assert any(row.stat_id == "property.augment_sockets" for row in selected)
         assert not any(

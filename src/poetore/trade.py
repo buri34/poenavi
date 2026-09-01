@@ -1959,7 +1959,11 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
     has_maximum_life_mod = False
     has_maximum_mana_mod = False
     simple: dict[str, float] = {}
+    simple_sources: dict[str, list[ItemModifier]] = {}
     attribute_sources = {key: [] for key in ("str", "dex", "int")}
+    aggregate_sources = {key: [] for key in (
+        "life", "mana", "fire", "cold", "lightning", "chaos",
+    )}
     for modifier in item.modifiers:
         value = modifier.values[0] if modifier.values else 0
         ref = modifier.ref or ""
@@ -1973,55 +1977,78 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
         if ref == "+# to maximum Life":
             has_maximum_life_mod = True
             totals["life"] += value
+            aggregate_sources["life"].append(modifier)
         if ref == "+# to maximum Mana":
             has_maximum_mana_mod = True
             totals["mana"] += value
+            aggregate_sources["mana"].append(modifier)
         for attr in _ATTRIBUTE_REFS.get(ref, ()):
             totals[attr] += value
-            attribute_sources[attr].append(ref)
+            attribute_sources[attr].append(modifier)
         if ref == "+# to all Attributes":
             simple[ref] = simple.get(ref, 0.0) + value
+            simple_sources.setdefault(ref, []).append(modifier)
         resistance = _RESISTANCE_REFS.get(ref)
         if resistance:
             elements, chaos = resistance
-            for element in elements: totals[element] += value
-            if chaos: totals["chaos"] += value
+            for element in elements:
+                totals[element] += value
+                aggregate_sources[element].append(modifier)
+            if chaos:
+                totals["chaos"] += value
+                aggregate_sources["chaos"].append(modifier)
         for source_ref, stat_id, label in _SIMPLE_PSEUDOS:
             if ref == source_ref and not (
                 source_ref == "#% increased Attack Speed" and
                 modifier.stat_id and modifier.stat_id.rsplit("_", 1)[-1] in _WEAPON_SPEED_STAT_KEYS
             ):
                 simple[source_ref] = simple.get(source_ref, 0.0) + value
+                simple_sources.setdefault(source_ref, []).append(modifier)
         if ref in _RELATIONAL_SOURCE_REFS:
             simple[ref] = simple.get(ref, 0.0) + value
+            simple_sources.setdefault(ref, []).append(modifier)
     filters = []
     totals["life"] += totals["str"] * 0.5
     totals["mana"] += totals["int"] * 0.5
     elemental = totals["fire"] + totals["cold"] + totals["lightning"]
-    if has_maximum_life_mod:
+    life_sources = aggregate_sources["life"] + attribute_sources["str"]
+    mana_sources = aggregate_sources["mana"] + attribute_sources["int"]
+    def useful_pseudo(value: float, sources: list[ItemModifier]) -> bool:
+        unique = list(dict.fromkeys(sources))
+        return len(unique) > 1 or bool(
+            unique and unique[0].values and unique[0].values[0] != value
+        )
+
+    if has_maximum_life_mod and useful_pseudo(totals["life"], life_sources):
         filters.append(TradeStatFilter(
             "pseudo.pseudo_total_life", "最大ライフ合計",
-            _relaxed(totals["life"]), "pseudo", True,
+            _relaxed(totals["life"]), "pseudo", False,
         ))
-    if has_maximum_mana_mod:
+    if has_maximum_mana_mod and useful_pseudo(totals["mana"], mana_sources):
         filters.append(TradeStatFilter("pseudo.pseudo_total_mana", "最大マナ合計", _relaxed(totals["mana"]), "pseudo"))
-    if elemental:
+    elemental_sources = (
+        aggregate_sources["fire"] + aggregate_sources["cold"]
+        + aggregate_sources["lightning"]
+    )
+    if elemental and useful_pseudo(elemental, elemental_sources):
         filters.append(TradeStatFilter(
-            "pseudo.pseudo_total_elemental_resistance", "元素耐性合計", _relaxed(elemental), "pseudo", True,
+            "pseudo.pseudo_total_elemental_resistance", "元素耐性合計", _relaxed(elemental), "pseudo", False,
             read_value=elemental,
         ))
     for element, stat_id, label in (("fire", "pseudo.pseudo_total_fire_resistance", "火耐性合計"),
                                     ("cold", "pseudo.pseudo_total_cold_resistance", "冷気耐性合計"),
                                     ("lightning", "pseudo.pseudo_total_lightning_resistance", "雷耐性合計")):
-        if totals[element]: filters.append(TradeStatFilter(stat_id, label, _relaxed(totals[element]), "pseudo"))
+        if totals[element] and useful_pseudo(totals[element], aggregate_sources[element]):
+            filters.append(TradeStatFilter(stat_id, label, _relaxed(totals[element]), "pseudo"))
     chaos_sources = [
         modifier for modifier in item.modifiers
         if modifier.ref in _RESISTANCE_REFS and _RESISTANCE_REFS[modifier.ref][1]
     ]
     crafted_chaos_only = len(chaos_sources) == 1 and chaos_sources[0].kind == "crafted"
-    if totals["chaos"] and not crafted_chaos_only:
+    if (totals["chaos"] and not crafted_chaos_only
+            and useful_pseudo(totals["chaos"], aggregate_sources["chaos"])):
         filters.append(TradeStatFilter(
-            "pseudo.pseudo_total_chaos_resistance", "混沌耐性合計", _relaxed(totals["chaos"]), "pseudo", True,
+            "pseudo.pseudo_total_chaos_resistance", "混沌耐性合計", _relaxed(totals["chaos"]), "pseudo", False,
             read_value=totals["chaos"],
         ))
     for attr, stat_id, label in (("str", "pseudo.pseudo_total_strength", "筋力合計"),
@@ -2032,10 +2059,12 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
             "dex": "+# to Dexterity",
             "int": "+# to Intelligence",
         }[attr]
-        if totals[attr] and attribute_sources[attr] != [direct_ref]:
+        if totals[attr] and [row.ref for row in attribute_sources[attr]] != [direct_ref]:
             filters.append(TradeStatFilter(stat_id, label, _relaxed(totals[attr]), "pseudo"))
     all_attributes = simple.get("+# to all Attributes", 0.0)
-    if all_attributes:
+    if all_attributes and useful_pseudo(
+        all_attributes, simple_sources.get("+# to all Attributes", []),
+    ):
         filters.append(TradeStatFilter(
             "pseudo.pseudo_total_all_attributes", "全能力値合計",
             _relaxed(all_attributes), "pseudo",
@@ -2052,13 +2081,20 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
         }
     }
     for ref, (stat_id, label) in simple_definitions.items():
-        if simple.get(ref):
+        if simple.get(ref) and useful_pseudo(simple[ref], simple_sources.get(ref, [])):
             filters.append(TradeStatFilter(stat_id, label, _relaxed(simple[ref]), "pseudo"))
 
     def add(stat_id: str, label: str, required_ref: str, *shared_refs: str) -> None:
         if not simple.get(required_ref):
             return
         value = sum(simple.get(ref, 0.0) for ref in (required_ref, *shared_refs))
+        sources = [
+            source
+            for ref in (required_ref, *shared_refs)
+            for source in simple_sources.get(ref, [])
+        ]
+        if not useful_pseudo(value, sources):
+            return
         filters.append(TradeStatFilter(stat_id, label, _relaxed(value), "pseudo"))
 
     add("pseudo.pseudo_global_critical_strike_chance", "グローバルクリティカル率",
@@ -2134,22 +2170,6 @@ def _apply_pseudo_relations(filters: list[TradeStatFilter]) -> list[TradeStatFil
                 kept = [row for row in kept if row.stat_id not in remove]
 
     return sorted(kept, key=lambda row: (row.kind != "property", row.stat_id, row.text))
-
-
-def _pseudo_consumed_stat_ids(item: ParsedItem) -> set[str]:
-    """pseudoへ集約した元Modを個別条件として二重表示しない。"""
-    known_refs = set(_RESISTANCE_REFS) | set(_ATTRIBUTE_REFS) | {
-        "+# to maximum Life", "+# to maximum Mana",
-    } | {row[0] for row in _SIMPLE_PSEUDOS} | _RELATIONAL_SOURCE_REFS
-    consumed = set()
-    for modifier in item.modifiers:
-        if not modifier.stat_id or modifier.ref not in known_refs:
-            continue
-        if (modifier.ref == "#% increased Attack Speed" and
-                modifier.stat_id.rsplit("_", 1)[-1] in _WEAPON_SPEED_STAT_KEYS):
-            continue
-        consumed.add(modifier.stat_id)
-    return consumed
 
 
 _stat_entries_cache: tuple[dict, ...] | None = None
@@ -3353,16 +3373,7 @@ def resolve_trade_stat_filters(
     # AwakenedはFoulborn品について、置換されたFoulborn Modだけでなく、
     # 置換されずに残った通常Unique Modも個体差として初期選択する。
     enable_foulborn_rolls = unique_item and "foulborn" in item.flags
-    # ユニーク品はpseudo集約を表示しないため、元の可変Modを消費扱いにしない。
-    # 非ユニーク品だけ、pseudoと個別Modの二重表示を避ける。
-    consumed_stat_ids = (
-        set() if unique_item or item.category in {"jewel", "abyss_jewel"}
-        else _pseudo_consumed_stat_ids(item)
-    )
-    consumed_refs = {
-        modifier.ref for modifier in item.modifiers
-        if modifier.stat_id in consumed_stat_ids and modifier.ref
-    }
+    # 非ユニーク品は直接Modを初期選択し、pseudoは任意の代替条件として残す。
     individual = tuple(
         TradeStatFilter(
             row.stat_id,
@@ -3370,6 +3381,13 @@ def resolve_trade_stat_filters(
             row.min_value, row.kind,
             False if row.hidden_reason else (
                 enable_unique_rolls or enable_foulborn_rolls or row.enabled
+                or (
+                    not unique_item
+                    and item.category in {"weapon", "armour", "accessory"}
+                    and row.kind in {
+                        "explicit", "prefix", "suffix", "crafted", "fractured",
+                    }
+                )
             ),
             row.max_value, row.ref, row.confidence, row.inverted,
             option_value=row.option_value, option_text=row.option_text, oils=row.oils,
@@ -3378,7 +3396,6 @@ def resolve_trade_stat_filters(
             hidden_reason=row.hidden_reason,
         )
         for combine_key, row in combined.items()
-        if row.stat_id not in consumed_stat_ids and not (not unique_item and row.ref in consumed_refs)
     )
     if unique_item:
         unique_property_ids = {

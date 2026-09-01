@@ -1397,13 +1397,7 @@ Item Level: 86
     assert [row.stat_id for row in rows[:3] if row.stat_id in major_ids] == [
         row.stat_id for row in rows if row.stat_id in major_ids
     ]
-    expected = [
-        "pseudo.pseudo_total_mana",
-        "pseudo.pseudo_increased_spell_damage",
-        "pseudo.pseudo_total_cast_speed",
-        "pseudo.pseudo_critical_strike_chance_for_spells",
-        "explicit.gem_level",
-    ]
+    expected = ["explicit.gem_level"]
     assert [stat_id for stat_id in ids if stat_id in expected] == expected
     assert next(row for row in rows if row.stat_id == "explicit.gem_level").enabled
     assert not any(
@@ -1434,10 +1428,10 @@ Enemies you Kill Explode, dealing 3% of their Life as Physical Damage
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         rows = resolve_trade_stat_filters(item)
     ids = [row.stat_id for row in rows]
-    assert ids.index("property.armour") < ids.index("pseudo.pseudo_total_life")
-    assert ids.index("property.energy_shield") < ids.index("pseudo.pseudo_total_life")
-    assert ids.index("pseudo.pseudo_total_life") < ids.index("explicit.explode")
-    assert ids.index("pseudo.pseudo_total_elemental_resistance") < ids.index("explicit.explode")
+    assert "pseudo.pseudo_total_life" not in ids
+    assert "pseudo.pseudo_total_elemental_resistance" not in ids
+    assert ids.index("property.armour") < ids.index("explicit.explode")
+    assert ids.index("property.energy_shield") < ids.index("explicit.explode")
 
 
 def test_finished_gear_orders_affix_families_by_original_modifier_position():
@@ -1492,19 +1486,15 @@ def test_finished_gear_orders_affix_families_by_original_modifier_position():
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         rows = resolve_trade_stat_filters(item)
     relevant = {
-        "property.armour", "crafted.prefix", "explicit.gem", "pseudo.pseudo_total_life",
-        "fractured.accuracy", "crafted.suffix", "pseudo.pseudo_total_chaos_resistance",
-        "pseudo.pseudo_total_life_regen", "implicit.area",
+        "property.armour", "crafted.prefix", "explicit.gem",
+        "fractured.accuracy", "crafted.suffix", "implicit.area",
     }
     assert [row.stat_id for row in rows if row.stat_id in relevant] == [
         "property.armour",
         "crafted.prefix",
         "explicit.gem",
-        "pseudo.pseudo_total_life",
         "fractured.accuracy",
         "crafted.suffix",
-        "pseudo.pseudo_total_chaos_resistance",
-        "pseudo.pseudo_total_life_regen",
         "implicit.area",
     ]
 
@@ -2255,7 +2245,7 @@ def test_quality_20_and_non_six_link_count_is_visible_but_not_preselected():
     assert details["property.links"].enabled is False
 
 
-def test_armour_also_enables_general_life_pseudo():
+def test_armour_single_life_mod_does_not_add_redundant_pseudo():
     item = parse_item_text(ITEM.replace("Two Hand Swords", "Body Armours").replace(
         "Physical Damage: 108-181 (augmented)\nAttacks per Second: 1.74 (augmented)",
         "Armour: 1000",
@@ -2263,7 +2253,7 @@ def test_armour_also_enables_general_life_pseudo():
     with patch("src.poetore.trade._trade_stat_entries", return_value=()):
         enabled = {row.stat_id: row.min_value for row in resolve_trade_stat_filters(item) if row.enabled}
     assert enabled["property.armour"] == 1080.0
-    assert enabled["pseudo.pseudo_total_life"] == 72.0
+    assert "pseudo.pseudo_total_life" not in enabled
 
 
 def test_weapon_strength_without_life_mod_does_not_create_life_pseudo():
@@ -2286,7 +2276,7 @@ def test_weapon_strength_without_life_mod_does_not_create_life_pseudo():
     assert filters["property.physical_dps"].enabled is True
 
 
-def test_accessory_enables_aggregated_life_and_resistance_pseudos():
+def test_accessory_only_keeps_useful_multi_source_resistance_pseudo_off():
     item = parse_item_text("""Item Class: Rings
 Rarity: Rare
 Test Ring
@@ -2301,14 +2291,12 @@ Item Level: 85
 """)
     with patch("src.poetore.trade._trade_stat_entries", return_value=()):
         filters = resolve_trade_stat_filters(item)
-    enabled = {row.stat_id: row.min_value for row in filters if row.enabled}
-    assert enabled == {
-        "pseudo.pseudo_total_life": 63.0,
-        "pseudo.pseudo_total_elemental_resistance": 63.0,
-        "pseudo.pseudo_total_chaos_resistance": 9.0,
-    }
     details = {row.stat_id: row for row in filters}
+    assert "pseudo.pseudo_total_life" not in details
+    assert "pseudo.pseudo_total_chaos_resistance" not in details
     elemental = details["pseudo.pseudo_total_elemental_resistance"]
+    assert elemental.min_value == 63.0
+    assert not elemental.enabled
     assert elemental.source_contributions == (30.0, 40.0)
 
 
@@ -2367,22 +2355,10 @@ Item Level: 85
     ids = [row.stat_id for row in filters]
     # Plain copy has no affix headers, but Life/Mana are explicitly assigned to
     # the Prefix group. Remaining pseudos stay in source order under Other.
-    expected = [
-        "pseudo.pseudo_total_life",
-        "pseudo.pseudo_total_mana",
-        "pseudo.pseudo_total_energy_shield",
-        "pseudo.pseudo_total_elemental_resistance",
-        "pseudo.pseudo_total_chaos_resistance",
-        "pseudo.pseudo_total_all_attributes",
-        "pseudo.pseudo_total_cast_speed",
-    ]
+    expected = ["pseudo.pseudo_total_mana"]
     assert [stat_id for stat_id in ids if stat_id in expected] == expected
     enabled = {row.stat_id for row in filters if row.enabled}
-    assert enabled & set(expected) == {
-        "pseudo.pseudo_total_life",
-        "pseudo.pseudo_total_elemental_resistance",
-        "pseudo.pseudo_total_chaos_resistance",
-    }
+    assert not enabled & set(expected)
 
 
 def test_quiver_category_search_uses_all_quivers():
@@ -2418,22 +2394,10 @@ def test_pseudo_mods_cover_attributes_resources_speed_damage_crit_and_recovery()
 マナ自動回復レートが40%増加する
 """)
     filters = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
-    expected = {
-        "pseudo.pseudo_total_all_attributes": 18.0,
-        "pseudo.pseudo_total_mana": 63.0,
-        "pseudo.pseudo_total_energy_shield": 36.0,
-        "pseudo.pseudo_total_cast_speed": 10.0,
-        "pseudo.pseudo_increased_spell_damage": 27.0,
-        "pseudo.pseudo_increased_fire_damage": 22.0,
-        "pseudo.pseudo_global_critical_strike_multiplier": 31.0,
-        "pseudo.pseudo_increased_movement_speed": 9.0,
-        "pseudo.pseudo_total_life_regen": 13.0,
-        "pseudo.pseudo_increased_mana_regen": 36.0,
-    }
+    expected = {"pseudo.pseudo_total_mana": 63.0}
     assert {stat_id: filters[stat_id].min_value for stat_id in expected} == expected
     assert "pseudo.pseudo_total_life" not in filters
     assert all(not filters[stat_id].enabled for stat_id in expected)
-    assert all(row.kind == "pseudo" for row in filters.values())
 
 
 def _pseudo_test_item(modifiers, category="accessory"):
@@ -2493,9 +2457,7 @@ def test_new_relational_pseudos_parse_from_japanese_detail_copy():
 燃焼ダメージが40%増加する
 """)
     rows = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
-    assert rows["pseudo.pseudo_critical_strike_chance_for_spells"].min_value == 22.0
-    assert rows["pseudo.pseudo_increased_elemental_damage_with_attack_skills"].min_value == 27.0
-    assert rows["pseudo.pseudo_increased_burning_damage"].min_value == 36.0
+    assert not any(row.kind == "pseudo" for row in rows.values())
 
 
 def test_pseudo_group_values_are_independent_of_modifier_input_order():
@@ -2514,17 +2476,12 @@ def test_pseudo_group_values_are_independent_of_modifier_input_order():
     }
     assert signature(forward) == signature(backward)
     ids = {row.stat_id for row in forward}
-    assert ids & {
+    assert not ids & {
         "pseudo.pseudo_total_fire_resistance",
         "pseudo.pseudo_total_cold_resistance",
         "pseudo.pseudo_total_lightning_resistance",
-    } == {"pseudo.pseudo_total_cold_resistance"}
-    cold = next(
-        row for row in forward
-        if row.stat_id == "pseudo.pseudo_total_cold_resistance"
-    )
-    assert cold.enabled is False
-    assert cold.hidden_reason == "Awakened: 最大の個別元素耐性は隠し候補"
+    }
+    assert "pseudo.pseudo_total_elemental_resistance" in ids
     assert "pseudo.pseudo_total_intelligence" not in ids
 
 
@@ -2552,7 +2509,7 @@ def test_crafted_chaos_only_is_hidden_but_mixed_sources_are_aggregated():
         _pseudo_test_item((crafted, natural))
     )}
     assert rows["pseudo.pseudo_total_chaos_resistance"].min_value == 32.0
-    assert rows["pseudo.pseudo_total_chaos_resistance"].enabled is True
+    assert rows["pseudo.pseudo_total_chaos_resistance"].enabled is False
 
 
 def test_aggregated_resistances_keep_exact_read_values_from_item():
@@ -2589,8 +2546,8 @@ def test_unresolved_modifier_does_not_remove_unrelated_pseudos():
         ItemModifier("", (30,), ref="+#% to Fire Resistance"),
     ))
     ids = {row.stat_id for row in resolve_trade_stat_filters(item)}
-    assert "pseudo.pseudo_total_life" in ids
-    assert "pseudo.pseudo_total_elemental_resistance" in ids
+    assert "pseudo.pseudo_total_life" not in ids
+    assert "pseudo.pseudo_total_elemental_resistance" not in ids
 
 
 def test_enabled_stat_filter_is_added_with_editable_minimum():

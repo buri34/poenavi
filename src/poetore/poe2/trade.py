@@ -450,7 +450,7 @@ _ATTRIBUTE_REFS = {
 
 
 def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...], set[str]]:
-    """Return useful aggregate pseudos and direct stat IDs replaced by enabled pseudos."""
+    """Return useful aggregate pseudos as optional alternatives to direct mods."""
     resistances = {key: 0.0 for key in ("fire", "cold", "lightning", "chaos")}
     attributes = {key: 0.0 for key in ("str", "dex", "int")}
     sources = {key: [] for key in (*resistances, *attributes, "life", "mana")}
@@ -485,18 +485,19 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
         if not used:
             return
         unique = list(dict.fromkeys(used))
+        if len(unique) == 1 and trade_stat_value(unique[0].values) == value:
+            return
         rows.append(TradeStatFilter(
             stat_id, text, value, "pseudo", enabled, read_value=value,
             source_texts=tuple(mod.text for mod in unique),
         ))
-        if enabled:
-            replaced.update(mod.stat_id for mod in unique if mod.stat_id)
+        # Pseudos are optional broader searches. Keep their direct source rows.
 
     elemental_sources = sources["fire"] + sources["cold"] + sources["lightning"]
     add(
         "pseudo.pseudo_total_elemental_resistance", "元素耐性合計",
         resistances["fire"] + resistances["cold"] + resistances["lightning"],
-        True, elemental_sources,
+        False, elemental_sources,
     )
     for element, stat_id, label in (
         ("fire", "pseudo.pseudo_total_fire_resistance", "火耐性合計"),
@@ -506,7 +507,7 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
         add(stat_id, label, resistances[element], False, sources[element])
     add(
         "pseudo.pseudo_total_chaos_resistance", "混沌耐性合計",
-        resistances["chaos"], True, sources["chaos"],
+        resistances["chaos"], False, sources["chaos"],
     )
     for attribute, stat_id, label in (
         ("str", "pseudo.pseudo_total_strength", "筋力合計"),
@@ -524,12 +525,14 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
     if direct_life:
         add(
             "pseudo.pseudo_total_life", "最大ライフ合計",
-            life + attributes["str"] * 2, True, sources["life"] + sources["str"],
+            life + attributes["str"] * 2, False,
+            sources["life"] + sources["str"],
         )
     if direct_mana:
         add(
             "pseudo.pseudo_total_mana", "最大マナ合計",
-            mana + attributes["int"] * 2, False, sources["mana"] + sources["int"],
+            mana + attributes["int"] * 2, False,
+            sources["mana"] + sources["int"],
         )
     return tuple(rows), replaced
 
