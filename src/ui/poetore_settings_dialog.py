@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
-from src.ui.app_theme import POETORE_THEME
+from src.ui.app_theme import POETORE_THEME, SETTINGS_THEME
 from src.ui.app_info_widget import AppInfoWidget
 from src.poetore.trade import (
     TradeApiError,
@@ -140,10 +140,10 @@ class PoetoreSettingsDialog(QDialog):
         self.exit_hotkey = HotkeyButton(hotkeys.get("exit", "F5"))
         self.monastery_hotkey = HotkeyButton(hotkeys.get("monastery", "F12"))
         self.capture_hotkey = AutoHideHotkeyWidget(
-            hotkeys.get("poetore_capture", "alt+d")
+            hotkeys.get("poetore_capture", "alt+d"), theme=SETTINGS_THEME
         )
         self.auto_hide_hotkey = AutoHideHotkeyWidget(
-            hotkeys.get("poetore_auto_hide", "ctrl+d")
+            hotkeys.get("poetore_auto_hide", "ctrl+d"), theme=SETTINGS_THEME
         )
         self.map_check_hotkey = HotkeyButton(hotkeys.get("map_check", "alt+f"))
         self.cheat_hotkey = HotkeyButton(
@@ -330,12 +330,12 @@ class PoetoreSettingsDialog(QDialog):
         basic_scroll.setWidget(basic_tab)
         tabs.addTab(basic_scroll, "基本設定")
         self.custom_commands_widget = CustomCommandSettingsWidget(
-            self.current_config.get("custom_commands", []), theme=POETORE_THEME
+            self.current_config.get("custom_commands", []), theme=SETTINGS_THEME
         )
         tabs.insertTab(1, self.custom_commands_widget, "任意コマンド設定")
         tabs.addTab(
             AppInfoWidget(
-                POETORE_THEME,
+                SETTINGS_THEME,
                 update_check_callback=self.update_check_callback,
             ),
             "アプリ情報",
@@ -355,66 +355,71 @@ class PoetoreSettingsDialog(QDialog):
 
     @staticmethod
     def _style_sheet():
+        theme = SETTINGS_THEME
         return f"""
-            QDialog {{ background: {POETORE_THEME.background}; color: {POETORE_THEME.text}; }}
+            QDialog {{ background: {theme.background}; color: {theme.text}; font-size: 13px; }}
             QScrollArea, QScrollArea > QWidget > QWidget {{
-                background: {POETORE_THEME.background};
+                background: {theme.background};
             }}
-            QLabel, QCheckBox, QRadioButton, QGroupBox {{ color: {POETORE_THEME.text}; }}
+            QLabel, QCheckBox, QRadioButton, QGroupBox {{ color: {theme.text}; }}
             QGroupBox {{
-                border: 1px solid #343B3E;
+                background: {theme.panel};
+                border: 1px solid #465046;
                 border-radius: 7px;
                 margin-top: 10px;
                 padding-top: 7px;
             }}
             QGroupBox::title {{
-                color: {POETORE_THEME.accent};
+                color: {theme.accent};
+                font-weight: 600;
                 subcontrol-origin: margin;
                 subcontrol-position: top center;
                 padding: 0 5px;
             }}
             QLineEdit, QComboBox {{
-                background: {POETORE_THEME.panel};
-                color: {POETORE_THEME.text};
-                border: 1px solid #3A4245;
+                background: #151A15;
+                color: {theme.text};
+                border: 1px solid #596359;
                 border-radius: 5px;
                 padding: 5px;
             }}
             QComboBox QAbstractItemView {{
-                background: {POETORE_THEME.panel};
-                color: {POETORE_THEME.text};
-                selection-background-color: #276B5A;
-                selection-color: #ffffff;
+                background: {theme.panel};
+                color: {theme.text};
+                selection-background-color: {theme.accent};
+                selection-color: {theme.background};
             }}
-            QTabWidget::pane {{ border: 1px solid {POETORE_THEME.accent}; }}
+            QTabWidget::pane {{ border: 1px solid #465046; }}
             QTabBar::tab {{
-                background: {POETORE_THEME.panel}; color: {POETORE_THEME.text};
-                border: 1px solid {POETORE_THEME.accent};
+                background: {theme.panel}; color: {theme.text};
+                border: 1px solid #465046;
                 padding: 7px 14px;
             }}
-            QTabBar::tab:selected {{ color: {POETORE_THEME.accent}; }}
+            QTabBar::tab:selected {{ color: {theme.accent}; border-bottom-color: {theme.accent}; font-weight: 600; }}
             QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
             QSlider::handle:horizontal {{
-                background: {POETORE_THEME.accent}; width: 16px;
+                background: {theme.accent}; width: 16px;
                 margin: -5px 0; border-radius: 8px;
             }}
             QPushButton {{
-                background: #1A1F21;
-                color: {POETORE_THEME.text};
-                border: 1px solid #3A4245;
+                background: {theme.panel};
+                color: {theme.text};
+                border: 1px solid #596359;
                 border-radius: 5px;
                 padding: 6px 12px;
                 font-weight: bold;
             }}
-            QPushButton:hover {{ background: #25332F; border-color: {POETORE_THEME.accent}; }}
-            QLabel#settingsNote {{ color: {POETORE_THEME.muted_text}; font-size: 11px; }}
+            QPushButton:hover {{ background: #293229; border-color: {theme.accent}; }}
+            QPushButton:focus {{ border-color: {theme.accent}; }}
+            QCheckBox::indicator:checked, QRadioButton::indicator:checked {{ background: {theme.accent}; }}
+            QLabel#settingsNote {{ color: {theme.muted_text}; font-size: 13px; }}
             QLabel#privateLeagueNote {{
-                color: {POETORE_THEME.muted_text};
-                font-size: 11px;
+                color: {theme.muted_text};
+                font-size: 13px;
             }}
             QLabel#resultFontSizeNote {{
-                color: {POETORE_THEME.muted_text};
-                font-size: 11px;
+                color: {theme.muted_text};
+                font-size: 13px;
             }}
         """
 

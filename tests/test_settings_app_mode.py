@@ -34,6 +34,19 @@ def test_settings_app_mode_uses_same_radio_and_startup_combo_structure(monkeypat
     dialog.close()
 
 
+def test_settings_dialog_uses_readable_shared_theme(qapp):
+    dialog = SettingsDialog(current_config={})
+    style = dialog.styleSheet()
+
+    assert dialog.objectName() == "settingsDialog"
+    assert "#B0FF7B" in style
+    assert "#E9FFBD" in style
+    assert "#101310" in style
+    assert "#1E241E" in style
+    assert "font-size: 13px" in style
+    dialog.close()
+
+
 def test_general_group_titles_are_center_aligned(qapp):
     dialog = SettingsDialog(current_config={})
     general_group_titles = {

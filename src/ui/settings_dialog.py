@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QKeySequence
 from src.ui.styles import Styles
 from src.ui.app_info_widget import AppInfoWidget
-from src.ui.app_theme import POENAVI_THEME, POETORE_THEME
+from src.ui.app_theme import POENAVI_THEME, POETORE_THEME, SETTINGS_THEME
 from src.utils.zone_data_poe2 import DEFAULT_ZONE_DATA_POE2
 from src.utils.guide_data import load_guide_data, save_guide_data, get_visit_guide_for_edit, set_visit_guide_for_edit
 from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_act_list, get_poe_label, get_town_zones
@@ -1726,6 +1726,35 @@ class GemShopSearchTermOverridesDialog(QWidget):
 
 
 class SettingsDialog(QDialog):
+    @staticmethod
+    def _style_sheet():
+        theme = SETTINGS_THEME
+        return f"""
+            QDialog#settingsDialog {{
+                background: {theme.background};
+                color: {theme.text};
+                font-size: 13px;
+            }}
+            QDialog#settingsDialog QWidget {{ color: {theme.text}; }}
+            QDialog#settingsDialog QScrollArea,
+            QDialog#settingsDialog QScrollArea > QWidget > QWidget {{
+                background: {theme.background};
+            }}
+            QDialog#settingsDialog QPushButton {{
+                background: {theme.panel};
+                color: {theme.text};
+                border: 1px solid #596359;
+                border-radius: 4px;
+                padding: 5px 10px;
+                font-weight: 600;
+            }}
+            QDialog#settingsDialog QPushButton:hover,
+            QDialog#settingsDialog QPushButton:focus {{
+                border-color: {theme.accent};
+                background: #293229;
+            }}
+        """
+
     def __init__(
         self,
         parent=None,
@@ -1736,7 +1765,8 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("設定")
         self.resize(630, 600)
-        self.setStyleSheet(Styles.MAIN_WINDOW)
+        self.setObjectName("settingsDialog")
+        self.setStyleSheet(self._style_sheet())
         
         self.current_config = current_config or {}
         self.update_check_callback = update_check_callback
@@ -1768,18 +1798,19 @@ class SettingsDialog(QDialog):
         self.setup_ui()
         
     def setup_ui(self):
+        theme = SETTINGS_THEME
         layout = QVBoxLayout(self)
         
         # タブ切り替え
         tabs = QTabWidget()
         tabs.setStyleSheet(f"""
-            QTabWidget::pane {{ border: 1px solid {Styles.TEXT_COLOR}; }}
+            QTabWidget::pane {{ border: 1px solid #465046; }}
             QTabBar::tab {{ 
-                background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
-                padding: 8px 16px; border: 1px solid {Styles.TEXT_COLOR};
+                background: {theme.panel}; color: {theme.text};
+                padding: 8px 16px; border: 1px solid #465046;
                 border-bottom: none; border-radius: 4px 4px 0 0;
             }}
-            QTabBar::tab:selected {{ background: rgba(60,60,60,200); }}
+            QTabBar::tab:selected {{ color: {theme.accent}; border-bottom: 2px solid {theme.accent}; font-weight: 600; }}
         """)
         
         # ── Tab 1: General ──
@@ -1791,22 +1822,22 @@ class SettingsDialog(QDialog):
         general_tab.setWidget(general_content)
         
         # 共通スタイル
-        group_style = f"QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid {Styles.TEXT_COLOR}; border-radius: 5px; margin-top: 10px; }} QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }}"
+        group_style = f"QGroupBox {{ color: {theme.text}; background: {theme.panel}; border: 1px solid #465046; border-radius: 5px; margin-top: 10px; }} QGroupBox::title {{ color: {theme.accent}; font-weight: 600; subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }}"
         checkbox_style = f"""
-            QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: 12px; spacing: 8px; }}
-            QCheckBox::indicator {{ width: 18px; height: 18px; border: 2px solid {Styles.TEXT_COLOR}; border-radius: 3px; background: transparent; }}
-            QCheckBox::indicator:checked {{ background: {Styles.TEXT_COLOR}; }}
+            QCheckBox {{ color: {theme.text}; font-size: 13px; spacing: 8px; }}
+            QCheckBox::indicator {{ width: 18px; height: 18px; border: 2px solid #778277; border-radius: 3px; background: transparent; }}
+            QCheckBox::indicator:checked {{ background: {theme.accent}; border-color: {theme.accent}; }}
         """
         combo_style = f"""
             QComboBox {{
-                background-color: #2a2a2a; color: {Styles.TEXT_COLOR};
-                border: 1px solid #555; border-radius: 4px;
-                padding: 4px 8px; font-size: 12px;
+                background-color: #151A15; color: {theme.text};
+                border: 1px solid #596359; border-radius: 4px;
+                padding: 4px 8px; font-size: 13px;
             }}
             QComboBox::drop-down {{ border: none; }}
             QComboBox QAbstractItemView {{
-                background-color: #2a2a2a; color: {Styles.TEXT_COLOR};
-                selection-background-color: #444;
+                background-color: {theme.panel}; color: {theme.text};
+                selection-background-color: {theme.accent}; selection-color: {theme.background};
             }}
         """
         
@@ -1822,14 +1853,14 @@ class SettingsDialog(QDialog):
         for version, label_text in ((POE1, "PoE1ログファイル:"), (POE2, "PoE2ログファイル:")):
             row = QHBoxLayout()
             label = QLabel(label_text)
-            label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+            label.setStyleSheet(f"color: {theme.text}; font-size: 13px;")
             row.addWidget(label)
             edit = self.log_path_edits[version]
             edit.setPlaceholderText("C:\\Program Files (x86)\\...\\logs\\Client.txt")
             edit.setStyleSheet(f"""
                 QLineEdit {{ 
-                    background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
-                    border: 1px solid {Styles.TEXT_COLOR}; border-radius: 4px; padding: 5px;
+                    background: #151A15; color: {theme.text};
+                    border: 1px solid #596359; border-radius: 4px; padding: 5px; font-size: 13px;
                 }}
             """)
             row.addWidget(edit)
@@ -1849,9 +1880,9 @@ class SettingsDialog(QDialog):
         self.poe_version_group = QButtonGroup(self)
         self.poe_version_radios = {}
         radio_style = f"""
-            QRadioButton {{ color: {Styles.TEXT_COLOR}; font-size: 13px; spacing: 8px; padding: 4px 0; }}
-            QRadioButton::indicator {{ width: 16px; height: 16px; border: 2px solid {Styles.TEXT_COLOR}; border-radius: 8px; background: transparent; }}
-            QRadioButton::indicator:checked {{ background: {Styles.TEXT_COLOR}; }}
+            QRadioButton {{ color: {theme.text}; font-size: 13px; spacing: 8px; padding: 4px 0; }}
+            QRadioButton::indicator {{ width: 16px; height: 16px; border: 2px solid #778277; border-radius: 8px; background: transparent; }}
+            QRadioButton::indicator:checked {{ background: {theme.accent}; border-color: {theme.accent}; }}
         """
         for version in POE_VERSION_ORDER:
             radio = QRadioButton(get_poe_label(version))
@@ -1864,7 +1895,7 @@ class SettingsDialog(QDialog):
 
         mode_row = QHBoxLayout()
         mode_label = QLabel("起動時:")
-        mode_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        mode_label.setStyleSheet(f"color: {theme.text}; font-size: 13px;")
         mode_row.addWidget(mode_label)
 
         self.poe_version_mode_combo = QComboBox()
@@ -1935,7 +1966,7 @@ class SettingsDialog(QDialog):
         group_layout = QVBoxLayout(group)
         
         hotkey_hint = QLabel("※ DeleteまたはBackspaceで解除できます")
-        hotkey_hint.setStyleSheet("color: #888888; font-size: 10px;")
+        hotkey_hint.setStyleSheet(f"color: {theme.muted_text}; font-size: 13px;")
         group_layout.addWidget(hotkey_hint)
         
         h_layout1 = QHBoxLayout()
@@ -2246,7 +2277,7 @@ class SettingsDialog(QDialog):
             voicevox_layout.addLayout(row)
         note = QLabel("VOICEVOXを起動してから使用してください。接続できない場合、読み上げだけをスキップします。")
         note.setWordWrap(True)
-        note.setStyleSheet("color: #aaaaaa; font-size: 11px;")
+        note.setStyleSheet(f"color: {theme.muted_text}; font-size: 13px;")
         voicevox_layout.addWidget(note)
         self.voicevox_group.setVisible(self.poe_version == POE2)
         general_layout.addWidget(self.voicevox_group)
@@ -2467,7 +2498,7 @@ class SettingsDialog(QDialog):
         town_layout = QVBoxLayout(town_group)
         
         town_desc = QLabel("ここに登録したエリアに入った時、攻略ガイドは更新されません（前のエリアのガイドを維持）")
-        town_desc.setStyleSheet(f"color: #888888; font-size: 10px;")
+        town_desc.setStyleSheet(f"color: {theme.muted_text}; font-size: 13px;")
         town_desc.setWordWrap(True)
         town_layout.addWidget(town_desc)
         
@@ -2493,7 +2524,7 @@ class SettingsDialog(QDialog):
             "保存後に再起動を確認します。"
         )
         settings_note.setObjectName("generalSettingsSaveNote")
-        settings_note.setStyleSheet("color: #aaaaaa; font-size: 11px;")
+        settings_note.setStyleSheet(f"color: {theme.muted_text}; font-size: 13px;")
         settings_note.setWordWrap(True)
         general_layout.addWidget(settings_note)
         general_layout.addStretch()
