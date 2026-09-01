@@ -1872,10 +1872,14 @@ class SettingsDialog(QDialog):
 
         general_layout.addWidget(log_group)
 
-        # ━━━━━ PoEバージョン ━━━━━
-        poe_group = QGroupBox("PoEバージョン")
-        poe_group.setStyleSheet(group_style)
-        poe_layout = QVBoxLayout(poe_group)
+        # ━━━━━ 起動設定 ━━━━━
+        startup_group = QGroupBox("起動設定")
+        startup_group.setStyleSheet(group_style)
+        startup_layout = QVBoxLayout(startup_group)
+
+        version_label = QLabel("PoEバージョン")
+        version_label.setStyleSheet(f"color: {theme.text}; font-size: 13px; font-weight: 600;")
+        startup_layout.addWidget(version_label)
 
         self.poe_version_group = QButtonGroup(self)
         self.poe_version_radios = {}
@@ -1889,33 +1893,13 @@ class SettingsDialog(QDialog):
             radio.setChecked(version == self.poe_version)
             radio.toggled.connect(lambda checked, v=version: self._on_poe_version_changed(v, checked))
             radio.setStyleSheet(radio_style)
-            poe_layout.addWidget(radio)
+            startup_layout.addWidget(radio)
             self.poe_version_group.addButton(radio)
             self.poe_version_radios[version] = radio
 
-        mode_row = QHBoxLayout()
-        mode_label = QLabel("起動時:")
-        mode_label.setStyleSheet(f"color: {theme.text}; font-size: 13px;")
-        mode_row.addWidget(mode_label)
-
-        self.poe_version_mode_combo = QComboBox()
-        self.poe_version_mode_combo.addItem("毎回確認", "ask")
-        self.poe_version_mode_combo.addItem("PoE1固定", POE1)
-        self.poe_version_mode_combo.addItem("PoE2固定", POE2)
-        self.poe_version_mode_combo.setFixedWidth(120)
-        self.poe_version_mode_combo.setStyleSheet(combo_style)
-        idx = self.poe_version_mode_combo.findData(self.poe_version_mode)
-        if idx >= 0:
-            self.poe_version_mode_combo.setCurrentIndex(idx)
-        mode_row.addWidget(self.poe_version_mode_combo)
-        mode_row.addStretch()
-        poe_layout.addLayout(mode_row)
-
-        general_layout.addWidget(poe_group)
-
-        startup_group = QGroupBox("起動モード")
-        startup_group.setStyleSheet(group_style)
-        startup_layout = QVBoxLayout(startup_group)
+        app_mode_label = QLabel("起動モード")
+        app_mode_label.setStyleSheet(f"color: {theme.text}; font-size: 13px; font-weight: 600;")
+        startup_layout.addWidget(app_mode_label)
         startup_config = self.current_config.get("startup")
         if not isinstance(startup_config, dict):
             startup_config = {}
@@ -1935,28 +1919,13 @@ class SettingsDialog(QDialog):
             self.app_mode_group.addButton(radio)
             self.app_mode_radios[mode] = radio
 
-        startup_mode_row = QHBoxLayout()
-        startup_mode_label = QLabel("起動時:")
-        startup_mode_label.setStyleSheet(
-            f"color: {Styles.TEXT_COLOR}; font-size: 12px;"
+        self.skip_startup_selector_checkbox = QCheckBox("次回からこの設定で直接起動")
+        self.skip_startup_selector_checkbox.setChecked(
+            self.poe_version_mode in POE_VERSION_ORDER
+            and not bool(startup_config.get("show_mode_selector", True))
         )
-        startup_mode_row.addWidget(startup_mode_label)
-        self.app_mode_startup_combo = QComboBox()
-        self.app_mode_startup_combo.addItem("毎回確認", "ask")
-        self.app_mode_startup_combo.addItem("ぽえなび固定", POENAVI_MODE)
-        self.app_mode_startup_combo.addItem("ぽえとれ固定", POETORE_MODE)
-        self.app_mode_startup_combo.setFixedWidth(140)
-        self.app_mode_startup_combo.setStyleSheet(combo_style)
-        startup_mode = (
-            "ask"
-            if bool(startup_config.get("show_mode_selector", True))
-            else preferred_mode
-        )
-        startup_mode_index = self.app_mode_startup_combo.findData(startup_mode)
-        self.app_mode_startup_combo.setCurrentIndex(max(0, startup_mode_index))
-        startup_mode_row.addWidget(self.app_mode_startup_combo)
-        startup_mode_row.addStretch()
-        startup_layout.addLayout(startup_mode_row)
+        Styles.apply_checkbox_style(self.skip_startup_selector_checkbox)
+        startup_layout.addWidget(self.skip_startup_selector_checkbox)
         general_layout.addWidget(startup_group)
         self._refresh_app_mode_availability()
         
@@ -3160,17 +3129,9 @@ class SettingsDialog(QDialog):
         poetore_radio = self.app_mode_radios[POETORE_MODE]
         poetore_radio.setEnabled(supported)
         poetore_radio.setToolTip("" if supported else "PoE2版は現在テスト中です")
-        poetore_index = self.app_mode_startup_combo.findData(POETORE_MODE)
-        poetore_item = self.app_mode_startup_combo.model().item(poetore_index)
-        if poetore_item is not None:
-            poetore_item.setEnabled(supported)
         if not supported:
             if poetore_radio.isChecked():
                 self.app_mode_radios[POENAVI_MODE].setChecked(True)
-            if self.app_mode_startup_combo.currentData() == POETORE_MODE:
-                self.app_mode_startup_combo.setCurrentIndex(
-                    self.app_mode_startup_combo.findData("ask")
-                )
 
     def accept(self):
         if not self.gem_shop_search_term_review.validate_term_overrides():
@@ -3246,15 +3207,11 @@ class SettingsDialog(QDialog):
             ),
             POENAVI_MODE,
         )
-        startup_mode = self.app_mode_startup_combo.currentData()
         if not is_feature_supported(POETORE, self.poe_version):
             selected_app_mode = POENAVI_MODE
-            if startup_mode == POETORE_MODE:
-                startup_mode = "ask"
-        startup_config["show_mode_selector"] = startup_mode == "ask"
-        startup_config["preferred_mode"] = normalize_app_mode(
-            selected_app_mode if startup_mode == "ask" else startup_mode
-        )
+        skip_selector = self.skip_startup_selector_checkbox.isChecked()
+        startup_config["show_mode_selector"] = not skip_selector
+        startup_config["preferred_mode"] = normalize_app_mode(selected_app_mode)
         poetore_config = dict(self.current_config.get("poetore", {}))
         voicevox_config = self.current_config.get("voicevox", {})
         voicevox_config = dict(voicevox_config) if isinstance(voicevox_config, dict) else {}
@@ -3299,7 +3256,7 @@ class SettingsDialog(QDialog):
                 POE2: normalize_log_path(self.log_path_edits[POE2].text()),
             },
             "poe_version": self.poe_version,
-            "poe_version_mode": self.poe_version_mode_combo.currentData(),
+            "poe_version_mode": self.poe_version if skip_selector else "ask",
             "guide_font_size": self.guide_font_spin.value(),
             "timer_size": self.timer_size_combo.currentData(),
             "confirm_reset": self.confirm_reset_cb.isChecked(),

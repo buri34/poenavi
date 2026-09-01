@@ -10,7 +10,7 @@ def qapp():
     return QApplication.instance() or QApplication([])
 
 
-def test_settings_app_mode_uses_same_radio_and_startup_combo_structure(monkeypatch, qapp):
+def test_settings_app_mode_uses_one_shared_startup_checkbox(monkeypatch, qapp):
     monkeypatch.setattr("src.ui.settings_dialog.save_zone_master_data", lambda *_args: None)
     dialog = SettingsDialog(current_config={
         "startup": {
@@ -20,17 +20,16 @@ def test_settings_app_mode_uses_same_radio_and_startup_combo_structure(monkeypat
     })
 
     assert dialog.app_mode_radios["poetore"].isChecked()
-    assert dialog.app_mode_startup_combo.currentData() == "poetore"
+    assert not dialog.skip_startup_selector_checkbox.isChecked()
     dialog.app_mode_radios["poenavi"].setChecked(True)
-    dialog.app_mode_startup_combo.setCurrentIndex(
-        dialog.app_mode_startup_combo.findData("ask")
-    )
+    dialog.skip_startup_selector_checkbox.setChecked(True)
     settings = dialog.get_settings()
 
     assert settings["startup"] == {
         "preferred_mode": "poenavi",
-        "show_mode_selector": True,
+        "show_mode_selector": False,
     }
+    assert settings["poe_version_mode"] == settings["poe_version"]
     dialog.close()
 
 
@@ -51,8 +50,7 @@ def test_general_group_titles_are_center_aligned(qapp):
     dialog = SettingsDialog(current_config={})
     general_group_titles = {
         "PoE ログファイル",
-        "起動モード",
-        "PoEバージョン",
+        "起動設定",
         "ホットキー",
         "ウィンドウ設定（本体）",
     }
@@ -69,32 +67,24 @@ def test_general_group_titles_are_center_aligned(qapp):
     dialog.close()
 
 
-def test_poe_version_group_is_above_startup_mode_group(qapp):
+def test_poe_version_and_app_mode_are_in_one_startup_group(qapp):
     dialog = SettingsDialog(current_config={})
-    groups = {
-        group.title(): group
-        for group in dialog.findChildren(QGroupBox)
-        if group.title() in {"PoEバージョン", "起動モード"}
-    }
-    layout = groups["PoEバージョン"].parentWidget().layout()
-
-    assert layout.indexOf(groups["PoEバージョン"]) < layout.indexOf(groups["起動モード"])
+    groups = [group for group in dialog.findChildren(QGroupBox) if group.title() == "起動設定"]
+    labels = [label.text() for label in groups[0].findChildren(QLabel)]
+    assert len(groups) == 1
+    assert "PoEバージョン" in labels
+    assert "起動モード" in labels
     dialog.close()
 
 
-def test_startup_mode_controls_match_poe_version_control_structure(qapp):
+def test_startup_controls_have_one_shared_checkbox(qapp):
     dialog = SettingsDialog(current_config={})
     assert [radio.text() for radio in dialog.app_mode_radios.values()] == [
         "ぽえなび", "ぽえとれ"
     ]
-    assert [
-        dialog.app_mode_startup_combo.itemData(index)
-        for index in range(dialog.app_mode_startup_combo.count())
-    ] == ["ask", "poenavi", "poetore"]
-    assert [
-        dialog.app_mode_startup_combo.itemText(index)
-        for index in range(dialog.app_mode_startup_combo.count())
-    ] == ["毎回確認", "ぽえなび固定", "ぽえとれ固定"]
+    assert dialog.skip_startup_selector_checkbox.text() == "次回からこの設定で直接起動"
+    assert not hasattr(dialog, "poe_version_mode_combo")
+    assert not hasattr(dialog, "app_mode_startup_combo")
     dialog.close()
 
 
@@ -102,9 +92,8 @@ def test_fixed_startup_mode_selects_the_fixed_app(qapp):
     dialog = SettingsDialog(current_config={
         "startup": {"preferred_mode": "poenavi", "show_mode_selector": True}
     })
-    dialog.app_mode_startup_combo.setCurrentIndex(
-        dialog.app_mode_startup_combo.findData("poetore")
-    )
+    dialog.app_mode_radios["poetore"].setChecked(True)
+    dialog.skip_startup_selector_checkbox.setChecked(True)
 
     assert dialog.get_settings()["startup"] == {
         "preferred_mode": "poetore",
@@ -116,18 +105,31 @@ def test_fixed_startup_mode_selects_the_fixed_app(qapp):
 def test_poe2_enables_poetore_mode_and_fixed_startup(qapp):
     dialog = SettingsDialog(current_config={
         "poe_version": POE2,
+        "poe_version_mode": POE2,
         "startup": {"preferred_mode": "poetore", "show_mode_selector": False},
     })
 
     assert dialog.app_mode_radios["poetore"].isEnabled()
     assert dialog.app_mode_radios["poetore"].isChecked()
-    poetore_index = dialog.app_mode_startup_combo.findData("poetore")
-    assert dialog.app_mode_startup_combo.model().item(poetore_index).isEnabled()
-    assert dialog.app_mode_startup_combo.currentData() == "poetore"
+    assert dialog.skip_startup_selector_checkbox.isChecked()
     assert dialog.get_settings()["startup"] == {
         "preferred_mode": "poetore",
         "show_mode_selector": False,
     }
+    dialog.close()
+
+
+def test_legacy_partially_fixed_startup_defaults_to_showing_selector(qapp):
+    dialog = SettingsDialog(current_config={
+        "poe_version": POE2,
+        "poe_version_mode": "ask",
+        "startup": {"preferred_mode": "poetore", "show_mode_selector": False},
+    })
+
+    assert not dialog.skip_startup_selector_checkbox.isChecked()
+    settings = dialog.get_settings()
+    assert settings["poe_version_mode"] == "ask"
+    assert settings["startup"]["show_mode_selector"] is True
     dialog.close()
 
 

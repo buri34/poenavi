@@ -20,14 +20,13 @@ def test_poe2_enables_poetore_startup_choices():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(current_config={
         "poe_version": POE2,
+        "poe_version_mode": POE2,
         "startup": {"preferred_mode": "poetore", "show_mode_selector": False},
     })
 
     assert dialog.app_mode_radios["poetore"].isEnabled()
     assert dialog.app_mode_radios["poetore"].isChecked()
-    poetore_index = dialog.app_mode_startup_combo.findData("poetore")
-    assert dialog.app_mode_startup_combo.model().item(poetore_index).isEnabled()
-    assert dialog.app_mode_startup_combo.currentData() == "poetore"
+    assert dialog.skip_startup_selector_checkbox.isChecked()
     assert dialog.get_settings()["startup"] == {
         "preferred_mode": "poetore",
         "show_mode_selector": False,
@@ -72,11 +71,9 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert "修道院へ移動（/monastery）:" in labels
     assert all("（仮）修道院" not in label for label in labels)
     assert dialog.app_mode_radios["poetore"].isChecked()
-    assert dialog.app_mode_startup_combo.currentData() == "poetore"
+    assert not dialog.skip_startup_selector_checkbox.isChecked()
     dialog.app_mode_radios["poenavi"].setChecked(True)
-    dialog.app_mode_startup_combo.setCurrentIndex(
-        dialog.app_mode_startup_combo.findData("ask")
-    )
+    dialog.skip_startup_selector_checkbox.setChecked(False)
     settings = dialog.get_settings()
     assert settings["startup"]["preferred_mode"] == "poenavi"
     assert settings["hotkeys"]["start_stop"] == "F7"
@@ -114,10 +111,7 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert [radio.text() for radio in dialog.app_mode_radios.values()] == [
         "ぽえなび", "ぽえとれ"
     ]
-    assert [
-        dialog.app_mode_startup_combo.itemText(index)
-        for index in range(dialog.app_mode_startup_combo.count())
-    ] == ["毎回確認", "ぽえなび固定", "ぽえとれ固定"]
+    assert dialog.skip_startup_selector_checkbox.text() == "次回からこの設定で直接起動"
     private_note = dialog.findChild(QLabel, "privateLeagueNote")
     assert (
         private_note.text()
@@ -231,11 +225,9 @@ def test_poetore_settings_saves_same_poe_version_controls_as_poenavi():
     })
 
     assert dialog.poe_version_radios["poe1"].isChecked()
-    assert dialog.poe_version_mode_combo.currentData() == "ask"
+    assert not dialog.skip_startup_selector_checkbox.isChecked()
     dialog.poe_version_radios["poe2"].setChecked(True)
-    dialog.poe_version_mode_combo.setCurrentIndex(
-        dialog.poe_version_mode_combo.findData("poe2")
-    )
+    dialog.skip_startup_selector_checkbox.setChecked(True)
 
     settings = dialog.get_settings()
     assert settings["poe_version"] == "poe2"
@@ -248,9 +240,8 @@ def test_poetore_fixed_startup_mode_selects_the_fixed_app():
     dialog = PoetoreSettingsDialog(current_config={
         "startup": {"preferred_mode": "poetore", "show_mode_selector": True}
     })
-    dialog.app_mode_startup_combo.setCurrentIndex(
-        dialog.app_mode_startup_combo.findData("poenavi")
-    )
+    dialog.app_mode_radios["poenavi"].setChecked(True)
+    dialog.skip_startup_selector_checkbox.setChecked(True)
 
     assert dialog.get_settings()["startup"] == {
         "preferred_mode": "poenavi",
@@ -259,17 +250,14 @@ def test_poetore_fixed_startup_mode_selects_the_fixed_app():
     dialog.close()
 
 
-def test_poetore_poe_version_group_is_visible_and_above_startup_mode():
+def test_poetore_poe_version_and_app_mode_are_in_one_startup_group():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(current_config={"poe_version": "poe2"})
-    groups = {
-        group.title(): group
-        for group in dialog.findChildren(QGroupBox)
-        if group.title() in {"PoEバージョン", "起動モード"}
-    }
-    layout = groups["PoEバージョン"].parentWidget().layout()
-
-    assert layout.indexOf(groups["PoEバージョン"]) < layout.indexOf(groups["起動モード"])
+    groups = [group for group in dialog.findChildren(QGroupBox) if group.title() == "起動設定"]
+    labels = [label.text() for label in groups[0].findChildren(QLabel)]
+    assert len(groups) == 1
+    assert "PoEバージョン" in labels
+    assert "起動モード" in labels
     assert "QRadioButton" in dialog.styleSheet()
     assert all(radio.text() in {"PoE1", "PoE2"} for radio in dialog.poe_version_radios.values())
     dialog.close()

@@ -71,8 +71,9 @@ class PoetoreSettingsDialog(QDialog):
         basic_layout.setContentsMargins(12, 12, 12, 12)
         basic_layout.setSpacing(12)
 
-        poe_group = QGroupBox("PoEバージョン")
-        poe_layout = QVBoxLayout(poe_group)
+        startup_group = QGroupBox("起動設定")
+        startup_layout = QVBoxLayout(startup_group)
+        startup_layout.addWidget(QLabel("PoEバージョン"))
         self.poe_version_group = QButtonGroup(self)
         self.poe_version_radios = {}
         for version in POE_VERSION_ORDER:
@@ -83,26 +84,12 @@ class PoetoreSettingsDialog(QDialog):
             radio.toggled.connect(
                 lambda checked, selected=version: self._on_poe_version_changed(selected, checked)
             )
-            poe_layout.addWidget(radio)
-        version_mode_row = QFormLayout()
-        self.poe_version_mode_combo = QComboBox()
-        self.poe_version_mode_combo.addItem("毎回確認", "ask")
-        self.poe_version_mode_combo.addItem("PoE1固定", POE1)
-        self.poe_version_mode_combo.addItem("PoE2固定", POE2)
+            startup_layout.addWidget(radio)
         saved_version_mode = str(self.current_config.get("poe_version_mode", "ask"))
-        version_mode_index = self.poe_version_mode_combo.findData(saved_version_mode)
-        self.poe_version_mode_combo.setCurrentIndex(max(0, version_mode_index))
-        version_mode_row.addRow("起動時:", self.poe_version_mode_combo)
-        poe_layout.addLayout(version_mode_row)
-        poe_note = QLabel("変更内容は次回起動時から適用されます。")
-        poe_note.setObjectName("poeVersionNote")
-        poe_layout.addWidget(poe_note)
-        basic_layout.addWidget(poe_group)
 
         startup = self.current_config.get("startup")
         startup = startup if isinstance(startup, dict) else {}
-        startup_group = QGroupBox("起動モード")
-        startup_layout = QVBoxLayout(startup_group)
+        startup_layout.addWidget(QLabel("起動モード"))
         preferred = normalize_app_mode(
             startup.get("preferred_mode", POETORE_MODE)
         )
@@ -117,19 +104,15 @@ class PoetoreSettingsDialog(QDialog):
             self.app_mode_group.addButton(radio)
             self.app_mode_radios[mode] = radio
             startup_layout.addWidget(radio)
-        startup_row = QFormLayout()
-        self.app_mode_startup_combo = QComboBox()
-        self.app_mode_startup_combo.addItem("毎回確認", "ask")
-        self.app_mode_startup_combo.addItem("ぽえなび固定", POENAVI_MODE)
-        self.app_mode_startup_combo.addItem("ぽえとれ固定", POETORE_MODE)
-        startup_mode = (
-            "ask" if bool(startup.get("show_mode_selector", True)) else preferred
+        self.skip_startup_selector_checkbox = QCheckBox("次回からこの設定で直接起動")
+        self.skip_startup_selector_checkbox.setChecked(
+            saved_version_mode in POE_VERSION_ORDER
+            and not bool(startup.get("show_mode_selector", True))
         )
-        self.app_mode_startup_combo.setCurrentIndex(
-            max(0, self.app_mode_startup_combo.findData(startup_mode))
-        )
-        startup_row.addRow("起動時:", self.app_mode_startup_combo)
-        startup_layout.addLayout(startup_row)
+        startup_layout.addWidget(self.skip_startup_selector_checkbox)
+        poe_note = QLabel("変更内容は次回起動時から適用されます。")
+        poe_note.setObjectName("poeVersionNote")
+        startup_layout.addWidget(poe_note)
         basic_layout.addWidget(startup_group)
         self._refresh_app_mode_availability()
 
@@ -505,17 +488,9 @@ class PoetoreSettingsDialog(QDialog):
         poetore_radio = self.app_mode_radios[POETORE_MODE]
         poetore_radio.setEnabled(supported)
         poetore_radio.setToolTip("" if supported else "PoE2版は現在テスト中です")
-        poetore_index = self.app_mode_startup_combo.findData(POETORE_MODE)
-        poetore_item = self.app_mode_startup_combo.model().item(poetore_index)
-        if poetore_item is not None:
-            poetore_item.setEnabled(supported)
         if not supported:
             if poetore_radio.isChecked():
                 self.app_mode_radios[POENAVI_MODE].setChecked(True)
-            if self.app_mode_startup_combo.currentData() == POETORE_MODE:
-                self.app_mode_startup_combo.setCurrentIndex(
-                    self.app_mode_startup_combo.findData("ask")
-                )
 
     def get_settings(self):
         selected_poe_version = next(
@@ -533,15 +508,11 @@ class PoetoreSettingsDialog(QDialog):
             ),
             POETORE_MODE,
         )
-        startup_mode = self.app_mode_startup_combo.currentData()
         if not is_feature_supported(POETORE, selected_poe_version):
             selected_app_mode = POENAVI_MODE
-            if startup_mode == POETORE_MODE:
-                startup_mode = "ask"
-        startup["show_mode_selector"] = startup_mode == "ask"
-        startup["preferred_mode"] = normalize_app_mode(
-            selected_app_mode if startup_mode == "ask" else startup_mode
-        )
+        skip_selector = self.skip_startup_selector_checkbox.isChecked()
+        startup["show_mode_selector"] = not skip_selector
+        startup["preferred_mode"] = normalize_app_mode(selected_app_mode)
         hotkeys = dict(self.current_config.get("hotkeys", {}))
         hotkeys.update(
             {
@@ -571,7 +542,7 @@ class PoetoreSettingsDialog(QDialog):
             "stash_tab_scroll_enabled": self.stash_tab_scroll_cb.isChecked(),
             "poetore": poetore,
             "poe_version": selected_poe_version,
-            "poe_version_mode": self.poe_version_mode_combo.currentData(),
+            "poe_version_mode": selected_poe_version if skip_selector else "ask",
             "window_opacity": self.opacity_slider.value(),
             "text_opacity": self.text_opacity_slider.value(),
             "window_locked": self.window_lock_check.isChecked(),
