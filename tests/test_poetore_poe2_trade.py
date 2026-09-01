@@ -828,6 +828,38 @@ def test_phase7_unique_roll_range_reaches_shared_editable_filter_model():
     assert (row.read_value, row.roll_min, row.roll_max, row.better) == (43.0, 25.0, 50.0, 1)
 
 
+def test_single_direct_attribute_mod_does_not_add_redundant_pseudo_in_poe2():
+    for ref, pseudo_id in (
+        ("# to Strength", "pseudo.pseudo_total_strength"),
+        ("# to Dexterity", "pseudo.pseudo_total_dexterity"),
+        ("# to Intelligence", "pseudo.pseudo_total_intelligence"),
+    ):
+        item = ParsedItem(
+            item_class="Spear", rarity="rare", name="Test", base_type="Test Spear",
+            category="spear",
+            modifiers=(ItemModifier(
+                "+33", (33,), stat_id="explicit.test", ref=ref,
+            ),),
+        )
+        assert pseudo_id not in {
+            row.stat_id for row in poe2_trade_filters(item)
+        }
+
+
+def test_compound_attribute_source_keeps_useful_pseudo_in_poe2():
+    item = ParsedItem(
+        item_class="Spear", rarity="rare", name="Test", base_type="Test Spear",
+        category="spear",
+        modifiers=(ItemModifier(
+            "+20", (20,), stat_id="explicit.test", ref="# to all Attributes",
+        ),),
+    )
+    ids = {row.stat_id for row in poe2_trade_filters(item)}
+    assert "pseudo.pseudo_total_strength" in ids
+    assert "pseudo.pseudo_total_dexterity" in ids
+    assert "pseudo.pseudo_total_intelligence" in ids
+
+
 def test_phase6_special_items_open_japanese_trade_with_localized_identity():
     items = {key: item for key, (_row, item) in _phase6_items().items()}
     expected = {

@@ -513,7 +513,14 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
         ("dex", "pseudo.pseudo_total_dexterity", "器用さ合計"),
         ("int", "pseudo.pseudo_total_intelligence", "知性合計"),
     ):
-        add(stat_id, label, attributes[attribute], False, sources[attribute])
+        direct_ref = {
+            "str": "# to Strength",
+            "dex": "# to Dexterity",
+            "int": "# to Intelligence",
+        }[attribute]
+        used = sources[attribute]
+        if len(used) != 1 or used[0].ref != direct_ref:
+            add(stat_id, label, attributes[attribute], False, used)
     if direct_life:
         add(
             "pseudo.pseudo_total_life", "最大ライフ合計",

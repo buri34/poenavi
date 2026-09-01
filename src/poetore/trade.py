@@ -674,6 +674,9 @@ def apply_search_range(
     ):
         percent = 0
     percent = max(0.0, min(float(percent), 50.0)) / 100.0
+    unique_item = bool(
+        item is not None and item.rarity.casefold() in {"unique", "ユニーク"}
+    )
     adjusted = []
     discrete_socket_stats = {
         "property.sockets",
@@ -706,7 +709,7 @@ def apply_search_range(
             adjusted.append(row)
             continue
         api_value = row.read_value
-        if row.roll_min is not None and row.roll_max is not None:
+        if unique_item and row.roll_min is not None and row.roll_max is not None:
             delta = abs(row.roll_max - row.roll_min) * percent
         else:
             delta = abs(api_value) * percent
@@ -1956,6 +1959,7 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
     has_maximum_life_mod = False
     has_maximum_mana_mod = False
     simple: dict[str, float] = {}
+    attribute_sources = {key: [] for key in ("str", "dex", "int")}
     for modifier in item.modifiers:
         value = modifier.values[0] if modifier.values else 0
         ref = modifier.ref or ""
@@ -1974,6 +1978,7 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
             totals["mana"] += value
         for attr in _ATTRIBUTE_REFS.get(ref, ()):
             totals[attr] += value
+            attribute_sources[attr].append(ref)
         if ref == "+# to all Attributes":
             simple[ref] = simple.get(ref, 0.0) + value
         resistance = _RESISTANCE_REFS.get(ref)
@@ -2022,7 +2027,13 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
     for attr, stat_id, label in (("str", "pseudo.pseudo_total_strength", "筋力合計"),
                                  ("dex", "pseudo.pseudo_total_dexterity", "器用さ合計"),
                                  ("int", "pseudo.pseudo_total_intelligence", "知性合計")):
-        if totals[attr]: filters.append(TradeStatFilter(stat_id, label, _relaxed(totals[attr]), "pseudo"))
+        direct_ref = {
+            "str": "+# to Strength",
+            "dex": "+# to Dexterity",
+            "int": "+# to Intelligence",
+        }[attr]
+        if totals[attr] and attribute_sources[attr] != [direct_ref]:
+            filters.append(TradeStatFilter(stat_id, label, _relaxed(totals[attr]), "pseudo"))
     all_attributes = simple.get("+# to all Attributes", 0.0)
     if all_attributes:
         filters.append(TradeStatFilter(

@@ -2443,6 +2443,27 @@ def _pseudo_test_item(modifiers, category="accessory"):
     )
 
 
+def test_single_direct_attribute_mod_does_not_add_redundant_pseudo_in_poe1():
+    for ref, pseudo_id in (
+        ("+# to Strength", "pseudo.pseudo_total_strength"),
+        ("+# to Dexterity", "pseudo.pseudo_total_dexterity"),
+        ("+# to Intelligence", "pseudo.pseudo_total_intelligence"),
+    ):
+        item = _pseudo_test_item((ItemModifier("", (33,), ref=ref),))
+        assert pseudo_id not in {
+            row.stat_id for row in resolve_trade_stat_filters(item)
+        }
+
+
+def test_compound_attribute_source_keeps_useful_pseudo_in_poe1():
+    item = _pseudo_test_item((
+        ItemModifier("", (33,), ref="+# to Strength"),
+        ItemModifier("", (20,), ref="+# to all Attributes"),
+    ))
+    ids = {row.stat_id for row in resolve_trade_stat_filters(item)}
+    assert "pseudo.pseudo_total_strength" in ids
+
+
 def test_pseudo_replaces_more_general_damage_and_crit_groups():
     item = _pseudo_test_item((
         ItemModifier("", (20,), ref="#% increased Elemental Damage"),
@@ -3763,6 +3784,28 @@ def test_common_search_range_recalculates_from_read_value():
     )
     assert apply_search_range((row,), 0)[0].min_value == 100
     assert apply_search_range((row,), 20)[0].min_value == 80
+
+
+@pytest.mark.parametrize("rarity", ["rare", "レア", "magic", "マジック"])
+def test_non_unique_search_range_uses_current_value_not_tier_width(rarity):
+    item = ParsedItem("Spear", rarity, "Test", "Test Spear", "weapon")
+    row = TradeStatFilter(
+        "explicit.strength", "筋力 +33", 33, "explicit", True,
+        read_value=33, roll_min=31, roll_max=33,
+    )
+
+    assert apply_search_range((row,), 10, item)[0].min_value == 29
+
+
+@pytest.mark.parametrize("rarity", ["unique", "ユニーク"])
+def test_unique_search_range_keeps_variable_roll_width(rarity):
+    item = ParsedItem("Spear", rarity, "Test", "Test Spear", "weapon")
+    row = TradeStatFilter(
+        "explicit.strength", "筋力 +33", 33, "explicit", True,
+        read_value=33, roll_min=31, roll_max=33,
+    )
+
+    assert apply_search_range((row,), 10, item)[0].min_value == 32
 
 
 def test_search_range_does_not_reduce_discrete_link_count():

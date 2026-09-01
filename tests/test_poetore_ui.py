@@ -2004,8 +2004,8 @@ def test_reported_poe2_rare_body_armour_shows_local_evasion_filter(qapp):
         selected = window._selected_stat_filters()
         evasion = [row for row in selected if row.text.startswith("回避力が")]
         assert [(row.stat_id, row.min_value) for row in evasion] == [
-            ("explicit.stat_124859000", 104),
-            ("explicit.stat_124859000", 39),
+            ("explicit.stat_124859000", 94),
+            ("explicit.stat_124859000", 36),
         ]
         assert all(not row.alternative_stat_ids for row in evasion)
         assert window.mod_warning.isHidden()
@@ -4693,7 +4693,7 @@ def test_reduced_curse_effect_flask_shows_awakened_positive_minimum(qapp):
         maximum = window.mod_filter_tree.itemWidget(
             target, _MOD_COLUMN_MAX
         ).findChild(QLineEdit)
-        assert minimum.text() == "44"
+        assert minimum.text() == "40"
         assert maximum.text() == ""
     finally:
         window.close()
@@ -6274,7 +6274,7 @@ def test_poe2_weapon_quality_20_is_visible_but_initially_disabled(qapp):
         assert window.gem_quality_edit.text() == "20"
         assert window._selected_quality() is None
         assert window.gem_quality_toggle.text() == "☐ 品質："
-        assert flat.min_value == 30.0
+        assert flat.min_value == 28.0
         assert flat.read_value == 32.0
 
         window.gem_quality_toggle.click()
