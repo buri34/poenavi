@@ -1428,10 +1428,10 @@ Enemies you Kill Explode, dealing 3% of their Life as Physical Damage
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         rows = resolve_trade_stat_filters(item)
     ids = [row.stat_id for row in rows]
-    assert "pseudo.pseudo_total_life" not in ids
-    assert "pseudo.pseudo_total_elemental_resistance" not in ids
-    assert ids.index("property.armour") < ids.index("explicit.explode")
-    assert ids.index("property.energy_shield") < ids.index("explicit.explode")
+    assert ids.index("property.armour") < ids.index("pseudo.pseudo_total_life")
+    assert ids.index("property.energy_shield") < ids.index("pseudo.pseudo_total_life")
+    assert ids.index("pseudo.pseudo_total_life") < ids.index("explicit.explode")
+    assert ids.index("pseudo.pseudo_total_elemental_resistance") < ids.index("explicit.explode")
 
 
 def test_finished_gear_orders_affix_families_by_original_modifier_position():
@@ -2245,7 +2245,7 @@ def test_quality_20_and_non_six_link_count_is_visible_but_not_preselected():
     assert details["property.links"].enabled is False
 
 
-def test_armour_single_life_mod_does_not_add_redundant_pseudo():
+def test_armour_single_life_mod_enables_awakened_style_life_pseudo():
     item = parse_item_text(ITEM.replace("Two Hand Swords", "Body Armours").replace(
         "Physical Damage: 108-181 (augmented)\nAttacks per Second: 1.74 (augmented)",
         "Armour: 1000",
@@ -2253,7 +2253,7 @@ def test_armour_single_life_mod_does_not_add_redundant_pseudo():
     with patch("src.poetore.trade._trade_stat_entries", return_value=()):
         enabled = {row.stat_id: row.min_value for row in resolve_trade_stat_filters(item) if row.enabled}
     assert enabled["property.armour"] == 1080.0
-    assert "pseudo.pseudo_total_life" not in enabled
+    assert enabled["pseudo.pseudo_total_life"] == 72.0
 
 
 def test_weapon_strength_without_life_mod_does_not_create_life_pseudo():
@@ -2276,7 +2276,7 @@ def test_weapon_strength_without_life_mod_does_not_create_life_pseudo():
     assert filters["property.physical_dps"].enabled is True
 
 
-def test_accessory_only_keeps_useful_multi_source_resistance_pseudo_off():
+def test_accessory_enables_awakened_style_primary_pseudos():
     item = parse_item_text("""Item Class: Rings
 Rarity: Rare
 Test Ring
@@ -2292,11 +2292,11 @@ Item Level: 85
     with patch("src.poetore.trade._trade_stat_entries", return_value=()):
         filters = resolve_trade_stat_filters(item)
     details = {row.stat_id: row for row in filters}
-    assert "pseudo.pseudo_total_life" not in details
-    assert "pseudo.pseudo_total_chaos_resistance" not in details
+    assert details["pseudo.pseudo_total_life"].enabled
+    assert details["pseudo.pseudo_total_chaos_resistance"].enabled
     elemental = details["pseudo.pseudo_total_elemental_resistance"]
     assert elemental.min_value == 63.0
-    assert not elemental.enabled
+    assert elemental.enabled
     assert elemental.source_contributions == (30.0, 40.0)
 
 
@@ -2509,7 +2509,7 @@ def test_crafted_chaos_only_is_hidden_but_mixed_sources_are_aggregated():
         _pseudo_test_item((crafted, natural))
     )}
     assert rows["pseudo.pseudo_total_chaos_resistance"].min_value == 32.0
-    assert rows["pseudo.pseudo_total_chaos_resistance"].enabled is False
+    assert rows["pseudo.pseudo_total_chaos_resistance"].enabled is True
 
 
 def test_aggregated_resistances_keep_exact_read_values_from_item():
@@ -2546,8 +2546,8 @@ def test_unresolved_modifier_does_not_remove_unrelated_pseudos():
         ItemModifier("", (30,), ref="+#% to Fire Resistance"),
     ))
     ids = {row.stat_id for row in resolve_trade_stat_filters(item)}
-    assert "pseudo.pseudo_total_life" not in ids
-    assert "pseudo.pseudo_total_elemental_resistance" not in ids
+    assert "pseudo.pseudo_total_life" in ids
+    assert "pseudo.pseudo_total_elemental_resistance" in ids
 
 
 def test_enabled_stat_filter_is_added_with_editable_minimum():

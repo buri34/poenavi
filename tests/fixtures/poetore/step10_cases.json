@@ -29,7 +29,7 @@
     "trade_base": "Imbued Wand",
     "stat_entries": [{"id": "explicit.stat_2974417149", "text": "スペルダメージが#%増加する", "type": "explicit"}],
     "text": "アイテムクラス: ワンド\nレアリティ: レア\n賢者の枝\nインブードワンド\n--------\nクリティカル率: 7.00%\n秒間アタック回数: 1.50\n--------\nアイテムレベル: 86\n--------\n{ プレフィックスモッド「ルーンの」 (ティア: 1) }\nスペルダメージが80(75-84)%増加する\n",
-    "expected_enabled": {"explicit.stat_2974417149": 72.0},
+    "expected_enabled": {},
     "expected_visible": ["explicit.stat_2974417149"],
     "expected_misc": {"corrupted": "false", "split": "false"}
   },
@@ -63,7 +63,7 @@
     "group": "装飾品/ライフ+耐性+能力値",
     "trade_base": "Ruby Ring",
     "text": "アイテムクラス: 指輪\nレアリティ: レア\n生命の輪\nルビーの指輪\n--------\nアイテムレベル: 85\n--------\n最大ライフ +70\n火耐性 +30%\n冷気および雷耐性 +20%\n混沌耐性 +10%\n全ての能力値 +20\n",
-    "expected_enabled": {},
+    "expected_enabled": {"pseudo.pseudo_total_life": 72.0, "pseudo.pseudo_total_elemental_resistance": 63.0, "pseudo.pseudo_total_chaos_resistance": 9.0},
     "expected_visible": ["pseudo.pseudo_total_elemental_resistance"],
     "expected_misc": {"corrupted": "false", "split": "false"}
   },
@@ -86,7 +86,7 @@
       {"id": "crafted.stat_3299347043", "text": "最大ライフ +#", "type": "crafted"}
     ],
     "text": "アイテムクラス: 指輪\nレアリティ: レア\n割れた環\nルビーの指輪\n--------\nアイテムレベル: 86\n--------\n{ フラクチャー サフィックスモッド「火炎の」 (ティア: 1) }\n火耐性 +40(36-41)%\n{ マスタークラフト プレフィックスモッド「製作の」 }\n最大ライフ +55\n",
-    "expected_enabled": {"fractured.stat_3372524247": 36.0, "crafted.stat_3299347043": 49.0},
+    "expected_enabled": {"pseudo.pseudo_total_life": 49.0, "pseudo.pseudo_total_elemental_resistance": 36.0},
     "expected_visible": ["fractured.stat_3372524247", "crafted.stat_3299347043"],
     "expected_misc": {"corrupted": "false"}
   },

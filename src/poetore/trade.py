@@ -2019,10 +2019,10 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
             unique and unique[0].values and unique[0].values[0] != value
         )
 
-    if has_maximum_life_mod and useful_pseudo(totals["life"], life_sources):
+    if has_maximum_life_mod:
         filters.append(TradeStatFilter(
             "pseudo.pseudo_total_life", "最大ライフ合計",
-            _relaxed(totals["life"]), "pseudo", False,
+            _relaxed(totals["life"]), "pseudo", True,
         ))
     if has_maximum_mana_mod and useful_pseudo(totals["mana"], mana_sources):
         filters.append(TradeStatFilter("pseudo.pseudo_total_mana", "最大マナ合計", _relaxed(totals["mana"]), "pseudo"))
@@ -2030,9 +2030,9 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
         aggregate_sources["fire"] + aggregate_sources["cold"]
         + aggregate_sources["lightning"]
     )
-    if elemental and useful_pseudo(elemental, elemental_sources):
+    if elemental:
         filters.append(TradeStatFilter(
-            "pseudo.pseudo_total_elemental_resistance", "元素耐性合計", _relaxed(elemental), "pseudo", False,
+            "pseudo.pseudo_total_elemental_resistance", "元素耐性合計", _relaxed(elemental), "pseudo", True,
             read_value=elemental,
         ))
     for element, stat_id, label in (("fire", "pseudo.pseudo_total_fire_resistance", "火耐性合計"),
@@ -2045,10 +2045,9 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
         if modifier.ref in _RESISTANCE_REFS and _RESISTANCE_REFS[modifier.ref][1]
     ]
     crafted_chaos_only = len(chaos_sources) == 1 and chaos_sources[0].kind == "crafted"
-    if (totals["chaos"] and not crafted_chaos_only
-            and useful_pseudo(totals["chaos"], aggregate_sources["chaos"])):
+    if totals["chaos"] and not crafted_chaos_only:
         filters.append(TradeStatFilter(
-            "pseudo.pseudo_total_chaos_resistance", "混沌耐性合計", _relaxed(totals["chaos"]), "pseudo", False,
+            "pseudo.pseudo_total_chaos_resistance", "混沌耐性合計", _relaxed(totals["chaos"]), "pseudo", True,
             read_value=totals["chaos"],
         ))
     for attr, stat_id, label in (("str", "pseudo.pseudo_total_strength", "筋力合計"),
@@ -3381,13 +3380,6 @@ def resolve_trade_stat_filters(
             row.min_value, row.kind,
             False if row.hidden_reason else (
                 enable_unique_rolls or enable_foulborn_rolls or row.enabled
-                or (
-                    not unique_item
-                    and item.category in {"weapon", "armour", "accessory"}
-                    and row.kind in {
-                        "explicit", "prefix", "suffix", "crafted", "fractured",
-                    }
-                )
             ),
             row.max_value, row.ref, row.confidence, row.inverted,
             option_value=row.option_value, option_text=row.option_text, oils=row.oils,
