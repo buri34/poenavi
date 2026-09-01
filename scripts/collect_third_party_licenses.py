@@ -15,6 +15,14 @@ RUNTIME_DISTRIBUTIONS = (
     "pynput", "six", "urllib3", "PyInstaller", "altgraph",
     "pyinstaller-hooks-contrib", "packaging", "pefile", "pywin32-ctypes",
 )
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+STATIC_LICENSES = (
+    (
+        "Noto-Sans-JP",
+        PROJECT_ROOT / "assets" / "fonts" / "NotoSansJP-OFL.txt",
+        "OFL.txt",
+    ),
+)
 LICENSE_BASENAME = re.compile(
     r"^(?:licen[cs]e|copying|notice|authors?)(?:[._-].*)?$", re.IGNORECASE
 )
@@ -45,7 +53,11 @@ def _python_license() -> Path:
     raise RuntimeError("Python license file was not found in the active interpreter")
 
 
-def collect(output_dir: Path, distribution_names: tuple[str, ...] = RUNTIME_DISTRIBUTIONS) -> None:
+def collect(
+    output_dir: Path,
+    distribution_names: tuple[str, ...] = RUNTIME_DISTRIBUTIONS,
+    static_licenses: tuple[tuple[str, Path, str], ...] = STATIC_LICENSES,
+) -> None:
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True)
@@ -58,6 +70,14 @@ def collect(output_dir: Path, distribution_names: tuple[str, ...] = RUNTIME_DIST
     python_target = output_dir / "Python-LICENSE.txt"
     shutil.copyfile(python_source, python_target)
     index_lines.append(f"- Python {sys.version.split()[0]}: `{python_target.name}`")
+
+    for component, source, target_name in static_licenses:
+        if not source.is_file():
+            raise RuntimeError(f"Required static license was not found: {source}")
+        component_dir = output_dir / _safe_name(component)
+        component_dir.mkdir()
+        shutil.copyfile(source, component_dir / target_name)
+        index_lines.append(f"- {component}: `{component_dir.name}/{target_name}`")
 
     for requested_name in distribution_names:
         try:

@@ -65,6 +65,8 @@ def test_readme_notices_and_app_wording_cover_required_attribution():
     assert "公認・承認を受けたものではありません" in readme
     assert "Awakened PoE Trade" in notices and "MIT License" in notices
     assert "RePoE" in notices and "全データはアプリへ同梱しません" in notices
+    assert "Noto Sans JP" in notices and "SIL Open Font License 1.1" in notices
+    assert (ROOT / "assets" / "fonts" / "NotoSansJP-OFL.txt").is_file()
     assert "無料の非公式ツール" not in poetore_ui
     assert "ぽえなびは無料の非公式ツール" in app_info_ui
     assert "提携・承認関係はありません" in app_info_ui

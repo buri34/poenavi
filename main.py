@@ -28,6 +28,7 @@ from src.single_instance import (
     consume_restart_pid,
     wait_for_previous_instance,
 )
+from src.app_font import apply_bundled_ui_font
 
 
 def select_startup_options(config):
@@ -86,6 +87,7 @@ def run():
     restart_pid = consume_restart_pid(sys.argv)
     wait_for_previous_instance(restart_pid)
     app = QApplication(sys.argv)
+    apply_bundled_ui_font(app)
     single_instance = SingleInstanceGuard(parent=app)
     if not single_instance.start():
         QMessageBox.information(

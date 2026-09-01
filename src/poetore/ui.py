@@ -1824,7 +1824,7 @@ class PoetoreWindow(QWidget):
         style = """
             QWidget {
                 color: #E6ECEA;
-                font-family: "Segoe UI", sans-serif;
+                font-family: "Noto Sans JP", sans-serif;
                 font-size: 12px;
             }
             QFrame#poetorePanel {
@@ -3843,7 +3843,7 @@ class PoetoreWindow(QWidget):
             QMessageBox QLabel {
                 background-color: transparent;
                 color: #E6ECEA;
-                font-family: "Segoe UI", sans-serif;
+                font-family: "Noto Sans JP", sans-serif;
                 font-size: 12px;
             }
             QMessageBox QPushButton {

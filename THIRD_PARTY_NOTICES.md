@@ -107,4 +107,17 @@ PoENavi's Windows distribution is created with PyInstaller and includes upstream
 - **OpenSSL runtime libraries** — Apache License 2.0
   - <https://www.openssl.org/source/license.html>
 
+## Noto Sans JP
+
+PoENavi bundles the unmodified Noto Sans JP variable font distributed by
+Google Fonts and uses it for its Japanese user interface.
+
+SIL Open Font License 1.1 — Copyright 2014-2021 Adobe
+(http://www.adobe.com/), with Reserved Font Name 'Source'.
+
+The complete license text is included in
+`THIRD_PARTY_LICENSES/Noto-Sans-JP/OFL.txt`.
+
+<https://github.com/google/fonts/tree/main/ofl/notosansjp>
+
 Exact versions used for an official release are pinned in `requirements.txt` and `requirements-build.txt`, and are recorded in the public GitHub Actions build log.
