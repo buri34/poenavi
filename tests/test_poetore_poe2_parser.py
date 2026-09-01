@@ -485,13 +485,14 @@ def test_poe2_standalone_rune_prefers_augment_stat_over_same_text_explicit():
     assert [(row.kind, row.stat_id) for row in rows if row.stat_id.endswith("50721145")] == [
         ("augment", "rune.stat_50721145"),
     ]
+    assert not next(row for row in rows if row.stat_id == "rune.stat_50721145").enabled
     payload = build_search_query(item, stat_filters=rows)
     sent_ids = {
         row["id"]
         for group in payload["query"]["stats"]
         for row in group["filters"]
     }
-    assert "rune.stat_50721145" in sent_ids
+    assert "rune.stat_50721145" not in sent_ids
     assert "explicit.stat_50721145" not in sent_ids
 
 

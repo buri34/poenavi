@@ -133,7 +133,9 @@ def build_audit_rows() -> list[AuditRow]:
                         else "nonunique"
                     )
                     observed_rarity = _observed_rarity(query)
-                    expected_stats = 1 if preset == PRESET_FINISHED and rarity != "normal" else 0
+                    expected_stats = (
+                        1 if preset == PRESET_FINISHED and rarity == "unique" else 0
+                    )
                     observed_stats = _stat_count(query)
                     checks = (
                         observed_category == TRADE_CATEGORY_BY_CATEGORY[category],

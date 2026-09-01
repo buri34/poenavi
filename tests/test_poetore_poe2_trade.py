@@ -114,10 +114,14 @@ def test_finished_preset_uses_explicit_counterpart_for_special_mod_like_ee2(kind
     rows = poe2_trade_filters(item)
     direct = next(row for row in rows if row.text == "Chaos Resistance")
     assert (direct.stat_id, direct.kind, direct.enabled) == (
-        "explicit.stat_2923486259", "explicit", True,
+        "explicit.stat_2923486259", "explicit", False,
     )
     assert direct.provenance_tags == (kind,)
-    sent = build_search_query(item, stat_filters=rows)["query"]["stats"][0]["filters"]
+    selected = tuple(
+        replace(row, enabled=True) if row is direct else row
+        for row in rows
+    )
+    sent = build_search_query(item, stat_filters=selected)["query"]["stats"][0]["filters"]
     assert sent == [{"id": "explicit.stat_2923486259", "value": {"min": 21.0}}]
 
 
@@ -130,7 +134,7 @@ def test_finished_preset_keeps_special_stat_without_explicit_counterpart():
     )
     direct = next(row for row in poe2_trade_filters(item) if row.text == "Special")
     assert (direct.stat_id, direct.kind, direct.enabled) == (
-        "desecrated.missing", "desecrated", True,
+        "desecrated.missing", "desecrated", False,
     )
     assert direct.provenance_tags == ("desecrated",)
 
@@ -171,7 +175,7 @@ def test_finished_preset_merges_natural_and_normalized_special_sources():
     )
     rows = [row for row in poe2_trade_filters(item) if row.stat_id == "explicit.stat_2923486259"]
     assert len(rows) == 1
-    assert (rows[0].min_value, rows[0].read_value, rows[0].enabled) == (21.0, 21.0, True)
+    assert (rows[0].min_value, rows[0].read_value, rows[0].enabled) == (21.0, 21.0, False)
     assert rows[0].provenance_tags == ("crafted",)
 
 
@@ -672,7 +676,7 @@ def test_phase7_weapon_and_armour_calculated_properties_use_trade2_equipment_fil
     )
 
 
-def test_phase7_single_chaos_mod_keeps_enabled_direct_without_redundant_pseudo():
+def test_phase7_single_chaos_mod_selects_awakened_pseudo_and_keeps_direct_optional():
     item = parse_item_text(
         (Path(__file__).parent / "fixtures" / "poe2" / "rare_body_armour_ja.txt").read_text(
             encoding="utf-8"
@@ -680,13 +684,16 @@ def test_phase7_single_chaos_mod_keeps_enabled_direct_without_redundant_pseudo()
     )
     rows = poe2_trade_filters(item)
     direct = next(row for row in rows if row.stat_id == "explicit.stat_2923486259")
-    assert direct.enabled
-    assert not any(
-        row.stat_id == "pseudo.pseudo_total_chaos_resistance" for row in rows
+    assert not direct.enabled
+    pseudo = next(
+        row for row in rows
+        if row.stat_id == "pseudo.pseudo_total_chaos_resistance"
     )
+    assert pseudo.enabled
     query = build_search_query(item, stat_filters=rows)
     sent = query["query"]["stats"][0]["filters"]
-    assert any(row["id"] == "explicit.stat_2923486259" for row in sent)
+    assert not any(row["id"] == "explicit.stat_2923486259" for row in sent)
+    assert any(row["id"] == "pseudo.pseudo_total_chaos_resistance" for row in sent)
 
 
 def test_phase7_elemental_and_life_pseudos_sum_shared_sources_once():
@@ -703,12 +710,44 @@ def test_phase7_elemental_and_life_pseudos_sum_shared_sources_once():
     by_id = {row.stat_id: row for row in rows}
     assert by_id["pseudo.pseudo_total_elemental_resistance"].min_value == 45.0
     assert by_id["pseudo.pseudo_total_life"].min_value == 140.0
-    assert not by_id["pseudo.pseudo_total_elemental_resistance"].enabled
-    assert not by_id["pseudo.pseudo_total_life"].enabled
-    assert by_id["explicit.all"].enabled
-    assert by_id["explicit.fire"].enabled
-    assert by_id["explicit.life"].enabled
-    assert by_id["explicit.str"].enabled
+    assert by_id["pseudo.pseudo_total_elemental_resistance"].enabled
+    assert by_id["pseudo.pseudo_total_life"].enabled
+    assert not by_id["explicit.all"].enabled
+    assert not by_id["explicit.fire"].enabled
+    assert not by_id["explicit.life"].enabled
+    assert not by_id["explicit.str"].enabled
+
+
+def test_poe2_awakened_defaults_select_major_properties_but_not_granted_skill():
+    item = ParsedItem(
+        item_class="Sceptres", rarity="rare", name="Test", base_type="Test Sceptre",
+        category="sceptre", properties={
+            "Spirit": "100", "Runic Ward": "80", "Reload Time": "0.70 Seconds",
+        }, modifiers=(
+            ItemModifier(
+                "Grants Skill: Test Skill", (), kind="explicit",
+                stat_id="explicit.granted_skill",
+            ),
+        ),
+    )
+    by_id = {row.stat_id: row for row in poe2_trade_filters(item)}
+
+    assert by_id["property.spirit"].enabled
+    assert by_id["property.runic_ward"].enabled
+    assert by_id["property.reload_time"].enabled
+    assert not by_id["explicit.granted_skill"].enabled
+
+
+def test_poe2_unique_keeps_existing_direct_mod_default():
+    item = ParsedItem(
+        item_class="Belts", rarity="unique", name="Test", base_type="Heavy Belt",
+        category="belt", modifiers=(
+            ItemModifier("Strength", (30.0,), stat_id="explicit.str"),
+        ),
+    )
+
+    direct = next(row for row in poe2_trade_filters(item) if row.stat_id == "explicit.str")
+    assert direct.enabled
 
 
 def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():

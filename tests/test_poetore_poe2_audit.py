@@ -27,7 +27,7 @@ def test_poe2_search_matrix_validates_final_trade2_identity_and_stats():
     assert (exact.observed_trade_category, exact.observed_type) == (
         "weapon.bow", "Rider Bow",
     )
-    assert (exact.observed_rarity, exact.observed_stat_count) == ("nonunique", 1)
+    assert (exact.observed_rarity, exact.observed_stat_count) == ("nonunique", 0)
     broad = rows["bow:rare:base:class"]
     assert (broad.observed_type, broad.observed_stat_count) == ("", 0)
     unique = rows["focus:unique:finished:exact"]

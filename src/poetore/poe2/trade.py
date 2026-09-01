@@ -63,6 +63,14 @@ _WEAPON_CATEGORIES = {
 _ARMOUR_CATEGORIES = {
     "focus", "buckler", "shield", "body_armour", "helmet", "gloves", "boots",
 }
+
+
+def _uses_awakened_rare_defaults(item: ParsedItem) -> bool:
+    trade_category = TRADE_CATEGORY_BY_CATEGORY.get(item.category, "")
+    is_equipment = trade_category.startswith(("weapon.", "armour.")) or item.category in {
+        "ring", "amulet", "belt",
+    }
+    return is_equipment and item.rarity.casefold() not in {"unique", "ユニーク"}
 _EE2_CATEGORY_BY_CATEGORY = {
     "bow": "Bow", "crossbow": "Crossbow", "spear": "Spear", "flail": "Flail",
     "staff": "Staff", "quarterstaff": "Warstaff", "wand": "Wand",
@@ -451,6 +459,7 @@ _ATTRIBUTE_REFS = {
 
 def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...], set[str]]:
     """Return useful aggregate pseudos as optional alternatives to direct mods."""
+    awakened_defaults = _uses_awakened_rare_defaults(item)
     resistances = {key: 0.0 for key in ("fire", "cold", "lightning", "chaos")}
     attributes = {key: 0.0 for key in ("str", "dex", "int")}
     sources = {key: [] for key in (*resistances, *attributes, "life", "mana")}
@@ -481,11 +490,18 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
     rows: list[TradeStatFilter] = []
     replaced: set[str] = set()
 
-    def add(stat_id: str, text: str, value: float, enabled: bool, used) -> None:
+    def add(
+        stat_id: str, text: str, value: float, enabled: bool, used,
+        *, keep_single: bool = False,
+    ) -> None:
         if not used:
             return
         unique = list(dict.fromkeys(used))
-        if len(unique) == 1 and trade_stat_value(unique[0].values) == value:
+        if (
+            not keep_single
+            and len(unique) == 1
+            and trade_stat_value(unique[0].values) == value
+        ):
             return
         rows.append(TradeStatFilter(
             stat_id, text, value, "pseudo", enabled, read_value=value,
@@ -497,7 +513,7 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
     add(
         "pseudo.pseudo_total_elemental_resistance", "元素耐性合計",
         resistances["fire"] + resistances["cold"] + resistances["lightning"],
-        False, elemental_sources,
+        awakened_defaults, elemental_sources, keep_single=True,
     )
     for element, stat_id, label in (
         ("fire", "pseudo.pseudo_total_fire_resistance", "火耐性合計"),
@@ -507,7 +523,7 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
         add(stat_id, label, resistances[element], False, sources[element])
     add(
         "pseudo.pseudo_total_chaos_resistance", "混沌耐性合計",
-        resistances["chaos"], False, sources["chaos"],
+        resistances["chaos"], awakened_defaults, sources["chaos"], keep_single=True,
     )
     for attribute, stat_id, label in (
         ("str", "pseudo.pseudo_total_strength", "筋力合計"),
@@ -525,8 +541,8 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
     if direct_life:
         add(
             "pseudo.pseudo_total_life", "最大ライフ合計",
-            life + attributes["str"] * 2, False,
-            sources["life"] + sources["str"],
+            life + attributes["str"] * 2, awakened_defaults,
+            sources["life"] + sources["str"], keep_single=True,
         )
     if direct_mana:
         add(
@@ -538,9 +554,9 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
 
 
 _POE2_PROPERTY_SPECS = (
-    ("property.spirit", "スピリット", ("Spirit", "スピリット"), "property", False),
-    ("property.runic_ward", "ルーンワード", ("Runic Ward", "ルーンワード", "Ward"), "property", False),
-    ("property.reload_time", "リロード時間", ("Reload Time", "リロード時間", "再装填時間"), "property", False),
+    ("property.spirit", "スピリット", ("Spirit", "スピリット"), "property", True),
+    ("property.runic_ward", "ルーンワード", ("Runic Ward", "ルーンワード", "Ward"), "property", True),
+    ("property.reload_time", "リロード時間", ("Reload Time", "リロード時間", "再装填時間"), "property", True),
     ("property.map_revives", "復活回数", ("Revives Available", "復活が利用可能"), "property", False),
     ("property.map_pack_size", "ウェイストーンパックサイズ", ("Monster Pack Size", "モンスターパックサイズ", "Pack Size", "パックサイズ"), "property", False),
     ("property.map_bonus", "ウェイストーンドロップ率", ("Waystone Drop Chance", "ウェイストーンドロップ確率", "ウェイストーンドロップ率"), "property", False),
@@ -565,9 +581,11 @@ _POE2_STATE_FILTER_NAMES = {
 def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
     """Build editable Trade2 property/state rows beside resolved modifier rows."""
     rows: list[TradeStatFilter] = []
+    awakened_defaults = _uses_awakened_rare_defaults(item)
     for stat_id, label, names, kind, enabled in _POE2_PROPERTY_SPECS:
         value = _property_float(item, *names)
         if value is not None:
+            enabled = enabled and awakened_defaults
             if stat_id == "property.area_level" and item.category in {"barya", "ultimatum"}:
                 enabled = True
             rows.append(TradeStatFilter(
@@ -587,7 +605,12 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         is_gem = item.category in {"active_gem", "support_gem", "meta_gem"}
         stat_id = "property.gem_sockets" if is_gem else "property.augment_sockets"
         label = "ジェムソケット" if is_gem else "オーグメントソケット"
-        enabled = not is_gem and "exceptional" in item.flags
+        quality = _property_float(item, "Quality", "品質")
+        enabled = (
+            not is_gem
+            and "exceptional" in item.flags
+            and (quality is None or quality <= 20)
+        )
         rows.append(TradeStatFilter(
             stat_id, label, float(sockets), "property", enabled,
             read_value=float(sockets),
@@ -653,7 +676,9 @@ def _poe2_modifier_rows(
             stat_id, modifier.text,
             None if modifier.better == -1 else value,
             "explicit" if converted else modifier.kind,
-            enabled=original_id not in replaced_ids,
+            # Awakened-style rare searches expose direct mods as optional
+            # alternatives while selecting only the high-value aggregates.
+            enabled=not _uses_awakened_rare_defaults(item),
             max_value=(value if modifier.better == -1 else None),
             ref=modifier.ref, confidence=modifier.confidence,
             read_value=value, roll_min=modifier.roll_min,

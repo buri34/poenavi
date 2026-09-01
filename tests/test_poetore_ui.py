@@ -1946,16 +1946,17 @@ def test_reported_poe2_rare_gloves_show_chaos_resistance_without_warning(qapp):
         window.input_edit.setPlainText(text)
         window.parse_current_text()
 
-        assert window.mod_filter_tree.topLevelItemCount() == 9
+        assert window.mod_filter_tree.topLevelItemCount() == 10
         assert window.mod_warning.isHidden()
         selected = window._selected_stat_filters()
         direct = next(row for row in selected if row.stat_id == "explicit.stat_2923486259")
-        assert direct.enabled
+        assert not direct.enabled
         assert direct.min_value == 13
-        assert not any(
-            row.stat_id == "pseudo.pseudo_total_chaos_resistance"
-            for row in selected
+        chaos = next(
+            row for row in selected
+            if row.stat_id == "pseudo.pseudo_total_chaos_resistance"
         )
+        assert chaos.enabled
         assert any(row.stat_id == "property.evasion" for row in selected)
         assert any(row.stat_id == "property.augment_sockets" for row in selected)
         assert not any(
@@ -1987,6 +1988,33 @@ def test_poe2_exceptional_item_enables_augment_socket_row_by_default(qapp):
         )
         assert row.enabled
         assert row.min_value == 2
+    finally:
+        window.close()
+
+
+def test_poe2_high_quality_exceptional_selects_quality_instead_of_sockets(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 手袋
+レアリティ: ノーマル
+規格外の 磨かれた弓籠手
+--------
+品質: +25%
+回避力: 170
+--------
+装備条件：レベル 80, 101 器用さ
+--------
+ソケット: S
+--------
+アイテムレベル: 82""")
+        window.parse_current_text()
+
+        row = next(
+            row for row in window._selected_stat_filters()
+            if row.stat_id == "property.augment_sockets"
+        )
+        assert not row.enabled
+        assert window._selected_quality() == 25
     finally:
         window.close()
 
@@ -6294,7 +6322,7 @@ def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
         filters = window._resolved_trade_filters(item, "finished")
         by_id = {row.stat_id: row for row in filters}
         assert by_id["property.spirit"].min_value == 90
-        assert not by_id["property.spirit"].enabled
+        assert by_id["property.spirit"].enabled
         assert by_id["property.augment_sockets"].min_value == 2
         assert not by_id["property.augment_sockets"].enabled
         assert "property.state.sanctified" not in by_id
