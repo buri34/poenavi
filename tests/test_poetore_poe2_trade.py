@@ -634,12 +634,28 @@ def test_phase7_weapon_and_armour_calculated_properties_use_trade2_equipment_fil
     fixtures = Path(__file__).parent / "fixtures" / "poe2"
     spear = parse_item_text((fixtures / "rare_spear_ja.txt").read_text(encoding="utf-8"))
     spear_rows = poe2_trade_filters(spear)
+    assert [row.kind for row in spear_rows[:3]] == ["property"] * 3
+    ordinary_affixes = [
+        row.affix for row in spear_rows
+        if row.kind == "explicit" and not row.provenance_tags
+    ]
+    assert ordinary_affixes == ["prefix", "prefix", "suffix"]
+    spear_query = build_search_query(spear, stat_filters=spear_rows)
+    sent_ids = {
+        row["id"]
+        for group in spear_query["query"]["stats"]
+        for row in group["filters"]
+    }
+    assert {
+        row.stat_id for row in spear_rows
+        if row.enabled and row.affix in {"prefix", "suffix"}
+        and row.stat_id.startswith("explicit.")
+    } <= sent_ids
     by_id = {row.stat_id: row for row in spear_rows}
     assert by_id["property.physical_dps"].enabled
     assert by_id["property.physical_dps"].read_value == pytest.approx(241.325)
     assert by_id["property.physical_dps"].min_value == pytest.approx(241.325)
     assert not by_id["property.aps"].enabled
-    spear_query = build_search_query(spear, stat_filters=spear_rows)
     equipment = spear_query["query"]["filters"]["equipment_filters"]["filters"]
     assert equipment["pdps"]["min"] == pytest.approx(241.325)
     assert "aps" not in equipment

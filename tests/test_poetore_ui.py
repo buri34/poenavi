@@ -2977,6 +2977,31 @@ def test_poe2_finished_filter_keeps_special_origin_visible_after_normalization(q
         window.close()
 
 
+def test_poe2_filter_ui_shows_affixes_and_property_first(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    try:
+        filters = (
+            TradeStatFilter("property.physical_dps", "物理DPS", 100, "property", True),
+            TradeStatFilter(
+                "explicit.stat_1", "物理ダメージ増加", 30, "explicit", True,
+                affix="prefix",
+            ),
+            TradeStatFilter(
+                "explicit.stat_2", "アタックスピード増加", 10, "explicit", True,
+                affix="suffix",
+            ),
+            TradeStatFilter("rune.stat_3", "ルーン効果", 5, "augment", True),
+        )
+        window._populate_stat_filters(filters)
+        labels = [
+            window.mod_filter_tree.topLevelItem(index).text(_MOD_COLUMN_KIND)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        ]
+        assert labels == ["アイテム特性", "プレフィックス", "サフィックス", "特殊"]
+    finally:
+        window.close()
+
+
 def test_mod_filter_ui_lists_merged_special_origins_in_kind_column(qapp):
     window = PoetoreWindow()
     try:

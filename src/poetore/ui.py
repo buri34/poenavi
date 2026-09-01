@@ -415,6 +415,8 @@ def _filter_kind_label(stat_filter: TradeStatFilter) -> str:
     kind = (
         stat_filter.generation
         if stat_filter.generation in _FILTER_KIND_LABELS
+        else stat_filter.affix
+        if stat_filter.affix in {"prefix", "suffix"}
         else stat_filter.kind
     )
     return _FILTER_KIND_LABELS.get(kind, "特殊")

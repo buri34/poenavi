@@ -648,6 +648,7 @@ def _poe2_modifier_rows(
             ref=modifier.ref, confidence=modifier.confidence,
             read_value=value, roll_min=modifier.roll_min,
             roll_max=modifier.roll_max, better=modifier.better,
+            affix=modifier.affix,
             provenance_tags=provenance_tags,
         )
         position = positions.get(stat_id)
@@ -708,7 +709,18 @@ def poe2_trade_filters(
             row for row in filters
             if row.kind == "state" or row.kind in {"crafted", "fractured", "desecrated"}
         )
-    return filters
+
+    def display_order(row: TradeStatFilter) -> int:
+        if row.kind == "property":
+            return 0
+        if not row.provenance_tags and row.kind == "explicit":
+            if row.affix == "prefix":
+                return 1
+            if row.affix == "suffix":
+                return 2
+        return 3
+
+    return tuple(sorted(filters, key=display_order))
 
 
 _POE2_FILTER_TARGETS = {

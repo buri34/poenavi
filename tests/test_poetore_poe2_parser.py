@@ -399,6 +399,13 @@ def test_poe2_roll_ranges_are_averaged_and_only_safe_ranges_get_better_direction
     flat = next(mod for mod in spear.modifiers if mod.stat_id == "explicit.stat_1940865751")
     assert (flat.roll_min, flat.roll_max, flat.better) == (28.5, 42.0, 1)
 
+    assert [
+        modifier.affix for modifier in spear.modifiers
+        if modifier.kind == "explicit"
+    ] == [
+        "prefix", "prefix", "suffix",
+    ]
+
     text = """アイテムクラス: ウェイストーン
 レアリティ: マジック
 減退する ウェイストーン (ティア15)

@@ -409,6 +409,16 @@ def _mod_kind_from_heading(heading: str, previous: str | None) -> str | None:
     return previous
 
 
+def _affix_from_heading(heading: str) -> str | None:
+    """Return the Prefix/Suffix provenance exposed by PoE2 detailed copy."""
+    lowered = heading.casefold()
+    if "プレフィックス" in heading or "prefix" in lowered:
+        return "prefix"
+    if "サフィックス" in heading or "suffix" in lowered:
+        return "suffix"
+    return None
+
+
 def _header(text: str) -> tuple[dict[str, str], list[str]]:
     first_section = re.split(r"^--------\s*$", text.strip(), maxsplit=1, flags=re.MULTILINE)[0]
     labels: dict[str, str] = {}
@@ -793,11 +803,13 @@ def parse_item_text(text: str) -> ParsedItem:
     elif base_type.casefold().startswith("runeforged "):
         flags.add("runeforged")
     current_kind = None
+    current_affix = None
     for line in text.splitlines():
         line = line.strip().replace("：", ":")
         if line.startswith("{") and line.endswith("}"):
             heading = line.strip("{} ")
             current_kind = _mod_kind_from_heading(heading, current_kind)
+            current_affix = _affix_from_heading(heading)
             if current_kind == "augment":
                 augment_count += 1
             continue
@@ -874,6 +886,7 @@ def parse_item_text(text: str) -> ParsedItem:
                 better = -1
             modifiers.append(ItemModifier(
                 text=line, values=values, kind=str(entry.get("type", current_kind or "explicit")),
+                affix=current_affix,
                 ref=str((entry.get("text") or {}).get("en", line)),
                 stat_id=raw_stat_id, confidence=1.0,
                 roll_min=roll_min, roll_max=roll_max, better=better,
