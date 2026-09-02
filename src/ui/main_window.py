@@ -4747,7 +4747,11 @@ class MainWindow(QMainWindow):
             )
             from src.app_restart import confirm_mode_switch_restart
 
-            if confirm_mode_switch_restart(self, self.config):
+            requested_poe_version = self.config.get("poe_version", POE1)
+            poe_version_changed = requested_poe_version != self.poe_version
+            if confirm_mode_switch_restart(
+                self, self.config, current_poe_version=self.poe_version
+            ):
                 return
             self._refresh_gem_shop_search_preview()
             if self.config.get("always_on_top", True) != previous_always_on_top:
@@ -4759,7 +4763,9 @@ class MainWindow(QMainWindow):
             self._update_cheat_sheets_hotkey_tooltip()
             
             # ログ監視の再設定
-            active_version = self.config.get("poe_version", self.poe_version)
+            active_version = (
+                self.poe_version if poe_version_changed else requested_poe_version
+            )
             client_log_paths = self.config.get("client_log_paths", {})
             log_path = client_log_paths.get(active_version, "")
             if log_path:
@@ -4773,7 +4779,8 @@ class MainWindow(QMainWindow):
             
             # ゾーンデータ・ガイドデータ更新
             prev_version = self.poe_version
-            self.poe_version = self.config.get("poe_version", POE1)
+            if not poe_version_changed:
+                self.poe_version = requested_poe_version
             self._sync_voicevox_service()
             self.lap_labels = get_lap_labels(self.poe_version)
             zone_master_data = load_zone_master_data()

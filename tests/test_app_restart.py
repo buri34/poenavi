@@ -53,7 +53,7 @@ def test_changed_mode_restarts_after_ok():
         assert confirm_mode_switch_restart(None, config) is True
 
     assert question.call_args.args[1] == "poetore"
-    assert "選択したモードへ切り替わります" in question.call_args.args[2]
+    assert "選択した設定へ切り替わります" in question.call_args.args[2]
     restart.assert_called_once_with()
 
 
@@ -77,6 +77,51 @@ def test_changed_mode_with_selector_explains_mode_will_be_selected_again():
 
     assert "もう一度選択します" in question.call_args.args[2]
     restart.assert_not_called()
+
+
+def test_changed_poe_version_prompts_even_when_mode_is_unchanged():
+    _app_with_mode("poetore")
+    config = {
+        "poe_version": "poe2",
+        "startup": {
+            "preferred_mode": "poetore",
+            "show_mode_selector": False,
+        },
+    }
+
+    with (
+        patch(
+            "src.app_restart._ask_mode_switch_restart",
+            return_value=QMessageBox.Cancel,
+        ) as question,
+        patch("src.app_restart.restart_application") as restart,
+    ):
+        assert confirm_mode_switch_restart(
+            None, config, current_poe_version="poe1"
+        ) is False
+
+    message = question.call_args.args[2]
+    assert "PoE版：PoE1 → PoE2" in message
+    assert "今すぐ再起動しますか" in message
+    restart.assert_not_called()
+
+
+def test_same_poe_version_and_mode_do_not_prompt():
+    _app_with_mode("poetore")
+    config = {
+        "poe_version": "poe1",
+        "startup": {
+            "preferred_mode": "poetore",
+            "show_mode_selector": False,
+        },
+    }
+
+    with patch("src.app_restart._ask_mode_switch_restart") as question:
+        assert confirm_mode_switch_restart(
+            None, config, current_poe_version="poe1"
+        ) is False
+
+    question.assert_not_called()
 
 
 def test_poetore_restart_prompt_uses_teal_neutral_theme():

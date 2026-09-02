@@ -293,6 +293,7 @@ class PoetoreModeWindow(QMainWindow):
         super().__init__()
         self.config = ConfigManager.load_config()
         poe_version = self.config.get("poe_version", POE1)
+        self.poe_version = poe_version
         if not is_feature_supported(POETORE, poe_version):
             raise RuntimeError("PoE2版ぽえとれは現在テスト中です")
         self._cheat_sheet_overlay = None
@@ -397,7 +398,7 @@ class PoetoreModeWindow(QMainWindow):
 
     def _build_ui(self):
         self.rate_quote_currency = (
-            "exalted" if self.config.get("poe_version", POE1) == POE2 else "chaos"
+            "exalted" if self.poe_version == POE2 else "chaos"
         )
         self.rate_quote_label = self.rate_quote_currency.title()
         central = QWidget()
@@ -467,7 +468,7 @@ class PoetoreModeWindow(QMainWindow):
         self.map_mods_button.setIcon(_map_mod_manager_icon())
         self.map_mods_button.setIconSize(QSize(24, 24))
         self.map_mods_button.setVisible(
-            is_feature_supported(MAP_CHECK, self.config.get("poe_version", POE1))
+            is_feature_supported(MAP_CHECK, self.poe_version)
         )
         self.settings_button = self._header_button("", "設定画面を開く")
         self.settings_button.setIcon(_settings_icon())
@@ -559,7 +560,7 @@ class PoetoreModeWindow(QMainWindow):
         layout.setSpacing(12)
         divine_icon = QLabel()
         divine_icon.setObjectName("divineCurrencyIcon")
-        poe_version = self.config.get("poe_version", POE1)
+        poe_version = self.poe_version
         divine_pixmap = QPixmap(str(self._asset_path(
             _currency_icon_filename("divine", poe_version)
         )))
@@ -593,7 +594,7 @@ class PoetoreModeWindow(QMainWindow):
 
     def _start_hotkeys(self):
         configured = self.config.get("hotkeys", {})
-        poe_version = self.config.get("poe_version", POE1)
+        poe_version = self.poe_version
         mode_hotkeys = {
             action: configured.get(action, default)
             for action, default in self.MODE_ACTION_DEFAULTS.items()
@@ -666,14 +667,14 @@ class PoetoreModeWindow(QMainWindow):
         return frozenset(names)
 
     def _configured_league(self):
-        key = "league_poe2" if self.config.get("poe_version", POE1) == POE2 else "league"
+        key = "league_poe2" if self.poe_version == POE2 else "league"
         return str(self.config.get("poetore", {}).get(key, "auto"))
 
     def _currency_rate_league(self):
         configured = self._configured_league()
         if configured != "auto":
             return configured
-        if self.config.get("poe_version", POE1) == POE2:
+        if self.poe_version == POE2:
             from src.poetore.poe2.trade import FALLBACK_LEAGUES, default_pc_league
             return default_pc_league(FALLBACK_LEAGUES)
         from src.poetore.trade import available_pc_leagues, default_pc_league
@@ -689,7 +690,7 @@ class PoetoreModeWindow(QMainWindow):
             try:
                 from src.poetore.poe_ninja import default_poe_ninja_service
                 league = self._currency_rate_league()
-                if self.config.get("poe_version", POE1) == POE2:
+                if self.poe_version == POE2:
                     rate = default_poe_ninja_service.divine_exalted_rate(league)
                 else:
                     rate = default_poe_ninja_service.divine_chaos_rate(league)
@@ -747,7 +748,7 @@ class PoetoreModeWindow(QMainWindow):
 
     def capture_poetore_item(self, auto_hide=False):
         if not is_feature_supported(
-            POETORE, self.config.get("poe_version", POE1),
+            POETORE, self.poe_version,
         ):
             return None
         started_at = time.perf_counter()
@@ -796,12 +797,12 @@ class PoetoreModeWindow(QMainWindow):
         return self._map_check_window
 
     def capture_map_check_item(self):
-        if not is_feature_supported(MAP_CHECK, self.config.get("poe_version", POE1)):
+        if not is_feature_supported(MAP_CHECK, self.poe_version):
             return None
         self._ensure_map_check_window().capture_from_poe()
 
     def open_map_mod_manager(self):
-        if not is_feature_supported(MAP_CHECK, self.config.get("poe_version", POE1)):
+        if not is_feature_supported(MAP_CHECK, self.poe_version):
             return None
         from src.ui.map_check import MapModManagerDialog
 
@@ -814,7 +815,7 @@ class PoetoreModeWindow(QMainWindow):
     def _prepare_poetore_window(self):
         """Build the search panel after startup without issuing Trade requests."""
         if not is_feature_supported(
-            POETORE, self.config.get("poe_version", POE1),
+            POETORE, self.poe_version,
         ):
             return None
         from src.poetore.ui import prepare_poetore_window
@@ -839,7 +840,7 @@ class PoetoreModeWindow(QMainWindow):
             return
         from src.ui.memo_dialog import MemoDialog
 
-        poe_version = self.config.get("poe_version", POE1)
+        poe_version = self.poe_version
         filename = "notes_poe2.json" if poe_version == POE2 else "notes_poe1.json"
         notes_path = str(ConfigManager.get_user_data_path(filename))
         self._memo_dialog = MemoDialog(self, notes_path=notes_path, theme=POETORE_THEME)
@@ -863,7 +864,9 @@ class PoetoreModeWindow(QMainWindow):
         ConfigManager.save_config(self.config)
         from src.app_restart import confirm_mode_switch_restart
 
-        if confirm_mode_switch_restart(self, self.config):
+        if confirm_mode_switch_restart(
+            self, self.config, current_poe_version=self.poe_version
+        ):
             return
         self._apply_window_settings()
         self._apply_startup_position()

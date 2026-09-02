@@ -407,6 +407,33 @@ def test_poetore_mode_renders_divine_chaos_rate():
     app.processEvents()
 
 
+def test_saved_poe_version_change_does_not_partially_switch_running_rate_table():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "poe_version": "poe1",
+        "hotkeys": {},
+        "poetore": {"league": "Mirage", "league_poe2": "Runes of Aldur"},
+    }
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    config["poe_version"] = "poe2"
+
+    assert window.poe_version == "poe1"
+    assert window._configured_league() == "Mirage"
+    assert window.rate_quote_currency == "chaos"
+    window._show_rate("Mirage", 200)
+    assert window.divine_rate_value.text() == "1 = 200.0 Chaos"
+    window.close()
+    app.processEvents()
+
+
 def test_poe2_poetore_mode_renders_divine_exalted_rate():
     app = QApplication.instance() or QApplication([])
     config = {"poe_version": POE2, "hotkeys": {}}
