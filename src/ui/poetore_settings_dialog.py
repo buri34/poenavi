@@ -145,7 +145,8 @@ class PoetoreSettingsDialog(QDialog):
         hotkey_form.addRow(self.monastery_label, self.monastery_hotkey)
         hotkey_form.addRow("ぽえとれ検索（操作モード）:", self.capture_hotkey)
         hotkey_form.addRow("ぽえとれ検索（AUTO-HIDE）:", self.auto_hide_hotkey)
-        hotkey_form.addRow("Map Modチェック:", self.map_check_hotkey)
+        self.map_check_label = QLabel("Map Modチェック:")
+        hotkey_form.addRow(self.map_check_label, self.map_check_hotkey)
         hotkey_form.addRow("Cheat sheets表示:", self.cheat_hotkey)
         basic_layout.addWidget(hotkey_group)
         self._refresh_version_specific_controls()
@@ -489,6 +490,8 @@ class PoetoreSettingsDialog(QDialog):
         monastery_visible = self.poe_version == POE1
         self.monastery_label.setVisible(monastery_visible)
         self.monastery_hotkey.setVisible(monastery_visible)
+        self.map_check_label.setVisible(monastery_visible)
+        self.map_check_hotkey.setVisible(monastery_visible)
 
     def _refresh_app_mode_availability(self):
         supported = is_feature_supported(POETORE, self.poe_version)
@@ -572,6 +575,8 @@ class PoetoreSettingsDialog(QDialog):
             "map_check": self.map_check_hotkey.key_text,
             "cheat_sheets_toggle": self.cheat_hotkey.key_text,
         }
+        if self.poe_version == POE2:
+            hotkeys.pop("map_check")
         if not self.custom_commands_widget.validate(hotkeys):
             return
         duplicates = find_duplicate_hotkeys(hotkeys)

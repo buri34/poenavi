@@ -41,7 +41,7 @@ from src.utils.global_hotkeys import (
 )
 from src.utils.poe_version_data import POE1, POE2
 from src.utils.stash_tab_scroll import StashTabScrollController
-from src.utils.feature_support import POETORE, is_feature_hotkey_supported, is_feature_supported
+from src.utils.feature_support import MAP_CHECK, POETORE, is_feature_hotkey_supported, is_feature_supported
 
 
 POETORE_ACCENT = POETORE_THEME.accent
@@ -466,6 +466,9 @@ class PoetoreModeWindow(QMainWindow):
         self.map_mods_button = self._header_button("", "Map Modを登録・管理")
         self.map_mods_button.setIcon(_map_mod_manager_icon())
         self.map_mods_button.setIconSize(QSize(24, 24))
+        self.map_mods_button.setVisible(
+            is_feature_supported(MAP_CHECK, self.config.get("poe_version", POE1))
+        )
         self.settings_button = self._header_button("", "設定画面を開く")
         self.settings_button.setIcon(_settings_icon())
         self.settings_button.setIconSize(QSize(24, 24))
@@ -793,9 +796,13 @@ class PoetoreModeWindow(QMainWindow):
         return self._map_check_window
 
     def capture_map_check_item(self):
+        if not is_feature_supported(MAP_CHECK, self.config.get("poe_version", POE1)):
+            return None
         self._ensure_map_check_window().capture_from_poe()
 
     def open_map_mod_manager(self):
+        if not is_feature_supported(MAP_CHECK, self.config.get("poe_version", POE1)):
+            return None
         from src.ui.map_check import MapModManagerDialog
 
         dialog = MapModManagerDialog(self.config.get("map_check", {}), self)

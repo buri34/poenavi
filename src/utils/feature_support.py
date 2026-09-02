@@ -5,14 +5,17 @@ from src.utils.poe_version_data import POE1, POE2
 
 MINI_NAVI = "mini_navi"
 POETORE = "poetore"
+MAP_CHECK = "map_check"
 
 FEATURE_SUPPORTED_VERSIONS = {
     MINI_NAVI: frozenset({POE1, POE2}),
     POETORE: frozenset({POE1, POE2}),
+    MAP_CHECK: frozenset({POE1}),
 }
 
 FEATURE_HOTKEY_ACTIONS = {
     POETORE: frozenset({"poetore_capture", "poetore_auto_hide"}),
+    MAP_CHECK: frozenset({"map_check"}),
 }
 
 

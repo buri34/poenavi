@@ -1987,7 +1987,6 @@ class SettingsDialog(QDialog):
         self.monastery_btn = HotkeyButton(self.hotkeys.get("monastery", "F12"))
         h_layout8.addWidget(self.monastery_btn)
         group_layout.addWidget(self.monastery_row)
-        self._refresh_version_specific_controls()
 
         h_layout9 = QHBoxLayout()
         h_layout9.addWidget(QLabel("検索文字列の貼り付け:"))
@@ -2013,11 +2012,14 @@ class SettingsDialog(QDialog):
         poetore_auto_hide_layout.addWidget(self.poetore_auto_hide_btn)
         group_layout.addLayout(poetore_auto_hide_layout)
 
-        map_check_layout = QHBoxLayout()
+        self.map_check_row = QWidget()
+        map_check_layout = QHBoxLayout(self.map_check_row)
+        map_check_layout.setContentsMargins(0, 0, 0, 0)
         map_check_layout.addWidget(QLabel("Map Modチェック:"))
         self.map_check_btn = HotkeyButton(self.hotkeys.get("map_check", "alt+f"))
         map_check_layout.addWidget(self.map_check_btn)
-        group_layout.addLayout(map_check_layout)
+        group_layout.addWidget(self.map_check_row)
+        self._refresh_version_specific_controls()
 
         h_layout11 = QHBoxLayout()
         h_layout11.addWidget(QLabel("ジェムショップ検索（長押し）:"))
@@ -3131,6 +3133,7 @@ class SettingsDialog(QDialog):
     def _refresh_version_specific_controls(self):
         """選択中のゲーム版で利用できる設定だけを表示する。"""
         self.monastery_row.setVisible(self.poe_version == POE1)
+        self.map_check_row.setVisible(self.poe_version == POE1)
 
     def _refresh_app_mode_availability(self):
         supported = is_feature_supported(POETORE, self.poe_version)
@@ -3160,6 +3163,8 @@ class SettingsDialog(QDialog):
             "gem_shop_search": self.gem_shop_search_btn.key_text,
             "cheat_sheets_toggle": self.cheat_sheets_toggle_btn.key_text,
         }
+        if self.poe_version == POE2:
+            hotkeys.pop("map_check")
         if not self.custom_commands_widget.validate(hotkeys):
             return
         duplicates = find_duplicate_hotkeys(hotkeys)

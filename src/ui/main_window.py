@@ -47,6 +47,7 @@ from src.utils.zone_lookup import get_zone_info, get_level_advice
 from src.utils.guide_data import load_guide_data, get_zone_guide, get_zone_guide_level, format_guide_html, get_mini_navi_content
 from src.utils.poe_version_data import POE1, POE2, get_lap_labels, get_poe_label, get_timer_filename, get_progress_flags_filename
 from src.utils.feature_support import (
+    MAP_CHECK,
     MINI_NAVI,
     POETORE,
     is_feature_hotkey_supported,
@@ -4663,6 +4664,8 @@ class MainWindow(QMainWindow):
 
     def capture_map_check_item(self):
         """Map系アイテムをコピーし、通信なしで危険Modを確認する。"""
+        if not is_feature_supported(MAP_CHECK, self.poe_version):
+            return None
         self._ensure_map_check_window().capture_from_poe()
 
     def _update_cheat_sheets_hotkey_tooltip(self):

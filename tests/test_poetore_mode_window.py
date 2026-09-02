@@ -131,9 +131,8 @@ def test_poetore_mode_starts_capture_and_stash_scroll_services_for_poe2():
     ), patch(
         "src.poetore.ui.prepare_poetore_window"
     ) as prepare_window, patch(
-        "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
-    ), patch(
-        "src.ui.poetore_mode_window.is_feature_hotkey_supported", return_value=True,
+        "src.ui.poetore_mode_window.is_feature_supported",
+        side_effect=lambda feature, _version: feature != "map_check",
     ), patch(
         "src.ui.poetore_mode_window.suppressed_hotkeys_supported", return_value=False,
     ):
@@ -142,7 +141,8 @@ def test_poetore_mode_starts_capture_and_stash_scroll_services_for_poe2():
     supplied_hotkeys = hotkey_class.call_args.args[0]
     assert "poetore_capture" in supplied_hotkeys
     assert "poetore_auto_hide" in supplied_hotkeys
-    assert supplied_hotkeys["map_check"] == "alt+f"
+    assert "map_check" not in supplied_hotkeys
+    assert not window.map_mods_button.isVisibleTo(window)
     stash_class.assert_called_once_with(enabled=True)
     prepare_window.assert_called_once_with(window)
     for object_name, filename, size in (

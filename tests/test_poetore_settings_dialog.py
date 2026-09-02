@@ -22,10 +22,14 @@ def test_monastery_hotkey_is_visible_only_for_poe1():
 
     assert not dialog.monastery_label.isVisibleTo(dialog)
     assert not dialog.monastery_hotkey.isVisibleTo(dialog)
+    assert not dialog.map_check_label.isVisibleTo(dialog)
+    assert not dialog.map_check_hotkey.isVisibleTo(dialog)
 
     dialog.poe_version_radios[POE1].setChecked(True)
     assert dialog.monastery_label.isVisibleTo(dialog)
     assert dialog.monastery_hotkey.isVisibleTo(dialog)
+    assert dialog.map_check_label.isVisibleTo(dialog)
+    assert dialog.map_check_hotkey.isVisibleTo(dialog)
     dialog.close()
 
 
