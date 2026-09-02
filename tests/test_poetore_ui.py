@@ -1250,6 +1250,7 @@ def test_mod_value_mouse_wheel_changes_nonempty_value_by_one(
         "item_level_edit",
         "gem_level_edit",
         "gem_quality_edit",
+        "gem_socket_edit",
         "map_tier_chip.minimum_edit",
         "base_percentile_chip.minimum_edit",
         "area_level_chip.minimum_edit",

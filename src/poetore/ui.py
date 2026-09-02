@@ -1377,6 +1377,7 @@ class PoetoreWindow(QWidget):
         self.gem_socket_edit = QLineEdit()
         self.gem_socket_edit.setObjectName("gemSocketEdit")
         self.gem_socket_edit.setValidator(QIntValidator(1, 10, self.gem_socket_edit))
+        self.gem_socket_edit.setProperty("wheelStepNumeric", True)
         self.gem_socket_edit.setAlignment(Qt.AlignCenter)
         self.gem_socket_edit.setFixedWidth(24)
         self.gem_socket_edit.textEdited.connect(self._enable_gem_socket_filter)
