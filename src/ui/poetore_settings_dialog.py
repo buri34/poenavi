@@ -141,14 +141,14 @@ class PoetoreSettingsDialog(QDialog):
         self.capture_hotkey.key_button.setStyleSheet("")
         self.auto_hide_hotkey.key_button.setStyleSheet("")
         hotkey_form.addRow("キャラクター選択へ戻る:", self.exit_hotkey)
-        hotkey_form.addRow(
-            "修道院へ移動（/monastery）:", self.monastery_hotkey
-        )
+        self.monastery_label = QLabel("修道院へ移動（/monastery）:")
+        hotkey_form.addRow(self.monastery_label, self.monastery_hotkey)
         hotkey_form.addRow("ぽえとれ検索（操作モード）:", self.capture_hotkey)
         hotkey_form.addRow("ぽえとれ検索（AUTO-HIDE）:", self.auto_hide_hotkey)
         hotkey_form.addRow("Map Modチェック:", self.map_check_hotkey)
         hotkey_form.addRow("Cheat sheets表示:", self.cheat_hotkey)
         basic_layout.addWidget(hotkey_group)
+        self._refresh_version_specific_controls()
 
         common_group = QGroupBox("共通機能")
         common_layout = QVBoxLayout(common_group)
@@ -482,6 +482,13 @@ class PoetoreSettingsDialog(QDialog):
             return
         self.poe_version = poe_version
         self._refresh_app_mode_availability()
+        self._refresh_version_specific_controls()
+
+    def _refresh_version_specific_controls(self):
+        """選択中のゲーム版で利用できる設定だけを表示する。"""
+        monastery_visible = self.poe_version == POE1
+        self.monastery_label.setVisible(monastery_visible)
+        self.monastery_hotkey.setVisible(monastery_visible)
 
     def _refresh_app_mode_availability(self):
         supported = is_feature_supported(POETORE, self.poe_version)

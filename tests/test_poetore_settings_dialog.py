@@ -13,7 +13,20 @@ from PySide6.QtWidgets import (
 
 from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 from src.poetore.trade import TradeLeague
-from src.utils.poe_version_data import POE2
+from src.utils.poe_version_data import POE1, POE2
+
+
+def test_monastery_hotkey_is_visible_only_for_poe1():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={"poe_version": POE2})
+
+    assert not dialog.monastery_label.isVisibleTo(dialog)
+    assert not dialog.monastery_hotkey.isVisibleTo(dialog)
+
+    dialog.poe_version_radios[POE1].setChecked(True)
+    assert dialog.monastery_label.isVisibleTo(dialog)
+    assert dialog.monastery_hotkey.isVisibleTo(dialog)
+    dialog.close()
 
 
 def test_poe2_enables_poetore_startup_choices():

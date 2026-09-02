@@ -201,6 +201,17 @@ def test_voicevox_is_off_by_default_and_visible_only_for_poe2(monkeypatch, qapp)
     dialog.close()
 
 
+def test_monastery_hotkey_is_visible_only_for_poe1(monkeypatch, qapp):
+    monkeypatch.setattr("src.ui.settings_dialog.save_zone_master_data", lambda *_args: None)
+    dialog = SettingsDialog(current_config={"poe_version": POE2})
+
+    assert not dialog.monastery_row.isVisibleTo(dialog)
+
+    dialog._on_poe_version_changed(POE1, True)
+    assert dialog.monastery_row.isVisibleTo(dialog)
+    dialog.close()
+
+
 def test_poe1_settings_preserve_voicevox_without_exposing_it(monkeypatch, qapp):
     monkeypatch.setattr("src.ui.settings_dialog.save_zone_master_data", lambda *_args: None)
     existing = {"enabled": True, "speaker_id": 8, "speed_scale": 1.3, "volume_scale": 0.7}

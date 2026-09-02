@@ -1980,11 +1980,14 @@ class SettingsDialog(QDialog):
         h_layout_exit.addWidget(self.exit_btn)
         group_layout.addLayout(h_layout_exit)
 
-        h_layout8 = QHBoxLayout()
+        self.monastery_row = QWidget()
+        h_layout8 = QHBoxLayout(self.monastery_row)
+        h_layout8.setContentsMargins(0, 0, 0, 0)
         h_layout8.addWidget(QLabel("修道院へ移動（/monastery）:"))
         self.monastery_btn = HotkeyButton(self.hotkeys.get("monastery", "F12"))
         h_layout8.addWidget(self.monastery_btn)
-        group_layout.addLayout(h_layout8)
+        group_layout.addWidget(self.monastery_row)
+        self._refresh_version_specific_controls()
 
         h_layout9 = QHBoxLayout()
         h_layout9.addWidget(QLabel("検索文字列の貼り付け:"))
@@ -3123,6 +3126,11 @@ class SettingsDialog(QDialog):
         self._rebuild_zone_tab()
         self._refresh_version_specific_tabs()
         self._refresh_app_mode_availability()
+        self._refresh_version_specific_controls()
+
+    def _refresh_version_specific_controls(self):
+        """選択中のゲーム版で利用できる設定だけを表示する。"""
+        self.monastery_row.setVisible(self.poe_version == POE1)
 
     def _refresh_app_mode_availability(self):
         supported = is_feature_supported(POETORE, self.poe_version)
