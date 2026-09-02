@@ -760,8 +760,7 @@ def test_poe2_fragment_exchange_uses_allowlist_and_fragments_overview():
     [
         "Primary Calamity Fragment", "Secondary Calamity Fragment",
         "Tertiary Calamity Fragment", "Zarokh's Reliquary Key: Temporalis",
-        "An Audience with the King", "Head of the King", "Idol of Estazunti",
-        "Breachstone",
+        "Idol of Estazunti",
     ],
 )
 def test_poe2_fragment_exchange_excludes_pending_and_trade2_items(base_type):
@@ -770,6 +769,42 @@ def test_poe2_fragment_exchange_excludes_pending_and_trade2_items(base_type):
     )
     item = ParsedItem("Special", "normal", "", base_type, "map_fragment")
     assert service.lookup_poe2_exchange(item, "Runes of Aldur") is None
+
+
+@pytest.mark.parametrize(
+    ("base_type", "source_type", "slug"),
+    [
+        ("An Audience with the King", "Ritual", "omens"),
+        ("Head of the King", "Ritual", "omens"),
+        ("Breachstone", "Breach", "breach-catalyst"),
+    ],
+)
+def test_poe2_special_exchange_items_use_their_poe_ninja_categories(
+    base_type, source_type, slug,
+):
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        return {
+            "core": {"primary": "divine", "rates": {"chaos": 7.74}},
+            "items": [{"id": "item", "name": base_type, "detailsId": "item"}],
+            "lines": [{
+                "id": "item", "primaryValue": 0.5,
+                "maxVolumeCurrency": "exalted", "maxVolumeRate": 0.25,
+                "sparkline": {"data": [], "totalChange": 0},
+            }],
+        }
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    category = "breachstone" if base_type == "Breachstone" else "map_fragment"
+    item = ParsedItem("Special", "normal", "", base_type, category)
+    price = service.lookup_poe2_exchange(item, "Runes of Aldur")
+
+    assert price is not None
+    assert price.source_type == source_type
+    assert price.url.endswith(f"/{slug}/item")
+    assert calls == [("Runes of Aldur", source_type)]
 
 
 def test_poe2_expedition_logbook_uses_expedition_exchange_overview():

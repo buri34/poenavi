@@ -428,3 +428,24 @@ def test_poe2_poetore_mode_renders_divine_exalted_rate():
     assert window.findChild(QLabel, "chaosCurrencyIcon") is None
     window.close()
     app.processEvents()
+
+
+def test_poe2_currency_rate_auto_league_does_not_call_trade2_api():
+    app = QApplication.instance() or QApplication([])
+    config = {"poe_version": POE2, "hotkeys": {}, "poetore": {"league_poe2": "auto"}}
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config", return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"), patch(
+        "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
+    ), patch(
+        "src.poetore.poe2.trade.available_pc_leagues",
+        side_effect=AssertionError("Trade2 API must not be used"),
+    ):
+        window = PoetoreModeWindow()
+
+    assert window._currency_rate_league() == "Runes of Aldur"
+    window.close()
+    app.processEvents()

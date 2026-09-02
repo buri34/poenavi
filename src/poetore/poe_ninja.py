@@ -49,6 +49,10 @@ POE2_EXPEDITION_SAGA_NAMES = frozenset({
     "Vorana's Saga",
 })
 POE2_OMEN_ITEM_CLASSES = frozenset({"Omens", "Omen", "お告げ"})
+POE2_RITUAL_EXCHANGE_NAMES = frozenset({
+    "An Audience with the King", "Head of the King",
+})
+POE2_BREACH_EXCHANGE_NAMES = frozenset({"Breachstone"})
 
 
 @dataclass(frozen=True)
@@ -719,6 +723,10 @@ def _poe2_exchange_overview_types(item: ParsedItem) -> tuple[str, ...]:
     identity = str(item.base_type or item.name or "").strip()
     if identity in POE2_EXPEDITION_SAGA_NAMES:
         return ("Expedition",)
+    if identity in POE2_RITUAL_EXCHANGE_NAMES:
+        return ("Ritual",)
+    if identity in POE2_BREACH_EXCHANGE_NAMES or item.category == "breachstone":
+        return ("Breach",)
     if item.item_class in POE2_OMEN_ITEM_CLASSES:
         return ("Ritual",)
     if item.category == "currency":

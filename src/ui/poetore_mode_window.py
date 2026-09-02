@@ -666,6 +666,16 @@ class PoetoreModeWindow(QMainWindow):
         key = "league_poe2" if self.config.get("poe_version", POE1) == POE2 else "league"
         return str(self.config.get("poetore", {}).get(key, "auto"))
 
+    def _currency_rate_league(self):
+        configured = self._configured_league()
+        if configured != "auto":
+            return configured
+        if self.config.get("poe_version", POE1) == POE2:
+            from src.poetore.poe2.trade import FALLBACK_LEAGUES, default_pc_league
+            return default_pc_league(FALLBACK_LEAGUES)
+        from src.poetore.trade import available_pc_leagues, default_pc_league
+        return default_pc_league(available_pc_leagues())
+
     def refresh_currency_rate(self):
         if self._rate_request_running:
             return
@@ -675,17 +685,7 @@ class PoetoreModeWindow(QMainWindow):
         def run():
             try:
                 from src.poetore.poe_ninja import default_poe_ninja_service
-                if self.config.get("poe_version", POE1) == POE2:
-                    from src.poetore.poe2.trade import available_pc_leagues, default_pc_league
-                else:
-                    from src.poetore.trade import available_pc_leagues, default_pc_league
-
-                configured = self._configured_league()
-                league = (
-                    default_pc_league(available_pc_leagues())
-                    if configured == "auto"
-                    else configured
-                )
+                league = self._currency_rate_league()
                 if self.config.get("poe_version", POE1) == POE2:
                     rate = default_poe_ninja_service.divine_exalted_rate(league)
                 else:

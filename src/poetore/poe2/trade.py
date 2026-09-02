@@ -623,15 +623,6 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                 "property.map_tier", "ウェイストーンティア", tier, "property", True,
                 max_value=tier, read_value=tier, exact=True,
             ))
-    ultimatum_hint = str(item.properties.get("Ultimatum Hint") or "").strip()
-    if item.category == "ultimatum" and ultimatum_hint:
-        rows.append(TradeStatFilter(
-            "property.ultimatum_hint", "アルティメイタムの試練のヒント", None,
-            "property", False, option_value=ultimatum_hint,
-            option_text={
-                "Victorious": "勝利の", "Cowardly": "臆病者の", "Deadly": "致命的な",
-            }.get(ultimatum_hint, ultimatum_hint),
-        ))
     if item.category == "tablet":
         uses = _property_float(item, "Uses Remaining", "残り使用回数", "使用回数残り")
         if uses is not None:
@@ -679,7 +670,10 @@ def _poe2_modifier_rows(
             "explicit" if converted else modifier.kind,
             # Awakened-style rare searches expose direct mods as optional
             # alternatives while selecting only the high-value aggregates.
-            enabled=not _uses_awakened_rare_defaults(item),
+            enabled=(
+                item.category != "waystone"
+                and not _uses_awakened_rare_defaults(item)
+            ),
             max_value=(value if modifier.better == -1 else None),
             ref=modifier.ref, confidence=modifier.confidence,
             read_value=value, roll_min=modifier.roll_min,

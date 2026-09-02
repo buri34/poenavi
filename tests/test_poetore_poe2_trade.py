@@ -625,16 +625,10 @@ def test_phase6_relic_barya_and_ultimatum_send_dedicated_filters():
     }
 
     ultimatum_rows = poe2_search_filters(items["inscribed_ultimatum"])
-    hint = next(row for row in ultimatum_rows if row.stat_id == "property.ultimatum_hint")
-    assert not hint.enabled
-    enabled_rows = tuple(
-        row.__class__(**{**row.__dict__, "enabled": True})
-        if row.stat_id == "property.ultimatum_hint" else row
-        for row in ultimatum_rows
-    )
-    ultimatum = build_search_query(items["inscribed_ultimatum"], stat_filters=enabled_rows)
-    assert ultimatum["query"]["filters"]["map_filters"]["filters"]["ultimatum_hint"] == {
-        "option": "Deadly",
+    assert all(row.stat_id != "property.ultimatum_hint" for row in ultimatum_rows)
+    ultimatum = build_search_query(items["inscribed_ultimatum"], stat_filters=ultimatum_rows)
+    assert ultimatum["query"]["filters"]["misc_filters"]["filters"]["area_level"] == {
+        "min": 80.0,
     }
 
     tablet_rows = poe2_trade_filters(items["normal_tablet"])
@@ -1015,6 +1009,15 @@ def test_reported_rare_waystone_sends_tier_base_instead_of_affix_name():
 
     assert payload["query"]["type"] == "Waystone (Tier 15)"
     assert payload["query"].get("name") != "先祖の突撃"
+
+
+def test_waystone_defaults_match_ee2_tier_only():
+    item = _phase45_item("rare_waystone_ja.txt")
+    enabled = [row for row in poe2_trade_filters(item) if row.enabled]
+
+    assert [(row.stat_id, row.min_value) for row in enabled] == [
+        ("property.map_tier", 15.0),
+    ]
 
 
 @pytest.mark.parametrize(

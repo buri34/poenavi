@@ -4160,7 +4160,7 @@ class PoetoreWindow(QWidget):
             )
             self.search_scope_notice.show()
             self.price_button.setEnabled(True)
-        elif is_inscribed_ultimatum(item):
+        elif self.poe_version != POE2 and is_inscribed_ultimatum(item):
             self.search_scope_notice.setText(
                 "⚠ チャレンジタイプ・報酬種類・必要なアイテム・報酬などの条件を使った検索には対応しておりません。"
             )

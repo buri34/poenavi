@@ -4084,6 +4084,29 @@ Chaos Orb
         window.close()
 
 
+def test_poe2_inscribed_ultimatum_uses_only_area_level_without_poe1_notice(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2", "poetore": {}})
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: アルティメイタム
+レアリティ: ノーマル
+アルティメイタムの刻印
+--------
+エリアレベル: 80
+試練数: 10
+致死
+--------
+アイテムレベル: 80
+""")
+        window.parse_current_text()
+
+        assert window.search_scope_notice.isHidden()
+        assert window.mod_filter_tree.topLevelItemCount() == 0
+        assert window.area_level_chip.isActive()
+        assert window.area_level_chip.values() == (80.0, None)
+    finally:
+        window.close()
+
+
 def test_misc_map_boss_invitation_has_no_unresolved_modifier_warning(qapp):
     window = PoetoreWindow()
     try:
