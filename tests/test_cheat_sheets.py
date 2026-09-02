@@ -66,7 +66,9 @@ def test_empty_overlay_guides_user_to_main_window_button(qapp):
     overlay = CheatSheetOverlay({"images": []})
 
     assert "画像が登録されていません" in overlay.image_label.text()
-    assert "🖼" in overlay.image_label.text()
+    assert "🖼" not in overlay.image_label.text()
+    assert "data:image/png;base64," in overlay.image_label.text()
+    assert "width='24' height='24'" in overlay.image_label.text()
     assert "画像を登録してください" in overlay.image_label.text()
     assert "rgba(0, 0, 0, 205)" in overlay.image_label.styleSheet()
     assert "font-size: 20px" in overlay.image_label.styleSheet()

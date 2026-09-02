@@ -6,7 +6,7 @@ import shutil
 import uuid
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, Qt, QPoint, QRect, Signal
+from PySide6.QtCore import QByteArray, QBuffer, QEvent, QIODevice, Qt, QPoint, QRect, QSize, Signal
 from PySide6.QtGui import QCursor, QKeyEvent, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.ui.app_theme import POENAVI_THEME
+from src.ui.toolbar_icons import image_manager_icon
 from src.poetore.window_position import path_of_exile_client_rect
 from src.utils.config_manager import ConfigManager
 
@@ -39,6 +40,20 @@ DEFAULT_CHEAT_SHEET_CONFIG = {
     "width": 900,
     "height": 650,
 }
+
+
+def _image_manager_icon_data_url() -> str:
+    """ぽえなび本体と同じ画像管理アイコンを案内文へ埋め込む。"""
+    icon = image_manager_icon(
+        accent_color="#E9FFBD",
+        panel_color="#263A20",
+        dark_color="#142111",
+    )
+    data = QByteArray()
+    buffer = QBuffer(data)
+    buffer.open(QIODevice.WriteOnly)
+    icon.pixmap(QSize(24, 24)).save(buffer, "PNG")
+    return "data:image/png;base64," + bytes(data.toBase64()).decode("ascii")
 
 
 def cheat_sheet_directory() -> Path:
@@ -388,8 +403,10 @@ class CheatSheetOverlay(QWidget):
                 "}"
             )
             self.image_label.setText(
-                "画像が登録されていません\n\n"
-                "ぽえなび本体の「🖼」ボタンから画像を登録してください"
+                "<div>画像が登録されていません</div>"
+                "<div style='margin-top:18px'>ぽえなび本体の「"
+                f"<img src='{_image_manager_icon_data_url()}' width='24' height='24'>"
+                "」ボタンから画像を登録してください</div>"
             )
             self.counter_label.clear()
             self._pixmap = QPixmap()
