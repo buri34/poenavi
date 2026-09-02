@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from dataclasses import replace
 import json
 from pathlib import Path
 
@@ -459,7 +460,16 @@ def test_waystone_players_cooldown_recovery_reduction_uses_negated_trade_stat():
     assert modifier.stat_id == "explicit.stat_941368244"
     assert modifier.values == (-27.0,)
     assert (modifier.roll_min, modifier.roll_max, modifier.better) == (-30.0, -25.0, -1)
-    payload = build_search_query(item, stat_filters=poe2_trade_filters(item))
+    filters = poe2_trade_filters(item)
+    cooldown_filter = next(
+        row for row in filters if row.stat_id == "explicit.stat_941368244"
+    )
+    assert not cooldown_filter.enabled
+    enabled_filters = tuple(
+        replace(row, enabled=True) if row is cooldown_filter else row
+        for row in filters
+    )
+    payload = build_search_query(item, stat_filters=enabled_filters)
     sent = next(
         row
         for group in payload["query"]["stats"]
