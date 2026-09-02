@@ -165,6 +165,31 @@ def test_gem_prose_is_not_reported_as_unresolved_item_modifiers():
         assert parse_item_text(fixture["英語設定の詳細コピー全文"]).modifiers == ()
 
 
+@pytest.mark.parametrize("name", (
+    "高貴なオーブ", "高貴なオーブ (上級)", "高貴なオーブ (完全)",
+    "宝飾職人のオーブ (見習い)", "宝飾職人のオーブ (上級)",
+    "宝飾職人のオーブ (完全)", "カオスオーブ", "カオスオーブ (上級)",
+    "カオスオーブ (完全)", "王者のオーブ", "王者のオーブ (上級)",
+    "王者のオーブ (完全)",
+))
+def test_currency_description_prose_is_not_reported_as_unresolved_modifiers(name):
+    item = parse_item_text(
+        "アイテムクラス: スタック可能カレンシー\n"
+        "レアリティ: カレンシー\n"
+        f"{name}\n"
+        "--------\n"
+        "スタック数: 2,152/20\n"
+        "--------\n"
+        "レアアイテムを1個の新しいランダムなモッドで強化する。\n"
+        "--------\n"
+        "このアイテムを右クリックした後、レアアイテムをクリックして使用する。"
+        "レアアイテムは最大で6個のランダムなモッドを持つことができる。\n"
+    )
+
+    assert item.category == "currency"
+    assert item.modifiers == ()
+
+
 def test_charm_properties_and_searchable_mods_resolve_equally_in_both_languages():
     charm = _real_copy("FX009")
     charm_items = [parse_item_text(charm[key]) for key in (

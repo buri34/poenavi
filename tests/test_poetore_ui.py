@@ -7198,6 +7198,30 @@ def test_scrying_orb_header_includes_the_searched_map_area(qapp):
         window.close()
 
 
+def test_poe2_exchange_currency_description_does_not_show_metadata_warning(qapp):
+    text = """アイテムクラス: スタック可能カレンシー
+レアリティ: カレンシー
+高貴なオーブ
+--------
+スタック数: 2,152/20
+--------
+レアアイテムを1個の新しいランダムなモッドで強化する。
+--------
+このアイテムを右クリックした後、レアアイテムをクリックして使用する。レアアイテムは最大で6個のランダムなモッドを持つことができる。
+Shift+クリックでスタックから取り出す。
+"""
+    window = PoetoreWindow(app_config={"poe_version": "poe2", "poetore": {}})
+    try:
+        window.input_edit.setPlainText(text)
+        window.parse_current_text()
+
+        assert window._parsed_item.modifiers == ()
+        assert window.mod_warning.isHidden()
+        assert "カレンシー交換" in window.search_scope_notice.text()
+    finally:
+        window.close()
+
+
 def test_poe2_related_items_resolve_ee2_group_and_keep_unpriced_rows(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2", "poetore": {}})
     item = ParsedItem(
