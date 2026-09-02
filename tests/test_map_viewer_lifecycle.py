@@ -18,6 +18,22 @@ def test_map_image_dialog_does_not_quit_the_application_when_closed():
     dialog.close()
 
 
+def test_map_image_notice_is_only_shown_for_poe2():
+    QApplication.instance() or QApplication([])
+    with patch("src.utils.config_manager.ConfigManager.load_config", return_value={}):
+        poe1_dialog = MapImageDialog("missing-map.png", poe_version="PoE1")
+        poe2_dialog = MapImageDialog("missing-map.png", poe_version="PoE2")
+
+    assert poe1_dialog.notice_label.isHidden()
+    assert not poe2_dialog.notice_label.isHidden()
+    assert poe2_dialog.notice_label.text() == (
+        "リーグ毎でPoE2はマップ構造自体が大きく変わり、掲載画像が現行リーグと異なる場合があるため、"
+        "参考情報としてご利用ください。"
+    )
+    poe1_dialog.close()
+    poe2_dialog.close()
+
+
 def test_map_image_geometry_is_clamped_inside_monitor_work_area():
     corrected = geometry_inside_available_screens(
         QRect(1700, -80, 500, 600), [QRect(0, 0, 1920, 1040)],
