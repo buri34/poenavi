@@ -2415,6 +2415,33 @@ def test_partial_price_result_is_shown_without_finishing_search(qapp):
         window.close()
 
 
+def test_next_ten_button_is_shown_only_for_poe2_results(qapp):
+    poe1 = PoetoreWindow(app_config={"poe_version": "PoE1"})
+    poe2 = PoetoreWindow(app_config={"poe_version": POE2})
+    result = PriceResult(
+        "Standard", "query-id", 30, (PriceListing(1, "divine"),),
+        next_result_ids=tuple(f"listing-{index}" for index in range(10, 20)),
+        fetched_count=10,
+    )
+    try:
+        poe1._show_price_result(result)
+        poe2._show_price_result(result)
+
+        assert poe1.additional_results_button.isHidden()
+        assert not poe2.additional_results_button.isHidden()
+        assert poe2.additional_results_button.text() == "次の10件を取得"
+        assert poe2.price_status.text() == "Standard: 候補30件 / 取得10件"
+
+        poe2._additional_results_completed(replace(
+            result, next_result_ids=(), fetched_count=20,
+        ), poe2._search_generation)
+        assert poe2.additional_results_button.isHidden()
+        assert poe2.price_status.text() == "Standard: 候補30件 / 取得20件"
+    finally:
+        poe1.close()
+        poe2.close()
+
+
 def test_relative_listing_time_is_shown_without_online_status(qapp):
     now = datetime(2026, 7, 22, 9, 24, tzinfo=timezone.utc)
     assert PoetoreWindow._relative_listing_time("2026-07-22T09:21:00Z", now) == "3分前"

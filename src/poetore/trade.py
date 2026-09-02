@@ -629,6 +629,9 @@ class PriceResult:
     rate_limit: str = ""
     web_url: str = ""
     cached: bool = False
+    # PoE2の手動追加取得でだけ使う。PoE1は従来どおり空のまま。
+    next_result_ids: tuple[str, ...] = ()
+    fetched_count: int = 0
 
     def median_by_currency(self) -> dict[str, float]:
         grouped: dict[str, list[float]] = {}

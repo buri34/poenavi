@@ -8,6 +8,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 import pytest
 
 from src.poetore.poe2 import build_search_query, fetch_listings, parse_item_text, search_items
+from src.poetore.poe2.trade import fetch_additional_prices
 from src.poetore.poe2.trade import (
     _stat_groups_from_filters, available_pc_leagues, build_web_trade_url,
     augment_socket_edit_counts, available_virtual_augments, default_pc_league,
@@ -362,7 +363,7 @@ def test_search_prices_sends_three_state_sanctified_filter(
     assert result.query_id == "sanctified-query"
 
 
-def test_poe2_price_search_fetches_only_top_twenty_even_for_one_seller(monkeypatch):
+def test_poe2_price_search_fetches_ten_then_fetches_next_ten_on_demand(monkeypatch):
     item = parse_item_text(_unique_fixture()["text"])
     ids = [f"listing-{index}" for index in range(30)]
     calls = []
@@ -387,10 +388,21 @@ def test_poe2_price_search_fetches_only_top_twenty_even_for_one_seller(monkeypat
     )
     result = search_prices(item, "Standard")
 
+    assert len(calls) == 2
+    assert sum("/fetch/" in url for url, _kwargs in calls) == 1
+    assert len(result.listings) == 1
+    assert result.listings[0].listed_times == 10
+    assert result.next_result_ids == tuple(ids[10:20])
+    assert result.fetched_count == 10
+
+    expanded = fetch_additional_prices(result)
+
     assert len(calls) == 3
     assert sum("/fetch/" in url for url, _kwargs in calls) == 2
-    assert len(result.listings) == 1
-    assert result.listings[0].listed_times == 20
+    assert len(expanded.listings) == 1
+    assert expanded.listings[0].listed_times == 20
+    assert expanded.next_result_ids == ()
+    assert expanded.fetched_count == 20
 
 
 def test_poe2_leagues_are_filtered_and_auto_selects_current_softcore(monkeypatch):

@@ -65,6 +65,8 @@ from .performance import SearchPerformanceTrace, start_search_trace
 class _TradeSignals(QObject):
     completed = Signal(object, object, int)
     partial_completed = Signal(object, int)
+    additional_completed = Signal(object, int)
+    additional_failed = Signal(str, int)
     failed = Signal(str, int)
     unique_candidates_ready = Signal(object)
     unique_variants_ready = Signal(object)
@@ -1708,6 +1710,16 @@ class PoetoreWindow(QWidget):
         price_header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
         price_header.setSectionResizeMode(1, QHeaderView.Stretch)
         content_layout.addWidget(self.price_list, stretch=2)
+        self.additional_results_button = QPushButton("次の10件を取得")
+        self.additional_results_button.setObjectName("filterActionButton")
+        self.additional_results_button.clicked.connect(self._fetch_additional_results)
+        self.additional_results_button.hide()
+        additional_results_row = QHBoxLayout()
+        additional_results_row.setContentsMargins(0, 0, 0, 0)
+        additional_results_row.addStretch()
+        additional_results_row.addWidget(self.additional_results_button)
+        additional_results_row.addStretch()
+        content_layout.addLayout(additional_results_row)
         resize_row = QHBoxLayout()
         resize_row.addStretch()
         resize_row.addWidget(QSizeGrip(self))
@@ -1716,6 +1728,8 @@ class PoetoreWindow(QWidget):
         self._trade_signals = _TradeSignals(self)
         self._trade_signals.completed.connect(self._search_completed)
         self._trade_signals.partial_completed.connect(self._search_partially_completed)
+        self._trade_signals.additional_completed.connect(self._additional_results_completed)
+        self._trade_signals.additional_failed.connect(self._additional_results_failed)
         self._trade_signals.failed.connect(self._show_price_error)
         self._trade_signals.unique_candidates_ready.connect(self._show_unique_candidates)
         self._trade_signals.unique_variants_ready.connect(self._show_unique_variants)
@@ -4201,6 +4215,7 @@ class PoetoreWindow(QWidget):
             self._search_dirty = False
             self.price_button.setEnabled(True)
             self.trade_url_button.setEnabled(False)
+            self.additional_results_button.hide()
             self.price_list.clear()
             self.price_status.setText(
                 "「カレンシー交換」の対象品のため、poe.ninja参考価格のみ表示します。"
@@ -4215,6 +4230,8 @@ class PoetoreWindow(QWidget):
         self._search_performance_traces[search_generation] = trace
         self.price_button.setEnabled(False)
         self.trade_url_button.setEnabled(False)
+        self.additional_results_button.hide()
+        self._last_price_result = None
         self.price_list.clear()
         trade_status = str(self.trade_status_combo.currentData())
         self._active_trade_status = trade_status
@@ -5536,11 +5553,55 @@ class PoetoreWindow(QWidget):
                 "trade_partial_result_displayed", listings=len(result.listings),
             )
 
+    def _fetch_additional_results(self):
+        result = getattr(self, "_last_price_result", None)
+        if self.poe_version != POE2 or result is None or not result.next_result_ids:
+            return
+        search_generation = self._search_generation
+        self.additional_results_button.setEnabled(False)
+        self.additional_results_button.setText("取得中…")
+
+        def run():
+            try:
+                from .poe2.trade import fetch_additional_prices
+                expanded = fetch_additional_prices(result)
+            except (TradeApiError, ValueError) as exc:
+                self._trade_signals.additional_failed.emit(
+                    str(exc), search_generation,
+                )
+            else:
+                self._trade_signals.additional_completed.emit(
+                    expanded, search_generation,
+                )
+
+        threading.Thread(target=run, daemon=True).start()
+
+    def _additional_results_completed(self, result: PriceResult, search_generation: int):
+        if search_generation != self._search_generation:
+            return
+        self._show_price_result(result)
+
+    def _additional_results_failed(self, message: str, search_generation: int):
+        if search_generation != self._search_generation:
+            return
+        self.additional_results_button.setText("次の10件を取得")
+        self.additional_results_button.setEnabled(True)
+        self.price_status.setText(_user_facing_trade_error(message))
+
     def _show_price_result(self, result: PriceResult, partial: bool = False):
         if not partial:
             self.price_button.setEnabled(True)
             self._last_trade_url = result.web_url
             self.trade_url_button.setEnabled(bool(result.web_url))
+            self._last_price_result = result
+        show_additional = (
+            not partial
+            and self.poe_version == POE2
+            and bool(result.next_result_ids)
+        )
+        self.additional_results_button.setText("次の10件を取得")
+        self.additional_results_button.setEnabled(show_additional)
+        self.additional_results_button.setVisible(show_additional)
         self.price_list.clear()
         cache_note = " / キャッシュ" if result.cached else ""
         if not result.listings:
@@ -5550,9 +5611,10 @@ class PoetoreWindow(QWidget):
             )
             return
         progress_note = "取得中 / " if partial else ""
+        fetched_count = result.fetched_count or len(result.listings)
         self.price_status.setText(
             f"{result.league}: {progress_note}候補{result.total}件 / "
-            f"取得{len(result.listings)}件{cache_note}"
+            f"取得{fetched_count}件{cache_note}"
         )
         item = getattr(self, "_parsed_item", None)
         show_stock = any(row.stack_size is not None for row in result.listings)

@@ -1014,7 +1014,7 @@ def search_prices(
     raw: list[PriceListing] = []
     fetch_cached = False
     fetched_count = 0
-    while fetched_count < min(len(ids), 20):
+    while fetched_count < min(len(ids), 10):
         fetch_ids = ",".join(ids[fetched_count:fetched_count + 10])
         fetched, _, block_cached = _cached_request_json(
             f"{API_ROOT}/fetch/{fetch_ids}?query={quote(query_id)}"
@@ -1043,19 +1043,51 @@ def search_prices(
                 ),
             ))
         fetched_count += 10
-        grouped = _group_price_listings(raw)
-        if partial_result_callback is not None and fetched_count == 10 and len(ids) > 10:
-            partial_result_callback(PriceResult(
-                league, query_id, len(ids), grouped,
-                headers.get("X-Rate-Limit-Ip-State", "") if headers else "",
-                web_url,
-                search_cached or fetch_cached,
-            ))
     return PriceResult(
         league, query_id, len(ids), _group_price_listings(raw),
         headers.get("X-Rate-Limit-Ip-State", "") if headers else "",
         web_url,
         search_cached or fetch_cached,
+        tuple(ids[10:20]),
+        min(len(ids), 10),
+    )
+
+
+def fetch_additional_prices(result: PriceResult) -> PriceResult:
+    """Fetch candidates 11-20 for an existing PoE2 result and merge them."""
+    ids = tuple(result.next_result_ids[:10])
+    if not ids:
+        return result
+    fetched, _, cached = _cached_request_json(
+        f"{API_ROOT}/fetch/{','.join(ids)}?query={quote(result.query_id)}"
+    )
+    raw = list(result.listings)
+    for row in fetched.get("result", ()):
+        listing = row.get("listing") or {}
+        fetched_item = row.get("item") or {}
+        price = listing.get("price") or {}
+        has_price = price.get("amount") is not None and bool(price.get("currency"))
+        raw.append(PriceListing(
+            float(price["amount"]) if has_price else 0.0,
+            str(price["currency"]) if has_price else "",
+            str((listing.get("account") or {}).get("name", "")),
+            str(fetched_item.get("name", "")),
+            str(fetched_item.get("baseType", "")),
+            str(listing.get("indexed", "")),
+            int(fetched_item["ilvl"]) if fetched_item.get("ilvl") is not None else None,
+            _property_number(fetched_item, "Level", "レベル", "Gem Level", "ジェムレベル"),
+            _property_number(fetched_item, "Quality", "品質"),
+            int(fetched_item["stackSize"]) if fetched_item.get("stackSize") is not None else None,
+            pricing_method=(
+                "instant" if listing.get("fee") is not None
+                else "face_to_face" if has_price or fetched_item.get("note") is not None
+                else "unpriced"
+            ),
+        ))
+    return PriceResult(
+        result.league, result.query_id, result.total, _group_price_listings(raw),
+        result.rate_limit, result.web_url, result.cached or cached,
+        (), result.fetched_count + len(ids),
     )
 
 
