@@ -798,6 +798,45 @@ def test_reported_rare_waystone_keeps_affix_name_separate_from_trade_base():
     assert item.base_type == "Waystone (Tier 15)"
 
 
+def test_reported_waystone_keeps_item_rarity_as_searchable_property():
+    item = parse_item_text("""アイテムクラス: ウェイストーン
+レアリティ: レア
+恐るべき辺境
+ウェイストーン (ティア3)
+--------
+復活が利用可能: 2 (augmented)
+アイテムレアリティ: +29% (augmented)
+モンスターレアリティ: +18% (augmented)
+ウェイストーンドロップ確率: +55% (augmented)
+--------
+アイテムレベル: 70
+""")
+
+    assert item.properties["アイテムレアリティ"] == "+29% (augmented)"
+
+
+def test_reported_breach_tablet_resolves_uses_and_variable_rare_monster_line():
+    item = parse_item_text("""アイテムクラス: 石板
+レアリティ: レア
+虚無に触れられし命令
+ブリーチの石板
+--------
+アイテムレベル: 80
+--------
+{ 暗黙モッド }
+マップに異世界からのブリーチを追加する
+残り使用可能回数 10回
+--------
+{ サフィックスモッド 「侵略の」 (ティア: 1) }
+マップの不安定なブリーチは安定化した後レアモンスターが追加で3(1-3)体スポーンする
+""")
+
+    assert item.properties["残り使用回数"] == "10"
+    assert [(mod.stat_id, mod.values, mod.confidence) for mod in item.modifiers] == [
+        ("explicit.stat_3762913035", (), 1.0),
+    ]
+
+
 def test_phase45_runemastered_base_and_desecrated_state_are_not_collapsed():
     text = (Path(__file__).parent / "fixtures" / "poe2" / "phase45_runemastered_ja.txt").read_text(
         encoding="utf-8"

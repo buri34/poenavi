@@ -7222,6 +7222,51 @@ Shift+クリックでスタックから取り出す。
         window.close()
 
 
+def test_poe2_waystone_item_rarity_is_visible_and_tablet_copy_has_no_warning(qapp):
+    waystone = """アイテムクラス: ウェイストーン
+レアリティ: レア
+恐るべき辺境
+ウェイストーン (ティア3)
+--------
+復活が利用可能: 2 (augmented)
+アイテムレアリティ: +29% (augmented)
+モンスターレアリティ: +18% (augmented)
+ウェイストーンドロップ確率: +55% (augmented)
+--------
+アイテムレベル: 70
+"""
+    tablet = """アイテムクラス: 石板
+レアリティ: レア
+虚無に触れられし命令
+ブリーチの石板
+--------
+アイテムレベル: 80
+--------
+{ 暗黙モッド }
+マップに異世界からのブリーチを追加する
+残り使用可能回数 10回
+--------
+{ サフィックスモッド 「侵略の」 (ティア: 1) }
+マップの不安定なブリーチは安定化した後レアモンスターが追加で3(1-3)体スポーンする
+"""
+    window = PoetoreWindow(app_config={"poe_version": "poe2", "poetore": {}})
+    try:
+        window.input_edit.setPlainText(waystone)
+        window.parse_current_text()
+        labels = {
+            window.mod_filter_tree.topLevelItem(index).text(_MOD_COLUMN_TEXT)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        }
+        assert "アイテムレアリティ" in labels
+
+        window.input_edit.setPlainText(tablet)
+        window.parse_current_text()
+        assert window.mod_warning.isHidden()
+        assert window._parsed_item.properties["残り使用回数"] == "10"
+    finally:
+        window.close()
+
+
 def test_poe2_related_items_resolve_ee2_group_and_keep_unpriced_rows(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2", "poetore": {}})
     item = ParsedItem(

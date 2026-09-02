@@ -215,6 +215,7 @@ _PROPERTY_LABELS = {
     "Requirements", "装備条件",
     "Runic Ward", "ルーンワード", "Deflection Rating", "受け流し力",
     "Waystone Tier", "ウェイストーンティア", "Revives Available", "復活が利用可能",
+    "Item Rarity", "アイテムレアリティ",
     "Monster Pack Size", "モンスターパックサイズ", "Pack Size", "パックサイズ",
     "Waystone Drop Chance", "ウェイストーンドロップ確率", "ウェイストーンドロップ率",
     "Magic Monsters", "モンスターエフェクティブ",
@@ -244,6 +245,7 @@ _DESCRIPTION_PREFIXES = (
 _TABLET_USES = (
     re.compile(r"^(\d+)\s+uses?\s+remaining$", re.IGNORECASE),
     re.compile(r"^残り使用回数\s*(\d+)回$"),
+    re.compile(r"^残り使用可能回数\s*(\d+)回$"),
 )
 _CHARM_DURATION = (
     re.compile(

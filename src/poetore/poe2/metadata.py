@@ -194,6 +194,16 @@ def resolve_stat_line_candidates(
     # The English client pluralises this property while Trade2 currently keeps
     # the official template in singular form (`Has # Charm Slot`).
     comparable = re.sub(r"\bCharm Slots\b", "Charm Slot", comparable)
+    # Trade2's Japanese Stat metadata currently fixes this Breach Tablet line
+    # at `1体`, while detailed in-game copy exposes the actual 1-3 roll.  The
+    # Trade stat itself is boolean (no numeric value), so normalize only the
+    # displayed roll to the official template instead of reporting it as
+    # unresolved metadata.
+    comparable = re.sub(
+        r"^(マップの不安定なブリーチは安定化した後レアモンスターが追加で)\d+(体スポーンする)$",
+        r"\g<1>1\g<2>",
+        comparable,
+    )
     comparable = re.sub(r"\s*[—-]\s*スケールできない値\s*$", "", comparable)
     comparable = re.sub(r"\s*[—-]\s*Unscalable Value\s*$", "", comparable, flags=re.IGNORECASE)
     matchers = stat_matchers()

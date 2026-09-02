@@ -986,6 +986,28 @@ def test_reported_magic_waystone_uses_tier_packsize_bonus_and_three_mods():
     ]
 
 
+def test_reported_waystone_item_rarity_reaches_trade2_map_iir_filter():
+    item = parse_item_text("""アイテムクラス: ウェイストーン
+レアリティ: レア
+恐るべき辺境
+ウェイストーン (ティア3)
+--------
+アイテムレアリティ: +29% (augmented)
+--------
+アイテムレベル: 70
+""")
+    rows = tuple(
+        row.__class__(**{**row.__dict__, "enabled": True})
+        for row in poe2_search_filters(item)
+    )
+
+    payload = build_search_query(item, stat_filters=rows)
+
+    assert payload["query"]["filters"]["map_filters"]["filters"]["map_iir"] == {
+        "min": 29.0,
+    }
+
+
 def test_reported_rare_waystone_sends_tier_base_instead_of_affix_name():
     item = _phase45_item("rare_waystone_ja.txt")
     rows = _phase45_rows(item)
