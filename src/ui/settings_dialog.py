@@ -2019,13 +2019,16 @@ class SettingsDialog(QDialog):
         self.map_check_btn = HotkeyButton(self.hotkeys.get("map_check", "alt+f"))
         map_check_layout.addWidget(self.map_check_btn)
         group_layout.addWidget(self.map_check_row)
-        self._refresh_version_specific_controls()
+
+        self.gem_shop_search_settings = QWidget()
+        gem_shop_search_settings_layout = QVBoxLayout(self.gem_shop_search_settings)
+        gem_shop_search_settings_layout.setContentsMargins(0, 0, 0, 0)
 
         h_layout11 = QHBoxLayout()
         h_layout11.addWidget(QLabel("ジェムショップ検索（長押し）:"))
         self.gem_shop_search_btn = HotkeyButton(self.hotkeys.get("gem_shop_search", "F2"))
         h_layout11.addWidget(self.gem_shop_search_btn)
-        group_layout.addLayout(h_layout11)
+        gem_shop_search_settings_layout.addLayout(h_layout11)
 
         gem_search_hold_layout = QHBoxLayout()
         gem_search_hold_layout.addWidget(QLabel("ジェムショップ検索の長押し時間:"))
@@ -2040,14 +2043,16 @@ class SettingsDialog(QDialog):
         self.gem_shop_search_hold_seconds_spin.setStyleSheet(_spinbox_style(85))
         gem_search_hold_layout.addWidget(self.gem_shop_search_hold_seconds_spin)
         gem_search_hold_layout.addStretch()
-        group_layout.addLayout(gem_search_hold_layout)
+        gem_shop_search_settings_layout.addLayout(gem_search_hold_layout)
 
         self.gem_shop_search_include_reward_purchases_cb = QCheckBox("報酬から選ばなかったジェムをRegexに含める")
         self.gem_shop_search_include_reward_purchases_cb.setChecked(
             self.current_config.get("gem_shop_search_include_reward_purchases", True)
         )
         Styles.apply_checkbox_style(self.gem_shop_search_include_reward_purchases_cb)
-        group_layout.addWidget(self.gem_shop_search_include_reward_purchases_cb)
+        gem_shop_search_settings_layout.addWidget(self.gem_shop_search_include_reward_purchases_cb)
+        group_layout.addWidget(self.gem_shop_search_settings)
+        self._refresh_version_specific_controls()
         h_layout12 = QHBoxLayout()
         h_layout12.addWidget(QLabel("Cheat sheets表示:"))
         self.cheat_sheets_toggle_btn = HotkeyButton(
@@ -3134,6 +3139,7 @@ class SettingsDialog(QDialog):
         """選択中のゲーム版で利用できる設定だけを表示する。"""
         self.monastery_row.setVisible(self.poe_version == POE1)
         self.map_check_row.setVisible(self.poe_version == POE1)
+        self.gem_shop_search_settings.setVisible(self.poe_version == POE1)
 
     def _refresh_app_mode_availability(self):
         supported = is_feature_supported(POETORE, self.poe_version)
@@ -3145,7 +3151,10 @@ class SettingsDialog(QDialog):
                 self.app_mode_radios[POENAVI_MODE].setChecked(True)
 
     def accept(self):
-        if not self.gem_shop_search_term_review.validate_term_overrides():
+        if (
+            self.poe_version == POE1
+            and not self.gem_shop_search_term_review.validate_term_overrides()
+        ):
             return
         hotkeys = {
             "start_stop": self.start_stop_btn.key_text,
@@ -3165,6 +3174,7 @@ class SettingsDialog(QDialog):
         }
         if self.poe_version == POE2:
             hotkeys.pop("map_check")
+            hotkeys.pop("gem_shop_search")
         if not self.custom_commands_widget.validate(hotkeys):
             return
         duplicates = find_duplicate_hotkeys(hotkeys)

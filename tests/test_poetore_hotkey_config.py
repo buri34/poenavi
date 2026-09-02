@@ -278,6 +278,7 @@ def test_main_mode_registers_poetore_hotkeys_in_poe2(monkeypatch):
     assert "poetore_capture" in window.hotkey_map.values()
     assert "poetore_auto_hide" in window.hotkey_map.values()
     assert "map_check" not in window.hotkey_map.values()
+    assert window._gem_shop_search_key == "none"
 
 
 def test_main_mode_emits_auto_hide_release_separately(monkeypatch):

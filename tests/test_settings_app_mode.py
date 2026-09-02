@@ -207,10 +207,12 @@ def test_monastery_hotkey_is_visible_only_for_poe1(monkeypatch, qapp):
 
     assert not dialog.monastery_row.isVisibleTo(dialog)
     assert not dialog.map_check_row.isVisibleTo(dialog)
+    assert not dialog.gem_shop_search_settings.isVisibleTo(dialog)
 
     dialog._on_poe_version_changed(POE1, True)
     assert dialog.monastery_row.isVisibleTo(dialog)
     assert dialog.map_check_row.isVisibleTo(dialog)
+    assert dialog.gem_shop_search_settings.isVisibleTo(dialog)
     dialog.close()
 
 

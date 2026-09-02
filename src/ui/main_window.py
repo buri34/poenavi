@@ -47,6 +47,7 @@ from src.utils.zone_lookup import get_zone_info, get_level_advice
 from src.utils.guide_data import load_guide_data, get_zone_guide, get_zone_guide_level, format_guide_html, get_mini_navi_content
 from src.utils.poe_version_data import POE1, POE2, get_lap_labels, get_poe_label, get_timer_filename, get_progress_flags_filename
 from src.utils.feature_support import (
+    GEM_SHOP_SEARCH,
     MAP_CHECK,
     MINI_NAVI,
     POETORE,
@@ -3069,9 +3070,11 @@ class MainWindow(QMainWindow):
                     self.hotkey_map[_listener_hotkey_name(key)] = action
             for action, key in custom_command_hotkeys(self.config.get("custom_commands", [])).items():
                 self.hotkey_map[_listener_hotkey_name(key)] = action
-            self._gem_shop_search_key = _listener_hotkey_name(
-                hotkeys.get("gem_shop_search", DEFAULT_GEM_SHOP_SEARCH_HOTKEY)
-            )
+            self._gem_shop_search_key = "none"
+            if is_feature_supported(GEM_SHOP_SEARCH, active_version):
+                self._gem_shop_search_key = _listener_hotkey_name(
+                    hotkeys.get("gem_shop_search", DEFAULT_GEM_SHOP_SEARCH_HOTKEY)
+                )
             
             print(f"Registering hotkeys: {self.hotkey_map}")
 
@@ -3283,6 +3286,8 @@ class MainWindow(QMainWindow):
 
     def _start_gem_shop_search_hold(self):
         """長押し判定を開始する。キーリピートではタイマーを延長しない。"""
+        if not is_feature_supported(GEM_SHOP_SEARCH, self.poe_version):
+            return None
         generation = self._gem_shop_search_hold.start()
         QTimer.singleShot(self._gem_shop_search_hold_delay_ms(), lambda: self._run_gem_shop_search_hold(generation))
 
