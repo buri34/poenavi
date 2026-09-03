@@ -235,6 +235,9 @@ class MainWindow(QMainWindow):
         self.detached_panel_windows[panel_id] = panel_window
         panel_window.apply_window_settings(self.config)
         panel_window.show()
+        self._set_window_click_through(
+            panel_window, bool(getattr(self, "click_through", False)),
+        )
         self._keep_detached_panel_header_on_screen(panel_window)
         self._save_detached_panel_state(panel_id)
         self._adjust_main_window_after_panel_change()
@@ -3604,29 +3607,39 @@ class MainWindow(QMainWindow):
                 )
 
     # --- クリックスルー ---
+    @staticmethod
+    def _set_window_click_through(window, enabled):
+        """Windowsの入力透過を、指定したトップレベルウィンドウへ反映する。"""
+        if sys.platform != 'win32':
+            return
+        import ctypes
+
+        hwnd = int(window.winId())
+        GWL_EXSTYLE = -20
+        WS_EX_TRANSPARENT = 0x00000020
+        WS_EX_LAYERED = 0x00080000
+        SWP_NOMOVE = 0x0002
+        SWP_NOSIZE = 0x0001
+        SWP_NOZORDER = 0x0004
+        SWP_FRAMECHANGED = 0x0020
+        user32 = ctypes.windll.user32
+        style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+        if enabled:
+            style |= WS_EX_TRANSPARENT | WS_EX_LAYERED
+        else:
+            style &= ~WS_EX_TRANSPARENT
+        user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+        user32.SetWindowPos(
+            hwnd, 0, 0, 0, 0, 0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
+        )
+
     def toggle_click_through(self):
         """クリックスルーのON/OFF切替"""
         self.click_through = not getattr(self, 'click_through', False)
-        if sys.platform == 'win32':
-            import ctypes
-            hwnd = int(self.winId())
-            GWL_EXSTYLE = -20
-            WS_EX_TRANSPARENT = 0x00000020
-            WS_EX_LAYERED = 0x00080000
-            SWP_NOMOVE = 0x0002
-            SWP_NOSIZE = 0x0001
-            SWP_NOZORDER = 0x0004
-            SWP_FRAMECHANGED = 0x0020
-            user32 = ctypes.windll.user32
-            style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-            if self.click_through:
-                style |= WS_EX_TRANSPARENT | WS_EX_LAYERED
-            else:
-                style &= ~WS_EX_TRANSPARENT
-            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
-            # フラグ変更を即座に反映
-            user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0,
-                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED)
+        self._set_window_click_through(self, self.click_through)
+        for panel_window in getattr(self, "detached_panel_windows", {}).values():
+            self._set_window_click_through(panel_window, self.click_through)
         
         # 視覚的フィードバック
         self._update_click_through_label()

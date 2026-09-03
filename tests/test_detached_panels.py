@@ -58,6 +58,46 @@ def test_detach_panel_removes_content_from_main_layout_and_restore_returns_it(mo
     assert not window.panel_registry["timer"]["minimize_button"].isHidden()
 
 
+def test_detach_panel_inherits_current_click_through_state(monkeypatch):
+    window, _content, _layout = _window()
+    window.click_through = True
+    applied = []
+    monkeypatch.setattr(ConfigManager, "save_config", lambda _config: None)
+    monkeypatch.setattr(
+        window, "_set_window_click_through",
+        lambda target, enabled: applied.append((target, enabled)),
+    )
+
+    window.detach_panel("timer")
+
+    assert applied == [(window.detached_panel_windows["timer"], True)]
+
+
+def test_click_through_toggle_updates_main_and_all_detached_windows(monkeypatch):
+    window, _content, _layout = _window()
+    detached_timer = QWidget()
+    detached_map = QWidget()
+    window.detached_panel_windows = {
+        "timer": detached_timer,
+        "map": detached_map,
+    }
+    applied = []
+    monkeypatch.setattr(window, "_update_click_through_label", lambda: None)
+    monkeypatch.setattr(
+        window, "_set_window_click_through",
+        lambda target, enabled: applied.append((target, enabled)),
+    )
+
+    window.toggle_click_through()
+
+    assert window.click_through is True
+    assert applied == [
+        (window, True),
+        (detached_timer, True),
+        (detached_map, True),
+    ]
+
+
 def test_detached_panel_persists_geometry_when_moved_or_resized(monkeypatch):
     window, _content, _layout = _window()
     monkeypatch.setattr(ConfigManager, "save_config", lambda _config: None)
