@@ -2407,6 +2407,21 @@ class PoetoreWindow(QWidget):
             )
         self._adjust_window_height_to_mod_rows()
 
+    def _refresh_hidden_mods_toggle_visibility(self):
+        has_hidden_candidates = any(
+            bool(getattr(
+                self.mod_filter_tree.topLevelItem(index).data(
+                    _MOD_COLUMN_CHECK, Qt.UserRole + 4
+                ),
+                "hidden_reason",
+                "",
+            ))
+            for index in range(self.mod_filter_tree.topLevelItemCount())
+        )
+        if not has_hidden_candidates:
+            self.hidden_mods_toggle.setChecked(False)
+        self.hidden_mods_toggle.setVisible(has_hidden_candidates)
+
     def _mercenary_support_row_is_hidden(self, row: QTreeWidgetItem) -> bool:
         stat_filter = row.data(_MOD_COLUMN_CHECK, Qt.UserRole + 4)
         return bool(
@@ -5545,6 +5560,7 @@ class PoetoreWindow(QWidget):
                 max_editor.textChanged.connect(sync_slider)
                 slider.valueCommitted.connect(commit_slider)
         self._fit_mod_kind_column()
+        self._refresh_hidden_mods_toggle_visibility()
         self._update_all_mod_conditions_button()
         self._adjust_window_height_to_mod_rows()
 

@@ -18,7 +18,7 @@ from src.poetore.ui import (
     _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
     show_poetore_window, _price_currency_icon_filename,
 )
-from src.utils.poe_version_data import POE2
+from src.utils.poe_version_data import POE1, POE2
 
 
 def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qapp):
@@ -2126,6 +2126,7 @@ def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
                 hidden_reason="ユニーク固定値のため初期非表示",
             ),
         ))
+        assert not window.hidden_mods_toggle.isHidden()
         normal = window.mod_filter_tree.topLevelItem(0)
         hidden = window.mod_filter_tree.topLevelItem(1)
         assert not normal.isHidden()
@@ -2154,6 +2155,32 @@ def test_hidden_candidates_and_pseudo_sources_can_be_toggled(qapp):
         window.mod_sources_toggle.setChecked(False)
         assert window.mod_sources_toggle.text() == "計算元Modを表示"
         assert not normal.isExpanded()
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize("poe_version", (POE1, POE2))
+def test_hidden_candidates_toggle_is_hidden_when_no_candidates(qapp, poe_version):
+    window = PoetoreWindow(app_config={"poe_version": poe_version})
+    try:
+        window.show()
+        window._populate_stat_filters((
+            TradeStatFilter(
+                "explicit.variable", "可変Mod", 10, "explicit", True,
+            ),
+        ))
+
+        assert window.hidden_mods_toggle.isHidden()
+        assert not window.hidden_mods_toggle.isChecked()
+
+        window._populate_stat_filters((
+            TradeStatFilter(
+                "explicit.fixed", "固定Mod", 10, "explicit", False,
+                hidden_reason="ユニーク固定値のため初期非表示",
+            ),
+        ))
+
+        assert not window.hidden_mods_toggle.isHidden()
     finally:
         window.close()
 
