@@ -840,9 +840,9 @@ def _poe2_base_modifier_rows(
     keep_normal_explicit = item.rarity.casefold() in {"magic", "マジック"}
     result = []
     for row in modifier_rows:
-        if row.kind in {"fractured", "desecrated"}:
+        if row.kind == "fractured":
             result.append(replace(row, enabled=True))
-        elif row.kind == "crafted":
+        elif row.kind in {"crafted", "desecrated"}:
             result.append(replace(row, enabled=False))
         elif row.kind == "explicit" and keep_normal_explicit:
             result.append(replace(row, enabled=row.tier in {1, 2}))

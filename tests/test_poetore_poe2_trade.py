@@ -163,7 +163,7 @@ def test_base_keeps_provenance_but_finished_normalizes_immutable_items(
     assert finished.stat_id == "explicit.stat_2923486259"
 
 
-def test_base_enables_fractured_and_desecrated_but_not_crafted_mods():
+def test_base_enables_fractured_but_not_crafted_or_desecrated_mods():
     item = ParsedItem(
         item_class="Spears", rarity="rare", name="Test", base_type="Soaring Spear",
         category="spear", modifiers=(
@@ -174,7 +174,7 @@ def test_base_enables_fractured_and_desecrated_but_not_crafted_mods():
     )
     rows = poe2_trade_filters(item, preset=PRESET_BASE)
     assert {row.kind: row.enabled for row in rows} == {
-        "crafted": False, "fractured": True, "desecrated": True,
+        "crafted": False, "fractured": True, "desecrated": False,
     }
 
 
