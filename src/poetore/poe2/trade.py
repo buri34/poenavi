@@ -855,6 +855,7 @@ _GRANTED_SKILL_HIDE_EXCLUDED_BASES = {
     "不在のアミュレット", "Absence Amulet",
     "悲嘆のアミュレット", "Mourning Amulet",
 }
+_HIDDEN_CANDIDATE_EXCLUDED_UNIQUES = {"Mageblood", "メイジブラッド"}
 
 
 def _poe2_item_is_modifiable(item: ParsedItem) -> bool:
@@ -868,6 +869,11 @@ def _apply_poe2_hidden_candidate_rules(
 ) -> tuple[TradeStatFilter, ...]:
     """Apply only the EE2 hidden rules explicitly adopted for PoE2."""
     if preset == PRESET_BASE:
+        return tuple(replace(row, hidden_reason="") for row in filters)
+
+    # Mageblood's Heritage choices materially change its market value. Keep every
+    # filter visible even when a generic Unique hidden rule would normally apply.
+    if item.name in _HIDDEN_CANDIDATE_EXCLUDED_UNIQUES:
         return tuple(replace(row, hidden_reason="") for row in filters)
 
     unique = item.rarity.casefold() in {"unique", "ユニーク"}

@@ -835,6 +835,19 @@ def test_poe2_unique_fixed_direct_mod_is_a_hidden_candidate():
     assert direct.hidden_reason == "可変ロールではありません"
 
 
+@pytest.mark.parametrize("fixture_name", ["mageblood_ja.txt", "mageblood_en.txt"])
+def test_poe2_mageblood_never_hides_trade_filters(fixture_name):
+    text = (Path(__file__).parent / "fixtures" / "poe2" / fixture_name).read_text(
+        encoding="utf-8"
+    )
+    rows = poe2_trade_filters(parse_item_text(text))
+
+    assert rows
+    assert all(row.hidden_reason == "" for row in rows)
+    heritage_rows = [row for row in rows if "explicit.stat_264262054|" in row.stat_id]
+    assert len(heritage_rows) == 4
+
+
 def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
     item = _phase45_item("phase45_sceptre_ja.txt")
     assert empty_augment_socket_count(item) == 1
