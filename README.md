@@ -2,7 +2,7 @@
 
 Path of Exile 1 / Path of Exile 2向けの、Windows用レベリング支援ツールです。
 
-`Client.txt`から現在地や進行状況を検知し、攻略ガイド、マップ画像、RTAタイマーなどを表示します。PoE1では、日本語版アイテムの価格検索を行う「ぽえとれ」も利用できます。
+`Client.txt`から現在地や進行状況を検知し、攻略ガイド、マップ画像、RTAタイマーなどを表示します。PoE1 / PoE2では、日本語版アイテムの価格検索を行う「ぽえとれ」も利用できます。
 
 > [!IMPORTANT]
 > 本ツールはGrinding Gear Gamesとは提携しておらず、同社による公認・承認を受けたものではありません。
@@ -15,7 +15,7 @@ Path of Exile 1 / Path of Exile 2向けの、Windows用レベリング支援ツ�
 - 小型オーバーレイ「みになび」（PoE1 / PoE2）
 - VOICEVOXによるみになびの音声案内（PoE2）
 - PoBからのジェム取得リスト作成（PoE1）
-- 日本語アイテム価格検索「ぽえとれ」（PoE1）
+- 日本語アイテム価格検索「ぽえとれ」（PoE1 / PoE2）
 - Map Modチェック、検索プリセット、メモ、Cheat sheets
 - 自動アップデート
 
@@ -46,7 +46,7 @@ PoENaviは、今後のWindows向けリリースを署名するためSignPath Fou
 ## 最初に行う設定
 
 1. 起動時にPoE1 / PoE2を選択
-2. 「ぽえなび」または「ぽえとれ」を選択（PoE2版ぽえとれは現在テスト中）
+2. 「ぽえなび」または「ぽえとれ」を選択
 3. 設定画面で`Client.txt`の場所を確認
 4. PoE側のチャット設定で「ローカル」を有効化
 
@@ -61,7 +61,8 @@ PoE2 Steam: C:\Program Files (x86)\Steam\steamapps\common\Path of Exile 2\logs\C
 
 - 正式対応：Windows 10 / 11
 - 対応ゲーム：Path of Exile 1 / Path of Exile 2
-- ぽえとれ、PoBインポート：PoE1のみ
+- ぽえとれ：PoE1 / PoE2
+- PoBインポート：PoE1のみ
 - VOICEVOX読み上げ：PoE2のみ（VOICEVOX本体の起動が必要）
 - Linux：非公式サポート。一部のWindows依存機能は動作保証外
 - PoEのローカルチャットログが無効だと、一部の自動ラップやガイド切替を検知できません
