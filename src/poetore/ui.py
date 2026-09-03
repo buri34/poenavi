@@ -1822,6 +1822,15 @@ class PoetoreWindow(QWidget):
         self.price_status.clear()
         self.price_button.setEnabled(True)
 
+    def _clear_displayed_trade_result(self):
+        """Remove result state that belongs to the previously captured item."""
+        self.price_list.clear()
+        self.price_status.clear()
+        self._last_price_result = None
+        self._last_trade_url = ""
+        self.trade_url_button.setEnabled(False)
+        self.additional_results_button.hide()
+
     def _auto_search_after_trade_option_change(self, *_args):
         if not self._has_searched_current_item or getattr(self, "_parsed_item", None) is None:
             return
@@ -3953,6 +3962,7 @@ class PoetoreWindow(QWidget):
         self._preset_item_key = None
         self._reset_unique_candidates()
         self.mod_filter_tree.clear()
+        self._clear_displayed_trade_result()
         self.input_edit.setPlainText(copied_text)
         self.parse_current_text()
         if trace is not None:

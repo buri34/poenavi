@@ -741,6 +741,11 @@ def test_only_poe2_rare_equipment_defers_hotkey_initial_search(
         QRect(0, 0, 1920, 1080), QPoint(100, 100),
     )
     try:
+        window._show_price_result(PriceResult(
+            "Mirage", "old-query", 1, (PriceListing(300, "exalted"),),
+            web_url="https://example.invalid/old-trade",
+        ))
+        assert window.price_list.topLevelItemCount() == 1
         with patch(
             "src.poetore.ui.read_item_clipboard", return_value=copied,
         ), patch.object(
@@ -756,6 +761,11 @@ def test_only_poe2_rare_equipment_defers_hotkey_initial_search(
             search.assert_not_called()
             assert window.price_status.text() == "検索条件を確認して「検索」を押してください。"
             assert window.price_button.isEnabled()
+            assert window.price_list.topLevelItemCount() == 0
+            assert window._last_price_result is None
+            assert window._last_trade_url == ""
+            assert not window.trade_url_button.isEnabled()
+            assert window.additional_results_button.isHidden()
         else:
             search.assert_called_once_with()
     finally:
