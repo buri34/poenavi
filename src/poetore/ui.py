@@ -2905,7 +2905,14 @@ class PoetoreWindow(QWidget):
         if (
             event.type() == QEvent.Enter
             and watched is self.price_button
-            and self._search_dirty
+            and (
+                self._search_dirty
+                or (
+                    not self._has_searched_current_item
+                    and getattr(self, "_parsed_item", None) is not None
+                    and self._should_defer_initial_trade_search(self._parsed_item)
+                )
+            )
         ):
             self.search_current_item()
             return True

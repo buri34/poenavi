@@ -1360,6 +1360,42 @@ def test_hovering_search_button_researches_when_conditions_changed(qapp):
         window.close()
 
 
+def test_hovering_search_button_runs_deferred_poe2_rare_equipment_search(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window._parsed_item = ParsedItem(
+            "Amulets", "rare", "Test Amulet", "Gold Amulet", "amulet",
+            raw_text="poe2-rare-amulet",
+        )
+        window._has_searched_current_item = False
+        window._search_dirty = False
+
+        with patch.object(window, "search_current_item") as search:
+            QApplication.sendEvent(window.price_button, QEvent(QEvent.Enter))
+
+        search.assert_called_once_with()
+    finally:
+        window.close()
+
+
+def test_hovering_search_button_does_not_start_unrelated_clean_initial_item(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window._parsed_item = ParsedItem(
+            "Belts", "unique", "Mageblood", "Heavy Belt", "belt",
+            raw_text="poe2-unique-belt",
+        )
+        window._has_searched_current_item = False
+        window._search_dirty = False
+
+        with patch.object(window, "search_current_item") as search:
+            QApplication.sendEvent(window.price_button, QEvent(QEvent.Enter))
+
+        search.assert_not_called()
+    finally:
+        window.close()
+
+
 @pytest.mark.parametrize("combo_name", [
     "trade_status_combo", "trade_currency_combo", "listed_within_combo",
 ])
