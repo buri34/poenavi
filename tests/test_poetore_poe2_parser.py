@@ -642,8 +642,10 @@ def test_reported_japanese_rare_spear_keeps_quality_and_both_flat_damage_values(
     assert flat.values == (25.0, 39.0)
     fractured = next(mod for mod in item.modifiers if "アタックスピードが28" in mod.text)
     assert fractured.kind == "fractured"
+    assert fractured.tier == 1
     assert "fractured" in item.flags
     crafted_accuracy = next(mod for mod in item.modifiers if mod.text.startswith("命中力"))
+    assert crafted_accuracy.tier is None
     assert crafted_accuracy.stat_id == "crafted.stat_803737631"
     crafted_speed = next(mod for mod in item.modifiers if "アタックスピードが8" in mod.text)
     assert crafted_speed.stat_id == "crafted.stat_210067635"

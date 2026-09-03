@@ -124,6 +124,7 @@ _MOD_COLUMN_MIN = 4
 _MOD_COLUMN_MAX = 5
 _MOD_CHECK_COLUMN_WIDTH = 40
 _MOD_TIER_COLUMN_WIDTH = 62
+_MOD_KIND_COLUMN_MAX_WIDTH = 104
 _MOD_TEXT_COLUMN_WIDTH = 320
 _MOD_VALUE_EDITOR_WIDTH = 48
 _MOD_VALUE_LEADING_GAP = 8
@@ -1589,7 +1590,10 @@ class PoetoreWindow(QWidget):
         self.mod_filter_tree.setColumnWidth(
             _MOD_COLUMN_CHECK, _MOD_CHECK_COLUMN_WIDTH
         )
-        mod_header.setSectionResizeMode(_MOD_COLUMN_KIND, QHeaderView.ResizeToContents)
+        mod_header.setSectionResizeMode(
+            _MOD_COLUMN_KIND,
+            QHeaderView.Fixed if self.poe_version == POE2 else QHeaderView.ResizeToContents,
+        )
         mod_header.setSectionResizeMode(_MOD_COLUMN_TIER, QHeaderView.Fixed)
         self.mod_filter_tree.setColumnWidth(_MOD_COLUMN_TIER, _MOD_TIER_COLUMN_WIDTH)
         # 操作列を常に表示領域内へ収め、余った幅だけをMod文章へ割り当てる。
@@ -2205,6 +2209,15 @@ class PoetoreWindow(QWidget):
         row.setFont(_MOD_COLUMN_KIND, font)
         row.setForeground(_MOD_COLUMN_KIND, QBrush(QColor("#98A39F")))
 
+    def _fit_mod_kind_column(self):
+        if self.poe_version != POE2:
+            return
+        content_width = self.mod_filter_tree.sizeHintForColumn(_MOD_COLUMN_KIND)
+        self.mod_filter_tree.setColumnWidth(
+            _MOD_COLUMN_KIND,
+            min(content_width, self._scaled_display_value(_MOD_KIND_COLUMN_MAX_WIDTH)),
+        )
+
     def _make_mod_value_cell(
         self, editor: QLineEdit, *, leading_gap: bool = False,
     ) -> QWidget:
@@ -2308,6 +2321,7 @@ class PoetoreWindow(QWidget):
             self._apply_mod_kind_font_size(
                 self.mod_filter_tree.topLevelItem(index)
             )
+        self._fit_mod_kind_column()
         for column in (_MOD_COLUMN_MIN, _MOD_COLUMN_MAX):
             for index in range(self.mod_filter_tree.topLevelItemCount()):
                 cell = self.mod_filter_tree.itemWidget(
@@ -5332,6 +5346,7 @@ class PoetoreWindow(QWidget):
             row.setData(0, Qt.UserRole + 4, stat_filter)
             row.setData(0, Qt.UserRole + 5, stat_filter.enabled)
             row.setToolTip(_MOD_COLUMN_TEXT, mod_tooltip)
+            row.setToolTip(_MOD_COLUMN_KIND, row.text(_MOD_COLUMN_KIND))
             row.setSizeHint(
                 _MOD_COLUMN_TEXT,
                 QSize(0, self._scaled_display_value(_MOD_ROW_HEIGHT)),
@@ -5524,6 +5539,7 @@ class PoetoreWindow(QWidget):
                 editor.textChanged.connect(sync_slider)
                 max_editor.textChanged.connect(sync_slider)
                 slider.valueCommitted.connect(commit_slider)
+        self._fit_mod_kind_column()
         self._update_all_mod_conditions_button()
         self._adjust_window_height_to_mod_rows()
 

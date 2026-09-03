@@ -163,6 +163,64 @@ def test_base_keeps_provenance_but_finished_normalizes_immutable_items(
     assert finished.stat_id == "explicit.stat_2923486259"
 
 
+def test_base_enables_fractured_and_desecrated_but_not_crafted_mods():
+    item = ParsedItem(
+        item_class="Spears", rarity="rare", name="Test", base_type="Soaring Spear",
+        category="spear", modifiers=(
+            ItemModifier("Crafted", (8,), kind="crafted", stat_id="crafted.one"),
+            ItemModifier("Fractured", (28,), kind="fractured", stat_id="fractured.two"),
+            ItemModifier("Desecrated", (12,), kind="desecrated", stat_id="desecrated.three"),
+        ),
+    )
+    rows = poe2_trade_filters(item, preset=PRESET_BASE)
+    assert {row.kind: row.enabled for row in rows} == {
+        "crafted": False, "fractured": True, "desecrated": True,
+    }
+
+
+@pytest.mark.parametrize(("rarity", "modifier_count", "expected_tiers"), [
+    ("magic", 2, {1, 2}),
+    ("rare", 4, {1, 2}),
+    ("rare", 5, set()),
+])
+def test_base_normal_explicit_defaults_follow_ee2(
+    rarity, modifier_count, expected_tiers,
+):
+    modifiers = tuple(
+        ItemModifier(
+            f"Explicit T{index}", (index,), kind="explicit", tier=index,
+            stat_id=f"explicit.stat_{index}",
+        )
+        for index in range(1, modifier_count + 1)
+    )
+    item = ParsedItem(
+        item_class="Spears", rarity=rarity, name="Test", base_type="Soaring Spear",
+        category="spear", modifiers=modifiers,
+    )
+    explicit_rows = [
+        row for row in poe2_trade_filters(item, preset=PRESET_BASE)
+        if row.kind == "explicit"
+    ]
+    assert {row.tier for row in explicit_rows} == (
+        set(range(1, modifier_count + 1)) if modifier_count <= 4 else set()
+    )
+    assert {row.tier for row in explicit_rows if row.enabled} == expected_tiers
+
+
+def test_reported_rare_spear_base_enables_its_fractured_mod_only():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(
+            encoding="utf-8"
+        )
+    )
+    rows = poe2_trade_filters(item, preset=PRESET_BASE)
+    direct_rows = [row for row in rows if row.kind != "state"]
+    assert {row.kind for row in direct_rows} == {"crafted", "fractured"}
+    assert [row.text for row in direct_rows if row.enabled] == [
+        "アタックスピードが28(26-28)%増加する"
+    ]
+
+
 def test_finished_preset_merges_natural_and_normalized_special_sources():
     item = ParsedItem(
         item_class="Gloves", rarity="rare", name="Test", base_type="Grand Bracers",

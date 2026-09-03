@@ -678,7 +678,7 @@ def _poe2_modifier_rows(
             ref=modifier.ref, confidence=modifier.confidence,
             read_value=value, roll_min=modifier.roll_min,
             roll_max=modifier.roll_max, better=modifier.better,
-            affix=modifier.affix,
+            tier=modifier.tier, affix=modifier.affix,
             provenance_tags=provenance_tags,
         )
         position = positions.get(stat_id)
@@ -712,6 +712,32 @@ def _poe2_modifier_rows(
     return tuple(rows)
 
 
+def _poe2_base_modifier_rows(
+    item: ParsedItem, modifier_rows: tuple[TradeStatFilter, ...],
+) -> tuple[TradeStatFilter, ...]:
+    """Apply EE2's Exact/Base modifier defaults for non-unique equipment."""
+    explicit_like_count = sum(
+        modifier.kind in {"explicit", "crafted", "fractured", "desecrated"}
+        for modifier in item.modifiers
+    )
+    keep_normal_explicit = (
+        item.rarity.casefold() in {"magic", "マジック"}
+        or (
+            item.rarity.casefold() in {"rare", "レア"}
+            and explicit_like_count <= 4
+        )
+    )
+    result = []
+    for row in modifier_rows:
+        if row.kind in {"fractured", "desecrated"}:
+            result.append(replace(row, enabled=True))
+        elif row.kind == "crafted":
+            result.append(replace(row, enabled=False))
+        elif row.kind == "explicit" and keep_normal_explicit:
+            result.append(replace(row, enabled=row.tier in {1, 2}))
+    return tuple(result)
+
+
 def poe2_trade_filters(
     item: ParsedItem, virtual_augment_ref: str | None = None,
     preset: str = PRESET_FINISHED,
@@ -735,10 +761,8 @@ def poe2_trade_filters(
         + virtual_augment_filters(item, virtual_augment_ref, virtual_augment_count)
     )
     if preset == PRESET_BASE:
-        return tuple(
-            row for row in filters
-            if row.kind == "state" or row.kind in {"crafted", "fractured", "desecrated"}
-        )
+        state_rows = tuple(row for row in filters if row.kind == "state")
+        return _poe2_base_modifier_rows(item, modifier_rows) + state_rows
 
     def display_order(row: TradeStatFilter) -> int:
         if row.kind == "property":

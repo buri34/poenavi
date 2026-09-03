@@ -3071,6 +3071,27 @@ def test_mod_filter_ui_lists_merged_special_origins_in_kind_column(qapp):
         window.close()
 
 
+def test_poe2_mod_kind_column_is_capped_and_full_label_has_tooltip(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    try:
+        source = TradeStatFilter(
+            "explicit.stat_1", "混沌耐性 +21%", 21, "explicit", True,
+            provenance_tags=("crafted", "fractured"),
+        )
+        window._populate_stat_filters((source,))
+        row = window.mod_filter_tree.topLevelItem(0)
+        assert window.mod_filter_tree.header().sectionResizeMode(
+            _MOD_COLUMN_KIND
+        ) == QHeaderView.Fixed
+        assert window.mod_filter_tree.columnWidth(_MOD_COLUMN_KIND) <= (
+            window._scaled_display_value(104)
+        )
+        assert row.toolTip(_MOD_COLUMN_KIND) == "クラフト／フラクチャー"
+        assert row.toolTip(_MOD_COLUMN_TEXT) == source.text
+    finally:
+        window.close()
+
+
 def test_unique_variable_roll_slider_drag_updates_minimum_and_enables_filter(qapp):
     window = PoetoreWindow()
     try:
