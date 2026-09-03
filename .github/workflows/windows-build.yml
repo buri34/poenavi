@@ -25,7 +25,7 @@ jobs:
       - name: Run tests
         env:
           QT_QPA_PLATFORM: offscreen
-        run: python -m pytest -q
+        run: python -m pytest -vv
 
       - name: Build release assets
         shell: pwsh
