@@ -60,6 +60,10 @@ _WEAPON_CATEGORIES = {
     "sceptre", "one_mace", "two_mace", "one_sword", "two_sword", "one_axe",
     "two_axe", "dagger",
 }
+_PHYSICAL_DPS_DEFAULT_CATEGORIES = {
+    "bow", "crossbow", "spear", "flail", "quarterstaff",
+    "one_mace", "two_mace", "one_sword", "two_sword", "one_axe", "two_axe",
+}
 _ARMOUR_CATEGORIES = {
     "focus", "buckler", "shield", "body_armour", "helmet", "gloves", "boots",
 }
@@ -399,7 +403,10 @@ def _poe2_item_property_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]
         if pdps:
             rows.append(TradeStatFilter(
                 "property.physical_dps", "物理DPS（品質20%換算）", pdps,
-                "property", not edps or pdps / total >= 0.67, read_value=pdps,
+                "property", (
+                    item.category in _PHYSICAL_DPS_DEFAULT_CATEGORIES
+                    and (not edps or pdps / total >= 0.67)
+                ), read_value=pdps,
                 hidden_reason=(
                     "物理ダメージがDPSの主要なソースではありません"
                     if total and pdps / total < 0.67 else ""
@@ -657,7 +664,7 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
 _POE2_PROPERTY_SPECS = (
     ("property.spirit", "スピリット", ("Spirit", "スピリット"), "property", True),
     ("property.runic_ward", "ルーンワード", ("Runic Ward", "ルーンワード", "Ward"), "property", True),
-    ("property.reload_time", "リロード時間", ("Reload Time", "リロード時間", "再装填時間"), "property", True),
+    ("property.reload_time", "リロード時間", ("Reload Time", "リロード時間", "再装填時間"), "property", False),
     ("property.map_revives", "復活回数", ("Revives Available", "復活が利用可能"), "property", False),
     ("property.map_rarity", "アイテムレアリティ", ("Item Rarity", "アイテムレアリティ"), "property", False),
     ("property.map_pack_size", "ウェイストーンパックサイズ", ("Monster Pack Size", "モンスターパックサイズ", "Pack Size", "パックサイズ"), "property", False),

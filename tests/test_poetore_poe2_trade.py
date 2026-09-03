@@ -798,7 +798,7 @@ def test_phase7_elemental_and_life_pseudos_sum_shared_sources_once():
     assert not by_id["explicit.str"].enabled
 
 
-def test_poe2_awakened_defaults_select_major_properties_but_not_granted_skill():
+def test_poe2_ee2_defaults_select_spirit_but_not_reload_or_granted_skill():
     item = ParsedItem(
         item_class="Sceptres", rarity="rare", name="Test", base_type="Test Sceptre",
         category="sceptre", properties={
@@ -814,8 +814,37 @@ def test_poe2_awakened_defaults_select_major_properties_but_not_granted_skill():
 
     assert by_id["property.spirit"].enabled
     assert by_id["property.runic_ward"].enabled
-    assert by_id["property.reload_time"].enabled
+    assert not by_id["property.reload_time"].enabled
     assert not by_id["explicit.granted_skill"].enabled
+
+
+@pytest.mark.parametrize(
+    ("category", "enabled"),
+    [
+        ("one_axe", True), ("two_axe", True),
+        ("one_sword", True), ("two_sword", True),
+        ("one_mace", True), ("two_mace", True),
+        ("bow", True), ("crossbow", True), ("spear", True),
+        ("flail", True), ("quarterstaff", True),
+        ("staff", False), ("wand", False), ("sceptre", False),
+        ("dagger", False),
+    ],
+)
+def test_poe2_physical_dps_default_matches_ee2_weapon_categories(category, enabled):
+    item = ParsedItem(
+        item_class="Weapons", rarity="rare", name="Test Weapon",
+        base_type="Test Base", category=category,
+        properties={
+            "物理ダメージ": "50-100",
+            "秒間アタック回数": "1.00",
+        },
+    )
+
+    row = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "property.physical_dps"
+    )
+    assert row.enabled is enabled
 
 
 def test_poe2_unique_fixed_direct_mod_is_a_hidden_candidate():
