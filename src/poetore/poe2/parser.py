@@ -396,7 +396,9 @@ def _mod_kind_from_heading(heading: str, previous: str | None) -> str | None:
         return "fractured"
     if "クラフト" in heading or "crafted" in lowered:
         return "crafted"
-    if "エンチャント" in heading or "enchant" in lowered:
+    # PoE2日本語クライアントは、アノイント等のEnhancement生成元を
+    # 詳細コピー上で「エンハンス」と表記する。公式TradeではEnchant種別。
+    if "エンチャント" in heading or "エンハンス" in heading or "enchant" in lowered:
         return "enchant"
     if "ルーン" in heading or "rune" in lowered:
         return "augment"

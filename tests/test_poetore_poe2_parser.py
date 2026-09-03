@@ -861,6 +861,38 @@ def test_phase45_runemastered_base_and_desecrated_state_are_not_collapsed():
     assert desecrated.stat_id == "desecrated.stat_2923486259"
 
 
+def test_japanese_enhancement_anointment_uses_enchant_trade_stat():
+    item = parse_item_text("""アイテムクラス: アミュレット
+レアリティ: レア
+恐るべきスカラベ
+前兆のアミュレット
+--------
+装備条件：レベル 64
+--------
+アイテムレベル: 82
+--------
+{ エンハンス }
+ソーマタージー発生装置 を割り当てる — スケールできない値
+--------
+{ 暗黙モッド }
+サフィックスモッド -1個
+""")
+
+    anointment = next(
+        modifier for modifier in item.modifiers
+        if modifier.stat_id == "enchant.stat_2954116742|56666"
+    )
+    assert anointment.kind == "enchant"
+    assert anointment.stat_id == "enchant.stat_2954116742|56666"
+    filters = poe2_trade_filters(item)
+    trade_filter = next(
+        row for row in filters
+        if row.stat_id == "enchant.stat_2954116742|56666"
+    )
+    assert trade_filter.kind == "enchant"
+    assert trade_filter.stat_id == "enchant.stat_2954116742|56666"
+
+
 @pytest.mark.parametrize(
     "fixture",
     json.loads(
