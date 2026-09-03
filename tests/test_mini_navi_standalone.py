@@ -43,8 +43,7 @@ class MiniNaviStandaloneTest(unittest.TestCase):
             self.assertIsNone(overlay.parent())
             self.assertIs(overlay.main_window, main)
         finally:
-            overlay.close()
-            main.close()
+            self._dispose_overlay(overlay, main)
 
     def test_overlay_is_always_an_obs_capture_window_while_disabled(self):
         main = QWidget()
@@ -138,8 +137,7 @@ class MiniNaviStandaloneTest(unittest.TestCase):
 
             self.assertEqual(main.config["mini_guide_overlay"], saved)
         finally:
-            overlay.lock_button_window.close()
-            main.close()
+            self._dispose_overlay(overlay, main)
 
     def test_compact_mode_uses_saved_geometry_without_overwriting_standard_geometry(self):
         main = QWidget()
