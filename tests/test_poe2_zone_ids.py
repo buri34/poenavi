@@ -33,6 +33,21 @@ class Poe2ZoneIdTest(unittest.TestCase):
         self.assertEqual(by_name["Dreadnought Vanguard"], "poe2_act2_area19")
         self.assertEqual(by_name["Trial of the Sekhemas"], "poe2_act2_area20")
 
+    def test_azak_bog_is_level_40_in_default_and_runtime_data(self):
+        default_by_name = {
+            zone["zone_en"]: zone for zone in DEFAULT_ZONE_DATA_POE2["Act 3"]
+        }
+
+        zone_master_path = Path(__file__).resolve().parents[1] / "data" / "zone_data.json"
+        zone_master = json.loads(zone_master_path.read_text(encoding="utf-8"))
+        runtime_by_name = {
+            zone["zone_en"]: zone
+            for zone in zone_master["zone_data_by_version"]["poe2"]["Act 3"]
+        }
+
+        self.assertEqual(default_by_name["The Azak Bog"]["level"], 40)
+        self.assertEqual(runtime_by_name["The Azak Bog"]["level"], 40)
+
 
 if __name__ == "__main__":
     unittest.main()
