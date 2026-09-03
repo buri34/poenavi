@@ -816,21 +816,8 @@ def _poe2_modifier_rows(
 def _poe2_base_modifier_rows(
     item: ParsedItem, modifier_rows: tuple[TradeStatFilter, ...],
 ) -> tuple[TradeStatFilter, ...]:
-    """Apply EE2's Exact/Base modifier defaults for non-unique equipment."""
-    explicit_like = tuple(
-        modifier for modifier in item.modifiers
-        if modifier.kind in {"explicit", "crafted", "fractured", "desecrated"}
-    )
-    grouped_affixes = {modifier.group for modifier in explicit_like if modifier.group is not None}
-    ungrouped_count = sum(modifier.group is None for modifier in explicit_like)
-    explicit_like_count = len(grouped_affixes) + ungrouped_count
-    keep_normal_explicit = (
-        item.rarity.casefold() in {"magic", "マジック"}
-        or (
-            item.rarity.casefold() in {"rare", "レア"}
-            and explicit_like_count <= 4
-        )
-    )
+    """Apply the selected Exact/Base defaults for non-unique equipment."""
+    keep_normal_explicit = item.rarity.casefold() in {"magic", "マジック"}
     result = []
     for row in modifier_rows:
         if row.kind in {"fractured", "desecrated"}:

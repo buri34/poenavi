@@ -180,10 +180,10 @@ def test_base_enables_fractured_and_desecrated_but_not_crafted_mods():
 
 @pytest.mark.parametrize(("rarity", "modifier_count", "expected_tiers"), [
     ("magic", 2, {1, 2}),
-    ("rare", 4, {1, 2}),
+    ("rare", 4, set()),
     ("rare", 5, set()),
 ])
-def test_base_normal_explicit_defaults_follow_ee2(
+def test_base_normal_explicit_defaults_keep_magic_and_hide_rare(
     rarity, modifier_count, expected_tiers,
 ):
     modifiers = tuple(
@@ -202,7 +202,7 @@ def test_base_normal_explicit_defaults_follow_ee2(
         if row.kind == "explicit"
     ]
     assert {row.tier for row in explicit_rows} == (
-        set(range(1, modifier_count + 1)) if modifier_count <= 4 else set()
+        set(range(1, modifier_count + 1)) if rarity == "magic" else set()
     )
     assert {row.tier for row in explicit_rows if row.enabled} == expected_tiers
 
@@ -221,7 +221,7 @@ def test_reported_rare_spear_base_enables_its_fractured_mod_only():
     ]
 
 
-def test_reported_rare_boots_count_compound_prefix_as_one_affix_for_base_search():
+def test_reported_rare_boots_hide_normal_explicit_mods_in_base_search():
     item = parse_item_text(
         (Path(__file__).parent / "fixtures" / "poe2" / "rare_boots_compound_prefix_ja.txt").read_text(
             encoding="utf-8"
@@ -234,11 +234,7 @@ def test_reported_rare_boots_count_compound_prefix_as_one_affix_for_base_search(
         row for row in poe2_trade_filters(item, preset=PRESET_BASE)
         if row.kind == "explicit"
     ]
-    assert len(rows) == 5
-    assert {row.text for row in rows if row.enabled} == {
-        "雷耐性 +43(41-45)%",
-        "冷気耐性 +44(41-45)%",
-    }
+    assert rows == []
 
 
 def test_finished_preset_merges_natural_and_normalized_special_sources():
