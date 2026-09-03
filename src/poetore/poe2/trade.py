@@ -887,11 +887,6 @@ def _apply_poe2_hidden_candidate_rules(
         ):
             hidden_reason = "可変ロールではありません"
 
-        # H09: provenance-specific crafting filters are useful only for the base view
-        # when a finished search has already normalized them to Explicit.
-        if row.provenance_tags and row.kind == "explicit":
-            hidden_reason = "クラフト用ベースアイテムとして価格確認する場合のみ選択"
-
         # H11: low-level granted skills, except the three user-selected amulet bases.
         if (
             row.kind == "skill"

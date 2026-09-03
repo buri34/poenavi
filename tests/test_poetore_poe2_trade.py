@@ -1384,6 +1384,21 @@ def test_rejected_poe2_hidden_rules_are_not_applied():
     assert row.hidden_reason == ""
 
 
+@pytest.mark.parametrize("kind", ["crafted", "fractured", "desecrated"])
+def test_rejected_h09_keeps_provenance_mods_visible_in_finished_search(kind):
+    item = ParsedItem(
+        "Amulets", "rare", "", "Test Amulet", "amulet",
+        modifiers=(ItemModifier(
+            "重要な由来Mod", (50,), kind=kind,
+            ref="# to Spirit", stat_id=f"{kind}.stat_3981240776",
+        ),),
+    )
+    row = next(row for row in poe2_trade_filters(item) if row.ref == "# to Spirit")
+    assert row.kind == "explicit"
+    assert row.provenance_tags == (kind,)
+    assert row.hidden_reason == ""
+
+
 def test_adopted_poe2_map_mod_and_unique_few_visible_defaults():
     map_item = ParsedItem(
         "Maps", "rare", "", "Test Map", "map",
