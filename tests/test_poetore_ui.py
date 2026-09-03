@@ -3336,6 +3336,30 @@ def test_mod_filter_ui_shows_multiple_awakened_tier_tags_on_property(qapp):
         window.close()
 
 
+@pytest.mark.parametrize(
+    ("tier", "style_fragment"),
+    ((1, "background: #D8C47A"), (2, "border: 1px solid #9F9162")),
+)
+def test_poe2_mod_filter_ui_shows_high_tier_badge(qapp, tier, style_fragment):
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    try:
+        source = TradeStatFilter(
+            f"explicit.stat_{tier}", f"PoE2 T{tier} Mod", 10.0,
+            "prefix", True, tier=tier,
+        )
+        window._populate_stat_filters((source,))
+
+        row = window.mod_filter_tree.topLevelItem(0)
+        tier_widget = window.mod_filter_tree.itemWidget(row, 2)
+        assert row.text(2) == ""
+        assert tier_widget is not None
+        labels = tier_widget.findChildren(QLabel)
+        assert [label.text() for label in labels] == [f"T{tier}"]
+        assert style_fragment in labels[0].styleSheet()
+    finally:
+        window.close()
+
+
 def test_weapon_compound_accuracy_tier_badge_has_double_width_column(qapp):
     window = PoetoreWindow()
     try:

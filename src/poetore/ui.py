@@ -5334,9 +5334,14 @@ class PoetoreWindow(QWidget):
             tier_text = " / ".join(f"T{tier}" for tier in tier_tags)
             if not tier_text and stat_filter.tier is not None:
                 tier_text = f"T{stat_filter.tier}"
+            badge_tiers = tier_tags or (
+                (stat_filter.tier,)
+                if self.poe_version == POE2 and stat_filter.tier in {1, 2}
+                else ()
+            )
             row = QTreeWidgetItem([
                 "", _filter_kind_label(stat_filter),
-                "" if tier_tags else tier_text,
+                "" if badge_tiers else tier_text,
                 stat_filter.text, "", "",
             ])
             row.setData(0, Qt.UserRole, stat_filter.stat_id)
@@ -5413,12 +5418,12 @@ class PoetoreWindow(QWidget):
             self.mod_filter_tree.setItemWidget(
                 row, _MOD_COLUMN_CHECK, checkbox_container
             )
-            if tier_tags:
+            if badge_tiers:
                 tier_widget = QWidget()
                 tier_layout = QHBoxLayout(tier_widget)
                 tier_layout.setContentsMargins(1, 0, 1, 0)
                 tier_layout.setSpacing(2)
-                for tier in tier_tags:
+                for tier in badge_tiers:
                     tag = QLabel(f"T{tier}")
                     tag.setAlignment(Qt.AlignCenter)
                     if tier == 1:
