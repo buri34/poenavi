@@ -18,6 +18,21 @@ AMBIGUOUS_BASE_FIXTURES = (
     Path(__file__).parent / "fixtures" / "poe2" / "ambiguous_bases_bilingual.json"
 )
 REAL_COPY_FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "real_copy_bilingual.csv"
+VAAL_SIPHONER_FIXTURE = Path(__file__).parent / "fixtures" / "poe2" / "vaal_siphoner_ja.txt"
+
+
+def test_japanese_vaal_siphoner_builds_currency_search_query():
+    item = parse_item_text(VAAL_SIPHONER_FIXTURE.read_text(encoding="utf-8"))
+    payload = build_search_query(item)
+
+    assert item.category == "currency"
+    assert item.rarity == "currency"
+    assert item.name == "Vaal Siphoner"
+    assert item.base_type == "Vaal Siphoner"
+    assert payload["query"]["type"] == "Vaal Siphoner"
+    assert payload["query"]["filters"]["type_filters"]["filters"]["category"] == {
+        "option": "currency",
+    }
 
 
 def _fixtures():

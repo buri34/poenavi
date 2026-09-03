@@ -127,6 +127,7 @@ _CLASS_CATEGORY = {
     "Waystones": "waystone", "Waystone": "waystone", "ウェイストーン": "waystone",
     "Runes": "rune", "Rune": "rune", "ルーン": "rune",
     "Soul Cores": "soul_core", "Soul Core": "soul_core", "ソウルコア": "soul_core",
+    "Incubators": "currency", "Incubator": "currency", "インキュベーター": "currency",
     "Skill Gems": "gem", "スキルジェム": "gem",
     "Support Gems": "gem", "サポートジェム": "gem",
     "Meta Gems": "gem", "メタジェム": "gem",
