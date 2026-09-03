@@ -719,6 +719,49 @@ def test_329_single_copy_is_parsed_without_normal_and_detailed_merge(qapp):
         window.close()
 
 
+@pytest.mark.parametrize(
+    ("poe_version", "rarity", "category", "deferred"),
+    [
+        ("poe2", "rare", "boots", True),
+        ("poe2", "レア", "amulet", True),
+        ("poe2", "unique", "belt", False),
+        ("poe2", "currency", "currency", False),
+        ("poe1", "rare", "boots", False),
+    ],
+)
+def test_only_poe2_rare_equipment_defers_hotkey_initial_search(
+    qapp, poe_version, rarity, category, deferred,
+):
+    window = PoetoreWindow(app_config={"poe_version": poe_version})
+    copied = "test item"
+    item = ParsedItem(
+        "Boots", rarity, "Test Item", "Test Base", category, raw_text=copied,
+    )
+    window._placement_context = PlacementContext(
+        QRect(0, 0, 1920, 1080), QPoint(100, 100),
+    )
+    try:
+        with patch(
+            "src.poetore.ui.read_item_clipboard", return_value=copied,
+        ), patch.object(
+            window, "_parse_item_text", return_value=item,
+        ), patch.object(
+            window, "parse_current_text",
+        ), patch.object(
+            window, "show_at_context",
+        ), patch.object(window, "search_current_item") as search:
+            window._capture_item_copy()
+
+        if deferred:
+            search.assert_not_called()
+            assert window.price_status.text() == "検索条件を確認して「検索」を押してください。"
+            assert window.price_button.isEnabled()
+        else:
+            search.assert_called_once_with()
+    finally:
+        window.close()
+
+
 def test_show_at_context_places_window_inward_from_cursor_side(qapp):
     window = PoetoreWindow()
     try:

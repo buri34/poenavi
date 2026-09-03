@@ -3955,7 +3955,22 @@ class PoetoreWindow(QWidget):
         )
         if trace is not None:
             trace.mark("window_shown")
+        if self._should_defer_initial_trade_search(item):
+            if trace is not None:
+                trace.mark("initial_search_deferred")
+            self._pending_performance_trace = None
+            self.price_status.setText("検索条件を確認して「検索」を押してください。")
+            self.price_button.setEnabled(True)
+            return
         self.search_current_item()
+
+    def _should_defer_initial_trade_search(self, item) -> bool:
+        """Match EE2's guarded first search for PoE2 rare equipment."""
+        return (
+            self.poe_version == POE2
+            and item.rarity.casefold() in {"rare", "レア"}
+            and is_equipment_category(item.category)
+        )
 
     def _close_and_return_to_poe(self):
         """操作可能なぽえとれを閉じ、Alt+D取得元のPoEへ戻る。"""
