@@ -221,6 +221,26 @@ def test_reported_rare_spear_base_enables_its_fractured_mod_only():
     ]
 
 
+def test_reported_rare_boots_count_compound_prefix_as_one_affix_for_base_search():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2" / "rare_boots_compound_prefix_ja.txt").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert len(item.modifiers) == 5
+    assert len({modifier.group for modifier in item.modifiers}) == 4
+
+    rows = [
+        row for row in poe2_trade_filters(item, preset=PRESET_BASE)
+        if row.kind == "explicit"
+    ]
+    assert len(rows) == 5
+    assert {row.text for row in rows if row.enabled} == {
+        "雷耐性 +43(41-45)%",
+        "冷気耐性 +44(41-45)%",
+    }
+
+
 def test_finished_preset_merges_natural_and_normalized_special_sources():
     item = ParsedItem(
         item_class="Gloves", rarity="rare", name="Test", base_type="Grand Bracers",

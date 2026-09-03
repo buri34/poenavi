@@ -807,6 +807,8 @@ def parse_item_text(text: str) -> ParsedItem:
     current_kind = None
     current_affix = None
     current_tier = None
+    current_group = None
+    next_group = 0
     for line in text.splitlines():
         line = line.strip().replace("：", ":")
         if line.startswith("{") and line.endswith("}"):
@@ -815,6 +817,8 @@ def parse_item_text(text: str) -> ParsedItem:
             current_affix = _affix_from_heading(heading)
             tier_match = re.search(r"(?:Tier|ティア)\s*:\s*(\d+)", heading, re.IGNORECASE)
             current_tier = int(tier_match.group(1)) if tier_match else None
+            current_group = next_group
+            next_group += 1
             if current_kind == "augment":
                 augment_count += 1
             continue
@@ -894,7 +898,7 @@ def parse_item_text(text: str) -> ParsedItem:
                 better = -1
             modifiers.append(ItemModifier(
                 text=line, values=values, kind=str(entry.get("type", current_kind or "explicit")),
-                tier=current_tier, affix=current_affix,
+                tier=current_tier, affix=current_affix, group=current_group,
                 ref=str((entry.get("text") or {}).get("en", line)),
                 stat_id=raw_stat_id, confidence=1.0,
                 roll_min=roll_min, roll_max=roll_max, better=better,
