@@ -589,13 +589,13 @@ def test_poe2_individual_elemental_damage_properties_build_edps_and_total_dps(
     assert rows["property.total_dps"].read_value == pytest.approx(149.12)
     assert rows["property.total_dps"].enabled is True
     assert rows["property.physical_dps"].enabled is False
-    assert rows["property.elemental_dps"].enabled is False
+    assert rows["property.elemental_dps"].enabled is True
 
     payload = build_search_query(item, stat_filters=tuple(rows.values()))
     equipment = payload["query"]["filters"]["equipment_filters"]["filters"]
     assert equipment["dps"]["min"] == pytest.approx(149.12)
     assert "pdps" not in equipment
-    assert "edps" not in equipment
+    assert equipment["edps"]["min"] == pytest.approx(70.4)
 
 
 def test_poe2_single_elemental_damage_property_enables_edps_filter():
@@ -822,7 +822,7 @@ def test_poe2_awakened_defaults_select_major_properties_but_not_granted_skill():
     assert not by_id["explicit.granted_skill"].enabled
 
 
-def test_poe2_unique_keeps_existing_direct_mod_default():
+def test_poe2_unique_fixed_direct_mod_is_a_hidden_candidate():
     item = ParsedItem(
         item_class="Belts", rarity="unique", name="Test", base_type="Heavy Belt",
         category="belt", modifiers=(
@@ -831,7 +831,8 @@ def test_poe2_unique_keeps_existing_direct_mod_default():
     )
 
     direct = next(row for row in poe2_trade_filters(item) if row.stat_id == "explicit.str")
-    assert direct.enabled
+    assert not direct.enabled
+    assert direct.hidden_reason == "可変ロールではありません"
 
 
 def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
@@ -969,7 +970,7 @@ def test_single_direct_attribute_mod_does_not_add_redundant_pseudo_in_poe2():
         }
 
 
-def test_single_all_attributes_mod_does_not_expand_to_redundant_pseudos_in_poe2():
+def test_single_all_attributes_mod_uses_only_all_attributes_pseudo_in_poe2():
     item = ParsedItem(
         item_class="Spear", rarity="rare", name="Test", base_type="Test Spear",
         category="spear",
@@ -978,7 +979,9 @@ def test_single_all_attributes_mod_does_not_expand_to_redundant_pseudos_in_poe2(
         ),),
     )
     ids = {row.stat_id for row in poe2_trade_filters(item)}
-    assert not any(stat_id.startswith("pseudo.pseudo_total_") for stat_id in ids)
+    assert {stat_id for stat_id in ids if stat_id.startswith("pseudo.pseudo_total_")} == {
+        "pseudo.pseudo_total_all_attributes"
+    }
 
 
 def test_phase6_special_items_open_japanese_trade_with_localized_identity():
@@ -1268,3 +1271,144 @@ def test_explicit_empty_filter_set_does_not_restore_item_modifiers():
     )
     query = build_search_query(parse_item_text(text), stat_filters=())["query"]
     assert query["stats"] == [{"type": "and", "filters": []}]
+
+
+def test_adopted_poe2_dps_hidden_candidate_thresholds_and_base_reset():
+    item = ParsedItem(
+        item_class="Spears", rarity="rare", name="", base_type="Test Spear",
+        category="spear", properties={
+            "物理ダメージ": "90-110", "火ダメージ": "5-15",
+            "秒間アタック回数": "1.00",
+        },
+    )
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+    assert rows["property.physical_dps"].hidden_reason == ""
+    assert rows["property.elemental_dps"].hidden_reason
+    assert not rows["property.elemental_dps"].enabled
+
+
+def test_adopted_poe2_resistance_and_attribute_hidden_candidate_rules():
+    mods = (
+        ItemModifier("全ての元素耐性 +10%", (10,), ref="#% to all Elemental Resistances", stat_id="explicit.all"),
+        ItemModifier("火耐性 +30%", (30,), ref="#% to Fire Resistance", stat_id="explicit.fire"),
+        ItemModifier("冷気耐性 +40%", (40,), ref="#% to Cold Resistance", stat_id="explicit.cold"),
+        ItemModifier("雷耐性 +35%", (35,), ref="#% to Lightning Resistance", stat_id="explicit.lightning"),
+        ItemModifier("筋力 +100", (100,), ref="# to Strength", stat_id="explicit.str"),
+        ItemModifier("器用さ +20", (20,), ref="# to Dexterity", stat_id="explicit.dex"),
+        ItemModifier("知性 +10", (10,), ref="# to Intelligence", stat_id="explicit.int"),
+    )
+    item = ParsedItem("Amulets", "rare", "", "Test Amulet", "amulet", modifiers=mods)
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+    assert rows["pseudo.pseudo_total_all_elemental_resistances"].hidden_reason
+    assert rows["pseudo.pseudo_total_all_elemental_resistances"].read_value == 40
+    assert rows["pseudo.pseudo_total_cold_resistance"].hidden_reason
+    assert "pseudo.pseudo_total_fire_resistance" not in rows
+    assert "pseudo.pseudo_total_lightning_resistance" not in rows
+    assert rows["pseudo.pseudo_total_intelligence"].hidden_reason
+    assert not rows["pseudo.pseudo_total_dexterity"].hidden_reason
+
+
+def test_adopted_poe2_unique_fixed_and_augment_hidden_rules_with_exceptions():
+    item = ParsedItem(
+        "Belts", "unique", "Test Unique", "Heavy Belt", "belt",
+        modifiers=(
+            ItemModifier(
+                "固定値", (10,), kind="explicit", ref="# fixed", stat_id="explicit.fixed",
+                roll_min=10, roll_max=10,
+            ),
+            ItemModifier(
+                "可変値", (15,), kind="explicit", ref="# variable", stat_id="explicit.variable",
+                roll_min=10, roll_max=20,
+            ),
+            ItemModifier("ルーン効果", (5,), kind="augment", ref="# rune", stat_id="rune.fixed"),
+        ),
+    )
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+    assert rows["explicit.fixed"].hidden_reason == "可変ロールではありません"
+    assert rows["explicit.variable"].hidden_reason == ""
+    assert rows["rune.fixed"].hidden_reason == "可変ロールではありません"
+    base = {row.stat_id: row for row in poe2_trade_filters(item, preset=PRESET_BASE)}
+    assert all(not row.hidden_reason for row in base.values())
+
+
+def test_adopted_poe2_low_level_magic_adds_hidden_only_rarity_filter():
+    item = ParsedItem(
+        "Boots", "magic", "", "Test Boots", "boots", item_level=78,
+    )
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+    rarity = rows["property.state.rarity_magic"]
+    assert rarity.hidden_reason
+    assert not rarity.enabled
+    enabled = tuple(
+        replace(row, enabled=True) if row.stat_id == rarity.stat_id else row
+        for row in rows.values()
+    )
+    query = build_search_query(item, stat_filters=enabled, exact_base_type=False)["query"]
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {"option": "magic"}
+
+
+@pytest.mark.parametrize(
+    ("base_type", "hidden"),
+    [("普通のアミュレット", True), ("前兆のアミュレット", False)],
+)
+def test_adopted_poe2_low_granted_skill_exception(base_type, hidden):
+    item = ParsedItem(
+        "Amulets", "rare", "", base_type, "amulet",
+        modifiers=(ItemModifier(
+            "スキルを付与: レベル14 テスト", (14,), kind="skill",
+            ref="Grants Skill #", stat_id="skill.test",
+        ),),
+    )
+    row = next(row for row in poe2_trade_filters(item) if row.stat_id == "skill.test")
+    assert bool(row.hidden_reason) is hidden
+
+
+def test_rejected_poe2_hidden_rules_are_not_applied():
+    item = ParsedItem(
+        "Amulets", "rare", "", "Test Amulet", "amulet",
+        modifiers=(ItemModifier(
+            "安価なアノイント", (), kind="enchant",
+            ref="Allocates Test", stat_id="enchant.test",
+        ),),
+    )
+    row = next(row for row in poe2_trade_filters(item) if row.stat_id == "enchant.test")
+    assert row.hidden_reason == ""
+
+
+def test_adopted_poe2_map_mod_and_unique_few_visible_defaults():
+    map_item = ParsedItem(
+        "Maps", "rare", "", "Test Map", "map",
+        modifiers=(ItemModifier(
+            "通常Map Mod", (10,), kind="explicit", stat_id="explicit.map",
+            roll_min=1, roll_max=20,
+        ),),
+    )
+    map_row = next(row for row in poe2_trade_filters(map_item) if row.stat_id == "explicit.map")
+    assert map_row.hidden_reason == "ほとんどのMap Modには価値がありません"
+
+    unique = ParsedItem(
+        "Belts", "unique", "Test Unique", "Heavy Belt", "belt",
+        modifiers=(
+            ItemModifier(
+                "可変値1", (15,), stat_id="explicit.one", roll_min=10, roll_max=20,
+            ),
+            ItemModifier(
+                "可変値2", (25,), stat_id="explicit.two", roll_min=20, roll_max=30,
+            ),
+        ),
+    )
+    visible = [row for row in poe2_trade_filters(unique) if not row.hidden_reason]
+    assert len(visible) == 2
+    assert all(row.enabled for row in visible)
+
+
+@pytest.mark.parametrize("name", ["Morior Invictus", "Darkness Enthroned"])
+def test_adopted_poe2_unique_augment_exceptions_remain_visible(name):
+    item = ParsedItem(
+        "Belts", "unique", name, "Test Belt", "belt",
+        modifiers=(ItemModifier(
+            "Augment効果", (10,), kind="augment", stat_id="rune.test",
+        ),),
+    )
+    row = next(row for row in poe2_trade_filters(item) if row.stat_id == "rune.test")
+    assert row.hidden_reason == ""

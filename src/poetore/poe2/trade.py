@@ -92,6 +92,14 @@ def trade_stat_value(values: tuple[float, ...]) -> float | None:
     return values[0]
 
 
+def _modifier_has_variable_roll(modifier) -> bool:
+    return (
+        modifier.roll_min is not None
+        and modifier.roll_max is not None
+        and modifier.roll_min != modifier.roll_max
+    )
+
+
 def _trade_filter_row(stat_id: str, min_value=None, max_value=None) -> dict:
     row = {"id": stat_id}
     if min_value is not None or max_value is not None:
@@ -392,11 +400,19 @@ def _poe2_item_property_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]
             rows.append(TradeStatFilter(
                 "property.physical_dps", "物理DPS（品質20%換算）", pdps,
                 "property", not edps or pdps / total >= 0.67, read_value=pdps,
+                hidden_reason=(
+                    "物理ダメージがDPSの主要なソースではありません"
+                    if total and pdps / total < 0.67 else ""
+                ),
             ))
         if edps:
             rows.append(TradeStatFilter(
                 "property.elemental_dps", "元素DPS", edps, "property",
-                not pdps or edps / total >= 0.67, read_value=edps,
+                not pdps or edps / total >= 0.15, read_value=edps,
+                hidden_reason=(
+                    "元素ダメージがDPSの主要なソースではありません"
+                    if total and edps / total < 0.15 else ""
+                ),
             ))
         aps = _property_value(item, "秒間アタック回数", "Attacks per Second")
         if aps is not None:
@@ -492,7 +508,7 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
 
     def add(
         stat_id: str, text: str, value: float, enabled: bool, used,
-        *, keep_single: bool = False,
+        *, keep_single: bool = False, hidden_reason: str = "",
     ) -> None:
         if not used:
             return
@@ -503,13 +519,31 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
             and trade_stat_value(unique[0].values) == value
         ):
             return
+        if (
+            not hidden_reason
+            and item.rarity.casefold() in {"unique", "ユニーク"}
+            and all(not _modifier_has_variable_roll(mod) for mod in unique)
+            and not any(mod.kind == "enchant" for mod in unique)
+        ):
+            hidden_reason = "可変ロールではありません"
         rows.append(TradeStatFilter(
-            stat_id, text, value, "pseudo", enabled, read_value=value,
+            stat_id, text, value, "pseudo", enabled and not hidden_reason,
+            read_value=value, hidden_reason=hidden_reason,
             source_texts=tuple(mod.text for mod in unique),
         ))
         # Pseudos are optional broader searches. Keep their direct source rows.
 
     elemental_sources = sources["fire"] + sources["cold"] + sources["lightning"]
+    all_elemental_resistance = min(
+        resistances["fire"], resistances["cold"], resistances["lightning"]
+    )
+    add(
+        "pseudo.pseudo_total_all_elemental_resistances", "全元素耐性合計",
+        all_elemental_resistance, False,
+        elemental_sources if all_elemental_resistance else (),
+        keep_single=True,
+        hidden_reason="元素耐性合計と比べて付加価値が小さい",
+    )
     add(
         "pseudo.pseudo_total_elemental_resistance", "元素耐性合計",
         resistances["fire"] + resistances["cold"] + resistances["lightning"],
@@ -520,24 +554,91 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
         ("cold", "pseudo.pseudo_total_cold_resistance", "冷気耐性合計"),
         ("lightning", "pseudo.pseudo_total_lightning_resistance", "雷耐性合計"),
     ):
-        add(stat_id, label, resistances[element], False, sources[element])
+        add(
+            stat_id, label, resistances[element], False, sources[element],
+            keep_single=True,
+        )
+    individual_resistance_rows = [
+        row for row in rows
+        if row.stat_id in {
+            "pseudo.pseudo_total_fire_resistance",
+            "pseudo.pseudo_total_cold_resistance",
+            "pseudo.pseudo_total_lightning_resistance",
+        }
+    ]
+    if individual_resistance_rows:
+        highest = max(row.read_value or 0.0 for row in individual_resistance_rows)
+        maxima = [row for row in individual_resistance_rows if row.read_value == highest]
+        rows = [row for row in rows if row not in individual_resistance_rows]
+        if len(maxima) == 1:
+            rows.append(replace(
+                maxima[0], enabled=False,
+                hidden_reason="正確な元素耐性で絞ると価格が不当に上昇します",
+            ))
+    chaos_sources = sources["chaos"]
+    chaos_hidden = bool(
+        len(dict.fromkeys(chaos_sources)) == 1
+        and chaos_sources[0].kind in {"augment", "added_augment"}
+    )
     add(
         "pseudo.pseudo_total_chaos_resistance", "混沌耐性合計",
-        resistances["chaos"], awakened_defaults, sources["chaos"], keep_single=True,
+        resistances["chaos"], awakened_defaults, chaos_sources, keep_single=True,
+        hidden_reason=(
+            "明示ModなしのAugment由来混沌耐性には価値がありません"
+            if chaos_hidden else ""
+        ),
     )
+    all_attribute_sources = tuple(
+        mod for mod in item.modifiers if mod.ref == "# to all Attributes"
+    )
+    add(
+        "pseudo.pseudo_total_all_attributes", "全能力値合計",
+        sum(trade_stat_value(mod.values) or 0.0 for mod in all_attribute_sources),
+        False, all_attribute_sources, keep_single=True,
+    )
+    has_all_three_attributes = all(sources[key] for key in ("str", "dex", "int"))
     for attribute, stat_id, label in (
         ("str", "pseudo.pseudo_total_strength", "筋力合計"),
         ("dex", "pseudo.pseudo_total_dexterity", "器用さ合計"),
         ("int", "pseudo.pseudo_total_intelligence", "知性合計"),
     ):
-        direct_ref = {
-            "str": "# to Strength",
-            "dex": "# to Dexterity",
-            "int": "# to Intelligence",
-        }[attribute]
         used = sources[attribute]
-        if len(used) != 1 or used[0].ref != direct_ref:
-            add(stat_id, label, attributes[attribute], False, used)
+        direct_ref = {
+            "str": "# to Strength", "dex": "# to Dexterity", "int": "# to Intelligence",
+        }[attribute]
+        if has_all_three_attributes or len(used) != 1 or used[0].ref != direct_ref:
+            add(stat_id, label, attributes[attribute], False, used, keep_single=True)
+    attribute_rows = [
+        row for row in rows
+        if row.stat_id in {
+            "pseudo.pseudo_total_strength",
+            "pseudo.pseudo_total_dexterity",
+            "pseudo.pseudo_total_intelligence",
+        }
+    ]
+    if len(attribute_rows) == 3:
+        ordered = sorted(attribute_rows, key=lambda row: row.read_value or 0.0, reverse=True)
+        all_attributes = next(
+            (row for row in rows if row.stat_id == "pseudo.pseudo_total_all_attributes"),
+            None,
+        )
+        if all(row.read_value == ordered[0].read_value for row in ordered) and all_attributes:
+            rows = [row for row in rows if row not in attribute_rows]
+            attribute_rows = []
+        elif all_attributes:
+            rows.remove(all_attributes)
+        largest = ordered[0].read_value or 0.0
+        smallest = ordered[2].read_value or 0.0
+        if attribute_rows and largest and smallest / largest < 0.3:
+            hidden = ordered[1:] if ordered[1].read_value == smallest else ordered[2:]
+            hidden_ids = {id(row) for row in hidden}
+            rows = [
+                replace(
+                    row, enabled=False,
+                    hidden_reason="小さい能力値合計を省略",
+                ) if id(row) in hidden_ids else row
+                for row in rows
+            ]
     if direct_life:
         add(
             "pseudo.pseudo_total_life", "最大ライフ合計",
@@ -741,6 +842,117 @@ def _poe2_base_modifier_rows(
     return tuple(result)
 
 
+_LOW_LEVEL_MAGIC_CAPS = {
+    "wand": 81,
+    "staff": 81,
+    "relic": 80,
+    "tablet": 1,
+    "jewel": 1,
+    "map": 1,
+}
+_GRANTED_SKILL_HIDE_EXCLUDED_BASES = {
+    "前兆のアミュレット", "Omen Amulet",
+    "不在のアミュレット", "Absence Amulet",
+    "悲嘆のアミュレット", "Mourning Amulet",
+}
+
+
+def _poe2_item_is_modifiable(item: ParsedItem) -> bool:
+    return not {"corrupted", "mirrored", "sanctified", "unmodifiable"}.intersection(
+        item.flags
+    )
+
+
+def _apply_poe2_hidden_candidate_rules(
+    item: ParsedItem, filters: tuple[TradeStatFilter, ...], preset: str,
+) -> tuple[TradeStatFilter, ...]:
+    """Apply only the EE2 hidden rules explicitly adopted for PoE2."""
+    if preset == PRESET_BASE:
+        return tuple(replace(row, hidden_reason="") for row in filters)
+
+    unique = item.rarity.casefold() in {"unique", "ユニーク"}
+    result: list[TradeStatFilter] = []
+    for row in filters:
+        hidden_reason = row.hidden_reason
+        enabled = row.enabled
+
+        # H01: fixed Unique Implicit/Explicit/Pseudo values do not distinguish
+        # listings. Jewel implicits, Enchant pseudos, and remaining uses stay visible.
+        if (
+            unique
+            and not hidden_reason
+            and row.kind in {"implicit", "explicit", "pseudo"}
+            and not (row.kind == "implicit" and item.category == "jewel")
+            and row.ref != "# uses remaining"
+            and "uses_remaining" not in row.stat_id
+            and not (row.kind == "pseudo" and "enchant" in row.provenance_tags)
+            and not (
+                row.roll_min is not None
+                and row.roll_max is not None
+                and row.roll_min != row.roll_max
+            )
+        ):
+            hidden_reason = "可変ロールではありません"
+
+        # H09: provenance-specific crafting filters are useful only for the base view
+        # when a finished search has already normalized them to Explicit.
+        if row.provenance_tags and row.kind == "explicit":
+            hidden_reason = "クラフト用ベースアイテムとして価格確認する場合のみ選択"
+
+        # H11: low-level granted skills, except the three user-selected amulet bases.
+        if (
+            row.kind == "skill"
+            and row.read_value is not None
+            and row.read_value < 19
+            and item.base_type not in _GRANTED_SKILL_HIDE_EXCLUDED_BASES
+        ):
+            hidden_reason = "最大レベル未満の付与スキルは価値を加えにくい"
+
+        # H12: normal Map mods are not useful price discriminators.
+        if item.category == "map" and row.kind not in {"property", "desecrated"}:
+            hidden_reason = "ほとんどのMap Modには価値がありません"
+
+        # H16: hide Unique augments except the two socket-scaling uniques and
+        # the destructive Jewel Socket conversion stat.
+        if (
+            unique
+            and item.name not in {"Morior Invictus", "不屈なる者として死す",
+                                  "Darkness Enthroned", "即位した闇"}
+            and row.kind in {"augment", "added_augment"}
+            and row.ref != "Destroys all Augment Sockets on the item to create a Jewel Socket"
+        ):
+            hidden_reason = "可変ロールではありません"
+
+        if hidden_reason:
+            enabled = False
+        result.append(replace(row, enabled=enabled, hidden_reason=hidden_reason))
+
+    # H13: this is a hidden-only helper condition; it does not exist otherwise.
+    rarity = item.rarity.casefold()
+    cap = _LOW_LEVEL_MAGIC_CAPS.get(item.category, 82)
+    if (
+        rarity in {"magic", "マジック"}
+        and _poe2_item_is_modifiable(item)
+        and item.item_level is not None
+        and item.item_level < cap - 3
+    ):
+        result.append(TradeStatFilter(
+            "property.state.rarity_magic", "レアリティ：マジック", None, "pseudo", False,
+            hidden_reason="すべてのModをロールするにはアイテムレベルが低すぎます",
+            exact=True,
+        ))
+
+    # H20: enable every visible filter only when at most three remain.
+    if unique or item.category == "relic":
+        visible_count = sum(not row.hidden_reason for row in result)
+        if visible_count <= 3:
+            result = [
+                replace(row, enabled=not bool(row.hidden_reason))
+                for row in result
+            ]
+    return tuple(result)
+
+
 def poe2_trade_filters(
     item: ParsedItem, virtual_augment_ref: str | None = None,
     preset: str = PRESET_FINISHED,
@@ -765,7 +977,8 @@ def poe2_trade_filters(
     )
     if preset == PRESET_BASE:
         state_rows = tuple(row for row in filters if row.kind == "state")
-        return _poe2_base_modifier_rows(item, modifier_rows) + state_rows
+        base_filters = _poe2_base_modifier_rows(item, modifier_rows) + state_rows
+        return _apply_poe2_hidden_candidate_rules(item, base_filters, preset)
 
     def display_order(row: TradeStatFilter) -> int:
         if row.kind == "property":
@@ -777,7 +990,8 @@ def poe2_trade_filters(
                 return 2
         return 3
 
-    return tuple(sorted(filters, key=display_order))
+    ordered = tuple(sorted(filters, key=display_order))
+    return _apply_poe2_hidden_candidate_rules(item, ordered, preset)
 
 
 _POE2_FILTER_TARGETS = {
@@ -815,6 +1029,11 @@ def _apply_poe2_filter_rows(query: dict, filters) -> None:
             continue
         if row.stat_id.startswith("property.state."):
             state = row.stat_id.rsplit(".", 1)[-1]
+            if state == "rarity_magic":
+                query["filters"]["type_filters"]["filters"]["rarity"] = {
+                    "option": "magic"
+                }
+                continue
             filter_name = _POE2_STATE_FILTER_NAMES.get(state)
             if filter_name is None:
                 continue

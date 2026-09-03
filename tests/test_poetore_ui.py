@@ -6324,14 +6324,16 @@ def test_poe2_life_flask_properties_do_not_show_metadata_warning(qapp):
         window.parse_current_text()
 
         assert window.mod_warning.isHidden()
-        assert window.mod_filter_tree.topLevelItemCount() == 2
+        assert window.mod_filter_tree.topLevelItemCount() == 3
         assert {
             window.mod_filter_tree.topLevelItem(index).text(_MOD_COLUMN_TEXT)
             for index in range(window.mod_filter_tree.topLevelItemCount())
         } == {
             "回復量が70(66-70)%増加する",
             "毎秒チャージを0.20獲得する",
+            "レアリティ：マジック",
         }
+        assert not window.hidden_mods_toggle.isHidden()
     finally:
         window.close()
 

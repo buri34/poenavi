@@ -133,9 +133,9 @@ def build_audit_rows() -> list[AuditRow]:
                         else "nonunique"
                     )
                     observed_rarity = _observed_rarity(query)
-                    expected_stats = (
-                        1 if preset == PRESET_FINISHED and rarity == "unique" else 0
-                    )
+                    # Synthetic Unique uses one fixed-roll stat. H01 keeps it as
+                    # a hidden candidate, so the default Trade2 query sends none.
+                    expected_stats = 0
                     observed_stats = _stat_count(query)
                     checks = (
                         observed_category == TRADE_CATEGORY_BY_CATEGORY[category],
