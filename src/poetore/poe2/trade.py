@@ -781,6 +781,11 @@ def _poe2_modifier_rows(
             enabled=(
                 item.category != "waystone"
                 and not _uses_awakened_rare_defaults(item)
+            ) or (
+                preset == PRESET_FINISHED
+                and _uses_awakened_rare_defaults(item)
+                and modifier.tier == 1
+                and _is_priority_t1_finished_modifier(modifier.ref)
             ),
             max_value=(value if modifier.better == -1 else None),
             ref=modifier.ref, confidence=modifier.confidence,
@@ -818,6 +823,14 @@ def _poe2_modifier_rows(
         if converted or stat_id.startswith("explicit."):
             positions.setdefault(stat_id, len(rows) - 1)
     return tuple(rows)
+
+
+def _is_priority_t1_finished_modifier(ref: str) -> bool:
+    """Return whether a T1 direct Mod should constrain a finished-item search."""
+    normalized = str(ref or "").strip().casefold()
+    if normalized == "# to spirit":
+        return True
+    return bool(re.search(r"(?:^|\s)to level of\s+.+\sskills?$", normalized))
 
 
 def _poe2_base_modifier_rows(

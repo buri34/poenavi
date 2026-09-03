@@ -847,6 +847,62 @@ def test_poe2_physical_dps_default_matches_ee2_weapon_categories(category, enabl
     assert row.enabled is enabled
 
 
+@pytest.mark.parametrize(
+    ("ref", "tier", "enabled"),
+    [
+        ("# to Spirit", 1, True),
+        ("# to Spirit", 2, False),
+        ("# to Level of all Spell Skills", 1, True),
+        ("# to Level of all Melee Skills", 1, True),
+        ("# to Level of all Minion Skills", 1, True),
+        ("# to Level of all Projectile Skills", 1, True),
+        ("# to Level of all Fire Spell Skills", 1, True),
+        ("+# to Level of all Tornado Shot Skills", 1, True),
+        ("# to Level of all Spell Skills", 2, False),
+        ("Skills deal #% increased Damage", 1, False),
+        ("#% increased Spirit", 1, False),
+    ],
+)
+def test_poe2_finished_search_enables_only_priority_t1_direct_mods(ref, tier, enabled):
+    item = ParsedItem(
+        item_class="Amulets", rarity="rare", name="Test Amulet",
+        base_type="Test Base", category="amulet",
+        modifiers=(ItemModifier(
+            "テストMod", (3,), kind="explicit", ref=ref,
+            stat_id="explicit.test", tier=tier,
+        ),),
+    )
+
+    row = next(row for row in poe2_trade_filters(item) if row.stat_id == "explicit.test")
+    assert row.enabled is enabled
+
+
+def test_poe2_finished_search_enables_t1_fractured_spirit_after_normalization():
+    item = ParsedItem(
+        item_class="Amulets", rarity="rare", name="Test Amulet",
+        base_type="Gold Amulet", category="amulet", flags=("fractured",),
+        modifiers=(ItemModifier(
+            "スピリット +50", (50,), kind="fractured", ref="# to Spirit",
+            stat_id="fractured.stat_3981240776", tier=1,
+        ),),
+    )
+
+    row = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "explicit.stat_3981240776"
+    )
+    assert row.kind == "explicit"
+    assert row.provenance_tags == ("fractured",)
+    assert row.enabled
+    sent = build_search_query(
+        item, stat_filters=poe2_trade_filters(item),
+    )["query"]["stats"][0]["filters"]
+    assert sent == [{
+        "id": "explicit.stat_3981240776",
+        "value": {"min": 50.0},
+    }]
+
+
 def test_poe2_unique_fixed_direct_mod_is_a_hidden_candidate():
     item = ParsedItem(
         item_class="Belts", rarity="unique", name="Test", base_type="Heavy Belt",
