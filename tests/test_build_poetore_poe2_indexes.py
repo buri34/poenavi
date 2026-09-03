@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import pytest
 from src.poetore.poe2.metadata import related_item_group
 
@@ -102,7 +103,7 @@ def test_build_identity_index_keeps_duplicate_variant_tags_and_base_armour(tmp_p
         )
 
     entries = build_identity_index(tmp_path)["entries"]
-    assert [row["ref_name"] for row in entries] == ["Bastion Sabatons", "Fortress Sabatons"]
+    assert [row["ref_name"] for row in entries[:2]] == ["Bastion Sabatons", "Fortress Sabatons"]
     assert entries[0]["tags"] == ["str_dex_armour"]
     assert entries[0]["armour"] == {"ar": [123, 123], "ev": [111, 111]}
     assert entries[1]["armour"] == {"ar": [147, 147], "ev": [134, 134]}
@@ -121,6 +122,29 @@ def test_generated_related_items_match_locked_ee2_and_have_price_hints():
     prism = next(row for row in first["items"] if row["name"] == "Prism of Belief")
     assert prism["variant"] == "Diamond"
     assert prism["ninja_type"] == "UniqueJewels"
+
+
+def test_reviewed_related_item_japanese_overrides_are_in_runtime_indexes():
+    overrides = json.loads(
+        Path("scripts/poetore-poe2-related-japanese-overrides.json").read_text(encoding="utf-8")
+    )["overrides"]
+    identity = json.loads((OUTPUT / "identity_index.json").read_text(encoding="utf-8"))
+    related = json.loads((OUTPUT / "related_item_groups.json").read_text(encoding="utf-8"))
+    expected = {
+        (row["namespace"], row["ref_name"]): row["japanese"] for row in overrides
+    }
+    identity_names = {
+        (row["namespace"], row["ref_name"]): row["names"].get("ja")
+        for row in identity["entries"]
+    }
+    related_names = {
+        (row["namespace"], row["name"]): row.get("display_name")
+        for group in related["groups"]
+        for row in (*group.get("query", ()), *group.get("items", ()))
+    }
+    assert {key: identity_names.get(key) for key in expected} == expected
+    assert {key: related_names.get(key) for key in expected} == expected
+    assert len(expected) == 21
 
 
 def test_build_related_items_is_reproducible_from_locked_ee2():

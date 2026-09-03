@@ -11,6 +11,30 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "vendor-sources" / "poe2-trade-api-2026-08-09"
 OUTPUT = ROOT / "data" / "poetore" / "poe2"
+RELATED_JAPANESE_OVERRIDES = ROOT / "scripts" / "poetore-poe2-related-japanese-overrides.json"
+
+
+def _related_japanese_overrides() -> tuple[dict, ...]:
+    payload = json.loads(RELATED_JAPANESE_OVERRIDES.read_text(encoding="utf-8"))
+    return tuple(payload.get("overrides", ()))
+
+
+def _apply_related_identity_overrides(entries: list[dict]) -> None:
+    by_key = {(row.get("namespace"), row.get("ref_name")): row for row in entries}
+    for override in _related_japanese_overrides():
+        key = (override["namespace"], override["ref_name"])
+        row = by_key.get(key)
+        if row is None:
+            row = {
+                "namespace": override["namespace"],
+                "ref_name": override["ref_name"],
+                "names": {"en": override["ref_name"]},
+            }
+            if override.get("base_ref"):
+                row["base_ref"] = override["base_ref"]
+            entries.append(row)
+            by_key[key] = row
+        row.setdefault("names", {})["ja"] = override["japanese"]
 
 
 def _load(name: str) -> dict:
@@ -79,6 +103,7 @@ def build_identity_index(ee2_root: Path | None = None) -> dict:
             if en.get("unique"):
                 row["base_ref"] = en["unique"].get("base", "")
             entries.append(row)
+        _apply_related_identity_overrides(entries)
         return {
             "schema_version": 2,
             "source": "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8",
@@ -253,6 +278,10 @@ def build_related_item_groups(ee2_root: Path) -> dict:
         (row.get("namespace", ""), row.get("refName", "")): row.get("name", "")
         for row in localized["ja"]
     }
+    japanese.update({
+        (row["namespace"], row["ref_name"]): row["japanese"]
+        for row in _related_japanese_overrides()
+    })
 
     def enrich(value: str) -> dict:
         row = _related_identity(value)
