@@ -492,11 +492,7 @@ class MainWindow(QMainWindow):
         self.resize(420, 1200)  # 仮サイズ、showEvent で実際に配置
 
         # アプリアイコン設定
-        icon_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "icon.ico")
-        if not os.path.exists(icon_path):
-            # PyInstaller _MEIPASS対応
-            base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(sys.argv[0])))
-            icon_path = os.path.join(base, "icon.ico")
+        icon_path = self._app_icon_path()
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
         
@@ -4937,8 +4933,29 @@ class MainWindow(QMainWindow):
     def _main_window_flags(self):
         return _with_optional_always_on_top(Qt.FramelessWindowHint, self)
 
+    @staticmethod
+    def _app_icon_path():
+        """開発時・PyInstaller実行時のどちらでもPoENaviアイコンを返す。"""
+        if getattr(sys, "frozen", False):
+            exe_dir = os.path.dirname(sys.executable)
+            base = getattr(sys, "_MEIPASS", exe_dir)
+            candidates = (
+                os.path.join(exe_dir, "assets", "app", "icon.ico"),
+                os.path.join(base, "assets", "app", "icon.ico"),
+                os.path.join(exe_dir, "icon.ico"),
+                os.path.join(base, "icon.ico"),
+            )
+            return next((path for path in candidates if os.path.exists(path)), candidates[0])
+
+        project_root = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
+        return os.path.join(project_root, "assets", "app", "icon.ico")
+
     def _build_tray_icon(self):
-        icon = self.windowIcon()
+        icon = QIcon(self._app_icon_path())
+        if icon.isNull():
+            icon = self.windowIcon()
         if icon.isNull():
             icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
 

@@ -1,5 +1,6 @@
 import os
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -34,6 +35,12 @@ class MiniNaviStandaloneTest(unittest.TestCase):
         main.deleteLater()
         self.app.sendPostedEvents(None, QEvent.DeferredDelete)
         self.app.processEvents()
+
+    def test_poennavi_tray_icon_uses_app_icon_asset(self):
+        icon_path = Path(MainWindow._app_icon_path())
+
+        self.assertEqual(icon_path.parts[-3:], ("assets", "app", "icon.ico"))
+        self.assertTrue(icon_path.is_file())
 
     def test_overlay_is_top_level_but_keeps_logical_main_window(self):
         main = QWidget()
