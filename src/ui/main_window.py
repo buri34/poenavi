@@ -8,9 +8,9 @@ from pynput import keyboard as pynput_keyboard
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QPushButton, QMenu, QFrame, QScrollArea, QSplitter,
                                QSizeGrip, QSizePolicy, QMessageBox, QRadioButton, QButtonGroup, QApplication,
-                               QToolTip)
+                               QStyle, QSystemTrayIcon, QToolTip)
 from PySide6.QtCore import QObject, Qt, QTimer, Signal, QRect, QEvent, QEventLoop, QPoint, QSize, QUrl
-from PySide6.QtGui import QCursor, QMouseEvent, QIcon, QDesktopServices, QKeySequence
+from PySide6.QtGui import QAction, QCursor, QMouseEvent, QIcon, QDesktopServices, QKeySequence
 from src.ui.styles import Styles
 from src.ui.detached_panel import DetachedPanelWindow
 from src.ui.settings_dialog import AreaNoteDialog, SettingsDialog
@@ -622,6 +622,7 @@ class MainWindow(QMainWindow):
         self.detached_panel_windows = {}
         
         self.setup_ui()
+        self._build_tray_icon()
         self._restore_detached_panels()
         self._restore_minimized_panels()
         self._refresh_main_window_minimum_height()
@@ -4936,13 +4937,65 @@ class MainWindow(QMainWindow):
     def _main_window_flags(self):
         return _with_optional_always_on_top(Qt.FramelessWindowHint, self)
 
+    def _build_tray_icon(self):
+        icon = self.windowIcon()
+        if icon.isNull():
+            icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
+
+        self.tray_icon = QSystemTrayIcon(icon, self)
+        self.tray_icon.setToolTip("ぽえなび")
+        self.tray_icon.activated.connect(self._handle_tray_activation)
+
+        menu = QMenu(self)
+        self.tray_show_action = QAction("ぽえなびを表示", menu)
+        self.tray_show_action.triggered.connect(self.restore_from_tray)
+        menu.addAction(self.tray_show_action)
+        menu.addSeparator()
+        self.tray_exit_action = QAction("終了", menu)
+        self.tray_exit_action.triggered.connect(self.quit_from_tray)
+        menu.addAction(self.tray_exit_action)
+        self.tray_icon.setContextMenu(menu)
+        self._tray_notification_shown = False
+
     def minimize_main_window(self):
-        """みになび表示中は本体だけ隠し、それ以外は通常どおり最小化する。"""
+        """本体をタスクトレイへ格納し、みになびの表示は維持する。"""
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            self.showMinimized()
+            return
+
         overlay = getattr(self, "mini_navi_overlay", None)
         if overlay is not None and self._is_mini_navi_available() and overlay.isVisible():
             self.hide_for_mini_navi()
-            return
-        self.showMinimized()
+        else:
+            self.hide()
+        self.tray_icon.show()
+        if not self._tray_notification_shown:
+            self.tray_icon.showMessage(
+                "ぽえなび",
+                "タスクトレイに格納しました。",
+                QSystemTrayIcon.Information,
+                3000,
+            )
+            self._tray_notification_shown = True
+
+    def restore_from_tray(self):
+        if getattr(self, "_hidden_for_mini_navi", False):
+            self.restore_from_mini_navi()
+        else:
+            self.showNormal()
+            self.raise_()
+            self.activateWindow()
+        self.tray_icon.hide()
+
+    def quit_from_tray(self):
+        self.close()
+        app = QApplication.instance()
+        if app is not None:
+            app.quit()
+
+    def _handle_tray_activation(self, reason):
+        if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.DoubleClick):
+            self.restore_from_tray()
 
     def hide_for_mini_navi(self):
         """ぽえなび本体だけを隠し、みになびの表示を維持する。"""
@@ -5092,6 +5145,10 @@ class MainWindow(QMainWindow):
             }
             ConfigManager.save_config(config)
             self.config = config
+
+        tray_icon = getattr(self, "tray_icon", None)
+        if tray_icon is not None:
+            tray_icon.hide()
 
         self._close_detached_panels()
 

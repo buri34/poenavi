@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QEvent, Qt
-from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QWidget
 
 from src.ui.main_window import MainWindow, MiniNaviOverlay
 from src.utils.config_manager import ConfigManager
@@ -212,30 +212,80 @@ class MiniNaviStandaloneTest(unittest.TestCase):
     def test_minimize_hides_only_main_when_mini_navi_is_visible(self):
         window = MainWindow.__new__(MainWindow)
         window._hidden_for_mini_navi = False
+        window._tray_notification_shown = False
         window.hide = Mock()
         window.showMinimized = Mock()
+        window.tray_icon = Mock()
         window._is_mini_navi_available = Mock(return_value=True)
         window.mini_navi_overlay = Mock()
         window.mini_navi_overlay.isVisible.return_value = True
 
-        MainWindow.minimize_main_window(window)
+        with patch.object(QSystemTrayIcon, "isSystemTrayAvailable", return_value=True):
+            MainWindow.minimize_main_window(window)
 
         self.assertTrue(window._hidden_for_mini_navi)
         window.hide.assert_called_once_with()
         window.showMinimized.assert_not_called()
+        window.tray_icon.show.assert_called_once_with()
+        window.tray_icon.showMessage.assert_called_once()
         window.mini_navi_overlay.show.assert_called_once_with()
         window.mini_navi_overlay._sync_lock_button.assert_called_once_with()
 
-    def test_minimize_uses_normal_minimize_without_visible_mini_navi(self):
+    def test_minimize_hides_to_tray_without_visible_mini_navi(self):
         window = MainWindow.__new__(MainWindow)
+        window._tray_notification_shown = True
+        window.hide = Mock()
         window.showMinimized = Mock()
+        window.tray_icon = Mock()
         window._is_mini_navi_available = Mock(return_value=True)
         window.mini_navi_overlay = Mock()
         window.mini_navi_overlay.isVisible.return_value = False
 
-        MainWindow.minimize_main_window(window)
+        with patch.object(QSystemTrayIcon, "isSystemTrayAvailable", return_value=True):
+            MainWindow.minimize_main_window(window)
+
+        window.hide.assert_called_once_with()
+        window.showMinimized.assert_not_called()
+        window.tray_icon.show.assert_called_once_with()
+        window.tray_icon.showMessage.assert_not_called()
+
+    def test_minimize_uses_normal_minimize_when_tray_is_unavailable(self):
+        window = Mock()
+        with patch.object(QSystemTrayIcon, "isSystemTrayAvailable", return_value=False):
+            MainWindow.minimize_main_window(window)
 
         window.showMinimized.assert_called_once_with()
+        window.hide.assert_not_called()
+
+    def test_tray_activation_restores_hidden_main_window(self):
+        window = Mock()
+        window._hidden_for_mini_navi = True
+
+        MainWindow.restore_from_tray(window)
+
+        window.restore_from_mini_navi.assert_called_once_with()
+        window.showNormal.assert_not_called()
+        window.tray_icon.hide.assert_called_once_with()
+
+    def test_tray_activation_restores_normal_main_window(self):
+        window = Mock()
+        window._hidden_for_mini_navi = False
+
+        MainWindow.restore_from_tray(window)
+
+        window.showNormal.assert_called_once_with()
+        window.raise_.assert_called_once_with()
+        window.activateWindow.assert_called_once_with()
+        window.tray_icon.hide.assert_called_once_with()
+
+    def test_tray_click_and_double_click_restore_main_window(self):
+        window = Mock()
+
+        MainWindow._handle_tray_activation(window, QSystemTrayIcon.Trigger)
+        MainWindow._handle_tray_activation(window, QSystemTrayIcon.DoubleClick)
+        MainWindow._handle_tray_activation(window, QSystemTrayIcon.Context)
+
+        self.assertEqual(window.restore_from_tray.call_count, 2)
 
     def test_main_button_restores_hidden_main_window(self):
         main = Mock()
