@@ -66,8 +66,8 @@ jobs:
       fail-fast: false
       matrix:
         scenario:
-          - repeat-mini-group
-          - repeat-standalone
+          - offscreen-full-prefix
+          - minimal-full-prefix
 
     steps:
       - uses: actions/checkout@v6
@@ -82,7 +82,6 @@ jobs:
       - name: Run diagnostic scenario
         shell: pwsh
         env:
-          QT_QPA_PLATFORM: offscreen
           DIAGNOSTIC_SCENARIO: ${{ matrix.scenario }}
         run: |
           $files = @(Get-ChildItem tests/test_*.py | Sort-Object Name | ForEach-Object { $_.FullName })
@@ -93,26 +92,14 @@ jobs:
           Write-Host "MiniNavi boundary:"
           $mini | ForEach-Object { Write-Host "  $_" }
 
-          if ($env:DIAGNOSTIC_SCENARIO -eq "repeat-mini-group") {
-            $targets = $mini
-          } elseif ($env:DIAGNOSTIC_SCENARIO -eq "repeat-standalone") {
-            $targets = @($files[62])
+          if ($env:DIAGNOSTIC_SCENARIO -eq "offscreen-full-prefix") {
+            $env:QT_QPA_PLATFORM = "offscreen"
+          } elseif ($env:DIAGNOSTIC_SCENARIO -eq "minimal-full-prefix") {
+            $env:QT_QPA_PLATFORM = "minimal"
           } else {
             throw "Unknown diagnostic scenario: $env:DIAGNOSTIC_SCENARIO"
           }
 
-          $failedRuns = @()
-          foreach ($iteration in 1..30) {
-            Write-Host "::group::Iteration $iteration"
-            python -m pytest -q $targets
-            $iterationExitCode = $LASTEXITCODE
-            Write-Host "::endgroup::"
-            if ($iterationExitCode -ne 0) {
-              $failedRuns += $iteration
-              Write-Host "Iteration $iteration failed with exit code $iterationExitCode"
-            }
-          }
-
-          if ($failedRuns.Count -gt 0) {
-            throw "Failing iterations: $($failedRuns -join ', ')"
-          }
+          Write-Host "Qt platform: $env:QT_QPA_PLATFORM"
+          python -m pytest -vv @($files[0..62])
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
