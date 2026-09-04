@@ -76,9 +76,10 @@ jobs:
 
       - name: Run full tests
         if: github.ref_name != 'v4.1.0'
+        shell: pwsh
         env:
           QT_QPA_PLATFORM: offscreen
-        run: python -m pytest -q
+        run: .\scripts\run_tests_by_file.ps1 -Python python
 
       - name: Build release assets
         shell: pwsh
