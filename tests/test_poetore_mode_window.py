@@ -473,6 +473,6 @@ def test_poe2_currency_rate_auto_league_does_not_call_trade2_api():
     ):
         window = PoetoreModeWindow()
 
-    assert window._currency_rate_league() == "Runes of Aldur"
+    assert window._currency_rate_league() == "Forbidden Rites"
     window.close()
     app.processEvents()

@@ -21,8 +21,10 @@ from .metadata import augment_entries, explicit_variant_id, resolve_identity
 
 API_ROOT = "https://www.pathofexile.com/api/trade2"
 USER_AGENT = "PoENavi/poetore-poe2-development (github.com/buri34/poenavi)"
-LEAGUES_URL = f"{API_ROOT}/data/leagues"
+LEAGUES_URL = f"{API_ROOT}/data/leagues?realm=poe2"
 FALLBACK_LEAGUES = (
+    TradeLeague("Forbidden Rites"),
+    TradeLeague("HC Forbidden Rites", True),
     TradeLeague("Runes of Aldur"),
     TradeLeague("HC Runes of Aldur", True),
     TradeLeague("Standard"),

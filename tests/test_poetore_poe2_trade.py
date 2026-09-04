@@ -479,20 +479,36 @@ def test_poe2_price_search_fetches_ten_then_fetches_next_ten_on_demand(monkeypat
     assert expanded.fetched_count == 20
 
 
-def test_poe2_leagues_are_filtered_and_auto_selects_current_softcore(monkeypatch):
-    monkeypatch.setattr(
-        "src.poetore.poe2.trade._cached_request_json",
-        lambda _url: ({"result": [
+def test_poe2_leagues_use_realm_specific_endpoint_and_auto_select_current_softcore(
+    monkeypatch,
+):
+    requested_urls = []
+
+    def fake_cached_request(url):
+        requested_urls.append(url)
+        return ({"result": [
+            {"id": "Forbidden Rites", "realm": "poe2"},
+            {"id": "HC Forbidden Rites", "realm": "poe2"},
             {"id": "Runes of Aldur", "realm": "poe2"},
             {"id": "HC Runes of Aldur", "realm": "poe2"},
             {"id": "Standard", "realm": "poe2"},
             {"id": "PoE1 League", "realm": "pc"},
-        ]}, {}, False),
+        ]}, {}, False)
+
+    monkeypatch.setattr(
+        "src.poetore.poe2.trade._cached_request_json",
+        fake_cached_request,
     )
     leagues = available_pc_leagues()
-    assert [row.id for row in leagues] == ["Runes of Aldur", "HC Runes of Aldur", "Standard"]
+    assert requested_urls == [
+        "https://www.pathofexile.com/api/trade2/data/leagues?realm=poe2",
+    ]
+    assert [row.id for row in leagues] == [
+        "Forbidden Rites", "HC Forbidden Rites", "Runes of Aldur",
+        "HC Runes of Aldur", "Standard",
+    ]
     assert leagues[1].hardcore
-    assert default_pc_league(leagues) == "Runes of Aldur"
+    assert default_pc_league(leagues) == "Forbidden Rites"
 
 
 def test_mageblood_option_stats_use_trade2_pipe_suffix_ids():

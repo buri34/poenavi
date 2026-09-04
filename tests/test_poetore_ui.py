@@ -1998,15 +1998,18 @@ def test_poetore_league_choices_include_sc_hc_and_persist(qapp):
         window.close()
 
 
-def test_poe2_window_starts_with_four_leagues_and_reported_mageblood_is_resolved(qapp):
+def test_poe2_window_starts_with_current_leagues_and_reported_mageblood_is_resolved(qapp):
     config = {"poe_version": "poe2", "poetore": {"league_poe2": "auto"}}
     window = PoetoreWindow(app_config=config)
     try:
-        assert window.trade_league_combo.itemText(0) == "自動（現行SC: Runes of Aldur）"
+        assert window.trade_league_combo.itemText(0) == "自動（現行SC: Forbidden Rites）"
         assert [
             window.trade_league_combo.itemData(index)
             for index in range(window.trade_league_combo.count())
-        ] == ["auto", "Runes of Aldur", "HC Runes of Aldur", "Standard", "Hardcore"]
+        ] == [
+            "auto", "Forbidden Rites", "HC Forbidden Rites", "Runes of Aldur",
+            "HC Runes of Aldur", "Standard", "Hardcore",
+        ]
 
         text = (Path(__file__).parent / "fixtures" / "poe2" / "mageblood_ja.txt").read_text(
             encoding="utf-8"
