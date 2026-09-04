@@ -192,12 +192,16 @@ class TriggerKeyButton(HotkeyButton):
 
 
 class AutoHideHotkeyWidget(QWidget):
-    """AUTO-HIDE専用の保持キー選択＋通常キー入力。"""
+    """保持キー選択＋通常キー入力。通常モードでは単独キーも許可する。"""
 
     INPUT_WIDTH = 275
 
-    def __init__(self, hotkey="ctrl+d", parent=None, theme=POETORE_THEME):
+    def __init__(
+        self, hotkey="ctrl+d", parent=None, theme=POETORE_THEME,
+        allow_no_modifier=False,
+    ):
         super().__init__(parent)
+        self.allow_no_modifier = allow_no_modifier
         self.setFixedWidth(self.INPUT_WIDTH)
         modifier, trigger = self._split_hotkey(hotkey)
 
@@ -209,7 +213,12 @@ class AutoHideHotkeyWidget(QWidget):
         self.modifier_group.setExclusive(True)
         self.ctrl_button = QPushButton("Ctrl")
         self.alt_button = QPushButton("Alt")
-        for name, button in (("ctrl", self.ctrl_button), ("alt", self.alt_button)):
+        modifier_buttons = [("ctrl", self.ctrl_button), ("alt", self.alt_button)]
+        self.no_modifier_button = None
+        if self.allow_no_modifier:
+            self.no_modifier_button = QPushButton("なし")
+            modifier_buttons.append(("none", self.no_modifier_button))
+        for name, button in modifier_buttons:
             button.setObjectName(f"autoHide{name.title()}Modifier")
             button.setCheckable(True)
             button.setFixedWidth(48)
@@ -225,17 +234,31 @@ class AutoHideHotkeyWidget(QWidget):
             button.setProperty("modifier", name)
             self.modifier_group.addButton(button)
             layout.addWidget(button)
-        (self.alt_button if modifier == "alt" else self.ctrl_button).setChecked(True)
+        selected_button = self.ctrl_button
+        if modifier == "alt":
+            selected_button = self.alt_button
+        elif modifier is None and self.no_modifier_button is not None:
+            selected_button = self.no_modifier_button
+        selected_button.setChecked(True)
 
         self.key_button = TriggerKeyButton(trigger)
         self.key_button.setObjectName("autoHideTriggerKey")
-        self.key_button.setToolTip("通常キーを1つ入力してください（Ctrl / Altは左で選択）")
+        self.key_button.setToolTip(
+            "通常キーを1つ入力してください（修飾キーは左で選択）"
+            if self.allow_no_modifier
+            else "通常キーを1つ入力してください（Ctrl / Altは左で選択）"
+        )
         layout.addWidget(self.key_button, 1)
 
     @staticmethod
     def _split_hotkey(hotkey):
         tokens = [token.strip() for token in str(hotkey or "").split("+") if token.strip()]
-        modifier = "alt" if any(token.casefold() == "alt" for token in tokens) else "ctrl"
+        normalized = {token.casefold() for token in tokens}
+        modifier = (
+            "alt" if "alt" in normalized
+            else "ctrl" if normalized & {"ctrl", "control"}
+            else None
+        )
         trigger = next(
             (token for token in reversed(tokens)
              if token.casefold() not in {"ctrl", "control", "alt", "shift", "win", "meta"}),
@@ -246,7 +269,8 @@ class AutoHideHotkeyWidget(QWidget):
     @property
     def modifier(self):
         checked = self.modifier_group.checkedButton()
-        return checked.property("modifier") if checked is not None else "ctrl"
+        value = checked.property("modifier") if checked is not None else "ctrl"
+        return None if value == "none" else value
 
     @property
     def key_text(self):
@@ -255,10 +279,14 @@ class AutoHideHotkeyWidget(QWidget):
             return "none"
         # 通常キー欄で修飾キー付き入力をしても、選択中の保持キーだけを採用する。
         _, trigger = self._split_hotkey(trigger)
-        return f"{self.modifier}+{trigger}"
+        return trigger if self.modifier is None else f"{self.modifier}+{trigger}"
 
     def set_modifier(self, modifier):
-        (self.alt_button if str(modifier).casefold() == "alt" else self.ctrl_button).setChecked(True)
+        normalized = str(modifier).casefold()
+        if normalized in {"none", "なし"} and self.no_modifier_button is not None:
+            self.no_modifier_button.setChecked(True)
+        else:
+            (self.alt_button if normalized == "alt" else self.ctrl_button).setChecked(True)
 
     def set_key(self, key):
         _, trigger = self._split_hotkey(key)
@@ -1999,6 +2027,7 @@ class SettingsDialog(QDialog):
         self.poetore_capture_btn = AutoHideHotkeyWidget(
             self.hotkeys.get("poetore_capture", "alt+d"),
             theme=POENAVI_THEME,
+            allow_no_modifier=True,
         )
         h_layout10.addWidget(self.poetore_capture_btn)
         group_layout.addLayout(h_layout10)

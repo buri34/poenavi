@@ -3087,6 +3087,7 @@ class MainWindow(QMainWindow):
                     "poetore_capture", capture_hotkey,
                     result_window_checker=lambda hwnd: MainWindow._is_poetore_result_window(self, hwnd),
                     poe_target_getter=lambda: MainWindow._poetore_poe_target(self),
+                    allow_unmodified=True,
                     parent=self if isinstance(self, QObject) else None,
                 )
                 self.suppressed_capture_hotkey.command.connect(self.hotkey_signal.emit)

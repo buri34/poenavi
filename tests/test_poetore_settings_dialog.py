@@ -105,9 +105,11 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert dialog.get_settings()["stash_tab_scroll_enabled"] is False
     assert isinstance(dialog.capture_hotkey, AutoHideHotkeyWidget)
     assert dialog.capture_hotkey.alt_button.isChecked()
+    assert dialog.capture_hotkey.no_modifier_button is not None
     assert dialog.capture_hotkey.key_button.key_text == "d"
     assert isinstance(dialog.auto_hide_hotkey, AutoHideHotkeyWidget)
     assert dialog.auto_hide_hotkey.ctrl_button.isChecked()
+    assert dialog.auto_hide_hotkey.no_modifier_button is None
     assert dialog.auto_hide_hotkey.key_button.key_text == "d"
     assert dialog.auto_hide_hotkey.ctrl_button.width() == 48
     assert dialog.auto_hide_hotkey.alt_button.width() == 48

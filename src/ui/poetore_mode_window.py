@@ -616,6 +616,7 @@ class PoetoreModeWindow(QMainWindow):
                 "poetore_capture", capture_hotkey,
                 result_window_checker=self._is_poetore_result_window,
                 poe_target_getter=self._poetore_poe_target,
+                allow_unmodified=True,
                 parent=self,
             )
             self.suppressed_capture_hotkey.command.connect(self.handle_hotkey)

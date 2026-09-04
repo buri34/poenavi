@@ -123,7 +123,8 @@ class PoetoreSettingsDialog(QDialog):
         self.exit_hotkey = HotkeyButton(hotkeys.get("exit", "F5"))
         self.monastery_hotkey = HotkeyButton(hotkeys.get("monastery", "F12"))
         self.capture_hotkey = AutoHideHotkeyWidget(
-            hotkeys.get("poetore_capture", "alt+d"), theme=SETTINGS_THEME
+            hotkeys.get("poetore_capture", "alt+d"), theme=SETTINGS_THEME,
+            allow_no_modifier=True,
         )
         self.auto_hide_hotkey = AutoHideHotkeyWidget(
             hotkeys.get("poetore_auto_hide", "ctrl+d"), theme=SETTINGS_THEME

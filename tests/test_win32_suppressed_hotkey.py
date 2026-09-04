@@ -19,6 +19,13 @@ def test_parse_hotkey_accepts_required_modifier_and_regular_key():
     assert _parse_hotkey("alt+Space") == (VK_MENU, 0x20)
 
 
+def test_parse_hotkey_accepts_single_key_only_when_explicitly_enabled():
+    assert _parse_hotkey("D", allow_unmodified=True) == (None, ord("D"))
+    assert _parse_hotkey("F5", allow_unmodified=True) == (None, 0x74)
+    with pytest.raises(ValueError):
+        _parse_hotkey("D")
+
+
 @pytest.mark.parametrize("hotkey", ["d", "shift+d", "alt+escape", "ctrl+"])
 def test_parse_hotkey_rejects_unsupported_bindings(hotkey):
     with pytest.raises(ValueError):
@@ -42,6 +49,29 @@ def test_processor_suppresses_target_only_in_allowed_context():
     assert processor.process(ord("D"), False) is True
     assert processor.process(VK_LMENU, False) is False
     assert events == ["pressed", "released"]
+
+
+def test_processor_suppresses_unmodified_target_without_modifier():
+    events = []
+    processor = HotkeyEventProcessor(
+        None, ord("D"), lambda: True, events.append,
+    )
+    assert processor.process(ord("D"), True) is True
+    assert processor.process(ord("D"), True) is True
+    assert processor.process(ord("D"), False) is True
+    assert events == ["pressed", "released"]
+
+
+def test_processor_does_not_treat_modified_key_as_unmodified_hotkey():
+    events = []
+    processor = HotkeyEventProcessor(
+        None, ord("D"), lambda: True, events.append,
+    )
+    assert processor.process(VK_CONTROL, True) is False
+    assert processor.process(ord("D"), True) is False
+    assert processor.process(ord("D"), False) is False
+    assert processor.process(VK_CONTROL, False) is False
+    assert events == []
 
 
 def test_processor_recognizes_injected_modifier_from_external_software():
