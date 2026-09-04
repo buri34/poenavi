@@ -66,13 +66,9 @@ jobs:
       fail-fast: false
       matrix:
         scenario:
-          - full-prefix
-          - mini-only
-          - split-boundary
-          - quarter-0-plus-mini
-          - quarter-1-plus-mini
-          - quarter-2-plus-mini
-          - quarter-3-plus-mini
+          - isolate-quarter-0
+          - isolate-quarter-2
+          - isolate-quarter-3
 
     steps:
       - uses: actions/checkout@v6
@@ -99,32 +95,26 @@ jobs:
           $mini | ForEach-Object { Write-Host "  $_" }
 
           switch ($env:DIAGNOSTIC_SCENARIO) {
-            "full-prefix" {
-              python -m pytest -vv @($files[0..62])
-            }
-            "mini-only" {
-              python -m pytest -vv $mini
-            }
-            "split-boundary" {
-              python -m pytest -vv @($files[0..55])
-              if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-              python -m pytest -vv $mini
-            }
-            "quarter-0-plus-mini" {
-              python -m pytest -vv @($files[0..13] + $mini)
-            }
-            "quarter-1-plus-mini" {
-              python -m pytest -vv @($files[14..27] + $mini)
-            }
-            "quarter-2-plus-mini" {
-              python -m pytest -vv @($files[28..41] + $mini)
-            }
-            "quarter-3-plus-mini" {
-              python -m pytest -vv @($files[42..55] + $mini)
-            }
+            "isolate-quarter-0" { $candidateIndexes = 0..13 }
+            "isolate-quarter-2" { $candidateIndexes = 28..41 }
+            "isolate-quarter-3" { $candidateIndexes = 42..55 }
             default {
               throw "Unknown diagnostic scenario: $env:DIAGNOSTIC_SCENARIO"
             }
           }
 
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $failedIndexes = @()
+          foreach ($index in $candidateIndexes) {
+            Write-Host "::group::Candidate $index - $($files[$index])"
+            python -m pytest -q @($files[$index]) $mini
+            $candidateExitCode = $LASTEXITCODE
+            Write-Host "::endgroup::"
+            if ($candidateExitCode -ne 0) {
+              $failedIndexes += $index
+              Write-Host "Candidate $index failed with exit code $candidateExitCode"
+            }
+          }
+
+          if ($failedIndexes.Count -gt 0) {
+            throw "Failing candidate indexes: $($failedIndexes -join ', ')"
+          }
