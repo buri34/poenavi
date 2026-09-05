@@ -160,6 +160,26 @@ def _league_slug(league: str) -> str:
     return f"{value}hc" if hardcore else value
 
 
+def _poe2_core_rate(core: dict, source: str, target: str) -> float | None:
+    primary = str(core.get("primary", "")).casefold()
+    rates = core.get("rates") or {}
+
+    def relative_value(currency: str) -> float | None:
+        if currency.casefold() == primary:
+            return 1.0
+        try:
+            value = float(rates.get(currency.casefold(), 0))
+        except (TypeError, ValueError):
+            return None
+        return value if value > 0 else None
+
+    source_value = relative_value(source)
+    target_value = relative_value(target)
+    if source_value is None or target_value is None:
+        return None
+    return target_value / source_value
+
+
 def _line_url(league: str, overview_url: str, line: dict) -> str:
     details = str(line.get("name", ""))
     if line.get("variant"):
@@ -326,11 +346,7 @@ class PoeNinjaPriceService:
         if not league or re.search(r"\(PL\d+\)$", league):
             return None
         payload = self._poe2_exchange_payload(league, "Currency")
-        core = payload.get("core") or {}
-        if core.get("primary") != "divine":
-            return None
-        rate = float((core.get("rates") or {}).get("exalted", 0))
-        return rate if rate > 0 else None
+        return _poe2_core_rate(payload.get("core") or {}, "divine", "exalted")
 
     def lookup_identity(
         self, namespace: str, name: str, variant: str | None, league: str,
@@ -791,28 +807,30 @@ def match_poe2_exchange_price(
     max_volume_rate = float(line.get("maxVolumeRate", 0))
     quote_currency = str(line.get("maxVolumeCurrency", "")).casefold()
     core = payload.get("core") or {}
-    if primary <= 0 or core.get("primary") != "divine":
+    primary_currency = str(core.get("primary", "")).casefold()
+    if primary <= 0 or not primary_currency:
         return None
-    chaos_rate = float((core.get("rates") or {}).get("chaos", 0))
-    if chaos_rate <= 0:
+    primary_chaos_rate = _poe2_core_rate(core, primary_currency, "chaos")
+    if primary_chaos_rate is None:
         return None
+    divine_in_chaos = _poe2_core_rate(core, "divine", "chaos")
     supported_quotes = {"divine", "exalted", "chaos"}
     if max_volume_rate > 0 and quote_currency in supported_quotes:
         quote_amount = 1 / max_volume_rate
     else:
         quote_amount = primary
-        quote_currency = "divine"
+        quote_currency = primary_currency
 
     sparkline = line.get("sparkline") or {}
     details_id = str(identity.get("detailsId", ""))
     return PoeNinjaPrice(
         str(identity.get("name", "")),
         None,
-        primary * chaos_rate,
+        primary * primary_chaos_rate,
         tuple(sparkline.get("data", ())),
         f"https://poe.ninja/poe2/economy/{_league_slug(league)}/"
         f"{_poe2_overview_slug(source_type)}/{details_id}",
-        chaos_rate,
+        divine_in_chaos,
         float(sparkline["totalChange"])
         if sparkline.get("totalChange") is not None else None,
         source_type,
@@ -844,24 +862,26 @@ def match_poe2_unique_price(
     line = matches[0]
     primary = float(line.get("primaryValue", 0))
     core = payload.get("core") or {}
-    if primary <= 0 or core.get("primary") != "divine":
+    primary_currency = str(core.get("primary", "")).casefold()
+    if primary <= 0 or not primary_currency:
         return None
-    chaos_rate = float((core.get("rates") or {}).get("chaos", 0))
-    if chaos_rate <= 0:
-        return None
+    primary_chaos_rate = _poe2_core_rate(core, primary_currency, "chaos")
+    divine_in_chaos = _poe2_core_rate(core, "divine", "chaos")
     sparkline = line.get("sparkLine") or {}
     details_id = str(line.get("detailsId", ""))
     return PoeNinjaPrice(
         str(line.get("name", "")),
         str(line["variant"]) if line.get("variant") else None,
-        primary * chaos_rate,
+        primary * primary_chaos_rate if primary_chaos_rate is not None else 0.0,
         tuple(sparkline.get("data", ())),
         f"https://poe.ninja/poe2/economy/{_league_slug(league)}/"
         f"{_poe2_overview_slug(source_type)}/{details_id}",
-        chaos_rate,
+        divine_in_chaos,
         float(sparkline["totalChange"])
         if sparkline.get("totalChange") is not None else None,
         source_type,
+        primary,
+        primary_currency,
     )
 
 

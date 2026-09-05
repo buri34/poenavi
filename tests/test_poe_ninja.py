@@ -489,6 +489,27 @@ def test_poe2_unique_overview_matches_name_base_and_divine_value():
     )
 
 
+def test_poe2_unique_overview_supports_exalted_primary_without_rates():
+    payload = _poe2_unique_payload()
+    payload["core"] = {
+        "items": [{"id": "exalted", "name": "Exalted Orb"}],
+        "rates": {},
+        "primary": "exalted",
+        "secondary": "divine",
+    }
+    payload["lines"][0]["primaryValue"] = 88.0
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
+
+    price = match_poe2_unique_price(
+        payload, item, "Forbidden Rites",
+        trade_name="Mageblood", trade_base_type="Utility Belt",
+    )
+
+    assert price is not None
+    assert price.display_price_parts() == ("88", "exalted")
+    assert "/poe2/economy/forbiddenrites/" in price.url
+
+
 def test_poe2_unique_hc_overview_uses_poe_ninja_suffix_slug():
     item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
     price = match_poe2_unique_price(
@@ -551,6 +572,22 @@ def test_poe2_divine_exalted_rate_uses_currency_exchange_core_and_cache():
     assert calls == [("Runes of Aldur", "Currency")]
 
 
+def test_poe2_divine_exalted_rate_inverts_exalted_primary_core():
+    payload = {
+        "core": {
+            "primary": "exalted", "secondary": "divine",
+            "rates": {"divine": 0.02, "chaos": 0.575},
+        },
+        "items": [],
+        "lines": [],
+    }
+    service = PoeNinjaPriceService(
+        poe2_exchange_fetcher=lambda _league, _type: payload,
+    )
+
+    assert service.divine_exalted_rate("Forbidden Rites") == pytest.approx(50.0)
+
+
 def test_poe2_exchange_matches_uncut_gem_and_uses_most_traded_quote_currency():
     item = ParsedItem(
         "Uncut Skill Gems", "currency", "Uncut Skill Gem (Level 18)",
@@ -565,6 +602,33 @@ def test_poe2_exchange_matches_uncut_gem_and_uses_most_traded_quote_currency():
         "https://poe.ninja/poe2/economy/runesofaldur/"
         "uncut-gems/uncut-skill-gem-level-18"
     )
+
+
+def test_poe2_exchange_supports_exalted_primary_core():
+    payload = _poe2_exchange_payload()
+    payload["core"] = {
+        "primary": "exalted", "secondary": "divine",
+        "rates": {"divine": 0.02, "chaos": 0.575},
+    }
+    payload["lines"][0].update({
+        "primaryValue": 2.0,
+        "maxVolumeCurrency": "exalted",
+        "maxVolumeRate": 0.5,
+    })
+    item = ParsedItem(
+        "Uncut Skill Gems", "currency", "Uncut Skill Gem (Level 18)",
+        "Uncut Skill Gem (Level 18)", "uncut_gem",
+    )
+
+    price = match_poe2_exchange_price(
+        payload, item, "Forbidden Rites", source_type="UncutGems",
+    )
+
+    assert price is not None
+    assert price.chaos == pytest.approx(1.15)
+    assert price.divine_chaos == pytest.approx(28.75)
+    assert price.display_price_parts() == ("2", "exalted")
+    assert "/poe2/economy/forbiddenrites/" in price.url
 
 
 def test_poe2_exchange_hc_overview_uses_poe_ninja_suffix_slug():
