@@ -480,6 +480,20 @@ def _identity_matches_category(identity: dict, category: str | None) -> bool:
     return False
 
 
+def _strip_base_display_prefixes(raw_base: str) -> str:
+    normalized = raw_base.strip()
+    while True:
+        stripped = re.sub(
+            r"^(?:Superior|Exceptional)\s+", "", normalized,
+            count=1, flags=re.IGNORECASE,
+        )
+        stripped = re.sub(r"^(?:上質な|規格外の)[\s　]*", "", stripped, count=1)
+        stripped = stripped.strip()
+        if stripped == normalized:
+            return normalized
+        normalized = stripped
+
+
 def _base_identity_candidates(
     raw_base: str, category: str | None, rarity: str,
 ) -> tuple[dict, ...]:
@@ -489,23 +503,17 @@ def _base_identity_candidates(
     )
     if exact:
         return exact
-    # PoE2 labels exceptional normal items as part of the displayed name even
-    # though Trade2 keeps the underlying base unchanged. Match EE2's
-    # parseExceptional behavior before falling back to magic-name fragments.
-    exceptional_prefixes = ("Exceptional ", "規格外の ")
-    normalized_base = next((
-        raw_base[len(prefix):].strip()
-        for prefix in exceptional_prefixes
-        if raw_base.startswith(prefix)
-    ), None)
-    if normalized_base:
-        exceptional = tuple(
+    # PoE2 includes quality/exceptional labels in the copied display name even
+    # though Trade2 identifies the underlying base without those prefixes.
+    normalized_base = _strip_base_display_prefixes(raw_base)
+    if normalized_base != raw_base.strip():
+        normalized = tuple(
             identity
             for identity in resolve_identity_candidates(normalized_base, "ITEM")
             if _identity_matches_category(identity, category)
         )
-        if exceptional:
-            return exceptional
+        if normalized:
+            return normalized
     if rarity != "magic":
         return ()
     fragments = tuple(

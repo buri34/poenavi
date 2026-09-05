@@ -535,6 +535,52 @@ def test_reported_rare_gloves_send_chaos_resistance_to_trade2():
     assert chaos["value"] == {"min": 15.0}
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        """アイテムクラス: セプター
+レアリティ: ノーマル
+上質な 神殿のセプター
+--------
+品質: +6% (augmented)
+スピリット: 100
+--------
+装備条件：レベル 26, 17 筋力, 38 知性
+--------
+アイテムレベル: 77
+--------
+スキルを付与: レベル18 ピュリティオブアイス""",
+        """Item Class: Sceptres
+Rarity: Normal
+Superior Shrine Sceptre
+--------
+Quality: +6% (augmented)
+Spirit: 100
+--------
+Requires: Level 26, 17 Str, 38 Int
+--------
+Item Level: 77
+--------
+Grants Skill: Level 18 Purity of Ice""",
+    ],
+)
+def test_reported_superior_normal_sceptre_uses_underlying_trade2_base(text):
+    item = parse_item_text(text)
+    rows = poe2_trade_filters(item)
+    query = build_search_query(item, stat_filters=rows)["query"]
+
+    assert (item.base_type, item.category, item.rarity) == (
+        "Shrine Sceptre", "sceptre", "normal",
+    )
+    assert query["type"] == "Shrine Sceptre"
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "normal",
+    }
+    assert query["filters"]["equipment_filters"]["filters"]["spirit"] == {
+        "min": 100.0,
+    }
+
+
 def test_multi_value_trade_stats_use_same_arithmetic_mean_as_ee2():
     assert trade_stat_value((25.0, 39.0)) == 32.0
     assert trade_stat_value((1.0, 3.0, 5.0, 7.0)) == 4.0
