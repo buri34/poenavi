@@ -68,6 +68,34 @@ def test_unique_query_contains_only_minimal_identity_filters():
     assert query["stats"] == [{"type": "and", "filters": []}]
 
 
+def test_duplicate_japanese_unique_name_is_disambiguated_by_base_type():
+    item = parse_item_text("""アイテムクラス: 兜
+レアリティ: ユニーク
+アッツィリの軽蔑
+金のサークレット
+--------
+エナジーシールド: 62
+--------
+アイテムレベル: 78
+--------
+最大マナ +87(60-100)
+見つかるアイテムのレアリティが15(10-20)%増加する
+最大ライフの11(10-15)%を追加の最大エナジーシールドとして獲得する
+受けたダメージの10%がエナジーシールドをバイパスする""")
+    payload = build_search_query(item)
+
+    assert (item.name, item.base_type, item.category) == (
+        "Atziri's Disdain", "Gold Circlet", "helmet",
+    )
+    assert payload["query"]["name"] == "Atziri's Disdain"
+    assert payload["query"]["type"] == "Gold Circlet"
+    web_query = _web_payload(
+        build_web_trade_url(item, "Forbidden Rites", payload, "query-id")
+    )["query"]
+    assert web_query["name"] == "アッツィリの軽蔑"
+    assert web_query["type"] == "金のサークレット"
+
+
 def test_unidentified_unique_searches_base_with_unique_and_unidentified_filters():
     item = ParsedItem(
         item_class="Talismans", rarity="unique", name="", base_type="Nettle Talisman",

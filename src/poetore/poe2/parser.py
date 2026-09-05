@@ -548,6 +548,26 @@ def _resolve_base_identity(
     return candidates[0] if candidates else None
 
 
+def _resolve_unique_identity(
+    raw_name: str, raw_base: str, category: str | None,
+) -> dict | None:
+    candidates = resolve_identity_candidates(raw_name, "UNIQUE")
+    if not candidates:
+        return None
+    base_refs = {
+        str(row.get("ref_name", ""))
+        for row in _base_identity_candidates(raw_base, category, "unique")
+    }
+    compatible = tuple(
+        row for row in candidates if str(row.get("base_ref", "")) in base_refs
+    )
+    compatible_names = {str(row.get("ref_name", "")) for row in compatible}
+    if len(compatible_names) == 1:
+        return compatible[0]
+    candidate_names = {str(row.get("ref_name", "")) for row in candidates}
+    return candidates[0] if len(candidate_names) == 1 else None
+
+
 _BASE_DEFENCE_PROPERTIES = {
     "ar": ("アーマー", "Armour"),
     "ev": ("回避力", "Evasion Rating"),
@@ -734,7 +754,9 @@ def parse_item_text(text: str) -> ParsedItem:
     if rarity == "unique" and not unidentified:
         if len(identity_lines) < 2:
             raise Poe2ItemParseError("PoE2 Unique名がありません")
-        unique_identity = resolve_identity(identity_lines[-2], "UNIQUE")
+        unique_identity = _resolve_unique_identity(
+            identity_lines[-2], raw_base, category,
+        )
         if unique_identity is None:
             raise Poe2ItemParseError(f"PoE2 Unique identity未解決: {identity_lines[-2]}")
     preferred_base_ref = str((unique_identity or {}).get("base_ref", "")) or None
