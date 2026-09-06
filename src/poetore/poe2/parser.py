@@ -274,21 +274,26 @@ _CHARM_EFFECT = (
 _FLASK_RECOVERY = (
     re.compile(
         r"^Recovers\s+(?P<amount>\d+(?:\.\d+)?)\s*(?:\(augmented\)\s*)?"
-        r"(?:Life|Mana)\s+over\s+(?P<duration>\d+(?:\.\d+)?)\s+Seconds?$",
+        r"(?:Life|Mana)\s+over\s+(?P<duration>\d+(?:\.\d+)?)\s*"
+        r"(?:\(augmented\)\s*)?Seconds?$",
         re.IGNORECASE,
     ),
     re.compile(
-        r"^(?P<duration>\d+(?:\.\d+)?)秒間かけて"
+        r"^(?P<duration>\d+(?:\.\d+)?)\s*(?:\(augmented\)\s*)?秒間かけて"
         r"(?P<amount>\d+(?:\.\d+)?)\s*(?:\(augmented\)\s*)?"
         r"の(?:ライフ|マナ)を回復$"
     ),
 )
 _FLASK_CONSUMPTION = (
     re.compile(
-        r"^Consumes\s+(\d+)\s+of\s+(\d+)\s+Charges on use$",
+        r"^Consumes\s+(\d+)\s*(?:\(augmented\)\s*)?of\s+"
+        r"(\d+)\s*(?:\(augmented\)\s*)?Charges on use$",
         re.IGNORECASE,
     ),
-    re.compile(r"^使用時に(\d+)中(\d+)チャージを消費$"),
+    re.compile(
+        r"^使用時に(\d+)\s*(?:\(augmented\)\s*)?中"
+        r"(\d+)\s*(?:\(augmented\)\s*)?チャージを消費$"
+    ),
 )
 _FLASK_CURRENT = _CHARM_CURRENT
 _WOMBGIFT_HIVEBLOOD = (

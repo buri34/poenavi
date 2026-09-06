@@ -300,6 +300,50 @@ def test_life_flask_properties_are_consumed_like_ee2_and_affixes_stay_searchable
         }
 
 
+def test_unique_life_flask_augmented_properties_are_not_unresolved_modifiers():
+    item = parse_item_text(
+        "アイテムクラス: ライフフラスコ\n"
+        "レアリティ: ユニーク\n"
+        "好機\n"
+        "究極のライフフラスコ\n"
+        "--------\n"
+        "5.30 (augmented)秒間かけて1978 (augmented)のライフを回復\n"
+        "使用時に75中3 (augmented)チャージを消費\n"
+        "現在0チャージ\n"
+        "--------\n"
+        "装備条件：レベル 60\n"
+        "--------\n"
+        "アイテムレベル: 84\n"
+        "--------\n"
+        "{ ユニークモッド — ライフ }\n"
+        "未リザーブライフがフルになった時でも効果は取り除かれない\n"
+        "{ ユニークモッド }\n"
+        "手動で使用できなくなる — スケールできない値\n"
+        "{ ユニークモッド }\n"
+        "完璧なタイミングでスキルを放った時に使用される — スケールできない値\n"
+        "{ ユニークモッド }\n"
+        "効果中はスキルの完全なタイミングの幅が109(80-120)%長くなる\n"
+        "{ ユニークモッド }\n"
+        "回復量が115(100-150)%増加する\n"
+        "{ ユニークモッド }\n"
+        "回復レートが43(50-25)%減少する\n"
+        "{ ユニークモッド }\n"
+        "使用に必要なチャージ量が61(75-50)%減少する\n"
+    )
+
+    assert (item.name, item.base_type, item.category) == (
+        "Opportunity", "Ultimate Life Flask", "life_flask",
+    )
+    assert item.properties["回復量"] == "1978"
+    assert item.properties["回復時間"] == "5.30"
+    assert item.properties["使用チャージ"] == "3"
+    assert item.properties["最大チャージ"] == "75"
+    assert item.properties["現在チャージ"] == "0"
+    assert all("秒間かけて" not in modifier.text for modifier in item.modifiers)
+    assert all("チャージを消費" not in modifier.text for modifier in item.modifiers)
+    assert all(modifier.stat_id for modifier in item.modifiers)
+
+
 def test_wombgift_hiveblood_cost_is_property_not_search_modifier_like_ee2():
     text = (
         Path(__file__).parent / "fixtures" / "poe2" / "signet_wombgift_ja.txt"
