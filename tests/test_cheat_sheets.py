@@ -60,6 +60,26 @@ def test_normalization_selects_first_available_image():
         }
     )
     assert config["selected_id"] == "first"
+    assert config["opacity"] == 100
+    assert config["background_opacity"] == 92
+
+
+def test_manager_saves_image_and_background_opacity_separately(qapp):
+    manager = CheatSheetManagerDialog(
+        {"images": [], "opacity": 75, "background_opacity": 40}
+    )
+    try:
+        assert manager.opacity_slider.value() == 75
+        assert manager.background_opacity_slider.value() == 40
+
+        manager.opacity_slider.setValue(65)
+        manager.background_opacity_slider.setValue(30)
+        result = manager.result_config()
+
+        assert result["opacity"] == 65
+        assert result["background_opacity"] == 30
+    finally:
+        manager.close()
 
 
 def test_empty_overlay_guides_user_to_main_window_button(qapp):
@@ -122,6 +142,7 @@ def test_overlay_switches_images_and_saves_geometry(qapp, tmp_path, monkeypatch)
             "width": 500,
             "height": 350,
             "opacity": 80,
+            "background_opacity": 40,
         }
     )
     saved = []
@@ -129,6 +150,9 @@ def test_overlay_switches_images_and_saves_geometry(qapp, tmp_path, monkeypatch)
 
     overlay.step_image(1)
     assert "background: transparent" in overlay.image_label.styleSheet()
+    assert overlay.windowOpacity() == 1.0
+    assert overlay.image_label.graphicsEffect().opacity() == 0.8
+    assert "rgba(12, 12, 12, 102)" in overlay.styleSheet()
     overlay.setGeometry(40, 50, 600, 420)
     overlay.hide_and_save()
 

@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QDialog,
     QFileDialog,
+    QGraphicsOpacityEffect,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -35,6 +36,7 @@ DEFAULT_CHEAT_SHEET_CONFIG = {
     "images": [],
     "selected_id": "",
     "opacity": 100,
+    "background_opacity": 92,
     "position": {"x": 120, "y": 120},
     "position_initialized": False,
     "width": 900,
@@ -178,7 +180,8 @@ class CheatSheetManagerDialog(QDialog):
         order.addWidget(self.down_button)
         editor.addLayout(order)
 
-        editor.addWidget(QLabel("表示の不透明度"))
+        editor.addWidget(QLabel("透明度の調整"))
+        editor.addWidget(QLabel("画像の不透明度"))
         opacity_row = QHBoxLayout()
         self.opacity_slider = QSlider(Qt.Horizontal)
         self.opacity_slider.setRange(20, 100)
@@ -190,6 +193,23 @@ class CheatSheetManagerDialog(QDialog):
         opacity_row.addWidget(self.opacity_slider)
         opacity_row.addWidget(self.opacity_label)
         editor.addLayout(opacity_row)
+
+        editor.addWidget(QLabel("背景の不透明度"))
+        background_opacity_row = QHBoxLayout()
+        self.background_opacity_slider = QSlider(Qt.Horizontal)
+        self.background_opacity_slider.setRange(0, 100)
+        self.background_opacity_slider.setValue(
+            int(self.value.get("background_opacity", 92))
+        )
+        self.background_opacity_label = QLabel(
+            f"{self.background_opacity_slider.value()}%"
+        )
+        self.background_opacity_slider.valueChanged.connect(
+            lambda value: self.background_opacity_label.setText(f"{value}%")
+        )
+        background_opacity_row.addWidget(self.background_opacity_slider)
+        background_opacity_row.addWidget(self.background_opacity_label)
+        editor.addLayout(background_opacity_row)
         editor.addStretch()
         body.addLayout(editor, 1)
         layout.addLayout(body)
@@ -270,6 +290,7 @@ class CheatSheetManagerDialog(QDialog):
 
     def result_config(self) -> dict:
         self.value["opacity"] = self.opacity_slider.value()
+        self.value["background_opacity"] = self.background_opacity_slider.value()
         row = self.list_widget.currentRow()
         if 0 <= row < len(self.value["images"]):
             self.value["selected_id"] = self.value["images"][row]["id"]
@@ -295,6 +316,7 @@ class CheatSheetOverlay(QWidget):
     def __init__(self, config: dict, parent=None, theme=POENAVI_THEME):
         super().__init__(None)
         self.owner = parent
+        self._theme = theme
         self.config = normalized_cheat_sheet_config(config)
         flags = Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
         if hasattr(Qt, "WindowDoesNotAcceptFocus"):
@@ -302,6 +324,7 @@ class CheatSheetOverlay(QWidget):
         self.setWindowFlags(flags)
         self.setAttribute(Qt.WA_ShowWithoutActivating, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setObjectName("cheatSheetOverlay")
         self.setMinimumSize(320, 220)
         self._drag_offset: QPoint | None = None
         self._pixmap = QPixmap()
@@ -338,6 +361,8 @@ class CheatSheetOverlay(QWidget):
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setMinimumSize(200, 120)
         self.image_label.setWordWrap(True)
+        self._image_opacity_effect = QGraphicsOpacityEffect(self.image_label)
+        self.image_label.setGraphicsEffect(self._image_opacity_effect)
         layout.addWidget(self.image_label, 1)
 
         nav = QHBoxLayout()
@@ -377,8 +402,22 @@ class CheatSheetOverlay(QWidget):
 
     def reload(self, config: dict):
         self.config = normalized_cheat_sheet_config(config)
-        self.setWindowOpacity(max(0.2, min(1.0, int(self.config["opacity"]) / 100)))
+        self.setWindowOpacity(1.0)
+        self._apply_background_opacity()
         self._show_selected_image()
+
+    def _apply_background_opacity(self):
+        opacity_pct = max(0, min(100, int(self.config["background_opacity"])))
+        background_alpha = round(255 * opacity_pct / 100)
+        self.setStyleSheet(
+            f"QWidget#cheatSheetOverlay {{ background: rgba(12, 12, 12, {background_alpha}); "
+            f"color: {self._theme.text}; border: 1px solid {self._theme.accent}; "
+            "border-radius: 6px; }"
+            "QLabel { border: none; background: transparent; }"
+            f"QPushButton {{ background:{self._theme.panel}; color:{self._theme.text}; "
+            "border:1px solid #666; border-radius:4px; padding:4px 8px; }"
+            f"QPushButton:hover {{ border-color:{self._theme.accent}; }}"
+        )
 
     def _selected_index(self) -> int:
         images = self.config["images"]
@@ -390,6 +429,7 @@ class CheatSheetOverlay(QWidget):
     def _show_selected_image(self):
         images = self.config["images"]
         if not images:
+            self._image_opacity_effect.setOpacity(1.0)
             self.title_label.setText("Cheat sheets（画像タイトルをドラッグで移動）")
             self.image_label.setStyleSheet(
                 "QLabel {"
@@ -419,6 +459,7 @@ class CheatSheetOverlay(QWidget):
         self.counter_label.setText(f"{index + 1} / {len(images)}")
         self._pixmap = QPixmap(str(registered_image_path(record)))
         if self._pixmap.isNull():
+            self._image_opacity_effect.setOpacity(1.0)
             self.image_label.setStyleSheet(
                 "QLabel {"
                 " background: rgba(0, 0, 0, 205);"
@@ -432,6 +473,9 @@ class CheatSheetOverlay(QWidget):
             )
             self.image_label.setText("画像ファイルが見つかりません")
         else:
+            self._image_opacity_effect.setOpacity(
+                max(0.2, min(1.0, int(self.config["opacity"]) / 100))
+            )
             self.image_label.setStyleSheet(
                 "QLabel { background: transparent; border: none; padding: 0; }"
             )
