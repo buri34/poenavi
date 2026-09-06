@@ -1213,7 +1213,7 @@ class PoetoreWindow(QWidget):
             self.trade_currency_combo.addItem("高貴なオーブのみ", "exalted")
             self.trade_currency_combo.addItem("神のオーブのみ", "divine")
             self.trade_currency_combo.addItem(
-                "高貴 / 神", "exalted_divine"
+                "高貴または神", "exalted_divine"
             )
         else:
             self.trade_currency_combo.addItem("カオスオーブのみ", "chaos")

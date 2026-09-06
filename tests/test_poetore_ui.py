@@ -6,13 +6,14 @@ import math
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt, QTimer
-from PySide6.QtGui import QKeyEvent, QMouseEvent, QPalette, QPixmap, QWheelEvent
+from PySide6.QtGui import QFontMetrics, QKeyEvent, QMouseEvent, QPalette, QPixmap, QWheelEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QAbstractItemView, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QTreeWidgetItem, QWidget
 import pytest
 
 from src.poetore.ui import (
     PoetoreWindow, _ACTION_CLUSTER_HORIZONTAL_GAP, _ACTION_CLUSTER_VERTICAL_GAP,
+    _DISPLAY_SIZE_PROFILES,
     _MOD_COLUMN_CHECK, _MOD_COLUMN_KIND, _MOD_COLUMN_MAX, _MOD_COLUMN_MIN, _MOD_COLUMN_TEXT,
     _MOD_ROW_HEIGHT,
     _UniqueRollSlider, _auto_mod_layout_sizes, _replace_filters_with_special_chips, prepare_poetore_window,
@@ -4722,7 +4723,7 @@ def test_poe2_trade_currency_shortens_only_exalted_divine_label(qapp):
             "すべての通貨",
             "高貴なオーブのみ",
             "神のオーブのみ",
-            "高貴 / 神",
+            "高貴または神",
         ]
 
         combined = window.trade_currency_combo.findData("exalted_divine")
@@ -4733,21 +4734,18 @@ def test_poe2_trade_currency_shortens_only_exalted_divine_label(qapp):
 
         window._fit_compact_action_widths()
         combined_width = window.trade_currency_combo.width()
-        combined_expected_width = (
-            window.trade_currency_combo.fontMetrics().horizontalAdvance("高貴 / 神")
-            + 12
+        compact_font = window.trade_currency_combo.font()
+        compact_font.setPixelSize(
+            _DISPLAY_SIZE_PROFILES[window._result_font_size]["mod_value_font"]
         )
-        assert combined_width == combined_expected_width
+        compact_metrics = QFontMetrics(compact_font)
+        assert combined_width == compact_metrics.horizontalAdvance("高貴または神") + 12
         window.trade_currency_combo.setCurrentIndex(
             window.trade_currency_combo.findData("exalted")
         )
         window._fit_compact_action_widths()
         exalted_width = window.trade_currency_combo.width()
-        exalted_expected_width = (
-            window.trade_currency_combo.fontMetrics().horizontalAdvance("高貴なオーブのみ")
-            + 12
-        )
-        assert exalted_width == exalted_expected_width
+        assert exalted_width == compact_metrics.horizontalAdvance("高貴なオーブのみ") + 12
         assert window.trade_currency_combo.view().minimumWidth() >= exalted_width
         assert combined_width < window.trade_status_combo.width()
         assert combined_width < exalted_width
