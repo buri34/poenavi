@@ -1208,20 +1208,34 @@ class PoetoreWindow(QWidget):
         self.trade_currency_combo.setObjectName("filterControl")
         self.trade_currency_combo.setProperty("compactAction", True)
         self.trade_currency_combo.setProperty("mutedText", True)
-        self.trade_currency_combo.addItem("すべての通貨", "any")
+        self.trade_currency_combo.addItem("全通貨", "any")
         if self.poe_version == POE2:
-            self.trade_currency_combo.addItem("高貴なオーブのみ", "exalted")
-            self.trade_currency_combo.addItem("神のオーブのみ", "divine")
+            self.trade_currency_combo.addItem("高貴のみ", "exalted")
+            self.trade_currency_combo.addItem("神のみ", "divine")
             self.trade_currency_combo.addItem(
-                "高貴なオーブまたは神のオーブ", "exalted_divine"
+                "高貴 / 神", "exalted_divine"
             )
         else:
-            self.trade_currency_combo.addItem("カオスオーブのみ", "chaos")
-            self.trade_currency_combo.addItem("神のオーブのみ", "divine")
+            self.trade_currency_combo.addItem("カオスのみ", "chaos")
+            self.trade_currency_combo.addItem("神のみ", "divine")
             self.trade_currency_combo.addItem(
-                "カオスまたは神のオーブ", "chaos_divine"
+                "カオス / 神", "chaos_divine"
+            )
+        currency_tooltips = {
+            "any": "出品価格の通貨を指定しません",
+            "chaos": "カオスオーブ建ての出品のみ",
+            "divine": "神のオーブ建ての出品のみ",
+            "chaos_divine": "カオスオーブまたは神のオーブ建ての出品",
+            "exalted": "高貴なオーブ建ての出品のみ",
+            "exalted_divine": "高貴なオーブまたは神のオーブ建ての出品",
+        }
+        for index in range(self.trade_currency_combo.count()):
+            value = str(self.trade_currency_combo.itemData(index))
+            self.trade_currency_combo.setItemData(
+                index, currency_tooltips[value], Qt.ToolTipRole
             )
         self._restore_trade_options()
+        self._update_trade_currency_tooltip()
         self.listed_within_combo = QComboBox()
         self.listed_within_combo.setObjectName("filterControl")
         self.listed_within_combo.setProperty("compactAction", True)
@@ -1806,6 +1820,9 @@ class PoetoreWindow(QWidget):
             combo.currentIndexChanged.connect(self._fit_compact_action_widths)
         self.trade_status_combo.currentIndexChanged.connect(self._persist_trade_options)
         self.trade_currency_combo.currentIndexChanged.connect(self._persist_trade_options)
+        self.trade_currency_combo.currentIndexChanged.connect(
+            self._update_trade_currency_tooltip
+        )
         self.trade_league_combo.currentIndexChanged.connect(
             self._auto_search_after_trade_option_change
         )
@@ -2289,6 +2306,12 @@ class PoetoreWindow(QWidget):
         self.trade_url_button.setFixedWidth(
             button_metrics.horizontalAdvance(self.trade_url_button.text()) + 12
         )
+
+    def _update_trade_currency_tooltip(self, *_args):
+        """省略表示した通貨条件の正式な意味をホバーで示す。"""
+        index = self.trade_currency_combo.currentIndex()
+        tooltip = self.trade_currency_combo.itemData(index, Qt.ToolTipRole) or ""
+        self.trade_currency_combo.setToolTip(str(tooltip))
 
     def apply_result_display_size(self):
         """設定済みの小／中／大を既存の検索画面へ即時反映する。"""
