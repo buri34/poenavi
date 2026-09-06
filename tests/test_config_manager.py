@@ -51,7 +51,35 @@ class ConfigManagerTest(unittest.TestCase):
 
         self.assertNotIn("guide_detail_level", migrated)
         self.assertNotIn("guide_detail_level_selected", migrated)
-        self.assertEqual(migrated["schemaVersion"], 11)
+        self.assertEqual(migrated["schemaVersion"], ConfigManager.CURRENT_SCHEMA_VERSION)
+
+    def test_schema_v12_migrates_cheat_sheet_opacity_to_transparency(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 11,
+            "cheat_sheets": {
+                "opacity": 75,
+                "background_opacity": 40,
+                "image_transparency": 0,
+                "background_transparency": 100,
+            },
+        })
+
+        self.assertEqual(migrated["cheat_sheets"]["image_transparency"], 25)
+        self.assertEqual(migrated["cheat_sheets"]["background_transparency"], 60)
+        self.assertNotIn("opacity", migrated["cheat_sheets"])
+        self.assertNotIn("background_opacity", migrated["cheat_sheets"])
+
+    def test_schema_v12_uses_transparent_background_for_pre_feature_config(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 11,
+            "cheat_sheets": {
+                "opacity": 100,
+                "background_transparency": 100,
+            },
+        })
+
+        self.assertEqual(migrated["cheat_sheets"]["image_transparency"], 0)
+        self.assertEqual(migrated["cheat_sheets"]["background_transparency"], 100)
 
     def test_schema_v10_removes_retired_hideout_hotkey(self):
         migrated = ConfigManager._migrate_config({

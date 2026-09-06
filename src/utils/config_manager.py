@@ -14,7 +14,7 @@ class ConfigManager:
     DEFAULT_CONFIG_FILE = "default_config.json"
     APP_NAME = "PoENavi"
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
-    CURRENT_SCHEMA_VERSION = 11
+    CURRENT_SCHEMA_VERSION = 12
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -462,6 +462,18 @@ class ConfigManager:
             # PoE2ガイドは詳細版へ統一したため、旧選択状態をconfigから撤去する。
             migrated.pop("guide_detail_level", None)
             migrated.pop("guide_detail_level_selected", None)
+
+        if schema_version < 12:
+            cheat_sheets = migrated.get("cheat_sheets")
+            if isinstance(cheat_sheets, dict):
+                if "opacity" in cheat_sheets:
+                    cheat_sheets["image_transparency"] = (
+                        100 - int(cheat_sheets.pop("opacity"))
+                    )
+                if "background_opacity" in cheat_sheets:
+                    cheat_sheets["background_transparency"] = (
+                        100 - int(cheat_sheets.pop("background_opacity"))
+                    )
 
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)

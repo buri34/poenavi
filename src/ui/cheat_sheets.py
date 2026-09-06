@@ -35,8 +35,8 @@ SUPPORTED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}
 DEFAULT_CHEAT_SHEET_CONFIG = {
     "images": [],
     "selected_id": "",
-    "opacity": 100,
-    "background_opacity": 92,
+    "image_transparency": 0,
+    "background_transparency": 100,
     "position": {"x": 120, "y": 120},
     "position_initialized": False,
     "width": 900,
@@ -97,10 +97,17 @@ def remove_registered_image(record: dict) -> None:
 
 
 def normalized_cheat_sheet_config(config: dict | None) -> dict:
+    source = config if isinstance(config, dict) else {}
     merged = {
         **DEFAULT_CHEAT_SHEET_CONFIG,
-        **(config if isinstance(config, dict) else {}),
+        **source,
     }
+    if "image_transparency" not in source and "opacity" in source:
+        merged["image_transparency"] = 100 - int(source["opacity"])
+    if "background_transparency" not in source and "background_opacity" in source:
+        merged["background_transparency"] = 100 - int(source["background_opacity"])
+    merged.pop("opacity", None)
+    merged.pop("background_opacity", None)
     merged["images"] = [
         dict(item)
         for item in merged.get("images", [])
@@ -181,34 +188,38 @@ class CheatSheetManagerDialog(QDialog):
         editor.addLayout(order)
 
         editor.addWidget(QLabel("透明度の調整"))
-        editor.addWidget(QLabel("画像の不透明度"))
+        editor.addWidget(QLabel("画像の透明度"))
         opacity_row = QHBoxLayout()
-        self.opacity_slider = QSlider(Qt.Horizontal)
-        self.opacity_slider.setRange(20, 100)
-        self.opacity_slider.setValue(int(self.value.get("opacity", 100)))
-        self.opacity_label = QLabel(f"{self.opacity_slider.value()}%")
-        self.opacity_slider.valueChanged.connect(
-            lambda value: self.opacity_label.setText(f"{value}%")
+        self.image_transparency_slider = QSlider(Qt.Horizontal)
+        self.image_transparency_slider.setRange(0, 80)
+        self.image_transparency_slider.setValue(
+            int(self.value.get("image_transparency", 0))
         )
-        opacity_row.addWidget(self.opacity_slider)
-        opacity_row.addWidget(self.opacity_label)
+        self.image_transparency_label = QLabel(
+            f"{self.image_transparency_slider.value()}%"
+        )
+        self.image_transparency_slider.valueChanged.connect(
+            lambda value: self.image_transparency_label.setText(f"{value}%")
+        )
+        opacity_row.addWidget(self.image_transparency_slider)
+        opacity_row.addWidget(self.image_transparency_label)
         editor.addLayout(opacity_row)
 
-        editor.addWidget(QLabel("背景の不透明度"))
+        editor.addWidget(QLabel("背景の透明度"))
         background_opacity_row = QHBoxLayout()
-        self.background_opacity_slider = QSlider(Qt.Horizontal)
-        self.background_opacity_slider.setRange(0, 100)
-        self.background_opacity_slider.setValue(
-            int(self.value.get("background_opacity", 92))
+        self.background_transparency_slider = QSlider(Qt.Horizontal)
+        self.background_transparency_slider.setRange(0, 100)
+        self.background_transparency_slider.setValue(
+            int(self.value.get("background_transparency", 100))
         )
-        self.background_opacity_label = QLabel(
-            f"{self.background_opacity_slider.value()}%"
+        self.background_transparency_label = QLabel(
+            f"{self.background_transparency_slider.value()}%"
         )
-        self.background_opacity_slider.valueChanged.connect(
-            lambda value: self.background_opacity_label.setText(f"{value}%")
+        self.background_transparency_slider.valueChanged.connect(
+            lambda value: self.background_transparency_label.setText(f"{value}%")
         )
-        background_opacity_row.addWidget(self.background_opacity_slider)
-        background_opacity_row.addWidget(self.background_opacity_label)
+        background_opacity_row.addWidget(self.background_transparency_slider)
+        background_opacity_row.addWidget(self.background_transparency_label)
         editor.addLayout(background_opacity_row)
         editor.addStretch()
         body.addLayout(editor, 1)
@@ -289,8 +300,10 @@ class CheatSheetManagerDialog(QDialog):
         self._refresh_list(target)
 
     def result_config(self) -> dict:
-        self.value["opacity"] = self.opacity_slider.value()
-        self.value["background_opacity"] = self.background_opacity_slider.value()
+        self.value["image_transparency"] = self.image_transparency_slider.value()
+        self.value["background_transparency"] = (
+            self.background_transparency_slider.value()
+        )
         row = self.list_widget.currentRow()
         if 0 <= row < len(self.value["images"]):
             self.value["selected_id"] = self.value["images"][row]["id"]
@@ -407,8 +420,10 @@ class CheatSheetOverlay(QWidget):
         self._show_selected_image()
 
     def _apply_background_opacity(self):
-        opacity_pct = max(0, min(100, int(self.config["background_opacity"])))
-        self._background_alpha = round(255 * opacity_pct / 100)
+        transparency_pct = max(
+            0, min(100, int(self.config["background_transparency"]))
+        )
+        self._background_alpha = round(255 * (100 - transparency_pct) / 100)
         self.setStyleSheet(
             f"QWidget#cheatSheetOverlay {{ background: transparent; color: {self._theme.text}; }}"
             "QLabel { border: none; background: transparent; }"
@@ -481,7 +496,13 @@ class CheatSheetOverlay(QWidget):
             self.image_label.setText("画像ファイルが見つかりません")
         else:
             self._image_opacity_effect.setOpacity(
-                max(0.2, min(1.0, int(self.config["opacity"]) / 100))
+                max(
+                    0.2,
+                    min(
+                        1.0,
+                        1.0 - int(self.config["image_transparency"]) / 100,
+                    ),
+                )
             )
             self.image_label.setStyleSheet(
                 "QLabel { background: transparent; border: none; padding: 0; }"

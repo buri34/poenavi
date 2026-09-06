@@ -60,26 +60,37 @@ def test_normalization_selects_first_available_image():
         }
     )
     assert config["selected_id"] == "first"
-    assert config["opacity"] == 100
-    assert config["background_opacity"] == 92
+    assert config["image_transparency"] == 0
+    assert config["background_transparency"] == 100
 
 
-def test_manager_saves_image_and_background_opacity_separately(qapp):
+def test_manager_saves_image_and_background_transparency_separately(qapp):
     manager = CheatSheetManagerDialog(
-        {"images": [], "opacity": 75, "background_opacity": 40}
+        {"images": [], "image_transparency": 25, "background_transparency": 60}
     )
     try:
-        assert manager.opacity_slider.value() == 75
-        assert manager.background_opacity_slider.value() == 40
+        assert manager.image_transparency_slider.value() == 25
+        assert manager.background_transparency_slider.value() == 60
 
-        manager.opacity_slider.setValue(65)
-        manager.background_opacity_slider.setValue(30)
+        manager.image_transparency_slider.setValue(35)
+        manager.background_transparency_slider.setValue(70)
         result = manager.result_config()
 
-        assert result["opacity"] == 65
-        assert result["background_opacity"] == 30
+        assert result["image_transparency"] == 35
+        assert result["background_transparency"] == 70
     finally:
         manager.close()
+
+
+def test_legacy_opacity_settings_are_migrated_without_changing_appearance():
+    config = normalized_cheat_sheet_config(
+        {"images": [], "opacity": 75, "background_opacity": 40}
+    )
+
+    assert config["image_transparency"] == 25
+    assert config["background_transparency"] == 60
+    assert "opacity" not in config
+    assert "background_opacity" not in config
 
 
 def test_empty_overlay_guides_user_to_main_window_button(qapp):
@@ -108,14 +119,14 @@ def test_poetore_theme_is_applied_to_manager_and_overlay(qapp):
 
 
 @pytest.mark.parametrize(
-    ("background_opacity", "expected_alpha"),
-    [(0, 0), (92, 235), (100, 255)],
+    ("background_transparency", "expected_alpha"),
+    [(0, 255), (8, 235), (100, 0)],
 )
-def test_overlay_renders_configured_background_opacity(
-    qapp, background_opacity, expected_alpha
+def test_overlay_renders_configured_background_transparency(
+    qapp, background_transparency, expected_alpha
 ):
     overlay = CheatSheetOverlay(
-        {"images": [], "background_opacity": background_opacity}
+        {"images": [], "background_transparency": background_transparency}
     )
     try:
         overlay.resize(500, 350)
@@ -163,8 +174,8 @@ def test_overlay_switches_images_and_saves_geometry(qapp, tmp_path, monkeypatch)
             "position_initialized": True,
             "width": 500,
             "height": 350,
-            "opacity": 80,
-            "background_opacity": 40,
+            "image_transparency": 20,
+            "background_transparency": 60,
         }
     )
     saved = []
