@@ -4682,6 +4682,54 @@ Item Level: 82
         window.close()
 
 
+def test_poe2_low_level_magic_shows_preset_and_current_rarity_condition(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    try:
+        item = parse_item_text("""Item Class: Rings
+Rarity: Magic
+Healthy Ruby Ring
+Ruby Ring
+--------
+Item Level: 75
+""")
+        window._parsed_item = item
+        window._configure_trade_presets(item)
+
+        assert window.trade_preset_combo.count() == 2
+        assert window.rarity_condition_chip.text() == "非ユニーク"
+        assert not window.rarity_condition_chip.isHidden()
+        assert window.magic_rarity_toggle.isHidden()
+
+        window.trade_preset_combo.setCurrentIndex(1)
+        assert window.rarity_condition_chip.isHidden()
+        assert not window.magic_rarity_toggle.isHidden()
+        assert window.magic_rarity_toggle.itemText(0) == "非ユニーク"
+        assert window.magic_rarity_toggle.currentText() == "マジック完全一致"
+
+        window.magic_rarity_toggle.setCurrentIndex(0)
+        assert window.magic_rarity_toggle.currentData() is False
+    finally:
+        window.close()
+
+
+def test_poe2_fixed_rarity_condition_labels_match_trade2(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    try:
+        for rarity, expected in (("Rare", "非ユニーク"), ("Unique", "ユニーク")):
+            item = ParsedItem(
+                "Rings", rarity, "Test", "Ruby Ring", "ring",
+                item_level=75, raw_text=f"{rarity} ring",
+            )
+            window._preset_item_key = None
+            window._parsed_item = item
+            window._configure_trade_presets(item)
+            assert window.rarity_condition_chip.text() == expected
+            assert not window.rarity_condition_chip.isHidden()
+            assert window.magic_rarity_toggle.isHidden()
+    finally:
+        window.close()
+
+
 def test_trade_options_are_kept_when_item_changes(qapp):
     config = {"poe_version": POE1, "poetore": {}}
     window = PoetoreWindow(app_config=config)
@@ -5608,7 +5656,7 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
             "influence_shaper", "influence_elder", "influence_crusader",
             "influence_hunter", "influence_redeemer", "influence_warlord",
             "influence_eater", "influence_exarch",
-            "magic_rarity", "unidentified", "veiled", "foil", "mirrored", "sanctified", "split",
+            "rarity", "magic_rarity", "unidentified", "veiled", "foil", "mirrored", "sanctified", "split",
         )
         assert window.filter_chip_layout.ordered_widgets() == tuple(
             widget for _name, widget in window._filter_chips

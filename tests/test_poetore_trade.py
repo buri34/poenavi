@@ -941,6 +941,18 @@ def test_fractured_item_can_offer_base_preset_below_ilvl_82():
     ]
 
 
+def test_low_level_magic_can_offer_base_preset_only_when_explicitly_enabled():
+    item = ParsedItem(
+        "Rings", "Magic", "Healthy Ruby Ring", "Ruby Ring", "ring",
+        item_level=75, raw_text="low-level magic ring",
+    )
+
+    assert available_trade_presets(item) == (PRESET_FINISHED,)
+    assert available_trade_presets(
+        item, allow_low_level_magic=True,
+    ) == (PRESET_FINISHED, PRESET_BASE)
+
+
 def test_quality_twenty_fractured_armour_still_offers_base_preset():
     item = parse_item_text("""アイテムクラス: 靴
 レアリティ: レア

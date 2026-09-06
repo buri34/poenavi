@@ -1033,7 +1033,9 @@ def _base_defence_percentile(item: ParsedItem, trade_base_type: str | None) -> f
     return None
 
 
-def available_trade_presets(item: ParsedItem) -> tuple[str, ...]:
+def available_trade_presets(
+    item: ParsedItem, *, allow_low_level_magic: bool = False,
+) -> tuple[str, ...]:
     """完成品を基本とし、未完成でクラフト価値がある装備だけベース検索を追加する。"""
     rarity = item.rarity.casefold()
     if (not (is_equipment_category(item.category)
@@ -1064,6 +1066,8 @@ def available_trade_presets(item: ParsedItem) -> tuple[str, ...]:
     )
     if is_unmodifiable:
         return (PRESET_FINISHED,)
+    if allow_low_level_magic and rarity in {"magic", "マジック"} and not likely_finished:
+        return (PRESET_FINISHED, PRESET_BASE)
     if has_strong_crafting_value:
         return (PRESET_FINISHED, PRESET_BASE)
     if likely_finished or not has_item_level_crafting_value:

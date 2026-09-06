@@ -1083,6 +1083,7 @@ def build_search_query(
     gem_level_min: int | None = None,
     gem_sockets_min: int | None = None,
     exact_base_type: bool = True,
+    magic_exact: bool | None = None,
     trade_currency: str = "any",
     listed_within: str = "any",
 ) -> dict:
@@ -1121,7 +1122,9 @@ def build_search_query(
         if exact_base_type and rarity in {"normal", "ノーマル"}:
             type_filter_values["rarity"] = {"option": "normal"}
         elif exact_base_type and rarity in {"magic", "マジック"}:
-            type_filter_values["rarity"] = {"option": "magic"}
+            type_filter_values["rarity"] = {
+                "option": "magic" if magic_exact is not False else "nonunique"
+            }
         elif rarity in {"normal", "ノーマル", "magic", "マジック", "rare", "レア"}:
             type_filter_values["rarity"] = {"option": "nonunique"}
     if stat_filters is not None:
@@ -1229,6 +1232,7 @@ def search_prices(
     gem_level_min: int | None = None,
     gem_sockets_min: int | None = None,
     exact_base_type: bool = True,
+    magic_exact: bool | None = None,
     trade_currency: str = "any",
     listed_within: str = "any",
     include_corrupted=None,
@@ -1241,7 +1245,8 @@ def search_prices(
         item, status=status, quality_min=quality_min, stat_filters=stat_filters,
         item_level_min=item_level_min, item_level_max=item_level_max,
         gem_level_min=gem_level_min, gem_sockets_min=gem_sockets_min,
-        exact_base_type=exact_base_type, trade_currency=trade_currency,
+        exact_base_type=exact_base_type, magic_exact=magic_exact,
+        trade_currency=trade_currency,
         listed_within=listed_within,
     )
     misc = payload["query"]["filters"].setdefault("misc_filters", {"filters": {}})["filters"]

@@ -1189,12 +1189,16 @@ class PoetoreWindow(QWidget):
         self.search_range_combo.currentIndexChanged.connect(self._search_range_changed)
         top_options.addWidget(self.search_range_combo)
         self.magic_rarity_toggle = _BinaryToggle(
-            ("ユニーク以外", False), ("マジック完全一致", True),
+            ("非ユニーク", False), ("マジック完全一致", True),
         )
         self.magic_rarity_toggle.setToolTip(
             "マジックのベースアイテムだけに絞る場合は「マジック完全一致」を選択"
         )
         self.magic_rarity_toggle.hide()
+        self.rarity_condition_chip = QPushButton()
+        self.rarity_condition_chip.setObjectName("readonlyFilterChip")
+        self.rarity_condition_chip.setEnabled(False)
+        self.rarity_condition_chip.hide()
 
         self.trade_status_combo = QComboBox()
         self.trade_status_combo.setObjectName("filterControl")
@@ -1530,6 +1534,7 @@ class PoetoreWindow(QWidget):
             ("runemastered", self.runemastered_tag),
             ("gem_sockets", self.gem_socket_tag),
             *((f"influence_{name}", self.influence_chips[name]) for name in _INFLUENCE_CHIPS),
+            ("rarity", self.rarity_condition_chip),
             ("magic_rarity", self.magic_rarity_toggle),
             ("unidentified", self.unidentified_chip),
             ("veiled", self.veiled_chip),
@@ -4503,6 +4508,7 @@ class PoetoreWindow(QWidget):
                         gem_level_min=gem_level_min,
                         gem_sockets_min=gem_sockets_min,
                         exact_base_type=exact_base_type,
+                        magic_exact=magic_exact,
                         trade_currency=trade_currency,
                         listed_within=listed_within,
                         include_corrupted=include_corrupted,
@@ -4560,7 +4566,9 @@ class PoetoreWindow(QWidget):
         if key == self._preset_item_key:
             return
         self._preset_item_key = key
-        presets = available_trade_presets(item)
+        presets = available_trade_presets(
+            item, allow_low_level_magic=self.poe_version == POE2,
+        )
         dedicated_exact = uses_dedicated_exact_preset(item)
         self.trade_preset_combo.blockSignals(True)
         rarity = (item.rarity or "").strip().casefold()
@@ -4594,20 +4602,42 @@ class PoetoreWindow(QWidget):
 
     def _configure_magic_rarity_toggle(self, item=None):
         item = item or getattr(self, "_parsed_item", None)
-        show = bool(
+        rarity = (item.rarity if item is not None else "").casefold()
+        magic_base_search = bool(
             item is not None
             and self.trade_preset_combo.currentData() == PRESET_BASE
-            and item.rarity.casefold() in {"magic", "マジック"}
+            and rarity in {"magic", "マジック"}
             and (is_equipment_category(item.category)
                  or item.category in {"cluster_jewel", "jewel", "abyss_jewel"})
         )
-        self.magic_rarity_toggle.setVisible(show)
-        if show:
-            # AwakenedはAdorned用途のMagic Jewel／Abyss Jewelだけ、
-            # Exact（ベース）検索でもrarityをMagic完全一致にする。
+        is_poe2_search_rarity = bool(
+            self.poe_version == POE2
+            and item is not None
+            and (is_equipment_category(item.category)
+                 or item.category in {"cluster_jewel", "jewel", "abyss_jewel"})
+            and rarity in {"normal", "ノーマル", "magic", "マジック", "rare", "レア", "unique", "ユニーク"}
+        )
+        self.magic_rarity_toggle.setItemText(
+            0, "非ユニーク" if self.poe_version == POE2 else "ユニーク以外",
+        )
+        self.magic_rarity_toggle.setVisible(magic_base_search)
+        self.rarity_condition_chip.setVisible(
+            is_poe2_search_rarity and not magic_base_search,
+        )
+        if magic_base_search:
             self.magic_rarity_toggle.setCurrentIndex(
-                1 if item.category in {"jewel", "abyss_jewel"} else 0
+                1 if self.poe_version == POE2
+                or item.category in {"jewel", "abyss_jewel"} else 0
             )
+        elif is_poe2_search_rarity:
+            if rarity in {"unique", "ユニーク"}:
+                label = "ユニーク"
+            elif (rarity in {"normal", "ノーマル"}
+                  and uses_dedicated_exact_preset(item)):
+                label = "ノーマル"
+            else:
+                label = "非ユニーク"
+            self.rarity_condition_chip.setText(label)
 
     def _configure_item_state_filters(self, item):
         """元アイテムが変わった時だけ推奨状態へ戻し、再検索時は選択を保持する。"""

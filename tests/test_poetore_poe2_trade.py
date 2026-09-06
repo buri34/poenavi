@@ -1504,6 +1504,20 @@ def test_poe2_nonunique_rarity_matches_ee2_exact_scope_rules(
     }
 
 
+def test_poe2_magic_exact_base_can_be_changed_to_nonunique():
+    item = parse_item_text(
+        "Item Class: Belts\nRarity: Magic\nHeavy Belt\n--------\n"
+    )
+
+    query = build_search_query(
+        item, exact_base_type=True, magic_exact=False,
+    )["query"]
+
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "nonunique"
+    }
+
+
 def test_shared_trade_options_are_sent_to_trade2_query():
     item = _phase45_item("phase45_gem_ja.txt")
     payload = build_search_query(
