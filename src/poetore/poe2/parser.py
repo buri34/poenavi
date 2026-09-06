@@ -242,6 +242,12 @@ _STATE_LINES = {
 _DESCRIPTION_PREFIXES = (
     "Can be used in a Map Device", "マップデバイスで使用すると",
 )
+_CHIMING_STAFF_BASES = {"Chiming Staff", "鐘鳴のスタッフ"}
+_CHIMING_STAFF_SIGIL = re.compile(
+    r"^(?:Grants Skill:\s*Level|スキルを付与:\s*レベル)\s*\d+\s+"
+    r"(?:Sigil of Power|シギルオブパワー)$",
+    re.IGNORECASE,
+)
 
 _TABLET_USES = (
     re.compile(r"^(\d+)\s+uses?\s+remaining$", re.IGNORECASE),
@@ -876,7 +882,16 @@ def parse_item_text(text: str) -> ParsedItem:
         if separator and key.strip() in _PROPERTY_LABELS:
             properties[key.strip()] = value.strip()
             continue
-        if separator and key.strip() not in _LABELS and not _ITEM_LEVEL.match(line):
+        is_chiming_staff_sigil = (
+            base_type in _CHIMING_STAFF_BASES
+            and _CHIMING_STAFF_SIGIL.fullmatch(line) is not None
+        )
+        if (
+            separator
+            and key.strip() not in _LABELS
+            and not _ITEM_LEVEL.match(line)
+            and not is_chiming_staff_sigil
+        ):
             properties[key.strip()] = value.strip()
             continue
         if not line or line == "--------" or line in identity_lines:

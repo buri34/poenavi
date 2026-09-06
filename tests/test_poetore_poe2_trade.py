@@ -609,6 +609,47 @@ def test_reported_superior_normal_sceptre_uses_underlying_trade2_base(text):
     }
 
 
+def test_chiming_staff_exposes_sigil_of_power_level_as_a_mod_filter():
+    text = """アイテムクラス: スタッフ
+レアリティ: マジック
+青い 熟達者の 鐘鳴のスタッフ
+--------
+装備条件：レベル 56, 29 (augmented) 知性
+--------
+アイテムレベル: 82
+--------
+スキルを付与: レベル20 シギルオブパワー
+--------
+{ プレフィックスモッド「青い」 (ティア: 1) — マナ }
+最大マナ +319(299-328)
+{ サフィックスモッド 「熟達者の」 (ティア: 1) }
+要求能力値が35%減少する"""
+
+    item = parse_item_text(text)
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+
+    assert item.base_type == "Chiming Staff"
+    assert rows["skill.sigil_of_power"].kind == "skill"
+    assert rows["skill.sigil_of_power"].read_value == 20
+    assert rows["skill.sigil_of_power"].hidden_reason == ""
+
+
+def test_non_chiming_granted_skill_property_does_not_change_to_a_mod_filter():
+    text = """アイテムクラス: セプター
+レアリティ: ノーマル
+神殿のセプター
+--------
+アイテムレベル: 82
+--------
+スキルを付与: レベル20 シギルオブパワー"""
+
+    item = parse_item_text(text)
+
+    assert "skill.sigil_of_power" not in {
+        row.stat_id for row in poe2_trade_filters(item)
+    }
+
+
 def test_multi_value_trade_stats_use_same_arithmetic_mean_as_ee2():
     assert trade_stat_value((25.0, 39.0)) == 32.0
     assert trade_stat_value((1.0, 3.0, 5.0, 7.0)) == 4.0

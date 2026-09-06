@@ -6430,6 +6430,36 @@ def test_poe2_life_flask_properties_do_not_show_metadata_warning(qapp):
         window.close()
 
 
+def test_poe2_chiming_staff_shows_sigil_of_power_level_in_mod_list(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: スタッフ
+レアリティ: マジック
+青い 熟達者の 鐘鳴のスタッフ
+--------
+装備条件：レベル 56, 29 (augmented) 知性
+--------
+アイテムレベル: 82
+--------
+スキルを付与: レベル20 シギルオブパワー
+--------
+{ プレフィックスモッド「青い」 (ティア: 1) — マナ }
+最大マナ +319(299-328)
+{ サフィックスモッド 「熟達者の」 (ティア: 1) }
+要求能力値が35%減少する""")
+        window.parse_current_text()
+
+        visible_mods = {
+            window.mod_filter_tree.topLevelItem(index).text(_MOD_COLUMN_TEXT)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+            if not window.mod_filter_tree.topLevelItem(index).isHidden()
+        }
+        assert "スキルを付与: レベル20 シギルオブパワー" in visible_mods
+        assert window.mod_warning.isHidden()
+    finally:
+        window.close()
+
+
 def test_poe2_wombgift_hiveblood_cost_does_not_show_metadata_warning(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:
