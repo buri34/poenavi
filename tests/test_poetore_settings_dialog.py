@@ -315,11 +315,29 @@ def test_poetore_settings_describes_obs_result_window_behavior():
     assert dialog.obs_streaming_enabled_cb.text() == (
         "検索結果ウィンドウをOBS配信用にする"
     )
+    assert dialog.obs_title_bar_opacity_slider.minimum() == 0
+    assert dialog.obs_title_bar_opacity_slider.maximum() == 100
+    assert dialog.obs_title_bar_opacity_slider.value() == 100
     note = dialog.findChild(QLabel, "obsStreamingNote")
     assert note.text() == (
         "待機中はタイトルバーだけを表示し、検索すると検索結果を当該タイトルバーの下に"
         "展開します。OBSでは「ぽえとれ - 検索結果ウィンドウ」として認識されます。"
     )
+    dialog.close()
+
+
+def test_poetore_settings_saves_obs_title_bar_opacity():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "poetore": {"obs_streaming": {"enabled": True, "title_bar_opacity": 42}}
+    })
+
+    assert dialog.obs_title_bar_opacity_slider.value() == 42
+    dialog.obs_title_bar_opacity_slider.setValue(18)
+    assert dialog.get_settings()["poetore"]["obs_streaming"] == {
+        "enabled": True,
+        "title_bar_opacity": 18,
+    }
     dialog.close()
 
 

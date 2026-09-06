@@ -74,6 +74,7 @@
         "result_positions": {},
         "obs_streaming": {
             "enabled": false,
+            "title_bar_opacity": 100,
             "geometry": {}
         }
     },

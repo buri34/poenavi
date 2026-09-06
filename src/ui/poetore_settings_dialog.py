@@ -254,6 +254,16 @@ class PoetoreSettingsDialog(QDialog):
             bool(obs_streaming.get("enabled", False))
         )
         obs_layout.addWidget(self.obs_streaming_enabled_cb)
+        self.obs_title_bar_opacity_slider = self._slider_row(
+            obs_layout,
+            "透過率:",
+            obs_streaming.get("title_bar_opacity", 100),
+            0,
+        )
+        self.obs_title_bar_opacity_slider.setObjectName("obsTitleBarOpacity")
+        self.obs_title_bar_opacity_slider.setToolTip(
+            "待機中に表示される「ぽえとれ検索ウィンドウ」バーの透過率"
+        )
         obs_note = QLabel(
             "待機中はタイトルバーだけを表示し、検索すると検索結果を当該タイトルバーの下に"
             "展開します。OBSでは「ぽえとれ - 検索結果ウィンドウ」として認識されます。"
@@ -543,6 +553,9 @@ class PoetoreSettingsDialog(QDialog):
         )
         obs_streaming = dict(poetore.get("obs_streaming", {}))
         obs_streaming["enabled"] = self.obs_streaming_enabled_cb.isChecked()
+        obs_streaming["title_bar_opacity"] = (
+            self.obs_title_bar_opacity_slider.value()
+        )
         poetore["obs_streaming"] = obs_streaming
         if self._reset_result_positions:
             poetore.pop("result_positions", None)

@@ -23,7 +23,9 @@ from src.utils.poe_version_data import POE1, POE2
 
 
 def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qapp):
-    config = {"poetore": {"obs_streaming": {"enabled": True, "geometry": {}}}}
+    config = {"poetore": {"obs_streaming": {
+        "enabled": True, "title_bar_opacity": 35, "geometry": {},
+    }}}
     saved = []
     window = PoetoreWindow(app_config=config, save_config=lambda value: saved.append(value))
     try:
@@ -37,6 +39,7 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
         assert window.windowType() == Qt.Window
         assert window.height() < expanded_height
         assert window.height() == 30
+        assert window.windowOpacity() == pytest.approx(0.35, abs=0.005)
         assert window._title_bar._obs_title_label.text() == "ぽえとれ検索ウィンドウ"
         assert window._title_bar._obs_title_label.isVisible()
         assert window._title_bar._expanded_controls.isHidden()
@@ -65,6 +68,7 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
         qapp.processEvents()
         assert window.height() == window._obs_expanded_size.height()
         assert window.height() > 30
+        assert window.windowOpacity() == pytest.approx(1.0)
         assert window._title_bar._obs_title_label.isHidden()
         assert not window._title_bar._expanded_controls.isHidden()
         assert not window._obs_content.isHidden()
@@ -79,6 +83,7 @@ def test_obs_streaming_mode_keeps_one_window_and_collapses_instead_of_closing(qa
         qapp.processEvents()
         assert window.isVisible()
         assert window.height() < expanded_height
+        assert window.windowOpacity() == pytest.approx(0.35, abs=0.005)
         assert saved
     finally:
         window.set_obs_streaming_mode(False)

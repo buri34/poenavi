@@ -3710,6 +3710,7 @@ class PoetoreWindow(QWidget):
             self.collapse_for_obs()
             self.show()
         elif self.isVisible():
+            self.setWindowOpacity(1.0)
             self._obs_collapsed = False
             self._title_bar.set_obs_collapsed(False)
             self._obs_content.show()
@@ -3737,6 +3738,7 @@ class PoetoreWindow(QWidget):
         self.setMinimumHeight(0)
         self.setMaximumHeight(collapsed_height)
         self.resize(self.width(), collapsed_height)
+        self._apply_obs_title_bar_opacity()
         self.show()
         self.raise_()
         self._persist_obs_geometry()
@@ -3748,6 +3750,7 @@ class PoetoreWindow(QWidget):
         # Windowsへ描画されないよう、完成状態まで非表示で組み替える。
         self._obs_transitioning = True
         self.hide()
+        self.setWindowOpacity(1.0)
         self._obs_collapsed = False
         self._title_bar.set_obs_collapsed(False)
         self._obs_content.show()
@@ -3766,6 +3769,14 @@ class PoetoreWindow(QWidget):
     def _obs_config(self):
         poetore = self._app_config.setdefault("poetore", {})
         return poetore.setdefault("obs_streaming", {})
+
+    def _apply_obs_title_bar_opacity(self):
+        """Apply the configured opacity only while the OBS waiting bar is shown."""
+        try:
+            opacity_pct = int(self._obs_config().get("title_bar_opacity", 100))
+        except (TypeError, ValueError):
+            opacity_pct = 100
+        self.setWindowOpacity(max(0, min(opacity_pct, 100)) / 100.0)
 
     def _restore_obs_geometry(self):
         geometry = self._obs_config().get("geometry", {})
