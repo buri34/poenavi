@@ -6505,6 +6505,35 @@ def test_poe2_wombgift_item_level_chip_reaches_trade2_search(qapp):
         window.close()
 
 
+def test_poe2_jewel_scoped_mana_on_kill_stat_reaches_trade2_search(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        fixture = (
+            Path(__file__).parent
+            / "fixtures"
+            / "poe2"
+            / "rare_sapphire_mana_on_kill_ja.txt"
+        )
+        window.input_edit.setPlainText(fixture.read_text(encoding="utf-8"))
+        window.parse_current_text()
+
+        result = PriceResult("Forbidden Rites", "qid", 1, ())
+        with patch("src.poetore.poe2.trade.search_prices", return_value=result) as search:
+            window.search_current_item()
+            for _ in range(50):
+                qapp.processEvents()
+                if search.called:
+                    break
+                QTest.qWait(10)
+
+        assert search.called
+        stat_ids = {row.stat_id for row in search.call_args.kwargs["stat_filters"]}
+        assert "explicit.stat_1604736568" in stat_ids
+        assert "explicit.stat_1030153674" not in stat_ids
+    finally:
+        window.close()
+
+
 def test_poe2_weapon_header_uses_individual_elemental_damage_properties(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:

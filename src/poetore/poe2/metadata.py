@@ -13,6 +13,10 @@ STAT_PATH = IDENTITY_PATH.with_name("stat_index.json")
 AUGMENT_PATH = IDENTITY_PATH.with_name("augment_index.json")
 RELATED_ITEMS_PATH = IDENTITY_PATH.with_name("related_item_groups.json")
 
+_STAT_SCOPE_SUFFIXES = {
+    "jewel": ("Jewel", "ジュエル"),
+}
+
 
 @lru_cache(maxsize=1)
 def identity_index() -> dict[str, tuple[dict, ...]]:
@@ -167,6 +171,24 @@ def local_stat_matchers() -> tuple[tuple[dict, re.Pattern], ...]:
     return tuple(rows)
 
 
+@lru_cache(maxsize=32)
+def scoped_stat_matchers(category: str) -> tuple[tuple[dict, re.Pattern], ...]:
+    suffixes = _STAT_SCOPE_SUFFIXES.get(category, ())
+    rows = []
+    for entry, _pattern in stat_matchers():
+        for template in (entry.get("text") or {}).values():
+            template = str(template)
+            scoped_template = template
+            for suffix in suffixes:
+                scoped_template = re.sub(
+                    rf"\s*\({re.escape(suffix)}\)\s*$", "", scoped_template,
+                    flags=re.IGNORECASE,
+                )
+            if scoped_template != template:
+                rows.append((entry, _template_pattern(scoped_template)))
+    return tuple(rows)
+
+
 def resolve_stat_line(
     text: str, preferred_type: str | None = None, *, prefer_local: bool = False,
 ) -> tuple[dict, tuple[float, ...]] | None:
@@ -181,6 +203,7 @@ def resolve_stat_line_candidates(
     preferred_type: str | None = None,
     *,
     include_local_variants: bool = False,
+    item_category: str | None = None,
 ) -> tuple[tuple[dict, tuple[float, ...]], ...]:
     comparable = re.sub(
         r"\s*\((?:implicit|explicit|enchant|rune|sanctified|desecrated|fractured|crafted)[^)]*\)\s*$",
@@ -214,6 +237,15 @@ def resolve_stat_line_candidates(
             row for row in matchers if row[0].get("type") != preferred_type
         )
     candidate_matchers = []
+    if item_category:
+        scoped_matchers = scoped_stat_matchers(item_category)
+        if preferred_type:
+            scoped_matchers = tuple(
+                row for row in scoped_matchers if row[0].get("type") == preferred_type
+            ) + tuple(
+                row for row in scoped_matchers if row[0].get("type") != preferred_type
+            )
+        candidate_matchers.extend(scoped_matchers)
     if include_local_variants:
         local_matchers = local_stat_matchers()
         if preferred_type:

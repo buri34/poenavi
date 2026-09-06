@@ -937,6 +937,7 @@ def parse_item_text(text: str) -> ParsedItem:
         preferred_stat_type = line_kind
         candidates = resolve_stat_line_candidates(
             line, preferred_stat_type, include_local_variants=scoped_affix,
+            item_category=category,
         )
         resolved = _select_scoped_stat_candidate(candidates, category, line_kind)
         if resolved:

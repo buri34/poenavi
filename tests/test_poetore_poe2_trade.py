@@ -25,6 +25,9 @@ PHASE6_FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "phase6_special_
 AMBIGUOUS_BASE_FIXTURES = (
     Path(__file__).parent / "fixtures" / "poe2" / "ambiguous_bases_bilingual.json"
 )
+MANA_ON_KILL_JEWEL_FIXTURE = (
+    Path(__file__).parent / "fixtures" / "poe2" / "rare_sapphire_mana_on_kill_ja.txt"
+)
 
 
 def _unique_fixture():
@@ -94,6 +97,24 @@ def test_duplicate_japanese_unique_name_is_disambiguated_by_base_type():
     )["query"]
     assert web_query["name"] == "アッツィリの軽蔑"
     assert web_query["type"] == "金のサークレット"
+
+
+def test_jewel_prefers_jewel_scoped_mana_on_kill_stat_in_trade_query():
+    item = parse_item_text(MANA_ON_KILL_JEWEL_FIXTURE.read_text(encoding="utf-8"))
+    filters = poe2_trade_filters(item)
+    payload = build_search_query(item, stat_filters=filters)
+    stat_ids = {
+        row["id"] for row in payload["query"]["stats"][0]["filters"]
+    }
+
+    assert item.category == "jewel"
+    assert {modifier.stat_id for modifier in item.modifiers} == {
+        "explicit.stat_3417711605",
+        "explicit.stat_1604736568",
+        "explicit.stat_3668351662",
+    }
+    assert "explicit.stat_1604736568" in stat_ids
+    assert "explicit.stat_1030153674" not in stat_ids
 
 
 def test_unidentified_unique_searches_base_with_unique_and_unidentified_filters():

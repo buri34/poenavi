@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from src.poetore.poe2.metadata import resolve_stat_line_candidates
 from src.poetore.poe2.parser import Poe2ItemParseError, TRADE_CATEGORY_BY_CATEGORY, parse_item_text
 from src.poetore.poe2.trade import build_search_query, poe2_trade_filters
 from src.poetore.poe2.fixture_loader import load_real_copy_rows
@@ -45,6 +46,20 @@ def test_japanese_double_corrupted_gem_preserves_corrupted_state():
     assert item.base_type == "Whirling Assault"
     assert "corrupted" in item.flags
     assert not [modifier for modifier in item.modifiers if not modifier.ref]
+
+
+def test_jewel_scoped_stat_match_does_not_replace_general_item_stat():
+    text = "敵を倒した時にマナの1%を回復する"
+
+    jewel = resolve_stat_line_candidates(
+        text, "explicit", item_category="jewel",
+    )
+    general = resolve_stat_line_candidates(
+        text, "explicit", item_category="ring",
+    )
+
+    assert jewel[0][0]["id"] == "explicit.stat_1604736568"
+    assert general[0][0]["id"] == "explicit.stat_1030153674"
 
 
 def _fixtures():
