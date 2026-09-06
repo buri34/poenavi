@@ -107,6 +107,28 @@ def test_poetore_theme_is_applied_to_manager_and_overlay(qapp):
         overlay.close()
 
 
+@pytest.mark.parametrize(
+    ("background_opacity", "expected_alpha"),
+    [(0, 0), (92, 235), (100, 255)],
+)
+def test_overlay_renders_configured_background_opacity(
+    qapp, background_opacity, expected_alpha
+):
+    overlay = CheatSheetOverlay(
+        {"images": [], "background_opacity": background_opacity}
+    )
+    try:
+        overlay.resize(500, 350)
+        overlay.show()
+        qapp.processEvents()
+
+        rendered = overlay.grab().toImage()
+
+        assert rendered.pixelColor(4, 100).alpha() == expected_alpha
+    finally:
+        overlay.close()
+
+
 def test_manager_cancel_removes_only_newly_imported_files(qapp, tmp_path, monkeypatch):
     monkeypatch.setenv("POENAVI_USER_DATA_DIR", str(tmp_path / "user-data"))
     existing_source = tmp_path / "existing.png"
@@ -152,7 +174,7 @@ def test_overlay_switches_images_and_saves_geometry(qapp, tmp_path, monkeypatch)
     assert "background: transparent" in overlay.image_label.styleSheet()
     assert overlay.windowOpacity() == 1.0
     assert overlay.image_label.graphicsEffect().opacity() == 0.8
-    assert "rgba(12, 12, 12, 102)" in overlay.styleSheet()
+    assert overlay._background_alpha == 102
     overlay.setGeometry(40, 50, 600, 420)
     overlay.hide_and_save()
 

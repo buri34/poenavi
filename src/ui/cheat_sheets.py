@@ -7,7 +7,7 @@ import uuid
 from pathlib import Path
 
 from PySide6.QtCore import QByteArray, QBuffer, QEvent, QIODevice, Qt, QPoint, QRect, QSize, Signal
-from PySide6.QtGui import QCursor, QKeyEvent, QPixmap
+from PySide6.QtGui import QColor, QCursor, QKeyEvent, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
@@ -408,16 +408,23 @@ class CheatSheetOverlay(QWidget):
 
     def _apply_background_opacity(self):
         opacity_pct = max(0, min(100, int(self.config["background_opacity"])))
-        background_alpha = round(255 * opacity_pct / 100)
+        self._background_alpha = round(255 * opacity_pct / 100)
         self.setStyleSheet(
-            f"QWidget#cheatSheetOverlay {{ background: rgba(12, 12, 12, {background_alpha}); "
-            f"color: {self._theme.text}; border: 1px solid {self._theme.accent}; "
-            "border-radius: 6px; }"
+            f"QWidget#cheatSheetOverlay {{ background: transparent; color: {self._theme.text}; }}"
             "QLabel { border: none; background: transparent; }"
             f"QPushButton {{ background:{self._theme.panel}; color:{self._theme.text}; "
             "border:1px solid #666; border-radius:4px; padding:4px 8px; }"
             f"QPushButton:hover {{ border-color:{self._theme.accent}; }}"
         )
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setBrush(QColor(12, 12, 12, self._background_alpha))
+        painter.setPen(QPen(QColor(self._theme.accent), 1))
+        painter.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 6, 6)
+        super().paintEvent(event)
 
     def _selected_index(self) -> int:
         images = self.config["images"]
