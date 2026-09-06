@@ -4733,11 +4733,22 @@ def test_poe2_trade_currency_shortens_only_exalted_divine_label(qapp):
 
         window._fit_compact_action_widths()
         combined_width = window.trade_currency_combo.width()
+        combined_expected_width = (
+            window.trade_currency_combo.fontMetrics().horizontalAdvance("高貴 / 神")
+            + 12
+        )
+        assert combined_width == combined_expected_width
         window.trade_currency_combo.setCurrentIndex(
             window.trade_currency_combo.findData("exalted")
         )
         window._fit_compact_action_widths()
         exalted_width = window.trade_currency_combo.width()
+        exalted_expected_width = (
+            window.trade_currency_combo.fontMetrics().horizontalAdvance("高貴なオーブのみ")
+            + 12
+        )
+        assert exalted_width == exalted_expected_width
+        assert window.trade_currency_combo.view().minimumWidth() >= exalted_width
         assert combined_width < window.trade_status_combo.width()
         assert combined_width < exalted_width
         assert window.width() == 650

@@ -2295,10 +2295,18 @@ class PoetoreWindow(QWidget):
             text_width = metrics.horizontalAdvance(combo.currentText())
             # コンパクト操作列用の左右パディング、矢印、境界分を確保する。
             compact_width = text_width + 12
-            if combo is self.trade_currency_combo:
-                # 選択肢に長い通貨名があるため、ポップアップの可読幅を確保する。
-                compact_width = round(compact_width * 1.68)
             combo.setFixedWidth(compact_width)
+
+            if combo is self.trade_currency_combo:
+                # 閉じた状態は現在値へ詰め、長い選択肢は一覧側だけ広く表示する。
+                popup_text_width = max(
+                    (
+                        metrics.horizontalAdvance(combo.itemText(index))
+                        for index in range(combo.count())
+                    ),
+                    default=0,
+                )
+                combo.view().setMinimumWidth(popup_text_width + 24)
 
         button_font = self.trade_url_button.font()
         button_font.setPixelSize(profile["mod_value_font"])
