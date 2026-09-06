@@ -6899,6 +6899,38 @@ def test_poe2_against_the_darkness_defaults_to_corrupted_only(qapp):
         window.close()
 
 
+def test_poe2_double_corrupted_gem_defaults_to_corrupted_only_and_searches_it(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        fixture = (
+            Path(__file__).parent
+            / "fixtures"
+            / "poe2"
+            / "whirling_assault_double_corrupted_ja.txt"
+        )
+        window.input_edit.setPlainText(fixture.read_text(encoding="utf-8"))
+        window.parse_current_text()
+
+        assert "corrupted" in window._parsed_item.flags
+        assert not window.corrupted_combo.isHidden()
+        assert window.corrupted_combo.currentText() == "コラプトのみ"
+        assert window.corrupted_combo.currentData() == "only"
+
+        result = PriceResult("Standard", "qid", 0, ())
+        with patch("src.poetore.poe2.trade.search_prices", return_value=result) as search:
+            window.search_current_item()
+            for _ in range(50):
+                qapp.processEvents()
+                if search.called:
+                    break
+                QTest.qWait(10)
+
+        assert search.called
+        assert search.call_args.kwargs["include_corrupted"] == "only"
+    finally:
+        window.close()
+
+
 def test_gem_allows_three_state_corruption_filter(qapp):
     window = PoetoreWindow()
     try:

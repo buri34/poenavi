@@ -19,6 +19,9 @@ AMBIGUOUS_BASE_FIXTURES = (
 )
 REAL_COPY_FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "real_copy_bilingual.csv"
 VAAL_SIPHONER_FIXTURE = Path(__file__).parent / "fixtures" / "poe2" / "vaal_siphoner_ja.txt"
+DOUBLE_CORRUPTED_GEM_FIXTURE = (
+    Path(__file__).parent / "fixtures" / "poe2" / "whirling_assault_double_corrupted_ja.txt"
+)
 
 
 def test_japanese_vaal_siphoner_builds_currency_search_query():
@@ -33,6 +36,15 @@ def test_japanese_vaal_siphoner_builds_currency_search_query():
     assert payload["query"]["filters"]["type_filters"]["filters"]["category"] == {
         "option": "currency",
     }
+
+
+def test_japanese_double_corrupted_gem_preserves_corrupted_state():
+    item = parse_item_text(DOUBLE_CORRUPTED_GEM_FIXTURE.read_text(encoding="utf-8"))
+
+    assert item.category == "active_gem"
+    assert item.base_type == "Whirling Assault"
+    assert "corrupted" in item.flags
+    assert not [modifier for modifier in item.modifiers if not modifier.ref]
 
 
 def _fixtures():
