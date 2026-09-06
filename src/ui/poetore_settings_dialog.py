@@ -266,7 +266,8 @@ class PoetoreSettingsDialog(QDialog):
         )
         obs_note = QLabel(
             "待機中はタイトルバーだけを表示し、検索すると検索結果を当該タイトルバーの下に"
-            "展開します。OBSでは「ぽえとれ - 検索結果ウィンドウ」として認識されます。"
+            "展開します。OBSでは「ぽえとれ - 検索結果ウィンドウ」として認識されます。\n"
+            "待機中のタイトルバーは透過率を変更できます。"
         )
         obs_note.setObjectName("obsStreamingNote")
         obs_note.setWordWrap(True)
