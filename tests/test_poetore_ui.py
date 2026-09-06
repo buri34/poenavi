@@ -4676,38 +4676,89 @@ Item Level: 82
         window.close()
 
 
-def test_currency_selection_uses_recommended_default_and_is_kept_for_same_item(qapp):
-    window = PoetoreWindow()
+def test_trade_options_are_kept_when_item_changes(qapp):
+    config = {"poe_version": POE1, "poetore": {}}
+    window = PoetoreWindow(app_config=config)
     try:
-        sword = parse_item_text("""Item Class: Two Hand Swords
+        sword_text = """Item Class: Two Hand Swords
 Rarity: Rare
 Test Sword
 Reaver Sword
 --------
 Item Level: 70
-""")
-        window._trade_base_type = "Reaver Sword"
-        window._configure_trade_currency(sword)
+"""
+        window.input_edit.setPlainText(sword_text)
+        window.parse_current_text()
         assert window.trade_currency_combo.currentData() == "any"
 
         window.trade_currency_combo.setCurrentIndex(
             window.trade_currency_combo.findData("divine")
         )
-        window._configure_trade_currency(sword)
-        assert window.trade_currency_combo.currentData() == "divine"
-
-        logbook = parse_item_text("""Item Class: Expedition Logbooks
+        window.trade_status_combo.setCurrentIndex(
+            window.trade_status_combo.findData("available")
+        )
+        logbook_text = """Item Class: Expedition Logbooks
 Rarity: Rare
 Test Logbook
 Expedition Logbook
 --------
 Item Level: 83
-""")
-        window._trade_base_type = "Expedition Logbook"
-        window._configure_trade_currency(logbook)
-        assert window.trade_currency_combo.currentData() == "chaos_divine"
+"""
+        window.input_edit.setPlainText(logbook_text)
+        window.parse_current_text()
+        assert window.trade_currency_combo.currentData() == "divine"
+        assert window.trade_status_combo.currentData() == "available"
     finally:
         window.close()
+
+
+def test_trade_options_are_persisted_separately_for_poe1_and_poe2(qapp):
+    config = {
+        "poetore": {
+            "trade_options": {
+                "poe1": {"status": "online", "currency": "divine"},
+                "poe2": {"status": "available", "currency": "exalted"},
+            }
+        }
+    }
+    saved = Mock()
+    poe1 = PoetoreWindow(
+        app_config={**config, "poe_version": POE1}, save_config=saved,
+    )
+    poe2 = PoetoreWindow(
+        app_config={**config, "poe_version": POE2}, save_config=saved,
+    )
+    try:
+        assert poe1.trade_status_combo.currentData() == "online"
+        assert poe1.trade_currency_combo.currentData() == "divine"
+        assert poe2.trade_status_combo.currentData() == "available"
+        assert poe2.trade_currency_combo.currentData() == "exalted"
+
+        poe2.trade_status_combo.setCurrentIndex(
+            poe2.trade_status_combo.findData("offline")
+        )
+        poe2.trade_currency_combo.setCurrentIndex(
+            poe2.trade_currency_combo.findData("exalted_divine")
+        )
+        assert config["poetore"]["trade_options"]["poe1"] == {
+            "status": "online", "currency": "divine",
+        }
+        assert config["poetore"]["trade_options"]["poe2"] == {
+            "status": "offline", "currency": "exalted_divine",
+        }
+        assert saved.called
+
+        reloaded_poe2 = PoetoreWindow(
+            app_config={**config, "poe_version": POE2}, save_config=saved,
+        )
+        try:
+            assert reloaded_poe2.trade_status_combo.currentData() == "offline"
+            assert reloaded_poe2.trade_currency_combo.currentData() == "exalted_divine"
+        finally:
+            reloaded_poe2.close()
+    finally:
+        poe1.close()
+        poe2.close()
 
 
 def test_item_state_filters_use_clear_labels_defaults_and_keep_selection(qapp):

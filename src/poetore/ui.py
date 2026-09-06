@@ -45,7 +45,7 @@ from .window_position import (
 )
 from .trade import (
     PRESET_BASE, PRESET_FINISHED, PriceResult, TradeApiError, TradeStatFilter,
-    available_pc_leagues, available_trade_presets, default_pc_league, default_trade_currency,
+    available_pc_leagues, available_trade_presets, default_pc_league,
     apply_search_range, english_trade_identity, gem_metadata,
     elemental_dps, physical_dps_at_20_quality,
     japanese_trade_item_label,
@@ -1221,6 +1221,7 @@ class PoetoreWindow(QWidget):
             self.trade_currency_combo.addItem(
                 "カオスまたは神のオーブ", "chaos_divine"
             )
+        self._restore_trade_options()
         self.listed_within_combo = QComboBox()
         self.listed_within_combo.setObjectName("filterControl")
         self.listed_within_combo.setProperty("compactAction", True)
@@ -1750,7 +1751,6 @@ class PoetoreWindow(QWidget):
         self._trade_base_type = None
         self._trade_item_name = None
         self._preset_item_key = None
-        self._currency_item_key = None
         self._state_item_key = None
         self._base_scope_item_key = None
         self._runemastered_item_key = None
@@ -1804,6 +1804,8 @@ class PoetoreWindow(QWidget):
         ):
             combo.currentIndexChanged.connect(self._auto_search_after_trade_option_change)
             combo.currentIndexChanged.connect(self._fit_compact_action_widths)
+        self.trade_status_combo.currentIndexChanged.connect(self._persist_trade_options)
+        self.trade_currency_combo.currentIndexChanged.connect(self._persist_trade_options)
         self.trade_league_combo.currentIndexChanged.connect(
             self._auto_search_after_trade_option_change
         )
@@ -3121,6 +3123,35 @@ class PoetoreWindow(QWidget):
             self._configure_special_filter_chips(item, resolved_filters)
             self._mark_search_dirty()
 
+    def _trade_options_mode_key(self) -> str:
+        return POE2 if self.poe_version == POE2 else POE1
+
+    def _restore_trade_options(self):
+        poetore = self._app_config.get("poetore", {})
+        options = poetore.get("trade_options", {})
+        mode_options = options.get(self._trade_options_mode_key(), {})
+        if not isinstance(mode_options, dict):
+            mode_options = {}
+        for combo, key, fallback in (
+            (self.trade_status_combo, "status", "instant"),
+            (self.trade_currency_combo, "currency", "any"),
+        ):
+            index = combo.findData(mode_options.get(key, fallback))
+            combo.setCurrentIndex(index if index >= 0 else combo.findData(fallback))
+
+    def _persist_trade_options(self):
+        poetore = self._app_config.setdefault("poetore", {})
+        options = poetore.setdefault("trade_options", {})
+        if not isinstance(options, dict):
+            options = {}
+            poetore["trade_options"] = options
+        options[self._trade_options_mode_key()] = {
+            "status": str(self.trade_status_combo.currentData() or "instant"),
+            "currency": str(self.trade_currency_combo.currentData() or "any"),
+        }
+        if self._save_app_config is not None:
+            self._save_app_config(self._app_config)
+
     def _configure_virtual_augments(self, item):
         if self.poe_version != POE2:
             self.virtual_augment_label.hide()
@@ -4147,7 +4178,6 @@ class PoetoreWindow(QWidget):
             self._reset_unique_candidates()
             self._unique_selector_item_key = item.raw_text
         self._configure_trade_presets(item)
-        self._configure_trade_currency(item)
         self._configure_item_state_filters(item)
         self._configure_item_level(item, force=is_new_item)
         self._configure_gem_level(item)
@@ -4536,20 +4566,6 @@ class PoetoreWindow(QWidget):
             self.magic_rarity_toggle.setCurrentIndex(
                 1 if item.category in {"jewel", "abyss_jewel"} else 0
             )
-
-    def _configure_trade_currency(self, item):
-        """同じ参照アイテムでは選択を保持し、新しい種類では推奨値へ戻す。"""
-        if item.rarity.casefold() in {"unique", "ユニーク"}:
-            reference = self._trade_item_name or item.name or item.base_type
-        else:
-            reference = self._trade_base_type or item.base_type
-        key = (item.category, str(reference).strip().casefold())
-        if key == self._currency_item_key:
-            return
-        self._currency_item_key = key
-        default_currency = default_trade_currency(item)
-        index = self.trade_currency_combo.findData(default_currency)
-        self.trade_currency_combo.setCurrentIndex(max(index, 0))
 
     def _configure_item_state_filters(self, item):
         """元アイテムが変わった時だけ推奨状態へ戻し、再検索時は選択を保持する。"""

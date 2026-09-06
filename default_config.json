@@ -60,6 +60,16 @@
     "poetore": {
         "league": "auto",
         "search_stat_range": 10,
+        "trade_options": {
+            "poe1": {
+                "status": "instant",
+                "currency": "any"
+            },
+            "poe2": {
+                "status": "instant",
+                "currency": "any"
+            }
+        },
         "result_font_size": "medium",
         "result_positions": {},
         "obs_streaming": {
