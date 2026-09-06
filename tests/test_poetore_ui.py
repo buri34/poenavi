@@ -6633,6 +6633,13 @@ def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
         assert "熟達のルーン" in label
         assert label != "熟達のルーン"
         assert window.virtual_augment_combo.itemData(index, Qt.ToolTipRole) == label
+        soul_core_index = window.virtual_augment_combo.findData(
+            "Jiquani's Soul Core of Automation"
+        )
+        assert soul_core_index >= 0
+        assert "ジクアニの自動化のソウルコア" in (
+            window.virtual_augment_combo.itemText(soul_core_index)
+        )
         window.virtual_augment_combo.setCurrentIndex(index)
         selected = window._selected_stat_filters()
         virtual = next(row for row in selected if row.kind == "virtual-rune")

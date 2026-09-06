@@ -12,6 +12,107 @@ ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "vendor-sources" / "poe2-trade-api-2026-08-09"
 OUTPUT = ROOT / "data" / "poetore" / "poe2"
 RELATED_JAPANESE_OVERRIDES = ROOT / "scripts" / "poetore-poe2-related-japanese-overrides.json"
+EE2_SOUL_CORE_REVISION = "cf58adf17a06fe453da47f3672803a33594abcf6"
+EE2_SOUL_CORE_IDENTITIES = {
+    "Atziri's Soul Core of Alacrity", "Atziri's Soul Core of Devotion",
+    "Atziri's Soul Core of Inoculation", "Atziri's Soul Core of Vitality",
+    "Jiquani's Soul Core of Abundance", "Jiquani's Soul Core of Automation",
+    "Jiquani's Soul Core of Malediction", "Jiquani's Soul Core of Munitions",
+    "Jiquani's Soul Core of Quaking", "Jiquani's Soul Core of Radiance",
+    "Jiquani's Soul Core of Rallying", "Jiquani's Soul Core of Rippling",
+    "Jiquani's Soul Core of Severing", "Jiquani's Soul Core of Snares",
+    "Jiquani's Soul Core of Squalls", "Jiquani's Soul Core of Targeting",
+    "Jiquani's Soul Core of Thundering",
+}
+EE2_SOUL_CORE_CHANGED_AUGMENTS = {
+    "Atmohua's Soul Core of Retreat", "Cholotl's Soul Core of War",
+    "Citaqualotl's Thesis", "Emergent Possibility",
+    "Estazunti's Soul Core of Convalescence", "Jiquani's Thesis",
+    "Katla's Gloom", "Legacy of Chernobog's Pillar", "Soul Core of Atmohua",
+    "Soul Core of Cholotl", "Soul Core of Citaqualotl", "Soul Core of Jiquani",
+    "Soul Core of Opiloti", "Soul Core of Puhuarte", "Soul Core of Tacati",
+    "Soul Core of Ticaba", "Soul Core of Topotante", "Soul Core of Tzamoto",
+    "Soul Core of Xopec", "Soul Core of Zalatl", "Soul Core of Zantipi",
+    "Uhtred's Sidereus", "Uromoti's Soul Core of Attenuation",
+}
+EE2_SOUL_CORE_STAT_IDS = {
+    "rune.stat_1195319608", "rune.stat_138373935", "rune.stat_1519474779",
+    "rune.stat_1839315243", "rune.stat_2139847597", "rune.stat_2203195791",
+    "rune.stat_2305301734", "rune.stat_2336703514", "rune.stat_2487305362",
+    "rune.stat_2527686725", "rune.stat_2621116283", "rune.stat_3148103963",
+    "rune.stat_3174700878", "rune.stat_3268281424", "rune.stat_3791899485",
+    "rune.stat_3985867204", "rune.stat_4081947835", "rune.stat_4169430079",
+    "rune.stat_653358410", "rune.stat_995044379",
+}
+EE2_SOUL_CORE_OFFICIAL_STATS = {
+    "rune.stat_2148999925": {
+        "en": "# to Level of all Warcry Skill Gems",
+        "ja": "全てのウォークライスキルジェムのレベル #",
+    },
+    "rune.stat_2296009672": {
+        "en": "# to Level of all Plant Skill Gems",
+        "ja": "全てのプラントスキルジェムのレベル #",
+    },
+    "rune.stat_1062190843": {
+        "en": "# to Level of all Storm Skill Gems",
+        "ja": "全てのストームスキルジェムのレベル #",
+    },
+}
+EE2_WEAPON_CATEGORIES = [
+    "Bow", "Claw", "Crossbow", "Dagger", "Flail", "One Hand Axe",
+    "One Hand Mace", "One Hand Sword", "Spear", "Talisman", "Two Hand Axe",
+    "Two Hand Mace", "Two Hand Sword", "Warstaff", "Wand", "Staff", "Sceptre",
+]
+EE2_SOUL_CORE_EXTRA_AUGMENTS = {
+    "Jiquani's Soul Core of Rallying": {
+        "ref_name": "Jiquani's Soul Core of Rallying",
+        "names": {
+            "en": "Jiquani's Soul Core of Rallying",
+            "ja": "ジクアニの決起のソウルコア",
+        },
+        "effects": [{
+            "categories": EE2_WEAPON_CATEGORIES,
+            "text": {
+                "en": "# to Level of all Warcry Skill Gems",
+                "ja": "全てのウォークライスキルジェムのレベル #",
+            },
+            "values": [1], "trade_ids": ["rune.stat_2148999925"],
+            "socket_bound": False,
+        }],
+    },
+    "Jiquani's Soul Core of Abundance": {
+        "ref_name": "Jiquani's Soul Core of Abundance",
+        "names": {
+            "en": "Jiquani's Soul Core of Abundance",
+            "ja": "ジクアニの豊富さのソウルコア",
+        },
+        "effects": [{
+            "categories": EE2_WEAPON_CATEGORIES,
+            "text": {
+                "en": "# to Level of all Plant Skill Gems",
+                "ja": "全てのプラントスキルジェムのレベル #",
+            },
+            "values": [1], "trade_ids": ["rune.stat_2296009672"],
+            "socket_bound": False,
+        }],
+    },
+    "Jiquani's Soul Core of Thundering": {
+        "ref_name": "Jiquani's Soul Core of Thundering",
+        "names": {
+            "en": "Jiquani's Soul Core of Thundering",
+            "ja": "ジクアニの雷鳴のソウルコア",
+        },
+        "effects": [{
+            "categories": EE2_WEAPON_CATEGORIES,
+            "text": {
+                "en": "# to Level of all Storm Skill Gems",
+                "ja": "全てのストームスキルジェムのレベル #",
+            },
+            "values": [1], "trade_ids": ["rune.stat_1062190843"],
+            "socket_bound": False,
+        }],
+    },
+}
 
 
 def _related_japanese_overrides() -> tuple[dict, ...]:
@@ -196,6 +297,80 @@ def build_augment_index(ee2_root: Path) -> dict:
     }
 
 
+def apply_v0162_soul_core_update(ee2_root: Path) -> None:
+    """Merge only the reviewed v0.16.2 Soul Core changes into runtime indexes."""
+    if __import__("subprocess").check_output(
+        ["git", "-C", str(ee2_root), "rev-parse", "HEAD"], text=True,
+    ).strip() != EE2_SOUL_CORE_REVISION:
+        raise ValueError("EE2 checkout must be pinned to the reviewed v0.16.2 revision")
+
+    identity = json.loads((OUTPUT / "identity_index.json").read_text(encoding="utf-8"))
+    candidate_identity = build_identity_index(ee2_root)
+    selected_identity = {
+        row["ref_name"]: row for row in candidate_identity["entries"]
+        if row["ref_name"] in EE2_SOUL_CORE_IDENTITIES
+    }
+    if selected_identity.keys() != EE2_SOUL_CORE_IDENTITIES:
+        raise ValueError("reviewed Soul Core identity set is incomplete")
+    identity["entries"] = [
+        row for row in identity["entries"]
+        if row["ref_name"] not in EE2_SOUL_CORE_IDENTITIES
+    ] + [selected_identity[name] for name in sorted(selected_identity)]
+    if EE2_SOUL_CORE_REVISION not in identity["source"]:
+        identity["source"] += f" + selected EE2 {EE2_SOUL_CORE_REVISION} Soul Cores"
+
+    augment = json.loads((OUTPUT / "augment_index.json").read_text(encoding="utf-8"))
+    candidate_augment = {
+        row["ref_name"]: row for row in build_augment_index(ee2_root)["entries"]
+    }
+    candidate_augment.update(EE2_SOUL_CORE_EXTRA_AUGMENTS)
+    selected_augments = (
+        (EE2_SOUL_CORE_IDENTITIES & candidate_augment.keys())
+        | EE2_SOUL_CORE_CHANGED_AUGMENTS
+    )
+    if not selected_augments <= candidate_augment.keys():
+        raise ValueError("reviewed Soul Core augment set is incomplete")
+    by_augment = {row["ref_name"]: row for row in augment["entries"]}
+    by_augment.update({name: candidate_augment[name] for name in selected_augments})
+    augment["entries"] = list(by_augment.values())
+    if EE2_SOUL_CORE_REVISION not in augment["source"]:
+        augment["source"] += f" + selected EE2 {EE2_SOUL_CORE_REVISION} Soul Cores"
+
+    localized_stats = {}
+    for language in ("en", "ja"):
+        path = ee2_root / "renderer" / "public" / "data" / language / "stats.ndjson"
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+        localized_stats[language] = {}
+        for row in rows:
+            for stat_id in ((row.get("trade") or {}).get("ids") or {}).get("rune", ()):
+                if stat_id in EE2_SOUL_CORE_STAT_IDS:
+                    localized_stats[language][stat_id] = row["matchers"][0]["string"]
+    if any(set(rows) != EE2_SOUL_CORE_STAT_IDS for rows in localized_stats.values()):
+        raise ValueError("reviewed Soul Core Stat ID set is incomplete")
+    stats = json.loads((OUTPUT / "stat_index.json").read_text(encoding="utf-8"))
+    by_stat = {row["id"]: row for row in stats["entries"]}
+    by_stat.pop("rune.stat_3170380905", None)
+    for stat_id in sorted(EE2_SOUL_CORE_STAT_IDS):
+        by_stat[stat_id] = {
+            "id": stat_id, "type": "augment",
+            "text": {lang: localized_stats[lang][stat_id] for lang in ("en", "ja")},
+        }
+    for stat_id, text in EE2_SOUL_CORE_OFFICIAL_STATS.items():
+        by_stat[stat_id] = {"id": stat_id, "type": "augment", "text": text}
+    stats["entries"] = list(by_stat.values())
+    if EE2_SOUL_CORE_REVISION not in stats["source"]:
+        stats["source"] += f" + selected EE2 {EE2_SOUL_CORE_REVISION} Rune stats"
+
+    for name, payload in (
+        ("identity_index.json", identity), ("augment_index.json", augment),
+        ("stat_index.json", stats),
+    ):
+        (OUTPUT / name).write_text(
+            json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n",
+            encoding="utf-8",
+        )
+
+
 def _related_identity(value: str) -> dict:
     namespace, identity = value.split("::", 1)
     name, separator, variant = identity.partition(" // ")
@@ -310,8 +485,14 @@ def main() -> None:
     parser.add_argument("--ee2-root", type=Path)
     parser.add_argument("--augment-only", action="store_true")
     parser.add_argument("--related-only", action="store_true")
+    parser.add_argument("--v0162-soul-cores", action="store_true")
     args = parser.parse_args()
     OUTPUT.mkdir(parents=True, exist_ok=True)
+    if args.v0162_soul_cores:
+        if args.ee2_root is None:
+            parser.error("--v0162-soul-cores requires --ee2-root")
+        apply_v0162_soul_core_update(args.ee2_root)
+        return
     if args.augment_only or args.related_only:
         if args.ee2_root is None:
             parser.error("--augment-only/--related-only requires --ee2-root")

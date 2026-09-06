@@ -1144,6 +1144,22 @@ def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
     assert len(alternate["filters"]) == 2
 
 
+def test_v0162_jiquani_soul_core_is_available_and_sends_reviewed_rune_stat():
+    item = _phase45_item("phase45_sceptre_ja.txt")
+    choice = next(
+        row for row in available_virtual_augments(item)
+        if row["ref_name"] == "Jiquani's Soul Core of Automation"
+    )
+    assert choice["names"]["ja"] == "ジクアニの自動化のソウルコア"
+    assert "全てのトーテムスキルジェムのレベル 1" in (
+        virtual_augment_choice_label(item, choice)
+    )
+    rows = virtual_augment_filters(item, choice["ref_name"])
+    assert len(rows) == 1
+    assert rows[0].stat_id == "rune.stat_2336703514"
+    assert rows[0].min_value == 1.0
+
+
 def test_two_identical_runes_leave_no_empty_augment_socket():
     item = parse_item_text(
         (Path(__file__).parent / "fixtures" / "poe2"

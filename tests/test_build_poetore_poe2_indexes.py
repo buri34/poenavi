@@ -6,6 +6,8 @@ import pytest
 from src.poetore.poe2.metadata import related_item_group
 
 from scripts.build_poetore_poe2_indexes import (
+    EE2_SOUL_CORE_IDENTITIES, EE2_SOUL_CORE_OFFICIAL_STATS,
+    EE2_SOUL_CORE_REVISION, EE2_SOUL_CORE_STAT_IDS,
     OUTPUT, _aligned, build_augment_index, build_identity_index,
     build_related_item_groups, build_stat_index,
 )
@@ -18,9 +20,16 @@ def test_aligned_recovers_after_one_localized_entry_is_missing():
     assert [(en["type"], ja["type"]) for en, ja in pairs] == [("A", "あ"), ("B", "し")]
 
 
-def test_generated_stat_index_matches_locked_snapshot_builder():
+def test_generated_stat_index_keeps_locked_snapshot_and_selected_soul_core_stats():
     generated = json.loads((OUTPUT / "stat_index.json").read_text(encoding="utf-8"))
-    assert generated == build_stat_index()
+    generated_by_id = {row["id"]: row for row in generated["entries"]}
+    locked = build_stat_index()
+    for row in locked["entries"]:
+        if row["id"] != "rune.stat_3170380905":
+            assert generated_by_id[row["id"]] == row
+    assert EE2_SOUL_CORE_STAT_IDS <= generated_by_id.keys()
+    assert EE2_SOUL_CORE_OFFICIAL_STATS.keys() <= generated_by_id.keys()
+    assert "rune.stat_3170380905" not in generated_by_id
     assert len(generated["entries"]) > 8000
 
 
@@ -35,13 +44,35 @@ def test_generated_identity_index_keeps_ambiguous_base_fingerprints():
     assert all(row["tags"] == ["str_dex_armour"] for row in rows)
 
 
+def test_generated_identity_index_contains_all_v0162_soul_cores():
+    generated = json.loads((OUTPUT / "identity_index.json").read_text(encoding="utf-8"))
+    by_ref = {row["ref_name"]: row for row in generated["entries"]}
+    assert EE2_SOUL_CORE_IDENTITIES <= by_ref.keys()
+    assert by_ref["Jiquani's Soul Core of Targeting"]["names"]["ja"] == (
+        "ジクアニの照準のソウルコア"
+    )
+    assert EE2_SOUL_CORE_REVISION in generated["source"]
+
+
 def test_generated_augment_index_has_fixed_source_and_trade_ids():
     generated = json.loads((OUTPUT / "augment_index.json").read_text(encoding="utf-8"))
-    assert generated["source"].endswith("d72afb83bc0888919a89d3c3744acee2c597e9c8")
-    assert len(generated["entries"]) == 259
+    assert EE2_SOUL_CORE_REVISION in generated["source"]
+    assert len(generated["entries"]) == 273
     effects = [effect for row in generated["entries"] for effect in row["effects"]]
-    assert len(effects) == 475
+    assert len(effects) == 490
     assert all(effect["categories"] and effect["trade_ids"] for effect in effects)
+    by_ref = {row["ref_name"]: row for row in generated["entries"]}
+    automation = by_ref["Jiquani's Soul Core of Automation"]["effects"][0]
+    assert automation["values"] == [1]
+    assert automation["trade_ids"] == ["rune.stat_2336703514"]
+    rallying = by_ref["Jiquani's Soul Core of Rallying"]["effects"][0]
+    assert rallying["trade_ids"] == ["rune.stat_2148999925"]
+    assert by_ref["Jiquani's Soul Core of Abundance"]["effects"][0]["trade_ids"] == [
+        "rune.stat_2296009672"
+    ]
+    assert by_ref["Jiquani's Soul Core of Thundering"]["effects"][0]["trade_ids"] == [
+        "rune.stat_1062190843"
+    ]
 
 
 def test_build_augment_index_keeps_bilingual_effects_and_trade_ids(tmp_path):
