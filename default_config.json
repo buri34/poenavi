@@ -100,8 +100,8 @@
     "cheat_sheets": {
         "images": [],
         "selected_id": "",
-        "image_transparency": 0,
-        "background_transparency": 100,
+        "image_transparency": 100,
+        "background_transparency": 0,
         "position": {
             "x": 120,
             "y": 120

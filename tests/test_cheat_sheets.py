@@ -60,8 +60,8 @@ def test_normalization_selects_first_available_image():
         }
     )
     assert config["selected_id"] == "first"
-    assert config["image_transparency"] == 0
-    assert config["background_transparency"] == 100
+    assert config["image_transparency"] == 100
+    assert config["background_transparency"] == 0
 
 
 def test_manager_saves_image_and_background_transparency_separately(qapp):
@@ -82,13 +82,22 @@ def test_manager_saves_image_and_background_transparency_separately(qapp):
         manager.close()
 
 
+def test_image_transparency_allows_fully_transparent_and_opaque(qapp):
+    manager = CheatSheetManagerDialog({"images": []})
+    try:
+        assert manager.image_transparency_slider.minimum() == 0
+        assert manager.image_transparency_slider.maximum() == 100
+    finally:
+        manager.close()
+
+
 def test_legacy_opacity_settings_are_migrated_without_changing_appearance():
     config = normalized_cheat_sheet_config(
         {"images": [], "opacity": 75, "background_opacity": 40}
     )
 
-    assert config["image_transparency"] == 25
-    assert config["background_transparency"] == 60
+    assert config["image_transparency"] == 75
+    assert config["background_transparency"] == 40
     assert "opacity" not in config
     assert "background_opacity" not in config
 
@@ -120,7 +129,7 @@ def test_poetore_theme_is_applied_to_manager_and_overlay(qapp):
 
 @pytest.mark.parametrize(
     ("background_transparency", "expected_alpha"),
-    [(0, 255), (8, 235), (100, 0)],
+    [(0, 0), (92, 235), (100, 255)],
 )
 def test_overlay_renders_configured_background_transparency(
     qapp, background_transparency, expected_alpha
@@ -184,8 +193,8 @@ def test_overlay_switches_images_and_saves_geometry(qapp, tmp_path, monkeypatch)
     overlay.step_image(1)
     assert "background: transparent" in overlay.image_label.styleSheet()
     assert overlay.windowOpacity() == 1.0
-    assert overlay.image_label.graphicsEffect().opacity() == 0.8
-    assert overlay._background_alpha == 102
+    assert overlay.image_label.graphicsEffect().opacity() == 0.2
+    assert overlay._background_alpha == 153
     overlay.setGeometry(40, 50, 600, 420)
     overlay.hide_and_save()
 

@@ -35,8 +35,8 @@ SUPPORTED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}
 DEFAULT_CHEAT_SHEET_CONFIG = {
     "images": [],
     "selected_id": "",
-    "image_transparency": 0,
-    "background_transparency": 100,
+    "image_transparency": 100,
+    "background_transparency": 0,
     "position": {"x": 120, "y": 120},
     "position_initialized": False,
     "width": 900,
@@ -103,9 +103,9 @@ def normalized_cheat_sheet_config(config: dict | None) -> dict:
         **source,
     }
     if "image_transparency" not in source and "opacity" in source:
-        merged["image_transparency"] = 100 - int(source["opacity"])
+        merged["image_transparency"] = int(source["opacity"])
     if "background_transparency" not in source and "background_opacity" in source:
-        merged["background_transparency"] = 100 - int(source["background_opacity"])
+        merged["background_transparency"] = int(source["background_opacity"])
     merged.pop("opacity", None)
     merged.pop("background_opacity", None)
     merged["images"] = [
@@ -191,9 +191,9 @@ class CheatSheetManagerDialog(QDialog):
         editor.addWidget(QLabel("画像の透明度"))
         opacity_row = QHBoxLayout()
         self.image_transparency_slider = QSlider(Qt.Horizontal)
-        self.image_transparency_slider.setRange(0, 80)
+        self.image_transparency_slider.setRange(0, 100)
         self.image_transparency_slider.setValue(
-            int(self.value.get("image_transparency", 0))
+            int(self.value.get("image_transparency", 100))
         )
         self.image_transparency_label = QLabel(
             f"{self.image_transparency_slider.value()}%"
@@ -210,7 +210,7 @@ class CheatSheetManagerDialog(QDialog):
         self.background_transparency_slider = QSlider(Qt.Horizontal)
         self.background_transparency_slider.setRange(0, 100)
         self.background_transparency_slider.setValue(
-            int(self.value.get("background_transparency", 100))
+            int(self.value.get("background_transparency", 0))
         )
         self.background_transparency_label = QLabel(
             f"{self.background_transparency_slider.value()}%"
@@ -423,7 +423,7 @@ class CheatSheetOverlay(QWidget):
         transparency_pct = max(
             0, min(100, int(self.config["background_transparency"]))
         )
-        self._background_alpha = round(255 * (100 - transparency_pct) / 100)
+        self._background_alpha = round(255 * transparency_pct / 100)
         self.setStyleSheet(
             f"QWidget#cheatSheetOverlay {{ background: transparent; color: {self._theme.text}; }}"
             "QLabel { border: none; background: transparent; }"
@@ -497,10 +497,10 @@ class CheatSheetOverlay(QWidget):
         else:
             self._image_opacity_effect.setOpacity(
                 max(
-                    0.2,
+                    0.0,
                     min(
                         1.0,
-                        1.0 - int(self.config["image_transparency"]) / 100,
+                        int(self.config["image_transparency"]) / 100,
                     ),
                 )
             )

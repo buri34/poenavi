@@ -53,7 +53,7 @@ class ConfigManagerTest(unittest.TestCase):
         self.assertNotIn("guide_detail_level_selected", migrated)
         self.assertEqual(migrated["schemaVersion"], ConfigManager.CURRENT_SCHEMA_VERSION)
 
-    def test_schema_v12_migrates_cheat_sheet_opacity_to_transparency(self):
+    def test_schema_v13_preserves_legacy_cheat_sheet_opacity_appearance(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 11,
             "cheat_sheets": {
@@ -64,12 +64,12 @@ class ConfigManagerTest(unittest.TestCase):
             },
         })
 
-        self.assertEqual(migrated["cheat_sheets"]["image_transparency"], 25)
-        self.assertEqual(migrated["cheat_sheets"]["background_transparency"], 60)
+        self.assertEqual(migrated["cheat_sheets"]["image_transparency"], 75)
+        self.assertEqual(migrated["cheat_sheets"]["background_transparency"], 40)
         self.assertNotIn("opacity", migrated["cheat_sheets"])
         self.assertNotIn("background_opacity", migrated["cheat_sheets"])
 
-    def test_schema_v12_uses_transparent_background_for_pre_feature_config(self):
+    def test_schema_v13_uses_transparent_background_for_pre_feature_config(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 11,
             "cheat_sheets": {
@@ -78,8 +78,20 @@ class ConfigManagerTest(unittest.TestCase):
             },
         })
 
-        self.assertEqual(migrated["cheat_sheets"]["image_transparency"], 0)
-        self.assertEqual(migrated["cheat_sheets"]["background_transparency"], 100)
+        self.assertEqual(migrated["cheat_sheets"]["image_transparency"], 100)
+        self.assertEqual(migrated["cheat_sheets"]["background_transparency"], 0)
+
+    def test_schema_v13_reverses_schema_v12_values_without_changing_appearance(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 12,
+            "cheat_sheets": {
+                "image_transparency": 25,
+                "background_transparency": 60,
+            },
+        })
+
+        self.assertEqual(migrated["cheat_sheets"]["image_transparency"], 75)
+        self.assertEqual(migrated["cheat_sheets"]["background_transparency"], 40)
 
     def test_schema_v10_removes_retired_hideout_hotkey(self):
         migrated = ConfigManager._migrate_config({
