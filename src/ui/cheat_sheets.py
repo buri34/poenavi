@@ -187,8 +187,8 @@ class CheatSheetManagerDialog(QDialog):
         order.addWidget(self.down_button)
         editor.addLayout(order)
 
-        editor.addWidget(QLabel("透明度の調整"))
-        editor.addWidget(QLabel("画像の透明度"))
+        editor.addWidget(QLabel("透明率の調整"))
+        editor.addWidget(QLabel("画像の透明率"))
         opacity_row = QHBoxLayout()
         self.image_transparency_slider = QSlider(Qt.Horizontal)
         self.image_transparency_slider.setRange(0, 100)
@@ -205,7 +205,7 @@ class CheatSheetManagerDialog(QDialog):
         opacity_row.addWidget(self.image_transparency_label)
         editor.addLayout(opacity_row)
 
-        editor.addWidget(QLabel("背景の透明度"))
+        editor.addWidget(QLabel("背景の透明率"))
         background_opacity_row = QHBoxLayout()
         self.background_transparency_slider = QSlider(Qt.Horizontal)
         self.background_transparency_slider.setRange(0, 100)
