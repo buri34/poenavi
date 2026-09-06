@@ -281,6 +281,24 @@ def resolve_stat_line_candidates(
         if inverted != comparable:
             resolved = collect(inverted, -1.0)
     if not resolved:
+        # Constricting Command displays the beneficial roll as fewer enemies,
+        # while Trade2 exposes only the opposite-direction canonical stat:
+        # `Require # additional enemies to be Surrounded`.  Preserve the
+        # in-game value as a negative filter value for that Trade stat.
+        inverted = re.sub(
+            r"^包囲状態になるのに必要な敵の数が(\d+(?:\.\d+)?)体少なくなる$",
+            r"包囲状態になるのに必要な敵の数が追加で\1体多くなる",
+            comparable,
+        )
+        inverted = re.sub(
+            r"^Require (\d+(?:\.\d+)?) fewer enemies to be Surrounded$",
+            r"Require \1 additional enemies to be Surrounded",
+            inverted,
+            flags=re.IGNORECASE,
+        )
+        if inverted != comparable:
+            resolved = collect(inverted, -1.0)
+    if not resolved:
         return ()
     if preferred_type and any(row[0].get("type") == preferred_type for row in resolved):
         resolved = [row for row in resolved if row[0].get("type") == preferred_type]

@@ -23,6 +23,9 @@ VAAL_SIPHONER_FIXTURE = Path(__file__).parent / "fixtures" / "poe2" / "vaal_siph
 DOUBLE_CORRUPTED_GEM_FIXTURE = (
     Path(__file__).parent / "fixtures" / "poe2" / "whirling_assault_double_corrupted_ja.txt"
 )
+CONSTRICTING_COMMAND_FIXTURE = (
+    Path(__file__).parent / "fixtures" / "poe2" / "constricting_command_ja.txt"
+)
 
 
 def test_japanese_vaal_siphoner_builds_currency_search_query():
@@ -60,6 +63,28 @@ def test_jewel_scoped_stat_match_does_not_replace_general_item_stat():
 
     assert jewel[0][0]["id"] == "explicit.stat_1604736568"
     assert general[0][0]["id"] == "explicit.stat_1030153674"
+
+
+def test_constricting_command_resolves_fewer_surrounded_enemies_as_negative_stat():
+    item = parse_item_text(CONSTRICTING_COMMAND_FIXTURE.read_text(encoding="utf-8"))
+
+    surrounded = next(
+        modifier for modifier in item.modifiers
+        if modifier.stat_id == "explicit.stat_2267564181"
+    )
+    assert item.name == "Constricting Command"
+    assert surrounded.values == (-3.0,)
+    assert surrounded.better == -1
+    assert (surrounded.roll_min, surrounded.roll_max) == (-4.0, -2.0)
+    assert not [modifier for modifier in item.modifiers if not modifier.stat_id]
+
+    row = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "explicit.stat_2267564181"
+    )
+    assert row.enabled
+    assert row.min_value is None
+    assert row.max_value == -3.0
 
 
 def _fixtures():

@@ -3773,6 +3773,26 @@ Unknown Experimental Modifier 123
         window.close()
 
 
+def test_constricting_command_surrounded_mod_has_no_unresolved_warning(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    try:
+        fixture = (
+            Path(__file__).parent / "fixtures" / "poe2" / "constricting_command_ja.txt"
+        )
+        window.input_edit.setPlainText(fixture.read_text(encoding="utf-8"))
+        window.parse_current_text()
+
+        assert window.mod_warning.isHidden()
+        surrounded = next(
+            row for row in window._selected_stat_filters()
+            if row.stat_id == "explicit.stat_2267564181"
+        )
+        assert surrounded.min_value is None
+        assert surrounded.max_value == -2.0
+    finally:
+        window.close()
+
+
 def test_dawnbreaker_shield_block_mod_does_not_show_unresolved_warning(qapp):
     window = PoetoreWindow()
     try:

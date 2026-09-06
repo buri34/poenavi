@@ -946,7 +946,8 @@ def parse_item_text(text: str) -> ParsedItem:
             roll_min, roll_max, better = _roll_bounds(line)
             is_negated_match = bool(values) and all(value <= 0 for value in values) and (
                 re.search(r"\breduced\b", line, re.IGNORECASE) is not None
-                or "減少する" in line or "低下する" in line
+                or re.search(r"\bfewer\b", line, re.IGNORECASE) is not None
+                or "減少する" in line or "低下する" in line or "少なくなる" in line
             )
             if is_negated_match:
                 if roll_min is not None and roll_max is not None:
