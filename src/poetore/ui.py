@@ -1208,18 +1208,18 @@ class PoetoreWindow(QWidget):
         self.trade_currency_combo.setObjectName("filterControl")
         self.trade_currency_combo.setProperty("compactAction", True)
         self.trade_currency_combo.setProperty("mutedText", True)
-        self.trade_currency_combo.addItem("全通貨", "any")
+        self.trade_currency_combo.addItem("すべての通貨", "any")
         if self.poe_version == POE2:
-            self.trade_currency_combo.addItem("高貴のみ", "exalted")
-            self.trade_currency_combo.addItem("神のみ", "divine")
+            self.trade_currency_combo.addItem("高貴なオーブのみ", "exalted")
+            self.trade_currency_combo.addItem("神のオーブのみ", "divine")
             self.trade_currency_combo.addItem(
                 "高貴 / 神", "exalted_divine"
             )
         else:
-            self.trade_currency_combo.addItem("カオスのみ", "chaos")
-            self.trade_currency_combo.addItem("神のみ", "divine")
+            self.trade_currency_combo.addItem("カオスオーブのみ", "chaos")
+            self.trade_currency_combo.addItem("神のオーブのみ", "divine")
             self.trade_currency_combo.addItem(
-                "カオス / 神", "chaos_divine"
+                "カオスまたは神のオーブ", "chaos_divine"
             )
         currency_tooltips = {
             "any": "出品価格の通貨を指定しません",

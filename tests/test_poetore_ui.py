@@ -233,10 +233,10 @@ def test_poetore_window_always_accepts_mouse_input(qapp):
             window.trade_currency_combo.itemText(index)
             for index in range(window.trade_currency_combo.count())
         ] == [
-            "全通貨",
-            "カオスのみ",
-            "神のみ",
-            "カオス / 神",
+            "すべての通貨",
+            "カオスオーブのみ",
+            "神のオーブのみ",
+            "カオスまたは神のオーブ",
         ]
         assert not hasattr(window, "disclaimer_label")
         assert window.trade_league_combo.currentData() == "auto"
@@ -4712,13 +4712,18 @@ Item Level: 83
         window.close()
 
 
-def test_poe2_trade_currency_uses_compact_labels_and_full_tooltips(qapp):
+def test_poe2_trade_currency_shortens_only_exalted_divine_label(qapp):
     window = PoetoreWindow(app_config={"poe_version": POE2, "poetore": {}})
     try:
         assert [
             window.trade_currency_combo.itemText(index)
             for index in range(window.trade_currency_combo.count())
-        ] == ["全通貨", "高貴のみ", "神のみ", "高貴 / 神"]
+        ] == [
+            "すべての通貨",
+            "高貴なオーブのみ",
+            "神のオーブのみ",
+            "高貴 / 神",
+        ]
 
         combined = window.trade_currency_combo.findData("exalted_divine")
         window.trade_currency_combo.setCurrentIndex(combined)
@@ -4732,8 +4737,10 @@ def test_poe2_trade_currency_uses_compact_labels_and_full_tooltips(qapp):
             window.trade_currency_combo.findData("exalted")
         )
         window._fit_compact_action_widths()
+        exalted_width = window.trade_currency_combo.width()
         assert combined_width < window.trade_status_combo.width()
-        assert window.trade_currency_combo.width() < window.trade_status_combo.width()
+        assert combined_width < exalted_width
+        assert window.width() == 650
     finally:
         window.close()
 
