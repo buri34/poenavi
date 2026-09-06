@@ -609,7 +609,8 @@ def test_reported_superior_normal_sceptre_uses_underlying_trade2_base(text):
     }
 
 
-def test_chiming_staff_exposes_sigil_of_power_level_as_a_mod_filter():
+@pytest.mark.parametrize("level", [18, 19, 20])
+def test_chiming_staff_exposes_every_sigil_level_as_a_mod_filter(level):
     text = """アイテムクラス: スタッフ
 レアリティ: マジック
 青い 熟達者の 鐘鳴のスタッフ
@@ -618,19 +619,19 @@ def test_chiming_staff_exposes_sigil_of_power_level_as_a_mod_filter():
 --------
 アイテムレベル: 82
 --------
-スキルを付与: レベル20 シギルオブパワー
+スキルを付与: レベルLEVEL シギルオブパワー
 --------
 { プレフィックスモッド「青い」 (ティア: 1) — マナ }
 最大マナ +319(299-328)
 { サフィックスモッド 「熟達者の」 (ティア: 1) }
-要求能力値が35%減少する"""
+要求能力値が35%減少する""".replace("LEVEL", str(level))
 
     item = parse_item_text(text)
     rows = {row.stat_id: row for row in poe2_trade_filters(item)}
 
     assert item.base_type == "Chiming Staff"
     assert rows["skill.sigil_of_power"].kind == "skill"
-    assert rows["skill.sigil_of_power"].read_value == 20
+    assert rows["skill.sigil_of_power"].read_value == level
     assert rows["skill.sigil_of_power"].hidden_reason == ""
 
 

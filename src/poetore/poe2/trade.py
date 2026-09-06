@@ -915,6 +915,10 @@ def _apply_poe2_hidden_candidate_rules(
             and row.read_value is not None
             and row.read_value < 19
             and item.base_type not in _GRANTED_SKILL_HIDE_EXCLUDED_BASES
+            and not (
+                item.base_type == "Chiming Staff"
+                and row.stat_id == "skill.sigil_of_power"
+            )
         ):
             hidden_reason = "最大レベル未満の付与スキルは価値を加えにくい"
 

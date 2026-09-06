@@ -6441,7 +6441,7 @@ def test_poe2_chiming_staff_shows_sigil_of_power_level_in_mod_list(qapp):
 --------
 アイテムレベル: 82
 --------
-スキルを付与: レベル20 シギルオブパワー
+スキルを付与: レベル18 シギルオブパワー
 --------
 { プレフィックスモッド「青い」 (ティア: 1) — マナ }
 最大マナ +319(299-328)
@@ -6454,7 +6454,7 @@ def test_poe2_chiming_staff_shows_sigil_of_power_level_in_mod_list(qapp):
             for index in range(window.mod_filter_tree.topLevelItemCount())
             if not window.mod_filter_tree.topLevelItem(index).isHidden()
         }
-        assert "スキルを付与: レベル20 シギルオブパワー" in visible_mods
+        assert "スキルを付与: レベル18 シギルオブパワー" in visible_mods
         assert window.mod_warning.isHidden()
     finally:
         window.close()
