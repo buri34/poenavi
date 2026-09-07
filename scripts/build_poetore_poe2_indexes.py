@@ -45,6 +45,10 @@ EE2_SOUL_CORE_STAT_IDS = {
     "rune.stat_653358410", "rune.stat_995044379",
 }
 EE2_SOUL_CORE_OFFICIAL_STATS = {
+    "rune.stat_1992191903": {
+        "en": "# to Level of all Mark Skills",
+        "ja": "全ての呪印スキルのレベル #",
+    },
     "rune.stat_2148999925": {
         "en": "# to Level of all Warcry Skill Gems",
         "ja": "全てのウォークライスキルジェムのレベル #",
@@ -64,6 +68,22 @@ EE2_WEAPON_CATEGORIES = [
     "Two Hand Mace", "Two Hand Sword", "Warstaff", "Wand", "Staff", "Sceptre",
 ]
 EE2_SOUL_CORE_EXTRA_AUGMENTS = {
+    "Jiquani's Soul Core of Targeting": {
+        "ref_name": "Jiquani's Soul Core of Targeting",
+        "names": {
+            "en": "Jiquani's Soul Core of Targeting",
+            "ja": "ジクアニの照準のソウルコア",
+        },
+        "effects": [{
+            "categories": ["Wand", "Staff", "Sceptre"],
+            "text": {
+                "en": "# to Level of all Mark Skills",
+                "ja": "全ての呪印スキルのレベル #",
+            },
+            "values": [1], "trade_ids": ["rune.stat_1992191903"],
+            "socket_bound": False,
+        }],
+    },
     "Jiquani's Soul Core of Rallying": {
         "ref_name": "Jiquani's Soul Core of Rallying",
         "names": {

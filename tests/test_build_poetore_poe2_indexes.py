@@ -57,9 +57,9 @@ def test_generated_identity_index_contains_all_v0162_soul_cores():
 def test_generated_augment_index_has_fixed_source_and_trade_ids():
     generated = json.loads((OUTPUT / "augment_index.json").read_text(encoding="utf-8"))
     assert EE2_SOUL_CORE_REVISION in generated["source"]
-    assert len(generated["entries"]) == 273
+    assert len(generated["entries"]) == 274
     effects = [effect for row in generated["entries"] for effect in row["effects"]]
-    assert len(effects) == 490
+    assert len(effects) == 491
     assert all(effect["categories"] and effect["trade_ids"] for effect in effects)
     by_ref = {row["ref_name"]: row for row in generated["entries"]}
     automation = by_ref["Jiquani's Soul Core of Automation"]["effects"][0]
@@ -73,6 +73,9 @@ def test_generated_augment_index_has_fixed_source_and_trade_ids():
     assert by_ref["Jiquani's Soul Core of Thundering"]["effects"][0]["trade_ids"] == [
         "rune.stat_1062190843"
     ]
+    targeting = by_ref["Jiquani's Soul Core of Targeting"]["effects"][0]
+    assert targeting["categories"] == ["Wand", "Staff", "Sceptre"]
+    assert targeting["trade_ids"] == ["rune.stat_1992191903"]
 
 
 def test_build_augment_index_keeps_bilingual_effects_and_trade_ids(tmp_path):

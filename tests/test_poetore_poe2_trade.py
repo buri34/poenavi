@@ -1159,6 +1159,25 @@ def test_v0162_jiquani_soul_core_is_available_and_sends_reviewed_rune_stat():
     assert rows[0].stat_id == "rune.stat_2336703514"
     assert rows[0].min_value == 1.0
 
+    targeting = next(
+        row for row in available_virtual_augments(item)
+        if row["ref_name"] == "Jiquani's Soul Core of Targeting"
+    )
+    assert targeting["names"]["ja"] == "ジクアニの照準のソウルコア"
+    assert "全ての呪印スキルのレベル 1" in virtual_augment_choice_label(item, targeting)
+    rows = virtual_augment_filters(item, targeting["ref_name"])
+    assert len(rows) == 1
+    assert rows[0].stat_id == "rune.stat_1992191903"
+    assert rows[0].min_value == 1.0
+
+    unavailable = {
+        "Jiquani's Soul Core of Radiance",
+        "Jiquani's Soul Core of Snares",
+    }
+    assert unavailable.isdisjoint(
+        row["ref_name"] for row in available_virtual_augments(item)
+    )
+
 
 def test_two_identical_runes_leave_no_empty_augment_socket():
     item = parse_item_text(
