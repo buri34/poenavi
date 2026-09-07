@@ -8,6 +8,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 import pytest
 
 from src.poetore.poe2 import build_search_query, fetch_listings, parse_item_text, search_items
+from src.poetore.poe2 import trade as poe2_trade
 from src.poetore.poe2.trade import fetch_additional_prices
 from src.poetore.poe2.trade import (
     _stat_groups_from_filters, available_pc_leagues, build_web_trade_url,
@@ -721,6 +722,42 @@ def test_multi_value_trade_stats_use_same_arithmetic_mean_as_ee2():
     assert trade_stat_value((1.0, 3.0, 5.0, 7.0)) == 4.0
     assert trade_stat_value((8.0,)) == 8.0
     assert trade_stat_value(()) is None
+
+
+def test_actual_augment_socket_count_is_not_clamped_to_normal_limit():
+    item = ParsedItem(
+        item_class="Body Armours", rarity="rare", name="Test", base_type="Test Base",
+        category="body_armour", properties={"Sockets": "S S S"}, augment_count=1,
+    )
+
+    assert empty_augment_socket_count(item) == 2
+    assert augment_socket_edit_counts(item) == (
+        (2, "空き2個に追加"),
+        (3, "全3個を置換"),
+    )
+
+
+def test_virtual_range_augment_uses_arithmetic_mean(monkeypatch):
+    monkeypatch.setattr(poe2_trade, "augment_entries", lambda: ({
+        "ref_name": "Desert Rune",
+        "names": {"en": "Desert Rune", "ja": "砂漠のルーン"},
+        "effects": ({
+            "categories": ["Bow"],
+            "text": {"en": "Adds # to # Fire Damage", "ja": "#から#の火ダメージを追加する"},
+            "values": [7, 11],
+            "trade_ids": ["rune.stat_709508406"],
+        },),
+    },))
+    item = ParsedItem(
+        item_class="Bows", rarity="rare", name="Test", base_type="Test Bow",
+        category="bow", properties={"Sockets": "S S"},
+    )
+
+    rows = virtual_augment_filters(item, "Desert Rune")
+
+    assert len(rows) == 1
+    assert rows[0].min_value == 18.0
+    assert rows[0].read_value == 18.0
 
 
 def test_reported_rare_spear_sends_flat_damage_average_and_optional_quality():

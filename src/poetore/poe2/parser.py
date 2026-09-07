@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import combinations_with_replacement, product
 import re
 import unicodedata
 
@@ -28,37 +29,107 @@ _AUGMENT_CATEGORY_BY_CATEGORY = {
 def _aggregate_augment_count(
     modifiers: list[ItemModifier], category: str, socket_count: int,
 ) -> int:
-    """Infer repeated identical augments collapsed into one summed Stat line."""
+    """Infer the minimum installed augments that exactly explain their Stat lines."""
     if socket_count <= 1:
         return 0
     augment_category = _AUGMENT_CATEGORY_BY_CATEGORY.get(category)
     if augment_category is None:
         return 0
-    inferred = 0
+
+    observed: dict[str, tuple[float, ...]] = {}
     for modifier in modifiers:
-        if modifier.kind != "augment" or not modifier.stat_id or not modifier.values:
+        if modifier.kind != "augment" or not modifier.stat_id:
             continue
-        for entry in augment_entries():
-            for effect in entry.get("effects", ()):
-                base_values = tuple(float(value) for value in effect.get("values", ()))
-                if (
-                    augment_category not in (effect.get("categories") or ())
-                    or modifier.stat_id not in (effect.get("trade_ids") or ())
-                    or len(base_values) != len(modifier.values)
-                    or not all(base_values)
-                ):
-                    continue
-                ratios = tuple(
-                    observed / base
-                    for observed, base in zip(modifier.values, base_values)
-                )
-                rounded = round(ratios[0])
-                if (
-                    2 <= rounded <= socket_count
-                    and all(abs(ratio - rounded) < 1e-9 for ratio in ratios)
-                ):
-                    inferred = max(inferred, rounded)
-    return inferred
+        values = tuple(float(value) for value in modifier.values)
+        previous = observed.get(modifier.stat_id)
+        if previous is None:
+            observed[modifier.stat_id] = values
+        elif len(previous) == len(values):
+            observed[modifier.stat_id] = tuple(
+                left + right for left, right in zip(previous, values)
+            )
+    if not observed:
+        return 0
+
+    def effect_value_options(effect: dict) -> tuple[tuple[float, ...], ...]:
+        values = tuple(float(value) for value in effect.get("values", ()))
+        texts = effect.get("text") or {}
+        placeholders = max(str(text).count("#") for text in texts.values())
+        if placeholders <= 0 or not values:
+            return ((),)
+        if placeholders == 1:
+            options = {(value,) for value in values}
+            options.add((sum(values) / len(values),))
+            return tuple(sorted(options))
+        return (values[:placeholders],) if len(values) >= placeholders else ()
+
+    candidate_vectors: set[tuple[tuple[str, tuple[float, ...]], ...]] = set()
+    for entry in augment_entries():
+        effect_options = []
+        for effect in entry.get("effects", ()):
+            if augment_category not in (effect.get("categories") or ()):
+                continue
+            trade_ids = tuple(
+                stat_id for stat_id in (effect.get("trade_ids") or ())
+                if stat_id in observed
+            )
+            value_options = effect_value_options(effect)
+            options = tuple(product(trade_ids, value_options))
+            if not options:
+                effect_options = []
+                break
+            effect_options.append(options)
+        if not effect_options:
+            continue
+        for selected_effects in product(*effect_options):
+            vector: dict[str, tuple[float, ...]] = {}
+            valid = True
+            for stat_id, values in selected_effects:
+                previous = vector.get(stat_id)
+                if previous is None:
+                    vector[stat_id] = values
+                elif len(previous) == len(values):
+                    vector[stat_id] = tuple(
+                        left + right for left, right in zip(previous, values)
+                    )
+                else:
+                    valid = False
+                    break
+            if valid:
+                candidate_vectors.add(tuple(sorted(vector.items())))
+
+    candidates = tuple(dict(vector) for vector in candidate_vectors)
+    if not candidates or len(candidates) > 8:
+        return 0
+
+    def combination_matches(indexes: tuple[int, ...]) -> bool:
+        combined: dict[str, tuple[float, ...]] = {}
+        for index in indexes:
+            for stat_id, values in candidates[index].items():
+                previous = combined.get(stat_id)
+                if previous is None:
+                    combined[stat_id] = values
+                elif len(previous) == len(values):
+                    combined[stat_id] = tuple(
+                        left + right for left, right in zip(previous, values)
+                    )
+                else:
+                    return False
+        if combined.keys() != observed.keys():
+            return False
+        return all(
+            len(combined[stat_id]) == len(values)
+            and all(abs(left - right) < 1e-9 for left, right in zip(combined[stat_id], values))
+            for stat_id, values in observed.items()
+        )
+
+    for count in range(1, min(socket_count, 6) + 1):
+        if any(
+            combination_matches(indexes)
+            for indexes in combinations_with_replacement(range(len(candidates)), count)
+        ):
+            return count
+    return 0
 
 
 class Poe2ItemParseError(ValueError):
@@ -881,10 +952,15 @@ def parse_item_text(text: str) -> ParsedItem:
     current_tier = None
     current_group = None
     next_group = 0
+    section_index = 0
+    standalone_augment_sections: set[int] = set()
     normalized_lines = [line.strip().replace("：", ":") for line in text.splitlines()]
     consumed_line_indexes: set[int] = set()
     for line_index, line in enumerate(normalized_lines):
         if line_index in consumed_line_indexes:
+            continue
+        if line == "--------":
+            section_index += 1
             continue
         if line.startswith("{") and line.endswith("}"):
             heading = line.strip("{} ")
@@ -960,7 +1036,7 @@ def parse_item_text(text: str) -> ParsedItem:
         if category == "relic" and line_kind == "explicit":
             line_kind = "sanctum"
         if standalone_augment and current_kind != "augment":
-            augment_count += 1
+            standalone_augment_sections.add(section_index)
         scoped_affix = (
             category in _LOCAL_AFFIX_CATEGORIES
             and line_kind in {"explicit", "fractured", "crafted", "desecrated"}
@@ -1012,6 +1088,7 @@ def parse_item_text(text: str) -> ParsedItem:
             modifiers.append(ItemModifier(text=line, confidence=0.0))
     socket_text = str(properties.get("Sockets") or properties.get("ソケット") or "")
     socket_count = len(re.findall(r"(?<![A-Za-z])S(?![A-Za-z])", socket_text, re.IGNORECASE))
+    augment_count += len(standalone_augment_sections)
     augment_count = min(
         socket_count,
         max(augment_count, _aggregate_augment_count(modifiers, category, socket_count)),

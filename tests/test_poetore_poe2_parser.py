@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from src.poetore.models import ItemModifier
+from src.poetore.poe2 import parser as poe2_parser
 from src.poetore.poe2.metadata import resolve_stat_line_candidates
 from src.poetore.poe2.parser import Poe2ItemParseError, TRADE_CATEGORY_BY_CATEGORY, parse_item_text
 from src.poetore.poe2.trade import build_search_query, poe2_trade_filters
@@ -652,6 +654,103 @@ def test_two_identical_runes_collapsed_into_one_line_count_as_two_augments():
     augment = next(modifier for modifier in item.modifiers if modifier.kind == "augment")
     assert augment.stat_id == "rune.stat_3523867985"
     assert augment.values == (36.0,)
+
+
+def test_different_augments_collapsed_into_one_section_count_separately(monkeypatch):
+    monkeypatch.setattr(poe2_parser, "augment_entries", lambda: (
+        {
+            "ref_name": "First Rune",
+            "effects": ({
+                "categories": ["Body Armour"],
+                "text": {"en": "# to maximum Life"},
+                "values": [10],
+                "trade_ids": ["rune.first"],
+            },),
+        },
+        {
+            "ref_name": "Second Rune",
+            "effects": ({
+                "categories": ["Body Armour"],
+                "text": {"en": "# to maximum Mana"},
+                "values": [20],
+                "trade_ids": ["rune.second"],
+            },),
+        },
+    ))
+    modifiers = [
+        ItemModifier("+10 to maximum Life", (10.0,), "augment", stat_id="rune.first"),
+        ItemModifier("+20 to maximum Mana", (20.0,), "augment", stat_id="rune.second"),
+    ]
+
+    assert poe2_parser._aggregate_augment_count(modifiers, "body_armour", 2) == 2
+
+
+def test_one_multi_stat_augment_counts_once(monkeypatch):
+    monkeypatch.setattr(poe2_parser, "augment_entries", lambda: ({
+        "ref_name": "Dual Rune",
+        "effects": (
+            {
+                "categories": ["Body Armour"],
+                "text": {"en": "# to maximum Life"},
+                "values": [10],
+                "trade_ids": ["rune.first"],
+            },
+            {
+                "categories": ["Body Armour"],
+                "text": {"en": "# to maximum Mana"},
+                "values": [20],
+                "trade_ids": ["rune.second"],
+            },
+        ),
+    },))
+    modifiers = [
+        ItemModifier("+10 to maximum Life", (10.0,), "augment", stat_id="rune.first"),
+        ItemModifier("+20 to maximum Mana", (20.0,), "augment", stat_id="rune.second"),
+    ]
+
+    assert poe2_parser._aggregate_augment_count(modifiers, "body_armour", 2) == 1
+
+
+def test_real_multi_stat_augment_lines_in_one_section_count_once():
+    item = parse_item_text("""Item Class: Boots
+Rarity: Rare
+Test Pace
+Rawhide Boots
+--------
+Sockets: S S
+--------
+Item Level: 80
+--------
+20% increased Curse Duration (rune)
+20% increased Poison Duration (rune)
+""")
+
+    assert item.augment_count == 1
+    assert {modifier.stat_id for modifier in item.modifiers} == {
+        "rune.stat_3824372849",
+        "rune.stat_2011656677",
+    }
+
+
+def test_real_different_augment_lines_in_one_section_count_separately():
+    item = parse_item_text("""Item Class: Body Armours
+Rarity: Rare
+Test Shelter
+Leather Vest
+--------
+Sockets: S S
+--------
+Item Level: 80
+--------
++45 to maximum Life (rune)
++14% to Fire Resistance (rune)
+""")
+
+    assert item.augment_count == 2
+    assert {modifier.stat_id for modifier in item.modifiers} == {
+        "rune.stat_3299347043",
+        "rune.stat_3372524247",
+    }
 
 
 def test_poe2_standalone_rune_prefers_augment_stat_over_same_text_explicit():
