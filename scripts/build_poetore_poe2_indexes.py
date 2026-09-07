@@ -141,6 +141,11 @@ def _related_japanese_overrides() -> tuple[dict, ...]:
     return tuple(payload.get("overrides", ()))
 
 
+def _related_identity_aliases() -> dict[str, str]:
+    payload = json.loads(RELATED_JAPANESE_OVERRIDES.read_text(encoding="utf-8"))
+    return {row["from"]: row["to"] for row in payload.get("aliases", ())}
+
+
 def _identity_japanese_overrides() -> tuple[dict, ...]:
     payload = json.loads(IDENTITY_JAPANESE_OVERRIDES.read_text(encoding="utf-8"))
     return tuple(payload.get("overrides", ()))
@@ -166,9 +171,22 @@ def _apply_japanese_identity_overrides(
             entries.append(row)
             by_key[key] = row
         row.setdefault("names", {})["ja"] = override["japanese"]
+        if override.get("base_ref"):
+            row["base_ref"] = override["base_ref"]
+        if override.get("category"):
+            row["category"] = override["category"]
 
 
 def _apply_reviewed_identity_overrides(entries: list[dict]) -> None:
+    deprecated = {
+        (row["namespace"], row["name"])
+        for value in _related_identity_aliases()
+        for row in (_related_identity(value),)
+    }
+    entries[:] = [
+        row for row in entries
+        if (row.get("namespace"), row.get("ref_name")) not in deprecated
+    ]
     _apply_japanese_identity_overrides(entries, _related_japanese_overrides())
     _apply_japanese_identity_overrides(entries, _identity_japanese_overrides())
 
@@ -494,6 +512,19 @@ def build_related_item_groups(ee2_root: Path) -> dict:
         ]
     for row in localized["en"]:
         identity_rows.setdefault((row.get("namespace", ""), row.get("refName", "")), []).append(row)
+    for override in _related_japanese_overrides():
+        if override.get("category"):
+            identity_rows.setdefault(
+                (override["namespace"], override["ref_name"]), []
+            ).append({"craftable": {"category": override["category"]}})
+    aliases = _related_identity_aliases()
+    for old_value, new_value in aliases.items():
+        old = _related_identity(old_value)
+        new = _related_identity(new_value)
+        old_key = (old["namespace"], old["name"])
+        new_key = (new["namespace"], new["name"])
+        if old_key in identity_rows and new_key not in identity_rows:
+            identity_rows[new_key] = identity_rows[old_key]
     japanese = {
         (row.get("namespace", ""), row.get("refName", "")): row.get("name", "")
         for row in localized["ja"]
@@ -504,6 +535,7 @@ def build_related_item_groups(ee2_root: Path) -> dict:
     })
 
     def enrich(value: str) -> dict:
+        value = aliases.get(value, value)
         row = _related_identity(value)
         display = japanese.get((row["namespace"], row["name"]))
         if display:
@@ -520,7 +552,10 @@ def build_related_item_groups(ee2_root: Path) -> dict:
     } for group in raw_groups]
     return {
         "schema_version": 1,
-        "source": "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8",
+        "source": (
+            "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8"
+            f" + selected EE2 {EE2_SOUL_CORE_REVISION} related identities"
+        ),
         "groups": groups,
     }
 

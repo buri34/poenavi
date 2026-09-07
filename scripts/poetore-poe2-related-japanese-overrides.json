@@ -1,11 +1,18 @@
 {
   "schema_version": 1,
   "description": "Reviewed Japanese identity fallbacks for EE2 related-item query identities missing from the locked Japanese item data.",
+  "aliases": [
+    {"from":"ITEM::Legacy of Edyrns Tusks","to":"ITEM::Legacy of Edyrn's Tusks"},
+    {"from":"UNIQUE::Edyrns Tusks // Iron Cuirass","to":"UNIQUE::Edyrn's Tusks // Iron Cuirass"}
+  ],
   "overrides": [
     {"namespace":"GEM","ref_name":"Techrod's Revenge","japanese":"テクロッドの復讐"},
+    {"namespace":"GEM","ref_name":"Uhtred's Augury","japanese":"ウートレドの予兆"},
+    {"namespace":"GEM","ref_name":"Uhtred's Exodus","japanese":"ウートレドの大移動"},
+    {"namespace":"GEM","ref_name":"Uhtred's Omen","japanese":"ウートレドの前兆"},
     {"namespace":"ITEM","ref_name":"Legacy of Bramblejack","japanese":"ブランブルジャック"},
-    {"namespace":"UNIQUE","ref_name":"Edyrns Tusks","base_ref":"Iron Cuirass","japanese":"エディルンの牙"},
-    {"namespace":"ITEM","ref_name":"Legacy of Kingsguard","japanese":"キングスガードの遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Edyrn's Tusks","japanese":"エディルンの牙の遺産","category":"SoulCore"},
+    {"namespace":"ITEM","ref_name":"Legacy of Kingsguard","japanese":"キングスガードの遺産","category":"SoulCore"},
     {"namespace":"ITEM","ref_name":"Legacy of Bristleboar","japanese":"毛深い猪の遺産"},
     {"namespace":"ITEM","ref_name":"Legacy of Elevore","japanese":"エレボアーの遺産"},
     {"namespace":"ITEM","ref_name":"Legacy of The Smiling Knight","japanese":"微笑む騎士の遺産"},

@@ -71,7 +71,7 @@ def test_reviewed_identity_japanese_overrides_are_in_runtime_index():
         for row in rebuilt["entries"]
     }
 
-    assert len(overrides) == 12
+    assert len(overrides) == 14
     for override in overrides:
         row = by_key[(override["namespace"], override["ref_name"])]
         assert row["names"]["ja"] == override["japanese"]
@@ -83,6 +83,8 @@ def test_reviewed_identity_japanese_overrides_are_in_runtime_index():
             assert row["base_ref"] == override["base_ref"]
 
     assert by_key[("ITEM", "Uhtred's Saga")]["names"]["ja"] == "ウートレッドの叙事詩"
+    assert ("ITEM", "Legacy of Edyrns Tusks") not in by_key
+    assert ("UNIQUE", "Edyrns Tusks") not in by_key
 
 
 @pytest.mark.parametrize(
@@ -92,6 +94,8 @@ def test_reviewed_identity_japanese_overrides_are_in_runtime_index():
         ("ITEM", "コペックの生贄のオーブ", "Kopec's Orb of Sacrifice"),
         ("ITEM", "ヤオマックの生贄のオーブ", "Yaomac's Orb of Sacrifice"),
         ("ITEM", "ユグルの生贄のオーブ", "Yugul's Orb of Sacrifice"),
+        ("ITEM", "エディルンの牙の遺産", "Legacy of Edyrn's Tusks"),
+        ("ITEM", "聖なる花", "Sacred Bloom"),
         ("GEM", "ウートレドの予兆", "Uhtred's Augury"),
         ("GEM", "ウートレドの星座", "Uhtred's Constellation"),
         ("GEM", "ウートレドの大移動", "Uhtred's Exodus"),
@@ -197,7 +201,8 @@ def test_build_identity_index_keeps_duplicate_variant_tags_and_base_armour(tmp_p
 
 def test_generated_related_items_match_locked_ee2_and_have_price_hints():
     generated = json.loads((OUTPUT / "related_item_groups.json").read_text(encoding="utf-8"))
-    assert generated["source"].endswith("d72afb83bc0888919a89d3c3744acee2c597e9c8")
+    assert "d72afb83bc0888919a89d3c3744acee2c597e9c8" in generated["source"]
+    assert EE2_SOUL_CORE_REVISION in generated["source"]
     assert len(generated["groups"]) == 115
     first = generated["groups"][0]
     assert first["query"][0] == {
@@ -230,7 +235,31 @@ def test_reviewed_related_item_japanese_overrides_are_in_runtime_indexes():
     }
     assert {key: identity_names.get(key) for key in expected} == expected
     assert {key: related_names.get(key) for key in expected} == expected
-    assert len(expected) == 21
+    assert len(expected) == 24
+
+
+def test_reviewed_related_item_identity_updates_keep_price_hints():
+    related = json.loads((OUTPUT / "related_item_groups.json").read_text(encoding="utf-8"))
+    rows = [
+        row for group in related["groups"]
+        for row in (*group.get("query", ()), *group.get("items", ()))
+    ]
+    by_id = {row["id"]: row for row in rows}
+
+    assert by_id["GEM::Uhtred's Augury"]["display_name"] == "ウートレドの予兆"
+    assert by_id["GEM::Uhtred's Exodus"]["display_name"] == "ウートレドの大移動"
+    assert by_id["GEM::Uhtred's Omen"]["display_name"] == "ウートレドの前兆"
+    assert by_id["UNIQUE::Kingsguard // Full Plate"]["display_name"] == "キングスガード"
+    assert by_id["ITEM::Legacy of Kingsguard"]["ninja_type"] == "Ultimatum"
+
+    legacy = by_id["ITEM::Legacy of Edyrn's Tusks"]
+    assert legacy["display_name"] == "エディルンの牙の遺産"
+    assert legacy["ninja_type"] == "Ultimatum"
+    unique = by_id["UNIQUE::Edyrn's Tusks // Iron Cuirass"]
+    assert unique["display_name"] == "エディルンの牙"
+    assert unique["ninja_type"] == "UniqueArmours"
+    assert "ITEM::Legacy of Edyrns Tusks" not in by_id
+    assert "UNIQUE::Edyrns Tusks // Iron Cuirass" not in by_id
 
 
 def test_build_related_items_is_reproducible_from_locked_ee2():

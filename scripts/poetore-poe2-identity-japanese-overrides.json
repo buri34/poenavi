@@ -6,6 +6,8 @@
     {"namespace":"ITEM","ref_name":"Kopec's Orb of Sacrifice","japanese":"コペックの生贄のオーブ","category":"Currency"},
     {"namespace":"ITEM","ref_name":"Yaomac's Orb of Sacrifice","japanese":"ヤオマックの生贄のオーブ","category":"Currency"},
     {"namespace":"ITEM","ref_name":"Yugul's Orb of Sacrifice","japanese":"ユグルの生贄のオーブ","category":"Currency"},
+    {"namespace":"ITEM","ref_name":"Legacy of Edyrn's Tusks","japanese":"エディルンの牙の遺産","category":"SoulCore"},
+    {"namespace":"ITEM","ref_name":"Sacred Bloom","japanese":"聖なる花","category":"MapFragment"},
     {"namespace":"GEM","ref_name":"Uhtred's Augury","japanese":"ウートレドの予兆"},
     {"namespace":"GEM","ref_name":"Uhtred's Constellation","japanese":"ウートレドの星座"},
     {"namespace":"GEM","ref_name":"Uhtred's Exodus","japanese":"ウートレドの大移動"},
