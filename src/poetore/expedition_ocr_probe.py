@@ -117,7 +117,9 @@ def detect_reward_cards(
         len(channel) != width * height for channel in (gray, red, green, blue)
     ):
         return 0, []
-    is_full_screen = width / height > 1.5
+    # Narrow panel crops can also be very wide when only a few rewards exist.
+    # Actual game captures are substantially larger than the panel itself.
+    is_full_screen = width >= 1000 and width / height > 1.5
     scan_width = round(height * 0.55) if is_full_screen else width
     row_fill: list[float] = []
     for y in range(height):
@@ -152,10 +154,16 @@ def detect_reward_cards(
     cards = [
         band
         for band in candidates
-        if typical_height * 0.78 <= band.bottom - band.top <= typical_height * 1.30
+        if typical_height * 0.78 <= band.bottom - band.top <= typical_height * 2.10
     ]
     if is_full_screen:
         cards = [band for band in cards if band.top >= height * 0.12]
+    elif (
+        len(cards) >= 2
+        and cards[0].top < height * 0.12
+        and cards[1].top - cards[0].bottom < 7
+    ):
+        cards.pop(0)
     if len(cards) >= 2:
         fill_rates = [
             sum(row_fill[band.top : band.bottom]) / (band.bottom - band.top)
@@ -172,6 +180,20 @@ def detect_reward_cards(
             or fill_rates[0] < typical_fill * 0.8
         ):
             cards.pop(0)
+    if len(cards) >= 3:
+        gaps = [cards[index + 1].top - cards[index].bottom for index in range(len(cards) - 1)]
+        positive_gaps = sorted(gap for gap in gaps if gap > 0)
+        typical_gap = positive_gaps[len(positive_gaps) // 2] if positive_gaps else 0
+        for index, gap in enumerate(gaps, start=1):
+            if index >= 2 and gap < max(5, typical_gap * 0.6):
+                cards = cards[:index]
+                break
+        typical_height = sorted(band.bottom - band.top for band in cards)[len(cards) // 2]
+        cards = [
+            band
+            for index, band in enumerate(cards)
+            if index < 2 or band.bottom - band.top <= typical_height * 1.5
+        ]
     return scan_width, cards
 
 
@@ -247,11 +269,19 @@ def _add_margin(pixels: Sequence[int], width: int, height: int, margin: int) -> 
     return output
 
 
-def _run_tesseract(image: Path, language: str) -> str:
+def _run_tesseract(image: Path, language: str, *, page_segmentation: int = 7) -> str:
     executable = shutil.which("tesseract")
     if executable is None:
         raise RuntimeError("tesseractが見つかりません。--prepare-onlyで前処理だけ実行できます。")
-    command = [executable, str(image), "stdout", "-l", language, "--psm", "7"]
+    command = [
+        executable,
+        str(image),
+        "stdout",
+        "-l",
+        language,
+        "--psm",
+        str(page_segmentation),
+    ]
     result = subprocess.run(command, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or f"tesseract終了コード: {result.returncode}")
@@ -297,7 +327,8 @@ def analyze_image(
             crop_height * scale + margin * 2,
             [0 if value else 255 for value in crop],
         )
-        raw = "" if prepare_only else _run_tesseract(crop_path, language)
+        psm = 11 if crop_height > 70 else 7
+        raw = "" if prepare_only else _run_tesseract(crop_path, language, page_segmentation=psm)
         rows.append(OcrRowResult(index, band.top, band.bottom, raw, normalize_text(raw)))
 
     truth_path = image_path.with_suffix(".truth.json")

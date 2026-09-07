@@ -59,6 +59,19 @@ def test_detect_reward_cards_ignores_header_and_partial_card():
     assert bands == [RowBand(65, 105), RowBand(112, 152)]
 
 
+def test_detect_reward_cards_treats_short_wide_image_as_panel_crop():
+    width, height = 220, 100
+    channels = [[50] * (width * height) for _ in range(4)]
+    for top, bottom in ((10, 40), (50, 80)):
+        for y in range(top, bottom):
+            for x in range(width):
+                for channel in channels:
+                    channel[y * width + x] = 200
+    panel_width, bands = detect_reward_cards(*channels, width, height)
+    assert panel_width == width
+    assert bands == [RowBand(10, 40), RowBand(50, 80)]
+
+
 def test_analyze_empty_directory_writes_empty_summary(tmp_path):
     input_dir = tmp_path / "input"
     output_dir = tmp_path / "output"
