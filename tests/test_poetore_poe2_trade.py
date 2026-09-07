@@ -144,6 +144,43 @@ def test_same_stat_on_prefix_and_suffix_is_combined_into_one_trade_filter():
     assert sent == [{"id": "explicit.stat_3917489142", "value": {"min": 35.0}}]
 
 
+def test_expedition_tablet_surpassing_duplicate_mod_resolves_to_current_trade_stat():
+    item = parse_item_text("""アイテムクラス: 石板
+レアリティ: マジック
+結晶化した 双子の エクスペディションの石板
+--------
+アイテムレベル: 82
+--------
+{ 暗黙モッド }
+マップにカルグールのエクスペディションを追加する
+残り使用可能回数 10回
+--------
+{ プレフィックスモッド「結晶化した」 (ティア: 1) }
+マップにエッセンスが追加で1個出現する — スケールできない値
+{ サフィックスモッド 「双子の」 (ティア: 1) }
+マップのエクスペディションは+36(30-40)%の超過可能確率でルーニックモンスターを複製する
+--------
+自身のマップデバイスで使用してマップにモッドを追加できる。""")
+
+    assert all(mod.stat_id for mod in item.modifiers), [
+        mod.text for mod in item.modifiers if not mod.stat_id
+    ]
+    duplicate = next(
+        mod for mod in item.modifiers if mod.stat_id == "explicit.stat_779964546"
+    )
+    assert (duplicate.values, duplicate.roll_min, duplicate.roll_max) == (
+        (36.0,), 30.0, 40.0,
+    )
+
+    rows = poe2_trade_filters(item)
+    duplicate_row = next(
+        row for row in rows if row.stat_id == "explicit.stat_779964546"
+    )
+    selected = tuple(replace(row, enabled=row is duplicate_row) for row in rows)
+    sent = build_search_query(item, stat_filters=selected)["query"]["stats"][0]["filters"]
+    assert sent == [{"id": "explicit.stat_779964546", "value": {"min": 36.0}}]
+
+
 def test_jewel_prefers_jewel_scoped_mana_on_kill_stat_in_trade_query():
     item = parse_item_text(MANA_ON_KILL_JEWEL_FIXTURE.read_text(encoding="utf-8"))
     filters = poe2_trade_filters(item)
@@ -1706,6 +1743,42 @@ def test_adopted_poe2_unique_fixed_and_augment_hidden_rules_with_exceptions():
     assert rows["rune.fixed"].hidden_reason == "可変ロールではありません"
     base = {row.stat_id: row for row in poe2_trade_filters(item, preset=PRESET_BASE)}
     assert all(not row.hidden_reason for row in base.values())
+
+
+def test_heart_of_the_well_modifiers_never_become_hidden_candidates():
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: ユニーク
+井戸の心臓
+ダイヤモンド
+--------
+個数制限: 1
+--------
+アイテムレベル: 82
+--------
+{ 冒涜 ユニークモッド — ダメージ, 元素, 雷 }
+ダメージの14(9-15)%を追加雷ダメージとして獲得する
+{ 冒涜 ユニークモッド — エナジーシールド }
+装備中の鎧から得られるエナジーシールドが48(40-60)%増加する
+{ 冒涜 ユニークモッド }
+クールダウン解消レートが3(2-3)%増加する
+{ 冒涜 ユニークモッド — 元素, 雷, 耐性 }
+雷耐性の最大値 +1%
+--------
+無数の魂の悲鳴が苦痛の和音となり、
+新たに死んだ者たちの重さに沈み続ける。
+--------
+パッシブツリーで割り当てられたジュエルソケットにはめる。右クリックしてソケットから取り外すことができる。
+--------
+メモ: ~b/o 5 divine""")
+
+    modifier_rows = [
+        row for row in poe2_trade_filters(item)
+        if row.kind == "explicit"
+    ]
+
+    assert item.name == "Heart of the Well"
+    assert len(modifier_rows) == 4
+    assert all(row.hidden_reason == "" for row in modifier_rows)
 
 
 def test_adopted_poe2_low_level_magic_adds_hidden_only_rarity_filter():

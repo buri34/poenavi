@@ -80,6 +80,15 @@ EE2_SOUL_CORE_OFFICIAL_STATS = {
         "ja": "全てのストームスキルジェムのレベル #",
     },
 }
+REVIEWED_OFFICIAL_STAT_OVERRIDES = {
+    "explicit.stat_779964546": {
+        "type": "explicit",
+        "text": {
+            "en": "Expeditions have +#% Surpassing chance to Duplicate Runic Monsters in Map",
+            "ja": "マップのエクスペディションは+#%の超過可能確率でルーニックモンスターを複製する",
+        },
+    },
+}
 EE2_WEAPON_CATEGORIES = [
     "Bow", "Claw", "Crossbow", "Dagger", "Flail", "One Hand Axe",
     "One Hand Mace", "One Hand Sword", "Spear", "Talisman", "Two Hand Axe",
@@ -329,6 +338,10 @@ def build_stat_index() -> dict:
             "type": str(english.get("type", "")),
             "text": {"en": str(english.get("text", "")), "ja": str(japanese.get("text", ""))},
         })
+    by_id = {entry["id"]: entry for entry in entries}
+    for stat_id, override in REVIEWED_OFFICIAL_STAT_OVERRIDES.items():
+        by_id[stat_id] = {"id": stat_id, **override}
+    entries = list(by_id.values())
     return {"schema_version": 1, "source": "scripts/poetore-poe2-sources.lock.json", "entries": entries}
 
 

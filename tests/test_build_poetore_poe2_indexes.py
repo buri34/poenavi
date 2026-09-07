@@ -11,6 +11,7 @@ from scripts.build_poetore_poe2_indexes import (
     EE2_SOUL_CORE_IDENTITIES, EE2_SOUL_CORE_OFFICIAL_STATS,
     EE2_REVIEWED_RUNEFORGED_IDENTITIES, EE2_REVIEWED_V0161_AUGMENTS,
     EE2_REVIEWED_V0161_STAT_IDS, EE2_SOUL_CORE_REVISION,
+    REVIEWED_OFFICIAL_STAT_OVERRIDES,
     EE2_SOUL_CORE_STAT_IDS,
     OUTPUT, _aligned, build_augment_index, build_identity_index,
     build_related_item_groups, build_stat_index,
@@ -35,6 +36,13 @@ def test_generated_stat_index_keeps_locked_snapshot_and_selected_soul_core_stats
     assert EE2_SOUL_CORE_OFFICIAL_STATS.keys() <= generated_by_id.keys()
     assert "rune.stat_3170380905" not in generated_by_id
     assert len(generated["entries"]) > 8000
+
+
+def test_stat_index_contains_reviewed_current_official_stats():
+    generated = json.loads((OUTPUT / "stat_index.json").read_text(encoding="utf-8"))
+    generated_by_id = {row["id"]: row for row in generated["entries"]}
+    for stat_id, override in REVIEWED_OFFICIAL_STAT_OVERRIDES.items():
+        assert generated_by_id[stat_id] == {"id": stat_id, **override}
 
 
 def test_generated_identity_index_keeps_ambiguous_base_fingerprints():
