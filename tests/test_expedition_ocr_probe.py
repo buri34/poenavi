@@ -84,6 +84,18 @@ def test_detect_reward_cards_drops_background_after_one_tall_reward():
     assert bands == [RowBand(50, 100)]
 
 
+def test_detect_reward_cards_keeps_short_reward_after_tall_cards():
+    width, height = 100, 300
+    channels = [[50] * (width * height) for _ in range(4)]
+    for top, bottom in ((50, 100), (110, 160), (170, 200)):
+        for y in range(top, bottom):
+            for x in range(width):
+                for channel in channels:
+                    channel[y * width + x] = 200
+    _, bands = detect_reward_cards(*channels, width, height)
+    assert bands == [RowBand(50, 100), RowBand(110, 160), RowBand(170, 200)]
+
+
 def test_analyze_empty_directory_writes_empty_summary(tmp_path):
     input_dir = tmp_path / "input"
     output_dir = tmp_path / "output"

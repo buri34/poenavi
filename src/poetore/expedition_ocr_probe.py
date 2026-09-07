@@ -154,7 +154,9 @@ def detect_reward_cards(
     cards = [
         band
         for band in candidates
-        if typical_height * 0.78 <= band.bottom - band.top <= typical_height * 2.10
+        if max(30, typical_height * 0.50)
+        <= band.bottom - band.top
+        <= typical_height * 2.10
     ]
     if is_full_screen:
         cards = [band for band in cards if band.top >= height * 0.12]
@@ -185,7 +187,10 @@ def detect_reward_cards(
         positive_gaps = sorted(gap for gap in gaps if gap > 0)
         typical_gap = positive_gaps[len(positive_gaps) // 2] if positive_gaps else 0
         for index, gap in enumerate(gaps, start=1):
-            if index >= 2 and gap < max(5, typical_gap * 0.6):
+            if index >= 2 and (
+                gap < max(5, typical_gap * 0.6)
+                or gap > max(typical_gap * 3, typical_height * 1.5)
+            ):
                 cards = cards[:index]
                 break
         typical_height = sorted(band.bottom - band.top for band in cards)[len(cards) // 2]
