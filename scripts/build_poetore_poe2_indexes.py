@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "vendor-sources" / "poe2-trade-api-2026-08-09"
 OUTPUT = ROOT / "data" / "poetore" / "poe2"
+IDENTITY_JAPANESE_OVERRIDES = ROOT / "scripts" / "poetore-poe2-identity-japanese-overrides.json"
 RELATED_JAPANESE_OVERRIDES = ROOT / "scripts" / "poetore-poe2-related-japanese-overrides.json"
 EE2_SOUL_CORE_REVISION = "cf58adf17a06fe453da47f3672803a33594abcf6"
 EE2_SOUL_CORE_IDENTITIES = {
@@ -140,9 +141,16 @@ def _related_japanese_overrides() -> tuple[dict, ...]:
     return tuple(payload.get("overrides", ()))
 
 
-def _apply_related_identity_overrides(entries: list[dict]) -> None:
+def _identity_japanese_overrides() -> tuple[dict, ...]:
+    payload = json.loads(IDENTITY_JAPANESE_OVERRIDES.read_text(encoding="utf-8"))
+    return tuple(payload.get("overrides", ()))
+
+
+def _apply_japanese_identity_overrides(
+    entries: list[dict], overrides: tuple[dict, ...],
+) -> None:
     by_key = {(row.get("namespace"), row.get("ref_name")): row for row in entries}
-    for override in _related_japanese_overrides():
+    for override in overrides:
         key = (override["namespace"], override["ref_name"])
         row = by_key.get(key)
         if row is None:
@@ -153,9 +161,16 @@ def _apply_related_identity_overrides(entries: list[dict]) -> None:
             }
             if override.get("base_ref"):
                 row["base_ref"] = override["base_ref"]
+            if override.get("category"):
+                row["category"] = override["category"]
             entries.append(row)
             by_key[key] = row
         row.setdefault("names", {})["ja"] = override["japanese"]
+
+
+def _apply_reviewed_identity_overrides(entries: list[dict]) -> None:
+    _apply_japanese_identity_overrides(entries, _related_japanese_overrides())
+    _apply_japanese_identity_overrides(entries, _identity_japanese_overrides())
 
 
 def _load(name: str) -> dict:
@@ -224,7 +239,7 @@ def build_identity_index(ee2_root: Path | None = None) -> dict:
             if en.get("unique"):
                 row["base_ref"] = en["unique"].get("base", "")
             entries.append(row)
-        _apply_related_identity_overrides(entries)
+        _apply_reviewed_identity_overrides(entries)
         return {
             "schema_version": 2,
             "source": "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8",
@@ -253,7 +268,17 @@ def build_identity_index(ee2_root: Path | None = None) -> dict:
                     "group": group_id, "names": {"en": name, "ja": ja_name or name},
                 })
                 seen.add(("UNIQUE", name))
+    _apply_reviewed_identity_overrides(entries)
     return {"schema_version": 2, "source": "scripts/poetore-poe2-sources.lock.json", "entries": entries}
+
+
+def apply_reviewed_identity_overrides() -> None:
+    identity = json.loads((OUTPUT / "identity_index.json").read_text(encoding="utf-8"))
+    _apply_reviewed_identity_overrides(identity["entries"])
+    (OUTPUT / "identity_index.json").write_text(
+        json.dumps(identity, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
 
 
 def build_stat_index() -> dict:
@@ -506,12 +531,16 @@ def main() -> None:
     parser.add_argument("--augment-only", action="store_true")
     parser.add_argument("--related-only", action="store_true")
     parser.add_argument("--v0162-soul-cores", action="store_true")
+    parser.add_argument("--reviewed-identity-overrides", action="store_true")
     args = parser.parse_args()
     OUTPUT.mkdir(parents=True, exist_ok=True)
     if args.v0162_soul_cores:
         if args.ee2_root is None:
             parser.error("--v0162-soul-cores requires --ee2-root")
         apply_v0162_soul_core_update(args.ee2_root)
+        return
+    if args.reviewed_identity_overrides:
+        apply_reviewed_identity_overrides()
         return
     if args.augment_only or args.related_only:
         if args.ee2_root is None:

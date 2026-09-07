@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "description": "Reviewed Japanese identity corrections and additions verified against the official PoE2 Trade API.",
+  "overrides": [
+    {"namespace":"ITEM","ref_name":"Kamasa's Orb of Sacrifice","japanese":"カマサの生贄のオーブ","category":"Currency"},
+    {"namespace":"ITEM","ref_name":"Kopec's Orb of Sacrifice","japanese":"コペックの生贄のオーブ","category":"Currency"},
+    {"namespace":"ITEM","ref_name":"Yaomac's Orb of Sacrifice","japanese":"ヤオマックの生贄のオーブ","category":"Currency"},
+    {"namespace":"ITEM","ref_name":"Yugul's Orb of Sacrifice","japanese":"ユグルの生贄のオーブ","category":"Currency"},
+    {"namespace":"GEM","ref_name":"Uhtred's Augury","japanese":"ウートレドの予兆"},
+    {"namespace":"GEM","ref_name":"Uhtred's Constellation","japanese":"ウートレドの星座"},
+    {"namespace":"GEM","ref_name":"Uhtred's Exodus","japanese":"ウートレドの大移動"},
+    {"namespace":"GEM","ref_name":"Uhtred's Omen","japanese":"ウートレドの前兆"},
+    {"namespace":"GEM","ref_name":"Uhtred's Rite","japanese":"ウートレドの儀式"},
+    {"namespace":"ITEM","ref_name":"Uhtred's Crest of the Chalice","japanese":"ウートレドの聖杯の紋章"},
+    {"namespace":"ITEM","ref_name":"Uhtred's Sidereus","japanese":"ウートレドの星読み"},
+    {"namespace":"UNIQUE","ref_name":"Uhtred's Chalice","japanese":"ウートレドの杯","base_ref":"Transcendent Mana Flask"}
+  ]
+}

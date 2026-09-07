@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import pytest
-from src.poetore.poe2.metadata import related_item_group
+from src.poetore.poe2.metadata import related_item_group, resolve_identity
 
 from scripts.build_poetore_poe2_indexes import (
     EE2_SOUL_CORE_IDENTITIES, EE2_SOUL_CORE_OFFICIAL_STATS,
@@ -52,6 +52,58 @@ def test_generated_identity_index_contains_all_v0162_soul_cores():
         "ジクアニの照準のソウルコア"
     )
     assert EE2_SOUL_CORE_REVISION in generated["source"]
+
+
+def test_reviewed_identity_japanese_overrides_are_in_runtime_index():
+    overrides = json.loads(
+        Path("scripts/poetore-poe2-identity-japanese-overrides.json").read_text(
+            encoding="utf-8"
+        )
+    )["overrides"]
+    identity = json.loads((OUTPUT / "identity_index.json").read_text(encoding="utf-8"))
+    rebuilt = build_identity_index()
+    by_key = {
+        (row["namespace"], row["ref_name"]): row
+        for row in identity["entries"]
+    }
+    rebuilt_by_key = {
+        (row["namespace"], row["ref_name"]): row
+        for row in rebuilt["entries"]
+    }
+
+    assert len(overrides) == 12
+    for override in overrides:
+        row = by_key[(override["namespace"], override["ref_name"])]
+        assert row["names"]["ja"] == override["japanese"]
+        rebuilt_row = rebuilt_by_key[(override["namespace"], override["ref_name"])]
+        assert rebuilt_row["names"]["ja"] == override["japanese"]
+        if override.get("category"):
+            assert row["category"] == override["category"]
+        if override.get("base_ref"):
+            assert row["base_ref"] == override["base_ref"]
+
+    assert by_key[("ITEM", "Uhtred's Saga")]["names"]["ja"] == "ウートレッドの叙事詩"
+
+
+@pytest.mark.parametrize(
+    ("namespace", "japanese", "ref_name"),
+    [
+        ("ITEM", "カマサの生贄のオーブ", "Kamasa's Orb of Sacrifice"),
+        ("ITEM", "コペックの生贄のオーブ", "Kopec's Orb of Sacrifice"),
+        ("ITEM", "ヤオマックの生贄のオーブ", "Yaomac's Orb of Sacrifice"),
+        ("ITEM", "ユグルの生贄のオーブ", "Yugul's Orb of Sacrifice"),
+        ("GEM", "ウートレドの予兆", "Uhtred's Augury"),
+        ("GEM", "ウートレドの星座", "Uhtred's Constellation"),
+        ("GEM", "ウートレドの大移動", "Uhtred's Exodus"),
+        ("GEM", "ウートレドの前兆", "Uhtred's Omen"),
+        ("GEM", "ウートレドの儀式", "Uhtred's Rite"),
+        ("ITEM", "ウートレドの聖杯の紋章", "Uhtred's Crest of the Chalice"),
+        ("ITEM", "ウートレドの星読み", "Uhtred's Sidereus"),
+        ("UNIQUE", "ウートレドの杯", "Uhtred's Chalice"),
+    ],
+)
+def test_reviewed_japanese_identity_resolves(namespace, japanese, ref_name):
+    assert resolve_identity(japanese, namespace)["ref_name"] == ref_name
 
 
 def test_generated_augment_index_has_fixed_source_and_trade_ids():
