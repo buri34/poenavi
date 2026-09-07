@@ -32,14 +32,14 @@ jobs:
       # These releases are isolated to Poetore. Keep their release gate scoped
       # to the changed product, shared startup, updater, and release integrity.
       - name: Run Poetore-scoped release tests
-        if: contains(fromJSON('["v4.1.0", "v4.1.6"]'), github.ref_name)
+        if: contains(fromJSON('["v4.1.0", "v4.1.6", "v4.1.7"]'), github.ref_name)
         shell: pwsh
         env:
           QT_QPA_PLATFORM: offscreen
         run: .\scripts\run_poetore_release_tests.ps1 -Python python
 
       - name: Run full tests
-        if: ${{ !contains(fromJSON('["v4.1.0", "v4.1.6"]'), github.ref_name) }}
+        if: ${{ !contains(fromJSON('["v4.1.0", "v4.1.6", "v4.1.7"]'), github.ref_name) }}
         shell: pwsh
         env:
           QT_QPA_PLATFORM: offscreen

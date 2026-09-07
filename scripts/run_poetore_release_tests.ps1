@@ -4,6 +4,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $testFiles = @(
+    "tests/test_cheat_sheets.py",
+    "tests/test_config_manager.py",
     "tests/test_poetore_audit_docs.py",
     "tests/test_poetore_awakened_audit_csv.py",
     "tests/test_poetore_categories.py",
