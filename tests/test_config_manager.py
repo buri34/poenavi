@@ -42,6 +42,19 @@ def write_default_config(app_dir: Path, overrides=None):
 
 
 class ConfigManagerTest(unittest.TestCase):
+    def test_schema_v14_resets_cheat_sheet_transparency_to_new_defaults(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 13,
+            "cheat_sheets": {
+                "images": [{"id": "saved", "filename": "saved.png"}],
+                "image_transparency": 25,
+                "background_transparency": 60,
+            },
+        })
+
+        self.assertEqual(migrated["cheat_sheets"]["image_transparency"], 100)
+        self.assertEqual(migrated["cheat_sheets"]["background_transparency"], 0)
+
     def test_schema_v11_removes_retired_guide_detail_selection(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 10,

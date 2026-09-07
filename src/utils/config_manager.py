@@ -14,7 +14,7 @@ class ConfigManager:
     DEFAULT_CONFIG_FILE = "default_config.json"
     APP_NAME = "PoENavi"
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
-    CURRENT_SCHEMA_VERSION = 13
+    CURRENT_SCHEMA_VERSION = 14
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -487,6 +487,13 @@ class ConfigManager:
                     cheat_sheets["background_transparency"] = (
                         100 - int(cheat_sheets["background_transparency"])
                     )
+
+        if schema_version == 13:
+            cheat_sheets = migrated.get("cheat_sheets")
+            if isinstance(cheat_sheets, dict):
+                # 未公開の試作版で保存された値を、新しい初期値へ一度だけ揃える。
+                cheat_sheets["image_transparency"] = 100
+                cheat_sheets["background_transparency"] = 0
 
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)
