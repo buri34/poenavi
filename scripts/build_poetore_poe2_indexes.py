@@ -81,6 +81,66 @@ EE2_SOUL_CORE_OFFICIAL_STATS = {
     },
 }
 REVIEWED_OFFICIAL_STAT_OVERRIDES = {
+    "explicit.stat_3520418269": {
+        "type": "explicit", "text": {
+            "en": "Monsters from Verisium Remnants drop #% increased Verisium",
+            "ja": "ヴェリシウムレムナントのモンスターがドロップするヴェリシウムが#%増加する",
+        },
+    },
+    "explicit.stat_1183698646": {
+        "type": "explicit", "text": {
+            "en": "Expeditions contain 1 Additional Boss encased in ice in Map",
+            "ja": "マップのエクスペディションに氷に包まれたボスが追加で1体出現する",
+        },
+    },
+    "explicit.stat_1109460697": {
+        "type": "explicit", "text": {
+            "en": "Expeditions contain 1 Additional Verisium Sentry in Map",
+            "ja": "マップのエクスペディションにヴェリシウムセントリーが追加で1体出現する",
+        },
+    },
+    "explicit.stat_2905096233": {
+        "type": "explicit", "text": {
+            "en": "#% increased Expedition Monster Rarity in Map",
+            "ja": "マップでエクスペディションのモンスターレアリティが#%増加する",
+        },
+    },
+    "explicit.stat_2852112245": {
+        "type": "explicit", "text": {
+            "en": "Expeditions contain 1 Vaal Relic in Map",
+            "ja": "Expeditions contain 1 Vaal Relic in Map",
+        },
+    },
+    "explicit.stat_181823691": {
+        "type": "explicit", "text": {
+            "en": "Expeditions contain 1 buried Strongbox in Map",
+            "ja": "マップのエクスペディションに埋められたストロングボックスが1個出現する",
+        },
+    },
+    "explicit.stat_3653794255": {
+        "type": "explicit", "text": {
+            "en": "Expeditions have +#% Surpassing chance to contain an additional Verisium Remnant",
+            "ja": "エクスペディションに+#%の超過可能確率でヴェリシウムレムナントが追加で1個出現する",
+        },
+    },
+    "explicit.stat_3871299443": {
+        "type": "explicit", "text": {
+            "en": "Verisium Remnants have +#% chance to add an additional Runic Modifier in Map",
+            "ja": "マップのヴェリシウムレムナントは+#%の確率でルーンモッドを追加で1個持つ",
+        },
+    },
+    "explicit.stat_3039133122": {
+        "type": "explicit", "text": {
+            "en": "#% increased Expedition Explosive Area of Effect in Map",
+            "ja": "#% increased Expedition Explosive Area of Effect in Map",
+        },
+    },
+    "explicit.stat_3963944561": {
+        "type": "explicit", "text": {
+            "en": "The first unearthed Runic Monster will be a Rare Monster in Map",
+            "ja": "マップで最初に発掘される1体のルーニックモンスターはレアモンスターになる",
+        },
+    },
     "explicit.stat_779964546": {
         "type": "explicit",
         "text": {

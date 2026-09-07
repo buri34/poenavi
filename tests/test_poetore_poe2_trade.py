@@ -181,6 +181,46 @@ def test_expedition_tablet_surpassing_duplicate_mod_resolves_to_current_trade_st
     assert sent == [{"id": "explicit.stat_779964546", "value": {"min": 36.0}}]
 
 
+def test_expedition_tablet_english_vaal_relic_mod_resolves_in_japanese_copy():
+    item = parse_item_text("""アイテムクラス: 石板
+レアリティ: レア
+神無き秘所
+エクスペディションの石板
+--------
+アイテムレベル: 82
+--------
+{ 暗黙モッド }
+マップにカルグールのエクスペディションを追加する
+残り使用可能回数 10回
+--------
+{ プレフィックスモッド「高い」 (ティア: 1) }
+マップでの獲得経験値が12(12-18)%増加する
+{ プレフィックスモッド「収集家の」 (ティア: 1) }
+マップで見つかるアイテムのレアリティが11(8-12)%増加する
+{ サフィックスモッド 「古物研究家の」 (ティア: 1) }
+マップにストロングボックスが追加で1個出現する
+{ サフィックスモッド 「過去の」 (ティア: 1) }
+Expeditions contain 1 Vaal Relic in Map
+--------
+自身のマップデバイスで使用してマップにモッドを追加できる。""")
+
+    assert all(mod.stat_id for mod in item.modifiers), [
+        mod.text for mod in item.modifiers if not mod.stat_id
+    ]
+    vaal_relic = next(
+        mod for mod in item.modifiers if mod.stat_id == "explicit.stat_2852112245"
+    )
+    assert vaal_relic.values == ()
+
+    rows = poe2_trade_filters(item)
+    vaal_relic_row = next(
+        row for row in rows if row.stat_id == "explicit.stat_2852112245"
+    )
+    selected = tuple(replace(row, enabled=row is vaal_relic_row) for row in rows)
+    sent = build_search_query(item, stat_filters=selected)["query"]["stats"][0]["filters"]
+    assert sent == [{"id": "explicit.stat_2852112245"}]
+
+
 def test_jewel_prefers_jewel_scoped_mana_on_kill_stat_in_trade_query():
     item = parse_item_text(MANA_ON_KILL_JEWEL_FIXTURE.read_text(encoding="utf-8"))
     filters = poe2_trade_filters(item)
