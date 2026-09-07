@@ -2,6 +2,7 @@
 
 PoE2の報酬画面キャプチャから報酬行を分離し、OCR結果をJSONへ保存する開発用ツールです。
 ゲームやPoENavi本体には接続せず、指定フォルダ内のPNG/JPEGだけを処理します。
+全画面画像では左端の報酬パネルだけを自動走査し、パネルだけを切り抜いた画像も処理できます。
 
 ## 入力
 
@@ -34,7 +35,7 @@ python scripts/expedition_ocr_probe.py path\to\screenshots --prepare-only
 ```
 
 結果は既定で`runs/expedition-ocr/`へ出力されます。画像ごとのフォルダには
-二値化画像、分離した各行、`result.json`が入り、全画像の結果は`summary.json`へまとまります。
+分離・3倍拡大した各報酬行、`result.json`が入り、全画像の結果は`summary.json`へまとまります。
 `runs/`はGit管理対象外です。
 
 ## 評価値

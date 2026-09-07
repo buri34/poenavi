@@ -98,6 +98,83 @@ def detect_row_bands(
     return [RowBand(max(0, top - padding), min(height, bottom + padding + 1)) for top, bottom in raw]
 
 
+def detect_reward_cards(
+    gray: Sequence[int],
+    red: Sequence[int],
+    green: Sequence[int],
+    blue: Sequence[int],
+    width: int,
+    height: int,
+    *,
+    minimum_row_fill: float = 0.45,
+) -> tuple[int, list[RowBand]]:
+    """Detect the pale reward cards before looking for dark text.
+
+    The Expedition panel is anchored at the left edge.  Limiting the scan width
+    prevents a full-screen capture's game world from affecting row detection.
+    """
+    if width <= 0 or height <= 0 or any(
+        len(channel) != width * height for channel in (gray, red, green, blue)
+    ):
+        return 0, []
+    is_full_screen = width / height > 1.5
+    scan_width = round(height * 0.55) if is_full_screen else width
+    row_fill: list[float] = []
+    for y in range(height):
+        pale = 0
+        offset = y * width
+        for x in range(scan_width):
+            index = offset + x
+            spread = max(red[index], green[index], blue[index]) - min(
+                red[index], green[index], blue[index]
+            )
+            if gray[index] > 115 and spread < 100:
+                pale += 1
+        row_fill.append(pale / scan_width)
+    active = [value > minimum_row_fill for value in row_fill]
+
+    candidates: list[RowBand] = []
+    start: int | None = None
+    for y, is_active in enumerate(active + [False]):
+        if is_active and start is None:
+            start = y
+        elif not is_active and start is not None:
+            if y - start >= 8:
+                candidates.append(RowBand(start, y))
+            start = None
+    if not candidates:
+        return scan_width, []
+
+    tall_heights = sorted(band.bottom - band.top for band in candidates if band.bottom - band.top >= 30)
+    if not tall_heights:
+        return scan_width, []
+    typical_height = tall_heights[len(tall_heights) // 2]
+    cards = [
+        band
+        for band in candidates
+        if typical_height * 0.78 <= band.bottom - band.top <= typical_height * 1.30
+    ]
+    if is_full_screen:
+        cards = [band for band in cards if band.top >= height * 0.12]
+    if len(cards) >= 2:
+        fill_rates = [
+            sum(row_fill[band.top : band.bottom]) / (band.bottom - band.top)
+            for band in cards
+        ]
+        typical_fill = sorted(fill_rates[1:])[len(fill_rates[1:]) // 2]
+        first_gap = cards[1].top - cards[0].bottom
+        later_gaps = sorted(
+            cards[index + 1].top - cards[index].bottom for index in range(1, len(cards) - 1)
+        )
+        typical_gap = later_gaps[len(later_gaps) // 2] if later_gaps else first_gap
+        if (
+            first_gap > max(typical_gap * 1.5, typical_gap + 5)
+            or fill_rates[0] < typical_fill * 0.8
+        ):
+            cards.pop(0)
+    return scan_width, cards
+
+
 def score_rows(expected: Sequence[str], actual: Sequence[str]) -> dict[str, object]:
     expected_norm = [normalize_text(value) for value in expected]
     actual_norm = [normalize_text(value) for value in actual]
@@ -116,26 +193,58 @@ def score_rows(expected: Sequence[str], actual: Sequence[str]) -> dict[str, obje
     }
 
 
-def _load_grayscale(path: Path) -> tuple[int, int, list[int]]:
+def _load_channels(path: Path) -> tuple[int, int, list[int], list[int], list[int], list[int]]:
     image = QImage(str(path))
     if image.isNull():
         raise ValueError(f"画像を読み込めません: {path}")
     image = image.convertToFormat(QImage.Format.Format_RGB888)
     width, height = image.width(), image.height()
     gray: list[int] = []
+    red: list[int] = []
+    green: list[int] = []
+    blue: list[int] = []
     for y in range(height):
         for x in range(width):
             color = image.pixelColor(x, y)
+            red.append(color.red())
+            green.append(color.green())
+            blue.append(color.blue())
             gray.append(round(0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()))
-    return width, height, gray
+    return width, height, gray, red, green, blue
 
 
 def _write_pgm(path: Path, width: int, height: int, pixels: Sequence[int]) -> None:
     path.write_bytes(f"P5\n{width} {height}\n255\n".encode("ascii") + bytes(pixels))
 
 
-def _crop_pixels(pixels: Sequence[int], width: int, band: RowBand) -> list[int]:
-    return list(pixels[band.top * width : band.bottom * width])
+def _crop_pixels(
+    pixels: Sequence[int], width: int, band: RowBand, left: int, right: int
+) -> list[int]:
+    cropped: list[int] = []
+    for y in range(band.top, band.bottom):
+        cropped.extend(pixels[y * width + left : y * width + right])
+    return cropped
+
+
+def _scale_pixels(pixels: Sequence[int], width: int, height: int, factor: int) -> list[int]:
+    scaled: list[int] = []
+    for y in range(height):
+        row: list[int] = []
+        for value in pixels[y * width : (y + 1) * width]:
+            row.extend([value] * factor)
+        for _ in range(factor):
+            scaled.extend(row)
+    return scaled
+
+
+def _add_margin(pixels: Sequence[int], width: int, height: int, margin: int) -> list[int]:
+    output = [0] * ((width + margin * 2) * margin)
+    for y in range(height):
+        output.extend([0] * margin)
+        output.extend(pixels[y * width : (y + 1) * width])
+        output.extend([0] * margin)
+    output.extend([0] * ((width + margin * 2) * margin))
+    return output
 
 
 def _run_tesseract(image: Path, language: str) -> str:
@@ -156,19 +265,38 @@ def analyze_image(
     language: str = "jpn+eng",
     prepare_only: bool = False,
 ) -> dict[str, object]:
-    width, height, gray = _load_grayscale(image_path)
-    threshold = otsu_threshold(gray)
-    dark_ink = [1 if value <= threshold else 0 for value in gray]
-    bands = detect_row_bands(dark_ink, width, height)
+    width, height, gray, red, green, blue = _load_channels(image_path)
+    panel_width, bands = detect_reward_cards(gray, red, green, blue, width, height)
     image_output = output_dir / image_path.stem
     image_output.mkdir(parents=True, exist_ok=True)
-    _write_pgm(image_output / "binary.pgm", width, height, [0 if value else 255 for value in dark_ink])
+    # Rune icons occupy roughly the left 40%; excluding them markedly improves
+    # single-line OCR and still retains the longest right-aligned reward name.
+    text_left = round(panel_width * 0.40)
+    text_right = panel_width
 
     rows: list[OcrRowResult] = []
     for index, band in enumerate(bands, start=1):
-        crop = _crop_pixels(dark_ink, width, band)
+        crop_gray = _crop_pixels(gray, width, band, text_left, text_right)
+        threshold = otsu_threshold(crop_gray)
+        crop = [1 if value <= threshold else 0 for value in crop_gray]
+        crop_width = text_right - text_left
+        crop_height = band.bottom - band.top
+        border = max(2, round(crop_height * 0.12))
+        for y in range(crop_height):
+            for x in range(crop_width):
+                if y < border or y >= crop_height - border or x >= crop_width - border:
+                    crop[y * crop_width + x] = 0
+        scale = 3
+        crop = _scale_pixels(crop, crop_width, crop_height, scale)
+        margin = 12
+        crop = _add_margin(crop, crop_width * scale, crop_height * scale, margin)
         crop_path = image_output / f"row_{index:02d}.pgm"
-        _write_pgm(crop_path, width, band.bottom - band.top, [0 if value else 255 for value in crop])
+        _write_pgm(
+            crop_path,
+            crop_width * scale + margin * 2,
+            crop_height * scale + margin * 2,
+            [0 if value else 255 for value in crop],
+        )
         raw = "" if prepare_only else _run_tesseract(crop_path, language)
         rows.append(OcrRowResult(index, band.top, band.bottom, raw, normalize_text(raw)))
 
@@ -184,7 +312,7 @@ def analyze_image(
         "image": image_path.name,
         "width": width,
         "height": height,
-        "otsu_threshold": threshold,
+        "panel_width": panel_width,
         "language": language,
         "prepare_only": prepare_only,
         "rows": [asdict(row) for row in rows],

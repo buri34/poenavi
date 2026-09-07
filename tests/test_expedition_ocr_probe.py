@@ -1,6 +1,7 @@
 from src.poetore.expedition_ocr_probe import (
     RowBand,
     analyze_directory,
+    detect_reward_cards,
     detect_row_bands,
     normalize_text,
     otsu_threshold,
@@ -34,6 +35,28 @@ def test_score_rows_reports_exact_and_similarity_rates():
     assert score["exact_rows"] == 1
     assert score["exact_rate"] == 0.5
     assert 0.9 < score["mean_similarity"] < 1.0
+
+
+def test_detect_reward_cards_ignores_header_and_partial_card():
+    width, height = 100, 180
+    gray = [50] * (width * height)
+    red = [50] * (width * height)
+    green = [50] * (width * height)
+    blue = [50] * (width * height)
+
+    def paint(top, bottom, right=55):
+        for y in range(top, bottom):
+            for x in range(right):
+                index = y * width + x
+                gray[index] = red[index] = green[index] = blue[index] = 200
+
+    paint(10, 50, 46)  # title/header: narrower and visually less solid than reward cards
+    paint(65, 105)
+    paint(112, 152)
+    paint(159, 175)  # clipped row
+    panel_width, bands = detect_reward_cards(gray, red, green, blue, width, height)
+    assert panel_width == 100
+    assert bands == [RowBand(65, 105), RowBand(112, 152)]
 
 
 def test_analyze_empty_directory_writes_empty_summary(tmp_path):
