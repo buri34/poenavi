@@ -711,6 +711,42 @@ def test_one_multi_stat_augment_counts_once(monkeypatch):
     assert poe2_parser._aggregate_augment_count(modifiers, "body_armour", 2) == 1
 
 
+def test_augment_inference_stops_when_candidate_count_exceeds_eight(monkeypatch):
+    entries = tuple({
+        "ref_name": f"Candidate {index}",
+        "effects": ({
+            "categories": ["Body Armour"],
+            "text": {"en": "# to maximum Life"},
+            "values": [index],
+            "trade_ids": [f"rune.{index}"],
+        },),
+    } for index in range(1, 10))
+    monkeypatch.setattr(poe2_parser, "augment_entries", lambda: entries)
+    modifiers = [
+        ItemModifier(str(index), (float(index),), "augment", stat_id=f"rune.{index}")
+        for index in range(1, 10)
+    ]
+
+    assert poe2_parser._aggregate_augment_count(modifiers, "body_armour", 9) == 0
+
+
+def test_augment_inference_does_not_search_combinations_longer_than_six(monkeypatch):
+    monkeypatch.setattr(poe2_parser, "augment_entries", lambda: ({
+        "ref_name": "Repeatable Rune",
+        "effects": ({
+            "categories": ["Body Armour"],
+            "text": {"en": "# to maximum Life"},
+            "values": [1],
+            "trade_ids": ["rune.life"],
+        },),
+    },))
+    modifiers = [
+        ItemModifier("+7 to maximum Life", (7.0,), "augment", stat_id="rune.life")
+    ]
+
+    assert poe2_parser._aggregate_augment_count(modifiers, "body_armour", 7) == 0
+
+
 def test_real_multi_stat_augment_lines_in_one_section_count_once():
     item = parse_item_text("""Item Class: Boots
 Rarity: Rare
@@ -787,6 +823,25 @@ def test_poe2_standalone_rune_prefers_augment_stat_over_same_text_explicit():
 def test_unknown_base_is_not_silently_guessed():
     with pytest.raises(Poe2ItemParseError, match="base identity未解決"):
         parse_item_text("Item Class: Bows\nRarity: Rare\nTest Name\nUnknown Bow\n")
+
+
+@pytest.mark.parametrize(
+    ("localized_base", "expected_base"),
+    [
+        ("監視者の弓", "Warden Bow"),
+        ("ルーンフォージの監視者の弓", "Runeforged Warden Bow"),
+    ],
+)
+def test_ironbound_resolves_both_legacy_and_runeforged_bases(
+    localized_base, expected_base,
+):
+    item = parse_item_text(
+        "アイテムクラス: 弓\nレアリティ: ユニーク\nアイアンバウンド\n"
+        f"{localized_base}\n--------\nアイテムレベル: 80\n"
+    )
+
+    assert item.name == "Ironbound"
+    assert item.base_type == expected_base
 
 
 @pytest.mark.parametrize(

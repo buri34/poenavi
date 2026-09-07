@@ -3,11 +3,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import pytest
-from src.poetore.poe2.metadata import related_item_group, resolve_identity
+from src.poetore.poe2.metadata import (
+    related_item_group, resolve_identity, resolve_identity_candidates,
+)
 
 from scripts.build_poetore_poe2_indexes import (
     EE2_SOUL_CORE_IDENTITIES, EE2_SOUL_CORE_OFFICIAL_STATS,
-    EE2_SOUL_CORE_REVISION, EE2_SOUL_CORE_STAT_IDS,
+    EE2_REVIEWED_RUNEFORGED_IDENTITIES, EE2_REVIEWED_V0161_AUGMENTS,
+    EE2_REVIEWED_V0161_STAT_IDS, EE2_SOUL_CORE_REVISION,
+    EE2_SOUL_CORE_STAT_IDS,
     OUTPUT, _aligned, build_augment_index, build_identity_index,
     build_related_item_groups, build_stat_index,
 )
@@ -52,6 +56,22 @@ def test_generated_identity_index_contains_all_v0162_soul_cores():
         "ジクアニの照準のソウルコア"
     )
     assert EE2_SOUL_CORE_REVISION in generated["source"]
+
+
+def test_reviewed_runeforged_warden_bow_keeps_both_ironbound_bases():
+    generated = json.loads((OUTPUT / "identity_index.json").read_text(encoding="utf-8"))
+    identities = {
+        (row.get("namespace"), row.get("ref_name"), row.get("base_ref", ""))
+        for row in generated["entries"]
+    }
+    assert EE2_REVIEWED_RUNEFORGED_IDENTITIES <= identities
+    assert {
+        row.get("base_ref")
+        for row in resolve_identity_candidates("アイアンバウンド", "UNIQUE")
+    } >= {"Warden Bow", "Runeforged Warden Bow"}
+    assert resolve_identity("ルーンフォージの監視者の弓", "ITEM")["ref_name"] == (
+        "Runeforged Warden Bow"
+    )
 
 
 def test_reviewed_identity_japanese_overrides_are_in_runtime_index():
@@ -115,7 +135,7 @@ def test_generated_augment_index_has_fixed_source_and_trade_ids():
     assert EE2_SOUL_CORE_REVISION in generated["source"]
     assert len(generated["entries"]) == 274
     effects = [effect for row in generated["entries"] for effect in row["effects"]]
-    assert len(effects) == 491
+    assert len(effects) == 494
     assert all(effect["categories"] and effect["trade_ids"] for effect in effects)
     by_ref = {row["ref_name"]: row for row in generated["entries"]}
     automation = by_ref["Jiquani's Soul Core of Automation"]["effects"][0]
@@ -132,6 +152,32 @@ def test_generated_augment_index_has_fixed_source_and_trade_ids():
     targeting = by_ref["Jiquani's Soul Core of Targeting"]["effects"][0]
     assert targeting["categories"] == ["Wand", "Staff", "Sceptre"]
     assert targeting["trade_ids"] == ["rune.stat_1992191903"]
+
+
+def test_reviewed_v0161_augments_keep_each_effect_as_one_item():
+    generated = json.loads((OUTPUT / "augment_index.json").read_text(encoding="utf-8"))
+    by_ref = {row["ref_name"]: row for row in generated["entries"]}
+    assert EE2_REVIEWED_V0161_AUGMENTS <= by_ref.keys()
+    assert [effect["trade_ids"] for effect in by_ref["Idol of Alira"]["effects"]] == [
+        ["rune.stat_3537994888"], ["rune.stat_4226127445"],
+    ]
+    assert [effect["trade_ids"] for effect in by_ref["Idol of Egrin"]["effects"]] == [
+        ["rune.stat_1984310483"], ["rune.stat_3824372849"],
+    ]
+    assert [effect["trade_ids"] for effect in by_ref["Idol of Kraityn"]["effects"]] == [
+        ["rune.stat_2916861134"], ["rune.stat_2211478554"],
+    ]
+    assert [effect["trade_ids"] for effect in by_ref["Idol of Oak"]["effects"]] == [
+        ["rune.stat_1228682002"], ["rune.stat_1881314095"],
+    ]
+    assert [effect["trade_ids"] for effect in by_ref["Legacy of Horns of Bynden"]["effects"]] == [
+        ["rune.stat_2995914769"], ["rune.stat_2709367754"],
+    ]
+    assert [effect["trade_ids"] for effect in by_ref["Legacy of The Sentry"]["effects"]] == [
+        ["rune.stat_2968503605"], ["rune.stat_1573130764"],
+    ]
+    stats = json.loads((OUTPUT / "stat_index.json").read_text(encoding="utf-8"))
+    assert EE2_REVIEWED_V0161_STAT_IDS <= {row["id"] for row in stats["entries"]}
 
 
 def test_build_augment_index_keeps_bilingual_effects_and_trade_ids(tmp_path):

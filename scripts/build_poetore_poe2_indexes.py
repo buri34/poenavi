@@ -36,6 +36,23 @@ EE2_SOUL_CORE_CHANGED_AUGMENTS = {
     "Soul Core of Xopec", "Soul Core of Zalatl", "Soul Core of Zantipi",
     "Uhtred's Sidereus", "Uromoti's Soul Core of Attenuation",
 }
+EE2_REVIEWED_V0161_AUGMENTS = {
+    "Idol of Alira", "Idol of Egrin", "Idol of Kraityn", "Idol of Oak",
+    "Legacy of Horns of Bynden", "Legacy of The Sentry",
+}
+EE2_REVIEWED_V0161_STAT_IDS = {
+    "rune.stat_1228682002", "rune.stat_1573130764",
+    "rune.stat_1881314095", "rune.stat_1984310483",
+    "rune.stat_2211478554", "rune.stat_2709367754",
+    "rune.stat_2916861134", "rune.stat_2968503605",
+    "rune.stat_2995914769", "rune.stat_3537994888",
+    "rune.stat_3824372849", "rune.stat_4226127445",
+}
+EE2_REVIEWED_RUNEFORGED_IDENTITIES = {
+    ("ITEM", "Runeforged Warden Bow", ""),
+    ("UNIQUE", "Ironbound", "Warden Bow"),
+    ("UNIQUE", "Ironbound", "Runeforged Warden Bow"),
+}
 EE2_SOUL_CORE_STAT_IDS = {
     "rune.stat_1195319608", "rune.stat_138373935", "rune.stat_1519474779",
     "rune.stat_1839315243", "rune.stat_2139847597", "rune.stat_2203195791",
@@ -360,8 +377,8 @@ def build_augment_index(ee2_root: Path) -> dict:
     }
 
 
-def apply_v0162_soul_core_update(ee2_root: Path) -> None:
-    """Merge only the reviewed v0.16.2 Soul Core changes into runtime indexes."""
+def apply_reviewed_ee2_updates(ee2_root: Path) -> None:
+    """Merge reviewed EE2 v0.16.1/v0.16.2 selections into runtime indexes."""
     if __import__("subprocess").check_output(
         ["git", "-C", str(ee2_root), "rev-parse", "HEAD"], text=True,
     ).strip() != EE2_SOUL_CORE_REVISION:
@@ -379,8 +396,30 @@ def apply_v0162_soul_core_update(ee2_root: Path) -> None:
         row for row in identity["entries"]
         if row["ref_name"] not in EE2_SOUL_CORE_IDENTITIES
     ] + [selected_identity[name] for name in sorted(selected_identity)]
+    runeforged_rows = [
+        row for row in candidate_identity["entries"]
+        if (
+            row.get("namespace"), row.get("ref_name"), row.get("base_ref", "")
+        ) in EE2_REVIEWED_RUNEFORGED_IDENTITIES
+    ]
+    if {
+        (row.get("namespace"), row.get("ref_name"), row.get("base_ref", ""))
+        for row in runeforged_rows
+    } != EE2_REVIEWED_RUNEFORGED_IDENTITIES:
+        raise ValueError("reviewed Runeforged Warden Bow identity set is incomplete")
+    identity["entries"] = [
+        row for row in identity["entries"]
+        if (
+            row.get("namespace"), row.get("ref_name"), row.get("base_ref", "")
+        ) not in EE2_REVIEWED_RUNEFORGED_IDENTITIES
+    ] + runeforged_rows
+    selection_source = f"selected EE2 {EE2_SOUL_CORE_REVISION} reviewed updates"
     if EE2_SOUL_CORE_REVISION not in identity["source"]:
-        identity["source"] += f" + selected EE2 {EE2_SOUL_CORE_REVISION} Soul Cores"
+        identity["source"] += f" + {selection_source}"
+    else:
+        identity["source"] = identity["source"].replace(
+            f"selected EE2 {EE2_SOUL_CORE_REVISION} Soul Cores", selection_source,
+        )
 
     augment = json.loads((OUTPUT / "augment_index.json").read_text(encoding="utf-8"))
     candidate_augment = {
@@ -390,6 +429,7 @@ def apply_v0162_soul_core_update(ee2_root: Path) -> None:
     selected_augments = (
         (EE2_SOUL_CORE_IDENTITIES & candidate_augment.keys())
         | EE2_SOUL_CORE_CHANGED_AUGMENTS
+        | EE2_REVIEWED_V0161_AUGMENTS
     )
     if not selected_augments <= candidate_augment.keys():
         raise ValueError("reviewed Soul Core augment set is incomplete")
@@ -397,7 +437,11 @@ def apply_v0162_soul_core_update(ee2_root: Path) -> None:
     by_augment.update({name: candidate_augment[name] for name in selected_augments})
     augment["entries"] = list(by_augment.values())
     if EE2_SOUL_CORE_REVISION not in augment["source"]:
-        augment["source"] += f" + selected EE2 {EE2_SOUL_CORE_REVISION} Soul Cores"
+        augment["source"] += f" + {selection_source}"
+    else:
+        augment["source"] = augment["source"].replace(
+            f"selected EE2 {EE2_SOUL_CORE_REVISION} Soul Cores", selection_source,
+        )
 
     localized_stats = {}
     for language in ("en", "ja"):
@@ -406,14 +450,15 @@ def apply_v0162_soul_core_update(ee2_root: Path) -> None:
         localized_stats[language] = {}
         for row in rows:
             for stat_id in ((row.get("trade") or {}).get("ids") or {}).get("rune", ()):
-                if stat_id in EE2_SOUL_CORE_STAT_IDS:
+                if stat_id in EE2_SOUL_CORE_STAT_IDS | EE2_REVIEWED_V0161_STAT_IDS:
                     localized_stats[language][stat_id] = row["matchers"][0]["string"]
-    if any(set(rows) != EE2_SOUL_CORE_STAT_IDS for rows in localized_stats.values()):
-        raise ValueError("reviewed Soul Core Stat ID set is incomplete")
+    reviewed_stat_ids = EE2_SOUL_CORE_STAT_IDS | EE2_REVIEWED_V0161_STAT_IDS
+    if any(set(rows) != reviewed_stat_ids for rows in localized_stats.values()):
+        raise ValueError("reviewed EE2 Stat ID set is incomplete")
     stats = json.loads((OUTPUT / "stat_index.json").read_text(encoding="utf-8"))
     by_stat = {row["id"]: row for row in stats["entries"]}
     by_stat.pop("rune.stat_3170380905", None)
-    for stat_id in sorted(EE2_SOUL_CORE_STAT_IDS):
+    for stat_id in sorted(reviewed_stat_ids):
         by_stat[stat_id] = {
             "id": stat_id, "type": "augment",
             "text": {lang: localized_stats[lang][stat_id] for lang in ("en", "ja")},
@@ -422,7 +467,7 @@ def apply_v0162_soul_core_update(ee2_root: Path) -> None:
         by_stat[stat_id] = {"id": stat_id, "type": "augment", "text": text}
     stats["entries"] = list(by_stat.values())
     if EE2_SOUL_CORE_REVISION not in stats["source"]:
-        stats["source"] += f" + selected EE2 {EE2_SOUL_CORE_REVISION} Rune stats"
+        stats["source"] += f" + {selection_source} Rune stats"
 
     for name, payload in (
         ("identity_index.json", identity), ("augment_index.json", augment),
@@ -565,14 +610,15 @@ def main() -> None:
     parser.add_argument("--ee2-root", type=Path)
     parser.add_argument("--augment-only", action="store_true")
     parser.add_argument("--related-only", action="store_true")
-    parser.add_argument("--v0162-soul-cores", action="store_true")
+    parser.add_argument("--reviewed-ee2-updates", action="store_true")
+    parser.add_argument("--v0162-soul-cores", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--reviewed-identity-overrides", action="store_true")
     args = parser.parse_args()
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    if args.v0162_soul_cores:
+    if args.reviewed_ee2_updates or args.v0162_soul_cores:
         if args.ee2_root is None:
-            parser.error("--v0162-soul-cores requires --ee2-root")
-        apply_v0162_soul_core_update(args.ee2_root)
+            parser.error("--reviewed-ee2-updates requires --ee2-root")
+        apply_reviewed_ee2_updates(args.ee2_root)
         return
     if args.reviewed_identity_overrides:
         apply_reviewed_identity_overrides()
