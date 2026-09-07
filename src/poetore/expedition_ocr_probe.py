@@ -194,6 +194,12 @@ def detect_reward_cards(
             for index, band in enumerate(cards)
             if index < 2 or band.bottom - band.top <= typical_height * 1.5
         ]
+    if (
+        len(cards) == 2
+        and cards[1].top - cards[0].bottom < 7
+        and cards[0].bottom - cards[0].top > cards[1].bottom - cards[1].top
+    ):
+        cards.pop()
     return scan_width, cards
 
 
