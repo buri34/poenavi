@@ -363,6 +363,7 @@ _FILTER_KIND_LABELS = {
     "explicit": "明示",
     "prefix": "プレフィックス",
     "suffix": "サフィックス",
+    "prefix_suffix": "プレフィックス／サフィックス",
     "crafted": "クラフト",
     "fractured": "フラクチャー",
     "implicit": "暗黙",

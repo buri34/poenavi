@@ -99,6 +99,50 @@ def test_duplicate_japanese_unique_name_is_disambiguated_by_base_type():
     assert web_query["type"] == "金のサークレット"
 
 
+def test_same_stat_on_prefix_and_suffix_is_combined_into_one_trade_filter():
+    item = parse_item_text("""アイテムクラス: 指輪
+レアリティ: レア
+ゴーレムの握り
+プリズムの指輪
+--------
+装備条件：レベル 52
+--------
+アイテムレベル: 81
+--------
+{ 暗黙モッド — 元素, 火, 冷気, 雷, 耐性 }
+全ての元素耐性 +9(7-10)%
+--------
+{ プレフィックスモッド「貯蔵者の」 (ティア: 1) — ドロップ }
+見つかるアイテムのレアリティが18(16-19)%増加する
+{ プレフィックスモッド「青鋼の」 (ティア: 4) — マナ }
+最大マナ +124(105-124)
+{ プレフィックスモッド「降雹する」 (ティア: 2) — ダメージ, 元素, 冷気 }
+冷気ダメージが26(23-26)%増加する
+{ サフィックスモッド 「考古学の」 (ティア: 1) — ドロップ }
+見つかるアイテムのレアリティが17(15-18)%増加する""")
+
+    rows = poe2_trade_filters(item)
+    rarity_rows = [row for row in rows if row.stat_id == "explicit.stat_3917489142"]
+    assert len(rarity_rows) == 1
+    assert (
+        rarity_rows[0].text,
+        rarity_rows[0].min_value,
+        rarity_rows[0].read_value,
+        rarity_rows[0].roll_min,
+        rarity_rows[0].roll_max,
+        rarity_rows[0].generation,
+    ) == (
+        "見つかるアイテムのレアリティが35%増加する",
+        35.0, 35.0, 31.0, 37.0, "prefix_suffix",
+    )
+
+    selected = tuple(
+        replace(row, enabled=row is rarity_rows[0]) for row in rows
+    )
+    sent = build_search_query(item, stat_filters=selected)["query"]["stats"][0]["filters"]
+    assert sent == [{"id": "explicit.stat_3917489142", "value": {"min": 35.0}}]
+
+
 def test_jewel_prefers_jewel_scoped_mana_on_kill_stat_in_trade_query():
     item = parse_item_text(MANA_ON_KILL_JEWEL_FIXTURE.read_text(encoding="utf-8"))
     filters = poe2_trade_filters(item)

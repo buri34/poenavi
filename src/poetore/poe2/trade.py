@@ -797,29 +797,54 @@ def _poe2_modifier_rows(
             provenance_tags=provenance_tags,
         )
         position = positions.get(stat_id)
+        cross_affix_duplicate = (
+            position is not None
+            and stat_id.startswith("explicit.")
+            and {rows[position].affix, row.affix} == {"prefix", "suffix"}
+        )
         if (
             position is not None
-            and (converted or stat_id in normalized_ids)
+            and (converted or stat_id in normalized_ids or cross_affix_duplicate)
             and row.better != -1
             and rows[position].better != -1
         ):
             previous = rows[position]
+            combined_value = (previous.read_value or 0.0) + (row.read_value or 0.0)
             merged_provenance = tuple(dict.fromkeys(
                 previous.provenance_tags + row.provenance_tags
             ))
             rows[position] = replace(
                 previous,
+                text=(
+                    re.sub(
+                        r"[-+]?\d+(?:\.\d+)?(?:\([^)]+\))?",
+                        f"{combined_value:g}", previous.text, count=1,
+                    )
+                    if cross_affix_duplicate else previous.text
+                ),
                 min_value=(previous.min_value or 0.0) + (row.min_value or 0.0),
-                read_value=(previous.read_value or 0.0) + (row.read_value or 0.0),
+                read_value=combined_value,
+                roll_min=(
+                    (previous.roll_min or 0.0) + (row.roll_min or 0.0)
+                    if previous.roll_min is not None and row.roll_min is not None
+                    else previous.roll_min
+                ),
+                roll_max=(
+                    (previous.roll_max or 0.0) + (row.roll_max or 0.0)
+                    if previous.roll_max is not None and row.roll_max is not None
+                    else previous.roll_max
+                ),
                 enabled=previous.enabled or row.enabled,
+                affix=None if cross_affix_duplicate else previous.affix,
+                generation="prefix_suffix" if cross_affix_duplicate else previous.generation,
                 provenance_tags=merged_provenance,
             )
             if converted:
                 normalized_ids.add(stat_id)
             continue
         rows.append(row)
-        # Only merge equal IDs when at least one source was normalized. Natural
-        # duplicate explicit rows retain PoENavi's existing independent controls.
+        # Equal Prefix/Suffix IDs describe one obtainable total and are merged.
+        # Other natural duplicate explicit rows retain independent controls.
         if converted:
             normalized_ids.add(stat_id)
         if converted or stat_id.startswith("explicit."):
