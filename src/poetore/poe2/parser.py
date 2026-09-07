@@ -707,6 +707,32 @@ def _select_scoped_stat_candidate(candidates, category: str, line_kind: str):
     return (local_candidates if prefer_local else non_local_candidates)[0]
 
 
+def _resolve_multiline_stat(
+    lines: list[str], start: int, preferred_type: str,
+    category: str, *, include_local_variants: bool = False,
+):
+    block_lines = [lines[start]]
+    for end in range(start + 1, len(lines)):
+        candidate_line = lines[end]
+        if (
+            not candidate_line
+            or candidate_line == "--------"
+            or candidate_line.startswith("{")
+            or _consume_special_property(category, candidate_line, {})
+        ):
+            break
+        block_lines.append(candidate_line)
+        block_text = "\n".join(block_lines)
+        candidates = resolve_stat_line_candidates(
+            block_text, preferred_type,
+            include_local_variants=include_local_variants,
+            item_category=category,
+        )
+        if candidates:
+            return block_text, candidates, end
+    return None
+
+
 def parse_item_text(text: str) -> ParsedItem:
     # Some Windows clipboard paths preserve an invisible marker before the
     # first label.  Meta Gems omit Item Class, so losing that first Rarity
@@ -855,8 +881,11 @@ def parse_item_text(text: str) -> ParsedItem:
     current_tier = None
     current_group = None
     next_group = 0
-    for line in text.splitlines():
-        line = line.strip().replace("：", ":")
+    normalized_lines = [line.strip().replace("：", ":") for line in text.splitlines()]
+    consumed_line_indexes: set[int] = set()
+    for line_index, line in enumerate(normalized_lines):
+        if line_index in consumed_line_indexes:
+            continue
         if line.startswith("{") and line.endswith("}"):
             heading = line.strip("{} ")
             current_kind = _mod_kind_from_heading(heading, current_kind)
@@ -880,6 +909,11 @@ def parse_item_text(text: str) -> ParsedItem:
         if match:
             item_level = int(match.group(1))
             continue
+        starts_multiline_stat = False
+        if current_kind:
+            starts_multiline_stat = _resolve_multiline_stat(
+                normalized_lines, line_index, current_kind, category,
+            ) is not None
         key, separator, value = line.partition(":")
         if separator and key.strip() in _PROPERTY_LABELS:
             properties[key.strip()] = value.strip()
@@ -893,6 +927,7 @@ def parse_item_text(text: str) -> ParsedItem:
             and key.strip() not in _LABELS
             and not _ITEM_LEVEL.match(line)
             and not is_chiming_staff_sigil
+            and not starts_multiline_stat
         ):
             properties[key.strip()] = value.strip()
             continue
@@ -939,6 +974,16 @@ def parse_item_text(text: str) -> ParsedItem:
             line, preferred_stat_type, include_local_variants=scoped_affix,
             item_category=category,
         )
+        if not candidates and current_kind:
+            multiline = _resolve_multiline_stat(
+                normalized_lines, line_index, preferred_stat_type, category,
+                include_local_variants=scoped_affix,
+            )
+            if multiline:
+                line, candidates, candidate_index = multiline
+                consumed_line_indexes.update(
+                    range(line_index + 1, candidate_index + 1)
+                )
         resolved = _select_scoped_stat_candidate(candidates, category, line_kind)
         if resolved:
             entry, values = resolved

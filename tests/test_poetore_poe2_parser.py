@@ -27,6 +27,33 @@ CONSTRICTING_COMMAND_FIXTURE = (
     Path(__file__).parent / "fixtures" / "poe2" / "constricting_command_ja.txt"
 )
 
+KEEPER_OF_THE_ARC_JA = """アイテムクラス: 兜
+レアリティ: ユニーク
+弧の守りて
+スピリットボーンの冠
+--------
+アーマー: 476 (augmented)
+エナジーシールド: 138 (augmented)
+--------
+装備条件：レベル 62, 36 筋力, 36 知性
+--------
+アイテムレベル: 81
+--------
+{ ユニークモッド — アーマー, エナジーシールド }
+アーマーおよびエナジーシールドが272(240-340)%増加する
+{ ユニークモッド }
+5秒ごとに変化する:
+ヒットから受けるダメージが40%低下する
+受ける継続ダメージが40%低下する
+{ ユニークモッド — ライフ }
+毎秒17.8(15-25)のライフを自動回復する
+{ ユニークモッド — マナ }
+マナ自動回復レートが24(15-25)%増加する
+--------
+カルグールの神官たちは証明できぬ約束ではなく、
+数字や計算により信仰心を集める。
+"""
+
 
 def test_japanese_vaal_siphoner_builds_currency_search_query():
     item = parse_item_text(VAAL_SIPHONER_FIXTURE.read_text(encoding="utf-8"))
@@ -85,6 +112,22 @@ def test_constricting_command_resolves_fewer_surrounded_enemies_as_negative_stat
     assert row.enabled
     assert row.min_value is None
     assert row.max_value == -3.0
+
+
+def test_keeper_of_the_arc_resolves_alternating_multiline_stat():
+    item = parse_item_text(KEEPER_OF_THE_ARC_JA)
+
+    alternating = next(
+        modifier for modifier in item.modifiers
+        if modifier.stat_id == "explicit.stat_258955603"
+    )
+    assert alternating.text == (
+        "5秒ごとに変化する:\n"
+        "ヒットから受けるダメージが40%低下する\n"
+        "受ける継続ダメージが40%低下する"
+    )
+    assert alternating.values == (-40.0, -40.0)
+    assert not [modifier for modifier in item.modifiers if not modifier.stat_id]
 
 
 def _fixtures():
