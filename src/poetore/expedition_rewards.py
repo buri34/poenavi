@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QRect, Qt, QTimer, Signal
+from PySide6.QtCore import QCoreApplication, QObject, QRect, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QGuiApplication, QImage, QPainter, QPen
 from PySide6.QtWidgets import QWidget
 
@@ -243,6 +243,9 @@ class ExpeditionRewardController(QObject):
         self._monitor.setInterval(650)
         self._monitor.timeout.connect(self._check_panel)
         self._ready.connect(self._show_result)
+        app = QCoreApplication.instance()
+        if app is not None:
+            app.aboutToQuit.connect(self.close)
 
     @property
     def running(self) -> bool:

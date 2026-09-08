@@ -1,11 +1,13 @@
 import json
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 from PySide6.QtCore import QRect
 from PySide6.QtGui import QColor, QImage
 
 from src.poetore.expedition_ocr_probe import RowBand
 from src.poetore.expedition_rewards import (
+    ExpeditionRewardController,
     RewardIdentity,
     SafeRewardNameResolver,
     expedition_capture_rect,
@@ -16,6 +18,28 @@ from src.poetore.expedition_rewards import (
     reward_cards_still_visible,
     stable_reward_identities,
 )
+
+
+def test_controller_closes_ocr_helper_when_application_quits():
+    app = SimpleNamespace(aboutToQuit=Mock())
+    overlay = Mock()
+    ocr = Mock()
+    with patch(
+        "src.poetore.expedition_rewards.QCoreApplication.instance",
+        return_value=app,
+    ), patch(
+        "src.poetore.expedition_rewards.ExpeditionPriceOverlay",
+        return_value=overlay,
+    ), patch(
+        "src.poetore.expedition_rewards.WindowsOcrServer",
+        return_value=ocr,
+    ):
+        controller = ExpeditionRewardController(lambda: "Test League")
+
+    app.aboutToQuit.connect.assert_called_once_with(controller.close)
+    app.aboutToQuit.connect.call_args.args[0]()
+    overlay.hide.assert_called_once_with()
+    ocr.close.assert_called_once_with()
 
 
 def test_load_reward_aliases_and_format_prices(tmp_path):
