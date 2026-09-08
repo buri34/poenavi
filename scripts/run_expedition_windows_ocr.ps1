@@ -19,20 +19,20 @@ if (-not $Output) { $Output = Join-Path $shareRoot "expedition-ocr-windows-run" 
 $helperOutput = Join-Path $Output "helper"
 
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
-    throw ".NET 8 SDKが見つかりません: https://dotnet.microsoft.com/download/dotnet/8.0"
+    throw ".NET 8 SDK was not found: https://dotnet.microsoft.com/download/dotnet/8.0"
 }
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-    throw "Pythonが見つかりません。PoENavi開発環境のPythonを有効にしてください。"
+    throw "Python was not found. Activate the PoENavi development environment."
 }
 if (-not (Test-Path -LiteralPath $InputDirectory -PathType Container)) {
-    throw "検証画像フォルダが見つかりません: $InputDirectory"
+    throw "Input image directory was not found: $InputDirectory"
 }
 if (-not (Test-Path -LiteralPath $Dictionary -PathType Leaf)) {
-    throw "日本語アイテム辞書が見つかりません: $Dictionary"
+    throw "Japanese item dictionary was not found: $Dictionary"
 }
 
 dotnet build $project --configuration Release --output $helperOutput
-if ($LASTEXITCODE -ne 0) { throw "Windows OCRヘルパーのビルドに失敗しました。" }
+if ($LASTEXITCODE -ne 0) { throw "Failed to build the Windows OCR helper." }
 $env:POENAVI_WINDOWS_OCR_HELPER = Join-Path $helperOutput "ExpeditionWindowsOcr.dll"
 
 python $probe $InputDirectory `
@@ -41,6 +41,6 @@ python $probe $InputDirectory `
     --dictionary $Dictionary `
     --csv $Csv `
     --output $Output
-if ($LASTEXITCODE -ne 0) { throw "OCR検証に失敗しました。" }
+if ($LASTEXITCODE -ne 0) { throw "OCR probe failed." }
 
-Write-Host "Windows OCR実測CSV: $((Resolve-Path $Csv).Path)"
+Write-Host "Windows OCR CSV: $((Resolve-Path $Csv).Path)"

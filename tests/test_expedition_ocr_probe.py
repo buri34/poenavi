@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 import src.poetore.expedition_ocr_probe as probe
@@ -15,6 +17,12 @@ from src.poetore.expedition_ocr_probe import (
     strip_quantity,
     write_results_csv,
 )
+
+
+def test_windows_powershell_launcher_is_windows_powershell_compatible_ascii():
+    launcher = Path("scripts/run_expedition_windows_ocr.ps1").read_bytes()
+
+    assert launcher.isascii()
 
 
 def test_normalize_text_preserves_japanese_and_normalizes_quantity_marker():
