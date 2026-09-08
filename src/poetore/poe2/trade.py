@@ -1150,7 +1150,10 @@ def build_search_query(
         rarity = item.rarity.casefold()
         if exact_base_type and rarity in {"normal", "ノーマル"}:
             type_filter_values["rarity"] = {"option": "normal"}
-        elif exact_base_type and rarity in {"magic", "マジック"}:
+        elif (
+            rarity in {"magic", "マジック"}
+            and (exact_base_type or magic_exact is not None)
+        ):
             type_filter_values["rarity"] = {
                 "option": "magic" if magic_exact is not False else "nonunique"
             }

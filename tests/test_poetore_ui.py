@@ -4682,6 +4682,29 @@ Item Level: 82
         window.close()
 
 
+def test_magic_equipment_keeps_magic_toggle_when_scope_changes_to_item_class(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    try:
+        item = parse_item_text("""アイテムクラス: 指輪
+レアリティ: マジック
+感電する トパーズの指輪
+--------
+アイテムレベル: 82
+""")
+        window._parsed_item = item
+        window._update_item_header(item)
+        window._configure_trade_presets(item)
+        window.trade_preset_combo.setCurrentIndex(1)
+
+        window.base_scope_toggle.setCurrentIndex(1)
+
+        assert not window._searches_exact_base_type(item)
+        assert not window.magic_rarity_toggle.isHidden()
+        assert window.magic_rarity_toggle.currentData() is True
+    finally:
+        window.close()
+
+
 def test_poe2_low_level_magic_shows_preset_and_current_rarity_condition(qapp):
     window = PoetoreWindow(app_config={"poe_version": POE2})
     try:

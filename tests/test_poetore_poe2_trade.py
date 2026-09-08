@@ -1743,6 +1743,30 @@ def test_poe2_magic_exact_base_can_be_changed_to_nonunique():
     }
 
 
+def test_poe2_magic_exact_is_kept_when_base_scope_changes_to_all_rings():
+    item = parse_item_text("""アイテムクラス: 指輪
+レアリティ: マジック
+感電する トパーズの指輪
+--------
+装備条件：レベル 60
+--------
+アイテムレベル: 82
+--------
+雷耐性 +21(20-30)%
+--------
+4(1-4)から70(60-71)の雷ダメージをアタックに追加する
+""")
+
+    query = build_search_query(
+        item, exact_base_type=False, magic_exact=True,
+    )["query"]
+
+    assert "type" not in query
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "magic"
+    }
+
+
 def test_shared_trade_options_are_sent_to_trade2_query():
     item = _phase45_item("phase45_gem_ja.txt")
     payload = build_search_query(
