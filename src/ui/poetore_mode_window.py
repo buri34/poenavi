@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QMenu,
+    QMessageBox,
     QPushButton,
     QStyle,
     QSystemTrayIcon,
@@ -823,6 +824,7 @@ class PoetoreModeWindow(QMainWindow):
             controller = ExpeditionRewardController(self._currency_rate_league, self)
             controller.status.connect(self._show_expedition_status)
             controller.failed.connect(self._show_expedition_error)
+            controller.diagnostic.connect(self._show_expedition_diagnostic)
             self._expedition_reward_controller = controller
         return self._expedition_reward_controller
 
@@ -841,6 +843,9 @@ class PoetoreModeWindow(QMainWindow):
         self.rate_status.setText(f"報酬読取失敗：{message}")
         if QSystemTrayIcon.isSystemTrayAvailable():
             self.tray_icon.showMessage("エクスペディション報酬価格", message, QSystemTrayIcon.Warning, 5000)
+
+    def _show_expedition_diagnostic(self, report):
+        QMessageBox.information(self, "エクスペディションOCR診断", report)
 
     def _save_map_check_config(self, map_check_config):
         self.config["map_check"] = dict(map_check_config)

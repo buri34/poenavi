@@ -1,5 +1,6 @@
 param(
-    [string]$Python = ".venv-build\Scripts\python.exe"
+    [string]$Python = ".venv-build\Scripts\python.exe",
+    [switch]$Diagnostic
 )
 
 $ErrorActionPreference = "Stop"
@@ -111,10 +112,21 @@ if (-not (Test-Path dist\PoENavi\PoENaviUpdater.exe)) {
     throw "PoENaviUpdater.exe was not built"
 }
 
-Remove-Item PoENavi.zip, PoENavi.zip.sha256 -ErrorAction SilentlyContinue
+$artifactBase = if ($Diagnostic) { "PoENavi-diagnostic" } else { "PoENavi" }
+$zipName = "$artifactBase.zip"
+$shaName = "$zipName.sha256"
+$diagnosticFlag = "dist\PoENavi\expedition-diagnostics.flag"
+if ($Diagnostic) {
+    Set-Content -Path $diagnosticFlag -Value "friend-test diagnostics enabled" -Encoding ascii
+}
+elseif (Test-Path $diagnosticFlag) {
+    Remove-Item $diagnosticFlag -Force
+}
+
+Remove-Item $zipName, $shaName -ErrorAction SilentlyContinue
 $zipCreated = $false
 $zipAttempts = 60
-$zipCode = "import shutil; shutil.make_archive('PoENavi', 'zip', root_dir='dist', base_dir='PoENavi')"
+$zipCode = "import shutil; shutil.make_archive('$artifactBase', 'zip', root_dir='dist', base_dir='PoENavi')"
 for ($attempt = 1; $attempt -le $zipAttempts; $attempt++) {
     try {
         & $Python -c $zipCode
@@ -125,7 +137,7 @@ for ($attempt = 1; $attempt -le $zipAttempts; $attempt++) {
         break
     }
     catch {
-        Remove-Item PoENavi.zip -ErrorAction SilentlyContinue
+        Remove-Item $zipName -ErrorAction SilentlyContinue
         if ($attempt -eq $zipAttempts) {
             throw "PoENaviUpdater.exe remained locked for 3 minutes. Close PoENavi/PoENaviUpdater if running, then check Windows Security protection history or add the PoENavi build folder as a temporary exclusion before retrying. Original error: $($_.Exception.Message)"
         }
@@ -136,11 +148,11 @@ for ($attempt = 1; $attempt -le $zipAttempts; $attempt++) {
 }
 
 if (-not $zipCreated) {
-    throw "PoENavi.zip was not created"
+    throw "$zipName was not created"
 }
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path PoENavi.zip))
+$archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $zipName))
 try {
     $entryNames = @($archive.Entries | ForEach-Object { $_.FullName.Replace("\", "/") })
     foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES/README.md", "THIRD_PARTY_LICENSES/Python-LICENSE.txt", "ExpeditionWindowsOcr.exe", "expedition_ocr_items.json", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json", "map_mods.json")) {
@@ -165,17 +177,26 @@ try {
     if ($null -eq $metadataEntry -or $metadataEntry.Length -gt 8MB) {
         throw "Release audit failed: mod_metadata.json is missing or exceeds 8 MiB"
     }
+    $hasDiagnosticFlag = @($entryNames | Where-Object {
+        $_ -match "(^|/)expedition-diagnostics\.flag$"
+    }).Count -gt 0
+    if ($Diagnostic -and -not $hasDiagnosticFlag) {
+        throw "Release audit failed: diagnostic marker is missing"
+    }
+    if (-not $Diagnostic -and $hasDiagnosticFlag) {
+        throw "Release audit failed: diagnostic marker leaked into normal release"
+    }
 }
 finally {
     $archive.Dispose()
 }
 
-$hash = (Get-FileHash PoENavi.zip -Algorithm SHA256).Hash.ToLower()
-Set-Content -Path PoENavi.zip.sha256 -Value "$hash  PoENavi.zip" -Encoding ascii
+$hash = (Get-FileHash $zipName -Algorithm SHA256).Hash.ToLower()
+Set-Content -Path $shaName -Value "$hash  $zipName" -Encoding ascii
 
-Write-Output "Built PoENavi"
-$zipPath = (Resolve-Path PoENavi.zip).Path
-$shaPath = (Resolve-Path PoENavi.zip.sha256).Path
+Write-Output "Built $artifactBase"
+$zipPath = (Resolve-Path $zipName).Path
+$shaPath = (Resolve-Path $shaName).Path
 Write-Output "Release artifacts (do not move or re-zip dist\\PoENavi):"
 Write-Output "  ZIP: $zipPath"
 Write-Output "  SHA256: $shaPath"

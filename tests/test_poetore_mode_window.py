@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, call, patch
 
 from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QSystemTrayIcon
+from PySide6.QtWidgets import QApplication, QLabel, QMessageBox, QPushButton, QSystemTrayIcon
 
 from src.ui.poetore_mode_window import PoetoreModeWindow, _currency_icon_filename
 from src.utils.poe_version_data import POE2
@@ -197,6 +197,18 @@ def test_expedition_hotkey_dispatches_single_scan():
     window = MagicMock()
     PoetoreModeWindow.handle_hotkey(window, "expedition_reward_ocr")
     window.capture_expedition_rewards.assert_called_once_with()
+
+
+def test_expedition_diagnostic_report_uses_single_message_box():
+    window = MagicMock()
+    with patch(
+        "src.ui.poetore_mode_window.QMessageBox.information"
+    ) as information:
+        PoetoreModeWindow._show_expedition_diagnostic(window, "diagnostic report")
+
+    information.assert_called_once_with(
+        window, "エクスペディションOCR診断", "diagnostic report"
+    )
 
 
 def test_poetore_mode_uses_version_specific_currency_icon_names():

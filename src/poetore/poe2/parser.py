@@ -1040,7 +1040,6 @@ def parse_item_text(text: str) -> ParsedItem:
         scoped_affix = (
             category in _LOCAL_AFFIX_CATEGORIES
             and line_kind in {"explicit", "fractured", "crafted", "desecrated"}
-            and (rarity != "unique" or category in _ARMOUR_LOCAL_AFFIX_CATEGORIES)
         )
         # Compact Stat metadata uses `type=augment` for IDs in the `rune.*`
         # namespace. Prefer by metadata type, not by ID namespace; using

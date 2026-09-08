@@ -64,6 +64,18 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert '"--hidden-import", "keyboard"' not in script
 
 
+def test_friend_diagnostic_build_is_separate_from_normal_release():
+    script = (ROOT / "scripts" / "build_release.ps1").read_text(encoding="utf-8")
+    batch = (ROOT / "build_diagnostic_exe.bat").read_text(encoding="utf-8")
+
+    assert "[switch]$Diagnostic" in script
+    assert '"PoENavi-diagnostic"' in script
+    assert "expedition-diagnostics.flag" in script
+    assert "diagnostic marker leaked into normal release" in script
+    assert "build_release.ps1\" -Diagnostic" in batch
+    assert "PoENavi-diagnostic.zip" in batch
+
+
 def test_readme_notices_and_app_wording_cover_required_attribution():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     notices = (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")

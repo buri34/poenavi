@@ -986,6 +986,17 @@ def test_reported_rare_body_armour_sends_only_category_selected_local_stat():
     assert all(row["id"] != "explicit.stat_2106365538" for row in filters)
 
 
+def test_reported_unique_skysliver_sends_local_attack_speed_to_trade2():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "skysliver_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    payload = build_search_query(parse_item_text(text))
+    filters = payload["query"]["stats"][0]["filters"]
+
+    assert any(row["id"] == "explicit.stat_210067635" for row in filters)
+    assert all(row["id"] != "explicit.stat_681332047" for row in filters)
+
+
 def test_poe2_filter_ignores_audit_alternatives_in_normal_search():
     row = TradeStatFilter(
         "explicit.stat_124859000", "回避力が増加する", 90, "explicit",

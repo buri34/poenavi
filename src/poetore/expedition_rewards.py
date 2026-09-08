@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import threading
 from collections import Counter
@@ -32,6 +33,27 @@ from src.poetore.expedition_ocr_probe import (
     strip_quantity,
 )
 from src.poetore.window_position import path_of_exile_client_rect
+
+EXPEDITION_PRICE_FONT_SIZE = 14
+EXPEDITION_DIAGNOSTIC_ENV = "POENAVI_EXPEDITION_DIAGNOSTICS"
+EXPEDITION_DIAGNOSTIC_FLAG = "expedition-diagnostics.flag"
+
+
+def expedition_diagnostics_enabled(marker_root: Path | None = None) -> bool:
+    enabled = os.environ.get(EXPEDITION_DIAGNOSTIC_ENV, "").strip().casefold()
+    if enabled in {"1", "true", "yes", "on"}:
+        return True
+    root = marker_root or Path(sys.executable).resolve().parent
+    return (root / EXPEDITION_DIAGNOSTIC_FLAG).is_file()
+
+
+def format_expedition_diagnostic_report(steps: list[str]) -> str:
+    body = "\n".join(steps) if steps else "診断情報を取得できませんでした。"
+    return (
+        "エクスペディション報酬OCR 診断結果\n\n"
+        f"{body}\n\n"
+        "この画面全体をスクリーンショットして送ってください。"
+    )
 
 
 @dataclass(frozen=True)
@@ -97,15 +119,12 @@ class SafeRewardNameResolver:
         cached = self._cache.get(key)
         if cached is not None:
             return cached
-        best, _score, _margin, trusted = match_item_name(
+        best, score, _margin, trusted = match_item_name(
             item_text, self._candidates,
         )
         if not trusted:
             return None
-        exact_match = (
-            normalize_text(item_text).replace(" ", "")
-            == normalize_text(best).replace(" ", "")
-        )
+        exact_match = score == 1.0
         resolved = (best, self.aliases[best], exact_match)
         if len(self._cache) >= 2048:
             self._cache.pop(next(iter(self._cache)))
@@ -132,12 +151,11 @@ def stable_reward_identities(
             agreeing = [row for row in named_rows if row.english_name == name]
         else:
             exact_rows = [row for row in named_rows if row.exact_match]
-            if (
-                len(exact_rows) != 1
-                or any(row.english_name != exact_rows[0].english_name for row in named_rows)
-            ):
+            exact_names = {row.english_name for row in exact_rows}
+            if len(exact_names) != 1:
                 continue
-            agreeing = exact_rows
+            exact_name = exact_names.pop()
+            agreeing = [row for row in exact_rows if row.english_name == exact_name]
         agreeing.sort(key=lambda row: (row.top, row.bottom))
         middle = agreeing[len(agreeing) // 2]
         stable.append(middle)
@@ -153,7 +171,7 @@ def format_exalted_unit_price(value: float) -> str:
         amount = f"{value:.1f}".rstrip("0").rstrip(".")
     else:
         amount = f"{value:.0f}"
-    return amount
+    return f"{amount} 高貴/個"
 
 
 def expedition_exalted_icon_path() -> Path:
@@ -252,7 +270,7 @@ class ExpeditionPriceOverlay(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
-        font = QFont("Yu Gothic UI", 13)
+        font = QFont("Yu Gothic UI", EXPEDITION_PRICE_FONT_SIZE)
         font.setBold(True)
         painter.setFont(font)
         x = price_label_x(self.width(), self._source_width, self._panel_width)
@@ -282,9 +300,10 @@ class ExpeditionPriceOverlay(QWidget):
 class ExpeditionRewardController(QObject):
     status = Signal(str)
     failed = Signal(str)
+    diagnostic = Signal(str)
     _ready = Signal(object, object, object, object, object)
 
-    def __init__(self, league_getter, parent=None):
+    def __init__(self, league_getter, parent=None, *, diagnostics_enabled=None):
         super().__init__(parent)
         self._league_getter = league_getter
         self._overlay = ExpeditionPriceOverlay()
@@ -300,6 +319,11 @@ class ExpeditionRewardController(QObject):
         self._monitor_misses = 0
         self._bands: list[RowBand] = []
         self._panel_width = 0
+        self._diagnostics_enabled = (
+            expedition_diagnostics_enabled()
+            if diagnostics_enabled is None else bool(diagnostics_enabled)
+        )
+        self._diagnostic_steps: list[str] = []
         self._monitor = QTimer(self)
         self._monitor.setInterval(650)
         self._monitor.timeout.connect(self._check_panel)
@@ -350,10 +374,18 @@ class ExpeditionRewardController(QObject):
     def request_scan(self) -> bool:
         if self._running:
             return False
+        self._diagnostic_steps = []
         client_rect = path_of_exile_client_rect()
         if client_rect is None:
-            self.failed.emit("Path of Exileのゲーム画面が見つかりませんでした。")
+            self._trace(
+                "❌ 1. ゲーム画面検出: "
+                "Path of Exileのゲーム画面が見つかりませんでした。"
+            )
+            self._finish_error("Path of Exileのゲーム画面が見つかりませんでした。")
             return False
+        self._trace(
+            f"✅ 1. ゲーム画面検出: {client_rect.width()}x{client_rect.height()}"
+        )
         self._running = True
         self.hide()
         self._client_rect = QRect(client_rect)
@@ -378,12 +410,14 @@ class ExpeditionRewardController(QObject):
     def _capture_frame(self) -> None:
         image = self._grab_game()
         if image.isNull():
+            self._trace("❌ 2. 画面キャプチャ: 画像を取得できません")
             self._finish_error("ゲーム画面をキャプチャできませんでした。")
             return
         self._captures.append(image)
         if len(self._captures) < 3:
             QTimer.singleShot(220, self._capture_frame)
             return
+        self._trace("✅ 2. 画面キャプチャ: 3/3枚")
         images = list(self._captures)
         client_rect = QRect(self._client_rect)
         capture_rect = QRect(self._capture_rect)
@@ -403,10 +437,22 @@ class ExpeditionRewardController(QObject):
                 )
                 for image in images
             ]
+            row_counts = "/".join(str(len(frame.images)) for frame in prepared)
+            self._trace(f"✅ 3. 報酬行検出: {row_counts}行")
             all_crops = [
                 crop for frame in prepared for crop in frame.images
             ]
+            try:
+                self._ocr.start()
+            except Exception as exc:
+                self._trace(f"❌ 4. Windows日本語OCR起動: {exc}")
+                raise
+            self._trace("✅ 4. Windows日本語OCR起動: ja-JP 利用可能")
             raw_texts = self._ocr.recognize(all_crops)
+            non_empty_count = sum(bool(text.strip()) for text in raw_texts)
+            self._trace(
+                f"✅ 5. OCR応答: {non_empty_count}/{len(all_crops)}行に文字あり"
+            )
             offset = 0
             frames: list[list[RewardIdentity]] = []
             for prepared_frame in prepared:
@@ -432,16 +478,31 @@ class ExpeditionRewardController(QObject):
                 frames.append(frame)
                 offset += len(prepared_frame.images)
             stable = [row for row in stable_reward_identities(frames) if row.english_name]
+            resolved_counts = "/".join(
+                str(sum(bool(row.english_name) for row in frame)) for frame in frames
+            )
+            self._trace(
+                f"✅ 6. 名称照合: 各フレーム {resolved_counts}件、安定確定 {len(stable)}件"
+            )
             if not stable:
+                samples = list(dict.fromkeys(
+                    normalize_text(text) for text in raw_texts if text.strip()
+                ))[:5]
+                if samples:
+                    self._trace("   OCR文字例: " + " / ".join(samples))
                 raise RuntimeError("安全に特定できる報酬名がありませんでした。")
 
             from src.poetore.poe_ninja import default_poe_ninja_service
 
             league = self._league_getter()
-            prices = default_poe_ninja_service.lookup_poe2_expedition_rewards(
-                tuple(row.english_name for row in stable), league,
-            )
-            exalted_chaos = default_poe_ninja_service.exalted_chaos_rate(league)
+            try:
+                prices = default_poe_ninja_service.lookup_poe2_expedition_rewards(
+                    tuple(row.english_name for row in stable), league,
+                )
+                exalted_chaos = default_poe_ninja_service.exalted_chaos_rate(league)
+            except Exception as exc:
+                self._trace(f"❌ 7. poe.ninja価格取得: {exc}")
+                raise
             if not exalted_chaos:
                 raise RuntimeError("高貴なオーブの換算レートを取得できませんでした。")
             priced = [
@@ -449,6 +510,9 @@ class ExpeditionRewardController(QObject):
                 for row in stable
                 if row.english_name in prices and prices[row.english_name].chaos > 0
             ]
+            self._trace(
+                f"✅ 7. poe.ninja価格取得: {len(priced)}/{len(stable)}件（{league}）"
+            )
             shown = highlight_highest_price_rows([
                 RewardPriceRow(
                     row.top,
@@ -469,24 +533,43 @@ class ExpeditionRewardController(QObject):
                 (first.panel_width, list(first.bands)), len(stable),
             )
         except Exception as exc:  # noqa: BLE001 - worker boundary reports to UI
-            self.failed.emit(str(exc))
-            self._running = False
+            self._finish_error(str(exc))
 
     def _show_result(self, client_rect, rows, source_size, panel_data, stable_count):
         self._running = False
         self._panel_width, self._bands = panel_data
         self._client_rect = QRect(client_rect)
         self._capture_rect = expedition_capture_rect(client_rect)
-        self._overlay.show_prices(
-            client_rect, source_size[0], source_size[1], self._panel_width, rows,
-        )
+        try:
+            self._overlay.show_prices(
+                client_rect, source_size[0], source_size[1], self._panel_width, rows,
+            )
+        except Exception as exc:  # noqa: BLE001 - final UI boundary is diagnosed
+            self._trace(f"❌ 8. オーバーレイ表示: {exc}")
+            self._finish_error(f"価格表示に失敗しました: {exc}")
+            return
         self._monitor_misses = 0
         self._monitor.start()
         self.status.emit(f"{len(rows)}/{stable_count}件の単価を表示しました。")
+        self._trace(f"✅ 8. オーバーレイ表示: {len(rows)}/{stable_count}件")
+        self._emit_diagnostic()
 
     def _finish_error(self, message: str) -> None:
         self._running = False
         self.failed.emit(message)
+        if not self._diagnostic_steps or not self._diagnostic_steps[-1].startswith("❌"):
+            self._trace(f"❌ 処理停止: {message}")
+        self._emit_diagnostic()
+
+    def _trace(self, message: str) -> None:
+        if self._diagnostics_enabled:
+            self._diagnostic_steps.append(message)
+
+    def _emit_diagnostic(self) -> None:
+        if self._diagnostics_enabled:
+            self.diagnostic.emit(
+                format_expedition_diagnostic_report(self._diagnostic_steps)
+            )
 
     def _check_panel(self) -> None:
         image = self._grab_game()

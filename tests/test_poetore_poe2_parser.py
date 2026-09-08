@@ -28,6 +28,7 @@ DOUBLE_CORRUPTED_GEM_FIXTURE = (
 CONSTRICTING_COMMAND_FIXTURE = (
     Path(__file__).parent / "fixtures" / "poe2" / "constricting_command_ja.txt"
 )
+SKYSLIVER_FIXTURE = Path(__file__).parent / "fixtures" / "poe2" / "skysliver_ja.txt"
 
 KEEPER_OF_THE_ARC_JA = """アイテムクラス: 兜
 レアリティ: ユニーク
@@ -957,6 +958,37 @@ def test_reported_japanese_rare_spear_keeps_quality_and_both_flat_damage_values(
     assert crafted_accuracy.stat_id == "crafted.stat_803737631"
     crafted_speed = next(mod for mod in item.modifiers if "アタックスピードが8" in mod.text)
     assert crafted_speed.stat_id == "crafted.stat_210067635"
+
+
+def test_reported_unique_skysliver_prefers_local_attack_speed():
+    item = parse_item_text(SKYSLIVER_FIXTURE.read_text(encoding="utf-8"))
+    attack_speed = next(mod for mod in item.modifiers if "アタックスピード" in mod.text)
+
+    assert item.category == "spear"
+    assert item.rarity == "unique"
+    assert attack_speed.stat_id == "explicit.stat_210067635"
+    assert attack_speed.values == (16.0,)
+
+
+@pytest.mark.parametrize("category", sorted(poe2_parser._WEAPON_LOCAL_AFFIX_CATEGORIES))
+def test_every_weapon_category_prefers_local_attack_properties(category):
+    global_entry = {
+        "id": "explicit.stat_681332047",
+        "text": {"en": "#% increased Attack Speed"},
+    }
+    local_entry = {
+        "id": "explicit.stat_210067635",
+        "text": {"en": "#% increased Attack Speed (Local)"},
+    }
+
+    selected, values = poe2_parser._select_scoped_stat_candidate(
+        ((global_entry, (16.0,)), (local_entry, (16.0,))),
+        category,
+        "explicit",
+    )
+
+    assert selected["id"] == "explicit.stat_210067635"
+    assert values == (16.0,)
 
 
 def test_audited_crossbow_accuracy_keeps_local_scope_when_both_ids_have_results():

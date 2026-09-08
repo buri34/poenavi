@@ -144,6 +144,26 @@ def test_dictionary_matching_corrects_exact_known_exalted_orb_ocr_error():
     assert result[3] is True
 
 
+@pytest.mark.parametrize(
+    ("raw_text", "expected"),
+    (
+        ("1 , サ カ ワ ル の 浸 良 の ル ー ン 一", "サカワルの浸食のルーン"),
+        ("lx ス ル ー ド の カ", "スルードの力"),
+    ),
+)
+def test_dictionary_matching_corrects_observed_expedition_ocr_errors(
+    raw_text, expected,
+):
+    candidates = ["サカワルの浸食のルーン", "スルードの力"]
+    _quantity, item_text = strip_quantity(raw_text)
+
+    result = match_item_name(item_text, candidates)
+
+    assert result[0] == expected
+    assert result[1] == 1.0
+    assert result[3] is True
+
+
 def test_dictionary_matching_uses_an_exact_ocr_level_to_disambiguate_variants():
     loaded = json.loads(
         Path("data/poetore/poe2/expedition_ocr_items.json").read_text(encoding="utf-8")

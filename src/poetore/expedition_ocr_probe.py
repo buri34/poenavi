@@ -23,6 +23,8 @@ from PySide6.QtGui import QImage
 OCR_ENGINES = ("tesseract", "windows")
 _EXACT_OCR_KEY_CORRECTIONS = {
     "高員なオーブ": "高貴なオーブ",
+    "サカワルの浸良のルーン一": "サカワルの浸食のルーン",
+    "スルードのカ": "スルードの力",
 }
 
 
