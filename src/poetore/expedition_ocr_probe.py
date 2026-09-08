@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 import re
 import shutil
@@ -27,12 +28,120 @@ class OcrRowResult:
     bottom: int
     raw_text: str
     normalized_text: str
+    quantity_text: str = ""
+    quantity: int | None = None
+    item_ocr_text: str = ""
+    matched_item_name: str = ""
+    match_score: float | None = None
+    match_margin: float | None = None
+    trusted: bool = False
 
 
 def normalize_text(text: str) -> str:
     text = text.casefold().replace("×", "x")
     text = re.sub(r"[^\w\sぁ-んァ-ヶ一-龯ーx]", " ", text)
     return re.sub(r"\s+", " ", text).strip()
+
+
+def strip_quantity(text: str) -> tuple[int | None, str]:
+    """Split a leading Expedition stack count from an OCR string."""
+    normalized = normalize_text(text)
+    match = re.match(r"^[|Il\s]*(\d{1,3})\s*[xX]\s*(.+)$", normalized)
+    if not match:
+        return None, normalized
+    return int(match.group(1)), match.group(2).strip()
+
+
+def _candidate_key(text: str) -> str:
+    text = normalize_text(text)
+    text = re.sub(r"^(?:スキルレベル\s*\d+|スキル|サポート)\s*[:：]\s*", "", text)
+    text = re.sub(r"\s*\(レベル\s*\d+\)\s*$", "", text)
+    return text.replace(" ", "")
+
+
+def match_item_name(
+    text: str,
+    candidates: Sequence[str],
+    *,
+    minimum_score: float = 0.72,
+    minimum_margin: float = 0.06,
+) -> tuple[str, float | None, float | None, bool]:
+    """Return the best dictionary candidate and a conservative trust decision."""
+    key = _candidate_key(text)
+    if not key or not candidates:
+        return "", None, None, False
+    scored = sorted(
+        (
+            (SequenceMatcher(None, key, _candidate_key(candidate)).ratio(), candidate)
+            for candidate in candidates
+            if _candidate_key(candidate)
+        ),
+        reverse=True,
+    )
+    best_score, best = scored[0]
+    second_score = scored[1][0] if len(scored) > 1 else 0.0
+    margin = best_score - second_score
+    trusted = best_score >= minimum_score and (best_score == 1.0 or margin >= minimum_margin)
+    # A noisy read of e.g. "カオスオーブ (上級)" must not silently become the
+    # unqualified base currency.  Require a nearly exact read when the chosen
+    # base has parenthesized variants in the dictionary.
+    best_key = _candidate_key(best)
+    has_qualified_variant = any(
+        candidate != best
+        and _candidate_key(candidate).startswith(best_key)
+        and "(" in candidate
+        for candidate in candidates
+    )
+    if has_qualified_variant and "(" not in text and best_score < 0.95:
+        trusted = False
+    return best, best_score, margin, trusted
+
+
+def load_item_dictionary(path: Path) -> list[str]:
+    """Load Japanese item names from a Trade API items response."""
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    names: set[str] = set()
+    for group in loaded.get("result", []):
+        for entry in group.get("entries", []):
+            for field in ("type", "name"):
+                value = entry.get(field)
+                if isinstance(value, str) and value.strip():
+                    names.add(value.strip())
+    return sorted(names)
+
+
+def write_results_csv(results: Sequence[dict[str, object]], path: Path) -> None:
+    """Write a flat row list without source-image identifiers."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fields = [
+        "row",
+        "item_name",
+        "trusted",
+        "quantity",
+        "ocr_item_text",
+        "ocr_raw_text",
+        "match_score",
+        "match_margin",
+    ]
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        flat_index = 0
+        for result in results:
+            for row in result.get("rows", []):
+                flat_index += 1
+                writer.writerow(
+                    {
+                        "row": flat_index,
+                        "item_name": row.get("matched_item_name", "") if row.get("trusted") else "",
+                        "trusted": "yes" if row.get("trusted") else "no",
+                        "quantity": row.get("quantity") or "",
+                        "ocr_item_text": row.get("item_ocr_text", ""),
+                        "ocr_raw_text": row.get("raw_text", ""),
+                        "match_score": row.get("match_score") if row.get("match_score") is not None else "",
+                        "match_margin": row.get("match_margin") if row.get("match_margin") is not None else "",
+                    }
+                )
 
 
 def otsu_threshold(gray: Sequence[int]) -> int:
@@ -280,7 +389,13 @@ def _add_margin(pixels: Sequence[int], width: int, height: int, margin: int) -> 
     return output
 
 
-def _run_tesseract(image: Path, language: str, *, page_segmentation: int = 7) -> str:
+def _run_tesseract(
+    image: Path,
+    language: str,
+    *,
+    page_segmentation: int = 7,
+    whitelist: str | None = None,
+) -> str:
     executable = shutil.which("tesseract")
     if executable is None:
         raise RuntimeError("tesseractが見つかりません。--prepare-onlyで前処理だけ実行できます。")
@@ -293,10 +408,18 @@ def _run_tesseract(image: Path, language: str, *, page_segmentation: int = 7) ->
         "--psm",
         str(page_segmentation),
     ]
+    if whitelist:
+        command.extend(["-c", f"tessedit_char_whitelist={whitelist}"])
     result = subprocess.run(command, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or f"tesseract終了コード: {result.returncode}")
     return result.stdout.strip()
+
+
+def parse_quantity_ocr(text: str) -> int | None:
+    compact = re.sub(r"\s+", "", text).replace("X", "x")
+    match = re.search(r"(\d{1,3})x", compact)
+    return int(match.group(1)) if match else None
 
 
 def analyze_image(
@@ -305,6 +428,7 @@ def analyze_image(
     *,
     language: str = "jpn+eng",
     prepare_only: bool = False,
+    item_dictionary: Sequence[str] = (),
 ) -> dict[str, object]:
     width, height, gray, red, green, blue = _load_channels(image_path)
     panel_width, bands = detect_reward_cards(gray, red, green, blue, width, height)
@@ -340,7 +464,31 @@ def analyze_image(
         )
         psm = 11 if crop_height > 70 else 7
         raw = "" if prepare_only else _run_tesseract(crop_path, language, page_segmentation=psm)
-        rows.append(OcrRowResult(index, band.top, band.bottom, raw, normalize_text(raw)))
+        inline_quantity, item_text = strip_quantity(raw)
+        quantity_raw = "" if prepare_only else _run_tesseract(
+            crop_path,
+            "eng",
+            page_segmentation=7,
+            whitelist="0123456789xX",
+        )
+        quantity = parse_quantity_ocr(quantity_raw) or inline_quantity
+        best, match_score, match_margin, trusted = match_item_name(item_text, item_dictionary)
+        rows.append(
+            OcrRowResult(
+                index,
+                band.top,
+                band.bottom,
+                raw,
+                normalize_text(raw),
+                quantity_text=quantity_raw,
+                quantity=quantity,
+                item_ocr_text=item_text,
+                matched_item_name=best,
+                match_score=match_score,
+                match_margin=match_margin,
+                trusted=trusted,
+            )
+        )
 
     truth_path = image_path.with_suffix(".truth.json")
     expected: list[str] | None = None
@@ -373,14 +521,23 @@ def analyze_directory(
     *,
     language: str = "jpn+eng",
     prepare_only: bool = False,
+    item_dictionary: Sequence[str] = (),
+    csv_path: Path | None = None,
 ) -> list[dict[str, object]]:
     images = sorted(path for path in input_dir.iterdir() if path.suffix.casefold() in {".png", ".jpg", ".jpeg"})
     output_dir.mkdir(parents=True, exist_ok=True)
     results = [
-        analyze_image(path, output_dir, language=language, prepare_only=prepare_only)
+        analyze_image(
+            path,
+            output_dir,
+            language=language,
+            prepare_only=prepare_only,
+            item_dictionary=item_dictionary,
+        )
         for path in images
     ]
     (output_dir / "summary.json").write_text(
         json.dumps(results, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
+    write_results_csv(results, csv_path or output_dir / "items.csv")
     return results

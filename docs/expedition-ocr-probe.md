@@ -38,6 +38,18 @@ python scripts/expedition_ocr_probe.py path\to\screenshots --prepare-only
 分離・3倍拡大した各報酬行、`result.json`が入り、全画像の結果は`summary.json`へまとまります。
 `runs/`はGit管理対象外です。
 
+日本語アイテム辞書を指定すると、数量専用OCRと保守的な候補照合を行い、画像名を含まない
+一覧CSVも出力します。`trusted=no`の行は誤価格防止のため`item_name`を空欄にします。
+
+```powershell
+python scripts/expedition_ocr_probe.py path\to\screenshots `
+  --dictionary path\to\items_ja.json `
+  --csv expedition-items.csv
+```
+
+CSVはUTF-8 BOM付きで、Excelから直接開けます。Windows標準OCRとの比較時も、同じ列へ
+結果を出すことでTesseract結果と行単位に比較できます。Windows OCRの実測自体はWindows上で行います。
+
 ## 評価値
 
 - `exact_rate`: 正規化後の完全一致率

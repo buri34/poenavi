@@ -3,9 +3,14 @@ from src.poetore.expedition_ocr_probe import (
     analyze_directory,
     detect_reward_cards,
     detect_row_bands,
+    load_item_dictionary,
+    match_item_name,
     normalize_text,
     otsu_threshold,
+    parse_quantity_ocr,
     score_rows,
+    strip_quantity,
+    write_results_csv,
 )
 
 
@@ -35,6 +40,43 @@ def test_score_rows_reports_exact_and_similarity_rates():
     assert score["exact_rows"] == 1
     assert score["exact_rate"] == 0.5
     assert 0.9 < score["mean_similarity"] < 1.0
+
+
+def test_strip_quantity_and_dedicated_quantity_parser():
+    assert strip_quantity("| 3× 高貴なオーブ") == (3, "高貴なオーブ")
+    assert parse_quantity_ocr(" 3x 19 ") == 3
+    assert parse_quantity_ocr("19") is None
+
+
+def test_dictionary_matching_rejects_ambiguous_neighbour():
+    candidates = ["勇気のワードルーン", "補強のワードルーン"]
+    exact = match_item_name("勇気のワードルーン", candidates)
+    ambiguous = match_item_name("のワードルーン", candidates)
+    assert exact[0] == "勇気のワードルーン" and exact[3] is True
+    assert ambiguous[3] is False
+
+
+def test_dictionary_matching_does_not_downgrade_a_missing_variant_suffix():
+    candidates = ["カオスオーブ", "カオスオーブ (上級)"]
+    assert match_item_name("カオスオーブ om i", candidates)[3] is False
+    assert match_item_name("カオスオーブ", candidates)[3] is True
+
+
+def test_load_dictionary_and_write_flat_csv(tmp_path):
+    source = tmp_path / "items.json"
+    source.write_text(
+        '{"result":[{"entries":[{"type":"高貴なオーブ"},{"name":"固有名"}]}]}',
+        encoding="utf-8",
+    )
+    assert load_item_dictionary(source) == ["固有名", "高貴なオーブ"]
+    output = tmp_path / "items.csv"
+    write_results_csv(
+        [{"rows": [{"matched_item_name": "高貴なオーブ", "trusted": True, "quantity": 3}]}],
+        output,
+    )
+    csv_text = output.read_text(encoding="utf-8-sig")
+    assert "image" not in csv_text
+    assert "高貴なオーブ" in csv_text
 
 
 def test_detect_reward_cards_ignores_header_and_partial_card():
