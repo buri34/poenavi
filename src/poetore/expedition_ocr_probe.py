@@ -349,23 +349,38 @@ def score_rows(expected: Sequence[str], actual: Sequence[str]) -> dict[str, obje
     }
 
 
-def _load_channels(path: Path) -> tuple[int, int, list[int], list[int], list[int], list[int]]:
+def _packed_image_bytes(image: QImage, bytes_per_pixel: int) -> bytes:
+    """Return tightly packed image bytes without per-pixel Qt calls."""
+    width = image.width()
+    height = image.height()
+    packed_stride = width * bytes_per_pixel
+    source_stride = image.bytesPerLine()
+    source = bytes(image.constBits())
+    if source_stride == packed_stride:
+        return source
+    return b"".join(
+        source[offset : offset + packed_stride]
+        for offset in range(0, source_stride * height, source_stride)
+    )
+
+
+def _load_channels(path: Path) -> tuple[int, int, bytes, bytes, bytes, bytes]:
     image = QImage(str(path))
     if image.isNull():
         raise ValueError(f"画像を読み込めません: {path}")
     image = image.convertToFormat(QImage.Format.Format_RGB888)
     width, height = image.width(), image.height()
-    gray: list[int] = []
-    red: list[int] = []
-    green: list[int] = []
-    blue: list[int] = []
-    for y in range(height):
-        for x in range(width):
-            color = image.pixelColor(x, y)
-            red.append(color.red())
-            green.append(color.green())
-            blue.append(color.blue())
-            gray.append(round(0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()))
+    rgb = _packed_image_bytes(image, 3)
+    red = rgb[0::3]
+    green = rgb[1::3]
+    blue = rgb[2::3]
+    # Preserve the benchmarked detector's original luminance values exactly.
+    # The Qt Grayscale8 conversion uses different weights and can create false
+    # reward-card bands near the threshold.
+    gray = bytes(
+        round(0.299 * red_value + 0.587 * green_value + 0.114 * blue_value)
+        for red_value, green_value, blue_value in zip(red, green, blue)
+    )
     return width, height, gray, red, green, blue
 
 

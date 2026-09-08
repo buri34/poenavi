@@ -2,6 +2,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from PySide6.QtGui import QColor, QImage
 
 import src.poetore.expedition_ocr_probe as probe
 from src.poetore.expedition_ocr_probe import (
@@ -18,6 +19,26 @@ from src.poetore.expedition_ocr_probe import (
     strip_quantity,
     write_results_csv,
 )
+
+
+def test_load_channels_reads_exact_rgb_values_with_padded_rows(tmp_path):
+    image = QImage(3, 2, QImage.Format.Format_RGB888)
+    colors = (
+        QColor(10, 20, 30), QColor(40, 50, 60), QColor(70, 80, 90),
+        QColor(100, 110, 120), QColor(130, 140, 150), QColor(160, 170, 180),
+    )
+    for index, color in enumerate(colors):
+        image.setPixelColor(index % 3, index // 3, color)
+    path = tmp_path / "channels.png"
+    assert image.save(str(path), "PNG")
+
+    width, height, gray, red, green, blue = probe._load_channels(path)
+
+    assert (width, height) == (3, 2)
+    assert list(red) == [10, 40, 70, 100, 130, 160]
+    assert list(green) == [20, 50, 80, 110, 140, 170]
+    assert list(blue) == [30, 60, 90, 120, 150, 180]
+    assert len(gray) == 6
 
 
 def test_windows_powershell_launcher_is_windows_powershell_compatible_ascii():
