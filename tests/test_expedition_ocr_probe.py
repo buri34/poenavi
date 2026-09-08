@@ -135,6 +135,42 @@ def test_dictionary_matching_does_not_downgrade_a_missing_variant_suffix():
     assert match_item_name("カオスオーブ", candidates)[3] is True
 
 
+def test_dictionary_matching_corrects_exact_known_exalted_orb_ocr_error():
+    candidates = ["高貴なオーブ", "高貴なオーブ (上級)", "高貴なオーブ (完全)"]
+
+    result = match_item_name("高 員 な オ ー ブ", candidates)
+
+    assert result[0] == "高貴なオーブ"
+    assert result[3] is True
+
+
+def test_dictionary_matching_uses_an_exact_ocr_level_to_disambiguate_variants():
+    loaded = json.loads(
+        Path("data/poetore/poe2/expedition_ocr_items.json").read_text(encoding="utf-8")
+    )
+    candidates = [row["ja"] for row in loaded["items"]]
+
+    result = match_item_name(
+        ", マ タ ー ジ ・ フ ラ ッ ク ス ( レ ベ ル 1 8 }",
+        candidates,
+    )
+
+    assert result[0] == "ソーマタージ・フラックス (レベル18)"
+    assert result[3] is True
+
+
+def test_dictionary_matching_does_not_override_a_different_ocr_level():
+    candidates = [
+        "ソーマタージ・フラックス (レベル17)",
+        "ソーマタージ・フラックス (レベル18)",
+    ]
+
+    result = match_item_name("ソーマタージ・フラックス (レベル17)", candidates)
+
+    assert result[0] == "ソーマタージ・フラックス (レベル17)"
+    assert result[3] is True
+
+
 def test_load_dictionary_and_write_flat_csv(tmp_path):
     source = tmp_path / "items.json"
     source.write_text(
@@ -240,6 +276,34 @@ def test_detect_reward_cards_drops_background_after_one_tall_reward():
                     channel[y * width + x] = 200
     _, bands = detect_reward_cards(*channels, width, height)
     assert bands == [RowBand(50, 100)]
+
+
+def test_detect_reward_cards_merges_one_pixel_split_inside_a_tall_reward():
+    width, height = 100, 220
+    channels = [[50] * (width * height) for _ in range(4)]
+    for top, bottom in ((50, 100), (101, 145)):
+        for y in range(top, bottom):
+            for x in range(width):
+                for channel in channels:
+                    channel[y * width + x] = 200
+
+    _, bands = detect_reward_cards(*channels, width, height)
+
+    assert bands == [RowBand(50, 145)]
+
+
+def test_detect_reward_cards_drops_a_background_band_reaching_image_bottom():
+    width, height = 100, 220
+    channels = [[50] * (width * height) for _ in range(4)]
+    for top, bottom in ((50, 100), (101, 145), (150, height)):
+        for y in range(top, bottom):
+            for x in range(width):
+                for channel in channels:
+                    channel[y * width + x] = 200
+
+    _, bands = detect_reward_cards(*channels, width, height)
+
+    assert bands == [RowBand(50, 145)]
 
 
 def test_detect_reward_cards_keeps_short_reward_after_tall_cards():

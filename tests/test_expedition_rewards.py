@@ -74,8 +74,8 @@ def test_safe_reward_name_resolver_caches_only_trusted_matches():
             ("", 0.5, 0.0, False),
         ],
     ) as matcher:
-        assert resolver.resolve("1x 高貴") == ("高貴", "Exalted")
-        assert resolver.resolve("1x 高貴") == ("高貴", "Exalted")
+        assert resolver.resolve("1x 高貴") == ("高貴", "Exalted", True)
+        assert resolver.resolve("1x 高貴") == ("高貴", "Exalted", True)
         assert resolver.resolve("不明") is None
         assert resolver.resolve("不明") is None
 
@@ -96,6 +96,28 @@ def test_stable_reward_identities_requires_two_matching_frames():
     wrong = RewardIdentity(10, 30, "混沌", "Chaos")
     result = stable_reward_identities([[a], [shifted], [wrong]])
     assert result == [shifted]
+
+
+def test_stable_reward_identities_accepts_one_exact_read_when_others_are_unresolved():
+    exact = RewardIdentity(10, 30, "旋風の合金", "Cyclonic Alloy", exact_match=True)
+    unresolved = RewardIdentity(11, 31, "", "")
+
+    assert stable_reward_identities([[exact], [unresolved], [unresolved]]) == [exact]
+
+
+def test_stable_reward_identities_rejects_one_fuzzy_read_when_others_are_unresolved():
+    fuzzy = RewardIdentity(10, 30, "旋風の合金", "Cyclonic Alloy")
+    unresolved = RewardIdentity(11, 31, "", "")
+
+    assert stable_reward_identities([[fuzzy], [unresolved], [unresolved]]) == []
+
+
+def test_stable_reward_identities_rejects_conflicting_exact_reads():
+    first = RewardIdentity(10, 30, "旋風の合金", "Cyclonic Alloy", exact_match=True)
+    second = RewardIdentity(11, 31, "神秘の合金", "Mystic Alloy", exact_match=True)
+    unresolved = RewardIdentity(12, 32, "", "")
+
+    assert stable_reward_identities([[first], [second], [unresolved]]) == []
 
 
 def test_price_label_is_placed_next_to_detected_panel_at_any_aspect_ratio():

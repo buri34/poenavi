@@ -21,6 +21,9 @@ from PySide6.QtCore import QBuffer, QByteArray, QIODevice
 from PySide6.QtGui import QImage
 
 OCR_ENGINES = ("tesseract", "windows")
+_EXACT_OCR_KEY_CORRECTIONS = {
+    "高員なオーブ": "高貴なオーブ",
+}
 
 
 @dataclass(frozen=True)
@@ -86,6 +89,11 @@ def _candidate_key(text: str) -> str:
     return text.replace(" ", "")
 
 
+def _level_number(text: str) -> int | None:
+    match = re.search(r"レベル(\d+)", normalize_text(text).replace(" ", ""))
+    return int(match.group(1)) if match else None
+
+
 def match_item_name(
     text: str,
     candidates: Sequence[str],
@@ -95,6 +103,7 @@ def match_item_name(
 ) -> tuple[str, float | None, float | None, bool]:
     """Return the best dictionary candidate and a conservative trust decision."""
     key = _candidate_key(text)
+    key = _EXACT_OCR_KEY_CORRECTIONS.get(key, key)
     if not key or not candidates:
         return "", None, None, False
     scored = sorted(
@@ -109,6 +118,14 @@ def match_item_name(
     second_score = scored[1][0] if len(scored) > 1 else 0.0
     margin = best_score - second_score
     trusted = best_score >= minimum_score and (best_score == 1.0 or margin >= minimum_margin)
+    observed_level = _level_number(text)
+    best_level = _level_number(best)
+    if (
+        observed_level is not None
+        and observed_level == best_level
+        and best_score >= max(minimum_score, 0.85)
+    ):
+        trusted = True
     # A noisy read of e.g. "カオスオーブ (上級)" must not silently become the
     # unqualified base currency.  Require a nearly exact read when the chosen
     # base has parenthesized variants in the dictionary.
@@ -292,6 +309,17 @@ def detect_reward_cards(
             start = None
     if not candidates:
         return scan_width, []
+    candidates = [band for band in candidates if band.bottom < height]
+    if not candidates:
+        return scan_width, []
+
+    merged_candidates: list[RowBand] = []
+    for band in candidates:
+        if merged_candidates and band.top - merged_candidates[-1].bottom <= 2:
+            merged_candidates[-1] = RowBand(merged_candidates[-1].top, band.bottom)
+        else:
+            merged_candidates.append(band)
+    candidates = merged_candidates
 
     tall_heights = sorted(band.bottom - band.top for band in candidates if band.bottom - band.top >= 30)
     if not tall_heights:

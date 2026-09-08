@@ -31,6 +31,7 @@ class RewardIdentity:
     bottom: int
     japanese_name: str
     english_name: str
+    exact_match: bool = False
 
 
 @dataclass(frozen=True)
@@ -75,9 +76,9 @@ class SafeRewardNameResolver:
         self.aliases = aliases
         self.dictionary_version = dictionary_version
         self._candidates = tuple(aliases)
-        self._cache: dict[tuple[str, str], tuple[str, str]] = {}
+        self._cache: dict[tuple[str, str], tuple[str, str, bool]] = {}
 
-    def resolve(self, raw_text: str) -> tuple[str, str] | None:
+    def resolve(self, raw_text: str) -> tuple[str, str, bool] | None:
         _quantity, item_text = strip_quantity(raw_text)
         key = (self.dictionary_version, normalize_text(item_text))
         if not key[1]:
@@ -90,7 +91,11 @@ class SafeRewardNameResolver:
         )
         if not trusted:
             return None
-        resolved = (best, self.aliases[best])
+        exact_match = (
+            normalize_text(item_text).replace(" ", "")
+            == normalize_text(best).replace(" ", "")
+        )
+        resolved = (best, self.aliases[best], exact_match)
         if len(self._cache) >= 2048:
             self._cache.pop(next(iter(self._cache)))
         self._cache[key] = resolved
@@ -107,13 +112,21 @@ def stable_reward_identities(
     stable: list[RewardIdentity] = []
     for index in range(max_rows):
         rows = [frame[index] for frame in frames if index < len(frame)]
-        votes = Counter(row.english_name for row in rows)
+        named_rows = [row for row in rows if row.english_name]
+        votes = Counter(row.english_name for row in named_rows)
         if not votes:
             continue
         name, count = votes.most_common(1)[0]
-        if count < required_votes:
-            continue
-        agreeing = [row for row in rows if row.english_name == name]
+        if count >= required_votes:
+            agreeing = [row for row in named_rows if row.english_name == name]
+        else:
+            exact_rows = [row for row in named_rows if row.exact_match]
+            if (
+                len(exact_rows) != 1
+                or any(row.english_name != exact_rows[0].english_name for row in named_rows)
+            ):
+                continue
+            agreeing = exact_rows
         agreeing.sort(key=lambda row: (row.top, row.bottom))
         middle = agreeing[len(agreeing) // 2]
         stable.append(middle)
@@ -356,9 +369,13 @@ class ExpeditionRewardController(QObject):
                 ):
                     resolved = self._name_resolver.resolve(raw)
                     if resolved is not None:
-                        japanese_name, english_name = resolved
+                        japanese_name, english_name, exact_match = resolved
                         frame.append(RewardIdentity(
-                            band.top, band.bottom, japanese_name, english_name,
+                            band.top,
+                            band.bottom,
+                            japanese_name,
+                            english_name,
+                            exact_match,
                         ))
                     else:
                         frame.append(RewardIdentity(
