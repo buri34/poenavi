@@ -9,13 +9,17 @@ from src.poetore.expedition_ocr_probe import RowBand
 from src.poetore.expedition_rewards import (
     ExpeditionRewardController,
     RewardIdentity,
+    RewardPriceRow,
     SafeRewardNameResolver,
     expedition_capture_rect,
+    expedition_exalted_icon_path,
     format_exalted_unit_price,
+    highlight_highest_price_rows,
     load_reward_alias_bundle,
     load_reward_aliases,
     price_label_x,
     reward_cards_still_visible,
+    reward_price_text_color,
     stable_reward_identities,
 )
 
@@ -46,10 +50,29 @@ def test_load_reward_aliases_and_format_prices(tmp_path):
     path = tmp_path / "aliases.json"
     path.write_text(json.dumps({"items": [{"ja": "高貴", "en": "Exalted"}]}))
     assert load_reward_aliases(path) == {"高貴": "Exalted"}
-    assert format_exalted_unit_price(0.004) == "<0.01 高貴/個"
-    assert format_exalted_unit_price(0.85) == "0.85 高貴/個"
-    assert format_exalted_unit_price(5.25) == "5.2 高貴/個"
-    assert format_exalted_unit_price(12.4) == "12 高貴/個"
+    assert format_exalted_unit_price(0.004) == "<0.01"
+    assert format_exalted_unit_price(0.85) == "0.85"
+    assert format_exalted_unit_price(5.25) == "5.2"
+    assert format_exalted_unit_price(12.4) == "12"
+
+
+def test_expedition_price_colors_only_highest_row_green():
+    rows = highlight_highest_price_rows([
+        RewardPriceRow(10, 20, "2.5", 2.5),
+        RewardPriceRow(30, 40, "8.2", 8.2),
+        RewardPriceRow(50, 60, "8.2", 8.2),
+    ])
+
+    assert [row.highlighted for row in rows] == [False, True, True]
+    assert reward_price_text_color(rows[0]).name() == "#ffffff"
+    assert reward_price_text_color(rows[1]).name() == "#b0ff7b"
+
+
+def test_expedition_exalted_icon_uses_poe2_asset():
+    path = expedition_exalted_icon_path()
+
+    assert path.name == "ExaltedOrb2.png"
+    assert path.is_file()
 
 
 def test_reward_alias_bundle_versions_exact_dictionary_bytes(tmp_path):

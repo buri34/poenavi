@@ -3,14 +3,23 @@
 from __future__ import annotations
 
 import json
+import sys
 import threading
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from hashlib import sha256
 from pathlib import Path
 
 from PySide6.QtCore import QCoreApplication, QObject, QRect, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QFont, QGuiApplication, QImage, QPainter, QPen
+from PySide6.QtGui import (
+    QColor,
+    QFont,
+    QGuiApplication,
+    QImage,
+    QPainter,
+    QPen,
+    QPixmap,
+)
 from PySide6.QtWidgets import QWidget
 
 from src.poetore.expedition_ocr_probe import (
@@ -39,6 +48,8 @@ class RewardPriceRow:
     top: int
     bottom: int
     text: str
+    unit_price: float
+    highlighted: bool = False
 
 
 def load_reward_aliases(path: Path | None = None) -> dict[str, str]:
@@ -142,7 +153,30 @@ def format_exalted_unit_price(value: float) -> str:
         amount = f"{value:.1f}".rstrip("0").rstrip(".")
     else:
         amount = f"{value:.0f}"
-    return f"{amount} 高貴/個"
+    return amount
+
+
+def expedition_exalted_icon_path() -> Path:
+    """Resolve the bundled PoE2 Exalted Orb icon in dev and packaged runs."""
+    source_root = Path(__file__).resolve().parents[2]
+    executable_root = Path(sys.executable).resolve().parent
+    roots = (executable_root, Path(getattr(sys, "_MEIPASS", source_root)), source_root)
+    for root in roots:
+        path = root / "assets" / "icons" / "ExaltedOrb2.png"
+        if path.is_file():
+            return path
+    return source_root / "assets" / "icons" / "ExaltedOrb2.png"
+
+
+def reward_price_text_color(row: RewardPriceRow) -> QColor:
+    return QColor("#B0FF7B" if row.highlighted else "#FFFFFF")
+
+
+def highlight_highest_price_rows(rows: list[RewardPriceRow]) -> list[RewardPriceRow]:
+    if not rows:
+        return []
+    highest_price = max(row.unit_price for row in rows)
+    return [replace(row, highlighted=row.unit_price == highest_price) for row in rows]
 
 
 def price_label_x(display_width: int, source_width: int, panel_width: int) -> int:
@@ -189,6 +223,7 @@ class ExpeditionPriceOverlay(QWidget):
         self._source_width = 1
         self._source_height = 1
         self._panel_width = 0
+        self._exalted_icon = QPixmap(str(expedition_exalted_icon_path()))
         self.setWindowFlags(
             Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
             | Qt.WindowTransparentForInput
@@ -216,19 +251,32 @@ class ExpeditionPriceOverlay(QWidget):
     def paintEvent(self, _event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
         font = QFont("Yu Gothic UI", 13)
         font.setBold(True)
         painter.setFont(font)
         x = price_label_x(self.width(), self._source_width, self._panel_width)
         scale_y = self.height() / self._source_height
+        icon_size = 24
+        icon_gap = 5
         for row in self._rows:
             y = round(((row.top + row.bottom) / 2) * scale_y)
             bounds = painter.fontMetrics().boundingRect(row.text)
             baseline = y + bounds.height() // 3
+            text_x = x
+            if not self._exalted_icon.isNull():
+                painter.drawPixmap(
+                    x,
+                    y - icon_size // 2,
+                    icon_size,
+                    icon_size,
+                    self._exalted_icon,
+                )
+                text_x += icon_size + icon_gap
             painter.setPen(QPen(QColor(0, 0, 0, 220), 4, Qt.SolidLine, Qt.RoundCap))
-            painter.drawText(x, baseline, row.text)
-            painter.setPen(QColor("#B0FF7B"))
-            painter.drawText(x, baseline, row.text)
+            painter.drawText(text_x, baseline, row.text)
+            painter.setPen(reward_price_text_color(row))
+            painter.drawText(text_x, baseline, row.text)
 
 
 class ExpeditionRewardController(QObject):
@@ -396,14 +444,20 @@ class ExpeditionRewardController(QObject):
             exalted_chaos = default_poe_ninja_service.exalted_chaos_rate(league)
             if not exalted_chaos:
                 raise RuntimeError("高貴なオーブの換算レートを取得できませんでした。")
-            shown = [
-                RewardPriceRow(
-                    row.top, row.bottom,
-                    format_exalted_unit_price(prices[row.english_name].chaos / exalted_chaos),
-                )
+            priced = [
+                (row, prices[row.english_name].chaos / exalted_chaos)
                 for row in stable
                 if row.english_name in prices and prices[row.english_name].chaos > 0
             ]
+            shown = highlight_highest_price_rows([
+                RewardPriceRow(
+                    row.top,
+                    row.bottom,
+                    format_exalted_unit_price(value),
+                    value,
+                )
+                for row, value in priced
+            ])
             if not shown:
                 raise RuntimeError("特定した報酬のpoe.ninja価格が見つかりませんでした。")
             first = prepared[0]
