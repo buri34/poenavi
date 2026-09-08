@@ -59,6 +59,34 @@ def test_strip_quantity_and_dedicated_quantity_parser():
     assert parse_quantity_ocr("19") is None
 
 
+@pytest.mark.parametrize(
+    ("raw", "quantity", "item_text"),
+    [
+        ("lx 滋 養 の ワ ー ド ル ー ン", 1, "滋 養 の ワ ー ド ル ー ン"),
+        ("1 , 勇 気 の ワ ー ド ル ー ン", 1, "勇 気 の ワ ー ド ル ー ン"),
+        ("1 = 窮 地 の ワ ー ド ル ー ン", 1, "窮 地 の ワ ー ド ル ー ン"),
+        ("、 lx ワ ー ド ル ー ン", 1, "ワ ー ド ル ー ン"),
+        ("ⅸ 錬 金 術 の オ ー ブ", 1, "錬 金 術 の オ ー ブ"),
+        ("6 = 秘 術 師 の 彫 刻 針", 6, "秘 術 師 の 彫 刻 針"),
+    ],
+)
+def test_windows_quantity_misreads_are_parsed_and_removed(raw, quantity, item_text):
+    assert parse_quantity_ocr(raw) == quantity
+    assert strip_quantity(raw) == (quantity, item_text)
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "ス キ ル レ ベ ル 20 : グ リ ム ピ ラ",
+        "ラ ン ダ ム な カ レ ン シ ー 5 個",
+        "19",
+    ],
+)
+def test_quantity_parser_does_not_use_non_leading_numbers(raw):
+    assert parse_quantity_ocr(raw) is None
+
+
 def test_dictionary_matching_rejects_ambiguous_neighbour():
     candidates = ["勇気のワードルーン", "補強のワードルーン"]
     exact = match_item_name("勇気のワードルーン", candidates)

@@ -63,6 +63,9 @@ powershell -ExecutionPolicy Bypass -File scripts\run_expedition_windows_ocr.ps1
 日本語OCRへ渡します。今回のWindowsミラーでは入力画像と辞書を自動選択し、共有フォルダの
 `expedition-items-windows.csv`へ結果を出力します。別の画像を使う場合は
 `-InputDirectory`と`-Dictionary`を指定できます。
+数量はWindows OCRで実際に発生した`1x`→`lx`、`1 ,`、`1 =`などの先頭マーカーを
+数量として補正します。行中のジェムレベル等を数量と誤認識しないよう、先頭以外の
+数字は対象にしません。
 初回ビルド時は.NETが必要な参照ファイルを取得するため、ネット接続が必要な場合があります。
 
 日本語OCRが利用できない場合は、Windowsの「設定」→「時刻と言語」→「言語と地域」で

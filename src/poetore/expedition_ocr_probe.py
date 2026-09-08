@@ -50,10 +50,20 @@ def normalize_text(text: str) -> str:
 def strip_quantity(text: str) -> tuple[int | None, str]:
     """Split a leading Expedition stack count from an OCR string."""
     normalized = normalize_text(text)
-    match = re.match(r"^[|Il\s]*(\d{1,3})\s*[xX]\s*(.+)$", normalized)
-    if not match:
+    quantity = parse_quantity_ocr(text)
+    if quantity is None:
         return None, normalized
-    return int(match.group(1)), match.group(2).strip()
+
+    # Windows OCR recognizes the narrow multiplication glyph reliably as a
+    # separator position, but often calls it comma or equals.  The count itself
+    # remains a leading number.  It also commonly reads "1x" as "lx".
+    without_prefix = re.sub(
+        r"^\s*[|\u3001\u3002'\"′・]*\s*(?:\d{1,3}\s*(?:[xX×,=，＝])|[lI|]\s*[xX×]|ⅸ)\s*",
+        "",
+        text,
+        count=1,
+    )
+    return quantity, normalize_text(without_prefix)
 
 
 def _candidate_key(text: str) -> str:
@@ -469,9 +479,21 @@ def _run_windows_ocr(image: Path, language: str) -> str:
 
 
 def parse_quantity_ocr(text: str) -> int | None:
-    compact = re.sub(r"\s+", "", text).replace("X", "x")
-    match = re.search(r"(\d{1,3})x", compact)
-    return int(match.group(1)) if match else None
+    """Read only a leading Expedition stack marker from noisy Windows OCR.
+
+    Observed Windows.Media.Ocr output turns the visual multiplication sign into
+    ``x``, comma, or equals, and turns ``1x`` into ``lx`` or ``IX``.  Requiring
+    the marker at the beginning avoids treating gem levels and item names as a
+    stack count.
+    """
+    compact = re.sub(r"\s+", "", text).replace("×", "x").replace("X", "x")
+    compact = re.sub(r"^[|、。'\"′・]+", "", compact)
+    match = re.match(r"(\d{1,3})(?:x|,|=|，|＝)", compact)
+    if match:
+        return int(match.group(1))
+    if re.match(r"(?:[lI|]x|ⅸ)", compact, re.IGNORECASE):
+        return 1
+    return None
 
 
 def analyze_image(
