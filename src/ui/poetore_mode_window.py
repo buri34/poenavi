@@ -1,8 +1,9 @@
 """ぽえとれモードの軽量メイン画面。"""
 
-from pathlib import Path
+import sys
 import threading
 import time
+from pathlib import Path
 
 from PySide6.QtCore import QObject, QPointF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import (
@@ -30,9 +31,18 @@ from PySide6.QtWidgets import (
 )
 
 from src.ui.app_theme import POETORE_THEME
+from src.ui.custom_command_settings import (
+    custom_command_hotkeys,
+    normalized_custom_commands,
+)
 from src.utils.chat_command import send_chat_command
-from src.ui.custom_command_settings import custom_command_hotkeys, normalized_custom_commands
 from src.utils.config_manager import ConfigManager
+from src.utils.feature_support import (
+    MAP_CHECK,
+    POETORE,
+    is_feature_hotkey_supported,
+    is_feature_supported,
+)
 from src.utils.global_hotkeys import (
     ForegroundSuppressedHotkeyService,
     GlobalHotkeyService,
@@ -41,8 +51,6 @@ from src.utils.global_hotkeys import (
 )
 from src.utils.poe_version_data import POE1, POE2
 from src.utils.stash_tab_scroll import StashTabScrollController
-from src.utils.feature_support import MAP_CHECK, POETORE, is_feature_hotkey_supported, is_feature_supported
-
 
 POETORE_ACCENT = POETORE_THEME.accent
 POETORE_TEXT = POETORE_THEME.text
@@ -321,6 +329,14 @@ class PoetoreModeWindow(QMainWindow):
         )
         self.stash_tab_scroll.start()
         self._start_hotkeys()
+        if (
+            sys.platform == "win32"
+            and self.poe_version == POE2
+            and self.config.get("poetore", {}).get(
+                "expedition_reward_overlay", {},
+            ).get("enabled", False)
+        ):
+            self._ensure_expedition_reward_controller().warm_up()
 
         self._rate_timer = QTimer(self)
         self._rate_timer.setInterval(RATE_REFRESH_MSEC)
@@ -726,6 +742,8 @@ class PoetoreModeWindow(QMainWindow):
         self._rate_request_running = False
         self.divine_rate_value.setText(f"1 = {rate:,.1f} {self.rate_quote_label}")
         self.rate_status.setText(f"{league} ・ poe.ninja ・ 31分ごとに自動更新")
+        if self._expedition_reward_controller is not None:
+            self._expedition_reward_controller.warm_up()
 
     def _show_rate_error(self, message):
         self._rate_request_running = False
@@ -991,7 +1009,7 @@ class PoetoreModeWindow(QMainWindow):
         if self.suppressed_expedition_hotkey is not None:
             self.suppressed_expedition_hotkey.stop()
         if self._expedition_reward_controller is not None:
-            self._expedition_reward_controller.hide()
+            self._expedition_reward_controller.close()
         if self._memo_dialog is not None:
             self._memo_dialog.close()
         if self._cheat_sheet_overlay is not None:

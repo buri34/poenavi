@@ -5,14 +5,13 @@ import re
 import threading
 import time
 import unicodedata
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Callable
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from .models import ParsedItem
-
 
 API_URL = "https://poe.ninja/poe1/api/economy/current/dense/overviews"
 STASH_OVERVIEW_URL = "https://poe.ninja/poe1/api/economy/stash/current/item/overview"
@@ -231,6 +230,7 @@ class PoeNinjaPriceService:
         self._stash_cache: dict[tuple[str, str], tuple[float, dict]] = {}
         self._poe2_cache: dict[tuple[str, str], tuple[float, dict]] = {}
         self._poe2_exchange_cache: dict[tuple[str, str], tuple[float, dict]] = {}
+        self._poe2_exchange_fetch_locks: dict[tuple[str, str], threading.Lock] = {}
         self._lock = threading.Lock()
 
     def clear(self):
@@ -368,21 +368,9 @@ class PoeNinjaPriceService:
         if not wanted or not league or re.search(r"\(PL\d+\)$", league):
             return {}
 
-        def fetch(type_name: str) -> tuple[str, dict]:
-            return type_name, self._poe2_exchange_payload(league, type_name)
-
-        payloads: dict[str, dict] = {}
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            futures = {
-                executor.submit(fetch, type_name): type_name
-                for type_name in POE2_EXPEDITION_REWARD_TYPES
-            }
-            for future in as_completed(futures):
-                try:
-                    type_name, payload = future.result()
-                except Exception:  # noqa: BLE001 - one optional category may fail
-                    continue
-                payloads[type_name] = payload
+        payloads = self._fetch_poe2_exchange_categories(
+            league, POE2_EXPEDITION_REWARD_TYPES,
+        )
 
         resolved: dict[str, PoeNinjaPrice] = {}
         for type_name in POE2_EXPEDITION_REWARD_TYPES:
@@ -398,6 +386,34 @@ class PoeNinjaPriceService:
                 if price is not None:
                     resolved[name] = price
         return resolved
+
+    def prefetch_poe2_expedition_rewards(self, league: str) -> int:
+        """Warm the Expedition exchange cache outside the scan critical path."""
+        if not league or re.search(r"\(PL\d+\)$", league):
+            return 0
+        return len(self._fetch_poe2_exchange_categories(
+            league, POE2_EXPEDITION_REWARD_TYPES,
+        ))
+
+    def _fetch_poe2_exchange_categories(
+        self, league: str, type_names: tuple[str, ...],
+    ) -> dict[str, dict]:
+        def fetch(type_name: str) -> tuple[str, dict]:
+            return type_name, self._poe2_exchange_payload(league, type_name)
+
+        payloads: dict[str, dict] = {}
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = {
+                executor.submit(fetch, type_name): type_name
+                for type_name in type_names
+            }
+            for future in as_completed(futures):
+                try:
+                    type_name, payload = future.result()
+                except Exception:  # noqa: BLE001, S112 - optional category
+                    continue
+                payloads[type_name] = payload
+        return payloads
 
     def lookup_identity(
         self, namespace: str, name: str, variant: str | None, league: str,
@@ -470,18 +486,29 @@ class PoeNinjaPriceService:
             now = self._clock()
             if cached and now - cached[0] < CACHE_TTL_SECONDS:
                 return cached[1]
-        # Network I/O must not hold the shared cache lock. Expedition scans
-        # fetch several independent categories concurrently on their first run.
-        payload = self._poe2_exchange_fetcher(league, type_name)
-        if not isinstance(payload, dict):
-            raise ValueError("poe.ninja PoE2 Currency Exchangeの応答形式を認識できませんでした。")
-        with self._lock:
-            cached = self._poe2_exchange_cache.get(key)
-            now = self._clock()
-            if cached and now - cached[0] < CACHE_TTL_SECONDS:
-                return cached[1]
-            self._poe2_exchange_cache[key] = (now, payload)
-            return payload
+            fetch_lock = self._poe2_exchange_fetch_locks.setdefault(
+                key, threading.Lock(),
+            )
+        # Coalesce a background prefetch and an early user scan for the same
+        # category without serializing unrelated categories.
+        with fetch_lock:
+            with self._lock:
+                cached = self._poe2_exchange_cache.get(key)
+                now = self._clock()
+                if cached and now - cached[0] < CACHE_TTL_SECONDS:
+                    return cached[1]
+            payload = self._poe2_exchange_fetcher(league, type_name)
+            if not isinstance(payload, dict):
+                raise ValueError(
+                    "poe.ninja PoE2 Currency Exchangeの応答形式を認識できませんでした。"
+                )
+            with self._lock:
+                cached = self._poe2_exchange_cache.get(key)
+                now = self._clock()
+                if cached and now - cached[0] < CACHE_TTL_SECONDS:
+                    return cached[1]
+                self._poe2_exchange_cache[key] = (now, payload)
+                return payload
 
 
 def _refresh_from_stash_overview(price: PoeNinjaPrice, payload: dict) -> PoeNinjaPrice:

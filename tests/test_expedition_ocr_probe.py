@@ -1,3 +1,5 @@
+import base64
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -7,6 +9,7 @@ from PySide6.QtGui import QColor, QImage
 import src.poetore.expedition_ocr_probe as probe
 from src.poetore.expedition_ocr_probe import (
     RowBand,
+    WindowsOcrServer,
     analyze_directory,
     detect_reward_cards,
     detect_row_bands,
@@ -15,6 +18,7 @@ from src.poetore.expedition_ocr_probe import (
     normalize_text,
     otsu_threshold,
     parse_quantity_ocr,
+    prepare_qimage_rows,
     score_rows,
     strip_quantity,
     write_results_csv,
@@ -45,6 +49,14 @@ def test_windows_powershell_launcher_is_windows_powershell_compatible_ascii():
     launcher = Path("scripts/run_expedition_windows_ocr.ps1").read_bytes()
 
     assert launcher.isascii()
+
+
+def test_windows_ocr_helper_has_persistent_memory_protocol():
+    source = Path("tools/ExpeditionWindowsOcr/Program.cs").read_text(encoding="utf-8")
+
+    assert '"--server"' in source
+    assert "InMemoryRandomAccessStream" in source
+    assert "Convert.FromBase64String" in source
 
 
 def test_normalize_text_preserves_japanese_and_normalizes_quantity_marker():
@@ -175,6 +187,49 @@ def test_detect_reward_cards_treats_short_wide_image_as_panel_crop():
     assert bands == [RowBand(10, 40), RowBand(50, 80)]
 
 
+def test_prepare_qimage_rows_keeps_images_in_memory():
+    image = QImage(220, 100, QImage.Format.Format_RGB888)
+    image.fill(QColor(50, 50, 50))
+    for top, bottom in ((10, 40), (50, 80)):
+        for y in range(top, bottom):
+            for x in range(220):
+                image.setPixelColor(x, y, QColor(200, 200, 200))
+
+    prepared = prepare_qimage_rows(image)
+
+    assert prepared.bands == (RowBand(10, 40), RowBand(50, 80))
+    assert len(prepared.images) == 2
+    assert all(data.startswith(b"BM") for data in prepared.images)
+
+
+def test_prepare_qimage_rows_can_limit_panel_scan_width():
+    image = QImage(220, 100, QImage.Format.Format_RGB888)
+    image.fill(QColor(50, 50, 50))
+    for y in range(20, 60):
+        for x in range(60):
+            image.setPixelColor(x, y, QColor(200, 200, 200))
+
+    prepared = prepare_qimage_rows(image, scan_width=60)
+
+    assert prepared.panel_width == 60
+    assert prepared.bands == (RowBand(20, 60),)
+
+
+def test_prepare_qimage_rows_preserves_full_screen_header_filter_after_crop():
+    image = QImage(220, 180, QImage.Format.Format_RGB888)
+    image.fill(QColor(50, 50, 50))
+    for top, bottom in ((10, 40), (65, 105), (112, 152)):
+        for y in range(top, bottom):
+            for x in range(100):
+                image.setPixelColor(x, y, QColor(200, 200, 200))
+
+    prepared = prepare_qimage_rows(
+        image, scan_width=100, full_screen=True,
+    )
+
+    assert prepared.bands == (RowBand(65, 105), RowBand(112, 152))
+
+
 def test_detect_reward_cards_drops_background_after_one_tall_reward():
     width, height = 100, 220
     channels = [[50] * (width * height) for _ in range(4)]
@@ -251,6 +306,70 @@ def test_windows_ocr_batch_preserves_input_order(tmp_path, monkeypatch):
     )
 
     assert probe.run_windows_ocr_batch(images) == ["一番目", "二番目"]
+
+
+def test_windows_ocr_server_reuses_one_process_for_multiple_batches(monkeypatch):
+    server = WindowsOcrServer()
+    starts = []
+
+    class FakeStdin:
+        def write(self, line):
+            request = json.loads(line)
+            texts = [
+                base64.b64decode(value).decode("ascii")
+                for value in request["Images"]
+            ]
+            server._responses.put(json.dumps({"id": request["Id"], "texts": texts}))
+
+        def flush(self):
+            pass
+
+    process = SimpleNamespace(stdin=FakeStdin(), poll=lambda: None)
+
+    def ensure_started():
+        if server._process is None:
+            starts.append(True)
+            server._process = process
+
+    monkeypatch.setattr(server, "_ensure_started", ensure_started)
+
+    assert server.recognize([b"first"]) == ["first"]
+    assert server.recognize([b"second"]) == ["second"]
+    assert len(starts) == 1
+
+
+def test_windows_ocr_server_restarts_once_after_failure(monkeypatch):
+    server = WindowsOcrServer()
+    calls = []
+    stops = []
+
+    def recognize_once(_images):
+        calls.append(True)
+        if len(calls) == 1:
+            raise RuntimeError("stopped")
+        return ["ok"]
+
+    monkeypatch.setattr(server, "_recognize_once", recognize_once)
+    monkeypatch.setattr(server, "_stop_process", lambda **_kwargs: stops.append(True))
+
+    assert server.recognize([b"image"]) == ["ok"]
+    assert len(calls) == 2
+    assert len(stops) == 1
+
+
+def test_windows_ocr_server_cleans_up_failed_start(monkeypatch):
+    server = WindowsOcrServer()
+    stops = []
+    monkeypatch.setattr(
+        server, "_ensure_started",
+        lambda: (_ for _ in ()).throw(RuntimeError("startup failed")),
+    )
+    monkeypatch.setattr(server, "_stop_process", lambda **_kwargs: stops.append(True))
+
+    with pytest.raises(RuntimeError, match="startup failed"):
+        server.start()
+
+    assert stops == [True]
 
 
 def test_unknown_ocr_engine_is_rejected_before_loading_image(tmp_path):

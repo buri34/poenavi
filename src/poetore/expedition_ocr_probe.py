@@ -2,18 +2,22 @@
 
 from __future__ import annotations
 
+import base64
 import csv
 import json
 import os
+import queue
 import re
 import shutil
 import subprocess
 import sys
+import threading
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
 
+from PySide6.QtCore import QBuffer, QByteArray, QIODevice
 from PySide6.QtGui import QImage
 
 OCR_ENGINES = ("tesseract", "windows")
@@ -39,6 +43,15 @@ class OcrRowResult:
     match_score: float | None = None
     match_margin: float | None = None
     trusted: bool = False
+
+
+@dataclass(frozen=True)
+class PreparedOcrFrame:
+    width: int
+    height: int
+    panel_width: int
+    bands: tuple[RowBand, ...]
+    images: tuple[bytes, ...]
 
 
 def normalize_text(text: str) -> str:
@@ -230,6 +243,8 @@ def detect_reward_cards(
     height: int,
     *,
     minimum_row_fill: float = 0.45,
+    scan_width: int | None = None,
+    full_screen: bool | None = None,
 ) -> tuple[int, list[RowBand]]:
     """Detect the pale reward cards before looking for dark text.
 
@@ -242,8 +257,16 @@ def detect_reward_cards(
         return 0, []
     # Narrow panel crops can also be very wide when only a few rewards exist.
     # Actual game captures are substantially larger than the panel itself.
-    is_full_screen = width >= 1000 and width / height > 1.5
-    scan_width = round(height * 0.55) if is_full_screen else width
+    is_full_screen = (
+        width >= 1000 and width / height > 1.5
+        if full_screen is None
+        else full_screen
+    )
+    scan_width = (
+        max(1, min(width, scan_width))
+        if scan_width is not None
+        else round(height * 0.55) if is_full_screen else width
+    )
     row_fill: list[float] = []
     for y in range(height):
         pale = 0
@@ -364,10 +387,9 @@ def _packed_image_bytes(image: QImage, bytes_per_pixel: int) -> bytes:
     )
 
 
-def _load_channels(path: Path) -> tuple[int, int, bytes, bytes, bytes, bytes]:
-    image = QImage(str(path))
+def _image_channels(image: QImage) -> tuple[int, int, bytes, bytes, bytes, bytes]:
     if image.isNull():
-        raise ValueError(f"画像を読み込めません: {path}")
+        raise ValueError("画像を読み込めません。")
     image = image.convertToFormat(QImage.Format.Format_RGB888)
     width, height = image.width(), image.height()
     rgb = _packed_image_bytes(image, 3)
@@ -382,6 +404,13 @@ def _load_channels(path: Path) -> tuple[int, int, bytes, bytes, bytes, bytes]:
         for red_value, green_value, blue_value in zip(red, green, blue)
     )
     return width, height, gray, red, green, blue
+
+
+def _load_channels(path: Path) -> tuple[int, int, bytes, bytes, bytes, bytes]:
+    image = QImage(str(path))
+    if image.isNull():
+        raise ValueError(f"画像を読み込めません: {path}")
+    return _image_channels(image)
 
 
 def _write_pgm(path: Path, width: int, height: int, pixels: Sequence[int]) -> None:
@@ -422,6 +451,74 @@ def _add_margin(pixels: Sequence[int], width: int, height: int, margin: int) -> 
         output.extend([0] * margin)
     output.extend([0] * ((width + margin * 2) * margin))
     return output
+
+
+def _prepare_row_image(
+    gray: Sequence[int],
+    width: int,
+    band: RowBand,
+    text_left: int,
+    text_right: int,
+) -> QImage:
+    crop_gray = _crop_pixels(gray, width, band, text_left, text_right)
+    threshold = otsu_threshold(crop_gray)
+    crop = [1 if value <= threshold else 0 for value in crop_gray]
+    crop_width = text_right - text_left
+    crop_height = band.bottom - band.top
+    border = max(2, round(crop_height * 0.12))
+    for y in range(crop_height):
+        for x in range(crop_width):
+            if y < border or y >= crop_height - border or x >= crop_width - border:
+                crop[y * crop_width + x] = 0
+    scale = 3
+    crop = _scale_pixels(crop, crop_width, crop_height, scale)
+    margin = 12
+    crop = _add_margin(crop, crop_width * scale, crop_height * scale, margin)
+    output_width = crop_width * scale + margin * 2
+    output_height = crop_height * scale + margin * 2
+    return QImage(
+        bytes(0 if value else 255 for value in crop),
+        output_width,
+        output_height,
+        output_width,
+        QImage.Format.Format_Grayscale8,
+    ).copy()
+
+
+def _image_bytes(image: QImage, image_format: str = "BMP") -> bytes:
+    data = QByteArray()
+    buffer = QBuffer(data)
+    if not buffer.open(QIODevice.OpenModeFlag.WriteOnly):
+        raise RuntimeError("OCR画像用メモリを開けませんでした。")
+    try:
+        if not image.save(buffer, image_format):
+            raise RuntimeError("OCR画像をメモリへ変換できませんでした。")
+    finally:
+        buffer.close()
+    return bytes(data)
+
+
+def prepare_qimage_rows(
+    image: QImage,
+    *,
+    scan_width: int | None = None,
+    full_screen: bool | None = None,
+) -> PreparedOcrFrame:
+    """Prepare Windows OCR row images without writing temporary files."""
+    width, height, gray, red, green, blue = _image_channels(image)
+    panel_width, bands = detect_reward_cards(
+        gray, red, green, blue, width, height,
+        scan_width=scan_width,
+        full_screen=full_screen,
+    )
+    text_left = round(panel_width * 0.40)
+    images = tuple(
+        _image_bytes(_prepare_row_image(gray, width, band, text_left, panel_width))
+        for band in bands
+    )
+    return PreparedOcrFrame(
+        width, height, panel_width, tuple(bands), images,
+    )
 
 
 def _run_tesseract(
@@ -490,6 +587,173 @@ def _windows_ocr_command(helper: Path) -> list[str]:
     if dotnet is None:
         raise RuntimeError("dotnetが見つかりません。.NET 8 SDKをインストールしてください。")
     return [dotnet, str(helper)]
+
+
+class WindowsOcrServer:
+    """Long-lived Windows OCR helper using an in-memory request protocol."""
+
+    def __init__(
+        self,
+        language: str = "ja-JP",
+        *,
+        startup_timeout: float = 15.0,
+        request_timeout: float = 45.0,
+    ):
+        self.language = language
+        self.startup_timeout = startup_timeout
+        self.request_timeout = request_timeout
+        self._lock = threading.Lock()
+        self._process = None
+        self._responses: queue.Queue[str | None] = queue.Queue()
+        self._stderr: list[str] = []
+        self._next_id = 0
+
+    def start(self) -> None:
+        with self._lock:
+            try:
+                self._ensure_started()
+            except Exception:
+                self._stop_process()
+                raise
+
+    def recognize(self, images: Sequence[bytes]) -> list[str]:
+        if not images:
+            return []
+        with self._lock:
+            last_error: Exception | None = None
+            for attempt in range(2):
+                try:
+                    return self._recognize_once(images)
+                except Exception as exc:  # noqa: BLE001 - restart owned helper once
+                    last_error = exc
+                    self._stop_process()
+                    if attempt:
+                        break
+            raise RuntimeError(str(last_error) if last_error else "Windows OCRに失敗しました。")
+
+    def close(self) -> None:
+        with self._lock:
+            self._stop_process(graceful=True)
+
+    def _ensure_started(self) -> None:
+        if sys.platform != "win32":
+            raise RuntimeError("Windows標準OCRはWindows上でのみ実行できます。")
+        if self._process is not None and self._process.poll() is None:
+            return
+        if self._process is not None:
+            self._stop_process()
+        helper = _windows_ocr_helper()
+        creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        self._responses = queue.Queue()
+        self._stderr = []
+        self._process = subprocess.Popen(
+            [*_windows_ocr_command(helper), "--server", self.language],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            bufsize=1,
+            creationflags=creationflags,
+        )
+        process = self._process
+        responses = self._responses
+        stderr = self._stderr
+        threading.Thread(
+            target=self._read_stdout, args=(process, responses), daemon=True,
+        ).start()
+        threading.Thread(
+            target=self._read_stderr, args=(process, stderr), daemon=True,
+        ).start()
+        ready_line = self._wait_response(self.startup_timeout)
+        try:
+            ready = json.loads(ready_line)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("Windows OCRヘルパーの起動応答が不正です。") from exc
+        if not isinstance(ready, dict) or ready.get("ready") is not True:
+            raise RuntimeError(str(ready.get("error") or "Windows OCRヘルパーを起動できません。"))
+
+    def _recognize_once(self, images: Sequence[bytes]) -> list[str]:
+        self._ensure_started()
+        process = self._process
+        if process is None or process.stdin is None:
+            raise RuntimeError("Windows OCRヘルパーへ接続できません。")
+        self._next_id += 1
+        request_id = self._next_id
+        request = {
+            "Id": request_id,
+            "Images": [base64.b64encode(image).decode("ascii") for image in images],
+        }
+        process.stdin.write(json.dumps(request, separators=(",", ":")) + "\n")
+        process.stdin.flush()
+        response_line = self._wait_response(self.request_timeout)
+        try:
+            response = json.loads(response_line)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("Windows OCRヘルパーの処理応答が不正です。") from exc
+        if not isinstance(response, dict):
+            raise RuntimeError(  # noqa: TRY004 - malformed process protocol
+                "Windows OCRヘルパーの処理応答が不正です。"
+            )
+        if response.get("error"):
+            raise RuntimeError(str(response["error"]))
+        texts = response.get("texts")
+        if response.get("id") != request_id or not isinstance(texts, list):
+            raise RuntimeError("Windows OCRヘルパーの処理順序が一致しません。")
+        if len(texts) != len(images):
+            raise RuntimeError("Windows OCRの一括処理結果が不正です。")
+        return [str(value) for value in texts]
+
+    def _wait_response(self, timeout: float) -> str:
+        try:
+            line = self._responses.get(timeout=timeout)
+        except queue.Empty as exc:
+            raise RuntimeError("Windows OCRヘルパーが時間内に応答しませんでした。") from exc
+        if line is None:
+            details = " ".join(self._stderr).strip()
+            if self._process is not None and getattr(self._process, "returncode", None) == 3:
+                raise RuntimeError(
+                    "Windowsの日本語OCRがありません。Windows設定の「言語と地域」で"
+                    "日本語のOCRを追加してください。"
+                )
+            raise RuntimeError(details or "Windows OCRヘルパーが終了しました。")
+        return line
+
+    @staticmethod
+    def _read_stdout(process, responses: queue.Queue[str | None]) -> None:
+        if process.stdout is not None:
+            for line in process.stdout:
+                responses.put(line.strip())
+        responses.put(None)
+
+    @staticmethod
+    def _read_stderr(process, stderr: list[str]) -> None:
+        if process.stderr is not None:
+            for line in process.stderr:
+                stderr.append(line.strip())
+
+    def _stop_process(self, *, graceful: bool = False) -> None:
+        process = self._process
+        self._process = None
+        if process is None:
+            return
+        if process.poll() is None and graceful and process.stdin is not None:
+            try:
+                process.stdin.write('{"Command":"shutdown"}\n')
+                process.stdin.flush()
+                process.wait(timeout=2)
+            except (BrokenPipeError, OSError, subprocess.TimeoutExpired):
+                pass
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=2)
+        for stream in (process.stdin, process.stdout, process.stderr):
+            if stream is not None:
+                stream.close()
 
 
 def windows_ocr_available(language: str = "ja-JP") -> bool:
@@ -590,27 +854,13 @@ def analyze_image(
 
     rows: list[OcrRowResult] = []
     for index, band in enumerate(bands, start=1):
-        crop_gray = _crop_pixels(gray, width, band, text_left, text_right)
-        threshold = otsu_threshold(crop_gray)
-        crop = [1 if value <= threshold else 0 for value in crop_gray]
-        crop_width = text_right - text_left
         crop_height = band.bottom - band.top
-        border = max(2, round(crop_height * 0.12))
-        for y in range(crop_height):
-            for x in range(crop_width):
-                if y < border or y >= crop_height - border or x >= crop_width - border:
-                    crop[y * crop_width + x] = 0
-        scale = 3
-        crop = _scale_pixels(crop, crop_width, crop_height, scale)
-        margin = 12
-        crop = _add_margin(crop, crop_width * scale, crop_height * scale, margin)
-        crop_path = image_output / f"row_{index:02d}.png"
-        _write_grayscale_png(
-            crop_path,
-            crop_width * scale + margin * 2,
-            crop_height * scale + margin * 2,
-            [0 if value else 255 for value in crop],
+        prepared_image = _prepare_row_image(
+            gray, width, band, text_left, text_right,
         )
+        crop_path = image_output / f"row_{index:02d}.png"
+        if not prepared_image.save(str(crop_path), "PNG"):
+            raise RuntimeError(f"OCR用PNGを保存できません: {crop_path}")
         psm = 11 if crop_height > 70 else 7
         if prepare_only:
             raw = ""

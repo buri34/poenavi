@@ -1,11 +1,16 @@
 import json
+from unittest.mock import patch
 
+from PySide6.QtCore import QRect
 from PySide6.QtGui import QColor, QImage
 
 from src.poetore.expedition_ocr_probe import RowBand
 from src.poetore.expedition_rewards import (
     RewardIdentity,
+    SafeRewardNameResolver,
+    expedition_capture_rect,
     format_exalted_unit_price,
+    load_reward_alias_bundle,
     load_reward_aliases,
     price_label_x,
     reward_cards_still_visible,
@@ -21,6 +26,44 @@ def test_load_reward_aliases_and_format_prices(tmp_path):
     assert format_exalted_unit_price(0.85) == "0.85 高貴/個"
     assert format_exalted_unit_price(5.25) == "5.2 高貴/個"
     assert format_exalted_unit_price(12.4) == "12 高貴/個"
+
+
+def test_reward_alias_bundle_versions_exact_dictionary_bytes(tmp_path):
+    path = tmp_path / "aliases.json"
+    path.write_text('{"items":[{"ja":"高貴","en":"Exalted"}]}', encoding="utf-8")
+
+    aliases, first_version = load_reward_alias_bundle(path)
+    path.write_text('{"items":[{"ja":"混沌","en":"Chaos"}]}', encoding="utf-8")
+    _, second_version = load_reward_alias_bundle(path)
+
+    assert aliases == {"高貴": "Exalted"}
+    assert first_version != second_version
+
+
+def test_safe_reward_name_resolver_caches_only_trusted_matches():
+    resolver = SafeRewardNameResolver({"高貴": "Exalted"}, "dictionary-v1")
+    with patch(
+        "src.poetore.expedition_rewards.match_item_name",
+        side_effect=[
+            ("高貴", 1.0, 1.0, True),
+            ("", 0.5, 0.0, False),
+            ("", 0.5, 0.0, False),
+        ],
+    ) as matcher:
+        assert resolver.resolve("1x 高貴") == ("高貴", "Exalted")
+        assert resolver.resolve("1x 高貴") == ("高貴", "Exalted")
+        assert resolver.resolve("不明") is None
+        assert resolver.resolve("不明") is None
+
+    assert matcher.call_count == 3
+
+
+def test_expedition_capture_rect_uses_only_left_panel_area():
+    client = QRect(100, 200, 1920, 1080)
+
+    capture = expedition_capture_rect(client)
+
+    assert capture == QRect(100, 200, 756, 1080)
 
 
 def test_stable_reward_identities_requires_two_matching_frames():

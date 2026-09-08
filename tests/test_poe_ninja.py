@@ -1,13 +1,18 @@
+import threading
+
 import pytest
 
 from src.poetore.models import ParsedItem
 from src.poetore.parser import parse_item_text
 from src.poetore.poe_ninja import (
-    CACHE_TTL_SECONDS, PoeNinjaPrice, PoeNinjaPriceService, divine_chaos_rate,
-    match_poe_ninja_price,
-    match_poe_ninja_identity,
+    CACHE_TTL_SECONDS,
+    PoeNinjaPrice,
+    PoeNinjaPriceService,
+    divine_chaos_rate,
     match_poe2_exchange_price,
     match_poe2_unique_price,
+    match_poe_ninja_identity,
+    match_poe_ninja_price,
 )
 from src.poetore.trade import english_trade_identity
 
@@ -249,6 +254,55 @@ def test_expedition_reward_lookup_searches_exchange_categories_and_converts_to_e
     assert set(prices) == {"Exalted Orb", "Desert Rune"}
     assert prices["Desert Rune"].chaos == 25
     assert service.exalted_chaos_rate("Test League") == 5
+
+
+def test_expedition_prefetch_populates_all_categories_before_lookup():
+    calls = []
+    service = PoeNinjaPriceService(
+        poe2_exchange_fetcher=lambda _league, type_name: calls.append(type_name) or {
+            "core": {}, "items": [], "lines": [],
+        },
+    )
+
+    assert service.prefetch_poe2_expedition_rewards("Test League") == 13
+    assert len(calls) == 13
+
+    service.lookup_poe2_expedition_rewards(("Missing",), "Test League")
+    assert len(calls) == 13
+
+
+def test_exchange_cache_coalesces_background_and_foreground_fetches():
+    fetch_started = threading.Event()
+    allow_fetch = threading.Event()
+    calls = []
+
+    def fetch(_league, _type_name):
+        calls.append(True)
+        fetch_started.set()
+        assert allow_fetch.wait(timeout=2)
+        return {"core": {}, "items": [], "lines": []}
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetch)
+    results = []
+    first = threading.Thread(
+        target=lambda: results.append(
+            service._poe2_exchange_payload("Test League", "Runes")
+        )
+    )
+    second = threading.Thread(
+        target=lambda: results.append(
+            service._poe2_exchange_payload("Test League", "Runes")
+        )
+    )
+    first.start()
+    assert fetch_started.wait(timeout=2)
+    second.start()
+    allow_fetch.set()
+    first.join(timeout=2)
+    second.join(timeout=2)
+
+    assert len(calls) == 1
+    assert len(results) == 2
 
 
 def test_trend_summary_uses_signed_total_change_instead_of_graph_deviation():

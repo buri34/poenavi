@@ -1,5 +1,4 @@
 from unittest.mock import MagicMock, call, patch
-import pytest
 
 from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QPixmap
@@ -165,6 +164,7 @@ def test_poe2_expedition_hotkey_starts_only_when_feature_is_enabled():
         "hotkeys": {"expedition_reward_ocr": "alt+e"},
         "poetore": {"expedition_reward_overlay": {"enabled": True}},
     }
+    controller = MagicMock()
     with patch(
         "src.ui.poetore_mode_window.ConfigManager.load_config", return_value=config,
     ), patch(
@@ -173,6 +173,13 @@ def test_poe2_expedition_hotkey_starts_only_when_feature_is_enabled():
         "src.ui.poetore_mode_window.ForegroundSuppressedHotkeyService",
     ) as suppressed_class, patch(
         "src.ui.poetore_mode_window.suppressed_hotkeys_supported", return_value=True,
+    ), patch(
+        "src.ui.poetore_mode_window.sys",
+        platform="win32",
+    ), patch.object(
+        PoetoreModeWindow,
+        "_ensure_expedition_reward_controller",
+        return_value=controller,
     ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
         window = PoetoreModeWindow()
 
@@ -181,6 +188,7 @@ def test_poe2_expedition_hotkey_starts_only_when_feature_is_enabled():
         ("poetore_capture", "alt+d"),
         ("expedition_reward_ocr", "alt+e"),
     ]
+    controller.warm_up.assert_called_once_with()
     window.close()
     app.processEvents()
 
