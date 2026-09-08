@@ -1200,6 +1200,18 @@ class PoetoreWindow(QWidget):
         self.rarity_condition_chip.setObjectName("readonlyFilterChip")
         self.rarity_condition_chip.setEnabled(False)
         self.rarity_condition_chip.hide()
+        self.tablet_rarity_combo = QComboBox()
+        self.tablet_rarity_combo.setObjectName("filterControl")
+        self.tablet_rarity_combo.setProperty("compactAction", True)
+        for label, value in (
+            ("非ユニーク", "nonunique"),
+            ("ノーマル限定", "normal"),
+            ("マジック限定", "magic"),
+            ("レア限定", "rare"),
+        ):
+            self.tablet_rarity_combo.addItem(label, value)
+        self.tablet_rarity_combo.setToolTip("石板のレアリティを指定して検索します")
+        self.tablet_rarity_combo.hide()
 
         self.trade_status_combo = QComboBox()
         self.trade_status_combo.setObjectName("filterControl")
@@ -1537,6 +1549,7 @@ class PoetoreWindow(QWidget):
             *((f"influence_{name}", self.influence_chips[name]) for name in _INFLUENCE_CHIPS),
             ("rarity", self.rarity_condition_chip),
             ("magic_rarity", self.magic_rarity_toggle),
+            ("tablet_rarity", self.tablet_rarity_combo),
             ("unidentified", self.unidentified_chip),
             ("veiled", self.veiled_chip),
             ("foil", self.foil_chip),
@@ -1773,6 +1786,7 @@ class PoetoreWindow(QWidget):
         self._preset_item_key = None
         self._state_item_key = None
         self._base_scope_item_key = None
+        self._tablet_rarity_item_key = None
         self._runemastered_item_key = None
         self._unique_selector_item_key = None
         self._last_trade_url = ""
@@ -1793,6 +1807,7 @@ class PoetoreWindow(QWidget):
         """Awakened準拠の検索待ち・即時再検索トリガーを接続する。"""
         for control in (
             self.trade_preset_combo, self.base_scope_toggle, self.magic_rarity_toggle,
+            self.tablet_rarity_combo,
             self.corrupted_combo, self.unidentified_chip, self.veiled_chip,
             self.foil_chip, self.split_combo, self.mirrored_combo,
             self.sanctified_combo,
@@ -4418,6 +4433,10 @@ class PoetoreWindow(QWidget):
         magic_exact = bool(
             self.magic_rarity_toggle.isVisible() and self.magic_rarity_toggle.currentData()
         )
+        tablet_rarity = (
+            str(self.tablet_rarity_combo.currentData())
+            if self.tablet_rarity_combo.isVisible() else None
+        )
         league = self._selected_trade_league()
         league_label = league or "現行SC（自動）"
         self.price_status.setText(
@@ -4510,6 +4529,7 @@ class PoetoreWindow(QWidget):
                         gem_sockets_min=gem_sockets_min,
                         exact_base_type=exact_base_type,
                         magic_exact=magic_exact,
+                        rarity_override=tablet_rarity,
                         trade_currency=trade_currency,
                         listed_within=listed_within,
                         include_corrupted=include_corrupted,
@@ -4622,9 +4642,23 @@ class PoetoreWindow(QWidget):
             0, "非ユニーク" if self.poe_version == POE2 else "ユニーク以外",
         )
         self.magic_rarity_toggle.setVisible(magic_base_search)
-        self.rarity_condition_chip.setVisible(
-            is_poe2_search_rarity and not magic_base_search,
+        tablet_rarity_search = bool(
+            self.poe_version == POE2
+            and item is not None
+            and item.category == "tablet"
+            and rarity not in {"unique", "ユニーク"}
         )
+        self.tablet_rarity_combo.setVisible(tablet_rarity_search)
+        self.rarity_condition_chip.setVisible(
+            is_poe2_search_rarity and not magic_base_search and not tablet_rarity_search,
+        )
+        if tablet_rarity_search:
+            item_key = item.raw_text
+            if item_key != self._tablet_rarity_item_key:
+                self._tablet_rarity_item_key = item_key
+                self.tablet_rarity_combo.setCurrentIndex(0)
+        else:
+            self._tablet_rarity_item_key = None
         if magic_base_search:
             self.magic_rarity_toggle.setCurrentIndex(
                 1 if self.poe_version == POE2

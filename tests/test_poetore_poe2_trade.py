@@ -221,6 +221,54 @@ Expeditions contain 1 Vaal Relic in Map
     assert sent == [{"id": "explicit.stat_2852112245"}]
 
 
+def test_expedition_tablet_rare_chest_roll_resolves_to_boolean_trade_stat():
+    item = parse_item_text("""アイテムクラス: 石板
+レアリティ: レア
+埋もれた記録
+エクスペディションの石板
+--------
+アイテムレベル: 82
+--------
+{ 暗黙モッド }
+マップにカルグールのエクスペディションを追加する
+残り使用可能回数 10回
+--------
+{ サフィックスモッド 「宝探しの」 (ティア: 1) }
+マップにレアのチェストが追加で3(2-3)個出現する
+""")
+
+    modifier = next(
+        mod for mod in item.modifiers if mod.stat_id == "explicit.stat_231864447"
+    )
+    assert modifier.values == ()
+    assert (modifier.roll_min, modifier.roll_max) == (2.0, 3.0)
+
+    rows = poe2_trade_filters(item)
+    selected = tuple(replace(row, enabled=row.stat_id == modifier.stat_id) for row in rows)
+    sent = build_search_query(item, stat_filters=selected)["query"]["stats"][0]["filters"]
+    assert sent == [{"id": "explicit.stat_231864447"}]
+
+
+def test_tablet_rarity_override_can_select_magic_or_rare_exactly():
+    item = parse_item_text("""アイテムクラス: 石板
+レアリティ: レア
+埋もれた記録
+エクスペディションの石板
+--------
+アイテムレベル: 82
+--------
+{ 暗黙モッド }
+マップにカルグールのエクスペディションを追加する
+残り使用可能回数 10回
+""")
+
+    for selected in ("magic", "rare"):
+        query = build_search_query(item, rarity_override=selected)["query"]
+        assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+            "option": selected,
+        }
+
+
 def test_jewel_prefers_jewel_scoped_mana_on_kill_stat_in_trade_query():
     item = parse_item_text(MANA_ON_KILL_JEWEL_FIXTURE.read_text(encoding="utf-8"))
     filters = poe2_trade_filters(item)

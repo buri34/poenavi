@@ -5656,7 +5656,8 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
             "influence_shaper", "influence_elder", "influence_crusader",
             "influence_hunter", "influence_redeemer", "influence_warlord",
             "influence_eater", "influence_exarch",
-            "rarity", "magic_rarity", "unidentified", "veiled", "foil", "mirrored", "sanctified", "split",
+            "rarity", "magic_rarity", "tablet_rarity", "unidentified", "veiled", "foil",
+            "mirrored", "sanctified", "split",
         )
         assert window.filter_chip_layout.ordered_widgets() == tuple(
             widget for _name, widget in window._filter_chips
@@ -7716,6 +7717,40 @@ def test_poe2_waystone_item_rarity_is_visible_and_tablet_copy_has_no_warning(qap
         window.parse_current_text()
         assert window.mod_warning.isHidden()
         assert window._parsed_item.properties["残り使用回数"] == "10"
+    finally:
+        window.close()
+
+
+def test_poe2_nonunique_tablet_has_selectable_rarity_filter(qapp):
+    tablet = """アイテムクラス: 石板
+レアリティ: レア
+埋もれた記録
+エクスペディションの石板
+--------
+アイテムレベル: 82
+--------
+{ 暗黙モッド }
+マップにカルグールのエクスペディションを追加する
+残り使用可能回数 10回
+--------
+{ サフィックスモッド 「宝探しの」 (ティア: 1) }
+マップにレアのチェストが追加で3(2-3)個出現する
+"""
+    window = PoetoreWindow(app_config={"poe_version": "poe2", "poetore": {}})
+    try:
+        window.input_edit.setPlainText(tablet)
+        window.parse_current_text()
+
+        assert window.mod_warning.isHidden()
+        assert not window.tablet_rarity_combo.isHidden()
+        assert [
+            window.tablet_rarity_combo.itemData(index)
+            for index in range(window.tablet_rarity_combo.count())
+        ] == ["nonunique", "normal", "magic", "rare"]
+        window.tablet_rarity_combo.setCurrentIndex(3)
+        window.parse_current_text()
+        assert window.tablet_rarity_combo.currentData() == "rare"
+        assert window.rarity_condition_chip.isHidden()
     finally:
         window.close()
 

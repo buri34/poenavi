@@ -1112,6 +1112,7 @@ def build_search_query(
     gem_sockets_min: int | None = None,
     exact_base_type: bool = True,
     magic_exact: bool | None = None,
+    rarity_override: str | None = None,
     trade_currency: str = "any",
     listed_within: str = "any",
 ) -> dict:
@@ -1155,6 +1156,8 @@ def build_search_query(
             }
         elif rarity in {"normal", "ノーマル", "magic", "マジック", "rare", "レア"}:
             type_filter_values["rarity"] = {"option": "nonunique"}
+    if rarity_override in {"normal", "magic", "rare", "nonunique"}:
+        type_filter_values["rarity"] = {"option": rarity_override}
     if stat_filters is not None:
         _apply_poe2_filter_rows(query, stat_filters)
     if gem_level_min is not None or gem_sockets_min is not None:
@@ -1261,6 +1264,7 @@ def search_prices(
     gem_sockets_min: int | None = None,
     exact_base_type: bool = True,
     magic_exact: bool | None = None,
+    rarity_override: str | None = None,
     trade_currency: str = "any",
     listed_within: str = "any",
     include_corrupted=None,
@@ -1274,6 +1278,7 @@ def search_prices(
         item_level_min=item_level_min, item_level_max=item_level_max,
         gem_level_min=gem_level_min, gem_sockets_min=gem_sockets_min,
         exact_base_type=exact_base_type, magic_exact=magic_exact,
+        rarity_override=rarity_override,
         trade_currency=trade_currency,
         listed_within=listed_within,
     )

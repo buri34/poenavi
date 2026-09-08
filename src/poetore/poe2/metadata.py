@@ -227,6 +227,14 @@ def resolve_stat_line_candidates(
         r"\g<1>1\g<2>",
         comparable,
     )
+    # Expedition Tablets expose a rolled Rare Chest count in the detailed
+    # copy, while Trade2 currently publishes this as a boolean singular Stat.
+    # Normalize the in-game wording to that official searchable condition.
+    comparable = re.sub(
+        r"^マップにレアのチェストが追加で\d+個出現する$",
+        "Map contains an additional Rare Chest",
+        comparable,
+    )
     comparable = re.sub(r"\s*[—-]\s*スケールできない値\s*$", "", comparable)
     comparable = re.sub(r"\s*[—-]\s*Unscalable Value\s*$", "", comparable, flags=re.IGNORECASE)
     matchers = stat_matchers()
