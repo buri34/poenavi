@@ -7747,6 +7747,10 @@ def test_poe2_nonunique_tablet_has_selectable_rarity_filter(qapp):
             window.tablet_rarity_combo.itemData(index)
             for index in range(window.tablet_rarity_combo.count())
         ] == ["nonunique", "normal", "magic", "rare"]
+        assert window.tablet_rarity_combo.objectName() == "cycleToggle"
+        window.tablet_rarity_combo.click()
+        assert window.tablet_rarity_combo.currentData() == "normal"
+        assert window.tablet_rarity_combo.currentText() == "ノーマル限定"
         window.tablet_rarity_combo.setCurrentIndex(3)
         window.parse_current_text()
         assert window.tablet_rarity_combo.currentData() == "rare"

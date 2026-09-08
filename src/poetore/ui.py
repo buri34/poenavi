@@ -1200,17 +1200,15 @@ class PoetoreWindow(QWidget):
         self.rarity_condition_chip.setObjectName("readonlyFilterChip")
         self.rarity_condition_chip.setEnabled(False)
         self.rarity_condition_chip.hide()
-        self.tablet_rarity_combo = QComboBox()
-        self.tablet_rarity_combo.setObjectName("filterControl")
-        self.tablet_rarity_combo.setProperty("compactAction", True)
-        for label, value in (
-            ("非ユニーク", "nonunique"),
-            ("ノーマル限定", "normal"),
-            ("マジック限定", "magic"),
-            ("レア限定", "rare"),
-        ):
-            self.tablet_rarity_combo.addItem(label, value)
-        self.tablet_rarity_combo.setToolTip("石板のレアリティを指定して検索します")
+        self.tablet_rarity_combo = _CycleButton((
+            ("非ユニーク", "nonunique", False),
+            ("ノーマル限定", "normal", False),
+            ("マジック限定", "magic", False),
+            ("レア限定", "rare", False),
+        ))
+        self.tablet_rarity_combo.setToolTip(
+            "クリックするたびに石板のレアリティ条件を切り替えます"
+        )
         self.tablet_rarity_combo.hide()
 
         self.trade_status_combo = QComboBox()
