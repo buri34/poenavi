@@ -4,15 +4,19 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import re
 import shutil
 import subprocess
+import sys
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
 
 from PySide6.QtGui import QImage
+
+OCR_ENGINES = ("tesseract", "windows")
 
 
 @dataclass(frozen=True)
@@ -359,6 +363,12 @@ def _write_pgm(path: Path, width: int, height: int, pixels: Sequence[int]) -> No
     path.write_bytes(f"P5\n{width} {height}\n255\n".encode("ascii") + bytes(pixels))
 
 
+def _write_grayscale_png(path: Path, width: int, height: int, pixels: Sequence[int]) -> None:
+    image = QImage(bytes(pixels), width, height, width, QImage.Format.Format_Grayscale8).copy()
+    if not image.save(str(path), "PNG"):
+        raise RuntimeError(f"OCR用PNGを保存できません: {path}")
+
+
 def _crop_pixels(
     pixels: Sequence[int], width: int, band: RowBand, left: int, right: int
 ) -> list[int]:
@@ -416,6 +426,48 @@ def _run_tesseract(
     return result.stdout.strip()
 
 
+def _windows_ocr_helper() -> Path:
+    configured = os.environ.get("POENAVI_WINDOWS_OCR_HELPER")
+    if configured:
+        helper = Path(configured)
+        if helper.is_file():
+            return helper
+        raise RuntimeError(f"Windows OCRヘルパーが見つかりません: {helper}")
+    helper = (
+        Path(__file__).resolve().parents[2]
+        / "tools"
+        / "ExpeditionWindowsOcr"
+        / "bin"
+        / "Release"
+        / "net8.0-windows10.0.19041.0"
+        / "ExpeditionWindowsOcr.dll"
+    )
+    if helper.exists():
+        return helper
+    raise RuntimeError(
+        "Windows OCRヘルパーが未ビルドです。"
+        "scripts\\run_expedition_windows_ocr.ps1を使って実行してください。"
+    )
+
+
+def _run_windows_ocr(image: Path, language: str) -> str:
+    if sys.platform != "win32":
+        raise RuntimeError("Windows標準OCRはWindows上でのみ実行できます。")
+    dotnet = shutil.which("dotnet")
+    if dotnet is None:
+        raise RuntimeError("dotnetが見つかりません。.NET 8 SDKをインストールしてください。")
+    result = subprocess.run(
+        [dotnet, str(_windows_ocr_helper()), str(image.resolve()), language],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or f"Windows OCR終了コード: {result.returncode}")
+    return result.stdout.strip()
+
+
 def parse_quantity_ocr(text: str) -> int | None:
     compact = re.sub(r"\s+", "", text).replace("X", "x")
     match = re.search(r"(\d{1,3})x", compact)
@@ -427,9 +479,12 @@ def analyze_image(
     output_dir: Path,
     *,
     language: str = "jpn+eng",
+    ocr_engine: str = "tesseract",
     prepare_only: bool = False,
     item_dictionary: Sequence[str] = (),
 ) -> dict[str, object]:
+    if ocr_engine not in OCR_ENGINES:
+        raise ValueError(f"未対応のOCRエンジンです: {ocr_engine}")
     width, height, gray, red, green, blue = _load_channels(image_path)
     panel_width, bands = detect_reward_cards(gray, red, green, blue, width, height)
     image_output = output_dir / image_path.stem
@@ -455,22 +510,32 @@ def analyze_image(
         crop = _scale_pixels(crop, crop_width, crop_height, scale)
         margin = 12
         crop = _add_margin(crop, crop_width * scale, crop_height * scale, margin)
-        crop_path = image_output / f"row_{index:02d}.pgm"
-        _write_pgm(
+        crop_path = image_output / f"row_{index:02d}.png"
+        _write_grayscale_png(
             crop_path,
             crop_width * scale + margin * 2,
             crop_height * scale + margin * 2,
             [0 if value else 255 for value in crop],
         )
         psm = 11 if crop_height > 70 else 7
-        raw = "" if prepare_only else _run_tesseract(crop_path, language, page_segmentation=psm)
+        if prepare_only:
+            raw = ""
+        elif ocr_engine == "windows":
+            raw = _run_windows_ocr(crop_path, language)
+        else:
+            raw = _run_tesseract(crop_path, language, page_segmentation=psm)
         inline_quantity, item_text = strip_quantity(raw)
-        quantity_raw = "" if prepare_only else _run_tesseract(
-            crop_path,
-            "eng",
-            page_segmentation=7,
-            whitelist="0123456789xX",
-        )
+        if prepare_only:
+            quantity_raw = ""
+        elif ocr_engine == "windows":
+            quantity_raw = raw
+        else:
+            quantity_raw = _run_tesseract(
+                crop_path,
+                "eng",
+                page_segmentation=7,
+                whitelist="0123456789xX",
+            )
         quantity = parse_quantity_ocr(quantity_raw) or inline_quantity
         best, match_score, match_margin, trusted = match_item_name(item_text, item_dictionary)
         rows.append(
@@ -504,6 +569,7 @@ def analyze_image(
         "height": height,
         "panel_width": panel_width,
         "language": language,
+        "ocr_engine": ocr_engine,
         "prepare_only": prepare_only,
         "rows": [asdict(row) for row in rows],
         "expected": expected,
@@ -520,6 +586,7 @@ def analyze_directory(
     output_dir: Path,
     *,
     language: str = "jpn+eng",
+    ocr_engine: str = "tesseract",
     prepare_only: bool = False,
     item_dictionary: Sequence[str] = (),
     csv_path: Path | None = None,
@@ -531,6 +598,7 @@ def analyze_directory(
             path,
             output_dir,
             language=language,
+            ocr_engine=ocr_engine,
             prepare_only=prepare_only,
             item_dictionary=item_dictionary,
         )

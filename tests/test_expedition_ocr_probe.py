@@ -1,3 +1,6 @@
+import pytest
+
+import src.poetore.expedition_ocr_probe as probe
 from src.poetore.expedition_ocr_probe import (
     RowBand,
     analyze_directory,
@@ -144,3 +147,21 @@ def test_analyze_empty_directory_writes_empty_summary(tmp_path):
     input_dir.mkdir()
     assert analyze_directory(input_dir, output_dir, prepare_only=True) == []
     assert (output_dir / "summary.json").read_text(encoding="utf-8") == "[]\n"
+
+
+def test_windows_ocr_is_explicitly_rejected_outside_windows(tmp_path, monkeypatch):
+    monkeypatch.setattr(probe.sys, "platform", "darwin")
+    with pytest.raises(RuntimeError, match="Windows上でのみ"):
+        probe._run_windows_ocr(tmp_path / "row.png", "ja-JP")
+
+
+def test_windows_ocr_helper_accepts_external_build_path(tmp_path, monkeypatch):
+    helper = tmp_path / "ExpeditionWindowsOcr.dll"
+    helper.write_bytes(b"test")
+    monkeypatch.setenv("POENAVI_WINDOWS_OCR_HELPER", str(helper))
+    assert probe._windows_ocr_helper() == helper
+
+
+def test_unknown_ocr_engine_is_rejected_before_loading_image(tmp_path):
+    with pytest.raises(ValueError, match="未対応のOCRエンジン"):
+        probe.analyze_image(tmp_path / "missing.png", tmp_path / "output", ocr_engine="other")

@@ -48,7 +48,26 @@ python scripts/expedition_ocr_probe.py path\to\screenshots `
 ```
 
 CSVはUTF-8 BOM付きで、Excelから直接開けます。Windows標準OCRとの比較時も、同じ列へ
-結果を出すことでTesseract結果と行単位に比較できます。Windows OCRの実測自体はWindows上で行います。
+結果を出すことでTesseract結果と行単位に比較できます。
+
+## Windows標準OCRで実測する
+
+Windows 10/11の日本語言語パックと.NET 8 SDKが必要です。PowerShellを開き、
+Windows確認用ミラーのルートで次を実行します。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\run_expedition_windows_ocr.ps1
+```
+
+スクリプトは`Windows.Media.Ocr`を呼ぶヘルパーをビルドし、既存と同じ行分離画像を
+日本語OCRへ渡します。今回のWindowsミラーでは入力画像と辞書を自動選択し、共有フォルダの
+`expedition-items-windows.csv`へ結果を出力します。別の画像を使う場合は
+`-InputDirectory`と`-Dictionary`を指定できます。
+初回ビルド時は.NETが必要な参照ファイルを取得するため、ネット接続が必要な場合があります。
+
+日本語OCRが利用できない場合は、Windowsの「設定」→「時刻と言語」→「言語と地域」で
+日本語の言語機能を追加してから再実行します。実測CSVが生成されるまでは、Windows OCRの
+精度を確認済みとは扱いません。
 
 ## 評価値
 
