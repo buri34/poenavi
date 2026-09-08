@@ -217,6 +217,40 @@ def test_divine_chaos_rate_uses_currency_overview_and_rejects_invalid_values():
     assert divine_chaos_rate(payload) is None
 
 
+def test_expedition_reward_lookup_searches_exchange_categories_and_converts_to_exalted():
+    payloads = {
+        "Currency": {
+            "core": {"primary": "chaos", "rates": {"exalted": 0.2, "divine": 0.01}},
+            "items": [{"id": "exalted", "name": "Exalted Orb", "detailsId": "exalted-orb"}],
+            "lines": [{
+                "id": "exalted", "primaryValue": 5,
+                "maxVolumeRate": 0.2, "maxVolumeCurrency": "chaos",
+            }],
+        },
+        "Runes": {
+            "core": {"primary": "chaos", "rates": {"exalted": 0.2, "divine": 0.01}},
+            "items": [{"id": "desert", "name": "Desert Rune", "detailsId": "desert-rune"}],
+            "lines": [{
+                "id": "desert", "primaryValue": 25,
+                "maxVolumeRate": 0.04, "maxVolumeCurrency": "chaos",
+            }],
+        },
+    }
+    service = PoeNinjaPriceService(
+        poe2_exchange_fetcher=lambda _league, type_name: payloads.get(
+            type_name, {"core": {}, "items": [], "lines": []}
+        )
+    )
+
+    prices = service.lookup_poe2_expedition_rewards(
+        ("Exalted Orb", "Desert Rune", "Missing"), "Test League"
+    )
+
+    assert set(prices) == {"Exalted Orb", "Desert Rune"}
+    assert prices["Desert Rune"].chaos == 25
+    assert service.exalted_chaos_rate("Test League") == 5
+
+
 def test_trend_summary_uses_signed_total_change_instead_of_graph_deviation():
     falling = PoeNinjaPrice(
         "Test", None, 8, (0, 0, 0, 0, 0, 0, -20), "https://example.com",

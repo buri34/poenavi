@@ -5,6 +5,7 @@ import re
 import threading
 import time
 import unicodedata
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Callable
 from urllib.parse import quote
@@ -18,6 +19,10 @@ STASH_OVERVIEW_URL = "https://poe.ninja/poe1/api/economy/stash/current/item/over
 POE2_STASH_OVERVIEW_URL = "https://poe.ninja/poe2/api/economy/stash/current/item/overview"
 POE2_EXCHANGE_OVERVIEW_URL = "https://poe.ninja/poe2/api/economy/exchange/current/overview"
 CACHE_TTL_SECONDS = 31 * 60
+POE2_EXPEDITION_REWARD_TYPES = (
+    "Currency", "Fragments", "Essences", "Delirium", "Breach", "Verisium",
+    "Expedition", "Ritual", "Runes", "Idols", "Abyss", "SoulCores", "UncutGems",
+)
 
 _UNIQUE_TYPES = {
     "UniqueJewel", "ForbiddenJewel", "UniqueFlask", "UniqueWeapon", "UniqueArmour",
@@ -348,6 +353,52 @@ class PoeNinjaPriceService:
         payload = self._poe2_exchange_payload(league, "Currency")
         return _poe2_core_rate(payload.get("core") or {}, "divine", "exalted")
 
+    def exalted_chaos_rate(self, league: str) -> float | None:
+        """Return the PoE2 league's current Exalted Orb value in Chaos Orbs."""
+        if not league or re.search(r"\(PL\d+\)$", league):
+            return None
+        payload = self._poe2_exchange_payload(league, "Currency")
+        return _poe2_core_rate(payload.get("core") or {}, "exalted", "chaos")
+
+    def lookup_poe2_expedition_rewards(
+        self, names: tuple[str, ...], league: str,
+    ) -> dict[str, PoeNinjaPrice]:
+        """Resolve exact English reward names across poe.ninja exchange categories."""
+        wanted = tuple(dict.fromkeys(name.strip() for name in names if name.strip()))
+        if not wanted or not league or re.search(r"\(PL\d+\)$", league):
+            return {}
+
+        def fetch(type_name: str) -> tuple[str, dict]:
+            return type_name, self._poe2_exchange_payload(league, type_name)
+
+        payloads: dict[str, dict] = {}
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = {
+                executor.submit(fetch, type_name): type_name
+                for type_name in POE2_EXPEDITION_REWARD_TYPES
+            }
+            for future in as_completed(futures):
+                try:
+                    type_name, payload = future.result()
+                except Exception:  # noqa: BLE001 - one optional category may fail
+                    continue
+                payloads[type_name] = payload
+
+        resolved: dict[str, PoeNinjaPrice] = {}
+        for type_name in POE2_EXPEDITION_REWARD_TYPES:
+            payload = payloads.get(type_name)
+            if payload is None:
+                continue
+            for name in wanted:
+                if name in resolved:
+                    continue
+                price = match_poe2_exchange_identity(
+                    payload, name, league, type_name,
+                )
+                if price is not None:
+                    resolved[name] = price
+        return resolved
+
     def lookup_identity(
         self, namespace: str, name: str, variant: str | None, league: str,
     ) -> PoeNinjaPrice | None:
@@ -419,9 +470,16 @@ class PoeNinjaPriceService:
             now = self._clock()
             if cached and now - cached[0] < CACHE_TTL_SECONDS:
                 return cached[1]
-            payload = self._poe2_exchange_fetcher(league, type_name)
-            if not isinstance(payload, dict):
-                raise ValueError("poe.ninja PoE2 Currency Exchangeの応答形式を認識できませんでした。")
+        # Network I/O must not hold the shared cache lock. Expedition scans
+        # fetch several independent categories concurrently on their first run.
+        payload = self._poe2_exchange_fetcher(league, type_name)
+        if not isinstance(payload, dict):
+            raise ValueError("poe.ninja PoE2 Currency Exchangeの応答形式を認識できませんでした。")
+        with self._lock:
+            cached = self._poe2_exchange_cache.get(key)
+            now = self._clock()
+            if cached and now - cached[0] < CACHE_TTL_SECONDS:
+                return cached[1]
             self._poe2_exchange_cache[key] = (now, payload)
             return payload
 

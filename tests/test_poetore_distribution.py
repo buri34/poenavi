@@ -46,6 +46,14 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert "collect_third_party_licenses.py" in script
     assert "THIRD_PARTY_LICENSES/Python-LICENSE.txt" in script
     assert '"--add-data", "data;data"' in script
+    assert "dotnet publish tools\\ExpeditionWindowsOcr\\ExpeditionWindowsOcr.csproj" in script
+    assert '"--add-data", "build\\expedition-windows-ocr;tools\\ExpeditionWindowsOcr"' in script
+    assert "ExpeditionWindowsOcr.exe" in script
+    assert "expedition_ocr_items.json" in script
+    assert ".NET 8 runtime" in (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
+    assert "dotnet-runtime-LICENSE.txt" in (
+        ROOT / "scripts" / "collect_third_party_licenses.py"
+    ).read_text(encoding="utf-8")
     assert '"--add-data", "tests;' not in script
     assert '"--add-data", "build;' not in script
     assert "poetore-sources\\.lock\\.json" in script

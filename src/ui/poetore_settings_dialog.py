@@ -133,6 +133,9 @@ class PoetoreSettingsDialog(QDialog):
         self.cheat_hotkey = HotkeyButton(
             hotkeys.get("cheat_sheets_toggle", "shift+space")
         )
+        self.expedition_hotkey = AutoHideHotkeyWidget(
+            hotkeys.get("expedition_reward_ocr", "alt+e"), theme=SETTINGS_THEME,
+        )
         for button in (
             self.exit_hotkey, self.monastery_hotkey,
             self.map_check_hotkey, self.cheat_hotkey,
@@ -141,6 +144,7 @@ class PoetoreSettingsDialog(QDialog):
             button.setStyleSheet("")
         self.capture_hotkey.key_button.setStyleSheet("")
         self.auto_hide_hotkey.key_button.setStyleSheet("")
+        self.expedition_hotkey.key_button.setStyleSheet("")
         hotkey_form.addRow("キャラクター選択へ戻る:", self.exit_hotkey)
         self.monastery_label = QLabel("修道院へ移動（/monastery）:")
         hotkey_form.addRow(self.monastery_label, self.monastery_hotkey)
@@ -150,6 +154,27 @@ class PoetoreSettingsDialog(QDialog):
         hotkey_form.addRow(self.map_check_label, self.map_check_hotkey)
         hotkey_form.addRow("Cheat sheets表示:", self.cheat_hotkey)
         basic_layout.addWidget(hotkey_group)
+
+        poetore = self.current_config.get("poetore")
+        poetore = poetore if isinstance(poetore, dict) else {}
+        expedition_config = poetore.get("expedition_reward_overlay", {})
+        expedition_config = expedition_config if isinstance(expedition_config, dict) else {}
+        self.expedition_group = QGroupBox("エクスペディション報酬価格")
+        expedition_layout = QVBoxLayout(self.expedition_group)
+        self.expedition_enabled_cb = QCheckBox("報酬価格表示を有効にする")
+        self.expedition_enabled_cb.setChecked(bool(expedition_config.get("enabled", False)))
+        expedition_layout.addWidget(self.expedition_enabled_cb)
+        expedition_form = QFormLayout()
+        expedition_form.addRow("読取ショートカット:", self.expedition_hotkey)
+        expedition_layout.addLayout(expedition_form)
+        expedition_note = QLabel(
+            "報酬画面で1回押すと、安全に特定できた品の単価を「高貴/個」で表示します。\n"
+            "Windowsの日本語OCRがない場合は、読取時に追加方法を案内します。"
+        )
+        expedition_note.setWordWrap(True)
+        expedition_note.setObjectName("expeditionOcrNote")
+        expedition_layout.addWidget(expedition_note)
+        basic_layout.addWidget(self.expedition_group)
         self._refresh_version_specific_controls()
 
         common_group = QGroupBox("共通機能")
@@ -504,6 +529,7 @@ class PoetoreSettingsDialog(QDialog):
         self.monastery_hotkey.setVisible(monastery_visible)
         self.map_check_label.setVisible(monastery_visible)
         self.map_check_hotkey.setVisible(monastery_visible)
+        self.expedition_group.setVisible(self.poe_version == POE2)
 
     def _refresh_app_mode_availability(self):
         supported = is_feature_supported(POETORE, self.poe_version)
@@ -542,6 +568,7 @@ class PoetoreSettingsDialog(QDialog):
                 "monastery": self.monastery_hotkey.key_text,
                 "poetore_capture": self.capture_hotkey.key_text,
                 "poetore_auto_hide": self.auto_hide_hotkey.key_text,
+                "expedition_reward_ocr": self.expedition_hotkey.key_text,
                 "map_check": self.map_check_hotkey.key_text,
                 "cheat_sheets_toggle": self.cheat_hotkey.key_text,
             }
@@ -552,6 +579,9 @@ class PoetoreSettingsDialog(QDialog):
         poetore["result_font_size"] = (
             self.result_font_size_combo.currentData() or "medium"
         )
+        expedition_config = dict(poetore.get("expedition_reward_overlay", {}))
+        expedition_config["enabled"] = self.expedition_enabled_cb.isChecked()
+        poetore["expedition_reward_overlay"] = expedition_config
         obs_streaming = dict(poetore.get("obs_streaming", {}))
         obs_streaming["enabled"] = self.obs_streaming_enabled_cb.isChecked()
         obs_streaming["title_bar_opacity"] = (
@@ -587,11 +617,14 @@ class PoetoreSettingsDialog(QDialog):
             "monastery": self.monastery_hotkey.key_text,
             "poetore_capture": self.capture_hotkey.key_text,
             "poetore_auto_hide": self.auto_hide_hotkey.key_text,
+            "expedition_reward_ocr": self.expedition_hotkey.key_text,
             "map_check": self.map_check_hotkey.key_text,
             "cheat_sheets_toggle": self.cheat_hotkey.key_text,
         }
         if self.poe_version == POE2:
             hotkeys.pop("map_check")
+        else:
+            hotkeys.pop("expedition_reward_ocr")
         if not self.custom_commands_widget.validate(hotkeys):
             return
         duplicates = find_duplicate_hotkeys(hotkeys)
@@ -601,6 +634,7 @@ class PoetoreSettingsDialog(QDialog):
                 "monastery": "修道院へ移動",
                 "poetore_capture": "ぽえとれ検索（操作モード）",
                 "poetore_auto_hide": "ぽえとれ検索（AUTO-HIDE）",
+                "expedition_reward_ocr": "エクスペディション報酬読取",
                 "map_check": "Map Modチェック",
                 "cheat_sheets_toggle": "Cheat sheets表示",
             }

@@ -25,6 +25,20 @@ Invoke-Python -m pip install -r requirements-build.txt
 
 Remove-Item -Recurse -Force build, dist -ErrorAction SilentlyContinue
 
+dotnet publish tools\ExpeditionWindowsOcr\ExpeditionWindowsOcr.csproj `
+    --configuration Release `
+    --runtime win-x64 `
+    --self-contained true `
+    -p:PublishSingleFile=true `
+    -p:IncludeNativeLibrariesForSelfExtract=true `
+    --output build\expedition-windows-ocr
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to publish the self-contained Windows OCR helper"
+}
+if (-not (Test-Path build\expedition-windows-ocr\ExpeditionWindowsOcr.exe)) {
+    throw "Windows OCR helper was not published"
+}
+
 $appVersion = & $Python -c "from src.version import APP_VERSION; print(APP_VERSION)"
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($appVersion)) {
     throw "Failed to read APP_VERSION"
@@ -61,6 +75,7 @@ $appArgs = @(
     "--add-data", "README.md;.",
     "--add-data", "THIRD_PARTY_NOTICES.md;.",
     "--add-data", "build\third-party-licenses;THIRD_PARTY_LICENSES",
+    "--add-data", "build\expedition-windows-ocr;tools\ExpeditionWindowsOcr",
     "--add-data", "data;data",
     "--add-data", "assets;assets",
     "--add-data", "maps;maps",
@@ -128,7 +143,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path PoENavi.zip))
 try {
     $entryNames = @($archive.Entries | ForEach-Object { $_.FullName.Replace("\", "/") })
-    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES/README.md", "THIRD_PARTY_LICENSES/Python-LICENSE.txt", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json", "map_mods.json")) {
+    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES/README.md", "THIRD_PARTY_LICENSES/Python-LICENSE.txt", "ExpeditionWindowsOcr.exe", "expedition_ocr_items.json", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json", "map_mods.json")) {
         if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {
             throw "Release audit failed: missing $requiredName"
         }

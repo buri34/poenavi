@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -196,6 +197,39 @@ def test_windows_ocr_helper_accepts_external_build_path(tmp_path, monkeypatch):
     helper.write_bytes(b"test")
     monkeypatch.setenv("POENAVI_WINDOWS_OCR_HELPER", str(helper))
     assert probe._windows_ocr_helper() == helper
+
+
+def test_packaged_windows_ocr_exe_does_not_require_dotnet(tmp_path, monkeypatch):
+    helper = tmp_path / "ExpeditionWindowsOcr.exe"
+    helper.write_bytes(b"test")
+    calls = []
+    monkeypatch.setattr(probe.sys, "platform", "win32")
+    monkeypatch.setattr(probe, "_windows_ocr_helper", lambda: helper)
+    monkeypatch.setattr(
+        probe.subprocess,
+        "run",
+        lambda command, **_kwargs: calls.append(command)
+        or SimpleNamespace(returncode=0, stdout="", stderr=""),
+    )
+
+    assert probe.windows_ocr_available()
+    assert calls == [[str(helper), "--check", "ja-JP"]]
+
+
+def test_windows_ocr_batch_preserves_input_order(tmp_path, monkeypatch):
+    helper = tmp_path / "ExpeditionWindowsOcr.exe"
+    images = [tmp_path / "a.png", tmp_path / "b.png"]
+    monkeypatch.setattr(probe.sys, "platform", "win32")
+    monkeypatch.setattr(probe, "_windows_ocr_helper", lambda: helper)
+    monkeypatch.setattr(
+        probe.subprocess,
+        "run",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=0, stdout='["一番目", "二番目"]', stderr="",
+        ),
+    )
+
+    assert probe.run_windows_ocr_batch(images) == ["一番目", "二番目"]
 
 
 def test_unknown_ocr_engine_is_rejected_before_loading_image(tmp_path):

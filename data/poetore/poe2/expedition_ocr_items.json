@@ -1,0 +1,6001 @@
+{
+  "schema_version": 1,
+  "items": [
+    {
+      "ja": "ふさわしい相手の遺産",
+      "en": "Legacy of A Worthy Foe"
+    },
+    {
+      "ja": "へつらう者のアイドル",
+      "en": "Idol of the Sycophant"
+    },
+    {
+      "ja": "アイアンバウンドの遺産",
+      "en": "Legacy of Ironbound"
+    },
+    {
+      "ja": "アイアンワード",
+      "en": "Iron Ward"
+    },
+    {
+      "ja": "アイオブウィンター",
+      "en": "Eye of Winter"
+    },
+    {
+      "ja": "アイスシャード",
+      "en": "Ice Shards"
+    },
+    {
+      "ja": "アイスショット",
+      "en": "Ice Shot"
+    },
+    {
+      "ja": "アイスストライク",
+      "en": "Ice Strike"
+    },
+    {
+      "ja": "アイスティップアロー",
+      "en": "Ice-Tipped Arrows"
+    },
+    {
+      "ja": "アイスノヴァ",
+      "en": "Ice Nova"
+    },
+    {
+      "ja": "アイスバイト I",
+      "en": "Ice Bite I"
+    },
+    {
+      "ja": "アイスバイト II",
+      "en": "Ice Bite II"
+    },
+    {
+      "ja": "アイナーの獣の儀式",
+      "en": "Einhar's Beastrite"
+    },
+    {
+      "ja": "アストラルプロジェクション",
+      "en": "Astral Projection"
+    },
+    {
+      "ja": "アストリッドの創造性",
+      "en": "Astrid's Creativity"
+    },
+    {
+      "ja": "アズカパのソウルコア",
+      "en": "Soul Core of Azcapa"
+    },
+    {
+      "ja": "アズメリの聖廟の鍵",
+      "en": "Azmeri Reliquary Key"
+    },
+    {
+      "ja": "アタックスピード増加 I",
+      "en": "Rapid Attacks I"
+    },
+    {
+      "ja": "アタックスピード増加 II",
+      "en": "Rapid Attacks II"
+    },
+    {
+      "ja": "アタックスピード増加 III",
+      "en": "Rapid Attacks III"
+    },
+    {
+      "ja": "アタルイの血抜き",
+      "en": "Atalui's Bloodletting"
+    },
+    {
+      "ja": "アッシュレンドの遺産",
+      "en": "Legacy of Ashrend"
+    },
+    {
+      "ja": "アッツィリの交感",
+      "en": "Atziri's Communion"
+    },
+    {
+      "ja": "アッツィリの短気",
+      "en": "Atziri's Impatience"
+    },
+    {
+      "ja": "アッツィリの魅惑",
+      "en": "Atziri's Allure"
+    },
+    {
+      "ja": "アトモフアのソウルコア",
+      "en": "Soul Core of Atmohua"
+    },
+    {
+      "ja": "アトモフアの退却のソウルコア",
+      "en": "Atmohua's Soul Core of Retreat"
+    },
+    {
+      "ja": "アトリション",
+      "en": "Attrition"
+    },
+    {
+      "ja": "アドニアのエゴの遺産",
+      "en": "Legacy of Adonia's Ego"
+    },
+    {
+      "ja": "アニムスエクスチェンジ",
+      "en": "Animus Exchange"
+    },
+    {
+      "ja": "アニムススプリンター",
+      "en": "Animus Splinters"
+    },
+    {
+      "ja": "アビスのエッセンス",
+      "en": "Essence of the Abyss"
+    },
+    {
+      "ja": "アビスの反響のお告げ",
+      "en": "Omen of Abyssal Echoes"
+    },
+    {
+      "ja": "アマナムの凝視",
+      "en": "Amanamu's Gaze"
+    },
+    {
+      "ja": "アマナムの十分の一税",
+      "en": "Amanamu's Tithe"
+    },
+    {
+      "ja": "アラカーリの肉欲",
+      "en": "Arakaali's Lust"
+    },
+    {
+      "ja": "アリラのアイドル",
+      "en": "Idol of Alira"
+    },
+    {
+      "ja": "アルケム・エイラの遺産",
+      "en": "Legacy of Alkem Eira"
+    },
+    {
+      "ja": "アルジュンの勲章",
+      "en": "Arjun's Medal"
+    },
+    {
+      "ja": "アルダーの叙事詩",
+      "en": "Aldur's Saga"
+    },
+    {
+      "ja": "アルダーの怒り",
+      "en": "Ire of Aldur"
+    },
+    {
+      "ja": "アルダーの息吹",
+      "en": "Breath of Aldur"
+    },
+    {
+      "ja": "アルダーの情熱",
+      "en": "Passion of Aldur"
+    },
+    {
+      "ja": "アルダーの裏切り",
+      "en": "Betrayal of Aldur"
+    },
+    {
+      "ja": "アルダーの遺産",
+      "en": "Aldur's Legacy"
+    },
+    {
+      "ja": "アルビノロアの羽根",
+      "en": "Albino Rhoa Feather"
+    },
+    {
+      "ja": "アンアース",
+      "en": "Unearth"
+    },
+    {
+      "ja": "アンステディテンポ",
+      "en": "Unsteady Tempo"
+    },
+    {
+      "ja": "アンセストラルウォーリアートーテム",
+      "en": "Ancestral Warrior Totem"
+    },
+    {
+      "ja": "アンセストラルエイド",
+      "en": "Ancestral Aid"
+    },
+    {
+      "ja": "アンセストラルクライ",
+      "en": "Ancestral Cry"
+    },
+    {
+      "ja": "アンセストラルコール I",
+      "en": "Ancestral Call I"
+    },
+    {
+      "ja": "アンセストラルコール II",
+      "en": "Ancestral Call II"
+    },
+    {
+      "ja": "アンタッチャブル",
+      "en": "Untouchable"
+    },
+    {
+      "ja": "アンブッシュ",
+      "en": "Ambush"
+    },
+    {
+      "ja": "アンブレイカブル",
+      "en": "Unbreakable"
+    },
+    {
+      "ja": "アンリーシュ",
+      "en": "Unleash"
+    },
+    {
+      "ja": "アーキテクトオーブ",
+      "en": "Architect's Orb"
+    },
+    {
+      "ja": "アーク",
+      "en": "Arc"
+    },
+    {
+      "ja": "アークの守り手の遺産",
+      "en": "Legacy of Keeper of the Arc"
+    },
+    {
+      "ja": "アークティックアーマー",
+      "en": "Arctic Armour"
+    },
+    {
+      "ja": "アークティックハウル",
+      "en": "Arctic Howl"
+    },
+    {
+      "ja": "アーケインサージ",
+      "en": "Arcane Surge"
+    },
+    {
+      "ja": "アースクエイク",
+      "en": "Earthquake"
+    },
+    {
+      "ja": "アースシャッター",
+      "en": "Earthshatter"
+    },
+    {
+      "ja": "アーチメイジ",
+      "en": "Archmage"
+    },
+    {
+      "ja": "アーティラリーバリスタ",
+      "en": "Artillery Ballista"
+    },
+    {
+      "ja": "アービターの射程",
+      "en": "Arbiter's Reach"
+    },
+    {
+      "ja": "アービターの着火",
+      "en": "Arbiter's Ignition"
+    },
+    {
+      "ja": "アービターの聖廟の鍵",
+      "en": "The Arbiter's Reliquary Key"
+    },
+    {
+      "ja": "アーマーピアシング弾",
+      "en": "Armour Piercing Rounds"
+    },
+    {
+      "ja": "アーマーブレイカー",
+      "en": "Armour Breaker"
+    },
+    {
+      "ja": "アーマー爆発",
+      "en": "Armour Explosion"
+    },
+    {
+      "ja": "アーマー破壊 I",
+      "en": "Armour Break I"
+    },
+    {
+      "ja": "アーマー破壊 II",
+      "en": "Armour Break II"
+    },
+    {
+      "ja": "アーマー破壊 III",
+      "en": "Armour Break III"
+    },
+    {
+      "ja": "アーマー破壊ブースト I",
+      "en": "Armour Demolisher I"
+    },
+    {
+      "ja": "アーマー破壊ブースト II",
+      "en": "Armour Demolisher II"
+    },
+    {
+      "ja": "アーマー破壊時眩暈",
+      "en": "Break Posture"
+    },
+    {
+      "ja": "アーンの城塞",
+      "en": "Ahn's Citadel"
+    },
+    {
+      "ja": "イシュチェルの苦悩",
+      "en": "Ixchel's Torment"
+    },
+    {
+      "ja": "イノシシのアイドル",
+      "en": "Boar Idol"
+    },
+    {
+      "ja": "インシネレート",
+      "en": "Incinerate"
+    },
+    {
+      "ja": "インセンディアリーショット",
+      "en": "Incendiary Shot"
+    },
+    {
+      "ja": "インパクトショックウェーブ",
+      "en": "Impact Shockwave"
+    },
+    {
+      "ja": "インファーナルクライ",
+      "en": "Infernal Cry"
+    },
+    {
+      "ja": "インファーナルリージョン I",
+      "en": "Infernal Legion I"
+    },
+    {
+      "ja": "インファーナルリージョン II",
+      "en": "Infernal Legion II"
+    },
+    {
+      "ja": "インファーナルリージョン III",
+      "en": "Infernal Legion III"
+    },
+    {
+      "ja": "インペンディングドゥーム",
+      "en": "Impending Doom"
+    },
+    {
+      "ja": "イーシュタのアイドル",
+      "en": "Idol of Eeshta"
+    },
+    {
+      "ja": "イーナのアイドル",
+      "en": "Idol of Yeena"
+    },
+    {
+      "ja": "ウィザリングプレゼンス",
+      "en": "Withering Presence"
+    },
+    {
+      "ja": "ウィングブラスト",
+      "en": "Wing Blast"
+    },
+    {
+      "ja": "ウィンドウェーブ",
+      "en": "Wind Wave"
+    },
+    {
+      "ja": "ウィンドサーペントの怒り",
+      "en": "Wind Serpent's Fury"
+    },
+    {
+      "ja": "ウィンドダンサー",
+      "en": "Wind Dancer"
+    },
+    {
+      "ja": "ウィンドブラスト",
+      "en": "Wind Blast"
+    },
+    {
+      "ja": "ウェーブオブフロスト",
+      "en": "Wave of Frost"
+    },
+    {
+      "ja": "ウォーキングカラミティ",
+      "en": "Walking Calamity"
+    },
+    {
+      "ja": "ウォーバナー",
+      "en": "War Banner"
+    },
+    {
+      "ja": "ウサギのアイドル",
+      "en": "Rabbit Idol"
+    },
+    {
+      "ja": "ウシのアイドル",
+      "en": "Ox Idol"
+    },
+    {
+      "ja": "ウラマンの凝視",
+      "en": "Ulaman's Gaze"
+    },
+    {
+      "ja": "ウルクの製錬",
+      "en": "Uruk's Smelting"
+    },
+    {
+      "ja": "ウルフスベインの遺産",
+      "en": "Legacy of Wulfsbane"
+    },
+    {
+      "ja": "ウルフパック",
+      "en": "Wolf Pack"
+    },
+    {
+      "ja": "ウルモティの希薄化のソウルコア",
+      "en": "Uromoti's Soul Core of Attenuation"
+    },
+    {
+      "ja": "ウートレッドの予兆",
+      "en": "Uhtred's Augury"
+    },
+    {
+      "ja": "ウートレッドの儀式",
+      "en": "Uhtred's Rite"
+    },
+    {
+      "ja": "ウートレッドの前兆",
+      "en": "Uhtred's Omen"
+    },
+    {
+      "ja": "ウートレッドの叙事詩",
+      "en": "Uhtred's Saga"
+    },
+    {
+      "ja": "ウートレッドの大移動",
+      "en": "Uhtred's Exodus"
+    },
+    {
+      "ja": "ウートレッドの星座",
+      "en": "Uhtred's Constellation"
+    },
+    {
+      "ja": "ウートレッドの星読み",
+      "en": "Uhtred's Sidereus"
+    },
+    {
+      "ja": "ウートレッドの聖杯の紋章",
+      "en": "Uhtred's Crest of the Chalice"
+    },
+    {
+      "ja": "ウール・ネトルのカタリスト",
+      "en": "Uul-Netol's Catalyst"
+    },
+    {
+      "ja": "ウール・ネトルの抱擁",
+      "en": "Uul-Netol's Embrace"
+    },
+    {
+      "ja": "エイリスの鐘",
+      "en": "Ailith's Chimes"
+    },
+    {
+      "ja": "エオニルの雷",
+      "en": "Eonyr's Thunder"
+    },
+    {
+      "ja": "エクスプローシブグレネード",
+      "en": "Explosive Grenade"
+    },
+    {
+      "ja": "エクスプローシブショット",
+      "en": "Explosive Shot"
+    },
+    {
+      "ja": "エクスプローシブスピア",
+      "en": "Explosive Spear"
+    },
+    {
+      "ja": "エクスプローシブトランスミューテーション",
+      "en": "Explosive Transmutation"
+    },
+    {
+      "ja": "エグリンのアイドル",
+      "en": "Idol of Egrin"
+    },
+    {
+      "ja": "エシュのカタリスト",
+      "en": "Esh's Catalyst"
+    },
+    {
+      "ja": "エシュの武勇",
+      "en": "Esh's Prowess"
+    },
+    {
+      "ja": "エシュの輝き",
+      "en": "Esh's Radiance"
+    },
+    {
+      "ja": "エスケープショット",
+      "en": "Escape Shot"
+    },
+    {
+      "ja": "エスタザンティの再起のソウルコア",
+      "en": "Estazunti's Soul Core of Convalescence"
+    },
+    {
+      "ja": "エゾマイトピークの遺産",
+      "en": "Legacy of Ezomyte Peak"
+    },
+    {
+      "ja": "エターナルマーチ",
+      "en": "Eternal March"
+    },
+    {
+      "ja": "エターナルレイジ",
+      "en": "Eternal Rage"
+    },
+    {
+      "ja": "エッセンスドレイン",
+      "en": "Essence Drain"
+    },
+    {
+      "ja": "エディルンの牙の遺産",
+      "en": "Legacy of Edyrns Tusks"
+    },
+    {
+      "ja": "エナジーバリア",
+      "en": "Energy Barrier"
+    },
+    {
+      "ja": "エネルギーキャパシター",
+      "en": "Energy Capacitor"
+    },
+    {
+      "ja": "エネルギー温存",
+      "en": "Energy Retention"
+    },
+    {
+      "ja": "エラミアのアイドル",
+      "en": "Idol of Eramir"
+    },
+    {
+      "ja": "エリアンの玉石の遺産",
+      "en": "Legacy of Erian's Cobble"
+    },
+    {
+      "ja": "エレクトロカッティングアロー",
+      "en": "Electrocuting Arrow"
+    },
+    {
+      "ja": "エレクトロマグネティズム",
+      "en": "Electromagnetism"
+    },
+    {
+      "ja": "エレボアーの遺産",
+      "en": "Legacy of Elevore"
+    },
+    {
+      "ja": "エレメンタルインボケーション",
+      "en": "Elemental Invocation"
+    },
+    {
+      "ja": "エレメンタルウィークネス",
+      "en": "Elemental Weakness"
+    },
+    {
+      "ja": "エレメンタルコンフラックス",
+      "en": "Elemental Conflux"
+    },
+    {
+      "ja": "エレメンタルサンダーリング",
+      "en": "Elemental Sundering"
+    },
+    {
+      "ja": "エレメンタルディチャージ",
+      "en": "Elemental Discharge"
+    },
+    {
+      "ja": "エンタングル",
+      "en": "Entangle"
+    },
+    {
+      "ja": "エンバーフシレイド",
+      "en": "Ember Fusillade"
+    },
+    {
+      "ja": "エンフィーブル",
+      "en": "Enfeeble"
+    },
+    {
+      "ja": "オイルグレネード",
+      "en": "Oil Grenade"
+    },
+    {
+      "ja": "オイルバラージ",
+      "en": "Oil Barrage"
+    },
+    {
+      "ja": "オオカミのアイドル",
+      "en": "Wolf Idol"
+    },
+    {
+      "ja": "オコジョのアイドル",
+      "en": "Stoat Idol"
+    },
+    {
+      "ja": "オシーンの誓い",
+      "en": "Oisín's Oath"
+    },
+    {
+      "ja": "オバーンの砦の遺産",
+      "en": "Legacy of Obern's Bastion"
+    },
+    {
+      "ja": "オピロティのソウルコア",
+      "en": "Soul Core of Opiloti"
+    },
+    {
+      "ja": "オピロティの強襲のソウルコア",
+      "en": "Opiloti's Soul Core of Assault"
+    },
+    {
+      "ja": "オルロスの信念",
+      "en": "Olroth's Conviction"
+    },
+    {
+      "ja": "オルロスの叙事詩",
+      "en": "Olroth's Saga"
+    },
+    {
+      "ja": "オルロスの太陽の紋章",
+      "en": "Olroth's Crest of the Sun"
+    },
+    {
+      "ja": "オルロスの聖廟の鍵",
+      "en": "Olroth's Reliquary Key"
+    },
+    {
+      "ja": "オルロスの驕り",
+      "en": "Olroth's Hubris"
+    },
+    {
+      "ja": "オルロヴァサラの遺産",
+      "en": "Legacy of Olrovasara"
+    },
+    {
+      "ja": "オークのアイドル",
+      "en": "Idol of Oak"
+    },
+    {
+      "ja": "オーバーウェルミングプレゼンス",
+      "en": "Overwhelming Presence"
+    },
+    {
+      "ja": "オーブオブストーム",
+      "en": "Orb of Storms"
+    },
+    {
+      "ja": "カオスのエフェクティブのお告げ",
+      "en": "Omen of Chaotic Effectiveness"
+    },
+    {
+      "ja": "カオスのモンスターのお告げ",
+      "en": "Omen of Chaotic Monsters"
+    },
+    {
+      "ja": "カオスのレアリティのお告げ",
+      "en": "Omen of Chaotic Rarity"
+    },
+    {
+      "ja": "カオスの数量のお告げ",
+      "en": "Omen of Chaotic Quantity"
+    },
+    {
+      "ja": "カオスアチューンメント",
+      "en": "Chaos Attunement"
+    },
+    {
+      "ja": "カオスオーブ",
+      "en": "Chaos Orb"
+    },
+    {
+      "ja": "カオスオーブ (上級)",
+      "en": "Greater Chaos Orb"
+    },
+    {
+      "ja": "カオスオーブ (完全)",
+      "en": "Perfect Chaos Orb"
+    },
+    {
+      "ja": "カオムの狂気",
+      "en": "Kaom's Madness"
+    },
+    {
+      "ja": "カタライジングエレメンツ",
+      "en": "Catalysing Elements"
+    },
+    {
+      "ja": "カタルの活力",
+      "en": "Khatal's Rejuvenation"
+    },
+    {
+      "ja": "カタルシス",
+      "en": "Catharsis"
+    },
+    {
+      "ja": "カディガンの啓示",
+      "en": "Cadigan's Epiphany"
+    },
+    {
+      "ja": "カトラの陰鬱",
+      "en": "Katla's Gloom"
+    },
+    {
+      "ja": "カニバリズム I",
+      "en": "Cannibalism I"
+    },
+    {
+      "ja": "カニバリズム II",
+      "en": "Cannibalism II"
+    },
+    {
+      "ja": "カランドラの鏡",
+      "en": "Mirror of Kalandra"
+    },
+    {
+      "ja": "カリサのクレッシェンド",
+      "en": "Kalisa's Crescendo"
+    },
+    {
+      "ja": "カリングストライク I",
+      "en": "Culling Strike I"
+    },
+    {
+      "ja": "カリングストライク II",
+      "en": "Culling Strike II"
+    },
+    {
+      "ja": "カルザウィーク",
+      "en": "Cull The Weak"
+    },
+    {
+      "ja": "ガスアロー",
+      "en": "Gas Arrow"
+    },
+    {
+      "ja": "ガスグレネード",
+      "en": "Gas Grenade"
+    },
+    {
+      "ja": "ガラス吹きの飾り玉",
+      "en": "Glassblower's Bauble"
+    },
+    {
+      "ja": "ガルカーンの決意",
+      "en": "Garukhan's Resolve"
+    },
+    {
+      "ja": "ガルヴァニックシャード",
+      "en": "Galvanic Shards"
+    },
+    {
+      "ja": "キツネのアイドル",
+      "en": "Fox Idol"
+    },
+    {
+      "ja": "キポラトルの命題",
+      "en": "Quipolatl's Thesis"
+    },
+    {
+      "ja": "キポラトルの流れのソウルコア",
+      "en": "Quipolatl's Soul Core of Flow"
+    },
+    {
+      "ja": "キャサの輝き",
+      "en": "Catha's Brilliance"
+    },
+    {
+      "ja": "キャストスピード増加 I",
+      "en": "Rapid Casting I"
+    },
+    {
+      "ja": "キャストスピード増加 II",
+      "en": "Rapid Casting II"
+    },
+    {
+      "ja": "キャストスピード増加 III",
+      "en": "Rapid Casting III"
+    },
+    {
+      "ja": "キャンドルメーカーの遺産",
+      "en": "Legacy of Candlemaker"
+    },
+    {
+      "ja": "キリングパーム",
+      "en": "Killing Palm"
+    },
+    {
+      "ja": "キングスガードの遺産",
+      "en": "Legacy of Kingsguard"
+    },
+    {
+      "ja": "ギザギザ領域 I",
+      "en": "Jagged Ground I"
+    },
+    {
+      "ja": "ギザギザ領域 II",
+      "en": "Jagged Ground II"
+    },
+    {
+      "ja": "ギャザリングストーム",
+      "en": "Gathering Storm"
+    },
+    {
+      "ja": "ギャンブルのお告げ",
+      "en": "Omen of Gambling"
+    },
+    {
+      "ja": "ギャンブルショット",
+      "en": "Gambleshot"
+    },
+    {
+      "ja": "クイポラトルのソウルコア",
+      "en": "Soul Core of Quipolatl"
+    },
+    {
+      "ja": "クイルバースト",
+      "en": "Quill Burst"
+    },
+    {
+      "ja": "クマのアイドル",
+      "en": "Bear Idol"
+    },
+    {
+      "ja": "クライティンのアイドル",
+      "en": "Idol of Kraityn"
+    },
+    {
+      "ja": "クラスターグレネード",
+      "en": "Cluster Grenade"
+    },
+    {
+      "ja": "クラリティ I",
+      "en": "Clarity I"
+    },
+    {
+      "ja": "クラリティ II",
+      "en": "Clarity II"
+    },
+    {
+      "ja": "クリティカル時キャスト",
+      "en": "Cast on Critical"
+    },
+    {
+      "ja": "クリティカル蓄積 I",
+      "en": "Inexorable Critical I"
+    },
+    {
+      "ja": "クリティカル蓄積 II",
+      "en": "Inexorable Critical II"
+    },
+    {
+      "ja": "クリティカル集中",
+      "en": "Pinpoint Critical"
+    },
+    {
+      "ja": "クリーピングチル",
+      "en": "Creeping Chill"
+    },
+    {
+      "ja": "クルガルの凝視",
+      "en": "Kurgal's Gaze"
+    },
+    {
+      "ja": "クルガルの鎖",
+      "en": "Kurgal's Leash"
+    },
+    {
+      "ja": "クレイシアンの回復のルーン",
+      "en": "Craiceann's Rune of Recovery"
+    },
+    {
+      "ja": "クレイシアンの守りのルーン",
+      "en": "Craiceann's Rune of Warding"
+    },
+    {
+      "ja": "クレッシェンド I",
+      "en": "Crescendo I"
+    },
+    {
+      "ja": "クレッシェンド II",
+      "en": "Crescendo II"
+    },
+    {
+      "ja": "クレッシェンド III",
+      "en": "Crescendo III"
+    },
+    {
+      "ja": "クレーター",
+      "en": "Crater"
+    },
+    {
+      "ja": "クロススラッシュ",
+      "en": "Cross Slash"
+    },
+    {
+      "ja": "クーラマクの支配",
+      "en": "Kulemak's Dominion"
+    },
+    {
+      "ja": "クールダウン解消 I",
+      "en": "Cooldown Recovery I"
+    },
+    {
+      "ja": "クールダウン解消 II",
+      "en": "Cooldown Recovery II"
+    },
+    {
+      "ja": "グアテリッツィの切除",
+      "en": "Guatelitzi's Ablation"
+    },
+    {
+      "ja": "グアテリッツィの命題",
+      "en": "Guatelitzi's Thesis"
+    },
+    {
+      "ja": "グアテリッツィの忍耐のソウルコア",
+      "en": "Guatelitzi's Soul Core of Endurance"
+    },
+    {
+      "ja": "グリムピラー",
+      "en": "Grim Pillars"
+    },
+    {
+      "ja": "グリムフィースト",
+      "en": "Grim Feast"
+    },
+    {
+      "ja": "グルーストのアイドル",
+      "en": "Idol of Greust"
+    },
+    {
+      "ja": "グレイシャルカスケード",
+      "en": "Glacial Cascade"
+    },
+    {
+      "ja": "グレイシャルボルト",
+      "en": "Glacial Bolt"
+    },
+    {
+      "ja": "グレイシャルランス",
+      "en": "Glacial Lance"
+    },
+    {
+      "ja": "グレイメイクの遺産",
+      "en": "Legacy of Greymake"
+    },
+    {
+      "ja": "グレーターチャージルーン",
+      "en": "Greater Charging Rune"
+    },
+    {
+      "ja": "グレーターワードルーン",
+      "en": "Greater Ward Rune"
+    },
+    {
+      "ja": "グロルドのアイドル",
+      "en": "Idol of Grold"
+    },
+    {
+      "ja": "ケイデンス",
+      "en": "Cadence"
+    },
+    {
+      "ja": "ケイリンの翼の遺産",
+      "en": "Legacy of Wings of Caelyn"
+    },
+    {
+      "ja": "コア不安定化装置",
+      "en": "Core Destabiliser"
+    },
+    {
+      "ja": "コスト軽減 I",
+      "en": "Efficiency I"
+    },
+    {
+      "ja": "コスト軽減 II",
+      "en": "Efficiency II"
+    },
+    {
+      "ja": "コメット",
+      "en": "Comet"
+    },
+    {
+      "ja": "コラプティングクライ 1",
+      "en": "Corrupting Cry I"
+    },
+    {
+      "ja": "コラプティングクライ 2",
+      "en": "Corrupting Cry II"
+    },
+    {
+      "ja": "コラプトの結晶",
+      "en": "Crystallised Corruption"
+    },
+    {
+      "ja": "コルの狩り",
+      "en": "Kolr's Hunt"
+    },
+    {
+      "ja": "コンカッシブルーン",
+      "en": "Concussive Runes"
+    },
+    {
+      "ja": "コンダクティビティ",
+      "en": "Conductivity"
+    },
+    {
+      "ja": "コンダクティブルーン",
+      "en": "Conductive Runes"
+    },
+    {
+      "ja": "コンテージョン",
+      "en": "Contagion"
+    },
+    {
+      "ja": "コンバットフレンジー",
+      "en": "Combat Frenzy"
+    },
+    {
+      "ja": "コンボフィニッシャー I",
+      "en": "Combo Finisher I"
+    },
+    {
+      "ja": "コンボフィニッシャー II",
+      "en": "Combo Finisher II"
+    },
+    {
+      "ja": "コンボ継続",
+      "en": "Flow"
+    },
+    {
+      "ja": "コンヴァレッセンス",
+      "en": "Convalescence"
+    },
+    {
+      "ja": "コールドアチューンメント",
+      "en": "Cold Attunement"
+    },
+    {
+      "ja": "ゴーストダンス",
+      "en": "Ghost Dance"
+    },
+    {
+      "ja": "サイズミッククライ",
+      "en": "Seismic Cry"
+    },
+    {
+      "ja": "サイフォンエレメント",
+      "en": "Siphon Elements"
+    },
+    {
+      "ja": "サイフォンストライク",
+      "en": "Siphoning Strike"
+    },
+    {
+      "ja": "サカワルの浸食のルーン",
+      "en": "Saqawal's Rune of Erosion"
+    },
+    {
+      "ja": "サカワルの空のルーン",
+      "en": "Saqawal's Rune of the Sky"
+    },
+    {
+      "ja": "サカワルの記憶のルーン",
+      "en": "Saqawal's Rune of Memory"
+    },
+    {
+      "ja": "サクリファイス",
+      "en": "Sacrifice"
+    },
+    {
+      "ja": "サベージフューリー",
+      "en": "Savage Fury"
+    },
+    {
+      "ja": "サポートジェムの原石",
+      "en": "Uncut Support Gem"
+    },
+    {
+      "ja": "サポートジェムの原石 (レベル1)",
+      "en": "Uncut Support Gem (Level 1)"
+    },
+    {
+      "ja": "サポートジェムの原石 (レベル2)",
+      "en": "Uncut Support Gem (Level 2)"
+    },
+    {
+      "ja": "サポートジェムの原石 (レベル3)",
+      "en": "Uncut Support Gem (Level 3)"
+    },
+    {
+      "ja": "サポートジェムの原石 (レベル4)",
+      "en": "Uncut Support Gem (Level 4)"
+    },
+    {
+      "ja": "サポートジェムの原石 (レベル5)",
+      "en": "Uncut Support Gem (Level 5)"
+    },
+    {
+      "ja": "サルのアイドル",
+      "en": "Primate Idol"
+    },
+    {
+      "ja": "サルヴォ",
+      "en": "Salvo"
+    },
+    {
+      "ja": "サンダラスリープ",
+      "en": "Thunderous Leap"
+    },
+    {
+      "ja": "サンダー",
+      "en": "Sunder"
+    },
+    {
+      "ja": "サンダーストーム",
+      "en": "Thunderstorm"
+    },
+    {
+      "ja": "サールの根性の遺産",
+      "en": "Legacy of Serle's Grit"
+    },
+    {
+      "ja": "ザモトのソウルコア",
+      "en": "Soul Core of Tzamoto"
+    },
+    {
+      "ja": "ザモトの凶暴性のソウルコア",
+      "en": "Tzamoto's Soul Core of Ferocity"
+    },
+    {
+      "ja": "ザラトルのソウルコア",
+      "en": "Soul Core of Zalatl"
+    },
+    {
+      "ja": "ザラトルの絶縁のソウルコア",
+      "en": "Zalatl's Soul Core of Insulation"
+    },
+    {
+      "ja": "ザロクの反復",
+      "en": "Zarokh's Refrain"
+    },
+    {
+      "ja": "ザロクの反逆",
+      "en": "Zarokh's Revolt"
+    },
+    {
+      "ja": "ザロクの聖廟の鍵：テンポラリス",
+      "en": "Zarokh's Reliquary Key: Temporalis"
+    },
+    {
+      "ja": "ザロクの聖廟の鍵：闇との対立",
+      "en": "Zarokh's Reliquary Key: Against the Darkness"
+    },
+    {
+      "ja": "ザンティーピのソウルコア",
+      "en": "Soul Core of Zantipi"
+    },
+    {
+      "ja": "シアクラトルのソウルコア",
+      "en": "Soul Core of Citaqualotl"
+    },
+    {
+      "ja": "シオネの闘志",
+      "en": "Sione's Temper"
+    },
+    {
+      "ja": "シカのアイドル",
+      "en": "Stag Idol"
+    },
+    {
+      "ja": "シタクアロトルの不快のソウルコア",
+      "en": "Citaqualotl's Soul Core of Foulness"
+    },
+    {
+      "ja": "シタクアロトルの命題",
+      "en": "Citaqualotl's Thesis"
+    },
+    {
+      "ja": "シバクアの引き裂き",
+      "en": "Xibaqua's Rending"
+    },
+    {
+      "ja": "シミュラクラムスプリンター",
+      "en": "Simulacrum Splinter"
+    },
+    {
+      "ja": "シャタリングパーム",
+      "en": "Shattering Palm"
+    },
+    {
+      "ja": "シャードスカベンジャー",
+      "en": "Shard Scavenger"
+    },
+    {
+      "ja": "ショックウェーブトーテム",
+      "en": "Shockwave Totem"
+    },
+    {
+      "ja": "ショックチェインアロー",
+      "en": "Shockchain Arrow"
+    },
+    {
+      "ja": "ショックバースト弾",
+      "en": "Shockburst Rounds"
+    },
+    {
+      "ja": "ショックフラッシュ",
+      "en": "Cast on Shock"
+    },
+    {
+      "ja": "シリウスのアイドル",
+      "en": "Idol of Sirrius"
+    },
+    {
+      "ja": "シルクのアイドル",
+      "en": "Idol of Silk"
+    },
+    {
+      "ja": "シレルの栽培",
+      "en": "Cirel's Cultivation"
+    },
+    {
+      "ja": "シージカスケード",
+      "en": "Siege Cascade"
+    },
+    {
+      "ja": "シージバリスタ",
+      "en": "Siege Ballista"
+    },
+    {
+      "ja": "シールドウォール",
+      "en": "Shield Wall"
+    },
+    {
+      "ja": "シールドチャージ",
+      "en": "Shield Charge"
+    },
+    {
+      "ja": "ジクアニのソウルコア",
+      "en": "Soul Core of Jiquani"
+    },
+    {
+      "ja": "ジクアニの命題",
+      "en": "Jiquani's Thesis"
+    },
+    {
+      "ja": "ジポカドの支配のソウルコア",
+      "en": "Xipocado's Soul Core of Dominion"
+    },
+    {
+      "ja": "スウィフトアフリクション I",
+      "en": "Swift Affliction I"
+    },
+    {
+      "ja": "スウィフトアフリクション II",
+      "en": "Swift Affliction II"
+    },
+    {
+      "ja": "スウィフトアフリクション III",
+      "en": "Swift Affliction III"
+    },
+    {
+      "ja": "スカイフォール",
+      "en": "Skyfall"
+    },
+    {
+      "ja": "スカベンジドプレーティング",
+      "en": "Scavenged Plating"
+    },
+    {
+      "ja": "スカリングフレイム",
+      "en": "Scouring Flame"
+    },
+    {
+      "ja": "スキルジェムの原石",
+      "en": "Uncut Skill Gem"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル1)",
+      "en": "Uncut Skill Gem (Level 1)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル10)",
+      "en": "Uncut Skill Gem (Level 10)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル11)",
+      "en": "Uncut Skill Gem (Level 11)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル12)",
+      "en": "Uncut Skill Gem (Level 12)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル13)",
+      "en": "Uncut Skill Gem (Level 13)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル14)",
+      "en": "Uncut Skill Gem (Level 14)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル15)",
+      "en": "Uncut Skill Gem (Level 15)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル16)",
+      "en": "Uncut Skill Gem (Level 16)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル17)",
+      "en": "Uncut Skill Gem (Level 17)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル18)",
+      "en": "Uncut Skill Gem (Level 18)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル19)",
+      "en": "Uncut Skill Gem (Level 19)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル2)",
+      "en": "Uncut Skill Gem (Level 2)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル20)",
+      "en": "Uncut Skill Gem (Level 20)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル3)",
+      "en": "Uncut Skill Gem (Level 3)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル4)",
+      "en": "Uncut Skill Gem (Level 4)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル5)",
+      "en": "Uncut Skill Gem (Level 5)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル6)",
+      "en": "Uncut Skill Gem (Level 6)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル7)",
+      "en": "Uncut Skill Gem (Level 7)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル8)",
+      "en": "Uncut Skill Gem (Level 8)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル9)",
+      "en": "Uncut Skill Gem (Level 9)"
+    },
+    {
+      "ja": "スケルトンアーソニスト",
+      "en": "Skeletal Arsonist"
+    },
+    {
+      "ja": "スケルトンクレリック",
+      "en": "Skeletal Cleric"
+    },
+    {
+      "ja": "スケルトンストームメイジ",
+      "en": "Skeletal Storm Mage"
+    },
+    {
+      "ja": "スケルトンスナイパー",
+      "en": "Skeletal Sniper"
+    },
+    {
+      "ja": "スケルトンフロストメイジ",
+      "en": "Skeletal Frost Mage"
+    },
+    {
+      "ja": "スケルトンブルート",
+      "en": "Skeletal Brute"
+    },
+    {
+      "ja": "スケルトンリーバー",
+      "en": "Skeletal Reaver"
+    },
+    {
+      "ja": "スタッガリングパーム",
+      "en": "Staggering Palm"
+    },
+    {
+      "ja": "スタティックショック",
+      "en": "Static Shocks"
+    },
+    {
+      "ja": "スタン I",
+      "en": "Stun I"
+    },
+    {
+      "ja": "スタン II",
+      "en": "Stun II"
+    },
+    {
+      "ja": "スタン III",
+      "en": "Stun III"
+    },
+    {
+      "ja": "スタンピード",
+      "en": "Stampede"
+    },
+    {
+      "ja": "スタン狙い I",
+      "en": "Brink I"
+    },
+    {
+      "ja": "スタン狙い II",
+      "en": "Brink II"
+    },
+    {
+      "ja": "スターコンジャの頭の遺産",
+      "en": "Legacy of Starkonja's Head"
+    },
+    {
+      "ja": "スターンの山",
+      "en": "Styrn's Mountain"
+    },
+    {
+      "ja": "スターンの獰猛さ",
+      "en": "Styrn's Ferocity"
+    },
+    {
+      "ja": "ストームウェーブ",
+      "en": "Storm Wave"
+    },
+    {
+      "ja": "ストームコーラーアロー",
+      "en": "Stormcaller Arrow"
+    },
+    {
+      "ja": "ストームファイヤー",
+      "en": "Stormfire"
+    },
+    {
+      "ja": "ストームブラストボルト",
+      "en": "Stormblast Bolts"
+    },
+    {
+      "ja": "ストームランス",
+      "en": "Storm Lance"
+    },
+    {
+      "ja": "スナイパーの呪印",
+      "en": "Sniper's Mark"
+    },
+    {
+      "ja": "スナイプ",
+      "en": "Snipe"
+    },
+    {
+      "ja": "スナップ",
+      "en": "Snap"
+    },
+    {
+      "ja": "スパイラルボレー",
+      "en": "Spiral Volley"
+    },
+    {
+      "ja": "スパーク",
+      "en": "Spark"
+    },
+    {
+      "ja": "スパーリング",
+      "en": "Spar"
+    },
+    {
+      "ja": "スピアオブソラリス",
+      "en": "Spear of Solaris"
+    },
+    {
+      "ja": "スピアフィールド",
+      "en": "Spearfield"
+    },
+    {
+      "ja": "スピリットジェムの原石",
+      "en": "Uncut Spirit Gem"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル10)",
+      "en": "Uncut Spirit Gem (Level 10)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル11)",
+      "en": "Uncut Spirit Gem (Level 11)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル12)",
+      "en": "Uncut Spirit Gem (Level 12)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル13)",
+      "en": "Uncut Spirit Gem (Level 13)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル14)",
+      "en": "Uncut Spirit Gem (Level 14)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル15)",
+      "en": "Uncut Spirit Gem (Level 15)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル16)",
+      "en": "Uncut Spirit Gem (Level 16)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル17)",
+      "en": "Uncut Spirit Gem (Level 17)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル18)",
+      "en": "Uncut Spirit Gem (Level 18)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル19)",
+      "en": "Uncut Spirit Gem (Level 19)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル20)",
+      "en": "Uncut Spirit Gem (Level 20)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル4)",
+      "en": "Uncut Spirit Gem (Level 4)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル5)",
+      "en": "Uncut Spirit Gem (Level 5)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル6)",
+      "en": "Uncut Spirit Gem (Level 6)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル7)",
+      "en": "Uncut Spirit Gem (Level 7)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル8)",
+      "en": "Uncut Spirit Gem (Level 8)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル9)",
+      "en": "Uncut Spirit Gem (Level 9)"
+    },
+    {
+      "ja": "スペクトラルボレー",
+      "en": "Spectral Volley"
+    },
+    {
+      "ja": "スペルエコー",
+      "en": "Spell Echo"
+    },
+    {
+      "ja": "スペルカスケード",
+      "en": "Spell Cascade"
+    },
+    {
+      "ja": "スペルトーテム",
+      "en": "Spell Totem"
+    },
+    {
+      "ja": "スラッシングヴァイン",
+      "en": "Thrashing Vines"
+    },
+    {
+      "ja": "スリルオブキル",
+      "en": "Thrill of the Kill"
+    },
+    {
+      "ja": "スリルオブキル II",
+      "en": "Thrill of the Kill II"
+    },
+    {
+      "ja": "スルルダーナのアイドル",
+      "en": "Idol of Thruldana"
+    },
+    {
+      "ja": "スルードの力",
+      "en": "Thrud's Might"
+    },
+    {
+      "ja": "スヴァリンの遺産",
+      "en": "Legacy of Svalinn"
+    },
+    {
+      "ja": "スーパークリティカル",
+      "en": "Supercritical"
+    },
+    {
+      "ja": "スーパーチャージドスラム",
+      "en": "Supercharged Slam"
+    },
+    {
+      "ja": "セカンドウィンド I",
+      "en": "Second Wind I"
+    },
+    {
+      "ja": "セカンドウィンド II",
+      "en": "Second Wind II"
+    },
+    {
+      "ja": "セカンドウィンド III",
+      "en": "Second Wind III"
+    },
+    {
+      "ja": "セスケ女伯爵の弓のルーン",
+      "en": "Countess Seske's Rune of Archery"
+    },
+    {
+      "ja": "セラフの心臓",
+      "en": "Seraph's Heart"
+    },
+    {
+      "ja": "セールの凱旋",
+      "en": "Serle's Triumph"
+    },
+    {
+      "ja": "ゼシュトの聖廟の鍵",
+      "en": "Xesht's Reliquary Key"
+    },
+    {
+      "ja": "ゼニス I",
+      "en": "Zenith I"
+    },
+    {
+      "ja": "ゼニス II",
+      "en": "Zenith II"
+    },
+    {
+      "ja": "ゼルフィの悪名",
+      "en": "Zerphi's Infamy"
+    },
+    {
+      "ja": "ソウルオファリング",
+      "en": "Soul Offering"
+    },
+    {
+      "ja": "ソウルドレイン",
+      "en": "Soul Drain"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル10)",
+      "en": "Thaumaturgic Flux (Level 10)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル11)",
+      "en": "Thaumaturgic Flux (Level 11)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル12)",
+      "en": "Thaumaturgic Flux (Level 12)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル13)",
+      "en": "Thaumaturgic Flux (Level 13)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル14)",
+      "en": "Thaumaturgic Flux (Level 14)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル15)",
+      "en": "Thaumaturgic Flux (Level 15)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル16)",
+      "en": "Thaumaturgic Flux (Level 16)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル17)",
+      "en": "Thaumaturgic Flux (Level 17)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル18)",
+      "en": "Thaumaturgic Flux (Level 18)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル19)",
+      "en": "Thaumaturgic Flux (Level 19)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル20)",
+      "en": "Thaumaturgic Flux (Level 20)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル8)",
+      "en": "Thaumaturgic Flux (Level 8)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル9)",
+      "en": "Thaumaturgic Flux (Level 9)"
+    },
+    {
+      "ja": "ソーラーオーブ",
+      "en": "Solar Orb"
+    },
+    {
+      "ja": "ゾフのカタリスト",
+      "en": "Xoph's Catalyst"
+    },
+    {
+      "ja": "ゾフの火葬",
+      "en": "Xoph's Pyre"
+    },
+    {
+      "ja": "ゾペックのソウルコア",
+      "en": "Soul Core of Xopec"
+    },
+    {
+      "ja": "ゾペックの力のソウルコア",
+      "en": "Xopec's Soul Core of Power"
+    },
+    {
+      "ja": "ゾンビ蘇生",
+      "en": "Raise Zombie"
+    },
+    {
+      "ja": "タイタンの古代ルーン",
+      "en": "Ancient Rune of the Titan"
+    },
+    {
+      "ja": "タイムオブニード",
+      "en": "Time of Need"
+    },
+    {
+      "ja": "タウホアの加護",
+      "en": "Tawhoa's Tending"
+    },
+    {
+      "ja": "タカのアイドル",
+      "en": "Hawk Idol"
+    },
+    {
+      "ja": "タカティのソウルコア",
+      "en": "Soul Core of Tacati"
+    },
+    {
+      "ja": "タカティの怒り",
+      "en": "Tacati's Ire"
+    },
+    {
+      "ja": "タカティの病苦のソウルコア",
+      "en": "Tacati's Soul Core of Affliction"
+    },
+    {
+      "ja": "タサリオのリズム",
+      "en": "Tasalio's Rhythm"
+    },
+    {
+      "ja": "タングマズの香炉",
+      "en": "Tangmazu's Thurible"
+    },
+    {
+      "ja": "タングマズーの聖廟の鍵",
+      "en": "Tangmazu's Reliquary Key"
+    },
+    {
+      "ja": "ダイアストライク I",
+      "en": "Direstrike I"
+    },
+    {
+      "ja": "ダイアストライク II",
+      "en": "Direstrike II"
+    },
+    {
+      "ja": "ダブルバレル I",
+      "en": "Double Barrel I"
+    },
+    {
+      "ja": "ダブルバレル II",
+      "en": "Double Barrel II"
+    },
+    {
+      "ja": "ダブルバレル III",
+      "en": "Double Barrel III"
+    },
+    {
+      "ja": "ダレッソの熱情",
+      "en": "Daresso's Passion"
+    },
+    {
+      "ja": "ダークエフィジー",
+      "en": "Dark Effigy"
+    },
+    {
+      "ja": "チェルノボグの柱の遺産",
+      "en": "Legacy of Chernobog's Pillar"
+    },
+    {
+      "ja": "チャネリング中頑強 I",
+      "en": "Steadfast I"
+    },
+    {
+      "ja": "チャネリング中頑強 II",
+      "en": "Steadfast II"
+    },
+    {
+      "ja": "チャネリング蓄積 I",
+      "en": "Burgeon I"
+    },
+    {
+      "ja": "チャネリング蓄積 II",
+      "en": "Burgeon II"
+    },
+    {
+      "ja": "チャユラのカタリスト",
+      "en": "Chayula's Catalyst"
+    },
+    {
+      "ja": "チャユラの手",
+      "en": "Hand of Chayula"
+    },
+    {
+      "ja": "チャージショット I",
+      "en": "Charged Shots I"
+    },
+    {
+      "ja": "チャージショット II",
+      "en": "Charged Shots II"
+    },
+    {
+      "ja": "チャージドスタッフ",
+      "en": "Charged Staff"
+    },
+    {
+      "ja": "チャージブースト",
+      "en": "Heightened Charges"
+    },
+    {
+      "ja": "チャージルーン",
+      "en": "Charging Rune"
+    },
+    {
+      "ja": "チャージレギュレーション",
+      "en": "Charge Regulation"
+    },
+    {
+      "ja": "チャージ消費抑制",
+      "en": "Inhibitor"
+    },
+    {
+      "ja": "チャージ温存",
+      "en": "Perpetual Charge"
+    },
+    {
+      "ja": "チャージ追加付与 I",
+      "en": "Charge Profusion I"
+    },
+    {
+      "ja": "チャージ追加付与 II",
+      "en": "Charge Profusion II"
+    },
+    {
+      "ja": "チャームバウンティ",
+      "en": "Charm Bounty"
+    },
+    {
+      "ja": "チョロトルのソウルコア",
+      "en": "Soul Core of Cholotl"
+    },
+    {
+      "ja": "チョロトルの戦のソウルコア",
+      "en": "Cholotl's Soul Core of War"
+    },
+    {
+      "ja": "ツイスター",
+      "en": "Twister"
+    },
+    {
+      "ja": "ティカバのソウルコア",
+      "en": "Soul Core of Ticaba"
+    },
+    {
+      "ja": "テイムビースト",
+      "en": "Tame Beast"
+    },
+    {
+      "ja": "テクトニックスラム",
+      "en": "Tectonic Slams"
+    },
+    {
+      "ja": "テクロッドの凝視",
+      "en": "Tecrod's Gaze"
+    },
+    {
+      "ja": "テクロッドの復讐",
+      "en": "Tecrod's Revenge"
+    },
+    {
+      "ja": "テンペストフラリィ",
+      "en": "Tempest Flurry"
+    },
+    {
+      "ja": "テンペストベル",
+      "en": "Tempest Bell"
+    },
+    {
+      "ja": "テンポラルチェーン",
+      "en": "Temporal Chains"
+    },
+    {
+      "ja": "ディアーラの欲望",
+      "en": "Dialla's Desire"
+    },
+    {
+      "ja": "ディスエンゲージ",
+      "en": "Disengage"
+    },
+    {
+      "ja": "ディスペア",
+      "en": "Despair"
+    },
+    {
+      "ja": "ディファイアンスバナー",
+      "en": "Defiance Banner"
+    },
+    {
+      "ja": "ディードベルの遺産",
+      "en": "Legacy of Deidbell"
+    },
+    {
+      "ja": "デスブローの遺産",
+      "en": "Legacy of Deathblow"
+    },
+    {
+      "ja": "デッドリーヘラルド",
+      "en": "Deadly Herald"
+    },
+    {
+      "ja": "デトネーティングアロー",
+      "en": "Detonating Arrow"
+    },
+    {
+      "ja": "デトネートデッド",
+      "en": "Detonate Dead"
+    },
+    {
+      "ja": "デトネートリビング",
+      "en": "Detonate Living"
+    },
+    {
+      "ja": "デバウアー",
+      "en": "Devour"
+    },
+    {
+      "ja": "トゥルのカタリスト",
+      "en": "Tul's Catalyst"
+    },
+    {
+      "ja": "トゥルの雪崩",
+      "en": "Tul's Avalanche"
+    },
+    {
+      "ja": "トゥルの静寂",
+      "en": "Tul's Stillness"
+    },
+    {
+      "ja": "トキシックグロース",
+      "en": "Toxic Growth"
+    },
+    {
+      "ja": "トキシックドメイン",
+      "en": "Toxic Domain"
+    },
+    {
+      "ja": "トポタンテのソウルコア",
+      "en": "Soul Core of Topotante"
+    },
+    {
+      "ja": "トポタンテの軽減のソウルコア",
+      "en": "Topotante's Soul Core of Dampening"
+    },
+    {
+      "ja": "トライアルマスターの聖廟の鍵",
+      "en": "The Trialmaster's Reliquary Key"
+    },
+    {
+      "ja": "トリスケリオン・カスケード",
+      "en": "Triskelion Cascade"
+    },
+    {
+      "ja": "トリックスターの破片",
+      "en": "Trickster's Shard"
+    },
+    {
+      "ja": "トリニティ",
+      "en": "Trinity"
+    },
+    {
+      "ja": "トルネード",
+      "en": "Tornado"
+    },
+    {
+      "ja": "トルネードショット",
+      "en": "Tornado Shot"
+    },
+    {
+      "ja": "トレイルオブカルトロップ",
+      "en": "Trail of Caltrops"
+    },
+    {
+      "ja": "トレンチティンバーの遺産",
+      "en": "Legacy of Trenchtimbre"
+    },
+    {
+      "ja": "トーテム分裂 I",
+      "en": "Splinter Totem I"
+    },
+    {
+      "ja": "トーテム分裂 II",
+      "en": "Splinter Totem II"
+    },
+    {
+      "ja": "トーテム補強 I",
+      "en": "Reinforced Totems I"
+    },
+    {
+      "ja": "トーテム補強 II",
+      "en": "Reinforced Totems II"
+    },
+    {
+      "ja": "トーテム高速設置 I",
+      "en": "Urgent Totems I"
+    },
+    {
+      "ja": "トーテム高速設置 II",
+      "en": "Urgent Totems II"
+    },
+    {
+      "ja": "トーテム高速設置 III",
+      "en": "Urgent Totems III"
+    },
+    {
+      "ja": "ドゥードリの災厄",
+      "en": "Doedre's Undoing"
+    },
+    {
+      "ja": "ドッジ時キャスト",
+      "en": "Cast on Dodge"
+    },
+    {
+      "ja": "ドミナスの掌握",
+      "en": "Dominus' Grasp"
+    },
+    {
+      "ja": "ドレッドバナー",
+      "en": "Dread Banner"
+    },
+    {
+      "ja": "ネコのアイドル",
+      "en": "Cat Idol"
+    },
+    {
+      "ja": "ノックバック",
+      "en": "Knockback"
+    },
+    {
+      "ja": "ノヴァの投射物 I",
+      "en": "Nova Projectiles I"
+    },
+    {
+      "ja": "ノヴァの投射物 II",
+      "en": "Nova Projectiles II"
+    },
+    {
+      "ja": "ハイベロシティー弾",
+      "en": "High Velocity Rounds"
+    },
+    {
+      "ja": "ハイポサーミア",
+      "en": "Hypothermia"
+    },
+    {
+      "ja": "ハザード制御",
+      "en": "Controlled Hazard"
+    },
+    {
+      "ja": "ハヨキの耐熱のソウルコア",
+      "en": "Hayoxi's Soul Core of Heatproofing"
+    },
+    {
+      "ja": "ハヨキの電撃",
+      "en": "Hayoxi's Fulmination"
+    },
+    {
+      "ja": "ハンマーオブゴッド",
+      "en": "Hammer of the Gods"
+    },
+    {
+      "ja": "バイタリティー I",
+      "en": "Vitality I"
+    },
+    {
+      "ja": "バイタリティー II",
+      "en": "Vitality II"
+    },
+    {
+      "ja": "バイティングフロスト I",
+      "en": "Biting Frost I"
+    },
+    {
+      "ja": "バイティングフロスト II",
+      "en": "Biting Frost II"
+    },
+    {
+      "ja": "バインドスペクター",
+      "en": "Bind Spectre"
+    },
+    {
+      "ja": "バウンティ I",
+      "en": "Bounty I"
+    },
+    {
+      "ja": "バウンティ II",
+      "en": "Bounty II"
+    },
+    {
+      "ja": "バタイルの復讐",
+      "en": "Bhatair's Vengeance"
+    },
+    {
+      "ja": "バラージ",
+      "en": "Barrage"
+    },
+    {
+      "ja": "バリアーインボケーション",
+      "en": "Barrier Invocation"
+    },
+    {
+      "ja": "バークスキン",
+      "en": "Barkskin"
+    },
+    {
+      "ja": "バーサーク",
+      "en": "Berserk"
+    },
+    {
+      "ja": "パウンス",
+      "en": "Pounce"
+    },
+    {
+      "ja": "パクアテの契約",
+      "en": "Paquate's Pact"
+    },
+    {
+      "ja": "パリサイ人のアイドル",
+      "en": "Idol of the Pharisee"
+    },
+    {
+      "ja": "パワードバイヴェリシウム",
+      "en": "Powered by Verisium"
+    },
+    {
+      "ja": "パーフェクション",
+      "en": "Perfection"
+    },
+    {
+      "ja": "パーフェクトエンデュランス",
+      "en": "Perfected Endurance"
+    },
+    {
+      "ja": "パーフェクトストライク",
+      "en": "Perfect Strike"
+    },
+    {
+      "ja": "パーフェクトチャージルーン",
+      "en": "Perfect Charging Rune"
+    },
+    {
+      "ja": "パーフェクトフラックス",
+      "en": "Perfect Flux"
+    },
+    {
+      "ja": "パーフェクトワードルーン",
+      "en": "Perfect Ward Rune"
+    },
+    {
+      "ja": "パーマフロストボルト",
+      "en": "Permafrost Bolts"
+    },
+    {
+      "ja": "ヒステリーのエッセンス",
+      "en": "Essence of Hysteria"
+    },
+    {
+      "ja": "ヒットエンドラン",
+      "en": "Hit and Run"
+    },
+    {
+      "ja": "ヒット時衰弱",
+      "en": "Withering Touch"
+    },
+    {
+      "ja": "ヒネコラの髪束",
+      "en": "Hinekora's Lock"
+    },
+    {
+      "ja": "ヒョウのアイドル",
+      "en": "Panther Idol"
+    },
+    {
+      "ja": "ビターデッド",
+      "en": "Bitter Dead"
+    },
+    {
+      "ja": "ビンデンの角笛の遺産",
+      "en": "Legacy of Horns of Bynden"
+    },
+    {
+      "ja": "ファイヤーアチューンメント",
+      "en": "Fire Attunement"
+    },
+    {
+      "ja": "ファイヤーストーム",
+      "en": "Firestorm"
+    },
+    {
+      "ja": "ファイヤーボール",
+      "en": "Fireball"
+    },
+    {
+      "ja": "ファルウルの気品のルーン",
+      "en": "Farrul's Rune of Grace"
+    },
+    {
+      "ja": "ファルウルの狩りのルーン",
+      "en": "Farrul's Rune of the Hunt"
+    },
+    {
+      "ja": "ファルウルの追跡のルーン",
+      "en": "Farrul's Rune of the Chase"
+    },
+    {
+      "ja": "ファングオブフロスト",
+      "en": "Fangs of Frost"
+    },
+    {
+      "ja": "ファンザフレイム",
+      "en": "Fan The Flames"
+    },
+    {
+      "ja": "ファンザフレイム II",
+      "en": "Fan The Flames II"
+    },
+    {
+      "ja": "ファーストブラッド",
+      "en": "First Blood"
+    },
+    {
+      "ja": "フィストオブウォー I",
+      "en": "Fist of War I"
+    },
+    {
+      "ja": "フィストオブウォー II",
+      "en": "Fist of War II"
+    },
+    {
+      "ja": "フィストオブウォー III",
+      "en": "Fist of War III"
+    },
+    {
+      "ja": "フィストオブカルグール",
+      "en": "Fist Of Kalguur"
+    },
+    {
+      "ja": "フィヌムスの吸収のルーン",
+      "en": "Fenumus' Rune of Draining"
+    },
+    {
+      "ja": "フィヌムスの紡績のルーン",
+      "en": "Fenumus' Rune of Spinning"
+    },
+    {
+      "ja": "フィヌムスの苦痛のルーン",
+      "en": "Fenumus' Rune of Agony"
+    },
+    {
+      "ja": "フェラルインヴォケーション",
+      "en": "Feral Invocation"
+    },
+    {
+      "ja": "フェロシアスロア",
+      "en": "Ferocious Roar"
+    },
+    {
+      "ja": "フェースブレーカーの遺産",
+      "en": "Legacy of Facebreaker"
+    },
+    {
+      "ja": "フォックスシェードの遺産",
+      "en": "Legacy of Foxshade"
+    },
+    {
+      "ja": "フォティファイイングクライ",
+      "en": "Fortifying Cry"
+    },
+    {
+      "ja": "フォージハンマー",
+      "en": "Forge Hammer"
+    },
+    {
+      "ja": "フォーリングサンダー",
+      "en": "Falling Thunder"
+    },
+    {
+      "ja": "フクロウのアイドル",
+      "en": "Owl Idol"
+    },
+    {
+      "ja": "フューリアススラム",
+      "en": "Furious Slam"
+    },
+    {
+      "ja": "フューリーオブザマウンテン",
+      "en": "Fury of the Mountain"
+    },
+    {
+      "ja": "フラクチャーオーブ",
+      "en": "Fracturing Orb"
+    },
+    {
+      "ja": "フラグメンテーション弾",
+      "en": "Fragmentation Rounds"
+    },
+    {
+      "ja": "フラグメントオブパスト",
+      "en": "Fragments Of The Past"
+    },
+    {
+      "ja": "フラッシュグレネード",
+      "en": "Flash Grenade"
+    },
+    {
+      "ja": "フラマビリティ",
+      "en": "Flammability"
+    },
+    {
+      "ja": "フリッカーストライク",
+      "en": "Flicker Strike"
+    },
+    {
+      "ja": "フリムノーの聖歌の遺産",
+      "en": "Legacy of Hrimnor's Hymn"
+    },
+    {
+      "ja": "フリージングサルヴォ",
+      "en": "Freezing Salvo"
+    },
+    {
+      "ja": "フレイムウォール",
+      "en": "Flame Wall"
+    },
+    {
+      "ja": "フレイムブラスト",
+      "en": "Flameblast"
+    },
+    {
+      "ja": "フレイムブレス",
+      "en": "Flame Breath"
+    },
+    {
+      "ja": "フロストウォール",
+      "en": "Frost Wall"
+    },
+    {
+      "ja": "フロストダーツ",
+      "en": "Frost Darts"
+    },
+    {
+      "ja": "フロストネクサス",
+      "en": "Frost Nexus"
+    },
+    {
+      "ja": "フロストファイヤー",
+      "en": "Frostfire"
+    },
+    {
+      "ja": "フロストフレイムノヴァ",
+      "en": "Frostflame Nova"
+    },
+    {
+      "ja": "フロストボム",
+      "en": "Frost Bomb"
+    },
+    {
+      "ja": "フロストボルト",
+      "en": "Frostbolt"
+    },
+    {
+      "ja": "フローズンスパイト",
+      "en": "Frozen Spite"
+    },
+    {
+      "ja": "フローズンローカス",
+      "en": "Frozen Locus"
+    },
+    {
+      "ja": "ブッシュワックの遺産",
+      "en": "Legacy of Bushwhack"
+    },
+    {
+      "ja": "ブライアパッチ",
+      "en": "Briarpatch"
+    },
+    {
+      "ja": "ブライアパッチの遺産",
+      "en": "Legacy of Briarpatch"
+    },
+    {
+      "ja": "ブラスファミー",
+      "en": "Blasphemy"
+    },
+    {
+      "ja": "ブラックブラッドのお告げ",
+      "en": "Omen of the Blackblooded"
+    },
+    {
+      "ja": "ブラッドハウンドの呪印",
+      "en": "Bloodhound's Mark"
+    },
+    {
+      "ja": "ブラッドハント",
+      "en": "Blood Hunt"
+    },
+    {
+      "ja": "ブラッドラスト",
+      "en": "Bloodlust"
+    },
+    {
+      "ja": "ブランブルジャックの遺産",
+      "en": "Legacy of Bramblejack"
+    },
+    {
+      "ja": "ブリスクラップのルーン",
+      "en": "Legacy of Briskwrap"
+    },
+    {
+      "ja": "ブリンク",
+      "en": "Blink"
+    },
+    {
+      "ja": "ブリンハンドの印の遺産",
+      "en": "Legacy of Brynhand's Mark"
+    },
+    {
+      "ja": "ブリーチのエッセンス",
+      "en": "Essence of the Breach"
+    },
+    {
+      "ja": "ブリーチスプリンター",
+      "en": "Breach Splinter"
+    },
+    {
+      "ja": "ブリーチロードの亀裂",
+      "en": "Breachlord's Rift"
+    },
+    {
+      "ja": "ブリーチロードの融合体",
+      "en": "Breachlord's Amalgam"
+    },
+    {
+      "ja": "ブルータスの脳",
+      "en": "Brutus' Brain"
+    },
+    {
+      "ja": "ブルータリティ I",
+      "en": "Brutality I"
+    },
+    {
+      "ja": "ブルータリティ II",
+      "en": "Brutality II"
+    },
+    {
+      "ja": "ブルータリティ III",
+      "en": "Brutality III"
+    },
+    {
+      "ja": "プフアーテのソウルコア",
+      "en": "Soul Core of Puhuarte"
+    },
+    {
+      "ja": "プライマルストライク",
+      "en": "Primal Strikes"
+    },
+    {
+      "ja": "プラズマブラスト",
+      "en": "Plasma Blast"
+    },
+    {
+      "ja": "プリズムのルーン",
+      "en": "Rune of the Prism"
+    },
+    {
+      "ja": "プリズム合金",
+      "en": "Prismatic Alloy"
+    },
+    {
+      "ja": "プレイグベアラー",
+      "en": "Plague Bearer"
+    },
+    {
+      "ja": "プレシジョン I",
+      "en": "Precision I"
+    },
+    {
+      "ja": "プレシジョン II",
+      "en": "Precision II"
+    },
+    {
+      "ja": "プロトタイプ17号",
+      "en": "Prototype Seventeen"
+    },
+    {
+      "ja": "プロファンリチュアル",
+      "en": "Profane Ritual"
+    },
+    {
+      "ja": "ヘイルストーム弾",
+      "en": "Hailstorm Rounds"
+    },
+    {
+      "ja": "ヘストラ婦人の冬のルーン",
+      "en": "Lady Hestra's Rune of Winter"
+    },
+    {
+      "ja": "ヘックスブラスト",
+      "en": "Hexblast"
+    },
+    {
+      "ja": "ヘッジウィッチ・アサンドラの知恵のルーン",
+      "en": "Hedgewitch Assandra's Rune of Wisdom"
+    },
+    {
+      "ja": "ヘビのアイドル",
+      "en": "Snake Idol"
+    },
+    {
+      "ja": "ヘビースイング",
+      "en": "Heavy Swing"
+    },
+    {
+      "ja": "ヘラルドオブアイス",
+      "en": "Herald of Ice"
+    },
+    {
+      "ja": "ヘラルドオブアッシュ",
+      "en": "Herald of Ash"
+    },
+    {
+      "ja": "ヘラルドオブサンダー",
+      "en": "Herald of Thunder"
+    },
+    {
+      "ja": "ヘラルドオブブラッド",
+      "en": "Herald of Blood"
+    },
+    {
+      "ja": "ヘラルドオブプレイグ",
+      "en": "Herald of Plague"
+    },
+    {
+      "ja": "ヘルブリムの皮",
+      "en": "Helbrym's Hide"
+    },
+    {
+      "ja": "ペインオファリング",
+      "en": "Pain Offering"
+    },
+    {
+      "ja": "ホロウシェル",
+      "en": "Hollow Shell"
+    },
+    {
+      "ja": "ボラタイルパワー",
+      "en": "Volatile Power"
+    },
+    {
+      "ja": "ボラティリティ",
+      "en": "Volatility"
+    },
+    {
+      "ja": "ボルカニックエラプション",
+      "en": "Volcanic Eruption"
+    },
+    {
+      "ja": "ボルケーノ",
+      "en": "Volcano"
+    },
+    {
+      "ja": "ボルタイックバリア",
+      "en": "Voltaic Barrier"
+    },
+    {
+      "ja": "ボルト",
+      "en": "Volt"
+    },
+    {
+      "ja": "ボールライトニング",
+      "en": "Ball Lightning"
+    },
+    {
+      "ja": "ボーンオファリング",
+      "en": "Bone Offering"
+    },
+    {
+      "ja": "ボーンケージ",
+      "en": "Bone Cage"
+    },
+    {
+      "ja": "ボーンシャッター",
+      "en": "Boneshatter"
+    },
+    {
+      "ja": "ボーンシュラプネル",
+      "en": "Bone Shrapnel"
+    },
+    {
+      "ja": "ボーンストーム",
+      "en": "Bonestorm"
+    },
+    {
+      "ja": "ポイズンバーストアロー",
+      "en": "Poisonburst Arrow"
+    },
+    {
+      "ja": "ポテンシャル",
+      "en": "Potential"
+    },
+    {
+      "ja": "マキビシ",
+      "en": "Caltrops"
+    },
+    {
+      "ja": "マクサリウスのアイドル",
+      "en": "Idol of Maxarius"
+    },
+    {
+      "ja": "マグネティックサルヴォ",
+      "en": "Magnetic Salvo"
+    },
+    {
+      "ja": "マグマバリアー",
+      "en": "Magma Barrier"
+    },
+    {
+      "ja": "マナの泉",
+      "en": "Font of Mana"
+    },
+    {
+      "ja": "マナテンペスト",
+      "en": "Mana Tempest"
+    },
+    {
+      "ja": "マナバウンティ",
+      "en": "Mana Bounty"
+    },
+    {
+      "ja": "マナフレア",
+      "en": "Mana Flare"
+    },
+    {
+      "ja": "マナリーチ",
+      "en": "Mana Leech"
+    },
+    {
+      "ja": "マナレムナント",
+      "en": "Mana Remnants"
+    },
+    {
+      "ja": "マルチショット I",
+      "en": "Multishot I"
+    },
+    {
+      "ja": "マルチショット II",
+      "en": "Multishot II"
+    },
+    {
+      "ja": "マントラオブデストラクション",
+      "en": "Mantra of Destruction"
+    },
+    {
+      "ja": "マンドラゴラの愛の遺産",
+      "en": "Legacy of Amor Mandragora"
+    },
+    {
+      "ja": "ミニオンインスタビリティ",
+      "en": "Minion Instability"
+    },
+    {
+      "ja": "ミニオンスプラッシュ I",
+      "en": "Minion Splash I"
+    },
+    {
+      "ja": "ミニオンスプラッシュ II",
+      "en": "Minion Splash II"
+    },
+    {
+      "ja": "ミニオンパクト I",
+      "en": "Minion Pact I"
+    },
+    {
+      "ja": "ミニオンパクト II",
+      "en": "Minion Pact II"
+    },
+    {
+      "ja": "ミニオンマスタリー",
+      "en": "Minion Mastery"
+    },
+    {
+      "ja": "ミニオン巨大化",
+      "en": "Hulking Minions"
+    },
+    {
+      "ja": "ミニオン死亡時キャスト",
+      "en": "Cast on Minion Death"
+    },
+    {
+      "ja": "ミョルナーの遺産",
+      "en": "Legacy of Mjölner"
+    },
+    {
+      "ja": "ミラージュアーチャー",
+      "en": "Mirage Archer"
+    },
+    {
+      "ja": "ミートシールド I",
+      "en": "Meat Shield I"
+    },
+    {
+      "ja": "ミートシールド II",
+      "en": "Meat Shield II"
+    },
+    {
+      "ja": "メドヴェッドの世話",
+      "en": "Medved's Tending"
+    },
+    {
+      "ja": "メドヴェッドの伐採",
+      "en": "Medved's Felling"
+    },
+    {
+      "ja": "メドヴェッドの円環の紋章",
+      "en": "Medved's Crest of the Circle"
+    },
+    {
+      "ja": "メドヴェッドの叙事詩",
+      "en": "Medved's Saga"
+    },
+    {
+      "ja": "モリガンの洞察",
+      "en": "Mórrigan's Insight"
+    },
+    {
+      "ja": "モルガナのテンペスト",
+      "en": "Morgana's Tempest"
+    },
+    {
+      "ja": "モルタルキャノン",
+      "en": "Mortar Cannon"
+    },
+    {
+      "ja": "モルテンブラスト",
+      "en": "Molten Blast"
+    },
+    {
+      "ja": "モーメンタム",
+      "en": "Momentum"
+    },
+    {
+      "ja": "ライトニングアチューンメント",
+      "en": "Lightning Attunement"
+    },
+    {
+      "ja": "ライトニングアロー",
+      "en": "Lightning Arrow"
+    },
+    {
+      "ja": "ライトニングコンジット",
+      "en": "Lightning Conduit"
+    },
+    {
+      "ja": "ライトニングスピア",
+      "en": "Lightning Spear"
+    },
+    {
+      "ja": "ライトニングロッド",
+      "en": "Lightning Rod"
+    },
+    {
+      "ja": "ライトニングワープ",
+      "en": "Lightning Warp"
+    },
+    {
+      "ja": "ライフスプリグの遺産",
+      "en": "Legacy of Lifesprig"
+    },
+    {
+      "ja": "ライフタップ",
+      "en": "Lifetap"
+    },
+    {
+      "ja": "ライフドレイン",
+      "en": "Life Drain"
+    },
+    {
+      "ja": "ライフバウンティ",
+      "en": "Life Bounty"
+    },
+    {
+      "ja": "ライフリーチ I",
+      "en": "Life Leech I"
+    },
+    {
+      "ja": "ライフリーチ II",
+      "en": "Life Leech II"
+    },
+    {
+      "ja": "ライフリーチ III",
+      "en": "Life Leech III"
+    },
+    {
+      "ja": "ライフ抽出",
+      "en": "Extraction"
+    },
+    {
+      "ja": "ラキアタの流れ",
+      "en": "Rakiata's Flow"
+    },
+    {
+      "ja": "ラサの強襲",
+      "en": "Ratha's Assault"
+    },
+    {
+      "ja": "ラピッドアサルト",
+      "en": "Rapid Assault"
+    },
+    {
+      "ja": "ラピッドショット",
+      "en": "Rapid Shot"
+    },
+    {
+      "ja": "ララケシュのアイドル",
+      "en": "Idol of Ralakesh"
+    },
+    {
+      "ja": "ランページ",
+      "en": "Rampage"
+    },
+    {
+      "ja": "ラヴェナススウォーム",
+      "en": "Ravenous Swarm"
+    },
+    {
+      "ja": "リキッドヴェリシウム",
+      "en": "Liquid Verisium"
+    },
+    {
+      "ja": "リグワルドの獰猛",
+      "en": "Rigwald's Ferocity"
+    },
+    {
+      "ja": "リコンビネーションのお告げ",
+      "en": "Omen of Recombination"
+    },
+    {
+      "ja": "リチュアルの聖廟の鍵",
+      "en": "Ritualistic Reliquary Key"
+    },
+    {
+      "ja": "リパルジョン",
+      "en": "Repulsion"
+    },
+    {
+      "ja": "リビングボム",
+      "en": "Living Bomb"
+    },
+    {
+      "ja": "リビングライトニング",
+      "en": "Living Lightning"
+    },
+    {
+      "ja": "リビングライトニング II",
+      "en": "Living Lightning II"
+    },
+    {
+      "ja": "リフュテーション",
+      "en": "Refutation"
+    },
+    {
+      "ja": "リンガーリングイリュージョン",
+      "en": "Lingering Illusion"
+    },
+    {
+      "ja": "リージョンストライドの遺産",
+      "en": "Legacy of Legionstride"
+    },
+    {
+      "ja": "リーパーズインボケーション",
+      "en": "Reaper's Invocation"
+    },
+    {
+      "ja": "リープスラム",
+      "en": "Leap Slam"
+    },
+    {
+      "ja": "ルナーアサルト",
+      "en": "Lunar Assault"
+    },
+    {
+      "ja": "ルナーブレッシング",
+      "en": "Lunar Blessing"
+    },
+    {
+      "ja": "ルースレス",
+      "en": "Ruthless"
+    },
+    {
+      "ja": "ルーニックインフュージョン",
+      "en": "Runic Infusion"
+    },
+    {
+      "ja": "ルーニックスプリンター",
+      "en": "Runic Splinter"
+    },
+    {
+      "ja": "ルーニックリプリーブ",
+      "en": "Runic Reprieve"
+    },
+    {
+      "ja": "ルーンの合金",
+      "en": "Runic Alloy"
+    },
+    {
+      "ja": "ルーンの抽出",
+      "en": "Runic Extraction"
+    },
+    {
+      "ja": "ルーンシーカーの呼び声の遺産",
+      "en": "Legacy of Runeseeker's Call"
+    },
+    {
+      "ja": "ルーンバインダーの合金",
+      "en": "The Runebinder's Alloy"
+    },
+    {
+      "ja": "ルーンファーザーの合金",
+      "en": "The Runefather's Alloy"
+    },
+    {
+      "ja": "ルーンフォージブレード",
+      "en": "Runeforged Blades"
+    },
+    {
+      "ja": "レイジフォージド I",
+      "en": "Rageforged I"
+    },
+    {
+      "ja": "レイジフォージド II",
+      "en": "Rageforged II"
+    },
+    {
+      "ja": "レイジングスピリット",
+      "en": "Raging Spirits"
+    },
+    {
+      "ja": "レイライン",
+      "en": "Leylines"
+    },
+    {
+      "ja": "レインオブアロー",
+      "en": "Rain of Arrows"
+    },
+    {
+      "ja": "レインオブブレード",
+      "en": "Rain of Blades"
+    },
+    {
+      "ja": "レイヴンタッチシャード",
+      "en": "Raven-Touched Shard"
+    },
+    {
+      "ja": "レゾーネーティングシールド",
+      "en": "Resonating Shield"
+    },
+    {
+      "ja": "レッサーワードルーン",
+      "en": "Lesser Ward Rune"
+    },
+    {
+      "ja": "レバレッジ",
+      "en": "Leverage"
+    },
+    {
+      "ja": "レムナントオブカルグール",
+      "en": "Remnants of Kalguur"
+    },
+    {
+      "ja": "レムナントブースト I",
+      "en": "Remnant Potency I"
+    },
+    {
+      "ja": "レムナントブースト II",
+      "en": "Remnant Potency II"
+    },
+    {
+      "ja": "レムナントブースト III",
+      "en": "Remnant Potency III"
+    },
+    {
+      "ja": "レーキ",
+      "en": "Rake"
+    },
+    {
+      "ja": "ロア騎乗",
+      "en": "Rhoa Mount"
+    },
+    {
+      "ja": "ロミラの報い",
+      "en": "Romira's Requital"
+    },
+    {
+      "ja": "ロングショット I",
+      "en": "Longshot I"
+    },
+    {
+      "ja": "ロングショット II",
+      "en": "Longshot II"
+    },
+    {
+      "ja": "ロンデル・デ・エゾの遺産",
+      "en": "Legacy of Rondel de Ezo"
+    },
+    {
+      "ja": "ローグマーカー",
+      "en": "Rogue's Marker"
+    },
+    {
+      "ja": "ローリングスラム",
+      "en": "Rolling Slam"
+    },
+    {
+      "ja": "ローリングマグマ",
+      "en": "Rolling Magma"
+    },
+    {
+      "ja": "ワイルドシャード I",
+      "en": "Wildshards I"
+    },
+    {
+      "ja": "ワイルドシャード II",
+      "en": "Wildshards II"
+    },
+    {
+      "ja": "ワンダーラストの遺産",
+      "en": "Legacy of Wanderlust"
+    },
+    {
+      "ja": "ワードバウンドミニオン",
+      "en": "Wardbound Minions"
+    },
+    {
+      "ja": "ワードルーン",
+      "en": "Ward Rune"
+    },
+    {
+      "ja": "ワーリングアサルト",
+      "en": "Whirling Assault"
+    },
+    {
+      "ja": "ワーリングスラッシュ",
+      "en": "Whirling Slash"
+    },
+    {
+      "ja": "ワールウィンドランス",
+      "en": "Whirlwind Lance"
+    },
+    {
+      "ja": "ヴァインアロー",
+      "en": "Vine Arrow"
+    },
+    {
+      "ja": "ヴァラシュタの祝福",
+      "en": "Varashta's Blessing"
+    },
+    {
+      "ja": "ヴァルネラビリティ",
+      "en": "Vulnerability"
+    },
+    {
+      "ja": "ヴァンガード I",
+      "en": "Vanguard I"
+    },
+    {
+      "ja": "ヴァンガード II",
+      "en": "Vanguard II"
+    },
+    {
+      "ja": "ヴァールアルカニストのインフューザー",
+      "en": "Vaal Arcanist's Infuser"
+    },
+    {
+      "ja": "ヴァールオーブ",
+      "en": "Vaal Orb"
+    },
+    {
+      "ja": "ヴァールカタリストのインフューザー",
+      "en": "Vaal Catalysing Infuser"
+    },
+    {
+      "ja": "ヴァールサイフォナー",
+      "en": "Vaal Siphoner"
+    },
+    {
+      "ja": "ヴァール培養のオーブ",
+      "en": "Vaal Cultivation Orb"
+    },
+    {
+      "ja": "ヴァール鍛冶屋のインフューザー",
+      "en": "Vaal Blacksmith's Infuser"
+    },
+    {
+      "ja": "ヴァール鎧鍛冶のインフューザー",
+      "en": "Vaal Armourer's Infuser"
+    },
+    {
+      "ja": "ヴィレンタの推進力",
+      "en": "Vilenta's Propulsion"
+    },
+    {
+      "ja": "ヴェリシウム",
+      "en": "Verisium"
+    },
+    {
+      "ja": "ヴェリシウムマニフェステーション",
+      "en": "Verisium Manifestations"
+    },
+    {
+      "ja": "ヴォラナの包囲",
+      "en": "Vorana's Siege"
+    },
+    {
+      "ja": "ヴォラナの叙事詩",
+      "en": "Vorana's Saga"
+    },
+    {
+      "ja": "ヴォラナの虐殺",
+      "en": "Vorana's Carnage"
+    },
+    {
+      "ja": "ヴォラナの黒鎌の紋章",
+      "en": "Vorana's Crest of the Scythe"
+    },
+    {
+      "ja": "ヴォルカニックフィッシャー",
+      "en": "Volcanic Fissure"
+    },
+    {
+      "ja": "ヴォルタイークグレネード",
+      "en": "Voltaic Grenade"
+    },
+    {
+      "ja": "ヴォルティングインパクト",
+      "en": "Vaulting Impact"
+    },
+    {
+      "ja": "ヴルーンの余波",
+      "en": "Vruun's Aftermath"
+    },
+    {
+      "ja": "ヴルーンの必然",
+      "en": "Vruun's Inevitability"
+    },
+    {
+      "ja": "一貫性のルーン",
+      "en": "Rune of Consistency"
+    },
+    {
+      "ja": "上限超過 I",
+      "en": "Overabundance I"
+    },
+    {
+      "ja": "上限超過 II",
+      "en": "Overabundance II"
+    },
+    {
+      "ja": "不動の覚悟 I",
+      "en": "Stoicism I"
+    },
+    {
+      "ja": "不動の覚悟 II",
+      "en": "Stoicism II"
+    },
+    {
+      "ja": "不動の詠唱",
+      "en": "Unbending"
+    },
+    {
+      "ja": "不屈のライフ回収",
+      "en": "Unyielding"
+    },
+    {
+      "ja": "串刺し",
+      "en": "Impale"
+    },
+    {
+      "ja": "二重起爆",
+      "en": "Payload"
+    },
+    {
+      "ja": "二面性の遺産",
+      "en": "Legacy of Duality"
+    },
+    {
+      "ja": "余震 I",
+      "en": "Aftershock I"
+    },
+    {
+      "ja": "余震 II",
+      "en": "Aftershock II"
+    },
+    {
+      "ja": "余震増幅",
+      "en": "Reverberate"
+    },
+    {
+      "ja": "余震追加",
+      "en": "Tremors"
+    },
+    {
+      "ja": "侵蝕する領域",
+      "en": "Encroaching Ground"
+    },
+    {
+      "ja": "保存された肋骨",
+      "en": "Preserved Rib"
+    },
+    {
+      "ja": "保存された背骨",
+      "en": "Preserved Vertebrae"
+    },
+    {
+      "ja": "保存された鎖骨",
+      "en": "Preserved Collarbone"
+    },
+    {
+      "ja": "保存された頭蓋骨",
+      "en": "Preserved Cranium"
+    },
+    {
+      "ja": "保存された顎骨",
+      "en": "Preserved Jawbone"
+    },
+    {
+      "ja": "保護のワードルーン",
+      "en": "Warding Rune of Protection"
+    },
+    {
+      "ja": "保護の合金",
+      "en": "Protective Alloy"
+    },
+    {
+      "ja": "偉大なる消去のお告げ",
+      "en": "Omen of Greater Annulment"
+    },
+    {
+      "ja": "偉大なる高貴なお告げ",
+      "en": "Omen of Greater Exaltation"
+    },
+    {
+      "ja": "偶発トリガー",
+      "en": "Fluke"
+    },
+    {
+      "ja": "傑作のルーン",
+      "en": "Masterwork Rune"
+    },
+    {
+      "ja": "儀式的呪い",
+      "en": "Ritualistic Curse"
+    },
+    {
+      "ja": "元素の軍勢",
+      "en": "Elemental Army"
+    },
+    {
+      "ja": "元素ダメージ集中",
+      "en": "Elemental Focus"
+    },
+    {
+      "ja": "元素武装 I",
+      "en": "Elemental Armament I"
+    },
+    {
+      "ja": "元素武装 II",
+      "en": "Elemental Armament II"
+    },
+    {
+      "ja": "元素武装 III",
+      "en": "Elemental Armament III"
+    },
+    {
+      "ja": "元素系状態異常時キャスト",
+      "en": "Cast on Elemental Ailment"
+    },
+    {
+      "ja": "先制の一手",
+      "en": "Opening Move"
+    },
+    {
+      "ja": "先見のグレータールーン",
+      "en": "Greater Vision Rune"
+    },
+    {
+      "ja": "先見のパーフェクトルーン",
+      "en": "Perfect Vision Rune"
+    },
+    {
+      "ja": "先見のルーン",
+      "en": "Vision Rune"
+    },
+    {
+      "ja": "先見のレッサールーン",
+      "en": "Lesser Vision Rune"
+    },
+    {
+      "ja": "光のお告げ",
+      "en": "Omen of Light"
+    },
+    {
+      "ja": "共生のワードルーン",
+      "en": "Warding Rune of Symbiosis"
+    },
+    {
+      "ja": "共鳴のレムナント I",
+      "en": "Harmonic Remnants I"
+    },
+    {
+      "ja": "共鳴のレムナント II",
+      "en": "Harmonic Remnants II"
+    },
+    {
+      "ja": "円形陣地 I",
+      "en": "Fortress I"
+    },
+    {
+      "ja": "円形陣地 II",
+      "en": "Fortress II"
+    },
+    {
+      "ja": "再生のお告げ",
+      "en": "Omen of Resurgence"
+    },
+    {
+      "ja": "再配置 I",
+      "en": "Rearm I"
+    },
+    {
+      "ja": "再配置 II",
+      "en": "Rearm II"
+    },
+    {
+      "ja": "冒涜の生贄のオーブ",
+      "en": "Kamasa's Orb of Sacrifice"
+    },
+    {
+      "ja": "冷却フラックス",
+      "en": "Chilling Flux"
+    },
+    {
+      "ja": "冷気の曝露",
+      "en": "Cold Exposure"
+    },
+    {
+      "ja": "冷気マスタリー",
+      "en": "Cold Mastery"
+    },
+    {
+      "ja": "冷気獲得",
+      "en": "Embitter"
+    },
+    {
+      "ja": "冷気耐性貫通",
+      "en": "Cold Penetration"
+    },
+    {
+      "ja": "冷血",
+      "en": "Cool Headed"
+    },
+    {
+      "ja": "凍結",
+      "en": "Freeze"
+    },
+    {
+      "ja": "凍結の呪印",
+      "en": "Freezing Mark"
+    },
+    {
+      "ja": "凍結分岐",
+      "en": "Freezefork"
+    },
+    {
+      "ja": "凍結持続",
+      "en": "Deep Freeze"
+    },
+    {
+      "ja": "凍結時キャスト",
+      "en": "Cast on Freeze"
+    },
+    {
+      "ja": "処刑 I",
+      "en": "Execute I"
+    },
+    {
+      "ja": "処刑 II",
+      "en": "Execute II"
+    },
+    {
+      "ja": "処刑 III",
+      "en": "Execute III"
+    },
+    {
+      "ja": "凶撃",
+      "en": "Execrate"
+    },
+    {
+      "ja": "出血 I",
+      "en": "Bleed I"
+    },
+    {
+      "ja": "出血 II",
+      "en": "Bleed II"
+    },
+    {
+      "ja": "出血 III",
+      "en": "Bleed III"
+    },
+    {
+      "ja": "出血 IV",
+      "en": "Bleed IV"
+    },
+    {
+      "ja": "出血薬品 I",
+      "en": "Concoct I"
+    },
+    {
+      "ja": "出血薬品 II",
+      "en": "Concoct II"
+    },
+    {
+      "ja": "分岐",
+      "en": "Fork"
+    },
+    {
+      "ja": "分点のワードルーン",
+      "en": "Warding Rune of Equinox"
+    },
+    {
+      "ja": "分解のワードルーン",
+      "en": "Warding Rune of Disintegration"
+    },
+    {
+      "ja": "切り裂き",
+      "en": "Rip"
+    },
+    {
+      "ja": "切開",
+      "en": "Incision"
+    },
+    {
+      "ja": "制御の古代ルーン",
+      "en": "Ancient Rune of Control"
+    },
+    {
+      "ja": "刻印された不屈",
+      "en": "Carved Tenacity"
+    },
+    {
+      "ja": "刻印された威厳",
+      "en": "Carved Majesty"
+    },
+    {
+      "ja": "刻印された悪戯",
+      "en": "Carved Mischief"
+    },
+    {
+      "ja": "刻印された狡猾さ",
+      "en": "Carved Cunning"
+    },
+    {
+      "ja": "削減のお告げ",
+      "en": "Omen of Whittling"
+    },
+    {
+      "ja": "効果範囲拡大 I",
+      "en": "Magnified Area I"
+    },
+    {
+      "ja": "効果範囲拡大 II",
+      "en": "Magnified Area II"
+    },
+    {
+      "ja": "効果範囲拡張",
+      "en": "Expanse"
+    },
+    {
+      "ja": "効果範囲集中",
+      "en": "Concentrated Area"
+    },
+    {
+      "ja": "効率化弾薬",
+      "en": "Streamlined Rounds"
+    },
+    {
+      "ja": "勇気のワードルーン",
+      "en": "Warding Rune of Courage"
+    },
+    {
+      "ja": "北の脚の遺産",
+      "en": "Legacy of Northpaw"
+    },
+    {
+      "ja": "十分の一税のグレータールーン",
+      "en": "Greater Rune of Tithing"
+    },
+    {
+      "ja": "卑劣な騎士の遺産",
+      "en": "Legacy of The Vile Knight"
+    },
+    {
+      "ja": "反響のクライ",
+      "en": "Echoing Cry"
+    },
+    {
+      "ja": "取引のお告げ",
+      "en": "Omen of Bartering"
+    },
+    {
+      "ja": "古代のお告げ",
+      "en": "Omen of the Ancients"
+    },
+    {
+      "ja": "古代のインフューザー",
+      "en": "Ancient Infuser"
+    },
+    {
+      "ja": "古代の希釈された液化した怒り",
+      "en": "Ancient Diluted Liquid Ire"
+    },
+    {
+      "ja": "古代の希釈された液化した罪悪感",
+      "en": "Ancient Diluted Liquid Guilt"
+    },
+    {
+      "ja": "古代の希釈された液化した貪欲",
+      "en": "Ancient Diluted Liquid Greed"
+    },
+    {
+      "ja": "古代の強力な液化した憂鬱",
+      "en": "Ancient Potent Liquid Melancholy"
+    },
+    {
+      "ja": "古代の強力な液化した獰猛",
+      "en": "Ancient Potent Liquid Ferocity"
+    },
+    {
+      "ja": "古代の強力な液化した軽蔑",
+      "en": "Ancient Potent Liquid Contempt"
+    },
+    {
+      "ja": "古代の液化した偏執症",
+      "en": "Ancient Liquid Paranoia"
+    },
+    {
+      "ja": "古代の液化した嫉妬",
+      "en": "Ancient Liquid Envy"
+    },
+    {
+      "ja": "古代の液化した嫌悪",
+      "en": "Ancient Liquid Disgust"
+    },
+    {
+      "ja": "古代の液化した絶望",
+      "en": "Ancient Liquid Despair"
+    },
+    {
+      "ja": "古代の濃縮された液化した孤立感",
+      "en": "Ancient Concentrated Liquid Isolation"
+    },
+    {
+      "ja": "古代の濃縮された液化した恐怖",
+      "en": "Ancient Concentrated Liquid Fear"
+    },
+    {
+      "ja": "古代の濃縮された液化した苦悩",
+      "en": "Ancient Concentrated Liquid Suffering"
+    },
+    {
+      "ja": "古代の肋骨",
+      "en": "Ancient Rib"
+    },
+    {
+      "ja": "古代の鎖骨",
+      "en": "Ancient Collarbone"
+    },
+    {
+      "ja": "古代の顎骨",
+      "en": "Ancient Jawbone"
+    },
+    {
+      "ja": "可能性のお告げ",
+      "en": "Omen of Chance"
+    },
+    {
+      "ja": "可能性のオーブ",
+      "en": "Orb of Chance"
+    },
+    {
+      "ja": "可能性のシャード",
+      "en": "Chance Shard"
+    },
+    {
+      "ja": "右側の抹消のお告げ",
+      "en": "Omen of Dextral Erasure"
+    },
+    {
+      "ja": "右側の消去のお告げ",
+      "en": "Omen of Dextral Annulment"
+    },
+    {
+      "ja": "右側の王者のお告げ",
+      "en": "Omen of Dextral Coronation"
+    },
+    {
+      "ja": "右側の結晶化のお告げ",
+      "en": "Omen of Dextral Crystallisation"
+    },
+    {
+      "ja": "右側の錬金術のお告げ",
+      "en": "Omen of Dextral Alchemy"
+    },
+    {
+      "ja": "右側の高貴なお告げ",
+      "en": "Omen of Dextral Exaltation"
+    },
+    {
+      "ja": "右手のネクロマンシーのお告げ",
+      "en": "Omen of Dextral Necromancy"
+    },
+    {
+      "ja": "名声のルーン",
+      "en": "Rune of Renown"
+    },
+    {
+      "ja": "君主のお告げ",
+      "en": "Omen of the Liege"
+    },
+    {
+      "ja": "吸収の呪印",
+      "en": "Mark of Siphoning"
+    },
+    {
+      "ja": "吸収の呪印 II",
+      "en": "Mark of Siphoning II"
+    },
+    {
+      "ja": "呪いブースト",
+      "en": "Heightened Curse"
+    },
+    {
+      "ja": "呪い刻みの遺産",
+      "en": "Legacy of Cursecarver"
+    },
+    {
+      "ja": "呪い領域",
+      "en": "Cursed Ground"
+    },
+    {
+      "ja": "呪印永続化",
+      "en": "Eternal Mark"
+    },
+    {
+      "ja": "呪術の華",
+      "en": "Hex Bloom"
+    },
+    {
+      "ja": "命中ブースト I",
+      "en": "Heightened Accuracy I"
+    },
+    {
+      "ja": "命中ブースト II",
+      "en": "Heightened Accuracy II"
+    },
+    {
+      "ja": "命令 I",
+      "en": "Bidding I"
+    },
+    {
+      "ja": "命令 II",
+      "en": "Bidding II"
+    },
+    {
+      "ja": "命令 III",
+      "en": "Bidding III"
+    },
+    {
+      "ja": "命令のエッセンス",
+      "en": "Essence of Command"
+    },
+    {
+      "ja": "命令のグレーターエッセンス",
+      "en": "Greater Essence of Command"
+    },
+    {
+      "ja": "命令のパーフェクトエッセンス",
+      "en": "Perfect Essence of Command"
+    },
+    {
+      "ja": "命令のレッサーエッセンス",
+      "en": "Lesser Essence of Command"
+    },
+    {
+      "ja": "命令集中",
+      "en": "Commandment"
+    },
+    {
+      "ja": "哨兵の遺産",
+      "en": "Legacy of The Sentry"
+    },
+    {
+      "ja": "噛み切られた肋骨",
+      "en": "Gnawed Rib"
+    },
+    {
+      "ja": "噛み切られた鎖骨",
+      "en": "Gnawed Collarbone"
+    },
+    {
+      "ja": "噛み切られた顎骨",
+      "en": "Gnawed Jawbone"
+    },
+    {
+      "ja": "回収のワードルーン",
+      "en": "Warding Rune of Salvaging"
+    },
+    {
+      "ja": "回復のルーン",
+      "en": "Healing Runes"
+    },
+    {
+      "ja": "圧政の手の遺産",
+      "en": "Legacy of Tyranny's Grip"
+    },
+    {
+      "ja": "地響き",
+      "en": "Stomping Ground"
+    },
+    {
+      "ja": "均質化の王者のお告げ",
+      "en": "Omen of Homogenising Coronation"
+    },
+    {
+      "ja": "均質化の高貴のお告げ",
+      "en": "Omen of Homogenising Exaltation"
+    },
+    {
+      "ja": "執着のワードルーン",
+      "en": "Warding Rune of Obsession"
+    },
+    {
+      "ja": "基礎のルーン",
+      "en": "Rune of Foundations"
+    },
+    {
+      "ja": "堅守",
+      "en": "Unabating"
+    },
+    {
+      "ja": "堅牢化の生贄のオーブ",
+      "en": "Kopec's Orb of Sacrifice"
+    },
+    {
+      "ja": "報復 I",
+      "en": "Retaliate I"
+    },
+    {
+      "ja": "報復 II",
+      "en": "Retaliate II"
+    },
+    {
+      "ja": "報復の古代ルーン",
+      "en": "Ancient Rune of Retaliation"
+    },
+    {
+      "ja": "増強のオーブ",
+      "en": "Orb of Augmentation"
+    },
+    {
+      "ja": "増強のオーブ (上級)",
+      "en": "Greater Orb of Augmentation"
+    },
+    {
+      "ja": "増強のオーブ (完全)",
+      "en": "Perfect Orb of Augmentation"
+    },
+    {
+      "ja": "増援のお告げ",
+      "en": "Omen of Reinforcements"
+    },
+    {
+      "ja": "変成のオーブ",
+      "en": "Orb of Transmutation"
+    },
+    {
+      "ja": "変成のオーブ (上級)",
+      "en": "Greater Orb of Transmutation"
+    },
+    {
+      "ja": "変成のオーブ (完全)",
+      "en": "Perfect Orb of Transmutation"
+    },
+    {
+      "ja": "変成のシャード",
+      "en": "Transmutation Shard"
+    },
+    {
+      "ja": "変質した鎖骨",
+      "en": "Altered Collarbone"
+    },
+    {
+      "ja": "夕闇の番の遺産",
+      "en": "Legacy of Dusk Vigil"
+    },
+    {
+      "ja": "大樹 II",
+      "en": "Greatwood II"
+    },
+    {
+      "ja": "大狼の意志力のルーン",
+      "en": "The Greatwolf's Rune of Willpower"
+    },
+    {
+      "ja": "大狼の鉤爪のルーン",
+      "en": "The Greatwolf's Rune of Claws"
+    },
+    {
+      "ja": "大群の古代ルーン",
+      "en": "Ancient Rune of the Horde"
+    },
+    {
+      "ja": "天体の合金",
+      "en": "Celestial Alloy"
+    },
+    {
+      "ja": "天体直列",
+      "en": "Syzygy"
+    },
+    {
+      "ja": "太陽のアーティファクト",
+      "en": "Sun Artifact"
+    },
+    {
+      "ja": "好機の幅 I",
+      "en": "Window of Opportunity I"
+    },
+    {
+      "ja": "好機の幅 II",
+      "en": "Window of Opportunity II"
+    },
+    {
+      "ja": "妖術の古代ルーン",
+      "en": "Ancient Rune of Witchcraft"
+    },
+    {
+      "ja": "安定のワードルーン",
+      "en": "Warding Rune of Stability"
+    },
+    {
+      "ja": "宝石細工師のプリズム",
+      "en": "Gemcutter's Prism"
+    },
+    {
+      "ja": "宝飾職人のオーブ (上級)",
+      "en": "Greater Jeweller's Orb"
+    },
+    {
+      "ja": "宝飾職人のオーブ (完全)",
+      "en": "Perfect Jeweller's Orb"
+    },
+    {
+      "ja": "宝飾職人のオーブ (見習い)",
+      "en": "Lesser Jeweller's Orb"
+    },
+    {
+      "ja": "実践的魔術 I",
+      "en": "Practical Magic I"
+    },
+    {
+      "ja": "実践的魔術 II",
+      "en": "Practical Magic II"
+    },
+    {
+      "ja": "宮廷女官マンナンの残虐のルーン",
+      "en": "Courtesan Mannan's Rune of Cruelty"
+    },
+    {
+      "ja": "対峙のルーン",
+      "en": "Rune of Confrontation"
+    },
+    {
+      "ja": "射程のルーン",
+      "en": "Rune of Reach"
+    },
+    {
+      "ja": "屈折装甲 I",
+      "en": "Refraction I"
+    },
+    {
+      "ja": "屈折装甲 II",
+      "en": "Refraction II"
+    },
+    {
+      "ja": "屈折装甲 III",
+      "en": "Refraction III"
+    },
+    {
+      "ja": "崇敬される星明りの鉱石",
+      "en": "Revered Starlit Ore"
+    },
+    {
+      "ja": "崩し打ち",
+      "en": "Outmaneuver"
+    },
+    {
+      "ja": "嵐のグレータールーン",
+      "en": "Greater Storm Rune"
+    },
+    {
+      "ja": "嵐のパーフェクトルーン",
+      "en": "Perfect Storm Rune"
+    },
+    {
+      "ja": "嵐のルーン",
+      "en": "Storm Rune"
+    },
+    {
+      "ja": "嵐のレッサールーン",
+      "en": "Lesser Storm Rune"
+    },
+    {
+      "ja": "嵐の連鎖",
+      "en": "Rising Tempest"
+    },
+    {
+      "ja": "左側の抹消のお告げ",
+      "en": "Omen of Sinistral Erasure"
+    },
+    {
+      "ja": "左側の消去のお告げ",
+      "en": "Omen of Sinistral Annulment"
+    },
+    {
+      "ja": "左側の王者のお告げ",
+      "en": "Omen of Sinistral Coronation"
+    },
+    {
+      "ja": "左側の結晶化のお告げ",
+      "en": "Omen of Sinistral Crystallisation"
+    },
+    {
+      "ja": "左側の錬金術のお告げ",
+      "en": "Omen of Sinistral Alchemy"
+    },
+    {
+      "ja": "左側の高貴なお告げ",
+      "en": "Omen of Sinistral Exaltation"
+    },
+    {
+      "ja": "左手のネクロマンシーのお告げ",
+      "en": "Omen of Sinistral Necromancy"
+    },
+    {
+      "ja": "希少なヴェリシウム",
+      "en": "Exceptional Verisium"
+    },
+    {
+      "ja": "希釈された液化した怒り",
+      "en": "Diluted Liquid Ire"
+    },
+    {
+      "ja": "希釈された液化した罪悪感",
+      "en": "Diluted Liquid Guilt"
+    },
+    {
+      "ja": "希釈された液化した貪欲",
+      "en": "Diluted Liquid Greed"
+    },
+    {
+      "ja": "帯電障壁",
+      "en": "Crackling Barrier"
+    },
+    {
+      "ja": "幸運の反抗 I",
+      "en": "Defy I"
+    },
+    {
+      "ja": "幸運の反抗 II",
+      "en": "Defy II"
+    },
+    {
+      "ja": "弱点活用",
+      "en": "Exploit Weakness"
+    },
+    {
+      "ja": "強力な液化した憂鬱",
+      "en": "Potent Liquid Melancholy"
+    },
+    {
+      "ja": "強力な液化した獰猛",
+      "en": "Potent Liquid Ferocity"
+    },
+    {
+      "ja": "強力な液化した軽蔑",
+      "en": "Potent Liquid Contempt"
+    },
+    {
+      "ja": "強化のエッセンス",
+      "en": "Essence of Enhancement"
+    },
+    {
+      "ja": "強化のグレーターエッセンス",
+      "en": "Greater Essence of Enhancement"
+    },
+    {
+      "ja": "強化のスパーク I",
+      "en": "Empowered Sparks I"
+    },
+    {
+      "ja": "強化のスパーク II",
+      "en": "Empowered Sparks II"
+    },
+    {
+      "ja": "強化のパーフェクトエッセンス",
+      "en": "Perfect Essence of Enhancement"
+    },
+    {
+      "ja": "強化のレッサーエッセンス",
+      "en": "Lesser Essence of Enhancement"
+    },
+    {
+      "ja": "強化ブースト",
+      "en": "Premeditation"
+    },
+    {
+      "ja": "強固のグレータールーン",
+      "en": "Greater Robust Rune"
+    },
+    {
+      "ja": "強固のパーフェクトルーン",
+      "en": "Perfect Robust Rune"
+    },
+    {
+      "ja": "強固のルーン",
+      "en": "Robust Rune"
+    },
+    {
+      "ja": "強固のレッサールーン",
+      "en": "Lesser Robust Rune"
+    },
+    {
+      "ja": "強奪者のカタリスト",
+      "en": "Reaver Catalyst"
+    },
+    {
+      "ja": "強心",
+      "en": "Strong Hearted"
+    },
+    {
+      "ja": "弾薬温存 I",
+      "en": "Ammo Conservation I"
+    },
+    {
+      "ja": "弾薬温存 II",
+      "en": "Ammo Conservation II"
+    },
+    {
+      "ja": "弾薬温存 III",
+      "en": "Ammo Conservation III"
+    },
+    {
+      "ja": "彼女の宣言",
+      "en": "Her Declaration"
+    },
+    {
+      "ja": "後退 I",
+      "en": "Retreat I"
+    },
+    {
+      "ja": "後退 II",
+      "en": "Retreat II"
+    },
+    {
+      "ja": "後退 III",
+      "en": "Retreat III"
+    },
+    {
+      "ja": "復活のグレータールーン",
+      "en": "Greater Rebirth Rune"
+    },
+    {
+      "ja": "復活のパーフェクトルーン",
+      "en": "Perfect Rebirth Rune"
+    },
+    {
+      "ja": "復活のルーン",
+      "en": "Rebirth Rune"
+    },
+    {
+      "ja": "復活のレッサールーン",
+      "en": "Lesser Rebirth Rune"
+    },
+    {
+      "ja": "微笑む騎士の遺産",
+      "en": "Legacy of The Smiling Knight"
+    },
+    {
+      "ja": "心臓のワードルーン",
+      "en": "Warding Rune of Heart"
+    },
+    {
+      "ja": "必死の一撃",
+      "en": "Desperation"
+    },
+    {
+      "ja": "忠誠",
+      "en": "Loyalty"
+    },
+    {
+      "ja": "急性毒",
+      "en": "Escalating Poison"
+    },
+    {
+      "ja": "悪意の小花の遺産",
+      "en": "Legacy of Spiteful Floret"
+    },
+    {
+      "ja": "感電",
+      "en": "Shock"
+    },
+    {
+      "ja": "感電エナジーシールド吸収",
+      "en": "Shock Siphon"
+    },
+    {
+      "ja": "感電ジャンプ",
+      "en": "Shocking Leap"
+    },
+    {
+      "ja": "感電伝染",
+      "en": "Shock Conduction"
+    },
+    {
+      "ja": "感電伝染 II",
+      "en": "Shock Conduction II"
+    },
+    {
+      "ja": "感電持続",
+      "en": "Lasting Shock"
+    },
+    {
+      "ja": "感電連鎖",
+      "en": "Stormchain"
+    },
+    {
+      "ja": "憤怒 I",
+      "en": "Rage I"
+    },
+    {
+      "ja": "憤怒 II",
+      "en": "Rage II"
+    },
+    {
+      "ja": "憤怒 III",
+      "en": "Rage III"
+    },
+    {
+      "ja": "憤怒のクライ",
+      "en": "Raging Cry"
+    },
+    {
+      "ja": "憤怒の泉",
+      "en": "Font of Rage"
+    },
+    {
+      "ja": "成就のお告げ",
+      "en": "Omen of Answered Prayers"
+    },
+    {
+      "ja": "成長の加速",
+      "en": "Accelerated Growth"
+    },
+    {
+      "ja": "成長の加速 II",
+      "en": "Accelerated Growth II"
+    },
+    {
+      "ja": "戦意高揚",
+      "en": "Rally"
+    },
+    {
+      "ja": "戦慄のエッセンス",
+      "en": "Essence of Horror"
+    },
+    {
+      "ja": "戦闘のエッセンス",
+      "en": "Essence of Battle"
+    },
+    {
+      "ja": "戦闘のグレーターエッセンス",
+      "en": "Greater Essence of Battle"
+    },
+    {
+      "ja": "戦闘のパーフェクトエッセンス",
+      "en": "Perfect Essence of Battle"
+    },
+    {
+      "ja": "戦闘のレッサーエッセンス",
+      "en": "Lesser Essence of Battle"
+    },
+    {
+      "ja": "手慣れたコンボ",
+      "en": "Practiced Combo"
+    },
+    {
+      "ja": "投射物加速 I",
+      "en": "Projectile Acceleration I"
+    },
+    {
+      "ja": "投射物加速 II",
+      "en": "Projectile Acceleration II"
+    },
+    {
+      "ja": "投射物加速 III",
+      "en": "Projectile Acceleration III"
+    },
+    {
+      "ja": "投射物減速 I",
+      "en": "Projectile Deceleration I"
+    },
+    {
+      "ja": "投射物減速 II",
+      "en": "Projectile Deceleration II"
+    },
+    {
+      "ja": "抽出のオーブ",
+      "en": "Orb of Extraction"
+    },
+    {
+      "ja": "招集",
+      "en": "Muster"
+    },
+    {
+      "ja": "拡張",
+      "en": "Expand"
+    },
+    {
+      "ja": "拡張の合金",
+      "en": "Expansive Alloy"
+    },
+    {
+      "ja": "持続する呪術",
+      "en": "Abiding Hex"
+    },
+    {
+      "ja": "持続のウォークライ",
+      "en": "Tireless"
+    },
+    {
+      "ja": "持続時間圧縮 I",
+      "en": "Compressed Duration I"
+    },
+    {
+      "ja": "持続時間圧縮 II",
+      "en": "Compressed Duration II"
+    },
+    {
+      "ja": "持続時間延長 I",
+      "en": "Prolonged Duration I"
+    },
+    {
+      "ja": "持続時間延長 II",
+      "en": "Prolonged Duration II"
+    },
+    {
+      "ja": "探求のエッセンス",
+      "en": "Essence of Seeking"
+    },
+    {
+      "ja": "探求のグレーターエッセンス",
+      "en": "Greater Essence of Seeking"
+    },
+    {
+      "ja": "探求のパーフェクトエッセンス",
+      "en": "Perfect Essence of Seeking"
+    },
+    {
+      "ja": "探求のレッサーエッセンス",
+      "en": "Lesser Essence of Seeking"
+    },
+    {
+      "ja": "接地のエッセンス",
+      "en": "Essence of Grounding"
+    },
+    {
+      "ja": "接地のグレーターエッセンス",
+      "en": "Greater Essence of Grounding"
+    },
+    {
+      "ja": "接地のパーフェクトエッセンス",
+      "en": "Perfect Essence of Grounding"
+    },
+    {
+      "ja": "接地のレッサーエッセンス",
+      "en": "Lesser Essence of Grounding"
+    },
+    {
+      "ja": "擦傷のエッセンス",
+      "en": "Essence of Abrasion"
+    },
+    {
+      "ja": "擦傷のグレーターエッセンス",
+      "en": "Greater Essence of Abrasion"
+    },
+    {
+      "ja": "擦傷のパーフェクトエッセンス",
+      "en": "Perfect Essence of Abrasion"
+    },
+    {
+      "ja": "擦傷のレッサーエッセンス",
+      "en": "Lesser Essence of Abrasion"
+    },
+    {
+      "ja": "支配者のお告げ",
+      "en": "Omen of the Sovereign"
+    },
+    {
+      "ja": "改善のお告げ",
+      "en": "Omen of Amelioration"
+    },
+    {
+      "ja": "放浪騎士の遺産",
+      "en": "Legacy of The Knight-errant"
+    },
+    {
+      "ja": "敏速のエッセンス",
+      "en": "Essence of Alacrity"
+    },
+    {
+      "ja": "敏速のグレーターエッセンス",
+      "en": "Greater Essence of Alacrity"
+    },
+    {
+      "ja": "敏速のパーフェクトエッセンス",
+      "en": "Perfect Essence of Alacrity"
+    },
+    {
+      "ja": "敏速のレッサーエッセンス",
+      "en": "Lesser Essence of Alacrity"
+    },
+    {
+      "ja": "教団のアーティファクト",
+      "en": "Order Artifact"
+    },
+    {
+      "ja": "敵意の古代ルーン",
+      "en": "Ancient Rune of Animosity"
+    },
+    {
+      "ja": "断たれた円環のアーティファクト",
+      "en": "Broken Circle Artifact"
+    },
+    {
+      "ja": "断固の一撃",
+      "en": "Dauntless"
+    },
+    {
+      "ja": "断固の一撃 I",
+      "en": "Enduring Impact I"
+    },
+    {
+      "ja": "断固の一撃 II",
+      "en": "Enduring Impact II"
+    },
+    {
+      "ja": "断熱のエッセンス",
+      "en": "Essence of Insulation"
+    },
+    {
+      "ja": "断熱のグレーターエッセンス",
+      "en": "Greater Essence of Insulation"
+    },
+    {
+      "ja": "断熱のパーフェクトエッセンス",
+      "en": "Perfect Essence of Insulation"
+    },
+    {
+      "ja": "断熱のレッサーエッセンス",
+      "en": "Lesser Essence of Insulation"
+    },
+    {
+      "ja": "新弾倉 I",
+      "en": "Fresh Clip I"
+    },
+    {
+      "ja": "新弾倉 II",
+      "en": "Fresh Clip II"
+    },
+    {
+      "ja": "方向一致 I",
+      "en": "Alignment I"
+    },
+    {
+      "ja": "方向一致 II",
+      "en": "Alignment II"
+    },
+    {
+      "ja": "方向一致 III",
+      "en": "Alignment III"
+    },
+    {
+      "ja": "旋風の合金",
+      "en": "Cyclonic Alloy"
+    },
+    {
+      "ja": "族長ガートの野生のルーン",
+      "en": "Thane Girt's Rune of Wildness"
+    },
+    {
+      "ja": "族長グラネルの熟達のルーン",
+      "en": "Thane Grannell's Rune of Mastery"
+    },
+    {
+      "ja": "族長ミュルクの夏のルーン",
+      "en": "Thane Myrk's Rune of Summer"
+    },
+    {
+      "ja": "族長レルドの春のルーン",
+      "en": "Thane Leld's Rune of Spring"
+    },
+    {
+      "ja": "曝露のクライ",
+      "en": "Exposing Cry"
+    },
+    {
+      "ja": "曝露ブースト",
+      "en": "Potent Exposure"
+    },
+    {
+      "ja": "条件の報酬",
+      "en": "Delayed Gratification"
+    },
+    {
+      "ja": "枝分かれする亀裂 I",
+      "en": "Branching Fissures I"
+    },
+    {
+      "ja": "枝分かれする亀裂 II",
+      "en": "Branching Fissures II"
+    },
+    {
+      "ja": "棘による報復 I",
+      "en": "Barbs I"
+    },
+    {
+      "ja": "棘による報復 II",
+      "en": "Barbs II"
+    },
+    {
+      "ja": "棘による報復 III",
+      "en": "Barbs III"
+    },
+    {
+      "ja": "棘皮 I",
+      "en": "Thornskin I"
+    },
+    {
+      "ja": "棘皮 II",
+      "en": "Thornskin II"
+    },
+    {
+      "ja": "楢の誓いの遺産",
+      "en": "Legacy of Oaksworn"
+    },
+    {
+      "ja": "機動力",
+      "en": "Mobility"
+    },
+    {
+      "ja": "正拳狙撃",
+      "en": "Punch Through"
+    },
+    {
+      "ja": "武勇の古代ルーン",
+      "en": "Ancient Rune of Prowess"
+    },
+    {
+      "ja": "歩行狙撃",
+      "en": "Deliberation"
+    },
+    {
+      "ja": "歪んだ天空の遺産",
+      "en": "Legacy of Twisted Empyrean"
+    },
+    {
+      "ja": "歯擦音のカタリスト",
+      "en": "Sibilant Catalyst"
+    },
+    {
+      "ja": "死に際",
+      "en": "Last Gasp"
+    },
+    {
+      "ja": "死の呪印",
+      "en": "Mark for Death"
+    },
+    {
+      "ja": "死の呪印 II",
+      "en": "Mark for Death II"
+    },
+    {
+      "ja": "死の舞踏",
+      "en": "Danse Macabre"
+    },
+    {
+      "ja": "死の行進",
+      "en": "Deathmarch"
+    },
+    {
+      "ja": "死体冒涜 I",
+      "en": "Profanity I"
+    },
+    {
+      "ja": "死体冒涜 II",
+      "en": "Profanity II"
+    },
+    {
+      "ja": "死体温存",
+      "en": "Corpse Conservation"
+    },
+    {
+      "ja": "死角攻撃",
+      "en": "Blindside"
+    },
+    {
+      "ja": "死闘",
+      "en": "Clash"
+    },
+    {
+      "ja": "死霊術のカタリスト",
+      "en": "Necrotic Catalyst"
+    },
+    {
+      "ja": "殉教者のアイドル",
+      "en": "Idol of the Martyr"
+    },
+    {
+      "ja": "残酷な生贄のオーブ",
+      "en": "Yaomac's Orb of Sacrifice"
+    },
+    {
+      "ja": "殲滅のワードルーン",
+      "en": "Warding Rune of Annihilation"
+    },
+    {
+      "ja": "殺意",
+      "en": "Murderous Intent"
+    },
+    {
+      "ja": "毒 I",
+      "en": "Poison I"
+    },
+    {
+      "ja": "毒 II",
+      "en": "Poison II"
+    },
+    {
+      "ja": "毒 III",
+      "en": "Poison III"
+    },
+    {
+      "ja": "毒胞子",
+      "en": "Poison Spores"
+    },
+    {
+      "ja": "毒血交換",
+      "en": "Malady"
+    },
+    {
+      "ja": "毒血連携",
+      "en": "Admixture"
+    },
+    {
+      "ja": "毛深い猪の遺産",
+      "en": "Legacy of Bristleboar"
+    },
+    {
+      "ja": "氷のグレーターエッセンス",
+      "en": "Greater Essence of Ice"
+    },
+    {
+      "ja": "氷のパーフェクトエッセンス",
+      "en": "Perfect Essence of Ice"
+    },
+    {
+      "ja": "氷のレッサーエッセンス",
+      "en": "Lesser Essence of Ice"
+    },
+    {
+      "ja": "氷塊",
+      "en": "Glacier"
+    },
+    {
+      "ja": "氷晶のエッセンス",
+      "en": "Essence of Ice"
+    },
+    {
+      "ja": "氷晶破壊",
+      "en": "Verglas"
+    },
+    {
+      "ja": "氷柱",
+      "en": "Icicle"
+    },
+    {
+      "ja": "氷河のグレータールーン",
+      "en": "Greater Glacial Rune"
+    },
+    {
+      "ja": "氷河のパーフェクトルーン",
+      "en": "Perfect Glacial Rune"
+    },
+    {
+      "ja": "氷河のルーン",
+      "en": "Glacial Rune"
+    },
+    {
+      "ja": "氷河のレッサールーン",
+      "en": "Lesser Glacial Rune"
+    },
+    {
+      "ja": "氷霜",
+      "en": "Rime"
+    },
+    {
+      "ja": "永続領域 I",
+      "en": "Persistent Ground I"
+    },
+    {
+      "ja": "永続領域 II",
+      "en": "Persistent Ground II"
+    },
+    {
+      "ja": "永続領域 III",
+      "en": "Persistent Ground III"
+    },
+    {
+      "ja": "永遠の炎 I",
+      "en": "Eternal Flame I"
+    },
+    {
+      "ja": "永遠の炎 II",
+      "en": "Eternal Flame II"
+    },
+    {
+      "ja": "永遠の炎 III",
+      "en": "Eternal Flame III"
+    },
+    {
+      "ja": "決意のグレータールーン",
+      "en": "Greater Resolve Rune"
+    },
+    {
+      "ja": "決意のパーフェクトルーン",
+      "en": "Perfect Resolve Rune"
+    },
+    {
+      "ja": "決意のルーン",
+      "en": "Resolve Rune"
+    },
+    {
+      "ja": "決意のレッサールーン",
+      "en": "Lesser Resolve Rune"
+    },
+    {
+      "ja": "決死の覚悟",
+      "en": "Deadly Resolve"
+    },
+    {
+      "ja": "決闘の古代ルーン",
+      "en": "Ancient Rune of Dueling"
+    },
+    {
+      "ja": "浅い傷のワードルーン",
+      "en": "Warding Rune of Glancing"
+    },
+    {
+      "ja": "消去のオーブ",
+      "en": "Orb of Annulment"
+    },
+    {
+      "ja": "液化した偏執症",
+      "en": "Liquid Paranoia"
+    },
+    {
+      "ja": "液化した嫉妬",
+      "en": "Liquid Envy"
+    },
+    {
+      "ja": "液化した嫌悪",
+      "en": "Liquid Disgust"
+    },
+    {
+      "ja": "液化した絶望",
+      "en": "Liquid Despair"
+    },
+    {
+      "ja": "混沌マスタリー",
+      "en": "Chaos Mastery"
+    },
+    {
+      "ja": "混沌凍結",
+      "en": "Chaotic Freeze"
+    },
+    {
+      "ja": "減速効能",
+      "en": "Slow Potency"
+    },
+    {
+      "ja": "温血",
+      "en": "Warm Blooded"
+    },
+    {
+      "ja": "溢れる魔力の加護 I",
+      "en": "Upwelling I"
+    },
+    {
+      "ja": "溢れる魔力の加護 II",
+      "en": "Upwelling II"
+    },
+    {
+      "ja": "滋養のワードルーン",
+      "en": "Warding Rune of Nourishment"
+    },
+    {
+      "ja": "激怒のウォークライ I",
+      "en": "Enraged Warcry I"
+    },
+    {
+      "ja": "激怒のウォークライ II",
+      "en": "Enraged Warcry II"
+    },
+    {
+      "ja": "激昂出血",
+      "en": "See Red"
+    },
+    {
+      "ja": "激痛",
+      "en": "Intense Agony"
+    },
+    {
+      "ja": "濃縮された液化した孤立感",
+      "en": "Concentrated Liquid Isolation"
+    },
+    {
+      "ja": "濃縮された液化した恐怖",
+      "en": "Concentrated Liquid Fear"
+    },
+    {
+      "ja": "濃縮された液化した苦悩",
+      "en": "Concentrated Liquid Suffering"
+    },
+    {
+      "ja": "火の曝露",
+      "en": "Fire Exposure"
+    },
+    {
+      "ja": "火マスタリー",
+      "en": "Fire Mastery"
+    },
+    {
+      "ja": "火炎のエッセンス",
+      "en": "Essence of Flames"
+    },
+    {
+      "ja": "火炎のグレーターエッセンス",
+      "en": "Greater Essence of Flames"
+    },
+    {
+      "ja": "火炎のパーフェクトエッセンス",
+      "en": "Perfect Essence of Flames"
+    },
+    {
+      "ja": "火炎のレッサーエッセンス",
+      "en": "Lesser Essence of Flames"
+    },
+    {
+      "ja": "火炎フラックス",
+      "en": "Blazing Flux"
+    },
+    {
+      "ja": "火炙り",
+      "en": "Immolate"
+    },
+    {
+      "ja": "火耐性貫通 I",
+      "en": "Fire Penetration I"
+    },
+    {
+      "ja": "火耐性貫通 II",
+      "en": "Fire Penetration II"
+    },
+    {
+      "ja": "灼熱のクリティカル",
+      "en": "Blazing Critical"
+    },
+    {
+      "ja": "灼熱の炎 I",
+      "en": "Searing Flame I"
+    },
+    {
+      "ja": "灼熱の炎 II",
+      "en": "Searing Flame II"
+    },
+    {
+      "ja": "無尽蔵のエネルギー I",
+      "en": "Boundless Energy I"
+    },
+    {
+      "ja": "無尽蔵のエネルギー II",
+      "en": "Boundless Energy II"
+    },
+    {
+      "ja": "無理の代償",
+      "en": "Overextend"
+    },
+    {
+      "ja": "無限のエッセンス",
+      "en": "Essence of the Infinite"
+    },
+    {
+      "ja": "無限のグレーターエッセンス",
+      "en": "Greater Essence of the Infinite"
+    },
+    {
+      "ja": "無限のパーフェクトエッセンス",
+      "en": "Perfect Essence of the Infinite"
+    },
+    {
+      "ja": "無限のレッサーエッセンス",
+      "en": "Lesser Essence of the Infinite"
+    },
+    {
+      "ja": "熟練工のオーブ",
+      "en": "Artificer's Orb"
+    },
+    {
+      "ja": "熟練工のシャード",
+      "en": "Artificer's Shard"
+    },
+    {
+      "ja": "熟考詠唱",
+      "en": "Considered Casting"
+    },
+    {
+      "ja": "熟達のグレータールーン",
+      "en": "Greater Adept Rune"
+    },
+    {
+      "ja": "熟達のパーフェクトルーン",
+      "en": "Perfect Adept Rune"
+    },
+    {
+      "ja": "熟達のルーン",
+      "en": "Adept Rune"
+    },
+    {
+      "ja": "熟達のレッサールーン",
+      "en": "Lesser Adept Rune"
+    },
+    {
+      "ja": "燃焼の刻印",
+      "en": "Burning Inscription"
+    },
+    {
+      "ja": "物理マスタリー",
+      "en": "Physical Mastery"
+    },
+    {
+      "ja": "犠牲のオファリング",
+      "en": "Sacrificial Offering"
+    },
+    {
+      "ja": "状態異常吸収",
+      "en": "Drain Ailments"
+    },
+    {
+      "ja": "状態異常転嫁",
+      "en": "Commiserate"
+    },
+    {
+      "ja": "狂乱のミニオン",
+      "en": "Crazed Minions"
+    },
+    {
+      "ja": "狂乱の切り返し",
+      "en": "Frenzied Riposte"
+    },
+    {
+      "ja": "狂乱の破壊",
+      "en": "Tumult"
+    },
+    {
+      "ja": "狂乱の餌付け I",
+      "en": "Feeding Frenzy I"
+    },
+    {
+      "ja": "狂乱の餌付け II",
+      "en": "Feeding Frenzy II"
+    },
+    {
+      "ja": "狂気のエッセンス",
+      "en": "Essence of Insanity"
+    },
+    {
+      "ja": "狩りのお告げ",
+      "en": "Omen of the Hunt"
+    },
+    {
+      "ja": "狩猟のルーン",
+      "en": "Rune of the Hunt"
+    },
+    {
+      "ja": "献身のレムナント",
+      "en": "Selfless Remnants"
+    },
+    {
+      "ja": "獰猛",
+      "en": "Ferocity"
+    },
+    {
+      "ja": "王家の生贄のオーブ",
+      "en": "Yugul's Orb of Sacrifice"
+    },
+    {
+      "ja": "王権の合金",
+      "en": "Sovereign Alloy"
+    },
+    {
+      "ja": "王者のオーブ",
+      "en": "Regal Orb"
+    },
+    {
+      "ja": "王者のオーブ (上級)",
+      "en": "Greater Regal Orb"
+    },
+    {
+      "ja": "王者のオーブ (完全)",
+      "en": "Perfect Regal Orb"
+    },
+    {
+      "ja": "王者のシャード",
+      "en": "Regal Shard"
+    },
+    {
+      "ja": "生命の炎のルーン",
+      "en": "Rune of Vital Flame"
+    },
+    {
+      "ja": "生命力のルーン",
+      "en": "Rune of Vitality"
+    },
+    {
+      "ja": "生贄の子羊 I",
+      "en": "Sacrificial Lamb I"
+    },
+    {
+      "ja": "生贄の子羊 II",
+      "en": "Sacrificial Lamb II"
+    },
+    {
+      "ja": "由緒ある星明りの鉱石",
+      "en": "Venerable Starlit Ore"
+    },
+    {
+      "ja": "甲羅のカタリスト",
+      "en": "Carapace Catalyst"
+    },
+    {
+      "ja": "異国のコイン",
+      "en": "Exotic Coinage"
+    },
+    {
+      "ja": "疫病爆発",
+      "en": "Bursting Plague"
+    },
+    {
+      "ja": "発火 I",
+      "en": "Ignite I"
+    },
+    {
+      "ja": "発火 II",
+      "en": "Ignite II"
+    },
+    {
+      "ja": "発火 III",
+      "en": "Ignite III"
+    },
+    {
+      "ja": "発火伝染",
+      "en": "Wildfire"
+    },
+    {
+      "ja": "発火時キャスト",
+      "en": "Cast on Ignite"
+    },
+    {
+      "ja": "発火死亡時爆発",
+      "en": "Fiery Death"
+    },
+    {
+      "ja": "発火貫通",
+      "en": "Flamepierce"
+    },
+    {
+      "ja": "発現する加護",
+      "en": "Emergent Protection"
+    },
+    {
+      "ja": "発現する可能性",
+      "en": "Emergent Possibility"
+    },
+    {
+      "ja": "発現する本能",
+      "en": "Emergent Instinct"
+    },
+    {
+      "ja": "発現する活力",
+      "en": "Emergent Vigour"
+    },
+    {
+      "ja": "発見の古代ルーン",
+      "en": "Ancient Rune of Discovery"
+    },
+    {
+      "ja": "目眩まし",
+      "en": "Dazzle"
+    },
+    {
+      "ja": "盲目 I",
+      "en": "Blind I"
+    },
+    {
+      "ja": "盲目 II",
+      "en": "Blind II"
+    },
+    {
+      "ja": "真実の星明りの鉱石",
+      "en": "Veridical Starlit Ore"
+    },
+    {
+      "ja": "眩暈",
+      "en": "Daze"
+    },
+    {
+      "ja": "眩暈のクライ",
+      "en": "Dazing Cry"
+    },
+    {
+      "ja": "知性代償",
+      "en": "Derange"
+    },
+    {
+      "ja": "短縮起爆 I",
+      "en": "Short Fuse I"
+    },
+    {
+      "ja": "短縮起爆 II",
+      "en": "Short Fuse II"
+    },
+    {
+      "ja": "石のグレータールーン",
+      "en": "Greater Stone Rune"
+    },
+    {
+      "ja": "石のパーフェクトルーン",
+      "en": "Perfect Stone Rune"
+    },
+    {
+      "ja": "石のルーン",
+      "en": "Stone Rune"
+    },
+    {
+      "ja": "石のレッサールーン",
+      "en": "Lesser Stone Rune"
+    },
+    {
+      "ja": "砂時計",
+      "en": "Hourglass"
+    },
+    {
+      "ja": "砂漠のグレータールーン",
+      "en": "Greater Desert Rune"
+    },
+    {
+      "ja": "砂漠のパーフェクトルーン",
+      "en": "Perfect Desert Rune"
+    },
+    {
+      "ja": "砂漠のルーン",
+      "en": "Desert Rune"
+    },
+    {
+      "ja": "砂漠のレッサールーン",
+      "en": "Lesser Desert Rune"
+    },
+    {
+      "ja": "砕けたトリスケリオン",
+      "en": "Shattered Triskelion"
+    },
+    {
+      "ja": "破壊のウォークライ",
+      "en": "Battershout"
+    },
+    {
+      "ja": "破壊制御",
+      "en": "Controlled Destruction"
+    },
+    {
+      "ja": "破壊時エンデュランス",
+      "en": "Break Endurance"
+    },
+    {
+      "ja": "破滅のエッセンス",
+      "en": "Essence of Ruin"
+    },
+    {
+      "ja": "破滅のグレーターエッセンス",
+      "en": "Greater Essence of Ruin"
+    },
+    {
+      "ja": "破滅のパーフェクトエッセンス",
+      "en": "Perfect Essence of Ruin"
+    },
+    {
+      "ja": "破滅のレッサーエッセンス",
+      "en": "Lesser Essence of Ruin"
+    },
+    {
+      "ja": "破片の古代ルーン",
+      "en": "Ancient Rune of Splinters"
+    },
+    {
+      "ja": "破砕の古代ルーン",
+      "en": "Ancient Rune of Shattering"
+    },
+    {
+      "ja": "磁石のレムナント",
+      "en": "Magnetic Remnants"
+    },
+    {
+      "ja": "祝福のお告げ",
+      "en": "Omen of the Blessed"
+    },
+    {
+      "ja": "神のオーブ",
+      "en": "Divine Orb"
+    },
+    {
+      "ja": "神秘の合金",
+      "en": "Mystic Alloy"
+    },
+    {
+      "ja": "神経のカタリスト",
+      "en": "Neural Catalyst"
+    },
+    {
+      "ja": "神経過負荷",
+      "en": "Neural Overload"
+    },
+    {
+      "ja": "秘密の区画のお告げ",
+      "en": "Omen of Secret Compartments"
+    },
+    {
+      "ja": "秘術の障壁 I",
+      "en": "Mysticism I"
+    },
+    {
+      "ja": "秘術の障壁 II",
+      "en": "Mysticism II"
+    },
+    {
+      "ja": "秘術師の彫刻針",
+      "en": "Arcanist's Etcher"
+    },
+    {
+      "ja": "積極性のグレータールーン",
+      "en": "Greater Rune of Alacrity"
+    },
+    {
+      "ja": "穢れのお告げ",
+      "en": "Omen of Corruption"
+    },
+    {
+      "ja": "究極の一撃 I",
+      "en": "Culmination I"
+    },
+    {
+      "ja": "究極の一撃 II",
+      "en": "Culmination II"
+    },
+    {
+      "ja": "空洞のワードルーン",
+      "en": "Warding Rune of Hollowing"
+    },
+    {
+      "ja": "窮地のワードルーン",
+      "en": "Warding Rune of Desperation"
+    },
+    {
+      "ja": "範囲超過",
+      "en": "Overreach"
+    },
+    {
+      "ja": "粘着グレネード I",
+      "en": "Adhesive Grenades I"
+    },
+    {
+      "ja": "粘着グレネード II",
+      "en": "Adhesive Grenades II"
+    },
+    {
+      "ja": "精密攻撃",
+      "en": "Excise"
+    },
+    {
+      "ja": "精確な一撃",
+      "en": "Unerring Power"
+    },
+    {
+      "ja": "精神のエッセンス",
+      "en": "Essence of the Mind"
+    },
+    {
+      "ja": "精神のグレーターエッセンス",
+      "en": "Greater Essence of the Mind"
+    },
+    {
+      "ja": "精神のグレータールーン",
+      "en": "Greater Mind Rune"
+    },
+    {
+      "ja": "精神のパーフェクトエッセンス",
+      "en": "Perfect Essence of the Mind"
+    },
+    {
+      "ja": "精神のパーフェクトルーン",
+      "en": "Perfect Mind Rune"
+    },
+    {
+      "ja": "精神のルーン",
+      "en": "Mind Rune"
+    },
+    {
+      "ja": "精神のレッサーエッセンス",
+      "en": "Lesser Essence of the Mind"
+    },
+    {
+      "ja": "精神のレッサールーン",
+      "en": "Lesser Mind Rune"
+    },
+    {
+      "ja": "精製されたウール・ネトルのカタリスト",
+      "en": "Refined Uul-Netol's Catalyst"
+    },
+    {
+      "ja": "精製されたエシュのカタリスト",
+      "en": "Refined Esh's Catalyst"
+    },
+    {
+      "ja": "精製されたゾフのカタリスト",
+      "en": "Refined Xoph's Catalyst"
+    },
+    {
+      "ja": "精製されたチャユラのカタリスト",
+      "en": "Refined Chayula's Catalyst"
+    },
+    {
+      "ja": "精製されたトゥルのカタリスト",
+      "en": "Refined Tul's Catalyst"
+    },
+    {
+      "ja": "精製された強奪者のカタリスト",
+      "en": "Refined Reaver Catalyst"
+    },
+    {
+      "ja": "精製された歯擦音のカタリスト",
+      "en": "Refined Sibilant Catalyst"
+    },
+    {
+      "ja": "精製された死霊術のカタリスト",
+      "en": "Refined Necrotic Catalyst"
+    },
+    {
+      "ja": "精製された甲羅のカタリスト",
+      "en": "Refined Carapace Catalyst"
+    },
+    {
+      "ja": "精製された神経のカタリスト",
+      "en": "Refined Neural Catalyst"
+    },
+    {
+      "ja": "精製された肉体のカタリスト",
+      "en": "Refined Flesh Catalyst"
+    },
+    {
+      "ja": "精製された軽快のカタリスト",
+      "en": "Refined Skittering Catalyst"
+    },
+    {
+      "ja": "精製された適応のカタリスト",
+      "en": "Refined Adaptive Catalyst"
+    },
+    {
+      "ja": "結晶の破片",
+      "en": "Crystalline Shards"
+    },
+    {
+      "ja": "絢爛のエッセンス",
+      "en": "Essence of Opulence"
+    },
+    {
+      "ja": "絢爛のグレーターエッセンス",
+      "en": "Greater Essence of Opulence"
+    },
+    {
+      "ja": "絢爛のパーフェクトエッセンス",
+      "en": "Perfect Essence of Opulence"
+    },
+    {
+      "ja": "絢爛のレッサーエッセンス",
+      "en": "Lesser Essence of Opulence"
+    },
+    {
+      "ja": "統率力のグレータールーン",
+      "en": "Greater Rune of Leadership"
+    },
+    {
+      "ja": "緊急リロード",
+      "en": "Emergency Reload"
+    },
+    {
+      "ja": "耐久性",
+      "en": "Durability"
+    },
+    {
+      "ja": "聖なる着地",
+      "en": "Holy Descent"
+    },
+    {
+      "ja": "聖別のお告げ",
+      "en": "Omen of Sanctification"
+    },
+    {
+      "ja": "肉体のエッセンス",
+      "en": "Essence of the Body"
+    },
+    {
+      "ja": "肉体のカタリスト",
+      "en": "Flesh Catalyst"
+    },
+    {
+      "ja": "肉体のグレーターエッセンス",
+      "en": "Greater Essence of the Body"
+    },
+    {
+      "ja": "肉体のグレータールーン",
+      "en": "Greater Body Rune"
+    },
+    {
+      "ja": "肉体のパーフェクトエッセンス",
+      "en": "Perfect Essence of the Body"
+    },
+    {
+      "ja": "肉体のパーフェクトルーン",
+      "en": "Perfect Body Rune"
+    },
+    {
+      "ja": "肉体のルーン",
+      "en": "Body Rune"
+    },
+    {
+      "ja": "肉体のレッサーエッセンス",
+      "en": "Lesser Essence of the Body"
+    },
+    {
+      "ja": "肉体のレッサールーン",
+      "en": "Lesser Body Rune"
+    },
+    {
+      "ja": "脆弱なアーマー",
+      "en": "Brittle Armour"
+    },
+    {
+      "ja": "脳揺らしの遺産",
+      "en": "Legacy of Brain Rattler"
+    },
+    {
+      "ja": "腐敗の古代ルーン",
+      "en": "Ancient Rune of Decay"
+    },
+    {
+      "ja": "腐敗の呪術",
+      "en": "Decaying Hex"
+    },
+    {
+      "ja": "腐食",
+      "en": "Corrosion"
+    },
+    {
+      "ja": "腐食のお告げ",
+      "en": "Omen of Putrefaction"
+    },
+    {
+      "ja": "自動装填",
+      "en": "Auto Reload"
+    },
+    {
+      "ja": "致死毒 I",
+      "en": "Deadly Poison I"
+    },
+    {
+      "ja": "致死毒 II",
+      "en": "Deadly Poison II"
+    },
+    {
+      "ja": "茨の冠の遺産",
+      "en": "Legacy of Crown of Thorns"
+    },
+    {
+      "ja": "荊棘のスラム",
+      "en": "Brambleslam"
+    },
+    {
+      "ja": "蓄積のルーン",
+      "en": "Rune of Accumulation"
+    },
+    {
+      "ja": "薬草学 I",
+      "en": "Herbalism I"
+    },
+    {
+      "ja": "薬草学 II",
+      "en": "Herbalism II"
+    },
+    {
+      "ja": "虚無フラックス",
+      "en": "Void Flux"
+    },
+    {
+      "ja": "蝕み",
+      "en": "Acrimony"
+    },
+    {
+      "ja": "血の棘の遺産",
+      "en": "Legacy of The Blood Thorn"
+    },
+    {
+      "ja": "血の泉",
+      "en": "Font of Blood"
+    },
+    {
+      "ja": "血の結晶",
+      "en": "Haemocrystals"
+    },
+    {
+      "ja": "衝撃のスペル",
+      "en": "Concussive Spells"
+    },
+    {
+      "ja": "裂傷",
+      "en": "Rupture"
+    },
+    {
+      "ja": "裂傷の頂点",
+      "en": "Rending Apex"
+    },
+    {
+      "ja": "補強のワードルーン",
+      "en": "Warding Rune of Reinforcement"
+    },
+    {
+      "ja": "補給のお告げ",
+      "en": "Omen of Refreshment"
+    },
+    {
+      "ja": "解き放たれし者の遺産",
+      "en": "Legacy of The Unleashed"
+    },
+    {
+      "ja": "解凍のエッセンス",
+      "en": "Essence of Thawing"
+    },
+    {
+      "ja": "解凍のグレーターエッセンス",
+      "en": "Greater Essence of Thawing"
+    },
+    {
+      "ja": "解凍のパーフェクトエッセンス",
+      "en": "Perfect Essence of Thawing"
+    },
+    {
+      "ja": "解凍のレッサーエッセンス",
+      "en": "Lesser Essence of Thawing"
+    },
+    {
+      "ja": "触媒の高貴のお告げ",
+      "en": "Omen of Catalysing Exaltation"
+    },
+    {
+      "ja": "請願のスプリンター",
+      "en": "Petition Splinter"
+    },
+    {
+      "ja": "謎の鍵",
+      "en": "Cryptic Key"
+    },
+    {
+      "ja": "護衛のワードルーン",
+      "en": "Warding Rune of Bodyguards"
+    },
+    {
+      "ja": "豚狩りの遺産",
+      "en": "Legacy of Hoghunt"
+    },
+    {
+      "ja": "貪食",
+      "en": "Gorge"
+    },
+    {
+      "ja": "貫通 I",
+      "en": "Pierce I"
+    },
+    {
+      "ja": "貫通 II",
+      "en": "Pierce II"
+    },
+    {
+      "ja": "貫通 III",
+      "en": "Pierce III"
+    },
+    {
+      "ja": "起爆の古代ルーン",
+      "en": "Ancient Rune of Detonation"
+    },
+    {
+      "ja": "超越の合金",
+      "en": "Transcendent Alloy"
+    },
+    {
+      "ja": "足止め I",
+      "en": "Pin I"
+    },
+    {
+      "ja": "足止め II",
+      "en": "Pin II"
+    },
+    {
+      "ja": "足止め III",
+      "en": "Pin III"
+    },
+    {
+      "ja": "足止めブースト",
+      "en": "Lockdown"
+    },
+    {
+      "ja": "跳弾 I",
+      "en": "Ricochet I"
+    },
+    {
+      "ja": "跳弾 II",
+      "en": "Ricochet II"
+    },
+    {
+      "ja": "跳弾 III",
+      "en": "Ricochet III"
+    },
+    {
+      "ja": "踏みつぶす爪先の遺産",
+      "en": "Legacy of Trampletoe"
+    },
+    {
+      "ja": "蹂躙",
+      "en": "Devastate"
+    },
+    {
+      "ja": "軽快のカタリスト",
+      "en": "Skittering Catalyst"
+    },
+    {
+      "ja": "軽業のルーン",
+      "en": "Rune of Acrobatics"
+    },
+    {
+      "ja": "迅速な呪い",
+      "en": "Focused Curse"
+    },
+    {
+      "ja": "迅速のエッセンス",
+      "en": "Essence of Haste"
+    },
+    {
+      "ja": "迅速のグレーターエッセンス",
+      "en": "Greater Essence of Haste"
+    },
+    {
+      "ja": "迅速のパーフェクトエッセンス",
+      "en": "Perfect Essence of Haste"
+    },
+    {
+      "ja": "迅速のレッサーエッセンス",
+      "en": "Lesser Essence of Haste"
+    },
+    {
+      "ja": "迅速の合金",
+      "en": "Swift Alloy"
+    },
+    {
+      "ja": "近距離戦闘 I",
+      "en": "Close Combat I"
+    },
+    {
+      "ja": "近距離戦闘 II",
+      "en": "Close Combat II"
+    },
+    {
+      "ja": "追い打ち",
+      "en": "Excoriate"
+    },
+    {
+      "ja": "追い裂き",
+      "en": "Tear"
+    },
+    {
+      "ja": "追撃 I",
+      "en": "Pursuit I"
+    },
+    {
+      "ja": "追撃 II",
+      "en": "Pursuit II"
+    },
+    {
+      "ja": "追撃 III",
+      "en": "Pursuit III"
+    },
+    {
+      "ja": "這いまわる石 I",
+      "en": "Skittering Stone I"
+    },
+    {
+      "ja": "這いまわる石 II",
+      "en": "Skittering Stone II"
+    },
+    {
+      "ja": "連鎖 I",
+      "en": "Chain I"
+    },
+    {
+      "ja": "連鎖 II",
+      "en": "Chain II"
+    },
+    {
+      "ja": "連鎖 III",
+      "en": "Chain III"
+    },
+    {
+      "ja": "進行する嵐",
+      "en": "Advancing Storm"
+    },
+    {
+      "ja": "遅延反応",
+      "en": "Delayed Reaction"
+    },
+    {
+      "ja": "遅延起爆 I",
+      "en": "Long Fuse I"
+    },
+    {
+      "ja": "遅延起爆 II",
+      "en": "Long Fuse II"
+    },
+    {
+      "ja": "過剰感電",
+      "en": "Overcharge"
+    },
+    {
+      "ja": "適応のカタリスト",
+      "en": "Adaptive Catalyst"
+    },
+    {
+      "ja": "適応の合金",
+      "en": "Adaptive Alloy"
+    },
+    {
+      "ja": "重傷",
+      "en": "Maim"
+    },
+    {
+      "ja": "重出血 I",
+      "en": "Deep Cuts I"
+    },
+    {
+      "ja": "重出血 II",
+      "en": "Deep Cuts II"
+    },
+    {
+      "ja": "重撃",
+      "en": "Heft"
+    },
+    {
+      "ja": "針の雨の遺産",
+      "en": "Legacy of Quill Rain"
+    },
+    {
+      "ja": "鈍足",
+      "en": "Hobble"
+    },
+    {
+      "ja": "鉄のグレータールーン",
+      "en": "Greater Iron Rune"
+    },
+    {
+      "ja": "鉄のパーフェクトルーン",
+      "en": "Perfect Iron Rune"
+    },
+    {
+      "ja": "鉄のルーン",
+      "en": "Iron Rune"
+    },
+    {
+      "ja": "鉄のレッサールーン",
+      "en": "Lesser Iron Rune"
+    },
+    {
+      "ja": "錆びた釘",
+      "en": "Rusted Spikes"
+    },
+    {
+      "ja": "錬金術のオーブ",
+      "en": "Orb of Alchemy"
+    },
+    {
+      "ja": "錬金術師の恩恵",
+      "en": "Alchemist's Boon"
+    },
+    {
+      "ja": "錯乱のエッセンス",
+      "en": "Essence of Delirium"
+    },
+    {
+      "ja": "鍛冶屋の砥石",
+      "en": "Blacksmith's Whetstone"
+    },
+    {
+      "ja": "鎧鍛冶の端材",
+      "en": "Armourer's Scrap"
+    },
+    {
+      "ja": "鑑定の巻物",
+      "en": "Scroll of Wisdom"
+    },
+    {
+      "ja": "開花のルーン",
+      "en": "Rune of the Blossom"
+    },
+    {
+      "ja": "間合い保持",
+      "en": "Arms Length"
+    },
+    {
+      "ja": "防護の星明りの鉱石",
+      "en": "Warding Starlit Ore"
+    },
+    {
+      "ja": "阻害",
+      "en": "Hinder"
+    },
+    {
+      "ja": "隆起 I",
+      "en": "Upheaval I"
+    },
+    {
+      "ja": "隆起 II",
+      "en": "Upheaval II"
+    },
+    {
+      "ja": "集大成のルーン",
+      "en": "Rune of Culmination"
+    },
+    {
+      "ja": "雷の奔流",
+      "en": "Coursing Current"
+    },
+    {
+      "ja": "雷の曝露",
+      "en": "Lightning Exposure"
+    },
+    {
+      "ja": "雷マスタリー",
+      "en": "Lightning Mastery"
+    },
+    {
+      "ja": "雷撃フラックス",
+      "en": "Crackling Flux"
+    },
+    {
+      "ja": "雷耐性貫通",
+      "en": "Lightning Penetration"
+    },
+    {
+      "ja": "電撃薬品 I",
+      "en": "Ambrosia"
+    },
+    {
+      "ja": "電撃薬品 II",
+      "en": "Ambrosia II"
+    },
+    {
+      "ja": "電気のエッセンス",
+      "en": "Essence of Electricity"
+    },
+    {
+      "ja": "電気のグレーターエッセンス",
+      "en": "Greater Essence of Electricity"
+    },
+    {
+      "ja": "電気のパーフェクトエッセンス",
+      "en": "Perfect Essence of Electricity"
+    },
+    {
+      "ja": "電気のレッサーエッセンス",
+      "en": "Lesser Essence of Electricity"
+    },
+    {
+      "ja": "電気刺激",
+      "en": "Innervate"
+    },
+    {
+      "ja": "電流の呪印",
+      "en": "Voltaic Mark"
+    },
+    {
+      "ja": "電荷の呪印",
+      "en": "Charged Mark"
+    },
+    {
+      "ja": "頑強なトーテム I",
+      "en": "Hardy Totems I"
+    },
+    {
+      "ja": "頑強なトーテム II",
+      "en": "Hardy Totems II"
+    },
+    {
+      "ja": "領域持続",
+      "en": "Lasting Ground"
+    },
+    {
+      "ja": "首狩り I",
+      "en": "Behead I"
+    },
+    {
+      "ja": "首狩り II",
+      "en": "Behead II"
+    },
+    {
+      "ja": "骨組みのワードルーン",
+      "en": "Warding Rune of Armature"
+    },
+    {
+      "ja": "高潔なグレータールーン",
+      "en": "Greater Rune of Nobility"
+    },
+    {
+      "ja": "高貴なオーブ",
+      "en": "Exalted Orb"
+    },
+    {
+      "ja": "高貴なオーブ (上級)",
+      "en": "Greater Exalted Orb"
+    },
+    {
+      "ja": "高貴なオーブ (完全)",
+      "en": "Perfect Exalted Orb"
+    },
+    {
+      "ja": "高速装填",
+      "en": "Nimble Reload"
+    },
+    {
+      "ja": "魂の収穫",
+      "en": "Essence Harvest"
+    },
+    {
+      "ja": "魔法のエッセンス",
+      "en": "Essence of Sorcery"
+    },
+    {
+      "ja": "魔法のグレーターエッセンス",
+      "en": "Greater Essence of Sorcery"
+    },
+    {
+      "ja": "魔法のパーフェクトエッセンス",
+      "en": "Perfect Essence of Sorcery"
+    },
+    {
+      "ja": "魔法のレッサーエッセンス",
+      "en": "Lesser Essence of Sorcery"
+    },
+    {
+      "ja": "麻痺",
+      "en": "Electrocute"
+    },
+    {
+      "ja": "黄昏の聖廟の鍵",
+      "en": "Twilight Reliquary Key"
+    },
+    {
+      "ja": "黒い組紐の遺産",
+      "en": "Legacy of Blackbraid"
+    },
+    {
+      "ja": "黒い鎌のアーティファクト",
+      "en": "Black Scythe Artifact"
+    },
+    {
+      "ja": "鼓舞のグレータールーン",
+      "en": "Greater Inspiration Rune"
+    },
+    {
+      "ja": "鼓舞のパーフェクトルーン",
+      "en": "Perfect Inspiration Rune"
+    },
+    {
+      "ja": "鼓舞のルーン",
+      "en": "Inspiration Rune"
+    },
+    {
+      "ja": "鼓舞のレッサールーン",
+      "en": "Lesser Inspiration Rune"
+    }
+  ]
+}

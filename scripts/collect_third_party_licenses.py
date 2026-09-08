@@ -22,6 +22,11 @@ STATIC_LICENSES = (
         PROJECT_ROOT / "assets" / "fonts" / "NotoSansJP-OFL.txt",
         "OFL.txt",
     ),
+    (
+        ".NET 8 runtime",
+        PROJECT_ROOT / "assets" / "licenses" / "dotnet-runtime-LICENSE.txt",
+        "LICENSE.txt",
+    ),
 )
 LICENSE_BASENAME = re.compile(
     r"^(?:licen[cs]e|copying|notice|authors?)(?:[._-].*)?$", re.IGNORECASE

@@ -285,6 +285,7 @@ class PoetoreModeWindow(QMainWindow):
         "monastery": "F12",
         "poetore_capture": "alt+d",
         "poetore_auto_hide": "ctrl+d",
+        "expedition_reward_ocr": "alt+e",
         "map_check": "alt+f",
         "cheat_sheets_toggle": "shift+space",
     }
@@ -299,6 +300,7 @@ class PoetoreModeWindow(QMainWindow):
         self._cheat_sheet_overlay = None
         self._map_check_window = None
         self._memo_dialog = None
+        self._expedition_reward_controller = None
         self._rate_request_running = False
         self._rate_signals = _RateSignals(self)
         self._rate_signals.ready.connect(self._show_rate)
@@ -602,15 +604,23 @@ class PoetoreModeWindow(QMainWindow):
         }
         mode_hotkeys.update(custom_command_hotkeys(self.config.get("custom_commands", [])))
         capture_hotkey = mode_hotkeys.get("poetore_capture", "none")
+        expedition_hotkey = mode_hotkeys.get("expedition_reward_ocr", "none")
+        expedition_enabled = self.poe_version == POE2 and bool(
+            self.config.get("poetore", {}).get("expedition_reward_overlay", {}).get("enabled", False)
+        )
+        if not expedition_enabled:
+            mode_hotkeys.pop("expedition_reward_ocr", None)
         use_suppression = suppressed_hotkeys_supported()
         if use_suppression:
             mode_hotkeys.pop("poetore_capture", None)
+            mode_hotkeys.pop("expedition_reward_ocr", None)
         self.hotkey_service = GlobalHotkeyService(
             mode_hotkeys, action_filter=is_hotkey_action_allowed, parent=self,
         )
         self.hotkey_service.command.connect(self.handle_hotkey)
         self.hotkey_service.start()
         self.suppressed_capture_hotkey = None
+        self.suppressed_expedition_hotkey = None
         if use_suppression:
             self.suppressed_capture_hotkey = ForegroundSuppressedHotkeyService(
                 "poetore_capture", capture_hotkey,
@@ -621,6 +631,15 @@ class PoetoreModeWindow(QMainWindow):
             )
             self.suppressed_capture_hotkey.command.connect(self.handle_hotkey)
             self.suppressed_capture_hotkey.start()
+            if expedition_enabled:
+                self.suppressed_expedition_hotkey = ForegroundSuppressedHotkeyService(
+                    "expedition_reward_ocr", expedition_hotkey,
+                    result_window_checker=lambda _hwnd: False,
+                    poe_target_getter=self._poetore_poe_target,
+                    parent=self,
+                )
+                self.suppressed_expedition_hotkey.command.connect(self.handle_hotkey)
+                self.suppressed_expedition_hotkey.start()
 
     def _is_poetore_result_window(self, hwnd):
         try:
@@ -732,6 +751,8 @@ class PoetoreModeWindow(QMainWindow):
             window = getattr(self, "_poetore_window", None)
             if window is not None:
                 window.capture_hotkey_released()
+        elif command == "expedition_reward_ocr":
+            self.capture_expedition_rewards()
         elif command == "map_check":
             self.capture_map_check_item()
         elif command == "map_check_released":
@@ -776,6 +797,32 @@ class PoetoreModeWindow(QMainWindow):
                 "poetore_capture", "alt+d"
             )
             window.capture_from_poe(trace, capture_hotkey=hotkey)
+
+    def _ensure_expedition_reward_controller(self):
+        if self._expedition_reward_controller is None:
+            from src.poetore.expedition_rewards import ExpeditionRewardController
+
+            controller = ExpeditionRewardController(self._currency_rate_league, self)
+            controller.status.connect(self._show_expedition_status)
+            controller.failed.connect(self._show_expedition_error)
+            self._expedition_reward_controller = controller
+        return self._expedition_reward_controller
+
+    def capture_expedition_rewards(self):
+        enabled = bool(
+            self.config.get("poetore", {}).get("expedition_reward_overlay", {}).get("enabled", False)
+        )
+        if self.poe_version != POE2 or not enabled:
+            return False
+        return self._ensure_expedition_reward_controller().request_scan()
+
+    def _show_expedition_status(self, message):
+        self.rate_status.setText(message)
+
+    def _show_expedition_error(self, message):
+        self.rate_status.setText(f"報酬読取失敗：{message}")
+        if QSystemTrayIcon.isSystemTrayAvailable():
+            self.tray_icon.showMessage("エクスペディション報酬価格", message, QSystemTrayIcon.Warning, 5000)
 
     def _save_map_check_config(self, map_check_config):
         self.config["map_check"] = dict(map_check_config)
@@ -880,6 +927,8 @@ class PoetoreModeWindow(QMainWindow):
         self.hotkey_service.stop()
         if self.suppressed_capture_hotkey is not None:
             self.suppressed_capture_hotkey.stop()
+        if self.suppressed_expedition_hotkey is not None:
+            self.suppressed_expedition_hotkey.stop()
         self._start_hotkeys()
         self._update_capture_hint()
         self.refresh_currency_rate()
@@ -939,6 +988,10 @@ class PoetoreModeWindow(QMainWindow):
         self.stash_tab_scroll.stop()
         if self.suppressed_capture_hotkey is not None:
             self.suppressed_capture_hotkey.stop()
+        if self.suppressed_expedition_hotkey is not None:
+            self.suppressed_expedition_hotkey.stop()
+        if self._expedition_reward_controller is not None:
+            self._expedition_reward_controller.hide()
         if self._memo_dialog is not None:
             self._memo_dialog.close()
         if self._cheat_sheet_overlay is not None:

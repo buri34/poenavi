@@ -33,6 +33,26 @@ def test_monastery_hotkey_is_visible_only_for_poe1():
     dialog.close()
 
 
+def test_expedition_reward_controls_are_poe2_only_and_saved():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "poe_version": POE2,
+        "hotkeys": {"expedition_reward_ocr": "alt+r"},
+        "poetore": {"expedition_reward_overlay": {"enabled": True}},
+    })
+
+    assert dialog.expedition_group.isVisibleTo(dialog)
+    assert dialog.expedition_enabled_cb.isChecked()
+    assert dialog.expedition_hotkey.key_text == "alt+r"
+    settings = dialog.get_settings()
+    assert settings["hotkeys"]["expedition_reward_ocr"] == "alt+r"
+    assert settings["poetore"]["expedition_reward_overlay"] == {"enabled": True}
+
+    dialog.poe_version_radios[POE1].setChecked(True)
+    assert not dialog.expedition_group.isVisibleTo(dialog)
+    dialog.close()
+
+
 def test_poe2_enables_poetore_startup_choices():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(current_config={

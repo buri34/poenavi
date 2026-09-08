@@ -15,6 +15,7 @@
         "search_string_test": "F4",
         "poetore_capture": "alt+d",
         "poetore_auto_hide": "ctrl+d",
+        "expedition_reward_ocr": "alt+e",
         "map_check": "alt+f",
         "gem_shop_search": "F2",
         "cheat_sheets_toggle": "shift+space"
@@ -72,6 +73,9 @@
         },
         "result_font_size": "medium",
         "result_positions": {},
+        "expedition_reward_overlay": {
+            "enabled": false
+        },
         "obs_streaming": {
             "enabled": false,
             "title_bar_opacity": 100,

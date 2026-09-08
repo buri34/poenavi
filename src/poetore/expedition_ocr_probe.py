@@ -443,6 +443,14 @@ def _windows_ocr_helper() -> Path:
         if helper.is_file():
             return helper
         raise RuntimeError(f"Windows OCRヘルパーが見つかりません: {helper}")
+    packaged = (
+        Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[2]))
+        / "tools"
+        / "ExpeditionWindowsOcr"
+        / "ExpeditionWindowsOcr.exe"
+    )
+    if packaged.exists():
+        return packaged
     helper = (
         Path(__file__).resolve().parents[2]
         / "tools"
@@ -460,14 +468,63 @@ def _windows_ocr_helper() -> Path:
     )
 
 
-def _run_windows_ocr(image: Path, language: str) -> str:
-    if sys.platform != "win32":
-        raise RuntimeError("Windows標準OCRはWindows上でのみ実行できます。")
+def _windows_ocr_command(helper: Path) -> list[str]:
+    if helper.suffix.casefold() == ".exe":
+        return [str(helper)]
     dotnet = shutil.which("dotnet")
     if dotnet is None:
         raise RuntimeError("dotnetが見つかりません。.NET 8 SDKをインストールしてください。")
+    return [dotnet, str(helper)]
+
+
+def windows_ocr_available(language: str = "ja-JP") -> bool:
+    if sys.platform != "win32":
+        return False
+    helper = _windows_ocr_helper()
     result = subprocess.run(
-        [dotnet, str(_windows_ocr_helper()), str(image.resolve()), language],
+        [*_windows_ocr_command(helper), "--check", language],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    return result.returncode == 0
+
+
+def run_windows_ocr_batch(images: Sequence[Path], language: str = "ja-JP") -> list[str]:
+    if sys.platform != "win32":
+        raise RuntimeError("Windows標準OCRはWindows上でのみ実行できます。")
+    if not images:
+        return []
+    helper = _windows_ocr_helper()
+    result = subprocess.run(
+        [
+            *_windows_ocr_command(helper), "--batch", language,
+            *(str(image.resolve()) for image in images),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    if result.returncode != 0:
+        if result.returncode == 3:
+            raise RuntimeError(
+                "Windowsの日本語OCRがありません。Windows設定の「言語と地域」で日本語のOCRを追加してください。"
+            )
+        raise RuntimeError(result.stderr.strip() or f"Windows OCR終了コード: {result.returncode}")
+    loaded = json.loads(result.stdout)
+    if not isinstance(loaded, list) or len(loaded) != len(images):
+        raise RuntimeError("Windows OCRの一括処理結果が不正です。")
+    return [str(value) for value in loaded]
+
+
+def _run_windows_ocr(image: Path, language: str) -> str:
+    if sys.platform != "win32":
+        raise RuntimeError("Windows標準OCRはWindows上でのみ実行できます。")
+    helper = _windows_ocr_helper()
+    result = subprocess.run(
+        [*_windows_ocr_command(helper), str(image.resolve()), language],
         capture_output=True,
         text=True,
         encoding="utf-8",

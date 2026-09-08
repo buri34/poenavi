@@ -6,6 +6,10 @@ $ErrorActionPreference = "Stop"
 $testFiles = @(
     "tests/test_cheat_sheets.py",
     "tests/test_config_manager.py",
+    "tests/test_build_expedition_ocr_items.py",
+    "tests/test_expedition_ocr_probe.py",
+    "tests/test_expedition_rewards.py",
+    "tests/test_feature_support.py",
     "tests/test_poetore_audit_docs.py",
     "tests/test_poetore_awakened_audit_csv.py",
     "tests/test_poetore_categories.py",

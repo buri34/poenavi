@@ -158,6 +158,39 @@ def test_poetore_mode_starts_capture_and_stash_scroll_services_for_poe2():
     app.processEvents()
 
 
+def test_poe2_expedition_hotkey_starts_only_when_feature_is_enabled():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "poe_version": POE2,
+        "hotkeys": {"expedition_reward_ocr": "alt+e"},
+        "poetore": {"expedition_reward_overlay": {"enabled": True}},
+    }
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config", return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService",
+    ) as hotkey_class, patch(
+        "src.ui.poetore_mode_window.ForegroundSuppressedHotkeyService",
+    ) as suppressed_class, patch(
+        "src.ui.poetore_mode_window.suppressed_hotkeys_supported", return_value=True,
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    assert "expedition_reward_ocr" not in hotkey_class.call_args.args[0]
+    assert [call.args[:2] for call in suppressed_class.call_args_list] == [
+        ("poetore_capture", "alt+d"),
+        ("expedition_reward_ocr", "alt+e"),
+    ]
+    window.close()
+    app.processEvents()
+
+
+def test_expedition_hotkey_dispatches_single_scan():
+    window = MagicMock()
+    PoetoreModeWindow.handle_hotkey(window, "expedition_reward_ocr")
+    window.capture_expedition_rewards.assert_called_once_with()
+
+
 def test_poetore_mode_uses_version_specific_currency_icon_names():
     assert _currency_icon_filename("divine", "poe2") == "DivineOrb2.png"
     assert _currency_icon_filename("chaos", "poe2") == "ChaosOrb2.png"

@@ -106,6 +106,10 @@ PoENavi's Windows distribution is created with PyInstaller and includes upstream
   - <https://pyinstaller.org/en/stable/license.html>
 - **OpenSSL runtime libraries** — Apache License 2.0
   - <https://www.openssl.org/source/license.html>
+- **.NET 8 runtime** — MIT License; bundled only with the self-contained
+  Windows OCR helper
+  - Copyright (c) .NET Foundation and Contributors
+  - <https://github.com/dotnet/runtime/blob/main/LICENSE.TXT>
 
 ## Noto Sans JP
 
