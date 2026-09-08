@@ -7721,19 +7721,29 @@ def test_poe2_waystone_item_rarity_is_visible_and_tablet_copy_has_no_warning(qap
         window.close()
 
 
-def test_poe2_nonunique_tablet_has_selectable_rarity_filter(qapp):
-    tablet = """アイテムクラス: 石板
-レアリティ: レア
+@pytest.mark.parametrize(
+    ("rarity_label", "expected_rarity", "expected_text"),
+    (
+        ("ノーマル", "normal", "ノーマル限定"),
+        ("マジック", "magic", "マジック限定"),
+        ("レア", "rare", "レア限定"),
+    ),
+)
+def test_poe2_nonunique_tablet_toggles_detected_rarity_and_nonunique(
+    qapp, rarity_label, expected_rarity, expected_text,
+):
+    tablet = f"""アイテムクラス: 石板
+レアリティ: {rarity_label}
 埋もれた記録
 エクスペディションの石板
 --------
 アイテムレベル: 82
 --------
-{ 暗黙モッド }
+{{ 暗黙モッド }}
 マップにカルグールのエクスペディションを追加する
 残り使用可能回数 10回
 --------
-{ サフィックスモッド 「宝探しの」 (ティア: 1) }
+{{ サフィックスモッド 「宝探しの」 (ティア: 1) }}
 マップにレアのチェストが追加で3(2-3)個出現する
 """
     window = PoetoreWindow(app_config={"poe_version": "poe2", "poetore": {}})
@@ -7746,14 +7756,15 @@ def test_poe2_nonunique_tablet_has_selectable_rarity_filter(qapp):
         assert [
             window.tablet_rarity_combo.itemData(index)
             for index in range(window.tablet_rarity_combo.count())
-        ] == ["nonunique", "normal", "magic", "rare"]
+        ] == [expected_rarity, "nonunique"]
         assert window.tablet_rarity_combo.objectName() == "cycleToggle"
+        assert window.tablet_rarity_combo.currentData() == expected_rarity
+        assert window.tablet_rarity_combo.currentText() == expected_text
         window.tablet_rarity_combo.click()
-        assert window.tablet_rarity_combo.currentData() == "normal"
-        assert window.tablet_rarity_combo.currentText() == "ノーマル限定"
-        window.tablet_rarity_combo.setCurrentIndex(3)
+        assert window.tablet_rarity_combo.currentData() == "nonunique"
+        assert window.tablet_rarity_combo.currentText() == "非ユニーク"
         window.parse_current_text()
-        assert window.tablet_rarity_combo.currentData() == "rare"
+        assert window.tablet_rarity_combo.currentData() == "nonunique"
         assert window.rarity_condition_chip.isHidden()
     finally:
         window.close()

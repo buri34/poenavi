@@ -694,6 +694,13 @@ class _CycleButton(QPushButton):
     def count(self) -> int:
         return len(self._options)
 
+    def setOptions(self, options: tuple[tuple[str, object, bool], ...]):
+        if not options:
+            raise ValueError("options must not be empty")
+        self._options = options
+        self._current_index = 0
+        self._sync_state()
+
 
 class _AreaSegmentedControl(QWidget):
     """Logbookの最大5エリアを横並びで選ぶ専用セグメント。"""
@@ -1202,9 +1209,6 @@ class PoetoreWindow(QWidget):
         self.rarity_condition_chip.hide()
         self.tablet_rarity_combo = _CycleButton((
             ("非ユニーク", "nonunique", False),
-            ("ノーマル限定", "normal", False),
-            ("マジック限定", "magic", False),
-            ("レア限定", "rare", False),
         ))
         self.tablet_rarity_combo.setToolTip(
             "クリックするたびに石板のレアリティ条件を切り替えます"
@@ -4654,7 +4658,20 @@ class PoetoreWindow(QWidget):
             item_key = item.raw_text
             if item_key != self._tablet_rarity_item_key:
                 self._tablet_rarity_item_key = item_key
-                self.tablet_rarity_combo.setCurrentIndex(0)
+                detected_rarity = {
+                    "ノーマル": "normal",
+                    "マジック": "magic",
+                    "レア": "rare",
+                }.get(rarity, rarity)
+                rarity_label = {
+                    "normal": "ノーマル限定",
+                    "magic": "マジック限定",
+                    "rare": "レア限定",
+                }[detected_rarity]
+                self.tablet_rarity_combo.setOptions((
+                    (rarity_label, detected_rarity, False),
+                    ("非ユニーク", "nonunique", False),
+                ))
         else:
             self._tablet_rarity_item_key = None
         if magic_base_search:
