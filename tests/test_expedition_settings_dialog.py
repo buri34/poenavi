@@ -58,7 +58,7 @@ def test_region_selector_uses_large_bold_guide_font():
     QApplication.instance() or QApplication([])
     selector = ExpeditionRegionSelector(QRect(100, 200, 1000, 800))
 
-    assert selector.font().pixelSize() == 72
+    assert selector.font().pixelSize() == 144
     assert selector.font().bold()
     selector.close()
 

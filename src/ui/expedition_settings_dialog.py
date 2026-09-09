@@ -87,7 +87,7 @@ class ExpeditionRegionSelector(QDialog):
         self._origin: QPoint | None = None
         self._selection = QRect()
         guide_font = self.font()
-        guide_font.setPixelSize(72)
+        guide_font.setPixelSize(144)
         guide_font.setBold(True)
         self.setFont(guide_font)
         self.setWindowTitle("エクスペ報酬の読取範囲を指定")
@@ -147,6 +147,7 @@ class ExpeditionRegionSelector(QDialog):
 
     def paintEvent(self, event):
         painter = QPainter(self)
+        painter.setFont(self.font())
         painter.fillRect(self.rect(), QColor(0, 0, 0, 92))
         if not self._selection.isNull():
             painter.setCompositionMode(QPainter.CompositionMode_Clear)
@@ -158,9 +159,9 @@ class ExpeditionRegionSelector(QDialog):
         painter.drawText(
             self.rect().adjusted(20, 20, -20, -20),
             Qt.AlignTop | Qt.AlignHCenter,
-            "報酬カードの左上から\n"
-            "パネル内側の右下までドラッグ\n"
-            "Enter: 確定 / Esc: キャンセル",
+            "左上から右下へドラッグ\n"
+            "Enter: 確定\n"
+            "Esc: キャンセル",
         )
 
 
