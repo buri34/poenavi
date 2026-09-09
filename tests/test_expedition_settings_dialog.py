@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from PySide6.QtCore import QRect, Qt
+from PySide6.QtCore import QRect, Qt, QTimer
 from PySide6.QtGui import QImage, QKeyEvent
 from PySide6.QtWidgets import QApplication, QDialog
 
@@ -117,6 +117,28 @@ def test_expedition_dialog_accepts_region_from_selector():
     assert dialog.settings()[0]["region"] == region
     assert dialog.status_label.text() == "設定済み"
     dialog.close()
+
+
+def test_region_selection_keeps_modal_settings_dialog_open():
+    QApplication.instance() or QApplication([])
+    region = {"left": 0.1, "top": 0.2, "right": 0.6, "bottom": 0.9}
+
+    class AcceptedSelector:
+        def __init__(self, client_rect, parent):
+            self.selected_region = region
+
+        def exec(self):
+            return QDialog.Accepted
+
+    dialog = ExpeditionSettingsDialog(
+        client_rect_getter=lambda: QRect(100, 200, 1000, 800),
+        selector_class=AcceptedSelector,
+    )
+    QTimer.singleShot(0, dialog.set_region_button.click)
+    QTimer.singleShot(50, dialog.accept)
+
+    assert dialog.exec() == QDialog.Accepted
+    assert dialog.settings()[0]["region"] == region
 
 
 def test_expedition_dialog_shows_example_or_clear_placeholder(tmp_path):

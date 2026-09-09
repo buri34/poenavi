@@ -7,6 +7,7 @@ from pathlib import Path
 from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QKeyEvent, QMouseEvent, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
+    QApplication,
     QCheckBox,
     QDialog,
     QFormLayout,
@@ -301,12 +302,16 @@ class ExpeditionSettingsDialog(QDialog):
                 "PoE2を起動して報酬画面を表示してから、もう一度お試しください。",
             )
             return
-        self.hide()
-        selector = self._selector_class(QRect(client_rect), self)
-        result = selector.exec()
-        self.show()
-        self.raise_()
-        self.activateWindow()
+        previous_opacity = self.windowOpacity()
+        self.setWindowOpacity(0.0)
+        QApplication.processEvents()
+        try:
+            selector = self._selector_class(QRect(client_rect), self)
+            result = selector.exec()
+        finally:
+            self.setWindowOpacity(previous_opacity)
+            self.raise_()
+            self.activateWindow()
         if result != QDialog.Accepted:
             return
         region = valid_normalized_region(selector.selected_region)
