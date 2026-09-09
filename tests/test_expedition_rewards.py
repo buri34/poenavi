@@ -3,13 +3,19 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
-from PySide6.QtCore import QRect
+from PySide6.QtCore import QRect, Qt
 from PySide6.QtGui import QColor, QImage
 
 from src.poetore.expedition_ocr_probe import PreparedOcrFrame, RowBand
 from src.poetore.expedition_rewards import (
     EXPEDITION_DIAGNOSTIC_FLAG,
+    EXPEDITION_PRICE_BACKGROUND,
+    EXPEDITION_PRICE_CORNER_RADIUS,
     EXPEDITION_PRICE_FONT_SIZE,
+    EXPEDITION_PRICE_HORIZONTAL_PADDING,
+    EXPEDITION_PRICE_TEXT_OUTLINE_PEN_WIDTH,
+    EXPEDITION_PRICE_VERTICAL_PADDING,
+    ExpeditionPriceOverlay,
     ExpeditionRewardController,
     RewardIdentity,
     RewardPriceRow,
@@ -123,6 +129,38 @@ def test_expedition_price_colors_only_highest_row_green():
     assert [row.highlighted for row in rows] == [False, True, True]
     assert reward_price_text_color(rows[0]).name() == "#ffffff"
     assert reward_price_text_color(rows[1]).name() == "#b0ff7b"
+
+
+def test_expedition_price_plate_uses_requested_readability_style():
+    assert EXPEDITION_PRICE_BACKGROUND == QColor(0, 0, 0, 190)
+    assert 0.70 <= EXPEDITION_PRICE_BACKGROUND.alphaF() <= 0.75
+    assert EXPEDITION_PRICE_CORNER_RADIUS == 5
+    assert EXPEDITION_PRICE_HORIZONTAL_PADDING == 6
+    assert EXPEDITION_PRICE_VERTICAL_PADDING == 3
+    assert EXPEDITION_PRICE_TEXT_OUTLINE_PEN_WIDTH == 4
+
+
+def test_expedition_price_overlay_renders_individual_translucent_plate(qapp):
+    overlay = ExpeditionPriceOverlay()
+    overlay.resize(420, 120)
+    overlay._source_width = 420
+    overlay._source_height = 120
+    overlay._panel_width = 120
+    overlay._rows = [RewardPriceRow(40, 60, "5.5 高貴/個", 5.5)]
+    image = QImage(overlay.size(), QImage.Format.Format_ARGB32_Premultiplied)
+    image.fill(Qt.transparent)
+
+    overlay.render(image)
+
+    x = price_label_x(420, 420, 120)
+    plate_pixel = image.pixelColor(x + 2, 50)
+    outside_pixel = image.pixelColor(x - 2, 50)
+    assert plate_pixel.red() == 0
+    assert plate_pixel.green() == 0
+    assert plate_pixel.blue() == 0
+    assert 185 <= plate_pixel.alpha() <= 195
+    assert outside_pixel.alpha() == 0
+    overlay.close()
 
 
 def test_expedition_exalted_icon_uses_poe2_asset():

@@ -11,13 +11,14 @@ from dataclasses import dataclass, replace
 from hashlib import sha256
 from pathlib import Path
 
-from PySide6.QtCore import QCoreApplication, QObject, QRect, Qt, QTimer, Signal
+from PySide6.QtCore import QCoreApplication, QObject, QRect, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import (
     QColor,
     QFont,
     QGuiApplication,
     QImage,
     QPainter,
+    QPainterPath,
     QPen,
     QPixmap,
 )
@@ -36,6 +37,15 @@ from src.poetore.expedition_ocr_probe import (
 from src.poetore.window_position import path_of_exile_client_rect
 
 EXPEDITION_PRICE_FONT_SIZE = 14
+EXPEDITION_PRICE_BACKGROUND = QColor(0, 0, 0, 190)
+EXPEDITION_PRICE_CORNER_RADIUS = 5
+EXPEDITION_PRICE_HORIZONTAL_PADDING = 6
+EXPEDITION_PRICE_VERTICAL_PADDING = 3
+EXPEDITION_PRICE_ICON_SIZE = 24
+EXPEDITION_PRICE_ICON_GAP = 5
+# QPainter strokes are centered on the glyph path, so width 4 creates a
+# visible outline of about 2 px outside the filled text.
+EXPEDITION_PRICE_TEXT_OUTLINE_PEN_WIDTH = 4
 EXPEDITION_DIAGNOSTIC_ENV = "POENAVI_EXPEDITION_DIAGNOSTICS"
 EXPEDITION_DIAGNOSTIC_FLAG = "expedition-diagnostics.flag"
 
@@ -350,26 +360,51 @@ class ExpeditionPriceOverlay(QWidget):
         painter.setFont(font)
         x = price_label_x(self.width(), self._source_width, self._panel_width)
         scale_y = self.height() / self._source_height
-        icon_size = 24
-        icon_gap = 5
+        metrics = painter.fontMetrics()
         for row in self._rows:
             y = round(((row.top + row.bottom) / 2) * scale_y)
-            bounds = painter.fontMetrics().boundingRect(row.text)
-            baseline = y + bounds.height() // 3
-            text_x = x
-            if not self._exalted_icon.isNull():
+            has_icon = not self._exalted_icon.isNull()
+            text_width = metrics.horizontalAdvance(row.text)
+            content_width = text_width
+            if has_icon:
+                content_width += EXPEDITION_PRICE_ICON_SIZE + EXPEDITION_PRICE_ICON_GAP
+            content_height = max(EXPEDITION_PRICE_ICON_SIZE if has_icon else 0, metrics.height())
+            plate_width = content_width + EXPEDITION_PRICE_HORIZONTAL_PADDING * 2
+            plate_height = content_height + EXPEDITION_PRICE_VERTICAL_PADDING * 2
+            plate = QRectF(x, y - plate_height / 2, plate_width, plate_height)
+
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(EXPEDITION_PRICE_BACKGROUND)
+            painter.drawRoundedRect(
+                plate,
+                EXPEDITION_PRICE_CORNER_RADIUS,
+                EXPEDITION_PRICE_CORNER_RADIUS,
+            )
+
+            content_x = x + EXPEDITION_PRICE_HORIZONTAL_PADDING
+            text_x = content_x
+            if has_icon:
                 painter.drawPixmap(
-                    x,
-                    y - icon_size // 2,
-                    icon_size,
-                    icon_size,
+                    round(content_x),
+                    y - EXPEDITION_PRICE_ICON_SIZE // 2,
+                    EXPEDITION_PRICE_ICON_SIZE,
+                    EXPEDITION_PRICE_ICON_SIZE,
                     self._exalted_icon,
                 )
-                text_x += icon_size + icon_gap
-            painter.setPen(QPen(QColor(0, 0, 0, 220), 4, Qt.SolidLine, Qt.RoundCap))
-            painter.drawText(text_x, baseline, row.text)
-            painter.setPen(reward_price_text_color(row))
-            painter.drawText(text_x, baseline, row.text)
+                text_x += EXPEDITION_PRICE_ICON_SIZE + EXPEDITION_PRICE_ICON_GAP
+            baseline = y + (metrics.ascent() - metrics.descent()) / 2
+            text_path = QPainterPath()
+            text_path.addText(text_x, baseline, font, row.text)
+            painter.setPen(QPen(
+                QColor(0, 0, 0, 255),
+                EXPEDITION_PRICE_TEXT_OUTLINE_PEN_WIDTH,
+                Qt.SolidLine,
+                Qt.RoundCap,
+                Qt.RoundJoin,
+            ))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(text_path)
+            painter.fillPath(text_path, reward_price_text_color(row))
 
 
 class ExpeditionRewardController(QObject):
