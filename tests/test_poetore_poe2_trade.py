@@ -1286,6 +1286,78 @@ def test_poe2_unique_fixed_direct_mod_is_a_hidden_candidate():
     assert direct.hidden_reason == "可変ロールではありません"
 
 
+def test_mastered_domain_keeps_fixed_biome_variant_visible_and_searchable():
+    item = parse_item_text("""アイテムクラス: 石板
+レアリティ: ユニーク
+熟達した領域
+照射の石板
+--------
+アイテムレベル: 82
+--------
+{ 暗黙モッド }
+マップに照射状態を追加する
+残り使用回数 1回
+--------
+{ ユニークモッド }
+マップは山バイオームエリアとも見なされる — スケールできない値
+--------
+輝ける束の間、先人たちは
+自由に世界を作り変えることができた。
+--------
+自身のマップデバイスで使用してマップにモッドを追加できる。""")
+
+    biome = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "explicit.stat_1583884108"
+    )
+    assert biome.hidden_reason == ""
+    assert biome.enabled
+    sent = build_search_query(
+        item, stat_filters=poe2_trade_filters(item),
+    )["query"]["stats"][0]["filters"]
+    assert {row["id"] for row in sent} == {
+        "explicit.stat_1583884108",
+        "pseudo.pseudo_number_of_uses_remaining",
+    }
+
+
+@pytest.mark.parametrize("stat_id", [
+    "explicit.stat_3517228691",  # Desert
+    "explicit.stat_3160511599",  # Grass
+    "explicit.stat_864099561",   # Forest
+    "explicit.stat_1583884108",  # Mountain
+    "explicit.stat_3271982291",  # Water
+    "explicit.stat_3755999954",  # Swamp
+])
+def test_all_unique_tablet_biome_variants_bypass_fixed_value_hiding(stat_id):
+    item = ParsedItem(
+        "Tablets", "unique", "Mastered Domain", "Irradiated Tablet", "tablet",
+        modifiers=(ItemModifier(
+            "固定バイオーム", (), kind="explicit", stat_id=stat_id,
+        ),),
+    )
+
+    row = next(row for row in poe2_trade_filters(item) if row.stat_id == stat_id)
+    assert row.hidden_reason == ""
+    assert row.enabled
+
+
+def test_other_unique_tablet_fixed_values_still_use_normal_hidden_rule():
+    item = ParsedItem(
+        "Tablets", "unique", "Test Unique", "Irradiated Tablet", "tablet",
+        modifiers=(ItemModifier(
+            "別の固定値Mod", (), kind="explicit", stat_id="explicit.other_fixed",
+        ),),
+    )
+
+    row = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "explicit.other_fixed"
+    )
+    assert row.hidden_reason == "可変ロールではありません"
+    assert not row.enabled
+
+
 @pytest.mark.parametrize("fixture_name", ["mageblood_ja.txt", "mageblood_en.txt"])
 def test_poe2_mageblood_never_hides_trade_filters(fixture_name):
     text = (Path(__file__).parent / "fixtures" / "poe2" / fixture_name).read_text(

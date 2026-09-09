@@ -893,6 +893,14 @@ _HIDDEN_CANDIDATE_EXCLUDED_UNIQUES = {
     "Heart of the Well", "井戸の心臓",
     "Mageblood", "メイジブラッド",
 }
+_UNIQUE_TABLET_BIOME_STAT_IDS = {
+    "explicit.stat_3517228691",  # Desert
+    "explicit.stat_3160511599",  # Grass
+    "explicit.stat_864099561",   # Forest
+    "explicit.stat_1583884108",  # Mountain
+    "explicit.stat_3271982291",  # Water
+    "explicit.stat_3755999954",  # Swamp
+}
 
 
 def _poe2_item_is_modifiable(item: ParsedItem) -> bool:
@@ -928,6 +936,10 @@ def _apply_poe2_hidden_candidate_rules(
             and not (row.kind == "implicit" and item.category == "jewel")
             and row.ref != "# uses remaining"
             and "uses_remaining" not in row.stat_id
+            and not (
+                item.category == "tablet"
+                and row.stat_id in _UNIQUE_TABLET_BIOME_STAT_IDS
+            )
             and not (row.kind == "pseudo" and "enchant" in row.provenance_tags)
             and not (
                 row.roll_min is not None
