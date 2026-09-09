@@ -104,20 +104,38 @@ def _memo_icon() -> QIcon:
 
 
 def _expedition_icon() -> QIcon:
-    """Return three rune tiles for Expedition reward settings."""
+    """Return the three-armed Expedition spiral emblem."""
     pixmap, painter = _icon_canvas()
     accent = QColor(POETORE_ACCENT)
     dark = QColor("#15201D")
-    painter.setPen(QPen(accent, 1.3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    painter.setBrush(QColor(32, 72, 62))
-    for left in (2.5, 9.0, 15.5):
-        painter.drawRoundedRect(left, 5.0, 6.0, 14.0, 1.2, 1.2)
-    painter.setPen(QPen(dark, 1.4, Qt.SolidLine, Qt.RoundCap))
-    painter.drawLine(QPointF(5.5, 8.0), QPointF(5.5, 16.0))
-    painter.drawLine(QPointF(3.8, 12.0), QPointF(7.2, 12.0))
-    painter.drawEllipse(QPointF(12.0, 12.0), 1.8, 3.4)
-    painter.drawLine(QPointF(17.5, 9.0), QPointF(20.0, 15.0))
-    painter.drawLine(QPointF(20.0, 9.0), QPointF(17.5, 15.0))
+
+    arm = QPainterPath(QPointF(12.0, 11.2))
+    arm.cubicTo(QPointF(10.9, 10.2), QPointF(9.7, 9.1), QPointF(9.3, 7.5))
+    arm.cubicTo(QPointF(8.9, 5.9), QPointF(9.6, 4.2), QPointF(11.1, 3.4))
+    arm.cubicTo(QPointF(12.6, 2.5), QPointF(14.4, 3.0), QPointF(15.2, 4.5))
+    arm.cubicTo(QPointF(15.8, 5.9), QPointF(15.2, 7.5), QPointF(13.8, 7.9))
+    arm.cubicTo(QPointF(12.5, 8.3), QPointF(11.3, 7.3), QPointF(11.5, 6.1))
+    arm.cubicTo(QPointF(11.7, 5.2), QPointF(12.8, 4.7), QPointF(13.5, 5.3))
+    arm.cubicTo(QPointF(14.1, 5.7), QPointF(13.7, 6.6), QPointF(13.0, 6.6))
+
+    for angle in (0, 120, 240):
+        painter.save()
+        painter.translate(12.0, 12.0)
+        painter.rotate(angle)
+        painter.translate(-12.0, -12.0)
+        painter.setPen(
+            QPen(dark, 1.7, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        )
+        painter.drawPath(arm)
+        painter.setPen(
+            QPen(accent, 1.0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        )
+        painter.drawPath(arm)
+        painter.restore()
+
+    painter.setPen(QPen(dark, 0.8, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+    painter.setBrush(accent)
+    painter.drawEllipse(QPointF(12.0, 12.0), 1.5, 1.5)
     return _finish_icon(pixmap, painter)
 
 
