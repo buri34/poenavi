@@ -58,7 +58,7 @@ def test_region_selector_uses_large_bold_guide_font():
     QApplication.instance() or QApplication([])
     selector = ExpeditionRegionSelector(QRect(100, 200, 1000, 800))
 
-    assert selector.font().pixelSize() == 36
+    assert selector.font().pixelSize() == 72
     assert selector.font().bold()
     selector.close()
 
@@ -178,6 +178,9 @@ def test_region_selection_keeps_modal_settings_dialog_open():
 def test_expedition_dialog_shows_example_or_clear_placeholder(tmp_path):
     QApplication.instance() or QApplication([])
     missing = ExpeditionSettingsDialog(example_image_path=tmp_path / "missing.png")
+    assert missing.example_hint_label.text() == (
+        "※以下の画像をクリックするとポップアップで拡大表示します"
+    )
     assert "準備中" in missing.example_thumbnail.text()
     missing.close()
 

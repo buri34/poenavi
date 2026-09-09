@@ -87,7 +87,7 @@ class ExpeditionRegionSelector(QDialog):
         self._origin: QPoint | None = None
         self._selection = QRect()
         guide_font = self.font()
-        guide_font.setPixelSize(36)
+        guide_font.setPixelSize(72)
         guide_font.setBold(True)
         self.setFont(guide_font)
         self.setWindowTitle("エクスペ報酬の読取範囲を指定")
@@ -158,7 +158,9 @@ class ExpeditionRegionSelector(QDialog):
         painter.drawText(
             self.rect().adjusted(20, 20, -20, -20),
             Qt.AlignTop | Qt.AlignHCenter,
-            "報酬カードの左上から、パネル内側の右下までドラッグ\nEnter: 確定 / Esc: キャンセル",
+            "報酬カードの左上から\n"
+            "パネル内側の右下までドラッグ\n"
+            "Enter: 確定 / Esc: キャンセル",
         )
 
 
@@ -265,7 +267,15 @@ class ExpeditionSettingsDialog(QDialog):
         instruction.setObjectName("expeditionRegionInstruction")
         root.addWidget(instruction)
 
-        root.addWidget(QLabel("指定例"))
+        example_heading = QHBoxLayout()
+        example_heading.addWidget(QLabel("指定例"))
+        self.example_hint_label = QLabel(
+            "※以下の画像をクリックするとポップアップで拡大表示します"
+        )
+        self.example_hint_label.setObjectName("expeditionExampleHint")
+        example_heading.addWidget(self.example_hint_label)
+        example_heading.addStretch()
+        root.addLayout(example_heading)
         self.example_thumbnail = ClickableImageLabel()
         self.example_thumbnail.setObjectName("expeditionExampleThumbnail")
         self.example_thumbnail.setAlignment(Qt.AlignCenter)
