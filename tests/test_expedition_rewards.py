@@ -15,11 +15,14 @@ from src.poetore.expedition_rewards import (
     EXPEDITION_PRICE_HORIZONTAL_PADDING,
     EXPEDITION_PRICE_TEXT_OUTLINE_PEN_WIDTH,
     EXPEDITION_PRICE_VERTICAL_PADDING,
+    RANDOM_CURRENCY_MESSAGES,
+    RANDOM_CURRENCY_REWARD_ID,
     ExpeditionPriceOverlay,
     ExpeditionRewardController,
     RewardIdentity,
     RewardPriceRow,
     SafeRewardNameResolver,
+    build_reward_display_rows,
     expedition_capture_rect,
     expedition_diagnostics_enabled,
     expedition_exalted_icon_path,
@@ -30,6 +33,7 @@ from src.poetore.expedition_rewards import (
     load_reward_aliases,
     normalized_expedition_region,
     price_label_x,
+    priceable_reward_identities,
     retry_unresolved_identities,
     reward_cards_still_visible,
     reward_price_text_color,
@@ -140,7 +144,10 @@ def test_controller_rejects_scan_until_read_region_is_configured():
 def test_load_reward_aliases_and_format_prices(tmp_path):
     path = tmp_path / "aliases.json"
     path.write_text(json.dumps({"items": [{"ja": "高貴", "en": "Exalted"}]}))
-    assert load_reward_aliases(path) == {"高貴": "Exalted"}
+    assert load_reward_aliases(path) == {
+        "高貴": "Exalted",
+        "ランダムなカレンシー": RANDOM_CURRENCY_REWARD_ID,
+    }
     assert format_exalted_unit_price(0.004) == "<0.01 高貴/個"
     assert format_exalted_unit_price(0.85) == "0.85 高貴/個"
     assert format_exalted_unit_price(5.25) == "5.2 高貴/個"
@@ -158,6 +165,91 @@ def test_expedition_price_colors_only_highest_row_green():
     assert [row.highlighted for row in rows] == [False, True, True]
     assert reward_price_text_color(rows[0]).name() == "#ffffff"
     assert reward_price_text_color(rows[1]).name() == "#b0ff7b"
+
+
+def test_random_currency_messages_match_the_approved_copy():
+    assert RANDOM_CURRENCY_MESSAGES == (
+        "価格：あなたの運次第",
+        "夢を買う5個",
+        "あなたの運：Priceless",
+        "ここでミラーをひとつまみ",
+        "当たりが出るとは言ってない",
+        "返品・交換はできません",
+        "結果には個人差があります",
+        "欲望に従え",
+        "期待値よりロマン",
+        "カランドラの鏡５個　と思いたい",
+    )
+
+
+def test_random_currency_quantity_marker_resolves_to_special_reward():
+    aliases, version = load_reward_alias_bundle()
+    resolver = SafeRewardNameResolver(aliases, version)
+
+    assert resolver.resolve("5x ランダムなカレンシー") == (
+        "ランダムなカレンシー",
+        RANDOM_CURRENCY_REWARD_ID,
+        True,
+    )
+
+
+def test_random_currency_is_not_priced_or_highlighted_and_has_no_icon():
+    special = RewardIdentity(
+        10, 30, "ランダムなカレンシー", RANDOM_CURRENCY_REWARD_ID, True,
+    )
+    priced = RewardIdentity(40, 60, "高貴なオーブ", "Exalted Orb", True)
+    prices = {"Exalted Orb": SimpleNamespace(chaos=100)}
+
+    assert priceable_reward_identities([special, priced]) == [priced]
+    with patch(
+        "src.poetore.expedition_rewards.random.choice",
+        return_value="期待値よりロマン",
+    ) as choose:
+        rows = build_reward_display_rows(
+            [special, priced],
+            prices,
+            20,
+            vertical_offset=5,
+            vertical_scale=2,
+        )
+
+    choose.assert_called_once_with(RANDOM_CURRENCY_MESSAGES)
+    assert rows == [
+        RewardPriceRow(
+            25, 65, "期待値よりロマン", None,
+            highlighted=False, show_currency_icon=False,
+        ),
+        RewardPriceRow(85, 125, "5 高貴/個", 5, highlighted=True),
+    ]
+
+
+def test_random_currency_can_be_displayed_without_any_price_data():
+    special_rows = [
+        RewardIdentity(
+            10, 30, "ランダムなカレンシー", RANDOM_CURRENCY_REWARD_ID, True,
+        ),
+        RewardIdentity(
+            40, 60, "ランダムなカレンシー", RANDOM_CURRENCY_REWARD_ID, True,
+        ),
+    ]
+
+    with patch(
+        "src.poetore.expedition_rewards.random.choice",
+        return_value="価格：あなたの運次第",
+    ) as choose:
+        rows = build_reward_display_rows(
+            special_rows,
+            {},
+            None,
+            vertical_offset=0,
+            vertical_scale=1,
+        )
+
+    choose.assert_called_once_with(RANDOM_CURRENCY_MESSAGES)
+    assert [row.text for row in rows] == ["価格：あなたの運次第"] * 2
+    assert all(row.unit_price is None for row in rows)
+    assert all(not row.highlighted for row in rows)
+    assert all(not row.show_currency_icon for row in rows)
 
 
 def test_expedition_price_plate_uses_requested_readability_style():
@@ -207,14 +299,18 @@ def test_reward_alias_bundle_versions_exact_dictionary_bytes(tmp_path):
     path.write_text('{"items":[{"ja":"混沌","en":"Chaos"}]}', encoding="utf-8")
     _, second_version = load_reward_alias_bundle(path)
 
-    assert aliases == {"高貴": "Exalted"}
+    assert aliases == {
+        "高貴": "Exalted",
+        "ランダムなカレンシー": RANDOM_CURRENCY_REWARD_ID,
+    }
     assert first_version != second_version
 
 
 def test_packaged_reward_aliases_are_limited_to_expedition_reward_pool():
     aliases = load_reward_aliases()
 
-    assert len(aliases) == 220
+    assert len(aliases) == 221
+    assert aliases["ランダムなカレンシー"] == RANDOM_CURRENCY_REWARD_ID
     assert aliases["旋風の合金"] == "Cyclonic Alloy"
     assert aliases["サカワルの浸食のルーン"] == "Saqawal's Rune of Erosion"
     assert aliases["スルードの力"] == "Thrud's Might"

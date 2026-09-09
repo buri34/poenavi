@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import sys
 import threading
 from collections import Counter
@@ -49,6 +50,24 @@ EXPEDITION_PRICE_ICON_GAP = 5
 EXPEDITION_PRICE_TEXT_OUTLINE_PEN_WIDTH = 4
 EXPEDITION_DIAGNOSTIC_ENV = "POENAVI_EXPEDITION_DIAGNOSTICS"
 EXPEDITION_DIAGNOSTIC_FLAG = "expedition-diagnostics.flag"
+RANDOM_CURRENCY_REWARD_ID = "poenavi:special:random-currency"
+SPECIAL_REWARD_ALIASES = {
+    "ランダムなカレンシー": RANDOM_CURRENCY_REWARD_ID,
+}
+RANDOM_CURRENCY_MESSAGES = (
+    "価格：あなたの運次第",
+    "夢を買う5個",
+    "あなたの運：Priceless",
+    "ここでミラーをひとつまみ",
+    "当たりが出るとは言ってない",
+    "返品・交換はできません",
+    "結果には個人差があります",
+    "欲望に従え",
+    "期待値よりロマン",
+    "カランドラの鏡５個　と思いたい",
+)
+
+
 def expedition_diagnostics_enabled(marker_root: Path | None = None) -> bool:
     enabled = os.environ.get(EXPEDITION_DIAGNOSTIC_ENV, "").strip().casefold()
     if enabled in {"1", "true", "yes", "on"}:
@@ -80,8 +99,9 @@ class RewardPriceRow:
     top: int
     bottom: int
     text: str
-    unit_price: float
+    unit_price: float | None
     highlighted: bool = False
+    show_currency_icon: bool = True
 
 
 def load_reward_aliases(path: Path | None = None) -> dict[str, str]:
@@ -90,11 +110,13 @@ def load_reward_aliases(path: Path | None = None) -> dict[str, str]:
         / "data" / "poetore" / "poe2" / "expedition_ocr_items.json"
     )
     loaded = json.loads(source.read_text(encoding="utf-8"))
-    return {
+    aliases = {
         str(row["ja"]): str(row["en"])
         for row in loaded.get("items", ())
         if row.get("ja") and row.get("en")
     }
+    aliases.update(SPECIAL_REWARD_ALIASES)
+    return aliases
 
 
 def load_reward_alias_bundle(path: Path | None = None) -> tuple[dict[str, str], str]:
@@ -109,7 +131,11 @@ def load_reward_alias_bundle(path: Path | None = None) -> tuple[dict[str, str], 
         for row in loaded.get("items", ())
         if row.get("ja") and row.get("en")
     }
-    return aliases, sha256(content).hexdigest()
+    aliases.update(SPECIAL_REWARD_ALIASES)
+    special_bytes = json.dumps(
+        SPECIAL_REWARD_ALIASES, ensure_ascii=False, sort_keys=True,
+    ).encode("utf-8")
+    return aliases, sha256(content + special_bytes).hexdigest()
 
 
 class SafeRewardNameResolver:
@@ -289,8 +315,64 @@ def reward_price_text_color(row: RewardPriceRow) -> QColor:
 def highlight_highest_price_rows(rows: list[RewardPriceRow]) -> list[RewardPriceRow]:
     if not rows:
         return []
-    highest_price = max(row.unit_price for row in rows)
-    return [replace(row, highlighted=row.unit_price == highest_price) for row in rows]
+    numeric_prices = [row.unit_price for row in rows if row.unit_price is not None]
+    if not numeric_prices:
+        return [replace(row, highlighted=False) for row in rows]
+    highest_price = max(numeric_prices)
+    return [
+        replace(
+            row,
+            highlighted=(
+                row.unit_price is not None and row.unit_price == highest_price
+            ),
+        )
+        for row in rows
+    ]
+
+
+def priceable_reward_identities(
+    rows: list[RewardIdentity],
+) -> list[RewardIdentity]:
+    return [row for row in rows if row.english_name != RANDOM_CURRENCY_REWARD_ID]
+
+
+def build_reward_display_rows(
+    rows: list[RewardIdentity],
+    prices: dict,
+    exalted_chaos: float | None,
+    *,
+    vertical_offset: int,
+    vertical_scale: float,
+) -> list[RewardPriceRow]:
+    special_message = (
+        random.choice(RANDOM_CURRENCY_MESSAGES)
+        if any(row.english_name == RANDOM_CURRENCY_REWARD_ID for row in rows)
+        else ""
+    )
+    display_rows: list[RewardPriceRow] = []
+    for row in rows:
+        top = round(vertical_offset + row.top * vertical_scale)
+        bottom = round(vertical_offset + row.bottom * vertical_scale)
+        if row.english_name == RANDOM_CURRENCY_REWARD_ID:
+            display_rows.append(RewardPriceRow(
+                top,
+                bottom,
+                special_message,
+                None,
+                show_currency_icon=False,
+            ))
+            continue
+        price = prices.get(row.english_name)
+        if price is None or price.chaos <= 0 or not exalted_chaos:
+            continue
+        value = price.chaos / exalted_chaos
+        display_rows.append(RewardPriceRow(
+            top,
+            bottom,
+            format_exalted_unit_price(value),
+            value,
+        ))
+    return sorted(highlight_highest_price_rows(display_rows), key=lambda row: row.top)
 
 
 def price_label_x(display_width: int, source_width: int, panel_width: int) -> int:
@@ -393,7 +475,7 @@ class ExpeditionPriceOverlay(QWidget):
         metrics = painter.fontMetrics()
         for row in self._rows:
             y = round(((row.top + row.bottom) / 2) * scale_y)
-            has_icon = not self._exalted_icon.isNull()
+            has_icon = row.show_currency_icon and not self._exalted_icon.isNull()
             text_width = metrics.horizontalAdvance(row.text)
             content_width = text_width
             if has_icon:
@@ -649,39 +731,42 @@ class ExpeditionRewardController(QObject):
                     self._trace("   OCR文字例: " + " / ".join(samples))
                 raise RuntimeError("安全に特定できる報酬名がありませんでした。")
 
-            from src.poetore.poe_ninja import default_poe_ninja_service
-
             league = self._league_getter()
-            try:
-                prices = default_poe_ninja_service.lookup_poe2_expedition_rewards(
-                    tuple(row.english_name for row in stable), league,
-                )
-                exalted_chaos = default_poe_ninja_service.exalted_chaos_rate(league)
-            except Exception as exc:
-                self._trace(f"❌ 7. poe.ninja価格取得: {exc}")
-                raise
-            if not exalted_chaos:
-                raise RuntimeError("高貴なオーブの換算レートを取得できませんでした。")
-            priced = [
-                (row, prices[row.english_name].chaos / exalted_chaos)
-                for row in stable
-                if row.english_name in prices and prices[row.english_name].chaos > 0
-            ]
+            priceable = priceable_reward_identities(stable)
+            prices = {}
+            exalted_chaos = None
+            if priceable:
+                from src.poetore.poe_ninja import default_poe_ninja_service
+
+                try:
+                    prices = default_poe_ninja_service.lookup_poe2_expedition_rewards(
+                        tuple(row.english_name for row in priceable), league,
+                    )
+                    exalted_chaos = default_poe_ninja_service.exalted_chaos_rate(league)
+                except Exception as exc:
+                    self._trace(f"❌ 7. poe.ninja価格取得: {exc}")
+                    raise
+                if not exalted_chaos:
+                    raise RuntimeError("高貴なオーブの換算レートを取得できませんでした。")
+            priced_count = sum(
+                row.english_name in prices and prices[row.english_name].chaos > 0
+                for row in priceable
+            )
+            special_count = len(stable) - len(priceable)
             self._trace(
-                f"✅ 7. poe.ninja価格取得: {len(priced)}/{len(stable)}件（{league}）"
+                f"✅ 7. poe.ninja価格取得: {priced_count}/{len(priceable)}件（{league}）、"
+                f"特別表示 {special_count}件"
             )
             first = prepared[0]
             vertical_offset = capture_rect.y() - client_rect.y()
             vertical_scale = capture_rect.height() / max(1, first.height)
-            shown = highlight_highest_price_rows([
-                RewardPriceRow(
-                    round(vertical_offset + row.top * vertical_scale),
-                    round(vertical_offset + row.bottom * vertical_scale),
-                    format_exalted_unit_price(value),
-                    value,
-                )
-                for row, value in priced
-            ])
+            shown = build_reward_display_rows(
+                stable,
+                prices,
+                exalted_chaos,
+                vertical_offset=vertical_offset,
+                vertical_scale=vertical_scale,
+            )
             if not shown:
                 raise RuntimeError("特定した報酬のpoe.ninja価格が見つかりませんでした。")
             panel_right = capture_rect.right() - client_rect.x() + 1
@@ -706,7 +791,7 @@ class ExpeditionRewardController(QObject):
             return
         self._monitor_misses = 0
         self._monitor.start()
-        self.status.emit(f"{len(rows)}/{stable_count}件の単価を表示しました。")
+        self.status.emit(f"{len(rows)}/{stable_count}件の報酬情報を表示しました。")
         self._trace(f"✅ 8. オーバーレイ表示: {len(rows)}/{stable_count}件")
         self._emit_diagnostic()
 
