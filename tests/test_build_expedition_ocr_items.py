@@ -21,6 +21,8 @@ def test_build_aliases_pairs_supported_groups_and_drops_ambiguous_names():
         {"id": "weapon", "entries": [{"type": "Ignored"}]},
     ]}
 
-    assert build_aliases(japanese, english) == [
+    assert build_aliases(
+        japanese, english, {"Exalted Orb", "First", "Second", "Ignored"},
+    ) == [
         {"ja": "高貴なオーブ", "en": "Exalted Orb"},
     ]

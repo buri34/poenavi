@@ -108,6 +108,15 @@ def match_item_name(
     key = _EXACT_OCR_KEY_CORRECTIONS.get(key, key)
     if not key or not candidates:
         return "", None, None, False
+    observed_level = _level_number(text)
+    level_candidates = [
+        candidate for candidate in candidates
+        if _level_number(candidate) == observed_level
+    ]
+    if observed_level is not None:
+        candidates = level_candidates
+        if not candidates:
+            return "", None, None, False
     scored = sorted(
         (
             (SequenceMatcher(None, key, _candidate_key(candidate)).ratio(), candidate)
@@ -120,7 +129,6 @@ def match_item_name(
     second_score = scored[1][0] if len(scored) > 1 else 0.0
     margin = best_score - second_score
     trusted = best_score >= minimum_score and (best_score == 1.0 or margin >= minimum_margin)
-    observed_level = _level_number(text)
     best_level = _level_number(best)
     if (
         observed_level is not None
@@ -139,6 +147,14 @@ def match_item_name(
         for candidate in candidates
     )
     if has_qualified_variant and "(" not in text and best_score < 0.95:
+        trusted = False
+    has_level_variant = any(
+        candidate != best
+        and _candidate_key(candidate) == best_key
+        and _level_number(candidate) is not None
+        for candidate in candidates
+    )
+    if observed_level is None and (best_level is not None or has_level_variant):
         trusted = False
     return best, best_score, margin, trusted
 

@@ -264,11 +264,11 @@ def test_expedition_prefetch_populates_all_categories_before_lookup():
         },
     )
 
-    assert service.prefetch_poe2_expedition_rewards("Test League") == 13
-    assert len(calls) == 13
+    assert service.prefetch_poe2_expedition_rewards("Test League") == 5
+    assert len(calls) == 5
 
     service.lookup_poe2_expedition_rewards(("Missing",), "Test League")
-    assert len(calls) == 13
+    assert len(calls) == 5
 
 
 def test_exchange_cache_coalesces_background_and_foreground_fetches():

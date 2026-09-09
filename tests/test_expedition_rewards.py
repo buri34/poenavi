@@ -8,8 +8,8 @@ from PySide6.QtGui import QColor, QImage
 
 from src.poetore.expedition_ocr_probe import RowBand
 from src.poetore.expedition_rewards import (
-    EXPEDITION_PRICE_FONT_SIZE,
     EXPEDITION_DIAGNOSTIC_FLAG,
+    EXPEDITION_PRICE_FONT_SIZE,
     ExpeditionRewardController,
     RewardIdentity,
     RewardPriceRow,
@@ -142,6 +142,17 @@ def test_reward_alias_bundle_versions_exact_dictionary_bytes(tmp_path):
     assert first_version != second_version
 
 
+def test_packaged_reward_aliases_are_limited_to_expedition_reward_pool():
+    aliases = load_reward_aliases()
+
+    assert len(aliases) == 281
+    assert aliases["旋風の合金"] == "Cyclonic Alloy"
+    assert aliases["サカワルの浸食のルーン"] == "Saqawal's Rune of Erosion"
+    assert aliases["スルードの力"] == "Thrud's Might"
+    assert aliases["カトラの陰鬱"] == "Katla's Gloom"
+    assert "グリムピラー" not in aliases
+
+
 def test_safe_reward_name_resolver_caches_only_trusted_matches():
     resolver = SafeRewardNameResolver({"高貴": "Exalted"}, "dictionary-v1")
     with patch(
@@ -177,6 +188,21 @@ def test_safe_reward_name_resolver_marks_corrected_exact_ocr_reads(
     resolver = SafeRewardNameResolver({japanese_name: english_name}, "dictionary-v1")
 
     assert resolver.resolve(raw_text) == (japanese_name, english_name, True)
+
+
+def test_safe_reward_name_resolver_requires_matching_reward_level():
+    resolver = SafeRewardNameResolver({
+        "ソーマタージ・フラックス（レベル18）": "Thaumaturge's Flux (Level 18)",
+        "ソーマタージ・フラックス（レベル19）": "Thaumaturge's Flux (Level 19)",
+    }, "dictionary-v1")
+
+    assert resolver.resolve("1x ソーマタージ・フラックス（レベル18）") == (
+        "ソーマタージ・フラックス（レベル18）",
+        "Thaumaturge's Flux (Level 18)",
+        True,
+    )
+    assert resolver.resolve("1x ソーマタージ・フラックス（レベル17）") is None
+    assert resolver.resolve("1x ソーマタージ・フラックス") is None
 
 
 def test_expedition_capture_rect_uses_only_left_panel_area():
@@ -223,6 +249,14 @@ def test_stable_reward_identities_prefers_one_exact_read_over_fuzzy_conflict():
     unresolved = RewardIdentity(12, 32, "", "")
 
     assert stable_reward_identities([[exact], [fuzzy], [unresolved]]) == [exact]
+
+
+def test_stable_reward_identities_rejects_three_different_fuzzy_candidates():
+    first = RewardIdentity(10, 30, "迅速の合金", "Swift Alloy")
+    second = RewardIdentity(11, 31, "旋風の合金", "Cyclonic Alloy")
+    third = RewardIdentity(12, 32, "拡張の合金", "Expansive Alloy")
+
+    assert stable_reward_identities([[first], [second], [third]]) == []
 
 
 def test_price_label_is_placed_next_to_detected_panel_at_any_aspect_ratio():

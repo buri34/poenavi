@@ -19,8 +19,7 @@ POE2_STASH_OVERVIEW_URL = "https://poe.ninja/poe2/api/economy/stash/current/item
 POE2_EXCHANGE_OVERVIEW_URL = "https://poe.ninja/poe2/api/economy/exchange/current/overview"
 CACHE_TTL_SECONDS = 31 * 60
 POE2_EXPEDITION_REWARD_TYPES = (
-    "Currency", "Fragments", "Essences", "Delirium", "Breach", "Verisium",
-    "Expedition", "Ritual", "Runes", "Idols", "Abyss", "SoulCores", "UncutGems",
+    "Currency", "Expedition", "UncutGems", "Runes", "Verisium",
 )
 
 _UNIQUE_TYPES = {
