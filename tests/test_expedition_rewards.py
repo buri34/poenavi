@@ -28,6 +28,7 @@ from src.poetore.expedition_rewards import (
     highlight_highest_price_rows,
     load_reward_alias_bundle,
     load_reward_aliases,
+    normalized_expedition_region,
     price_label_x,
     retry_unresolved_identities,
     reward_cards_still_visible,
@@ -106,6 +107,34 @@ def test_controller_closes_ocr_helper_when_application_quits():
     app.aboutToQuit.connect.call_args.args[0]()
     overlay.hide.assert_called_once_with()
     ocr.close.assert_called_once_with()
+
+
+def test_controller_rejects_scan_until_read_region_is_configured():
+    overlay = Mock()
+    with patch(
+        "src.poetore.expedition_rewards.QCoreApplication.instance",
+        return_value=None,
+    ), patch(
+        "src.poetore.expedition_rewards.ExpeditionPriceOverlay",
+        return_value=overlay,
+    ), patch(
+        "src.poetore.expedition_rewards.WindowsOcrServer",
+        return_value=Mock(),
+    ), patch(
+        "src.poetore.expedition_rewards.path_of_exile_client_rect",
+        return_value=QRect(100, 200, 1920, 1080),
+    ):
+        controller = ExpeditionRewardController(
+            lambda: "Test League", region_getter=lambda: None,
+        )
+        failures = []
+        controller.failed.connect(failures.append)
+
+        assert not controller.request_scan()
+
+    assert failures == [
+        "読取範囲が未設定です。設定の「エクスペ報酬チェック」から範囲を指定してください。"
+    ]
 
 
 def test_load_reward_aliases_and_format_prices(tmp_path):
@@ -204,6 +233,7 @@ def test_safe_reward_name_resolver_caches_only_trusted_matches():
             ("高貴", 1.0, 1.0, True),
             ("", 0.5, 0.0, False),
             ("", 0.5, 0.0, False),
+            ("", 0.5, 0.0, False),
         ],
     ) as matcher:
         assert resolver.resolve("1x 高貴") == ("高貴", "Exalted", True)
@@ -211,7 +241,16 @@ def test_safe_reward_name_resolver_caches_only_trusted_matches():
         assert resolver.resolve("不明") is None
         assert resolver.resolve("不明") is None
 
-    assert matcher.call_count == 3
+    assert matcher.call_count == 4
+
+
+def test_safe_reward_name_resolver_rejects_conflicting_exact_lines():
+    resolver = SafeRewardNameResolver({
+        "迅速の合金": "Swift Alloy",
+        "旋風の合金": "Cyclonic Alloy",
+    }, "dictionary-v1")
+
+    assert resolver.resolve("1x 迅速の合金\n1x 旋風の合金") is None
 
 
 @pytest.mark.parametrize(
@@ -248,12 +287,23 @@ def test_safe_reward_name_resolver_requires_matching_reward_level():
     assert resolver.resolve("1x ソーマタージ・フラックス") is None
 
 
-def test_expedition_capture_rect_uses_only_left_panel_area():
+def test_expedition_capture_rect_uses_saved_normalized_panel_region():
     client = QRect(100, 200, 1920, 1080)
 
-    capture = expedition_capture_rect(client)
+    region = {"left": 0.02, "top": 0.12, "right": 0.32, "bottom": 0.88}
+    capture = expedition_capture_rect(client, region)
 
-    assert capture == QRect(100, 200, 756, 1080)
+    assert capture == QRect(138, 330, 576, 821)
+
+
+def test_expedition_capture_rect_rejects_missing_or_tiny_regions():
+    client = QRect(100, 200, 1920, 1080)
+
+    assert normalized_expedition_region(None) is None
+    assert expedition_capture_rect(client, None) is None
+    assert expedition_capture_rect(
+        client, {"left": 0.1, "top": 0.1, "right": 0.12, "bottom": 0.9},
+    ) is None
 
 
 def test_stable_reward_identities_requires_two_matching_frames():

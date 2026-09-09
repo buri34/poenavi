@@ -336,6 +336,9 @@ class PoetoreModeWindow(QMainWindow):
             and self.config.get("poetore", {}).get(
                 "expedition_reward_overlay", {},
             ).get("enabled", False)
+            and self.config.get("poetore", {}).get(
+                "expedition_reward_overlay", {},
+            ).get("region")
         ):
             self._ensure_expedition_reward_controller().warm_up()
 
@@ -821,7 +824,13 @@ class PoetoreModeWindow(QMainWindow):
         if self._expedition_reward_controller is None:
             from src.poetore.expedition_rewards import ExpeditionRewardController
 
-            controller = ExpeditionRewardController(self._currency_rate_league, self)
+            controller = ExpeditionRewardController(
+                self._currency_rate_league,
+                self,
+                region_getter=lambda: self.config.get("poetore", {}).get(
+                    "expedition_reward_overlay", {}
+                ).get("region"),
+            )
             controller.status.connect(self._show_expedition_status)
             controller.failed.connect(self._show_expedition_error)
             controller.diagnostic.connect(self._show_expedition_diagnostic)

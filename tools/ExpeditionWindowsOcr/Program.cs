@@ -57,7 +57,8 @@ try
             BitmapAlphaMode.Premultiplied
         );
         var result = await engine.RecognizeAsync(bitmap);
-        return result.Text.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return string.Join("\n", result.Lines.Select(line => line.Text.Trim()))
+            .Trim();
     }
 
     Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);

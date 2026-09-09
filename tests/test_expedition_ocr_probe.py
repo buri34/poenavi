@@ -23,6 +23,7 @@ from src.poetore.expedition_ocr_probe import (
     parse_quantity_ocr,
     prepare_qimage_rows,
     prepare_retry_row_images,
+    reward_text_candidates,
     score_rows,
     strip_quantity,
     write_results_csv,
@@ -74,6 +75,12 @@ def test_windows_ocr_helper_has_persistent_memory_protocol():
     assert "Convert.FromBase64String" in source
 
 
+def test_windows_ocr_helper_preserves_recognized_line_boundaries():
+    source = Path("tools/ExpeditionWindowsOcr/Program.cs").read_text(encoding="utf-8")
+
+    assert 'string.Join("\\n", result.Lines.Select' in source
+
+
 def test_normalize_text_preserves_japanese_and_normalizes_quantity_marker():
     assert normalize_text("  3× 高貴なオーブ！ ") == "3x 高貴なオーブ"
 
@@ -104,6 +111,13 @@ def test_score_rows_reports_exact_and_similarity_rates():
 
 def test_strip_quantity_and_dedicated_quantity_parser():
     assert strip_quantity("| 3× 高貴なオーブ") == (3, "高貴なオーブ")
+
+
+def test_reward_text_candidates_prioritizes_quantity_suffix_on_same_or_next_line():
+    assert reward_text_candidates("記号の誤読 1x 復活のグレーター ルーン")[0] == (
+        "復活のグレーター ルーン"
+    )
+    assert reward_text_candidates("記号の誤読\n1x カトラの陰鬱")[0] == "カトラの陰鬱"
     assert parse_quantity_ocr(" 3x 19 ") == 3
     assert parse_quantity_ocr("19") is None
 
@@ -319,7 +333,7 @@ def test_prepare_retry_row_images_only_builds_requested_rows():
         retries = prepare_retry_row_images(prepared, [1])
 
     assert tuple(retries) == (1,)
-    assert len(retries[1]) == 2
+    assert len(retries[1]) == 3
     assert all(data.startswith(b"BM") for data in retries[1])
     assert retries[1][1] != prepared.images[1]
     assert prepare_row.call_args_list[0].kwargs["threshold_mode"] == "adaptive"
@@ -327,22 +341,42 @@ def test_prepare_retry_row_images_only_builds_requested_rows():
         prepare_row.call_args_list[1].kwargs["target_text_height"]
         == probe.OCR_RETRY_LARGE_TEXT_HEIGHT
     )
+    assert prepare_row.call_args_list[2].kwargs["mask_icons"] is True
 
 
-def test_prepare_qimage_rows_can_limit_panel_scan_width():
+def test_rune_icon_mask_removes_large_square_without_erasing_small_text():
+    width, height = 120, 60
+    binary = [0] * (width * height)
+    for x in range(5, 40):
+        binary[5 * width + x] = 1
+        binary[39 * width + x] = 1
+    for y in range(5, 40):
+        binary[y * width + 5] = 1
+        binary[y * width + 39] = 1
+    for y in range(22, 32):
+        for x in range(75, 82):
+            binary[y * width + x] = 1
+
+    probe._mask_likely_rune_icons(binary, width, height)
+
+    assert not any(binary[y * width + x] for y in range(4, 41) for x in range(4, 41))
+    assert any(binary[y * width + x] for y in range(22, 32) for x in range(75, 82))
+
+
+def test_prepare_qimage_rows_uses_the_supplied_panel_crop_width():
     image = QImage(220, 100, QImage.Format.Format_RGB888)
     image.fill(QColor(50, 50, 50))
     for y in range(20, 60):
         for x in range(60):
             image.setPixelColor(x, y, QColor(200, 200, 200))
 
-    prepared = prepare_qimage_rows(image, scan_width=60)
+    prepared = prepare_qimage_rows(image.copy(0, 0, 60, 100))
 
     assert prepared.panel_width == 60
     assert prepared.bands == (RowBand(20, 60),)
 
 
-def test_prepare_qimage_rows_preserves_full_screen_header_filter_after_crop():
+def test_prepare_qimage_rows_uses_every_card_in_the_user_selected_region():
     image = QImage(220, 180, QImage.Format.Format_RGB888)
     image.fill(QColor(50, 50, 50))
     for top, bottom in ((10, 40), (65, 105), (112, 152)):
@@ -350,11 +384,11 @@ def test_prepare_qimage_rows_preserves_full_screen_header_filter_after_crop():
             for x in range(100):
                 image.setPixelColor(x, y, QColor(200, 200, 200))
 
-    prepared = prepare_qimage_rows(
-        image, scan_width=100, full_screen=True,
-    )
+    prepared = prepare_qimage_rows(image.copy(0, 0, 100, 180))
 
-    assert prepared.bands == (RowBand(65, 105), RowBand(112, 152))
+    assert prepared.bands == (
+        RowBand(10, 40), RowBand(65, 105), RowBand(112, 152),
+    )
 
 
 def test_detect_reward_cards_drops_background_after_one_tall_reward():
@@ -383,6 +417,26 @@ def test_detect_reward_cards_merges_one_pixel_split_inside_a_tall_reward():
     assert bands == [RowBand(50, 145)]
 
 
+def test_detect_reward_cards_merges_relative_short_halves_inside_a_tall_reward():
+    width, height = 120, 370
+    channels = [[45] * (width * height) for _ in range(4)]
+    painted = [
+        RowBand(10, 90), RowBand(100, 180), RowBand(190, 270),
+        RowBand(280, 318), RowBand(324, 360),
+    ]
+    for band in painted:
+        for y in range(band.top, band.bottom):
+            for x in range(width):
+                for channel in channels:
+                    channel[y * width + x] = 195
+
+    _, bands = detect_reward_cards(*channels, width, height)
+
+    assert bands == [
+        RowBand(10, 90), RowBand(100, 180), RowBand(190, 270), RowBand(280, 360),
+    ]
+
+
 def test_detect_reward_cards_drops_a_background_band_reaching_image_bottom():
     width, height = 100, 220
     channels = [[50] * (width * height) for _ in range(4)]
@@ -407,6 +461,51 @@ def test_detect_reward_cards_keeps_short_reward_after_tall_cards():
                     channel[y * width + x] = 200
     _, bands = detect_reward_cards(*channels, width, height)
     assert bands == [RowBand(50, 100), RowBand(110, 160), RowBand(170, 200)]
+
+
+def test_detect_reward_cards_keeps_three_pixel_gaps_and_mixed_card_heights():
+    width, height = 120, 300
+    channels = [[45] * (width * height) for _ in range(4)]
+    expected = [RowBand(10, 90), RowBand(93, 133), RowBand(136, 216)]
+    for band in expected:
+        for y in range(band.top, band.bottom):
+            for x in range(width):
+                for channel in channels:
+                    channel[y * width + x] = 195
+
+    _, bands = detect_reward_cards(*channels, width, height)
+
+    assert bands == expected
+
+
+def test_detect_reward_cards_keeps_all_tall_cards_and_excludes_bottom_partial():
+    width, height = 120, 260
+    channels = [[45] * (width * height) for _ in range(4)]
+    expected = [RowBand(8, 78), RowBand(81, 151), RowBand(154, 224)]
+    for band in [*expected, RowBand(227, height)]:
+        for y in range(band.top, band.bottom):
+            for x in range(width):
+                for channel in channels:
+                    channel[y * width + x] = 195
+
+    _, bands = detect_reward_cards(*channels, width, height)
+
+    assert bands == expected
+
+
+def test_detect_reward_cards_scans_past_a_large_blank_area():
+    width, height = 120, 300
+    channels = [[45] * (width * height) for _ in range(4)]
+    expected = [RowBand(10, 50), RowBand(210, 250)]
+    for band in expected:
+        for y in range(band.top, band.bottom):
+            for x in range(width):
+                for channel in channels:
+                    channel[y * width + x] = 195
+
+    _, bands = detect_reward_cards(*channels, width, height)
+
+    assert bands == expected
 
 
 def test_analyze_empty_directory_writes_empty_summary(tmp_path):

@@ -9,7 +9,6 @@ import threading
 from collections import Counter
 from dataclasses import dataclass, replace
 from hashlib import sha256
-from itertools import pairwise
 from pathlib import Path
 
 from PySide6.QtCore import QCoreApplication, QObject, QRect, QRectF, Qt, QTimer, Signal
@@ -29,11 +28,12 @@ from src.poetore.expedition_ocr_probe import (
     PreparedOcrFrame,
     RowBand,
     WindowsOcrServer,
+    detect_qimage_reward_cards,
     match_item_name,
     normalize_text,
     prepare_qimage_rows,
     prepare_retry_row_images,
-    strip_quantity,
+    reward_text_candidates,
 )
 from src.poetore.window_position import path_of_exile_client_rect
 
@@ -49,15 +49,6 @@ EXPEDITION_PRICE_ICON_GAP = 5
 EXPEDITION_PRICE_TEXT_OUTLINE_PEN_WIDTH = 4
 EXPEDITION_DIAGNOSTIC_ENV = "POENAVI_EXPEDITION_DIAGNOSTICS"
 EXPEDITION_DIAGNOSTIC_FLAG = "expedition-diagnostics.flag"
-# Calibrated against the saved Expedition panel set.  Real separators can
-# contain bright ornament pixels, so combine an absolute limit with contrast
-# against their adjacent cards instead of requiring every gap to be dark.
-_REWARD_CARD_LINE_PALE_RATIO = 0.43
-_REWARD_CARD_SEPARATOR_PALE_RATIO = 0.68
-_REWARD_CARD_SEPARATOR_DARK_RATIO = 0.50
-_REWARD_CARD_SEPARATOR_CONTRAST = 0.08
-
-
 def expedition_diagnostics_enabled(marker_root: Path | None = None) -> bool:
     enabled = os.environ.get(EXPEDITION_DIAGNOSTIC_ENV, "").strip().casefold()
     if enabled in {"1", "true", "yes", "on"}:
@@ -131,19 +122,31 @@ class SafeRewardNameResolver:
         self._cache: dict[tuple[str, str], tuple[str, str, bool]] = {}
 
     def resolve(self, raw_text: str) -> tuple[str, str, bool] | None:
-        _quantity, item_text = strip_quantity(raw_text)
-        key = (self.dictionary_version, normalize_text(item_text))
+        key = (self.dictionary_version, normalize_text(raw_text))
         if not key[1]:
             return None
         cached = self._cache.get(key)
         if cached is not None:
             return cached
-        best, score, _margin, trusted = match_item_name(
-            item_text, self._candidates,
-        )
-        if not trusted:
+        matches: list[tuple[str, float, bool]] = []
+        for item_text in reward_text_candidates(raw_text):
+            best, score, _margin, trusted = match_item_name(
+                item_text, self._candidates,
+            )
+            if trusted and score is not None:
+                matches.append((best, score, score == 1.0))
+        exact_names = {best for best, _score, exact in matches if exact}
+        if len(exact_names) > 1:
             return None
-        exact_match = score == 1.0
+        if exact_names:
+            best = exact_names.pop()
+            exact_match = True
+        else:
+            names = {best for best, _score, _exact in matches}
+            if len(names) != 1:
+                return None
+            best = names.pop()
+            exact_match = False
         resolved = (best, self.aliases[best], exact_match)
         if len(self._cache) >= 2048:
             self._cache.pop(next(iter(self._cache)))
@@ -298,71 +301,52 @@ def price_label_x(display_width: int, source_width: int, panel_width: int) -> in
     return max(8, min(display_width - 8, scaled_panel_right + 8))
 
 
-def expedition_capture_rect(client_rect: QRect) -> QRect:
-    """Capture only the left area that can contain the Expedition panel."""
-    width = min(client_rect.width(), max(1, round(client_rect.height() * 0.70)))
-    return QRect(client_rect.x(), client_rect.y(), width, client_rect.height())
+def normalized_expedition_region(value) -> tuple[float, float, float, float] | None:
+    if not isinstance(value, dict):
+        return None
+    try:
+        left = float(value["left"])
+        top = float(value["top"])
+        right = float(value["right"])
+        bottom = float(value["bottom"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not (0 <= left < right <= 1 and 0 <= top < bottom <= 1):
+        return None
+    if right - left < 0.05 or bottom - top < 0.05:
+        return None
+    return left, top, right, bottom
+
+
+def expedition_capture_rect(client_rect: QRect, region) -> QRect | None:
+    """Convert a normalized user selection into an absolute client rectangle."""
+    normalized = normalized_expedition_region(region)
+    if normalized is None or client_rect.isEmpty():
+        return None
+    left, top, right, bottom = normalized
+    x = client_rect.x() + round(client_rect.width() * left)
+    y = client_rect.y() + round(client_rect.height() * top)
+    width = max(1, round(client_rect.width() * (right - left)))
+    height = max(1, round(client_rect.height() * (bottom - top)))
+    return QRect(x, y, width, height).intersected(client_rect)
 
 
 def reward_cards_still_visible(
     image: QImage, bands: list[RowBand], panel_width: int,
 ) -> bool:
-    """Verify the alternating pale-card/dark-gap structure behind shown rows."""
+    """Verify that the selected panel still contains the same card structure."""
     if image.isNull() or not bands or panel_width <= 0:
         return False
-    image = image.convertToFormat(QImage.Format.Format_RGB888)
-    right = min(image.width(), panel_width)
-
-    def pale_ratio(y: int) -> float:
-        if y < 0 or y >= image.height() or right <= 0:
-            return 1.0
-        samples = 0
-        pale = 0
-        for x in range(0, right, max(2, right // 80)):
-            color = image.pixelColor(x, y)
-            channels = (color.red(), color.green(), color.blue())
-            samples += 1
-            if sum(channels) / 3 > 115 and max(channels) - min(channels) < 100:
-                pale += 1
-        return pale / samples if samples else 0.0
-
-    card_ratios: list[float] = []
-    for band in bands:
-        if band.bottom <= band.top:
+    selected = image.copy(0, 0, min(image.width(), panel_width), image.height())
+    _width, current = detect_qimage_reward_cards(selected)
+    if len(current) != len(bands):
+        return False
+    for expected, actual in zip(bands, current):
+        overlap = max(0, min(expected.bottom, actual.bottom) - max(expected.top, actual.top))
+        expected_height = max(1, expected.bottom - expected.top)
+        if overlap / expected_height < 0.6:
             return False
-        height = band.bottom - band.top
-        line_ratios = [
-            pale_ratio(round(band.top + (height - 1) * fraction))
-            for fraction in (0.20, 0.50, 0.80)
-        ]
-        if any(ratio < _REWARD_CARD_LINE_PALE_RATIO for ratio in line_ratios):
-            return False
-        card_ratios.append(sum(line_ratios) / len(line_ratios))
-
-    def is_separator(gap_ratio: float, adjacent_card_ratio: float) -> bool:
-        return gap_ratio < _REWARD_CARD_SEPARATOR_DARK_RATIO or (
-            gap_ratio < _REWARD_CARD_SEPARATOR_PALE_RATIO
-            and adjacent_card_ratio - gap_ratio >= _REWARD_CARD_SEPARATOR_CONTRAST
-        )
-
-    if len(bands) == 1:
-        band = bands[0]
-        boundary_ratios = [
-            pale_ratio(band.top - 3),
-            pale_ratio(band.bottom + 3),
-        ]
-        return any(is_separator(ratio, card_ratios[0]) for ratio in boundary_ratios)
-
-    separator_matches = 0
-    for index, (upper, lower) in enumerate(pairwise(bands)):
-        gap_ratio = pale_ratio((upper.bottom + lower.top) // 2)
-        adjacent_ratio = (card_ratios[index] + card_ratios[index + 1]) / 2
-        if is_separator(gap_ratio, adjacent_ratio):
-            separator_matches += 1
-    # One separator may be obscured by an ornament or pointer, but a real panel
-    # keeps the alternating structure at all remaining expected row boundaries.
-    required_separators = max(1, len(bands) - 2)
-    return separator_matches >= required_separators
+    return True
 
 
 class ExpeditionPriceOverlay(QWidget):
@@ -459,9 +443,12 @@ class ExpeditionRewardController(QObject):
     diagnostic = Signal(str)
     _ready = Signal(object, object, object, object, object)
 
-    def __init__(self, league_getter, parent=None, *, diagnostics_enabled=None):
+    def __init__(
+        self, league_getter, parent=None, *, region_getter=None, diagnostics_enabled=None,
+    ):
         super().__init__(parent)
         self._league_getter = league_getter
+        self._region_getter = region_getter or (lambda: None)
         self._overlay = ExpeditionPriceOverlay()
         aliases, dictionary_version = load_reward_alias_bundle()
         self._name_resolver = SafeRewardNameResolver(aliases, dictionary_version)
@@ -475,6 +462,7 @@ class ExpeditionRewardController(QObject):
         self._monitor_misses = 0
         self._bands: list[RowBand] = []
         self._panel_width = 0
+        self._capture_panel_width = 0
         self._diagnostics_enabled = (
             expedition_diagnostics_enabled()
             if diagnostics_enabled is None else bool(diagnostics_enabled)
@@ -545,7 +533,12 @@ class ExpeditionRewardController(QObject):
         self._running = True
         self.hide()
         self._client_rect = QRect(client_rect)
-        self._capture_rect = expedition_capture_rect(client_rect)
+        self._capture_rect = expedition_capture_rect(client_rect, self._region_getter())
+        if self._capture_rect is None or self._capture_rect.isEmpty():
+            self._finish_error(
+                "読取範囲が未設定です。設定の「エクスペ報酬チェック」から範囲を指定してください。"
+            )
+            return False
         self._captures = []
         self.warm_up()
         self.status.emit("エクスペディション報酬を読み取っています…")
@@ -586,11 +579,7 @@ class ExpeditionRewardController(QObject):
     ) -> None:
         try:
             prepared: list[PreparedOcrFrame] = [
-                prepare_qimage_rows(
-                    image,
-                    scan_width=round(image.height() * 0.55),
-                    full_screen=True,
-                )
+                prepare_qimage_rows(image)
                 for image in images
             ]
             row_counts = "/".join(str(len(frame.images)) for frame in prepared)
@@ -681,10 +670,13 @@ class ExpeditionRewardController(QObject):
             self._trace(
                 f"✅ 7. poe.ninja価格取得: {len(priced)}/{len(stable)}件（{league}）"
             )
+            first = prepared[0]
+            vertical_offset = capture_rect.y() - client_rect.y()
+            vertical_scale = capture_rect.height() / max(1, first.height)
             shown = highlight_highest_price_rows([
                 RewardPriceRow(
-                    row.top,
-                    row.bottom,
+                    round(vertical_offset + row.top * vertical_scale),
+                    round(vertical_offset + row.bottom * vertical_scale),
                     format_exalted_unit_price(value),
                     value,
                 )
@@ -692,22 +684,18 @@ class ExpeditionRewardController(QObject):
             ])
             if not shown:
                 raise RuntimeError("特定した報酬のpoe.ninja価格が見つかりませんでした。")
-            first = prepared[0]
-            source_width = round(
-                first.width * client_rect.width() / max(1, capture_rect.width())
-            )
+            panel_right = capture_rect.right() - client_rect.x() + 1
             self._ready.emit(
-                client_rect, shown, (source_width, first.height),
-                (first.panel_width, list(first.bands)), len(stable),
+                client_rect, shown, (client_rect.width(), client_rect.height()),
+                (panel_right, first.panel_width, list(first.bands)), len(stable),
             )
         except Exception as exc:  # noqa: BLE001 - worker boundary reports to UI
             self._finish_error(str(exc))
 
     def _show_result(self, client_rect, rows, source_size, panel_data, stable_count):
         self._running = False
-        self._panel_width, self._bands = panel_data
+        self._panel_width, self._capture_panel_width, self._bands = panel_data
         self._client_rect = QRect(client_rect)
-        self._capture_rect = expedition_capture_rect(client_rect)
         try:
             self._overlay.show_prices(
                 client_rect, source_size[0], source_size[1], self._panel_width, rows,
@@ -741,7 +729,7 @@ class ExpeditionRewardController(QObject):
 
     def _check_panel(self) -> None:
         image = self._grab_game()
-        if reward_cards_still_visible(image, self._bands, self._panel_width):
+        if reward_cards_still_visible(image, self._bands, self._capture_panel_width):
             self._monitor_misses = 0
             return
         self._monitor_misses += 1

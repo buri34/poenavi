@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import threading
+from collections import deque
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from difflib import SequenceMatcher
@@ -70,22 +71,46 @@ def normalize_text(text: str) -> str:
 
 
 def strip_quantity(text: str) -> tuple[int | None, str]:
-    """Split a leading Expedition stack count from an OCR string."""
+    """Split the first Expedition stack marker from a noisy OCR string."""
     normalized = normalize_text(text)
-    quantity = parse_quantity_ocr(text)
-    if quantity is None:
+    marker = _quantity_marker(text)
+    if marker is None:
         return None, normalized
+    quantity, end = marker
+    return quantity, normalize_text(text[end:])
 
-    # Windows OCR recognizes the narrow multiplication glyph reliably as a
-    # separator position, but often calls it comma or equals.  The count itself
-    # remains a leading number.  It also commonly reads "1x" as "lx".
-    without_prefix = re.sub(
-        r"^\s*[|\u3001\u3002'\"′・]*\s*(?:\d{1,3}\s*(?:[xX×,=，＝])|[lI|]\s*[xX×]|ⅸ)\s*",
-        "",
-        text,
-        count=1,
+
+def reward_text_candidates(text: str) -> tuple[str, ...]:
+    """Return quantity-anchored and per-line reward-name candidates in priority order."""
+    lines = [line for line in re.split(r"[\r\n]+", text) if line.strip()]
+    sources = [*lines, text]
+    candidates: list[str] = []
+    for source in sources:
+        marker = _quantity_marker(source)
+        if marker is not None:
+            candidate = normalize_text(source[marker[1]:])
+            if candidate and candidate not in candidates:
+                candidates.append(candidate)
+    for source in lines:
+        candidate = normalize_text(source)
+        if candidate and candidate not in candidates:
+            candidates.append(candidate)
+    normalized = normalize_text(text)
+    if normalized and normalized not in candidates:
+        candidates.append(normalized)
+    return tuple(candidates)
+
+
+def _quantity_marker(text: str) -> tuple[int, int] | None:
+    pattern = re.compile(
+        r"(?:^|\s|[|、。'\"′・])"
+        r"(?:(?P<count>\d{1,3})\s*(?:[xX×,=，＝])|(?P<one>[lI|]\s*[xX×]|ⅸ))\s*",
+        re.IGNORECASE,
     )
-    return quantity, normalize_text(without_prefix)
+    match = pattern.search(text)
+    if match is None:
+        return None
+    return (int(match.group("count")) if match.group("count") else 1, match.end())
 
 
 def _candidate_key(text: str) -> str:
@@ -280,45 +305,20 @@ def detect_reward_cards(
     blue: Sequence[int],
     width: int,
     height: int,
-    *,
-    minimum_row_fill: float = 0.45,
-    scan_width: int | None = None,
-    full_screen: bool | None = None,
 ) -> tuple[int, list[RowBand]]:
-    """Detect the pale reward cards before looking for dark text.
-
-    The Expedition panel is anchored at the left edge.  Limiting the scan width
-    prevents a full-screen capture's game world from affecting row detection.
-    """
+    """Detect reward-card bands inside a user-selected panel-inner rectangle."""
     if width <= 0 or height <= 0 or any(
         len(channel) != width * height for channel in (gray, red, green, blue)
     ):
         return 0, []
-    # Narrow panel crops can also be very wide when only a few rewards exist.
-    # Actual game captures are substantially larger than the panel itself.
-    is_full_screen = (
-        width >= 1000 and width / height > 1.5
-        if full_screen is None
-        else full_screen
-    )
-    scan_width = (
-        max(1, min(width, scan_width))
-        if scan_width is not None
-        else round(height * 0.55) if is_full_screen else width
-    )
-    row_fill: list[float] = []
+    scan_width = width
+    row_scores: list[int] = []
     for y in range(height):
-        pale = 0
         offset = y * width
-        for x in range(scan_width):
-            index = offset + x
-            spread = max(red[index], green[index], blue[index]) - min(
-                red[index], green[index], blue[index]
-            )
-            if gray[index] > 115 and spread < 100:
-                pale += 1
-        row_fill.append(pale / scan_width)
-    active = [value > minimum_row_fill for value in row_fill]
+        values = sorted(gray[offset : offset + scan_width])
+        row_scores.append(values[(len(values) - 1) // 2])
+    threshold = otsu_threshold(row_scores)
+    active = [value > threshold for value in row_scores]
 
     candidates: list[RowBand] = []
     start: int | None = None
@@ -326,7 +326,7 @@ def detect_reward_cards(
         if is_active and start is None:
             start = y
         elif not is_active and start is not None:
-            if y - start >= 8:
+            if y > start:
                 candidates.append(RowBand(start, y))
             start = None
     if not candidates:
@@ -335,73 +335,46 @@ def detect_reward_cards(
     if not candidates:
         return scan_width, []
 
+    merge_gap = max(1, round(scan_width * 0.002))
     merged_candidates: list[RowBand] = []
     for band in candidates:
-        if merged_candidates and band.top - merged_candidates[-1].bottom <= 2:
+        if merged_candidates and band.top - merged_candidates[-1].bottom <= merge_gap:
             merged_candidates[-1] = RowBand(merged_candidates[-1].top, band.bottom)
         else:
             merged_candidates.append(band)
     candidates = merged_candidates
-
-    tall_heights = sorted(band.bottom - band.top for band in candidates if band.bottom - band.top >= 30)
-    if not tall_heights:
-        return scan_width, []
-    typical_height = tall_heights[len(tall_heights) // 2]
-    cards = [
-        band
-        for band in candidates
-        if max(30, typical_height * 0.50)
-        <= band.bottom - band.top
-        <= typical_height * 2.10
+    heights = sorted(band.bottom - band.top for band in candidates)
+    typical_height = heights[len(heights) // 2]
+    candidates = [
+        band for band in candidates
+        if band.bottom - band.top >= max(1, typical_height * 0.10)
     ]
-    if is_full_screen:
-        cards = [band for band in cards if band.top >= height * 0.12]
-    elif (
-        len(cards) >= 2
-        and cards[0].top < height * 0.12
-        and cards[1].top - cards[0].bottom < 7
-    ):
-        cards.pop(0)
-    if len(cards) >= 2:
-        fill_rates = [
-            sum(row_fill[band.top : band.bottom]) / (band.bottom - band.top)
-            for band in cards
-        ]
-        typical_fill = sorted(fill_rates[1:])[len(fill_rates[1:]) // 2]
-        first_gap = cards[1].top - cards[0].bottom
-        later_gaps = sorted(
-            cards[index + 1].top - cards[index].bottom for index in range(1, len(cards) - 1)
-        )
-        typical_gap = later_gaps[len(later_gaps) // 2] if later_gaps else first_gap
-        if (
-            first_gap > max(typical_gap * 1.5, typical_gap + 5)
-            or fill_rates[0] < typical_fill * 0.8
-        ):
-            cards.pop(0)
-    if len(cards) >= 3:
-        gaps = [cards[index + 1].top - cards[index].bottom for index in range(len(cards) - 1)]
-        positive_gaps = sorted(gap for gap in gaps if gap > 0)
-        typical_gap = positive_gaps[len(positive_gaps) // 2] if positive_gaps else 0
-        for index, gap in enumerate(gaps, start=1):
-            if index >= 2 and (
-                gap < max(5, typical_gap * 0.6)
-                or gap > max(typical_gap * 3, typical_height * 1.5)
+    joined_candidates: list[RowBand] = []
+    index = 0
+    while index < len(candidates):
+        current = candidates[index]
+        if index + 1 < len(candidates):
+            following = candidates[index + 1]
+            gap = following.top - current.bottom
+            current_height = current.bottom - current.top
+            following_height = following.bottom - following.top
+            if (
+                current_height < typical_height * 0.60
+                and following_height < typical_height * 0.60
+                and gap <= typical_height * 0.08
             ):
-                cards = cards[:index]
-                break
-        typical_height = sorted(band.bottom - band.top for band in cards)[len(cards) // 2]
-        cards = [
-            band
-            for index, band in enumerate(cards)
-            if index < 2 or band.bottom - band.top <= typical_height * 1.5
-        ]
-    if (
-        len(cards) == 2
-        and cards[1].top - cards[0].bottom < 7
-        and cards[0].bottom - cards[0].top > cards[1].bottom - cards[1].top
-    ):
-        cards.pop()
-    return scan_width, cards
+                joined_candidates.append(RowBand(current.top, following.bottom))
+                index += 2
+                continue
+        joined_candidates.append(current)
+        index += 1
+    candidates = joined_candidates
+    heights = sorted(band.bottom - band.top for band in candidates)
+    typical_height = heights[len(heights) // 2]
+    minimum_height = max(2, round(typical_height * 0.45))
+    return scan_width, [
+        band for band in candidates if band.bottom - band.top >= minimum_height
+    ]
 
 
 def score_rows(expected: Sequence[str], actual: Sequence[str]) -> dict[str, object]:
@@ -454,6 +427,14 @@ def _image_channels(image: QImage) -> tuple[int, int, bytes, bytes, bytes, bytes
         for red_value, green_value, blue_value in zip(red, green, blue)
     )
     return width, height, gray, red, green, blue
+
+
+def detect_qimage_reward_cards(image: QImage) -> tuple[int, list[RowBand]]:
+    """Detect card bands from an already-cropped panel-inner image."""
+    if image.isNull():
+        return 0, []
+    width, height, gray, red, green, blue = _image_channels(image)
+    return detect_reward_cards(gray, red, green, blue, width, height)
 
 
 def _load_channels(path: Path) -> tuple[int, int, bytes, bytes, bytes, bytes]:
@@ -523,6 +504,56 @@ def _clear_row_image_border(binary: list[int], width: int, height: int) -> None:
     for y in range(height):
         for x in range(width):
             if y < border or y >= height - border or x >= width - border:
+                binary[y * width + x] = 0
+
+
+def _mask_likely_rune_icons(binary: list[int], width: int, height: int) -> None:
+    """Remove square icon components while preserving smaller text glyphs."""
+    if width <= 0 or height <= 0:
+        return
+    tall_card = height > width * 0.12
+    minimum_side = max(4, round(height * (0.25 if tall_card else 0.55)))
+    maximum_side = max(minimum_side, round(height * 0.95))
+    visited = bytearray(width * height)
+    components: list[tuple[int, int, int, int]] = []
+    for start in range(width * height):
+        if not binary[start] or visited[start]:
+            continue
+        visited[start] = 1
+        pending = deque([start])
+        min_x = max_x = start % width
+        min_y = max_y = start // width
+        pixels = 0
+        while pending:
+            index = pending.popleft()
+            pixels += 1
+            x = index % width
+            y = index // width
+            min_x, max_x = min(min_x, x), max(max_x, x)
+            min_y, max_y = min(min_y, y), max(max_y, y)
+            for neighbor in (index - 1, index + 1, index - width, index + width):
+                if neighbor < 0 or neighbor >= width * height or visited[neighbor]:
+                    continue
+                neighbor_x = neighbor % width
+                if abs(neighbor_x - x) > 1 or not binary[neighbor]:
+                    continue
+                visited[neighbor] = 1
+                pending.append(neighbor)
+        component_width = max_x - min_x + 1
+        component_height = max_y - min_y + 1
+        if not (
+            minimum_side <= component_width <= maximum_side
+            and minimum_side <= component_height <= maximum_side
+            and 0.70 <= component_width / component_height <= 1.30
+            and min_y < height * 0.65
+            and pixels >= (component_width + component_height) * 0.6
+        ):
+            continue
+        components.append((min_x, min_y, max_x, max_y))
+    padding = max(1, round(height * 0.03))
+    for min_x, min_y, max_x, max_y in components:
+        for y in range(max(0, min_y - padding), min(height, max_y + padding + 1)):
+            for x in range(max(0, min_x - padding), min(width, max_x + padding + 1)):
                 binary[y * width + x] = 0
 
 
@@ -598,6 +629,7 @@ def _prepare_row_image(
     *,
     threshold_mode: str = "otsu",
     target_text_height: int = OCR_TARGET_TEXT_HEIGHT,
+    mask_icons: bool = False,
 ) -> QImage:
     crop_gray = _crop_pixels(gray, width, band, text_left, text_right)
     crop_width = text_right - text_left
@@ -610,6 +642,20 @@ def _prepare_row_image(
     else:
         raise ValueError(f"未対応のOCR二値化方式です: {threshold_mode}")
     _clear_row_image_border(crop, crop_width, crop_height)
+    if mask_icons:
+        _mask_likely_rune_icons(crop, crop_width, crop_height)
+    active_columns = [
+        x for x in range(crop_width)
+        if any(crop[y * crop_width + x] for y in range(crop_height))
+    ]
+    if active_columns:
+        margin = max(2, round(crop_height * 0.12))
+        trim_left = max(0, active_columns[0] - margin)
+        trim_right = min(crop_width, active_columns[-1] + margin + 1)
+        crop = _crop_pixels(
+            crop, crop_width, RowBand(0, crop_height), trim_left, trim_right,
+        )
+        crop_width = trim_right - trim_left
     return _normalized_binary_image(
         crop,
         crop_width,
@@ -631,22 +677,14 @@ def _image_bytes(image: QImage, image_format: str = "BMP") -> bytes:
     return bytes(data)
 
 
-def prepare_qimage_rows(
-    image: QImage,
-    *,
-    scan_width: int | None = None,
-    full_screen: bool | None = None,
-) -> PreparedOcrFrame:
+def prepare_qimage_rows(image: QImage) -> PreparedOcrFrame:
     """Prepare Windows OCR row images without writing temporary files."""
     width, height, gray, red, green, blue = _image_channels(image)
     panel_width, bands = detect_reward_cards(
         gray, red, green, blue, width, height,
-        scan_width=scan_width,
-        full_screen=full_screen,
     )
-    text_left = round(panel_width * 0.40)
     images = tuple(
-        _image_bytes(_prepare_row_image(gray, width, band, text_left, panel_width))
+        _image_bytes(_prepare_row_image(gray, width, band, 0, panel_width))
         for band in bands
     )
     return PreparedOcrFrame(
@@ -657,12 +695,11 @@ def prepare_qimage_rows(
 def prepare_retry_row_images(
     frame: PreparedOcrFrame,
     row_indices: Sequence[int],
-) -> dict[int, tuple[bytes, bytes]]:
+) -> dict[int, tuple[bytes, bytes, bytes]]:
     """Build alternate OCR inputs only for rows unresolved by the primary pass."""
     if not frame.gray:
         raise ValueError("再OCR用の元画像データがありません。")
-    text_left = round(frame.panel_width * 0.40)
-    retries: dict[int, tuple[bytes, bytes]] = {}
+    retries: dict[int, tuple[bytes, bytes, bytes]] = {}
     for index in dict.fromkeys(row_indices):
         if index < 0 or index >= len(frame.bands):
             raise IndexError(f"報酬行番号が範囲外です: {index}")
@@ -671,7 +708,7 @@ def prepare_retry_row_images(
             frame.gray,
             frame.width,
             band,
-            text_left,
+            0,
             frame.panel_width,
             threshold_mode="adaptive",
         )
@@ -679,11 +716,22 @@ def prepare_retry_row_images(
             frame.gray,
             frame.width,
             band,
-            text_left,
+            0,
             frame.panel_width,
             target_text_height=OCR_RETRY_LARGE_TEXT_HEIGHT,
         )
-        retries[index] = (_image_bytes(adaptive), _image_bytes(larger))
+        masked = _prepare_row_image(
+            frame.gray,
+            frame.width,
+            band,
+            0,
+            frame.panel_width,
+            threshold_mode="adaptive",
+            mask_icons=True,
+        )
+        retries[index] = (
+            _image_bytes(adaptive), _image_bytes(larger), _image_bytes(masked),
+        )
     return retries
 
 
@@ -1013,9 +1061,7 @@ def analyze_image(
     panel_width, bands = detect_reward_cards(gray, red, green, blue, width, height)
     image_output = output_dir / image_path.stem
     image_output.mkdir(parents=True, exist_ok=True)
-    # Rune icons occupy roughly the left 40%; excluding them markedly improves
-    # single-line OCR and still retains the longest right-aligned reward name.
-    text_left = round(panel_width * 0.40)
+    text_left = 0
     text_right = panel_width
 
     rows: list[OcrRowResult] = []
@@ -1035,6 +1081,7 @@ def analyze_image(
         else:
             raw = _run_tesseract(crop_path, language, page_segmentation=psm)
         inline_quantity, item_text = strip_quantity(raw)
+        match_inputs = reward_text_candidates(raw)
         if prepare_only:
             quantity_raw = ""
         elif ocr_engine == "windows":
@@ -1047,7 +1094,13 @@ def analyze_image(
                 whitelist="0123456789xX",
             )
         quantity = parse_quantity_ocr(quantity_raw) or inline_quantity
-        best, match_score, match_margin, trusted = match_item_name(item_text, item_dictionary)
+        matches = [match_item_name(value, item_dictionary) for value in match_inputs]
+        trusted_matches = [value for value in matches if value[3]]
+        exact_matches = [value for value in trusted_matches if value[1] == 1.0]
+        selected = exact_matches[0] if len({value[0] for value in exact_matches}) == 1 else None
+        if selected is None and not exact_matches and len({value[0] for value in trusted_matches}) == 1:
+            selected = trusted_matches[0]
+        best, match_score, match_margin, trusted = selected or ("", None, None, False)
         rows.append(
             OcrRowResult(
                 index,

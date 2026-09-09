@@ -2,7 +2,12 @@ from unittest.mock import MagicMock, call, patch
 
 from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QApplication, QLabel, QMessageBox, QPushButton, QSystemTrayIcon
+from PySide6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QPushButton,
+    QSystemTrayIcon,
+)
 
 from src.ui.poetore_mode_window import PoetoreModeWindow, _currency_icon_filename
 from src.utils.poe_version_data import POE2
@@ -162,7 +167,10 @@ def test_poe2_expedition_hotkey_starts_only_when_feature_is_enabled():
     config = {
         "poe_version": POE2,
         "hotkeys": {"expedition_reward_ocr": "alt+e"},
-        "poetore": {"expedition_reward_overlay": {"enabled": True}},
+        "poetore": {"expedition_reward_overlay": {
+            "enabled": True,
+            "region": {"left": 0.1, "top": 0.1, "right": 0.5, "bottom": 0.9},
+        }},
     }
     controller = MagicMock()
     with patch(
@@ -193,10 +201,60 @@ def test_poe2_expedition_hotkey_starts_only_when_feature_is_enabled():
     app.processEvents()
 
 
+def test_poe2_expedition_ocr_does_not_warm_up_before_region_is_set():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "poe_version": POE2,
+        "hotkeys": {"expedition_reward_ocr": "alt+e"},
+        "poetore": {"expedition_reward_overlay": {"enabled": True}},
+    }
+    controller = MagicMock()
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config", return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService",
+    ), patch(
+        "src.ui.poetore_mode_window.ForegroundSuppressedHotkeyService",
+    ), patch(
+        "src.ui.poetore_mode_window.suppressed_hotkeys_supported", return_value=True,
+    ), patch(
+        "src.ui.poetore_mode_window.sys", platform="win32",
+    ), patch.object(
+        PoetoreModeWindow,
+        "_ensure_expedition_reward_controller",
+        return_value=controller,
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    controller.warm_up.assert_not_called()
+    window.close()
+    app.processEvents()
+
+
 def test_expedition_hotkey_dispatches_single_scan():
     window = MagicMock()
     PoetoreModeWindow.handle_hotkey(window, "expedition_reward_ocr")
     window.capture_expedition_rewards.assert_called_once_with()
+
+
+def test_expedition_controller_receives_current_saved_region():
+    window = MagicMock()
+    window._expedition_reward_controller = None
+    region = {"left": 0.1, "top": 0.2, "right": 0.5, "bottom": 0.9}
+    window.config = {
+        "poetore": {"expedition_reward_overlay": {"region": region}}
+    }
+    window._currency_rate_league = MagicMock()
+    with patch(
+        "src.poetore.expedition_rewards.ExpeditionRewardController"
+    ) as controller_class:
+        controller = controller_class.return_value
+
+        result = PoetoreModeWindow._ensure_expedition_reward_controller(window)
+
+    assert result is controller
+    region_getter = controller_class.call_args.kwargs["region_getter"]
+    assert region_getter() == region
 
 
 def test_expedition_diagnostic_report_uses_single_message_box():

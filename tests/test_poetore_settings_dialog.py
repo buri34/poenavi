@@ -11,8 +11,8 @@ from PySide6.QtWidgets import (
     QTabWidget,
 )
 
-from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 from src.poetore.trade import TradeLeague
+from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 from src.utils.poe_version_data import POE1, POE2
 
 
@@ -42,14 +42,69 @@ def test_expedition_reward_controls_are_poe2_only_and_saved():
     })
 
     assert dialog.expedition_group.isVisibleTo(dialog)
-    assert dialog.expedition_enabled_cb.isChecked()
-    assert dialog.expedition_hotkey.key_text == "alt+r"
+    assert dialog.expedition_settings_button.text() == (
+        "エクスペ報酬チェック設定を開く"
+    )
+    assert dialog.expedition_summary_label.text() == (
+        "状態: 有効 / 範囲未設定 / alt+r"
+    )
     settings = dialog.get_settings()
     assert settings["hotkeys"]["expedition_reward_ocr"] == "alt+r"
     assert settings["poetore"]["expedition_reward_overlay"] == {"enabled": True}
 
     dialog.poe_version_radios[POE1].setChecked(True)
     assert not dialog.expedition_group.isVisibleTo(dialog)
+    dialog.close()
+
+
+def test_expedition_management_dialog_updates_parent_settings():
+    QApplication.instance() or QApplication([])
+    region = {"left": 0.05, "top": 0.15, "right": 0.55, "bottom": 0.95}
+    dialog = PoetoreSettingsDialog(current_config={"poe_version": POE2})
+
+    with patch(
+        "src.ui.poetore_settings_dialog.ExpeditionSettingsDialog"
+    ) as expedition_dialog_class:
+        expedition_dialog = expedition_dialog_class.return_value
+        expedition_dialog.exec.return_value = QDialog.Accepted
+        expedition_dialog.settings.return_value = (
+            {"enabled": True, "region": region},
+            "ctrl+r",
+        )
+        dialog.expedition_settings_button.click()
+
+    settings = dialog.get_settings()
+    assert settings["hotkeys"]["expedition_reward_ocr"] == "ctrl+r"
+    assert settings["poetore"]["expedition_reward_overlay"] == {
+        "enabled": True,
+        "region": region,
+    }
+    assert dialog.expedition_summary_label.text() == (
+        "状態: 有効 / 範囲設定済み / ctrl+r"
+    )
+    dialog.close()
+
+
+def test_expedition_summary_treats_invalid_saved_region_as_unset():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "poe_version": POE2,
+        "poetore": {
+            "expedition_reward_overlay": {
+                "enabled": True,
+                "region": {
+                    "left": 0.2,
+                    "top": 0.2,
+                    "right": 1.2,
+                    "bottom": 0.8,
+                },
+            }
+        },
+    })
+
+    assert dialog.expedition_summary_label.text() == (
+        "状態: 有効 / 範囲未設定 / alt+e"
+    )
     dialog.close()
 
 
