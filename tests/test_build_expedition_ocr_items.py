@@ -39,18 +39,25 @@ def test_build_aliases_pairs_supported_groups_and_drops_ambiguous_names():
 def test_load_excluded_names_reads_unique_reviewed_names(tmp_path):
     path = tmp_path / "excluded.json"
     path.write_text(
-        json.dumps({"items": ["Kamasa's Orb of Sacrifice", "Vaal Orb"]}),
+        json.dumps({
+            "leagues": {
+                "Forbidden Rites": {
+                    "items": ["Kamasa's Orb of Sacrifice", "Vaal Orb"],
+                },
+            },
+        }),
         encoding="utf-8",
     )
 
-    assert load_excluded_names(path) == {
+    assert load_excluded_names(path, "Forbidden Rites") == {
         "Kamasa's Orb of Sacrifice",
         "Vaal Orb",
     }
+    assert load_excluded_names(path, "Future League") == set()
 
 
 def test_packaged_exclusions_match_buri_review_count():
-    names = load_excluded_names(DEFAULT_EXCLUSIONS_PATH)
+    names = load_excluded_names(DEFAULT_EXCLUSIONS_PATH, "Forbidden Rites")
 
     assert len(names) == 61
     assert "Kamasa's Orb of Sacrifice" in names
@@ -62,7 +69,10 @@ def test_packaged_exclusions_match_buri_review_count():
 @pytest.mark.parametrize("items", [["Vaal Orb", "Vaal Orb"], ["Vaal Orb", ""]])
 def test_load_excluded_names_rejects_invalid_lists(tmp_path, items):
     path = tmp_path / "excluded.json"
-    path.write_text(json.dumps({"items": items}), encoding="utf-8")
+    path.write_text(
+        json.dumps({"leagues": {"Forbidden Rites": {"items": items}}}),
+        encoding="utf-8",
+    )
 
     with pytest.raises(ValueError):
-        load_excluded_names(path)
+        load_excluded_names(path, "Forbidden Rites")

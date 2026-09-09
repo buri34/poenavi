@@ -28,10 +28,25 @@ DEFAULT_EXCLUSIONS_PATH = (
 )
 
 
-def load_excluded_names(path: Path) -> set[str]:
-    """Load the reviewed names that must not return on dictionary rebuilds."""
+def load_excluded_names(path: Path, league: str) -> set[str]:
+    """Load reviewed exclusions for exactly one league."""
     payload = json.loads(path.read_text(encoding="utf-8"))
-    items = payload.get("items")
+    leagues = payload.get("leagues")
+    if not isinstance(leagues, dict):
+        raise TypeError("Expedition OCR exclusions must contain a leagues object")
+    matching_leagues = [
+        name
+        for name in leagues
+        if str(name).strip().casefold() == league.strip().casefold()
+    ]
+    if len(matching_leagues) > 1:
+        raise ValueError("Expedition OCR exclusions contain duplicate league names")
+    if not matching_leagues:
+        return set()
+    review = leagues[matching_leagues[0]]
+    if not isinstance(review, dict):
+        raise TypeError("Expedition OCR league review must be an object")
+    items = review.get("items")
     if not isinstance(items, list):
         raise TypeError("Expedition OCR exclusions must contain an items list")
     names = [str(item).strip() for item in items]
@@ -112,7 +127,7 @@ def main() -> int:
     args = parser.parse_args()
     japanese = json.loads(args.ja.read_text(encoding="utf-8"))
     english = json.loads(args.en.read_text(encoding="utf-8"))
-    excluded_names = load_excluded_names(args.exclusions)
+    excluded_names = load_excluded_names(args.exclusions, args.league)
     reward_names = fetch_reward_names(args.league) - excluded_names
     aliases = build_aliases(japanese, english, reward_names)
     mapped_names = {row["en"] for row in aliases}
@@ -129,7 +144,7 @@ def main() -> int:
                 "schema_version": 2,
                 "source": (
                     "poe.ninja PoE2 Currency Exchange categories, "
-                    "filtered by Buri review"
+                    "filtered by league-scoped Buri review"
                 ),
                 "league": args.league,
                 "categories": list(EXPEDITION_REWARD_TYPES),
