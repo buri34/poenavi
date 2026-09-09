@@ -10,7 +10,7 @@ Awakened / RePoE / 日本語公式Trade APIを参考情報源とし、ぽえと�
 
 ## 再開地点
 
-- worktree: `/Volumes/Android共有用/poenavi-dev-poetore`
+- worktree: canonical working tree
 - branch: `feature/poetore-spike`
 - GitHub: 未push。手順11・12のコミット後は `origin/main` より34コミット先行、
   READMEのリモート更新1コミット分は内容反映済みだが履歴上behind 1
