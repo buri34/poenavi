@@ -99,15 +99,24 @@ def test_expedition_dialog_saves_status_hotkey_and_region():
 def test_expedition_dialog_accepts_region_from_selector():
     QApplication.instance() or QApplication([])
     region = {"left": 0.1, "top": 0.2, "right": 0.6, "bottom": 0.9}
+    selection_opacities = []
 
     class AcceptedSelector:
         def __init__(self, client_rect, parent):
             self.selected_region = region
+            self.parent = parent
 
         def exec(self):
+            selection_opacities.append((
+                self.parent.windowOpacity(),
+                self.parent.parentWidget().windowOpacity(),
+            ))
             return QDialog.Accepted
 
+    owner = QDialog()
+    owner.setWindowOpacity(0.75)
     dialog = ExpeditionSettingsDialog(
+        owner,
         client_rect_getter=lambda: QRect(100, 200, 1000, 800),
         selector_class=AcceptedSelector,
     )
@@ -116,7 +125,11 @@ def test_expedition_dialog_accepts_region_from_selector():
 
     assert dialog.settings()[0]["region"] == region
     assert dialog.status_label.text() == "設定済み"
+    assert selection_opacities == [(0.0, 0.0)]
+    assert dialog.windowOpacity() == 1.0
+    assert abs(owner.windowOpacity() - 0.75) < 0.01
     dialog.close()
+    owner.close()
 
 
 def test_region_selection_keeps_modal_settings_dialog_open():

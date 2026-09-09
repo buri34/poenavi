@@ -72,10 +72,12 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert "stash_tab_scroll" in window.active_service_names
     header_buttons = (
         window.memo_button,
+        window.expedition_settings_button,
         window.map_mods_button,
         window.cheat_sheets_button,
         window.settings_button,
     )
+    assert window.header_action_buttons == header_buttons
     assert all(button.text() == "" for button in header_buttons)
     assert all(not button.icon().isNull() for button in header_buttons)
     assert all(button.iconSize() == QSize(24, 24) for button in header_buttons)
@@ -110,6 +112,28 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     window.close()
     app.processEvents()
     stash_class.return_value.stop.assert_called_once_with()
+
+
+def test_expedition_settings_button_is_immediately_right_of_memo_for_poe2():
+    app = QApplication.instance() or QApplication([])
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value={"poe_version": POE2, "hotkeys": {}},
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService",
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    assert window.header_action_buttons[:2] == (
+        window.memo_button,
+        window.expedition_settings_button,
+    )
+    assert window.expedition_settings_button.isVisibleTo(window)
+    assert window.expedition_settings_button.toolTip() == (
+        "エクスペ報酬チェック設定を開く"
+    )
+    window.close()
+    app.processEvents()
 
 
 def test_poetore_mode_starts_capture_and_stash_scroll_services_for_poe2():
@@ -235,6 +259,71 @@ def test_expedition_hotkey_dispatches_single_scan():
     window = MagicMock()
     PoetoreModeWindow.handle_hotkey(window, "expedition_reward_ocr")
     window.capture_expedition_rewards.assert_called_once_with()
+
+
+def test_expedition_header_button_saves_settings_and_restarts_hotkeys():
+    window = MagicMock()
+    window.poe_version = POE2
+    window.config = {
+        "hotkeys": {"expedition_reward_ocr": "alt+e"},
+        "poetore": {"expedition_reward_overlay": {"enabled": False}},
+    }
+    window._expedition_reward_controller = None
+    region = {"left": 0.1, "top": 0.2, "right": 0.6, "bottom": 0.9}
+    controller = MagicMock()
+
+    with patch(
+        "src.ui.expedition_settings_dialog.ExpeditionSettingsDialog"
+    ) as dialog_class, patch(
+        "src.ui.poetore_mode_window.ConfigManager.save_config"
+    ) as save_config:
+        dialog = dialog_class.return_value
+        dialog.exec.return_value = True
+        dialog.settings.return_value = (
+            {"enabled": True, "region": region},
+            "ctrl+r",
+        )
+        window._ensure_expedition_reward_controller.return_value = controller
+
+        PoetoreModeWindow.open_expedition_settings(window)
+
+    assert window.config["hotkeys"]["expedition_reward_ocr"] == "ctrl+r"
+    assert window.config["poetore"]["expedition_reward_overlay"] == {
+        "enabled": True,
+        "region": region,
+    }
+    save_config.assert_called_once_with(window.config)
+    window._restart_hotkeys.assert_called_once_with()
+    controller.warm_up.assert_called_once_with()
+
+
+def test_expedition_header_button_rejects_duplicate_hotkey():
+    window = MagicMock()
+    window.poe_version = POE2
+    window.config = {
+        "hotkeys": {
+            "poetore_capture": "alt+d",
+            "expedition_reward_ocr": "alt+e",
+        },
+        "poetore": {"expedition_reward_overlay": {"enabled": False}},
+    }
+
+    with patch(
+        "src.ui.expedition_settings_dialog.ExpeditionSettingsDialog"
+    ) as dialog_class, patch(
+        "src.ui.poetore_mode_window.ConfigManager.save_config"
+    ) as save_config, patch(
+        "src.ui.poetore_mode_window.QMessageBox.warning"
+    ) as warning:
+        dialog = dialog_class.return_value
+        dialog.exec.return_value = True
+        dialog.settings.return_value = ({"enabled": True}, "alt+d")
+
+        PoetoreModeWindow.open_expedition_settings(window)
+
+    save_config.assert_not_called()
+    window._restart_hotkeys.assert_not_called()
+    warning.assert_called_once()
 
 
 def test_expedition_controller_receives_current_saved_region():

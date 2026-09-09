@@ -47,6 +47,7 @@ from src.utils.feature_support import (
 from src.utils.global_hotkeys import (
     ForegroundSuppressedHotkeyService,
     GlobalHotkeyService,
+    find_duplicate_hotkeys,
     is_hotkey_action_allowed,
     suppressed_hotkeys_supported,
 )
@@ -99,6 +100,24 @@ def _memo_icon() -> QIcon:
     painter.drawLine(QPointF(8.0, 10.0), QPointF(16.8, 10.0))
     painter.drawLine(QPointF(8.0, 14.0), QPointF(16.8, 14.0))
     painter.drawLine(QPointF(8.0, 18.0), QPointF(14.0, 18.0))
+    return _finish_icon(pixmap, painter)
+
+
+def _expedition_icon() -> QIcon:
+    """Return three rune tiles for Expedition reward settings."""
+    pixmap, painter = _icon_canvas()
+    accent = QColor(POETORE_ACCENT)
+    dark = QColor("#15201D")
+    painter.setPen(QPen(accent, 1.3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+    painter.setBrush(QColor(32, 72, 62))
+    for left in (2.5, 9.0, 15.5):
+        painter.drawRoundedRect(left, 5.0, 6.0, 14.0, 1.2, 1.2)
+    painter.setPen(QPen(dark, 1.4, Qt.SolidLine, Qt.RoundCap))
+    painter.drawLine(QPointF(5.5, 8.0), QPointF(5.5, 16.0))
+    painter.drawLine(QPointF(3.8, 12.0), QPointF(7.2, 12.0))
+    painter.drawEllipse(QPointF(12.0, 12.0), 1.8, 3.4)
+    painter.drawLine(QPointF(17.5, 9.0), QPointF(20.0, 15.0))
+    painter.drawLine(QPointF(20.0, 9.0), QPointF(17.5, 15.0))
     return _finish_icon(pixmap, painter)
 
 
@@ -481,6 +500,12 @@ class PoetoreModeWindow(QMainWindow):
         self.memo_button = self._header_button("", "共通メモを開く")
         self.memo_button.setIcon(_memo_icon())
         self.memo_button.setIconSize(QSize(24, 24))
+        self.expedition_settings_button = self._header_button(
+            "", "エクスペ報酬チェック設定を開く"
+        )
+        self.expedition_settings_button.setIcon(_expedition_icon())
+        self.expedition_settings_button.setIconSize(QSize(24, 24))
+        self.expedition_settings_button.setVisible(self.poe_version == POE2)
         self.cheat_sheets_button = self._header_button(
             "", "Cheat sheetsの画像を登録・管理"
         )
@@ -496,13 +521,21 @@ class PoetoreModeWindow(QMainWindow):
         self.settings_button.setIcon(_settings_icon())
         self.settings_button.setIconSize(QSize(24, 24))
         self.memo_button.clicked.connect(self.open_memo)
+        self.expedition_settings_button.clicked.connect(
+            self.open_expedition_settings
+        )
         self.map_mods_button.clicked.connect(self.open_map_mod_manager)
         self.cheat_sheets_button.clicked.connect(self.open_cheat_sheet_manager)
         self.settings_button.clicked.connect(self.open_settings)
-        header.addWidget(self.memo_button)
-        header.addWidget(self.map_mods_button)
-        header.addWidget(self.cheat_sheets_button)
-        header.addWidget(self.settings_button)
+        self.header_action_buttons = (
+            self.memo_button,
+            self.expedition_settings_button,
+            self.map_mods_button,
+            self.cheat_sheets_button,
+            self.settings_button,
+        )
+        for button in self.header_action_buttons:
+            header.addWidget(button)
         body_layout.addLayout(header)
 
         section_title = QLabel(f"Divine / {self.rate_quote_label} 換算")
@@ -930,6 +963,87 @@ class PoetoreModeWindow(QMainWindow):
         )
         self._memo_dialog.show()
 
+    def _restart_hotkeys(self):
+        self.hotkey_service.stop()
+        if self.suppressed_capture_hotkey is not None:
+            self.suppressed_capture_hotkey.stop()
+        if self.suppressed_expedition_hotkey is not None:
+            self.suppressed_expedition_hotkey.stop()
+        self._start_hotkeys()
+
+    def open_expedition_settings(self):
+        if self.poe_version != POE2:
+            return
+        from src.ui.expedition_settings_dialog import ExpeditionSettingsDialog
+
+        poetore = self.config.get("poetore", {})
+        poetore = poetore if isinstance(poetore, dict) else {}
+        expedition_config = poetore.get("expedition_reward_overlay", {})
+        expedition_config = (
+            expedition_config if isinstance(expedition_config, dict) else {}
+        )
+        hotkeys = self.config.get("hotkeys", {})
+        hotkeys = hotkeys if isinstance(hotkeys, dict) else {}
+        dialog = ExpeditionSettingsDialog(
+            self,
+            expedition_config=expedition_config,
+            hotkey=hotkeys.get("expedition_reward_ocr", "alt+e"),
+        )
+        if not dialog.exec():
+            return
+        expedition_config, expedition_hotkey = dialog.settings()
+        active_hotkeys = {
+            action: hotkeys.get(action, default)
+            for action, default in PoetoreModeWindow.MODE_ACTION_DEFAULTS.items()
+            if is_feature_hotkey_supported(action, self.poe_version)
+        }
+        active_hotkeys["expedition_reward_ocr"] = expedition_hotkey
+        active_hotkeys.update(
+            custom_command_hotkeys(self.config.get("custom_commands", []))
+        )
+        duplicate = next(
+            (
+                (key, actions)
+                for key, actions in find_duplicate_hotkeys(active_hotkeys).items()
+                if "expedition_reward_ocr" in actions
+            ),
+            None,
+        )
+        if duplicate is not None:
+            key, actions = duplicate
+            labels = {
+                "exit": "キャラクター選択へ戻る",
+                "monastery": "修道院へ移動",
+                "poetore_capture": "ぽえとれ検索（操作モード）",
+                "poetore_auto_hide": "ぽえとれ検索（AUTO-HIDE）",
+                "map_check": "Map Modチェック",
+                "cheat_sheets_toggle": "Cheat sheets表示",
+            }
+            others = "、".join(
+                labels.get(action, action) for action in actions
+                if action != "expedition_reward_ocr"
+            )
+            QMessageBox.warning(
+                self,
+                "ホットキー重複",
+                f"{key}は別の操作（{others}）にも設定されています。",
+            )
+            return
+        poetore = dict(poetore)
+        poetore["expedition_reward_overlay"] = dict(expedition_config)
+        hotkeys = dict(hotkeys)
+        hotkeys["expedition_reward_ocr"] = expedition_hotkey
+        self.config["poetore"] = poetore
+        self.config["hotkeys"] = hotkeys
+        ConfigManager.save_config(self.config)
+        self._restart_hotkeys()
+        if not expedition_config.get("enabled", False):
+            if self._expedition_reward_controller is not None:
+                self._expedition_reward_controller.hide()
+            return
+        if expedition_config.get("region"):
+            self._ensure_expedition_reward_controller().warm_up()
+
     def open_settings(self):
         from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 
@@ -956,12 +1070,7 @@ class PoetoreModeWindow(QMainWindow):
         self.stash_tab_scroll.set_enabled(
             self.config.get("stash_tab_scroll_enabled", True)
         )
-        self.hotkey_service.stop()
-        if self.suppressed_capture_hotkey is not None:
-            self.suppressed_capture_hotkey.stop()
-        if self.suppressed_expedition_hotkey is not None:
-            self.suppressed_expedition_hotkey.stop()
-        self._start_hotkeys()
+        self._restart_hotkeys()
         self._update_capture_hint()
         self.refresh_currency_rate()
 

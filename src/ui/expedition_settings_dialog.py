@@ -302,14 +302,22 @@ class ExpeditionSettingsDialog(QDialog):
                 "PoE2を起動して報酬画面を表示してから、もう一度お試しください。",
             )
             return
-        previous_opacity = self.windowOpacity()
-        self.setWindowOpacity(0.0)
+        windows = [self]
+        owner = self.parentWidget()
+        if owner is not None and owner.isWindow():
+            windows.append(owner)
+        previous_opacities = [window.windowOpacity() for window in windows]
+        for window in windows:
+            window.setWindowOpacity(0.0)
         QApplication.processEvents()
         try:
             selector = self._selector_class(QRect(client_rect), self)
             result = selector.exec()
         finally:
-            self.setWindowOpacity(previous_opacity)
+            for window, opacity in reversed(
+                list(zip(windows, previous_opacities))
+            ):
+                window.setWindowOpacity(opacity)
             self.raise_()
             self.activateWindow()
         if result != QDialog.Accepted:

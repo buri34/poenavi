@@ -31,10 +31,6 @@ from src.poetore.trade import (
 from src.ui.app_info_widget import AppInfoWidget
 from src.ui.app_theme import SETTINGS_THEME
 from src.ui.custom_command_settings import CustomCommandSettingsWidget
-from src.ui.expedition_settings_dialog import (
-    ExpeditionSettingsDialog,
-    valid_normalized_region,
-)
 from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
 from src.utils.feature_support import POETORE, is_feature_supported
 from src.utils.global_hotkeys import find_duplicate_hotkeys
@@ -156,26 +152,6 @@ class PoetoreSettingsDialog(QDialog):
         hotkey_form.addRow("Cheat sheets表示:", self.cheat_hotkey)
         basic_layout.addWidget(hotkey_group)
 
-        poetore = self.current_config.get("poetore")
-        poetore = poetore if isinstance(poetore, dict) else {}
-        expedition_config = poetore.get("expedition_reward_overlay", {})
-        expedition_config = expedition_config if isinstance(expedition_config, dict) else {}
-        self._expedition_config = dict(expedition_config)
-        if valid_normalized_region(self._expedition_config.get("region")) is None:
-            self._expedition_config.pop("region", None)
-        self.expedition_group = QGroupBox("エクスペディション報酬価格")
-        expedition_layout = QVBoxLayout(self.expedition_group)
-        self.expedition_summary_label = QLabel()
-        self.expedition_summary_label.setObjectName("expeditionSettingsSummary")
-        expedition_layout.addWidget(self.expedition_summary_label)
-        self.expedition_settings_button = QPushButton("エクスペ報酬チェック設定を開く")
-        self.expedition_settings_button.setObjectName("openExpeditionSettingsButton")
-        self.expedition_settings_button.clicked.connect(
-            self._open_expedition_settings
-        )
-        expedition_layout.addWidget(self.expedition_settings_button)
-        self._refresh_expedition_summary()
-        basic_layout.addWidget(self.expedition_group)
         self._refresh_version_specific_controls()
 
         common_group = QGroupBox("共通機能")
@@ -537,27 +513,6 @@ class PoetoreSettingsDialog(QDialog):
         self.monastery_hotkey.setVisible(monastery_visible)
         self.map_check_label.setVisible(monastery_visible)
         self.map_check_hotkey.setVisible(monastery_visible)
-        self.expedition_group.setVisible(self.poe_version == POE2)
-
-    def _open_expedition_settings(self):
-        dialog = ExpeditionSettingsDialog(
-            self,
-            expedition_config=self._expedition_config,
-            hotkey=self._expedition_hotkey,
-        )
-        if dialog.exec() != QDialog.Accepted:
-            return
-        self._expedition_config, self._expedition_hotkey = dialog.settings()
-        self._refresh_expedition_summary()
-
-    def _refresh_expedition_summary(self):
-        enabled = bool(self._expedition_config.get("enabled", False))
-        region = valid_normalized_region(self._expedition_config.get("region"))
-        state = "有効" if enabled else "無効"
-        range_state = "範囲設定済み" if region is not None else "範囲未設定"
-        self.expedition_summary_label.setText(
-            f"状態: {state} / {range_state} / {self._expedition_hotkey}"
-        )
 
     def _refresh_app_mode_availability(self):
         supported = is_feature_supported(POETORE, self.poe_version)
@@ -607,7 +562,6 @@ class PoetoreSettingsDialog(QDialog):
         poetore["result_font_size"] = (
             self.result_font_size_combo.currentData() or "medium"
         )
-        poetore["expedition_reward_overlay"] = dict(self._expedition_config)
         obs_streaming = dict(poetore.get("obs_streaming", {}))
         obs_streaming["enabled"] = self.obs_streaming_enabled_cb.isChecked()
         obs_streaming["title_bar_opacity"] = (
