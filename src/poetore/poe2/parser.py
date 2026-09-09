@@ -321,6 +321,15 @@ _CHIMING_STAFF_SIGIL = re.compile(
     r"(?:Sigil of Power|シギルオブパワー)$",
     re.IGNORECASE,
 )
+SEARCHABLE_GRANTED_SKILL_AMULET_BASES = {
+    "Absent Amulet",
+    "Lament Amulet",
+    "Portent Amulet",
+}
+_GRANTED_SKILL_PROPERTY = re.compile(
+    r"^(?:Grants Skill|スキルを付与):\s*(?:Level|レベル)\s*\d+\s+\S",
+    re.IGNORECASE,
+)
 
 _TABLET_USES = (
     re.compile(r"^(\d+)\s+uses?\s+remaining$", re.IGNORECASE),
@@ -998,11 +1007,16 @@ def parse_item_text(text: str) -> ParsedItem:
             base_type in _CHIMING_STAFF_BASES
             and _CHIMING_STAFF_SIGIL.fullmatch(line) is not None
         )
+        is_searchable_amulet_skill = (
+            base_type in SEARCHABLE_GRANTED_SKILL_AMULET_BASES
+            and _GRANTED_SKILL_PROPERTY.match(line) is not None
+        )
         if (
             separator
             and key.strip() not in _LABELS
             and not _ITEM_LEVEL.match(line)
             and not is_chiming_staff_sigil
+            and not is_searchable_amulet_skill
             and not starts_multiline_stat
         ):
             properties[key.strip()] = value.strip()

@@ -842,6 +842,47 @@ def test_non_chiming_granted_skill_property_does_not_change_to_a_mod_filter():
     }
 
 
+def test_absent_amulet_exposes_low_level_rhoa_mount_from_actual_copy_text():
+    item = parse_item_text("""アイテムクラス: アミュレット
+レアリティ: ノーマル
+不在のアミュレット
+--------
+装備条件：レベル 58
+--------
+アイテムレベル: 65
+--------
+{ 暗黙モッド }
+プレフィックスモッド -1個
+サフィックスモッド -1個
+--------
+スキルを付与: レベル14 ロアマウント
+--------
+我らは永遠に生まれぬ者たちを掴む……
+--------
+メモ: ~b/o 10 chaos""")
+
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+    skill = rows["skill.summon_rhoa_mount"]
+
+    assert item.base_type == "Absent Amulet"
+    assert skill.text == "スキルを付与: レベル14 ロアマウント"
+    assert skill.kind == "skill"
+    assert skill.read_value == 14
+    assert skill.enabled is False
+    assert skill.hidden_reason == ""
+
+    enabled = tuple(
+        replace(row, enabled=True)
+        if row.stat_id == "skill.summon_rhoa_mount" else row
+        for row in rows.values()
+    )
+    sent = build_search_query(item, stat_filters=enabled)["query"]["stats"][0]["filters"]
+    assert {row["id"]: row for row in sent}["skill.summon_rhoa_mount"] == {
+        "id": "skill.summon_rhoa_mount",
+        "value": {"min": 14.0},
+    }
+
+
 def test_multi_value_trade_stats_use_same_arithmetic_mean_as_ee2():
     assert trade_stat_value((25.0, 39.0)) == 32.0
     assert trade_stat_value((1.0, 3.0, 5.0, 7.0)) == 4.0
@@ -1994,7 +2035,12 @@ def test_adopted_poe2_low_level_magic_adds_hidden_only_rarity_filter():
 
 @pytest.mark.parametrize(
     ("base_type", "hidden"),
-    [("普通のアミュレット", True), ("前兆のアミュレット", False)],
+    [
+        ("Ordinary Amulet", True),
+        ("Absent Amulet", False),
+        ("Lament Amulet", False),
+        ("Portent Amulet", False),
+    ],
 )
 def test_adopted_poe2_low_granted_skill_exception(base_type, hidden):
     item = ParsedItem(

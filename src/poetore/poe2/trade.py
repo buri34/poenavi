@@ -15,8 +15,8 @@ from ..trade import (
     _defence_at_20_quality, _group_price_listings, _property_value,
     physical_dps_at_20_quality,
 )
-from .parser import TRADE_CATEGORY_BY_CATEGORY
 from .metadata import augment_entries, explicit_variant_id, resolve_identity
+from .parser import SEARCHABLE_GRANTED_SKILL_AMULET_BASES, TRADE_CATEGORY_BY_CATEGORY
 
 
 API_ROOT = "https://www.pathofexile.com/api/trade2"
@@ -884,11 +884,6 @@ _LOW_LEVEL_MAGIC_CAPS = {
     "jewel": 1,
     "map": 1,
 }
-_GRANTED_SKILL_HIDE_EXCLUDED_BASES = {
-    "前兆のアミュレット", "Omen Amulet",
-    "不在のアミュレット", "Absence Amulet",
-    "悲嘆のアミュレット", "Mourning Amulet",
-}
 _HIDDEN_CANDIDATE_EXCLUDED_UNIQUES = {
     "Heart of the Well", "井戸の心臓",
     "Mageblood", "メイジブラッド",
@@ -954,7 +949,7 @@ def _apply_poe2_hidden_candidate_rules(
             row.kind == "skill"
             and row.read_value is not None
             and row.read_value < 19
-            and item.base_type not in _GRANTED_SKILL_HIDE_EXCLUDED_BASES
+            and item.base_type not in SEARCHABLE_GRANTED_SKILL_AMULET_BASES
             and not (
                 item.base_type == "Chiming Staff"
                 and row.stat_id == "skill.sigil_of_power"
