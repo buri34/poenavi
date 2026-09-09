@@ -34,8 +34,9 @@ OCR環境を用意する前に行検出と前処理だけ確認する場合:
 python scripts/expedition_ocr_probe.py path\to\screenshots --prepare-only
 ```
 
-結果は既定で`runs/expedition-ocr/`へ出力されます。画像ごとのフォルダには
-分離・3倍拡大した各報酬行、`result.json`が入り、全画像の結果は`summary.json`へまとまります。
+結果は既定で`runs/expedition-ocr/`へ出力されます。画像ごとのフォルダには、
+分離して文字高さを正規化した各報酬行と`result.json`が入り、全画像の結果は
+`summary.json`へまとまります。
 `runs/`はGit管理対象外です。
 
 日本語アイテム辞書を指定すると、数量専用OCRと保守的な候補照合を行い、画像名を含まない
@@ -66,6 +67,8 @@ powershell -ExecutionPolicy Bypass -File scripts\run_expedition_windows_ocr.ps1
 数量はWindows OCRで実際に発生した`1x`→`lx`、`1 ,`、`1 =`などの先頭マーカーを
 数量として補正します。行中のジェムレベル等を数量と誤認識しないよう、先頭以外の
 数字は対象にしません。
+PoENavi本体では通常のOCRで安全確定できなかった行だけ、局所適応二値化と大きめの
+文字倍率を使って再OCRします。通常処理で既に安定確定した行は再処理しません。
 初回ビルド時は.NETが必要な参照ファイルを取得するため、ネット接続が必要な場合があります。
 
 日本語OCRが利用できない場合は、Windowsの「設定」→「時刻と言語」→「言語と地域」で

@@ -2,12 +2,15 @@ import base64
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 from PySide6.QtGui import QColor, QImage
 
 import src.poetore.expedition_ocr_probe as probe
 from src.poetore.expedition_ocr_probe import (
+    OCR_MAX_IMAGE_DIMENSION,
+    OCR_TARGET_TEXT_HEIGHT,
     RowBand,
     WindowsOcrServer,
     analyze_directory,
@@ -19,10 +22,22 @@ from src.poetore.expedition_ocr_probe import (
     otsu_threshold,
     parse_quantity_ocr,
     prepare_qimage_rows,
+    prepare_retry_row_images,
     score_rows,
     strip_quantity,
     write_results_csv,
 )
+
+
+def _black_ink_height(image_bytes: bytes) -> int:
+    image = QImage.fromData(image_bytes, "BMP").convertToFormat(
+        QImage.Format.Format_Grayscale8
+    )
+    rows = []
+    for y in range(image.height()):
+        if any(image.pixelColor(x, y).red() < 128 for x in range(image.width())):
+            rows.append(y)
+    return rows[-1] - rows[0] + 1 if rows else 0
 
 
 def test_load_channels_reads_exact_rgb_values_with_padded_rows(tmp_path):
@@ -256,6 +271,62 @@ def test_prepare_qimage_rows_keeps_images_in_memory():
     assert prepared.bands == (RowBand(10, 40), RowBand(50, 80))
     assert len(prepared.images) == 2
     assert all(data.startswith(b"BM") for data in prepared.images)
+
+
+def test_prepare_qimage_rows_normalizes_different_source_text_heights():
+    def make_image(card_height: int, text_height: int) -> QImage:
+        image = QImage(220, card_height + 20, QImage.Format.Format_RGB888)
+        image.fill(QColor(50, 50, 50))
+        for y in range(10, card_height + 10):
+            for x in range(220):
+                image.setPixelColor(x, y, QColor(205, 205, 205))
+        text_top = 10 + (card_height - text_height) // 2
+        for y in range(text_top, text_top + text_height):
+            for x in range(100, 180):
+                image.setPixelColor(x, y, QColor(25, 25, 25))
+        return image
+
+    small = prepare_qimage_rows(make_image(40, 8))
+    large = prepare_qimage_rows(make_image(80, 18))
+
+    assert _black_ink_height(small.images[0]) == pytest.approx(
+        OCR_TARGET_TEXT_HEIGHT, abs=2,
+    )
+    assert _black_ink_height(large.images[0]) == pytest.approx(
+        OCR_TARGET_TEXT_HEIGHT, abs=2,
+    )
+    for image_bytes in (*small.images, *large.images):
+        image = QImage.fromData(image_bytes, "BMP")
+        assert image.width() <= OCR_MAX_IMAGE_DIMENSION
+        assert image.height() <= OCR_MAX_IMAGE_DIMENSION
+
+
+def test_prepare_retry_row_images_only_builds_requested_rows():
+    image = QImage(220, 100, QImage.Format.Format_RGB888)
+    image.fill(QColor(50, 50, 50))
+    for top, bottom in ((10, 40), (50, 80)):
+        for y in range(top, bottom):
+            for x in range(220):
+                image.setPixelColor(x, y, QColor(200, 200, 200))
+        for y in range(top + 8, top + 18):
+            for x in range(100, 180):
+                image.setPixelColor(x, y, QColor(20, 20, 20))
+
+    prepared = prepare_qimage_rows(image)
+    with patch.object(
+        probe, "_prepare_row_image", wraps=probe._prepare_row_image,
+    ) as prepare_row:
+        retries = prepare_retry_row_images(prepared, [1])
+
+    assert tuple(retries) == (1,)
+    assert len(retries[1]) == 2
+    assert all(data.startswith(b"BM") for data in retries[1])
+    assert retries[1][1] != prepared.images[1]
+    assert prepare_row.call_args_list[0].kwargs["threshold_mode"] == "adaptive"
+    assert (
+        prepare_row.call_args_list[1].kwargs["target_text_height"]
+        == probe.OCR_RETRY_LARGE_TEXT_HEIGHT
+    )
 
 
 def test_prepare_qimage_rows_can_limit_panel_scan_width():

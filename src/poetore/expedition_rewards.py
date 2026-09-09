@@ -30,6 +30,7 @@ from src.poetore.expedition_ocr_probe import (
     match_item_name,
     normalize_text,
     prepare_qimage_rows,
+    prepare_retry_row_images,
     strip_quantity,
 )
 from src.poetore.window_position import path_of_exile_client_rect
@@ -160,6 +161,80 @@ def stable_reward_identities(
         middle = agreeing[len(agreeing) // 2]
         stable.append(middle)
     return stable
+
+
+def select_retry_resolution(
+    resolved: list[tuple[str, str, bool] | None],
+) -> tuple[str, str, bool] | None:
+    """Select one safe identity from alternate views of the same source row."""
+    valid = [value for value in resolved if value is not None]
+    if not valid:
+        return None
+    exact = [value for value in valid if value[2]]
+    exact_names = {value[1] for value in exact}
+    if len(exact_names) > 1:
+        return None
+    if exact:
+        return exact[0]
+    names = {value[1] for value in valid}
+    return valid[0] if len(names) == 1 else None
+
+
+def retry_unresolved_identities(
+    prepared: list[PreparedOcrFrame],
+    frames: list[list[RewardIdentity]],
+    ocr: WindowsOcrServer,
+    resolver: SafeRewardNameResolver,
+) -> tuple[int, int, list[str]]:
+    """Retry only unresolved rows with alternate preprocessing variants."""
+    requests: list[bytes] = []
+    groups: list[tuple[int, int, int]] = []
+    max_rows = max((len(frame) for frame in frames), default=0)
+    already_stable = {
+        row_index
+        for row_index in range(max_rows)
+        if stable_reward_identities([
+            [frame[row_index]] if row_index < len(frame) else []
+            for frame in frames
+        ])
+    }
+    for frame_index, (prepared_frame, frame) in enumerate(zip(prepared, frames)):
+        unresolved = [
+            row_index
+            for row_index, row in enumerate(frame)
+            if not row.english_name and row_index not in already_stable
+        ]
+        if not unresolved:
+            continue
+        retry_images = prepare_retry_row_images(prepared_frame, unresolved)
+        for row_index, images in retry_images.items():
+            groups.append((frame_index, row_index, len(images)))
+            requests.extend(images)
+    if not requests:
+        return 0, 0, []
+
+    raw_texts = ocr.recognize(requests)
+    recovered = 0
+    offset = 0
+    for frame_index, row_index, image_count in groups:
+        raw_group = raw_texts[offset : offset + image_count]
+        offset += image_count
+        selected = select_retry_resolution([
+            resolver.resolve(raw_text) for raw_text in raw_group
+        ])
+        if selected is None:
+            continue
+        japanese_name, english_name, exact_match = selected
+        row = frames[frame_index][row_index]
+        frames[frame_index][row_index] = RewardIdentity(
+            row.top,
+            row.bottom,
+            japanese_name,
+            english_name,
+            exact_match,
+        )
+        recovered += 1
+    return recovered, len(groups), raw_texts
 
 
 def format_exalted_unit_price(value: float) -> str:
@@ -477,6 +552,16 @@ class ExpeditionRewardController(QObject):
                         ))
                 frames.append(frame)
                 offset += len(prepared_frame.images)
+            recovered, retry_count, retry_raw_texts = retry_unresolved_identities(
+                prepared,
+                frames,
+                self._ocr,
+                self._name_resolver,
+            )
+            if retry_count:
+                self._trace(
+                    f"✅ 5b. 失敗行再OCR: {recovered}/{retry_count}行を追加確定"
+                )
             stable = [row for row in stable_reward_identities(frames) if row.english_name]
             resolved_counts = "/".join(
                 str(sum(bool(row.english_name) for row in frame)) for frame in frames
@@ -486,7 +571,9 @@ class ExpeditionRewardController(QObject):
             )
             if not stable:
                 samples = list(dict.fromkeys(
-                    normalize_text(text) for text in raw_texts if text.strip()
+                    normalize_text(text)
+                    for text in [*raw_texts, *retry_raw_texts]
+                    if text.strip()
                 ))[:5]
                 if samples:
                     self._trace("   OCR文字例: " + " / ".join(samples))

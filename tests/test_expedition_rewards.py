@@ -6,7 +6,7 @@ import pytest
 from PySide6.QtCore import QRect
 from PySide6.QtGui import QColor, QImage
 
-from src.poetore.expedition_ocr_probe import RowBand
+from src.poetore.expedition_ocr_probe import PreparedOcrFrame, RowBand
 from src.poetore.expedition_rewards import (
     EXPEDITION_DIAGNOSTIC_FLAG,
     EXPEDITION_PRICE_FONT_SIZE,
@@ -23,8 +23,10 @@ from src.poetore.expedition_rewards import (
     load_reward_alias_bundle,
     load_reward_aliases,
     price_label_x,
+    retry_unresolved_identities,
     reward_cards_still_visible,
     reward_price_text_color,
+    select_retry_resolution,
     stable_reward_identities,
 )
 
@@ -260,6 +262,91 @@ def test_stable_reward_identities_rejects_three_different_fuzzy_candidates():
     third = RewardIdentity(12, 32, "拡張の合金", "Expansive Alloy")
 
     assert stable_reward_identities([[first], [second], [third]]) == []
+
+
+def test_retry_resolution_prefers_one_exact_result_over_fuzzy_noise():
+    exact = ("旋風の合金", "Cyclonic Alloy", True)
+    fuzzy = ("迅速の合金", "Swift Alloy", False)
+
+    assert select_retry_resolution([fuzzy, exact]) == exact
+
+
+def test_retry_resolution_accepts_two_matching_fuzzy_variants():
+    fuzzy = ("旋風の合金", "Cyclonic Alloy", False)
+
+    assert select_retry_resolution([fuzzy, fuzzy]) == fuzzy
+
+
+def test_retry_ocr_only_sends_unresolved_rows_and_recovers_them():
+    prepared = [PreparedOcrFrame(
+        100,
+        100,
+        60,
+        (RowBand(10, 30), RowBand(40, 60)),
+        (b"primary-1", b"primary-2"),
+        b"source-gray",
+    )]
+    frames = [[
+        RewardIdentity(10, 30, "高貴なオーブ", "Exalted Orb", True),
+        RewardIdentity(40, 60, "", ""),
+    ]]
+    ocr = Mock()
+    ocr.recognize.return_value = ["1x 旋風の合金", "1x 旋風の合金"]
+    resolver = Mock()
+    resolver.resolve.side_effect = [
+        ("旋風の合金", "Cyclonic Alloy", False),
+        ("旋風の合金", "Cyclonic Alloy", False),
+    ]
+
+    with patch(
+        "src.poetore.expedition_rewards.prepare_retry_row_images",
+        return_value={1: (b"adaptive", b"larger")},
+    ) as prepare_retry:
+        recovered, attempted, raw = retry_unresolved_identities(
+            prepared, frames, ocr, resolver,
+        )
+
+    prepare_retry.assert_called_once_with(prepared[0], [1])
+    ocr.recognize.assert_called_once_with([b"adaptive", b"larger"])
+    assert (recovered, attempted, raw) == (
+        1,
+        1,
+        ["1x 旋風の合金", "1x 旋風の合金"],
+    )
+    assert frames[0][0].english_name == "Exalted Orb"
+    assert frames[0][1].english_name == "Cyclonic Alloy"
+
+
+def test_retry_ocr_skips_unresolved_frames_when_row_is_already_stable():
+    prepared = [
+        PreparedOcrFrame(
+            100, 100, 60, (RowBand(10, 30),), (b"primary",), b"source-gray",
+        )
+        for _ in range(3)
+    ]
+    frames = [
+        [RewardIdentity(10, 30, "旋風の合金", "Cyclonic Alloy", True)],
+        [RewardIdentity(10, 30, "", "")],
+        [RewardIdentity(10, 30, "", "")],
+    ]
+    ocr = Mock()
+    resolver = Mock()
+
+    with patch(
+        "src.poetore.expedition_rewards.prepare_retry_row_images",
+    ) as prepare_retry:
+        result = retry_unresolved_identities(prepared, frames, ocr, resolver)
+
+    assert result == (0, 0, [])
+    prepare_retry.assert_not_called()
+    ocr.recognize.assert_not_called()
+
+
+def test_retry_resolution_rejects_competing_results():
+    first = ("旋風の合金", "Cyclonic Alloy", False)
+    second = ("迅速" + "の合金", "Swift Alloy", False)
+
+    assert select_retry_resolution([first, second]) is None
 
 
 def test_price_label_is_placed_next_to_detected_panel_at_any_aspect_ratio():

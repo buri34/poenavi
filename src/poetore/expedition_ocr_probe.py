@@ -17,10 +17,13 @@ from dataclasses import asdict, dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from PySide6.QtCore import QBuffer, QByteArray, QIODevice
+from PySide6.QtCore import QBuffer, QByteArray, QIODevice, Qt
 from PySide6.QtGui import QImage
 
 OCR_ENGINES = ("tesseract", "windows")
+OCR_MAX_IMAGE_DIMENSION = 2400
+OCR_TARGET_TEXT_HEIGHT = 96
+OCR_RETRY_LARGE_TEXT_HEIGHT = 120
 _EXACT_OCR_KEY_CORRECTIONS = {
     "高員なオーブ": "高貴なオーブ",
     "サカワルの浸良のルーン一": "サカワルの浸食のルーン",
@@ -57,6 +60,7 @@ class PreparedOcrFrame:
     panel_width: int
     bands: tuple[RowBand, ...]
     images: tuple[bytes, ...]
+    gray: bytes = b""
 
 
 def normalize_text(text: str) -> str:
@@ -478,25 +482,111 @@ def _crop_pixels(
     return cropped
 
 
-def _scale_pixels(pixels: Sequence[int], width: int, height: int, factor: int) -> list[int]:
-    scaled: list[int] = []
+def _adaptive_dark_foreground(
+    gray: Sequence[int], width: int, height: int, *, radius: int = 8, offset: int = 10,
+) -> list[int]:
+    """Return dark text using each pixel's local background brightness."""
+    stride = width + 1
+    integral = [0] * (stride * (height + 1))
     for y in range(height):
-        row: list[int] = []
-        for value in pixels[y * width : (y + 1) * width]:
-            row.extend([value] * factor)
-        for _ in range(factor):
-            scaled.extend(row)
-    return scaled
+        row_total = 0
+        source_offset = y * width
+        integral_offset = (y + 1) * stride
+        previous_offset = y * stride
+        for x in range(width):
+            row_total += gray[source_offset + x]
+            integral[integral_offset + x + 1] = (
+                integral[previous_offset + x + 1] + row_total
+            )
+
+    binary = [0] * (width * height)
+    for y in range(height):
+        top = max(0, y - radius)
+        bottom = min(height, y + radius + 1)
+        for x in range(width):
+            left = max(0, x - radius)
+            right = min(width, x + radius + 1)
+            total = (
+                integral[bottom * stride + right]
+                - integral[top * stride + right]
+                - integral[bottom * stride + left]
+                + integral[top * stride + left]
+            )
+            local_mean = total / ((right - left) * (bottom - top))
+            if gray[y * width + x] <= local_mean - offset:
+                binary[y * width + x] = 1
+    return binary
 
 
-def _add_margin(pixels: Sequence[int], width: int, height: int, margin: int) -> list[int]:
-    output = [0] * ((width + margin * 2) * margin)
+def _clear_row_image_border(binary: list[int], width: int, height: int) -> None:
+    border = max(2, round(height * 0.12))
     for y in range(height):
-        output.extend([0] * margin)
-        output.extend(pixels[y * width : (y + 1) * width])
-        output.extend([0] * margin)
-    output.extend([0] * ((width + margin * 2) * margin))
-    return output
+        for x in range(width):
+            if y < border or y >= height - border or x >= width - border:
+                binary[y * width + x] = 0
+
+
+def _main_text_height(binary: Sequence[int], width: int, height: int) -> int:
+    bands = detect_row_bands(
+        binary,
+        width,
+        height,
+        min_ink_ratio=0.01,
+        max_blank_gap=1,
+        min_height=3,
+        padding=0,
+    )
+    return max((band.bottom - band.top for band in bands), default=max(1, height))
+
+
+def _normalized_binary_image(
+    binary: Sequence[int],
+    width: int,
+    height: int,
+    *,
+    target_text_height: int,
+) -> QImage:
+    text_height = _main_text_height(binary, width, height)
+    margin = 12
+    maximum_content_size = OCR_MAX_IMAGE_DIMENSION - margin * 2
+    scale = max(0.1, min(
+        12.0,
+        target_text_height / max(1, text_height),
+        maximum_content_size / max(1, width),
+        maximum_content_size / max(1, height),
+    ))
+    source = QImage(
+        bytes(0 if value else 255 for value in binary),
+        width,
+        height,
+        width,
+        QImage.Format.Format_Grayscale8,
+    ).copy()
+    output_width = max(1, round(width * scale))
+    output_height = max(1, round(height * scale))
+    scaled = source.scaled(
+        output_width,
+        output_height,
+        Qt.AspectRatioMode.IgnoreAspectRatio,
+        Qt.TransformationMode.FastTransformation,
+    )
+    packed = _packed_image_bytes(scaled, 1)
+    final_width = output_width + margin * 2
+    final_height = output_height + margin * 2
+    output = bytearray([255]) * (final_width * final_height)
+    for y in range(output_height):
+        source_offset = y * output_width
+        target_offset = (y + margin) * final_width + margin
+        output[target_offset : target_offset + output_width] = packed[
+            source_offset : source_offset + output_width
+        ]
+    return QImage(
+        bytes(output),
+        final_width,
+        final_height,
+        final_width,
+        QImage.Format.Format_Grayscale8,
+    ).copy()
 
 
 def _prepare_row_image(
@@ -505,30 +595,27 @@ def _prepare_row_image(
     band: RowBand,
     text_left: int,
     text_right: int,
+    *,
+    threshold_mode: str = "otsu",
+    target_text_height: int = OCR_TARGET_TEXT_HEIGHT,
 ) -> QImage:
     crop_gray = _crop_pixels(gray, width, band, text_left, text_right)
-    threshold = otsu_threshold(crop_gray)
-    crop = [1 if value <= threshold else 0 for value in crop_gray]
     crop_width = text_right - text_left
     crop_height = band.bottom - band.top
-    border = max(2, round(crop_height * 0.12))
-    for y in range(crop_height):
-        for x in range(crop_width):
-            if y < border or y >= crop_height - border or x >= crop_width - border:
-                crop[y * crop_width + x] = 0
-    scale = 3
-    crop = _scale_pixels(crop, crop_width, crop_height, scale)
-    margin = 12
-    crop = _add_margin(crop, crop_width * scale, crop_height * scale, margin)
-    output_width = crop_width * scale + margin * 2
-    output_height = crop_height * scale + margin * 2
-    return QImage(
-        bytes(0 if value else 255 for value in crop),
-        output_width,
-        output_height,
-        output_width,
-        QImage.Format.Format_Grayscale8,
-    ).copy()
+    if threshold_mode == "otsu":
+        threshold = otsu_threshold(crop_gray)
+        crop = [1 if value <= threshold else 0 for value in crop_gray]
+    elif threshold_mode == "adaptive":
+        crop = _adaptive_dark_foreground(crop_gray, crop_width, crop_height)
+    else:
+        raise ValueError(f"未対応のOCR二値化方式です: {threshold_mode}")
+    _clear_row_image_border(crop, crop_width, crop_height)
+    return _normalized_binary_image(
+        crop,
+        crop_width,
+        crop_height,
+        target_text_height=target_text_height,
+    )
 
 
 def _image_bytes(image: QImage, image_format: str = "BMP") -> bytes:
@@ -563,8 +650,41 @@ def prepare_qimage_rows(
         for band in bands
     )
     return PreparedOcrFrame(
-        width, height, panel_width, tuple(bands), images,
+        width, height, panel_width, tuple(bands), images, gray,
     )
+
+
+def prepare_retry_row_images(
+    frame: PreparedOcrFrame,
+    row_indices: Sequence[int],
+) -> dict[int, tuple[bytes, bytes]]:
+    """Build alternate OCR inputs only for rows unresolved by the primary pass."""
+    if not frame.gray:
+        raise ValueError("再OCR用の元画像データがありません。")
+    text_left = round(frame.panel_width * 0.40)
+    retries: dict[int, tuple[bytes, bytes]] = {}
+    for index in dict.fromkeys(row_indices):
+        if index < 0 or index >= len(frame.bands):
+            raise IndexError(f"報酬行番号が範囲外です: {index}")
+        band = frame.bands[index]
+        adaptive = _prepare_row_image(
+            frame.gray,
+            frame.width,
+            band,
+            text_left,
+            frame.panel_width,
+            threshold_mode="adaptive",
+        )
+        larger = _prepare_row_image(
+            frame.gray,
+            frame.width,
+            band,
+            text_left,
+            frame.panel_width,
+            target_text_height=OCR_RETRY_LARGE_TEXT_HEIGHT,
+        )
+        retries[index] = (_image_bytes(adaptive), _image_bytes(larger))
+    return retries
 
 
 def _run_tesseract(
