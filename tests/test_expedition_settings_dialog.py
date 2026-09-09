@@ -56,11 +56,15 @@ def test_region_selector_enter_confirms_valid_selection_and_escape_cancels():
 
 def test_region_selector_uses_large_bold_guide_font():
     QApplication.instance() or QApplication([])
-    selector = ExpeditionRegionSelector(QRect(100, 200, 1000, 800))
+    parent = ExpeditionSettingsDialog()
+    selector = ExpeditionRegionSelector(QRect(100, 200, 1000, 800), parent)
+    selector.show()
+    QApplication.processEvents()
 
     assert selector.font().pixelSize() == 144
     assert selector.font().bold()
     selector.close()
+    parent.close()
 
 
 def test_region_selector_rejects_tiny_selection():

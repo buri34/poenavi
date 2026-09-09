@@ -90,6 +90,7 @@ class ExpeditionRegionSelector(QDialog):
         guide_font.setPixelSize(144)
         guide_font.setBold(True)
         self.setFont(guide_font)
+        self.setStyleSheet("font-size: 144px; font-weight: bold;")
         self.setWindowTitle("エクスペ報酬の読取範囲を指定")
         self.setWindowFlags(
             Qt.Dialog
