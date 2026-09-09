@@ -393,11 +393,76 @@ def test_price_label_is_placed_next_to_detected_panel_at_any_aspect_ratio():
     assert price_label_x(1920, 3840, 1200) == 608
 
 
-def test_reward_card_visibility_samples_expected_bands():
+def _reward_panel_image(
+    bands: list[RowBand], *, width: int = 120, height: int = 120,
+) -> QImage:
+    image = QImage(width, height, QImage.Format.Format_RGB888)
+    image.fill(QColor(20, 20, 20))
+    for band in bands:
+        for y in range(band.top, band.bottom):
+            for x in range(width // 2):
+                image.setPixelColor(x, y, QColor(190, 190, 190))
+    return image
+
+
+def test_reward_card_visibility_requires_every_expected_card_band():
+    bands = [RowBand(10, 30), RowBand(40, 60), RowBand(70, 90)]
+    image = _reward_panel_image(bands)
+
+    assert reward_cards_still_visible(image, bands, 60)
+
+    missing_middle = _reward_panel_image([bands[0], bands[2]])
+    assert not reward_cards_still_visible(missing_middle, bands, 60)
+
+
+def test_reward_card_visibility_rejects_continuously_pale_world_background():
+    bands = [RowBand(10, 30), RowBand(40, 60), RowBand(70, 90)]
+    image = QImage(120, 120, QImage.Format.Format_RGB888)
+    image.fill(QColor(20, 20, 20))
+    for y in range(5, 96):
+        for x in range(60):
+            image.setPixelColor(x, y, QColor(190, 190, 190))
+
+    assert not reward_cards_still_visible(image, bands, 60)
+
+
+def test_reward_card_visibility_uses_outer_boundary_for_a_single_card():
     image = QImage(120, 100, QImage.Format.Format_RGB888)
     image.fill(QColor(20, 20, 20))
     for y in range(20, 40):
         for x in range(60):
             image.setPixelColor(x, y, QColor(190, 190, 190))
     assert reward_cards_still_visible(image, [RowBand(20, 40)], 60)
-    assert not reward_cards_still_visible(image, [RowBand(60, 80)], 60)
+
+    for y in range(100):
+        for x in range(60):
+            image.setPixelColor(x, y, QColor(190, 190, 190))
+    assert not reward_cards_still_visible(image, [RowBand(20, 40)], 60)
+
+
+def test_controller_hides_only_after_two_consecutive_structure_misses():
+    overlay = Mock()
+    with patch(
+        "src.poetore.expedition_rewards.QCoreApplication.instance",
+        return_value=None,
+    ), patch(
+        "src.poetore.expedition_rewards.ExpeditionPriceOverlay",
+        return_value=overlay,
+    ), patch(
+        "src.poetore.expedition_rewards.WindowsOcrServer",
+        return_value=Mock(),
+    ):
+        controller = ExpeditionRewardController(lambda: "Test League")
+
+    controller._bands = [RowBand(20, 40)]
+    controller._panel_width = 60
+    controller._grab_game = Mock(return_value=QImage())
+    statuses = []
+    controller.status.connect(statuses.append)
+
+    controller._check_panel()
+    overlay.hide.assert_not_called()
+    controller._check_panel()
+
+    overlay.hide.assert_called_once_with()
+    assert statuses == ["エクスペディション報酬画面を閉じたため表示を消しました。"]

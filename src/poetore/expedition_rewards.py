@@ -9,6 +9,7 @@ import threading
 from collections import Counter
 from dataclasses import dataclass, replace
 from hashlib import sha256
+from itertools import pairwise
 from pathlib import Path
 
 from PySide6.QtCore import QCoreApplication, QObject, QRect, QRectF, Qt, QTimer, Signal
@@ -48,6 +49,13 @@ EXPEDITION_PRICE_ICON_GAP = 5
 EXPEDITION_PRICE_TEXT_OUTLINE_PEN_WIDTH = 4
 EXPEDITION_DIAGNOSTIC_ENV = "POENAVI_EXPEDITION_DIAGNOSTICS"
 EXPEDITION_DIAGNOSTIC_FLAG = "expedition-diagnostics.flag"
+# Calibrated against the saved Expedition panel set.  Real separators can
+# contain bright ornament pixels, so combine an absolute limit with contrast
+# against their adjacent cards instead of requiring every gap to be dark.
+_REWARD_CARD_LINE_PALE_RATIO = 0.43
+_REWARD_CARD_SEPARATOR_PALE_RATIO = 0.68
+_REWARD_CARD_SEPARATOR_DARK_RATIO = 0.50
+_REWARD_CARD_SEPARATOR_CONTRAST = 0.08
 
 
 def expedition_diagnostics_enabled(marker_root: Path | None = None) -> bool:
@@ -299,13 +307,15 @@ def expedition_capture_rect(client_rect: QRect) -> QRect:
 def reward_cards_still_visible(
     image: QImage, bands: list[RowBand], panel_width: int,
 ) -> bool:
-    """Cheaply verify that the pale cards behind the shown rows still exist."""
+    """Verify the alternating pale-card/dark-gap structure behind shown rows."""
     if image.isNull() or not bands or panel_width <= 0:
         return False
     image = image.convertToFormat(QImage.Format.Format_RGB888)
     right = min(image.width(), panel_width)
-    for band in bands:
-        y = max(0, min(image.height() - 1, (band.top + band.bottom) // 2))
+
+    def pale_ratio(y: int) -> float:
+        if y < 0 or y >= image.height() or right <= 0:
+            return 1.0
         samples = 0
         pale = 0
         for x in range(0, right, max(2, right // 80)):
@@ -314,9 +324,45 @@ def reward_cards_still_visible(
             samples += 1
             if sum(channels) / 3 > 115 and max(channels) - min(channels) < 100:
                 pale += 1
-        if samples and pale / samples >= 0.35:
-            return True
-    return False
+        return pale / samples if samples else 0.0
+
+    card_ratios: list[float] = []
+    for band in bands:
+        if band.bottom <= band.top:
+            return False
+        height = band.bottom - band.top
+        line_ratios = [
+            pale_ratio(round(band.top + (height - 1) * fraction))
+            for fraction in (0.20, 0.50, 0.80)
+        ]
+        if any(ratio < _REWARD_CARD_LINE_PALE_RATIO for ratio in line_ratios):
+            return False
+        card_ratios.append(sum(line_ratios) / len(line_ratios))
+
+    def is_separator(gap_ratio: float, adjacent_card_ratio: float) -> bool:
+        return gap_ratio < _REWARD_CARD_SEPARATOR_DARK_RATIO or (
+            gap_ratio < _REWARD_CARD_SEPARATOR_PALE_RATIO
+            and adjacent_card_ratio - gap_ratio >= _REWARD_CARD_SEPARATOR_CONTRAST
+        )
+
+    if len(bands) == 1:
+        band = bands[0]
+        boundary_ratios = [
+            pale_ratio(band.top - 3),
+            pale_ratio(band.bottom + 3),
+        ]
+        return any(is_separator(ratio, card_ratios[0]) for ratio in boundary_ratios)
+
+    separator_matches = 0
+    for index, (upper, lower) in enumerate(pairwise(bands)):
+        gap_ratio = pale_ratio((upper.bottom + lower.top) // 2)
+        adjacent_ratio = (card_ratios[index] + card_ratios[index + 1]) / 2
+        if is_separator(gap_ratio, adjacent_ratio):
+            separator_matches += 1
+    # One separator may be obscured by an ornament or pointer, but a real panel
+    # keeps the alternating structure at all remaining expected row boundaries.
+    required_separators = max(1, len(bands) - 2)
+    return separator_matches >= required_separators
 
 
 class ExpeditionPriceOverlay(QWidget):
