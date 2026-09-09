@@ -86,6 +86,10 @@ class ExpeditionRegionSelector(QDialog):
         self.client_rect = QRect(client_rect)
         self._origin: QPoint | None = None
         self._selection = QRect()
+        guide_font = self.font()
+        guide_font.setPixelSize(36)
+        guide_font.setBold(True)
+        self.setFont(guide_font)
         self.setWindowTitle("エクスペ報酬の読取範囲を指定")
         self.setWindowFlags(
             Qt.Dialog
