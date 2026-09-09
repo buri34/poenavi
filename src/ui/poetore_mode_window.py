@@ -109,6 +109,10 @@ def _expedition_icon() -> QIcon:
     accent = QColor(POETORE_ACCENT)
     dark = QColor("#15201D")
 
+    # Match the in-game emblem: two curls above and one curl below.
+    painter.translate(0.0, 24.0)
+    painter.scale(1.0, -1.0)
+
     arm = QPainterPath(QPointF(12.0, 11.2))
     arm.cubicTo(QPointF(10.9, 10.2), QPointF(9.7, 9.1), QPointF(9.3, 7.5))
     arm.cubicTo(QPointF(8.9, 5.9), QPointF(9.6, 4.2), QPointF(11.1, 3.4))

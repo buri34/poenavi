@@ -9,7 +9,11 @@ from PySide6.QtWidgets import (
     QSystemTrayIcon,
 )
 
-from src.ui.poetore_mode_window import PoetoreModeWindow, _currency_icon_filename
+from src.ui.poetore_mode_window import (
+    PoetoreModeWindow,
+    _currency_icon_filename,
+    _expedition_icon,
+)
 from src.utils.poe_version_data import POE2
 
 
@@ -134,6 +138,22 @@ def test_expedition_settings_button_is_immediately_right_of_memo_for_poe2():
     )
     window.close()
     app.processEvents()
+
+
+def test_expedition_icon_has_two_upper_curls_and_one_lower_curl():
+    app = QApplication.instance() or QApplication([])
+    image = _expedition_icon().pixmap(QSize(24, 24)).toImage()
+
+    def opaque_pixels(left, top, right, bottom):
+        return sum(
+            image.pixelColor(x, y).alpha() > 20
+            for y in range(top, bottom)
+            for x in range(left, right)
+        )
+
+    top_center = opaque_pixels(8, 0, 16, 8)
+    bottom_center = opaque_pixels(8, 16, 16, 24)
+    assert bottom_center > top_center * 2
 
 
 def test_poetore_mode_starts_capture_and_stash_scroll_services_for_poe2():
