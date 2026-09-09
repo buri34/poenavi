@@ -689,6 +689,7 @@ class PoetoreModeWindow(QMainWindow):
                     "expedition_reward_ocr", expedition_hotkey,
                     result_window_checker=lambda _hwnd: False,
                     poe_target_getter=self._poetore_poe_target,
+                    allow_unmodified=True,
                     parent=self,
                 )
                 self.suppressed_expedition_hotkey.command.connect(self.handle_hotkey)

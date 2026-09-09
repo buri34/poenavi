@@ -138,7 +138,7 @@ class GlobalHotkeyService(QObject):
                     ]
                     + [key_name]
                 )
-                configured = self._hotkey_map.get(combo) or self._hotkey_map.get(key_name)
+                configured = self._hotkey_map.get(combo)
                 if (configured and combo not in triggered_combos
                         and self._action_is_allowed(configured)):
                     triggered_combos.add(combo)

@@ -232,7 +232,7 @@ class ExpeditionSettingsDialog(QDialog):
 
         hotkey_form = QFormLayout()
         self.hotkey_widget = AutoHideHotkeyWidget(
-            hotkey, theme=SETTINGS_THEME
+            hotkey, theme=SETTINGS_THEME, allow_no_modifier=True
         )
         self.hotkey_widget.key_button.setStyleSheet("")
         hotkey_form.addRow("読取ショートカット:", self.hotkey_widget)

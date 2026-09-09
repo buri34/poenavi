@@ -220,6 +220,7 @@ def test_poe2_expedition_hotkey_starts_only_when_feature_is_enabled():
         ("poetore_capture", "alt+d"),
         ("expedition_reward_ocr", "alt+e"),
     ]
+    assert suppressed_class.call_args_list[1].kwargs["allow_unmodified"] is True
     controller.warm_up.assert_called_once_with()
     window.close()
     app.processEvents()

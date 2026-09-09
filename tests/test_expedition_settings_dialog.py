@@ -5,6 +5,7 @@ from PySide6.QtGui import QImage, QKeyEvent
 from PySide6.QtWidgets import QApplication, QDialog
 
 from src.ui.expedition_settings_dialog import (
+    DEFAULT_EXAMPLE_IMAGE_PATH,
     ExpeditionRegionSelector,
     ExpeditionSettingsDialog,
     normalized_region,
@@ -89,6 +90,7 @@ def test_expedition_dialog_saves_status_hotkey_and_region():
 
     assert dialog.enabled_checkbox.isChecked()
     assert dialog.hotkey_widget.key_text == "alt+r"
+    assert dialog.hotkey_widget.no_modifier_button is not None
     assert dialog.status_label.text() == "設定済み"
     assert dialog.set_region_button.text() == "読取範囲を再設定"
     assert dialog.reset_region_button.isEnabled()
@@ -102,6 +104,16 @@ def test_expedition_dialog_saves_status_hotkey_and_region():
     assert dialog.set_region_button.text() == "読取範囲を設定"
     assert not dialog.reset_region_button.isEnabled()
     assert dialog.settings() == ({"enabled": True}, "alt+r")
+    dialog.close()
+
+
+def test_expedition_dialog_accepts_unmodified_hotkey():
+    QApplication.instance() or QApplication([])
+    dialog = ExpeditionSettingsDialog(hotkey="e")
+
+    assert dialog.hotkey_widget.no_modifier_button.isChecked()
+    assert dialog.hotkey_widget.key_text == "e"
+    assert dialog.settings()[1] == "e"
     dialog.close()
 
 
@@ -178,3 +190,14 @@ def test_expedition_dialog_shows_example_or_clear_placeholder(tmp_path):
     assert not available.example_thumbnail.pixmap().isNull()
     assert available.example_thumbnail.toolTip() == "クリックして拡大"
     available.close()
+
+
+def test_packaged_expedition_example_image_is_available():
+    QApplication.instance() or QApplication([])
+    assert DEFAULT_EXAMPLE_IMAGE_PATH.is_file()
+
+    dialog = ExpeditionSettingsDialog()
+    assert dialog.example_thumbnail.pixmap() is not None
+    assert not dialog.example_thumbnail.pixmap().isNull()
+    assert dialog.example_thumbnail.toolTip() == "クリックして拡大"
+    dialog.close()
