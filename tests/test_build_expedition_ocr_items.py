@@ -1,4 +1,12 @@
-from scripts.build_expedition_ocr_items import build_aliases
+import json
+
+import pytest
+
+from scripts.build_expedition_ocr_items import (
+    DEFAULT_EXCLUSIONS_PATH,
+    build_aliases,
+    load_excluded_names,
+)
 
 
 def test_build_aliases_pairs_supported_groups_and_drops_ambiguous_names():
@@ -26,3 +34,35 @@ def test_build_aliases_pairs_supported_groups_and_drops_ambiguous_names():
     ) == [
         {"ja": "高貴なオーブ", "en": "Exalted Orb"},
     ]
+
+
+def test_load_excluded_names_reads_unique_reviewed_names(tmp_path):
+    path = tmp_path / "excluded.json"
+    path.write_text(
+        json.dumps({"items": ["Kamasa's Orb of Sacrifice", "Vaal Orb"]}),
+        encoding="utf-8",
+    )
+
+    assert load_excluded_names(path) == {
+        "Kamasa's Orb of Sacrifice",
+        "Vaal Orb",
+    }
+
+
+def test_packaged_exclusions_match_buri_review_count():
+    names = load_excluded_names(DEFAULT_EXCLUSIONS_PATH)
+
+    assert len(names) == 61
+    assert "Kamasa's Orb of Sacrifice" in names
+    assert "Expedition Logbook" in names
+    assert "Uncut Skill Gem (Level 1)" in names
+    assert "Exalted Orb" not in names
+
+
+@pytest.mark.parametrize("items", [["Vaal Orb", "Vaal Orb"], ["Vaal Orb", ""]])
+def test_load_excluded_names_rejects_invalid_lists(tmp_path, items):
+    path = tmp_path / "excluded.json"
+    path.write_text(json.dumps({"items": items}), encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        load_excluded_names(path)

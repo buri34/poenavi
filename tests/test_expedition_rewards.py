@@ -145,12 +145,15 @@ def test_reward_alias_bundle_versions_exact_dictionary_bytes(tmp_path):
 def test_packaged_reward_aliases_are_limited_to_expedition_reward_pool():
     aliases = load_reward_aliases()
 
-    assert len(aliases) == 281
+    assert len(aliases) == 220
     assert aliases["旋風の合金"] == "Cyclonic Alloy"
     assert aliases["サカワルの浸食のルーン"] == "Saqawal's Rune of Erosion"
     assert aliases["スルードの力"] == "Thrud's Might"
     assert aliases["カトラの陰鬱"] == "Katla's Gloom"
     assert "グリムピラー" not in aliases
+    assert "冒涜の生贄のオーブ" not in aliases
+    assert "エクスペディションログブック" not in aliases
+    assert "スキルジェムの原石 (レベル1)" not in aliases
 
 
 def test_safe_reward_name_resolver_caches_only_trusted_matches():

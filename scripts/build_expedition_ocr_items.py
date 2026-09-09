@@ -19,6 +19,27 @@ EXPEDITION_REWARD_TYPES = (
 POE2_EXCHANGE_OVERVIEW_URL = (
     "https://poe.ninja/poe2/api/economy/exchange/current/overview"
 )
+DEFAULT_EXCLUSIONS_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "data"
+    / "poetore"
+    / "poe2"
+    / "expedition_ocr_excluded_items.json"
+)
+
+
+def load_excluded_names(path: Path) -> set[str]:
+    """Load the reviewed names that must not return on dictionary rebuilds."""
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    items = payload.get("items")
+    if not isinstance(items, list):
+        raise TypeError("Expedition OCR exclusions must contain an items list")
+    names = [str(item).strip() for item in items]
+    if any(not name for name in names):
+        raise ValueError("Expedition OCR exclusions contain a blank name")
+    if len(names) != len(set(names)):
+        raise ValueError("Expedition OCR exclusions contain duplicate names")
+    return set(names)
 
 
 def build_aliases(
@@ -83,10 +104,16 @@ def main() -> int:
     parser.add_argument("--en", type=Path, required=True)
     parser.add_argument("--league", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--exclusions",
+        type=Path,
+        default=DEFAULT_EXCLUSIONS_PATH,
+    )
     args = parser.parse_args()
     japanese = json.loads(args.ja.read_text(encoding="utf-8"))
     english = json.loads(args.en.read_text(encoding="utf-8"))
-    reward_names = fetch_reward_names(args.league)
+    excluded_names = load_excluded_names(args.exclusions)
+    reward_names = fetch_reward_names(args.league) - excluded_names
     aliases = build_aliases(japanese, english, reward_names)
     mapped_names = {row["en"] for row in aliases}
     missing_names = sorted(reward_names - mapped_names)
@@ -100,9 +127,13 @@ def main() -> int:
         json.dumps(
             {
                 "schema_version": 2,
-                "source": "poe.ninja PoE2 Currency Exchange categories",
+                "source": (
+                    "poe.ninja PoE2 Currency Exchange categories, "
+                    "filtered by Buri review"
+                ),
                 "league": args.league,
                 "categories": list(EXPEDITION_REWARD_TYPES),
+                "excluded_items": len(excluded_names),
                 "items": aliases,
             },
             ensure_ascii=False,

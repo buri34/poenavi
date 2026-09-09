@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "source": "poe.ninja PoE2 Currency Exchange categories",
+  "source": "poe.ninja PoE2 Currency Exchange categories, filtered by Buri review",
   "league": "Forbidden Rites",
   "categories": [
     "Currency",
@@ -35,10 +35,6 @@
       "en": "Aldur's Legacy"
     },
     {
-      "ja": "アーキテクトオーブ",
-      "en": "Architect's Orb"
-    },
-    {
       "ja": "ウートレッドの叙事詩",
       "en": "Uhtred's Saga"
     },
@@ -49,10 +45,6 @@
     {
       "ja": "ウートレッドの聖杯の紋章",
       "en": "Uhtred's Crest of the Chalice"
-    },
-    {
-      "ja": "エクスペディションログブック",
-      "en": "Expedition Logbook"
     },
     {
       "ja": "オルロスの叙事詩",
@@ -107,14 +99,6 @@
       "en": "Greater Ward Rune"
     },
     {
-      "ja": "コア不安定化装置",
-      "en": "Core Destabiliser"
-    },
-    {
-      "ja": "コラプトの結晶",
-      "en": "Crystallised Corruption"
-    },
-    {
       "ja": "コルの狩り",
       "en": "Kolr's Hunt"
     },
@@ -131,62 +115,6 @@
       "en": "Saqawal's Rune of Memory"
     },
     {
-      "ja": "サポートジェムの原石 (レベル1)",
-      "en": "Uncut Support Gem (Level 1)"
-    },
-    {
-      "ja": "サポートジェムの原石 (レベル2)",
-      "en": "Uncut Support Gem (Level 2)"
-    },
-    {
-      "ja": "サポートジェムの原石 (レベル3)",
-      "en": "Uncut Support Gem (Level 3)"
-    },
-    {
-      "ja": "サポートジェムの原石 (レベル4)",
-      "en": "Uncut Support Gem (Level 4)"
-    },
-    {
-      "ja": "サポートジェムの原石 (レベル5)",
-      "en": "Uncut Support Gem (Level 5)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル1)",
-      "en": "Uncut Skill Gem (Level 1)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル10)",
-      "en": "Uncut Skill Gem (Level 10)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル11)",
-      "en": "Uncut Skill Gem (Level 11)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル12)",
-      "en": "Uncut Skill Gem (Level 12)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル13)",
-      "en": "Uncut Skill Gem (Level 13)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル14)",
-      "en": "Uncut Skill Gem (Level 14)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル15)",
-      "en": "Uncut Skill Gem (Level 15)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル16)",
-      "en": "Uncut Skill Gem (Level 16)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル17)",
-      "en": "Uncut Skill Gem (Level 17)"
-    },
-    {
       "ja": "スキルジェムの原石 (レベル18)",
       "en": "Uncut Skill Gem (Level 18)"
     },
@@ -195,72 +123,8 @@
       "en": "Uncut Skill Gem (Level 19)"
     },
     {
-      "ja": "スキルジェムの原石 (レベル2)",
-      "en": "Uncut Skill Gem (Level 2)"
-    },
-    {
       "ja": "スキルジェムの原石 (レベル20)",
       "en": "Uncut Skill Gem (Level 20)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル3)",
-      "en": "Uncut Skill Gem (Level 3)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル4)",
-      "en": "Uncut Skill Gem (Level 4)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル5)",
-      "en": "Uncut Skill Gem (Level 5)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル6)",
-      "en": "Uncut Skill Gem (Level 6)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル7)",
-      "en": "Uncut Skill Gem (Level 7)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル8)",
-      "en": "Uncut Skill Gem (Level 8)"
-    },
-    {
-      "ja": "スキルジェムの原石 (レベル9)",
-      "en": "Uncut Skill Gem (Level 9)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル10)",
-      "en": "Uncut Spirit Gem (Level 10)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル11)",
-      "en": "Uncut Spirit Gem (Level 11)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル12)",
-      "en": "Uncut Spirit Gem (Level 12)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル13)",
-      "en": "Uncut Spirit Gem (Level 13)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル14)",
-      "en": "Uncut Spirit Gem (Level 14)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル15)",
-      "en": "Uncut Spirit Gem (Level 15)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル16)",
-      "en": "Uncut Spirit Gem (Level 16)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル17)",
-      "en": "Uncut Spirit Gem (Level 17)"
     },
     {
       "ja": "スピリットジェムの原石 (レベル18)",
@@ -273,30 +137,6 @@
     {
       "ja": "スピリットジェムの原石 (レベル20)",
       "en": "Uncut Spirit Gem (Level 20)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル4)",
-      "en": "Uncut Spirit Gem (Level 4)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル5)",
-      "en": "Uncut Spirit Gem (Level 5)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル6)",
-      "en": "Uncut Spirit Gem (Level 6)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル7)",
-      "en": "Uncut Spirit Gem (Level 7)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル8)",
-      "en": "Uncut Spirit Gem (Level 8)"
-    },
-    {
-      "ja": "スピリットジェムの原石 (レベル9)",
-      "en": "Uncut Spirit Gem (Level 9)"
     },
     {
       "ja": "スルードの力",
@@ -391,10 +231,6 @@
       "en": "Fenumus' Rune of Agony"
     },
     {
-      "ja": "フラクチャーオーブ",
-      "en": "Fracturing Orb"
-    },
-    {
       "ja": "プリズムのルーン",
       "en": "Rune of the Prism"
     },
@@ -447,34 +283,6 @@
       "en": "Ward Rune"
     },
     {
-      "ja": "ヴァールアルカニストのインフューザー",
-      "en": "Vaal Arcanist's Infuser"
-    },
-    {
-      "ja": "ヴァールオーブ",
-      "en": "Vaal Orb"
-    },
-    {
-      "ja": "ヴァールカタリストのインフューザー",
-      "en": "Vaal Catalysing Infuser"
-    },
-    {
-      "ja": "ヴァールサイフォナー",
-      "en": "Vaal Siphoner"
-    },
-    {
-      "ja": "ヴァール培養のオーブ",
-      "en": "Vaal Cultivation Orb"
-    },
-    {
-      "ja": "ヴァール鍛冶屋のインフューザー",
-      "en": "Vaal Blacksmith's Infuser"
-    },
-    {
-      "ja": "ヴァール鎧鍛冶のインフューザー",
-      "en": "Vaal Armourer's Infuser"
-    },
-    {
       "ja": "ヴェリシウム",
       "en": "Verisium"
     },
@@ -523,10 +331,6 @@
       "en": "Warding Rune of Symbiosis"
     },
     {
-      "ja": "冒涜の生贄のオーブ",
-      "en": "Kamasa's Orb of Sacrifice"
-    },
-    {
       "ja": "冷却フラックス",
       "en": "Chilling Flux"
     },
@@ -551,16 +355,8 @@
       "en": "Greater Rune of Tithing"
     },
     {
-      "ja": "古代のインフューザー",
-      "en": "Ancient Infuser"
-    },
-    {
       "ja": "可能性のオーブ",
       "en": "Orb of Chance"
-    },
-    {
-      "ja": "可能性のシャード",
-      "en": "Chance Shard"
     },
     {
       "ja": "名声のルーン",
@@ -579,10 +375,6 @@
       "en": "Rune of Foundations"
     },
     {
-      "ja": "堅牢化の生贄のオーブ",
-      "en": "Kopec's Orb of Sacrifice"
-    },
-    {
       "ja": "報復の古代ルーン",
       "en": "Ancient Rune of Retaliation"
     },
@@ -599,20 +391,12 @@
       "en": "Perfect Orb of Augmentation"
     },
     {
-      "ja": "変成のオーブ",
-      "en": "Orb of Transmutation"
-    },
-    {
       "ja": "変成のオーブ (上級)",
       "en": "Greater Orb of Transmutation"
     },
     {
       "ja": "変成のオーブ (完全)",
       "en": "Perfect Orb of Transmutation"
-    },
-    {
-      "ja": "変成のシャード",
-      "en": "Transmutation Shard"
     },
     {
       "ja": "大狼の意志力のルーン",
@@ -763,10 +547,6 @@
       "en": "Ancient Rune of Prowess"
     },
     {
-      "ja": "残酷な生贄のオーブ",
-      "en": "Yaomac's Orb of Sacrifice"
-    },
-    {
       "ja": "殲滅のワードルーン",
       "en": "Warding Rune of Annihilation"
     },
@@ -827,10 +607,6 @@
       "en": "Artificer's Orb"
     },
     {
-      "ja": "熟練工のシャード",
-      "en": "Artificer's Shard"
-    },
-    {
       "ja": "熟達のグレータールーン",
       "en": "Greater Adept Rune"
     },
@@ -851,10 +627,6 @@
       "en": "Rune of the Hunt"
     },
     {
-      "ja": "王家の生贄のオーブ",
-      "en": "Yugul's Orb of Sacrifice"
-    },
-    {
       "ja": "王権の合金",
       "en": "Sovereign Alloy"
     },
@@ -869,10 +641,6 @@
     {
       "ja": "王者のオーブ (完全)",
       "en": "Perfect Regal Orb"
-    },
-    {
-      "ja": "王者のシャード",
-      "en": "Regal Shard"
     },
     {
       "ja": "生命の炎のルーン",
@@ -955,10 +723,6 @@
       "en": "Mystic Alloy"
     },
     {
-      "ja": "秘術師の彫刻針",
-      "en": "Arcanist's Etcher"
-    },
-    {
       "ja": "積極性のグレータールーン",
       "en": "Greater Rune of Alacrity"
     },
@@ -1023,10 +787,6 @@
       "en": "Warding Rune of Reinforcement"
     },
     {
-      "ja": "謎の鍵",
-      "en": "Cryptic Key"
-    },
-    {
       "ja": "護衛のワードルーン",
       "en": "Warding Rune of Bodyguards"
     },
@@ -1077,10 +837,6 @@
     {
       "ja": "鎧鍛冶の端材",
       "en": "Armourer's Scrap"
-    },
-    {
-      "ja": "鑑定の巻物",
-      "en": "Scroll of Wisdom"
     },
     {
       "ja": "開花のルーン",
@@ -1134,5 +890,6 @@
       "ja": "鼓舞のレッサールーン",
       "en": "Lesser Inspiration Rune"
     }
-  ]
+  ],
+  "excluded_items": 61
 }
