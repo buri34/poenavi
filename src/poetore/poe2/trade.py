@@ -69,6 +69,7 @@ _PHYSICAL_DPS_DEFAULT_CATEGORIES = {
 _ARMOUR_CATEGORIES = {
     "focus", "buckler", "shield", "body_armour", "helmet", "gloves", "boots",
 }
+_TIMELESS_JEWEL_SEED_STAT_PREFIX = "explicit.stat_3418580811|"
 
 
 def _uses_awakened_rare_defaults(item: ParsedItem) -> bool:
@@ -769,6 +770,12 @@ def _poe2_modifier_rows(
         converted = explicit_variant_id(original_id) if normalize_special else None
         stat_id = converted or original_id
         value = trade_stat_value(modifier.values)
+        timeless_seed = (
+            item.category == "jewel"
+            and item.base_type.casefold() == "timeless jewel"
+            and stat_id.startswith(_TIMELESS_JEWEL_SEED_STAT_PREFIX)
+            and value is not None
+        )
         provenance_tags = (
             (modifier.kind,)
             if modifier.kind in {"crafted", "fractured", "desecrated"}
@@ -789,11 +796,12 @@ def _poe2_modifier_rows(
                 and modifier.tier == 1
                 and _is_priority_t1_finished_modifier(modifier.ref)
             ),
-            max_value=(value if modifier.better == -1 else None),
+            max_value=(value if modifier.better == -1 or timeless_seed else None),
             ref=modifier.ref, confidence=modifier.confidence,
             read_value=value, roll_min=modifier.roll_min,
             roll_max=modifier.roll_max, better=modifier.better,
             tier=modifier.tier, affix=modifier.affix,
+            exact=timeless_seed,
             provenance_tags=provenance_tags,
         )
         position = positions.get(stat_id)

@@ -18,7 +18,10 @@ from src.poetore.poe2.trade import (
     virtual_augment_choice_label, virtual_augment_filters,
 )
 from src.poetore.models import ItemModifier, ParsedItem
-from src.poetore.trade import PRESET_BASE, PRESET_FINISHED, TradeStatFilter
+from src.poetore.trade import (
+    PRESET_BASE, PRESET_FINISHED, TradeStatFilter, apply_search_range,
+    unresolved_modifier_warnings,
+)
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
@@ -39,6 +42,96 @@ def _unique_fixture():
 def _web_payload(url: str) -> dict:
     encoded = parse_qs(urlparse(url).query)["q"][0]
     return json.loads(unquote(encoded))
+
+
+HEROIC_TRAGEDY_JA = """アイテムクラス: ジュエル
+レアリティ: ユニーク
+英雄の悲劇
+タイムレスジュエル
+--------
+個数制限: ヒストリック1つのみ
+半径: 特大
+--------
+アイテムレベル: 81
+--------
+{ ユニークモッド }
+ヒストリック — スケールできない値
+オルロスの一族が行った歌にするにふさわしい偉業4050(100-8000)個を刻む
+範囲内のパッシブはカルグールに征服される — スケールできない値
+--------
+彼らは自分たちを勇敢で献身的だと思っていたが、
+その勇敢さが彼らの玄関にやってくる破滅となった。
+--------
+パッシブツリーで割り当てられたジュエルソケットにはめる。右クリックしてソケットから取り外すことができる。
+--------"""
+
+
+def _undying_hate_ja(person: str, seed: int) -> str:
+    return f"""アイテムクラス: ジュエル
+レアリティ: ユニーク
+不死の憎しみ
+タイムレスジュエル
+--------
+個数制限: ヒストリック1つのみ
+半径: 特大
+--------
+アイテムレベル: 86
+--------
+{{ ユニークモッド }}
+ヒストリック — スケールできない値
+{person}(アマナム-ウラマン)に捧げるために{seed}(79-30977)体の魂を穢しそれを讃える
+範囲内のパッシブはアビスに征服される
+冒涜するとこのアイテムは不安定になる — スケールできない値
+--------
+彼らは必要に駆られていると信じていたが、
+その必死さが彼らを怪物とした。
+--------
+パッシブツリーで割り当てられたジュエルソケットにはめる。右クリックしてソケットから取り外すことができる。
+4回冒涜できる
+冒涜することによりアイテムが不安定になります
+--------"""
+
+
+def test_heroic_tragedy_defaults_olroth_seed_to_exact_range():
+    item = parse_item_text(HEROIC_TRAGEDY_JA)
+    rows = apply_search_range(poe2_trade_filters(item), 50, item)
+    seed = next(row for row in rows if row.stat_id == "explicit.stat_3418580811|23")
+
+    assert seed.enabled is True
+    assert seed.exact is True
+    assert seed.min_value == 4050
+    assert seed.max_value == 4050
+    assert unresolved_modifier_warnings(item, rows) == ()
+    assert {
+        "id": "explicit.stat_3418580811|23",
+        "value": {"min": 4050.0, "max": 4050.0},
+    } in build_search_query(item, stat_filters=rows)["query"]["stats"][0]["filters"]
+
+
+@pytest.mark.parametrize(
+    "person,seed,stat_id",
+    (
+        ("アマナム", 7913, "explicit.stat_3418580811|24"),
+        ("クーラマク", 16373, "explicit.stat_3418580811|25"),
+        ("クルガル", 23405, "explicit.stat_3418580811|26"),
+        ("テクロッド", 12007, "explicit.stat_3418580811|27"),
+        ("ウラマン", 30901, "explicit.stat_3418580811|28"),
+    ),
+)
+def test_undying_hate_people_resolve_to_exact_seed(person, seed, stat_id):
+    item = parse_item_text(_undying_hate_ja(person, seed))
+    rows = apply_search_range(poe2_trade_filters(item), 50, item)
+    seed_row = next(row for row in rows if row.stat_id == stat_id)
+
+    assert seed_row.enabled is True
+    assert seed_row.exact is True
+    assert seed_row.min_value == seed
+    assert seed_row.max_value == seed
+    assert unresolved_modifier_warnings(item, rows) == ()
+    assert {
+        "id": stat_id,
+        "value": {"min": float(seed), "max": float(seed)},
+    } in build_search_query(item, stat_filters=rows)["query"]["stats"][0]["filters"]
 
 
 @pytest.mark.parametrize(

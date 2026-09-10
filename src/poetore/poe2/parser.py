@@ -389,6 +389,9 @@ _WOMBGIFT_HIVEBLOOD = (
     re.compile(r"^Requires\s+(\d+)\s+Hiveblood$", re.IGNORECASE),
     re.compile(r"^(\d+)\s+Hiveblood Required$", re.IGNORECASE),
 )
+_TIMELESS_JEWEL_DESECRATION_USES = (
+    re.compile(r"^(\d+)回冒涜できる$"),
+)
 
 
 def _consume_special_property(category: str, line: str, properties: dict[str, str]) -> bool:
@@ -399,6 +402,12 @@ def _consume_special_property(category: str, line: str, properties: dict[str, st
     those useful display values in PoENavi while preserving the same Trade
     behaviour.
     """
+    if category == "jewel":
+        for pattern in _TIMELESS_JEWEL_DESECRATION_USES:
+            match = pattern.fullmatch(line)
+            if match:
+                properties["冒涜可能回数"] = match.group(1)
+                return True
     if category == "tablet":
         for pattern in _TABLET_USES:
             match = pattern.fullmatch(line)

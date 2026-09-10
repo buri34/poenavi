@@ -237,6 +237,13 @@ def resolve_stat_line_candidates(
     )
     comparable = re.sub(r"\s*[—-]\s*スケールできない値\s*$", "", comparable)
     comparable = re.sub(r"\s*[—-]\s*Unscalable Value\s*$", "", comparable, flags=re.IGNORECASE)
+    # Undying Hate's detailed Japanese copy uses a different wording from the
+    # official Trade2 stat for the same third line.  Normalize only this exact
+    # sentence so the preceding person name still selects the correct variant.
+    comparable = comparable.replace(
+        "冒涜するとこのアイテムは不安定になる",
+        "冒涜化によりこのアイテムは不安定になる",
+    )
     matchers = stat_matchers()
     if preferred_type:
         matchers = tuple(
