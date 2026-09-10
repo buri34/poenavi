@@ -65,7 +65,7 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert '"--hidden-import", "keyboard"' not in script
 
 
-def test_v420_release_uses_poetore_scoped_tests():
+def test_recent_poetore_releases_use_poetore_scoped_tests():
     workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
         encoding="utf-8"
     )
@@ -74,6 +74,7 @@ def test_v420_release_uses_poetore_scoped_tests():
     )
 
     assert workflow.count('"v4.2.0"') == 2
+    assert workflow.count('"v4.2.1"') == 2
     for test_file in (
         "tests/test_expedition_settings_dialog.py",
         "tests/test_global_hotkeys.py",
