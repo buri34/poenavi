@@ -73,6 +73,7 @@
             }
         },
         "result_font_size": "medium",
+        "capture_error_notification_enabled": false,
         "result_positions": {},
         "expedition_reward_overlay": {
             "enabled": false

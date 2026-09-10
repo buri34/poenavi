@@ -4028,7 +4028,7 @@ class PoetoreWindow(QWidget):
         """Return whether clipboard/parse failures should open a dialog."""
         poetore = self._app_config.get("poetore", {})
         poetore = poetore if isinstance(poetore, dict) else {}
-        return bool(poetore.get("capture_error_notification_enabled", True))
+        return bool(poetore.get("capture_error_notification_enabled", False))
 
     def _capture_item_copy(self):
         trace = self._pending_performance_trace

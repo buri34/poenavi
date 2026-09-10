@@ -140,7 +140,7 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert settings["window_locked"] is True
     assert settings["always_on_top"] is False
     assert settings["snap_to_right_edge"] is True
-    assert dialog.capture_error_notification_cb.isChecked()
+    assert not dialog.capture_error_notification_cb.isChecked()
     assert dialog.capture_error_notification_cb.text() == (
         "アイテムを取得できなかったときに通知する"
     )
@@ -181,6 +181,17 @@ def test_poetore_settings_saves_capture_error_notification_preference():
     assert dialog.get_settings()["poetore"][
         "capture_error_notification_enabled"
     ] is True
+    dialog.close()
+
+
+def test_poetore_capture_error_notification_is_disabled_by_default():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={})
+
+    assert not dialog.capture_error_notification_cb.isChecked()
+    assert dialog.get_settings()["poetore"][
+        "capture_error_notification_enabled"
+    ] is False
     dialog.close()
 
 
@@ -339,8 +350,16 @@ def test_poetore_windows_autostart_has_blank_line_and_saves_setting():
     assert checkbox.isChecked()
     layout = dialog.skip_startup_selector_checkbox.parentWidget().layout()
     direct_index = layout.indexOf(dialog.skip_startup_selector_checkbox)
-    assert layout.itemAt(direct_index + 1).spacerItem().sizeHint().height() == 13
-    assert layout.itemAt(direct_index + 2).widget() is checkbox
+    assert layout.itemAt(direct_index + 1).widget() is dialog.startup_change_note
+    assert dialog.startup_change_note.text() == (
+        "PoEバージョン・起動モードの変更は、次回起動時から適用されます。"
+    )
+    assert layout.itemAt(direct_index + 2).spacerItem().sizeHint().height() == 13
+    assert layout.itemAt(direct_index + 3).widget() is checkbox
+    assert layout.itemAt(direct_index + 4).widget() is dialog.windows_autostart_note
+    assert dialog.windows_autostart_note.text() == (
+        "有効にすると、次回のWindowsログイン時からぽえとれを自動起動します。"
+    )
     checkbox.setChecked(False)
     assert dialog.get_settings()["startup"]["windows_autostart_poetore"] is False
     dialog.close()

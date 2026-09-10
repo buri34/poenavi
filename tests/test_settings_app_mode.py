@@ -58,6 +58,11 @@ def test_mini_navi_topmost_setting_uses_three_modes_and_poe_only_default(
             for index in range(dialog.mini_navi_topmost_mode_combo.count())
         ] == ["poe_only", "always", "never"]
         assert dialog.mini_navi_topmost_mode_combo.currentData() == "poe_only"
+        assert dialog.mini_navi_topmost_mode_combo.width() == 250
+        assert (
+            dialog.mini_navi_topmost_mode_combo.styleSheet()
+            == dialog.mini_navi_display_mode_combo.styleSheet()
+        )
 
         dialog.mini_navi_topmost_mode_combo.setCurrentIndex(
             dialog.mini_navi_topmost_mode_combo.findData("always")
@@ -113,9 +118,17 @@ def test_startup_controls_have_one_shared_checkbox(qapp):
     assert not dialog.windows_autostart_poetore_checkbox.isChecked()
     layout = dialog.skip_startup_selector_checkbox.parentWidget().layout()
     direct_index = layout.indexOf(dialog.skip_startup_selector_checkbox)
-    assert layout.itemAt(direct_index + 1).spacerItem().sizeHint().height() == 13
-    assert layout.itemAt(direct_index + 2).widget() is (
+    assert layout.itemAt(direct_index + 1).widget() is dialog.startup_change_note
+    assert dialog.startup_change_note.text() == (
+        "PoEバージョン・起動モードの変更は、次回起動時から適用されます。"
+    )
+    assert layout.itemAt(direct_index + 2).spacerItem().sizeHint().height() == 13
+    assert layout.itemAt(direct_index + 3).widget() is (
         dialog.windows_autostart_poetore_checkbox
+    )
+    assert layout.itemAt(direct_index + 4).widget() is dialog.windows_autostart_note
+    assert dialog.windows_autostart_note.text() == (
+        "有効にすると、次回のWindowsログイン時からぽえとれを自動起動します。"
     )
     assert not hasattr(dialog, "poe_version_mode_combo")
     assert not hasattr(dialog, "app_mode_startup_combo")

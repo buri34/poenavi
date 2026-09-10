@@ -1960,6 +1960,14 @@ class SettingsDialog(QDialog):
         )
         Styles.apply_checkbox_style(self.skip_startup_selector_checkbox)
         startup_layout.addWidget(self.skip_startup_selector_checkbox)
+        self.startup_change_note = QLabel(
+            "PoEバージョン・起動モードの変更は、次回起動時から適用されます。"
+        )
+        self.startup_change_note.setWordWrap(True)
+        self.startup_change_note.setStyleSheet(
+            f"color: {theme.muted_text}; font-size: 13px;"
+        )
+        startup_layout.addWidget(self.startup_change_note)
         startup_layout.addSpacing(13)
         self.windows_autostart_poetore_checkbox = QCheckBox(
             "Windowsログイン時にぽえとれを自動起動"
@@ -1969,6 +1977,14 @@ class SettingsDialog(QDialog):
         )
         Styles.apply_checkbox_style(self.windows_autostart_poetore_checkbox)
         startup_layout.addWidget(self.windows_autostart_poetore_checkbox)
+        self.windows_autostart_note = QLabel(
+            "有効にすると、次回のWindowsログイン時からぽえとれを自動起動します。"
+        )
+        self.windows_autostart_note.setWordWrap(True)
+        self.windows_autostart_note.setStyleSheet(
+            f"color: {theme.muted_text}; font-size: 13px;"
+        )
+        startup_layout.addWidget(self.windows_autostart_note)
         general_layout.addWidget(startup_group)
         self._refresh_app_mode_availability()
         
@@ -2504,7 +2520,11 @@ class SettingsDialog(QDialog):
         mini_navi_window_layout.addLayout(mini_navi_text_opacity_row)
 
         mini_navi_topmost_row = QHBoxLayout()
-        mini_navi_topmost_row.addWidget(QLabel("前面表示:"))
+        mini_navi_topmost_label = QLabel("前面表示:")
+        mini_navi_topmost_label.setStyleSheet(
+            f"color: {Styles.TEXT_COLOR}; font-size: 12px;"
+        )
+        mini_navi_topmost_row.addWidget(mini_navi_topmost_label)
         self.mini_navi_topmost_mode_combo = QComboBox()
         self.mini_navi_topmost_mode_combo.addItem(
             "PoEがアクティブな時だけ最前面", MINI_TOPMOST_POE_ONLY
@@ -2514,6 +2534,8 @@ class SettingsDialog(QDialog):
         current_topmost_mode = mini_topmost_mode_from_config(self.current_config)
         current_topmost_index = self.mini_navi_topmost_mode_combo.findData(current_topmost_mode)
         self.mini_navi_topmost_mode_combo.setCurrentIndex(max(0, current_topmost_index))
+        self.mini_navi_topmost_mode_combo.setFixedWidth(250)
+        self.mini_navi_topmost_mode_combo.setStyleSheet(combo_style)
         mini_navi_topmost_row.addWidget(self.mini_navi_topmost_mode_combo)
         mini_navi_topmost_row.addStretch()
         mini_navi_window_layout.addLayout(mini_navi_topmost_row)

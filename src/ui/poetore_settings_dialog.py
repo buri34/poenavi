@@ -108,6 +108,12 @@ class PoetoreSettingsDialog(QDialog):
             and not bool(startup.get("show_mode_selector", True))
         )
         startup_layout.addWidget(self.skip_startup_selector_checkbox)
+        self.startup_change_note = QLabel(
+            "PoEバージョン・起動モードの変更は、次回起動時から適用されます。"
+        )
+        self.startup_change_note.setObjectName("startupChangeNote")
+        self.startup_change_note.setWordWrap(True)
+        startup_layout.addWidget(self.startup_change_note)
         startup_layout.addSpacing(13)
         self.windows_autostart_poetore_checkbox = QCheckBox(
             "Windowsログイン時にぽえとれを自動起動"
@@ -116,9 +122,12 @@ class PoetoreSettingsDialog(QDialog):
             bool(startup.get("windows_autostart_poetore", False))
         )
         startup_layout.addWidget(self.windows_autostart_poetore_checkbox)
-        poe_note = QLabel("変更内容は次回起動時から適用されます。")
-        poe_note.setObjectName("poeVersionNote")
-        startup_layout.addWidget(poe_note)
+        self.windows_autostart_note = QLabel(
+            "有効にすると、次回のWindowsログイン時からぽえとれを自動起動します。"
+        )
+        self.windows_autostart_note.setObjectName("windowsAutostartNote")
+        self.windows_autostart_note.setWordWrap(True)
+        startup_layout.addWidget(self.windows_autostart_note)
         basic_layout.addWidget(startup_group)
         self._refresh_app_mode_availability()
 
@@ -168,7 +177,7 @@ class PoetoreSettingsDialog(QDialog):
             "アイテムを取得できなかったときに通知する"
         )
         self.capture_error_notification_cb.setChecked(
-            bool(poetore.get("capture_error_notification_enabled", True))
+            bool(poetore.get("capture_error_notification_enabled", False))
         )
         error_layout.addWidget(self.capture_error_notification_cb)
         basic_layout.addWidget(error_group)
@@ -438,6 +447,10 @@ class PoetoreSettingsDialog(QDialog):
                 font-size: 13px;
             }}
             QLabel#resultFontSizeNote {{
+                color: {theme.muted_text};
+                font-size: 13px;
+            }}
+            QLabel#startupChangeNote, QLabel#windowsAutostartNote {{
                 color: {theme.muted_text};
                 font-size: 13px;
             }}

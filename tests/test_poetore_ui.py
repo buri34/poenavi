@@ -417,8 +417,12 @@ def test_capture_error_dialog_uses_configured_interactive_hotkey(qapp):
         window.close()
 
 
-def test_capture_failure_opens_the_dark_error_dialog(qapp):
-    window = PoetoreWindow()
+def test_capture_failure_opens_the_dark_error_dialog_when_enabled(qapp):
+    window = PoetoreWindow(
+        app_config={
+            "poetore": {"capture_error_notification_enabled": True}
+        }
+    )
     dialog = Mock()
     try:
         with patch(
@@ -453,6 +457,20 @@ def test_capture_failure_can_suppress_only_the_capture_error_dialog(qapp):
 
         build.assert_not_called()
         assert window._last_capture_parse_error
+    finally:
+        window.close()
+
+
+def test_capture_failure_notification_is_disabled_by_default(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch(
+            "src.poetore.ui.read_item_clipboard",
+            return_value="",
+        ), patch.object(window, "_build_capture_error_dialog") as build:
+            window._capture_item_copy()
+
+        build.assert_not_called()
     finally:
         window.close()
 
