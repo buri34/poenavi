@@ -1231,6 +1231,7 @@ class PoetoreWindow(QWidget):
         if self.poe_version == POE2:
             self.trade_currency_combo.addItem("高貴なオーブのみ", "exalted")
             self.trade_currency_combo.addItem("神のオーブのみ", "divine")
+            self.trade_currency_combo.addItem("カオスオーブのみ", "chaos")
             self.trade_currency_combo.addItem(
                 "高貴または神", "exalted_divine"
             )

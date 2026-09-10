@@ -4818,8 +4818,16 @@ def test_poe2_trade_currency_shortens_only_exalted_divine_label(qapp):
             "すべての通貨",
             "高貴なオーブのみ",
             "神のオーブのみ",
+            "カオスオーブのみ",
             "高貴または神",
         ]
+
+        chaos = window.trade_currency_combo.findData("chaos")
+        assert chaos >= 0
+        window.trade_currency_combo.setCurrentIndex(chaos)
+        assert window.trade_currency_combo.toolTip() == (
+            "カオスオーブ建ての出品のみ"
+        )
 
         combined = window.trade_currency_combo.findData("exalted_divine")
         window.trade_currency_combo.setCurrentIndex(combined)

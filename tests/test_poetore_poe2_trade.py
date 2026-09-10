@@ -1915,6 +1915,16 @@ def test_shared_trade_options_are_sent_to_trade2_query():
     }
 
 
+def test_chaos_currency_filter_is_sent_to_trade2_query():
+    item = _phase45_item("phase45_gem_ja.txt")
+
+    query = build_search_query(item, trade_currency="chaos")["query"]
+
+    assert query["filters"]["trade_filters"]["filters"]["price"] == {
+        "option": "chaos"
+    }
+
+
 def test_explicit_empty_filter_set_does_not_restore_item_modifiers():
     text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(
         encoding="utf-8"
