@@ -1,7 +1,8 @@
 {
     "startup": {
         "preferred_mode": "poenavi",
-        "show_mode_selector": true
+        "show_mode_selector": true,
+        "windows_autostart_poetore": false
     },
     "hotkeys": {
         "start_stop": "F7",

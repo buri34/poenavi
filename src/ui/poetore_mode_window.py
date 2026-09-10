@@ -1079,6 +1079,18 @@ class PoetoreModeWindow(QMainWindow):
             return
         self.config.update(dialog.get_settings())
         ConfigManager.save_config(self.config)
+        from src.windows_autostart import (
+            sync_windows_poetore_autostart_with_error,
+        )
+
+        autostart_error = sync_windows_poetore_autostart_with_error(self.config)
+        if autostart_error:
+            QMessageBox.warning(
+                self,
+                "自動起動設定エラー",
+                "Windowsの自動起動設定を更新できませんでした。\n"
+                "設定は保存済みのため、次回起動時に再試行します。",
+            )
         from src.app_restart import confirm_mode_switch_restart
 
         if confirm_mode_switch_restart(

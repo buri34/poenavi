@@ -140,8 +140,36 @@ class ConfigManagerTest(unittest.TestCase):
             {
                 "preferred_mode": "poenavi",
                 "show_mode_selector": True,
+                "windows_autostart_poetore": False,
             },
         )
+
+    def test_schema_v16_adds_disabled_windows_poetore_autostart(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 15,
+            "startup": {
+                "preferred_mode": "poetore",
+                "show_mode_selector": False,
+            },
+        })
+
+        self.assertEqual(migrated["schemaVersion"], 16)
+        self.assertEqual(
+            migrated["startup"],
+            {
+                "preferred_mode": "poetore",
+                "show_mode_selector": False,
+                "windows_autostart_poetore": False,
+            },
+        )
+
+    def test_schema_v16_preserves_enabled_windows_poetore_autostart(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 15,
+            "startup": {"windows_autostart_poetore": True},
+        })
+
+        self.assertTrue(migrated["startup"]["windows_autostart_poetore"])
 
     def test_schema_v8_preserves_existing_startup_choice(self):
         migrated = ConfigManager._migrate_config({

@@ -108,6 +108,14 @@ class PoetoreSettingsDialog(QDialog):
             and not bool(startup.get("show_mode_selector", True))
         )
         startup_layout.addWidget(self.skip_startup_selector_checkbox)
+        startup_layout.addSpacing(13)
+        self.windows_autostart_poetore_checkbox = QCheckBox(
+            "Windowsログイン時にぽえとれを自動起動"
+        )
+        self.windows_autostart_poetore_checkbox.setChecked(
+            bool(startup.get("windows_autostart_poetore", False))
+        )
+        startup_layout.addWidget(self.windows_autostart_poetore_checkbox)
         poe_note = QLabel("変更内容は次回起動時から適用されます。")
         poe_note.setObjectName("poeVersionNote")
         startup_layout.addWidget(poe_note)
@@ -555,6 +563,9 @@ class PoetoreSettingsDialog(QDialog):
         skip_selector = self.skip_startup_selector_checkbox.isChecked()
         startup["show_mode_selector"] = not skip_selector
         startup["preferred_mode"] = normalize_app_mode(selected_app_mode)
+        startup["windows_autostart_poetore"] = (
+            self.windows_autostart_poetore_checkbox.isChecked()
+        )
         hotkeys = dict(self.current_config.get("hotkeys", {}))
         hotkeys.update(
             {

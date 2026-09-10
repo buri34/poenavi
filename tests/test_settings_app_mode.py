@@ -28,6 +28,7 @@ def test_settings_app_mode_uses_one_shared_startup_checkbox(monkeypatch, qapp):
     assert settings["startup"] == {
         "preferred_mode": "poenavi",
         "show_mode_selector": False,
+        "windows_autostart_poetore": False,
     }
     assert settings["poe_version_mode"] == settings["poe_version"]
     dialog.close()
@@ -106,8 +107,29 @@ def test_startup_controls_have_one_shared_checkbox(qapp):
         "ぽえなび", "ぽえとれ"
     ]
     assert dialog.skip_startup_selector_checkbox.text() == "次回からこの設定で直接起動"
+    assert dialog.windows_autostart_poetore_checkbox.text() == (
+        "Windowsログイン時にぽえとれを自動起動"
+    )
+    assert not dialog.windows_autostart_poetore_checkbox.isChecked()
+    layout = dialog.skip_startup_selector_checkbox.parentWidget().layout()
+    direct_index = layout.indexOf(dialog.skip_startup_selector_checkbox)
+    assert layout.itemAt(direct_index + 1).spacerItem().sizeHint().height() == 13
+    assert layout.itemAt(direct_index + 2).widget() is (
+        dialog.windows_autostart_poetore_checkbox
+    )
     assert not hasattr(dialog, "poe_version_mode_combo")
     assert not hasattr(dialog, "app_mode_startup_combo")
+    dialog.close()
+
+
+def test_settings_saves_windows_poetore_autostart(qapp):
+    dialog = SettingsDialog(current_config={
+        "startup": {"windows_autostart_poetore": True}
+    })
+
+    assert dialog.windows_autostart_poetore_checkbox.isChecked()
+    dialog.windows_autostart_poetore_checkbox.setChecked(False)
+    assert dialog.get_settings()["startup"]["windows_autostart_poetore"] is False
     dialog.close()
 
 
@@ -121,6 +143,7 @@ def test_fixed_startup_mode_selects_the_fixed_app(qapp):
     assert dialog.get_settings()["startup"] == {
         "preferred_mode": "poetore",
         "show_mode_selector": False,
+        "windows_autostart_poetore": False,
     }
     dialog.close()
 
@@ -138,6 +161,7 @@ def test_poe2_enables_poetore_mode_and_fixed_startup(qapp):
     assert dialog.get_settings()["startup"] == {
         "preferred_mode": "poetore",
         "show_mode_selector": False,
+        "windows_autostart_poetore": False,
     }
     dialog.close()
 

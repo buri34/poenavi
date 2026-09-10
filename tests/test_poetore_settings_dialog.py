@@ -67,6 +67,7 @@ def test_poe2_enables_poetore_startup_choices():
     assert dialog.get_settings()["startup"] == {
         "preferred_mode": "poetore",
         "show_mode_selector": False,
+        "windows_autostart_poetore": False,
     }
     dialog.close()
 from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
@@ -309,6 +310,7 @@ def test_poetore_fixed_startup_mode_selects_the_fixed_app():
     assert dialog.get_settings()["startup"] == {
         "preferred_mode": "poenavi",
         "show_mode_selector": False,
+        "windows_autostart_poetore": False,
     }
     dialog.close()
 
@@ -323,6 +325,24 @@ def test_poetore_poe_version_and_app_mode_are_in_one_startup_group():
     assert "起動モード" in labels
     assert "QRadioButton" in dialog.styleSheet()
     assert all(radio.text() in {"PoE1", "PoE2"} for radio in dialog.poe_version_radios.values())
+    dialog.close()
+
+
+def test_poetore_windows_autostart_has_blank_line_and_saves_setting():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "startup": {"windows_autostart_poetore": True}
+    })
+
+    checkbox = dialog.windows_autostart_poetore_checkbox
+    assert checkbox.text() == "Windowsログイン時にぽえとれを自動起動"
+    assert checkbox.isChecked()
+    layout = dialog.skip_startup_selector_checkbox.parentWidget().layout()
+    direct_index = layout.indexOf(dialog.skip_startup_selector_checkbox)
+    assert layout.itemAt(direct_index + 1).spacerItem().sizeHint().height() == 13
+    assert layout.itemAt(direct_index + 2).widget() is checkbox
+    checkbox.setChecked(False)
+    assert dialog.get_settings()["startup"]["windows_autostart_poetore"] is False
     dialog.close()
 
 

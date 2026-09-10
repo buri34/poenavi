@@ -14,7 +14,7 @@ class ConfigManager:
     DEFAULT_CONFIG_FILE = "default_config.json"
     APP_NAME = "PoENavi"
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
-    CURRENT_SCHEMA_VERSION = 15
+    CURRENT_SCHEMA_VERSION = 16
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -502,6 +502,13 @@ class ConfigManager:
                 mini_navi["topmost_mode"] = (
                     "never" if legacy_always_on_top is False else "poe_only"
                 )
+
+        if schema_version < 16:
+            startup = migrated.get("startup")
+            if not isinstance(startup, dict):
+                startup = {}
+            startup.setdefault("windows_autostart_poetore", False)
+            migrated["startup"] = startup
 
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)
