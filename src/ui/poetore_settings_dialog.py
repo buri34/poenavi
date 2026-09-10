@@ -152,6 +152,19 @@ class PoetoreSettingsDialog(QDialog):
         hotkey_form.addRow("Cheat sheets表示:", self.cheat_hotkey)
         basic_layout.addWidget(hotkey_group)
 
+        error_group = QGroupBox("検索時のエラー処理")
+        error_layout = QVBoxLayout(error_group)
+        poetore = self.current_config.get("poetore")
+        poetore = poetore if isinstance(poetore, dict) else {}
+        self.capture_error_notification_cb = QCheckBox(
+            "アイテムを取得できなかったときに通知する"
+        )
+        self.capture_error_notification_cb.setChecked(
+            bool(poetore.get("capture_error_notification_enabled", True))
+        )
+        error_layout.addWidget(self.capture_error_notification_cb)
+        basic_layout.addWidget(error_group)
+
         self._refresh_version_specific_controls()
 
         common_group = QGroupBox("共通機能")
@@ -169,8 +182,6 @@ class PoetoreSettingsDialog(QDialog):
         common_layout.addWidget(self.stash_tab_scroll_cb)
         basic_layout.addWidget(common_group)
 
-        poetore = self.current_config.get("poetore")
-        poetore = poetore if isinstance(poetore, dict) else {}
         trade_group = QGroupBox("価格データ")
         trade_layout = QVBoxLayout(trade_group)
         trade_form = QFormLayout()
@@ -561,6 +572,9 @@ class PoetoreSettingsDialog(QDialog):
         poetore[league_key] = self._league_selection_value()
         poetore["result_font_size"] = (
             self.result_font_size_combo.currentData() or "medium"
+        )
+        poetore["capture_error_notification_enabled"] = (
+            self.capture_error_notification_cb.isChecked()
         )
         obs_streaming = dict(poetore.get("obs_streaming", {}))
         obs_streaming["enabled"] = self.obs_streaming_enabled_cb.isChecked()

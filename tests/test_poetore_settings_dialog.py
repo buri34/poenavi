@@ -139,6 +139,14 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert settings["window_locked"] is True
     assert settings["always_on_top"] is False
     assert settings["snap_to_right_edge"] is True
+    assert dialog.capture_error_notification_cb.isChecked()
+    assert dialog.capture_error_notification_cb.text() == (
+        "アイテムを取得できなかったときに通知する"
+    )
+    groups = [group.title() for group in dialog.findChildren(QGroupBox)]
+    assert groups.index("検索時のエラー処理") == (
+        groups.index("共通・ぽえとれホットキー") + 1
+    )
     tabs = dialog.findChild(QTabWidget)
     assert [tabs.tabText(index) for index in range(tabs.count())] == [
         "基本設定",
@@ -156,6 +164,22 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
         private_note.text()
         == "プライベートリーグで使う場合は、リーグ名を直接手打ちで入力してください。"
     )
+    dialog.close()
+
+
+def test_poetore_settings_saves_capture_error_notification_preference():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(
+        current_config={
+            "poetore": {"capture_error_notification_enabled": False}
+        }
+    )
+
+    assert not dialog.capture_error_notification_cb.isChecked()
+    dialog.capture_error_notification_cb.setChecked(True)
+    assert dialog.get_settings()["poetore"][
+        "capture_error_notification_enabled"
+    ] is True
     dialog.close()
 
 

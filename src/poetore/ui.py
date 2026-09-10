@@ -4023,6 +4023,12 @@ class PoetoreWindow(QWidget):
         """)
         return message
 
+    def _capture_error_notification_enabled(self) -> bool:
+        """Return whether clipboard/parse failures should open a dialog."""
+        poetore = self._app_config.get("poetore", {})
+        poetore = poetore if isinstance(poetore, dict) else {}
+        return bool(poetore.get("capture_error_notification_enabled", True))
+
     def _capture_item_copy(self):
         trace = self._pending_performance_trace
         copied_text = read_item_clipboard(QApplication.clipboard())
@@ -4035,7 +4041,8 @@ class PoetoreWindow(QWidget):
                 trace.mark("clipboard_parse_failed")
             self._last_capture_parse_error = str(error)
             self._pending_performance_trace = None
-            self._build_capture_error_dialog().exec()
+            if self._capture_error_notification_enabled():
+                self._build_capture_error_dialog().exec()
             return
         self._last_capture_parse_error = ""
         if trace is not None:
