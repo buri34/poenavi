@@ -46,6 +46,29 @@ def test_settings_dialog_uses_readable_shared_theme(qapp):
     dialog.close()
 
 
+def test_mini_navi_topmost_setting_uses_three_modes_and_poe_only_default(
+    monkeypatch, qapp
+):
+    monkeypatch.setattr("src.ui.settings_dialog.save_zone_master_data", lambda *_args: None)
+    dialog = SettingsDialog(current_config={"mini_guide_overlay": {}})
+    try:
+        assert [
+            dialog.mini_navi_topmost_mode_combo.itemData(index)
+            for index in range(dialog.mini_navi_topmost_mode_combo.count())
+        ] == ["poe_only", "always", "never"]
+        assert dialog.mini_navi_topmost_mode_combo.currentData() == "poe_only"
+
+        dialog.mini_navi_topmost_mode_combo.setCurrentIndex(
+            dialog.mini_navi_topmost_mode_combo.findData("always")
+        )
+        settings = dialog.get_settings()
+
+        assert settings["mini_guide_overlay"]["topmost_mode"] == "always"
+        assert "always_on_top" not in settings["mini_guide_overlay"]
+    finally:
+        dialog.close()
+
+
 def test_general_group_titles_are_center_aligned(qapp):
     dialog = SettingsDialog(current_config={})
     general_group_titles = {

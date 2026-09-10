@@ -134,6 +134,6 @@
         "window_opacity": 100,
         "text_opacity": 100,
         "fade_delay_ms": 5000,
-        "always_on_top": true
+        "topmost_mode": "poe_only"
     }
 }

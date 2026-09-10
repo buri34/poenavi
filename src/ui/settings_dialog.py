@@ -22,6 +22,12 @@ from src.utils.gem_shop_search import (
     validate_gem_shop_search_term_override,
 )
 from src.utils.global_hotkeys import find_duplicate_hotkeys
+from src.ui.window_flags import (
+    MINI_TOPMOST_ALWAYS,
+    MINI_TOPMOST_NEVER,
+    MINI_TOPMOST_POE_ONLY,
+    mini_topmost_mode_from_config,
+)
 import os
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
@@ -2488,10 +2494,20 @@ class SettingsDialog(QDialog):
         mini_navi_text_opacity_row.addStretch()
         mini_navi_window_layout.addLayout(mini_navi_text_opacity_row)
 
-        self.mini_navi_always_on_top_cb = QCheckBox("常に最前面に表示する")
-        self.mini_navi_always_on_top_cb.setChecked(bool(mini_navi_config.get("always_on_top", True)) if isinstance(mini_navi_config, dict) else True)
-        Styles.apply_checkbox_style(self.mini_navi_always_on_top_cb)
-        mini_navi_window_layout.addWidget(self.mini_navi_always_on_top_cb)
+        mini_navi_topmost_row = QHBoxLayout()
+        mini_navi_topmost_row.addWidget(QLabel("前面表示:"))
+        self.mini_navi_topmost_mode_combo = QComboBox()
+        self.mini_navi_topmost_mode_combo.addItem(
+            "PoEがアクティブな時だけ最前面", MINI_TOPMOST_POE_ONLY
+        )
+        self.mini_navi_topmost_mode_combo.addItem("常に最前面", MINI_TOPMOST_ALWAYS)
+        self.mini_navi_topmost_mode_combo.addItem("最前面にしない", MINI_TOPMOST_NEVER)
+        current_topmost_mode = mini_topmost_mode_from_config(self.current_config)
+        current_topmost_index = self.mini_navi_topmost_mode_combo.findData(current_topmost_mode)
+        self.mini_navi_topmost_mode_combo.setCurrentIndex(max(0, current_topmost_index))
+        mini_navi_topmost_row.addWidget(self.mini_navi_topmost_mode_combo)
+        mini_navi_topmost_row.addStretch()
+        mini_navi_window_layout.addLayout(mini_navi_topmost_row)
 
         self.mini_navi_fade_enabled_cb = QCheckBox("一定時間経過で薄く表示する（自動フェード。ウィンドウロック中のみ）")
         self.mini_navi_fade_enabled_cb.setChecked(bool(mini_navi_config.get("fade_enabled", True)) if isinstance(mini_navi_config, dict) else True)
@@ -3248,7 +3264,8 @@ class SettingsDialog(QDialog):
         mini_navi_overlay_config["font_size"] = self.mini_navi_font_size_combo.currentData()
         mini_navi_overlay_config["window_opacity"] = self.mini_navi_window_opacity_slider.value()
         mini_navi_overlay_config["text_opacity"] = self.mini_navi_text_opacity_slider.value()
-        mini_navi_overlay_config["always_on_top"] = self.mini_navi_always_on_top_cb.isChecked()
+        mini_navi_overlay_config["topmost_mode"] = self.mini_navi_topmost_mode_combo.currentData()
+        mini_navi_overlay_config.pop("always_on_top", None)
         mini_navi_overlay_config["fade_enabled"] = self.mini_navi_fade_enabled_cb.isChecked()
         startup_config = self.current_config.get("startup")
         startup_config = dict(startup_config) if isinstance(startup_config, dict) else {}

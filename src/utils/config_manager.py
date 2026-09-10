@@ -14,7 +14,7 @@ class ConfigManager:
     DEFAULT_CONFIG_FILE = "default_config.json"
     APP_NAME = "PoENavi"
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
-    CURRENT_SCHEMA_VERSION = 14
+    CURRENT_SCHEMA_VERSION = 15
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -494,6 +494,14 @@ class ConfigManager:
                 # 未公開の試作版で保存された値を、新しい初期値へ一度だけ揃える。
                 cheat_sheets["image_transparency"] = 100
                 cheat_sheets["background_transparency"] = 0
+
+        if schema_version < 15:
+            mini_navi = migrated.get("mini_guide_overlay")
+            if isinstance(mini_navi, dict):
+                legacy_always_on_top = mini_navi.pop("always_on_top", None)
+                mini_navi["topmost_mode"] = (
+                    "never" if legacy_always_on_top is False else "poe_only"
+                )
 
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)

@@ -16,8 +16,20 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.ui.window_flags import _with_optional_mini_always_on_top
+from src.ui.window_flags import (
+    MINI_TOPMOST_ALWAYS,
+    MINI_TOPMOST_NEVER,
+    MINI_TOPMOST_POE_ONLY,
+    _mini_topmost_mode,
+    _with_optional_mini_always_on_top,
+    set_native_window_topmost,
+)
 from src.utils.config_manager import ConfigManager
+from src.utils.window_focus import (
+    get_foreground_window,
+    get_next_visible_window_after,
+    is_path_of_exile_window,
+)
 
 
 class MiniNaviLockButtonWindow(QWidget):
@@ -91,7 +103,8 @@ class MiniNaviLockButtonWindow(QWidget):
         self.button.setText("🔒" if cfg.get("locked", True) else "🔓")
         self.move(self.overlay.x() + self.overlay.width() - self.width() - 4, self.overlay.y() + 4)
         self.show()
-        self.raise_()
+        if self.overlay._last_topmost_state:
+            self.raise_()
 
     def enterEvent(self, event):
         self.overlay._show_strong_opacity()
@@ -148,7 +161,7 @@ class MiniNaviOverlay(QWidget):
         "width": 800,
         "height": 130,
         "show_lock_button": True,
-        "always_on_top": True,
+        "topmost_mode": MINI_TOPMOST_POE_ONLY,
     }
 
     def __init__(self, parent=None):
@@ -179,6 +192,10 @@ class MiniNaviOverlay(QWidget):
         self._fade_timer = QTimer(self)
         self._fade_timer.setSingleShot(True)
         self._fade_timer.timeout.connect(self._fade_to_idle_opacity)
+        self._topmost_timer = QTimer(self)
+        self._topmost_timer.setInterval(350)
+        self._topmost_timer.timeout.connect(self._refresh_topmost_state)
+        self._last_topmost_state = None
         self.setMouseTracking(True)
         self.setMinimumSize(220, 70)
 
@@ -301,6 +318,7 @@ class MiniNaviOverlay(QWidget):
         self.size_grip.setVisible(not bool(cfg.get("locked", True)))
         self._apply_click_through()
         self._sync_lock_button()
+        self._configure_topmost_monitor()
 
     def _apply_text_opacity(self, opacity_pct: int):
         """みになび本文・矢印・経験値表示の文字透過率を適用。"""
@@ -357,7 +375,7 @@ class MiniNaviOverlay(QWidget):
         # 描画されないよう、完成geometryになってから本文を表示する。
         self.outer.show()
         self.show()
-        self.raise_()
+        self._refresh_topmost_state()
         self._apply_click_through()
         self._sync_lock_button()
         self._show_strong_opacity(restart_fade=True)
@@ -608,10 +626,49 @@ class MiniNaviOverlay(QWidget):
         self.lock_button_window.setWindowFlags(_with_optional_mini_always_on_top(Qt.Tool | Qt.FramelessWindowHint, self.main_window))
         if was_visible:
             self.show()
-            self.raise_()
         if lock_was_visible:
             self.lock_button_window.show()
-            self.lock_button_window.raise_()
+        self._last_topmost_state = None
+        self._refresh_topmost_state()
+
+    def _configure_topmost_monitor(self):
+        mode = _mini_topmost_mode(self.main_window)
+        should_poll = (
+            mode == MINI_TOPMOST_POE_ONLY
+            and bool(self.config().get("enabled", False))
+        )
+        if should_poll:
+            self._topmost_timer.start()
+        else:
+            self._topmost_timer.stop()
+        self._refresh_topmost_state()
+
+    def _poe_is_active_context(self) -> bool:
+        foreground = get_foreground_window()
+        if not foreground:
+            return False
+        own_windows = {int(self.winId()), int(self.lock_button_window.winId())}
+        if int(foreground) in own_windows:
+            foreground = get_next_visible_window_after(
+                foreground,
+                skip_current_process=True,
+            )
+        return bool(foreground and is_path_of_exile_window(foreground))
+
+    def _refresh_topmost_state(self):
+        mode = _mini_topmost_mode(self.main_window)
+        if mode == MINI_TOPMOST_ALWAYS:
+            desired = True
+        elif mode == MINI_TOPMOST_NEVER:
+            desired = False
+        else:
+            desired = self._poe_is_active_context()
+        if desired == self._last_topmost_state:
+            return
+        overlay_updated = set_native_window_topmost(self, desired)
+        lock_updated = set_native_window_topmost(self.lock_button_window, desired)
+        if sys.platform != "win32" or (overlay_updated and lock_updated):
+            self._last_topmost_state = desired
 
     def _hit_test_edges(self, pos: QPoint) -> str:
         margin = self._resize_margin

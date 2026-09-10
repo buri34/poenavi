@@ -42,6 +42,23 @@ def write_default_config(app_dir: Path, overrides=None):
 
 
 class ConfigManagerTest(unittest.TestCase):
+    def test_schema_v15_makes_legacy_topmost_default_poe_only(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 14,
+            "mini_guide_overlay": {"always_on_top": True},
+        })
+
+        self.assertEqual(migrated["mini_guide_overlay"]["topmost_mode"], "poe_only")
+        self.assertNotIn("always_on_top", migrated["mini_guide_overlay"])
+
+    def test_schema_v15_preserves_legacy_topmost_off_as_never(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 14,
+            "mini_guide_overlay": {"always_on_top": False},
+        })
+
+        self.assertEqual(migrated["mini_guide_overlay"]["topmost_mode"], "never")
+
     def test_schema_v14_resets_cheat_sheet_transparency_to_new_defaults(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 13,

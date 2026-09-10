@@ -52,6 +52,91 @@ class MiniNaviStandaloneTest(unittest.TestCase):
         finally:
             self._dispose_overlay(overlay, main)
 
+    def test_poe_only_topmost_tracks_foreground_for_overlay_and_lock(self):
+        main = QWidget()
+        main.config = {
+            "mini_guide_overlay": {
+                "enabled": True,
+                "topmost_mode": "poe_only",
+            }
+        }
+        with (
+            patch("src.ui.mini_navi.get_foreground_window", return_value=123),
+            patch("src.ui.mini_navi.is_path_of_exile_window", return_value=True) as is_poe,
+            patch("src.ui.mini_navi.set_native_window_topmost") as set_topmost,
+        ):
+            overlay = MiniNaviOverlay(main)
+            try:
+                overlay._last_topmost_state = None
+                overlay._refresh_topmost_state()
+                self.assertTrue(overlay._topmost_timer.isActive())
+                self.assertEqual(set_topmost.call_args_list[-2].args, (overlay, True))
+                self.assertEqual(
+                    set_topmost.call_args_list[-1].args,
+                    (overlay.lock_button_window, True),
+                )
+                is_poe.return_value = False
+                overlay._refresh_topmost_state()
+                self.assertEqual(set_topmost.call_args_list[-2].args, (overlay, False))
+                self.assertEqual(
+                    set_topmost.call_args_list[-1].args,
+                    (overlay.lock_button_window, False),
+                )
+            finally:
+                self._dispose_overlay(overlay, main)
+
+    def test_topmost_modes_do_not_poll_when_always_or_never(self):
+        for mode, expected in (("always", True), ("never", False)):
+            main = QWidget()
+            main.config = {
+                "mini_guide_overlay": {
+                    "enabled": True,
+                    "topmost_mode": mode,
+                }
+            }
+            with patch("src.ui.mini_navi.set_native_window_topmost") as set_topmost:
+                overlay = MiniNaviOverlay(main)
+                try:
+                    self.assertFalse(overlay._topmost_timer.isActive())
+                    self.assertEqual(set_topmost.call_args_list[-2].args, (overlay, expected))
+                    self.assertEqual(
+                        set_topmost.call_args_list[-1].args,
+                        (overlay.lock_button_window, expected),
+                    )
+                finally:
+                    self._dispose_overlay(overlay, main)
+
+    def test_clicking_mini_navi_keeps_poe_as_active_context(self):
+        main = QWidget()
+        main.config = {
+            "mini_guide_overlay": {
+                "enabled": True,
+                "topmost_mode": "poe_only",
+            }
+        }
+        with (
+            patch("src.ui.mini_navi.get_foreground_window", return_value=None),
+            patch("src.ui.mini_navi.set_native_window_topmost"),
+        ):
+            overlay = MiniNaviOverlay(main)
+        try:
+            overlay_hwnd = int(overlay.winId())
+            with (
+                patch("src.ui.mini_navi.get_foreground_window", return_value=overlay_hwnd),
+                patch(
+                    "src.ui.mini_navi.get_next_visible_window_after",
+                    return_value=456,
+                ) as next_window,
+                patch("src.ui.mini_navi.is_path_of_exile_window", return_value=True),
+            ):
+                self.assertTrue(overlay._poe_is_active_context())
+                next_window.assert_called_once_with(
+                    overlay_hwnd,
+                    skip_current_process=True,
+                )
+        finally:
+            self._dispose_overlay(overlay, main)
+
     def test_overlay_is_always_an_obs_capture_window_while_disabled(self):
         main = QWidget()
         main.config = {"mini_guide_overlay": {"enabled": False}}
