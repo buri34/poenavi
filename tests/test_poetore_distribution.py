@@ -51,6 +51,7 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert "ExpeditionWindowsOcr.exe" in script
     assert "expedition_region_example.png" in script
     assert "expedition_ocr_items.json" in script
+    assert "desecration_tiers.json" in script
     assert ".NET 8 runtime" in (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
     assert "dotnet-runtime-LICENSE.txt" in (
         ROOT / "scripts" / "collect_third_party_licenses.py"

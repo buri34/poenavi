@@ -89,6 +89,36 @@ RePoEの生成データはGrinding Gear Gamesが権利を保有し、同社の�
 
 <https://github.com/repoe-fork/repoe>
 
+## Path of Building Community for Path of Exile 2
+
+PoE2の冒涜Reveal用Tierデータは、固定したPath of Building Community PoE2の
+生成済みMod・ベースタグデータから派生させています。PoB2本体を配布物へ同梱せず、
+PoENavi用に変換した数値範囲・対応装備プロファイル・Tier順位だけを同梱します。
+
+MIT License — Copyright (c) 2016 David Gowor
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+生成済みゲームデータの権利はGrinding Gear Gamesに帰属します。
+
+<https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2>
+
 ## Packaged open-source runtime components
 
 PoENavi's Windows distribution is created with PyInstaller and includes upstream runtime libraries. These upstream binaries are not developed or represented as PoENavi project binaries.
