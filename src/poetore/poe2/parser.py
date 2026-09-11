@@ -315,19 +315,9 @@ _STATE_LINES = {
 _DESCRIPTION_PREFIXES = (
     "Can be used in a Map Device", "マップデバイスで使用すると",
 )
-_CHIMING_STAFF_BASES = {"Chiming Staff", "鐘鳴のスタッフ"}
-_CHIMING_STAFF_SIGIL = re.compile(
-    r"^(?:Grants Skill:\s*Level|スキルを付与:\s*レベル)\s*\d+\s+"
-    r"(?:Sigil of Power|シギルオブパワー)$",
-    re.IGNORECASE,
-)
-SEARCHABLE_GRANTED_SKILL_AMULET_BASES = {
-    "Absent Amulet",
-    "Lament Amulet",
-    "Portent Amulet",
-}
 _GRANTED_SKILL_PROPERTY = re.compile(
-    r"^(?:Grants Skill|スキルを付与):\s*(?:Level|レベル)\s*\d+\s+\S",
+    r"^(?:Grants Skill|スキルを付与):\s*"
+    r"(?:(?:Level|レベル)\s*\d+\s+)?\S",
     re.IGNORECASE,
 )
 
@@ -1012,20 +1002,12 @@ def parse_item_text(text: str) -> ParsedItem:
         if separator and key.strip() in _PROPERTY_LABELS:
             properties[key.strip()] = value.strip()
             continue
-        is_chiming_staff_sigil = (
-            base_type in _CHIMING_STAFF_BASES
-            and _CHIMING_STAFF_SIGIL.fullmatch(line) is not None
-        )
-        is_searchable_amulet_skill = (
-            base_type in SEARCHABLE_GRANTED_SKILL_AMULET_BASES
-            and _GRANTED_SKILL_PROPERTY.match(line) is not None
-        )
+        is_granted_skill = _GRANTED_SKILL_PROPERTY.match(line) is not None
         if (
             separator
             and key.strip() not in _LABELS
             and not _ITEM_LEVEL.match(line)
-            and not is_chiming_staff_sigil
-            and not is_searchable_amulet_skill
+            and not is_granted_skill
             and not starts_multiline_stat
         ):
             properties[key.strip()] = value.strip()
@@ -1105,6 +1087,16 @@ def parse_item_text(text: str) -> ParsedItem:
             ))
             if line_kind in {"augment", "desecrated", "fractured", "crafted", "sanctified"}:
                 flags.add(line_kind)
+        elif _GRANTED_SKILL_PROPERTY.match(line):
+            # Base-item granted skills such as Spear Throw are not all exposed
+            # as Trade2 Stat IDs. Keep them visible as an optional row; when
+            # selected, the query builder enforces the exact base type that
+            # guarantees the skill.
+            modifiers.append(ItemModifier(
+                text=line, values=(), kind="skill",
+                ref="Grants Skill", stat_id="property.granted_skill",
+                confidence=1.0,
+            ))
         elif re.search(r"\d", line) and not separator:
             # Keep suspicious numeric lines visible to the user instead of silently dropping them.
             modifiers.append(ItemModifier(text=line, confidence=0.0))

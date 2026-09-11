@@ -461,6 +461,28 @@ _PRICE_CURRENCY_ICON_STEMS = {
     "chaos": "ChaosOrb",
     "divine": "DivineOrb",
     "exalted": "ExaltedOrb",
+    "mirror": "MirrorofKalandra",
+    "alch": "OrbofAlchemy",
+    "aug": "OrbofAugmentation",
+    "chance": "OrbofChance",
+    "transmute": "OrbofTransmutation",
+    "regal": "RegalOrb",
+    "vaal": "VaalOrb",
+}
+_POE2_EXTRA_PRICE_CURRENCIES = {
+    "mirror", "alch", "aug", "chance", "transmute", "regal", "vaal",
+}
+_PRICE_CURRENCY_TOOLTIPS = {
+    "chaos": "Chaos Orb",
+    "divine": "Divine Orb",
+    "exalted": "Exalted Orb",
+    "mirror": "Mirror of Kalandra",
+    "alch": "Orb of Alchemy",
+    "aug": "Orb of Augmentation",
+    "chance": "Orb of Chance",
+    "transmute": "Orb of Transmutation",
+    "regal": "Regal Orb",
+    "vaal": "Vaal Orb",
 }
 _PRICE_LIST_CURRENCY_ICON_SIZE = 18
 
@@ -5937,11 +5959,18 @@ class PoetoreWindow(QWidget):
                 self.price_list.setItemWidget(row, 0, price_widget)
 
     def _price_list_currency_widget(self, listing) -> QWidget | None:
-        """Chaos/Divine価格を数値 × 通貨アイコンで描画する。"""
+        """対応通貨の価格を数値 × 通貨アイコンで描画する。"""
         currency = str(listing.currency or "").lower()
+        supported = (
+            currency in _PRICE_CURRENCY_ICON_STEMS
+            and (
+                currency not in _POE2_EXTRA_PRICE_CURRENCIES
+                or self.poe_version == POE2
+            )
+        )
         icon_filename = (
             _price_currency_icon_filename(currency, self.poe_version)
-            if currency in _PRICE_CURRENCY_ICON_STEMS
+            if supported
             else None
         )
         icon_path = _asset_icon_path(icon_filename) if icon_filename else None
@@ -5970,7 +5999,7 @@ class PoetoreWindow(QWidget):
             Qt.KeepAspectRatio,
             Qt.SmoothTransformation,
         ))
-        icon.setToolTip("Chaos Orb" if currency == "chaos" else "Divine Orb")
+        icon.setToolTip(_PRICE_CURRENCY_TOOLTIPS[currency])
         layout.addWidget(amount)
         layout.addWidget(multiplier)
         layout.addWidget(icon)

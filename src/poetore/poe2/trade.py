@@ -18,7 +18,7 @@ from ..trade import (
     physical_dps_at_20_quality,
 )
 from .metadata import augment_entries, explicit_variant_id, resolve_identity
-from .parser import SEARCHABLE_GRANTED_SKILL_AMULET_BASES, TRADE_CATEGORY_BY_CATEGORY
+from .parser import TRADE_CATEGORY_BY_CATEGORY
 
 
 API_ROOT = "https://www.pathofexile.com/api/trade2"
@@ -820,13 +820,18 @@ def _poe2_modifier_rows(
             # Awakened-style rare searches expose direct mods as optional
             # alternatives while selecting only the high-value aggregates.
             enabled=(
-                item.category != "waystone"
-                and not _uses_awakened_rare_defaults(item)
-            ) or (
-                preset == PRESET_FINISHED
-                and _uses_awakened_rare_defaults(item)
-                and modifier.tier == 1
-                and _is_priority_t1_finished_modifier(modifier.ref)
+                modifier.kind != "skill"
+                and (
+                    (
+                        item.category != "waystone"
+                        and not _uses_awakened_rare_defaults(item)
+                    ) or (
+                        preset == PRESET_FINISHED
+                        and _uses_awakened_rare_defaults(item)
+                        and modifier.tier == 1
+                        and _is_priority_t1_finished_modifier(modifier.ref)
+                    )
+                )
             ),
             max_value=(value if modifier.better == -1 or timeless_seed else None),
             ref=modifier.ref, confidence=modifier.confidence,
@@ -983,19 +988,6 @@ def _apply_poe2_hidden_candidate_rules(
             )
         ):
             hidden_reason = "可変ロールではありません"
-
-        # H11: low-level granted skills, except the three user-selected amulet bases.
-        if (
-            row.kind == "skill"
-            and row.read_value is not None
-            and row.read_value < 19
-            and item.base_type not in SEARCHABLE_GRANTED_SKILL_AMULET_BASES
-            and not (
-                item.base_type == "Chiming Staff"
-                and row.stat_id == "skill.sigil_of_power"
-            )
-        ):
-            hidden_reason = "最大レベル未満の付与スキルは価値を加えにくい"
 
         # H12: normal Map mods are not useful price discriminators.
         if item.category == "map" and row.kind not in {"property", "desecrated"}:
@@ -1178,7 +1170,11 @@ def build_search_query(
         ),
         "filters": {"type_filters": {"filters": type_filters}},
     }
-    if exact_base_type:
+    granted_skill_requires_exact_base = any(
+        row.enabled and row.stat_id == "property.granted_skill"
+        for row in (stat_filters or ())
+    )
+    if exact_base_type or granted_skill_requires_exact_base:
         query["type"] = item.base_type
     type_filter_values = query["filters"]["type_filters"]["filters"]
     if item_level_min is not None or item_level_max is not None:

@@ -994,10 +994,11 @@ def test_chiming_staff_exposes_every_sigil_level_as_a_mod_filter(level):
     assert item.base_type == "Chiming Staff"
     assert rows["skill.sigil_of_power"].kind == "skill"
     assert rows["skill.sigil_of_power"].read_value == level
+    assert rows["skill.sigil_of_power"].enabled is False
     assert rows["skill.sigil_of_power"].hidden_reason == ""
 
 
-def test_non_chiming_granted_skill_property_does_not_change_to_a_mod_filter():
+def test_non_chiming_granted_skill_is_a_visible_unchecked_mod_filter():
     text = """アイテムクラス: セプター
 レアリティ: ノーマル
 神殿のセプター
@@ -1008,9 +1009,41 @@ def test_non_chiming_granted_skill_property_does_not_change_to_a_mod_filter():
 
     item = parse_item_text(text)
 
-    assert "skill.sigil_of_power" not in {
-        row.stat_id for row in poe2_trade_filters(item)
-    }
+    skill = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "skill.sigil_of_power"
+    )
+    assert skill.kind == "skill"
+    assert skill.read_value == 20
+    assert skill.enabled is False
+    assert skill.hidden_reason == ""
+
+
+def test_base_granted_skill_without_trade_stat_is_visible_and_enforces_exact_base():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2" / "skysliver_ja.txt")
+        .read_text(encoding="utf-8")
+    )
+    rows = poe2_trade_filters(item)
+    skill = next(row for row in rows if row.stat_id == "property.granted_skill")
+
+    assert skill.text == "スキルを付与: スピアスロー"
+    assert skill.kind == "skill"
+    assert skill.enabled is False
+    assert skill.hidden_reason == ""
+
+    unchecked = build_search_query(
+        item, stat_filters=rows, exact_base_type=False,
+    )["query"]
+    assert "type" not in unchecked
+
+    checked_rows = tuple(
+        replace(row, enabled=True) if row is skill else row for row in rows
+    )
+    checked = build_search_query(
+        item, stat_filters=checked_rows, exact_base_type=False,
+    )["query"]
+    assert checked["type"] == "Winged Spear"
 
 
 def test_absent_amulet_exposes_low_level_rhoa_mount_from_actual_copy_text():
@@ -2215,15 +2248,10 @@ def test_adopted_poe2_low_level_magic_adds_hidden_only_rarity_filter():
 
 
 @pytest.mark.parametrize(
-    ("base_type", "hidden"),
-    [
-        ("Ordinary Amulet", True),
-        ("Absent Amulet", False),
-        ("Lament Amulet", False),
-        ("Portent Amulet", False),
-    ],
+    "base_type",
+    ["Ordinary Amulet", "Absent Amulet", "Lament Amulet", "Portent Amulet"],
 )
-def test_adopted_poe2_low_granted_skill_exception(base_type, hidden):
+def test_every_low_level_granted_skill_stays_visible_and_unchecked(base_type):
     item = ParsedItem(
         "Amulets", "rare", "", base_type, "amulet",
         modifiers=(ItemModifier(
@@ -2232,7 +2260,8 @@ def test_adopted_poe2_low_granted_skill_exception(base_type, hidden):
         ),),
     )
     row = next(row for row in poe2_trade_filters(item) if row.stat_id == "skill.test")
-    assert bool(row.hidden_reason) is hidden
+    assert row.hidden_reason == ""
+    assert row.enabled is False
 
 
 def test_rejected_poe2_hidden_rules_are_not_applied():

@@ -2695,6 +2695,40 @@ def test_price_result_uses_currency_icons_and_keeps_text_fallback(qapp):
         window.close()
 
 
+@pytest.mark.parametrize(
+    ("currency", "filename", "tooltip"),
+    [
+        ("mirror", "MirrorofKalandra2.png", "Mirror of Kalandra"),
+        ("alch", "OrbofAlchemy2.png", "Orb of Alchemy"),
+        ("aug", "OrbofAugmentation2.png", "Orb of Augmentation"),
+        ("chance", "OrbofChance2.png", "Orb of Chance"),
+        ("transmute", "OrbofTransmutation2.png", "Orb of Transmutation"),
+        ("regal", "RegalOrb2.png", "Regal Orb"),
+        ("vaal", "VaalOrb2.png", "Vaal Orb"),
+    ],
+)
+def test_poe2_price_result_uses_extra_currency_icons(
+    qapp, currency, filename, tooltip,
+):
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    try:
+        window._show_price_result(PriceResult(
+            "Forbidden Rites", "q", 1, (PriceListing(2, currency),),
+        ))
+        row = window.price_list.topLevelItem(0)
+        cell = window.price_list.itemWidget(row, 0)
+        icon = cell.findChild(QLabel, f"priceCurrencyIcon-{currency}")
+        expected = QPixmap(str(
+            Path(__file__).resolve().parents[1] / "assets" / "icons" / filename
+        )).scaled(18, 18, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+        assert cell.findChild(QLabel, "priceCurrencyAmount").text() == "2"
+        assert icon.toolTip() == tooltip
+        assert icon.pixmap().toImage() == expected.toImage()
+    finally:
+        window.close()
+
+
 def test_currency_icon_price_column_reserves_30_percent_more_width(qapp):
     window = PoetoreWindow()
     try:
@@ -5889,6 +5923,13 @@ def test_poe2_currency_icon_names_use_supplied_assets():
     assert _price_currency_icon_filename("divine", "poe2") == "DivineOrb2.png"
     assert _price_currency_icon_filename("chaos", "poe2") == "ChaosOrb2.png"
     assert _price_currency_icon_filename("exalted", "poe2") == "ExaltedOrb2.png"
+    assert _price_currency_icon_filename("mirror", "poe2") == "MirrorofKalandra2.png"
+    assert _price_currency_icon_filename("alch", "poe2") == "OrbofAlchemy2.png"
+    assert _price_currency_icon_filename("aug", "poe2") == "OrbofAugmentation2.png"
+    assert _price_currency_icon_filename("chance", "poe2") == "OrbofChance2.png"
+    assert _price_currency_icon_filename("transmute", "poe2") == "OrbofTransmutation2.png"
+    assert _price_currency_icon_filename("regal", "poe2") == "RegalOrb2.png"
+    assert _price_currency_icon_filename("vaal", "poe2") == "VaalOrb2.png"
     assert _price_currency_icon_filename("divine", "poe1") == "DivineOrb.png"
 
 
