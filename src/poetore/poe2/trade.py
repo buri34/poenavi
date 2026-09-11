@@ -5,6 +5,7 @@ from copy import deepcopy
 from dataclasses import replace
 import json
 import re
+import threading
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
@@ -12,6 +13,7 @@ from ..models import ParsedItem
 from ..trade import (
     LISTED_WITHIN_OPTIONS, PRESET_BASE, PRESET_FINISHED,
     PriceListing, PriceResult, TradeApiError, TradeLeague, TradeStatFilter, _cached_request_json,
+    _request_json,
     _defence_at_20_quality, _group_price_listings, _property_value,
     physical_dps_at_20_quality,
 )
@@ -22,6 +24,7 @@ from .parser import SEARCHABLE_GRANTED_SKILL_AMULET_BASES, TRADE_CATEGORY_BY_CAT
 API_ROOT = "https://www.pathofexile.com/api/trade2"
 USER_AGENT = "PoENavi/poetore-poe2-development (github.com/buri34/poenavi)"
 LEAGUES_URL = f"{API_ROOT}/data/leagues?realm=poe2"
+ALTERNATE_LEAGUES_URL = f"{API_ROOT}/data/leagues"
 FALLBACK_LEAGUES = (
     TradeLeague("Forbidden Rites"),
     TradeLeague("HC Forbidden Rites", True),
@@ -30,11 +33,12 @@ FALLBACK_LEAGUES = (
     TradeLeague("Standard"),
     TradeLeague("Hardcore", True),
 )
+_BASE_LEAGUE_IDS = {"Standard", "Hardcore"}
+_last_known_good_leagues = FALLBACK_LEAGUES
+_league_cache_lock = threading.Lock()
 
 
-def available_pc_leagues() -> tuple[TradeLeague, ...]:
-    """Return only official PoE2 trade leagues in display order."""
-    data, _, _ = _cached_request_json(LEAGUES_URL)
+def _parse_pc_leagues(data: dict) -> tuple[TradeLeague, ...]:
     rows = data.get("result", ())
     leagues = []
     for row in rows:
@@ -44,6 +48,34 @@ def available_pc_leagues() -> tuple[TradeLeague, ...]:
         lowered = league_id.casefold()
         leagues.append(TradeLeague(league_id, "hardcore" in lowered or lowered.startswith("hc ")))
     return tuple(leagues)
+
+
+def _has_current_league(leagues: tuple[TradeLeague, ...]) -> bool:
+    """Reject maintenance responses that expose only permanent leagues."""
+    return any(league.id not in _BASE_LEAGUE_IDS for league in leagues)
+
+
+def available_pc_leagues(*, force_refresh: bool = False) -> tuple[TradeLeague, ...]:
+    """Return a complete official PoE2 league list, preserving the last good one."""
+    global _last_known_good_leagues
+
+    for url in (LEAGUES_URL, ALTERNATE_LEAGUES_URL):
+        try:
+            if force_refresh:
+                data, _ = _request_json(url)
+            else:
+                data, _, _ = _cached_request_json(url)
+            leagues = _parse_pc_leagues(data)
+        except Exception:
+            continue
+        if not _has_current_league(leagues):
+            continue
+        with _league_cache_lock:
+            _last_known_good_leagues = leagues
+        return leagues
+
+    with _league_cache_lock:
+        return _last_known_good_leagues or FALLBACK_LEAGUES
 
 
 def default_pc_league(leagues: tuple[TradeLeague, ...]) -> str:

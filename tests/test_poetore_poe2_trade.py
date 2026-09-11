@@ -823,6 +823,84 @@ def test_poe2_leagues_use_realm_specific_endpoint_and_auto_select_current_softco
     assert default_pc_league(leagues) == "Forbidden Rites"
 
 
+def test_poe2_leagues_retry_alternate_endpoint_when_primary_is_incomplete(monkeypatch):
+    requested_urls = []
+
+    def fake_cached_request(url):
+        requested_urls.append(url)
+        if url.endswith("?realm=poe2"):
+            return ({"result": [
+                {"id": "Standard", "realm": "poe2"},
+                {"id": "Hardcore", "realm": "poe2"},
+            ]}, {}, False)
+        return ({"result": [
+            {"id": "Forbidden Rites", "realm": "poe2"},
+            {"id": "Standard", "realm": "poe2"},
+            {"id": "PoE1 League", "realm": "pc"},
+        ]}, {}, False)
+
+    monkeypatch.setattr(poe2_trade, "_cached_request_json", fake_cached_request)
+    leagues = available_pc_leagues()
+
+    assert requested_urls == [poe2_trade.LEAGUES_URL, poe2_trade.ALTERNATE_LEAGUES_URL]
+    assert [league.id for league in leagues] == ["Forbidden Rites", "Standard"]
+
+
+def test_poe2_leagues_retry_alternate_endpoint_after_primary_error(monkeypatch):
+    requested_urls = []
+
+    def fake_cached_request(url):
+        requested_urls.append(url)
+        if url.endswith("?realm=poe2"):
+            raise TimeoutError("maintenance")
+        return ({"result": [
+            {"id": "Recovered League", "realm": "poe2"},
+            {"id": "Standard", "realm": "poe2"},
+        ]}, {}, False)
+
+    monkeypatch.setattr(poe2_trade, "_cached_request_json", fake_cached_request)
+
+    assert [league.id for league in available_pc_leagues()] == [
+        "Recovered League", "Standard",
+    ]
+    assert requested_urls == [poe2_trade.LEAGUES_URL, poe2_trade.ALTERNATE_LEAGUES_URL]
+
+
+def test_poe2_leagues_keep_last_good_list_when_both_endpoints_are_incomplete(monkeypatch):
+    previous = (poe2_trade.TradeLeague("Remembered League"),)
+    monkeypatch.setattr(poe2_trade, "_last_known_good_leagues", previous)
+    monkeypatch.setattr(
+        poe2_trade,
+        "_cached_request_json",
+        lambda _url: ({"result": [{"id": "Standard", "realm": "poe2"}]}, {}, False),
+    )
+
+    assert available_pc_leagues() == previous
+
+
+def test_poe2_manual_league_refresh_bypasses_local_response_cache(monkeypatch):
+    requested_urls = []
+
+    def fake_request(url):
+        requested_urls.append(url)
+        return ({"result": [
+            {"id": "Fresh League", "realm": "poe2"},
+            {"id": "Standard", "realm": "poe2"},
+        ]}, {})
+
+    monkeypatch.setattr(poe2_trade, "_request_json", fake_request)
+    monkeypatch.setattr(
+        poe2_trade,
+        "_cached_request_json",
+        lambda _url: pytest.fail("manual refresh must bypass the local cache"),
+    )
+
+    leagues = available_pc_leagues(force_refresh=True)
+
+    assert requested_urls == [poe2_trade.LEAGUES_URL]
+    assert [league.id for league in leagues] == ["Fresh League", "Standard"]
+
+
 def test_mageblood_option_stats_use_trade2_pipe_suffix_ids():
     text = (Path(__file__).parent / "fixtures" / "poe2" / "mageblood_ja.txt").read_text(
         encoding="utf-8"

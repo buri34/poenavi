@@ -899,7 +899,16 @@ class _PoetoreTitleBar(QWidget):
         window.league_popup_button.setFixedSize(28, 28)
         window.league_popup_button.clicked.connect(window.trade_league_combo.showPopup)
         controls_layout.addWidget(window.league_popup_button)
-        controls_layout.addStretch()
+        controls_layout.addSpacing(4)
+        window.league_refresh_button = QPushButton("再取得", self._expanded_controls)
+        window.league_refresh_button.setObjectName("leagueRefreshButton")
+        window.league_refresh_button.setToolTip("公式サイトからリーグ一覧を再取得")
+        window.league_refresh_button.setFixedSize(62, 28)
+        window.league_refresh_button.clicked.connect(
+            lambda: window.refresh_trade_leagues(force_refresh=True)
+        )
+        controls_layout.addWidget(window.league_refresh_button)
+        controls_layout.addSpacing(4)
         window.poetore_close_button = QPushButton("×", self._expanded_controls)
         window.poetore_close_button.setToolTip("閉じる")
         window.poetore_close_button.setFixedSize(28, 24)
@@ -989,7 +998,7 @@ class PoetoreWindow(QWidget):
         # リーグ欄を自動フォーカス対象にしない。
         self.trade_league_combo.setFocusPolicy(Qt.ClickFocus)
         self.trade_league_combo.lineEdit().setFocusPolicy(Qt.ClickFocus)
-        self.trade_league_combo.setFixedWidth(290)
+        self.trade_league_combo.setFixedWidth(238)
         self.trade_league_combo.setMinimumContentsLength(12)
         self.trade_league_combo.setToolTip("一覧から選択、またはPrivate League IDを直接入力")
         saved_league = self._saved_trade_league()
@@ -1940,6 +1949,17 @@ class PoetoreWindow(QWidget):
                 font-size: 11px;
                 border: none;
             }
+            QPushButton#leagueRefreshButton {
+                color: #D8E3DF;
+                background: #202629;
+                border: 1px solid #3A4245;
+                border-radius: 4px;
+                padding: 0 6px;
+                font-size: 11px;
+            }
+            QPushButton#leagueRefreshButton:hover,
+            QPushButton#leagueRefreshButton:focus { border-color: #65FFCA; }
+            QPushButton#leagueRefreshButton:disabled { color: #66706D; }
             QLabel#itemName {
                 color: #D8E3DF;
                 font-size: 15px;
@@ -2365,9 +2385,12 @@ class PoetoreWindow(QWidget):
         self._apply_related_items_layout(
             not self.related_items_panel.isHidden()
         )
-        self.trade_league_combo.setFixedWidth(self._scaled_display_value(290))
+        self.trade_league_combo.setFixedWidth(self._scaled_display_value(238))
         self.league_popup_button.setFixedSize(
             self._scaled_display_value(28), self._scaled_display_value(28)
+        )
+        self.league_refresh_button.setFixedSize(
+            self._scaled_display_value(62), self._scaled_display_value(28)
         )
         self.poetore_close_button.setFixedSize(
             self._scaled_display_value(28), self._scaled_display_value(24)
@@ -3048,16 +3071,18 @@ class PoetoreWindow(QWidget):
             self._widget_belongs_to_panel(widget)
         )
 
-    def refresh_trade_leagues(self):
+    def refresh_trade_leagues(self, *, force_refresh: bool = False):
         if self._league_refresh_started:
             return
         self._league_refresh_started = True
+        self.league_refresh_button.setEnabled(False)
+        self.league_refresh_button.setText("取得中…")
 
         def run():
             try:
                 if self.poe_version == POE2:
                     from .poe2.trade import available_pc_leagues as poe2_available_pc_leagues
-                    leagues = poe2_available_pc_leagues()
+                    leagues = poe2_available_pc_leagues(force_refresh=force_refresh)
                 else:
                     leagues = available_pc_leagues()
             except Exception:
@@ -3071,6 +3096,9 @@ class PoetoreWindow(QWidget):
         threading.Thread(target=run, daemon=True).start()
 
     def _show_trade_leagues(self, leagues):
+        self._league_refresh_started = False
+        self.league_refresh_button.setEnabled(True)
+        self.league_refresh_button.setText("再取得")
         saved = self._saved_trade_league()
         if self.poe_version == POE2:
             from .poe2.trade import default_pc_league as poe2_default_pc_league

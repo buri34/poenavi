@@ -226,7 +226,19 @@ class PoetoreSettingsDialog(QDialog):
             self.league_combo.addItem(saved_league, saved_league)
         if saved_league != "auto":
             self.league_combo.setCurrentIndex(max(0, self.league_combo.findData(saved_league)))
-        trade_form.addRow("リーグ:", self.league_combo)
+        league_row = QHBoxLayout()
+        league_row.setContentsMargins(0, 0, 0, 0)
+        league_row.setSpacing(6)
+        league_row.addWidget(self.league_combo, 1)
+        self.league_refresh_button = QPushButton("再取得")
+        self.league_refresh_button.setObjectName("leagueRefreshButton")
+        self.league_refresh_button.setToolTip("公式サイトからリーグ一覧を再取得")
+        self.league_refresh_button.setFixedWidth(72)
+        self.league_refresh_button.clicked.connect(
+            lambda: self._refresh_trade_leagues(force_refresh=True)
+        )
+        league_row.addWidget(self.league_refresh_button)
+        trade_form.addRow("リーグ:", league_row)
         trade_layout.addLayout(trade_form)
         league_note = QLabel(
             "プライベートリーグで使う場合は、リーグ名を直接手打ちで入力してください。"
@@ -464,10 +476,12 @@ class PoetoreSettingsDialog(QDialog):
         super().showEvent(event)
         self._refresh_trade_leagues()
 
-    def _refresh_trade_leagues(self):
+    def _refresh_trade_leagues(self, *, force_refresh: bool = False):
         if self._league_refresh_started:
             return
         self._league_refresh_started = True
+        self.league_refresh_button.setEnabled(False)
+        self.league_refresh_button.setText("取得中…")
 
         def run():
             try:
@@ -475,7 +489,7 @@ class PoetoreSettingsDialog(QDialog):
                     from src.poetore.poe2.trade import (
                         available_pc_leagues as poe2_available_pc_leagues,
                     )
-                    leagues = poe2_available_pc_leagues()
+                    leagues = poe2_available_pc_leagues(force_refresh=force_refresh)
                 else:
                     leagues = available_pc_leagues()
             except Exception:
@@ -489,6 +503,9 @@ class PoetoreSettingsDialog(QDialog):
         threading.Thread(target=run, daemon=True).start()
 
     def _show_trade_leagues(self, leagues):
+        self._league_refresh_started = False
+        self.league_refresh_button.setEnabled(True)
+        self.league_refresh_button.setText("再取得")
         saved = self._league_selection_value()
         if self.poe_version == POE2:
             from src.poetore.poe2.trade import (

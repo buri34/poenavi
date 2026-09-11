@@ -278,7 +278,8 @@ def test_poetore_result_display_size_scales_window_and_controls(
         assert window.height() == height
         assert window.minimumWidth() == minimum_width
         assert f"font-size: {font_px}px" in window.styleSheet()
-        assert window.trade_league_combo.width() == round(290 * font_px / 12)
+        assert window.trade_league_combo.width() == round(238 * font_px / 12)
+        assert window.league_refresh_button.width() == round(62 * font_px / 12)
         assert window.mod_filter_tree.minimumHeight() > 0
         assert window.price_list.minimumHeight() > 0
     finally:
@@ -1101,9 +1102,12 @@ def test_poetore_title_bar_keeps_close_button(qapp):
     try:
         assert window.trade_league_combo.parentWidget() is window._title_bar._expanded_controls
         assert window._title_bar._expanded_controls.parentWidget().objectName() == "poetoreTitleBar"
-        assert window.trade_league_combo.width() == 338
+        assert window.trade_league_combo.width() == 278
         assert window.league_popup_button.text() == "▼"
         assert window.league_popup_button.toolTip() == "リーグ一覧を開く"
+        assert window.league_refresh_button.text() == "再取得"
+        assert window.league_refresh_button.toolTip() == "公式サイトからリーグ一覧を再取得"
+        assert window.league_refresh_button.parentWidget() is window._title_bar._expanded_controls
         close_buttons = [
             button for button in window.findChildren(QPushButton)
             if button.toolTip() == "閉じる" and button.text() == "×"
@@ -2037,6 +2041,35 @@ def test_poetore_league_choices_include_sc_hc_and_persist(qapp):
         window._persist_trade_league()
         assert config["poetore"]["league"] == "My League (PL99999)"
         assert window._selected_trade_league() == "My League (PL99999)"
+    finally:
+        window.close()
+
+
+def test_poe2_title_bar_refresh_button_forces_a_fresh_league_request(qapp, monkeypatch):
+    requested = []
+
+    class ImmediateThread:
+        def __init__(self, *, target, daemon):
+            self.target = target
+
+        def start(self):
+            self.target()
+
+    monkeypatch.setattr("src.poetore.ui.threading.Thread", ImmediateThread)
+    monkeypatch.setattr(
+        "src.poetore.poe2.trade.available_pc_leagues",
+        lambda *, force_refresh=False: (
+            requested.append(force_refresh) or (TradeLeague("Fresh League"),)
+        ),
+    )
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.league_refresh_button.click()
+
+        assert requested == [True]
+        assert window.trade_league_combo.itemText(0) == "自動（現行SC: Fresh League）"
+        assert window.league_refresh_button.isEnabled()
+        assert window.league_refresh_button.text() == "再取得"
     finally:
         window.close()
 

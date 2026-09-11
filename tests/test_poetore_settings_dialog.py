@@ -266,6 +266,9 @@ def test_poetore_settings_league_choices_match_trade_window_and_allow_manual_inp
         dialog.league_combo.itemData(index)
         for index in range(dialog.league_combo.count())
     ] == ["auto", "Standard", "Allflame", "Hardcore Allflame"]
+    assert dialog.league_refresh_button.text() == "再取得"
+    assert dialog.league_refresh_button.toolTip() == "公式サイトからリーグ一覧を再取得"
+    assert dialog.league_refresh_button.isEnabled()
 
     dialog.league_combo.setEditText("My Private League")
     assert dialog.get_settings()["poetore"]["league"] == "My Private League"
@@ -290,6 +293,35 @@ def test_poe2_league_selection_uses_same_ui_but_separate_setting():
     settings = dialog.get_settings()["poetore"]
     assert settings["league"] == "Allflame"
     assert settings["league_poe2"] == "Runes of Aldur"
+    dialog.close()
+
+
+def test_poe2_settings_refresh_button_forces_a_fresh_league_request(monkeypatch):
+    requested = []
+
+    class ImmediateThread:
+        def __init__(self, *, target, daemon):
+            self.target = target
+
+        def start(self):
+            self.target()
+
+    monkeypatch.setattr("src.ui.poetore_settings_dialog.threading.Thread", ImmediateThread)
+    monkeypatch.setattr(
+        "src.poetore.poe2.trade.available_pc_leagues",
+        lambda *, force_refresh=False: (
+            requested.append(force_refresh) or (TradeLeague("Fresh League"),)
+        ),
+    )
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={"poe_version": "poe2"})
+
+    dialog.league_refresh_button.click()
+
+    assert requested == [True]
+    assert dialog.league_combo.itemText(0) == "自動（現行SC: Fresh League）"
+    assert dialog.league_refresh_button.isEnabled()
+    assert dialog.league_refresh_button.text() == "再取得"
     dialog.close()
 
 
