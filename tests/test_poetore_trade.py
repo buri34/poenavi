@@ -1,9 +1,11 @@
-from dataclasses import replace
 import json
-import pytest
+from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlsplit
+
+import pytest
+import urllib3
 
 from src.poetore.parser import parse_item_text
 from src.poetore.metadata import unique_fixed_stats
@@ -39,6 +41,19 @@ from src.poetore.trade import (
     _japanese_trade_item_name,
     _japanese_trade_item_type,
 )
+
+
+@pytest.fixture(autouse=True)
+def _isolate_trade_api_test_state(monkeypatch):
+    """Keep synthetic requests out of user logs and limiter state isolated."""
+    monkeypatch.setattr(
+        "src.poetore.trade.record_trade_api_event", lambda *_args, **_kwargs: None,
+    )
+    _trade_rate_limiter.reset()
+    _trade2_rate_limiter.reset()
+    yield
+    _trade_rate_limiter.reset()
+    _trade2_rate_limiter.reset()
 
 
 def test_value_for_template_uses_single_placeholder_not_fixed_number():
@@ -435,7 +450,11 @@ def test_trade_api_surfaces_rate_limit_immediately():
     response = SimpleNamespace(
         status=429, headers={"Retry-After": "580"}, data=b"{}",
     )
-    with patch("src.poetore.trade._trade_http_pool.request", return_value=response) as request:
+    with patch(
+        "src.poetore.trade._trade_http_pool.request", return_value=response,
+    ) as request, patch(
+        "src.poetore.trade.record_trade_api_event",
+    ) as record_event:
         with pytest.raises(Exception) as exc_info:
             _request_json("https://example.invalid", {"query": {}})
     assert str(exc_info.value) == (
@@ -444,6 +463,8 @@ def test_trade_api_surfaces_rate_limit_immediately():
     )
     request.assert_called_once()
     assert request.call_args.kwargs["retries"] is False
+    assert record_event.call_args.kwargs["status"] == 429
+    assert record_event.call_args.kwargs["outcome"] == "http_error"
 
 
 def test_trade_api_surfaces_rate_limit_without_retry_after():
@@ -481,6 +502,128 @@ def test_trade_http_pool_reuses_connections_without_automatic_retries():
 
     assert request.call_count == 2
     assert all(call.kwargs["retries"] is False for call in request.call_args_list)
+
+
+def test_trade_api_retries_read_timeout_once_with_fresh_connection_and_diagnostics(capsys):
+    response = SimpleNamespace(status=200, headers={}, data=b'{"ok":true}')
+    timeout = urllib3.exceptions.ReadTimeoutError(
+        None, "https://example.invalid/api/trade/search/Standard", "timed out",
+    )
+    payload = {
+        "query": {
+            "stats": [{
+                "type": "and",
+                "filters": [{"id": "explicit.stat_1"}, {"id": "explicit.stat_2"}],
+            }],
+        },
+    }
+    with patch(
+        "src.poetore.trade._trade_http_pool.request",
+        side_effect=[timeout, response],
+    ) as request, patch(
+        "src.poetore.trade._trade_http_pool.clear",
+    ) as clear, patch(
+        "src.poetore.trade.record_trade_api_event",
+    ) as record_event:
+        assert _request_json(
+            "https://example.invalid/api/trade/search/Standard", payload,
+        )[0] == {"ok": True}
+
+    assert request.call_count == 2
+    clear.assert_called_once_with()
+    assert all(
+        call.kwargs["timeout"].total == 20
+        for call in request.call_args_list
+    )
+    output = capsys.readouterr().out
+    assert "stage=search_post" in output
+    assert "mod_filters=2" in output
+    assert "attempt=1" in output
+    assert "status=none" in output
+    assert "outcome=retrying" in output
+    assert "attempt=2" in output
+    assert "status=200" in output
+    assert "outcome=success" in output
+    assert [call.kwargs["outcome"] for call in record_event.call_args_list] == [
+        "retrying", "success",
+    ]
+    assert all("url" not in call.kwargs for call in record_event.call_args_list)
+    assert all("payload" not in call.kwargs for call in record_event.call_args_list)
+
+
+def test_trade_api_retries_read_timeout_only_once_for_result_fetch(capsys):
+    timeout = urllib3.exceptions.ReadTimeoutError(
+        None, "https://example.invalid/api/trade/fetch/a?query=q", "timed out",
+    )
+    with patch(
+        "src.poetore.trade._trade_http_pool.request",
+        side_effect=[timeout, timeout],
+    ) as request, patch(
+        "src.poetore.trade._trade_http_pool.clear",
+    ) as clear:
+        with pytest.raises(TradeApiError, match="接続に失敗"):
+            _request_json("https://example.invalid/api/trade/fetch/a?query=q")
+
+    assert request.call_count == 2
+    clear.assert_called_once_with()
+    output = capsys.readouterr().out
+    assert "stage=result_fetch_get" in output
+    assert "mod_filters=0" in output
+    assert "attempt=2" in output
+    assert "outcome=failed" in output
+
+
+def test_trade_api_does_not_retry_non_read_timeout(capsys):
+    error = urllib3.exceptions.ConnectTimeoutError(
+        None, "https://example.invalid", "connect timed out",
+    )
+    with patch(
+        "src.poetore.trade._trade_http_pool.request", side_effect=error,
+    ) as request, patch(
+        "src.poetore.trade._trade_http_pool.clear",
+    ) as clear:
+        with pytest.raises(TradeApiError, match="接続に失敗"):
+            _request_json("https://example.invalid/api/trade/search/Standard", {"query": {}})
+
+    request.assert_called_once()
+    clear.assert_not_called()
+    assert "outcome=failed" in capsys.readouterr().out
+
+
+def test_trade2_search_persists_sanitized_stage_mod_count_and_status():
+    response = SimpleNamespace(
+        status=200, headers={}, data=b'{"id":"query-id","result":[]}',
+    )
+    payload = {
+        "query": {
+            "stats": [
+                {"type": "and", "filters": [
+                    {"id": "explicit.stat_1"},
+                    {"id": "explicit.stat_2"},
+                ]},
+                {"type": "not", "filters": [{"id": "explicit.stat_3"}]},
+            ],
+        },
+    }
+    with patch(
+        "src.poetore.trade._trade_http_pool.request", return_value=response,
+    ), patch(
+        "src.poetore.trade.record_trade_api_event",
+    ) as record_event:
+        _request_json(
+            "https://www.pathofexile.com/api/trade2/search/poe2/Standard",
+            payload,
+        )
+
+    details = record_event.call_args.kwargs
+    assert details["stage"] == "search_post"
+    assert details["method"] == "POST"
+    assert details["mod_filters"] == 3
+    assert details["status"] == 200
+    assert details["outcome"] == "success"
+    assert details["elapsed_ms"] >= 0
+    assert "url" not in details
+    assert "payload" not in details
 
 
 def test_weapon_search_uses_english_base_rarity_and_comparable_pdps():

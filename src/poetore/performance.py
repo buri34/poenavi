@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from itertools import count
 import json
-from pathlib import Path
-from queue import SimpleQueue
 import threading
 import time
-from typing import Callable
+from collections.abc import Callable
+from datetime import datetime, timezone
+from itertools import count
+from pathlib import Path
+from queue import SimpleQueue
 
 from src.utils.config_manager import ConfigManager
 
@@ -82,6 +82,16 @@ def record_hotkey_event(event: str, **details) -> None:
     _queue_record({
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
         "source": "suppressed_hotkey",
+        "event": event,
+        **details,
+    })
+
+
+def record_trade_api_event(event: str, **details) -> None:
+    """Persist sanitized Trade API diagnostics without blocking a search."""
+    _queue_record({
+        "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+        "source": "trade_api",
         "event": event,
         **details,
     })

@@ -16,7 +16,7 @@ import urllib3
 
 from .categories import is_armour_category, is_equipment_category, is_weapon_category
 from .models import ParsedItem
-from .performance import SearchPerformanceTrace
+from .performance import SearchPerformanceTrace, record_trade_api_event
 from .metadata import (
     base_armour_bounds, default_metadata_index, gem_metadata, multi_value_rule,
     normalize_stat_text,
@@ -44,6 +44,8 @@ LISTED_WITHIN_OPTIONS = {
 }
 TRADE_CACHE_TTL = 300.0
 TRADE_CACHE_MAX_ENTRIES = 128
+TRADE_REQUEST_TIMEOUT_SECONDS = 20
+TRADE_READ_TIMEOUT_MAX_ATTEMPTS = 2
 TRADE_CURRENCY_OPTIONS = {
     "any": None,
     "chaos": "chaos",
@@ -770,6 +772,70 @@ _trade_http_pool = urllib3.PoolManager(num_pools=2, maxsize=1, block=True)
 _trade_http_request_lock = threading.Lock()
 
 
+def _trade_request_stage(url: str, payload: dict | None) -> str:
+    path = urlsplit(url).path
+    if "/search/" in path and payload is not None:
+        return "search_post"
+    if "/fetch/" in path:
+        return "result_fetch_get"
+    return "metadata"
+
+
+def _trade_request_mod_filter_count(payload: dict | None) -> int:
+    if not isinstance(payload, dict):
+        return 0
+    query = payload.get("query")
+    if not isinstance(query, dict):
+        return 0
+    groups = query.get("stats")
+    if not isinstance(groups, list):
+        return 0
+    return sum(
+        len(group.get("filters", ()))
+        for group in groups
+        if isinstance(group, dict) and isinstance(group.get("filters"), list)
+    )
+
+
+def _is_read_timeout(exc: Exception) -> bool:
+    if isinstance(exc, urllib3.exceptions.ReadTimeoutError):
+        return True
+    return (
+        isinstance(exc, urllib3.exceptions.MaxRetryError)
+        and isinstance(exc.reason, urllib3.exceptions.ReadTimeoutError)
+    )
+
+
+def _trade_request_diagnostic(
+    *, stage: str, method: str, mod_filters: int, attempt: int,
+    elapsed: float, status: int | None, outcome: str,
+    error_type: str | None = None,
+) -> None:
+    fields = [
+        f"stage={stage}",
+        f"method={method}",
+        f"mod_filters={mod_filters}",
+        f"attempt={attempt}",
+        f"elapsed_seconds={elapsed:.3f}",
+        f"status={status if status is not None else 'none'}",
+        f"outcome={outcome}",
+    ]
+    if error_type:
+        fields.append(f"error_type={error_type}")
+    _trade_log("diagnostic: " + " ".join(fields))
+    record_trade_api_event(
+        "request_completed",
+        stage=stage,
+        method=method,
+        mod_filters=mod_filters,
+        attempt=attempt,
+        elapsed_ms=round(elapsed * 1000, 3),
+        status=status,
+        outcome=outcome,
+        error_type=error_type,
+    )
+
+
 def _cached_request_json(
     url: str,
     payload: dict | None = None,
@@ -794,28 +860,62 @@ def _request_json(url: str, payload: dict | None = None) -> tuple[dict, object]:
     if data is not None:
         headers["Content-Type"] = "application/json"
     method = "POST" if data is not None else "GET"
+    stage = _trade_request_stage(url, payload)
+    mod_filters = _trade_request_mod_filter_count(payload)
     rate_limiter, rate_policy = _rate_limit_context(url)
-    try:
-        # retries=False keeps the request count exactly one per call. The lock
-        # preserves sequential API use; PoolManager only reuses its TCP/TLS link.
-        with _trade_http_request_lock:
+    response = None
+    response_elapsed = 0.0
+    response_attempt = 1
+    # urllib3's own retries stay disabled. Only a read timeout gets one explicit
+    # retry after clearing pooled connections, so HTTP errors and connect errors
+    # are never duplicated.
+    with _trade_http_request_lock:
+        for attempt in range(1, TRADE_READ_TIMEOUT_MAX_ATTEMPTS + 1):
             if rate_limiter is not None and rate_policy is not None:
                 waited = rate_limiter.wait_and_borrow(rate_policy)
                 if waited > 0:
                     _trade_log(
                         f"rate limit wait: policy={rate_policy} seconds={waited:.3f}"
                     )
-            response = _trade_http_pool.request(
-                method, url, body=data, headers=headers,
-                timeout=urllib3.Timeout(total=15), retries=False,
-            )
-    except Exception as exc:
-        _trade_log(f"request failed: {method} {url} error={exc!r}")
-        raise TradeApiError(f"PoE Trade APIへの接続に失敗しました: {exc}") from exc
+            started = time.monotonic()
+            try:
+                response = _trade_http_pool.request(
+                    method, url, body=data, headers=headers,
+                    timeout=urllib3.Timeout(total=TRADE_REQUEST_TIMEOUT_SECONDS),
+                    retries=False,
+                )
+                response_elapsed = time.monotonic() - started
+                response_attempt = attempt
+                break
+            except Exception as exc:
+                elapsed = time.monotonic() - started
+                retrying = (
+                    attempt < TRADE_READ_TIMEOUT_MAX_ATTEMPTS
+                    and _is_read_timeout(exc)
+                )
+                _trade_request_diagnostic(
+                    stage=stage, method=method, mod_filters=mod_filters,
+                    attempt=attempt, elapsed=elapsed, status=None,
+                    outcome="retrying" if retrying else "failed",
+                    error_type=type(exc).__name__,
+                )
+                if retrying:
+                    _trade_http_pool.clear()
+                    continue
+                _trade_log(f"request failed: {method} {url} error={exc!r}")
+                raise TradeApiError(
+                    f"PoE Trade APIへの接続に失敗しました: {exc}"
+                ) from exc
+    assert response is not None
     if rate_limiter is not None and rate_policy is not None:
         rate_limiter.adjust(rate_policy, response.headers)
     body = response.data.decode("utf-8", errors="replace")
     if response.status == 429:
+        _trade_request_diagnostic(
+            stage=stage, method=method, mod_filters=mod_filters,
+            attempt=response_attempt, elapsed=response_elapsed,
+            status=response.status, outcome="http_error",
+        )
         try:
             retry_after = max(0, int(float(response.headers.get("Retry-After", ""))))
         except (AttributeError, TypeError, ValueError):
@@ -839,16 +939,32 @@ def _request_json(url: str, payload: dict | None = None) -> tuple[dict, object]:
             f"request failed: {method} {url} status={response.status} "
             f"api_message={api_message!r}"
         )
+        _trade_request_diagnostic(
+            stage=stage, method=method, mod_filters=mod_filters,
+            attempt=response_attempt, elapsed=response_elapsed,
+            status=response.status, outcome="http_error",
+        )
         detail = f"（{api_message}）" if api_message else ""
         raise TradeApiError(
             f"PoE Trade APIが検索条件を受理しませんでした: "
             f"HTTP {response.status}{detail}"
         )
     try:
-        return json.loads(body), response.headers
+        parsed = json.loads(body)
     except json.JSONDecodeError as exc:
+        _trade_request_diagnostic(
+            stage=stage, method=method, mod_filters=mod_filters,
+            attempt=response_attempt, elapsed=response_elapsed,
+            status=response.status, outcome="invalid_json",
+        )
         _trade_log(f"request failed: {method} {url} invalid JSON")
         raise TradeApiError(f"PoE Trade APIから不正な応答を受信しました: {exc}") from exc
+    _trade_request_diagnostic(
+        stage=stage, method=method, mod_filters=mod_filters,
+        attempt=response_attempt, elapsed=response_elapsed,
+        status=response.status, outcome="success",
+    )
+    return parsed, response.headers
 
 
 def active_pc_league() -> str:
