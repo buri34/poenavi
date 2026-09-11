@@ -95,3 +95,57 @@ def set_native_window_topmost(widget, enabled: bool) -> bool:
     except Exception as exc:
         print(f"[MINI NAVI] topmost update failed: {exc}")
         return False
+
+
+def native_window_z_order_state(widget, foreground_hwnd=None) -> dict:
+    """Return privacy-safe topmost and relative Z-order state for diagnostics."""
+    unknown = {"topmost": None, "foreground_above": None}
+    if sys.platform != "win32" or widget is None:
+        return unknown
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        user32 = ctypes.windll.user32
+        hwnd = int(widget.winId())
+        if not hwnd:
+            return unknown
+
+        GWL_EXSTYLE = -20
+        WS_EX_TOPMOST = 0x00000008
+        GW_HWNDNEXT = 2
+        user32.GetWindowLongW.argtypes = [wintypes.HWND, ctypes.c_int]
+        user32.GetWindowLongW.restype = ctypes.c_long
+        user32.GetTopWindow.argtypes = [wintypes.HWND]
+        user32.GetTopWindow.restype = wintypes.HWND
+        user32.GetWindow.argtypes = [wintypes.HWND, wintypes.UINT]
+        user32.GetWindow.restype = wintypes.HWND
+
+        ex_style = int(user32.GetWindowLongW(wintypes.HWND(hwnd), GWL_EXSTYLE))
+        foreground_above = None
+        foreground = int(foreground_hwnd or 0)
+        if foreground:
+            widget_index = None
+            foreground_index = None
+            current = user32.GetTopWindow(None)
+            for index in range(4096):
+                current_value = int(current or 0)
+                if not current_value:
+                    break
+                if current_value == hwnd:
+                    widget_index = index
+                if current_value == foreground:
+                    foreground_index = index
+                if widget_index is not None and foreground_index is not None:
+                    break
+                current = user32.GetWindow(current, GW_HWNDNEXT)
+            if widget_index is not None and foreground_index is not None:
+                foreground_above = foreground_index < widget_index
+
+        return {
+            "topmost": bool(ex_style & WS_EX_TOPMOST),
+            "foreground_above": foreground_above,
+        }
+    except Exception as exc:
+        print(f"[MINI NAVI] Z-order diagnostic failed: {exc}")
+        return unknown

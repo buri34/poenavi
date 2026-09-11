@@ -1,6 +1,10 @@
 from unittest.mock import patch
 
-from src.poetore.performance import SearchPerformanceTrace, record_trade_api_event
+from src.poetore.performance import (
+    SearchPerformanceTrace,
+    record_mini_navi_topmost_event,
+    record_trade_api_event,
+)
 
 
 def test_search_performance_trace_records_elapsed_and_delta_with_one_id():
@@ -51,3 +55,27 @@ def test_trade_api_diagnostic_record_contains_only_sanitized_fields():
     assert "url" not in record
     assert "payload" not in record
     assert "cookie" not in record
+
+
+def test_mini_navi_topmost_record_contains_only_timing_and_z_order_state():
+    with patch("src.poetore.performance._queue_record") as queue_record:
+        record_mini_navi_topmost_event(
+            "transition",
+            desired=False,
+            tick_gap_ms=3012.5,
+            foreground_kind="other",
+            overlay_topmost_after=False,
+            foreground_above_overlay=False,
+        )
+
+    record = queue_record.call_args.args[0]
+    assert record["source"] == "mini_navi_topmost"
+    assert record["event"] == "transition"
+    assert record["desired"] is False
+    assert record["tick_gap_ms"] == 3012.5
+    assert record["foreground_kind"] == "other"
+    assert record["overlay_topmost_after"] is False
+    assert record["foreground_above_overlay"] is False
+    assert "window_title" not in record
+    assert "process_path" not in record
+    assert "hwnd" not in record

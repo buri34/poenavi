@@ -97,6 +97,16 @@ def record_trade_api_event(event: str, **details) -> None:
     })
 
 
+def record_mini_navi_topmost_event(event: str, **details) -> None:
+    """Persist sanitized MiniNavi topmost timing and Z-order diagnostics."""
+    _queue_record({
+        "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+        "source": "mini_navi_topmost",
+        "event": event,
+        **details,
+    })
+
+
 class SearchPerformanceTrace:
     """Record elapsed and inter-stage time without blocking the UI on file I/O."""
 

@@ -106,6 +106,57 @@ class MiniNaviStandaloneTest(unittest.TestCase):
                 finally:
                     self._dispose_overlay(overlay, main)
 
+    def test_topmost_diagnostics_distinguish_timer_stall_from_z_order_delay(self):
+        main = QWidget()
+        main.config = {
+            "mini_guide_overlay": {
+                "enabled": True,
+                "topmost_mode": "poe_only",
+            }
+        }
+        with (
+            patch("src.ui.mini_navi.get_foreground_window", return_value=123),
+            patch("src.ui.mini_navi.is_path_of_exile_window", return_value=True),
+            patch("src.ui.mini_navi.set_native_window_topmost"),
+        ):
+            overlay = MiniNaviOverlay(main)
+        try:
+            overlay._last_topmost_state = True
+            overlay._last_topmost_tick_at = 10.0
+            z_state = {"topmost": False, "foreground_above": False}
+            with (
+                patch("src.ui.mini_navi.sys.platform", "win32"),
+                patch("src.ui.mini_navi.time.perf_counter", side_effect=(13.0, 16.05)),
+                patch("src.ui.mini_navi.get_foreground_window", return_value=456),
+                patch("src.ui.mini_navi.is_path_of_exile_window", return_value=False),
+                patch("src.ui.mini_navi.set_native_window_topmost", return_value=True),
+                patch("src.ui.mini_navi.native_window_z_order_state", return_value=z_state),
+                patch("src.ui.mini_navi.record_mini_navi_topmost_event") as record_event,
+                patch("src.ui.mini_navi.QTimer.singleShot") as single_shot,
+            ):
+                overlay._refresh_topmost_state()
+
+                transition = record_event.call_args_list[0].kwargs
+                self.assertEqual(transition["tick_gap_ms"], 3000.0)
+                self.assertFalse(transition["desired"])
+                self.assertEqual(transition["foreground_kind"], "other")
+                self.assertFalse(transition["overlay_topmost_after"])
+                self.assertFalse(transition["foreground_above_overlay"])
+                self.assertEqual(
+                    [call.args[0] for call in single_shot.call_args_list],
+                    [100, 500, 1500, 3000],
+                )
+
+                sample_3000 = single_shot.call_args_list[-1].args[1]
+                sample_3000()
+                sample = record_event.call_args_list[-1].kwargs
+                self.assertEqual(sample["requested_delay_ms"], 3000)
+                self.assertEqual(sample["actual_delay_ms"], 3050.0)
+                self.assertEqual(sample["foreground_kind"], "other")
+                self.assertFalse(sample["foreground_above_overlay"])
+        finally:
+            self._dispose_overlay(overlay, main)
+
     def test_clicking_mini_navi_keeps_poe_as_active_context(self):
         main = QWidget()
         main.config = {
