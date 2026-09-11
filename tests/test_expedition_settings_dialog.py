@@ -111,6 +111,14 @@ def test_expedition_dialog_saves_status_hotkey_and_region():
     dialog.close()
 
 
+def test_expedition_enabled_checkbox_uses_shared_blue_style():
+    QApplication.instance() or QApplication([])
+    dialog = ExpeditionSettingsDialog()
+
+    assert "poenavi_check_4488ff.png" in dialog.enabled_checkbox.styleSheet()
+    dialog.close()
+
+
 def test_expedition_dialog_accepts_unmodified_hotkey():
     QApplication.instance() or QApplication([])
     dialog = ExpeditionSettingsDialog(hotkey="e")

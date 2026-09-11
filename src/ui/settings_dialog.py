@@ -1968,23 +1968,6 @@ class SettingsDialog(QDialog):
             f"color: {theme.muted_text}; font-size: 13px;"
         )
         startup_layout.addWidget(self.startup_change_note)
-        startup_layout.addSpacing(13)
-        self.windows_autostart_poetore_checkbox = QCheckBox(
-            "Windowsログイン時にぽえとれを自動起動"
-        )
-        self.windows_autostart_poetore_checkbox.setChecked(
-            bool(startup_config.get("windows_autostart_poetore", False))
-        )
-        Styles.apply_checkbox_style(self.windows_autostart_poetore_checkbox)
-        startup_layout.addWidget(self.windows_autostart_poetore_checkbox)
-        self.windows_autostart_note = QLabel(
-            "有効にすると、次回のWindowsログイン時からぽえとれを自動起動します。"
-        )
-        self.windows_autostart_note.setWordWrap(True)
-        self.windows_autostart_note.setStyleSheet(
-            f"color: {theme.muted_text}; font-size: 13px;"
-        )
-        startup_layout.addWidget(self.windows_autostart_note)
         general_layout.addWidget(startup_group)
         self._refresh_app_mode_availability()
         
@@ -3312,9 +3295,7 @@ class SettingsDialog(QDialog):
         skip_selector = self.skip_startup_selector_checkbox.isChecked()
         startup_config["show_mode_selector"] = not skip_selector
         startup_config["preferred_mode"] = normalize_app_mode(selected_app_mode)
-        startup_config["windows_autostart_poetore"] = (
-            self.windows_autostart_poetore_checkbox.isChecked()
-        )
+        startup_config.setdefault("windows_autostart_poetore", False)
         poetore_config = dict(self.current_config.get("poetore", {}))
         voicevox_config = self.current_config.get("voicevox", {})
         voicevox_config = dict(voicevox_config) if isinstance(voicevox_config, dict) else {}

@@ -106,43 +106,33 @@ def test_poe_version_and_app_mode_are_in_one_startup_group(qapp):
     dialog.close()
 
 
-def test_startup_controls_have_one_shared_checkbox(qapp):
+def test_poENavi_startup_controls_do_not_show_poetore_autostart(qapp):
     dialog = SettingsDialog(current_config={})
     assert [radio.text() for radio in dialog.app_mode_radios.values()] == [
         "ぽえなび", "ぽえとれ"
     ]
     assert dialog.skip_startup_selector_checkbox.text() == "次回からこの設定で直接起動"
-    assert dialog.windows_autostart_poetore_checkbox.text() == (
-        "Windowsログイン時にぽえとれを自動起動"
-    )
-    assert not dialog.windows_autostart_poetore_checkbox.isChecked()
     layout = dialog.skip_startup_selector_checkbox.parentWidget().layout()
     direct_index = layout.indexOf(dialog.skip_startup_selector_checkbox)
     assert layout.itemAt(direct_index + 1).widget() is dialog.startup_change_note
     assert dialog.startup_change_note.text() == (
         "PoEバージョン・起動モードの変更は、次回起動時から適用されます。"
     )
-    assert layout.itemAt(direct_index + 2).spacerItem().sizeHint().height() == 13
-    assert layout.itemAt(direct_index + 3).widget() is (
-        dialog.windows_autostart_poetore_checkbox
-    )
-    assert layout.itemAt(direct_index + 4).widget() is dialog.windows_autostart_note
-    assert dialog.windows_autostart_note.text() == (
-        "有効にすると、次回のWindowsログイン時からぽえとれを自動起動します。"
-    )
+    assert layout.count() == direct_index + 2
+    assert not hasattr(dialog, "windows_autostart_poetore_checkbox")
+    assert not hasattr(dialog, "windows_autostart_note")
     assert not hasattr(dialog, "poe_version_mode_combo")
     assert not hasattr(dialog, "app_mode_startup_combo")
     dialog.close()
 
 
-def test_settings_saves_windows_poetore_autostart(qapp):
+def test_poENavi_settings_preserve_hidden_windows_poetore_autostart(qapp):
     dialog = SettingsDialog(current_config={
         "startup": {"windows_autostart_poetore": True}
     })
 
-    assert dialog.windows_autostart_poetore_checkbox.isChecked()
-    dialog.windows_autostart_poetore_checkbox.setChecked(False)
-    assert dialog.get_settings()["startup"]["windows_autostart_poetore"] is False
+    assert not hasattr(dialog, "windows_autostart_poetore_checkbox")
+    assert dialog.get_settings()["startup"]["windows_autostart_poetore"] is True
     dialog.close()
 
 

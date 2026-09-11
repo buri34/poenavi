@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
 )
 from src.ui.app_theme import POENAVI_THEME
 from src.ui.settings_dialog import HotkeyButton
+from src.ui.styles import Styles
 
 
 def normalized_custom_commands(value) -> list[dict]:
@@ -78,6 +79,7 @@ class CustomCommandSettingsWidget(QWidget):
         self.table.setRowHeight(row, self.ROW_HEIGHT)
         enabled = QCheckBox()
         enabled.setChecked(bool(command.get("enabled", True)))
+        Styles.apply_checkbox_style(enabled)
         holder = QWidget()
         holder_layout = QHBoxLayout(holder)
         holder_layout.setContentsMargins(0, 0, 0, 0)

@@ -32,6 +32,7 @@ from src.ui.app_info_widget import AppInfoWidget
 from src.ui.app_theme import SETTINGS_THEME
 from src.ui.custom_command_settings import CustomCommandSettingsWidget
 from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
+from src.ui.styles import Styles
 from src.utils.feature_support import POETORE, is_feature_supported
 from src.utils.global_hotkeys import find_duplicate_hotkeys
 from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_poe_label
@@ -381,6 +382,9 @@ class PoetoreSettingsDialog(QDialog):
         buttons.addWidget(cancel)
         buttons.addWidget(save)
         root.addLayout(buttons)
+
+        for checkbox in self.findChildren(QCheckBox):
+            Styles.apply_checkbox_style(checkbox)
 
     @staticmethod
     def _style_sheet():

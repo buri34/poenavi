@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import (
     QApplication,
+    QCheckBox,
     QDialog,
     QGroupBox,
     QLabel,
@@ -362,6 +363,26 @@ def test_poetore_windows_autostart_has_blank_line_and_saves_setting():
     )
     checkbox.setChecked(False)
     assert dialog.get_settings()["startup"]["windows_autostart_poetore"] is False
+    dialog.close()
+
+
+def test_poetore_settings_uses_shared_blue_checkbox_style_everywhere():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "custom_commands": [{
+            "enabled": True,
+            "name": "hideout",
+            "hotkey": "ctrl+h",
+            "command": "/hideout",
+        }]
+    })
+
+    checkboxes = dialog.findChildren(QCheckBox)
+    assert checkboxes
+    assert all(
+        "poenavi_check_4488ff.png" in checkbox.styleSheet()
+        for checkbox in checkboxes
+    )
     dialog.close()
 
 

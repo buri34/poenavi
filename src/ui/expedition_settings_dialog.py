@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 from src.poetore.window_position import path_of_exile_client_rect
 from src.ui.app_theme import SETTINGS_THEME
 from src.ui.settings_dialog import AutoHideHotkeyWidget
+from src.ui.styles import Styles
 
 MIN_SELECTION_WIDTH_RATIO = 0.05
 MIN_SELECTION_HEIGHT_RATIO = 0.05
@@ -232,6 +233,7 @@ class ExpeditionSettingsDialog(QDialog):
 
         self.enabled_checkbox = QCheckBox("報酬価格表示を有効にする")
         self.enabled_checkbox.setChecked(bool(self._config.get("enabled", False)))
+        Styles.apply_checkbox_style(self.enabled_checkbox)
         root.addWidget(self.enabled_checkbox)
 
         hotkey_form = QFormLayout()
