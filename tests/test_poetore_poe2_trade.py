@@ -994,11 +994,11 @@ def test_chiming_staff_exposes_every_sigil_level_as_a_mod_filter(level):
     assert item.base_type == "Chiming Staff"
     assert rows["skill.sigil_of_power"].kind == "skill"
     assert rows["skill.sigil_of_power"].read_value == level
-    assert rows["skill.sigil_of_power"].enabled is False
+    assert rows["skill.sigil_of_power"].enabled is True
     assert rows["skill.sigil_of_power"].hidden_reason == ""
 
 
-def test_non_chiming_granted_skill_is_a_visible_unchecked_mod_filter():
+def test_non_chiming_granted_skill_is_a_visible_checked_mod_filter():
     text = """アイテムクラス: セプター
 レアリティ: ノーマル
 神殿のセプター
@@ -1015,7 +1015,7 @@ def test_non_chiming_granted_skill_is_a_visible_unchecked_mod_filter():
     )
     assert skill.kind == "skill"
     assert skill.read_value == 20
-    assert skill.enabled is False
+    assert skill.enabled is True
     assert skill.hidden_reason == ""
 
 
@@ -1054,13 +1054,10 @@ def test_level_less_granted_skill_with_trade_stat_is_visible_and_searchable():
 
     assert skill.text == "スキルを付与: パリィ"
     assert skill.read_value is None
-    assert skill.enabled is False
+    assert skill.enabled is True
     assert skill.hidden_reason == ""
 
-    checked_rows = tuple(
-        replace(row, enabled=True) if row is skill else row for row in rows
-    )
-    query = build_search_query(item, stat_filters=checked_rows)["query"]
+    query = build_search_query(item, stat_filters=rows)["query"]
     assert {row["id"]: row for row in query["stats"][0]["filters"]}[
         "skill.parry"
     ] == {"id": "skill.parry"}
@@ -1092,15 +1089,12 @@ def test_absent_amulet_exposes_low_level_rhoa_mount_from_actual_copy_text():
     assert skill.text == "スキルを付与: レベル14 ロアマウント"
     assert skill.kind == "skill"
     assert skill.read_value == 14
-    assert skill.enabled is False
+    assert skill.enabled is True
     assert skill.hidden_reason == ""
 
-    enabled = tuple(
-        replace(row, enabled=True)
-        if row.stat_id == "skill.summon_rhoa_mount" else row
-        for row in rows.values()
-    )
-    sent = build_search_query(item, stat_filters=enabled)["query"]["stats"][0]["filters"]
+    sent = build_search_query(
+        item, stat_filters=tuple(rows.values()),
+    )["query"]["stats"][0]["filters"]
     assert {row["id"]: row for row in sent}["skill.summon_rhoa_mount"] == {
         "id": "skill.summon_rhoa_mount",
         "value": {"min": 14.0},
@@ -2271,7 +2265,7 @@ def test_adopted_poe2_low_level_magic_adds_hidden_only_rarity_filter():
     "base_type",
     ["Ordinary Amulet", "Absent Amulet", "Lament Amulet", "Portent Amulet"],
 )
-def test_every_low_level_granted_skill_stays_visible_and_unchecked(base_type):
+def test_every_low_level_granted_skill_stays_visible_and_checked(base_type):
     item = ParsedItem(
         "Amulets", "rare", "", base_type, "amulet",
         modifiers=(ItemModifier(
@@ -2281,7 +2275,7 @@ def test_every_low_level_granted_skill_stays_visible_and_unchecked(base_type):
     )
     row = next(row for row in poe2_trade_filters(item) if row.stat_id == "skill.test")
     assert row.hidden_reason == ""
-    assert row.enabled is False
+    assert row.enabled is True
 
 
 def test_rejected_poe2_hidden_rules_are_not_applied():

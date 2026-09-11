@@ -820,8 +820,8 @@ def _poe2_modifier_rows(
             # Awakened-style rare searches expose direct mods as optional
             # alternatives while selecting only the high-value aggregates.
             enabled=(
-                modifier.kind != "skill"
-                and (
+                modifier.kind == "skill"
+                or (
                     (
                         item.category != "waystone"
                         and not _uses_awakened_rare_defaults(item)
