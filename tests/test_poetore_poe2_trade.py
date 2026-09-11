@@ -1019,31 +1019,51 @@ def test_non_chiming_granted_skill_is_a_visible_unchecked_mod_filter():
     assert skill.hidden_reason == ""
 
 
-def test_base_granted_skill_without_trade_stat_is_visible_and_enforces_exact_base():
+def test_base_granted_skill_without_trade_stat_is_not_displayed_or_searched():
     item = parse_item_text(
         (Path(__file__).parent / "fixtures" / "poe2" / "skysliver_ja.txt")
         .read_text(encoding="utf-8")
     )
     rows = poe2_trade_filters(item)
-    skill = next(row for row in rows if row.stat_id == "property.granted_skill")
-
-    assert skill.text == "スキルを付与: スピアスロー"
-    assert skill.kind == "skill"
-    assert skill.enabled is False
-    assert skill.hidden_reason == ""
-
-    unchecked = build_search_query(
+    assert not any(row.kind == "skill" for row in rows)
+    query = build_search_query(
         item, stat_filters=rows, exact_base_type=False,
     )["query"]
-    assert "type" not in unchecked
+    assert "type" not in query
+    assert not any(
+        row["id"].startswith("skill.")
+        for group in query["stats"] for row in group["filters"]
+    )
+
+
+def test_level_less_granted_skill_with_trade_stat_is_visible_and_searchable():
+    item = parse_item_text("""アイテムクラス: バックラー
+レアリティ: マジック
+古代のバックラー
+--------
+ブロック率: 20%
+回避力: 178
+--------
+装備条件：レベル 75, 107 器用さ
+--------
+アイテムレベル: 75
+--------
+スキルを付与: パリィ""")
+    rows = poe2_trade_filters(item)
+    skill = next(row for row in rows if row.stat_id == "skill.parry")
+
+    assert skill.text == "スキルを付与: パリィ"
+    assert skill.read_value is None
+    assert skill.enabled is False
+    assert skill.hidden_reason == ""
 
     checked_rows = tuple(
         replace(row, enabled=True) if row is skill else row for row in rows
     )
-    checked = build_search_query(
-        item, stat_filters=checked_rows, exact_base_type=False,
-    )["query"]
-    assert checked["type"] == "Winged Spear"
+    query = build_search_query(item, stat_filters=checked_rows)["query"]
+    assert {row["id"]: row for row in query["stats"][0]["filters"]}[
+        "skill.parry"
+    ] == {"id": "skill.parry"}
 
 
 def test_absent_amulet_exposes_low_level_rhoa_mount_from_actual_copy_text():

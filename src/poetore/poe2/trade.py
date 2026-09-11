@@ -1170,11 +1170,7 @@ def build_search_query(
         ),
         "filters": {"type_filters": {"filters": type_filters}},
     }
-    granted_skill_requires_exact_base = any(
-        row.enabled and row.stat_id == "property.granted_skill"
-        for row in (stat_filters or ())
-    )
-    if exact_base_type or granted_skill_requires_exact_base:
+    if exact_base_type:
         query["type"] = item.base_type
     type_filter_values = query["filters"]["type_filters"]["filters"]
     if item_level_min is not None or item_level_max is not None:

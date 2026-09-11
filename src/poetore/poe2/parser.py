@@ -320,6 +320,10 @@ _GRANTED_SKILL_PROPERTY = re.compile(
     r"(?:(?:Level|レベル)\s*\d+\s+)?\S",
     re.IGNORECASE,
 )
+_GRANTED_SKILL_WITHOUT_LEVEL = (
+    re.compile(r"^Grants Skill:\s*(?!Level\b)(.+)$", re.IGNORECASE),
+    re.compile(r"^スキルを付与:\s*(?!レベル)(.+)$"),
+)
 
 _TABLET_USES = (
     re.compile(r"^(\d+)\s+uses?\s+remaining$", re.IGNORECASE),
@@ -812,6 +816,31 @@ def _resolve_multiline_stat(
     return None
 
 
+def _resolve_level_less_granted_skill(line: str, category: str):
+    """Resolve a base-granted skill only when Trade2 publishes one unique ID."""
+    synthetic = None
+    for index, pattern in enumerate(_GRANTED_SKILL_WITHOUT_LEVEL):
+        match = pattern.fullmatch(line)
+        if match:
+            synthetic = (
+                f"Grants Skill: Level 1 {match.group(1)}"
+                if index == 0
+                else f"スキルを付与: レベル1 {match.group(1)}"
+            )
+            break
+    if synthetic is None:
+        return ()
+    candidates = resolve_stat_line_candidates(
+        synthetic, "skill", item_category=category,
+    )
+    skill_candidates = tuple(
+        (entry, ()) for entry, _values in candidates
+        if entry.get("type") == "skill"
+    )
+    distinct_ids = {str(entry.get("id", "")) for entry, _values in skill_candidates}
+    return skill_candidates[:1] if len(distinct_ids) == 1 else ()
+
+
 def parse_item_text(text: str) -> ParsedItem:
     # Some Windows clipboard paths preserve an invisible marker before the
     # first label.  Meta Gems omit Item Class, so losing that first Rarity
@@ -1054,6 +1083,8 @@ def parse_item_text(text: str) -> ParsedItem:
             line, preferred_stat_type, include_local_variants=scoped_affix,
             item_category=category,
         )
+        if not candidates and _GRANTED_SKILL_PROPERTY.match(line):
+            candidates = _resolve_level_less_granted_skill(line, category)
         if not candidates and current_kind:
             multiline = _resolve_multiline_stat(
                 normalized_lines, line_index, preferred_stat_type, category,
@@ -1087,16 +1118,6 @@ def parse_item_text(text: str) -> ParsedItem:
             ))
             if line_kind in {"augment", "desecrated", "fractured", "crafted", "sanctified"}:
                 flags.add(line_kind)
-        elif _GRANTED_SKILL_PROPERTY.match(line):
-            # Base-item granted skills such as Spear Throw are not all exposed
-            # as Trade2 Stat IDs. Keep them visible as an optional row; when
-            # selected, the query builder enforces the exact base type that
-            # guarantees the skill.
-            modifiers.append(ItemModifier(
-                text=line, values=(), kind="skill",
-                ref="Grants Skill", stat_id="property.granted_skill",
-                confidence=1.0,
-            ))
         elif re.search(r"\d", line) and not separator:
             # Keep suspicious numeric lines visible to the user instead of silently dropping them.
             modifiers.append(ItemModifier(text=line, confidence=0.0))
