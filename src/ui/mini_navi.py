@@ -711,7 +711,13 @@ class MiniNaviOverlay(QWidget):
                 foreground_above_overlay=overlay_after["foreground_above"],
                 foreground_above_lock=lock_after["foreground_above"],
             )
-        if sys.platform != "win32" or (overlay_updated and lock_updated):
+        native_state_matches = (
+            overlay_after["topmost"] is desired
+            and lock_after["topmost"] is desired
+        )
+        if sys.platform != "win32" or (
+            overlay_updated and lock_updated and native_state_matches
+        ):
             self._last_topmost_state = desired
         self._topmost_diagnostic_generation += 1
         generation = self._topmost_diagnostic_generation

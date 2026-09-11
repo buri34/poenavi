@@ -79,7 +79,10 @@ def set_native_window_topmost(widget, enabled: bool) -> bool:
             wintypes.UINT,
         ]
         user32.SetWindowPos.restype = wintypes.BOOL
-        insert_after = wintypes.HWND(-1 if enabled else -2)  # HWND_TOPMOST / HWND_NOTOPMOST
+        # HWND_NOTOPMOST (-2) leaves the window above every regular window.
+        # When PoE loses focus MiniNavi must move behind the newly active app,
+        # so use HWND_BOTTOM while also dropping the topmost status.
+        insert_after = wintypes.HWND(-1 if enabled else 1)  # HWND_TOPMOST / HWND_BOTTOM
         flags = 0x0001 | 0x0002 | 0x0010  # NOSIZE | NOMOVE | NOACTIVATE
         return bool(
             user32.SetWindowPos(

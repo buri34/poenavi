@@ -1,6 +1,8 @@
+import ctypes
 import os
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -9,6 +11,7 @@ from PySide6.QtCore import QEvent, Qt
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QWidget
 
 from src.ui.main_window import MainWindow, MiniNaviOverlay
+from src.ui.window_flags import set_native_window_topmost
 from src.utils.config_manager import ConfigManager
 
 
@@ -154,6 +157,63 @@ class MiniNaviStandaloneTest(unittest.TestCase):
                 self.assertEqual(sample["actual_delay_ms"], 3050.0)
                 self.assertEqual(sample["foreground_kind"], "other")
                 self.assertFalse(sample["foreground_above_overlay"])
+        finally:
+            self._dispose_overlay(overlay, main)
+
+    def test_disabling_native_topmost_places_window_at_bottom(self):
+        widget = QWidget()
+        user32 = Mock()
+        user32.SetWindowPos.return_value = 1
+        try:
+            with (
+                patch("src.ui.window_flags.sys.platform", "win32"),
+                patch.object(
+                    ctypes,
+                    "windll",
+                    SimpleNamespace(user32=user32),
+                    create=True,
+                ),
+            ):
+                self.assertTrue(set_native_window_topmost(widget, False))
+
+            insert_after = user32.SetWindowPos.call_args.args[1]
+            self.assertEqual(int(insert_after.value), 1)
+        finally:
+            widget.close()
+            widget.deleteLater()
+
+    def test_topmost_state_is_not_cached_when_native_postcondition_mismatches(self):
+        main = QWidget()
+        main.config = {
+            "mini_guide_overlay": {
+                "enabled": True,
+                "topmost_mode": "poe_only",
+            }
+        }
+        with (
+            patch("src.ui.mini_navi.get_foreground_window", return_value=None),
+            patch("src.ui.mini_navi.set_native_window_topmost"),
+        ):
+            overlay = MiniNaviOverlay(main)
+        try:
+            overlay._last_topmost_state = False
+            before = {"topmost": False, "foreground_above": True}
+            overlay_mismatch = {"topmost": False, "foreground_above": True}
+            lock_matches = {"topmost": True, "foreground_above": False}
+            with (
+                patch("src.ui.mini_navi.sys.platform", "win32"),
+                patch("src.ui.mini_navi.get_foreground_window", return_value=123),
+                patch("src.ui.mini_navi.is_path_of_exile_window", return_value=True),
+                patch("src.ui.mini_navi.set_native_window_topmost", return_value=True),
+                patch(
+                    "src.ui.mini_navi.native_window_z_order_state",
+                    side_effect=(before, before, overlay_mismatch, lock_matches),
+                ),
+                patch("src.ui.mini_navi.record_mini_navi_topmost_event"),
+            ):
+                overlay._refresh_topmost_state()
+
+            self.assertFalse(overlay._last_topmost_state)
         finally:
             self._dispose_overlay(overlay, main)
 
