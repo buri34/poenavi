@@ -4,7 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from poetore.poe2.desecration_tiers import resolve_desecration_choice, tier_data
+from poetore.poe2.desecration_tiers import (
+    resolve_desecration_choice,
+    resolve_desecration_choice_fuzzy,
+    resolve_desecration_reveal,
+    tier_data,
+)
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "poetore" / "poe2" / "desecration"
 FIXTURE = json.loads((FIXTURE_DIR / "reveal_cases.json").read_text(encoding="utf-8"))
@@ -43,3 +48,20 @@ def test_database_keeps_unparsed_template_rows_explicitly_diagnostic():
     assert len(payload["entries"]) == 1713
     assert payload["diagnostics"]["fully_matchable_rows"] == 1675
     assert len(payload["diagnostics"]["rows_with_unparsed_parts"]) == 38
+
+
+def test_fuzzy_match_tolerates_one_character_but_keeps_numbers_strict():
+    result = resolve_desecration_choice_fuzzy(
+        "物理ダメージが28%増加する\n病中力 +57", "spear"
+    )
+    assert result.tier == 6
+    assert result.score == 0.875
+    assert resolve_desecration_choice_fuzzy("最大マナ +999", "boots").tier is None
+
+
+def test_reveal_infers_category_from_all_three_choices():
+    result = resolve_desecration_reveal((
+        "アーマー +27", "最大マナ +108", "移動スピードが30%増加する",
+    ))
+    assert "boots" in result.categories
+    assert result.tiers_by_category["boots"] == (7, 1, 2)

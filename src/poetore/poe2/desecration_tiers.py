@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from functools import lru_cache
+from itertools import permutations
 from pathlib import Path
 
 DATA_PATH = (
@@ -21,6 +23,27 @@ class TierResolution:
     mod_ids: tuple[str, ...] = ()
     profile_ids: tuple[str, ...] = ()
     reason: str = "unknown"
+
+
+@dataclass(frozen=True)
+class FuzzyTierResolution(TierResolution):
+    score: float | None = None
+
+
+@dataclass(frozen=True)
+class RevealResolution:
+    categories: tuple[str, ...]
+    tiers_by_category: dict[str, tuple[int | None, ...]]
+    observed_texts: tuple[str, ...]
+
+    @property
+    def needs_category_choice(self) -> bool:
+        return len(set(self.tiers_by_category.values())) > 1
+
+    @property
+    def tiers(self) -> tuple[int | None, ...] | None:
+        unique = set(self.tiers_by_category.values())
+        return next(iter(unique)) if len(unique) == 1 else None
 
 
 @lru_cache(maxsize=1)
@@ -79,14 +102,59 @@ def _entry_matches(entry: dict, lines: tuple[str, ...]) -> bool:
     return assign(0)
 
 
+def _score_key(text: str) -> str:
+    text = _visible_template(text)
+    text = re.sub(NUMBER_RE, "#", text.casefold())
+    return re.sub(r"[^#a-zぁ-んァ-ヶ一-龯ー]", "", text)
+
+
+def _part_score(part: dict, observed: str) -> float | None:
+    ranges = part.get("ranges")
+    if ranges is None:
+        return None
+    values = [float(value) for value in re.findall(NUMBER_RE, observed)]
+    if len(values) != len(ranges):
+        return None
+    if not all(
+        float(low) <= value <= float(high)
+        for value, (low, high) in zip(values, ranges)
+    ):
+        return None
+    expected = _score_key(str(part["text"]["ja"]))
+    actual = _score_key(observed)
+    if not expected or not actual:
+        return None
+    return SequenceMatcher(None, expected, actual).ratio()
+
+
+def _entry_score(entry: dict, lines: tuple[str, ...]) -> float | None:
+    parts = entry.get("parts", ())
+    if len(parts) != len(lines):
+        return None
+    best = None
+    for ordered in permutations(lines):
+        scores = [_part_score(part, line) for part, line in zip(parts, ordered)]
+        if any(score is None for score in scores):
+            continue
+        combined = sum(scores) / len(scores)
+        best = combined if best is None else max(best, combined)
+    return best
+
+
+def _normalized_lines(lines: str | tuple[str, ...] | list[str]) -> tuple[str, ...]:
+    source = lines.splitlines() if isinstance(lines, str) else lines
+    return tuple(str(line).strip() for line in source if str(line).strip())
+
+
+def available_categories() -> tuple[str, ...]:
+    return tuple(sorted({profile["category"] for profile in tier_data()["profiles"]}))
+
+
 def resolve_desecration_choice(
     lines: str | tuple[str, ...] | list[str], category: str,
 ) -> TierResolution:
     """Resolve one Reveal choice; ambiguous results are never guessed."""
-    if isinstance(lines, str):
-        normalized_lines = tuple(line.strip() for line in lines.splitlines() if line.strip())
-    else:
-        normalized_lines = tuple(str(line).strip() for line in lines if str(line).strip())
+    normalized_lines = _normalized_lines(lines)
     payload = tier_data()
     profile_ids = {
         profile["id"] for profile in payload["profiles"]
@@ -112,4 +180,59 @@ def resolve_desecration_choice(
     return TierResolution(
         tier=next(iter(tiers)), mod_ids=mod_ids,
         profile_ids=matched_profiles, reason="matched",
+    )
+
+
+def resolve_desecration_choice_fuzzy(
+    lines: str | tuple[str, ...] | list[str], category: str,
+    *, minimum_score: float = 0.78, ambiguity_margin: float = 0.035,
+) -> FuzzyTierResolution:
+    """Resolve OCR text while keeping numeric values strict and never guessing."""
+    normalized_lines = _normalized_lines(lines)
+    payload = tier_data()
+    profile_ids = {
+        profile["id"] for profile in payload["profiles"]
+        if profile["category"] == category
+    }
+    candidates: list[tuple[float, dict, str, int]] = []
+    for entry in payload["entries"]:
+        score = _entry_score(entry, normalized_lines)
+        if score is None or score < minimum_score:
+            continue
+        for profile_id, tier in entry["profile_tiers"].items():
+            if profile_id in profile_ids:
+                candidates.append((score, entry, profile_id, int(tier)))
+    if not candidates:
+        return FuzzyTierResolution(tier=None, reason="no_match", score=None)
+    best_score = max(row[0] for row in candidates)
+    finalists = [row for row in candidates if best_score - row[0] <= ambiguity_margin]
+    tiers = {row[3] for row in finalists}
+    mod_ids = tuple(sorted({row[1]["mod_id"] for row in finalists}))
+    profiles = tuple(sorted({row[2] for row in finalists}))
+    if len(tiers) != 1:
+        return FuzzyTierResolution(
+            tier=None, mod_ids=mod_ids, profile_ids=profiles,
+            reason="ambiguous", score=round(best_score, 4),
+        )
+    return FuzzyTierResolution(
+        tier=next(iter(tiers)), mod_ids=mod_ids, profile_ids=profiles,
+        reason="matched", score=round(best_score, 4),
+    )
+
+
+def resolve_desecration_reveal(
+    observed_texts: tuple[str, ...] | list[str],
+    categories: tuple[str, ...] | list[str] | None = None,
+) -> RevealResolution:
+    """Find categories that can explain all three choices and their tier tuples."""
+    texts = tuple(str(text).strip() for text in observed_texts)
+    candidates = tuple(categories) if categories is not None else available_categories()
+    tiers_by_category: dict[str, tuple[int | None, ...]] = {}
+    for category in candidates:
+        resolutions = tuple(resolve_desecration_choice_fuzzy(text, category) for text in texts)
+        if all(result.tier is not None for result in resolutions):
+            tiers_by_category[category] = tuple(result.tier for result in resolutions)
+    return RevealResolution(
+        categories=tuple(tiers_by_category), tiers_by_category=tiers_by_category,
+        observed_texts=texts,
     )

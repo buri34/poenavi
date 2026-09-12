@@ -77,6 +77,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     header_buttons = (
         window.memo_button,
         window.expedition_settings_button,
+        window.desecration_settings_button,
         window.map_mods_button,
         window.cheat_sheets_button,
         window.settings_button,
@@ -211,10 +212,12 @@ def test_poe2_expedition_hotkey_starts_only_when_feature_is_enabled():
     config = {
         "poe_version": POE2,
         "hotkeys": {"expedition_reward_ocr": "alt+e"},
-        "poetore": {"expedition_reward_overlay": {
-            "enabled": True,
-            "region": {"left": 0.1, "top": 0.1, "right": 0.5, "bottom": 0.9},
-        }},
+        "poetore": {
+            "screen_reading": {"enabled": True},
+            "expedition_reward_overlay": {
+                "region": {"left": 0.1, "top": 0.1, "right": 0.5, "bottom": 0.9},
+            },
+        },
     }
     controller = MagicMock()
     with patch(
@@ -251,7 +254,10 @@ def test_poe2_expedition_ocr_does_not_warm_up_before_region_is_set():
     config = {
         "poe_version": POE2,
         "hotkeys": {"expedition_reward_ocr": "alt+e"},
-        "poetore": {"expedition_reward_overlay": {"enabled": True}},
+        "poetore": {
+            "screen_reading": {"enabled": True},
+            "expedition_reward_overlay": {},
+        },
     }
     controller = MagicMock()
     with patch(
@@ -282,12 +288,60 @@ def test_expedition_hotkey_dispatches_single_scan():
     window.capture_expedition_rewards.assert_called_once_with()
 
 
+def test_desecration_hotkey_dispatches_single_scan():
+    window = MagicMock()
+    PoetoreModeWindow.handle_hotkey(window, "desecration_tier_ocr")
+    window.capture_desecration_tiers.assert_called_once_with()
+
+
+def test_shared_screen_reading_off_stops_both_features_and_keeps_regions():
+    window = MagicMock()
+    window.poe_version = POE2
+    expedition_region = {"left": .1, "top": .1, "right": .5, "bottom": .8}
+    desecration_region = {"left": .2, "top": .2, "right": .7, "bottom": .7}
+    window.config = {
+        "hotkeys": {
+            "expedition_reward_ocr": "alt+e",
+            "desecration_tier_ocr": "alt+r",
+        },
+        "poetore": {
+            "screen_reading": {"enabled": True},
+            "expedition_reward_overlay": {"region": expedition_region},
+            "desecration_tier_overlay": {"inventory_open_region": desecration_region},
+        },
+    }
+    with patch("src.ui.poetore_mode_window.ConfigManager.save_config"):
+        assert PoetoreModeWindow._save_screen_reading_settings(
+            window, "expedition_reward_overlay", {"region": expedition_region},
+            "expedition_reward_ocr", "alt+e", False,
+        )
+    assert window.config["poetore"]["screen_reading"] == {"enabled": False}
+    assert window.config["poetore"]["desecration_tier_overlay"]["inventory_open_region"] == desecration_region
+    window._shutdown_screen_reading.assert_called_once_with()
+    window._restart_hotkeys.assert_called_once_with()
+
+
+def test_desecration_hotkey_requires_shared_enabled_and_open_region():
+    window = MagicMock()
+    window.poe_version = POE2
+    window.config = {
+        "poetore": {
+            "screen_reading": {"enabled": True},
+            "desecration_tier_overlay": {},
+        }
+    }
+    window._screen_reading_enabled.return_value = True
+    window._desecration_ready.return_value = False
+    assert not PoetoreModeWindow.capture_desecration_tiers(window)
+    window._ensure_desecration_tier_controller.assert_not_called()
+
+
 def test_expedition_header_button_saves_settings_and_restarts_hotkeys():
     window = MagicMock()
     window.poe_version = POE2
     window.config = {
         "hotkeys": {"expedition_reward_ocr": "alt+e"},
-        "poetore": {"expedition_reward_overlay": {"enabled": False}},
+        "poetore": {"screen_reading": {"enabled": False}, "expedition_reward_overlay": {}},
     }
     window._expedition_reward_controller = None
     region = {"left": 0.1, "top": 0.2, "right": 0.6, "bottom": 0.9}
@@ -301,8 +355,9 @@ def test_expedition_header_button_saves_settings_and_restarts_hotkeys():
         dialog = dialog_class.return_value
         dialog.exec.return_value = True
         dialog.settings.return_value = (
-            {"enabled": True, "region": region},
+            {"region": region},
             "ctrl+r",
+            True,
         )
         window._ensure_expedition_reward_controller.return_value = controller
 
@@ -310,9 +365,9 @@ def test_expedition_header_button_saves_settings_and_restarts_hotkeys():
 
     assert window.config["hotkeys"]["expedition_reward_ocr"] == "ctrl+r"
     assert window.config["poetore"]["expedition_reward_overlay"] == {
-        "enabled": True,
         "region": region,
     }
+    assert window.config["poetore"]["screen_reading"] == {"enabled": True}
     save_config.assert_called_once_with(window.config)
     window._restart_hotkeys.assert_called_once_with()
     controller.warm_up.assert_called_once_with()
@@ -326,7 +381,7 @@ def test_expedition_header_button_rejects_duplicate_hotkey():
             "poetore_capture": "alt+d",
             "expedition_reward_ocr": "alt+e",
         },
-        "poetore": {"expedition_reward_overlay": {"enabled": False}},
+        "poetore": {"screen_reading": {"enabled": False}, "expedition_reward_overlay": {}},
     }
 
     with patch(
@@ -338,7 +393,7 @@ def test_expedition_header_button_rejects_duplicate_hotkey():
     ) as warning:
         dialog = dialog_class.return_value
         dialog.exec.return_value = True
-        dialog.settings.return_value = ({"enabled": True}, "alt+d")
+        dialog.settings.return_value = ({}, "alt+d", True)
 
         PoetoreModeWindow.open_expedition_settings(window)
 

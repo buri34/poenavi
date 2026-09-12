@@ -14,7 +14,7 @@ class ConfigManager:
     DEFAULT_CONFIG_FILE = "default_config.json"
     APP_NAME = "PoENavi"
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
-    CURRENT_SCHEMA_VERSION = 16
+    CURRENT_SCHEMA_VERSION = 17
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -509,6 +509,29 @@ class ConfigManager:
                 startup = {}
             startup.setdefault("windows_autostart_poetore", False)
             migrated["startup"] = startup
+
+        if schema_version < 17:
+            poetore = migrated.get("poetore")
+            if not isinstance(poetore, dict):
+                poetore = {}
+            expedition = poetore.get("expedition_reward_overlay")
+            if not isinstance(expedition, dict):
+                expedition = {}
+            screen_reading = poetore.get("screen_reading")
+            if not isinstance(screen_reading, dict):
+                screen_reading = {}
+            screen_reading.setdefault("enabled", bool(expedition.get("enabled", False)))
+            expedition.pop("enabled", None)
+            poetore["screen_reading"] = screen_reading
+            poetore["expedition_reward_overlay"] = expedition
+            poetore.setdefault("desecration_tier_overlay", {})
+            migrated["poetore"] = poetore
+
+            hotkeys = migrated.get("hotkeys")
+            if not isinstance(hotkeys, dict):
+                hotkeys = {}
+            hotkeys.setdefault("desecration_tier_ocr", "alt+r")
+            migrated["hotkeys"] = hotkeys
 
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)

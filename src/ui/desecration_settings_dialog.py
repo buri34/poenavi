@@ -1,0 +1,251 @@
+"""Settings UI for the PoE2 Abyss Desecration tier overlay."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from PySide6.QtCore import QRect, QSize, Qt
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QDialog,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+)
+
+from src.poetore.window_position import path_of_exile_client_rect
+from src.ui.app_theme import SETTINGS_THEME
+from src.ui.expedition_settings_dialog import (
+    ClickableImageLabel,
+    ExpeditionRegionSelector,
+    RegionPreview,
+    valid_normalized_region,
+)
+from src.ui.settings_dialog import AutoHideHotkeyWidget
+from src.ui.styles import Styles
+
+DEFAULT_EXAMPLE_IMAGE_PATH = (
+    Path(__file__).resolve().parents[2] / "assets" / "images"
+    / "desecration_region_example.png"
+)
+
+
+class DesecrationRegionSelector(ExpeditionRegionSelector):
+    def __init__(self, client_rect, parent=None):
+        super().__init__(client_rect, parent)
+        self.setWindowTitle("アビス冒涜Modの読取範囲を指定")
+
+
+class DesecrationSettingsDialog(QDialog):
+    def __init__(
+        self, parent=None, desecration_config=None, hotkey="alt+r",
+        screen_reading_enabled=False, example_image_path=None,
+        client_rect_getter=path_of_exile_client_rect,
+        selector_class=DesecrationRegionSelector,
+    ):
+        super().__init__(parent)
+        self._config = dict(desecration_config or {})
+        self._regions = {
+            "inventory_open_region": valid_normalized_region(
+                self._config.get("inventory_open_region")
+            ),
+            "inventory_closed_region": valid_normalized_region(
+                self._config.get("inventory_closed_region")
+            ),
+        }
+        self._client_rect_getter = client_rect_getter
+        self._selector_class = selector_class
+        self._example_image_path = Path(example_image_path or DEFAULT_EXAMPLE_IMAGE_PATH)
+        self._section_widgets = {}
+        self.setWindowTitle("アビス冒涜Modティアチェック設定")
+        self.setMinimumSize(600, 820)
+        self.setStyleSheet(self._style_sheet())
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(18, 18, 18, 14)
+        root.setSpacing(10)
+        self.enabled_checkbox = QCheckBox("ゲーム画面の読み取り機能を有効にする")
+        self.enabled_checkbox.setChecked(bool(screen_reading_enabled))
+        Styles.apply_checkbox_style(self.enabled_checkbox)
+        root.addWidget(self.enabled_checkbox)
+        shared_hint = QLabel(
+            "エクスペ報酬価格チェックとアビス冒涜Modティアチェックで共通の設定です。"
+        )
+        shared_hint.setWordWrap(True)
+        shared_hint.setStyleSheet(f"color: {SETTINGS_THEME.muted_text};")
+        root.addWidget(shared_hint)
+
+        form = QFormLayout()
+        self.hotkey_widget = AutoHideHotkeyWidget(
+            hotkey, theme=SETTINGS_THEME, allow_no_modifier=True
+        )
+        self.hotkey_widget.key_button.setStyleSheet("")
+        form.addRow("読取ショートカット:", self.hotkey_widget)
+        root.addLayout(form)
+
+        self._add_region_section(root, "inventory_open_region", "インベントリを開いた状態（必須）")
+        self._add_region_section(root, "inventory_closed_region", "インベントリを閉じた状態（任意）")
+
+        instruction = QLabel(
+            "タイトル・装備画像・確認ボタンを含めず、3つのMod選択肢部分だけを囲んでください。\n"
+            "読取時は「開」を先に確認し、3択を検出できない場合だけ「閉」を確認します。"
+        )
+        instruction.setWordWrap(True)
+        instruction.setObjectName("desecrationRegionInstruction")
+        root.addWidget(instruction)
+
+        heading = QHBoxLayout()
+        heading.addWidget(QLabel("指定例"))
+        hint = QLabel("※以下の画像をクリックするとポップアップで拡大表示します")
+        hint.setStyleSheet(f"color: {SETTINGS_THEME.muted_text};")
+        heading.addWidget(hint)
+        heading.addStretch()
+        root.addLayout(heading)
+        self.example_thumbnail = ClickableImageLabel()
+        self.example_thumbnail.setObjectName("desecrationExampleThumbnail")
+        self.example_thumbnail.setAlignment(Qt.AlignCenter)
+        self.example_thumbnail.setFixedHeight(130)
+        self.example_thumbnail.setCursor(Qt.PointingHandCursor)
+        self.example_thumbnail.clicked.connect(self._show_example_popup)
+        root.addWidget(self.example_thumbnail)
+        self._load_example_thumbnail()
+
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        cancel = QPushButton("キャンセル")
+        cancel.clicked.connect(self.reject)
+        save = QPushButton("保存")
+        save.setDefault(True)
+        save.clicked.connect(self.accept)
+        buttons.addWidget(cancel)
+        buttons.addWidget(save)
+        root.addLayout(buttons)
+        self._refresh_all()
+
+    def _add_region_section(self, root, key, title):
+        root.addWidget(QLabel(title))
+        status = QLabel()
+        preview = RegionPreview()
+        preview.setMinimumHeight(82)
+        preview.set_region(self._regions[key])
+        root.addWidget(status)
+        root.addWidget(preview)
+        row = QHBoxLayout()
+        choose = QPushButton()
+        choose.clicked.connect(lambda _checked=False, item=key: self._choose_region(item))
+        reset = QPushButton("読取範囲をリセット")
+        reset.clicked.connect(lambda _checked=False, item=key: self._reset_region(item))
+        row.addWidget(choose)
+        row.addWidget(reset)
+        root.addLayout(row)
+        self._section_widgets[key] = (status, preview, choose, reset)
+
+    def settings(self) -> tuple[dict, str, bool]:
+        config = dict(self._config)
+        for key, region in self._regions.items():
+            if region is None:
+                config.pop(key, None)
+            else:
+                config[key] = dict(region)
+        return config, self.hotkey_widget.key_text, self.enabled_checkbox.isChecked()
+
+    def _choose_region(self, key):
+        client_rect = self._client_rect_getter()
+        if client_rect is None:
+            QMessageBox.warning(
+                self, "PoE2が見つかりません",
+                "PoE2を起動して冒涜Modの3択画面を表示してから、もう一度お試しください。",
+            )
+            return
+        windows = [self]
+        owner = self.parentWidget()
+        if owner is not None and owner.isWindow():
+            windows.append(owner)
+        opacities = [window.windowOpacity() for window in windows]
+        for window in windows:
+            window.setWindowOpacity(0.0)
+        QApplication.processEvents()
+        try:
+            selector = self._selector_class(QRect(client_rect), self)
+            result = selector.exec()
+        finally:
+            for window, opacity in reversed(list(zip(windows, opacities))):
+                window.setWindowOpacity(opacity)
+            self.raise_()
+            self.activateWindow()
+        if result != QDialog.Accepted:
+            return
+        region = valid_normalized_region(selector.selected_region)
+        if region is None:
+            QMessageBox.warning(self, "範囲を確認してください", "選択した範囲を保存できませんでした。")
+            return
+        self._regions[key] = region
+        self._refresh_all()
+
+    def _reset_region(self, key):
+        self._regions[key] = None
+        self._refresh_all()
+
+    def _refresh_all(self):
+        for key, (status, preview, choose, reset) in self._section_widgets.items():
+            configured = self._regions[key] is not None
+            required = key == "inventory_open_region"
+            if configured:
+                text, color = "設定済み", "#B0FF7B"
+            elif required:
+                text, color = "未設定（読取ショートカットは無効）", "#FFCC80"
+            else:
+                text, color = "未設定", "#98A39F"
+            status.setText(text)
+            status.setStyleSheet(f"color: {color}; font-weight: bold;")
+            preview.set_region(self._regions[key])
+            choose.setText("読取範囲を再設定" if configured else "読取範囲を設定")
+            reset.setEnabled(configured)
+
+    def _load_example_thumbnail(self):
+        pixmap = QPixmap(str(self._example_image_path))
+        if pixmap.isNull():
+            self.example_thumbnail.setText(
+                "指定例画像は準備中です\n（画像追加後、ここをクリックすると拡大表示します）"
+            )
+            return
+        self.example_thumbnail.setPixmap(pixmap.scaled(
+            QSize(540, 120), Qt.KeepAspectRatio, Qt.SmoothTransformation
+        ))
+
+    def _show_example_popup(self):
+        popup = QDialog(self)
+        popup.setWindowTitle("読取範囲の指定例")
+        popup.resize(900, 700)
+        layout = QVBoxLayout(popup)
+        image = QLabel()
+        image.setAlignment(Qt.AlignCenter)
+        pixmap = QPixmap(str(self._example_image_path))
+        image.setText("指定例画像は準備中です。") if pixmap.isNull() else image.setPixmap(
+            pixmap.scaled(QSize(860, 630), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        )
+        layout.addWidget(image)
+        close = QPushButton("閉じる")
+        close.clicked.connect(popup.accept)
+        layout.addWidget(close, alignment=Qt.AlignRight)
+        popup.exec()
+
+    @staticmethod
+    def _style_sheet():
+        theme = SETTINGS_THEME
+        return f"""
+            QDialog {{ background: {theme.background}; color: {theme.text}; font-size: 13px; }}
+            QLabel, QCheckBox {{ color: {theme.text}; }}
+            QPushButton {{ background: {theme.panel}; color: {theme.text}; border: 1px solid #596359;
+                border-radius: 5px; padding: 7px 12px; font-weight: bold; }}
+            QPushButton:hover {{ background: #293229; border-color: {theme.accent}; }}
+            QLabel#desecrationRegionInstruction {{ color: {theme.muted_text}; }}
+            QLabel#desecrationExampleThumbnail {{ background: #151A15; color: {theme.muted_text};
+                border: 1px solid #596359; border-radius: 6px; }}
+            QCheckBox::indicator:checked {{ background: {theme.accent}; }}
+        """

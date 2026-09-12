@@ -153,7 +153,7 @@ class ConfigManagerTest(unittest.TestCase):
             },
         })
 
-        self.assertEqual(migrated["schemaVersion"], 16)
+        self.assertEqual(migrated["schemaVersion"], 17)
         self.assertEqual(
             migrated["startup"],
             {
@@ -162,6 +162,23 @@ class ConfigManagerTest(unittest.TestCase):
                 "windows_autostart_poetore": False,
             },
         )
+
+    def test_schema_v17_migrates_expedition_enabled_to_shared_screen_reading(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 16,
+            "hotkeys": {"expedition_reward_ocr": "alt+e"},
+            "poetore": {
+                "expedition_reward_overlay": {
+                    "enabled": True,
+                    "region": {"left": .1, "top": .2, "right": .5, "bottom": .8},
+                },
+            },
+        })
+        assert migrated["schemaVersion"] == 17
+        assert migrated["poetore"]["screen_reading"] == {"enabled": True}
+        assert "enabled" not in migrated["poetore"]["expedition_reward_overlay"]
+        assert migrated["poetore"]["desecration_tier_overlay"] == {}
+        assert migrated["hotkeys"]["desecration_tier_ocr"] == "alt+r"
 
     def test_schema_v16_preserves_enabled_windows_poetore_autostart(self):
         migrated = ConfigManager._migrate_config({

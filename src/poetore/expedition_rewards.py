@@ -523,10 +523,11 @@ class ExpeditionRewardController(QObject):
     status = Signal(str)
     failed = Signal(str)
     diagnostic = Signal(str)
-    _ready = Signal(object, object, object, object, object)
+    _ready = Signal(object, object, object, object, object, int)
 
     def __init__(
         self, league_getter, parent=None, *, region_getter=None, diagnostics_enabled=None,
+        ocr_server=None, scan_coordinator=None,
     ):
         super().__init__(parent)
         self._league_getter = league_getter
@@ -534,11 +535,16 @@ class ExpeditionRewardController(QObject):
         self._overlay = ExpeditionPriceOverlay()
         aliases, dictionary_version = load_reward_alias_bundle()
         self._name_resolver = SafeRewardNameResolver(aliases, dictionary_version)
-        self._ocr = WindowsOcrServer()
+        self._ocr = ocr_server or WindowsOcrServer()
+        self._owns_ocr = ocr_server is None
+        self._scan_coordinator = scan_coordinator
+        self._scan_owner = "expedition"
         self._captures: list[QImage] = []
         self._client_rect: QRect | None = None
         self._capture_rect: QRect | None = None
         self._running = False
+        self._scan_generation = 0
+        self._active_generation = 0
         self._helper_warm_started = False
         self._price_warm_running = False
         self._monitor_misses = 0
@@ -567,8 +573,12 @@ class ExpeditionRewardController(QObject):
         self._monitor.stop()
 
     def close(self) -> None:
+        self._scan_generation += 1
+        self._running = False
         self.hide()
-        self._ocr.close()
+        self._release_scan()
+        if self._owns_ocr:
+            self._ocr.close()
 
     def warm_up(self) -> None:
         if not self._helper_warm_started:
@@ -600,6 +610,12 @@ class ExpeditionRewardController(QObject):
     def request_scan(self) -> bool:
         if self._running:
             return False
+        if (
+            self._scan_coordinator is not None
+            and not self._scan_coordinator.try_begin(self._scan_owner)
+        ):
+            self.failed.emit("別の画面読み取り処理中です。")
+            return False
         self._diagnostic_steps = []
         client_rect = path_of_exile_client_rect()
         if client_rect is None:
@@ -613,6 +629,8 @@ class ExpeditionRewardController(QObject):
             f"✅ 1. ゲーム画面検出: {client_rect.width()}x{client_rect.height()}"
         )
         self._running = True
+        self._scan_generation += 1
+        self._active_generation = self._scan_generation
         self.hide()
         self._client_rect = QRect(client_rect)
         self._capture_rect = expedition_capture_rect(client_rect, self._region_getter())
@@ -639,6 +657,8 @@ class ExpeditionRewardController(QObject):
         ).toImage()
 
     def _capture_frame(self) -> None:
+        if not self._running:
+            return
         image = self._grab_game()
         if image.isNull():
             self._trace("❌ 2. 画面キャプチャ: 画像を取得できません")
@@ -653,13 +673,18 @@ class ExpeditionRewardController(QObject):
         client_rect = QRect(self._client_rect)
         capture_rect = QRect(self._capture_rect)
         threading.Thread(
-            target=self._process, args=(images, client_rect, capture_rect), daemon=True,
+            target=self._process,
+            args=(images, client_rect, capture_rect, self._active_generation),
+            daemon=True,
         ).start()
 
     def _process(
         self, images: list[QImage], client_rect: QRect, capture_rect: QRect,
+        generation: int,
     ) -> None:
         try:
+            if generation != self._scan_generation:
+                return
             prepared: list[PreparedOcrFrame] = [
                 prepare_qimage_rows(image)
                 for image in images
@@ -772,13 +797,17 @@ class ExpeditionRewardController(QObject):
             panel_right = capture_rect.right() - client_rect.x() + 1
             self._ready.emit(
                 client_rect, shown, (client_rect.width(), client_rect.height()),
-                (panel_right, first.panel_width, list(first.bands)), len(stable),
+                (panel_right, first.panel_width, list(first.bands)), len(stable), generation,
             )
         except Exception as exc:  # noqa: BLE001 - worker boundary reports to UI
-            self._finish_error(str(exc))
+            if generation == self._scan_generation:
+                self._finish_error(str(exc))
 
-    def _show_result(self, client_rect, rows, source_size, panel_data, stable_count):
+    def _show_result(self, client_rect, rows, source_size, panel_data, stable_count, generation):
+        if generation != self._scan_generation:
+            return
         self._running = False
+        self._release_scan()
         self._panel_width, self._capture_panel_width, self._bands = panel_data
         self._client_rect = QRect(client_rect)
         try:
@@ -797,10 +826,15 @@ class ExpeditionRewardController(QObject):
 
     def _finish_error(self, message: str) -> None:
         self._running = False
+        self._release_scan()
         self.failed.emit(message)
         if not self._diagnostic_steps or not self._diagnostic_steps[-1].startswith("❌"):
             self._trace(f"❌ 処理停止: {message}")
         self._emit_diagnostic()
+
+    def _release_scan(self) -> None:
+        if self._scan_coordinator is not None:
+            self._scan_coordinator.finish(self._scan_owner)
 
     def _trace(self, message: str) -> None:
         if self._diagnostics_enabled:

@@ -210,6 +210,7 @@ class ExpeditionSettingsDialog(QDialog):
         self,
         parent=None,
         expedition_config=None,
+        screen_reading_enabled=False,
         hotkey="alt+e",
         example_image_path=None,
         client_rect_getter=path_of_exile_client_rect,
@@ -231,10 +232,16 @@ class ExpeditionSettingsDialog(QDialog):
         root.setContentsMargins(18, 18, 18, 14)
         root.setSpacing(12)
 
-        self.enabled_checkbox = QCheckBox("報酬価格表示を有効にする")
-        self.enabled_checkbox.setChecked(bool(self._config.get("enabled", False)))
+        self.enabled_checkbox = QCheckBox("ゲーム画面の読み取り機能を有効にする")
+        self.enabled_checkbox.setChecked(bool(screen_reading_enabled))
         Styles.apply_checkbox_style(self.enabled_checkbox)
         root.addWidget(self.enabled_checkbox)
+        shared_hint = QLabel(
+            "エクスペ報酬価格チェックとアビス冒涜Modティアチェックで共通の設定です。"
+        )
+        shared_hint.setWordWrap(True)
+        shared_hint.setStyleSheet(f"color: {SETTINGS_THEME.muted_text};")
+        root.addWidget(shared_hint)
 
         hotkey_form = QFormLayout()
         self.hotkey_widget = AutoHideHotkeyWidget(
@@ -302,14 +309,14 @@ class ExpeditionSettingsDialog(QDialog):
         root.addLayout(buttons)
         self._refresh_region_state()
 
-    def settings(self) -> tuple[dict, str]:
+    def settings(self) -> tuple[dict, str, bool]:
         config = dict(self._config)
-        config["enabled"] = self.enabled_checkbox.isChecked()
+        config.pop("enabled", None)
         if self._region is None:
             config.pop("region", None)
         else:
             config["region"] = dict(self._region)
-        return config, self.hotkey_widget.key_text
+        return config, self.hotkey_widget.key_text, self.enabled_checkbox.isChecked()
 
     def _choose_region(self):
         client_rect = self._client_rect_getter()

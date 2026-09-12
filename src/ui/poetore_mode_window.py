@@ -15,6 +15,7 @@ from PySide6.QtGui import (
     QPainterPath,
     QPen,
     QPixmap,
+    QPolygonF,
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -140,6 +141,55 @@ def _expedition_icon() -> QIcon:
     painter.setPen(QPen(dark, 0.8, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
     painter.setBrush(accent)
     painter.drawEllipse(QPointF(12.0, 12.0), 1.5, 1.5)
+    return _finish_icon(pixmap, painter)
+
+
+def _abyss_desecration_icon() -> QIcon:
+    """Return the approved green stone-and-concentric-eye Abyss emblem."""
+    pixmap, painter = _icon_canvas()
+    accent = QColor(POETORE_ACCENT)
+    stone = QColor("#34423F")
+    edge = QColor("#82918B")
+    dark = QColor("#121A18")
+    slab = QPolygonF([
+        QPointF(4.0, 2.3), QPointF(19.7, 2.8), QPointF(21.8, 5.2),
+        QPointF(21.2, 19.7), QPointF(18.8, 21.8), QPointF(4.5, 21.1),
+        QPointF(2.4, 18.5), QPointF(2.9, 5.0),
+    ])
+    painter.setPen(QPen(edge, 1.0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+    painter.setBrush(stone)
+    painter.drawPolygon(slab)
+    painter.setPen(QPen(dark, 0.8, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+    for points in (
+        ((4.1, 6.0), (6.1, 6.8), (5.0, 8.2)),
+        ((17.8, 4.5), (16.8, 6.2), (19.1, 7.0)),
+        ((4.0, 16.8), (6.0, 16.1), (5.5, 19.0)),
+        ((18.9, 15.7), (17.1, 17.0), (18.3, 19.3)),
+    ):
+        path = QPainterPath(QPointF(*points[0]))
+        path.lineTo(QPointF(*points[1]))
+        path.lineTo(QPointF(*points[2]))
+        painter.drawPath(path)
+    center = QPointF(12.0, 12.0)
+    painter.setPen(QPen(dark, 2.8, Qt.SolidLine, Qt.RoundCap))
+    for angle in range(0, 360, 45):
+        painter.save()
+        painter.translate(center)
+        painter.rotate(angle)
+        painter.drawLine(QPointF(0.0, -8.1), QPointF(0.0, -6.4))
+        painter.restore()
+    painter.setPen(QPen(accent.darker(155), 1.5))
+    painter.setBrush(QColor("#1B2523"))
+    painter.drawEllipse(center, 7.0, 7.0)
+    painter.setPen(QPen(edge, 1.1))
+    painter.setBrush(QColor("#26312F"))
+    painter.drawEllipse(center, 4.7, 4.7)
+    painter.setPen(QPen(QColor("#161817"), 1.1))
+    painter.setBrush(QColor("#0C100F"))
+    painter.drawEllipse(center, 2.7, 2.7)
+    painter.setPen(QPen(QColor("#A8F5E1"), 0.9))
+    painter.setBrush(accent)
+    painter.drawEllipse(center, 1.45, 1.45)
     return _finish_icon(pixmap, painter)
 
 
@@ -336,6 +386,7 @@ class PoetoreModeWindow(QMainWindow):
         "poetore_capture": "alt+d",
         "poetore_auto_hide": "ctrl+d",
         "expedition_reward_ocr": "alt+e",
+        "desecration_tier_ocr": "alt+r",
         "map_check": "alt+f",
         "cheat_sheets_toggle": "shift+space",
     }
@@ -351,6 +402,8 @@ class PoetoreModeWindow(QMainWindow):
         self._map_check_window = None
         self._memo_dialog = None
         self._expedition_reward_controller = None
+        self._desecration_tier_controller = None
+        self._screen_reading_coordinator = None
         self._rate_request_running = False
         self._rate_signals = _RateSignals(self)
         self._rate_signals.ready.connect(self._show_rate)
@@ -371,17 +424,11 @@ class PoetoreModeWindow(QMainWindow):
         )
         self.stash_tab_scroll.start()
         self._start_hotkeys()
-        if (
-            sys.platform == "win32"
-            and self.poe_version == POE2
-            and self.config.get("poetore", {}).get(
-                "expedition_reward_overlay", {},
-            ).get("enabled", False)
-            and self.config.get("poetore", {}).get(
-                "expedition_reward_overlay", {},
-            ).get("region")
-        ):
-            self._ensure_expedition_reward_controller().warm_up()
+        if sys.platform == "win32" and self._screen_reading_enabled():
+            if self._expedition_ready():
+                self._ensure_expedition_reward_controller().warm_up()
+            if self._desecration_ready():
+                self._ensure_desecration_tier_controller().warm_up()
 
         self._rate_timer = QTimer(self)
         self._rate_timer.setInterval(RATE_REFRESH_MSEC)
@@ -528,6 +575,12 @@ class PoetoreModeWindow(QMainWindow):
         self.expedition_settings_button.setIcon(_expedition_icon())
         self.expedition_settings_button.setIconSize(QSize(24, 24))
         self.expedition_settings_button.setVisible(self.poe_version == POE2)
+        self.desecration_settings_button = self._header_button(
+            "", "アビス冒涜Modティアチェック設定を開く"
+        )
+        self.desecration_settings_button.setIcon(_abyss_desecration_icon())
+        self.desecration_settings_button.setIconSize(QSize(24, 24))
+        self.desecration_settings_button.setVisible(self.poe_version == POE2)
         self.cheat_sheets_button = self._header_button(
             "", "Cheat sheetsの画像を登録・管理"
         )
@@ -546,12 +599,16 @@ class PoetoreModeWindow(QMainWindow):
         self.expedition_settings_button.clicked.connect(
             self.open_expedition_settings
         )
+        self.desecration_settings_button.clicked.connect(
+            self.open_desecration_settings
+        )
         self.map_mods_button.clicked.connect(self.open_map_mod_manager)
         self.cheat_sheets_button.clicked.connect(self.open_cheat_sheet_manager)
         self.settings_button.clicked.connect(self.open_settings)
         self.header_action_buttons = (
             self.memo_button,
             self.expedition_settings_button,
+            self.desecration_settings_button,
             self.map_mods_button,
             self.cheat_sheets_button,
             self.settings_button,
@@ -680,15 +737,18 @@ class PoetoreModeWindow(QMainWindow):
         mode_hotkeys.update(custom_command_hotkeys(self.config.get("custom_commands", [])))
         capture_hotkey = mode_hotkeys.get("poetore_capture", "none")
         expedition_hotkey = mode_hotkeys.get("expedition_reward_ocr", "none")
-        expedition_enabled = self.poe_version == POE2 and bool(
-            self.config.get("poetore", {}).get("expedition_reward_overlay", {}).get("enabled", False)
-        )
+        desecration_hotkey = mode_hotkeys.get("desecration_tier_ocr", "none")
+        expedition_enabled = self._screen_reading_enabled() and self._expedition_ready()
+        desecration_enabled = self._screen_reading_enabled() and self._desecration_ready()
         if not expedition_enabled:
             mode_hotkeys.pop("expedition_reward_ocr", None)
+        if not desecration_enabled:
+            mode_hotkeys.pop("desecration_tier_ocr", None)
         use_suppression = suppressed_hotkeys_supported()
         if use_suppression:
             mode_hotkeys.pop("poetore_capture", None)
             mode_hotkeys.pop("expedition_reward_ocr", None)
+            mode_hotkeys.pop("desecration_tier_ocr", None)
         self.hotkey_service = GlobalHotkeyService(
             mode_hotkeys, action_filter=is_hotkey_action_allowed, parent=self,
         )
@@ -696,6 +756,7 @@ class PoetoreModeWindow(QMainWindow):
         self.hotkey_service.start()
         self.suppressed_capture_hotkey = None
         self.suppressed_expedition_hotkey = None
+        self.suppressed_desecration_hotkey = None
         if use_suppression:
             self.suppressed_capture_hotkey = ForegroundSuppressedHotkeyService(
                 "poetore_capture", capture_hotkey,
@@ -716,6 +777,27 @@ class PoetoreModeWindow(QMainWindow):
                 )
                 self.suppressed_expedition_hotkey.command.connect(self.handle_hotkey)
                 self.suppressed_expedition_hotkey.start()
+            if desecration_enabled:
+                self.suppressed_desecration_hotkey = ForegroundSuppressedHotkeyService(
+                    "desecration_tier_ocr", desecration_hotkey,
+                    result_window_checker=lambda _hwnd: False,
+                    poe_target_getter=self._poetore_poe_target,
+                    allow_unmodified=True,
+                    parent=self,
+                )
+                self.suppressed_desecration_hotkey.command.connect(self.handle_hotkey)
+                self.suppressed_desecration_hotkey.start()
+
+    def _screen_reading_enabled(self):
+        return self.poe_version == POE2 and bool(
+            self.config.get("poetore", {}).get("screen_reading", {}).get("enabled", False)
+        )
+
+    def _expedition_ready(self):
+        return bool(self.config.get("poetore", {}).get("expedition_reward_overlay", {}).get("region"))
+
+    def _desecration_ready(self):
+        return bool(self.config.get("poetore", {}).get("desecration_tier_overlay", {}).get("inventory_open_region"))
 
     def _is_poetore_result_window(self, hwnd):
         try:
@@ -802,7 +884,7 @@ class PoetoreModeWindow(QMainWindow):
         self._rate_request_running = False
         self.divine_rate_value.setText(f"1 = {rate:,.1f} {self.rate_quote_label}")
         self.rate_status.setText(f"{league} ・ poe.ninja ・ 31分ごとに自動更新")
-        if self._expedition_reward_controller is not None:
+        if self._screen_reading_enabled() and self._expedition_ready() and self._expedition_reward_controller is not None:
             self._expedition_reward_controller.warm_up()
 
     def _show_rate_error(self, message):
@@ -831,6 +913,8 @@ class PoetoreModeWindow(QMainWindow):
                 window.capture_hotkey_released()
         elif command == "expedition_reward_ocr":
             self.capture_expedition_rewards()
+        elif command == "desecration_tier_ocr":
+            self.capture_desecration_tiers()
         elif command == "map_check":
             self.capture_map_check_item()
         elif command == "map_check_released":
@@ -880,12 +964,15 @@ class PoetoreModeWindow(QMainWindow):
         if self._expedition_reward_controller is None:
             from src.poetore.expedition_rewards import ExpeditionRewardController
 
+            shared = self._ensure_screen_reading_coordinator()
             controller = ExpeditionRewardController(
                 self._currency_rate_league,
                 self,
                 region_getter=lambda: self.config.get("poetore", {}).get(
                     "expedition_reward_overlay", {}
                 ).get("region"),
+                ocr_server=shared,
+                scan_coordinator=shared,
             )
             controller.status.connect(self._show_expedition_status)
             controller.failed.connect(self._show_expedition_error)
@@ -894,12 +981,43 @@ class PoetoreModeWindow(QMainWindow):
         return self._expedition_reward_controller
 
     def capture_expedition_rewards(self):
-        enabled = bool(
-            self.config.get("poetore", {}).get("expedition_reward_overlay", {}).get("enabled", False)
-        )
-        if self.poe_version != POE2 or not enabled:
+        if not self._screen_reading_enabled() or not self._expedition_ready():
             return False
         return self._ensure_expedition_reward_controller().request_scan()
+
+    def _ensure_screen_reading_coordinator(self):
+        if self._screen_reading_coordinator is None:
+            from src.poetore.screen_reading import ScreenReadingCoordinator
+            self._screen_reading_coordinator = ScreenReadingCoordinator()
+        return self._screen_reading_coordinator
+
+    def _ensure_desecration_tier_controller(self):
+        if self._desecration_tier_controller is None:
+            from src.poetore.poe2.desecration_overlay import DesecrationTierController
+            shared = self._ensure_screen_reading_coordinator()
+            controller = DesecrationTierController(
+                self,
+                regions_getter=lambda: self.config.get("poetore", {}).get("desecration_tier_overlay", {}),
+                ocr_server=shared,
+                scan_coordinator=shared,
+            )
+            controller.status.connect(self._show_desecration_status)
+            controller.failed.connect(self._show_desecration_error)
+            self._desecration_tier_controller = controller
+        return self._desecration_tier_controller
+
+    def capture_desecration_tiers(self):
+        if not self._screen_reading_enabled() or not self._desecration_ready():
+            return False
+        return self._ensure_desecration_tier_controller().request_scan()
+
+    def _show_desecration_status(self, message):
+        self.rate_status.setText(message)
+
+    def _show_desecration_error(self, message):
+        self.rate_status.setText(f"冒涜Mod読取失敗：{message}")
+        if QSystemTrayIcon.isSystemTrayAvailable():
+            self.tray_icon.showMessage("アビス冒涜Modティア", message, QSystemTrayIcon.Warning, 5000)
 
     def _show_expedition_status(self, message):
         self.rate_status.setText(message)
@@ -992,7 +1110,61 @@ class PoetoreModeWindow(QMainWindow):
             self.suppressed_capture_hotkey.stop()
         if self.suppressed_expedition_hotkey is not None:
             self.suppressed_expedition_hotkey.stop()
+        if self.suppressed_desecration_hotkey is not None:
+            self.suppressed_desecration_hotkey.stop()
         self._start_hotkeys()
+
+    def _save_screen_reading_settings(self, feature_key, feature_config, action, hotkey, enabled):
+        configured_hotkeys = self.config.get("hotkeys", {})
+        configured_hotkeys = configured_hotkeys if isinstance(configured_hotkeys, dict) else {}
+        active_hotkeys = {
+            name: configured_hotkeys.get(name, default)
+            for name, default in PoetoreModeWindow.MODE_ACTION_DEFAULTS.items()
+            if is_feature_hotkey_supported(name, self.poe_version)
+        }
+        active_hotkeys[action] = hotkey
+        active_hotkeys.update(custom_command_hotkeys(self.config.get("custom_commands", [])))
+        duplicate = next(
+            ((key, actions) for key, actions in find_duplicate_hotkeys(active_hotkeys).items() if action in actions),
+            None,
+        )
+        if duplicate is not None:
+            key, actions = duplicate
+            labels = {
+                "exit": "キャラクター選択へ戻る", "monastery": "修道院へ移動",
+                "poetore_capture": "ぽえとれ検索（操作モード）",
+                "poetore_auto_hide": "ぽえとれ検索（AUTO-HIDE）",
+                "expedition_reward_ocr": "エクスペ報酬チェック",
+                "desecration_tier_ocr": "アビス冒涜Modティアチェック",
+                "map_check": "Map Modチェック", "cheat_sheets_toggle": "Cheat sheets表示",
+            }
+            others = "、".join(labels.get(name, name) for name in actions if name != action)
+            QMessageBox.warning(self, "ホットキー重複", f"{key}は別の操作（{others}）にも設定されています。")
+            return False
+        poetore = self.config.get("poetore", {})
+        poetore = dict(poetore) if isinstance(poetore, dict) else {}
+        poetore[feature_key] = dict(feature_config)
+        poetore["screen_reading"] = {"enabled": bool(enabled)}
+        hotkeys = dict(configured_hotkeys)
+        hotkeys[action] = hotkey
+        self.config["poetore"] = poetore
+        self.config["hotkeys"] = hotkeys
+        ConfigManager.save_config(self.config)
+        if not enabled:
+            self._shutdown_screen_reading()
+        self._restart_hotkeys()
+        return True
+
+    def _shutdown_screen_reading(self):
+        if self._expedition_reward_controller is not None:
+            self._expedition_reward_controller.close()
+            self._expedition_reward_controller = None
+        if self._desecration_tier_controller is not None:
+            self._desecration_tier_controller.close()
+            self._desecration_tier_controller = None
+        if self._screen_reading_coordinator is not None:
+            self._screen_reading_coordinator.close()
+            self._screen_reading_coordinator = None
 
     def open_expedition_settings(self):
         if self.poe_version != POE2:
@@ -1011,61 +1183,44 @@ class PoetoreModeWindow(QMainWindow):
             self,
             expedition_config=expedition_config,
             hotkey=hotkeys.get("expedition_reward_ocr", "alt+e"),
+            screen_reading_enabled=self._screen_reading_enabled(),
         )
         if not dialog.exec():
             return
-        expedition_config, expedition_hotkey = dialog.settings()
-        active_hotkeys = {
-            action: hotkeys.get(action, default)
-            for action, default in PoetoreModeWindow.MODE_ACTION_DEFAULTS.items()
-            if is_feature_hotkey_supported(action, self.poe_version)
-        }
-        active_hotkeys["expedition_reward_ocr"] = expedition_hotkey
-        active_hotkeys.update(
-            custom_command_hotkeys(self.config.get("custom_commands", []))
-        )
-        duplicate = next(
-            (
-                (key, actions)
-                for key, actions in find_duplicate_hotkeys(active_hotkeys).items()
-                if "expedition_reward_ocr" in actions
-            ),
-            None,
-        )
-        if duplicate is not None:
-            key, actions = duplicate
-            labels = {
-                "exit": "キャラクター選択へ戻る",
-                "monastery": "修道院へ移動",
-                "poetore_capture": "ぽえとれ検索（操作モード）",
-                "poetore_auto_hide": "ぽえとれ検索（AUTO-HIDE）",
-                "map_check": "Map Modチェック",
-                "cheat_sheets_toggle": "Cheat sheets表示",
-            }
-            others = "、".join(
-                labels.get(action, action) for action in actions
-                if action != "expedition_reward_ocr"
-            )
-            QMessageBox.warning(
-                self,
-                "ホットキー重複",
-                f"{key}は別の操作（{others}）にも設定されています。",
-            )
+        expedition_config, expedition_hotkey, enabled = dialog.settings()
+        if not PoetoreModeWindow._save_screen_reading_settings(self,
+            "expedition_reward_overlay", expedition_config,
+            "expedition_reward_ocr", expedition_hotkey, enabled,
+        ):
             return
-        poetore = dict(poetore)
-        poetore["expedition_reward_overlay"] = dict(expedition_config)
-        hotkeys = dict(hotkeys)
-        hotkeys["expedition_reward_ocr"] = expedition_hotkey
-        self.config["poetore"] = poetore
-        self.config["hotkeys"] = hotkeys
-        ConfigManager.save_config(self.config)
-        self._restart_hotkeys()
-        if not expedition_config.get("enabled", False):
-            if self._expedition_reward_controller is not None:
-                self._expedition_reward_controller.hide()
-            return
-        if expedition_config.get("region"):
+        if enabled and expedition_config.get("region"):
             self._ensure_expedition_reward_controller().warm_up()
+
+    def open_desecration_settings(self):
+        if self.poe_version != POE2:
+            return
+        from src.ui.desecration_settings_dialog import DesecrationSettingsDialog
+        poetore = self.config.get("poetore", {})
+        poetore = poetore if isinstance(poetore, dict) else {}
+        feature_config = poetore.get("desecration_tier_overlay", {})
+        feature_config = feature_config if isinstance(feature_config, dict) else {}
+        hotkeys = self.config.get("hotkeys", {})
+        hotkeys = hotkeys if isinstance(hotkeys, dict) else {}
+        dialog = DesecrationSettingsDialog(
+            self, desecration_config=feature_config,
+            hotkey=hotkeys.get("desecration_tier_ocr", "alt+r"),
+            screen_reading_enabled=self._screen_reading_enabled(),
+        )
+        if not dialog.exec():
+            return
+        feature_config, hotkey, enabled = dialog.settings()
+        if not PoetoreModeWindow._save_screen_reading_settings(self,
+            "desecration_tier_overlay", feature_config,
+            "desecration_tier_ocr", hotkey, enabled,
+        ):
+            return
+        if enabled and feature_config.get("inventory_open_region"):
+            self._ensure_desecration_tier_controller().warm_up()
 
     def open_settings(self):
         from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
@@ -1166,8 +1321,9 @@ class PoetoreModeWindow(QMainWindow):
             self.suppressed_capture_hotkey.stop()
         if self.suppressed_expedition_hotkey is not None:
             self.suppressed_expedition_hotkey.stop()
-        if self._expedition_reward_controller is not None:
-            self._expedition_reward_controller.close()
+        if self.suppressed_desecration_hotkey is not None:
+            self.suppressed_desecration_hotkey.stop()
+        self._shutdown_screen_reading()
         if self._memo_dialog is not None:
             self._memo_dialog.close()
         if self._cheat_sheet_overlay is not None:

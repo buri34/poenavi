@@ -1,0 +1,178 @@
+"""PoE2 Desecration Reveal capture preparation and safe OCR resolution."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRect, Qt
+from PySide6.QtGui import QColor, QImage
+
+from src.poetore.poe2.desecration_tiers import (
+    FuzzyTierResolution,
+    available_categories,
+    resolve_desecration_choice_fuzzy,
+)
+
+
+@dataclass(frozen=True)
+class ChoiceBand:
+    top: int
+    bottom: int
+
+
+@dataclass(frozen=True)
+class PreparedDesecrationFrame:
+    bands: tuple[ChoiceBand, ...]
+    variants: tuple[tuple[QImage, ...], ...]
+    valid_panel: bool
+
+
+@dataclass(frozen=True)
+class OcrRevealResolution:
+    categories: tuple[str, ...]
+    tiers_by_category: dict[str, tuple[int | None, ...]]
+    texts_by_category: dict[str, tuple[str, ...]]
+
+    @property
+    def needs_category_choice(self) -> bool:
+        return len(set(self.tiers_by_category.values())) > 1
+
+    @property
+    def tiers(self) -> tuple[int | None, ...] | None:
+        unique = set(self.tiers_by_category.values())
+        return next(iter(unique)) if len(unique) == 1 else None
+
+
+def image_bytes(image: QImage, image_format: str = "BMP") -> bytes:
+    payload = QByteArray()
+    buffer = QBuffer(payload)
+    buffer.open(QIODevice.WriteOnly)
+    if not image.save(buffer, image_format):
+        raise RuntimeError("OCR用画像を変換できませんでした。")
+    return bytes(payload)
+
+
+def choice_bands(image: QImage) -> tuple[ChoiceBand, ...]:
+    height = image.height()
+    if image.isNull() or height < 60:
+        return ()
+    radius = max(4, round(height * .09))
+    separators = []
+    sample_step = max(1, image.width() // 180)
+    for fraction in (1 / 3, 2 / 3):
+        center = round(height * fraction)
+        left, right = max(1, center - radius), min(height - 1, center + radius)
+        means = []
+        for y in range(left, right):
+            total = 0
+            count = 0
+            for x in range(0, image.width(), sample_step):
+                color = image.pixelColor(x, y)
+                total += color.red() + color.green() + color.blue()
+                count += 3
+            means.append(total / max(1, count))
+        separators.append(left + min(range(len(means)), key=means.__getitem__))
+    edges = (0, *separators, height)
+    if not (edges[0] < edges[1] < edges[2] < edges[3]):
+        return ()
+    return tuple(ChoiceBand(edges[index] + (1 if index else 0), edges[index + 1]) for index in range(3))
+
+
+def _green_text_rect(image: QImage, padding: int = 8) -> tuple[QRect | None, int]:
+    left, top, right, bottom = image.width(), image.height(), -1, -1
+    count = 0
+    for y in range(image.height()):
+        for x in range(image.width()):
+            color = image.pixelColor(x, y)
+            if color.green() >= 75 and color.green() - color.blue() >= 10 and color.green() - color.red() >= 5:
+                left, top = min(left, x), min(top, y)
+                right, bottom = max(right, x), max(bottom, y)
+                count += 1
+    if right < left or bottom < top:
+        return None, 0
+    return QRect(
+        max(0, left - padding), max(0, top - padding),
+        min(image.width() - 1, right + padding) - max(0, left - padding) + 1,
+        min(image.height() - 1, bottom + padding) - max(0, top - padding) + 1,
+    ), count
+
+
+def _green_mask(image: QImage) -> QImage:
+    result = QImage(image.size(), QImage.Format_RGB32)
+    result.fill(QColor("white"))
+    for y in range(image.height()):
+        for x in range(image.width()):
+            color = image.pixelColor(x, y)
+            if color.green() >= 75 and color.green() - color.blue() >= 10 and color.green() - color.red() >= 5:
+                result.setPixelColor(x, y, QColor("black"))
+    return result
+
+
+def prepare_desecration_frame(image: QImage) -> PreparedDesecrationFrame:
+    bands = choice_bands(image)
+    all_variants = []
+    valid = len(bands) == 3
+    for band in bands:
+        card = image.copy(0, band.top, image.width(), max(1, band.bottom - band.top))
+        text_rect, pixels = _green_text_rect(card)
+        if text_rect is None or pixels < 20:
+            valid = False
+            crop = card
+        else:
+            crop = card.copy(text_rect)
+        all_variants.append((
+            crop.scaled(crop.width() * 4, crop.height() * 4, Qt.IgnoreAspectRatio, Qt.SmoothTransformation),
+            crop.scaled(crop.width() * 6, crop.height() * 6, Qt.IgnoreAspectRatio, Qt.SmoothTransformation),
+            _green_mask(crop).scaled(crop.width() * 4, crop.height() * 4),
+        ))
+    return PreparedDesecrationFrame(bands, tuple(all_variants), valid)
+
+
+def resolve_ocr_variants(
+    variant_texts: tuple[tuple[str, ...], ...],
+    categories: tuple[str, ...] | None = None,
+) -> OcrRevealResolution:
+    """Choose OCR variants by score; numeric conflicts remain unresolved."""
+    category_pool = categories or available_categories()
+    candidate_rows = {}
+    max_resolved = 0
+    for category in category_pool:
+        tiers = []
+        texts = []
+        for outputs in variant_texts:
+            attempts: list[tuple[str, FuzzyTierResolution]] = [
+                (text, resolve_desecration_choice_fuzzy(text, category))
+                for text in outputs if text.strip()
+            ]
+            matched = [(text, result) for text, result in attempts if result.tier is not None]
+            if not matched:
+                tiers.append(None)
+                texts.append(outputs[0].strip() if outputs else "")
+                continue
+            best_score = max(result.score or 0 for _text, result in matched)
+            finalists = [
+                (text, result) for text, result in matched
+                if best_score - (result.score or 0) <= .035
+            ]
+            finalist_tiers = {result.tier for _text, result in finalists}
+            if len(finalist_tiers) != 1:
+                tiers.append(None)
+                texts.append(finalists[0][0])
+                continue
+            chosen = max(finalists, key=lambda item: item[1].score or 0)
+            tiers.append(chosen[1].tier)
+            texts.append(chosen[0])
+        resolved = sum(tier is not None for tier in tiers)
+        max_resolved = max(max_resolved, resolved)
+        candidate_rows[category] = (resolved, tuple(tiers), tuple(texts))
+    if max_resolved == 0:
+        return OcrRevealResolution((), {}, {})
+    winners = {
+        category: row for category, row in candidate_rows.items()
+        if row[0] == max_resolved
+    }
+    return OcrRevealResolution(
+        tuple(winners),
+        {category: row[1] for category, row in winners.items()},
+        {category: row[2] for category, row in winners.items()},
+    )

@@ -88,7 +88,8 @@ def test_expedition_dialog_saves_status_hotkey_and_region():
     QApplication.instance() or QApplication([])
     region = {"left": 0.05, "top": 0.15, "right": 0.55, "bottom": 0.95}
     dialog = ExpeditionSettingsDialog(
-        expedition_config={"enabled": True, "region": region},
+        expedition_config={"region": region},
+        screen_reading_enabled=True,
         hotkey="alt+r",
     )
 
@@ -99,15 +100,16 @@ def test_expedition_dialog_saves_status_hotkey_and_region():
     assert dialog.set_region_button.text() == "読取範囲を再設定"
     assert dialog.reset_region_button.isEnabled()
     assert dialog.settings() == (
-        {"enabled": True, "region": region},
+        {"region": region},
         "alt+r",
+        True,
     )
 
     dialog.reset_region_button.click()
     assert dialog.status_label.text() == "未設定"
     assert dialog.set_region_button.text() == "読取範囲を設定"
     assert not dialog.reset_region_button.isEnabled()
-    assert dialog.settings() == ({"enabled": True}, "alt+r")
+    assert dialog.settings() == ({}, "alt+r", True)
     dialog.close()
 
 

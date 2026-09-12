@@ -152,6 +152,9 @@ class PoetoreSettingsDialog(QDialog):
         self._expedition_hotkey = str(
             hotkeys.get("expedition_reward_ocr", "alt+e")
         )
+        self._desecration_hotkey = str(
+            hotkeys.get("desecration_tier_ocr", "alt+r")
+        )
         for button in (
             self.exit_hotkey, self.monastery_hotkey,
             self.map_check_hotkey, self.cheat_hotkey,
@@ -608,6 +611,7 @@ class PoetoreSettingsDialog(QDialog):
                 "poetore_capture": self.capture_hotkey.key_text,
                 "poetore_auto_hide": self.auto_hide_hotkey.key_text,
                 "expedition_reward_ocr": self._expedition_hotkey,
+                "desecration_tier_ocr": self._desecration_hotkey,
                 "map_check": self.map_check_hotkey.key_text,
                 "cheat_sheets_toggle": self.cheat_hotkey.key_text,
             }
@@ -657,6 +661,7 @@ class PoetoreSettingsDialog(QDialog):
             "poetore_capture": self.capture_hotkey.key_text,
             "poetore_auto_hide": self.auto_hide_hotkey.key_text,
             "expedition_reward_ocr": self._expedition_hotkey,
+            "desecration_tier_ocr": self._desecration_hotkey,
             "map_check": self.map_check_hotkey.key_text,
             "cheat_sheets_toggle": self.cheat_hotkey.key_text,
         }
@@ -664,6 +669,7 @@ class PoetoreSettingsDialog(QDialog):
             hotkeys.pop("map_check")
         else:
             hotkeys.pop("expedition_reward_ocr")
+            hotkeys.pop("desecration_tier_ocr")
         if not self.custom_commands_widget.validate(hotkeys):
             return
         duplicates = find_duplicate_hotkeys(hotkeys)
@@ -674,6 +680,7 @@ class PoetoreSettingsDialog(QDialog):
                 "poetore_capture": "ぽえとれ検索（操作モード）",
                 "poetore_auto_hide": "ぽえとれ検索（AUTO-HIDE）",
                 "expedition_reward_ocr": "エクスペディション報酬読取",
+                "desecration_tier_ocr": "アビス冒涜Modティア読取",
                 "map_check": "Map Modチェック",
                 "cheat_sheets_toggle": "Cheat sheets表示",
             }
