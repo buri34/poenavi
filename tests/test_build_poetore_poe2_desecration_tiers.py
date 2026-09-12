@@ -16,6 +16,11 @@ def test_spawn_weight_uses_first_matching_base_tag():
     assert MODULE.spawn_weight(row, profile) == 0
 
 
+def test_warstaff_base_is_emitted_as_quarterstaff():
+    assert MODULE.concrete_base_category("staff", ("staff",)) == "staff"
+    assert MODULE.concrete_base_category("staff", ("warstaff",)) == "quarterstaff"
+
+
 def test_value_ranges_accepts_pob_rolls_and_trade_local_suffix():
     assert MODULE.value_ranges(
         "# to Accuracy Rating (Local)", "+(47-72) to Accuracy Rating",

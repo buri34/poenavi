@@ -194,8 +194,16 @@ def _normalized_lines(lines: str | tuple[str, ...] | list[str]) -> tuple[str, ..
     return tuple(str(line).strip() for line in source if str(line).strip())
 
 
+def _profile_category(profile: dict) -> str:
+    """Return the concrete PoE2 equipment category represented by a profile."""
+    category = str(profile["category"])
+    if category == "staff" and "warstaff" in profile.get("tags", ()):
+        return "quarterstaff"
+    return category
+
+
 def available_categories() -> tuple[str, ...]:
-    return tuple(sorted({profile["category"] for profile in tier_data()["profiles"]}))
+    return tuple(sorted({_profile_category(profile) for profile in tier_data()["profiles"]}))
 
 
 def resolve_desecration_choice(
@@ -206,7 +214,7 @@ def resolve_desecration_choice(
     payload = tier_data()
     profile_ids = {
         profile["id"] for profile in payload["profiles"]
-        if profile["category"] == category
+        if _profile_category(profile) == category
     }
     matches: list[tuple[dict, str, int]] = []
     for entry in payload["entries"]:
@@ -244,7 +252,7 @@ def resolve_desecration_choice_fuzzy(
     payload = tier_data()
     profile_ids = {
         profile["id"] for profile in payload["profiles"]
-        if profile["category"] == category
+        if _profile_category(profile) == category
     }
     candidates: list[tuple[float, dict, str, int]] = []
     for entry in payload["entries"]:

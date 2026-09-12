@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from poetore.poe2.desecration_tiers import (
+    available_categories,
     resolve_desecration_choice,
     resolve_desecration_choice_fuzzy,
     resolve_desecration_reveal,
@@ -41,6 +42,25 @@ def test_category_is_required_to_prevent_cross_equipment_guessing():
     result = resolve_desecration_choice("アーマー +27", "spear")
     assert result.tier is None
     assert result.reason == "no_match"
+
+
+def test_staff_and_quarterstaff_use_separate_profile_families():
+    assert {"staff", "quarterstaff"} <= set(available_categories())
+
+    caster_staff = resolve_desecration_choice(
+        "ダメージの45%を追加混沌ダメージとして獲得する", "staff",
+    )
+    quarterstaff = resolve_desecration_choice(
+        "この武器によるアタックは20%の火耐性を貫通する", "quarterstaff",
+    )
+    assert caster_staff.tier == 1
+    assert resolve_desecration_choice(
+        "ダメージの45%を追加混沌ダメージとして獲得する", "quarterstaff",
+    ).tier is None
+    assert quarterstaff.tier == 1
+    assert resolve_desecration_choice(
+        "この武器によるアタックは20%の火耐性を貫通する", "staff",
+    ).tier is None
 
 
 def test_database_keeps_unparsed_template_rows_explicitly_diagnostic():

@@ -105,6 +105,13 @@ def category_key(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", value.casefold()).strip("_")
 
 
+def concrete_base_category(category: str, tags: tuple[str, ...]) -> str:
+    """Split PoB's shared Staff base type into its concrete PoE2 categories."""
+    if category == "staff" and "warstaff" in tags:
+        return "quarterstaff"
+    return category
+
+
 def parse_base_profiles(bases_dir: Path) -> list[dict]:
     profiles: dict[tuple[str, tuple[str, ...]], dict] = {}
     for path in sorted(bases_dir.glob("*.lua")):
@@ -119,6 +126,7 @@ def parse_base_profiles(bases_dir: Path) -> list[dict]:
             tags = tuple(sorted(re.findall(r"([a-z0-9_]+)\s*=\s*true", tags_match.group(1))))
             if not tags:
                 continue
+            category = concrete_base_category(category, tags)
             key = (category, tags)
             profiles.setdefault(key, {"category": category, "tags": list(tags)})
     result = []

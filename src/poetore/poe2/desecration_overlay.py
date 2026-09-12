@@ -19,14 +19,15 @@ from src.poetore.poe2.desecration_tiers import available_categories
 from src.poetore.window_position import path_of_exile_client_rect
 
 CATEGORY_LABELS = {
-    "amulet": "アミュレット", "belt": "ベルト", "body_armour": "胴体防具",
+    "amulet": "アミュレット", "belt": "ベルト", "body_armour": "鎧",
     "boots": "靴", "bow": "弓", "claw": "クロー", "crossbow": "クロスボウ",
     "dagger": "ダガー", "flail": "フレイル", "focus": "フォーカス",
     "gloves": "手袋", "helmet": "兜", "jewel": "ジュエル",
     "one_hand_axe": "片手斧", "one_hand_mace": "片手メイス",
     "one_hand_sword": "片手剣", "quiver": "矢筒", "ring": "指輪",
     "sceptre": "セプター", "shield": "盾", "spear": "スピア",
-    "staff": "スタッフ", "talisman": "タリスマン", "two_hand_axe": "両手斧",
+    "staff": "スタッフ", "quarterstaff": "クォータースタッフ",
+    "talisman": "タリスマン", "two_hand_axe": "両手斧",
     "two_hand_mace": "両手メイス", "two_hand_sword": "両手剣", "wand": "ワンド",
 }
 

@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QApplication, QPushButton
 
 from src.poetore.poe2.desecration_ocr import ChoiceBand
 from src.poetore.poe2.desecration_overlay import (
+    CATEGORY_LABELS,
     STATUS_LABELS,
     CategoryChoiceOverlay,
     DesecrationTierController,
@@ -56,6 +57,22 @@ def test_category_selector_excludes_equipment_types_not_implemented_in_poe2():
         "クロー", "ダガー", "フレイル", "片手斧", "片手剣",
         "両手斧", "両手剣",
     })
+    overlay.close()
+
+
+def test_category_selector_uses_distinct_staff_names_and_armour_wording():
+    QApplication.instance() or QApplication([])
+    assert CATEGORY_LABELS["body_armour"] == "鎧"
+    assert CATEGORY_LABELS["staff"] == "スタッフ"
+    assert CATEGORY_LABELS["quarterstaff"] == "クォータースタッフ"
+
+    overlay = CategoryChoiceOverlay()
+    overlay.show_categories(
+        ("body_armour", "staff", "quarterstaff"), QPoint(0, 0),
+    )
+    labels = {button.text() for button in overlay.findChildren(QPushButton)}
+    assert {"鎧", "スタッフ", "クォータースタッフ", "閉じる"} <= labels
+    assert "胴体防具" not in labels
     overlay.close()
 
 
