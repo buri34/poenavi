@@ -2,7 +2,6 @@ import json
 import os
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -50,6 +49,7 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert '"--add-data", "build\\expedition-windows-ocr;tools\\ExpeditionWindowsOcr"' in script
     assert "ExpeditionWindowsOcr.exe" in script
     assert "expedition_region_example.png" in script
+    assert "desecration_region_example.png" in script
     assert "expedition_ocr_items.json" in script
     assert "desecration_tiers.json" in script
     assert ".NET 8 runtime" in (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")

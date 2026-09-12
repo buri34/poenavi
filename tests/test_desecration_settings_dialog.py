@@ -1,7 +1,11 @@
 from PySide6.QtCore import QRect
-from PySide6.QtWidgets import QLabel
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QApplication, QLabel
 
-from src.ui.desecration_settings_dialog import DesecrationSettingsDialog
+from src.ui.desecration_settings_dialog import (
+    DEFAULT_EXAMPLE_IMAGE_PATH,
+    DesecrationSettingsDialog,
+)
 
 
 def test_desecration_settings_defaults_to_alt_r_and_keeps_open_region_optional(qtbot):
@@ -67,3 +71,13 @@ def test_desecration_settings_warns_that_screen_reading_must_be_enabled(qtbot):
     assert hint.text() == "※使用するにはチェックをONにしてください"
     assert "#FFD54F" in dialog.styleSheet()
     assert "font-weight: bold" in dialog.styleSheet()
+
+
+def test_desecration_default_example_image_is_bundled_and_loadable():
+    QApplication.instance() or QApplication([])
+    pixmap = QPixmap(str(DEFAULT_EXAMPLE_IMAGE_PATH))
+
+    assert DEFAULT_EXAMPLE_IMAGE_PATH.is_file()
+    assert not pixmap.isNull()
+    assert pixmap.width() == 2577
+    assert pixmap.height() == 698
