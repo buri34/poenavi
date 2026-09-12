@@ -57,19 +57,18 @@ def test_desecration_settings_groups_required_flow_before_optional_display(qtbot
         "1. 基本設定",
         "2. 読取範囲",
         "3. 表示設定",
-        "4. 指定例",
     ]
     assert dialog.findChild(QScrollArea, "desecrationSettingsScroll") is not None
 
     basic = dialog.findChild(QGroupBox, "basicSettingsGroup")
     ranges = dialog.findChild(QGroupBox, "readRegionsGroup")
     display = dialog.findChild(QGroupBox, "displaySettingsGroup")
-    example = dialog.findChild(QGroupBox, "exampleGroup")
     assert basic.isAncestorOf(dialog.enabled_checkbox)
     assert basic.isAncestorOf(dialog.hotkey_widget)
     assert ranges.isAncestorOf(dialog.findChild(QLabel, "inventory_open_regionTitle"))
+    assert ranges.isAncestorOf(dialog.example_thumbnail)
     assert display.isAncestorOf(dialog.show_ranges_checkbox)
-    assert example.isAncestorOf(dialog.example_thumbnail)
+    assert dialog.findChild(QGroupBox, "exampleGroup") is None
 
 
 def test_desecration_settings_preserves_explicitly_disabled_tier_ranges(qtbot):

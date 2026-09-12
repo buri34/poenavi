@@ -141,6 +141,23 @@ class DesecrationSettingsDialog(QDialog):
             ranges, "inventory_closed_region", "インベントリを閉じた状態（任意）",
             note="※インベントリを閉じると位置がずれて読取に失敗するため",
         )
+        heading = QHBoxLayout()
+        example_heading = QLabel("指定例")
+        example_heading.setObjectName("desecrationExampleHeading")
+        heading.addWidget(example_heading)
+        hint = QLabel("※以下の画像をクリックするとポップアップで拡大表示します")
+        hint.setStyleSheet(f"color: {SETTINGS_THEME.muted_text};")
+        heading.addWidget(hint)
+        heading.addStretch()
+        ranges.addLayout(heading)
+        self.example_thumbnail = ClickableImageLabel()
+        self.example_thumbnail.setObjectName("desecrationExampleThumbnail")
+        self.example_thumbnail.setAlignment(Qt.AlignCenter)
+        self.example_thumbnail.setFixedHeight(130)
+        self.example_thumbnail.setCursor(Qt.PointingHandCursor)
+        self.example_thumbnail.clicked.connect(self._show_example_popup)
+        ranges.addWidget(self.example_thumbnail)
+        self._load_example_thumbnail()
         content.addWidget(range_group)
 
         display_group, display = self._section_group(
@@ -155,23 +172,6 @@ class DesecrationSettingsDialog(QDialog):
         Styles.apply_checkbox_style(self.show_ranges_checkbox)
         display.addWidget(self.show_ranges_checkbox)
         content.addWidget(display_group)
-
-        example_group, example = self._section_group("4. 指定例", "exampleGroup")
-        heading = QHBoxLayout()
-        hint = QLabel("※以下の画像をクリックするとポップアップで拡大表示します")
-        hint.setStyleSheet(f"color: {SETTINGS_THEME.muted_text};")
-        heading.addWidget(hint)
-        heading.addStretch()
-        example.addLayout(heading)
-        self.example_thumbnail = ClickableImageLabel()
-        self.example_thumbnail.setObjectName("desecrationExampleThumbnail")
-        self.example_thumbnail.setAlignment(Qt.AlignCenter)
-        self.example_thumbnail.setFixedHeight(130)
-        self.example_thumbnail.setCursor(Qt.PointingHandCursor)
-        self.example_thumbnail.clicked.connect(self._show_example_popup)
-        example.addWidget(self.example_thumbnail)
-        self._load_example_thumbnail()
-        content.addWidget(example_group)
         content.addStretch()
 
         buttons = QHBoxLayout()
@@ -339,6 +339,7 @@ class DesecrationSettingsDialog(QDialog):
                 subcontrol-origin: margin; subcontrol-position: top left;
                 left: 10px; padding: 0 6px;
             }}
+            QLabel#desecrationExampleHeading {{ font-weight: bold; }}
             QPushButton {{ background: {theme.panel}; color: {theme.text}; border: 1px solid #596359;
                 border-radius: 5px; padding: 7px 12px; font-weight: bold; }}
             QPushButton:hover {{ background: #293229; border-color: {theme.accent}; }}
