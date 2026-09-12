@@ -2,7 +2,13 @@ from unittest.mock import patch
 
 from PySide6.QtCore import QRect, Qt, QTimer
 from PySide6.QtGui import QImage, QKeyEvent
-from PySide6.QtWidgets import QApplication, QDialog, QLabel
+from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QGroupBox,
+    QLabel,
+    QScrollArea,
+)
 
 from src.ui.expedition_settings_dialog import (
     DEFAULT_EXAMPLE_IMAGE_PATH,
@@ -118,6 +124,28 @@ def test_expedition_enabled_checkbox_uses_shared_blue_style():
     dialog = ExpeditionSettingsDialog()
 
     assert "poenavi_check_4488ff.png" in dialog.enabled_checkbox.styleSheet()
+    dialog.close()
+
+
+def test_expedition_settings_matches_abyss_grouped_layout():
+    QApplication.instance() or QApplication([])
+    dialog = ExpeditionSettingsDialog()
+
+    groups = dialog.findChildren(QGroupBox)
+    assert [group.title() for group in groups] == [
+        "1. 基本設定",
+        "2. 読取範囲",
+    ]
+    assert dialog.findChild(QScrollArea, "expeditionSettingsScroll") is not None
+
+    basic = dialog.findChild(QGroupBox, "basicSettingsGroup")
+    ranges = dialog.findChild(QGroupBox, "readRegionsGroup")
+    assert basic.isAncestorOf(dialog.enabled_checkbox)
+    assert basic.isAncestorOf(dialog.hotkey_widget)
+    assert ranges.isAncestorOf(dialog.status_label)
+    assert ranges.isAncestorOf(dialog.preview)
+    assert ranges.isAncestorOf(dialog.example_thumbnail)
+    assert dialog.findChild(QLabel, "expeditionExampleHeading").text() == "指定例"
     dialog.close()
 
 

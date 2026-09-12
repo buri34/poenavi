@@ -11,10 +11,13 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
     QFormLayout,
+    QFrame,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -225,13 +228,26 @@ class ExpeditionSettingsDialog(QDialog):
             example_image_path or DEFAULT_EXAMPLE_IMAGE_PATH
         )
         self.setWindowTitle("エクスペ報酬チェック設定")
-        self.setMinimumSize(560, 650)
+        self.setMinimumSize(620, 820)
         self.setStyleSheet(self._style_sheet())
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(18, 18, 18, 14)
-        root.setSpacing(12)
+        root.setContentsMargins(14, 14, 14, 12)
+        root.setSpacing(10)
 
+        scroll = QScrollArea()
+        scroll.setObjectName("expeditionSettingsScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        content_widget = QWidget()
+        content = QVBoxLayout(content_widget)
+        content.setContentsMargins(4, 4, 4, 4)
+        content.setSpacing(10)
+        scroll.setWidget(content_widget)
+        root.addWidget(scroll, 1)
+
+        basic_group, basic = self._section_group("1. 基本設定", "basicSettingsGroup")
         reading_toggle_row = QHBoxLayout()
         reading_toggle_row.setSpacing(8)
         self.enabled_checkbox = QCheckBox("ゲーム画面の読み取り機能を有効にする")
@@ -244,29 +260,48 @@ class ExpeditionSettingsDialog(QDialog):
         self.enable_required_hint.setObjectName("screenReadingEnableRequiredHint")
         reading_toggle_row.addWidget(self.enable_required_hint)
         reading_toggle_row.addStretch()
-        root.addLayout(reading_toggle_row)
+        basic.addLayout(reading_toggle_row)
         shared_hint = QLabel(
             "エクスペ報酬価格チェックとアビス冒涜Modティアチェックで共通の設定です。"
         )
         shared_hint.setWordWrap(True)
         shared_hint.setStyleSheet(f"color: {SETTINGS_THEME.muted_text};")
-        root.addWidget(shared_hint)
+        basic.addWidget(shared_hint)
 
         hotkey_form = QFormLayout()
+        hotkey_form.setContentsMargins(0, 2, 0, 0)
         self.hotkey_widget = AutoHideHotkeyWidget(
             hotkey, theme=SETTINGS_THEME, allow_no_modifier=True
         )
         self.hotkey_widget.key_button.setStyleSheet("")
         hotkey_form.addRow("読取ショートカット:", self.hotkey_widget)
-        root.addLayout(hotkey_form)
+        basic.addLayout(hotkey_form)
+        content.addWidget(basic_group)
 
-        root.addWidget(QLabel("現在の読取範囲"))
+        range_group, ranges = self._section_group("2. 読取範囲", "readRegionsGroup")
+        instruction = QLabel(
+            "報酬カードの左端・右端、先頭カードの上端、報酬パネル内側の最下部を囲んでください。\n"
+            "タイトルや外枠は含めず、報酬が少ない時の空白部分は含めます。"
+        )
+        instruction.setWordWrap(True)
+        instruction.setObjectName("expeditionRegionInstruction")
+        ranges.addWidget(instruction)
+        size_warning = QLabel(
+            "PoE2のウィンドウサイズを変更した場合、位置が変わるため再設定が必要です。"
+        )
+        size_warning.setWordWrap(True)
+        size_warning.setObjectName("screenSizeRegionWarning")
+        ranges.addWidget(size_warning)
+
+        current_region_heading = QLabel("現在の読取範囲")
+        current_region_heading.setObjectName("expeditionCurrentRegionHeading")
+        ranges.addWidget(current_region_heading)
         self.status_label = QLabel()
         self.status_label.setObjectName("expeditionRegionStatus")
-        root.addWidget(self.status_label)
+        ranges.addWidget(self.status_label)
         self.preview = RegionPreview()
         self.preview.set_region(self._region)
-        root.addWidget(self.preview)
+        ranges.addWidget(self.preview)
 
         range_buttons = QHBoxLayout()
         self.set_region_button = QPushButton()
@@ -277,41 +312,30 @@ class ExpeditionSettingsDialog(QDialog):
         self.reset_region_button.clicked.connect(self._reset_region)
         range_buttons.addWidget(self.set_region_button)
         range_buttons.addWidget(self.reset_region_button)
-        root.addLayout(range_buttons)
-
-        instruction = QLabel(
-            "報酬カードの左端・右端、先頭カードの上端、報酬パネル内側の最下部を囲んでください。\n"
-            "タイトルや外枠は含めず、報酬が少ない時の空白部分は含めます。"
-        )
-        instruction.setWordWrap(True)
-        instruction.setObjectName("expeditionRegionInstruction")
-        root.addWidget(instruction)
-        size_warning = QLabel(
-            "PoE2のウィンドウサイズを変更した場合、位置が変わるため再設定が必要です。"
-        )
-        size_warning.setWordWrap(True)
-        size_warning.setObjectName("screenSizeRegionWarning")
-        root.addWidget(size_warning)
+        ranges.addLayout(range_buttons)
 
         example_heading = QHBoxLayout()
-        example_heading.addWidget(QLabel("指定例"))
+        example_title = QLabel("指定例")
+        example_title.setObjectName("expeditionExampleHeading")
+        example_heading.addWidget(example_title)
         self.example_hint_label = QLabel(
             "※以下の画像をクリックするとポップアップで拡大表示します"
         )
         self.example_hint_label.setObjectName("expeditionExampleHint")
         example_heading.addWidget(self.example_hint_label)
         example_heading.addStretch()
-        root.addLayout(example_heading)
+        ranges.addLayout(example_heading)
         self.example_thumbnail = ClickableImageLabel()
         self.example_thumbnail.setObjectName("expeditionExampleThumbnail")
         self.example_thumbnail.setAlignment(Qt.AlignCenter)
         self.example_thumbnail.setFixedHeight(150)
         self.example_thumbnail.setCursor(Qt.PointingHandCursor)
         self.example_thumbnail.clicked.connect(self._show_example_popup)
-        root.addWidget(self.example_thumbnail)
+        ranges.addWidget(self.example_thumbnail)
         self._load_example_thumbnail()
+        content.addWidget(range_group)
+        content.addStretch()
 
-        root.addStretch()
         buttons = QHBoxLayout()
         buttons.addStretch()
         cancel = QPushButton("キャンセル")
@@ -323,6 +347,15 @@ class ExpeditionSettingsDialog(QDialog):
         buttons.addWidget(save)
         root.addLayout(buttons)
         self._refresh_region_state()
+
+    @staticmethod
+    def _section_group(title: str, object_name: str):
+        group = QGroupBox(title)
+        group.setObjectName(object_name)
+        layout = QVBoxLayout(group)
+        layout.setContentsMargins(12, 18, 12, 12)
+        layout.setSpacing(8)
+        return group, layout
 
     def settings(self) -> tuple[dict, str, bool]:
         config = dict(self._config)
@@ -433,7 +466,17 @@ class ExpeditionSettingsDialog(QDialog):
         theme = SETTINGS_THEME
         return f"""
             QDialog {{ background: {theme.background}; color: {theme.text}; font-size: 13px; }}
-            QLabel, QCheckBox {{ color: {theme.text}; }}
+            QScrollArea, QScrollArea > QWidget > QWidget {{ background: {theme.background}; }}
+            QLabel, QCheckBox, QGroupBox {{ color: {theme.text}; }}
+            QGroupBox {{
+                background: {theme.panel}; border: 1px solid #465046;
+                border-radius: 7px; margin-top: 10px; padding-top: 7px;
+            }}
+            QGroupBox::title {{
+                color: {theme.accent}; font-size: 14px; font-weight: bold;
+                subcontrol-origin: margin; subcontrol-position: top left;
+                left: 10px; padding: 0 6px;
+            }}
             QPushButton {{
                 background: {theme.panel}; color: {theme.text};
                 border: 1px solid #596359; border-radius: 5px;
@@ -442,6 +485,8 @@ class ExpeditionSettingsDialog(QDialog):
             QPushButton:hover {{ background: #293229; border-color: {theme.accent}; }}
             QPushButton:focus {{ border-color: {theme.accent}; }}
             QLabel#expeditionRegionInstruction {{ color: {theme.muted_text}; }}
+            QLabel#expeditionCurrentRegionHeading,
+            QLabel#expeditionExampleHeading {{ font-weight: bold; }}
             QLabel#screenSizeRegionWarning, QLabel#screenReadingEnableRequiredHint {{
                 color: #FFD54F; font-weight: bold;
             }}
