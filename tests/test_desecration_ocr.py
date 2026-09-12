@@ -82,3 +82,48 @@ def test_ocr_resolution_rejects_an_extra_number_from_a_neighbouring_ui_element()
 
     assert result.categories == ()
     assert result.fallback_statuses == ("read_failed",)
+
+
+def test_short_text_rescue_requires_multiple_ocr_variants_to_agree():
+    rescued = resolve_ocr_variants((("回避カ +76", "回避カ +76", ""),), ("ring",))
+    assert rescued.categories == ("ring",)
+    assert rescued.tiers == (6,)
+
+    single = resolve_ocr_variants((("回避カ +76", "", ""),), ("ring",))
+    assert single.categories == ()
+    assert single.fallback_statuses == ("read_failed",)
+
+
+def test_fixed_number_rescue_requires_multiple_ocr_variants_to_agree():
+    text = "投射物は8mより遠くにいる敵に対するヒットダメージが60%増加する"
+    rescued = resolve_ocr_variants(((text, text, ""),), ("spear",))
+    assert rescued.categories == ("spear",)
+    assert rescued.tiers == (1,)
+
+    single = resolve_ocr_variants(((text, "", ""),), ("spear",))
+    assert single.categories == ()
+
+
+def test_supplied_short_mod_panel_texts_use_the_three_mod_intersection():
+    result = resolve_ocr_variants((
+        ("見つかるアイテムのレアリティが8%増加する",) * 3,
+        ("4から6の冷気ダメージをアタックに追加する",) * 3,
+        ("回避カ +76", "回避カ +76", ""),
+    ), ("ring", "amulet", "boots", "gloves", "quiver"))
+    assert result.categories == ("ring", "gloves")
+    assert result.tiers_by_category == {
+        "ring": (3, 8, 6),
+        "gloves": (3, 8, 4),
+    }
+
+
+def test_category_panel_requires_all_three_mods_not_the_best_partial_match():
+    result = resolve_ocr_variants((
+        ("アーマー +27", "アーマー +27", "アーマー +27"),
+        ("移動スピードが30%増加する",) * 3,
+        ("未知の効果が123%増加する",) * 3,
+    ), ("boots", "amulet"))
+
+    assert result.categories == ()
+    assert result.fallback_tiers == (7, 2, None)
+    assert result.fallback_statuses == ("matched", "matched", "unsupported")

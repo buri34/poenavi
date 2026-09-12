@@ -364,8 +364,10 @@ class DesecrationTierController(QObject):
             count = len(bands)
             statuses = resolution.fallback_statuses or ("read_failed",) * count
             self._display(
-                client_rect, capture_rect, bands, (None,) * count,
-                statuses=statuses, range_labels=((),) * count,
+                client_rect, capture_rect, bands,
+                resolution.fallback_tiers or (None,) * count,
+                statuses=statuses,
+                range_labels=resolution.fallback_ranges or ((),) * count,
             )
             return
         if resolution.needs_category_choice:

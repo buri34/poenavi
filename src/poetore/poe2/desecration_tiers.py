@@ -15,6 +15,8 @@ DATA_PATH = (
     / "data" / "poetore" / "poe2" / "desecration_tiers.json"
 )
 NUMBER_RE = r"[+-]?\d+(?:\.\d+)?"
+TEMPLATE_NUMBER_RE = re.compile(rf"#|{NUMBER_RE}")
+RESCUE_REASONS = {"fixed_number_rescue", "short_text_rescue"}
 
 
 @dataclass(frozen=True)
@@ -103,6 +105,11 @@ def _shared_range_labels(
     return next(iter(labels)) if len(labels) == 1 else ()
 
 
+def _stat_identity(entry: dict) -> tuple[str, ...]:
+    """Treat prefix/suffix records for the same displayed stat as one effect."""
+    return tuple(sorted(str(part.get("stat_id", "")) for part in entry.get("parts", ())))
+
+
 @lru_cache(maxsize=4096)
 def _line_pattern(template: str) -> re.Pattern:
     template = _visible_template(template).strip()
@@ -152,41 +159,170 @@ def _entry_matches(entry: dict, lines: tuple[str, ...]) -> bool:
 
 def _score_key(text: str) -> str:
     text = _visible_template(text)
-    text = re.sub(NUMBER_RE, "#", text.casefold())
-    return re.sub(r"[^#a-zぁ-んァ-ヶ一-龯ー]", "", text)
+    return re.sub(r"[^#%+\-.0-9a-zぁ-んァ-ヶ一-龯ー]", "", text.casefold())
 
 
-def _part_score(part: dict, observed: str) -> float | None:
+def _numeric_skeleton(
+    template: str, observed: str, ranges: list,
+    *, allow_fixed_mismatch: bool = False,
+) -> tuple[str, str, int] | None:
+    """Pair observed numbers with literal numbers or # slots in the template."""
+    template = _visible_template(template)
+    template_tokens = list(TEMPLATE_NUMBER_RE.finditer(template))
+    observed_tokens = list(re.finditer(NUMBER_RE, observed))
+    if len(template_tokens) != len(observed_tokens):
+        return None
+    if sum(token.group() == "#" for token in template_tokens) != len(ranges):
+        return None
+
+    expected_parts: list[str] = []
+    actual_parts: list[str] = []
+    expected_cursor = actual_cursor = range_index = fixed_mismatches = 0
+    for expected_token, actual_token in zip(template_tokens, observed_tokens):
+        expected_parts.append(template[expected_cursor:expected_token.start()])
+        actual_parts.append(observed[actual_cursor:actual_token.start()])
+        expected_raw = expected_token.group()
+        actual_raw = actual_token.group()
+        if expected_raw == "#":
+            value = float(actual_raw)
+            low, high = ranges[range_index]
+            if not float(low) <= value <= float(high):
+                return None
+            range_index += 1
+            expected_parts.append("#")
+            # A leading + is part of the captured numeric value in OCR text,
+            # while Trade templates commonly express the same slot as bare #.
+            # Numeric range validation above already preserves sign semantics.
+            actual_parts.append("#")
+        else:
+            expected_value = float(expected_raw)
+            actual_value = float(actual_raw)
+            if expected_value != actual_value:
+                fixed_mismatches += 1
+                if not allow_fixed_mismatch:
+                    return None
+            expected_parts.append(expected_raw)
+            actual_parts.append(actual_raw)
+        expected_cursor = expected_token.end()
+        actual_cursor = actual_token.end()
+    expected_parts.append(template[expected_cursor:])
+    actual_parts.append(observed[actual_cursor:])
+    return (
+        _score_key("".join(expected_parts)),
+        _score_key("".join(actual_parts)),
+        fixed_mismatches,
+    )
+
+
+def _part_analysis(
+    part: dict, observed: str, *, allow_fixed_mismatch: bool = False,
+) -> tuple[float, int] | None:
     ranges = part.get("ranges")
     if ranges is None:
         return None
-    values = [float(value) for value in re.findall(NUMBER_RE, observed)]
-    if len(values) != len(ranges):
+    skeleton = _numeric_skeleton(
+        str(part["text"]["ja"]), observed, ranges,
+        allow_fixed_mismatch=allow_fixed_mismatch,
+    )
+    if skeleton is None:
         return None
-    if not all(
-        float(low) <= value <= float(high)
-        for value, (low, high) in zip(values, ranges)
-    ):
-        return None
-    expected = _score_key(str(part["text"]["ja"]))
-    actual = _score_key(observed)
+    expected, actual, fixed_mismatches = skeleton
     if not expected or not actual:
         return None
-    return SequenceMatcher(None, expected, actual).ratio()
+    return SequenceMatcher(None, expected, actual).ratio(), fixed_mismatches
 
 
-def _entry_score(entry: dict, lines: tuple[str, ...]) -> float | None:
+def _part_score(part: dict, observed: str) -> float | None:
+    analysis = _part_analysis(part, observed)
+    return analysis[0] if analysis else None
+
+
+def _entry_analysis(
+    entry: dict, lines: tuple[str, ...], *, allow_fixed_mismatch: bool = False,
+) -> tuple[float, int] | None:
     parts = entry.get("parts", ())
     if len(parts) != len(lines):
         return None
     best = None
     for ordered in permutations(lines):
-        scores = [_part_score(part, line) for part, line in zip(parts, ordered)]
-        if any(score is None for score in scores):
+        analyses = [
+            _part_analysis(part, line, allow_fixed_mismatch=allow_fixed_mismatch)
+            for part, line in zip(parts, ordered)
+        ]
+        if any(analysis is None for analysis in analyses):
             continue
-        combined = sum(scores) / len(scores)
-        best = combined if best is None else max(best, combined)
+        score = sum(analysis[0] for analysis in analyses) / len(analyses)
+        mismatch_count = sum(analysis[1] for analysis in analyses)
+        candidate = (score, mismatch_count)
+        best = candidate if best is None or candidate[0] > best[0] else best
     return best
+
+
+def _entry_score(entry: dict, lines: tuple[str, ...]) -> float | None:
+    analysis = _entry_analysis(entry, lines)
+    return analysis[0] if analysis else None
+
+
+def _fixed_number_rescue_score(entry: dict, lines: tuple[str, ...]) -> float | None:
+    parts = entry.get("parts", ())
+    if len(parts) != len(lines):
+        return None
+    best = None
+    for ordered in permutations(lines):
+        scores = []
+        mismatch_count = 0
+        for part, line in zip(parts, ordered):
+            ranges = part.get("ranges")
+            if ranges is None:
+                break
+            skeleton = _numeric_skeleton(
+                str(part["text"]["ja"]), line, ranges,
+                allow_fixed_mismatch=True,
+            )
+            if skeleton is None:
+                break
+            expected, actual, mismatches = skeleton
+            # Rescue only a numeric OCR error. Any nonnumeric difference must
+            # use the separate short-text path or remain unresolved.
+            if re.sub(NUMBER_RE, "#", expected) != re.sub(NUMBER_RE, "#", actual):
+                break
+            scores.append(SequenceMatcher(None, expected, actual).ratio())
+            mismatch_count += mismatches
+        else:
+            if mismatch_count:
+                combined = sum(scores) / len(scores)
+                best = combined if best is None else max(best, combined)
+    return best
+
+
+def _edit_distance(left: str, right: str) -> int:
+    previous = list(range(len(right) + 1))
+    for left_index, left_char in enumerate(left, 1):
+        current = [left_index]
+        for right_index, right_char in enumerate(right, 1):
+            current.append(min(
+                current[-1] + 1,
+                previous[right_index] + 1,
+                previous[right_index - 1] + (left_char != right_char),
+            ))
+        previous = current
+    return previous[-1]
+
+
+def _short_text_score(entry: dict, lines: tuple[str, ...]) -> float | None:
+    parts = entry.get("parts", ())
+    if len(parts) != 1 or len(lines) != 1:
+        return None
+    ranges = parts[0].get("ranges")
+    if ranges is None:
+        return None
+    skeleton = _numeric_skeleton(str(parts[0]["text"]["ja"]), lines[0], ranges)
+    if skeleton is None:
+        return None
+    expected, actual, _mismatches = skeleton
+    if len(expected) > 12 or _edit_distance(expected, actual) != 1:
+        return None
+    return 1 - (1 / max(len(expected), len(actual), 1))
 
 
 def _normalized_lines(lines: str | tuple[str, ...] | list[str]) -> tuple[str, ...]:
@@ -254,22 +390,43 @@ def resolve_desecration_choice_fuzzy(
         profile["id"] for profile in payload["profiles"]
         if _profile_category(profile) == category
     }
-    candidates: list[tuple[float, dict, str, int]] = []
-    for entry in payload["entries"]:
-        score = _entry_score(entry, normalized_lines)
-        if score is None or score < minimum_score:
-            continue
-        for profile_id, tier in entry["profile_tiers"].items():
-            if profile_id in profile_ids:
-                candidates.append((score, entry, profile_id, int(tier)))
+    def candidates_for(mode: str) -> list[tuple[float, dict, str, int]]:
+        rows: list[tuple[float, dict, str, int]] = []
+        for entry in payload["entries"]:
+            if mode == "matched":
+                score = _entry_score(entry, normalized_lines)
+                if score is None or score < minimum_score:
+                    continue
+            elif mode == "fixed_number_rescue":
+                score = _fixed_number_rescue_score(entry, normalized_lines)
+                if score is None:
+                    continue
+            else:
+                score = _short_text_score(entry, normalized_lines)
+                if score is None:
+                    continue
+            for profile_id, tier in entry["profile_tiers"].items():
+                if profile_id in profile_ids:
+                    rows.append((score, entry, profile_id, int(tier)))
+        return rows
+
+    reason = "matched"
+    candidates = candidates_for(reason)
+    if not candidates:
+        reason = "fixed_number_rescue"
+        candidates = candidates_for(reason)
+    if not candidates:
+        reason = "short_text_rescue"
+        candidates = candidates_for(reason)
     if not candidates:
         return FuzzyTierResolution(tier=None, reason="no_match", score=None)
     best_score = max(row[0] for row in candidates)
     finalists = [row for row in candidates if best_score - row[0] <= ambiguity_margin]
     tiers = {row[3] for row in finalists}
     mod_ids = tuple(sorted({row[1]["mod_id"] for row in finalists}))
+    stat_identities = {_stat_identity(row[1]) for row in finalists}
     profiles = tuple(sorted({row[2] for row in finalists}))
-    if len(tiers) != 1:
+    if len(tiers) != 1 or len(stat_identities) != 1:
         return FuzzyTierResolution(
             tier=None, mod_ids=mod_ids, profile_ids=profiles,
             reason="ambiguous", score=round(best_score, 4),
@@ -279,7 +436,7 @@ def resolve_desecration_choice_fuzzy(
         range_labels=_shared_range_labels(
             (row[1] for row in finalists), normalized_lines,
         ),
-        reason="matched", score=round(best_score, 4),
+        reason=reason, score=round(best_score, 4),
     )
 
 

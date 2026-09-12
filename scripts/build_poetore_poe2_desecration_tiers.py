@@ -43,6 +43,10 @@ MISSING_PROFILE_OVERRIDES = {
     "AbyssModBootsUlamanSuffixReducedMovementPenaltyWhileSkilling": "boots",
     "AbyssModGlovesAmanamuSuffixPercentOfLifeLeechInstant": "gloves",
 }
+DIRECTION_RULES = (
+    ("increased", "reduced", "増加", "減少", "decrease"),
+    ("reduced", "increased", "減少", "増加", "increase"),
+)
 
 
 def quoted_list(text: str) -> list[str]:
@@ -249,6 +253,34 @@ def value_ranges(template: str, rendered: str) -> list[list[float]] | None:
     return ranges
 
 
+def resolve_directional_part(
+    en_template: str, ja_template: str, rendered: str,
+) -> dict | None:
+    """Resolve a strict PoB2 polarity mismatch without guessing other text."""
+    for source_word, target_word, ja_source, ja_target, direction in DIRECTION_RULES:
+        if len(re.findall(rf"\b{source_word}\b", en_template, re.IGNORECASE)) != 1:
+            continue
+        if ja_template.count(ja_source) != 1:
+            continue
+        adjusted_en = re.sub(
+            rf"\b{source_word}\b", target_word, en_template,
+            count=1, flags=re.IGNORECASE,
+        )
+        ranges = value_ranges(adjusted_en, rendered)
+        if ranges is None:
+            continue
+        return {
+            "en": adjusted_en,
+            "ja": ja_template.replace(ja_source, ja_target, 1),
+            "ranges": [
+                [min(abs(low), abs(high)), max(abs(low), abs(high))]
+                for low, high in ranges
+            ],
+            "direction": direction,
+        }
+    return None
+
+
 def build_parts(row: dict, stats: dict[str, list[dict]]) -> list[dict]:
     parts = []
     for hash_value, descriptions in row["trade_hashes"].items():
@@ -259,14 +291,46 @@ def build_parts(row: dict, stats: dict[str, list[dict]]) -> list[dict]:
         ja_template = str(stat["text"].get("ja", ""))
         for description in descriptions:
             ranges = value_ranges(en_template, description)
-            parts.append({
+            directional = None
+            if ranges is None:
+                directional = resolve_directional_part(
+                    en_template, ja_template, description,
+                )
+            part = {
                 "stat_hash": hash_value,
                 "stat_id": f"desecrated.stat_{hash_value}",
-                "text": {"en": en_template, "ja": ja_template},
-                "ranges": ranges,
+                "text": {
+                    "en": directional["en"] if directional else en_template,
+                    "ja": directional["ja"] if directional else ja_template,
+                },
+                "ranges": directional["ranges"] if directional else ranges,
                 "source_text": description,
-            })
+            }
+            if directional:
+                part["direction"] = directional["direction"]
+            parts.append(part)
     return parts
+
+
+def template_audit(entries: list[dict]) -> dict:
+    mixed = []
+    skeletons: dict[str, set[str]] = defaultdict(set)
+    for entry in entries:
+        for part in entry["parts"]:
+            template = str(part["text"]["ja"])
+            if "#" in template and re.search(r"\d", template):
+                mixed.append({"mod_id": entry["mod_id"], "template": template})
+            skeleton = re.sub(NUMBER, "#", template)
+            skeletons[skeleton].add(template)
+    collisions = [
+        {"numeric_skeleton": skeleton, "templates": sorted(templates)}
+        for skeleton, templates in sorted(skeletons.items()) if len(templates) > 1
+    ]
+    return {
+        "mixed_fixed_dynamic_parts": len(mixed),
+        "mixed_fixed_dynamic_templates": len({row["template"] for row in mixed}),
+        "numeric_skeleton_collisions": collisions,
+    }
 
 
 def sha256(path: Path) -> str:
@@ -305,10 +369,13 @@ def build(pob2: Path, stat_index: Path, output: Path, expected_revision: str | N
     stats = load_stats(stat_index)
     entries = []
     skipped_parts = []
+    polarity_adjusted_rows = []
     for row in rows:
         parts = build_parts(row, stats)
         if len(parts) != len(row["trade_hashes"]) or any(part["ranges"] is None for part in parts):
             skipped_parts.append(row["mod_id"])
+        if any("direction" in part for part in parts):
+            polarity_adjusted_rows.append(row["mod_id"])
         entries.append({
             "mod_id": row["mod_id"],
             "pool": row["pool"],
@@ -336,6 +403,8 @@ def build(pob2: Path, stat_index: Path, output: Path, expected_revision: str | N
             "emitted_rows": len(entries),
             "fully_matchable_rows": len(entries) - len(skipped_parts),
             "rows_with_unparsed_parts": sorted(skipped_parts),
+            "polarity_adjusted_rows": sorted(polarity_adjusted_rows),
+            **template_audit(entries),
         },
     }
     output.parent.mkdir(parents=True, exist_ok=True)
