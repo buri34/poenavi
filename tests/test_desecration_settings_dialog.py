@@ -1,9 +1,11 @@
 from PySide6.QtCore import QRect
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QApplication, QLabel
+from PySide6.QtWidgets import QApplication, QDialog, QLabel
 
 from src.ui.desecration_settings_dialog import (
     DEFAULT_EXAMPLE_IMAGE_PATH,
+    EXAMPLE_POPUP_IMAGE_SIZE,
+    EXAMPLE_POPUP_SIZE,
     DesecrationSettingsDialog,
 )
 
@@ -81,3 +83,26 @@ def test_desecration_default_example_image_is_bundled_and_loadable():
     assert not pixmap.isNull()
     assert pixmap.width() == 2577
     assert pixmap.height() == 698
+
+
+def test_desecration_example_popup_image_is_one_and_a_half_times_larger(
+    qtbot, monkeypatch
+):
+    captured = {}
+
+    def capture_popup(popup):
+        captured["popup"] = popup
+        return QDialog.Rejected
+
+    monkeypatch.setattr(QDialog, "exec", capture_popup)
+    dialog = DesecrationSettingsDialog()
+    qtbot.addWidget(dialog)
+
+    dialog._show_example_popup()
+
+    popup = captured["popup"]
+    image = popup.findChild(QLabel, "desecrationExamplePopupImage")
+    assert popup.size() == EXAMPLE_POPUP_SIZE
+    assert EXAMPLE_POPUP_IMAGE_SIZE.width() == 860 * 1.5
+    assert EXAMPLE_POPUP_IMAGE_SIZE.height() == 630 * 1.5
+    assert image.pixmap().width() == 1290

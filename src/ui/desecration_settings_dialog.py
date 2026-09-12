@@ -33,6 +33,8 @@ DEFAULT_EXAMPLE_IMAGE_PATH = (
     Path(__file__).resolve().parents[2] / "assets" / "images"
     / "desecration_region_example.png"
 )
+EXAMPLE_POPUP_SIZE = QSize(1350, 700)
+EXAMPLE_POPUP_IMAGE_SIZE = QSize(1290, 945)
 
 
 class DesecrationRegionSelector(ExpeditionRegionSelector):
@@ -269,13 +271,18 @@ class DesecrationSettingsDialog(QDialog):
     def _show_example_popup(self):
         popup = QDialog(self)
         popup.setWindowTitle("読取範囲の指定例")
-        popup.resize(900, 700)
+        popup.resize(EXAMPLE_POPUP_SIZE)
         layout = QVBoxLayout(popup)
         image = QLabel()
+        image.setObjectName("desecrationExamplePopupImage")
         image.setAlignment(Qt.AlignCenter)
         pixmap = QPixmap(str(self._example_image_path))
         image.setText("指定例画像は準備中です。") if pixmap.isNull() else image.setPixmap(
-            pixmap.scaled(QSize(860, 630), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            pixmap.scaled(
+                EXAMPLE_POPUP_IMAGE_SIZE,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation,
+            )
         )
         layout.addWidget(image)
         close = QPushButton("閉じる")
