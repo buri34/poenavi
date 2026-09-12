@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from poetore.poe2.desecration_tiers import (
+from src.poetore.poe2.desecration_tiers import (
     available_categories,
     resolve_desecration_choice,
     resolve_desecration_choice_fuzzy,
