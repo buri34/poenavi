@@ -121,6 +121,17 @@ def test_expedition_enabled_checkbox_uses_shared_blue_style():
     dialog.close()
 
 
+def test_expedition_settings_warns_that_screen_reading_must_be_enabled():
+    QApplication.instance() or QApplication([])
+    dialog = ExpeditionSettingsDialog()
+
+    hint = dialog.findChild(QLabel, "screenReadingEnableRequiredHint")
+    assert hint.text() == "※使用するにはチェックをONにしてください"
+    assert "#FFD54F" in dialog.styleSheet()
+    assert "font-weight: bold" in dialog.styleSheet()
+    dialog.close()
+
+
 def test_expedition_dialog_accepts_unmodified_hotkey():
     QApplication.instance() or QApplication([])
     dialog = ExpeditionSettingsDialog(hotkey="e")

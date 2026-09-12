@@ -57,3 +57,13 @@ def test_desecration_settings_explains_required_and_closed_regions(qtbot):
     assert warning.text() == (
         "PoE2のウィンドウサイズを変更した場合、位置が変わるため再設定が必要です。"
     )
+
+
+def test_desecration_settings_warns_that_screen_reading_must_be_enabled(qtbot):
+    dialog = DesecrationSettingsDialog()
+    qtbot.addWidget(dialog)
+
+    hint = dialog.findChild(QLabel, "screenReadingEnableRequiredHint")
+    assert hint.text() == "※使用するにはチェックをONにしてください"
+    assert "#FFD54F" in dialog.styleSheet()
+    assert "font-weight: bold" in dialog.styleSheet()

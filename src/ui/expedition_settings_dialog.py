@@ -232,10 +232,19 @@ class ExpeditionSettingsDialog(QDialog):
         root.setContentsMargins(18, 18, 18, 14)
         root.setSpacing(12)
 
+        reading_toggle_row = QHBoxLayout()
+        reading_toggle_row.setSpacing(8)
         self.enabled_checkbox = QCheckBox("ゲーム画面の読み取り機能を有効にする")
         self.enabled_checkbox.setChecked(bool(screen_reading_enabled))
         Styles.apply_checkbox_style(self.enabled_checkbox)
-        root.addWidget(self.enabled_checkbox)
+        reading_toggle_row.addWidget(self.enabled_checkbox)
+        self.enable_required_hint = QLabel(
+            "※使用するにはチェックをONにしてください"
+        )
+        self.enable_required_hint.setObjectName("screenReadingEnableRequiredHint")
+        reading_toggle_row.addWidget(self.enable_required_hint)
+        reading_toggle_row.addStretch()
+        root.addLayout(reading_toggle_row)
         shared_hint = QLabel(
             "エクスペ報酬価格チェックとアビス冒涜Modティアチェックで共通の設定です。"
         )
@@ -433,7 +442,10 @@ class ExpeditionSettingsDialog(QDialog):
             QPushButton:hover {{ background: #293229; border-color: {theme.accent}; }}
             QPushButton:focus {{ border-color: {theme.accent}; }}
             QLabel#expeditionRegionInstruction {{ color: {theme.muted_text}; }}
-            QLabel#screenSizeRegionWarning {{ color: #FFD54F; font-weight: bold; }}
+            QLabel#screenSizeRegionWarning, QLabel#screenReadingEnableRequiredHint {{
+                color: #FFD54F; font-weight: bold;
+            }}
+            QLabel#screenReadingEnableRequiredHint {{ font-size: 12px; }}
             QLabel#expeditionExampleThumbnail {{
                 background: #151A15; color: {theme.muted_text};
                 border: 1px solid #596359; border-radius: 6px;
