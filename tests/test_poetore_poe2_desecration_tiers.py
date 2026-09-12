@@ -65,3 +65,15 @@ def test_reveal_infers_category_from_all_three_choices():
     ))
     assert "boots" in result.categories
     assert result.tiers_by_category["boots"] == (7, 1, 2)
+
+
+def test_roll_ranges_follow_the_visible_value_order():
+    cold = resolve_desecration_choice_fuzzy(
+        "26から43の冷気ダメージを追加する", "spear"
+    )
+    assert cold.range_labels == ("22–29", "34–44")
+
+    compound = resolve_desecration_choice_fuzzy(
+        "物理ダメージが28%増加する\n命中力 +57", "spear"
+    )
+    assert compound.range_labels == ("25–34%", "47–72")

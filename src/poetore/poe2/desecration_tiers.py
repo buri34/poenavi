@@ -22,6 +22,7 @@ class TierResolution:
     tier: int | None
     mod_ids: tuple[str, ...] = ()
     profile_ids: tuple[str, ...] = ()
+    range_labels: tuple[str, ...] = ()
     reason: str = "unknown"
 
 
@@ -53,6 +54,53 @@ def tier_data() -> dict:
 
 def _visible_template(template: str) -> str:
     return re.sub(r"\s*\((?:Local|ローカル)\)\s*$", "", template, flags=re.IGNORECASE)
+
+
+def _display_number(value: float) -> str:
+    number = float(value)
+    return str(int(number)) if number.is_integer() else f"{number:g}"
+
+
+def _entry_range_labels(
+    entry: dict, observed_lines: tuple[str, ...] = (),
+) -> tuple[str, ...]:
+    labels: list[str] = []
+    parts = tuple(entry.get("parts", ()))
+    if observed_lines and len(parts) == len(observed_lines):
+        ranked = []
+        for ordered in permutations(parts):
+            scores = [_part_score(part, line) for part, line in zip(ordered, observed_lines)]
+            if all(score is not None for score in scores):
+                ranked.append((sum(scores), ordered))
+        if ranked:
+            parts = max(ranked, key=lambda item: item[0])[1]
+    for part in parts:
+        ranges = part.get("ranges")
+        if ranges is None:
+            return ()
+        template = _visible_template(str(part["text"]["ja"]))
+        suffixes = [
+            "%" if tail.lstrip().startswith("%") else ""
+            for tail in template.split("#")[1:]
+        ]
+        if len(suffixes) != len(ranges):
+            return ()
+        for (low, high), suffix in zip(ranges, suffixes):
+            low_text = _display_number(low)
+            high_text = _display_number(high)
+            value = low_text if low_text == high_text else f"{low_text}–{high_text}"
+            labels.append(f"{value}{suffix}")
+    return tuple(labels)
+
+
+def _shared_range_labels(
+    entries, observed_lines: tuple[str, ...] = (),
+) -> tuple[str, ...]:
+    unique = {entry["mod_id"]: entry for entry in entries}
+    labels = {
+        _entry_range_labels(entry, observed_lines) for entry in unique.values()
+    }
+    return next(iter(labels)) if len(labels) == 1 else ()
 
 
 @lru_cache(maxsize=4096)
@@ -179,7 +227,11 @@ def resolve_desecration_choice(
         )
     return TierResolution(
         tier=next(iter(tiers)), mod_ids=mod_ids,
-        profile_ids=matched_profiles, reason="matched",
+        profile_ids=matched_profiles,
+        range_labels=_shared_range_labels(
+            (entry for entry, _profile, _tier in matches), normalized_lines,
+        ),
+        reason="matched",
     )
 
 
@@ -216,6 +268,9 @@ def resolve_desecration_choice_fuzzy(
         )
     return FuzzyTierResolution(
         tier=next(iter(tiers)), mod_ids=mod_ids, profile_ids=profiles,
+        range_labels=_shared_range_labels(
+            (row[1] for row in finalists), normalized_lines,
+        ),
         reason="matched", score=round(best_score, 4),
     )
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+from collections import Counter
 from dataclasses import dataclass
 
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRect, Qt
@@ -32,6 +34,10 @@ class OcrRevealResolution:
     categories: tuple[str, ...]
     tiers_by_category: dict[str, tuple[int | None, ...]]
     texts_by_category: dict[str, tuple[str, ...]]
+    ranges_by_category: dict[str, tuple[tuple[str, ...], ...]]
+    statuses_by_category: dict[str, tuple[str, ...]]
+    fallback_statuses: tuple[str, ...] = ()
+    fallback_texts: tuple[str, ...] = ()
 
     @property
     def needs_category_choice(self) -> bool:
@@ -40,6 +46,16 @@ class OcrRevealResolution:
     @property
     def tiers(self) -> tuple[int | None, ...] | None:
         unique = set(self.tiers_by_category.values())
+        return next(iter(unique)) if len(unique) == 1 else None
+
+    @property
+    def ranges(self) -> tuple[tuple[str, ...], ...] | None:
+        unique = set(self.ranges_by_category.values())
+        return next(iter(unique)) if len(unique) == 1 else None
+
+    @property
+    def statuses(self) -> tuple[str, ...] | None:
+        unique = set(self.statuses_by_category.values())
         return next(iter(unique)) if len(unique) == 1 else None
 
 
@@ -128,6 +144,19 @@ def prepare_desecration_frame(image: QImage) -> PreparedDesecrationFrame:
     return PreparedDesecrationFrame(bands, tuple(all_variants), valid)
 
 
+def _unmatched_status(outputs: tuple[str, ...]) -> str:
+    """Separate unstable/garbled OCR from stable text absent from our data."""
+    normalized = [re.sub(r"\s+", "", text) for text in outputs if text.strip()]
+    readable = [
+        text for text in normalized
+        if re.search(r"\d", text) and re.search(r"[ぁ-んァ-ヶ一-龯]", text)
+        and len(text) >= 5
+    ]
+    if readable and Counter(readable).most_common(1)[0][1] >= 2:
+        return "unsupported"
+    return "read_failed"
+
+
 def resolve_ocr_variants(
     variant_texts: tuple[tuple[str, ...], ...],
     categories: tuple[str, ...] | None = None,
@@ -136,9 +165,16 @@ def resolve_ocr_variants(
     category_pool = categories or available_categories()
     candidate_rows = {}
     max_resolved = 0
+    fallback_statuses = tuple(_unmatched_status(outputs) for outputs in variant_texts)
+    fallback_texts = tuple(
+        next((text.strip() for text in outputs if text.strip()), "")
+        for outputs in variant_texts
+    )
     for category in category_pool:
         tiers = []
         texts = []
+        ranges = []
+        statuses = []
         for outputs in variant_texts:
             attempts: list[tuple[str, FuzzyTierResolution]] = [
                 (text, resolve_desecration_choice_fuzzy(text, category))
@@ -148,6 +184,8 @@ def resolve_ocr_variants(
             if not matched:
                 tiers.append(None)
                 texts.append(outputs[0].strip() if outputs else "")
+                ranges.append(())
+                statuses.append(_unmatched_status(outputs))
                 continue
             best_score = max(result.score or 0 for _text, result in matched)
             finalists = [
@@ -158,15 +196,23 @@ def resolve_ocr_variants(
             if len(finalist_tiers) != 1:
                 tiers.append(None)
                 texts.append(finalists[0][0])
+                ranges.append(())
+                statuses.append("read_failed")
                 continue
             chosen = max(finalists, key=lambda item: item[1].score or 0)
             tiers.append(chosen[1].tier)
             texts.append(chosen[0])
+            ranges.append(chosen[1].range_labels)
+            statuses.append("matched")
         resolved = sum(tier is not None for tier in tiers)
         max_resolved = max(max_resolved, resolved)
-        candidate_rows[category] = (resolved, tuple(tiers), tuple(texts))
+        candidate_rows[category] = (
+            resolved, tuple(tiers), tuple(texts), tuple(ranges), tuple(statuses),
+        )
     if max_resolved == 0:
-        return OcrRevealResolution((), {}, {})
+        return OcrRevealResolution(
+            (), {}, {}, {}, {}, fallback_statuses, fallback_texts,
+        )
     winners = {
         category: row for category, row in candidate_rows.items()
         if row[0] == max_resolved
@@ -175,4 +221,8 @@ def resolve_ocr_variants(
         tuple(winners),
         {category: row[1] for category, row in winners.items()},
         {category: row[2] for category, row in winners.items()},
+        {category: row[3] for category, row in winners.items()},
+        {category: row[4] for category, row in winners.items()},
+        fallback_statuses,
+        fallback_texts,
     )

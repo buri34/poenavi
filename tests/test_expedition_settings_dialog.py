@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from PySide6.QtCore import QRect, Qt, QTimer
 from PySide6.QtGui import QImage, QKeyEvent
-from PySide6.QtWidgets import QApplication, QDialog
+from PySide6.QtWidgets import QApplication, QDialog, QLabel
 
 from src.ui.expedition_settings_dialog import (
     DEFAULT_EXAMPLE_IMAGE_PATH,
@@ -217,4 +217,14 @@ def test_packaged_expedition_example_image_is_available():
     assert dialog.example_thumbnail.pixmap() is not None
     assert not dialog.example_thumbnail.pixmap().isNull()
     assert dialog.example_thumbnail.toolTip() == "クリックして拡大"
+    dialog.close()
+
+
+def test_expedition_dialog_warns_that_window_resize_requires_region_reset():
+    dialog = ExpeditionSettingsDialog()
+    warning = dialog.findChild(QLabel, "screenSizeRegionWarning")
+    assert warning.text() == (
+        "PoE2のウィンドウサイズを変更した場合、位置が変わるため再設定が必要です。"
+    )
+    assert "#FFD54F" in dialog.styleSheet()
     dialog.close()

@@ -88,16 +88,37 @@ class DesecrationSettingsDialog(QDialog):
         form.addRow("読取ショートカット:", self.hotkey_widget)
         root.addLayout(form)
 
-        self._add_region_section(root, "inventory_open_region", "インベントリを開いた状態（必須）")
-        self._add_region_section(root, "inventory_closed_region", "インベントリを閉じた状態（任意）")
+        self.show_ranges_checkbox = QCheckBox(
+            "Tierの数値範囲を表示する（例：15–25%）"
+        )
+        self.show_ranges_checkbox.setChecked(
+            bool(self._config.get("show_tier_ranges", False))
+        )
+        Styles.apply_checkbox_style(self.show_ranges_checkbox)
+        root.addWidget(self.show_ranges_checkbox)
+
+        self._add_region_section(
+            root, "inventory_open_region", "インベントリを開いた状態", required=True,
+        )
+        self._add_region_section(
+            root, "inventory_closed_region", "インベントリを閉じた状態（任意）",
+            note="※インベントリを閉じると位置がずれて読取に失敗するため",
+        )
 
         instruction = QLabel(
             "タイトル・装備画像・確認ボタンを含めず、3つのMod選択肢部分だけを囲んでください。\n"
-            "読取時は「開」を先に確認し、3択を検出できない場合だけ「閉」を確認します。"
+            "読取時は「インベントリを開いた状態」を先に確認し、読取に失敗した場合は"
+            "「閉じた状態」を確認します。"
         )
         instruction.setWordWrap(True)
         instruction.setObjectName("desecrationRegionInstruction")
         root.addWidget(instruction)
+        size_warning = QLabel(
+            "PoE2のウィンドウサイズを変更した場合、位置が変わるため再設定が必要です。"
+        )
+        size_warning.setWordWrap(True)
+        size_warning.setObjectName("screenSizeRegionWarning")
+        root.addWidget(size_warning)
 
         heading = QHBoxLayout()
         heading.addWidget(QLabel("指定例"))
@@ -127,8 +148,22 @@ class DesecrationSettingsDialog(QDialog):
         root.addLayout(buttons)
         self._refresh_all()
 
-    def _add_region_section(self, root, key, title):
-        root.addWidget(QLabel(title))
+    def _add_region_section(self, root, key, title, *, required=False, note=""):
+        heading = QHBoxLayout()
+        heading.setSpacing(4)
+        title_label = QLabel(title)
+        title_label.setObjectName(f"{key}Title")
+        heading.addWidget(title_label)
+        if required:
+            required_label = QLabel("（必須）")
+            required_label.setObjectName("desecrationRequiredLabel")
+            heading.addWidget(required_label)
+        if note:
+            note_label = QLabel(note)
+            note_label.setObjectName("desecrationClosedRegionNote")
+            heading.addWidget(note_label)
+        heading.addStretch()
+        root.addLayout(heading)
         status = QLabel()
         preview = RegionPreview()
         preview.setMinimumHeight(82)
@@ -147,6 +182,10 @@ class DesecrationSettingsDialog(QDialog):
 
     def settings(self) -> tuple[dict, str, bool]:
         config = dict(self._config)
+        if self.show_ranges_checkbox.isChecked():
+            config["show_tier_ranges"] = True
+        else:
+            config.pop("show_tier_ranges", None)
         for key, region in self._regions.items():
             if region is None:
                 config.pop(key, None)
@@ -245,6 +284,12 @@ class DesecrationSettingsDialog(QDialog):
                 border-radius: 5px; padding: 7px 12px; font-weight: bold; }}
             QPushButton:hover {{ background: #293229; border-color: {theme.accent}; }}
             QLabel#desecrationRegionInstruction {{ color: {theme.muted_text}; }}
+            QLabel#desecrationRequiredLabel, QLabel#screenSizeRegionWarning {{
+                color: #FFD54F; font-weight: bold;
+            }}
+            QLabel#desecrationClosedRegionNote {{
+                color: {theme.muted_text}; font-size: 11px;
+            }}
             QLabel#desecrationExampleThumbnail {{ background: #151A15; color: {theme.muted_text};
                 border: 1px solid #596359; border-radius: 6px; }}
             QCheckBox::indicator:checked {{ background: {theme.accent}; }}

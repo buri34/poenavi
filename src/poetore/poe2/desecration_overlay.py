@@ -29,6 +29,13 @@ CATEGORY_LABELS = {
     "two_hand_mace": "両手メイス", "two_hand_sword": "両手剣", "wand": "ワンド",
 }
 
+STATUS_LABELS = {
+    "read_failed": "読取失敗",
+    "unsupported": "未対応",
+    "tierless": "Tierなし",
+    "category_unselected": "部位未選択",
+}
+
 
 def normalized_capture_rect(client_rect: QRect, value) -> QRect | None:
     if not isinstance(value, dict):
@@ -51,17 +58,26 @@ class DesecrationTierOverlay(QWidget):
         self._capture_size = (1, 1)
         self._bands: tuple[ChoiceBand, ...] = ()
         self._tiers: tuple[int | None, ...] = ()
+        self._statuses: tuple[str, ...] = ()
+        self._range_labels: tuple[tuple[str, ...], ...] = ()
+        self._show_ranges = False
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowTransparentForInput)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WA_ShowWithoutActivating)
 
-    def show_tiers(self, client_rect: QRect, capture_rect: QRect, source_size, bands, tiers):
+    def show_tiers(
+        self, client_rect: QRect, capture_rect: QRect, source_size, bands, tiers,
+        *, statuses=(), range_labels=(), show_ranges=False,
+    ):
         self.setGeometry(client_rect)
         self._capture_offset = capture_rect.topLeft() - client_rect.topLeft()
         self._capture_size = source_size
         self._bands = tuple(bands)
         self._tiers = tuple(tiers)
+        self._statuses = tuple(statuses)
+        self._range_labels = tuple(tuple(labels) for labels in range_labels)
+        self._show_ranges = bool(show_ranges)
         self.show()
         self.raise_()
         self.update()
@@ -72,11 +88,18 @@ class DesecrationTierOverlay(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         scale_y = 1.0
-        x = self._capture_offset.x() + self._capture_size[0] - 58
-        for band, tier in zip(self._bands, self._tiers):
+        right_edge = self._capture_offset.x() + self._capture_size[0] - 8
+        rows = zip(
+            self._bands,
+            self._tiers,
+            self._statuses or ("matched",) * len(self._tiers),
+            self._range_labels or ((),) * len(self._tiers),
+        )
+        for band, tier, status, range_labels in rows:
             y = self._capture_offset.y() + round(((band.top + band.bottom) / 2) * scale_y)
-            label = f"T{tier}" if tier is not None else "不明"
-            rect = QRectF(x, y - 15, 50, 30)
+            label = f"T{tier}" if tier is not None else STATUS_LABELS.get(status, "読取失敗")
+            badge_width = 50 if tier is not None else 82
+            rect = QRectF(right_edge - badge_width, y - 15, badge_width, 30)
             font = QFont(self.font())
             font.setBold(True)
             font.setPixelSize(16)
@@ -87,8 +110,17 @@ class DesecrationTierOverlay(QWidget):
             elif tier == 2:
                 painter.setBrush(QColor(10, 13, 12, 220)); painter.setPen(QPen(QColor("#C9A227"), 2))
                 text_color = QColor("white")
+            elif status == "unsupported":
+                painter.setBrush(QColor(10, 13, 12, 230)); painter.setPen(QPen(QColor("#B79CFF"), 2))
+                text_color = QColor("#D8CAFF")
+            elif status == "tierless":
+                painter.setBrush(QColor(30, 34, 33, 230)); painter.setPen(QPen(QColor("#8D9894"), 2))
+                text_color = QColor("#D0D6D4")
+            elif status == "category_unselected":
+                painter.setBrush(QColor(10, 13, 12, 230)); painter.setPen(QPen(QColor("#E7C85E"), 2))
+                text_color = QColor("#FFE88A")
             elif tier is None:
-                painter.setBrush(QColor(10, 13, 12, 220)); painter.setPen(QPen(QColor("#FF9F43"), 2))
+                painter.setBrush(QColor(10, 13, 12, 230)); painter.setPen(QPen(QColor("#FF9F43"), 2))
                 text_color = QColor("#FFCC80")
             else:
                 painter.setBrush(QColor(10, 13, 12, 220)); painter.setPen(QPen(QColor("#DDE7E3"), 1))
@@ -96,6 +128,31 @@ class DesecrationTierOverlay(QWidget):
             painter.drawRoundedRect(rect, 6, 6)
             painter.setPen(text_color)
             painter.drawText(rect, Qt.AlignCenter, label)
+            if self._show_ranges and tier is not None and range_labels:
+                self._draw_ranges(painter, y, range_labels)
+
+    def _draw_ranges(self, painter: QPainter, center_y: int, labels: tuple[str, ...]):
+        range_font = QFont(self.font())
+        range_font.setBold(True)
+        range_font.setPixelSize(13)
+        painter.setFont(range_font)
+        metrics = painter.fontMetrics()
+        desired_width = max(metrics.horizontalAdvance(label) for label in labels) + 14
+        x = self._capture_offset.x() + self._capture_size[0] + 8
+        available = self.width() - x - 6
+        if available < 36:
+            return
+        width = min(max(54, desired_width), available)
+        line_height = 18
+        height = line_height * len(labels) + 6
+        rect = QRectF(x, center_y - height / 2, width, height)
+        painter.setBrush(QColor(10, 13, 12, 218))
+        painter.setPen(QPen(QColor("#7E8B87"), 1))
+        painter.drawRoundedRect(rect, 5, 5)
+        painter.setPen(QColor("#F0F4F2"))
+        for index, label in enumerate(labels):
+            line = QRectF(x, rect.top() + 3 + index * line_height, width, line_height)
+            painter.drawText(line, Qt.AlignCenter, label)
 
 
 class CategoryChoiceOverlay(QWidget):
@@ -149,6 +206,7 @@ class DesecrationTierController(QObject):
     status = Signal(str)
     failed = Signal(str)
     _ready = Signal(object, object, object, object, int)
+    _retry_closed_requested = Signal(int)
 
     def __init__(self, parent=None, *, regions_getter=None, ocr_server=None, scan_coordinator=None):
         super().__init__(parent)
@@ -159,6 +217,7 @@ class DesecrationTierController(QObject):
         self._overlay = DesecrationTierOverlay()
         self._category_overlay = CategoryChoiceOverlay()
         self._category_overlay.selected.connect(self._category_selected)
+        self._category_overlay.cancelled.connect(self._category_cancelled)
         self._running = False
         self._scan_generation = 0
         self._pending = None
@@ -174,6 +233,7 @@ class DesecrationTierController(QObject):
         self._capture_rect = None
         self._bands = ()
         self._ready.connect(self._show_result)
+        self._retry_closed_requested.connect(self._scan_closed)
 
     @property
     def running(self):
@@ -210,21 +270,41 @@ class DesecrationTierController(QObject):
         self._client_rect = QRect(client_rect)
         image = self._grab(open_rect)
         prepared = prepare_desecration_frame(image)
-        capture_rect = open_rect
         if not prepared.valid_panel:
-            closed_rect = normalized_capture_rect(client_rect, regions.get("inventory_closed_region"))
-            if closed_rect is not None:
-                closed_image = self._grab(closed_rect)
-                closed_prepared = prepare_desecration_frame(closed_image)
-                if closed_prepared.valid_panel:
-                    image, prepared, capture_rect = closed_image, closed_prepared, closed_rect
-        if not prepared.valid_panel:
-            self._finish_error("冒涜Modの3択を検出できませんでした。")
-            return False
-        self._capture_rect = QRect(capture_rect)
+            return self._scan_closed(generation)
+        self._capture_rect = QRect(open_rect)
         self._bands = prepared.bands
         self.status.emit("アビス冒涜Modを読み取っています…")
-        threading.Thread(target=self._process, args=(prepared, generation), daemon=True).start()
+        allow_closed = normalized_capture_rect(
+            client_rect, regions.get("inventory_closed_region")
+        ) is not None
+        threading.Thread(
+            target=self._process,
+            args=(prepared, QRect(open_rect), generation, allow_closed), daemon=True,
+        ).start()
+        return True
+
+    def _scan_closed(self, generation):
+        if generation != self._scan_generation or self._client_rect is None:
+            return False
+        regions = self._regions_getter() or {}
+        closed_rect = normalized_capture_rect(
+            self._client_rect, regions.get("inventory_closed_region")
+        )
+        if closed_rect is None:
+            self._finish_error("冒涜Modの3択を検出できませんでした。")
+            return False
+        closed_prepared = prepare_desecration_frame(self._grab(closed_rect))
+        if not closed_prepared.valid_panel:
+            self._finish_error("冒涜Modの3択を検出できませんでした。")
+            return False
+        self._capture_rect = QRect(closed_rect)
+        self._bands = closed_prepared.bands
+        self.status.emit("閉じた状態の範囲で再確認しています…")
+        threading.Thread(
+            target=self._process,
+            args=(closed_prepared, QRect(closed_rect), generation, False), daemon=True,
+        ).start()
         return True
 
     def _grab(self, rect):
@@ -233,7 +313,7 @@ class DesecrationTierController(QObject):
             return QImage()
         return screen.grabWindow(0, rect.x(), rect.y(), rect.width(), rect.height()).toImage()
 
-    def _process(self, prepared, generation):
+    def _process(self, prepared, capture_rect, generation, allow_closed):
         try:
             if generation != self._scan_generation:
                 return
@@ -244,8 +324,16 @@ class DesecrationTierController(QObject):
             grouped = tuple(tuple(raw[index * width:(index + 1) * width]) for index in range(3))
             resolution = resolve_ocr_variants(grouped)
             if not resolution.categories:
-                raise RuntimeError("Tierを安全に特定できるModがありませんでした。")
-            self._ready.emit(resolution, self._client_rect, self._capture_rect, prepared.bands, generation)
+                if allow_closed:
+                    self._retry_closed_requested.emit(generation)
+                    return
+                if not resolution.fallback_statuses or all(
+                    status == "read_failed" for status in resolution.fallback_statuses
+                ):
+                    raise RuntimeError("3つのModを読み取れませんでした。読取範囲を確認してください。")
+            self._ready.emit(
+                resolution, self._client_rect, capture_rect, prepared.bands, generation,
+            )
         except Exception as exc:  # noqa: BLE001 - worker boundary reports to UI
             if generation == self._scan_generation:
                 self._finish_error(str(exc))
@@ -255,6 +343,14 @@ class DesecrationTierController(QObject):
             return
         self._running = False
         self._release_scan()
+        if not resolution.categories:
+            count = len(bands)
+            statuses = resolution.fallback_statuses or ("read_failed",) * count
+            self._display(
+                client_rect, capture_rect, bands, (None,) * count,
+                statuses=statuses, range_labels=((),) * count,
+            )
+            return
         if resolution.needs_category_choice:
             self._pending = (resolution, client_rect, capture_rect, bands)
             anchor = QPoint(capture_rect.left(), capture_rect.bottom() + 8)
@@ -265,24 +361,53 @@ class DesecrationTierController(QObject):
         if tiers is None:
             self._finish_error("Tierを一意に特定できませんでした。")
             return
-        self._display(client_rect, capture_rect, bands, tiers)
+        self._display(
+            client_rect, capture_rect, bands, tiers,
+            statuses=resolution.statuses or (), range_labels=resolution.ranges or (),
+        )
 
     def _category_selected(self, category):
         if self._pending is None:
             return
         resolution, client_rect, capture_rect, bands = self._pending
         self._pending = None
-        self._display(client_rect, capture_rect, bands, resolution.tiers_by_category[category])
+        self._display(
+            client_rect, capture_rect, bands,
+            resolution.tiers_by_category[category],
+            statuses=resolution.statuses_by_category[category],
+            range_labels=resolution.ranges_by_category[category],
+        )
 
-    def _display(self, client_rect, capture_rect, bands, tiers):
+    def _category_cancelled(self):
+        if self._pending is None:
+            return
+        _resolution, client_rect, capture_rect, bands = self._pending
+        self._pending = None
+        count = len(bands)
+        self._display(
+            client_rect, capture_rect, bands, (None,) * count,
+            statuses=("category_unselected",) * count,
+            range_labels=((),) * count,
+        )
+
+    def _display(
+        self, client_rect, capture_rect, bands, tiers, *, statuses=(), range_labels=(),
+    ):
+        config = self._regions_getter() or {}
         self._overlay.show_tiers(
-            client_rect, capture_rect, (capture_rect.width(), capture_rect.height()), bands, tiers
+            client_rect, capture_rect, (capture_rect.width(), capture_rect.height()), bands, tiers,
+            statuses=statuses, range_labels=range_labels,
+            show_ranges=bool(config.get("show_tier_ranges", False)),
         )
         self._monitor_misses = 0
         self._monitor.start()
         self._expiry.start()
         known = sum(tier is not None for tier in tiers)
-        self.status.emit(f"{known}/3件のTierを表示しました。")
+        unresolved = [STATUS_LABELS.get(status, status) for tier, status in zip(
+            tiers, statuses or ("matched",) * len(tiers),
+        ) if tier is None]
+        suffix = f"（{'、'.join(unresolved)}）" if unresolved else ""
+        self.status.emit(f"{known}/3件のTierを表示しました。{suffix}")
 
     def _check_panel(self):
         if self._capture_rect is None:

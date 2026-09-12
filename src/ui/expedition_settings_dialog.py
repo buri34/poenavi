@@ -277,6 +277,12 @@ class ExpeditionSettingsDialog(QDialog):
         instruction.setWordWrap(True)
         instruction.setObjectName("expeditionRegionInstruction")
         root.addWidget(instruction)
+        size_warning = QLabel(
+            "PoE2のウィンドウサイズを変更した場合、位置が変わるため再設定が必要です。"
+        )
+        size_warning.setWordWrap(True)
+        size_warning.setObjectName("screenSizeRegionWarning")
+        root.addWidget(size_warning)
 
         example_heading = QHBoxLayout()
         example_heading.addWidget(QLabel("指定例"))
@@ -427,6 +433,7 @@ class ExpeditionSettingsDialog(QDialog):
             QPushButton:hover {{ background: #293229; border-color: {theme.accent}; }}
             QPushButton:focus {{ border-color: {theme.accent}; }}
             QLabel#expeditionRegionInstruction {{ color: {theme.muted_text}; }}
+            QLabel#screenSizeRegionWarning {{ color: #FFD54F; font-weight: bold; }}
             QLabel#expeditionExampleThumbnail {{
                 background: #151A15; color: {theme.muted_text};
                 border: 1px solid #596359; border-radius: 6px;
