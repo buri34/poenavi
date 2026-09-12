@@ -993,6 +993,7 @@ class PoetoreModeWindow(QMainWindow):
 
     def _ensure_desecration_tier_controller(self):
         if self._desecration_tier_controller is None:
+            from src.poetore.performance import start_search_trace
             from src.poetore.poe2.desecration_overlay import DesecrationTierController
             shared = self._ensure_screen_reading_coordinator()
             controller = DesecrationTierController(
@@ -1000,6 +1001,7 @@ class PoetoreModeWindow(QMainWindow):
                 regions_getter=lambda: self.config.get("poetore", {}).get("desecration_tier_overlay", {}),
                 ocr_server=shared,
                 scan_coordinator=shared,
+                trace_factory=lambda: start_search_trace("desecration_tier_scan"),
             )
             controller.status.connect(self._show_desecration_status)
             controller.failed.connect(self._show_desecration_error)

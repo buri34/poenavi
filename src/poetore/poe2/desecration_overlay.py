@@ -225,12 +225,17 @@ class DesecrationTierController(QObject):
     _ready = Signal(object, object, object, object, int)
     _retry_closed_requested = Signal(int)
 
-    def __init__(self, parent=None, *, regions_getter=None, ocr_server=None, scan_coordinator=None):
+    def __init__(
+        self, parent=None, *, regions_getter=None, ocr_server=None,
+        scan_coordinator=None, trace_factory=None,
+    ):
         super().__init__(parent)
         self._regions_getter = regions_getter or dict
         self._ocr = ocr_server or WindowsOcrServer()
         self._owns_ocr = ocr_server is None
         self._scan_coordinator = scan_coordinator
+        self._trace_factory = trace_factory
+        self._active_trace = None
         self._overlay = DesecrationTierOverlay()
         self._category_overlay = CategoryChoiceOverlay()
         self._category_overlay.selected.connect(self._category_selected)
@@ -266,28 +271,56 @@ class DesecrationTierController(QObject):
             pass
 
     def request_scan(self):
+        trace = self._create_trace()
+        self._mark_trace(trace, "scan_requested", schema_version=1)
         if self._running:
+            self._mark_trace(trace, "scan_completed", outcome="rejected_running")
             return False
         if self._scan_coordinator is not None and not self._scan_coordinator.try_begin("desecration"):
+            self._mark_trace(trace, "scan_completed", outcome="rejected_ocr_busy")
             self.failed.emit("別の画面読み取り処理中です。")
             return False
+        self._active_trace = trace
+        self._mark_trace(trace, "scan_gate_acquired")
         client_rect = path_of_exile_client_rect()
         if client_rect is None:
-            self._finish_error("Path of Exileのゲーム画面が見つかりませんでした。")
+            self._finish_error(
+                "Path of Exileのゲーム画面が見つかりませんでした。",
+                failure_stage="client_rect",
+            )
             return False
+        self._mark_trace(
+            trace, "client_rect_resolved",
+            client_width=client_rect.width(), client_height=client_rect.height(),
+        )
         regions = self._regions_getter() or {}
         open_rect = normalized_capture_rect(client_rect, regions.get("inventory_open_region"))
         if open_rect is None:
-            self._finish_error("インベントリを開いた状態の読取範囲が未設定です。")
+            self._finish_error(
+                "インベントリを開いた状態の読取範囲が未設定です。",
+                failure_stage="open_region",
+            )
             return False
+        self._mark_trace(
+            trace, "capture_region_resolved", capture_mode="open",
+            capture_width=open_rect.width(), capture_height=open_rect.height(),
+        )
         self._running = True
         self._scan_generation += 1
         generation = self._scan_generation
         self.hide()
         self._client_rect = QRect(client_rect)
         image = self._grab(open_rect)
+        self._mark_trace(
+            trace, "capture_completed", capture_mode="open",
+            image_width=image.width(), image_height=image.height(),
+        )
         prepared = prepare_desecration_frame(image)
+        self._mark_frame_prepared(trace, prepared, "open")
         if not prepared.valid_panel:
+            self._mark_trace(
+                trace, "closed_fallback_requested", reason="open_panel_not_detected",
+            )
             return self._scan_closed(generation)
         self._capture_rect = QRect(open_rect)
         self._bands = prepared.bands
@@ -297,7 +330,7 @@ class DesecrationTierController(QObject):
         ) is not None
         threading.Thread(
             target=self._process,
-            args=(prepared, QRect(open_rect), generation, allow_closed), daemon=True,
+            args=(prepared, QRect(open_rect), generation, allow_closed, "open"), daemon=True,
         ).start()
         return True
 
@@ -309,18 +342,36 @@ class DesecrationTierController(QObject):
             self._client_rect, regions.get("inventory_closed_region")
         )
         if closed_rect is None:
-            self._finish_error("冒涜Modの3択を検出できませんでした。")
+            self._finish_error(
+                "冒涜Modの3択を検出できませんでした。",
+                failure_stage="closed_region",
+            )
             return False
-        closed_prepared = prepare_desecration_frame(self._grab(closed_rect))
+        trace = self._active_trace
+        self._mark_trace(
+            trace, "capture_region_resolved", capture_mode="closed",
+            capture_width=closed_rect.width(), capture_height=closed_rect.height(),
+        )
+        closed_image = self._grab(closed_rect)
+        self._mark_trace(
+            trace, "capture_completed", capture_mode="closed",
+            image_width=closed_image.width(), image_height=closed_image.height(),
+        )
+        closed_prepared = prepare_desecration_frame(closed_image)
+        self._mark_frame_prepared(trace, closed_prepared, "closed")
         if not closed_prepared.valid_panel:
-            self._finish_error("冒涜Modの3択を検出できませんでした。")
+            self._finish_error(
+                "冒涜Modの3択を検出できませんでした。",
+                failure_stage="closed_frame_preparation",
+            )
             return False
         self._capture_rect = QRect(closed_rect)
         self._bands = closed_prepared.bands
         self.status.emit("閉じた状態の範囲で再確認しています…")
         threading.Thread(
             target=self._process,
-            args=(closed_prepared, QRect(closed_rect), generation, False), daemon=True,
+            args=(closed_prepared, QRect(closed_rect), generation, False, "closed"),
+            daemon=True,
         ).start()
         return True
 
@@ -330,34 +381,63 @@ class DesecrationTierController(QObject):
             return QImage()
         return screen.grabWindow(0, rect.x(), rect.y(), rect.width(), rect.height()).toImage()
 
-    def _process(self, prepared, capture_rect, generation, allow_closed):
+    def _process(self, prepared, capture_rect, generation, allow_closed, capture_mode):
+        trace = self._active_trace
         try:
             if generation != self._scan_generation:
+                self._mark_trace(trace, "scan_completed", outcome="stale_worker")
                 return
+            self._mark_trace(trace, "worker_started", capture_mode=capture_mode)
             images = [image_bytes(image) for variants in prepared.variants for image in variants]
+            self._mark_trace(
+                trace, "image_encoding_completed", capture_mode=capture_mode,
+                image_count=len(images), encoded_bytes=sum(len(image) for image in images),
+            )
             self._ocr.start()
+            self._mark_trace(trace, "ocr_start_completed", capture_mode=capture_mode)
             raw = self._ocr.recognize(images)
+            self._mark_trace(
+                trace, "ocr_recognition_completed", capture_mode=capture_mode,
+                result_count=len(raw),
+                nonempty_result_count=sum(bool(str(value).strip()) for value in raw),
+                character_count=sum(len(str(value)) for value in raw),
+            )
             width = len(prepared.variants[0])
             grouped = tuple(tuple(raw[index * width:(index + 1) * width]) for index in range(3))
             resolution = resolve_ocr_variants(grouped, selectable_categories())
+            self._mark_trace(
+                trace, "tier_resolution_completed", capture_mode=capture_mode,
+                category_count=len(resolution.categories),
+                needs_category_choice=bool(resolution.needs_category_choice),
+                fallback_status_count=len(resolution.fallback_statuses or ()),
+            )
             if not resolution.categories:
                 if allow_closed:
+                    self._mark_trace(
+                        trace, "closed_fallback_requested",
+                        reason="open_result_unresolved",
+                    )
                     self._retry_closed_requested.emit(generation)
                     return
                 if not resolution.fallback_statuses or all(
                     status == "read_failed" for status in resolution.fallback_statuses
                 ):
                     raise RuntimeError("3つのModを読み取れませんでした。読取範囲を確認してください。")
+            self._mark_trace(trace, "result_queued", capture_mode=capture_mode)
             self._ready.emit(
                 resolution, self._client_rect, capture_rect, prepared.bands, generation,
             )
         except Exception as exc:  # noqa: BLE001 - worker boundary reports to UI
             if generation == self._scan_generation:
-                self._finish_error(str(exc))
+                self._finish_error(
+                    str(exc), failure_stage="worker",
+                    error_type=type(exc).__name__,
+                )
 
     def _show_result(self, resolution, client_rect, capture_rect, bands, generation):
         if generation != self._scan_generation:
             return
+        self._mark_trace(self._active_trace, "result_received")
         self._running = False
         self._release_scan()
         if not resolution.categories:
@@ -374,6 +454,10 @@ class DesecrationTierController(QObject):
             self._pending = (resolution, client_rect, capture_rect, bands)
             anchor = QPoint(capture_rect.left(), capture_rect.bottom() + 8)
             self._category_overlay.show_categories(resolution.categories, anchor)
+            self._mark_trace(
+                self._active_trace, "category_choice_displayed",
+                category_count=len(resolution.categories),
+            )
             self.status.emit("装備の種類を選択してください。")
             return
         tiers = resolution.tiers
@@ -390,6 +474,7 @@ class DesecrationTierController(QObject):
             return
         resolution, client_rect, capture_rect, bands = self._pending
         self._pending = None
+        self._mark_trace(self._active_trace, "category_selected")
         self._display(
             client_rect, capture_rect, bands,
             resolution.tiers_by_category[category],
@@ -402,6 +487,7 @@ class DesecrationTierController(QObject):
             return
         _resolution, client_rect, capture_rect, bands = self._pending
         self._pending = None
+        self._mark_trace(self._active_trace, "category_cancelled")
         count = len(bands)
         self._display(
             client_rect, capture_rect, bands, (None,) * count,
@@ -427,6 +513,13 @@ class DesecrationTierController(QObject):
         ) if tier is None]
         suffix = f"（{'、'.join(unresolved)}）" if unresolved else ""
         self.status.emit(f"{known}/3件のTierを表示しました。{suffix}")
+        trace = self._active_trace
+        self._mark_trace(
+            trace, "overlay_displayed", resolved_count=known,
+            unresolved_count=len(unresolved),
+        )
+        self._mark_trace(trace, "scan_completed", outcome="displayed")
+        self._active_trace = None
 
     def _check_panel(self):
         if self._capture_rect is None:
@@ -440,10 +533,40 @@ class DesecrationTierController(QObject):
             self.hide()
             self.status.emit("冒涜Modの3択画面を閉じたため表示を消しました。")
 
-    def _finish_error(self, message):
+    def _finish_error(self, message, *, failure_stage="unknown", error_type=None):
         self._running = False
         self._release_scan()
+        trace = self._active_trace
+        details = {"outcome": "failed", "failure_stage": failure_stage}
+        if error_type is not None:
+            details["error_type"] = error_type
+        self._mark_trace(trace, "scan_completed", **details)
+        self._active_trace = None
         self.failed.emit(message)
+
+    def _create_trace(self):
+        if self._trace_factory is None:
+            return None
+        try:
+            return self._trace_factory()
+        except Exception:  # noqa: BLE001 - diagnostics must never break scanning
+            return None
+
+    @staticmethod
+    def _mark_trace(trace, event, **details):
+        if trace is None:
+            return
+        try:
+            trace.mark(event, **details)
+        except Exception:  # noqa: BLE001, S110 - diagnostics must never break scanning
+            pass
+
+    def _mark_frame_prepared(self, trace, prepared, capture_mode):
+        self._mark_trace(
+            trace, "frame_preparation_completed", capture_mode=capture_mode,
+            valid_panel=bool(prepared.valid_panel), band_count=len(prepared.bands),
+            variant_count=sum(len(variants) for variants in prepared.variants),
+        )
 
     def _release_scan(self):
         if self._scan_coordinator is not None:
@@ -457,6 +580,10 @@ class DesecrationTierController(QObject):
         self._pending = None
 
     def close(self):
+        trace = self._active_trace
+        if trace is not None:
+            self._mark_trace(trace, "scan_completed", outcome="controller_closed")
+            self._active_trace = None
         self._scan_generation += 1
         self._running = False
         self.hide()

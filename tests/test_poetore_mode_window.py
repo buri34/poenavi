@@ -650,6 +650,31 @@ def test_poetore_mode_passes_configured_interactive_hotkey_to_capture():
     )
 
 
+def test_poetore_mode_enables_desecration_performance_trace():
+    owner = MagicMock()
+    owner._desecration_tier_controller = None
+    owner.config = {"poetore": {"desecration_tier_overlay": {}}}
+    shared = MagicMock()
+    owner._ensure_screen_reading_coordinator.return_value = shared
+    trace = MagicMock()
+
+    with patch(
+        "src.poetore.poe2.desecration_overlay.DesecrationTierController",
+    ) as controller_class, patch(
+        "src.poetore.performance.start_search_trace", return_value=trace,
+    ) as start_trace:
+        controller = controller_class.return_value
+        result = PoetoreModeWindow._ensure_desecration_tier_controller(owner)
+        trace_factory = controller_class.call_args.kwargs["trace_factory"]
+        assert trace_factory() is trace
+
+    assert result is controller
+    start_trace.assert_called_once_with("desecration_tier_scan")
+    controller_class.assert_called_once()
+    assert controller_class.call_args.kwargs["ocr_server"] is shared
+    assert controller_class.call_args.kwargs["scan_coordinator"] is shared
+
+
 def test_poetore_mode_renders_divine_chaos_rate():
     app = QApplication.instance() or QApplication([])
     config = {"hotkeys": {}}

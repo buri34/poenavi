@@ -16,6 +16,23 @@ from src.poetore.poe2.desecration_overlay import (
 )
 
 
+class RecordingTrace:
+    def __init__(self):
+        self.records = []
+
+    def mark(self, event, **details):
+        self.records.append((event, details))
+
+
+class ImmediateThread:
+    def __init__(self, *, target, args=(), daemon=None):
+        self.target = target
+        self.args = args
+
+    def start(self):
+        self.target(*self.args)
+
+
 def test_normalized_capture_rect_is_client_relative():
     rect = normalized_capture_rect(QRect(100, 50, 1000, 500), {
         "left": .2, "top": .1, "right": .8, "bottom": .7,
@@ -160,14 +177,6 @@ def test_controller_retries_closed_region_when_open_panel_ocr_cannot_resolve():
     )
     controller._grab = Mock(side_effect=[open_image, closed_image])
 
-    class ImmediateThread:
-        def __init__(self, *, target, args=(), daemon=None):
-            self.target = target
-            self.args = args
-
-        def start(self):
-            self.target(*self.args)
-
     with patch(
         "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
         return_value=QRect(0, 0, 1920, 1080),
@@ -175,7 +184,6 @@ def test_controller_retries_closed_region_when_open_panel_ocr_cannot_resolve():
         "src.poetore.poe2.desecration_overlay.threading.Thread", ImmediateThread,
     ):
         assert controller.request_scan()
-
     assert controller._grab.call_count == 2
     assert ocr.recognize.call_count == 2
     assert controller._capture_rect == QRect(960, 540, 960, 540)
@@ -199,14 +207,6 @@ def test_controller_reports_all_unreadable_without_showing_badges():
     failures = []
     controller.failed.connect(failures.append)
 
-    class ImmediateThread:
-        def __init__(self, *, target, args=(), daemon=None):
-            self.target = target
-            self.args = args
-
-        def start(self):
-            self.target(*self.args)
-
     with patch(
         "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
         return_value=QRect(0, 0, 1920, 1080),
@@ -218,6 +218,171 @@ def test_controller_reports_all_unreadable_without_showing_badges():
     assert failures == ["3つのModを読み取れませんでした。読取範囲を確認してください。"]
     assert not controller._overlay.isVisible()
     gate.finish.assert_called_once_with("desecration")
+    controller.close()
+
+
+def test_controller_records_sanitized_stage_timings_until_overlay_display():
+    QApplication.instance() or QApplication([])
+    image = QImage("tests/fixtures/poetore/poe2/desecration/spear-reveal.png")
+    region = {"left": 0, "top": 0, "right": .5, "bottom": .5}
+    raw_ocr = [
+        "この武器によるアタックは20%の火耐性を貫通する",
+        "この武器によるアタックは20%の火耐性を貫通する",
+        "この武器によるアタックは20%の火耐性を貫通する",
+        "26から43の冷気ダメージを追加する",
+        "26から43の冷気ダメージを追加する",
+        "26から43の冷気ダメージを追加する",
+        "物理ダメージが28%増加する\n命中力 +57",
+        "物理ダメージが28%増加する\n命中力 +57",
+        "物理ダメージが28%増加する\n命中力 +57",
+    ]
+    trace = RecordingTrace()
+    ocr = Mock()
+    ocr.recognize.return_value = raw_ocr
+    controller = DesecrationTierController(
+        regions_getter=lambda: {"inventory_open_region": region},
+        ocr_server=ocr,
+        scan_coordinator=Mock(try_begin=Mock(return_value=True)),
+        trace_factory=lambda: trace,
+    )
+    controller._grab = Mock(return_value=image)
+    controller._overlay.show_tiers = Mock()
+
+    with patch(
+        "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
+        return_value=QRect(0, 0, 1920, 1080),
+    ), patch(
+        "src.poetore.poe2.desecration_overlay.threading.Thread", ImmediateThread,
+    ):
+        assert controller.request_scan()
+    assert controller._pending is not None
+    controller._category_selected(controller._pending[0].categories[0])
+
+    events = [event for event, _details in trace.records]
+    assert events == [
+        "scan_requested",
+        "scan_gate_acquired",
+        "client_rect_resolved",
+        "capture_region_resolved",
+        "capture_completed",
+        "frame_preparation_completed",
+        "worker_started",
+        "image_encoding_completed",
+        "ocr_start_completed",
+        "ocr_recognition_completed",
+        "tier_resolution_completed",
+        "result_queued",
+        "result_received",
+        "category_choice_displayed",
+        "category_selected",
+        "overlay_displayed",
+        "scan_completed",
+    ]
+    serialized = repr(trace.records)
+    assert all(text not in serialized for text in raw_ocr)
+    assert trace.records[9][1]["nonempty_result_count"] == 9
+    assert trace.records[9][1]["character_count"] > 0
+    assert trace.records[-1][1]["outcome"] == "displayed"
+    controller.close()
+
+
+def test_controller_records_closed_region_fallback_as_separate_attempt():
+    QApplication.instance() or QApplication([])
+    open_image = QImage("tests/fixtures/poetore/poe2/desecration/boots-reveal.png")
+    closed_image = QImage("tests/fixtures/poetore/poe2/desecration/spear-reveal.png")
+    region = {"left": 0, "top": 0, "right": .5, "bottom": .5}
+    trace = RecordingTrace()
+    ocr = Mock()
+    ocr.recognize.side_effect = [
+        ["読取不能"] * 9,
+        [
+            "この武器によるアタックは20%の火耐性を貫通する",
+            "この武器によるアタックは20%の火耐性を貫通する",
+            "この武器によるアタックは20%の火耐性を貫通する",
+            "26から43の冷気ダメージを追加する",
+            "26から43の冷気ダメージを追加する",
+            "26から43の冷気ダメージを追加する",
+            "物理ダメージが28%増加する\n命中力 +57",
+            "物理ダメージが28%増加する\n命中力 +57",
+            "物理ダメージが28%増加する\n命中力 +57",
+        ],
+    ]
+    controller = DesecrationTierController(
+        regions_getter=lambda: {
+            "inventory_open_region": region,
+            "inventory_closed_region": region,
+        },
+        ocr_server=ocr,
+        scan_coordinator=Mock(try_begin=Mock(return_value=True)),
+        trace_factory=lambda: trace,
+    )
+    controller._grab = Mock(side_effect=[open_image, closed_image])
+    controller._overlay.show_tiers = Mock()
+
+    with patch(
+        "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
+        return_value=QRect(0, 0, 1920, 1080),
+    ), patch(
+        "src.poetore.poe2.desecration_overlay.threading.Thread", ImmediateThread,
+    ):
+        assert controller.request_scan()
+    assert controller._pending is not None
+    controller._category_selected(controller._pending[0].categories[0])
+
+    records = trace.records
+    fallbacks = [details for event, details in records if event == "closed_fallback_requested"]
+    assert fallbacks == [{"reason": "open_result_unresolved"}]
+    assert [
+        details["capture_mode"] for event, details in records
+        if event == "ocr_recognition_completed"
+    ] == ["open", "closed"]
+    assert records[-1] == ("scan_completed", {"outcome": "displayed"})
+    controller.close()
+
+
+def test_controller_records_failure_stage_without_user_facing_message():
+    QApplication.instance() or QApplication([])
+    trace = RecordingTrace()
+    controller = DesecrationTierController(
+        regions_getter=dict,
+        ocr_server=Mock(),
+        scan_coordinator=Mock(try_begin=Mock(return_value=True)),
+        trace_factory=lambda: trace,
+    )
+    with patch(
+        "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
+        return_value=None,
+    ):
+        assert not controller.request_scan()
+
+    assert trace.records[-1] == (
+        "scan_completed",
+        {"outcome": "failed", "failure_stage": "client_rect"},
+    )
+    assert "Path of Exileのゲーム画面が見つかりませんでした。" not in repr(trace.records)
+    controller.close()
+
+
+def test_diagnostic_failure_never_blocks_the_scan_error_path():
+    QApplication.instance() or QApplication([])
+    broken_trace = Mock()
+    broken_trace.mark.side_effect = OSError("read-only diagnostic folder")
+    controller = DesecrationTierController(
+        regions_getter=dict,
+        ocr_server=Mock(),
+        scan_coordinator=Mock(try_begin=Mock(return_value=True)),
+        trace_factory=lambda: broken_trace,
+    )
+    failures = []
+    controller.failed.connect(failures.append)
+
+    with patch(
+        "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
+        return_value=None,
+    ):
+        assert not controller.request_scan()
+
+    assert failures == ["Path of Exileのゲーム画面が見つかりませんでした。"]
     controller.close()
 
 
