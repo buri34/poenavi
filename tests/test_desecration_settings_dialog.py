@@ -41,9 +41,21 @@ def test_desecration_settings_preserves_two_independent_regions(qtbot):
 def test_desecration_settings_saves_optional_tier_ranges(qtbot):
     dialog = DesecrationSettingsDialog()
     qtbot.addWidget(dialog)
-    assert not dialog.show_ranges_checkbox.isChecked()
-    dialog.show_ranges_checkbox.setChecked(True)
+    assert dialog.show_ranges_checkbox.isChecked()
     assert dialog.settings()[0]["show_tier_ranges"] is True
+
+    dialog.show_ranges_checkbox.setChecked(False)
+    assert dialog.settings()[0]["show_tier_ranges"] is False
+
+
+def test_desecration_settings_preserves_explicitly_disabled_tier_ranges(qtbot):
+    dialog = DesecrationSettingsDialog(
+        desecration_config={"show_tier_ranges": False}
+    )
+    qtbot.addWidget(dialog)
+
+    assert not dialog.show_ranges_checkbox.isChecked()
+    assert dialog.settings()[0]["show_tier_ranges"] is False
 
 
 def test_desecration_settings_explains_required_and_closed_regions(qtbot):

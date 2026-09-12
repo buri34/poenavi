@@ -103,7 +103,7 @@ class DesecrationSettingsDialog(QDialog):
             "Tierの数値範囲を表示する（例：15–25%）"
         )
         self.show_ranges_checkbox.setChecked(
-            bool(self._config.get("show_tier_ranges", False))
+            bool(self._config.get("show_tier_ranges", True))
         )
         Styles.apply_checkbox_style(self.show_ranges_checkbox)
         root.addWidget(self.show_ranges_checkbox)
@@ -193,10 +193,7 @@ class DesecrationSettingsDialog(QDialog):
 
     def settings(self) -> tuple[dict, str, bool]:
         config = dict(self._config)
-        if self.show_ranges_checkbox.isChecked():
-            config["show_tier_ranges"] = True
-        else:
-            config.pop("show_tier_ranges", None)
+        config["show_tier_ranges"] = self.show_ranges_checkbox.isChecked()
         for key, region in self._regions.items():
             if region is None:
                 config.pop(key, None)

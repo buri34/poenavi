@@ -80,7 +80,9 @@
             "enabled": false
         },
         "expedition_reward_overlay": {},
-        "desecration_tier_overlay": {},
+        "desecration_tier_overlay": {
+            "show_tier_ranges": true
+        },
         "obs_streaming": {
             "enabled": false,
             "title_bar_opacity": 100,

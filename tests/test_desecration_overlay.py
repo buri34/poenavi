@@ -1,8 +1,8 @@
 from unittest.mock import Mock, patch
 
-from PySide6.QtCore import QRect, Qt
+from PySide6.QtCore import QPoint, QRect, Qt
 from PySide6.QtGui import QColor, QImage
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QPushButton
 
 from src.poetore.poe2.desecration_ocr import ChoiceBand
 from src.poetore.poe2.desecration_overlay import (
@@ -11,6 +11,7 @@ from src.poetore.poe2.desecration_overlay import (
     DesecrationTierController,
     DesecrationTierOverlay,
     normalized_capture_rect,
+    selectable_categories,
 )
 
 
@@ -34,6 +35,27 @@ def test_category_selector_is_non_modal_and_does_not_accept_focus():
     assert overlay.windowFlags() & Qt.WindowDoesNotAcceptFocus
     assert overlay.testAttribute(Qt.WA_ShowWithoutActivating)
     assert not overlay.isModal()
+    overlay.close()
+
+
+def test_category_selector_excludes_equipment_types_not_implemented_in_poe2():
+    QApplication.instance() or QApplication([])
+    unavailable = (
+        "claw", "dagger", "flail", "one_hand_axe", "one_hand_sword",
+        "two_hand_axe", "two_hand_sword",
+    )
+    assert selectable_categories(("bow", *unavailable, "spear")) == (
+        "bow", "spear",
+    )
+
+    overlay = CategoryChoiceOverlay()
+    overlay.show_categories(("bow", *unavailable, "spear"), QPoint(0, 0))
+    labels = {button.text() for button in overlay.findChildren(QPushButton)}
+    assert {"弓", "スピア", "閉じる"} <= labels
+    assert not labels.intersection({
+        "クロー", "ダガー", "フレイル", "片手斧", "片手剣",
+        "両手斧", "両手剣",
+    })
     overlay.close()
 
 
@@ -246,6 +268,25 @@ def test_tier_ranges_render_outside_the_registered_panel():
         for x in range(outside_left, image.width())
     )
     overlay.close()
+
+
+def test_controller_shows_tier_ranges_by_default_and_preserves_explicit_off():
+    QApplication.instance() or QApplication([])
+    bands = (ChoiceBand(0, 100), ChoiceBand(100, 200), ChoiceBand(200, 300))
+    client = QRect(0, 0, 800, 360)
+    capture = QRect(60, 30, 600, 300)
+    for config, expected in (({}, True), ({"show_tier_ranges": False}, False)):
+        controller = DesecrationTierController(
+            regions_getter=lambda value=config: value, ocr_server=Mock(),
+        )
+        controller._overlay.show_tiers = Mock()
+        controller._display(
+            client, capture, bands, (1, 5, 6),
+            statuses=("matched",) * 3,
+            range_labels=(("15–25%",), ("22–29", "34–44"), ("25–34%",)),
+        )
+        assert controller._overlay.show_tiers.call_args.kwargs["show_ranges"] is expected
+        controller.close()
 
 
 def test_category_cancel_displays_explicit_unselected_state():

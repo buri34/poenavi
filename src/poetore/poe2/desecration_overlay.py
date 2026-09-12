@@ -15,6 +15,7 @@ from src.poetore.poe2.desecration_ocr import (
     prepare_desecration_frame,
     resolve_ocr_variants,
 )
+from src.poetore.poe2.desecration_tiers import available_categories
 from src.poetore.window_position import path_of_exile_client_rect
 
 CATEGORY_LABELS = {
@@ -28,6 +29,20 @@ CATEGORY_LABELS = {
     "staff": "スタッフ", "talisman": "タリスマン", "two_hand_axe": "両手斧",
     "two_hand_mace": "両手メイス", "two_hand_sword": "両手剣", "wand": "ワンド",
 }
+
+UNAVAILABLE_POE2_CATEGORIES = frozenset({
+    "claw", "dagger", "flail", "one_hand_axe", "one_hand_sword",
+    "two_hand_axe", "two_hand_sword",
+})
+
+
+def selectable_categories(categories=None) -> tuple[str, ...]:
+    source = available_categories() if categories is None else categories
+    return tuple(
+        category for category in source
+        if category not in UNAVAILABLE_POE2_CATEGORIES
+    )
+
 
 STATUS_LABELS = {
     "read_failed": "読取失敗",
@@ -175,6 +190,7 @@ class CategoryChoiceOverlay(QWidget):
             item = self._buttons.takeAt(0)
             if item.widget() is not None:
                 item.widget().deleteLater()
+        categories = selectable_categories(categories)
         for index, category in enumerate(categories):
             button = QPushButton(CATEGORY_LABELS.get(category, category))
             button.clicked.connect(lambda _checked=False, value=category: self._choose(value))
@@ -322,7 +338,7 @@ class DesecrationTierController(QObject):
             raw = self._ocr.recognize(images)
             width = len(prepared.variants[0])
             grouped = tuple(tuple(raw[index * width:(index + 1) * width]) for index in range(3))
-            resolution = resolve_ocr_variants(grouped)
+            resolution = resolve_ocr_variants(grouped, selectable_categories())
             if not resolution.categories:
                 if allow_closed:
                     self._retry_closed_requested.emit(generation)
@@ -397,7 +413,7 @@ class DesecrationTierController(QObject):
         self._overlay.show_tiers(
             client_rect, capture_rect, (capture_rect.width(), capture_rect.height()), bands, tiers,
             statuses=statuses, range_labels=range_labels,
-            show_ranges=bool(config.get("show_tier_ranges", False)),
+            show_ranges=bool(config.get("show_tier_ranges", True)),
         )
         self._monitor_misses = 0
         self._monitor.start()
