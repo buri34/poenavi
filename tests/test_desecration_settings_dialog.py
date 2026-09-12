@@ -1,6 +1,6 @@
 from PySide6.QtCore import QRect
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QApplication, QDialog, QLabel
+from PySide6.QtWidgets import QApplication, QDialog, QGroupBox, QLabel, QScrollArea
 
 from src.ui.desecration_settings_dialog import (
     DEFAULT_EXAMPLE_IMAGE_PATH,
@@ -46,6 +46,30 @@ def test_desecration_settings_saves_optional_tier_ranges(qtbot):
 
     dialog.show_ranges_checkbox.setChecked(False)
     assert dialog.settings()[0]["show_tier_ranges"] is False
+
+
+def test_desecration_settings_groups_required_flow_before_optional_display(qtbot):
+    dialog = DesecrationSettingsDialog()
+    qtbot.addWidget(dialog)
+
+    groups = dialog.findChildren(QGroupBox)
+    assert [group.title() for group in groups] == [
+        "1. 基本設定",
+        "2. 読取範囲",
+        "3. 表示設定",
+        "4. 指定例",
+    ]
+    assert dialog.findChild(QScrollArea, "desecrationSettingsScroll") is not None
+
+    basic = dialog.findChild(QGroupBox, "basicSettingsGroup")
+    ranges = dialog.findChild(QGroupBox, "readRegionsGroup")
+    display = dialog.findChild(QGroupBox, "displaySettingsGroup")
+    example = dialog.findChild(QGroupBox, "exampleGroup")
+    assert basic.isAncestorOf(dialog.enabled_checkbox)
+    assert basic.isAncestorOf(dialog.hotkey_widget)
+    assert ranges.isAncestorOf(dialog.findChild(QLabel, "inventory_open_regionTitle"))
+    assert display.isAncestorOf(dialog.show_ranges_checkbox)
+    assert example.isAncestorOf(dialog.example_thumbnail)
 
 
 def test_desecration_settings_preserves_explicitly_disabled_tier_ranges(qtbot):

@@ -11,11 +11,15 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
     QFormLayout,
+    QFrame,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.poetore.window_position import path_of_exile_client_rect
@@ -65,12 +69,26 @@ class DesecrationSettingsDialog(QDialog):
         self._example_image_path = Path(example_image_path or DEFAULT_EXAMPLE_IMAGE_PATH)
         self._section_widgets = {}
         self.setWindowTitle("アビス冒涜Modティアチェック設定")
-        self.setMinimumSize(600, 820)
+        self.setMinimumSize(620, 820)
         self.setStyleSheet(self._style_sheet())
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(18, 18, 18, 14)
+        root.setContentsMargins(14, 14, 14, 12)
         root.setSpacing(10)
+
+        scroll = QScrollArea()
+        scroll.setObjectName("desecrationSettingsScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        content_widget = QWidget()
+        content = QVBoxLayout(content_widget)
+        content.setContentsMargins(4, 4, 4, 4)
+        content.setSpacing(10)
+        scroll.setWidget(content_widget)
+        root.addWidget(scroll, 1)
+
+        basic_group, basic = self._section_group("1. 基本設定", "basicSettingsGroup")
         reading_toggle_row = QHBoxLayout()
         reading_toggle_row.setSpacing(8)
         self.enabled_checkbox = QCheckBox("ゲーム画面の読み取り機能を有効にする")
@@ -83,39 +101,25 @@ class DesecrationSettingsDialog(QDialog):
         self.enable_required_hint.setObjectName("screenReadingEnableRequiredHint")
         reading_toggle_row.addWidget(self.enable_required_hint)
         reading_toggle_row.addStretch()
-        root.addLayout(reading_toggle_row)
+        basic.addLayout(reading_toggle_row)
         shared_hint = QLabel(
             "エクスペ報酬価格チェックとアビス冒涜Modティアチェックで共通の設定です。"
         )
         shared_hint.setWordWrap(True)
         shared_hint.setStyleSheet(f"color: {SETTINGS_THEME.muted_text};")
-        root.addWidget(shared_hint)
+        basic.addWidget(shared_hint)
 
         form = QFormLayout()
+        form.setContentsMargins(0, 2, 0, 0)
         self.hotkey_widget = AutoHideHotkeyWidget(
             hotkey, theme=SETTINGS_THEME, allow_no_modifier=True
         )
         self.hotkey_widget.key_button.setStyleSheet("")
         form.addRow("読取ショートカット:", self.hotkey_widget)
-        root.addLayout(form)
+        basic.addLayout(form)
+        content.addWidget(basic_group)
 
-        self.show_ranges_checkbox = QCheckBox(
-            "Tierの数値範囲を表示する（例：15–25%）"
-        )
-        self.show_ranges_checkbox.setChecked(
-            bool(self._config.get("show_tier_ranges", True))
-        )
-        Styles.apply_checkbox_style(self.show_ranges_checkbox)
-        root.addWidget(self.show_ranges_checkbox)
-
-        self._add_region_section(
-            root, "inventory_open_region", "インベントリを開いた状態", required=True,
-        )
-        self._add_region_section(
-            root, "inventory_closed_region", "インベントリを閉じた状態（任意）",
-            note="※インベントリを閉じると位置がずれて読取に失敗するため",
-        )
-
+        range_group, ranges = self._section_group("2. 読取範囲", "readRegionsGroup")
         instruction = QLabel(
             "タイトル・装備画像・確認ボタンを含めず、3つのMod選択肢部分だけを囲んでください。\n"
             "読取時は「インベントリを開いた状態」を先に確認し、読取に失敗した場合は"
@@ -123,29 +127,52 @@ class DesecrationSettingsDialog(QDialog):
         )
         instruction.setWordWrap(True)
         instruction.setObjectName("desecrationRegionInstruction")
-        root.addWidget(instruction)
+        ranges.addWidget(instruction)
         size_warning = QLabel(
             "PoE2のウィンドウサイズを変更した場合、位置が変わるため再設定が必要です。"
         )
         size_warning.setWordWrap(True)
         size_warning.setObjectName("screenSizeRegionWarning")
-        root.addWidget(size_warning)
+        ranges.addWidget(size_warning)
+        self._add_region_section(
+            ranges, "inventory_open_region", "インベントリを開いた状態", required=True,
+        )
+        self._add_region_section(
+            ranges, "inventory_closed_region", "インベントリを閉じた状態（任意）",
+            note="※インベントリを閉じると位置がずれて読取に失敗するため",
+        )
+        content.addWidget(range_group)
 
+        display_group, display = self._section_group(
+            "3. 表示設定", "displaySettingsGroup"
+        )
+        self.show_ranges_checkbox = QCheckBox(
+            "Tierの数値範囲を表示する（例：15–25%）"
+        )
+        self.show_ranges_checkbox.setChecked(
+            bool(self._config.get("show_tier_ranges", True))
+        )
+        Styles.apply_checkbox_style(self.show_ranges_checkbox)
+        display.addWidget(self.show_ranges_checkbox)
+        content.addWidget(display_group)
+
+        example_group, example = self._section_group("4. 指定例", "exampleGroup")
         heading = QHBoxLayout()
-        heading.addWidget(QLabel("指定例"))
         hint = QLabel("※以下の画像をクリックするとポップアップで拡大表示します")
         hint.setStyleSheet(f"color: {SETTINGS_THEME.muted_text};")
         heading.addWidget(hint)
         heading.addStretch()
-        root.addLayout(heading)
+        example.addLayout(heading)
         self.example_thumbnail = ClickableImageLabel()
         self.example_thumbnail.setObjectName("desecrationExampleThumbnail")
         self.example_thumbnail.setAlignment(Qt.AlignCenter)
         self.example_thumbnail.setFixedHeight(130)
         self.example_thumbnail.setCursor(Qt.PointingHandCursor)
         self.example_thumbnail.clicked.connect(self._show_example_popup)
-        root.addWidget(self.example_thumbnail)
+        example.addWidget(self.example_thumbnail)
         self._load_example_thumbnail()
+        content.addWidget(example_group)
+        content.addStretch()
 
         buttons = QHBoxLayout()
         buttons.addStretch()
@@ -158,6 +185,15 @@ class DesecrationSettingsDialog(QDialog):
         buttons.addWidget(save)
         root.addLayout(buttons)
         self._refresh_all()
+
+    @staticmethod
+    def _section_group(title: str, object_name: str):
+        group = QGroupBox(title)
+        group.setObjectName(object_name)
+        layout = QVBoxLayout(group)
+        layout.setContentsMargins(12, 18, 12, 12)
+        layout.setSpacing(8)
+        return group, layout
 
     def _add_region_section(self, root, key, title, *, required=False, note=""):
         heading = QHBoxLayout()
@@ -292,7 +328,17 @@ class DesecrationSettingsDialog(QDialog):
         theme = SETTINGS_THEME
         return f"""
             QDialog {{ background: {theme.background}; color: {theme.text}; font-size: 13px; }}
-            QLabel, QCheckBox {{ color: {theme.text}; }}
+            QScrollArea, QScrollArea > QWidget > QWidget {{ background: {theme.background}; }}
+            QLabel, QCheckBox, QGroupBox {{ color: {theme.text}; }}
+            QGroupBox {{
+                background: {theme.panel}; border: 1px solid #465046;
+                border-radius: 7px; margin-top: 10px; padding-top: 7px;
+            }}
+            QGroupBox::title {{
+                color: {theme.accent}; font-size: 14px; font-weight: bold;
+                subcontrol-origin: margin; subcontrol-position: top left;
+                left: 10px; padding: 0 6px;
+            }}
             QPushButton {{ background: {theme.panel}; color: {theme.text}; border: 1px solid #596359;
                 border-radius: 5px; padding: 7px 12px; font-weight: bold; }}
             QPushButton:hover {{ background: #293229; border-color: {theme.accent}; }}
