@@ -182,6 +182,47 @@ def test_controller_reports_all_unreadable_without_showing_badges():
     controller.close()
 
 
+def test_controller_rejects_repeated_scan_while_current_scan_is_running():
+    QApplication.instance() or QApplication([])
+    image = QImage("tests/fixtures/poetore/poe2/desecration/boots-reveal.png")
+    region = {"left": 0, "top": 0, "right": .5, "bottom": .5}
+    gate = Mock()
+    gate.try_begin.return_value = True
+    controller = DesecrationTierController(
+        regions_getter=lambda: {"inventory_open_region": region},
+        ocr_server=Mock(), scan_coordinator=gate,
+    )
+    controller._grab = Mock(return_value=image)
+    with patch(
+        "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
+        return_value=QRect(0, 0, 1920, 1080),
+    ), patch("src.poetore.poe2.desecration_overlay.threading.Thread"):
+        assert controller.request_scan()
+        assert not controller.request_scan()
+
+    gate.try_begin.assert_called_once_with("desecration")
+    controller.close()
+
+
+def test_stale_async_result_cannot_replace_a_newer_scan_or_release_its_gate():
+    QApplication.instance() or QApplication([])
+    gate = Mock()
+    controller = DesecrationTierController(ocr_server=Mock(), scan_coordinator=gate)
+    controller._scan_generation = 2
+    controller._running = True
+    controller._display = Mock()
+
+    controller._show_result(
+        Mock(), QRect(0, 0, 1920, 1080), QRect(100, 100, 600, 300),
+        (ChoiceBand(0, 100), ChoiceBand(100, 200), ChoiceBand(200, 300)), 1,
+    )
+
+    controller._display.assert_not_called()
+    gate.finish.assert_not_called()
+    assert controller.running
+    controller.close()
+
+
 def test_tier_ranges_render_outside_the_registered_panel():
     QApplication.instance() or QApplication([])
     overlay = DesecrationTierOverlay()

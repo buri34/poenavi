@@ -70,7 +70,8 @@ def image_bytes(image: QImage, image_format: str = "BMP") -> bytes:
 
 def choice_bands(image: QImage) -> tuple[ChoiceBand, ...]:
     height = image.height()
-    if image.isNull() or height < 60:
+    width = image.width()
+    if image.isNull() or height < 60 or width < 120:
         return ()
     radius = max(4, round(height * .09))
     separators = []
@@ -87,6 +88,10 @@ def choice_bands(image: QImage) -> tuple[ChoiceBand, ...]:
                 total += color.red() + color.green() + color.blue()
                 count += 3
             means.append(total / max(1, count))
+        # A uniformly coloured or badly clipped crop still has a mathematical
+        # minimum, but it does not contain the two dark card separators.
+        if max(means) - min(means) < 4:
+            return ()
         separators.append(left + min(range(len(means)), key=means.__getitem__))
     edges = (0, *separators, height)
     if not (edges[0] < edges[1] < edges[2] < edges[3]):
@@ -186,6 +191,16 @@ def resolve_ocr_variants(
                 texts.append(outputs[0].strip() if outputs else "")
                 ranges.append(())
                 statuses.append(_unmatched_status(outputs))
+                continue
+            identities = {
+                (result.tier, result.mod_ids)
+                for _text, result in matched
+            }
+            if len(identities) != 1:
+                tiers.append(None)
+                texts.append(matched[0][0])
+                ranges.append(())
+                statuses.append("read_failed")
                 continue
             best_score = max(result.score or 0 for _text, result in matched)
             finalists = [

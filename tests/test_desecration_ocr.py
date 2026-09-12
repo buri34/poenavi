@@ -1,4 +1,4 @@
-from PySide6.QtGui import QImage
+from PySide6.QtGui import QColor, QImage
 
 from src.poetore.poe2.desecration_ocr import (
     choice_bands,
@@ -14,6 +14,16 @@ def test_supplied_panels_have_three_valid_choice_bands():
         assert frame.valid_panel
         assert len(choice_bands(image)) == 3
         assert all(len(variants) == 3 for variants in frame.variants)
+
+
+def test_tiny_or_uniform_crops_are_not_mistaken_for_a_three_choice_panel():
+    tiny = QImage(16, 180, QImage.Format_RGB32)
+    tiny.fill(QColor("#2f7f4f"))
+    uniform = QImage(620, 291, QImage.Format_RGB32)
+    uniform.fill(QColor("#2f7f4f"))
+
+    assert not prepare_desecration_frame(tiny).valid_panel
+    assert not prepare_desecration_frame(uniform).valid_panel
 
 
 def test_ocr_variants_resolve_safe_typo_and_reject_bad_number():
@@ -43,3 +53,32 @@ def test_ocr_resolution_separates_stable_unsupported_text_from_read_failure():
 
     failed = resolve_ocr_variants((("読取不能", "", "別の誤読"),), ("boots",))
     assert failed.fallback_statuses == ("read_failed",)
+
+
+def test_ocr_variants_reject_conflicting_tiers_even_when_one_text_scores_better():
+    """Different valid numbers from the same crop must never be score-tiebroken."""
+    result = resolve_ocr_variants((
+        ("最大マナ +108", "最大マナが +100"),
+    ), ("boots",))
+
+    assert result.categories == ()
+    assert result.fallback_statuses == ("read_failed",)
+
+
+def test_ocr_variants_reject_different_mods_that_happen_to_share_a_tier():
+    """Agreement on T1 alone is insufficient when OCR variants name different mods."""
+    result = resolve_ocr_variants((
+        ("最大マナ +108", "火耐性 +43%"),
+    ), ("boots",))
+
+    assert result.categories == ()
+    assert result.fallback_statuses == ("read_failed",)
+
+
+def test_ocr_resolution_rejects_an_extra_number_from_a_neighbouring_ui_element():
+    result = resolve_ocr_variants((
+        ("最大マナ +108 レベル81",),
+    ), ("boots",))
+
+    assert result.categories == ()
+    assert result.fallback_statuses == ("read_failed",)
