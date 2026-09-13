@@ -17,6 +17,7 @@ from src.poetore.expedition_ocr_probe import (
     detect_reward_cards,
     detect_row_bands,
     load_item_dictionary,
+    looks_like_expedition_panel,
     match_item_name,
     normalize_text,
     otsu_threshold,
@@ -39,6 +40,13 @@ def _black_ink_height(image_bytes: bytes) -> int:
         if any(image.pixelColor(x, y).red() < 128 for x in range(image.width())):
             rows.append(y)
     return rows[-1] - rows[0] + 1 if rows else 0
+
+
+def test_registered_expedition_region_has_reward_card_structure():
+    image = QImage("assets/images/expedition_region_example.png").copy(
+        47, 162, 605, 652
+    )
+    assert looks_like_expedition_panel(image)
 
 
 def test_load_channels_reads_exact_rgb_values_with_padded_rows(tmp_path):

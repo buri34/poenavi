@@ -16,8 +16,7 @@
         "search_string_test": "F4",
         "poetore_capture": "alt+d",
         "poetore_auto_hide": "ctrl+d",
-        "expedition_reward_ocr": "alt+e",
-        "desecration_tier_ocr": "alt+r",
+        "screen_reading_ocr": "alt+r",
         "map_check": "alt+f",
         "gem_shop_search": "F2",
         "cheat_sheets_toggle": "shift+space"

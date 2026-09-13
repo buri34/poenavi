@@ -112,10 +112,11 @@ class DesecrationSettingsDialog(QDialog):
         form = QFormLayout()
         form.setContentsMargins(0, 2, 0, 0)
         self.hotkey_widget = AutoHideHotkeyWidget(
-            hotkey, theme=SETTINGS_THEME, allow_no_modifier=True
+            hotkey, theme=SETTINGS_THEME, allow_no_modifier=True,
+            allow_multiple_modifiers=True, allow_shift=True,
         )
         self.hotkey_widget.key_button.setStyleSheet("")
-        form.addRow("読取ショートカット:", self.hotkey_widget)
+        form.addRow("画面読取ショートカット（共通）:", self.hotkey_widget)
         basic.addLayout(form)
         content.addWidget(basic_group)
 

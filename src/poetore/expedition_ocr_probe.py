@@ -437,6 +437,23 @@ def detect_qimage_reward_cards(image: QImage) -> tuple[int, list[RowBand]]:
     return detect_reward_cards(gray, red, green, blue, width, height)
 
 
+def looks_like_expedition_panel(image: QImage) -> bool:
+    """Return whether a registered crop contains plausible reward-card rows."""
+    if image.isNull() or image.width() < 160 or image.height() < 100:
+        return False
+    probe = (
+        image.scaledToWidth(300, Qt.FastTransformation)
+        if image.width() > 300 else image
+    )
+    panel_width, bands = detect_qimage_reward_cards(probe)
+    if not 1 <= len(bands) <= 12:
+        return False
+    if panel_width < max(80, round(probe.width() * 0.45)):
+        return False
+    heights = [band.bottom - band.top for band in bands]
+    return min(heights, default=0) >= 10
+
+
 def _load_channels(path: Path) -> tuple[int, int, bytes, bytes, bytes, bytes]:
     image = QImage(str(path))
     if image.isNull():

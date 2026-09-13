@@ -34,7 +34,7 @@ def find_duplicate_hotkeys(hotkeys: dict[str, str]) -> dict[str, list[str]]:
     """未割り当てを除き、同じキーへ割り当てられた操作を返す。"""
     by_key: dict[str, list[str]] = {}
     for action, key in hotkeys.items():
-        normalized = str(key or "").strip().casefold()
+        normalized = canonical_hotkey_name(key)
         if not normalized or normalized == "none":
             continue
         by_key.setdefault(normalized, []).append(action)
@@ -42,11 +42,30 @@ def find_duplicate_hotkeys(hotkeys: dict[str, str]) -> dict[str, list[str]]:
 
 
 def listener_hotkey_name(key_text: str) -> str:
-    normalized = str(key_text).lower().replace(" ", "_").replace("capslock", "caps_lock")
+    normalized = canonical_hotkey_name(key_text).replace("capslock", "caps_lock")
     return {
         "left_alt": "alt_l",
         "right_alt": "alt_r",
     }.get(normalized, normalized)
+
+
+def canonical_hotkey_name(key_text: str) -> str:
+    """Normalize modifier aliases and order while preserving the trigger key."""
+    parts = [
+        part.strip().casefold().replace(" ", "_")
+        for part in str(key_text or "").split("+")
+        if part.strip()
+    ]
+    if not parts:
+        return ""
+    aliases = {"control": "ctrl"}
+    parts = [aliases.get(part, part) for part in parts]
+    modifiers = [name for name in ("ctrl", "alt", "shift") if name in parts]
+    trigger = next(
+        (part for part in reversed(parts) if part not in {"ctrl", "alt", "shift"}),
+        "",
+    )
+    return "+".join((*modifiers, trigger)) if trigger else "+".join(modifiers)
 
 
 def hotkey_key_name(key) -> str | None:

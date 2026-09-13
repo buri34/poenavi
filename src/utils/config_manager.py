@@ -14,7 +14,7 @@ class ConfigManager:
     DEFAULT_CONFIG_FILE = "default_config.json"
     APP_NAME = "PoENavi"
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
-    CURRENT_SCHEMA_VERSION = 17
+    CURRENT_SCHEMA_VERSION = 18
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -531,6 +531,33 @@ class ConfigManager:
             if not isinstance(hotkeys, dict):
                 hotkeys = {}
             hotkeys.setdefault("desecration_tier_ocr", "alt+r")
+            migrated["hotkeys"] = hotkeys
+
+        if schema_version < 18:
+            hotkeys = migrated.get("hotkeys")
+            if not isinstance(hotkeys, dict):
+                hotkeys = {}
+            common = str(hotkeys.get("screen_reading_ocr", "")).strip()
+            expedition = str(hotkeys.get("expedition_reward_ocr", "alt+e")).strip()
+            desecration = str(hotkeys.get("desecration_tier_ocr", "alt+r")).strip()
+            expedition_active = expedition.casefold() not in {"", "none"}
+            desecration_active = desecration.casefold() not in {"", "none"}
+            expedition_custom = expedition_active and expedition.casefold() != "alt+e"
+            desecration_custom = desecration_active and desecration.casefold() != "alt+r"
+            if not common:
+                if expedition_active and not desecration_active:
+                    common = expedition
+                elif desecration_active and not expedition_active:
+                    common = desecration
+                elif expedition_custom and not desecration_custom:
+                    common = expedition
+                elif desecration_custom:
+                    common = desecration
+                else:
+                    common = "alt+r"
+            hotkeys["screen_reading_ocr"] = common
+            hotkeys.pop("expedition_reward_ocr", None)
+            hotkeys.pop("desecration_tier_ocr", None)
             migrated["hotkeys"] = hotkeys
 
         if "poe1_route_selected" not in migrated:

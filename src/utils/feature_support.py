@@ -9,6 +9,7 @@ MAP_CHECK = "map_check"
 GEM_SHOP_SEARCH = "gem_shop_search"
 EXPEDITION_REWARD_OVERLAY = "expedition_reward_overlay"
 DESECRATION_TIER_OVERLAY = "desecration_tier_overlay"
+SCREEN_READING = "screen_reading"
 
 FEATURE_SUPPORTED_VERSIONS = {
     MINI_NAVI: frozenset({POE1, POE2}),
@@ -17,14 +18,14 @@ FEATURE_SUPPORTED_VERSIONS = {
     GEM_SHOP_SEARCH: frozenset({POE1}),
     EXPEDITION_REWARD_OVERLAY: frozenset({POE2}),
     DESECRATION_TIER_OVERLAY: frozenset({POE2}),
+    SCREEN_READING: frozenset({POE2}),
 }
 
 FEATURE_HOTKEY_ACTIONS = {
     POETORE: frozenset({"poetore_capture", "poetore_auto_hide"}),
     MAP_CHECK: frozenset({"map_check"}),
     GEM_SHOP_SEARCH: frozenset({"gem_shop_search"}),
-    EXPEDITION_REWARD_OVERLAY: frozenset({"expedition_reward_ocr"}),
-    DESECRATION_TIER_OVERLAY: frozenset({"desecration_tier_ocr"}),
+    SCREEN_READING: frozenset({"screen_reading_ocr"}),
 }
 
 

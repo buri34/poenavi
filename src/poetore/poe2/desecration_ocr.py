@@ -148,6 +148,30 @@ def _green_text_rect(image: QImage, padding: int = 8) -> tuple[QRect | None, int
     ), count
 
 
+def looks_like_desecration_panel(image: QImage) -> bool:
+    """Return whether a registered crop has three balanced green-text choices."""
+    image = (
+        image.scaledToWidth(360, Qt.FastTransformation)
+        if image.width() > 360 else image
+    )
+    bands = choice_bands(image)
+    if len(bands) != 3:
+        return False
+    heights = [band.bottom - band.top for band in bands]
+    if min(heights) <= 0 or max(heights) / min(heights) > 1.45:
+        return False
+    for band in bands:
+        card = image.copy(0, band.top, image.width(), max(1, band.bottom - band.top))
+        text_rect, pixels = _green_text_rect(card, padding=0)
+        if (
+            text_rect is None
+            or pixels < 20
+            or text_rect.width() < max(24, round(image.width() * 0.08))
+        ):
+            return False
+    return True
+
+
 def _green_mask(image: QImage) -> QImage:
     source = image.convertToFormat(QImage.Format_RGBA8888)
     source_pixels = source.bits()

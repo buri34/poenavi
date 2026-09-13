@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import ctypes
-from ctypes import wintypes
 import queue
 import threading
+from ctypes import wintypes
 
 
 WM_KEYDOWN = 0x0100
@@ -45,16 +45,26 @@ NAMED_VIRTUAL_KEYS = {
 
 def _parse_hotkey(
     hotkey: str, *, allow_unmodified: bool = False,
-) -> tuple[int | None, int]:
-    parts = [part.strip().casefold() for part in str(hotkey or "").split("+")]
-    if len(parts) == 1 and allow_unmodified:
-        modifier_vk = None
-        key = parts[0]
-    elif len(parts) == 2 and parts[0] in {"ctrl", "alt"}:
-        modifier_vk = VK_CONTROL if parts[0] == "ctrl" else VK_MENU
-        key = parts[1]
-    else:
-        raise ValueError("suppressed hotkey must be Ctrl/Alt + one key")
+) -> tuple[frozenset[str], int]:
+    parts = [
+        part.strip().casefold()
+        for part in str(hotkey or "").split("+")
+        if part.strip()
+    ]
+    aliases = {"control": "ctrl"}
+    parts = [aliases.get(part, part) for part in parts]
+    modifiers = parts[:-1]
+    key = parts[-1] if parts else ""
+    if not modifiers and not allow_unmodified:
+        raise ValueError("suppressed hotkey requires Ctrl, Alt, or Shift")
+    if (
+        any(part not in {"ctrl", "alt", "shift"} for part in modifiers)
+        or len(set(modifiers)) != len(modifiers)
+        or key in {"ctrl", "alt", "shift", "win", "meta"}
+    ):
+        raise ValueError(
+            "suppressed hotkey must use Ctrl/Alt/Shift and one regular key"
+        )
     if len(key) == 1 and key.isascii() and key.isalnum():
         target_vk = ord(key.upper())
     elif key in NAMED_VIRTUAL_KEYS:
@@ -63,24 +73,27 @@ def _parse_hotkey(
         target_vk = 0x70 + int(key[1:]) - 1
     else:
         raise ValueError(f"unsupported suppressed hotkey key: {key}")
-    return modifier_vk, target_vk
+    return frozenset(modifiers), target_vk
 
 
 class HotkeyEventProcessor:
     """Pure state machine used by the native hook and unit tests."""
 
-    def __init__(self, modifier_vk: int | None, target_vk: int, should_suppress, on_event):
-        self.modifier_vk = modifier_vk
-        self.modifier_vks = (
-            MODIFIER_GROUPS["ctrl"]
-            if modifier_vk == VK_CONTROL
-            else MODIFIER_GROUPS["alt"] if modifier_vk == VK_MENU
-            else set()
-        )
+    def __init__(
+        self, required_modifier_groups, target_vk: int, should_suppress, on_event,
+    ):
+        if required_modifier_groups is None:
+            required_modifier_groups = frozenset()
+        elif isinstance(required_modifier_groups, int):
+            required_modifier_groups = {
+                VK_CONTROL: frozenset({"ctrl"}),
+                VK_MENU: frozenset({"alt"}),
+                VK_SHIFT: frozenset({"shift"}),
+            }.get(required_modifier_groups, frozenset())
+        self.required_modifier_groups = frozenset(required_modifier_groups)
         self.target_vk = target_vk
         self.should_suppress = should_suppress
         self.on_event = on_event
-        self.modifier_down = False
         self.pressed_modifier_groups = set()
         self.suppressing_target = False
 
@@ -95,8 +108,6 @@ class HotkeyEventProcessor:
                 self.pressed_modifier_groups.add(modifier_group)
             else:
                 self.pressed_modifier_groups.discard(modifier_group)
-            if vk_code in self.modifier_vks:
-                self.modifier_down = is_down
             return False
         if vk_code != self.target_vk:
             return False
@@ -104,9 +115,7 @@ class HotkeyEventProcessor:
             if self.suppressing_target:
                 return True
             modifier_matches = (
-                not self.pressed_modifier_groups
-                if self.modifier_vk is None
-                else self.modifier_down
+                self.pressed_modifier_groups == self.required_modifier_groups
             )
             if modifier_matches and self.should_suppress():
                 self.suppressing_target = True
@@ -127,11 +136,11 @@ class Win32SuppressedHotkeyHook:
         self, hotkey: str, *, should_suppress, on_event,
         allow_unmodified: bool = False,
     ):
-        modifier_vk, target_vk = _parse_hotkey(
+        modifier_groups, target_vk = _parse_hotkey(
             hotkey, allow_unmodified=allow_unmodified,
         )
         self._processor = HotkeyEventProcessor(
-            modifier_vk, target_vk, should_suppress, on_event,
+            modifier_groups, target_vk, should_suppress, on_event,
         )
         self._thread = None
         self._thread_id = 0

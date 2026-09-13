@@ -170,6 +170,25 @@ def test_expedition_dialog_accepts_unmodified_hotkey():
     dialog.close()
 
 
+def test_screen_reading_hotkey_accepts_ctrl_alt_shift_combinations():
+    QApplication.instance() or QApplication([])
+    dialog = ExpeditionSettingsDialog(hotkey="ctrl+alt+shift+r")
+
+    widget = dialog.hotkey_widget
+    assert widget.ctrl_button.isChecked()
+    assert widget.alt_button.isChecked()
+    assert widget.shift_button.isChecked()
+    assert not widget.no_modifier_button.isChecked()
+    assert widget.key_text == "ctrl+alt+shift+r"
+
+    widget.no_modifier_button.click()
+    assert widget.key_text == "r"
+    widget.ctrl_button.click()
+    widget.shift_button.click()
+    assert widget.key_text == "ctrl+shift+r"
+    dialog.close()
+
+
 def test_expedition_dialog_accepts_region_from_selector():
     QApplication.instance() or QApplication([])
     region = {"left": 0.1, "top": 0.2, "right": 0.6, "bottom": 0.9}

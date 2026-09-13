@@ -153,7 +153,7 @@ class ConfigManagerTest(unittest.TestCase):
             },
         })
 
-        self.assertEqual(migrated["schemaVersion"], 17)
+        self.assertEqual(migrated["schemaVersion"], 18)
         self.assertEqual(
             migrated["startup"],
             {
@@ -174,11 +174,43 @@ class ConfigManagerTest(unittest.TestCase):
                 },
             },
         })
-        assert migrated["schemaVersion"] == 17
+        assert migrated["schemaVersion"] == 18
         assert migrated["poetore"]["screen_reading"] == {"enabled": True}
         assert "enabled" not in migrated["poetore"]["expedition_reward_overlay"]
         assert migrated["poetore"]["desecration_tier_overlay"] == {}
-        assert migrated["hotkeys"]["desecration_tier_ocr"] == "alt+r"
+        assert migrated["hotkeys"]["screen_reading_ocr"] == "alt+r"
+        assert "expedition_reward_ocr" not in migrated["hotkeys"]
+        assert "desecration_tier_ocr" not in migrated["hotkeys"]
+
+    def test_schema_v18_preserves_the_only_custom_legacy_ocr_hotkey(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 17,
+            "hotkeys": {
+                "expedition_reward_ocr": "ctrl+alt+shift+r",
+                "desecration_tier_ocr": "alt+r",
+            },
+        })
+        assert migrated["hotkeys"]["screen_reading_ocr"] == "ctrl+alt+shift+r"
+
+    def test_schema_v18_prefers_desecration_when_both_legacy_hotkeys_are_custom(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 17,
+            "hotkeys": {
+                "expedition_reward_ocr": "ctrl+e",
+                "desecration_tier_ocr": "shift+r",
+            },
+        })
+        assert migrated["hotkeys"]["screen_reading_ocr"] == "shift+r"
+
+    def test_schema_v18_does_not_disable_both_when_one_legacy_hotkey_is_none(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 17,
+            "hotkeys": {
+                "expedition_reward_ocr": "none",
+                "desecration_tier_ocr": "alt+r",
+            },
+        })
+        assert migrated["hotkeys"]["screen_reading_ocr"] == "alt+r"
 
     def test_schema_v16_preserves_enabled_windows_poetore_autostart(self):
         migrated = ConfigManager._migrate_config({

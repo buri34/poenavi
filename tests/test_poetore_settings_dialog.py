@@ -42,14 +42,14 @@ def test_expedition_settings_are_preserved_without_general_settings_controls():
     }
     dialog = PoetoreSettingsDialog(current_config={
         "poe_version": POE2,
-        "hotkeys": {"expedition_reward_ocr": "alt+r"},
+        "hotkeys": {"screen_reading_ocr": "ctrl+alt+shift+r"},
         "poetore": {"expedition_reward_overlay": expedition},
     })
 
     assert not hasattr(dialog, "expedition_group")
     assert dialog.findChild(QPushButton, "openExpeditionSettingsButton") is None
     settings = dialog.get_settings()
-    assert settings["hotkeys"]["expedition_reward_ocr"] == "alt+r"
+    assert settings["hotkeys"]["screen_reading_ocr"] == "ctrl+alt+shift+r"
     assert settings["poetore"]["expedition_reward_overlay"] == expedition
     dialog.close()
 

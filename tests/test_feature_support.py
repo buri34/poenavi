@@ -34,10 +34,8 @@ def test_poetore_hotkeys_follow_feature_support():
     assert not is_feature_hotkey_supported("map_check", POE2)
     assert is_feature_hotkey_supported("gem_shop_search", POE1)
     assert not is_feature_hotkey_supported("gem_shop_search", POE2)
-    assert not is_feature_hotkey_supported("expedition_reward_ocr", POE1)
-    assert is_feature_hotkey_supported("expedition_reward_ocr", POE2)
-    assert not is_feature_hotkey_supported("desecration_tier_ocr", POE1)
-    assert is_feature_hotkey_supported("desecration_tier_ocr", POE2)
+    assert not is_feature_hotkey_supported("screen_reading_ocr", POE1)
+    assert is_feature_hotkey_supported("screen_reading_ocr", POE2)
 
 
 def test_unknown_features_fail_closed():
