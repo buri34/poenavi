@@ -21,12 +21,20 @@ TierValue = int | tuple[int, ...] | None
 
 
 @dataclass(frozen=True)
+class AffixTierOption:
+    affix: str
+    tier: TierValue
+    range_labels: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class TierResolution:
     tier: int | None
     tier_candidates: tuple[int, ...] = ()
     mod_ids: tuple[str, ...] = ()
     profile_ids: tuple[str, ...] = ()
     range_labels: tuple[str, ...] = ()
+    affix_options: tuple[AffixTierOption, ...] = ()
     reason: str = "unknown"
 
 
@@ -111,6 +119,41 @@ def _shared_range_labels(
 def _stat_identity(entry: dict) -> tuple[str, ...]:
     """Treat prefix/suffix records for the same displayed stat as one effect."""
     return tuple(sorted(str(part.get("stat_id", "")) for part in entry.get("parts", ())))
+
+
+def _affix_options(
+    matches: list[tuple[dict, int]], observed_lines: tuple[str, ...],
+) -> tuple[AffixTierOption, ...]:
+    """Keep indistinguishable Prefix/Suffix rows linked to their own tiers."""
+    signatures = {
+        tuple(sorted(
+            _visible_template(str(part["text"]["ja"]))
+            for part in entry.get("parts", ())
+        ))
+        for entry, _tier in matches
+    }
+    if len(signatures) != 1:
+        return ()
+    by_affix: dict[str, list[tuple[dict, int]]] = {}
+    for entry, tier in matches:
+        affix = str(entry.get("type", "")).casefold()
+        if affix in {"prefix", "suffix"}:
+            by_affix.setdefault(affix, []).append((entry, int(tier)))
+    if not {"prefix", "suffix"} <= set(by_affix):
+        return ()
+    options = []
+    for affix in ("prefix", "suffix"):
+        rows = by_affix[affix]
+        tiers = tuple(sorted({tier for _entry, tier in rows}))
+        tier_value: TierValue = tiers[0] if len(tiers) == 1 else tiers
+        options.append(AffixTierOption(
+            affix=affix,
+            tier=tier_value,
+            range_labels=_shared_range_labels(
+                (entry for entry, _tier in rows), observed_lines,
+            ),
+        ))
+    return tuple(options)
 
 
 @lru_cache(maxsize=4096)
@@ -429,11 +472,15 @@ def resolve_desecration_choice(
     mod_ids = tuple(sorted({entry["mod_id"] for entry, _profile, _tier in matches}))
     stat_identities = {_stat_identity(entry) for entry, _profile, _tier in matches}
     matched_profiles = tuple(sorted({profile for _entry, profile, _tier in matches}))
+    affix_options = _affix_options(
+        [(entry, tier) for entry, _profile, tier in matches], normalized_lines,
+    )
     if len(tiers) != 1:
         if len(stat_identities) == 1:
             return TierResolution(
                 tier=None, tier_candidates=tuple(sorted(tiers)), mod_ids=mod_ids,
-                profile_ids=matched_profiles, reason="multiple_tiers",
+                profile_ids=matched_profiles, affix_options=affix_options,
+                reason="multiple_tiers",
             )
         return TierResolution(
             tier=None, mod_ids=mod_ids, profile_ids=matched_profiles,
@@ -445,6 +492,7 @@ def resolve_desecration_choice(
         range_labels=_shared_range_labels(
             (entry for entry, _profile, _tier in matches), normalized_lines,
         ),
+        affix_options=affix_options,
         reason="matched",
     )
 
@@ -459,6 +507,9 @@ def _finalize_fuzzy_candidates(
     mod_ids = tuple(sorted({row[1]["mod_id"] for row in finalists}))
     stat_identities = {_stat_identity(row[1]) for row in finalists}
     profiles = tuple(sorted({row[2] for row in finalists}))
+    affix_options = _affix_options(
+        [(row[1], row[3]) for row in finalists], normalized_lines,
+    )
     if len(stat_identities) != 1:
         return FuzzyTierResolution(
             tier=None, mod_ids=mod_ids, profile_ids=profiles,
@@ -467,7 +518,8 @@ def _finalize_fuzzy_candidates(
     if len(tiers) != 1:
         return FuzzyTierResolution(
             tier=None, tier_candidates=tuple(sorted(tiers)), mod_ids=mod_ids,
-            profile_ids=profiles, reason="multiple_tiers",
+            profile_ids=profiles, affix_options=affix_options,
+            reason="multiple_tiers",
             score=round(best_score, 4),
         )
     return FuzzyTierResolution(
@@ -475,6 +527,7 @@ def _finalize_fuzzy_candidates(
         range_labels=_shared_range_labels(
             (row[1] for row in finalists), normalized_lines,
         ),
+        affix_options=affix_options,
         reason=reason, score=round(best_score, 4),
     )
 

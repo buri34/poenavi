@@ -15,7 +15,11 @@ from src.poetore.poe2.desecration_ocr import (
     prepare_desecration_frame,
     resolve_ocr_variants,
 )
-from src.poetore.poe2.desecration_tiers import TierValue, available_categories
+from src.poetore.poe2.desecration_tiers import (
+    AffixTierOption,
+    TierValue,
+    available_categories,
+)
 from src.poetore.window_position import path_of_exile_client_rect
 
 CATEGORY_LABELS = {
@@ -97,6 +101,7 @@ class DesecrationTierOverlay(QWidget):
         self._tiers: tuple[TierValue, ...] = ()
         self._statuses: tuple[str, ...] = ()
         self._range_labels: tuple[tuple[str, ...], ...] = ()
+        self._affix_options: tuple[tuple[AffixTierOption, ...], ...] = ()
         self._show_ranges = False
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowTransparentForInput)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -105,7 +110,7 @@ class DesecrationTierOverlay(QWidget):
 
     def show_tiers(
         self, client_rect: QRect, capture_rect: QRect, source_size, bands, tiers,
-        *, statuses=(), range_labels=(), show_ranges=False,
+        *, statuses=(), range_labels=(), affix_options=(), show_ranges=False,
     ):
         self.setGeometry(client_rect)
         self._capture_offset = capture_rect.topLeft() - client_rect.topLeft()
@@ -114,6 +119,7 @@ class DesecrationTierOverlay(QWidget):
         self._tiers = tuple(tiers)
         self._statuses = tuple(statuses)
         self._range_labels = tuple(tuple(labels) for labels in range_labels)
+        self._affix_options = tuple(tuple(options) for options in affix_options)
         self._show_ranges = bool(show_ranges)
         self.show()
         self.raise_()
@@ -131,9 +137,13 @@ class DesecrationTierOverlay(QWidget):
             self._tiers,
             self._statuses or ("matched",) * len(self._tiers),
             self._range_labels or ((),) * len(self._tiers),
+            self._affix_options or ((),) * len(self._tiers),
         )
-        for band, tier, status, range_labels in rows:
+        for band, tier, status, range_labels, affix_options in rows:
             y = self._capture_offset.y() + round(((band.top + band.bottom) / 2) * scale_y)
+            if affix_options:
+                self._draw_affix_options(painter, right_edge, y, affix_options)
+                continue
             label = tier_badge_label(tier, status)
             badge_width = 50 if isinstance(tier, int) else 82
             rect = QRectF(right_edge - badge_width, y - 15, badge_width, 30)
@@ -167,6 +177,53 @@ class DesecrationTierOverlay(QWidget):
             painter.drawText(rect, Qt.AlignCenter, label)
             if self._show_ranges and tier is not None and range_labels:
                 self._draw_ranges(painter, y, range_labels)
+
+    @staticmethod
+    def _affix_display_labels(options: tuple[AffixTierOption, ...]):
+        names = {"prefix": "プレフィックス", "suffix": "サフィックス"}
+        return tuple(
+            (
+                f"{names.get(option.affix, option.affix)} {tier_badge_label(option.tier, 'matched')}",
+                option.range_labels,
+            )
+            for option in options
+        )
+
+    def _draw_affix_options(
+        self, painter: QPainter, right_edge: int, center_y: int,
+        options: tuple[AffixTierOption, ...],
+    ):
+        font = QFont(self.font())
+        font.setBold(True)
+        font.setPixelSize(12)
+        painter.setFont(font)
+        rows = self._affix_display_labels(options)
+        metrics = painter.fontMetrics()
+        width = max(110, max(metrics.horizontalAdvance(label) for label, _ranges in rows) + 16)
+        row_height = 24
+        gap = 4
+        total_height = len(rows) * row_height + (len(rows) - 1) * gap
+        top = center_y - total_height / 2
+        for index, ((label, ranges), option) in enumerate(zip(rows, options)):
+            y = top + index * (row_height + gap)
+            rect = QRectF(right_edge - width, y, width, row_height)
+            if option.tier == 1:
+                painter.setBrush(QColor("#C9A227"))
+                painter.setPen(QPen(QColor("#F4D76A"), 2))
+                text_color = QColor("#111111")
+            elif option.tier == 2:
+                painter.setBrush(QColor(10, 13, 12, 220))
+                painter.setPen(QPen(QColor("#C9A227"), 2))
+                text_color = QColor("white")
+            else:
+                painter.setBrush(QColor(10, 13, 12, 230))
+                painter.setPen(QPen(QColor("#DDE7E3"), 1))
+                text_color = QColor("white")
+            painter.drawRoundedRect(rect, 5, 5)
+            painter.setPen(text_color)
+            painter.drawText(rect, Qt.AlignCenter, label)
+            if self._show_ranges and ranges:
+                self._draw_ranges(painter, round(y + row_height / 2), ranges)
 
     def _draw_ranges(self, painter: QPainter, center_y: int, labels: tuple[str, ...]):
         range_font = QFont(self.font())
@@ -469,6 +526,7 @@ class DesecrationTierController(QObject):
                 resolution.fallback_tiers or (None,) * count,
                 statuses=statuses,
                 range_labels=resolution.fallback_ranges or ((),) * count,
+                affix_options=resolution.fallback_affix_options or ((),) * count,
             )
             return
         if resolution.needs_category_choice:
@@ -488,6 +546,7 @@ class DesecrationTierController(QObject):
         self._display(
             client_rect, capture_rect, bands, tiers,
             statuses=resolution.statuses or (), range_labels=resolution.ranges or (),
+            affix_options=resolution.affix_options or (),
         )
 
     def _category_selected(self, category):
@@ -501,6 +560,7 @@ class DesecrationTierController(QObject):
             resolution.tiers_by_category[category],
             statuses=resolution.statuses_by_category[category],
             range_labels=resolution.ranges_by_category[category],
+            affix_options=resolution.affix_options_by_category[category],
         )
 
     def _category_cancelled(self):
@@ -518,11 +578,13 @@ class DesecrationTierController(QObject):
 
     def _display(
         self, client_rect, capture_rect, bands, tiers, *, statuses=(), range_labels=(),
+        affix_options=(),
     ):
         config = self._regions_getter() or {}
         self._overlay.show_tiers(
             client_rect, capture_rect, (capture_rect.width(), capture_rect.height()), bands, tiers,
             statuses=statuses, range_labels=range_labels,
+            affix_options=affix_options,
             show_ranges=bool(config.get("show_tier_ranges", True)),
         )
         self._monitor_misses = 0

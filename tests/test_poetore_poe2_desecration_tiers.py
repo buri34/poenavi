@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -129,6 +130,63 @@ def test_same_display_stat_can_share_prefix_and_suffix_records():
     assert result.mod_ids == (
         "ItemFoundRarityIncrease1", "ItemFoundRarityIncreasePrefix1",
     )
+    assert tuple(
+        (option.affix, option.tier, option.range_labels)
+        for option in result.affix_options
+    ) == (
+        ("prefix", 3, ("8–11%",)),
+        ("suffix", 3, ("6–10%",)),
+    )
+
+
+def test_affix_options_keep_different_tiers_linked_to_their_affix():
+    rarity = resolve_desecration_choice_fuzzy(
+        "見つかるアイテムのレアリティが11%増加する", "ring",
+    )
+    grenade = resolve_desecration_choice_fuzzy(
+        "グレネードスキルのクールダウン使用回数 +1", "crossbow",
+    )
+
+    assert rarity.tier_candidates == (2, 3)
+    assert tuple((row.affix, row.tier, row.range_labels) for row in rarity.affix_options) == (
+        ("prefix", 3, ("8–11%",)),
+        ("suffix", 2, ("11–14%",)),
+    )
+    assert tuple((row.affix, row.tier, row.range_labels) for row in grenade.affix_options) == (
+        ("prefix", 1, ("1",)),
+        ("suffix", 2, ("1",)),
+    )
+
+
+def test_all_identical_prefix_suffix_displays_are_limited_to_audited_cases():
+    payload = tier_data()
+    categories = {profile["id"]: profile["category"] for profile in payload["profiles"]}
+    rows = {}
+    for entry in payload["entries"]:
+        affix = entry.get("type", "").casefold()
+        if affix not in {"prefix", "suffix"}:
+            continue
+        signature = tuple(sorted(
+            re.sub(
+                r"\s*\((?:Local|ローカル)\)\s*$", "", part["text"]["ja"],
+                flags=re.IGNORECASE,
+            )
+            for part in entry["parts"]
+        ))
+        for profile_id in entry["profile_tiers"]:
+            rows.setdefault((profile_id, signature), set()).add(affix)
+    affected = {
+        (categories[profile_id], signature)
+        for (profile_id, signature), affixes in rows.items()
+        if affixes == {"prefix", "suffix"}
+    }
+
+    assert affected == {
+        (category, ("見つかるアイテムのレアリティが#%増加する",))
+        for category in ("amulet", "helmet", "ring")
+    } | {
+        ("crossbow", ("グレネードスキルのクールダウン使用回数 +#",)),
+    }
 
 
 def test_all_mixed_fixed_and_dynamic_templates_keep_numeric_roles():

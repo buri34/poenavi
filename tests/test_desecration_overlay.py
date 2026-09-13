@@ -109,6 +109,33 @@ def test_multi_tier_badge_lists_only_the_ambiguous_tiers():
     assert tier_badge_label(10, "matched") == "T10"
 
 
+def test_affix_candidates_render_with_japanese_labels_and_ranges():
+    QApplication.instance() or QApplication([])
+    from src.poetore.poe2.desecration_tiers import AffixTierOption
+
+    overlay = DesecrationTierOverlay()
+    overlay.show_tiers(
+        QRect(0, 0, 800, 360), QRect(60, 30, 600, 300), (600, 300),
+        (ChoiceBand(0, 100), ChoiceBand(100, 200), ChoiceBand(200, 300)),
+        (3, 7, 9), statuses=("matched",) * 3,
+        range_labels=(("",), ("50–64%",), ("8–17",)),
+        affix_options=((
+            AffixTierOption("prefix", 3, ("8–11%",)),
+            AffixTierOption("suffix", 3, ("6–10%",)),
+        ), (), ()),
+        show_ranges=True,
+    )
+    image = QImage(overlay.size(), QImage.Format_ARGB32)
+    image.fill(QColor(0, 0, 0, 0))
+    overlay.render(image)
+
+    assert overlay._affix_display_labels(overlay._affix_options[0]) == (
+        ("プレフィックス T3", ("8–11%",)),
+        ("サフィックス T3", ("6–10%",)),
+    )
+    overlay.close()
+
+
 def test_closed_retry_requires_two_independent_readable_open_choices():
     one_readable = Mock(categories=(), fallback_statuses=(
         "matched", "read_failed", "read_failed",

@@ -123,6 +123,31 @@ def test_ocr_variants_reject_conflicting_tiers_even_when_one_text_scores_better(
     assert result.fallback_statuses == ("read_failed",)
 
 
+def test_ocr_variants_accept_two_of_three_matching_mod_number_and_tier():
+    result = resolve_ocr_variants(((
+        "物理ダメージが64%増加する",
+        "物理ダメージが64%増加する",
+        "物理ダメージが84%増加する",
+    ),), ("spear",))
+
+    assert result.categories == ("spear",)
+    assert result.tiers == (7,)
+    assert result.texts_by_category["spear"] == (
+        "物理ダメージが64%増加する",
+    )
+
+
+def test_ocr_variants_do_not_vote_across_different_numbers_in_the_same_tier():
+    result = resolve_ocr_variants(((
+        "物理ダメージが60%増加する",
+        "物理ダメージが61%増加する",
+        "物理ダメージが62%増加する",
+    ),), ("spear",))
+
+    assert result.categories == ()
+    assert result.fallback_statuses == ("read_failed",)
+
+
 def test_ocr_variants_reject_different_mods_that_happen_to_share_a_tier():
     """Agreement on T1 alone is insufficient when OCR variants name different mods."""
     result = resolve_ocr_variants((
@@ -173,6 +198,20 @@ def test_supplied_short_mod_panel_texts_use_the_three_mod_intersection():
         "ring": (3, 8, 6),
         "gloves": (3, 8, 4),
     }
+
+
+def test_affix_options_survive_ocr_resolution_for_result_rendering():
+    result = resolve_ocr_variants((
+        ("見つかるアイテムのレアリティが9%増加する",) * 3,
+        ("最大ライフ +22",) * 3,
+    ), ("ring",))
+
+    options = result.affix_options_by_category["ring"][0]
+    assert tuple((row.affix, row.tier, row.range_labels) for row in options) == (
+        ("prefix", 3, ("8–11%",)),
+        ("suffix", 3, ("6–10%",)),
+    )
+    assert result.affix_options == (options, ())
 
 
 def test_category_panel_uses_two_recognized_mods_when_one_is_unsupported():
