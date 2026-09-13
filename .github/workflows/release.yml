@@ -38,8 +38,21 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: .\scripts\run_poetore_release_tests.ps1 -Python python
 
+      - name: Run Desecration-scoped release tests
+        if: github.ref_name == 'v4.3.1'
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: >-
+          python -m pytest -q
+          tests/test_build_poetore_poe2_desecration_tiers.py
+          tests/test_desecration_ocr.py
+          tests/test_desecration_overlay.py
+          tests/test_desecration_settings_dialog.py
+          tests/test_poetore_poe2_desecration_tiers.py
+
       - name: Run full tests
-        if: ${{ !contains(fromJSON('["v4.1.0", "v4.1.6", "v4.1.7", "v4.2.0", "v4.2.1", "v4.2.3", "v4.3.0"]'), github.ref_name) }}
+        if: ${{ !contains(fromJSON('["v4.1.0", "v4.1.6", "v4.1.7", "v4.2.0", "v4.2.1", "v4.2.3", "v4.3.0", "v4.3.1"]'), github.ref_name) }}
         shell: pwsh
         env:
           QT_QPA_PLATFORM: offscreen
