@@ -34,6 +34,183 @@ MANA_ON_KILL_JEWEL_FIXTURE = (
 )
 
 
+def _range_row(
+    *,
+    stat_id: str = "explicit.test",
+    ref: str = "# test",
+    value: float = 100,
+    minimum: float | None = None,
+    maximum: float | None = None,
+    roll_min: float | None = 80,
+    roll_max: float | None = 120,
+    better: int | None = 1,
+    kind: str = "explicit",
+    tier: int | None = None,
+    inverted: bool = False,
+) -> TradeStatFilter:
+    return TradeStatFilter(
+        stat_id, ref, value if minimum is None else minimum, kind, True,
+        maximum, ref=ref, read_value=value, roll_min=roll_min,
+        roll_max=roll_max, better=better, tier=tier, inverted=inverted,
+        provenance_tags=(("fractured",) if kind == "fractured" else ()),
+    )
+
+
+def test_ee2_range_keeps_charm_slot_count_exact():
+    item = ParsedItem("Belts", "rare", "", "Test Belt", "belt")
+    row = _range_row(ref="Has # Charm Slot", value=2, roll_min=1, roll_max=3)
+
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (2, None)
+
+
+def test_ee2_range_keeps_actual_mageblood_charm_slots_exact():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2" / "mageblood_ja.txt").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    ranged = apply_search_range(
+        poe2_trade_filters(item), 20, item, poe2_rules=True,
+    )
+    charm_slots = next(row for row in ranged if row.ref == "Has # Charm Slot")
+
+    assert (charm_slots.min_value, charm_slots.max_value) == (2, None)
+
+
+def test_ee2_range_freezes_unmodifiable_sanctified_magic_item():
+    item = ParsedItem(
+        "Amulets", "magic", "", "Test Amulet", "amulet",
+        flags=("sanctified",),
+    )
+    row = _range_row(value=100)
+
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (100, None)
+
+
+@pytest.mark.parametrize(
+    "item,row",
+    (
+        (
+            ParsedItem("Belts", "unique", "", "Test Belt", "belt"),
+            _range_row(value=120),
+        ),
+        (
+            ParsedItem("Jewels", "magic", "", "Test Jewel", "jewel"),
+            _range_row(value=120),
+        ),
+        (
+            ParsedItem("Jewels", "magic", "", "Test Abyss Jewel", "abyss_jewel"),
+            replace(_range_row(value=80, better=-1), min_value=None, max_value=80),
+        ),
+        (
+            ParsedItem("Spear", "rare", "", "Test Spear", "weapon"),
+            _range_row(value=120, kind="fractured", tier=1),
+        ),
+    ),
+)
+def test_ee2_range_freezes_perfect_rolls_for_selected_item_kinds(item, row):
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+
+    expected = (
+        (None, row.read_value) if row.better == -1
+        else (row.read_value, None)
+    )
+    assert (ranged[0].min_value, ranged[0].max_value) == expected
+
+
+def test_ee2_range_does_not_freeze_nonperfect_selected_roll():
+    item = ParsedItem("Belts", "unique", "", "Test Belt", "belt")
+    row = _range_row(value=100)
+
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (92, None)
+
+
+def test_ee2_range_keeps_not_comparable_stat_exact():
+    item = ParsedItem("Jewels", "rare", "", "Test Jewel", "jewel")
+    row = _range_row(value=12345, roll_min=1, roll_max=99999, better=0)
+
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (12345, 12345)
+
+
+def test_ee2_base_range_keeps_all_tablet_mods_exact():
+    item = ParsedItem("Tablets", "magic", "", "Test Tablet", "tablet")
+    row = _range_row(value=90, roll_min=80, roll_max=100)
+
+    ranged = apply_search_range(
+        (row,), 20, item, poe2_rules=True, preset=PRESET_BASE,
+    )
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (90, None)
+
+
+def test_ee2_finished_range_keeps_tolerance_for_nonperfect_tablet_mod():
+    item = ParsedItem("Tablets", "magic", "", "Test Tablet", "tablet")
+    row = _range_row(value=90, roll_min=80, roll_max=100)
+
+    ranged = apply_search_range(
+        (row,), 20, item, poe2_rules=True, preset=PRESET_FINISHED,
+    )
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (72, None)
+
+
+def test_ee2_range_applies_tolerance_before_trade_inversion():
+    item = ParsedItem("Utility Flasks", "magic", "", "Test Flask", "flask")
+    row = replace(
+        _range_row(
+            stat_id="explicit.inverted", value=38,
+            roll_min=33, roll_max=38, better=-1, inverted=True,
+        ),
+        min_value=None, max_value=38,
+    )
+
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+    assert (ranged[0].min_value, ranged[0].max_value) == (None, 46)
+    assert _stat_groups_from_filters(ranged)[0]["filters"] == [{
+        "id": "explicit.inverted", "value": {"min": -46},
+    }]
+
+
+def test_ee2_range_inverts_property_bounds_only_when_building_query():
+    item = ParsedItem("Crossbows", "magic", "", "Test Crossbow", "crossbow")
+    row = replace(
+        _range_row(
+            stat_id="property.reload_time", value=38,
+            roll_min=33, roll_max=38, better=-1, inverted=True,
+            kind="property",
+        ),
+        min_value=None, max_value=38,
+    )
+
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+    query = build_search_query(item, stat_filters=ranged)
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (None, 46)
+    assert query["query"]["filters"]["equipment_filters"]["filters"][
+        "reload_time"
+    ] == {"min": -46}
+
+
+def test_ee2_base_range_intentionally_keeps_full_user_tolerance():
+    item = ParsedItem("Spear", "rare", "", "Test Spear", "weapon")
+    row = _range_row(value=100)
+
+    ranged = apply_search_range(
+        (row,), 20, item, poe2_rules=True, preset=PRESET_BASE,
+    )
+
+    assert ranged[0].min_value == 80
+
+
 def _unique_fixture():
     rows = json.loads(FIXTURES.read_text(encoding="utf-8"))["fixtures"]
     return next(row for row in rows if row["id"] == "unique_focus_en")

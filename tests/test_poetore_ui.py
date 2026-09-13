@@ -2228,6 +2228,34 @@ def test_poetore_search_range_is_persisted(qapp):
         window.close()
 
 
+def test_poe2_search_range_applies_ee2_rules_through_ui(qapp):
+    window = PoetoreWindow(
+        app_config={
+            "poe_version": "poe2",
+            "poetore": {"search_stat_range": 20},
+        }
+    )
+    try:
+        from src.poetore.poe2.parser import parse_item_text as parse_poe2_item_text
+
+        text = (
+            Path(__file__).parent / "fixtures" / "poe2" / "mageblood_ja.txt"
+        ).read_text(encoding="utf-8")
+        item = parse_poe2_item_text(text)
+        filters = window._resolved_trade_filters(item, PRESET_FINISHED)
+        charm_slots = next(row for row in filters if row.ref == "Has # Charm Slot")
+        mage_effect = next(
+            row for row in filters
+            if row.ref
+            == "All Mage's Legacies have #% increased effect per duplicate Mage's Legacy you have"
+        )
+
+        assert (charm_slots.min_value, charm_slots.max_value) == (2, None)
+        assert mage_effect.min_value == 38
+    finally:
+        window.close()
+
+
 def test_search_range_change_keeps_checkboxes_but_recalculates_edited_values(qapp):
     window = PoetoreWindow(
         app_config={"poetore": {"search_stat_range": 0}}

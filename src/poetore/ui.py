@@ -3192,6 +3192,8 @@ class PoetoreWindow(QWidget):
                 poe2_trade_filters(item, virtual_ref, preset, virtual_count),
                 self._selected_search_range(),
                 item,
+                poe2_rules=True,
+                preset=preset,
             )
         return apply_search_range(
             resolve_trade_stat_filters(

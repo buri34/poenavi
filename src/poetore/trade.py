@@ -671,11 +671,16 @@ def _group_price_listings(listings: list[PriceListing]) -> tuple[PriceListing, .
 
 
 def apply_search_range(
-    filters: tuple[TradeStatFilter, ...], percent: float, item: ParsedItem | None = None,
+    filters: tuple[TradeStatFilter, ...], percent: float,
+    item: ParsedItem | None = None, *, poe2_rules: bool = False,
+    preset: str = PRESET_FINISHED,
 ) -> tuple[TradeStatFilter, ...]:
     """検索値をAwakenedの共通幅設定で再計算する（0～50%）。"""
     if item is not None and item.rarity.casefold() in {"magic", "マジック"} and (
-        "mirrored" in item.flags or "corrupted" in item.flags or "unmodifiable" in item.flags
+        "mirrored" in item.flags
+        or "corrupted" in item.flags
+        or "unmodifiable" in item.flags
+        or (poe2_rules and "sanctified" in item.flags)
     ):
         percent = 0
     percent = max(0.0, min(float(percent), 50.0)) / 100.0
@@ -690,6 +695,11 @@ def apply_search_range(
         "property.gem_sockets",
     }
     for row in filters:
+        if poe2_rules and row.read_value is not None and row.better == 0:
+            adjusted.append(replace(
+                row, min_value=row.read_value, max_value=row.read_value,
+            ))
+            continue
         if (
             row.read_value is None
             or row.stat_id in discrete_socket_stats
@@ -703,7 +713,7 @@ def apply_search_range(
             )
             or row.option_value is not None
             or row.exact
-            or row.inverted
+            or (row.inverted and not poe2_rules)
             or row.hidden_reason
             or (
                 row.generation == "foulborn"
@@ -714,21 +724,56 @@ def apply_search_range(
             adjusted.append(row)
             continue
         api_value = row.read_value
+        row_percent = percent
+        if poe2_rules:
+            perfect_roll = (
+                row.roll_min is not None
+                and row.roll_max is not None
+                and (
+                    (row.better == 1 and api_value >= row.roll_max)
+                    or (row.better == -1 and api_value <= row.roll_min)
+                )
+            )
+            selected_perfect_roll = perfect_roll and (
+                unique_item
+                or (
+                    item is not None
+                    and item.rarity.casefold() in {"magic", "マジック"}
+                    and item.category in {"jewel", "abyss_jewel", "tablet"}
+                )
+                or (
+                    row.tier == 1
+                    and (
+                        row.kind == "fractured"
+                        or "fractured" in row.provenance_tags
+                    )
+                )
+            )
+            if (
+                row.ref == "Has # Charm Slot"
+                or (
+                    item is not None
+                    and item.category == "tablet"
+                    and preset == PRESET_BASE
+                )
+                or selected_perfect_roll
+            ):
+                row_percent = 0
         if unique_item and row.roll_min is not None and row.roll_max is not None:
-            delta = abs(row.roll_max - row.roll_min) * percent
+            delta = abs(row.roll_max - row.roll_min) * row_percent
         else:
-            delta = abs(api_value) * percent
+            delta = abs(api_value) * row_percent
         minimum = row.min_value
         maximum = row.max_value
         if minimum is not None:
             minimum = (
-                api_value if percent == 0
+                api_value if row_percent == 0
                 else math.floor(api_value - delta) if not row.decimal
                 else api_value - delta
             )
         if maximum is not None:
             maximum = (
-                api_value if percent == 0
+                api_value if row_percent == 0
                 else math.ceil(api_value + delta) if not row.decimal
                 else api_value + delta
             )

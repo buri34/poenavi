@@ -166,17 +166,23 @@ def _stat_groups_from_filters(filters) -> list[dict]:
     for row in filters:
         if not row.enabled or not row.stat_id or row.stat_id.startswith("property."):
             continue
+        minimum, maximum = row.min_value, row.max_value
+        if row.inverted:
+            minimum, maximum = (
+                -maximum if maximum is not None else None,
+                -minimum if minimum is not None else None,
+            )
         alternatives = tuple(dict.fromkeys((row.stat_id, *row.alternative_stat_ids)))
         if row.kind == "virtual-rune" and len(alternatives) > 1:
             groups.append({
                 "type": "count", "value": {"min": 1},
                 "filters": [
-                    _trade_filter_row(stat_id, row.min_value, row.max_value)
+                    _trade_filter_row(stat_id, minimum, maximum)
                     for stat_id in alternatives
                 ],
             })
             continue
-        direct.append(_trade_filter_row(row.stat_id, row.min_value, row.max_value))
+        direct.append(_trade_filter_row(row.stat_id, minimum, maximum))
     return groups
 
 
@@ -1131,9 +1137,15 @@ def _apply_poe2_filter_rows(query: dict, filters) -> None:
                 "option": row.option_value
             }
             continue
+        minimum, maximum = row.min_value, row.max_value
+        if row.inverted:
+            minimum, maximum = (
+                -maximum if maximum is not None else None,
+                -minimum if minimum is not None else None,
+            )
         value = {
-            **({"min": row.min_value} if row.min_value is not None else {}),
-            **({"max": row.max_value} if row.max_value is not None else {}),
+            **({"min": minimum} if minimum is not None else {}),
+            **({"max": maximum} if maximum is not None else {}),
         }
         if value:
             query["filters"].setdefault(group, {"filters": {}})["filters"][name] = value
