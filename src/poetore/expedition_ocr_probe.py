@@ -437,21 +437,44 @@ def detect_qimage_reward_cards(image: QImage) -> tuple[int, list[RowBand]]:
     return detect_reward_cards(gray, red, green, blue, width, height)
 
 
-def looks_like_expedition_panel(image: QImage) -> bool:
-    """Return whether a registered crop contains plausible reward-card rows."""
+def expedition_panel_diagnostics(image: QImage) -> dict[str, object]:
+    """Return sanitized structural metrics used by the shared OCR router."""
+    result: dict[str, object] = {
+        "image_width": image.width(),
+        "image_height": image.height(),
+        "probe_width": 0,
+        "probe_height": 0,
+        "panel_width": 0,
+        "band_count": 0,
+        "min_band_height": 0,
+        "matched": False,
+    }
     if image.isNull() or image.width() < 160 or image.height() < 100:
-        return False
+        return result
     probe = (
         image.scaledToWidth(300, Qt.FastTransformation)
         if image.width() > 300 else image
     )
     panel_width, bands = detect_qimage_reward_cards(probe)
-    if not 1 <= len(bands) <= 12:
-        return False
-    if panel_width < max(80, round(probe.width() * 0.45)):
-        return False
     heights = [band.bottom - band.top for band in bands]
-    return min(heights, default=0) >= 10
+    result.update({
+        "probe_width": probe.width(),
+        "probe_height": probe.height(),
+        "panel_width": panel_width,
+        "band_count": len(bands),
+        "min_band_height": min(heights, default=0),
+        "matched": (
+            1 <= len(bands) <= 12
+            and panel_width >= max(80, round(probe.width() * 0.45))
+            and min(heights, default=0) >= 10
+        ),
+    })
+    return result
+
+
+def looks_like_expedition_panel(image: QImage) -> bool:
+    """Return whether a registered crop contains plausible reward-card rows."""
+    return bool(expedition_panel_diagnostics(image)["matched"])
 
 
 def _load_channels(path: Path) -> tuple[int, int, bytes, bytes, bytes, bytes]:

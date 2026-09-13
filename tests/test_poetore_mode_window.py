@@ -320,11 +320,11 @@ def test_shared_screen_reading_routes_only_expedition_when_panel_matches():
         "src.poetore.poe2.desecration_overlay.normalized_capture_rect",
         side_effect=lambda _client, value: QRect(2, 2, 300, 180) if value else None,
     ), patch(
-        "src.poetore.expedition_ocr_probe.looks_like_expedition_panel",
-        return_value=True,
+        "src.poetore.expedition_ocr_probe.expedition_panel_diagnostics",
+        return_value={"matched": True},
     ), patch(
-        "src.poetore.poe2.desecration_ocr.looks_like_desecration_panel",
-        side_effect=(False, False),
+        "src.poetore.poe2.desecration_ocr.desecration_panel_diagnostics",
+        side_effect=({"matched": False}, {"matched": False}),
     ):
         assert PoetoreModeWindow.capture_screen_reading(window)
     window.capture_expedition_rewards.assert_called_once_with()
@@ -343,11 +343,11 @@ def test_shared_screen_reading_routes_only_desecration_when_panel_matches():
         "src.poetore.poe2.desecration_overlay.normalized_capture_rect",
         side_effect=lambda _client, value: QRect(2, 2, 300, 180) if value else None,
     ), patch(
-        "src.poetore.expedition_ocr_probe.looks_like_expedition_panel",
-        return_value=False,
+        "src.poetore.expedition_ocr_probe.expedition_panel_diagnostics",
+        return_value={"matched": False},
     ), patch(
-        "src.poetore.poe2.desecration_ocr.looks_like_desecration_panel",
-        return_value=True,
+        "src.poetore.poe2.desecration_ocr.desecration_panel_diagnostics",
+        side_effect=({"matched": False}, {"matched": True}),
     ):
         assert PoetoreModeWindow.capture_screen_reading(window)
     window.capture_desecration_tiers.assert_called_once_with()
@@ -356,7 +356,10 @@ def test_shared_screen_reading_routes_only_desecration_when_panel_matches():
 
 def test_shared_screen_reading_rejects_ambiguous_detection():
     window = _shared_routing_window()
+    trace = MagicMock()
     with patch(
+        "src.poetore.performance.start_search_trace", return_value=trace,
+    ), patch(
         "src.poetore.window_position.path_of_exile_client_rect",
         return_value=QRect(0, 0, 1920, 1080),
     ), patch(
@@ -366,16 +369,31 @@ def test_shared_screen_reading_rejects_ambiguous_detection():
         "src.poetore.poe2.desecration_overlay.normalized_capture_rect",
         side_effect=lambda _client, value: QRect(2, 2, 300, 180) if value else None,
     ), patch(
-        "src.poetore.expedition_ocr_probe.looks_like_expedition_panel",
-        return_value=True,
+        "src.poetore.expedition_ocr_probe.expedition_panel_diagnostics",
+        return_value={"matched": True},
     ), patch(
-        "src.poetore.poe2.desecration_ocr.looks_like_desecration_panel",
-        side_effect=(False, True),
+        "src.poetore.poe2.desecration_ocr.desecration_panel_diagnostics",
+        side_effect=({"matched": False}, {"matched": True}),
     ):
         assert not PoetoreModeWindow.capture_screen_reading(window)
     window.capture_expedition_rewards.assert_not_called()
     window.capture_desecration_tiers.assert_not_called()
     assert "判別できません" in window.rate_status.setText.call_args.args[0]
+    classified = [
+        call.kwargs for call in trace.mark.call_args_list
+        if call.args == ("region_classified",)
+    ]
+    assert classified == [
+        {"region": "expedition", "detector": "expedition", "matched": True},
+        {"region": "expedition", "detector": "desecration", "matched": False},
+        {"region": "inventory_open_region", "detector": "desecration", "matched": True},
+    ]
+    trace.mark.assert_any_call(
+        "route_decided",
+        outcome="ambiguous",
+        expedition_match=True,
+        desecration_match=True,
+    )
 
 
 def test_shared_screen_reading_off_stops_both_features_and_keeps_regions():

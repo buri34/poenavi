@@ -16,6 +16,7 @@ from src.poetore.expedition_ocr_probe import (
     analyze_directory,
     detect_reward_cards,
     detect_row_bands,
+    expedition_panel_diagnostics,
     load_item_dictionary,
     looks_like_expedition_panel,
     match_item_name,
@@ -46,6 +47,11 @@ def test_registered_expedition_region_has_reward_card_structure():
     image = QImage("assets/images/expedition_region_example.png").copy(
         47, 162, 605, 652
     )
+    diagnostics = expedition_panel_diagnostics(image)
+    assert diagnostics["matched"]
+    assert diagnostics["band_count"] >= 1
+    assert diagnostics["panel_width"] >= 80
+    assert diagnostics["min_band_height"] >= 10
     assert looks_like_expedition_panel(image)
 
 

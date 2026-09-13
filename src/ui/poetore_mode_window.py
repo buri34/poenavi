@@ -1008,25 +1008,38 @@ class PoetoreModeWindow(QMainWindow):
 
     def capture_screen_reading(self):
         """Route the shared OCR hotkey by lightweight panel structure checks."""
+        from src.poetore.performance import start_search_trace
+
+        trace = start_search_trace("screen_reading_route")
         if not self._screen_reading_enabled():
+            trace.mark("route_decided", outcome="disabled")
             return False
         expedition_ready = self._expedition_ready()
         desecration_ready = self._desecration_ready()
+        trace.mark(
+            "readiness_checked",
+            expedition_ready=expedition_ready,
+            desecration_ready=desecration_ready,
+        )
         if expedition_ready and not desecration_ready:
+            trace.mark("route_decided", outcome="expedition_only_configured")
             return self.capture_expedition_rewards()
         if desecration_ready and not expedition_ready:
+            trace.mark("route_decided", outcome="desecration_only_configured")
             return self.capture_desecration_tiers()
         if not expedition_ready and not desecration_ready:
+            trace.mark("route_decided", outcome="no_region_configured")
             return False
 
-        from src.poetore.expedition_ocr_probe import looks_like_expedition_panel
+        from src.poetore.expedition_ocr_probe import expedition_panel_diagnostics
         from src.poetore.expedition_rewards import expedition_capture_rect
-        from src.poetore.poe2.desecration_ocr import looks_like_desecration_panel
+        from src.poetore.poe2.desecration_ocr import desecration_panel_diagnostics
         from src.poetore.poe2.desecration_overlay import normalized_capture_rect
         from src.poetore.window_position import path_of_exile_client_rect
 
         client_rect = path_of_exile_client_rect()
         if client_rect is None:
+            trace.mark("route_decided", outcome="poe_window_not_found")
             self.rate_status.setText("画面読取失敗：PoE2のゲーム画面が見つかりません。")
             return False
         poetore = self.config.get("poetore", {})
@@ -1036,11 +1049,31 @@ class PoetoreModeWindow(QMainWindow):
         expedition_image = (
             self._grab_screen_region(expedition_rect) if expedition_rect is not None else None
         )
+        expedition_diagnostics = (
+            expedition_panel_diagnostics(expedition_image)
+            if expedition_image is not None and not expedition_image.isNull()
+            else {"matched": False}
+        )
+        expedition_as_desecration = (
+            desecration_panel_diagnostics(expedition_image)
+            if expedition_image is not None and not expedition_image.isNull()
+            else {"matched": False}
+        )
         expedition_match = bool(
-            expedition_image is not None
-            and not expedition_image.isNull()
-            and looks_like_expedition_panel(expedition_image)
-            and not looks_like_desecration_panel(expedition_image)
+            expedition_diagnostics["matched"]
+            and not expedition_as_desecration["matched"]
+        )
+        trace.mark(
+            "region_classified",
+            region="expedition",
+            detector="expedition",
+            **expedition_diagnostics,
+        )
+        trace.mark(
+            "region_classified",
+            region="expedition",
+            detector="desecration",
+            **expedition_as_desecration,
         )
 
         desecration_match = False
@@ -1049,17 +1082,36 @@ class PoetoreModeWindow(QMainWindow):
             if rect is None:
                 continue
             image = self._grab_screen_region(rect)
-            if image is not None and not image.isNull() and looks_like_desecration_panel(image):
+            diagnostics = (
+                desecration_panel_diagnostics(image)
+                if image is not None and not image.isNull()
+                else {"matched": False}
+            )
+            trace.mark(
+                "region_classified",
+                region=key,
+                detector="desecration",
+                **diagnostics,
+            )
+            if diagnostics["matched"]:
                 desecration_match = True
                 break
 
         if expedition_match == desecration_match:
+            trace.mark(
+                "route_decided",
+                outcome="ambiguous" if expedition_match else "no_match",
+                expedition_match=expedition_match,
+                desecration_match=desecration_match,
+            )
             self.rate_status.setText(
                 "画面を判別できませんでした。エクスペ報酬またはアビス3択を表示して再実行してください。"
             )
             return False
         if expedition_match:
+            trace.mark("route_decided", outcome="expedition")
             return self.capture_expedition_rewards()
+        trace.mark("route_decided", outcome="desecration")
         return self.capture_desecration_tiers()
 
     def _show_desecration_status(self, message):
