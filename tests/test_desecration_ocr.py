@@ -88,7 +88,10 @@ def test_ocr_variants_resolve_safe_typo_and_reject_bad_number():
     result = resolve_ocr_variants((
         ("この武器によるアタックは20%の火耐性を貫通する",),
         ("26から43の冷気ダメージを追加する",),
-        ("物理ダメージが28%増加する\n病中力 +57",),
+        (
+            "物理ダメージが28%増加する\n病中力 +57",
+            "物理ダメージが28%増加する\n病中力 +57",
+        ),
     ), ("spear",))
     assert result.tiers == (1, 5, 6)
     assert result.ranges == (
@@ -175,6 +178,32 @@ def test_short_text_rescue_requires_multiple_ocr_variants_to_agree():
     single = resolve_ocr_variants((("回避カ +76", "", ""),), ("ring",))
     assert single.categories == ()
     assert single.fallback_statuses == ("read_failed",)
+
+
+def test_windows_ocr_evasion_output_is_rescued_by_two_of_three_agreement():
+    result = resolve_ocr_variants((
+        ("回 避 カ + 13", "回 避 カ + 13", "回 避 カ + 13"),
+    ), ("ring",))
+
+    assert result.categories == ("ring",)
+    assert result.tiers == (9,)
+    assert result.ranges == (("8–17",),)
+
+
+def test_compound_short_text_rescue_accepts_exact_and_rescued_variant_agreement():
+    rescued_text = "物理ダメージが28%増加する\n命中カ +57"
+    exact_text = "物理ダメージが28%増加する\n命中力 +57"
+
+    single = resolve_ocr_variants(((rescued_text, "", ""),), ("spear",))
+    mixed = resolve_ocr_variants(((rescued_text, exact_text, ""),), ("spear",))
+    agreed = resolve_ocr_variants(((rescued_text, rescued_text, ""),), ("spear",))
+
+    assert single.categories == ()
+    assert single.fallback_statuses == ("read_failed",)
+    assert mixed.categories == ("spear",)
+    assert mixed.tiers == (6,)
+    assert agreed.categories == ("spear",)
+    assert agreed.tiers == (6,)
 
 
 def test_fixed_number_rescue_requires_multiple_ocr_variants_to_agree():

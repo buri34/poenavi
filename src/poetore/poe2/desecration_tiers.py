@@ -232,6 +232,11 @@ def _numeric_skeleton(
 ) -> tuple[str, str, int] | None:
     """Pair observed numbers with literal numbers or # slots in the template."""
     template = _visible_template(template)
+    # Windows OCR may insert spaces between every Japanese character and even
+    # between a numeric sign and its digits (for example ``回 避 カ + 13``).
+    # Whitespace is not meaningful in the Trade templates, so remove it before
+    # tokenizing numbers. This keeps ``+ 13`` attached as the signed value.
+    observed = re.sub(r"\s+", "", observed)
     template_tokens = _template_number_tokens(template)
     observed_tokens = _observed_number_tokens(observed)
     if len(template_tokens) != len(observed_tokens):
@@ -375,18 +380,35 @@ def _edit_distance(left: str, right: str) -> int:
 
 def _short_text_score(entry: dict, lines: tuple[str, ...]) -> float | None:
     parts = entry.get("parts", ())
-    if len(parts) != 1 or len(lines) != 1:
+    if len(parts) != len(lines):
         return None
-    ranges = parts[0].get("ranges")
-    if ranges is None:
-        return None
-    skeleton = _numeric_skeleton(str(parts[0]["text"]["ja"]), lines[0], ranges)
-    if skeleton is None:
-        return None
-    expected, actual, _mismatches = skeleton
-    if len(expected) > 12 or _edit_distance(expected, actual) != 1:
-        return None
-    return 1 - (1 / max(len(expected), len(actual), 1))
+    best = None
+    for ordered in permutations(lines):
+        scores = []
+        changed_short_parts = 0
+        for part, line in zip(parts, ordered):
+            ranges = part.get("ranges")
+            if ranges is None:
+                break
+            skeleton = _numeric_skeleton(str(part["text"]["ja"]), line, ranges)
+            if skeleton is None:
+                break
+            expected, actual, _mismatches = skeleton
+            distance = _edit_distance(expected, actual)
+            if distance == 0:
+                scores.append(1.0)
+                continue
+            if distance != 1 or len(expected) > 12:
+                break
+            changed_short_parts += 1
+            scores.append(1 - (1 / max(len(expected), len(actual), 1)))
+        else:
+            # Only one short line may be repaired. Every other line in a
+            # compound modifier must remain an exact textual/numeric match.
+            if changed_short_parts == 1:
+                combined = sum(scores) / len(scores)
+                best = combined if best is None else max(best, combined)
+    return best
 
 
 def _normalized_lines(lines: str | tuple[str, ...] | list[str]) -> tuple[str, ...]:
@@ -543,7 +565,10 @@ def _resolve_desecration_choices_fuzzy_cached(
     resolved: dict[str, FuzzyTierResolution] = {}
     entries = _candidate_entries(normalized_lines)
 
-    for mode in ("matched", "fixed_number_rescue", "short_text_rescue"):
+    # Exact rows take precedence. Safe short-text candidates are then checked
+    # before the broad fuzzy matcher so ambiguous abbreviations cannot be
+    # guessed as a single stat by similarity alone.
+    for mode in ("exact", "short_text_rescue", "matched", "fixed_number_rescue"):
         rows_by_category: dict[str, list[tuple[float, dict, str, int]]] = {
             category: [] for category in unresolved
         }
@@ -555,7 +580,11 @@ def _resolve_desecration_choices_fuzzy_cached(
             ]
             if not relevant:
                 continue
-            if mode == "matched":
+            if mode == "exact":
+                score = _entry_score(indexed.entry, normalized_lines)
+                if score != 1.0:
+                    continue
+            elif mode == "matched":
                 score = _entry_score(indexed.entry, normalized_lines)
                 if score is None or score < minimum_score:
                     continue
@@ -578,8 +607,10 @@ def _resolve_desecration_choices_fuzzy_cached(
             candidates = rows_by_category.get(category, ())
             if not candidates:
                 continue
+            reason = "matched" if mode == "exact" else mode
+            final_margin = 1.0 if mode == "short_text_rescue" else ambiguity_margin
             resolved[category] = _finalize_fuzzy_candidates(
-                list(candidates), normalized_lines, mode, ambiguity_margin,
+                list(candidates), normalized_lines, reason, final_margin,
             )
             newly_resolved.append(category)
         unresolved.difference_update(newly_resolved)

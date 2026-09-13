@@ -122,6 +122,29 @@ def test_short_mod_rescue_keeps_number_and_candidate_identity_strict():
     assert resolve_desecration_choice_fuzzy("回避カ +999", "ring").tier is None
 
 
+def test_short_mod_rescue_accepts_windows_ocr_inter_character_spaces():
+    rescued = resolve_desecration_choice_fuzzy("回 避 カ + 13", "ring")
+
+    assert rescued.tier == 9
+    assert rescued.mod_ids == ("IncreasedEvasionRating1",)
+    assert rescued.reason == "short_text_rescue"
+    assert rescued.range_labels == ("8–17",)
+
+
+def test_short_mod_rescue_rejects_text_ambiguous_between_different_stats():
+    assert resolve_desecration_choice_fuzzy("命力 +33", "ring").tier is None
+    assert resolve_desecration_choice_fuzzy("回力 +33", "ring").tier is None
+
+
+def test_short_mod_rescue_allows_one_changed_short_line_in_compound_mod():
+    rescued = resolve_desecration_choice_fuzzy(
+        "物理ダメージが28%増加する\n命中カ +57", "spear",
+    )
+
+    assert rescued.tier == 6
+    assert rescued.reason == "short_text_rescue"
+
+
 def test_same_display_stat_can_share_prefix_and_suffix_records():
     result = resolve_desecration_choice_fuzzy(
         "見つかるアイテムのレアリティが8%増加する", "ring",
