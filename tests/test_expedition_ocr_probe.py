@@ -79,7 +79,7 @@ def test_expedition_panel_rejects_one_band_taller_than_registered_region_ratio()
     assert not looks_like_expedition_panel(image)
 
 
-def test_expedition_panel_keeps_one_tall_reward_below_registered_region_ratio():
+def test_expedition_panel_keeps_a_single_real_reward_shape():
     image = _solid_panel_with_bright_band(top=100, bottom=244)
 
     diagnostics = expedition_panel_diagnostics(image)
@@ -89,6 +89,61 @@ def test_expedition_panel_keeps_one_tall_reward_below_registered_region_ratio():
     assert diagnostics["max_band_height_ratio"] < 0.23
     assert diagnostics["matched"]
     assert looks_like_expedition_panel(image)
+
+
+def test_expedition_panel_keeps_two_consistent_reward_bands():
+    image = QImage(600, 652, QImage.Format.Format_RGB888)
+    image.fill(QColor(40, 40, 40))
+    for top, bottom in ((100, 144), (160, 204)):
+        for y in range(top, bottom):
+            for x in range(image.width()):
+                image.setPixelColor(x, y, QColor(190, 190, 190))
+
+    diagnostics = expedition_panel_diagnostics(image)
+
+    assert diagnostics["band_count"] == 2
+    assert diagnostics["min_band_height"] == diagnostics["max_band_height"] == 22
+    assert diagnostics["matched"]
+
+
+def test_expedition_panel_keeps_saved_partial_row_height_variance():
+    image = QImage(600, 652, QImage.Format.Format_RGB888)
+    image.fill(QColor(40, 40, 40))
+    saved_shape = [RowBand(10, 20), *[
+        RowBand(top, top + 22) for top in range(40, 282, 22)
+    ]]
+
+    with patch.object(
+        probe,
+        "detect_qimage_reward_cards",
+        return_value=(300, saved_shape),
+    ):
+        diagnostics = expedition_panel_diagnostics(image)
+
+    assert diagnostics["band_count"] == 12
+    assert diagnostics["min_band_height"] == 10
+    assert diagnostics["max_band_height"] == 22
+    assert diagnostics["band_height_consistency"] > 0.45
+    assert diagnostics["matched"]
+
+
+def test_expedition_panel_rejects_logged_inconsistent_band_heights():
+    image = QImage(600, 652, QImage.Format.Format_RGB888)
+    image.fill(QColor(40, 40, 40))
+    logged_bands = [RowBand(10, 20), RowBand(30, 116), RowBand(130, 150)]
+
+    with patch.object(
+        probe,
+        "detect_qimage_reward_cards",
+        return_value=(300, logged_bands),
+    ):
+        diagnostics = expedition_panel_diagnostics(image)
+
+    assert diagnostics["band_count"] == 3
+    assert diagnostics["min_band_height"] == 10
+    assert diagnostics["max_band_height"] == 86
+    assert diagnostics["band_height_consistency"] < 0.12
+    assert not diagnostics["matched"]
 
 
 @pytest.mark.parametrize("scale", (0.5, 0.7, 1.0, 1.3))

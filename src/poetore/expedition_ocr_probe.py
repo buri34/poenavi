@@ -25,9 +25,12 @@ OCR_ENGINES = ("tesseract", "windows")
 OCR_MAX_IMAGE_DIMENSION = 2400
 OCR_TARGET_TEXT_HEIGHT = 96
 OCR_RETRY_LARGE_TEXT_HEIGHT = 120
-# Registered reward rows remain below 23% even for a tall single card, while
+# Registered reward rows remain below 23% even for a tall individual card, while
 # the observed Abyss false-positive band occupied about 36% of the crop.
 EXPEDITION_ROUTER_MAX_BAND_HEIGHT_RATIO = 0.30
+# Actual cards are similar in height. The saved partial-row example remains at
+# 10/22, while the observed Abyss false positive fell to 10/86.
+EXPEDITION_ROUTER_MIN_BAND_HEIGHT_CONSISTENCY = 0.40
 _EXACT_OCR_KEY_CORRECTIONS = {
     "高員なオーブ": "高貴なオーブ",
     "サカワルの浸良のルーン一": "サカワルの浸食のルーン",
@@ -452,6 +455,7 @@ def expedition_panel_diagnostics(image: QImage) -> dict[str, object]:
         "min_band_height": 0,
         "max_band_height": 0,
         "max_band_height_ratio": 0.0,
+        "band_height_consistency": 0.0,
         "matched": False,
     }
     if image.isNull() or image.width() < 160 or image.height() < 100:
@@ -466,6 +470,9 @@ def expedition_panel_diagnostics(image: QImage) -> dict[str, object]:
     max_band_height_ratio = (
         max_band_height / probe.height() if probe.height() > 0 else 0.0
     )
+    band_height_consistency = (
+        min(heights, default=0) / max_band_height if max_band_height > 0 else 0.0
+    )
     result.update({
         "probe_width": probe.width(),
         "probe_height": probe.height(),
@@ -474,11 +481,14 @@ def expedition_panel_diagnostics(image: QImage) -> dict[str, object]:
         "min_band_height": min(heights, default=0),
         "max_band_height": max_band_height,
         "max_band_height_ratio": max_band_height_ratio,
+        "band_height_consistency": band_height_consistency,
         "matched": (
             1 <= len(bands) <= 12
             and panel_width >= max(80, round(probe.width() * 0.45))
             and min(heights, default=0) >= 10
             and max_band_height_ratio <= EXPEDITION_ROUTER_MAX_BAND_HEIGHT_RATIO
+            and band_height_consistency
+            >= EXPEDITION_ROUTER_MIN_BAND_HEIGHT_CONSISTENCY
         ),
     })
     return result
