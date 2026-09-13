@@ -106,6 +106,29 @@ PoENaviはゲームとは独立して動作し、処理内容をこのリポジ�
 - 自律的な戦闘・移動・アイテム操作
 - PoEアカウントの認証情報やセッション情報の収集
 
+### OCRを使用する画面読取機能
+
+PoE2の「エクスペディション報酬価格チェック」と「アビス冒涜Modティアチェック」は、ユーザーが設定したホットキーを押した時だけ実行されます。
+
+処理の流れは次のとおりです。
+
+1. OSの画面キャプチャ機能で、ユーザーが指定したPoE画面の範囲を取得
+2. Windows OCRを使ってPC内で文字を解析
+3. 解析結果をPoENaviの独立したウィンドウとして表示
+
+これらのOCR機能は、ゲームメモリやゲームファイルを読み取らず、ゲームプロセスへのコード注入も行いません。また、OCR結果を使った自動クリック、キー入力、Mod選択などのゲーム操作は行いません。
+
+キャプチャ画像やOCRで読み取った文章は外部へ送信されません。エクスペディション報酬の参考価格はpoe.ninjaから取得し、アビス冒涜ModのTier判定にはPoENaviへ同梱したローカルデータを使用します。
+
+Grinding Gear GamesのDeveloper Policyでは、ゲームとは独立して動作する実行アプリは「推奨はしないが許可する」とされる一方、ゲームクライアント、メモリ、ゲームファイルへの介入や、画面認識を起点とした自動操作は禁止されています。
+
+PoENaviのOCR機能は、この方針を考慮して「ユーザーによる手動実行・画面の読取専用・ローカル解析・独立ウィンドウへの表示」という設計にしています。
+
+この説明はGrinding Gear Gamesによる個別の承認を意味するものではありません。最新の方針は公式Developer Policyをご確認ください。
+
+- [Path of Exile Developer Policy](https://www.pathofexile.com/developer/docs/index#policy)
+- [Path of Exile Terms of Use](https://www.pathofexile.com/legal/terms-of-use-and-privacy-policy)
+
 ### 外部通信先
 
 - GitHub Releases：アップデート確認・取得
