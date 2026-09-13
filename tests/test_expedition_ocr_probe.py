@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QImage
 
 import src.poetore.expedition_ocr_probe as probe
@@ -53,6 +54,60 @@ def test_registered_expedition_region_has_reward_card_structure():
     assert diagnostics["panel_width"] >= 80
     assert diagnostics["min_band_height"] >= 10
     assert looks_like_expedition_panel(image)
+
+
+def _solid_panel_with_bright_band(
+    *, width: int = 600, height: int = 652, top: int, bottom: int,
+) -> QImage:
+    image = QImage(width, height, QImage.Format.Format_RGB888)
+    image.fill(QColor(40, 40, 40))
+    for y in range(top, bottom):
+        for x in range(width):
+            image.setPixelColor(x, y, QColor(190, 190, 190))
+    return image
+
+
+def test_expedition_panel_rejects_one_band_taller_than_registered_region_ratio():
+    image = _solid_panel_with_bright_band(top=120, bottom=354)
+
+    diagnostics = expedition_panel_diagnostics(image)
+
+    assert diagnostics["band_count"] == 1
+    assert diagnostics["max_band_height"] == 117
+    assert diagnostics["max_band_height_ratio"] > 0.35
+    assert not diagnostics["matched"]
+    assert not looks_like_expedition_panel(image)
+
+
+def test_expedition_panel_keeps_one_tall_reward_below_registered_region_ratio():
+    image = _solid_panel_with_bright_band(top=100, bottom=244)
+
+    diagnostics = expedition_panel_diagnostics(image)
+
+    assert diagnostics["band_count"] == 1
+    assert diagnostics["max_band_height"] == 72
+    assert diagnostics["max_band_height_ratio"] < 0.23
+    assert diagnostics["matched"]
+    assert looks_like_expedition_panel(image)
+
+
+@pytest.mark.parametrize("scale", (0.5, 0.7, 1.0, 1.3))
+def test_expedition_panel_height_ratio_is_stable_across_image_scales(scale):
+    valid = QImage("assets/images/expedition_region_example.png").copy(
+        47, 162, 605, 652
+    )
+    false_positive = _solid_panel_with_bright_band(top=120, bottom=354)
+
+    def scaled(image: QImage) -> QImage:
+        return image.scaled(
+            round(image.width() * scale),
+            round(image.height() * scale),
+            Qt.AspectRatioMode.IgnoreAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+
+    assert expedition_panel_diagnostics(scaled(valid))["matched"]
+    assert not expedition_panel_diagnostics(scaled(false_positive))["matched"]
 
 
 def test_load_channels_reads_exact_rgb_values_with_padded_rows(tmp_path):

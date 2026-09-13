@@ -25,6 +25,9 @@ OCR_ENGINES = ("tesseract", "windows")
 OCR_MAX_IMAGE_DIMENSION = 2400
 OCR_TARGET_TEXT_HEIGHT = 96
 OCR_RETRY_LARGE_TEXT_HEIGHT = 120
+# Registered reward rows remain below 23% even for a tall single card, while
+# the observed Abyss false-positive band occupied about 36% of the crop.
+EXPEDITION_ROUTER_MAX_BAND_HEIGHT_RATIO = 0.30
 _EXACT_OCR_KEY_CORRECTIONS = {
     "高員なオーブ": "高貴なオーブ",
     "サカワルの浸良のルーン一": "サカワルの浸食のルーン",
@@ -447,6 +450,8 @@ def expedition_panel_diagnostics(image: QImage) -> dict[str, object]:
         "panel_width": 0,
         "band_count": 0,
         "min_band_height": 0,
+        "max_band_height": 0,
+        "max_band_height_ratio": 0.0,
         "matched": False,
     }
     if image.isNull() or image.width() < 160 or image.height() < 100:
@@ -457,16 +462,23 @@ def expedition_panel_diagnostics(image: QImage) -> dict[str, object]:
     )
     panel_width, bands = detect_qimage_reward_cards(probe)
     heights = [band.bottom - band.top for band in bands]
+    max_band_height = max(heights, default=0)
+    max_band_height_ratio = (
+        max_band_height / probe.height() if probe.height() > 0 else 0.0
+    )
     result.update({
         "probe_width": probe.width(),
         "probe_height": probe.height(),
         "panel_width": panel_width,
         "band_count": len(bands),
         "min_band_height": min(heights, default=0),
+        "max_band_height": max_band_height,
+        "max_band_height_ratio": max_band_height_ratio,
         "matched": (
             1 <= len(bands) <= 12
             and panel_width >= max(80, round(probe.width() * 0.45))
             and min(heights, default=0) >= 10
+            and max_band_height_ratio <= EXPEDITION_ROUTER_MAX_BAND_HEIGHT_RATIO
         ),
     })
     return result
