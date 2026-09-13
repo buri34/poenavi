@@ -13,7 +13,7 @@ from src.poetore.poe2.desecration_tiers import (
     RESCUE_REASONS,
     FuzzyTierResolution,
     available_categories,
-    resolve_desecration_choice_fuzzy,
+    resolve_desecration_choices_fuzzy,
 )
 
 
@@ -79,6 +79,9 @@ def choice_bands(image: QImage) -> tuple[ChoiceBand, ...]:
     radius = max(4, round(height * .09))
     separators = []
     sample_step = max(1, image.width() // 180)
+    rgba = image.convertToFormat(QImage.Format_RGBA8888)
+    pixels = rgba.bits()
+    stride = rgba.bytesPerLine()
     for fraction in (1 / 3, 2 / 3):
         center = round(height * fraction)
         left, right = max(1, center - radius), min(height - 1, center + radius)
@@ -87,8 +90,8 @@ def choice_bands(image: QImage) -> tuple[ChoiceBand, ...]:
             total = 0
             count = 0
             for x in range(0, image.width(), sample_step):
-                color = image.pixelColor(x, y)
-                total += color.red() + color.green() + color.blue()
+                offset = y * stride + x * 4
+                total += pixels[offset] + pixels[offset + 1] + pixels[offset + 2]
                 count += 3
             means.append(total / max(1, count))
         # A uniformly coloured or badly clipped crop still has a mathematical
@@ -105,10 +108,15 @@ def choice_bands(image: QImage) -> tuple[ChoiceBand, ...]:
 def _green_text_rect(image: QImage, padding: int = 8) -> tuple[QRect | None, int]:
     left, top, right, bottom = image.width(), image.height(), -1, -1
     count = 0
+    rgba = image.convertToFormat(QImage.Format_RGBA8888)
+    pixels = rgba.bits()
+    stride = rgba.bytesPerLine()
     for y in range(image.height()):
+        row = y * stride
         for x in range(image.width()):
-            color = image.pixelColor(x, y)
-            if color.green() >= 75 and color.green() - color.blue() >= 10 and color.green() - color.red() >= 5:
+            offset = row + x * 4
+            red, green, blue = pixels[offset], pixels[offset + 1], pixels[offset + 2]
+            if green >= 75 and green - blue >= 10 and green - red >= 5:
                 left, top = min(left, x), min(top, y)
                 right, bottom = max(right, x), max(bottom, y)
                 count += 1
@@ -122,14 +130,27 @@ def _green_text_rect(image: QImage, padding: int = 8) -> tuple[QRect | None, int
 
 
 def _green_mask(image: QImage) -> QImage:
-    result = QImage(image.size(), QImage.Format_RGB32)
+    source = image.convertToFormat(QImage.Format_RGBA8888)
+    source_pixels = source.bits()
+    source_stride = source.bytesPerLine()
+    result = QImage(image.size(), QImage.Format_RGBA8888)
     result.fill(QColor("white"))
+    result_pixels = result.bits()
+    result_stride = result.bytesPerLine()
     for y in range(image.height()):
+        source_row = y * source_stride
+        result_row = y * result_stride
         for x in range(image.width()):
-            color = image.pixelColor(x, y)
-            if color.green() >= 75 and color.green() - color.blue() >= 10 and color.green() - color.red() >= 5:
-                result.setPixelColor(x, y, QColor("black"))
-    return result
+            source_offset = source_row + x * 4
+            red = source_pixels[source_offset]
+            green = source_pixels[source_offset + 1]
+            blue = source_pixels[source_offset + 2]
+            if green >= 75 and green - blue >= 10 and green - red >= 5:
+                result_offset = result_row + x * 4
+                result_pixels[result_offset] = 0
+                result_pixels[result_offset + 1] = 0
+                result_pixels[result_offset + 2] = 0
+    return result.convertToFormat(QImage.Format_RGB32)
 
 
 def prepare_desecration_frame(image: QImage) -> PreparedDesecrationFrame:
@@ -177,6 +198,15 @@ def resolve_ocr_variants(
         next((text.strip() for text in outputs if text.strip()), "")
         for outputs in variant_texts
     )
+    unique_texts = tuple(dict.fromkeys(
+        text.strip()
+        for outputs in variant_texts for text in outputs
+        if text.strip()
+    ))
+    resolutions_by_text = {
+        text: resolve_desecration_choices_fuzzy(text, category_pool)
+        for text in unique_texts
+    }
     for category in category_pool:
         tiers = []
         texts = []
@@ -185,7 +215,7 @@ def resolve_ocr_variants(
         identities_by_choice = []
         for outputs in variant_texts:
             attempts: list[tuple[str, FuzzyTierResolution]] = [
-                (text, resolve_desecration_choice_fuzzy(text, category))
+                (text, resolutions_by_text[text.strip()][category])
                 for text in outputs if text.strip()
             ]
             matched = [(text, result) for text, result in attempts if result.tier is not None]

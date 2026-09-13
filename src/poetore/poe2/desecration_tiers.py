@@ -54,6 +54,7 @@ def tier_data() -> dict:
     return json.loads(DATA_PATH.read_text(encoding="utf-8"))
 
 
+@lru_cache(maxsize=4096)
 def _visible_template(template: str) -> str:
     return re.sub(r"\s*\((?:Local|ローカル)\)\s*$", "", template, flags=re.IGNORECASE)
 
@@ -157,9 +158,27 @@ def _entry_matches(entry: dict, lines: tuple[str, ...]) -> bool:
     return assign(0)
 
 
+@lru_cache(maxsize=16384)
 def _score_key(text: str) -> str:
     text = _visible_template(text)
     return re.sub(r"[^#%+\-.0-9a-zぁ-んァ-ヶ一-龯ー]", "", text.casefold())
+
+
+@lru_cache(maxsize=4096)
+def _template_number_tokens(template: str) -> tuple[tuple[int, int, str], ...]:
+    visible = _visible_template(template)
+    return tuple(
+        (token.start(), token.end(), token.group())
+        for token in TEMPLATE_NUMBER_RE.finditer(visible)
+    )
+
+
+@lru_cache(maxsize=16384)
+def _observed_number_tokens(observed: str) -> tuple[tuple[int, int, str], ...]:
+    return tuple(
+        (token.start(), token.end(), token.group())
+        for token in re.finditer(NUMBER_RE, observed)
+    )
 
 
 def _numeric_skeleton(
@@ -168,21 +187,21 @@ def _numeric_skeleton(
 ) -> tuple[str, str, int] | None:
     """Pair observed numbers with literal numbers or # slots in the template."""
     template = _visible_template(template)
-    template_tokens = list(TEMPLATE_NUMBER_RE.finditer(template))
-    observed_tokens = list(re.finditer(NUMBER_RE, observed))
+    template_tokens = _template_number_tokens(template)
+    observed_tokens = _observed_number_tokens(observed)
     if len(template_tokens) != len(observed_tokens):
         return None
-    if sum(token.group() == "#" for token in template_tokens) != len(ranges):
+    if sum(raw == "#" for _start, _end, raw in template_tokens) != len(ranges):
         return None
 
     expected_parts: list[str] = []
     actual_parts: list[str] = []
     expected_cursor = actual_cursor = range_index = fixed_mismatches = 0
     for expected_token, actual_token in zip(template_tokens, observed_tokens):
-        expected_parts.append(template[expected_cursor:expected_token.start()])
-        actual_parts.append(observed[actual_cursor:actual_token.start()])
-        expected_raw = expected_token.group()
-        actual_raw = actual_token.group()
+        expected_start, expected_end, expected_raw = expected_token
+        actual_start, actual_end, actual_raw = actual_token
+        expected_parts.append(template[expected_cursor:expected_start])
+        actual_parts.append(observed[actual_cursor:actual_start])
         if expected_raw == "#":
             value = float(actual_raw)
             low, high = ranges[range_index]
@@ -203,8 +222,8 @@ def _numeric_skeleton(
                     return None
             expected_parts.append(expected_raw)
             actual_parts.append(actual_raw)
-        expected_cursor = expected_token.end()
-        actual_cursor = actual_token.end()
+        expected_cursor = expected_end
+        actual_cursor = actual_end
     expected_parts.append(template[expected_cursor:])
     actual_parts.append(observed[actual_cursor:])
     return (
@@ -338,6 +357,49 @@ def _profile_category(profile: dict) -> str:
     return category
 
 
+@dataclass(frozen=True)
+class _IndexedEntry:
+    entry: dict
+    profiles_by_category: tuple[tuple[str, tuple[tuple[str, int], ...]], ...]
+
+
+@lru_cache(maxsize=1)
+def _matching_index() -> dict[tuple[int, int], tuple[_IndexedEntry, ...]]:
+    """Index immutable tier rows by structural shape before fuzzy scoring."""
+    payload = tier_data()
+    category_by_profile = {
+        str(profile["id"]): _profile_category(profile)
+        for profile in payload["profiles"]
+    }
+    buckets: dict[tuple[int, int], list[_IndexedEntry]] = {}
+    for entry in payload["entries"]:
+        parts = tuple(entry.get("parts", ()))
+        number_count = sum(
+            len(_template_number_tokens(str(part["text"]["ja"])))
+            for part in parts
+        )
+        profiles: dict[str, list[tuple[str, int]]] = {}
+        for profile_id, tier in entry.get("profile_tiers", {}).items():
+            category = category_by_profile.get(str(profile_id))
+            if category is None:
+                continue
+            profiles.setdefault(category, []).append((str(profile_id), int(tier)))
+        indexed = _IndexedEntry(
+            entry=entry,
+            profiles_by_category=tuple(
+                (category, tuple(rows)) for category, rows in profiles.items()
+            ),
+        )
+        buckets.setdefault((len(parts), number_count), []).append(indexed)
+    return {shape: tuple(entries) for shape, entries in buckets.items()}
+
+
+def _candidate_entries(lines: tuple[str, ...]) -> tuple[_IndexedEntry, ...]:
+    number_count = sum(len(_observed_number_tokens(line)) for line in lines)
+    return _matching_index().get((len(lines), number_count), ())
+
+
+@lru_cache(maxsize=1)
 def available_categories() -> tuple[str, ...]:
     return tuple(sorted({_profile_category(profile) for profile in tier_data()["profiles"]}))
 
@@ -379,47 +441,10 @@ def resolve_desecration_choice(
     )
 
 
-def resolve_desecration_choice_fuzzy(
-    lines: str | tuple[str, ...] | list[str], category: str,
-    *, minimum_score: float = 0.78, ambiguity_margin: float = 0.035,
+def _finalize_fuzzy_candidates(
+    candidates: list[tuple[float, dict, str, int]],
+    normalized_lines: tuple[str, ...], reason: str, ambiguity_margin: float,
 ) -> FuzzyTierResolution:
-    """Resolve OCR text while keeping numeric values strict and never guessing."""
-    normalized_lines = _normalized_lines(lines)
-    payload = tier_data()
-    profile_ids = {
-        profile["id"] for profile in payload["profiles"]
-        if _profile_category(profile) == category
-    }
-    def candidates_for(mode: str) -> list[tuple[float, dict, str, int]]:
-        rows: list[tuple[float, dict, str, int]] = []
-        for entry in payload["entries"]:
-            if mode == "matched":
-                score = _entry_score(entry, normalized_lines)
-                if score is None or score < minimum_score:
-                    continue
-            elif mode == "fixed_number_rescue":
-                score = _fixed_number_rescue_score(entry, normalized_lines)
-                if score is None:
-                    continue
-            else:
-                score = _short_text_score(entry, normalized_lines)
-                if score is None:
-                    continue
-            for profile_id, tier in entry["profile_tiers"].items():
-                if profile_id in profile_ids:
-                    rows.append((score, entry, profile_id, int(tier)))
-        return rows
-
-    reason = "matched"
-    candidates = candidates_for(reason)
-    if not candidates:
-        reason = "fixed_number_rescue"
-        candidates = candidates_for(reason)
-    if not candidates:
-        reason = "short_text_rescue"
-        candidates = candidates_for(reason)
-    if not candidates:
-        return FuzzyTierResolution(tier=None, reason="no_match", score=None)
     best_score = max(row[0] for row in candidates)
     finalists = [row for row in candidates if best_score - row[0] <= ambiguity_margin]
     tiers = {row[3] for row in finalists}
@@ -440,6 +465,91 @@ def resolve_desecration_choice_fuzzy(
     )
 
 
+@lru_cache(maxsize=512)
+def _resolve_desecration_choices_fuzzy_cached(
+    normalized_lines: tuple[str, ...], categories: tuple[str, ...],
+    minimum_score: float, ambiguity_margin: float,
+) -> tuple[tuple[str, FuzzyTierResolution], ...]:
+    """Score each tier row once, then project the result to every category."""
+    ordered_categories = tuple(dict.fromkeys(categories))
+    unresolved = set(ordered_categories)
+    resolved: dict[str, FuzzyTierResolution] = {}
+    entries = _candidate_entries(normalized_lines)
+
+    for mode in ("matched", "fixed_number_rescue", "short_text_rescue"):
+        rows_by_category: dict[str, list[tuple[float, dict, str, int]]] = {
+            category: [] for category in unresolved
+        }
+        for indexed in entries:
+            relevant = [
+                (category, profiles)
+                for category, profiles in indexed.profiles_by_category
+                if category in unresolved
+            ]
+            if not relevant:
+                continue
+            if mode == "matched":
+                score = _entry_score(indexed.entry, normalized_lines)
+                if score is None or score < minimum_score:
+                    continue
+            elif mode == "fixed_number_rescue":
+                score = _fixed_number_rescue_score(indexed.entry, normalized_lines)
+                if score is None:
+                    continue
+            else:
+                score = _short_text_score(indexed.entry, normalized_lines)
+                if score is None:
+                    continue
+            for category, profiles in relevant:
+                rows_by_category[category].extend(
+                    (score, indexed.entry, profile_id, tier)
+                    for profile_id, tier in profiles
+                )
+
+        newly_resolved = []
+        for category in ordered_categories:
+            candidates = rows_by_category.get(category, ())
+            if not candidates:
+                continue
+            resolved[category] = _finalize_fuzzy_candidates(
+                list(candidates), normalized_lines, mode, ambiguity_margin,
+            )
+            newly_resolved.append(category)
+        unresolved.difference_update(newly_resolved)
+        if not unresolved:
+            break
+
+    no_match = FuzzyTierResolution(tier=None, reason="no_match", score=None)
+    return tuple(
+        (category, resolved.get(category, no_match))
+        for category in ordered_categories
+    )
+
+
+def resolve_desecration_choices_fuzzy(
+    lines: str | tuple[str, ...] | list[str],
+    categories: tuple[str, ...] | list[str] | None = None,
+    *, minimum_score: float = 0.78, ambiguity_margin: float = 0.035,
+) -> dict[str, FuzzyTierResolution]:
+    """Resolve one OCR text for all categories without repeated database scans."""
+    normalized_lines = _normalized_lines(lines)
+    category_pool = tuple(categories) if categories is not None else available_categories()
+    return dict(_resolve_desecration_choices_fuzzy_cached(
+        normalized_lines, category_pool, minimum_score, ambiguity_margin,
+    ))
+
+
+def resolve_desecration_choice_fuzzy(
+    lines: str | tuple[str, ...] | list[str], category: str,
+    *, minimum_score: float = 0.78, ambiguity_margin: float = 0.035,
+) -> FuzzyTierResolution:
+    """Resolve OCR text while keeping numeric values strict and never guessing."""
+    return resolve_desecration_choices_fuzzy(
+        lines, (category,), minimum_score=minimum_score,
+        ambiguity_margin=ambiguity_margin,
+    )[category]
+
+
 def resolve_desecration_reveal(
     observed_texts: tuple[str, ...] | list[str],
     categories: tuple[str, ...] | list[str] | None = None,
@@ -447,9 +557,10 @@ def resolve_desecration_reveal(
     """Find categories that can explain all three choices and their tier tuples."""
     texts = tuple(str(text).strip() for text in observed_texts)
     candidates = tuple(categories) if categories is not None else available_categories()
+    by_text = tuple(resolve_desecration_choices_fuzzy(text, candidates) for text in texts)
     tiers_by_category: dict[str, tuple[int | None, ...]] = {}
     for category in candidates:
-        resolutions = tuple(resolve_desecration_choice_fuzzy(text, category) for text in texts)
+        resolutions = tuple(results[category] for results in by_text)
         if all(result.tier is not None for result in resolutions):
             tiers_by_category[category] = tuple(result.tier for result in resolutions)
     return RevealResolution(

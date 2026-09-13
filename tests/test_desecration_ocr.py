@@ -1,10 +1,54 @@
+from unittest.mock import patch
+
 from PySide6.QtGui import QColor, QImage
 
 from src.poetore.poe2.desecration_ocr import (
+    _green_mask,
+    _green_text_rect,
     choice_bands,
     prepare_desecration_frame,
     resolve_ocr_variants,
 )
+from src.poetore.poe2.desecration_tiers import resolve_desecration_choices_fuzzy
+
+
+def _legacy_green_text_rect(image, padding=8):
+    left, top, right, bottom = image.width(), image.height(), -1, -1
+    count = 0
+    for y in range(image.height()):
+        for x in range(image.width()):
+            color = image.pixelColor(x, y)
+            if (
+                color.green() >= 75
+                and color.green() - color.blue() >= 10
+                and color.green() - color.red() >= 5
+            ):
+                left, top = min(left, x), min(top, y)
+                right, bottom = max(right, x), max(bottom, y)
+                count += 1
+    if right < left or bottom < top:
+        return None, 0
+    from PySide6.QtCore import QRect
+    return QRect(
+        max(0, left - padding), max(0, top - padding),
+        min(image.width() - 1, right + padding) - max(0, left - padding) + 1,
+        min(image.height() - 1, bottom + padding) - max(0, top - padding) + 1,
+    ), count
+
+
+def _legacy_green_mask(image):
+    result = QImage(image.size(), QImage.Format_RGB32)
+    result.fill(QColor("white"))
+    for y in range(image.height()):
+        for x in range(image.width()):
+            color = image.pixelColor(x, y)
+            if (
+                color.green() >= 75
+                and color.green() - color.blue() >= 10
+                and color.green() - color.red() >= 5
+            ):
+                result.setPixelColor(x, y, QColor("black"))
+    return result
 
 
 def test_supplied_panels_have_three_valid_choice_bands():
@@ -14,6 +58,20 @@ def test_supplied_panels_have_three_valid_choice_bands():
         assert frame.valid_panel
         assert len(choice_bands(image)) == 3
         assert all(len(variants) == 3 for variants in frame.variants)
+
+
+def test_bulk_pixel_processing_matches_the_original_pixel_api_results():
+    for name in ("boots-reveal.png", "spear-reveal.png"):
+        image = QImage(f"tests/fixtures/poetore/poe2/desecration/{name}")
+        for band in choice_bands(image):
+            card = image.copy(0, band.top, image.width(), band.bottom - band.top)
+            actual_rect, actual_count = _green_text_rect(card)
+            expected_rect, expected_count = _legacy_green_text_rect(card)
+            assert (actual_rect, actual_count) == (expected_rect, expected_count)
+            crop = card.copy(actual_rect)
+            actual = _green_mask(crop).convertToFormat(QImage.Format_RGBA8888)
+            expected = _legacy_green_mask(crop).convertToFormat(QImage.Format_RGBA8888)
+            assert bytes(actual.bits()) == bytes(expected.bits())
 
 
 def test_tiny_or_uniform_crops_are_not_mistaken_for_a_three_choice_panel():
@@ -127,3 +185,19 @@ def test_category_panel_requires_all_three_mods_not_the_best_partial_match():
     assert result.categories == ()
     assert result.fallback_tiers == (7, 2, None)
     assert result.fallback_statuses == ("matched", "matched", "unsupported")
+
+
+def test_duplicate_ocr_texts_are_resolved_once_for_all_categories():
+    variants = (
+        ("最大マナ +108",) * 3,
+        ("移動スピードが30%増加する",) * 3,
+        ("アーマー +27",) * 3,
+    )
+    with patch(
+        "src.poetore.poe2.desecration_ocr.resolve_desecration_choices_fuzzy",
+        wraps=resolve_desecration_choices_fuzzy,
+    ) as resolver:
+        result = resolve_ocr_variants(variants, ("boots", "body_armour"))
+
+    assert result.categories == ("boots",)
+    assert resolver.call_count == 3

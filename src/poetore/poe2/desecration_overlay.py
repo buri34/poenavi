@@ -45,6 +45,17 @@ def selectable_categories(categories=None) -> tuple[str, ...]:
     )
 
 
+def should_retry_closed_region(resolution) -> bool:
+    """Retry only when the open crop lacks two independent readable choices."""
+    if resolution.categories:
+        return False
+    confident = sum(
+        status in {"matched", "unsupported", "tierless"}
+        for status in resolution.fallback_statuses
+    )
+    return confident < 2
+
+
 STATUS_LABELS = {
     "read_failed": "読取失敗",
     "unsupported": "未対応",
@@ -412,7 +423,7 @@ class DesecrationTierController(QObject):
                 fallback_status_count=len(resolution.fallback_statuses or ()),
             )
             if not resolution.categories:
-                if allow_closed:
+                if allow_closed and should_retry_closed_region(resolution):
                     self._mark_trace(
                         trace, "closed_fallback_requested",
                         reason="open_result_unresolved",

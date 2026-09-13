@@ -11,6 +11,7 @@ from src.poetore.poe2.desecration_tiers import (
     available_categories,
     resolve_desecration_choice,
     resolve_desecration_choice_fuzzy,
+    resolve_desecration_choices_fuzzy,
     resolve_desecration_reveal,
     tier_data,
 )
@@ -80,6 +81,16 @@ def test_fuzzy_match_tolerates_one_character_but_keeps_numbers_strict():
     assert result.tier == 6
     assert result.score == 0.875
     assert resolve_desecration_choice_fuzzy("最大マナ +999", "boots").tier is None
+
+
+def test_all_category_resolution_matches_individual_category_results():
+    text = "物理ダメージが28%増加する\n病中力 +57"
+    categories = ("spear", "staff", "ring", "boots")
+    together = resolve_desecration_choices_fuzzy(text, categories)
+    assert together == {
+        category: resolve_desecration_choice_fuzzy(text, category)
+        for category in categories
+    }
 
 
 def test_fuzzy_match_distinguishes_fixed_numbers_from_tier_values():

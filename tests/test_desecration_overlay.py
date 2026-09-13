@@ -13,6 +13,7 @@ from src.poetore.poe2.desecration_overlay import (
     DesecrationTierOverlay,
     normalized_capture_rect,
     selectable_categories,
+    should_retry_closed_region,
 )
 
 
@@ -102,6 +103,20 @@ def test_unresolved_statuses_have_distinct_user_facing_labels():
     }
 
 
+def test_closed_retry_requires_two_independent_readable_open_choices():
+    one_readable = Mock(categories=(), fallback_statuses=(
+        "matched", "read_failed", "read_failed",
+    ))
+    two_readable = Mock(categories=(), fallback_statuses=(
+        "matched", "unsupported", "read_failed",
+    ))
+    fully_resolved = Mock(categories=("boots",), fallback_statuses=())
+
+    assert should_retry_closed_region(one_readable)
+    assert not should_retry_closed_region(two_readable)
+    assert not should_retry_closed_region(fully_resolved)
+
+
 def test_controller_tries_open_region_before_optional_closed_region():
     QApplication.instance() or QApplication([])
     valid = QImage("tests/fixtures/poetore/poe2/desecration/boots-reveal.png")
@@ -187,6 +202,42 @@ def test_controller_retries_closed_region_when_open_panel_ocr_cannot_resolve():
     assert controller._grab.call_count == 2
     assert ocr.recognize.call_count == 2
     assert controller._capture_rect == QRect(960, 540, 960, 540)
+    controller.close()
+
+
+def test_controller_keeps_confident_partial_open_result_without_closed_retry():
+    """Two independently readable choices prove that the open region is active."""
+    QApplication.instance() or QApplication([])
+    image = QImage("tests/fixtures/poetore/poe2/desecration/boots-reveal.png")
+    region = {"left": 0, "top": 0, "right": .5, "bottom": .5}
+    ocr = Mock()
+    ocr.recognize.return_value = [
+        *("最大マナ +108",) * 3,
+        *("移動スピードが30%増加する",) * 3,
+        *("未知の効果が123%増加する",) * 3,
+    ]
+    controller = DesecrationTierController(
+        regions_getter=lambda: {
+            "inventory_open_region": region,
+            "inventory_closed_region": region,
+        },
+        ocr_server=ocr,
+        scan_coordinator=Mock(try_begin=Mock(return_value=True)),
+    )
+    controller._grab = Mock(return_value=image)
+    controller._overlay.show_tiers = Mock()
+
+    with patch(
+        "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
+        return_value=QRect(0, 0, 1920, 1080),
+    ), patch(
+        "src.poetore.poe2.desecration_overlay.threading.Thread", ImmediateThread,
+    ):
+        assert controller.request_scan()
+
+    controller._grab.assert_called_once()
+    ocr.recognize.assert_called_once()
+    controller._overlay.show_tiers.assert_called_once()
     controller.close()
 
 
