@@ -93,7 +93,7 @@ PoENaviはゲームとは独立して動作し、処理内容をこのリポジ�
 - PoEの`Client.txt`：エリア、レベル、Act進行の検知
 - ユーザーがコピーしたアイテム情報：ぽえとれの価格検索
 - PoEウィンドウの位置とプロセス名：対象ウィンドウの識別
-- ユーザーが指定したPoE2報酬パネルの画像：エクスペディション報酬名のローカルOCR
+- ユーザーが指定したPoE2画面範囲の画像：エクスペディション報酬とアビス冒涜ModのローカルOCR
 
 設定、メモ、タイマー記録、価格キャッシュ、OCR用画像処理はPC内で扱います。`Client.txt`の内容、個人メモ、キャプチャ画像を外部へ送信することはありません。
 
@@ -137,6 +137,54 @@ PoENaviのOCR機能は、この方針を考慮して「ユーザーによる手�
 - Path of Exile公式CDNなど：アイテム画像取得
 
 ユーザー操作を起点に、検索文字列やチャットコマンドなどのキー入力をPoEへ送る機能があります。ログアウト機能を有効にしてホットキーを押した場合は、PoEクライアントのTCP接続を切断します。
+
+## Safety and External Communications (English)
+
+PoENavi runs independently from the game, and its source code is publicly available in this repository.
+
+### Information Read Locally
+
+- PoE's `Client.txt`: used to detect areas, levels, and Act progression
+- Item information copied by the user: used for trade searches in Poetore
+- The PoE window position and process name: used to identify the target window
+- Images of PoE2 screen regions selected by the user: used for local OCR of Expedition rewards and Abyss Desecration modifiers
+
+Settings, notes, timer records, price caches, screenshots, and OCR processing remain on the user's PC. The contents of `Client.txt`, personal notes, captured images, and OCR text are not uploaded.
+
+### What PoENavi Does Not Do
+
+- Read or modify game memory
+- Inject code into the game process
+- Modify the game client or game files
+- Intercept or alter network packets
+- Automate combat, movement, or item interaction
+- Collect PoE account credentials or session information
+
+### OCR-Based Screen Reading
+
+The PoE2 Expedition reward price checker and Abyss Desecration modifier Tier checker run only when the user presses the configured shortcut.
+
+1. A user-configured region of the PoE screen is captured through the operating system's screen-capture API.
+2. Text is recognized locally using Windows OCR.
+3. The result is shown in a separate PoENavi window.
+
+These OCR features do not read game memory or files, inject code, or interact with the game process. OCR results are never used to click, press keys, select modifiers, or perform any other in-game action automatically.
+
+Captured images and recognized text are not sent to an external server. Expedition reference prices are obtained from poe.ninja, while Abyss Desecration modifier Tiers are determined using data bundled with PoENavi.
+
+PoENavi's OCR features are designed with the Path of Exile Developer Policy in mind: they are manually initiated, read-only, processed locally, and displayed in a separate application window. This statement does not mean that PoENavi has been individually reviewed, endorsed, or approved by Grinding Gear Games. Please refer to the current official policies:
+
+- [Path of Exile Developer Policy](https://www.pathofexile.com/developer/docs/index#policy)
+- [Path of Exile Terms of Use](https://www.pathofexile.com/legal/terms-of-use-and-privacy-policy)
+
+### External Connections
+
+- GitHub Releases: checking for and downloading updates
+- Official Path of Exile Trade API: submitting item names, modifiers, values, and other search conditions
+- poe.ninja: obtaining reference prices for currencies and items
+- Official Path of Exile CDN and related services: downloading item images
+
+Some non-OCR features can send search text or chat commands to PoE, but only in response to an explicit user action. OCR results never initiate keyboard or mouse input to the game. When the logout feature is enabled and its shortcut is pressed, PoENavi disconnects the PoE client's TCP connection.
 
 ## アップデート
 
