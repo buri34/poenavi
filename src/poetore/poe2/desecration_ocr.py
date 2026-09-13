@@ -12,6 +12,7 @@ from PySide6.QtGui import QColor, QImage
 from src.poetore.poe2.desecration_tiers import (
     RESCUE_REASONS,
     FuzzyTierResolution,
+    TierValue,
     available_categories,
     resolve_desecration_choices_fuzzy,
 )
@@ -33,21 +34,22 @@ class PreparedDesecrationFrame:
 @dataclass(frozen=True)
 class OcrRevealResolution:
     categories: tuple[str, ...]
-    tiers_by_category: dict[str, tuple[int | None, ...]]
+    tiers_by_category: dict[str, tuple[TierValue, ...]]
     texts_by_category: dict[str, tuple[str, ...]]
     ranges_by_category: dict[str, tuple[tuple[str, ...], ...]]
     statuses_by_category: dict[str, tuple[str, ...]]
     fallback_statuses: tuple[str, ...] = ()
     fallback_texts: tuple[str, ...] = ()
-    fallback_tiers: tuple[int | None, ...] = ()
+    fallback_tiers: tuple[TierValue, ...] = ()
     fallback_ranges: tuple[tuple[str, ...], ...] = ()
+    category_conflict: bool = False
 
     @property
     def needs_category_choice(self) -> bool:
         return len(set(self.tiers_by_category.values())) > 1
 
     @property
-    def tiers(self) -> tuple[int | None, ...] | None:
+    def tiers(self) -> tuple[TierValue, ...] | None:
         unique = set(self.tiers_by_category.values())
         return next(iter(unique)) if len(unique) == 1 else None
 
@@ -186,6 +188,12 @@ def _unmatched_status(outputs: tuple[str, ...]) -> str:
     return "read_failed"
 
 
+def _tier_value(result: FuzzyTierResolution) -> TierValue:
+    if result.tier is not None:
+        return result.tier
+    return result.tier_candidates or None
+
+
 def resolve_ocr_variants(
     variant_texts: tuple[tuple[str, ...], ...],
     categories: tuple[str, ...] | None = None,
@@ -218,7 +226,10 @@ def resolve_ocr_variants(
                 (text, resolutions_by_text[text.strip()][category])
                 for text in outputs if text.strip()
             ]
-            matched = [(text, result) for text, result in attempts if result.tier is not None]
+            matched = [
+                (text, result) for text, result in attempts
+                if _tier_value(result) is not None
+            ]
             if not matched:
                 tiers.append(None)
                 texts.append(outputs[0].strip() if outputs else "")
@@ -227,7 +238,7 @@ def resolve_ocr_variants(
                 identities_by_choice.append(None)
                 continue
             identities = {
-                (result.tier, result.mod_ids)
+                (_tier_value(result), result.mod_ids)
                 for _text, result in matched
             }
             if len(identities) != 1:
@@ -240,7 +251,7 @@ def resolve_ocr_variants(
             if any(result.reason in RESCUE_REASONS for _text, result in matched):
                 agreeing = sum(
                     1 for _text, result in matched
-                    if (result.tier, result.mod_ids) == next(iter(identities))
+                    if (_tier_value(result), result.mod_ids) == next(iter(identities))
                 )
                 if agreeing < 2:
                     tiers.append(None)
@@ -254,7 +265,7 @@ def resolve_ocr_variants(
                 (text, result) for text, result in matched
                 if best_score - (result.score or 0) <= .035
             ]
-            finalist_tiers = {result.tier for _text, result in finalists}
+            finalist_tiers = {_tier_value(result) for _text, result in finalists}
             if len(finalist_tiers) != 1:
                 tiers.append(None)
                 texts.append(finalists[0][0])
@@ -263,12 +274,15 @@ def resolve_ocr_variants(
                 identities_by_choice.append(None)
                 continue
             chosen = max(finalists, key=lambda item: item[1].score or 0)
-            tiers.append(chosen[1].tier)
+            tier_value = _tier_value(chosen[1])
+            tiers.append(tier_value)
             texts.append(chosen[0])
             ranges.append(chosen[1].range_labels)
-            statuses.append("matched")
-            identities_by_choice.append((chosen[1].tier, chosen[1].mod_ids))
-        resolved = sum(tier is not None for tier in tiers)
+            statuses.append(
+                "multiple_tiers" if chosen[1].tier_candidates else "matched"
+            )
+            identities_by_choice.append((tier_value, chosen[1].mod_ids))
+        resolved = sum(identity is not None for identity in identities_by_choice)
         candidate_rows[category] = (
             resolved, tuple(tiers), tuple(texts), tuple(ranges), tuple(statuses),
             tuple(identities_by_choice),
@@ -287,7 +301,9 @@ def resolve_ocr_variants(
             identity, labels = next(iter(outcomes))
             fallback_tiers.append(identity[0])
             fallback_ranges.append(labels)
-            resolved_fallback_statuses[index] = "matched"
+            resolved_fallback_statuses[index] = (
+                "multiple_tiers" if isinstance(identity[0], tuple) else "matched"
+            )
             resolved_fallback_texts[index] = next(
                 row[2][index] for row in candidate_rows.values()
                 if row[5][index] == identity
@@ -295,11 +311,22 @@ def resolve_ocr_variants(
         else:
             fallback_tiers.append(None)
             fallback_ranges.append(())
+            if outcomes:
+                resolved_fallback_statuses[index] = "category_unselected"
+                resolved_fallback_texts[index] = next(
+                    row[2][index] for row in candidate_rows.values()
+                    if row[5][index] is not None
+                )
 
-    required = len(variant_texts)
+    recognized_choices = {
+        index for index in range(len(variant_texts))
+        if any(row[5][index] is not None for row in candidate_rows.values())
+    }
     winners = {
         category: row for category, row in candidate_rows.items()
-        if row[0] == required
+        if recognized_choices
+        and (len(recognized_choices) >= 2 or len(category_pool) == 1)
+        and all(row[5][index] is not None for index in recognized_choices)
     }
     if not winners:
         return OcrRevealResolution(
@@ -309,6 +336,7 @@ def resolve_ocr_variants(
             fallback_texts=tuple(resolved_fallback_texts),
             fallback_tiers=tuple(fallback_tiers),
             fallback_ranges=tuple(fallback_ranges),
+            category_conflict=len(recognized_choices) >= 2,
         )
     return OcrRevealResolution(
         categories=tuple(winners),

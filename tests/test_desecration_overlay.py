@@ -14,6 +14,7 @@ from src.poetore.poe2.desecration_overlay import (
     normalized_capture_rect,
     selectable_categories,
     should_retry_closed_region,
+    tier_badge_label,
 )
 
 
@@ -103,6 +104,11 @@ def test_unresolved_statuses_have_distinct_user_facing_labels():
     }
 
 
+def test_multi_tier_badge_lists_only_the_ambiguous_tiers():
+    assert tier_badge_label((7, 8), "multiple_tiers") == "T7/T8"
+    assert tier_badge_label(10, "matched") == "T10"
+
+
 def test_closed_retry_requires_two_independent_readable_open_choices():
     one_readable = Mock(categories=(), fallback_statuses=(
         "matched", "read_failed", "read_failed",
@@ -111,9 +117,14 @@ def test_closed_retry_requires_two_independent_readable_open_choices():
         "matched", "unsupported", "read_failed",
     ))
     fully_resolved = Mock(categories=("boots",), fallback_statuses=())
+    conflicting = Mock(
+        categories=(), category_conflict=True,
+        fallback_statuses=("matched", "matched", "unsupported"),
+    )
 
     assert should_retry_closed_region(one_readable)
     assert not should_retry_closed_region(two_readable)
+    assert should_retry_closed_region(conflicting)
     assert not should_retry_closed_region(fully_resolved)
 
 
@@ -237,7 +248,8 @@ def test_controller_keeps_confident_partial_open_result_without_closed_retry():
 
     controller._grab.assert_called_once()
     ocr.recognize.assert_called_once()
-    controller._overlay.show_tiers.assert_called_once()
+    assert controller._pending is not None
+    assert controller._pending[0].categories == ("boots", "focus", "staff", "wand")
     controller.close()
 
 

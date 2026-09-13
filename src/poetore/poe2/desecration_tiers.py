@@ -17,11 +17,13 @@ DATA_PATH = (
 NUMBER_RE = r"[+-]?\d+(?:\.\d+)?"
 TEMPLATE_NUMBER_RE = re.compile(rf"#|{NUMBER_RE}")
 RESCUE_REASONS = {"fixed_number_rescue", "short_text_rescue"}
+TierValue = int | tuple[int, ...] | None
 
 
 @dataclass(frozen=True)
 class TierResolution:
     tier: int | None
+    tier_candidates: tuple[int, ...] = ()
     mod_ids: tuple[str, ...] = ()
     profile_ids: tuple[str, ...] = ()
     range_labels: tuple[str, ...] = ()
@@ -36,7 +38,7 @@ class FuzzyTierResolution(TierResolution):
 @dataclass(frozen=True)
 class RevealResolution:
     categories: tuple[str, ...]
-    tiers_by_category: dict[str, tuple[int | None, ...]]
+    tiers_by_category: dict[str, tuple[TierValue, ...]]
     observed_texts: tuple[str, ...]
 
     @property
@@ -44,7 +46,7 @@ class RevealResolution:
         return len(set(self.tiers_by_category.values())) > 1
 
     @property
-    def tiers(self) -> tuple[int | None, ...] | None:
+    def tiers(self) -> tuple[TierValue, ...] | None:
         unique = set(self.tiers_by_category.values())
         return next(iter(unique)) if len(unique) == 1 else None
 
@@ -425,8 +427,14 @@ def resolve_desecration_choice(
         return TierResolution(tier=None, reason="no_match")
     tiers = {tier for _entry, _profile, tier in matches}
     mod_ids = tuple(sorted({entry["mod_id"] for entry, _profile, _tier in matches}))
+    stat_identities = {_stat_identity(entry) for entry, _profile, _tier in matches}
     matched_profiles = tuple(sorted({profile for _entry, profile, _tier in matches}))
     if len(tiers) != 1:
+        if len(stat_identities) == 1:
+            return TierResolution(
+                tier=None, tier_candidates=tuple(sorted(tiers)), mod_ids=mod_ids,
+                profile_ids=matched_profiles, reason="multiple_tiers",
+            )
         return TierResolution(
             tier=None, mod_ids=mod_ids, profile_ids=matched_profiles,
             reason="category_dependent",
@@ -451,10 +459,16 @@ def _finalize_fuzzy_candidates(
     mod_ids = tuple(sorted({row[1]["mod_id"] for row in finalists}))
     stat_identities = {_stat_identity(row[1]) for row in finalists}
     profiles = tuple(sorted({row[2] for row in finalists}))
-    if len(tiers) != 1 or len(stat_identities) != 1:
+    if len(stat_identities) != 1:
         return FuzzyTierResolution(
             tier=None, mod_ids=mod_ids, profile_ids=profiles,
             reason="ambiguous", score=round(best_score, 4),
+        )
+    if len(tiers) != 1:
+        return FuzzyTierResolution(
+            tier=None, tier_candidates=tuple(sorted(tiers)), mod_ids=mod_ids,
+            profile_ids=profiles, reason="multiple_tiers",
+            score=round(best_score, 4),
         )
     return FuzzyTierResolution(
         tier=next(iter(tiers)), mod_ids=mod_ids, profile_ids=profiles,
@@ -558,11 +572,14 @@ def resolve_desecration_reveal(
     texts = tuple(str(text).strip() for text in observed_texts)
     candidates = tuple(categories) if categories is not None else available_categories()
     by_text = tuple(resolve_desecration_choices_fuzzy(text, candidates) for text in texts)
-    tiers_by_category: dict[str, tuple[int | None, ...]] = {}
+    tiers_by_category: dict[str, tuple[TierValue, ...]] = {}
     for category in candidates:
         resolutions = tuple(results[category] for results in by_text)
-        if all(result.tier is not None for result in resolutions):
-            tiers_by_category[category] = tuple(result.tier for result in resolutions)
+        if all(result.tier is not None or result.tier_candidates for result in resolutions):
+            tiers_by_category[category] = tuple(
+                result.tier if result.tier is not None else result.tier_candidates
+                for result in resolutions
+            )
     return RevealResolution(
         categories=tuple(tiers_by_category), tiers_by_category=tiers_by_category,
         observed_texts=texts,

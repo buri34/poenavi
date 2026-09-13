@@ -8,6 +8,7 @@ from src.poetore.poe2.desecration_tiers import (
     TEMPLATE_NUMBER_RE,
     _match_part,
     _numeric_skeleton,
+    _stat_identity,
     available_categories,
     resolve_desecration_choice,
     resolve_desecration_choice_fuzzy,
@@ -204,3 +205,52 @@ def test_roll_ranges_follow_the_visible_value_order():
         "物理ダメージが28%増加する\n命中力 +57", "spear"
     )
     assert compound.range_labels == ("25–34%", "47–72")
+
+
+def test_overlapping_tiers_keep_one_stat_identity_and_all_tier_candidates():
+    result = resolve_desecration_choice_fuzzy(
+        "2から5の物理ダメージをアタックに追加する", "ring",
+    )
+
+    assert result.tier is None
+    assert result.tier_candidates == (7, 8)
+    assert result.reason == "multiple_tiers"
+    assert len({_stat_identity(entry) for entry in tier_data()["entries"]
+                if entry["mod_id"] in result.mod_ids}) == 1
+
+
+def test_all_tier_range_overlaps_are_limited_to_the_audited_stat_series():
+    """New overlaps must be reviewed instead of silently changing resolution."""
+    overlapping_stats = set()
+    rows_by_profile_stat = {}
+    for entry in tier_data()["entries"]:
+        if any(part.get("ranges") is None for part in entry["parts"]):
+            continue
+        ranges = tuple(
+            tuple(map(float, value_range))
+            for part in entry["parts"] for value_range in part["ranges"]
+        )
+        for profile_id, tier in entry["profile_tiers"].items():
+            rows_by_profile_stat.setdefault((profile_id, _stat_identity(entry)), []).append(
+                (int(tier), ranges)
+            )
+    for (_profile_id, stat_identity), rows in rows_by_profile_stat.items():
+        for index, first in enumerate(rows):
+            for second in rows[index + 1:]:
+                same_shape = len(first[1]) == len(second[1])
+                overlaps = same_shape and all(
+                    max(first_low, second_low) <= min(first_high, second_high)
+                    for (first_low, first_high), (second_low, second_high)
+                    in zip(first[1], second[1])
+                )
+                if first[0] != second[0] and overlaps:
+                    overlapping_stats.add(stat_identity)
+
+    assert overlapping_stats == {
+        ("desecrated.stat_1574590649",),
+        ("desecrated.stat_1940865751",),
+        ("desecrated.stat_2250681686",),
+        ("desecrated.stat_3032590688",),
+        ("desecrated.stat_3917489142",),
+        ("desecrated.stat_789117908",),
+    }

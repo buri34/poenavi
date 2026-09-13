@@ -175,15 +175,55 @@ def test_supplied_short_mod_panel_texts_use_the_three_mod_intersection():
     }
 
 
-def test_category_panel_requires_all_three_mods_not_the_best_partial_match():
+def test_category_panel_uses_two_recognized_mods_when_one_is_unsupported():
     result = resolve_ocr_variants((
         ("アーマー +27", "アーマー +27", "アーマー +27"),
         ("移動スピードが30%増加する",) * 3,
         ("未知の効果が123%増加する",) * 3,
     ), ("boots", "amulet"))
 
-    assert result.categories == ()
+    assert result.categories == ("boots",)
+    assert result.tiers == (7, 2, None)
+    assert result.statuses == ("matched", "matched", "unsupported")
     assert result.fallback_tiers == (7, 2, None)
+    assert result.fallback_statuses == ("matched", "matched", "unsupported")
+
+
+def test_one_recognized_mod_does_not_open_an_overbroad_category_panel():
+    result = resolve_ocr_variants((
+        ("最大マナ +25",) * 3,
+        ("未知の効果が123%増加する",) * 3,
+        ("さらに未知の効果が456%増加する",) * 3,
+    ), ("ring", "amulet", "boots", "gloves"))
+
+    assert result.categories == ()
+    assert result.fallback_tiers[0] is None
+
+
+def test_ring_overlap_keeps_category_and_only_marks_that_mod_multi_tier():
+    result = resolve_ocr_variants((
+        ("最大マナ +25",) * 3,
+        ("2から5の物理ダメージをアタックに追加する",) * 3,
+        ("1から6の雷ダメージをアタックに追加する",) * 3,
+    ), ("ring", "gloves", "amulet", "boots"))
+
+    assert result.categories == ("ring", "gloves")
+    assert result.tiers_by_category["ring"] == (10, (7, 8), 9)
+    assert result.statuses_by_category["ring"] == (
+        "matched", "multiple_tiers", "matched",
+    )
+
+
+def test_conflicting_recognized_mods_preserve_safe_individual_results():
+    result = resolve_ocr_variants((
+        ("移動スピードが30%増加する",) * 3,
+        ("この武器によるアタックは20%の火耐性を貫通する",) * 3,
+        ("未知の効果が123%増加する",) * 3,
+    ), ("boots", "spear"))
+
+    assert result.categories == ()
+    assert result.category_conflict
+    assert result.fallback_tiers == (2, 1, None)
     assert result.fallback_statuses == ("matched", "matched", "unsupported")
 
 

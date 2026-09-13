@@ -15,7 +15,7 @@ from src.poetore.poe2.desecration_ocr import (
     prepare_desecration_frame,
     resolve_ocr_variants,
 )
-from src.poetore.poe2.desecration_tiers import available_categories
+from src.poetore.poe2.desecration_tiers import TierValue, available_categories
 from src.poetore.window_position import path_of_exile_client_rect
 
 CATEGORY_LABELS = {
@@ -49,6 +49,8 @@ def should_retry_closed_region(resolution) -> bool:
     """Retry only when the open crop lacks two independent readable choices."""
     if resolution.categories:
         return False
+    if getattr(resolution, "category_conflict", False) is True:
+        return True
     confident = sum(
         status in {"matched", "unsupported", "tierless"}
         for status in resolution.fallback_statuses
@@ -62,6 +64,14 @@ STATUS_LABELS = {
     "tierless": "Tierなし",
     "category_unselected": "部位未選択",
 }
+
+
+def tier_badge_label(tier: TierValue, status: str) -> str:
+    if isinstance(tier, tuple):
+        return "/".join(f"T{candidate}" for candidate in tier)
+    if tier is not None:
+        return f"T{tier}"
+    return STATUS_LABELS.get(status, "読取失敗")
 
 
 def normalized_capture_rect(client_rect: QRect, value) -> QRect | None:
@@ -84,7 +94,7 @@ class DesecrationTierOverlay(QWidget):
         self._capture_offset = QPoint()
         self._capture_size = (1, 1)
         self._bands: tuple[ChoiceBand, ...] = ()
-        self._tiers: tuple[int | None, ...] = ()
+        self._tiers: tuple[TierValue, ...] = ()
         self._statuses: tuple[str, ...] = ()
         self._range_labels: tuple[tuple[str, ...], ...] = ()
         self._show_ranges = False
@@ -124,8 +134,8 @@ class DesecrationTierOverlay(QWidget):
         )
         for band, tier, status, range_labels in rows:
             y = self._capture_offset.y() + round(((band.top + band.bottom) / 2) * scale_y)
-            label = f"T{tier}" if tier is not None else STATUS_LABELS.get(status, "読取失敗")
-            badge_width = 50 if tier is not None else 82
+            label = tier_badge_label(tier, status)
+            badge_width = 50 if isinstance(tier, int) else 82
             rect = QRectF(right_edge - badge_width, y - 15, badge_width, 30)
             font = QFont(self.font())
             font.setBold(True)
