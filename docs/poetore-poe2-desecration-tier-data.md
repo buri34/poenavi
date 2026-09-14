@@ -41,7 +41,7 @@ OCR数値照合は未対応として診断欄へ残す。
 役割の異なる情報を混同しない。確認順は次のとおり。
 
 1. **GGG公式Patch Notes**
-   - <https://www.pathofexile.com/forum/view-forum/patch-notes>
+   - <https://www.pathofexile.com/forum/view-forum/2212>
    - Mod追加・削除、数値変更、対応ベース変更、アビス／冒涜仕様変更の一次情報として使う。
    - Patch Notesに記載がないことを「変更なし」の証明にはしない。
 2. **GGG公式Trade2 Stat API（日英）**
