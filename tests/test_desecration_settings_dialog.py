@@ -38,6 +38,18 @@ def test_desecration_settings_preserves_two_independent_regions(qtbot):
     assert config["inventory_closed_region"] == closed
 
 
+def test_desecration_hotkey_accepts_ctrl_alt_shift_combinations(qtbot):
+    dialog = DesecrationSettingsDialog(hotkey="ctrl+alt+shift+r")
+    qtbot.addWidget(dialog)
+
+    widget = dialog.hotkey_widget
+    assert widget.ctrl_button.isChecked()
+    assert widget.alt_button.isChecked()
+    assert widget.shift_button.isChecked()
+    assert not widget.no_modifier_button.isChecked()
+    assert dialog.settings()[1] == "ctrl+alt+shift+r"
+
+
 def test_desecration_settings_saves_optional_tier_ranges(qtbot):
     dialog = DesecrationSettingsDialog()
     qtbot.addWidget(dialog)

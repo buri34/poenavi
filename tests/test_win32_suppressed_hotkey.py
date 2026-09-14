@@ -7,26 +7,30 @@ from src.utils.win32_suppressed_hotkey import (
     VK_CONTROL,
     VK_LMENU,
     VK_MENU,
+    VK_SHIFT,
     _parse_hotkey,
     Win32SuppressedHotkeyHook,
 )
 
 
 def test_parse_hotkey_accepts_required_modifier_and_regular_key():
-    assert _parse_hotkey("Alt+D") == (VK_MENU, ord("D"))
-    assert _parse_hotkey("ctrl+1") == (VK_CONTROL, ord("1"))
-    assert _parse_hotkey("ctrl+F5") == (VK_CONTROL, 0x74)
-    assert _parse_hotkey("alt+Space") == (VK_MENU, 0x20)
+    assert _parse_hotkey("Alt+D") == (frozenset({"alt"}), ord("D"))
+    assert _parse_hotkey("ctrl+1") == (frozenset({"ctrl"}), ord("1"))
+    assert _parse_hotkey("ctrl+F5") == (frozenset({"ctrl"}), 0x74)
+    assert _parse_hotkey("alt+Space") == (frozenset({"alt"}), 0x20)
+    assert _parse_hotkey("Shift+Ctrl+Alt+R") == (
+        frozenset({"ctrl", "alt", "shift"}), ord("R")
+    )
 
 
 def test_parse_hotkey_accepts_single_key_only_when_explicitly_enabled():
-    assert _parse_hotkey("D", allow_unmodified=True) == (None, ord("D"))
-    assert _parse_hotkey("F5", allow_unmodified=True) == (None, 0x74)
+    assert _parse_hotkey("D", allow_unmodified=True) == (frozenset(), ord("D"))
+    assert _parse_hotkey("F5", allow_unmodified=True) == (frozenset(), 0x74)
     with pytest.raises(ValueError):
         _parse_hotkey("D")
 
 
-@pytest.mark.parametrize("hotkey", ["d", "shift+d", "alt+escape", "ctrl+"])
+@pytest.mark.parametrize("hotkey", ["d", "win+d", "alt+escape", "ctrl+", "ctrl+ctrl+d"])
 def test_parse_hotkey_rejects_unsupported_bindings(hotkey):
     with pytest.raises(ValueError):
         _parse_hotkey(hotkey)
@@ -71,6 +75,31 @@ def test_processor_does_not_treat_modified_key_as_unmodified_hotkey():
     assert processor.process(ord("D"), True) is False
     assert processor.process(ord("D"), False) is False
     assert processor.process(VK_CONTROL, False) is False
+    assert events == []
+
+
+def test_processor_requires_exact_modifier_set_for_multi_modifier_hotkey():
+    events = []
+    processor = HotkeyEventProcessor(
+        frozenset({"ctrl", "alt", "shift"}), ord("R"),
+        lambda: True, events.append,
+    )
+    for modifier in (VK_CONTROL, VK_MENU, VK_SHIFT):
+        assert processor.process(modifier, True) is False
+    assert processor.process(ord("R"), True) is True
+    assert processor.process(ord("R"), False) is True
+    assert events == ["pressed", "released"]
+
+
+def test_processor_rejects_extra_modifier():
+    events = []
+    processor = HotkeyEventProcessor(
+        frozenset({"ctrl", "alt"}), ord("R"), lambda: True, events.append,
+    )
+    for modifier in (VK_CONTROL, VK_MENU, VK_SHIFT):
+        processor.process(modifier, True)
+    assert processor.process(ord("R"), True) is False
+    assert processor.process(ord("R"), False) is False
     assert events == []
 
 

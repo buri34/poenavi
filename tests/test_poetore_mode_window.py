@@ -249,6 +249,50 @@ def test_poe2_expedition_hotkey_starts_only_when_feature_is_enabled():
     app.processEvents()
 
 
+def test_separate_ocr_services_receive_multi_modifier_hotkeys():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "poe_version": POE2,
+        "hotkeys": {
+            "expedition_reward_ocr": "ctrl+shift+e",
+            "desecration_tier_ocr": "ctrl+alt+shift+r",
+        },
+        "poetore": {
+            "screen_reading": {"enabled": True},
+            "expedition_reward_overlay": {
+                "region": {"left": 0.1, "top": 0.1, "right": 0.5, "bottom": 0.9},
+            },
+            "desecration_tier_overlay": {
+                "inventory_open_region": {
+                    "left": 0.2, "top": 0.2, "right": 0.7, "bottom": 0.8,
+                },
+            },
+        },
+    }
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config", return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService",
+    ), patch(
+        "src.ui.poetore_mode_window.ForegroundSuppressedHotkeyService",
+    ) as suppressed_class, patch(
+        "src.ui.poetore_mode_window.suppressed_hotkeys_supported", return_value=True,
+    ), patch.object(
+        PoetoreModeWindow, "_ensure_expedition_reward_controller",
+    ), patch.object(
+        PoetoreModeWindow, "_ensure_desecration_tier_controller",
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    assert [call.args[:2] for call in suppressed_class.call_args_list] == [
+        ("poetore_capture", "alt+d"),
+        ("expedition_reward_ocr", "ctrl+shift+e"),
+        ("desecration_tier_ocr", "ctrl+alt+shift+r"),
+    ]
+    window.close()
+    app.processEvents()
+
+
 def test_poe2_expedition_ocr_does_not_warm_up_before_region_is_set():
     app = QApplication.instance() or QApplication([])
     config = {

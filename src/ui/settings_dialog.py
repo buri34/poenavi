@@ -204,22 +204,30 @@ class AutoHideHotkeyWidget(QWidget):
 
     def __init__(
         self, hotkey="ctrl+d", parent=None, theme=POETORE_THEME,
-        allow_no_modifier=False,
+        allow_no_modifier=False, allow_multiple_modifiers=False,
+        allow_shift=False,
     ):
         super().__init__(parent)
         self.allow_no_modifier = allow_no_modifier
-        self.setFixedWidth(self.INPUT_WIDTH)
+        self.allow_multiple_modifiers = allow_multiple_modifiers
+        self.allow_shift = allow_shift
+        self.setFixedWidth(self.INPUT_WIDTH + (52 if allow_shift else 0))
         modifier, trigger = self._split_hotkey(hotkey)
+        selected_modifiers = self._hotkey_modifiers(hotkey)
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
         self.modifier_group = QButtonGroup(self)
-        self.modifier_group.setExclusive(True)
+        self.modifier_group.setExclusive(not self.allow_multiple_modifiers)
         self.ctrl_button = QPushButton("Ctrl")
         self.alt_button = QPushButton("Alt")
         modifier_buttons = [("ctrl", self.ctrl_button), ("alt", self.alt_button)]
+        self.shift_button = None
+        if self.allow_shift:
+            self.shift_button = QPushButton("Shift")
+            modifier_buttons.append(("shift", self.shift_button))
         self.no_modifier_button = None
         if self.allow_no_modifier:
             self.no_modifier_button = QPushButton("なし")
@@ -240,12 +248,24 @@ class AutoHideHotkeyWidget(QWidget):
             button.setProperty("modifier", name)
             self.modifier_group.addButton(button)
             layout.addWidget(button)
-        selected_button = self.ctrl_button
-        if modifier == "alt":
-            selected_button = self.alt_button
-        elif modifier is None and self.no_modifier_button is not None:
-            selected_button = self.no_modifier_button
-        selected_button.setChecked(True)
+        if self.allow_multiple_modifiers:
+            for name, button in modifier_buttons:
+                button.setChecked(
+                    name in selected_modifiers
+                    or (name == "none" and not selected_modifiers)
+                )
+                button.clicked.connect(
+                    lambda checked, item=name: self._on_multi_modifier_clicked(
+                        item, checked
+                    )
+                )
+        else:
+            selected_button = self.ctrl_button
+            if modifier == "alt":
+                selected_button = self.alt_button
+            elif modifier is None and self.no_modifier_button is not None:
+                selected_button = self.no_modifier_button
+            selected_button.setChecked(True)
 
         self.key_button = TriggerKeyButton(trigger)
         self.key_button.setObjectName("autoHideTriggerKey")
@@ -272,11 +292,39 @@ class AutoHideHotkeyWidget(QWidget):
         )
         return modifier, trigger
 
+    @staticmethod
+    def _hotkey_modifiers(hotkey):
+        normalized = {
+            token.strip().casefold()
+            for token in str(hotkey or "").split("+")
+            if token.strip()
+        }
+        if "control" in normalized:
+            normalized.add("ctrl")
+        return tuple(
+            modifier for modifier in ("ctrl", "alt", "shift")
+            if modifier in normalized
+        )
+
     @property
     def modifier(self):
         checked = self.modifier_group.checkedButton()
         value = checked.property("modifier") if checked is not None else "ctrl"
         return None if value == "none" else value
+
+    @property
+    def modifiers(self):
+        if not self.allow_multiple_modifiers:
+            return () if self.modifier is None else (self.modifier,)
+        buttons = {
+            "ctrl": self.ctrl_button,
+            "alt": self.alt_button,
+            "shift": self.shift_button,
+        }
+        return tuple(
+            name for name in ("ctrl", "alt", "shift")
+            if buttons[name] is not None and buttons[name].isChecked()
+        )
 
     @property
     def key_text(self):
@@ -285,14 +333,38 @@ class AutoHideHotkeyWidget(QWidget):
             return "none"
         # 通常キー欄で修飾キー付き入力をしても、選択中の保持キーだけを採用する。
         _, trigger = self._split_hotkey(trigger)
-        return trigger if self.modifier is None else f"{self.modifier}+{trigger}"
+        modifiers = self.modifiers
+        return "+".join((*modifiers, trigger)) if modifiers else trigger
 
     def set_modifier(self, modifier):
         normalized = str(modifier).casefold()
+        if self.allow_multiple_modifiers:
+            selected = set(self._hotkey_modifiers(normalized))
+            self.ctrl_button.setChecked("ctrl" in selected)
+            self.alt_button.setChecked("alt" in selected)
+            if self.shift_button is not None:
+                self.shift_button.setChecked("shift" in selected)
+            if self.no_modifier_button is not None:
+                self.no_modifier_button.setChecked(not selected)
+            return
         if normalized in {"none", "なし"} and self.no_modifier_button is not None:
             self.no_modifier_button.setChecked(True)
         else:
             (self.alt_button if normalized == "alt" else self.ctrl_button).setChecked(True)
+
+    def _on_multi_modifier_clicked(self, name, checked):
+        if not self.allow_multiple_modifiers:
+            return
+        if name == "none" and checked:
+            self.ctrl_button.setChecked(False)
+            self.alt_button.setChecked(False)
+            if self.shift_button is not None:
+                self.shift_button.setChecked(False)
+            return
+        if name != "none" and checked and self.no_modifier_button is not None:
+            self.no_modifier_button.setChecked(False)
+        if name != "none" and not self.modifiers and self.no_modifier_button is not None:
+            self.no_modifier_button.setChecked(True)
 
     def set_key(self, key):
         _, trigger = self._split_hotkey(key)
