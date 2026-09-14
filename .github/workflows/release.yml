@@ -77,8 +77,35 @@ jobs:
           tests/test_poetore_distribution.py
           tests/test_windows_version_info.py
 
+      - name: Run OCR-hotkey-recovery release tests
+        if: github.ref_name == 'v4.3.3'
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: >-
+          python -m pytest -q
+          tests/test_build_poetore_poe2_desecration_tiers.py
+          tests/test_audit_poetore_poe2_desecration_update.py
+          tests/test_desecration_ocr.py
+          tests/test_desecration_overlay.py
+          tests/test_desecration_settings_dialog.py
+          tests/test_expedition_ocr_probe.py
+          tests/test_expedition_settings_dialog.py
+          tests/test_config_manager.py
+          tests/test_feature_support.py
+          tests/test_global_hotkeys.py
+          tests/test_poetore_hotkey_config.py
+          tests/test_win32_suppressed_hotkey.py
+          tests/test_poetore_mode_window.py
+          tests/test_poetore_poe2_desecration_tiers.py
+          tests/test_poetore_poe2_trade.py
+          tests/test_poetore_settings_dialog.py
+          tests/test_poetore_ui.py
+          tests/test_poetore_distribution.py
+          tests/test_windows_version_info.py
+
       - name: Run full tests
-        if: ${{ !contains(fromJSON('["v4.1.0", "v4.1.6", "v4.1.7", "v4.2.0", "v4.2.1", "v4.2.3", "v4.3.0", "v4.3.1", "v4.3.2"]'), github.ref_name) }}
+        if: ${{ !contains(fromJSON('["v4.1.0", "v4.1.6", "v4.1.7", "v4.2.0", "v4.2.1", "v4.2.3", "v4.3.0", "v4.3.1", "v4.3.2", "v4.3.3"]'), github.ref_name) }}
         shell: pwsh
         env:
           QT_QPA_PLATFORM: offscreen
