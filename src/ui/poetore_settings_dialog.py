@@ -149,8 +149,11 @@ class PoetoreSettingsDialog(QDialog):
         self.cheat_hotkey = HotkeyButton(
             hotkeys.get("cheat_sheets_toggle", "shift+space")
         )
-        self._screen_reading_hotkey = str(
-            hotkeys.get("screen_reading_ocr", "alt+r")
+        self._expedition_hotkey = str(
+            hotkeys.get("expedition_reward_ocr", "alt+e")
+        )
+        self._desecration_hotkey = str(
+            hotkeys.get("desecration_tier_ocr", "alt+r")
         )
         for button in (
             self.exit_hotkey, self.monastery_hotkey,
@@ -601,15 +604,14 @@ class PoetoreSettingsDialog(QDialog):
             self.windows_autostart_poetore_checkbox.isChecked()
         )
         hotkeys = dict(self.current_config.get("hotkeys", {}))
-        hotkeys.pop("expedition_reward_ocr", None)
-        hotkeys.pop("desecration_tier_ocr", None)
         hotkeys.update(
             {
                 "exit": self.exit_hotkey.key_text,
                 "monastery": self.monastery_hotkey.key_text,
                 "poetore_capture": self.capture_hotkey.key_text,
                 "poetore_auto_hide": self.auto_hide_hotkey.key_text,
-                "screen_reading_ocr": self._screen_reading_hotkey,
+                "expedition_reward_ocr": self._expedition_hotkey,
+                "desecration_tier_ocr": self._desecration_hotkey,
                 "map_check": self.map_check_hotkey.key_text,
                 "cheat_sheets_toggle": self.cheat_hotkey.key_text,
             }
@@ -658,14 +660,16 @@ class PoetoreSettingsDialog(QDialog):
             "monastery": self.monastery_hotkey.key_text,
             "poetore_capture": self.capture_hotkey.key_text,
             "poetore_auto_hide": self.auto_hide_hotkey.key_text,
-            "screen_reading_ocr": self._screen_reading_hotkey,
+            "expedition_reward_ocr": self._expedition_hotkey,
+            "desecration_tier_ocr": self._desecration_hotkey,
             "map_check": self.map_check_hotkey.key_text,
             "cheat_sheets_toggle": self.cheat_hotkey.key_text,
         }
         if self.poe_version == POE2:
             hotkeys.pop("map_check")
         else:
-            hotkeys.pop("screen_reading_ocr")
+            hotkeys.pop("expedition_reward_ocr")
+            hotkeys.pop("desecration_tier_ocr")
         if not self.custom_commands_widget.validate(hotkeys):
             return
         duplicates = find_duplicate_hotkeys(hotkeys)
@@ -675,7 +679,8 @@ class PoetoreSettingsDialog(QDialog):
                 "monastery": "修道院へ移動",
                 "poetore_capture": "ぽえとれ検索（操作モード）",
                 "poetore_auto_hide": "ぽえとれ検索（AUTO-HIDE）",
-                "screen_reading_ocr": "画面読取ショートカット",
+                "expedition_reward_ocr": "エクスペディション報酬読取",
+                "desecration_tier_ocr": "アビス冒涜Modティア読取",
                 "map_check": "Map Modチェック",
                 "cheat_sheets_toggle": "Cheat sheets表示",
             }

@@ -6,8 +6,6 @@ from src.poetore.poe2.desecration_ocr import (
     _green_mask,
     _green_text_rect,
     choice_bands,
-    desecration_panel_diagnostics,
-    looks_like_desecration_panel,
     prepare_desecration_frame,
     resolve_ocr_variants,
 )
@@ -57,22 +55,9 @@ def test_supplied_panels_have_three_valid_choice_bands():
     for name in ("boots-reveal.png", "spear-reveal.png"):
         image = QImage(f"tests/fixtures/poetore/poe2/desecration/{name}")
         frame = prepare_desecration_frame(image)
-        diagnostics = desecration_panel_diagnostics(image)
         assert frame.valid_panel
         assert len(choice_bands(image)) == 3
         assert all(len(variants) == 3 for variants in frame.variants)
-        assert diagnostics["matched"]
-        assert diagnostics["band_count"] == 3
-        assert len(diagnostics["green_pixel_counts"]) == 3
-        assert len(diagnostics["green_text_widths"]) == 3
-        assert looks_like_desecration_panel(image)
-
-
-def test_expedition_region_is_not_mistaken_for_desecration():
-    image = QImage("assets/images/expedition_region_example.png").copy(
-        47, 162, 605, 652
-    )
-    assert not looks_like_desecration_panel(image)
 
 
 def test_bulk_pixel_processing_matches_the_original_pixel_api_results():

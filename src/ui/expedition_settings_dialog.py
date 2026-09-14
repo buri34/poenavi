@@ -214,7 +214,7 @@ class ExpeditionSettingsDialog(QDialog):
         parent=None,
         expedition_config=None,
         screen_reading_enabled=False,
-        hotkey="alt+r",
+        hotkey="alt+e",
         example_image_path=None,
         client_rect_getter=path_of_exile_client_rect,
         selector_class=ExpeditionRegionSelector,
@@ -271,11 +271,10 @@ class ExpeditionSettingsDialog(QDialog):
         hotkey_form = QFormLayout()
         hotkey_form.setContentsMargins(0, 2, 0, 0)
         self.hotkey_widget = AutoHideHotkeyWidget(
-            hotkey, theme=SETTINGS_THEME, allow_no_modifier=True,
-            allow_multiple_modifiers=True, allow_shift=True,
+            hotkey, theme=SETTINGS_THEME, allow_no_modifier=True
         )
         self.hotkey_widget.key_button.setStyleSheet("")
-        hotkey_form.addRow("画面読取ショートカット（共通）:", self.hotkey_widget)
+        hotkey_form.addRow("読取ショートカット:", self.hotkey_widget)
         basic.addLayout(hotkey_form)
         content.addWidget(basic_group)
 

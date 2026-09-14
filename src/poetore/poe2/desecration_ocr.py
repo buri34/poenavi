@@ -148,63 +148,6 @@ def _green_text_rect(image: QImage, padding: int = 8) -> tuple[QRect | None, int
     ), count
 
 
-def desecration_panel_diagnostics(image: QImage) -> dict[str, object]:
-    """Return sanitized structural metrics used by the shared OCR router."""
-    result: dict[str, object] = {
-        "image_width": image.width(),
-        "image_height": image.height(),
-        "probe_width": 0,
-        "probe_height": 0,
-        "band_count": 0,
-        "min_band_height": 0,
-        "max_band_height": 0,
-        "green_pixel_counts": [],
-        "green_text_widths": [],
-        "matched": False,
-    }
-    if image.isNull():
-        return result
-    image = (
-        image.scaledToWidth(360, Qt.FastTransformation)
-        if image.width() > 360 else image
-    )
-    result["probe_width"] = image.width()
-    result["probe_height"] = image.height()
-    bands = choice_bands(image)
-    result["band_count"] = len(bands)
-    if len(bands) != 3:
-        return result
-    heights = [band.bottom - band.top for band in bands]
-    result["min_band_height"] = min(heights, default=0)
-    result["max_band_height"] = max(heights, default=0)
-    if min(heights) <= 0 or max(heights) / min(heights) > 1.45:
-        return result
-    pixel_counts = []
-    text_widths = []
-    for band in bands:
-        card = image.copy(0, band.top, image.width(), max(1, band.bottom - band.top))
-        text_rect, pixels = _green_text_rect(card, padding=0)
-        pixel_counts.append(pixels)
-        text_widths.append(text_rect.width() if text_rect is not None else 0)
-        if (
-            text_rect is None
-            or pixels < 20
-            or text_rect.width() < max(24, round(image.width() * 0.08))
-        ):
-            result["green_pixel_counts"] = pixel_counts
-            result["green_text_widths"] = text_widths
-            return result
-    result["green_pixel_counts"] = pixel_counts
-    result["green_text_widths"] = text_widths
-    result["matched"] = True
-    return result
-
-
-def looks_like_desecration_panel(image: QImage) -> bool:
-    """Return whether a registered crop has three balanced green-text choices."""
-    return bool(desecration_panel_diagnostics(image)["matched"])
-
-
 def _green_mask(image: QImage) -> QImage:
     source = image.convertToFormat(QImage.Format_RGBA8888)
     source_pixels = source.bits()

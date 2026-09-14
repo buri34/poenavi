@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, call, patch
 
-from PySide6.QtCore import QRect, QSize, Qt, QTimer
-from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtCore import QSize, Qt, QTimer
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QLabel,
@@ -211,7 +211,7 @@ def test_poe2_expedition_hotkey_starts_only_when_feature_is_enabled():
     app = QApplication.instance() or QApplication([])
     config = {
         "poe_version": POE2,
-        "hotkeys": {"screen_reading_ocr": "ctrl+alt+shift+r"},
+        "hotkeys": {"expedition_reward_ocr": "alt+e"},
         "poetore": {
             "screen_reading": {"enabled": True},
             "expedition_reward_overlay": {
@@ -238,10 +238,10 @@ def test_poe2_expedition_hotkey_starts_only_when_feature_is_enabled():
     ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
         window = PoetoreModeWindow()
 
-    assert "screen_reading_ocr" not in hotkey_class.call_args.args[0]
+    assert "expedition_reward_ocr" not in hotkey_class.call_args.args[0]
     assert [call.args[:2] for call in suppressed_class.call_args_list] == [
         ("poetore_capture", "alt+d"),
-        ("screen_reading_ocr", "ctrl+alt+shift+r"),
+        ("expedition_reward_ocr", "alt+e"),
     ]
     assert suppressed_class.call_args_list[1].kwargs["allow_unmodified"] is True
     controller.warm_up.assert_called_once_with()
@@ -253,7 +253,7 @@ def test_poe2_expedition_ocr_does_not_warm_up_before_region_is_set():
     app = QApplication.instance() or QApplication([])
     config = {
         "poe_version": POE2,
-        "hotkeys": {"screen_reading_ocr": "alt+r"},
+        "hotkeys": {"expedition_reward_ocr": "alt+e"},
         "poetore": {
             "screen_reading": {"enabled": True},
             "expedition_reward_overlay": {},
@@ -282,118 +282,16 @@ def test_poe2_expedition_ocr_does_not_warm_up_before_region_is_set():
     app.processEvents()
 
 
-def test_shared_screen_reading_hotkey_dispatches_router():
+def test_expedition_hotkey_dispatches_single_scan():
     window = MagicMock()
-    PoetoreModeWindow.handle_hotkey(window, "screen_reading_ocr")
-    window.capture_screen_reading.assert_called_once_with()
-
-
-def _shared_routing_window():
-    window = MagicMock()
-    window.config = {
-        "poetore": {
-            "expedition_reward_overlay": {"region": {"left": .1}},
-            "desecration_tier_overlay": {
-                "inventory_open_region": {"left": .2},
-            },
-        },
-    }
-    window._screen_reading_enabled.return_value = True
-    window._expedition_ready.return_value = True
-    window._desecration_ready.return_value = True
-    window._grab_screen_region.side_effect = [
-        QImage(300, 180, QImage.Format_RGB32),
-        QImage(300, 180, QImage.Format_RGB32),
-    ]
-    return window
-
-
-def test_shared_screen_reading_routes_only_expedition_when_panel_matches():
-    window = _shared_routing_window()
-    with patch(
-        "src.poetore.window_position.path_of_exile_client_rect",
-        return_value=QRect(0, 0, 1920, 1080),
-    ), patch(
-        "src.poetore.expedition_rewards.expedition_capture_rect",
-        return_value=QRect(1, 1, 300, 180),
-    ), patch(
-        "src.poetore.poe2.desecration_overlay.normalized_capture_rect",
-        side_effect=lambda _client, value: QRect(2, 2, 300, 180) if value else None,
-    ), patch(
-        "src.poetore.expedition_ocr_probe.expedition_panel_diagnostics",
-        return_value={"matched": True},
-    ), patch(
-        "src.poetore.poe2.desecration_ocr.desecration_panel_diagnostics",
-        side_effect=({"matched": False}, {"matched": False}),
-    ):
-        assert PoetoreModeWindow.capture_screen_reading(window)
+    PoetoreModeWindow.handle_hotkey(window, "expedition_reward_ocr")
     window.capture_expedition_rewards.assert_called_once_with()
-    window.capture_desecration_tiers.assert_not_called()
 
 
-def test_shared_screen_reading_routes_only_desecration_when_panel_matches():
-    window = _shared_routing_window()
-    with patch(
-        "src.poetore.window_position.path_of_exile_client_rect",
-        return_value=QRect(0, 0, 1920, 1080),
-    ), patch(
-        "src.poetore.expedition_rewards.expedition_capture_rect",
-        return_value=QRect(1, 1, 300, 180),
-    ), patch(
-        "src.poetore.poe2.desecration_overlay.normalized_capture_rect",
-        side_effect=lambda _client, value: QRect(2, 2, 300, 180) if value else None,
-    ), patch(
-        "src.poetore.expedition_ocr_probe.expedition_panel_diagnostics",
-        return_value={"matched": False},
-    ), patch(
-        "src.poetore.poe2.desecration_ocr.desecration_panel_diagnostics",
-        side_effect=({"matched": False}, {"matched": True}),
-    ):
-        assert PoetoreModeWindow.capture_screen_reading(window)
+def test_desecration_hotkey_dispatches_single_scan():
+    window = MagicMock()
+    PoetoreModeWindow.handle_hotkey(window, "desecration_tier_ocr")
     window.capture_desecration_tiers.assert_called_once_with()
-    window.capture_expedition_rewards.assert_not_called()
-
-
-def test_shared_screen_reading_rejects_ambiguous_detection():
-    window = _shared_routing_window()
-    trace = MagicMock()
-    with patch(
-        "src.poetore.performance.start_search_trace", return_value=trace,
-    ), patch(
-        "src.poetore.window_position.path_of_exile_client_rect",
-        return_value=QRect(0, 0, 1920, 1080),
-    ), patch(
-        "src.poetore.expedition_rewards.expedition_capture_rect",
-        return_value=QRect(1, 1, 300, 180),
-    ), patch(
-        "src.poetore.poe2.desecration_overlay.normalized_capture_rect",
-        side_effect=lambda _client, value: QRect(2, 2, 300, 180) if value else None,
-    ), patch(
-        "src.poetore.expedition_ocr_probe.expedition_panel_diagnostics",
-        return_value={"matched": True},
-    ), patch(
-        "src.poetore.poe2.desecration_ocr.desecration_panel_diagnostics",
-        side_effect=({"matched": False}, {"matched": True}),
-    ):
-        assert not PoetoreModeWindow.capture_screen_reading(window)
-    window.capture_expedition_rewards.assert_not_called()
-    window.capture_desecration_tiers.assert_not_called()
-    assert "判別できません" in window.rate_status.setText.call_args.args[0]
-    classified = [
-        call.kwargs for call in trace.mark.call_args_list
-        if call.args == ("region_classified",)
-    ]
-    assert classified == [
-        {"region": "expedition", "detector": "expedition", "matched": True},
-        {"region": "expedition", "detector": "desecration", "matched": False},
-        {"region": "inventory_open_region", "detector": "desecration", "matched": True},
-    ]
-    trace.mark.assert_any_call(
-        "route_decided",
-        outcome="ambiguous",
-        expedition_match=True,
-        desecration_match=True,
-    )
 
 
 def test_shared_screen_reading_off_stops_both_features_and_keeps_regions():
@@ -402,7 +300,10 @@ def test_shared_screen_reading_off_stops_both_features_and_keeps_regions():
     expedition_region = {"left": .1, "top": .1, "right": .5, "bottom": .8}
     desecration_region = {"left": .2, "top": .2, "right": .7, "bottom": .7}
     window.config = {
-        "hotkeys": {"screen_reading_ocr": "alt+r"},
+        "hotkeys": {
+            "expedition_reward_ocr": "alt+e",
+            "desecration_tier_ocr": "alt+r",
+        },
         "poetore": {
             "screen_reading": {"enabled": True},
             "expedition_reward_overlay": {"region": expedition_region},
@@ -412,7 +313,7 @@ def test_shared_screen_reading_off_stops_both_features_and_keeps_regions():
     with patch("src.ui.poetore_mode_window.ConfigManager.save_config"):
         assert PoetoreModeWindow._save_screen_reading_settings(
             window, "expedition_reward_overlay", {"region": expedition_region},
-            "alt+r", False,
+            "expedition_reward_ocr", "alt+e", False,
         )
     assert window.config["poetore"]["screen_reading"] == {"enabled": False}
     assert window.config["poetore"]["desecration_tier_overlay"]["inventory_open_region"] == desecration_region
@@ -439,7 +340,7 @@ def test_expedition_header_button_saves_settings_and_restarts_hotkeys():
     window = MagicMock()
     window.poe_version = POE2
     window.config = {
-        "hotkeys": {"screen_reading_ocr": "alt+r"},
+        "hotkeys": {"expedition_reward_ocr": "alt+e"},
         "poetore": {"screen_reading": {"enabled": False}, "expedition_reward_overlay": {}},
     }
     window._expedition_reward_controller = None
@@ -462,7 +363,7 @@ def test_expedition_header_button_saves_settings_and_restarts_hotkeys():
 
         PoetoreModeWindow.open_expedition_settings(window)
 
-    assert window.config["hotkeys"]["screen_reading_ocr"] == "ctrl+r"
+    assert window.config["hotkeys"]["expedition_reward_ocr"] == "ctrl+r"
     assert window.config["poetore"]["expedition_reward_overlay"] == {
         "region": region,
     }
@@ -478,7 +379,7 @@ def test_expedition_header_button_rejects_duplicate_hotkey():
     window.config = {
         "hotkeys": {
             "poetore_capture": "alt+d",
-            "screen_reading_ocr": "alt+r",
+            "expedition_reward_ocr": "alt+e",
         },
         "poetore": {"screen_reading": {"enabled": False}, "expedition_reward_overlay": {}},
     }

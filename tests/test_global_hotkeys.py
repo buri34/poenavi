@@ -124,7 +124,7 @@ def test_service_registers_only_supplied_mode_actions():
 def test_unmodified_hotkey_does_not_fire_with_modifier_held():
     listeners = []
     service = GlobalHotkeyService(
-        {"screen_reading_ocr": "e"},
+        {"expedition_reward_ocr": "e"},
         listener_factory=(
             lambda **kwargs: listeners.append(FakeListener(**kwargs))
             or listeners[-1]
@@ -141,28 +141,7 @@ def test_unmodified_hotkey_does_not_fire_with_modifier_held():
     assert emitted == []
 
     listeners[0].on_press(SimpleNamespace(char="e", vk=ord("E")))
-    assert emitted == ["screen_reading_ocr"]
-
-
-def test_multi_modifier_hotkey_is_order_independent_and_rejects_extra_modifier():
-    listeners = []
-    service = GlobalHotkeyService(
-        {"screen_reading_ocr": "Shift+Ctrl+R"},
-        listener_factory=lambda **kwargs: listeners.append(FakeListener(**kwargs)) or listeners[-1],
-    )
-    emitted = []
-    service.command.connect(emitted.append)
-    service.start()
-
-    listeners[0].on_press(SimpleNamespace(name="ctrl"))
-    listeners[0].on_press(SimpleNamespace(name="shift"))
-    listeners[0].on_press(SimpleNamespace(name="alt"))
-    listeners[0].on_press(SimpleNamespace(char="r", vk=ord("R")))
-    assert emitted == []
-    listeners[0].on_release(SimpleNamespace(char="r", vk=ord("R")))
-    listeners[0].on_release(SimpleNamespace(name="alt"))
-    listeners[0].on_press(SimpleNamespace(char="r", vk=ord("R")))
-    assert emitted == ["screen_reading_ocr"]
+    assert emitted == ["expedition_reward_ocr"]
 
 
 def test_capture_release_waits_for_every_key_regardless_of_release_order():

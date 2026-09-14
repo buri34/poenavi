@@ -5,7 +5,6 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QImage
 
 import src.poetore.expedition_ocr_probe as probe
@@ -17,9 +16,7 @@ from src.poetore.expedition_ocr_probe import (
     analyze_directory,
     detect_reward_cards,
     detect_row_bands,
-    expedition_panel_diagnostics,
     load_item_dictionary,
-    looks_like_expedition_panel,
     match_item_name,
     normalize_text,
     otsu_threshold,
@@ -42,127 +39,6 @@ def _black_ink_height(image_bytes: bytes) -> int:
         if any(image.pixelColor(x, y).red() < 128 for x in range(image.width())):
             rows.append(y)
     return rows[-1] - rows[0] + 1 if rows else 0
-
-
-def test_registered_expedition_region_has_reward_card_structure():
-    image = QImage("assets/images/expedition_region_example.png").copy(
-        47, 162, 605, 652
-    )
-    diagnostics = expedition_panel_diagnostics(image)
-    assert diagnostics["matched"]
-    assert diagnostics["band_count"] >= 1
-    assert diagnostics["panel_width"] >= 80
-    assert diagnostics["min_band_height"] >= 10
-    assert looks_like_expedition_panel(image)
-
-
-def _solid_panel_with_bright_band(
-    *, width: int = 600, height: int = 652, top: int, bottom: int,
-) -> QImage:
-    image = QImage(width, height, QImage.Format.Format_RGB888)
-    image.fill(QColor(40, 40, 40))
-    for y in range(top, bottom):
-        for x in range(width):
-            image.setPixelColor(x, y, QColor(190, 190, 190))
-    return image
-
-
-def test_expedition_panel_rejects_one_band_taller_than_registered_region_ratio():
-    image = _solid_panel_with_bright_band(top=120, bottom=354)
-
-    diagnostics = expedition_panel_diagnostics(image)
-
-    assert diagnostics["band_count"] == 1
-    assert diagnostics["max_band_height"] == 117
-    assert diagnostics["max_band_height_ratio"] > 0.35
-    assert not diagnostics["matched"]
-    assert not looks_like_expedition_panel(image)
-
-
-def test_expedition_panel_keeps_a_single_real_reward_shape():
-    image = _solid_panel_with_bright_band(top=100, bottom=244)
-
-    diagnostics = expedition_panel_diagnostics(image)
-
-    assert diagnostics["band_count"] == 1
-    assert diagnostics["max_band_height"] == 72
-    assert diagnostics["max_band_height_ratio"] < 0.23
-    assert diagnostics["matched"]
-    assert looks_like_expedition_panel(image)
-
-
-def test_expedition_panel_keeps_two_consistent_reward_bands():
-    image = QImage(600, 652, QImage.Format.Format_RGB888)
-    image.fill(QColor(40, 40, 40))
-    for top, bottom in ((100, 144), (160, 204)):
-        for y in range(top, bottom):
-            for x in range(image.width()):
-                image.setPixelColor(x, y, QColor(190, 190, 190))
-
-    diagnostics = expedition_panel_diagnostics(image)
-
-    assert diagnostics["band_count"] == 2
-    assert diagnostics["min_band_height"] == diagnostics["max_band_height"] == 22
-    assert diagnostics["matched"]
-
-
-def test_expedition_panel_keeps_saved_partial_row_height_variance():
-    image = QImage(600, 652, QImage.Format.Format_RGB888)
-    image.fill(QColor(40, 40, 40))
-    saved_shape = [RowBand(10, 20), *[
-        RowBand(top, top + 22) for top in range(40, 282, 22)
-    ]]
-
-    with patch.object(
-        probe,
-        "detect_qimage_reward_cards",
-        return_value=(300, saved_shape),
-    ):
-        diagnostics = expedition_panel_diagnostics(image)
-
-    assert diagnostics["band_count"] == 12
-    assert diagnostics["min_band_height"] == 10
-    assert diagnostics["max_band_height"] == 22
-    assert diagnostics["band_height_consistency"] > 0.45
-    assert diagnostics["matched"]
-
-
-def test_expedition_panel_rejects_logged_inconsistent_band_heights():
-    image = QImage(600, 652, QImage.Format.Format_RGB888)
-    image.fill(QColor(40, 40, 40))
-    logged_bands = [RowBand(10, 20), RowBand(30, 116), RowBand(130, 150)]
-
-    with patch.object(
-        probe,
-        "detect_qimage_reward_cards",
-        return_value=(300, logged_bands),
-    ):
-        diagnostics = expedition_panel_diagnostics(image)
-
-    assert diagnostics["band_count"] == 3
-    assert diagnostics["min_band_height"] == 10
-    assert diagnostics["max_band_height"] == 86
-    assert diagnostics["band_height_consistency"] < 0.12
-    assert not diagnostics["matched"]
-
-
-@pytest.mark.parametrize("scale", (0.5, 0.7, 1.0, 1.3))
-def test_expedition_panel_height_ratio_is_stable_across_image_scales(scale):
-    valid = QImage("assets/images/expedition_region_example.png").copy(
-        47, 162, 605, 652
-    )
-    false_positive = _solid_panel_with_bright_band(top=120, bottom=354)
-
-    def scaled(image: QImage) -> QImage:
-        return image.scaled(
-            round(image.width() * scale),
-            round(image.height() * scale),
-            Qt.AspectRatioMode.IgnoreAspectRatio,
-            Qt.TransformationMode.SmoothTransformation,
-        )
-
-    assert expedition_panel_diagnostics(scaled(valid))["matched"]
-    assert not expedition_panel_diagnostics(scaled(false_positive))["matched"]
 
 
 def test_load_channels_reads_exact_rgb_values_with_padded_rows(tmp_path):
