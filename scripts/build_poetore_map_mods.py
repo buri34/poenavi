@@ -2,13 +2,19 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import tarfile
+from pathlib import Path
 
-
-DEFAULT_ARCHIVE = Path("vendor-sources/awakened-poe-trade-1e2225af.tar.gz")
+DEFAULT_LOCK = Path("scripts/poetore-sources.lock.json")
 DEFAULT_METADATA = Path("data/poetore/mod_metadata.json")
 DEFAULT_OUTPUT = Path("data/poetore/map_mods.json")
+
+
+def source_from_lock(lock_path: Path = DEFAULT_LOCK) -> tuple[Path, str]:
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    revision = str(lock["sources"]["awakened_poe_trade"]["revision"])
+    archive = Path("vendor-sources") / f"awakened-poe-trade-{revision[:8]}.tar.gz"
+    return archive, revision
 
 # Awakened marks this generic item stat as ``fromAreaMods``, but it is not
 # available under the official Trade site's Map stat category.  Keeping it in
@@ -50,7 +56,9 @@ def _flatten_stats(rows: list[dict]) -> list[dict]:
     return flattened
 
 
-def build_catalog(archive: Path, metadata_path: Path) -> dict:
+def build_catalog(
+    archive: Path, metadata_path: Path, source_revision: str | None = None,
+) -> dict:
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     by_id = {
         (str(row["kind"]), str(row["stat_id"])): row
@@ -105,18 +113,28 @@ def build_catalog(archive: Path, metadata_path: Path) -> dict:
     entries.sort(key=lambda row: (row["scope"], row["japanese"], row["key"]))
     return {
         "schema_version": 1,
-        "source_revision": "1e2225af",
+        "source_revision": (
+            source_revision[:8] if source_revision
+            else archive.stem.removeprefix("awakened-poe-trade-")
+        ),
         "entries": entries,
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--archive", type=Path, default=DEFAULT_ARCHIVE)
+    parser.add_argument("--lock", type=Path, default=DEFAULT_LOCK)
+    parser.add_argument("--archive", type=Path)
+    parser.add_argument("--source-revision")
     parser.add_argument("--metadata", type=Path, default=DEFAULT_METADATA)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
-    payload = build_catalog(args.archive, args.metadata)
+    locked_archive, locked_revision = source_from_lock(args.lock)
+    payload = build_catalog(
+        args.archive or locked_archive,
+        args.metadata,
+        args.source_revision or locked_revision,
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n",

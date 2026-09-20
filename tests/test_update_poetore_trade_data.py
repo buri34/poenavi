@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
+from scripts.build_poetore_map_mods import source_from_lock
 from scripts.build_poetore_metadata import _run_regression_tests
 from scripts.update_poetore_trade_data import (
     atomic_apply_manifest,
@@ -127,14 +128,39 @@ def test_external_candidate_does_not_claim_distribution_data_file(tmp_path):
     candidate = tmp_path / "mod_metadata.json"
     candidate.write_text("{}", encoding="utf-8")
     captured = {}
+    commands = []
+    command_envs = []
 
-    def run(_command, **kwargs):
+    def run(command, **kwargs):
+        commands.append(command)
+        command_envs.append(kwargs["env"])
         captured.update(kwargs["env"])
 
     with patch("scripts.build_poetore_metadata.subprocess.run", side_effect=run):
         _run_regression_tests(candidate)
     assert captured["POETORE_METADATA_PATH"] == str(candidate.resolve())
     assert "POETORE_CANDIDATE_BUILD" not in captured
+    assert commands
+    assert all(command[1:4] == ["-m", "pytest", "-q"] for command in commands)
+    assert any(command[-1] == "tests/test_poetore_ui.py" for command in commands)
+    single_instance_index = next(
+        index for index, command in enumerate(commands)
+        if command[-1] == "tests/test_single_instance.py"
+    )
+    assert command_envs[single_instance_index]["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] == "1"
+
+
+def test_in_place_metadata_candidate_claims_distribution_candidate_file():
+    candidate = Path("data/poetore/.mod_metadata.json.candidate")
+    captured = {}
+
+    def run(_command, **kwargs):
+        captured.update(kwargs["env"])
+
+    with patch("scripts.build_poetore_metadata.subprocess.run", side_effect=run):
+        _run_regression_tests(candidate)
+
+    assert captured["POETORE_CANDIDATE_BUILD"] == "1"
 
 
 def test_representative_api_verifier_reports_success_and_failure():
@@ -158,9 +184,10 @@ def test_representative_api_verifier_reports_success_and_failure():
 
 def test_fixed_awakened_archive_reproduces_pseudo_relations():
     root = Path(__file__).parents[1]
+    archive, revision = source_from_lock(root / "scripts/poetore-sources.lock.json")
     generated = build_pseudo_relations_candidate(
-        root / "vendor-sources/awakened-poe-trade-1e2225af.tar.gz",
-        "1e2225af8cfe04ccc5676d00eede81d7ee071240",
+        root / archive,
+        revision,
     )
     current = json.loads(
         (root / "data/poetore/pseudo_relations.json").read_text(encoding="utf-8")

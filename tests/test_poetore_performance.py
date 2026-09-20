@@ -2,9 +2,28 @@ from unittest.mock import patch
 
 from src.poetore.performance import (
     SearchPerformanceTrace,
+    _queue_record,
     record_mini_navi_topmost_event,
     record_trade_api_event,
 )
+
+
+def test_performance_queue_can_be_disabled_for_isolated_runs(monkeypatch):
+    monkeypatch.setenv("POETORE_DISABLE_PERFORMANCE_LOG", "1")
+    with patch("src.poetore.performance._ensure_writer") as ensure_writer:
+        _queue_record({"event": "ignored"})
+    ensure_writer.assert_not_called()
+
+
+def test_performance_queue_starts_writer_during_normal_operation(monkeypatch):
+    monkeypatch.delenv("POETORE_DISABLE_PERFORMANCE_LOG", raising=False)
+    with (
+        patch("src.poetore.performance._ensure_writer") as ensure_writer,
+        patch("src.poetore.performance._write_queue") as write_queue,
+    ):
+        _queue_record({"event": "kept"})
+    ensure_writer.assert_called_once_with()
+    write_queue.put.assert_called_once_with({"event": "kept"})
 
 
 def test_search_performance_trace_records_elapsed_and_delta_with_one_id():

@@ -19,10 +19,10 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 try:
-    from scripts.build_poetore_map_mods import build_catalog
+    from scripts.build_poetore_map_mods import build_catalog, source_from_lock
     from scripts.extract_poetore_pseudo_relations import extract_relations
 except ModuleNotFoundError:  # `python scripts/update_*.py`で直接起動する場合
-    from build_poetore_map_mods import build_catalog
+    from build_poetore_map_mods import build_catalog, source_from_lock
     from extract_poetore_pseudo_relations import extract_relations
 
 
@@ -425,7 +425,11 @@ def _metadata_command(candidate: bool, official_mods_only: bool = False) -> list
     return command
 
 
-def create_refresh_candidate(official: dict, official_mods_only: bool = False) -> tuple[dict, Path]:
+def create_refresh_candidate(
+    official: dict,
+    official_mods_only: bool = False,
+    source_lock: Path | None = None,
+) -> tuple[dict, Path]:
     if CANDIDATE_DIR.exists():
         shutil.rmtree(CANDIDATE_DIR)
     CANDIDATE_DIR.mkdir(parents=True)
@@ -433,19 +437,23 @@ def create_refresh_candidate(official: dict, official_mods_only: bool = False) -
     for name, source in AUTHORITATIVE.items():
         if name == "map_mods":
             continue
-        shutil.copy2(ROOT / source, CANDIDATE_DIR / source.name)
+        selected = source_lock if name == "source_lock" and source_lock else ROOT / source
+        shutil.copy2(selected, CANDIDATE_DIR / source.name)
     _run(_metadata_command(candidate=True, official_mods_only=official_mods_only))
+    archive, awakened_revision = source_from_lock(
+        CANDIDATE_DIR / "poetore-sources.lock.json"
+    )
+    archive = ROOT / archive
     map_payload = build_catalog(
-        ROOT / "vendor-sources/awakened-poe-trade-1e2225af.tar.gz",
+        archive,
         CANDIDATE_DIR / "mod_metadata.json",
+        awakened_revision,
     )
     (CANDIDATE_DIR / "map_mods.json").write_text(
         json.dumps(map_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    lock = load_json(CANDIDATE_DIR / "poetore-sources.lock.json")
-    awakened_revision = str(lock["sources"]["awakened_poe_trade"]["revision"])
     pseudo_payload = build_pseudo_relations_candidate(
-        ROOT / "vendor-sources/awakened-poe-trade-1e2225af.tar.gz",
+        archive,
         awakened_revision,
     )
     (CANDIDATE_DIR / "pseudo_relations.json").write_text(
@@ -523,7 +531,10 @@ def atomic_apply_manifest(
 
 
 def run_audit(
-    refresh: bool, official_mods_only: bool = False, verify_api: bool = False,
+    refresh: bool,
+    official_mods_only: bool = False,
+    verify_api: bool = False,
+    source_lock: Path | None = None,
 ) -> dict:
     official = _fetch_official()
     pseudo = audit_pseudo_files()
@@ -534,6 +545,7 @@ def run_audit(
         if refresh:
             metadata, manifest = create_refresh_candidate(
                 official, official_mods_only=official_mods_only,
+                source_lock=source_lock,
             )
         else:
             _run(_metadata_command(candidate=False, official_mods_only=official_mods_only))
@@ -543,17 +555,21 @@ def run_audit(
     if not refresh:
         manifest = None
         with tempfile.TemporaryDirectory(prefix="poetore-map-audit-"):
+            archive, awakened_revision = source_from_lock(
+                ROOT / AUTHORITATIVE["source_lock"]
+            )
+            archive = ROOT / archive
             generated = build_catalog(
-                ROOT / "vendor-sources/awakened-poe-trade-1e2225af.tar.gz",
+                archive,
                 ROOT / AUTHORITATIVE["mod_metadata"],
+                awakened_revision,
             )
             current = load_json(ROOT / AUTHORITATIVE["map_mods"])
             if generated != current:
                 failures.append("Map Mod派生データが固定入力からの再生成結果と一致しない")
-            source_lock = load_json(ROOT / AUTHORITATIVE["source_lock"])
             pseudo_generated = build_pseudo_relations_candidate(
-                ROOT / "vendor-sources/awakened-poe-trade-1e2225af.tar.gz",
-                str(source_lock["sources"]["awakened_poe_trade"]["revision"]),
+                archive,
+                awakened_revision,
             )
             pseudo_current = load_json(ROOT / AUTHORITATIVE["pseudo_relations"])
             if pseudo_generated != pseudo_current:
@@ -600,18 +616,26 @@ def main(argv: Iterable[str] | None = None) -> int:
         "--verify-api", action="store_true",
         help="代表12 fixtureを公式Trade検索APIへ実送信して受理を確認する",
     )
+    parser.add_argument(
+        "--source-lock", type=Path,
+        help="--refresh用のレビュー対象lock。正本lockは候補反映まで変更しない",
+    )
     args = parser.parse_args(argv)
     if args.apply:
-        if args.official_mods_only or args.verify_api:
-            parser.error("--official-mods-only/--verify-api cannot be combined with --apply")
+        if args.official_mods_only or args.verify_api or args.source_lock:
+            parser.error(
+                "--official-mods-only/--verify-api/--source-lock cannot be combined with --apply"
+            )
         applied = atomic_apply_manifest(args.apply.resolve())
         print("applied reviewed candidate:")
         for path in applied:
             print(f"  {path.relative_to(ROOT)}")
         return 0
+    if args.source_lock and not args.refresh:
+        parser.error("--source-lock requires --refresh")
     report = run_audit(
         refresh=args.refresh, official_mods_only=args.official_mods_only,
-        verify_api=args.verify_api,
+        verify_api=args.verify_api, source_lock=args.source_lock,
     )
     print(f"{report['status']}: {REPORT_MD.relative_to(ROOT)}")
     return 2 if report["status"] == "BLOCKED" else 0

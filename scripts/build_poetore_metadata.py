@@ -1,25 +1,27 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import hashlib
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
+from datetime import datetime, timezone
+from pathlib import Path
 from urllib.request import Request, urlopen
 
 from src.poetore.metadata_builder import (
-    apply_japanese_trade_overrides, audit_awakened_stat_rules,
-    build_official_index, build_related_item_groups,
-    diff_minimal_indexes, diff_official_trade_entries,
+    apply_japanese_trade_overrides,
+    audit_awakened_stat_rules,
+    build_official_index,
+    build_related_item_groups,
+    diff_minimal_indexes,
+    diff_official_trade_entries,
     excessive_removal,
     official_trade_entry_snapshot,
     unresolved_trade_entries,
     validate_minimal_index,
 )
-
 
 DEFAULT_LOCK = Path("scripts/poetore-sources.lock.json")
 DEFAULT_OUTPUT = Path("data/poetore/mod_metadata.json")
@@ -46,14 +48,29 @@ def _serialized(payload: dict) -> bytes:
 def _run_regression_tests(candidate: Path) -> None:
     env = os.environ.copy()
     env["POETORE_METADATA_PATH"] = str(candidate.resolve())
-    if candidate.parent.resolve() == DEFAULT_OUTPUT.parent.resolve():
+    in_place_candidate = DEFAULT_OUTPUT.with_name(
+        f".{DEFAULT_OUTPUT.name}.candidate"
+    ).resolve()
+    if candidate.resolve() == in_place_candidate:
         env["POETORE_CANDIDATE_BUILD"] = "1"
     else:
         env.pop("POETORE_CANDIDATE_BUILD", None)
     env.setdefault("QT_QPA_PLATFORM", "offscreen")
-    command = [sys.executable, "-m", "pytest", "-q"]
-    print(f"running candidate regression tests: {' '.join(command)}")
-    subprocess.run(command, check=True, env=env)
+    commands = tuple(
+        [sys.executable, "-m", "pytest", "-q", str(path)]
+        for path in sorted(Path("tests").glob("test_*.py"))
+    )
+    # macOS/PySideは複数のGUIテストファイルを同一プロセスで走らせると、
+    # 終了時のQt teardownでSIGSEGVすることがある。対象範囲は減らさず、
+    # ファイル単位でプロセスを分離する。
+    for command in commands:
+        print(f"running candidate regression tests: {' '.join(command)}")
+        command_env = env.copy()
+        if command[-1] == "tests/test_single_instance.py":
+            # pytest-qt 4.5 + Qt 6.11/macOSのQLocalServer teardownで落ちるため、
+            # Qt fixtureを使わないこの統合テストだけplugin自動読込を止める。
+            command_env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
+        subprocess.run(command, check=True, env=command_env)
 
 
 def main() -> int:

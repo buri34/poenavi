@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 import time
 from collections.abc import Callable
@@ -12,7 +13,6 @@ from pathlib import Path
 from queue import SimpleQueue
 
 from src.utils.config_manager import ConfigManager
-
 
 PERFORMANCE_LOG_FILENAME = "poetore-performance.jsonl"
 PERFORMANCE_LOG_MAX_BYTES = 2 * 1024 * 1024
@@ -73,6 +73,8 @@ def _ensure_writer() -> None:
 
 
 def _queue_record(record: dict) -> None:
+    if os.environ.get("POETORE_DISABLE_PERFORMANCE_LOG") == "1":
+        return
     _ensure_writer()
     _write_queue.put(record)
 
