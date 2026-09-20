@@ -12,6 +12,7 @@ from src.poetore.metadata import (
     diff_pseudo_payloads,
     pseudo_definitions,
     pseudo_relations,
+    unique_disenchant_value,
     unique_fixed_stats,
     unique_icon_url,
     validate_pseudo_payload,
@@ -469,6 +470,33 @@ def test_builder_restores_official_cluster_option_entries_to_base_stat():
     assert record["exact"] is True
     assert [option["value"] for option in record["options"]] == [23, 43]
     assert record["options"][1]["japanese"].endswith("回避力が15%増加する")
+
+
+def test_builder_extracts_unique_disenchant_values_by_name_and_base(tmp_path):
+    items = (
+        json.dumps({
+            "namespace": "UNIQUE", "refName": "Eternal Damnation",
+            "unique": {"base": "Agate Amulet", "disenchantValue": 165.78},
+        }),
+        json.dumps({
+            "namespace": "UNIQUE", "refName": "Combat Focus",
+            "unique": {"base": "Viridian Jewel", "disenchantValue": 2.19},
+        }),
+        json.dumps({
+            "namespace": "UNIQUE", "refName": "Combat Focus",
+            "unique": {"base": "Crimson Jewel", "disenchantValue": 2.19},
+        }),
+    )
+    payload = build_minimal_index([], {"result": []}, awakened_items=items)
+    path = tmp_path / "metadata.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert payload["unique_disenchant_values"]["eternal damnation"] == {
+        "agate amulet": 165.78,
+    }
+    assert unique_disenchant_value("Eternal Damnation", "Agate Amulet", path) == 165.78
+    assert unique_disenchant_value("Combat Focus", "Cobalt Jewel", path) == 2.19
+    assert unique_disenchant_value("Unknown", "Agate Amulet", path) is None
 
 
 def test_pseudo_relations_are_fixed_to_audited_awakened_source():

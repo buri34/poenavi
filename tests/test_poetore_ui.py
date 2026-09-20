@@ -190,7 +190,7 @@ def test_obs_streaming_mode_restores_saved_position_and_expanded_size(qapp):
 from src.poetore.window_position import PlacementContext, position_for_context
 from src.poetore.trade import (
     PRESET_BASE, PRESET_FINISHED, PriceListing, PriceResult, TradeLeague, TradeStatFilter,
-    available_trade_presets, build_search_query, resolve_trade_stat_filters,
+    UniqueCandidate, available_trade_presets, build_search_query, resolve_trade_stat_filters,
 )
 from src.poetore.parser import parse_item_text
 from src.poetore.poe2.parser import parse_item_text as parse_poe2_item_text
@@ -4508,6 +4508,54 @@ def test_unidentified_unique_candidates_show_japanese_but_search_in_english(qapp
         assert button.text() == "永遠の破滅"
         assert button.property("uniqueName") == "Eternal Damnation"
         assert button.toolTip() == "永遠の破滅\nEternal Damnation"
+    finally:
+        window.close()
+
+
+def test_unidentified_unique_candidate_selection_recalculates_disenchant_dust(qapp):
+    window = PoetoreWindow()
+    try:
+        window._parsed_item = ParsedItem(
+            item_class="Amulets", rarity="Unique", name="Agate Amulet",
+            base_type="Agate Amulet", category="accessory", item_level=83,
+            flags=("unidentified",),
+        )
+        window._trade_base_type = "Agate Amulet"
+        candidates = (
+            UniqueCandidate("Eternal Damnation", None, "永遠の破滅"),
+            UniqueCandidate("Voll's Devotion", None, "ヴォールの献身"),
+        )
+        with patch(
+            "src.poetore.ui.disenchant_dust",
+            side_effect=lambda item, unique_name=None, base_type=None: {
+                "Eternal Damnation": 551_218,
+                "Voll's Devotion": 153_349,
+            }.get(unique_name),
+        ):
+            window._show_unique_candidates(candidates)
+            assert not window.disenchant_dust_panel.isHidden()
+            assert window.disenchant_dust_value.text() == "551,218"
+
+            window.unique_name_group.buttons()[1].click()
+            assert window.disenchant_dust_value.text() == "153,349"
+    finally:
+        window.close()
+
+
+def test_identified_unique_shows_disenchant_dust_from_generated_metadata(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""Item Class: Belts
+Rarity: Unique
+Mageblood
+Heavy Belt
+--------
+Item Level: 85
+""")
+        window.parse_current_text()
+
+        assert not window.disenchant_dust_panel.isHidden()
+        assert window.disenchant_dust_value.text() == "2,227,900"
     finally:
         window.close()
 

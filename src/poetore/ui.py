@@ -55,6 +55,7 @@ from .trade import (
 )
 from .poe_ninja import PoeNinjaPrice, default_poe_ninja_service, is_poe2_exchange_price_item
 from .metadata import related_item_group
+from .disenchant import disenchant_dust
 from .poe2.metadata import (
     related_item_group as poe2_related_item_group,
     resolve_identity as resolve_poe2_identity,
@@ -1174,6 +1175,21 @@ class PoetoreWindow(QWidget):
         self.poe_ninja_price_panel.hide()
         content_layout.addWidget(self.poe_ninja_price_panel)
 
+        self.disenchant_dust_panel = QFrame()
+        self.disenchant_dust_panel.setObjectName("disenchantDustPanel")
+        dust_layout = QHBoxLayout(self.disenchant_dust_panel)
+        dust_layout.setContentsMargins(8, 5, 8, 5)
+        dust_layout.setSpacing(8)
+        self.disenchant_dust_label = QLabel("解呪ダスト（推定）")
+        self.disenchant_dust_label.setObjectName("disenchantDustLabel")
+        self.disenchant_dust_value = QLabel("—")
+        self.disenchant_dust_value.setObjectName("disenchantDustValue")
+        dust_layout.addStretch()
+        dust_layout.addWidget(self.disenchant_dust_label)
+        dust_layout.addWidget(self.disenchant_dust_value)
+        self.disenchant_dust_panel.hide()
+        content_layout.addWidget(self.disenchant_dust_panel)
+
         self.related_items_panel = QFrame()
         self.related_items_panel.setObjectName("relatedItemsPanel")
         related_layout = QVBoxLayout(self.related_items_panel)
@@ -1823,6 +1839,7 @@ class PoetoreWindow(QWidget):
         self._trade_signals.global_mouse_moved.connect(self._handle_global_mouse_move)
         self._trade_base_type = None
         self._trade_item_name = None
+        self._parsed_item = None
         self._preset_item_key = None
         self._state_item_key = None
         self._base_scope_item_key = None
@@ -1952,6 +1969,13 @@ class PoetoreWindow(QWidget):
                 border: none;
                 border-radius: 4px;
             }
+            QFrame#disenchantDustPanel {
+                background: rgba(26, 31, 33, 220);
+                border: none;
+                border-radius: 4px;
+            }
+            QLabel#disenchantDustLabel { color: #98A39F; font-weight: 700; }
+            QLabel#disenchantDustValue { color: #E6ECEA; font-size: 14px; font-weight: 700; }
             QLabel#poeNinjaPriceLabel { color: #98A39F; font-weight: 700; }
             QLabel#poeNinjaPriceValue { color: #E6ECEA; font-size: 14px; font-weight: 700; }
             QLabel#poeNinjaPriceMultiplier { color: #E6ECEA; font-size: 13px; }
@@ -4337,6 +4361,7 @@ class PoetoreWindow(QWidget):
         self.result_tree.expandAll()
         self.result_tree.scrollToTop()
         self._parsed_item = item
+        self._update_disenchant_dust(item)
         if self.mod_filter_tree.topLevelItemCount() == 0:
             preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
             if trace is not None:
@@ -5403,6 +5428,21 @@ class PoetoreWindow(QWidget):
         self.unique_variant_combo.hide()
         self.unique_variant_label.hide()
 
+    def _update_disenchant_dust(self, item, unique_name=None, base_type=None):
+        value = None
+        if self.poe_version != POE2 and item is not None:
+            value = disenchant_dust(
+                item,
+                unique_name=unique_name,
+                base_type=base_type or self._trade_base_type or item.base_type,
+            )
+        if value is None:
+            self.disenchant_dust_value.setText("—")
+            self.disenchant_dust_panel.hide()
+            return
+        self.disenchant_dust_value.setText(f"{value:,}")
+        self.disenchant_dust_panel.show()
+
     def _show_unique_candidates(self, candidates):
         self.price_button.setEnabled(True)
         self._reset_unique_candidates()
@@ -5420,6 +5460,15 @@ class PoetoreWindow(QWidget):
             button.setToolTip(
                 display_name if display_name == name
                 else f"{display_name}\n{name}"
+            )
+            button.clicked.connect(
+                lambda checked, selected=name: checked and self._update_disenchant_dust(
+                    getattr(self, "_parsed_item", None),
+                    unique_name=selected,
+                    base_type=self._trade_base_type or (
+                        self._parsed_item.base_type if getattr(self, "_parsed_item", None) else ""
+                    ),
+                )
             )
             button.setStyleSheet(
                 "QPushButton#uniqueCandidateButton {"
@@ -5442,6 +5491,13 @@ class PoetoreWindow(QWidget):
         first_button = next(iter(self.unique_name_group.buttons()), None)
         if first_button is not None:
             first_button.setChecked(True)
+            self._update_disenchant_dust(
+                getattr(self, "_parsed_item", None),
+                unique_name=str(first_button.property("uniqueName") or ""),
+                base_type=self._trade_base_type or (
+                    self._parsed_item.base_type if getattr(self, "_parsed_item", None) else ""
+                ),
+            )
         self.unique_name_label.show()
         self.unique_name_container.show()
         self.unique_name_scroll.show()

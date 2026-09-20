@@ -81,6 +81,31 @@ def test_related_captured_beast_identity_matches_beast_overview():
     assert "/beasts/wild-hellion-alpha" in price.url
 
 
+def test_corpse_matches_poe_ninja_corpse_overview():
+    payload = {
+        "itemOverviews": [{
+            "type": "Corpse",
+            "lines": [{
+                "name": "Perfect Forest Tiger", "chaos": 42,
+                "graph": [], "sparkLine": {"totalChange": 3},
+            }],
+        }],
+    }
+    item = ParsedItem(
+        item_class="死体", rarity="カレンシー", name="完全体のフォレストタイガー",
+        base_type="完全体のフォレストタイガー", category="corpse",
+    )
+
+    price = match_poe_ninja_price(
+        payload, item, "Standard", trade_base_type="Perfect Forest Tiger",
+    )
+
+    assert price is not None
+    assert price.source_type == "Corpse"
+    assert price.chaos == 42
+    assert "/corpses/perfect-forest-tiger" in price.url
+
+
 def _payload():
     return {
         "currencyOverviews": [{

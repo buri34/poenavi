@@ -35,6 +35,7 @@ _EXACT_TYPES_BY_CATEGORY = {
     "invitation": {"Invitation"},
     "incursion_item": {"IncursionTemple"},
     "scarab": {"Scarab"},
+    "corpse": {"Corpse"},
 }
 _MAP_TYPES = {"Map", "BlightedMap", "BlightRavagedMap", "ValdoMap"}
 POE2_FRAGMENT_EXCHANGE_NAMES = frozenset({
@@ -197,6 +198,7 @@ _URL_BY_TYPE = {
     "Artifact": "artifacts", "Tattoo": "tattoos", "Omen": "omens", "Vial": "vials",
     "Incubator": "incubators", "Runegraft": "runegrafts", "DjinnCoin": "djinn-coins",
     "Astrolabe": "astrolabes", "Ducat": "ducats",
+    "Corpse": "corpses",
     "EnshroudingCrystal": "enshrouding-crystals", "AllflameEmber": "allflame-embers", "Beast": "beasts",
     "Invitation": "invitations", "Map": "maps", "BlightedMap": "blighted-maps",
     "BlightRavagedMap": "blight-ravaged-maps", "ValdoMap": "valdo-maps",

@@ -209,7 +209,7 @@ def main() -> int:
     if args.official_mods_only:
         for field in (
             "base_armour", "gems", "unique_fixed_stats", "unique_icons",
-            "related_item_groups",
+            "unique_disenchant_values", "related_item_groups",
         ):
             candidate[field] = previous.get(field, candidate.get(field))
     integrity = validate_minimal_index(candidate)
