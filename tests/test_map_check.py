@@ -138,6 +138,35 @@ Map (Tier 16)
     assert all(modifier.stat_id in catalog_ids for modifier in parsed.modifiers)
 
 
+def test_map_check_renders_explicit_sections_only():
+    parsed = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+Explicit Only Test
+Map (Tier 16)
+--------
+アイテムレベル: 83
+--------
+{ 暗黙モッド }
+検索対象ではない暗黙効果
+{ プレフィックスモッド (ティア: 1) }
+レアモンスターの数が25%増加する
+""")
+
+    QApplication.instance() or QApplication([])
+    window = MapCheckWindow(default_map_check_config())
+    window._render(parsed)
+    buttons = [
+        button for button in window.body.findChildren(QPushButton)
+        if button.property("map_mod_key")
+    ]
+    labels = [label.text() for label in window.body.findChildren(QLabel)]
+    assert len(buttons) == 1
+    assert buttons[0].property("map_mod_text") == "レアモンスターの数が25%増加する"
+    assert not any("検索対象ではない暗黙効果" in text for text in labels)
+    assert not any(text.startswith("未認識Mod") for text in labels)
+    window.close()
+
+
 def test_japanese_map_copy_aliases_resolve_boss_damage_and_implicit_hinder_chance():
     parsed = parse_item_text("""アイテムクラス: マップ
 レアリティ: レア

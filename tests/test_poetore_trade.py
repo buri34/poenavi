@@ -5955,30 +5955,46 @@ def test_rare_jewel_mods_start_off_and_magic_affixes_start_on():
         assert next(row for row in rows if row.stat_id == "explicit.life").enabled is expected
 
 
-def test_exact_map_starts_with_tier_and_all_explicit_mods_on():
+def test_exact_map_starts_with_tier_and_only_t1_t2_explicit_mods_on():
     item = ParsedItem(
         "Maps", "Rare", "Test", "Cemetery Map", "map",
         properties={"Map Tier": "16", "Item Quantity": "+100%"},
-        modifiers=(ItemModifier(
-            "Monsters deal 100% extra Damage", (100,), kind="explicit",
-            stat_id="explicit.map_damage",
-        ),),
+        modifiers=(
+            ItemModifier(
+                "T1 Map Mod", (100,), kind="prefix", tier=1,
+                stat_id="explicit.map_t1",
+            ),
+            ItemModifier(
+                "T2 Map Mod", (80,), kind="suffix", tier=2,
+                stat_id="explicit.map_t2",
+            ),
+            ItemModifier(
+                "T3 Map Mod", (60,), kind="explicit", tier=3,
+                stat_id="explicit.map_t3",
+            ),
+        ),
     )
-    entries = ({"id": "explicit.map_damage", "text": "Monsters deal #% extra Damage",
-                "type": "explicit"},)
+    entries = tuple(
+        {"id": f"explicit.map_t{tier}", "text": f"T{tier} Map Mod", "type": "explicit"}
+        for tier in (1, 2, 3)
+    )
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         rows = resolve_trade_stat_filters(item)
     by_id = {row.stat_id: row for row in rows}
     assert by_id["property.map_tier"].enabled is True
     assert "property.map_quantity" not in by_id
-    assert by_id["explicit.map_damage"].enabled is True
+    assert by_id["explicit.map_t1"].enabled is True
+    assert by_id["explicit.map_t2"].enabled is True
+    assert by_id["explicit.map_t3"].enabled is False
     query = build_search_query(
         item, "Cemetery Map", rows, preset=PRESET_FINISHED,
     )["query"]
-    assert {
-        "id": "explicit.map_damage",
-        "value": {"min": 100.0},
-    } in query["stats"][0]["filters"]
+    assert [row["id"] for row in query["stats"][0]["filters"]] == [
+        "explicit.map_t1", "explicit.map_t2",
+    ]
+    map_filters = query["filters"]["map_filters"]["filters"]
+    assert map_filters["map_blighted"] == {"option": "false"}
+    assert map_filters["map_uberblighted"] == {"option": "false"}
 
 
 def test_corrupted_map_value_properties_start_on():
@@ -6000,7 +6016,7 @@ def test_corrupted_map_value_properties_start_on():
         assert by_id[stat_id].enabled is True
 
 
-def test_more_drops_map_enables_value_pseudos_but_not_rarity():
+def test_more_drops_map_keeps_value_pseudos_off_by_default():
     item = ParsedItem(
         "Maps", "Rare", "Test", "Cemetery Map", "map",
         properties={
@@ -6015,7 +6031,7 @@ def test_more_drops_map_enables_value_pseudos_but_not_rarity():
     assert by_id["property.map_quantity"].enabled is True
     assert by_id["property.map_rarity"].enabled is False
     assert by_id["property.map_pack_size"].enabled is True
-    assert by_id["pseudo.pseudo_map_more_scarab_drops"].enabled is True
+    assert by_id["pseudo.pseudo_map_more_scarab_drops"].enabled is False
 
 
 def test_japanese_nightmare_map_new_more_drop_labels_and_mods_resolve():
@@ -6096,23 +6112,35 @@ def test_japanese_map_new_currency_and_divination_card_drop_labels_resolve():
     currency = by_id["pseudo.pseudo_map_more_currency_drops"]
     assert currency.text == "カレンシー量"
     assert currency.min_value == 139
-    assert currency.enabled is True
+    assert currency.enabled is False
 
     cards = by_id["pseudo.pseudo_map_more_card_drops"]
     assert cards.text == "占いカード量"
     assert cards.min_value == 50
-    assert cards.enabled is True
+    assert cards.enabled is False
 
     query = build_search_query(item, item.base_type, rows)["query"]
     api_rows = {
         row["id"]: row.get("value", {})
         for group in query["stats"] for row in group["filters"]
     }
-    assert api_rows["pseudo.pseudo_map_more_currency_drops"] == {"min": 139.0}
-    assert api_rows["pseudo.pseudo_map_more_card_drops"] == {"min": 50.0}
+    assert "pseudo.pseudo_map_more_currency_drops" not in api_rows
+    assert "pseudo.pseudo_map_more_card_drops" not in api_rows
+
+    selected = tuple(
+        replace(row, enabled=True)
+        if row.stat_id == "pseudo.pseudo_map_more_currency_drops" else row
+        for row in rows
+    )
+    selected_query = build_search_query(item, item.base_type, selected)["query"]
+    selected_rows = {
+        row["id"]: row.get("value", {})
+        for group in selected_query["stats"] for row in group["filters"]
+    }
+    assert selected_rows["pseudo.pseudo_map_more_currency_drops"] == {"min": 139.0}
 
 
-def test_corrupted_eight_mod_map_enables_modifier_count_pseudo():
+def test_corrupted_eight_mod_map_keeps_modifier_count_pseudo_off_by_default():
     modifiers = tuple(
         ItemModifier(
             f"Map modifier {index}", (index,),
@@ -6131,16 +6159,13 @@ def test_corrupted_eight_mod_map_enables_modifier_count_pseudo():
         row for row in rows
         if row.stat_id == "pseudo.pseudo_number_of_affix_mods"
     )
-    assert count.enabled is True
+    assert count.enabled is False
     assert count.min_value == 8
     assert count.max_value == 8
     query = build_search_query(
         item, "Cemetery Map", rows, preset=PRESET_FINISHED,
     )["query"]
-    assert {
-        "id": "pseudo.pseudo_number_of_affix_mods",
-        "value": {"min": 8.0, "max": 8.0},
-    } in query["stats"][0]["filters"]
+    assert query["stats"][0]["filters"] == []
 
 
 def test_japanese_elegant_hubris_advanced_copy_uses_exact_caspiro_seed():

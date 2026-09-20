@@ -1329,10 +1329,9 @@ def _apply_dedicated_exact_rules(
             is_valdo = item.category == "map" and item.base_type.casefold() == "valdo map"
             if is_valdo and row.kind in {"prefix", "suffix", "explicit"}:
                 enabled = True
-            if item.category == "map" and not is_valdo and row.kind in {
-                "prefix", "suffix", "explicit",
-            }:
-                enabled = True
+            # Map/Chartも通常のExact規則へ統一し、Pseudoは候補表示だけにする。
+            if item.category == "map" and row.kind == "map pseudo":
+                enabled = False
             if item.category == "invitation" and row.kind in {
                 "prefix", "suffix", "explicit", "map", "map pseudo",
             }:
@@ -4135,6 +4134,17 @@ def build_search_query(
         misc.pop("mirrored", None)
     else:
         misc["mirrored"] = {"option": "false"}
+    if (
+        item.category == "map"
+        and not _is_unique(item)
+        and _map_blight_state(item) is None
+    ):
+        # 通常Map検索へBlighted系が混ざらないよう、両分類を明示的に除外する。
+        map_filters = query["filters"].setdefault(
+            "map_filters", {"filters": {}}
+        )["filters"]
+        map_filters["map_blighted"] = {"option": "false"}
+        map_filters["map_uberblighted"] = {"option": "false"}
     # Awakened準拠: Veiled全般のmisc条件ではなく、詳細コピーで読み取った
     # Veiled Mod名に対応するstat IDをAND条件として検索する。
     stat_filters = tuple(row for row in stat_filters if row.kind != "veiled")
