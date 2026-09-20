@@ -1995,6 +1995,112 @@ def test_base_percentile_removes_quality_and_local_increase_multiplicatively(tmp
     assert _base_defence_percentile(item, "Test Armour") == 50.0
 
 
+def test_unique_armour_uses_base_percentile_instead_of_redundant_fixed_defence(tmp_path, monkeypatch):
+    metadata_path = tmp_path / "metadata.json"
+    metadata_path.write_text(json.dumps({
+        "base_armour": {"test armour": {"ar": [100, 200]}}, "mods": [],
+    }), encoding="utf-8")
+    monkeypatch.setenv("POETORE_METADATA_PATH", str(metadata_path))
+    item = ParsedItem(
+        item_class="Body Armours", rarity="Unique", name="Test Unique",
+        base_type="Test Armour", category="armour", properties={"Armour": "150"},
+    )
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(
+            item, trade_base_type="Test Armour", trade_name="Test Unique",
+        )}
+
+    assert "property.armour" not in rows
+    assert rows["property.base_percentile"].read_value == 50.0
+    assert rows["property.base_percentile"].enabled is True
+    query = build_search_query(
+        item, "Test Armour", tuple(rows.values()), trade_name="Test Unique",
+    )["query"]
+    assert query["filters"]["armour_filters"]["filters"]["base_defence_percentile"] == {
+        "min": 45.0,
+    }
+
+
+def test_unique_variable_armour_uses_q20_base_bounds_and_hides_redundant_percentile(
+    tmp_path, monkeypatch,
+):
+    metadata_path = tmp_path / "metadata.json"
+    metadata_path.write_text(json.dumps({
+        "base_armour": {"test armour": {"ar": [100, 200]}}, "mods": [],
+    }), encoding="utf-8")
+    monkeypatch.setenv("POETORE_METADATA_PATH", str(metadata_path))
+    item = ParsedItem(
+        item_class="Body Armours", rarity="Unique", name="Test Unique",
+        base_type="Test Armour", category="armour", properties={"Armour": "225"},
+        modifiers=(ItemModifier(
+            "50% increased Armour", (50.0,), ref="#% increased Armour",
+            roll_min=40.0, roll_max=60.0,
+        ),),
+    )
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(
+            item, trade_base_type="Test Armour", trade_name="Test Unique",
+        )}
+
+    armour = rows["property.armour"]
+    assert armour.read_value == 270.0
+    assert armour.min_value == 243.0
+    assert (armour.roll_min, armour.roll_max) == (168.0, 384.0)
+    assert armour.enabled is True
+    assert "property.base_percentile" not in rows
+    query = build_search_query(
+        item, "Test Armour", tuple(rows.values()), trade_name="Test Unique",
+    )["query"]
+    assert query["filters"]["armour_filters"]["filters"]["ar"] == {"min": 243.0}
+
+
+def test_quality_disabled_enchant_uses_zero_quality_for_defence_and_percentile(
+    tmp_path, monkeypatch,
+):
+    metadata_path = tmp_path / "metadata.json"
+    metadata_path.write_text(json.dumps({
+        "base_armour": {"test armour": {"ar": [100, 200]}}, "mods": [],
+    }), encoding="utf-8")
+    monkeypatch.setenv("POETORE_METADATA_PATH", str(metadata_path))
+    item = ParsedItem(
+        item_class="Body Armours", rarity="Rare", name="Test",
+        base_type="Test Armour", category="armour",
+        properties={"Armour": "150", "Quality": "+20%"},
+        modifiers=(ItemModifier(
+            "Quality does not increase Defences", kind="enchant",
+            ref="Quality does not increase Defences",
+            stat_id="enchant.stat_2677401098",
+        ),),
+    )
+
+    assert _base_defence_percentile(item, "Test Armour") == 50.0
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        armour = next(
+            row for row in resolve_trade_stat_filters(item)
+            if row.stat_id == "property.armour"
+        )
+    assert armour.read_value == 150.0
+    assert armour.min_value == 135.0
+
+
+def test_quality_disabled_enchant_does_not_inflate_physical_dps():
+    item = ParsedItem(
+        item_class="Two Hand Swords", rarity="Rare", name="Test",
+        base_type="Test Sword", category="weapon",
+        properties={
+            "Physical Damage": "100-200", "Attacks per Second": "1.00",
+            "Quality": "+10%",
+        },
+        modifiers=(ItemModifier(
+            "Quality does not increase Physical Damage", kind="enchant",
+            ref="Quality does not increase Physical Damage",
+        ),),
+    )
+    assert physical_dps_at_20_quality(item) == 150.0
+
+
 def test_cluster_jewel_item_level_is_normalized_to_awakened_bracket():
     item = parse_item_text("""Item Class: Cluster Jewels
 Rarity: Rare
@@ -2873,6 +2979,119 @@ Item Level: 70
         filters = resolve_trade_stat_filters(item)
     assert len(filters) == 4
     assert not any(row.enabled for row in filters)
+
+
+def test_unique_pseudo_requires_two_explicit_sources_and_starts_off():
+    item = ParsedItem(
+        item_class="Rings", rarity="Unique", name="Test Unique",
+        base_type="Ring", category="accessory",
+        modifiers=(
+            ItemModifier("+30% to Fire Resistance", (30.0,), ref="+#% to Fire Resistance"),
+            ItemModifier(
+                "+20% to Cold and Lightning Resistances", (20.0,),
+                ref="+#% to Cold and Lightning Resistances",
+            ),
+        ),
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
+
+    elemental = rows["pseudo.pseudo_total_elemental_resistance"]
+    assert elemental.read_value == 70.0
+    assert elemental.enabled is False
+    assert len(elemental.source_indexes) == 2
+    default_query = build_search_query(
+        item, "Ring", tuple(rows.values()), trade_name="Test Unique",
+    )["query"]
+    assert default_query["stats"] == [{"type": "and", "filters": []}]
+    selected = tuple(
+        replace(row, enabled=row.stat_id == elemental.stat_id)
+        for row in rows.values()
+    )
+    selected_query = build_search_query(
+        item, "Ring", selected, trade_name="Test Unique",
+    )["query"]
+    assert selected_query["stats"][0]["filters"] == [{
+        "id": elemental.stat_id, "value": {"min": 63.0},
+    }]
+
+
+def test_corrupted_unique_pseudo_accepts_explicit_and_corrupted_implicit_sources():
+    modifiers = (
+        ItemModifier("+30% to Fire Resistance", (30.0,), ref="+#% to Fire Resistance"),
+        ItemModifier(
+            "+20% to Cold Resistance", (20.0,), kind="implicit",
+            ref="+#% to Cold Resistance", generation="corrupted",
+        ),
+    )
+    plain = ParsedItem(
+        item_class="Rings", rarity="Unique", name="Test Unique",
+        base_type="Ring", category="accessory", modifiers=modifiers,
+    )
+    corrupted = replace(plain, flags=("corrupted",))
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        plain_ids = {row.stat_id for row in resolve_trade_stat_filters(plain)}
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(corrupted)}
+
+    assert "pseudo.pseudo_total_elemental_resistance" not in plain_ids
+    assert rows["pseudo.pseudo_total_elemental_resistance"].enabled is False
+
+
+def test_unique_pseudo_keeps_compound_elemental_chaos_resistance_filter():
+    modifiers = (
+        ItemModifier(
+            "+20% to Fire and Chaos Resistances", (20.0,),
+            ref="+#% to Fire and Chaos Resistances", stat_id="explicit.compound",
+        ),
+        ItemModifier(
+            "+30% to Cold Resistance", (30.0,),
+            ref="+#% to Cold Resistance", stat_id="explicit.cold",
+        ),
+    )
+    item = ParsedItem(
+        item_class="Rings", rarity="Unique", name="Test Unique",
+        base_type="Ring", category="accessory", modifiers=modifiers,
+    )
+    entries = (
+        {"id": "explicit.compound", "text": "+#% to Fire and Chaos Resistances", "type": "explicit"},
+        {"id": "explicit.cold", "text": "+#% to Cold Resistance", "type": "explicit"},
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries), patch(
+        "src.poetore.trade.unique_fixed_stats", return_value=None,
+    ):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
+
+    assert "pseudo.pseudo_total_elemental_resistance" in rows
+    assert "explicit.compound" in rows
+
+
+@pytest.mark.parametrize(("rarity", "flags", "properties", "expected_tag"), [
+    ("Unique", ("corrupted",), {}, "corrupted"),
+    ("Unique", (), {"Quality": "+20%"}, "catalyst"),
+    ("Rare", ("mirrored",), {}, "reflecting"),
+])
+def test_special_crafting_keeps_unique_numeric_stat_visible(
+    rarity, flags, properties, expected_tag,
+):
+    modifier = ItemModifier(
+        "+30% to Fire Resistance", (30.0,), ref="+#% to Fire Resistance",
+        stat_id="explicit.resistance", roll_min=20.0, roll_max=40.0,
+    )
+    item = ParsedItem(
+        item_class="Rings", rarity=rarity, name="Test Unique",
+        base_type="Ring", category="accessory", properties=properties,
+        modifiers=(modifier,), flags=flags,
+    )
+    entries = ({
+        "id": "explicit.resistance", "text": "+#% to Fire Resistance", "type": "explicit",
+    },)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries), patch(
+        "src.poetore.trade.unique_fixed_stats", return_value=frozenset({modifier.ref}),
+    ):
+        row = next(row for row in resolve_trade_stat_filters(item) if row.stat_id == modifier.stat_id)
+
+    assert row.hidden_reason == ""
+    assert expected_tag in row.provenance_tags
 
 
 def test_watchers_eye_uses_awakened_fixed_stats_and_keeps_unscalable_variant():

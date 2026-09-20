@@ -1083,10 +1083,38 @@ def elemental_dps(item: ParsedItem) -> float | None:
     return average_damage * float(speed_values[0])
 
 
+_QUALITY_DISABLED_REFS = frozenset({
+    "Quality does not increase Defences",
+    "Quality does not increase Physical Damage",
+})
+_QUALITY_DISABLED_NORMALIZED = frozenset(
+    normalize_stat_text(ref) for ref in _QUALITY_DISABLED_REFS
+)
+
+
+def _quality_is_disabled(item: ParsedItem) -> bool:
+    return any(
+        modifier.ref in _QUALITY_DISABLED_REFS
+        or normalize_stat_text(modifier.text) in _QUALITY_DISABLED_NORMALIZED
+        for modifier in item.modifiers
+    )
+
+
+def _property_quality(item: ParsedItem) -> float:
+    if _quality_is_disabled(item):
+        return 0.0
+    return _property_value(item, "品質", "Quality") or 0.0
+
+
+def _trade_property_quality(item: ParsedItem) -> float:
+    quality = _property_quality(item)
+    return 0.0 if _quality_is_disabled(item) else max(20.0, quality)
+
+
 def _quality_at_least_20(value: float, item: ParsedItem) -> float:
     """表示プロパティをAwakened同様、最低品質20%時の値へ換算する。"""
-    quality = _property_value(item, "品質", "Quality") or 0.0
-    target_quality = max(20.0, quality)
+    quality = _property_quality(item)
+    target_quality = _trade_property_quality(item)
     return value * (1 + target_quality / 100) / (1 + quality / 100)
 
 
@@ -1163,8 +1191,8 @@ def _local_defence_components(item: ParsedItem, defence: str) -> tuple[float, fl
 
 def _defence_at_20_quality(value: float, item: ParsedItem, defence: str) -> float:
     """Reconstruct a defence property at minimum 20% quality like Awakened."""
-    quality = _property_value(item, "品質", "Quality") or 0.0
-    target_quality = max(20.0, quality)
+    quality = _property_quality(item)
+    target_quality = _trade_property_quality(item)
     flat, increased = _local_defence_components(item, defence)
     quality_multiplier = 1.0 + quality / 100.0
     increased_multiplier = 1.0 + increased / 100.0
@@ -1172,6 +1200,41 @@ def _defence_at_20_quality(value: float, item: ParsedItem, defence: str) -> floa
         return value
     base = value / quality_multiplier / increased_multiplier - flat
     return (base + flat) * increased_multiplier * (1.0 + target_quality / 100.0)
+
+
+def _defence_bounds_at_trade_quality(
+    item: ParsedItem, trade_base_type: str | None, defence: str,
+) -> tuple[float, float] | None:
+    base_range = base_armour_bounds(trade_base_type or item.base_type).get(defence)
+    if not base_range:
+        return None
+    flat_refs, increased_refs = _DEFENCE_REFS[defence]
+    flat_min = flat_max = increased_min = increased_max = 0.0
+    for modifier in item.modifiers:
+        value = modifier.values[0] if modifier.values else 0.0
+        low = modifier.roll_min if modifier.roll_min is not None else value
+        high = modifier.roll_max if modifier.roll_max is not None else value
+        if modifier.ref in flat_refs:
+            flat_min += min(low, high)
+            flat_max += max(low, high)
+        elif modifier.ref in increased_refs:
+            increased_min += min(low, high)
+            increased_max += max(low, high)
+    quality_multiplier = 1.0 + _trade_property_quality(item) / 100.0
+    minimum = (base_range[0] + flat_min) * (1.0 + increased_min / 100.0)
+    maximum = (base_range[1] + flat_max) * (1.0 + increased_max / 100.0)
+    return minimum * quality_multiplier, maximum * quality_multiplier
+
+
+def _has_variable_local_defence(item: ParsedItem, defence: str) -> bool:
+    refs = set().union(*_DEFENCE_REFS[defence])
+    return any(
+        modifier.ref in refs
+        and modifier.roll_min is not None
+        and modifier.roll_max is not None
+        and modifier.roll_min != modifier.roll_max
+        for modifier in item.modifiers
+    )
 
 
 def _base_defence_percentile(item: ParsedItem, trade_base_type: str | None) -> float | None:
@@ -1182,7 +1245,7 @@ def _base_defence_percentile(item: ParsedItem, trade_base_type: str | None) -> f
         "es": _property_value(item, "エナジーシールド", "Energy Shield"),
         "ward": _property_value(item, "Ward"),
     }
-    quality = _property_value(item, "品質", "Quality") or 0.0
+    quality = _property_quality(item)
     for defence in ("ar", "ev", "es", "ward"):
         total, base_range = properties[defence], bounds.get(defence)
         if not total or not base_range or base_range[0] == base_range[1]:
@@ -1968,7 +2031,15 @@ def _initial_property_filters(
             for stat_id, text, value in defenses if value
         ]
         for stat_id, text, value in present:
-            filters.append(TradeStatFilter(stat_id, text, _relaxed(value), "property", True))
+            bounds = _defence_bounds_at_trade_quality(
+                item, trade_base_type, defence_keys[stat_id],
+            )
+            filters.append(TradeStatFilter(
+                stat_id, text, _relaxed(value), "property", True,
+                read_value=value,
+                roll_min=bounds[0] if bounds else None,
+                roll_max=bounds[1] if bounds else None,
+            ))
         percentile = _base_defence_percentile(item, trade_base_type)
         if percentile is not None:
             filters.append(TradeStatFilter(
@@ -3236,6 +3307,32 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
             for modifier in contributing_sources
             if modifier.text and modifier.text != row.text
         ))
+        provenance_sources = contributing_sources or (() if source is None else (source,))
+        provenance_tags = []
+        for modifier in provenance_sources:
+            if modifier.generation in {"volatile", "reflecting"}:
+                provenance_tags.append(modifier.generation)
+            if (
+                item.category == "accessory"
+                and _property_value(item, "品質", "Quality")
+                and modifier.values
+            ):
+                provenance_tags.append("catalyst")
+            if (
+                "corrupted" in item.flags
+                and modifier.values
+                and modifier.roll_min is not None
+                and modifier.roll_max is not None
+                and modifier.roll_min != modifier.roll_max
+            ):
+                provenance_tags.append("corrupted")
+            if (
+                "mirrored" in item.flags
+                and item.category == "accessory"
+                and not _is_unique(item)
+                and modifier.values
+            ):
+                provenance_tags.append("reflecting")
         decorated.append(replace(
             row,
             read_value=read_value,
@@ -3265,6 +3362,7 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
                 item.modifiers[index].affix for index in contributing_indexes
             ),
             source_indexes=contributing_indexes,
+            provenance_tags=tuple(dict.fromkeys(provenance_tags)),
         ))
     return tuple(decorated)
 
@@ -3359,8 +3457,29 @@ def resolve_trade_stat_filters(
             and modifier.option_value is None
             and "|" in (modifier.stat_id or "")
         )
+        special_variable = bool(
+            modifier.values and (
+                modifier.generation in {"volatile", "reflecting"}
+                or (
+                    "corrupted" in item.flags
+                    and modifier.roll_min is not None
+                    and modifier.roll_max is not None
+                    and modifier.roll_min != modifier.roll_max
+                )
+                or (
+                    item.category == "accessory"
+                    and _property_value(item, "品質", "Quality")
+                )
+                or (
+                    "mirrored" in item.flags
+                    and item.category == "accessory"
+                    and not unique_item
+                )
+            )
+        )
         unique_variant = (
             standalone_variant
+            or special_variable
             or modifier.generation == "vestigial"
             or (
                 unique_item
@@ -3385,7 +3504,7 @@ def resolve_trade_stat_filters(
             if (not standalone_variant and not corrupted_implicit
                     and not foulborn_variant and not vestigial_variant) and (
                 fixed_unique_refs is None or modifier.ref in fixed_unique_refs
-            ):
+            ) and not special_variable:
                 # Awakened準拠: 常設Modでも可変ロールがあれば候補へ残す。
                 # 固定Modも「隠された候補」から確認できるよう保持する。
                 hidden_reason = "ユニーク固定値のため初期非表示"
@@ -3560,21 +3679,63 @@ def resolve_trade_stat_filters(
         unique_property_ids = {
             "property.total_dps", "property.physical_dps",
             "property.elemental_dps", "property.aps", "property.crit",
-            "property.block", "property.memory_strands",
+            "property.armour", "property.evasion", "property.energy_shield",
+            "property.ward", "property.block", "property.base_percentile",
+            "property.memory_strands",
         }
-        special_properties = tuple(
+        special_properties = list(
             row for row in _initial_property_filters(
                 item, trade_base_type, hide_memory_strands=True,
             )
             if row.stat_id in unique_property_ids
         )
+        defence_ids = {
+            "property.armour": "ar",
+            "property.evasion": "ev",
+            "property.energy_shield": "es",
+            "property.ward": "ward",
+        }
+        visible_defence_ids = {
+            stat_id for stat_id, defence in defence_ids.items()
+            if _has_variable_local_defence(item, defence)
+            or _property_quality(item) >= 21
+        }
+        special_properties = [
+            row for row in special_properties
+            if (
+                row.stat_id not in defence_ids
+                or row.stat_id in visible_defence_ids
+            ) and not (
+                row.stat_id == "property.base_percentile"
+                and visible_defence_ids
+            )
+        ]
+        pseudo_candidates = list(_gear_pseudo_filters(item))
         # AwakenedのUnique Map Exactは固有名・Map種別・Tierだけで照合し、
         # 個体ごとのUnique Modロールを検索条件へ追加しない。
         exact_individual = () if item.category == "map" else individual
-        return _decorate_filters(
-            item, special_properties + exact_individual + _item_detail_filters(item)
-            + _unique_exception_filters(item) + _special_content_filters(item), True,
+        decorated = _decorate_filters(
+            item, tuple(special_properties) + tuple(pseudo_candidates) + exact_individual
+            + _item_detail_filters(item) + _unique_exception_filters(item)
+            + _special_content_filters(item), True,
         )
+        unique_pseudos = []
+        for row in decorated:
+            if row.kind != "pseudo":
+                unique_pseudos.append(row)
+                continue
+            sources = [item.modifiers[index] for index in row.source_indexes]
+            enough_sources = (
+                len(sources) >= 2
+                if "corrupted" in item.flags else
+                sum(source.kind in {"explicit", "prefix", "suffix"} for source in sources) >= 2
+            )
+            if enough_sources:
+                unique_pseudos.append(replace(
+                    row, enabled=False,
+                    selection_reason="Uniqueの複数Mod集約候補（初期未選択）",
+                ))
+        return tuple(unique_pseudos)
     initial_properties = [
         row for row in _initial_property_filters(
             item, trade_base_type, hide_memory_strands=True,

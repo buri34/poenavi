@@ -377,6 +377,9 @@ _FILTER_KIND_LABELS = {
     "essence": "エッセンス",
     "infamous": "悪名高い",
     "corrupted": "コラプト",
+    "catalyst": "カタリスト",
+    "volatile": "ヴォラタイル・ヴァール",
+    "reflecting": "リフレクティング・ミスト",
     "eldritch": "エルドリッチ",
     "synthesised": "シンセシス",
     "delve": "デルブ",
@@ -412,7 +415,10 @@ def _filter_kind_label(stat_filter: TradeStatFilter) -> str:
     provenance_labels = tuple(
         _FILTER_KIND_LABELS[provenance]
         for provenance in stat_filter.provenance_tags
-        if provenance in {"crafted", "fractured", "desecrated"}
+        if provenance in {
+            "crafted", "fractured", "desecrated", "catalyst", "volatile",
+            "reflecting", "corrupted",
+        }
     )
     if provenance_labels:
         return "／".join(dict.fromkeys(provenance_labels))

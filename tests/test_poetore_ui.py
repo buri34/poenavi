@@ -3235,6 +3235,10 @@ def test_mod_filter_ui_keeps_diagnostics_internal_and_tooltip_simple(qapp):
     ("crafted", "クラフト"),
     ("fractured", "フラクチャー"),
     ("desecrated", "冒涜"),
+    ("catalyst", "カタリスト"),
+    ("volatile", "ヴォラタイル・ヴァール"),
+    ("reflecting", "リフレクティング・ミスト"),
+    ("corrupted", "コラプト"),
 ])
 def test_mod_filter_ui_shows_provenance_in_kind_column(qapp, provenance, label):
     window = PoetoreWindow()
