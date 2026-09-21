@@ -2098,6 +2098,7 @@ def test_svalinn_keeps_armour_base_percentile_beside_variable_japanese_ward():
         )}
 
     ward = rows["property.ward"]
+    assert ward.text == "ワード（品質20%換算）"
     assert ward.read_value == 144.0
     assert ward.min_value == 129.0
     assert (ward.roll_min, ward.roll_max) == (120.0, 180.0)
@@ -2149,6 +2150,8 @@ def test_aegis_aurora_uses_variable_final_defences_without_base_percentile():
 
     armour = rows["property.armour"]
     energy_shield = rows["property.energy_shield"]
+    assert armour.text == "アーマー（品質20%換算）"
+    assert energy_shield.text == "エナジーシールド（品質20%換算）"
     assert armour.read_value == pytest.approx(1232.4)
     assert armour.min_value == 1109.0
     assert (armour.roll_min, armour.roll_max) == (1032.0, 1482.0)

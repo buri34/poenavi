@@ -2048,10 +2048,10 @@ def _initial_property_filters(
                 "property.block", "ブロック率", _relaxed(block), "property", False,
             ))
         defenses = [
-            ("property.armour", "アーマー", _property_value(item, *_DEFENCE_PROPERTY_LABELS["ar"])),
-            ("property.evasion", "回避力", _property_value(item, *_DEFENCE_PROPERTY_LABELS["ev"])),
-            ("property.energy_shield", "エナジーシールド", _property_value(item, *_DEFENCE_PROPERTY_LABELS["es"])),
-            ("property.ward", "ワード", _property_value(item, *_DEFENCE_PROPERTY_LABELS["ward"])),
+            ("property.armour", "アーマー（品質20%換算）", _property_value(item, *_DEFENCE_PROPERTY_LABELS["ar"])),
+            ("property.evasion", "回避力（品質20%換算）", _property_value(item, *_DEFENCE_PROPERTY_LABELS["ev"])),
+            ("property.energy_shield", "エナジーシールド（品質20%換算）", _property_value(item, *_DEFENCE_PROPERTY_LABELS["es"])),
+            ("property.ward", "ワード（品質20%換算）", _property_value(item, *_DEFENCE_PROPERTY_LABELS["ward"])),
         ]
         defence_keys = {
             "property.armour": "ar",

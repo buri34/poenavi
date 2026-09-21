@@ -2024,6 +2024,35 @@ Item Level: 83
         window.close()
 
 
+def test_poe1_armour_property_rows_show_quality_20_conversion(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 盾
+レアリティ: ユニーク
+イージス・オーロラ
+チャンピオンカイトシールド
+--------
+ブロック率: 32% (augmented)
+アーマー: 914 (augmented)
+エナジーシールド: 188 (augmented)
+--------
+アイテムレベル: 83
+--------
+{ ユニークモッド — 防御, アーマー, エナジーシールド }
+アーマーおよびエナジーシールドが301(300-400)%増加する
+""")
+        window.parse_current_text()
+
+        labels = {
+            window.mod_filter_tree.topLevelItem(index).text(_MOD_COLUMN_TEXT)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        }
+        assert "アーマー（品質20%換算）" in labels
+        assert "エナジーシールド（品質20%換算）" in labels
+    finally:
+        window.close()
+
+
 def test_weapon_header_shows_total_pdps_and_edps_but_hides_summary_for_non_weapon(qapp):
     window = PoetoreWindow()
     try:
