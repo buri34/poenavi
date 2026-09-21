@@ -15,7 +15,7 @@ from urllib.parse import quote, urlsplit
 import urllib3
 
 from .categories import is_armour_category, is_equipment_category, is_weapon_category
-from .models import ParsedItem
+from .models import ItemModifier, ParsedItem
 from .performance import SearchPerformanceTrace, record_trade_api_event
 from .metadata import (
     base_armour_bounds, default_metadata_index, gem_metadata, multi_value_rule,
@@ -1103,7 +1103,7 @@ def _quality_is_disabled(item: ParsedItem) -> bool:
 def _property_quality(item: ParsedItem) -> float:
     if _quality_is_disabled(item):
         return 0.0
-    return _property_value(item, "品質", "Quality") or 0.0
+    return _raw_property_quality(item) or 0.0
 
 
 def _trade_property_quality(item: ParsedItem) -> float:
@@ -1151,6 +1151,29 @@ def _property_value(item: ParsedItem, *labels: str) -> float | None:
             if match:
                 return float(match.group())
     return None
+
+
+def _raw_property_quality(item: ParsedItem) -> float | None:
+    """通常品質とCatalyst種別付き品質の表示値を取得する。"""
+    for label, value in item.properties.items():
+        if not re.fullmatch(
+            r"(?:品質|quality)(?:\s*\([^)]*\))?", label, re.IGNORECASE,
+        ):
+            continue
+        match = re.search(r"\d+(?:\.\d+)?", value.replace(",", ""))
+        if match:
+            return float(match.group())
+    return None
+
+
+def _is_catalyst_affected(item: ParsedItem, modifier: ItemModifier) -> bool:
+    """Catalyst品質が実際にロールへ反映されたアクセサリーModだけを返す。"""
+    if item.category != "accessory" or not _raw_property_quality(item):
+        return False
+    if modifier.quality_affected is not None:
+        return modifier.quality_affected
+    # 通常コピーにはMod見出しがないため、従来の安全側フォールバックを維持する。
+    return bool(modifier.values)
 
 
 def _memory_strands(item: ParsedItem) -> float | None:
@@ -1267,7 +1290,7 @@ def available_trade_presets(
             or _is_unique(item) or rarity in {"normal", "ノーマル"}
             or "unidentified" in item.flags):
         return (PRESET_FINISHED,)
-    quality = _property_value(item, "品質", "Quality")
+    quality = _raw_property_quality(item)
     likely_finished = (
         any(modifier.kind == "crafted" for modifier in item.modifiers)
         or (quality == 20 and (
@@ -1588,7 +1611,7 @@ def _socket_summary(item: ParsedItem) -> tuple[int, int]:
 
 def _item_detail_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
     filters: list[TradeStatFilter] = []
-    quality = _property_value(item, "品質", "Quality")
+    quality = _raw_property_quality(item)
     if quality is not None and quality >= 20:
         filters.append(TradeStatFilter(
             "property.quality", "品質", quality, "property", quality > 20,
@@ -1604,7 +1627,7 @@ def _item_detail_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
 def _gem_filters(item: ParsedItem, trade_base_type: str | None) -> tuple[TradeStatFilter, ...]:
     info = gem_metadata(trade_base_type or item.base_type)
     level = _property_value(item, "ジェムレベル", "レベル", "Level")
-    quality = _property_value(item, "品質", "Quality")
+    quality = _raw_property_quality(item)
     maximum = int(info.get("max_level", 20))
     filters = []
     if level is not None:
@@ -3133,7 +3156,7 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
         "property.energy_shield": _property_value(item, "エナジーシールド", "Energy Shield"),
         "property.ward": _property_value(item, "Ward"),
         "property.item_level": float(item.item_level) if item.item_level is not None else None,
-        "property.quality": _property_value(item, "品質", "Quality"),
+        "property.quality": _raw_property_quality(item),
         "property.sockets": float(sockets) if sockets else None,
         "property.links": float(links) if links else None,
     }
@@ -3303,9 +3326,7 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
             if modifier.generation in {"volatile", "reflecting"}:
                 provenance_tags.append(modifier.generation)
             if (
-                item.category == "accessory"
-                and _property_value(item, "品質", "Quality")
-                and modifier.values
+                _is_catalyst_affected(item, modifier)
             ):
                 provenance_tags.append("catalyst")
             if (
@@ -3457,8 +3478,7 @@ def resolve_trade_stat_filters(
                     and modifier.roll_min != modifier.roll_max
                 )
                 or (
-                    item.category == "accessory"
-                    and _property_value(item, "品質", "Quality")
+                    _is_catalyst_affected(item, modifier)
                 )
                 or (
                     "mirrored" in item.flags

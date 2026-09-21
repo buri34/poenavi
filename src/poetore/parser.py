@@ -647,7 +647,7 @@ def _section_has_modifier_evidence(section: list[str]) -> bool:
 
 def _modifier_header_details(
     line: str,
-) -> tuple[str, int | None, str | None, str | None, str | None] | None:
+) -> tuple[str, int | None, str | None, str | None, str | None, bool] | None:
     kind = _modifier_header_kind(line)
     if kind is None:
         return None
@@ -685,7 +685,15 @@ def _modifier_header_details(
         next((value for value in name_match.groups() if value is not None), None)
         if name_match else None
     )
-    return kind, int(tier_match.group(1)) if tier_match else None, affix, generation, name
+    quality_affected = re.search(
+        r"[-–—]\s*\+?\d+(?:\.\d+)?%\s*(?:増加|increased)",
+        body,
+        re.IGNORECASE,
+    ) is not None
+    return (
+        kind, int(tier_match.group(1)) if tier_match else None, affix,
+        generation, name, quality_affected,
+    )
 
 
 def _is_unique_flavour_section(
@@ -855,6 +863,7 @@ def parse_item_text(text: str) -> ParsedItem:
     current_header_affix: str | None = None
     current_header_generation: str | None = None
     current_header_name: str | None = None
+    current_header_quality_affected: bool | None = None
     current_modifier_group = 0
     item_category = _category_with_item_identity(
         header.get("item_class", ""), name, base_type, text,
@@ -895,6 +904,7 @@ def parse_item_text(text: str) -> ParsedItem:
         current_header_affix = None
         current_header_generation = None
         current_header_name = None
+        current_header_quality_affected = None
         if reached_item_level and _is_unique_flavour_section(
             section, rarity, item_category, bool(modifiers),
         ):
@@ -943,7 +953,8 @@ def parse_item_text(text: str) -> ParsedItem:
                 # 1つのModが複数行の効果を持つ場合がある。
                 # 次の見出しまで同じPrefix/Suffix種別を維持する。
                 (current_header_kind, current_header_tier, current_header_affix,
-                 current_header_generation, current_header_name) = header_details
+                 current_header_generation, current_header_name,
+                 current_header_quality_affected) = header_details
                 current_modifier_group += 1
                 continue
             # 詳細コピーでは構造上Modと確認できる区画だけを解析する。
@@ -1155,6 +1166,9 @@ def parse_item_text(text: str) -> ParsedItem:
                 option_text=option.japanese if option else None,
                 oils=option.oils if option else (),
                 decimal=metadata.decimal if metadata else False,
+                quality_affected=(
+                    current_header_quality_affected if from_header else None
+                ),
             ))
 
     # 日本語クライアントの詳細コピーでは、Map Tierが独立したプロパティ行ではなく

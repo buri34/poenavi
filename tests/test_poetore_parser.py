@@ -830,6 +830,29 @@ Iron Ring
         )
         self.assertEqual(item.modifiers[-1].generation, "foulborn")
 
+    def test_detailed_catalyst_quality_marks_only_affected_modifier(self):
+        item = parse_item_text("""アイテムクラス: 指輪
+レアリティ: ユニーク
+ファウルボーン 皆を繋ぐもの
+鉄の指輪
+--------
+品質 (防御力モッド): +10% (augmented)
+--------
+アイテムレベル: 71
+--------
+{ ユニークモッド — 能力値 }
+全ての能力値 +13(10-30)
+{ ファウルボーンユニークモッド — 防御 - 10%増加 }
+グローバル防御力が25(10-30)%増加する
+{ ファウルボーンユニークモッド — ダメージ, クリティカル }
+グローバルクリティカルダメージ倍率 +22(10-30)%
+""")
+
+        attributes, defences, critical = item.modifiers
+        self.assertFalse(attributes.quality_affected)
+        self.assertTrue(defences.quality_affected)
+        self.assertFalse(critical.quality_affected)
+
     def test_japanese_vestigial_unique_uses_normal_base_and_marks_implicit(self):
         item = parse_item_text("""アイテムクラス: 靴
 レアリティ: ユニーク

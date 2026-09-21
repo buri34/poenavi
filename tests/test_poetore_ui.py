@@ -1627,6 +1627,56 @@ def test_foulborn_unique_uses_normal_name_and_enables_variable_mods_in_real_pane
         window.close()
 
 
+def test_foulborn_catalyst_quality_shows_only_on_affected_mod_in_real_panel(qapp):
+    window = PoetoreWindow()
+    try:
+        window._trade_base_type = "Iron Ring"
+        window._trade_item_name = "Le Heup of All"
+        window.input_edit.setPlainText("""アイテムクラス: 指輪
+レアリティ: ユニーク
+ファウルボーン 皆を繋ぐもの
+鉄の指輪
+--------
+品質 (防御力モッド): +10% (augmented)
+--------
+装備要求:
+レベル: 24
+--------
+アイテムレベル: 71
+--------
+{ 暗黙モッド — ダメージ, 物理, アタック }
+1から4の物理ダメージをアタックに追加する
+--------
+{ ユニークモッド — 能力値 }
+全ての能力値 +13(10-30)
+(Attribute: 能力値は筋力、器用さ、知性)
+{ ユニークモッド — 元素, 耐性 }
+全ての元素耐性 +22(10-30)%
+{ ファウルボーンユニークモッド — 防御 - 10%増加 }
+グローバル防御力が25(10-30)%増加する
+(アーマー、回避力、エナジーシールドは標準的な防御力である)
+{ ファウルボーンユニークモッド — ダメージ, クリティカル }
+グローバルクリティカルダメージ倍率 +22(10-30)%
+""")
+        window.parse_current_text()
+
+        rows = {
+            window.mod_filter_tree.topLevelItem(index).text(3):
+            window.mod_filter_tree.topLevelItem(index)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+        }
+        assert rows["グローバル防御力が25(10-30)%増加する"].text(1) == (
+            "ファウルボーン／カタリスト"
+        )
+        assert rows["グローバルクリティカルダメージ倍率 +22(10-30)%"].text(1) == (
+            "ファウルボーン"
+        )
+        assert rows["全ての能力値 +13(10-30)"].text(1) == "明示"
+        assert rows["全ての元素耐性 +22(10-30)%"].text(1) == "明示"
+    finally:
+        window.close()
+
+
 def test_japanese_vestigial_unique_shows_enabled_implicit_in_real_panel(qapp):
     window = PoetoreWindow()
     try:

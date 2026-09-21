@@ -421,8 +421,6 @@ def _filter_kind_label(stat_filter: TradeStatFilter) -> str:
             "reflecting", "corrupted",
         }
     )
-    if provenance_labels:
-        return "／".join(dict.fromkeys(provenance_labels))
     kind = (
         stat_filter.generation
         if stat_filter.generation in _FILTER_KIND_LABELS
@@ -430,7 +428,15 @@ def _filter_kind_label(stat_filter: TradeStatFilter) -> str:
         if stat_filter.affix in {"prefix", "suffix"}
         else stat_filter.kind
     )
-    return _FILTER_KIND_LABELS.get(kind, "特殊")
+    kind_label = _FILTER_KIND_LABELS.get(kind, "特殊")
+    if provenance_labels:
+        labels = (
+            (kind_label, *provenance_labels)
+            if kind not in {"explicit", "implicit", "prefix", "suffix"}
+            else provenance_labels
+        )
+        return "／".join(dict.fromkeys(labels))
+    return kind_label
 
 
 def _replace_filters_with_special_chips(
