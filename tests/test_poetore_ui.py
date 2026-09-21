@@ -4620,10 +4620,16 @@ def test_unidentified_unique_candidate_selection_recalculates_disenchant_dust(qa
         ):
             window._show_unique_candidates(candidates)
             assert not window.disenchant_dust_panel.isHidden()
-            assert window.disenchant_dust_value.text() == "551,218"
+            assert window.disenchant_dust_value.text() == "551.2K"
+            assert window.disenchant_dust_panel.toolTip() == (
+                "解呪ダスト（推定）：551,218"
+            )
 
             window.unique_name_group.buttons()[1].click()
-            assert window.disenchant_dust_value.text() == "153,349"
+            assert window.disenchant_dust_value.text() == "153.3K"
+            assert window.disenchant_dust_panel.toolTip() == (
+                "解呪ダスト（推定）：153,349"
+            )
     finally:
         window.close()
 
@@ -4641,7 +4647,91 @@ Item Level: 85
         window.parse_current_text()
 
         assert not window.disenchant_dust_panel.isHidden()
-        assert window.disenchant_dust_value.text() == "2,227,900"
+        assert window.disenchant_dust_value.text() == "2.23M"
+        assert window.disenchant_dust_panel.toolTip() == (
+            "解呪ダスト（推定）：2,227,900"
+        )
+        assert window.weapon_property_header.indexOf(window.disenchant_dust_panel) >= 0
+    finally:
+        window.close()
+
+
+def test_identified_japanese_unique_uses_resolved_identity_for_compact_dust(qapp):
+    window = PoetoreWindow()
+    try:
+        window._trade_base_type = "Champion Kite Shield"
+        window._trade_item_name = "Aegis Aurora"
+        window.input_edit.setPlainText("""アイテムクラス: 盾
+レアリティ: ユニーク
+イージス・オーロラ
+チャンピオンカイトシールド
+--------
+ブロック率: 32% (augmented)
+アーマー: 914 (augmented)
+エナジーシールド: 188 (augmented)
+--------
+アイテムレベル: 83
+""")
+        window.parse_current_text()
+
+        assert not window.disenchant_dust_panel.isHidden()
+        assert window.disenchant_dust_label.text() == "ダスト"
+        assert window.disenchant_dust_value.text() == "119.7K"
+        assert window.disenchant_dust_panel.toolTip() == (
+            "解呪ダスト（推定）：119,700"
+        )
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(("value", "expected"), (
+    (999, "999"),
+    (119_700, "119.7K"),
+    (2_227_900, "2.23M"),
+))
+def test_compact_dust_amount(value, expected):
+    from src.poetore.ui import _compact_dust_amount
+
+    assert _compact_dust_amount(value) == expected
+
+
+def test_unique_weapon_shows_dps_and_compact_dust_in_same_header(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.disenchant_dust", return_value=119_700):
+            window.input_edit.setPlainText("""Item Class: Two Hand Swords
+Rarity: Unique
+Terminus Est
+Tiger Sword
+--------
+Physical Damage: 50-100 (augmented)
+Attacks per Second: 1.50
+--------
+Item Level: 83
+""")
+            window.parse_current_text()
+
+        assert not window.weapon_dps_label.isHidden()
+        assert not window.disenchant_dust_panel.isHidden()
+        assert window.weapon_property_header.indexOf(window.weapon_dps_label) >= 0
+        assert window.weapon_property_header.indexOf(window.disenchant_dust_panel) >= 0
+        assert window.disenchant_dust_value.text() == "119.7K"
+    finally:
+        window.close()
+
+
+def test_poe2_never_shows_poe1_disenchant_dust(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        item = ParsedItem(
+            item_class="Body Armours", rarity="Unique", name="Test Unique",
+            base_type="Test Armour", category="armour", item_level=80,
+        )
+        with patch("src.poetore.ui.disenchant_dust") as calculate:
+            window._update_disenchant_dust(item)
+
+        calculate.assert_not_called()
+        assert window.disenchant_dust_panel.isHidden()
     finally:
         window.close()
 

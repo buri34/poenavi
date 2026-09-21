@@ -63,6 +63,15 @@ from .poe2.metadata import (
 from .performance import SearchPerformanceTrace, start_search_trace
 
 
+def _compact_dust_amount(value: int) -> str:
+    """Fit an estimated dust amount in the compact search-condition header."""
+    if value >= 1_000_000:
+        return f"{value / 1_000_000:.2f}".rstrip("0").rstrip(".") + "M"
+    if value >= 1_000:
+        return f"{value / 1_000:.1f}".rstrip("0").rstrip(".") + "K"
+    return f"{value:,}"
+
+
 class _TradeSignals(QObject):
     completed = Signal(object, object, int)
     partial_completed = Signal(object, int)
@@ -1184,17 +1193,18 @@ class PoetoreWindow(QWidget):
         self.disenchant_dust_panel = QFrame()
         self.disenchant_dust_panel.setObjectName("disenchantDustPanel")
         dust_layout = QHBoxLayout(self.disenchant_dust_panel)
-        dust_layout.setContentsMargins(8, 5, 8, 5)
-        dust_layout.setSpacing(8)
-        self.disenchant_dust_label = QLabel("解呪ダスト（推定）")
+        dust_layout.setContentsMargins(8, 3, 8, 3)
+        dust_layout.setSpacing(6)
+        self.disenchant_dust_label = QLabel("ダスト")
         self.disenchant_dust_label.setObjectName("disenchantDustLabel")
         self.disenchant_dust_value = QLabel("—")
         self.disenchant_dust_value.setObjectName("disenchantDustValue")
-        dust_layout.addStretch()
         dust_layout.addWidget(self.disenchant_dust_label)
         dust_layout.addWidget(self.disenchant_dust_value)
+        self.disenchant_dust_panel.setSizePolicy(
+            QSizePolicy.Maximum, QSizePolicy.Fixed,
+        )
         self.disenchant_dust_panel.hide()
-        content_layout.addWidget(self.disenchant_dust_panel)
 
         self.related_items_panel = QFrame()
         self.related_items_panel.setObjectName("relatedItemsPanel")
@@ -1630,13 +1640,14 @@ class PoetoreWindow(QWidget):
         self.weapon_dps_label = QLabel()
         self.weapon_dps_label.setObjectName("weaponDpsSummary")
         self.weapon_dps_label.hide()
-        weapon_property_header = QHBoxLayout()
-        weapon_property_header.setContentsMargins(0, 0, 0, 0)
-        weapon_property_header.setSpacing(8)
-        weapon_property_header.addWidget(self.weapon_property_label)
-        weapon_property_header.addWidget(self.weapon_dps_label)
-        weapon_property_header.addStretch(1)
-        content_layout.addLayout(weapon_property_header)
+        self.weapon_property_header = QHBoxLayout()
+        self.weapon_property_header.setContentsMargins(0, 0, 0, 0)
+        self.weapon_property_header.setSpacing(8)
+        self.weapon_property_header.addWidget(self.weapon_property_label)
+        self.weapon_property_header.addWidget(self.weapon_dps_label)
+        self.weapon_property_header.addStretch(1)
+        self.weapon_property_header.addWidget(self.disenchant_dust_panel)
+        content_layout.addLayout(self.weapon_property_header)
         self.clear_mod_conditions_button = QPushButton("一覧のチェックを全て選択")
         self.clear_mod_conditions_button.setObjectName("secondaryActionButton")
         self.clear_mod_conditions_button.setProperty("mutedText", True)
@@ -5437,16 +5448,32 @@ class PoetoreWindow(QWidget):
     def _update_disenchant_dust(self, item, unique_name=None, base_type=None):
         value = None
         if self.poe_version != POE2 and item is not None:
+            resolved_base = str(
+                base_type or self._trade_base_type or item.base_type or ""
+            ).strip()
+            resolved_name = str(unique_name or self._trade_item_name or "").strip()
+            if not unique_name and not resolved_name:
+                try:
+                    resolved_base, resolved_name = english_trade_identity(
+                        item, resolved_base, item.name,
+                    )
+                except TradeApiError:
+                    resolved_name = str(item.name or "").strip()
             value = disenchant_dust(
                 item,
-                unique_name=unique_name,
-                base_type=base_type or self._trade_base_type or item.base_type,
+                unique_name=resolved_name or None,
+                base_type=resolved_base or None,
             )
         if value is None:
             self.disenchant_dust_value.setText("—")
+            self.disenchant_dust_panel.setToolTip("")
             self.disenchant_dust_panel.hide()
             return
-        self.disenchant_dust_value.setText(f"{value:,}")
+        tooltip = f"解呪ダスト（推定）：{value:,}"
+        self.disenchant_dust_value.setText(_compact_dust_amount(value))
+        self.disenchant_dust_panel.setToolTip(tooltip)
+        self.disenchant_dust_label.setToolTip(tooltip)
+        self.disenchant_dust_value.setToolTip(tooltip)
         self.disenchant_dust_panel.show()
 
     def _show_unique_candidates(self, candidates):
