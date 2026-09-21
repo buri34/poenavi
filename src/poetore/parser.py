@@ -1,16 +1,16 @@
 from __future__ import annotations
 
+import re
 from dataclasses import replace
 from functools import lru_cache
-import re
 
-from .models import ItemModifier, ParsedItem
 from .metadata import (
     default_metadata_index,
     gem_metadata,
     multi_value_rule,
     normalize_stat_text,
 )
+from .models import ItemModifier, ParsedItem, apply_roll_increase
 
 
 class ItemParseError(ValueError):
@@ -647,7 +647,9 @@ def _section_has_modifier_evidence(section: list[str]) -> bool:
 
 def _modifier_header_details(
     line: str,
-) -> tuple[str, int | None, str | None, str | None, str | None, bool] | None:
+) -> tuple[
+    str, int | None, str | None, str | None, str | None, bool, float | None,
+] | None:
     kind = _modifier_header_kind(line)
     if kind is None:
         return None
@@ -685,14 +687,16 @@ def _modifier_header_details(
         next((value for value in name_match.groups() if value is not None), None)
         if name_match else None
     )
-    quality_affected = re.search(
-        r"[-–—]\s*\+?\d+(?:\.\d+)?%\s*(?:増加|increased)",
+    increase_match = re.search(
+        r"[-–—]\s*\+?(\d+(?:\.\d+)?)%\s*(?:増加|increased)",
         body,
         re.IGNORECASE,
-    ) is not None
+    )
+    quality_affected = increase_match is not None
+    roll_increase = float(increase_match.group(1)) if increase_match else None
     return (
         kind, int(tier_match.group(1)) if tier_match else None, affix,
-        generation, name, quality_affected,
+        generation, name, quality_affected, roll_increase,
     )
 
 
@@ -864,6 +868,7 @@ def parse_item_text(text: str) -> ParsedItem:
     current_header_generation: str | None = None
     current_header_name: str | None = None
     current_header_quality_affected: bool | None = None
+    current_header_roll_increase: float | None = None
     current_modifier_group = 0
     item_category = _category_with_item_identity(
         header.get("item_class", ""), name, base_type, text,
@@ -905,6 +910,7 @@ def parse_item_text(text: str) -> ParsedItem:
         current_header_generation = None
         current_header_name = None
         current_header_quality_affected = None
+        current_header_roll_increase = None
         if reached_item_level and _is_unique_flavour_section(
             section, rarity, item_category, bool(modifiers),
         ):
@@ -954,7 +960,8 @@ def parse_item_text(text: str) -> ParsedItem:
                 # 次の見出しまで同じPrefix/Suffix種別を維持する。
                 (current_header_kind, current_header_tier, current_header_affix,
                  current_header_generation, current_header_name,
-                 current_header_quality_affected) = header_details
+                 current_header_quality_affected,
+                 current_header_roll_increase) = header_details
                 current_modifier_group += 1
                 continue
             # 詳細コピーでは構造上Modと確認できる区画だけを解析する。
@@ -1135,6 +1142,35 @@ def parse_item_text(text: str) -> ParsedItem:
             value_index = _DIRECTIONAL_STAT_VALUE_INDEX.get(direction_alias_key)
             if value_index is not None and len(values) > value_index:
                 values = (values[value_index],)
+            decimal = metadata.decimal if metadata else False
+            catalyst_quality = (
+                item_category == "accessory"
+                and any(
+                    re.fullmatch(
+                        r"(?:品質|quality)(?:\s*\([^)]*\))?",
+                        label,
+                        re.IGNORECASE,
+                    )
+                    for label in properties
+                )
+            )
+            roll_increase = (
+                current_header_roll_increase
+                if from_header and catalyst_quality else None
+            )
+            if roll_increase:
+                values = tuple(
+                    apply_roll_increase(value, roll_increase, decimal=decimal)
+                    for value in values
+                )
+                if roll_min is not None:
+                    roll_min = apply_roll_increase(
+                        roll_min, roll_increase, decimal=decimal,
+                    )
+                if roll_max is not None:
+                    roll_max = apply_roll_increase(
+                        roll_max, roll_increase, decimal=decimal,
+                    )
             # 公式日本語文（refに対応）のmatcher.negateはAwakenedと同じく
             # better/invertedの両方へ反映する。方向語の別表記を一意照合した場合は、
             # 従来どおり表示値に対する良否を維持し、API符号だけを反転する。
@@ -1165,10 +1201,11 @@ def parse_item_text(text: str) -> ParsedItem:
                 option_value=option.value if option else None,
                 option_text=option.japanese if option else None,
                 oils=option.oils if option else (),
-                decimal=metadata.decimal if metadata else False,
+                decimal=decimal,
                 quality_affected=(
                     current_header_quality_affected if from_header else None
                 ),
+                roll_increase=roll_increase,
             ))
 
     # 日本語クライアントの詳細コピーでは、Map Tierが独立したプロパティ行ではなく

@@ -1630,6 +1630,9 @@ def test_foulborn_unique_uses_normal_name_and_enables_variable_mods_in_real_pane
 def test_foulborn_catalyst_quality_shows_only_on_affected_mod_in_real_panel(qapp):
     window = PoetoreWindow()
     try:
+        window.search_range_combo.setCurrentIndex(
+            window.search_range_combo.findData(0)
+        )
         window._trade_base_type = "Iron Ring"
         window._trade_item_name = "Le Heup of All"
         window.input_edit.setPlainText("""アイテムクラス: 指輪
@@ -1668,6 +1671,10 @@ def test_foulborn_catalyst_quality_shows_only_on_affected_mod_in_real_panel(qapp
         assert rows["グローバル防御力が25(10-30)%増加する"].text(1) == (
             "ファウルボーン／カタリスト"
         )
+        defence_minimum = window.mod_filter_tree.itemWidget(
+            rows["グローバル防御力が25(10-30)%増加する"], 4,
+        ).findChild(QLineEdit)
+        assert defence_minimum.text() == "27"
         assert rows["グローバルクリティカルダメージ倍率 +22(10-30)%"].text(1) == (
             "ファウルボーン"
         )

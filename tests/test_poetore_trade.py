@@ -3094,6 +3094,49 @@ def test_special_crafting_keeps_unique_numeric_stat_visible(
     assert expected_tag in row.provenance_tags
 
 
+def test_detailed_catalyst_increase_reaches_exact_trade_query():
+    item = parse_item_text("""アイテムクラス: 指輪
+レアリティ: ユニーク
+ファウルボーン 皆を繋ぐもの
+鉄の指輪
+--------
+品質 (防御力モッド): +10% (augmented)
+--------
+アイテムレベル: 71
+--------
+{ ファウルボーンユニークモッド — 防御 - 10%増加 }
+グローバル防御力が25(10-30)%増加する
+""")
+    entry = {
+        "id": "explicit.stat_1389153006",
+        "text": "グローバル防御力が#%増加する",
+        "type": "explicit",
+    }
+    with patch("src.poetore.trade._trade_stat_entries", return_value=(entry,)):
+        filters = resolve_trade_stat_filters(
+            item, trade_base_type="Iron Ring", trade_name="Le Heup of All",
+        )
+
+    defence = next(row for row in filters if row.stat_id == entry["id"])
+    exact = apply_search_range((defence,), 0, item)
+    assert (
+        defence.read_value,
+        defence.roll_min,
+        defence.roll_max,
+        exact[0].min_value,
+    ) == (27, 11, 33, 27)
+    query = build_search_query(
+        item,
+        trade_base_type="Iron Ring",
+        trade_name="Le Heup of All",
+        stat_filters=exact,
+    )["query"]
+    assert query["stats"][0]["filters"] == [{
+        "id": entry["id"],
+        "value": {"min": 27},
+    }]
+
+
 def test_watchers_eye_uses_awakened_fixed_stats_and_keeps_unscalable_variant():
     item = parse_item_text("""アイテムクラス: ジュエル
 レアリティ: ユニーク

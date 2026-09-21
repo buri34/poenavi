@@ -15,7 +15,7 @@ from urllib.parse import quote, urlsplit
 import urllib3
 
 from .categories import is_armour_category, is_equipment_category, is_weapon_category
-from .models import ItemModifier, ParsedItem
+from .models import ItemModifier, ParsedItem, apply_roll_increase
 from .performance import SearchPerformanceTrace, record_trade_api_event
 from .metadata import (
     base_armour_bounds, default_metadata_index, gem_metadata, multi_value_rule,
@@ -2447,6 +2447,7 @@ def _indexed_stat_text(text: str, kind: str) -> str:
 
 def _value_for_template(
     source: str, template: str, stat_id: str | None = None,
+    *, roll_increase: float | None = None, decimal: bool = False,
 ) -> float | None:
     source = re.sub(r"\([^)]*(?:\d|implicit|crafted|enchant)[^)]*\)", "", source, flags=re.IGNORECASE).strip()
     template = template.replace(" (ローカル)", "").strip()
@@ -2454,7 +2455,10 @@ def _value_for_template(
     match = re.fullmatch(pattern, source)
     if not match or not match.groups():
         return None
-    values = tuple(float(value) for value in match.groups())
+    values = tuple(
+        apply_roll_increase(float(value), roll_increase, decimal=decimal)
+        for value in match.groups()
+    )
     rule = multi_value_rule(stat_id or "")
     if rule:
         operation = rule.get("operation")
@@ -3462,6 +3466,13 @@ def resolve_trade_stat_filters(
                 # Anointmentも候補へ表示する。その他の付け直しやすいものは隠す。
                 continue
         roll_bounds = _unique_roll_bounds(modifier.text) if unique_item else None
+        if (
+            roll_bounds is not None
+            and modifier.roll_increase
+            and modifier.roll_min is not None
+            and modifier.roll_max is not None
+        ):
+            roll_bounds = (modifier.roll_min, modifier.roll_max)
         standalone_variant = (
             unique_item
             and modifier.kind == "explicit"
@@ -3564,7 +3575,10 @@ def resolve_trade_stat_filters(
                 # DPS・APS・クリ率・防御値へ反映済みなので二重条件化しない。
                 continue
             entry_text = str(entry.get("text", ""))
-            value = _value_for_template(modifier.text, entry_text, modifier.stat_id)
+            value = _value_for_template(
+                modifier.text, entry_text, modifier.stat_id,
+                roll_increase=modifier.roll_increase, decimal=modifier.decimal,
+            )
             if value is None and (
                 "#" in entry_text
                 or modifier.option_value is not None
@@ -3605,6 +3619,8 @@ def resolve_trade_stat_filters(
                 # 4(3)%の変異値が3%以上になり通常品まで混ざってしまう。
                 current_value = _value_for_template(
                     modifier.text, str(entry.get("text", "")),
+                    roll_increase=modifier.roll_increase,
+                    decimal=modifier.decimal,
                 )
                 if current_value is not None:
                     value = maximum = current_value
