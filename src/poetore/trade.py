@@ -230,7 +230,7 @@ _WEAPON_CRIT_STAT_KEYS = {"2375316951"}
 _ARMOUR_STAT_KEYS = {
     "4052037485", "124859000", "4015621042", "53045048", "1062208444",
     "3484657501", "3321629045", "2451402625", "1999113824", "3523867985",
-    "4253454700",
+    "4253454700", "774059442", "830161081",
 }
 
 # Allflameの日本語Trade APIで、固定文言中の数字をmin値として送る旧条件が0件、
@@ -1198,6 +1198,13 @@ _DEFENCE_REFS = {
     "ward": ({"+# to Ward"}, {"#% increased Ward"}),
 }
 
+_DEFENCE_PROPERTY_LABELS = {
+    "ar": ("アーマー", "防具", "Armour"),
+    "ev": ("回避力", "Evasion Rating"),
+    "es": ("エナジーシールド", "Energy Shield"),
+    "ward": ("ワード", "Ward"),
+}
+
 
 def _local_defence_components(item: ParsedItem, defence: str) -> tuple[float, float]:
     """Return local flat and increased defence totals used by Awakened's q20 calculation."""
@@ -1229,11 +1236,19 @@ def _defence_bounds_at_trade_quality(
     item: ParsedItem, trade_base_type: str | None, defence: str,
 ) -> tuple[float, float] | None:
     base_range = base_armour_bounds(trade_base_type or item.base_type).get(defence)
-    if not base_range:
-        return None
     flat_refs, increased_refs = _DEFENCE_REFS[defence]
+    relevant_modifiers = tuple(
+        modifier for modifier in item.modifiers
+        if modifier.ref in flat_refs or modifier.ref in increased_refs
+    )
+    if not base_range:
+        if not relevant_modifiers:
+            return None
+        # SvalinnのWardのように、防具ベース自体は該当防御値を持たず、
+        # UniqueのローカルModだけで最終Propertyが作られる場合がある。
+        base_range = (0.0, 0.0)
     flat_min = flat_max = increased_min = increased_max = 0.0
-    for modifier in item.modifiers:
+    for modifier in relevant_modifiers:
         value = modifier.values[0] if modifier.values else 0.0
         low = modifier.roll_min if modifier.roll_min is not None else value
         high = modifier.roll_max if modifier.roll_max is not None else value
@@ -1260,13 +1275,13 @@ def _has_variable_local_defence(item: ParsedItem, defence: str) -> bool:
     )
 
 
-def _base_defence_percentile(item: ParsedItem, trade_base_type: str | None) -> float | None:
+def _base_defence_percentile_details(
+    item: ParsedItem, trade_base_type: str | None,
+) -> tuple[float, str] | None:
     bounds = base_armour_bounds(trade_base_type or item.base_type)
     properties = {
-        "ar": _property_value(item, "アーマー", "防具", "Armour"),
-        "ev": _property_value(item, "回避力", "Evasion Rating"),
-        "es": _property_value(item, "エナジーシールド", "Energy Shield"),
-        "ward": _property_value(item, "Ward"),
+        defence: _property_value(item, *labels)
+        for defence, labels in _DEFENCE_PROPERTY_LABELS.items()
     }
     quality = _property_quality(item)
     for defence in ("ar", "ev", "es", "ward"):
@@ -1276,8 +1291,13 @@ def _base_defence_percentile(item: ParsedItem, trade_base_type: str | None) -> f
         flat, increased = _local_defence_components(item, defence)
         rolled_base = total / (1.0 + quality / 100.0) / (1.0 + increased / 100.0) - flat
         percentile = round((rolled_base - base_range[0]) * 100.0 / (base_range[1] - base_range[0]))
-        return float(min(100, max(0, percentile)))
+        return float(min(100, max(0, percentile))), defence
     return None
+
+
+def _base_defence_percentile(item: ParsedItem, trade_base_type: str | None) -> float | None:
+    details = _base_defence_percentile_details(item, trade_base_type)
+    return details[0] if details else None
 
 
 def available_trade_presets(
@@ -2028,10 +2048,10 @@ def _initial_property_filters(
                 "property.block", "ブロック率", _relaxed(block), "property", False,
             ))
         defenses = [
-            ("property.armour", "アーマー", _property_value(item, "アーマー", "防具", "Armour")),
-            ("property.evasion", "回避力", _property_value(item, "回避力", "Evasion Rating")),
-            ("property.energy_shield", "エナジーシールド", _property_value(item, "エナジーシールド", "Energy Shield")),
-            ("property.ward", "Ward", _property_value(item, "Ward")),
+            ("property.armour", "アーマー", _property_value(item, *_DEFENCE_PROPERTY_LABELS["ar"])),
+            ("property.evasion", "回避力", _property_value(item, *_DEFENCE_PROPERTY_LABELS["ev"])),
+            ("property.energy_shield", "エナジーシールド", _property_value(item, *_DEFENCE_PROPERTY_LABELS["es"])),
+            ("property.ward", "ワード", _property_value(item, *_DEFENCE_PROPERTY_LABELS["ward"])),
         ]
         defence_keys = {
             "property.armour": "ar",
@@ -2996,10 +3016,10 @@ def _aggregated_local_property_stat(item: ParsedItem, stat_id: str) -> bool:
         if key in _WEAPON_CRIT_STAT_KEYS:
             return _property_value(item, "クリティカル率", "Critical Strike Chance") is not None
     if item.category == "armour" and key in _ARMOUR_STAT_KEYS:
-        return any(_property_value(item, label) is not None for label in (
-            "アーマー", "防具", "Armour", "回避力", "Evasion Rating",
-            "エナジーシールド", "Energy Shield", "Ward",
-        ))
+        return any(
+            _property_value(item, *labels) is not None
+            for labels in _DEFENCE_PROPERTY_LABELS.values()
+        )
     return False
 
 
@@ -3726,6 +3746,14 @@ def resolve_trade_stat_filters(
             if _has_variable_local_defence(item, defence)
             or _property_quality(item) >= 21
         }
+        percentile_details = _base_defence_percentile_details(item, trade_base_type)
+        percentile_property_id = (
+            next(
+                stat_id for stat_id, defence in defence_ids.items()
+                if defence == percentile_details[1]
+            )
+            if percentile_details else None
+        )
         special_properties = [
             row for row in special_properties
             if (
@@ -3733,7 +3761,7 @@ def resolve_trade_stat_filters(
                 or row.stat_id in visible_defence_ids
             ) and not (
                 row.stat_id == "property.base_percentile"
-                and visible_defence_ids
+                and percentile_property_id in visible_defence_ids
             )
         ]
         pseudo_candidates = list(_gear_pseudo_filters(item))

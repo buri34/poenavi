@@ -2056,6 +2056,109 @@ def test_unique_variable_armour_uses_q20_base_bounds_and_hides_redundant_percent
     assert query["filters"]["armour_filters"]["filters"]["ar"] == {"min": 243.0}
 
 
+def test_svalinn_keeps_armour_base_percentile_beside_variable_japanese_ward():
+    item = parse_item_text("""アイテムクラス: 盾
+レアリティ: ユニーク
+スヴァリン
+補強されたタワーシールド
+--------
+品質: +20% (augmented)
+ブロック率: 23%
+アーマー: 518 (augmented)
+ワード: 144 (augmented)
+--------
+アイテムレベル: 85
+--------
+{ 暗黙モッド — ライフ }
+最大ライフ +18(10-20)
+--------
+{ ユニークモッド }
+スペルブロック率が15(10-15)%
+{ ユニークモッド — 防御 }
+ワード +120(100-150)
+{ ユニークモッド }
+アタックブロック率の最大値 -10%
+{ ユニークモッド }
+スペルブロック率の最大値 -10%
+{ ユニークモッド }
+ブロック確率が幸運になる
+{ ユニークモッド — キャスター, ジェム }
+ブロック時にソケットされた元素スペルをトリガーする。クールダウンは0.25秒 — スケールできない値
+""")
+    ward_stat = next(modifier for modifier in item.modifiers if modifier.ref == "+# to Ward")
+    entries = ({
+        "id": ward_stat.stat_id,
+        "text": "+# to Ward",
+        "type": "explicit",
+    },)
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(
+            item, trade_base_type="Girded Tower Shield", trade_name="Svalinn",
+        )}
+
+    ward = rows["property.ward"]
+    assert ward.read_value == 144.0
+    assert ward.min_value == 129.0
+    assert (ward.roll_min, ward.roll_max) == (120.0, 180.0)
+    assert ward.enabled is True
+    percentile = rows["property.base_percentile"]
+    assert percentile.read_value == 87.0
+    assert percentile.min_value == 78.0
+    assert percentile.enabled is True
+    assert ward_stat.stat_id not in rows
+
+    query = build_search_query(
+        item, "Girded Tower Shield", tuple(rows.values()), trade_name="Svalinn",
+    )["query"]["filters"]["armour_filters"]["filters"]
+    assert query["ward"] == {"min": 129.0}
+    assert query["base_defence_percentile"] == {"min": 78.0}
+    assert "ar" not in query
+
+
+def test_aegis_aurora_uses_variable_final_defences_without_base_percentile():
+    item = parse_item_text("""アイテムクラス: 盾
+レアリティ: ユニーク
+イージス・オーロラ
+チャンピオンカイトシールド
+--------
+ブロック率: 32% (augmented)
+アーマー: 1027 (augmented)
+エナジーシールド: 206 (augmented)
+--------
+アイテムレベル: 85
+--------
+{ ユニークモッド — 防御, アーマー, エナジーシールド }
+アーマーおよびエナジーシールドが321(300-400)%増加する
+{ ユニークモッド — 元素, 冷気, 耐性 }
+冷気耐性の最大値 +5%
+{ ユニークモッド — 元素, 耐性 }
+全ての元素耐性 +10%
+{ ユニークモッド — ダメージ, 元素, アタック }
+アタックスキルの元素ダメージが12(10-20)%増加する
+{ ユニークモッド }
+ブロック率 +6%
+{ ユニークモッド — 防御, エナジーシールド }
+ブロック時にアーマーの2%と同量のエナジーシールドを回復する
+""")
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(
+            item, trade_base_type="Champion Kite Shield", trade_name="Aegis Aurora",
+        )}
+
+    armour = rows["property.armour"]
+    energy_shield = rows["property.energy_shield"]
+    assert armour.read_value == pytest.approx(1232.4)
+    assert armour.min_value == 1109.0
+    assert (armour.roll_min, armour.roll_max) == (1032.0, 1482.0)
+    assert energy_shield.read_value == pytest.approx(247.2)
+    assert energy_shield.min_value == 222.0
+    assert (energy_shield.roll_min, energy_shield.roll_max) == (211.2, 300.0)
+    assert armour.enabled is energy_shield.enabled is True
+    assert "property.base_percentile" not in rows
+
+
 def test_quality_disabled_enchant_uses_zero_quality_for_defence_and_percentile(
     tmp_path, monkeypatch,
 ):
