@@ -6201,7 +6201,7 @@ def test_exact_map_starts_with_tier_and_only_t1_t2_explicit_mods_on():
         rows = resolve_trade_stat_filters(item)
     by_id = {row.stat_id: row for row in rows}
     assert by_id["property.map_tier"].enabled is True
-    assert "property.map_quantity" not in by_id
+    assert by_id["property.map_quantity"].enabled is True
     assert by_id["explicit.map_t1"].enabled is True
     assert by_id["explicit.map_t2"].enabled is True
     assert by_id["explicit.map_t3"].enabled is False
@@ -6214,6 +6214,56 @@ def test_exact_map_starts_with_tier_and_only_t1_t2_explicit_mods_on():
     map_filters = query["filters"]["map_filters"]["filters"]
     assert map_filters["map_blighted"] == {"option": "false"}
     assert map_filters["map_uberblighted"] == {"option": "false"}
+
+
+def test_non_corrupted_japanese_map_keeps_value_properties_in_search():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+古臭い名残
+マップ (ティア 16)
+--------
+アイテム数量: +90% (augmented)
+アイテムレアリティ: +53% (augmented)
+モンスターパックサイズ: +34% (augmented)
+--------
+アイテムレベル: 85
+--------
+モンスターレベル：83
+--------
+{ プレフィックスモッド「双生の」 (ティア: 1) }
+エリアには2体のユニークボスがいる — スケールできない値
+{ プレフィックスモッド「揺るがぬ」 (ティア: 1) — ライフ }
+モンスターのライフが29(25-30)%上昇する
+モンスターはスタンを受けることがない — スケールできない値
+{ プレフィックスモッド「耐呪の」 (ティア: 1) — キャスター, 呪い }
+モンスターはヘックスプルーフを持つ — スケールできない値
+{ サフィックスモッド 「停滞の」 (ティア: 1) — ライフ, マナ, 防御, エナジーシールド }
+全てのプレイヤーはライフ、マナおよびエナジーシールドを自動回復することができない — スケールできない値
+{ サフィックスモッド 「弱体化の」 (ティア: 1) — キャスター, 呪い }
+プレイヤーはエンフィーブルの呪いを受ける
+(エンフィーブルの呪術の一種で、対象の命中力を10%、ダメージを15%(レアやユニーク相手の場合9%)減少させる。持続時間は8秒)
+{ サフィックスモッド 「巨人の」 (ティア: 1) }
+モンスターの効果範囲が100%増加する
+--------
+自身のマップデバイスで使用することでこのティアまたはそれよりティアの低いマップに移動する。マップは一度のみ使用できる。
+""")
+
+    rows = resolve_trade_stat_filters(item)
+    by_id = {row.stat_id: row for row in rows}
+    expected = {
+        "property.map_quantity": 90.0,
+        "property.map_rarity": 53.0,
+        "property.map_pack_size": 34.0,
+    }
+    for stat_id, value in expected.items():
+        assert by_id[stat_id].min_value == value
+        assert by_id[stat_id].enabled is True
+
+    query = build_search_query(item, item.base_type, rows)["query"]
+    map_filters = query["filters"]["map_filters"]["filters"]
+    assert map_filters["map_iiq"] == {"min": 90.0}
+    assert map_filters["map_iir"] == {"min": 53.0}
+    assert map_filters["map_packsize"] == {"min": 34.0}
 
 
 def test_corrupted_map_value_properties_start_on():

@@ -1716,20 +1716,10 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                     "explicit.stat_1095765106", "死亡時にVoidへ送られるマップを除外", None,
                     "map safety", True, group_type="not", group_key="valdo-lethal",
                 ))
-        map_identity = f"{item.name} {item.base_type}".casefold()
-        is_nightmare = (
-            "nightmare map" in map_identity
-            or "ナイトメアマップ" in map_identity
-        )
         use_value_properties = (
             not _is_unique(item)
             and blight_state is None
             and not completion
-            and (
-                "corrupted" in item.flags
-                or bool(more_drop_rows)
-                or is_nightmare
-            )
         )
         if use_value_properties:
             for stat_id, label, value, enabled in (
