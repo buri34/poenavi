@@ -5,6 +5,9 @@ from __future__ import annotations
 
 import json
 import argparse
+import os
+import subprocess
+import tempfile
 from pathlib import Path
 
 
@@ -14,6 +17,8 @@ OUTPUT = ROOT / "data" / "poetore" / "poe2"
 IDENTITY_JAPANESE_OVERRIDES = ROOT / "scripts" / "poetore-poe2-identity-japanese-overrides.json"
 RELATED_JAPANESE_OVERRIDES = ROOT / "scripts" / "poetore-poe2-related-japanese-overrides.json"
 EE2_SOUL_CORE_REVISION = "cf58adf17a06fe453da47f3672803a33594abcf6"
+EE2_REPOSITORY = "Kvan7/Exiled-Exchange-2"
+IDENTITY_REVIEW_REPORT = ROOT / "build" / "poe2-identity-review.json"
 EE2_SOUL_CORE_IDENTITIES = {
     "Atziri's Soul Core of Alacrity", "Atziri's Soul Core of Devotion",
     "Atziri's Soul Core of Inoculation", "Atziri's Soul Core of Vitality",
@@ -237,6 +242,186 @@ def _identity_japanese_overrides() -> tuple[dict, ...]:
     return tuple(payload.get("overrides", ()))
 
 
+def resolve_ee2_revision(
+    ee2_root: Path, *, expected_revision: str | None = None,
+) -> str:
+    """Return the real EE2 checkout HEAD and reject untrusted source roots."""
+    try:
+        top_level = subprocess.check_output(
+            ["git", "-C", str(ee2_root), "rev-parse", "--show-toplevel"],
+            text=True, stderr=subprocess.DEVNULL,
+        ).strip()
+        revision = subprocess.check_output(
+            ["git", "-C", str(ee2_root), "rev-parse", "HEAD"],
+            text=True, stderr=subprocess.DEVNULL,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise ValueError("EE2 source must be a Git checkout") from exc
+    if Path(top_level).resolve() != ee2_root.resolve():
+        raise ValueError("EE2 source must be the Git checkout root")
+    if expected_revision is not None and revision != expected_revision:
+        raise ValueError(
+            f"EE2 checkout {revision} does not match expected revision "
+            f"{expected_revision}"
+        )
+    return revision
+
+
+def _ee2_source(component: str, revision: str, *, reason: str = "direct build") -> dict:
+    return {
+        "repository": EE2_REPOSITORY,
+        "revision": revision,
+        "component": component,
+        "reason": reason,
+    }
+
+
+class IdentityReviewRequired(ValueError):
+    def __init__(self, anomalies: list[dict]):
+        self.anomalies = anomalies
+        kinds = sorted({str(row.get("kind", "unknown")) for row in anomalies})
+        super().__init__(
+            "EE2 bilingual identity review required: " + ", ".join(kinds)
+        )
+
+
+def _ee2_identity_key(row: dict) -> tuple[str, str, str]:
+    namespace = str(row.get("namespace", ""))
+    ref_name = str(row.get("refName", ""))
+    base_ref = str((row.get("unique") or {}).get("base", ""))
+    return namespace, ref_name, base_ref
+
+
+def _indexed_ee2_rows(rows: list[dict], language: str) -> dict[tuple[str, str, str], dict]:
+    indexed: dict[tuple[str, str, str], dict] = {}
+    anomalies = []
+    for row in rows:
+        key = _ee2_identity_key(row)
+        if not key[1]:
+            continue
+        if not key[0]:
+            anomalies.append({
+                "kind": "missing_namespace", "language": language,
+                "ref_name": key[1],
+            })
+            continue
+        if key in indexed:
+            anomalies.append({
+                "kind": "duplicate_key", "language": language,
+                "key": list(key),
+            })
+            continue
+        indexed[key] = row
+    if anomalies:
+        raise IdentityReviewRequired(anomalies)
+    return indexed
+
+
+def _paired_ee2_rows(
+    localized: dict[str, list[dict]], *, require_augment: bool = False,
+    ref_names: set[str] | None = None,
+) -> list[tuple[dict, dict]]:
+    selected = {
+        language: [
+            row for row in rows
+            if (not require_augment or bool(row.get("augment")))
+            and (ref_names is None or row.get("refName") in ref_names)
+        ]
+        for language, rows in localized.items()
+    }
+    english = _indexed_ee2_rows(selected["en"], "English")
+    japanese = _indexed_ee2_rows(selected["ja"], "Japanese")
+    if english.keys() != japanese.keys():
+        missing_ja = sorted(english.keys() - japanese.keys())
+        missing_en = sorted(japanese.keys() - english.keys())
+        raise IdentityReviewRequired([
+            *({"kind": "missing_japanese_key", "key": list(key)} for key in missing_ja),
+            *({"kind": "missing_english_key", "key": list(key)} for key in missing_en),
+        ])
+    return [(english[key], japanese[key]) for key in english]
+
+
+def _verified_identity_names(entries: list[dict] | None) -> dict[tuple[str, str, str], str]:
+    if entries is None:
+        path = OUTPUT / "identity_index.json"
+        entries = json.loads(path.read_text(encoding="utf-8"))["entries"] if path.exists() else []
+    return {
+        (
+            str(row.get("namespace", "")), str(row.get("ref_name", "")),
+            str(row.get("base_ref", "")),
+        ): str((row.get("names") or {}).get("ja", ""))
+        for row in entries
+    }
+
+
+def _reject_unreviewed_japanese_changes(
+    entries: list[dict], verified_entries: list[dict] | None,
+) -> None:
+    verified = _verified_identity_names(verified_entries)
+    approved = {
+        (
+            str(row.get("namespace", "")), str(row.get("ref_name", "")),
+            str(row.get("base_ref", "")),
+        ): str(row.get("japanese", ""))
+        for row in (*_identity_japanese_overrides(), *_related_japanese_overrides())
+    }
+    anomalies = []
+    for row in entries:
+        key = (
+            str(row.get("namespace", "")), str(row.get("ref_name", "")),
+            str(row.get("base_ref", "")),
+        )
+        candidate = str((row.get("names") or {}).get("ja", ""))
+        previous = verified.get(key)
+        if previous and candidate != previous and approved.get(key) != candidate:
+            anomalies.append({
+                "kind": "unreviewed_japanese_name_change", "key": list(key),
+                "previous": previous, "candidate": candidate,
+            })
+    if anomalies:
+        raise IdentityReviewRequired(anomalies)
+
+
+def _write_identity_review_report(
+    path: Path, *, revision: str | None, anomalies: list[dict],
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema_version": 1,
+        "status": "blocked",
+        "source": {
+            "repository": EE2_REPOSITORY,
+            "revision": revision,
+        },
+        "anomalies": anomalies,
+    }
+    handle, temporary = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent,
+    )
+    try:
+        with os.fdopen(handle, "w", encoding="utf-8") as stream:
+            json.dump(payload, stream, ensure_ascii=False, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+        raise
+
+
+def _append_source_revision(
+    payload: dict, *, component: str, revision: str, reason: str,
+) -> None:
+    rows = payload.setdefault("source_revisions", [])
+    source = _ee2_source(component, revision, reason=reason)
+    if source not in rows:
+        rows.append(source)
+
+
 def _apply_japanese_identity_overrides(
     entries: list[dict], overrides: tuple[dict, ...],
 ) -> None:
@@ -312,18 +497,21 @@ def _aligned(english: list[dict], japanese: list[dict]):
             ji += 1
 
 
-def build_identity_index(ee2_root: Path | None = None) -> dict:
+def build_identity_index(
+    ee2_root: Path | None = None, *, expected_revision: str | None = None,
+    verified_entries: list[dict] | None = None,
+    ref_names: set[str] | None = None,
+) -> dict:
     if ee2_root is not None:
+        revision = resolve_ee2_revision(
+            ee2_root, expected_revision=expected_revision,
+        )
         localized = {}
         for language in ("en", "ja"):
             path = ee2_root / "renderer" / "public" / "data" / language / "items.ndjson"
             localized[language] = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
         entries = []
-        for en, ja in zip(localized["en"], localized["ja"]):
-            if not en.get("refName") and not ja.get("refName"):
-                continue
-            if en.get("refName") != ja.get("refName") or en.get("namespace") != ja.get("namespace"):
-                raise ValueError("EE2 bilingual item rows are not aligned")
+        for en, ja in _paired_ee2_rows(localized, ref_names=ref_names):
             row = {
                 "namespace": en["namespace"], "ref_name": en["refName"],
                 "names": {"en": en["name"], "ja": ja["name"]},
@@ -344,9 +532,10 @@ def build_identity_index(ee2_root: Path | None = None) -> dict:
                 row["base_ref"] = en["unique"].get("base", "")
             entries.append(row)
         _apply_reviewed_identity_overrides(entries)
+        _reject_unreviewed_japanese_changes(entries, verified_entries)
         return {
             "schema_version": 2,
-            "source": "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8",
+            "source": _ee2_source("identity", revision),
             "entries": entries,
         }
 
@@ -405,8 +594,13 @@ def build_stat_index() -> dict:
     return {"schema_version": 1, "source": "scripts/poetore-poe2-sources.lock.json", "entries": entries}
 
 
-def build_augment_index(ee2_root: Path) -> dict:
+def build_augment_index(
+    ee2_root: Path, *, expected_revision: str | None = None,
+) -> dict:
     """Build the compact bilingual Rune/Soul Core editor index from fixed EE2 data."""
+    revision = resolve_ee2_revision(
+        ee2_root, expected_revision=expected_revision,
+    )
     localized = {}
     for language in ("en", "ja"):
         path = ee2_root / "renderer" / "public" / "data" / language / "items.ndjson"
@@ -414,12 +608,10 @@ def build_augment_index(ee2_root: Path) -> dict:
             json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line
         ]
     entries = []
-    for en, ja in zip(localized["en"], localized["ja"]):
+    for en, ja in _paired_ee2_rows(localized, require_augment=True):
         effects = en.get("augment") or ()
         if not effects:
             continue
-        if en.get("refName") != ja.get("refName"):
-            raise ValueError("EE2 bilingual augment rows are not aligned")
         ja_effects = ja.get("augment") or ()
         built_effects = []
         for index, effect in enumerate(effects):
@@ -445,20 +637,23 @@ def build_augment_index(ee2_root: Path) -> dict:
             })
     return {
         "schema_version": 1,
-        "source": "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8",
+        "source": _ee2_source("augment", revision),
         "entries": entries,
     }
 
 
 def apply_reviewed_ee2_updates(ee2_root: Path) -> None:
     """Merge reviewed EE2 v0.16.1/v0.16.2 selections into runtime indexes."""
-    if __import__("subprocess").check_output(
-        ["git", "-C", str(ee2_root), "rev-parse", "HEAD"], text=True,
-    ).strip() != EE2_SOUL_CORE_REVISION:
-        raise ValueError("EE2 checkout must be pinned to the reviewed v0.16.2 revision")
+    resolve_ee2_revision(ee2_root, expected_revision=EE2_SOUL_CORE_REVISION)
 
     identity = json.loads((OUTPUT / "identity_index.json").read_text(encoding="utf-8"))
-    candidate_identity = build_identity_index(ee2_root)
+    candidate_identity = build_identity_index(
+        ee2_root, expected_revision=EE2_SOUL_CORE_REVISION,
+        ref_names=(
+            EE2_SOUL_CORE_IDENTITIES
+            | {row[1] for row in EE2_REVIEWED_RUNEFORGED_IDENTITIES}
+        ),
+    )
     selected_identity = {
         row["ref_name"]: row for row in candidate_identity["entries"]
         if row["ref_name"] in EE2_SOUL_CORE_IDENTITIES
@@ -487,16 +682,24 @@ def apply_reviewed_ee2_updates(ee2_root: Path) -> None:
         ) not in EE2_REVIEWED_RUNEFORGED_IDENTITIES
     ] + runeforged_rows
     selection_source = f"selected EE2 {EE2_SOUL_CORE_REVISION} reviewed updates"
-    if EE2_SOUL_CORE_REVISION not in identity["source"]:
-        identity["source"] += f" + {selection_source}"
-    else:
-        identity["source"] = identity["source"].replace(
-            f"selected EE2 {EE2_SOUL_CORE_REVISION} Soul Cores", selection_source,
-        )
+    if isinstance(identity.get("source"), str):
+        if EE2_SOUL_CORE_REVISION not in identity["source"]:
+            identity["source"] += f" + {selection_source}"
+        else:
+            identity["source"] = identity["source"].replace(
+                f"selected EE2 {EE2_SOUL_CORE_REVISION} Soul Cores", selection_source,
+            )
+    _append_source_revision(
+        identity, component="reviewed identity selection",
+        revision=EE2_SOUL_CORE_REVISION,
+        reason="Buri-reviewed v0.16.1/v0.16.2 identity subset",
+    )
 
     augment = json.loads((OUTPUT / "augment_index.json").read_text(encoding="utf-8"))
     candidate_augment = {
-        row["ref_name"]: row for row in build_augment_index(ee2_root)["entries"]
+        row["ref_name"]: row for row in build_augment_index(
+            ee2_root, expected_revision=EE2_SOUL_CORE_REVISION,
+        )["entries"]
     }
     candidate_augment.update(EE2_SOUL_CORE_EXTRA_AUGMENTS)
     selected_augments = (
@@ -509,12 +712,18 @@ def apply_reviewed_ee2_updates(ee2_root: Path) -> None:
     by_augment = {row["ref_name"]: row for row in augment["entries"]}
     by_augment.update({name: candidate_augment[name] for name in selected_augments})
     augment["entries"] = list(by_augment.values())
-    if EE2_SOUL_CORE_REVISION not in augment["source"]:
-        augment["source"] += f" + {selection_source}"
-    else:
-        augment["source"] = augment["source"].replace(
-            f"selected EE2 {EE2_SOUL_CORE_REVISION} Soul Cores", selection_source,
-        )
+    if isinstance(augment.get("source"), str):
+        if EE2_SOUL_CORE_REVISION not in augment["source"]:
+            augment["source"] += f" + {selection_source}"
+        else:
+            augment["source"] = augment["source"].replace(
+                f"selected EE2 {EE2_SOUL_CORE_REVISION} Soul Cores", selection_source,
+            )
+    _append_source_revision(
+        augment, component="reviewed augment selection",
+        revision=EE2_SOUL_CORE_REVISION,
+        reason="Buri-reviewed v0.16.1/v0.16.2 augment subset",
+    )
 
     localized_stats = {}
     for language in ("en", "ja"):
@@ -539,8 +748,13 @@ def apply_reviewed_ee2_updates(ee2_root: Path) -> None:
     for stat_id, text in EE2_SOUL_CORE_OFFICIAL_STATS.items():
         by_stat[stat_id] = {"id": stat_id, "type": "augment", "text": text}
     stats["entries"] = list(by_stat.values())
-    if EE2_SOUL_CORE_REVISION not in stats["source"]:
+    if isinstance(stats.get("source"), str) and EE2_SOUL_CORE_REVISION not in stats["source"]:
         stats["source"] += f" + {selection_source} Rune stats"
+    _append_source_revision(
+        stats, component="reviewed Rune Stat selection",
+        revision=EE2_SOUL_CORE_REVISION,
+        reason="Buri-reviewed v0.16.1/v0.16.2 Stat subset",
+    )
 
     for name, payload in (
         ("identity_index.json", identity), ("augment_index.json", augment),
@@ -618,7 +832,12 @@ def _poe2_ninja_type(row: dict, identities: dict[tuple[str, str], list[dict]]) -
     return "Currency" if category == "Currency" else None
 
 
-def build_related_item_groups(ee2_root: Path) -> dict:
+def build_related_item_groups(
+    ee2_root: Path, *, expected_revision: str | None = None,
+) -> dict:
+    revision = resolve_ee2_revision(
+        ee2_root, expected_revision=expected_revision,
+    )
     data_root = ee2_root / "renderer" / "public" / "data"
     localized = {}
     identity_rows: dict[tuple[str, str], list[dict]] = {}
@@ -670,10 +889,13 @@ def build_related_item_groups(ee2_root: Path) -> dict:
     } for group in raw_groups]
     return {
         "schema_version": 1,
-        "source": (
-            "Exiled Exchange 2 d72afb83bc0888919a89d3c3744acee2c597e9c8"
-            f" + selected EE2 {EE2_SOUL_CORE_REVISION} related identities"
-        ),
+        "source": _ee2_source("related items", revision),
+        "source_revisions": [
+            _ee2_source(
+                "reviewed related identity selection", EE2_SOUL_CORE_REVISION,
+                reason="Buri-reviewed related-identity overrides",
+            ),
+        ],
         "groups": groups,
     }
 
@@ -681,6 +903,8 @@ def build_related_item_groups(ee2_root: Path) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ee2-root", type=Path)
+    parser.add_argument("--expected-ee2-revision")
+    parser.add_argument("--identity-review-report", type=Path, default=IDENTITY_REVIEW_REPORT)
     parser.add_argument("--augment-only", action="store_true")
     parser.add_argument("--related-only", action="store_true")
     parser.add_argument("--reviewed-ee2-updates", action="store_true")
@@ -688,25 +912,46 @@ def main() -> None:
     parser.add_argument("--reviewed-identity-overrides", action="store_true")
     args = parser.parse_args()
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    if args.reviewed_ee2_updates or args.v0162_soul_cores:
-        if args.ee2_root is None:
-            parser.error("--reviewed-ee2-updates requires --ee2-root")
-        apply_reviewed_ee2_updates(args.ee2_root)
-        return
-    if args.reviewed_identity_overrides:
-        apply_reviewed_identity_overrides()
-        return
-    if args.augment_only or args.related_only:
-        if args.ee2_root is None:
-            parser.error("--augment-only/--related-only requires --ee2-root")
-        payloads = (("augment_index.json", build_augment_index(args.ee2_root)),) if args.augment_only else (
-            ("related_item_groups.json", build_related_item_groups(args.ee2_root)),
+    if (
+        args.ee2_root is not None
+        and not (args.reviewed_ee2_updates or args.v0162_soul_cores)
+        and not args.expected_ee2_revision
+    ):
+        parser.error("--ee2-root requires --expected-ee2-revision")
+    try:
+        if args.reviewed_ee2_updates or args.v0162_soul_cores:
+            if args.ee2_root is None:
+                parser.error("--reviewed-ee2-updates requires --ee2-root")
+            apply_reviewed_ee2_updates(args.ee2_root)
+            return
+        if args.reviewed_identity_overrides:
+            apply_reviewed_identity_overrides()
+            return
+        if args.augment_only or args.related_only:
+            if args.ee2_root is None:
+                parser.error("--augment-only/--related-only requires --ee2-root")
+            if args.augment_only:
+                payloads = (("augment_index.json", build_augment_index(
+                    args.ee2_root, expected_revision=args.expected_ee2_revision,
+                )),)
+            else:
+                payloads = (("related_item_groups.json", build_related_item_groups(
+                    args.ee2_root, expected_revision=args.expected_ee2_revision,
+                )),)
+        else:
+            payloads = (
+                ("identity_index.json", build_identity_index(
+                    args.ee2_root, expected_revision=args.expected_ee2_revision,
+                )),
+                ("stat_index.json", build_stat_index()),
+            )
+    except IdentityReviewRequired as exc:
+        _write_identity_review_report(
+            args.identity_review_report,
+            revision=args.expected_ee2_revision,
+            anomalies=exc.anomalies,
         )
-    else:
-        payloads = (
-            ("identity_index.json", build_identity_index(args.ee2_root)),
-            ("stat_index.json", build_stat_index()),
-        )
+        parser.exit(2, f"{exc}; report={args.identity_review_report}\n")
     for name, payload in payloads:
         (OUTPUT / name).write_text(
             json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n",

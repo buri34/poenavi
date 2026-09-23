@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import subprocess
 import pytest
 from src.poetore.poe2.metadata import (
     related_item_group, resolve_identity, resolve_identity_candidates,
@@ -14,8 +15,21 @@ from scripts.build_poetore_poe2_indexes import (
     REVIEWED_OFFICIAL_STAT_OVERRIDES,
     EE2_SOUL_CORE_STAT_IDS,
     OUTPUT, _aligned, build_augment_index, build_identity_index,
-    build_related_item_groups, build_stat_index,
+    build_related_item_groups, build_stat_index, resolve_ee2_revision,
 )
+
+
+def _commit_ee2_fixture(root: Path) -> str:
+    if not any(root.iterdir()):
+        (root / ".fixture").write_text("fixture\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    subprocess.run(["git", "-C", str(root), "config", "user.name", "PoENavi Test"], check=True)
+    subprocess.run(["git", "-C", str(root), "config", "user.email", "test@invalid.local"], check=True)
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(root), "commit", "-qm", "fixture"], check=True)
+    return subprocess.check_output(
+        ["git", "-C", str(root), "rev-parse", "HEAD"], text=True,
+    ).strip()
 
 
 def test_aligned_recovers_after_one_localized_entry_is_missing():
@@ -207,7 +221,8 @@ def test_build_augment_index_keeps_bilingual_effects_and_trade_ids(tmp_path):
             json.dumps(row, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
-    payload = build_augment_index(tmp_path)
+    revision = _commit_ee2_fixture(tmp_path)
+    payload = build_augment_index(tmp_path, expected_revision=revision)
     assert payload["entries"] == [{
         "ref_name": "Body Rune",
         "names": {"en": "Body Rune", "ja": "肉体のルーン"},
@@ -217,6 +232,7 @@ def test_build_augment_index_keeps_bilingual_effects_and_trade_ids(tmp_path):
             "values": [45], "trade_ids": ["rune.stat_1"], "socket_bound": False,
         }],
     }]
+    assert payload["source"]["revision"] == revision
 
 
 def test_build_identity_index_keeps_duplicate_variant_tags_and_base_armour(tmp_path):
@@ -246,11 +262,114 @@ def test_build_identity_index_keeps_duplicate_variant_tags_and_base_armour(tmp_p
             encoding="utf-8",
         )
 
-    entries = build_identity_index(tmp_path)["entries"]
+    revision = _commit_ee2_fixture(tmp_path)
+    entries = build_identity_index(tmp_path, expected_revision=revision)["entries"]
     assert [row["ref_name"] for row in entries[:2]] == ["Bastion Sabatons", "Fortress Sabatons"]
     assert entries[0]["tags"] == ["str_dex_armour"]
     assert entries[0]["armour"] == {"ar": [123, 123], "ev": [111, 111]}
     assert entries[1]["armour"] == {"ar": [147, 147], "ev": [134, 134]}
+
+
+def test_build_identity_index_joins_reordered_rows_by_stable_key(tmp_path):
+    data = tmp_path / "renderer" / "public" / "data"
+    rows = {
+        "en": [
+            {"namespace": "ITEM", "refName": "Alpha", "name": "Alpha"},
+            {"namespace": "ITEM", "refName": "Beta", "name": "Beta"},
+        ],
+        "ja": [
+            {"namespace": "ITEM", "refName": "Beta", "name": "ベータ"},
+            {"namespace": "ITEM", "refName": "Alpha", "name": "アルファ"},
+        ],
+    }
+    for language, values in rows.items():
+        target = data / language
+        target.mkdir(parents=True)
+        (target / "items.ndjson").write_text(
+            "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in values),
+            encoding="utf-8",
+        )
+    revision = _commit_ee2_fixture(tmp_path)
+
+    payload = build_identity_index(tmp_path, expected_revision=revision, verified_entries=[])
+
+    selected = [
+        (row["ref_name"], row["names"]["ja"]) for row in payload["entries"]
+        if row["ref_name"] in {"Alpha", "Beta"}
+    ]
+    assert selected == [
+        ("Alpha", "アルファ"), ("Beta", "ベータ"),
+    ]
+
+
+def test_build_identity_index_rejects_missing_final_row(tmp_path):
+    data = tmp_path / "renderer" / "public" / "data"
+    for language, values in {
+        "en": [
+            {"namespace": "ITEM", "refName": "Alpha", "name": "Alpha"},
+            {"namespace": "ITEM", "refName": "Beta", "name": "Beta"},
+        ],
+        "ja": [{"namespace": "ITEM", "refName": "Alpha", "name": "アルファ"}],
+    }.items():
+        target = data / language
+        target.mkdir(parents=True)
+        (target / "items.ndjson").write_text(
+            "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in values),
+            encoding="utf-8",
+        )
+    revision = _commit_ee2_fixture(tmp_path)
+
+    with pytest.raises(ValueError, match="review required"):
+        build_identity_index(tmp_path, expected_revision=revision, verified_entries=[])
+
+
+def test_build_identity_index_rejects_unique_base_mismatch(tmp_path):
+    data = tmp_path / "renderer" / "public" / "data"
+    for language, base in (("en", "Alpha Base"), ("ja", "Beta Base")):
+        target = data / language
+        target.mkdir(parents=True)
+        row = {
+            "namespace": "UNIQUE", "refName": "Same Unique", "name": "同じユニーク",
+            "unique": {"base": base},
+        }
+        (target / "items.ndjson").write_text(
+            json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8",
+        )
+    revision = _commit_ee2_fixture(tmp_path)
+
+    with pytest.raises(ValueError, match="review required"):
+        build_identity_index(tmp_path, expected_revision=revision, verified_entries=[])
+
+
+def test_build_identity_index_rejects_unreviewed_japanese_name_change(tmp_path):
+    data = tmp_path / "renderer" / "public" / "data"
+    for language, name in (("en", "Stable Unique"), ("ja", "急な誤訳")):
+        target = data / language
+        target.mkdir(parents=True)
+        row = {"namespace": "UNIQUE", "refName": "Stable Unique", "name": name,
+               "unique": {"base": "Stable Base"}}
+        (target / "items.ndjson").write_text(
+            json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8",
+        )
+    revision = _commit_ee2_fixture(tmp_path)
+    verified = [{
+        "namespace": "UNIQUE", "ref_name": "Stable Unique", "base_ref": "Stable Base",
+        "names": {"en": "Stable Unique", "ja": "安定したユニーク"},
+    }]
+
+    with pytest.raises(ValueError, match="review required"):
+        build_identity_index(
+            tmp_path, expected_revision=revision, verified_entries=verified,
+        )
+
+
+def test_resolve_ee2_revision_rejects_non_git_and_mismatch(tmp_path):
+    with pytest.raises(ValueError, match="Git checkout"):
+        resolve_ee2_revision(tmp_path)
+    revision = _commit_ee2_fixture(tmp_path)
+    assert resolve_ee2_revision(tmp_path, expected_revision=revision) == revision
+    with pytest.raises(ValueError, match="does not match expected revision"):
+        resolve_ee2_revision(tmp_path, expected_revision="0" * 40)
 
 
 def test_generated_related_items_match_locked_ee2_and_have_price_hints():
