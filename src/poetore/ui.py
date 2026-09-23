@@ -87,6 +87,7 @@ class _TradeSignals(QObject):
     related_items_failed = Signal(object)
     divine_rate_ready = Signal(object, object)
     divine_rate_failed = Signal(object)
+    augment_values_ready = Signal(object, int)
     global_mouse_pressed = Signal(int, int)
     global_mouse_moved = Signal(int, int)
 
@@ -1822,6 +1823,35 @@ class PoetoreWindow(QWidget):
         price_header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
         price_header.setSectionResizeMode(1, QHeaderView.Stretch)
         content_layout.addWidget(self.price_list, stretch=2)
+        self.virtual_augment_cost_label = QLabel("")
+        self.virtual_augment_cost_label.setObjectName("virtualAugmentCost")
+        self.virtual_augment_cost_label.setToolTip(
+            "検索で仮挿入した素材だけをpoe.ninja参考価格で計算した目安です。"
+        )
+        self.virtual_augment_cost_label.hide()
+        content_layout.addWidget(self.virtual_augment_cost_label)
+        self.installed_augment_recovery_panel = QWidget()
+        self.installed_augment_recovery_panel.setObjectName("installedAugmentRecovery")
+        recovery_layout = QVBoxLayout(self.installed_augment_recovery_panel)
+        recovery_layout.setContentsMargins(0, 0, 0, 0)
+        recovery_layout.setSpacing(1)
+        self.installed_augment_recovery_value = QLabel("")
+        self.installed_augment_recovery_comparison = QLabel("")
+        self.installed_augment_recovery_hint = QLabel(
+            "オーグメント抽出に価値がある可能性あり"
+        )
+        self.installed_augment_recovery_hint.setStyleSheet("color: #79b8b2;")
+        for label in (
+            self.installed_augment_recovery_value,
+            self.installed_augment_recovery_comparison,
+            self.installed_augment_recovery_hint,
+        ):
+            recovery_layout.addWidget(label)
+        self.installed_augment_recovery_panel.setToolTip(
+            "コピー元装備の装着素材、抽出のオーブ、出品最安をpoe.ninja参考価格で比較した目安です。"
+        )
+        self.installed_augment_recovery_panel.hide()
+        content_layout.addWidget(self.installed_augment_recovery_panel)
         self.additional_results_button = QPushButton("次の10件を取得")
         self.additional_results_button.setObjectName("filterActionButton")
         self.additional_results_button.clicked.connect(self._fetch_additional_results)
@@ -1852,6 +1882,7 @@ class PoetoreWindow(QWidget):
         self._trade_signals.related_items_failed.connect(self._hide_related_items)
         self._trade_signals.divine_rate_ready.connect(self._show_divine_rate)
         self._trade_signals.divine_rate_failed.connect(self._hide_divine_rate)
+        self._trade_signals.augment_values_ready.connect(self._show_augment_values)
         self._trade_signals.global_mouse_pressed.connect(self._handle_global_mouse_press)
         self._trade_signals.global_mouse_moved.connect(self._handle_global_mouse_move)
         self._trade_base_type = None
@@ -1934,6 +1965,7 @@ class PoetoreWindow(QWidget):
         self._last_trade_url = ""
         self.trade_url_button.setEnabled(False)
         self.price_status.clear()
+        self._hide_augment_values()
         self.price_button.setEnabled(True)
 
     def _clear_displayed_trade_result(self):
@@ -1944,6 +1976,7 @@ class PoetoreWindow(QWidget):
         self._last_trade_url = ""
         self.trade_url_button.setEnabled(False)
         self.additional_results_button.hide()
+        self._hide_augment_values()
 
     def _auto_search_after_trade_option_change(self, *_args):
         if not self._has_searched_current_item or getattr(self, "_parsed_item", None) is None:
@@ -1953,6 +1986,7 @@ class PoetoreWindow(QWidget):
         self.price_list.clear()
         self._last_trade_url = ""
         self.trade_url_button.setEnabled(False)
+        self._hide_augment_values()
         if self._auto_search_queued:
             return
         self._auto_search_queued = True
@@ -5898,6 +5932,7 @@ class PoetoreWindow(QWidget):
         if initial_filters:
             self._populate_stat_filters(initial_filters)
         self._show_price_result(result)
+        self._queue_augment_values(result, search_generation)
         if trace is not None:
             trace.mark(
                 "trade_result_displayed",
@@ -5943,6 +5978,7 @@ class PoetoreWindow(QWidget):
         if search_generation != self._search_generation:
             return
         self._show_price_result(result)
+        self._queue_augment_values(result, search_generation)
 
     def _additional_results_failed(self, message: str, search_generation: int):
         if search_generation != self._search_generation:
@@ -6054,6 +6090,101 @@ class PoetoreWindow(QWidget):
                 price_width = math.ceil((widget_hint.width() + 20) * 1.3)
                 row.setSizeHint(0, QSize(price_width, widget_hint.height()))
                 self.price_list.setItemWidget(row, 0, price_widget)
+
+    def _hide_augment_values(self):
+        if not hasattr(self, "virtual_augment_cost_label"):
+            return
+        self.virtual_augment_cost_label.clear()
+        self.virtual_augment_cost_label.hide()
+        self.installed_augment_recovery_value.clear()
+        self.installed_augment_recovery_comparison.clear()
+        self.installed_augment_recovery_hint.hide()
+        self.installed_augment_recovery_panel.hide()
+
+    def _queue_augment_values(self, result: PriceResult, search_generation: int):
+        self._hide_augment_values()
+        item = getattr(self, "_parsed_item", None)
+        league = self._selected_trade_league()
+        if self.poe_version != POE2 or item is None or not league:
+            return
+        from .poe2.augment_pricing import installed_augment_refs
+
+        virtual_ref = (
+            self.virtual_augment_combo.currentData()
+            if not self.virtual_augment_combo.isHidden() else None
+        )
+        virtual_count = int(
+            (self.virtual_augment_count_combo.currentData() or 0)
+            if not self.virtual_augment_count_combo.isHidden() else 0
+        )
+        installed_refs = installed_augment_refs(item)
+        wanted = tuple(dict.fromkeys(
+            ref for ref in (virtual_ref, *installed_refs) if ref
+        ))
+        if not wanted:
+            return
+
+        def run():
+            payload = {}
+            try:
+                from .poe2.augment_pricing import (
+                    installed_augment_recovery, virtual_augment_cost,
+                )
+                prices = default_poe_ninja_service.lookup_poe2_augments(wanted, league)
+                exalted_chaos = default_poe_ninja_service.exalted_chaos_rate(league)
+                divine_exalted = default_poe_ninja_service.divine_exalted_rate(league)
+                if virtual_ref:
+                    payload["virtual"] = virtual_augment_cost(
+                        str(virtual_ref), virtual_count, prices.get(str(virtual_ref)),
+                        exalted_chaos,
+                    )
+                if installed_refs:
+                    extraction = default_poe_ninja_service.lookup_poe2_identities((
+                        ("ITEM", "Orb of Extraction", None, "Currency"),
+                    ), league)[0]
+                    payload["recovery"] = installed_augment_recovery(
+                        item, prices, extraction, result.listings,
+                        exalted_chaos=exalted_chaos,
+                        divine_exalted=divine_exalted,
+                    )
+            except Exception:
+                # Optional estimates must never replace or fail the Trade result.
+                payload = {}
+            self._trade_signals.augment_values_ready.emit(payload, search_generation)
+
+        threading.Thread(target=run, daemon=True).start()
+
+    def _show_augment_values(self, payload: dict, search_generation: int):
+        if search_generation != self._search_generation:
+            return
+        from .poe2.augment_pricing import compact_exalted
+
+        self._hide_augment_values()
+        virtual = payload.get("virtual")
+        if virtual is not None:
+            self.virtual_augment_cost_label.setText(
+                "仮挿入オーグメントの参考費用　"
+                f"{compact_exalted(virtual.total_exalted)} ex"
+            )
+            self.virtual_augment_cost_label.show()
+        recovery = payload.get("recovery")
+        if recovery is not None:
+            difference = recovery.difference_exalted
+            sign = "+" if difference >= 0 else "−"
+            self.installed_augment_recovery_value.setText(
+                "装着済みオーグメントの回収参考価値　"
+                f"{compact_exalted(recovery.recovery_exalted)} ex"
+            )
+            self.installed_augment_recovery_comparison.setText(
+                f"出品最安 {compact_exalted(recovery.cheapest_listing_exalted)} ex より "
+                f"{sign}{compact_exalted(abs(difference))} ex"
+                f"（素材 {compact_exalted(recovery.materials_exalted)} − "
+                f"抽出 {compact_exalted(recovery.extraction_exalted)}）"
+            )
+            self.installed_augment_recovery_hint.setVisible(
+                recovery.extraction_may_be_worthwhile
+            )
+            self.installed_augment_recovery_panel.show()
 
     def _price_list_currency_widget(self, listing) -> QWidget | None:
         """対応通貨の価格を数値 × 通貨アイコンで描画する。"""

@@ -813,6 +813,36 @@ def test_poe2_augments_use_their_exchange_overviews(
     assert calls == [("Runes of Aldur", source_type)]
 
 
+def test_lookup_poe2_augments_returns_only_requested_unambiguous_names():
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        names = ["Adept Rune"] if type_name == "Runes" else []
+        return {
+            "core": {"primary": "exalted", "rates": {"chaos": 0.5}},
+            "items": [
+                {"id": name, "name": name, "detailsId": name.lower()}
+                for name in names
+            ],
+            "lines": [
+                {"id": name, "primaryValue": 2, "sparkline": {"data": []}}
+                for name in names
+            ],
+        }
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    prices = service.lookup_poe2_augments(
+        ("Adept Rune", "Missing Rune"), "Runes of Aldur",
+    )
+
+    assert tuple(prices) == ("Adept Rune",)
+    assert prices["Adept Rune"].source_type == "Runes"
+    assert {type_name for _league, type_name in calls} == {
+        "Runes", "SoulCores", "Ultimatum", "Idols", "Abyss",
+    }
+
+
 @pytest.mark.parametrize(
     ("category", "name", "source_type"),
     [

@@ -30,15 +30,21 @@ _BOND_SUPPORT_STAT_IDS = {
 }
 
 
-def _aggregate_augment_count(
-    modifiers: list[ItemModifier], category: str, socket_count: int,
-) -> int:
-    """Infer the minimum installed augments that exactly explain their Stat lines."""
-    if socket_count <= 1:
-        return 0
+def identify_installed_augments(
+    modifiers: list[ItemModifier], category: str, socket_count: int, *,
+    _require_unique_refs: bool = True,
+) -> tuple[str, ...]:
+    """Return the unique minimum augment composition explaining all Stat lines.
+
+    An empty tuple means no composition could be proven uniquely.  Pricing must
+    stay hidden in that case rather than guessing which socketed material was
+    used.
+    """
+    if socket_count <= 0:
+        return ()
     augment_category = _AUGMENT_CATEGORY_BY_CATEGORY.get(category)
     if augment_category is None:
-        return 0
+        return ()
 
     observed: dict[str, tuple[float, ...]] = {}
     for modifier in modifiers:
@@ -57,7 +63,7 @@ def _aggregate_augment_count(
                 left + right for left, right in zip(previous, values)
             )
     if not observed:
-        return 0
+        return ()
 
     def effect_value_options(effect: dict) -> tuple[tuple[float, ...], ...]:
         values = tuple(float(value) for value in effect.get("values", ()))
@@ -71,7 +77,9 @@ def _aggregate_augment_count(
             return tuple(sorted(options))
         return (values[:placeholders],) if len(values) >= placeholders else ()
 
-    candidate_vectors: set[tuple[tuple[str, tuple[float, ...]], ...]] = set()
+    candidate_vectors: dict[
+        tuple[tuple[str, tuple[float, ...]], ...], set[str]
+    ] = {}
     for entry in augment_entries():
         effect_options = []
         for effect in entry.get("effects", ()):
@@ -104,11 +112,16 @@ def _aggregate_augment_count(
                     valid = False
                     break
             if valid:
-                candidate_vectors.add(tuple(sorted(vector.items())))
+                key = tuple(sorted(vector.items()))
+                candidate_vectors.setdefault(key, set()).add(str(entry["ref_name"]))
 
-    candidates = tuple(dict(vector) for vector in candidate_vectors)
+    candidate_rows = tuple(
+        (dict(vector), tuple(sorted(ref_names)))
+        for vector, ref_names in candidate_vectors.items()
+    )
+    candidates = tuple(vector for vector, _ref_names in candidate_rows)
     if not candidates or len(candidates) > 8:
-        return 0
+        return ()
 
     def combination_matches(indexes: tuple[int, ...]) -> bool:
         combined: dict[str, tuple[float, ...]] = {}
@@ -132,12 +145,27 @@ def _aggregate_augment_count(
         )
 
     for count in range(1, min(socket_count, 6) + 1):
-        if any(
-            combination_matches(indexes)
-            for indexes in combinations_with_replacement(range(len(candidates)), count)
-        ):
-            return count
-    return 0
+        matches: set[tuple[str, ...]] = set()
+        for indexes in combinations_with_replacement(range(len(candidates)), count):
+            if not combination_matches(indexes):
+                continue
+            ref_options = [candidate_rows[index][1] for index in indexes]
+            for refs in product(*ref_options):
+                matches.add(tuple(sorted(refs)))
+                if _require_unique_refs and len(matches) > 1:
+                    return ()
+        if matches:
+            return next(iter(matches))
+    return ()
+
+
+def _aggregate_augment_count(
+    modifiers: list[ItemModifier], category: str, socket_count: int,
+) -> int:
+    """Infer the minimum installed augments that exactly explain their Stat lines."""
+    return len(identify_installed_augments(
+        modifiers, category, socket_count, _require_unique_refs=False,
+    ))
 
 
 class Poe2ItemParseError(ValueError):

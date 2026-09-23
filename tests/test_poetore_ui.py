@@ -2706,6 +2706,58 @@ def test_price_result_is_rendered_in_japanese(qapp):
     window.close()
 
 
+def test_poe2_augment_estimates_render_compactly_below_results(qapp):
+    from src.poetore.poe2.augment_pricing import (
+        InstalledAugmentRecovery, VirtualAugmentCost,
+    )
+
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    try:
+        window._search_generation = 7
+        window._show_augment_values({
+            "virtual": VirtualAugmentCost("Adept Rune", 2, 9.2),
+            "recovery": InstalledAugmentRecovery(
+                ("Adept Rune",), 13, 2, 11, 6,
+            ),
+        }, 7)
+        assert window.virtual_augment_cost_label.text() == (
+            "仮挿入オーグメントの参考費用　9.2 ex"
+        )
+        assert window.installed_augment_recovery_value.text() == (
+            "装着済みオーグメントの回収参考価値　11 ex"
+        )
+        assert window.installed_augment_recovery_comparison.text() == (
+            "出品最安 6 ex より +5 ex（素材 13 − 抽出 2）"
+        )
+        assert not window.installed_augment_recovery_hint.isHidden()
+        layout = window.price_list.parentWidget().layout()
+        assert layout.indexOf(window.price_list) < layout.indexOf(
+            window.virtual_augment_cost_label
+        ) < layout.indexOf(window.installed_augment_recovery_panel)
+    finally:
+        window.close()
+
+
+def test_poe2_augment_recovery_hides_hint_when_listing_is_better(qapp):
+    from src.poetore.poe2.augment_pricing import InstalledAugmentRecovery
+
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    try:
+        window._search_generation = 3
+        window._show_augment_values({
+            "recovery": InstalledAugmentRecovery(
+                ("Adept Rune",), 8, 2, 6, 10,
+            ),
+        }, 3)
+        assert window.installed_augment_recovery_comparison.text() == (
+            "出品最安 10 ex より −4 ex（素材 8 − 抽出 2）"
+        )
+        assert window.installed_augment_recovery_hint.isHidden()
+        assert not window.installed_augment_recovery_panel.isHidden()
+    finally:
+        window.close()
+
+
 def test_partial_price_result_is_shown_without_finishing_search(qapp):
     window = PoetoreWindow()
     window._search_generation = 7

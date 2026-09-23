@@ -21,6 +21,7 @@ CACHE_TTL_SECONDS = 31 * 60
 POE2_EXPEDITION_REWARD_TYPES = (
     "Currency", "Expedition", "UncutGems", "Runes", "Verisium",
 )
+POE2_AUGMENT_TYPES = ("Runes", "SoulCores", "Ultimatum", "Idols", "Abyss")
 
 _UNIQUE_TYPES = {
     "UniqueJewel", "ForbiddenJewel", "UniqueFlask", "UniqueWeapon", "UniqueArmour",
@@ -387,6 +388,27 @@ class PoeNinjaPriceService:
                 if price is not None:
                     resolved[name] = price
         return resolved
+
+    def lookup_poe2_augments(
+        self, names: tuple[str, ...], league: str,
+    ) -> dict[str, PoeNinjaPrice]:
+        """Resolve only requested Rune/Soul Core names, rejecting ambiguity."""
+        wanted = tuple(dict.fromkeys(name.strip() for name in names if name.strip()))
+        if not wanted or not league or re.search(r"\(PL\d+\)$", league):
+            return {}
+        payloads = self._fetch_poe2_exchange_categories(league, POE2_AUGMENT_TYPES)
+        matches: dict[str, list[PoeNinjaPrice]] = {name: [] for name in wanted}
+        for type_name in POE2_AUGMENT_TYPES:
+            payload = payloads.get(type_name)
+            if payload is None:
+                continue
+            for name in wanted:
+                price = match_poe2_exchange_identity(payload, name, league, type_name)
+                if price is not None:
+                    matches[name].append(price)
+        return {
+            name: rows[0] for name, rows in matches.items() if len(rows) == 1
+        }
 
     def prefetch_poe2_expedition_rewards(self, league: str) -> int:
         """Warm the Expedition exchange cache outside the scan critical path."""
