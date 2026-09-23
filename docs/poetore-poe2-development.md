@@ -345,15 +345,28 @@ baseTypeが`Crystal Focus`であることを確認した。query IDや出品ID�
 ## 固定入力
 
 - Source lock: `scripts/poetore-poe2-sources.lock.json`
-- Snapshot: `vendor-sources/poe2-trade-api-2026-08-09/`
+- Snapshot: `scripts/poetore-poe2-sources.lock.json` の各 `sources.*.path`
 - Fixture: `tests/fixtures/poe2/minimal_items.json`
 - Identity: `data/poetore/poe2/identity_index.json`
 
 snapshot検証:
 
 ```bash
-python3 scripts/snapshot_poetore_poe2_sources.py --verify
+python3 scripts/snapshot_poetore_poe2_sources.py verify
 ```
+
+公式Trade2データの更新は正本へ直接保存しない。候補を作成し、
+`review-manifest.json` の全差分を分類・確認してからpromotionする。
+
+```bash
+python3 scripts/snapshot_poetore_poe2_sources.py candidate --output /tmp/poe2-trade-candidate
+# review-manifest.json の review_required を adopt / retain_baseline と理由で確定
+python3 scripts/snapshot_poetore_poe2_sources.py promote --candidate /tmp/poe2-trade-candidate
+```
+
+`hard_block`、未確認、`hold`、候補／基準ハッシュの変化が1件でもあればpromotionは失敗し、
+既存snapshotとlockを維持する。成功時は新しい変更不可snapshotディレクトリを作り、最後に
+lockだけを原子的に切り替える。
 
 ## 実コピーfixture拡充の残タスク（2026-08-09）
 

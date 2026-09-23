@@ -3,16 +3,15 @@
 
 from __future__ import annotations
 
-import json
 import argparse
+import json
 import os
 import subprocess
 import tempfile
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
-SNAPSHOT = ROOT / "vendor-sources" / "poe2-trade-api-2026-08-09"
+SOURCE_LOCK = ROOT / "scripts" / "poetore-poe2-sources.lock.json"
 OUTPUT = ROOT / "data" / "poetore" / "poe2"
 IDENTITY_JAPANESE_OVERRIDES = ROOT / "scripts" / "poetore-poe2-identity-japanese-overrides.json"
 RELATED_JAPANESE_OVERRIDES = ROOT / "scripts" / "poetore-poe2-related-japanese-overrides.json"
@@ -462,8 +461,23 @@ def _apply_reviewed_identity_overrides(entries: list[dict]) -> None:
     _apply_japanese_identity_overrides(entries, _identity_japanese_overrides())
 
 
+def resolve_locked_source(
+    source_id: str,
+    lock_path: Path = SOURCE_LOCK,
+    root: Path = ROOT,
+) -> Path:
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    source = (lock.get("sources") or {}).get(source_id)
+    if source is None:
+        raise KeyError(f"source lock does not contain {source_id}")
+    path = root / source["path"]
+    if not path.is_file():
+        raise FileNotFoundError(f"locked source does not exist: {path}")
+    return path
+
+
 def _load(name: str) -> dict:
-    return json.loads((SNAPSHOT / name).read_text(encoding="utf-8"))
+    return json.loads(resolve_locked_source(Path(name).stem).read_text(encoding="utf-8"))
 
 
 def _signature(entry: dict) -> tuple:

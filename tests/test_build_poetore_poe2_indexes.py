@@ -1,21 +1,33 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import subprocess
+from pathlib import Path
+
 import pytest
-from src.poetore.poe2.metadata import (
-    related_item_group, resolve_identity, resolve_identity_candidates,
-)
 
 from scripts.build_poetore_poe2_indexes import (
-    EE2_SOUL_CORE_IDENTITIES, EE2_SOUL_CORE_OFFICIAL_STATS,
-    EE2_REVIEWED_RUNEFORGED_IDENTITIES, EE2_REVIEWED_V0161_AUGMENTS,
-    EE2_REVIEWED_V0161_STAT_IDS, EE2_SOUL_CORE_REVISION,
-    REVIEWED_OFFICIAL_STAT_OVERRIDES,
+    EE2_REVIEWED_RUNEFORGED_IDENTITIES,
+    EE2_REVIEWED_V0161_AUGMENTS,
+    EE2_REVIEWED_V0161_STAT_IDS,
+    EE2_SOUL_CORE_IDENTITIES,
+    EE2_SOUL_CORE_OFFICIAL_STATS,
+    EE2_SOUL_CORE_REVISION,
     EE2_SOUL_CORE_STAT_IDS,
-    OUTPUT, _aligned, build_augment_index, build_identity_index,
-    build_related_item_groups, build_stat_index, resolve_ee2_revision,
+    OUTPUT,
+    REVIEWED_OFFICIAL_STAT_OVERRIDES,
+    _aligned,
+    build_augment_index,
+    build_identity_index,
+    build_related_item_groups,
+    build_stat_index,
+    resolve_ee2_revision,
+    resolve_locked_source,
+)
+from src.poetore.poe2.metadata import (
+    related_item_group,
+    resolve_identity,
+    resolve_identity_candidates,
 )
 
 
@@ -37,6 +49,18 @@ def test_aligned_recovers_after_one_localized_entry_is_missing():
     japanese = [{"type": "あ"}, {"type": "し", "name": "ユニーク"}]
     pairs = list(_aligned(english, japanese))
     assert [(en["type"], ja["type"]) for en, ja in pairs] == [("A", "あ"), ("B", "し")]
+
+
+def test_snapshot_source_is_resolved_from_lock_instead_of_a_fixed_directory(tmp_path):
+    source = tmp_path / "reviewed" / "stats_en.json"
+    source.parent.mkdir()
+    source.write_text("{}", encoding="utf-8")
+    lock_path = tmp_path / "lock.json"
+    lock_path.write_text(json.dumps({
+        "sources": {"stats_en": {"path": "reviewed/stats_en.json"}},
+    }), encoding="utf-8")
+
+    assert resolve_locked_source("stats_en", lock_path, tmp_path) == source
 
 
 def test_generated_stat_index_keeps_locked_snapshot_and_selected_soul_core_stats():
