@@ -23,7 +23,13 @@ def identity_index() -> dict[str, tuple[dict, ...]]:
     payload = identity_entries()
     index = {}
     for entry in payload:
-        for name in entry.get("names", {}).values():
+        names = list(entry.get("names", {}).values())
+        names.extend(
+            alias
+            for aliases in (entry.get("aliases") or {}).values()
+            for alias in aliases
+        )
+        for name in names:
             index.setdefault(str(name).casefold(), []).append(entry)
     return {key: tuple(value) for key, value in index.items()}
 
@@ -94,10 +100,16 @@ def resolve_identity_fragments(name: str, namespace: str = "ITEM") -> tuple[dict
     for entry in identity_entries():
         if entry.get("namespace") != namespace:
             continue
+        localized_names = list((entry.get("names") or {}).values())
+        localized_names.extend(
+            alias
+            for aliases in (entry.get("aliases") or {}).values()
+            for alias in aliases
+        )
         matched_length = max(
             (
                 len(str(localized))
-                for localized in (entry.get("names") or {}).values()
+                for localized in localized_names
                 if str(localized).strip().casefold() in comparable
             ),
             default=0,

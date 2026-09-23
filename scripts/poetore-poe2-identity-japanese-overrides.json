@@ -15,6 +15,7 @@
     {"namespace":"GEM","ref_name":"Uhtred's Rite","japanese":"ウートレドの儀式"},
     {"namespace":"ITEM","ref_name":"Uhtred's Crest of the Chalice","japanese":"ウートレドの聖杯の紋章"},
     {"namespace":"ITEM","ref_name":"Uhtred's Sidereus","japanese":"ウートレドの星読み"},
-    {"namespace":"UNIQUE","ref_name":"Uhtred's Chalice","japanese":"ウートレドの杯","base_ref":"Transcendent Mana Flask"}
+    {"namespace":"UNIQUE","ref_name":"Uhtred's Chalice","japanese":"ウートレドの杯","base_ref":"Transcendent Mana Flask"},
+    {"namespace":"ITEM","ref_name":"Legacy of Bramblejack","japanese":"ブランブルジャックの遺産","category":"SoulCore"}
   ]
 }

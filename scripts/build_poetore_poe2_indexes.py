@@ -44,12 +44,30 @@ EE2_REVIEWED_V0161_AUGMENTS = {
     "Idol of Alira", "Idol of Egrin", "Idol of Kraityn", "Idol of Oak",
     "Legacy of Horns of Bynden", "Legacy of The Sentry",
 }
+EE2_REVIEWED_V0161_LEGACY_AUGMENTS = {
+    "Legacy of Alkem Eira", "Legacy of Amor Mandragora",
+    "Legacy of Bramblejack", "Legacy of Bristleboar", "Legacy of Bushwhack",
+    "Legacy of Deidbell", "Legacy of Dionadair", "Legacy of Dunkelhalt",
+    "Legacy of Elevore", "Legacy of Kingsguard", "Legacy of Legionstride",
+    "Legacy of Oaksworn", "Legacy of Obern's Bastion", "Legacy of Serle's Grit",
+    "Legacy of The Blood Thorn", "Legacy of The Knight-errant",
+    "Legacy of The Smiling Knight", "Legacy of The Vile Knight",
+    "Legacy of Tyranny's Grip",
+}
+EE2_REVIEWED_V0161_IDENTITIES = {
+    ("ITEM", "Liquid Verisium", ""),
+    ("ITEM", "Tethering Bands", ""),
+    ("UNIQUE", "The Master's Reach", "Tethering Bands"),
+}
 EE2_REVIEWED_V0161_STAT_IDS = {
     "rune.stat_1228682002", "rune.stat_1573130764",
     "rune.stat_1881314095", "rune.stat_1984310483",
+    "rune.stat_2174462855", "rune.stat_2511217560",
     "rune.stat_2211478554", "rune.stat_2709367754",
+    "rune.stat_2861770798",
     "rune.stat_2916861134", "rune.stat_2968503605",
     "rune.stat_2995914769", "rune.stat_3537994888",
+    "rune.stat_3686997387",
     "rune.stat_3824372849", "rune.stat_4226127445",
 }
 EE2_REVIEWED_RUNEFORGED_IDENTITIES = {
@@ -320,10 +338,15 @@ def _paired_ee2_rows(
     localized: dict[str, list[dict]], *, require_augment: bool = False,
     ref_names: set[str] | None = None,
 ) -> list[tuple[dict, dict]]:
+    augment_keys = {
+        _ee2_identity_key(row)
+        for row in localized["en"]
+        if bool(row.get("augment"))
+    }
     selected = {
         language: [
             row for row in rows
-            if (not require_augment or bool(row.get("augment")))
+            if (not require_augment or _ee2_identity_key(row) in augment_keys)
             and (ref_names is None or row.get("refName") in ref_names)
         ]
         for language, rows in localized.items()
@@ -644,11 +667,25 @@ def build_augment_index(
                 "socket_bound": bool(effect.get("socketBound")),
             })
         if built_effects:
-            entries.append({
+            repeated_values = [tuple(effect["values"]) for effect in built_effects]
+            if len(built_effects) > 1 and len(set(repeated_values)) == 1:
+                shared = repeated_values[0]
+                widths = [max(1, effect["text"]["en"].count("#")) for effect in built_effects]
+                if sum(widths) == len(shared):
+                    offset = 0
+                    for effect, width in zip(built_effects, widths):
+                        effect["values"] = list(shared[offset:offset + width])
+                        offset += width
+            entry = {
                 "ref_name": str(en.get("refName", "")),
                 "names": {"en": str(en.get("name", "")), "ja": str(ja.get("name", ""))},
                 "effects": built_effects,
-            })
+            }
+            if entry["ref_name"].startswith("Legacy of "):
+                entry["max_count"] = 1
+            if entry["ref_name"] == "Legacy of Serle's Grit":
+                entry["effects"][0]["text"]["ja"] = "品質の最大値 #%"
+            entries.append(entry)
     return {
         "schema_version": 1,
         "source": _ee2_source("augment", revision),
@@ -666,6 +703,8 @@ def apply_reviewed_ee2_updates(ee2_root: Path) -> None:
         ref_names=(
             EE2_SOUL_CORE_IDENTITIES
             | {row[1] for row in EE2_REVIEWED_RUNEFORGED_IDENTITIES}
+            | {row[1] for row in EE2_REVIEWED_V0161_IDENTITIES}
+            | {"Legacy of Bramblejack"}
         ),
     )
     selected_identity = {
@@ -695,6 +734,36 @@ def apply_reviewed_ee2_updates(ee2_root: Path) -> None:
             row.get("namespace"), row.get("ref_name"), row.get("base_ref", "")
         ) not in EE2_REVIEWED_RUNEFORGED_IDENTITIES
     ] + runeforged_rows
+    reviewed_identity_rows = [
+        row for row in candidate_identity["entries"]
+        if (
+            row.get("namespace"), row.get("ref_name"), row.get("base_ref", "")
+        ) in EE2_REVIEWED_V0161_IDENTITIES
+    ]
+    if {
+        (row.get("namespace"), row.get("ref_name"), row.get("base_ref", ""))
+        for row in reviewed_identity_rows
+    } != EE2_REVIEWED_V0161_IDENTITIES:
+        raise ValueError("reviewed v0.16.1 identity remainder is incomplete")
+    identity["entries"] = [
+        row for row in identity["entries"]
+        if (
+            row.get("namespace"), row.get("ref_name"), row.get("base_ref", "")
+        ) not in EE2_REVIEWED_V0161_IDENTITIES
+    ] + reviewed_identity_rows
+    bramblejack = next(
+        row for row in candidate_identity["entries"]
+        if row.get("namespace") == "ITEM"
+        and row.get("ref_name") == "Legacy of Bramblejack"
+    )
+    bramblejack["aliases"] = {"ja": ["ブランブルジャック"]}
+    identity["entries"] = [
+        row for row in identity["entries"]
+        if not (
+            row.get("namespace") == "ITEM"
+            and row.get("ref_name") == "Legacy of Bramblejack"
+        )
+    ] + [bramblejack]
     selection_source = f"selected EE2 {EE2_SOUL_CORE_REVISION} reviewed updates"
     if isinstance(identity.get("source"), str):
         if EE2_SOUL_CORE_REVISION not in identity["source"]:
@@ -720,11 +789,15 @@ def apply_reviewed_ee2_updates(ee2_root: Path) -> None:
         (EE2_SOUL_CORE_IDENTITIES & candidate_augment.keys())
         | EE2_SOUL_CORE_CHANGED_AUGMENTS
         | EE2_REVIEWED_V0161_AUGMENTS
+        | EE2_REVIEWED_V0161_LEGACY_AUGMENTS
     )
     if not selected_augments <= candidate_augment.keys():
         raise ValueError("reviewed Soul Core augment set is incomplete")
     by_augment = {row["ref_name"]: row for row in augment["entries"]}
     by_augment.update({name: candidate_augment[name] for name in selected_augments})
+    for ref_name, row in by_augment.items():
+        if ref_name.startswith("Legacy of "):
+            row["max_count"] = 1
     augment["entries"] = list(by_augment.values())
     if isinstance(augment.get("source"), str):
         if EE2_SOUL_CORE_REVISION not in augment["source"]:
@@ -770,9 +843,24 @@ def apply_reviewed_ee2_updates(ee2_root: Path) -> None:
         reason="Buri-reviewed v0.16.1/v0.16.2 Stat subset",
     )
 
+    related = json.loads((OUTPUT / "related_item_groups.json").read_text(encoding="utf-8"))
+    reviewed_related_names = {
+        ("ITEM", "Legacy of Bramblejack"): "ブランブルジャックの遺産",
+    }
+    for group in related.get("groups", ()):
+        for row in (*group.get("query", ()), *group.get("items", ())):
+            key = (str(row.get("namespace", "")), str(row.get("name", "")))
+            if key in reviewed_related_names:
+                row["display_name"] = reviewed_related_names[key]
+    _append_source_revision(
+        related, component="reviewed related-item localization",
+        revision=EE2_SOUL_CORE_REVISION,
+        reason="Buri-reviewed v0.16.1 official Japanese name",
+    )
+
     for name, payload in (
         ("identity_index.json", identity), ("augment_index.json", augment),
-        ("stat_index.json", stats),
+        ("stat_index.json", stats), ("related_item_groups.json", related),
     ):
         (OUTPUT / name).write_text(
             json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n",

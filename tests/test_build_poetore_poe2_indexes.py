@@ -9,6 +9,8 @@ import pytest
 from scripts.build_poetore_poe2_indexes import (
     EE2_REVIEWED_RUNEFORGED_IDENTITIES,
     EE2_REVIEWED_V0161_AUGMENTS,
+    EE2_REVIEWED_V0161_IDENTITIES,
+    EE2_REVIEWED_V0161_LEGACY_AUGMENTS,
     EE2_REVIEWED_V0161_STAT_IDS,
     EE2_SOUL_CORE_IDENTITIES,
     EE2_SOUL_CORE_OFFICIAL_STATS,
@@ -137,7 +139,7 @@ def test_reviewed_identity_japanese_overrides_are_in_runtime_index():
         for row in rebuilt["entries"]
     }
 
-    assert len(overrides) == 14
+    assert len(overrides) == 15
     for override in overrides:
         row = by_key[(override["namespace"], override["ref_name"])]
         assert row["names"]["ja"] == override["japanese"]
@@ -179,9 +181,9 @@ def test_reviewed_japanese_identity_resolves(namespace, japanese, ref_name):
 def test_generated_augment_index_has_fixed_source_and_trade_ids():
     generated = json.loads((OUTPUT / "augment_index.json").read_text(encoding="utf-8"))
     assert EE2_SOUL_CORE_REVISION in generated["source"]
-    assert len(generated["entries"]) == 274
+    assert len(generated["entries"]) == 293
     effects = [effect for row in generated["entries"] for effect in row["effects"]]
-    assert len(effects) == 494
+    assert len(effects) == 516
     assert all(effect["categories"] and effect["trade_ids"] for effect in effects)
     by_ref = {row["ref_name"]: row for row in generated["entries"]}
     automation = by_ref["Jiquani's Soul Core of Automation"]["effects"][0]
@@ -224,6 +226,70 @@ def test_reviewed_v0161_augments_keep_each_effect_as_one_item():
     ]
     stats = json.loads((OUTPUT / "stat_index.json").read_text(encoding="utf-8"))
     assert EE2_REVIEWED_V0161_STAT_IDS <= {row["id"] for row in stats["entries"]}
+
+
+def test_reviewed_v0161_identity_remainder_keeps_official_metadata_and_alias():
+    generated = json.loads((OUTPUT / "identity_index.json").read_text(encoding="utf-8"))
+    by_key = {
+        (row.get("namespace"), row.get("ref_name"), row.get("base_ref", "")): row
+        for row in generated["entries"]
+    }
+    assert EE2_REVIEWED_V0161_IDENTITIES <= by_key.keys()
+    assert by_key[("ITEM", "Liquid Verisium", "")]["names"]["ja"] == "リキッドヴェリシウム"
+    tethering = by_key[("ITEM", "Tethering Bands", "")]
+    assert tethering["category"] == "Gloves"
+    assert tethering["tags"] == ["str_int_armour", "karui_basetype"]
+    assert tethering["armour"] == {"ar": [98, 98], "es": [27, 27]}
+    reach = by_key[("UNIQUE", "The Master's Reach", "Tethering Bands")]
+    assert reach["names"]["ja"] == "達人の間合い"
+    bramblejack = by_key[("ITEM", "Legacy of Bramblejack", "")]
+    assert bramblejack["names"]["ja"] == "ブランブルジャックの遺産"
+    assert "ブランブルジャック" in bramblejack["aliases"]["ja"]
+    assert resolve_identity("ブランブルジャックの遺産", "ITEM")["ref_name"] == (
+        "Legacy of Bramblejack"
+    )
+    assert resolve_identity("ブランブルジャック", "ITEM")["ref_name"] == (
+        "Legacy of Bramblejack"
+    )
+
+
+def test_reviewed_legacy_augments_have_one_item_cap_and_ordered_values():
+    generated = json.loads((OUTPUT / "augment_index.json").read_text(encoding="utf-8"))
+    by_ref = {row["ref_name"]: row for row in generated["entries"]}
+    assert EE2_REVIEWED_V0161_LEGACY_AUGMENTS <= by_ref.keys()
+    assert all(
+        row.get("max_count") == 1
+        for ref_name, row in by_ref.items()
+        if ref_name.startswith("Legacy of ")
+    )
+    assert [effect["values"] for effect in by_ref["Legacy of Bristleboar"]["effects"]] == [
+        [5], [10],
+    ]
+    assert [effect["values"] for effect in by_ref["Legacy of Elevore"]["effects"]] == [
+        [60], [1],
+    ]
+    assert [effect["values"] for effect in by_ref["Legacy of The Blood Thorn"]["effects"]] == [
+        [1], [4, 8],
+    ]
+    serle = by_ref["Legacy of Serle's Grit"]["effects"][0]
+    assert serle["text"]["ja"] == "品質の最大値 #%"
+
+
+def test_reviewed_stat_remainder_uses_official_bilingual_text():
+    generated = json.loads((OUTPUT / "stat_index.json").read_text(encoding="utf-8"))
+    by_id = {row["id"]: row for row in generated["entries"]}
+    expected = {
+        "rune.stat_2174462855": ("Bonded: #% reduced Chill Duration on you", "絆 受ける冷却の持続時間が#%減少する"),
+        "rune.stat_2861770798": ("Bonded: #% reduced Freeze Duration on you", "絆 受ける凍結の持続時間が#%減少する"),
+        "rune.stat_2511217560": ("#% increased Stun Recovery", "スタン復帰が#%増加する"),
+        "rune.stat_3686997387": ("Double Stun Threshold while Shield is Raised", "盾を掲げている時にスタン閾値が二倍になる"),
+    }
+    for stat_id, (english, japanese) in expected.items():
+        assert by_id[stat_id] == {
+            "id": stat_id,
+            "type": "augment",
+            "text": {"en": english, "ja": japanese},
+        }
 
 
 def test_build_augment_index_keeps_bilingual_effects_and_trade_ids(tmp_path):
@@ -398,8 +464,10 @@ def test_resolve_ee2_revision_rejects_non_git_and_mismatch(tmp_path):
 
 def test_generated_related_items_match_locked_ee2_and_have_price_hints():
     generated = json.loads((OUTPUT / "related_item_groups.json").read_text(encoding="utf-8"))
-    assert "d72afb83bc0888919a89d3c3744acee2c597e9c8" in generated["source"]
-    assert EE2_SOUL_CORE_REVISION in generated["source"]
+    assert generated["source"]["revision"] == "d72afb83bc0888919a89d3c3744acee2c597e9c8"
+    assert EE2_SOUL_CORE_REVISION in {
+        row["revision"] for row in generated["source_revisions"]
+    }
     assert len(generated["groups"]) == 115
     first = generated["groups"][0]
     assert first["query"][0] == {

@@ -686,6 +686,24 @@ def test_different_augments_collapsed_into_one_section_count_separately(monkeypa
     assert poe2_parser._aggregate_augment_count(modifiers, "body_armour", 2) == 2
 
 
+def test_bonded_support_stats_do_not_consume_augment_sockets(monkeypatch):
+    monkeypatch.setattr(poe2_parser, "augment_entries", lambda: ({
+        "ref_name": "Bonded Helper",
+        "effects": ({
+            "categories": ["Body Armour"],
+            "text": {"en": "Bonded: #% reduced Chill Duration on you"},
+            "values": [20],
+            "trade_ids": ["rune.stat_2174462855"],
+        },),
+    },))
+    modifiers = [ItemModifier(
+        "Bonded: 20% reduced Chill Duration on you", (20.0,), "augment",
+        stat_id="rune.stat_2174462855",
+    )]
+
+    assert poe2_parser._aggregate_augment_count(modifiers, "body_armour", 2) == 0
+
+
 def test_one_multi_stat_augment_counts_once(monkeypatch):
     monkeypatch.setattr(poe2_parser, "augment_entries", lambda: ({
         "ref_name": "Dual Rune",

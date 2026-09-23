@@ -1904,6 +1904,64 @@ def test_v0162_jiquani_soul_core_is_available_and_sends_reviewed_rune_stat():
     )
 
 
+def test_reviewed_legacy_caps_label_and_trade_value_at_one_item():
+    item = _phase45_item("phase45_sceptre_ja.txt")
+    body = item.__class__(**{
+        **item.__dict__,
+        "category": "body_armour",
+        "properties": {**item.properties, "Sockets": "S S"},
+        "augment_count": 0,
+    })
+    choice = next(
+        row for row in available_virtual_augments(body)
+        if row["ref_name"] == "Legacy of Bramblejack"
+    )
+    assert choice["max_count"] == 1
+    label = virtual_augment_choice_label(body, choice, 2)
+    assert "250%" in label
+    assert "500%" not in label
+    assert "装着上限1個" in label
+    rows = virtual_augment_filters(body, choice["ref_name"], 2)
+    assert len(rows) == 1
+    assert rows[0].stat_id == "rune.stat_1092987622"
+    assert rows[0].min_value == 250.0
+    assert "ソケット1個" in rows[0].source_texts[0]
+
+
+def test_reviewed_multi_stat_legacy_preserves_effect_value_order():
+    item = _phase45_item("phase45_sceptre_ja.txt")
+    helmet = item.__class__(**{
+        **item.__dict__,
+        "category": "helmet",
+        "properties": {**item.properties, "Sockets": "S S"},
+        "augment_count": 0,
+    })
+    rows = virtual_augment_filters(helmet, "Legacy of Elevore", 2)
+    assert [(row.stat_id, row.min_value) for row in rows] == [
+        ("rune.stat_185580205", 60.0),
+        ("rune.stat_554899692", 1.0),
+    ]
+
+
+def test_talisman_supports_reviewed_legacy_at_one_item_cap():
+    item = _phase45_item("phase45_sceptre_ja.txt")
+    talisman = item.__class__(**{
+        **item.__dict__,
+        "category": "talisman",
+        "properties": {**item.properties, "Sockets": "S S"},
+        "augment_count": 0,
+    })
+    choice = next(
+        row for row in available_virtual_augments(talisman)
+        if row["ref_name"] == "Legacy of Amor Mandragora"
+    )
+    assert choice["max_count"] == 1
+    rows = virtual_augment_filters(talisman, choice["ref_name"], 2)
+    assert [(row.stat_id, row.min_value) for row in rows] == [
+        ("rune.stat_1273508088", 20.0),
+    ]
+
+
 def test_two_identical_runes_leave_no_empty_augment_socket():
     item = parse_item_text(
         (Path(__file__).parent / "fixtures" / "poe2"

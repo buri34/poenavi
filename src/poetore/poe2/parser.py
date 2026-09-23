@@ -22,7 +22,11 @@ _AUGMENT_CATEGORY_BY_CATEGORY = {
     "one_axe": "One Hand Axe", "two_axe": "Two Hand Axe", "dagger": "Dagger",
     "focus": "Focus", "buckler": "Buckler", "shield": "Shield",
     "body_armour": "Body Armour", "helmet": "Helmet", "gloves": "Gloves",
-    "boots": "Boots",
+    "boots": "Boots", "talisman": "Talisman",
+}
+
+_BOND_SUPPORT_STAT_IDS = {
+    "rune.stat_2174462855", "rune.stat_2861770798",
 }
 
 
@@ -38,7 +42,11 @@ def _aggregate_augment_count(
 
     observed: dict[str, tuple[float, ...]] = {}
     for modifier in modifiers:
-        if modifier.kind != "augment" or not modifier.stat_id:
+        if (
+            modifier.kind != "augment"
+            or not modifier.stat_id
+            or modifier.stat_id in _BOND_SUPPORT_STAT_IDS
+        ):
             continue
         values = tuple(float(value) for value in modifier.values)
         previous = observed.get(modifier.stat_id)

@@ -118,7 +118,7 @@ _EE2_CATEGORY_BY_CATEGORY = {
     "one_axe": "One Hand Axe", "two_axe": "Two Hand Axe", "dagger": "Dagger",
     "focus": "Focus", "buckler": "Buckler", "shield": "Shield",
     "body_armour": "Body Armour", "helmet": "Helmet", "gloves": "Gloves",
-    "boots": "Boots",
+    "boots": "Boots", "talisman": "Talisman",
 }
 
 
@@ -376,11 +376,17 @@ def _virtual_augment_effect_text(effect: dict, socket_count: int) -> str:
     return re.sub(r"#", replace_value, text)
 
 
+def _virtual_augment_effective_count(choice: dict, requested_count: int) -> int:
+    maximum = int(choice.get("max_count") or requested_count)
+    return min(requested_count, maximum)
+
+
 def virtual_augment_choice_label(
     item: ParsedItem, choice: dict, socket_count: int | None = None,
 ) -> str:
     """Return an effect-first label matching the virtual stats sent to Trade2."""
-    socket_count = int(socket_count or empty_augment_socket_count(item))
+    requested_count = int(socket_count or empty_augment_socket_count(item))
+    socket_count = _virtual_augment_effective_count(choice, requested_count)
     names = choice.get("names") or {}
     name = str(names.get("ja") or names.get("en") or choice.get("ref_name") or "")
     effects = tuple(
@@ -388,7 +394,10 @@ def virtual_augment_choice_label(
         for effect in choice.get("effects") or ()
     )
     effect_text = " / ".join(text for text in effects if text)
-    count_text = f" ×{socket_count}" if socket_count > 1 else ""
+    if choice.get("max_count") == 1:
+        count_text = " / 装着上限1個"
+    else:
+        count_text = f" ×{socket_count}" if socket_count > 1 else ""
     return f"{effect_text}（{name}{count_text}）" if effect_text else f"{name}{count_text}"
 
 
@@ -403,6 +412,7 @@ def virtual_augment_filters(
     choice = next((row for row in available_virtual_augments(item) if row["ref_name"] == ref_name), None)
     if choice is None or selected_count not in allowed_counts:
         return ()
+    selected_count = _virtual_augment_effective_count(choice, selected_count)
     rows = []
     for effect in choice["effects"]:
         values = tuple(float(value) * selected_count for value in effect.get("values") or ())
