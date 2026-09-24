@@ -11,7 +11,9 @@ from PySide6.QtWidgets import QGridLayout, QLabel, QPushButton, QVBoxLayout, QWi
 from src.poetore.expedition_ocr_probe import WindowsOcrServer
 from src.poetore.poe2.desecration_ocr import (
     ChoiceBand,
+    apply_ndl_numeric_rescues,
     image_bytes,
+    ndl_numeric_candidate_indexes,
     needs_short_numeric_rescue,
     prepare_desecration_frame,
     rescue_short_numeric_variants,
@@ -22,6 +24,7 @@ from src.poetore.poe2.desecration_tiers import (
     TierValue,
     available_categories,
 )
+from src.poetore.poe2.ndlocr_lite import NdlOcrLiteServer
 from src.poetore.window_position import path_of_exile_client_rect
 
 CATEGORY_LABELS = {
@@ -307,7 +310,8 @@ class DesecrationTierController(QObject):
 
     def __init__(
         self, parent=None, *, regions_getter=None, ocr_server=None,
-        numeric_ocr_server=None, scan_coordinator=None, trace_factory=None,
+        numeric_ocr_server=None, ndl_ocr_server=None, scan_coordinator=None,
+        trace_factory=None,
     ):
         super().__init__(parent)
         self._regions_getter = regions_getter or dict
@@ -315,6 +319,8 @@ class DesecrationTierController(QObject):
         self._owns_ocr = ocr_server is None
         self._numeric_ocr = numeric_ocr_server or WindowsOcrServer("en-US")
         self._owns_numeric_ocr = numeric_ocr_server is None
+        self._ndl_ocr = ndl_ocr_server or NdlOcrLiteServer()
+        self._owns_ndl_ocr = ndl_ocr_server is None
         self._scan_coordinator = scan_coordinator
         self._trace_factory = trace_factory
         self._active_trace = None
@@ -515,7 +521,33 @@ class DesecrationTierController(QObject):
                         trace, "numeric_ocr_rescue_failed",
                         capture_mode=capture_mode, error_type=type(exc).__name__,
                     )
-            resolution = resolve_ocr_variants(grouped, selectable_categories())
+            categories = selectable_categories()
+            resolution = resolve_ocr_variants(grouped, categories)
+            ndl_candidates = ndl_numeric_candidate_indexes(grouped, resolution)
+            if ndl_candidates:
+                try:
+                    ndl_results = self._ndl_ocr.recognize([
+                        image_bytes(prepared.ndl_images[index])
+                        for index in ndl_candidates
+                    ])
+                    ndl_texts = {
+                        index: result.text
+                        for index, result in zip(ndl_candidates, ndl_results)
+                    }
+                    grouped, resolution, accepted = apply_ndl_numeric_rescues(
+                        grouped, ndl_texts, categories,
+                    )
+                    self._mark_trace(
+                        trace, "ndl_numeric_rescue_completed",
+                        capture_mode=capture_mode,
+                        candidate_count=len(ndl_candidates),
+                        accepted_count=len(accepted),
+                    )
+                except Exception as exc:  # noqa: BLE001 - optional safe fallback
+                    self._mark_trace(
+                        trace, "ndl_numeric_rescue_failed",
+                        capture_mode=capture_mode, error_type=type(exc).__name__,
+                    )
             self._mark_trace(
                 trace, "tier_resolution_completed", capture_mode=capture_mode,
                 category_count=len(resolution.categories),
@@ -707,3 +739,5 @@ class DesecrationTierController(QObject):
             self._ocr.close()
         if self._owns_numeric_ocr:
             self._numeric_ocr.close()
+        if self._owns_ndl_ocr:
+            self._ndl_ocr.close()

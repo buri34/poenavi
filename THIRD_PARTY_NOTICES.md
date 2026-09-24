@@ -119,6 +119,25 @@ SOFTWARE.
 
 <https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2>
 
+## NDLOCR-Lite 1.3.1
+
+ぽえとれは、Windows標準OCRでMod本文を安定して認識できたものの数字だけが欠落し、
+Tierを確定できなかった場合に限り、NDLOCR-Liteを補助OCRとして使用します。
+Windows標準OCRでTierを確定できた結果をNDLOCR-Liteで上書きすることはありません。
+
+NDLOCR-Liteは国立国会図書館がCreative Commons Attribution 4.0
+International（CC BY 4.0）で公開しているプログラムです。
+
+- 原著作者・提供者: 国立国会図書館
+- 元リポジトリ: <https://github.com/ndl-lab/ndlocr-lite>
+- ライセンス: <https://creativecommons.org/licenses/by/4.0/>
+- PoENaviでの変更: 固定した1.3.1のソースとモデルを自己完結型の補助プロセスとして
+  パッケージし、数字欠落時だけ起動する連携処理を追加しています。
+- PoENaviおよびぽえとれは、国立国会図書館の公認・提携製品ではありません。
+
+完全なCC BY 4.0本文とNDLOCR-Lite依存物のライセンス一覧は、配布物内の
+`THIRD_PARTY_LICENSES/NDLOCR-Lite-1.3.1/`に収録しています。
+
 ## Packaged open-source runtime components
 
 PoENavi's Windows distribution is created with PyInstaller and includes upstream runtime libraries. These upstream binaries are not developed or represented as PoENavi project binaries.

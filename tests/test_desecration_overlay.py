@@ -16,6 +16,7 @@ from src.poetore.poe2.desecration_overlay import (
     should_retry_closed_region,
     tier_badge_label,
 )
+from src.poetore.poe2.ndlocr_lite import NdlOcrResult
 
 
 class RecordingTrace:
@@ -349,6 +350,87 @@ def test_controller_uses_en_us_ocr_only_for_stable_short_missing_integer():
     numeric_ocr.recognize.assert_called_once()
     assert controller._pending is not None
     assert controller._pending[0].tiers_by_category["ring"] == (6, 7, 1)
+    controller.close()
+
+
+def test_controller_uses_ndl_only_for_stable_unresolved_numeric_gap():
+    QApplication.instance() or QApplication([])
+    image = QImage(
+        "tests/fixtures/poetore/poe2/desecration/"
+        "reported-spear-physical-read-failed.png"
+    )
+    region = {"left": 0, "top": 0, "right": .5, "bottom": .5}
+    ocr = Mock()
+    ocr.recognize.return_value = [
+        *("物 理 ダ メ ー ジ が % 増 加 す る",) * 4,
+        *("1 か ら 4 の 雷 ダ メ ー ジ を 追 加 す る",) * 4,
+        *("物 理 ダ メ ー ジ が 24 % 増 加 す る\n命 中 力 + 41",) * 4,
+    ]
+    ndl_ocr = Mock()
+    ndl_ocr.recognize.return_value = [
+        NdlOcrResult("物理ダメージが64%増加する", .874),
+    ]
+    controller = DesecrationTierController(
+        regions_getter=lambda: {"inventory_open_region": region},
+        ocr_server=ocr,
+        ndl_ocr_server=ndl_ocr,
+        scan_coordinator=Mock(try_begin=Mock(return_value=True)),
+    )
+    controller._grab = Mock(return_value=image)
+    controller._display = Mock()
+
+    with patch(
+        "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
+        return_value=QRect(0, 0, 1920, 1080),
+    ), patch(
+        "src.poetore.poe2.desecration_overlay.threading.Thread", ImmediateThread,
+    ):
+        assert controller.request_scan()
+
+    ndl_ocr.recognize.assert_called_once()
+    assert len(ndl_ocr.recognize.call_args.args[0]) == 1
+    controller._display.assert_called_once()
+    assert controller._display.call_args.args[3] == (7, 10, 7)
+    controller.close()
+
+
+def test_controller_does_not_run_ndl_when_windows_already_resolved_all_choices():
+    QApplication.instance() or QApplication([])
+    image = QImage(
+        "tests/fixtures/poetore/poe2/desecration/"
+        "reported-spear-companion-wrapped.png"
+    )
+    ocr = Mock()
+    ocr.recognize.return_value = [
+        *("6 か ら 9 の 物 理 ダ メ ー ジ を 追 加 す る",) * 4,
+        *("1 か ら 5 の 雷 ダ メ ー ジ を 追 加 す る",) * 4,
+        *(
+            (
+                "コ ン パ ニ オ ン の ダ メ ー ジ が 49 % 増 加 す る\n"
+                "コ ン パ ニ オ ン が プ レ イ ヤ ー の 存 在 下 に い る 時 に "
+                "ダ メ ー ジ が 51 % 増\n加 す る"
+            ),
+        ) * 4,
+    ]
+    ndl_ocr = Mock()
+    controller = DesecrationTierController(
+        regions_getter=lambda: {
+            "inventory_open_region": {"left": 0, "top": 0, "right": .5, "bottom": .5},
+        },
+        ocr_server=ocr,
+        ndl_ocr_server=ndl_ocr,
+        scan_coordinator=Mock(try_begin=Mock(return_value=True)),
+    )
+    controller._grab = Mock(return_value=image)
+    with patch(
+        "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
+        return_value=QRect(0, 0, 1920, 1080),
+    ), patch(
+        "src.poetore.poe2.desecration_overlay.threading.Thread", ImmediateThread,
+    ):
+        assert controller.request_scan()
+
+    ndl_ocr.recognize.assert_not_called()
     controller.close()
 
 

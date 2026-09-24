@@ -29,6 +29,7 @@ class ChoiceBand:
 class PreparedDesecrationFrame:
     bands: tuple[ChoiceBand, ...]
     variants: tuple[tuple[QImage, ...], ...]
+    ndl_images: tuple[QImage, ...]
     valid_panel: bool
 
 
@@ -175,9 +176,11 @@ def _green_mask(image: QImage) -> QImage:
 def prepare_desecration_frame(image: QImage) -> PreparedDesecrationFrame:
     bands = choice_bands(image)
     all_variants = []
+    ndl_images = []
     valid = len(bands) == 3
     for band in bands:
         card = image.copy(0, band.top, image.width(), max(1, band.bottom - band.top))
+        ndl_images.append(card)
         text_rect, pixels = _green_text_rect(card)
         if text_rect is None or pixels < 20:
             valid = False
@@ -191,7 +194,9 @@ def prepare_desecration_frame(image: QImage) -> PreparedDesecrationFrame:
             green_mask.scaled(crop.width() * 4, crop.height() * 4),
             green_mask.scaled(crop.width() * 6, crop.height() * 6),
         ))
-    return PreparedDesecrationFrame(bands, tuple(all_variants), valid)
+    return PreparedDesecrationFrame(
+        bands, tuple(all_variants), tuple(ndl_images), valid,
+    )
 
 
 def _unmatched_status(outputs: tuple[str, ...]) -> str:
@@ -273,6 +278,91 @@ def rescue_short_numeric_variants(
             continue
         repaired.append(tuple(f"{text}{integers[0]}" for text in outputs))
     return tuple(repaired)
+
+
+_KATAKANA_DASH_RE = re.compile(r"(?<=[ァ-ヶ])[-‐‑–—](?=[ァ-ヶ])")
+
+
+def _compact_ocr_text(text: str) -> str:
+    return _KATAKANA_DASH_RE.sub("ー", re.sub(r"\s+", "", str(text or "")))
+
+
+def _stable_missing_number_body(outputs: tuple[str, ...]) -> str | None:
+    if len(outputs) != 4:
+        return None
+    compact = tuple(_compact_ocr_text(text) for text in outputs)
+    if not compact[0] or len(set(compact)) != 1:
+        return None
+    if not re.search(r"[ぁ-んァ-ヶ一-龯]", compact[0]):
+        return None
+    return compact[0]
+
+
+def ndl_numeric_candidate_indexes(
+    variant_texts: tuple[tuple[str, ...], ...],
+    resolution: OcrRevealResolution,
+) -> tuple[int, ...]:
+    """Return unresolved stable Windows rows eligible for an NDL pass."""
+    candidates = []
+    for index, outputs in enumerate(variant_texts):
+        already_resolved = (
+            index < len(resolution.fallback_tiers)
+            and resolution.fallback_tiers[index] is not None
+        ) or any(
+            index < len(tiers) and tiers[index] is not None
+            for tiers in resolution.tiers_by_category.values()
+        )
+        if not already_resolved and _stable_missing_number_body(outputs) is not None:
+            candidates.append(index)
+    return tuple(candidates)
+
+
+def _single_inserted_number(windows_body: str, ndl_text: str) -> str | None:
+    ndl_body = _compact_ocr_text(ndl_text)
+    matches = []
+    for token in re.finditer(r"\d+(?:\.\d+)?", ndl_body):
+        if ndl_body[:token.start()] + ndl_body[token.end():] == windows_body:
+            matches.append(token.group())
+    return matches[0] if len(matches) == 1 else None
+
+
+def apply_ndl_numeric_rescues(
+    variant_texts: tuple[tuple[str, ...], ...],
+    ndl_texts: dict[int, str],
+    categories: tuple[str, ...] | None = None,
+) -> tuple[tuple[tuple[str, ...], ...], OcrRevealResolution, tuple[int, ...]]:
+    """Accept only one-number NDL insertions that preserve Windows successes."""
+    category_pool = categories or available_categories()
+    baseline = resolve_ocr_variants(variant_texts, category_pool)
+    repaired = list(variant_texts)
+    accepted: list[int] = []
+    for index in ndl_numeric_candidate_indexes(variant_texts, baseline):
+        ndl_text = str(ndl_texts.get(index) or "").strip()
+        body = _stable_missing_number_body(variant_texts[index])
+        if body is None or not ndl_text or _single_inserted_number(body, ndl_text) is None:
+            continue
+        proposal = list(repaired)
+        proposal[index] = (ndl_text,) * len(variant_texts[index])
+        proposed_resolution = resolve_ocr_variants(tuple(proposal), category_pool)
+        if (
+            index >= len(proposed_resolution.fallback_tiers)
+            or proposed_resolution.fallback_tiers[index] is None
+        ):
+            continue
+        preserves_windows = all(
+            tier is None
+            or (
+                offset < len(proposed_resolution.fallback_tiers)
+                and proposed_resolution.fallback_tiers[offset] == tier
+            )
+            for offset, tier in enumerate(baseline.fallback_tiers)
+        )
+        if not preserves_windows:
+            continue
+        repaired = proposal
+        accepted.append(index)
+    final = resolve_ocr_variants(tuple(repaired), category_pool)
+    return tuple(repaired), final, tuple(accepted)
 
 
 def _tier_value(result: FuzzyTierResolution) -> TierValue:

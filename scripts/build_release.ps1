@@ -23,8 +23,44 @@ if ($Python -eq ".venv-build\Scripts\python.exe" -and -not (Test-Path $Python)) 
 }
 
 Invoke-Python -m pip install -r requirements-build.txt
+Invoke-Python -m pip install -r requirements-ndlocr.txt
 
 Remove-Item -Recurse -Force build, dist -ErrorAction SilentlyContinue
+
+$ndlVersion = "1.3.1"
+$ndlArchive = "build\ndlocr-lite-$ndlVersion-source.zip"
+$ndlExtractRoot = "build\ndlocr-source"
+$ndlSource = Join-Path $ndlExtractRoot "ndlocr-lite-$ndlVersion"
+$ndlSourceUrl = "https://github.com/ndl-lab/ndlocr-lite/archive/refs/tags/$ndlVersion.zip"
+$ndlSourceSha256 = "e510d3a7b878395ea9de0bdd365711b699e5fd430b5c7e23a40e918e913fd1f2"
+New-Item -ItemType Directory -Path build -Force | Out-Null
+Invoke-WebRequest -Uri $ndlSourceUrl -OutFile $ndlArchive
+$downloadedNdlHash = (Get-FileHash $ndlArchive -Algorithm SHA256).Hash.ToLower()
+if ($downloadedNdlHash -ne $ndlSourceSha256) {
+    throw "NDLOCR-Lite source archive hash mismatch: $downloadedNdlHash"
+}
+Expand-Archive -Path $ndlArchive -DestinationPath $ndlExtractRoot -Force
+if (-not (Test-Path "$ndlSource\src\ocr.py")) {
+    throw "NDLOCR-Lite source was not extracted"
+}
+
+$ndlArgs = @(
+    "-m", "PyInstaller",
+    "--noconfirm", "--clean", "--noupx", "--onedir", "--console",
+    "--name", "PoENaviNdlOcr",
+    "--distpath", "build\ndlocr-dist",
+    "--workpath", "build\ndlocr-app",
+    "--paths", "$ndlSource\src",
+    "--add-data", "$ndlSource\src\model;model",
+    "--add-data", "$ndlSource\src\config;config",
+    "--add-data", "$ndlSource\LICENCE;.",
+    "--add-data", "$ndlSource\LICENCE_DEPENDENCEIES;.",
+    "$ndlSource\src\ocr.py"
+)
+Invoke-Python @ndlArgs
+if (-not (Test-Path build\ndlocr-dist\PoENaviNdlOcr\PoENaviNdlOcr.exe)) {
+    throw "Self-contained NDLOCR-Lite helper was not built"
+}
 
 dotnet publish tools\ExpeditionWindowsOcr\ExpeditionWindowsOcr.csproj `
     --configuration Release `
@@ -58,6 +94,11 @@ Invoke-Python scripts\generate_windows_version_info.py `
     --output "build\version\PoENaviUpdater-version.txt"
 Invoke-Python scripts\collect_third_party_licenses.py `
     --output "build\third-party-licenses"
+$ndlLicenseDir = "build\third-party-licenses\NDLOCR-Lite-$ndlVersion"
+New-Item -ItemType Directory -Path $ndlLicenseDir -Force | Out-Null
+Copy-Item "$ndlSource\LICENCE" "$ndlLicenseDir\LICENCE.txt"
+Copy-Item "$ndlSource\LICENCE_DEPENDENCEIES" "$ndlLicenseDir\LICENCE_DEPENDENCIES.txt"
+Add-Content -Path "build\third-party-licenses\README.md" -Value "- NDLOCR-Lite $ndlVersion: ``NDLOCR-Lite-$ndlVersion/LICENCE.txt``, ``NDLOCR-Lite-$ndlVersion/LICENCE_DEPENDENCIES.txt``"
 
 $appArgs = @(
     "-m", "PyInstaller",
@@ -77,6 +118,7 @@ $appArgs = @(
     "--add-data", "THIRD_PARTY_NOTICES.md;.",
     "--add-data", "build\third-party-licenses;THIRD_PARTY_LICENSES",
     "--add-data", "build\expedition-windows-ocr;tools\ExpeditionWindowsOcr",
+    "--add-data", "build\ndlocr-dist\PoENaviNdlOcr;tools\NDLOcrLite",
     "--add-data", "data;data",
     "--add-data", "assets;assets",
     "--add-data", "maps;maps",
@@ -155,7 +197,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $zipName))
 try {
     $entryNames = @($archive.Entries | ForEach-Object { $_.FullName.Replace("\", "/") })
-    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES/README.md", "THIRD_PARTY_LICENSES/Python-LICENSE.txt", "ExpeditionWindowsOcr.exe", "expedition_region_example.png", "desecration_region_example.png", "expedition_ocr_items.json", "desecration_tiers.json", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json", "map_mods.json")) {
+    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES/README.md", "THIRD_PARTY_LICENSES/Python-LICENSE.txt", "THIRD_PARTY_LICENSES/NDLOCR-Lite-1.3.1/LICENCE.txt", "THIRD_PARTY_LICENSES/NDLOCR-Lite-1.3.1/LICENCE_DEPENDENCIES.txt", "ExpeditionWindowsOcr.exe", "PoENaviNdlOcr.exe", "deim-s-1024x1024.onnx", "parseq-ndl-24x256-30-tiny-189epoch-tegaki3-r8data-202604.onnx", "expedition_region_example.png", "desecration_region_example.png", "expedition_ocr_items.json", "desecration_tiers.json", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json", "map_mods.json")) {
         if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {
             throw "Release audit failed: missing $requiredName"
         }

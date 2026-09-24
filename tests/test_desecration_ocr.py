@@ -7,7 +7,9 @@ from PySide6.QtGui import QColor, QImage
 from src.poetore.poe2.desecration_ocr import (
     _green_mask,
     _green_text_rect,
+    apply_ndl_numeric_rescues,
     choice_bands,
+    ndl_numeric_candidate_indexes,
     needs_short_numeric_rescue,
     prepare_desecration_frame,
     rescue_short_numeric_variants,
@@ -47,6 +49,43 @@ def test_numeric_rescue_rejects_long_rows_false_positives_and_disagreement():
     assert not needs_short_numeric_rescue(long_row)
     assert rescue_short_numeric_variants(long_row, false_numeric) == long_row
     assert rescue_short_numeric_variants(short_row, disagreement) == short_row
+
+
+def test_ndl_rescue_only_fills_one_missing_number_and_preserves_windows_rows():
+    windows = (
+        ("物 理 ダ メ ー ジ が % 増 加 す る",) * 4,
+        ("1 か ら 4 の 雷 ダ メ ー ジ を 追 加 す る",) * 4,
+        ("物 理 ダ メ ー ジ が 24 % 増 加 す る\n命 中 力 + 41",) * 4,
+    )
+    baseline = resolve_ocr_variants(windows, ("spear",))
+
+    assert ndl_numeric_candidate_indexes(windows, baseline) == (0,)
+    repaired, resolution, accepted = apply_ndl_numeric_rescues(
+        windows, {0: "物理ダメージが64%増加する"}, ("spear",),
+    )
+
+    assert accepted == (0,)
+    assert repaired[1:] == windows[1:]
+    assert resolution.tiers_by_category["spear"] == (7, 10, 7)
+
+
+def test_ndl_rescue_rejects_skeleton_changes_and_never_overwrites_windows_success():
+    successful = (("ダメージが51%増加する",) * 4,)
+    baseline = resolve_ocr_variants(successful, ("spear",))
+    assert ndl_numeric_candidate_indexes(successful, baseline) == ()
+    unchanged, resolution, accepted = apply_ndl_numeric_rescues(
+        successful, {0: "ダメージが5196増加する"}, ("spear",),
+    )
+    assert unchanged == successful
+    assert accepted == ()
+    assert resolution.tiers == baseline.tiers
+
+    missing = (("物 理 ダ メ ー ジ が % 増 加 す る",) * 4,)
+    unchanged, _resolution, accepted = apply_ndl_numeric_rescues(
+        missing, {0: "物理ダメージが5196増加する"}, ("spear",),
+    )
+    assert unchanged == missing
+    assert accepted == ()
 
 
 def _legacy_green_text_rect(image, padding=8):

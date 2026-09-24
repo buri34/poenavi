@@ -47,7 +47,12 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert '"--add-data", "data;data"' in script
     assert "dotnet publish tools\\ExpeditionWindowsOcr\\ExpeditionWindowsOcr.csproj" in script
     assert '"--add-data", "build\\expedition-windows-ocr;tools\\ExpeditionWindowsOcr"' in script
+    assert '"--add-data", "build\\ndlocr-dist\\PoENaviNdlOcr;tools\\NDLOcrLite"' in script
     assert "ExpeditionWindowsOcr.exe" in script
+    assert "PoENaviNdlOcr.exe" in script
+    assert "requirements-ndlocr.txt" in script
+    assert "e510d3a7b878395ea9de0bdd365711b699e5fd430b5c7e23a40e918e913fd1f2" in script
+    assert "NDLOCR-Lite-1.3.1/LICENCE.txt" in script
     assert "expedition_region_example.png" in script
     assert "desecration_region_example.png" in script
     assert "expedition_ocr_items.json" in script
@@ -106,10 +111,15 @@ def test_readme_notices_and_app_wording_cover_required_attribution():
     assert "Awakened PoE Trade" in notices and "MIT License" in notices
     assert "RePoE" in notices and "全データはアプリへ同梱しません" in notices
     assert "Noto Sans JP" in notices and "SIL Open Font License 1.1" in notices
+    assert "NDLOCR-Lite 1.3.1" in notices
+    assert "国立国会図書館" in notices and "CC BY 4.0" in notices
+    assert "公認・提携製品ではありません" in notices
     assert (ROOT / "assets" / "fonts" / "NotoSansJP-OFL.txt").is_file()
     assert "無料の非公式ツール" not in poetore_ui
     assert "ぽえなびは無料の非公式ツール" in app_info_ui
     assert "提携・承認関係はありません" in app_info_ui
+    assert "NDLOCR-Lite 1.3.1" in app_info_ui
+    assert "CC BY 4.0" in app_info_ui
     assert "ぽえとれについて" not in app_info_ui
 
 

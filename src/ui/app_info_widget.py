@@ -90,6 +90,17 @@ class AppInfoWidget(QWidget):
             f"color: {theme.muted_text}; font-size: 12px;"
         )
         layout.addWidget(self.disclaimer_label)
+
+        self.ndlocr_license_label = QLabel(
+            "補助OCR: NDLOCR-Lite 1.3.1 © 国立国会図書館 / CC BY 4.0\n"
+            "国立国会図書館の公認・提携製品ではありません。"
+        )
+        self.ndlocr_license_label.setObjectName("ndlocrLicenseLabel")
+        self.ndlocr_license_label.setWordWrap(True)
+        self.ndlocr_license_label.setStyleSheet(
+            f"color: {theme.muted_text}; font-size: 11px;"
+        )
+        layout.addWidget(self.ndlocr_license_label)
         layout.addStretch()
 
     @staticmethod
