@@ -4201,6 +4201,10 @@ class PoetoreWindow(QWidget):
         self._reset_unique_candidates()
         self.mod_filter_tree.clear()
         self._clear_displayed_trade_result()
+        # A fresh capture is a fresh search cycle even when the copied text is
+        # byte-for-byte identical to the previously searched rare item.
+        self._has_searched_current_item = False
+        self._search_dirty = False
         self.input_edit.setPlainText(copied_text)
         self.parse_current_text()
         if trace is not None:

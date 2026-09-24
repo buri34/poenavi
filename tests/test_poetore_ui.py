@@ -1435,6 +1435,32 @@ def test_hovering_search_button_runs_deferred_poe2_rare_equipment_search(qapp):
         window.close()
 
 
+def test_recapturing_same_poe2_rare_allows_hover_search_again(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    item = ParsedItem(
+        "Helmets", "rare", "Test Helmet", "Great Helmet", "helmet",
+        raw_text="same-poe2-rare-helmet",
+    )
+    try:
+        with patch(
+            "src.poetore.ui.read_item_clipboard",
+            return_value="same-poe2-rare-helmet",
+        ), patch.object(
+            window, "_parse_item_text", return_value=item,
+        ), patch.object(window, "show_at_context"):
+            window._capture_item_copy()
+            window._has_searched_current_item = True
+            window._capture_item_copy()
+
+        assert not window._has_searched_current_item
+        assert not window._search_dirty
+        with patch.object(window, "search_current_item") as search:
+            QApplication.sendEvent(window.price_button, QEvent(QEvent.Enter))
+        search.assert_called_once_with()
+    finally:
+        window.close()
+
+
 def test_hovering_search_button_does_not_start_unrelated_clean_initial_item(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:
