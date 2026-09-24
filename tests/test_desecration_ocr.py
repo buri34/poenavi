@@ -199,6 +199,23 @@ def test_user_reported_read_failures_resolve_when_ocr_text_is_correct():
     assert ring.tiers == (6, 7, 1)
 
 
+def test_colour_pair_wins_when_masks_only_erase_a_decimal_point():
+    result = resolve_ocr_variants((
+        (
+            "毎 秒 3.2 の ラ イ フ を 自 動 回 復 す る",
+            "毎 秒 3.2 の ラ イ フ を 自 動 回 復 す る",
+            "毎 秒 32 の ラ イ フ を 自 動 回 復 す る",
+            "毎 秒 32 の ラ イ フ を 自 動 回 復 す る",
+        ),
+        ("敵 を 倒 し た 時 に ラ イ フ の 3 % を 回 復 す る",) * 4,
+        ("受 け た ダ メ ー ジ の 21 % を マ ナ と し て 回 収 す る",) * 4,
+    ))
+
+    assert "amulet" in result.categories
+    assert result.tiers_by_category["amulet"] == (8, 1, 2)
+    assert result.statuses_by_category["amulet"] == ("matched",) * 3
+
+
 def test_ocr_variants_reject_conflicting_tiers_even_when_one_text_scores_better():
     """Different valid numbers from the same crop must never be score-tiebroken."""
     result = resolve_ocr_variants((

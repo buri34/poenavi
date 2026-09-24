@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -106,11 +107,14 @@ def _write_html(report: dict, output_dir: Path) -> None:
     for case in report["cases"]:
         choice_rows = []
         for choice in case["choices"]:
+            numeric_raw = choice.get("numeric_raw_texts", [])
             variants = "".join(
                 "<li><strong>候補{}</strong><pre>{}</pre>"
+                "<p>数値OCR: <code>{}</code></p>"
                 "<img src=\"{}\" alt=\"OCR候補画像\"></li>".format(
                     index + 1,
                     html.escape(text or "（空）"),
+                    html.escape(numeric_raw[index] or "（空）") if numeric_raw else "未実行",
                     html.escape(choice["prepared_images"][index]),
                 )
                 for index, text in enumerate(choice["raw_texts"])
@@ -159,6 +163,7 @@ def run_probe(
     output_dir: Path,
     *,
     ocr_server: OcrServer | None = None,
+    numeric_ocr_server: OcrServer | None = None,
     prepare_only: bool = False,
 ) -> dict:
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -172,6 +177,8 @@ def run_probe(
         server = WindowsOcrServer()
     if server is not None and not prepare_only:
         server.start()
+    if numeric_ocr_server is not None and not prepare_only:
+        numeric_ocr_server.start()
     results = []
     try:
         for case in cases:
@@ -180,6 +187,7 @@ def run_probe(
             shutil.copy2(case.image, copied_source)
             frame = prepare_desecration_frame(QImage(str(case.image)))
             raw_grouped: tuple[tuple[str, ...], ...] = ()
+            numeric_grouped: tuple[tuple[str, ...], ...] = ()
             prepared_paths: list[tuple[str, ...]] = []
             if frame.valid_panel:
                 flat_images = []
@@ -200,6 +208,12 @@ def run_probe(
                         tuple(raw[index * width:(index + 1) * width])
                         for index in range(3)
                     )
+                    if numeric_ocr_server is not None:
+                        numeric_raw = numeric_ocr_server.recognize(flat_images)
+                        numeric_grouped = tuple(
+                            tuple(numeric_raw[index * width:(index + 1) * width])
+                            for index in range(3)
+                        )
             resolution = None
             if raw_grouped:
                 resolution = resolve_ocr_variants(raw_grouped, selectable_categories())
@@ -215,6 +229,14 @@ def run_probe(
                 choices.append({
                     "index": index + 1,
                     "raw_texts": list(raw_grouped[index]) if raw_grouped else [],
+                    "numeric_raw_texts": (
+                        list(numeric_grouped[index]) if numeric_grouped else []
+                    ),
+                    "numeric_tokens": sorted({
+                        token
+                        for text in (numeric_grouped[index] if numeric_grouped else ())
+                        for token in re.findall(r"\d+(?:[.,]\d+)?", text)
+                    }),
                     "selected_text": texts[index],
                     "tier": _json_tier(tiers[index]),
                     "status": statuses[index],
@@ -241,10 +263,15 @@ def run_probe(
     finally:
         if server is not None:
             server.close()
+        if numeric_ocr_server is not None:
+            numeric_ocr_server.close()
     expected_results = [row for row in results if row["passed"] is not None]
     report = {
         "schema_version": 1,
         "engine": "Windows.Media.Ocr" if not prepare_only else "prepare-only",
+        "numeric_engine": (
+            "Windows.Media.Ocr/en-US" if numeric_ocr_server is not None else None
+        ),
         "case_count": len(results),
         "expected_cases": len(expected_results),
         "passed_cases": sum(row["passed"] is True for row in expected_results),

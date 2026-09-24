@@ -207,6 +207,21 @@ def _unmatched_status(outputs: tuple[str, ...]) -> str:
     return "read_failed"
 
 
+def _prefer_color_decimal_variants(outputs: tuple[str, ...]) -> tuple[str, ...]:
+    """Prefer agreeing colour OCR when masks only erase a decimal point."""
+    if len(outputs) != 4:
+        return outputs
+    compact = tuple(re.sub(r"\s+", "", text) for text in outputs)
+    colour, colour_large, mask, mask_large = compact
+    if colour != colour_large or mask != mask_large or "." not in colour:
+        return outputs
+    if colour.replace(".", "") != mask:
+        return outputs
+    if not re.search(r"\d+\.\d+", colour):
+        return outputs
+    return outputs[:2]
+
+
 def _tier_value(result: FuzzyTierResolution) -> TierValue:
     if result.tier is not None:
         return result.tier
@@ -247,9 +262,10 @@ def resolve_ocr_variants(
         statuses = []
         identities_by_choice = []
         for outputs in variant_texts:
+            candidate_outputs = _prefer_color_decimal_variants(outputs)
             attempts: list[tuple[str, FuzzyTierResolution]] = [
                 (text, resolutions_by_text[text.strip()][category])
-                for text in outputs if text.strip()
+                for text in candidate_outputs if text.strip()
             ]
             matched = [
                 (text, result) for text, result in attempts

@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -29,23 +30,43 @@ class ExpectedTextOcr:
         self.closed = True
 
 
+class ExpectedNumericOcr(ExpectedTextOcr):
+    def __init__(self, cases):
+        self._responses = [
+            [
+                " ".join(re.findall(r"\d+(?:\.\d+)?", text))
+                for text in case.expected_texts for _variant in range(4)
+            ]
+            for case in cases
+        ]
+        self.started = False
+        self.closed = False
+
+
 def test_reported_images_run_through_full_post_ocr_pipeline(tmp_path):
     cases = load_probe_cases(FIXTURE_DIR, FIXTURE_DIR / "reported-cases.json")
     ocr = ExpectedTextOcr(cases)
+    numeric_ocr = ExpectedNumericOcr(cases)
 
-    report = run_probe(cases, tmp_path, ocr_server=ocr)
+    report = run_probe(
+        cases, tmp_path,
+        ocr_server=ocr,
+        numeric_ocr_server=numeric_ocr,
+    )
 
     assert len(cases) == 7
     assert report["case_count"] == 7
     assert report["passed_cases"] == 7
     assert report["all_expected_passed"] is True
     assert ocr.closed is True
+    assert numeric_ocr.closed is True
     assert (tmp_path / "report.html").is_file()
     html = (tmp_path / "report.html").read_text(encoding="utf-8")
     assert "アビス冒涜 Windows OCR検証" in html
     assert html.count("OCR候補画像") == 84
     saved = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
     assert saved["cases"][0]["choices"][0]["tier"] == 8
+    assert saved["cases"][0]["choices"][0]["numeric_tokens"] == ["3.2"]
     assert saved["cases"][5]["choices"][1]["tier"] == [3, 4]
     assert all(len(choice["prepared_images"]) == 4 for case in saved["cases"] for choice in case["choices"])
 
@@ -94,4 +115,5 @@ def test_windows_launcher_uses_local_build_output_and_opens_the_report():
     assert "if ($trustedPrebuilt)" in script
     assert "Copy-Item -LiteralPath $projectSource" in script
     assert "POENAVI_WINDOWS_OCR_HELPER" in script
+    assert 'if ($numericOcrAvailable) { $arguments += @("--numeric-language", "en-US") }' in script
     assert "Start-Process $report" in script

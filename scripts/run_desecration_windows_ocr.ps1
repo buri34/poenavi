@@ -66,12 +66,20 @@ if ($helperPath.EndsWith(".exe")) {
 } else {
     dotnet $helperPath --check ja-JP
 }
-if ($LASTEXITCODE -ne 0) {
+$japaneseOcrExitCode = $LASTEXITCODE
+if ($japaneseOcrExitCode -ne 0) {
     throw "Windows Japanese OCR is not installed. Add Japanese OCR in Windows Language settings."
 }
+if ($helperPath.EndsWith(".exe")) {
+    & $helperPath --check en-US
+} else {
+    dotnet $helperPath --check en-US
+}
+$numericOcrAvailable = $LASTEXITCODE -eq 0
 
 $arguments = @($probe, "--input-dir", $InputDirectory, "--output", $Output)
 if ($Manifest) { $arguments += @("--manifest", $Manifest) }
+if ($numericOcrAvailable) { $arguments += @("--numeric-language", "en-US") }
 python @arguments
 $probeExitCode = $LASTEXITCODE
 $report = Join-Path $Output "report.html"
