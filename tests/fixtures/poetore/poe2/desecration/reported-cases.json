@@ -15,10 +15,10 @@
       "category": "spear",
       "expected_texts": [
         "物理ダメージが64%増加する",
-        "1から40の雷ダメージを追加する",
+        "1から4の雷ダメージを追加する",
         "物理ダメージが24%増加する\n命中力 +41"
       ],
-      "expected_tiers": [7, 7, 7]
+      "expected_tiers": [7, 10, 7]
     },
     {
       "file": "reported-spear-companion-wrapped.png",

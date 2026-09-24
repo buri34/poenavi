@@ -1,3 +1,5 @@
 data/zone_data.json text eol=lf
 RUN_DESECRATION_OCR_TEST.cmd text eol=crlf
+RUN_DESECRATION_OCR_FUSION_TEST.cmd text eol=crlf
 scripts/run_desecration_windows_ocr.ps1 text eol=crlf
+scripts/run_desecration_ocr_fusion_test.ps1 text eol=crlf

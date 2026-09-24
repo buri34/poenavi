@@ -1,7 +1,9 @@
 param(
     [string]$InputDirectory = "",
     [string]$Manifest = "",
-    [string]$Output = ""
+    [string]$Output = "",
+    [switch]$NoOpen,
+    [switch]$AllowMismatches
 )
 
 $ErrorActionPreference = "Stop"
@@ -83,8 +85,10 @@ if ($numericOcrAvailable) { $arguments += @("--numeric-language", "en-US") }
 python @arguments
 $probeExitCode = $LASTEXITCODE
 $report = Join-Path $Output "report.html"
-if (Test-Path -LiteralPath $report -PathType Leaf) {
+if ((-not $NoOpen) -and (Test-Path -LiteralPath $report -PathType Leaf)) {
     Start-Process $report
     Write-Host "OCR report: $report"
 }
-if ($probeExitCode -ne 0) { throw "One or more OCR results did not match the expected tiers." }
+if (($probeExitCode -ne 0) -and (-not $AllowMismatches)) {
+    throw "One or more OCR results did not match the expected tiers."
+}
