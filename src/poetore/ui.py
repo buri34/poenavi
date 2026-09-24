@@ -3341,7 +3341,7 @@ class PoetoreWindow(QWidget):
         if self._save_app_config is not None:
             self._save_app_config(self._app_config)
 
-    def _configure_virtual_augments(self, item):
+    def _configure_virtual_augments(self, item, *, preserve_selection: bool = False):
         if self.poe_version != POE2:
             self.virtual_augment_label.hide()
             self.virtual_augment_count_combo.hide()
@@ -3351,13 +3351,18 @@ class PoetoreWindow(QWidget):
             available_virtual_augments, augment_socket_edit_counts,
             virtual_augment_choice_label,
         )
+        selected_ref = self.virtual_augment_combo.currentData() if preserve_selection else None
+        selected_count = (
+            self.virtual_augment_count_combo.currentData() if preserve_selection else None
+        )
         choices = available_virtual_augments(item)
         counts = augment_socket_edit_counts(item)
         self.virtual_augment_count_combo.blockSignals(True)
         self.virtual_augment_count_combo.clear()
         for count, label in counts:
             self.virtual_augment_count_combo.addItem(label, count)
-        self.virtual_augment_count_combo.setCurrentIndex(0)
+        count_index = self.virtual_augment_count_combo.findData(selected_count)
+        self.virtual_augment_count_combo.setCurrentIndex(max(count_index, 0))
         self.virtual_augment_count_combo.blockSignals(False)
         selected_count = self.virtual_augment_count_combo.currentData()
         self.virtual_augment_combo.blockSignals(True)
@@ -3373,7 +3378,8 @@ class PoetoreWindow(QWidget):
             )
         popup_width = self.virtual_augment_combo.view().sizeHintForColumn(0) + 36
         self.virtual_augment_combo.view().setMinimumWidth(min(760, max(220, popup_width)))
-        self.virtual_augment_combo.setCurrentIndex(0)
+        augment_index = self.virtual_augment_combo.findData(selected_ref)
+        self.virtual_augment_combo.setCurrentIndex(max(augment_index, 0))
         self.virtual_augment_combo.blockSignals(False)
         visible = bool(choices)
         self.virtual_augment_label.setVisible(visible)
@@ -4365,7 +4371,7 @@ class PoetoreWindow(QWidget):
             and popup.window().frameGeometry().contains(point)
         )
 
-    def parse_current_text(self):
+    def parse_current_text(self, *, preserve_virtual_augment_selection: bool = False):
         trace = self._current_performance_trace or self._pending_performance_trace
         if trace is not None:
             trace.mark("ui_parse_started")
@@ -4397,7 +4403,10 @@ class PoetoreWindow(QWidget):
         self._configure_links(item)
         self._configure_influence_chips(item)
         self._configure_special_filter_chips(item)
-        self._configure_virtual_augments(item)
+        self._configure_virtual_augments(
+            item,
+            preserve_selection=preserve_virtual_augment_selection,
+        )
         self._update_item_header(item)
         self.result_tree.clear()
         for label, value in (
@@ -4507,7 +4516,7 @@ class PoetoreWindow(QWidget):
         # 前回のUniqueで隠し候補を開いたまま次を検索すると、通常候補が
         # 空に見えて誤解を招く。チェック状態は検索へ残し、表示だけ戻す。
         self.hidden_mods_toggle.setChecked(False)
-        self.parse_current_text()
+        self.parse_current_text(preserve_virtual_augment_selection=True)
         item = getattr(self, "_parsed_item", None)
         if item is None:
             trace.mark("search_parse_failed")

@@ -7326,6 +7326,55 @@ def test_poe2_phase45_properties_and_states_join_editable_trade_rows(qapp):
         window.close()
 
 
+def test_poe2_search_reparse_preserves_virtual_augment_selection(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        fixture = Path(__file__).parent / "fixtures" / "poe2" / "phase45_sceptre_ja.txt"
+        window.input_edit.setPlainText(fixture.read_text(encoding="utf-8"))
+        window.parse_current_text()
+
+        window.virtual_augment_count_combo.setCurrentIndex(1)
+        augment_index = window.virtual_augment_combo.findData("Adept Rune")
+        assert augment_index >= 0
+        window.virtual_augment_combo.setCurrentIndex(augment_index)
+
+        result = PriceResult("Standard", "qid", 0, ())
+        with (
+            patch("src.poetore.poe2.trade.search_prices", return_value=result) as search,
+            patch.object(window, "_queue_augment_values") as queue_augment_values,
+        ):
+            window.search_current_item()
+            for _ in range(50):
+                qapp.processEvents()
+                if search.called and queue_augment_values.called:
+                    break
+                QTest.qWait(10)
+
+        assert search.called
+        assert window.virtual_augment_count_combo.currentData() == 2
+        assert window.virtual_augment_combo.currentData() == "Adept Rune"
+        assert queue_augment_values.called
+    finally:
+        window.close()
+
+
+def test_poe2_fresh_parse_resets_virtual_augment_selection(qapp):
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        fixture = Path(__file__).parent / "fixtures" / "poe2" / "phase45_sceptre_ja.txt"
+        window.input_edit.setPlainText(fixture.read_text(encoding="utf-8"))
+        window.parse_current_text()
+        augment_index = window.virtual_augment_combo.findData("Adept Rune")
+        assert augment_index >= 0
+        window.virtual_augment_combo.setCurrentIndex(augment_index)
+
+        window.parse_current_text()
+
+        assert window.virtual_augment_combo.currentData() is None
+    finally:
+        window.close()
+
+
 def test_poe2_two_identical_runes_show_only_replace_all_mode(qapp):
     window = PoetoreWindow(app_config={"poe_version": "poe2"})
     try:
