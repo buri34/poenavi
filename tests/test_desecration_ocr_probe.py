@@ -89,6 +89,9 @@ def test_windows_launcher_uses_local_build_output_and_opens_the_report():
 
     assert "run_desecration_windows_ocr.ps1" in launcher
     assert "$env:LOCALAPPDATA" in script
+    assert "poenavi-short-ocr-diagnostic\\helper\\ExpeditionWindowsOcr.exe" in script
+    assert "Get-FileHash -LiteralPath $prebuiltHelper -Algorithm SHA256" in script
+    assert "if ($trustedPrebuilt)" in script
     assert "Copy-Item -LiteralPath $projectSource" in script
     assert "POENAVI_WINDOWS_OCR_HELPER" in script
     assert "Start-Process $report" in script
