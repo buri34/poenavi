@@ -51,6 +51,8 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert "ExpeditionWindowsOcr.exe" in script
     assert "PoENaviNdlOcr.exe" in script
     assert "requirements-ndlocr.txt" in script
+    assert "verify_ndlocr_helper.py" in script
+    assert "reported-spear-physical-read-failed.png" in script
     assert "e510d3a7b878395ea9de0bdd365711b699e5fd430b5c7e23a40e918e913fd1f2" in script
     assert "NDLOCR-Lite-1.3.1/LICENCE.txt" in script
     assert "expedition_region_example.png" in script

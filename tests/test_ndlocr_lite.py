@@ -39,7 +39,7 @@ def test_server_runs_bundled_helper_in_temporary_directory(tmp_path):
     with patch(
         "src.poetore.poe2.ndlocr_lite._helper_path", return_value=helper,
     ), patch("src.poetore.poe2.ndlocr_lite.subprocess.run", side_effect=fake_run):
-        results = NdlOcrLiteServer().recognize([b"first", b"second"])
+        results = NdlOcrLiteServer(helper=helper).recognize([b"first", b"second"])
 
     assert [result.text for result in results] == [
         "物理ダメージが64%増加する",

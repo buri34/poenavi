@@ -59,13 +59,16 @@ def _payload_result(payload: dict) -> NdlOcrResult:
 class NdlOcrLiteServer:
     """Run the bundled CPU-only helper once for the requested image batch."""
 
-    def __init__(self, *, timeout: float = 90.0):
+    def __init__(self, *, helper: Path | None = None, timeout: float = 90.0):
+        self.helper = helper
         self.timeout = timeout
 
     def recognize(self, images: Sequence[bytes]) -> list[NdlOcrResult]:
         if not images:
             return []
-        helper = _helper_path()
+        helper = self.helper or _helper_path()
+        if not helper.is_file():
+            raise RuntimeError(f"NDLOCRヘルパーが見つかりません: {helper}")
         creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         with tempfile.TemporaryDirectory(prefix="poenavi-ndlocr-") as temporary:
             root = Path(temporary)

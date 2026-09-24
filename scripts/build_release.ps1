@@ -61,6 +61,9 @@ Invoke-Python @ndlArgs
 if (-not (Test-Path build\ndlocr-dist\PoENaviNdlOcr\PoENaviNdlOcr.exe)) {
     throw "Self-contained NDLOCR-Lite helper was not built"
 }
+Invoke-Python scripts\verify_ndlocr_helper.py `
+    --helper "build\ndlocr-dist\PoENaviNdlOcr\PoENaviNdlOcr.exe" `
+    --image "tests\fixtures\poetore\poe2\desecration\reported-spear-physical-read-failed.png"
 
 dotnet publish tools\ExpeditionWindowsOcr\ExpeditionWindowsOcr.csproj `
     --configuration Release `
