@@ -9,6 +9,7 @@ $testFiles = @(
     "tests/test_build_poetore_poe2_desecration_tiers.py",
     "tests/test_build_expedition_ocr_items.py",
     "tests/test_desecration_ocr.py",
+    "tests/test_desecration_ocr_probe.py",
     "tests/test_desecration_overlay.py",
     "tests/test_desecration_settings_dialog.py",
     "tests/test_expedition_ocr_probe.py",
