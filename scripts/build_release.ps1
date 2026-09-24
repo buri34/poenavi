@@ -16,7 +16,7 @@ function Invoke-Python {
 }
 
 if ($Python -eq ".venv-build\Scripts\python.exe" -and -not (Test-Path $Python)) {
-    py -3 -m venv .venv-build
+    py -3.12 -m venv .venv-build
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create .venv-build"
     }

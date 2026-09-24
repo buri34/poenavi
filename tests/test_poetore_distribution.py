@@ -146,6 +146,19 @@ def test_windows_build_verifies_executable_product_and_version_metadata():
     assert "PoENavi.exe" in workflow and "PoENaviUpdater.exe" in workflow
 
 
+def test_ndlocr_windows_handoff_builds_locally_and_returns_audited_artifacts():
+    batch = (ROOT / "BUILD_POENAVI_NDLOCR_TEST.cmd").read_text(encoding="utf-8")
+    handoff = (ROOT / "scripts" / "build_release_from_local_copy.ps1").read_text(
+        encoding="utf-8"
+    )
+    assert "build_release_from_local_copy.ps1" in batch
+    assert "Python 3.12" in handoff and ".NET 8 SDK" in handoff
+    assert '"PoENavi\\SourceBuilds"' in handoff
+    assert "Copy-Item" in handoff and "scripts\\build_release.ps1" in handoff
+    assert "PoENavi.zip.sha256" in handoff and "BUILD_INFO.txt" in handoff
+    assert "zip_bytes=" in handoff and "zip_sha256=" in handoff
+
+
 def test_source_lock_is_development_only_and_pins_revision_and_hashes():
     lock = json.loads((ROOT / "scripts" / "poetore-sources.lock.json").read_text(encoding="utf-8"))
     sources = lock["sources"]
