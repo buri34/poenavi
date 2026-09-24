@@ -1851,7 +1851,6 @@ class PoetoreWindow(QWidget):
             "コピー元装備の装着素材、抽出のオーブ、出品最安をpoe.ninja参考価格で比較した目安です。"
         )
         self.installed_augment_recovery_panel.hide()
-        content_layout.addWidget(self.installed_augment_recovery_panel)
         self.additional_results_button = QPushButton("次の10件を取得")
         self.additional_results_button.setObjectName("filterActionButton")
         self.additional_results_button.clicked.connect(self._fetch_additional_results)
@@ -1861,7 +1860,9 @@ class PoetoreWindow(QWidget):
         additional_results_row.addStretch()
         additional_results_row.addWidget(self.additional_results_button)
         additional_results_row.addStretch()
+        self.additional_results_layout = additional_results_row
         content_layout.addLayout(additional_results_row)
+        content_layout.addWidget(self.installed_augment_recovery_panel)
         resize_row = QHBoxLayout()
         resize_row.addStretch()
         resize_row.addWidget(QSizeGrip(self))

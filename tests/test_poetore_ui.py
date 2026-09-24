@@ -2731,9 +2731,16 @@ def test_poe2_augment_estimates_render_compactly_below_results(qapp):
         )
         assert not window.installed_augment_recovery_hint.isHidden()
         layout = window.price_list.parentWidget().layout()
-        assert layout.indexOf(window.price_list) < layout.indexOf(
-            window.virtual_augment_cost_label
-        ) < layout.indexOf(window.installed_augment_recovery_panel)
+        additional_results_index = next(
+            index for index in range(layout.count())
+            if layout.itemAt(index).layout() is window.additional_results_layout
+        )
+        assert (
+            layout.indexOf(window.price_list)
+            < layout.indexOf(window.virtual_augment_cost_label)
+            < additional_results_index
+            < layout.indexOf(window.installed_augment_recovery_panel)
+        )
     finally:
         window.close()
 
