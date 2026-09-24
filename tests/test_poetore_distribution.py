@@ -153,8 +153,17 @@ def test_ndlocr_windows_handoff_builds_locally_and_returns_audited_artifacts():
     handoff = (ROOT / "scripts" / "build_release_from_local_copy.ps1").read_text(
         encoding="utf-8"
     )
+    bootstrap = (ROOT / "scripts" / "ensure_windows_build_tools.ps1").read_text(
+        encoding="utf-8"
+    )
     assert "build_release_from_local_copy.ps1" in batch
-    assert "Python 3.12" in handoff and ".NET 8 SDK" in handoff
+    assert "ensure_windows_build_tools.ps1" in handoff
+    assert "Python312" in bootstrap and "Dotnet8" in bootstrap
+    assert "python.org/ftp/python/3.12.10" in bootstrap
+    assert "67b5635e80ea51072b87941312d00ec8927c4db9ba18938f7ad2d27b328b95fb" in bootstrap
+    assert "dotnet-sdk-8.0.414-win-x64.zip" in bootstrap
+    assert "ae86d5d9aeff5be9db7e306e0f85f708" in bootstrap
+    assert "Get-FileHash" in bootstrap and "Start-Process" in bootstrap
     assert '"PoENavi\\SourceBuilds"' in handoff
     assert "Copy-Item" in handoff and "scripts\\build_release.ps1" in handoff
     assert "PoENavi.zip.sha256" in handoff and "BUILD_INFO.txt" in handoff

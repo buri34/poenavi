@@ -7,31 +7,10 @@ $source = (Resolve-Path $SourceRoot).Path
 $sourceName = Split-Path $source -Leaf
 $missing = [System.Collections.Generic.List[string]]::new()
 
-$pythonLauncher = Get-Command py.exe -ErrorAction SilentlyContinue
-if ($null -eq $pythonLauncher) {
-    $missing.Add("Python Launcher (py.exe) and Python 3.12")
-}
-else {
-    & $pythonLauncher.Source -3.12 -c "import sys; assert sys.version_info[:2] == (3, 12)" 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        $missing.Add("Python 3.12 (64-bit)")
-    }
-}
-
-$dotnet = Get-Command dotnet.exe -ErrorAction SilentlyContinue
-if ($null -eq $dotnet) {
-    $missing.Add(".NET 8 SDK")
-}
-else {
-    $sdks = @(& $dotnet.Source --list-sdks)
-    if (-not ($sdks | Where-Object { $_ -match '^8\.' })) {
-        $missing.Add(".NET 8 SDK")
-    }
-}
-
 foreach ($required in @(
     "scripts\build_release.ps1", "requirements-build.txt",
-    "requirements-ndlocr.txt", "tools\ExpeditionWindowsOcr\ExpeditionWindowsOcr.csproj"
+    "requirements-ndlocr.txt", "scripts\ensure_windows_build_tools.ps1",
+    "tools\ExpeditionWindowsOcr\ExpeditionWindowsOcr.csproj"
 )) {
     if (-not (Test-Path (Join-Path $source $required))) {
         $missing.Add("Source file: $required")
@@ -39,11 +18,23 @@ foreach ($required in @(
 }
 
 if ($missing.Count -gt 0) {
-    Write-Host "The following build prerequisites are missing:" -ForegroundColor Red
+    Write-Host "The source snapshot is incomplete:" -ForegroundColor Red
     $missing | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
-    Write-Host "Install Python 3.12 from python.org and the .NET 8 SDK from dotnet.microsoft.com, then run this file again."
     exit 2
 }
+
+$bootstrap = Join-Path $source "scripts\ensure_windows_build_tools.ps1"
+$toolOutput = @(& $bootstrap)
+if ($toolOutput.Count -eq 0) {
+    throw "The Windows build tools bootstrap returned no result"
+}
+$buildTools = $toolOutput[-1]
+$buildPython = $buildTools.Python
+$buildDotnet = $buildTools.Dotnet
+if (-not (Test-Path $buildPython) -or -not (Test-Path $buildDotnet)) {
+    throw "The Windows build tools bootstrap returned invalid paths"
+}
+$env:PATH = "$(Split-Path $buildDotnet);$env:PATH"
 
 $localBase = Join-Path $env:LOCALAPPDATA "PoENavi\SourceBuilds"
 $localRoot = Join-Path $localBase $sourceName
@@ -61,7 +52,7 @@ Copy-Item (Join-Path $source ".gitignore") $localRoot -Force -ErrorAction Silent
 
 Push-Location $localRoot
 try {
-    & $pythonLauncher.Source -3.12 -m venv .venv-build
+    & $buildPython -m venv .venv-build
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create the Python 3.12 build environment"
     }
