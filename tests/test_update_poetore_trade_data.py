@@ -142,10 +142,10 @@ def test_external_candidate_does_not_claim_distribution_data_file(tmp_path):
     assert "POETORE_CANDIDATE_BUILD" not in captured
     assert commands
     assert all(command[1:4] == ["-m", "pytest", "-q"] for command in commands)
-    assert any(command[-1] == "tests/test_poetore_ui.py" for command in commands)
+    assert any(Path(command[-1]).name == "test_poetore_ui.py" for command in commands)
     single_instance_index = next(
         index for index, command in enumerate(commands)
-        if command[-1] == "tests/test_single_instance.py"
+        if Path(command[-1]).name == "test_single_instance.py"
     )
     assert command_envs[single_instance_index]["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] == "1"
 

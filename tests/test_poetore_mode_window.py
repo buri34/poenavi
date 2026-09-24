@@ -524,6 +524,8 @@ def test_poetore_mode_starts_obs_window_collapsed_when_enabled():
         return_value=config,
     ), patch(
         "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch(
+        "src.ui.poetore_mode_window.StashTabScrollController"
     ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
         window = PoetoreModeWindow()
         app.processEvents()

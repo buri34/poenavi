@@ -223,7 +223,9 @@ def test_retain_baseline_decision_materializes_old_stat_value(tmp_path, monkeypa
 
     promoted = snapshot.promote_candidate(candidate, lock_path=lock_path, root=root)
 
-    payload = json.loads((root / promoted["sources"]["stats_ja"]["path"]).read_text())
+    payload = json.loads(
+        (root / promoted["sources"]["stats_ja"]["path"]).read_text(encoding="utf-8")
+    )
     assert payload["result"][0]["entries"][0]["text"] == "旧訳"
 
 
