@@ -66,7 +66,8 @@ def _run_regression_tests(candidate: Path) -> None:
     for command in commands:
         print(f"running candidate regression tests: {' '.join(command)}")
         command_env = env.copy()
-        if command[-1] == "tests/test_single_instance.py":
+        test_name = str(command[-1]).replace("\\", "/").rsplit("/", 1)[-1]
+        if test_name == "test_single_instance.py":
             # pytest-qt 4.5 + Qt 6.11/macOSのQLocalServer teardownで落ちるため、
             # Qt fixtureを使わないこの統合テストだけplugin自動読込を止める。
             command_env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"

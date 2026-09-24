@@ -1,5 +1,5 @@
 import json
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from unittest.mock import patch
 
 import pytest
@@ -148,6 +148,27 @@ def test_external_candidate_does_not_claim_distribution_data_file(tmp_path):
         if Path(command[-1]).name == "test_single_instance.py"
     )
     assert command_envs[single_instance_index]["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] == "1"
+
+
+def test_candidate_regression_disables_plugins_for_windows_single_instance_path(tmp_path):
+    candidate = tmp_path / "mod_metadata.json"
+    candidate.write_text("{}", encoding="utf-8")
+    captured = {}
+
+    def run(_command, **kwargs):
+        captured.update(kwargs["env"])
+
+    with (
+        patch.object(
+            Path,
+            "glob",
+            return_value=[PureWindowsPath("tests/test_single_instance.py")],
+        ),
+        patch("scripts.build_poetore_metadata.subprocess.run", side_effect=run),
+    ):
+        _run_regression_tests(candidate)
+
+    assert captured["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] == "1"
 
 
 def test_in_place_metadata_candidate_claims_distribution_candidate_file():
