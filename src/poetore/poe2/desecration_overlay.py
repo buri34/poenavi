@@ -12,7 +12,9 @@ from src.poetore.expedition_ocr_probe import WindowsOcrServer
 from src.poetore.poe2.desecration_ocr import (
     ChoiceBand,
     image_bytes,
+    needs_short_numeric_rescue,
     prepare_desecration_frame,
+    rescue_short_numeric_variants,
     resolve_ocr_variants,
 )
 from src.poetore.poe2.desecration_tiers import (
@@ -305,12 +307,14 @@ class DesecrationTierController(QObject):
 
     def __init__(
         self, parent=None, *, regions_getter=None, ocr_server=None,
-        scan_coordinator=None, trace_factory=None,
+        numeric_ocr_server=None, scan_coordinator=None, trace_factory=None,
     ):
         super().__init__(parent)
         self._regions_getter = regions_getter or dict
         self._ocr = ocr_server or WindowsOcrServer()
         self._owns_ocr = ocr_server is None
+        self._numeric_ocr = numeric_ocr_server or WindowsOcrServer("en-US")
+        self._owns_numeric_ocr = numeric_ocr_server is None
         self._scan_coordinator = scan_coordinator
         self._trace_factory = trace_factory
         self._active_trace = None
@@ -481,7 +485,36 @@ class DesecrationTierController(QObject):
                 character_count=sum(len(str(value)) for value in raw),
             )
             width = len(prepared.variants[0])
-            grouped = tuple(tuple(raw[index * width:(index + 1) * width]) for index in range(3))
+            grouped = tuple(
+                tuple(raw[index * width:(index + 1) * width])
+                for index in range(3)
+            )
+            if needs_short_numeric_rescue(grouped):
+                try:
+                    original_grouped = grouped
+                    self._numeric_ocr.start()
+                    numeric_raw = self._numeric_ocr.recognize(images)
+                    numeric_grouped = tuple(
+                        tuple(numeric_raw[index * width:(index + 1) * width])
+                        for index in range(3)
+                    )
+                    grouped = rescue_short_numeric_variants(
+                        grouped, numeric_grouped,
+                    )
+                    self._mark_trace(
+                        trace, "numeric_ocr_rescue_completed",
+                        capture_mode=capture_mode,
+                        repaired_choice_count=sum(
+                            needs_short_numeric_rescue((before,))
+                            and not needs_short_numeric_rescue((after,))
+                            for before, after in zip(original_grouped, grouped)
+                        ),
+                    )
+                except Exception as exc:  # noqa: BLE001 - optional safe fallback
+                    self._mark_trace(
+                        trace, "numeric_ocr_rescue_failed",
+                        capture_mode=capture_mode, error_type=type(exc).__name__,
+                    )
             resolution = resolve_ocr_variants(grouped, selectable_categories())
             self._mark_trace(
                 trace, "tier_resolution_completed", capture_mode=capture_mode,
@@ -672,3 +705,5 @@ class DesecrationTierController(QObject):
         self._release_scan()
         if self._owns_ocr:
             self._ocr.close()
+        if self._owns_numeric_ocr:
+            self._numeric_ocr.close()

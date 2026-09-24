@@ -16,6 +16,7 @@ from src.poetore.expedition_ocr_probe import WindowsOcrServer
 from src.poetore.poe2.desecration_ocr import (
     image_bytes,
     prepare_desecration_frame,
+    rescue_short_numeric_variants,
     resolve_ocr_variants,
 )
 from src.poetore.poe2.desecration_overlay import selectable_categories
@@ -216,7 +217,12 @@ def run_probe(
                         )
             resolution = None
             if raw_grouped:
-                resolution = resolve_ocr_variants(raw_grouped, selectable_categories())
+                effective_grouped = rescue_short_numeric_variants(
+                    raw_grouped, numeric_grouped,
+                )
+                resolution = resolve_ocr_variants(
+                    effective_grouped, selectable_categories(),
+                )
                 tiers, texts, ranges, statuses = _selected_rows(resolution, case.category)
             else:
                 tiers, texts, ranges, statuses = (

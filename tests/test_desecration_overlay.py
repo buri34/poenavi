@@ -310,6 +310,48 @@ def test_controller_displays_three_read_failed_badges_when_all_are_unreadable():
     controller.close()
 
 
+def test_controller_uses_en_us_ocr_only_for_stable_short_missing_integer():
+    QApplication.instance() or QApplication([])
+    image = QImage(
+        "tests/fixtures/poetore/poe2/desecration/"
+        "reported-ring-accuracy-read-failed.png"
+    )
+    region = {"left": 0, "top": 0, "right": .5, "bottom": .5}
+    ocr = Mock()
+    ocr.recognize.return_value = [
+        *("命 中 力 +",) * 4,
+        *("最 大 マ ナ + 66",) * 4,
+        *("プ レ イ ヤ ー が 生 成 し た レ ム ナ ン ト は 効 果 が 14 % 増 加 す る",) * 4,
+    ]
+    numeric_ocr = Mock()
+    numeric_ocr.recognize.return_value = [
+        *("+64",) * 4,
+        *("+66",) * 4,
+        *("",) * 4,
+    ]
+    controller = DesecrationTierController(
+        regions_getter=lambda: {"inventory_open_region": region},
+        ocr_server=ocr,
+        numeric_ocr_server=numeric_ocr,
+        scan_coordinator=Mock(try_begin=Mock(return_value=True)),
+    )
+    controller._grab = Mock(return_value=image)
+
+    with patch(
+        "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
+        return_value=QRect(0, 0, 1920, 1080),
+    ), patch(
+        "src.poetore.poe2.desecration_overlay.threading.Thread", ImmediateThread,
+    ):
+        assert controller.request_scan()
+
+    numeric_ocr.start.assert_called_once_with()
+    numeric_ocr.recognize.assert_called_once()
+    assert controller._pending is not None
+    assert controller._pending[0].tiers_by_category["ring"] == (6, 7, 1)
+    controller.close()
+
+
 def test_controller_records_sanitized_stage_timings_until_overlay_display():
     QApplication.instance() or QApplication([])
     image = QImage("tests/fixtures/poetore/poe2/desecration/spear-reveal.png")

@@ -83,6 +83,25 @@ def test_prepare_only_saves_all_variants_without_starting_ocr(tmp_path):
     assert report["cases"][0]["choices"][0]["status"] == "not_run"
 
 
+def test_probe_applies_safe_short_numeric_rescue(tmp_path):
+    cases = load_probe_cases(FIXTURE_DIR, FIXTURE_DIR / "reported-cases.json")[-1:]
+    ocr = ExpectedTextOcr(cases)
+    ocr._responses[0][:4] = ["命 中 力 +"] * 4
+    numeric_ocr = ExpectedNumericOcr(cases)
+    numeric_ocr._responses[0][:4] = ["+64"] * 4
+
+    report = run_probe(
+        cases, tmp_path,
+        ocr_server=ocr,
+        numeric_ocr_server=numeric_ocr,
+    )
+
+    assert report["passed_cases"] == 1
+    assert report["cases"][0]["choices"][0]["tier"] == 6
+    assert report["cases"][0]["choices"][0]["raw_texts"] == ["命 中 力 +"] * 4
+    assert report["cases"][0]["choices"][0]["numeric_tokens"] == ["64"]
+
+
 def test_directory_without_manifest_accepts_only_supported_images(tmp_path):
     (tmp_path / "ignore.txt").write_text("x", encoding="utf-8")
     (tmp_path / "one.PNG").write_bytes(b"not-an-image")

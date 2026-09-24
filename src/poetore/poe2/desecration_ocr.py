@@ -222,6 +222,59 @@ def _prefer_color_decimal_variants(outputs: tuple[str, ...]) -> tuple[str, ...]:
     return outputs[:2]
 
 
+def _short_missing_integer_body(outputs: tuple[str, ...]) -> str | None:
+    """Return a stable short Japanese ``+`` body whose integer disappeared."""
+    if len(outputs) != 4:
+        return None
+    compact = tuple(re.sub(r"\s+", "", text) for text in outputs)
+    if len(set(compact)) != 1:
+        return None
+    body = compact[0]
+    if len(body) > 16 or not re.fullmatch(r"[ぁ-んァ-ヶ一-龯ー]+\+", body):
+        return None
+    return body
+
+
+def needs_short_numeric_rescue(
+    variant_texts: tuple[tuple[str, ...], ...],
+) -> bool:
+    """Whether an en-US numeric pass could safely repair one short choice."""
+    return any(_short_missing_integer_body(outputs) for outputs in variant_texts)
+
+
+def rescue_short_numeric_variants(
+    variant_texts: tuple[tuple[str, ...], ...],
+    numeric_variant_texts: tuple[tuple[str, ...], ...],
+) -> tuple[tuple[str, ...], ...]:
+    """Append an integer only when four independent en-US reads all agree.
+
+    The English OCR is intentionally not merged into long text: the Windows
+    report showed plausible but false numbers there.  This rescue is limited
+    to stable, short Japanese bodies ending in ``+`` with no number.
+    """
+    repaired = []
+    for index, outputs in enumerate(variant_texts):
+        if _short_missing_integer_body(outputs) is None:
+            repaired.append(outputs)
+            continue
+        numeric_outputs = (
+            numeric_variant_texts[index]
+            if index < len(numeric_variant_texts) else ()
+        )
+        integers = []
+        for text in numeric_outputs:
+            match = re.fullmatch(r"\s*\+\s*(\d+)\s*", text)
+            if match is None:
+                integers = []
+                break
+            integers.append(match.group(1))
+        if len(integers) != 4 or len(set(integers)) != 1:
+            repaired.append(outputs)
+            continue
+        repaired.append(tuple(f"{text}{integers[0]}" for text in outputs))
+    return tuple(repaired)
+
+
 def _tier_value(result: FuzzyTierResolution) -> TierValue:
     if result.tier is not None:
         return result.tier

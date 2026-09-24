@@ -8,7 +8,9 @@ from src.poetore.poe2.desecration_ocr import (
     _green_mask,
     _green_text_rect,
     choice_bands,
+    needs_short_numeric_rescue,
     prepare_desecration_frame,
+    rescue_short_numeric_variants,
     resolve_ocr_variants,
 )
 from src.poetore.poe2.desecration_tiers import resolve_desecration_choices_fuzzy
@@ -23,6 +25,28 @@ REPORTED_IMAGES = {
     "reported-ring-minion-wrapped.png": "846a53dcd8a4b7ffa3cf0d22f7afbb4aedc6ffd5fc6d9a6d9444fce408662c64",
     "reported-ring-accuracy-read-failed.png": "aff1e4aadcdc6dece2ad4743523b241bfba7fc8346d011d892b5118f429a4793",
 }
+
+
+def test_short_missing_integer_is_rescued_only_by_four_agreeing_numeric_reads():
+    japanese = (("命 中 力 +",) * 4,)
+    numeric = (("+64",) * 4,)
+
+    assert needs_short_numeric_rescue(japanese)
+    repaired = rescue_short_numeric_variants(japanese, numeric)
+    assert repaired == (("命 中 力 +64",) * 4,)
+    resolved = resolve_ocr_variants(repaired, ("ring",))
+    assert resolved.tiers_by_category["ring"] == (6,)
+
+
+def test_numeric_rescue_rejects_long_rows_false_positives_and_disagreement():
+    long_row = (("18 か ら 29 の 冷 気 ダ メ ー ジ を 追 加 す る",) * 4,)
+    false_numeric = (("", "75 v D", "", ""),)
+    short_row = (("命 中 力 +",) * 4,)
+    disagreement = (("+64", "+64", "+64", "+84"),)
+
+    assert not needs_short_numeric_rescue(long_row)
+    assert rescue_short_numeric_variants(long_row, false_numeric) == long_row
+    assert rescue_short_numeric_variants(short_row, disagreement) == short_row
 
 
 def _legacy_green_text_rect(image, padding=8):
