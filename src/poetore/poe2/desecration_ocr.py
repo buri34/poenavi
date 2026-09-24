@@ -184,10 +184,12 @@ def prepare_desecration_frame(image: QImage) -> PreparedDesecrationFrame:
             crop = card
         else:
             crop = card.copy(text_rect)
+        green_mask = _green_mask(crop)
         all_variants.append((
             crop.scaled(crop.width() * 4, crop.height() * 4, Qt.IgnoreAspectRatio, Qt.SmoothTransformation),
             crop.scaled(crop.width() * 6, crop.height() * 6, Qt.IgnoreAspectRatio, Qt.SmoothTransformation),
-            _green_mask(crop).scaled(crop.width() * 4, crop.height() * 4),
+            green_mask.scaled(crop.width() * 4, crop.height() * 4),
+            green_mask.scaled(crop.width() * 6, crop.height() * 6),
         ))
     return PreparedDesecrationFrame(bands, tuple(all_variants), valid)
 

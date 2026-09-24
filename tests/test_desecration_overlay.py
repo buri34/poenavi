@@ -209,17 +209,11 @@ def test_controller_retries_closed_region_when_open_panel_ocr_cannot_resolve():
         "inventory_open_region": {"left": 0, "top": 0, "right": .5, "bottom": .5},
         "inventory_closed_region": {"left": .5, "top": .5, "right": 1, "bottom": 1},
     }
-    unresolved = ["読取不能"] * 9
+    unresolved = ["読取不能"] * 12
     resolved = [
-        "この武器によるアタックは20%の火耐性を貫通する",
-        "この武器によるアタックは20%の火耐性を貫通する",
-        "この武器によるアタックは20%の火耐性を貫通する",
-        "26から43の冷気ダメージを追加する",
-        "26から43の冷気ダメージを追加する",
-        "26から43の冷気ダメージを追加する",
-        "物理ダメージが28%増加する\n命中力 +57",
-        "物理ダメージが28%増加する\n命中力 +57",
-        "物理ダメージが28%増加する\n命中力 +57",
+        *("この武器によるアタックは20%の火耐性を貫通する",) * 4,
+        *("26から43の冷気ダメージを追加する",) * 4,
+        *("物理ダメージが28%増加する\n命中力 +57",) * 4,
     ]
     ocr = Mock()
     ocr.recognize.side_effect = [unresolved, resolved]
@@ -250,9 +244,9 @@ def test_controller_keeps_confident_partial_open_result_without_closed_retry():
     region = {"left": 0, "top": 0, "right": .5, "bottom": .5}
     ocr = Mock()
     ocr.recognize.return_value = [
-        *("最大マナ +108",) * 3,
-        *("移動スピードが30%増加する",) * 3,
-        *("未知の効果が123%増加する",) * 3,
+        *("最大マナ +108",) * 4,
+        *("移動スピードが30%増加する",) * 4,
+        *("未知の効果が123%増加する",) * 4,
     ]
     controller = DesecrationTierController(
         regions_getter=lambda: {
@@ -280,12 +274,12 @@ def test_controller_keeps_confident_partial_open_result_without_closed_retry():
     controller.close()
 
 
-def test_controller_reports_all_unreadable_without_showing_badges():
+def test_controller_displays_three_read_failed_badges_when_all_are_unreadable():
     QApplication.instance() or QApplication([])
     image = QImage("tests/fixtures/poetore/poe2/desecration/boots-reveal.png")
     region = {"left": 0, "top": 0, "right": .5, "bottom": .5}
     ocr = Mock()
-    ocr.recognize.return_value = ["", "読取不能", "別の誤読"] * 3
+    ocr.recognize.return_value = ["", "読取不能", "別の誤読", ""] * 3
     gate = Mock()
     gate.try_begin.return_value = True
     controller = DesecrationTierController(
@@ -294,6 +288,7 @@ def test_controller_reports_all_unreadable_without_showing_badges():
         scan_coordinator=gate,
     )
     controller._grab = Mock(return_value=image)
+    controller._overlay.show_tiers = Mock()
     failures = []
     controller.failed.connect(failures.append)
 
@@ -305,8 +300,12 @@ def test_controller_reports_all_unreadable_without_showing_badges():
     ):
         assert controller.request_scan()
 
-    assert failures == ["3つのModを読み取れませんでした。読取範囲を確認してください。"]
-    assert not controller._overlay.isVisible()
+    assert failures == []
+    controller._overlay.show_tiers.assert_called_once()
+    args = controller._overlay.show_tiers.call_args.args
+    kwargs = controller._overlay.show_tiers.call_args.kwargs
+    assert args[4] == (None, None, None)
+    assert kwargs["statuses"] == ("read_failed",) * 3
     gate.finish.assert_called_once_with("desecration")
     controller.close()
 
@@ -316,15 +315,9 @@ def test_controller_records_sanitized_stage_timings_until_overlay_display():
     image = QImage("tests/fixtures/poetore/poe2/desecration/spear-reveal.png")
     region = {"left": 0, "top": 0, "right": .5, "bottom": .5}
     raw_ocr = [
-        "この武器によるアタックは20%の火耐性を貫通する",
-        "この武器によるアタックは20%の火耐性を貫通する",
-        "この武器によるアタックは20%の火耐性を貫通する",
-        "26から43の冷気ダメージを追加する",
-        "26から43の冷気ダメージを追加する",
-        "26から43の冷気ダメージを追加する",
-        "物理ダメージが28%増加する\n命中力 +57",
-        "物理ダメージが28%増加する\n命中力 +57",
-        "物理ダメージが28%増加する\n命中力 +57",
+        *("この武器によるアタックは20%の火耐性を貫通する",) * 4,
+        *("26から43の冷気ダメージを追加する",) * 4,
+        *("物理ダメージが28%増加する\n命中力 +57",) * 4,
     ]
     trace = RecordingTrace()
     ocr = Mock()
@@ -370,7 +363,7 @@ def test_controller_records_sanitized_stage_timings_until_overlay_display():
     ]
     serialized = repr(trace.records)
     assert all(text not in serialized for text in raw_ocr)
-    assert trace.records[9][1]["nonempty_result_count"] == 9
+    assert trace.records[9][1]["nonempty_result_count"] == 12
     assert trace.records[9][1]["character_count"] > 0
     assert trace.records[-1][1]["outcome"] == "displayed"
     controller.close()
@@ -384,17 +377,11 @@ def test_controller_records_closed_region_fallback_as_separate_attempt():
     trace = RecordingTrace()
     ocr = Mock()
     ocr.recognize.side_effect = [
-        ["読取不能"] * 9,
+        ["読取不能"] * 12,
         [
-            "この武器によるアタックは20%の火耐性を貫通する",
-            "この武器によるアタックは20%の火耐性を貫通する",
-            "この武器によるアタックは20%の火耐性を貫通する",
-            "26から43の冷気ダメージを追加する",
-            "26から43の冷気ダメージを追加する",
-            "26から43の冷気ダメージを追加する",
-            "物理ダメージが28%増加する\n命中力 +57",
-            "物理ダメージが28%増加する\n命中力 +57",
-            "物理ダメージが28%増加する\n命中力 +57",
+            *("この武器によるアタックは20%の火耐性を貫通する",) * 4,
+            *("26から43の冷気ダメージを追加する",) * 4,
+            *("物理ダメージが28%増加する\n命中力 +57",) * 4,
         ],
     ]
     controller = DesecrationTierController(

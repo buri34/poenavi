@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 from functools import lru_cache
-from itertools import permutations
+from itertools import combinations, permutations
 from pathlib import Path
 
 DATA_PATH = (
@@ -416,6 +416,26 @@ def _normalized_lines(lines: str | tuple[str, ...] | list[str]) -> tuple[str, ..
     return tuple(str(line).strip() for line in source if str(line).strip())
 
 
+@lru_cache(maxsize=4096)
+def _soft_wrap_layouts(lines: tuple[str, ...]) -> tuple[tuple[str, ...], ...]:
+    """Return contiguous line joins while preferring the original OCR layout."""
+    if len(lines) <= 1:
+        return (lines,)
+    layouts = [lines]
+    boundaries = range(1, len(lines))
+    maximum_parts = max(
+        len(entry.get("parts", ())) for entry in tier_data()["entries"]
+    )
+    for group_count in range(min(len(lines) - 1, maximum_parts), 0, -1):
+        for cuts in combinations(boundaries, group_count - 1):
+            edges = (0, *cuts, len(lines))
+            layouts.append(tuple(
+                "".join(lines[edges[index]:edges[index + 1]])
+                for index in range(group_count)
+            ))
+    return tuple(dict.fromkeys(layouts))
+
+
 def _profile_category(profile: dict) -> str:
     """Return the concrete PoE2 equipment category represented by a profile."""
     category = str(profile["category"])
@@ -555,7 +575,7 @@ def _finalize_fuzzy_candidates(
 
 
 @lru_cache(maxsize=512)
-def _resolve_desecration_choices_fuzzy_cached(
+def _resolve_desecration_choices_fuzzy_layout_cached(
     normalized_lines: tuple[str, ...], categories: tuple[str, ...],
     minimum_score: float, ambiguity_margin: float,
 ) -> tuple[tuple[str, FuzzyTierResolution], ...]:
@@ -622,6 +642,69 @@ def _resolve_desecration_choices_fuzzy_cached(
         (category, resolved.get(category, no_match))
         for category in ordered_categories
     )
+
+
+def _resolved_identity(result: FuzzyTierResolution) -> tuple | None:
+    tier_value: TierValue = result.tier
+    if tier_value is None and result.tier_candidates:
+        tier_value = result.tier_candidates
+    if tier_value is None:
+        return None
+    return tier_value, result.mod_ids
+
+
+@lru_cache(maxsize=512)
+def _resolve_desecration_choices_fuzzy_cached(
+    normalized_lines: tuple[str, ...], categories: tuple[str, ...],
+    minimum_score: float, ambiguity_margin: float,
+) -> tuple[tuple[str, FuzzyTierResolution], ...]:
+    """Resolve OCR text, safely rejoining visual line wraps when required."""
+    layouts = _soft_wrap_layouts(normalized_lines)
+    by_layout = tuple(dict(_resolve_desecration_choices_fuzzy_layout_cached(
+        layout, categories, minimum_score, ambiguity_margin,
+    )) for layout in layouts)
+    merged = []
+    for category in categories:
+        original = by_layout[0][category]
+        if _resolved_identity(original) is not None:
+            merged.append((category, original))
+            continue
+        candidates = [
+            (layout, results[category])
+            for layout, results in zip(layouts[1:], by_layout[1:])
+            if _resolved_identity(results[category]) is not None
+        ]
+        if not candidates:
+            merged.append((category, original))
+            continue
+        best_score = max(result.score or 0 for _layout, result in candidates)
+        finalists = [
+            (layout, result) for layout, result in candidates
+            if best_score - (result.score or 0) <= ambiguity_margin
+        ]
+        identities = {
+            _resolved_identity(result) for _layout, result in finalists
+        }
+        if len(identities) != 1:
+            merged.append((category, FuzzyTierResolution(
+                tier=None,
+                mod_ids=tuple(sorted({
+                    mod_id for _layout, result in finalists
+                    for mod_id in result.mod_ids
+                })),
+                profile_ids=tuple(sorted({
+                    profile_id for _layout, result in finalists
+                    for profile_id in result.profile_ids
+                })),
+                reason="ambiguous", score=round(best_score, 4),
+            )))
+            continue
+        # With equal evidence, preserve as many original OCR lines as possible.
+        chosen = max(finalists, key=lambda row: (
+            row[1].score or 0, len(row[0]),
+        ))[1]
+        merged.append((category, chosen))
+    return tuple(merged)
 
 
 def resolve_desecration_choices_fuzzy(

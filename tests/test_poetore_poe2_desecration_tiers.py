@@ -9,6 +9,7 @@ from src.poetore.poe2.desecration_tiers import (
     TEMPLATE_NUMBER_RE,
     _match_part,
     _numeric_skeleton,
+    _soft_wrap_layouts,
     _stat_identity,
     available_categories,
     resolve_desecration_choice,
@@ -83,6 +84,14 @@ def test_fuzzy_match_tolerates_one_character_but_keeps_numbers_strict():
     assert result.tier == 6
     assert result.score == 0.875
     assert resolve_desecration_choice_fuzzy("最大マナ +999", "boots").tier is None
+
+
+def test_soft_wrap_layouts_are_bounded_by_the_largest_mod_structure():
+    layouts = _soft_wrap_layouts(tuple(f"line-{index}" for index in range(20)))
+
+    assert layouts[0] == tuple(f"line-{index}" for index in range(20))
+    assert max(len(layout) for layout in layouts[1:]) == 3
+    assert len(layouts) == 192
 
 
 def test_all_category_resolution_matches_individual_category_results():

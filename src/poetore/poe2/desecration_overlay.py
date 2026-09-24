@@ -489,18 +489,17 @@ class DesecrationTierController(QObject):
                 needs_category_choice=bool(resolution.needs_category_choice),
                 fallback_status_count=len(resolution.fallback_statuses or ()),
             )
-            if not resolution.categories:
-                if allow_closed and should_retry_closed_region(resolution):
-                    self._mark_trace(
-                        trace, "closed_fallback_requested",
-                        reason="open_result_unresolved",
-                    )
-                    self._retry_closed_requested.emit(generation)
-                    return
-                if not resolution.fallback_statuses or all(
-                    status == "read_failed" for status in resolution.fallback_statuses
-                ):
-                    raise RuntimeError("3つのModを読み取れませんでした。読取範囲を確認してください。")
+            if (
+                not resolution.categories
+                and allow_closed
+                and should_retry_closed_region(resolution)
+            ):
+                self._mark_trace(
+                    trace, "closed_fallback_requested",
+                    reason="open_result_unresolved",
+                )
+                self._retry_closed_requested.emit(generation)
+                return
             self._mark_trace(trace, "result_queued", capture_mode=capture_mode)
             self._ready.emit(
                 resolution, self._client_rect, capture_rect, prepared.bands, generation,

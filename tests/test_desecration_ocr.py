@@ -1,3 +1,5 @@
+import hashlib
+from pathlib import Path
 from unittest.mock import patch
 
 from PySide6.QtGui import QColor, QImage
@@ -10,6 +12,17 @@ from src.poetore.poe2.desecration_ocr import (
     resolve_ocr_variants,
 )
 from src.poetore.poe2.desecration_tiers import resolve_desecration_choices_fuzzy
+
+FIXTURE_DIR = Path(__file__).parent / "fixtures" / "poetore" / "poe2" / "desecration"
+REPORTED_IMAGES = {
+    "reported-amulet-all-read-failed.png": "c1b8f7ae1ff889a142e75e66f3d58862740298ca2ef44dd49035633ff3cbaea8",
+    "reported-spear-physical-read-failed.png": "744c4a459e61b345b1426c309e73810f8cb00208c2253d9ce1ebb2479638f44c",
+    "reported-spear-companion-wrapped.png": "ae186264b370c0c46f891633b7e6e317c13a3a7075b62d00971b74a7201f0cca",
+    "reported-bow-projectile-wrapped.png": "3423725ebec2de50aa85e07e195485ca343af5e28c9e4a2aa88fe19e0548726f",
+    "reported-ring-shock-wrapped.png": "d478fe7e8eb46c8fa472cb15efe7e82d0292e4a26364bbf526723af5c00f9303",
+    "reported-ring-minion-wrapped.png": "846a53dcd8a4b7ffa3cf0d22f7afbb4aedc6ffd5fc6d9a6d9444fce408662c64",
+    "reported-ring-accuracy-read-failed.png": "aff1e4aadcdc6dece2ad4743523b241bfba7fc8346d011d892b5118f429a4793",
+}
 
 
 def _legacy_green_text_rect(image, padding=8):
@@ -57,7 +70,17 @@ def test_supplied_panels_have_three_valid_choice_bands():
         frame = prepare_desecration_frame(image)
         assert frame.valid_panel
         assert len(choice_bands(image)) == 3
-        assert all(len(variants) == 3 for variants in frame.variants)
+        assert all(len(variants) == 4 for variants in frame.variants)
+
+
+def test_newly_reported_panels_are_preserved_and_prepare_four_ocr_variants():
+    for name, expected_sha256 in REPORTED_IMAGES.items():
+        path = FIXTURE_DIR / name
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == expected_sha256
+        frame = prepare_desecration_frame(QImage(str(path)))
+        assert frame.valid_panel
+        assert len(frame.bands) == 3
+        assert all(len(variants) == 4 for variants in frame.variants)
 
 
 def test_bulk_pixel_processing_matches_the_original_pixel_api_results():
@@ -114,6 +137,66 @@ def test_ocr_resolution_separates_stable_unsupported_text_from_read_failure():
 
     failed = resolve_ocr_variants((("読取不能", "", "別の誤読"),), ("boots",))
     assert failed.fallback_statuses == ("read_failed",)
+
+
+def test_wrapped_user_reported_mods_rejoin_before_tier_matching():
+    cases = (
+        (
+            "spear",
+            (
+                "コンパニオンのダメージが49%増加する\n"
+                "コンパニオンがプレイヤーの存在下にいる時にダメージが51%増\n"
+                "加する"
+            ),
+        ),
+        (
+            "bow",
+            (
+                "投射物は6mより遠くにいる敵に対するヒットダメージが76%増\n"
+                "加する"
+            ),
+        ),
+        (
+            "ring",
+            (
+                "直近フレンジーチャージを消費していれば感電の強度が22%増加\n"
+                "する"
+            ),
+        ),
+        (
+            "ring",
+            (
+                "直近プレイヤーがヒットを与えていればミニオンのダメージが\n"
+                "23%増加する"
+            ),
+        ),
+    )
+
+    for category, text in cases:
+        result = resolve_ocr_variants(((text,) * 4,), (category,))
+        assert result.categories == (category,)
+        assert result.tiers == (1,)
+        assert result.statuses == ("matched",)
+
+
+def test_user_reported_read_failures_resolve_when_ocr_text_is_correct():
+    amulet = resolve_ocr_variants((
+        ("毎秒3.2のライフを自動回復する",) * 4,
+        ("敵を倒した時にライフの3%を回復する",) * 4,
+        ("受けたダメージの21%をマナとして回収する",) * 4,
+    ), ("amulet",))
+    spear = resolve_ocr_variants((
+        ("物理ダメージが64%増加する",) * 4,
+    ), ("spear",))
+    ring = resolve_ocr_variants((
+        ("命中力 +64",) * 4,
+        ("最大マナ +66",) * 4,
+        ("プレイヤーが生成したレムナントは効果が14%増加する",) * 4,
+    ), ("ring",))
+
+    assert amulet.tiers == (8, 1, 2)
+    assert spear.tiers == (7,)
+    assert ring.tiers == (6, 7, 1)
 
 
 def test_ocr_variants_reject_conflicting_tiers_even_when_one_text_scores_better():
