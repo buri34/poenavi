@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import os
 import subprocess
 import sys
@@ -44,3 +45,20 @@ def test_verify_runs_packaged_helper_against_reported_physical_64(monkeypatch):
     assert server.recognize.call_count == 2
     assert len(server.recognize.call_args.args[0]) == 1
     server.close.assert_called_once_with()
+
+
+def test_main_forces_utf8_when_runner_stdout_starts_as_cp1252(monkeypatch):
+    output = io.BytesIO()
+    stdout = io.TextIOWrapper(output, encoding="cp1252")
+    monkeypatch.setattr(verifier.sys, "stdout", stdout)
+    monkeypatch.setattr(verifier.sys, "stderr", io.StringIO())
+    monkeypatch.setattr(verifier, "verify", Mock(return_value=verifier.EXPECTED))
+    monkeypatch.setattr(
+        verifier.sys,
+        "argv",
+        ["verify_ndlocr_helper.py", "--helper", "helper.exe", "--image", "input.png"],
+    )
+
+    assert verifier.main() == 0
+    stdout.flush()
+    assert output.getvalue().decode("utf-8").strip() == verifier.EXPECTED

@@ -19,6 +19,14 @@ from src.poetore.poe2.ndlocr_lite import NdlOcrLiteServer
 EXPECTED = "物理ダメージが64%増加する"
 
 
+def configure_standard_streams() -> None:
+    """Keep Japanese smoke-test output stable on non-UTF-8 Windows runners."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
 def verify(helper: Path, image_path: Path) -> str:
     image = QImage(str(image_path))
     prepared = prepare_desecration_frame(image)
@@ -45,6 +53,7 @@ def verify(helper: Path, image_path: Path) -> str:
 
 
 def main() -> int:
+    configure_standard_streams()
     parser = argparse.ArgumentParser()
     parser.add_argument("--helper", type=Path, required=True)
     parser.add_argument("--image", type=Path, required=True)
