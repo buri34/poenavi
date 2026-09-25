@@ -276,3 +276,7 @@ v4.4.0の本体ZIPは展開後約768.61MiBとなり、既存UpdaterのZIP爆弾�
 - SHA-256、パス走査、リンク、ファイル数、単一ファイル、展開後総量、圧縮率を検証してから原子的に置換する。
 - パック準備中はNDLOCRを待たずWindows OCRの結果を表示し、ダウンロード専用のゲーム内右肩表示は追加しない。
 - パック準備完了後のNDLOCR採用条件、3分常駐、起動中表示は従来仕様を維持する。
+
+この節の「同じPoENavi Releaseへ添付する」方式は、正式公開前の運用見直しにより廃止予定となった。
+後続の専用Release移行計画は
+[`poetore-ndlocr-pack-release-migration-plan.md`](poetore-ndlocr-pack-release-migration-plan.md)を正本とする。
