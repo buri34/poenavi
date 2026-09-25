@@ -101,7 +101,7 @@ $ndlLicenseDir = "build\third-party-licenses\NDLOCR-Lite-$ndlVersion"
 New-Item -ItemType Directory -Path $ndlLicenseDir -Force | Out-Null
 Copy-Item "$ndlSource\LICENCE" "$ndlLicenseDir\LICENCE.txt"
 Copy-Item "$ndlSource\LICENCE_DEPENDENCEIES" "$ndlLicenseDir\LICENCE_DEPENDENCIES.txt"
-Add-Content -Path "build\third-party-licenses\README.md" -Value "- NDLOCR-Lite $ndlVersion: ``NDLOCR-Lite-$ndlVersion/LICENCE.txt``, ``NDLOCR-Lite-$ndlVersion/LICENCE_DEPENDENCIES.txt``"
+Add-Content -Path "build\third-party-licenses\README.md" -Value "- NDLOCR-Lite ${ndlVersion}: ``NDLOCR-Lite-$ndlVersion/LICENCE.txt``, ``NDLOCR-Lite-$ndlVersion/LICENCE_DEPENDENCIES.txt``"
 
 $appArgs = @(
     "-m", "PyInstaller",

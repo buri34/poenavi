@@ -1,8 +1,23 @@
 import json
 import os
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_powershell_interpolated_variables_do_not_absorb_literal_colons():
+    invalid = re.compile(
+        r"\$(?!(?:env|global|script|local|private|using):)[A-Za-z_][A-Za-z0-9_]*:"
+    )
+    violations = []
+    for script in (ROOT / "scripts").glob("*.ps1"):
+        for line_number, line in enumerate(script.read_text(encoding="utf-8").splitlines(), 1):
+            if invalid.search(line):
+                violations.append(f"{script.name}:{line_number}: {line.strip()}")
+    assert not violations, "PowerShell variable before ':' must use ${name}:\n" + "\n".join(
+        violations
+    )
 
 
 def test_poetore_distribution_contains_only_minimal_derived_data():
