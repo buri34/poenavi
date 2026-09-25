@@ -65,6 +65,7 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert '"--add-data", "build\\ndlocr-dist\\PoENaviNdlOcr;tools\\NDLOcrLite"' in script
     assert "ExpeditionWindowsOcr.exe" in script
     assert "PoENaviNdlOcr.exe" in script
+    assert '"scripts\\ndlocr_lite_entry.py"' in script
     assert "requirements-ndlocr.txt" in script
     assert "verify_ndlocr_helper.py" in script
     assert "reported-spear-physical-read-failed.png" in script

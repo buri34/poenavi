@@ -35,9 +35,12 @@ def test_verify_runs_packaged_helper_against_reported_physical_64(monkeypatch):
     )
     server = Mock()
     server.recognize.return_value = [NdlOcrResult("物理ダメージが64%増加する", .874)]
+    server.last_metrics = Mock(cold_start=False)
     factory = Mock(return_value=server)
     monkeypatch.setattr(verifier, "NdlOcrLiteServer", factory)
 
     assert verifier.verify(Path("PoENaviNdlOcr.exe"), fixture) == verifier.EXPECTED
     factory.assert_called_once_with(helper=Path("PoENaviNdlOcr.exe"), timeout=120)
+    assert server.recognize.call_count == 2
     assert len(server.recognize.call_args.args[0]) == 1
+    server.close.assert_called_once_with()

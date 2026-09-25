@@ -61,9 +61,11 @@ def test_windows_runner_exposes_samples_as_properties_and_recovers_saved_run():
     )
 
 
-def test_spike_is_not_connected_to_the_production_ocr_path():
+def test_production_does_not_reuse_the_spikes_polling_protocol():
     production = (ROOT / "src" / "poetore" / "poe2" / "ndlocr_lite.py").read_text(
         encoding="utf-8",
     )
     assert "NdlOcrResident" not in production
-    assert "resident" not in production.lower()
+    assert "--control-dir" not in production
+    assert "time.sleep" not in production
+    assert '"--server"' in production

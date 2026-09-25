@@ -109,6 +109,16 @@ def record_mini_navi_topmost_event(event: str, **details) -> None:
     })
 
 
+def record_ndlocr_event(event: str, **details) -> None:
+    """Persist sanitized resident-NDLOCR lifecycle and timing diagnostics."""
+    _queue_record({
+        "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+        "source": "ndlocr_resident",
+        "event": event,
+        **details,
+    })
+
+
 class SearchPerformanceTrace:
     """Record elapsed and inter-stage time without blocking the UI on file I/O."""
 

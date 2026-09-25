@@ -24,13 +24,24 @@ def verify(helper: Path, image_path: Path) -> str:
     prepared = prepare_desecration_frame(image)
     if image.isNull() or not prepared.valid_panel or len(prepared.ndl_images) != 3:
         raise RuntimeError("NDLOCRスモークテスト画像を切り出せませんでした。")
-    result = NdlOcrLiteServer(helper=helper, timeout=120).recognize([
-        image_bytes(prepared.ndl_images[0]),
-    ])[0]
-    compact = re.sub(r"\s+", "", result.text)
-    if compact != EXPECTED:
-        raise RuntimeError(f"NDLOCRスモークテスト不一致: {result.text!r}")
-    return compact
+    server = NdlOcrLiteServer(helper=helper, timeout=120)
+    try:
+        compacts = []
+        for _index in range(2):
+            result = server.recognize([
+                image_bytes(prepared.ndl_images[0]),
+            ])[0]
+            compact = re.sub(r"\s+", "", result.text)
+            if compact != EXPECTED:
+                raise RuntimeError(
+                    f"NDLOCRスモークテスト不一致: {result.text!r}",
+                )
+            compacts.append(compact)
+        if server.last_metrics is None or server.last_metrics.cold_start:
+            raise RuntimeError("NDLOCR常駐プロセスが再利用されませんでした。")
+        return compacts[-1]
+    finally:
+        server.close()
 
 
 def main() -> int:

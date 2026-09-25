@@ -365,6 +365,25 @@ def test_shared_screen_reading_off_stops_both_features_and_keeps_regions():
     window._restart_hotkeys.assert_called_once_with()
 
 
+def test_screen_reading_shutdown_closes_desecration_ndlocr_owner():
+    window = MagicMock()
+    expedition = MagicMock()
+    desecration = MagicMock()
+    coordinator = MagicMock()
+    window._expedition_reward_controller = expedition
+    window._desecration_tier_controller = desecration
+    window._screen_reading_coordinator = coordinator
+
+    PoetoreModeWindow._shutdown_screen_reading(window)
+
+    expedition.close.assert_called_once_with()
+    desecration.close.assert_called_once_with()
+    coordinator.close.assert_called_once_with()
+    assert window._expedition_reward_controller is None
+    assert window._desecration_tier_controller is None
+    assert window._screen_reading_coordinator is None
+
+
 def test_desecration_hotkey_requires_shared_enabled_and_open_region():
     window = MagicMock()
     window.poe_version = POE2

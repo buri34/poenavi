@@ -6,9 +6,17 @@ import threading
 
 from PySide6.QtCore import QObject, QPoint, QRect, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QGuiApplication, QImage, QPainter, QPen
-from PySide6.QtWidgets import QGridLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from src.poetore.expedition_ocr_probe import WindowsOcrServer
+from src.poetore.performance import record_ndlocr_event
 from src.poetore.poe2.desecration_ocr import (
     ChoiceBand,
     apply_ndl_numeric_rescues,
@@ -302,11 +310,84 @@ class CategoryChoiceOverlay(QWidget):
         self.cancelled.emit()
 
 
+class HighAccuracyOcrStatusOverlay(QWidget):
+    """Non-interactive in-game explanation shown only while NDLOCR is active."""
+
+    _spinner_frames = ("◐", "◓", "◑", "◒")
+
+    def __init__(self):
+        super().__init__(None)
+        self.setWindowFlags(
+            Qt.Tool
+            | Qt.FramelessWindowHint
+            | Qt.WindowStaysOnTopHint
+            | Qt.WindowDoesNotAcceptFocus
+            | Qt.WindowTransparentForInput
+        )
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WA_ShowWithoutActivating)
+        self.setStyleSheet(
+            "QWidget#ocrStatus { background: rgba(10, 13, 12, 222); "
+            "border: 1px solid #7E8B87; border-radius: 7px; }"
+            "QLabel { color: #F0F4F2; background: transparent; border: none; }"
+        )
+        self.setObjectName("ocrStatus")
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(12, 9, 14, 9)
+        layout.setSpacing(9)
+        self._spinner = QLabel(self._spinner_frames[0])
+        spinner_font = QFont(self.font())
+        spinner_font.setPixelSize(19)
+        self._spinner.setFont(spinner_font)
+        self._spinner.setStyleSheet("color: #63E6C5;")
+        layout.addWidget(self._spinner, 0, Qt.AlignVCenter)
+        self._message = QLabel()
+        message_font = QFont(self.font())
+        message_font.setPixelSize(14)
+        self._message.setFont(message_font)
+        self._message.setTextFormat(Qt.PlainText)
+        layout.addWidget(self._message)
+        self._spinner_index = 0
+        self._animation = QTimer(self)
+        self._animation.setInterval(120)
+        self._animation.timeout.connect(self._advance_spinner)
+
+    @property
+    def message(self) -> str:
+        return self._message.text()
+
+    def _advance_spinner(self):
+        self._spinner_index = (self._spinner_index + 1) % len(self._spinner_frames)
+        self._spinner.setText(self._spinner_frames[self._spinner_index])
+
+    def show_status(self, client_rect: QRect, capture_rect: QRect, lines) -> None:
+        self._message.setText("\n".join(lines))
+        self.adjustSize()
+        width = min(max(self.width(), 390), min(520, client_rect.width()))
+        height = self.height()
+        x = capture_rect.right() - width // 4
+        x = min(max(client_rect.left(), x), client_rect.right() - width + 1)
+        y = capture_rect.top() - height - 12
+        if y < client_rect.top():
+            y = min(client_rect.bottom() - height + 1, capture_rect.top() + 12)
+        self.setGeometry(x, y, width, height)
+        self.show()
+        self.raise_()
+        self._animation.start()
+
+    def hide(self) -> None:
+        self._animation.stop()
+        super().hide()
+
+
 class DesecrationTierController(QObject):
     status = Signal(str)
     failed = Signal(str)
     _ready = Signal(object, object, object, object, int)
     _retry_closed_requested = Signal(int)
+    _ndl_status_begin = Signal(bool, int, int)
+    _ndl_status_end = Signal(int, int)
 
     def __init__(
         self, parent=None, *, regions_getter=None, ocr_server=None,
@@ -319,18 +400,27 @@ class DesecrationTierController(QObject):
         self._owns_ocr = ocr_server is None
         self._numeric_ocr = numeric_ocr_server or WindowsOcrServer("en-US")
         self._owns_numeric_ocr = numeric_ocr_server is None
-        self._ndl_ocr = ndl_ocr_server or NdlOcrLiteServer()
+        self._ndl_ocr = ndl_ocr_server or NdlOcrLiteServer(
+            event_callback=record_ndlocr_event,
+        )
         self._owns_ndl_ocr = ndl_ocr_server is None
         self._scan_coordinator = scan_coordinator
         self._trace_factory = trace_factory
         self._active_trace = None
         self._overlay = DesecrationTierOverlay()
         self._category_overlay = CategoryChoiceOverlay()
+        self._ndl_status_overlay = HighAccuracyOcrStatusOverlay()
         self._category_overlay.selected.connect(self._category_selected)
         self._category_overlay.cancelled.connect(self._category_cancelled)
         self._running = False
         self._scan_generation = 0
         self._pending = None
+        self._ndl_request_number = 0
+        self._pending_ndl_status = None
+        self._ndl_status_delay = QTimer(self)
+        self._ndl_status_delay.setSingleShot(True)
+        self._ndl_status_delay.setInterval(400)
+        self._ndl_status_delay.timeout.connect(self._show_delayed_ndl_status)
         self._monitor = QTimer(self)
         self._monitor.setInterval(650)
         self._monitor.timeout.connect(self._check_panel)
@@ -344,6 +434,8 @@ class DesecrationTierController(QObject):
         self._bands = ()
         self._ready.connect(self._show_result)
         self._retry_closed_requested.connect(self._scan_closed)
+        self._ndl_status_begin.connect(self._begin_ndl_status)
+        self._ndl_status_end.connect(self._end_ndl_status)
 
     @property
     def running(self):
@@ -393,6 +485,9 @@ class DesecrationTierController(QObject):
             trace, "capture_region_resolved", capture_mode="open",
             capture_width=open_rect.width(), capture_height=open_rect.height(),
         )
+        touch_ndl = getattr(self._ndl_ocr, "touch_if_running", None)
+        if callable(touch_ndl) and touch_ndl():
+            self._mark_trace(trace, "ndl_resident_timeout_refreshed")
         self._running = True
         self._scan_generation += 1
         generation = self._scan_generation
@@ -525,6 +620,12 @@ class DesecrationTierController(QObject):
             resolution = resolve_ocr_variants(grouped, categories)
             ndl_candidates = ndl_numeric_candidate_indexes(grouped, resolution)
             if ndl_candidates:
+                cold_start = getattr(self._ndl_ocr, "is_ready", False) is not True
+                self._ndl_request_number += 1
+                ndl_request_number = self._ndl_request_number
+                self._ndl_status_begin.emit(
+                    cold_start, generation, ndl_request_number,
+                )
                 try:
                     ndl_results = self._ndl_ocr.recognize([
                         image_bytes(prepared.ndl_images[index])
@@ -542,12 +643,27 @@ class DesecrationTierController(QObject):
                         capture_mode=capture_mode,
                         candidate_count=len(ndl_candidates),
                         accepted_count=len(accepted),
+                        cold_start=cold_start,
+                        startup_ms=getattr(
+                            getattr(self._ndl_ocr, "last_metrics", None),
+                            "startup_ms", None,
+                        ),
+                        wall_startup_ms=getattr(
+                            getattr(self._ndl_ocr, "last_metrics", None),
+                            "wall_startup_ms", None,
+                        ),
+                        inference_ms=getattr(
+                            getattr(self._ndl_ocr, "last_metrics", None),
+                            "inference_ms", None,
+                        ),
                     )
                 except Exception as exc:  # noqa: BLE001 - optional safe fallback
                     self._mark_trace(
                         trace, "ndl_numeric_rescue_failed",
                         capture_mode=capture_mode, error_type=type(exc).__name__,
                     )
+                finally:
+                    self._ndl_status_end.emit(generation, ndl_request_number)
             self._mark_trace(
                 trace, "tier_resolution_completed", capture_mode=capture_mode,
                 category_count=len(resolution.categories),
@@ -715,6 +831,47 @@ class DesecrationTierController(QObject):
             variant_count=sum(len(variants) for variants in prepared.variants),
         )
 
+    def _begin_ndl_status(self, cold_start, generation, request_number):
+        if generation != self._scan_generation or not self._running:
+            return
+        self._pending_ndl_status = (generation, request_number)
+        self._ndl_status_delay.stop()
+        if cold_start:
+            self._show_ndl_status(cold_start=True)
+        else:
+            self._ndl_status_delay.start()
+
+    def _show_delayed_ndl_status(self):
+        if self._pending_ndl_status is None or not self._running:
+            return
+        generation, _request_number = self._pending_ndl_status
+        if generation != self._scan_generation:
+            return
+        self._show_ndl_status(cold_start=False)
+
+    def _show_ndl_status(self, *, cold_start):
+        if self._client_rect is None or self._capture_rect is None:
+            return
+        lines = [
+            "通常の読み取りで一部の数値を確認できませんでした",
+            (
+                "高精度OCRを準備しています…"
+                if cold_start else "高精度OCRで再確認しています…"
+            ),
+        ]
+        if cold_start:
+            lines.append("初回のみ10～15秒ほどかかります")
+        self._ndl_status_overlay.show_status(
+            self._client_rect, self._capture_rect, lines,
+        )
+
+    def _end_ndl_status(self, generation, request_number):
+        if self._pending_ndl_status != (generation, request_number):
+            return
+        self._pending_ndl_status = None
+        self._ndl_status_delay.stop()
+        self._ndl_status_overlay.hide()
+
     def _release_scan(self):
         if self._scan_coordinator is not None:
             self._scan_coordinator.finish("desecration")
@@ -722,6 +879,9 @@ class DesecrationTierController(QObject):
     def hide(self):
         self._overlay.hide()
         self._category_overlay.hide()
+        self._ndl_status_overlay.hide()
+        self._ndl_status_delay.stop()
+        self._pending_ndl_status = None
         self._monitor.stop()
         self._expiry.stop()
         self._pending = None

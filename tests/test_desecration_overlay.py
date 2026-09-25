@@ -11,6 +11,7 @@ from src.poetore.poe2.desecration_overlay import (
     CategoryChoiceOverlay,
     DesecrationTierController,
     DesecrationTierOverlay,
+    HighAccuracyOcrStatusOverlay,
     normalized_capture_rect,
     selectable_categories,
     should_retry_closed_region,
@@ -56,6 +57,37 @@ def test_category_selector_is_non_modal_and_does_not_accept_focus():
     assert overlay.windowFlags() & Qt.WindowDoesNotAcceptFocus
     assert overlay.testAttribute(Qt.WA_ShowWithoutActivating)
     assert not overlay.isModal()
+    overlay.close()
+
+
+def test_high_accuracy_status_is_non_focus_and_uses_agreed_wording():
+    QApplication.instance() or QApplication([])
+    overlay = HighAccuracyOcrStatusOverlay()
+    client = QRect(0, 0, 800, 760)
+    capture = QRect(70, 390, 620, 290)
+    overlay.show_status(client, capture, (
+        "通常の読み取りで一部の数値を確認できませんでした",
+        "高精度OCRを準備しています…",
+        "初回のみ10～15秒ほどかかります",
+    ))
+
+    assert overlay.windowFlags() & Qt.WindowDoesNotAcceptFocus
+    assert overlay.windowFlags() & Qt.WindowTransparentForInput
+    assert overlay.testAttribute(Qt.WA_ShowWithoutActivating)
+    assert overlay.testAttribute(Qt.WA_TransparentForMouseEvents)
+    assert overlay.message.splitlines() == [
+        "通常の読み取りで一部の数値を確認できませんでした",
+        "高精度OCRを準備しています…",
+        "初回のみ10～15秒ほどかかります",
+    ]
+    assert client.contains(overlay.geometry())
+    for client, capture in (
+        (QRect(0, 0, 1920, 1080), QRect(700, 560, 620, 290)),
+        (QRect(100, 80, 2560, 1440), QRect(1050, 850, 760, 350)),
+        (QRect(-300, 0, 3021, 1296), QRect(850, 690, 800, 340)),
+    ):
+        overlay.show_status(client, capture, ("再確認理由", "高精度OCRで再確認しています…"))
+        assert client.contains(overlay.geometry())
     overlay.close()
 
 
@@ -434,6 +466,90 @@ def test_controller_does_not_run_ndl_when_windows_already_resolved_all_choices()
     controller.close()
 
 
+def test_valid_desecration_hotkey_refreshes_running_ndl_without_starting_rescue():
+    QApplication.instance() or QApplication([])
+    image = QImage(
+        "tests/fixtures/poetore/poe2/desecration/"
+        "reported-spear-companion-wrapped.png"
+    )
+    ocr = Mock()
+    ocr.recognize.return_value = [
+        *("6 か ら 9 の 物 理 ダ メ ー ジ を 追 加 す る",) * 4,
+        *("1 か ら 5 の 雷 ダ メ ー ジ を 追 加 す る",) * 4,
+        *(
+            (
+                "コ ン パ ニ オ ン の ダ メ ー ジ が 49 % 増 加 す る\n"
+                "コ ン パ ニ オ ン が プ レ イ ヤ ー の 存 在 下 に い る 時 に "
+                "ダ メ ー ジ が 51 % 増\n加 す る"
+            ),
+        ) * 4,
+    ]
+    ndl_ocr = Mock(is_ready=True)
+    ndl_ocr.touch_if_running.return_value = True
+    controller = DesecrationTierController(
+        regions_getter=lambda: {
+            "inventory_open_region": {
+                "left": 0, "top": 0, "right": .5, "bottom": .5,
+            },
+        },
+        ocr_server=ocr,
+        ndl_ocr_server=ndl_ocr,
+        scan_coordinator=Mock(try_begin=Mock(return_value=True)),
+    )
+    controller._grab = Mock(return_value=image)
+    with patch(
+        "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
+        return_value=QRect(0, 0, 1920, 1080),
+    ), patch(
+        "src.poetore.poe2.desecration_overlay.threading.Thread", ImmediateThread,
+    ):
+        assert controller.request_scan()
+
+    ndl_ocr.touch_if_running.assert_called_once_with()
+    ndl_ocr.recognize.assert_not_called()
+    controller.close()
+
+
+def test_ndl_status_is_immediate_when_cold_and_delayed_when_warm():
+    QApplication.instance() or QApplication([])
+    controller = DesecrationTierController(ocr_server=Mock())
+    controller._client_rect = QRect(0, 0, 800, 760)
+    controller._capture_rect = QRect(70, 390, 620, 290)
+    controller._running = True
+    controller._scan_generation = 4
+    controller._ndl_status_overlay.show_status = Mock()
+    controller._ndl_status_overlay.hide = Mock()
+
+    controller._begin_ndl_status(True, 4, 1)
+    controller._ndl_status_overlay.show_status.assert_called_once()
+    cold_lines = controller._ndl_status_overlay.show_status.call_args.args[2]
+    assert cold_lines == [
+        "通常の読み取りで一部の数値を確認できませんでした",
+        "高精度OCRを準備しています…",
+        "初回のみ10～15秒ほどかかります",
+    ]
+    controller._end_ndl_status(4, 1)
+
+    controller._ndl_status_overlay.show_status.reset_mock()
+    controller._begin_ndl_status(False, 4, 2)
+    controller._ndl_status_overlay.show_status.assert_not_called()
+    assert controller._ndl_status_delay.isActive()
+    controller._end_ndl_status(4, 2)
+    controller._show_delayed_ndl_status()
+    controller._ndl_status_overlay.show_status.assert_not_called()
+
+    controller._begin_ndl_status(False, 4, 3)
+    controller._show_delayed_ndl_status()
+    warm_lines = controller._ndl_status_overlay.show_status.call_args.args[2]
+    assert warm_lines == [
+        "通常の読み取りで一部の数値を確認できませんでした",
+        "高精度OCRで再確認しています…",
+    ]
+    controller._end_ndl_status(4, 3)
+    assert not controller._ndl_status_delay.isActive()
+    controller.close()
+
+
 def test_controller_records_sanitized_stage_timings_until_overlay_display():
     QApplication.instance() or QApplication([])
     image = QImage("tests/fixtures/poetore/poe2/desecration/spear-reveal.png")
@@ -561,6 +677,25 @@ def test_controller_records_failure_stage_without_user_facing_message():
         {"outcome": "failed", "failure_stage": "client_rect"},
     )
     assert "Path of Exileのゲーム画面が見つかりませんでした。" not in repr(trace.records)
+    controller.close()
+
+
+def test_invalid_desecration_hotkey_does_not_refresh_ndl_timeout():
+    QApplication.instance() or QApplication([])
+    ndl_ocr = Mock(is_ready=True)
+    controller = DesecrationTierController(
+        regions_getter=dict,
+        ocr_server=Mock(),
+        ndl_ocr_server=ndl_ocr,
+        scan_coordinator=Mock(try_begin=Mock(return_value=True)),
+    )
+    with patch(
+        "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
+        return_value=None,
+    ):
+        assert not controller.request_scan()
+
+    ndl_ocr.touch_if_running.assert_not_called()
     controller.close()
 
 

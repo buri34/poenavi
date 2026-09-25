@@ -55,7 +55,7 @@ $ndlArgs = @(
     "--add-data", "$ndlSource\src\config;config",
     "--add-data", "$ndlSource\LICENCE;.",
     "--add-data", "$ndlSource\LICENCE_DEPENDENCEIES;.",
-    "$ndlSource\src\ocr.py"
+    "scripts\ndlocr_lite_entry.py"
 )
 Invoke-Python @ndlArgs
 if (-not (Test-Path build\ndlocr-dist\PoENaviNdlOcr\PoENaviNdlOcr.exe)) {

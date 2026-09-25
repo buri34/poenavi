@@ -4,6 +4,7 @@ from src.poetore.performance import (
     SearchPerformanceTrace,
     _queue_record,
     record_mini_navi_topmost_event,
+    record_ndlocr_event,
     record_trade_api_event,
 )
 
@@ -98,3 +99,22 @@ def test_mini_navi_topmost_record_contains_only_timing_and_z_order_state():
     assert "window_title" not in record
     assert "process_path" not in record
     assert "hwnd" not in record
+
+
+def test_ndlocr_record_contains_only_lifecycle_and_timing_fields():
+    with patch("src.poetore.performance._queue_record") as queue_record:
+        record_ndlocr_event(
+            "ndl_request_completed",
+            cold_start=False,
+            inference_ms=742.5,
+            image_count=1,
+        )
+
+    record = queue_record.call_args.args[0]
+    assert record["source"] == "ndlocr_resident"
+    assert record["event"] == "ndl_request_completed"
+    assert record["cold_start"] is False
+    assert record["inference_ms"] == 742.5
+    assert record["image_count"] == 1
+    assert "text" not in record
+    assert "image" not in record
