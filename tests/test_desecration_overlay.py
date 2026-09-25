@@ -12,6 +12,7 @@ from src.poetore.poe2.desecration_overlay import (
     DesecrationTierController,
     DesecrationTierOverlay,
     HighAccuracyOcrStatusOverlay,
+    OutlinedLabel,
     normalized_capture_rect,
     selectable_categories,
     should_retry_closed_region,
@@ -80,6 +81,12 @@ def test_high_accuracy_status_is_non_focus_and_uses_agreed_wording():
         "高精度OCRを準備しています…",
         "初回のみ10～15秒ほどかかります",
     ]
+    assert isinstance(overlay._message, OutlinedLabel)
+    assert overlay._message.font().pixelSize() == 16
+    assert overlay._message.font().weight() == 600
+    assert overlay._message.outline_color == QColor(0, 0, 0, 245)
+    assert overlay._message.outline_pen_width == 2.0
+    assert overlay._spinner.font().pixelSize() == 21
     assert client.contains(overlay.geometry())
     for client, capture in (
         (QRect(0, 0, 1920, 1080), QRect(700, 560, 620, 290)),

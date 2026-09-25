@@ -5,7 +5,16 @@ from __future__ import annotations
 import threading
 
 from PySide6.QtCore import QObject, QPoint, QRect, QRectF, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QFont, QGuiApplication, QImage, QPainter, QPen
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QFont,
+    QGuiApplication,
+    QImage,
+    QPainter,
+    QPainterPath,
+    QPen,
+)
 from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
@@ -310,6 +319,40 @@ class CategoryChoiceOverlay(QWidget):
         self.cancelled.emit()
 
 
+class OutlinedLabel(QLabel):
+    """Plain multiline label with a crisp outline for in-game readability."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.outline_color = QColor(0, 0, 0, 245)
+        self.text_color = QColor("#F7FAF8")
+        # A 2px centered pen extends roughly 1px outside each glyph.
+        self.outline_pen_width = 2.0
+        self.setContentsMargins(2, 2, 2, 2)
+
+    def paintEvent(self, _event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        metrics = self.fontMetrics()
+        margins = self.contentsMargins()
+        baseline = margins.top() + metrics.ascent()
+        path = QPainterPath()
+        for index, line in enumerate(self.text().splitlines() or ("",)):
+            path.addText(
+                margins.left(),
+                baseline + index * metrics.lineSpacing(),
+                self.font(),
+                line,
+            )
+        pen = QPen(self.outline_color)
+        pen.setWidthF(self.outline_pen_width)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.strokePath(path, pen)
+        # Fill after stroking so the inner half of the 2px pen cannot darken
+        # thin Japanese glyphs; the remaining outer half is a 1px outline.
+        painter.fillPath(path, QBrush(self.text_color))
+
+
 class HighAccuracyOcrStatusOverlay(QWidget):
     """Non-interactive in-game explanation shown only while NDLOCR is active."""
 
@@ -338,13 +381,14 @@ class HighAccuracyOcrStatusOverlay(QWidget):
         layout.setSpacing(9)
         self._spinner = QLabel(self._spinner_frames[0])
         spinner_font = QFont(self.font())
-        spinner_font.setPixelSize(19)
+        spinner_font.setPixelSize(21)
         self._spinner.setFont(spinner_font)
         self._spinner.setStyleSheet("color: #63E6C5;")
         layout.addWidget(self._spinner, 0, Qt.AlignVCenter)
-        self._message = QLabel()
+        self._message = OutlinedLabel()
         message_font = QFont(self.font())
-        message_font.setPixelSize(14)
+        message_font.setPixelSize(16)
+        message_font.setWeight(QFont.DemiBold)
         self._message.setFont(message_font)
         self._message.setTextFormat(Qt.PlainText)
         layout.addWidget(self._message)
