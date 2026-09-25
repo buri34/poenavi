@@ -4,12 +4,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_cleanup_batch_calls_guarded_powershell_script_relative_to_snapshot():
-    batch = (ROOT / "CLEANUP_OLD_POENAVI_FOLDERS.cmd").read_text(encoding="utf-8")
+    batch_path = ROOT / "CLEANUP_OLD_POENAVI_FOLDERS.cmd"
+    raw_batch = batch_path.read_bytes()
+    batch = raw_batch.decode("utf-8")
 
+    assert b"\n" not in raw_batch.replace(b"\r\n", b"")
     assert "%~dp0" in batch
     assert "cleanup_old_poenavi_folders.ps1" in batch
     assert '-Root "%SCRIPT_DIR%.."' in batch
-    assert '-ProtectPath "%SCRIPT_DIR%"' in batch
+    assert '-ProtectPath "%SCRIPT_DIR%."' in batch
+    assert '-ProtectPath "%SCRIPT_DIR%"' not in batch
     assert "pause" in batch
 
 
