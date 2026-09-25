@@ -198,6 +198,7 @@ def test_snapshot_release_handoff_builds_locally_and_returns_audited_artifacts()
 
 def test_root_windows_entry_points_are_limited_to_current_build_workflows():
     expected = {
+        "CLEANUP_OLD_POENAVI_FOLDERS.cmd",
         "BUILD_RELEASE_FROM_SNAPSHOT.cmd",
         "build_diagnostic_exe.bat",
         "build_exe.bat",

@@ -1,4 +1,6 @@
 data/zone_data.json text eol=lf
+CLEANUP_OLD_POENAVI_FOLDERS.cmd text eol=crlf
+scripts/cleanup_old_poenavi_folders.ps1 text eol=crlf
 RUN_DESECRATION_OCR_TEST.cmd text eol=crlf
 RUN_DESECRATION_OCR_FUSION_TEST.cmd text eol=crlf
 BUILD_POENAVI_NDLOCR_TEST.cmd text eol=crlf
