@@ -215,6 +215,9 @@ def test_root_windows_entry_points_are_limited_to_current_build_workflows():
     }
 
     assert actual == expected
+    attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
+    assert "*.bat text eol=crlf" in attributes
+    assert "*.cmd text eol=crlf" in attributes
     assert not (ROOT / "scripts" / "run_desecration_ocr_fusion_test.ps1").exists()
     assert not (ROOT / "spikes" / "001-ndlocr-resident-memory").exists()
 
