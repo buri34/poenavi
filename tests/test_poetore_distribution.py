@@ -164,8 +164,8 @@ def test_windows_build_verifies_executable_product_and_version_metadata():
     assert "PoENavi.exe" in workflow and "PoENaviUpdater.exe" in workflow
 
 
-def test_ndlocr_windows_handoff_builds_locally_and_returns_audited_artifacts():
-    batch = (ROOT / "BUILD_POENAVI_NDLOCR_TEST.cmd").read_text(encoding="utf-8")
+def test_snapshot_release_handoff_builds_locally_and_returns_audited_artifacts():
+    batch = (ROOT / "BUILD_RELEASE_FROM_SNAPSHOT.cmd").read_text(encoding="utf-8")
     handoff = (ROOT / "scripts" / "build_release_from_local_copy.ps1").read_text(
         encoding="utf-8"
     )
@@ -184,6 +184,25 @@ def test_ndlocr_windows_handoff_builds_locally_and_returns_audited_artifacts():
     assert "Copy-Item" in handoff and "scripts\\build_release.ps1" in handoff
     assert "PoENavi.zip.sha256" in handoff and "BUILD_INFO.txt" in handoff
     assert "zip_bytes=" in handoff and "zip_sha256=" in handoff
+
+
+def test_root_windows_entry_points_are_limited_to_current_build_workflows():
+    expected = {
+        "BUILD_RELEASE_FROM_SNAPSHOT.cmd",
+        "build_diagnostic_exe.bat",
+        "build_exe.bat",
+        "run_dev.bat",
+        "test_local_update.bat",
+    }
+    actual = {
+        path.name
+        for path in ROOT.iterdir()
+        if path.is_file() and path.suffix.lower() in {".bat", ".cmd"}
+    }
+
+    assert actual == expected
+    assert not (ROOT / "scripts" / "run_desecration_ocr_fusion_test.ps1").exists()
+    assert not (ROOT / "spikes" / "001-ndlocr-resident-memory").exists()
 
 
 def test_source_lock_is_development_only_and_pins_revision_and_hashes():

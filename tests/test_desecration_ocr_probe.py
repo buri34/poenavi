@@ -124,10 +124,12 @@ def test_manifest_cannot_escape_the_input_directory(tmp_path):
 
 
 def test_windows_launcher_uses_local_build_output_and_opens_the_report():
-    launcher = Path("RUN_DESECRATION_OCR_TEST.cmd").read_text(encoding="utf-8")
+    launcher = Path(
+        "tools/diagnostics/RUN_DESECRATION_WINDOWS_OCR_TEST.cmd"
+    ).read_text(encoding="utf-8")
     script = Path("scripts/run_desecration_windows_ocr.ps1").read_text(encoding="utf-8")
 
-    assert "run_desecration_windows_ocr.ps1" in launcher
+    assert "..\\..\\scripts\\run_desecration_windows_ocr.ps1" in launcher
     assert "$env:LOCALAPPDATA" in script
     assert "poenavi-short-ocr-diagnostic\\helper\\ExpeditionWindowsOcr.exe" in script
     assert "Get-FileHash -LiteralPath $prebuiltHelper -Algorithm SHA256" in script

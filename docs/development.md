@@ -1,5 +1,17 @@
 # Development Notes
 
+## Windowsビルド・OCR検証の入口
+
+- `build_exe.bat`: 通常の正式配布用`PoENavi.zip`を作る標準入口。
+- `build_diagnostic_exe.bat`: エクスペディションOCRの詳細診断を有効にした保守用ZIPを作る。
+- `BUILD_RELEASE_FROM_SNAPSHOT.cmd`: SMB上の変更不可スナップショットをWindowsローカルへコピーし、
+  ビルドツール準備、正式ZIP生成、監査、共有フォルダへの成果物回収まで行う実機引き渡し用入口。
+- `tools/diagnostics/RUN_DESECRATION_WINDOWS_OCR_TEST.cmd`: 保存済み実画像をWindows OCR単体へ通す
+  開発者向け回帰確認。正式ZIPは作らない。
+
+過去のWindows OCR＋NDLOCR Fusion検証と常駐RAMスパイクは、本体実装とWindows実測が完了したため
+削除した。検証結果は`docs/poetore-ndlocr-resident-integration-plan.md`に保存している。
+
 ## 開発用のユーザーデータ保存先
 
 通常起動では、設定ファイルは `%APPDATA%\PoENavi\config.json` に保存されます。
