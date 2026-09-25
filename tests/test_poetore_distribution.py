@@ -64,6 +64,9 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert '"--add-data", "build\\expedition-windows-ocr;tools\\ExpeditionWindowsOcr"' in script
     assert '"--add-data", "build\\ndlocr-dist\\PoENaviNdlOcr;tools\\NDLOcrLite"' not in script
     assert '$ocrPackName = "PoENavi-HighAccuracyOCR"' in script
+    assert '$ocrPackArgs = @("-c", $ocrPackCode)' in script
+    assert "Invoke-Python @ocrPackArgs" in script
+    assert "Invoke-Python -c $ocrPackCode" not in script
     assert "updater-compatible archive exceeds 512 MiB" in script
     assert "high-accuracy OCR runtime leaked into PoENavi.zip" in script
     assert "ExpeditionWindowsOcr.exe" in script

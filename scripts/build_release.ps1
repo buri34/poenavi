@@ -114,7 +114,8 @@ Copy-Item "$ndlLicenseDir\LICENCE.txt" "$ocrPackRoot\THIRD_PARTY_LICENSES\NDLOCR
 Copy-Item "$ndlLicenseDir\LICENCE_DEPENDENCIES.txt" "$ocrPackRoot\THIRD_PARTY_LICENSES\NDLOCR-Lite-$ndlVersion\LICENCE_DEPENDENCIES.txt"
 Remove-Item $ocrPackZip, $ocrPackSha -ErrorAction SilentlyContinue
 $ocrPackCode = "import shutil; shutil.make_archive('$ocrPackName', 'zip', root_dir='build/ndlocr-pack', base_dir='$ocrPackName')"
-Invoke-Python -c $ocrPackCode
+$ocrPackArgs = @("-c", $ocrPackCode)
+Invoke-Python @ocrPackArgs
 if (-not (Test-Path $ocrPackZip)) {
     throw "High-accuracy OCR pack was not created"
 }
