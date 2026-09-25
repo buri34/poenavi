@@ -33,7 +33,7 @@ function Write-Utf8NoBom {
 function Get-MemorySample {
     param([int]$ProcessId, [string]$Stage, [double]$ElapsedSeconds)
     $item = Get-Process -Id $ProcessId -ErrorAction Stop
-    return [ordered]@{
+    return [PSCustomObject][ordered]@{
         stage = $Stage
         elapsed_seconds = [Math]::Round($ElapsedSeconds, 3)
         working_set_mib = [Math]::Round($item.WorkingSet64 / 1MB, 2)
@@ -57,11 +57,50 @@ function Wait-JsonFile {
     throw "Timed out waiting for $Path"
 }
 
+function Write-ProbeReport {
+    param([PSCustomObject]$Summary, [string]$RunDirectory)
+    $sampleRows = @($Summary.memory_samples)
+    $requestItems = @($Summary.requests)
+    if ($sampleRows.Count -eq 0) { throw "The saved summary has no memory samples." }
+    if ($requestItems.Count -eq 0) { throw "The saved summary has no OCR requests." }
+
+    $peakWorking = ($sampleRows | Measure-Object -Property peak_working_set_mib -Maximum).Maximum
+    $peakPrivate = ($sampleRows | Measure-Object -Property private_memory_mib -Maximum).Maximum
+    $requestRows = ($requestItems | ForEach-Object { "<tr><td>$($_.index)</td><td>$($_.inference_ms)</td><td>$($_.expected_text_found)</td><td>$($_.minimum_confidence)</td></tr>" }) -join "`n"
+    $memoryRows = ($sampleRows | ForEach-Object { "<tr><td>$($_.stage)</td><td>$($_.elapsed_seconds)</td><td>$($_.working_set_mib)</td><td>$($_.private_memory_mib)</td><td>$($_.peak_working_set_mib)</td><td>$($_.cpu_seconds)</td></tr>" }) -join "`n"
+    $html = @"
+<!doctype html><meta charset="utf-8"><title>NDLOCR常駐RAM検証</title>
+<style>body{font-family:Segoe UI,sans-serif;max-width:1100px;margin:32px auto;padding:0 20px}table{border-collapse:collapse;width:100%;margin:16px 0}th,td{border:1px solid #bbb;padding:6px;text-align:right}th:first-child,td:first-child{text-align:left}.ok{color:#087f23;font-weight:bold}</style>
+<h1>NDLOCR常駐RAM検証</h1><p class="ok">物理64%認識: $($Summary.all_expected_text_found)</p>
+<ul><li>モデル読込: $($Summary.model_startup_ms) ms</li><li>最大Working Set: $peakWorking MiB</li><li>最大Private Memory: $peakPrivate MiB</li><li>アイドル計測: $($Summary.idle_seconds) 秒</li></ul>
+<h2>連続OCR</h2><table><tr><th>回</th><th>推論 ms</th><th>物理64%</th><th>最低信頼度</th></tr>$requestRows</table>
+<h2>メモリ推移</h2><table><tr><th>段階</th><th>経過秒</th><th>Working Set MiB</th><th>Private MiB</th><th>Peak Working MiB</th><th>CPU秒</th></tr>$memoryRows</table>
+<p>独立検証ツールの結果です。PoENavi本体のOCR動作は変更していません。</p>
+"@
+    $reportPath = Join-Path $RunDirectory "report.html"
+    Write-Utf8NoBom $reportPath $html
+    Write-Host "Summary: $(Join-Path $RunDirectory 'summary.json')" -ForegroundColor Green
+    Write-Host "Report:  $reportPath" -ForegroundColor Green
+    Start-Process $reportPath
+}
+
 if ($RepeatCount -lt 2) { throw "RepeatCount must be at least 2." }
 if ($IdleSeconds -lt 0) { throw "IdleSeconds cannot be negative." }
 if (-not (Test-Path -LiteralPath $fixtureSource -PathType Leaf)) { throw "Fixture not found: $fixtureSource" }
 
-New-Item -ItemType Directory -Path $cacheRoot, $runRoot, $control -Force | Out-Null
+New-Item -ItemType Directory -Path $cacheRoot, $runsRoot -Force | Out-Null
+$recoverableSummary = Get-ChildItem -LiteralPath $runsRoot -Filter "summary.json" -File -Recurse -ErrorAction SilentlyContinue |
+    Where-Object { -not (Test-Path -LiteralPath (Join-Path $_.DirectoryName "report.html") -PathType Leaf) } |
+    Sort-Object LastWriteTimeUtc -Descending |
+    Select-Object -First 1
+if ($null -ne $recoverableSummary) {
+    Write-Host "Recovering the completed measurement without downloading, building, or waiting again..." -ForegroundColor Yellow
+    $savedSummary = Get-Content -LiteralPath $recoverableSummary.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+    Write-ProbeReport $savedSummary $recoverableSummary.DirectoryName
+    exit 0
+}
+
+New-Item -ItemType Directory -Path $runRoot, $control -Force | Out-Null
 Copy-Item -LiteralPath $serverSource -Destination $localServerSource -Force
 Copy-Item -LiteralPath $fixtureSource -Destination $fixture -Force
 $bootstrap = Join-Path $repo "scripts\ensure_windows_build_tools.ps1"
@@ -139,7 +178,7 @@ try {
         Write-Utf8NoBom $requestPath ($request | ConvertTo-Json -Depth 4)
         $response = Wait-JsonFile $responsePath 120
         if (-not $response.ok) { throw "NDLOCR request failed: $($response.error)" }
-        $requests.Add([ordered]@{
+        $requests.Add([PSCustomObject][ordered]@{
             index = $index
             inference_ms = [double]$response.elapsed_ms
             expected_text_found = [bool]$response.expected_text_found
@@ -170,25 +209,8 @@ try {
     }
     $summaryPath = Join-Path $runRoot "summary.json"
     Write-Utf8NoBom $summaryPath ($summary | ConvertTo-Json -Depth 8)
-
-    $peakWorking = ($samples | Measure-Object peak_working_set_mib -Maximum).Maximum
-    $peakPrivate = ($samples | Measure-Object private_memory_mib -Maximum).Maximum
-    $requestRows = ($requests | ForEach-Object { "<tr><td>$($_.index)</td><td>$($_.inference_ms)</td><td>$($_.expected_text_found)</td><td>$($_.minimum_confidence)</td></tr>" }) -join "`n"
-    $memoryRows = ($samples | ForEach-Object { "<tr><td>$($_.stage)</td><td>$($_.elapsed_seconds)</td><td>$($_.working_set_mib)</td><td>$($_.private_memory_mib)</td><td>$($_.peak_working_set_mib)</td><td>$($_.cpu_seconds)</td></tr>" }) -join "`n"
-    $html = @"
-<!doctype html><meta charset="utf-8"><title>NDLOCR常駐RAM検証</title>
-<style>body{font-family:Segoe UI,sans-serif;max-width:1100px;margin:32px auto;padding:0 20px}table{border-collapse:collapse;width:100%;margin:16px 0}th,td{border:1px solid #bbb;padding:6px;text-align:right}th:first-child,td:first-child{text-align:left}.ok{color:#087f23;font-weight:bold}</style>
-<h1>NDLOCR常駐RAM検証</h1><p class="ok">物理64%認識: $($summary.all_expected_text_found)</p>
-<ul><li>モデル読込: $($summary.model_startup_ms) ms</li><li>最大Working Set: $peakWorking MiB</li><li>最大Private Memory: $peakPrivate MiB</li><li>アイドル計測: $IdleSeconds 秒</li></ul>
-<h2>連続OCR</h2><table><tr><th>回</th><th>推論 ms</th><th>物理64%</th><th>最低信頼度</th></tr>$requestRows</table>
-<h2>メモリ推移</h2><table><tr><th>段階</th><th>経過秒</th><th>Working Set MiB</th><th>Private MiB</th><th>Peak Working MiB</th><th>CPU秒</th></tr>$memoryRows</table>
-<p>独立検証ツールの結果です。PoENavi本体のOCR動作は変更していません。</p>
-"@
-    $reportPath = Join-Path $runRoot "report.html"
-    Write-Utf8NoBom $reportPath $html
-    Write-Host "Summary: $summaryPath" -ForegroundColor Green
-    Write-Host "Report:  $reportPath" -ForegroundColor Green
-    Start-Process $reportPath
+    $savedSummary = Get-Content -LiteralPath $summaryPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    Write-ProbeReport $savedSummary $runRoot
 }
 finally {
     Write-Utf8NoBom (Join-Path $control "shutdown.json") "{}"

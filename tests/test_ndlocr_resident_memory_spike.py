@@ -49,6 +49,18 @@ def test_windows_runner_measures_startup_requests_and_idle_memory():
     assert "run_probe.ps1" in batch
 
 
+def test_windows_runner_exposes_samples_as_properties_and_recovers_saved_run():
+    script = (SPIKE / "run_probe.ps1").read_text(encoding="utf-8")
+    assert "return [PSCustomObject][ordered]@{" in script
+    assert "$requests.Add([PSCustomObject][ordered]@{" in script
+    assert "Measure-Object -Property peak_working_set_mib -Maximum" in script
+    assert "Recovering the completed measurement" in script
+    assert "Write-ProbeReport $savedSummary $recoverableSummary.DirectoryName" in script
+    assert script.index("Recovering the completed measurement") < script.index(
+        "ensure_windows_build_tools.ps1",
+    )
+
+
 def test_spike_is_not_connected_to_the_production_ocr_path():
     production = (ROOT / "src" / "poetore" / "poe2" / "ndlocr_lite.py").read_text(
         encoding="utf-8",
