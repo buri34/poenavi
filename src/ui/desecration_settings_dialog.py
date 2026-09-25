@@ -16,12 +16,14 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMessageBox,
+    QProgressBar,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
     QWidget,
 )
 
+from src.poetore.poe2.ndlocr_pack import PACK_VERSION
 from src.poetore.window_position import path_of_exile_client_rect
 from src.ui.app_theme import SETTINGS_THEME
 from src.ui.expedition_settings_dialog import (
@@ -53,6 +55,7 @@ class DesecrationSettingsDialog(QDialog):
         screen_reading_enabled=False, example_image_path=None,
         client_rect_getter=path_of_exile_client_rect,
         selector_class=DesecrationRegionSelector,
+        ocr_pack_controller=None,
     ):
         super().__init__(parent)
         self._config = dict(desecration_config or {})
@@ -67,6 +70,7 @@ class DesecrationSettingsDialog(QDialog):
         self._client_rect_getter = client_rect_getter
         self._selector_class = selector_class
         self._example_image_path = Path(example_image_path or DEFAULT_EXAMPLE_IMAGE_PATH)
+        self._ocr_pack_controller = ocr_pack_controller
         self._section_widgets = {}
         self.setWindowTitle("アビス冒涜Modティアチェック設定")
         self.setMinimumSize(620, 820)
@@ -120,7 +124,33 @@ class DesecrationSettingsDialog(QDialog):
         basic.addLayout(form)
         content.addWidget(basic_group)
 
-        range_group, ranges = self._section_group("2. 読取範囲", "readRegionsGroup")
+        pack_group, pack = self._section_group(
+            "2. 高精度OCR", "highAccuracyOcrGroup"
+        )
+        self.ocr_pack_status = QLabel()
+        self.ocr_pack_status.setObjectName("highAccuracyOcrStatus")
+        self.ocr_pack_status.setWordWrap(True)
+        pack.addWidget(self.ocr_pack_status)
+        self.ocr_pack_progress = QProgressBar()
+        self.ocr_pack_progress.setObjectName("highAccuracyOcrProgress")
+        self.ocr_pack_progress.setRange(0, 100)
+        self.ocr_pack_progress.setTextVisible(True)
+        pack.addWidget(self.ocr_pack_progress)
+        self.ocr_pack_retry = QPushButton("再試行")
+        self.ocr_pack_retry.setObjectName("highAccuracyOcrRetry")
+        self.ocr_pack_retry.clicked.connect(self._retry_ocr_pack)
+        pack.addWidget(self.ocr_pack_retry, alignment=Qt.AlignLeft)
+        content.addWidget(pack_group)
+
+        if self._ocr_pack_controller is not None:
+            self._ocr_pack_controller.status_changed.connect(
+                self._update_ocr_pack_status
+            )
+            self._update_ocr_pack_status(self._ocr_pack_controller.status)
+        else:
+            self._update_ocr_pack_status(None)
+
+        range_group, ranges = self._section_group("3. 読取範囲", "readRegionsGroup")
         instruction = QLabel(
             "タイトル・装備画像・確認ボタンを含めず、3つのMod選択肢部分だけを囲んでください。\n"
             "読取時は「インベントリを開いた状態」を先に確認し、読取に失敗した場合は"
@@ -162,7 +192,7 @@ class DesecrationSettingsDialog(QDialog):
         content.addWidget(range_group)
 
         display_group, display = self._section_group(
-            "3. 表示設定", "displaySettingsGroup"
+            "4. 表示設定", "displaySettingsGroup"
         )
         self.show_ranges_checkbox = QCheckBox(
             "Tierの数値範囲を表示する（例：15–25%）"
@@ -186,6 +216,55 @@ class DesecrationSettingsDialog(QDialog):
         buttons.addWidget(save)
         root.addLayout(buttons)
         self._refresh_all()
+
+    def _retry_ocr_pack(self):
+        if self._ocr_pack_controller is not None:
+            self._ocr_pack_controller.retry()
+
+    def _update_ocr_pack_status(self, status):
+        state = getattr(status, "state", "unavailable")
+        detail = getattr(status, "detail", "")
+        done = int(getattr(status, "done", 0) or 0)
+        total = int(getattr(status, "total", 0) or 0)
+        self.ocr_pack_progress.setVisible(state == "downloading")
+        self.ocr_pack_retry.setVisible(state == "error")
+        if state == "ready":
+            self.ocr_pack_status.setText(
+                f"✓ 高精度OCRを利用できます\nNDLOCR-Lite {PACK_VERSION}"
+            )
+            self.ocr_pack_status.setStyleSheet("color: #B0FF7B; font-weight: bold;")
+        elif state == "checking":
+            self.ocr_pack_status.setText(
+                "高精度OCRを準備しています\n初回のみ高精度OCRパックをダウンロードします"
+            )
+            self.ocr_pack_status.setStyleSheet("")
+        elif state == "downloading":
+            percent = int(done * 100 / total) if total > 0 else 0
+            self.ocr_pack_progress.setRange(0, 100 if total > 0 else 0)
+            if total > 0:
+                self.ocr_pack_progress.setValue(percent)
+            self.ocr_pack_status.setText(
+                f"高精度OCRをダウンロードしています… {percent}%"
+                if total > 0 else "高精度OCRをダウンロードしています…"
+            )
+            self.ocr_pack_status.setStyleSheet("")
+        elif state == "installing":
+            self.ocr_pack_status.setText("高精度OCRをインストールしています…")
+            self.ocr_pack_status.setStyleSheet("")
+        elif state == "error":
+            message = "高精度OCRを準備できませんでした\n通常の読み取り機能は引き続き利用できます"
+            if detail:
+                message += f"\n{detail}"
+            self.ocr_pack_status.setText(message)
+            self.ocr_pack_status.setStyleSheet("color: #FFCC80;")
+        elif state == "idle":
+            self.ocr_pack_status.setText(
+                "高精度OCRを準備しています\n初回のみ高精度OCRパックをダウンロードします"
+            )
+            self.ocr_pack_status.setStyleSheet("")
+        else:
+            self.ocr_pack_status.setText("高精度OCRの状態を確認できません")
+            self.ocr_pack_status.setStyleSheet("")
 
     @staticmethod
     def _section_group(title: str, object_name: str):

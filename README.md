@@ -114,7 +114,7 @@ PoE2の「エクスペディション報酬価格チェック」と「アビス�
 
 1. OSの画面キャプチャ機能で、ユーザーが指定したPoE画面の範囲を取得
 2. Windows OCRを使ってPC内で文字を解析
-   - アビス冒涜Modで、Windows OCRが本文を安定して認識したものの数字だけ欠落した場合に限り、同梱のNDLOCR-Liteでその行を再確認
+   - アビス冒涜Modで、Windows OCRが本文を安定して認識したものの数字だけ欠落した場合に限り、自動取得した高精度OCRパック（NDLOCR-Lite）でその行を再確認
 3. 解析結果をPoENaviの独立したウィンドウとして表示
 
 これらのOCR機能は、ゲームメモリやゲームファイルを読み取らず、ゲームプロセスへのコード注入も行いません。また、OCR結果を使った自動クリック、キー入力、Mod選択などのゲーム操作は行いません。
@@ -167,7 +167,7 @@ The PoE2 Expedition reward price checker and Abyss Desecration modifier Tier che
 
 1. A user-configured region of the PoE screen is captured through the operating system's screen-capture API.
 2. Text is recognized locally using Windows OCR.
-   - For an Abyss Desecration modifier only, if Windows OCR has a stable body but is missing a number, the bundled NDLOCR-Lite rechecks that row locally.
+   - For an Abyss Desecration modifier only, if Windows OCR has a stable body but is missing a number, the automatically downloaded high-accuracy OCR pack (NDLOCR-Lite) rechecks that row locally.
 3. The result is shown in a separate PoENavi window.
 
 These OCR features do not read game memory or files, inject code, or interact with the game process. OCR results are never used to click, press keys, select modifiers, or perform any other in-game action automatically.

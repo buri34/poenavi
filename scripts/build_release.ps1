@@ -103,6 +103,22 @@ Copy-Item "$ndlSource\LICENCE" "$ndlLicenseDir\LICENCE.txt"
 Copy-Item "$ndlSource\LICENCE_DEPENDENCEIES" "$ndlLicenseDir\LICENCE_DEPENDENCIES.txt"
 Add-Content -Path "build\third-party-licenses\README.md" -Value "- NDLOCR-Lite ${ndlVersion}: ``NDLOCR-Lite-$ndlVersion/LICENCE.txt``, ``NDLOCR-Lite-$ndlVersion/LICENCE_DEPENDENCIES.txt``"
 
+$ocrPackName = "PoENavi-HighAccuracyOCR"
+$ocrPackZip = "$ocrPackName.zip"
+$ocrPackSha = "$ocrPackZip.sha256"
+$ocrPackRoot = "build\ndlocr-pack\$ocrPackName"
+New-Item -ItemType Directory -Path $ocrPackRoot -Force | Out-Null
+Copy-Item "build\ndlocr-dist\PoENaviNdlOcr" "$ocrPackRoot\PoENaviNdlOcr" -Recurse
+New-Item -ItemType Directory -Path "$ocrPackRoot\THIRD_PARTY_LICENSES\NDLOCR-Lite-$ndlVersion" -Force | Out-Null
+Copy-Item "$ndlLicenseDir\LICENCE.txt" "$ocrPackRoot\THIRD_PARTY_LICENSES\NDLOCR-Lite-$ndlVersion\LICENCE.txt"
+Copy-Item "$ndlLicenseDir\LICENCE_DEPENDENCIES.txt" "$ocrPackRoot\THIRD_PARTY_LICENSES\NDLOCR-Lite-$ndlVersion\LICENCE_DEPENDENCIES.txt"
+Remove-Item $ocrPackZip, $ocrPackSha -ErrorAction SilentlyContinue
+$ocrPackCode = "import shutil; shutil.make_archive('$ocrPackName', 'zip', root_dir='build/ndlocr-pack', base_dir='$ocrPackName')"
+Invoke-Python -c $ocrPackCode
+if (-not (Test-Path $ocrPackZip)) {
+    throw "High-accuracy OCR pack was not created"
+}
+
 $appArgs = @(
     "-m", "PyInstaller",
     "--noconfirm", "--clean", "--noupx", "--onedir", "--windowed",
@@ -121,7 +137,6 @@ $appArgs = @(
     "--add-data", "THIRD_PARTY_NOTICES.md;.",
     "--add-data", "build\third-party-licenses;THIRD_PARTY_LICENSES",
     "--add-data", "build\expedition-windows-ocr;tools\ExpeditionWindowsOcr",
-    "--add-data", "build\ndlocr-dist\PoENaviNdlOcr;tools\NDLOcrLite",
     "--add-data", "data;data",
     "--add-data", "assets;assets",
     "--add-data", "maps;maps",
@@ -200,7 +215,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $zipName))
 try {
     $entryNames = @($archive.Entries | ForEach-Object { $_.FullName.Replace("\", "/") })
-    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES/README.md", "THIRD_PARTY_LICENSES/Python-LICENSE.txt", "THIRD_PARTY_LICENSES/NDLOCR-Lite-1.3.1/LICENCE.txt", "THIRD_PARTY_LICENSES/NDLOCR-Lite-1.3.1/LICENCE_DEPENDENCIES.txt", "ExpeditionWindowsOcr.exe", "PoENaviNdlOcr.exe", "deim-s-1024x1024.onnx", "parseq-ndl-24x256-30-tiny-189epoch-tegaki3-r8data-202604.onnx", "expedition_region_example.png", "desecration_region_example.png", "expedition_ocr_items.json", "desecration_tiers.json", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json", "map_mods.json")) {
+    foreach ($requiredName in @("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES/README.md", "THIRD_PARTY_LICENSES/Python-LICENSE.txt", "THIRD_PARTY_LICENSES/NDLOCR-Lite-1.3.1/LICENCE.txt", "THIRD_PARTY_LICENSES/NDLOCR-Lite-1.3.1/LICENCE_DEPENDENCIES.txt", "ExpeditionWindowsOcr.exe", "expedition_region_example.png", "desecration_region_example.png", "expedition_ocr_items.json", "desecration_tiers.json", "mod_metadata.json", "pseudo_relations.json", "pseudo_definitions.json", "map_mods.json")) {
         if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {
             throw "Release audit failed: missing $requiredName"
         }
@@ -231,6 +246,13 @@ try {
     if (-not $Diagnostic -and $hasDiagnosticFlag) {
         throw "Release audit failed: diagnostic marker leaked into normal release"
     }
+    $totalUncompressed = ($archive.Entries | Measure-Object -Property Length -Sum).Sum
+    if ($totalUncompressed -gt 512MB) {
+        throw "Release audit failed: updater-compatible archive exceeds 512 MiB after extraction"
+    }
+    if ($entryNames | Where-Object { $_ -match "(^|/)(PoENaviNdlOcr\.exe|.+\.onnx)$" }) {
+        throw "Release audit failed: high-accuracy OCR runtime leaked into PoENavi.zip"
+    }
 }
 finally {
     $archive.Dispose()
@@ -238,6 +260,21 @@ finally {
 
 $hash = (Get-FileHash $zipName -Algorithm SHA256).Hash.ToLower()
 Set-Content -Path $shaName -Value "$hash  $zipName" -Encoding ascii
+$ocrPackHash = (Get-FileHash $ocrPackZip -Algorithm SHA256).Hash.ToLower()
+Set-Content -Path $ocrPackSha -Value "$ocrPackHash  $ocrPackZip" -Encoding ascii
+
+$ocrArchive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $ocrPackZip))
+try {
+    $ocrEntryNames = @($ocrArchive.Entries | ForEach-Object { $_.FullName.Replace("\", "/") })
+    foreach ($requiredName in @("PoENaviNdlOcr.exe", "deim-s-1024x1024.onnx", "parseq-ndl-24x256-30-tiny-189epoch-tegaki3-r8data-202604.onnx", "parseq-ndl-24x384-50-tiny-300epoch-tegaki3-r8data-202604.onnx", "parseq-ndl-24x768-100-tiny-153epoch-tegaki3-r8data-202604.onnx", "LICENCE.txt", "LICENCE_DEPENDENCIES.txt")) {
+        if (-not ($ocrEntryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {
+            throw "High-accuracy OCR pack audit failed: missing $requiredName"
+        }
+    }
+}
+finally {
+    $ocrArchive.Dispose()
+}
 
 Write-Output "Built $artifactBase"
 $zipPath = (Resolve-Path $zipName).Path

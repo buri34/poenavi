@@ -403,6 +403,7 @@ class PoetoreModeWindow(QMainWindow):
         self._memo_dialog = None
         self._expedition_reward_controller = None
         self._desecration_tier_controller = None
+        self._ndlocr_pack_controller = None
         self._screen_reading_coordinator = None
         self._rate_request_running = False
         self._rate_signals = _RateSignals(self)
@@ -1008,6 +1009,13 @@ class PoetoreModeWindow(QMainWindow):
             self._desecration_tier_controller = controller
         return self._desecration_tier_controller
 
+    def _ensure_ndlocr_pack_controller(self):
+        if self._ndlocr_pack_controller is None:
+            from src.poetore.poe2.ndlocr_pack import NdlOcrPackController
+
+            self._ndlocr_pack_controller = NdlOcrPackController(self)
+        return self._ndlocr_pack_controller
+
     def capture_desecration_tiers(self):
         if not self._screen_reading_enabled() or not self._desecration_ready():
             return False
@@ -1208,11 +1216,14 @@ class PoetoreModeWindow(QMainWindow):
         feature_config = feature_config if isinstance(feature_config, dict) else {}
         hotkeys = self.config.get("hotkeys", {})
         hotkeys = hotkeys if isinstance(hotkeys, dict) else {}
+        pack_controller = self._ensure_ndlocr_pack_controller()
         dialog = DesecrationSettingsDialog(
             self, desecration_config=feature_config,
             hotkey=hotkeys.get("desecration_tier_ocr", "alt+r"),
             screen_reading_enabled=self._screen_reading_enabled(),
+            ocr_pack_controller=pack_controller,
         )
+        pack_controller.ensure_started()
         if not dialog.exec():
             return
         feature_config, hotkey, enabled = dialog.settings()
@@ -1326,6 +1337,9 @@ class PoetoreModeWindow(QMainWindow):
         if self.suppressed_desecration_hotkey is not None:
             self.suppressed_desecration_hotkey.stop()
         self._shutdown_screen_reading()
+        if self._ndlocr_pack_controller is not None:
+            self._ndlocr_pack_controller.close()
+            self._ndlocr_pack_controller = None
         if self._memo_dialog is not None:
             self._memo_dialog.close()
         if self._cheat_sheet_overlay is not None:

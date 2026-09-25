@@ -1,13 +1,26 @@
-from PySide6.QtCore import QRect
+from PySide6.QtCore import QObject, QRect, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QApplication, QDialog, QGroupBox, QLabel, QScrollArea
 
+from src.poetore.poe2.ndlocr_pack import PackStatus
 from src.ui.desecration_settings_dialog import (
     DEFAULT_EXAMPLE_IMAGE_PATH,
     EXAMPLE_POPUP_IMAGE_SIZE,
     EXAMPLE_POPUP_SIZE,
     DesecrationSettingsDialog,
 )
+
+
+class FakePackController(QObject):
+    status_changed = Signal(object)
+
+    def __init__(self, status):
+        super().__init__()
+        self.status = status
+        self.retry_count = 0
+
+    def retry(self):
+        self.retry_count += 1
 
 
 def test_desecration_settings_defaults_to_alt_r_and_keeps_open_region_optional(qtbot):
@@ -67,8 +80,9 @@ def test_desecration_settings_groups_required_flow_before_optional_display(qtbot
     groups = dialog.findChildren(QGroupBox)
     assert [group.title() for group in groups] == [
         "1. 基本設定",
-        "2. 読取範囲",
-        "3. 表示設定",
+        "2. 高精度OCR",
+        "3. 読取範囲",
+        "4. 表示設定",
     ]
     assert dialog.findChild(QScrollArea, "desecrationSettingsScroll") is not None
 
@@ -81,6 +95,32 @@ def test_desecration_settings_groups_required_flow_before_optional_display(qtbot
     assert ranges.isAncestorOf(dialog.example_thumbnail)
     assert display.isAncestorOf(dialog.show_ranges_checkbox)
     assert dialog.findChild(QGroupBox, "exampleGroup") is None
+
+
+def test_desecration_settings_shows_pack_download_progress_and_ready_state(qtbot):
+    controller = FakePackController(PackStatus("downloading", done=1, total=4))
+    dialog = DesecrationSettingsDialog(ocr_pack_controller=controller)
+    qtbot.addWidget(dialog)
+
+    assert dialog.ocr_pack_status.text().endswith("25%")
+    assert not dialog.ocr_pack_progress.isHidden()
+    assert dialog.ocr_pack_progress.value() == 25
+
+    controller.status = PackStatus("ready")
+    controller.status_changed.emit(controller.status)
+    assert "利用できます" in dialog.ocr_pack_status.text()
+    assert not dialog.ocr_pack_progress.isVisible()
+
+
+def test_desecration_settings_shows_retry_only_after_pack_error(qtbot):
+    controller = FakePackController(PackStatus("error", "network"))
+    dialog = DesecrationSettingsDialog(ocr_pack_controller=controller)
+    qtbot.addWidget(dialog)
+
+    assert "通常の読み取り機能は引き続き利用できます" in dialog.ocr_pack_status.text()
+    assert not dialog.ocr_pack_retry.isHidden()
+    dialog.ocr_pack_retry.click()
+    assert controller.retry_count == 1
 
 
 def test_desecration_settings_preserves_explicitly_disabled_tier_ranges(qtbot):

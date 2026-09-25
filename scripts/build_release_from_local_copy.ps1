@@ -72,19 +72,26 @@ $outputRoot = Join-Path (Split-Path $source -Parent) "poenavi-build-output-$comm
 New-Item -ItemType Directory -Path $outputRoot -ErrorAction Stop | Out-Null
 Copy-Item (Join-Path $localRoot "PoENavi.zip") $outputRoot
 Copy-Item (Join-Path $localRoot "PoENavi.zip.sha256") $outputRoot
+Copy-Item (Join-Path $localRoot "PoENavi-HighAccuracyOCR.zip") $outputRoot
+Copy-Item (Join-Path $localRoot "PoENavi-HighAccuracyOCR.zip.sha256") $outputRoot
 
 $zip = Get-Item (Join-Path $outputRoot "PoENavi.zip")
 $zipHash = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash.ToLower()
+$ocrPack = Get-Item (Join-Path $outputRoot "PoENavi-HighAccuracyOCR.zip")
+$ocrPackHash = (Get-FileHash $ocrPack.FullName -Algorithm SHA256).Hash.ToLower()
 $buildInfo = @(
     "source_snapshot=$sourceName",
     "ndlocr_version=1.3.1",
     "ndlocr_source_sha256=e510d3a7b878395ea9de0bdd365711b699e5fd430b5c7e23a40e918e913fd1f2",
     "zip_bytes=$($zip.Length)",
     "zip_sha256=$zipHash",
+    "ocr_pack_bytes=$($ocrPack.Length)",
+    "ocr_pack_sha256=$ocrPackHash",
     "built_at=$((Get-Date).ToString('o'))"
 )
 Set-Content -Path (Join-Path $outputRoot "BUILD_INFO.txt") -Value $buildInfo -Encoding utf8
 
 Write-Host "Build output: $outputRoot" -ForegroundColor Green
 Write-Host "PoENavi.zip: $($zip.Length) bytes" -ForegroundColor Green
+Write-Host "PoENavi-HighAccuracyOCR.zip: $($ocrPack.Length) bytes" -ForegroundColor Green
 Start-Process explorer.exe $outputRoot

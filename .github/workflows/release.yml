@@ -104,8 +104,26 @@ jobs:
           tests/test_poetore_distribution.py
           tests/test_windows_version_info.py
 
+      - name: Run Desecration high-accuracy OCR pack release tests
+        if: github.ref_name == 'v4.4.1'
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: >-
+          python -m pytest -q
+          tests/test_build_poetore_poe2_desecration_tiers.py
+          tests/test_desecration_ocr.py
+          tests/test_desecration_overlay.py
+          tests/test_desecration_settings_dialog.py
+          tests/test_ndlocr_lite.py
+          tests/test_ndlocr_pack.py
+          tests/test_poetore_mode_window.py
+          tests/test_poetore_poe2_desecration_tiers.py
+          tests/test_poetore_distribution.py
+          tests/test_verify_ndlocr_helper.py
+
       - name: Run full tests
-        if: ${{ !contains(fromJSON('["v4.1.0", "v4.1.6", "v4.1.7", "v4.2.0", "v4.2.1", "v4.2.3", "v4.3.0", "v4.3.1", "v4.3.2", "v4.3.3"]'), github.ref_name) }}
+        if: ${{ !contains(fromJSON('["v4.1.0", "v4.1.6", "v4.1.7", "v4.2.0", "v4.2.1", "v4.2.3", "v4.3.0", "v4.3.1", "v4.3.2", "v4.3.3", "v4.4.1"]'), github.ref_name) }}
         shell: pwsh
         env:
           QT_QPA_PLATFORM: offscreen
@@ -124,4 +142,4 @@ jobs:
           if (-not (Test-Path $notesFile)) {
             throw "Release notes file was not found: $notesFile"
           }
-          gh release create $env:GITHUB_REF_NAME PoENavi.zip PoENavi.zip.sha256 --verify-tag --notes-file $notesFile --title "PoENavi $env:GITHUB_REF_NAME"
+          gh release create $env:GITHUB_REF_NAME PoENavi.zip PoENavi.zip.sha256 PoENavi-HighAccuracyOCR.zip PoENavi-HighAccuracyOCR.zip.sha256 --verify-tag --notes-file $notesFile --title "PoENavi $env:GITHUB_REF_NAME"

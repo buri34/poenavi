@@ -406,6 +406,7 @@ def test_controller_uses_ndl_only_for_stable_unresolved_numeric_gap():
         *("物 理 ダ メ ー ジ が 24 % 増 加 す る\n命 中 力 + 41",) * 4,
     ]
     ndl_ocr = Mock()
+    ndl_ocr.is_available = True
     ndl_ocr.recognize.return_value = [
         NdlOcrResult("物理ダメージが64%増加する", .874),
     ]
@@ -430,6 +431,45 @@ def test_controller_uses_ndl_only_for_stable_unresolved_numeric_gap():
     assert len(ndl_ocr.recognize.call_args.args[0]) == 1
     controller._display.assert_called_once()
     assert controller._display.call_args.args[3] == (7, 10, 7)
+    controller.close()
+
+
+def test_controller_does_not_wait_for_ndlocr_pack_that_is_not_ready():
+    QApplication.instance() or QApplication([])
+    image = QImage(
+        "tests/fixtures/poetore/poe2/desecration/"
+        "reported-spear-physical-read-failed.png"
+    )
+    region = {"left": 0, "top": 0, "right": .5, "bottom": .5}
+    ocr = Mock()
+    ocr.recognize.return_value = [
+        *("物 理 ダ メ ー ジ が % 増 加 す る",) * 4,
+        *("1 か ら 4 の 雷 ダ メ ー ジ を 追 加 す る",) * 4,
+        *("物 理 ダ メ ー ジ が 24 % 増 加 す る\n命 中 力 + 41",) * 4,
+    ]
+    ndl_ocr = Mock()
+    ndl_ocr.is_available = False
+    controller = DesecrationTierController(
+        regions_getter=lambda: {"inventory_open_region": region},
+        ocr_server=ocr,
+        ndl_ocr_server=ndl_ocr,
+        scan_coordinator=Mock(try_begin=Mock(return_value=True)),
+    )
+    controller._grab = Mock(return_value=image)
+    controller._display = Mock()
+    controller._ndl_status_overlay = Mock()
+
+    with patch(
+        "src.poetore.poe2.desecration_overlay.path_of_exile_client_rect",
+        return_value=QRect(0, 0, 1920, 1080),
+    ), patch(
+        "src.poetore.poe2.desecration_overlay.threading.Thread", ImmediateThread,
+    ):
+        assert controller.request_scan()
+
+    ndl_ocr.recognize.assert_not_called()
+    controller._ndl_status_overlay.show_status.assert_not_called()
+    controller._display.assert_called_once()
     controller.close()
 
 

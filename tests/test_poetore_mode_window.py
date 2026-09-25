@@ -465,6 +465,33 @@ def test_expedition_header_button_rejects_duplicate_hotkey():
     warning.assert_called_once()
 
 
+def test_desecration_settings_starts_pack_download_even_when_dialog_is_cancelled():
+    window = MagicMock()
+    window.poe_version = POE2
+    window.config = {
+        "hotkeys": {"desecration_tier_ocr": "alt+r"},
+        "poetore": {
+            "screen_reading": {"enabled": True},
+            "desecration_tier_overlay": {},
+        },
+    }
+    pack_controller = MagicMock()
+    window._ensure_ndlocr_pack_controller.return_value = pack_controller
+
+    with patch(
+        "src.ui.desecration_settings_dialog.DesecrationSettingsDialog"
+    ) as dialog_class, patch(
+        "src.ui.poetore_mode_window.ConfigManager.save_config"
+    ) as save_config:
+        dialog_class.return_value.exec.return_value = False
+
+        PoetoreModeWindow.open_desecration_settings(window)
+
+    assert dialog_class.call_args.kwargs["ocr_pack_controller"] is pack_controller
+    pack_controller.ensure_started.assert_called_once_with()
+    save_config.assert_not_called()
+
+
 def test_expedition_controller_receives_current_saved_region():
     window = MagicMock()
     window._expedition_reward_controller = None

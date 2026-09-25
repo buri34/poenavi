@@ -663,7 +663,7 @@ class DesecrationTierController(QObject):
             categories = selectable_categories()
             resolution = resolve_ocr_variants(grouped, categories)
             ndl_candidates = ndl_numeric_candidate_indexes(grouped, resolution)
-            if ndl_candidates:
+            if ndl_candidates and getattr(self._ndl_ocr, "is_available", True):
                 cold_start = getattr(self._ndl_ocr, "is_ready", False) is not True
                 self._ndl_request_number += 1
                 ndl_request_number = self._ndl_request_number

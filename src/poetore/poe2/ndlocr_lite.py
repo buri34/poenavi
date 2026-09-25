@@ -40,6 +40,11 @@ def _helper_path() -> Path:
         if helper.is_file():
             return helper
         raise RuntimeError(f"NDLOCRヘルパーが見つかりません: {helper}")
+    from src.poetore.poe2.ndlocr_pack import installed_helper_path
+
+    installed = installed_helper_path()
+    if installed is not None:
+        return installed
     root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[3]))
     helper = root / "tools" / "NDLOcrLite" / "PoENaviNdlOcr.exe"
     if helper.is_file():
@@ -112,6 +117,14 @@ class NdlOcrLiteServer:
                 and self._process is not None
                 and self._process.poll() is None
             )
+
+    @property
+    def is_available(self) -> bool:
+        try:
+            helper = self.helper or _helper_path()
+        except RuntimeError:
+            return False
+        return helper.is_file()
 
     @property
     def session_dir(self) -> Path | None:
