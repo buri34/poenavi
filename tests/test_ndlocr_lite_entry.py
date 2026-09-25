@@ -1,7 +1,9 @@
 import importlib.util
 import io
 import json
+import sys
 from pathlib import Path
+from unittest.mock import Mock
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "ndlocr_lite_entry.py"
 SPEC = importlib.util.spec_from_file_location("ndlocr_lite_entry", SCRIPT)
@@ -14,6 +16,40 @@ class FakeEngine:
             "text": f"物理ダメージが64%増加する:{Path(image_path).name}",
             "confidence": .874,
         }
+
+
+def test_frozen_entry_explicitly_forces_utf8_stdio(monkeypatch):
+    module = importlib.util.module_from_spec(SPEC)
+    SPEC.loader.exec_module(module)
+    stdin = Mock()
+    stdout = Mock()
+    stderr = Mock()
+    monkeypatch.setattr(sys, "stdin", stdin)
+    monkeypatch.setattr(sys, "stdout", stdout)
+    monkeypatch.setattr(sys, "stderr", stderr)
+
+    module._configure_stdio_utf8()
+
+    stdin.reconfigure.assert_called_once_with(encoding="utf-8", errors="strict")
+    stdout.reconfigure.assert_called_once_with(encoding="utf-8", errors="strict")
+    stderr.reconfigure.assert_called_once_with(
+        encoding="utf-8", errors="backslashreplace",
+    )
+
+
+def test_utf8_configuration_overrides_windows_cp932_protocol_stream(monkeypatch):
+    module = importlib.util.module_from_spec(SPEC)
+    SPEC.loader.exec_module(module)
+    raw_stdout = io.BytesIO()
+    stdout = io.TextIOWrapper(raw_stdout, encoding="cp932")
+    monkeypatch.setattr(sys, "stdout", stdout)
+
+    module._configure_stdio_utf8()
+    stdout.write(json.dumps({"text": "物理ダメージが64%増加する"}, ensure_ascii=False))
+    stdout.flush()
+
+    decoded = raw_stdout.getvalue().decode("utf-8")
+    assert "物理ダメージが64%増加する" in decoded
 
 
 def test_server_protocol_loads_once_and_handles_repeated_requests():

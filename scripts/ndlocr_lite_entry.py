@@ -13,6 +13,19 @@ from types import SimpleNamespace
 from typing import TextIO
 
 
+def _configure_stdio_utf8() -> None:
+    """Keep the JSON Lines protocol UTF-8 even in a frozen Windows helper."""
+
+    for stream, errors in (
+        (sys.stdin, "strict"),
+        (sys.stdout, "strict"),
+        (sys.stderr, "backslashreplace"),
+    ):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors=errors)
+
+
 def _resource_root() -> Path:
     return Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 
@@ -155,6 +168,7 @@ def serve(
 
 
 def main() -> int:
+    _configure_stdio_utf8()
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--server", action="store_true")
     known, _remaining = parser.parse_known_args()
