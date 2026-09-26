@@ -39,7 +39,7 @@ def test_collect_copies_python_and_distribution_license_texts(tmp_path, monkeypa
     monkeypatch.setattr(collector.metadata, "distribution", lambda name: FakeDistribution(package_root, name=name))
 
     output = tmp_path / "output"
-    collector.collect(output, ("Example",))
+    collector.collect(output, ("Example",), ())
 
     assert (output / "Python-LICENSE.txt").read_text() == "complete python license"
     assert (output / "Example-1.2.3/LICENSE.txt").read_text() == "complete example license"
@@ -56,7 +56,7 @@ def test_collect_fails_when_required_distribution_is_missing(tmp_path, monkeypat
 
     monkeypatch.setattr(collector.metadata, "distribution", missing)
     with pytest.raises(RuntimeError, match="Required distribution is not installed"):
-        collector.collect(tmp_path / "output", ("Missing",))
+        collector.collect(tmp_path / "output", ("Missing",), ())
 
 
 def test_collect_fails_when_complete_license_text_is_absent(tmp_path, monkeypatch):
@@ -70,4 +70,23 @@ def test_collect_fails_when_complete_license_text_is_absent(tmp_path, monkeypatc
     monkeypatch.setattr(collector, "_python_license", lambda: python_license)
     monkeypatch.setattr(collector.metadata, "distribution", lambda _name: distribution)
     with pytest.raises(RuntimeError, match="No complete license text found"):
-        collector.collect(tmp_path / "output", ("NoLicense",))
+        collector.collect(tmp_path / "output", ("NoLicense",), ())
+
+
+def test_collect_copies_static_font_license(tmp_path, monkeypatch):
+    python_license = tmp_path / "Python-LICENSE.txt"
+    python_license.write_text("python", encoding="utf-8")
+    font_license = tmp_path / "NotoSansJP-OFL.txt"
+    font_license.write_text("SIL OPEN FONT LICENSE Version 1.1", encoding="utf-8")
+    monkeypatch.setattr(collector, "_python_license", lambda: python_license)
+
+    output = tmp_path / "output"
+    collector.collect(
+        output,
+        (),
+        (("Noto-Sans-JP", font_license, "OFL.txt"),),
+    )
+
+    copied = output / "Noto-Sans-JP" / "OFL.txt"
+    assert copied.read_text(encoding="utf-8") == "SIL OPEN FONT LICENSE Version 1.1"
+    assert "Noto-Sans-JP/OFL.txt" in (output / "README.md").read_text(encoding="utf-8")

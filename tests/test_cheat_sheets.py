@@ -2,7 +2,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QRect
 from PySide6.QtGui import QColor, QImage
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QLabel
 import pytest
 
 from src.ui.cheat_sheets import (
@@ -60,13 +60,68 @@ def test_normalization_selects_first_available_image():
         }
     )
     assert config["selected_id"] == "first"
+    assert config["image_transparency"] == 100
+    assert config["background_transparency"] == 0
+
+
+def test_manager_saves_image_and_background_transparency_separately(qapp):
+    manager = CheatSheetManagerDialog(
+        {"images": [], "image_transparency": 25, "background_transparency": 60}
+    )
+    try:
+        assert manager.image_transparency_slider.value() == 25
+        assert manager.background_transparency_slider.value() == 60
+
+        manager.image_transparency_slider.setValue(35)
+        manager.background_transparency_slider.setValue(70)
+        result = manager.result_config()
+
+        assert result["image_transparency"] == 35
+        assert result["background_transparency"] == 70
+    finally:
+        manager.close()
+
+
+def test_manager_uses_transparency_rate_labels_consistently(qapp):
+    manager = CheatSheetManagerDialog({"images": []})
+    try:
+        labels = {label.text() for label in manager.findChildren(QLabel)}
+
+        assert "透明率の調整" in labels
+        assert "画像の透明率" in labels
+        assert "背景の透明率" in labels
+        assert not any("透明度" in label for label in labels)
+    finally:
+        manager.close()
+
+
+def test_image_transparency_allows_fully_transparent_and_opaque(qapp):
+    manager = CheatSheetManagerDialog({"images": []})
+    try:
+        assert manager.image_transparency_slider.minimum() == 0
+        assert manager.image_transparency_slider.maximum() == 100
+    finally:
+        manager.close()
+
+
+def test_legacy_opacity_settings_are_migrated_without_changing_appearance():
+    config = normalized_cheat_sheet_config(
+        {"images": [], "opacity": 75, "background_opacity": 40}
+    )
+
+    assert config["image_transparency"] == 75
+    assert config["background_transparency"] == 40
+    assert "opacity" not in config
+    assert "background_opacity" not in config
 
 
 def test_empty_overlay_guides_user_to_main_window_button(qapp):
     overlay = CheatSheetOverlay({"images": []})
 
     assert "画像が登録されていません" in overlay.image_label.text()
-    assert "🖼" in overlay.image_label.text()
+    assert "🖼" not in overlay.image_label.text()
+    assert "data:image/png;base64," in overlay.image_label.text()
+    assert "width='24' height='24'" in overlay.image_label.text()
     assert "画像を登録してください" in overlay.image_label.text()
     assert "rgba(0, 0, 0, 205)" in overlay.image_label.styleSheet()
     assert "font-size: 20px" in overlay.image_label.styleSheet()
@@ -82,6 +137,28 @@ def test_poetore_theme_is_applied_to_manager_and_overlay(qapp):
         assert POETORE_THEME.accent in overlay.styleSheet()
     finally:
         manager.close()
+        overlay.close()
+
+
+@pytest.mark.parametrize(
+    ("background_transparency", "expected_alpha"),
+    [(0, 0), (92, 235), (100, 255)],
+)
+def test_overlay_renders_configured_background_transparency(
+    qapp, background_transparency, expected_alpha
+):
+    overlay = CheatSheetOverlay(
+        {"images": [], "background_transparency": background_transparency}
+    )
+    try:
+        overlay.resize(500, 350)
+        overlay.show()
+        qapp.processEvents()
+
+        rendered = overlay.grab().toImage()
+
+        assert rendered.pixelColor(4, 100).alpha() == expected_alpha
+    finally:
         overlay.close()
 
 
@@ -119,7 +196,8 @@ def test_overlay_switches_images_and_saves_geometry(qapp, tmp_path, monkeypatch)
             "position_initialized": True,
             "width": 500,
             "height": 350,
-            "opacity": 80,
+            "image_transparency": 20,
+            "background_transparency": 60,
         }
     )
     saved = []
@@ -127,6 +205,9 @@ def test_overlay_switches_images_and_saves_geometry(qapp, tmp_path, monkeypatch)
 
     overlay.step_image(1)
     assert "background: transparent" in overlay.image_label.styleSheet()
+    assert overlay.windowOpacity() == 1.0
+    assert overlay.image_label.graphicsEffect().opacity() == 0.2
+    assert overlay._background_alpha == 153
     overlay.setGeometry(40, 50, 600, 420)
     overlay.hide_and_save()
 

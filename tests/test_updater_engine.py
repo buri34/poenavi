@@ -1,9 +1,9 @@
-from pathlib import Path
 import zipfile
+from pathlib import Path
 
 import pytest
-import src.update.updater_engine as updater_engine
 
+from src.update import updater_engine
 from src.update.updater_engine import (
     UpdateApplyError,
     apply_update,
@@ -17,6 +17,14 @@ def make_release(path: Path, marker="new", guide="new guide"):
         archive.writestr("PoENavi/PoENavi.exe", marker)
         archive.writestr("PoENavi/PoENaviUpdater.exe", "updater")
         archive.writestr("PoENavi/guide_data.json", guide)
+        archive.writestr(
+            "PoENavi/_internal/tools/ExpeditionWindowsOcr/ExpeditionWindowsOcr.exe",
+            "ocr-helper",
+        )
+        archive.writestr(
+            "PoENavi/_internal/data/poetore/poe2/expedition_ocr_items.json",
+            '{"items": []}',
+        )
 
 
 def make_root_release(path: Path, marker="new"):
@@ -89,6 +97,21 @@ def test_apply_update_replaces_install_and_launches_new_exe(tmp_path):
     )
 
     assert (install / "PoENavi.exe").read_text(encoding="utf-8") == "new"
+    assert (
+        install
+        / "_internal"
+        / "tools"
+        / "ExpeditionWindowsOcr"
+        / "ExpeditionWindowsOcr.exe"
+    ).read_text(encoding="utf-8") == "ocr-helper"
+    assert (
+        install
+        / "_internal"
+        / "data"
+        / "poetore"
+        / "poe2"
+        / "expedition_ocr_items.json"
+    ).is_file()
     assert launched == [install / "PoENavi.exe"]
     assert backup.exists()
 

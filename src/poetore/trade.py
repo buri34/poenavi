@@ -15,8 +15,8 @@ from urllib.parse import quote, urlsplit
 import urllib3
 
 from .categories import is_armour_category, is_equipment_category, is_weapon_category
-from .models import ParsedItem
-from .performance import SearchPerformanceTrace
+from .models import ItemModifier, ParsedItem, apply_roll_increase
+from .performance import SearchPerformanceTrace, record_trade_api_event
 from .metadata import (
     base_armour_bounds, default_metadata_index, gem_metadata, multi_value_rule,
     normalize_stat_text,
@@ -44,6 +44,8 @@ LISTED_WITHIN_OPTIONS = {
 }
 TRADE_CACHE_TTL = 300.0
 TRADE_CACHE_MAX_ENTRIES = 128
+TRADE_REQUEST_TIMEOUT_SECONDS = 20
+TRADE_READ_TIMEOUT_MAX_ATTEMPTS = 2
 TRADE_CURRENCY_OPTIONS = {
     "any": None,
     "chaos": "chaos",
@@ -228,7 +230,7 @@ _WEAPON_CRIT_STAT_KEYS = {"2375316951"}
 _ARMOUR_STAT_KEYS = {
     "4052037485", "124859000", "4015621042", "53045048", "1062208444",
     "3484657501", "3321629045", "2451402625", "1999113824", "3523867985",
-    "4253454700",
+    "4253454700", "774059442", "830161081",
 }
 
 # Allflameの日本語Trade APIで、固定文言中の数字をmin値として送る旧条件が0件、
@@ -629,6 +631,9 @@ class PriceResult:
     rate_limit: str = ""
     web_url: str = ""
     cached: bool = False
+    # PoE2の手動追加取得でだけ使う。PoE1は従来どおり空のまま。
+    next_result_ids: tuple[str, ...] = ()
+    fetched_count: int = 0
 
     def median_by_currency(self) -> dict[str, float]:
         grouped: dict[str, list[float]] = {}
@@ -666,14 +671,22 @@ def _group_price_listings(listings: list[PriceListing]) -> tuple[PriceListing, .
 
 
 def apply_search_range(
-    filters: tuple[TradeStatFilter, ...], percent: float, item: ParsedItem | None = None,
+    filters: tuple[TradeStatFilter, ...], percent: float,
+    item: ParsedItem | None = None, *, poe2_rules: bool = False,
+    preset: str = PRESET_FINISHED,
 ) -> tuple[TradeStatFilter, ...]:
     """検索値をAwakenedの共通幅設定で再計算する（0～50%）。"""
     if item is not None and item.rarity.casefold() in {"magic", "マジック"} and (
-        "mirrored" in item.flags or "corrupted" in item.flags or "unmodifiable" in item.flags
+        "mirrored" in item.flags
+        or "corrupted" in item.flags
+        or "unmodifiable" in item.flags
+        or (poe2_rules and "sanctified" in item.flags)
     ):
         percent = 0
     percent = max(0.0, min(float(percent), 50.0)) / 100.0
+    unique_item = bool(
+        item is not None and item.rarity.casefold() in {"unique", "ユニーク"}
+    )
     adjusted = []
     discrete_socket_stats = {
         "property.sockets",
@@ -682,6 +695,11 @@ def apply_search_range(
         "property.gem_sockets",
     }
     for row in filters:
+        if poe2_rules and row.read_value is not None and row.better == 0:
+            adjusted.append(replace(
+                row, min_value=row.read_value, max_value=row.read_value,
+            ))
+            continue
         if (
             row.read_value is None
             or row.stat_id in discrete_socket_stats
@@ -695,7 +713,7 @@ def apply_search_range(
             )
             or row.option_value is not None
             or row.exact
-            or row.inverted
+            or (row.inverted and not poe2_rules)
             or row.hidden_reason
             or (
                 row.generation == "foulborn"
@@ -706,21 +724,56 @@ def apply_search_range(
             adjusted.append(row)
             continue
         api_value = row.read_value
-        if row.roll_min is not None and row.roll_max is not None:
-            delta = abs(row.roll_max - row.roll_min) * percent
+        row_percent = percent
+        if poe2_rules:
+            perfect_roll = (
+                row.roll_min is not None
+                and row.roll_max is not None
+                and (
+                    (row.better == 1 and api_value >= row.roll_max)
+                    or (row.better == -1 and api_value <= row.roll_min)
+                )
+            )
+            selected_perfect_roll = perfect_roll and (
+                unique_item
+                or (
+                    item is not None
+                    and item.rarity.casefold() in {"magic", "マジック"}
+                    and item.category in {"jewel", "abyss_jewel", "tablet"}
+                )
+                or (
+                    row.tier == 1
+                    and (
+                        row.kind == "fractured"
+                        or "fractured" in row.provenance_tags
+                    )
+                )
+            )
+            if (
+                row.ref == "Has # Charm Slot"
+                or (
+                    item is not None
+                    and item.category == "tablet"
+                    and preset == PRESET_BASE
+                )
+                or selected_perfect_roll
+            ):
+                row_percent = 0
+        if unique_item and row.roll_min is not None and row.roll_max is not None:
+            delta = abs(row.roll_max - row.roll_min) * row_percent
         else:
-            delta = abs(api_value) * percent
+            delta = abs(api_value) * row_percent
         minimum = row.min_value
         maximum = row.max_value
         if minimum is not None:
             minimum = (
-                api_value if percent == 0
+                api_value if row_percent == 0
                 else math.floor(api_value - delta) if not row.decimal
                 else api_value - delta
             )
         if maximum is not None:
             maximum = (
-                api_value if percent == 0
+                api_value if row_percent == 0
                 else math.ceil(api_value + delta) if not row.decimal
                 else api_value + delta
             )
@@ -764,6 +817,70 @@ _trade_http_pool = urllib3.PoolManager(num_pools=2, maxsize=1, block=True)
 _trade_http_request_lock = threading.Lock()
 
 
+def _trade_request_stage(url: str, payload: dict | None) -> str:
+    path = urlsplit(url).path
+    if "/search/" in path and payload is not None:
+        return "search_post"
+    if "/fetch/" in path:
+        return "result_fetch_get"
+    return "metadata"
+
+
+def _trade_request_mod_filter_count(payload: dict | None) -> int:
+    if not isinstance(payload, dict):
+        return 0
+    query = payload.get("query")
+    if not isinstance(query, dict):
+        return 0
+    groups = query.get("stats")
+    if not isinstance(groups, list):
+        return 0
+    return sum(
+        len(group.get("filters", ()))
+        for group in groups
+        if isinstance(group, dict) and isinstance(group.get("filters"), list)
+    )
+
+
+def _is_read_timeout(exc: Exception) -> bool:
+    if isinstance(exc, urllib3.exceptions.ReadTimeoutError):
+        return True
+    return (
+        isinstance(exc, urllib3.exceptions.MaxRetryError)
+        and isinstance(exc.reason, urllib3.exceptions.ReadTimeoutError)
+    )
+
+
+def _trade_request_diagnostic(
+    *, stage: str, method: str, mod_filters: int, attempt: int,
+    elapsed: float, status: int | None, outcome: str,
+    error_type: str | None = None,
+) -> None:
+    fields = [
+        f"stage={stage}",
+        f"method={method}",
+        f"mod_filters={mod_filters}",
+        f"attempt={attempt}",
+        f"elapsed_seconds={elapsed:.3f}",
+        f"status={status if status is not None else 'none'}",
+        f"outcome={outcome}",
+    ]
+    if error_type:
+        fields.append(f"error_type={error_type}")
+    _trade_log("diagnostic: " + " ".join(fields))
+    record_trade_api_event(
+        "request_completed",
+        stage=stage,
+        method=method,
+        mod_filters=mod_filters,
+        attempt=attempt,
+        elapsed_ms=round(elapsed * 1000, 3),
+        status=status,
+        outcome=outcome,
+        error_type=error_type,
+    )
+
+
 def _cached_request_json(
     url: str,
     payload: dict | None = None,
@@ -788,28 +905,62 @@ def _request_json(url: str, payload: dict | None = None) -> tuple[dict, object]:
     if data is not None:
         headers["Content-Type"] = "application/json"
     method = "POST" if data is not None else "GET"
+    stage = _trade_request_stage(url, payload)
+    mod_filters = _trade_request_mod_filter_count(payload)
     rate_limiter, rate_policy = _rate_limit_context(url)
-    try:
-        # retries=False keeps the request count exactly one per call. The lock
-        # preserves sequential API use; PoolManager only reuses its TCP/TLS link.
-        with _trade_http_request_lock:
+    response = None
+    response_elapsed = 0.0
+    response_attempt = 1
+    # urllib3's own retries stay disabled. Only a read timeout gets one explicit
+    # retry after clearing pooled connections, so HTTP errors and connect errors
+    # are never duplicated.
+    with _trade_http_request_lock:
+        for attempt in range(1, TRADE_READ_TIMEOUT_MAX_ATTEMPTS + 1):
             if rate_limiter is not None and rate_policy is not None:
                 waited = rate_limiter.wait_and_borrow(rate_policy)
                 if waited > 0:
                     _trade_log(
                         f"rate limit wait: policy={rate_policy} seconds={waited:.3f}"
                     )
-            response = _trade_http_pool.request(
-                method, url, body=data, headers=headers,
-                timeout=urllib3.Timeout(total=15), retries=False,
-            )
-    except Exception as exc:
-        _trade_log(f"request failed: {method} {url} error={exc!r}")
-        raise TradeApiError(f"PoE Trade APIへの接続に失敗しました: {exc}") from exc
+            started = time.monotonic()
+            try:
+                response = _trade_http_pool.request(
+                    method, url, body=data, headers=headers,
+                    timeout=urllib3.Timeout(total=TRADE_REQUEST_TIMEOUT_SECONDS),
+                    retries=False,
+                )
+                response_elapsed = time.monotonic() - started
+                response_attempt = attempt
+                break
+            except Exception as exc:
+                elapsed = time.monotonic() - started
+                retrying = (
+                    attempt < TRADE_READ_TIMEOUT_MAX_ATTEMPTS
+                    and _is_read_timeout(exc)
+                )
+                _trade_request_diagnostic(
+                    stage=stage, method=method, mod_filters=mod_filters,
+                    attempt=attempt, elapsed=elapsed, status=None,
+                    outcome="retrying" if retrying else "failed",
+                    error_type=type(exc).__name__,
+                )
+                if retrying:
+                    _trade_http_pool.clear()
+                    continue
+                _trade_log(f"request failed: {method} {url} error={exc!r}")
+                raise TradeApiError(
+                    f"PoE Trade APIへの接続に失敗しました: {exc}"
+                ) from exc
+    assert response is not None
     if rate_limiter is not None and rate_policy is not None:
         rate_limiter.adjust(rate_policy, response.headers)
     body = response.data.decode("utf-8", errors="replace")
     if response.status == 429:
+        _trade_request_diagnostic(
+            stage=stage, method=method, mod_filters=mod_filters,
+            attempt=response_attempt, elapsed=response_elapsed,
+            status=response.status, outcome="http_error",
+        )
         try:
             retry_after = max(0, int(float(response.headers.get("Retry-After", ""))))
         except (AttributeError, TypeError, ValueError):
@@ -833,16 +984,32 @@ def _request_json(url: str, payload: dict | None = None) -> tuple[dict, object]:
             f"request failed: {method} {url} status={response.status} "
             f"api_message={api_message!r}"
         )
+        _trade_request_diagnostic(
+            stage=stage, method=method, mod_filters=mod_filters,
+            attempt=response_attempt, elapsed=response_elapsed,
+            status=response.status, outcome="http_error",
+        )
         detail = f"（{api_message}）" if api_message else ""
         raise TradeApiError(
             f"PoE Trade APIが検索条件を受理しませんでした: "
             f"HTTP {response.status}{detail}"
         )
     try:
-        return json.loads(body), response.headers
+        parsed = json.loads(body)
     except json.JSONDecodeError as exc:
+        _trade_request_diagnostic(
+            stage=stage, method=method, mod_filters=mod_filters,
+            attempt=response_attempt, elapsed=response_elapsed,
+            status=response.status, outcome="invalid_json",
+        )
         _trade_log(f"request failed: {method} {url} invalid JSON")
         raise TradeApiError(f"PoE Trade APIから不正な応答を受信しました: {exc}") from exc
+    _trade_request_diagnostic(
+        stage=stage, method=method, mod_filters=mod_filters,
+        attempt=response_attempt, elapsed=response_elapsed,
+        status=response.status, outcome="success",
+    )
+    return parsed, response.headers
 
 
 def active_pc_league() -> str:
@@ -916,10 +1083,38 @@ def elemental_dps(item: ParsedItem) -> float | None:
     return average_damage * float(speed_values[0])
 
 
+_QUALITY_DISABLED_REFS = frozenset({
+    "Quality does not increase Defences",
+    "Quality does not increase Physical Damage",
+})
+_QUALITY_DISABLED_NORMALIZED = frozenset(
+    normalize_stat_text(ref) for ref in _QUALITY_DISABLED_REFS
+)
+
+
+def _quality_is_disabled(item: ParsedItem) -> bool:
+    return any(
+        modifier.ref in _QUALITY_DISABLED_REFS
+        or normalize_stat_text(modifier.text) in _QUALITY_DISABLED_NORMALIZED
+        for modifier in item.modifiers
+    )
+
+
+def _property_quality(item: ParsedItem) -> float:
+    if _quality_is_disabled(item):
+        return 0.0
+    return _raw_property_quality(item) or 0.0
+
+
+def _trade_property_quality(item: ParsedItem) -> float:
+    quality = _property_quality(item)
+    return 0.0 if _quality_is_disabled(item) else max(20.0, quality)
+
+
 def _quality_at_least_20(value: float, item: ParsedItem) -> float:
     """表示プロパティをAwakened同様、最低品質20%時の値へ換算する。"""
-    quality = _property_value(item, "品質", "Quality") or 0.0
-    target_quality = max(20.0, quality)
+    quality = _property_quality(item)
+    target_quality = _trade_property_quality(item)
     return value * (1 + target_quality / 100) / (1 + quality / 100)
 
 
@@ -958,6 +1153,29 @@ def _property_value(item: ParsedItem, *labels: str) -> float | None:
     return None
 
 
+def _raw_property_quality(item: ParsedItem) -> float | None:
+    """通常品質とCatalyst種別付き品質の表示値を取得する。"""
+    for label, value in item.properties.items():
+        if not re.fullmatch(
+            r"(?:品質|quality)(?:\s*\([^)]*\))?", label, re.IGNORECASE,
+        ):
+            continue
+        match = re.search(r"\d+(?:\.\d+)?", value.replace(",", ""))
+        if match:
+            return float(match.group())
+    return None
+
+
+def _is_catalyst_affected(item: ParsedItem, modifier: ItemModifier) -> bool:
+    """Catalyst品質が実際にロールへ反映されたアクセサリーModだけを返す。"""
+    if item.category != "accessory" or not _raw_property_quality(item):
+        return False
+    if modifier.quality_affected is not None:
+        return modifier.quality_affected
+    # 通常コピーにはMod見出しがないため、従来の安全側フォールバックを維持する。
+    return bool(modifier.values)
+
+
 def _memory_strands(item: ParsedItem) -> float | None:
     return _property_value(
         item, "メモリーの糸", "記憶の糸", "メモリーストランド", "Memory Strands",
@@ -980,6 +1198,13 @@ _DEFENCE_REFS = {
     "ward": ({"+# to Ward"}, {"#% increased Ward"}),
 }
 
+_DEFENCE_PROPERTY_LABELS = {
+    "ar": ("アーマー", "防具", "Armour"),
+    "ev": ("回避力", "Evasion Rating"),
+    "es": ("エナジーシールド", "Energy Shield"),
+    "ward": ("ワード", "Ward"),
+}
+
 
 def _local_defence_components(item: ParsedItem, defence: str) -> tuple[float, float]:
     """Return local flat and increased defence totals used by Awakened's q20 calculation."""
@@ -996,8 +1221,8 @@ def _local_defence_components(item: ParsedItem, defence: str) -> tuple[float, fl
 
 def _defence_at_20_quality(value: float, item: ParsedItem, defence: str) -> float:
     """Reconstruct a defence property at minimum 20% quality like Awakened."""
-    quality = _property_value(item, "品質", "Quality") or 0.0
-    target_quality = max(20.0, quality)
+    quality = _property_quality(item)
+    target_quality = _trade_property_quality(item)
     flat, increased = _local_defence_components(item, defence)
     quality_multiplier = 1.0 + quality / 100.0
     increased_multiplier = 1.0 + increased / 100.0
@@ -1007,15 +1232,58 @@ def _defence_at_20_quality(value: float, item: ParsedItem, defence: str) -> floa
     return (base + flat) * increased_multiplier * (1.0 + target_quality / 100.0)
 
 
-def _base_defence_percentile(item: ParsedItem, trade_base_type: str | None) -> float | None:
+def _defence_bounds_at_trade_quality(
+    item: ParsedItem, trade_base_type: str | None, defence: str,
+) -> tuple[float, float] | None:
+    base_range = base_armour_bounds(trade_base_type or item.base_type).get(defence)
+    flat_refs, increased_refs = _DEFENCE_REFS[defence]
+    relevant_modifiers = tuple(
+        modifier for modifier in item.modifiers
+        if modifier.ref in flat_refs or modifier.ref in increased_refs
+    )
+    if not base_range:
+        if not relevant_modifiers:
+            return None
+        # SvalinnのWardのように、防具ベース自体は該当防御値を持たず、
+        # UniqueのローカルModだけで最終Propertyが作られる場合がある。
+        base_range = (0.0, 0.0)
+    flat_min = flat_max = increased_min = increased_max = 0.0
+    for modifier in relevant_modifiers:
+        value = modifier.values[0] if modifier.values else 0.0
+        low = modifier.roll_min if modifier.roll_min is not None else value
+        high = modifier.roll_max if modifier.roll_max is not None else value
+        if modifier.ref in flat_refs:
+            flat_min += min(low, high)
+            flat_max += max(low, high)
+        elif modifier.ref in increased_refs:
+            increased_min += min(low, high)
+            increased_max += max(low, high)
+    quality_multiplier = 1.0 + _trade_property_quality(item) / 100.0
+    minimum = (base_range[0] + flat_min) * (1.0 + increased_min / 100.0)
+    maximum = (base_range[1] + flat_max) * (1.0 + increased_max / 100.0)
+    return minimum * quality_multiplier, maximum * quality_multiplier
+
+
+def _has_variable_local_defence(item: ParsedItem, defence: str) -> bool:
+    refs = set().union(*_DEFENCE_REFS[defence])
+    return any(
+        modifier.ref in refs
+        and modifier.roll_min is not None
+        and modifier.roll_max is not None
+        and modifier.roll_min != modifier.roll_max
+        for modifier in item.modifiers
+    )
+
+
+def _base_defence_percentile_details(
+    item: ParsedItem, trade_base_type: str | None,
+) -> tuple[float, str] | None:
     bounds = base_armour_bounds(trade_base_type or item.base_type)
     properties = {
-        "ar": _property_value(item, "アーマー", "防具", "Armour"),
-        "ev": _property_value(item, "回避力", "Evasion Rating"),
-        "es": _property_value(item, "エナジーシールド", "Energy Shield"),
-        "ward": _property_value(item, "Ward"),
+        defence: _property_value(item, *labels)
+        for defence, labels in _DEFENCE_PROPERTY_LABELS.items()
     }
-    quality = _property_value(item, "品質", "Quality") or 0.0
+    quality = _property_quality(item)
     for defence in ("ar", "ev", "es", "ward"):
         total, base_range = properties[defence], bounds.get(defence)
         if not total or not base_range or base_range[0] == base_range[1]:
@@ -1023,11 +1291,18 @@ def _base_defence_percentile(item: ParsedItem, trade_base_type: str | None) -> f
         flat, increased = _local_defence_components(item, defence)
         rolled_base = total / (1.0 + quality / 100.0) / (1.0 + increased / 100.0) - flat
         percentile = round((rolled_base - base_range[0]) * 100.0 / (base_range[1] - base_range[0]))
-        return float(min(100, max(0, percentile)))
+        return float(min(100, max(0, percentile))), defence
     return None
 
 
-def available_trade_presets(item: ParsedItem) -> tuple[str, ...]:
+def _base_defence_percentile(item: ParsedItem, trade_base_type: str | None) -> float | None:
+    details = _base_defence_percentile_details(item, trade_base_type)
+    return details[0] if details else None
+
+
+def available_trade_presets(
+    item: ParsedItem, *, allow_low_level_magic: bool = False,
+) -> tuple[str, ...]:
     """完成品を基本とし、未完成でクラフト価値がある装備だけベース検索を追加する。"""
     rarity = item.rarity.casefold()
     if (not (is_equipment_category(item.category)
@@ -1035,7 +1310,7 @@ def available_trade_presets(item: ParsedItem) -> tuple[str, ...]:
             or _is_unique(item) or rarity in {"normal", "ノーマル"}
             or "unidentified" in item.flags):
         return (PRESET_FINISHED,)
-    quality = _property_value(item, "品質", "Quality")
+    quality = _raw_property_quality(item)
     likely_finished = (
         any(modifier.kind == "crafted" for modifier in item.modifiers)
         or (quality == 20 and (
@@ -1058,6 +1333,8 @@ def available_trade_presets(item: ParsedItem) -> tuple[str, ...]:
     )
     if is_unmodifiable:
         return (PRESET_FINISHED,)
+    if allow_low_level_magic and rarity in {"magic", "マジック"} and not likely_finished:
+        return (PRESET_FINISHED, PRESET_BASE)
     if has_strong_crafting_value:
         return (PRESET_FINISHED, PRESET_BASE)
     if likely_finished or not has_item_level_crafting_value:
@@ -1158,10 +1435,9 @@ def _apply_dedicated_exact_rules(
             is_valdo = item.category == "map" and item.base_type.casefold() == "valdo map"
             if is_valdo and row.kind in {"prefix", "suffix", "explicit"}:
                 enabled = True
-            if item.category == "map" and not is_valdo and row.kind in {
-                "prefix", "suffix", "explicit",
-            }:
-                enabled = True
+            # Map/Chartも通常のExact規則へ統一し、Pseudoは候補表示だけにする。
+            if item.category == "map" and row.kind == "map pseudo":
+                enabled = False
             if item.category == "invitation" and row.kind in {
                 "prefix", "suffix", "explicit", "map", "map pseudo",
             }:
@@ -1355,7 +1631,7 @@ def _socket_summary(item: ParsedItem) -> tuple[int, int]:
 
 def _item_detail_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
     filters: list[TradeStatFilter] = []
-    quality = _property_value(item, "品質", "Quality")
+    quality = _raw_property_quality(item)
     if quality is not None and quality >= 20:
         filters.append(TradeStatFilter(
             "property.quality", "品質", quality, "property", quality > 20,
@@ -1371,7 +1647,7 @@ def _item_detail_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
 def _gem_filters(item: ParsedItem, trade_base_type: str | None) -> tuple[TradeStatFilter, ...]:
     info = gem_metadata(trade_base_type or item.base_type)
     level = _property_value(item, "ジェムレベル", "レベル", "Level")
-    quality = _property_value(item, "品質", "Quality")
+    quality = _raw_property_quality(item)
     maximum = int(info.get("max_level", 20))
     filters = []
     if level is not None:
@@ -1483,20 +1759,10 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                     "explicit.stat_1095765106", "死亡時にVoidへ送られるマップを除外", None,
                     "map safety", True, group_type="not", group_key="valdo-lethal",
                 ))
-        map_identity = f"{item.name} {item.base_type}".casefold()
-        is_nightmare = (
-            "nightmare map" in map_identity
-            or "ナイトメアマップ" in map_identity
-        )
         use_value_properties = (
             not _is_unique(item)
             and blight_state is None
             and not completion
-            and (
-                "corrupted" in item.flags
-                or bool(more_drop_rows)
-                or is_nightmare
-            )
         )
         if use_value_properties:
             for stat_id, label, value, enabled in (
@@ -1782,10 +2048,10 @@ def _initial_property_filters(
                 "property.block", "ブロック率", _relaxed(block), "property", False,
             ))
         defenses = [
-            ("property.armour", "アーマー", _property_value(item, "アーマー", "防具", "Armour")),
-            ("property.evasion", "回避力", _property_value(item, "回避力", "Evasion Rating")),
-            ("property.energy_shield", "エナジーシールド", _property_value(item, "エナジーシールド", "Energy Shield")),
-            ("property.ward", "Ward", _property_value(item, "Ward")),
+            ("property.armour", "アーマー（品質20%換算）", _property_value(item, *_DEFENCE_PROPERTY_LABELS["ar"])),
+            ("property.evasion", "回避力（品質20%換算）", _property_value(item, *_DEFENCE_PROPERTY_LABELS["ev"])),
+            ("property.energy_shield", "エナジーシールド（品質20%換算）", _property_value(item, *_DEFENCE_PROPERTY_LABELS["es"])),
+            ("property.ward", "ワード（品質20%換算）", _property_value(item, *_DEFENCE_PROPERTY_LABELS["ward"])),
         ]
         defence_keys = {
             "property.armour": "ar",
@@ -1798,7 +2064,15 @@ def _initial_property_filters(
             for stat_id, text, value in defenses if value
         ]
         for stat_id, text, value in present:
-            filters.append(TradeStatFilter(stat_id, text, _relaxed(value), "property", True))
+            bounds = _defence_bounds_at_trade_quality(
+                item, trade_base_type, defence_keys[stat_id],
+            )
+            filters.append(TradeStatFilter(
+                stat_id, text, _relaxed(value), "property", True,
+                read_value=value,
+                roll_min=bounds[0] if bounds else None,
+                roll_max=bounds[1] if bounds else None,
+            ))
         percentile = _base_defence_percentile(item, trade_base_type)
         if percentile is not None:
             filters.append(TradeStatFilter(
@@ -1956,6 +2230,11 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
     has_maximum_life_mod = False
     has_maximum_mana_mod = False
     simple: dict[str, float] = {}
+    simple_sources: dict[str, list[ItemModifier]] = {}
+    attribute_sources = {key: [] for key in ("str", "dex", "int")}
+    aggregate_sources = {key: [] for key in (
+        "life", "mana", "fire", "cold", "lightning", "chaos",
+    )}
     for modifier in item.modifiers:
         value = modifier.values[0] if modifier.values else 0
         ref = modifier.ref or ""
@@ -1969,37 +2248,59 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
         if ref == "+# to maximum Life":
             has_maximum_life_mod = True
             totals["life"] += value
+            aggregate_sources["life"].append(modifier)
         if ref == "+# to maximum Mana":
             has_maximum_mana_mod = True
             totals["mana"] += value
+            aggregate_sources["mana"].append(modifier)
         for attr in _ATTRIBUTE_REFS.get(ref, ()):
             totals[attr] += value
+            attribute_sources[attr].append(modifier)
         if ref == "+# to all Attributes":
             simple[ref] = simple.get(ref, 0.0) + value
+            simple_sources.setdefault(ref, []).append(modifier)
         resistance = _RESISTANCE_REFS.get(ref)
         if resistance:
             elements, chaos = resistance
-            for element in elements: totals[element] += value
-            if chaos: totals["chaos"] += value
+            for element in elements:
+                totals[element] += value
+                aggregate_sources[element].append(modifier)
+            if chaos:
+                totals["chaos"] += value
+                aggregate_sources["chaos"].append(modifier)
         for source_ref, stat_id, label in _SIMPLE_PSEUDOS:
             if ref == source_ref and not (
                 source_ref == "#% increased Attack Speed" and
                 modifier.stat_id and modifier.stat_id.rsplit("_", 1)[-1] in _WEAPON_SPEED_STAT_KEYS
             ):
                 simple[source_ref] = simple.get(source_ref, 0.0) + value
+                simple_sources.setdefault(source_ref, []).append(modifier)
         if ref in _RELATIONAL_SOURCE_REFS:
             simple[ref] = simple.get(ref, 0.0) + value
+            simple_sources.setdefault(ref, []).append(modifier)
     filters = []
     totals["life"] += totals["str"] * 0.5
     totals["mana"] += totals["int"] * 0.5
     elemental = totals["fire"] + totals["cold"] + totals["lightning"]
+    life_sources = aggregate_sources["life"] + attribute_sources["str"]
+    mana_sources = aggregate_sources["mana"] + attribute_sources["int"]
+    def useful_pseudo(value: float, sources: list[ItemModifier]) -> bool:
+        unique = list(dict.fromkeys(sources))
+        return len(unique) > 1 or bool(
+            unique and unique[0].values and unique[0].values[0] != value
+        )
+
     if has_maximum_life_mod:
         filters.append(TradeStatFilter(
             "pseudo.pseudo_total_life", "最大ライフ合計",
             _relaxed(totals["life"]), "pseudo", True,
         ))
-    if has_maximum_mana_mod:
+    if has_maximum_mana_mod and useful_pseudo(totals["mana"], mana_sources):
         filters.append(TradeStatFilter("pseudo.pseudo_total_mana", "最大マナ合計", _relaxed(totals["mana"]), "pseudo"))
+    elemental_sources = (
+        aggregate_sources["fire"] + aggregate_sources["cold"]
+        + aggregate_sources["lightning"]
+    )
     if elemental:
         filters.append(TradeStatFilter(
             "pseudo.pseudo_total_elemental_resistance", "元素耐性合計", _relaxed(elemental), "pseudo", True,
@@ -2008,7 +2309,8 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
     for element, stat_id, label in (("fire", "pseudo.pseudo_total_fire_resistance", "火耐性合計"),
                                     ("cold", "pseudo.pseudo_total_cold_resistance", "冷気耐性合計"),
                                     ("lightning", "pseudo.pseudo_total_lightning_resistance", "雷耐性合計")):
-        if totals[element]: filters.append(TradeStatFilter(stat_id, label, _relaxed(totals[element]), "pseudo"))
+        if totals[element] and useful_pseudo(totals[element], aggregate_sources[element]):
+            filters.append(TradeStatFilter(stat_id, label, _relaxed(totals[element]), "pseudo"))
     chaos_sources = [
         modifier for modifier in item.modifiers
         if modifier.ref in _RESISTANCE_REFS and _RESISTANCE_REFS[modifier.ref][1]
@@ -2022,9 +2324,17 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
     for attr, stat_id, label in (("str", "pseudo.pseudo_total_strength", "筋力合計"),
                                  ("dex", "pseudo.pseudo_total_dexterity", "器用さ合計"),
                                  ("int", "pseudo.pseudo_total_intelligence", "知性合計")):
-        if totals[attr]: filters.append(TradeStatFilter(stat_id, label, _relaxed(totals[attr]), "pseudo"))
+        direct_ref = {
+            "str": "+# to Strength",
+            "dex": "+# to Dexterity",
+            "int": "+# to Intelligence",
+        }[attr]
+        if totals[attr] and [row.ref for row in attribute_sources[attr]] != [direct_ref]:
+            filters.append(TradeStatFilter(stat_id, label, _relaxed(totals[attr]), "pseudo"))
     all_attributes = simple.get("+# to all Attributes", 0.0)
-    if all_attributes:
+    if all_attributes and useful_pseudo(
+        all_attributes, simple_sources.get("+# to all Attributes", []),
+    ):
         filters.append(TradeStatFilter(
             "pseudo.pseudo_total_all_attributes", "全能力値合計",
             _relaxed(all_attributes), "pseudo",
@@ -2041,13 +2351,20 @@ def _gear_pseudo_filters(item: ParsedItem) -> list[TradeStatFilter]:
         }
     }
     for ref, (stat_id, label) in simple_definitions.items():
-        if simple.get(ref):
+        if simple.get(ref) and useful_pseudo(simple[ref], simple_sources.get(ref, [])):
             filters.append(TradeStatFilter(stat_id, label, _relaxed(simple[ref]), "pseudo"))
 
     def add(stat_id: str, label: str, required_ref: str, *shared_refs: str) -> None:
         if not simple.get(required_ref):
             return
         value = sum(simple.get(ref, 0.0) for ref in (required_ref, *shared_refs))
+        sources = [
+            source
+            for ref in (required_ref, *shared_refs)
+            for source in simple_sources.get(ref, [])
+        ]
+        if not useful_pseudo(value, sources):
+            return
         filters.append(TradeStatFilter(stat_id, label, _relaxed(value), "pseudo"))
 
     add("pseudo.pseudo_global_critical_strike_chance", "グローバルクリティカル率",
@@ -2125,22 +2442,6 @@ def _apply_pseudo_relations(filters: list[TradeStatFilter]) -> list[TradeStatFil
     return sorted(kept, key=lambda row: (row.kind != "property", row.stat_id, row.text))
 
 
-def _pseudo_consumed_stat_ids(item: ParsedItem) -> set[str]:
-    """pseudoへ集約した元Modを個別条件として二重表示しない。"""
-    known_refs = set(_RESISTANCE_REFS) | set(_ATTRIBUTE_REFS) | {
-        "+# to maximum Life", "+# to maximum Mana",
-    } | {row[0] for row in _SIMPLE_PSEUDOS} | _RELATIONAL_SOURCE_REFS
-    consumed = set()
-    for modifier in item.modifiers:
-        if not modifier.stat_id or modifier.ref not in known_refs:
-            continue
-        if (modifier.ref == "#% increased Attack Speed" and
-                modifier.stat_id.rsplit("_", 1)[-1] in _WEAPON_SPEED_STAT_KEYS):
-            continue
-        consumed.add(modifier.stat_id)
-    return consumed
-
-
 _stat_entries_cache: tuple[dict, ...] | None = None
 _stat_entry_indexes_cache = None
 _item_entries_cache: tuple[dict, ...] | None = None
@@ -2166,6 +2467,7 @@ def _indexed_stat_text(text: str, kind: str) -> str:
 
 def _value_for_template(
     source: str, template: str, stat_id: str | None = None,
+    *, roll_increase: float | None = None, decimal: bool = False,
 ) -> float | None:
     source = re.sub(r"\([^)]*(?:\d|implicit|crafted|enchant)[^)]*\)", "", source, flags=re.IGNORECASE).strip()
     template = template.replace(" (ローカル)", "").strip()
@@ -2173,7 +2475,10 @@ def _value_for_template(
     match = re.fullmatch(pattern, source)
     if not match or not match.groups():
         return None
-    values = tuple(float(value) for value in match.groups())
+    values = tuple(
+        apply_roll_increase(float(value), roll_increase, decimal=decimal)
+        for value in match.groups()
+    )
     rule = multi_value_rule(stat_id or "")
     if rule:
         operation = rule.get("operation")
@@ -2711,10 +3016,10 @@ def _aggregated_local_property_stat(item: ParsedItem, stat_id: str) -> bool:
         if key in _WEAPON_CRIT_STAT_KEYS:
             return _property_value(item, "クリティカル率", "Critical Strike Chance") is not None
     if item.category == "armour" and key in _ARMOUR_STAT_KEYS:
-        return any(_property_value(item, label) is not None for label in (
-            "アーマー", "防具", "Armour", "回避力", "Evasion Rating",
-            "エナジーシールド", "Energy Shield", "Ward",
-        ))
+        return any(
+            _property_value(item, *labels) is not None
+            for labels in _DEFENCE_PROPERTY_LABELS.values()
+        )
     return False
 
 
@@ -2875,7 +3180,7 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
         "property.energy_shield": _property_value(item, "エナジーシールド", "Energy Shield"),
         "property.ward": _property_value(item, "Ward"),
         "property.item_level": float(item.item_level) if item.item_level is not None else None,
-        "property.quality": _property_value(item, "品質", "Quality"),
+        "property.quality": _raw_property_quality(item),
         "property.sockets": float(sockets) if sockets else None,
         "property.links": float(links) if links else None,
     }
@@ -3039,6 +3344,30 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
             for modifier in contributing_sources
             if modifier.text and modifier.text != row.text
         ))
+        provenance_sources = contributing_sources or (() if source is None else (source,))
+        provenance_tags = []
+        for modifier in provenance_sources:
+            if modifier.generation in {"volatile", "reflecting"}:
+                provenance_tags.append(modifier.generation)
+            if (
+                _is_catalyst_affected(item, modifier)
+            ):
+                provenance_tags.append("catalyst")
+            if (
+                "corrupted" in item.flags
+                and modifier.values
+                and modifier.roll_min is not None
+                and modifier.roll_max is not None
+                and modifier.roll_min != modifier.roll_max
+            ):
+                provenance_tags.append("corrupted")
+            if (
+                "mirrored" in item.flags
+                and item.category == "accessory"
+                and not _is_unique(item)
+                and modifier.values
+            ):
+                provenance_tags.append("reflecting")
         decorated.append(replace(
             row,
             read_value=read_value,
@@ -3068,6 +3397,7 @@ def _decorate_filters(item: ParsedItem, filters: tuple[TradeStatFilter, ...],
                 item.modifiers[index].affix for index in contributing_indexes
             ),
             source_indexes=contributing_indexes,
+            provenance_tags=tuple(dict.fromkeys(provenance_tags)),
         ))
     return tuple(decorated)
 
@@ -3156,14 +3486,41 @@ def resolve_trade_stat_filters(
                 # Anointmentも候補へ表示する。その他の付け直しやすいものは隠す。
                 continue
         roll_bounds = _unique_roll_bounds(modifier.text) if unique_item else None
+        if (
+            roll_bounds is not None
+            and modifier.roll_increase
+            and modifier.roll_min is not None
+            and modifier.roll_max is not None
+        ):
+            roll_bounds = (modifier.roll_min, modifier.roll_max)
         standalone_variant = (
             unique_item
             and modifier.kind == "explicit"
             and modifier.option_value is None
             and "|" in (modifier.stat_id or "")
         )
+        special_variable = bool(
+            modifier.values and (
+                modifier.generation in {"volatile", "reflecting"}
+                or (
+                    "corrupted" in item.flags
+                    and modifier.roll_min is not None
+                    and modifier.roll_max is not None
+                    and modifier.roll_min != modifier.roll_max
+                )
+                or (
+                    _is_catalyst_affected(item, modifier)
+                )
+                or (
+                    "mirrored" in item.flags
+                    and item.category == "accessory"
+                    and not unique_item
+                )
+            )
+        )
         unique_variant = (
             standalone_variant
+            or special_variable
             or modifier.generation == "vestigial"
             or (
                 unique_item
@@ -3188,7 +3545,7 @@ def resolve_trade_stat_filters(
             if (not standalone_variant and not corrupted_implicit
                     and not foulborn_variant and not vestigial_variant) and (
                 fixed_unique_refs is None or modifier.ref in fixed_unique_refs
-            ):
+            ) and not special_variable:
                 # Awakened準拠: 常設Modでも可変ロールがあれば候補へ残す。
                 # 固定Modも「隠された候補」から確認できるよう保持する。
                 hidden_reason = "ユニーク固定値のため初期非表示"
@@ -3238,7 +3595,10 @@ def resolve_trade_stat_filters(
                 # DPS・APS・クリ率・防御値へ反映済みなので二重条件化しない。
                 continue
             entry_text = str(entry.get("text", ""))
-            value = _value_for_template(modifier.text, entry_text, modifier.stat_id)
+            value = _value_for_template(
+                modifier.text, entry_text, modifier.stat_id,
+                roll_increase=modifier.roll_increase, decimal=modifier.decimal,
+            )
             if value is None and (
                 "#" in entry_text
                 or modifier.option_value is not None
@@ -3279,6 +3639,8 @@ def resolve_trade_stat_filters(
                 # 4(3)%の変異値が3%以上になり通常品まで混ざってしまう。
                 current_value = _value_for_template(
                     modifier.text, str(entry.get("text", "")),
+                    roll_increase=modifier.roll_increase,
+                    decimal=modifier.decimal,
                 )
                 if current_value is not None:
                     value = maximum = current_value
@@ -3342,16 +3704,7 @@ def resolve_trade_stat_filters(
     # AwakenedはFoulborn品について、置換されたFoulborn Modだけでなく、
     # 置換されずに残った通常Unique Modも個体差として初期選択する。
     enable_foulborn_rolls = unique_item and "foulborn" in item.flags
-    # ユニーク品はpseudo集約を表示しないため、元の可変Modを消費扱いにしない。
-    # 非ユニーク品だけ、pseudoと個別Modの二重表示を避ける。
-    consumed_stat_ids = (
-        set() if unique_item or item.category in {"jewel", "abyss_jewel"}
-        else _pseudo_consumed_stat_ids(item)
-    )
-    consumed_refs = {
-        modifier.ref for modifier in item.modifiers
-        if modifier.stat_id in consumed_stat_ids and modifier.ref
-    }
+    # 非ユニーク品は直接Modを初期選択し、pseudoは任意の代替条件として残す。
     individual = tuple(
         TradeStatFilter(
             row.stat_id,
@@ -3367,27 +3720,76 @@ def resolve_trade_stat_filters(
             hidden_reason=row.hidden_reason,
         )
         for combine_key, row in combined.items()
-        if row.stat_id not in consumed_stat_ids and not (not unique_item and row.ref in consumed_refs)
     )
     if unique_item:
         unique_property_ids = {
             "property.total_dps", "property.physical_dps",
             "property.elemental_dps", "property.aps", "property.crit",
-            "property.block", "property.memory_strands",
+            "property.armour", "property.evasion", "property.energy_shield",
+            "property.ward", "property.block", "property.base_percentile",
+            "property.memory_strands",
         }
-        special_properties = tuple(
+        special_properties = list(
             row for row in _initial_property_filters(
                 item, trade_base_type, hide_memory_strands=True,
             )
             if row.stat_id in unique_property_ids
         )
+        defence_ids = {
+            "property.armour": "ar",
+            "property.evasion": "ev",
+            "property.energy_shield": "es",
+            "property.ward": "ward",
+        }
+        visible_defence_ids = {
+            stat_id for stat_id, defence in defence_ids.items()
+            if _has_variable_local_defence(item, defence)
+            or _property_quality(item) >= 21
+        }
+        percentile_details = _base_defence_percentile_details(item, trade_base_type)
+        percentile_property_id = (
+            next(
+                stat_id for stat_id, defence in defence_ids.items()
+                if defence == percentile_details[1]
+            )
+            if percentile_details else None
+        )
+        special_properties = [
+            row for row in special_properties
+            if (
+                row.stat_id not in defence_ids
+                or row.stat_id in visible_defence_ids
+            ) and not (
+                row.stat_id == "property.base_percentile"
+                and percentile_property_id in visible_defence_ids
+            )
+        ]
+        pseudo_candidates = list(_gear_pseudo_filters(item))
         # AwakenedのUnique Map Exactは固有名・Map種別・Tierだけで照合し、
         # 個体ごとのUnique Modロールを検索条件へ追加しない。
         exact_individual = () if item.category == "map" else individual
-        return _decorate_filters(
-            item, special_properties + exact_individual + _item_detail_filters(item)
-            + _unique_exception_filters(item) + _special_content_filters(item), True,
+        decorated = _decorate_filters(
+            item, tuple(special_properties) + tuple(pseudo_candidates) + exact_individual
+            + _item_detail_filters(item) + _unique_exception_filters(item)
+            + _special_content_filters(item), True,
         )
+        unique_pseudos = []
+        for row in decorated:
+            if row.kind != "pseudo":
+                unique_pseudos.append(row)
+                continue
+            sources = [item.modifiers[index] for index in row.source_indexes]
+            enough_sources = (
+                len(sources) >= 2
+                if "corrupted" in item.flags else
+                sum(source.kind in {"explicit", "prefix", "suffix"} for source in sources) >= 2
+            )
+            if enough_sources:
+                unique_pseudos.append(replace(
+                    row, enabled=False,
+                    selection_reason="Uniqueの複数Mod集約候補（初期未選択）",
+                ))
+        return tuple(unique_pseudos)
     initial_properties = [
         row for row in _initial_property_filters(
             item, trade_base_type, hide_memory_strands=True,
@@ -3947,6 +4349,17 @@ def build_search_query(
         misc.pop("mirrored", None)
     else:
         misc["mirrored"] = {"option": "false"}
+    if (
+        item.category == "map"
+        and not _is_unique(item)
+        and _map_blight_state(item) is None
+    ):
+        # 通常Map検索へBlighted系が混ざらないよう、両分類を明示的に除外する。
+        map_filters = query["filters"].setdefault(
+            "map_filters", {"filters": {}}
+        )["filters"]
+        map_filters["map_blighted"] = {"option": "false"}
+        map_filters["map_uberblighted"] = {"option": "false"}
     # Awakened準拠: Veiled全般のmisc条件ではなく、詳細コピーで読み取った
     # Veiled Mod名に対応するstat IDをAND条件として検索する。
     stat_filters = tuple(row for row in stat_filters if row.kind != "veiled")

@@ -14,7 +14,9 @@ class ConfigManager:
     DEFAULT_CONFIG_FILE = "default_config.json"
     APP_NAME = "PoENavi"
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
-    CURRENT_SCHEMA_VERSION = 11
+    # Schema 18 was published in v4.3.2. Keep the version monotonic even
+    # though the shared OCR hotkey feature has been withdrawn.
+    CURRENT_SCHEMA_VERSION = 18
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -462,6 +464,76 @@ class ConfigManager:
             # PoE2ガイドは詳細版へ統一したため、旧選択状態をconfigから撤去する。
             migrated.pop("guide_detail_level", None)
             migrated.pop("guide_detail_level_selected", None)
+
+        if schema_version < 12:
+            cheat_sheets = migrated.get("cheat_sheets")
+            if isinstance(cheat_sheets, dict):
+                if "opacity" in cheat_sheets:
+                    cheat_sheets["image_transparency"] = (
+                        100 - int(cheat_sheets.pop("opacity"))
+                    )
+                if "background_opacity" in cheat_sheets:
+                    cheat_sheets["background_transparency"] = (
+                        100 - int(cheat_sheets.pop("background_opacity"))
+                    )
+
+        if schema_version < 13:
+            cheat_sheets = migrated.get("cheat_sheets")
+            if isinstance(cheat_sheets, dict):
+                # PoENaviの既存「透明率」と同じく、0%=完全透明、100%=不透明へ統一する。
+                if "image_transparency" in cheat_sheets:
+                    cheat_sheets["image_transparency"] = (
+                        100 - int(cheat_sheets["image_transparency"])
+                    )
+                if "background_transparency" in cheat_sheets:
+                    cheat_sheets["background_transparency"] = (
+                        100 - int(cheat_sheets["background_transparency"])
+                    )
+
+        if schema_version == 13:
+            cheat_sheets = migrated.get("cheat_sheets")
+            if isinstance(cheat_sheets, dict):
+                # 未公開の試作版で保存された値を、新しい初期値へ一度だけ揃える。
+                cheat_sheets["image_transparency"] = 100
+                cheat_sheets["background_transparency"] = 0
+
+        if schema_version < 15:
+            mini_navi = migrated.get("mini_guide_overlay")
+            if isinstance(mini_navi, dict):
+                legacy_always_on_top = mini_navi.pop("always_on_top", None)
+                mini_navi["topmost_mode"] = (
+                    "never" if legacy_always_on_top is False else "poe_only"
+                )
+
+        if schema_version < 16:
+            startup = migrated.get("startup")
+            if not isinstance(startup, dict):
+                startup = {}
+            startup.setdefault("windows_autostart_poetore", False)
+            migrated["startup"] = startup
+
+        if schema_version < 17:
+            poetore = migrated.get("poetore")
+            if not isinstance(poetore, dict):
+                poetore = {}
+            expedition = poetore.get("expedition_reward_overlay")
+            if not isinstance(expedition, dict):
+                expedition = {}
+            screen_reading = poetore.get("screen_reading")
+            if not isinstance(screen_reading, dict):
+                screen_reading = {}
+            screen_reading.setdefault("enabled", bool(expedition.get("enabled", False)))
+            expedition.pop("enabled", None)
+            poetore["screen_reading"] = screen_reading
+            poetore["expedition_reward_overlay"] = expedition
+            poetore.setdefault("desecration_tier_overlay", {})
+            migrated["poetore"] = poetore
+
+            hotkeys = migrated.get("hotkeys")
+            if not isinstance(hotkeys, dict):
+                hotkeys = {}
+            hotkeys.setdefault("desecration_tier_ocr", "alt+r")
+            migrated["hotkeys"] = hotkeys
 
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)

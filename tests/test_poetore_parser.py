@@ -1,12 +1,13 @@
 import unittest
 
 from src.poetore import ItemParseError, parse_item_text
+from src.poetore.metadata import ModMetadata
+from src.poetore.models import apply_roll_increase
 from src.poetore.parser import (
     _modifier_header_details,
     _modifier_values,
     _values_for_matched_template,
 )
-from src.poetore.metadata import ModMetadata
 
 
 RARE_JP = """アイテムクラス: 指輪
@@ -829,6 +830,60 @@ Iron Ring
             ["implicit", "explicit", "explicit", "explicit", "explicit"],
         )
         self.assertEqual(item.modifiers[-1].generation, "foulborn")
+
+    def test_detailed_catalyst_quality_marks_only_affected_modifier(self):
+        item = parse_item_text("""アイテムクラス: 指輪
+レアリティ: ユニーク
+ファウルボーン 皆を繋ぐもの
+鉄の指輪
+--------
+品質 (防御力モッド): +10% (augmented)
+--------
+アイテムレベル: 71
+--------
+{ ユニークモッド — 能力値 }
+全ての能力値 +13(10-30)
+{ ファウルボーンユニークモッド — 防御 - 10%増加 }
+グローバル防御力が25(10-30)%増加する
+{ ファウルボーンユニークモッド — ダメージ, クリティカル }
+グローバルクリティカルダメージ倍率 +22(10-30)%
+""")
+
+        attributes, defences, critical = item.modifiers
+        self.assertFalse(attributes.quality_affected)
+        self.assertTrue(defences.quality_affected)
+        self.assertEqual(defences.roll_increase, 10)
+        self.assertEqual(defences.values, (27,))
+        self.assertEqual((defences.roll_min, defences.roll_max), (11, 33))
+        self.assertFalse(critical.quality_affected)
+
+    def test_detailed_resistance_catalyst_uses_same_roll_increase_path(self):
+        item = parse_item_text("""アイテムクラス: 指輪
+レアリティ: ユニーク
+皆を繋ぐもの
+鉄の指輪
+--------
+品質 (耐性モッド): +10% (augmented)
+--------
+アイテムレベル: 71
+--------
+{ ユニークモッド — 能力値 }
+全ての能力値 +13(10-30)
+{ ユニークモッド — 元素, 耐性 - 10%増加 }
+全ての元素耐性 +22(10-30)%
+""")
+
+        attributes, resistances = item.modifiers
+        self.assertFalse(attributes.quality_affected)
+        self.assertTrue(resistances.quality_affected)
+        self.assertEqual(resistances.roll_increase, 10)
+        self.assertEqual(resistances.values, (24,))
+        self.assertEqual((resistances.roll_min, resistances.roll_max), (11, 33))
+
+    def test_roll_increase_matches_awakened_truncation(self):
+        self.assertEqual(apply_roll_increase(25, 10), 27)
+        self.assertEqual(apply_roll_increase(22, 10), 24)
+        self.assertEqual(apply_roll_increase(0.25, 10, decimal=True), 0.27)
 
     def test_japanese_vestigial_unique_uses_normal_base_and_marks_implicit(self):
         item = parse_item_text("""アイテムクラス: 靴

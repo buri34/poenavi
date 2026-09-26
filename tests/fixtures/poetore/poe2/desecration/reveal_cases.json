@@ -1,0 +1,24 @@
+{
+  "cases": [
+    {
+      "image": "boots-reveal.png",
+      "image_sha256": "8dde03473325b453c82ebd649bc4c30278c2546dac9fc41fefb3345a1e935b22",
+      "category": "boots",
+      "choices": [
+        {"text": ["アーマー +27"], "tier": 7, "mod_id": "LocalIncreasedPhysicalDamageReductionRating1"},
+        {"text": ["最大マナ +108"], "tier": 1, "mod_id": "IncreasedMana9"},
+        {"text": ["移動スピードが30%増加する"], "tier": 2, "mod_id": "MovementVelocity5"}
+      ]
+    },
+    {
+      "image": "spear-reveal.png",
+      "image_sha256": "ec90f24fe03f3c8ca7c656a03fd65b7894c7f0e2366f878da643e6737226fc6e",
+      "category": "spear",
+      "choices": [
+        {"text": ["この武器によるアタックは20%の火耐性を貫通する"], "tier": 1, "mod_id": "AbyssModGenWeaponAmanamuPrefixFirePenetration"},
+        {"text": ["26から43の冷気ダメージを追加する"], "tier": 5, "mod_id": "LocalAddedColdDamage6"},
+        {"text": ["物理ダメージが28%増加する", "命中力 +57"], "tier": 6, "mod_id": "LocalIncreasedPhysicalDamagePercentAndAccuracyRating3"}
+      ]
+    }
+  ]
+}

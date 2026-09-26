@@ -8,6 +8,8 @@ from urllib.parse import parse_qs, unquote, urlparse
 import pytest
 
 from src.poetore.poe2 import build_search_query, fetch_listings, parse_item_text, search_items
+from src.poetore.poe2 import trade as poe2_trade
+from src.poetore.poe2.trade import fetch_additional_prices
 from src.poetore.poe2.trade import (
     _stat_groups_from_filters, available_pc_leagues, build_web_trade_url,
     augment_socket_edit_counts, available_virtual_augments, default_pc_league,
@@ -16,7 +18,10 @@ from src.poetore.poe2.trade import (
     virtual_augment_choice_label, virtual_augment_filters,
 )
 from src.poetore.models import ItemModifier, ParsedItem
-from src.poetore.trade import PRESET_BASE, PRESET_FINISHED, TradeStatFilter
+from src.poetore.trade import (
+    PRESET_BASE, PRESET_FINISHED, TradeStatFilter, apply_search_range,
+    unresolved_modifier_warnings,
+)
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "minimal_items.json"
@@ -24,6 +29,186 @@ PHASE6_FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "phase6_special_
 AMBIGUOUS_BASE_FIXTURES = (
     Path(__file__).parent / "fixtures" / "poe2" / "ambiguous_bases_bilingual.json"
 )
+MANA_ON_KILL_JEWEL_FIXTURE = (
+    Path(__file__).parent / "fixtures" / "poe2" / "rare_sapphire_mana_on_kill_ja.txt"
+)
+
+
+def _range_row(
+    *,
+    stat_id: str = "explicit.test",
+    ref: str = "# test",
+    value: float = 100,
+    minimum: float | None = None,
+    maximum: float | None = None,
+    roll_min: float | None = 80,
+    roll_max: float | None = 120,
+    better: int | None = 1,
+    kind: str = "explicit",
+    tier: int | None = None,
+    inverted: bool = False,
+) -> TradeStatFilter:
+    return TradeStatFilter(
+        stat_id, ref, value if minimum is None else minimum, kind, True,
+        maximum, ref=ref, read_value=value, roll_min=roll_min,
+        roll_max=roll_max, better=better, tier=tier, inverted=inverted,
+        provenance_tags=(("fractured",) if kind == "fractured" else ()),
+    )
+
+
+def test_ee2_range_keeps_charm_slot_count_exact():
+    item = ParsedItem("Belts", "rare", "", "Test Belt", "belt")
+    row = _range_row(ref="Has # Charm Slot", value=2, roll_min=1, roll_max=3)
+
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (2, None)
+
+
+def test_ee2_range_keeps_actual_mageblood_charm_slots_exact():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2" / "mageblood_ja.txt").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    ranged = apply_search_range(
+        poe2_trade_filters(item), 20, item, poe2_rules=True,
+    )
+    charm_slots = next(row for row in ranged if row.ref == "Has # Charm Slot")
+
+    assert (charm_slots.min_value, charm_slots.max_value) == (2, None)
+
+
+def test_ee2_range_freezes_unmodifiable_sanctified_magic_item():
+    item = ParsedItem(
+        "Amulets", "magic", "", "Test Amulet", "amulet",
+        flags=("sanctified",),
+    )
+    row = _range_row(value=100)
+
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (100, None)
+
+
+@pytest.mark.parametrize(
+    "item,row",
+    (
+        (
+            ParsedItem("Belts", "unique", "", "Test Belt", "belt"),
+            _range_row(value=120),
+        ),
+        (
+            ParsedItem("Jewels", "magic", "", "Test Jewel", "jewel"),
+            _range_row(value=120),
+        ),
+        (
+            ParsedItem("Jewels", "magic", "", "Test Abyss Jewel", "abyss_jewel"),
+            replace(_range_row(value=80, better=-1), min_value=None, max_value=80),
+        ),
+        (
+            ParsedItem("Spear", "rare", "", "Test Spear", "weapon"),
+            _range_row(value=120, kind="fractured", tier=1),
+        ),
+    ),
+)
+def test_ee2_range_freezes_perfect_rolls_for_selected_item_kinds(item, row):
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+
+    expected = (
+        (None, row.read_value) if row.better == -1
+        else (row.read_value, None)
+    )
+    assert (ranged[0].min_value, ranged[0].max_value) == expected
+
+
+def test_ee2_range_does_not_freeze_nonperfect_selected_roll():
+    item = ParsedItem("Belts", "unique", "", "Test Belt", "belt")
+    row = _range_row(value=100)
+
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (92, None)
+
+
+def test_ee2_range_keeps_not_comparable_stat_exact():
+    item = ParsedItem("Jewels", "rare", "", "Test Jewel", "jewel")
+    row = _range_row(value=12345, roll_min=1, roll_max=99999, better=0)
+
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (12345, 12345)
+
+
+def test_ee2_base_range_keeps_all_tablet_mods_exact():
+    item = ParsedItem("Tablets", "magic", "", "Test Tablet", "tablet")
+    row = _range_row(value=90, roll_min=80, roll_max=100)
+
+    ranged = apply_search_range(
+        (row,), 20, item, poe2_rules=True, preset=PRESET_BASE,
+    )
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (90, None)
+
+
+def test_ee2_finished_range_keeps_tolerance_for_nonperfect_tablet_mod():
+    item = ParsedItem("Tablets", "magic", "", "Test Tablet", "tablet")
+    row = _range_row(value=90, roll_min=80, roll_max=100)
+
+    ranged = apply_search_range(
+        (row,), 20, item, poe2_rules=True, preset=PRESET_FINISHED,
+    )
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (72, None)
+
+
+def test_ee2_range_applies_tolerance_before_trade_inversion():
+    item = ParsedItem("Utility Flasks", "magic", "", "Test Flask", "flask")
+    row = replace(
+        _range_row(
+            stat_id="explicit.inverted", value=38,
+            roll_min=33, roll_max=38, better=-1, inverted=True,
+        ),
+        min_value=None, max_value=38,
+    )
+
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+    assert (ranged[0].min_value, ranged[0].max_value) == (None, 46)
+    assert _stat_groups_from_filters(ranged)[0]["filters"] == [{
+        "id": "explicit.inverted", "value": {"min": -46},
+    }]
+
+
+def test_ee2_range_inverts_property_bounds_only_when_building_query():
+    item = ParsedItem("Crossbows", "magic", "", "Test Crossbow", "crossbow")
+    row = replace(
+        _range_row(
+            stat_id="property.reload_time", value=38,
+            roll_min=33, roll_max=38, better=-1, inverted=True,
+            kind="property",
+        ),
+        min_value=None, max_value=38,
+    )
+
+    ranged = apply_search_range((row,), 20, item, poe2_rules=True)
+    query = build_search_query(item, stat_filters=ranged)
+
+    assert (ranged[0].min_value, ranged[0].max_value) == (None, 46)
+    assert query["query"]["filters"]["equipment_filters"]["filters"][
+        "reload_time"
+    ] == {"min": -46}
+
+
+def test_ee2_base_range_intentionally_keeps_full_user_tolerance():
+    item = ParsedItem("Spear", "rare", "", "Test Spear", "weapon")
+    row = _range_row(value=100)
+
+    ranged = apply_search_range(
+        (row,), 20, item, poe2_rules=True, preset=PRESET_BASE,
+    )
+
+    assert ranged[0].min_value == 80
 
 
 def _unique_fixture():
@@ -34,6 +219,96 @@ def _unique_fixture():
 def _web_payload(url: str) -> dict:
     encoded = parse_qs(urlparse(url).query)["q"][0]
     return json.loads(unquote(encoded))
+
+
+HEROIC_TRAGEDY_JA = """アイテムクラス: ジュエル
+レアリティ: ユニーク
+英雄の悲劇
+タイムレスジュエル
+--------
+個数制限: ヒストリック1つのみ
+半径: 特大
+--------
+アイテムレベル: 81
+--------
+{ ユニークモッド }
+ヒストリック — スケールできない値
+オルロスの一族が行った歌にするにふさわしい偉業4050(100-8000)個を刻む
+範囲内のパッシブはカルグールに征服される — スケールできない値
+--------
+彼らは自分たちを勇敢で献身的だと思っていたが、
+その勇敢さが彼らの玄関にやってくる破滅となった。
+--------
+パッシブツリーで割り当てられたジュエルソケットにはめる。右クリックしてソケットから取り外すことができる。
+--------"""
+
+
+def _undying_hate_ja(person: str, seed: int) -> str:
+    return f"""アイテムクラス: ジュエル
+レアリティ: ユニーク
+不死の憎しみ
+タイムレスジュエル
+--------
+個数制限: ヒストリック1つのみ
+半径: 特大
+--------
+アイテムレベル: 86
+--------
+{{ ユニークモッド }}
+ヒストリック — スケールできない値
+{person}(アマナム-ウラマン)に捧げるために{seed}(79-30977)体の魂を穢しそれを讃える
+範囲内のパッシブはアビスに征服される
+冒涜するとこのアイテムは不安定になる — スケールできない値
+--------
+彼らは必要に駆られていると信じていたが、
+その必死さが彼らを怪物とした。
+--------
+パッシブツリーで割り当てられたジュエルソケットにはめる。右クリックしてソケットから取り外すことができる。
+4回冒涜できる
+冒涜することによりアイテムが不安定になります
+--------"""
+
+
+def test_heroic_tragedy_defaults_olroth_seed_to_exact_range():
+    item = parse_item_text(HEROIC_TRAGEDY_JA)
+    rows = apply_search_range(poe2_trade_filters(item), 50, item)
+    seed = next(row for row in rows if row.stat_id == "explicit.stat_3418580811|23")
+
+    assert seed.enabled is True
+    assert seed.exact is True
+    assert seed.min_value == 4050
+    assert seed.max_value == 4050
+    assert unresolved_modifier_warnings(item, rows) == ()
+    assert {
+        "id": "explicit.stat_3418580811|23",
+        "value": {"min": 4050.0, "max": 4050.0},
+    } in build_search_query(item, stat_filters=rows)["query"]["stats"][0]["filters"]
+
+
+@pytest.mark.parametrize(
+    "person,seed,stat_id",
+    (
+        ("アマナム", 7913, "explicit.stat_3418580811|24"),
+        ("クーラマク", 16373, "explicit.stat_3418580811|25"),
+        ("クルガル", 23405, "explicit.stat_3418580811|26"),
+        ("テクロッド", 12007, "explicit.stat_3418580811|27"),
+        ("ウラマン", 30901, "explicit.stat_3418580811|28"),
+    ),
+)
+def test_undying_hate_people_resolve_to_exact_seed(person, seed, stat_id):
+    item = parse_item_text(_undying_hate_ja(person, seed))
+    rows = apply_search_range(poe2_trade_filters(item), 50, item)
+    seed_row = next(row for row in rows if row.stat_id == stat_id)
+
+    assert seed_row.enabled is True
+    assert seed_row.exact is True
+    assert seed_row.min_value == seed
+    assert seed_row.max_value == seed
+    assert unresolved_modifier_warnings(item, rows) == ()
+    assert {
+        "id": stat_id,
+        "value": {"min": float(seed), "max": float(seed)},
+    } in build_search_query(item, stat_filters=rows)["query"]["stats"][0]["filters"]
 
 
 @pytest.mark.parametrize(
@@ -65,6 +340,221 @@ def test_unique_query_contains_only_minimal_identity_filters():
         }}
     }
     assert query["stats"] == [{"type": "and", "filters": []}]
+
+
+def test_duplicate_japanese_unique_name_is_disambiguated_by_base_type():
+    item = parse_item_text("""アイテムクラス: 兜
+レアリティ: ユニーク
+アッツィリの軽蔑
+金のサークレット
+--------
+エナジーシールド: 62
+--------
+アイテムレベル: 78
+--------
+最大マナ +87(60-100)
+見つかるアイテムのレアリティが15(10-20)%増加する
+最大ライフの11(10-15)%を追加の最大エナジーシールドとして獲得する
+受けたダメージの10%がエナジーシールドをバイパスする""")
+    payload = build_search_query(item)
+
+    assert (item.name, item.base_type, item.category) == (
+        "Atziri's Disdain", "Gold Circlet", "helmet",
+    )
+    assert payload["query"]["name"] == "Atziri's Disdain"
+    assert payload["query"]["type"] == "Gold Circlet"
+    web_query = _web_payload(
+        build_web_trade_url(item, "Forbidden Rites", payload, "query-id")
+    )["query"]
+    assert web_query["name"] == "アッツィリの軽蔑"
+    assert web_query["type"] == "金のサークレット"
+
+
+def test_same_stat_on_prefix_and_suffix_is_combined_into_one_trade_filter():
+    item = parse_item_text("""アイテムクラス: 指輪
+レアリティ: レア
+ゴーレムの握り
+プリズムの指輪
+--------
+装備条件：レベル 52
+--------
+アイテムレベル: 81
+--------
+{ 暗黙モッド — 元素, 火, 冷気, 雷, 耐性 }
+全ての元素耐性 +9(7-10)%
+--------
+{ プレフィックスモッド「貯蔵者の」 (ティア: 1) — ドロップ }
+見つかるアイテムのレアリティが18(16-19)%増加する
+{ プレフィックスモッド「青鋼の」 (ティア: 4) — マナ }
+最大マナ +124(105-124)
+{ プレフィックスモッド「降雹する」 (ティア: 2) — ダメージ, 元素, 冷気 }
+冷気ダメージが26(23-26)%増加する
+{ サフィックスモッド 「考古学の」 (ティア: 1) — ドロップ }
+見つかるアイテムのレアリティが17(15-18)%増加する""")
+
+    rows = poe2_trade_filters(item)
+    rarity_rows = [row for row in rows if row.stat_id == "explicit.stat_3917489142"]
+    assert len(rarity_rows) == 1
+    assert (
+        rarity_rows[0].text,
+        rarity_rows[0].min_value,
+        rarity_rows[0].read_value,
+        rarity_rows[0].roll_min,
+        rarity_rows[0].roll_max,
+        rarity_rows[0].generation,
+    ) == (
+        "見つかるアイテムのレアリティが35%増加する",
+        35.0, 35.0, 31.0, 37.0, "prefix_suffix",
+    )
+
+    selected = tuple(
+        replace(row, enabled=row is rarity_rows[0]) for row in rows
+    )
+    sent = build_search_query(item, stat_filters=selected)["query"]["stats"][0]["filters"]
+    assert sent == [{"id": "explicit.stat_3917489142", "value": {"min": 35.0}}]
+
+
+def test_expedition_tablet_surpassing_duplicate_mod_resolves_to_current_trade_stat():
+    item = parse_item_text("""アイテムクラス: 石板
+レアリティ: マジック
+結晶化した 双子の エクスペディションの石板
+--------
+アイテムレベル: 82
+--------
+{ 暗黙モッド }
+マップにカルグールのエクスペディションを追加する
+残り使用可能回数 10回
+--------
+{ プレフィックスモッド「結晶化した」 (ティア: 1) }
+マップにエッセンスが追加で1個出現する — スケールできない値
+{ サフィックスモッド 「双子の」 (ティア: 1) }
+マップのエクスペディションは+36(30-40)%の超過可能確率でルーニックモンスターを複製する
+--------
+自身のマップデバイスで使用してマップにモッドを追加できる。""")
+
+    assert all(mod.stat_id for mod in item.modifiers), [
+        mod.text for mod in item.modifiers if not mod.stat_id
+    ]
+    duplicate = next(
+        mod for mod in item.modifiers if mod.stat_id == "explicit.stat_779964546"
+    )
+    assert (duplicate.values, duplicate.roll_min, duplicate.roll_max) == (
+        (36.0,), 30.0, 40.0,
+    )
+
+    rows = poe2_trade_filters(item)
+    duplicate_row = next(
+        row for row in rows if row.stat_id == "explicit.stat_779964546"
+    )
+    selected = tuple(replace(row, enabled=row is duplicate_row) for row in rows)
+    sent = build_search_query(item, stat_filters=selected)["query"]["stats"][0]["filters"]
+    assert sent == [{"id": "explicit.stat_779964546", "value": {"min": 36.0}}]
+
+
+def test_expedition_tablet_english_vaal_relic_mod_resolves_in_japanese_copy():
+    item = parse_item_text("""アイテムクラス: 石板
+レアリティ: レア
+神無き秘所
+エクスペディションの石板
+--------
+アイテムレベル: 82
+--------
+{ 暗黙モッド }
+マップにカルグールのエクスペディションを追加する
+残り使用可能回数 10回
+--------
+{ プレフィックスモッド「高い」 (ティア: 1) }
+マップでの獲得経験値が12(12-18)%増加する
+{ プレフィックスモッド「収集家の」 (ティア: 1) }
+マップで見つかるアイテムのレアリティが11(8-12)%増加する
+{ サフィックスモッド 「古物研究家の」 (ティア: 1) }
+マップにストロングボックスが追加で1個出現する
+{ サフィックスモッド 「過去の」 (ティア: 1) }
+Expeditions contain 1 Vaal Relic in Map
+--------
+自身のマップデバイスで使用してマップにモッドを追加できる。""")
+
+    assert all(mod.stat_id for mod in item.modifiers), [
+        mod.text for mod in item.modifiers if not mod.stat_id
+    ]
+    vaal_relic = next(
+        mod for mod in item.modifiers if mod.stat_id == "explicit.stat_2852112245"
+    )
+    assert vaal_relic.values == ()
+
+    rows = poe2_trade_filters(item)
+    vaal_relic_row = next(
+        row for row in rows if row.stat_id == "explicit.stat_2852112245"
+    )
+    selected = tuple(replace(row, enabled=row is vaal_relic_row) for row in rows)
+    sent = build_search_query(item, stat_filters=selected)["query"]["stats"][0]["filters"]
+    assert sent == [{"id": "explicit.stat_2852112245"}]
+
+
+def test_expedition_tablet_rare_chest_roll_resolves_to_boolean_trade_stat():
+    item = parse_item_text("""アイテムクラス: 石板
+レアリティ: レア
+埋もれた記録
+エクスペディションの石板
+--------
+アイテムレベル: 82
+--------
+{ 暗黙モッド }
+マップにカルグールのエクスペディションを追加する
+残り使用可能回数 10回
+--------
+{ サフィックスモッド 「宝探しの」 (ティア: 1) }
+マップにレアのチェストが追加で3(2-3)個出現する
+""")
+
+    modifier = next(
+        mod for mod in item.modifiers if mod.stat_id == "explicit.stat_231864447"
+    )
+    assert modifier.values == ()
+    assert (modifier.roll_min, modifier.roll_max) == (2.0, 3.0)
+
+    rows = poe2_trade_filters(item)
+    selected = tuple(replace(row, enabled=row.stat_id == modifier.stat_id) for row in rows)
+    sent = build_search_query(item, stat_filters=selected)["query"]["stats"][0]["filters"]
+    assert sent == [{"id": "explicit.stat_231864447"}]
+
+
+def test_tablet_rarity_override_can_select_magic_or_rare_exactly():
+    item = parse_item_text("""アイテムクラス: 石板
+レアリティ: レア
+埋もれた記録
+エクスペディションの石板
+--------
+アイテムレベル: 82
+--------
+{ 暗黙モッド }
+マップにカルグールのエクスペディションを追加する
+残り使用可能回数 10回
+""")
+
+    for selected in ("magic", "rare"):
+        query = build_search_query(item, rarity_override=selected)["query"]
+        assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+            "option": selected,
+        }
+
+
+def test_jewel_prefers_jewel_scoped_mana_on_kill_stat_in_trade_query():
+    item = parse_item_text(MANA_ON_KILL_JEWEL_FIXTURE.read_text(encoding="utf-8"))
+    filters = poe2_trade_filters(item)
+    payload = build_search_query(item, stat_filters=filters)
+    stat_ids = {
+        row["id"] for row in payload["query"]["stats"][0]["filters"]
+    }
+
+    assert item.category == "jewel"
+    assert {modifier.stat_id for modifier in item.modifiers} == {
+        "explicit.stat_3417711605",
+        "explicit.stat_1604736568",
+        "explicit.stat_3668351662",
+    }
+    assert "explicit.stat_1604736568" in stat_ids
+    assert "explicit.stat_1030153674" not in stat_ids
 
 
 def test_unidentified_unique_searches_base_with_unique_and_unidentified_filters():
@@ -114,10 +604,14 @@ def test_finished_preset_uses_explicit_counterpart_for_special_mod_like_ee2(kind
     rows = poe2_trade_filters(item)
     direct = next(row for row in rows if row.text == "Chaos Resistance")
     assert (direct.stat_id, direct.kind, direct.enabled) == (
-        "explicit.stat_2923486259", "explicit", True,
+        "explicit.stat_2923486259", "explicit", False,
     )
     assert direct.provenance_tags == (kind,)
-    sent = build_search_query(item, stat_filters=rows)["query"]["stats"][0]["filters"]
+    selected = tuple(
+        replace(row, enabled=True) if row is direct else row
+        for row in rows
+    )
+    sent = build_search_query(item, stat_filters=selected)["query"]["stats"][0]["filters"]
     assert sent == [{"id": "explicit.stat_2923486259", "value": {"min": 21.0}}]
 
 
@@ -130,7 +624,7 @@ def test_finished_preset_keeps_special_stat_without_explicit_counterpart():
     )
     direct = next(row for row in poe2_trade_filters(item) if row.text == "Special")
     assert (direct.stat_id, direct.kind, direct.enabled) == (
-        "desecrated.missing", "desecrated", True,
+        "desecrated.missing", "desecrated", False,
     )
     assert direct.provenance_tags == ("desecrated",)
 
@@ -158,6 +652,80 @@ def test_base_keeps_provenance_but_finished_normalizes_immutable_items(
     assert finished.stat_id == "explicit.stat_2923486259"
 
 
+def test_base_enables_fractured_but_not_crafted_or_desecrated_mods():
+    item = ParsedItem(
+        item_class="Spears", rarity="rare", name="Test", base_type="Soaring Spear",
+        category="spear", modifiers=(
+            ItemModifier("Crafted", (8,), kind="crafted", stat_id="crafted.one"),
+            ItemModifier("Fractured", (28,), kind="fractured", stat_id="fractured.two"),
+            ItemModifier("Desecrated", (12,), kind="desecrated", stat_id="desecrated.three"),
+        ),
+    )
+    rows = poe2_trade_filters(item, preset=PRESET_BASE)
+    assert {row.kind: row.enabled for row in rows} == {
+        "crafted": False, "fractured": True, "desecrated": False,
+    }
+
+
+@pytest.mark.parametrize(("rarity", "modifier_count", "expected_tiers"), [
+    ("magic", 2, {1, 2}),
+    ("rare", 4, set()),
+    ("rare", 5, set()),
+])
+def test_base_normal_explicit_defaults_keep_magic_and_hide_rare(
+    rarity, modifier_count, expected_tiers,
+):
+    modifiers = tuple(
+        ItemModifier(
+            f"Explicit T{index}", (index,), kind="explicit", tier=index,
+            stat_id=f"explicit.stat_{index}",
+        )
+        for index in range(1, modifier_count + 1)
+    )
+    item = ParsedItem(
+        item_class="Spears", rarity=rarity, name="Test", base_type="Soaring Spear",
+        category="spear", modifiers=modifiers,
+    )
+    explicit_rows = [
+        row for row in poe2_trade_filters(item, preset=PRESET_BASE)
+        if row.kind == "explicit"
+    ]
+    assert {row.tier for row in explicit_rows} == (
+        set(range(1, modifier_count + 1)) if rarity == "magic" else set()
+    )
+    assert {row.tier for row in explicit_rows if row.enabled} == expected_tiers
+
+
+def test_reported_rare_spear_base_enables_its_fractured_mod_only():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(
+            encoding="utf-8"
+        )
+    )
+    rows = poe2_trade_filters(item, preset=PRESET_BASE)
+    direct_rows = [row for row in rows if row.kind != "state"]
+    assert {row.kind for row in direct_rows} == {"crafted", "fractured"}
+    assert [row.text for row in direct_rows if row.enabled] == [
+        "アタックスピードが28(26-28)%増加する"
+    ]
+
+
+def test_reported_rare_boots_hide_normal_explicit_mods_in_base_search():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2" / "rare_boots_compound_prefix_ja.txt").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert len(item.modifiers) == 5
+    assert len({modifier.group for modifier in item.modifiers}) == 4
+
+    rows = [
+        row for row in poe2_trade_filters(item, preset=PRESET_BASE)
+        if row.kind == "explicit"
+    ]
+    assert rows == []
+
+
 def test_finished_preset_merges_natural_and_normalized_special_sources():
     item = ParsedItem(
         item_class="Gloves", rarity="rare", name="Test", base_type="Grand Bracers",
@@ -171,7 +739,7 @@ def test_finished_preset_merges_natural_and_normalized_special_sources():
     )
     rows = [row for row in poe2_trade_filters(item) if row.stat_id == "explicit.stat_2923486259"]
     assert len(rows) == 1
-    assert (rows[0].min_value, rows[0].read_value, rows[0].enabled) == (21.0, 21.0, True)
+    assert (rows[0].min_value, rows[0].read_value, rows[0].enabled) == (21.0, 21.0, False)
     assert rows[0].provenance_tags == ("crafted",)
 
 
@@ -358,7 +926,7 @@ def test_search_prices_sends_three_state_sanctified_filter(
     assert result.query_id == "sanctified-query"
 
 
-def test_poe2_price_search_fetches_only_top_twenty_even_for_one_seller(monkeypatch):
+def test_poe2_price_search_fetches_ten_then_fetches_next_ten_on_demand(monkeypatch):
     item = parse_item_text(_unique_fixture()["text"])
     ids = [f"listing-{index}" for index in range(30)]
     calls = []
@@ -383,26 +951,131 @@ def test_poe2_price_search_fetches_only_top_twenty_even_for_one_seller(monkeypat
     )
     result = search_prices(item, "Standard")
 
+    assert len(calls) == 2
+    assert sum("/fetch/" in url for url, _kwargs in calls) == 1
+    assert len(result.listings) == 1
+    assert result.listings[0].listed_times == 10
+    assert result.next_result_ids == tuple(ids[10:20])
+    assert result.fetched_count == 10
+
+    expanded = fetch_additional_prices(result)
+
     assert len(calls) == 3
     assert sum("/fetch/" in url for url, _kwargs in calls) == 2
-    assert len(result.listings) == 1
-    assert result.listings[0].listed_times == 20
+    assert len(expanded.listings) == 1
+    assert expanded.listings[0].listed_times == 20
+    assert expanded.next_result_ids == ()
+    assert expanded.fetched_count == 20
 
 
-def test_poe2_leagues_are_filtered_and_auto_selects_current_softcore(monkeypatch):
-    monkeypatch.setattr(
-        "src.poetore.poe2.trade._cached_request_json",
-        lambda _url: ({"result": [
+def test_poe2_leagues_use_realm_specific_endpoint_and_auto_select_current_softcore(
+    monkeypatch,
+):
+    requested_urls = []
+
+    def fake_cached_request(url):
+        requested_urls.append(url)
+        return ({"result": [
+            {"id": "Forbidden Rites", "realm": "poe2"},
+            {"id": "HC Forbidden Rites", "realm": "poe2"},
             {"id": "Runes of Aldur", "realm": "poe2"},
             {"id": "HC Runes of Aldur", "realm": "poe2"},
             {"id": "Standard", "realm": "poe2"},
             {"id": "PoE1 League", "realm": "pc"},
-        ]}, {}, False),
+        ]}, {}, False)
+
+    monkeypatch.setattr(
+        "src.poetore.poe2.trade._cached_request_json",
+        fake_cached_request,
     )
     leagues = available_pc_leagues()
-    assert [row.id for row in leagues] == ["Runes of Aldur", "HC Runes of Aldur", "Standard"]
+    assert requested_urls == [
+        "https://www.pathofexile.com/api/trade2/data/leagues?realm=poe2",
+    ]
+    assert [row.id for row in leagues] == [
+        "Forbidden Rites", "HC Forbidden Rites", "Runes of Aldur",
+        "HC Runes of Aldur", "Standard",
+    ]
     assert leagues[1].hardcore
-    assert default_pc_league(leagues) == "Runes of Aldur"
+    assert default_pc_league(leagues) == "Forbidden Rites"
+
+
+def test_poe2_leagues_retry_alternate_endpoint_when_primary_is_incomplete(monkeypatch):
+    requested_urls = []
+
+    def fake_cached_request(url):
+        requested_urls.append(url)
+        if url.endswith("?realm=poe2"):
+            return ({"result": [
+                {"id": "Standard", "realm": "poe2"},
+                {"id": "Hardcore", "realm": "poe2"},
+            ]}, {}, False)
+        return ({"result": [
+            {"id": "Forbidden Rites", "realm": "poe2"},
+            {"id": "Standard", "realm": "poe2"},
+            {"id": "PoE1 League", "realm": "pc"},
+        ]}, {}, False)
+
+    monkeypatch.setattr(poe2_trade, "_cached_request_json", fake_cached_request)
+    leagues = available_pc_leagues()
+
+    assert requested_urls == [poe2_trade.LEAGUES_URL, poe2_trade.ALTERNATE_LEAGUES_URL]
+    assert [league.id for league in leagues] == ["Forbidden Rites", "Standard"]
+
+
+def test_poe2_leagues_retry_alternate_endpoint_after_primary_error(monkeypatch):
+    requested_urls = []
+
+    def fake_cached_request(url):
+        requested_urls.append(url)
+        if url.endswith("?realm=poe2"):
+            raise TimeoutError("maintenance")
+        return ({"result": [
+            {"id": "Recovered League", "realm": "poe2"},
+            {"id": "Standard", "realm": "poe2"},
+        ]}, {}, False)
+
+    monkeypatch.setattr(poe2_trade, "_cached_request_json", fake_cached_request)
+
+    assert [league.id for league in available_pc_leagues()] == [
+        "Recovered League", "Standard",
+    ]
+    assert requested_urls == [poe2_trade.LEAGUES_URL, poe2_trade.ALTERNATE_LEAGUES_URL]
+
+
+def test_poe2_leagues_keep_last_good_list_when_both_endpoints_are_incomplete(monkeypatch):
+    previous = (poe2_trade.TradeLeague("Remembered League"),)
+    monkeypatch.setattr(poe2_trade, "_last_known_good_leagues", previous)
+    monkeypatch.setattr(
+        poe2_trade,
+        "_cached_request_json",
+        lambda _url: ({"result": [{"id": "Standard", "realm": "poe2"}]}, {}, False),
+    )
+
+    assert available_pc_leagues() == previous
+
+
+def test_poe2_manual_league_refresh_bypasses_local_response_cache(monkeypatch):
+    requested_urls = []
+
+    def fake_request(url):
+        requested_urls.append(url)
+        return ({"result": [
+            {"id": "Fresh League", "realm": "poe2"},
+            {"id": "Standard", "realm": "poe2"},
+        ]}, {})
+
+    monkeypatch.setattr(poe2_trade, "_request_json", fake_request)
+    monkeypatch.setattr(
+        poe2_trade,
+        "_cached_request_json",
+        lambda _url: pytest.fail("manual refresh must bypass the local cache"),
+    )
+
+    leagues = available_pc_leagues(force_refresh=True)
+
+    assert requested_urls == [poe2_trade.LEAGUES_URL]
+    assert [league.id for league in leagues] == ["Fresh League", "Standard"]
 
 
 def test_mageblood_option_stats_use_trade2_pipe_suffix_ids():
@@ -429,11 +1102,223 @@ def test_reported_rare_gloves_send_chaos_resistance_to_trade2():
     assert chaos["value"] == {"min": 15.0}
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        """アイテムクラス: セプター
+レアリティ: ノーマル
+上質な 神殿のセプター
+--------
+品質: +6% (augmented)
+スピリット: 100
+--------
+装備条件：レベル 26, 17 筋力, 38 知性
+--------
+アイテムレベル: 77
+--------
+スキルを付与: レベル18 ピュリティオブアイス""",
+        """Item Class: Sceptres
+Rarity: Normal
+Superior Shrine Sceptre
+--------
+Quality: +6% (augmented)
+Spirit: 100
+--------
+Requires: Level 26, 17 Str, 38 Int
+--------
+Item Level: 77
+--------
+Grants Skill: Level 18 Purity of Ice""",
+    ],
+)
+def test_reported_superior_normal_sceptre_uses_underlying_trade2_base(text):
+    item = parse_item_text(text)
+    rows = poe2_trade_filters(item)
+    query = build_search_query(item, stat_filters=rows)["query"]
+
+    assert (item.base_type, item.category, item.rarity) == (
+        "Shrine Sceptre", "sceptre", "normal",
+    )
+    assert query["type"] == "Shrine Sceptre"
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "normal",
+    }
+    assert query["filters"]["equipment_filters"]["filters"]["spirit"] == {
+        "min": 100.0,
+    }
+
+
+@pytest.mark.parametrize("level", [18, 19, 20])
+def test_chiming_staff_exposes_every_sigil_level_as_a_mod_filter(level):
+    text = """アイテムクラス: スタッフ
+レアリティ: マジック
+青い 熟達者の 鐘鳴のスタッフ
+--------
+装備条件：レベル 56, 29 (augmented) 知性
+--------
+アイテムレベル: 82
+--------
+スキルを付与: レベルLEVEL シギルオブパワー
+--------
+{ プレフィックスモッド「青い」 (ティア: 1) — マナ }
+最大マナ +319(299-328)
+{ サフィックスモッド 「熟達者の」 (ティア: 1) }
+要求能力値が35%減少する""".replace("LEVEL", str(level))
+
+    item = parse_item_text(text)
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+
+    assert item.base_type == "Chiming Staff"
+    assert rows["skill.sigil_of_power"].kind == "skill"
+    assert rows["skill.sigil_of_power"].read_value == level
+    assert rows["skill.sigil_of_power"].enabled is True
+    assert rows["skill.sigil_of_power"].hidden_reason == ""
+
+
+def test_non_chiming_granted_skill_is_a_visible_checked_mod_filter():
+    text = """アイテムクラス: セプター
+レアリティ: ノーマル
+神殿のセプター
+--------
+アイテムレベル: 82
+--------
+スキルを付与: レベル20 シギルオブパワー"""
+
+    item = parse_item_text(text)
+
+    skill = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "skill.sigil_of_power"
+    )
+    assert skill.kind == "skill"
+    assert skill.read_value == 20
+    assert skill.enabled is True
+    assert skill.hidden_reason == ""
+
+
+def test_base_granted_skill_without_trade_stat_is_not_displayed_or_searched():
+    item = parse_item_text(
+        (Path(__file__).parent / "fixtures" / "poe2" / "skysliver_ja.txt")
+        .read_text(encoding="utf-8")
+    )
+    rows = poe2_trade_filters(item)
+    assert not any(row.kind == "skill" for row in rows)
+    query = build_search_query(
+        item, stat_filters=rows, exact_base_type=False,
+    )["query"]
+    assert "type" not in query
+    assert not any(
+        row["id"].startswith("skill.")
+        for group in query["stats"] for row in group["filters"]
+    )
+
+
+def test_level_less_granted_skill_with_trade_stat_is_visible_and_searchable():
+    item = parse_item_text("""アイテムクラス: バックラー
+レアリティ: マジック
+古代のバックラー
+--------
+ブロック率: 20%
+回避力: 178
+--------
+装備条件：レベル 75, 107 器用さ
+--------
+アイテムレベル: 75
+--------
+スキルを付与: パリィ""")
+    rows = poe2_trade_filters(item)
+    skill = next(row for row in rows if row.stat_id == "skill.parry")
+
+    assert skill.text == "スキルを付与: パリィ"
+    assert skill.read_value is None
+    assert skill.enabled is True
+    assert skill.hidden_reason == ""
+
+    query = build_search_query(item, stat_filters=rows)["query"]
+    assert {row["id"]: row for row in query["stats"][0]["filters"]}[
+        "skill.parry"
+    ] == {"id": "skill.parry"}
+
+
+def test_absent_amulet_exposes_low_level_rhoa_mount_from_actual_copy_text():
+    item = parse_item_text("""アイテムクラス: アミュレット
+レアリティ: ノーマル
+不在のアミュレット
+--------
+装備条件：レベル 58
+--------
+アイテムレベル: 65
+--------
+{ 暗黙モッド }
+プレフィックスモッド -1個
+サフィックスモッド -1個
+--------
+スキルを付与: レベル14 ロアマウント
+--------
+我らは永遠に生まれぬ者たちを掴む……
+--------
+メモ: ~b/o 10 chaos""")
+
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+    skill = rows["skill.summon_rhoa_mount"]
+
+    assert item.base_type == "Absent Amulet"
+    assert skill.text == "スキルを付与: レベル14 ロアマウント"
+    assert skill.kind == "skill"
+    assert skill.read_value == 14
+    assert skill.enabled is True
+    assert skill.hidden_reason == ""
+
+    sent = build_search_query(
+        item, stat_filters=tuple(rows.values()),
+    )["query"]["stats"][0]["filters"]
+    assert {row["id"]: row for row in sent}["skill.summon_rhoa_mount"] == {
+        "id": "skill.summon_rhoa_mount",
+        "value": {"min": 14.0},
+    }
+
+
 def test_multi_value_trade_stats_use_same_arithmetic_mean_as_ee2():
     assert trade_stat_value((25.0, 39.0)) == 32.0
     assert trade_stat_value((1.0, 3.0, 5.0, 7.0)) == 4.0
     assert trade_stat_value((8.0,)) == 8.0
     assert trade_stat_value(()) is None
+
+
+def test_actual_augment_socket_count_is_not_clamped_to_normal_limit():
+    item = ParsedItem(
+        item_class="Body Armours", rarity="rare", name="Test", base_type="Test Base",
+        category="body_armour", properties={"Sockets": "S S S"}, augment_count=1,
+    )
+
+    assert empty_augment_socket_count(item) == 2
+    assert augment_socket_edit_counts(item) == (
+        (2, "空き2個に追加"),
+        (3, "全3個を置換"),
+    )
+
+
+def test_virtual_range_augment_uses_arithmetic_mean(monkeypatch):
+    monkeypatch.setattr(poe2_trade, "augment_entries", lambda: ({
+        "ref_name": "Desert Rune",
+        "names": {"en": "Desert Rune", "ja": "砂漠のルーン"},
+        "effects": ({
+            "categories": ["Bow"],
+            "text": {"en": "Adds # to # Fire Damage", "ja": "#から#の火ダメージを追加する"},
+            "values": [7, 11],
+            "trade_ids": ["rune.stat_709508406"],
+        },),
+    },))
+    item = ParsedItem(
+        item_class="Bows", rarity="rare", name="Test", base_type="Test Bow",
+        category="bow", properties={"Sockets": "S S"},
+    )
+
+    rows = virtual_augment_filters(item, "Desert Rune")
+
+    assert len(rows) == 1
+    assert rows[0].min_value == 18.0
+    assert rows[0].read_value == 18.0
 
 
 def test_reported_rare_spear_sends_flat_damage_average_and_optional_quality():
@@ -495,13 +1380,13 @@ def test_poe2_individual_elemental_damage_properties_build_edps_and_total_dps(
     assert rows["property.total_dps"].read_value == pytest.approx(149.12)
     assert rows["property.total_dps"].enabled is True
     assert rows["property.physical_dps"].enabled is False
-    assert rows["property.elemental_dps"].enabled is False
+    assert rows["property.elemental_dps"].enabled is True
 
     payload = build_search_query(item, stat_filters=tuple(rows.values()))
     equipment = payload["query"]["filters"]["equipment_filters"]["filters"]
     assert equipment["dps"]["min"] == pytest.approx(149.12)
     assert "pdps" not in equipment
-    assert "edps" not in equipment
+    assert equipment["edps"]["min"] == pytest.approx(70.4)
 
 
 def test_poe2_single_elemental_damage_property_enables_edps_filter():
@@ -535,6 +1420,17 @@ def test_reported_rare_body_armour_sends_only_category_selected_local_stat():
         {"id": "explicit.stat_124859000", "value": {"min": 40.0}},
     ]
     assert all(row["id"] != "explicit.stat_2106365538" for row in filters)
+
+
+def test_reported_unique_skysliver_sends_local_attack_speed_to_trade2():
+    text = (Path(__file__).parent / "fixtures" / "poe2" / "skysliver_ja.txt").read_text(
+        encoding="utf-8"
+    )
+    payload = build_search_query(parse_item_text(text))
+    filters = payload["query"]["stats"][0]["filters"]
+
+    assert any(row["id"] == "explicit.stat_210067635" for row in filters)
+    assert all(row["id"] != "explicit.stat_681332047" for row in filters)
 
 
 def test_poe2_filter_ignores_audit_alternatives_in_normal_search():
@@ -609,16 +1505,10 @@ def test_phase6_relic_barya_and_ultimatum_send_dedicated_filters():
     }
 
     ultimatum_rows = poe2_search_filters(items["inscribed_ultimatum"])
-    hint = next(row for row in ultimatum_rows if row.stat_id == "property.ultimatum_hint")
-    assert not hint.enabled
-    enabled_rows = tuple(
-        row.__class__(**{**row.__dict__, "enabled": True})
-        if row.stat_id == "property.ultimatum_hint" else row
-        for row in ultimatum_rows
-    )
-    ultimatum = build_search_query(items["inscribed_ultimatum"], stat_filters=enabled_rows)
-    assert ultimatum["query"]["filters"]["map_filters"]["filters"]["ultimatum_hint"] == {
-        "option": "Deadly",
+    assert all(row.stat_id != "property.ultimatum_hint" for row in ultimatum_rows)
+    ultimatum = build_search_query(items["inscribed_ultimatum"], stat_filters=ultimatum_rows)
+    assert ultimatum["query"]["filters"]["misc_filters"]["filters"]["area_level"] == {
+        "min": 80.0,
     }
 
     tablet_rows = poe2_trade_filters(items["normal_tablet"])
@@ -634,12 +1524,28 @@ def test_phase7_weapon_and_armour_calculated_properties_use_trade2_equipment_fil
     fixtures = Path(__file__).parent / "fixtures" / "poe2"
     spear = parse_item_text((fixtures / "rare_spear_ja.txt").read_text(encoding="utf-8"))
     spear_rows = poe2_trade_filters(spear)
+    assert [row.kind for row in spear_rows[:3]] == ["property"] * 3
+    ordinary_affixes = [
+        row.affix for row in spear_rows
+        if row.kind == "explicit" and not row.provenance_tags
+    ]
+    assert ordinary_affixes == ["prefix", "prefix", "suffix"]
+    spear_query = build_search_query(spear, stat_filters=spear_rows)
+    sent_ids = {
+        row["id"]
+        for group in spear_query["query"]["stats"]
+        for row in group["filters"]
+    }
+    assert {
+        row.stat_id for row in spear_rows
+        if row.enabled and row.affix in {"prefix", "suffix"}
+        and row.stat_id.startswith("explicit.")
+    } <= sent_ids
     by_id = {row.stat_id: row for row in spear_rows}
     assert by_id["property.physical_dps"].enabled
     assert by_id["property.physical_dps"].read_value == pytest.approx(241.325)
     assert by_id["property.physical_dps"].min_value == pytest.approx(241.325)
     assert not by_id["property.aps"].enabled
-    spear_query = build_search_query(spear, stat_filters=spear_rows)
     equipment = spear_query["query"]["filters"]["equipment_filters"]["filters"]
     assert equipment["pdps"]["min"] == pytest.approx(241.325)
     assert "aps" not in equipment
@@ -656,7 +1562,7 @@ def test_phase7_weapon_and_armour_calculated_properties_use_trade2_equipment_fil
     )
 
 
-def test_phase7_pseudo_replaces_direct_chaos_filter_without_duplicate_constraint():
+def test_phase7_single_chaos_mod_selects_awakened_pseudo_and_keeps_direct_optional():
     item = parse_item_text(
         (Path(__file__).parent / "fixtures" / "poe2" / "rare_body_armour_ja.txt").read_text(
             encoding="utf-8"
@@ -664,13 +1570,16 @@ def test_phase7_pseudo_replaces_direct_chaos_filter_without_duplicate_constraint
     )
     rows = poe2_trade_filters(item)
     direct = next(row for row in rows if row.stat_id == "explicit.stat_2923486259")
-    pseudo = next(row for row in rows if row.stat_id == "pseudo.pseudo_total_chaos_resistance")
     assert not direct.enabled
-    assert pseudo.enabled and pseudo.min_value == 21.0
+    pseudo = next(
+        row for row in rows
+        if row.stat_id == "pseudo.pseudo_total_chaos_resistance"
+    )
+    assert pseudo.enabled
     query = build_search_query(item, stat_filters=rows)
     sent = query["query"]["stats"][0]["filters"]
-    assert {"id": "pseudo.pseudo_total_chaos_resistance", "value": {"min": 21.0}} in sent
-    assert not any(row["id"] == "crafted.stat_2923486259" for row in sent)
+    assert not any(row["id"] == "explicit.stat_2923486259" for row in sent)
+    assert any(row["id"] == "pseudo.pseudo_total_chaos_resistance" for row in sent)
 
 
 def test_phase7_elemental_and_life_pseudos_sum_shared_sources_once():
@@ -693,6 +1602,209 @@ def test_phase7_elemental_and_life_pseudos_sum_shared_sources_once():
     assert not by_id["explicit.fire"].enabled
     assert not by_id["explicit.life"].enabled
     assert not by_id["explicit.str"].enabled
+
+
+def test_poe2_ee2_defaults_select_spirit_but_not_reload_or_granted_skill():
+    item = ParsedItem(
+        item_class="Sceptres", rarity="rare", name="Test", base_type="Test Sceptre",
+        category="sceptre", properties={
+            "Spirit": "100", "Runic Ward": "80", "Reload Time": "0.70 Seconds",
+        }, modifiers=(
+            ItemModifier(
+                "Grants Skill: Test Skill", (), kind="explicit",
+                stat_id="explicit.granted_skill",
+            ),
+        ),
+    )
+    by_id = {row.stat_id: row for row in poe2_trade_filters(item)}
+
+    assert by_id["property.spirit"].enabled
+    assert by_id["property.runic_ward"].enabled
+    assert not by_id["property.reload_time"].enabled
+    assert not by_id["explicit.granted_skill"].enabled
+
+
+@pytest.mark.parametrize(
+    ("category", "enabled"),
+    [
+        ("one_axe", True), ("two_axe", True),
+        ("one_sword", True), ("two_sword", True),
+        ("one_mace", True), ("two_mace", True),
+        ("bow", True), ("crossbow", True), ("spear", True),
+        ("flail", True), ("quarterstaff", True),
+        ("staff", False), ("wand", False), ("sceptre", False),
+        ("dagger", False),
+    ],
+)
+def test_poe2_physical_dps_default_matches_ee2_weapon_categories(category, enabled):
+    item = ParsedItem(
+        item_class="Weapons", rarity="rare", name="Test Weapon",
+        base_type="Test Base", category=category,
+        properties={
+            "物理ダメージ": "50-100",
+            "秒間アタック回数": "1.00",
+        },
+    )
+
+    row = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "property.physical_dps"
+    )
+    assert row.enabled is enabled
+
+
+@pytest.mark.parametrize(
+    ("ref", "tier", "enabled"),
+    [
+        ("# to Spirit", 1, True),
+        ("# to Spirit", 2, False),
+        ("# to Level of all Spell Skills", 1, True),
+        ("# to Level of all Melee Skills", 1, True),
+        ("# to Level of all Minion Skills", 1, True),
+        ("# to Level of all Projectile Skills", 1, True),
+        ("# to Level of all Fire Spell Skills", 1, True),
+        ("+# to Level of all Tornado Shot Skills", 1, True),
+        ("# to Level of all Spell Skills", 2, False),
+        ("Skills deal #% increased Damage", 1, False),
+        ("#% increased Spirit", 1, False),
+    ],
+)
+def test_poe2_finished_search_enables_only_priority_t1_direct_mods(ref, tier, enabled):
+    item = ParsedItem(
+        item_class="Amulets", rarity="rare", name="Test Amulet",
+        base_type="Test Base", category="amulet",
+        modifiers=(ItemModifier(
+            "テストMod", (3,), kind="explicit", ref=ref,
+            stat_id="explicit.test", tier=tier,
+        ),),
+    )
+
+    row = next(row for row in poe2_trade_filters(item) if row.stat_id == "explicit.test")
+    assert row.enabled is enabled
+
+
+def test_poe2_finished_search_enables_t1_fractured_spirit_after_normalization():
+    item = ParsedItem(
+        item_class="Amulets", rarity="rare", name="Test Amulet",
+        base_type="Gold Amulet", category="amulet", flags=("fractured",),
+        modifiers=(ItemModifier(
+            "スピリット +50", (50,), kind="fractured", ref="# to Spirit",
+            stat_id="fractured.stat_3981240776", tier=1,
+        ),),
+    )
+
+    row = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "explicit.stat_3981240776"
+    )
+    assert row.kind == "explicit"
+    assert row.provenance_tags == ("fractured",)
+    assert row.enabled
+    sent = build_search_query(
+        item, stat_filters=poe2_trade_filters(item),
+    )["query"]["stats"][0]["filters"]
+    assert sent == [{
+        "id": "explicit.stat_3981240776",
+        "value": {"min": 50.0},
+    }]
+
+
+def test_poe2_unique_fixed_direct_mod_is_a_hidden_candidate():
+    item = ParsedItem(
+        item_class="Belts", rarity="unique", name="Test", base_type="Heavy Belt",
+        category="belt", modifiers=(
+            ItemModifier("Strength", (30.0,), stat_id="explicit.str"),
+        ),
+    )
+
+    direct = next(row for row in poe2_trade_filters(item) if row.stat_id == "explicit.str")
+    assert not direct.enabled
+    assert direct.hidden_reason == "可変ロールではありません"
+
+
+def test_mastered_domain_keeps_fixed_biome_variant_visible_and_searchable():
+    item = parse_item_text("""アイテムクラス: 石板
+レアリティ: ユニーク
+熟達した領域
+照射の石板
+--------
+アイテムレベル: 82
+--------
+{ 暗黙モッド }
+マップに照射状態を追加する
+残り使用回数 1回
+--------
+{ ユニークモッド }
+マップは山バイオームエリアとも見なされる — スケールできない値
+--------
+輝ける束の間、先人たちは
+自由に世界を作り変えることができた。
+--------
+自身のマップデバイスで使用してマップにモッドを追加できる。""")
+
+    biome = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "explicit.stat_1583884108"
+    )
+    assert biome.hidden_reason == ""
+    assert biome.enabled
+    sent = build_search_query(
+        item, stat_filters=poe2_trade_filters(item),
+    )["query"]["stats"][0]["filters"]
+    assert {row["id"] for row in sent} == {
+        "explicit.stat_1583884108",
+        "pseudo.pseudo_number_of_uses_remaining",
+    }
+
+
+@pytest.mark.parametrize("stat_id", [
+    "explicit.stat_3517228691",  # Desert
+    "explicit.stat_3160511599",  # Grass
+    "explicit.stat_864099561",   # Forest
+    "explicit.stat_1583884108",  # Mountain
+    "explicit.stat_3271982291",  # Water
+    "explicit.stat_3755999954",  # Swamp
+])
+def test_all_unique_tablet_biome_variants_bypass_fixed_value_hiding(stat_id):
+    item = ParsedItem(
+        "Tablets", "unique", "Mastered Domain", "Irradiated Tablet", "tablet",
+        modifiers=(ItemModifier(
+            "固定バイオーム", (), kind="explicit", stat_id=stat_id,
+        ),),
+    )
+
+    row = next(row for row in poe2_trade_filters(item) if row.stat_id == stat_id)
+    assert row.hidden_reason == ""
+    assert row.enabled
+
+
+def test_other_unique_tablet_fixed_values_still_use_normal_hidden_rule():
+    item = ParsedItem(
+        "Tablets", "unique", "Test Unique", "Irradiated Tablet", "tablet",
+        modifiers=(ItemModifier(
+            "別の固定値Mod", (), kind="explicit", stat_id="explicit.other_fixed",
+        ),),
+    )
+
+    row = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "explicit.other_fixed"
+    )
+    assert row.hidden_reason == "可変ロールではありません"
+    assert not row.enabled
+
+
+@pytest.mark.parametrize("fixture_name", ["mageblood_ja.txt", "mageblood_en.txt"])
+def test_poe2_mageblood_never_hides_trade_filters(fixture_name):
+    text = (Path(__file__).parent / "fixtures" / "poe2" / fixture_name).read_text(
+        encoding="utf-8"
+    )
+    rows = poe2_trade_filters(parse_item_text(text))
+
+    assert rows
+    assert all(row.hidden_reason == "" for row in rows)
+    heritage_rows = [row for row in rows if "explicit.stat_264262054|" in row.stat_id]
+    assert len(heritage_rows) == 4
 
 
 def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
@@ -757,6 +1869,99 @@ def test_phase7_virtual_augment_uses_only_empty_sockets_and_sends_rune_stat():
     assert len(alternate["filters"]) == 2
 
 
+def test_v0162_jiquani_soul_core_is_available_and_sends_reviewed_rune_stat():
+    item = _phase45_item("phase45_sceptre_ja.txt")
+    choice = next(
+        row for row in available_virtual_augments(item)
+        if row["ref_name"] == "Jiquani's Soul Core of Automation"
+    )
+    assert choice["names"]["ja"] == "ジクアニの自動化のソウルコア"
+    assert "全てのトーテムスキルジェムのレベル 1" in (
+        virtual_augment_choice_label(item, choice)
+    )
+    rows = virtual_augment_filters(item, choice["ref_name"])
+    assert len(rows) == 1
+    assert rows[0].stat_id == "rune.stat_2336703514"
+    assert rows[0].min_value == 1.0
+
+    targeting = next(
+        row for row in available_virtual_augments(item)
+        if row["ref_name"] == "Jiquani's Soul Core of Targeting"
+    )
+    assert targeting["names"]["ja"] == "ジクアニの照準のソウルコア"
+    assert "全ての呪印スキルのレベル 1" in virtual_augment_choice_label(item, targeting)
+    rows = virtual_augment_filters(item, targeting["ref_name"])
+    assert len(rows) == 1
+    assert rows[0].stat_id == "rune.stat_1992191903"
+    assert rows[0].min_value == 1.0
+
+    unavailable = {
+        "Jiquani's Soul Core of Radiance",
+        "Jiquani's Soul Core of Snares",
+    }
+    assert unavailable.isdisjoint(
+        row["ref_name"] for row in available_virtual_augments(item)
+    )
+
+
+def test_reviewed_legacy_caps_label_and_trade_value_at_one_item():
+    item = _phase45_item("phase45_sceptre_ja.txt")
+    body = item.__class__(**{
+        **item.__dict__,
+        "category": "body_armour",
+        "properties": {**item.properties, "Sockets": "S S"},
+        "augment_count": 0,
+    })
+    choice = next(
+        row for row in available_virtual_augments(body)
+        if row["ref_name"] == "Legacy of Bramblejack"
+    )
+    assert choice["max_count"] == 1
+    label = virtual_augment_choice_label(body, choice, 2)
+    assert "250%" in label
+    assert "500%" not in label
+    assert "装着上限1個" in label
+    rows = virtual_augment_filters(body, choice["ref_name"], 2)
+    assert len(rows) == 1
+    assert rows[0].stat_id == "rune.stat_1092987622"
+    assert rows[0].min_value == 250.0
+    assert "ソケット1個" in rows[0].source_texts[0]
+
+
+def test_reviewed_multi_stat_legacy_preserves_effect_value_order():
+    item = _phase45_item("phase45_sceptre_ja.txt")
+    helmet = item.__class__(**{
+        **item.__dict__,
+        "category": "helmet",
+        "properties": {**item.properties, "Sockets": "S S"},
+        "augment_count": 0,
+    })
+    rows = virtual_augment_filters(helmet, "Legacy of Elevore", 2)
+    assert [(row.stat_id, row.min_value) for row in rows] == [
+        ("rune.stat_185580205", 60.0),
+        ("rune.stat_554899692", 1.0),
+    ]
+
+
+def test_talisman_supports_reviewed_legacy_at_one_item_cap():
+    item = _phase45_item("phase45_sceptre_ja.txt")
+    talisman = item.__class__(**{
+        **item.__dict__,
+        "category": "talisman",
+        "properties": {**item.properties, "Sockets": "S S"},
+        "augment_count": 0,
+    })
+    choice = next(
+        row for row in available_virtual_augments(talisman)
+        if row["ref_name"] == "Legacy of Amor Mandragora"
+    )
+    assert choice["max_count"] == 1
+    rows = virtual_augment_filters(talisman, choice["ref_name"], 2)
+    assert [(row.stat_id, row.min_value) for row in rows] == [
+        ("rune.stat_1273508088", 20.0),
+    ]
+
+
 def test_two_identical_runes_leave_no_empty_augment_socket():
     item = parse_item_text(
         (Path(__file__).parent / "fixtures" / "poe2"
@@ -810,6 +2015,38 @@ def test_phase7_unique_roll_range_reaches_shared_editable_filter_model():
         if row.stat_id == "explicit.stat_3874491706"
     )
     assert (row.read_value, row.roll_min, row.roll_max, row.better) == (43.0, 25.0, 50.0, 1)
+
+
+def test_single_direct_attribute_mod_does_not_add_redundant_pseudo_in_poe2():
+    for ref, pseudo_id in (
+        ("# to Strength", "pseudo.pseudo_total_strength"),
+        ("# to Dexterity", "pseudo.pseudo_total_dexterity"),
+        ("# to Intelligence", "pseudo.pseudo_total_intelligence"),
+    ):
+        item = ParsedItem(
+            item_class="Spear", rarity="rare", name="Test", base_type="Test Spear",
+            category="spear",
+            modifiers=(ItemModifier(
+                "+33", (33,), stat_id="explicit.test", ref=ref,
+            ),),
+        )
+        assert pseudo_id not in {
+            row.stat_id for row in poe2_trade_filters(item)
+        }
+
+
+def test_single_all_attributes_mod_uses_only_all_attributes_pseudo_in_poe2():
+    item = ParsedItem(
+        item_class="Spear", rarity="rare", name="Test", base_type="Test Spear",
+        category="spear",
+        modifiers=(ItemModifier(
+            "+20", (20,), stat_id="explicit.test", ref="# to all Attributes",
+        ),),
+    )
+    ids = {row.stat_id for row in poe2_trade_filters(item)}
+    assert {stat_id for stat_id in ids if stat_id.startswith("pseudo.pseudo_total_")} == {
+        "pseudo.pseudo_total_all_attributes"
+    }
 
 
 def test_phase6_special_items_open_japanese_trade_with_localized_identity():
@@ -889,6 +2126,28 @@ def test_reported_magic_waystone_uses_tier_packsize_bonus_and_three_mods():
     ]
 
 
+def test_reported_waystone_item_rarity_reaches_trade2_map_iir_filter():
+    item = parse_item_text("""アイテムクラス: ウェイストーン
+レアリティ: レア
+恐るべき辺境
+ウェイストーン (ティア3)
+--------
+アイテムレアリティ: +29% (augmented)
+--------
+アイテムレベル: 70
+""")
+    rows = tuple(
+        row.__class__(**{**row.__dict__, "enabled": True})
+        for row in poe2_search_filters(item)
+    )
+
+    payload = build_search_query(item, stat_filters=rows)
+
+    assert payload["query"]["filters"]["map_filters"]["filters"]["map_iir"] == {
+        "min": 29.0,
+    }
+
+
 def test_reported_rare_waystone_sends_tier_base_instead_of_affix_name():
     item = _phase45_item("rare_waystone_ja.txt")
     rows = _phase45_rows(item)
@@ -896,6 +2155,15 @@ def test_reported_rare_waystone_sends_tier_base_instead_of_affix_name():
 
     assert payload["query"]["type"] == "Waystone (Tier 15)"
     assert payload["query"].get("name") != "先祖の突撃"
+
+
+def test_waystone_defaults_match_ee2_tier_only():
+    item = _phase45_item("rare_waystone_ja.txt")
+    enabled = [row for row in poe2_trade_filters(item) if row.enabled]
+
+    assert [(row.stat_id, row.min_value) for row in enabled] == [
+        ("property.map_tier", 15.0),
+    ]
 
 
 @pytest.mark.parametrize(
@@ -1038,6 +2306,44 @@ def test_poe2_nonunique_rarity_matches_ee2_exact_scope_rules(
     }
 
 
+def test_poe2_magic_exact_base_can_be_changed_to_nonunique():
+    item = parse_item_text(
+        "Item Class: Belts\nRarity: Magic\nHeavy Belt\n--------\n"
+    )
+
+    query = build_search_query(
+        item, exact_base_type=True, magic_exact=False,
+    )["query"]
+
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "nonunique"
+    }
+
+
+def test_poe2_magic_exact_is_kept_when_base_scope_changes_to_all_rings():
+    item = parse_item_text("""アイテムクラス: 指輪
+レアリティ: マジック
+感電する トパーズの指輪
+--------
+装備条件：レベル 60
+--------
+アイテムレベル: 82
+--------
+雷耐性 +21(20-30)%
+--------
+4(1-4)から70(60-71)の雷ダメージをアタックに追加する
+""")
+
+    query = build_search_query(
+        item, exact_base_type=False, magic_exact=True,
+    )["query"]
+
+    assert "type" not in query
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "magic"
+    }
+
+
 def test_shared_trade_options_are_sent_to_trade2_query():
     item = _phase45_item("phase45_gem_ja.txt")
     payload = build_search_query(
@@ -1062,9 +2368,212 @@ def test_shared_trade_options_are_sent_to_trade2_query():
     }
 
 
+def test_chaos_currency_filter_is_sent_to_trade2_query():
+    item = _phase45_item("phase45_gem_ja.txt")
+
+    query = build_search_query(item, trade_currency="chaos")["query"]
+
+    assert query["filters"]["trade_filters"]["filters"]["price"] == {
+        "option": "chaos"
+    }
+
+
 def test_explicit_empty_filter_set_does_not_restore_item_modifiers():
     text = (Path(__file__).parent / "fixtures" / "poe2" / "rare_spear_ja.txt").read_text(
         encoding="utf-8"
     )
     query = build_search_query(parse_item_text(text), stat_filters=())["query"]
     assert query["stats"] == [{"type": "and", "filters": []}]
+
+
+def test_adopted_poe2_dps_hidden_candidate_thresholds_and_base_reset():
+    item = ParsedItem(
+        item_class="Spears", rarity="rare", name="", base_type="Test Spear",
+        category="spear", properties={
+            "物理ダメージ": "90-110", "火ダメージ": "5-15",
+            "秒間アタック回数": "1.00",
+        },
+    )
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+    assert rows["property.physical_dps"].hidden_reason == ""
+    assert rows["property.elemental_dps"].hidden_reason
+    assert not rows["property.elemental_dps"].enabled
+
+
+def test_adopted_poe2_resistance_and_attribute_hidden_candidate_rules():
+    mods = (
+        ItemModifier("全ての元素耐性 +10%", (10,), ref="#% to all Elemental Resistances", stat_id="explicit.all"),
+        ItemModifier("火耐性 +30%", (30,), ref="#% to Fire Resistance", stat_id="explicit.fire"),
+        ItemModifier("冷気耐性 +40%", (40,), ref="#% to Cold Resistance", stat_id="explicit.cold"),
+        ItemModifier("雷耐性 +35%", (35,), ref="#% to Lightning Resistance", stat_id="explicit.lightning"),
+        ItemModifier("筋力 +100", (100,), ref="# to Strength", stat_id="explicit.str"),
+        ItemModifier("器用さ +20", (20,), ref="# to Dexterity", stat_id="explicit.dex"),
+        ItemModifier("知性 +10", (10,), ref="# to Intelligence", stat_id="explicit.int"),
+    )
+    item = ParsedItem("Amulets", "rare", "", "Test Amulet", "amulet", modifiers=mods)
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+    assert rows["pseudo.pseudo_total_all_elemental_resistances"].hidden_reason
+    assert rows["pseudo.pseudo_total_all_elemental_resistances"].read_value == 40
+    assert rows["pseudo.pseudo_total_cold_resistance"].hidden_reason
+    assert "pseudo.pseudo_total_fire_resistance" not in rows
+    assert "pseudo.pseudo_total_lightning_resistance" not in rows
+    assert rows["pseudo.pseudo_total_intelligence"].hidden_reason
+    assert not rows["pseudo.pseudo_total_dexterity"].hidden_reason
+
+
+def test_adopted_poe2_unique_fixed_and_augment_hidden_rules_with_exceptions():
+    item = ParsedItem(
+        "Belts", "unique", "Test Unique", "Heavy Belt", "belt",
+        modifiers=(
+            ItemModifier(
+                "固定値", (10,), kind="explicit", ref="# fixed", stat_id="explicit.fixed",
+                roll_min=10, roll_max=10,
+            ),
+            ItemModifier(
+                "可変値", (15,), kind="explicit", ref="# variable", stat_id="explicit.variable",
+                roll_min=10, roll_max=20,
+            ),
+            ItemModifier("ルーン効果", (5,), kind="augment", ref="# rune", stat_id="rune.fixed"),
+        ),
+    )
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+    assert rows["explicit.fixed"].hidden_reason == "可変ロールではありません"
+    assert rows["explicit.variable"].hidden_reason == ""
+    assert rows["rune.fixed"].hidden_reason == "可変ロールではありません"
+    base = {row.stat_id: row for row in poe2_trade_filters(item, preset=PRESET_BASE)}
+    assert all(not row.hidden_reason for row in base.values())
+
+
+def test_heart_of_the_well_modifiers_never_become_hidden_candidates():
+    item = parse_item_text("""アイテムクラス: ジュエル
+レアリティ: ユニーク
+井戸の心臓
+ダイヤモンド
+--------
+個数制限: 1
+--------
+アイテムレベル: 82
+--------
+{ 冒涜 ユニークモッド — ダメージ, 元素, 雷 }
+ダメージの14(9-15)%を追加雷ダメージとして獲得する
+{ 冒涜 ユニークモッド — エナジーシールド }
+装備中の鎧から得られるエナジーシールドが48(40-60)%増加する
+{ 冒涜 ユニークモッド }
+クールダウン解消レートが3(2-3)%増加する
+{ 冒涜 ユニークモッド — 元素, 雷, 耐性 }
+雷耐性の最大値 +1%
+--------
+無数の魂の悲鳴が苦痛の和音となり、
+新たに死んだ者たちの重さに沈み続ける。
+--------
+パッシブツリーで割り当てられたジュエルソケットにはめる。右クリックしてソケットから取り外すことができる。
+--------
+メモ: ~b/o 5 divine""")
+
+    modifier_rows = [
+        row for row in poe2_trade_filters(item)
+        if row.kind == "explicit"
+    ]
+
+    assert item.name == "Heart of the Well"
+    assert len(modifier_rows) == 4
+    assert all(row.hidden_reason == "" for row in modifier_rows)
+
+
+def test_adopted_poe2_low_level_magic_adds_hidden_only_rarity_filter():
+    item = ParsedItem(
+        "Boots", "magic", "", "Test Boots", "boots", item_level=78,
+    )
+    rows = {row.stat_id: row for row in poe2_trade_filters(item)}
+    rarity = rows["property.state.rarity_magic"]
+    assert rarity.hidden_reason
+    assert not rarity.enabled
+    enabled = tuple(
+        replace(row, enabled=True) if row.stat_id == rarity.stat_id else row
+        for row in rows.values()
+    )
+    query = build_search_query(item, stat_filters=enabled, exact_base_type=False)["query"]
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {"option": "magic"}
+
+
+@pytest.mark.parametrize(
+    "base_type",
+    ["Ordinary Amulet", "Absent Amulet", "Lament Amulet", "Portent Amulet"],
+)
+def test_every_low_level_granted_skill_stays_visible_and_checked(base_type):
+    item = ParsedItem(
+        "Amulets", "rare", "", base_type, "amulet",
+        modifiers=(ItemModifier(
+            "スキルを付与: レベル14 テスト", (14,), kind="skill",
+            ref="Grants Skill #", stat_id="skill.test",
+        ),),
+    )
+    row = next(row for row in poe2_trade_filters(item) if row.stat_id == "skill.test")
+    assert row.hidden_reason == ""
+    assert row.enabled is True
+
+
+def test_rejected_poe2_hidden_rules_are_not_applied():
+    item = ParsedItem(
+        "Amulets", "rare", "", "Test Amulet", "amulet",
+        modifiers=(ItemModifier(
+            "安価なアノイント", (), kind="enchant",
+            ref="Allocates Test", stat_id="enchant.test",
+        ),),
+    )
+    row = next(row for row in poe2_trade_filters(item) if row.stat_id == "enchant.test")
+    assert row.hidden_reason == ""
+
+
+@pytest.mark.parametrize("kind", ["crafted", "fractured", "desecrated"])
+def test_rejected_h09_keeps_provenance_mods_visible_in_finished_search(kind):
+    item = ParsedItem(
+        "Amulets", "rare", "", "Test Amulet", "amulet",
+        modifiers=(ItemModifier(
+            "重要な由来Mod", (50,), kind=kind,
+            ref="# to Spirit", stat_id=f"{kind}.stat_3981240776",
+        ),),
+    )
+    row = next(row for row in poe2_trade_filters(item) if row.ref == "# to Spirit")
+    assert row.kind == "explicit"
+    assert row.provenance_tags == (kind,)
+    assert row.hidden_reason == ""
+
+
+def test_adopted_poe2_map_mod_and_unique_few_visible_defaults():
+    map_item = ParsedItem(
+        "Maps", "rare", "", "Test Map", "map",
+        modifiers=(ItemModifier(
+            "通常Map Mod", (10,), kind="explicit", stat_id="explicit.map",
+            roll_min=1, roll_max=20,
+        ),),
+    )
+    map_row = next(row for row in poe2_trade_filters(map_item) if row.stat_id == "explicit.map")
+    assert map_row.hidden_reason == "ほとんどのMap Modには価値がありません"
+
+    unique = ParsedItem(
+        "Belts", "unique", "Test Unique", "Heavy Belt", "belt",
+        modifiers=(
+            ItemModifier(
+                "可変値1", (15,), stat_id="explicit.one", roll_min=10, roll_max=20,
+            ),
+            ItemModifier(
+                "可変値2", (25,), stat_id="explicit.two", roll_min=20, roll_max=30,
+            ),
+        ),
+    )
+    visible = [row for row in poe2_trade_filters(unique) if not row.hidden_reason]
+    assert len(visible) == 2
+    assert all(row.enabled for row in visible)
+
+
+@pytest.mark.parametrize("name", ["Morior Invictus", "Darkness Enthroned"])
+def test_adopted_poe2_unique_augment_exceptions_remain_visible(name):
+    item = ParsedItem(
+        "Belts", "unique", name, "Test Belt", "belt",
+        modifiers=(ItemModifier(
+            "Augment効果", (10,), kind="augment", stat_id="rune.test",
+        ),),
+    )
+    row = next(row for row in poe2_trade_filters(item) if row.stat_id == "rune.test")
+    assert row.hidden_reason == ""

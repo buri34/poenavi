@@ -1,23 +1,27 @@
 import json
 from pathlib import Path
+from unittest.mock import patch
 
-from PySide6.QtWidgets import QApplication, QLabel, QPushButton
 from PySide6.QtCore import QPoint, QRect, QSize
+from PySide6.QtWidgets import QApplication, QLabel, QPushButton
 
+from scripts.build_poetore_map_mods import build_catalog, source_from_lock
 from src.poetore.map_check import (
-    decision_for, default_map_check_config, is_map_check_item,
-    load_map_mod_catalog, next_color_decision, normalized_map_check_config,
+    decision_for,
+    default_map_check_config,
+    is_map_check_item,
+    load_map_mod_catalog,
+    next_color_decision,
+    normalized_map_check_config,
     set_decision,
 )
 from src.poetore.models import ParsedItem
 from src.poetore.parser import parse_item_text
 from src.poetore.window_position import (
-    PlacementContext, position_for_context_at_cursor_y,
+    PlacementContext,
+    position_for_context_at_cursor_y,
 )
-from unittest.mock import patch
-
 from src.ui.map_check import MapCheckWindow, MapModManagerDialog
-from scripts.build_poetore_map_mods import build_catalog
 
 
 def item(category="map", rarity="レア"):
@@ -54,9 +58,11 @@ def test_catalog_matches_locked_awakened_area_mod_population():
 
 
 def test_catalog_is_reproducible_from_locked_awakened_and_poetore_metadata():
+    archive, revision = source_from_lock()
     generated = build_catalog(
-        Path("vendor-sources/awakened-poe-trade-1e2225af.tar.gz"),
+        archive,
         Path("data/poetore/mod_metadata.json"),
+        revision,
     )
     stored = json.loads(
         Path("data/poetore/map_mods.json").read_text(encoding="utf-8")
@@ -130,6 +136,35 @@ Map (Tier 16)
     }
     assert len(parsed.modifiers) == 3
     assert all(modifier.stat_id in catalog_ids for modifier in parsed.modifiers)
+
+
+def test_map_check_renders_explicit_sections_only():
+    parsed = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+Explicit Only Test
+Map (Tier 16)
+--------
+アイテムレベル: 83
+--------
+{ 暗黙モッド }
+検索対象ではない暗黙効果
+{ プレフィックスモッド (ティア: 1) }
+レアモンスターの数が25%増加する
+""")
+
+    QApplication.instance() or QApplication([])
+    window = MapCheckWindow(default_map_check_config())
+    window._render(parsed)
+    buttons = [
+        button for button in window.body.findChildren(QPushButton)
+        if button.property("map_mod_key")
+    ]
+    labels = [label.text() for label in window.body.findChildren(QLabel)]
+    assert len(buttons) == 1
+    assert buttons[0].property("map_mod_text") == "レアモンスターの数が25%増加する"
+    assert not any("検索対象ではない暗黙効果" in text for text in labels)
+    assert not any(text.startswith("未認識Mod") for text in labels)
+    window.close()
 
 
 def test_japanese_map_copy_aliases_resolve_boss_damage_and_implicit_hinder_chance():

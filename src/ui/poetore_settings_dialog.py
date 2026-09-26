@@ -4,16 +4,15 @@ import threading
 
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtWidgets import (
+    QApplication,
     QButtonGroup,
     QCheckBox,
     QComboBox,
     QDialog,
-    QApplication,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QMessageBox,
     QPushButton,
     QRadioButton,
@@ -25,18 +24,18 @@ from PySide6.QtWidgets import (
 )
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
-from src.ui.app_theme import POETORE_THEME
-from src.ui.app_info_widget import AppInfoWidget
 from src.poetore.trade import (
-    TradeApiError,
     available_pc_leagues,
     default_pc_league,
 )
-from src.utils.global_hotkeys import find_duplicate_hotkeys
+from src.ui.app_info_widget import AppInfoWidget
+from src.ui.app_theme import SETTINGS_THEME
 from src.ui.custom_command_settings import CustomCommandSettingsWidget
 from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
-from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_poe_label
+from src.ui.styles import Styles
 from src.utils.feature_support import POETORE, is_feature_supported
+from src.utils.global_hotkeys import find_duplicate_hotkeys
+from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_poe_label
 
 
 class _LeagueSignals(QObject):
@@ -71,8 +70,9 @@ class PoetoreSettingsDialog(QDialog):
         basic_layout.setContentsMargins(12, 12, 12, 12)
         basic_layout.setSpacing(12)
 
-        poe_group = QGroupBox("PoEバージョン")
-        poe_layout = QVBoxLayout(poe_group)
+        startup_group = QGroupBox("起動設定")
+        startup_layout = QVBoxLayout(startup_group)
+        startup_layout.addWidget(QLabel("PoEバージョン"))
         self.poe_version_group = QButtonGroup(self)
         self.poe_version_radios = {}
         for version in POE_VERSION_ORDER:
@@ -83,26 +83,12 @@ class PoetoreSettingsDialog(QDialog):
             radio.toggled.connect(
                 lambda checked, selected=version: self._on_poe_version_changed(selected, checked)
             )
-            poe_layout.addWidget(radio)
-        version_mode_row = QFormLayout()
-        self.poe_version_mode_combo = QComboBox()
-        self.poe_version_mode_combo.addItem("毎回確認", "ask")
-        self.poe_version_mode_combo.addItem("PoE1固定", POE1)
-        self.poe_version_mode_combo.addItem("PoE2固定", POE2)
+            startup_layout.addWidget(radio)
         saved_version_mode = str(self.current_config.get("poe_version_mode", "ask"))
-        version_mode_index = self.poe_version_mode_combo.findData(saved_version_mode)
-        self.poe_version_mode_combo.setCurrentIndex(max(0, version_mode_index))
-        version_mode_row.addRow("起動時:", self.poe_version_mode_combo)
-        poe_layout.addLayout(version_mode_row)
-        poe_note = QLabel("変更内容は次回起動時から適用されます。")
-        poe_note.setObjectName("poeVersionNote")
-        poe_layout.addWidget(poe_note)
-        basic_layout.addWidget(poe_group)
 
         startup = self.current_config.get("startup")
         startup = startup if isinstance(startup, dict) else {}
-        startup_group = QGroupBox("起動モード")
-        startup_layout = QVBoxLayout(startup_group)
+        startup_layout.addWidget(QLabel("起動モード"))
         preferred = normalize_app_mode(
             startup.get("preferred_mode", POETORE_MODE)
         )
@@ -117,19 +103,32 @@ class PoetoreSettingsDialog(QDialog):
             self.app_mode_group.addButton(radio)
             self.app_mode_radios[mode] = radio
             startup_layout.addWidget(radio)
-        startup_row = QFormLayout()
-        self.app_mode_startup_combo = QComboBox()
-        self.app_mode_startup_combo.addItem("毎回確認", "ask")
-        self.app_mode_startup_combo.addItem("ぽえなび固定", POENAVI_MODE)
-        self.app_mode_startup_combo.addItem("ぽえとれ固定", POETORE_MODE)
-        startup_mode = (
-            "ask" if bool(startup.get("show_mode_selector", True)) else preferred
+        self.skip_startup_selector_checkbox = QCheckBox("次回からこの設定で直接起動")
+        self.skip_startup_selector_checkbox.setChecked(
+            saved_version_mode in POE_VERSION_ORDER
+            and not bool(startup.get("show_mode_selector", True))
         )
-        self.app_mode_startup_combo.setCurrentIndex(
-            max(0, self.app_mode_startup_combo.findData(startup_mode))
+        startup_layout.addWidget(self.skip_startup_selector_checkbox)
+        self.startup_change_note = QLabel(
+            "PoEバージョン・起動モードの変更は、次回起動時から適用されます。"
         )
-        startup_row.addRow("起動時:", self.app_mode_startup_combo)
-        startup_layout.addLayout(startup_row)
+        self.startup_change_note.setObjectName("startupChangeNote")
+        self.startup_change_note.setWordWrap(True)
+        startup_layout.addWidget(self.startup_change_note)
+        startup_layout.addSpacing(13)
+        self.windows_autostart_poetore_checkbox = QCheckBox(
+            "Windowsログイン時にぽえとれを自動起動"
+        )
+        self.windows_autostart_poetore_checkbox.setChecked(
+            bool(startup.get("windows_autostart_poetore", False))
+        )
+        startup_layout.addWidget(self.windows_autostart_poetore_checkbox)
+        self.windows_autostart_note = QLabel(
+            "有効にすると、次回のWindowsログイン時からぽえとれを自動起動します。"
+        )
+        self.windows_autostart_note.setObjectName("windowsAutostartNote")
+        self.windows_autostart_note.setWordWrap(True)
+        startup_layout.addWidget(self.windows_autostart_note)
         basic_layout.addWidget(startup_group)
         self._refresh_app_mode_availability()
 
@@ -140,14 +139,21 @@ class PoetoreSettingsDialog(QDialog):
         self.exit_hotkey = HotkeyButton(hotkeys.get("exit", "F5"))
         self.monastery_hotkey = HotkeyButton(hotkeys.get("monastery", "F12"))
         self.capture_hotkey = AutoHideHotkeyWidget(
-            hotkeys.get("poetore_capture", "alt+d")
+            hotkeys.get("poetore_capture", "alt+d"), theme=SETTINGS_THEME,
+            allow_no_modifier=True,
         )
         self.auto_hide_hotkey = AutoHideHotkeyWidget(
-            hotkeys.get("poetore_auto_hide", "ctrl+d")
+            hotkeys.get("poetore_auto_hide", "ctrl+d"), theme=SETTINGS_THEME
         )
         self.map_check_hotkey = HotkeyButton(hotkeys.get("map_check", "alt+f"))
         self.cheat_hotkey = HotkeyButton(
             hotkeys.get("cheat_sheets_toggle", "shift+space")
+        )
+        self._expedition_hotkey = str(
+            hotkeys.get("expedition_reward_ocr", "alt+e")
+        )
+        self._desecration_hotkey = str(
+            hotkeys.get("desecration_tier_ocr", "alt+r")
         )
         for button in (
             self.exit_hotkey, self.monastery_hotkey,
@@ -158,14 +164,29 @@ class PoetoreSettingsDialog(QDialog):
         self.capture_hotkey.key_button.setStyleSheet("")
         self.auto_hide_hotkey.key_button.setStyleSheet("")
         hotkey_form.addRow("キャラクター選択へ戻る:", self.exit_hotkey)
-        hotkey_form.addRow(
-            "修道院へ移動（/monastery）:", self.monastery_hotkey
-        )
+        self.monastery_label = QLabel("修道院へ移動（/monastery）:")
+        hotkey_form.addRow(self.monastery_label, self.monastery_hotkey)
         hotkey_form.addRow("ぽえとれ検索（操作モード）:", self.capture_hotkey)
         hotkey_form.addRow("ぽえとれ検索（AUTO-HIDE）:", self.auto_hide_hotkey)
-        hotkey_form.addRow("Map Modチェック:", self.map_check_hotkey)
+        self.map_check_label = QLabel("Map Modチェック:")
+        hotkey_form.addRow(self.map_check_label, self.map_check_hotkey)
         hotkey_form.addRow("Cheat sheets表示:", self.cheat_hotkey)
         basic_layout.addWidget(hotkey_group)
+
+        error_group = QGroupBox("検索時のエラー処理")
+        error_layout = QVBoxLayout(error_group)
+        poetore = self.current_config.get("poetore")
+        poetore = poetore if isinstance(poetore, dict) else {}
+        self.capture_error_notification_cb = QCheckBox(
+            "アイテムを取得できなかったときに通知する"
+        )
+        self.capture_error_notification_cb.setChecked(
+            bool(poetore.get("capture_error_notification_enabled", False))
+        )
+        error_layout.addWidget(self.capture_error_notification_cb)
+        basic_layout.addWidget(error_group)
+
+        self._refresh_version_specific_controls()
 
         common_group = QGroupBox("共通機能")
         common_layout = QVBoxLayout(common_group)
@@ -182,8 +203,6 @@ class PoetoreSettingsDialog(QDialog):
         common_layout.addWidget(self.stash_tab_scroll_cb)
         basic_layout.addWidget(common_group)
 
-        poetore = self.current_config.get("poetore")
-        poetore = poetore if isinstance(poetore, dict) else {}
         trade_group = QGroupBox("価格データ")
         trade_layout = QVBoxLayout(trade_group)
         trade_form = QFormLayout()
@@ -195,7 +214,10 @@ class PoetoreSettingsDialog(QDialog):
         league_key = "league_poe2" if self.poe_version == POE2 else "league"
         saved_league = str(poetore.get(league_key, "auto")).strip() or "auto"
         if self.poe_version == POE2:
-            from src.poetore.poe2.trade import FALLBACK_LEAGUES, default_pc_league as poe2_default_pc_league
+            from src.poetore.poe2.trade import FALLBACK_LEAGUES
+            from src.poetore.poe2.trade import (
+                default_pc_league as poe2_default_pc_league,
+            )
             auto_league = poe2_default_pc_league(FALLBACK_LEAGUES)
             self.league_combo.addItem(f"自動（現行SC: {auto_league}）", "auto")
             for league in FALLBACK_LEAGUES:
@@ -207,7 +229,19 @@ class PoetoreSettingsDialog(QDialog):
             self.league_combo.addItem(saved_league, saved_league)
         if saved_league != "auto":
             self.league_combo.setCurrentIndex(max(0, self.league_combo.findData(saved_league)))
-        trade_form.addRow("リーグ:", self.league_combo)
+        league_row = QHBoxLayout()
+        league_row.setContentsMargins(0, 0, 0, 0)
+        league_row.setSpacing(6)
+        league_row.addWidget(self.league_combo, 1)
+        self.league_refresh_button = QPushButton("再取得")
+        self.league_refresh_button.setObjectName("leagueRefreshButton")
+        self.league_refresh_button.setToolTip("公式サイトからリーグ一覧を再取得")
+        self.league_refresh_button.setFixedWidth(72)
+        self.league_refresh_button.clicked.connect(
+            lambda: self._refresh_trade_leagues(force_refresh=True)
+        )
+        league_row.addWidget(self.league_refresh_button)
+        trade_form.addRow("リーグ:", league_row)
         trade_layout.addLayout(trade_form)
         league_note = QLabel(
             "プライベートリーグで使う場合は、リーグ名を直接手打ちで入力してください。"
@@ -269,9 +303,20 @@ class PoetoreSettingsDialog(QDialog):
             bool(obs_streaming.get("enabled", False))
         )
         obs_layout.addWidget(self.obs_streaming_enabled_cb)
+        self.obs_title_bar_opacity_slider = self._slider_row(
+            obs_layout,
+            "透過率:",
+            obs_streaming.get("title_bar_opacity", 100),
+            0,
+        )
+        self.obs_title_bar_opacity_slider.setObjectName("obsTitleBarOpacity")
+        self.obs_title_bar_opacity_slider.setToolTip(
+            "待機中に表示される「ぽえとれ検索ウィンドウ」バーの透過率"
+        )
         obs_note = QLabel(
             "待機中はタイトルバーだけを表示し、検索すると検索結果を当該タイトルバーの下に"
-            "展開します。OBSでは「ぽえとれ - 検索結果ウィンドウ」として認識されます。"
+            "展開します。OBSでは「ぽえとれ - 検索結果ウィンドウ」として認識されます。\n"
+            "待機中のタイトルバーは透過率を変更できます。"
         )
         obs_note.setObjectName("obsStreamingNote")
         obs_note.setWordWrap(True)
@@ -330,12 +375,12 @@ class PoetoreSettingsDialog(QDialog):
         basic_scroll.setWidget(basic_tab)
         tabs.addTab(basic_scroll, "基本設定")
         self.custom_commands_widget = CustomCommandSettingsWidget(
-            self.current_config.get("custom_commands", []), theme=POETORE_THEME
+            self.current_config.get("custom_commands", []), theme=SETTINGS_THEME
         )
         tabs.insertTab(1, self.custom_commands_widget, "任意コマンド設定")
         tabs.addTab(
             AppInfoWidget(
-                POETORE_THEME,
+                SETTINGS_THEME,
                 update_check_callback=self.update_check_callback,
             ),
             "アプリ情報",
@@ -353,68 +398,80 @@ class PoetoreSettingsDialog(QDialog):
         buttons.addWidget(save)
         root.addLayout(buttons)
 
+        for checkbox in self.findChildren(QCheckBox):
+            Styles.apply_checkbox_style(checkbox)
+
     @staticmethod
     def _style_sheet():
+        theme = SETTINGS_THEME
         return f"""
-            QDialog {{ background: {POETORE_THEME.background}; color: {POETORE_THEME.text}; }}
+            QDialog {{ background: {theme.background}; color: {theme.text}; font-size: 13px; }}
             QScrollArea, QScrollArea > QWidget > QWidget {{
-                background: {POETORE_THEME.background};
+                background: {theme.background};
             }}
-            QLabel, QCheckBox, QRadioButton, QGroupBox {{ color: {POETORE_THEME.text}; }}
+            QLabel, QCheckBox, QRadioButton, QGroupBox {{ color: {theme.text}; }}
             QGroupBox {{
-                border: 1px solid #343B3E;
+                background: {theme.panel};
+                border: 1px solid #465046;
                 border-radius: 7px;
                 margin-top: 10px;
                 padding-top: 7px;
             }}
             QGroupBox::title {{
-                color: {POETORE_THEME.accent};
+                color: {theme.accent};
+                font-weight: 600;
                 subcontrol-origin: margin;
                 subcontrol-position: top center;
                 padding: 0 5px;
             }}
             QLineEdit, QComboBox {{
-                background: {POETORE_THEME.panel};
-                color: {POETORE_THEME.text};
-                border: 1px solid #3A4245;
+                background: #151A15;
+                color: {theme.text};
+                border: 1px solid #596359;
                 border-radius: 5px;
                 padding: 5px;
             }}
             QComboBox QAbstractItemView {{
-                background: {POETORE_THEME.panel};
-                color: {POETORE_THEME.text};
-                selection-background-color: #276B5A;
-                selection-color: #ffffff;
+                background: {theme.panel};
+                color: {theme.text};
+                selection-background-color: {theme.accent};
+                selection-color: {theme.background};
             }}
-            QTabWidget::pane {{ border: 1px solid {POETORE_THEME.accent}; }}
+            QTabWidget::pane {{ border: 1px solid #465046; }}
             QTabBar::tab {{
-                background: {POETORE_THEME.panel}; color: {POETORE_THEME.text};
-                border: 1px solid {POETORE_THEME.accent};
+                background: {theme.panel}; color: {theme.text};
+                border: 1px solid #465046;
                 padding: 7px 14px;
             }}
-            QTabBar::tab:selected {{ color: {POETORE_THEME.accent}; }}
+            QTabBar::tab:selected {{ color: {theme.accent}; border-bottom-color: {theme.accent}; font-weight: 600; }}
             QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
             QSlider::handle:horizontal {{
-                background: {POETORE_THEME.accent}; width: 16px;
+                background: {theme.accent}; width: 16px;
                 margin: -5px 0; border-radius: 8px;
             }}
             QPushButton {{
-                background: #1A1F21;
-                color: {POETORE_THEME.text};
-                border: 1px solid #3A4245;
+                background: {theme.panel};
+                color: {theme.text};
+                border: 1px solid #596359;
                 border-radius: 5px;
                 padding: 6px 12px;
                 font-weight: bold;
             }}
-            QPushButton:hover {{ background: #25332F; border-color: {POETORE_THEME.accent}; }}
-            QLabel#settingsNote {{ color: {POETORE_THEME.muted_text}; font-size: 11px; }}
+            QPushButton:hover {{ background: #293229; border-color: {theme.accent}; }}
+            QPushButton:focus {{ border-color: {theme.accent}; }}
+            QCheckBox::indicator:checked, QRadioButton::indicator:checked {{ background: {theme.accent}; }}
+            QLabel#settingsNote {{ color: {theme.muted_text}; font-size: 13px; }}
             QLabel#privateLeagueNote {{
-                color: {POETORE_THEME.muted_text};
-                font-size: 11px;
+                color: {theme.muted_text};
+                font-size: 13px;
             }}
             QLabel#resultFontSizeNote {{
-                color: {POETORE_THEME.muted_text};
-                font-size: 11px;
+                color: {theme.muted_text};
+                font-size: 13px;
+            }}
+            QLabel#startupChangeNote, QLabel#windowsAutostartNote {{
+                color: {theme.muted_text};
+                font-size: 13px;
             }}
         """
 
@@ -422,16 +479,20 @@ class PoetoreSettingsDialog(QDialog):
         super().showEvent(event)
         self._refresh_trade_leagues()
 
-    def _refresh_trade_leagues(self):
+    def _refresh_trade_leagues(self, *, force_refresh: bool = False):
         if self._league_refresh_started:
             return
         self._league_refresh_started = True
+        self.league_refresh_button.setEnabled(False)
+        self.league_refresh_button.setText("取得中…")
 
         def run():
             try:
                 if self.poe_version == POE2:
-                    from src.poetore.poe2.trade import available_pc_leagues as poe2_available_pc_leagues
-                    leagues = poe2_available_pc_leagues()
+                    from src.poetore.poe2.trade import (
+                        available_pc_leagues as poe2_available_pc_leagues,
+                    )
+                    leagues = poe2_available_pc_leagues(force_refresh=force_refresh)
                 else:
                     leagues = available_pc_leagues()
             except Exception:
@@ -445,9 +506,14 @@ class PoetoreSettingsDialog(QDialog):
         threading.Thread(target=run, daemon=True).start()
 
     def _show_trade_leagues(self, leagues):
+        self._league_refresh_started = False
+        self.league_refresh_button.setEnabled(True)
+        self.league_refresh_button.setText("再取得")
         saved = self._league_selection_value()
         if self.poe_version == POE2:
-            from src.poetore.poe2.trade import default_pc_league as poe2_default_pc_league
+            from src.poetore.poe2.trade import (
+                default_pc_league as poe2_default_pc_league,
+            )
             auto_league = poe2_default_pc_league(tuple(leagues))
         else:
             auto_league = default_pc_league(tuple(leagues))
@@ -494,23 +560,24 @@ class PoetoreSettingsDialog(QDialog):
             return
         self.poe_version = poe_version
         self._refresh_app_mode_availability()
+        self._refresh_version_specific_controls()
+
+    def _refresh_version_specific_controls(self):
+        """選択中のゲーム版で利用できる設定だけを表示する。"""
+        monastery_visible = self.poe_version == POE1
+        self.monastery_label.setVisible(monastery_visible)
+        self.monastery_hotkey.setVisible(monastery_visible)
+        self.map_check_label.setVisible(monastery_visible)
+        self.map_check_hotkey.setVisible(monastery_visible)
 
     def _refresh_app_mode_availability(self):
         supported = is_feature_supported(POETORE, self.poe_version)
         poetore_radio = self.app_mode_radios[POETORE_MODE]
         poetore_radio.setEnabled(supported)
         poetore_radio.setToolTip("" if supported else "PoE2版は現在テスト中です")
-        poetore_index = self.app_mode_startup_combo.findData(POETORE_MODE)
-        poetore_item = self.app_mode_startup_combo.model().item(poetore_index)
-        if poetore_item is not None:
-            poetore_item.setEnabled(supported)
         if not supported:
             if poetore_radio.isChecked():
                 self.app_mode_radios[POENAVI_MODE].setChecked(True)
-            if self.app_mode_startup_combo.currentData() == POETORE_MODE:
-                self.app_mode_startup_combo.setCurrentIndex(
-                    self.app_mode_startup_combo.findData("ask")
-                )
 
     def get_settings(self):
         selected_poe_version = next(
@@ -528,14 +595,13 @@ class PoetoreSettingsDialog(QDialog):
             ),
             POETORE_MODE,
         )
-        startup_mode = self.app_mode_startup_combo.currentData()
         if not is_feature_supported(POETORE, selected_poe_version):
             selected_app_mode = POENAVI_MODE
-            if startup_mode == POETORE_MODE:
-                startup_mode = "ask"
-        startup["show_mode_selector"] = startup_mode == "ask"
-        startup["preferred_mode"] = normalize_app_mode(
-            selected_app_mode if startup_mode == "ask" else startup_mode
+        skip_selector = self.skip_startup_selector_checkbox.isChecked()
+        startup["show_mode_selector"] = not skip_selector
+        startup["preferred_mode"] = normalize_app_mode(selected_app_mode)
+        startup["windows_autostart_poetore"] = (
+            self.windows_autostart_poetore_checkbox.isChecked()
         )
         hotkeys = dict(self.current_config.get("hotkeys", {}))
         hotkeys.update(
@@ -544,6 +610,8 @@ class PoetoreSettingsDialog(QDialog):
                 "monastery": self.monastery_hotkey.key_text,
                 "poetore_capture": self.capture_hotkey.key_text,
                 "poetore_auto_hide": self.auto_hide_hotkey.key_text,
+                "expedition_reward_ocr": self._expedition_hotkey,
+                "desecration_tier_ocr": self._desecration_hotkey,
                 "map_check": self.map_check_hotkey.key_text,
                 "cheat_sheets_toggle": self.cheat_hotkey.key_text,
             }
@@ -554,8 +622,14 @@ class PoetoreSettingsDialog(QDialog):
         poetore["result_font_size"] = (
             self.result_font_size_combo.currentData() or "medium"
         )
+        poetore["capture_error_notification_enabled"] = (
+            self.capture_error_notification_cb.isChecked()
+        )
         obs_streaming = dict(poetore.get("obs_streaming", {}))
         obs_streaming["enabled"] = self.obs_streaming_enabled_cb.isChecked()
+        obs_streaming["title_bar_opacity"] = (
+            self.obs_title_bar_opacity_slider.value()
+        )
         poetore["obs_streaming"] = obs_streaming
         if self._reset_result_positions:
             poetore.pop("result_positions", None)
@@ -566,7 +640,7 @@ class PoetoreSettingsDialog(QDialog):
             "stash_tab_scroll_enabled": self.stash_tab_scroll_cb.isChecked(),
             "poetore": poetore,
             "poe_version": selected_poe_version,
-            "poe_version_mode": self.poe_version_mode_combo.currentData(),
+            "poe_version_mode": selected_poe_version if skip_selector else "ask",
             "window_opacity": self.opacity_slider.value(),
             "text_opacity": self.text_opacity_slider.value(),
             "window_locked": self.window_lock_check.isChecked(),
@@ -586,9 +660,16 @@ class PoetoreSettingsDialog(QDialog):
             "monastery": self.monastery_hotkey.key_text,
             "poetore_capture": self.capture_hotkey.key_text,
             "poetore_auto_hide": self.auto_hide_hotkey.key_text,
+            "expedition_reward_ocr": self._expedition_hotkey,
+            "desecration_tier_ocr": self._desecration_hotkey,
             "map_check": self.map_check_hotkey.key_text,
             "cheat_sheets_toggle": self.cheat_hotkey.key_text,
         }
+        if self.poe_version == POE2:
+            hotkeys.pop("map_check")
+        else:
+            hotkeys.pop("expedition_reward_ocr")
+            hotkeys.pop("desecration_tier_ocr")
         if not self.custom_commands_widget.validate(hotkeys):
             return
         duplicates = find_duplicate_hotkeys(hotkeys)
@@ -598,6 +679,8 @@ class PoetoreSettingsDialog(QDialog):
                 "monastery": "修道院へ移動",
                 "poetore_capture": "ぽえとれ検索（操作モード）",
                 "poetore_auto_hide": "ぽえとれ検索（AUTO-HIDE）",
+                "expedition_reward_ocr": "エクスペディション報酬読取",
+                "desecration_tier_ocr": "アビス冒涜Modティア読取",
                 "map_check": "Map Modチェック",
                 "cheat_sheets_toggle": "Cheat sheets表示",
             }

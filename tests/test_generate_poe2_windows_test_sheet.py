@@ -16,9 +16,9 @@ copy_requirement = MODULE.copy_requirement
 def test_build_rows_preserves_all_detailed_cases() -> None:
     rows = build_rows()
 
-    assert len(rows) == 64
+    assert len(rows) == 83
     assert rows[0]["ケースID"] == "P2-WIN-001"
-    assert rows[-1]["ケースID"] == "P2-WIN-064"
+    assert rows[-1]["ケースID"] == "P2-WIN-083"
     assert list(rows[0]) == FIELDNAMES
 
     flail = next(row for row in rows if row["ケースID"] == "P2-WIN-004")
@@ -30,6 +30,25 @@ def test_build_rows_preserves_all_detailed_cases() -> None:
     assert logbook["対象アイテム"] == "エクスペディションログブック"
     assert "Area/Faction/明示Mod条件を表示しない" in logbook["確認B_チップ・初期状態"]
     assert "poe.ninja Expedition" in logbook["確認C_検索先・条件"]
+
+    race = next(row for row in rows if row["ケースID"] == "P2-WIN-065")
+    assert "結果を待たず" in race["操作"]
+    assert "2品目" in race["確認C_検索先・条件"]
+
+    web_trade = next(row for row in rows if row["ケースID"] == "P2-WIN-071")
+    assert "ゴースト条件" in web_trade["確認C_検索先・条件"]
+
+    weapon_census = next(row for row in rows if row["ケースID"] == "P2-WIN-075")
+    assert "実装済み通常武器9系統" in weapon_census["対象アイテム"]
+    assert "Sword" not in weapon_census["対象アイテム"]
+    assert "Flail" not in weapon_census["対象アイテム"]
+    assert "Axe" not in weapon_census["対象アイテム"]
+    assert "Dagger" not in weapon_census["対象アイテム"]
+    assert "9系統" in weapon_census["確認C_検索先・条件"]
+
+    special_census = next(row for row in rows if row["ケースID"] == "P2-WIN-081")
+    assert "Wombgift" in special_census["対象アイテム"]
+    assert "MiscMapItem" in special_census["確認C_検索先・条件"]
 
 
 def test_copy_requirements_are_explicit() -> None:
@@ -51,3 +70,9 @@ def test_copy_requirements_are_explicit() -> None:
             "日本語設定の詳細コピー全文": "@mageblood_ja.txt",
         }
     ).startswith("収集済みfixture")
+    assert "通常コピーと詳細コピー" in copy_requirement(
+        {
+            "ケースID": "P2-WIN-067",
+            "日本語設定の詳細コピー全文": "",
+        }
+    )

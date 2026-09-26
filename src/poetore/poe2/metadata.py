@@ -13,13 +13,23 @@ STAT_PATH = IDENTITY_PATH.with_name("stat_index.json")
 AUGMENT_PATH = IDENTITY_PATH.with_name("augment_index.json")
 RELATED_ITEMS_PATH = IDENTITY_PATH.with_name("related_item_groups.json")
 
+_STAT_SCOPE_SUFFIXES = {
+    "jewel": ("Jewel", "ジュエル"),
+}
+
 
 @lru_cache(maxsize=1)
 def identity_index() -> dict[str, tuple[dict, ...]]:
     payload = identity_entries()
     index = {}
     for entry in payload:
-        for name in entry.get("names", {}).values():
+        names = list(entry.get("names", {}).values())
+        names.extend(
+            alias
+            for aliases in (entry.get("aliases") or {}).values()
+            for alias in aliases
+        )
+        for name in names:
             index.setdefault(str(name).casefold(), []).append(entry)
     return {key: tuple(value) for key, value in index.items()}
 
@@ -90,10 +100,16 @@ def resolve_identity_fragments(name: str, namespace: str = "ITEM") -> tuple[dict
     for entry in identity_entries():
         if entry.get("namespace") != namespace:
             continue
+        localized_names = list((entry.get("names") or {}).values())
+        localized_names.extend(
+            alias
+            for aliases in (entry.get("aliases") or {}).values()
+            for alias in aliases
+        )
         matched_length = max(
             (
                 len(str(localized))
-                for localized in (entry.get("names") or {}).values()
+                for localized in localized_names
                 if str(localized).strip().casefold() in comparable
             ),
             default=0,
@@ -167,6 +183,24 @@ def local_stat_matchers() -> tuple[tuple[dict, re.Pattern], ...]:
     return tuple(rows)
 
 
+@lru_cache(maxsize=32)
+def scoped_stat_matchers(category: str) -> tuple[tuple[dict, re.Pattern], ...]:
+    suffixes = _STAT_SCOPE_SUFFIXES.get(category, ())
+    rows = []
+    for entry, _pattern in stat_matchers():
+        for template in (entry.get("text") or {}).values():
+            template = str(template)
+            scoped_template = template
+            for suffix in suffixes:
+                scoped_template = re.sub(
+                    rf"\s*\({re.escape(suffix)}\)\s*$", "", scoped_template,
+                    flags=re.IGNORECASE,
+                )
+            if scoped_template != template:
+                rows.append((entry, _template_pattern(scoped_template)))
+    return tuple(rows)
+
+
 def resolve_stat_line(
     text: str, preferred_type: str | None = None, *, prefer_local: bool = False,
 ) -> tuple[dict, tuple[float, ...]] | None:
@@ -181,6 +215,7 @@ def resolve_stat_line_candidates(
     preferred_type: str | None = None,
     *,
     include_local_variants: bool = False,
+    item_category: str | None = None,
 ) -> tuple[tuple[dict, tuple[float, ...]], ...]:
     comparable = re.sub(
         r"\s*\((?:implicit|explicit|enchant|rune|sanctified|desecrated|fractured|crafted)[^)]*\)\s*$",
@@ -194,8 +229,33 @@ def resolve_stat_line_candidates(
     # The English client pluralises this property while Trade2 currently keeps
     # the official template in singular form (`Has # Charm Slot`).
     comparable = re.sub(r"\bCharm Slots\b", "Charm Slot", comparable)
+    # Trade2's Japanese Stat metadata currently fixes this Breach Tablet line
+    # at `1体`, while detailed in-game copy exposes the actual 1-3 roll.  The
+    # Trade stat itself is boolean (no numeric value), so normalize only the
+    # displayed roll to the official template instead of reporting it as
+    # unresolved metadata.
+    comparable = re.sub(
+        r"^(マップの不安定なブリーチは安定化した後レアモンスターが追加で)\d+(体スポーンする)$",
+        r"\g<1>1\g<2>",
+        comparable,
+    )
+    # Expedition Tablets expose a rolled Rare Chest count in the detailed
+    # copy, while Trade2 currently publishes this as a boolean singular Stat.
+    # Normalize the in-game wording to that official searchable condition.
+    comparable = re.sub(
+        r"^マップにレアのチェストが追加で\d+個出現する$",
+        "Map contains an additional Rare Chest",
+        comparable,
+    )
     comparable = re.sub(r"\s*[—-]\s*スケールできない値\s*$", "", comparable)
     comparable = re.sub(r"\s*[—-]\s*Unscalable Value\s*$", "", comparable, flags=re.IGNORECASE)
+    # Undying Hate's detailed Japanese copy uses a different wording from the
+    # official Trade2 stat for the same third line.  Normalize only this exact
+    # sentence so the preceding person name still selects the correct variant.
+    comparable = comparable.replace(
+        "冒涜するとこのアイテムは不安定になる",
+        "冒涜化によりこのアイテムは不安定になる",
+    )
     matchers = stat_matchers()
     if preferred_type:
         matchers = tuple(
@@ -204,6 +264,15 @@ def resolve_stat_line_candidates(
             row for row in matchers if row[0].get("type") != preferred_type
         )
     candidate_matchers = []
+    if item_category:
+        scoped_matchers = scoped_stat_matchers(item_category)
+        if preferred_type:
+            scoped_matchers = tuple(
+                row for row in scoped_matchers if row[0].get("type") == preferred_type
+            ) + tuple(
+                row for row in scoped_matchers if row[0].get("type") != preferred_type
+            )
+        candidate_matchers.extend(scoped_matchers)
     if include_local_variants:
         local_matchers = local_stat_matchers()
         if preferred_type:
@@ -236,6 +305,24 @@ def resolve_stat_line_candidates(
         inverted = re.sub(r"\breduced\b", "increased", comparable, flags=re.IGNORECASE)
         inverted = inverted.replace("減少する", "増加する")
         inverted = inverted.replace("低下する", "上昇する")
+        if inverted != comparable:
+            resolved = collect(inverted, -1.0)
+    if not resolved:
+        # Constricting Command displays the beneficial roll as fewer enemies,
+        # while Trade2 exposes only the opposite-direction canonical stat:
+        # `Require # additional enemies to be Surrounded`.  Preserve the
+        # in-game value as a negative filter value for that Trade stat.
+        inverted = re.sub(
+            r"^包囲状態になるのに必要な敵の数が(\d+(?:\.\d+)?)体少なくなる$",
+            r"包囲状態になるのに必要な敵の数が追加で\1体多くなる",
+            comparable,
+        )
+        inverted = re.sub(
+            r"^Require (\d+(?:\.\d+)?) fewer enemies to be Surrounded$",
+            r"Require \1 additional enemies to be Surrounded",
+            inverted,
+            flags=re.IGNORECASE,
+        )
         if inverted != comparable:
             resolved = collect(inverted, -1.0)
     if not resolved:

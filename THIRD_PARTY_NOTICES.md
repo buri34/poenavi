@@ -89,6 +89,55 @@ RePoEの生成データはGrinding Gear Gamesが権利を保有し、同社の�
 
 <https://github.com/repoe-fork/repoe>
 
+## Path of Building Community for Path of Exile 2
+
+PoE2の冒涜Reveal用Tierデータは、固定したPath of Building Community PoE2の
+生成済みMod・ベースタグデータから派生させています。PoB2本体を配布物へ同梱せず、
+PoENavi用に変換した数値範囲・対応装備プロファイル・Tier順位だけを同梱します。
+
+MIT License — Copyright (c) 2016 David Gowor
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+生成済みゲームデータの権利はGrinding Gear Gamesに帰属します。
+
+<https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2>
+
+## NDLOCR-Lite 1.3.1
+
+ぽえとれは、Windows標準OCRでMod本文を安定して認識できたものの数字だけが欠落し、
+Tierを確定できなかった場合に限り、NDLOCR-Liteを補助OCRとして使用します。
+Windows標準OCRでTierを確定できた結果をNDLOCR-Liteで上書きすることはありません。
+
+NDLOCR-Liteは国立国会図書館がCreative Commons Attribution 4.0
+International（CC BY 4.0）で公開しているプログラムです。
+
+- 原著作者・提供者: 国立国会図書館
+- 元リポジトリ: <https://github.com/ndl-lab/ndlocr-lite>
+- ライセンス: <https://creativecommons.org/licenses/by/4.0/>
+- PoENaviでの変更: 固定した1.3.1のソースとモデルを自己完結型の補助プロセスとして
+  パッケージし、数字欠落時だけ起動する連携処理を追加しています。
+- PoENaviおよびぽえとれは、国立国会図書館の公認・提携製品ではありません。
+
+完全なCC BY 4.0本文とNDLOCR-Lite依存物のライセンス一覧は、配布物内の
+`THIRD_PARTY_LICENSES/NDLOCR-Lite-1.3.1/`に収録しています。
+
 ## Packaged open-source runtime components
 
 PoENavi's Windows distribution is created with PyInstaller and includes upstream runtime libraries. These upstream binaries are not developed or represented as PoENavi project binaries.
@@ -106,5 +155,22 @@ PoENavi's Windows distribution is created with PyInstaller and includes upstream
   - <https://pyinstaller.org/en/stable/license.html>
 - **OpenSSL runtime libraries** — Apache License 2.0
   - <https://www.openssl.org/source/license.html>
+- **.NET 8 runtime** — MIT License; bundled only with the self-contained
+  Windows OCR helper
+  - Copyright (c) .NET Foundation and Contributors
+  - <https://github.com/dotnet/runtime/blob/main/LICENSE.TXT>
+
+## Noto Sans JP
+
+PoENavi bundles the unmodified Noto Sans JP variable font distributed by
+Google Fonts and uses it for its Japanese user interface.
+
+SIL Open Font License 1.1 — Copyright 2014-2021 Adobe
+(http://www.adobe.com/), with Reserved Font Name 'Source'.
+
+The complete license text is included in
+`THIRD_PARTY_LICENSES/Noto-Sans-JP/OFL.txt`.
+
+<https://github.com/google/fonts/tree/main/ofl/notosansjp>
 
 Exact versions used for an official release are pinned in `requirements.txt` and `requirements-build.txt`, and are recorded in the public GitHub Actions build log.

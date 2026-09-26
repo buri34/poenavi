@@ -1,0 +1,73 @@
+name: Release High-Accuracy OCR Pack
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Immutable OCR pack tag declared by PoENavi
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.10"
+          cache: pip
+
+      - name: Verify requested tag matches PoENavi
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          $declaredTag = python -c "from src.poetore.poe2.ndlocr_pack import PACK_RELEASE_TAG; print(PACK_RELEASE_TAG)"
+          if ($env:RELEASE_TAG -ne $declaredTag.Trim()) {
+            throw "Requested tag does not match PACK_RELEASE_TAG: $declaredTag"
+          }
+
+      - name: Reject an existing immutable release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          $releaseView = @(gh release view $env:RELEASE_TAG 2>&1)
+          if ($LASTEXITCODE -eq 0) {
+            throw "OCR pack release already exists and must not be overwritten"
+          }
+          if (($releaseView -join "`n") -notmatch "release not found") {
+            throw "Unable to inspect existing GitHub Release: $($releaseView -join ' ')"
+          }
+
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-build.txt
+
+      - name: Run OCR pack boundary tests
+        shell: pwsh
+        run: >-
+          python -m pytest -q
+          tests/test_ndlocr_pack.py
+          tests/test_poetore_distribution.py
+          tests/test_verify_ndlocr_helper.py
+
+      - name: Build and audit OCR pack
+        shell: pwsh
+        run: .\scripts\build_ndlocr_pack.ps1 -Python python
+
+      - name: Create immutable OCR pack Pre-release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          $notesFile = "docs/release-notes-$env:RELEASE_TAG.md"
+          if (-not (Test-Path $notesFile)) {
+            throw "Release notes file was not found: $notesFile"
+          }
+          gh release create $env:RELEASE_TAG PoENavi-HighAccuracyOCR.zip PoENavi-HighAccuracyOCR.zip.sha256 --target $env:GITHUB_SHA --prerelease --notes-file $notesFile --title "［内部コンポーネント］PoENavi 高精度OCRパック"

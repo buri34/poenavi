@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import combinations_with_replacement, product
 import re
 import unicodedata
 
@@ -21,44 +22,150 @@ _AUGMENT_CATEGORY_BY_CATEGORY = {
     "one_axe": "One Hand Axe", "two_axe": "Two Hand Axe", "dagger": "Dagger",
     "focus": "Focus", "buckler": "Buckler", "shield": "Shield",
     "body_armour": "Body Armour", "helmet": "Helmet", "gloves": "Gloves",
-    "boots": "Boots",
+    "boots": "Boots", "talisman": "Talisman",
 }
+
+_BOND_SUPPORT_STAT_IDS = {
+    "rune.stat_2174462855", "rune.stat_2861770798",
+}
+
+
+def identify_installed_augments(
+    modifiers: list[ItemModifier], category: str, socket_count: int, *,
+    _require_unique_refs: bool = True,
+) -> tuple[str, ...]:
+    """Return the unique minimum augment composition explaining all Stat lines.
+
+    An empty tuple means no composition could be proven uniquely.  Pricing must
+    stay hidden in that case rather than guessing which socketed material was
+    used.
+    """
+    if socket_count <= 0:
+        return ()
+    augment_category = _AUGMENT_CATEGORY_BY_CATEGORY.get(category)
+    if augment_category is None:
+        return ()
+
+    observed: dict[str, tuple[float, ...]] = {}
+    for modifier in modifiers:
+        if (
+            modifier.kind != "augment"
+            or not modifier.stat_id
+            or modifier.stat_id in _BOND_SUPPORT_STAT_IDS
+        ):
+            continue
+        values = tuple(float(value) for value in modifier.values)
+        previous = observed.get(modifier.stat_id)
+        if previous is None:
+            observed[modifier.stat_id] = values
+        elif len(previous) == len(values):
+            observed[modifier.stat_id] = tuple(
+                left + right for left, right in zip(previous, values)
+            )
+    if not observed:
+        return ()
+
+    def effect_value_options(effect: dict) -> tuple[tuple[float, ...], ...]:
+        values = tuple(float(value) for value in effect.get("values", ()))
+        texts = effect.get("text") or {}
+        placeholders = max(str(text).count("#") for text in texts.values())
+        if placeholders <= 0 or not values:
+            return ((),)
+        if placeholders == 1:
+            options = {(value,) for value in values}
+            options.add((sum(values) / len(values),))
+            return tuple(sorted(options))
+        return (values[:placeholders],) if len(values) >= placeholders else ()
+
+    candidate_vectors: dict[
+        tuple[tuple[str, tuple[float, ...]], ...], set[str]
+    ] = {}
+    for entry in augment_entries():
+        effect_options = []
+        for effect in entry.get("effects", ()):
+            if augment_category not in (effect.get("categories") or ()):
+                continue
+            trade_ids = tuple(
+                stat_id for stat_id in (effect.get("trade_ids") or ())
+                if stat_id in observed
+            )
+            value_options = effect_value_options(effect)
+            options = tuple(product(trade_ids, value_options))
+            if not options:
+                effect_options = []
+                break
+            effect_options.append(options)
+        if not effect_options:
+            continue
+        for selected_effects in product(*effect_options):
+            vector: dict[str, tuple[float, ...]] = {}
+            valid = True
+            for stat_id, values in selected_effects:
+                previous = vector.get(stat_id)
+                if previous is None:
+                    vector[stat_id] = values
+                elif len(previous) == len(values):
+                    vector[stat_id] = tuple(
+                        left + right for left, right in zip(previous, values)
+                    )
+                else:
+                    valid = False
+                    break
+            if valid:
+                key = tuple(sorted(vector.items()))
+                candidate_vectors.setdefault(key, set()).add(str(entry["ref_name"]))
+
+    candidate_rows = tuple(
+        (dict(vector), tuple(sorted(ref_names)))
+        for vector, ref_names in candidate_vectors.items()
+    )
+    candidates = tuple(vector for vector, _ref_names in candidate_rows)
+    if not candidates or len(candidates) > 8:
+        return ()
+
+    def combination_matches(indexes: tuple[int, ...]) -> bool:
+        combined: dict[str, tuple[float, ...]] = {}
+        for index in indexes:
+            for stat_id, values in candidates[index].items():
+                previous = combined.get(stat_id)
+                if previous is None:
+                    combined[stat_id] = values
+                elif len(previous) == len(values):
+                    combined[stat_id] = tuple(
+                        left + right for left, right in zip(previous, values)
+                    )
+                else:
+                    return False
+        if combined.keys() != observed.keys():
+            return False
+        return all(
+            len(combined[stat_id]) == len(values)
+            and all(abs(left - right) < 1e-9 for left, right in zip(combined[stat_id], values))
+            for stat_id, values in observed.items()
+        )
+
+    for count in range(1, min(socket_count, 6) + 1):
+        matches: set[tuple[str, ...]] = set()
+        for indexes in combinations_with_replacement(range(len(candidates)), count):
+            if not combination_matches(indexes):
+                continue
+            ref_options = [candidate_rows[index][1] for index in indexes]
+            for refs in product(*ref_options):
+                matches.add(tuple(sorted(refs)))
+                if _require_unique_refs and len(matches) > 1:
+                    return ()
+        if matches:
+            return next(iter(matches))
+    return ()
 
 
 def _aggregate_augment_count(
     modifiers: list[ItemModifier], category: str, socket_count: int,
 ) -> int:
-    """Infer repeated identical augments collapsed into one summed Stat line."""
-    if socket_count <= 1:
-        return 0
-    augment_category = _AUGMENT_CATEGORY_BY_CATEGORY.get(category)
-    if augment_category is None:
-        return 0
-    inferred = 0
-    for modifier in modifiers:
-        if modifier.kind != "augment" or not modifier.stat_id or not modifier.values:
-            continue
-        for entry in augment_entries():
-            for effect in entry.get("effects", ()):
-                base_values = tuple(float(value) for value in effect.get("values", ()))
-                if (
-                    augment_category not in (effect.get("categories") or ())
-                    or modifier.stat_id not in (effect.get("trade_ids") or ())
-                    or len(base_values) != len(modifier.values)
-                    or not all(base_values)
-                ):
-                    continue
-                ratios = tuple(
-                    observed / base
-                    for observed, base in zip(modifier.values, base_values)
-                )
-                rounded = round(ratios[0])
-                if (
-                    2 <= rounded <= socket_count
-                    and all(abs(ratio - rounded) < 1e-9 for ratio in ratios)
-                ):
-                    inferred = max(inferred, rounded)
-    return inferred
+    """Infer the minimum installed augments that exactly explain their Stat lines."""
+    return len(identify_installed_augments(
+        modifiers, category, socket_count, _require_unique_refs=False,
+    ))
 
 
 class Poe2ItemParseError(ValueError):
@@ -127,6 +234,7 @@ _CLASS_CATEGORY = {
     "Waystones": "waystone", "Waystone": "waystone", "ウェイストーン": "waystone",
     "Runes": "rune", "Rune": "rune", "ルーン": "rune",
     "Soul Cores": "soul_core", "Soul Core": "soul_core", "ソウルコア": "soul_core",
+    "Incubators": "currency", "Incubator": "currency", "インキュベーター": "currency",
     "Skill Gems": "gem", "スキルジェム": "gem",
     "Support Gems": "gem", "サポートジェム": "gem",
     "Meta Gems": "gem", "メタジェム": "gem",
@@ -215,6 +323,7 @@ _PROPERTY_LABELS = {
     "Requirements", "装備条件",
     "Runic Ward", "ルーンワード", "Deflection Rating", "受け流し力",
     "Waystone Tier", "ウェイストーンティア", "Revives Available", "復活が利用可能",
+    "Item Rarity", "アイテムレアリティ",
     "Monster Pack Size", "モンスターパックサイズ", "Pack Size", "パックサイズ",
     "Waystone Drop Chance", "ウェイストーンドロップ確率", "ウェイストーンドロップ率",
     "Magic Monsters", "モンスターエフェクティブ",
@@ -231,7 +340,9 @@ _ULTIMATUM_HINT_LINES = {
 }
 
 _STATE_LINES = {
-    "Corrupted": "corrupted", "コラプト状態": "corrupted", "コラプト": "corrupted",
+    "Corrupted": "corrupted", "Double Corrupted": "corrupted",
+    "コラプト状態": "corrupted", "コラプト": "corrupted",
+    "ダブルコラプト状態": "corrupted",
     "Mirrored": "mirrored", "ミラー状態": "mirrored", "ミラー化": "mirrored", "ミラー化アイテム": "mirrored",
     "Sanctified": "sanctified", "聖別化": "sanctified", "聖別化アイテム": "sanctified",
     "Desecrated": "desecrated", "冒涜": "desecrated", "冒涜アイテム": "desecrated",
@@ -240,10 +351,20 @@ _STATE_LINES = {
 _DESCRIPTION_PREFIXES = (
     "Can be used in a Map Device", "マップデバイスで使用すると",
 )
+_GRANTED_SKILL_PROPERTY = re.compile(
+    r"^(?:Grants Skill|スキルを付与):\s*"
+    r"(?:(?:Level|レベル)\s*\d+\s+)?\S",
+    re.IGNORECASE,
+)
+_GRANTED_SKILL_WITHOUT_LEVEL = (
+    re.compile(r"^Grants Skill:\s*(?!Level\b)(.+)$", re.IGNORECASE),
+    re.compile(r"^スキルを付与:\s*(?!レベル)(.+)$"),
+)
 
 _TABLET_USES = (
     re.compile(r"^(\d+)\s+uses?\s+remaining$", re.IGNORECASE),
     re.compile(r"^残り使用回数\s*(\d+)回$"),
+    re.compile(r"^残り使用可能回数\s*(\d+)回$"),
 )
 _CHARM_DURATION = (
     re.compile(
@@ -271,27 +392,35 @@ _CHARM_EFFECT = (
 _FLASK_RECOVERY = (
     re.compile(
         r"^Recovers\s+(?P<amount>\d+(?:\.\d+)?)\s*(?:\(augmented\)\s*)?"
-        r"(?:Life|Mana)\s+over\s+(?P<duration>\d+(?:\.\d+)?)\s+Seconds?$",
+        r"(?:Life|Mana)\s+over\s+(?P<duration>\d+(?:\.\d+)?)\s*"
+        r"(?:\(augmented\)\s*)?Seconds?$",
         re.IGNORECASE,
     ),
     re.compile(
-        r"^(?P<duration>\d+(?:\.\d+)?)秒間かけて"
+        r"^(?P<duration>\d+(?:\.\d+)?)\s*(?:\(augmented\)\s*)?秒間かけて"
         r"(?P<amount>\d+(?:\.\d+)?)\s*(?:\(augmented\)\s*)?"
         r"の(?:ライフ|マナ)を回復$"
     ),
 )
 _FLASK_CONSUMPTION = (
     re.compile(
-        r"^Consumes\s+(\d+)\s+of\s+(\d+)\s+Charges on use$",
+        r"^Consumes\s+(\d+)\s*(?:\(augmented\)\s*)?of\s+"
+        r"(\d+)\s*(?:\(augmented\)\s*)?Charges on use$",
         re.IGNORECASE,
     ),
-    re.compile(r"^使用時に(\d+)中(\d+)チャージを消費$"),
+    re.compile(
+        r"^使用時に(\d+)\s*(?:\(augmented\)\s*)?中"
+        r"(\d+)\s*(?:\(augmented\)\s*)?チャージを消費$"
+    ),
 )
 _FLASK_CURRENT = _CHARM_CURRENT
 _WOMBGIFT_HIVEBLOOD = (
     re.compile(r"^(\d+)のハイヴブラッドが必要$"),
     re.compile(r"^Requires\s+(\d+)\s+Hiveblood$", re.IGNORECASE),
     re.compile(r"^(\d+)\s+Hiveblood Required$", re.IGNORECASE),
+)
+_TIMELESS_JEWEL_DESECRATION_USES = (
+    re.compile(r"^(\d+)回冒涜できる$"),
 )
 
 
@@ -303,6 +432,12 @@ def _consume_special_property(category: str, line: str, properties: dict[str, st
     those useful display values in PoENavi while preserving the same Trade
     behaviour.
     """
+    if category == "jewel":
+        for pattern in _TIMELESS_JEWEL_DESECRATION_USES:
+            match = pattern.fullmatch(line)
+            if match:
+                properties["冒涜可能回数"] = match.group(1)
+                return True
     if category == "tablet":
         for pattern in _TABLET_USES:
             match = pattern.fullmatch(line)
@@ -394,7 +529,9 @@ def _mod_kind_from_heading(heading: str, previous: str | None) -> str | None:
         return "fractured"
     if "クラフト" in heading or "crafted" in lowered:
         return "crafted"
-    if "エンチャント" in heading or "enchant" in lowered:
+    # PoE2日本語クライアントは、アノイント等のEnhancement生成元を
+    # 詳細コピー上で「エンハンス」と表記する。公式TradeではEnchant種別。
+    if "エンチャント" in heading or "エンハンス" in heading or "enchant" in lowered:
         return "enchant"
     if "ルーン" in heading or "rune" in lowered:
         return "augment"
@@ -407,6 +544,16 @@ def _mod_kind_from_heading(heading: str, previous: str | None) -> str | None:
     if any(label in lowered for label in ("prefix", "suffix", "unique")):
         return "explicit"
     return previous
+
+
+def _affix_from_heading(heading: str) -> str | None:
+    """Return the Prefix/Suffix provenance exposed by PoE2 detailed copy."""
+    lowered = heading.casefold()
+    if "プレフィックス" in heading or "prefix" in lowered:
+        return "prefix"
+    if "サフィックス" in heading or "suffix" in lowered:
+        return "suffix"
+    return None
 
 
 def _header(text: str) -> tuple[dict[str, str], list[str]]:
@@ -465,6 +612,20 @@ def _identity_matches_category(identity: dict, category: str | None) -> bool:
     return False
 
 
+def _strip_base_display_prefixes(raw_base: str) -> str:
+    normalized = raw_base.strip()
+    while True:
+        stripped = re.sub(
+            r"^(?:Superior|Exceptional)\s+", "", normalized,
+            count=1, flags=re.IGNORECASE,
+        )
+        stripped = re.sub(r"^(?:上質な|規格外の)[\s　]*", "", stripped, count=1)
+        stripped = stripped.strip()
+        if stripped == normalized:
+            return normalized
+        normalized = stripped
+
+
 def _base_identity_candidates(
     raw_base: str, category: str | None, rarity: str,
 ) -> tuple[dict, ...]:
@@ -474,23 +635,17 @@ def _base_identity_candidates(
     )
     if exact:
         return exact
-    # PoE2 labels exceptional normal items as part of the displayed name even
-    # though Trade2 keeps the underlying base unchanged. Match EE2's
-    # parseExceptional behavior before falling back to magic-name fragments.
-    exceptional_prefixes = ("Exceptional ", "規格外の ")
-    normalized_base = next((
-        raw_base[len(prefix):].strip()
-        for prefix in exceptional_prefixes
-        if raw_base.startswith(prefix)
-    ), None)
-    if normalized_base:
-        exceptional = tuple(
+    # PoE2 includes quality/exceptional labels in the copied display name even
+    # though Trade2 identifies the underlying base without those prefixes.
+    normalized_base = _strip_base_display_prefixes(raw_base)
+    if normalized_base != raw_base.strip():
+        normalized = tuple(
             identity
             for identity in resolve_identity_candidates(normalized_base, "ITEM")
             if _identity_matches_category(identity, category)
         )
-        if exceptional:
-            return exceptional
+        if normalized:
+            return normalized
     if rarity != "magic":
         return ()
     fragments = tuple(
@@ -523,6 +678,26 @@ def _resolve_base_identity(
         if preferred is not None:
             return preferred
     return candidates[0] if candidates else None
+
+
+def _resolve_unique_identity(
+    raw_name: str, raw_base: str, category: str | None,
+) -> dict | None:
+    candidates = resolve_identity_candidates(raw_name, "UNIQUE")
+    if not candidates:
+        return None
+    base_refs = {
+        str(row.get("ref_name", ""))
+        for row in _base_identity_candidates(raw_base, category, "unique")
+    }
+    compatible = tuple(
+        row for row in candidates if str(row.get("base_ref", "")) in base_refs
+    )
+    compatible_names = {str(row.get("ref_name", "")) for row in compatible}
+    if len(compatible_names) == 1:
+        return compatible[0]
+    candidate_names = {str(row.get("ref_name", "")) for row in candidates}
+    return candidates[0] if len(candidate_names) == 1 else None
 
 
 _BASE_DEFENCE_PROPERTIES = {
@@ -651,6 +826,57 @@ def _select_scoped_stat_candidate(candidates, category: str, line_kind: str):
     return (local_candidates if prefer_local else non_local_candidates)[0]
 
 
+def _resolve_multiline_stat(
+    lines: list[str], start: int, preferred_type: str,
+    category: str, *, include_local_variants: bool = False,
+):
+    block_lines = [lines[start]]
+    for end in range(start + 1, len(lines)):
+        candidate_line = lines[end]
+        if (
+            not candidate_line
+            or candidate_line == "--------"
+            or candidate_line.startswith("{")
+            or _consume_special_property(category, candidate_line, {})
+        ):
+            break
+        block_lines.append(candidate_line)
+        block_text = "\n".join(block_lines)
+        candidates = resolve_stat_line_candidates(
+            block_text, preferred_type,
+            include_local_variants=include_local_variants,
+            item_category=category,
+        )
+        if candidates:
+            return block_text, candidates, end
+    return None
+
+
+def _resolve_level_less_granted_skill(line: str, category: str):
+    """Resolve a base-granted skill only when Trade2 publishes one unique ID."""
+    synthetic = None
+    for index, pattern in enumerate(_GRANTED_SKILL_WITHOUT_LEVEL):
+        match = pattern.fullmatch(line)
+        if match:
+            synthetic = (
+                f"Grants Skill: Level 1 {match.group(1)}"
+                if index == 0
+                else f"スキルを付与: レベル1 {match.group(1)}"
+            )
+            break
+    if synthetic is None:
+        return ()
+    candidates = resolve_stat_line_candidates(
+        synthetic, "skill", item_category=category,
+    )
+    skill_candidates = tuple(
+        (entry, ()) for entry, _values in candidates
+        if entry.get("type") == "skill"
+    )
+    distinct_ids = {str(entry.get("id", "")) for entry, _values in skill_candidates}
+    return skill_candidates[:1] if len(distinct_ids) == 1 else ()
+
+
 def parse_item_text(text: str) -> ParsedItem:
     # Some Windows clipboard paths preserve an invisible marker before the
     # first label.  Meta Gems omit Item Class, so losing that first Rarity
@@ -711,7 +937,9 @@ def parse_item_text(text: str) -> ParsedItem:
     if rarity == "unique" and not unidentified:
         if len(identity_lines) < 2:
             raise Poe2ItemParseError("PoE2 Unique名がありません")
-        unique_identity = resolve_identity(identity_lines[-2], "UNIQUE")
+        unique_identity = _resolve_unique_identity(
+            identity_lines[-2], raw_base, category,
+        )
         if unique_identity is None:
             raise Poe2ItemParseError(f"PoE2 Unique identity未解決: {identity_lines[-2]}")
     preferred_base_ref = str((unique_identity or {}).get("base_ref", "")) or None
@@ -793,11 +1021,28 @@ def parse_item_text(text: str) -> ParsedItem:
     elif base_type.casefold().startswith("runeforged "):
         flags.add("runeforged")
     current_kind = None
-    for line in text.splitlines():
-        line = line.strip().replace("：", ":")
+    current_affix = None
+    current_tier = None
+    current_group = None
+    next_group = 0
+    section_index = 0
+    standalone_augment_sections: set[int] = set()
+    normalized_lines = [line.strip().replace("：", ":") for line in text.splitlines()]
+    consumed_line_indexes: set[int] = set()
+    for line_index, line in enumerate(normalized_lines):
+        if line_index in consumed_line_indexes:
+            continue
+        if line == "--------":
+            section_index += 1
+            continue
         if line.startswith("{") and line.endswith("}"):
             heading = line.strip("{} ")
             current_kind = _mod_kind_from_heading(heading, current_kind)
+            current_affix = _affix_from_heading(heading)
+            tier_match = re.search(r"(?:Tier|ティア)\s*:\s*(\d+)", heading, re.IGNORECASE)
+            current_tier = int(tier_match.group(1)) if tier_match else None
+            current_group = next_group
+            next_group += 1
             if current_kind == "augment":
                 augment_count += 1
             continue
@@ -813,11 +1058,23 @@ def parse_item_text(text: str) -> ParsedItem:
         if match:
             item_level = int(match.group(1))
             continue
+        starts_multiline_stat = False
+        if current_kind:
+            starts_multiline_stat = _resolve_multiline_stat(
+                normalized_lines, line_index, current_kind, category,
+            ) is not None
         key, separator, value = line.partition(":")
         if separator and key.strip() in _PROPERTY_LABELS:
             properties[key.strip()] = value.strip()
             continue
-        if separator and key.strip() not in _LABELS and not _ITEM_LEVEL.match(line):
+        is_granted_skill = _GRANTED_SKILL_PROPERTY.match(line) is not None
+        if (
+            separator
+            and key.strip() not in _LABELS
+            and not _ITEM_LEVEL.match(line)
+            and not is_granted_skill
+            and not starts_multiline_stat
+        ):
             properties[key.strip()] = value.strip()
             continue
         if not line or line == "--------" or line in identity_lines:
@@ -833,11 +1090,14 @@ def parse_item_text(text: str) -> ParsedItem:
         # prose and skill effects are not item modifiers.
         if category in {"active_gem", "support_gem", "meta_gem", "uncut_gem"}:
             continue
-        # Normal Map Fragments such as Simulacrum are identity-only exchange
-        # items.  Their flavour/help sections may contain numeric prose (for
-        # example "at least 100% Delirious") but do not contain searchable
-        # item modifiers. EE2 leaves those unparsed after identity detection.
-        if category == "map_fragment" and rarity == "normal":
+        # Currency and normal Map Fragments such as Simulacrum are identity-only
+        # exchange items. Their effect/help sections may contain numeric prose
+        # (for example "1 new random modifier" or "at least 100% Delirious")
+        # but do not contain searchable item modifiers. Any structured
+        # properties have already been consumed above.
+        if category == "currency" or (
+            category == "map_fragment" and rarity == "normal"
+        ):
             continue
         standalone_augment = bool(re.search(r"\(rune\)\s*$", line, re.IGNORECASE))
         line_kind = "augment" if standalone_augment else current_kind
@@ -846,11 +1106,10 @@ def parse_item_text(text: str) -> ParsedItem:
         if category == "relic" and line_kind == "explicit":
             line_kind = "sanctum"
         if standalone_augment and current_kind != "augment":
-            augment_count += 1
+            standalone_augment_sections.add(section_index)
         scoped_affix = (
             category in _LOCAL_AFFIX_CATEGORIES
             and line_kind in {"explicit", "fractured", "crafted", "desecrated"}
-            and (rarity != "unique" or category in _ARMOUR_LOCAL_AFFIX_CATEGORIES)
         )
         # Compact Stat metadata uses `type=augment` for IDs in the `rune.*`
         # namespace. Prefer by metadata type, not by ID namespace; using
@@ -858,7 +1117,20 @@ def parse_item_text(text: str) -> ParsedItem:
         preferred_stat_type = line_kind
         candidates = resolve_stat_line_candidates(
             line, preferred_stat_type, include_local_variants=scoped_affix,
+            item_category=category,
         )
+        if not candidates and _GRANTED_SKILL_PROPERTY.match(line):
+            candidates = _resolve_level_less_granted_skill(line, category)
+        if not candidates and current_kind:
+            multiline = _resolve_multiline_stat(
+                normalized_lines, line_index, preferred_stat_type, category,
+                include_local_variants=scoped_affix,
+            )
+            if multiline:
+                line, candidates, candidate_index = multiline
+                consumed_line_indexes.update(
+                    range(line_index + 1, candidate_index + 1)
+                )
         resolved = _select_scoped_stat_candidate(candidates, category, line_kind)
         if resolved:
             entry, values = resolved
@@ -866,7 +1138,8 @@ def parse_item_text(text: str) -> ParsedItem:
             roll_min, roll_max, better = _roll_bounds(line)
             is_negated_match = bool(values) and all(value <= 0 for value in values) and (
                 re.search(r"\breduced\b", line, re.IGNORECASE) is not None
-                or "減少する" in line or "低下する" in line
+                or re.search(r"\bfewer\b", line, re.IGNORECASE) is not None
+                or "減少する" in line or "低下する" in line or "少なくなる" in line
             )
             if is_negated_match:
                 if roll_min is not None and roll_max is not None:
@@ -874,6 +1147,7 @@ def parse_item_text(text: str) -> ParsedItem:
                 better = -1
             modifiers.append(ItemModifier(
                 text=line, values=values, kind=str(entry.get("type", current_kind or "explicit")),
+                tier=current_tier, affix=current_affix, group=current_group,
                 ref=str((entry.get("text") or {}).get("en", line)),
                 stat_id=raw_stat_id, confidence=1.0,
                 roll_min=roll_min, roll_max=roll_max, better=better,
@@ -885,6 +1159,7 @@ def parse_item_text(text: str) -> ParsedItem:
             modifiers.append(ItemModifier(text=line, confidence=0.0))
     socket_text = str(properties.get("Sockets") or properties.get("ソケット") or "")
     socket_count = len(re.findall(r"(?<![A-Za-z])S(?![A-Za-z])", socket_text, re.IGNORECASE))
+    augment_count += len(standalone_augment_sections)
     augment_count = min(
         socket_count,
         max(augment_count, _aggregate_augment_count(modifiers, category, socket_count)),

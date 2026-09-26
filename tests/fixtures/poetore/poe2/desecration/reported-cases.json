@@ -1,0 +1,74 @@
+{
+  "cases": [
+    {
+      "file": "reported-amulet-all-read-failed.png",
+      "category": "amulet",
+      "expected_texts": [
+        "毎秒3.2のライフを自動回復する",
+        "敵を倒した時にライフの3%を回復する",
+        "受けたダメージの21%をマナとして回収する"
+      ],
+      "expected_tiers": [8, 1, 2]
+    },
+    {
+      "file": "reported-spear-physical-read-failed.png",
+      "category": "spear",
+      "expected_texts": [
+        "物理ダメージが64%増加する",
+        "1から4の雷ダメージを追加する",
+        "物理ダメージが24%増加する\n命中力 +41"
+      ],
+      "expected_tiers": [7, 10, 7]
+    },
+    {
+      "file": "reported-spear-companion-wrapped.png",
+      "category": "spear",
+      "expected_texts": [
+        "6から9の物理ダメージを追加する",
+        "1から5の雷ダメージを追加する",
+        "コンパニオンのダメージが49%増加する\nコンパニオンがプレイヤーの存在下にいる時にダメージが51%増\n加する"
+      ],
+      "expected_tiers": [8, 10, 1]
+    },
+    {
+      "file": "reported-bow-projectile-wrapped.png",
+      "category": "bow",
+      "expected_texts": [
+        "投射物は6mより遠くにいる敵に対するヒットダメージが76%増\n加する",
+        "5から11の物理ダメージを追加する",
+        "2から40の雷ダメージを追加する"
+      ],
+      "expected_tiers": [1, 8, 7]
+    },
+    {
+      "file": "reported-ring-shock-wrapped.png",
+      "category": "ring",
+      "expected_texts": [
+        "18から29の冷気ダメージをアタックに追加する",
+        "直近フレンジーチャージを消費していれば感電の強度が22%増加\nする",
+        "回避力 +160"
+      ],
+      "expected_tiers": [2, 1, 3]
+    },
+    {
+      "file": "reported-ring-minion-wrapped.png",
+      "category": "ring",
+      "expected_texts": [
+        "直近プレイヤーがヒットを与えていればミニオンのダメージが\n23%増加する",
+        "9から16の物理ダメージをアタックに追加する",
+        "命中力 +22"
+      ],
+      "expected_tiers": [1, [3, 4], 8]
+    },
+    {
+      "file": "reported-ring-accuracy-read-failed.png",
+      "category": "ring",
+      "expected_texts": [
+        "命中力 +64",
+        "最大マナ +66",
+        "プレイヤーが生成したレムナントは効果が14%増加する"
+      ],
+      "expected_tiers": [6, 7, 1]
+    }
+  ]
+}

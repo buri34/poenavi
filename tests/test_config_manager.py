@@ -42,6 +42,36 @@ def write_default_config(app_dir: Path, overrides=None):
 
 
 class ConfigManagerTest(unittest.TestCase):
+    def test_schema_v15_makes_legacy_topmost_default_poe_only(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 14,
+            "mini_guide_overlay": {"always_on_top": True},
+        })
+
+        self.assertEqual(migrated["mini_guide_overlay"]["topmost_mode"], "poe_only")
+        self.assertNotIn("always_on_top", migrated["mini_guide_overlay"])
+
+    def test_schema_v15_preserves_legacy_topmost_off_as_never(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 14,
+            "mini_guide_overlay": {"always_on_top": False},
+        })
+
+        self.assertEqual(migrated["mini_guide_overlay"]["topmost_mode"], "never")
+
+    def test_schema_v14_resets_cheat_sheet_transparency_to_new_defaults(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 13,
+            "cheat_sheets": {
+                "images": [{"id": "saved", "filename": "saved.png"}],
+                "image_transparency": 25,
+                "background_transparency": 60,
+            },
+        })
+
+        self.assertEqual(migrated["cheat_sheets"]["image_transparency"], 100)
+        self.assertEqual(migrated["cheat_sheets"]["background_transparency"], 0)
+
     def test_schema_v11_removes_retired_guide_detail_selection(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 10,
@@ -51,7 +81,47 @@ class ConfigManagerTest(unittest.TestCase):
 
         self.assertNotIn("guide_detail_level", migrated)
         self.assertNotIn("guide_detail_level_selected", migrated)
-        self.assertEqual(migrated["schemaVersion"], 11)
+        self.assertEqual(migrated["schemaVersion"], ConfigManager.CURRENT_SCHEMA_VERSION)
+
+    def test_schema_v13_preserves_legacy_cheat_sheet_opacity_appearance(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 11,
+            "cheat_sheets": {
+                "opacity": 75,
+                "background_opacity": 40,
+                "image_transparency": 0,
+                "background_transparency": 100,
+            },
+        })
+
+        self.assertEqual(migrated["cheat_sheets"]["image_transparency"], 75)
+        self.assertEqual(migrated["cheat_sheets"]["background_transparency"], 40)
+        self.assertNotIn("opacity", migrated["cheat_sheets"])
+        self.assertNotIn("background_opacity", migrated["cheat_sheets"])
+
+    def test_schema_v13_uses_transparent_background_for_pre_feature_config(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 11,
+            "cheat_sheets": {
+                "opacity": 100,
+                "background_transparency": 100,
+            },
+        })
+
+        self.assertEqual(migrated["cheat_sheets"]["image_transparency"], 100)
+        self.assertEqual(migrated["cheat_sheets"]["background_transparency"], 0)
+
+    def test_schema_v13_reverses_schema_v12_values_without_changing_appearance(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 12,
+            "cheat_sheets": {
+                "image_transparency": 25,
+                "background_transparency": 60,
+            },
+        })
+
+        self.assertEqual(migrated["cheat_sheets"]["image_transparency"], 75)
+        self.assertEqual(migrated["cheat_sheets"]["background_transparency"], 40)
 
     def test_schema_v10_removes_retired_hideout_hotkey(self):
         migrated = ConfigManager._migrate_config({
@@ -70,8 +140,89 @@ class ConfigManagerTest(unittest.TestCase):
             {
                 "preferred_mode": "poenavi",
                 "show_mode_selector": True,
+                "windows_autostart_poetore": False,
             },
         )
+
+    def test_schema_v16_adds_disabled_windows_poetore_autostart(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 15,
+            "startup": {
+                "preferred_mode": "poetore",
+                "show_mode_selector": False,
+            },
+        })
+
+        self.assertEqual(migrated["schemaVersion"], 18)
+        self.assertEqual(
+            migrated["startup"],
+            {
+                "preferred_mode": "poetore",
+                "show_mode_selector": False,
+                "windows_autostart_poetore": False,
+            },
+        )
+
+    def test_schema_v17_migrates_expedition_enabled_to_shared_screen_reading(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 16,
+            "hotkeys": {"expedition_reward_ocr": "alt+e"},
+            "poetore": {
+                "expedition_reward_overlay": {
+                    "enabled": True,
+                    "region": {"left": .1, "top": .2, "right": .5, "bottom": .8},
+                },
+            },
+        })
+        assert migrated["schemaVersion"] == 18
+        assert migrated["poetore"]["screen_reading"] == {"enabled": True}
+        assert "enabled" not in migrated["poetore"]["expedition_reward_overlay"]
+        assert migrated["poetore"]["desecration_tier_overlay"] == {}
+        assert migrated["hotkeys"]["desecration_tier_ocr"] == "alt+r"
+
+    def test_withdrawn_shared_ocr_hotkey_is_left_untouched_without_reverse_migration(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 18,
+            "hotkeys": {"screen_reading_ocr": "ctrl+shift+r"},
+        })
+
+        assert migrated["schemaVersion"] == 18
+        assert migrated["hotkeys"] == {"screen_reading_ocr": "ctrl+shift+r"}
+
+    def test_v432_config_gets_separate_default_hotkeys_without_reverse_migration(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp) / "app"
+            user_dir = Path(tmp) / "user-data"
+            app_dir.mkdir()
+            user_dir.mkdir()
+            write_default_config(app_dir, {
+                "hotkeys": {
+                    "expedition_reward_ocr": "alt+e",
+                    "desecration_tier_ocr": "alt+r",
+                },
+            })
+            config_path = user_dir / ConfigManager.CONFIG_FILE
+            config_path.write_text(json.dumps({
+                "schemaVersion": 18,
+                "hotkeys": {"screen_reading_ocr": "ctrl+shift+r"},
+            }), encoding="utf-8")
+
+            with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}), \
+                 patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
+                loaded = ConfigManager.load_config()
+
+            assert loaded["schemaVersion"] == 18
+            assert loaded["hotkeys"]["screen_reading_ocr"] == "ctrl+shift+r"
+            assert loaded["hotkeys"]["expedition_reward_ocr"] == "alt+e"
+            assert loaded["hotkeys"]["desecration_tier_ocr"] == "alt+r"
+
+    def test_schema_v16_preserves_enabled_windows_poetore_autostart(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 15,
+            "startup": {"windows_autostart_poetore": True},
+        })
+
+        self.assertTrue(migrated["startup"]["windows_autostart_poetore"])
 
     def test_schema_v8_preserves_existing_startup_choice(self):
         migrated = ConfigManager._migrate_config({

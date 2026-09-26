@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import csv
+from dataclasses import replace
 import json
 from pathlib import Path
 
 import pytest
 
+from src.poetore.models import ItemModifier
+from src.poetore.poe2 import parser as poe2_parser
+from src.poetore.poe2.metadata import resolve_stat_line_candidates
 from src.poetore.poe2.parser import Poe2ItemParseError, TRADE_CATEGORY_BY_CATEGORY, parse_item_text
 from src.poetore.poe2.trade import build_search_query, poe2_trade_filters
 from src.poetore.poe2.fixture_loader import load_real_copy_rows
@@ -17,6 +21,116 @@ AMBIGUOUS_BASE_FIXTURES = (
     Path(__file__).parent / "fixtures" / "poe2" / "ambiguous_bases_bilingual.json"
 )
 REAL_COPY_FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "real_copy_bilingual.csv"
+VAAL_SIPHONER_FIXTURE = Path(__file__).parent / "fixtures" / "poe2" / "vaal_siphoner_ja.txt"
+DOUBLE_CORRUPTED_GEM_FIXTURE = (
+    Path(__file__).parent / "fixtures" / "poe2" / "whirling_assault_double_corrupted_ja.txt"
+)
+CONSTRICTING_COMMAND_FIXTURE = (
+    Path(__file__).parent / "fixtures" / "poe2" / "constricting_command_ja.txt"
+)
+SKYSLIVER_FIXTURE = Path(__file__).parent / "fixtures" / "poe2" / "skysliver_ja.txt"
+
+KEEPER_OF_THE_ARC_JA = """アイテムクラス: 兜
+レアリティ: ユニーク
+弧の守りて
+スピリットボーンの冠
+--------
+アーマー: 476 (augmented)
+エナジーシールド: 138 (augmented)
+--------
+装備条件：レベル 62, 36 筋力, 36 知性
+--------
+アイテムレベル: 81
+--------
+{ ユニークモッド — アーマー, エナジーシールド }
+アーマーおよびエナジーシールドが272(240-340)%増加する
+{ ユニークモッド }
+5秒ごとに変化する:
+ヒットから受けるダメージが40%低下する
+受ける継続ダメージが40%低下する
+{ ユニークモッド — ライフ }
+毎秒17.8(15-25)のライフを自動回復する
+{ ユニークモッド — マナ }
+マナ自動回復レートが24(15-25)%増加する
+--------
+カルグールの神官たちは証明できぬ約束ではなく、
+数字や計算により信仰心を集める。
+"""
+
+
+def test_japanese_vaal_siphoner_builds_currency_search_query():
+    item = parse_item_text(VAAL_SIPHONER_FIXTURE.read_text(encoding="utf-8"))
+    payload = build_search_query(item)
+
+    assert item.category == "currency"
+    assert item.rarity == "currency"
+    assert item.name == "Vaal Siphoner"
+    assert item.base_type == "Vaal Siphoner"
+    assert payload["query"]["type"] == "Vaal Siphoner"
+    assert payload["query"]["filters"]["type_filters"]["filters"]["category"] == {
+        "option": "currency",
+    }
+
+
+def test_japanese_double_corrupted_gem_preserves_corrupted_state():
+    item = parse_item_text(DOUBLE_CORRUPTED_GEM_FIXTURE.read_text(encoding="utf-8"))
+
+    assert item.category == "active_gem"
+    assert item.base_type == "Whirling Assault"
+    assert "corrupted" in item.flags
+    assert not [modifier for modifier in item.modifiers if not modifier.ref]
+
+
+def test_jewel_scoped_stat_match_does_not_replace_general_item_stat():
+    text = "敵を倒した時にマナの1%を回復する"
+
+    jewel = resolve_stat_line_candidates(
+        text, "explicit", item_category="jewel",
+    )
+    general = resolve_stat_line_candidates(
+        text, "explicit", item_category="ring",
+    )
+
+    assert jewel[0][0]["id"] == "explicit.stat_1604736568"
+    assert general[0][0]["id"] == "explicit.stat_1030153674"
+
+
+def test_constricting_command_resolves_fewer_surrounded_enemies_as_negative_stat():
+    item = parse_item_text(CONSTRICTING_COMMAND_FIXTURE.read_text(encoding="utf-8"))
+
+    surrounded = next(
+        modifier for modifier in item.modifiers
+        if modifier.stat_id == "explicit.stat_2267564181"
+    )
+    assert item.name == "Constricting Command"
+    assert surrounded.values == (-3.0,)
+    assert surrounded.better == -1
+    assert (surrounded.roll_min, surrounded.roll_max) == (-4.0, -2.0)
+    assert not [modifier for modifier in item.modifiers if not modifier.stat_id]
+
+    row = next(
+        row for row in poe2_trade_filters(item)
+        if row.stat_id == "explicit.stat_2267564181"
+    )
+    assert row.enabled
+    assert row.min_value is None
+    assert row.max_value == -3.0
+
+
+def test_keeper_of_the_arc_resolves_alternating_multiline_stat():
+    item = parse_item_text(KEEPER_OF_THE_ARC_JA)
+
+    alternating = next(
+        modifier for modifier in item.modifiers
+        if modifier.stat_id == "explicit.stat_258955603"
+    )
+    assert alternating.text == (
+        "5秒ごとに変化する:\n"
+        "ヒットから受けるダメージが40%低下する\n"
+        "受ける継続ダメージが40%低下する"
+    )
+    assert alternating.values == (-40.0, -40.0)
+    assert not [modifier for modifier in item.modifiers if not modifier.stat_id]
 
 
 def _fixtures():
@@ -165,6 +279,31 @@ def test_gem_prose_is_not_reported_as_unresolved_item_modifiers():
         assert parse_item_text(fixture["英語設定の詳細コピー全文"]).modifiers == ()
 
 
+@pytest.mark.parametrize("name", (
+    "高貴なオーブ", "高貴なオーブ (上級)", "高貴なオーブ (完全)",
+    "宝飾職人のオーブ (見習い)", "宝飾職人のオーブ (上級)",
+    "宝飾職人のオーブ (完全)", "カオスオーブ", "カオスオーブ (上級)",
+    "カオスオーブ (完全)", "王者のオーブ", "王者のオーブ (上級)",
+    "王者のオーブ (完全)",
+))
+def test_currency_description_prose_is_not_reported_as_unresolved_modifiers(name):
+    item = parse_item_text(
+        "アイテムクラス: スタック可能カレンシー\n"
+        "レアリティ: カレンシー\n"
+        f"{name}\n"
+        "--------\n"
+        "スタック数: 2,152/20\n"
+        "--------\n"
+        "レアアイテムを1個の新しいランダムなモッドで強化する。\n"
+        "--------\n"
+        "このアイテムを右クリックした後、レアアイテムをクリックして使用する。"
+        "レアアイテムは最大で6個のランダムなモッドを持つことができる。\n"
+    )
+
+    assert item.category == "currency"
+    assert item.modifiers == ()
+
+
 def test_charm_properties_and_searchable_mods_resolve_equally_in_both_languages():
     charm = _real_copy("FX009")
     charm_items = [parse_item_text(charm[key]) for key in (
@@ -257,6 +396,50 @@ def test_life_flask_properties_are_consumed_like_ee2_and_affixes_stay_searchable
             "回復量が70(66-70)%増加する",
             "毎秒チャージを0.20獲得する",
         }
+
+
+def test_unique_life_flask_augmented_properties_are_not_unresolved_modifiers():
+    item = parse_item_text(
+        "アイテムクラス: ライフフラスコ\n"
+        "レアリティ: ユニーク\n"
+        "好機\n"
+        "究極のライフフラスコ\n"
+        "--------\n"
+        "5.30 (augmented)秒間かけて1978 (augmented)のライフを回復\n"
+        "使用時に75中3 (augmented)チャージを消費\n"
+        "現在0チャージ\n"
+        "--------\n"
+        "装備条件：レベル 60\n"
+        "--------\n"
+        "アイテムレベル: 84\n"
+        "--------\n"
+        "{ ユニークモッド — ライフ }\n"
+        "未リザーブライフがフルになった時でも効果は取り除かれない\n"
+        "{ ユニークモッド }\n"
+        "手動で使用できなくなる — スケールできない値\n"
+        "{ ユニークモッド }\n"
+        "完璧なタイミングでスキルを放った時に使用される — スケールできない値\n"
+        "{ ユニークモッド }\n"
+        "効果中はスキルの完全なタイミングの幅が109(80-120)%長くなる\n"
+        "{ ユニークモッド }\n"
+        "回復量が115(100-150)%増加する\n"
+        "{ ユニークモッド }\n"
+        "回復レートが43(50-25)%減少する\n"
+        "{ ユニークモッド }\n"
+        "使用に必要なチャージ量が61(75-50)%減少する\n"
+    )
+
+    assert (item.name, item.base_type, item.category) == (
+        "Opportunity", "Ultimate Life Flask", "life_flask",
+    )
+    assert item.properties["回復量"] == "1978"
+    assert item.properties["回復時間"] == "5.30"
+    assert item.properties["使用チャージ"] == "3"
+    assert item.properties["最大チャージ"] == "75"
+    assert item.properties["現在チャージ"] == "0"
+    assert all("秒間かけて" not in modifier.text for modifier in item.modifiers)
+    assert all("チャージを消費" not in modifier.text for modifier in item.modifiers)
+    assert all(modifier.stat_id for modifier in item.modifiers)
 
 
 def test_wombgift_hiveblood_cost_is_property_not_search_modifier_like_ee2():
@@ -399,6 +582,13 @@ def test_poe2_roll_ranges_are_averaged_and_only_safe_ranges_get_better_direction
     flat = next(mod for mod in spear.modifiers if mod.stat_id == "explicit.stat_1940865751")
     assert (flat.roll_min, flat.roll_max, flat.better) == (28.5, 42.0, 1)
 
+    assert [
+        modifier.affix for modifier in spear.modifiers
+        if modifier.kind == "explicit"
+    ] == [
+        "prefix", "prefix", "suffix",
+    ]
+
     text = """アイテムクラス: ウェイストーン
 レアリティ: マジック
 減退する ウェイストーン (ティア15)
@@ -427,7 +617,16 @@ def test_waystone_players_cooldown_recovery_reduction_uses_negated_trade_stat():
     assert modifier.stat_id == "explicit.stat_941368244"
     assert modifier.values == (-27.0,)
     assert (modifier.roll_min, modifier.roll_max, modifier.better) == (-30.0, -25.0, -1)
-    payload = build_search_query(item, stat_filters=poe2_trade_filters(item))
+    filters = poe2_trade_filters(item)
+    cooldown_filter = next(
+        row for row in filters if row.stat_id == "explicit.stat_941368244"
+    )
+    assert not cooldown_filter.enabled
+    enabled_filters = tuple(
+        replace(row, enabled=True) if row is cooldown_filter else row
+        for row in filters
+    )
+    payload = build_search_query(item, stat_filters=enabled_filters)
     sent = next(
         row
         for group in payload["query"]["stats"]
@@ -458,6 +657,157 @@ def test_two_identical_runes_collapsed_into_one_line_count_as_two_augments():
     assert augment.values == (36.0,)
 
 
+def test_different_augments_collapsed_into_one_section_count_separately(monkeypatch):
+    monkeypatch.setattr(poe2_parser, "augment_entries", lambda: (
+        {
+            "ref_name": "First Rune",
+            "effects": ({
+                "categories": ["Body Armour"],
+                "text": {"en": "# to maximum Life"},
+                "values": [10],
+                "trade_ids": ["rune.first"],
+            },),
+        },
+        {
+            "ref_name": "Second Rune",
+            "effects": ({
+                "categories": ["Body Armour"],
+                "text": {"en": "# to maximum Mana"},
+                "values": [20],
+                "trade_ids": ["rune.second"],
+            },),
+        },
+    ))
+    modifiers = [
+        ItemModifier("+10 to maximum Life", (10.0,), "augment", stat_id="rune.first"),
+        ItemModifier("+20 to maximum Mana", (20.0,), "augment", stat_id="rune.second"),
+    ]
+
+    assert poe2_parser._aggregate_augment_count(modifiers, "body_armour", 2) == 2
+
+
+def test_bonded_support_stats_do_not_consume_augment_sockets(monkeypatch):
+    monkeypatch.setattr(poe2_parser, "augment_entries", lambda: ({
+        "ref_name": "Bonded Helper",
+        "effects": ({
+            "categories": ["Body Armour"],
+            "text": {"en": "Bonded: #% reduced Chill Duration on you"},
+            "values": [20],
+            "trade_ids": ["rune.stat_2174462855"],
+        },),
+    },))
+    modifiers = [ItemModifier(
+        "Bonded: 20% reduced Chill Duration on you", (20.0,), "augment",
+        stat_id="rune.stat_2174462855",
+    )]
+
+    assert poe2_parser._aggregate_augment_count(modifiers, "body_armour", 2) == 0
+
+
+def test_one_multi_stat_augment_counts_once(monkeypatch):
+    monkeypatch.setattr(poe2_parser, "augment_entries", lambda: ({
+        "ref_name": "Dual Rune",
+        "effects": (
+            {
+                "categories": ["Body Armour"],
+                "text": {"en": "# to maximum Life"},
+                "values": [10],
+                "trade_ids": ["rune.first"],
+            },
+            {
+                "categories": ["Body Armour"],
+                "text": {"en": "# to maximum Mana"},
+                "values": [20],
+                "trade_ids": ["rune.second"],
+            },
+        ),
+    },))
+    modifiers = [
+        ItemModifier("+10 to maximum Life", (10.0,), "augment", stat_id="rune.first"),
+        ItemModifier("+20 to maximum Mana", (20.0,), "augment", stat_id="rune.second"),
+    ]
+
+    assert poe2_parser._aggregate_augment_count(modifiers, "body_armour", 2) == 1
+
+
+def test_augment_inference_stops_when_candidate_count_exceeds_eight(monkeypatch):
+    entries = tuple({
+        "ref_name": f"Candidate {index}",
+        "effects": ({
+            "categories": ["Body Armour"],
+            "text": {"en": "# to maximum Life"},
+            "values": [index],
+            "trade_ids": [f"rune.{index}"],
+        },),
+    } for index in range(1, 10))
+    monkeypatch.setattr(poe2_parser, "augment_entries", lambda: entries)
+    modifiers = [
+        ItemModifier(str(index), (float(index),), "augment", stat_id=f"rune.{index}")
+        for index in range(1, 10)
+    ]
+
+    assert poe2_parser._aggregate_augment_count(modifiers, "body_armour", 9) == 0
+
+
+def test_augment_inference_does_not_search_combinations_longer_than_six(monkeypatch):
+    monkeypatch.setattr(poe2_parser, "augment_entries", lambda: ({
+        "ref_name": "Repeatable Rune",
+        "effects": ({
+            "categories": ["Body Armour"],
+            "text": {"en": "# to maximum Life"},
+            "values": [1],
+            "trade_ids": ["rune.life"],
+        },),
+    },))
+    modifiers = [
+        ItemModifier("+7 to maximum Life", (7.0,), "augment", stat_id="rune.life")
+    ]
+
+    assert poe2_parser._aggregate_augment_count(modifiers, "body_armour", 7) == 0
+
+
+def test_real_multi_stat_augment_lines_in_one_section_count_once():
+    item = parse_item_text("""Item Class: Boots
+Rarity: Rare
+Test Pace
+Rawhide Boots
+--------
+Sockets: S S
+--------
+Item Level: 80
+--------
+20% increased Curse Duration (rune)
+20% increased Poison Duration (rune)
+""")
+
+    assert item.augment_count == 1
+    assert {modifier.stat_id for modifier in item.modifiers} == {
+        "rune.stat_3824372849",
+        "rune.stat_2011656677",
+    }
+
+
+def test_real_different_augment_lines_in_one_section_count_separately():
+    item = parse_item_text("""Item Class: Body Armours
+Rarity: Rare
+Test Shelter
+Leather Vest
+--------
+Sockets: S S
+--------
+Item Level: 80
+--------
++45 to maximum Life (rune)
++14% to Fire Resistance (rune)
+""")
+
+    assert item.augment_count == 2
+    assert {modifier.stat_id for modifier in item.modifiers} == {
+        "rune.stat_3299347043",
+        "rune.stat_3372524247",
+    }
+
+
 def test_poe2_standalone_rune_prefers_augment_stat_over_same_text_explicit():
     item = parse_item_text("""アイテムクラス: 靴
 レアリティ: レア
@@ -478,19 +828,39 @@ def test_poe2_standalone_rune_prefers_augment_stat_over_same_text_explicit():
     assert [(row.kind, row.stat_id) for row in rows if row.stat_id.endswith("50721145")] == [
         ("augment", "rune.stat_50721145"),
     ]
+    assert not next(row for row in rows if row.stat_id == "rune.stat_50721145").enabled
     payload = build_search_query(item, stat_filters=rows)
     sent_ids = {
         row["id"]
         for group in payload["query"]["stats"]
         for row in group["filters"]
     }
-    assert "rune.stat_50721145" in sent_ids
+    assert "rune.stat_50721145" not in sent_ids
     assert "explicit.stat_50721145" not in sent_ids
 
 
 def test_unknown_base_is_not_silently_guessed():
     with pytest.raises(Poe2ItemParseError, match="base identity未解決"):
         parse_item_text("Item Class: Bows\nRarity: Rare\nTest Name\nUnknown Bow\n")
+
+
+@pytest.mark.parametrize(
+    ("localized_base", "expected_base"),
+    [
+        ("監視者の弓", "Warden Bow"),
+        ("ルーンフォージの監視者の弓", "Runeforged Warden Bow"),
+    ],
+)
+def test_ironbound_resolves_both_legacy_and_runeforged_bases(
+    localized_base, expected_base,
+):
+    item = parse_item_text(
+        "アイテムクラス: 弓\nレアリティ: ユニーク\nアイアンバウンド\n"
+        f"{localized_base}\n--------\nアイテムレベル: 80\n"
+    )
+
+    assert item.name == "Ironbound"
+    assert item.base_type == expected_base
 
 
 @pytest.mark.parametrize(
@@ -599,11 +969,44 @@ def test_reported_japanese_rare_spear_keeps_quality_and_both_flat_damage_values(
     assert flat.values == (25.0, 39.0)
     fractured = next(mod for mod in item.modifiers if "アタックスピードが28" in mod.text)
     assert fractured.kind == "fractured"
+    assert fractured.tier == 1
     assert "fractured" in item.flags
     crafted_accuracy = next(mod for mod in item.modifiers if mod.text.startswith("命中力"))
+    assert crafted_accuracy.tier is None
     assert crafted_accuracy.stat_id == "crafted.stat_803737631"
     crafted_speed = next(mod for mod in item.modifiers if "アタックスピードが8" in mod.text)
     assert crafted_speed.stat_id == "crafted.stat_210067635"
+
+
+def test_reported_unique_skysliver_prefers_local_attack_speed():
+    item = parse_item_text(SKYSLIVER_FIXTURE.read_text(encoding="utf-8"))
+    attack_speed = next(mod for mod in item.modifiers if "アタックスピード" in mod.text)
+
+    assert item.category == "spear"
+    assert item.rarity == "unique"
+    assert attack_speed.stat_id == "explicit.stat_210067635"
+    assert attack_speed.values == (16.0,)
+
+
+@pytest.mark.parametrize("category", sorted(poe2_parser._WEAPON_LOCAL_AFFIX_CATEGORIES))
+def test_every_weapon_category_prefers_local_attack_properties(category):
+    global_entry = {
+        "id": "explicit.stat_681332047",
+        "text": {"en": "#% increased Attack Speed"},
+    }
+    local_entry = {
+        "id": "explicit.stat_210067635",
+        "text": {"en": "#% increased Attack Speed (Local)"},
+    }
+
+    selected, values = poe2_parser._select_scoped_stat_candidate(
+        ((global_entry, (16.0,)), (local_entry, (16.0,))),
+        category,
+        "explicit",
+    )
+
+    assert selected["id"] == "explicit.stat_210067635"
+    assert values == (16.0,)
 
 
 def test_audited_crossbow_accuracy_keeps_local_scope_when_both_ids_have_results():
@@ -765,6 +1168,45 @@ def test_reported_rare_waystone_keeps_affix_name_separate_from_trade_base():
     assert item.base_type == "Waystone (Tier 15)"
 
 
+def test_reported_waystone_keeps_item_rarity_as_searchable_property():
+    item = parse_item_text("""アイテムクラス: ウェイストーン
+レアリティ: レア
+恐るべき辺境
+ウェイストーン (ティア3)
+--------
+復活が利用可能: 2 (augmented)
+アイテムレアリティ: +29% (augmented)
+モンスターレアリティ: +18% (augmented)
+ウェイストーンドロップ確率: +55% (augmented)
+--------
+アイテムレベル: 70
+""")
+
+    assert item.properties["アイテムレアリティ"] == "+29% (augmented)"
+
+
+def test_reported_breach_tablet_resolves_uses_and_variable_rare_monster_line():
+    item = parse_item_text("""アイテムクラス: 石板
+レアリティ: レア
+虚無に触れられし命令
+ブリーチの石板
+--------
+アイテムレベル: 80
+--------
+{ 暗黙モッド }
+マップに異世界からのブリーチを追加する
+残り使用可能回数 10回
+--------
+{ サフィックスモッド 「侵略の」 (ティア: 1) }
+マップの不安定なブリーチは安定化した後レアモンスターが追加で3(1-3)体スポーンする
+""")
+
+    assert item.properties["残り使用回数"] == "10"
+    assert [(mod.stat_id, mod.values, mod.confidence) for mod in item.modifiers] == [
+        ("explicit.stat_3762913035", (), 1.0),
+    ]
+
+
 def test_phase45_runemastered_base_and_desecrated_state_are_not_collapsed():
     text = (Path(__file__).parent / "fixtures" / "poe2" / "phase45_runemastered_ja.txt").read_text(
         encoding="utf-8"
@@ -775,6 +1217,38 @@ def test_phase45_runemastered_base_and_desecrated_state_are_not_collapsed():
     assert "runeforged" not in item.flags
     desecrated = next(mod for mod in item.modifiers if mod.kind == "desecrated")
     assert desecrated.stat_id == "desecrated.stat_2923486259"
+
+
+def test_japanese_enhancement_anointment_uses_enchant_trade_stat():
+    item = parse_item_text("""アイテムクラス: アミュレット
+レアリティ: レア
+恐るべきスカラベ
+前兆のアミュレット
+--------
+装備条件：レベル 64
+--------
+アイテムレベル: 82
+--------
+{ エンハンス }
+ソーマタージー発生装置 を割り当てる — スケールできない値
+--------
+{ 暗黙モッド }
+サフィックスモッド -1個
+""")
+
+    anointment = next(
+        modifier for modifier in item.modifiers
+        if modifier.stat_id == "enchant.stat_2954116742|56666"
+    )
+    assert anointment.kind == "enchant"
+    assert anointment.stat_id == "enchant.stat_2954116742|56666"
+    filters = poe2_trade_filters(item)
+    trade_filter = next(
+        row for row in filters
+        if row.stat_id == "enchant.stat_2954116742|56666"
+    )
+    assert trade_filter.kind == "enchant"
+    assert trade_filter.stat_id == "enchant.stat_2954116742|56666"
 
 
 @pytest.mark.parametrize(

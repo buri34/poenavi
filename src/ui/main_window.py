@@ -8,9 +8,9 @@ from pynput import keyboard as pynput_keyboard
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QPushButton, QMenu, QFrame, QScrollArea, QSplitter,
                                QSizeGrip, QSizePolicy, QMessageBox, QRadioButton, QButtonGroup, QApplication,
-                               QToolTip)
+                               QStyle, QSystemTrayIcon, QToolTip)
 from PySide6.QtCore import QObject, Qt, QTimer, Signal, QRect, QEvent, QEventLoop, QPoint, QSize, QUrl
-from PySide6.QtGui import QCursor, QMouseEvent, QIcon, QDesktopServices, QKeySequence
+from PySide6.QtGui import QAction, QCursor, QMouseEvent, QIcon, QDesktopServices, QKeySequence
 from src.ui.styles import Styles
 from src.ui.detached_panel import DetachedPanelWindow
 from src.ui.settings_dialog import AreaNoteDialog, SettingsDialog
@@ -47,6 +47,8 @@ from src.utils.zone_lookup import get_zone_info, get_level_advice
 from src.utils.guide_data import load_guide_data, get_zone_guide, get_zone_guide_level, format_guide_html, get_mini_navi_content
 from src.utils.poe_version_data import POE1, POE2, get_lap_labels, get_poe_label, get_timer_filename, get_progress_flags_filename
 from src.utils.feature_support import (
+    GEM_SHOP_SEARCH,
+    MAP_CHECK,
     MINI_NAVI,
     POETORE,
     is_feature_hotkey_supported,
@@ -233,6 +235,9 @@ class MainWindow(QMainWindow):
         self.detached_panel_windows[panel_id] = panel_window
         panel_window.apply_window_settings(self.config)
         panel_window.show()
+        self._set_window_click_through(
+            panel_window, bool(getattr(self, "click_through", False)),
+        )
         self._keep_detached_panel_header_on_screen(panel_window)
         self._save_detached_panel_state(panel_id)
         self._adjust_main_window_after_panel_change()
@@ -487,11 +492,7 @@ class MainWindow(QMainWindow):
         self.resize(420, 1200)  # 仮サイズ、showEvent で実際に配置
 
         # アプリアイコン設定
-        icon_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "icon.ico")
-        if not os.path.exists(icon_path):
-            # PyInstaller _MEIPASS対応
-            base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(sys.argv[0])))
-            icon_path = os.path.join(base, "icon.ico")
+        icon_path = self._app_icon_path()
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
         
@@ -617,6 +618,7 @@ class MainWindow(QMainWindow):
         self.detached_panel_windows = {}
         
         self.setup_ui()
+        self._build_tray_icon()
         self._restore_detached_panels()
         self._restore_minimized_panels()
         self._refresh_main_window_minimum_height()
@@ -3068,9 +3070,11 @@ class MainWindow(QMainWindow):
                     self.hotkey_map[_listener_hotkey_name(key)] = action
             for action, key in custom_command_hotkeys(self.config.get("custom_commands", [])).items():
                 self.hotkey_map[_listener_hotkey_name(key)] = action
-            self._gem_shop_search_key = _listener_hotkey_name(
-                hotkeys.get("gem_shop_search", DEFAULT_GEM_SHOP_SEARCH_HOTKEY)
-            )
+            self._gem_shop_search_key = "none"
+            if is_feature_supported(GEM_SHOP_SEARCH, active_version):
+                self._gem_shop_search_key = _listener_hotkey_name(
+                    hotkeys.get("gem_shop_search", DEFAULT_GEM_SHOP_SEARCH_HOTKEY)
+                )
             
             print(f"Registering hotkeys: {self.hotkey_map}")
 
@@ -3083,6 +3087,7 @@ class MainWindow(QMainWindow):
                     "poetore_capture", capture_hotkey,
                     result_window_checker=lambda hwnd: MainWindow._is_poetore_result_window(self, hwnd),
                     poe_target_getter=lambda: MainWindow._poetore_poe_target(self),
+                    allow_unmodified=True,
                     parent=self if isinstance(self, QObject) else None,
                 )
                 self.suppressed_capture_hotkey.command.connect(self.hotkey_signal.emit)
@@ -3282,6 +3287,8 @@ class MainWindow(QMainWindow):
 
     def _start_gem_shop_search_hold(self):
         """長押し判定を開始する。キーリピートではタイマーを延長しない。"""
+        if not is_feature_supported(GEM_SHOP_SEARCH, self.poe_version):
+            return None
         generation = self._gem_shop_search_hold.start()
         QTimer.singleShot(self._gem_shop_search_hold_delay_ms(), lambda: self._run_gem_shop_search_hold(generation))
 
@@ -3598,29 +3605,39 @@ class MainWindow(QMainWindow):
                 )
 
     # --- クリックスルー ---
+    @staticmethod
+    def _set_window_click_through(window, enabled):
+        """Windowsの入力透過を、指定したトップレベルウィンドウへ反映する。"""
+        if sys.platform != 'win32':
+            return
+        import ctypes
+
+        hwnd = int(window.winId())
+        GWL_EXSTYLE = -20
+        WS_EX_TRANSPARENT = 0x00000020
+        WS_EX_LAYERED = 0x00080000
+        SWP_NOMOVE = 0x0002
+        SWP_NOSIZE = 0x0001
+        SWP_NOZORDER = 0x0004
+        SWP_FRAMECHANGED = 0x0020
+        user32 = ctypes.windll.user32
+        style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+        if enabled:
+            style |= WS_EX_TRANSPARENT | WS_EX_LAYERED
+        else:
+            style &= ~WS_EX_TRANSPARENT
+        user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+        user32.SetWindowPos(
+            hwnd, 0, 0, 0, 0, 0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
+        )
+
     def toggle_click_through(self):
         """クリックスルーのON/OFF切替"""
         self.click_through = not getattr(self, 'click_through', False)
-        if sys.platform == 'win32':
-            import ctypes
-            hwnd = int(self.winId())
-            GWL_EXSTYLE = -20
-            WS_EX_TRANSPARENT = 0x00000020
-            WS_EX_LAYERED = 0x00080000
-            SWP_NOMOVE = 0x0002
-            SWP_NOSIZE = 0x0001
-            SWP_NOZORDER = 0x0004
-            SWP_FRAMECHANGED = 0x0020
-            user32 = ctypes.windll.user32
-            style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-            if self.click_through:
-                style |= WS_EX_TRANSPARENT | WS_EX_LAYERED
-            else:
-                style &= ~WS_EX_TRANSPARENT
-            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
-            # フラグ変更を即座に反映
-            user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0,
-                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED)
+        self._set_window_click_through(self, self.click_through)
+        for panel_window in getattr(self, "detached_panel_windows", {}).values():
+            self._set_window_click_through(panel_window, self.click_through)
         
         # 視覚的フィードバック
         self._update_click_through_label()
@@ -4663,6 +4680,8 @@ class MainWindow(QMainWindow):
 
     def capture_map_check_item(self):
         """Map系アイテムをコピーし、通信なしで危険Modを確認する。"""
+        if not is_feature_supported(MAP_CHECK, self.poe_version):
+            return None
         self._ensure_map_check_window().capture_from_poe()
 
     def _update_cheat_sheets_hotkey_tooltip(self):
@@ -4734,12 +4753,30 @@ class MainWindow(QMainWindow):
             new_settings = dialog.get_settings()
             self.config.update(new_settings)
             ConfigManager.save_config(self.config)
+            from src.windows_autostart import (
+                sync_windows_poetore_autostart_with_error,
+            )
+
+            autostart_error = sync_windows_poetore_autostart_with_error(
+                self.config
+            )
+            if autostart_error:
+                QMessageBox.warning(
+                    self,
+                    "自動起動設定エラー",
+                    "Windowsの自動起動設定を更新できませんでした。\n"
+                    "設定は保存済みのため、次回起動時に再試行します。",
+                )
             self.stash_tab_scroll.set_enabled(
                 self.config.get("stash_tab_scroll_enabled", True)
             )
             from src.app_restart import confirm_mode_switch_restart
 
-            if confirm_mode_switch_restart(self, self.config):
+            requested_poe_version = self.config.get("poe_version", POE1)
+            poe_version_changed = requested_poe_version != self.poe_version
+            if confirm_mode_switch_restart(
+                self, self.config, current_poe_version=self.poe_version
+            ):
                 return
             self._refresh_gem_shop_search_preview()
             if self.config.get("always_on_top", True) != previous_always_on_top:
@@ -4751,7 +4788,9 @@ class MainWindow(QMainWindow):
             self._update_cheat_sheets_hotkey_tooltip()
             
             # ログ監視の再設定
-            active_version = self.config.get("poe_version", self.poe_version)
+            active_version = (
+                self.poe_version if poe_version_changed else requested_poe_version
+            )
             client_log_paths = self.config.get("client_log_paths", {})
             log_path = client_log_paths.get(active_version, "")
             if log_path:
@@ -4765,7 +4804,8 @@ class MainWindow(QMainWindow):
             
             # ゾーンデータ・ガイドデータ更新
             prev_version = self.poe_version
-            self.poe_version = self.config.get("poe_version", POE1)
+            if not poe_version_changed:
+                self.poe_version = requested_poe_version
             self._sync_voicevox_service()
             self.lap_labels = get_lap_labels(self.poe_version)
             zone_master_data = load_zone_master_data()
@@ -4908,13 +4948,86 @@ class MainWindow(QMainWindow):
     def _main_window_flags(self):
         return _with_optional_always_on_top(Qt.FramelessWindowHint, self)
 
+    @staticmethod
+    def _app_icon_path():
+        """開発時・PyInstaller実行時のどちらでもPoENaviアイコンを返す。"""
+        if getattr(sys, "frozen", False):
+            exe_dir = os.path.dirname(sys.executable)
+            base = getattr(sys, "_MEIPASS", exe_dir)
+            candidates = (
+                os.path.join(exe_dir, "assets", "app", "icon.ico"),
+                os.path.join(base, "assets", "app", "icon.ico"),
+                os.path.join(exe_dir, "icon.ico"),
+                os.path.join(base, "icon.ico"),
+            )
+            return next((path for path in candidates if os.path.exists(path)), candidates[0])
+
+        project_root = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
+        return os.path.join(project_root, "assets", "app", "icon.ico")
+
+    def _build_tray_icon(self):
+        icon = QIcon(self._app_icon_path())
+        if icon.isNull():
+            icon = self.windowIcon()
+        if icon.isNull():
+            icon = self.style().standardIcon(QStyle.SP_ComputerIcon)
+
+        self.tray_icon = QSystemTrayIcon(icon, self)
+        self.tray_icon.setToolTip("ぽえなび")
+        self.tray_icon.activated.connect(self._handle_tray_activation)
+
+        menu = QMenu(self)
+        self.tray_show_action = QAction("ぽえなびを表示", menu)
+        self.tray_show_action.triggered.connect(self.restore_from_tray)
+        menu.addAction(self.tray_show_action)
+        menu.addSeparator()
+        self.tray_exit_action = QAction("終了", menu)
+        self.tray_exit_action.triggered.connect(self.quit_from_tray)
+        menu.addAction(self.tray_exit_action)
+        self.tray_icon.setContextMenu(menu)
+        self._tray_notification_shown = False
+
     def minimize_main_window(self):
-        """みになび表示中は本体だけ隠し、それ以外は通常どおり最小化する。"""
+        """本体をタスクトレイへ格納し、みになびの表示は維持する。"""
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            self.showMinimized()
+            return
+
         overlay = getattr(self, "mini_navi_overlay", None)
         if overlay is not None and self._is_mini_navi_available() and overlay.isVisible():
             self.hide_for_mini_navi()
-            return
-        self.showMinimized()
+        else:
+            self.hide()
+        self.tray_icon.show()
+        if not self._tray_notification_shown:
+            self.tray_icon.showMessage(
+                "ぽえなび",
+                "タスクトレイに格納しました。",
+                QSystemTrayIcon.Information,
+                3000,
+            )
+            self._tray_notification_shown = True
+
+    def restore_from_tray(self):
+        if getattr(self, "_hidden_for_mini_navi", False):
+            self.restore_from_mini_navi()
+        else:
+            self.showNormal()
+            self.raise_()
+            self.activateWindow()
+        self.tray_icon.hide()
+
+    def quit_from_tray(self):
+        self.close()
+        app = QApplication.instance()
+        if app is not None:
+            app.quit()
+
+    def _handle_tray_activation(self, reason):
+        if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.DoubleClick):
+            self.restore_from_tray()
 
     def hide_for_mini_navi(self):
         """ぽえなび本体だけを隠し、みになびの表示を維持する。"""
@@ -5064,6 +5177,10 @@ class MainWindow(QMainWindow):
             }
             ConfigManager.save_config(config)
             self.config = config
+
+        tray_icon = getattr(self, "tray_icon", None)
+        if tray_icon is not None:
+            tray_icon.hide()
 
         self._close_detached_panels()
 

@@ -144,14 +144,20 @@ def test_warrant_ui_reveals_supports_without_losing_selected_skills(
         assert window.mercenary_supports_toggle.property("mutedText") is True
         window.show()
         qapp.processEvents()
-        mod_actions_bottom = max(
-            widget.mapTo(window, QPoint(0, 0)).y() + widget.height()
+        visible_mod_actions = tuple(
+            widget
             for widget in (
                 window.mod_conditions_toggle,
                 window.clear_mod_conditions_button,
                 window.hidden_mods_toggle,
                 window.mod_sources_toggle,
             )
+            if not widget.isHidden()
+        )
+        assert visible_mod_actions
+        mod_actions_bottom = max(
+            widget.mapTo(window, QPoint(0, 0)).y() + widget.height()
+            for widget in visible_mod_actions
         )
         support_button_top = window.mercenary_supports_toggle.mapTo(
             window, QPoint(0, 0),

@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import (
     QApplication,
+    QCheckBox,
     QDialog,
     QGroupBox,
     QLabel,
@@ -11,26 +12,63 @@ from PySide6.QtWidgets import (
     QTabWidget,
 )
 
-from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
 from src.poetore.trade import TradeLeague
-from src.utils.poe_version_data import POE2
+from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
+from src.utils.poe_version_data import POE1, POE2
 
 
-def test_poe2_disables_poetore_startup_choices():
+def test_monastery_hotkey_is_visible_only_for_poe1():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={"poe_version": POE2})
+
+    assert not dialog.monastery_label.isVisibleTo(dialog)
+    assert not dialog.monastery_hotkey.isVisibleTo(dialog)
+    assert not dialog.map_check_label.isVisibleTo(dialog)
+    assert not dialog.map_check_hotkey.isVisibleTo(dialog)
+
+    dialog.poe_version_radios[POE1].setChecked(True)
+    assert dialog.monastery_label.isVisibleTo(dialog)
+    assert dialog.monastery_hotkey.isVisibleTo(dialog)
+    assert dialog.map_check_label.isVisibleTo(dialog)
+    assert dialog.map_check_hotkey.isVisibleTo(dialog)
+    dialog.close()
+
+
+def test_expedition_settings_are_preserved_without_general_settings_controls():
+    QApplication.instance() or QApplication([])
+    expedition = {
+        "enabled": True,
+        "region": {"left": 0.1, "top": 0.2, "right": 0.6, "bottom": 0.9},
+    }
+    dialog = PoetoreSettingsDialog(current_config={
+        "poe_version": POE2,
+        "hotkeys": {"expedition_reward_ocr": "alt+r"},
+        "poetore": {"expedition_reward_overlay": expedition},
+    })
+
+    assert not hasattr(dialog, "expedition_group")
+    assert dialog.findChild(QPushButton, "openExpeditionSettingsButton") is None
+    settings = dialog.get_settings()
+    assert settings["hotkeys"]["expedition_reward_ocr"] == "alt+r"
+    assert settings["poetore"]["expedition_reward_overlay"] == expedition
+    dialog.close()
+
+
+def test_poe2_enables_poetore_startup_choices():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(current_config={
         "poe_version": POE2,
+        "poe_version_mode": POE2,
         "startup": {"preferred_mode": "poetore", "show_mode_selector": False},
     })
 
-    assert not dialog.app_mode_radios["poetore"].isEnabled()
-    assert dialog.app_mode_radios["poenavi"].isChecked()
-    poetore_index = dialog.app_mode_startup_combo.findData("poetore")
-    assert not dialog.app_mode_startup_combo.model().item(poetore_index).isEnabled()
-    assert dialog.app_mode_startup_combo.currentData() == "ask"
+    assert dialog.app_mode_radios["poetore"].isEnabled()
+    assert dialog.app_mode_radios["poetore"].isChecked()
+    assert dialog.skip_startup_selector_checkbox.isChecked()
     assert dialog.get_settings()["startup"] == {
-        "preferred_mode": "poenavi",
-        "show_mode_selector": True,
+        "preferred_mode": "poetore",
+        "show_mode_selector": False,
+        "windows_autostart_poetore": False,
     }
     dialog.close()
 from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
@@ -60,19 +98,21 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
         }
     )
 
-    assert "#65FFCA" in dialog.styleSheet()
-    assert "#343B3E" in dialog.styleSheet()
+    assert "#B0FF7B" in dialog.styleSheet()
+    assert "#E9FFBD" in dialog.styleSheet()
+    assert "#C9D4C2" in dialog.styleSheet()
+    assert "#101310" in dialog.styleSheet()
+    assert "#1E241E" in dialog.styleSheet()
+    assert "font-size: 13px" in dialog.styleSheet()
     assert not hasattr(dialog, "log_path_edits")
     assert not hasattr(dialog, "timer_size_combo")
     labels = [label.text() for label in dialog.findChildren(QLabel)]
     assert "修道院へ移動（/monastery）:" in labels
     assert all("（仮）修道院" not in label for label in labels)
     assert dialog.app_mode_radios["poetore"].isChecked()
-    assert dialog.app_mode_startup_combo.currentData() == "poetore"
+    assert not dialog.skip_startup_selector_checkbox.isChecked()
     dialog.app_mode_radios["poenavi"].setChecked(True)
-    dialog.app_mode_startup_combo.setCurrentIndex(
-        dialog.app_mode_startup_combo.findData("ask")
-    )
+    dialog.skip_startup_selector_checkbox.setChecked(False)
     settings = dialog.get_settings()
     assert settings["startup"]["preferred_mode"] == "poenavi"
     assert settings["hotkeys"]["start_stop"] == "F7"
@@ -87,18 +127,28 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert dialog.get_settings()["stash_tab_scroll_enabled"] is False
     assert isinstance(dialog.capture_hotkey, AutoHideHotkeyWidget)
     assert dialog.capture_hotkey.alt_button.isChecked()
+    assert dialog.capture_hotkey.no_modifier_button is not None
     assert dialog.capture_hotkey.key_button.key_text == "d"
     assert isinstance(dialog.auto_hide_hotkey, AutoHideHotkeyWidget)
     assert dialog.auto_hide_hotkey.ctrl_button.isChecked()
+    assert dialog.auto_hide_hotkey.no_modifier_button is None
     assert dialog.auto_hide_hotkey.key_button.key_text == "d"
     assert dialog.auto_hide_hotkey.ctrl_button.width() == 48
     assert dialog.auto_hide_hotkey.alt_button.width() == 48
-    assert "#65FFCA" in dialog.auto_hide_hotkey.ctrl_button.styleSheet()
+    assert "#B0FF7B" in dialog.auto_hide_hotkey.ctrl_button.styleSheet()
     assert settings["window_opacity"] == 80
     assert settings["text_opacity"] == 70
     assert settings["window_locked"] is True
     assert settings["always_on_top"] is False
     assert settings["snap_to_right_edge"] is True
+    assert not dialog.capture_error_notification_cb.isChecked()
+    assert dialog.capture_error_notification_cb.text() == (
+        "アイテムを取得できなかったときに通知する"
+    )
+    groups = [group.title() for group in dialog.findChildren(QGroupBox)]
+    assert groups.index("検索時のエラー処理") == (
+        groups.index("共通・ぽえとれホットキー") + 1
+    )
     tabs = dialog.findChild(QTabWidget)
     assert [tabs.tabText(index) for index in range(tabs.count())] == [
         "基本設定",
@@ -110,15 +160,39 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert [radio.text() for radio in dialog.app_mode_radios.values()] == [
         "ぽえなび", "ぽえとれ"
     ]
-    assert [
-        dialog.app_mode_startup_combo.itemText(index)
-        for index in range(dialog.app_mode_startup_combo.count())
-    ] == ["毎回確認", "ぽえなび固定", "ぽえとれ固定"]
+    assert dialog.skip_startup_selector_checkbox.text() == "次回からこの設定で直接起動"
     private_note = dialog.findChild(QLabel, "privateLeagueNote")
     assert (
         private_note.text()
         == "プライベートリーグで使う場合は、リーグ名を直接手打ちで入力してください。"
     )
+    dialog.close()
+
+
+def test_poetore_settings_saves_capture_error_notification_preference():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(
+        current_config={
+            "poetore": {"capture_error_notification_enabled": False}
+        }
+    )
+
+    assert not dialog.capture_error_notification_cb.isChecked()
+    dialog.capture_error_notification_cb.setChecked(True)
+    assert dialog.get_settings()["poetore"][
+        "capture_error_notification_enabled"
+    ] is True
+    dialog.close()
+
+
+def test_poetore_capture_error_notification_is_disabled_by_default():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={})
+
+    assert not dialog.capture_error_notification_cb.isChecked()
+    assert dialog.get_settings()["poetore"][
+        "capture_error_notification_enabled"
+    ] is False
     dialog.close()
 
 
@@ -192,6 +266,9 @@ def test_poetore_settings_league_choices_match_trade_window_and_allow_manual_inp
         dialog.league_combo.itemData(index)
         for index in range(dialog.league_combo.count())
     ] == ["auto", "Standard", "Allflame", "Hardcore Allflame"]
+    assert dialog.league_refresh_button.text() == "再取得"
+    assert dialog.league_refresh_button.toolTip() == "公式サイトからリーグ一覧を再取得"
+    assert dialog.league_refresh_button.isEnabled()
 
     dialog.league_combo.setEditText("My Private League")
     assert dialog.get_settings()["poetore"]["league"] == "My Private League"
@@ -219,6 +296,35 @@ def test_poe2_league_selection_uses_same_ui_but_separate_setting():
     dialog.close()
 
 
+def test_poe2_settings_refresh_button_forces_a_fresh_league_request(monkeypatch):
+    requested = []
+
+    class ImmediateThread:
+        def __init__(self, *, target, daemon):
+            self.target = target
+
+        def start(self):
+            self.target()
+
+    monkeypatch.setattr("src.ui.poetore_settings_dialog.threading.Thread", ImmediateThread)
+    monkeypatch.setattr(
+        "src.poetore.poe2.trade.available_pc_leagues",
+        lambda *, force_refresh=False: (
+            requested.append(force_refresh) or (TradeLeague("Fresh League"),)
+        ),
+    )
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={"poe_version": "poe2"})
+
+    dialog.league_refresh_button.click()
+
+    assert requested == [True]
+    assert dialog.league_combo.itemText(0) == "自動（現行SC: Fresh League）"
+    assert dialog.league_refresh_button.isEnabled()
+    assert dialog.league_refresh_button.text() == "再取得"
+    dialog.close()
+
+
 def test_poetore_settings_saves_same_poe_version_controls_as_poenavi():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(current_config={
@@ -227,11 +333,9 @@ def test_poetore_settings_saves_same_poe_version_controls_as_poenavi():
     })
 
     assert dialog.poe_version_radios["poe1"].isChecked()
-    assert dialog.poe_version_mode_combo.currentData() == "ask"
+    assert not dialog.skip_startup_selector_checkbox.isChecked()
     dialog.poe_version_radios["poe2"].setChecked(True)
-    dialog.poe_version_mode_combo.setCurrentIndex(
-        dialog.poe_version_mode_combo.findData("poe2")
-    )
+    dialog.skip_startup_selector_checkbox.setChecked(True)
 
     settings = dialog.get_settings()
     assert settings["poe_version"] == "poe2"
@@ -244,30 +348,73 @@ def test_poetore_fixed_startup_mode_selects_the_fixed_app():
     dialog = PoetoreSettingsDialog(current_config={
         "startup": {"preferred_mode": "poetore", "show_mode_selector": True}
     })
-    dialog.app_mode_startup_combo.setCurrentIndex(
-        dialog.app_mode_startup_combo.findData("poenavi")
-    )
+    dialog.app_mode_radios["poenavi"].setChecked(True)
+    dialog.skip_startup_selector_checkbox.setChecked(True)
 
     assert dialog.get_settings()["startup"] == {
         "preferred_mode": "poenavi",
         "show_mode_selector": False,
+        "windows_autostart_poetore": False,
     }
     dialog.close()
 
 
-def test_poetore_poe_version_group_is_visible_and_above_startup_mode():
+def test_poetore_poe_version_and_app_mode_are_in_one_startup_group():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(current_config={"poe_version": "poe2"})
-    groups = {
-        group.title(): group
-        for group in dialog.findChildren(QGroupBox)
-        if group.title() in {"PoEバージョン", "起動モード"}
-    }
-    layout = groups["PoEバージョン"].parentWidget().layout()
-
-    assert layout.indexOf(groups["PoEバージョン"]) < layout.indexOf(groups["起動モード"])
+    groups = [group for group in dialog.findChildren(QGroupBox) if group.title() == "起動設定"]
+    labels = [label.text() for label in groups[0].findChildren(QLabel)]
+    assert len(groups) == 1
+    assert "PoEバージョン" in labels
+    assert "起動モード" in labels
     assert "QRadioButton" in dialog.styleSheet()
     assert all(radio.text() in {"PoE1", "PoE2"} for radio in dialog.poe_version_radios.values())
+    dialog.close()
+
+
+def test_poetore_windows_autostart_has_blank_line_and_saves_setting():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "startup": {"windows_autostart_poetore": True}
+    })
+
+    checkbox = dialog.windows_autostart_poetore_checkbox
+    assert checkbox.text() == "Windowsログイン時にぽえとれを自動起動"
+    assert checkbox.isChecked()
+    layout = dialog.skip_startup_selector_checkbox.parentWidget().layout()
+    direct_index = layout.indexOf(dialog.skip_startup_selector_checkbox)
+    assert layout.itemAt(direct_index + 1).widget() is dialog.startup_change_note
+    assert dialog.startup_change_note.text() == (
+        "PoEバージョン・起動モードの変更は、次回起動時から適用されます。"
+    )
+    assert layout.itemAt(direct_index + 2).spacerItem().sizeHint().height() == 13
+    assert layout.itemAt(direct_index + 3).widget() is checkbox
+    assert layout.itemAt(direct_index + 4).widget() is dialog.windows_autostart_note
+    assert dialog.windows_autostart_note.text() == (
+        "有効にすると、次回のWindowsログイン時からぽえとれを自動起動します。"
+    )
+    checkbox.setChecked(False)
+    assert dialog.get_settings()["startup"]["windows_autostart_poetore"] is False
+    dialog.close()
+
+
+def test_poetore_settings_uses_shared_blue_checkbox_style_everywhere():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "custom_commands": [{
+            "enabled": True,
+            "name": "hideout",
+            "hotkey": "ctrl+h",
+            "command": "/hideout",
+        }]
+    })
+
+    checkboxes = dialog.findChildren(QCheckBox)
+    assert checkboxes
+    assert all(
+        "poenavi_check_4488ff.png" in checkbox.styleSheet()
+        for checkbox in checkboxes
+    )
     dialog.close()
 
 
@@ -304,11 +451,30 @@ def test_poetore_settings_describes_obs_result_window_behavior():
     assert dialog.obs_streaming_enabled_cb.text() == (
         "検索結果ウィンドウをOBS配信用にする"
     )
+    assert dialog.obs_title_bar_opacity_slider.minimum() == 0
+    assert dialog.obs_title_bar_opacity_slider.maximum() == 100
+    assert dialog.obs_title_bar_opacity_slider.value() == 100
     note = dialog.findChild(QLabel, "obsStreamingNote")
     assert note.text() == (
         "待機中はタイトルバーだけを表示し、検索すると検索結果を当該タイトルバーの下に"
-        "展開します。OBSでは「ぽえとれ - 検索結果ウィンドウ」として認識されます。"
+        "展開します。OBSでは「ぽえとれ - 検索結果ウィンドウ」として認識されます。\n"
+        "待機中のタイトルバーは透過率を変更できます。"
     )
+    dialog.close()
+
+
+def test_poetore_settings_saves_obs_title_bar_opacity():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "poetore": {"obs_streaming": {"enabled": True, "title_bar_opacity": 42}}
+    })
+
+    assert dialog.obs_title_bar_opacity_slider.value() == 42
+    dialog.obs_title_bar_opacity_slider.setValue(18)
+    assert dialog.get_settings()["poetore"]["obs_streaming"] == {
+        "enabled": True,
+        "title_bar_opacity": 18,
+    }
     dialog.close()
 
 

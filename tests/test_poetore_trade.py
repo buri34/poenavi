@@ -1,9 +1,11 @@
-from dataclasses import replace
 import json
-import pytest
+from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlsplit
+
+import pytest
+import urllib3
 
 from src.poetore.parser import parse_item_text
 from src.poetore.metadata import unique_fixed_stats
@@ -39,6 +41,19 @@ from src.poetore.trade import (
     _japanese_trade_item_name,
     _japanese_trade_item_type,
 )
+
+
+@pytest.fixture(autouse=True)
+def _isolate_trade_api_test_state(monkeypatch):
+    """Keep synthetic requests out of user logs and limiter state isolated."""
+    monkeypatch.setattr(
+        "src.poetore.trade.record_trade_api_event", lambda *_args, **_kwargs: None,
+    )
+    _trade_rate_limiter.reset()
+    _trade2_rate_limiter.reset()
+    yield
+    _trade_rate_limiter.reset()
+    _trade2_rate_limiter.reset()
 
 
 def test_value_for_template_uses_single_placeholder_not_fixed_number():
@@ -435,7 +450,11 @@ def test_trade_api_surfaces_rate_limit_immediately():
     response = SimpleNamespace(
         status=429, headers={"Retry-After": "580"}, data=b"{}",
     )
-    with patch("src.poetore.trade._trade_http_pool.request", return_value=response) as request:
+    with patch(
+        "src.poetore.trade._trade_http_pool.request", return_value=response,
+    ) as request, patch(
+        "src.poetore.trade.record_trade_api_event",
+    ) as record_event:
         with pytest.raises(Exception) as exc_info:
             _request_json("https://example.invalid", {"query": {}})
     assert str(exc_info.value) == (
@@ -444,6 +463,8 @@ def test_trade_api_surfaces_rate_limit_immediately():
     )
     request.assert_called_once()
     assert request.call_args.kwargs["retries"] is False
+    assert record_event.call_args.kwargs["status"] == 429
+    assert record_event.call_args.kwargs["outcome"] == "http_error"
 
 
 def test_trade_api_surfaces_rate_limit_without_retry_after():
@@ -481,6 +502,128 @@ def test_trade_http_pool_reuses_connections_without_automatic_retries():
 
     assert request.call_count == 2
     assert all(call.kwargs["retries"] is False for call in request.call_args_list)
+
+
+def test_trade_api_retries_read_timeout_once_with_fresh_connection_and_diagnostics(capsys):
+    response = SimpleNamespace(status=200, headers={}, data=b'{"ok":true}')
+    timeout = urllib3.exceptions.ReadTimeoutError(
+        None, "https://example.invalid/api/trade/search/Standard", "timed out",
+    )
+    payload = {
+        "query": {
+            "stats": [{
+                "type": "and",
+                "filters": [{"id": "explicit.stat_1"}, {"id": "explicit.stat_2"}],
+            }],
+        },
+    }
+    with patch(
+        "src.poetore.trade._trade_http_pool.request",
+        side_effect=[timeout, response],
+    ) as request, patch(
+        "src.poetore.trade._trade_http_pool.clear",
+    ) as clear, patch(
+        "src.poetore.trade.record_trade_api_event",
+    ) as record_event:
+        assert _request_json(
+            "https://example.invalid/api/trade/search/Standard", payload,
+        )[0] == {"ok": True}
+
+    assert request.call_count == 2
+    clear.assert_called_once_with()
+    assert all(
+        call.kwargs["timeout"].total == 20
+        for call in request.call_args_list
+    )
+    output = capsys.readouterr().out
+    assert "stage=search_post" in output
+    assert "mod_filters=2" in output
+    assert "attempt=1" in output
+    assert "status=none" in output
+    assert "outcome=retrying" in output
+    assert "attempt=2" in output
+    assert "status=200" in output
+    assert "outcome=success" in output
+    assert [call.kwargs["outcome"] for call in record_event.call_args_list] == [
+        "retrying", "success",
+    ]
+    assert all("url" not in call.kwargs for call in record_event.call_args_list)
+    assert all("payload" not in call.kwargs for call in record_event.call_args_list)
+
+
+def test_trade_api_retries_read_timeout_only_once_for_result_fetch(capsys):
+    timeout = urllib3.exceptions.ReadTimeoutError(
+        None, "https://example.invalid/api/trade/fetch/a?query=q", "timed out",
+    )
+    with patch(
+        "src.poetore.trade._trade_http_pool.request",
+        side_effect=[timeout, timeout],
+    ) as request, patch(
+        "src.poetore.trade._trade_http_pool.clear",
+    ) as clear:
+        with pytest.raises(TradeApiError, match="接続に失敗"):
+            _request_json("https://example.invalid/api/trade/fetch/a?query=q")
+
+    assert request.call_count == 2
+    clear.assert_called_once_with()
+    output = capsys.readouterr().out
+    assert "stage=result_fetch_get" in output
+    assert "mod_filters=0" in output
+    assert "attempt=2" in output
+    assert "outcome=failed" in output
+
+
+def test_trade_api_does_not_retry_non_read_timeout(capsys):
+    error = urllib3.exceptions.ConnectTimeoutError(
+        None, "https://example.invalid", "connect timed out",
+    )
+    with patch(
+        "src.poetore.trade._trade_http_pool.request", side_effect=error,
+    ) as request, patch(
+        "src.poetore.trade._trade_http_pool.clear",
+    ) as clear:
+        with pytest.raises(TradeApiError, match="接続に失敗"):
+            _request_json("https://example.invalid/api/trade/search/Standard", {"query": {}})
+
+    request.assert_called_once()
+    clear.assert_not_called()
+    assert "outcome=failed" in capsys.readouterr().out
+
+
+def test_trade2_search_persists_sanitized_stage_mod_count_and_status():
+    response = SimpleNamespace(
+        status=200, headers={}, data=b'{"id":"query-id","result":[]}',
+    )
+    payload = {
+        "query": {
+            "stats": [
+                {"type": "and", "filters": [
+                    {"id": "explicit.stat_1"},
+                    {"id": "explicit.stat_2"},
+                ]},
+                {"type": "not", "filters": [{"id": "explicit.stat_3"}]},
+            ],
+        },
+    }
+    with patch(
+        "src.poetore.trade._trade_http_pool.request", return_value=response,
+    ), patch(
+        "src.poetore.trade.record_trade_api_event",
+    ) as record_event:
+        _request_json(
+            "https://www.pathofexile.com/api/trade2/search/poe2/Standard",
+            payload,
+        )
+
+    details = record_event.call_args.kwargs
+    assert details["stage"] == "search_post"
+    assert details["method"] == "POST"
+    assert details["mod_filters"] == 3
+    assert details["status"] == 200
+    assert details["outcome"] == "success"
+    assert details["elapsed_ms"] >= 0
+    assert "url" not in details
+    assert "payload" not in details
 
 
 def test_weapon_search_uses_english_base_rarity_and_comparable_pdps():
@@ -941,6 +1084,18 @@ def test_fractured_item_can_offer_base_preset_below_ilvl_82():
     ]
 
 
+def test_low_level_magic_can_offer_base_preset_only_when_explicitly_enabled():
+    item = ParsedItem(
+        "Rings", "Magic", "Healthy Ruby Ring", "Ruby Ring", "ring",
+        item_level=75, raw_text="low-level magic ring",
+    )
+
+    assert available_trade_presets(item) == (PRESET_FINISHED,)
+    assert available_trade_presets(
+        item, allow_low_level_magic=True,
+    ) == (PRESET_FINISHED, PRESET_BASE)
+
+
 def test_quality_twenty_fractured_armour_still_offers_base_preset():
     item = parse_item_text("""アイテムクラス: 靴
 レアリティ: レア
@@ -1397,13 +1552,7 @@ Item Level: 86
     assert [row.stat_id for row in rows[:3] if row.stat_id in major_ids] == [
         row.stat_id for row in rows if row.stat_id in major_ids
     ]
-    expected = [
-        "pseudo.pseudo_total_mana",
-        "pseudo.pseudo_increased_spell_damage",
-        "pseudo.pseudo_total_cast_speed",
-        "pseudo.pseudo_critical_strike_chance_for_spells",
-        "explicit.gem_level",
-    ]
+    expected = ["explicit.gem_level"]
     assert [stat_id for stat_id in ids if stat_id in expected] == expected
     assert next(row for row in rows if row.stat_id == "explicit.gem_level").enabled
     assert not any(
@@ -1492,19 +1641,15 @@ def test_finished_gear_orders_affix_families_by_original_modifier_position():
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         rows = resolve_trade_stat_filters(item)
     relevant = {
-        "property.armour", "crafted.prefix", "explicit.gem", "pseudo.pseudo_total_life",
-        "fractured.accuracy", "crafted.suffix", "pseudo.pseudo_total_chaos_resistance",
-        "pseudo.pseudo_total_life_regen", "implicit.area",
+        "property.armour", "crafted.prefix", "explicit.gem",
+        "fractured.accuracy", "crafted.suffix", "implicit.area",
     }
     assert [row.stat_id for row in rows if row.stat_id in relevant] == [
         "property.armour",
         "crafted.prefix",
         "explicit.gem",
-        "pseudo.pseudo_total_life",
         "fractured.accuracy",
         "crafted.suffix",
-        "pseudo.pseudo_total_chaos_resistance",
-        "pseudo.pseudo_total_life_regen",
         "implicit.area",
     ]
 
@@ -1848,6 +1993,218 @@ def test_base_percentile_removes_quality_and_local_increase_multiplicatively(tmp
     )
     # 270 / 1.20 / 1.50 = 150。100～200の中央なので50 percentile。
     assert _base_defence_percentile(item, "Test Armour") == 50.0
+
+
+def test_unique_armour_uses_base_percentile_instead_of_redundant_fixed_defence(tmp_path, monkeypatch):
+    metadata_path = tmp_path / "metadata.json"
+    metadata_path.write_text(json.dumps({
+        "base_armour": {"test armour": {"ar": [100, 200]}}, "mods": [],
+    }), encoding="utf-8")
+    monkeypatch.setenv("POETORE_METADATA_PATH", str(metadata_path))
+    item = ParsedItem(
+        item_class="Body Armours", rarity="Unique", name="Test Unique",
+        base_type="Test Armour", category="armour", properties={"Armour": "150"},
+    )
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(
+            item, trade_base_type="Test Armour", trade_name="Test Unique",
+        )}
+
+    assert "property.armour" not in rows
+    assert rows["property.base_percentile"].read_value == 50.0
+    assert rows["property.base_percentile"].enabled is True
+    query = build_search_query(
+        item, "Test Armour", tuple(rows.values()), trade_name="Test Unique",
+    )["query"]
+    assert query["filters"]["armour_filters"]["filters"]["base_defence_percentile"] == {
+        "min": 45.0,
+    }
+
+
+def test_unique_variable_armour_uses_q20_base_bounds_and_hides_redundant_percentile(
+    tmp_path, monkeypatch,
+):
+    metadata_path = tmp_path / "metadata.json"
+    metadata_path.write_text(json.dumps({
+        "base_armour": {"test armour": {"ar": [100, 200]}}, "mods": [],
+    }), encoding="utf-8")
+    monkeypatch.setenv("POETORE_METADATA_PATH", str(metadata_path))
+    item = ParsedItem(
+        item_class="Body Armours", rarity="Unique", name="Test Unique",
+        base_type="Test Armour", category="armour", properties={"Armour": "225"},
+        modifiers=(ItemModifier(
+            "50% increased Armour", (50.0,), ref="#% increased Armour",
+            roll_min=40.0, roll_max=60.0,
+        ),),
+    )
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(
+            item, trade_base_type="Test Armour", trade_name="Test Unique",
+        )}
+
+    armour = rows["property.armour"]
+    assert armour.read_value == 270.0
+    assert armour.min_value == 243.0
+    assert (armour.roll_min, armour.roll_max) == (168.0, 384.0)
+    assert armour.enabled is True
+    assert "property.base_percentile" not in rows
+    query = build_search_query(
+        item, "Test Armour", tuple(rows.values()), trade_name="Test Unique",
+    )["query"]
+    assert query["filters"]["armour_filters"]["filters"]["ar"] == {"min": 243.0}
+
+
+def test_svalinn_keeps_armour_base_percentile_beside_variable_japanese_ward():
+    item = parse_item_text("""アイテムクラス: 盾
+レアリティ: ユニーク
+スヴァリン
+補強されたタワーシールド
+--------
+品質: +20% (augmented)
+ブロック率: 23%
+アーマー: 518 (augmented)
+ワード: 144 (augmented)
+--------
+アイテムレベル: 85
+--------
+{ 暗黙モッド — ライフ }
+最大ライフ +18(10-20)
+--------
+{ ユニークモッド }
+スペルブロック率が15(10-15)%
+{ ユニークモッド — 防御 }
+ワード +120(100-150)
+{ ユニークモッド }
+アタックブロック率の最大値 -10%
+{ ユニークモッド }
+スペルブロック率の最大値 -10%
+{ ユニークモッド }
+ブロック確率が幸運になる
+{ ユニークモッド — キャスター, ジェム }
+ブロック時にソケットされた元素スペルをトリガーする。クールダウンは0.25秒 — スケールできない値
+""")
+    ward_stat = next(modifier for modifier in item.modifiers if modifier.ref == "+# to Ward")
+    entries = ({
+        "id": ward_stat.stat_id,
+        "text": "+# to Ward",
+        "type": "explicit",
+    },)
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(
+            item, trade_base_type="Girded Tower Shield", trade_name="Svalinn",
+        )}
+
+    ward = rows["property.ward"]
+    assert ward.text == "ワード（品質20%換算）"
+    assert ward.read_value == 144.0
+    assert ward.min_value == 129.0
+    assert (ward.roll_min, ward.roll_max) == (120.0, 180.0)
+    assert ward.enabled is True
+    percentile = rows["property.base_percentile"]
+    assert percentile.read_value == 87.0
+    assert percentile.min_value == 78.0
+    assert percentile.enabled is True
+    assert ward_stat.stat_id not in rows
+
+    query = build_search_query(
+        item, "Girded Tower Shield", tuple(rows.values()), trade_name="Svalinn",
+    )["query"]["filters"]["armour_filters"]["filters"]
+    assert query["ward"] == {"min": 129.0}
+    assert query["base_defence_percentile"] == {"min": 78.0}
+    assert "ar" not in query
+
+
+def test_aegis_aurora_uses_variable_final_defences_without_base_percentile():
+    item = parse_item_text("""アイテムクラス: 盾
+レアリティ: ユニーク
+イージス・オーロラ
+チャンピオンカイトシールド
+--------
+ブロック率: 32% (augmented)
+アーマー: 1027 (augmented)
+エナジーシールド: 206 (augmented)
+--------
+アイテムレベル: 85
+--------
+{ ユニークモッド — 防御, アーマー, エナジーシールド }
+アーマーおよびエナジーシールドが321(300-400)%増加する
+{ ユニークモッド — 元素, 冷気, 耐性 }
+冷気耐性の最大値 +5%
+{ ユニークモッド — 元素, 耐性 }
+全ての元素耐性 +10%
+{ ユニークモッド — ダメージ, 元素, アタック }
+アタックスキルの元素ダメージが12(10-20)%増加する
+{ ユニークモッド }
+ブロック率 +6%
+{ ユニークモッド — 防御, エナジーシールド }
+ブロック時にアーマーの2%と同量のエナジーシールドを回復する
+""")
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(
+            item, trade_base_type="Champion Kite Shield", trade_name="Aegis Aurora",
+        )}
+
+    armour = rows["property.armour"]
+    energy_shield = rows["property.energy_shield"]
+    assert armour.text == "アーマー（品質20%換算）"
+    assert energy_shield.text == "エナジーシールド（品質20%換算）"
+    assert armour.read_value == pytest.approx(1232.4)
+    assert armour.min_value == 1109.0
+    assert (armour.roll_min, armour.roll_max) == (1032.0, 1482.0)
+    assert energy_shield.read_value == pytest.approx(247.2)
+    assert energy_shield.min_value == 222.0
+    assert (energy_shield.roll_min, energy_shield.roll_max) == (211.2, 300.0)
+    assert armour.enabled is energy_shield.enabled is True
+    assert "property.base_percentile" not in rows
+
+
+def test_quality_disabled_enchant_uses_zero_quality_for_defence_and_percentile(
+    tmp_path, monkeypatch,
+):
+    metadata_path = tmp_path / "metadata.json"
+    metadata_path.write_text(json.dumps({
+        "base_armour": {"test armour": {"ar": [100, 200]}}, "mods": [],
+    }), encoding="utf-8")
+    monkeypatch.setenv("POETORE_METADATA_PATH", str(metadata_path))
+    item = ParsedItem(
+        item_class="Body Armours", rarity="Rare", name="Test",
+        base_type="Test Armour", category="armour",
+        properties={"Armour": "150", "Quality": "+20%"},
+        modifiers=(ItemModifier(
+            "Quality does not increase Defences", kind="enchant",
+            ref="Quality does not increase Defences",
+            stat_id="enchant.stat_2677401098",
+        ),),
+    )
+
+    assert _base_defence_percentile(item, "Test Armour") == 50.0
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        armour = next(
+            row for row in resolve_trade_stat_filters(item)
+            if row.stat_id == "property.armour"
+        )
+    assert armour.read_value == 150.0
+    assert armour.min_value == 135.0
+
+
+def test_quality_disabled_enchant_does_not_inflate_physical_dps():
+    item = ParsedItem(
+        item_class="Two Hand Swords", rarity="Rare", name="Test",
+        base_type="Test Sword", category="weapon",
+        properties={
+            "Physical Damage": "100-200", "Attacks per Second": "1.00",
+            "Quality": "+10%",
+        },
+        modifiers=(ItemModifier(
+            "Quality does not increase Physical Damage", kind="enchant",
+            ref="Quality does not increase Physical Damage",
+        ),),
+    )
+    assert physical_dps_at_20_quality(item) == 150.0
 
 
 def test_cluster_jewel_item_level_is_normalized_to_awakened_bracket():
@@ -2255,7 +2612,7 @@ def test_quality_20_and_non_six_link_count_is_visible_but_not_preselected():
     assert details["property.links"].enabled is False
 
 
-def test_armour_also_enables_general_life_pseudo():
+def test_armour_single_life_mod_enables_awakened_style_life_pseudo():
     item = parse_item_text(ITEM.replace("Two Hand Swords", "Body Armours").replace(
         "Physical Damage: 108-181 (augmented)\nAttacks per Second: 1.74 (augmented)",
         "Armour: 1000",
@@ -2286,7 +2643,7 @@ def test_weapon_strength_without_life_mod_does_not_create_life_pseudo():
     assert filters["property.physical_dps"].enabled is True
 
 
-def test_accessory_enables_aggregated_life_and_resistance_pseudos():
+def test_accessory_enables_awakened_style_primary_pseudos():
     item = parse_item_text("""Item Class: Rings
 Rarity: Rare
 Test Ring
@@ -2301,14 +2658,12 @@ Item Level: 85
 """)
     with patch("src.poetore.trade._trade_stat_entries", return_value=()):
         filters = resolve_trade_stat_filters(item)
-    enabled = {row.stat_id: row.min_value for row in filters if row.enabled}
-    assert enabled == {
-        "pseudo.pseudo_total_life": 63.0,
-        "pseudo.pseudo_total_elemental_resistance": 63.0,
-        "pseudo.pseudo_total_chaos_resistance": 9.0,
-    }
     details = {row.stat_id: row for row in filters}
+    assert details["pseudo.pseudo_total_life"].enabled
+    assert details["pseudo.pseudo_total_chaos_resistance"].enabled
     elemental = details["pseudo.pseudo_total_elemental_resistance"]
+    assert elemental.min_value == 63.0
+    assert elemental.enabled
     assert elemental.source_contributions == (30.0, 40.0)
 
 
@@ -2367,22 +2722,10 @@ Item Level: 85
     ids = [row.stat_id for row in filters]
     # Plain copy has no affix headers, but Life/Mana are explicitly assigned to
     # the Prefix group. Remaining pseudos stay in source order under Other.
-    expected = [
-        "pseudo.pseudo_total_life",
-        "pseudo.pseudo_total_mana",
-        "pseudo.pseudo_total_energy_shield",
-        "pseudo.pseudo_total_elemental_resistance",
-        "pseudo.pseudo_total_chaos_resistance",
-        "pseudo.pseudo_total_all_attributes",
-        "pseudo.pseudo_total_cast_speed",
-    ]
+    expected = ["pseudo.pseudo_total_mana"]
     assert [stat_id for stat_id in ids if stat_id in expected] == expected
     enabled = {row.stat_id for row in filters if row.enabled}
-    assert enabled & set(expected) == {
-        "pseudo.pseudo_total_life",
-        "pseudo.pseudo_total_elemental_resistance",
-        "pseudo.pseudo_total_chaos_resistance",
-    }
+    assert not enabled & set(expected)
 
 
 def test_quiver_category_search_uses_all_quivers():
@@ -2418,22 +2761,10 @@ def test_pseudo_mods_cover_attributes_resources_speed_damage_crit_and_recovery()
 マナ自動回復レートが40%増加する
 """)
     filters = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
-    expected = {
-        "pseudo.pseudo_total_all_attributes": 18.0,
-        "pseudo.pseudo_total_mana": 63.0,
-        "pseudo.pseudo_total_energy_shield": 36.0,
-        "pseudo.pseudo_total_cast_speed": 10.0,
-        "pseudo.pseudo_increased_spell_damage": 27.0,
-        "pseudo.pseudo_increased_fire_damage": 22.0,
-        "pseudo.pseudo_global_critical_strike_multiplier": 31.0,
-        "pseudo.pseudo_increased_movement_speed": 9.0,
-        "pseudo.pseudo_total_life_regen": 13.0,
-        "pseudo.pseudo_increased_mana_regen": 36.0,
-    }
+    expected = {"pseudo.pseudo_total_mana": 63.0}
     assert {stat_id: filters[stat_id].min_value for stat_id in expected} == expected
     assert "pseudo.pseudo_total_life" not in filters
     assert all(not filters[stat_id].enabled for stat_id in expected)
-    assert all(row.kind == "pseudo" for row in filters.values())
 
 
 def _pseudo_test_item(modifiers, category="accessory"):
@@ -2441,6 +2772,27 @@ def _pseudo_test_item(modifiers, category="accessory"):
         item_class="Rings", rarity="Rare", name="Test", base_type="Ring",
         category=category, item_level=85, modifiers=tuple(modifiers),
     )
+
+
+def test_single_direct_attribute_mod_does_not_add_redundant_pseudo_in_poe1():
+    for ref, pseudo_id in (
+        ("+# to Strength", "pseudo.pseudo_total_strength"),
+        ("+# to Dexterity", "pseudo.pseudo_total_dexterity"),
+        ("+# to Intelligence", "pseudo.pseudo_total_intelligence"),
+    ):
+        item = _pseudo_test_item((ItemModifier("", (33,), ref=ref),))
+        assert pseudo_id not in {
+            row.stat_id for row in resolve_trade_stat_filters(item)
+        }
+
+
+def test_compound_attribute_source_keeps_useful_pseudo_in_poe1():
+    item = _pseudo_test_item((
+        ItemModifier("", (33,), ref="+# to Strength"),
+        ItemModifier("", (20,), ref="+# to all Attributes"),
+    ))
+    ids = {row.stat_id for row in resolve_trade_stat_filters(item)}
+    assert "pseudo.pseudo_total_strength" in ids
 
 
 def test_pseudo_replaces_more_general_damage_and_crit_groups():
@@ -2472,9 +2824,7 @@ def test_new_relational_pseudos_parse_from_japanese_detail_copy():
 燃焼ダメージが40%増加する
 """)
     rows = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
-    assert rows["pseudo.pseudo_critical_strike_chance_for_spells"].min_value == 22.0
-    assert rows["pseudo.pseudo_increased_elemental_damage_with_attack_skills"].min_value == 27.0
-    assert rows["pseudo.pseudo_increased_burning_damage"].min_value == 36.0
+    assert not any(row.kind == "pseudo" for row in rows.values())
 
 
 def test_pseudo_group_values_are_independent_of_modifier_input_order():
@@ -2493,17 +2843,12 @@ def test_pseudo_group_values_are_independent_of_modifier_input_order():
     }
     assert signature(forward) == signature(backward)
     ids = {row.stat_id for row in forward}
-    assert ids & {
+    assert not ids & {
         "pseudo.pseudo_total_fire_resistance",
         "pseudo.pseudo_total_cold_resistance",
         "pseudo.pseudo_total_lightning_resistance",
-    } == {"pseudo.pseudo_total_cold_resistance"}
-    cold = next(
-        row for row in forward
-        if row.stat_id == "pseudo.pseudo_total_cold_resistance"
-    )
-    assert cold.enabled is False
-    assert cold.hidden_reason == "Awakened: 最大の個別元素耐性は隠し候補"
+    }
+    assert "pseudo.pseudo_total_elemental_resistance" in ids
     assert "pseudo.pseudo_total_intelligence" not in ids
 
 
@@ -2740,6 +3085,162 @@ Item Level: 70
         filters = resolve_trade_stat_filters(item)
     assert len(filters) == 4
     assert not any(row.enabled for row in filters)
+
+
+def test_unique_pseudo_requires_two_explicit_sources_and_starts_off():
+    item = ParsedItem(
+        item_class="Rings", rarity="Unique", name="Test Unique",
+        base_type="Ring", category="accessory",
+        modifiers=(
+            ItemModifier("+30% to Fire Resistance", (30.0,), ref="+#% to Fire Resistance"),
+            ItemModifier(
+                "+20% to Cold and Lightning Resistances", (20.0,),
+                ref="+#% to Cold and Lightning Resistances",
+            ),
+        ),
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
+
+    elemental = rows["pseudo.pseudo_total_elemental_resistance"]
+    assert elemental.read_value == 70.0
+    assert elemental.enabled is False
+    assert len(elemental.source_indexes) == 2
+    default_query = build_search_query(
+        item, "Ring", tuple(rows.values()), trade_name="Test Unique",
+    )["query"]
+    assert default_query["stats"] == [{"type": "and", "filters": []}]
+    selected = tuple(
+        replace(row, enabled=row.stat_id == elemental.stat_id)
+        for row in rows.values()
+    )
+    selected_query = build_search_query(
+        item, "Ring", selected, trade_name="Test Unique",
+    )["query"]
+    assert selected_query["stats"][0]["filters"] == [{
+        "id": elemental.stat_id, "value": {"min": 63.0},
+    }]
+
+
+def test_corrupted_unique_pseudo_accepts_explicit_and_corrupted_implicit_sources():
+    modifiers = (
+        ItemModifier("+30% to Fire Resistance", (30.0,), ref="+#% to Fire Resistance"),
+        ItemModifier(
+            "+20% to Cold Resistance", (20.0,), kind="implicit",
+            ref="+#% to Cold Resistance", generation="corrupted",
+        ),
+    )
+    plain = ParsedItem(
+        item_class="Rings", rarity="Unique", name="Test Unique",
+        base_type="Ring", category="accessory", modifiers=modifiers,
+    )
+    corrupted = replace(plain, flags=("corrupted",))
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        plain_ids = {row.stat_id for row in resolve_trade_stat_filters(plain)}
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(corrupted)}
+
+    assert "pseudo.pseudo_total_elemental_resistance" not in plain_ids
+    assert rows["pseudo.pseudo_total_elemental_resistance"].enabled is False
+
+
+def test_unique_pseudo_keeps_compound_elemental_chaos_resistance_filter():
+    modifiers = (
+        ItemModifier(
+            "+20% to Fire and Chaos Resistances", (20.0,),
+            ref="+#% to Fire and Chaos Resistances", stat_id="explicit.compound",
+        ),
+        ItemModifier(
+            "+30% to Cold Resistance", (30.0,),
+            ref="+#% to Cold Resistance", stat_id="explicit.cold",
+        ),
+    )
+    item = ParsedItem(
+        item_class="Rings", rarity="Unique", name="Test Unique",
+        base_type="Ring", category="accessory", modifiers=modifiers,
+    )
+    entries = (
+        {"id": "explicit.compound", "text": "+#% to Fire and Chaos Resistances", "type": "explicit"},
+        {"id": "explicit.cold", "text": "+#% to Cold Resistance", "type": "explicit"},
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries), patch(
+        "src.poetore.trade.unique_fixed_stats", return_value=None,
+    ):
+        rows = {row.stat_id: row for row in resolve_trade_stat_filters(item)}
+
+    assert "pseudo.pseudo_total_elemental_resistance" in rows
+    assert "explicit.compound" in rows
+
+
+@pytest.mark.parametrize(("rarity", "flags", "properties", "expected_tag"), [
+    ("Unique", ("corrupted",), {}, "corrupted"),
+    ("Unique", (), {"Quality": "+20%"}, "catalyst"),
+    ("Rare", ("mirrored",), {}, "reflecting"),
+])
+def test_special_crafting_keeps_unique_numeric_stat_visible(
+    rarity, flags, properties, expected_tag,
+):
+    modifier = ItemModifier(
+        "+30% to Fire Resistance", (30.0,), ref="+#% to Fire Resistance",
+        stat_id="explicit.resistance", roll_min=20.0, roll_max=40.0,
+    )
+    item = ParsedItem(
+        item_class="Rings", rarity=rarity, name="Test Unique",
+        base_type="Ring", category="accessory", properties=properties,
+        modifiers=(modifier,), flags=flags,
+    )
+    entries = ({
+        "id": "explicit.resistance", "text": "+#% to Fire Resistance", "type": "explicit",
+    },)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries), patch(
+        "src.poetore.trade.unique_fixed_stats", return_value=frozenset({modifier.ref}),
+    ):
+        row = next(row for row in resolve_trade_stat_filters(item) if row.stat_id == modifier.stat_id)
+
+    assert row.hidden_reason == ""
+    assert expected_tag in row.provenance_tags
+
+
+def test_detailed_catalyst_increase_reaches_exact_trade_query():
+    item = parse_item_text("""アイテムクラス: 指輪
+レアリティ: ユニーク
+ファウルボーン 皆を繋ぐもの
+鉄の指輪
+--------
+品質 (防御力モッド): +10% (augmented)
+--------
+アイテムレベル: 71
+--------
+{ ファウルボーンユニークモッド — 防御 - 10%増加 }
+グローバル防御力が25(10-30)%増加する
+""")
+    entry = {
+        "id": "explicit.stat_1389153006",
+        "text": "グローバル防御力が#%増加する",
+        "type": "explicit",
+    }
+    with patch("src.poetore.trade._trade_stat_entries", return_value=(entry,)):
+        filters = resolve_trade_stat_filters(
+            item, trade_base_type="Iron Ring", trade_name="Le Heup of All",
+        )
+
+    defence = next(row for row in filters if row.stat_id == entry["id"])
+    exact = apply_search_range((defence,), 0, item)
+    assert (
+        defence.read_value,
+        defence.roll_min,
+        defence.roll_max,
+        exact[0].min_value,
+    ) == (27, 11, 33, 27)
+    query = build_search_query(
+        item,
+        trade_base_type="Iron Ring",
+        trade_name="Le Heup of All",
+        stat_filters=exact,
+    )["query"]
+    assert query["stats"][0]["filters"] == [{
+        "id": entry["id"],
+        "value": {"min": 27},
+    }]
 
 
 def test_watchers_eye_uses_awakened_fixed_stats_and_keeps_unscalable_variant():
@@ -3763,6 +4264,28 @@ def test_common_search_range_recalculates_from_read_value():
     )
     assert apply_search_range((row,), 0)[0].min_value == 100
     assert apply_search_range((row,), 20)[0].min_value == 80
+
+
+@pytest.mark.parametrize("rarity", ["rare", "レア", "magic", "マジック"])
+def test_non_unique_search_range_uses_current_value_not_tier_width(rarity):
+    item = ParsedItem("Spear", rarity, "Test", "Test Spear", "weapon")
+    row = TradeStatFilter(
+        "explicit.strength", "筋力 +33", 33, "explicit", True,
+        read_value=33, roll_min=31, roll_max=33,
+    )
+
+    assert apply_search_range((row,), 10, item)[0].min_value == 29
+
+
+@pytest.mark.parametrize("rarity", ["unique", "ユニーク"])
+def test_unique_search_range_keeps_variable_roll_width(rarity):
+    item = ParsedItem("Spear", rarity, "Test", "Test Spear", "weapon")
+    row = TradeStatFilter(
+        "explicit.strength", "筋力 +33", 33, "explicit", True,
+        read_value=33, roll_min=31, roll_max=33,
+    )
+
+    assert apply_search_range((row,), 10, item)[0].min_value == 32
 
 
 def test_search_range_does_not_reduce_discrete_link_count():
@@ -5800,30 +6323,96 @@ def test_rare_jewel_mods_start_off_and_magic_affixes_start_on():
         assert next(row for row in rows if row.stat_id == "explicit.life").enabled is expected
 
 
-def test_exact_map_starts_with_tier_and_all_explicit_mods_on():
+def test_exact_map_starts_with_tier_and_only_t1_t2_explicit_mods_on():
     item = ParsedItem(
         "Maps", "Rare", "Test", "Cemetery Map", "map",
         properties={"Map Tier": "16", "Item Quantity": "+100%"},
-        modifiers=(ItemModifier(
-            "Monsters deal 100% extra Damage", (100,), kind="explicit",
-            stat_id="explicit.map_damage",
-        ),),
+        modifiers=(
+            ItemModifier(
+                "T1 Map Mod", (100,), kind="prefix", tier=1,
+                stat_id="explicit.map_t1",
+            ),
+            ItemModifier(
+                "T2 Map Mod", (80,), kind="suffix", tier=2,
+                stat_id="explicit.map_t2",
+            ),
+            ItemModifier(
+                "T3 Map Mod", (60,), kind="explicit", tier=3,
+                stat_id="explicit.map_t3",
+            ),
+        ),
     )
-    entries = ({"id": "explicit.map_damage", "text": "Monsters deal #% extra Damage",
-                "type": "explicit"},)
+    entries = tuple(
+        {"id": f"explicit.map_t{tier}", "text": f"T{tier} Map Mod", "type": "explicit"}
+        for tier in (1, 2, 3)
+    )
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         rows = resolve_trade_stat_filters(item)
     by_id = {row.stat_id: row for row in rows}
     assert by_id["property.map_tier"].enabled is True
-    assert "property.map_quantity" not in by_id
-    assert by_id["explicit.map_damage"].enabled is True
+    assert by_id["property.map_quantity"].enabled is True
+    assert by_id["explicit.map_t1"].enabled is True
+    assert by_id["explicit.map_t2"].enabled is True
+    assert by_id["explicit.map_t3"].enabled is False
     query = build_search_query(
         item, "Cemetery Map", rows, preset=PRESET_FINISHED,
     )["query"]
-    assert {
-        "id": "explicit.map_damage",
-        "value": {"min": 100.0},
-    } in query["stats"][0]["filters"]
+    assert [row["id"] for row in query["stats"][0]["filters"]] == [
+        "explicit.map_t1", "explicit.map_t2",
+    ]
+    map_filters = query["filters"]["map_filters"]["filters"]
+    assert map_filters["map_blighted"] == {"option": "false"}
+    assert map_filters["map_uberblighted"] == {"option": "false"}
+
+
+def test_non_corrupted_japanese_map_keeps_value_properties_in_search():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+古臭い名残
+マップ (ティア 16)
+--------
+アイテム数量: +90% (augmented)
+アイテムレアリティ: +53% (augmented)
+モンスターパックサイズ: +34% (augmented)
+--------
+アイテムレベル: 85
+--------
+モンスターレベル：83
+--------
+{ プレフィックスモッド「双生の」 (ティア: 1) }
+エリアには2体のユニークボスがいる — スケールできない値
+{ プレフィックスモッド「揺るがぬ」 (ティア: 1) — ライフ }
+モンスターのライフが29(25-30)%上昇する
+モンスターはスタンを受けることがない — スケールできない値
+{ プレフィックスモッド「耐呪の」 (ティア: 1) — キャスター, 呪い }
+モンスターはヘックスプルーフを持つ — スケールできない値
+{ サフィックスモッド 「停滞の」 (ティア: 1) — ライフ, マナ, 防御, エナジーシールド }
+全てのプレイヤーはライフ、マナおよびエナジーシールドを自動回復することができない — スケールできない値
+{ サフィックスモッド 「弱体化の」 (ティア: 1) — キャスター, 呪い }
+プレイヤーはエンフィーブルの呪いを受ける
+(エンフィーブルの呪術の一種で、対象の命中力を10%、ダメージを15%(レアやユニーク相手の場合9%)減少させる。持続時間は8秒)
+{ サフィックスモッド 「巨人の」 (ティア: 1) }
+モンスターの効果範囲が100%増加する
+--------
+自身のマップデバイスで使用することでこのティアまたはそれよりティアの低いマップに移動する。マップは一度のみ使用できる。
+""")
+
+    rows = resolve_trade_stat_filters(item)
+    by_id = {row.stat_id: row for row in rows}
+    expected = {
+        "property.map_quantity": 90.0,
+        "property.map_rarity": 53.0,
+        "property.map_pack_size": 34.0,
+    }
+    for stat_id, value in expected.items():
+        assert by_id[stat_id].min_value == value
+        assert by_id[stat_id].enabled is True
+
+    query = build_search_query(item, item.base_type, rows)["query"]
+    map_filters = query["filters"]["map_filters"]["filters"]
+    assert map_filters["map_iiq"] == {"min": 90.0}
+    assert map_filters["map_iir"] == {"min": 53.0}
+    assert map_filters["map_packsize"] == {"min": 34.0}
 
 
 def test_corrupted_map_value_properties_start_on():
@@ -5845,7 +6434,7 @@ def test_corrupted_map_value_properties_start_on():
         assert by_id[stat_id].enabled is True
 
 
-def test_more_drops_map_enables_value_pseudos_but_not_rarity():
+def test_more_drops_map_keeps_value_pseudos_off_by_default():
     item = ParsedItem(
         "Maps", "Rare", "Test", "Cemetery Map", "map",
         properties={
@@ -5860,7 +6449,7 @@ def test_more_drops_map_enables_value_pseudos_but_not_rarity():
     assert by_id["property.map_quantity"].enabled is True
     assert by_id["property.map_rarity"].enabled is False
     assert by_id["property.map_pack_size"].enabled is True
-    assert by_id["pseudo.pseudo_map_more_scarab_drops"].enabled is True
+    assert by_id["pseudo.pseudo_map_more_scarab_drops"].enabled is False
 
 
 def test_japanese_nightmare_map_new_more_drop_labels_and_mods_resolve():
@@ -5941,23 +6530,35 @@ def test_japanese_map_new_currency_and_divination_card_drop_labels_resolve():
     currency = by_id["pseudo.pseudo_map_more_currency_drops"]
     assert currency.text == "カレンシー量"
     assert currency.min_value == 139
-    assert currency.enabled is True
+    assert currency.enabled is False
 
     cards = by_id["pseudo.pseudo_map_more_card_drops"]
     assert cards.text == "占いカード量"
     assert cards.min_value == 50
-    assert cards.enabled is True
+    assert cards.enabled is False
 
     query = build_search_query(item, item.base_type, rows)["query"]
     api_rows = {
         row["id"]: row.get("value", {})
         for group in query["stats"] for row in group["filters"]
     }
-    assert api_rows["pseudo.pseudo_map_more_currency_drops"] == {"min": 139.0}
-    assert api_rows["pseudo.pseudo_map_more_card_drops"] == {"min": 50.0}
+    assert "pseudo.pseudo_map_more_currency_drops" not in api_rows
+    assert "pseudo.pseudo_map_more_card_drops" not in api_rows
+
+    selected = tuple(
+        replace(row, enabled=True)
+        if row.stat_id == "pseudo.pseudo_map_more_currency_drops" else row
+        for row in rows
+    )
+    selected_query = build_search_query(item, item.base_type, selected)["query"]
+    selected_rows = {
+        row["id"]: row.get("value", {})
+        for group in selected_query["stats"] for row in group["filters"]
+    }
+    assert selected_rows["pseudo.pseudo_map_more_currency_drops"] == {"min": 139.0}
 
 
-def test_corrupted_eight_mod_map_enables_modifier_count_pseudo():
+def test_corrupted_eight_mod_map_keeps_modifier_count_pseudo_off_by_default():
     modifiers = tuple(
         ItemModifier(
             f"Map modifier {index}", (index,),
@@ -5976,16 +6577,13 @@ def test_corrupted_eight_mod_map_enables_modifier_count_pseudo():
         row for row in rows
         if row.stat_id == "pseudo.pseudo_number_of_affix_mods"
     )
-    assert count.enabled is True
+    assert count.enabled is False
     assert count.min_value == 8
     assert count.max_value == 8
     query = build_search_query(
         item, "Cemetery Map", rows, preset=PRESET_FINISHED,
     )["query"]
-    assert {
-        "id": "pseudo.pseudo_number_of_affix_mods",
-        "value": {"min": 8.0, "max": 8.0},
-    } in query["stats"][0]["filters"]
+    assert query["stats"][0]["filters"] == []
 
 
 def test_japanese_elegant_hubris_advanced_copy_uses_exact_caspiro_seed():

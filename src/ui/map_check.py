@@ -290,7 +290,12 @@ class MapCheckWindow(QDialog):
         self.title.setText(item.name or item.base_type or "Map Check")
         self._clear_body()
         lookup = entries_by_stat_id()
-        for modifier in item.modifiers:
+        # Parser上のDesecratedはNightmare MapのExplicit affixに相当する。
+        explicit_modifiers = tuple(
+            modifier for modifier in item.modifiers
+            if modifier.kind in {"prefix", "suffix", "explicit", "desecrated"}
+        )
+        for modifier in explicit_modifiers:
             entry = lookup.get(modifier.stat_id or "")
             if entry is None:
                 row = QLabel(f"未認識Mod — {modifier.text}")
@@ -315,7 +320,7 @@ class MapCheckWindow(QDialog):
                 self._style_seen_button(seen, entry.key)
             self.body_layout.addWidget(row_widget)
             self._style_mod_button(button, entry.key, modifier.text)
-        if not item.modifiers:
+        if not explicit_modifiers:
             self.body_layout.addWidget(QLabel("認識できるMap Modがありません。"))
         self.body_layout.addStretch()
 

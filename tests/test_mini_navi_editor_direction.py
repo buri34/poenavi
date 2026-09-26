@@ -14,17 +14,23 @@ class MiniNaviEditorDirectionTest(unittest.TestCase):
     def setUpClass(cls):
         cls.app = QApplication.instance() or QApplication(sys.argv)
 
+    def _track_dialog(self, dialog):
+        self.addCleanup(self.app.processEvents)
+        self.addCleanup(dialog.deleteLater)
+        self.addCleanup(dialog.close)
+        return dialog
+
     def test_inherit_option_is_available_for_second_visit_and_removes_direction_override(self):
         guide = {
             "objective": "2回目ガイド",
             "direction": "ne",
             "mini_navi": {"text": "2回目みになび", "direction": "ne"},
         }
-        dialog = MiniNaviEditorDialog(
+        dialog = self._track_dialog(MiniNaviEditorDialog(
             None,
             "テスト (act8_area15)",
             [{"kind": "visit", "title": "2回目", "visit": 2, "route": "", "guide": guide}],
-        )
+        ))
         item = dialog.section_editors[0]
         values = {button.property("dir_value") for button in item["direction"].buttons()}
         self.assertIn("inherit", values)
@@ -44,11 +50,11 @@ class MiniNaviEditorDirectionTest(unittest.TestCase):
             "objective": "1回目ガイド",
             "direction": "ne",
         }
-        dialog = MiniNaviEditorDialog(
+        dialog = self._track_dialog(MiniNaviEditorDialog(
             None,
             "テスト (act8_area15)",
             [{"kind": "visit", "title": "1回目", "visit": 1, "route": "", "guide": guide}],
-        )
+        ))
         item = dialog.section_editors[0]
         values = {button.property("dir_value") for button in item["direction"].buttons()}
 
@@ -59,11 +65,11 @@ class MiniNaviEditorDirectionTest(unittest.TestCase):
             "objective": "右上へ進み、帝国の庭園へ",
             "direction": "ne",
         }
-        dialog = MiniNaviEditorDialog(
+        dialog = self._track_dialog(MiniNaviEditorDialog(
             None,
             "黒檀の兵舎 (act3_area11)",
             [{"kind": "visit", "title": "2回目", "visit": 2, "route": "", "guide": guide}],
-        )
+        ))
         item = dialog.section_editors[0]
         item["editor"].setPlainText("")
         for button in item["direction"].buttons():
@@ -81,12 +87,12 @@ class MiniNaviEditorDirectionTest(unittest.TestCase):
             "objective": "PoE2詳細ガイド",
             "mini_navi": {"text": "旧本文", "direction": "ne"},
         }
-        dialog = MiniNaviEditorDialog(
+        dialog = self._track_dialog(MiniNaviEditorDialog(
             None,
             "PoE2テスト",
             [{"kind": "default", "title": "通常時", "guide": guide}],
             show_direction=False,
-        )
+        ))
 
         labels = {label.text() for label in dialog.findChildren(QLabel)}
         self.assertNotIn("🧭 基本方向", labels)

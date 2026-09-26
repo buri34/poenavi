@@ -39,7 +39,9 @@ FIELDNAMES = [
 def copy_requirement(row: dict[str, str]) -> str:
     if row["日本語設定の詳細コピー全文"].startswith("@"):
         return "収集済みfixtureを使用（日英の新規貼付不要）"
-    if row["ケースID"] == "P2-WIN-057":
+    if row["ケースID"] in {"P2-WIN-057", "P2-WIN-067"}:
+        if row["ケースID"] == "P2-WIN-067":
+            return "同じ現物の日本語通常コピーと詳細コピーを保存（両方必須）"
         return "同じ現物の日本語・英語を保存（両方必須）"
     return "使用した現物の日本語を保存（英語は差分発生時に追加依頼）"
 

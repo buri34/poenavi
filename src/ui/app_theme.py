@@ -22,6 +22,9 @@ POENAVI_THEME = AppTheme(
     panel="#1E241E",
 )
 
+# 設定画面はアプリモードにかかわらず、長文を読みやすい共通テーマにする。
+SETTINGS_THEME = POENAVI_THEME
+
 POETORE_THEME = AppTheme(
     accent="#65FFCA",
     text="#E6ECEA",

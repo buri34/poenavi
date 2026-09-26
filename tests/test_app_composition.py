@@ -20,11 +20,11 @@ def test_poennavi_mode_resolves_only_existing_main_window():
     assert resolved.__name__ == "MainWindow"
 
 
-def test_poetore_mode_fails_closed_for_poe2():
-    import pytest
+def test_poetore_mode_resolves_for_poe2():
+    resolved = app_composition.resolve_window_class(POETORE_MODE, POE2)
 
-    with pytest.raises(ValueError, match="では利用できません"):
-        app_composition.resolve_window_class(POETORE_MODE, POE2)
+    assert resolved.__module__ == "src.ui.poetore_mode_window"
+    assert resolved.__name__ == "PoetoreModeWindow"
 
 def test_real_poetore_composition_does_not_import_poennavi_runtime_modules():
     script = (
