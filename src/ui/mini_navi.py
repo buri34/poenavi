@@ -70,6 +70,32 @@ class MiniNaviLockButtonWindow(QWidget):
         self.restore_button.clicked.connect(self.overlay.toggle_main_window)
         layout.addWidget(self.restore_button)
 
+        self.act4_button = QPushButton("Act4")
+        self.act4_button.setCheckable(True)
+        self.act4_button.setFixedSize(52, 28)
+        self.act4_button.setCursor(QCursor(Qt.PointingHandCursor))
+        self.act4_button.setToolTip("Act4攻略チェックの表示／非表示を切り替えます")
+        self.act4_button.setStyleSheet("""
+            QPushButton {
+                background: rgba(10, 10, 10, 220);
+                color: #ffffff;
+                border: 1px solid rgba(176, 255, 123, 140);
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover, QPushButton:focus {
+                background: rgba(73, 110, 50, 230);
+                border-color: rgba(176, 255, 123, 220);
+            }
+            QPushButton:checked {
+                background: rgba(73, 110, 50, 245);
+                border: 2px solid rgba(176, 255, 123, 240);
+            }
+        """)
+        self.act4_button.clicked.connect(self._toggle_act4_checklist)
+        layout.addWidget(self.act4_button)
+
         self.button = QPushButton("🔒")
         self.button.setFixedSize(30, 28)
         self.button.setCursor(QCursor(Qt.PointingHandCursor))
@@ -91,14 +117,26 @@ class MiniNaviLockButtonWindow(QWidget):
 
     def sync_from_overlay(self):
         cfg = self.overlay.config()
-        main_hidden = self.overlay.is_main_window_hidden()
         show_lock_button = bool(cfg.get("show_lock_button", True))
         if not self.overlay.isVisible() or not cfg.get("enabled", False):
             self.hide()
             return
         self.restore_button.setVisible(True)
+        main_window = self.overlay.main_window
+        act4_available = bool(
+            main_window
+            and hasattr(main_window, "is_act4_checklist_available_context")
+            and main_window.is_act4_checklist_available_context()
+        )
+        self.act4_button.setVisible(act4_available)
+        checklist = getattr(main_window, "act4_checklist_window", None) if main_window else None
+        self.act4_button.blockSignals(True)
+        self.act4_button.setChecked(bool(checklist and checklist.isVisible()))
+        self.act4_button.blockSignals(False)
         self.button.setVisible(show_lock_button)
         buttons = [self.restore_button]
+        if act4_available:
+            buttons.append(self.act4_button)
         if show_lock_button:
             buttons.append(self.button)
         width = sum(button.width() for button in buttons) + 4 * (len(buttons) - 1)
@@ -108,6 +146,12 @@ class MiniNaviLockButtonWindow(QWidget):
         self.show()
         if self.overlay._last_topmost_state:
             self.raise_()
+
+    def _toggle_act4_checklist(self):
+        main_window = self.overlay.main_window
+        if main_window and hasattr(main_window, "toggle_act4_checklist"):
+            main_window.toggle_act4_checklist()
+        self.sync_from_overlay()
 
     def enterEvent(self, event):
         self.overlay._show_strong_opacity()
@@ -657,6 +701,9 @@ class MiniNaviOverlay(QWidget):
             self._last_topmost_foreground_kind = "none"
             return False
         own_windows = {int(self.winId()), int(self.lock_button_window.winId())}
+        checklist = getattr(self.main_window, "act4_checklist_window", None)
+        if checklist is not None:
+            own_windows.add(int(checklist.winId()))
         if int(foreground) in own_windows:
             self._last_topmost_foreground_kind = "mini_navi"
             foreground = get_next_visible_window_after(
@@ -692,6 +739,10 @@ class MiniNaviOverlay(QWidget):
         lock_before = native_window_z_order_state(self.lock_button_window, foreground)
         overlay_updated = set_native_window_topmost(self, desired)
         lock_updated = set_native_window_topmost(self.lock_button_window, desired)
+        checklist = getattr(self.main_window, "act4_checklist_window", None)
+        checklist_updated = True
+        if checklist is not None:
+            checklist_updated = set_native_window_topmost(checklist, desired)
         overlay_after = native_window_z_order_state(self, foreground)
         lock_after = native_window_z_order_state(self.lock_button_window, foreground)
         if sys.platform == "win32":
@@ -716,7 +767,7 @@ class MiniNaviOverlay(QWidget):
             and lock_after["topmost"] is desired
         )
         if sys.platform != "win32" or (
-            overlay_updated and lock_updated and native_state_matches
+            overlay_updated and lock_updated and checklist_updated and native_state_matches
         ):
             self._last_topmost_state = desired
         self._topmost_diagnostic_generation += 1

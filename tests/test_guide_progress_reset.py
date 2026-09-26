@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 from PySide6.QtWidgets import QApplication, QLabel, QMessageBox, QPushButton, QTabWidget
 
 from src.ui.main_window import MainWindow
+from src.ui.act4_checklist import Act4ChecklistState
 from src.ui.settings_dialog import SettingsDialog
 from src.utils.new_character_history import NewCharacterHistoryResult
 from src.utils.poe_version_data import POE1, POE2
@@ -133,6 +134,11 @@ class GuideProgressResetTest(unittest.TestCase):
                     "last_visit_key": None,
                     "visited_town": False,
                     "last_log_zone": None,
+                    "act4_checklist": {
+                        "checked_zone_ids": [],
+                        "optional_npc_checked": False,
+                        "dismissed": False,
+                    },
                 },
             )
 
@@ -397,6 +403,12 @@ class GuideProgressResetTest(unittest.TestCase):
             window._last_visit_key = "poe2_act2_area06"
             window._visited_town = True
             window._last_log_zone = "オガムの農地"
+            window.act4_checklist_state = Act4ChecklistState(
+                checked_zone_ids={"poe2_act4_area01", "poe2_act4_area02"},
+                optional_npc_checked=True,
+                dismissed=True,
+                position=(120, 340),
+            )
             window._progress_flags_path = Mock(return_value=str(progress_path))
 
             MainWindow._save_progress_flags(window)
@@ -408,6 +420,12 @@ class GuideProgressResetTest(unittest.TestCase):
                     "last_visit_key": "poe2_act2_area06",
                     "visited_town": True,
                     "last_log_zone": "オガムの農地",
+                    "act4_checklist": {
+                        "checked_zone_ids": ["poe2_act4_area01", "poe2_act4_area02"],
+                        "optional_npc_checked": True,
+                        "dismissed": True,
+                        "position": {"x": 120, "y": 340},
+                    },
                 },
             )
 
@@ -421,6 +439,7 @@ class GuideProgressResetTest(unittest.TestCase):
             self.assertEqual(restored._last_visit_key, "poe2_act2_area06")
             self.assertTrue(restored._visited_town)
             self.assertEqual(restored._last_log_zone, "オガムの農地")
+            self.assertEqual(restored.act4_checklist_state, window.act4_checklist_state)
 
     def test_legacy_poe2_flags_file_restores_with_empty_visit_state(self):
         with TemporaryDirectory() as temp_dir:
@@ -468,6 +487,11 @@ class GuideProgressResetTest(unittest.TestCase):
                     "last_visit_key": None,
                     "visited_town": False,
                     "last_log_zone": "オガムの農地",
+                    "act4_checklist": {
+                        "checked_zone_ids": [],
+                        "optional_npc_checked": False,
+                        "dismissed": False,
+                    },
                 },
             )
 

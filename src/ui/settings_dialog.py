@@ -3220,6 +3220,21 @@ class SettingsDialog(QDialog):
                 )
                 row.addWidget(memo_button)
 
+                if (
+                    self.poe_version == POE2
+                    and _guide_dev_editor_enabled(self.poe_version, zone_id)
+                ):
+                    guide_button = QPushButton("ガイド編集")
+                    guide_button.setObjectName(f"guideEditButton_{zone_id}")
+                    guide_button.setToolTip("公式ガイドを編集")
+                    guide_button.setFixedWidth(90)
+                    guide_button.setStyleSheet(Styles.BUTTON)
+                    guide_button.clicked.connect(
+                        lambda checked=False, editor=name_edit, zid=zone_id:
+                        self._open_guide_editor(editor, zid)
+                    )
+                    row.addWidget(guide_button)
+
                 row.addStretch()
                 act_layout.addLayout(row)
                 act_widgets.append((name_edit, zone_id))
@@ -3338,7 +3353,7 @@ class SettingsDialog(QDialog):
         self._save_current_zone_ui_to_memory()
         self.town_zones_by_version[self.poe_version] = [z.strip() for z in self.town_zones_edit.toPlainText().split("\n") if z.strip()]
 
-        # エリア一覧のみ保存する。公式ガイドはユーザー編集対象外。
+        # エリア一覧を保存する。開発用公式ガイド編集はダイアログ確定時に即時保存済み。
         save_zone_master_data(self.zone_data_by_version, self.town_zones_by_version)
         
         def normalize_log_path(text: str) -> str:

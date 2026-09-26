@@ -76,6 +76,11 @@ from PySide6.QtWidgets import QComboBox, QDialog, QFormLayout
 from src.ui.startup_dialogs import RouteSelectionDialog
 from src.ui.memo_dialog import MemoDialog
 from src.ui.mini_navi import MiniNaviOverlay
+from src.ui.act4_checklist import (
+    Act4ChecklistState,
+    Act4ChecklistWindow,
+    is_act4_context,
+)
 from src.ui.search_paste_dialog import SearchStringPasteTestDialog
 from src.ui.window_flags import (
     _is_always_on_top_enabled,
@@ -533,6 +538,8 @@ class MainWindow(QMainWindow):
         self.zone_visit_counts = {}
         # PoE2 進行フラグ（ログ検知ベースの高度制御用）
         self.progress_flags = set()
+        self.act4_checklist_state = Act4ChecklistState()
+        self._act4_context_active = False
         self._restore_progress_flags()
         self.interlude_ready = set()
         # 起動時の復元中はvisitカウントしない
@@ -643,6 +650,20 @@ class MainWindow(QMainWindow):
         self.zone_data = self.zone_data_by_version.get(self.poe_version, {})
         self.guide_data = load_guide_data(self.poe_version)
         self.mini_navi_overlay = MiniNaviOverlay(self)
+        self.act4_checklist_window = Act4ChecklistWindow(self)
+        self.act4_checklist_window.required_toggled.connect(
+            self._on_act4_required_toggled
+        )
+        self.act4_checklist_window.optional_toggled.connect(
+            self._on_act4_optional_toggled
+        )
+        self.act4_checklist_window.dismissed_by_user.connect(
+            self._on_act4_checklist_dismissed
+        )
+        self.act4_checklist_window.position_changed.connect(
+            self._on_act4_checklist_position_changed
+        )
+        self.act4_checklist_window.apply_state(self.act4_checklist_state)
         self.poelab_url_resolved.connect(self._open_resolved_poelab_url)
         self.poelab_url_failed.connect(self._handle_poelab_url_error)
         self.historical_progress_check_finished.connect(
@@ -2500,6 +2521,9 @@ class MainWindow(QMainWindow):
         overlay = getattr(self, "mini_navi_overlay", None)
         if overlay is not None and not self._is_mini_navi_available():
             overlay.hide()
+        checklist = getattr(self, "act4_checklist_window", None)
+        if checklist is not None and self.poe_version != POE2:
+            checklist.hide()
         poetore_window = getattr(self, "_poetore_window", None)
         if poetore_window is not None and (
             not self._is_poetore_available()
@@ -2523,9 +2547,11 @@ class MainWindow(QMainWindow):
             self.mini_navi_overlay.apply_settings(refresh_window_flags=False)
             if not overlay_config["enabled"]:
                 self.mini_navi_overlay.collapse_for_obs()
+                self._hide_act4_checklist()
         self._refresh_mini_navi_toggle()
         if not overlay_config["enabled"]:
             return
+        self._sync_act4_checklist_visibility()
         if self.current_zone:
             if self._is_town_zone(self.current_zone):
                 self.mini_navi_overlay.show_last_content_or_waiting()
@@ -2535,6 +2561,119 @@ class MainWindow(QMainWindow):
             self._update_guide_and_map(self.current_zone, zone_id, visit_num)
             return
         self.mini_navi_overlay.show_last_content_or_waiting()
+
+    def _mini_navi_enabled(self) -> bool:
+        config = self.config.get("mini_guide_overlay", {})
+        return bool(isinstance(config, dict) and config.get("enabled", False))
+
+    def is_act4_checklist_available_context(self) -> bool:
+        return bool(
+            getattr(self, "poe_version", POE1) == POE2
+            and getattr(self, "_act4_context_active", False)
+            and self._mini_navi_enabled()
+        )
+
+    def _hide_act4_checklist(self):
+        checklist = getattr(self, "act4_checklist_window", None)
+        if checklist is not None:
+            checklist.hide()
+        overlay = getattr(self, "mini_navi_overlay", None)
+        if overlay is not None:
+            overlay._sync_lock_button()
+
+    def _show_act4_checklist(self):
+        checklist = getattr(self, "act4_checklist_window", None)
+        if checklist is None or not self.is_act4_checklist_available_context():
+            return
+        checklist.apply_state(self.act4_checklist_state)
+        if self.act4_checklist_state.position is not None:
+            checklist.move(*self.act4_checklist_state.position)
+        elif not checklist.isVisible():
+            overlay = getattr(self, "mini_navi_overlay", None)
+            if overlay is not None:
+                checklist.move(overlay.x(), overlay.y() + overlay.height() + 8)
+        checklist.show()
+        checklist.raise_()
+        overlay = getattr(self, "mini_navi_overlay", None)
+        if overlay is not None:
+            # 既に同じ前面状態でも、新しく表示したチェックリストへ確実に反映する。
+            overlay._last_topmost_state = None
+            overlay._refresh_topmost_state()
+            overlay._sync_lock_button()
+
+    def _sync_act4_checklist_visibility(self):
+        if (
+            self.is_act4_checklist_available_context()
+            and not getattr(
+                self,
+                "act4_checklist_state",
+                Act4ChecklistState(),
+            ).dismissed
+        ):
+            self._show_act4_checklist()
+        else:
+            self._hide_act4_checklist()
+
+    def toggle_act4_checklist(self):
+        if not self.is_act4_checklist_available_context():
+            self._hide_act4_checklist()
+            return
+        checklist = self.act4_checklist_window
+        if checklist.isVisible():
+            self.act4_checklist_state.dismissed = True
+            checklist.hide()
+        else:
+            self.act4_checklist_state.dismissed = False
+            self._show_act4_checklist()
+        self._save_progress_flags()
+        self.mini_navi_overlay._sync_lock_button()
+
+    def _on_act4_required_toggled(self, zone_id: str, checked: bool):
+        if self.act4_checklist_state.set_checked(zone_id, checked):
+            self.act4_checklist_window.apply_state(self.act4_checklist_state)
+            self._save_progress_flags()
+
+    def _on_act4_optional_toggled(self, checked: bool):
+        if self.act4_checklist_state.optional_npc_checked == checked:
+            return
+        self.act4_checklist_state.optional_npc_checked = checked
+        self._save_progress_flags()
+
+    def _on_act4_checklist_dismissed(self):
+        self.act4_checklist_state.dismissed = True
+        self._save_progress_flags()
+        self.mini_navi_overlay._sync_lock_button()
+
+    def _on_act4_checklist_position_changed(self, x: int, y: int):
+        position = (x, y)
+        if self.act4_checklist_state.position == position:
+            return
+        self.act4_checklist_state.position = position
+        self._save_progress_flags()
+
+    def _update_act4_checklist_for_zone(self, zone_name: str, _actual_entry: bool):
+        if self.poe_version != POE2:
+            self._act4_context_active = False
+            self._hide_act4_checklist()
+            return
+        zone_id = self._get_zone_id(zone_name)
+        known_zone = bool(zone_id or self._is_town_zone(zone_name))
+        act4_zone_ids = {
+            entry.get("id")
+            for entry in self.zone_data.get("Act 4", [])
+            if isinstance(entry, dict) and entry.get("id")
+        }
+        in_act4 = is_act4_context(zone_name, zone_id, act4_zone_ids)
+        if not in_act4 and not known_zone:
+            return
+        self._act4_context_active = in_act4
+        if in_act4 and zone_id:
+            if self.act4_checklist_state.mark_entered(zone_id):
+                self._save_progress_flags()
+            checklist = getattr(self, "act4_checklist_window", None)
+            if checklist is not None:
+                checklist.apply_state(self.act4_checklist_state)
+        self._sync_act4_checklist_visibility()
 
     
     def toggle_map_section(self):
@@ -3840,6 +3979,7 @@ class MainWindow(QMainWindow):
             f"visited_town_before={getattr(self, '_visited_town', False)}"
         )
         self.current_zone = zone_name
+        self._update_act4_checklist_for_zone(zone_name, actual_entry)
         if actual_entry:
             self._track_live_new_character_candidate(zone_name)
             self._record_last_non_town_zone(zone_name)
@@ -4349,6 +4489,9 @@ class MainWindow(QMainWindow):
             "visited_town": getattr(self, "_visited_town", False),
         }
         data["last_log_zone"] = getattr(self, "_last_log_zone", None)
+        if self.poe_version == POE2:
+            state = getattr(self, "act4_checklist_state", Act4ChecklistState())
+            data["act4_checklist"] = state.to_dict()
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
@@ -4358,6 +4501,10 @@ class MainWindow(QMainWindow):
         self.zone_visit_counts = {}
         self._last_visit_key = None
         self._visited_town = False
+        self.act4_checklist_state = Act4ChecklistState()
+        checklist = getattr(self, "act4_checklist_window", None)
+        if checklist is not None:
+            checklist.apply_state(self.act4_checklist_state)
         self._save_progress_flags()
 
     def _restore_progress_flags(self):
@@ -4366,6 +4513,7 @@ class MainWindow(QMainWindow):
         self._last_visit_key = None
         self._visited_town = False
         self._last_log_zone = None
+        self.act4_checklist_state = Act4ChecklistState()
         path = self._progress_flags_path()
         if not path or not os.path.exists(path):
             return
@@ -4379,6 +4527,10 @@ class MainWindow(QMainWindow):
             self._visited_town = bool(data.get('visited_town', False))
             last_log_zone = data.get('last_log_zone')
             self._last_log_zone = last_log_zone if isinstance(last_log_zone, str) else None
+            if self.poe_version == POE2:
+                self.act4_checklist_state = Act4ChecklistState.from_dict(
+                    data.get("act4_checklist")
+                )
         except Exception as e:
             print(f"[WARN] progress flags load failed [{self.poe_version}]: {e}")
             self.progress_flags = set()
@@ -4386,6 +4538,7 @@ class MainWindow(QMainWindow):
             self._last_visit_key = None
             self._visited_town = False
             self._last_log_zone = None
+            self.act4_checklist_state = Act4ChecklistState()
 
     def set_progress_flag(self, flag_name: str, enabled: bool = True):
         """進行フラグを更新し、必要ならガイド再評価する"""
@@ -4822,6 +4975,10 @@ class MainWindow(QMainWindow):
                 self._rebuild_lap_ui()
                 self._restore_timer_state()
                 self._restore_progress_flags()
+                self._act4_context_active = False
+                if hasattr(self, "act4_checklist_window"):
+                    self.act4_checklist_window.apply_state(self.act4_checklist_state)
+                    self.act4_checklist_window.hide()
                 self.update_lap_display()
                 switched_log_path = self.config.get("client_log_paths", {}).get(self.poe_version, "")
                 if switched_log_path:
@@ -4875,6 +5032,8 @@ class MainWindow(QMainWindow):
             self._apply_detached_panel_window_settings()
             if hasattr(self, "mini_navi_overlay"):
                 self.mini_navi_overlay.apply_settings(refresh_window_flags=True)
+            if hasattr(self, "act4_checklist_window"):
+                self.act4_checklist_window.apply_window_flags()
             # メモダイアログにも透過率を反映
             if hasattr(self, '_memo_dialog') and self._memo_dialog is not None and self._memo_dialog.isVisible():
                 self._memo_dialog.apply_opacity(
@@ -4908,13 +5067,16 @@ class MainWindow(QMainWindow):
                     except (OSError, ValueError, TypeError):
                         existing = {}
                 with open(path, 'w', encoding='utf-8') as f:
-                    json.dump({
+                    reset_data = {
                         "active_flags": [],
                         "zone_visit_counts": {},
                         "last_visit_key": None,
                         "visited_town": False,
                         "last_log_zone": existing.get("last_log_zone"),
-                    }, f, ensure_ascii=False, indent=2)
+                    }
+                    if target_version == POE2:
+                        reset_data["act4_checklist"] = Act4ChecklistState().to_dict()
+                    json.dump(reset_data, f, ensure_ascii=False, indent=2)
             return
 
         self._reset_guide_progress_state()
@@ -5189,6 +5351,10 @@ class MainWindow(QMainWindow):
         overlay = getattr(self, "mini_navi_overlay", None)
         if overlay is not None:
             overlay.close()
+
+        checklist = getattr(self, "act4_checklist_window", None)
+        if checklist is not None:
+            checklist.close()
 
         cheat_sheet_overlay = getattr(self, "_cheat_sheet_overlay", None)
         if cheat_sheet_overlay is not None:
