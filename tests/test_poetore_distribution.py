@@ -1,9 +1,23 @@
 import json
 import os
+import re
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_powershell_interpolated_variables_do_not_absorb_literal_colons():
+    invalid = re.compile(
+        r"\$(?!(?:env|global|script|local|private|using):)[A-Za-z_][A-Za-z0-9_]*:"
+    )
+    violations = []
+    for script in (ROOT / "scripts").glob("*.ps1"):
+        for line_number, line in enumerate(script.read_text(encoding="utf-8").splitlines(), 1):
+            if invalid.search(line):
+                violations.append(f"{script.name}:{line_number}: {line.strip()}")
+    assert not violations, "PowerShell variable before ':' must use ${name}:\n" + "\n".join(
+        violations
+    )
 
 
 def test_poetore_distribution_contains_only_minimal_derived_data():
@@ -40,12 +54,43 @@ def test_poetore_distribution_contains_only_minimal_derived_data():
 
 def test_release_build_includes_legal_notices_but_not_development_fixtures():
     script = (ROOT / "scripts" / "build_release.ps1").read_text(encoding="utf-8")
+    ocr_script = (ROOT / "scripts" / "build_ndlocr_pack.ps1").read_text(
+        encoding="utf-8"
+    )
     for filename in ("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md"):
         assert f'"--add-data", "{filename};."' in script
     assert '"--add-data", "build\\third-party-licenses;THIRD_PARTY_LICENSES"' in script
     assert "collect_third_party_licenses.py" in script
     assert "THIRD_PARTY_LICENSES/Python-LICENSE.txt" in script
     assert '"--add-data", "data;data"' in script
+    assert "dotnet publish tools\\ExpeditionWindowsOcr\\ExpeditionWindowsOcr.csproj" in script
+    assert '"--add-data", "build\\expedition-windows-ocr;tools\\ExpeditionWindowsOcr"' in script
+    assert '"--add-data", "build\\ndlocr-dist\\PoENaviNdlOcr;tools\\NDLOcrLite"' not in script
+    assert "PoENavi-HighAccuracyOCR" not in script
+    assert "requirements-ndlocr.txt" not in script
+    assert '$ocrPackName = "PoENavi-HighAccuracyOCR"' in ocr_script
+    assert '$ocrPackArgs = @("-c", $ocrPackCode)' in ocr_script
+    assert "Invoke-Python @ocrPackArgs" in ocr_script
+    assert "Invoke-Python -c $ocrPackCode" not in ocr_script
+    assert "updater-compatible archive exceeds 512 MiB" in script
+    assert "high-accuracy OCR runtime leaked into PoENavi.zip" in script
+    assert "ExpeditionWindowsOcr.exe" in script
+    assert "PoENaviNdlOcr\\.exe" in script
+    assert "PoENaviNdlOcr.exe" in ocr_script
+    assert '"scripts\\ndlocr_lite_entry.py"' in ocr_script
+    assert "requirements-ndlocr.txt" in ocr_script
+    assert "verify_ndlocr_helper.py" in ocr_script
+    assert "reported-spear-physical-read-failed.png" in ocr_script
+    assert "e510d3a7b878395ea9de0bdd365711b699e5fd430b5c7e23a40e918e913fd1f2" in ocr_script
+    assert "LICENCE_DEPENDENCIES.txt" in ocr_script
+    assert "expedition_region_example.png" in script
+    assert "desecration_region_example.png" in script
+    assert "expedition_ocr_items.json" in script
+    assert "desecration_tiers.json" in script
+    assert ".NET 8 runtime" in (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
+    assert "dotnet-runtime-LICENSE.txt" in (
+        ROOT / "scripts" / "collect_third_party_licenses.py"
+    ).read_text(encoding="utf-8")
     assert '"--add-data", "tests;' not in script
     assert '"--add-data", "build;' not in script
     assert "poetore-sources\\.lock\\.json" in script
@@ -54,6 +99,73 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert '"--version-file", "build\\version\\PoENavi-version.txt"' in script
     assert '"--version-file", "build\\version\\PoENaviUpdater-version.txt"' in script
     assert '"--hidden-import", "keyboard"' not in script
+
+
+def test_recent_poetore_releases_use_poetore_scoped_tests():
+    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
+        encoding="utf-8"
+    )
+    script = (ROOT / "scripts" / "run_poetore_release_tests.ps1").read_text(
+        encoding="utf-8"
+    )
+
+    assert workflow.count('"v4.2.0"') == 2
+    assert workflow.count('"v4.2.1"') == 2
+    for test_file in (
+        "tests/test_expedition_settings_dialog.py",
+        "tests/test_global_hotkeys.py",
+        "tests/test_win32_suppressed_hotkey.py",
+    ):
+        assert test_file in script
+    assert "PoENavi-HighAccuracyOCR.zip" not in workflow
+    assert "gh release upload $env:GITHUB_REF_NAME PoENavi.zip PoENavi.zip.sha256 --clobber" in workflow
+    assert "gh release edit $env:GITHUB_REF_NAME --notes-file $notesFile" in workflow
+    assert "Run Desecration high-accuracy OCR pack release tests" in workflow
+    assert 'github.ref_name == \'v4.4.1\'' in workflow
+    assert "tests/test_ndlocr_pack.py" in workflow
+
+
+def test_app_release_tags_must_be_reachable_from_main():
+    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "fetch-depth: 0" in workflow
+    assert "Verify release tag is reachable from main" in workflow
+    assert (
+        'git fetch --no-tags origin "+refs/heads/main:refs/remotes/origin/main"'
+        in workflow
+    )
+    assert 'git rev-parse "$env:GITHUB_REF_NAME^{commit}"' in workflow
+    assert "git merge-base --is-ancestor $tagCommit origin/main" in workflow
+    assert "must be merged into main before release" in workflow
+
+
+def test_ocr_pack_has_a_separate_immutable_prerelease_workflow():
+    workflow = (ROOT / ".github" / "workflows" / "release-ndlocr-pack.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "workflow_dispatch:" in workflow
+    assert "PACK_RELEASE_TAG" in workflow
+    assert "RELEASE_TAG: ${{ inputs.release_tag }}" in workflow
+    assert "gh release view '${{ inputs.release_tag }}'" not in workflow
+    assert "release already exists and must not be overwritten" in workflow
+    assert ".\\scripts\\build_ndlocr_pack.ps1" in workflow
+    assert "PoENavi-HighAccuracyOCR.zip" in workflow
+    assert "PoENavi-HighAccuracyOCR.zip.sha256" in workflow
+    assert "--prerelease" in workflow
+
+
+def test_friend_diagnostic_build_is_separate_from_normal_release():
+    script = (ROOT / "scripts" / "build_release.ps1").read_text(encoding="utf-8")
+    batch = (ROOT / "build_diagnostic_exe.bat").read_text(encoding="utf-8")
+
+    assert "[switch]$Diagnostic" in script
+    assert '"PoENavi-diagnostic"' in script
+    assert "expedition-diagnostics.flag" in script
+    assert "diagnostic marker leaked into normal release" in script
+    assert "build_release.ps1\" -Diagnostic" in batch
+    assert "PoENavi-diagnostic.zip" in batch
 
 
 def test_readme_notices_and_app_wording_cover_required_attribution():
@@ -65,9 +177,16 @@ def test_readme_notices_and_app_wording_cover_required_attribution():
     assert "公認・承認を受けたものではありません" in readme
     assert "Awakened PoE Trade" in notices and "MIT License" in notices
     assert "RePoE" in notices and "全データはアプリへ同梱しません" in notices
+    assert "Noto Sans JP" in notices and "SIL Open Font License 1.1" in notices
+    assert "NDLOCR-Lite 1.3.1" in notices
+    assert "国立国会図書館" in notices and "CC BY 4.0" in notices
+    assert "公認・提携製品ではありません" in notices
+    assert (ROOT / "assets" / "fonts" / "NotoSansJP-OFL.txt").is_file()
     assert "無料の非公式ツール" not in poetore_ui
     assert "ぽえなびは無料の非公式ツール" in app_info_ui
     assert "提携・承認関係はありません" in app_info_ui
+    assert "NDLOCR-Lite 1.3.1" in app_info_ui
+    assert "CC BY 4.0" in app_info_ui
     assert "ぽえとれについて" not in app_info_ui
 
 
@@ -92,6 +211,54 @@ def test_windows_build_verifies_executable_product_and_version_metadata():
     assert "ProductName" in workflow and '"PoENavi"' in workflow
     assert "ProductVersion" in workflow and "FileVersion" in workflow
     assert "PoENavi.exe" in workflow and "PoENaviUpdater.exe" in workflow
+
+
+def test_snapshot_release_handoff_builds_locally_and_returns_audited_artifacts():
+    batch = (ROOT / "BUILD_RELEASE_FROM_SNAPSHOT.cmd").read_text(encoding="utf-8")
+    handoff = (ROOT / "scripts" / "build_release_from_local_copy.ps1").read_text(
+        encoding="utf-8"
+    )
+    bootstrap = (ROOT / "scripts" / "ensure_windows_build_tools.ps1").read_text(
+        encoding="utf-8"
+    )
+    assert "build_release_from_local_copy.ps1" in batch
+    assert "ensure_windows_build_tools.ps1" in handoff
+    assert "Python312" in bootstrap and "Dotnet8" in bootstrap
+    assert "python.org/ftp/python/3.12.10" in bootstrap
+    assert "67b5635e80ea51072b87941312d00ec8927c4db9ba18938f7ad2d27b328b95fb" in bootstrap
+    assert "dotnet-sdk-8.0.414-win-x64.zip" in bootstrap
+    assert "ae86d5d9aeff5be9db7e306e0f85f708" in bootstrap
+    assert "Get-FileHash" in bootstrap and "Start-Process" in bootstrap
+    assert '"PoENavi\\SourceBuilds"' in handoff
+    assert "Copy-Item" in handoff and "scripts\\build_release.ps1" in handoff
+    assert "PoENavi.zip.sha256" in handoff and "BUILD_INFO.txt" in handoff
+    assert "PoENavi-HighAccuracyOCR.zip" not in handoff
+    assert "requirements-ndlocr.txt" not in handoff
+    assert "zip_bytes=" in handoff and "zip_sha256=" in handoff
+    assert "ocr_pack_bytes=" not in handoff and "ocr_pack_sha256=" not in handoff
+
+
+def test_root_windows_entry_points_are_limited_to_current_build_workflows():
+    expected = {
+        "CLEANUP_OLD_POENAVI_FOLDERS.cmd",
+        "BUILD_RELEASE_FROM_SNAPSHOT.cmd",
+        "build_diagnostic_exe.bat",
+        "build_exe.bat",
+        "run_dev.bat",
+        "test_local_update.bat",
+    }
+    actual = {
+        path.name
+        for path in ROOT.iterdir()
+        if path.is_file() and path.suffix.lower() in {".bat", ".cmd"}
+    }
+
+    assert actual == expected
+    attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
+    assert "*.bat text eol=crlf" in attributes
+    assert "*.cmd text eol=crlf" in attributes
+    assert not (ROOT / "scripts" / "run_desecration_ocr_fusion_test.ps1").exists()
+    assert not (ROOT / "spikes" / "001-ndlocr-resident-memory").exists()
 
 
 def test_source_lock_is_development_only_and_pins_revision_and_hashes():

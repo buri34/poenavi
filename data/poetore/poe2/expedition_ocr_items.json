@@ -1,0 +1,895 @@
+{
+  "schema_version": 2,
+  "source": "poe.ninja PoE2 Currency Exchange categories, filtered by league-scoped Buri review",
+  "league": "Forbidden Rites",
+  "categories": [
+    "Currency",
+    "Expedition",
+    "UncutGems",
+    "Runes",
+    "Verisium"
+  ],
+  "items": [
+    {
+      "ja": "アストリッドの創造性",
+      "en": "Astrid's Creativity"
+    },
+    {
+      "ja": "アルダーの怒り",
+      "en": "Ire of Aldur"
+    },
+    {
+      "ja": "アルダーの息吹",
+      "en": "Breath of Aldur"
+    },
+    {
+      "ja": "アルダーの情熱",
+      "en": "Passion of Aldur"
+    },
+    {
+      "ja": "アルダーの裏切り",
+      "en": "Betrayal of Aldur"
+    },
+    {
+      "ja": "アルダーの遺産",
+      "en": "Aldur's Legacy"
+    },
+    {
+      "ja": "ウートレッドの叙事詩",
+      "en": "Uhtred's Saga"
+    },
+    {
+      "ja": "ウートレッドの星読み",
+      "en": "Uhtred's Sidereus"
+    },
+    {
+      "ja": "ウートレッドの聖杯の紋章",
+      "en": "Uhtred's Crest of the Chalice"
+    },
+    {
+      "ja": "オルロスの叙事詩",
+      "en": "Olroth's Saga"
+    },
+    {
+      "ja": "オルロスの太陽の紋章",
+      "en": "Olroth's Crest of the Sun"
+    },
+    {
+      "ja": "カオスオーブ",
+      "en": "Chaos Orb"
+    },
+    {
+      "ja": "カオスオーブ (上級)",
+      "en": "Greater Chaos Orb"
+    },
+    {
+      "ja": "カオスオーブ (完全)",
+      "en": "Perfect Chaos Orb"
+    },
+    {
+      "ja": "カディガンの啓示",
+      "en": "Cadigan's Epiphany"
+    },
+    {
+      "ja": "カトラの陰鬱",
+      "en": "Katla's Gloom"
+    },
+    {
+      "ja": "カランドラの鏡",
+      "en": "Mirror of Kalandra"
+    },
+    {
+      "ja": "ガラス吹きの飾り玉",
+      "en": "Glassblower's Bauble"
+    },
+    {
+      "ja": "クレイシアンの回復のルーン",
+      "en": "Craiceann's Rune of Recovery"
+    },
+    {
+      "ja": "クレイシアンの守りのルーン",
+      "en": "Craiceann's Rune of Warding"
+    },
+    {
+      "ja": "グレーターチャージルーン",
+      "en": "Greater Charging Rune"
+    },
+    {
+      "ja": "グレーターワードルーン",
+      "en": "Greater Ward Rune"
+    },
+    {
+      "ja": "コルの狩り",
+      "en": "Kolr's Hunt"
+    },
+    {
+      "ja": "サカワルの浸食のルーン",
+      "en": "Saqawal's Rune of Erosion"
+    },
+    {
+      "ja": "サカワルの空のルーン",
+      "en": "Saqawal's Rune of the Sky"
+    },
+    {
+      "ja": "サカワルの記憶のルーン",
+      "en": "Saqawal's Rune of Memory"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル18)",
+      "en": "Uncut Skill Gem (Level 18)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル19)",
+      "en": "Uncut Skill Gem (Level 19)"
+    },
+    {
+      "ja": "スキルジェムの原石 (レベル20)",
+      "en": "Uncut Skill Gem (Level 20)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル18)",
+      "en": "Uncut Spirit Gem (Level 18)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル19)",
+      "en": "Uncut Spirit Gem (Level 19)"
+    },
+    {
+      "ja": "スピリットジェムの原石 (レベル20)",
+      "en": "Uncut Spirit Gem (Level 20)"
+    },
+    {
+      "ja": "スルードの力",
+      "en": "Thrud's Might"
+    },
+    {
+      "ja": "セスケ女伯爵の弓のルーン",
+      "en": "Countess Seske's Rune of Archery"
+    },
+    {
+      "ja": "セールの凱旋",
+      "en": "Serle's Triumph"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル13)",
+      "en": "Thaumaturgic Flux (Level 13)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル14)",
+      "en": "Thaumaturgic Flux (Level 14)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル15)",
+      "en": "Thaumaturgic Flux (Level 15)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル16)",
+      "en": "Thaumaturgic Flux (Level 16)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル17)",
+      "en": "Thaumaturgic Flux (Level 17)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル18)",
+      "en": "Thaumaturgic Flux (Level 18)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル19)",
+      "en": "Thaumaturgic Flux (Level 19)"
+    },
+    {
+      "ja": "ソーマタージ・フラックス (レベル20)",
+      "en": "Thaumaturgic Flux (Level 20)"
+    },
+    {
+      "ja": "タイタンの古代ルーン",
+      "en": "Ancient Rune of the Titan"
+    },
+    {
+      "ja": "チャージルーン",
+      "en": "Charging Rune"
+    },
+    {
+      "ja": "パーフェクトチャージルーン",
+      "en": "Perfect Charging Rune"
+    },
+    {
+      "ja": "パーフェクトフラックス",
+      "en": "Perfect Flux"
+    },
+    {
+      "ja": "パーフェクトワードルーン",
+      "en": "Perfect Ward Rune"
+    },
+    {
+      "ja": "ヒネコラの髪束",
+      "en": "Hinekora's Lock"
+    },
+    {
+      "ja": "ファルウルの気品のルーン",
+      "en": "Farrul's Rune of Grace"
+    },
+    {
+      "ja": "ファルウルの狩りのルーン",
+      "en": "Farrul's Rune of the Hunt"
+    },
+    {
+      "ja": "ファルウルの追跡のルーン",
+      "en": "Farrul's Rune of the Chase"
+    },
+    {
+      "ja": "フィヌムスの吸収のルーン",
+      "en": "Fenumus' Rune of Draining"
+    },
+    {
+      "ja": "フィヌムスの紡績のルーン",
+      "en": "Fenumus' Rune of Spinning"
+    },
+    {
+      "ja": "フィヌムスの苦痛のルーン",
+      "en": "Fenumus' Rune of Agony"
+    },
+    {
+      "ja": "プリズムのルーン",
+      "en": "Rune of the Prism"
+    },
+    {
+      "ja": "プリズム合金",
+      "en": "Prismatic Alloy"
+    },
+    {
+      "ja": "ヘストラ婦人の冬のルーン",
+      "en": "Lady Hestra's Rune of Winter"
+    },
+    {
+      "ja": "ヘッジウィッチ・アサンドラの知恵のルーン",
+      "en": "Hedgewitch Assandra's Rune of Wisdom"
+    },
+    {
+      "ja": "メドヴェッドの世話",
+      "en": "Medved's Tending"
+    },
+    {
+      "ja": "メドヴェッドの円環の紋章",
+      "en": "Medved's Crest of the Circle"
+    },
+    {
+      "ja": "メドヴェッドの叙事詩",
+      "en": "Medved's Saga"
+    },
+    {
+      "ja": "リキッドヴェリシウム",
+      "en": "Liquid Verisium"
+    },
+    {
+      "ja": "ルーンの合金",
+      "en": "Runic Alloy"
+    },
+    {
+      "ja": "ルーンバインダーの合金",
+      "en": "The Runebinder's Alloy"
+    },
+    {
+      "ja": "ルーンファーザーの合金",
+      "en": "The Runefather's Alloy"
+    },
+    {
+      "ja": "レッサーワードルーン",
+      "en": "Lesser Ward Rune"
+    },
+    {
+      "ja": "ワードルーン",
+      "en": "Ward Rune"
+    },
+    {
+      "ja": "ヴェリシウム",
+      "en": "Verisium"
+    },
+    {
+      "ja": "ヴォラナの叙事詩",
+      "en": "Vorana's Saga"
+    },
+    {
+      "ja": "ヴォラナの虐殺",
+      "en": "Vorana's Carnage"
+    },
+    {
+      "ja": "ヴォラナの黒鎌の紋章",
+      "en": "Vorana's Crest of the Scythe"
+    },
+    {
+      "ja": "一貫性のルーン",
+      "en": "Rune of Consistency"
+    },
+    {
+      "ja": "保護のワードルーン",
+      "en": "Warding Rune of Protection"
+    },
+    {
+      "ja": "保護の合金",
+      "en": "Protective Alloy"
+    },
+    {
+      "ja": "傑作のルーン",
+      "en": "Masterwork Rune"
+    },
+    {
+      "ja": "先見のグレータールーン",
+      "en": "Greater Vision Rune"
+    },
+    {
+      "ja": "先見のパーフェクトルーン",
+      "en": "Perfect Vision Rune"
+    },
+    {
+      "ja": "先見のルーン",
+      "en": "Vision Rune"
+    },
+    {
+      "ja": "共生のワードルーン",
+      "en": "Warding Rune of Symbiosis"
+    },
+    {
+      "ja": "冷却フラックス",
+      "en": "Chilling Flux"
+    },
+    {
+      "ja": "分点のワードルーン",
+      "en": "Warding Rune of Equinox"
+    },
+    {
+      "ja": "分解のワードルーン",
+      "en": "Warding Rune of Disintegration"
+    },
+    {
+      "ja": "制御の古代ルーン",
+      "en": "Ancient Rune of Control"
+    },
+    {
+      "ja": "勇気のワードルーン",
+      "en": "Warding Rune of Courage"
+    },
+    {
+      "ja": "十分の一税のグレータールーン",
+      "en": "Greater Rune of Tithing"
+    },
+    {
+      "ja": "可能性のオーブ",
+      "en": "Orb of Chance"
+    },
+    {
+      "ja": "名声のルーン",
+      "en": "Rune of Renown"
+    },
+    {
+      "ja": "回収のワードルーン",
+      "en": "Warding Rune of Salvaging"
+    },
+    {
+      "ja": "執着のワードルーン",
+      "en": "Warding Rune of Obsession"
+    },
+    {
+      "ja": "基礎のルーン",
+      "en": "Rune of Foundations"
+    },
+    {
+      "ja": "報復の古代ルーン",
+      "en": "Ancient Rune of Retaliation"
+    },
+    {
+      "ja": "増強のオーブ",
+      "en": "Orb of Augmentation"
+    },
+    {
+      "ja": "増強のオーブ (上級)",
+      "en": "Greater Orb of Augmentation"
+    },
+    {
+      "ja": "増強のオーブ (完全)",
+      "en": "Perfect Orb of Augmentation"
+    },
+    {
+      "ja": "変成のオーブ (上級)",
+      "en": "Greater Orb of Transmutation"
+    },
+    {
+      "ja": "変成のオーブ (完全)",
+      "en": "Perfect Orb of Transmutation"
+    },
+    {
+      "ja": "大狼の意志力のルーン",
+      "en": "The Greatwolf's Rune of Willpower"
+    },
+    {
+      "ja": "大狼の鉤爪のルーン",
+      "en": "The Greatwolf's Rune of Claws"
+    },
+    {
+      "ja": "大群の古代ルーン",
+      "en": "Ancient Rune of the Horde"
+    },
+    {
+      "ja": "天体の合金",
+      "en": "Celestial Alloy"
+    },
+    {
+      "ja": "妖術の古代ルーン",
+      "en": "Ancient Rune of Witchcraft"
+    },
+    {
+      "ja": "安定のワードルーン",
+      "en": "Warding Rune of Stability"
+    },
+    {
+      "ja": "宝石細工師のプリズム",
+      "en": "Gemcutter's Prism"
+    },
+    {
+      "ja": "宝飾職人のオーブ (上級)",
+      "en": "Greater Jeweller's Orb"
+    },
+    {
+      "ja": "宝飾職人のオーブ (完全)",
+      "en": "Perfect Jeweller's Orb"
+    },
+    {
+      "ja": "宝飾職人のオーブ (見習い)",
+      "en": "Lesser Jeweller's Orb"
+    },
+    {
+      "ja": "宮廷女官マンナンの残虐のルーン",
+      "en": "Courtesan Mannan's Rune of Cruelty"
+    },
+    {
+      "ja": "対峙のルーン",
+      "en": "Rune of Confrontation"
+    },
+    {
+      "ja": "射程のルーン",
+      "en": "Rune of Reach"
+    },
+    {
+      "ja": "崇敬される星明りの鉱石",
+      "en": "Revered Starlit Ore"
+    },
+    {
+      "ja": "嵐のグレータールーン",
+      "en": "Greater Storm Rune"
+    },
+    {
+      "ja": "嵐のパーフェクトルーン",
+      "en": "Perfect Storm Rune"
+    },
+    {
+      "ja": "嵐のルーン",
+      "en": "Storm Rune"
+    },
+    {
+      "ja": "嵐のレッサールーン",
+      "en": "Lesser Storm Rune"
+    },
+    {
+      "ja": "希少なヴェリシウム",
+      "en": "Exceptional Verisium"
+    },
+    {
+      "ja": "強固のグレータールーン",
+      "en": "Greater Robust Rune"
+    },
+    {
+      "ja": "強固のパーフェクトルーン",
+      "en": "Perfect Robust Rune"
+    },
+    {
+      "ja": "強固のルーン",
+      "en": "Robust Rune"
+    },
+    {
+      "ja": "強固のレッサールーン",
+      "en": "Lesser Robust Rune"
+    },
+    {
+      "ja": "復活のグレータールーン",
+      "en": "Greater Rebirth Rune"
+    },
+    {
+      "ja": "復活のパーフェクトルーン",
+      "en": "Perfect Rebirth Rune"
+    },
+    {
+      "ja": "復活のルーン",
+      "en": "Rebirth Rune"
+    },
+    {
+      "ja": "復活のレッサールーン",
+      "en": "Lesser Rebirth Rune"
+    },
+    {
+      "ja": "心臓のワードルーン",
+      "en": "Warding Rune of Heart"
+    },
+    {
+      "ja": "抽出のオーブ",
+      "en": "Orb of Extraction"
+    },
+    {
+      "ja": "拡張の合金",
+      "en": "Expansive Alloy"
+    },
+    {
+      "ja": "敵意の古代ルーン",
+      "en": "Ancient Rune of Animosity"
+    },
+    {
+      "ja": "旋風の合金",
+      "en": "Cyclonic Alloy"
+    },
+    {
+      "ja": "族長ガートの野生のルーン",
+      "en": "Thane Girt's Rune of Wildness"
+    },
+    {
+      "ja": "族長グラネルの熟達のルーン",
+      "en": "Thane Grannell's Rune of Mastery"
+    },
+    {
+      "ja": "族長ミュルクの夏のルーン",
+      "en": "Thane Myrk's Rune of Summer"
+    },
+    {
+      "ja": "族長レルドの春のルーン",
+      "en": "Thane Leld's Rune of Spring"
+    },
+    {
+      "ja": "武勇の古代ルーン",
+      "en": "Ancient Rune of Prowess"
+    },
+    {
+      "ja": "殲滅のワードルーン",
+      "en": "Warding Rune of Annihilation"
+    },
+    {
+      "ja": "氷河のグレータールーン",
+      "en": "Greater Glacial Rune"
+    },
+    {
+      "ja": "氷河のパーフェクトルーン",
+      "en": "Perfect Glacial Rune"
+    },
+    {
+      "ja": "氷河のルーン",
+      "en": "Glacial Rune"
+    },
+    {
+      "ja": "氷河のレッサールーン",
+      "en": "Lesser Glacial Rune"
+    },
+    {
+      "ja": "決意のグレータールーン",
+      "en": "Greater Resolve Rune"
+    },
+    {
+      "ja": "決意のパーフェクトルーン",
+      "en": "Perfect Resolve Rune"
+    },
+    {
+      "ja": "決意のルーン",
+      "en": "Resolve Rune"
+    },
+    {
+      "ja": "決意のレッサールーン",
+      "en": "Lesser Resolve Rune"
+    },
+    {
+      "ja": "決闘の古代ルーン",
+      "en": "Ancient Rune of Dueling"
+    },
+    {
+      "ja": "浅い傷のワードルーン",
+      "en": "Warding Rune of Glancing"
+    },
+    {
+      "ja": "消去のオーブ",
+      "en": "Orb of Annulment"
+    },
+    {
+      "ja": "滋養のワードルーン",
+      "en": "Warding Rune of Nourishment"
+    },
+    {
+      "ja": "火炎フラックス",
+      "en": "Blazing Flux"
+    },
+    {
+      "ja": "熟練工のオーブ",
+      "en": "Artificer's Orb"
+    },
+    {
+      "ja": "熟達のグレータールーン",
+      "en": "Greater Adept Rune"
+    },
+    {
+      "ja": "熟達のパーフェクトルーン",
+      "en": "Perfect Adept Rune"
+    },
+    {
+      "ja": "熟達のルーン",
+      "en": "Adept Rune"
+    },
+    {
+      "ja": "熟達のレッサールーン",
+      "en": "Lesser Adept Rune"
+    },
+    {
+      "ja": "狩猟のルーン",
+      "en": "Rune of the Hunt"
+    },
+    {
+      "ja": "王権の合金",
+      "en": "Sovereign Alloy"
+    },
+    {
+      "ja": "王者のオーブ",
+      "en": "Regal Orb"
+    },
+    {
+      "ja": "王者のオーブ (上級)",
+      "en": "Greater Regal Orb"
+    },
+    {
+      "ja": "王者のオーブ (完全)",
+      "en": "Perfect Regal Orb"
+    },
+    {
+      "ja": "生命の炎のルーン",
+      "en": "Rune of Vital Flame"
+    },
+    {
+      "ja": "生命力のルーン",
+      "en": "Rune of Vitality"
+    },
+    {
+      "ja": "由緒ある星明りの鉱石",
+      "en": "Venerable Starlit Ore"
+    },
+    {
+      "ja": "発現する加護",
+      "en": "Emergent Protection"
+    },
+    {
+      "ja": "発現する可能性",
+      "en": "Emergent Possibility"
+    },
+    {
+      "ja": "発現する本能",
+      "en": "Emergent Instinct"
+    },
+    {
+      "ja": "発現する活力",
+      "en": "Emergent Vigour"
+    },
+    {
+      "ja": "発見の古代ルーン",
+      "en": "Ancient Rune of Discovery"
+    },
+    {
+      "ja": "真実の星明りの鉱石",
+      "en": "Veridical Starlit Ore"
+    },
+    {
+      "ja": "石のグレータールーン",
+      "en": "Greater Stone Rune"
+    },
+    {
+      "ja": "石のパーフェクトルーン",
+      "en": "Perfect Stone Rune"
+    },
+    {
+      "ja": "石のレッサールーン",
+      "en": "Lesser Stone Rune"
+    },
+    {
+      "ja": "砂漠のグレータールーン",
+      "en": "Greater Desert Rune"
+    },
+    {
+      "ja": "砂漠のパーフェクトルーン",
+      "en": "Perfect Desert Rune"
+    },
+    {
+      "ja": "砂漠のルーン",
+      "en": "Desert Rune"
+    },
+    {
+      "ja": "砂漠のレッサールーン",
+      "en": "Lesser Desert Rune"
+    },
+    {
+      "ja": "破片の古代ルーン",
+      "en": "Ancient Rune of Splinters"
+    },
+    {
+      "ja": "破砕の古代ルーン",
+      "en": "Ancient Rune of Shattering"
+    },
+    {
+      "ja": "神のオーブ",
+      "en": "Divine Orb"
+    },
+    {
+      "ja": "神秘の合金",
+      "en": "Mystic Alloy"
+    },
+    {
+      "ja": "積極性のグレータールーン",
+      "en": "Greater Rune of Alacrity"
+    },
+    {
+      "ja": "空洞のワードルーン",
+      "en": "Warding Rune of Hollowing"
+    },
+    {
+      "ja": "窮地のワードルーン",
+      "en": "Warding Rune of Desperation"
+    },
+    {
+      "ja": "精神のグレータールーン",
+      "en": "Greater Mind Rune"
+    },
+    {
+      "ja": "精神のパーフェクトルーン",
+      "en": "Perfect Mind Rune"
+    },
+    {
+      "ja": "精神のルーン",
+      "en": "Mind Rune"
+    },
+    {
+      "ja": "精神のレッサールーン",
+      "en": "Lesser Mind Rune"
+    },
+    {
+      "ja": "統率力のグレータールーン",
+      "en": "Greater Rune of Leadership"
+    },
+    {
+      "ja": "肉体のグレータールーン",
+      "en": "Greater Body Rune"
+    },
+    {
+      "ja": "肉体のパーフェクトルーン",
+      "en": "Perfect Body Rune"
+    },
+    {
+      "ja": "肉体のルーン",
+      "en": "Body Rune"
+    },
+    {
+      "ja": "肉体のレッサールーン",
+      "en": "Lesser Body Rune"
+    },
+    {
+      "ja": "腐敗の古代ルーン",
+      "en": "Ancient Rune of Decay"
+    },
+    {
+      "ja": "蓄積のルーン",
+      "en": "Rune of Accumulation"
+    },
+    {
+      "ja": "虚無フラックス",
+      "en": "Void Flux"
+    },
+    {
+      "ja": "補強のワードルーン",
+      "en": "Warding Rune of Reinforcement"
+    },
+    {
+      "ja": "護衛のワードルーン",
+      "en": "Warding Rune of Bodyguards"
+    },
+    {
+      "ja": "起爆の古代ルーン",
+      "en": "Ancient Rune of Detonation"
+    },
+    {
+      "ja": "超越の合金",
+      "en": "Transcendent Alloy"
+    },
+    {
+      "ja": "軽業のルーン",
+      "en": "Rune of Acrobatics"
+    },
+    {
+      "ja": "迅速の合金",
+      "en": "Swift Alloy"
+    },
+    {
+      "ja": "適応の合金",
+      "en": "Adaptive Alloy"
+    },
+    {
+      "ja": "鉄のグレータールーン",
+      "en": "Greater Iron Rune"
+    },
+    {
+      "ja": "鉄のパーフェクトルーン",
+      "en": "Perfect Iron Rune"
+    },
+    {
+      "ja": "鉄のルーン",
+      "en": "Iron Rune"
+    },
+    {
+      "ja": "鉄のレッサールーン",
+      "en": "Lesser Iron Rune"
+    },
+    {
+      "ja": "錬金術のオーブ",
+      "en": "Orb of Alchemy"
+    },
+    {
+      "ja": "鍛冶屋の砥石",
+      "en": "Blacksmith's Whetstone"
+    },
+    {
+      "ja": "鎧鍛冶の端材",
+      "en": "Armourer's Scrap"
+    },
+    {
+      "ja": "開花のルーン",
+      "en": "Rune of the Blossom"
+    },
+    {
+      "ja": "防護の星明りの鉱石",
+      "en": "Warding Starlit Ore"
+    },
+    {
+      "ja": "集大成のルーン",
+      "en": "Rune of Culmination"
+    },
+    {
+      "ja": "雷撃フラックス",
+      "en": "Crackling Flux"
+    },
+    {
+      "ja": "骨組みのワードルーン",
+      "en": "Warding Rune of Armature"
+    },
+    {
+      "ja": "高潔なグレータールーン",
+      "en": "Greater Rune of Nobility"
+    },
+    {
+      "ja": "高貴なオーブ",
+      "en": "Exalted Orb"
+    },
+    {
+      "ja": "高貴なオーブ (上級)",
+      "en": "Greater Exalted Orb"
+    },
+    {
+      "ja": "高貴なオーブ (完全)",
+      "en": "Perfect Exalted Orb"
+    },
+    {
+      "ja": "鼓舞のグレータールーン",
+      "en": "Greater Inspiration Rune"
+    },
+    {
+      "ja": "鼓舞のパーフェクトルーン",
+      "en": "Perfect Inspiration Rune"
+    },
+    {
+      "ja": "鼓舞のルーン",
+      "en": "Inspiration Rune"
+    },
+    {
+      "ja": "鼓舞のレッサールーン",
+      "en": "Lesser Inspiration Rune"
+    }
+  ],
+  "excluded_items": 61
+}

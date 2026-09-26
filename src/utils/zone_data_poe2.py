@@ -243,7 +243,7 @@ DEFAULT_ZONE_DATA_POE2 = {
         {
             "id": "poe2_act3_area05",
             "zone": "アザク湿原",
-            "level": 36,
+            "level": 40,
             "zone_en": "The Azak Bog"
         },
         {

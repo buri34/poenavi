@@ -121,6 +121,58 @@ def test_service_registers_only_supplied_mode_actions():
     assert emitted == ["poetore_capture", "poetore_capture_released"]
 
 
+def test_unmodified_hotkey_does_not_fire_with_modifier_held():
+    listeners = []
+    service = GlobalHotkeyService(
+        {"expedition_reward_ocr": "e"},
+        listener_factory=(
+            lambda **kwargs: listeners.append(FakeListener(**kwargs))
+            or listeners[-1]
+        ),
+    )
+    emitted = []
+    service.command.connect(emitted.append)
+    service.start()
+
+    listeners[0].on_press(SimpleNamespace(name="ctrl"))
+    listeners[0].on_press(SimpleNamespace(char="e", vk=ord("E")))
+    listeners[0].on_release(SimpleNamespace(char="e", vk=ord("E")))
+    listeners[0].on_release(SimpleNamespace(name="ctrl"))
+    assert emitted == []
+
+    listeners[0].on_press(SimpleNamespace(char="e", vk=ord("E")))
+    assert emitted == ["expedition_reward_ocr"]
+
+
+def test_separate_ocr_hotkeys_accept_multi_modifiers_and_reject_extras():
+    for action, trigger in (
+        ("expedition_reward_ocr", "e"),
+        ("desecration_tier_ocr", "r"),
+    ):
+        listeners = []
+        service = GlobalHotkeyService(
+            {action: f"Shift+Ctrl+{trigger}"},
+            listener_factory=(
+                lambda **kwargs: listeners.append(FakeListener(**kwargs))
+                or listeners[-1]
+            ),
+        )
+        emitted = []
+        service.command.connect(emitted.append)
+        service.start()
+
+        listeners[0].on_press(SimpleNamespace(name="ctrl"))
+        listeners[0].on_press(SimpleNamespace(name="shift"))
+        listeners[0].on_press(SimpleNamespace(name="alt"))
+        listeners[0].on_press(SimpleNamespace(char=trigger, vk=ord(trigger.upper())))
+        assert emitted == []
+        listeners[0].on_release(SimpleNamespace(char=trigger, vk=ord(trigger.upper())))
+        listeners[0].on_release(SimpleNamespace(name="alt"))
+        listeners[0].on_press(SimpleNamespace(char=trigger, vk=ord(trigger.upper())))
+        assert emitted == [action]
+        service.stop()
+
+
 def test_capture_release_waits_for_every_key_regardless_of_release_order():
     listeners = []
     service = GlobalHotkeyService(

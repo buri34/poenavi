@@ -1,13 +1,18 @@
+import threading
+
 import pytest
 
 from src.poetore.models import ParsedItem
 from src.poetore.parser import parse_item_text
 from src.poetore.poe_ninja import (
-    CACHE_TTL_SECONDS, PoeNinjaPrice, PoeNinjaPriceService, divine_chaos_rate,
-    match_poe_ninja_price,
-    match_poe_ninja_identity,
+    CACHE_TTL_SECONDS,
+    PoeNinjaPrice,
+    PoeNinjaPriceService,
+    divine_chaos_rate,
     match_poe2_exchange_price,
     match_poe2_unique_price,
+    match_poe_ninja_identity,
+    match_poe_ninja_price,
 )
 from src.poetore.trade import english_trade_identity
 
@@ -74,6 +79,31 @@ def test_related_captured_beast_identity_matches_beast_overview():
     assert price.chaos == 42
     assert price.source_type == "Beast"
     assert "/beasts/wild-hellion-alpha" in price.url
+
+
+def test_corpse_matches_poe_ninja_corpse_overview():
+    payload = {
+        "itemOverviews": [{
+            "type": "Corpse",
+            "lines": [{
+                "name": "Perfect Forest Tiger", "chaos": 42,
+                "graph": [], "sparkLine": {"totalChange": 3},
+            }],
+        }],
+    }
+    item = ParsedItem(
+        item_class="死体", rarity="カレンシー", name="完全体のフォレストタイガー",
+        base_type="完全体のフォレストタイガー", category="corpse",
+    )
+
+    price = match_poe_ninja_price(
+        payload, item, "Standard", trade_base_type="Perfect Forest Tiger",
+    )
+
+    assert price is not None
+    assert price.source_type == "Corpse"
+    assert price.chaos == 42
+    assert "/corpses/perfect-forest-tiger" in price.url
 
 
 def _payload():
@@ -215,6 +245,89 @@ def test_divine_chaos_rate_uses_currency_overview_and_rejects_invalid_values():
     payload = _payload()
     payload["currencyOverviews"][0]["lines"][0]["chaos"] = 29.9
     assert divine_chaos_rate(payload) is None
+
+
+def test_expedition_reward_lookup_searches_exchange_categories_and_converts_to_exalted():
+    payloads = {
+        "Currency": {
+            "core": {"primary": "chaos", "rates": {"exalted": 0.2, "divine": 0.01}},
+            "items": [{"id": "exalted", "name": "Exalted Orb", "detailsId": "exalted-orb"}],
+            "lines": [{
+                "id": "exalted", "primaryValue": 5,
+                "maxVolumeRate": 0.2, "maxVolumeCurrency": "chaos",
+            }],
+        },
+        "Runes": {
+            "core": {"primary": "chaos", "rates": {"exalted": 0.2, "divine": 0.01}},
+            "items": [{"id": "desert", "name": "Desert Rune", "detailsId": "desert-rune"}],
+            "lines": [{
+                "id": "desert", "primaryValue": 25,
+                "maxVolumeRate": 0.04, "maxVolumeCurrency": "chaos",
+            }],
+        },
+    }
+    service = PoeNinjaPriceService(
+        poe2_exchange_fetcher=lambda _league, type_name: payloads.get(
+            type_name, {"core": {}, "items": [], "lines": []}
+        )
+    )
+
+    prices = service.lookup_poe2_expedition_rewards(
+        ("Exalted Orb", "Desert Rune", "Missing"), "Test League"
+    )
+
+    assert set(prices) == {"Exalted Orb", "Desert Rune"}
+    assert prices["Desert Rune"].chaos == 25
+    assert service.exalted_chaos_rate("Test League") == 5
+
+
+def test_expedition_prefetch_populates_all_categories_before_lookup():
+    calls = []
+    service = PoeNinjaPriceService(
+        poe2_exchange_fetcher=lambda _league, type_name: calls.append(type_name) or {
+            "core": {}, "items": [], "lines": [],
+        },
+    )
+
+    assert service.prefetch_poe2_expedition_rewards("Test League") == 5
+    assert len(calls) == 5
+
+    service.lookup_poe2_expedition_rewards(("Missing",), "Test League")
+    assert len(calls) == 5
+
+
+def test_exchange_cache_coalesces_background_and_foreground_fetches():
+    fetch_started = threading.Event()
+    allow_fetch = threading.Event()
+    calls = []
+
+    def fetch(_league, _type_name):
+        calls.append(True)
+        fetch_started.set()
+        assert allow_fetch.wait(timeout=2)
+        return {"core": {}, "items": [], "lines": []}
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetch)
+    results = []
+    first = threading.Thread(
+        target=lambda: results.append(
+            service._poe2_exchange_payload("Test League", "Runes")
+        )
+    )
+    second = threading.Thread(
+        target=lambda: results.append(
+            service._poe2_exchange_payload("Test League", "Runes")
+        )
+    )
+    first.start()
+    assert fetch_started.wait(timeout=2)
+    second.start()
+    allow_fetch.set()
+    first.join(timeout=2)
+    second.join(timeout=2)
+
+    assert len(calls) == 1
+    assert len(results) == 2
 
 
 def test_trend_summary_uses_signed_total_change_instead_of_graph_deviation():
@@ -489,6 +602,27 @@ def test_poe2_unique_overview_matches_name_base_and_divine_value():
     )
 
 
+def test_poe2_unique_overview_supports_exalted_primary_without_rates():
+    payload = _poe2_unique_payload()
+    payload["core"] = {
+        "items": [{"id": "exalted", "name": "Exalted Orb"}],
+        "rates": {},
+        "primary": "exalted",
+        "secondary": "divine",
+    }
+    payload["lines"][0]["primaryValue"] = 88.0
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
+
+    price = match_poe2_unique_price(
+        payload, item, "Forbidden Rites",
+        trade_name="Mageblood", trade_base_type="Utility Belt",
+    )
+
+    assert price is not None
+    assert price.display_price_parts() == ("88", "exalted")
+    assert "/poe2/economy/forbiddenrites/" in price.url
+
+
 def test_poe2_unique_hc_overview_uses_poe_ninja_suffix_slug():
     item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
     price = match_poe2_unique_price(
@@ -551,6 +685,22 @@ def test_poe2_divine_exalted_rate_uses_currency_exchange_core_and_cache():
     assert calls == [("Runes of Aldur", "Currency")]
 
 
+def test_poe2_divine_exalted_rate_inverts_exalted_primary_core():
+    payload = {
+        "core": {
+            "primary": "exalted", "secondary": "divine",
+            "rates": {"divine": 0.02, "chaos": 0.575},
+        },
+        "items": [],
+        "lines": [],
+    }
+    service = PoeNinjaPriceService(
+        poe2_exchange_fetcher=lambda _league, _type: payload,
+    )
+
+    assert service.divine_exalted_rate("Forbidden Rites") == pytest.approx(50.0)
+
+
 def test_poe2_exchange_matches_uncut_gem_and_uses_most_traded_quote_currency():
     item = ParsedItem(
         "Uncut Skill Gems", "currency", "Uncut Skill Gem (Level 18)",
@@ -565,6 +715,33 @@ def test_poe2_exchange_matches_uncut_gem_and_uses_most_traded_quote_currency():
         "https://poe.ninja/poe2/economy/runesofaldur/"
         "uncut-gems/uncut-skill-gem-level-18"
     )
+
+
+def test_poe2_exchange_supports_exalted_primary_core():
+    payload = _poe2_exchange_payload()
+    payload["core"] = {
+        "primary": "exalted", "secondary": "divine",
+        "rates": {"divine": 0.02, "chaos": 0.575},
+    }
+    payload["lines"][0].update({
+        "primaryValue": 2.0,
+        "maxVolumeCurrency": "exalted",
+        "maxVolumeRate": 0.5,
+    })
+    item = ParsedItem(
+        "Uncut Skill Gems", "currency", "Uncut Skill Gem (Level 18)",
+        "Uncut Skill Gem (Level 18)", "uncut_gem",
+    )
+
+    price = match_poe2_exchange_price(
+        payload, item, "Forbidden Rites", source_type="UncutGems",
+    )
+
+    assert price is not None
+    assert price.chaos == pytest.approx(1.15)
+    assert price.divine_chaos == pytest.approx(28.75)
+    assert price.display_price_parts() == ("2", "exalted")
+    assert "/poe2/economy/forbiddenrites/" in price.url
 
 
 def test_poe2_exchange_hc_overview_uses_poe_ninja_suffix_slug():
@@ -634,6 +811,36 @@ def test_poe2_augments_use_their_exchange_overviews(
     assert price.display_price_parts() == ("4.6", "exalted")
     assert price.url.endswith(f"/{slug}/augment")
     assert calls == [("Runes of Aldur", source_type)]
+
+
+def test_lookup_poe2_augments_returns_only_requested_unambiguous_names():
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        names = ["Adept Rune"] if type_name == "Runes" else []
+        return {
+            "core": {"primary": "exalted", "rates": {"chaos": 0.5}},
+            "items": [
+                {"id": name, "name": name, "detailsId": name.lower()}
+                for name in names
+            ],
+            "lines": [
+                {"id": name, "primaryValue": 2, "sparkline": {"data": []}}
+                for name in names
+            ],
+        }
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    prices = service.lookup_poe2_augments(
+        ("Adept Rune", "Missing Rune"), "Runes of Aldur",
+    )
+
+    assert tuple(prices) == ("Adept Rune",)
+    assert prices["Adept Rune"].source_type == "Runes"
+    assert {type_name for _league, type_name in calls} == {
+        "Runes", "SoulCores", "Ultimatum", "Idols", "Abyss",
+    }
 
 
 @pytest.mark.parametrize(
@@ -760,8 +967,7 @@ def test_poe2_fragment_exchange_uses_allowlist_and_fragments_overview():
     [
         "Primary Calamity Fragment", "Secondary Calamity Fragment",
         "Tertiary Calamity Fragment", "Zarokh's Reliquary Key: Temporalis",
-        "An Audience with the King", "Head of the King", "Idol of Estazunti",
-        "Breachstone",
+        "Idol of Estazunti",
     ],
 )
 def test_poe2_fragment_exchange_excludes_pending_and_trade2_items(base_type):
@@ -770,6 +976,42 @@ def test_poe2_fragment_exchange_excludes_pending_and_trade2_items(base_type):
     )
     item = ParsedItem("Special", "normal", "", base_type, "map_fragment")
     assert service.lookup_poe2_exchange(item, "Runes of Aldur") is None
+
+
+@pytest.mark.parametrize(
+    ("base_type", "source_type", "slug"),
+    [
+        ("An Audience with the King", "Ritual", "omens"),
+        ("Head of the King", "Ritual", "omens"),
+        ("Breachstone", "Breach", "breach-catalyst"),
+    ],
+)
+def test_poe2_special_exchange_items_use_their_poe_ninja_categories(
+    base_type, source_type, slug,
+):
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        return {
+            "core": {"primary": "divine", "rates": {"chaos": 7.74}},
+            "items": [{"id": "item", "name": base_type, "detailsId": "item"}],
+            "lines": [{
+                "id": "item", "primaryValue": 0.5,
+                "maxVolumeCurrency": "exalted", "maxVolumeRate": 0.25,
+                "sparkline": {"data": [], "totalChange": 0},
+            }],
+        }
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    category = "breachstone" if base_type == "Breachstone" else "map_fragment"
+    item = ParsedItem("Special", "normal", "", base_type, category)
+    price = service.lookup_poe2_exchange(item, "Runes of Aldur")
+
+    assert price is not None
+    assert price.source_type == source_type
+    assert price.url.endswith(f"/{slug}/item")
+    assert calls == [("Runes of Aldur", source_type)]
 
 
 def test_poe2_expedition_logbook_uses_expedition_exchange_overview():

@@ -239,11 +239,12 @@ def test_main_mode_uses_suppressed_service_for_capture_hotkey(monkeypatch):
     )
     assert callable(service.options["result_window_checker"])
     assert callable(service.options["poe_target_getter"])
+    assert service.options["allow_unmodified"] is True
     assert service.command.connected is window.hotkey_signal.emit
     assert service.started
 
 
-def test_main_mode_does_not_register_poetore_hotkeys_in_poe2(monkeypatch):
+def test_main_mode_registers_poetore_hotkeys_in_poe2(monkeypatch):
     class FakeListener:
         def __init__(self, on_press, on_release):
             self.on_press = on_press
@@ -269,12 +270,16 @@ def test_main_mode_does_not_register_poetore_hotkeys_in_poe2(monkeypatch):
         _hotkey_action_allowed=lambda _action: True,
     )
     monkeypatch.setattr("src.ui.main_window.pynput_keyboard.Listener", FakeListener)
+    monkeypatch.setattr(
+        "src.ui.main_window.suppressed_hotkeys_supported", lambda: False,
+    )
 
     MainWindow.register_hotkeys(window)
 
-    assert "poetore_capture" not in window.hotkey_map.values()
-    assert "poetore_auto_hide" not in window.hotkey_map.values()
-    assert "map_check" in window.hotkey_map.values()
+    assert "poetore_capture" in window.hotkey_map.values()
+    assert "poetore_auto_hide" in window.hotkey_map.values()
+    assert "map_check" not in window.hotkey_map.values()
+    assert window._gem_shop_search_key == "none"
 
 
 def test_main_mode_emits_auto_hide_release_separately(monkeypatch):
@@ -361,9 +366,11 @@ def test_settings_dialog_can_change_poetore_capture_hotkey(monkeypatch):
     try:
         assert dialog.poetore_capture_btn.key_text == "ctrl+P"
         assert dialog.poetore_capture_btn.ctrl_button.isChecked()
+        assert dialog.poetore_capture_btn.no_modifier_button is not None
         assert dialog.poetore_capture_btn.key_button.key_text == "P"
         assert dialog.poetore_auto_hide_btn.key_text == "ctrl+d"
         assert dialog.poetore_auto_hide_btn.ctrl_button.isChecked()
+        assert dialog.poetore_auto_hide_btn.no_modifier_button is None
         assert dialog.poetore_auto_hide_btn.key_button.key_text == "d"
         assert dialog.poetore_auto_hide_btn.ctrl_button.width() == 48
         assert dialog.poetore_auto_hide_btn.alt_button.width() == 48
@@ -395,6 +402,41 @@ def test_settings_dialog_can_change_poetore_capture_hotkey(monkeypatch):
         assert dialog.get_settings()["hotkeys"]["cheat_sheets_toggle"] == "Ctrl+Space"
         assert dialog.get_settings()["hotkeys"]["exit"] == "Ctrl+F5"
         assert dialog.get_settings()["stash_tab_scroll_enabled"] is False
+
+        dialog.poetore_capture_btn.set_modifier("none")
+        dialog.poetore_capture_btn.set_key("F8")
+        assert dialog.get_settings()["hotkeys"]["poetore_capture"] == "F8"
+        assert dialog.get_settings()["hotkeys"]["poetore_auto_hide"] == "alt+Q"
+    finally:
+        dialog.close()
+        app.processEvents()
+
+
+def test_settings_dialog_preserves_single_key_for_capture_only(monkeypatch):
+    app = QApplication.instance() or QApplication([])
+    monkeypatch.setattr("src.ui.settings_dialog.load_guide_data", lambda _version: {})
+    monkeypatch.setattr(
+        "src.ui.settings_dialog.load_zone_master_data",
+        lambda: {
+            "zone_data_by_version": {"poe1": {}, "poe2": {}},
+            "town_zones_by_version": {"poe1": [], "poe2": []},
+        },
+    )
+    monkeypatch.setattr(SettingsDialog, "_rebuild_zone_tab", lambda self: None)
+    monkeypatch.setattr(
+        "src.ui.settings_dialog.save_zone_master_data",
+        lambda *_args, **_kwargs: None,
+    )
+    dialog = SettingsDialog(current_config={
+        "hotkeys": {"poetore_capture": "F8", "poetore_auto_hide": "ctrl+d"},
+        "poe_version": "poe1",
+        "poe_version_mode": "ask",
+    })
+    try:
+        assert dialog.poetore_capture_btn.no_modifier_button.isChecked()
+        assert dialog.poetore_capture_btn.key_text == "F8"
+        assert dialog.poetore_auto_hide_btn.no_modifier_button is None
+        assert dialog.poetore_auto_hide_btn.key_text == "ctrl+d"
     finally:
         dialog.close()
         app.processEvents()

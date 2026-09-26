@@ -28,9 +28,14 @@ from src.single_instance import (
     consume_restart_pid,
     wait_for_previous_instance,
 )
+from src.app_font import apply_bundled_ui_font
+from src.windows_autostart import (
+    consume_windows_startup_poetore_argument,
+    sync_windows_poetore_autostart_with_error,
+)
 
 
-def select_startup_options(config):
+def select_startup_options(config, force_poetore=False):
     """PoEバージョンと使用機能を確定し、必要なら統合選択画面を表示する。"""
     updated = dict(config or {})
     version_mode = updated.get("poe_version_mode", "ask")
@@ -38,6 +43,9 @@ def select_startup_options(config):
     if current_version not in (POE1, POE2):
         current_version = POE1
     selected_version = version_mode if version_mode in (POE1, POE2) else current_version
+
+    if force_poetore and is_feature_supported(POETORE, selected_version):
+        return updated, POETORE_MODE
 
     preferred_mode, show_selector = startup_preferences(config)
     if (
@@ -83,9 +91,11 @@ def select_startup_options(config):
 
 def run():
     started_at = perf_counter()
+    force_poetore = consume_windows_startup_poetore_argument(sys.argv)
     restart_pid = consume_restart_pid(sys.argv)
     wait_for_previous_instance(restart_pid)
     app = QApplication(sys.argv)
+    apply_bundled_ui_font(app)
     single_instance = SingleInstanceGuard(parent=app)
     if not single_instance.start():
         QMessageBox.information(
@@ -96,6 +106,12 @@ def run():
         )
         return 0
     config = ConfigManager.load_config()
+    autostart_error = sync_windows_poetore_autostart_with_error(config)
+    if autostart_error:
+        print(
+            "[startup] Windows自動起動の同期に失敗しました: "
+            f"{autostart_error}"
+        )
 
     from src.update.startup_gate import run_startup_update_gate
 
@@ -104,7 +120,10 @@ def run():
     app.setProperty("startupUpdateChecked", True)
 
     config = ConfigManager.load_config()
-    startup_selection = select_startup_options(config)
+    if force_poetore:
+        startup_selection = select_startup_options(config, force_poetore=True)
+    else:
+        startup_selection = select_startup_options(config)
     if startup_selection is None:
         return 0
     config, app_mode = startup_selection

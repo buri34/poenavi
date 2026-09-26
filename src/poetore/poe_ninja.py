@@ -5,19 +5,23 @@ import re
 import threading
 import time
 import unicodedata
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Callable
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from .models import ParsedItem
-
 
 API_URL = "https://poe.ninja/poe1/api/economy/current/dense/overviews"
 STASH_OVERVIEW_URL = "https://poe.ninja/poe1/api/economy/stash/current/item/overview"
 POE2_STASH_OVERVIEW_URL = "https://poe.ninja/poe2/api/economy/stash/current/item/overview"
 POE2_EXCHANGE_OVERVIEW_URL = "https://poe.ninja/poe2/api/economy/exchange/current/overview"
 CACHE_TTL_SECONDS = 31 * 60
+POE2_EXPEDITION_REWARD_TYPES = (
+    "Currency", "Expedition", "UncutGems", "Runes", "Verisium",
+)
+POE2_AUGMENT_TYPES = ("Runes", "SoulCores", "Ultimatum", "Idols", "Abyss")
 
 _UNIQUE_TYPES = {
     "UniqueJewel", "ForbiddenJewel", "UniqueFlask", "UniqueWeapon", "UniqueArmour",
@@ -32,6 +36,7 @@ _EXACT_TYPES_BY_CATEGORY = {
     "invitation": {"Invitation"},
     "incursion_item": {"IncursionTemple"},
     "scarab": {"Scarab"},
+    "corpse": {"Corpse"},
 }
 _MAP_TYPES = {"Map", "BlightedMap", "BlightRavagedMap", "ValdoMap"}
 POE2_FRAGMENT_EXCHANGE_NAMES = frozenset({
@@ -49,6 +54,10 @@ POE2_EXPEDITION_SAGA_NAMES = frozenset({
     "Vorana's Saga",
 })
 POE2_OMEN_ITEM_CLASSES = frozenset({"Omens", "Omen", "お告げ"})
+POE2_RITUAL_EXCHANGE_NAMES = frozenset({
+    "An Audience with the King", "Head of the King",
+})
+POE2_BREACH_EXCHANGE_NAMES = frozenset({"Breachstone"})
 
 
 @dataclass(frozen=True)
@@ -156,6 +165,26 @@ def _league_slug(league: str) -> str:
     return f"{value}hc" if hardcore else value
 
 
+def _poe2_core_rate(core: dict, source: str, target: str) -> float | None:
+    primary = str(core.get("primary", "")).casefold()
+    rates = core.get("rates") or {}
+
+    def relative_value(currency: str) -> float | None:
+        if currency.casefold() == primary:
+            return 1.0
+        try:
+            value = float(rates.get(currency.casefold(), 0))
+        except (TypeError, ValueError):
+            return None
+        return value if value > 0 else None
+
+    source_value = relative_value(source)
+    target_value = relative_value(target)
+    if source_value is None or target_value is None:
+        return None
+    return target_value / source_value
+
+
 def _line_url(league: str, overview_url: str, line: dict) -> str:
     details = str(line.get("name", ""))
     if line.get("variant"):
@@ -170,6 +199,7 @@ _URL_BY_TYPE = {
     "Artifact": "artifacts", "Tattoo": "tattoos", "Omen": "omens", "Vial": "vials",
     "Incubator": "incubators", "Runegraft": "runegrafts", "DjinnCoin": "djinn-coins",
     "Astrolabe": "astrolabes", "Ducat": "ducats",
+    "Corpse": "corpses",
     "EnshroudingCrystal": "enshrouding-crystals", "AllflameEmber": "allflame-embers", "Beast": "beasts",
     "Invitation": "invitations", "Map": "maps", "BlightedMap": "blighted-maps",
     "BlightRavagedMap": "blight-ravaged-maps", "ValdoMap": "valdo-maps",
@@ -202,6 +232,7 @@ class PoeNinjaPriceService:
         self._stash_cache: dict[tuple[str, str], tuple[float, dict]] = {}
         self._poe2_cache: dict[tuple[str, str], tuple[float, dict]] = {}
         self._poe2_exchange_cache: dict[tuple[str, str], tuple[float, dict]] = {}
+        self._poe2_exchange_fetch_locks: dict[tuple[str, str], threading.Lock] = {}
         self._lock = threading.Lock()
 
     def clear(self):
@@ -322,11 +353,90 @@ class PoeNinjaPriceService:
         if not league or re.search(r"\(PL\d+\)$", league):
             return None
         payload = self._poe2_exchange_payload(league, "Currency")
-        core = payload.get("core") or {}
-        if core.get("primary") != "divine":
+        return _poe2_core_rate(payload.get("core") or {}, "divine", "exalted")
+
+    def exalted_chaos_rate(self, league: str) -> float | None:
+        """Return the PoE2 league's current Exalted Orb value in Chaos Orbs."""
+        if not league or re.search(r"\(PL\d+\)$", league):
             return None
-        rate = float((core.get("rates") or {}).get("exalted", 0))
-        return rate if rate > 0 else None
+        payload = self._poe2_exchange_payload(league, "Currency")
+        return _poe2_core_rate(payload.get("core") or {}, "exalted", "chaos")
+
+    def lookup_poe2_expedition_rewards(
+        self, names: tuple[str, ...], league: str,
+    ) -> dict[str, PoeNinjaPrice]:
+        """Resolve exact English reward names across poe.ninja exchange categories."""
+        wanted = tuple(dict.fromkeys(name.strip() for name in names if name.strip()))
+        if not wanted or not league or re.search(r"\(PL\d+\)$", league):
+            return {}
+
+        payloads = self._fetch_poe2_exchange_categories(
+            league, POE2_EXPEDITION_REWARD_TYPES,
+        )
+
+        resolved: dict[str, PoeNinjaPrice] = {}
+        for type_name in POE2_EXPEDITION_REWARD_TYPES:
+            payload = payloads.get(type_name)
+            if payload is None:
+                continue
+            for name in wanted:
+                if name in resolved:
+                    continue
+                price = match_poe2_exchange_identity(
+                    payload, name, league, type_name,
+                )
+                if price is not None:
+                    resolved[name] = price
+        return resolved
+
+    def lookup_poe2_augments(
+        self, names: tuple[str, ...], league: str,
+    ) -> dict[str, PoeNinjaPrice]:
+        """Resolve only requested Rune/Soul Core names, rejecting ambiguity."""
+        wanted = tuple(dict.fromkeys(name.strip() for name in names if name.strip()))
+        if not wanted or not league or re.search(r"\(PL\d+\)$", league):
+            return {}
+        payloads = self._fetch_poe2_exchange_categories(league, POE2_AUGMENT_TYPES)
+        matches: dict[str, list[PoeNinjaPrice]] = {name: [] for name in wanted}
+        for type_name in POE2_AUGMENT_TYPES:
+            payload = payloads.get(type_name)
+            if payload is None:
+                continue
+            for name in wanted:
+                price = match_poe2_exchange_identity(payload, name, league, type_name)
+                if price is not None:
+                    matches[name].append(price)
+        return {
+            name: rows[0] for name, rows in matches.items() if len(rows) == 1
+        }
+
+    def prefetch_poe2_expedition_rewards(self, league: str) -> int:
+        """Warm the Expedition exchange cache outside the scan critical path."""
+        if not league or re.search(r"\(PL\d+\)$", league):
+            return 0
+        return len(self._fetch_poe2_exchange_categories(
+            league, POE2_EXPEDITION_REWARD_TYPES,
+        ))
+
+    def _fetch_poe2_exchange_categories(
+        self, league: str, type_names: tuple[str, ...],
+    ) -> dict[str, dict]:
+        def fetch(type_name: str) -> tuple[str, dict]:
+            return type_name, self._poe2_exchange_payload(league, type_name)
+
+        payloads: dict[str, dict] = {}
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = {
+                executor.submit(fetch, type_name): type_name
+                for type_name in type_names
+            }
+            for future in as_completed(futures):
+                try:
+                    type_name, payload = future.result()
+                except Exception:  # noqa: BLE001, S112 - optional category
+                    continue
+                payloads[type_name] = payload
+        return payloads
 
     def lookup_identity(
         self, namespace: str, name: str, variant: str | None, league: str,
@@ -399,11 +509,29 @@ class PoeNinjaPriceService:
             now = self._clock()
             if cached and now - cached[0] < CACHE_TTL_SECONDS:
                 return cached[1]
+            fetch_lock = self._poe2_exchange_fetch_locks.setdefault(
+                key, threading.Lock(),
+            )
+        # Coalesce a background prefetch and an early user scan for the same
+        # category without serializing unrelated categories.
+        with fetch_lock:
+            with self._lock:
+                cached = self._poe2_exchange_cache.get(key)
+                now = self._clock()
+                if cached and now - cached[0] < CACHE_TTL_SECONDS:
+                    return cached[1]
             payload = self._poe2_exchange_fetcher(league, type_name)
             if not isinstance(payload, dict):
-                raise ValueError("poe.ninja PoE2 Currency Exchangeの応答形式を認識できませんでした。")
-            self._poe2_exchange_cache[key] = (now, payload)
-            return payload
+                raise ValueError(
+                    "poe.ninja PoE2 Currency Exchangeの応答形式を認識できませんでした。"
+                )
+            with self._lock:
+                cached = self._poe2_exchange_cache.get(key)
+                now = self._clock()
+                if cached and now - cached[0] < CACHE_TTL_SECONDS:
+                    return cached[1]
+                self._poe2_exchange_cache[key] = (now, payload)
+                return payload
 
 
 def _refresh_from_stash_overview(price: PoeNinjaPrice, payload: dict) -> PoeNinjaPrice:
@@ -719,6 +847,10 @@ def _poe2_exchange_overview_types(item: ParsedItem) -> tuple[str, ...]:
     identity = str(item.base_type or item.name or "").strip()
     if identity in POE2_EXPEDITION_SAGA_NAMES:
         return ("Expedition",)
+    if identity in POE2_RITUAL_EXCHANGE_NAMES:
+        return ("Ritual",)
+    if identity in POE2_BREACH_EXCHANGE_NAMES or item.category == "breachstone":
+        return ("Breach",)
     if item.item_class in POE2_OMEN_ITEM_CLASSES:
         return ("Ritual",)
     if item.category == "currency":
@@ -783,28 +915,30 @@ def match_poe2_exchange_price(
     max_volume_rate = float(line.get("maxVolumeRate", 0))
     quote_currency = str(line.get("maxVolumeCurrency", "")).casefold()
     core = payload.get("core") or {}
-    if primary <= 0 or core.get("primary") != "divine":
+    primary_currency = str(core.get("primary", "")).casefold()
+    if primary <= 0 or not primary_currency:
         return None
-    chaos_rate = float((core.get("rates") or {}).get("chaos", 0))
-    if chaos_rate <= 0:
+    primary_chaos_rate = _poe2_core_rate(core, primary_currency, "chaos")
+    if primary_chaos_rate is None:
         return None
+    divine_in_chaos = _poe2_core_rate(core, "divine", "chaos")
     supported_quotes = {"divine", "exalted", "chaos"}
     if max_volume_rate > 0 and quote_currency in supported_quotes:
         quote_amount = 1 / max_volume_rate
     else:
         quote_amount = primary
-        quote_currency = "divine"
+        quote_currency = primary_currency
 
     sparkline = line.get("sparkline") or {}
     details_id = str(identity.get("detailsId", ""))
     return PoeNinjaPrice(
         str(identity.get("name", "")),
         None,
-        primary * chaos_rate,
+        primary * primary_chaos_rate,
         tuple(sparkline.get("data", ())),
         f"https://poe.ninja/poe2/economy/{_league_slug(league)}/"
         f"{_poe2_overview_slug(source_type)}/{details_id}",
-        chaos_rate,
+        divine_in_chaos,
         float(sparkline["totalChange"])
         if sparkline.get("totalChange") is not None else None,
         source_type,
@@ -836,24 +970,26 @@ def match_poe2_unique_price(
     line = matches[0]
     primary = float(line.get("primaryValue", 0))
     core = payload.get("core") or {}
-    if primary <= 0 or core.get("primary") != "divine":
+    primary_currency = str(core.get("primary", "")).casefold()
+    if primary <= 0 or not primary_currency:
         return None
-    chaos_rate = float((core.get("rates") or {}).get("chaos", 0))
-    if chaos_rate <= 0:
-        return None
+    primary_chaos_rate = _poe2_core_rate(core, primary_currency, "chaos")
+    divine_in_chaos = _poe2_core_rate(core, "divine", "chaos")
     sparkline = line.get("sparkLine") or {}
     details_id = str(line.get("detailsId", ""))
     return PoeNinjaPrice(
         str(line.get("name", "")),
         str(line["variant"]) if line.get("variant") else None,
-        primary * chaos_rate,
+        primary * primary_chaos_rate if primary_chaos_rate is not None else 0.0,
         tuple(sparkline.get("data", ())),
         f"https://poe.ninja/poe2/economy/{_league_slug(league)}/"
         f"{_poe2_overview_slug(source_type)}/{details_id}",
-        chaos_rate,
+        divine_in_chaos,
         float(sparkline["totalChange"])
         if sparkline.get("totalChange") is not None else None,
         source_type,
+        primary,
+        primary_currency,
     )
 
 

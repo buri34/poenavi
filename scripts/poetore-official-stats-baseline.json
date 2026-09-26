@@ -12179,7 +12179,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.indexable_skill_27",
-      "japanese": "全ての#ジェムのレベル +閃光"
+      "japanese": "全ての#ジェムのレベル +スパーク"
     },
     {
       "kind": "explicit",
@@ -14179,7 +14179,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1065479853",
-      "japanese": "栄光なる狂気の影響を影響を受けている時に元素系状態異常に完全無効化を持つ"
+      "japanese": "栄光の狂気の影響を影響を受けている時に元素系状態異常に完全無効化を持つ"
     },
     {
       "kind": "explicit",
@@ -14619,7 +14619,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1121911611",
-      "japanese": "同種のトーテムを2体以上同時に召喚できなくなる"
+      "japanese": "同種のトーテムを3体以上同時に召喚できなくなる"
     },
     {
       "kind": "explicit",
@@ -16954,7 +16954,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1299868012",
-      "japanese": "栄光なる狂気の影響を受けている時に#%の確率でダブルダメージを与える"
+      "japanese": "栄光の狂気の影響を受けている時に#%の確率でダブルダメージを与える"
     },
     {
       "kind": "explicit",
@@ -18169,7 +18169,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_1455353008",
-      "japanese": "Monsters cannot steal or remove your Power, Frenzy or Endurance charges on Hit"
+      "japanese": "モンスターはヒット時にパワーチャージ、フレンジーチャージまたはエンデュランスチャージを盗むことも取り除くこともできない"
     },
     {
       "kind": "explicit",
@@ -19635,6 +19635,11 @@
       "kind": "explicit",
       "stat_id": "explicit.stat_162742068",
       "japanese": "モンスターの雷耐性 +#%"
+    },
+    {
+      "kind": "explicit",
+      "stat_id": "explicit.stat_1628375748",
+      "japanese": "ソケットされたジェムはレベル#エルドリッチブラスフェミーによりサポートされる"
     },
     {
       "kind": "explicit",
@@ -28629,7 +28634,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2611224062",
-      "japanese": "栄光なる狂気の影響を受けている時に堅牢の最大数 +#"
+      "japanese": "栄光の狂気の影響を受けている時に堅牢の最大数 +#"
     },
     {
       "kind": "explicit",
@@ -29879,7 +29884,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_2780297117",
-      "japanese": "栄光なる狂気の影響を受けている時にプレイヤーが倒した敵は#%の確率で爆発し、そのライフの4分の1を混沌ダメージとして与える"
+      "japanese": "栄光の狂気の影響を受けている時にプレイヤーが倒した敵は#%の確率で爆発し、そのライフの4分の1を混沌ダメージとして与える"
     },
     {
       "kind": "explicit",
@@ -34604,7 +34609,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3359218839",
-      "japanese": "栄光なる狂気の影響を受けている時に全てのダメージが毒を付与する"
+      "japanese": "栄光の狂気の影響を受けている時に全てのダメージが毒を付与する"
     },
     {
       "kind": "explicit",
@@ -34974,7 +34979,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3408048164",
-      "japanese": "パワーチャージ1個ごとに#の最低冷気ダメージをスペルに追加する"
+      "japanese": "パワーチャージ1個ごとに#から#の冷気ダメージをスペルに追加する"
     },
     {
       "kind": "explicit",
@@ -39074,7 +39079,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_3909952544",
-      "japanese": "栄光なる狂気の影響を受けている時にプレイヤーは発火、冷却および感電のコンフラックスを持つ"
+      "japanese": "栄光の狂気の影響を受けている時にプレイヤーは発火、冷却および感電のコンフラックスを持つ"
     },
     {
       "kind": "explicit",
@@ -40819,7 +40824,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_4089743927|1|150",
-      "japanese": "ヘルメットにソケットされたスキルはレベル# フレイムウッドによってサポートされる"
+      "japanese": "ヘルメットにソケットされたスキルはレベル# フレッシュミートによってサポートされる"
     },
     {
       "kind": "explicit",
@@ -41639,7 +41644,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_4089743927|2|150",
-      "japanese": "グローブにソケットされたスキルはレベル# フレイムウッドによってサポートされる"
+      "japanese": "グローブにソケットされたスキルはレベル# フレッシュミートによってサポートされる"
     },
     {
       "kind": "explicit",
@@ -42459,7 +42464,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_4089743927|3|150",
-      "japanese": "ブーツにソケットされたスキルはレベル# フレイムウッドによってサポートされる"
+      "japanese": "ブーツにソケットされたスキルはレベル# フレッシュミートによってサポートされる"
     },
     {
       "kind": "explicit",
@@ -43279,7 +43284,7 @@
     {
       "kind": "explicit",
       "stat_id": "explicit.stat_4089743927|4|150",
-      "japanese": "パッシブツリーによって付与されたスキルはレベル# フレイムウッドによってサポートされる"
+      "japanese": "パッシブツリーによって付与されたスキルはレベル# フレッシュミートによってサポートされる"
     },
     {
       "kind": "explicit",
@@ -47348,6 +47353,11 @@
     },
     {
       "kind": "explicit",
+      "stat_id": "explicit.stat_654335115",
+      "japanese": "ソケットされたジェムはレベル#クールダウン解消によりサポートされる"
+    },
+    {
+      "kind": "explicit",
       "stat_id": "explicit.stat_654501336",
       "japanese": "ソケットされたマジックの催眠の眼のジュエルの効果が#%増加する"
     },
@@ -50568,6 +50578,11 @@
     },
     {
       "kind": "fractured",
+      "stat_id": "fractured.stat_1192661666",
+      "japanese": "トラップのクリティカル率が#%増加する"
+    },
+    {
+      "kind": "fractured",
       "stat_id": "fractured.stat_1195319608",
       "japanese": "装備中の鎧から得られるエナジーシールドが#%増加する"
     },
@@ -51868,6 +51883,11 @@
     },
     {
       "kind": "fractured",
+      "stat_id": "fractured.stat_1780168381",
+      "japanese": "トラップのクリティカルダメージ倍率 +#%"
+    },
+    {
+      "kind": "fractured",
       "stat_id": "fractured.stat_1782086450",
       "japanese": "エナジーシールドのリチャージが#%速く始まる"
     },
@@ -52723,6 +52743,11 @@
     },
     {
       "kind": "fractured",
+      "stat_id": "fractured.stat_214031493",
+      "japanese": "マインのクリティカル率が#%増加する"
+    },
+    {
+      "kind": "fractured",
       "stat_id": "fractured.stat_2142803347",
       "japanese": "敵を倒した時に#%の確率でフレンジーチャージを1個失う"
     },
@@ -53493,6 +53518,11 @@
     },
     {
       "kind": "fractured",
+      "stat_id": "fractured.stat_2445634879",
+      "japanese": "マインは#%の確率で追加で1回起爆できる"
+    },
+    {
+      "kind": "fractured",
       "stat_id": "fractured.stat_2448920197",
       "japanese": "効果が#%増加する"
     },
@@ -53745,6 +53775,11 @@
       "kind": "fractured",
       "stat_id": "fractured.stat_2527686725",
       "japanese": "感電の効果が#%増加する"
+    },
+    {
+      "kind": "fractured",
+      "stat_id": "fractured.stat_2529112796",
+      "japanese": "マインのクリティカルダメージ倍率 +#%"
     },
     {
       "kind": "fractured",
@@ -54070,6 +54105,11 @@
       "kind": "fractured",
       "stat_id": "fractured.stat_2709692542",
       "japanese": "追加されるスモールパッシブスキルはさらに付与: 冷気耐性 +#%"
+    },
+    {
+      "kind": "fractured",
+      "stat_id": "fractured.stat_270993809",
+      "japanese": "燃焼状態の敵に常にヒットが当たる"
     },
     {
       "kind": "fractured",
@@ -55133,6 +55173,11 @@
     },
     {
       "kind": "fractured",
+      "stat_id": "fractured.stat_3181879507",
+      "japanese": "フォーカス時にプレイヤー自身を#秒間感電させる"
+    },
+    {
+      "kind": "fractured",
       "stat_id": "fractured.stat_3182498570",
       "japanese": "効果中は移動スピードが#%増加する"
     },
@@ -55689,7 +55734,7 @@
     {
       "kind": "fractured",
       "stat_id": "fractured.stat_3408048164",
-      "japanese": "パワーチャージ1個ごとに#の最低冷気ダメージをスペルに追加する"
+      "japanese": "パワーチャージ1個ごとに#から#の冷気ダメージをスペルに追加する"
     },
     {
       "kind": "fractured",
@@ -55745,6 +55790,11 @@
       "kind": "fractured",
       "stat_id": "fractured.stat_3438201750",
       "japanese": "アタックによるヒット時に#%の確率で敵を4秒間威嚇する"
+    },
+    {
+      "kind": "fractured",
+      "stat_id": "fractured.stat_3440719546",
+      "japanese": "冷却領域の上にいる時にプレイヤーに対する冷却の効果が反転する"
     },
     {
       "kind": "fractured",
@@ -59293,6 +59343,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_100371300",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、トーテム設置スピードが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1004011302",
       "japanese": "クールダウン解消レートが#%増加する"
     },
@@ -59310,6 +59365,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1011772129",
       "japanese": "プレイヤーの雷ダメージは凍結を付与できるが感電を付与できない"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1016130575",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#から#の冷気ダメージをアタックに追加する"
     },
     {
       "kind": "implicit",
@@ -59434,7 +59494,7 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_1065479853",
-      "japanese": "栄光なる狂気の影響を影響を受けている時に元素系状態異常に完全無効化を持つ"
+      "japanese": "栄光の狂気の影響を影響を受けている時に元素系状態異常に完全無効化を持つ"
     },
     {
       "kind": "implicit",
@@ -59488,6 +59548,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1080711147",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、キャリオンゴーレムにより付与されるバフの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1086147743",
       "japanese": "敵に対する発火の持続時間が#%増加する"
     },
@@ -59528,6 +59593,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1114962813",
+      "japanese": "ユニークの敵が付近にいる場合、最大エナジーシールドが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1122074043",
       "japanese": "バイタリティのリザーブが#%減少する"
     },
@@ -59535,6 +59605,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1123291426",
       "japanese": "武器によるダメージは火耐性の#%を貫通する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1123587207",
+      "japanese": "ユニークの敵が付近にいる場合、エンデュランスチャージ1個ごとに毎秒ライフの#%を自動回復する"
     },
     {
       "kind": "implicit",
@@ -59563,6 +59638,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1133929401",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、火耐性の最大値 +#%"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1134560807",
       "japanese": "インティミデーティングクライのクールダウン解消レートが#%増加する"
     },
@@ -59575,6 +59655,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_113536037",
       "japanese": "プレイヤーの存在下で元素系状態異常の影響を受けているプレイヤーおよび敵は移動中とみなされる"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1138488752",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、テンペストシールドのバフの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -59600,6 +59685,16 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_114734841",
       "japanese": "プレイヤーに対して使用されたフラスコの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1153825002",
+      "japanese": "ユニークの敵が付近にいる場合、物理ダメージの#%を冷気ダメージに変換する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1158288860",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ヒット時に#%の確率で敵を消火する"
     },
     {
       "kind": "implicit",
@@ -59723,6 +59818,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1217759839",
+      "japanese": "ユニークの敵が付近にいる場合、マナ回復レートが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1218939541",
       "japanese": "二刀流中はスペルクリティカル率が#%増加する"
     },
@@ -59833,6 +59933,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1283684786",
+      "japanese": "ユニークの敵が付近にいる場合、ヒットによる物理ダメージの#%を火ダメージとして受ける"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1285430327",
       "japanese": "ピュリティオブライトニングのリザーブが#%減少する"
     },
@@ -59858,13 +59963,23 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1297664519",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、アタックのマナコストが#%減少する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1297965523",
       "japanese": "鉤爪の命中力が#%増加する"
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1299790658",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、火耐性 +#%"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1299868012",
-      "japanese": "栄光なる狂気の影響を受けている時に#%の確率でダブルダメージを与える"
+      "japanese": "栄光の狂気の影響を受けている時に#%の確率でダブルダメージを与える"
     },
     {
       "kind": "implicit",
@@ -59918,6 +60033,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1327020319",
+      "japanese": "ユニークの敵が付近にいる場合、マレヴォレンスのオーラの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1328548975",
       "japanese": "ソケットされたサポートジェムの品質 +#%"
     },
@@ -59925,6 +60045,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1328787425",
       "japanese": "ユニークの敵が付近にいる場合、ヒット時に#%の確率で敵を消火する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1328859059",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、雷ダメージが#%増加する"
     },
     {
       "kind": "implicit",
@@ -59953,6 +60078,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1343931641",
+      "japanese": "ユニークの敵が付近にいる場合、プレイヤーに対する感電の効果が#%減少する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1344805487",
       "japanese": "ソケットされたヘラルドジェムのレベル +#"
     },
@@ -59960,6 +60090,21 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1345113611",
       "japanese": "#%上昇したダメージを与えたと仮定して非ダメージ性状態異常を付与する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1350472585",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、呪いの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1358320252",
+      "japanese": "ユニークの敵が付近にいる場合、スペルブロック率が#%"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1360723495",
+      "japanese": "プレイヤーに付与されている毒のスタックごとに移動スピードが#%、最大50%増加する"
     },
     {
       "kind": "implicit",
@@ -59988,8 +60133,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1373026185",
+      "japanese": "ユニークの敵が付近にいる場合、インファーナルクライの効果範囲が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1379411836",
       "japanese": "全ての能力値 +#"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1381761351",
+      "japanese": "ユニークの敵が付近にいる場合、ラリイングクライのバフの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -60035,6 +60190,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1408638732",
       "japanese": "キャラクターサイズが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1412947753",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、スペルのクリティカル率が#%増加する"
     },
     {
       "kind": "implicit",
@@ -60213,8 +60373,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1477049675",
+      "japanese": "ユニークの敵が付近にいる場合、ダメージは#%の冷気耐性を貫通する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1478653032",
       "japanese": "プレイヤー自身に対する冷却の効果が#%減少する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1481249164",
+      "japanese": "ユニークの敵が付近にいる場合、ライフ回復レートが#%増加する"
     },
     {
       "kind": "implicit",
@@ -60225,6 +60395,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1483066460",
       "japanese": "アークティックアーマーのリザーブがなくなる"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1492071500",
+      "japanese": "ユニークの敵が付近にいる場合、フレンジーチャージ1個ごとに命中力 +#"
     },
     {
       "kind": "implicit",
@@ -60245,6 +60420,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1504905117",
       "japanese": "ウォークライのクールダウンが+#秒される"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1505297139",
+      "japanese": "ユニークの敵が付近にいる場合、サイズミッククライにより奮起したアタックのダメージが#%増加する"
     },
     {
       "kind": "implicit",
@@ -60283,6 +60463,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1516273114",
+      "japanese": "ユニークの敵が付近にいる場合、物理ダメージの#%を雷ダメージに変換する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1516326076",
       "japanese": "ユニークの敵が付近にいる場合、マイン投擲スピードが#%増加する"
     },
@@ -60290,6 +60475,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1519615863",
       "japanese": "ヒット時に#%の確率で出血を付与する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1519845279",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、3秒ごとにフラスコはチャージを#獲得する"
     },
     {
       "kind": "implicit",
@@ -60338,6 +60528,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1542827808",
+      "japanese": "ユニークの敵が付近にいる場合、#%の確率で敵を凍結させる"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1545858329",
       "japanese": "全ての雷スペルスキルジェムのレベル +#"
     },
@@ -60345,6 +60540,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1549898151",
       "japanese": "グレースのリザーブが#%減少する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1553385903",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ヘラルドオブサンダーのバフの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -60380,6 +60580,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1575046591",
       "japanese": "ダメージ性状態異常の影響を受けない"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1576689223",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、冷気ダメージが#%増加する"
     },
     {
       "kind": "implicit",
@@ -60423,6 +60628,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1598254831",
+      "japanese": "ユニークの敵が付近にいる場合、ダメージは#%の雷耐性を貫通する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1599775597",
       "japanese": "火ダメージの#%を追加混沌ダメージとして獲得する"
     },
@@ -60438,6 +60648,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1609260458",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ヘラルドオブアイスのバフの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1609570656",
       "japanese": "アンホーリーマイトがある時に物理ダメージが#%増加する"
     },
@@ -60450,6 +60665,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1612402470",
       "japanese": "エリアにはモンスターに守られた洗練されたヴァールの器が追加で1個出現する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1613190388",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、受けた火ダメージの#%をライフとして回収する"
     },
     {
       "kind": "implicit",
@@ -60475,6 +60695,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_162292333",
       "japanese": "ソケットしている緑スキルジェムの数ごとにクールダウン解消レートが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1623369100",
+      "japanese": "ユニークの敵が付近にいる場合、物理ダメージの#%を混沌ダメージに変換する"
     },
     {
       "kind": "implicit",
@@ -60578,6 +60803,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1668340466",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ヴァルネラビリティの呪い効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1669429179",
       "japanese": "エリアにはアファルドの司令官モンスターマーカーが追加で#個出現する"
     },
@@ -60618,6 +60848,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_168204696",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、アイスゴーレムにより付与されるバフの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_168308685",
       "japanese": "ゼロトリーのマナリザーブ効率が#%増加する"
     },
@@ -60643,6 +60878,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1695965847",
+      "japanese": "ユニークの敵が付近にいる場合、ミニオンは受ける反射ダメージの+#%を防ぐ"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1698847655",
       "japanese": "ユニークの敵が付近にいる場合、プレイヤーが付与した発火は#m以内の他の敵にも伝染する"
     },
@@ -60650,6 +60890,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_169946467",
       "japanese": "弓の命中力が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1702124724",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、移動スピードが#%増加する"
     },
     {
       "kind": "implicit",
@@ -60700,6 +60945,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1723061251",
       "japanese": "トーテムはヒットを受けた時にその最大ライフの#%を火ダメージとして近くの敵に反射する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_172529037",
+      "japanese": "ユニークの敵が付近にいる場合、プレイヤーがアタックによるヒットを対象に与えたら#%の確率で対象の出血を悪化させる"
     },
     {
       "kind": "implicit",
@@ -60775,6 +61025,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_17730902",
       "japanese": "左の指輪スロット: ヒットによる火ダメージの#%を雷ダメージとして受ける"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1774362541",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、アタックによるヒット時に憤怒を1獲得する"
     },
     {
       "kind": "implicit",
@@ -60868,6 +61123,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1825301877",
+      "japanese": "ユニークの敵が付近にいる場合、装備中の兜と靴から得られる回避力が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1826802197",
       "japanese": "敵を倒した時に#%の確率でフレンジーチャージを1個獲得する"
     },
@@ -60888,6 +61148,16 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1831757355",
+      "japanese": "ウィンタータイドブランドの冷却の効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1836549522",
+      "japanese": "ユニークの敵が付近にいる場合、ヒット時に冷気の曝露を付与し、冷気耐性が#%される"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1837040413",
       "japanese": "敵どうしが近くにいる状態で同時に倒すとこの世界の外からのビヨンドからモンスターを呼び寄せる"
     },
@@ -60898,13 +61168,28 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1840069423",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、アタックのクリティカル率が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1847660463",
       "japanese": "ユニークの敵が付近にいる場合、効果範囲が#%増加する"
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_184959267",
+      "japanese": "ユニークの敵が付近にいる場合、筋力#ごとに受けるダメージが1%低下する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1850144024",
       "japanese": "アトラスのピナクルボスが付近にいる場合、ラースのオーラの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1855179125",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、フレンジーチャージ1個ごとにダメージが#%増加する"
     },
     {
       "kind": "implicit",
@@ -60930,6 +61215,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1869144397",
       "japanese": "プレイヤーがスキルを使った時にレベル#ヴォイドゲイズをトリガーする"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1870961528",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、火継続ダメージ倍率 +#%"
     },
     {
       "kind": "implicit",
@@ -60970,6 +61260,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1881314095",
       "japanese": "近くのパーティメンバーとエンデュランスチャージを共有する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1884100040",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ヴァールスキルでないストライクスキルは近くの敵を追加で#体対象にする"
     },
     {
       "kind": "implicit",
@@ -61053,6 +61348,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1916766878",
+      "japanese": "ユニークの敵が付近にいる場合、ライフ自動回復レートが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1916904011",
       "japanese": "左の指輪スロット: ミニオンが受けるダメージが#%増加する"
     },
@@ -61073,6 +61373,16 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_1918094957",
+      "japanese": "ユニークの敵が付近にいる場合、物理ダメージの#%を追加雷ダメージとして獲得する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1918872160",
+      "japanese": "ユニークの敵が付近にいる場合、パワーチャージ1個ごとにマナ自動回復レートが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1923210508",
       "japanese": "投射物は連鎖するごとにヒットおよび状態異常のダメージが#%増加する"
     },
@@ -61080,6 +61390,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1923879260",
       "japanese": "アタックは#%の確率で出血を付与する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1926772156",
+      "japanese": "ユニークの敵が付近にいる場合、ピュリティオブファイヤーのオーラの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -61100,6 +61415,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_1942151132",
       "japanese": "雷耐性が#%になる"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1944219739",
+      "japanese": "ユニークの敵が付近にいる場合、雷ダメージの#%をライフとしてリーチする"
     },
     {
       "kind": "implicit",
@@ -61153,8 +61473,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_196824923",
+      "japanese": "ユニークの敵が付近にいる場合、ヒットによる物理ダメージの#%を雷ダメージとして受ける"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_1973340656",
       "japanese": "アトラスのピナクルボスが付近にいる場合、ミニオンは受ける反射ダメージの+#%を防ぐ"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_1980216452",
+      "japanese": "ユニークの敵が付近にいる場合、アーマーが#%増加する"
     },
     {
       "kind": "implicit",
@@ -61233,6 +61563,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2013839784",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、フレッシュオファリングの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2016247664",
       "japanese": "ユニークの敵が付近にいる場合、キャストスピードが#%増加する"
     },
@@ -61253,6 +61588,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2022820500",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、移動中に焦げ領域を地面に撒く。持続時間は#秒"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2023107756",
       "japanese": "敵を倒した時にライフの#%を回復する"
     },
@@ -61270,6 +61610,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2028847114",
       "japanese": "ヒット時に敵をエレメンタルウィークネスで呪う"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2029969019",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、エレメンタルウィークネスの呪い効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -61373,6 +61718,16 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2068042138",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、フロストバイトの呪い効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2070979181",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、混沌ダメージが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2080582538",
       "japanese": "ユニークの敵が付近にいる場合、受けたダメージの#%をライフとして回収する"
     },
@@ -61420,6 +61775,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2094299742",
       "japanese": "最大堅牢化数 +#"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2095999895",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、コンダクティヴィティの呪い効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -61588,6 +61948,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2163155983",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、混沌継続ダメージ倍率 +#%"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2163876658",
       "japanese": "アトラスのピナクルボスが付近にいる場合、プライドのオーラの効果が#%増加する"
     },
@@ -61600,6 +61965,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2168861013",
       "japanese": "敵からヒットを受けた時に#%の確率でその敵を1秒間凍結させる"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2169620689",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、敵スタン閾値が#%減少する"
     },
     {
       "kind": "implicit",
@@ -61625,6 +61995,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2181129193",
       "japanese": "静止中は#%の物理ダメージ軽減率追加"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2181576428",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、受けた冷気ダメージの#%をライフとして回収する"
     },
     {
       "kind": "implicit",
@@ -61660,6 +62035,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2195137717",
       "japanese": "プレイヤーの筋力の半分がミニオンに加算される"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2195698019",
+      "japanese": "ユニークの敵が付近にいる場合、反射ダメージの+#%を防ぐ"
     },
     {
       "kind": "implicit",
@@ -61713,6 +62093,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2218095219",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、プレイヤーが付与した感電は#m以内の他の敵にも伝染する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2221570601",
       "japanese": "ヒット時に#%のグローバル確率で敵を盲目にする"
     },
@@ -61763,6 +62148,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2237382624",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#秒ごとにフレンジーチャージを1獲得する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2238174408",
       "japanese": "#%の確率で脆弱を付与する"
     },
@@ -61808,6 +62198,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2251857767",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、アクションスピードが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2253286128",
       "japanese": "低ライフ時のスペルブロック率 +#%"
     },
@@ -61815,6 +62210,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2254480358",
       "japanese": "全ての冷気スペルスキルジェムのレベル +#"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2255001736",
+      "japanese": "ユニークの敵が付近にいる場合、ウォークライスピードが#%増加する"
     },
     {
       "kind": "implicit",
@@ -61988,6 +62388,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2349328837",
+      "japanese": "ユニークの敵が付近にいる場合、プレイヤーが付与した発火がダメージを与える速度が#%速くなる"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2351239732",
       "japanese": "アークティックアーマーのマナリザーブ効率が#%増加する"
     },
@@ -62005,6 +62410,21 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2358015838",
       "japanese": "回避力は最大値を超過した冷気耐性により増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2358153166",
+      "japanese": "ユニークの敵が付近にいる場合、全ての元素耐性 +#%"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2358903592",
+      "japanese": "ユニークの敵が付近にいる場合、スキルのマナリザーブ効率が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2366356855",
+      "japanese": "ユニークの敵が付近にいる場合、デターミネーションのオーラの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -62053,6 +62473,21 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2391109128",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ブランドの付着範囲が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2391907787",
+      "japanese": "ユニークの敵が付近にいる場合、アタックによるヒット時に#%の確率で敵を串刺しにする"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2393004388",
+      "japanese": "ユニークの敵が付近にいる場合、ヒットによる物理ダメージの#%を混沌ダメージとして受ける"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2397408229",
       "japanese": "ランページ"
     },
@@ -62073,6 +62508,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2409504914",
+      "japanese": "ブランド1個ごとにクリティカル率が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2410613176",
       "japanese": "レベル#バイタリティスキルを付与する"
     },
@@ -62088,6 +62528,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2413932980",
+      "japanese": "ユニークの敵が付近にいる場合、身躱しの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2415020123",
       "japanese": "ユニークの敵が付近にいる場合、フレンジーチャージ1個ごとにダメージが#%増加する"
     },
@@ -62100,6 +62545,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2420972973",
       "japanese": "キャリオンゴーレムにより付与されるバフの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2423625781",
+      "japanese": "ユニークの敵が付近にいる場合、グローバル命中力が#%増加する"
     },
     {
       "kind": "implicit",
@@ -62128,6 +62578,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2433754249",
+      "japanese": "ユニークの敵が付近にいる場合、ヒット時に#%の確率で敵に毒を付与する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2435536961",
       "japanese": "#から#の物理ダメージをスペルに追加する"
     },
@@ -62150,6 +62605,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2444070126",
       "japanese": "ユニークの敵が付近にいる場合、#から#の混沌ダメージをアタックに追加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2446980928",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、アタックスピードが#%増加する"
     },
     {
       "kind": "implicit",
@@ -62263,6 +62723,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2491353340",
+      "japanese": "ユニークの敵が付近にいる場合、クールダウン解消レートが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2495041954",
       "japanese": "#%の物理ダメージ軽減率を圧倒する"
     },
@@ -62323,6 +62788,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2520245478",
+      "japanese": "ユニークの敵が付近にいる場合、受ける発火の持続時間が#%減少する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2520458995",
       "japanese": "欺瞞のスピードが#%増加する"
     },
@@ -62350,6 +62820,21 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2524254339",
       "japanese": "カリングストライク"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2525287976",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、受けたダメージの#%をライフとして回収する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2526554500",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、オファリングの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2527345629",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ライトニングゴーレムにより付与されるバフの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -62390,6 +62875,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2539726203",
       "japanese": "ピュリティオブファイヤーのオーラの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2545907302",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、グローバル物理ダメージが#%増加する"
     },
     {
       "kind": "implicit",
@@ -62519,7 +63009,7 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_2611224062",
-      "japanese": "栄光なる狂気の影響を受けている時に堅牢の最大数 +#"
+      "japanese": "栄光の狂気の影響を受けている時に堅牢の最大数 +#"
     },
     {
       "kind": "implicit",
@@ -62535,6 +63025,16 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_261654754",
       "japanese": "ヒットから受ける冷気ダメージ +#"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2619970520",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、冷気継続ダメージ倍率 +#%"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2621869142",
+      "japanese": "ユニークの敵が付近にいる場合、#%の確率で敵を感電させる"
     },
     {
       "kind": "implicit",
@@ -62598,6 +63098,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2651293339",
+      "japanese": "ユニークの敵が付近にいる場合、#%の確率で出血を無効化する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2653955271",
       "japanese": "ダメージは#%の火耐性を貫通する"
     },
@@ -62613,6 +63118,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2661498709",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#%の確率で凍結を無効化する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2662416009",
       "japanese": "テンペストシールドのバフの効果が#%増加する"
     },
@@ -62625,6 +63135,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2665518524",
       "japanese": "ピュリティオブアイスのマナリザーブ効率が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_266654028",
+      "japanese": "ユニークの敵が付近にいる場合、スタン閾値が#%増加する"
     },
     {
       "kind": "implicit",
@@ -62665,6 +63180,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_26867112",
       "japanese": "コラプト状態であればアタックスピードおよびキャストスピードが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2689351720",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、プレイヤーが付与した凍結は#m以内の他の敵に伝染する"
     },
     {
       "kind": "implicit",
@@ -62748,6 +63268,16 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2734758957",
+      "japanese": "ユニークの敵が付近にいる場合、装備中の手袋と靴から得られる最大エナジーシールドが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2735804076",
+      "japanese": "ユニークの敵が付近にいる場合、ヘイストのオーラの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2739830820",
       "japanese": "全てのゾンビ蘇生ジェムのレベル +#"
     },
@@ -62818,6 +63348,16 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2775855429",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ディスペアの呪い効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2776235850",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#秒ごとにパワーチャージを1獲得する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2777224821",
       "japanese": "マップで見つかるマップが#%増加する"
     },
@@ -62829,7 +63369,12 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_2780297117",
-      "japanese": "栄光なる狂気の影響を受けている時にプレイヤーが倒した敵は#%の確率で爆発し、そのライフの4分の1を混沌ダメージとして与える"
+      "japanese": "栄光の狂気の影響を受けている時にプレイヤーが倒した敵は#%の確率で爆発し、そのライフの4分の1を混沌ダメージとして与える"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2782184338",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、火ダメージが#%増加する"
     },
     {
       "kind": "implicit",
@@ -62845,6 +63390,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_279246355",
       "japanese": "マップにはインベージョンボスが追加で1体生息している"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2792560229",
+      "japanese": "ユニークの敵が付近にいる場合、エンデュアリングクライのクールダウン解消レートが#%増加する"
     },
     {
       "kind": "implicit",
@@ -62875,6 +63425,16 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_280731498",
       "japanese": "効果範囲が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2809284200",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、パワーチャージ1個ごとにダメージが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2809900883",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ミニオンの移動スピードが#%増加する"
     },
     {
       "kind": "implicit",
@@ -63013,6 +63573,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_286128234",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、受けた物理ダメージの#%がライフとして回収される"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2865550257",
       "japanese": "ソケットされたスキルジェムは#%のコストおよびリザーブ倍率を獲得する"
     },
@@ -63108,6 +63673,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2887638881",
+      "japanese": "ユニークの敵が付近にいる場合、冷気ダメージの#%をライフとしてリーチする"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2888942321",
       "japanese": "対魔術のスピードが#%増加する"
     },
@@ -63135,6 +63705,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2896346114",
       "japanese": "ポイントブランク"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2896379260",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#秒ごとにエンデュランスチャージを1獲得する"
     },
     {
       "kind": "implicit",
@@ -63228,6 +63803,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2925105924",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#から#の雷ダメージをアタックに追加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2927667525",
       "japanese": "他の装備しているアイテムにライフモッドがなければ最大ライフ +#"
     },
@@ -63263,6 +63843,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2940779795",
+      "japanese": "ユニークの敵が付近にいる場合、火ダメージの#%をライフとしてリーチする"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2947215268",
       "japanese": "いずれかのフラスコ効果中はダメージが#%増加する"
     },
@@ -63278,8 +63863,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2950684886",
+      "japanese": "ユニークの敵が付近にいる場合、非ダメージ性状態異常の効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2950697759",
       "japanese": "ヒット時に#%の確率で敵をパニッシュメントで呪う"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_2955927568",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、スペルダメージのクリティカルダメージ倍率 +#%"
     },
     {
       "kind": "implicit",
@@ -63318,6 +63913,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2986495340",
+      "japanese": "ユニークの敵が付近にいる場合、トラベルスキルのクールダウン解消レートが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2991413918",
       "japanese": "エリアにあるレムナントの数が#%増加する"
     },
@@ -63338,6 +63938,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_2996354577",
+      "japanese": "ユニークの敵が付近にいる場合、ヒット時に雷の曝露を付与し、雷耐性を#%させる"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_2998191728",
       "japanese": "マップで見つかるアイテムの数量が#%増加する"
     },
@@ -63345,6 +63950,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_2998245080",
       "japanese": "アトラスのピナクルボスが付近にいる場合、スペルダメージ抑制確率 +#%"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3001066983",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ヘラルドオブアゴニーのバフの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -63373,8 +63983,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3004272949",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ヒット時に#%の確率で近くの敵を4秒間威嚇する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3005472710",
       "japanese": "#%の確率で元素系状態異常を無効化する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3005679448",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ヘラルドオブピュリティのバフの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -63440,6 +64060,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3044748809",
       "japanese": "ユニークの敵が付近にいる場合、ミニオンの最大ライフが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3045509476",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ヘラルドオブアッシュのバフの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -63538,6 +64163,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3123599008",
+      "japanese": "ユニークの敵が付近にいる場合、器用さ#ごとに受けるダメージが1%低下する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3126680545",
       "japanese": "フレンジーチャージ1個ごとに命中力 +#"
     },
@@ -63560,6 +64190,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3141070085",
       "japanese": "元素ダメージが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3141084961",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ミニオンのダメージが#%増加する"
     },
     {
       "kind": "implicit",
@@ -63613,13 +64248,28 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3163099942",
+      "japanese": "ユニークの敵が付近にいる場合、プレイヤーに対するアーケインサージの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3165492062",
       "japanese": "ヴァールスキルのクリティカル率が#%増加する"
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3171354842",
+      "japanese": "ユニークの敵が付近にいる場合、物理ダメージの#%を追加冷気ダメージとして獲得する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3173079195",
       "japanese": "アトラスのピナクルボスが付近にいる場合、身躱しの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3173180145",
+      "japanese": "ユニークの敵が付近にいる場合、バトルメイジズクライのバフの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -63683,8 +64333,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3206883665",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#から#の混沌ダメージをスペルに追加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3208450870",
       "japanese": "メイスまたはセプターの命中力が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3209267362",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、プレイヤーが持つ猛攻の効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -63720,6 +64380,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3225230656",
       "japanese": "アトラスのピナクルボスが付近にいる場合、エンデュランスチャージ1個ごとに毎秒ライフの#%を自動回復する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_323292443",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、フラマビリティの呪い効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -63793,6 +64458,16 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3262721796",
+      "japanese": "ユニークの敵が付近にいる場合、プレイヤーが付与した衰弱は#%速く消える"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3264420229",
+      "japanese": "ユニークの敵が付近にいる場合、#%の確率で元素系状態異常を無効化する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3268519799",
       "japanese": "魂の変容"
     },
@@ -63830,6 +64505,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3289828378",
       "japanese": "マップにある爆発物の半径が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3291139981",
+      "japanese": "ユニークの敵が付近にいる場合、奮起したアタックのダメージが#%増加する"
     },
     {
       "kind": "implicit",
@@ -63890,6 +64570,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3303114033",
       "japanese": "受ける冷気ダメージが#%減少する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3303144948",
+      "japanese": "ユニークの敵が付近にいる場合、グレースのオーラの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -63973,13 +64658,38 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3341892633",
+      "japanese": "ユニークの敵が付近にいる場合、敵に対する状態異常の持続時間が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_334238649",
+      "japanese": "ユニークの敵が付近にいる場合、ディシプリンのオーラの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3342989455",
       "japanese": "ヒットによる物理ダメージの#%を火ダメージとして受ける"
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3343791355",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、プレイヤーが付与した発火は#m以内の他の敵にも伝染する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3344624374",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、アタックヒット時に憤怒を#獲得する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3348324479",
       "japanese": "エレメンタルウィークネスの呪い効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3349767748",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#から#の冷気ダメージをスペルに追加する"
     },
     {
       "kind": "implicit",
@@ -63994,7 +64704,7 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_3359218839",
-      "japanese": "栄光なる狂気の影響を受けている時に全てのダメージが毒を付与する"
+      "japanese": "栄光の狂気の影響を受けている時に全てのダメージが毒を付与する"
     },
     {
       "kind": "implicit",
@@ -64043,6 +64753,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3381588096",
+      "japanese": "ユニークの敵が付近にいる場合、インティミデーティングクライのクールダウン解消レートが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3382807662",
       "japanese": "火継続ダメージ倍率 +#%"
     },
@@ -64065,6 +64780,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3393547195",
       "japanese": "フルライフ時に移動スピードが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3394288644",
+      "japanese": "ユニークの敵が付近にいる場合、回避力が#%増加する"
     },
     {
       "kind": "implicit",
@@ -64103,6 +64823,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3415855998",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、冷気耐性の最大値 +#%"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3416410609",
       "japanese": "投射物アタックブロック率 +#%"
     },
@@ -64130,6 +64855,16 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3423006863",
       "japanese": "矢は対象を追加で1体貫通する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3423886807",
+      "japanese": "ユニークの敵が付近にいる場合、スペルによるヒット時に#%の確率で敵を阻害する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3425675761",
+      "japanese": "ユニークの敵が付近にいる場合、ダメージは#%の火耐性を貫通する"
     },
     {
       "kind": "implicit",
@@ -64193,6 +64928,16 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3473165335",
+      "japanese": "ユニークの敵が付近にいる場合、ヒット時に火の曝露を付与し、その火耐性に#%適用する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3477311591",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#から#の物理ダメージをアタックに追加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3477714116",
       "japanese": "ブロック時に敵をヴァルネラビリティで呪う"
     },
@@ -64228,6 +64973,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_348693938",
+      "japanese": "ユニークの敵が付近にいる場合、ピュリティオブエレメンツのオーラの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3489782002",
       "japanese": "最大エナジーシールド +#"
     },
@@ -64255,6 +65005,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3496944181",
       "japanese": "スタッフ装備中はスペルダメージが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3499126604",
+      "japanese": "ユニークの敵が付近にいる場合、ピュリティオブアイスのオーラの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -64373,13 +65128,28 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3549954477",
+      "japanese": "ユニークの敵が付近にいる場合、物理ダメージの#%を追加火ダメージとして獲得する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3550168289",
       "japanese": "マップにはローグエグザイルが追加で1体生息している"
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3550578554",
+      "japanese": "ユニークの敵が付近にいる場合、ゼロトリーのオーラの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3550868361",
       "japanese": "斧のアタックスピードが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3553907672",
+      "japanese": "ユニークの敵が付近にいる場合、#%の確率で毒を無効化する"
     },
     {
       "kind": "implicit",
@@ -64475,6 +65245,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3594640492",
       "japanese": "毎秒エナジーシールドの#%を自動回復する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3598887112",
+      "japanese": "ユニークの敵が付近にいる場合、アンセストラルクライで奮起したアタックのダメージが#%増加する"
     },
     {
       "kind": "implicit",
@@ -64638,6 +65413,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3678860707",
+      "japanese": "ユニークの敵が付近にいる場合、物理ダメージの#%をライフとしてリーチする"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3679418014",
       "japanese": "受けた冷気ダメージの#%をライフとして回収する"
     },
@@ -64680,6 +65460,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_369494213",
       "japanese": "物理ダメージの#%を追加火ダメージとして獲得する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3695602451",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、テンポラルチェーンの呪い効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -64803,6 +65588,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3744585764",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、アークティックアーマーのバフ効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3749526289",
       "japanese": "アトラスのピナクルボスが付近にいる場合、器用さ#ごとに受けるダメージが1%低下する"
     },
@@ -64810,6 +65600,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3753703249",
       "japanese": "物理ダメージの#%をランダムな元素属性の追加ダメージとして獲得する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3757358729",
+      "japanese": "ユニークの敵が付近にいる場合、アタックは#%の確率で出血を付与する"
     },
     {
       "kind": "implicit",
@@ -64893,6 +65688,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3788782813",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、スキルによる呪い以外のオーラの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3792821911",
       "japanese": "レベル#エレメンタルウィークネススキルを付与する"
     },
@@ -64900,6 +65700,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3799930101",
       "japanese": "緑色ソケットにソケットされたジェムの品質 +#%"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_380027104",
+      "japanese": "ユニークの敵が付近にいる場合、物理ダメージの#%を火ダメージに変換する"
     },
     {
       "kind": "implicit",
@@ -64923,6 +65728,16 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3806837783",
+      "japanese": "ユニークの敵が付近にいる場合、エナジーシールドリチャージレートが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_38083709",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、エンフィーブルの呪い効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3809896400",
       "japanese": "呪いの影響を受けない"
     },
@@ -64935,6 +65750,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3812562802",
       "japanese": "プレイヤーのトーテムが与えたダメージの#%をライフとしてプレイヤーがリーチする"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3812596254",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、移動中に消耗領域を地面に撒く。持続時間は#秒"
     },
     {
       "kind": "implicit",
@@ -64963,8 +65783,23 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3823702653",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#%の確率で感電を無効化する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3825877290",
       "japanese": "移動中のグローバル回避力 +#"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3827973062",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、マイン投擲スピードが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3828039449",
+      "japanese": "ユニークの敵が付近にいる場合、付与した毒がダメージを与える速度が#%速くなる"
     },
     {
       "kind": "implicit",
@@ -65023,6 +65858,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3864103630",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、冷気耐性 +#%"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3868184702",
       "japanese": "#の雷ダメージを近接アタックしてきた敵に反射する"
     },
@@ -65030,6 +65870,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3868549606",
       "japanese": "マナを合計200消費した後にフレンジーチャージを1個獲得する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3870554516",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、受けた雷ダメージの#%をライフとして回収する"
     },
     {
       "kind": "implicit",
@@ -65048,8 +65893,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3872739249|3",
+      "japanese": "集中のハービンジャー召喚スキルを付与する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3872739249|9",
       "japanese": "集中の大ハービンジャー召喚スキルを付与する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3874289",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#から#の雷ダメージをスペルに追加する"
     },
     {
       "kind": "implicit",
@@ -65124,7 +65979,7 @@
     {
       "kind": "implicit",
       "stat_id": "implicit.stat_3909952544",
-      "japanese": "栄光なる狂気の影響を受けている時にプレイヤーは発火、冷却および感電のコンフラックスを持つ"
+      "japanese": "栄光の狂気の影響を受けている時にプレイヤーは発火、冷却および感電のコンフラックスを持つ"
     },
     {
       "kind": "implicit",
@@ -65155,6 +66010,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3922006600",
       "japanese": "ソケットされたジェムはレベル#傲慢によりサポートされる"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3924473787",
+      "japanese": "ユニークの敵が付近にいる場合、投射物は対象を追加で#体貫通する"
     },
     {
       "kind": "implicit",
@@ -65223,6 +66083,16 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3953801646",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#から#の混沌ダメージをアタックに追加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3954869480",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#から#の火ダメージをスペルに追加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_395808938",
       "japanese": "マップには追加で1体のエッセンスに囚われたモンスターが出現する"
     },
@@ -65253,6 +66123,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3966336964",
+      "japanese": "ユニークの敵が付近にいる場合、器用さ100ごとにダメージが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3966666111",
       "japanese": "知性100ごとにダメージが#%増加する"
     },
@@ -65278,6 +66153,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3972399670",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#から#の火ダメージをアタックに追加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3972739758",
       "japanese": "バイタリティのマナリザーブ効率が#%増加する"
     },
@@ -65288,6 +66168,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3980173235",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、雷耐性 +#%"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3983941937",
       "japanese": "アトラスのピナクルボスが付近にいる場合、混沌ダメージの#%をライフとしてリーチする"
     },
@@ -65295,6 +66180,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_3985468650",
       "japanese": "レベル#ブラッドオファリングスキルを付与する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3985862221",
+      "japanese": "ユニークの敵が付近にいる場合、受ける凍結の持続時間が#%減少する"
     },
     {
       "kind": "implicit",
@@ -65318,6 +66208,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_399528178",
+      "japanese": "ユニークの敵が付近にいる場合、ラースのオーラの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3995612171",
       "japanese": "アークティックアーマーのバフ効果が#%増加する"
     },
@@ -65328,8 +66223,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_3996548075",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、マナコスト効率が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_3998601568",
       "japanese": "短剣のクリティカルダメージ倍率 +#%"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_3998961962",
+      "japanese": "ユニークの敵が付近にいる場合、スペルダメージ抑制確率 +#%"
     },
     {
       "kind": "implicit",
@@ -65358,6 +66263,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_4007728388",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、移動中に脆弱領域を地面に撒く。持続時間は#秒"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_4009462747",
       "japanese": "レベル#サベージバーナクルを付与する"
     },
@@ -65375,6 +66285,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_401685616",
       "japanese": "ブロック時にレベル#シールドシャッターをトリガーする"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_4018420421",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ヒット時に#%の確率で敵を4秒間狼狽させる"
     },
     {
       "kind": "implicit",
@@ -65400,6 +66315,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_403285636",
       "japanese": "アトラスのピナクルボスが付近にいる場合、ダメージは#%の冷気耐性を貫通する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_4039774101",
+      "japanese": "ユニークの敵が付近にいる場合、プライドのオーラの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -65438,6 +66358,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_4053459163",
+      "japanese": "ユニークの敵が付近にいる場合、装備中の兜および手袋から得られるアーマーが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_4053951709",
       "japanese": "#%の確率で毒を無効化する"
     },
@@ -65450,6 +66375,21 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_4057155645",
       "japanese": "ユニークの敵が付近にいる場合、#から#の冷気ダメージをアタックに追加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_4057257145",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ミニオンの最大ライフが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_40584863",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、パニッシュメントの呪い効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_4061200499",
+      "japanese": "ユニークの敵が付近にいる場合、アタックダメージが#%増加する"
     },
     {
       "kind": "implicit",
@@ -65503,6 +66443,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_4084536353",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、物理継続ダメージ倍率 +#%"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_4091694419",
       "japanese": "回避力の増減のモッドはスペルダメージにも適用される"
     },
@@ -65533,6 +66478,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_4098747485",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、キャストスピードが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_4100175081",
       "japanese": "最大エナジーシールドの増減のモッドは変わりにワードに適用される"
     },
@@ -65548,8 +66498,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_4105610833",
+      "japanese": "ユニークの敵が付近にいる場合、ヒットは#%の確率で敵モンスターの物理ダメージ軽減を無視する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_4106235309",
       "japanese": "アトラスのピナクルボスが付近にいる場合、付与した出血がダメージを与える速度が#%速くなる"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_410716074",
+      "japanese": "ユニークの敵が付近にいる場合、筋力100ごとにダメージが#%増加する"
     },
     {
       "kind": "implicit",
@@ -65598,6 +66558,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_4128294206",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ゴーレムにより付与されるバフの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_4129825612",
       "japanese": "ヒットによる物理ダメージの#%を混沌ダメージとして受ける"
     },
@@ -65605,6 +66570,16 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_4134865890",
       "japanese": "最大マナ500ごとにアタックダメージが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_4136085904",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、雷耐性の最大値 +#%"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_4136821316",
+      "japanese": "ユニークの敵が付近にいる場合、スペルダメージが#%増加する"
     },
     {
       "kind": "implicit",
@@ -65655,6 +66630,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_4154778375",
       "japanese": "マップにエクスペディションエンカウンターが出現する確率が+#%される"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_4155771029",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、プレイヤーに対して使用されたフラスコの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -65755,6 +66735,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_4215265273",
       "japanese": "冷気以外のダメージ属性のモッドをロールできない"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_4218330172",
+      "japanese": "ユニークの敵が付近にいる場合、ヘイトレッドのオーラの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -65953,6 +66938,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_438468314",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ストーンゴーレムにより付与されるバフの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_44159086",
       "japanese": "エリアにはモンスターに守られているヴァールの器が追加で1個出現する"
     },
@@ -66038,6 +67028,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_485268361",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#から#の物理ダメージをスペルに追加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_485385046",
       "japanese": "ユニークの敵が付近にいる場合、テンポラルチェーンの呪い効果が#%増加する"
     },
@@ -66118,8 +67113,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_505694848",
+      "japanese": "ユニークの敵が付近にいる場合、呪印の効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_506942497",
       "japanese": "筋力10ごとにエナジーシールドが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_510803146",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、カオスゴーレムにより付与されるバフの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -66148,6 +67153,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_529984126",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、アタックダメージのクリティカルダメージ倍率 +#%"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_53045048",
       "japanese": "回避力 +# (ローカル)"
     },
@@ -66165,6 +67175,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_532792006",
       "japanese": "アトラスのピナクルボスが付近にいる場合、ヒット時に#%の確率で敵に毒を付与する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_535043290",
+      "japanese": "ユニークの敵が付近にいる場合、知性#ごとに受けるダメージが1%低下する"
     },
     {
       "kind": "implicit",
@@ -66188,8 +67203,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_545832642",
+      "japanese": "ユニークの敵が付近にいる場合、知性100ごとにダメージが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_547412107",
       "japanese": "ヴァールスキルはスキル効果持続時間が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_547463927",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、トラップ投擲スピードが#%増加する"
     },
     {
       "kind": "implicit",
@@ -66223,6 +67248,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_568930056",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、効果範囲が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_569299859",
       "japanese": "全ての耐性の最大値 +#%"
     },
@@ -66243,6 +67273,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_577552701",
+      "japanese": "ユニークの敵が付近にいる場合、直近プレイヤーがヒットを与えた敵のライフ自動回復レートが#%減少する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_581013336",
       "japanese": "マップにはマジックモンスターが追加で1パック出現する"
     },
@@ -66260,6 +67295,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_585159631",
       "japanese": "エリアにはシルバーコインが1個出現する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_587322642",
+      "japanese": "ユニークの敵が付近にいる場合、エナジーシールドリチャージレートが#%増加する"
     },
     {
       "kind": "implicit",
@@ -66318,8 +67358,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_614709726",
+      "japanese": "ユニークの敵が付近にいる場合、スキル効果持続時間が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_614758785",
       "japanese": "ヒットにより受ける火ダメージ +#"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_620552892",
+      "japanese": "ユニークの敵が付近にいる場合、物理ダメージの#%を追加混沌ダメージとして獲得する"
     },
     {
       "kind": "implicit",
@@ -66453,8 +67503,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_673499528",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、全ての耐性の最大値 +#%"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_674553446",
       "japanese": "#から#の混沌ダメージをアタックに追加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_676741860",
+      "japanese": "ユニークの敵が付近にいる場合、混沌ダメージの#%をライフとしてリーチする"
     },
     {
       "kind": "implicit",
@@ -66473,6 +67533,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_689723685",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ボーンオファリングの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_690135178",
       "japanese": "リーチによる秒間合計マナ回復量が#%増加する"
     },
@@ -66485,6 +67550,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_691932474",
       "japanese": "命中力 +# (ローカル)"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_699673918",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ダメージの#%をライフより先にマナで受ける"
     },
     {
       "kind": "implicit",
@@ -66513,6 +67583,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_720015764",
+      "japanese": "ユニークの敵が付近にいる場合、アタックはヒット時に#%の確率で敵に重傷を付与する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_720395808",
       "japanese": "元素ダメージの#%をライフとしてリーチする"
     },
@@ -66528,6 +67603,16 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_725501141",
+      "japanese": "ユニークの敵が付近にいる場合、アタックブロック率が#%"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_726251263",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、スピリットオファリングの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_734614379",
       "japanese": "筋力が#%増加する"
     },
@@ -66540,6 +67625,21 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_737908626",
       "japanese": "スペルのクリティカル率が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_738837643",
+      "japanese": "ユニークの敵が付近にいる場合、付与した出血がダメージを与える速度が#%速くなる"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_740797388",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、エンデュランスチャージ1個ごとにダメージが#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_74135418",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、混沌耐性 +#%"
     },
     {
       "kind": "implicit",
@@ -66578,6 +67678,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_760444887",
+      "japanese": "ユニークの敵が付近にいる場合、マナ自動回復レートが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_762600725",
       "japanese": "ブロック時に#のライフを獲得する"
     },
@@ -66590,6 +67695,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_763611529",
       "japanese": "ヒット時に#%の確率で敵を4秒間狼狽させる"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_764963982",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、フレッシュアンドストーンの効果範囲が#%増加する"
     },
     {
       "kind": "implicit",
@@ -66638,6 +67748,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_778803098",
+      "japanese": "ユニークの敵が付近にいる場合、アンガーのオーラの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_779168081",
       "japanese": "装備するとレベル#コープスウォークをトリガーする"
     },
@@ -66655,6 +67770,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_782230869",
       "japanese": "非ダメージ性状態異常の効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_783010498",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、フレイムゴーレムにより付与されるバフの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -66700,6 +67820,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_791835907",
       "japanese": "スペルクリティカル率 +#%"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_794753348",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、ウォークライのバフの効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -66838,6 +67963,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_848890513",
+      "japanese": "ユニークの敵が付近にいる場合、ヒットによる物理ダメージの#%を冷気ダメージとして受ける"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_850668052",
       "japanese": "アトラスのピナクルボスが付近にいる場合、トラベルスキルのクールダウン解消レートが#%増加する"
     },
@@ -66873,6 +68003,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_874990741",
+      "japanese": "ユニークの敵が付近にいる場合、#%の確率で敵を発火させる"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_875143443",
       "japanese": "ヒット時に#%の確率でパワーチャージ、フレンジーチャージおよびエンデュランスチャージのスタックを盗む"
     },
@@ -66895,6 +68030,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_884586851",
       "japanese": "見つかるアイテムの数量が#%増加する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_886650454",
+      "japanese": "ユニークの敵が付近にいる場合、盲目の効果が#%増加する"
     },
     {
       "kind": "implicit",
@@ -66928,8 +68068,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_908556575",
+      "japanese": "ユニークの敵が付近にいる場合、ピュリティオブライトニングのオーラの効果が#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_911695185",
       "japanese": "近接距離でのクリティカル時に#%の確率でフレンジーチャージを1個獲得する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_911929910",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#%の確率で発火を無効化する"
     },
     {
       "kind": "implicit",
@@ -66978,8 +68128,18 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_942266300",
+      "japanese": "ユニークの敵が付近にいる場合、ジュネラルズクライのクールダウン解消レートが#%増加する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_944211673",
       "japanese": "ユニークの敵が付近にいる場合、敵スタン閾値が#%減少する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_944522962",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、混沌耐性の最大値 +#%"
     },
     {
       "kind": "implicit",
@@ -67098,6 +68258,11 @@
     },
     {
       "kind": "implicit",
+      "stat_id": "implicit.stat_990874979",
+      "japanese": "アトラスのピナクルボスが付近にいる場合、#%の確率でスタンを無効化する"
+    },
+    {
+      "kind": "implicit",
       "stat_id": "implicit.stat_99089516",
       "japanese": "ソケットされたジェムはレベル#投射物高速化によりサポートされる"
     },
@@ -67110,6 +68275,11 @@
       "kind": "implicit",
       "stat_id": "implicit.stat_991194404",
       "japanese": "ディシプリンの影響を受けている時に毎秒エナジーシールドの#%を自動回復する"
+    },
+    {
+      "kind": "implicit",
+      "stat_id": "implicit.stat_993223747",
+      "japanese": "ユニークの敵が付近にいる場合、近接ヒットにより堅牢化する"
     },
     {
       "kind": "implicit",
@@ -67134,102 +68304,102 @@
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_11536",
-      "japanese": "ヤーネスのヴェールの"
+      "japanese": "of Janus' Veil"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_14269",
-      "japanese": "ヴェイガンのヴェールされた"
+      "japanese": "Vagan's Veiled"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_3258",
-      "japanese": "リオのヴェールされた"
+      "japanese": "Leo's Veiled"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_38872",
-      "japanese": "グラヴィシウスのヴェールされた"
+      "japanese": "Gravicius' Veiled"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_39023",
-      "japanese": "ハクのヴェールされた"
+      "japanese": "Haku's Veiled"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_3975",
-      "japanese": "ヒロックのヴェールされた"
+      "japanese": "of Hillock's Veil"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_44855",
-      "japanese": "コレルのヴェールされた"
+      "japanese": "Korell's Veiled"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_47933",
-      "japanese": "ヴォリーチのヴェールされた"
+      "japanese": "Vorici's Veiled"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_48007",
-      "japanese": "アシュリングのヴェールの"
+      "japanese": "of Aisling's Veil"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_48408",
-      "japanese": "ライカーのヴェールの"
+      "japanese": "of Riker's Veil"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_55787",
-      "japanese": "逃げたもののヴェールされた"
+      "japanese": "It That Fled's Veiled"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_5769",
-      "japanese": "エルレオンのヴェールされた"
+      "japanese": "Elreon's Veiled"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_6131",
-      "japanese": "リンのヴェールされた"
+      "japanese": "Rin's Veiled"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_62955",
-      "japanese": "ジョーギンのヴェールの"
+      "japanese": "of Jorgin's Veil"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_63099",
-      "japanese": "ヴェールの"
+      "japanese": "of the Veil"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_63772",
-      "japanese": "カタリナのヴェールされた"
+      "japanese": "Catarina's Veiled"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_65000",
-      "japanese": "ヴェールされた"
+      "japanese": "Veiled"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_65163",
-      "japanese": "カミリアのヴェールの"
+      "japanese": "of Cameria's Veil"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_6779",
-      "japanese": "ガフのヴェールされた"
+      "japanese": "Guff's Veiled"
     },
     {
       "kind": "veiled",
       "stat_id": "veiled.mod_8541",
-      "japanese": "トーラのヴェールされた"
+      "japanese": "Tora's Veiled"
     }
   ]
 }

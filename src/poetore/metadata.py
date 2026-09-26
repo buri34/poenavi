@@ -76,6 +76,31 @@ def unique_icon_url(name: str, path: Path | None = None) -> str | None:
     return str(value) if value else None
 
 
+def unique_disenchant_value(
+    name: str, base_type: str, path: Path | None = None,
+) -> float | None:
+    """Unique名・基底種に対応する解呪ダストの基礎値を返す。"""
+    path = (path or Path(os.environ.get("POETORE_METADATA_PATH", INDEX_PATH))).resolve()
+    if not name or not path.exists():
+        return None
+    variants = _load_payload(str(path)).get("unique_disenchant_values", {}).get(
+        name.strip().casefold(), {}
+    )
+    if not isinstance(variants, dict) or not variants:
+        return None
+    value = variants.get(base_type.strip().casefold()) if base_type else None
+    if value is None:
+        values = {float(candidate) for candidate in variants.values()}
+        if len(values) != 1:
+            return None
+        value = values.pop()
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+    return numeric if numeric > 0 else None
+
+
 def related_item_group(
     namespace: str, name: str, variant: str | None = None, path: Path | None = None,
 ) -> dict | None:

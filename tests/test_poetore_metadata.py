@@ -3,18 +3,33 @@ from pathlib import Path
 
 import pytest
 
+from scripts.extract_poetore_stat_rules import extract_rules
 from src.poetore.metadata import (
-    MetadataIndex, ModMetadata, OptionValue, TierRange, pseudo_definitions, pseudo_relations,
-    diff_pseudo_payloads, unique_fixed_stats, unique_icon_url, validate_pseudo_payload,
+    MetadataIndex,
+    ModMetadata,
+    OptionValue,
+    TierRange,
+    diff_pseudo_payloads,
+    pseudo_definitions,
+    pseudo_relations,
+    unique_disenchant_value,
+    unique_fixed_stats,
+    unique_icon_url,
+    validate_pseudo_payload,
 )
 from src.poetore.metadata_builder import (
-    apply_japanese_trade_overrides, audit_awakened_stat_rules,
-    build_minimal_index, build_official_index,
-    build_related_item_groups, diff_minimal_indexes,
-    diff_official_trade_entries, excessive_removal, official_trade_entry_snapshot,
-    unresolved_trade_entries, validate_minimal_index,
+    apply_japanese_trade_overrides,
+    audit_awakened_stat_rules,
+    build_minimal_index,
+    build_official_index,
+    build_related_item_groups,
+    diff_minimal_indexes,
+    diff_official_trade_entries,
+    excessive_removal,
+    official_trade_entry_snapshot,
+    unresolved_trade_entries,
+    validate_minimal_index,
 )
-from scripts.extract_poetore_stat_rules import extract_rules
 
 
 def test_official_builder_uses_official_japanese_repoe_tiers_and_poetore_rules():
@@ -188,7 +203,7 @@ def test_default_metadata_uses_latest_reviewed_awakened_snapshot():
     payload = json.loads(Path("data/poetore/mod_metadata.json").read_text(encoding="utf-8"))
 
     assert payload["sources"]["awakened_poe_trade"]["revision"] == (
-        "1e2225af8cfe04ccc5676d00eede81d7ee071240"
+        "543423aba68db81d965f42bfbe7af47bf435fe13"
     )
     assert payload["gems"]["coursing current support"]["max_level"] == 3
     assert payload["unique_fixed_stats"]["heroic tragedy"] == ["Historic"]
@@ -200,6 +215,53 @@ def test_default_metadata_uses_latest_reviewed_awakened_snapshot():
         any(item["name"] == "Reclaimed Malevolence" for item in group["items"])
         for group in payload["related_item_groups"]
     )
+
+
+def test_latest_reviewed_snapshot_keeps_only_selected_runtime_data():
+    payload = json.loads(Path("data/poetore/mod_metadata.json").read_text(encoding="utf-8"))
+    rows = {(row["kind"], row["stat_id"]): row for row in payload["mods"]}
+
+    assert rows[("explicit", "explicit.indexable_skill_27")]["japanese"] == [
+        "全ての#ジェムのレベル +スパーク"
+    ]
+    assert rows[("explicit", "explicit.stat_1121911611")]["japanese"] == [
+        "同種のトーテムを3体以上同時に召喚できなくなる"
+    ]
+    assert rows[("explicit", "explicit.stat_1455353008")]["japanese"] == [
+        "モンスターはヒット時にパワーチャージ、フレンジーチャージまたはエンデュランスチャージを盗むことも取り除くこともできない"
+    ]
+    minimum_power_charge = rows[("explicit", "explicit.stat_1999711879")]
+    assert any(
+        tier["generation"] == "corrupted"
+        and tier["mod_id"] == "V2MinPowerChargesCorruptedNew"
+        for tier in minimum_power_charge["tiers"]
+    )
+
+    serialized = json.dumps(payload, ensure_ascii=False)
+    for rejected_field in ("modFamily", "maxTier", "jewelleryQuality"):
+        assert f'"{rejected_field}"' not in serialized
+
+
+def test_latest_reviewed_related_items_include_verified_map_and_chase_updates():
+    payload = json.loads(Path("data/poetore/mod_metadata.json").read_text(encoding="utf-8"))
+    groups = {
+        tuple(row["id"] for row in group["query"]): group
+        for group in payload["related_item_groups"]
+    }
+
+    cortex = groups[("UNIQUE::Cortex // T0", "UNIQUE::Replica Cortex // T0")]
+    assert any(row["name"] == "Bottled Faith" for row in cortex["items"])
+    vinktar = groups[("UNIQUE::The Vinktar Square // T0",)]
+    assert [row["name"] for row in vinktar["items"]] == ["Vessel of Vinktar"]
+    chase = groups[(
+        "ITEM::Ancient Orb", "ITEM::Astragali", "ITEM::Voidborn Reliquary Key",
+        "ITEM::Valdo's Puzzle Box",
+    )]
+    assert any(
+        row["name"] == "Mageblood" and row["variant"] == "4 Flasks, Heavy Belt"
+        for row in chase["items"]
+    )
+    assert any(row["name"] == "Soul Taker" for row in chase["items"])
 
 
 def test_all_awakened_timeless_jewel_people_match_japanese_advanced_copy_exactly():
@@ -410,11 +472,38 @@ def test_builder_restores_official_cluster_option_entries_to_base_stat():
     assert record["options"][1]["japanese"].endswith("回避力が15%増加する")
 
 
+def test_builder_extracts_unique_disenchant_values_by_name_and_base(tmp_path):
+    items = (
+        json.dumps({
+            "namespace": "UNIQUE", "refName": "Eternal Damnation",
+            "unique": {"base": "Agate Amulet", "disenchantValue": 165.78},
+        }),
+        json.dumps({
+            "namespace": "UNIQUE", "refName": "Combat Focus",
+            "unique": {"base": "Viridian Jewel", "disenchantValue": 2.19},
+        }),
+        json.dumps({
+            "namespace": "UNIQUE", "refName": "Combat Focus",
+            "unique": {"base": "Crimson Jewel", "disenchantValue": 2.19},
+        }),
+    )
+    payload = build_minimal_index([], {"result": []}, awakened_items=items)
+    path = tmp_path / "metadata.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert payload["unique_disenchant_values"]["eternal damnation"] == {
+        "agate amulet": 165.78,
+    }
+    assert unique_disenchant_value("Eternal Damnation", "Agate Amulet", path) == 165.78
+    assert unique_disenchant_value("Combat Focus", "Cobalt Jewel", path) == 2.19
+    assert unique_disenchant_value("Unknown", "Agate Amulet", path) is None
+
+
 def test_pseudo_relations_are_fixed_to_audited_awakened_source():
     path = Path("data/poetore/pseudo_relations.json")
     payload = json.loads(path.read_text(encoding="utf-8"))
-    assert payload["source_revision"] == "1e2225af8cfe04ccc5676d00eede81d7ee071240"
-    assert payload["source_sha256"] == "50209531e87e8d3d2f87d98b51ca6371dd4c2c2e4dce9c37302333e44c0a4b70"
+    assert payload["source_revision"] == "543423aba68db81d965f42bfbe7af47bf435fe13"
+    assert payload["source_sha256"] == "b3a0d919a59d64c4559b4114c689661f9f4a0e4ae19a865d6f02998cc75691c2"
     relations = pseudo_relations(path)
     assert len(relations) == 19
     assert any(row["stat_id"] == "pseudo.pseudo_increased_burning_damage" and

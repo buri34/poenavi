@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "description": "Reviewed Japanese identity fallbacks for EE2 related-item query identities missing from the locked Japanese item data.",
+  "aliases": [
+    {"from":"ITEM::Legacy of Edyrns Tusks","to":"ITEM::Legacy of Edyrn's Tusks"},
+    {"from":"UNIQUE::Edyrns Tusks // Iron Cuirass","to":"UNIQUE::Edyrn's Tusks // Iron Cuirass"}
+  ],
+  "overrides": [
+    {"namespace":"GEM","ref_name":"Techrod's Revenge","japanese":"テクロッドの復讐"},
+    {"namespace":"GEM","ref_name":"Uhtred's Augury","japanese":"ウートレドの予兆"},
+    {"namespace":"GEM","ref_name":"Uhtred's Exodus","japanese":"ウートレドの大移動"},
+    {"namespace":"GEM","ref_name":"Uhtred's Omen","japanese":"ウートレドの前兆"},
+    {"namespace":"ITEM","ref_name":"Legacy of Bramblejack","japanese":"ブランブルジャックの遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Edyrn's Tusks","japanese":"エディルンの牙の遺産","category":"SoulCore"},
+    {"namespace":"ITEM","ref_name":"Legacy of Kingsguard","japanese":"キングスガードの遺産","category":"SoulCore"},
+    {"namespace":"ITEM","ref_name":"Legacy of Bristleboar","japanese":"毛深い猪の遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Elevore","japanese":"エレボアーの遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of The Smiling Knight","japanese":"微笑む騎士の遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of The Vile Knight","japanese":"卑劣な騎士の遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Legionstride","japanese":"リージョンストライドの遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Bushwhack","japanese":"ブッシュワックの遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of The Knight-errant","japanese":"放浪騎士の遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Obern's Bastion","japanese":"オバーンの砦の遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Dionadair","japanese":"ディオナデアの遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Wulfsbane","japanese":"ウルフスベインの遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Alkem Eira","japanese":"アルケム・エイラの遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Oaksworn","japanese":"楢の誓いの遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Dunkelhalt","japanese":"ダンケルハルトの遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Rondel de Ezo","japanese":"ロンデル・デ・エゾの遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Tyranny's Grip","japanese":"圧政の手の遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of The Blood Thorn","japanese":"血の棘の遺産"},
+    {"namespace":"ITEM","ref_name":"Legacy of Amor Mandragora","japanese":"マンドラゴラの愛の遺産"}
+  ]
+}

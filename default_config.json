@@ -1,7 +1,8 @@
 {
     "startup": {
         "preferred_mode": "poenavi",
-        "show_mode_selector": true
+        "show_mode_selector": true,
+        "windows_autostart_poetore": false
     },
     "hotkeys": {
         "start_stop": "F7",
@@ -15,6 +16,8 @@
         "search_string_test": "F4",
         "poetore_capture": "alt+d",
         "poetore_auto_hide": "ctrl+d",
+        "expedition_reward_ocr": "alt+e",
+        "desecration_tier_ocr": "alt+r",
         "map_check": "alt+f",
         "gem_shop_search": "F2",
         "cheat_sheets_toggle": "shift+space"
@@ -60,10 +63,29 @@
     "poetore": {
         "league": "auto",
         "search_stat_range": 10,
+        "trade_options": {
+            "poe1": {
+                "status": "instant",
+                "currency": "any"
+            },
+            "poe2": {
+                "status": "instant",
+                "currency": "any"
+            }
+        },
         "result_font_size": "medium",
+        "capture_error_notification_enabled": false,
         "result_positions": {},
+        "screen_reading": {
+            "enabled": false
+        },
+        "expedition_reward_overlay": {},
+        "desecration_tier_overlay": {
+            "show_tier_ranges": true
+        },
         "obs_streaming": {
             "enabled": false,
+            "title_bar_opacity": 100,
             "geometry": {}
         }
     },
@@ -89,7 +111,8 @@
     "cheat_sheets": {
         "images": [],
         "selected_id": "",
-        "opacity": 100,
+        "image_transparency": 100,
+        "background_transparency": 0,
         "position": {
             "x": 120,
             "y": 120
@@ -118,6 +141,6 @@
         "window_opacity": 100,
         "text_opacity": 100,
         "fade_delay_ms": 5000,
-        "always_on_top": true
+        "topmost_mode": "poe_only"
     }
 }

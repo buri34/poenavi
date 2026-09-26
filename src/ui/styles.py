@@ -40,7 +40,7 @@ class Styles:
             border: 1px solid {TEXT_COLOR};
             border-radius: 4px;
             padding: 5px 10px;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Noto Sans JP', sans-serif;
             font-weight: bold;
         }}
         QPushButton:hover {{
@@ -55,7 +55,7 @@ class Styles:
     # ラップタイム表示用スタイル
     LAP_ITEM_BASE = f"""
         QLabel {{
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Noto Sans JP', sans-serif;
             font-size: 14px;
             padding: 2px 8px;
         }}
@@ -63,7 +63,7 @@ class Styles:
     
     LAP_ITEM_COMPLETED = f"""
         QLabel {{
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Noto Sans JP', sans-serif;
             font-size: 14px;
             padding: 2px 8px;
             color: rgba(176, 255, 123, 0.7);
@@ -72,7 +72,7 @@ class Styles:
     
     LAP_ITEM_CURRENT = f"""
         QLabel {{
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Noto Sans JP', sans-serif;
             font-size: 14px;
             font-weight: bold;
             padding: 2px 8px;
@@ -182,7 +182,7 @@ class Styles:
 
     LAP_ITEM_PENDING = f"""
         QLabel {{
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Noto Sans JP', sans-serif;
             font-size: 14px;
             padding: 2px 8px;
             color: rgba(128, 128, 128, 0.6);

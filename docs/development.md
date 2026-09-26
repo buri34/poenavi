@@ -1,5 +1,33 @@
 # Development Notes
 
+## 正式リリースの順序
+
+PoENavi本体の正式リリースは、必ず次の順序で行います。
+
+1. リリース対象の変更、`APP_VERSION`、リリースノートを同じbranchで確定する。
+2. `main`向けPull Requestを作成し、Security ScanとWindows Build Verificationを完走させる。
+3. squashやrebaseではなくmerge commitで`main`へ統合する。
+4. リリース対象commitが`origin/main`の祖先であることを確認する。
+5. そのcommitへ`vX.Y.Z`タグを作成してpushする。
+6. Release Workflow完了後、タグが`main`の祖先であること、公開assetのSHA-256とGitHub digestが一致することを再確認する。
+
+長期開発branch上のcommitへ直接リリースタグを付けてはいけません。Release
+Workflowも、タグのcommitが`main`から到達できない場合は成果物生成前に停止します。
+高精度OCRパックは専用の手動Workflowと`ndlocr-pack-*`タグで管理し、この本体
+リリース手順とは分離します。
+
+## Windowsビルド・OCR検証の入口
+
+- `build_exe.bat`: 通常の正式配布用`PoENavi.zip`を作る標準入口。
+- `build_diagnostic_exe.bat`: エクスペディションOCRの詳細診断を有効にした保守用ZIPを作る。
+- `BUILD_RELEASE_FROM_SNAPSHOT.cmd`: SMB上の変更不可スナップショットをWindowsローカルへコピーし、
+  ビルドツール準備、正式ZIP生成、監査、共有フォルダへの成果物回収まで行う実機引き渡し用入口。
+- `tools/diagnostics/RUN_DESECRATION_WINDOWS_OCR_TEST.cmd`: 保存済み実画像をWindows OCR単体へ通す
+  開発者向け回帰確認。正式ZIPは作らない。
+
+過去のWindows OCR＋NDLOCR Fusion検証と常駐RAMスパイクは、本体実装とWindows実測が完了したため
+削除した。検証結果は`docs/poetore-ndlocr-resident-integration-plan.md`に保存している。
+
 ## 開発用のユーザーデータ保存先
 
 通常起動では、設定ファイルは `%APPDATA%\PoENavi\config.json` に保存されます。

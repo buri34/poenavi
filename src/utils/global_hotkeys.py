@@ -34,7 +34,7 @@ def find_duplicate_hotkeys(hotkeys: dict[str, str]) -> dict[str, list[str]]:
     """未割り当てを除き、同じキーへ割り当てられた操作を返す。"""
     by_key: dict[str, list[str]] = {}
     for action, key in hotkeys.items():
-        normalized = str(key or "").strip().casefold()
+        normalized = canonical_hotkey_name(key)
         if not normalized or normalized == "none":
             continue
         by_key.setdefault(normalized, []).append(action)
@@ -42,11 +42,30 @@ def find_duplicate_hotkeys(hotkeys: dict[str, str]) -> dict[str, list[str]]:
 
 
 def listener_hotkey_name(key_text: str) -> str:
-    normalized = str(key_text).lower().replace(" ", "_").replace("capslock", "caps_lock")
+    normalized = canonical_hotkey_name(key_text).replace("capslock", "caps_lock")
     return {
         "left_alt": "alt_l",
         "right_alt": "alt_r",
     }.get(normalized, normalized)
+
+
+def canonical_hotkey_name(key_text: str) -> str:
+    """Normalize modifier aliases and order while preserving the trigger key."""
+    parts = [
+        part.strip().casefold().replace(" ", "_")
+        for part in str(key_text or "").split("+")
+        if part.strip()
+    ]
+    if not parts:
+        return ""
+    aliases = {"control": "ctrl"}
+    parts = [aliases.get(part, part) for part in parts]
+    modifiers = [name for name in ("ctrl", "alt", "shift") if name in parts]
+    trigger = next(
+        (part for part in reversed(parts) if part not in {"ctrl", "alt", "shift"}),
+        "",
+    )
+    return "+".join((*modifiers, trigger)) if trigger else "+".join(modifiers)
 
 
 def hotkey_key_name(key) -> str | None:
@@ -138,7 +157,7 @@ class GlobalHotkeyService(QObject):
                     ]
                     + [key_name]
                 )
-                configured = self._hotkey_map.get(combo) or self._hotkey_map.get(key_name)
+                configured = self._hotkey_map.get(combo)
                 if (configured and combo not in triggered_combos
                         and self._action_is_allowed(configured)):
                     triggered_combos.add(combo)
@@ -218,6 +237,7 @@ class ForegroundSuppressedHotkeyService(QObject):
         result_window_checker=None,
         poe_target_getter=None,
         focus_target=None,
+        allow_unmodified=False,
         platform=None,
         poll_interval_ms=100,
         parent=None,
@@ -231,6 +251,7 @@ class ForegroundSuppressedHotkeyService(QObject):
         self._result_window_checker = result_window_checker
         self._poe_target_getter = poe_target_getter
         self._focus_target = focus_target or focus_window
+        self._allow_unmodified = allow_unmodified
         self._platform = sys.platform if platform is None else platform
         self._poll_interval_ms = poll_interval_ms
         self._native_hook = None
@@ -290,11 +311,13 @@ class ForegroundSuppressedHotkeyService(QObject):
             if factory is None:
                 from src.utils.win32_suppressed_hotkey import Win32SuppressedHotkeyHook
                 factory = Win32SuppressedHotkeyHook
-            hook = factory(
-                self._hotkey,
-                should_suppress=self._should_suppress_native_event,
-                on_event=self._receive_native_event,
-            )
+            options = {
+                "should_suppress": self._should_suppress_native_event,
+                "on_event": self._receive_native_event,
+            }
+            if self._allow_unmodified:
+                options["allow_unmodified"] = True
+            hook = factory(self._hotkey, **options)
             hook.start()
             self._native_hook = hook
             record_hotkey_event("registered", hotkey=self._hotkey)

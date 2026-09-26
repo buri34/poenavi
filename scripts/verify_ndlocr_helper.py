@@ -1,0 +1,66 @@
+"""Smoke-test the packaged NDLOCR helper with the reported physical-64 image."""
+
+from __future__ import annotations
+
+import argparse
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from PySide6.QtGui import QImage
+
+from src.poetore.poe2.desecration_ocr import image_bytes, prepare_desecration_frame
+from src.poetore.poe2.ndlocr_lite import NdlOcrLiteServer
+
+EXPECTED = "物理ダメージが64%増加する"
+
+
+def configure_standard_streams() -> None:
+    """Keep Japanese smoke-test output stable on non-UTF-8 Windows runners."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
+def verify(helper: Path, image_path: Path) -> str:
+    image = QImage(str(image_path))
+    prepared = prepare_desecration_frame(image)
+    if image.isNull() or not prepared.valid_panel or len(prepared.ndl_images) != 3:
+        raise RuntimeError("NDLOCRスモークテスト画像を切り出せませんでした。")
+    server = NdlOcrLiteServer(helper=helper, timeout=120)
+    try:
+        compacts = []
+        for _index in range(2):
+            result = server.recognize([
+                image_bytes(prepared.ndl_images[0]),
+            ])[0]
+            compact = re.sub(r"\s+", "", result.text)
+            if compact != EXPECTED:
+                raise RuntimeError(
+                    f"NDLOCRスモークテスト不一致: {result.text!r}",
+                )
+            compacts.append(compact)
+        if server.last_metrics is None or server.last_metrics.cold_start:
+            raise RuntimeError("NDLOCR常駐プロセスが再利用されませんでした。")
+        return compacts[-1]
+    finally:
+        server.close()
+
+
+def main() -> int:
+    configure_standard_streams()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--helper", type=Path, required=True)
+    parser.add_argument("--image", type=Path, required=True)
+    args = parser.parse_args()
+    print(verify(args.helper, args.image))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

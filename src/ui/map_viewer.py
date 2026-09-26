@@ -167,8 +167,7 @@ class MapImageDialog(QDialog):
         layout.setContentsMargins(10, 10, 10, 10)
         
         self.notice_label = QLabel(
-            "実際のレイアウトは、ワールドマップ上の隣接エリアとの位置関係に依存してランダムに変動します。\n"
-            "そのため、上下または左右に反転したレイアウトや、90度回転したようなレイアウトになることがあります。"
+            "リーグ毎でPoE2はマップ構造自体が大きく変わり、掲載画像が現行リーグと異なる場合があるため、参考情報としてご利用ください。"
         )
         self.notice_label.setWordWrap(True)
         self.notice_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)

@@ -219,6 +219,30 @@ def _unique_icons(items_lines: Iterable[str]) -> dict[str, str]:
     return dict(sorted(result.items()))
 
 
+def _unique_disenchant_values(items_lines: Iterable[str]) -> dict[str, dict[str, float]]:
+    """AwakenedのUnique基礎解呪値を名前・基底種の組で固定する。"""
+    result: dict[str, dict[str, float]] = {}
+    for line in items_lines:
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        unique = row.get("unique") or {}
+        name = str(row.get("refName", "")).strip().casefold()
+        base = str(unique.get("base", "")).strip().casefold()
+        value = unique.get("disenchantValue")
+        if row.get("namespace") != "UNIQUE" or not name or not base or value is None:
+            continue
+        numeric = float(value)
+        previous = result.setdefault(name, {}).get(base)
+        if previous is not None and previous != numeric:
+            raise ValueError(f"conflicting unique disenchant value: {name}:{base}")
+        result[name][base] = numeric
+    return {
+        name: dict(sorted(variants.items()))
+        for name, variants in sorted(result.items())
+    }
+
+
 UBER_BOSS_DROP_SUPPLEMENTS = {
     # Awakenedのitem-drop.jsonはUber固有枠を中心に収録しており、
     # 通常版とUber版に共通する取引可能ドロップが各入場券から欠けている。
@@ -485,6 +509,7 @@ def build_minimal_index(awakened_lines: Iterable[str], jp_trade: dict,
         "gems": _gems(awakened_items),
         "unique_fixed_stats": _unique_fixed_stats(awakened_items),
         "unique_icons": _unique_icons(awakened_items),
+        "unique_disenchant_values": _unique_disenchant_values(awakened_items),
         "related_item_groups": build_related_item_groups(
             awakened_items, awakened_item_drops,
         ),
@@ -551,6 +576,7 @@ def build_official_index(jp_trade: dict, stat_rules: dict,
         "gems": _gems(awakened_items),
         "unique_fixed_stats": _unique_fixed_stats(awakened_items),
         "unique_icons": _unique_icons(awakened_items),
+        "unique_disenchant_values": _unique_disenchant_values(awakened_items),
         "related_item_groups": build_related_item_groups(
             awakened_items, awakened_item_drops,
         ),
@@ -625,6 +651,18 @@ def validate_minimal_index(payload: dict) -> dict:
         if (not unique_name or not isinstance(icon_url, str)
                 or not icon_url.startswith("https://web.poecdn.com/")):
             errors.append(f"invalid unique icon: {unique_name}")
+    for unique_name, variants in payload.get("unique_disenchant_values", {}).items():
+        if not unique_name or not isinstance(variants, dict) or not variants:
+            errors.append(f"invalid unique disenchant variants: {unique_name}")
+            continue
+        for base_type, value in variants.items():
+            if (
+                not base_type or not isinstance(value, (int, float))
+                or isinstance(value, bool) or value <= 0
+            ):
+                errors.append(
+                    f"invalid unique disenchant value: {unique_name}:{base_type}={value}"
+                )
     keys: set[tuple[str, str]] = set()
     matchers: dict[tuple[str, str], list[str]] = {}
     for index, row in enumerate(mods):

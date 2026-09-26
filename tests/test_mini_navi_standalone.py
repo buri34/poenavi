@@ -1,13 +1,17 @@
+import ctypes
 import os
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QEvent, Qt
-from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QWidget
 
 from src.ui.main_window import MainWindow, MiniNaviOverlay
+from src.ui.window_flags import set_native_window_topmost
 from src.utils.config_manager import ConfigManager
 
 
@@ -35,6 +39,12 @@ class MiniNaviStandaloneTest(unittest.TestCase):
         self.app.sendPostedEvents(None, QEvent.DeferredDelete)
         self.app.processEvents()
 
+    def test_poennavi_tray_icon_uses_app_icon_asset(self):
+        icon_path = Path(MainWindow._app_icon_path())
+
+        self.assertEqual(icon_path.parts[-3:], ("assets", "app", "icon.ico"))
+        self.assertTrue(icon_path.is_file())
+
     def test_overlay_is_top_level_but_keeps_logical_main_window(self):
         main = QWidget()
         main.config = {"mini_guide_overlay": {}}
@@ -43,8 +53,200 @@ class MiniNaviStandaloneTest(unittest.TestCase):
             self.assertIsNone(overlay.parent())
             self.assertIs(overlay.main_window, main)
         finally:
-            overlay.close()
-            main.close()
+            self._dispose_overlay(overlay, main)
+
+    def test_poe_only_topmost_tracks_foreground_for_overlay_and_lock(self):
+        main = QWidget()
+        main.config = {
+            "mini_guide_overlay": {
+                "enabled": True,
+                "topmost_mode": "poe_only",
+            }
+        }
+        with (
+            patch("src.ui.mini_navi.get_foreground_window", return_value=123),
+            patch("src.ui.mini_navi.is_path_of_exile_window", return_value=True) as is_poe,
+            patch("src.ui.mini_navi.set_native_window_topmost") as set_topmost,
+        ):
+            overlay = MiniNaviOverlay(main)
+            try:
+                overlay._last_topmost_state = None
+                overlay._refresh_topmost_state()
+                self.assertTrue(overlay._topmost_timer.isActive())
+                self.assertEqual(set_topmost.call_args_list[-2].args, (overlay, True))
+                self.assertEqual(
+                    set_topmost.call_args_list[-1].args,
+                    (overlay.lock_button_window, True),
+                )
+                is_poe.return_value = False
+                overlay._refresh_topmost_state()
+                self.assertEqual(set_topmost.call_args_list[-2].args, (overlay, False))
+                self.assertEqual(
+                    set_topmost.call_args_list[-1].args,
+                    (overlay.lock_button_window, False),
+                )
+            finally:
+                self._dispose_overlay(overlay, main)
+
+    def test_topmost_modes_do_not_poll_when_always_or_never(self):
+        for mode, expected in (("always", True), ("never", False)):
+            main = QWidget()
+            main.config = {
+                "mini_guide_overlay": {
+                    "enabled": True,
+                    "topmost_mode": mode,
+                }
+            }
+            with patch("src.ui.mini_navi.set_native_window_topmost") as set_topmost:
+                overlay = MiniNaviOverlay(main)
+                try:
+                    self.assertFalse(overlay._topmost_timer.isActive())
+                    self.assertEqual(set_topmost.call_args_list[-2].args, (overlay, expected))
+                    self.assertEqual(
+                        set_topmost.call_args_list[-1].args,
+                        (overlay.lock_button_window, expected),
+                    )
+                finally:
+                    self._dispose_overlay(overlay, main)
+
+    def test_topmost_diagnostics_distinguish_timer_stall_from_z_order_delay(self):
+        main = QWidget()
+        main.config = {
+            "mini_guide_overlay": {
+                "enabled": True,
+                "topmost_mode": "poe_only",
+            }
+        }
+        with (
+            patch("src.ui.mini_navi.get_foreground_window", return_value=123),
+            patch("src.ui.mini_navi.is_path_of_exile_window", return_value=True),
+            patch("src.ui.mini_navi.set_native_window_topmost"),
+        ):
+            overlay = MiniNaviOverlay(main)
+        try:
+            overlay._last_topmost_state = True
+            overlay._last_topmost_tick_at = 10.0
+            z_state = {"topmost": False, "foreground_above": False}
+            with (
+                patch("src.ui.mini_navi.sys.platform", "win32"),
+                patch("src.ui.mini_navi.time.perf_counter", side_effect=(13.0, 16.05)),
+                patch("src.ui.mini_navi.get_foreground_window", return_value=456),
+                patch("src.ui.mini_navi.is_path_of_exile_window", return_value=False),
+                patch("src.ui.mini_navi.set_native_window_topmost", return_value=True),
+                patch("src.ui.mini_navi.native_window_z_order_state", return_value=z_state),
+                patch("src.ui.mini_navi.record_mini_navi_topmost_event") as record_event,
+                patch("src.ui.mini_navi.QTimer.singleShot") as single_shot,
+            ):
+                overlay._refresh_topmost_state()
+
+                transition = record_event.call_args_list[0].kwargs
+                self.assertEqual(transition["tick_gap_ms"], 3000.0)
+                self.assertFalse(transition["desired"])
+                self.assertEqual(transition["foreground_kind"], "other")
+                self.assertFalse(transition["overlay_topmost_after"])
+                self.assertFalse(transition["foreground_above_overlay"])
+                self.assertEqual(
+                    [call.args[0] for call in single_shot.call_args_list],
+                    [100, 500, 1500, 3000],
+                )
+
+                sample_3000 = single_shot.call_args_list[-1].args[1]
+                sample_3000()
+                sample = record_event.call_args_list[-1].kwargs
+                self.assertEqual(sample["requested_delay_ms"], 3000)
+                self.assertEqual(sample["actual_delay_ms"], 3050.0)
+                self.assertEqual(sample["foreground_kind"], "other")
+                self.assertFalse(sample["foreground_above_overlay"])
+        finally:
+            self._dispose_overlay(overlay, main)
+
+    def test_disabling_native_topmost_places_window_at_bottom(self):
+        widget = QWidget()
+        user32 = Mock()
+        user32.SetWindowPos.return_value = 1
+        try:
+            with (
+                patch("src.ui.window_flags.sys.platform", "win32"),
+                patch.object(
+                    ctypes,
+                    "windll",
+                    SimpleNamespace(user32=user32),
+                    create=True,
+                ),
+            ):
+                self.assertTrue(set_native_window_topmost(widget, False))
+
+            insert_after = user32.SetWindowPos.call_args.args[1]
+            self.assertEqual(int(insert_after.value), 1)
+        finally:
+            widget.close()
+            widget.deleteLater()
+
+    def test_topmost_state_is_not_cached_when_native_postcondition_mismatches(self):
+        main = QWidget()
+        main.config = {
+            "mini_guide_overlay": {
+                "enabled": True,
+                "topmost_mode": "poe_only",
+            }
+        }
+        with (
+            patch("src.ui.mini_navi.get_foreground_window", return_value=None),
+            patch("src.ui.mini_navi.set_native_window_topmost"),
+        ):
+            overlay = MiniNaviOverlay(main)
+        try:
+            overlay._last_topmost_state = False
+            before = {"topmost": False, "foreground_above": True}
+            overlay_mismatch = {"topmost": False, "foreground_above": True}
+            lock_matches = {"topmost": True, "foreground_above": False}
+            with (
+                patch("src.ui.mini_navi.sys.platform", "win32"),
+                patch("src.ui.mini_navi.get_foreground_window", return_value=123),
+                patch("src.ui.mini_navi.is_path_of_exile_window", return_value=True),
+                patch("src.ui.mini_navi.set_native_window_topmost", return_value=True),
+                patch(
+                    "src.ui.mini_navi.native_window_z_order_state",
+                    side_effect=(before, before, overlay_mismatch, lock_matches),
+                ),
+                patch("src.ui.mini_navi.record_mini_navi_topmost_event"),
+            ):
+                overlay._refresh_topmost_state()
+
+            self.assertFalse(overlay._last_topmost_state)
+        finally:
+            self._dispose_overlay(overlay, main)
+
+    def test_clicking_mini_navi_keeps_poe_as_active_context(self):
+        main = QWidget()
+        main.config = {
+            "mini_guide_overlay": {
+                "enabled": True,
+                "topmost_mode": "poe_only",
+            }
+        }
+        with (
+            patch("src.ui.mini_navi.get_foreground_window", return_value=None),
+            patch("src.ui.mini_navi.set_native_window_topmost"),
+        ):
+            overlay = MiniNaviOverlay(main)
+        try:
+            overlay_hwnd = int(overlay.winId())
+            with (
+                patch("src.ui.mini_navi.get_foreground_window", return_value=overlay_hwnd),
+                patch(
+                    "src.ui.mini_navi.get_next_visible_window_after",
+                    return_value=456,
+                ) as next_window,
+                patch("src.ui.mini_navi.is_path_of_exile_window", return_value=True),
+            ):
+                self.assertTrue(overlay._poe_is_active_context())
+                next_window.assert_called_once_with(
+                    overlay_hwnd,
+                    skip_current_process=True,
+                )
+        finally:
+            self._dispose_overlay(overlay, main)
 
     def test_overlay_is_always_an_obs_capture_window_while_disabled(self):
         main = QWidget()
@@ -138,8 +340,7 @@ class MiniNaviStandaloneTest(unittest.TestCase):
 
             self.assertEqual(main.config["mini_guide_overlay"], saved)
         finally:
-            overlay.lock_button_window.close()
-            main.close()
+            self._dispose_overlay(overlay, main)
 
     def test_compact_mode_uses_saved_geometry_without_overwriting_standard_geometry(self):
         main = QWidget()
@@ -214,30 +415,80 @@ class MiniNaviStandaloneTest(unittest.TestCase):
     def test_minimize_hides_only_main_when_mini_navi_is_visible(self):
         window = MainWindow.__new__(MainWindow)
         window._hidden_for_mini_navi = False
+        window._tray_notification_shown = False
         window.hide = Mock()
         window.showMinimized = Mock()
+        window.tray_icon = Mock()
         window._is_mini_navi_available = Mock(return_value=True)
         window.mini_navi_overlay = Mock()
         window.mini_navi_overlay.isVisible.return_value = True
 
-        MainWindow.minimize_main_window(window)
+        with patch.object(QSystemTrayIcon, "isSystemTrayAvailable", return_value=True):
+            MainWindow.minimize_main_window(window)
 
         self.assertTrue(window._hidden_for_mini_navi)
         window.hide.assert_called_once_with()
         window.showMinimized.assert_not_called()
+        window.tray_icon.show.assert_called_once_with()
+        window.tray_icon.showMessage.assert_called_once()
         window.mini_navi_overlay.show.assert_called_once_with()
         window.mini_navi_overlay._sync_lock_button.assert_called_once_with()
 
-    def test_minimize_uses_normal_minimize_without_visible_mini_navi(self):
+    def test_minimize_hides_to_tray_without_visible_mini_navi(self):
         window = MainWindow.__new__(MainWindow)
+        window._tray_notification_shown = True
+        window.hide = Mock()
         window.showMinimized = Mock()
+        window.tray_icon = Mock()
         window._is_mini_navi_available = Mock(return_value=True)
         window.mini_navi_overlay = Mock()
         window.mini_navi_overlay.isVisible.return_value = False
 
-        MainWindow.minimize_main_window(window)
+        with patch.object(QSystemTrayIcon, "isSystemTrayAvailable", return_value=True):
+            MainWindow.minimize_main_window(window)
+
+        window.hide.assert_called_once_with()
+        window.showMinimized.assert_not_called()
+        window.tray_icon.show.assert_called_once_with()
+        window.tray_icon.showMessage.assert_not_called()
+
+    def test_minimize_uses_normal_minimize_when_tray_is_unavailable(self):
+        window = Mock()
+        with patch.object(QSystemTrayIcon, "isSystemTrayAvailable", return_value=False):
+            MainWindow.minimize_main_window(window)
 
         window.showMinimized.assert_called_once_with()
+        window.hide.assert_not_called()
+
+    def test_tray_activation_restores_hidden_main_window(self):
+        window = Mock()
+        window._hidden_for_mini_navi = True
+
+        MainWindow.restore_from_tray(window)
+
+        window.restore_from_mini_navi.assert_called_once_with()
+        window.showNormal.assert_not_called()
+        window.tray_icon.hide.assert_called_once_with()
+
+    def test_tray_activation_restores_normal_main_window(self):
+        window = Mock()
+        window._hidden_for_mini_navi = False
+
+        MainWindow.restore_from_tray(window)
+
+        window.showNormal.assert_called_once_with()
+        window.raise_.assert_called_once_with()
+        window.activateWindow.assert_called_once_with()
+        window.tray_icon.hide.assert_called_once_with()
+
+    def test_tray_click_and_double_click_restore_main_window(self):
+        window = Mock()
+
+        MainWindow._handle_tray_activation(window, QSystemTrayIcon.Trigger)
+        MainWindow._handle_tray_activation(window, QSystemTrayIcon.DoubleClick)
+        MainWindow._handle_tray_activation(window, QSystemTrayIcon.Context)
+
+        self.assertEqual(window.restore_from_tray.call_count, 2)
 
     def test_main_button_restores_hidden_main_window(self):
         main = Mock()

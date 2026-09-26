@@ -1,5 +1,5 @@
 import pytest
-from PySide6.QtWidgets import QApplication, QPushButton
+from PySide6.QtWidgets import QApplication, QLabel, QPushButton
 
 from src.ui import app_info_widget
 from src.ui.settings_dialog import SettingsDialog
@@ -44,4 +44,16 @@ def test_app_information_update_button_uses_injected_callback(qapp):
     button.click()
 
     assert calls == ["checked"]
+    dialog.close()
+
+
+def test_app_information_displays_ndlocr_attribution(qapp):
+    dialog = SettingsDialog(current_config={})
+
+    label = dialog.findChild(QLabel, "ndlocrLicenseLabel")
+    assert label is not None
+    assert "NDLOCR-Lite 1.3.1" in label.text()
+    assert "国立国会図書館" in label.text()
+    assert "CC BY 4.0" in label.text()
+    assert "公認・提携製品ではありません" in label.text()
     dialog.close()

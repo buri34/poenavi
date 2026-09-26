@@ -5,6 +5,7 @@ from copy import deepcopy
 from dataclasses import replace
 import json
 import re
+import threading
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
@@ -12,27 +13,32 @@ from ..models import ParsedItem
 from ..trade import (
     LISTED_WITHIN_OPTIONS, PRESET_BASE, PRESET_FINISHED,
     PriceListing, PriceResult, TradeApiError, TradeLeague, TradeStatFilter, _cached_request_json,
+    _request_json,
     _defence_at_20_quality, _group_price_listings, _property_value,
     physical_dps_at_20_quality,
 )
-from .parser import TRADE_CATEGORY_BY_CATEGORY
 from .metadata import augment_entries, explicit_variant_id, resolve_identity
+from .parser import TRADE_CATEGORY_BY_CATEGORY
 
 
 API_ROOT = "https://www.pathofexile.com/api/trade2"
 USER_AGENT = "PoENavi/poetore-poe2-development (github.com/buri34/poenavi)"
-LEAGUES_URL = f"{API_ROOT}/data/leagues"
+LEAGUES_URL = f"{API_ROOT}/data/leagues?realm=poe2"
+ALTERNATE_LEAGUES_URL = f"{API_ROOT}/data/leagues"
 FALLBACK_LEAGUES = (
+    TradeLeague("Forbidden Rites"),
+    TradeLeague("HC Forbidden Rites", True),
     TradeLeague("Runes of Aldur"),
     TradeLeague("HC Runes of Aldur", True),
     TradeLeague("Standard"),
     TradeLeague("Hardcore", True),
 )
+_BASE_LEAGUE_IDS = {"Standard", "Hardcore"}
+_last_known_good_leagues = FALLBACK_LEAGUES
+_league_cache_lock = threading.Lock()
 
 
-def available_pc_leagues() -> tuple[TradeLeague, ...]:
-    """Return only official PoE2 trade leagues in display order."""
-    data, _, _ = _cached_request_json(LEAGUES_URL)
+def _parse_pc_leagues(data: dict) -> tuple[TradeLeague, ...]:
     rows = data.get("result", ())
     leagues = []
     for row in rows:
@@ -42,6 +48,34 @@ def available_pc_leagues() -> tuple[TradeLeague, ...]:
         lowered = league_id.casefold()
         leagues.append(TradeLeague(league_id, "hardcore" in lowered or lowered.startswith("hc ")))
     return tuple(leagues)
+
+
+def _has_current_league(leagues: tuple[TradeLeague, ...]) -> bool:
+    """Reject maintenance responses that expose only permanent leagues."""
+    return any(league.id not in _BASE_LEAGUE_IDS for league in leagues)
+
+
+def available_pc_leagues(*, force_refresh: bool = False) -> tuple[TradeLeague, ...]:
+    """Return a complete official PoE2 league list, preserving the last good one."""
+    global _last_known_good_leagues
+
+    for url in (LEAGUES_URL, ALTERNATE_LEAGUES_URL):
+        try:
+            if force_refresh:
+                data, _ = _request_json(url)
+            else:
+                data, _, _ = _cached_request_json(url)
+            leagues = _parse_pc_leagues(data)
+        except Exception:
+            continue
+        if not _has_current_league(leagues):
+            continue
+        with _league_cache_lock:
+            _last_known_good_leagues = leagues
+        return leagues
+
+    with _league_cache_lock:
+        return _last_known_good_leagues or FALLBACK_LEAGUES
 
 
 def default_pc_league(leagues: tuple[TradeLeague, ...]) -> str:
@@ -60,9 +94,22 @@ _WEAPON_CATEGORIES = {
     "sceptre", "one_mace", "two_mace", "one_sword", "two_sword", "one_axe",
     "two_axe", "dagger",
 }
+_PHYSICAL_DPS_DEFAULT_CATEGORIES = {
+    "bow", "crossbow", "spear", "flail", "quarterstaff",
+    "one_mace", "two_mace", "one_sword", "two_sword", "one_axe", "two_axe",
+}
 _ARMOUR_CATEGORIES = {
     "focus", "buckler", "shield", "body_armour", "helmet", "gloves", "boots",
 }
+_TIMELESS_JEWEL_SEED_STAT_PREFIX = "explicit.stat_3418580811|"
+
+
+def _uses_awakened_rare_defaults(item: ParsedItem) -> bool:
+    trade_category = TRADE_CATEGORY_BY_CATEGORY.get(item.category, "")
+    is_equipment = trade_category.startswith(("weapon.", "armour.")) or item.category in {
+        "ring", "amulet", "belt",
+    }
+    return is_equipment and item.rarity.casefold() not in {"unique", "ユニーク"}
 _EE2_CATEGORY_BY_CATEGORY = {
     "bow": "Bow", "crossbow": "Crossbow", "spear": "Spear", "flail": "Flail",
     "staff": "Staff", "quarterstaff": "Warstaff", "wand": "Wand",
@@ -71,7 +118,7 @@ _EE2_CATEGORY_BY_CATEGORY = {
     "one_axe": "One Hand Axe", "two_axe": "Two Hand Axe", "dagger": "Dagger",
     "focus": "Focus", "buckler": "Buckler", "shield": "Shield",
     "body_armour": "Body Armour", "helmet": "Helmet", "gloves": "Gloves",
-    "boots": "Boots",
+    "boots": "Boots", "talisman": "Talisman",
 }
 
 
@@ -82,6 +129,14 @@ def trade_stat_value(values: tuple[float, ...]) -> float | None:
     if len(values) in {2, 4}:
         return sum(values) / len(values)
     return values[0]
+
+
+def _modifier_has_variable_roll(modifier) -> bool:
+    return (
+        modifier.roll_min is not None
+        and modifier.roll_max is not None
+        and modifier.roll_min != modifier.roll_max
+    )
 
 
 def _trade_filter_row(stat_id: str, min_value=None, max_value=None) -> dict:
@@ -111,17 +166,23 @@ def _stat_groups_from_filters(filters) -> list[dict]:
     for row in filters:
         if not row.enabled or not row.stat_id or row.stat_id.startswith("property."):
             continue
+        minimum, maximum = row.min_value, row.max_value
+        if row.inverted:
+            minimum, maximum = (
+                -maximum if maximum is not None else None,
+                -minimum if minimum is not None else None,
+            )
         alternatives = tuple(dict.fromkeys((row.stat_id, *row.alternative_stat_ids)))
         if row.kind == "virtual-rune" and len(alternatives) > 1:
             groups.append({
                 "type": "count", "value": {"min": 1},
                 "filters": [
-                    _trade_filter_row(stat_id, row.min_value, row.max_value)
+                    _trade_filter_row(stat_id, minimum, maximum)
                     for stat_id in alternatives
                 ],
             })
             continue
-        direct.append(_trade_filter_row(row.stat_id, row.min_value, row.max_value))
+        direct.append(_trade_filter_row(row.stat_id, minimum, maximum))
     return groups
 
 
@@ -315,11 +376,17 @@ def _virtual_augment_effect_text(effect: dict, socket_count: int) -> str:
     return re.sub(r"#", replace_value, text)
 
 
+def _virtual_augment_effective_count(choice: dict, requested_count: int) -> int:
+    maximum = int(choice.get("max_count") or requested_count)
+    return min(requested_count, maximum)
+
+
 def virtual_augment_choice_label(
     item: ParsedItem, choice: dict, socket_count: int | None = None,
 ) -> str:
     """Return an effect-first label matching the virtual stats sent to Trade2."""
-    socket_count = int(socket_count or empty_augment_socket_count(item))
+    requested_count = int(socket_count or empty_augment_socket_count(item))
+    socket_count = _virtual_augment_effective_count(choice, requested_count)
     names = choice.get("names") or {}
     name = str(names.get("ja") or names.get("en") or choice.get("ref_name") or "")
     effects = tuple(
@@ -327,7 +394,10 @@ def virtual_augment_choice_label(
         for effect in choice.get("effects") or ()
     )
     effect_text = " / ".join(text for text in effects if text)
-    count_text = f" ×{socket_count}" if socket_count > 1 else ""
+    if choice.get("max_count") == 1:
+        count_text = " / 装着上限1個"
+    else:
+        count_text = f" ×{socket_count}" if socket_count > 1 else ""
     return f"{effect_text}（{name}{count_text}）" if effect_text else f"{name}{count_text}"
 
 
@@ -342,6 +412,7 @@ def virtual_augment_filters(
     choice = next((row for row in available_virtual_augments(item) if row["ref_name"] == ref_name), None)
     if choice is None or selected_count not in allowed_counts:
         return ()
+    selected_count = _virtual_augment_effective_count(choice, selected_count)
     rows = []
     for effect in choice["effects"]:
         values = tuple(float(value) * selected_count for value in effect.get("values") or ())
@@ -383,12 +454,23 @@ def _poe2_item_property_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]
         if pdps:
             rows.append(TradeStatFilter(
                 "property.physical_dps", "物理DPS（品質20%換算）", pdps,
-                "property", not edps or pdps / total >= 0.67, read_value=pdps,
+                "property", (
+                    item.category in _PHYSICAL_DPS_DEFAULT_CATEGORIES
+                    and (not edps or pdps / total >= 0.67)
+                ), read_value=pdps,
+                hidden_reason=(
+                    "物理ダメージがDPSの主要なソースではありません"
+                    if total and pdps / total < 0.67 else ""
+                ),
             ))
         if edps:
             rows.append(TradeStatFilter(
                 "property.elemental_dps", "元素DPS", edps, "property",
-                not pdps or edps / total >= 0.67, read_value=edps,
+                not pdps or edps / total >= 0.15, read_value=edps,
+                hidden_reason=(
+                    "元素ダメージがDPSの主要なソースではありません"
+                    if total and edps / total < 0.15 else ""
+                ),
             ))
         aps = _property_value(item, "秒間アタック回数", "Attacks per Second")
         if aps is not None:
@@ -450,7 +532,8 @@ _ATTRIBUTE_REFS = {
 
 
 def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...], set[str]]:
-    """Return useful aggregate pseudos and direct stat IDs replaced by enabled pseudos."""
+    """Return useful aggregate pseudos as optional alternatives to direct mods."""
+    awakened_defaults = _uses_awakened_rare_defaults(item)
     resistances = {key: 0.0 for key in ("fire", "cold", "lightning", "chaos")}
     attributes = {key: 0.0 for key in ("str", "dex", "int")}
     sources = {key: [] for key in (*resistances, *attributes, "life", "mana")}
@@ -481,57 +564,160 @@ def _poe2_pseudo_filters(item: ParsedItem) -> tuple[tuple[TradeStatFilter, ...],
     rows: list[TradeStatFilter] = []
     replaced: set[str] = set()
 
-    def add(stat_id: str, text: str, value: float, enabled: bool, used) -> None:
+    def add(
+        stat_id: str, text: str, value: float, enabled: bool, used,
+        *, keep_single: bool = False, hidden_reason: str = "",
+    ) -> None:
         if not used:
             return
         unique = list(dict.fromkeys(used))
+        if (
+            not keep_single
+            and len(unique) == 1
+            and trade_stat_value(unique[0].values) == value
+        ):
+            return
+        if (
+            not hidden_reason
+            and item.rarity.casefold() in {"unique", "ユニーク"}
+            and all(not _modifier_has_variable_roll(mod) for mod in unique)
+            and not any(mod.kind == "enchant" for mod in unique)
+        ):
+            hidden_reason = "可変ロールではありません"
         rows.append(TradeStatFilter(
-            stat_id, text, value, "pseudo", enabled, read_value=value,
+            stat_id, text, value, "pseudo", enabled and not hidden_reason,
+            read_value=value, hidden_reason=hidden_reason,
             source_texts=tuple(mod.text for mod in unique),
         ))
-        if enabled:
-            replaced.update(mod.stat_id for mod in unique if mod.stat_id)
+        # Pseudos are optional broader searches. Keep their direct source rows.
 
     elemental_sources = sources["fire"] + sources["cold"] + sources["lightning"]
+    all_elemental_resistance = min(
+        resistances["fire"], resistances["cold"], resistances["lightning"]
+    )
+    add(
+        "pseudo.pseudo_total_all_elemental_resistances", "全元素耐性合計",
+        all_elemental_resistance, False,
+        elemental_sources if all_elemental_resistance else (),
+        keep_single=True,
+        hidden_reason="元素耐性合計と比べて付加価値が小さい",
+    )
     add(
         "pseudo.pseudo_total_elemental_resistance", "元素耐性合計",
         resistances["fire"] + resistances["cold"] + resistances["lightning"],
-        True, elemental_sources,
+        awakened_defaults, elemental_sources, keep_single=True,
     )
     for element, stat_id, label in (
         ("fire", "pseudo.pseudo_total_fire_resistance", "火耐性合計"),
         ("cold", "pseudo.pseudo_total_cold_resistance", "冷気耐性合計"),
         ("lightning", "pseudo.pseudo_total_lightning_resistance", "雷耐性合計"),
     ):
-        add(stat_id, label, resistances[element], False, sources[element])
+        add(
+            stat_id, label, resistances[element], False, sources[element],
+            keep_single=True,
+        )
+    individual_resistance_rows = [
+        row for row in rows
+        if row.stat_id in {
+            "pseudo.pseudo_total_fire_resistance",
+            "pseudo.pseudo_total_cold_resistance",
+            "pseudo.pseudo_total_lightning_resistance",
+        }
+    ]
+    if individual_resistance_rows:
+        highest = max(row.read_value or 0.0 for row in individual_resistance_rows)
+        maxima = [row for row in individual_resistance_rows if row.read_value == highest]
+        rows = [row for row in rows if row not in individual_resistance_rows]
+        if len(maxima) == 1:
+            rows.append(replace(
+                maxima[0], enabled=False,
+                hidden_reason="正確な元素耐性で絞ると価格が不当に上昇します",
+            ))
+    chaos_sources = sources["chaos"]
+    chaos_hidden = bool(
+        len(dict.fromkeys(chaos_sources)) == 1
+        and chaos_sources[0].kind in {"augment", "added_augment"}
+    )
     add(
         "pseudo.pseudo_total_chaos_resistance", "混沌耐性合計",
-        resistances["chaos"], True, sources["chaos"],
+        resistances["chaos"], awakened_defaults, chaos_sources, keep_single=True,
+        hidden_reason=(
+            "明示ModなしのAugment由来混沌耐性には価値がありません"
+            if chaos_hidden else ""
+        ),
     )
+    all_attribute_sources = tuple(
+        mod for mod in item.modifiers if mod.ref == "# to all Attributes"
+    )
+    add(
+        "pseudo.pseudo_total_all_attributes", "全能力値合計",
+        sum(trade_stat_value(mod.values) or 0.0 for mod in all_attribute_sources),
+        False, all_attribute_sources, keep_single=True,
+    )
+    has_all_three_attributes = all(sources[key] for key in ("str", "dex", "int"))
     for attribute, stat_id, label in (
         ("str", "pseudo.pseudo_total_strength", "筋力合計"),
         ("dex", "pseudo.pseudo_total_dexterity", "器用さ合計"),
         ("int", "pseudo.pseudo_total_intelligence", "知性合計"),
     ):
-        add(stat_id, label, attributes[attribute], False, sources[attribute])
+        used = sources[attribute]
+        direct_ref = {
+            "str": "# to Strength", "dex": "# to Dexterity", "int": "# to Intelligence",
+        }[attribute]
+        if has_all_three_attributes or len(used) != 1 or used[0].ref != direct_ref:
+            add(stat_id, label, attributes[attribute], False, used, keep_single=True)
+    attribute_rows = [
+        row for row in rows
+        if row.stat_id in {
+            "pseudo.pseudo_total_strength",
+            "pseudo.pseudo_total_dexterity",
+            "pseudo.pseudo_total_intelligence",
+        }
+    ]
+    if len(attribute_rows) == 3:
+        ordered = sorted(attribute_rows, key=lambda row: row.read_value or 0.0, reverse=True)
+        all_attributes = next(
+            (row for row in rows if row.stat_id == "pseudo.pseudo_total_all_attributes"),
+            None,
+        )
+        if all(row.read_value == ordered[0].read_value for row in ordered) and all_attributes:
+            rows = [row for row in rows if row not in attribute_rows]
+            attribute_rows = []
+        elif all_attributes:
+            rows.remove(all_attributes)
+        largest = ordered[0].read_value or 0.0
+        smallest = ordered[2].read_value or 0.0
+        if attribute_rows and largest and smallest / largest < 0.3:
+            hidden = ordered[1:] if ordered[1].read_value == smallest else ordered[2:]
+            hidden_ids = {id(row) for row in hidden}
+            rows = [
+                replace(
+                    row, enabled=False,
+                    hidden_reason="小さい能力値合計を省略",
+                ) if id(row) in hidden_ids else row
+                for row in rows
+            ]
     if direct_life:
         add(
             "pseudo.pseudo_total_life", "最大ライフ合計",
-            life + attributes["str"] * 2, True, sources["life"] + sources["str"],
+            life + attributes["str"] * 2, awakened_defaults,
+            sources["life"] + sources["str"], keep_single=True,
         )
     if direct_mana:
         add(
             "pseudo.pseudo_total_mana", "最大マナ合計",
-            mana + attributes["int"] * 2, False, sources["mana"] + sources["int"],
+            mana + attributes["int"] * 2, False,
+            sources["mana"] + sources["int"],
         )
     return tuple(rows), replaced
 
 
 _POE2_PROPERTY_SPECS = (
-    ("property.spirit", "スピリット", ("Spirit", "スピリット"), "property", False),
-    ("property.runic_ward", "ルーンワード", ("Runic Ward", "ルーンワード", "Ward"), "property", False),
+    ("property.spirit", "スピリット", ("Spirit", "スピリット"), "property", True),
+    ("property.runic_ward", "ルーンワード", ("Runic Ward", "ルーンワード", "Ward"), "property", True),
     ("property.reload_time", "リロード時間", ("Reload Time", "リロード時間", "再装填時間"), "property", False),
     ("property.map_revives", "復活回数", ("Revives Available", "復活が利用可能"), "property", False),
+    ("property.map_rarity", "アイテムレアリティ", ("Item Rarity", "アイテムレアリティ"), "property", False),
     ("property.map_pack_size", "ウェイストーンパックサイズ", ("Monster Pack Size", "モンスターパックサイズ", "Pack Size", "パックサイズ"), "property", False),
     ("property.map_bonus", "ウェイストーンドロップ率", ("Waystone Drop Chance", "ウェイストーンドロップ確率", "ウェイストーンドロップ率"), "property", False),
     ("property.map_magic_monsters", "モンスターエフェクティブ", ("Magic Monsters", "モンスターエフェクティブ"), "property", False),
@@ -555,9 +741,11 @@ _POE2_STATE_FILTER_NAMES = {
 def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
     """Build editable Trade2 property/state rows beside resolved modifier rows."""
     rows: list[TradeStatFilter] = []
+    awakened_defaults = _uses_awakened_rare_defaults(item)
     for stat_id, label, names, kind, enabled in _POE2_PROPERTY_SPECS:
         value = _property_float(item, *names)
         if value is not None:
+            enabled = enabled and awakened_defaults
             if stat_id == "property.area_level" and item.category in {"barya", "ultimatum"}:
                 enabled = True
             rows.append(TradeStatFilter(
@@ -577,7 +765,12 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         is_gem = item.category in {"active_gem", "support_gem", "meta_gem"}
         stat_id = "property.gem_sockets" if is_gem else "property.augment_sockets"
         label = "ジェムソケット" if is_gem else "オーグメントソケット"
-        enabled = not is_gem and "exceptional" in item.flags
+        quality = _property_float(item, "Quality", "品質")
+        enabled = (
+            not is_gem
+            and "exceptional" in item.flags
+            and (quality is None or quality <= 20)
+        )
         rows.append(TradeStatFilter(
             stat_id, label, float(sockets), "property", enabled,
             read_value=float(sockets),
@@ -589,15 +782,6 @@ def poe2_search_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                 "property.map_tier", "ウェイストーンティア", tier, "property", True,
                 max_value=tier, read_value=tier, exact=True,
             ))
-    ultimatum_hint = str(item.properties.get("Ultimatum Hint") or "").strip()
-    if item.category == "ultimatum" and ultimatum_hint:
-        rows.append(TradeStatFilter(
-            "property.ultimatum_hint", "アルティメイタムの試練のヒント", None,
-            "property", False, option_value=ultimatum_hint,
-            option_text={
-                "Victorious": "勝利の", "Cowardly": "臆病者の", "Deadly": "致命的な",
-            }.get(ultimatum_hint, ultimatum_hint),
-        ))
     if item.category == "tablet":
         uses = _property_float(item, "Uses Remaining", "残り使用回数", "使用回数残り")
         if uses is not None:
@@ -634,6 +818,12 @@ def _poe2_modifier_rows(
         converted = explicit_variant_id(original_id) if normalize_special else None
         stat_id = converted or original_id
         value = trade_stat_value(modifier.values)
+        timeless_seed = (
+            item.category == "jewel"
+            and item.base_type.casefold() == "timeless jewel"
+            and stat_id.startswith(_TIMELESS_JEWEL_SEED_STAT_PREFIX)
+            and value is not None
+        )
         provenance_tags = (
             (modifier.kind,)
             if modifier.kind in {"crafted", "fractured", "desecrated"}
@@ -643,42 +833,221 @@ def _poe2_modifier_rows(
             stat_id, modifier.text,
             None if modifier.better == -1 else value,
             "explicit" if converted else modifier.kind,
-            enabled=original_id not in replaced_ids,
-            max_value=(value if modifier.better == -1 else None),
+            # Awakened-style rare searches expose direct mods as optional
+            # alternatives while selecting only the high-value aggregates.
+            enabled=(
+                modifier.kind == "skill"
+                or (
+                    (
+                        item.category != "waystone"
+                        and not _uses_awakened_rare_defaults(item)
+                    ) or (
+                        preset == PRESET_FINISHED
+                        and _uses_awakened_rare_defaults(item)
+                        and modifier.tier == 1
+                        and _is_priority_t1_finished_modifier(modifier.ref)
+                    )
+                )
+            ),
+            max_value=(value if modifier.better == -1 or timeless_seed else None),
             ref=modifier.ref, confidence=modifier.confidence,
             read_value=value, roll_min=modifier.roll_min,
             roll_max=modifier.roll_max, better=modifier.better,
+            tier=modifier.tier, affix=modifier.affix,
+            exact=timeless_seed,
             provenance_tags=provenance_tags,
         )
         position = positions.get(stat_id)
+        cross_affix_duplicate = (
+            position is not None
+            and stat_id.startswith("explicit.")
+            and {rows[position].affix, row.affix} == {"prefix", "suffix"}
+        )
         if (
             position is not None
-            and (converted or stat_id in normalized_ids)
+            and (converted or stat_id in normalized_ids or cross_affix_duplicate)
             and row.better != -1
             and rows[position].better != -1
         ):
             previous = rows[position]
+            combined_value = (previous.read_value or 0.0) + (row.read_value or 0.0)
             merged_provenance = tuple(dict.fromkeys(
                 previous.provenance_tags + row.provenance_tags
             ))
             rows[position] = replace(
                 previous,
+                text=(
+                    re.sub(
+                        r"[-+]?\d+(?:\.\d+)?(?:\([^)]+\))?",
+                        f"{combined_value:g}", previous.text, count=1,
+                    )
+                    if cross_affix_duplicate else previous.text
+                ),
                 min_value=(previous.min_value or 0.0) + (row.min_value or 0.0),
-                read_value=(previous.read_value or 0.0) + (row.read_value or 0.0),
+                read_value=combined_value,
+                roll_min=(
+                    (previous.roll_min or 0.0) + (row.roll_min or 0.0)
+                    if previous.roll_min is not None and row.roll_min is not None
+                    else previous.roll_min
+                ),
+                roll_max=(
+                    (previous.roll_max or 0.0) + (row.roll_max or 0.0)
+                    if previous.roll_max is not None and row.roll_max is not None
+                    else previous.roll_max
+                ),
                 enabled=previous.enabled or row.enabled,
+                affix=None if cross_affix_duplicate else previous.affix,
+                generation="prefix_suffix" if cross_affix_duplicate else previous.generation,
                 provenance_tags=merged_provenance,
             )
             if converted:
                 normalized_ids.add(stat_id)
             continue
         rows.append(row)
-        # Only merge equal IDs when at least one source was normalized. Natural
-        # duplicate explicit rows retain PoENavi's existing independent controls.
+        # Equal Prefix/Suffix IDs describe one obtainable total and are merged.
+        # Other natural duplicate explicit rows retain independent controls.
         if converted:
             normalized_ids.add(stat_id)
         if converted or stat_id.startswith("explicit."):
             positions.setdefault(stat_id, len(rows) - 1)
     return tuple(rows)
+
+
+def _is_priority_t1_finished_modifier(ref: str) -> bool:
+    """Return whether a T1 direct Mod should constrain a finished-item search."""
+    normalized = str(ref or "").strip().casefold()
+    if normalized == "# to spirit":
+        return True
+    return bool(re.search(r"(?:^|\s)to level of\s+.+\sskills?$", normalized))
+
+
+def _poe2_base_modifier_rows(
+    item: ParsedItem, modifier_rows: tuple[TradeStatFilter, ...],
+) -> tuple[TradeStatFilter, ...]:
+    """Apply the selected Exact/Base defaults for non-unique equipment."""
+    keep_normal_explicit = item.rarity.casefold() in {"magic", "マジック"}
+    result = []
+    for row in modifier_rows:
+        if row.kind == "fractured":
+            result.append(replace(row, enabled=True))
+        elif row.kind in {"crafted", "desecrated"}:
+            result.append(replace(row, enabled=False))
+        elif row.kind == "explicit" and keep_normal_explicit:
+            result.append(replace(row, enabled=row.tier in {1, 2}))
+    return tuple(result)
+
+
+_LOW_LEVEL_MAGIC_CAPS = {
+    "wand": 81,
+    "staff": 81,
+    "relic": 80,
+    "tablet": 1,
+    "jewel": 1,
+    "map": 1,
+}
+_HIDDEN_CANDIDATE_EXCLUDED_UNIQUES = {
+    "Heart of the Well", "井戸の心臓",
+    "Mageblood", "メイジブラッド",
+}
+_UNIQUE_TABLET_BIOME_STAT_IDS = {
+    "explicit.stat_3517228691",  # Desert
+    "explicit.stat_3160511599",  # Grass
+    "explicit.stat_864099561",   # Forest
+    "explicit.stat_1583884108",  # Mountain
+    "explicit.stat_3271982291",  # Water
+    "explicit.stat_3755999954",  # Swamp
+}
+
+
+def _poe2_item_is_modifiable(item: ParsedItem) -> bool:
+    return not {"corrupted", "mirrored", "sanctified", "unmodifiable"}.intersection(
+        item.flags
+    )
+
+
+def _apply_poe2_hidden_candidate_rules(
+    item: ParsedItem, filters: tuple[TradeStatFilter, ...], preset: str,
+) -> tuple[TradeStatFilter, ...]:
+    """Apply only the EE2 hidden rules explicitly adopted for PoE2."""
+    if preset == PRESET_BASE:
+        return tuple(replace(row, hidden_reason="") for row in filters)
+
+    # These Uniques have variable modifier pools that materially change their market
+    # value. Keep every filter visible even when a generic hidden rule would apply.
+    if item.name in _HIDDEN_CANDIDATE_EXCLUDED_UNIQUES:
+        return tuple(replace(row, hidden_reason="") for row in filters)
+
+    unique = item.rarity.casefold() in {"unique", "ユニーク"}
+    result: list[TradeStatFilter] = []
+    for row in filters:
+        hidden_reason = row.hidden_reason
+        enabled = row.enabled
+
+        # H01: fixed Unique Implicit/Explicit/Pseudo values do not distinguish
+        # listings. Jewel implicits, Enchant pseudos, and remaining uses stay visible.
+        if (
+            unique
+            and not hidden_reason
+            and row.kind in {"implicit", "explicit", "pseudo"}
+            and not (row.kind == "implicit" and item.category == "jewel")
+            and row.ref != "# uses remaining"
+            and "uses_remaining" not in row.stat_id
+            and not (
+                item.category == "tablet"
+                and row.stat_id in _UNIQUE_TABLET_BIOME_STAT_IDS
+            )
+            and not (row.kind == "pseudo" and "enchant" in row.provenance_tags)
+            and not (
+                row.roll_min is not None
+                and row.roll_max is not None
+                and row.roll_min != row.roll_max
+            )
+        ):
+            hidden_reason = "可変ロールではありません"
+
+        # H12: normal Map mods are not useful price discriminators.
+        if item.category == "map" and row.kind not in {"property", "desecrated"}:
+            hidden_reason = "ほとんどのMap Modには価値がありません"
+
+        # H16: hide Unique augments except the two socket-scaling uniques and
+        # the destructive Jewel Socket conversion stat.
+        if (
+            unique
+            and item.name not in {"Morior Invictus", "不屈なる者として死す",
+                                  "Darkness Enthroned", "即位した闇"}
+            and row.kind in {"augment", "added_augment"}
+            and row.ref != "Destroys all Augment Sockets on the item to create a Jewel Socket"
+        ):
+            hidden_reason = "可変ロールではありません"
+
+        if hidden_reason:
+            enabled = False
+        result.append(replace(row, enabled=enabled, hidden_reason=hidden_reason))
+
+    # H13: this is a hidden-only helper condition; it does not exist otherwise.
+    rarity = item.rarity.casefold()
+    cap = _LOW_LEVEL_MAGIC_CAPS.get(item.category, 82)
+    if (
+        rarity in {"magic", "マジック"}
+        and _poe2_item_is_modifiable(item)
+        and item.item_level is not None
+        and item.item_level < cap - 3
+    ):
+        result.append(TradeStatFilter(
+            "property.state.rarity_magic", "レアリティ：マジック", None, "pseudo", False,
+            hidden_reason="すべてのModをロールするにはアイテムレベルが低すぎます",
+            exact=True,
+        ))
+
+    # H20: enable every visible filter only when at most three remain.
+    if unique or item.category == "relic":
+        visible_count = sum(not row.hidden_reason for row in result)
+        if visible_count <= 3:
+            result = [
+                replace(row, enabled=not bool(row.hidden_reason))
+                for row in result
+            ]
+    return tuple(result)
 
 
 def poe2_trade_filters(
@@ -704,11 +1073,22 @@ def poe2_trade_filters(
         + virtual_augment_filters(item, virtual_augment_ref, virtual_augment_count)
     )
     if preset == PRESET_BASE:
-        return tuple(
-            row for row in filters
-            if row.kind == "state" or row.kind in {"crafted", "fractured", "desecrated"}
-        )
-    return filters
+        state_rows = tuple(row for row in filters if row.kind == "state")
+        base_filters = _poe2_base_modifier_rows(item, modifier_rows) + state_rows
+        return _apply_poe2_hidden_candidate_rules(item, base_filters, preset)
+
+    def display_order(row: TradeStatFilter) -> int:
+        if row.kind == "property":
+            return 0
+        if not row.provenance_tags and row.kind == "explicit":
+            if row.affix == "prefix":
+                return 1
+            if row.affix == "suffix":
+                return 2
+        return 3
+
+    ordered = tuple(sorted(filters, key=display_order))
+    return _apply_poe2_hidden_candidate_rules(item, ordered, preset)
 
 
 _POE2_FILTER_TARGETS = {
@@ -729,6 +1109,7 @@ _POE2_FILTER_TARGETS = {
     "property.gem_sockets": ("misc_filters", "gem_sockets"),
     "property.map_tier": ("map_filters", "map_tier"),
     "property.map_revives": ("map_filters", "map_revives"),
+    "property.map_rarity": ("map_filters", "map_iir"),
     "property.map_pack_size": ("map_filters", "map_packsize"),
     "property.map_bonus": ("map_filters", "map_bonus"),
     "property.map_magic_monsters": ("map_filters", "map_magic_monsters"),
@@ -745,6 +1126,11 @@ def _apply_poe2_filter_rows(query: dict, filters) -> None:
             continue
         if row.stat_id.startswith("property.state."):
             state = row.stat_id.rsplit(".", 1)[-1]
+            if state == "rarity_magic":
+                query["filters"]["type_filters"]["filters"]["rarity"] = {
+                    "option": "magic"
+                }
+                continue
             filter_name = _POE2_STATE_FILTER_NAMES.get(state)
             if filter_name is None:
                 continue
@@ -761,9 +1147,15 @@ def _apply_poe2_filter_rows(query: dict, filters) -> None:
                 "option": row.option_value
             }
             continue
+        minimum, maximum = row.min_value, row.max_value
+        if row.inverted:
+            minimum, maximum = (
+                -maximum if maximum is not None else None,
+                -minimum if minimum is not None else None,
+            )
         value = {
-            **({"min": row.min_value} if row.min_value is not None else {}),
-            **({"max": row.max_value} if row.max_value is not None else {}),
+            **({"min": minimum} if minimum is not None else {}),
+            **({"max": maximum} if maximum is not None else {}),
         }
         if value:
             query["filters"].setdefault(group, {"filters": {}})["filters"][name] = value
@@ -780,6 +1172,8 @@ def build_search_query(
     gem_level_min: int | None = None,
     gem_sockets_min: int | None = None,
     exact_base_type: bool = True,
+    magic_exact: bool | None = None,
+    rarity_override: str | None = None,
     trade_currency: str = "any",
     listed_within: str = "any",
 ) -> dict:
@@ -817,10 +1211,17 @@ def build_search_query(
         rarity = item.rarity.casefold()
         if exact_base_type and rarity in {"normal", "ノーマル"}:
             type_filter_values["rarity"] = {"option": "normal"}
-        elif exact_base_type and rarity in {"magic", "マジック"}:
-            type_filter_values["rarity"] = {"option": "magic"}
+        elif (
+            rarity in {"magic", "マジック"}
+            and (exact_base_type or magic_exact is not None)
+        ):
+            type_filter_values["rarity"] = {
+                "option": "magic" if magic_exact is not False else "nonunique"
+            }
         elif rarity in {"normal", "ノーマル", "magic", "マジック", "rare", "レア"}:
             type_filter_values["rarity"] = {"option": "nonunique"}
+    if rarity_override in {"normal", "magic", "rare", "nonunique"}:
+        type_filter_values["rarity"] = {"option": rarity_override}
     if stat_filters is not None:
         _apply_poe2_filter_rows(query, stat_filters)
     if gem_level_min is not None or gem_sockets_min is not None:
@@ -926,6 +1327,8 @@ def search_prices(
     gem_level_min: int | None = None,
     gem_sockets_min: int | None = None,
     exact_base_type: bool = True,
+    magic_exact: bool | None = None,
+    rarity_override: str | None = None,
     trade_currency: str = "any",
     listed_within: str = "any",
     include_corrupted=None,
@@ -938,7 +1341,9 @@ def search_prices(
         item, status=status, quality_min=quality_min, stat_filters=stat_filters,
         item_level_min=item_level_min, item_level_max=item_level_max,
         gem_level_min=gem_level_min, gem_sockets_min=gem_sockets_min,
-        exact_base_type=exact_base_type, trade_currency=trade_currency,
+        exact_base_type=exact_base_type, magic_exact=magic_exact,
+        rarity_override=rarity_override,
+        trade_currency=trade_currency,
         listed_within=listed_within,
     )
     misc = payload["query"]["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
@@ -967,7 +1372,7 @@ def search_prices(
     raw: list[PriceListing] = []
     fetch_cached = False
     fetched_count = 0
-    while fetched_count < min(len(ids), 20):
+    while fetched_count < min(len(ids), 10):
         fetch_ids = ",".join(ids[fetched_count:fetched_count + 10])
         fetched, _, block_cached = _cached_request_json(
             f"{API_ROOT}/fetch/{fetch_ids}?query={quote(query_id)}"
@@ -996,19 +1401,51 @@ def search_prices(
                 ),
             ))
         fetched_count += 10
-        grouped = _group_price_listings(raw)
-        if partial_result_callback is not None and fetched_count == 10 and len(ids) > 10:
-            partial_result_callback(PriceResult(
-                league, query_id, len(ids), grouped,
-                headers.get("X-Rate-Limit-Ip-State", "") if headers else "",
-                web_url,
-                search_cached or fetch_cached,
-            ))
     return PriceResult(
         league, query_id, len(ids), _group_price_listings(raw),
         headers.get("X-Rate-Limit-Ip-State", "") if headers else "",
         web_url,
         search_cached or fetch_cached,
+        tuple(ids[10:20]),
+        min(len(ids), 10),
+    )
+
+
+def fetch_additional_prices(result: PriceResult) -> PriceResult:
+    """Fetch candidates 11-20 for an existing PoE2 result and merge them."""
+    ids = tuple(result.next_result_ids[:10])
+    if not ids:
+        return result
+    fetched, _, cached = _cached_request_json(
+        f"{API_ROOT}/fetch/{','.join(ids)}?query={quote(result.query_id)}"
+    )
+    raw = list(result.listings)
+    for row in fetched.get("result", ()):
+        listing = row.get("listing") or {}
+        fetched_item = row.get("item") or {}
+        price = listing.get("price") or {}
+        has_price = price.get("amount") is not None and bool(price.get("currency"))
+        raw.append(PriceListing(
+            float(price["amount"]) if has_price else 0.0,
+            str(price["currency"]) if has_price else "",
+            str((listing.get("account") or {}).get("name", "")),
+            str(fetched_item.get("name", "")),
+            str(fetched_item.get("baseType", "")),
+            str(listing.get("indexed", "")),
+            int(fetched_item["ilvl"]) if fetched_item.get("ilvl") is not None else None,
+            _property_number(fetched_item, "Level", "レベル", "Gem Level", "ジェムレベル"),
+            _property_number(fetched_item, "Quality", "品質"),
+            int(fetched_item["stackSize"]) if fetched_item.get("stackSize") is not None else None,
+            pricing_method=(
+                "instant" if listing.get("fee") is not None
+                else "face_to_face" if has_price or fetched_item.get("note") is not None
+                else "unpriced"
+            ),
+        ))
+    return PriceResult(
+        result.league, result.query_id, result.total, _group_price_listings(raw),
+        result.rate_limit, result.web_url, result.cached or cached,
+        (), result.fetched_count + len(ids),
     )
 
 

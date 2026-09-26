@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from itertools import count
 import json
-from pathlib import Path
-from queue import SimpleQueue
+import os
 import threading
 import time
-from typing import Callable
+from collections.abc import Callable
+from datetime import datetime, timezone
+from itertools import count
+from pathlib import Path
+from queue import SimpleQueue
 
 from src.utils.config_manager import ConfigManager
-
 
 PERFORMANCE_LOG_FILENAME = "poetore-performance.jsonl"
 PERFORMANCE_LOG_MAX_BYTES = 2 * 1024 * 1024
@@ -73,6 +73,8 @@ def _ensure_writer() -> None:
 
 
 def _queue_record(record: dict) -> None:
+    if os.environ.get("POETORE_DISABLE_PERFORMANCE_LOG") == "1":
+        return
     _ensure_writer()
     _write_queue.put(record)
 
@@ -82,6 +84,36 @@ def record_hotkey_event(event: str, **details) -> None:
     _queue_record({
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
         "source": "suppressed_hotkey",
+        "event": event,
+        **details,
+    })
+
+
+def record_trade_api_event(event: str, **details) -> None:
+    """Persist sanitized Trade API diagnostics without blocking a search."""
+    _queue_record({
+        "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+        "source": "trade_api",
+        "event": event,
+        **details,
+    })
+
+
+def record_mini_navi_topmost_event(event: str, **details) -> None:
+    """Persist sanitized MiniNavi topmost timing and Z-order diagnostics."""
+    _queue_record({
+        "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+        "source": "mini_navi_topmost",
+        "event": event,
+        **details,
+    })
+
+
+def record_ndlocr_event(event: str, **details) -> None:
+    """Persist sanitized resident-NDLOCR lifecycle and timing diagnostics."""
+    _queue_record({
+        "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+        "source": "ndlocr_resident",
         "event": event,
         **details,
     })

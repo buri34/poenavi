@@ -7,10 +7,17 @@ import json
 from pathlib import Path
 from urllib.request import Request, urlopen
 
+DEFAULT_LOCK = Path("scripts/poetore-sources.lock.json")
 
-DEFAULT_REVISION = "1e2225af8cfe04ccc5676d00eede81d7ee071240"
-DEFAULT_ARCHIVE = Path("vendor-sources/awakened-poe-trade-1e2225af.tar.gz")
-DEFAULT_MANIFEST = Path("vendor-sources/awakened-poe-trade-1e2225af.json")
+
+def locked_revision(lock_path: Path = DEFAULT_LOCK) -> str:
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    return str(lock["sources"]["awakened_poe_trade"]["revision"])
+
+
+def default_archive_paths(revision: str) -> tuple[Path, Path]:
+    stem = Path("vendor-sources") / f"awakened-poe-trade-{revision[:8]}"
+    return stem.with_suffix(".tar.gz"), stem.with_suffix(".json")
 
 
 def sha256(path: Path) -> str:
@@ -23,39 +30,47 @@ def sha256(path: Path) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--revision", default=DEFAULT_REVISION)
-    parser.add_argument("--archive", type=Path, default=DEFAULT_ARCHIVE)
-    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument("--revision")
+    parser.add_argument("--archive", type=Path)
+    parser.add_argument("--manifest", type=Path)
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
+    revision = args.revision or locked_revision()
+    default_archive, default_manifest = default_archive_paths(revision)
+    archive = args.archive or default_archive
+    manifest_path = args.manifest or default_manifest
     if args.verify:
-        manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
-        actual = sha256(args.archive)
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        actual = sha256(archive)
         if actual != manifest["archive_sha256"]:
             raise SystemExit(f"archive hash mismatch: {actual}")
-        print(f"verified {args.archive}: {actual}")
+        if manifest["revision"] != revision:
+            raise SystemExit(
+                f"archive revision mismatch: expected={revision} actual={manifest['revision']}"
+            )
+        print(f"verified {archive}: {actual}")
         return 0
 
-    url = f"https://codeload.github.com/SnosMe/awakened-poe-trade/tar.gz/{args.revision}"
+    url = f"https://codeload.github.com/SnosMe/awakened-poe-trade/tar.gz/{revision}"
     request = Request(url, headers={"User-Agent": "PoENavi/source-archiver"})
-    args.archive.parent.mkdir(parents=True, exist_ok=True)
-    temporary = args.archive.with_suffix(args.archive.suffix + ".tmp")
+    archive.parent.mkdir(parents=True, exist_ok=True)
+    temporary = archive.with_suffix(archive.suffix + ".tmp")
     with urlopen(request, timeout=120) as response, temporary.open("wb") as target:
         while chunk := response.read(1024 * 1024):
             target.write(chunk)
-    temporary.replace(args.archive)
+    temporary.replace(archive)
     manifest = {
         "project": "Awakened PoE Trade",
         "license": "MIT",
-        "revision": args.revision,
+        "revision": revision,
         "source_url": url,
-        "archive_sha256": sha256(args.archive),
+        "archive_sha256": sha256(archive),
         "purpose": "Development-only recovery source; excluded from PoENavi releases.",
     }
-    args.manifest.write_text(
+    manifest_path.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
     )
-    print(f"archived {args.revision}: {args.archive}")
+    print(f"archived {revision}: {archive}")
     return 0
 
 
