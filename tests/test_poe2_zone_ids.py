@@ -48,6 +48,27 @@ class Poe2ZoneIdTest(unittest.TestCase):
         self.assertEqual(default_by_name["The Azak Bog"]["level"], 40)
         self.assertEqual(runtime_by_name["The Azak Bog"]["level"], 40)
 
+    def test_plunders_point_is_registered_as_poe2_act4_zone(self):
+        default_by_name = {
+            zone["zone_en"]: zone for zone in DEFAULT_ZONE_DATA_POE2["Act 4"]
+        }
+
+        zone_master_path = Path(__file__).resolve().parents[1] / "data" / "zone_data.json"
+        zone_master = json.loads(zone_master_path.read_text(encoding="utf-8"))
+        runtime_by_name = {
+            zone["zone_en"]: zone
+            for zone in zone_master["zone_data_by_version"]["poe2"]["Act 4"]
+        }
+
+        expected = {
+            "id": "poe2_act4_area17",
+            "zone": "略奪の岬",
+            "level": 0,
+            "zone_en": "Plunder's Point",
+        }
+        self.assertEqual(default_by_name["Plunder's Point"], expected)
+        self.assertEqual(runtime_by_name["Plunder's Point"], expected)
+
 
 if __name__ == "__main__":
     unittest.main()

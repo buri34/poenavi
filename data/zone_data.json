@@ -1331,6 +1331,12 @@
                     "zone": "部族の中心",
                     "level": 53,
                     "zone_en": "Heart of the Tribe"
+                },
+                {
+                    "id": "poe2_act4_area17",
+                    "zone": "略奪の岬",
+                    "level": 0,
+                    "zone_en": "Plunder's Point"
                 }
             ],
             "幕間 1": [
