@@ -213,35 +213,8 @@ def test_windows_build_verifies_executable_product_and_version_metadata():
     assert "PoENavi.exe" in workflow and "PoENaviUpdater.exe" in workflow
 
 
-def test_snapshot_release_handoff_builds_locally_and_returns_audited_artifacts():
-    batch = (ROOT / "BUILD_RELEASE_FROM_SNAPSHOT.cmd").read_text(encoding="utf-8")
-    handoff = (ROOT / "scripts" / "build_release_from_local_copy.ps1").read_text(
-        encoding="utf-8"
-    )
-    bootstrap = (ROOT / "scripts" / "ensure_windows_build_tools.ps1").read_text(
-        encoding="utf-8"
-    )
-    assert "build_release_from_local_copy.ps1" in batch
-    assert "ensure_windows_build_tools.ps1" in handoff
-    assert "Python312" in bootstrap and "Dotnet8" in bootstrap
-    assert "python.org/ftp/python/3.12.10" in bootstrap
-    assert "67b5635e80ea51072b87941312d00ec8927c4db9ba18938f7ad2d27b328b95fb" in bootstrap
-    assert "dotnet-sdk-8.0.414-win-x64.zip" in bootstrap
-    assert "ae86d5d9aeff5be9db7e306e0f85f708" in bootstrap
-    assert "Get-FileHash" in bootstrap and "Start-Process" in bootstrap
-    assert '"PoENavi\\SourceBuilds"' in handoff
-    assert "Copy-Item" in handoff and "scripts\\build_release.ps1" in handoff
-    assert "PoENavi.zip.sha256" in handoff and "BUILD_INFO.txt" in handoff
-    assert "PoENavi-HighAccuracyOCR.zip" not in handoff
-    assert "requirements-ndlocr.txt" not in handoff
-    assert "zip_bytes=" in handoff and "zip_sha256=" in handoff
-    assert "ocr_pack_bytes=" not in handoff and "ocr_pack_sha256=" not in handoff
-
-
 def test_root_windows_entry_points_are_limited_to_current_build_workflows():
     expected = {
-        "CLEANUP_OLD_POENAVI_FOLDERS.cmd",
-        "BUILD_RELEASE_FROM_SNAPSHOT.cmd",
         "build_diagnostic_exe.bat",
         "build_exe.bat",
         "run_dev.bat",
@@ -259,6 +232,14 @@ def test_root_windows_entry_points_are_limited_to_current_build_workflows():
     assert "*.cmd text eol=crlf" in attributes
     assert not (ROOT / "scripts" / "run_desecration_ocr_fusion_test.ps1").exists()
     assert not (ROOT / "spikes" / "001-ndlocr-resident-memory").exists()
+    local_only_paths = (
+        ROOT / "BUILD_RELEASE_FROM_SNAPSHOT.cmd",
+        ROOT / "CLEANUP_OLD_POENAVI_FOLDERS.cmd",
+        ROOT / "scripts" / "build_release_from_local_copy.ps1",
+        ROOT / "scripts" / "cleanup_old_poenavi_folders.ps1",
+        ROOT / "scripts" / "ensure_windows_build_tools.ps1",
+    )
+    assert all(not path.exists() for path in local_only_paths)
 
 
 def test_source_lock_is_development_only_and_pins_revision_and_hashes():
