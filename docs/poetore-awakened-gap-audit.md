@@ -14,8 +14,7 @@ Awakened相当まで実装済み。意図的に対象外とした旧Bulk Exchang
 値の境界、プリセット別の初期ON/OFF、ぽえとれ独自仕様まで含む規則単位の比較は
 `docs/poetore-awakened-filter-rule-audit.csv`を正本とし、解説は
 `docs/poetore-awakened-filter-rule-audit.md`を参照する。
-今後のUI再設計、実機検証、保守性改善を含む残タスクは
-`docs/poetore-pending-tasks.md`を正本とする。
+今後のUI再設計、実機検証、保守性改善は、現行コード・回帰テストとGitHub Issuesで管理する。
 
 判定基準:
 
@@ -80,7 +79,7 @@ Magic JewelのAdorned向けrarity／corrupted厳密条件まで対応済み。
 - crafted Chaos Resistance単独候補の非表示、crafted/通常Modの合算
 - 完成品とクラフトベースの候補分離、固定rollと初期選択規則
 
-詳細な実装タスクは `docs/poetore-pseudo-mod-tasks.md` を参照。
+現行のpseudo Mod定義と採否は生成済みメタデータと回帰テストを正本とする。
 
 ### 5. ユニーク・Variant・特殊状態 — 実装済み
 

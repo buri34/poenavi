@@ -266,4 +266,4 @@ python scripts/update_poetore_trade_data.py --refresh --official-mods-only
 - RePoEの配布条件とendpoint
 - 現在の公式Trade response schema
 - 新リーグ固有カテゴリが追加されていないか
-- GitHub公開やReleaseは別途、鰤さんの明示確認後に行う
+- GitHub公開やReleaseは別途、メンテナーの明示承認後に行う

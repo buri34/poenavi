@@ -1,7 +1,6 @@
 import importlib.util
 from pathlib import Path
 
-
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/generate_poe2_windows_test_sheet.py"
 SPEC = importlib.util.spec_from_file_location("generate_poe2_windows_test_sheet", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
@@ -11,6 +10,7 @@ SPEC.loader.exec_module(MODULE)
 FIELDNAMES = MODULE.FIELDNAMES
 build_rows = MODULE.build_rows
 copy_requirement = MODULE.copy_requirement
+write_sheet = MODULE.write_sheet
 
 
 def test_build_rows_preserves_all_detailed_cases() -> None:
@@ -76,3 +76,12 @@ def test_copy_requirements_are_explicit() -> None:
             "日本語設定の詳細コピー全文": "",
         }
     )
+
+
+def test_write_sheet_creates_untracked_output_directory(tmp_path) -> None:
+    target = tmp_path / "build" / "manual" / "windows-test-run.csv"
+
+    write_sheet(target)
+
+    assert target.is_file()
+    assert len(target.read_text(encoding="utf-8-sig").splitlines()) == 84

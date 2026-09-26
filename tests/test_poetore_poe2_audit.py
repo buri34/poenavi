@@ -2,13 +2,20 @@ from __future__ import annotations
 
 import csv
 import json
-
 from pathlib import Path
 
-from src.poetore.poe2.audit import audit_real_copy_pairs, build_audit_rows, write_reports
-
+from src.poetore.poe2.audit import (
+    DEFAULT_OUTPUT_DIR,
+    audit_real_copy_pairs,
+    build_audit_rows,
+    write_reports,
+)
 
 REAL_COPY_FIXTURES = Path(__file__).parent / "fixtures" / "poe2" / "real_copy_bilingual.csv"
+
+
+def test_poe2_audit_default_output_is_untracked_build_directory():
+    assert DEFAULT_OUTPUT_DIR == Path("build/poetore-poe2-audit")
 
 
 def test_poe2_search_matrix_has_complete_structural_population():

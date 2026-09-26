@@ -2,15 +2,17 @@ from __future__ import annotations
 
 import argparse
 import csv
-from dataclasses import asdict, dataclass
 import json
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from ..models import ItemModifier, ParsedItem
 from ..trade import PRESET_BASE, PRESET_FINISHED, available_trade_presets
+from .fixture_loader import load_real_copy_rows
 from .parser import TRADE_CATEGORY_BY_CATEGORY, parse_item_text
 from .trade import build_search_query, poe2_trade_filters
-from .fixture_loader import load_real_copy_rows
+
+DEFAULT_OUTPUT_DIR = Path("build/poetore-poe2-audit")
 
 
 _EQUIPMENT_FIXTURES = {
@@ -256,7 +258,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Audit PoE2 Trade2 search-pattern matrix")
     parser.add_argument(
         "--output-dir", type=Path,
-        default=Path("docs/poetore-poe2-testing"),
+        default=DEFAULT_OUTPUT_DIR,
     )
     args = parser.parse_args()
     csv_path, json_path, rows = write_reports(args.output_dir)

@@ -3,10 +3,9 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "docs/poetore-poe2-testing/windows-test-cases.csv"
-TARGET = ROOT / "docs/poetore-poe2-testing/windows-test-run.csv"
+SOURCE = ROOT / "tests/manual/poetore-poe2/windows-test-cases.csv"
+TARGET = ROOT / "build/manual/poetore-poe2-windows-test-run.csv"
 
 
 FIELDNAMES = [
@@ -83,6 +82,7 @@ def build_rows(source: Path = SOURCE) -> list[dict[str, str]]:
 
 
 def write_sheet(target: Path = TARGET) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
     with target.open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=FIELDNAMES, lineterminator="\n")
         writer.writeheader()
