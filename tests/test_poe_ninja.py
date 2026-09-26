@@ -922,6 +922,35 @@ def test_poe2_related_identities_use_pinned_categories_and_share_cache():
     assert unique_calls == [("Runes of Aldur", "UniqueJewels")]
 
 
+def test_poe2_related_thesis_uses_current_soul_cores_overview():
+    calls = []
+
+    def fetcher(league, type_name):
+        calls.append((league, type_name))
+        return {
+            "core": {"primary": "divine", "rates": {"chaos": 7.74}},
+            "items": [{
+                "id": "quipolatls-thesis", "name": "Quipolatl's Thesis",
+                "detailsId": "quipolatls-thesis",
+            }],
+            "lines": [{
+                "id": "quipolatls-thesis", "primaryValue": 3,
+                "maxVolumeCurrency": "divine", "maxVolumeRate": 1 / 3,
+                "sparkline": {"data": [], "totalChange": 0},
+            }],
+        }
+
+    service = PoeNinjaPriceService(poe2_exchange_fetcher=fetcher)
+    prices = service.lookup_poe2_identities((
+        ("ITEM", "Quipolatl's Thesis", None, "SoulCores"),
+    ), "Runes of Aldur")
+
+    assert prices[0] is not None
+    assert prices[0].display_price() == "3 div"
+    assert prices[0].url.endswith("/soul-cores/quipolatls-thesis")
+    assert calls == [("Runes of Aldur", "SoulCores")]
+
+
 def test_poe2_exchange_matches_regular_currency():
     payload = _poe2_exchange_payload()
     payload["items"] = [{"id": "chaos", "name": "Chaos Orb", "detailsId": "chaos-orb"}]

@@ -918,7 +918,7 @@ def _poe2_ninja_type(row: dict, identities: dict[tuple[str, str], list[dict]]) -
     )
     tags = {tag for match in matches for tag in match.get("tags", ())}
     if category == "SoulCore":
-        return "Ultimatum"
+        return "SoulCores"
     if category == "Omen":
         return "Ritual"
     if category in {"VaultKey", "MapFragment", "PinnacleKey", "MiscMapItem"}:

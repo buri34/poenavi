@@ -478,6 +478,15 @@ def test_generated_related_items_match_locked_ee2_and_have_price_hints():
     prism = next(row for row in first["items"] if row["name"] == "Prism of Belief")
     assert prism["variant"] == "Diamond"
     assert prism["ninja_type"] == "UniqueJewels"
+    thesis_group = next(
+        group for group in generated["groups"]
+        if any(row["name"] == "Quipolatl's Thesis" for row in group["query"])
+    )
+    thesis = next(
+        row for row in thesis_group["query"]
+        if row["name"] == "Quipolatl's Thesis"
+    )
+    assert thesis["ninja_type"] == "SoulCores"
 
 
 def test_reviewed_related_item_japanese_overrides_are_in_runtime_indexes():
@@ -515,11 +524,11 @@ def test_reviewed_related_item_identity_updates_keep_price_hints():
     assert by_id["GEM::Uhtred's Exodus"]["display_name"] == "ウートレドの大移動"
     assert by_id["GEM::Uhtred's Omen"]["display_name"] == "ウートレドの前兆"
     assert by_id["UNIQUE::Kingsguard // Full Plate"]["display_name"] == "キングスガード"
-    assert by_id["ITEM::Legacy of Kingsguard"]["ninja_type"] == "Ultimatum"
+    assert by_id["ITEM::Legacy of Kingsguard"]["ninja_type"] == "SoulCores"
 
     legacy = by_id["ITEM::Legacy of Edyrn's Tusks"]
     assert legacy["display_name"] == "エディルンの牙の遺産"
-    assert legacy["ninja_type"] == "Ultimatum"
+    assert legacy["ninja_type"] == "SoulCores"
     unique = by_id["UNIQUE::Edyrn's Tusks // Iron Cuirass"]
     assert unique["display_name"] == "エディルンの牙"
     assert unique["ninja_type"] == "UniqueArmours"
