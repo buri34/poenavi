@@ -1,7 +1,7 @@
 # ぽえとれ 高精度OCRパック専用Release移行計画
 
 - 作成日: 2026-09-26
-- 状態: **ローカル実装済み／Windows実機検証待ち**
+- 状態: **完了**
 - 対象: PoE2「アビス冒涜Modティアチェック」の高精度OCRパック配布
 - 現行候補版: PoENavi v4.4.1 Pre-release
 
@@ -171,3 +171,13 @@ v4.4.1、v4.4.2、v4.5.0が同じパック版を指定する限り、すべて�
 従来の本体タグへ戻す。専用Releaseは削除せず、原因調査中はPre-releaseのまま保持する。
 
 正式版昇格後は既存タグやassetを上書きせず、修正版のPoENaviまたは新しいOCRパックタグで対応する。
+
+## 12. 完了記録
+
+- 実装コミット／v4.4.1タグ: `a4a51325d3473f1c7baf4ecc64000c2f20aa819d`
+- v4.4.1は正式版へ昇格し、`PoENavi.zip`と`PoENavi.zip.sha256`だけを配置した。
+- `ndlocr-pack-v1.3.1-r1`は公開済みPre-releaseとして、OCRパックZIPとSHAだけを維持した。
+- Windows実機で専用Releaseからの自動取得と、実プレイ中の高精度OCR動作を確認した。
+- 本体ZIPは展開後512MiB未満、NDLOCR実行環境・ONNXモデルの混入なしを確認した。
+- v4.4.1上の旧OCR asset 2点を削除し、旧URLが404、専用URLがHTTP 200であることを確認した。
+- `/releases/latest`がv4.4.1を返すことを確認した。
