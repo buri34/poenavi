@@ -8,6 +8,8 @@ import pytest
 from src.poetore.poe2.ndlocr_pack import (
     PACK_ARCHIVE_ROOT,
     PACK_ASSET_NAME,
+    PACK_RELEASE_ARCHIVE_SHA256,
+    PACK_RELEASE_TAG,
     PACK_VERSION,
     REQUIRED_MODELS,
     PackStatus,
@@ -41,10 +43,12 @@ def make_pack(path, *, unsafe_name=None):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_pack_asset_urls_are_pinned_to_running_app_release():
-    archive, checksum = pack_asset_urls("4.4.1")
-    assert archive.endswith(f"/v4.4.1/{PACK_ASSET_NAME}")
-    assert checksum.endswith(f"/v4.4.1/{PACK_ASSET_NAME}.sha256")
+def test_pack_asset_urls_are_pinned_to_immutable_pack_release():
+    archive, checksum = pack_asset_urls()
+    assert archive.endswith(f"/{PACK_RELEASE_TAG}/{PACK_ASSET_NAME}")
+    assert checksum.endswith(f"/{PACK_RELEASE_TAG}/{PACK_ASSET_NAME}.sha256")
+    assert "/v4.4.1/" not in archive
+    assert "/v4.4.2/" not in archive
 
 
 def test_pack_install_is_atomic_and_reusable(tmp_path, monkeypatch):
@@ -61,7 +65,71 @@ def test_pack_install_is_atomic_and_reusable(tmp_path, monkeypatch):
         installed / "PoENaviNdlOcr" / "PoENaviNdlOcr.exe"
     )
     marker = json.loads((installed / ".installed.json").read_text(encoding="utf-8"))
-    assert marker == {"pack_version": PACK_VERSION, "archive_sha256": digest}
+    assert marker == {
+        "pack_version": PACK_VERSION,
+        "pack_release_tag": PACK_RELEASE_TAG,
+        "archive_sha256": digest,
+    }
+
+
+def test_existing_v441_pack_is_reused_only_when_legacy_sha_matches(
+    tmp_path, monkeypatch
+):
+    parent = tmp_path / "packs"
+    monkeypatch.setenv("POENAVI_NDLOCR_PACK_DIR", str(parent))
+    installed = parent / f"ndlocr-{PACK_VERSION}"
+    helper = installed / "PoENaviNdlOcr" / "PoENaviNdlOcr.exe"
+    helper.parent.mkdir(parents=True)
+    helper.write_bytes(b"exe")
+    model_dir = installed / "PoENaviNdlOcr" / "_internal" / "model"
+    model_dir.mkdir(parents=True)
+    for name in REQUIRED_MODELS:
+        (model_dir / name).write_bytes(b"model")
+    marker = installed / ".installed.json"
+    marker.write_text(
+        json.dumps(
+            {
+                "pack_version": PACK_VERSION,
+                "archive_sha256": PACK_RELEASE_ARCHIVE_SHA256,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert installed_helper_path() == helper
+
+    marker.write_text(
+        json.dumps({"pack_version": PACK_VERSION, "archive_sha256": "0" * 64}),
+        encoding="utf-8",
+    )
+    assert installed_helper_path() is None
+
+
+def test_installed_pack_with_different_release_revision_is_rejected(
+    tmp_path, monkeypatch
+):
+    parent = tmp_path / "packs"
+    monkeypatch.setenv("POENAVI_NDLOCR_PACK_DIR", str(parent))
+    installed = parent / f"ndlocr-{PACK_VERSION}"
+    helper = installed / "PoENaviNdlOcr" / "PoENaviNdlOcr.exe"
+    helper.parent.mkdir(parents=True)
+    helper.write_bytes(b"exe")
+    model_dir = installed / "PoENaviNdlOcr" / "_internal" / "model"
+    model_dir.mkdir(parents=True)
+    for name in REQUIRED_MODELS:
+        (model_dir / name).write_bytes(b"model")
+    (installed / ".installed.json").write_text(
+        json.dumps(
+            {
+                "pack_version": PACK_VERSION,
+                "pack_release_tag": "ndlocr-pack-v1.3.1-r2",
+                "archive_sha256": PACK_RELEASE_ARCHIVE_SHA256,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert installed_helper_path() is None
 
 
 def test_pack_install_rejects_hash_mismatch_without_replacing_existing(tmp_path):
@@ -109,16 +177,12 @@ def test_download_checks_checksum_and_installs_into_user_data(tmp_path, monkeypa
             progress(source.stat().st_size, source.stat().st_size)
         return destination
 
-    installed = download_and_install_pack(
-        app_version="4.4.1",
-        phase=phases.append,
-        downloader=downloader,
-    )
+    installed = download_and_install_pack(phase=phases.append, downloader=downloader)
 
     assert installed == parent / f"ndlocr-{PACK_VERSION}"
     assert phases == ["checking", "downloading", "installing"]
-    assert downloads[0].endswith(f"/v4.4.1/{PACK_ASSET_NAME}.sha256")
-    assert downloads[1].endswith(f"/v4.4.1/{PACK_ASSET_NAME}")
+    assert downloads[0].endswith(f"/{PACK_RELEASE_TAG}/{PACK_ASSET_NAME}.sha256")
+    assert downloads[1].endswith(f"/{PACK_RELEASE_TAG}/{PACK_ASSET_NAME}")
     assert pack_is_installed()
     assert not stale.exists()
 

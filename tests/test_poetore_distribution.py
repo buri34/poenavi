@@ -54,6 +54,9 @@ def test_poetore_distribution_contains_only_minimal_derived_data():
 
 def test_release_build_includes_legal_notices_but_not_development_fixtures():
     script = (ROOT / "scripts" / "build_release.ps1").read_text(encoding="utf-8")
+    ocr_script = (ROOT / "scripts" / "build_ndlocr_pack.ps1").read_text(
+        encoding="utf-8"
+    )
     for filename in ("LICENSE", "README.md", "THIRD_PARTY_NOTICES.md"):
         assert f'"--add-data", "{filename};."' in script
     assert '"--add-data", "build\\third-party-licenses;THIRD_PARTY_LICENSES"' in script
@@ -63,20 +66,23 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert "dotnet publish tools\\ExpeditionWindowsOcr\\ExpeditionWindowsOcr.csproj" in script
     assert '"--add-data", "build\\expedition-windows-ocr;tools\\ExpeditionWindowsOcr"' in script
     assert '"--add-data", "build\\ndlocr-dist\\PoENaviNdlOcr;tools\\NDLOcrLite"' not in script
-    assert '$ocrPackName = "PoENavi-HighAccuracyOCR"' in script
-    assert '$ocrPackArgs = @("-c", $ocrPackCode)' in script
-    assert "Invoke-Python @ocrPackArgs" in script
-    assert "Invoke-Python -c $ocrPackCode" not in script
+    assert "PoENavi-HighAccuracyOCR" not in script
+    assert "requirements-ndlocr.txt" not in script
+    assert '$ocrPackName = "PoENavi-HighAccuracyOCR"' in ocr_script
+    assert '$ocrPackArgs = @("-c", $ocrPackCode)' in ocr_script
+    assert "Invoke-Python @ocrPackArgs" in ocr_script
+    assert "Invoke-Python -c $ocrPackCode" not in ocr_script
     assert "updater-compatible archive exceeds 512 MiB" in script
     assert "high-accuracy OCR runtime leaked into PoENavi.zip" in script
     assert "ExpeditionWindowsOcr.exe" in script
-    assert "PoENaviNdlOcr.exe" in script
-    assert '"scripts\\ndlocr_lite_entry.py"' in script
-    assert "requirements-ndlocr.txt" in script
-    assert "verify_ndlocr_helper.py" in script
-    assert "reported-spear-physical-read-failed.png" in script
-    assert "e510d3a7b878395ea9de0bdd365711b699e5fd430b5c7e23a40e918e913fd1f2" in script
-    assert "NDLOCR-Lite-1.3.1/LICENCE.txt" in script
+    assert "PoENaviNdlOcr\\.exe" in script
+    assert "PoENaviNdlOcr.exe" in ocr_script
+    assert '"scripts\\ndlocr_lite_entry.py"' in ocr_script
+    assert "requirements-ndlocr.txt" in ocr_script
+    assert "verify_ndlocr_helper.py" in ocr_script
+    assert "reported-spear-physical-read-failed.png" in ocr_script
+    assert "e510d3a7b878395ea9de0bdd365711b699e5fd430b5c7e23a40e918e913fd1f2" in ocr_script
+    assert "LICENCE_DEPENDENCIES.txt" in ocr_script
     assert "expedition_region_example.png" in script
     assert "desecration_region_example.png" in script
     assert "expedition_ocr_items.json" in script
@@ -111,11 +117,27 @@ def test_recent_poetore_releases_use_poetore_scoped_tests():
         "tests/test_win32_suppressed_hotkey.py",
     ):
         assert test_file in script
-    assert "PoENavi-HighAccuracyOCR.zip" in workflow
-    assert "PoENavi-HighAccuracyOCR.zip.sha256" in workflow
+    assert "PoENavi-HighAccuracyOCR.zip" not in workflow
+    assert "gh release upload $env:GITHUB_REF_NAME PoENavi.zip PoENavi.zip.sha256 --clobber" in workflow
+    assert "gh release edit $env:GITHUB_REF_NAME --notes-file $notesFile" in workflow
     assert "Run Desecration high-accuracy OCR pack release tests" in workflow
     assert 'github.ref_name == \'v4.4.1\'' in workflow
     assert "tests/test_ndlocr_pack.py" in workflow
+
+
+def test_ocr_pack_has_a_separate_immutable_prerelease_workflow():
+    workflow = (ROOT / ".github" / "workflows" / "release-ndlocr-pack.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "workflow_dispatch:" in workflow
+    assert "PACK_RELEASE_TAG" in workflow
+    assert "RELEASE_TAG: ${{ inputs.release_tag }}" in workflow
+    assert "gh release view '${{ inputs.release_tag }}'" not in workflow
+    assert "release already exists and must not be overwritten" in workflow
+    assert ".\\scripts\\build_ndlocr_pack.ps1" in workflow
+    assert "PoENavi-HighAccuracyOCR.zip" in workflow
+    assert "PoENavi-HighAccuracyOCR.zip.sha256" in workflow
+    assert "--prerelease" in workflow
 
 
 def test_friend_diagnostic_build_is_separate_from_normal_release():
@@ -194,9 +216,10 @@ def test_snapshot_release_handoff_builds_locally_and_returns_audited_artifacts()
     assert '"PoENavi\\SourceBuilds"' in handoff
     assert "Copy-Item" in handoff and "scripts\\build_release.ps1" in handoff
     assert "PoENavi.zip.sha256" in handoff and "BUILD_INFO.txt" in handoff
-    assert "PoENavi-HighAccuracyOCR.zip.sha256" in handoff
+    assert "PoENavi-HighAccuracyOCR.zip" not in handoff
+    assert "requirements-ndlocr.txt" not in handoff
     assert "zip_bytes=" in handoff and "zip_sha256=" in handoff
-    assert "ocr_pack_bytes=" in handoff and "ocr_pack_sha256=" in handoff
+    assert "ocr_pack_bytes=" not in handoff and "ocr_pack_sha256=" not in handoff
 
 
 def test_root_windows_entry_points_are_limited_to_current_build_workflows():

@@ -22,9 +22,11 @@ from src.update.artifacts import (
     parse_checksum,
     verify_sha256,
 )
-from src.version import APP_VERSION
-
 PACK_VERSION = "1.3.1"
+PACK_RELEASE_TAG = "ndlocr-pack-v1.3.1-r1"
+PACK_RELEASE_ARCHIVE_SHA256 = (
+    "85f2e112a1a82a2e07e9bf98d50cb2fae7103b81fc64c3427705a2154b9b34bc"
+)
 PACK_ASSET_NAME = "PoENavi-HighAccuracyOCR.zip"
 PACK_CHECKSUM_NAME = f"{PACK_ASSET_NAME}.sha256"
 PACK_ARCHIVE_ROOT = "PoENavi-HighAccuracyOCR"
@@ -68,6 +70,12 @@ def installed_helper_path() -> Path | None:
         return None
     if payload.get("pack_version") != PACK_VERSION or not helper.is_file():
         return None
+    release_tag = payload.get("pack_release_tag")
+    if release_tag is None:
+        if payload.get("archive_sha256", "").lower() != PACK_RELEASE_ARCHIVE_SHA256:
+            return None
+    elif release_tag != PACK_RELEASE_TAG:
+        return None
     model_dir = root / "PoENaviNdlOcr" / "_internal" / "model"
     if not all((model_dir / name).is_file() for name in REQUIRED_MODELS):
         return None
@@ -78,11 +86,11 @@ def pack_is_installed() -> bool:
     return installed_helper_path() is not None
 
 
-def pack_asset_urls(app_version: str = APP_VERSION) -> tuple[str, str]:
+def pack_asset_urls() -> tuple[str, str]:
     override = os.environ.get(PACK_URL_ENV, "").strip().rstrip("/")
     base = override or (
         "https://github.com/buri34/poenavi/releases/download/"
-        f"v{app_version}"
+        f"{PACK_RELEASE_TAG}"
     )
     return f"{base}/{PACK_ASSET_NAME}", f"{base}/{PACK_CHECKSUM_NAME}"
 
@@ -161,6 +169,7 @@ def install_pack_archive(
             raise ValueError("高精度OCRパックを展開できませんでした")
         marker = {
             "pack_version": PACK_VERSION,
+            "pack_release_tag": PACK_RELEASE_TAG,
             "archive_sha256": expected_sha256.lower(),
         }
         (payload_root / ".installed.json").write_text(
@@ -184,13 +193,12 @@ def install_pack_archive(
 
 def download_and_install_pack(
     *,
-    app_version: str = APP_VERSION,
     progress: Callable[[int, int], None] = lambda _done, _total: None,
     phase: Callable[[str], None] = lambda _phase: None,
     cancelled: Callable[[], bool] = lambda: False,
     downloader=download_file,
 ) -> Path:
-    archive_url, checksum_url = pack_asset_urls(app_version)
+    archive_url, checksum_url = pack_asset_urls()
     parent = _default_pack_parent()
     parent.mkdir(parents=True, exist_ok=True)
     _cleanup_stale_work_dirs(parent)
