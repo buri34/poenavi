@@ -1,7 +1,6 @@
 import csv
 from pathlib import Path
 
-
 AUDIT_CSV = (
     Path(__file__).resolve().parents[1]
     / "docs"
@@ -39,6 +38,6 @@ def test_awakened_audit_tracks_resolved_and_remaining_differences():
 
     for rule_id in ("I14a", "S18", "S19", "S20", "R11", "R12"):
         assert rows[rule_id]["判定"] == "準拠"
-        assert rows[rule_id]["鰤さん判断欄"] == ""
+        assert rows[rule_id]["メンテナー判断欄"] == ""
     assert rows["I28"]["判定"] == "未対応"
-    assert rows["I28"]["鰤さん判断欄"] == "要対応"
+    assert rows["I28"]["メンテナー判断欄"] == "要対応"

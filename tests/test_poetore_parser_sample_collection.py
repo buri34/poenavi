@@ -6,11 +6,12 @@ from pathlib import Path
 from src.poetore import parse_item_text
 from src.poetore.trade import build_search_query, resolve_trade_stat_filters
 
-
 SAMPLE_CSV = (
     Path(__file__).resolve().parents[1]
-    / "docs"
-    / "poetore-parser-sample-collection.csv"
+    / "tests"
+    / "fixtures"
+    / "poetore"
+    / "parser-sample-collection.csv"
 )
 
 EXPECTED = {
@@ -82,6 +83,7 @@ def _filled_samples():
 def test_all_collected_samples_parse_with_expected_category_and_mod_count():
     rows = _samples()
     assert len(rows) == 54
+    assert set(rows[0]) == {"ID", "貼り付け本文"}
     rows = _filled_samples()
     assert len(rows) == 54
 

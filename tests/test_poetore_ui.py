@@ -6172,7 +6172,7 @@ def test_cross_category_transitions_clear_chips_notice_and_restore_preset(qapp):
 
 
 def test_windows_acceptance_csv_has_complete_ordered_cases():
-    path = Path("docs/poetore-windows-acceptance-tests.csv")
+    path = Path("tests/manual/poetore-windows-acceptance-tests.csv")
     with path.open(encoding="utf-8-sig", newline="") as handle:
         rows = list(csv.DictReader(handle))
     assert len(rows) == 42
@@ -6181,6 +6181,7 @@ def test_windows_acceptance_csv_has_complete_ordered_cases():
     required = {"ID", "区分", "優先度", "前提条件", "テストデータ", "手順", "期待結果", "結果", "証跡", "備考"}
     assert set(rows[0]) == required
     assert all(row["手順"] and row["期待結果"] for row in rows)
+    assert all(not row["結果"] and not row["証跡"] and not row["備考"] for row in rows)
 
 
 def test_filter_chip_flow_wraps_visible_chips(qapp):

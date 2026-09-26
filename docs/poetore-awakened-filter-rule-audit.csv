@@ -1,4 +1,4 @@
-rule_id,大分類,対象,Awakened仕様,ぽえとれ現状,判定,推奨,鰤さん判断欄,Awakened根拠,ぽえとれ根拠
+rule_id,大分類,対象,Awakened仕様,ぽえとれ現状,判定,推奨,メンテナー判断欄,Awakened根拠,ぽえとれ根拠
 P01,プリセット,Expedition Logbook,エリアごとにI～VのExactプリセットを作り先頭を選択,エリアグループを保持し先頭だけ初期ON,部分準拠,複数エリアをタブで切り替えるUIが必要か判断,要判断,create-presets.ts:20-27,trade.py:_apply_dedicated_exact_rules
 P02,プリセット,非クラフト可能な非ユニーク,Exactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:31-52,trade.py:uses_dedicated_exact_preset
 P03,プリセット,未鑑定アイテム,Exactプリセットだけを使用,専用Exact対象として処理,準拠,維持,,create-presets.ts:31-52,trade.py:uses_dedicated_exact_preset

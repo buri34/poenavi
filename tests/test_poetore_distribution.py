@@ -242,6 +242,39 @@ def test_root_windows_entry_points_are_limited_to_current_build_workflows():
     assert all(not path.exists() for path in local_only_paths)
 
 
+def test_internal_work_records_are_not_part_of_public_source_tree():
+    internal_docs = {
+        "note-poenavi-release-note-audit.csv",
+        "note-poenavi-usage-draft.md",
+        "note-poenavi-v4.0.0-revised.md",
+        "note-poetore-release-note-audit.csv",
+        "note-poetore-usage-draft.md",
+        "signpath-application-draft.md",
+        "signpath-readiness-checklist.md",
+        "signpath-change-retention-review.md",
+        "poetore-resume.md",
+        "poetore-pending-tasks.md",
+        "poetore-spike.md",
+        "poetore-obs-streaming-mode-plan.md",
+        "poetore-ndlocr-pack-release-migration-plan.md",
+        "stashsage-adoption-analysis-2026-09-01.md",
+        "expedition-windows-ocr-audit-2026-09-08.md",
+        "poetore-awakened-ui-and-poeninja-audit.md",
+        "poetore-poe2-gap-analysis-2026-08-10.md",
+        "poetore-poe2-auxiliary-features-audit-2026-08-11.md",
+        "poetore-poe2-upstream-delta-audit-2026-08-11.md",
+        "poetore-release-audit.md",
+        "poetore-pseudo-mod-tasks.md",
+        "poetore-step10-validation.md",
+    }
+    assert all(not (ROOT / "docs" / name).exists() for name in internal_docs)
+    assert all(not (ROOT / "docs" / f"screenshot{index}.png").exists() for index in range(1, 13))
+    assert not (ROOT / "docs" / "poetore-poe2-testing").exists()
+    assert (ROOT / "tests" / "fixtures" / "poetore" / "parser-sample-collection.csv").is_file()
+    assert (ROOT / "tests" / "manual" / "poetore-windows-acceptance-tests.csv").is_file()
+    assert (ROOT / "tests" / "manual" / "poetore-poe2" / "windows-test-cases.csv").is_file()
+
+
 def test_source_lock_is_development_only_and_pins_revision_and_hashes():
     lock = json.loads((ROOT / "scripts" / "poetore-sources.lock.json").read_text(encoding="utf-8"))
     sources = lock["sources"]

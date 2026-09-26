@@ -1,7 +1,6 @@
 import csv
 from pathlib import Path
 
-
 AUDIT_CSV = (
     Path(__file__).resolve().parents[1]
     / "docs"
@@ -21,7 +20,7 @@ def test_awakened_filter_rule_audit_has_valid_reviewable_rows():
         "ぽえとれ現状",
         "判定",
         "推奨",
-        "鰤さん判断欄",
+        "メンテナー判断欄",
         "Awakened根拠",
         "ぽえとれ根拠",
     }
@@ -43,7 +42,7 @@ def test_awakened_filter_rule_audit_has_valid_reviewable_rows():
         assert row["判定"] in allowed_statuses
         assert all(
             row[column].strip()
-            for column in expected_columns - {"鰤さん判断欄"}
+            for column in expected_columns - {"メンテナー判断欄"}
         )
 
 
@@ -55,5 +54,5 @@ def test_awakened_filter_rule_audit_keeps_decision_rows_visible():
         "R02",  # Hybrid armour properties
     }
     assert expected_review_rows <= rows.keys()
-    assert all(rows[rule_id]["鰤さん判断欄"] == "要判断"
+    assert all(rows[rule_id]["メンテナー判断欄"] == "要判断"
                for rule_id in expected_review_rows)
