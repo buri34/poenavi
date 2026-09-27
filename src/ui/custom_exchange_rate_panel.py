@@ -100,6 +100,7 @@ class CustomExchangeRatePanel(QWidget):
         # applied, regardless of whether the Future completed synchronously.
         self._signals.icon_ready.connect(self._apply_icon, Qt.QueuedConnection)
         self._manual_check = False
+        self._sync_in_progress = False
         self._build_ui()
         self.render_rows()
         self.check_timer = QTimer(self)
@@ -197,7 +198,11 @@ class CustomExchangeRatePanel(QWidget):
                     display = format_significant_rate(cached.price)
                     latest_cached_at = max(latest_cached_at or 0, cached.confirmed_at)
                 else:
-                    display = "最新データを取得できません"
+                    display = (
+                        "最新データ取得中…"
+                        if self._sync_in_progress
+                        else "最新データを取得できません"
+                    )
             row = self._make_row(index, pair.left_item_id, pair.right_item_id, display)
             self.rows_layout.addWidget(row)
             self.row_widgets.append(row)
@@ -220,7 +225,9 @@ class CustomExchangeRatePanel(QWidget):
             self.add_button = None
 
         state = self.service.sync_state(self.poe_version, league)
-        if state.available:
+        if self._sync_in_progress:
+            self.status_label.setText("最新データを確認中…")
+        elif state.available:
             self.status_label.setText(
                 f"{league} ・ 公式取引データ（1時間単位・自動取得）"
             )
@@ -307,8 +314,10 @@ class CustomExchangeRatePanel(QWidget):
 
     def refresh(self, *, manual: bool = False) -> None:
         self._manual_check = self._manual_check or manual
+        self._sync_in_progress = True
         self.status_label.setText("最新データを確認中…")
         self.refresh_button.setEnabled(False)
+        self.render_rows()
         league = self.league_getter()
         self.service.queue_sync(
             self.poe_version,
@@ -321,6 +330,7 @@ class CustomExchangeRatePanel(QWidget):
         self.render_rows()
 
     def _sync_checked(self, result) -> None:
+        self._sync_in_progress = False
         self.refresh_button.setEnabled(True)
         manual = self._manual_check
         self._manual_check = False

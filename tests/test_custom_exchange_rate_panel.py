@@ -176,11 +176,17 @@ def test_refresh_is_nonblocking_and_manual_result_text_is_specific(qapp, tmp_pat
     try:
         panel.refresh(manual=True)
         assert panel.status_label.text() == "最新データを確認中…"
+        assert panel.row_widgets[0].findChild(QLabel, "customRateValue0").text() == (
+            "1 ＝ 最新データ取得中…"
+        )
         assert not panel.refresh_button.isEnabled()
         callback = service.queued[-1][3]
         callback(SyncCheckResult("no_new_data", POE1, "League", 720))
         qapp.processEvents()
         assert panel.status_label.text() == "新しい公式データはまだありません"
+        assert panel.row_widgets[0].findChild(QLabel, "customRateValue0").text() == (
+            "1 ＝ 最新データを取得できません"
+        )
         assert panel.refresh_button.isEnabled()
         assert panel.check_timer.interval() == RATE_CHECK_INTERVAL_MSEC
     finally:
