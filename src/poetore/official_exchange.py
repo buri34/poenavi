@@ -14,6 +14,7 @@ import math
 import os
 import re
 import statistics
+import sys
 import tempfile
 import threading
 import time
@@ -33,6 +34,7 @@ CACHE_MAX_LAG_HOURS = 2
 CONFLICT_FACTOR = 2.0
 LOG_MAX_BYTES = 5 * 1024 * 1024
 LOG_BACKUPS = 3
+SEARCH_LOG_DEDUPE_SECONDS = 2
 
 CHAOS = "Metadata/Items/Currency/CurrencyRerollRare"
 DIVINE = "Metadata/Items/Currency/CurrencyModValues"
@@ -114,6 +116,27 @@ def latest_completed_hour(now: float | None = None) -> int:
 
 def normalize_name(value: str) -> str:
     return " ".join(unicodedata.normalize("NFKC", value).casefold().split())
+
+
+def _candidate_names(values: Iterable[str | None]) -> tuple[str, ...]:
+    return tuple(dict.fromkeys(
+        text
+        for value in values
+        if value is not None and (text := str(value).strip())
+    ))
+
+
+def _bundled_metadata_root() -> Path:
+    """Resolve exchange metadata in source and PyInstaller onedir builds."""
+    source_root = Path(__file__).resolve().parents[2]
+    executable_root = Path(sys.executable).resolve().parent
+    roots = (executable_root, Path(getattr(sys, "_MEIPASS", source_root)), source_root)
+    relative = Path("data") / "poetore" / "currency_exchange"
+    for root in roots:
+        candidate = root / relative
+        if candidate.is_dir():
+            return candidate
+    return source_root / relative
 
 
 def _safe_league_folder(league: str) -> str:
@@ -283,13 +306,13 @@ class OfficialExchangeShadowService:
         self.cache_root = cache_root or ConfigManager.get_user_data_path(
             "poetore-official-exchange"
         )
-        self.metadata_root = metadata_root or (
-            ConfigManager.get_app_dir() / "data" / "poetore" / "currency_exchange"
-        )
+        self.metadata_root = metadata_root or _bundled_metadata_root()
         self._fetcher = fetcher
         self._clock = clock
         self._tables: dict[tuple[str, str], _PriceTable] = {}
         self._active_syncs: set[tuple[str, str]] = set()
+        self._last_search_fingerprint: tuple | None = None
+        self._last_search_logged_at = 0.0
         self._lock = threading.RLock()
 
     @property
@@ -402,7 +425,7 @@ class OfficialExchangeShadowService:
         self,
         poe_version: str,
         league: str,
-        candidate_names: Iterable[str],
+        candidate_names: Iterable[str | None],
         *,
         reference_base_price: float | None = None,
         reference_divine_rate: float | None = None,
@@ -416,7 +439,7 @@ class OfficialExchangeShadowService:
             return None
         item_id = next((
             table.ids_by_name.get(normalize_name(name))
-            for name in candidate_names if str(name).strip()
+            for name in _candidate_names(candidate_names)
         ), None)
         if item_id is None:
             return None
@@ -490,15 +513,13 @@ class OfficialExchangeShadowService:
         self,
         poe_version: str,
         league: str,
-        candidate_names: Iterable[str],
+        candidate_names: Iterable[str | None],
         *,
         reference_base_price: float | None,
         reference_divine_rate: float | None,
     ) -> ShadowPrice | None:
         started = time.perf_counter()
-        names = tuple(dict.fromkeys(
-            str(name).strip() for name in candidate_names if str(name).strip()
-        ))
+        names = _candidate_names(candidate_names)
         price = self.lookup(
             poe_version,
             league,
@@ -533,7 +554,29 @@ class OfficialExchangeShadowService:
                 "direct_divine": _route_dict(price.direct_divine),
                 "warnings": price.warnings,
             })
-        self._append_log(event)
+        fingerprint = (
+            poe_version,
+            league,
+            names,
+            reference_base_price,
+            reference_divine_rate,
+            event.get("status"),
+            event.get("item_id"),
+            event.get("selected_route"),
+            event.get("selected_price"),
+        )
+        logged_at = self._clock()
+        with self._lock:
+            is_duplicate = (
+                fingerprint == self._last_search_fingerprint
+                and 0 <= logged_at - self._last_search_logged_at
+                <= SEARCH_LOG_DEDUPE_SECONDS
+            )
+            if not is_duplicate:
+                self._last_search_fingerprint = fingerprint
+                self._last_search_logged_at = logged_at
+        if not is_duplicate:
+            self._append_log(event)
         return price
 
     def cache_file_count(self, poe_version: str, league: str) -> int:

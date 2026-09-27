@@ -1,4 +1,5 @@
 import json
+import sys
 import threading
 import time
 
@@ -85,6 +86,20 @@ def make_service(tmp_path, league="Test League", **kwargs):
 
 def test_latest_completed_hour_never_uses_the_open_hour():
     assert latest_completed_hour(7201) == 3600
+
+
+def test_default_metadata_root_uses_pyinstaller_bundle(tmp_path, monkeypatch):
+    executable = tmp_path / "PoENavi" / "PoENavi.exe"
+    bundle_root = executable.parent / "_internal"
+    expected = bundle_root / "data" / "poetore" / "currency_exchange"
+    expected.mkdir(parents=True)
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", str(executable))
+    monkeypatch.setattr(sys, "_MEIPASS", str(bundle_root), raising=False)
+
+    service = OfficialExchangeShadowService(cache_root=tmp_path / "cache")
+
+    assert service.metadata_root == expected
 
 
 def test_single_real_trade_uses_reference_only_as_anomaly_detection():
@@ -380,6 +395,28 @@ def test_search_lookup_does_not_call_network(tmp_path):
     event = json.loads(service.log_path.read_text(encoding="utf-8").splitlines()[-1])
     assert event["event"] == "search_shadow"
     assert event["status"] == "accepted_direct"
+
+
+def test_search_log_drops_none_names_and_suppresses_immediate_duplicates(tmp_path):
+    service, _calls = make_service(tmp_path)
+    service.sync(POE1, "Test League")
+
+    for _ in range(2):
+        service.record_search(
+            POE1,
+            "Test League",
+            (None, "Test Item", "Test Item"),
+            reference_base_price=7,
+            reference_divine_rate=200,
+        )
+
+    events = [
+        json.loads(line)
+        for line in service.log_path.read_text(encoding="utf-8").splitlines()
+        if json.loads(line)["event"] == "search_shadow"
+    ]
+    assert len(events) == 1
+    assert events[0]["candidate_names"] == ["Test Item"]
 
 
 def test_poe_ninja_reference_conversion_respects_each_game_base_currency():
