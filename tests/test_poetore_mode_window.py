@@ -9,13 +9,23 @@ from PySide6.QtWidgets import (
     QSystemTrayIcon,
 )
 
+from src.poetore.official_exchange import ResolvedReferencePrice
 from src.ui.poetore_mode_window import (
     PoetoreModeWindow,
     _currency_icon_filename,
     _expedition_icon,
+    _format_rate_amount,
 )
-from src.poetore.official_exchange import ResolvedReferencePrice
-from src.utils.poe_version_data import POE2
+from src.utils.poe_version_data import POE1, POE2
+
+
+def test_rate_amount_rounds_only_each_games_base_currency():
+    assert _format_rate_amount(200.4, "chaos", POE1) == "200"
+    assert _format_rate_amount(200.5, "chaos", POE1) == "201"
+    assert _format_rate_amount(364.4, "exalted", POE2) == "364"
+    assert _format_rate_amount(364.5, "exalted", POE2) == "365"
+    assert _format_rate_amount(1.25, "divine", POE1) == "1.2"
+    assert _format_rate_amount(1.25, "divine", POE2) == "1.2"
 
 
 def test_poetore_mode_starts_only_common_and_poetore_services():
@@ -781,7 +791,7 @@ def test_poetore_mode_renders_divine_chaos_rate():
         window = PoetoreModeWindow()
 
     window._show_rate("Mirage", 200)
-    assert window.divine_rate_value.text() == "1 = 200.0 Chaos"
+    assert window.divine_rate_value.text() == "1 = 200 Chaos"
     assert not hasattr(window, "chaos_rate_value")
     divine_icon = window.findChild(QLabel, "divineCurrencyIcon")
     chaos_icon = window.findChild(QLabel, "chaosCurrencyIcon")
@@ -824,8 +834,10 @@ def test_saved_poe_version_change_does_not_partially_switch_running_rate_table()
     assert window.poe_version == "poe1"
     assert window._configured_league() == "Mirage"
     assert window.rate_quote_currency == "chaos"
-    window._show_rate("Mirage", 200)
-    assert window.divine_rate_value.text() == "1 = 200.0 Chaos"
+    window._show_rate("Mirage", 200.4)
+    assert window.divine_rate_value.text() == "1 = 200 Chaos"
+    window._show_rate("Mirage", 200.5)
+    assert window.divine_rate_value.text() == "1 = 201 Chaos"
     window.close()
     app.processEvents()
 
@@ -845,8 +857,10 @@ def test_poe2_poetore_mode_renders_divine_exalted_rate():
         ):
             window = PoetoreModeWindow()
 
-    window._show_rate("Runes of Aldur", 364.9)
-    assert window.divine_rate_value.text() == "1 = 364.9 Exalted"
+    window._show_rate("Runes of Aldur", 364.4)
+    assert window.divine_rate_value.text() == "1 = 364 Exalted"
+    window._show_rate("Runes of Aldur", 364.5)
+    assert window.divine_rate_value.text() == "1 = 365 Exalted"
     assert window.findChild(QLabel, "exaltedCurrencyIcon") is not None
     assert window.findChild(QLabel, "chaosCurrencyIcon") is None
     window.close()
@@ -872,7 +886,7 @@ def test_poetore_mode_renders_official_divine_rate_source():
     )
     window._show_rate("Forbidden Rites", rate)
 
-    assert window.divine_rate_value.text() == "1 = 480.6 Exalted"
+    assert window.divine_rate_value.text() == "1 = 481 Exalted"
     assert window.rate_status.text() == (
         "Forbidden Rites ・ カレンシー交換 直近価格 ・ 31分ごとに自動更新"
     )

@@ -1,5 +1,6 @@
 """ぽえとれモードの軽量メイン画面。"""
 
+import math
 import sys
 import threading
 import time
@@ -58,6 +59,13 @@ from src.utils.stash_tab_scroll import StashTabScrollController
 POETORE_ACCENT = POETORE_THEME.accent
 POETORE_TEXT = POETORE_THEME.text
 RATE_REFRESH_MSEC = 31 * 60 * 1000
+
+
+def _format_rate_amount(value: float, currency: str, poe_version: str) -> str:
+    base_currency = "exalted" if poe_version == POE2 else "chaos"
+    if currency == base_currency:
+        return f"{math.floor(value + 0.5):,}"
+    return f"{value:,.1f}"
 
 
 def _currency_icon_filename(currency: str, poe_version: str) -> str:
@@ -909,7 +917,10 @@ class PoetoreModeWindow(QMainWindow):
             "カレンシー交換 直近価格"
             if source == "official" else "poe.ninja 参考価格"
         )
-        self.divine_rate_value.setText(f"1 = {value:,.1f} {self.rate_quote_label}")
+        amount = _format_rate_amount(
+            value, self.rate_quote_currency, self.poe_version,
+        )
+        self.divine_rate_value.setText(f"1 = {amount} {self.rate_quote_label}")
         self.rate_status.setText(
             f"{league} ・ {source_label} ・ 31分ごとに自動更新"
         )
