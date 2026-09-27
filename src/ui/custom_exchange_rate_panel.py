@@ -22,15 +22,9 @@ from PySide6.QtWidgets import (
 from src.poetore.exchange_catalog import exchange_catalog_by_id
 from src.poetore.exchange_icon_cache import ExchangeIconCache
 from src.poetore.exchange_rate_cache import ExchangeRateValueCache
-from src.poetore.exchange_rate_settings import (
-    CHAOS_ORB_ID,
-    EXALTED_ORB_ID,
-    MAX_RATE_PAIRS,
-    ExchangeRatePairStore,
-)
+from src.poetore.exchange_rate_settings import MAX_RATE_PAIRS, ExchangeRatePairStore
 from src.poetore.official_exchange import OfficialExchangeShadowService
 from src.ui.app_theme import POETORE_THEME
-from src.utils.poe_version_data import POE1, POE2
 
 RATE_CHECK_INTERVAL_MSEC = 10 * 60 * 1000
 OFFICIAL_DATA_TOOLTIP = (
@@ -52,18 +46,6 @@ def format_significant_rate(value: float) -> str:
     integer, separator, fraction = text.partition(".")
     grouped = f"{int(integer):,}"
     return grouped + (separator + fraction if separator else "")
-
-
-def format_pair_rate(value: float, poe_version: str, right_item_id: str) -> str:
-    """Format base-currency quotes as integers and other quotes precisely."""
-    base_currency_id = {
-        POE1: CHAOS_ORB_ID,
-        POE2: EXALTED_ORB_ID,
-    }.get(poe_version)
-    if right_item_id == base_currency_id:
-        rounded = Decimal(str(value)).quantize(Decimal(1), rounding=ROUND_HALF_UP)
-        return f"{int(rounded):,}"
-    return format_significant_rate(value)
 
 
 class _PanelSignals(QObject):
@@ -197,9 +179,7 @@ class CustomExchangeRatePanel(QWidget):
                 self.poe_version, league, pair.left_item_id, pair.right_item_id
             )
             if result.status == "available" and result.price is not None:
-                display = format_pair_rate(
-                    result.price, self.poe_version, pair.right_item_id
-                )
+                display = format_significant_rate(result.price)
                 display_is_rate = True
                 self.value_cache.put(
                     self.poe_version,
@@ -218,9 +198,7 @@ class CustomExchangeRatePanel(QWidget):
                     self.poe_version, league, pair.left_item_id, pair.right_item_id
                 )
                 if cached is not None:
-                    display = format_pair_rate(
-                        cached.price, self.poe_version, pair.right_item_id
-                    )
+                    display = format_significant_rate(cached.price)
                     display_is_rate = True
                     latest_cached_at = max(latest_cached_at or 0, cached.confirmed_at)
                 else:
