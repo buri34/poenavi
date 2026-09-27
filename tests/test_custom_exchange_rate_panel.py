@@ -28,6 +28,7 @@ from src.ui.custom_exchange_rate_panel import (
     OFFICIAL_DATA_TOOLTIP,
     RATE_CHECK_INTERVAL_MSEC,
     CustomExchangeRatePanel,
+    format_pair_rate,
     format_significant_rate,
 )
 from src.utils.poe_version_data import POE1, POE2
@@ -108,6 +109,23 @@ def test_four_significant_digits_and_trailing_zeroes(value, expected):
     assert format_significant_rate(value) == expected
 
 
+@pytest.mark.parametrize(
+    ("value", "poe_version", "right_item_id", "expected"),
+    [
+        (372.4, POE1, CHAOS_ORB_ID, "372"),
+        (372.5, POE1, CHAOS_ORB_ID, "373"),
+        (372.8, POE1, CHAOS_ORB_ID, "373"),
+        (1234.5, POE2, EXALTED_ORB_ID, "1,235"),
+        (372.8, POE2, CHAOS_ORB_ID, "372.8"),
+        (0.00573526, POE1, DIVINE_ORB_ID, "0.005735"),
+    ],
+)
+def test_base_currency_quotes_round_to_integer_only(
+    value, poe_version, right_item_id, expected
+):
+    assert format_pair_rate(value, poe_version, right_item_id) == expected
+
+
 @pytest.mark.parametrize("count", (0, 1, 9, 10))
 def test_zero_through_ten_rows_have_no_scroll_and_plus_until_limit(
     qapp, tmp_path, count,
@@ -153,6 +171,31 @@ def test_available_no_trade_unconfirmed_and_unavailable_are_distinct(qapp, tmp_p
             == Qt.AlignCenter
             for index in range(4)
         )
+    finally:
+        panel.stop()
+        panel.close()
+
+
+@pytest.mark.parametrize(
+    ("poe_version", "right_item_id"),
+    ((POE1, CHAOS_ORB_ID), (POE2, EXALTED_ORB_ID)),
+)
+def test_panel_rounds_base_currency_quote_to_integer(
+    qapp, tmp_path, poe_version, right_item_id
+):
+    pair = RatePair(DIVINE_ORB_ID, right_item_id)
+    result = DirectPairPrice(
+        "available", DIVINE_ORB_ID, right_item_id, 372.8, 720
+    )
+    panel, *_ = make_panel(
+        qapp,
+        tmp_path,
+        pairs=[pair],
+        service=FakeService({(DIVINE_ORB_ID, right_item_id): result}),
+        version=poe_version,
+    )
+    try:
+        assert panel.findChild(QLabel, "customRateValue0").text() == "1 ＝ 373"
     finally:
         panel.stop()
         panel.close()
