@@ -885,16 +885,20 @@ class PoetoreModeWindow(QMainWindow):
         from src.poetore.poe_ninja import default_poe_ninja_service
 
         try:
-            if self.poe_version == POE2:
-                ninja_rate = default_poe_ninja_service.divine_exalted_rate(league)
-            else:
-                ninja_rate = default_poe_ninja_service.divine_chaos_rate(league)
-        except Exception:  # noqa: BLE001 - official rate may still resolve
-            ninja_rate = None
-        try:
             default_official_exchange_shadow_service.sync(self.poe_version, league)
         except Exception:  # noqa: BLE001 - keep the poe.ninja fallback available
             pass
+        rate = resolve_divine_rate(self.poe_version, league, None)
+        if rate is not None:
+            return rate
+        try:
+            ninja_rate = (
+                default_poe_ninja_service.divine_exalted_rate(league)
+                if self.poe_version == POE2
+                else default_poe_ninja_service.divine_chaos_rate(league)
+            )
+        except Exception:  # noqa: BLE001 - no fallback is available
+            ninja_rate = None
         return resolve_divine_rate(self.poe_version, league, ninja_rate)
 
     def _show_rate(self, league, rate):

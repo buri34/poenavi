@@ -435,6 +435,30 @@ def test_next_hour_fetches_only_delta_and_keeps_cache_bounded(tmp_path):
     assert service.cache_file_count(POE1, "Test League") == WINDOW_HOURS
 
 
+def test_restart_rebuilds_memory_table_from_disk_without_refetching_24_hours(tmp_path):
+    service, calls = make_service(tmp_path)
+    service.sync(POE1, "Test League")
+    assert len(calls) == WINDOW_HOURS
+
+    restarted = OfficialExchangeShadowService(
+        cache_root=service.cache_root,
+        metadata_root=service.metadata_root,
+        fetcher=lambda _profile, _hour: (_ for _ in ()).throw(
+            AssertionError("valid disk cache must not be refetched")
+        ),
+        clock=lambda: 100 * HOUR_SECONDS + 1,
+    )
+    assert restarted.lookup(POE1, "Test League", ("Test Item",)) is None
+
+    summary = restarted.sync(POE1, "Test League")
+    price = restarted.lookup(POE1, "Test League", ("Test Item",))
+
+    assert summary["fetched"] == 0
+    assert restarted.cache_file_count(POE1, "Test League") == WINDOW_HOURS
+    assert price is not None
+    assert price.selected_price == 7
+
+
 def test_one_week_gap_rebuilds_only_current_window_and_discards_stale_hours(tmp_path):
     now = [100 * HOUR_SECONDS + 1]
     service, calls = make_service(tmp_path, clock=lambda: now[0])

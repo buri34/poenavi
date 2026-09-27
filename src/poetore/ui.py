@@ -3583,6 +3583,7 @@ class PoetoreWindow(QWidget):
         if item is None:
             return
         self._poe_ninja_item_key = None
+        self._divine_rate_key = None
         self._queue_poe_ninja_price(item)
 
     def _record_official_exchange_shadow(
@@ -3651,25 +3652,6 @@ class PoetoreWindow(QWidget):
             return None
 
         all_rows = tuple(group.get("query", ())) + tuple(group.get("items", ()))
-        identities = tuple(
-            (
-                str(row.get("namespace", "")),
-                str(row.get("name", "")),
-                row.get("variant"),
-            )
-            for row in all_rows
-        )
-        try:
-            prices = default_poe_ninja_service.lookup_identities(identities, league)
-        except Exception:  # noqa: BLE001 - official prices can work without fallback
-            prices = tuple(None for _ in identities)
-        ninja_by_id = {
-            str(row.get("id", "")): price for row, price in zip(all_rows, prices)
-        }
-        try:
-            ninja_divine_rate = default_poe_ninja_service.divine_chaos_rate(league)
-        except Exception:  # noqa: BLE001 - optional comparison/fallback source
-            ninja_divine_rate = None
         price_by_id = resolve_reference_prices(
             POE1,
             league,
@@ -3677,12 +3659,48 @@ class PoetoreWindow(QWidget):
                 (
                     str(row.get("id", "")),
                     (str(row.get("name", "")),),
-                    ninja_by_id.get(str(row.get("id", ""))),
+                    None,
                 )
                 for row in all_rows
             ),
-            reference_divine_rate=ninja_divine_rate,
+            reference_divine_rate=None,
         )
+        unresolved_rows = tuple(
+            row for row in all_rows
+            if price_by_id.get(str(row.get("id", ""))) is None
+        )
+        if unresolved_rows:
+            identities = tuple(
+                (
+                    str(row.get("namespace", "")),
+                    str(row.get("name", "")),
+                    row.get("variant"),
+                )
+                for row in unresolved_rows
+            )
+            try:
+                prices = default_poe_ninja_service.lookup_identities(
+                    identities, league,
+                )
+            except Exception:  # noqa: BLE001 - official results remain usable
+                prices = tuple(None for _ in identities)
+            ninja_by_id = {
+                str(row.get("id", "")): price
+                for row, price in zip(unresolved_rows, prices)
+            }
+            price_by_id.update(resolve_reference_prices(
+                POE1,
+                league,
+                (
+                    (
+                        str(row.get("id", "")),
+                        (str(row.get("name", "")),),
+                        ninja_by_id.get(str(row.get("id", ""))),
+                    )
+                    for row in unresolved_rows
+                ),
+                reference_divine_rate=None,
+            ))
 
         def priced(rows):
             return tuple(
@@ -3728,21 +3746,6 @@ class PoetoreWindow(QWidget):
         if group is None:
             return None
         all_rows = tuple(group.get("query", ())) + tuple(group.get("items", ()))
-        identities = tuple((
-            str(row.get("namespace", "")), str(row.get("name", "")),
-            row.get("variant"), row.get("ninja_type"),
-        ) for row in all_rows)
-        try:
-            prices = default_poe_ninja_service.lookup_poe2_identities(identities, league)
-        except Exception:  # noqa: BLE001 - official prices can work without fallback
-            prices = tuple(None for _ in identities)
-        ninja_by_id = {
-            str(row.get("id", "")): price for row, price in zip(all_rows, prices)
-        }
-        try:
-            ninja_divine_rate = default_poe_ninja_service.divine_exalted_rate(league)
-        except Exception:  # noqa: BLE001 - optional comparison/fallback source
-            ninja_divine_rate = None
         price_by_id = resolve_reference_prices(
             POE2,
             league,
@@ -3750,12 +3753,56 @@ class PoetoreWindow(QWidget):
                 (
                     str(row.get("id", "")),
                     (str(row.get("name", "")),),
-                    ninja_by_id.get(str(row.get("id", ""))),
+                    None,
                 )
                 for row in all_rows
             ),
-            reference_divine_rate=ninja_divine_rate,
+            reference_divine_rate=None,
         )
+        unresolved_rows = tuple(
+            row for row in all_rows
+            if price_by_id.get(str(row.get("id", ""))) is None
+        )
+        if unresolved_rows:
+            identities = tuple((
+                str(row.get("namespace", "")), str(row.get("name", "")),
+                row.get("variant"), row.get("ninja_type"),
+            ) for row in unresolved_rows)
+            try:
+                prices = default_poe_ninja_service.lookup_poe2_identities(
+                    identities, league,
+                )
+            except Exception:  # noqa: BLE001 - official results remain usable
+                prices = tuple(None for _ in identities)
+            ninja_by_id = {
+                str(row.get("id", "")): price
+                for row, price in zip(unresolved_rows, prices)
+            }
+            ninja_divine_rate = None
+            if any(
+                str(getattr(price, "quote_currency", "") or "").casefold()
+                == "divine"
+                for price in prices if price is not None
+            ):
+                try:
+                    ninja_divine_rate = (
+                        default_poe_ninja_service.divine_exalted_rate(league)
+                    )
+                except Exception:  # noqa: BLE001 - Exalted fallbacks still work
+                    ninja_divine_rate = None
+            price_by_id.update(resolve_reference_prices(
+                POE2,
+                league,
+                (
+                    (
+                        str(row.get("id", "")),
+                        (str(row.get("name", "")),),
+                        ninja_by_id.get(str(row.get("id", ""))),
+                    )
+                    for row in unresolved_rows
+                ),
+                reference_divine_rate=ninja_divine_rate,
+            ))
         return {
             "query": tuple((row, price_by_id.get(str(row.get("id", ""))))
                            for row in group.get("query", ())),
@@ -3783,19 +3830,19 @@ class PoetoreWindow(QWidget):
 
         def run():
             try:
-                if self.poe_version == POE2:
+                rate = resolve_divine_rate(self.poe_version, league, None)
+                if rate is None:
                     try:
                         ninja_rate = (
                             default_poe_ninja_service.divine_exalted_rate(league)
+                            if self.poe_version == POE2
+                            else default_poe_ninja_service.divine_chaos_rate(league)
                         )
-                    except Exception:  # noqa: BLE001 - official rate may still resolve
+                    except Exception:  # noqa: BLE001 - no fallback is available
                         ninja_rate = None
-                else:
-                    try:
-                        ninja_rate = default_poe_ninja_service.divine_chaos_rate(league)
-                    except Exception:  # noqa: BLE001 - official rate may still resolve
-                        ninja_rate = None
-                rate = resolve_divine_rate(self.poe_version, league, ninja_rate)
+                    rate = resolve_divine_rate(
+                        self.poe_version, league, ninja_rate,
+                    )
             except Exception:
                 self._trade_signals.divine_rate_failed.emit(key)
             else:
@@ -6431,47 +6478,99 @@ class PoetoreWindow(QWidget):
                     installed_augment_recovery,
                     virtual_augment_cost,
                 )
-                try:
-                    prices = default_poe_ninja_service.lookup_poe2_augments(
-                        wanted, league,
-                    )
-                except Exception:  # noqa: BLE001 - official prices may still resolve
-                    prices = {name: None for name in wanted}
-                try:
-                    exalted_chaos = default_poe_ninja_service.exalted_chaos_rate(league)
-                except Exception:  # noqa: BLE001 - only Chaos listings need this
-                    exalted_chaos = None
-                try:
-                    ninja_divine_exalted = (
-                        default_poe_ninja_service.divine_exalted_rate(league)
-                    )
-                except Exception:  # noqa: BLE001 - optional comparison/fallback source
-                    ninja_divine_exalted = None
-                extraction = None
-                if installed_refs:
-                    try:
-                        extraction = default_poe_ninja_service.lookup_poe2_identities((
-                            ("ITEM", "Orb of Extraction", None, "Currency"),
-                        ), league)[0]
-                    except Exception:  # noqa: BLE001 - official price may still resolve
-                        extraction = None
-                requested_prices = {**prices, "Orb of Extraction": extraction}
+                requested_names = tuple(dict.fromkeys((
+                    *wanted,
+                    *(("Orb of Extraction",) if installed_refs else ()),
+                )))
                 resolved = resolve_reference_prices(
                     POE2,
                     league,
                     (
-                        (name, (name,), price)
-                        for name, price in requested_prices.items()
+                        (name, (name,), None) for name in requested_names
                     ),
-                    reference_divine_rate=ninja_divine_exalted,
+                    reference_divine_rate=None,
                 )
-                divine_quote = resolve_divine_rate(
-                    POE2, league, ninja_divine_exalted,
+                unresolved = tuple(
+                    name for name in requested_names if resolved.get(name) is None
                 )
-                divine_exalted = (
-                    divine_quote.base_amount if divine_quote is not None
-                    else ninja_divine_exalted
+                ninja_by_name = {name: None for name in unresolved}
+                augment_names = tuple(
+                    name for name in unresolved if name != "Orb of Extraction"
                 )
+                if augment_names:
+                    try:
+                        ninja_by_name.update(
+                            default_poe_ninja_service.lookup_poe2_augments(
+                                augment_names, league,
+                            )
+                        )
+                    except Exception:  # noqa: BLE001, S110 - official results remain usable
+                        pass
+                if "Orb of Extraction" in unresolved:
+                    try:
+                        ninja_by_name["Orb of Extraction"] = (
+                            default_poe_ninja_service.lookup_poe2_identities((
+                                ("ITEM", "Orb of Extraction", None, "Currency"),
+                            ), league)[0]
+                        )
+                    except Exception:  # noqa: BLE001, S110 - official results remain usable
+                        pass
+                ninja_divine_exalted = None
+                if any(
+                    str(getattr(price, "quote_currency", "") or "").casefold()
+                    == "divine"
+                    for price in ninja_by_name.values() if price is not None
+                ):
+                    try:
+                        ninja_divine_exalted = (
+                            default_poe_ninja_service.divine_exalted_rate(league)
+                        )
+                    except Exception:  # noqa: BLE001, S110 - base fallbacks can still work
+                        pass
+                if any(price is not None for price in ninja_by_name.values()):
+                    resolved.update(resolve_reference_prices(
+                        POE2,
+                        league,
+                        (
+                            (name, (name,), ninja_by_name.get(name))
+                            for name in unresolved
+                        ),
+                        reference_divine_rate=ninja_divine_exalted,
+                    ))
+                divine_exalted = None
+                if any(
+                    str(listing.currency or "").casefold() == "divine"
+                    for listing in result.listings
+                ):
+                    divine_quote = resolve_divine_rate(POE2, league, None)
+                    if divine_quote is None:
+                        if ninja_divine_exalted is None:
+                            try:
+                                ninja_divine_exalted = (
+                                    default_poe_ninja_service.divine_exalted_rate(
+                                        league,
+                                    )
+                                )
+                            except Exception:  # noqa: BLE001, S110 - no fallback is available
+                                pass
+                        divine_quote = resolve_divine_rate(
+                            POE2, league, ninja_divine_exalted,
+                        )
+                    divine_exalted = (
+                        divine_quote.base_amount if divine_quote is not None
+                        else ninja_divine_exalted
+                    )
+                exalted_chaos = None
+                if any(
+                    str(listing.currency or "").casefold() == "chaos"
+                    for listing in result.listings
+                ):
+                    try:
+                        exalted_chaos = (
+                            default_poe_ninja_service.exalted_chaos_rate(league)
+                        )
+                    except Exception:  # noqa: BLE001, S110 - non-Chaos listings still work
+                        pass
                 if virtual_ref:
                     payload["virtual"] = virtual_augment_cost(
                         str(virtual_ref), virtual_count,

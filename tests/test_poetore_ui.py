@@ -2774,6 +2774,82 @@ def test_poe2_augment_estimates_render_compactly_below_results(qapp):
         window.close()
 
 
+def test_augment_values_skip_ninja_when_official_prices_resolve(qapp, monkeypatch):
+    class ImmediateThread:
+        def __init__(self, *, target, daemon):
+            self.target = target
+
+        def start(self):
+            self.target()
+
+    monkeypatch.setattr("src.poetore.ui.threading.Thread", ImmediateThread)
+    window = PoetoreWindow(app_config={"poe_version": POE2, "poetore": {}})
+    official = ResolvedReferencePrice(
+        "Adept Rune", 7.5, 7.5, "exalted", "official",
+    )
+    divine = ResolvedReferencePrice(
+        "Divine Orb", 490, 490, "exalted", "official",
+    )
+
+    def resolved(_version, _league, entries, **_kwargs):
+        return {key: official for key, _names, _fallback in entries}
+
+    try:
+        window._auto_league = "Forbidden Rites"
+        window._parsed_item = ParsedItem(
+            "Body Armours", "normal", "", "Expert Mail", "body_armour",
+            properties={"ソケット": "S S"},
+        )
+        window._search_generation = 4
+        window._configure_virtual_augments(window._parsed_item)
+        window.virtual_augment_combo.setCurrentIndex(
+            window.virtual_augment_combo.findData("Adept Rune")
+        )
+        window.virtual_augment_count_combo.setCurrentIndex(
+            window.virtual_augment_count_combo.findData(2)
+        )
+        result = PriceResult("Forbidden Rites", "qid", 0, ())
+        assert window.poe_version == POE2
+        assert not window.virtual_augment_combo.isHidden()
+        assert window.virtual_augment_combo.currentData() == "Adept Rune"
+        assert not window.virtual_augment_count_combo.isHidden()
+        assert window.virtual_augment_count_combo.currentData() == 2
+
+        with (
+            patch.object(
+                window, "_selected_trade_league", return_value="Forbidden Rites",
+            ),
+            patch("src.poetore.ui.resolve_reference_prices", side_effect=resolved),
+            patch("src.poetore.ui.resolve_divine_rate", return_value=divine),
+            patch.object(
+                default_poe_ninja_service, "lookup_poe2_augments",
+                side_effect=AssertionError("poe.ninja must not be fetched"),
+            ) as augments,
+            patch.object(
+                default_poe_ninja_service, "lookup_poe2_identities",
+                side_effect=AssertionError("poe.ninja must not be fetched"),
+            ) as identities,
+            patch.object(
+                default_poe_ninja_service, "divine_exalted_rate",
+                side_effect=AssertionError("poe.ninja must not be fetched"),
+            ) as divine_rate,
+            patch.object(
+                default_poe_ninja_service, "exalted_chaos_rate",
+                side_effect=AssertionError("poe.ninja must not be fetched"),
+            ) as exalted_rate,
+        ):
+            window._queue_augment_values(result, 4)
+            qapp.processEvents()
+
+        augments.assert_not_called()
+        identities.assert_not_called()
+        divine_rate.assert_not_called()
+        exalted_rate.assert_not_called()
+        assert window.virtual_augment_cost_label.text().endswith("15 ex")
+    finally:
+        window.close()
+
+
 def test_poe2_augment_recovery_hides_hint_when_listing_is_better(qapp):
     from src.poetore.poe2.augment_pricing import InstalledAugmentRecovery
 
@@ -6669,8 +6745,8 @@ def test_divine_rate_uses_official_when_ninja_is_unavailable(qapp):
             patch.object(
                 default_poe_ninja_service,
                 "divine_exalted_rate",
-                side_effect=RuntimeError("offline"),
-            ),
+                side_effect=AssertionError("poe.ninja must not be fetched"),
+            ) as ninja,
             patch("src.poetore.ui.resolve_divine_rate", return_value=rate),
         ):
             window._queue_divine_rate("Forbidden Rites")
@@ -6681,6 +6757,7 @@ def test_divine_rate_uses_official_when_ninja_is_unavailable(qapp):
                 QTest.qWait(10)
 
         assert window.divine_rate_button.text() == "⇄ 492"
+        ninja.assert_not_called()
     finally:
         window.close()
 
@@ -8437,6 +8514,94 @@ def test_poe2_related_items_resolve_ee2_group_and_keep_unpriced_rows(qapp):
         window.close()
 
 
+def test_poe2_related_items_skip_ninja_when_all_official_prices_resolve(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2, "poetore": {}})
+    item = ParsedItem(
+        "Map Fragments", "normal", "", "Primary Calamity Fragment", "map_fragment",
+    )
+
+    def resolved(_version, _league, entries, **_kwargs):
+        return {
+            key: ResolvedReferencePrice(
+                next(iter(names)), 12, 12, "exalted", "official",
+            )
+            for key, names, _fallback in entries
+        }
+
+    try:
+        window._trade_base_type = "Primary Calamity Fragment"
+        with (
+            patch("src.poetore.ui.resolve_reference_prices", side_effect=resolved),
+            patch.object(
+                default_poe_ninja_service, "lookup_poe2_identities",
+                side_effect=AssertionError("poe.ninja must not be fetched"),
+            ) as lookup,
+            patch.object(
+                default_poe_ninja_service, "divine_exalted_rate",
+                side_effect=AssertionError("poe.ninja must not be fetched"),
+            ) as divine_rate,
+        ):
+            related = window._lookup_poe2_related_items(item, "Forbidden Rites")
+
+        assert related is not None
+        assert all(price.source == "official" for _row, price in related["items"])
+        lookup.assert_not_called()
+        divine_rate.assert_not_called()
+    finally:
+        window.close()
+
+
+def test_poe2_related_items_fetch_ninja_only_for_unresolved_rows(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2, "poetore": {}})
+    item = ParsedItem(
+        "Map Fragments", "normal", "", "Primary Calamity Fragment", "map_fragment",
+    )
+    pass_number = 0
+
+    def resolved(_version, _league, entries, **_kwargs):
+        nonlocal pass_number
+        rows = tuple(entries)
+        pass_number += 1
+        if pass_number == 1:
+            return {
+                key: (
+                    None if index == len(rows) - 1 else ResolvedReferencePrice(
+                        next(iter(names)), 12, 12, "exalted", "official",
+                    )
+                )
+                for index, (key, names, _fallback) in enumerate(rows)
+            }
+        return {
+            key: ResolvedReferencePrice(
+                next(iter(names)), 9, 9, "exalted", "poe_ninja",
+            )
+            for key, names, _fallback in rows
+        }
+
+    try:
+        window._trade_base_type = "Primary Calamity Fragment"
+        fallback = PoeNinjaPrice(
+            "Faith of Prism", None, 9, (), "https://poe.ninja/example", 490,
+        )
+        with (
+            patch("src.poetore.ui.resolve_reference_prices", side_effect=resolved),
+            patch.object(
+                default_poe_ninja_service, "lookup_poe2_identities",
+                return_value=(fallback,),
+            ) as lookup,
+            patch.object(
+                default_poe_ninja_service, "divine_exalted_rate", return_value=490,
+            ),
+        ):
+            related = window._lookup_poe2_related_items(item, "Forbidden Rites")
+
+        assert related is not None
+        assert len(lookup.call_args.args[0]) == 1
+        assert pass_number == 2
+    finally:
+        window.close()
+
+
 def test_official_exchange_shadow_sync_uses_selected_mode_and_league(qapp):
     window = PoetoreWindow(app_config={"poe_version": POE2, "poetore": {}})
     try:
@@ -8712,12 +8877,14 @@ def test_completed_official_sync_refreshes_current_item_only_for_active_context(
         window._auto_league = "Forbidden Rites"
         window._parsed_item = item
         window._poe_ninja_item_key = ("old",)
+        window._divine_rate_key = "Forbidden Rites"
         with patch.object(window, "_queue_poe_ninja_price") as refresh:
             window._refresh_reference_price_after_official_sync(
                 POE2, "Forbidden Rites",
             )
             refresh.assert_called_once_with(item)
             assert window._poe_ninja_item_key is None
+            assert window._divine_rate_key is None
 
             refresh.reset_mock()
             window._refresh_reference_price_after_official_sync(POE1, "Allflame")

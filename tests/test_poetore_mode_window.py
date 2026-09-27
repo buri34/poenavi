@@ -880,7 +880,7 @@ def test_poetore_mode_renders_official_divine_rate_source():
     app.processEvents()
 
 
-def test_poetore_mode_resolves_official_rate_with_ninja_as_fallback_reference():
+def test_poetore_mode_resolves_official_rate_without_fetching_ninja():
     app = QApplication.instance() or QApplication([])
     config = {"poe_version": POE2, "hotkeys": {}}
     rate = ResolvedReferencePrice(
@@ -899,8 +899,8 @@ def test_poetore_mode_resolves_official_rate_with_ninja_as_fallback_reference():
 
     with patch(
         "src.poetore.poe_ninja.default_poe_ninja_service.divine_exalted_rate",
-        return_value=492.4,
-    ), patch(
+        side_effect=AssertionError("poe.ninja must not be fetched"),
+    ) as ninja, patch(
         "src.poetore.official_exchange.default_official_exchange_shadow_service.sync",
     ) as sync, patch(
         "src.poetore.official_exchange.resolve_divine_rate", return_value=rate,
@@ -909,7 +909,46 @@ def test_poetore_mode_resolves_official_rate_with_ninja_as_fallback_reference():
 
     assert result is rate
     sync.assert_called_once_with(POE2, "Forbidden Rites")
-    resolve.assert_called_once_with(POE2, "Forbidden Rites", 492.4)
+    resolve.assert_called_once_with(POE2, "Forbidden Rites", None)
+    ninja.assert_not_called()
+    window.close()
+    app.processEvents()
+
+
+def test_poetore_mode_fetches_ninja_only_after_official_rate_is_unavailable():
+    app = QApplication.instance() or QApplication([])
+    config = {"poe_version": POE2, "hotkeys": {}}
+    fallback = ResolvedReferencePrice(
+        "Divine Orb", 492.4, 492.4, "exalted", "poe_ninja",
+    )
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"), patch(
+        "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
+    ):
+        window = PoetoreModeWindow()
+
+    with patch(
+        "src.poetore.poe_ninja.default_poe_ninja_service.divine_exalted_rate",
+        return_value=492.4,
+    ) as ninja, patch(
+        "src.poetore.official_exchange.default_official_exchange_shadow_service.sync",
+    ), patch(
+        "src.poetore.official_exchange.resolve_divine_rate",
+        side_effect=(None, fallback),
+    ) as resolve:
+        result = window._resolve_currency_rate("Forbidden Rites")
+
+    assert result is fallback
+    assert resolve.call_args_list == [
+        call(POE2, "Forbidden Rites", None),
+        call(POE2, "Forbidden Rites", 492.4),
+    ]
+    ninja.assert_called_once_with("Forbidden Rites")
     window.close()
     app.processEvents()
 
