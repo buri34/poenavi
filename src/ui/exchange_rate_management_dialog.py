@@ -43,6 +43,8 @@ from src.ui.app_theme import POETORE_THEME
 
 BASE_CURRENCY_IDS = (DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID)
 RATE_PAIR_DRAG_MIME = "application/x-poenavi-rate-pair-index"
+CANDIDATE_ROW_HEIGHT = 18
+CANDIDATE_ICON_SIZE = 14
 
 
 class _IconSignals(QObject):
@@ -341,8 +343,12 @@ class ExchangeRateManagementDialog(QDialog):
         item_selection_row.addWidget(self.category_list)
 
         self.candidate_list = QListWidget()
+        self.candidate_list.setObjectName("ratePairCandidateList")
         self.candidate_list.setAccessibleName("価格を確認するアイテム")
-        self.candidate_list.setIconSize(QSize(28, 28))
+        self.candidate_list.setIconSize(
+            QSize(CANDIDATE_ICON_SIZE, CANDIDATE_ICON_SIZE)
+        )
+        self.candidate_list.setUniformItemSizes(True)
         self.candidate_list.currentItemChanged.connect(self._selection_changed)
         self.candidate_list.verticalScrollBar().valueChanged.connect(
             self._request_visible_icons
@@ -450,6 +456,7 @@ class ExchangeRateManagementDialog(QDialog):
             if query:
                 text = f"{text}  ·  {category_name[item.category]}"
             row = QListWidgetItem(text)
+            row.setSizeHint(QSize(0, CANDIDATE_ROW_HEIGHT))
             row.setData(Qt.UserRole, item.item_id)
             row.setToolTip(item.japanese_name)
             self.candidate_list.addItem(row)

@@ -3,7 +3,7 @@ from copy import deepcopy
 from unittest.mock import Mock
 
 import pytest
-from PySide6.QtCore import QMimeData, QPoint, QPointF, Qt
+from PySide6.QtCore import QMimeData, QPoint, QPointF, QSize, Qt
 from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QToolButton
 
@@ -18,6 +18,8 @@ from src.poetore.exchange_rate_settings import (
 )
 from src.ui.app_theme import POETORE_THEME
 from src.ui.exchange_rate_management_dialog import (
+    CANDIDATE_ICON_SIZE,
+    CANDIDATE_ROW_HEIGHT,
     RATE_PAIR_DRAG_MIME,
     ExchangeRateManagementDialog,
 )
@@ -345,6 +347,27 @@ def test_only_visible_candidates_request_icons(qapp, tmp_path):
     try:
         requested = len(dialog.icon_cache.requests)
         assert 0 < requested < dialog.candidate_list.count()
+    finally:
+        dialog.close()
+
+
+def test_candidate_rows_use_compact_uniform_height_and_icons(qapp, tmp_path):
+    dialog, *_ = make_dialog(qapp, tmp_path)
+    try:
+        qapp.processEvents()
+        assert dialog.candidate_list.uniformItemSizes()
+        assert dialog.candidate_list.iconSize() == QSize(
+            CANDIDATE_ICON_SIZE, CANDIDATE_ICON_SIZE
+        )
+        assert dialog.candidate_list.count() > 1
+        heights = {
+            dialog.candidate_list.visualItemRect(
+                dialog.candidate_list.item(row)
+            ).height()
+            for row in range(min(10, dialog.candidate_list.count()))
+        }
+        assert heights == {CANDIDATE_ROW_HEIGHT}
+        assert CANDIDATE_ROW_HEIGHT >= dialog.candidate_list.fontMetrics().height()
     finally:
         dialog.close()
 
