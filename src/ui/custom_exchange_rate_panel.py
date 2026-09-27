@@ -240,8 +240,9 @@ class CustomExchangeRatePanel(QWidget):
             f"color: {POETORE_THEME.accent}; font-size: 13px;"
         )
         layout.addWidget(left_name)
-        value = QLabel(f"1個 ＝ {display}")
+        value = QLabel(f"1 ＝ {display}")
         value.setObjectName(f"customRateValue{index}")
+        value.setAlignment(Qt.AlignCenter)
         value.setStyleSheet(
             f"color: {POETORE_THEME.text}; font-size: 15px; font-weight: bold;"
         )

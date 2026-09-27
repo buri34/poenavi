@@ -126,7 +126,8 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert all(image != icon_images[0] for image in icon_images[1:])
     assert window.memo_button.size().width() == 35
     assert window.memo_button.size().height() == 35
-    assert window.divine_rate_value.text() == "1個 ＝ 最新データを取得できません"
+    assert window.divine_rate_value.text() == "1 ＝ 最新データを取得できません"
+    assert window.divine_rate_value.alignment() == Qt.AlignCenter
     assert window.width() == 558
     assert window.windowFlags() & Qt.FramelessWindowHint
     assert window.capture_hint.text() == (

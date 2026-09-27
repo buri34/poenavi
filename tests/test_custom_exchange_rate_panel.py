@@ -2,6 +2,7 @@ from concurrent.futures import Future
 from copy import deepcopy
 
 import pytest
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton
 
 from src.poetore.exchange_catalog import (
@@ -142,9 +143,14 @@ def test_available_no_trade_unconfirmed_and_unavailable_are_distinct(qapp, tmp_p
             for index in range(4)
         ]
         assert values == [
-            "1個 ＝ 2.5", "1個 ＝ 取引データなし", "1個 ＝ 価格未確定",
-            "1個 ＝ 最新データを取得できません",
+            "1 ＝ 2.5", "1 ＝ 取引データなし", "1 ＝ 価格未確定",
+            "1 ＝ 最新データを取得できません",
         ]
+        assert all(
+            panel.findChild(QLabel, f"customRateValue{index}").alignment()
+            == Qt.AlignCenter
+            for index in range(4)
+        )
     finally:
         panel.stop()
         panel.close()
