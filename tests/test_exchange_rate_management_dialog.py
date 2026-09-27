@@ -91,6 +91,26 @@ def test_search_is_japanese_only_and_crosses_selected_category(qapp, tmp_path):
         dialog.close()
 
 
+def test_changing_category_clears_search_text(qapp, tmp_path):
+    items = exchange_catalog_items(POE1)
+    target = next(item for item in items if item.category_order > 0)
+    dialog, *_ = make_dialog(qapp, tmp_path, available_ids=[target.item_id])
+    try:
+        dialog.search_edit.setText(target.japanese_name)
+        assert dialog.search_edit.text() == target.japanese_name
+        assert dialog.candidate_list.count() == 1
+
+        dialog.category_list.setCurrentRow(1)
+
+        assert dialog.search_edit.text() == ""
+        assert all(
+            "·" not in dialog.candidate_list.item(row).text()
+            for row in range(dialog.candidate_list.count())
+        )
+    finally:
+        dialog.close()
+
+
 def test_add_clears_selection_stays_open_and_saves_once(qapp, tmp_path):
     catalog = exchange_catalog_by_id(POE1)
     target = next(

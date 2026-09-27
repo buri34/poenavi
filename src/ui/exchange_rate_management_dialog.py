@@ -169,7 +169,7 @@ class ExchangeRateManagementDialog(QDialog):
         self.category_list.addItem("すべて")
         self.category_list.addItems(category_labels(self.poe_version))
         self.category_list.setCurrentRow(0)
-        self.category_list.currentRowChanged.connect(self._filter_candidates)
+        self.category_list.currentRowChanged.connect(self._category_changed)
         selection_row.addWidget(self.category_list)
 
         self.candidate_list = QListWidget()
@@ -261,6 +261,12 @@ class ExchangeRateManagementDialog(QDialog):
                 self.candidate_list.setCurrentItem(row)
         self._selection_changed()
         self._request_visible_icons()
+
+    def _category_changed(self, _row: int) -> None:
+        if self.search_edit.text():
+            self.search_edit.clear()
+            return
+        self._filter_candidates()
 
     def _request_visible_icons(self, *_args) -> None:
         if self.candidate_list.count() == 0:
