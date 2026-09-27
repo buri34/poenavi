@@ -293,6 +293,11 @@ PoE 2は658品で同期に成功した。両方とも未対応ID・同名衝突�
 
 ## テスト計画
 
+Windows実機プレイの最小確認は
+[`tests/manual/poetore-phase3/WINDOWS_GAMEPLAY_TEST_GUIDE.md`](../tests/manual/poetore-phase3/WINDOWS_GAMEPLAY_TEST_GUIDE.md)
+に集約する。PoE 1／PoE 2の主価格、モード分離、再起動キャッシュ、ExpeditionをP0必須とし、
+関連価格、仮挿入・回収価値、poe.ninjaフォールバックをP1追加推奨とする。
+
 ### 単体テスト
 
 - 市場ペアの向きに関係なく1個あたり価格を正しく計算する。
