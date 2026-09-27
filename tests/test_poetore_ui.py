@@ -8477,7 +8477,7 @@ def test_reference_price_panel_uses_poe2_exalted_official_price(qapp):
         window.close()
 
 
-def test_reference_price_panel_labels_ninja_fallback_as_temporary(qapp):
+def test_reference_price_panel_labels_ninja_fallback_as_reference(qapp):
     window = PoetoreWindow(app_config={"poe_version": POE1, "poetore": {}})
     key = ("fallback",)
     ninja = PoeNinjaPrice(
@@ -8492,15 +8492,15 @@ def test_reference_price_panel_labels_ninja_fallback_as_temporary(qapp):
     try:
         window._poe_ninja_item_key = key
         window._show_reference_price(key, ninja, official)
-        assert window.poe_ninja_price_label.text() == "poe.ninja 暫定価格"
-        assert "一時的に表示" in window.poe_ninja_price_label.toolTip()
+        assert window.poe_ninja_price_label.text() == "poe.ninja 参考価格"
+        assert "直近価格が未確定" in window.poe_ninja_price_label.toolTip()
         assert window.poe_ninja_price_value.text() == "42"
         assert window.poe_ninja_currency_icon.toolTip() == "Chaos Orb"
     finally:
         window.close()
 
 
-def test_reference_price_panel_labels_syncing_exchange_item_as_temporary(qapp):
+def test_reference_price_panel_labels_syncing_exchange_item_as_reference(qapp):
     window = PoetoreWindow(app_config={"poe_version": POE1, "poetore": {}})
     key = ("syncing",)
     ninja = PoeNinjaPrice(
@@ -8509,7 +8509,7 @@ def test_reference_price_panel_labels_syncing_exchange_item_as_temporary(qapp):
     try:
         window._poe_ninja_item_key = key
         window._show_reference_price(key, ninja, None, official_expected=True)
-        assert window.poe_ninja_price_label.text() == "poe.ninja 暫定価格"
+        assert window.poe_ninja_price_label.text() == "poe.ninja 参考価格"
         assert "カレンシー交換の直近価格が未確定" in (
             window.poe_ninja_price_label.toolTip()
         )

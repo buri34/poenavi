@@ -3900,10 +3900,10 @@ class PoetoreWindow(QWidget):
 
         if not accepted:
             if official_expected or official_price is not None:
-                self.poe_ninja_price_label.setText("poe.ninja 暫定価格")
+                self.poe_ninja_price_label.setText("poe.ninja 参考価格")
                 self.poe_ninja_price_label.setToolTip(
                     "カレンシー交換の直近価格が未確定のため、"
-                    "poe.ninja価格を一時的に表示しています"
+                    "poe.ninjaの参考価格を表示しています"
                 )
             else:
                 self.poe_ninja_price_label.setToolTip(
