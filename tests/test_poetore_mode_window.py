@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, call, patch
 
 from PySide6.QtCore import QSize, Qt, QTimer
-from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QLabel,
@@ -9,23 +8,12 @@ from PySide6.QtWidgets import (
     QSystemTrayIcon,
 )
 
-from src.poetore.official_exchange import ResolvedReferencePrice
+from src.poetore.exchange_catalog import exchange_catalog_by_id
 from src.ui.poetore_mode_window import (
     PoetoreModeWindow,
-    _currency_icon_filename,
     _expedition_icon,
-    _format_rate_amount,
 )
 from src.utils.poe_version_data import POE1, POE2
-
-
-def test_rate_amount_rounds_only_each_games_base_currency():
-    assert _format_rate_amount(200.4, "chaos", POE1) == "200"
-    assert _format_rate_amount(200.5, "chaos", POE1) == "201"
-    assert _format_rate_amount(364.4, "exalted", POE2) == "364"
-    assert _format_rate_amount(364.5, "exalted", POE2) == "365"
-    assert _format_rate_amount(1.25, "divine", POE1) == "1.2"
-    assert _format_rate_amount(1.25, "divine", POE2) == "1.2"
 
 
 def test_main_header_shows_current_poe_mode_with_the_title_style():
@@ -138,7 +126,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert all(image != icon_images[0] for image in icon_images[1:])
     assert window.memo_button.size().width() == 35
     assert window.memo_button.size().height() == 35
-    assert window.divine_rate_value.text() == "取得中…"
+    assert window.divine_rate_value.text() == "1個 ＝ 最新データを取得できません"
     assert window.width() == 558
     assert window.windowFlags() & Qt.FramelessWindowHint
     assert window.capture_hint.text() == (
@@ -151,7 +139,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert close_button.text() == "✕"
     assert minimize_button.focusPolicy() == Qt.NoFocus
     assert close_button.focusPolicy() == Qt.NoFocus
-    assert window.rate_refresh_button.text() == "更新"
+    assert window.rate_refresh_button.text() == "最新データ確認"
     assert window.rate_refresh_button.focusPolicy() == Qt.NoFocus
     assert window.tray_icon.toolTip() == "ぽえとれ"
     assert [
@@ -187,7 +175,7 @@ def test_expedition_settings_button_is_immediately_right_of_memo_for_poe2():
 
 
 def test_expedition_icon_has_two_upper_curls_and_one_lower_curl():
-    app = QApplication.instance() or QApplication([])
+    QApplication.instance() or QApplication([])
     image = _expedition_icon().pixmap(QSize(24, 24)).toImage()
 
     def opaque_pixels(left, top, right, bottom):
@@ -239,15 +227,8 @@ def test_poetore_mode_starts_capture_and_stash_scroll_services_for_poe2():
     assert not window.map_mods_button.isVisibleTo(window)
     stash_class.assert_called_once_with(enabled=True)
     prepare_window.assert_called_once_with(window)
-    for object_name, filename, size in (
-        ("divineCurrencyIcon", "DivineOrb2.png", 52),
-        ("exaltedCurrencyIcon", "ExaltedOrb2.png", 46),
-    ):
-        label = window.findChild(QLabel, object_name)
-        expected = QPixmap(str(window._asset_path(filename))).scaled(
-            QSize(size, size), Qt.KeepAspectRatio, Qt.SmoothTransformation,
-        )
-        assert label.pixmap().toImage() == expected.toImage()
+    assert window.rate_panel.title_label.text() == "カレンシー交換レート"
+    assert len(window.rate_panel.row_widgets) == 1
     window.close()
     app.processEvents()
 
@@ -569,13 +550,6 @@ def test_expedition_diagnostic_report_uses_single_message_box():
     )
 
 
-def test_poetore_mode_uses_version_specific_currency_icon_names():
-    assert _currency_icon_filename("divine", "poe2") == "DivineOrb2.png"
-    assert _currency_icon_filename("chaos", "poe2") == "ChaosOrb2.png"
-    assert _currency_icon_filename("exalted", "poe2") == "ExaltedOrb2.png"
-    assert _currency_icon_filename("chaos", "poe1") == "ChaosOrb.png"
-
-
 def test_poetore_mode_respects_disabled_stash_scroll_for_poe2():
     app = QApplication.instance() or QApplication([])
     config = {
@@ -812,7 +786,7 @@ def test_poetore_mode_enables_desecration_performance_trace():
     assert controller_class.call_args.kwargs["scan_coordinator"] is shared
 
 
-def test_poetore_mode_renders_divine_chaos_rate():
+def test_poetore_mode_renders_default_divine_chaos_pair():
     app = QApplication.instance() or QApplication([])
     config = {"hotkeys": {}}
 
@@ -824,25 +798,64 @@ def test_poetore_mode_renders_divine_chaos_rate():
     ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
         window = PoetoreModeWindow()
 
-    window._show_rate("Mirage", 200)
-    assert window.divine_rate_value.text() == "1 = 200 Chaos"
-    assert not hasattr(window, "chaos_rate_value")
-    divine_icon = window.findChild(QLabel, "divineCurrencyIcon")
-    chaos_icon = window.findChild(QLabel, "chaosCurrencyIcon")
-    assert divine_icon is not None and not divine_icon.pixmap().isNull()
-    assert chaos_icon is not None and not chaos_icon.pixmap().isNull()
-    rate_layout = window.divine_rate_value.parentWidget().layout()
-    assert rate_layout.itemAt(1).widget() is window.divine_rate_value
-    assert rate_layout.stretch(1) == 0
-    assert rate_layout.itemAt(2).widget() is chaos_icon
-    assert rate_layout.itemAt(3).spacerItem() is not None
-    assert window.rate_status.text() == (
-        "Mirage ・ poe.ninja 参考価格 ・ 31分ごとに自動更新"
-    )
+    assert window.rate_panel.findChild(QLabel, "customRateLeftName0").text() == "神のオーブ"
+    assert window.rate_panel.findChild(QLabel, "customRateRightName0").text() == "カオスオーブ"
+    assert window.rate_panel.add_button is not None
     style = window.centralWidget().styleSheet()
     assert "#65FFCA" in style
     assert "#343B3E" in style
     assert "#DB86EF" not in style.upper()
+    window.close()
+    app.processEvents()
+
+
+def test_main_window_height_expands_with_saved_rows_without_scroll():
+    app = QApplication.instance() or QApplication([])
+    catalog_ids = list(exchange_catalog_by_id(POE1))
+    pairs = [
+        {
+            "left_item_id": catalog_ids[index],
+            "right_item_id": catalog_ids[index + 10],
+        }
+        for index in range(5)
+    ]
+    config = {
+        "hotkeys": {},
+        "poetore": {"exchange_rate_pairs": {POE1: pairs, POE2: []}},
+    }
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    assert len(window.rate_panel.row_widgets) == 5
+    assert window.rate_panel.add_button is None
+    assert window.height() == 530
+    window.close()
+    app.processEvents()
+
+
+def test_main_window_zero_rows_is_compact_and_shows_centered_plus():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "hotkeys": {},
+        "poetore": {"exchange_rate_pairs": {POE1: [], POE2: []}},
+    }
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    assert window.rate_panel.row_widgets == []
+    assert window.rate_panel.add_button.text() == "＋"
+    assert window.rate_panel.add_button.height() == 54
+    assert window.height() == 330
     window.close()
     app.processEvents()
 
@@ -868,15 +881,12 @@ def test_saved_poe_version_change_does_not_partially_switch_running_rate_table()
     assert window.poe_version == "poe1"
     assert window._configured_league() == "Mirage"
     assert window.rate_quote_currency == "chaos"
-    window._show_rate("Mirage", 200.4)
-    assert window.divine_rate_value.text() == "1 = 200 Chaos"
-    window._show_rate("Mirage", 200.5)
-    assert window.divine_rate_value.text() == "1 = 201 Chaos"
+    assert window.rate_panel.findChild(QLabel, "customRateRightName0").text() == "カオスオーブ"
     window.close()
     app.processEvents()
 
 
-def test_poe2_poetore_mode_renders_divine_exalted_rate():
+def test_poe2_poetore_mode_renders_default_divine_exalted_pair():
     app = QApplication.instance() or QApplication([])
     config = {"poe_version": POE2, "hotkeys": {}}
 
@@ -891,112 +901,8 @@ def test_poe2_poetore_mode_renders_divine_exalted_rate():
         ):
             window = PoetoreModeWindow()
 
-    window._show_rate("Runes of Aldur", 364.4)
-    assert window.divine_rate_value.text() == "1 = 364 Exalted"
-    window._show_rate("Runes of Aldur", 364.5)
-    assert window.divine_rate_value.text() == "1 = 365 Exalted"
-    assert window.findChild(QLabel, "exaltedCurrencyIcon") is not None
-    assert window.findChild(QLabel, "chaosCurrencyIcon") is None
-    window.close()
-    app.processEvents()
-
-
-def test_poetore_mode_renders_official_divine_rate_source():
-    app = QApplication.instance() or QApplication([])
-    config = {"poe_version": POE2, "hotkeys": {}}
-
-    with patch(
-        "src.ui.poetore_mode_window.ConfigManager.load_config",
-        return_value=config,
-    ), patch(
-        "src.ui.poetore_mode_window.GlobalHotkeyService"
-    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"), patch(
-        "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
-    ):
-        window = PoetoreModeWindow()
-
-    rate = ResolvedReferencePrice(
-        "Divine Orb", 480.6, 480.6, "exalted", "official",
-    )
-    window._show_rate("Forbidden Rites", rate)
-
-    assert window.divine_rate_value.text() == "1 = 481 Exalted"
-    assert window.rate_status.text() == (
-        "Forbidden Rites ・ カレンシー交換 直近価格 ・ 31分ごとに自動更新"
-    )
-    window.close()
-    app.processEvents()
-
-
-def test_poetore_mode_resolves_official_rate_without_fetching_ninja():
-    app = QApplication.instance() or QApplication([])
-    config = {"poe_version": POE2, "hotkeys": {}}
-    rate = ResolvedReferencePrice(
-        "Divine Orb", 480.6, 480.6, "exalted", "official",
-    )
-
-    with patch(
-        "src.ui.poetore_mode_window.ConfigManager.load_config",
-        return_value=config,
-    ), patch(
-        "src.ui.poetore_mode_window.GlobalHotkeyService"
-    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"), patch(
-        "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
-    ):
-        window = PoetoreModeWindow()
-
-    with patch(
-        "src.poetore.poe_ninja.default_poe_ninja_service.divine_exalted_rate",
-        side_effect=AssertionError("poe.ninja must not be fetched"),
-    ) as ninja, patch(
-        "src.poetore.official_exchange.default_official_exchange_shadow_service.sync",
-    ) as sync, patch(
-        "src.poetore.official_exchange.resolve_divine_rate", return_value=rate,
-    ) as resolve:
-        result = window._resolve_currency_rate("Forbidden Rites")
-
-    assert result is rate
-    sync.assert_called_once_with(POE2, "Forbidden Rites")
-    resolve.assert_called_once_with(POE2, "Forbidden Rites", None)
-    ninja.assert_not_called()
-    window.close()
-    app.processEvents()
-
-
-def test_poetore_mode_fetches_ninja_only_after_official_rate_is_unavailable():
-    app = QApplication.instance() or QApplication([])
-    config = {"poe_version": POE2, "hotkeys": {}}
-    fallback = ResolvedReferencePrice(
-        "Divine Orb", 492.4, 492.4, "exalted", "poe_ninja",
-    )
-
-    with patch(
-        "src.ui.poetore_mode_window.ConfigManager.load_config",
-        return_value=config,
-    ), patch(
-        "src.ui.poetore_mode_window.GlobalHotkeyService"
-    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"), patch(
-        "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
-    ):
-        window = PoetoreModeWindow()
-
-    with patch(
-        "src.poetore.poe_ninja.default_poe_ninja_service.divine_exalted_rate",
-        return_value=492.4,
-    ) as ninja, patch(
-        "src.poetore.official_exchange.default_official_exchange_shadow_service.sync",
-    ), patch(
-        "src.poetore.official_exchange.resolve_divine_rate",
-        side_effect=(None, fallback),
-    ) as resolve:
-        result = window._resolve_currency_rate("Forbidden Rites")
-
-    assert result is fallback
-    assert resolve.call_args_list == [
-        call(POE2, "Forbidden Rites", None),
-        call(POE2, "Forbidden Rites", 492.4),
-    ]
-    ninja.assert_called_once_with("Forbidden Rites")
+    assert window.rate_panel.findChild(QLabel, "customRateLeftName0").text() == "神のオーブ"
+    assert window.rate_panel.findChild(QLabel, "customRateRightName0").text() == "高貴なオーブ"
     window.close()
     app.processEvents()
 

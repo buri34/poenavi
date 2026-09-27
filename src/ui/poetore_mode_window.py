@@ -1,6 +1,5 @@
 """ぽえとれモードの軽量メイン画面。"""
 
-import math
 import sys
 import threading
 import time
@@ -20,7 +19,6 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QApplication,
-    QFrame,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -33,6 +31,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.poetore.exchange_icon_cache import ExchangeIconCache
+from src.poetore.exchange_rate_cache import ExchangeRateValueCache
+from src.poetore.exchange_rate_settings import (
+    ExchangeRatePairStore,
+    ensure_rate_pair_config,
+)
 from src.ui.app_theme import POETORE_THEME
 from src.ui.custom_command_settings import (
     custom_command_hotkeys,
@@ -58,20 +62,6 @@ from src.utils.stash_tab_scroll import StashTabScrollController
 
 POETORE_ACCENT = POETORE_THEME.accent
 POETORE_TEXT = POETORE_THEME.text
-RATE_REFRESH_MSEC = 31 * 60 * 1000
-
-
-def _format_rate_amount(value: float, currency: str, poe_version: str) -> str:
-    base_currency = "exalted" if poe_version == POE2 else "chaos"
-    if currency == base_currency:
-        return f"{math.floor(value + 0.5):,}"
-    return f"{value:,.1f}"
-
-
-def _currency_icon_filename(currency: str, poe_version: str) -> str:
-    stems = {"divine": "DivineOrb", "chaos": "ChaosOrb", "exalted": "ExaltedOrb"}
-    stem = stems[currency]
-    return f"{stem}2.png" if poe_version == POE2 else f"{stem}.png"
 
 
 def _icon_canvas():
@@ -294,8 +284,8 @@ def _map_mod_manager_icon() -> QIcon:
     return _finish_icon(pixmap, painter)
 
 
-class _RateSignals(QObject):
-    ready = Signal(str, object)
+class _LeagueSignals(QObject):
+    ready = Signal(str, bool)
     failed = Signal(str)
 
 
@@ -402,6 +392,7 @@ class PoetoreModeWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.config = ConfigManager.load_config()
+        ensure_rate_pair_config(self.config)
         poe_version = self.config.get("poe_version", POE1)
         self.poe_version = poe_version
         if not is_feature_supported(POETORE, poe_version):
@@ -413,10 +404,16 @@ class PoetoreModeWindow(QMainWindow):
         self._desecration_tier_controller = None
         self._ndlocr_pack_controller = None
         self._screen_reading_coordinator = None
-        self._rate_request_running = False
-        self._rate_signals = _RateSignals(self)
-        self._rate_signals.ready.connect(self._show_rate)
-        self._rate_signals.failed.connect(self._show_rate_error)
+        self._rate_pair_store = ExchangeRatePairStore(
+            self.config, ConfigManager.save_config,
+        )
+        self._rate_icon_cache = ExchangeIconCache()
+        self._rate_value_cache = ExchangeRateValueCache()
+        self._resolved_rate_league = self._initial_currency_rate_league()
+        self._league_request_running = False
+        self._league_signals = _LeagueSignals(self)
+        self._league_signals.ready.connect(self._queue_rate_sync)
+        self._league_signals.failed.connect(self._show_rate_error)
 
         self.setWindowTitle("ぽえとれ")
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
@@ -424,6 +421,7 @@ class PoetoreModeWindow(QMainWindow):
         self.setMinimumSize(500, 300)
         self.resize(558, 360)
         self._build_ui()
+        self._apply_rate_panel_height()
         self._build_tray_icon()
         self._apply_window_settings()
         QTimer.singleShot(0, self._apply_startup_position)
@@ -439,10 +437,6 @@ class PoetoreModeWindow(QMainWindow):
             if self._desecration_ready():
                 self._ensure_desecration_tier_controller().warm_up()
 
-        self._rate_timer = QTimer(self)
-        self._rate_timer.setInterval(RATE_REFRESH_MSEC)
-        self._rate_timer.timeout.connect(self.refresh_currency_rate)
-        self._rate_timer.start()
         QTimer.singleShot(0, self.refresh_currency_rate)
         self._prepare_poetore_window()
         self._apply_obs_streaming_mode()
@@ -636,26 +630,27 @@ class PoetoreModeWindow(QMainWindow):
             header.addWidget(button)
         body_layout.addLayout(header)
 
-        section_title = QLabel(f"Divine / {self.rate_quote_label} 換算")
-        section_title.setStyleSheet(
-            f"color: {POETORE_ACCENT}; font-size: 15px; font-weight: bold;"
+        from src.poetore.official_exchange import (
+            default_official_exchange_shadow_service,
         )
-        body_layout.addWidget(section_title)
+        from src.ui.custom_exchange_rate_panel import CustomExchangeRatePanel
 
-        self.divine_rate_value = QLabel("取得中…")
-        body_layout.addWidget(self._rate_card(self.divine_rate_value))
-
-        footer = QHBoxLayout()
-        self.rate_status = QLabel("カレンシー交換の直近レートを取得しています")
-        self.rate_status.setStyleSheet("color: #98A39F; font-size: 11px;")
-        self.rate_status.setWordWrap(True)
-        footer.addWidget(self.rate_status, 1)
-        self.rate_refresh_button = QPushButton("更新")
-        self.rate_refresh_button.setFocusPolicy(Qt.NoFocus)
-        self.rate_refresh_button.setToolTip("現在の換算レートを再取得")
-        self.rate_refresh_button.clicked.connect(self.refresh_currency_rate)
-        footer.addWidget(self.rate_refresh_button)
-        body_layout.addLayout(footer)
+        self.rate_panel = CustomExchangeRatePanel(
+            body,
+            poe_version=self.poe_version,
+            store=self._rate_pair_store,
+            league_getter=lambda: self._resolved_rate_league,
+            service=default_official_exchange_shadow_service,
+            value_cache=self._rate_value_cache,
+            icon_cache=self._rate_icon_cache,
+            on_manage=self.open_exchange_rate_management,
+            on_rows_changed=self._apply_rate_panel_height,
+            refresh_callback=self.refresh_currency_rate,
+        )
+        body_layout.addWidget(self.rate_panel)
+        self.rate_status = self.rate_panel.status_label
+        self.rate_refresh_button = self.rate_panel.refresh_button
+        self.divine_rate_value = self.rate_panel.findChild(QLabel, "customRateValue0")
         body_layout.addStretch()
 
         self.capture_hint = QLabel()
@@ -704,46 +699,6 @@ class PoetoreModeWindow(QMainWindow):
         button.setToolTip(tooltip)
         button.setFixedSize(35, 35)
         return button
-
-    def _rate_card(self, value_label):
-        card = QFrame()
-        card.setObjectName("rateCard")
-        layout = QHBoxLayout(card)
-        layout.setContentsMargins(16, 14, 16, 14)
-        layout.setSpacing(12)
-        divine_icon = QLabel()
-        divine_icon.setObjectName("divineCurrencyIcon")
-        poe_version = self.poe_version
-        divine_pixmap = QPixmap(str(self._asset_path(
-            _currency_icon_filename("divine", poe_version)
-        )))
-        divine_icon.setPixmap(divine_pixmap.scaled(
-            QSize(52, 52),
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation,
-        ))
-        divine_icon.setFixedSize(52, 52)
-        divine_icon.setToolTip("Divine Orb")
-        layout.addWidget(divine_icon)
-        value_label.setStyleSheet(
-            f"color: {POETORE_TEXT}; font-size: 20px; font-weight: bold;"
-        )
-        layout.addWidget(value_label)
-        quote_icon = QLabel()
-        quote_icon.setObjectName(f"{self.rate_quote_currency}CurrencyIcon")
-        quote_pixmap = QPixmap(str(self._asset_path(
-            _currency_icon_filename(self.rate_quote_currency, poe_version)
-        )))
-        quote_icon.setPixmap(quote_pixmap.scaled(
-            QSize(46, 46),
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation,
-        ))
-        quote_icon.setFixedSize(46, 46)
-        quote_icon.setToolTip(f"{self.rate_quote_label} Orb")
-        layout.addWidget(quote_icon)
-        layout.addStretch()
-        return card
 
     def _start_hotkeys(self):
         configured = self.config.get("hotkeys", {})
@@ -877,70 +832,84 @@ class PoetoreModeWindow(QMainWindow):
         from src.poetore.trade import available_pc_leagues, default_pc_league
         return default_pc_league(available_pc_leagues())
 
-    def refresh_currency_rate(self):
-        if self._rate_request_running:
+    def _initial_currency_rate_league(self):
+        configured = self._configured_league()
+        if configured != "auto":
+            return configured
+        if self.poe_version == POE2:
+            from src.poetore.poe2.trade import FALLBACK_LEAGUES, default_pc_league
+            return default_pc_league(FALLBACK_LEAGUES)
+        return "Standard"
+
+    def refresh_currency_rate(self, *, manual=False):
+        if self._league_request_running:
             return
-        self._rate_request_running = True
-        self.rate_status.setText("カレンシー交換の直近レートを取得しています")
+        self._league_request_running = True
+        if hasattr(self, "rate_status"):
+            self.rate_status.setText("最新データを確認中…")
 
         def run():
             try:
-                league = self._currency_rate_league()
-                rate = self._resolve_currency_rate(league)
-                if rate is None:
-                    raise ValueError("Divine Orbの換算レートが見つかりませんでした。")
-                self._rate_signals.ready.emit(league, rate)
-            except Exception as exc:
-                self._rate_signals.failed.emit(str(exc))
+                self._league_signals.ready.emit(
+                    self._currency_rate_league(), bool(manual)
+                )
+            except Exception as exc:  # noqa: BLE001 - daemon boundary
+                self._league_signals.failed.emit(str(exc))
 
         threading.Thread(target=run, daemon=True).start()
 
-    def _resolve_currency_rate(self, league):
-        from src.poetore.official_exchange import (
-            default_official_exchange_shadow_service,
-            resolve_divine_rate,
-        )
-        from src.poetore.poe_ninja import default_poe_ninja_service
-
-        try:
-            default_official_exchange_shadow_service.sync(self.poe_version, league)
-        except Exception:  # noqa: BLE001 - keep the poe.ninja fallback available
-            pass
-        rate = resolve_divine_rate(self.poe_version, league, None)
-        if rate is not None:
-            return rate
-        try:
-            ninja_rate = (
-                default_poe_ninja_service.divine_exalted_rate(league)
-                if self.poe_version == POE2
-                else default_poe_ninja_service.divine_chaos_rate(league)
-            )
-        except Exception:  # noqa: BLE001 - no fallback is available
-            ninja_rate = None
-        return resolve_divine_rate(self.poe_version, league, ninja_rate)
-
-    def _show_rate(self, league, rate):
-        self._rate_request_running = False
-        value = float(getattr(rate, "base_amount", rate))
-        source = getattr(rate, "source", "poe_ninja")
-        source_label = (
-            "カレンシー交換 直近価格"
-            if source == "official" else "poe.ninja 参考価格"
-        )
-        amount = _format_rate_amount(
-            value, self.rate_quote_currency, self.poe_version,
-        )
-        self.divine_rate_value.setText(f"1 = {amount} {self.rate_quote_label}")
-        self.rate_status.setText(
-            f"{league} ・ {source_label} ・ 31分ごとに自動更新"
-        )
-        if self._screen_reading_enabled() and self._expedition_ready() and self._expedition_reward_controller is not None:
-            self._expedition_reward_controller.warm_up()
+    def _queue_rate_sync(self, league, manual):
+        self._league_request_running = False
+        self._resolved_rate_league = league
+        self.rate_panel.league_changed()
+        self.rate_panel.refresh(manual=manual)
 
     def _show_rate_error(self, message):
-        self._rate_request_running = False
-        self.divine_rate_value.setText("取得できませんでした")
-        self.rate_status.setText(f"レート取得失敗：{message}")
+        self._league_request_running = False
+        self.rate_panel.render_rows()
+        self.rate_status.setText("公式データを取得できませんでした")
+
+    def open_exchange_rate_management(self):
+        from src.ui.exchange_rate_management_dialog import (
+            ExchangeRateManagementDialog,
+        )
+
+        dialog = ExchangeRateManagementDialog(
+            self,
+            poe_version=self.poe_version,
+            store=self._rate_pair_store,
+            available_item_ids=self.rate_panel.available_item_ids(),
+            icon_cache=self._rate_icon_cache,
+            on_changed=self._rate_pairs_changed,
+        )
+        dialog.exec()
+
+    def _rate_pairs_changed(self):
+        self.rate_panel.render_rows()
+        self.divine_rate_value = self.rate_panel.findChild(
+            QLabel, "customRateValue0"
+        )
+        self._apply_rate_panel_height()
+
+    def _apply_rate_panel_height(self):
+        if not hasattr(self, "rate_panel"):
+            return
+        row_count = len(self._rate_pair_store.pairs(self.poe_version))
+        target_height = 338 + max(0, row_count - 1) * 48
+        if row_count == 0:
+            target_height = 330
+        self.resize(self.width(), target_height)
+        screen = QApplication.screenAt(self.frameGeometry().center())
+        if screen is None:
+            screen = self.screen()
+        if screen is None:
+            return
+        available = screen.availableGeometry()
+        if self.frameGeometry().bottom() > available.bottom():
+            self.move(
+                self.x(),
+                max(available.top(), available.bottom() - self.height() + 1),
+            )
 
     def handle_hotkey(self, command):
         if command.startswith("custom_command:"):
@@ -1376,7 +1345,8 @@ class PoetoreModeWindow(QMainWindow):
 
     def closeEvent(self, event):
         self.tray_icon.hide()
-        self._rate_timer.stop()
+        self.rate_panel.stop()
+        self._rate_icon_cache.close(wait=False)
         self.hotkey_service.stop()
         self.stash_tab_scroll.stop()
         if self.suppressed_capture_hotkey is not None:
