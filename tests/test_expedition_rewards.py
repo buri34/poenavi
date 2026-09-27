@@ -34,6 +34,7 @@ from src.poetore.expedition_rewards import (
     normalized_expedition_region,
     price_label_x,
     priceable_reward_identities,
+    resolve_expedition_reward_prices,
     retry_unresolved_identities,
     reward_cards_still_visible,
     reward_price_text_color,
@@ -265,6 +266,68 @@ def test_expedition_display_uses_resolved_official_exalted_price():
     )
 
     assert rows == [RewardPriceRow(10, 30, "1 高貴/個", 1, highlighted=True)]
+
+
+def test_expedition_prices_skip_ninja_when_all_visible_rewards_are_official():
+    official = ResolvedReferencePrice(
+        "Liquid Verisium", 28, 28, "exalted", "official",
+    )
+    ninja = Mock()
+    with patch(
+        "src.poetore.expedition_rewards.resolve_reference_prices",
+        return_value={"Liquid Verisium": official},
+    ) as resolve:
+        result = resolve_expedition_reward_prices(
+            ("Liquid Verisium",), "Test League", ninja_service=ninja,
+        )
+
+    assert result.prices == {"Liquid Verisium": official}
+    assert result.ninja_requested_names == ()
+    assert result.ninja_error is None
+    ninja.lookup_poe2_expedition_rewards.assert_not_called()
+    ninja.divine_exalted_rate.assert_not_called()
+    resolve.assert_called_once()
+
+
+def test_expedition_prices_fetch_ninja_for_only_unresolved_visible_rewards():
+    official = ResolvedReferencePrice(
+        "Liquid Verisium", 28, 28, "exalted", "official",
+    )
+    fallback = SimpleNamespace(
+        name="Unknown Reward", quote_amount=5, quote_currency="exalted",
+        display_price_parts=lambda: ("5", "exalted"),
+    )
+    ninja = Mock()
+    ninja.lookup_poe2_expedition_rewards.return_value = {
+        "Unknown Reward": fallback,
+    }
+    ninja.divine_exalted_rate.return_value = 500
+    resolved_fallback = ResolvedReferencePrice(
+        "Unknown Reward", 5, 5, "exalted", "poe_ninja", fallback=fallback,
+    )
+    with patch(
+        "src.poetore.expedition_rewards.resolve_reference_prices",
+        side_effect=[
+            {"Liquid Verisium": official, "Unknown Reward": None},
+            {"Unknown Reward": resolved_fallback},
+        ],
+    ) as resolve:
+        result = resolve_expedition_reward_prices(
+            ("Liquid Verisium", "Unknown Reward"),
+            "Test League",
+            ninja_service=ninja,
+        )
+
+    assert result.prices == {
+        "Liquid Verisium": official,
+        "Unknown Reward": resolved_fallback,
+    }
+    assert result.ninja_requested_names == ("Unknown Reward",)
+    ninja.lookup_poe2_expedition_rewards.assert_called_once_with(
+        ("Unknown Reward",), "Test League",
+    )
+    ninja.divine_exalted_rate.assert_called_once_with("Test League")
+    assert resolve.call_count == 2
 
 
 def test_expedition_price_plate_uses_requested_readability_style():

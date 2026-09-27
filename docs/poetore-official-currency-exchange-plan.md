@@ -1,7 +1,7 @@
 # ぽえとれ GGG公式Currency Exchange価格対応計画
 
 更新日: 2026-09-27
-状態: Phase 3-1実装済み・最新実取引追随をMac検証済み
+状態: Phase 3実装済み・Expedition公式先行をMac検証済み
 対象: PoE 1／PoE 2のCurrency Exchange対象品
 
 ## 目的
@@ -273,6 +273,17 @@ PoE 2は658品で同期に成功した。両方とも未対応ID・同名衝突�
 - 公式価格単独表示、poe.ninja比較情報の併記、stale非同期結果の破棄をテストへ固定した。
 - PoETore関連1,579件・15サブテスト、全145テストファイルの分離回帰、重大静的検査、
   compileall、差分検査に成功した。Windows配布版の最終表示確認は固定ミラーで行う。
+
+#### Phase 3-2〜4: 関連価格・Expedition・仮挿入計算
+
+- 関連アイテム・素材価格、Divine換算、PoE 2 Expedition報酬、ルーン等の仮挿入費用・
+  回収価値を、共通の公式優先・poe.ninjaフォールバック価格へ統一した。
+- Expeditionは画面上で確定した報酬だけを完成済み公式価格表へ先に照合する。全件を公式価格で
+  解決できた場合はpoe.ninja通信を行わず、未解決品がある場合だけ該当名を問い合わせる。
+- Forbidden Rites実データではLiquid Verisium、Masterwork Rune、Orb of Extractionを
+  すべて公式価格で解決し、poe.ninja照会0件、価格処理初回0.112msを確認した。
+- 公式の異常価格判定は維持し、poe.ninja値が裏付けに必要な品や公式対象外品は従来どおり
+  フォールバックする。
 
 ## テスト計画
 

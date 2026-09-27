@@ -106,6 +106,13 @@ class RewardPriceRow:
     show_currency_icon: bool = True
 
 
+@dataclass(frozen=True)
+class ExpeditionPriceResolution:
+    prices: dict[str, object | None]
+    ninja_error: Exception | None = None
+    ninja_requested_names: tuple[str, ...] = ()
+
+
 def load_reward_aliases(path: Path | None = None) -> dict[str, str]:
     source = path or (
         Path(__file__).resolve().parents[2]
@@ -338,6 +345,47 @@ def priceable_reward_identities(
     return [row for row in rows if row.english_name != RANDOM_CURRENCY_REWARD_ID]
 
 
+def resolve_expedition_reward_prices(
+    names: tuple[str, ...],
+    league: str,
+    *,
+    ninja_service=None,
+) -> ExpeditionPriceResolution:
+    """Resolve visible rewards locally first and fetch ninja only when needed."""
+    unique_names = tuple(dict.fromkeys(name for name in names if name))
+    prices = resolve_reference_prices(
+        POE2,
+        league,
+        ((name, (name,), None) for name in unique_names),
+        reference_divine_rate=None,
+    )
+    unresolved = tuple(name for name in unique_names if prices.get(name) is None)
+    if not unresolved:
+        return ExpeditionPriceResolution(prices)
+
+    if ninja_service is None:
+        from src.poetore.poe_ninja import default_poe_ninja_service
+
+        ninja_service = default_poe_ninja_service
+    try:
+        fallbacks = ninja_service.lookup_poe2_expedition_rewards(unresolved, league)
+    except Exception as exc:  # noqa: BLE001 - official results remain usable
+        return ExpeditionPriceResolution(prices, exc, unresolved)
+
+    try:
+        divine_exalted = ninja_service.divine_exalted_rate(league)
+    except Exception:  # noqa: BLE001 - base-currency fallbacks can still work
+        divine_exalted = None
+    retried = resolve_reference_prices(
+        POE2,
+        league,
+        ((name, (name,), fallbacks.get(name)) for name in unresolved),
+        reference_divine_rate=divine_exalted,
+    )
+    prices.update(retried)
+    return ExpeditionPriceResolution(prices, None, unresolved)
+
+
 def build_reward_display_rows(
     rows: list[RewardIdentity],
     prices: dict,
@@ -556,7 +604,6 @@ class ExpeditionRewardController(QObject):
         self._scan_generation = 0
         self._active_generation = 0
         self._helper_warm_started = False
-        self._price_warm_running = False
         self._monitor_misses = 0
         self._bands: list[RowBand] = []
         self._panel_width = 0
@@ -594,9 +641,6 @@ class ExpeditionRewardController(QObject):
         if not self._helper_warm_started:
             self._helper_warm_started = True
             threading.Thread(target=self._warm_ocr, daemon=True).start()
-        if not self._price_warm_running:
-            self._price_warm_running = True
-            threading.Thread(target=self._warm_prices, daemon=True).start()
 
     def _warm_ocr(self) -> None:
         try:
@@ -604,18 +648,6 @@ class ExpeditionRewardController(QObject):
         except Exception:  # noqa: BLE001 - warm-up failure is retried by scan
             # A scan retries startup and reports the actionable error to the user.
             self._helper_warm_started = False
-
-    def _warm_prices(self) -> None:
-        try:
-            from src.poetore.poe_ninja import default_poe_ninja_service
-
-            default_poe_ninja_service.prefetch_poe2_expedition_rewards(
-                self._league_getter(),
-            )
-        except Exception:  # noqa: BLE001, S110 - on-demand lookup remains available
-            pass
-        finally:
-            self._price_warm_running = False
 
     def request_scan(self) -> bool:
         if self._running:
@@ -769,37 +801,19 @@ class ExpeditionRewardController(QObject):
             league = self._league_getter()
             priceable = priceable_reward_identities(stable)
             prices = {}
-            exalted_chaos = None
+            ninja_error = None
+            ninja_requested_names: tuple[str, ...] = ()
             if priceable:
-                from src.poetore.poe_ninja import default_poe_ninja_service
-
-                ninja_error = None
-                try:
-                    prices = default_poe_ninja_service.lookup_poe2_expedition_rewards(
-                        tuple(row.english_name for row in priceable), league,
-                    )
-                except Exception as exc:  # noqa: BLE001 - official table may still work
-                    prices = {}
-                    ninja_error = exc
-                try:
-                    exalted_chaos = default_poe_ninja_service.exalted_chaos_rate(league)
-                except Exception:  # noqa: BLE001 - only ninja fallback needs this
-                    exalted_chaos = None
-                try:
-                    divine_exalted = default_poe_ninja_service.divine_exalted_rate(league)
-                except Exception:  # noqa: BLE001 - optional comparison/fallback source
-                    divine_exalted = None
-                prices = resolve_reference_prices(
-                    POE2,
-                    league,
-                    (
-                        (name, (name,), prices.get(name))
-                        for name in tuple(row.english_name for row in priceable)
-                    ),
-                    reference_divine_rate=divine_exalted,
+                resolution = resolve_expedition_reward_prices(
+                    tuple(row.english_name for row in priceable), league,
                 )
+                prices = resolution.prices
+                ninja_error = resolution.ninja_error
+                ninja_requested_names = resolution.ninja_requested_names
                 if ninja_error is not None:
-                    self._trace(f"⚠️ 7. poe.ninjaフォールバック取得失敗: {ninja_error}")
+                    self._trace(
+                        f"⚠️ 7. poe.ninjaフォールバック取得失敗: {ninja_error}"
+                    )
             priced_count = sum(
                 row.english_name in prices and prices[row.english_name] is not None
                 for row in priceable
@@ -812,6 +826,7 @@ class ExpeditionRewardController(QObject):
             self._trace(
                 f"✅ 7. 参考価格取得: {priced_count}/{len(priceable)}件（{league}）、"
                 f"公式 {official_count}件、"
+                f"poe.ninja照会 {len(ninja_requested_names)}件、"
                 f"特別表示 {special_count}件"
             )
             first = prepared[0]
@@ -820,7 +835,7 @@ class ExpeditionRewardController(QObject):
             shown = build_reward_display_rows(
                 stable,
                 prices,
-                exalted_chaos,
+                None,
                 vertical_offset=vertical_offset,
                 vertical_scale=vertical_scale,
             )
