@@ -42,6 +42,32 @@ def write_default_config(app_dir: Path, overrides=None):
 
 
 class ConfigManagerTest(unittest.TestCase):
+    def test_schema_v19_adds_distinct_exchange_rate_defaults(self):
+        migrated = ConfigManager._migrate_config({"schemaVersion": 18})
+
+        assert migrated["schemaVersion"] == 19
+        assert migrated["poetore"]["exchange_rate_pairs"] == {
+            "poe1": [{
+                "left_item_id": "Metadata/Items/Currency/CurrencyModValues",
+                "right_item_id": "Metadata/Items/Currency/CurrencyRerollRare",
+            }],
+            "poe2": [{
+                "left_item_id": "Metadata/Items/Currency/CurrencyModValues",
+                "right_item_id": "Metadata/Items/Currency/CurrencyAddModToRare",
+            }],
+        }
+
+    def test_schema_v19_preserves_explicit_empty_exchange_rate_lists(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 19,
+            "poetore": {"exchange_rate_pairs": {"poe1": [], "poe2": []}},
+        })
+
+        assert migrated["poetore"]["exchange_rate_pairs"] == {
+            "poe1": [],
+            "poe2": [],
+        }
+
     def test_schema_v15_makes_legacy_topmost_default_poe_only(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 14,
@@ -153,7 +179,7 @@ class ConfigManagerTest(unittest.TestCase):
             },
         })
 
-        self.assertEqual(migrated["schemaVersion"], 18)
+        self.assertEqual(migrated["schemaVersion"], 19)
         self.assertEqual(
             migrated["startup"],
             {
@@ -174,7 +200,7 @@ class ConfigManagerTest(unittest.TestCase):
                 },
             },
         })
-        assert migrated["schemaVersion"] == 18
+        assert migrated["schemaVersion"] == 19
         assert migrated["poetore"]["screen_reading"] == {"enabled": True}
         assert "enabled" not in migrated["poetore"]["expedition_reward_overlay"]
         assert migrated["poetore"]["desecration_tier_overlay"] == {}
@@ -186,7 +212,7 @@ class ConfigManagerTest(unittest.TestCase):
             "hotkeys": {"screen_reading_ocr": "ctrl+shift+r"},
         })
 
-        assert migrated["schemaVersion"] == 18
+        assert migrated["schemaVersion"] == 19
         assert migrated["hotkeys"] == {"screen_reading_ocr": "ctrl+shift+r"}
 
     def test_v432_config_gets_separate_default_hotkeys_without_reverse_migration(self):
@@ -211,7 +237,7 @@ class ConfigManagerTest(unittest.TestCase):
                  patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
                 loaded = ConfigManager.load_config()
 
-            assert loaded["schemaVersion"] == 18
+            assert loaded["schemaVersion"] == 19
             assert loaded["hotkeys"]["screen_reading_ocr"] == "ctrl+shift+r"
             assert loaded["hotkeys"]["expedition_reward_ocr"] == "alt+e"
             assert loaded["hotkeys"]["desecration_tier_ocr"] == "alt+r"
@@ -447,6 +473,28 @@ class ConfigManagerTest(unittest.TestCase):
             self.assertEqual(loaded["mini_guide_overlay"]["font_size"], 18)
             self.assertEqual(persisted["mini_guide_overlay"], loaded["mini_guide_overlay"])
             self.assertEqual(persisted["schemaVersion"], ConfigManager.CURRENT_SCHEMA_VERSION)
+
+    def test_load_config_preserves_explicit_empty_exchange_rate_lists(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp) / "app"
+            user_dir = Path(tmp) / "user-data"
+            app_dir.mkdir()
+            user_dir.mkdir()
+            write_default_config(app_dir)
+            config_path = user_dir / ConfigManager.CONFIG_FILE
+            config_path.write_text(json.dumps({
+                "schemaVersion": 19,
+                "poetore": {"exchange_rate_pairs": {"poe1": [], "poe2": []}},
+            }), encoding="utf-8")
+
+            with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}), \
+                 patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
+                loaded = ConfigManager.load_config()
+
+            assert loaded["poetore"]["exchange_rate_pairs"] == {
+                "poe1": [],
+                "poe2": [],
+            }
 
     def test_save_and_load_uses_user_data_dir_override(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -83,6 +83,20 @@
         "desecration_tier_overlay": {
             "show_tier_ranges": true
         },
+        "exchange_rate_pairs": {
+            "poe1": [
+                {
+                    "left_item_id": "Metadata/Items/Currency/CurrencyModValues",
+                    "right_item_id": "Metadata/Items/Currency/CurrencyRerollRare"
+                }
+            ],
+            "poe2": [
+                {
+                    "left_item_id": "Metadata/Items/Currency/CurrencyModValues",
+                    "right_item_id": "Metadata/Items/Currency/CurrencyAddModToRare"
+                }
+            ]
+        },
         "obs_streaming": {
             "enabled": false,
             "title_bar_opacity": 100,
