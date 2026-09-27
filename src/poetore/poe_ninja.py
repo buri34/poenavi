@@ -878,6 +878,14 @@ def is_poe2_exchange_price_item(item: ParsedItem) -> bool:
     return bool(_poe2_exchange_overview_types(item))
 
 
+def is_poe1_exchange_price_item(item: ParsedItem) -> bool:
+    """Return whether the parsed item belongs to a Currency Exchange category."""
+    return (
+        item.rarity.casefold() not in {"unique", "ユニーク"}
+        and item.category in _EXACT_TYPES_BY_CATEGORY
+    )
+
+
 def match_poe2_exchange_price(
     payload: dict,
     item: ParsedItem,

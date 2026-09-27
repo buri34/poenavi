@@ -53,8 +53,16 @@ from .trade import (
     unique_variants, unresolved_modifier_warnings, uses_dedicated_exact_preset,
     is_inscribed_ultimatum, is_special_chart_area,
 )
-from .poe_ninja import PoeNinjaPrice, default_poe_ninja_service, is_poe2_exchange_price_item
+from .poe_ninja import (
+    PoeNinjaPrice,
+    default_poe_ninja_service,
+    is_poe1_exchange_price_item,
+    is_poe2_exchange_price_item,
+)
 from .official_exchange import (
+    CHAOS,
+    DIVINE,
+    EXALTED,
     default_official_exchange_shadow_service,
     poe_ninja_reference_base,
 )
@@ -86,6 +94,8 @@ class _TradeSignals(QObject):
     unique_variants_ready = Signal(object)
     leagues_ready = Signal(object)
     poe_ninja_ready = Signal(object, object)
+    reference_price_ready = Signal(object, object, object, bool)
+    official_exchange_synced = Signal(str, str)
     poe_ninja_failed = Signal(object)
     related_items_ready = Signal(object, object)
     related_items_failed = Signal(object)
@@ -1882,6 +1892,10 @@ class PoetoreWindow(QWidget):
         self._trade_signals.unique_variants_ready.connect(self._show_unique_variants)
         self._trade_signals.leagues_ready.connect(self._show_trade_leagues)
         self._trade_signals.poe_ninja_ready.connect(self._show_poe_ninja_price)
+        self._trade_signals.reference_price_ready.connect(self._show_reference_price)
+        self._trade_signals.official_exchange_synced.connect(
+            self._refresh_reference_price_after_official_sync
+        )
         self._trade_signals.poe_ninja_failed.connect(self._hide_poe_ninja_price)
         self._trade_signals.related_items_ready.connect(self._show_related_items)
         self._trade_signals.related_items_failed.connect(self._hide_related_items)
@@ -3472,9 +3486,18 @@ class PoetoreWindow(QWidget):
         if not league:
             return
 
+        official_expected = (
+            is_poe2_exchange_price_item(item)
+            if self.poe_version == POE2
+            else is_poe1_exchange_price_item(item)
+        )
+
         def run():
             if trace is not None:
                 trace.mark("poe_ninja_lookup_started")
+            result = None
+            related = ()
+            ninja_failed = False
             try:
                 if self.poe_version == POE2:
                     if _is_poe2_exchange_price_item(item, self.poe_version):
@@ -3503,60 +3526,89 @@ class PoetoreWindow(QWidget):
                     )
                     related = self._lookup_related_items(item, league, result)
             except Exception:
-                self._record_official_exchange_shadow(
-                    item, league, None, trade_name, trade_base_type,
-                )
+                ninja_failed = True
                 if trace is not None:
                     trace.mark("poe_ninja_lookup_failed")
-                self._trade_signals.poe_ninja_failed.emit(key)
-                self._trade_signals.related_items_failed.emit(key)
             else:
-                self._record_official_exchange_shadow(
-                    item, league, result, trade_name, trade_base_type,
-                )
                 if trace is not None:
                     trace.mark(
                         "poe_ninja_lookup_completed",
                         matched=result is not None,
                         related=bool(related),
                     )
-                if result is None:
-                    self._trade_signals.poe_ninja_failed.emit(key)
-                else:
-                    self._trade_signals.poe_ninja_ready.emit(key, result)
-                if related:
-                    self._trade_signals.related_items_ready.emit(key, related)
-                else:
-                    self._trade_signals.related_items_failed.emit(key)
+
+            official = self._record_official_exchange_shadow(
+                item, league, result, trade_name, trade_base_type,
+            )
+            official_accepted = bool(
+                official is not None
+                and official.status in {"accepted_direct", "accepted_divine"}
+            )
+            if result is not None or official_accepted:
+                self._trade_signals.reference_price_ready.emit(
+                    key, result, official, official_expected,
+                )
+            else:
+                self._trade_signals.poe_ninja_failed.emit(key)
+            if related:
+                self._trade_signals.related_items_ready.emit(key, related)
+            else:
+                self._trade_signals.related_items_failed.emit(key)
+            if ninja_failed and official_accepted and trace is not None:
+                trace.mark("official_reference_price_used_after_ninja_failure")
 
         threading.Thread(target=run, daemon=True).start()
 
     def _queue_official_exchange_shadow_sync(self):
-        """Refresh the hidden official price table without touching visible prices."""
+        """Refresh the official price table outside the UI thread."""
         league = self._selected_trade_league()
-        default_official_exchange_shadow_service.queue_sync(self.poe_version, league)
+        default_official_exchange_shadow_service.queue_sync(
+            self.poe_version,
+            league,
+            on_complete=self._official_exchange_sync_completed,
+        )
+
+    def _official_exchange_sync_completed(self, summary):
+        self._trade_signals.official_exchange_synced.emit(
+            str(summary.get("poe_version") or ""),
+            str(summary.get("league") or ""),
+        )
+
+    def _refresh_reference_price_after_official_sync(self, poe_version, league):
+        if poe_version != self.poe_version or league != self._selected_trade_league():
+            return
+        item = getattr(self, "_parsed_item", None)
+        if item is None:
+            return
+        self._poe_ninja_item_key = None
+        self._queue_poe_ninja_price(item)
 
     def _record_official_exchange_shadow(
         self, item, league, poe_ninja_price, trade_name=None, trade_base_type=None,
     ):
-        """Compare one searched item in the background and append an audit event."""
+        """Compare one searched item, append an audit event, and return its decision."""
         if not league:
-            return
+            return None
+        divine_rate = None
+        if poe_ninja_price is not None:
+            try:
+                if self.poe_version == POE2:
+                    divine_rate = default_poe_ninja_service.divine_exalted_rate(league)
+                else:
+                    divine_rate = (
+                        float(poe_ninja_price.divine_chaos)
+                        if poe_ninja_price.divine_chaos
+                        else default_poe_ninja_service.divine_chaos_rate(league)
+                    )
+            except Exception:
+                # A robust multi-hour official price does not depend on the
+                # comparison source's Divine rate.
+                divine_rate = None
         try:
-            if self.poe_version == POE2:
-                divine_rate = default_poe_ninja_service.divine_exalted_rate(league)
-            else:
-                divine_rate = (
-                    float(poe_ninja_price.divine_chaos)
-                    if poe_ninja_price is not None and poe_ninja_price.divine_chaos
-                    else default_poe_ninja_service.divine_chaos_rate(league)
-                )
             reference_base = poe_ninja_reference_base(
-                self.poe_version,
-                poe_ninja_price,
-                divine_rate=divine_rate,
+                self.poe_version, poe_ninja_price, divine_rate=divine_rate,
             )
-            default_official_exchange_shadow_service.record_search(
+            return default_official_exchange_shadow_service.record_search(
                 self.poe_version,
                 league,
                 (
@@ -3569,9 +3621,8 @@ class PoetoreWindow(QWidget):
                 reference_base_price=reference_base,
                 reference_divine_rate=divine_rate,
             )
-        except Exception:  # noqa: BLE001 - shadow mode must never affect visible prices
-            # Shadow validation must never delay or hide the existing poe.ninja result.
-            return
+        except Exception:  # noqa: BLE001 - official mode must preserve fallback display
+            return None
 
     def _lookup_related_items(self, item, league, primary_price=None):
         namespace = (
@@ -3767,6 +3818,8 @@ class PoetoreWindow(QWidget):
             if trace is not None:
                 trace.mark("stale_poe_ninja_result_discarded")
             return
+        self.poe_ninja_price_label.setText("poe.ninja 参考価格")
+        self.poe_ninja_price_label.setToolTip("")
         amount, currency = price.display_price_parts()
         self.poe_ninja_price_value.setText(amount)
         icon_path = _asset_icon_path(
@@ -3793,10 +3846,104 @@ class PoetoreWindow(QWidget):
         )
         self.poe_ninja_trend_chart.setPoints(price.graph_points())
         self._last_poe_ninja_url = price.url
+        self.poe_ninja_open_button.show()
         self.poe_ninja_price_panel.show()
         trace = self._poe_ninja_performance_traces.pop(key, None)
         if trace is not None:
             trace.mark("poe_ninja_result_displayed")
+
+    @staticmethod
+    def _official_display_parts(price) -> tuple[str, str] | None:
+        amount = getattr(price, "display_amount", None)
+        currency_id = getattr(price, "display_currency", None)
+        currency = {CHAOS: "chaos", DIVINE: "divine", EXALTED: "exalted"}.get(
+            currency_id
+        )
+        if amount is None or currency is None:
+            return None
+        value = float(amount)
+        if abs(value) < 1:
+            text = f"{value:.2f}".rstrip("0").rstrip(".")
+        elif abs(value) < 10:
+            text = f"{value:.1f}".rstrip("0").rstrip(".")
+        else:
+            text = str(round(value))
+        return text, currency
+
+    def _show_reference_price(
+        self, key, ninja_price, official_price, official_expected=False,
+    ):
+        """Render an official accepted price, otherwise the poe.ninja fallback."""
+        if key != self._poe_ninja_item_key:
+            trace = self._poe_ninja_performance_traces.pop(key, None)
+            if trace is not None:
+                trace.mark("stale_reference_price_discarded")
+            return
+
+        accepted = bool(
+            official_price is not None
+            and official_price.status in {"accepted_direct", "accepted_divine"}
+        )
+        if ninja_price is not None:
+            self._show_poe_ninja_price(key, ninja_price)
+        elif not accepted:
+            self._hide_poe_ninja_price(key)
+            return
+        else:
+            self.poe_ninja_trend_label.clear()
+            self.poe_ninja_trend_chart.setPoints(())
+            self._last_poe_ninja_url = ""
+            self.poe_ninja_open_button.hide()
+            trace = self._poe_ninja_performance_traces.pop(key, None)
+            if trace is not None:
+                trace.mark("official_reference_price_displayed_without_ninja")
+
+        if not accepted:
+            if official_expected or official_price is not None:
+                self.poe_ninja_price_label.setText("poe.ninja 暫定価格")
+                self.poe_ninja_price_label.setToolTip(
+                    "公式約定価格が未確定のため、poe.ninja価格を表示しています"
+                )
+            return
+
+        parts = self._official_display_parts(official_price)
+        if parts is None:
+            if ninja_price is None:
+                self._hide_poe_ninja_price(key)
+            return
+        amount, currency = parts
+        self.poe_ninja_price_label.setText("GGG公式 約定価格")
+        route = getattr(official_price, "selected_route", None)
+        route_label = "Divine直接" if route == "direct_divine" else (
+            "Chaos直接" if self.poe_version == POE1 else "Exalted直接"
+        )
+        self.poe_ninja_price_label.setToolTip(
+            f"Currency Exchangeの直近24時間約定価格（{route_label}）"
+        )
+        self.poe_ninja_price_value.setText(amount)
+        icon_path = _asset_icon_path(
+            _price_currency_icon_filename(currency, self.poe_version)
+        )
+        pixmap = QPixmap(str(icon_path)) if icon_path else QPixmap()
+        self.poe_ninja_currency_icon.setPixmap(
+            pixmap.scaled(26, 26, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            if not pixmap.isNull() else QPixmap()
+        )
+        currency_name = {
+            "divine": "Divine Orb",
+            "chaos": "Chaos Orb",
+            "exalted": "Exalted Orb",
+        }[currency]
+        self.poe_ninja_currency_icon.setToolTip(currency_name)
+        self.poe_ninja_price_multiplier.setVisible(not pixmap.isNull())
+        self.poe_ninja_currency_icon.setVisible(not pixmap.isNull())
+        if ninja_price is not None:
+            trend = ninja_price.trend_summary()
+            self.poe_ninja_trend_label.setText(
+                f"{trend[0]} {trend[1]}\npoe.ninja 7日推移"
+                if trend else "poe.ninja 7日データなし"
+            )
+        self.poe_ninja_price_panel.show()
 
     def _hide_poe_ninja_price(self, key=None):
         if key is not None and key != self._poe_ninja_item_key:
@@ -3807,6 +3954,8 @@ class PoetoreWindow(QWidget):
         trace = self._poe_ninja_performance_traces.pop(key, None) if key is not None else None
         if trace is not None:
             trace.mark("poe_ninja_result_unavailable")
+        self.poe_ninja_price_label.setText("poe.ninja 参考価格")
+        self.poe_ninja_price_label.setToolTip("")
         self.poe_ninja_price_panel.hide()
         self.poe_ninja_price_value.setText("—")
         self.poe_ninja_price_multiplier.show()
@@ -3815,6 +3964,7 @@ class PoetoreWindow(QWidget):
         self.poe_ninja_trend_label.clear()
         self.poe_ninja_trend_chart.setPoints(())
         self._last_poe_ninja_url = ""
+        self.poe_ninja_open_button.show()
 
     def _show_related_items(self, key, result):
         if key != self._poe_ninja_item_key:

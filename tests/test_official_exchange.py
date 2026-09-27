@@ -380,6 +380,36 @@ def test_queue_sync_returns_before_slow_network_work_finishes(tmp_path):
         time.sleep(0.01)
 
 
+def test_queue_sync_notifies_all_waiters_once_after_table_is_ready(tmp_path):
+    gate = threading.Event()
+    completed = []
+
+    def fetcher(profile, hour):
+        gate.wait(timeout=2)
+        return payload("Test League", profile, hour)
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=fetcher,
+        clock=lambda: 100 * HOUR_SECONDS + 1,
+    )
+
+    def on_complete(summary):
+        completed.append(summary)
+
+    assert service.queue_sync(POE1, "Test League", on_complete=on_complete)
+    assert not service.queue_sync(POE1, "Test League", on_complete=on_complete)
+    gate.set()
+    deadline = time.monotonic() + 2
+    while not completed:
+        assert time.monotonic() < deadline
+        time.sleep(0.01)
+    assert len(completed) == 1
+    assert completed[0]["event"] == "sync_completed"
+    assert service.lookup(POE1, "Test League", ("Test Item",)) is not None
+
+
 def test_search_lookup_does_not_call_network(tmp_path):
     service, calls = make_service(tmp_path)
     service.sync(POE1, "Test League")

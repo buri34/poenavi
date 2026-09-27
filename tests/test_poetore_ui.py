@@ -197,7 +197,8 @@ from src.poetore.poe2.parser import parse_item_text as parse_poe2_item_text
 from src.poetore.poe2.audit import _EQUIPMENT_FIXTURES, _RARITIES, _item as poe2_audit_item
 from src.poetore.poe2.trade import build_search_query as build_poe2_search_query, poe2_trade_filters
 from src.poetore.models import ItemModifier, ParsedItem
-from src.poetore.poe_ninja import PoeNinjaPrice
+from src.poetore.poe_ninja import PoeNinjaPrice, default_poe_ninja_service
+from src.poetore.official_exchange import CHAOS, DIVINE, EXALTED
 from src.ui.settings_dialog import SettingsDialog
 from src.ui.styles import Styles
 
@@ -8373,7 +8374,11 @@ def test_official_exchange_shadow_sync_uses_selected_mode_and_league(qapp):
             return_value=True,
         ) as queue_sync:
             window._queue_official_exchange_shadow_sync()
-        queue_sync.assert_called_once_with(POE2, "Runes of Aldur")
+        queue_sync.assert_called_once_with(
+            POE2,
+            "Runes of Aldur",
+            on_complete=window._official_exchange_sync_completed,
+        )
     finally:
         window.close()
 
@@ -8401,5 +8406,238 @@ def test_official_exchange_shadow_records_without_changing_visible_ninja_price(q
         assert record.call_args.args[:2] == (POE1, "Allflame")
         assert record.call_args.kwargs["reference_base_price"] == 1800
         assert record.call_args.kwargs["reference_divine_rate"] == 200
+    finally:
+        window.close()
+
+
+def _official_price(**overrides):
+    values = {
+        "status": "accepted_direct",
+        "selected_route": "direct_base",
+        "display_amount": 86.03398169336384,
+        "display_currency": CHAOS,
+        "selected_price": 86.03398169336384,
+        "selected_currency": CHAOS,
+    }
+    values.update(overrides)
+    return Mock(**values)
+
+
+def test_reference_price_panel_prefers_official_price_and_keeps_ninja_context(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE1, "poetore": {}})
+    key = ("official",)
+    ninja = PoeNinjaPrice(
+        "Omen of Amelioration", None, 104.5, (0, 2, 4),
+        "https://poe.ninja/example", 370.8,
+    )
+    official = _official_price(
+        display_amount=1.25,
+        display_currency=DIVINE,
+        selected_price=463.5,
+        selected_currency=CHAOS,
+    )
+    try:
+        window._poe_ninja_item_key = key
+        window._show_reference_price(key, ninja, official)
+
+        assert window.poe_ninja_price_label.text() == "GGG公式 約定価格"
+        assert window.poe_ninja_price_value.text() == "1.2"
+        assert window.poe_ninja_currency_icon.toolTip() == "Divine Orb"
+        assert "poe.ninja 7日推移" in window.poe_ninja_trend_label.text()
+        assert window.poe_ninja_trend_chart._points == (0, 2, 4)
+        assert window._last_poe_ninja_url == "https://poe.ninja/example"
+        assert not window.poe_ninja_open_button.isHidden()
+    finally:
+        window.close()
+
+
+def test_reference_price_panel_uses_poe2_exalted_official_price(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2, "poetore": {}})
+    key = ("official-poe2",)
+    ninja = PoeNinjaPrice(
+        "Liquid Verisium", None, 26.2, (), "https://poe.ninja/example", 492.4,
+        quote_amount=26.2, quote_currency="exalted",
+    )
+    official = _official_price(
+        display_amount=28.839236303265082,
+        display_currency=EXALTED,
+        selected_price=28.839236303265082,
+        selected_currency=EXALTED,
+    )
+    try:
+        window._poe_ninja_item_key = key
+        window._show_reference_price(key, ninja, official)
+        assert window.poe_ninja_price_value.text() == "29"
+        assert window.poe_ninja_currency_icon.toolTip() == "Exalted Orb"
+    finally:
+        window.close()
+
+
+def test_reference_price_panel_labels_ninja_fallback_as_temporary(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE1, "poetore": {}})
+    key = ("fallback",)
+    ninja = PoeNinjaPrice(
+        "Test Item", None, 42, (), "https://poe.ninja/example", 200,
+    )
+    official = _official_price(
+        status="poe_ninja_fallback",
+        selected_route="poe_ninja",
+        display_amount=42,
+        display_currency=CHAOS,
+    )
+    try:
+        window._poe_ninja_item_key = key
+        window._show_reference_price(key, ninja, official)
+        assert window.poe_ninja_price_label.text() == "poe.ninja 暫定価格"
+        assert window.poe_ninja_price_value.text() == "42"
+        assert window.poe_ninja_currency_icon.toolTip() == "Chaos Orb"
+    finally:
+        window.close()
+
+
+def test_reference_price_panel_labels_syncing_exchange_item_as_temporary(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE1, "poetore": {}})
+    key = ("syncing",)
+    ninja = PoeNinjaPrice(
+        "Test Item", None, 42, (), "https://poe.ninja/example", 200,
+    )
+    try:
+        window._poe_ninja_item_key = key
+        window._show_reference_price(key, ninja, None, official_expected=True)
+        assert window.poe_ninja_price_label.text() == "poe.ninja 暫定価格"
+        assert "公式約定価格が未確定" in window.poe_ninja_price_label.toolTip()
+    finally:
+        window.close()
+
+
+def test_reference_price_panel_keeps_legacy_ninja_label_for_non_exchange_item(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE1, "poetore": {}})
+    key = ("non-exchange",)
+    ninja = PoeNinjaPrice(
+        "Mageblood", None, 40000, (), "https://poe.ninja/example", 200,
+    )
+    try:
+        window._poe_ninja_item_key = key
+        window._show_reference_price(key, ninja, None)
+        assert window.poe_ninja_price_label.text() == "poe.ninja 参考価格"
+        assert window.poe_ninja_price_value.text() == "200"
+    finally:
+        window.close()
+
+
+def test_reference_price_panel_can_show_official_price_without_ninja(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2, "poetore": {}})
+    key = ("official-only",)
+    official = _official_price(
+        status="accepted_divine",
+        selected_route="direct_divine",
+        display_amount=0.5,
+        display_currency=DIVINE,
+        selected_price=0.5,
+        selected_currency=DIVINE,
+    )
+    try:
+        window._poe_ninja_item_key = key
+        window._show_reference_price(key, None, official)
+        assert not window.poe_ninja_price_panel.isHidden()
+        assert window.poe_ninja_price_label.text() == "GGG公式 約定価格"
+        assert window.poe_ninja_price_value.text() == "0.5"
+        assert window.poe_ninja_currency_icon.toolTip() == "Divine Orb"
+        assert window.poe_ninja_trend_chart._points == ()
+        assert window.poe_ninja_open_button.isHidden()
+    finally:
+        window.close()
+
+
+def test_primary_price_queue_reaches_official_display_for_poe1_exchange_item(
+    qapp, monkeypatch,
+):
+    class ImmediateThread:
+        def __init__(self, *, target, daemon):
+            self.target = target
+
+        def start(self):
+            self.target()
+
+    monkeypatch.setattr("src.poetore.ui.threading.Thread", ImmediateThread)
+    window = PoetoreWindow(app_config={"poe_version": POE1, "poetore": {}})
+    item = ParsedItem("Currency", "normal", "", "Chaos Orb", "currency")
+    ninja = PoeNinjaPrice(
+        "Chaos Orb", None, 1, (), "https://poe.ninja/example", 200,
+    )
+    official = _official_price(display_amount=1, display_currency=CHAOS)
+    try:
+        window._auto_league = "Allflame"
+        window._trade_item_name = "Chaos Orb"
+        window._trade_base_type = "Chaos Orb"
+        with (
+            patch.object(default_poe_ninja_service, "lookup", return_value=ninja),
+            patch.object(window, "_lookup_related_items", return_value=()),
+            patch.object(window, "_queue_divine_rate"),
+            patch.object(window, "_record_official_exchange_shadow", return_value=official),
+        ):
+            window._queue_poe_ninja_price(item)
+        assert window.poe_ninja_price_label.text() == "GGG公式 約定価格"
+        assert window.poe_ninja_price_value.text() == "1"
+        assert window.poe_ninja_currency_icon.toolTip() == "Chaos Orb"
+    finally:
+        window.close()
+
+
+def test_primary_price_queue_uses_official_when_ninja_lookup_fails(qapp, monkeypatch):
+    class ImmediateThread:
+        def __init__(self, *, target, daemon):
+            self.target = target
+
+        def start(self):
+            self.target()
+
+    monkeypatch.setattr("src.poetore.ui.threading.Thread", ImmediateThread)
+    window = PoetoreWindow(app_config={"poe_version": POE2, "poetore": {}})
+    item = ParsedItem("Currency", "normal", "", "Liquid Verisium", "currency")
+    official = _official_price(
+        display_amount=28.8,
+        display_currency=EXALTED,
+        selected_price=28.8,
+        selected_currency=EXALTED,
+    )
+    try:
+        window._auto_league = "Forbidden Rites"
+        window._trade_item_name = "Liquid Verisium"
+        window._trade_base_type = "Liquid Verisium"
+        with (
+            patch.object(
+                default_poe_ninja_service,
+                "lookup_poe2_exchange",
+                side_effect=RuntimeError("offline"),
+            ),
+            patch.object(window, "_queue_divine_rate"),
+            patch.object(window, "_record_official_exchange_shadow", return_value=official),
+        ):
+            window._queue_poe_ninja_price(item)
+        assert window.poe_ninja_price_label.text() == "GGG公式 約定価格"
+        assert window.poe_ninja_price_value.text() == "29"
+        assert window.poe_ninja_open_button.isHidden()
+    finally:
+        window.close()
+
+
+def test_completed_official_sync_refreshes_current_item_only_for_active_context(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2, "poetore": {}})
+    item = ParsedItem("Currency", "normal", "", "Liquid Verisium", "currency")
+    try:
+        window._auto_league = "Forbidden Rites"
+        window._parsed_item = item
+        window._poe_ninja_item_key = ("old",)
+        with patch.object(window, "_queue_poe_ninja_price") as refresh:
+            window._refresh_reference_price_after_official_sync(
+                POE2, "Forbidden Rites",
+            )
+            refresh.assert_called_once_with(item)
+            assert window._poe_ninja_item_key is None
+
+            refresh.reset_mock()
+            window._refresh_reference_price_after_official_sync(POE1, "Allflame")
+            refresh.assert_not_called()
     finally:
         window.close()

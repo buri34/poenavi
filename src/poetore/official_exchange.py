@@ -311,6 +311,7 @@ class OfficialExchangeShadowService:
         self._clock = clock
         self._tables: dict[tuple[str, str], _PriceTable] = {}
         self._active_syncs: set[tuple[str, str]] = set()
+        self._sync_callbacks: dict[tuple[str, str], list[Callable[[dict], None]]] = {}
         self._last_search_fingerprint: tuple | None = None
         self._last_search_logged_at = 0.0
         self._lock = threading.RLock()
@@ -319,21 +320,36 @@ class OfficialExchangeShadowService:
     def log_path(self) -> Path:
         return self.cache_root / "shadow.jsonl"
 
-    def queue_sync(self, poe_version: str, league: str | None) -> bool:
+    def queue_sync(
+        self,
+        poe_version: str,
+        league: str | None,
+        *,
+        on_complete: Callable[[dict], None] | None = None,
+    ) -> bool:
         if poe_version not in PROFILES or not league or re.search(r"\(PL\d+\)$", league):
             return False
         key = (poe_version, league)
         with self._lock:
             if key in self._active_syncs:
+                if on_complete is not None:
+                    callbacks = self._sync_callbacks.setdefault(key, [])
+                    if on_complete not in callbacks:
+                        callbacks.append(on_complete)
                 return False
             current = self._tables.get(key)
             if current is not None and current.end_hour >= latest_completed_hour(self._clock()):
                 return False
+            if on_complete is not None:
+                callbacks = self._sync_callbacks.setdefault(key, [])
+                if on_complete not in callbacks:
+                    callbacks.append(on_complete)
             self._active_syncs.add(key)
 
         def run() -> None:
+            result = None
             try:
-                self.sync(poe_version, league)
+                result = self.sync(poe_version, league)
             except Exception as exc:  # noqa: BLE001 - daemon boundary must contain failures
                 self._append_log({
                     "event": "sync_failed",
@@ -345,6 +361,13 @@ class OfficialExchangeShadowService:
             finally:
                 with self._lock:
                     self._active_syncs.discard(key)
+                    callbacks = tuple(self._sync_callbacks.pop(key, ()))
+            if result is not None:
+                for callback in callbacks:
+                    try:
+                        callback(result)
+                    except Exception:  # noqa: BLE001 - observers cannot fail sync
+                        continue
 
         threading.Thread(target=run, daemon=True).start()
         return True
