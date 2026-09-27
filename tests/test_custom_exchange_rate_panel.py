@@ -145,8 +145,8 @@ def test_available_no_trade_unconfirmed_and_unavailable_are_distinct(qapp, tmp_p
             for index in range(4)
         ]
         assert values == [
-            "1 ＝ 2.5", "1 ＝ 取引データなし", "1 ＝ 価格未確定",
-            "1 ＝ 最新データを取得できません",
+            "1 ＝ 2.5", "取引データなし", "価格未確定",
+            "最新データを取得できません",
         ]
         assert all(
             panel.findChild(QLabel, f"customRateValue{index}").alignment()
@@ -174,19 +174,23 @@ def test_refresh_is_nonblocking_and_manual_result_text_is_specific(qapp, tmp_pat
     service = FakeService()
     panel, *_ = make_panel(qapp, tmp_path, service=service)
     try:
+        previous_row = panel.row_widgets[0]
         panel.refresh(manual=True)
+        assert not previous_row.isVisible()
         assert panel.status_label.text() == "最新データを確認中…"
-        assert panel.row_widgets[0].findChild(QLabel, "customRateValue0").text() == (
-            "1 ＝ 最新データ取得中…"
-        )
+        loading_value = panel.row_widgets[0].findChild(QLabel, "customRateValue0")
+        assert loading_value.text() == "最新データ取得中…"
+        assert loading_value.toolTip() == "最新データ取得中…"
+        assert "font-size: 12px" in loading_value.styleSheet()
+        assert loading_value.sizeHint().width() <= loading_value.width()
         assert not panel.refresh_button.isEnabled()
         callback = service.queued[-1][3]
         callback(SyncCheckResult("no_new_data", POE1, "League", 720))
         qapp.processEvents()
         assert panel.status_label.text() == "新しい公式データはまだありません"
-        assert panel.row_widgets[0].findChild(QLabel, "customRateValue0").text() == (
-            "1 ＝ 最新データを取得できません"
-        )
+        failed_value = panel.row_widgets[0].findChild(QLabel, "customRateValue0")
+        assert failed_value.text() == "最新データを取得できません"
+        assert failed_value.toolTip() == "最新データを取得できません"
         assert panel.refresh_button.isEnabled()
         assert panel.check_timer.interval() == RATE_CHECK_INTERVAL_MSEC
     finally:

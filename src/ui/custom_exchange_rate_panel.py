@@ -167,17 +167,20 @@ class CustomExchangeRatePanel(QWidget):
         while self.rows_layout.count():
             child = self.rows_layout.takeAt(0)
             if child.widget() is not None:
+                child.widget().hide()
                 child.widget().deleteLater()
         self.row_widgets.clear()
         league = self.league_getter()
         pairs = self.store.pairs(self.poe_version)
         latest_cached_at = None
         for index, pair in enumerate(pairs):
+            display_is_rate = False
             result = self.service.direct_pair(
                 self.poe_version, league, pair.left_item_id, pair.right_item_id
             )
             if result.status == "available" and result.price is not None:
                 display = format_significant_rate(result.price)
+                display_is_rate = True
                 self.value_cache.put(
                     self.poe_version,
                     league,
@@ -196,6 +199,7 @@ class CustomExchangeRatePanel(QWidget):
                 )
                 if cached is not None:
                     display = format_significant_rate(cached.price)
+                    display_is_rate = True
                     latest_cached_at = max(latest_cached_at or 0, cached.confirmed_at)
                 else:
                     display = (
@@ -203,7 +207,13 @@ class CustomExchangeRatePanel(QWidget):
                         if self._sync_in_progress
                         else "最新データを取得できません"
                     )
-            row = self._make_row(index, pair.left_item_id, pair.right_item_id, display)
+            row = self._make_row(
+                index,
+                pair.left_item_id,
+                pair.right_item_id,
+                display,
+                display_is_rate=display_is_rate,
+            )
             self.rows_layout.addWidget(row)
             self.row_widgets.append(row)
 
@@ -237,7 +247,13 @@ class CustomExchangeRatePanel(QWidget):
         self.on_rows_changed()
 
     def _make_row(
-        self, index: int, left_id: str, right_id: str, display: str,
+        self,
+        index: int,
+        left_id: str,
+        right_id: str,
+        display: str,
+        *,
+        display_is_rate: bool,
     ) -> QWidget:
         row = QWidget()
         row.setObjectName(f"customRateRow{index}")
@@ -255,11 +271,15 @@ class CustomExchangeRatePanel(QWidget):
             f"color: {POETORE_THEME.accent}; font-size: 13px;"
         )
         layout.addWidget(left_name)
-        value = QLabel(f"1 ＝ {display}")
+        value_text = f"1 ＝ {display}" if display_is_rate else display
+        value = QLabel(value_text)
         value.setObjectName(f"customRateValue{index}")
         value.setAlignment(Qt.AlignCenter)
+        value.setToolTip(value_text)
+        value_font_size = 15 if display_is_rate else 12
         value.setStyleSheet(
-            f"color: {POETORE_THEME.text}; font-size: 15px; font-weight: bold;"
+            f"color: {POETORE_THEME.text}; font-size: {value_font_size}px; "
+            "font-weight: bold;"
         )
         layout.addWidget(value, 1)
         right_icon = self._icon_label(right_id, "right")

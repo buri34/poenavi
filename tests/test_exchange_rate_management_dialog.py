@@ -3,7 +3,8 @@ from copy import deepcopy
 from unittest.mock import Mock
 
 import pytest
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QMimeData, QPoint, QPointF, Qt
+from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QToolButton
 
 from src.poetore.exchange_catalog import exchange_catalog_by_id, exchange_catalog_items
@@ -16,7 +17,10 @@ from src.poetore.exchange_rate_settings import (
     default_rate_pairs_config,
 )
 from src.ui.app_theme import POETORE_THEME
-from src.ui.exchange_rate_management_dialog import ExchangeRateManagementDialog
+from src.ui.exchange_rate_management_dialog import (
+    RATE_PAIR_DRAG_MIME,
+    ExchangeRateManagementDialog,
+)
 from src.utils.poe_version_data import POE1
 
 
@@ -220,6 +224,70 @@ def test_move_and_delete_save_once_and_refresh_main_once(qapp, tmp_path):
         assert len(saved) == 2
         assert changed.call_count == 2
         assert len(store.pairs(POE1)) == 1
+    finally:
+        dialog.close()
+
+
+def test_dragging_registered_pair_to_bottom_reorders_and_saves_once(qapp, tmp_path):
+    catalog = exchange_catalog_by_id(POE1)
+    extras = tuple(
+        item_id for item_id in catalog
+        if item_id not in {DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID}
+    )[:2]
+    dialog, store, saved, changed = make_dialog(
+        qapp, tmp_path, available_ids=list(extras)
+    )
+    try:
+        for item_id in extras:
+            store.add(POE1, item_id, DIVINE_ORB_ID)
+        saved.clear()
+        dialog._render_registered_pairs()
+        before = store.pairs(POE1)
+        rows = dialog.registered_widget._rows
+        assert len(rows) == 3
+        assert all("ドラッグ" in row.toolTip() for row in rows)
+
+        mime = QMimeData()
+        mime.setData(RATE_PAIR_DRAG_MIME, b"0")
+        drop = QDropEvent(
+            QPointF(5, rows[-1].geometry().bottom() + 5),
+            Qt.MoveAction,
+            mime,
+            Qt.LeftButton,
+            Qt.NoModifier,
+        )
+        dialog.registered_widget.dropEvent(drop)
+
+        assert store.pairs(POE1) == (before[1], before[2], before[0])
+        assert len(saved) == 1
+        changed.assert_called_once_with()
+    finally:
+        dialog.close()
+
+
+def test_dragging_near_registered_list_edge_auto_scrolls(qapp, tmp_path):
+    catalog = exchange_catalog_by_id(POE1)
+    extras = [
+        item_id for item_id in catalog
+        if item_id not in {DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID}
+    ][:9]
+    dialog, store, *_ = make_dialog(qapp, tmp_path, available_ids=list(extras))
+    try:
+        for item_id in extras:
+            store.add(POE1, item_id, DIVINE_ORB_ID)
+        dialog._render_registered_pairs()
+        qapp.processEvents()
+        scroll_bar = dialog.registered_scroll.verticalScrollBar()
+        assert scroll_bar.maximum() > 0
+        scroll_bar.setValue(0)
+        content_position = dialog.registered_scroll.viewport().mapTo(
+            dialog.registered_widget,
+            QPoint(5, dialog.registered_scroll.viewport().height() - 2),
+        )
+
+        dialog.registered_widget._auto_scroll(content_position)
+
+        assert scroll_bar.value() > 0
     finally:
         dialog.close()
 

@@ -176,6 +176,22 @@ def test_move_saves_once_and_boundary_move_does_not_save():
     assert saved == []
 
 
+def test_move_to_arbitrary_index_saves_once():
+    store, _, saved = make_store()
+    first = RatePair(DIVINE_ORB_ID, CHAOS_ORB_ID)
+    second = store.add(POE1, EXTRA_IDS[0], EXTRA_IDS[1])
+    third = store.add(POE1, EXTRA_IDS[2], EXTRA_IDS[3])
+    saved.clear()
+
+    assert store.move_to(POE1, 0, 2) is True
+    assert store.pairs(POE1) == (second, third, first)
+    assert len(saved) == 1
+
+    saved.clear()
+    assert store.move_to(POE1, 2, 2) is False
+    assert saved == []
+
+
 def test_out_of_range_operation_is_rejected_without_saving():
     store, _, saved = make_store()
 

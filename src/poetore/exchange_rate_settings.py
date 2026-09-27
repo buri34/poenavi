@@ -153,6 +153,18 @@ class ExchangeRatePairStore:
     def move_down(self, poe_version: str, index: int) -> bool:
         return self._move(poe_version, index, index + 1)
 
+    def move_to(self, poe_version: str, source: int, destination: int) -> bool:
+        """Move one pair to an arbitrary final index and save exactly once."""
+        current = list(self.pairs(poe_version))
+        self._require_index(source, len(current))
+        self._require_index(destination, len(current))
+        if source == destination:
+            return False
+        pair = current.pop(source)
+        current.insert(destination, pair)
+        self._replace(poe_version, current)
+        return True
+
     def _move(self, poe_version: str, index: int, destination: int) -> bool:
         current = list(self.pairs(poe_version))
         self._require_index(index, len(current))

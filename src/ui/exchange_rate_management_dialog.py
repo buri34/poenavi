@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Collection
 
-from PySide6.QtCore import QObject, QSize, Qt, Signal
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import QMimeData, QObject, QPoint, QSize, Qt, Signal
+from PySide6.QtGui import QDrag, QIcon
 from PySide6.QtWidgets import (
+    QApplication,
     QButtonGroup,
     QDialog,
     QFrame,
@@ -42,10 +43,146 @@ from src.poetore.exchange_rate_settings import (
 from src.ui.app_theme import POETORE_THEME
 
 BASE_CURRENCY_IDS = (DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID)
+RATE_PAIR_DRAG_MIME = "application/x-poenavi-rate-pair-index"
 
 
 class _IconSignals(QObject):
     ready = Signal(str, str)
+
+
+class _RegisteredPairRow(QWidget):
+    """A rate-pair row that starts an internal reorder drag outside its buttons."""
+
+    def __init__(self, index: int, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.index = index
+        self._drag_start: QPoint | None = None
+        self.setCursor(Qt.OpenHandCursor)
+        self.setToolTip("ドラッグして表示順を変更")
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.LeftButton:
+            self._drag_start = event.position().toPoint()
+            self.setCursor(Qt.ClosedHandCursor)
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event) -> None:
+        if (
+            self._drag_start is None
+            or not event.buttons() & Qt.LeftButton
+            or (event.position().toPoint() - self._drag_start).manhattanLength()
+            < QApplication.startDragDistance()
+        ):
+            super().mouseMoveEvent(event)
+            return
+        mime = QMimeData()
+        mime.setData(RATE_PAIR_DRAG_MIME, str(self.index).encode("ascii"))
+        drag = QDrag(self)
+        drag.setMimeData(mime)
+        drag.setPixmap(self.grab())
+        drag.setHotSpot(self._drag_start)
+        drag.exec(Qt.MoveAction)
+        self._drag_start = None
+        self.setCursor(Qt.OpenHandCursor)
+
+    def mouseReleaseEvent(self, event) -> None:
+        self._drag_start = None
+        self.setCursor(Qt.OpenHandCursor)
+        super().mouseReleaseEvent(event)
+
+
+class _RegisteredPairsWidget(QWidget):
+    """Drop surface that maps a visual insertion point to a final pair index."""
+
+    reordered = Signal(int, int)
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
+        self._rows: list[_RegisteredPairRow] = []
+        self.setAcceptDrops(True)
+
+    def set_rows(self, rows: list[_RegisteredPairRow]) -> None:
+        self._rows = rows
+
+    def dragEnterEvent(self, event) -> None:
+        if event.mimeData().hasFormat(RATE_PAIR_DRAG_MIME):
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event) -> None:
+        if not event.mimeData().hasFormat(RATE_PAIR_DRAG_MIME):
+            return
+        content_y = self._auto_scroll(event.position().toPoint())
+        self._show_drop_indicator(self._insertion_index(content_y))
+        event.acceptProposedAction()
+
+    def dragLeaveEvent(self, event) -> None:
+        self._clear_drop_indicator()
+        super().dragLeaveEvent(event)
+
+    def dropEvent(self, event) -> None:
+        self._clear_drop_indicator()
+        if not event.mimeData().hasFormat(RATE_PAIR_DRAG_MIME):
+            return
+        try:
+            source = int(bytes(event.mimeData().data(RATE_PAIR_DRAG_MIME)))
+        except ValueError:
+            return
+        if source < 0 or source >= len(self._rows):
+            return
+        destination = self._destination_index(
+            source, self._insertion_index(event.position().y())
+        )
+        if destination != source:
+            self.reordered.emit(source, destination)
+        event.acceptProposedAction()
+
+    def _insertion_index(self, y: float) -> int:
+        for index, row in enumerate(self._rows):
+            if y < row.geometry().center().y():
+                return index
+        return len(self._rows)
+
+    def _destination_index(self, source: int, insertion: int) -> int:
+        if not self._rows:
+            return source
+        destination = insertion - 1 if insertion > source else insertion
+        return max(0, min(destination, len(self._rows) - 1))
+
+    def _auto_scroll(self, content_position: QPoint) -> int:
+        scroll_area = self.parentWidget()
+        while scroll_area is not None and not isinstance(scroll_area, QScrollArea):
+            scroll_area = scroll_area.parentWidget()
+        if scroll_area is None:
+            return content_position.y()
+        viewport = scroll_area.viewport()
+        viewport_position = viewport.mapFrom(self, content_position)
+        scroll_bar = scroll_area.verticalScrollBar()
+        edge = 24
+        step = max(20, scroll_bar.singleStep())
+        if viewport_position.y() < edge:
+            scroll_bar.setValue(scroll_bar.value() - step)
+        elif viewport_position.y() > viewport.height() - edge:
+            scroll_bar.setValue(scroll_bar.value() + step)
+        return viewport.mapTo(self, viewport_position).y()
+
+    def _show_drop_indicator(self, insertion: int) -> None:
+        self._clear_drop_indicator()
+        if not self._rows:
+            return
+        if insertion >= len(self._rows):
+            row = self._rows[-1]
+            border = "border-bottom"
+        else:
+            row = self._rows[insertion]
+            border = "border-top"
+        row.setStyleSheet(
+            f"QWidget#{row.objectName()} {{ {border}: 2px solid "
+            f"{POETORE_THEME.accent}; }}"
+        )
+
+    def _clear_drop_indicator(self) -> None:
+        for row in self._rows:
+            row.setStyleSheet("")
 
 
 class ExchangeRateManagementDialog(QDialog):
@@ -140,7 +277,7 @@ class ExchangeRateManagementDialog(QDialog):
         self.registered_scroll.viewport().setStyleSheet(
             f"background: {theme.panel}; color: {theme.text};"
         )
-        self.registered_widget = QWidget()
+        self.registered_widget = _RegisteredPairsWidget()
         self.registered_widget.setObjectName("registeredPairsWidget")
         self.registered_widget.setStyleSheet(
             f"QWidget#registeredPairsWidget {{ background: {theme.panel}; "
@@ -149,6 +286,7 @@ class ExchangeRateManagementDialog(QDialog):
         self.registered_layout = QVBoxLayout(self.registered_widget)
         self.registered_layout.setContentsMargins(6, 6, 6, 6)
         self.registered_layout.setSpacing(5)
+        self.registered_widget.reordered.connect(self._drag_reorder)
         self.registered_scroll.setWidget(self.registered_widget)
         root.addWidget(self.registered_scroll)
 
@@ -374,9 +512,12 @@ class ExchangeRateManagementDialog(QDialog):
         self.on_changed()
 
     def _render_registered_pairs(self) -> None:
+        self.registered_widget.set_rows([])
+        self.registered_widget.setMinimumHeight(0)
         while self.registered_layout.count():
             child = self.registered_layout.takeAt(0)
             if child.widget() is not None:
+                child.widget().hide()
                 child.widget().deleteLater()
         pairs = self.store.pairs(self.poe_version)
         self.title_label.setText(f"レート表示の管理（{len(pairs)} / {MAX_RATE_PAIRS}）")
@@ -385,8 +526,15 @@ class ExchangeRateManagementDialog(QDialog):
             empty.setAlignment(Qt.AlignCenter)
             empty.setStyleSheet("color: #98A39F; padding: 12px;")
             self.registered_layout.addWidget(empty)
+        registered_rows: list[_RegisteredPairRow] = []
         for index, pair in enumerate(pairs):
-            row = QWidget()
+            row = _RegisteredPairRow(index)
+            row.setObjectName(f"registeredPairRow{index}")
+            row.setAccessibleName(
+                f"{self.catalog[pair.left_item_id].japanese_name}から"
+                f"{self.catalog[pair.right_item_id].japanese_name}。"
+                "ドラッグして表示順を変更"
+            )
             row_layout = QHBoxLayout(row)
             row_layout.setContentsMargins(3, 2, 3, 2)
             name = QLabel(
@@ -412,7 +560,15 @@ class ExchangeRateManagementDialog(QDialog):
             row_layout.addWidget(down)
             row_layout.addWidget(delete)
             self.registered_layout.addWidget(row)
+            registered_rows.append(row)
+        self.registered_widget.set_rows(registered_rows)
         self.registered_layout.addStretch()
+        margins = self.registered_layout.contentsMargins()
+        content_height = margins.top() + margins.bottom()
+        if registered_rows:
+            content_height += sum(row.sizeHint().height() for row in registered_rows)
+            content_height += self.registered_layout.spacing() * (len(registered_rows) - 1)
+        self.registered_widget.setMinimumHeight(content_height)
         if hasattr(self, "add_button"):
             self._selection_changed()
 
@@ -448,6 +604,11 @@ class ExchangeRateManagementDialog(QDialog):
 
     def _move_down(self, index: int) -> None:
         if self.store.move_down(self.poe_version, index):
+            self._render_registered_pairs()
+            self.on_changed()
+
+    def _drag_reorder(self, source: int, destination: int) -> None:
+        if self.store.move_to(self.poe_version, source, destination):
             self._render_registered_pairs()
             self.on_changed()
 
