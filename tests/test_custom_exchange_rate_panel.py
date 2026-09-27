@@ -196,6 +196,19 @@ def test_official_hourly_explanation_is_exact(qapp, tmp_path):
         panel.close()
 
 
+def test_tooltips_use_high_contrast_dark_theme(qapp, tmp_path):
+    panel, *_ = make_panel(qapp, tmp_path)
+    try:
+        style = panel.styleSheet()
+        assert "QToolTip" in style
+        assert f"color: {POETORE_THEME.text}" in style
+        assert f"background-color: {POETORE_THEME.background}" in style
+        assert "border: 1px solid" in style
+    finally:
+        panel.stop()
+        panel.close()
+
+
 def test_long_names_keep_full_tooltip(qapp, tmp_path):
     panel, *_ = make_panel(qapp, tmp_path)
     try:

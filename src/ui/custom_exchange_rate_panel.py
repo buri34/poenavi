@@ -108,6 +108,14 @@ class CustomExchangeRatePanel(QWidget):
         self.check_timer.start()
 
     def _build_ui(self) -> None:
+        self.setStyleSheet(f"""
+            QToolTip {{
+                color: {POETORE_THEME.text};
+                background-color: {POETORE_THEME.background};
+                border: 1px solid #66706C;
+                padding: 5px;
+            }}
+        """)
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(8)
