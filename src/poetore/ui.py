@@ -65,6 +65,8 @@ from .official_exchange import (
     EXALTED,
     default_official_exchange_shadow_service,
     poe_ninja_reference_base,
+    resolve_divine_rate,
+    resolve_reference_prices,
 )
 from .metadata import related_item_group
 from .disenchant import disenchant_dust
@@ -1226,7 +1228,7 @@ class PoetoreWindow(QWidget):
         related_layout = QVBoxLayout(self.related_items_panel)
         related_layout.setContentsMargins(8, 6, 8, 6)
         related_layout.setSpacing(4)
-        related_title = QLabel("関連アイテムのpoe.ninja参考価格")
+        related_title = QLabel("関連アイテムの参考価格")
         related_title.setObjectName("relatedItemsTitle")
         related_layout.addWidget(related_title)
         self.related_items_tree = QTreeWidget()
@@ -3657,10 +3659,30 @@ class PoetoreWindow(QWidget):
             )
             for row in all_rows
         )
-        prices = default_poe_ninja_service.lookup_identities(identities, league)
-        price_by_id = {
+        try:
+            prices = default_poe_ninja_service.lookup_identities(identities, league)
+        except Exception:  # noqa: BLE001 - official prices can work without fallback
+            prices = tuple(None for _ in identities)
+        ninja_by_id = {
             str(row.get("id", "")): price for row, price in zip(all_rows, prices)
         }
+        try:
+            ninja_divine_rate = default_poe_ninja_service.divine_chaos_rate(league)
+        except Exception:  # noqa: BLE001 - optional comparison/fallback source
+            ninja_divine_rate = None
+        price_by_id = resolve_reference_prices(
+            POE1,
+            league,
+            (
+                (
+                    str(row.get("id", "")),
+                    (str(row.get("name", "")),),
+                    ninja_by_id.get(str(row.get("id", ""))),
+                )
+                for row in all_rows
+            ),
+            reference_divine_rate=ninja_divine_rate,
+        )
 
         def priced(rows):
             return tuple(
@@ -3710,10 +3732,30 @@ class PoetoreWindow(QWidget):
             str(row.get("namespace", "")), str(row.get("name", "")),
             row.get("variant"), row.get("ninja_type"),
         ) for row in all_rows)
-        prices = default_poe_ninja_service.lookup_poe2_identities(identities, league)
-        price_by_id = {
+        try:
+            prices = default_poe_ninja_service.lookup_poe2_identities(identities, league)
+        except Exception:  # noqa: BLE001 - official prices can work without fallback
+            prices = tuple(None for _ in identities)
+        ninja_by_id = {
             str(row.get("id", "")): price for row, price in zip(all_rows, prices)
         }
+        try:
+            ninja_divine_rate = default_poe_ninja_service.divine_exalted_rate(league)
+        except Exception:  # noqa: BLE001 - optional comparison/fallback source
+            ninja_divine_rate = None
+        price_by_id = resolve_reference_prices(
+            POE2,
+            league,
+            (
+                (
+                    str(row.get("id", "")),
+                    (str(row.get("name", "")),),
+                    ninja_by_id.get(str(row.get("id", ""))),
+                )
+                for row in all_rows
+            ),
+            reference_divine_rate=ninja_divine_rate,
+        )
         return {
             "query": tuple((row, price_by_id.get(str(row.get("id", ""))))
                            for row in group.get("query", ())),
@@ -3742,9 +3784,18 @@ class PoetoreWindow(QWidget):
         def run():
             try:
                 if self.poe_version == POE2:
-                    rate = default_poe_ninja_service.divine_exalted_rate(league)
+                    try:
+                        ninja_rate = (
+                            default_poe_ninja_service.divine_exalted_rate(league)
+                        )
+                    except Exception:  # noqa: BLE001 - official rate may still resolve
+                        ninja_rate = None
                 else:
-                    rate = default_poe_ninja_service.divine_chaos_rate(league)
+                    try:
+                        ninja_rate = default_poe_ninja_service.divine_chaos_rate(league)
+                    except Exception:  # noqa: BLE001 - official rate may still resolve
+                        ninja_rate = None
+                rate = resolve_divine_rate(self.poe_version, league, ninja_rate)
             except Exception:
                 self._trade_signals.divine_rate_failed.emit(key)
             else:
@@ -3762,8 +3813,9 @@ class PoetoreWindow(QWidget):
     def _show_divine_rate(self, key, rate):
         if key != self._divine_rate_key:
             return
-        rate = float(rate)
-        self.divine_rate_button.setText(f"⇄ {self._awakened_round(rate)}")
+        source = getattr(rate, "source", "poe_ninja")
+        rate_value = float(getattr(rate, "base_amount", rate))
+        self.divine_rate_button.setText(f"⇄ {self._awakened_round(rate_value)}")
         self.divine_rate_button.setEnabled(True)
         self.divine_rate_button.show()
         self.divine_rate_menu.clear()
@@ -3777,7 +3829,7 @@ class PoetoreWindow(QWidget):
         )
         for step in range(1, 10):
             divine = step / 10
-            quote_amount = self._awakened_round(rate * divine)
+            quote_amount = self._awakened_round(rate_value * divine)
             action = QWidgetAction(self.divine_rate_menu)
             action.setText(
                 f"{divine:.1f} div  →  {quote_amount} {quote_abbreviation}"
@@ -3803,6 +3855,14 @@ class PoetoreWindow(QWidget):
                 layout.addWidget(label)
             action.setDefaultWidget(row)
             self.divine_rate_menu.addAction(action)
+        source_label = (
+            "公式Currency Exchangeの直近価格"
+            if source == "official" else "poe.ninja参考価格"
+        )
+        quote_name = "Exalted" if self.poe_version == POE2 else "Chaos"
+        self.divine_rate_button.setToolTip(
+            f"Divine Orbの{quote_name}換算早見表（{source_label}）"
+        )
 
     def _hide_divine_rate(self, key=None):
         if key is not None and key != self._divine_rate_key:
@@ -3997,7 +4057,12 @@ class PoetoreWindow(QWidget):
                     label, price.display_price() if price is not None else "—",
                 ])
                 if price is not None:
-                    child.setToolTip(1, "poe.ninja参考価格")
+                    child.setToolTip(
+                        1,
+                        "カレンシー交換 直近価格"
+                        if getattr(price, "source", "poe_ninja") == "official"
+                        else "poe.ninja 参考価格",
+                    )
                 parent.addChild(child)
             parent.setExpanded(True)
         visible = self.related_items_tree.topLevelItemCount() > 0
@@ -6363,22 +6428,59 @@ class PoetoreWindow(QWidget):
             payload = {}
             try:
                 from .poe2.augment_pricing import (
-                    installed_augment_recovery, virtual_augment_cost,
+                    installed_augment_recovery,
+                    virtual_augment_cost,
                 )
-                prices = default_poe_ninja_service.lookup_poe2_augments(wanted, league)
-                exalted_chaos = default_poe_ninja_service.exalted_chaos_rate(league)
-                divine_exalted = default_poe_ninja_service.divine_exalted_rate(league)
+                try:
+                    prices = default_poe_ninja_service.lookup_poe2_augments(
+                        wanted, league,
+                    )
+                except Exception:  # noqa: BLE001 - official prices may still resolve
+                    prices = {name: None for name in wanted}
+                try:
+                    exalted_chaos = default_poe_ninja_service.exalted_chaos_rate(league)
+                except Exception:  # noqa: BLE001 - only Chaos listings need this
+                    exalted_chaos = None
+                try:
+                    ninja_divine_exalted = (
+                        default_poe_ninja_service.divine_exalted_rate(league)
+                    )
+                except Exception:  # noqa: BLE001 - optional comparison/fallback source
+                    ninja_divine_exalted = None
+                extraction = None
+                if installed_refs:
+                    try:
+                        extraction = default_poe_ninja_service.lookup_poe2_identities((
+                            ("ITEM", "Orb of Extraction", None, "Currency"),
+                        ), league)[0]
+                    except Exception:  # noqa: BLE001 - official price may still resolve
+                        extraction = None
+                requested_prices = {**prices, "Orb of Extraction": extraction}
+                resolved = resolve_reference_prices(
+                    POE2,
+                    league,
+                    (
+                        (name, (name,), price)
+                        for name, price in requested_prices.items()
+                    ),
+                    reference_divine_rate=ninja_divine_exalted,
+                )
+                divine_quote = resolve_divine_rate(
+                    POE2, league, ninja_divine_exalted,
+                )
+                divine_exalted = (
+                    divine_quote.base_amount if divine_quote is not None
+                    else ninja_divine_exalted
+                )
                 if virtual_ref:
                     payload["virtual"] = virtual_augment_cost(
-                        str(virtual_ref), virtual_count, prices.get(str(virtual_ref)),
+                        str(virtual_ref), virtual_count,
+                        resolved.get(str(virtual_ref)),
                         exalted_chaos,
                     )
                 if installed_refs:
-                    extraction = default_poe_ninja_service.lookup_poe2_identities((
-                        ("ITEM", "Orb of Extraction", None, "Currency"),
-                    ), league)[0]
                     payload["recovery"] = installed_augment_recovery(
-                        item, prices, extraction, result.listings,
+                        item, resolved, resolved.get("Orb of Extraction"), result.listings,
                         exalted_chaos=exalted_chaos,
                         divine_exalted=divine_exalted,
                     )

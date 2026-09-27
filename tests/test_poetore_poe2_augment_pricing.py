@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from src.poetore.models import ItemModifier, ParsedItem
+from src.poetore.official_exchange import ResolvedReferencePrice
 from src.poetore.poe2.augment_pricing import (
     installed_augment_recovery,
     installed_augment_refs,
@@ -38,6 +39,14 @@ def test_virtual_augment_cost_bills_added_units_and_caps_legacy():
 
 def test_virtual_augment_cost_is_unavailable_when_price_is_missing():
     assert virtual_augment_cost("Adept Rune", 1, None, 3) is None
+
+
+def test_virtual_augment_cost_uses_resolved_official_base_price():
+    price = ResolvedReferencePrice(
+        "Adept Rune", 7.5, 7.5, "exalted", "official",
+    )
+    estimate = virtual_augment_cost("Adept Rune", 2, price, None)
+    assert estimate.total_exalted == 15
 
 
 def test_installed_augment_recovery_uses_copy_source_and_cheapest_convertible_listing():

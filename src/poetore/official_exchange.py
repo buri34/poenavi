@@ -100,6 +100,30 @@ class ShadowPrice:
 
 
 @dataclass(frozen=True)
+class ResolvedReferencePrice:
+    """A UI/calculation-ready price with an explicit source."""
+
+    name: str
+    base_amount: float
+    display_amount: float
+    display_currency: str
+    source: str
+    official: ShadowPrice | None = None
+    fallback: object | None = None
+
+    def display_price(self) -> str:
+        value = self.display_amount
+        if abs(value) < 1:
+            amount = f"{value:.2f}".rstrip("0").rstrip(".")
+        elif abs(value) < 10:
+            amount = f"{value:.1f}".rstrip("0").rstrip(".")
+        else:
+            amount = str(round(value))
+        suffix = "div" if self.display_currency == "divine" else self.display_currency
+        return f"{amount} {suffix}"
+
+
+@dataclass(frozen=True)
 class _PriceTable:
     profile: RealmProfile
     league: str
@@ -851,6 +875,123 @@ def poe_ninja_reference_base(
     if currency == "divine" and divine_rate and divine_rate > 0:
         return amount * divine_rate
     return None
+
+
+def resolve_reference_prices(
+    poe_version: str,
+    league: str,
+    entries: Iterable[tuple[object, Iterable[str | None], object | None]],
+    *,
+    reference_divine_rate: float | None,
+    service: OfficialExchangeShadowService | None = None,
+) -> dict[object, ResolvedReferencePrice | None]:
+    """Resolve many prices from the local official table with ninja fallback."""
+    active_service = service or default_official_exchange_shadow_service
+    resolved: dict[object, ResolvedReferencePrice | None] = {}
+    for key, candidate_names, fallback in entries:
+        names = _candidate_names(candidate_names)
+        reference_base = poe_ninja_reference_base(
+            poe_version, fallback, divine_rate=reference_divine_rate,
+        )
+        official = active_service.lookup(
+            poe_version,
+            league,
+            names,
+            reference_base_price=reference_base,
+            reference_divine_rate=reference_divine_rate,
+        )
+        if (
+            official is not None
+            and official.status in {"accepted_direct", "accepted_divine"}
+            and official.selected_price is not None
+            and official.display_amount is not None
+        ):
+            base_amount = official.base_equivalent
+            if (
+                base_amount is None
+                and official.selected_currency == DIVINE
+                and reference_divine_rate
+                and reference_divine_rate > 0
+            ):
+                base_amount = official.selected_price * reference_divine_rate
+            display_currency = {
+                CHAOS: "chaos", DIVINE: "divine", EXALTED: "exalted",
+            }.get(official.display_currency)
+            if base_amount is not None and base_amount > 0 and display_currency:
+                resolved[key] = ResolvedReferencePrice(
+                    name=official.name,
+                    base_amount=float(base_amount),
+                    display_amount=float(official.display_amount),
+                    display_currency=display_currency,
+                    source="official",
+                    official=official,
+                    fallback=fallback,
+                )
+                continue
+        if fallback is None or reference_base is None or reference_base <= 0:
+            resolved[key] = None
+            continue
+        display_parts = getattr(fallback, "display_price_parts", None)
+        if callable(display_parts):
+            amount_text, currency = display_parts()
+            try:
+                display_amount = float(amount_text)
+            except (TypeError, ValueError):
+                display_amount = reference_base
+                currency = PROFILES[poe_version].base_label
+        else:
+            display_amount = reference_base
+            currency = PROFILES[poe_version].base_label
+        resolved[key] = ResolvedReferencePrice(
+            name=str(getattr(fallback, "name", None) or next(iter(names), "")),
+            base_amount=float(reference_base),
+            display_amount=float(display_amount),
+            display_currency=str(currency),
+            source="poe_ninja",
+            fallback=fallback,
+        )
+    return resolved
+
+
+def resolve_divine_rate(
+    poe_version: str,
+    league: str,
+    reference_rate: float | None,
+    *,
+    service: OfficialExchangeShadowService | None = None,
+) -> ResolvedReferencePrice | None:
+    """Resolve one Divine Orb in the game's base currency."""
+    active_service = service or default_official_exchange_shadow_service
+    official = active_service.lookup(
+        poe_version,
+        league,
+        ("Divine Orb",),
+        reference_base_price=reference_rate,
+        reference_divine_rate=reference_rate,
+    )
+    if (
+        official is not None
+        and official.status in {"accepted_direct", "accepted_divine"}
+        and official.base_equivalent is not None
+        and official.base_equivalent > 0
+    ):
+        return ResolvedReferencePrice(
+            name="Divine Orb",
+            base_amount=float(official.base_equivalent),
+            display_amount=float(official.base_equivalent),
+            display_currency=PROFILES[poe_version].base_label,
+            source="official",
+            official=official,
+        )
+    if reference_rate is None or reference_rate <= 0:
+        return None
+    return ResolvedReferencePrice(
+        name="Divine Orb",
+        base_amount=float(reference_rate),
+        display_amount=float(reference_rate),
+        display_currency=PROFILES[poe_version].base_label,
+        source="poe_ninja",
+    )
 
 
 default_official_exchange_shadow_service = OfficialExchangeShadowService()

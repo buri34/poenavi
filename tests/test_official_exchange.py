@@ -16,6 +16,8 @@ from src.poetore.official_exchange import (
     evaluate_route,
     latest_completed_hour,
     poe_ninja_reference_base,
+    resolve_divine_rate,
+    resolve_reference_prices,
 )
 from src.poetore.poe_ninja import PoeNinjaPrice
 from src.utils.poe_version_data import POE1, POE2
@@ -687,3 +689,73 @@ def test_poe_ninja_reference_conversion_respects_each_game_base_currency():
     )
     assert poe_ninja_reference_base(POE1, poe1, divine_rate=200) == 7
     assert poe_ninja_reference_base(POE2, poe2, divine_rate=200) == 100
+
+
+def test_resolve_reference_prices_prefers_official_and_keeps_ninja_fallback(tmp_path):
+    service, _calls = make_service(tmp_path)
+    service.sync(POE1, "Test League")
+    ninja = PoeNinjaPrice(
+        "Test Item", None, 9, (), "https://example.invalid", 200,
+    )
+
+    prices = resolve_reference_prices(
+        POE1,
+        "Test League",
+        (
+            ("official", ("Test Item",), ninja),
+            ("fallback", ("Unknown Item",), ninja),
+        ),
+        reference_divine_rate=200,
+        service=service,
+    )
+
+    assert prices["official"].source == "official"
+    assert prices["official"].base_amount == 7
+    assert prices["official"].display_price() == "7 chaos"
+    assert prices["fallback"].source == "poe_ninja"
+    assert prices["fallback"].base_amount == 9
+
+
+def test_resolve_reference_prices_converts_official_divine_to_base(tmp_path):
+    service, _calls = make_service(tmp_path)
+    service.sync(POE2, "Test League")
+    ninja = PoeNinjaPrice(
+        "Divine Only", None, 0, (), "https://example.invalid",
+        quote_amount=100, quote_currency="exalted",
+    )
+
+    price = resolve_reference_prices(
+        POE2,
+        "Test League",
+        (("item", ("Divine Only",), ninja),),
+        reference_divine_rate=200,
+        service=service,
+    )["item"]
+
+    assert price.source == "official"
+    assert price.display_price() == "0.5 div"
+    assert price.base_amount == 100
+
+
+def test_resolve_divine_rate_prefers_latest_official_rate(tmp_path):
+    service, _calls = make_service(tmp_path)
+    service.sync(POE2, "Test League")
+
+    rate = resolve_divine_rate(
+        POE2, "Test League", 180, service=service,
+    )
+
+    assert rate.source == "official"
+    assert rate.base_amount == 200
+
+
+def test_resolve_divine_rate_works_without_ninja_reference(tmp_path):
+    service, _calls = make_service(tmp_path)
+    service.sync(POE1, "Test League")
+
+    rate = resolve_divine_rate(
+        POE1, "Test League", None, service=service,
+    )
+
+    assert rate.source == "official"
+    assert rate.base_amount == 200

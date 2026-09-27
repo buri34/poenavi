@@ -40,6 +40,7 @@ from src.poetore.expedition_rewards import (
     select_retry_resolution,
     stable_reward_identities,
 )
+from src.poetore.official_exchange import ResolvedReferencePrice
 
 
 def test_expedition_diagnostics_can_be_enabled_by_environment_or_marker(tmp_path):
@@ -250,6 +251,20 @@ def test_random_currency_can_be_displayed_without_any_price_data():
     assert all(row.unit_price is None for row in rows)
     assert all(not row.highlighted for row in rows)
     assert all(not row.show_currency_icon for row in rows)
+
+
+def test_expedition_display_uses_resolved_official_exalted_price():
+    reward = RewardIdentity(10, 30, "高貴なオーブ", "Exalted Orb", True)
+    price = ResolvedReferencePrice(
+        "Exalted Orb", 1, 1, "exalted", "official",
+    )
+
+    rows = build_reward_display_rows(
+        [reward], {"Exalted Orb": price}, None,
+        vertical_offset=0, vertical_scale=1,
+    )
+
+    assert rows == [RewardPriceRow(10, 30, "1 高貴/個", 1, highlighted=True)]
 
 
 def test_expedition_price_plate_uses_requested_readability_style():

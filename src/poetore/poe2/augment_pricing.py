@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..models import ParsedItem
-from ..poe_ninja import PoeNinjaPrice
 from ..trade import PriceListing
 from .metadata import augment_entries
 from .parser import identify_installed_augments
@@ -56,12 +55,17 @@ def installed_augment_refs(item: ParsedItem) -> tuple[str, ...]:
     return refs if len(refs) == item.augment_count else ()
 
 
-def poe_ninja_price_in_exalted(
-    price: PoeNinjaPrice | None, exalted_chaos: float | None,
+def reference_price_in_exalted(
+    price: object | None, exalted_chaos: float | None,
 ) -> float | None:
-    if price is None or not exalted_chaos or exalted_chaos <= 0 or price.chaos <= 0:
+    base_amount = getattr(price, "base_amount", None)
+    if base_amount is not None:
+        value = float(base_amount)
+        return value if value > 0 else None
+    chaos = float(getattr(price, "chaos", 0) or 0)
+    if price is None or not exalted_chaos or exalted_chaos <= 0 or chaos <= 0:
         return None
-    return price.chaos / exalted_chaos
+    return chaos / exalted_chaos
 
 
 def listing_price_in_exalted(
@@ -81,11 +85,11 @@ def listing_price_in_exalted(
 
 
 def virtual_augment_cost(
-    ref_name: str, requested_count: int, price: PoeNinjaPrice | None,
+    ref_name: str, requested_count: int, price: object | None,
     exalted_chaos: float | None,
 ) -> VirtualAugmentCost | None:
     count = effective_virtual_augment_count(ref_name, requested_count)
-    unit = poe_ninja_price_in_exalted(price, exalted_chaos)
+    unit = reference_price_in_exalted(price, exalted_chaos)
     if count <= 0 or unit is None:
         return None
     return VirtualAugmentCost(ref_name, count, unit * count)
@@ -93,8 +97,8 @@ def virtual_augment_cost(
 
 def installed_augment_recovery(
     item: ParsedItem,
-    material_prices: dict[str, PoeNinjaPrice | None],
-    extraction_price: PoeNinjaPrice | None,
+    material_prices: dict[str, object | None],
+    extraction_price: object | None,
     listings: tuple[PriceListing, ...],
     *,
     exalted_chaos: float | None,
@@ -104,10 +108,10 @@ def installed_augment_recovery(
     if not refs:
         return None
     units = [
-        poe_ninja_price_in_exalted(material_prices.get(ref_name), exalted_chaos)
+        reference_price_in_exalted(material_prices.get(ref_name), exalted_chaos)
         for ref_name in refs
     ]
-    extraction = poe_ninja_price_in_exalted(extraction_price, exalted_chaos)
+    extraction = reference_price_in_exalted(extraction_price, exalted_chaos)
     listing_values = [
         value for row in listings
         if (value := listing_price_in_exalted(

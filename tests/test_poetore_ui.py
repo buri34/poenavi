@@ -198,7 +198,9 @@ from src.poetore.poe2.audit import _EQUIPMENT_FIXTURES, _RARITIES, _item as poe2
 from src.poetore.poe2.trade import build_search_query as build_poe2_search_query, poe2_trade_filters
 from src.poetore.models import ItemModifier, ParsedItem
 from src.poetore.poe_ninja import PoeNinjaPrice, default_poe_ninja_service
-from src.poetore.official_exchange import CHAOS, DIVINE, EXALTED
+from src.poetore.official_exchange import (
+    CHAOS, DIVINE, EXALTED, ResolvedReferencePrice,
+)
 from src.ui.settings_dialog import SettingsDialog
 from src.ui.styles import Styles
 
@@ -6515,6 +6517,9 @@ def test_related_items_panel_renders_materials_and_rewards(qapp):
             == "チャユラの祝福"
         )
         assert window.related_items_tree.topLevelItem(1).child(0).text(1) == "12 chaos"
+        assert window.related_items_tree.topLevelItem(1).child(0).toolTip(1) == (
+            "poe.ninja 参考価格"
+        )
         assert window.related_items_tree.minimumHeight() == 210
         assert window.related_items_tree.maximumHeight() == 210
         assert window.price_list.minimumHeight() == 224
@@ -6526,6 +6531,30 @@ def test_related_items_panel_renders_materials_and_rewards(qapp):
         window._hide_related_items(key)
         assert window.related_items_tree.minimumHeight() == 0
         assert window.price_list.minimumHeight() == 434
+    finally:
+        window.close()
+
+
+def test_related_items_panel_labels_official_exchange_price(qapp):
+    window = PoetoreWindow()
+    try:
+        key = ("item", "Standard", "", "")
+        window._poe_ninja_item_key = key
+        price = ResolvedReferencePrice(
+            "Blessing of Chayula", 14, 14, "chaos", "official",
+        )
+        window._show_related_items(key, {
+            "current": ("ITEM", "chayula's breachstone"),
+            "query": (),
+            "items": (({
+                "namespace": "ITEM", "name": "Blessing of Chayula",
+                "display_name": "チャユラの祝福",
+            }, price),),
+        })
+
+        child = window.related_items_tree.topLevelItem(0).child(0)
+        assert child.text(1) == "14 chaos"
+        assert child.toolTip(1) == "カレンシー交換 直近価格"
     finally:
         window.close()
 
@@ -6596,7 +6625,7 @@ def test_poe2_divine_rate_button_builds_exalted_conversion_menu(qapp):
         assert not window.divine_rate_button.isHidden()
         assert window.divine_rate_button.text() == "⇄ 365"
         assert window.divine_rate_button.toolTip() == (
-            "Divine OrbのExalted換算早見表"
+            "Divine OrbのExalted換算早見表（poe.ninja参考価格）"
         )
         assert [action.text() for action in window.divine_rate_menu.actions()] == [
             "0.1 div  →  36 ex",
@@ -6609,6 +6638,49 @@ def test_poe2_divine_rate_button_builds_exalted_conversion_menu(qapp):
             "0.8 div  →  292 ex",
             "0.9 div  →  328 ex",
         ]
+    finally:
+        window.close()
+
+
+def test_divine_rate_button_labels_official_exchange_rate(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    try:
+        window._divine_rate_key = "Forbidden Rites"
+        rate = ResolvedReferencePrice(
+            "Divine Orb", 492.4, 492.4, "exalted", "official",
+        )
+        window._show_divine_rate("Forbidden Rites", rate)
+
+        assert window.divine_rate_button.text() == "⇄ 492"
+        assert window.divine_rate_button.toolTip() == (
+            "Divine OrbのExalted換算早見表（公式Currency Exchangeの直近価格）"
+        )
+    finally:
+        window.close()
+
+
+def test_divine_rate_uses_official_when_ninja_is_unavailable(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2})
+    rate = ResolvedReferencePrice(
+        "Divine Orb", 492.4, 492.4, "exalted", "official",
+    )
+    try:
+        with (
+            patch.object(
+                default_poe_ninja_service,
+                "divine_exalted_rate",
+                side_effect=RuntimeError("offline"),
+            ),
+            patch("src.poetore.ui.resolve_divine_rate", return_value=rate),
+        ):
+            window._queue_divine_rate("Forbidden Rites")
+            for _ in range(100):
+                qapp.processEvents()
+                if window.divine_rate_button.text() == "⇄ 492":
+                    break
+                QTest.qWait(10)
+
+        assert window.divine_rate_button.text() == "⇄ 492"
     finally:
         window.close()
 

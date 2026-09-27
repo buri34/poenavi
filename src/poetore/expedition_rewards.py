@@ -36,7 +36,9 @@ from src.poetore.expedition_ocr_probe import (
     prepare_retry_row_images,
     reward_text_candidates,
 )
+from src.poetore.official_exchange import resolve_reference_prices
 from src.poetore.window_position import path_of_exile_client_rect
+from src.utils.poe_version_data import POE2
 
 EXPEDITION_PRICE_FONT_SIZE = 14
 EXPEDITION_PRICE_BACKGROUND = QColor(0, 0, 0, 190)
@@ -363,9 +365,17 @@ def build_reward_display_rows(
             ))
             continue
         price = prices.get(row.english_name)
-        if price is None or price.chaos <= 0 or not exalted_chaos:
+        base_amount = getattr(price, "base_amount", None)
+        if base_amount is not None:
+            value = float(base_amount)
+        elif (
+            price is not None
+            and float(getattr(price, "chaos", 0) or 0) > 0
+            and exalted_chaos
+        ):
+            value = float(price.chaos) / exalted_chaos
+        else:
             continue
-        value = price.chaos / exalted_chaos
         display_rows.append(RewardPriceRow(
             top,
             bottom,
@@ -763,23 +773,45 @@ class ExpeditionRewardController(QObject):
             if priceable:
                 from src.poetore.poe_ninja import default_poe_ninja_service
 
+                ninja_error = None
                 try:
                     prices = default_poe_ninja_service.lookup_poe2_expedition_rewards(
                         tuple(row.english_name for row in priceable), league,
                     )
+                except Exception as exc:  # noqa: BLE001 - official table may still work
+                    prices = {}
+                    ninja_error = exc
+                try:
                     exalted_chaos = default_poe_ninja_service.exalted_chaos_rate(league)
-                except Exception as exc:
-                    self._trace(f"❌ 7. poe.ninja価格取得: {exc}")
-                    raise
-                if not exalted_chaos:
-                    raise RuntimeError("高貴なオーブの換算レートを取得できませんでした。")
+                except Exception:  # noqa: BLE001 - only ninja fallback needs this
+                    exalted_chaos = None
+                try:
+                    divine_exalted = default_poe_ninja_service.divine_exalted_rate(league)
+                except Exception:  # noqa: BLE001 - optional comparison/fallback source
+                    divine_exalted = None
+                prices = resolve_reference_prices(
+                    POE2,
+                    league,
+                    (
+                        (name, (name,), prices.get(name))
+                        for name in tuple(row.english_name for row in priceable)
+                    ),
+                    reference_divine_rate=divine_exalted,
+                )
+                if ninja_error is not None:
+                    self._trace(f"⚠️ 7. poe.ninjaフォールバック取得失敗: {ninja_error}")
             priced_count = sum(
-                row.english_name in prices and prices[row.english_name].chaos > 0
+                row.english_name in prices and prices[row.english_name] is not None
+                for row in priceable
+            )
+            official_count = sum(
+                getattr(prices.get(row.english_name), "source", None) == "official"
                 for row in priceable
             )
             special_count = len(stable) - len(priceable)
             self._trace(
-                f"✅ 7. poe.ninja価格取得: {priced_count}/{len(priceable)}件（{league}）、"
+                f"✅ 7. 参考価格取得: {priced_count}/{len(priceable)}件（{league}）、"
+                f"公式 {official_count}件、"
                 f"特別表示 {special_count}件"
             )
             first = prepared[0]
@@ -793,7 +825,7 @@ class ExpeditionRewardController(QObject):
                 vertical_scale=vertical_scale,
             )
             if not shown:
-                raise RuntimeError("特定した報酬のpoe.ninja価格が見つかりませんでした。")
+                raise RuntimeError("特定した報酬の参考価格が見つかりませんでした。")
             panel_right = capture_rect.right() - client_rect.x() + 1
             self._ready.emit(
                 client_rect, shown, (client_rect.width(), client_rect.height()),
