@@ -560,17 +560,27 @@ class PoetoreModeWindow(QMainWindow):
         body_layout.setSpacing(16)
 
         header = QHBoxLayout()
+        header.setSpacing(3)
         title_box = QVBoxLayout()
         title_box.setSpacing(1)
-        title = QLabel("ぽえとれ")
-        title.setStyleSheet(
+        title_row = QHBoxLayout()
+        title_row.setContentsMargins(0, 0, 0, 0)
+        title_row.setSpacing(0)
+        title_style = (
             f"color: {POETORE_ACCENT}; font-size: 26px; font-weight: bold;"
         )
+        self.title_label = QLabel("ぽえとれ")
+        self.title_label.setStyleSheet(title_style)
+        mode_name = "PoE2" if self.poe_version == POE2 else "PoE1"
+        self.mode_label = QLabel(f"（{mode_name}モード）")
+        self.mode_label.setStyleSheet(title_style)
+        title_row.addWidget(self.title_label)
+        title_row.addWidget(self.mode_label)
         subtitle = QLabel("価格チェック・トレード支援")
         subtitle.setStyleSheet(
             f"color: {POETORE_THEME.muted_text}; font-size: 12px;"
         )
-        title_box.addWidget(title)
+        title_box.addLayout(title_row)
         title_box.addWidget(subtitle)
         header.addLayout(title_box)
         header.addStretch()

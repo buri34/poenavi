@@ -28,6 +28,40 @@ def test_rate_amount_rounds_only_each_games_base_currency():
     assert _format_rate_amount(1.25, "divine", POE2) == "1.2"
 
 
+def test_main_header_shows_current_poe_mode_with_the_title_style():
+    app = QApplication.instance() or QApplication([])
+
+    for poe_version, expected in (
+        (POE1, "（PoE1モード）"),
+        (POE2, "（PoE2モード）"),
+    ):
+        with patch(
+            "src.ui.poetore_mode_window.ConfigManager.load_config",
+            return_value={"poe_version": poe_version, "hotkeys": {}},
+        ), patch(
+            "src.ui.poetore_mode_window.GlobalHotkeyService",
+        ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+            window = PoetoreModeWindow()
+
+        window.show()
+        app.processEvents()
+        assert window.title_label.text() == "ぽえとれ"
+        assert window.mode_label.text() == expected
+        assert window.mode_label.styleSheet() == window.title_label.styleSheet()
+        assert window.mode_label.width() >= window.mode_label.sizeHint().width()
+        assert (
+            window.mode_label.font().pixelSize()
+            == window.title_label.font().pixelSize()
+        )
+        assert window.mode_label.palette().color(
+            window.mode_label.foregroundRole()
+        ) == window.title_label.palette().color(
+            window.title_label.foregroundRole()
+        )
+        window.close()
+        app.processEvents()
+
+
 def test_poetore_mode_starts_only_common_and_poetore_services():
     app = QApplication.instance() or QApplication([])
     config = {
