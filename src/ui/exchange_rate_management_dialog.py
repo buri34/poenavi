@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QScrollArea,
     QStyle,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -151,13 +152,26 @@ class ExchangeRateManagementDialog(QDialog):
         self.registered_scroll.setWidget(self.registered_widget)
         root.addWidget(self.registered_scroll)
 
+        self.preview_label = QLabel("追加するペアを選択してください")
+        self.preview_label.setObjectName("ratePairPreview")
+        self.preview_label.setWordWrap(True)
+        self.preview_label.setStyleSheet("font-weight: bold;")
+        root.addWidget(self.preview_label)
+
         search_row = QHBoxLayout()
-        search_label = QLabel("検索")
+        self.search_label = QLabel("検索")
+        self.search_label.setObjectName("ratePairSearchLabel")
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("日本語名で検索")
         self.search_edit.setAccessibleName("交換対象の日本語名検索")
+        self.search_edit.setClearButtonEnabled(True)
+        self.search_clear_button = self.search_edit.findChild(QToolButton)
+        if self.search_clear_button is not None:
+            self.search_clear_button.setObjectName("ratePairSearchClear")
+            self.search_clear_button.setToolTip("検索文字列をクリア")
+            self.search_clear_button.setAccessibleName("検索文字列をクリア")
         self.search_edit.textChanged.connect(self._filter_candidates)
-        search_row.addWidget(search_label)
+        search_row.addWidget(self.search_label)
         search_row.addWidget(self.search_edit, 1)
         root.addLayout(search_row)
 
@@ -201,10 +215,6 @@ class ExchangeRateManagementDialog(QDialog):
         selection_row.addWidget(currency_panel)
         root.addLayout(selection_row, 1)
 
-        self.preview_label = QLabel("追加するペアを選択してください")
-        self.preview_label.setWordWrap(True)
-        self.preview_label.setStyleSheet("font-weight: bold;")
-        root.addWidget(self.preview_label)
         self.validation_label = QLabel("")
         self.validation_label.setWordWrap(True)
         self.validation_label.setStyleSheet("color: #D4AAA5; font-size: 11px;")
@@ -387,8 +397,8 @@ class ExchangeRateManagementDialog(QDialog):
             name.setToolTip(name.text())
             name.setStyleSheet(f"color: {POETORE_THEME.text};")
             row_layout.addWidget(name, 1)
-            up = self._icon_button(QStyle.SP_ArrowUp, "上へ移動")
-            down = self._icon_button(QStyle.SP_ArrowDown, "下へ移動")
+            up = self._move_button("↑", "上へ移動")
+            down = self._move_button("↓", "下へ移動")
             delete = self._icon_button(QStyle.SP_TrashIcon, "削除")
             up.setObjectName(f"ratePairMoveUp{index}")
             down.setObjectName(f"ratePairMoveDown{index}")
@@ -413,6 +423,22 @@ class ExchangeRateManagementDialog(QDialog):
         button.setFixedSize(34, 34)
         button.setToolTip(label)
         button.setAccessibleName(label)
+        return button
+
+    def _move_button(self, text: str, label: str) -> QPushButton:
+        button = QPushButton(text)
+        button.setFixedSize(34, 34)
+        button.setToolTip(label)
+        button.setAccessibleName(label)
+        button.setStyleSheet("""
+            QPushButton {
+                color: #FFFFFF;
+                font-size: 20px;
+                font-weight: bold;
+                padding: 0;
+            }
+            QPushButton:disabled { color: #000000; }
+        """)
         return button
 
     def _move_up(self, index: int) -> None:

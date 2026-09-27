@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QLabel
+from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QToolButton
 
 from src.poetore.exchange_catalog import exchange_catalog_by_id, exchange_catalog_items
 from src.poetore.exchange_icon_cache import IconResult
@@ -111,6 +111,29 @@ def test_changing_category_clears_search_text(qapp, tmp_path):
         dialog.close()
 
 
+def test_search_clear_button_clears_input(qapp, tmp_path):
+    dialog, *_ = make_dialog(qapp, tmp_path)
+    try:
+        dialog.search_edit.setText("神のオーブ")
+        qapp.processEvents()
+        clear_button = dialog.findChild(QToolButton, "ratePairSearchClear")
+        assert clear_button is not None
+        assert clear_button.isVisible()
+        clear_button.click()
+        assert dialog.search_edit.text() == ""
+    finally:
+        dialog.close()
+
+
+def test_pair_prompt_is_above_search_field(qapp, tmp_path):
+    dialog, *_ = make_dialog(qapp, tmp_path)
+    try:
+        assert dialog.preview_label.objectName() == "ratePairPreview"
+        assert dialog.preview_label.geometry().bottom() < dialog.search_edit.geometry().top()
+    finally:
+        dialog.close()
+
+
 def test_add_clears_selection_stays_open_and_saves_once(qapp, tmp_path):
     catalog = exchange_catalog_by_id(POE1)
     target = next(
@@ -168,9 +191,29 @@ def test_move_and_delete_save_once_and_refresh_main_once(qapp, tmp_path):
         store.add(POE1, target, DIVINE_ORB_ID)
         saved.clear()
         dialog._render_registered_pairs()
-        assert not dialog.findChild(type(dialog.add_button), "ratePairMoveUp0").isEnabled()
-        assert not dialog.findChild(type(dialog.add_button), "ratePairMoveDown1").isEnabled()
-        dialog.findChild(type(dialog.add_button), "ratePairMoveUp1").click()
+        first_up = dialog.registered_widget.findChildren(
+            QPushButton, "ratePairMoveUp0"
+        )[-1]
+        first_down = dialog.registered_widget.findChildren(
+            QPushButton, "ratePairMoveDown0"
+        )[-1]
+        last_up = dialog.registered_widget.findChildren(
+            QPushButton, "ratePairMoveUp1"
+        )[-1]
+        last_down = dialog.registered_widget.findChildren(
+            QPushButton, "ratePairMoveDown1"
+        )[-1]
+        assert first_up.text() == "↑"
+        assert first_down.text() == "↓"
+        assert not first_up.isEnabled()
+        assert first_down.isEnabled()
+        assert last_up.isEnabled()
+        assert not last_down.isEnabled()
+        for enabled in (first_down, last_up):
+            assert "color: #FFFFFF" in enabled.styleSheet()
+        for disabled in (first_up, last_down):
+            assert "QPushButton:disabled { color: #000000; }" in disabled.styleSheet()
+        last_up.click()
         assert len(saved) == 1
         changed.assert_called_once_with()
         dialog.findChild(type(dialog.add_button), "ratePairDelete0").click()
