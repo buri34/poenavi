@@ -113,23 +113,217 @@ def test_single_real_trade_uses_reference_only_as_anomaly_detection():
 
 def test_repeated_new_price_overrides_stale_reference():
     result = evaluate_route(
-        [HourlySample(1, 78, 1), HourlySample(2, 82, 1)], 2,
+        [
+            HourlySample(HOUR_SECONDS, 78, 1),
+            HourlySample(2 * HOUR_SECONDS, 82, 1),
+        ],
+        2,
     )
     assert result.valid
-    assert result.price == 80
-    assert result.reason == "repeated_observation_overrides_reference"
+    assert result.price == 82
+    assert result.reason == "latest_observation_previous_confirmed"
 
 
-def test_single_extreme_hour_is_removed_from_three_or_more_observations():
+def test_latest_non_extreme_trade_is_used_instead_of_the_24_hour_median():
+    result = evaluate_route([
+        HourlySample(1, 7, 100),
+        HourlySample(2, 7.2, 100),
+        HourlySample(3, 7.4, 100),
+        HourlySample(4, 12.71, 146),
+    ])
+    assert result.valid
+    assert result.price == 12.71
+    assert result.reason == "latest_observation"
+    assert result.baseline_price == 7.2
+    assert result.extreme_factor < 3
+
+
+def test_unconfirmed_single_extreme_hour_is_rejected():
     result = evaluate_route([
         HourlySample(1, 7, 1),
         HourlySample(2, 7, 1),
         HourlySample(3, 7, 1),
         HourlySample(4, 388.5, 1),
     ])
+    assert not result.valid
+    assert result.price == 388.5
+    assert result.reason == "latest_extreme_unconfirmed"
+    assert result.extreme_factor == 55.5
+
+
+def test_extreme_latest_trade_is_accepted_when_previous_hour_confirms_it():
+    result = evaluate_route([
+        HourlySample(HOUR_SECONDS, 7, 1),
+        HourlySample(2 * HOUR_SECONDS, 7, 1),
+        HourlySample(3 * HOUR_SECONDS, 80, 1),
+        HourlySample(4 * HOUR_SECONDS, 100, 1),
+    ])
     assert result.valid
-    assert result.price == 7
-    assert result.excluded_hours == 1
+    assert result.price == 100
+    assert result.reason == "latest_extreme_confirmed"
+    assert result.confirmations == ("previous_hour",)
+
+
+def test_extreme_latest_trade_is_accepted_when_order_book_confirms_it():
+    result = evaluate_route([
+        HourlySample(1, 7, 1),
+        HourlySample(2, 7, 1),
+        HourlySample(3, 7, 1),
+        HourlySample(4, 100, 1, order_book_supported=True),
+    ])
+    assert result.valid
+    assert result.price == 100
+    assert result.confirmations == ("order_book",)
+
+
+def test_extreme_latest_trade_is_accepted_when_poe_ninja_confirms_it():
+    result = evaluate_route([
+        HourlySample(1, 7, 1),
+        HourlySample(2, 7, 1),
+        HourlySample(3, 7, 1),
+        HourlySample(4, 100, 1),
+    ], reference_price=80)
+    assert result.valid
+    assert result.price == 100
+    assert result.confirmations == ("poe_ninja",)
+
+
+def test_exactly_threefold_latest_trade_does_not_require_confirmation():
+    result = evaluate_route([
+        HourlySample(1, 7, 1),
+        HourlySample(2, 7, 1),
+        HourlySample(3, 7, 1),
+        HourlySample(4, 21, 1),
+    ])
+    assert result.valid
+    assert result.price == 21
+    assert result.reason == "latest_observation"
+
+
+def test_unconfirmed_extreme_direct_trade_falls_back_to_poe_ninja_not_divine(tmp_path):
+    league = "Extreme Direct"
+
+    def fetcher(profile, hour):
+        direct_price = 100 if hour == 99 * HOUR_SECONDS else 7
+        return {"markets": [
+            market(league, ITEM, profile.base_currency, 1, direct_price),
+            market(league, ITEM, DIVINE, 2, 1),
+            market(league, DIVINE, profile.base_currency, 1, 200),
+        ]}
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=fetcher,
+        clock=lambda: 100 * HOUR_SECONDS + 1,
+    )
+    service.sync(POE1, league)
+    price = service.lookup(
+        POE1,
+        league,
+        ("Test Item",),
+        reference_base_price=7,
+        reference_divine_rate=200,
+    )
+    assert price is not None
+    assert price.status == "poe_ninja_fallback"
+    assert price.selected_route == "poe_ninja"
+    assert price.selected_price == 7
+
+
+def test_tight_order_book_from_api_confirms_latest_extreme_trade(tmp_path):
+    league = "Book Confirmed"
+
+    def fetcher(profile, hour):
+        direct_price = 100 if hour == 99 * HOUR_SECONDS else 7
+        direct = market(league, ITEM, profile.base_currency, 1, direct_price)
+        if direct_price == 100:
+            direct.update({
+                "lowest_ratio": {ITEM: 1, profile.base_currency: 120},
+                "highest_ratio": {ITEM: 1, profile.base_currency: 80},
+                "lowest_stock": {ITEM: 10, profile.base_currency: 1000},
+                "highest_stock": {ITEM: 20, profile.base_currency: 2000},
+            })
+        return {"markets": [
+            direct,
+            market(league, DIVINE, profile.base_currency, 1, 200),
+        ]}
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=fetcher,
+        clock=lambda: 100 * HOUR_SECONDS + 1,
+    )
+    service.sync(POE1, league)
+    price = service.lookup(
+        POE1,
+        league,
+        ("Test Item",),
+        reference_base_price=7,
+        reference_divine_rate=200,
+    )
+    assert price is not None
+    assert price.status == "accepted_direct"
+    assert price.selected_price == 100
+    assert price.direct_base.confirmations == ("order_book",)
+
+
+@pytest.mark.parametrize(
+    "book_fields",
+    (
+        {
+            "lowest_ratio": {ITEM: 1, CHAOS: 400},
+            "highest_ratio": {ITEM: 1, CHAOS: 80},
+            "lowest_stock": {ITEM: 10, CHAOS: 1000},
+            "highest_stock": {ITEM: 20, CHAOS: 2000},
+        },
+        {
+            "lowest_ratio": {ITEM: 1, CHAOS: 17},
+            "highest_ratio": {ITEM: 1, CHAOS: 10},
+            "lowest_stock": {ITEM: 10, CHAOS: 1000},
+            "highest_stock": {ITEM: 20, CHAOS: 2000},
+        },
+        {
+            "lowest_ratio": {ITEM: 1, CHAOS: 120},
+            "highest_ratio": {ITEM: 1, CHAOS: 80},
+            "lowest_stock": {ITEM: 0, CHAOS: 1000},
+            "highest_stock": {ITEM: 20, CHAOS: 2000},
+        },
+    ),
+)
+def test_wide_distant_or_empty_order_book_does_not_confirm_extreme_trade(
+    tmp_path, book_fields,
+):
+    league = "Book Rejected"
+
+    def fetcher(profile, hour):
+        direct_price = 100 if hour == 99 * HOUR_SECONDS else 7
+        direct = market(league, ITEM, profile.base_currency, 1, direct_price)
+        if direct_price == 100:
+            direct.update(book_fields)
+        return {"markets": [
+            direct,
+            market(league, DIVINE, profile.base_currency, 1, 200),
+        ]}
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=fetcher,
+        clock=lambda: 100 * HOUR_SECONDS + 1,
+    )
+    service.sync(POE1, league)
+    price = service.lookup(
+        POE1,
+        league,
+        ("Test Item",),
+        reference_base_price=7,
+        reference_divine_rate=200,
+    )
+    assert price is not None
+    assert price.status == "poe_ninja_fallback"
+    assert "order_book" not in price.direct_base.confirmations
 
 
 @pytest.mark.parametrize(
@@ -307,6 +501,42 @@ def test_unmapped_id_is_isolated_without_breaking_other_prices(tmp_path):
     assert summary["missing_ids"] == 1
     assert service.lookup(POE1, "Test League", ("Test Item",)) is None
     assert service.lookup(POE1, "Test League", ("Divine Only",)) is not None
+
+
+def test_item_seen_only_in_unpriced_market_falls_back_without_key_error(tmp_path):
+    league = "Unsupported Quote"
+    other_quote = "Metadata/Items/Test/OtherQuote"
+    metadata = metadata_root(tmp_path)
+    for realm in ("poe1", "poe2"):
+        path = metadata / f"{realm}_item_names.json"
+        names = json.loads(path.read_text(encoding="utf-8"))
+        names[other_quote] = "Other Quote"
+        path.write_text(json.dumps(names), encoding="utf-8")
+
+    def fetcher(profile, hour):
+        return {"markets": [
+            market(league, ITEM, other_quote, 1, 3),
+            market(league, DIVINE, profile.base_currency, 1, 200),
+        ]}
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata,
+        fetcher=fetcher,
+        clock=lambda: 100 * HOUR_SECONDS + 1,
+    )
+    service.sync(POE1, league)
+    price = service.lookup(
+        POE1,
+        league,
+        ("Test Item",),
+        reference_base_price=7,
+        reference_divine_rate=200,
+    )
+    assert price is not None
+    assert price.status == "poe_ninja_fallback"
+    assert price.direct_base.reason == "no_trades"
+    assert price.direct_divine.reason == "no_trades"
 
 
 def test_swapped_golden_currency_ids_stop_table_creation(tmp_path):

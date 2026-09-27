@@ -8442,7 +8442,8 @@ def test_reference_price_panel_prefers_official_price_and_keeps_ninja_context(qa
 
         assert window.poe_ninja_price_label.text() == "カレンシー交換 直近価格"
         assert (
-            "公式Currency Exchangeの直近24時間の取引データから算出"
+            "公式Currency Exchangeで直近24時間以内に取引が成立した"
+            "最新1時間の平均価格"
             in window.poe_ninja_price_label.toolTip()
         )
         assert window.poe_ninja_price_value.text() == "1.2"

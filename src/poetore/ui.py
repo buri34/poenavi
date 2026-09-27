@@ -3924,7 +3924,8 @@ class PoetoreWindow(QWidget):
             "Chaos直接" if self.poe_version == POE1 else "Exalted直接"
         )
         self.poe_ninja_price_label.setToolTip(
-            "公式Currency Exchangeの直近24時間の取引データから算出"
+            "公式Currency Exchangeで直近24時間以内に取引が成立した"
+            "最新1時間の平均価格"
             f"（{route_label}）"
         )
         self.poe_ninja_price_value.setText(amount)

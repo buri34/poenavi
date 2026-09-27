@@ -1,9 +1,4 @@
-"""GGG Currency Exchange shadow-mode cache and price evaluation.
-
-This module deliberately never changes the user-facing price.  It maintains a
-bounded 24-hour cache, evaluates official trade candidates, and records the
-comparison with the existing poe.ninja result for Phase 2 validation.
-"""
+"""GGG Currency Exchange cache and latest-trade price evaluation."""
 
 from __future__ import annotations
 
@@ -31,7 +26,11 @@ from src.utils.poe_version_data import POE1, POE2
 HOUR_SECONDS = 3600
 WINDOW_HOURS = 24
 CACHE_MAX_LAG_HOURS = 2
-CONFLICT_FACTOR = 2.0
+EXTREME_PRICE_FACTOR = 3.0
+PREVIOUS_HOUR_CONFIRMATION_FACTOR = 1.5
+REFERENCE_CONFIRMATION_FACTOR = 2.0
+ORDER_BOOK_MAX_SPREAD_FACTOR = 3.0
+ORDER_BOOK_PRICE_TOLERANCE_FACTOR = 1.2
 LOG_MAX_BYTES = 5 * 1024 * 1024
 LOG_BACKUPS = 3
 SEARCH_LOG_DEDUPE_SECONDS = 2
@@ -65,6 +64,7 @@ class HourlySample:
     hour: int
     price: float
     item_units: int
+    order_book_supported: bool = False
 
 
 @dataclass(frozen=True)
@@ -77,6 +77,9 @@ class RouteDecision:
     excluded_hours: int
     latest_hour: int | None
     total_item_units: int
+    baseline_price: float | None = None
+    extreme_factor: float | None = None
+    confirmations: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -187,78 +190,148 @@ def _pair_price(
     return price, item_units
 
 
+def _ratio_price(values: dict, item_id: str, quote_id: str) -> float | None:
+    item_units = float(values.get(item_id, 0) or 0)
+    quote_units = float(values.get(quote_id, 0) or 0)
+    if item_units <= 0 or quote_units <= 0:
+        return None
+    price = quote_units / item_units
+    return price if math.isfinite(price) and price > 0 else None
+
+
+def _order_book_supports(
+    indexed: dict[frozenset[str], dict],
+    item_id: str,
+    quote_id: str,
+    price: float,
+) -> bool:
+    market = indexed.get(frozenset((item_id, quote_id)))
+    if market is None:
+        return False
+    ratios = [
+        _ratio_price(market.get(key) or {}, item_id, quote_id)
+        for key in ("lowest_ratio", "highest_ratio")
+    ]
+    if any(value is None for value in ratios):
+        return False
+    stocks = [
+        float((market.get(key) or {}).get(currency, 0) or 0)
+        for key in ("lowest_stock", "highest_stock")
+        for currency in (item_id, quote_id)
+    ]
+    if not stocks or min(stocks) <= 0:
+        return False
+    lower, upper = min(ratios), max(ratios)
+    if upper / lower > ORDER_BOOK_MAX_SPREAD_FACTOR:
+        return False
+    return (
+        lower / ORDER_BOOK_PRICE_TOLERANCE_FACTOR
+        <= price
+        <= upper * ORDER_BOOK_PRICE_TOLERANCE_FACTOR
+    )
+
+
+def _pair_sample(
+    indexed: dict[frozenset[str], dict],
+    item_id: str,
+    quote_id: str,
+    hour: int,
+) -> HourlySample | None:
+    result = _pair_price(indexed, item_id, quote_id)
+    if result is None:
+        return None
+    price, item_units = result
+    return HourlySample(
+        hour=hour,
+        price=price,
+        item_units=item_units,
+        order_book_supported=_order_book_supports(
+            indexed, item_id, quote_id, price,
+        ),
+    )
+
+
 def evaluate_route(
     samples: Iterable[HourlySample], reference_price: float | None = None,
-    conflict_factor: float = CONFLICT_FACTOR,
 ) -> RouteDecision:
-    values = list(samples)
+    values = sorted(samples, key=lambda sample: sample.hour)
     if not values:
         return RouteDecision(False, "no_trades", None, 0, 0, 0, None, 0)
 
-    prices = [sample.price for sample in values]
-    center = statistics.median(prices)
-    kept = list(values)
-    if len(values) >= 3:
-        log_deviations = [abs(math.log(price / center)) for price in prices]
-        mad = statistics.median(log_deviations)
-        allowed_factor = max(conflict_factor, math.exp(4 * mad))
-        kept = [
-            sample for sample in values
-            if max(sample.price / center, center / sample.price) <= allowed_factor
-        ]
+    latest = values[-1]
+    prior = values[:-1]
+    candidate = latest.price
+    baseline = statistics.median(sample.price for sample in prior) if prior else None
+    extreme_factor = (
+        max(candidate / baseline, baseline / candidate)
+        if baseline is not None and baseline > 0 else None
+    )
+    confirmations = []
+    if (
+        prior
+        and prior[-1].hour == latest.hour - HOUR_SECONDS
+        and max(candidate / prior[-1].price, prior[-1].price / candidate)
+        <= PREVIOUS_HOUR_CONFIRMATION_FACTOR
+    ):
+        confirmations.append("previous_hour")
+    if latest.order_book_supported:
+        confirmations.append("order_book")
+    reference_factor = None
+    if reference_price is not None and reference_price > 0:
+        reference_factor = max(
+            candidate / reference_price, reference_price / candidate,
+        )
+        if reference_factor <= REFERENCE_CONFIRMATION_FACTOR:
+            confirmations.append("poe_ninja")
 
-    candidate = statistics.median(sample.price for sample in kept)
-    valid = True
-    reason = "robust_median" if len(values) >= 3 else "repeated_observation"
-    if len(values) == 1:
+    is_extreme = (
+        len(prior) >= 3
+        and extreme_factor is not None
+        and extreme_factor > EXTREME_PRICE_FACTOR
+    )
+    lacks_sparse_confirmation = (
+        len(prior) < 3
+        and reference_factor is not None
+        and reference_factor > REFERENCE_CONFIRMATION_FACTOR
+        and not confirmations
+    )
+    if is_extreme and not confirmations:
+        valid = False
+        reason = "latest_extreme_unconfirmed"
+    elif lacks_sparse_confirmation:
+        valid = False
+        reason = (
+            "single_observation_reference_conflict"
+            if len(values) == 1 else "latest_sparse_reference_conflict"
+        )
+    elif is_extreme:
+        valid = True
+        reason = "latest_extreme_confirmed"
+    elif "previous_hour" in confirmations and reference_factor is not None:
+        valid = True
+        reason = "latest_observation_previous_confirmed"
+    elif len(values) == 1 and "poe_ninja" in confirmations:
+        valid = True
+        reason = "single_observation_reference_confirmed"
+    elif len(values) == 1:
+        valid = True
         reason = "single_observation_unchecked"
-        if reference_price is not None and reference_price > 0:
-            factor = max(candidate / reference_price, reference_price / candidate)
-            if factor <= conflict_factor:
-                reason = "single_observation_reference_confirmed"
-            else:
-                valid = False
-                reason = "single_observation_reference_conflict"
-    elif len(values) == 2:
-        pair_factor = max(prices[0] / prices[1], prices[1] / prices[0])
-        if pair_factor > conflict_factor:
-            if reference_price is None or reference_price <= 0:
-                valid = False
-                reason = "split_observations_unresolved"
-            else:
-                closest = min(
-                    values,
-                    key=lambda sample: max(
-                        sample.price / reference_price, reference_price / sample.price,
-                    ),
-                )
-                closest_factor = max(
-                    closest.price / reference_price, reference_price / closest.price,
-                )
-                if closest_factor <= conflict_factor:
-                    kept = [closest]
-                    candidate = closest.price
-                    reason = "split_observations_reference_selected"
-                else:
-                    valid = False
-                    reason = "split_observations_reference_conflict"
-        elif reference_price is not None and reference_price > 0:
-            factor = max(candidate / reference_price, reference_price / candidate)
-            reason = (
-                "repeated_observation_reference_confirmed"
-                if factor <= conflict_factor
-                else "repeated_observation_overrides_reference"
-            )
+    else:
+        valid = True
+        reason = "latest_observation"
 
     return RouteDecision(
         valid=valid,
         reason=reason,
         price=candidate,
         raw_hours=len(values),
-        kept_hours=len(kept),
-        excluded_hours=len(values) - len(kept),
-        latest_hour=max(sample.hour for sample in kept),
-        total_item_units=sum(sample.item_units for sample in kept),
+        kept_hours=len(values),
+        excluded_hours=0,
+        latest_hour=latest.hour,
+        total_item_units=sum(sample.item_units for sample in values),
+        baseline_price=baseline,
+        extreme_factor=extreme_factor,
+        confirmations=tuple(confirmations),
     )
 
 
@@ -272,6 +345,9 @@ def _route_dict(decision: RouteDecision) -> dict:
         "excluded_hours": decision.excluded_hours,
         "latest_hour": decision.latest_hour,
         "total_item_units": decision.total_item_units,
+        "baseline_price": decision.baseline_price,
+        "extreme_factor": decision.extreme_factor,
+        "confirmations": decision.confirmations,
     }
 
 
@@ -293,7 +369,7 @@ def _default_fetcher(profile: RealmProfile, hour: int) -> dict:
 
 
 class OfficialExchangeShadowService:
-    """Maintain bounded official-price state without affecting displayed prices."""
+    """Maintain bounded official-price state for lookup, audit, and display."""
 
     def __init__(
         self,
@@ -467,7 +543,10 @@ class OfficialExchangeShadowService:
         if item_id is None:
             return None
 
-        routes = table.series[item_id]
+        routes = table.series.get(item_id, {
+            "direct_base": (),
+            "direct_divine": (),
+        })
         divine_reference = (
             reference_base_price / reference_divine_rate
             if reference_base_price and reference_divine_rate and reference_divine_rate > 0
@@ -489,7 +568,7 @@ class OfficialExchangeShadowService:
                 factor = max(direct.price / converted, converted / direct.price)
                 if factor > 1.5:
                     warnings.append({"code": "cross_route_conflict", "factor": factor})
-        elif divine.valid:
+        elif direct.raw_hours == 0 and divine.valid:
             status = "accepted_divine"
             selected_route = "direct_divine"
             selected_price = divine.price
@@ -686,9 +765,10 @@ class OfficialExchangeShadowService:
                 for item_id in market.get("market_pair", ())
             }
             observed_ids.update(ids)
-            rate = _pair_price(indexed, profile.bridge_currency, profile.base_currency)
-            if rate:
-                rate_sample = HourlySample(hour, rate[0], rate[1])
+            rate_sample = _pair_sample(
+                indexed, profile.bridge_currency, profile.base_currency, hour,
+            )
+            if rate_sample:
                 divine_rates.append(rate_sample)
                 series[profile.bridge_currency]["direct_base"].append(rate_sample)
             # The base unit is definitionally worth one of itself.  This keeps
@@ -698,16 +778,12 @@ class OfficialExchangeShadowService:
                 HourlySample(hour, 1.0, 1)
             )
             for item_id in ids - {profile.base_currency, profile.bridge_currency}:
-                direct = _pair_price(indexed, item_id, profile.base_currency)
-                divine = _pair_price(indexed, item_id, profile.bridge_currency)
+                direct = _pair_sample(indexed, item_id, profile.base_currency, hour)
+                divine = _pair_sample(indexed, item_id, profile.bridge_currency, hour)
                 if direct:
-                    series[item_id]["direct_base"].append(
-                        HourlySample(hour, direct[0], direct[1])
-                    )
+                    series[item_id]["direct_base"].append(direct)
                 if divine:
-                    series[item_id]["direct_divine"].append(
-                        HourlySample(hour, divine[0], divine[1])
-                    )
+                    series[item_id]["direct_divine"].append(divine)
 
         missing_ids = tuple(sorted(item_id for item_id in observed_ids if item_id not in names))
         by_name: dict[str, list[str]] = defaultdict(list)
