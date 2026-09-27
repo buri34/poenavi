@@ -2752,11 +2752,17 @@ def test_poe2_augment_estimates_render_compactly_below_results(qapp):
         assert window.virtual_augment_cost_label.text() == (
             "仮挿入オーグメントの参考費用　9.2 ex"
         )
+        assert "カレンシー交換の直近価格を優先" in (
+            window.virtual_augment_cost_label.toolTip()
+        )
         assert window.installed_augment_recovery_value.text() == (
             "装着済みオーグメントの回収参考価値　11 ex"
         )
         assert window.installed_augment_recovery_comparison.text() == (
             "出品最安 6 ex より +5 ex（素材 13 − 抽出 2）"
+        )
+        assert "カレンシー交換の直近価格を優先" in (
+            window.installed_augment_recovery_panel.toolTip()
         )
         assert not window.installed_augment_recovery_hint.isHidden()
         layout = window.price_list.parentWidget().layout()
@@ -2846,6 +2852,71 @@ def test_augment_values_skip_ninja_when_official_prices_resolve(qapp, monkeypatc
         divine_rate.assert_not_called()
         exalted_rate.assert_not_called()
         assert window.virtual_augment_cost_label.text().endswith("15 ex")
+    finally:
+        window.close()
+
+
+def test_augment_recovery_uses_official_chaos_to_exalted_rate(qapp, monkeypatch):
+    class ImmediateThread:
+        def __init__(self, *, target, daemon):
+            self.target = target
+
+        def start(self):
+            self.target()
+
+    monkeypatch.setattr("src.poetore.ui.threading.Thread", ImmediateThread)
+    window = PoetoreWindow(app_config={"poe_version": POE2, "poetore": {}})
+    material = ResolvedReferencePrice(
+        "Adept Rune", 7.5, 7.5, "exalted", "official",
+    )
+    extraction = ResolvedReferencePrice(
+        "Orb of Extraction", 200, 200, "exalted", "official",
+    )
+    chaos = ResolvedReferencePrice(
+        "Chaos Orb", 70, 70, "exalted", "official",
+    )
+
+    def resolved(_version, _league, entries, **_kwargs):
+        keys = tuple(key for key, _names, _fallback in entries)
+        if keys == ("Chaos Orb",):
+            return {"Chaos Orb": chaos}
+        return {
+            key: extraction if key == "Orb of Extraction" else material
+            for key in keys
+        }
+
+    try:
+        window._auto_league = "Forbidden Rites"
+        window._parsed_item = ParsedItem(
+            "Body Armours", "normal", "", "Expert Mail", "body_armour",
+        )
+        window._search_generation = 4
+        result = PriceResult(
+            "Forbidden Rites", "qid", 1, (PriceListing(2, "chaos"),),
+        )
+        with (
+            patch.object(
+                window, "_selected_trade_league", return_value="Forbidden Rites",
+            ),
+            patch(
+                "src.poetore.poe2.augment_pricing.installed_augment_refs",
+                return_value=("Adept Rune",),
+            ),
+            patch("src.poetore.ui.resolve_reference_prices", side_effect=resolved),
+            patch(
+                "src.poetore.poe2.augment_pricing.installed_augment_recovery",
+                return_value=None,
+            ) as recovery,
+            patch.object(
+                default_poe_ninja_service, "exalted_chaos_rate",
+                side_effect=AssertionError("poe.ninja must not be fetched"),
+            ) as ninja_rate,
+        ):
+            window._queue_augment_values(result, 4)
+            qapp.processEvents()
+
+        ninja_rate.assert_not_called()
+        assert recovery.call_args.kwargs["exalted_chaos"] == pytest.approx(1 / 70)
     finally:
         window.close()
 
@@ -6387,9 +6458,9 @@ def test_poe2_exchange_item_skips_trade2_and_uses_exalted_price_icon(qapp):
         assert window._parsed_item.category == "uncut_gem"
         assert window.search_scope_notice.text() == (
             "ℹ 「カレンシー交換」の対象品です。通常トレード出品検索は行わず、"
-            "poe.ninja参考価格を表示します。"
+            "カレンシー交換の直近価格を優先して表示します。"
         )
-        assert "poe.ninja参考価格のみ" in window.price_status.text()
+        assert "カレンシー交換の直近価格を優先" in window.price_status.text()
 
         key = ("uncut",)
         window._poe_ninja_item_key = key
@@ -6422,7 +6493,7 @@ def test_poe2_fragment_exchange_item_skips_trade2(qapp):
         trade_search.assert_not_called()
         assert window._parsed_item.category == "map_fragment"
         assert "通常トレード出品検索は行わず" in window.search_scope_notice.text()
-        assert "poe.ninja参考価格のみ" in window.price_status.text()
+        assert "カレンシー交換の直近価格を優先" in window.price_status.text()
     finally:
         window.close()
 
@@ -6467,7 +6538,7 @@ def test_poe2_vorana_saga_uses_expedition_exchange_price(qapp):
         assert window._parsed_item.category == "currency"
         assert window._parsed_item.base_type == "Vorana's Saga"
         assert "「カレンシー交換」の対象品" in window.search_scope_notice.text()
-        assert "poe.ninja参考価格のみ" in window.price_status.text()
+        assert "カレンシー交換の直近価格を優先" in window.price_status.text()
         assert not window.trade_url_button.isEnabled()
     finally:
         window.close()
@@ -6493,7 +6564,7 @@ Shift+クリックでスタックから取り出す。""")
         trade_search.assert_not_called()
         assert window._parsed_item.item_class == "お告げ"
         assert window._parsed_item.base_type == "Omen of Sanctification"
-        assert "poe.ninja参考価格のみ" in window.price_status.text()
+        assert "カレンシー交換の直近価格を優先" in window.price_status.text()
         assert not window.trade_url_button.isEnabled()
     finally:
         window.close()
@@ -6521,7 +6592,7 @@ def test_poe2_augments_are_exchange_price_items(
         trade_search.assert_not_called()
         assert window._parsed_item.category == category
         assert window._parsed_item.base_type == base_type
-        assert "poe.ninja参考価格のみ" in window.price_status.text()
+        assert "カレンシー交換の直近価格を優先" in window.price_status.text()
         assert not window.trade_url_button.isEnabled()
     finally:
         window.close()
@@ -8828,6 +8899,51 @@ def test_primary_price_queue_reaches_official_display_for_poe1_exchange_item(
         assert window.poe_ninja_price_label.text() == "カレンシー交換 直近価格"
         assert window.poe_ninja_price_value.text() == "1"
         assert window.poe_ninja_currency_icon.toolTip() == "Chaos Orb"
+    finally:
+        window.close()
+
+
+def test_related_prices_resolve_even_when_primary_ninja_lookup_fails(
+    qapp, monkeypatch,
+):
+    class ImmediateThread:
+        def __init__(self, *, target, daemon):
+            self.target = target
+
+        def start(self):
+            self.target()
+
+    monkeypatch.setattr("src.poetore.ui.threading.Thread", ImmediateThread)
+    window = PoetoreWindow(app_config={"poe_version": POE1, "poetore": {}})
+    item = ParsedItem("Currency", "normal", "", "Chaos Orb", "currency")
+    related = {
+        "query": (), "items": (), "query_label": "関連素材・同系統",
+        "current": ("ITEM", "chaos orb"),
+    }
+    try:
+        window._auto_league = "Allflame"
+        window._trade_item_name = "Chaos Orb"
+        window._trade_base_type = "Chaos Orb"
+        with (
+            patch.object(
+                default_poe_ninja_service, "lookup",
+                side_effect=RuntimeError("offline"),
+            ),
+            patch.object(
+                window, "_lookup_related_items", return_value=related,
+            ) as lookup_related,
+            patch.object(window, "_queue_divine_rate"),
+            patch.object(window, "_record_official_exchange_shadow", return_value=None),
+        ):
+            emitted = []
+            window._trade_signals.related_items_ready.connect(
+                lambda emitted_key, value: emitted.append((emitted_key, value))
+            )
+            window._queue_poe_ninja_price(item)
+
+        lookup_related.assert_called_once_with(item, "Allflame")
+        assert len(emitted) == 1
+        assert emitted[0][1] == related
     finally:
         window.close()
 

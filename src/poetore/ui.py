@@ -1842,7 +1842,8 @@ class PoetoreWindow(QWidget):
         self.virtual_augment_cost_label = QLabel("")
         self.virtual_augment_cost_label.setObjectName("virtualAugmentCost")
         self.virtual_augment_cost_label.setToolTip(
-            "検索で仮挿入した素材だけをpoe.ninja参考価格で計算した目安です。"
+            "検索で仮挿入した素材のカレンシー交換の直近価格を優先し、"
+            "取得できない場合はpoe.ninja参考価格で計算した目安です。"
         )
         self.virtual_augment_cost_label.hide()
         content_layout.addWidget(self.virtual_augment_cost_label)
@@ -1864,7 +1865,9 @@ class PoetoreWindow(QWidget):
         ):
             recovery_layout.addWidget(label)
         self.installed_augment_recovery_panel.setToolTip(
-            "コピー元装備の装着素材、抽出のオーブ、出品最安をpoe.ninja参考価格で比較した目安です。"
+            "コピー元装備の装着素材と抽出のオーブはカレンシー交換の直近価格を"
+            "優先し、取得できない場合はpoe.ninja参考価格を使用して、"
+            "出品最安と比較した目安です。"
         )
         self.installed_augment_recovery_panel.hide()
         self.additional_results_button = QPushButton("次の10件を取得")
@@ -3488,6 +3491,8 @@ class PoetoreWindow(QWidget):
         if not league:
             return
 
+        self._queue_related_items(item, league, key)
+
         official_expected = (
             is_poe2_exchange_price_item(item)
             if self.poe_version == POE2
@@ -3498,7 +3503,6 @@ class PoetoreWindow(QWidget):
             if trace is not None:
                 trace.mark("poe_ninja_lookup_started")
             result = None
-            related = ()
             ninja_failed = False
             try:
                 if self.poe_version == POE2:
@@ -3514,19 +3518,12 @@ class PoetoreWindow(QWidget):
                             trade_name=trade_name,
                             trade_base_type=trade_base_type,
                         )
-                    try:
-                        related = self._lookup_poe2_related_items(item, league, result)
-                    except Exception:
-                        # Related Items is optional; keep the primary price when one
-                        # category is temporarily unavailable.
-                        related = ()
                 else:
                     result = default_poe_ninja_service.lookup(
                         item, league,
                         trade_name=trade_name,
                         trade_base_type=trade_base_type,
                     )
-                    related = self._lookup_related_items(item, league, result)
             except Exception:
                 ninja_failed = True
                 if trace is not None:
@@ -3536,7 +3533,6 @@ class PoetoreWindow(QWidget):
                     trace.mark(
                         "poe_ninja_lookup_completed",
                         matched=result is not None,
-                        related=bool(related),
                     )
 
             official = self._record_official_exchange_shadow(
@@ -3552,12 +3548,26 @@ class PoetoreWindow(QWidget):
                 )
             else:
                 self._trade_signals.poe_ninja_failed.emit(key)
+            if ninja_failed and official_accepted and trace is not None:
+                trace.mark("official_reference_price_used_after_ninja_failure")
+
+        threading.Thread(target=run, daemon=True).start()
+
+    def _queue_related_items(self, item, league: str, key) -> None:
+        """Resolve related prices independently from the primary ninja request."""
+        def run():
+            try:
+                related = (
+                    self._lookup_poe2_related_items(item, league)
+                    if self.poe_version == POE2
+                    else self._lookup_related_items(item, league)
+                )
+            except Exception:  # noqa: BLE001 - related prices are optional
+                related = None
             if related:
                 self._trade_signals.related_items_ready.emit(key, related)
             else:
                 self._trade_signals.related_items_failed.emit(key)
-            if ninja_failed and official_accepted and trace is not None:
-                trace.mark("official_reference_price_used_after_ninja_failure")
 
         threading.Thread(target=run, daemon=True).start()
 
@@ -4790,7 +4800,7 @@ class PoetoreWindow(QWidget):
         if _is_poe2_exchange_price_item(item, self.poe_version):
             self.search_scope_notice.setText(
                 "ℹ 「カレンシー交換」の対象品です。通常トレード出品検索は行わず、"
-                "poe.ninja参考価格を表示します。"
+                "カレンシー交換の直近価格を優先して表示します。"
             )
             self.search_scope_notice.show()
             self.price_button.setEnabled(True)
@@ -4864,7 +4874,8 @@ class PoetoreWindow(QWidget):
             self.additional_results_button.hide()
             self.price_list.clear()
             self.price_status.setText(
-                "「カレンシー交換」の対象品のため、poe.ninja参考価格のみ表示します。"
+                "「カレンシー交換」の対象品のため、カレンシー交換の直近価格を"
+                "優先して表示します。"
             )
             self._current_performance_trace = None
             return
@@ -6565,12 +6576,27 @@ class PoetoreWindow(QWidget):
                     str(listing.currency or "").casefold() == "chaos"
                     for listing in result.listings
                 ):
-                    try:
-                        exalted_chaos = (
-                            default_poe_ninja_service.exalted_chaos_rate(league)
-                        )
-                    except Exception:  # noqa: BLE001, S110 - non-Chaos listings still work
-                        pass
+                    chaos_quote = resolve_reference_prices(
+                        POE2,
+                        league,
+                        (("Chaos Orb", ("Chaos Orb",), None),),
+                        reference_divine_rate=None,
+                    ).get("Chaos Orb")
+                    chaos_exalted = (
+                        float(chaos_quote.base_amount)
+                        if chaos_quote is not None else 0.0
+                    )
+                    if chaos_exalted > 0:
+                        # The resolved quote is Exalted per Chaos, while the
+                        # existing listing converter expects Chaos per Exalted.
+                        exalted_chaos = 1 / chaos_exalted
+                    else:
+                        try:
+                            exalted_chaos = (
+                                default_poe_ninja_service.exalted_chaos_rate(league)
+                            )
+                        except Exception:  # noqa: BLE001, S110 - non-Chaos listings still work
+                            pass
                 if virtual_ref:
                     payload["virtual"] = virtual_augment_cost(
                         str(virtual_ref), virtual_count,

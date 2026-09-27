@@ -372,10 +372,15 @@ def resolve_expedition_reward_prices(
     except Exception as exc:  # noqa: BLE001 - official results remain usable
         return ExpeditionPriceResolution(prices, exc, unresolved)
 
-    try:
-        divine_exalted = ninja_service.divine_exalted_rate(league)
-    except Exception:  # noqa: BLE001 - base-currency fallbacks can still work
-        divine_exalted = None
+    divine_exalted = None
+    if any(
+        str(getattr(price, "quote_currency", "") or "").casefold() == "divine"
+        for price in fallbacks.values() if price is not None
+    ):
+        try:
+            divine_exalted = ninja_service.divine_exalted_rate(league)
+        except Exception:  # noqa: BLE001 - base-currency fallbacks can still work
+            divine_exalted = None
     retried = resolve_reference_prices(
         POE2,
         league,

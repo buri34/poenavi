@@ -301,7 +301,6 @@ def test_expedition_prices_fetch_ninja_for_only_unresolved_visible_rewards():
     ninja.lookup_poe2_expedition_rewards.return_value = {
         "Unknown Reward": fallback,
     }
-    ninja.divine_exalted_rate.return_value = 500
     resolved_fallback = ResolvedReferencePrice(
         "Unknown Reward", 5, 5, "exalted", "poe_ninja", fallback=fallback,
     )
@@ -326,8 +325,36 @@ def test_expedition_prices_fetch_ninja_for_only_unresolved_visible_rewards():
     ninja.lookup_poe2_expedition_rewards.assert_called_once_with(
         ("Unknown Reward",), "Test League",
     )
-    ninja.divine_exalted_rate.assert_called_once_with("Test League")
+    ninja.divine_exalted_rate.assert_not_called()
     assert resolve.call_count == 2
+
+
+def test_expedition_prices_fetch_divine_rate_only_for_divine_fallback():
+    fallback = SimpleNamespace(
+        name="Unknown Reward", quote_amount=0.5, quote_currency="divine",
+        display_price_parts=lambda: ("0.5", "divine"),
+    )
+    ninja = Mock()
+    ninja.lookup_poe2_expedition_rewards.return_value = {
+        "Unknown Reward": fallback,
+    }
+    ninja.divine_exalted_rate.return_value = 500
+    resolved_fallback = ResolvedReferencePrice(
+        "Unknown Reward", 250, 0.5, "divine", "poe_ninja", fallback=fallback,
+    )
+    with patch(
+        "src.poetore.expedition_rewards.resolve_reference_prices",
+        side_effect=[
+            {"Unknown Reward": None},
+            {"Unknown Reward": resolved_fallback},
+        ],
+    ):
+        result = resolve_expedition_reward_prices(
+            ("Unknown Reward",), "Test League", ninja_service=ninja,
+        )
+
+    assert result.prices == {"Unknown Reward": resolved_fallback}
+    ninja.divine_exalted_rate.assert_called_once_with("Test League")
 
 
 def test_expedition_price_plate_uses_requested_readability_style():
