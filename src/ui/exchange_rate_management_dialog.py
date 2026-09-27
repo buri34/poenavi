@@ -45,6 +45,9 @@ BASE_CURRENCY_IDS = (DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID)
 RATE_PAIR_DRAG_MIME = "application/x-poenavi-rate-pair-index"
 CANDIDATE_ROW_HEIGHT = 18
 CANDIDATE_ICON_SIZE = 14
+CATEGORY_ROW_HEIGHT = 20
+DIALOG_DEFAULT_HEIGHT = 760
+DIALOG_MINIMUM_HEIGHT = 670
 
 
 class _IconSignals(QObject):
@@ -217,8 +220,8 @@ class ExchangeRateManagementDialog(QDialog):
 
         self.setWindowTitle("レート表示の管理")
         self.setModal(True)
-        self.resize(820, 650)
-        self.setMinimumSize(720, 560)
+        self.resize(820, DIALOG_DEFAULT_HEIGHT)
+        self.setMinimumSize(720, DIALOG_MINIMUM_HEIGHT)
         self._build_ui()
         self._render_registered_pairs()
         self._filter_candidates()
@@ -338,6 +341,9 @@ class ExchangeRateManagementDialog(QDialog):
         self.category_list.setFixedWidth(145)
         self.category_list.addItem("すべて")
         self.category_list.addItems(category_labels(self.poe_version))
+        self.category_list.setUniformItemSizes(True)
+        for row in range(self.category_list.count()):
+            self.category_list.item(row).setSizeHint(QSize(0, CATEGORY_ROW_HEIGHT))
         self.category_list.setCurrentRow(0)
         self.category_list.currentRowChanged.connect(self._category_changed)
         item_selection_row.addWidget(self.category_list)

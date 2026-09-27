@@ -20,6 +20,9 @@ from src.ui.app_theme import POETORE_THEME
 from src.ui.exchange_rate_management_dialog import (
     CANDIDATE_ICON_SIZE,
     CANDIDATE_ROW_HEIGHT,
+    CATEGORY_ROW_HEIGHT,
+    DIALOG_DEFAULT_HEIGHT,
+    DIALOG_MINIMUM_HEIGHT,
     RATE_PAIR_DRAG_MIME,
     ExchangeRateManagementDialog,
 )
@@ -368,6 +371,26 @@ def test_candidate_rows_use_compact_uniform_height_and_icons(qapp, tmp_path):
         }
         assert heights == {CANDIDATE_ROW_HEIGHT}
         assert CANDIDATE_ROW_HEIGHT >= dialog.candidate_list.fontMetrics().height()
+    finally:
+        dialog.close()
+
+
+def test_category_rows_are_compact_and_add_section_is_taller(qapp, tmp_path):
+    dialog, *_ = make_dialog(qapp, tmp_path)
+    try:
+        qapp.processEvents()
+        assert dialog.height() == DIALOG_DEFAULT_HEIGHT
+        assert dialog.minimumHeight() == DIALOG_MINIMUM_HEIGHT
+        assert dialog.category_list.uniformItemSizes()
+        heights = {
+            dialog.category_list.visualItemRect(
+                dialog.category_list.item(row)
+            ).height()
+            for row in range(dialog.category_list.count())
+        }
+        assert heights == {CATEGORY_ROW_HEIGHT}
+        assert CATEGORY_ROW_HEIGHT >= dialog.category_list.fontMetrics().height()
+        assert dialog.item_card.height() >= 400
     finally:
         dialog.close()
 
