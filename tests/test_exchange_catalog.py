@@ -7,6 +7,7 @@ from src.poetore.exchange_catalog import (
     divination_card_icon_path,
     exchange_catalog_by_id,
     exchange_catalog_items,
+    placeholder_icon_path,
 )
 from src.poetore.official_exchange import CHAOS, DIVINE, EXALTED
 from src.utils.poe_version_data import POE1, POE2
@@ -97,7 +98,10 @@ def test_catalog_sources_are_hash_pinned_official_static_endpoints():
             assert len(source["sha256"]) == 64
 
 
-def test_distribution_includes_catalog_and_shared_card_icon():
+def test_distribution_includes_catalog_and_bundled_icons():
     script = (ROOT / "scripts/build_release.ps1").read_text(encoding="utf-8")
     assert '"--add-data", "data;data"' in script
     assert '"--add-data", "assets;assets"' in script
+    placeholder = placeholder_icon_path()
+    assert placeholder.is_file()
+    assert "<svg" in placeholder.read_text(encoding="utf-8")

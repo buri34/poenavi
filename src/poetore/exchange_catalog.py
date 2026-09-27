@@ -12,6 +12,7 @@ from src.utils.poe_version_data import POE1, POE2
 
 CATALOG_FILENAME = "exchange_item_catalog.json"
 DIVINATION_CARD_ICON = "16px-Divination_card_inventory_icon.png"
+PLACEHOLDER_ICON = "CurrencyExchangePlaceholder.svg"
 
 
 @dataclass(frozen=True)
@@ -47,6 +48,15 @@ def catalog_path() -> Path:
 
 def divination_card_icon_path() -> Path:
     relative = Path("assets") / "icons" / DIVINATION_CARD_ICON
+    for root in _runtime_roots():
+        candidate = root / relative
+        if candidate.is_file():
+            return candidate
+    return _runtime_roots()[-1] / relative
+
+
+def placeholder_icon_path() -> Path:
+    relative = Path("assets") / "icons" / PLACEHOLDER_ICON
     for root in _runtime_roots():
         candidate = root / relative
         if candidate.is_file():
