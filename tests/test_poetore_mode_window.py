@@ -14,6 +14,7 @@ from src.ui.poetore_mode_window import (
     _currency_icon_filename,
     _expedition_icon,
 )
+from src.poetore.official_exchange import ResolvedReferencePrice
 from src.utils.poe_version_data import POE2
 
 
@@ -791,7 +792,9 @@ def test_poetore_mode_renders_divine_chaos_rate():
     assert rate_layout.stretch(1) == 0
     assert rate_layout.itemAt(2).widget() is chaos_icon
     assert rate_layout.itemAt(3).spacerItem() is not None
-    assert window.rate_status.text() == "Mirage ・ poe.ninja ・ 31分ごとに自動更新"
+    assert window.rate_status.text() == (
+        "Mirage ・ poe.ninja 参考価格 ・ 31分ごとに自動更新"
+    )
     style = window.centralWidget().styleSheet()
     assert "#65FFCA" in style
     assert "#343B3E" in style
@@ -846,6 +849,67 @@ def test_poe2_poetore_mode_renders_divine_exalted_rate():
     assert window.divine_rate_value.text() == "1 = 364.9 Exalted"
     assert window.findChild(QLabel, "exaltedCurrencyIcon") is not None
     assert window.findChild(QLabel, "chaosCurrencyIcon") is None
+    window.close()
+    app.processEvents()
+
+
+def test_poetore_mode_renders_official_divine_rate_source():
+    app = QApplication.instance() or QApplication([])
+    config = {"poe_version": POE2, "hotkeys": {}}
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"), patch(
+        "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
+    ):
+        window = PoetoreModeWindow()
+
+    rate = ResolvedReferencePrice(
+        "Divine Orb", 480.6, 480.6, "exalted", "official",
+    )
+    window._show_rate("Forbidden Rites", rate)
+
+    assert window.divine_rate_value.text() == "1 = 480.6 Exalted"
+    assert window.rate_status.text() == (
+        "Forbidden Rites ・ カレンシー交換 直近価格 ・ 31分ごとに自動更新"
+    )
+    window.close()
+    app.processEvents()
+
+
+def test_poetore_mode_resolves_official_rate_with_ninja_as_fallback_reference():
+    app = QApplication.instance() or QApplication([])
+    config = {"poe_version": POE2, "hotkeys": {}}
+    rate = ResolvedReferencePrice(
+        "Divine Orb", 480.6, 480.6, "exalted", "official",
+    )
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"), patch(
+        "src.ui.poetore_mode_window.is_feature_supported", return_value=True,
+    ):
+        window = PoetoreModeWindow()
+
+    with patch(
+        "src.poetore.poe_ninja.default_poe_ninja_service.divine_exalted_rate",
+        return_value=492.4,
+    ), patch(
+        "src.poetore.official_exchange.default_official_exchange_shadow_service.sync",
+    ) as sync, patch(
+        "src.poetore.official_exchange.resolve_divine_rate", return_value=rate,
+    ) as resolve:
+        result = window._resolve_currency_rate("Forbidden Rites")
+
+    assert result is rate
+    sync.assert_called_once_with(POE2, "Forbidden Rites")
+    resolve.assert_called_once_with(POE2, "Forbidden Rites", 492.4)
     window.close()
     app.processEvents()
 

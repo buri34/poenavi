@@ -287,7 +287,7 @@ def _map_mod_manager_icon() -> QIcon:
 
 
 class _RateSignals(QObject):
-    ready = Signal(str, float)
+    ready = Signal(str, object)
     failed = Signal(str)
 
 
@@ -628,7 +628,7 @@ class PoetoreModeWindow(QMainWindow):
         body_layout.addWidget(self._rate_card(self.divine_rate_value))
 
         footer = QHBoxLayout()
-        self.rate_status = QLabel("poe.ninjaから現在のレートを取得しています")
+        self.rate_status = QLabel("カレンシー交換の直近レートを取得しています")
         self.rate_status.setStyleSheet("color: #98A39F; font-size: 11px;")
         self.rate_status.setWordWrap(True)
         footer.addWidget(self.rate_status, 1)
@@ -863,16 +863,12 @@ class PoetoreModeWindow(QMainWindow):
         if self._rate_request_running:
             return
         self._rate_request_running = True
-        self.rate_status.setText("poe.ninjaから現在のレートを取得しています")
+        self.rate_status.setText("カレンシー交換の直近レートを取得しています")
 
         def run():
             try:
-                from src.poetore.poe_ninja import default_poe_ninja_service
                 league = self._currency_rate_league()
-                if self.poe_version == POE2:
-                    rate = default_poe_ninja_service.divine_exalted_rate(league)
-                else:
-                    rate = default_poe_ninja_service.divine_chaos_rate(league)
+                rate = self._resolve_currency_rate(league)
                 if rate is None:
                     raise ValueError("Divine Orbの換算レートが見つかりませんでした。")
                 self._rate_signals.ready.emit(league, rate)
@@ -881,10 +877,38 @@ class PoetoreModeWindow(QMainWindow):
 
         threading.Thread(target=run, daemon=True).start()
 
+    def _resolve_currency_rate(self, league):
+        from src.poetore.official_exchange import (
+            default_official_exchange_shadow_service,
+            resolve_divine_rate,
+        )
+        from src.poetore.poe_ninja import default_poe_ninja_service
+
+        try:
+            if self.poe_version == POE2:
+                ninja_rate = default_poe_ninja_service.divine_exalted_rate(league)
+            else:
+                ninja_rate = default_poe_ninja_service.divine_chaos_rate(league)
+        except Exception:  # noqa: BLE001 - official rate may still resolve
+            ninja_rate = None
+        try:
+            default_official_exchange_shadow_service.sync(self.poe_version, league)
+        except Exception:  # noqa: BLE001 - keep the poe.ninja fallback available
+            pass
+        return resolve_divine_rate(self.poe_version, league, ninja_rate)
+
     def _show_rate(self, league, rate):
         self._rate_request_running = False
-        self.divine_rate_value.setText(f"1 = {rate:,.1f} {self.rate_quote_label}")
-        self.rate_status.setText(f"{league} ・ poe.ninja ・ 31分ごとに自動更新")
+        value = float(getattr(rate, "base_amount", rate))
+        source = getattr(rate, "source", "poe_ninja")
+        source_label = (
+            "カレンシー交換 直近価格"
+            if source == "official" else "poe.ninja 参考価格"
+        )
+        self.divine_rate_value.setText(f"1 = {value:,.1f} {self.rate_quote_label}")
+        self.rate_status.setText(
+            f"{league} ・ {source_label} ・ 31分ごとに自動更新"
+        )
         if self._screen_reading_enabled() and self._expedition_ready() and self._expedition_reward_controller is not None:
             self._expedition_reward_controller.warm_up()
 
