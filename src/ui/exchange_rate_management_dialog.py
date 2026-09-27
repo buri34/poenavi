@@ -17,7 +17,6 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QPushButton,
-    QRadioButton,
     QScrollArea,
     QStyle,
     QToolButton,
@@ -247,13 +246,17 @@ class ExchangeRateManagementDialog(QDialog):
             }}
             QPushButton:hover, QPushButton:focus {{ border-color: {theme.accent}; }}
             QPushButton:disabled {{ color: #66706C; border-color: #2B3133; }}
-            QRadioButton {{ color: {theme.text}; spacing: 8px; padding: 5px; }}
-            QRadioButton::indicator {{
-                width: 15px; height: 15px; border: 2px solid #77827E;
-                border-radius: 8px; background: transparent;
+            QFrame#ratePairItemCard, QFrame#ratePairCurrencyCard {{
+                background: #171C1E; border: 1px solid #3A4245;
+                border-radius: 8px;
             }}
-            QRadioButton::indicator:checked {{
-                background: {theme.accent}; border-color: {theme.accent};
+            QPushButton[rateCurrencyChoice="true"] {{
+                text-align: left; padding: 8px 10px; font-weight: normal;
+                background: #1A1F21;
+            }}
+            QPushButton[rateCurrencyChoice="true"]:checked {{
+                color: #FFFFFF; background: #245C50;
+                border-color: {theme.accent}; font-weight: bold;
             }}
         """)
         root = QVBoxLayout(self)
@@ -290,18 +293,31 @@ class ExchangeRateManagementDialog(QDialog):
         self.registered_scroll.setWidget(self.registered_widget)
         root.addWidget(self.registered_scroll)
 
-        self.preview_label = QLabel("追加するペアを選択してください")
-        self.preview_label.setObjectName("ratePairPreview")
-        self.preview_label.setWordWrap(True)
-        self.preview_label.setStyleSheet("font-weight: bold;")
-        root.addWidget(self.preview_label)
+        add_title = QLabel("追加するペア")
+        add_title.setStyleSheet("font-size: 14px; font-weight: bold;")
+        root.addWidget(add_title)
+
+        selection_row = QHBoxLayout()
+        selection_row.setSpacing(10)
+
+        self.item_card = QFrame()
+        self.item_card.setObjectName("ratePairItemCard")
+        item_card_layout = QVBoxLayout(self.item_card)
+        item_card_layout.setContentsMargins(10, 10, 10, 10)
+        item_card_layout.setSpacing(8)
+        self.item_card_title = QLabel("価格を確認するアイテム")
+        self.item_card_title.setObjectName("ratePairItemCardTitle")
+        self.item_card_title.setStyleSheet(
+            f"color: {theme.accent}; font-weight: bold;"
+        )
+        item_card_layout.addWidget(self.item_card_title)
 
         search_row = QHBoxLayout()
         self.search_label = QLabel("検索")
         self.search_label.setObjectName("ratePairSearchLabel")
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("日本語名で検索")
-        self.search_edit.setAccessibleName("交換対象の日本語名検索")
+        self.search_edit.setAccessibleName("価格を確認するアイテムの日本語名検索")
         self.search_edit.setClearButtonEnabled(True)
         self.search_clear_button = self.search_edit.findChild(QToolButton)
         if self.search_clear_button is not None:
@@ -311,63 +327,95 @@ class ExchangeRateManagementDialog(QDialog):
         self.search_edit.textChanged.connect(self._filter_candidates)
         search_row.addWidget(self.search_label)
         search_row.addWidget(self.search_edit, 1)
-        root.addLayout(search_row)
+        item_card_layout.addLayout(search_row)
 
-        selection_row = QHBoxLayout()
-        selection_row.setSpacing(10)
+        item_selection_row = QHBoxLayout()
+        item_selection_row.setSpacing(10)
         self.category_list = QListWidget()
         self.category_list.setAccessibleName("カテゴリ")
-        self.category_list.setFixedWidth(160)
+        self.category_list.setFixedWidth(145)
         self.category_list.addItem("すべて")
         self.category_list.addItems(category_labels(self.poe_version))
         self.category_list.setCurrentRow(0)
         self.category_list.currentRowChanged.connect(self._category_changed)
-        selection_row.addWidget(self.category_list)
+        item_selection_row.addWidget(self.category_list)
 
         self.candidate_list = QListWidget()
-        self.candidate_list.setAccessibleName("交換対象")
+        self.candidate_list.setAccessibleName("価格を確認するアイテム")
         self.candidate_list.setIconSize(QSize(28, 28))
         self.candidate_list.currentItemChanged.connect(self._selection_changed)
         self.candidate_list.verticalScrollBar().valueChanged.connect(
             self._request_visible_icons
         )
-        selection_row.addWidget(self.candidate_list, 1)
+        item_selection_row.addWidget(self.candidate_list, 1)
+        item_card_layout.addLayout(item_selection_row, 1)
+        selection_row.addWidget(self.item_card, 1)
 
-        currency_panel = QFrame()
-        currency_layout = QVBoxLayout(currency_panel)
-        currency_layout.setContentsMargins(8, 0, 0, 0)
-        currency_title = QLabel("基準通貨")
-        currency_title.setStyleSheet("font-weight: bold;")
-        currency_layout.addWidget(currency_title)
+        self.exchange_symbol = QLabel("⇔")
+        self.exchange_symbol.setObjectName("ratePairExchangeSymbol")
+        self.exchange_symbol.setAlignment(Qt.AlignCenter)
+        self.exchange_symbol.setFixedWidth(34)
+        self.exchange_symbol.setStyleSheet(
+            f"color: {theme.accent}; font-size: 22px; font-weight: bold;"
+        )
+        selection_row.addWidget(self.exchange_symbol)
+
+        self.currency_card = QFrame()
+        self.currency_card.setObjectName("ratePairCurrencyCard")
+        self.currency_card.setFixedWidth(165)
+        currency_layout = QVBoxLayout(self.currency_card)
+        currency_layout.setContentsMargins(10, 10, 10, 10)
+        currency_layout.setSpacing(8)
+        self.currency_card_title = QLabel("通貨")
+        self.currency_card_title.setObjectName("ratePairCurrencyCardTitle")
+        self.currency_card_title.setStyleSheet(
+            f"color: {theme.accent}; font-weight: bold;"
+        )
+        currency_layout.addWidget(self.currency_card_title)
         self.currency_group = QButtonGroup(self)
-        self.currency_buttons: dict[str, QRadioButton] = {}
+        self.currency_group.setExclusive(True)
+        self.currency_buttons: dict[str, QPushButton] = {}
         for item_id in BASE_CURRENCY_IDS:
             name = self.catalog[item_id].japanese_name
-            radio = QRadioButton(name)
-            radio.setAccessibleName(f"基準通貨 {name}")
-            self.currency_group.addButton(radio)
-            self.currency_buttons[item_id] = radio
-            currency_layout.addWidget(radio)
-            radio.toggled.connect(self._selection_changed)
+            button = QPushButton(name)
+            button.setCheckable(True)
+            button.setProperty("rateCurrencyChoice", True)
+            button.setIconSize(QSize(26, 26))
+            button.setMinimumHeight(42)
+            button.setAccessibleName(f"通貨 {name}")
+            self.currency_group.addButton(button)
+            self.currency_buttons[item_id] = button
+            currency_layout.addWidget(button)
+            button.toggled.connect(self._selection_changed)
         currency_layout.addStretch()
-        selection_row.addWidget(currency_panel)
+        selection_row.addWidget(self.currency_card)
         root.addLayout(selection_row, 1)
 
+        footer = QHBoxLayout()
+        footer.setSpacing(10)
+        footer_copy = QVBoxLayout()
+        footer_copy.setSpacing(2)
+        self.preview_label = QLabel("アイテムと通貨を選択してください")
+        self.preview_label.setObjectName("ratePairPreview")
+        self.preview_label.setWordWrap(True)
+        self.preview_label.setStyleSheet("font-weight: bold;")
+        footer_copy.addWidget(self.preview_label)
         self.validation_label = QLabel("")
         self.validation_label.setWordWrap(True)
         self.validation_label.setStyleSheet("color: #D4AAA5; font-size: 11px;")
-        root.addWidget(self.validation_label)
-
-        action_row = QHBoxLayout()
-        action_row.addStretch()
+        footer_copy.addWidget(self.validation_label)
+        footer.addLayout(footer_copy, 1)
         self.add_button = QPushButton("追加")
         self.add_button.setAccessibleName("選択したレートを追加")
         self.add_button.clicked.connect(self._add_selected_pair)
-        action_row.addWidget(self.add_button)
+        footer.addWidget(self.add_button)
         self.close_button = QPushButton("閉じる")
         self.close_button.clicked.connect(self.accept)
-        action_row.addWidget(self.close_button)
-        root.addLayout(action_row)
+        footer.addWidget(self.close_button)
+        root.addLayout(footer)
+
+        for item_id in BASE_CURRENCY_IDS:
+            self._request_item_icon(item_id)
 
     def update_available_item_ids(self, item_ids: Collection[str]) -> None:
         self._available_item_ids = frozenset(item_ids)
@@ -428,27 +476,33 @@ class ExchangeRateManagementDialog(QDialog):
         for row in range(top, min(bottom + 1, self.candidate_list.count())):
             list_item = self.candidate_list.item(row)
             item_id = list_item.data(Qt.UserRole)
-            if item_id in self._icon_requested:
-                continue
-            self._icon_requested.add(item_id)
-            catalog_item = self.catalog[item_id]
-            future = self.icon_cache.request(
-                catalog_item.icon_kind, catalog_item.icon_url
-            )
+            self._request_item_icon(item_id)
 
-            def completed(result_future, *, selected_id=item_id):
-                try:
-                    result = result_future.result()
-                except Exception:  # noqa: BLE001  # pragma: no cover
-                    return
-                self._icon_signals.ready.emit(selected_id, str(result.path))
+    def _request_item_icon(self, item_id: str) -> None:
+        if item_id in self._icon_requested:
+            return
+        self._icon_requested.add(item_id)
+        catalog_item = self.catalog[item_id]
+        future = self.icon_cache.request(
+            catalog_item.icon_kind, catalog_item.icon_url
+        )
 
-            future.add_done_callback(completed)
+        def completed(result_future, *, selected_id=item_id):
+            try:
+                result = result_future.result()
+            except Exception:  # noqa: BLE001  # pragma: no cover
+                return
+            self._icon_signals.ready.emit(selected_id, str(result.path))
+
+        future.add_done_callback(completed)
 
     def _apply_icon(self, item_id: str, path: str) -> None:
         icon = QIcon(path)
         if icon.isNull():
             return
+        currency_button = self.currency_buttons.get(item_id)
+        if currency_button is not None:
+            currency_button.setIcon(icon)
         for row in range(self.candidate_list.count()):
             item = self.candidate_list.item(row)
             if item.data(Qt.UserRole) == item_id:
@@ -473,7 +527,7 @@ class ExchangeRateManagementDialog(QDialog):
         if len(pairs) >= MAX_RATE_PAIRS:
             reason = f"登録上限の{MAX_RATE_PAIRS}件に達しています。"
         elif left_id is None or right_id is None:
-            reason = "交換対象と基準通貨を選択してください。"
+            reason = ""
         elif left_id == right_id:
             reason = "同じ通貨同士は登録できません。"
         elif any(
@@ -481,15 +535,17 @@ class ExchangeRateManagementDialog(QDialog):
             for pair in pairs
         ):
             reason = "同じ向きのペアはすでに登録されています。"
-        self.add_button.setEnabled(not reason)
+        self.add_button.setEnabled(
+            not reason and left_id is not None and right_id is not None
+        )
         self.validation_label.setText(reason)
         if left_id is not None and right_id is not None:
             self.preview_label.setText(
-                f"{self.catalog[left_id].japanese_name} → "
+                f"{self.catalog[left_id].japanese_name} ⇔ "
                 f"{self.catalog[right_id].japanese_name}"
             )
         else:
-            self.preview_label.setText("追加するペアを選択してください")
+            self.preview_label.setText("アイテムと通貨を選択してください")
 
     def _add_selected_pair(self) -> None:
         left_id = self._selected_item_id()

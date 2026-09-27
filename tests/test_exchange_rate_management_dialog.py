@@ -129,11 +129,47 @@ def test_search_clear_button_clears_input(qapp, tmp_path):
         dialog.close()
 
 
-def test_pair_prompt_is_above_search_field(qapp, tmp_path):
+def test_pair_editor_uses_two_labeled_cards_and_footer(qapp, tmp_path):
     dialog, *_ = make_dialog(qapp, tmp_path)
     try:
+        assert dialog.item_card_title.text() == "価格を確認するアイテム"
+        assert dialog.currency_card_title.text() == "通貨"
+        assert dialog.exchange_symbol.text() == "⇔"
+        assert dialog.item_card.isAncestorOf(dialog.search_edit)
+        assert all(
+            dialog.currency_card.isAncestorOf(button)
+            for button in dialog.currency_buttons.values()
+        )
         assert dialog.preview_label.objectName() == "ratePairPreview"
-        assert dialog.preview_label.geometry().bottom() < dialog.search_edit.geometry().top()
+        assert dialog.preview_label.geometry().top() > dialog.item_card.geometry().bottom()
+        assert dialog.preview_label.text() == "アイテムと通貨を選択してください"
+    finally:
+        dialog.close()
+
+
+def test_currency_choices_have_icons_and_preview_uses_bidirectional_symbol(
+    qapp, tmp_path
+):
+    catalog = exchange_catalog_by_id(POE1)
+    target = next(
+        item_id
+        for item_id in catalog
+        if item_id not in {DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID}
+    )
+    dialog, *_ = make_dialog(qapp, tmp_path, available_ids=[target])
+    try:
+        assert all(
+            not button.icon().isNull()
+            for button in dialog.currency_buttons.values()
+        )
+        select_candidate(dialog, target)
+        dialog.currency_buttons[DIVINE_ORB_ID].setChecked(True)
+        assert dialog.preview_label.text() == (
+            f"{catalog[target].japanese_name} ⇔ "
+            f"{catalog[DIVINE_ORB_ID].japanese_name}"
+        )
+        assert dialog.validation_label.text() == ""
+        assert dialog.add_button.isEnabled()
     finally:
         dialog.close()
 
