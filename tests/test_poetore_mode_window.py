@@ -16,7 +16,7 @@ from src.ui.poetore_mode_window import (
 from src.utils.poe_version_data import POE1, POE2
 
 
-def test_main_header_shows_current_poe_mode_with_the_title_style():
+def test_main_header_shows_current_poe_mode_four_pixels_smaller_than_title():
     app = QApplication.instance() or QApplication([])
 
     for poe_version, expected in (
@@ -35,11 +35,10 @@ def test_main_header_shows_current_poe_mode_with_the_title_style():
         app.processEvents()
         assert window.title_label.text() == "ぽえとれ"
         assert window.mode_label.text() == expected
-        assert window.mode_label.styleSheet() == window.title_label.styleSheet()
         assert window.mode_label.width() >= window.mode_label.sizeHint().width()
         assert (
             window.mode_label.font().pixelSize()
-            == window.title_label.font().pixelSize()
+            == window.title_label.font().pixelSize() - 4
         )
         assert window.mode_label.palette().color(
             window.mode_label.foregroundRole()
@@ -818,7 +817,7 @@ def test_main_window_height_expands_with_saved_rows_without_scroll():
             "left_item_id": catalog_ids[index],
             "right_item_id": catalog_ids[index + 10],
         }
-        for index in range(5)
+        for index in range(10)
     ]
     config = {
         "hotkeys": {},
@@ -832,9 +831,9 @@ def test_main_window_height_expands_with_saved_rows_without_scroll():
     ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
         window = PoetoreModeWindow()
 
-    assert len(window.rate_panel.row_widgets) == 5
+    assert len(window.rate_panel.row_widgets) == 10
     assert window.rate_panel.add_button is None
-    assert window.height() == 530
+    assert window.height() == 770
     window.close()
     app.processEvents()
 

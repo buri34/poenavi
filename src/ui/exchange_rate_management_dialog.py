@@ -323,7 +323,7 @@ class ExchangeRateManagementDialog(QDialog):
         pairs = self.store.pairs(self.poe_version)
         reason = ""
         if len(pairs) >= MAX_RATE_PAIRS:
-            reason = "登録上限の5件に達しています。"
+            reason = f"登録上限の{MAX_RATE_PAIRS}件に達しています。"
         elif left_id is None or right_id is None:
             reason = "交換対象と基準通貨を選択してください。"
         elif left_id == right_id:

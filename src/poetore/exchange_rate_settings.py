@@ -9,7 +9,7 @@ from typing import Any
 from src.poetore.exchange_catalog import exchange_catalog_by_id
 from src.utils.poe_version_data import POE1, POE2
 
-MAX_RATE_PAIRS = 5
+MAX_RATE_PAIRS = 10
 DIVINE_ORB_ID = "Metadata/Items/Currency/CurrencyModValues"
 CHAOS_ORB_ID = "Metadata/Items/Currency/CurrencyRerollRare"
 EXALTED_ORB_ID = "Metadata/Items/Currency/CurrencyAddModToRare"
@@ -133,7 +133,9 @@ class ExchangeRatePairStore:
         if pair in current:
             raise RatePairValidationError("duplicate", "The same directed pair is already registered")
         if len(current) >= MAX_RATE_PAIRS:
-            raise RatePairValidationError("limit", "No more than five pairs can be registered")
+            raise RatePairValidationError(
+                "limit", f"No more than {MAX_RATE_PAIRS} pairs can be registered"
+            )
         current.append(pair)
         self._replace(poe_version, current)
         return pair

@@ -567,7 +567,9 @@ class PoetoreModeWindow(QMainWindow):
         self.title_label.setStyleSheet(title_style)
         mode_name = "PoE2" if self.poe_version == POE2 else "PoE1"
         self.mode_label = QLabel(f"（{mode_name}モード）")
-        self.mode_label.setStyleSheet(title_style)
+        self.mode_label.setStyleSheet(
+            f"color: {POETORE_ACCENT}; font-size: 22px; font-weight: bold;"
+        )
         title_row.addWidget(self.title_label)
         title_row.addWidget(self.mode_label)
         subtitle = QLabel("価格チェック・トレード支援")

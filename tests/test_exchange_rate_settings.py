@@ -15,7 +15,7 @@ from src.poetore.exchange_rate_settings import (
 )
 from src.utils.poe_version_data import POE1, POE2
 
-EXTRA_IDS = tuple(f"test-item-{number}" for number in range(1, 8))
+EXTRA_IDS = tuple(f"test-item-{number}" for number in range(1, 13))
 VALID_IDS = {DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID, *EXTRA_IDS}
 
 
@@ -78,28 +78,25 @@ def test_pairs_are_scoped_by_poe_version_not_league():
     assert store.pairs(POE2) == (RatePair(DIVINE_ORB_ID, EXALTED_ORB_ID),)
 
 
-def test_normalize_drops_invalid_unknown_same_and_duplicate_then_limits_to_five():
+def test_normalize_drops_invalid_unknown_same_and_duplicate_then_limits_to_ten():
     raw = [
         None,
         {"left_item_id": EXTRA_IDS[0]},
         {"left_item_id": 1, "right_item_id": EXTRA_IDS[1]},
         {"left_item_id": "unknown", "right_item_id": EXTRA_IDS[1]},
         {"left_item_id": EXTRA_IDS[0], "right_item_id": EXTRA_IDS[0]},
+        *[
+            RatePair(EXTRA_IDS[index], EXTRA_IDS[index + 1]).to_config()
+            for index in range(11)
+        ],
         {"left_item_id": EXTRA_IDS[0], "right_item_id": EXTRA_IDS[1]},
-        {"left_item_id": EXTRA_IDS[0], "right_item_id": EXTRA_IDS[1]},
-        {"left_item_id": EXTRA_IDS[1], "right_item_id": EXTRA_IDS[0]},
-        {"left_item_id": EXTRA_IDS[1], "right_item_id": EXTRA_IDS[2]},
-        {"left_item_id": EXTRA_IDS[2], "right_item_id": EXTRA_IDS[3]},
-        {"left_item_id": EXTRA_IDS[3], "right_item_id": EXTRA_IDS[4]},
-        {"left_item_id": EXTRA_IDS[4], "right_item_id": EXTRA_IDS[5]},
     ]
 
     assert normalize_rate_pairs(raw, VALID_IDS) == (
-        RatePair(EXTRA_IDS[0], EXTRA_IDS[1]),
-        RatePair(EXTRA_IDS[1], EXTRA_IDS[0]),
-        RatePair(EXTRA_IDS[1], EXTRA_IDS[2]),
-        RatePair(EXTRA_IDS[2], EXTRA_IDS[3]),
-        RatePair(EXTRA_IDS[3], EXTRA_IDS[4]),
+        *(
+            RatePair(EXTRA_IDS[index], EXTRA_IDS[index + 1])
+            for index in range(10)
+        ),
     )
     assert normalize_rate_pairs("broken", VALID_IDS) == ()
 
@@ -132,15 +129,18 @@ def test_add_rejects_invalid_pair_without_saving(left, right, code):
     assert saved == []
 
 
-def test_add_rejects_sixth_pair_without_saving():
+def test_add_rejects_eleventh_pair_without_saving():
     config = {"poetore": {"exchange_rate_pairs": {
-        POE1: [RatePair(EXTRA_IDS[index], EXTRA_IDS[index + 1]).to_config() for index in range(5)],
+        POE1: [
+            RatePair(EXTRA_IDS[index], EXTRA_IDS[index + 1]).to_config()
+            for index in range(10)
+        ],
         POE2: [],
     }}}
     store, _, saved = make_store(config)
 
     with pytest.raises(RatePairValidationError) as error:
-        store.add(POE1, EXTRA_IDS[5], EXTRA_IDS[6])
+        store.add(POE1, EXTRA_IDS[10], EXTRA_IDS[11])
 
     assert error.value.code == "limit"
     assert saved == []

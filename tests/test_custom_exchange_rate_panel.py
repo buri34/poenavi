@@ -108,14 +108,16 @@ def test_four_significant_digits_and_trailing_zeroes(value, expected):
     assert format_significant_rate(value) == expected
 
 
-@pytest.mark.parametrize("count", (0, 1, 4, 5))
-def test_zero_through_five_rows_have_no_scroll_and_plus_until_limit(qapp, tmp_path, count):
+@pytest.mark.parametrize("count", (0, 1, 9, 10))
+def test_zero_through_ten_rows_have_no_scroll_and_plus_until_limit(
+    qapp, tmp_path, count,
+):
     ids = list(exchange_catalog_by_id(POE1))
     pairs = [RatePair(ids[index], ids[index + 10]) for index in range(count)]
     panel, *_ = make_panel(qapp, tmp_path, pairs=pairs)
     try:
         assert len(panel.row_widgets) == count
-        assert panel.add_button is not None if count < 5 else panel.add_button is None
+        assert panel.add_button is not None if count < 10 else panel.add_button is None
         assert panel.findChildren(type(panel)) == []
     finally:
         panel.stop()

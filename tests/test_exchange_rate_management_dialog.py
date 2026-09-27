@@ -138,7 +138,7 @@ def test_same_pair_same_currency_and_limit_have_nearby_reasons(qapp, tmp_path):
     extras = [
         item_id for item_id in catalog
         if item_id not in {DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID}
-    ][:5]
+    ][:9]
     dialog, store, *_ = make_dialog(qapp, tmp_path, available_ids=extras)
     try:
         select_candidate(dialog, DIVINE_ORB_ID)
@@ -146,10 +146,12 @@ def test_same_pair_same_currency_and_limit_have_nearby_reasons(qapp, tmp_path):
         assert "すでに登録" in dialog.validation_label.text()
         dialog.currency_buttons[DIVINE_ORB_ID].setChecked(True)
         assert "同じ通貨" in dialog.validation_label.text()
-        for item_id in extras[:4]:
+        for item_id in extras[:9]:
             store.add(POE1, item_id, DIVINE_ORB_ID)
         dialog._render_registered_pairs()
         assert "上限" in dialog.validation_label.text()
+        assert "10件" in dialog.validation_label.text()
+        assert dialog.title_label.text() == "レート表示の管理（10 / 10）"
         assert not dialog.add_button.isEnabled()
     finally:
         dialog.close()
