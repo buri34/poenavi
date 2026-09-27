@@ -124,6 +124,39 @@ class ResolvedReferencePrice:
 
 
 @dataclass(frozen=True)
+class DirectPairPrice:
+    """A direct-market-only rate for one left item in right-item units."""
+
+    status: str
+    left_item_id: str
+    right_item_id: str
+    price: float | None
+    end_hour: int | None
+    decision: RouteDecision | None = None
+
+
+@dataclass(frozen=True)
+class ExchangeSyncState:
+    poe_version: str
+    league: str
+    end_hour: int | None
+    latest_hour: int
+    lag_hours: int | None
+    syncing: bool
+    available: bool
+
+
+@dataclass(frozen=True)
+class SyncCheckResult:
+    status: str
+    poe_version: str
+    league: str
+    end_hour: int | None
+    fetched: int = 0
+    error_type: str | None = None
+
+
+@dataclass(frozen=True)
 class _PriceTable:
     profile: RealmProfile
     league: str
@@ -131,6 +164,8 @@ class _PriceTable:
     names_by_id: dict[str, str]
     ids_by_name: dict[str, str]
     series: dict[str, dict[str, tuple[HourlySample, ...]]]
+    direct_pair_series: dict[tuple[str, str], tuple[HourlySample, ...]]
+    observed_ids: frozenset[str]
     divine_rate_samples: tuple[HourlySample, ...]
     missing_ids: tuple[str, ...]
     ambiguous_names: tuple[str, ...]
@@ -412,6 +447,9 @@ class OfficialExchangeShadowService:
         self._tables: dict[tuple[str, str], _PriceTable] = {}
         self._active_syncs: set[tuple[str, str]] = set()
         self._sync_callbacks: dict[tuple[str, str], list[Callable[[dict], None]]] = {}
+        self._check_callbacks: dict[
+            tuple[str, str], list[Callable[[SyncCheckResult], None]]
+        ] = {}
         self._last_search_fingerprint: tuple | None = None
         self._last_search_logged_at = 0.0
         self._lock = threading.RLock()
@@ -426,31 +464,60 @@ class OfficialExchangeShadowService:
         league: str | None,
         *,
         on_complete: Callable[[dict], None] | None = None,
+        on_checked: Callable[[SyncCheckResult], None] | None = None,
     ) -> bool:
         if poe_version not in PROFILES or not league or re.search(r"\(PL\d+\)$", league):
+            if on_checked is not None:
+                self._notify_check_callback(on_checked, SyncCheckResult(
+                    "failed", poe_version, league or "", None,
+                    error_type="invalid_request",
+                ))
             return False
         key = (poe_version, league)
+        no_new_result = None
         with self._lock:
             if key in self._active_syncs:
                 if on_complete is not None:
                     callbacks = self._sync_callbacks.setdefault(key, [])
                     if on_complete not in callbacks:
                         callbacks.append(on_complete)
+                if on_checked is not None:
+                    callbacks = self._check_callbacks.setdefault(key, [])
+                    if on_checked not in callbacks:
+                        callbacks.append(on_checked)
                 return False
             current = self._tables.get(key)
             if current is not None and current.end_hour >= latest_completed_hour(self._clock()):
-                return False
-            if on_complete is not None:
-                callbacks = self._sync_callbacks.setdefault(key, [])
-                if on_complete not in callbacks:
-                    callbacks.append(on_complete)
-            self._active_syncs.add(key)
+                no_new_result = SyncCheckResult(
+                    "no_new_data", poe_version, league, current.end_hour,
+                )
+            if no_new_result is None:
+                if on_complete is not None:
+                    callbacks = self._sync_callbacks.setdefault(key, [])
+                    if on_complete not in callbacks:
+                        callbacks.append(on_complete)
+                if on_checked is not None:
+                    callbacks = self._check_callbacks.setdefault(key, [])
+                    if on_checked not in callbacks:
+                        callbacks.append(on_checked)
+                self._active_syncs.add(key)
+                previous_end_hour = current.end_hour if current is not None else None
+
+        if no_new_result is not None:
+            if on_checked is not None:
+                self._notify_check_callback(on_checked, no_new_result)
+            return False
 
         def run() -> None:
             result = None
+            check_result = None
             try:
                 result = self.sync(poe_version, league)
             except Exception as exc:  # noqa: BLE001 - daemon boundary must contain failures
+                check_result = SyncCheckResult(
+                    "failed", poe_version, league, previous_end_hour,
+                    error_type=type(exc).__name__,
+                )
                 self._append_log({
                     "event": "sync_failed",
                     "poe_version": poe_version,
@@ -462,15 +529,41 @@ class OfficialExchangeShadowService:
                 with self._lock:
                     self._active_syncs.discard(key)
                     callbacks = tuple(self._sync_callbacks.pop(key, ()))
+                    check_callbacks = tuple(self._check_callbacks.pop(key, ()))
             if result is not None:
+                check_result = SyncCheckResult(
+                    "updated" if previous_end_hour != result["end_hour"] else "no_new_data",
+                    poe_version,
+                    league,
+                    result["end_hour"],
+                    fetched=result["fetched"],
+                )
                 for callback in callbacks:
-                    try:
-                        callback(result)
-                    except Exception:  # noqa: BLE001 - observers cannot fail sync
-                        continue
+                    self._notify_completion_callback(callback, result)
+            if check_result is not None:
+                for callback in check_callbacks:
+                    self._notify_check_callback(callback, check_result)
 
         threading.Thread(target=run, daemon=True).start()
         return True
+
+    @staticmethod
+    def _notify_completion_callback(
+        callback: Callable[[dict], None], result: dict,
+    ) -> None:
+        try:
+            callback(result)
+        except Exception:  # noqa: BLE001, S110 - observers cannot fail sync
+            pass
+
+    @staticmethod
+    def _notify_check_callback(
+        callback: Callable[[SyncCheckResult], None], result: SyncCheckResult,
+    ) -> None:
+        try:
+            callback(result)
+        except Exception:  # noqa: BLE001, S110 - observers cannot fail sync
+            pass
 
     def sync(self, poe_version: str, league: str, *, now: float | None = None) -> dict:
         profile = PROFILES[poe_version]
@@ -635,6 +728,78 @@ class OfficialExchangeShadowService:
             warnings=tuple(warnings),
         )
 
+    def direct_pair(
+        self,
+        poe_version: str,
+        league: str,
+        left_item_id: str,
+        right_item_id: str,
+        *,
+        now: float | None = None,
+    ) -> DirectPairPrice:
+        """Resolve only real trades for the requested directed market pair."""
+        table = self._table_for(poe_version, league, now=now)
+        if table is None or left_item_id == right_item_id:
+            return DirectPairPrice(
+                "unavailable", left_item_id, right_item_id, None, None,
+            )
+
+        decision = evaluate_route(
+            table.direct_pair_series.get((left_item_id, right_item_id), ())
+        )
+        if decision.raw_hours == 0:
+            status = "no_trades"
+            price = None
+        elif not decision.valid:
+            status = "unconfirmed"
+            price = None
+        else:
+            status = "available"
+            price = decision.price
+        return DirectPairPrice(
+            status,
+            left_item_id,
+            right_item_id,
+            price,
+            table.end_hour,
+            decision,
+        )
+
+    def exchange_item_ids(
+        self, poe_version: str, league: str, *, now: float | None = None,
+    ) -> frozenset[str]:
+        """Return IDs observed anywhere in the current 24-hour market table."""
+        table = self._table_for(poe_version, league, now=now)
+        return table.observed_ids if table is not None else frozenset()
+
+    def sync_state(
+        self, poe_version: str, league: str, *, now: float | None = None,
+    ) -> ExchangeSyncState:
+        current_time = self._clock() if now is None else now
+        latest = latest_completed_hour(current_time)
+        key = (poe_version, league)
+        with self._lock:
+            table = self._tables.get(key)
+            syncing = key in self._active_syncs
+        end_hour = table.end_hour if table is not None else None
+        lag_hours = (
+            (latest - end_hour) // HOUR_SECONDS if end_hour is not None else None
+        )
+        available = bool(
+            table is not None
+            and lag_hours is not None
+            and 0 <= lag_hours <= CACHE_MAX_LAG_HOURS
+        )
+        return ExchangeSyncState(
+            poe_version,
+            league,
+            end_hour,
+            latest,
+            lag_hours,
+            syncing,
+            available,
+        )
+
     def record_search(
         self,
         poe_version: str,
@@ -775,6 +940,7 @@ class OfficialExchangeShadowService:
         series: dict[str, dict[str, list[HourlySample]]] = defaultdict(
             lambda: {"direct_base": [], "direct_divine": []}
         )
+        direct_pairs: dict[tuple[str, str], list[HourlySample]] = defaultdict(list)
         divine_rates: list[HourlySample] = []
         observed_ids: set[str] = set()
         for path in paths:
@@ -789,6 +955,17 @@ class OfficialExchangeShadowService:
                 for item_id in market.get("market_pair", ())
             }
             observed_ids.update(ids)
+            for market_pair in indexed:
+                if len(market_pair) != 2:
+                    continue
+                left_item_id, right_item_id = sorted(market_pair)
+                for left_id, right_id in (
+                    (left_item_id, right_item_id),
+                    (right_item_id, left_item_id),
+                ):
+                    sample = _pair_sample(indexed, left_id, right_id, hour)
+                    if sample is not None:
+                        direct_pairs[(left_id, right_id)].append(sample)
             rate_sample = _pair_sample(
                 indexed, profile.bridge_currency, profile.base_currency, hour,
             )
@@ -831,6 +1008,10 @@ class OfficialExchangeShadowService:
             names_by_id={item_id: names[item_id] for item_id in safe_ids},
             ids_by_name=ids_by_name,
             series=frozen_series,
+            direct_pair_series={
+                pair: tuple(samples) for pair, samples in direct_pairs.items()
+            },
+            observed_ids=frozenset(observed_ids),
             divine_rate_samples=tuple(divine_rates),
             missing_ids=missing_ids,
             ambiguous_names=ambiguous,

@@ -629,6 +629,7 @@ def test_queue_sync_returns_before_slow_network_work_finishes(tmp_path):
     started = time.perf_counter()
     assert service.queue_sync(POE1, "Test League")
     assert time.perf_counter() - started < 0.1
+    assert service.sync_state(POE1, "Test League").syncing
     gate.set()
     deadline = time.monotonic() + 2
     while service.cache_file_count(POE1, "Test League") < WINDOW_HOURS:
@@ -681,6 +682,203 @@ def test_search_lookup_does_not_call_network(tmp_path):
     event = json.loads(service.log_path.read_text(encoding="utf-8").splitlines()[-1])
     assert event["event"] == "search_shadow"
     assert event["status"] == "accepted_direct"
+
+
+def test_direct_pair_and_reverse_are_reciprocal(tmp_path):
+    service, _calls = make_service(tmp_path)
+    service.sync(POE1, "Test League")
+
+    forward = service.direct_pair(POE1, "Test League", ITEM, CHAOS)
+    reverse = service.direct_pair(POE1, "Test League", CHAOS, ITEM)
+
+    assert forward.status == "available"
+    assert reverse.status == "available"
+    assert forward.price == 7
+    assert reverse.price == pytest.approx(1 / 7)
+    assert forward.price * reverse.price == pytest.approx(1)
+
+
+def test_direct_pair_does_not_use_bridge_currency_cross_rate(tmp_path):
+    league = "No Cross"
+
+    def fetcher(profile, hour):
+        return {"markets": [
+            market(league, ITEM, DIVINE, 2, 1),
+            market(league, DIVINE, profile.base_currency, 1, 200),
+        ]}
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=fetcher,
+        clock=lambda: 100 * HOUR_SECONDS + 1,
+    )
+    service.sync(POE1, league)
+
+    result = service.direct_pair(POE1, league, ITEM, CHAOS)
+
+    assert result.status == "no_trades"
+    assert result.price is None
+    assert service.direct_pair(POE1, league, ITEM, DIVINE).price == 0.5
+
+
+def test_order_book_without_real_volume_is_not_an_available_pair(tmp_path):
+    league = "Book Only"
+
+    def fetcher(profile, hour):
+        book_only = market(league, ITEM, profile.base_currency, 0, 0)
+        book_only.update({
+            "lowest_ratio": {ITEM: 1, profile.base_currency: 7},
+            "highest_ratio": {ITEM: 1, profile.base_currency: 7},
+            "lowest_stock": {ITEM: 10, profile.base_currency: 70},
+            "highest_stock": {ITEM: 10, profile.base_currency: 70},
+        })
+        return {"markets": [book_only]}
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=fetcher,
+        clock=lambda: 100 * HOUR_SECONDS + 1,
+    )
+    service.sync(POE1, league)
+
+    assert service.direct_pair(POE1, league, ITEM, CHAOS).status == "no_trades"
+
+
+def test_unconfirmed_extreme_pair_is_distinct_from_no_trades(tmp_path):
+    league = "Unconfirmed"
+
+    def fetcher(profile, hour):
+        price = 100 if hour == 99 * HOUR_SECONDS else 7
+        return {"markets": [market(league, ITEM, profile.base_currency, 1, price)]}
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=fetcher,
+        clock=lambda: 100 * HOUR_SECONDS + 1,
+    )
+    service.sync(POE1, league)
+
+    result = service.direct_pair(POE1, league, ITEM, CHAOS)
+
+    assert result.status == "unconfirmed"
+    assert result.price is None
+    assert result.decision.price == 100
+    assert result.decision.reason == "latest_extreme_unconfirmed"
+
+
+def test_direct_pair_state_and_observed_ids_require_a_current_table(tmp_path):
+    service, _calls = make_service(tmp_path)
+
+    before = service.sync_state(POE1, "Test League")
+    assert not before.available
+    assert before.end_hour is None
+    assert service.direct_pair(POE1, "Test League", ITEM, CHAOS).status == "unavailable"
+    assert service.exchange_item_ids(POE1, "Test League") == frozenset()
+
+    service.sync(POE1, "Test League")
+    current = service.sync_state(POE1, "Test League")
+    assert current.available
+    assert current.end_hour == 99 * HOUR_SECONDS
+    assert current.lag_hours == 0
+    assert {ITEM, CHAOS, DIVINE}.issubset(
+        service.exchange_item_ids(POE1, "Test League")
+    )
+
+    stale_now = 103 * HOUR_SECONDS + 1
+    stale = service.sync_state(POE1, "Test League", now=stale_now)
+    assert not stale.available
+    assert stale.lag_hours == 3
+    assert service.direct_pair(
+        POE1, "Test League", ITEM, CHAOS, now=stale_now,
+    ).status == "unavailable"
+
+
+def test_same_completed_hour_check_fetches_nothing_and_reports_no_new_data(tmp_path):
+    service, calls = make_service(tmp_path)
+    service.sync(POE1, "Test League")
+    calls.clear()
+    checked = []
+
+    started = service.queue_sync(
+        POE1, "Test League", on_checked=checked.append,
+    )
+
+    assert not started
+    assert calls == []
+    assert len(checked) == 1
+    assert checked[0].status == "no_new_data"
+    assert checked[0].end_hour == 99 * HOUR_SECONDS
+
+
+def test_new_completed_hour_check_fetches_one_and_reports_updated(tmp_path):
+    now = [100 * HOUR_SECONDS + 1]
+    service, calls = make_service(tmp_path, clock=lambda: now[0])
+    service.sync(POE1, "Test League")
+    calls.clear()
+    now[0] += HOUR_SECONDS
+    completed = threading.Event()
+    checked = []
+
+    def on_checked(result):
+        checked.append(result)
+        completed.set()
+
+    assert service.queue_sync(POE1, "Test League", on_checked=on_checked)
+    assert completed.wait(timeout=2)
+
+    assert len(calls) == 1
+    assert checked[0].status == "updated"
+    assert checked[0].fetched == 1
+    assert checked[0].end_hour == 100 * HOUR_SECONDS
+
+
+def test_failed_check_reports_failure_and_next_check_retries(tmp_path):
+    now = [100 * HOUR_SECONDS + 1]
+    fail = [False]
+    calls = []
+
+    def fetcher(profile, hour):
+        calls.append(hour)
+        if fail[0]:
+            raise OSError("temporary")
+        return payload("Test League", profile, hour)
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=fetcher,
+        clock=lambda: now[0],
+    )
+    service.sync(POE1, "Test League")
+    calls.clear()
+    now[0] += HOUR_SECONDS
+    fail[0] = True
+    failed = threading.Event()
+    results = []
+
+    def on_failed(result):
+        results.append(result)
+        failed.set()
+
+    assert service.queue_sync(POE1, "Test League", on_checked=on_failed)
+    assert failed.wait(timeout=2)
+    assert results[-1].status == "failed"
+    assert results[-1].error_type == "OSError"
+
+    fail[0] = False
+    recovered = threading.Event()
+
+    def on_recovered(result):
+        results.append(result)
+        recovered.set()
+
+    assert service.queue_sync(POE1, "Test League", on_checked=on_recovered)
+    assert recovered.wait(timeout=2)
+    assert results[-1].status == "updated"
+    assert calls.count(100 * HOUR_SECONDS) == 2
 
 
 def test_search_log_drops_none_names_and_suppresses_immediate_duplicates(tmp_path):
