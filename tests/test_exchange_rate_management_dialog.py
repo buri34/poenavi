@@ -5,7 +5,14 @@ from unittest.mock import Mock
 import pytest
 from PySide6.QtCore import QMimeData, QPoint, QPointF, QSize, Qt
 from PySide6.QtGui import QDropEvent
-from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QToolButton
+from PySide6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QPushButton,
+    QStyle,
+    QStyleOptionViewItem,
+    QToolButton,
+)
 
 from src.poetore.exchange_catalog import exchange_catalog_by_id, exchange_catalog_items
 from src.poetore.exchange_icon_cache import IconResult
@@ -46,13 +53,22 @@ class FakeIconCache:
         return future
 
 
-def make_dialog(qapp, tmp_path, *, available_ids=None, config=None):
+def make_dialog(
+    qapp,
+    tmp_path,
+    *,
+    available_ids=None,
+    available_item_ids_getter=None,
+    config=None,
+):
     catalog = exchange_catalog_by_id(POE1)
     ids = list(catalog)
-    available_ids = available_ids or ids[:40]
-    for required in (DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID):
-        if required not in available_ids:
-            available_ids.append(required)
+    if available_ids is None:
+        available_ids = ids[:40]
+    if available_ids:
+        for required in (DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID):
+            if required not in available_ids:
+                available_ids.append(required)
     config = config or {"poetore": {"exchange_rate_pairs": default_rate_pairs_config()}}
     saved = []
     store = ExchangeRatePairStore(
@@ -68,6 +84,7 @@ def make_dialog(qapp, tmp_path, *, available_ids=None, config=None):
         store=store,
         available_item_ids=available_ids,
         icon_cache=FakeIconCache(icon_path),
+        available_item_ids_getter=available_item_ids_getter,
         on_changed=changed,
     )
     dialog.show()
@@ -338,8 +355,36 @@ def test_candidate_refresh_does_not_remove_registered_pair(qapp, tmp_path):
     before = store.pairs(POE1)
     try:
         dialog.update_available_item_ids([])
-        assert dialog.candidate_list.count() == 0
+        assert dialog.candidate_list.count() == 1
+        assert dialog.candidate_list.item(0).text() == "候補データを取得中…"
+        assert not dialog.candidate_list.item(0).flags() & Qt.ItemIsEnabled
         assert store.pairs(POE1) == before
+    finally:
+        dialog.close()
+
+
+def test_candidates_appear_when_background_market_table_becomes_ready(
+    qapp, tmp_path
+):
+    target = exchange_catalog_items(POE1)[0]
+    live_ids = set()
+    dialog, *_ = make_dialog(
+        qapp,
+        tmp_path,
+        available_ids=[],
+        available_item_ids_getter=lambda: live_ids,
+    )
+    try:
+        assert dialog._availability_timer.isActive()
+        assert dialog.candidate_list.item(0).text() == "候補データを取得中…"
+
+        live_ids.add(target.item_id)
+        dialog._refresh_available_item_ids()
+
+        assert not dialog._availability_timer.isActive()
+        assert dialog.candidate_list.count() == 1
+        assert dialog.candidate_list.item(0).data(Qt.UserRole) == target.item_id
+        assert dialog.candidate_list.item(0).text() == target.japanese_name
     finally:
         dialog.close()
 
@@ -391,6 +436,13 @@ def test_category_rows_are_compact_and_add_section_is_taller(qapp, tmp_path):
         assert heights == {CATEGORY_ROW_HEIGHT}
         assert CATEGORY_ROW_HEIGHT >= dialog.category_list.fontMetrics().height()
         assert dialog.item_card.height() >= 400
+        assert "QListWidget#ratePairCategoryList::item { padding: 1px 7px; }" in (
+            dialog.styleSheet()
+        )
+        option = QStyleOptionViewItem()
+        option.state |= QStyle.State_HasFocus
+        clean = dialog.category_list.itemDelegate().option_without_focus(option)
+        assert not clean.state & QStyle.State_HasFocus
     finally:
         dialog.close()
 

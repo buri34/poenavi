@@ -882,6 +882,7 @@ class PoetoreModeWindow(QMainWindow):
             store=self._rate_pair_store,
             available_item_ids=self.rate_panel.available_item_ids(),
             icon_cache=self._rate_icon_cache,
+            available_item_ids_getter=self.rate_panel.available_item_ids,
             on_changed=self._rate_pairs_changed,
         )
         dialog.exec()

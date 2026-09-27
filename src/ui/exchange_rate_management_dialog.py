@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Collection
 
-from PySide6.QtCore import QMimeData, QObject, QPoint, QSize, Qt, Signal
+from PySide6.QtCore import QMimeData, QObject, QPoint, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QDrag, QIcon
 from PySide6.QtWidgets import (
     QApplication,
@@ -19,6 +19,8 @@ from PySide6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QStyle,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -52,6 +54,25 @@ DIALOG_MINIMUM_HEIGHT = 670
 
 class _IconSignals(QObject):
     ready = Signal(str, str)
+
+
+class _CategoryItemDelegate(QStyledItemDelegate):
+    """Keep compact rows while suppressing the native Windows focus artifact."""
+
+    @staticmethod
+    def option_without_focus(option) -> QStyleOptionViewItem:
+        clean_option = QStyleOptionViewItem(option)
+        clean_option.state &= ~QStyle.State_HasFocus
+        return clean_option
+
+    def paint(self, painter, option, index) -> None:
+        clean_option = self.option_without_focus(option)
+        super().paint(painter, clean_option, index)
+
+    def sizeHint(self, option, index) -> QSize:
+        size = super().sizeHint(option, index)
+        size.setHeight(CATEGORY_ROW_HEIGHT)
+        return size
 
 
 class _RegisteredPairRow(QWidget):
@@ -200,12 +221,14 @@ class ExchangeRateManagementDialog(QDialog):
         store: ExchangeRatePairStore,
         available_item_ids: Collection[str],
         icon_cache: ExchangeIconCache,
+        available_item_ids_getter: Callable[[], Collection[str]] | None = None,
         on_changed: Callable[[], None] | None = None,
     ):
         super().__init__(parent)
         self.poe_version = poe_version
         self.store = store
         self.icon_cache = icon_cache
+        self._available_item_ids_getter = available_item_ids_getter
         self.on_changed = on_changed or (lambda: None)
         self.catalog = exchange_catalog_by_id(poe_version)
         self._all_items = exchange_catalog_items(poe_version)
@@ -225,6 +248,12 @@ class ExchangeRateManagementDialog(QDialog):
         self._build_ui()
         self._render_registered_pairs()
         self._filter_candidates()
+        self._availability_timer = QTimer(self)
+        self._availability_timer.setInterval(250)
+        self._availability_timer.timeout.connect(self._refresh_available_item_ids)
+        if self._available_item_ids_getter is not None and not self._available_item_ids:
+            self._availability_timer.start()
+        self.finished.connect(self._availability_timer.stop)
 
     def _category_label_pairs(self) -> tuple[tuple[str, str], ...]:
         labels = category_labels(self.poe_version)
@@ -240,7 +269,9 @@ class ExchangeRateManagementDialog(QDialog):
                 background: {theme.panel}; color: {theme.text};
                 border: 1px solid #3A4245; border-radius: 6px;
             }}
-            QListWidget::item {{ padding: 7px; }}
+            QListWidget#ratePairCategoryList {{ outline: none; }}
+            QListWidget#ratePairCategoryList::item {{ padding: 1px 7px; }}
+            QListWidget#ratePairCandidateList::item {{ padding: 0px 7px; }}
             QListWidget::item:selected {{
                 background: #276B5A; color: #FFFFFF;
             }}
@@ -337,13 +368,13 @@ class ExchangeRateManagementDialog(QDialog):
         item_selection_row = QHBoxLayout()
         item_selection_row.setSpacing(10)
         self.category_list = QListWidget()
+        self.category_list.setObjectName("ratePairCategoryList")
         self.category_list.setAccessibleName("カテゴリ")
         self.category_list.setFixedWidth(145)
         self.category_list.addItem("すべて")
         self.category_list.addItems(category_labels(self.poe_version))
         self.category_list.setUniformItemSizes(True)
-        for row in range(self.category_list.count()):
-            self.category_list.item(row).setSizeHint(QSize(0, CATEGORY_ROW_HEIGHT))
+        self.category_list.setItemDelegate(_CategoryItemDelegate(self.category_list))
         self.category_list.setCurrentRow(0)
         self.category_list.currentRowChanged.connect(self._category_changed)
         item_selection_row.addWidget(self.category_list)
@@ -430,8 +461,22 @@ class ExchangeRateManagementDialog(QDialog):
             self._request_item_icon(item_id)
 
     def update_available_item_ids(self, item_ids: Collection[str]) -> None:
-        self._available_item_ids = frozenset(item_ids)
+        updated = frozenset(item_ids)
+        if updated == self._available_item_ids:
+            return
+        self._available_item_ids = updated
         self._filter_candidates()
+
+    def _refresh_available_item_ids(self) -> None:
+        if self._available_item_ids_getter is None:
+            return
+        try:
+            item_ids = frozenset(self._available_item_ids_getter())
+        except Exception:  # noqa: BLE001 - background availability is best effort
+            return
+        self.update_available_item_ids(item_ids)
+        if item_ids:
+            self._availability_timer.stop()
 
     def _filtered_items(self) -> tuple[ExchangeCatalogItem, ...]:
         query = self.search_edit.text().strip().casefold()
@@ -457,7 +502,13 @@ class ExchangeRateManagementDialog(QDialog):
         category_name = {
             category: label for category, label in self._category_label_pairs()
         }
-        for item in self._filtered_items():
+        filtered_items = self._filtered_items()
+        if not filtered_items and not self._available_item_ids:
+            row = QListWidgetItem("候補データを取得中…")
+            row.setFlags(Qt.NoItemFlags)
+            row.setSizeHint(QSize(0, CANDIDATE_ROW_HEIGHT))
+            self.candidate_list.addItem(row)
+        for item in filtered_items:
             text = item.japanese_name
             if query:
                 text = f"{text}  ·  {category_name[item.category]}"
@@ -489,6 +540,8 @@ class ExchangeRateManagementDialog(QDialog):
         for row in range(top, min(bottom + 1, self.candidate_list.count())):
             list_item = self.candidate_list.item(row)
             item_id = list_item.data(Qt.UserRole)
+            if item_id is None:
+                continue
             self._request_item_icon(item_id)
 
     def _request_item_icon(self, item_id: str) -> None:
