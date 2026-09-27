@@ -54,6 +54,10 @@ from .trade import (
     is_inscribed_ultimatum, is_special_chart_area,
 )
 from .poe_ninja import PoeNinjaPrice, default_poe_ninja_service, is_poe2_exchange_price_item
+from .official_exchange import (
+    default_official_exchange_shadow_service,
+    poe_ninja_reference_base,
+)
 from .metadata import related_item_group
 from .disenchant import disenchant_dust
 from .poe2.metadata import (
@@ -1904,6 +1908,12 @@ class PoetoreWindow(QWidget):
         self._search_performance_traces = {}
         self._divine_rate_key = None
         self._divine_rate_retry_after = 0.0
+        self._official_exchange_timer = QTimer(self)
+        self._official_exchange_timer.setInterval(60 * 60 * 1000)
+        self._official_exchange_timer.timeout.connect(
+            self._queue_official_exchange_shadow_sync
+        )
+        self._official_exchange_timer.start()
         self._connect_search_trigger_signals()
         self.installEventFilter(self)
         for child in self.findChildren(QWidget):
@@ -3227,6 +3237,7 @@ class PoetoreWindow(QWidget):
         self.trade_league_combo.blockSignals(False)
         if saved == "auto":
             self._persist_trade_league()
+        self._queue_official_exchange_shadow_sync()
 
     def _selected_trade_league(self) -> str | None:
         selected = self._league_selection_value()
@@ -3245,6 +3256,7 @@ class PoetoreWindow(QWidget):
             poetore["league"] = value
         if self._save_app_config is not None:
             self._save_app_config(self._app_config)
+        self._queue_official_exchange_shadow_sync()
         item = getattr(self, "_parsed_item", None)
         if item is not None:
             self._refresh_hidden_split_default(item)
@@ -3440,9 +3452,12 @@ class PoetoreWindow(QWidget):
 
     def _queue_poe_ninja_price(self, item):
         league = self._selected_trade_league()
+        self._queue_official_exchange_shadow_sync()
+        trade_name = self._trade_item_name
+        trade_base_type = self._trade_base_type
         key = (
-            item.raw_text, league, str(self._trade_item_name or ""),
-            str(self._trade_base_type or ""),
+            item.raw_text, league, str(trade_name or ""),
+            str(trade_base_type or ""),
         )
         if key == self._poe_ninja_item_key:
             return
@@ -3465,14 +3480,14 @@ class PoetoreWindow(QWidget):
                     if _is_poe2_exchange_price_item(item, self.poe_version):
                         result = default_poe_ninja_service.lookup_poe2_exchange(
                             item, league,
-                            trade_name=self._trade_item_name,
-                            trade_base_type=self._trade_base_type,
+                            trade_name=trade_name,
+                            trade_base_type=trade_base_type,
                         )
                     else:
                         result = default_poe_ninja_service.lookup_poe2_unique(
                             item, league,
-                            trade_name=self._trade_item_name,
-                            trade_base_type=self._trade_base_type,
+                            trade_name=trade_name,
+                            trade_base_type=trade_base_type,
                         )
                     try:
                         related = self._lookup_poe2_related_items(item, league, result)
@@ -3483,16 +3498,22 @@ class PoetoreWindow(QWidget):
                 else:
                     result = default_poe_ninja_service.lookup(
                         item, league,
-                        trade_name=self._trade_item_name,
-                        trade_base_type=self._trade_base_type,
+                        trade_name=trade_name,
+                        trade_base_type=trade_base_type,
                     )
                     related = self._lookup_related_items(item, league, result)
             except Exception:
+                self._record_official_exchange_shadow(
+                    item, league, None, trade_name, trade_base_type,
+                )
                 if trace is not None:
                     trace.mark("poe_ninja_lookup_failed")
                 self._trade_signals.poe_ninja_failed.emit(key)
                 self._trade_signals.related_items_failed.emit(key)
             else:
+                self._record_official_exchange_shadow(
+                    item, league, result, trade_name, trade_base_type,
+                )
                 if trace is not None:
                     trace.mark(
                         "poe_ninja_lookup_completed",
@@ -3509,6 +3530,48 @@ class PoetoreWindow(QWidget):
                     self._trade_signals.related_items_failed.emit(key)
 
         threading.Thread(target=run, daemon=True).start()
+
+    def _queue_official_exchange_shadow_sync(self):
+        """Refresh the hidden official price table without touching visible prices."""
+        league = self._selected_trade_league()
+        default_official_exchange_shadow_service.queue_sync(self.poe_version, league)
+
+    def _record_official_exchange_shadow(
+        self, item, league, poe_ninja_price, trade_name=None, trade_base_type=None,
+    ):
+        """Compare one searched item in the background and append an audit event."""
+        if not league:
+            return
+        try:
+            if self.poe_version == POE2:
+                divine_rate = default_poe_ninja_service.divine_exalted_rate(league)
+            else:
+                divine_rate = (
+                    float(poe_ninja_price.divine_chaos)
+                    if poe_ninja_price is not None and poe_ninja_price.divine_chaos
+                    else default_poe_ninja_service.divine_chaos_rate(league)
+                )
+            reference_base = poe_ninja_reference_base(
+                self.poe_version,
+                poe_ninja_price,
+                divine_rate=divine_rate,
+            )
+            default_official_exchange_shadow_service.record_search(
+                self.poe_version,
+                league,
+                (
+                    trade_name,
+                    trade_base_type,
+                    getattr(poe_ninja_price, "name", None),
+                    item.name,
+                    item.base_type,
+                ),
+                reference_base_price=reference_base,
+                reference_divine_rate=divine_rate,
+            )
+        except Exception:  # noqa: BLE001 - shadow mode must never affect visible prices
+            # Shadow validation must never delay or hide the existing poe.ninja result.
+            return
 
     def _lookup_related_items(self, item, league, primary_price=None):
         namespace = (

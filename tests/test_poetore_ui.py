@@ -8362,3 +8362,44 @@ def test_poe2_related_items_resolve_ee2_group_and_keep_unpriced_rows(qapp):
         )
     finally:
         window.close()
+
+
+def test_official_exchange_shadow_sync_uses_selected_mode_and_league(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE2, "poetore": {}})
+    try:
+        window._auto_league = "Runes of Aldur"
+        with patch(
+            "src.poetore.ui.default_official_exchange_shadow_service.queue_sync",
+            return_value=True,
+        ) as queue_sync:
+            window._queue_official_exchange_shadow_sync()
+        queue_sync.assert_called_once_with(POE2, "Runes of Aldur")
+    finally:
+        window.close()
+
+
+def test_official_exchange_shadow_records_without_changing_visible_ninja_price(qapp):
+    window = PoetoreWindow(app_config={"poe_version": POE1, "poetore": {}})
+    item = Mock(name="The Doctor", base_type="The Doctor")
+    price = PoeNinjaPrice(
+        "The Doctor", None, 1800, (), "https://poe.ninja/example", 200,
+    )
+    try:
+        window._trade_item_name = "The Doctor"
+        window._trade_base_type = "The Doctor"
+        window._poe_ninja_item_key = ("active",)
+        window._show_poe_ninja_price(("active",), price)
+        visible_before = window.poe_ninja_price_value.text()
+        with patch(
+            "src.poetore.ui.default_official_exchange_shadow_service.record_search",
+        ) as record:
+            window._record_official_exchange_shadow(
+                item, "Allflame", price, "The Doctor", "The Doctor",
+            )
+        assert window.poe_ninja_price_value.text() == visible_before
+        record.assert_called_once()
+        assert record.call_args.args[:2] == (POE1, "Allflame")
+        assert record.call_args.kwargs["reference_base_price"] == 1800
+        assert record.call_args.kwargs["reference_divine_rate"] == 200
+    finally:
+        window.close()
