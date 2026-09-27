@@ -3902,7 +3902,13 @@ class PoetoreWindow(QWidget):
             if official_expected or official_price is not None:
                 self.poe_ninja_price_label.setText("poe.ninja 暫定価格")
                 self.poe_ninja_price_label.setToolTip(
-                    "公式約定価格が未確定のため、poe.ninja価格を表示しています"
+                    "カレンシー交換の直近価格が未確定のため、"
+                    "poe.ninja価格を一時的に表示しています"
+                )
+            else:
+                self.poe_ninja_price_label.setToolTip(
+                    "Currency Exchange対象外のため、"
+                    "poe.ninjaの参考価格を表示しています"
                 )
             return
 
@@ -3912,13 +3918,14 @@ class PoetoreWindow(QWidget):
                 self._hide_poe_ninja_price(key)
             return
         amount, currency = parts
-        self.poe_ninja_price_label.setText("GGG公式 約定価格")
+        self.poe_ninja_price_label.setText("カレンシー交換 直近価格")
         route = getattr(official_price, "selected_route", None)
         route_label = "Divine直接" if route == "direct_divine" else (
             "Chaos直接" if self.poe_version == POE1 else "Exalted直接"
         )
         self.poe_ninja_price_label.setToolTip(
-            f"Currency Exchangeの直近24時間約定価格（{route_label}）"
+            "公式Currency Exchangeの直近24時間の取引データから算出"
+            f"（{route_label}）"
         )
         self.poe_ninja_price_value.setText(amount)
         icon_path = _asset_icon_path(
