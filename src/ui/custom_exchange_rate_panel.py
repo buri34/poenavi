@@ -95,7 +95,10 @@ class CustomExchangeRatePanel(QWidget):
         self._signals = _PanelSignals(self)
         self._signals.table_ready.connect(self._table_ready)
         self._signals.checked.connect(self._sync_checked)
-        self._signals.icon_ready.connect(self._apply_icon)
+        # A disk-cache hit can complete before the row has been attached to this
+        # panel. Queue delivery so the label is discoverable when the icon is
+        # applied, regardless of whether the Future completed synchronously.
+        self._signals.icon_ready.connect(self._apply_icon, Qt.QueuedConnection)
         self._manual_check = False
         self._build_ui()
         self.render_rows()
@@ -233,6 +236,9 @@ class CustomExchangeRatePanel(QWidget):
         left_name.setToolTip(left_name.text())
         left_name.setAccessibleName(left_name.text())
         left_name.setFixedWidth(125)
+        left_name.setStyleSheet(
+            f"color: {POETORE_THEME.accent}; font-size: 13px;"
+        )
         layout.addWidget(left_name)
         value = QLabel(f"1個 ＝ {display}")
         value.setObjectName(f"customRateValue{index}")
@@ -247,6 +253,9 @@ class CustomExchangeRatePanel(QWidget):
         right_name.setToolTip(right_name.text())
         right_name.setAccessibleName(right_name.text())
         right_name.setFixedWidth(88)
+        right_name.setStyleSheet(
+            f"color: {POETORE_THEME.accent}; font-size: 13px;"
+        )
         layout.addWidget(right_name)
         delete = QPushButton()
         delete.setObjectName(f"customRateDelete{index}")

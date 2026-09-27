@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QLabel
 
 from src.poetore.exchange_catalog import exchange_catalog_by_id, exchange_catalog_items
 from src.poetore.exchange_icon_cache import IconResult
@@ -15,6 +15,7 @@ from src.poetore.exchange_rate_settings import (
     ExchangeRatePairStore,
     default_rate_pairs_config,
 )
+from src.ui.app_theme import POETORE_THEME
 from src.ui.exchange_rate_management_dialog import ExchangeRateManagementDialog
 from src.utils.poe_version_data import POE1
 
@@ -175,5 +176,17 @@ def test_only_visible_candidates_request_icons(qapp, tmp_path):
     try:
         requested = len(dialog.icon_cache.requests)
         assert 0 < requested < dialog.candidate_list.count()
+    finally:
+        dialog.close()
+
+
+def test_registered_area_and_pair_names_use_dark_theme(qapp, tmp_path):
+    dialog, *_ = make_dialog(qapp, tmp_path)
+    try:
+        assert POETORE_THEME.panel in dialog.registered_scroll.viewport().styleSheet()
+        assert POETORE_THEME.panel in dialog.registered_widget.styleSheet()
+        name = dialog.findChild(QLabel, "ratePairName0")
+        assert name is not None
+        assert POETORE_THEME.text in name.styleSheet()
     finally:
         dialog.close()

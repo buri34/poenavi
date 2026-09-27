@@ -132,10 +132,19 @@ class ExchangeRateManagementDialog(QDialog):
         registered_title.setStyleSheet("font-size: 14px; font-weight: bold;")
         root.addWidget(registered_title)
         self.registered_scroll = QScrollArea()
+        self.registered_scroll.setObjectName("registeredPairsScroll")
         self.registered_scroll.setWidgetResizable(True)
         self.registered_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.registered_scroll.setFixedHeight(175)
+        self.registered_scroll.viewport().setStyleSheet(
+            f"background: {theme.panel}; color: {theme.text};"
+        )
         self.registered_widget = QWidget()
+        self.registered_widget.setObjectName("registeredPairsWidget")
+        self.registered_widget.setStyleSheet(
+            f"QWidget#registeredPairsWidget {{ background: {theme.panel}; "
+            f"color: {theme.text}; }}"
+        )
         self.registered_layout = QVBoxLayout(self.registered_widget)
         self.registered_layout.setContentsMargins(6, 6, 6, 6)
         self.registered_layout.setSpacing(5)
@@ -368,7 +377,9 @@ class ExchangeRateManagementDialog(QDialog):
                 f"{self.catalog[pair.left_item_id].japanese_name} → "
                 f"{self.catalog[pair.right_item_id].japanese_name}"
             )
+            name.setObjectName(f"ratePairName{index}")
             name.setToolTip(name.text())
+            name.setStyleSheet(f"color: {POETORE_THEME.text};")
             row_layout.addWidget(name, 1)
             up = self._icon_button(QStyle.SP_ArrowUp, "上へ移動")
             down = self._icon_button(QStyle.SP_ArrowDown, "下へ移動")

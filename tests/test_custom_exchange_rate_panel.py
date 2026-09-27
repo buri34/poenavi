@@ -4,7 +4,10 @@ from copy import deepcopy
 import pytest
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton
 
-from src.poetore.exchange_catalog import exchange_catalog_by_id
+from src.poetore.exchange_catalog import (
+    divination_card_icon_path,
+    exchange_catalog_by_id,
+)
 from src.poetore.exchange_icon_cache import IconResult
 from src.poetore.exchange_rate_cache import ExchangeRateValueCache
 from src.poetore.exchange_rate_settings import (
@@ -19,6 +22,7 @@ from src.poetore.official_exchange import (
     ExchangeSyncState,
     SyncCheckResult,
 )
+from src.ui.app_theme import POETORE_THEME
 from src.ui.custom_exchange_rate_panel import (
     OFFICIAL_DATA_TOOLTIP,
     RATE_CHECK_INTERVAL_MSEC,
@@ -75,8 +79,7 @@ def make_panel(qapp, tmp_path, *, pairs=None, service=None, version=POE1):
     }}}
     saved = []
     store = ExchangeRatePairStore(config, lambda value: saved.append(deepcopy(value)))
-    icon = tmp_path / "placeholder.svg"
-    icon.write_text('<svg xmlns="http://www.w3.org/2000/svg"/>', encoding="utf-8")
+    icon = divination_card_icon_path()
     panel = CustomExchangeRatePanel(
         None,
         poe_version=version,
@@ -193,6 +196,26 @@ def test_long_names_keep_full_tooltip(qapp, tmp_path):
         label = panel.findChild(QLabel, "customRateLeftName0")
         assert label.toolTip() == label.text()
         assert label.width() == 125
+    finally:
+        panel.stop()
+        panel.close()
+
+
+def test_names_use_heading_accent_and_cached_icons_render(qapp, tmp_path):
+    panel, *_ = make_panel(qapp, tmp_path)
+    try:
+        qapp.processEvents()
+        for side in ("Left", "Right"):
+            name = panel.findChild(QLabel, f"customRate{side}Name0")
+            assert POETORE_THEME.accent in name.styleSheet()
+        icon_labels = [
+            label
+            for label in panel.findChildren(QLabel)
+            if label.objectName().startswith("customRateIcon-")
+        ]
+        assert len(icon_labels) == 2
+        assert all(label.pixmap() is not None and not label.pixmap().isNull()
+                   for label in icon_labels)
     finally:
         panel.stop()
         panel.close()
