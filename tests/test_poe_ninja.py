@@ -361,6 +361,35 @@ def test_blighted_map_price_uses_tier_and_state():
     assert price is not None and price.name == "Blighted Map (Tier 16)"
 
 
+def test_misc_map_item_fragment_uses_fragment_overview():
+    item = parse_item_text("""アイテムクラス: その他マップアイテム
+レアリティ: ノーマル
+覚醒のフラグメント
+--------
+スタックサイズ: 1/10
+""")
+    payload = {
+        "itemOverviews": [{
+            "type": "Fragment",
+            "lines": [{
+                "name": "Awakening Fragment",
+                "chaos": 9.72,
+                "graph": [-4.73, -14.01, -4.33, -2.56, 2.51, 30.09, 17.37],
+            }],
+        }],
+    }
+
+    price = match_poe_ninja_price(
+        payload, item, "Allflame", trade_base_type="Awakening Fragment",
+    )
+
+    assert item.category == "map"
+    assert price is not None
+    assert price.source_type == "Fragment"
+    assert price.chaos == 9.72
+    assert price.graph_points() == (-4.73, -14.01, -4.33, -2.56, 2.51, 30.09, 17.37)
+
+
 def test_exact_name_item_price_is_supported():
     item = ParsedItem("Divination Cards", "Normal", "The Doctor", "The Doctor", "divination_card")
     price = match_poe_ninja_price(_payload(), item, "Standard", trade_base_type="The Doctor")

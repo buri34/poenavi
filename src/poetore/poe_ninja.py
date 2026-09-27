@@ -736,6 +736,18 @@ def match_poe_ninja_price(
                 selected = (type_name, lines[0])
                 break
             # Atlas世代違いで複数行ある場合は誤価格防止のため表示しない。
+        if selected is None:
+            # Pinnacle fragments use the broad Misc Map Items class and are
+            # therefore parsed as maps.  They still belong to poe.ninja's
+            # Fragment overview; use it only when the map overviews had no
+            # match and the exact English identity resolves to one row.
+            candidate_names = {name.casefold() for name in candidates}
+            fragment_lines = [
+                row for row in overviews.get("Fragment", ())
+                if str(row.get("name", "")).casefold() in candidate_names
+            ]
+            if len(fragment_lines) == 1:
+                selected = ("Fragment", fragment_lines[0])
     else:
         allowed_types = _EXACT_TYPES_BY_CATEGORY.get(item.category, set())
         matches = []
