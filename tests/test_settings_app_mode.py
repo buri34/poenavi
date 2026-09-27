@@ -39,10 +39,13 @@ def test_settings_dialog_uses_readable_shared_theme(qapp):
     style = dialog.styleSheet()
 
     assert dialog.objectName() == "settingsDialog"
+    assert dialog.property("dialogTheme") == "poenavi"
     assert "#B0FF7B" in style
-    assert "#E9FFBD" in style
-    assert "#101310" in style
-    assert "#1E241E" in style
+    assert "#E6ECEA" in style
+    assert "#E9FFBD" not in style
+    assert "#111416" in style
+    assert "#171B1D" in style
+    assert "Noto Sans JP" in style
     assert "font-size: 13px" in style
     dialog.close()
 
@@ -75,7 +78,7 @@ def test_mini_navi_topmost_setting_uses_three_modes_and_poe_only_default(
         dialog.close()
 
 
-def test_general_group_titles_are_center_aligned(qapp):
+def test_general_group_titles_use_shared_left_aligned_style(qapp):
     dialog = SettingsDialog(current_config={})
     general_group_titles = {
         "PoE ログファイル",
@@ -91,7 +94,9 @@ def test_general_group_titles_are_center_aligned(qapp):
 
     assert groups.keys() == general_group_titles
     for group in groups.values():
-        assert "subcontrol-position: top center" in group.styleSheet()
+        assert group.styleSheet() == ""
+
+    assert "subcontrol-position: top left" in dialog.styleSheet()
 
     dialog.close()
 

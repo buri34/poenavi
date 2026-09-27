@@ -50,18 +50,23 @@ def test_dialog_stylesheet_contains_every_shared_component_state():
     assert 'QLabel[uiRole="section"]' in qss
     assert 'QLabel[uiRole="muted"]' in qss
     assert 'QPushButton[buttonRole="primary"]' in qss
+    assert "QPushButton:checked" in qss
     assert 'QPushButton[buttonRole="danger"]:hover' in qss
     assert "QLineEdit:focus" in qss
     assert "QCheckBox::indicator:checked" in qss
     assert "QRadioButton::indicator:checked" in qss
     assert "QTabBar::tab:selected" in qss
     assert "QAbstractItemView::item:selected" in qss
+    assert "QHeaderView::section" in qss
+    assert "QSlider::handle:horizontal" in qss
+    assert "QScrollArea > QWidget > QWidget" in qss
     assert "QScrollBar::handle:vertical:hover" in qss
     assert "QToolTip" in qss
     assert 'QLabel[state="success"]' in qss
     assert 'QLabel[state="warning"]' in qss
     assert 'QLabel[state="error"]' in qss
     assert 'QWidget[density="compact"]' in qss
+    assert 'QWidget[density="compact"] QLineEdit' in qss
 
 
 def test_dialog_stylesheet_uses_blue_choice_assets_and_brand_focus_only():

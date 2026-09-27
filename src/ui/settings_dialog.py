@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
                                QPushButton, QGroupBox, QLineEdit, QFileDialog,
                                QTabWidget, QWidget, QScrollArea, QSpinBox, QComboBox,
-                               QFormLayout, QTextEdit, QFrame, QRadioButton,
+                               QTextEdit, QFrame, QRadioButton,
                                QButtonGroup, QGridLayout, QCheckBox, QMessageBox,
                                QDoubleSpinBox, QTableWidget, QTableWidgetItem,
                                QHeaderView, QAbstractItemView)
@@ -9,7 +9,13 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QKeySequence
 from src.ui.styles import Styles
 from src.ui.app_info_widget import AppInfoWidget
-from src.ui.app_theme import POENAVI_THEME, POETORE_THEME, SETTINGS_THEME
+from src.ui.app_theme import POENAVI_THEME, POETORE_THEME
+from src.ui.dialog_theme import (
+    POENAVI_DIALOG_THEME,
+    DialogTheme,
+    apply_dialog_theme,
+    build_dialog_stylesheet,
+)
 from src.utils.zone_data_poe2 import DEFAULT_ZONE_DATA_POE2
 from src.utils.guide_data import load_guide_data, save_guide_data, get_visit_guide_for_edit, set_visit_guide_for_edit
 from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_act_list, get_poe_label, get_town_zones
@@ -1700,8 +1706,11 @@ class MiniNaviEditorDialog(QDialog):
 class GemShopSearchTermOverridesDialog(QWidget):
     """ショップ検索用の短縮語上書きを一覧で確認・編集する。"""
 
-    def __init__(self, parent=None, term_overrides=None):
+    def __init__(self, parent=None, term_overrides=None, theme: DialogTheme | None = None):
         super().__init__(parent)
+        self.theme = theme
+        if self.theme is not None:
+            self.setProperty("density", "compact")
         self._gem_names_en = load_gem_names_en()
         self._automatic_terms = build_unique_gem_search_terms(self._gem_names_en, minimum_length=4)
         self._term_overrides = dict(term_overrides or {})
@@ -1716,7 +1725,10 @@ class GemShopSearchTermOverridesDialog(QWidget):
             "上書きは正式名に含まれる、他ジェムと重複しない4文字以上の語だけ保存できます。"
         )
         hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 11px;")
+        if self.theme is not None:
+            hint.setProperty("uiRole", "muted")
+        else:
+            hint.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 11px;")
         layout.addWidget(hint)
 
         filters = QHBoxLayout()
@@ -1729,6 +1741,8 @@ class GemShopSearchTermOverridesDialog(QWidget):
         self.changed_only_checkbox.toggled.connect(self._apply_filter)
         filters.addWidget(self.changed_only_checkbox)
         self.reset_all_button = QPushButton("すべて自動へ戻す")
+        if self.theme is not None:
+            self.reset_all_button.setProperty("buttonRole", "danger")
         self.reset_all_button.clicked.connect(self._reset_all_overrides)
         filters.addWidget(self.reset_all_button)
         layout.addLayout(filters)
@@ -1745,12 +1759,13 @@ class GemShopSearchTermOverridesDialog(QWidget):
         table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Interactive)
         table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
         table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Interactive)
-        table.setStyleSheet("""
-            QTableWidget { background: #1a1a1a; color: #e9ffbd; gridline-color: #454545; }
-            QTableWidget::item { padding: 4px; }
-            QTableWidget::item:alternate { background: #202020; }
-            QHeaderView::section { background: #29351e; color: #b0ff7b; padding: 5px; border: 1px solid #537336; }
-        """)
+        if self.theme is None:
+            table.setStyleSheet("""
+                QTableWidget { background: #1a1a1a; color: #e9ffbd; gridline-color: #454545; }
+                QTableWidget::item { padding: 4px; }
+                QTableWidget::item:alternate { background: #202020; }
+                QHeaderView::section { background: #29351e; color: #b0ff7b; padding: 5px; border: 1px solid #537336; }
+            """)
         self._table = table
 
         for row, (gem_key, gem_name) in enumerate(sorted(self._gem_names_en.items(), key=lambda item: item[1])):
@@ -1764,7 +1779,10 @@ class GemShopSearchTermOverridesDialog(QWidget):
             table.setCellWidget(row, 2, term_edit)
             self._term_edits[gem_key] = term_edit
             self._row_by_gem_key[gem_key] = row
-            table.setRowHeight(row, 28)
+            table.setRowHeight(
+                row,
+                max(self.theme.compact_row_height, 28) if self.theme else 28,
+            )
         layout.addWidget(table)
         self._apply_filter()
 
@@ -1834,32 +1852,7 @@ class GemShopSearchTermOverridesDialog(QWidget):
 class SettingsDialog(QDialog):
     @staticmethod
     def _style_sheet():
-        theme = SETTINGS_THEME
-        return f"""
-            QDialog#settingsDialog {{
-                background: {theme.background};
-                color: {theme.text};
-                font-size: 13px;
-            }}
-            QDialog#settingsDialog QWidget {{ color: {theme.text}; }}
-            QDialog#settingsDialog QScrollArea,
-            QDialog#settingsDialog QScrollArea > QWidget > QWidget {{
-                background: {theme.background};
-            }}
-            QDialog#settingsDialog QPushButton {{
-                background: {theme.panel};
-                color: {theme.text};
-                border: 1px solid #596359;
-                border-radius: 4px;
-                padding: 5px 10px;
-                font-weight: 600;
-            }}
-            QDialog#settingsDialog QPushButton:hover,
-            QDialog#settingsDialog QPushButton:focus {{
-                border-color: {theme.accent};
-                background: #293229;
-            }}
-        """
+        return build_dialog_stylesheet(POENAVI_DIALOG_THEME)
 
     def __init__(
         self,
@@ -1872,7 +1865,8 @@ class SettingsDialog(QDialog):
         self.setWindowTitle("設定")
         self.resize(630, 600)
         self.setObjectName("settingsDialog")
-        self.setStyleSheet(self._style_sheet())
+        self.theme = POENAVI_DIALOG_THEME
+        apply_dialog_theme(self, self.theme)
         
         self.current_config = current_config or {}
         self.update_check_callback = update_check_callback
@@ -1904,48 +1898,29 @@ class SettingsDialog(QDialog):
         self.setup_ui()
         
     def setup_ui(self):
-        theme = SETTINGS_THEME
+        theme = self.theme
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
+
+        self.title_label = QLabel("設定")
+        self.title_label.setProperty("uiRole", "title")
+        layout.addWidget(self.title_label)
         
         # タブ切り替え
         tabs = QTabWidget()
-        tabs.setStyleSheet(f"""
-            QTabWidget::pane {{ border: 1px solid #465046; }}
-            QTabBar::tab {{ 
-                background: {theme.panel}; color: {theme.text};
-                padding: 8px 16px; border: 1px solid #465046;
-                border-bottom: none; border-radius: 4px 4px 0 0;
-            }}
-            QTabBar::tab:selected {{ color: {theme.accent}; border-bottom: 2px solid {theme.accent}; font-weight: 600; }}
-        """)
         
         # ── Tab 1: General ──
         general_tab = QScrollArea()
         general_tab.setWidgetResizable(True)
-        general_tab.setStyleSheet("QScrollArea { border: none; }")
         general_content = QWidget()
         general_layout = QVBoxLayout(general_content)
         general_tab.setWidget(general_content)
         
         # 共通スタイル
-        group_style = f"QGroupBox {{ color: {theme.text}; background: {theme.panel}; border: 1px solid #465046; border-radius: 5px; margin-top: 10px; }} QGroupBox::title {{ color: {theme.accent}; font-weight: 600; subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; }}"
-        checkbox_style = f"""
-            QCheckBox {{ color: {theme.text}; font-size: 13px; spacing: 8px; }}
-            QCheckBox::indicator {{ width: 18px; height: 18px; border: 2px solid #778277; border-radius: 3px; background: transparent; }}
-            QCheckBox::indicator:checked {{ background: {theme.accent}; border-color: {theme.accent}; }}
-        """
-        combo_style = f"""
-            QComboBox {{
-                background-color: #151A15; color: {theme.text};
-                border: 1px solid #596359; border-radius: 4px;
-                padding: 4px 8px; font-size: 13px;
-            }}
-            QComboBox::drop-down {{ border: none; }}
-            QComboBox QAbstractItemView {{
-                background-color: {theme.panel}; color: {theme.text};
-                selection-background-color: {theme.accent}; selection-color: {theme.background};
-            }}
-        """
+        group_style = ""
+        checkbox_style = ""
+        combo_style = ""
         
         # ━━━━━ 1. PoE ログファイル ━━━━━
         log_group = QGroupBox("PoE ログファイル")
@@ -1989,11 +1964,7 @@ class SettingsDialog(QDialog):
 
         self.poe_version_group = QButtonGroup(self)
         self.poe_version_radios = {}
-        radio_style = f"""
-            QRadioButton {{ color: {theme.text}; font-size: 13px; spacing: 8px; padding: 4px 0; }}
-            QRadioButton::indicator {{ width: 16px; height: 16px; border: 2px solid #778277; border-radius: 8px; background: transparent; }}
-            QRadioButton::indicator:checked {{ background: {theme.accent}; border-color: {theme.accent}; }}
-        """
+        radio_style = ""
         for version in POE_VERSION_ORDER:
             radio = QRadioButton(get_poe_label(version))
             radio.setChecked(version == self.poe_version)
@@ -2204,7 +2175,7 @@ class SettingsDialog(QDialog):
         # タイマーサイズ
         timer_size_row = QHBoxLayout()
         timer_size_label = QLabel("タイマーサイズ:")
-        timer_size_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        timer_size_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         timer_size_row.addWidget(timer_size_label)
         
         self.timer_size_combo = QComboBox()
@@ -2237,7 +2208,7 @@ class SettingsDialog(QDialog):
         
         font_row = QHBoxLayout()
         font_label = QLabel("フォントサイズ:")
-        font_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        font_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         font_row.addWidget(font_label)
         
         self.guide_font_spin = QSpinBox()
@@ -2266,7 +2237,7 @@ class SettingsDialog(QDialog):
         route_poe1_tag.setStyleSheet(poe1_only_tag_style)
         poe1_route_act3_row.addWidget(route_poe1_tag)
         poe1_route_act3_label = QLabel("Act3 ルート:")
-        poe1_route_act3_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        poe1_route_act3_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         poe1_route_act3_row.addWidget(poe1_route_act3_label)
         self.poe1_route_act3_combo = QComboBox()
         self.poe1_route_act3_combo.addItem("通常ルート（図書館スキップ）", "standard")
@@ -2285,7 +2256,7 @@ class SettingsDialog(QDialog):
         route_poe1_tag2.setStyleSheet(poe1_only_tag_style)
         poe1_route_act8_row.addWidget(route_poe1_tag2)
         poe1_route_act8_label = QLabel("Act8 ルート:")
-        poe1_route_act8_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        poe1_route_act8_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         poe1_route_act8_row.addWidget(poe1_route_act8_label)
         self.poe1_route_act8_combo = QComboBox()
         self.poe1_route_act8_combo.addItem("通常ルート", "standard")
@@ -2356,7 +2327,7 @@ class SettingsDialog(QDialog):
         ):
             row = QHBoxLayout()
             label = QLabel(label_text)
-            label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+            label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
             row.addWidget(label)
             spin = QDoubleSpinBox()
             spin.setRange(minimum, maximum)
@@ -2385,7 +2356,7 @@ class SettingsDialog(QDialog):
         # 透過率
         opacity_row = QHBoxLayout()
         opacity_label = QLabel("透過率:")
-        opacity_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        opacity_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         opacity_row.addWidget(opacity_label)
 
         from PySide6.QtWidgets import QSlider
@@ -2395,12 +2366,12 @@ class SettingsDialog(QDialog):
         self.opacity_slider.setFixedWidth(200)
         self.opacity_slider.setStyleSheet(f"""
             QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
-            QSlider::handle:horizontal {{ background: {Styles.TEXT_COLOR}; width: 16px; margin: -5px 0; border-radius: 8px; }}
+            QSlider::handle:horizontal {{ background: {theme.accent}; width: 16px; margin: -5px 0; border-radius: 8px; }}
         """)
         opacity_row.addWidget(self.opacity_slider)
 
         self.opacity_value_label = QLabel(f"{self.opacity_slider.value()}%")
-        self.opacity_value_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        self.opacity_value_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         self.opacity_value_label.setFixedWidth(40)
         opacity_row.addWidget(self.opacity_value_label)
         self.opacity_slider.valueChanged.connect(lambda v: self.opacity_value_label.setText(f"{v}%"))
@@ -2410,7 +2381,7 @@ class SettingsDialog(QDialog):
         # 文字透過率
         text_opacity_row = QHBoxLayout()
         text_opacity_label = QLabel("文字透過率:")
-        text_opacity_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        text_opacity_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         text_opacity_row.addWidget(text_opacity_label)
 
         from PySide6.QtWidgets import QSlider as _QSlider
@@ -2420,12 +2391,12 @@ class SettingsDialog(QDialog):
         self.text_opacity_slider.setFixedWidth(200)
         self.text_opacity_slider.setStyleSheet(f"""
             QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
-            QSlider::handle:horizontal {{ background: {Styles.TEXT_COLOR}; width: 16px; margin: -5px 0; border-radius: 8px; }}
+            QSlider::handle:horizontal {{ background: {theme.accent}; width: 16px; margin: -5px 0; border-radius: 8px; }}
         """)
         text_opacity_row.addWidget(self.text_opacity_slider)
 
         self.text_opacity_value_label = QLabel(f"{self.text_opacity_slider.value()}%")
-        self.text_opacity_value_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        self.text_opacity_value_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         self.text_opacity_value_label.setFixedWidth(40)
         text_opacity_row.addWidget(self.text_opacity_value_label)
         self.text_opacity_slider.valueChanged.connect(lambda v: self.text_opacity_value_label.setText(f"{v}%"))
@@ -2453,7 +2424,7 @@ class SettingsDialog(QDialog):
         # モニター選択
         monitor_row = QHBoxLayout()
         monitor_label = QLabel("起動時の配置先:")
-        monitor_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        monitor_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         monitor_row.addWidget(monitor_label)
         self.monitor_combo = QComboBox()
         self.monitor_combo.setStyleSheet(combo_style)
@@ -2477,7 +2448,7 @@ class SettingsDialog(QDialog):
         def _update_monitor_enabled(checked):
             self.monitor_combo.setEnabled(checked)
             self._monitor_label.setStyleSheet(
-                f"color: {Styles.TEXT_COLOR}; font-size: 12px;" if checked
+                f"color: {self.theme.text}; font-size: 12px;" if checked
                 else "color: #555555; font-size: 12px;"
             )
         _update_monitor_enabled(self.snap_right_edge_cb.isChecked())
@@ -2494,7 +2465,7 @@ class SettingsDialog(QDialog):
         mini_navi_config = self.current_config.get("mini_guide_overlay", {})
         mini_navi_display_mode_row = QHBoxLayout()
         mini_navi_display_mode_label = QLabel("表示形式:")
-        mini_navi_display_mode_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        mini_navi_display_mode_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         mini_navi_display_mode_row.addWidget(mini_navi_display_mode_label)
         self.mini_navi_display_mode_combo = QComboBox()
         self.mini_navi_display_mode_combo.addItem("標準", "standard")
@@ -2512,7 +2483,7 @@ class SettingsDialog(QDialog):
         mini_navi_font_size = int(mini_navi_config.get("font_size", 15)) if isinstance(mini_navi_config, dict) else 15
         mini_navi_font_row = QHBoxLayout()
         mini_navi_font_label = QLabel("フォントサイズ:")
-        mini_navi_font_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        mini_navi_font_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         mini_navi_font_row.addWidget(mini_navi_font_label)
         self.mini_navi_font_size_combo = QComboBox()
         self.mini_navi_font_size_combo.addItem("小", 15)
@@ -2533,7 +2504,7 @@ class SettingsDialog(QDialog):
         # みになび専用のウィンドウ透過率
         mini_navi_window_opacity_row = QHBoxLayout()
         mini_navi_window_opacity_label = QLabel("ウィンドウ透過率:")
-        mini_navi_window_opacity_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        mini_navi_window_opacity_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         mini_navi_window_opacity_row.addWidget(mini_navi_window_opacity_label)
         self.mini_navi_window_opacity_slider = QSlider(Qt.Horizontal)
         self.mini_navi_window_opacity_slider.setRange(5, 100)
@@ -2541,11 +2512,11 @@ class SettingsDialog(QDialog):
         self.mini_navi_window_opacity_slider.setFixedWidth(200)
         self.mini_navi_window_opacity_slider.setStyleSheet(f"""
             QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
-            QSlider::handle:horizontal {{ background: {Styles.TEXT_COLOR}; width: 16px; margin: -5px 0; border-radius: 8px; }}
+            QSlider::handle:horizontal {{ background: {theme.accent}; width: 16px; margin: -5px 0; border-radius: 8px; }}
         """)
         mini_navi_window_opacity_row.addWidget(self.mini_navi_window_opacity_slider)
         self.mini_navi_window_opacity_value_label = QLabel(f"{self.mini_navi_window_opacity_slider.value()}%")
-        self.mini_navi_window_opacity_value_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        self.mini_navi_window_opacity_value_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         self.mini_navi_window_opacity_value_label.setFixedWidth(40)
         mini_navi_window_opacity_row.addWidget(self.mini_navi_window_opacity_value_label)
         self.mini_navi_window_opacity_slider.valueChanged.connect(lambda v: self.mini_navi_window_opacity_value_label.setText(f"{v}%"))
@@ -2555,7 +2526,7 @@ class SettingsDialog(QDialog):
         # みになび専用の文字透過率
         mini_navi_text_opacity_row = QHBoxLayout()
         mini_navi_text_opacity_label = QLabel("文字透過率:")
-        mini_navi_text_opacity_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        mini_navi_text_opacity_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         mini_navi_text_opacity_row.addWidget(mini_navi_text_opacity_label)
         self.mini_navi_text_opacity_slider = QSlider(Qt.Horizontal)
         self.mini_navi_text_opacity_slider.setRange(0, 100)
@@ -2563,11 +2534,11 @@ class SettingsDialog(QDialog):
         self.mini_navi_text_opacity_slider.setFixedWidth(200)
         self.mini_navi_text_opacity_slider.setStyleSheet(f"""
             QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
-            QSlider::handle:horizontal {{ background: {Styles.TEXT_COLOR}; width: 16px; margin: -5px 0; border-radius: 8px; }}
+            QSlider::handle:horizontal {{ background: {theme.accent}; width: 16px; margin: -5px 0; border-radius: 8px; }}
         """)
         mini_navi_text_opacity_row.addWidget(self.mini_navi_text_opacity_slider)
         self.mini_navi_text_opacity_value_label = QLabel(f"{self.mini_navi_text_opacity_slider.value()}%")
-        self.mini_navi_text_opacity_value_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        self.mini_navi_text_opacity_value_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         self.mini_navi_text_opacity_value_label.setFixedWidth(40)
         mini_navi_text_opacity_row.addWidget(self.mini_navi_text_opacity_value_label)
         self.mini_navi_text_opacity_slider.valueChanged.connect(lambda v: self.mini_navi_text_opacity_value_label.setText(f"{v}%"))
@@ -2577,7 +2548,7 @@ class SettingsDialog(QDialog):
         mini_navi_topmost_row = QHBoxLayout()
         mini_navi_topmost_label = QLabel("前面表示:")
         mini_navi_topmost_label.setStyleSheet(
-            f"color: {Styles.TEXT_COLOR}; font-size: 12px;"
+            f"color: {theme.text}; font-size: 12px;"
         )
         mini_navi_topmost_row.addWidget(mini_navi_topmost_label)
         self.mini_navi_topmost_mode_combo = QComboBox()
@@ -2620,7 +2591,7 @@ class SettingsDialog(QDialog):
         self.town_zones_edit.setFixedHeight(100)
         self.town_zones_edit.setStyleSheet(f"""
             QTextEdit {{ 
-                background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
+                background: rgba(26,26,26,200); color: {theme.text};
                 border: 1px solid rgba(176,255,123,0.3); border-radius: 4px; 
                 padding: 5px; font-size: 11px;
             }}
@@ -2642,7 +2613,7 @@ class SettingsDialog(QDialog):
         tabs.addTab(general_tab, "基本設定")
         from src.ui.custom_command_settings import CustomCommandSettingsWidget
         self.custom_commands_widget = CustomCommandSettingsWidget(
-            self.current_config.get("custom_commands", []), theme=POENAVI_THEME
+            self.current_config.get("custom_commands", []), theme=self.theme
         )
         tabs.insertTab(1, self.custom_commands_widget, "任意コマンド設定")
         
@@ -2680,7 +2651,7 @@ class SettingsDialog(QDialog):
         self.guide_reset_description = QLabel()
         self.guide_reset_description.setObjectName("guideProgressResetDescription")
         self.guide_reset_description.setWordWrap(True)
-        self.guide_reset_description.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 12px;")
+        self.guide_reset_description.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         self._update_guide_reset_description()
         guide_reset_layout.addWidget(self.guide_reset_description)
 
@@ -2695,7 +2666,7 @@ class SettingsDialog(QDialog):
 
         # === アプリ情報タブ（ぽえとれ設定と共通） ===
         about_tab = AppInfoWidget(
-            POENAVI_THEME,
+            self.theme,
             update_check_callback=self.update_check_callback,
         )
         self.app_disclaimer_label = about_tab.disclaimer_label
@@ -2706,6 +2677,7 @@ class SettingsDialog(QDialog):
         self.gem_shop_search_term_review = GemShopSearchTermOverridesDialog(
             term_review_tab,
             self.current_config.get("gem_shop_search_term_overrides", {}),
+            theme=self.theme,
         )
         term_review_layout.addWidget(self.gem_shop_search_term_review)
         self.settings_tabs = tabs
@@ -2717,18 +2689,46 @@ class SettingsDialog(QDialog):
         layout.addWidget(tabs)
 
         # OK/Cancel
-        btn_layout = QHBoxLayout()
+        self.footer_layout = QHBoxLayout()
         self.ok_btn = QPushButton("保存")
-        self.ok_btn.setStyleSheet(Styles.BUTTON)
+        self.ok_btn.setProperty("buttonRole", "primary")
         self.ok_btn.clicked.connect(self.accept)
 
         self.cancel_btn = QPushButton("キャンセル")
-        self.cancel_btn.setStyleSheet(Styles.BUTTON)
+        self.cancel_btn.setProperty("buttonRole", "secondary")
         self.cancel_btn.clicked.connect(self.reject)
 
-        btn_layout.addWidget(self.ok_btn)
-        btn_layout.addWidget(self.cancel_btn)
-        layout.addLayout(btn_layout)
+        self.footer_layout.addStretch()
+        self.footer_layout.addWidget(self.cancel_btn)
+        self.footer_layout.addWidget(self.ok_btn)
+        layout.addLayout(self.footer_layout)
+
+        self.guide_progress_reset_btn.setProperty("buttonRole", "danger")
+        self._clear_legacy_control_styles(self)
+
+    @staticmethod
+    def _clear_legacy_control_styles(root: QWidget) -> None:
+        """対象設定画面内だけ、旧インラインQSSを共通テーマへ委譲する。"""
+        from PySide6.QtWidgets import QSlider
+
+        widget_types = (
+            QCheckBox,
+            QComboBox,
+            QDoubleSpinBox,
+            QGroupBox,
+            QLineEdit,
+            QPushButton,
+            QRadioButton,
+            QScrollArea,
+            QSlider,
+            QSpinBox,
+            QTableWidget,
+            QTabWidget,
+            QTextEdit,
+        )
+        for widget_type in widget_types:
+            for widget in root.findChildren(widget_type):
+                widget.setStyleSheet("")
 
     def _update_guide_reset_description(self):
         description = (
@@ -2789,7 +2789,7 @@ class SettingsDialog(QDialog):
         btn.setToolTip(tooltip)
         btn.setStyleSheet(f"""
             QPushButton {{
-                background: rgba(40,40,40,200); color: {Styles.TEXT_COLOR};
+                background: rgba(40,40,40,200); color: {self.theme.text};
                 border: 1px solid rgba(176,255,123,0.3); border-radius: 3px;
                 font-size: 11px; font-weight: bold;
             }}
@@ -2983,7 +2983,7 @@ class SettingsDialog(QDialog):
         name_edit.setPlaceholderText("エリア名")
         name_edit.setStyleSheet(f"""
             QLineEdit {{ 
-                background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
+                background: rgba(26,26,26,200); color: {self.theme.text};
                 border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; 
                 padding: 3px 5px; font-size: 11px;
             }}
@@ -3170,7 +3170,7 @@ class SettingsDialog(QDialog):
             act_group = QGroupBox(act_name)
             act_group.setStyleSheet(f"""
                 QGroupBox {{ 
-                    color: {Styles.TEXT_COLOR}; 
+                    color: {self.theme.text};
                     border: 1px solid rgba(176,255,123,0.3); 
                     border-radius: 4px; 
                     margin-top: 8px; 
@@ -3203,7 +3203,7 @@ class SettingsDialog(QDialog):
                 name_edit.setToolTip("エリアレベルは訪問順で変動" if level == 0 else f"推奨エリアレベル: {level}")
                 name_edit.setStyleSheet(f"""
                     QLineEdit {{ 
-                        background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
+                        background: rgba(26,26,26,200); color: {self.theme.text};
                         border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; 
                         padding: 3px 5px; font-size: 11px;
                     }}
@@ -3247,7 +3247,7 @@ class SettingsDialog(QDialog):
                     border: 1px dashed rgba(176,255,123,0.3); border-radius: 3px; 
                     padding: 3px; font-size: 10px;
                 }}
-                QPushButton:hover {{ color: {Styles.TEXT_COLOR}; }}
+                QPushButton:hover {{ color: {self.theme.text}; }}
             """)
             add_btn.clicked.connect(lambda checked, an=act_name, al=act_layout, aw=act_widgets: self._add_zone_row(an, al, aw))
             add_btn.setEnabled(False)
@@ -3258,6 +3258,8 @@ class SettingsDialog(QDialog):
             self.zone_spinboxes[act_name] = act_widgets
 
         self.zone_scroll_inner.addStretch()
+        if hasattr(self, "theme"):
+            self._clear_legacy_control_styles(self.zone_scroll_widget)
 
     def _open_area_note_editor(self, zone_id: str, zone_name: str):
         """設定画面から任意エリアのエリアメモを編集して即時保存する。"""

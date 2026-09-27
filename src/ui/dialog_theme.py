@@ -40,6 +40,11 @@ class DialogTheme:
     scrollbar_width: int = 8
     icon_size: int = 16
 
+    @property
+    def panel(self) -> str:
+        """旧AppTheme利用部品を段階移行するための互換名。"""
+        return self.surface
+
 
 POENAVI_DIALOG_THEME = DialogTheme(
     name="poenavi",
@@ -100,6 +105,11 @@ def build_dialog_stylesheet(theme: DialogTheme) -> str:
     font-family: "{theme.font_family}";
     font-size: {theme.body_size}px;
 }}
+{root} QScrollArea,
+{root} QScrollArea > QWidget > QWidget {{
+    background-color: {theme.background};
+    border: none;
+}}
 {root} QFrame[uiRole="surface"],
 {root} QWidget[uiRole="surface"] {{
     background-color: {theme.surface};
@@ -143,6 +153,12 @@ def build_dialog_stylesheet(theme: DialogTheme) -> str:
 {root} QToolButton:focus {{ border-color: {theme.accent}; }}
 {root} QPushButton:pressed,
 {root} QToolButton:pressed {{ background-color: {theme.background}; }}
+{root} QPushButton:checked,
+{root} QToolButton:checked {{
+    color: {theme.text};
+    background-color: {theme.accent_soft};
+    border-color: {theme.accent};
+}}
 {root} QPushButton[buttonRole="primary"] {{
     color: {theme.background};
     background-color: {theme.accent};
@@ -236,6 +252,20 @@ def build_dialog_stylesheet(theme: DialogTheme) -> str:
     selection-color: {theme.text};
 }}
 
+{root} QSlider::groove:horizontal {{
+    height: 6px;
+    background-color: {theme.border};
+    border-radius: 3px;
+}}
+{root} QSlider::handle:horizontal {{
+    width: 16px;
+    margin: -5px 0;
+    background-color: {theme.accent};
+    border: 1px solid {theme.accent};
+    border-radius: 8px;
+}}
+{root} QSlider::handle:horizontal:hover {{ border-color: {theme.text}; }}
+
 {root} QCheckBox,
 {root} QRadioButton {{ spacing: 8px; }}
 {root} QCheckBox::indicator,
@@ -318,6 +348,15 @@ def build_dialog_stylesheet(theme: DialogTheme) -> str:
     border-radius: {theme.radius}px;
     outline: 0;
 }}
+{root} QHeaderView::section {{
+    min-height: {theme.form_control_height}px;
+    padding: 0 7px;
+    color: {theme.text};
+    background-color: {theme.surface};
+    border: none;
+    border-right: 1px solid {theme.border};
+    border-bottom: 1px solid {theme.border};
+}}
 {root} QAbstractItemView::item {{
     min-height: {theme.form_control_height}px;
     padding: 0 7px;
@@ -337,6 +376,16 @@ def build_dialog_stylesheet(theme: DialogTheme) -> str:
 {root} QWidget[density="compact"] QToolButton {{
     min-height: {theme.compact_row_height}px;
     border-radius: {theme.compact_radius}px;
+}}
+{root} QWidget[density="compact"] QLineEdit,
+{root} QWidget[density="compact"] QComboBox,
+{root} QWidget[density="compact"] QSpinBox,
+{root} QWidget[density="compact"] QDoubleSpinBox {{
+    min-height: {theme.compact_row_height}px;
+    border-radius: {theme.compact_radius}px;
+}}
+{root} QWidget[density="compact"] QHeaderView::section {{
+    min-height: {theme.compact_row_height}px;
 }}
 
 {root} QScrollBar:vertical {{

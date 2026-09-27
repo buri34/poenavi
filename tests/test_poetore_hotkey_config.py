@@ -376,8 +376,8 @@ def test_settings_dialog_can_change_poetore_capture_hotkey(monkeypatch):
         assert dialog.poetore_auto_hide_btn.alt_button.width() == 48
         assert dialog.poetore_capture_btn.width() == AutoHideHotkeyWidget.INPUT_WIDTH
         assert dialog.poetore_auto_hide_btn.width() == AutoHideHotkeyWidget.INPUT_WIDTH
-        assert "#B0FF7B" in dialog.poetore_auto_hide_btn.ctrl_button.styleSheet()
-        assert "#49D6B0" not in dialog.poetore_auto_hide_btn.ctrl_button.styleSheet()
+        assert dialog.poetore_auto_hide_btn.ctrl_button.styleSheet() == ""
+        assert dialog.property("dialogAccent") == "#B0FF7B"
         assert (
             dialog.poetore_auto_hide_btn.key_button.width()
             > dialog.poetore_auto_hide_btn.ctrl_button.width()
