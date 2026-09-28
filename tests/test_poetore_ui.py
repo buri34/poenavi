@@ -1214,7 +1214,6 @@ def test_mod_filter_checkbox_uses_muted_teal_checked_color(qapp):
         assert "poenavi_check_257a64.png" in style
         assert "border: 2px solid #257a64" in style
         assert "width: 18px; height: 18px" in style
-        assert "remembertradeoptionscheckbox { color: #e6ecea; }" in style
         assert "border-radius: 3px" in style
     finally:
         window.close()
@@ -5462,6 +5461,7 @@ def test_trade_option_memory_defaults_to_on_and_includes_listing_period(qapp):
         assert "poenavi_check_257a64.png" in style
         assert "border: 2px solid #257a64" in style
         assert "width: 18px; height: 18px" in style
+        assert "remembertradeoptionscheckbox { color: #e6ecea; }" in style
         assert window.trade_status_combo.currentData() == "online"
         assert window.trade_currency_combo.currentData() == "divine"
         assert window.listed_within_combo.currentData() == "3days"
