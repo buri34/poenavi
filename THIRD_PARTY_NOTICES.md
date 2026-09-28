@@ -151,6 +151,11 @@ PoENavi's Windows distribution is created with PyInstaller and includes upstream
   - <https://github.com/moses-palmer/pynput>
 - **urllib3** — MIT License
   - <https://github.com/urllib3/urllib3>
+- **miniaudio (Python bindings)** — MIT No Attribution License
+  - <https://github.com/irmen/pyminiaudio>
+- **CFFI / pycparser** — MIT License and BSD 3-Clause License, respectively
+  - <https://cffi.readthedocs.io/>
+  - <https://github.com/eliben/pycparser>
 - **PyInstaller bootloader** — GNU General Public License v2 or later with the PyInstaller bootloader exception
   - <https://pyinstaller.org/en/stable/license.html>
 - **OpenSSL runtime libraries** — Apache License 2.0

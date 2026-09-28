@@ -9,10 +9,10 @@ import shutil
 import sys
 from pathlib import Path
 
-
 RUNTIME_DISTRIBUTIONS = (
     "PySide6", "PySide6-Addons", "PySide6-Essentials", "shiboken6",
-    "pynput", "six", "urllib3", "PyInstaller", "altgraph",
+    "pynput", "six", "urllib3", "miniaudio", "cffi", "pycparser",
+    "PyInstaller", "altgraph",
     "pyinstaller-hooks-contrib", "packaging", "pefile", "pywin32-ctypes",
 )
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

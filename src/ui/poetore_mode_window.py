@@ -418,9 +418,11 @@ class PoetoreModeWindow(QMainWindow):
         self.setWindowTitle("ぽえとれ")
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setMinimumSize(500, 300)
-        self.resize(558, 360)
+        self.setMinimumSize(620, 300)
+        self.resize(620, 360)
         self._build_ui()
+        self._hideout_notification = None
+        self.focus_button.setText("集中 OFF")
         self._apply_rate_panel_height()
         self._build_tray_icon()
         self._apply_window_settings()
@@ -539,6 +541,11 @@ class PoetoreModeWindow(QMainWindow):
             }}
             QPushButton:hover {{ background: #25332F; border-color: {POETORE_ACCENT}; }}
             QPushButton:pressed {{ background: #276B5A; }}
+            QPushButton#poetoreFocusButton[focusActive="true"] {{
+                background: #204C40;
+                border-color: {POETORE_ACCENT};
+                color: {POETORE_TEXT};
+            }}
         """)
         root = QVBoxLayout(central)
         root.setContentsMargins(0, 0, 0, 0)
@@ -570,6 +577,7 @@ class PoetoreModeWindow(QMainWindow):
         self.mode_label.setStyleSheet(
             f"color: {POETORE_ACCENT}; font-size: 22px; font-weight: bold;"
         )
+        self.mode_label.setMinimumWidth(self.mode_label.sizeHint().width())
         title_row.addWidget(self.title_label)
         title_row.addWidget(self.mode_label)
         subtitle = QLabel("価格チェック・トレード支援")
@@ -580,6 +588,14 @@ class PoetoreModeWindow(QMainWindow):
         title_box.addWidget(subtitle)
         header.addLayout(title_box)
         header.addStretch()
+
+        self.focus_button = QPushButton("集中 OFF")
+        self.focus_button.setObjectName("poetoreFocusButton")
+        self.focus_button.setFocusPolicy(Qt.NoFocus)
+        self.focus_button.setToolTip("隠れ家滞在通知の集中モードを切り替える")
+        self.focus_button.setFixedSize(108, 35)
+        self.focus_button.clicked.connect(self.toggle_focus_mode)
+        header.addWidget(self.focus_button)
 
         self.memo_button = self._header_button("", "共通メモを開く")
         self.memo_button.setIcon(_memo_icon())
@@ -631,6 +647,15 @@ class PoetoreModeWindow(QMainWindow):
         for button in self.header_action_buttons:
             header.addWidget(button)
         body_layout.addLayout(header)
+
+        self.focus_message_label = QLabel("")
+        self.focus_message_label.setObjectName("focusMessageLabel")
+        self.focus_message_label.setStyleSheet(
+            f"color: {POETORE_ACCENT}; font-size: 12px;"
+        )
+        self.focus_message_label.setWordWrap(True)
+        self.focus_message_label.hide()
+        body_layout.addWidget(self.focus_message_label)
 
         from src.poetore.official_exchange import (
             default_official_exchange_shadow_service,
@@ -701,6 +726,56 @@ class PoetoreModeWindow(QMainWindow):
         button.setToolTip(tooltip)
         button.setFixedSize(35, 35)
         return button
+
+    def toggle_focus_mode(self):
+        self._ensure_hideout_notification().toggle()
+
+    def _ensure_hideout_notification(self):
+        if self._hideout_notification is not None:
+            return self._hideout_notification
+        from src.poetore.hideout_notification_controller import (
+            HideoutNotificationController,
+        )
+
+        controller = HideoutNotificationController(
+            self.config, self.poe_version, ConfigManager.save_config, self
+        )
+        controller.display_changed.connect(self.focus_button.setText)
+        controller.focus_changed.connect(self._update_focus_button_state)
+        controller.flash_requested.connect(self._flash_focus_button)
+        controller.message_requested.connect(self._handle_focus_message)
+        self._hideout_notification = controller
+        return controller
+
+    def _update_focus_button_state(self, active):
+        self.focus_button.setProperty("focusActive", bool(active))
+        self.focus_button.style().unpolish(self.focus_button)
+        self.focus_button.style().polish(self.focus_button)
+
+    def _flash_focus_button(self):
+        self.focus_button.setStyleSheet(
+            f"background: {POETORE_ACCENT}; color: #101614;"
+        )
+        QTimer.singleShot(1800, lambda: self.focus_button.setStyleSheet(""))
+
+    def _handle_focus_message(self, kind, text):
+        if kind == "log_missing":
+            answer = QMessageBox.question(
+                self,
+                "隠れ家滞在通知",
+                f"{text}\n\n設定画面を開きますか？",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes,
+            )
+            if answer == QMessageBox.Yes:
+                QTimer.singleShot(0, self.open_settings)
+            return
+        if kind == "poe_not_running":
+            QMessageBox.information(self, "隠れ家滞在通知", text)
+            return
+        self.focus_message_label.setText(text)
+        self.focus_message_label.show()
+        QTimer.singleShot(6000, self.focus_message_label.hide)
 
     def _start_hotkeys(self):
         configured = self.config.get("hotkeys", {})
@@ -1268,6 +1343,8 @@ class PoetoreModeWindow(QMainWindow):
             return
         self.config.update(dialog.get_settings())
         ConfigManager.save_config(self.config)
+        if self._hideout_notification is not None:
+            self._hideout_notification.apply_settings(self.config)
         from src.windows_autostart import (
             sync_windows_poetore_autostart_with_error,
         )
@@ -1348,6 +1425,8 @@ class PoetoreModeWindow(QMainWindow):
 
     def closeEvent(self, event):
         self.tray_icon.hide()
+        if self._hideout_notification is not None:
+            self._hideout_notification.close()
         self.rate_panel.stop()
         self._rate_icon_cache.close(wait=False)
         self.hotkey_service.stop()

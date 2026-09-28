@@ -45,7 +45,7 @@ class ConfigManagerTest(unittest.TestCase):
     def test_schema_v19_adds_distinct_exchange_rate_defaults(self):
         migrated = ConfigManager._migrate_config({"schemaVersion": 18})
 
-        assert migrated["schemaVersion"] == 19
+        assert migrated["schemaVersion"] == 20
         assert migrated["poetore"]["exchange_rate_pairs"] == {
             "poe1": [{
                 "left_item_id": "Metadata/Items/Currency/CurrencyModValues",
@@ -179,7 +179,7 @@ class ConfigManagerTest(unittest.TestCase):
             },
         })
 
-        self.assertEqual(migrated["schemaVersion"], 19)
+        self.assertEqual(migrated["schemaVersion"], 20)
         self.assertEqual(
             migrated["startup"],
             {
@@ -200,7 +200,7 @@ class ConfigManagerTest(unittest.TestCase):
                 },
             },
         })
-        assert migrated["schemaVersion"] == 19
+        assert migrated["schemaVersion"] == 20
         assert migrated["poetore"]["screen_reading"] == {"enabled": True}
         assert "enabled" not in migrated["poetore"]["expedition_reward_overlay"]
         assert migrated["poetore"]["desecration_tier_overlay"] == {}
@@ -212,7 +212,7 @@ class ConfigManagerTest(unittest.TestCase):
             "hotkeys": {"screen_reading_ocr": "ctrl+shift+r"},
         })
 
-        assert migrated["schemaVersion"] == 19
+        assert migrated["schemaVersion"] == 20
         assert migrated["hotkeys"] == {"screen_reading_ocr": "ctrl+shift+r"}
 
     def test_v432_config_gets_separate_default_hotkeys_without_reverse_migration(self):
@@ -237,7 +237,7 @@ class ConfigManagerTest(unittest.TestCase):
                  patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
                 loaded = ConfigManager.load_config()
 
-            assert loaded["schemaVersion"] == 19
+            assert loaded["schemaVersion"] == 20
             assert loaded["hotkeys"]["screen_reading_ocr"] == "ctrl+shift+r"
             assert loaded["hotkeys"]["expedition_reward_ocr"] == "alt+e"
             assert loaded["hotkeys"]["desecration_tier_ocr"] == "alt+r"

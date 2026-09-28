@@ -76,6 +76,56 @@ def test_poe2_enables_poetore_startup_choices():
         "windows_autostart_poetore": False,
     }
     dialog.close()
+
+
+def test_hideout_notification_controls_load_and_save_seconds_and_volume():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "poe_version": POE1,
+        "client_log_paths": {"poe1": r"C:\PoE\logs\Client.txt"},
+        "poetore": {
+            "hideout_notification": {
+                "duration_seconds": 125,
+                "repeat": True,
+                "audio_source": "custom",
+                "custom_audio_display_name": "声.mp3",
+                "custom_audio_file": "poetore-hideout-notification.mp3",
+                "volume": 75,
+            }
+        },
+    })
+    assert dialog.hideout_minutes_spin.value() == 2
+    assert dialog.hideout_seconds_spin.value() == 5
+    assert dialog.hideout_repeat_cb.isChecked()
+    assert dialog.hideout_audio_name.text() == "声.mp3"
+    assert dialog.hideout_log_path_edit.text() == r"C:\PoE\logs\Client.txt"
+    assert dialog.hideout_volume_label.text() == "75"
+    settings = dialog.get_settings()["poetore"]["hideout_notification"]
+    assert settings == {
+        "duration_seconds": 125,
+        "repeat": True,
+        "audio_source": "custom",
+        "custom_audio_display_name": "声.mp3",
+        "custom_audio_file": "poetore-hideout-notification.mp3",
+        "volume": 75,
+    }
+    assert dialog.get_settings()["client_log_paths"]["poe1"] == (
+        r"C:\PoE\logs\Client.txt"
+    )
+    dialog.close()
+
+
+def test_hideout_notification_duration_is_bounded_to_ten_seconds():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={"poe_version": POE1})
+    dialog.hideout_minutes_spin.setValue(0)
+    dialog.hideout_seconds_spin.setValue(1)
+    assert dialog.hideout_seconds_spin.value() == 10
+    settings = dialog.get_settings()["poetore"]["hideout_notification"]
+    assert settings["duration_seconds"] == 10
+    assert dialog.hideout_volume_label.text() == "50（標準）"
+    dialog.close()
+
 def test_poetore_settings_contains_common_trade_and_window_controls():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(

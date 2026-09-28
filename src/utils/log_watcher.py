@@ -6,6 +6,7 @@ PoE1/PoE2で最終クリアイベントの文言が異なる可能性を考慮�
 
 import os
 import re
+
 from PySide6.QtCore import QObject, QTimer, Signal
 
 from src.utils.poe_version_data import POE1
@@ -36,7 +37,14 @@ class LogWatcher(QObject):
     # Set Source pattern (works regardless of chat tab settings)
     # e.g. "[SCENE] Set Source [ハイゲート]" or "[SCENE] Set Source [The Coast]"
     SET_SOURCE_PATTERN = re.compile(r"\[SCENE\] Set Source \[(.+?)\]")
-    def __init__(self, log_path: str = "", poll_interval_ms: int = 500, parent=None):
+    def __init__(
+        self,
+        log_path: str = "",
+        poll_interval_ms: int = 500,
+        parent=None,
+        *,
+        restore_state: bool = True,
+    ):
         super().__init__(parent)
         self.log_path = log_path
         self.poll_interval_ms = poll_interval_ms
@@ -45,6 +53,7 @@ class LogWatcher(QObject):
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._poll)
         self._active = False
+        self.restore_state = bool(restore_state)
 
     def set_log_path(self, path: str):
         """ログファイルパスを設定（監視中なら再起動）"""
@@ -75,8 +84,9 @@ class LogWatcher(QObject):
             print(f"[LogWatcher] File not found: {self.log_path}")
             return False
         
-        # 起動時に最新のレベルとゾーンを復元
-        self._restore_latest_state()
+        # 集中モード等、現在プロセスだけを独自復元する利用側は無効化できる。
+        if self.restore_state:
+            self._restore_latest_state()
         
         # ファイル末尾にシーク（過去ログは無視）
         try:

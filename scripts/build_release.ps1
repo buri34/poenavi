@@ -87,6 +87,8 @@ $appArgs = @(
     "--hidden-import", "pynput",
     "--hidden-import", "pynput.keyboard",
     "--hidden-import", "pynput.keyboard._win32",
+    "--hidden-import", "miniaudio",
+    "--hidden-import", "_miniaudio",
     "main.py"
 )
 Invoke-Python @appArgs
@@ -175,7 +177,8 @@ try {
         "ui-checkbox-checked.svg",
         "ui-radio-checked.svg",
         "TriskelionShattered.png",
-        "TriskelionReforged.png"
+        "TriskelionReforged.png",
+        "hideout_focus_notification.wav"
     )) {
         if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {
             throw "Release audit failed: missing $requiredName"

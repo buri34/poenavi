@@ -232,6 +232,7 @@ python -m pytest -q
 - PySide6（Qt 6）
 - pynput / Windows API
 - urllib3
+- miniaudio（WAV／MP3通知音声の再生）
 - Windows OCR（PoE2エクスペディション報酬読取）
 - NDLOCR-Lite 1.3.1（PoE2アビス冒涜Modの数字欠落時のみ補助）
 - PyInstaller

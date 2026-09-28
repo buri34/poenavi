@@ -75,6 +75,14 @@
         },
         "result_font_size": "medium",
         "capture_error_notification_enabled": false,
+        "hideout_notification": {
+            "duration_seconds": 60,
+            "repeat": false,
+            "audio_source": "bundled",
+            "custom_audio_display_name": "",
+            "custom_audio_file": "",
+            "volume": 50
+        },
         "result_positions": {},
         "screen_reading": {
             "enabled": false

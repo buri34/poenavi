@@ -9,21 +9,33 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
+    QFileDialog,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QMessageBox,
     QPushButton,
     QRadioButton,
     QScrollArea,
     QSlider,
+    QSpinBox,
     QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
+from src.poetore.hideout_notification import (
+    normalize_hideout_notification_settings,
+)
+from src.poetore.notification_audio import (
+    NotificationAudioPlayer,
+    bundled_audio_path,
+    copy_custom_audio,
+    custom_audio_path,
+)
 from src.poetore.trade import (
     available_pc_leagues,
     default_pc_league,
@@ -216,6 +228,93 @@ class PoetoreSettingsDialog(QDialog):
         )
         common_layout.addWidget(self.stash_tab_scroll_cb)
         basic_layout.addWidget(common_group)
+
+        hideout_settings = normalize_hideout_notification_settings(
+            poetore.get("hideout_notification")
+        )
+        hideout_group = QGroupBox("隠れ家滞在通知")
+        hideout_layout = QVBoxLayout(hideout_group)
+        hideout_form = QFormLayout()
+        duration_row = QHBoxLayout()
+        self.hideout_minutes_spin = QSpinBox()
+        self.hideout_minutes_spin.setRange(0, 60)
+        self.hideout_minutes_spin.setSuffix(" 分")
+        self.hideout_seconds_spin = QSpinBox()
+        self.hideout_seconds_spin.setRange(0, 59)
+        self.hideout_seconds_spin.setSuffix(" 秒")
+        minutes, seconds = divmod(hideout_settings["duration_seconds"], 60)
+        self.hideout_minutes_spin.setValue(minutes)
+        self.hideout_seconds_spin.setValue(seconds)
+        self.hideout_minutes_spin.valueChanged.connect(
+            self._limit_hideout_duration
+        )
+        self._limit_hideout_duration(self.hideout_minutes_spin.value())
+        duration_row.addWidget(self.hideout_minutes_spin)
+        duration_row.addWidget(self.hideout_seconds_spin)
+        duration_row.addStretch()
+        hideout_form.addRow("通知までの時間:", duration_row)
+        self.hideout_repeat_cb = QCheckBox("通知を繰り返す")
+        self.hideout_repeat_cb.setChecked(hideout_settings["repeat"])
+        hideout_form.addRow("", self.hideout_repeat_cb)
+        self._hideout_audio_source = hideout_settings["audio_source"]
+        self._hideout_audio_file = hideout_settings["custom_audio_file"]
+        self._hideout_audio_display_name = hideout_settings[
+            "custom_audio_display_name"
+        ]
+        self.hideout_audio_name = QLabel()
+        self._refresh_hideout_audio_name()
+        audio_row = QHBoxLayout()
+        audio_row.addWidget(self.hideout_audio_name, 1)
+        self.hideout_audio_select_button = QPushButton("選択")
+        self.hideout_audio_select_button.clicked.connect(
+            self._select_hideout_audio
+        )
+        audio_row.addWidget(self.hideout_audio_select_button)
+        self.hideout_audio_reset_button = QPushButton("標準に戻す")
+        self.hideout_audio_reset_button.clicked.connect(
+            self._reset_hideout_audio
+        )
+        audio_row.addWidget(self.hideout_audio_reset_button)
+        hideout_form.addRow("通知音声:", audio_row)
+        volume_row = QHBoxLayout()
+        self.hideout_volume_slider = QSlider(Qt.Horizontal)
+        self.hideout_volume_slider.setRange(0, 100)
+        self.hideout_volume_slider.setValue(hideout_settings["volume"])
+        self.hideout_volume_label = QLabel()
+        self.hideout_volume_slider.valueChanged.connect(
+            self._refresh_hideout_volume_label
+        )
+        self._refresh_hideout_volume_label()
+        volume_row.addWidget(self.hideout_volume_slider, 1)
+        volume_row.addWidget(self.hideout_volume_label)
+        hideout_form.addRow("音量:", volume_row)
+        log_paths = self.current_config.get("client_log_paths")
+        log_paths = log_paths if isinstance(log_paths, dict) else {}
+        log_row = QHBoxLayout()
+        self.hideout_log_path_edit = QLineEdit(
+            str(log_paths.get(self.poe_version, "") or "")
+        )
+        self.hideout_log_path_edit.setPlaceholderText("Client.txtを選択")
+        log_row.addWidget(self.hideout_log_path_edit, 1)
+        self.hideout_log_path_button = QPushButton("参照")
+        self.hideout_log_path_button.clicked.connect(
+            self._select_hideout_log_path
+        )
+        log_row.addWidget(self.hideout_log_path_button)
+        hideout_form.addRow("Client.txt:", log_row)
+        hideout_layout.addLayout(hideout_form)
+        self.hideout_preview_button = QPushButton("試聴")
+        self.hideout_preview_button.clicked.connect(self._preview_hideout_audio)
+        hideout_layout.addWidget(self.hideout_preview_button)
+        hideout_note = QLabel(
+            "集中モード中、隠れ家に設定時間滞在すると音声でお知らせします。\n"
+            "音量50が音声本来の大きさで、50より上は増幅します。"
+        )
+        hideout_note.setProperty("uiRole", "muted")
+        hideout_note.setWordWrap(True)
+        hideout_layout.addWidget(hideout_note)
+        self._hideout_preview_player = None
+        basic_layout.addWidget(hideout_group)
 
         trade_group = QGroupBox("価格データ")
         trade_layout = QVBoxLayout(trade_group)
@@ -597,6 +696,18 @@ class PoetoreSettingsDialog(QDialog):
         poetore["capture_error_notification_enabled"] = (
             self.capture_error_notification_cb.isChecked()
         )
+        hideout_settings = normalize_hideout_notification_settings({
+            "duration_seconds": (
+                self.hideout_minutes_spin.value() * 60
+                + self.hideout_seconds_spin.value()
+            ),
+            "repeat": self.hideout_repeat_cb.isChecked(),
+            "audio_source": self._hideout_audio_source,
+            "custom_audio_display_name": self._hideout_audio_display_name,
+            "custom_audio_file": self._hideout_audio_file,
+            "volume": self.hideout_volume_slider.value(),
+        })
+        poetore["hideout_notification"] = hideout_settings
         obs_streaming = dict(poetore.get("obs_streaming", {}))
         obs_streaming["enabled"] = self.obs_streaming_enabled_cb.isChecked()
         obs_streaming["title_bar_opacity"] = (
@@ -611,6 +722,10 @@ class PoetoreSettingsDialog(QDialog):
             "custom_commands": self.custom_commands_widget.commands(),
             "stash_tab_scroll_enabled": self.stash_tab_scroll_cb.isChecked(),
             "poetore": poetore,
+            "client_log_paths": {
+                **dict(self.current_config.get("client_log_paths", {})),
+                self.poe_version: self.hideout_log_path_edit.text().strip(),
+            },
             "poe_version": selected_poe_version,
             "poe_version_mode": selected_poe_version if skip_selector else "ask",
             "window_opacity": self.opacity_slider.value(),
@@ -620,6 +735,80 @@ class PoetoreSettingsDialog(QDialog):
             "display_monitor": self.monitor_combo.currentData(),
             "snap_to_right_edge": self.snap_right_edge_cb.isChecked(),
         }
+
+    def _limit_hideout_duration(self, minutes):
+        if int(minutes) >= 60:
+            self.hideout_seconds_spin.setMinimum(0)
+            self.hideout_seconds_spin.setValue(0)
+            self.hideout_seconds_spin.setEnabled(False)
+        else:
+            self.hideout_seconds_spin.setEnabled(True)
+            self.hideout_seconds_spin.setMinimum(10 if int(minutes) == 0 else 0)
+
+    def _refresh_hideout_volume_label(self, *_args):
+        value = self.hideout_volume_slider.value()
+        self.hideout_volume_label.setText(
+            f"{value}（標準）" if value == 50 else str(value)
+        )
+
+    def _refresh_hideout_audio_name(self):
+        name = (
+            self._hideout_audio_display_name
+            if self._hideout_audio_source == "custom"
+            else "標準（ずんだもん）"
+        )
+        self.hideout_audio_name.setText(name)
+        self.hideout_audio_name.setToolTip(name)
+
+    def _select_hideout_audio(self):
+        source, _selected_filter = QFileDialog.getOpenFileName(
+            self, "通知音声を選択", "", "音声ファイル (*.wav *.mp3)"
+        )
+        if not source:
+            return
+        try:
+            display_name, stored_name = copy_custom_audio(source)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "通知音声", str(error))
+            return
+        self._hideout_audio_source = "custom"
+        self._hideout_audio_display_name = display_name
+        self._hideout_audio_file = stored_name
+        self._refresh_hideout_audio_name()
+
+    def _select_hideout_log_path(self):
+        source, _selected_filter = QFileDialog.getOpenFileName(
+            self, "Client.txtを選択", "", "PoEクライアントログ (Client.txt)"
+        )
+        if source:
+            self.hideout_log_path_edit.setText(source)
+
+    def _reset_hideout_audio(self):
+        self._hideout_audio_source = "bundled"
+        self._hideout_audio_display_name = ""
+        self._hideout_audio_file = ""
+        self._refresh_hideout_audio_name()
+
+    def _preview_hideout_audio(self):
+        if self._hideout_preview_player is None:
+            self._hideout_preview_player = NotificationAudioPlayer(self)
+            self._hideout_preview_player.failed.connect(
+                lambda text: QMessageBox.warning(self, "通知音声", text)
+            )
+            self._hideout_preview_player.fallback_used.connect(
+                lambda text: QMessageBox.information(self, "通知音声", text)
+            )
+        primary = bundled_audio_path()
+        if self._hideout_audio_source == "custom":
+            primary = custom_audio_path(self._hideout_audio_file)
+        self._hideout_preview_player.play(
+            primary, bundled_audio_path(), self.hideout_volume_slider.value()
+        )
+
+    def done(self, result):
+        if self._hideout_preview_player is not None:
+            self._hideout_preview_player.stop()
+        super().done(result)
 
     def _mark_result_positions_for_reset(self):
         self._reset_result_positions = True

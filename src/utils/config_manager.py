@@ -7,6 +7,9 @@ from datetime import datetime
 from pathlib import Path
 
 from src.poetore.exchange_rate_settings import ensure_rate_pair_config
+from src.poetore.hideout_notification import (
+    normalize_hideout_notification_settings,
+)
 from src.utils.poe_version_data import POE1
 
 
@@ -17,8 +20,9 @@ class ConfigManager:
     ENV_USER_DATA_DIR = "POENAVI_USER_DATA_DIR"
     # Schema 18 was published in v4.3.2. Keep the version monotonic even
     # though the shared OCR hotkey feature has been withdrawn. Schema 19 adds
-    # the PoE-version-scoped Currency Exchange rate-pair lists.
-    CURRENT_SCHEMA_VERSION = 19
+    # the PoE-version-scoped Currency Exchange rate-pair lists. Schema 20 adds
+    # the opt-in PoETore hideout-stay notification settings.
+    CURRENT_SCHEMA_VERSION = 20
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -540,6 +544,14 @@ class ConfigManager:
         # Missing keys mean first use and receive the initial pair. Explicit
         # empty lists are retained so deleting every row survives a restart.
         ensure_rate_pair_config(migrated)
+
+        poetore = migrated.get("poetore")
+        if not isinstance(poetore, dict):
+            poetore = {}
+        poetore["hideout_notification"] = normalize_hideout_notification_settings(
+            poetore.get("hideout_notification")
+        )
+        migrated["poetore"] = poetore
 
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)

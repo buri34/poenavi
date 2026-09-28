@@ -115,6 +115,9 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
         window.settings_button,
     )
     assert window.header_action_buttons == header_buttons
+    assert window.focus_button.text() == "集中 OFF"
+    assert window.focus_button.size().width() == 108
+    assert window._hideout_notification is None
     assert all(button.text() == "" for button in header_buttons)
     assert all(not button.icon().isNull() for button in header_buttons)
     assert all(button.iconSize() == QSize(24, 24) for button in header_buttons)
@@ -127,7 +130,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert window.memo_button.size().height() == 35
     assert window.divine_rate_value.text() == "最新データを取得できません"
     assert window.divine_rate_value.alignment() == Qt.AlignCenter
-    assert window.width() == 558
+    assert window.width() == 620
     assert window.windowFlags() & Qt.FramelessWindowHint
     assert window.capture_hint.text() == (
         "アイテムにマウスオーバーして Alt + D 操作モード / "
