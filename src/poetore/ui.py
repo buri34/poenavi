@@ -1340,8 +1340,6 @@ class PoetoreWindow(QWidget):
             self.trade_currency_combo.setItemData(
                 index, currency_tooltips[value], Qt.ToolTipRole
             )
-        self._restore_trade_options()
-        self._update_trade_currency_tooltip()
         self.listed_within_combo = QComboBox()
         self.listed_within_combo.setObjectName("filterControl")
         self.listed_within_combo.setProperty("compactAction", True)
@@ -1352,6 +1350,13 @@ class PoetoreWindow(QWidget):
             ("1か月以内", "1month"), ("2か月以内", "2months"),
         ):
             self.listed_within_combo.addItem(label, value)
+        self._remember_trade_options = bool(
+            self._app_config.get("poetore", {}).get(
+                "remember_trade_options", True,
+            )
+        )
+        self._restore_trade_options()
+        self._update_trade_currency_tooltip()
 
         unique_options = QVBoxLayout()
         self.unique_name_label = QLabel("未鑑定ユニーク候補:")
@@ -1807,6 +1812,17 @@ class PoetoreWindow(QWidget):
         action_row.addWidget(self.trade_status_combo)
         action_row.addWidget(self.trade_currency_combo)
         action_row.addWidget(self.listed_within_combo)
+        self.remember_trade_options_checkbox = QCheckBox("選択を記憶")
+        self.remember_trade_options_checkbox.setObjectName(
+            "rememberTradeOptionsCheckbox"
+        )
+        self.remember_trade_options_checkbox.setToolTip(
+            "ONの間は取引方式・通貨・出品期間の選択を記憶します"
+        )
+        self.remember_trade_options_checkbox.setChecked(
+            self._remember_trade_options
+        )
+        action_row.addWidget(self.remember_trade_options_checkbox)
         self.trade_url_button = QPushButton("公式トレード  ↗")
         self.trade_url_button.setObjectName("filterActionButton")
         self.trade_url_button.setProperty("compactAction", True)
@@ -1819,15 +1835,21 @@ class PoetoreWindow(QWidget):
         self.price_status = QLabel("検索条件を読み取っています…")
         self.price_status.setWordWrap(True)
         self.price_status.setObjectName("priceStatus")
+        status_row = QHBoxLayout()
+        status_row.setContentsMargins(0, 0, 0, 0)
+        status_row.setSpacing(_ACTION_CLUSTER_HORIZONTAL_GAP)
+        status_row.addWidget(self.price_status, stretch=1)
+        self.price_status_layout = status_row
         action_cluster = QVBoxLayout()
         action_cluster.setContentsMargins(0, 0, 0, 0)
         action_cluster.setSpacing(_ACTION_CLUSTER_VERTICAL_GAP)
         action_cluster.addLayout(mod_conditions_actions)
         action_cluster.addWidget(self.mercenary_supports_actions_widget)
         action_cluster.addLayout(action_row)
-        action_cluster.addWidget(self.price_status)
+        action_cluster.addLayout(status_row)
         self.action_cluster_layout = action_cluster
         content_layout.addLayout(action_cluster)
+        self._set_price_status_layout(compact=False)
         self.price_list = QTreeWidget()
         self.price_list.setObjectName("priceList")
         self.price_list.setHeaderLabels(["価格", "出品日時"])
@@ -1976,6 +1998,12 @@ class PoetoreWindow(QWidget):
             combo.currentIndexChanged.connect(self._fit_compact_action_widths)
         self.trade_status_combo.currentIndexChanged.connect(self._persist_trade_options)
         self.trade_currency_combo.currentIndexChanged.connect(self._persist_trade_options)
+        self.listed_within_combo.currentIndexChanged.connect(
+            self._persist_trade_options
+        )
+        self.remember_trade_options_checkbox.toggled.connect(
+            self._remember_trade_options_changed
+        )
         self.trade_currency_combo.currentIndexChanged.connect(
             self._update_trade_currency_tooltip
         )
@@ -1986,6 +2014,29 @@ class PoetoreWindow(QWidget):
             self._auto_search_after_trade_option_change
         )
 
+    def _set_price_status_layout(self, *, compact: bool):
+        """Keep guidance full-width and use the second row only for compact results."""
+        self.remember_trade_options_checkbox.setVisible(compact)
+        target_layout = (
+            self.price_status_layout if compact else self.trade_action_layout
+        )
+        other_layout = (
+            self.trade_action_layout if compact else self.price_status_layout
+        )
+        if target_layout.indexOf(self.trade_url_button) < 0:
+            other_layout.removeWidget(self.trade_url_button)
+            target_layout.addWidget(self.trade_url_button)
+
+    def _set_price_status(self, text: str, *, compact: bool = False):
+        """Show status text; new call sites safely default to full-width guidance."""
+        self.price_status.setText(text)
+        self._set_price_status_layout(compact=compact)
+
+    def _clear_price_status(self):
+        """An empty row cannot collide, so retain access to the memory toggle."""
+        self.price_status.clear()
+        self._set_price_status_layout(compact=True)
+
     def _mark_search_dirty(self, *_args):
         if not self._has_searched_current_item or getattr(self, "_parsed_item", None) is None:
             return
@@ -1994,14 +2045,14 @@ class PoetoreWindow(QWidget):
         self.price_list.clear()
         self._last_trade_url = ""
         self.trade_url_button.setEnabled(False)
-        self.price_status.clear()
+        self._clear_price_status()
         self._hide_augment_values()
         self.price_button.setEnabled(True)
 
     def _clear_displayed_trade_result(self):
         """Remove result state that belongs to the previously captured item."""
         self.price_list.clear()
-        self.price_status.clear()
+        self._clear_price_status()
         self._last_price_result = None
         self._last_trade_url = ""
         self.trade_url_button.setEnabled(False)
@@ -2992,7 +3043,7 @@ class PoetoreWindow(QWidget):
         if item is not None and item.category == "chart":
             relaxed = not bool(self.base_scope_toggle.currentData())
             self.chart_area_chip.setVisible(relaxed)
-            self.price_status.setText(
+            self._set_price_status(
                 "同じ海域の海図を検索します。"
                 if relaxed and self.chart_area_chip.isChecked()
                 else "すべての海図を検索します。"
@@ -3001,7 +3052,7 @@ class PoetoreWindow(QWidget):
             )
             self._mark_search_dirty()
             return
-        self.price_status.setText(
+        self._set_price_status(
             "ベースタイプを限定して検索します。"
             if self.base_scope_toggle.currentData()
             else "同じアイテムクラスの全ベースを対象に検索します。"
@@ -3013,7 +3064,7 @@ class PoetoreWindow(QWidget):
             return
         self.price_list.clear()
         self.trade_url_button.setEnabled(False)
-        self.price_status.setText(
+        self._set_price_status(
             "同じ海域の海図を検索します。"
             if checked else "すべての海図を検索します。"
         )
@@ -3026,7 +3077,7 @@ class PoetoreWindow(QWidget):
             return
         self.price_list.clear()
         self.trade_url_button.setEnabled(False)
-        self.price_status.setText(
+        self._set_price_status(
             "ルーンマスター版を検索します。"
             if checked else "通常版のベースを検索します。"
         )
@@ -3352,14 +3403,40 @@ class PoetoreWindow(QWidget):
         mode_options = options.get(self._trade_options_mode_key(), {})
         if not isinstance(mode_options, dict):
             mode_options = {}
+        if not self._remember_trade_options:
+            mode_options = {}
         for combo, key, fallback in (
             (self.trade_status_combo, "status", "instant"),
             (self.trade_currency_combo, "currency", "any"),
+            (self.listed_within_combo, "listed_within", "any"),
         ):
             index = combo.findData(mode_options.get(key, fallback))
             combo.setCurrentIndex(index if index >= 0 else combo.findData(fallback))
 
+    def _reset_trade_options_to_defaults(self):
+        for combo, fallback in (
+            (self.trade_status_combo, "instant"),
+            (self.trade_currency_combo, "any"),
+            (self.listed_within_combo, "any"),
+        ):
+            index = combo.findData(fallback)
+            if index >= 0:
+                combo.setCurrentIndex(index)
+
+    def _remember_trade_options_changed(self, checked: bool):
+        self._remember_trade_options = bool(checked)
+        poetore = self._app_config.setdefault("poetore", {})
+        poetore["remember_trade_options"] = self._remember_trade_options
+        if self._remember_trade_options:
+            self._persist_trade_options()
+            return
+        self._reset_trade_options_to_defaults()
+        if self._save_app_config is not None:
+            self._save_app_config(self._app_config)
+
     def _persist_trade_options(self):
+        if not self._remember_trade_options:
+            return
         poetore = self._app_config.setdefault("poetore", {})
         options = poetore.setdefault("trade_options", {})
         if not isinstance(options, dict):
@@ -3368,6 +3445,9 @@ class PoetoreWindow(QWidget):
         options[self._trade_options_mode_key()] = {
             "status": str(self.trade_status_combo.currentData() or "instant"),
             "currency": str(self.trade_currency_combo.currentData() or "any"),
+            "listed_within": str(
+                self.listed_within_combo.currentData() or "any"
+            ),
         }
         if self._save_app_config is not None:
             self._save_app_config(self._app_config)
@@ -4567,7 +4647,7 @@ class PoetoreWindow(QWidget):
             if trace is not None:
                 trace.mark("initial_search_deferred")
             self._pending_performance_trace = None
-            self.price_status.setText("検索条件を確認して「検索」を押してください。")
+            self._set_price_status("検索条件を確認して「検索」を押してください。")
             self.price_button.setEnabled(True)
             return
         self.search_current_item()
@@ -4734,6 +4814,8 @@ class PoetoreWindow(QWidget):
             self._has_searched_current_item = False
             self._search_dirty = False
             self._search_generation += 1
+            if not self._remember_trade_options:
+                self._reset_trade_options_to_defaults()
         if item.raw_text != self._unique_selector_item_key:
             self._reset_unique_candidates()
             self._unique_selector_item_key = item.raw_text
@@ -4873,7 +4955,7 @@ class PoetoreWindow(QWidget):
             self.trade_url_button.setEnabled(False)
             self.additional_results_button.hide()
             self.price_list.clear()
-            self.price_status.setText(
+            self._set_price_status(
                 "「カレンシー交換」の対象品のため、カレンシー交換の直近価格を"
                 "優先して表示します。"
             )
@@ -4941,7 +5023,7 @@ class PoetoreWindow(QWidget):
         )
         league = self._selected_trade_league()
         league_label = league or "現行SC（自動）"
-        self.price_status.setText(
+        self._set_price_status(
             f"{league_label}で「{preset_label} / {trade_status_label} / "
             f"{trade_currency_label} / {listed_within_label}」を検索中…"
         )
@@ -5813,15 +5895,15 @@ class PoetoreWindow(QWidget):
             self._populate_stat_filters(self._resolved_trade_filters(item, preset))
             self._update_mod_warning(item)
         if preset == PRESET_BASE:
-            self.price_status.setText(
+            self._set_price_status(
                 "ベースアイテムとして、ベースタイプとアイテムレベルを中心に検索します。"
             )
         elif item is not None and uses_dedicated_exact_preset(item):
-            self.price_status.setText(
+            self._set_price_status(
                 "アイテム種別に合わせた専用条件で検索します。"
             )
         else:
-            self.price_status.setText("完成品として、実際の性能を中心に検索します。")
+            self._set_price_status("完成品として、実際の性能を中心に検索します。")
 
     def _reset_unique_candidates(self):
         while self.unique_name_layout.count():
@@ -5926,7 +6008,7 @@ class PoetoreWindow(QWidget):
         self.unique_name_label.show()
         self.unique_name_container.show()
         self.unique_name_scroll.show()
-        self.price_status.setText(
+        self._set_price_status(
             f"同じベースの未鑑定ユニークが{len(candidates)}種類あります。候補を選んで「価格を検索」を押してください。"
         )
 
@@ -5954,7 +6036,7 @@ class PoetoreWindow(QWidget):
             self.unique_variant_combo.addItem(str(label), discriminator)
         self.unique_variant_label.show()
         self.unique_variant_combo.show()
-        self.price_status.setText(
+        self._set_price_status(
             f"同名ユニークに{len(variants)}種類のVariantがあります。候補を選んで再検索してください。"
         )
 
@@ -6343,7 +6425,7 @@ class PoetoreWindow(QWidget):
             return
         self.additional_results_button.setText("次の10件を取得")
         self.additional_results_button.setEnabled(True)
-        self.price_status.setText(_user_facing_trade_error(message))
+        self._set_price_status(_user_facing_trade_error(message))
 
     def _show_price_result(self, result: PriceResult, partial: bool = False):
         if not partial:
@@ -6362,16 +6444,17 @@ class PoetoreWindow(QWidget):
         self.price_list.clear()
         cache_note = " / キャッシュ" if result.cached else ""
         if not result.listings:
-            self.price_status.setText(
+            self._set_price_status(
                 f"{result.league}: 検索候補{result.total}件{cache_note}。"
                 "価格付き出品は取得できませんでした。"
             )
             return
         progress_note = "取得中 / " if partial else ""
         fetched_count = result.fetched_count or len(result.listings)
-        self.price_status.setText(
+        self._set_price_status(
             f"{result.league}: {progress_note}候補{result.total}件 / "
-            f"取得{fetched_count}件{cache_note}"
+            f"取得{fetched_count}件{cache_note}",
+            compact=not partial,
         )
         item = getattr(self, "_parsed_item", None)
         show_stock = any(row.stack_size is not None for row in result.listings)
@@ -6736,7 +6819,7 @@ class PoetoreWindow(QWidget):
             return
         self.price_button.setEnabled(True)
         self.price_list.clear()
-        self.price_status.setText(_user_facing_trade_error(message))
+        self._set_price_status(_user_facing_trade_error(message))
         if trace is not None:
             trace.mark("search_error_displayed")
 

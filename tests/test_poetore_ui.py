@@ -2735,6 +2735,63 @@ def test_price_result_is_rendered_in_japanese(qapp):
     window.close()
 
 
+def test_price_status_layout_keeps_trade_link_visible_and_defaults_to_guidance(qapp):
+    window = PoetoreWindow()
+    try:
+        assert window.remember_trade_options_checkbox.isHidden()
+        assert window.trade_action_layout.indexOf(window.trade_url_button) >= 0
+        assert window.price_status_layout.indexOf(window.trade_url_button) < 0
+
+        window._show_price_result(PriceResult(
+            "Mirage", "q", 1, (PriceListing(4, "chaos"),),
+        ))
+        assert not window.remember_trade_options_checkbox.isHidden()
+        assert window.trade_action_layout.indexOf(window.trade_url_button) < 0
+        assert window.price_status_layout.indexOf(window.trade_url_button) >= 0
+
+        window._search_generation = 7
+        window._show_price_error("temporary failure", 7)
+        assert window.remember_trade_options_checkbox.isHidden()
+        assert window.trade_action_layout.indexOf(window.trade_url_button) >= 0
+        assert window.price_status_layout.indexOf(window.trade_url_button) < 0
+
+        window._clear_displayed_trade_result()
+        assert not window.remember_trade_options_checkbox.isHidden()
+        assert window.trade_action_layout.indexOf(window.trade_url_button) < 0
+        assert window.price_status_layout.indexOf(window.trade_url_button) >= 0
+
+        window._set_price_status("将来追加された案内")
+        assert window.remember_trade_options_checkbox.isHidden()
+        assert window.trade_action_layout.indexOf(window.trade_url_button) >= 0
+        assert window.price_status_layout.indexOf(window.trade_url_button) < 0
+    finally:
+        window.close()
+
+
+def test_partial_and_empty_price_results_use_full_width_guidance(qapp):
+    window = PoetoreWindow()
+    try:
+        window._show_price_result(PriceResult(
+            "Mirage", "q", 10, (PriceListing(4, "chaos"),),
+        ), partial=True)
+        assert window.remember_trade_options_checkbox.isHidden()
+        assert window.trade_action_layout.indexOf(window.trade_url_button) >= 0
+
+        window._show_price_result(PriceResult("Mirage", "q", 0, ()))
+        assert window.remember_trade_options_checkbox.isHidden()
+        assert window.trade_action_layout.indexOf(window.trade_url_button) >= 0
+    finally:
+        window.close()
+
+
+def test_price_status_writes_stay_behind_safe_layout_helper():
+    source = (
+        Path(__file__).parents[1] / "src" / "poetore" / "ui.py"
+    ).read_text(encoding="utf-8")
+    assert source.count("self.price_status.setText(") == 1
+    assert source.count("self.price_status.clear(") == 1
+
+
 def test_poe2_augment_estimates_render_compactly_below_results(qapp):
     from src.poetore.poe2.augment_pricing import (
         InstalledAugmentRecovery, VirtualAugmentCost,
@@ -5384,6 +5441,112 @@ Item Level: 83
         window.close()
 
 
+def test_trade_option_memory_defaults_to_on_and_includes_listing_period(qapp):
+    config = {
+        "poe_version": POE1,
+        "poetore": {
+            "trade_options": {
+                "poe1": {
+                    "status": "online",
+                    "currency": "divine",
+                    "listed_within": "3days",
+                },
+            },
+        },
+    }
+    window = PoetoreWindow(app_config=config)
+    try:
+        assert window.remember_trade_options_checkbox.isChecked()
+        assert window.trade_status_combo.currentData() == "online"
+        assert window.trade_currency_combo.currentData() == "divine"
+        assert window.listed_within_combo.currentData() == "3days"
+    finally:
+        window.close()
+
+
+def test_disabling_trade_option_memory_resets_and_does_not_save_choices(qapp):
+    config = {
+        "poe_version": POE1,
+        "poetore": {
+            "trade_options": {
+                "poe1": {
+                    "status": "online",
+                    "currency": "divine",
+                    "listed_within": "3days",
+                },
+            },
+        },
+    }
+    saved = Mock()
+    window = PoetoreWindow(app_config=config, save_config=saved)
+    try:
+        window.remember_trade_options_checkbox.setChecked(False)
+        assert config["poetore"]["remember_trade_options"] is False
+        assert window.trade_status_combo.currentData() == "instant"
+        assert window.trade_currency_combo.currentData() == "any"
+        assert window.listed_within_combo.currentData() == "any"
+
+        window.trade_status_combo.setCurrentIndex(
+            window.trade_status_combo.findData("available")
+        )
+        window.trade_currency_combo.setCurrentIndex(
+            window.trade_currency_combo.findData("chaos")
+        )
+        window.listed_within_combo.setCurrentIndex(
+            window.listed_within_combo.findData("1week")
+        )
+        assert config["poetore"]["trade_options"]["poe1"] == {
+            "status": "online",
+            "currency": "divine",
+            "listed_within": "3days",
+        }
+
+        window.input_edit.setPlainText("""Item Class: Two Hand Swords
+Rarity: Rare
+Test Sword
+Reaver Sword
+--------
+Item Level: 70
+""")
+        window.parse_current_text()
+        assert window.trade_status_combo.currentData() == "instant"
+        assert window.trade_currency_combo.currentData() == "any"
+        assert window.listed_within_combo.currentData() == "any"
+        assert saved.called
+    finally:
+        window.close()
+
+
+def test_enabling_trade_option_memory_saves_current_three_choices(qapp):
+    config = {
+        "poe_version": POE2,
+        "poetore": {"remember_trade_options": False},
+    }
+    saved = Mock()
+    window = PoetoreWindow(app_config=config, save_config=saved)
+    try:
+        window.trade_status_combo.setCurrentIndex(
+            window.trade_status_combo.findData("available")
+        )
+        window.trade_currency_combo.setCurrentIndex(
+            window.trade_currency_combo.findData("exalted")
+        )
+        window.listed_within_combo.setCurrentIndex(
+            window.listed_within_combo.findData("2weeks")
+        )
+        window.remember_trade_options_checkbox.setChecked(True)
+
+        assert config["poetore"]["remember_trade_options"] is True
+        assert config["poetore"]["trade_options"]["poe2"] == {
+            "status": "available",
+            "currency": "exalted",
+            "listed_within": "2weeks",
+        }
+        assert saved.called
+    finally:
+        window.close()
+
+
 def test_poe2_trade_currency_shortens_only_exalted_divine_label(qapp):
     window = PoetoreWindow(app_config={"poe_version": POE2, "poetore": {}})
     try:
@@ -5438,7 +5601,11 @@ def test_trade_options_are_persisted_separately_for_poe1_and_poe2(qapp):
         "poetore": {
             "trade_options": {
                 "poe1": {"status": "online", "currency": "divine"},
-                "poe2": {"status": "available", "currency": "exalted"},
+                "poe2": {
+                    "status": "available",
+                    "currency": "exalted",
+                    "listed_within": "3days",
+                },
             }
         }
     }
@@ -5454,6 +5621,7 @@ def test_trade_options_are_persisted_separately_for_poe1_and_poe2(qapp):
         assert poe1.trade_currency_combo.currentData() == "divine"
         assert poe2.trade_status_combo.currentData() == "available"
         assert poe2.trade_currency_combo.currentData() == "exalted"
+        assert poe2.listed_within_combo.currentData() == "3days"
 
         poe2.trade_status_combo.setCurrentIndex(
             poe2.trade_status_combo.findData("offline")
@@ -5461,11 +5629,16 @@ def test_trade_options_are_persisted_separately_for_poe1_and_poe2(qapp):
         poe2.trade_currency_combo.setCurrentIndex(
             poe2.trade_currency_combo.findData("exalted_divine")
         )
+        poe2.listed_within_combo.setCurrentIndex(
+            poe2.listed_within_combo.findData("1week")
+        )
         assert config["poetore"]["trade_options"]["poe1"] == {
             "status": "online", "currency": "divine",
         }
         assert config["poetore"]["trade_options"]["poe2"] == {
-            "status": "offline", "currency": "exalted_divine",
+            "status": "offline",
+            "currency": "exalted_divine",
+            "listed_within": "1week",
         }
         assert saved.called
 
@@ -5475,6 +5648,7 @@ def test_trade_options_are_persisted_separately_for_poe1_and_poe2(qapp):
         try:
             assert reloaded_poe2.trade_status_combo.currentData() == "offline"
             assert reloaded_poe2.trade_currency_combo.currentData() == "exalted_divine"
+            assert reloaded_poe2.listed_within_combo.currentData() == "1week"
         finally:
             reloaded_poe2.close()
     finally:
