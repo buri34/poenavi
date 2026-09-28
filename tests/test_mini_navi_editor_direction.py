@@ -82,10 +82,14 @@ class MiniNaviEditorDirectionTest(unittest.TestCase):
         self.assertEqual(guide["direction"], "e")
         self.assertEqual(guide["mini_navi"], {"text": "", "direction": "e"})
 
-    def test_poe2_mode_hides_direction_and_saves_only_mini_navi_text(self):
+    def test_poe2_mode_hides_direction_and_preserves_unexposed_voice_text(self):
         guide = {
             "objective": "PoE2詳細ガイド",
-            "mini_navi": {"text": "旧本文", "direction": "ne"},
+            "mini_navi": {
+                "text": "旧本文",
+                "direction": "ne",
+                "voice_text": "既存の読み上げ文",
+            },
         }
         dialog = self._track_dialog(MiniNaviEditorDialog(
             None,
@@ -101,7 +105,29 @@ class MiniNaviEditorDirectionTest(unittest.TestCase):
         dialog.section_editors[0]["editor"].setPlainText("新本文")
         dialog.apply_to_sections()
 
-        self.assertEqual(guide["mini_navi"], {"text": "新本文"})
+        self.assertEqual(
+            guide["mini_navi"],
+            {"voice_text": "既存の読み上げ文", "text": "新本文"},
+        )
+
+    def test_poe2_empty_text_keeps_unexposed_voice_text(self):
+        guide = {
+            "mini_navi": {
+                "text": "旧本文",
+                "voice_text": "既存の読み上げ文",
+            },
+        }
+        dialog = self._track_dialog(MiniNaviEditorDialog(
+            None,
+            "PoE2テスト",
+            [{"kind": "default", "title": "通常時", "guide": guide}],
+            show_direction=False,
+        ))
+
+        dialog.section_editors[0]["editor"].clear()
+        dialog.apply_to_sections()
+
+        self.assertEqual(guide["mini_navi"], {"voice_text": "既存の読み上げ文"})
 
 
 if __name__ == "__main__":

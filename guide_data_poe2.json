@@ -716,7 +716,7 @@
   "poe2_act4_area01": {
     "default": {
       "objective": "・ボス「盲目の獣」を倒す\n・「火山地帯」へ行く",
-      "layout": "<span style='color:#ffffff'>・エリアの上部に出口と「原始の闘技場」あり。</span>\n\n<span style='color:#ffffff'>・原始の闘技場にいるボス「盲目の獣」を倒すと、空白のルーン（グレーター）を獲得</span>",
+      "layout": "<span style='color:#ffffff'>・エリアの上部に出口と「原始の闘技場」あり。</span>\n\n<span style='color:#ffffff'>・原始の闘技場にいるボス「盲目の獣」を倒すと、空白のルーン（グレーター）を獲得</span>\n\n・エリア内に「破れた地図の切れ端」を落とすオブジェクトあり。（エクスペディションのルーン解放のクエストアイテム）",
       "tips": "<span style='color:#ffffff'>・道中の牢屋にいるレアモンスターの</span><span style='color:#dddd44'>「縛られしミンボック」を倒すと、確定でスキルジェムの原石Lv11/12とサポートジェムの原石Lv4</span><span style=\" color:#ffffff;\">が手に入る。\n\n・エリア内にある「石化した構造物」から確定で「宝石職人オーブ（見習い）」で手に入る\n\n・経験値効率の良いエリアなので、ここでエリアレベルの-4or-5まで上げるのを推奨\n\n【ボス情報】\n盲目の獣\n属性：物理、雷\n耐性：物理、雷\n弱点：－</span>",
       "summary": "<span style=\" color:#ffffff;\">・ボス「盲目の獣」を倒す\n・「火山地帯」へ行く</span>\n\n<span style='color:#ffffff'>エリアの上部に出口と「原始の闘技場」あり。</span>\n<span style='color:#ffffff'>原始の闘技場にいる</span><span style='color:#dddd44'>ボス「盲目の獣」を倒すと、ルーン</span><span style='color:#ffffff'>を獲得</span>\n\n<span style='color:#ffffff'>道中の牢屋にいるレアモンスターの「縛られしミンボック」から</span><span style='color:#dddd44'>スキルジェムの原石Lv11or12とサポートジェムの原石Lv4</span>\n\n<span style='color:#ffffff'>エリア内にある「石化した構造物」から</span><span style='color:#dddd44'>「宝石職人オーブ（見習い）」</span>\n\n<span style='color:#ffffff'>経験値効率の良いエリアなので、ここで</span><span style='color:#dddd44'>エリアlvlの-4or-5まで上げるのを推奨</span>",
       "mini_navi": {
@@ -742,7 +742,7 @@
   "poe2_act4_area03": {
     "default": {
       "objective": "「旅の終わり」へ行く",
-      "layout": "<span style='color:#ffffff'>・少し脇道が存在するが、基本的には一本道</span>",
+      "layout": "<span style='color:#ffffff'>・少し脇道が存在するが、基本的には一本道</span>\n\n・エリア内に「破れた地図の切れ端」を落とすオブジェクトあり。（エクスペディションのルーン解放のクエストアイテム）",
       "tips": "",
       "summary": "・<span style='color:#ffffff'>「旅の終わり」へ行く</span>\n\n<span style='color:#ffffff'>少し脇道が存在するが、基本的には一本道</span>",
       "mini_navi": {
@@ -805,7 +805,7 @@
   "poe2_act4_area07": {
     "default": {
       "objective": "・ボス「偉大なる白きもの」を倒す（後でクエスト提出で永続バフ獲得）\n・「歌う大洞窟」へ行く",
-      "layout": "<span style=\" color:#ffffff;\">・かなり広大なエリア。迷いやすい。\n\n・円を描くようにエリアを回ると出口へたどり着ける。\n  マップ画像は、あくまで１パターンの例。入口の位置が右下になることもある。\n  時計回りではなく、反時計回りの形になることもある。</span>",
+      "layout": "<span style=\" color:#ffffff;\">・かなり広大なエリア。迷いやすい。\n\n・円を描くようにエリアを回ると出口へたどり着ける。\n  マップ画像は、あくまで１パターンの例。入口の位置が右下になることもある。\n  時計回りではなく、反時計回りの形になることもある。</span>\n\n・エリア内に「破れた地図の切れ端」を落とすオブジェクトあり。（エクスペディションのルーン解放のクエストアイテム）",
       "tips": "<span style=\" color:#ffffff;\">・道中にいるレアのカニモンスター（近くにチェックポイントあり。海岸沿い）を倒すと、サポートジェムの原石Lv4が入手可能\n\n【ボス情報】\n偉大なる白きもの\n属性：物理\n耐性：物理、冷気\n弱点：雷</span>",
       "summary": "<span style='color:#ffffff'>・ボス「偉大なる白きもの」を倒す（後でクエスト提出で永続バフ獲得）</span>\n<span style=\" color:#ffffff;\">・「歌う大洞窟」へ行く\n</span>\n<span style='color:#ffffff'>円を描くようにエリアを回ると出口へたどり着ける</span>\n\n<span style='color:#ffffff'>道中、海辺にいるレアのカニモンスターを倒すと、サポートジェムの原石</span>",
       "mini_navi": {
@@ -831,7 +831,7 @@
   "poe2_act4_area09": {
     "default": {
       "objective": "・ボス「空のスカージ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ヒネコラの目」へ行く",
-      "layout": "<span style='color:#ffffff'>・かなり広大なエリア。ただ、基本的に一本道なので、構造はシンプル。</span>\n<span style='color:#ffffff'>  二手に分かれる道があっても、並行して道が走っているだけ。</span>",
+      "layout": "<span style='color:#ffffff'>・かなり広大なエリア。ただ、基本的に一本道なので、構造はシンプル。</span>\n<span style='color:#ffffff'>  二手に分かれる道があっても、並行して道が走っているだけ。</span>\n\n・エリア内に「破れた地図の切れ端」を落とすオブジェクトあり。（エクスペディションのルーン解放のクエストアイテム）",
       "tips": "<span style=\" color:#ffffff;\">【ボス情報】\n空のスカージ\n属性：物理\n耐性：－\n弱点：－</span>",
       "summary": "<span style=\" color:#ffffff;\">・ボス「空のスカージ」を倒す\n・ポータルで街へ戻る\n\n（街）\nマコルに話して、船で「ヒネコラの目」へ行く</span>\n\n<span style='color:#ffffff'>かなり広大なエリア。ただ、基本的に一本道なので、構造はシンプル。</span>\n<span style='color:#ffffff'>二手に分かれる道があっても、並行して道が走っているだけ</span>",
       "mini_navi": {
@@ -1087,11 +1087,11 @@
   "poe2_interlude3_area05": {
     "default": {
       "objective": "「侵蝕の峡谷」へ行く",
-      "layout": "<span style='color:#ffffff'>・縦に長い一本道の構造。</span>",
+      "layout": "<span style='color:#ffffff'>・縦に長い一本道の構造。</span>\n\n<span style='color:#ffffff'>・中腹のチェックポイントのあたりからさらに細い道を進むと、ユニーク装備をくれるNPCがいる</span>",
       "tips": "",
       "summary": "<span style='color:#ffffff'>・「侵蝕の峡谷」へ行く</span>\n\n<span style='color:#ffffff'>縦に長い一本道の構造。</span>\n\n<span style='color:#ffffff'>このエリアにいる商人は、ユニークアイテムを売っている。</span>\n<span style='color:#ffffff'>（以前は、レベルが１あがるごとに、インスタンスをリセットすれば品揃えが更新される仕様だったが、修正されて不可に）</span>",
       "mini_navi": {
-        "text": "<span style='color:#ffffff'>▸[move]</span><span style='color:#dddd44'>侵蝕の峡谷</span><span style='color:#ffffff'>へ行く</span>\n<span style='color:#ffffff'>（縦に長い一本道の構造。）</span>",
+        "text": "<span style='color:#ffffff'>▸[move]</span><span style='color:#dddd44'>侵蝕の峡谷</span><span style='color:#ffffff'>へ行く</span>\n<span style='color:#ffffff'>（縦に長い一本道の構造。）</span>\n<span style='color:#ffffff'>▸中腹のチェックポイントのあたりからさらに細い道を進むと、</span>\n<span style='color:#ffffff'>  ユニーク装備をくれるNPCがいる</span>",
         "voice_text": "このエリアは、縦に長い構造です。\n次のエリアの侵蝕の峡谷へ行きます。"
       }
     },
@@ -1180,7 +1180,7 @@
       "tips": "<span style='color:#ffffff'>・</span><span style='color:#dddd44'>ドックにいるNPC（渡し守の魂）からグレータールーンを安く購入可能</span><span style='color:#ffffff'>。大きめの橋を渡ったあと、川沿いを探すとチェックポイントのそばにいる</span>",
       "summary": "<span style='color:#ffffff'>・「狼の砦」へ行く</span>\n\n<span style='color:#ffffff'>右手の壁沿いに進めば、狼の砦にたどり着く</span>\n\n<span style='color:#ffffff'>ドックにいるNPCから</span><span style='color:#dddd44'>グレータールーンを購入可能</span><span style='color:#ffffff'>。大きめの橋を渡ったあと、川沿いを探すとチェックポイントのそばにいる</span>",
       "mini_navi": {
-        "text": "<span style='color:#ffffff'>▸[move]</span><span style='color:#dddd44'>狼の砦</span><span style='color:#ffffff'>へ行く</span>\n<span style=\" color:#ffffff;\">（右手の壁沿いに進めば、狼の砦にたどり着く。\n　中腹のドックにいるNPCからグレータールーンを購入可能）</span>",
+        "text": "<span style='color:#ffffff'>▸[move]</span><span style='color:#dddd44'>狼の砦</span><span style='color:#ffffff'>へ行く</span>\n<span style=\" color:#ffffff;\">（右手の壁沿いに進めば、狼の砦にたどり着く。\n▸中腹のドックにいるNPCからグレータールーンを購入可能</span>",
         "voice_text": "このエリアでは、まず、右手の壁沿いに進むと、狼の砦にたどり着けます。\nちなみに、途中のドックにいるエヌピーシーから、グレーター・ルーンを購入できます。"
       }
     },

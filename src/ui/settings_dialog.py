@@ -1748,9 +1748,21 @@ class MiniNaviEditorDialog(QDialog):
             if not isinstance(guide, dict):
                 continue
             text = item["editor"].to_storage_html()
+            existing_mini = guide.get("mini_navi")
+            preserved_mini = (
+                {
+                    key: value
+                    for key, value in existing_mini.items()
+                    if key not in {"text", "direction"}
+                }
+                if isinstance(existing_mini, dict)
+                else {}
+            )
             if item["direction"] is None:
                 if text:
-                    guide["mini_navi"] = {"text": text}
+                    preserved_mini["text"] = text
+                if preserved_mini:
+                    guide["mini_navi"] = preserved_mini
                 else:
                     guide.pop("mini_navi", None)
                 continue
@@ -1761,7 +1773,9 @@ class MiniNaviEditorDialog(QDialog):
             if direction == "inherit":
                 guide.pop("direction", None)
                 if text:
-                    guide["mini_navi"] = {"text": text}
+                    preserved_mini["text"] = text
+                if preserved_mini:
+                    guide["mini_navi"] = preserved_mini
                 else:
                     guide.pop("mini_navi", None)
             else:
@@ -1769,7 +1783,10 @@ class MiniNaviEditorDialog(QDialog):
                 # 方向変更が保存されていないように見えるため、セクション本体のdirectionも正とする。
                 guide["direction"] = direction
                 if text or direction != "none":
-                    guide["mini_navi"] = {"text": text, "direction": direction}
+                    preserved_mini.update({"text": text, "direction": direction})
+                    guide["mini_navi"] = preserved_mini
+                elif preserved_mini:
+                    guide["mini_navi"] = preserved_mini
                 else:
                     guide.pop("mini_navi", None)
 
