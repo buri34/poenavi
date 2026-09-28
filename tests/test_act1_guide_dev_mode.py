@@ -62,7 +62,8 @@ def test_settings_shows_poe2_guide_editor_in_dev_mode(monkeypatch, qapp):
     assert "公式ガイドを編集" in tooltips
     assert "ガイド編集" in texts
     assert "要約版ガイドを編集" not in tooltips
-    assert "みになびを編集" not in tooltips
+    assert "みになびを編集" in tooltips
+    assert "みになび編集" in texts
     dialog.close()
 
 
@@ -78,6 +79,27 @@ def test_poe2_dev_guide_button_opens_editor_for_its_zone(monkeypatch, qapp):
     buttons = [
         button for button in dialog.findChildren(QPushButton)
         if button.objectName().startswith("guideEditButton_")
+    ]
+
+    assert buttons
+    buttons[0].click()
+    assert opened
+    assert opened[0][1].startswith("poe2_")
+    dialog.close()
+
+
+def test_poe2_dev_mini_navi_button_opens_editor_for_its_zone(monkeypatch, qapp):
+    monkeypatch.setenv("POENAVI_POE2_GUIDE_DEV", "1")
+    opened = []
+    monkeypatch.setattr(
+        SettingsDialog,
+        "_open_mini_navi_editor",
+        lambda _self, editor, zone_id: opened.append((editor.text(), zone_id)),
+    )
+    dialog = SettingsDialog(current_config={"poe_version": POE2})
+    buttons = [
+        button for button in dialog.findChildren(QPushButton)
+        if button.objectName().startswith("miniNaviEditButton_")
     ]
 
     assert buttons

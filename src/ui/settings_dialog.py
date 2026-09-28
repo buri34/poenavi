@@ -1971,6 +1971,8 @@ class SettingsDialog(QDialog):
         self.guide_data = load_guide_data(self.poe_version)
         
         self.setup_ui()
+        if _guide_dev_editor_enabled(self.poe_version, "poe2_"):
+            self.resize(700, 600)
         
     def setup_ui(self):
         theme = self.theme
@@ -3272,6 +3274,10 @@ class SettingsDialog(QDialog):
                 zone_id = z.get("id", "")
                 row = QHBoxLayout()
                 row.setSpacing(5)
+                show_poe2_dev_editors = (
+                    self.poe_version == POE2
+                    and _guide_dev_editor_enabled(self.poe_version, zone_id)
+                )
 
                 level = z.get("level", 0)
                 level_suffix = " [Lv動的]" if level == 0 else f" [Lv{level}]"
@@ -3298,10 +3304,7 @@ class SettingsDialog(QDialog):
                 )
                 row.addWidget(memo_button)
 
-                if (
-                    self.poe_version == POE2
-                    and _guide_dev_editor_enabled(self.poe_version, zone_id)
-                ):
+                if show_poe2_dev_editors:
                     guide_button = QPushButton("ガイド編集")
                     guide_button.setObjectName(f"guideEditButton_{zone_id}")
                     guide_button.setToolTip("公式ガイドを編集")
@@ -3312,6 +3315,17 @@ class SettingsDialog(QDialog):
                         self._open_guide_editor(editor, zid)
                     )
                     row.addWidget(guide_button)
+
+                    mini_navi_button = QPushButton("みになび編集")
+                    mini_navi_button.setObjectName(f"miniNaviEditButton_{zone_id}")
+                    mini_navi_button.setToolTip("みになびを編集")
+                    mini_navi_button.setFixedWidth(100)
+                    mini_navi_button.setStyleSheet(Styles.BUTTON)
+                    mini_navi_button.clicked.connect(
+                        lambda checked=False, editor=name_edit, zid=zone_id:
+                        self._open_mini_navi_editor(editor, zid)
+                    )
+                    row.addWidget(mini_navi_button)
 
                 row.addStretch()
                 act_layout.addLayout(row)
