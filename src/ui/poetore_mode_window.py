@@ -598,7 +598,7 @@ class PoetoreModeWindow(QMainWindow):
         self.focus_button.setObjectName("poetoreFocusButton")
         self.focus_button.setFocusPolicy(Qt.NoFocus)
         self.focus_button.setToolTip("隠れ家滞在通知の集中モードを切り替える")
-        self.focus_button.setFixedSize(108, 46)
+        self.focus_button.setFixedSize(108, 35)
         self.focus_button.clicked.connect(self.toggle_focus_mode)
         header.addWidget(self.focus_button)
 

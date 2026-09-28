@@ -117,7 +117,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert window.header_action_buttons == header_buttons
     assert window.focus_button.text() == "隠れ家滞在通知\nOFF"
     assert window.focus_button.size().width() == 108
-    assert window.focus_button.size().height() == 46
+    assert window.focus_button.size().height() == 35
     assert "text-align: center" in window.centralWidget().styleSheet()
     assert window._hideout_notification is None
     assert all(button.text() == "" for button in header_buttons)
@@ -130,6 +130,10 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert all(image != icon_images[0] for image in icon_images[1:])
     assert window.memo_button.size().width() == 35
     assert window.memo_button.size().height() == 35
+    assert all(
+        button.height() == window.focus_button.height()
+        for button in header_buttons
+    )
     assert window.divine_rate_value.text() == "最新データを取得できません"
     assert window.divine_rate_value.alignment() == Qt.AlignCenter
     assert window.minimumWidth() == 500
