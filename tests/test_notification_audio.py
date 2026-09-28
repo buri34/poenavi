@@ -8,6 +8,7 @@ import pytest
 
 from src.poetore.notification_audio import (
     NotificationAudioPlayer,
+    _decode_audio_file,
     bundled_audio_path,
     copy_custom_audio,
     scale_signed16,
@@ -38,6 +39,17 @@ def test_custom_audio_is_copied_to_user_data(monkeypatch, tmp_path):
     assert display_name == "声.wav"
     assert stored_name == "poetore-hideout-notification.wav"
     assert (user_data / stored_name).read_bytes() == source.read_bytes()
+
+
+def test_audio_decode_supports_japanese_directories_on_windows(tmp_path):
+    source = tmp_path / "日本語の共有フォルダ" / "通知音声.wav"
+    source.parent.mkdir()
+    source.write_bytes(bundled_audio_path().read_bytes())
+
+    decoded = _decode_audio_file(source)
+
+    assert decoded.num_frames > 0
+    assert decoded.duration > 3.0
 
 
 def test_custom_audio_rejects_unsupported_extension(tmp_path):

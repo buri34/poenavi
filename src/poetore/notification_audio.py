@@ -38,6 +38,18 @@ def custom_audio_path(filename: str) -> Path:
     return ConfigManager.get_user_data_dir() / safe_name
 
 
+def _decode_audio_file(path: str | Path, **decode_options):
+    """Decode audio without passing a filesystem path to miniaudio.
+
+    miniaudio's filename API uses a narrow C string on Windows and cannot
+    reliably open paths containing Japanese characters.  Python's file API
+    is Unicode-aware, so read the encoded file first and decode it in memory.
+    """
+    import miniaudio
+
+    return miniaudio.decode(Path(path).read_bytes(), **decode_options)
+
+
 def copy_custom_audio(source: str | Path) -> tuple[str, str]:
     source_path = Path(source)
     suffix = source_path.suffix.casefold()
@@ -56,7 +68,7 @@ def copy_custom_audio(source: str | Path) -> tuple[str, str]:
         ) from error
 
     try:
-        miniaudio.decode_file(str(source_path))
+        _decode_audio_file(source_path)
     except miniaudio.MiniaudioError as error:
         raise ValueError(
             "音声ファイルを読み込めませんでした。別のWAVまたはMP3を選択してください。"
@@ -149,8 +161,8 @@ class NotificationAudioPlayer(QObject):
 
         if not path.is_file():
             raise FileNotFoundError(path)
-        decoded = miniaudio.decode_file(
-            str(path),
+        decoded = _decode_audio_file(
+            path,
             output_format=miniaudio.SampleFormat.SIGNED16,
             nchannels=2,
             sample_rate=44100,
