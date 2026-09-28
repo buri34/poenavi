@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.dialog_theme import POENAVI_DIALOG_THEME, apply_dialog_theme
 from src.ui.styles import Styles
 from src.ui.window_flags import _with_optional_always_on_top
 from src.utils.config_manager import ConfigManager
@@ -72,6 +73,7 @@ class VendorSearchPresetDialog(QDialog):
         self._last_poe1_generated_patterns = set()
         self._last_poe1_selected_labels = set()
         self._saved_snapshot = []
+        self.theme = POENAVI_DIALOG_THEME
         self.setWindowFlags(_with_optional_always_on_top(Qt.Window | Qt.FramelessWindowHint, parent))
         self.setAttribute(Qt.WA_TranslucentBackground)
         # 初期表示は従来どおり広めに開く。小さいモニターでは手動リサイズ + REGEX欄スクロールで対応。
@@ -102,29 +104,29 @@ class VendorSearchPresetDialog(QDialog):
         title_bar.setStyleSheet("background: transparent; border: none;")
         title_layout = QHBoxLayout(title_bar)
         title_layout.setContentsMargins(4, 0, 4, 0)
-        title_label = QLabel(
+        self.title_label = QLabel(
             "🔍 PoE1 店売り検索プリセット" if self.poe_version == POE1 else "🔍 PoE2 店売り・スタッシュ検索プリセット"
         )
-        title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none;")
-        title_layout.addWidget(title_label)
+        self.title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none;")
+        title_layout.addWidget(self.title_label)
         title_layout.addStretch()
-        close_btn = QPushButton("✕")
-        close_btn.setFixedSize(22, 22)
-        close_btn.setStyleSheet("""
+        self.close_button = QPushButton("✕")
+        self.close_button.setFixedSize(22, 22)
+        self.close_button.setStyleSheet("""
             QPushButton { background: transparent; color: #888; border: none; font-size: 14px; }
             QPushButton:hover { color: #ff6666; }
         """)
-        close_btn.clicked.connect(self.close)
-        title_layout.addWidget(close_btn)
+        self.close_button.clicked.connect(self.close)
+        title_layout.addWidget(self.close_button)
         container_layout.addWidget(title_bar)
 
         hint_text = "左は一覧表示です。表示名・検索文字列は右側の編集枠で調整します。有効にチェックをつけたプリセットだけが検索ホットキー時のメニューに表示されます。"
         if self.poe_version == POE1:
             hint_text += " PoE1ではAct中の3リンク装備購入など、ベンダー検索向けのプリセットを管理します。"
-        hint = QLabel(hint_text)
-        hint.setStyleSheet("color: #aaaaaa; font-size: 13px; border: none;")
-        hint.setWordWrap(True)
-        container_layout.addWidget(hint)
+        self.hint_label = QLabel(hint_text)
+        self.hint_label.setStyleSheet("color: #aaaaaa; font-size: 13px; border: none;")
+        self.hint_label.setWordWrap(True)
+        container_layout.addWidget(self.hint_label)
 
         body_layout = QHBoxLayout()
         body_layout.setSpacing(10)
@@ -132,6 +134,7 @@ class VendorSearchPresetDialog(QDialog):
 
         # 左: 一覧（表示用 + 有効チェックのみ編集可）
         left_panel = QWidget()
+        self.left_panel = left_panel
         left_panel.setStyleSheet("background: transparent; border: none;")
         left_layout = QVBoxLayout(left_panel)
         left_layout.setContentsMargins(0, 0, 0, 0)
@@ -172,6 +175,7 @@ class VendorSearchPresetDialog(QDialog):
 
         btn_row = QHBoxLayout()
         btn_row.setSpacing(6)
+        self.row_buttons = {}
         for label, handler in [
             ("追加", self._add_row),
             ("削除", self._delete_selected),
@@ -182,24 +186,22 @@ class VendorSearchPresetDialog(QDialog):
             btn.setStyleSheet(Styles.BUTTON)
             btn.clicked.connect(handler)
             btn_row.addWidget(btn)
+            self.row_buttons[label] = btn
         btn_row.addStretch()
-        self.save_btn = QPushButton("保存")
-        self.save_btn.setStyleSheet(self._save_button_style())
-        self.save_btn.clicked.connect(self._save_presets)
-        btn_row.addWidget(self.save_btn)
         left_layout.addLayout(btn_row)
 
         # 右: 編集欄 + regex支援チェックボックス
         right_panel = QWidget()
+        self.right_panel = right_panel
         right_panel.setStyleSheet("background: rgba(10,10,10,120); border: 1px solid rgba(176,255,123,0.25); border-radius: 5px;")
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(10, 8, 10, 8)
         right_layout.setSpacing(8)
         body_layout.addWidget(right_panel, stretch=16)
 
-        editor_title = QLabel("編集")
-        editor_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 16px; font-weight: bold; border: none;")
-        right_layout.addWidget(editor_title)
+        self.editor_title = QLabel("編集")
+        self.editor_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 16px; font-weight: bold; border: none;")
+        right_layout.addWidget(self.editor_title)
 
         label_style = f"color: {Styles.TEXT_COLOR}; font-size: 13px; border: none;"
         input_style = f"""
@@ -267,9 +269,9 @@ class VendorSearchPresetDialog(QDialog):
             self.query_limit_note.setStyleSheet("color: #aaaaaa; font-size: 12px; border: none;")
             right_layout.addWidget(self.query_limit_note)
 
-        helper_title = QLabel("PoE1検索作成支援（チェックすると検索文字列に追加）" if self.poe_version == POE1 else "正規表現の作成支援（チェックすると検索文字列に追加）")
-        helper_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none; margin-top: 4px;")
-        right_layout.addWidget(helper_title)
+        self.helper_title = QLabel("PoE1検索作成支援（チェックすると検索文字列に追加）" if self.poe_version == POE1 else "正規表現の作成支援（チェックすると検索文字列に追加）")
+        self.helper_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none; margin-top: 4px;")
+        right_layout.addWidget(self.helper_title)
 
         # REGEX候補は項目が多いため、小さいモニターでも編集欄全体を見失わないよう
         # この候補エリアだけ縦横スクロール可能にする。
@@ -307,6 +309,7 @@ class VendorSearchPresetDialog(QDialog):
             }}
         """)
         helper_content = QWidget()
+        self.helper_content = helper_content
         helper_content.setStyleSheet("background: transparent; border: none;")
         helper_content.setMinimumWidth(900)
         helper_layout = QVBoxLayout(helper_content)
@@ -316,6 +319,16 @@ class VendorSearchPresetDialog(QDialog):
         helper_layout.addStretch()
         helper_scroll.setWidget(helper_content)
         right_layout.addWidget(helper_scroll, stretch=1)
+
+        self.footer_layout = QHBoxLayout()
+        self.footer_layout.addStretch()
+        self.cancel_button = QPushButton("閉じる")
+        self.cancel_button.clicked.connect(self.close)
+        self.save_btn = QPushButton("保存")
+        self.save_btn.clicked.connect(self._save_presets)
+        self.footer_layout.addWidget(self.cancel_button)
+        self.footer_layout.addWidget(self.save_btn)
+        container_layout.addLayout(self.footer_layout)
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -327,20 +340,48 @@ class VendorSearchPresetDialog(QDialog):
             self._syncing = False
         self._load_selected_to_editor()
         self._capture_saved_snapshot()
+        self._apply_shared_theme()
 
-    def _save_button_style(self):
-        return """
-            QPushButton {
-                background: #44cc66;
-                color: #071407;
-                border: 1px solid #b0ff7b;
-                border-radius: 4px;
-                padding: 4px 10px;
-                font-weight: bold;
-            }
-            QPushButton:hover { background: #66e685; }
-            QPushButton:pressed { background: #2fa84f; }
-        """
+    def _apply_shared_theme(self):
+        apply_dialog_theme(self, self.theme)
+        self._container.setStyleSheet("")
+        self._container.setProperty("uiRole", "surface")
+        self._title_bar.setStyleSheet("")
+        self.left_panel.setStyleSheet("")
+        self.left_panel.setProperty("density", "compact")
+        self.right_panel.setStyleSheet("")
+        self.right_panel.setProperty("uiRole", "surface")
+        self.helper_content.setStyleSheet("")
+        self.helper_content.setProperty("density", "compact")
+
+        for widget_type in (
+            QTableWidget,
+            QLineEdit,
+            QTextEdit,
+            QCheckBox,
+            QSpinBox,
+            QScrollArea,
+            QScrollBar,
+        ):
+            for widget in self.findChildren(widget_type):
+                widget.setStyleSheet("")
+        for label in self.findChildren(QLabel):
+            label.setStyleSheet("")
+        self.title_label.setProperty("uiRole", "title")
+        self.editor_title.setProperty("uiRole", "section")
+        self.helper_title.setProperty("uiRole", "section")
+        self.hint_label.setProperty("uiRole", "muted")
+
+        for button in self.findChildren(QPushButton):
+            button.setStyleSheet("")
+            if button.property("buttonRole") is None:
+                button.setProperty("buttonRole", "secondary")
+        self.close_button.setProperty("buttonRole", "danger")
+        self.row_buttons["追加"].setProperty("buttonRole", "primary")
+        self.row_buttons["削除"].setProperty("buttonRole", "danger")
+        self.cancel_button.setProperty("buttonRole", "secondary")
+        self.save_btn.setProperty("buttonRole", "primary")
+        self._update_query_length_label()
 
     def _set_dirty(self, dirty=True):
         self._dirty = bool(dirty)
@@ -1696,13 +1737,18 @@ class VendorSearchPresetDialog(QDialog):
                 )
                 if len(over_limit) > 5:
                     details += f"\n...ほか{len(over_limit) - 5}件"
-                QMessageBox.warning(
-                    self,
-                    "検索文字列が長すぎます",
+                msg = QMessageBox(self)
+                msg.setWindowTitle("検索文字列が長すぎます")
+                msg.setIcon(QMessageBox.Warning)
+                msg.setText(
                     f"PoE2の検索窓は{self.MAX_SEARCH_QUERY_LENGTH}文字が上限です。\n"
                     "上限を超えるプリセットは正しく貼り付けできないため、保存を中止しました。\n\n"
-                    f"{details}",
+                    f"{details}"
                 )
+                close_button = msg.addButton("閉じる", QMessageBox.AcceptRole)
+                apply_dialog_theme(msg, self.theme)
+                close_button.setProperty("buttonRole", "secondary")
+                msg.exec()
                 return
             data = {"presets": presets}
             with open(self.presets_path, "w", encoding="utf-8") as f:
@@ -1811,6 +1857,10 @@ class VendorSearchPresetDialog(QDialog):
         discard_button = msg.addButton("保存せずに閉じる", QMessageBox.DestructiveRole)
         cancel_button = msg.addButton("キャンセル", QMessageBox.RejectRole)
         msg.setDefaultButton(save_button)
+        apply_dialog_theme(msg, self.theme)
+        save_button.setProperty("buttonRole", "primary")
+        discard_button.setProperty("buttonRole", "danger")
+        cancel_button.setProperty("buttonRole", "secondary")
         msg.exec()
         clicked = msg.clickedButton()
         if clicked == save_button:

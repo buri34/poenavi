@@ -71,6 +71,52 @@ def _act1_guide_dev_editor_enabled(poe_version: str, zone_id: str) -> bool:
     """旧テスト・呼び出し向けの互換ラッパー。"""
     return _guide_dev_editor_enabled(poe_version, zone_id)
 
+
+def _apply_poENavi_editor_theme(
+    dialog,
+    *,
+    title_label,
+    cancel_button,
+    save_button,
+    muted_labels=(),
+):
+    """ガイド／メモ編集画面の標準部品だけを共通テーマへ移行する。"""
+    dialog.theme = POENAVI_DIALOG_THEME
+    apply_dialog_theme(dialog, dialog.theme)
+
+    for widget_type in (
+        QScrollArea,
+        QTextEdit,
+        QLineEdit,
+        QGroupBox,
+        QRadioButton,
+        QCheckBox,
+        QSpinBox,
+        QDoubleSpinBox,
+        QFrame,
+    ):
+        for widget in dialog.findChildren(widget_type):
+            widget.setStyleSheet("")
+
+    for label in dialog.findChildren(QLabel):
+        label.setStyleSheet("")
+    title_label.setProperty("uiRole", "title")
+    for label in muted_labels:
+        label.setProperty("uiRole", "muted")
+
+    for button in dialog.findChildren(QPushButton):
+        # 文字色パレットは、データとして意味のある色なので局所スタイルを残す。
+        if not button.text():
+            continue
+        button.setStyleSheet("")
+        if button.text() == "✕":
+            button.setProperty("buttonRole", "danger")
+        elif button.property("buttonRole") is None:
+            button.setProperty("buttonRole", "secondary")
+
+    cancel_button.setProperty("buttonRole", "secondary")
+    save_button.setProperty("buttonRole", "primary")
+
 def _spinbox_style(width=55, height=28):
     """SpinBox共通スタイル（ボタン押しやすい版）"""
     return f"""
@@ -418,14 +464,13 @@ class AreaNoteDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(f"エリアメモ — {zone_name}")
         self.resize(520, 360)
-        self.setStyleSheet(Styles.MAIN_WINDOW)
 
         layout = QVBoxLayout(self)
-        description = QLabel(f"📝 {zone_name} のエリアメモ")
-        description.setStyleSheet(
+        self.title_label = QLabel(f"📝 {zone_name} のエリアメモ")
+        self.title_label.setStyleSheet(
             f"color: {Styles.TEXT_COLOR}; font-size: 14px; font-weight: bold;"
         )
-        layout.addWidget(description)
+        layout.addWidget(self.title_label)
 
         toolbar = QHBoxLayout()
         toolbar.setSpacing(5)
@@ -441,7 +486,7 @@ class AreaNoteDialog(QDialog):
             toolbar.addWidget(button)
         reset_button = QPushButton("標準色")
         reset_button.setToolTip("選択範囲の文字色を標準色へ戻します")
-        reset_button.clicked.connect(lambda: self._set_color(Styles.TEXT_COLOR))
+        reset_button.clicked.connect(lambda: self._set_color(POENAVI_DIALOG_THEME.text))
         toolbar.addWidget(reset_button)
         toolbar.addStretch()
         layout.addLayout(toolbar)
@@ -454,16 +499,23 @@ class AreaNoteDialog(QDialog):
         self.text_edit.set_from_html(content)
         layout.addWidget(self.text_edit)
 
-        buttons = QHBoxLayout()
-        buttons.addStretch()
-        cancel_button = QPushButton("キャンセル")
-        cancel_button.clicked.connect(self.reject)
-        save_button = QPushButton("保存")
-        save_button.setDefault(True)
-        save_button.clicked.connect(self.accept)
-        buttons.addWidget(cancel_button)
-        buttons.addWidget(save_button)
-        layout.addLayout(buttons)
+        self.footer_layout = QHBoxLayout()
+        self.footer_layout.addStretch()
+        self.cancel_button = QPushButton("キャンセル")
+        self.cancel_button.clicked.connect(self.reject)
+        self.save_button = QPushButton("保存")
+        self.save_button.setDefault(True)
+        self.save_button.clicked.connect(self.accept)
+        self.footer_layout.addWidget(self.cancel_button)
+        self.footer_layout.addWidget(self.save_button)
+        layout.addLayout(self.footer_layout)
+
+        _apply_poENavi_editor_theme(
+            self,
+            title_label=self.title_label,
+            cancel_button=self.cancel_button,
+            save_button=self.save_button,
+        )
 
     def _set_color(self, color: str):
         from PySide6.QtGui import QColor
@@ -495,7 +547,6 @@ class GuideEditorDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(f"ガイド編集 — {zone_name}")
         self.resize(550, 620)
-        self.setStyleSheet(Styles.MAIN_WINDOW)
         self.guide_v2 = guide_v2 or {}
         self._existing_mini_navi = guide.get("mini_navi") if isinstance(guide, dict) else None
         self._existing_v2_mini_navi = self.guide_v2.get("mini_navi") if isinstance(self.guide_v2, dict) else None
@@ -510,6 +561,8 @@ class GuideEditorDialog(QDialog):
             self.guide_v2 = self.flag_guides.get(self.primary_flag_key, {})
         
         main_layout = QVBoxLayout(self)
+        self.title_label = QLabel(f"ガイド編集 — {zone_name}")
+        main_layout.addWidget(self.title_label)
         
         # スクロール対応
         scroll = QScrollArea()
@@ -1094,16 +1147,22 @@ class GuideEditorDialog(QDialog):
         main_layout.addWidget(scroll)
         
         # OK/Cancel
-        btn_layout = QHBoxLayout()
-        ok_btn = QPushButton("保存")
-        ok_btn.setStyleSheet(Styles.BUTTON)
-        ok_btn.clicked.connect(self.accept)
-        cancel_btn = QPushButton("キャンセル")
-        cancel_btn.setStyleSheet(Styles.BUTTON)
-        cancel_btn.clicked.connect(self.reject)
-        btn_layout.addWidget(ok_btn)
-        btn_layout.addWidget(cancel_btn)
-        main_layout.addLayout(btn_layout)
+        self.footer_layout = QHBoxLayout()
+        self.footer_layout.addStretch()
+        self.cancel_button = QPushButton("キャンセル")
+        self.cancel_button.clicked.connect(self.reject)
+        self.save_button = QPushButton("保存")
+        self.save_button.clicked.connect(self.accept)
+        self.footer_layout.addWidget(self.cancel_button)
+        self.footer_layout.addWidget(self.save_button)
+        main_layout.addLayout(self.footer_layout)
+
+        _apply_poENavi_editor_theme(
+            self,
+            title_label=self.title_label,
+            cancel_button=self.cancel_button,
+            save_button=self.save_button,
+        )
     
     def _toggle_bold(self):
         """選択テキストの太字をトグル"""
@@ -1136,7 +1195,7 @@ class GuideEditorDialog(QDialog):
         if not cursor.hasSelection():
             return
         fmt = QTextCharFormat()
-        fmt.setForeground(QColor(Styles.TEXT_COLOR))
+        fmt.setForeground(QColor(POENAVI_DIALOG_THEME.text))
         cursor.mergeCharFormat(fmt)
     
     def _set_color(self, color: str):
@@ -1294,7 +1353,6 @@ class GuideSummaryEditorDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(f"要約編集 — {zone_name}")
         self.resize(520, 460)
-        self.setStyleSheet(Styles.MAIN_WINDOW)
 
         self.entry = entry if isinstance(entry, dict) else {}
         self.default_guide = self.entry.get("default", {}) if isinstance(self.entry.get("default", {}), dict) else {}
@@ -1303,11 +1361,13 @@ class GuideSummaryEditorDialog(QDialog):
         self.summary_count_labels = {}
 
         main_layout = QVBoxLayout(self)
+        self.title_label = QLabel(f"要約編集 — {zone_name}")
+        main_layout.addWidget(self.title_label)
 
-        hint = QLabel("中級者向け表示で使う要点だけを書きます。未入力の場合は通常ガイドを表示します。")
-        hint.setStyleSheet("color: #888888; font-size: 11px;")
-        hint.setWordWrap(True)
-        main_layout.addWidget(hint)
+        self.hint_label = QLabel("中級者向け表示で使う要点だけを書きます。未入力の場合は通常ガイドを表示します。")
+        self.hint_label.setStyleSheet("color: #888888; font-size: 11px;")
+        self.hint_label.setWordWrap(True)
+        main_layout.addWidget(self.hint_label)
 
         text_style = f"""
             QTextEdit {{
@@ -1356,17 +1416,26 @@ class GuideSummaryEditorDialog(QDialog):
         scroll.setWidget(body)
         main_layout.addWidget(scroll)
 
-        button_row = QHBoxLayout()
-        button_row.addStretch()
-        cancel_btn = QPushButton("キャンセル")
-        cancel_btn.setStyleSheet(Styles.BUTTON)
-        cancel_btn.clicked.connect(self.reject)
-        button_row.addWidget(cancel_btn)
-        save_btn = QPushButton("保存")
-        save_btn.setStyleSheet(Styles.BUTTON)
-        save_btn.clicked.connect(self.accept)
-        button_row.addWidget(save_btn)
-        main_layout.addLayout(button_row)
+        self.footer_layout = QHBoxLayout()
+        self.footer_layout.addStretch()
+        self.cancel_button = QPushButton("キャンセル")
+        self.cancel_button.clicked.connect(self.reject)
+        self.footer_layout.addWidget(self.cancel_button)
+        self.save_button = QPushButton("保存")
+        self.save_button.clicked.connect(self.accept)
+        self.footer_layout.addWidget(self.save_button)
+        main_layout.addLayout(self.footer_layout)
+
+        _apply_poENavi_editor_theme(
+            self,
+            title_label=self.title_label,
+            cancel_button=self.cancel_button,
+            save_button=self.save_button,
+            muted_labels=(self.hint_label,),
+        )
+        self._update_summary_count("default", self.default_summary_edit)
+        for key, editor in self.flag_editors.items():
+            self._update_summary_count(key, editor)
 
     def _build_summary_header(self, title: str, key: str, label_style: str):
         header = QHBoxLayout()
@@ -1442,7 +1511,7 @@ class GuideSummaryEditorDialog(QDialog):
         if not cursor.hasSelection():
             return
         fmt = QTextCharFormat()
-        fmt.setForeground(QColor(Styles.TEXT_COLOR))
+        fmt.setForeground(QColor(POENAVI_DIALOG_THEME.text))
         cursor.mergeCharFormat(fmt)
 
     def apply_to_entry(self, entry: dict) -> dict:

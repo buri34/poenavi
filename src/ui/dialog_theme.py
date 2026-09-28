@@ -381,6 +381,25 @@ def build_dialog_stylesheet(theme: DialogTheme) -> str:
     background-color: {theme.accent_soft};
     border-color: {theme.accent};
 }}
+{root} QAbstractItemView::indicator {{
+    width: 18px;
+    height: 18px;
+    background-color: {theme.control};
+    border: 2px solid {theme.border_strong};
+    border-radius: 4px;
+}}
+{root} QAbstractItemView::indicator:hover {{
+    border-color: {theme.selection_control};
+}}
+{root} QAbstractItemView::indicator:checked {{
+    image: url("{checkbox_asset}");
+    background-color: {theme.selection_control};
+    border-color: {theme.selection_control};
+}}
+{root} QAbstractItemView::indicator:disabled {{
+    background-color: {theme.surface};
+    border-color: {theme.disabled};
+}}
 {root} QWidget[density="compact"] QAbstractItemView::item {{
     min-height: {theme.compact_row_height}px;
     padding: 0 5px;

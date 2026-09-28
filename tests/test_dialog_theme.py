@@ -57,6 +57,7 @@ def test_dialog_stylesheet_contains_every_shared_component_state():
     assert "QRadioButton::indicator:checked" in qss
     assert "QTabBar::tab:selected" in qss
     assert "QAbstractItemView::item:selected" in qss
+    assert "QAbstractItemView::indicator:checked" in qss
     assert "QHeaderView::section" in qss
     assert "QSlider::handle:horizontal" in qss
     assert "QProgressBar::chunk" in qss

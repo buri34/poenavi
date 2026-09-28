@@ -10,6 +10,14 @@ def qapp():
     return QApplication.instance() or QApplication([])
 
 
+@pytest.fixture(autouse=True)
+def prevent_zone_master_write(monkeypatch):
+    """設定保存テストが追跡中のエリア正本を書き換えないよう隔離する。"""
+    monkeypatch.setattr(
+        "src.ui.settings_dialog.save_zone_master_data", lambda *_args: None
+    )
+
+
 def test_settings_app_mode_uses_one_shared_startup_checkbox(monkeypatch, qapp):
     monkeypatch.setattr("src.ui.settings_dialog.save_zone_master_data", lambda *_args: None)
     dialog = SettingsDialog(current_config={
