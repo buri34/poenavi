@@ -5,6 +5,7 @@ import threading
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtWidgets import (
     QApplication,
+    QAbstractSpinBox,
     QButtonGroup,
     QCheckBox,
     QComboBox,
@@ -28,6 +29,8 @@ from PySide6.QtWidgets import (
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 from src.poetore.hideout_notification import (
+    MAX_DURATION_SECONDS,
+    MIN_DURATION_SECONDS,
     normalize_hideout_notification_settings,
 )
 from src.poetore.notification_audio import (
@@ -239,18 +242,35 @@ class PoetoreSettingsDialog(QDialog):
         self.hideout_minutes_spin = QSpinBox()
         self.hideout_minutes_spin.setRange(0, 60)
         self.hideout_minutes_spin.setSuffix(" 分")
+        self.hideout_minutes_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.hideout_seconds_spin = QSpinBox()
         self.hideout_seconds_spin.setRange(0, 59)
         self.hideout_seconds_spin.setSuffix(" 秒")
+        self.hideout_seconds_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
         minutes, seconds = divmod(hideout_settings["duration_seconds"], 60)
         self.hideout_minutes_spin.setValue(minutes)
         self.hideout_seconds_spin.setValue(seconds)
+        minutes_control = self._build_hideout_duration_control(
+            self.hideout_minutes_spin,
+            prefix="minutes",
+            step_seconds=60,
+            step_label="1分",
+        )
+        seconds_control = self._build_hideout_duration_control(
+            self.hideout_seconds_spin,
+            prefix="seconds",
+            step_seconds=1,
+            step_label="1秒",
+        )
         self.hideout_minutes_spin.valueChanged.connect(
             self._limit_hideout_duration
         )
+        self.hideout_seconds_spin.valueChanged.connect(
+            self._refresh_hideout_duration_buttons
+        )
         self._limit_hideout_duration(self.hideout_minutes_spin.value())
-        duration_row.addWidget(self.hideout_minutes_spin)
-        duration_row.addWidget(self.hideout_seconds_spin)
+        duration_row.addWidget(minutes_control)
+        duration_row.addWidget(seconds_control)
         duration_row.addStretch()
         hideout_form.addRow("通知までの時間:", duration_row)
         self.hideout_repeat_cb = QCheckBox("通知を繰り返す")
@@ -306,13 +326,14 @@ class PoetoreSettingsDialog(QDialog):
         self.hideout_preview_button = QPushButton("試聴")
         self.hideout_preview_button.clicked.connect(self._preview_hideout_audio)
         hideout_layout.addWidget(self.hideout_preview_button)
-        hideout_note = QLabel(
+        self.hideout_note = QLabel(
             "集中モード中、隠れ家に設定時間滞在すると音声でお知らせします。\n"
+            "音声ファイルは、選択ボタンから任意のwavまたはmp3ファイルに変更可能です。\n"
             "音量50が音声本来の大きさで、50より上は増幅します。"
         )
-        hideout_note.setProperty("uiRole", "muted")
-        hideout_note.setWordWrap(True)
-        hideout_layout.addWidget(hideout_note)
+        self.hideout_note.setProperty("uiRole", "muted")
+        self.hideout_note.setWordWrap(True)
+        hideout_layout.addWidget(self.hideout_note)
         self._hideout_preview_player = None
         basic_layout.addWidget(hideout_group)
 
@@ -744,6 +765,73 @@ class PoetoreSettingsDialog(QDialog):
         else:
             self.hideout_seconds_spin.setEnabled(True)
             self.hideout_seconds_spin.setMinimum(10 if int(minutes) == 0 else 0)
+        self._refresh_hideout_duration_buttons()
+
+    def _build_hideout_duration_control(
+        self, spin, *, prefix, step_seconds, step_label
+    ):
+        control = QWidget()
+        layout = QHBoxLayout(control)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+        spin.setFixedWidth(70)
+        layout.addWidget(spin)
+
+        for direction, text, delta in (
+            ("up", "+", step_seconds),
+            ("down", "−", -step_seconds),
+        ):
+            button = QPushButton(text)
+            button.setFixedWidth(28)
+            button.setAutoRepeat(True)
+            button_font = button.font()
+            button_font.setPixelSize(16)
+            button_font.setBold(True)
+            button.setFont(button_font)
+            button.setAccessibleName(
+                f"{step_label}{'増やす' if delta > 0 else '減らす'}"
+            )
+            button.setToolTip(button.accessibleName())
+            button.clicked.connect(
+                lambda _checked=False, amount=delta: self._step_hideout_duration(amount)
+            )
+            setattr(self, f"hideout_{prefix}_{direction}_button", button)
+            layout.addWidget(button)
+        return control
+
+    def _hideout_duration_seconds(self):
+        return (
+            self.hideout_minutes_spin.value() * 60
+            + self.hideout_seconds_spin.value()
+        )
+
+    def _step_hideout_duration(self, delta_seconds):
+        total = max(
+            MIN_DURATION_SECONDS,
+            min(
+                MAX_DURATION_SECONDS,
+                self._hideout_duration_seconds() + int(delta_seconds),
+            ),
+        )
+        minutes, seconds = divmod(total, 60)
+        self.hideout_minutes_spin.setValue(minutes)
+        self.hideout_seconds_spin.setValue(seconds)
+        self._refresh_hideout_duration_buttons()
+
+    def _refresh_hideout_duration_buttons(self, *_args):
+        required = (
+            "hideout_minutes_up_button",
+            "hideout_minutes_down_button",
+            "hideout_seconds_up_button",
+            "hideout_seconds_down_button",
+        )
+        if not all(hasattr(self, name) for name in required):
+            return
+        total = self._hideout_duration_seconds()
+        self.hideout_minutes_up_button.setEnabled(total + 60 <= MAX_DURATION_SECONDS)
+        self.hideout_minutes_down_button.setEnabled(total - 60 >= MIN_DURATION_SECONDS)
+        self.hideout_seconds_up_button.setEnabled(total < MAX_DURATION_SECONDS)
+        self.hideout_seconds_down_button.setEnabled(total > MIN_DURATION_SECONDS)
 
     def _refresh_hideout_volume_label(self, *_args):
         value = self.hideout_volume_slider.value()

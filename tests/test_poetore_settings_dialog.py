@@ -101,6 +101,11 @@ def test_hideout_notification_controls_load_and_save_seconds_and_volume():
     assert dialog.hideout_audio_name.text() == "声.mp3"
     assert dialog.hideout_log_path_edit.text() == r"C:\PoE\logs\Client.txt"
     assert dialog.hideout_volume_label.text() == "75"
+    assert dialog.hideout_note.text().splitlines() == [
+        "集中モード中、隠れ家に設定時間滞在すると音声でお知らせします。",
+        "音声ファイルは、選択ボタンから任意のwavまたはmp3ファイルに変更可能です。",
+        "音量50が音声本来の大きさで、50より上は増幅します。",
+    ]
     settings = dialog.get_settings()["poetore"]["hideout_notification"]
     assert settings == {
         "duration_seconds": 125,
@@ -125,6 +130,42 @@ def test_hideout_notification_duration_is_bounded_to_ten_seconds():
     settings = dialog.get_settings()["poetore"]["hideout_notification"]
     assert settings["duration_seconds"] == 10
     assert dialog.hideout_volume_label.text() == "50（標準）"
+    dialog.close()
+
+
+def test_hideout_duration_buttons_show_bounds_and_adjust_reliably(qtbot):
+    dialog = PoetoreSettingsDialog(current_config={
+        "poe_version": POE1,
+        "poetore": {"hideout_notification": {"duration_seconds": 10}},
+    })
+    qtbot.addWidget(dialog)
+
+    assert not dialog.hideout_minutes_down_button.isEnabled()
+    assert not dialog.hideout_seconds_down_button.isEnabled()
+
+    qtbot.mouseClick(dialog.hideout_seconds_up_button, Qt.LeftButton)
+    assert (dialog.hideout_minutes_spin.value(), dialog.hideout_seconds_spin.value()) == (0, 11)
+    qtbot.mouseClick(dialog.hideout_seconds_down_button, Qt.LeftButton)
+    assert (dialog.hideout_minutes_spin.value(), dialog.hideout_seconds_spin.value()) == (0, 10)
+
+    qtbot.mouseClick(dialog.hideout_minutes_up_button, Qt.LeftButton)
+    assert (dialog.hideout_minutes_spin.value(), dialog.hideout_seconds_spin.value()) == (1, 10)
+    qtbot.mouseClick(dialog.hideout_minutes_down_button, Qt.LeftButton)
+    assert (dialog.hideout_minutes_spin.value(), dialog.hideout_seconds_spin.value()) == (0, 10)
+    dialog.close()
+
+
+def test_hideout_second_buttons_carry_and_borrow_minutes(qtbot):
+    dialog = PoetoreSettingsDialog(current_config={
+        "poe_version": POE1,
+        "poetore": {"hideout_notification": {"duration_seconds": 59}},
+    })
+    qtbot.addWidget(dialog)
+
+    qtbot.mouseClick(dialog.hideout_seconds_up_button, Qt.LeftButton)
+    assert (dialog.hideout_minutes_spin.value(), dialog.hideout_seconds_spin.value()) == (1, 0)
+    qtbot.mouseClick(dialog.hideout_seconds_down_button, Qt.LeftButton)
+    assert (dialog.hideout_minutes_spin.value(), dialog.hideout_seconds_spin.value()) == (0, 59)
     dialog.close()
 
 
