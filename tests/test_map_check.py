@@ -21,6 +21,7 @@ from src.poetore.window_position import (
     PlacementContext,
     position_for_context_at_cursor_y,
 )
+from src.ui.dialog_theme import POETORE_DIALOG_THEME
 from src.ui.map_check import MapCheckWindow, MapModManagerDialog
 
 
@@ -386,6 +387,43 @@ def test_manager_orders_decision_columns_by_severity():
         for column in range(1, dialog.table.columnCount())
     ] == ["☠", "⚠", "✓", "×"]
     dialog.close()
+
+
+def test_manager_uses_shared_poetore_theme_and_preserves_meaning_colors():
+    QApplication.instance() or QApplication([])
+    dialog = MapModManagerDialog(default_map_check_config())
+    assert dialog.property("dialogTheme") == "poetore"
+    assert dialog.property("density") == "compact"
+    assert dialog.title_label.property("uiRole") == "title"
+    assert dialog.count_label.property("uiRole") == "muted"
+    assert dialog.close_button.property("buttonRole") == "secondary"
+    assert all(
+        button.property("buttonRole") == "secondary"
+        for button in dialog.profile_buttons
+    )
+    assert POETORE_DIALOG_THEME.accent in dialog.styleSheet()
+    assert "ui-checkbox-checked.svg" in dialog.styleSheet()
+    assert "QTableCornerButton::section" in dialog.styleSheet()
+    assert POETORE_DIALOG_THEME.surface in dialog.styleSheet()
+    assert [
+        dialog.table.cellWidget(0, column).property("meaningColor")
+        for column in range(1, dialog.table.columnCount())
+    ] == ["danger", "warning", "beneficial", "clear"]
+    assert "#8b1e25" in dialog.table.cellWidget(0, 1).styleSheet()
+    assert "#a85a13" in dialog.table.cellWidget(0, 2).styleSheet()
+    assert "#27633a" in dialog.table.cellWidget(0, 3).styleSheet()
+    dialog.close()
+
+
+def test_map_check_window_keeps_existing_overlay_theme():
+    QApplication.instance() or QApplication([])
+    window = MapCheckWindow(default_map_check_config())
+    assert window.property("dialogTheme") is None
+    assert "QDialog,QWidget{background:#111416;color:#E6ECEA;}" in (
+        window.styleSheet()
+    )
+    assert "QPushButton:hover{border-color:#65FFCA;}" in window.styleSheet()
+    window.close()
 
 
 def test_seen_column_is_hidden_when_new_mod_notifications_are_disabled():

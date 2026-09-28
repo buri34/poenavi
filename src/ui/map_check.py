@@ -3,27 +3,45 @@ from __future__ import annotations
 from functools import partial
 
 from PySide6.QtCore import QEvent, Qt, QTimer, Signal
-from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
-    QApplication, QCheckBox, QDialog, QHBoxLayout, QLabel, QLineEdit,
-    QHeaderView, QMessageBox, QPushButton, QScrollArea, QTableWidget, QTableWidgetItem,
-    QVBoxLayout, QWidget,
+    QApplication,
+    QCheckBox,
+    QDialog,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
 )
 
 from src.poetore.clipboard import clipboard_change_token, read_item_clipboard
 from src.poetore.map_check import (
-    DEFAULT_DECISIONS_BY_REF, decision_for, entries_by_stat_id,
-    is_map_check_item, load_map_mod_catalog, next_color_decision,
-    normalized_map_check_config, set_decision,
+    DEFAULT_DECISIONS_BY_REF,
+    decision_for,
+    entries_by_stat_id,
+    is_map_check_item,
+    load_map_mod_catalog,
+    next_color_decision,
+    normalized_map_check_config,
+    set_decision,
 )
 from src.poetore.parser import ItemParseError, parse_item_text
 from src.poetore.window_position import (
-    capture_placement_context, position_for_context_at_cursor_y,
+    capture_placement_context,
+    position_for_context_at_cursor_y,
 )
+from src.ui.dialog_theme import POETORE_DIALOG_THEME, apply_dialog_theme
 from src.utils.window_focus import (
-    focus_window, get_foreground_window, is_path_of_exile_window,
+    focus_window,
+    get_foreground_window,
+    is_path_of_exile_window,
 )
-
 
 _COLORS = {
     "d": ("☠", "#8b1e25"),
@@ -45,20 +63,32 @@ class MapModManagerDialog(QDialog):
         self.catalog = load_map_mod_catalog()
         self.setWindowTitle("Map Mod管理")
         self.resize(820, 680)
+        self.setProperty("density", "compact")
+        apply_dialog_theme(self, POETORE_DIALOG_THEME)
         self.setStyleSheet(
-            "QDialog,QWidget{background:#111416;color:#E6ECEA;}"
-            "QLineEdit,QTableWidget{background:#1A1F21;color:#E6ECEA;border:1px solid #3A4245;}"
-            "QPushButton{padding:5px;background:#1A1F21;color:#E6ECEA;border:1px solid #3A4245;}"
-            "QPushButton:hover{border-color:#65FFCA;}"
-            "QPushButton:checked{border:2px solid #65FFCA;}"
+            self.styleSheet()
+            + f"""
+            QDialog[dialogTheme="poetore"] QTableCornerButton::section {{
+                background-color: {POETORE_DIALOG_THEME.surface};
+                border: none;
+                border-right: 1px solid {POETORE_DIALOG_THEME.border};
+                border-bottom: 1px solid {POETORE_DIALOG_THEME.border};
+            }}
+            """
         )
         root = QVBoxLayout(self)
+        root.setContentsMargins(18, 18, 18, 18)
+        root.setSpacing(12)
+        self.title_label = QLabel("Map Mod管理")
+        self.title_label.setProperty("uiRole", "title")
+        root.addWidget(self.title_label)
         controls = QHBoxLayout()
         controls.addWidget(QLabel("プロファイル:"))
         self.profile_buttons = []
         for profile in (1, 2, 3):
             button = QPushButton(str(profile))
             button.setCheckable(True)
+            button.setProperty("buttonRole", "secondary")
             button.clicked.connect(partial(self._select_profile, profile))
             controls.addWidget(button)
             self.profile_buttons.append(button)
@@ -75,6 +105,7 @@ class MapModManagerDialog(QDialog):
         controls.addWidget(self.show_new)
         root.addLayout(controls)
         self.count_label = QLabel()
+        self.count_label.setProperty("uiRole", "muted")
         root.addWidget(self.count_label)
         self.table = QTableWidget(0, 5)
         self.table.setHorizontalHeaderLabels(["Map Mod", "危険", "警告", "有利", "解除"])
@@ -83,9 +114,13 @@ class MapModManagerDialog(QDialog):
             0, QHeaderView.ResizeMode.Stretch,
         )
         root.addWidget(self.table, 1)
-        close = QPushButton("閉じる")
-        close.clicked.connect(self.accept)
-        root.addWidget(close)
+        footer = QHBoxLayout()
+        footer.addStretch()
+        self.close_button = QPushButton("閉じる")
+        self.close_button.setProperty("buttonRole", "secondary")
+        self.close_button.clicked.connect(self.accept)
+        footer.addWidget(self.close_button)
+        root.addLayout(footer)
         self._select_profile(self.config["profile"])
 
     def _set_show_new(self, checked):
@@ -143,6 +178,12 @@ class MapModManagerDialog(QDialog):
                 button = QPushButton(label)
                 button.setCheckable(True)
                 button.setChecked(current == value)
+                button.setProperty("meaningColor", {
+                    "d": "danger",
+                    "w": "warning",
+                    "g": "beneficial",
+                    "-": "clear",
+                }[value])
                 button.setStyleSheet(f"QPushButton{{background:{color};}}")
                 button.clicked.connect(partial(self._choose, entry.key, value))
                 self.table.setCellWidget(row, column, button)

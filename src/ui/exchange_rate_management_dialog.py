@@ -41,7 +41,10 @@ from src.poetore.exchange_rate_settings import (
     ExchangeRatePairStore,
     RatePairValidationError,
 )
-from src.ui.app_theme import POETORE_THEME
+from src.ui.dialog_theme import (
+    POETORE_DIALOG_THEME,
+    apply_dialog_theme,
+)
 
 BASE_CURRENCY_IDS = (DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID)
 RATE_PAIR_DRAG_MIME = "application/x-poenavi-rate-pair-index"
@@ -202,7 +205,7 @@ class _RegisteredPairsWidget(QWidget):
             border = "border-top"
         row.setStyleSheet(
             f"QWidget#{row.objectName()} {{ {border}: 2px solid "
-            f"{POETORE_THEME.accent}; }}"
+            f"{POETORE_DIALOG_THEME.accent}; }}"
         )
 
     def _clear_drop_indicator(self) -> None:
@@ -261,65 +264,54 @@ class ExchangeRateManagementDialog(QDialog):
         return tuple(zip(categories, labels, strict=True))
 
     def _build_ui(self) -> None:
-        theme = POETORE_THEME
-        self.setStyleSheet(f"""
-            QDialog {{ background: {theme.background}; color: {theme.text}; }}
-            QLabel {{ color: {theme.text}; }}
-            QLineEdit, QListWidget, QScrollArea {{
-                background: {theme.panel}; color: {theme.text};
-                border: 1px solid #3A4245; border-radius: 6px;
+        theme = POETORE_DIALOG_THEME
+        self.setProperty("density", "compact")
+        apply_dialog_theme(self, theme)
+        self.setStyleSheet(
+            self.styleSheet()
+            + f"""
+            QDialog[dialogTheme="poetore"] QListWidget#ratePairCategoryList {{
+                outline: none;
             }}
-            QListWidget#ratePairCategoryList {{ outline: none; }}
-            QListWidget#ratePairCategoryList::item {{ padding: 1px 7px; }}
-            QListWidget#ratePairCandidateList::item {{ padding: 0px 7px; }}
-            QListWidget::item:selected {{
-                background: #276B5A; color: #FFFFFF;
+            QDialog[dialogTheme="poetore"] QListWidget#ratePairCategoryList::item {{
+                min-height: {CATEGORY_ROW_HEIGHT}px; padding: 1px 7px;
             }}
-            QPushButton {{
-                background: #1A1F21; color: {theme.text};
-                border: 1px solid #3A4245; border-radius: 6px;
-                padding: 7px 12px; font-weight: bold;
+            QDialog[dialogTheme="poetore"] QListWidget#ratePairCandidateList::item {{
+                min-height: {CANDIDATE_ROW_HEIGHT}px; padding: 0 7px;
             }}
-            QPushButton:hover, QPushButton:focus {{ border-color: {theme.accent}; }}
-            QPushButton:disabled {{ color: #66706C; border-color: #2B3133; }}
-            QFrame#ratePairItemCard, QFrame#ratePairCurrencyCard {{
-                background: #171C1E; border: 1px solid #3A4245;
-                border-radius: 8px;
+            QDialog[dialogTheme="poetore"] QPushButton[rateCurrencyChoice="true"] {{
+                min-height: 42px; text-align: left; padding: 0 10px;
+                font-weight: 400;
             }}
-            QPushButton[rateCurrencyChoice="true"] {{
-                text-align: left; padding: 8px 10px; font-weight: normal;
-                background: #1A1F21;
+            QDialog[dialogTheme="poetore"] QPushButton[rateCurrencyChoice="true"]:checked {{
+                color: {theme.text}; background-color: {theme.accent_soft};
+                border-color: {theme.accent}; font-weight: 700;
             }}
-            QPushButton[rateCurrencyChoice="true"]:checked {{
-                color: #FFFFFF; background: #245C50;
-                border-color: {theme.accent}; font-weight: bold;
-            }}
-        """)
+            """
+        )
         root = QVBoxLayout(self)
         root.setContentsMargins(18, 18, 18, 18)
         root.setSpacing(12)
 
         self.title_label = QLabel()
-        self.title_label.setStyleSheet(
-            f"color: {theme.accent}; font-size: 18px; font-weight: bold;"
-        )
+        self.title_label.setProperty("uiRole", "title")
         root.addWidget(self.title_label)
 
-        registered_title = QLabel("登録済み")
-        registered_title.setStyleSheet("font-size: 14px; font-weight: bold;")
-        root.addWidget(registered_title)
+        self.registered_title = QLabel("登録済み")
+        self.registered_title.setProperty("uiRole", "section")
+        root.addWidget(self.registered_title)
         self.registered_scroll = QScrollArea()
         self.registered_scroll.setObjectName("registeredPairsScroll")
         self.registered_scroll.setWidgetResizable(True)
         self.registered_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.registered_scroll.setFixedHeight(175)
         self.registered_scroll.viewport().setStyleSheet(
-            f"background: {theme.panel}; color: {theme.text};"
+            f"background: {theme.surface}; color: {theme.text};"
         )
         self.registered_widget = _RegisteredPairsWidget()
         self.registered_widget.setObjectName("registeredPairsWidget")
         self.registered_widget.setStyleSheet(
-            f"QWidget#registeredPairsWidget {{ background: {theme.panel}; "
+            f"QWidget#registeredPairsWidget {{ background: {theme.surface}; "
             f"color: {theme.text}; }}"
         )
         self.registered_layout = QVBoxLayout(self.registered_widget)
@@ -329,23 +321,23 @@ class ExchangeRateManagementDialog(QDialog):
         self.registered_scroll.setWidget(self.registered_widget)
         root.addWidget(self.registered_scroll)
 
-        add_title = QLabel("追加するペア")
-        add_title.setStyleSheet("font-size: 14px; font-weight: bold;")
-        root.addWidget(add_title)
+        self.add_title = QLabel("追加するペア")
+        self.add_title.setProperty("uiRole", "section")
+        root.addWidget(self.add_title)
 
         selection_row = QHBoxLayout()
         selection_row.setSpacing(10)
 
         self.item_card = QFrame()
         self.item_card.setObjectName("ratePairItemCard")
+        self.item_card.setProperty("uiRole", "surface")
+        self.item_card.setMinimumHeight(400)
         item_card_layout = QVBoxLayout(self.item_card)
         item_card_layout.setContentsMargins(10, 10, 10, 10)
         item_card_layout.setSpacing(8)
         self.item_card_title = QLabel("価格を確認するアイテム")
         self.item_card_title.setObjectName("ratePairItemCardTitle")
-        self.item_card_title.setStyleSheet(
-            f"color: {theme.accent}; font-weight: bold;"
-        )
+        self.item_card_title.setProperty("uiRole", "section")
         item_card_layout.addWidget(self.item_card_title)
 
         search_row = QHBoxLayout()
@@ -405,15 +397,14 @@ class ExchangeRateManagementDialog(QDialog):
 
         self.currency_card = QFrame()
         self.currency_card.setObjectName("ratePairCurrencyCard")
+        self.currency_card.setProperty("uiRole", "surface")
         self.currency_card.setFixedWidth(165)
         currency_layout = QVBoxLayout(self.currency_card)
         currency_layout.setContentsMargins(10, 10, 10, 10)
         currency_layout.setSpacing(8)
         self.currency_card_title = QLabel("通貨")
         self.currency_card_title.setObjectName("ratePairCurrencyCardTitle")
-        self.currency_card_title.setStyleSheet(
-            f"color: {theme.accent}; font-weight: bold;"
-        )
+        self.currency_card_title.setProperty("uiRole", "section")
         currency_layout.addWidget(self.currency_card_title)
         self.currency_group = QButtonGroup(self)
         self.currency_group.setExclusive(True)
@@ -445,14 +436,16 @@ class ExchangeRateManagementDialog(QDialog):
         footer_copy.addWidget(self.preview_label)
         self.validation_label = QLabel("")
         self.validation_label.setWordWrap(True)
-        self.validation_label.setStyleSheet("color: #D4AAA5; font-size: 11px;")
+        self.validation_label.setProperty("state", "error")
         footer_copy.addWidget(self.validation_label)
         footer.addLayout(footer_copy, 1)
         self.add_button = QPushButton("追加")
+        self.add_button.setProperty("buttonRole", "primary")
         self.add_button.setAccessibleName("選択したレートを追加")
         self.add_button.clicked.connect(self._add_selected_pair)
         footer.addWidget(self.add_button)
         self.close_button = QPushButton("閉じる")
+        self.close_button.setProperty("buttonRole", "secondary")
         self.close_button.clicked.connect(self.accept)
         footer.addWidget(self.close_button)
         root.addLayout(footer)
@@ -665,7 +658,7 @@ class ExchangeRateManagementDialog(QDialog):
             )
             name.setObjectName(f"ratePairName{index}")
             name.setToolTip(name.text())
-            name.setStyleSheet(f"color: {POETORE_THEME.text};")
+            name.setStyleSheet(f"color: {POETORE_DIALOG_THEME.text};")
             row_layout.addWidget(name, 1)
             up = self._move_button("↑", "上へ移動")
             down = self._move_button("↓", "下へ移動")
@@ -673,6 +666,7 @@ class ExchangeRateManagementDialog(QDialog):
             up.setObjectName(f"ratePairMoveUp{index}")
             down.setObjectName(f"ratePairMoveDown{index}")
             delete.setObjectName(f"ratePairDelete{index}")
+            delete.setProperty("buttonRole", "danger")
             up.setEnabled(index > 0)
             down.setEnabled(index < len(pairs) - 1)
             up.clicked.connect(lambda _checked=False, i=index: self._move_up(i))

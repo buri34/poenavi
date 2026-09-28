@@ -23,7 +23,7 @@ from src.poetore.exchange_rate_settings import (
     ExchangeRatePairStore,
     default_rate_pairs_config,
 )
-from src.ui.app_theme import POETORE_THEME
+from src.ui.dialog_theme import POETORE_DIALOG_THEME
 from src.ui.exchange_rate_management_dialog import (
     CANDIDATE_ICON_SIZE,
     CANDIDATE_ROW_HEIGHT,
@@ -165,6 +165,32 @@ def test_pair_editor_uses_two_labeled_cards_and_footer(qapp, tmp_path):
         assert dialog.preview_label.objectName() == "ratePairPreview"
         assert dialog.preview_label.geometry().top() > dialog.item_card.geometry().bottom()
         assert dialog.preview_label.text() == "アイテムと通貨を選択してください"
+    finally:
+        dialog.close()
+
+
+def test_management_dialog_uses_shared_poetore_theme_and_button_roles(
+    qapp, tmp_path
+):
+    dialog, *_ = make_dialog(qapp, tmp_path)
+    try:
+        assert dialog.property("dialogTheme") == "poetore"
+        assert dialog.property("density") == "compact"
+        assert dialog.title_label.property("uiRole") == "title"
+        assert dialog.registered_title.property("uiRole") == "section"
+        assert dialog.add_title.property("uiRole") == "section"
+        assert dialog.item_card.property("uiRole") == "surface"
+        assert dialog.currency_card.property("uiRole") == "surface"
+        assert dialog.item_card_title.property("uiRole") == "section"
+        assert dialog.currency_card_title.property("uiRole") == "section"
+        assert dialog.validation_label.property("state") == "error"
+        assert dialog.add_button.property("buttonRole") == "primary"
+        assert dialog.close_button.property("buttonRole") == "secondary"
+        stylesheet = dialog.styleSheet()
+        assert POETORE_DIALOG_THEME.accent in stylesheet
+        assert POETORE_DIALOG_THEME.text in stylesheet
+        assert "ui-checkbox-checked.svg" in stylesheet
+        assert "QDialog,QWidget{background" not in stylesheet
     finally:
         dialog.close()
 
@@ -436,9 +462,8 @@ def test_category_rows_are_compact_and_add_section_is_taller(qapp, tmp_path):
         assert heights == {CATEGORY_ROW_HEIGHT}
         assert CATEGORY_ROW_HEIGHT >= dialog.category_list.fontMetrics().height()
         assert dialog.item_card.height() >= 400
-        assert "QListWidget#ratePairCategoryList::item { padding: 1px 7px; }" in (
-            dialog.styleSheet()
-        )
+        assert "QListWidget#ratePairCategoryList::item" in dialog.styleSheet()
+        assert "min-height: 20px; padding: 1px 7px;" in dialog.styleSheet()
         option = QStyleOptionViewItem()
         option.state |= QStyle.State_HasFocus
         clean = dialog.category_list.itemDelegate().option_without_focus(option)
@@ -450,10 +475,12 @@ def test_category_rows_are_compact_and_add_section_is_taller(qapp, tmp_path):
 def test_registered_area_and_pair_names_use_dark_theme(qapp, tmp_path):
     dialog, *_ = make_dialog(qapp, tmp_path)
     try:
-        assert POETORE_THEME.panel in dialog.registered_scroll.viewport().styleSheet()
-        assert POETORE_THEME.panel in dialog.registered_widget.styleSheet()
+        assert POETORE_DIALOG_THEME.surface in (
+            dialog.registered_scroll.viewport().styleSheet()
+        )
+        assert POETORE_DIALOG_THEME.surface in dialog.registered_widget.styleSheet()
         name = dialog.findChild(QLabel, "ratePairName0")
         assert name is not None
-        assert POETORE_THEME.text in name.styleSheet()
+        assert POETORE_DIALOG_THEME.text in name.styleSheet()
     finally:
         dialog.close()
