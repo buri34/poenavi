@@ -1820,7 +1820,9 @@ class PoetoreWindow(QWidget):
             "ONの間は取引方式・通貨・出品期間の選択を記憶します"
         )
         Styles.apply_checkbox_style(
-            self.remember_trade_options_checkbox, checked_color="#257A64"
+            self.remember_trade_options_checkbox,
+            checked_color="#257A64",
+            match_native_indicator=True,
         )
         self.remember_trade_options_checkbox.setStyleSheet(
             self.remember_trade_options_checkbox.styleSheet()

@@ -5442,6 +5442,8 @@ Item Level: 83
 
 
 def test_trade_option_memory_defaults_to_on_and_includes_listing_period(qapp):
+    from PySide6.QtWidgets import QStyle, QStyleOptionButton
+
     config = {
         "poe_version": POE1,
         "poetore": {
@@ -5454,13 +5456,31 @@ def test_trade_option_memory_defaults_to_on_and_includes_listing_period(qapp):
             },
         },
     }
+    native_checkbox = QCheckBox()
+    native_option = QStyleOptionButton()
+    native_checkbox.initStyleOption(native_option)
+    native_indicator = native_checkbox.style().subElementRect(
+        QStyle.SubElement.SE_CheckBoxIndicator,
+        native_option,
+        native_checkbox,
+    ).size()
+
     window = PoetoreWindow(app_config=config)
     try:
         assert window.remember_trade_options_checkbox.isChecked()
         style = window.remember_trade_options_checkbox.styleSheet().lower()
-        assert "poenavi_check_257a64.png" in style
-        assert "border: 2px solid #257a64" in style
-        assert "width: 18px; height: 18px" in style
+        assert "poenavi_check_257a64_" in style
+        assert "border: 1px solid #257a64" in style
+        styled_option = QStyleOptionButton()
+        window.remember_trade_options_checkbox.initStyleOption(styled_option)
+        styled_indicator = (
+            window.remember_trade_options_checkbox.style().subElementRect(
+                QStyle.SubElement.SE_CheckBoxIndicator,
+                styled_option,
+                window.remember_trade_options_checkbox,
+            ).size()
+        )
+        assert styled_indicator == native_indicator
         assert "remembertradeoptionscheckbox { color: #e6ecea; }" in style
         assert window.trade_status_combo.currentData() == "online"
         assert window.trade_currency_combo.currentData() == "divine"
