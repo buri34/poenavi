@@ -7,8 +7,35 @@ from src.ui.desecration_settings_dialog import (
     DEFAULT_EXAMPLE_IMAGE_PATH,
     EXAMPLE_POPUP_IMAGE_SIZE,
     EXAMPLE_POPUP_SIZE,
+    DesecrationRegionSelector,
     DesecrationSettingsDialog,
 )
+
+
+def test_desecration_settings_uses_poetore_dialog_theme_and_footer_roles(qtbot):
+    dialog = DesecrationSettingsDialog()
+    qtbot.addWidget(dialog)
+
+    assert dialog.property("dialogTheme") == "poetore"
+    assert dialog.property("dialogAccent") == "#65FFCA"
+    assert dialog.title_label.property("uiRole") == "title"
+    assert dialog.title_label.text() == "アビス冒涜Modティアチェック設定"
+    assert dialog.cancel_button.property("buttonRole") == "secondary"
+    assert dialog.save_button.property("buttonRole") == "primary"
+    assert dialog.footer_layout.itemAt(1).widget() is dialog.cancel_button
+    assert dialog.footer_layout.itemAt(2).widget() is dialog.save_button
+    assert "#65FFCA" in dialog.styleSheet()
+    assert "#B0FF7B" not in dialog.styleSheet()
+    assert dialog.enabled_checkbox.styleSheet() == ""
+    assert dialog.show_ranges_checkbox.styleSheet() == ""
+
+
+def test_desecration_region_selector_keeps_protected_game_overlay_style(qtbot):
+    selector = DesecrationRegionSelector(QRect(100, 200, 1000, 800))
+    qtbot.addWidget(selector)
+
+    assert selector.property("dialogTheme") is None
+    assert selector.styleSheet() == "font-size: 36px; font-weight: bold;"
 
 
 class FakePackController(QObject):
@@ -33,12 +60,15 @@ def test_desecration_settings_defaults_to_alt_r_and_keeps_open_region_optional(q
     assert hotkey == "alt+r"
     assert enabled is True
     assert "inventory_open_region" not in config
-    assert "読取ショートカットは無効" in dialog._section_widgets["inventory_open_region"][0].text()
+    assert (
+        "読取ショートカットは無効"
+        in dialog._section_widgets["inventory_open_region"][0].text()
+    )
 
 
 def test_desecration_settings_preserves_two_independent_regions(qtbot):
-    opened = {"left": .2, "top": .1, "right": .7, "bottom": .5}
-    closed = {"left": .3, "top": .2, "right": .8, "bottom": .6}
+    opened = {"left": 0.2, "top": 0.1, "right": 0.7, "bottom": 0.5}
+    closed = {"left": 0.3, "top": 0.2, "right": 0.8, "bottom": 0.6}
     dialog = DesecrationSettingsDialog(
         desecration_config={
             "inventory_open_region": opened,
@@ -124,9 +154,7 @@ def test_desecration_settings_shows_retry_only_after_pack_error(qtbot):
 
 
 def test_desecration_settings_preserves_explicitly_disabled_tier_ranges(qtbot):
-    dialog = DesecrationSettingsDialog(
-        desecration_config={"show_tier_ranges": False}
-    )
+    dialog = DesecrationSettingsDialog(desecration_config={"show_tier_ranges": False})
     qtbot.addWidget(dialog)
 
     assert not dialog.show_ranges_checkbox.isChecked()
@@ -141,7 +169,8 @@ def test_desecration_settings_explains_required_and_closed_regions(qtbot):
     instruction = dialog.findChild(QLabel, "desecrationRegionInstruction")
     warning = dialog.findChild(QLabel, "screenSizeRegionWarning")
     assert required.text() == "（必須）"
-    assert "#FFD54F" in dialog.styleSheet()
+    assert required.property("state") == "warning"
+    assert "#F6C85F" in dialog.styleSheet()
     assert closed_note.text() == "※インベントリを閉じると位置がずれて読取に失敗するため"
     assert instruction.text().endswith(
         "読取時は「インベントリを開いた状態」を先に確認し、読取に失敗した場合は"
@@ -158,8 +187,9 @@ def test_desecration_settings_warns_that_screen_reading_must_be_enabled(qtbot):
 
     hint = dialog.findChild(QLabel, "screenReadingEnableRequiredHint")
     assert hint.text() == "※使用するにはチェックをONにしてください"
-    assert "#FFD54F" in dialog.styleSheet()
-    assert "font-weight: bold" in dialog.styleSheet()
+    assert hint.property("state") == "warning"
+    assert "#F6C85F" in dialog.styleSheet()
+    assert "font-weight: 600" in dialog.styleSheet()
 
 
 def test_desecration_default_example_image_is_bundled_and_loadable():
@@ -190,6 +220,7 @@ def test_desecration_example_popup_image_is_one_and_a_half_times_larger(
     popup = captured["popup"]
     image = popup.findChild(QLabel, "desecrationExamplePopupImage")
     assert popup.size() == EXAMPLE_POPUP_SIZE
+    assert popup.property("dialogTheme") == "poetore"
     assert EXAMPLE_POPUP_IMAGE_SIZE.width() == 860 * 1.5
     assert EXAMPLE_POPUP_IMAGE_SIZE.height() == 630 * 1.5
     assert image.pixmap().width() == 1290

@@ -130,9 +130,9 @@ def build_dialog_stylesheet(theme: DialogTheme) -> str:
     color: {theme.muted_text};
     font-size: {theme.caption_size}px;
 }}
-{root} QLabel[state="success"] {{ color: {theme.success}; }}
-{root} QLabel[state="warning"] {{ color: {theme.warning}; }}
-{root} QLabel[state="error"] {{ color: {theme.danger}; }}
+{root} QLabel[state="success"] {{ color: {theme.success}; font-weight: 600; }}
+{root} QLabel[state="warning"] {{ color: {theme.warning}; font-weight: 600; }}
+{root} QLabel[state="error"] {{ color: {theme.danger}; font-weight: 600; }}
 {root} QLabel:disabled {{ color: {theme.disabled}; }}
 
 {root} QPushButton,
@@ -265,6 +265,19 @@ def build_dialog_stylesheet(theme: DialogTheme) -> str:
     border-radius: 8px;
 }}
 {root} QSlider::handle:horizontal:hover {{ border-color: {theme.text}; }}
+
+{root} QProgressBar {{
+    min-height: 20px;
+    color: {theme.text};
+    background-color: {theme.control};
+    border: 1px solid {theme.border};
+    border-radius: {theme.compact_radius}px;
+    text-align: center;
+}}
+{root} QProgressBar::chunk {{
+    background-color: {theme.accent};
+    border-radius: {theme.compact_radius}px;
+}}
 
 {root} QCheckBox,
 {root} QRadioButton {{ spacing: 8px; }}

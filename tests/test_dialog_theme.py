@@ -59,6 +59,7 @@ def test_dialog_stylesheet_contains_every_shared_component_state():
     assert "QAbstractItemView::item:selected" in qss
     assert "QHeaderView::section" in qss
     assert "QSlider::handle:horizontal" in qss
+    assert "QProgressBar::chunk" in qss
     assert "QScrollArea > QWidget > QWidget" in qss
     assert "QScrollBar::handle:vertical:hover" in qss
     assert "QToolTip" in qss

@@ -19,6 +19,33 @@ from src.ui.expedition_settings_dialog import (
 )
 
 
+def test_expedition_settings_uses_poetore_dialog_theme_and_footer_roles():
+    QApplication.instance() or QApplication([])
+    dialog = ExpeditionSettingsDialog()
+
+    assert dialog.property("dialogTheme") == "poetore"
+    assert dialog.property("dialogAccent") == "#65FFCA"
+    assert dialog.title_label.property("uiRole") == "title"
+    assert dialog.title_label.text() == "エクスペ報酬チェック設定"
+    assert dialog.cancel_button.property("buttonRole") == "secondary"
+    assert dialog.save_button.property("buttonRole") == "primary"
+    assert dialog.footer_layout.itemAt(1).widget() is dialog.cancel_button
+    assert dialog.footer_layout.itemAt(2).widget() is dialog.save_button
+    assert "#65FFCA" in dialog.styleSheet()
+    assert "#B0FF7B" not in dialog.styleSheet()
+    assert dialog.enabled_checkbox.styleSheet() == ""
+    dialog.close()
+
+
+def test_expedition_region_selector_keeps_protected_game_overlay_style():
+    QApplication.instance() or QApplication([])
+    selector = ExpeditionRegionSelector(QRect(100, 200, 1000, 800))
+
+    assert selector.property("dialogTheme") is None
+    assert selector.styleSheet() == "font-size: 36px; font-weight: bold;"
+    selector.close()
+
+
 def test_normalized_region_uses_poe_client_coordinates():
     client = QRect(100, 200, 1000, 800)
     selection = QRect(200, 280, 600, 640)
@@ -36,9 +63,17 @@ def test_normalized_region_rejects_tiny_and_outside_selections():
 
     assert normalized_region(QRect(110, 210, 20, 20), client) is None
     assert normalized_region(QRect(50, 250, 300, 300), client) is None
-    assert valid_normalized_region({
-        "left": 0.2, "top": 0.2, "right": 1.1, "bottom": 0.8,
-    }) is None
+    assert (
+        valid_normalized_region(
+            {
+                "left": 0.2,
+                "top": 0.2,
+                "right": 1.1,
+                "bottom": 0.8,
+            }
+        )
+        is None
+    )
 
 
 def test_region_selector_enter_confirms_valid_selection_and_escape_cancels():
@@ -46,15 +81,15 @@ def test_region_selector_enter_confirms_valid_selection_and_escape_cancels():
     selector = ExpeditionRegionSelector(QRect(100, 200, 1000, 800))
     selector._selection = QRect(100, 80, 600, 640)
 
-    selector.keyPressEvent(QKeyEvent(
-        QKeyEvent.Type.KeyPress, Qt.Key_Return, Qt.NoModifier
-    ))
+    selector.keyPressEvent(
+        QKeyEvent(QKeyEvent.Type.KeyPress, Qt.Key_Return, Qt.NoModifier)
+    )
     assert selector.result() == QDialog.Accepted
 
     cancelled = ExpeditionRegionSelector(QRect(100, 200, 1000, 800))
-    cancelled.keyPressEvent(QKeyEvent(
-        QKeyEvent.Type.KeyPress, Qt.Key_Escape, Qt.NoModifier
-    ))
+    cancelled.keyPressEvent(
+        QKeyEvent(QKeyEvent.Type.KeyPress, Qt.Key_Escape, Qt.NoModifier)
+    )
     assert cancelled.result() == QDialog.Rejected
     selector.close()
     cancelled.close()
@@ -78,12 +113,10 @@ def test_region_selector_rejects_tiny_selection():
     selector = ExpeditionRegionSelector(QRect(100, 200, 1000, 800))
     selector._selection = QRect(10, 10, 20, 20)
 
-    with patch(
-        "src.ui.expedition_settings_dialog.QMessageBox.warning"
-    ) as warning:
-        selector.keyPressEvent(QKeyEvent(
-            QKeyEvent.Type.KeyPress, Qt.Key_Return, Qt.NoModifier
-        ))
+    with patch("src.ui.expedition_settings_dialog.QMessageBox.warning") as warning:
+        selector.keyPressEvent(
+            QKeyEvent(QKeyEvent.Type.KeyPress, Qt.Key_Return, Qt.NoModifier)
+        )
 
     assert selector.result() != QDialog.Accepted
     warning.assert_called_once()
@@ -123,7 +156,9 @@ def test_expedition_enabled_checkbox_uses_shared_blue_style():
     QApplication.instance() or QApplication([])
     dialog = ExpeditionSettingsDialog()
 
-    assert "poenavi_check_4488ff.png" in dialog.enabled_checkbox.styleSheet()
+    assert dialog.enabled_checkbox.styleSheet() == ""
+    assert "ui-checkbox-checked.svg" in dialog.styleSheet()
+    assert "#4488FF" in dialog.styleSheet()
     dialog.close()
 
 
@@ -155,8 +190,9 @@ def test_expedition_settings_warns_that_screen_reading_must_be_enabled():
 
     hint = dialog.findChild(QLabel, "screenReadingEnableRequiredHint")
     assert hint.text() == "※使用するにはチェックをONにしてください"
-    assert "#FFD54F" in dialog.styleSheet()
-    assert "font-weight: bold" in dialog.styleSheet()
+    assert hint.property("state") == "warning"
+    assert "#F6C85F" in dialog.styleSheet()
+    assert "font-weight: 600" in dialog.styleSheet()
     dialog.close()
 
 
@@ -200,10 +236,12 @@ def test_expedition_dialog_accepts_region_from_selector():
             self.parent = parent
 
         def exec(self):
-            selection_opacities.append((
-                self.parent.windowOpacity(),
-                self.parent.parentWidget().windowOpacity(),
-            ))
+            selection_opacities.append(
+                (
+                    self.parent.windowOpacity(),
+                    self.parent.parentWidget().windowOpacity(),
+                )
+            )
             return QDialog.Accepted
 
     owner = QDialog()
@@ -284,5 +322,6 @@ def test_expedition_dialog_warns_that_window_resize_requires_region_reset():
     assert warning.text() == (
         "PoE2のウィンドウサイズを変更した場合、位置が変わるため再設定が必要です。"
     )
-    assert "#FFD54F" in dialog.styleSheet()
+    assert warning.property("state") == "warning"
+    assert "#F6C85F" in dialog.styleSheet()
     dialog.close()
