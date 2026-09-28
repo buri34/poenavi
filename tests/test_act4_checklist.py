@@ -54,12 +54,14 @@ def test_manual_parent_off_clears_descendants_and_child_on_checks_parent():
 
 
 def test_state_round_trip_filters_unknown_ids_and_preserves_ui_state():
-    state = Act4ChecklistState.from_dict({
-        "checked_zone_ids": ["poe2_act4_area01", "poe2_act4_area17", "unknown"],
-        "optional_npc_checked": True,
-        "dismissed": True,
-        "position": {"x": 123, "y": 456},
-    })
+    state = Act4ChecklistState.from_dict(
+        {
+            "checked_zone_ids": ["poe2_act4_area01", "poe2_act4_area17", "unknown"],
+            "optional_npc_checked": True,
+            "dismissed": True,
+            "position": {"x": 123, "y": 456},
+        }
+    )
 
     assert state.checked_zone_ids == {"poe2_act4_area01"}
     assert state.optional_npc_checked
@@ -80,12 +82,108 @@ def test_window_uses_final_copy_and_updates_progress(qapp):
         assert window.windowTitle() == "Act4 攻略チェック"
         assert window.progress_label.text() == "14 / 14"
         assert window.complete_label.text() == "✓ Act4の攻略必須エリアをすべて完了済み"
-        assert window.complete_label.isVisible() is False  # 親を表示するまではQt上非表示
+        assert (
+            window.complete_label.isVisible() is False
+        )  # 親を表示するまではQt上非表示
         assert "ナカヌの装備販売NPCを確認" in window.optional_checkbox.text()
-        notes = [label.text() for label in window.findChildren(type(window.complete_label))]
+        notes = [
+            label.text() for label in window.findChildren(type(window.complete_label))
+        ]
         assert "発掘現場を攻略前に立ち寄る" in notes
     finally:
         window.close()
+
+
+def test_window_uses_requested_area_notes_without_number_prefixes(qapp):
+    window = Act4ChecklistWindow()
+    try:
+        labels = {
+            zone_id: checkbox.property("checklistLabel")
+            for zone_id, checkbox in window._checkboxes.items()
+        }
+        assert labels["poe2_act4_area01"] == "キンの島（地図の切れ端 ①、経験値効率良）"
+        assert labels["poe2_act4_area03"] == "ケッジ湾（地図の切れ端 ②）"
+        assert (
+            labels["poe2_act4_area04"]
+            == "└  旅の終わり（クエスト完了でスキルポイント+2）"
+        )
+        assert labels["poe2_act4_area05"] == "放棄された監獄（礼拝堂で永続バフ）"
+        assert (
+            labels["poe2_act4_area07"]
+            == "ワーカパヌ島（地図の切れ端 ③、鮫ボスで永続バフ）"
+        )
+        assert labels["poe2_act4_area09"] == "モズの島（地図の切れ端 ④）"
+        assert labels["poe2_act4_area10"] == "ヒネコラの目（永続バフ）"
+        assert labels["poe2_act4_area11"] == "└  死者の殿堂（永続バフ）"
+        assert labels["poe2_act4_area12"] == "   └  祖先の試練（スキルポイント+2）"
+        assert all(
+            not str(label).lstrip().startswith(tuple("12345678"))
+            for label in labels.values()
+        )
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize(
+    ("mini_font_size", "profile_name", "body_size"),
+    [(15, "small", 12), (18, "medium", 15), (22, "large", 18)],
+)
+def test_window_font_profile_tracks_mini_navi_setting(
+    qapp,
+    mini_font_size,
+    profile_name,
+    body_size,
+):
+    main = QWidget()
+    main.config = {"mini_guide_overlay": {"font_size": mini_font_size}}
+    window = Act4ChecklistWindow(main)
+    try:
+        assert window.font_profile_name == profile_name
+        assert window.body_font_size == body_size
+        assert f"font-size: {body_size}px" in window.outer.styleSheet()
+    finally:
+        window.close()
+        main.close()
+
+
+def test_window_uses_shared_blue_checkbox_visual(qapp):
+    window = Act4ChecklistWindow()
+    try:
+        stylesheet = window.outer.styleSheet().lower()
+        assert "#4488ff" in stylesheet
+        assert "ui-checkbox-checked.svg" in stylesheet
+        assert "width: 18px" in stylesheet
+        assert window._checkboxes["poe2_act4_area01"].text().startswith("キンの島")
+        assert not window._checkboxes["poe2_act4_area01"].text().startswith(("□", "✓"))
+    finally:
+        window.close()
+
+
+def test_window_fade_tracks_mini_navi_enabled_delay_and_opacity(qapp):
+    main = QWidget()
+    main.config = {
+        "mini_guide_overlay": {
+            "fade_enabled": True,
+            "fade_delay_ms": 1234,
+            "faded_opacity": 0.42,
+        }
+    }
+    window = Act4ChecklistWindow(main)
+    try:
+        window.show()
+        window._maybe_start_fade_timer()
+        assert window._fade_timer.isActive()
+        assert window._fade_timer.interval() == 1234
+        window._fade_to_idle_opacity()
+        assert window.windowOpacity() == pytest.approx(0.42, abs=0.01)
+
+        main.config["mini_guide_overlay"]["fade_enabled"] = False
+        window.apply_settings()
+        assert not window._fade_timer.isActive()
+        assert window.windowOpacity() == pytest.approx(1.0)
+    finally:
+        window.close()
+        main.close()
 
 
 def test_window_emits_manual_and_close_actions(qapp):
@@ -122,7 +220,9 @@ def _main_window_for_zone_updates(zone_ids):
     window.act4_checklist_state = Act4ChecklistState()
     window._act4_context_active = False
     window._get_zone_id = Mock(side_effect=lambda name: zone_ids.get(name))
-    window._is_town_zone = Mock(side_effect=lambda name: name in {"キングスマーチ", "ジッグラトの野営地"})
+    window._is_town_zone = Mock(
+        side_effect=lambda name: name in {"キングスマーチ", "ジッグラトの野営地"}
+    )
     window._save_progress_flags = Mock()
     window._show_act4_checklist = Mock()
     window._hide_act4_checklist = Mock()

@@ -2585,6 +2585,7 @@ class MainWindow(QMainWindow):
         checklist = getattr(self, "act4_checklist_window", None)
         if checklist is None or not self.is_act4_checklist_available_context():
             return
+        checklist.apply_settings()
         checklist.apply_state(self.act4_checklist_state)
         if self.act4_checklist_state.position is not None:
             checklist.move(*self.act4_checklist_state.position)
@@ -5033,7 +5034,7 @@ class MainWindow(QMainWindow):
             if hasattr(self, "mini_navi_overlay"):
                 self.mini_navi_overlay.apply_settings(refresh_window_flags=True)
             if hasattr(self, "act4_checklist_window"):
-                self.act4_checklist_window.apply_window_flags()
+                self.act4_checklist_window.apply_settings(refresh_window_flags=True)
             # メモダイアログにも透過率を反映
             if hasattr(self, '_memo_dialog') and self._memo_dialog is not None and self._memo_dialog.isVisible():
                 self._memo_dialog.apply_opacity(
