@@ -181,6 +181,40 @@ def test_poe2_corrected_categories_and_triskelions_are_visible(qapp, tmp_path):
         dialog.close()
 
 
+def test_poe1_corrected_categories_are_visible(qapp, tmp_path):
+    expected_by_label = {
+        "カレンシー": {
+            "Metadata/Items/MapFragments/CurrencyFragmentPantheonFlask",
+            "Metadata/Items/MapFragments/VoidbornVaultKey",
+            "Metadata/Items/Currency/AstrolabeGeneric",
+            "Metadata/Items/Currency/AstrolabeLegion",
+        },
+        "デリリウムオーブ": {
+            "Metadata/Items/MapFragments/CurrencyAfflictionFragment",
+            "Metadata/Items/Currency/CurrencyAfflictionShard",
+        },
+        "オールフレイム": {
+            "Metadata/Items/Currency/CurrencyDeepwater",
+            "Metadata/Items/Deepwater/DeepwaterBottledItem",
+        },
+    }
+    available_ids = set().union(*expected_by_label.values())
+    dialog, *_ = make_dialog(
+        qapp,
+        tmp_path,
+        available_ids=list(available_ids),
+        poe_version=POE1,
+    )
+    try:
+        for label, expected_ids in expected_by_label.items():
+            matches = dialog.category_list.findItems(label, Qt.MatchExactly)
+            assert len(matches) == 1
+            dialog.category_list.setCurrentItem(matches[0])
+            assert expected_ids <= candidate_ids(dialog)
+    finally:
+        dialog.close()
+
+
 def test_search_clear_button_clears_input(qapp, tmp_path):
     dialog, *_ = make_dialog(qapp, tmp_path)
     try:

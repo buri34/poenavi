@@ -95,6 +95,34 @@ def test_confirmed_exception_categories_are_fixed():
         poe1["Metadata/Items/Currency/CurrencyMutatedAddModToRare"].category
         == "currency"
     )
+    expected_poe1_categories = {
+        "Metadata/Items/MapFragments/CurrencyFragmentPantheonFlask": "currency",
+        "Metadata/Items/MapFragments/VoidbornVaultKey": "currency",
+        "Metadata/Items/Currency/FearMemoryThread": "currency",
+        "Metadata/Items/Currency/BenevolenceMemoryThread": "currency",
+        "Metadata/Items/Currency/IgnoranceMemoryThread": "currency",
+        "Metadata/Items/Currency/AstrolabeGeneric": "currency",
+        "Metadata/Items/Currency/AstrolabeHarvest": "currency",
+        "Metadata/Items/Currency/AstrolabeAbyss": "currency",
+        "Metadata/Items/Currency/AstrolabeBreach": "currency",
+        "Metadata/Items/Currency/AstrolabeRitual": "currency",
+        "Metadata/Items/Currency/AstrolabeBlight": "currency",
+        "Metadata/Items/Currency/AstrolabeUltimatum": "currency",
+        "Metadata/Items/Currency/AstrolabeDelirium": "currency",
+        "Metadata/Items/Currency/AstrolabeLegion": "currency",
+        "Metadata/Items/Currency/AstrolabeExpedition": "currency",
+        "Metadata/Items/MapFragments/CurrencyAfflictionFragment": "delirium",
+        "Metadata/Items/Currency/CurrencyAfflictionShard": "delirium",
+        "Metadata/Items/Currency/CurrencyDeepwater": "allflame",
+        "Metadata/Items/Deepwater/DeepwaterBottledItem": "allflame",
+    }
+    assert {
+        item_id: poe1[item_id].category for item_id in expected_poe1_categories
+    } == expected_poe1_categories
+    assert (
+        poe1["Metadata/Items/Deepwater/DeepwaterBottledItem"].japanese_name
+        == "瓶の中の手紙"
+    )
     assert (
         poe2["Metadata/Items/Currency/CurrencyVerisiumMetal1"].category == "expedition"
     )
@@ -167,7 +195,7 @@ def test_current_unmapped_observed_items_are_explicit_and_not_catalog_items():
         version: {row["en"] for row in payload["realms"][version]["unmapped_observed"]}
         for version in (POE1, POE2)
     }
-    assert missing[POE1] == {"Message in a Bottle"}
+    assert missing[POE1] == set()
     assert missing[POE2] == {
         "Raven's Reflection",
         "Helbrym's Hide",

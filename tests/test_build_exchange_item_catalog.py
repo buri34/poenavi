@@ -148,6 +148,51 @@ def test_confirmed_poe2_in_game_category_overrides_are_deterministic():
     )
 
 
+def test_confirmed_poe1_in_game_category_overrides_are_deterministic():
+    expected = {
+        "Metadata/Items/MapFragments/CurrencyFragmentPantheonFlask": "currency",
+        "Metadata/Items/MapFragments/VoidbornVaultKey": "currency",
+        "Metadata/Items/Currency/FearMemoryThread": "currency",
+        "Metadata/Items/Currency/BenevolenceMemoryThread": "currency",
+        "Metadata/Items/Currency/IgnoranceMemoryThread": "currency",
+        "Metadata/Items/Currency/AstrolabeGeneric": "currency",
+        "Metadata/Items/Currency/AstrolabeHarvest": "currency",
+        "Metadata/Items/Currency/AstrolabeAbyss": "currency",
+        "Metadata/Items/Currency/AstrolabeBreach": "currency",
+        "Metadata/Items/Currency/AstrolabeRitual": "currency",
+        "Metadata/Items/Currency/AstrolabeBlight": "currency",
+        "Metadata/Items/Currency/AstrolabeUltimatum": "currency",
+        "Metadata/Items/Currency/AstrolabeDelirium": "currency",
+        "Metadata/Items/Currency/AstrolabeLegion": "currency",
+        "Metadata/Items/Currency/AstrolabeExpedition": "currency",
+        "Metadata/Items/MapFragments/CurrencyAfflictionFragment": "delirium",
+        "Metadata/Items/Currency/CurrencyAfflictionShard": "delirium",
+        "Metadata/Items/Currency/CurrencyDeepwater": "allflame",
+    }
+    assert {
+        item_id: _category(POE1, "Fragments", item_id, "Example")
+        for item_id in expected
+    } == expected
+
+
+def test_confirmed_observed_message_in_a_bottle_is_added_without_static_row():
+    item_id = "Metadata/Items/Deepwater/DeepwaterBottledItem"
+    result = build_realm(
+        POE1,
+        {item_id: "Message in a Bottle"},
+        {"result": []},
+        {"result": []},
+        {item_id},
+        {},
+    )
+
+    assert [
+        (row["id"], row["en"], row["ja"], row["category"]) for row in result["items"]
+    ] == [(item_id, "Message in a Bottle", "瓶の中の手紙", "allflame")]
+    assert result["items"][0]["icon"] == {"kind": "placeholder"}
+    assert result["unmapped_observed"] == []
+
+
 def test_confirmed_observed_triskelions_are_added_without_static_rows():
     item_ids = {
         "Metadata/Items/Currency/Expedition/ExpeditionPinnacleKeyShard",

@@ -99,9 +99,30 @@ CATEGORIES = {
     ),
 }
 
-# The Trade2 static endpoint groups these by data origin, while the in-game
-# Currency Exchange uses the categories below.  Keep the correction keyed by
-# the stable metadata ID so similarly named items are not moved accidentally.
+# The Trade static endpoint groups these by data origin, while the in-game
+# Currency Exchange uses the categories below. Keep corrections keyed by the
+# stable metadata ID so similarly named items are not moved accidentally.
+POE1_CONFIRMED_CATEGORY_OVERRIDES = {
+    "Metadata/Items/MapFragments/CurrencyFragmentPantheonFlask": "currency",
+    "Metadata/Items/MapFragments/VoidbornVaultKey": "currency",
+    "Metadata/Items/Currency/FearMemoryThread": "currency",
+    "Metadata/Items/Currency/BenevolenceMemoryThread": "currency",
+    "Metadata/Items/Currency/IgnoranceMemoryThread": "currency",
+    "Metadata/Items/Currency/AstrolabeGeneric": "currency",
+    "Metadata/Items/Currency/AstrolabeHarvest": "currency",
+    "Metadata/Items/Currency/AstrolabeAbyss": "currency",
+    "Metadata/Items/Currency/AstrolabeBreach": "currency",
+    "Metadata/Items/Currency/AstrolabeRitual": "currency",
+    "Metadata/Items/Currency/AstrolabeBlight": "currency",
+    "Metadata/Items/Currency/AstrolabeUltimatum": "currency",
+    "Metadata/Items/Currency/AstrolabeDelirium": "currency",
+    "Metadata/Items/Currency/AstrolabeLegion": "currency",
+    "Metadata/Items/Currency/AstrolabeExpedition": "currency",
+    "Metadata/Items/MapFragments/CurrencyAfflictionFragment": "delirium",
+    "Metadata/Items/Currency/CurrencyAfflictionShard": "delirium",
+    "Metadata/Items/Currency/CurrencyDeepwater": "allflame",
+}
+
 POE2_CONFIRMED_CATEGORY_OVERRIDES = {
     "Metadata/Items/Currency/Abyss/AbyssPinnacleKey": "abyss",
     "Metadata/Items/Currency/Breach/BreachPinnacleKey": "breach",
@@ -118,6 +139,17 @@ POE2_CONFIRMED_CATEGORY_OVERRIDES = {
     "Metadata/Items/SoulCores/CarvedMajesty": "idols",
     "Metadata/Items/SoulCores/CarvedMischief": "idols",
     "Metadata/Items/SoulCores/CarvedTenacity": "idols",
+}
+
+# This observed market ID is present in game and the official item-name data,
+# but is still absent from the Trade static endpoint.
+POE1_CONFIRMED_OBSERVED_ITEMS = {
+    "Metadata/Items/Deepwater/DeepwaterBottledItem": {
+        "en": "Message in a Bottle",
+        "ja": "瓶の中の手紙",
+        "category": "allflame",
+        "item_order": 40_000,
+    },
 }
 
 # These two observed market IDs are present in the official Trade2 item list
@@ -176,6 +208,8 @@ def _card_names(path: Path) -> dict[str, str]:
 
 
 def _category(poe_version: str, group: str, item_id: str, english: str) -> str:
+    if poe_version == POE1 and item_id in POE1_CONFIRMED_CATEGORY_OVERRIDES:
+        return POE1_CONFIRMED_CATEGORY_OVERRIDES[item_id]
     if poe_version == POE2 and item_id in POE2_CONFIRMED_CATEGORY_OVERRIDES:
         return POE2_CONFIRMED_CATEGORY_OVERRIDES[item_id]
     category = GROUP_CATEGORIES[poe_version][group]
@@ -290,6 +324,25 @@ def build_realm(
                 "icon": {"kind": "divination_card"},
             }
             next_card_order += 1
+        for item_id, confirmed in POE1_CONFIRMED_OBSERVED_ITEMS.items():
+            if item_id in items:
+                continue
+            if item_id not in active_ids:
+                continue
+            if normalize_name(names.get(item_id, "")) != normalize_name(
+                confirmed["en"]
+            ):
+                continue
+            category = confirmed["category"]
+            items[item_id] = {
+                "id": item_id,
+                "en": confirmed["en"],
+                "ja": confirmed["ja"],
+                "category": category,
+                "category_order": category_order[category],
+                "item_order": confirmed["item_order"],
+                "icon": {"kind": "placeholder"},
+            }
     elif poe_version == POE2:
         for item_id, confirmed in POE2_CONFIRMED_OBSERVED_ITEMS.items():
             if item_id in items:
