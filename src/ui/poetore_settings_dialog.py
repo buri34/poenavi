@@ -2,7 +2,8 @@
 
 import threading
 
-from PySide6.QtCore import QObject, Qt, Signal
+from PySide6.QtCore import QObject, QPoint, QSize, Qt, Signal
+from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap, QPolygon
 from PySide6.QtWidgets import (
     QApplication,
     QAbstractSpinBox,
@@ -58,6 +59,28 @@ from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_poe_la
 
 class _LeagueSignals(QObject):
     ready = Signal(object)
+
+
+def _duration_step_icon(direction, theme):
+    icon = QIcon()
+    points = {
+        "up": (QPoint(2, 11), QPoint(8, 5), QPoint(14, 11)),
+        "down": (QPoint(2, 5), QPoint(8, 11), QPoint(14, 5)),
+    }[direction]
+    for mode, color in (
+        (QIcon.Normal, theme.text),
+        (QIcon.Disabled, theme.disabled),
+    ):
+        pixmap = QPixmap(16, 16)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor(color))
+        painter.drawPolygon(QPolygon(points))
+        painter.end()
+        icon.addPixmap(pixmap, mode)
+    return icon
 
 
 class PoetoreSettingsDialog(QDialog):
@@ -777,17 +800,15 @@ class PoetoreSettingsDialog(QDialog):
         spin.setFixedWidth(70)
         layout.addWidget(spin)
 
-        for direction, text, delta in (
-            ("up", "+", step_seconds),
-            ("down", "−", -step_seconds),
+        for direction, delta in (
+            ("up", step_seconds),
+            ("down", -step_seconds),
         ):
-            button = QPushButton(text)
+            button = QPushButton()
             button.setFixedWidth(28)
             button.setAutoRepeat(True)
-            button_font = button.font()
-            button_font.setPixelSize(16)
-            button_font.setBold(True)
-            button.setFont(button_font)
+            button.setIcon(_duration_step_icon(direction, self.theme))
+            button.setIconSize(QSize(16, 16))
             button.setAccessibleName(
                 f"{step_label}{'増やす' if delta > 0 else '減らす'}"
             )
@@ -828,8 +849,9 @@ class PoetoreSettingsDialog(QDialog):
         if not all(hasattr(self, name) for name in required):
             return
         total = self._hideout_duration_seconds()
-        self.hideout_minutes_up_button.setEnabled(total + 60 <= MAX_DURATION_SECONDS)
-        self.hideout_minutes_down_button.setEnabled(total - 60 >= MIN_DURATION_SECONDS)
+        minutes = self.hideout_minutes_spin.value()
+        self.hideout_minutes_up_button.setEnabled(minutes < 60)
+        self.hideout_minutes_down_button.setEnabled(minutes > 0)
         self.hideout_seconds_up_button.setEnabled(total < MAX_DURATION_SECONDS)
         self.hideout_seconds_down_button.setEnabled(total > MIN_DURATION_SECONDS)
 

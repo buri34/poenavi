@@ -142,6 +142,14 @@ def test_hideout_duration_buttons_show_bounds_and_adjust_reliably(qtbot):
 
     assert not dialog.hideout_minutes_down_button.isEnabled()
     assert not dialog.hideout_seconds_down_button.isEnabled()
+    for button in (
+        dialog.hideout_minutes_up_button,
+        dialog.hideout_minutes_down_button,
+        dialog.hideout_seconds_up_button,
+        dialog.hideout_seconds_down_button,
+    ):
+        assert button.text() == ""
+        assert not button.icon().isNull()
 
     qtbot.mouseClick(dialog.hideout_seconds_up_button, Qt.LeftButton)
     assert (dialog.hideout_minutes_spin.value(), dialog.hideout_seconds_spin.value()) == (0, 11)
@@ -150,6 +158,19 @@ def test_hideout_duration_buttons_show_bounds_and_adjust_reliably(qtbot):
 
     qtbot.mouseClick(dialog.hideout_minutes_up_button, Qt.LeftButton)
     assert (dialog.hideout_minutes_spin.value(), dialog.hideout_seconds_spin.value()) == (1, 10)
+    qtbot.mouseClick(dialog.hideout_minutes_down_button, Qt.LeftButton)
+    assert (dialog.hideout_minutes_spin.value(), dialog.hideout_seconds_spin.value()) == (0, 10)
+    dialog.close()
+
+
+def test_hideout_minute_down_can_reach_zero_minutes(qtbot):
+    dialog = PoetoreSettingsDialog(current_config={
+        "poe_version": POE1,
+        "poetore": {"hideout_notification": {"duration_seconds": 61}},
+    })
+    qtbot.addWidget(dialog)
+
+    assert dialog.hideout_minutes_down_button.isEnabled()
     qtbot.mouseClick(dialog.hideout_minutes_down_button, Qt.LeftButton)
     assert (dialog.hideout_minutes_spin.value(), dialog.hideout_seconds_spin.value()) == (0, 10)
     dialog.close()
