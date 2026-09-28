@@ -5,15 +5,20 @@ from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
+    QComboBox,
     QDialog,
     QGroupBox,
     QLabel,
     QPushButton,
+    QRadioButton,
+    QSlider,
     QTabWidget,
 )
 
 from src.poetore.trade import TradeLeague
+from src.ui.dialog_theme import POETORE_DIALOG_THEME
 from src.ui.poetore_settings_dialog import PoetoreSettingsDialog
+from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
 from src.utils.poe_version_data import POE1, POE2
 
 
@@ -71,9 +76,6 @@ def test_poe2_enables_poetore_startup_choices():
         "windows_autostart_poetore": False,
     }
     dialog.close()
-from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
-
-
 def test_poetore_settings_contains_common_trade_and_window_controls():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(
@@ -98,11 +100,16 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
         }
     )
 
-    assert "#B0FF7B" in dialog.styleSheet()
-    assert "#E9FFBD" in dialog.styleSheet()
-    assert "#C9D4C2" in dialog.styleSheet()
-    assert "#101310" in dialog.styleSheet()
-    assert "#1E241E" in dialog.styleSheet()
+    assert dialog.theme is POETORE_DIALOG_THEME
+    assert dialog.property("dialogTheme") == "poetore"
+    assert dialog.property("dialogAccent") == "#65FFCA"
+    assert "#65FFCA" in dialog.styleSheet()
+    assert "#B0FF7B" not in dialog.styleSheet()
+    assert "#E9FFBD" not in dialog.styleSheet()
+    assert "#E6ECEA" in dialog.styleSheet()
+    assert "#111416" in dialog.styleSheet()
+    assert "#171B1D" in dialog.styleSheet()
+    assert "Noto Sans JP" in dialog.styleSheet()
     assert "font-size: 13px" in dialog.styleSheet()
     assert not hasattr(dialog, "log_path_edits")
     assert not hasattr(dialog, "timer_size_combo")
@@ -135,7 +142,7 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
     assert dialog.auto_hide_hotkey.key_button.key_text == "d"
     assert dialog.auto_hide_hotkey.ctrl_button.width() == 48
     assert dialog.auto_hide_hotkey.alt_button.width() == 48
-    assert "#B0FF7B" in dialog.auto_hide_hotkey.ctrl_button.styleSheet()
+    assert dialog.auto_hide_hotkey.ctrl_button.styleSheet() == ""
     assert settings["window_opacity"] == 80
     assert settings["text_opacity"] == 70
     assert settings["window_locked"] is True
@@ -156,7 +163,7 @@ def test_poetore_settings_contains_common_trade_and_window_controls():
         "アプリ情報",
     ]
     assert dialog.windowTitle() == "設定"
-    assert "subcontrol-position: top center" in dialog.styleSheet()
+    assert "subcontrol-position: top left" in dialog.styleSheet()
     assert [radio.text() for radio in dialog.app_mode_radios.values()] == [
         "ぽえなび", "ぽえとれ"
     ]
@@ -411,11 +418,50 @@ def test_poetore_settings_uses_shared_blue_checkbox_style_everywhere():
 
     checkboxes = dialog.findChildren(QCheckBox)
     assert checkboxes
-    assert all(
-        "poenavi_check_4488ff.png" in checkbox.styleSheet()
-        for checkbox in checkboxes
-    )
+    assert all(checkbox.styleSheet() == "" for checkbox in checkboxes)
+    assert "#4488FF" in dialog.styleSheet()
     dialog.close()
+
+
+def test_poetore_settings_uses_shared_control_roles_and_fixed_footer():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={})
+    try:
+        assert dialog.save_button.property("buttonRole") == "primary"
+        assert dialog.cancel_button.property("buttonRole") == "secondary"
+        assert dialog.custom_commands_widget.theme is POETORE_DIALOG_THEME
+        assert dialog.custom_commands_widget.property("density") == "compact"
+        assert (
+            dialog.custom_commands_widget.add_button.property("buttonRole")
+            == "primary"
+        )
+        assert (
+            dialog.custom_commands_widget.remove_button.property("buttonRole")
+            == "danger"
+        )
+        assert dialog.app_info_widget.update_button.property("buttonRole") == "primary"
+
+        footer_widgets = [
+            dialog.footer_layout.itemAt(index).widget()
+            for index in range(dialog.footer_layout.count())
+            if dialog.footer_layout.itemAt(index).widget() is not None
+        ]
+        assert footer_widgets[-2:] == [dialog.cancel_button, dialog.save_button]
+
+        for widget_type in (
+            QCheckBox,
+            QComboBox,
+            QGroupBox,
+            QPushButton,
+            QRadioButton,
+            QSlider,
+        ):
+            assert all(
+                widget.styleSheet() == ""
+                for widget in dialog.findChildren(widget_type)
+            )
+    finally:
+        dialog.close()
 
 
 def test_poetore_settings_saves_result_font_size():

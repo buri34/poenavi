@@ -29,10 +29,13 @@ from src.poetore.trade import (
     default_pc_league,
 )
 from src.ui.app_info_widget import AppInfoWidget
-from src.ui.app_theme import SETTINGS_THEME
 from src.ui.custom_command_settings import CustomCommandSettingsWidget
+from src.ui.dialog_theme import (
+    POETORE_DIALOG_THEME,
+    apply_dialog_theme,
+    build_dialog_stylesheet,
+)
 from src.ui.settings_dialog import AutoHideHotkeyWidget, HotkeyButton
-from src.ui.styles import Styles
 from src.utils.feature_support import POETORE, is_feature_supported
 from src.utils.global_hotkeys import find_duplicate_hotkeys
 from src.utils.poe_version_data import POE1, POE2, POE_VERSION_ORDER, get_poe_label
@@ -43,6 +46,10 @@ class _LeagueSignals(QObject):
 
 
 class PoetoreSettingsDialog(QDialog):
+    @staticmethod
+    def _style_sheet():
+        return build_dialog_stylesheet(POETORE_DIALOG_THEME)
+
     def __init__(
         self,
         parent=None,
@@ -57,13 +64,18 @@ class PoetoreSettingsDialog(QDialog):
         self._league_signals = _LeagueSignals(self)
         self._league_signals.ready.connect(self._show_trade_leagues)
         self.setWindowTitle("設定")
+        self.setObjectName("poetoreSettingsDialog")
         self.setMinimumSize(540, 620)
         self.resize(560, 760)
-        self.setStyleSheet(self._style_sheet())
+        self.theme = POETORE_DIALOG_THEME
+        apply_dialog_theme(self, self.theme)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(18, 18, 18, 14)
         root.setSpacing(12)
+        self.title_label = QLabel("設定")
+        self.title_label.setProperty("uiRole", "title")
+        root.addWidget(self.title_label)
         tabs = QTabWidget()
         basic_tab = QWidget()
         basic_layout = QVBoxLayout(basic_tab)
@@ -113,6 +125,7 @@ class PoetoreSettingsDialog(QDialog):
             "PoEバージョン・起動モードの変更は、次回起動時から適用されます。"
         )
         self.startup_change_note.setObjectName("startupChangeNote")
+        self.startup_change_note.setProperty("uiRole", "muted")
         self.startup_change_note.setWordWrap(True)
         startup_layout.addWidget(self.startup_change_note)
         startup_layout.addSpacing(13)
@@ -127,6 +140,7 @@ class PoetoreSettingsDialog(QDialog):
             "有効にすると、次回のWindowsログイン時からぽえとれを自動起動します。"
         )
         self.windows_autostart_note.setObjectName("windowsAutostartNote")
+        self.windows_autostart_note.setProperty("uiRole", "muted")
         self.windows_autostart_note.setWordWrap(True)
         startup_layout.addWidget(self.windows_autostart_note)
         basic_layout.addWidget(startup_group)
@@ -139,11 +153,11 @@ class PoetoreSettingsDialog(QDialog):
         self.exit_hotkey = HotkeyButton(hotkeys.get("exit", "F5"))
         self.monastery_hotkey = HotkeyButton(hotkeys.get("monastery", "F12"))
         self.capture_hotkey = AutoHideHotkeyWidget(
-            hotkeys.get("poetore_capture", "alt+d"), theme=SETTINGS_THEME,
+            hotkeys.get("poetore_capture", "alt+d"), theme=self.theme,
             allow_no_modifier=True,
         )
         self.auto_hide_hotkey = AutoHideHotkeyWidget(
-            hotkeys.get("poetore_auto_hide", "ctrl+d"), theme=SETTINGS_THEME
+            hotkeys.get("poetore_auto_hide", "ctrl+d"), theme=self.theme
         )
         self.map_check_hotkey = HotkeyButton(hotkeys.get("map_check", "alt+f"))
         self.cheat_hotkey = HotkeyButton(
@@ -247,6 +261,7 @@ class PoetoreSettingsDialog(QDialog):
             "プライベートリーグで使う場合は、リーグ名を直接手打ちで入力してください。"
         )
         league_note.setObjectName("privateLeagueNote")
+        league_note.setProperty("uiRole", "muted")
         league_note.setWordWrap(True)
         trade_layout.addWidget(league_note)
         basic_layout.addWidget(trade_group)
@@ -272,6 +287,7 @@ class PoetoreSettingsDialog(QDialog):
             "文字に合わせてボタンや入力欄、検索結果ウィンドウの大きさも調整します。"
         )
         display_note.setObjectName("resultFontSizeNote")
+        display_note.setProperty("uiRole", "muted")
         display_note.setWordWrap(True)
         display_form.addRow("", display_note)
         self._reset_result_positions = False
@@ -319,6 +335,7 @@ class PoetoreSettingsDialog(QDialog):
             "待機中のタイトルバーは透過率を変更できます。"
         )
         obs_note.setObjectName("obsStreamingNote")
+        obs_note.setProperty("uiRole", "muted")
         obs_note.setWordWrap(True)
         obs_layout.addWidget(obs_note)
         basic_layout.addWidget(obs_group)
@@ -367,6 +384,7 @@ class PoetoreSettingsDialog(QDialog):
         )
         note.setWordWrap(True)
         note.setObjectName("settingsNote")
+        note.setProperty("uiRole", "muted")
         basic_layout.addWidget(note)
         basic_layout.addStretch()
         basic_scroll = QScrollArea()
@@ -375,105 +393,59 @@ class PoetoreSettingsDialog(QDialog):
         basic_scroll.setWidget(basic_tab)
         tabs.addTab(basic_scroll, "基本設定")
         self.custom_commands_widget = CustomCommandSettingsWidget(
-            self.current_config.get("custom_commands", []), theme=SETTINGS_THEME
+            self.current_config.get("custom_commands", []), theme=self.theme
         )
         tabs.insertTab(1, self.custom_commands_widget, "任意コマンド設定")
-        tabs.addTab(
-            AppInfoWidget(
-                SETTINGS_THEME,
-                update_check_callback=self.update_check_callback,
-            ),
-            "アプリ情報",
+        self.app_info_widget = AppInfoWidget(
+            self.theme,
+            update_check_callback=self.update_check_callback,
         )
+        tabs.addTab(self.app_info_widget, "アプリ情報")
         root.addWidget(tabs)
 
-        buttons = QHBoxLayout()
-        buttons.addStretch()
-        cancel = QPushButton("キャンセル")
-        cancel.clicked.connect(self.reject)
-        save = QPushButton("保存")
-        save.setDefault(True)
-        save.clicked.connect(self.accept)
-        buttons.addWidget(cancel)
-        buttons.addWidget(save)
-        root.addLayout(buttons)
+        self.footer_layout = QHBoxLayout()
+        self.footer_layout.addStretch()
+        self.cancel_button = QPushButton("キャンセル")
+        self.cancel_button.setProperty("buttonRole", "secondary")
+        self.cancel_button.clicked.connect(self.reject)
+        self.save_button = QPushButton("保存")
+        self.save_button.setProperty("buttonRole", "primary")
+        self.save_button.setDefault(True)
+        self.save_button.clicked.connect(self.accept)
+        self.footer_layout.addWidget(self.cancel_button)
+        self.footer_layout.addWidget(self.save_button)
+        root.addLayout(self.footer_layout)
 
-        for checkbox in self.findChildren(QCheckBox):
-            Styles.apply_checkbox_style(checkbox)
+        self._clear_legacy_control_styles()
 
-    @staticmethod
-    def _style_sheet():
-        theme = SETTINGS_THEME
-        return f"""
-            QDialog {{ background: {theme.background}; color: {theme.text}; font-size: 13px; }}
-            QScrollArea, QScrollArea > QWidget > QWidget {{
-                background: {theme.background};
-            }}
-            QLabel, QCheckBox, QRadioButton, QGroupBox {{ color: {theme.text}; }}
-            QGroupBox {{
-                background: {theme.panel};
-                border: 1px solid #465046;
-                border-radius: 7px;
-                margin-top: 10px;
-                padding-top: 7px;
-            }}
-            QGroupBox::title {{
-                color: {theme.accent};
-                font-weight: 600;
-                subcontrol-origin: margin;
-                subcontrol-position: top center;
-                padding: 0 5px;
-            }}
-            QLineEdit, QComboBox {{
-                background: #151A15;
-                color: {theme.text};
-                border: 1px solid #596359;
-                border-radius: 5px;
-                padding: 5px;
-            }}
-            QComboBox QAbstractItemView {{
-                background: {theme.panel};
-                color: {theme.text};
-                selection-background-color: {theme.accent};
-                selection-color: {theme.background};
-            }}
-            QTabWidget::pane {{ border: 1px solid #465046; }}
-            QTabBar::tab {{
-                background: {theme.panel}; color: {theme.text};
-                border: 1px solid #465046;
-                padding: 7px 14px;
-            }}
-            QTabBar::tab:selected {{ color: {theme.accent}; border-bottom-color: {theme.accent}; font-weight: 600; }}
-            QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
-            QSlider::handle:horizontal {{
-                background: {theme.accent}; width: 16px;
-                margin: -5px 0; border-radius: 8px;
-            }}
-            QPushButton {{
-                background: {theme.panel};
-                color: {theme.text};
-                border: 1px solid #596359;
-                border-radius: 5px;
-                padding: 6px 12px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{ background: #293229; border-color: {theme.accent}; }}
-            QPushButton:focus {{ border-color: {theme.accent}; }}
-            QCheckBox::indicator:checked, QRadioButton::indicator:checked {{ background: {theme.accent}; }}
-            QLabel#settingsNote {{ color: {theme.muted_text}; font-size: 13px; }}
-            QLabel#privateLeagueNote {{
-                color: {theme.muted_text};
-                font-size: 13px;
-            }}
-            QLabel#resultFontSizeNote {{
-                color: {theme.muted_text};
-                font-size: 13px;
-            }}
-            QLabel#startupChangeNote, QLabel#windowsAutostartNote {{
-                color: {theme.muted_text};
-                font-size: 13px;
-            }}
-        """
+    def _clear_legacy_control_styles(self):
+        """ぽえとれ設定内だけ、旧インラインQSSを共通テーマへ委譲する。"""
+        from PySide6.QtWidgets import (
+            QDoubleSpinBox,
+            QLineEdit,
+            QSpinBox,
+            QTableWidget,
+            QTextEdit,
+        )
+
+        widget_types = (
+            QCheckBox,
+            QComboBox,
+            QDoubleSpinBox,
+            QGroupBox,
+            QLineEdit,
+            QPushButton,
+            QRadioButton,
+            QScrollArea,
+            QSlider,
+            QSpinBox,
+            QTableWidget,
+            QTabWidget,
+            QTextEdit,
+        )
+        for widget_type in widget_types:
+            for widget in self.findChildren(widget_type):
+                widget.setStyleSheet("")
 
     def showEvent(self, event):
         super().showEvent(event)
