@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 from PySide6.QtWidgets import QApplication, QGroupBox, QLabel
 
@@ -40,6 +42,39 @@ def test_settings_app_mode_uses_one_shared_startup_checkbox(monkeypatch, qapp):
     }
     assert settings["poe_version_mode"] == settings["poe_version"]
     dialog.close()
+
+
+def test_unchanged_zone_master_is_not_rewritten(monkeypatch, qapp):
+    save_zone_master = MagicMock()
+    monkeypatch.setattr(
+        "src.ui.settings_dialog.save_zone_master_data",
+        save_zone_master,
+    )
+    dialog = SettingsDialog(current_config={"poe_version": POE2})
+    try:
+        dialog.get_settings()
+
+        assert dialog.zone_data_changed is False
+        save_zone_master.assert_not_called()
+    finally:
+        dialog.close()
+
+
+def test_edited_town_zones_are_saved_and_marked_for_reload(monkeypatch, qapp):
+    save_zone_master = MagicMock()
+    monkeypatch.setattr(
+        "src.ui.settings_dialog.save_zone_master_data",
+        save_zone_master,
+    )
+    dialog = SettingsDialog(current_config={"poe_version": POE2})
+    try:
+        dialog.town_zones_edit.append("差分適用テスト用の街")
+        dialog.get_settings()
+
+        assert dialog.zone_data_changed is True
+        save_zone_master.assert_called_once()
+    finally:
+        dialog.close()
 
 
 def test_settings_dialog_uses_readable_shared_theme(qapp):

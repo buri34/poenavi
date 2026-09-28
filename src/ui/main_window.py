@@ -4,6 +4,8 @@ import re
 import sys
 import threading
 import time
+from copy import deepcopy
+
 from pynput import keyboard as pynput_keyboard
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QPushButton, QMenu, QFrame, QScrollArea, QSplitter,
@@ -4900,36 +4902,66 @@ class MainWindow(QMainWindow):
             ),
             guide_progress_reset_callback=self._reset_guide_progress_from_settings,
         )
-        if dialog.exec():
+        settings_accepted = dialog.exec()
+        if settings_accepted:
             self._set_timer_ready(False)
             # 設定保存
+            previous_config = deepcopy(self.config)
             previous_timer_size_setting = self.config.get("timer_size", "large")
             previous_always_on_top = self.config.get("always_on_top", True)
             previous_mini_topmost_mode = mini_topmost_mode_from_config(self.config)
             new_settings = dialog.get_settings()
             self.config.update(new_settings)
             ConfigManager.save_config(self.config)
+            zone_master_changed = bool(
+                getattr(dialog, "zone_data_changed", False)
+            )
+
+            requested_poe_version = self.config.get("poe_version", POE1)
+            poe_version_changed = requested_poe_version != self.poe_version
+            mini_navi_settings_changed = (
+                previous_config.get("mini_guide_overlay", {})
+                != self.config.get("mini_guide_overlay", {})
+            )
+            if mini_navi_settings_changed:
+                # 見た目だけの変更は、ホットキーやログ監視などの再設定を
+                # 待たずに既存ウィンドウへ適用する。
+                self._apply_mini_navi_related_settings(previous_mini_topmost_mode)
+
             from src.windows_autostart import (
                 sync_windows_poetore_autostart_with_error,
             )
 
-            autostart_error = sync_windows_poetore_autostart_with_error(
-                self.config
-            )
-            if autostart_error:
-                QMessageBox.warning(
-                    self,
-                    "自動起動設定エラー",
-                    "Windowsの自動起動設定を更新できませんでした。\n"
-                    "設定は保存済みのため、次回起動時に再試行します。",
+            previous_autostart = bool(
+                previous_config.get("startup", {}).get(
+                    "windows_autostart_poetore", False
                 )
-            self.stash_tab_scroll.set_enabled(
-                self.config.get("stash_tab_scroll_enabled", True)
             )
+            current_autostart = bool(
+                self.config.get("startup", {}).get(
+                    "windows_autostart_poetore", False
+                )
+            )
+            if current_autostart != previous_autostart:
+                autostart_error = sync_windows_poetore_autostart_with_error(
+                    self.config
+                )
+                if autostart_error:
+                    QMessageBox.warning(
+                        self,
+                        "自動起動設定エラー",
+                        "Windowsの自動起動設定を更新できませんでした。\n"
+                        "設定は保存済みのため、次回起動時に再試行します。",
+                    )
+            if (
+                previous_config.get("stash_tab_scroll_enabled", True)
+                != self.config.get("stash_tab_scroll_enabled", True)
+            ):
+                self.stash_tab_scroll.set_enabled(
+                    self.config.get("stash_tab_scroll_enabled", True)
+                )
             from src.app_restart import confirm_mode_switch_restart
 
-            requested_poe_version = self.config.get("poe_version", POE1)
-            poe_version_changed = requested_poe_version != self.poe_version
             if confirm_mode_switch_restart(
                 self, self.config, current_poe_version=self.poe_version
             ):
@@ -4938,38 +4970,55 @@ class MainWindow(QMainWindow):
             if self.config.get("always_on_top", True) != previous_always_on_top:
                 self._apply_window_flags()
             
-            # ホットキー再登録
-            self.register_hotkeys()
-            self._update_click_through_label()
-            self._update_cheat_sheets_hotkey_tooltip()
+            hotkey_settings_changed = (
+                poe_version_changed
+                or previous_config.get("hotkeys", {})
+                != self.config.get("hotkeys", {})
+                or previous_config.get("custom_commands", [])
+                != self.config.get("custom_commands", [])
+            )
+            if hotkey_settings_changed:
+                self.register_hotkeys()
+                self._update_click_through_label()
+                self._update_cheat_sheets_hotkey_tooltip()
             
-            # ログ監視の再設定
             active_version = (
                 self.poe_version if poe_version_changed else requested_poe_version
             )
             client_log_paths = self.config.get("client_log_paths", {})
             log_path = client_log_paths.get(active_version, "")
-            if log_path:
+            previous_log_path = previous_config.get("client_log_paths", {}).get(
+                active_version, ""
+            )
+            if log_path != previous_log_path:
                 self.log_watcher.set_log_path(log_path)
-                self.log_watcher.start()
-                # PoE1ルート未選択なら、PoE1ログ設定時に表示する
-                if active_version == POE1 and not self.config.get("poe1_route_selected", False):
-                    self._show_route_selection_dialog()
-                # ログファイル未設定メッセージをクリア
-                self.guide_text_label.setText("")
+                if log_path and not self.log_watcher.is_active:
+                    self.log_watcher.start()
+                if log_path:
+                    # PoE1ルート未選択なら、PoE1ログ設定時に表示する
+                    if active_version == POE1 and not self.config.get("poe1_route_selected", False):
+                        self._show_route_selection_dialog()
+                    # ログファイル未設定メッセージをクリア
+                    self.guide_text_label.setText("")
             
-            # ゾーンデータ・ガイドデータ更新
             prev_version = self.poe_version
             if not poe_version_changed:
                 self.poe_version = requested_poe_version
-            self._sync_voicevox_service()
-            self.lap_labels = get_lap_labels(self.poe_version)
-            zone_master_data = load_zone_master_data()
-            self.zone_data_by_version = zone_master_data["zone_data_by_version"]
-            self.town_zones_by_version = zone_master_data["town_zones_by_version"]
-            self.zone_data = self.zone_data_by_version.get(self.poe_version, {})
-            self.log_watcher.set_poe_version(self.poe_version)
-            self.setWindowTitle(f"ぽえなび [{get_poe_label(self.poe_version)}]")
+            if (
+                poe_version_changed
+                or previous_config.get("voicevox", {})
+                != self.config.get("voicevox", {})
+            ):
+                self._sync_voicevox_service()
+            if poe_version_changed or zone_master_changed:
+                zone_master_data = load_zone_master_data()
+                self.zone_data_by_version = zone_master_data["zone_data_by_version"]
+                self.town_zones_by_version = zone_master_data["town_zones_by_version"]
+                self.zone_data = self.zone_data_by_version.get(self.poe_version, {})
+            if poe_version_changed:
+                self.lap_labels = get_lap_labels(self.poe_version)
+                self.log_watcher.set_poe_version(self.poe_version)
+                self.setWindowTitle(f"ぽえなび [{get_poe_label(self.poe_version)}]")
             if prev_version != self.poe_version:
                 self.lap_times = [None] * len(self.lap_labels)
                 self.current_act = 1
@@ -4995,47 +5044,79 @@ class MainWindow(QMainWindow):
                     self._vendor_search_dialog = None
             
             # ガイドフォントサイズ更新
-            self.guide_font_size = self.config.get("guide_font_size", 18)
-            if self.poe_version != POE1 and self._is_panel_detached("gem"):
-                self.restore_panel("gem")
-            self.gem_tracker_frame.setVisible(self.poe_version == POE1 and self.gem_tracker_expanded)
-            if "gem" in self.panel_registry:
-                self.panel_registry["gem"]["content"].setVisible(self.poe_version == POE1)
-            self.part2_btn.setVisible(self.poe_version == POE1)
-            self._refresh_mini_navi_toggle()
-            self._enforce_feature_support()
+            if (
+                previous_config.get("guide_font_size", 18)
+                != self.config.get("guide_font_size", 18)
+            ):
+                self.guide_font_size = self.config.get("guide_font_size", 18)
+            if poe_version_changed:
+                if self.poe_version != POE1 and self._is_panel_detached("gem"):
+                    self.restore_panel("gem")
+                self.gem_tracker_frame.setVisible(self.poe_version == POE1 and self.gem_tracker_expanded)
+                if "gem" in self.panel_registry:
+                    self.panel_registry["gem"]["content"].setVisible(self.poe_version == POE1)
+                self.part2_btn.setVisible(self.poe_version == POE1)
+                self._enforce_feature_support()
+            if poe_version_changed or mini_navi_settings_changed:
+                self._refresh_mini_navi_toggle()
             
             # タイマーサイズ更新
             new_timer_size_setting = self.config.get("timer_size", "large")
-            if new_timer_size_setting == "off":
-                if self.timer_size in self.TIMER_SIZES:
-                    self.config["timer_size_before_off"] = self.timer_size
-                self._set_timer_expanded(False)
-                self.config["timer_expanded"] = False
-                effective_timer_size = self._effective_timer_size(new_timer_size_setting)
-            else:
-                self.config["timer_size_before_off"] = new_timer_size_setting
-                effective_timer_size = new_timer_size_setting
-                if previous_timer_size_setting == "off":
-                    self._set_timer_expanded(True)
-                    self.config["timer_expanded"] = True
-            if effective_timer_size != self.timer_size:
-                self.timer_size = effective_timer_size
-                self._apply_timer_size()
-            ConfigManager.save_config(self.config)
+            if new_timer_size_setting != previous_timer_size_setting:
+                if new_timer_size_setting == "off":
+                    if self.timer_size in self.TIMER_SIZES:
+                        self.config["timer_size_before_off"] = self.timer_size
+                    self._set_timer_expanded(False)
+                    self.config["timer_expanded"] = False
+                    effective_timer_size = self._effective_timer_size(new_timer_size_setting)
+                else:
+                    self.config["timer_size_before_off"] = new_timer_size_setting
+                    effective_timer_size = new_timer_size_setting
+                    if previous_timer_size_setting == "off":
+                        self._set_timer_expanded(True)
+                        self.config["timer_expanded"] = True
+                if effective_timer_size != self.timer_size:
+                    self.timer_size = effective_timer_size
+                    self._apply_timer_size()
+                ConfigManager.save_config(self.config)
             
             # ウィンドウロック更新
-            self.window_locked = self.config.get("window_locked", False)
+            window_locked_changed = (
+                previous_config.get("window_locked", False)
+                != self.config.get("window_locked", False)
+            )
+            if window_locked_changed:
+                self.window_locked = self.config.get("window_locked", False)
             # マップ自動表示更新
             self.map_thumbnail.auto_open = self.config.get("auto_open_map", False)
             self.map_thumbnail.auto_position = self.config.get("auto_position_map", True)
             # 透過率更新
-            self._apply_bg_opacity(self.config.get("window_opacity", 100))
-            self._apply_text_opacity(self.config.get("text_opacity", 100))
-            self._apply_detached_panel_window_settings()
-            self._apply_mini_navi_related_settings(previous_mini_topmost_mode)
+            window_opacity_changed = (
+                previous_config.get("window_opacity", 100)
+                != self.config.get("window_opacity", 100)
+            )
+            text_opacity_changed = (
+                previous_config.get("text_opacity", 100)
+                != self.config.get("text_opacity", 100)
+            )
+            if window_opacity_changed:
+                self._apply_bg_opacity(self.config.get("window_opacity", 100))
+            if text_opacity_changed:
+                self._apply_text_opacity(self.config.get("text_opacity", 100))
+            if (
+                window_locked_changed
+                or window_opacity_changed
+                or text_opacity_changed
+                or self.config.get("always_on_top", True) != previous_always_on_top
+            ):
+                self._apply_detached_panel_window_settings()
             # メモダイアログにも透過率を反映
-            if hasattr(self, '_memo_dialog') and self._memo_dialog is not None and self._memo_dialog.isVisible():
+            if (
+                (window_opacity_changed or text_opacity_changed)
+                and hasattr(self, '_memo_dialog')
+                and self._memo_dialog is not None
+                and self._memo_dialog.isVisible()
+            ):
                 self._memo_dialog.apply_opacity(
                     self.config.get("window_opacity", 100),
                     self.config.get("text_opacity", 100)
@@ -5044,10 +5125,11 @@ class MainWindow(QMainWindow):
             self._refresh_ready_button()
             self.update_level_guide_display()
         
-        # ガイドデータは常にリロード（ガイド編集Saveで即保存されるため、Cancelでも反映する）
-        self.guide_data = load_guide_data(self.poe_version)
-        # 現在表示中のガイドを再描画
-        if self.current_zone:
+        # ガイド編集は設定保存前に即時保存されるため、Cancel時でも編集時だけ再読込する。
+        if getattr(dialog, "guide_data_changed", False):
+            self.guide_data = load_guide_data(self.poe_version)
+        # 設定保存またはガイド編集後に、現在表示中のガイドを再描画する。
+        if (settings_accepted or getattr(dialog, "guide_data_changed", False)) and self.current_zone:
             zone_id = self._get_zone_id(self.current_zone)
             visit_num = self.zone_visit_counts.get(self.current_zone, 1)
             self._update_guide_and_map(self.current_zone, zone_id, visit_num)

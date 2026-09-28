@@ -1,3 +1,6 @@
+import os
+from copy import deepcopy
+
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
                                QPushButton, QGroupBox, QLineEdit, QFileDialog,
                                QTabWidget, QWidget, QScrollArea, QSpinBox, QComboBox,
@@ -34,7 +37,6 @@ from src.ui.window_flags import (
     MINI_TOPMOST_POE_ONLY,
     mini_topmost_mode_from_config,
 )
-import os
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 from src.utils.feature_support import POETORE, is_feature_supported
@@ -1961,6 +1963,10 @@ class SettingsDialog(QDialog):
         zone_master_data = load_zone_master_data()
         self.zone_data_by_version = zone_master_data["zone_data_by_version"]
         self.town_zones_by_version = zone_master_data["town_zones_by_version"]
+        self._initial_zone_data_by_version = deepcopy(self.zone_data_by_version)
+        self._initial_town_zones_by_version = deepcopy(self.town_zones_by_version)
+        self.zone_data_changed = False
+        self.guide_data_changed = False
         self.zone_data = self.zone_data_by_version.get(self.poe_version, {})
         self.guide_data = load_guide_data(self.poe_version)
         
@@ -2918,7 +2924,7 @@ class SettingsDialog(QDialog):
             if dialog.exec():
                 dialog.apply_to_sections()
                 self.guide_data[zone_id] = raw_entry
-                save_guide_data(self.guide_data, self.poe_version)
+                self._save_edited_guide_data()
             return
 
         if self.poe_version != POE1:
@@ -3035,7 +3041,7 @@ class SettingsDialog(QDialog):
                         visit=section["visit"],
                         route=section["route"],
                     )
-            save_guide_data(self.guide_data, self.poe_version)
+            self._save_edited_guide_data()
 
     def _add_zone_row(self, act_name, act_layout, act_widgets):
         """エリア行を動的追加"""
@@ -3074,8 +3080,7 @@ class SettingsDialog(QDialog):
         dialog = GuideSummaryEditorDialog(self, f"{zone_name} ({zone_id})", raw_entry)
         if dialog.exec():
             self.guide_data[zone_id] = dialog.apply_to_entry(raw_entry)
-            from src.utils.guide_data import save_guide_data
-            save_guide_data(self.guide_data, self.poe_version)
+            self._save_edited_guide_data()
 
     def _open_guide_editor(self, name_edit: QLineEdit, zone_id: str = ""):
         """ガイドデータ編集ダイアログを開く"""
@@ -3198,8 +3203,12 @@ class SettingsDialog(QDialog):
                     del self.guide_data[rkey]
             
             # ガイド編集のSaveで即座にファイル保存（Settings画面のSaveを待たない）
-            from src.utils.guide_data import save_guide_data
-            save_guide_data(self.guide_data, self.poe_version)
+            self._save_edited_guide_data()
+
+    def _save_edited_guide_data(self):
+        """編集済みガイドを保存し、呼び出し元へ再読込の必要性を伝える。"""
+        save_guide_data(self.guide_data, self.poe_version)
+        self.guide_data_changed = True
     
     def _default_zone_data_for_version(self, poe_version: str):
         return self.zone_data_by_version.get(poe_version, DEFAULT_ZONE_DATA_POE2 if poe_version != POE1 else {})
@@ -3424,8 +3433,16 @@ class SettingsDialog(QDialog):
         self._save_current_zone_ui_to_memory()
         self.town_zones_by_version[self.poe_version] = [z.strip() for z in self.town_zones_edit.toPlainText().split("\n") if z.strip()]
 
-        # エリア一覧を保存する。開発用公式ガイド編集はダイアログ確定時に即時保存済み。
-        save_zone_master_data(self.zone_data_by_version, self.town_zones_by_version)
+        # エリア一覧は実際に編集された時だけ保存する。
+        self.zone_data_changed = (
+            self.zone_data_by_version != self._initial_zone_data_by_version
+            or self.town_zones_by_version != self._initial_town_zones_by_version
+        )
+        if self.zone_data_changed:
+            save_zone_master_data(
+                self.zone_data_by_version,
+                self.town_zones_by_version,
+            )
         
         def normalize_log_path(text: str) -> str:
             # Explorerの「パスのコピー」は前後に引用符を付けるため、保存時に外側だけ除去する
