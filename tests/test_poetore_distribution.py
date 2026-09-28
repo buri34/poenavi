@@ -63,6 +63,13 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert "collect_third_party_licenses.py" in script
     assert "THIRD_PARTY_LICENSES/Python-LICENSE.txt" in script
     assert '"--add-data", "data;data"' in script
+    assert '"--add-data", "assets;assets"' in script
+    for required_ui_asset in (
+        "NotoSansJP[wght].ttf",
+        "ui-checkbox-checked.svg",
+        "ui-radio-checked.svg",
+    ):
+        assert required_ui_asset in script
     assert "dotnet publish tools\\ExpeditionWindowsOcr\\ExpeditionWindowsOcr.csproj" in script
     assert '"--add-data", "build\\expedition-windows-ocr;tools\\ExpeditionWindowsOcr"' in script
     assert '"--add-data", "build\\ndlocr-dist\\PoENaviNdlOcr;tools\\NDLOcrLite"' not in script

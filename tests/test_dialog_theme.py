@@ -1,3 +1,4 @@
+import sys
 from dataclasses import fields
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE
@@ -121,3 +122,19 @@ def test_apply_dialog_theme_marks_only_the_explicit_target():
     }
     assert 'QDialog[dialogTheme="poenavi"]' in dialog.stylesheet
     assert "#E9FFBD" not in dialog.stylesheet
+
+
+def test_theme_assets_resolve_from_frozen_distribution(monkeypatch, tmp_path):
+    executable = tmp_path / "PoENavi.exe"
+    icon_dir = tmp_path / "assets" / "icons"
+    icon_dir.mkdir(parents=True)
+    expected = []
+    for filename in ("ui-checkbox-checked.svg", "ui-radio-checked.svg"):
+        path = icon_dir / filename
+        path.write_text("<svg/>", encoding="utf-8")
+        expected.append(path)
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", str(executable))
+    monkeypatch.delattr(sys, "_MEIPASS", raising=False)
+
+    assert [theme_asset_path(path.name) for path in expected] == expected
