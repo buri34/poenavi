@@ -4,6 +4,7 @@ import time
 import zlib
 
 from src.poetore.exchange_catalog import (
+    bundled_exchange_icon_path,
     divination_card_icon_path,
     placeholder_icon_path,
 )
@@ -118,7 +119,8 @@ def test_oversized_or_huge_dimension_image_is_placeholder(tmp_path):
     ).to_bytes(4, "big")
     responses = iter((b"x" * (MAX_IMAGE_BYTES + 1), bytes(huge_dimensions)))
     cache = ExchangeIconCache(
-        tmp_path / "icons", fetcher=lambda _url: next(responses),
+        tmp_path / "icons",
+        fetcher=lambda _url: next(responses),
     )
 
     assert cache.request("remote", URL).result(timeout=2).is_placeholder
@@ -152,7 +154,8 @@ def test_corrupt_disk_entry_is_refetched(tmp_path):
     path.write_bytes(b"broken")
     calls = []
     restarted = ExchangeIconCache(
-        root, fetcher=lambda url: calls.append(url) or PNG_1X1,
+        root,
+        fetcher=lambda url: calls.append(url) or PNG_1X1,
     )
 
     result = restarted.request("remote", URL).result(timeout=2)
@@ -179,11 +182,38 @@ def test_divination_card_uses_bundled_asset_without_network(tmp_path):
     assert result.path.is_file()
 
 
+def test_triskelions_use_their_bundled_assets_without_network(tmp_path):
+    cache = ExchangeIconCache(
+        tmp_path / "icons",
+        fetcher=lambda _url: (_ for _ in ()).throw(
+            AssertionError("bundled icon must not fetch")
+        ),
+    )
+
+    for filename in ("TriskelionShattered.png", "TriskelionReforged.png"):
+        result = cache.request("bundled", icon_filename=filename).result(timeout=1)
+        assert result.source == "bundled"
+        assert result.path == bundled_exchange_icon_path(filename)
+        assert result.image_format == "png"
+    cache.close()
+
+
+def test_unknown_bundled_icon_uses_placeholder(tmp_path):
+    cache = ExchangeIconCache(tmp_path / "icons")
+    result = cache.request("bundled", icon_filename="../outside.png").result(timeout=1)
+    cache.close()
+
+    assert result.is_placeholder
+    assert result.path == placeholder_icon_path()
+
+
 def test_missing_or_untrusted_remote_url_uses_bundled_placeholder(tmp_path):
     cache = ExchangeIconCache(tmp_path / "icons")
 
     missing = cache.request("remote", None).result(timeout=1)
-    untrusted = cache.request("remote", "https://example.invalid/icon.png").result(timeout=1)
+    untrusted = cache.request("remote", "https://example.invalid/icon.png").result(
+        timeout=1
+    )
     cache.close()
 
     assert missing.path == placeholder_icon_path()

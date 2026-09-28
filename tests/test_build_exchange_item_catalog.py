@@ -162,4 +162,46 @@ def test_confirmed_observed_triskelions_are_added_without_static_rows():
         ("Shattered Triskelion", "砕けたトリスケリオン", "expedition"),
         ("The Triskelion Reforged", "再鍛造されたトリスケリオン", "expedition"),
     ]
+    assert [row["icon"] for row in result["items"]] == [
+        {"kind": "bundled", "filename": "TriskelionShattered.png"},
+        {"kind": "bundled", "filename": "TriskelionReforged.png"},
+    ]
     assert result["unmapped_observed"] == []
+
+
+def test_official_static_triskelion_icon_replaces_bundled_fallback():
+    item_id = "Metadata/Items/Currency/Expedition/ExpeditionPinnacleKey"
+    names = {item_id: "The Triskelion Reforged"}
+    static_row = {
+        "id": "Expedition",
+        "entries": [
+            {
+                "id": item_id,
+                "text": "The Triskelion Reforged",
+                "image": "/gen/image/triskelion.png",
+            }
+        ],
+    }
+    japanese_row = {
+        "id": "Expedition",
+        "entries": [
+            {
+                "id": item_id,
+                "text": "再鍛造されたトリスケリオン",
+            }
+        ],
+    }
+
+    result = build_realm(
+        POE2,
+        names,
+        {"result": [static_row]},
+        {"result": [japanese_row]},
+        {item_id},
+        {},
+    )
+
+    assert result["items"][0]["icon"] == {
+        "kind": "remote",
+        "url": "https://web.poecdn.com/gen/image/triskelion.png",
+    }

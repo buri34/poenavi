@@ -121,21 +121,23 @@ POE2_CONFIRMED_CATEGORY_OVERRIDES = {
 }
 
 # These two observed market IDs are present in the official Trade2 item list
-# and in game, but are still absent from the Trade2 static endpoint.  The
-# placeholder icon is replaced automatically once the static endpoint exposes
-# a verified CDN image.
+# and in game, but are still absent from the Trade2 static endpoint.  Their
+# independently verified game icons are bundled until the endpoint exposes a
+# verified CDN image.
 POE2_CONFIRMED_OBSERVED_ITEMS = {
     "Metadata/Items/Currency/Expedition/ExpeditionPinnacleKeyShard": {
         "en": "Shattered Triskelion",
         "ja": "砕けたトリスケリオン",
         "category": "expedition",
         "item_order": 40_006,
+        "icon_filename": "TriskelionShattered.png",
     },
     "Metadata/Items/Currency/Expedition/ExpeditionPinnacleKey": {
         "en": "The Triskelion Reforged",
         "ja": "再鍛造されたトリスケリオン",
         "category": "expedition",
         "item_order": 40_007,
+        "icon_filename": "TriskelionReforged.png",
     },
 }
 
@@ -290,6 +292,8 @@ def build_realm(
             next_card_order += 1
     elif poe_version == POE2:
         for item_id, confirmed in POE2_CONFIRMED_OBSERVED_ITEMS.items():
+            if item_id in items:
+                continue
             if item_id not in active_ids:
                 continue
             if normalize_name(names.get(item_id, "")) != normalize_name(
@@ -304,7 +308,10 @@ def build_realm(
                 "category": category,
                 "category_order": category_order[category],
                 "item_order": confirmed["item_order"],
-                "icon": {"kind": "placeholder"},
+                "icon": {
+                    "kind": "bundled",
+                    "filename": confirmed["icon_filename"],
+                },
             }
     known = set(items)
     unmapped_observed = [

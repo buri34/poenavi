@@ -543,7 +543,9 @@ class ExchangeRateManagementDialog(QDialog):
         self._icon_requested.add(item_id)
         catalog_item = self.catalog[item_id]
         future = self.icon_cache.request(
-            catalog_item.icon_kind, catalog_item.icon_url
+            catalog_item.icon_kind,
+            catalog_item.icon_url,
+            catalog_item.icon_filename,
         )
 
         def completed(result_future, *, selected_id=item_id):

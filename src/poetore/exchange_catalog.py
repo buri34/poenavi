@@ -13,6 +13,10 @@ from src.utils.poe_version_data import POE1, POE2
 CATALOG_FILENAME = "exchange_item_catalog.json"
 DIVINATION_CARD_ICON = "16px-Divination_card_inventory_icon.png"
 PLACEHOLDER_ICON = "CurrencyExchangePlaceholder.svg"
+BUNDLED_EXCHANGE_ICONS = frozenset({
+    "TriskelionShattered.png",
+    "TriskelionReforged.png",
+})
 
 
 @dataclass(frozen=True)
@@ -25,6 +29,7 @@ class ExchangeCatalogItem:
     item_order: int
     icon_kind: str
     icon_url: str | None = None
+    icon_filename: str | None = None
 
 
 def _runtime_roots() -> tuple[Path, ...]:
@@ -64,6 +69,17 @@ def placeholder_icon_path() -> Path:
     return _runtime_roots()[-1] / relative
 
 
+def bundled_exchange_icon_path(filename: str | None) -> Path | None:
+    if filename not in BUNDLED_EXCHANGE_ICONS:
+        return None
+    relative = Path("assets") / "icons" / filename
+    for root in _runtime_roots():
+        candidate = root / relative
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 @lru_cache(maxsize=1)
 def _load_payload() -> dict:
     with catalog_path().open(encoding="utf-8") as source:
@@ -93,6 +109,7 @@ def exchange_catalog_items(poe_version: str) -> tuple[ExchangeCatalogItem, ...]:
         item_order=int(row["item_order"]),
         icon_kind=row["icon"]["kind"],
         icon_url=row["icon"].get("url"),
+        icon_filename=row["icon"].get("filename"),
     ) for row in realm["items"])
 
 

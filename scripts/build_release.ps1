@@ -173,7 +173,9 @@ try {
         "map_mods.json",
         "NotoSansJP[wght].ttf",
         "ui-checkbox-checked.svg",
-        "ui-radio-checked.svg"
+        "ui-radio-checked.svg",
+        "TriskelionShattered.png",
+        "TriskelionReforged.png"
     )) {
         if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {
             throw "Release audit failed: missing $requiredName"

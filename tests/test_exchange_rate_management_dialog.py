@@ -46,8 +46,8 @@ class FakeIconCache:
         self.path = path
         self.requests = []
 
-    def request(self, kind, url=None):
-        self.requests.append((kind, url))
+    def request(self, kind, url=None, filename=None):
+        self.requests.append((kind, url, filename))
         future = Future()
         future.set_result(IconResult(self.path, "placeholder", "svg"))
         return future

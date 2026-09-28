@@ -310,7 +310,9 @@ class CustomExchangeRatePanel(QWidget):
         label.setFixedSize(28, 28)
         label.setToolTip(self.catalog[item_id].japanese_name)
         item = self.catalog[item_id]
-        future = self.icon_cache.request(item.icon_kind, item.icon_url)
+        future = self.icon_cache.request(
+            item.icon_kind, item.icon_url, item.icon_filename,
+        )
 
         def completed(result_future, selected=item_id, selected_side=side):
             try:

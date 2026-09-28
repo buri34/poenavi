@@ -3,6 +3,7 @@ import struct
 from pathlib import Path
 
 from src.poetore.exchange_catalog import (
+    bundled_exchange_icon_path,
     category_labels,
     divination_card_icon_path,
     exchange_catalog_by_id,
@@ -59,7 +60,13 @@ def test_catalog_items_have_unique_ids_verified_japanese_and_safe_icons():
         assert len({item.item_id for item in items}) == len(items)
         assert all(item.japanese_name.strip() for item in items)
         assert all(
-            item.icon_kind in {"remote", "divination_card", "placeholder"}
+            item.icon_kind
+            in {
+                "remote",
+                "divination_card",
+                "bundled",
+                "placeholder",
+            }
             for item in items
         )
         assert all(
@@ -121,6 +128,22 @@ def test_confirmed_triskelions_are_available_in_poe2_expedition():
     }
     assert {item_id: poe2[item_id].japanese_name for item_id in expected} == expected
     assert {poe2[item_id].category for item_id in expected} == {"expedition"}
+    expected_icons = {
+        "Metadata/Items/Currency/Expedition/ExpeditionPinnacleKeyShard": "TriskelionShattered.png",
+        "Metadata/Items/Currency/Expedition/ExpeditionPinnacleKey": "TriskelionReforged.png",
+    }
+    assert {
+        item_id: (poe2[item_id].icon_kind, poe2[item_id].icon_filename)
+        for item_id in expected
+    } == {
+        item_id: ("bundled", filename) for item_id, filename in expected_icons.items()
+    }
+    for filename in expected_icons.values():
+        icon = bundled_exchange_icon_path(filename)
+        assert icon is not None
+        content = icon.read_bytes()
+        assert content.startswith(b"\x89PNG\r\n\x1a\n")
+        assert struct.unpack(">II", content[16:24]) == (518, 524)
 
 
 def test_poe1_divination_cards_use_one_bundled_icon():
@@ -176,3 +199,5 @@ def test_distribution_includes_catalog_and_bundled_icons():
     placeholder = placeholder_icon_path()
     assert placeholder.is_file()
     assert "<svg" in placeholder.read_text(encoding="utf-8")
+    for filename in ("TriskelionShattered.png", "TriskelionReforged.png"):
+        assert filename in script

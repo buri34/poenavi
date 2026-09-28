@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 from src.poetore.exchange_catalog import (
+    bundled_exchange_icon_path,
     divination_card_icon_path,
     placeholder_icon_path,
 )
@@ -209,11 +210,17 @@ class ExchangeIconCache:
 
     def request(
         self, icon_kind: str, icon_url: str | None = None,
+        icon_filename: str | None = None,
     ) -> Future[IconResult]:
         if icon_kind == "divination_card":
             return _completed_future(IconResult(
                 divination_card_icon_path(), "bundled", "png",
             ))
+        if icon_kind == "bundled":
+            path = bundled_exchange_icon_path(icon_filename)
+            if path is not None:
+                return _completed_future(IconResult(path, "bundled", "png"))
+            return _completed_future(self._placeholder())
         if icon_kind != "remote" or not self._valid_remote_url(icon_url):
             return _completed_future(self._placeholder())
 

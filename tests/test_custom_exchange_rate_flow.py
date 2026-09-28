@@ -24,7 +24,7 @@ class _IconCache:
     def __init__(self, path):
         self.path = path
 
-    def request(self, _kind, _url=None):
+    def request(self, _kind, _url=None, _filename=None):
         future = Future()
         future.set_result(IconResult(self.path, "placeholder", "svg"))
         return future
