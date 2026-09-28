@@ -17,15 +17,38 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_catalog_uses_confirmed_in_game_category_labels_and_order():
     assert category_labels(POE1) == (
-        "カレンシー", "エッセンス", "デルブ", "スカラベ", "占いカード",
-        "デリリウムオーブ", "リージョン", "フラグメント", "オイル",
-        "カタリスト", "お告げ", "タトゥー", "エクスペディション",
-        "ハーベスト", "ルーングラフト", "オールフレイム",
+        "カレンシー",
+        "エッセンス",
+        "デルブ",
+        "スカラベ",
+        "占いカード",
+        "デリリウムオーブ",
+        "リージョン",
+        "フラグメント",
+        "オイル",
+        "カタリスト",
+        "お告げ",
+        "タトゥー",
+        "エクスペディション",
+        "ハーベスト",
+        "ルーングラフト",
+        "オールフレイム",
     )
     assert category_labels(POE2) == (
-        "カレンシー", "エッセンス", "デリリウム", "ブリーチ", "アビス",
-        "アッツィリ神殿", "フラグメント", "ルーン", "リチュアル",
-        "ソウルコア", "アイドル", "ジェムの原石", "エクスペディション", "ジェム",
+        "カレンシー",
+        "エッセンス",
+        "デリリウム",
+        "ブリーチ",
+        "アビス",
+        "アッツィリ神殿",
+        "フラグメント",
+        "ルーン",
+        "リチュアル",
+        "ソウルコア",
+        "アイドル",
+        "ジェムの原石",
+        "エクスペディション",
+        "ジェム",
     )
 
 
@@ -35,9 +58,13 @@ def test_catalog_items_have_unique_ids_verified_japanese_and_safe_icons():
         assert len(items) > 600
         assert len({item.item_id for item in items}) == len(items)
         assert all(item.japanese_name.strip() for item in items)
-        assert all(item.icon_kind in {"remote", "divination_card", "placeholder"} for item in items)
         assert all(
-            item.icon_kind != "remote" or str(item.icon_url).startswith("https://web.poecdn.com/")
+            item.icon_kind in {"remote", "divination_card", "placeholder"}
+            for item in items
+        )
+        assert all(
+            item.icon_kind != "remote"
+            or str(item.icon_url).startswith("https://web.poecdn.com/")
             for item in items
         )
 
@@ -53,11 +80,47 @@ def test_golden_currency_ids_resolve_in_both_realms():
 def test_confirmed_exception_categories_are_fixed():
     poe1 = exchange_catalog_by_id(POE1)
     poe2 = exchange_catalog_by_id(POE2)
-    assert poe1["Metadata/Items/Deepwater/DeepwaterAbyssCurrency"].category == "allflame"
+    assert (
+        poe1["Metadata/Items/Deepwater/DeepwaterAbyssCurrency"].category == "allflame"
+    )
     assert poe1["Metadata/Items/Currency/LegionCocoonGloves"].category == "legion"
-    assert poe1["Metadata/Items/Currency/CurrencyMutatedAddModToRare"].category == "currency"
-    assert poe2["Metadata/Items/Currency/CurrencyVerisiumMetal1"].category == "expedition"
-    assert poe2["Metadata/Items/Currency/Abyss/AbyssPinnacleKey"].category == "fragments"
+    assert (
+        poe1["Metadata/Items/Currency/CurrencyMutatedAddModToRare"].category
+        == "currency"
+    )
+    assert (
+        poe2["Metadata/Items/Currency/CurrencyVerisiumMetal1"].category == "expedition"
+    )
+    expected_poe2_categories = {
+        "Metadata/Items/Currency/Abyss/AbyssPinnacleKey": "abyss",
+        "Metadata/Items/Currency/Breach/BreachPinnacleKey": "breach",
+        "Metadata/Items/Pinnacle/RitualPinnacleEffigyPiece": "fragments",
+        "Metadata/Items/Currency/OmenOnAbyssRerollOptions": "abyss",
+        "Metadata/Items/Currency/OmenOnAbyssGuarenteeLichTypeMod1": "abyss",
+        "Metadata/Items/Currency/OmenOnAbyssGuarenteeLichTypeMod2": "abyss",
+        "Metadata/Items/Currency/OmenOnAbyssGuarenteeLichTypeMod3": "abyss",
+        "Metadata/Items/Currency/OmenOnAbyssVeilAllAndCorrupt": "abyss",
+        "Metadata/Items/Currency/OmenOnAnnulRemoveAbyssMod": "abyss",
+        "Metadata/Items/Currency/OmenOnAbyssAddPrefixes": "abyss",
+        "Metadata/Items/Currency/OmenOnAbyssAddSuffixes": "abyss",
+        "Metadata/Items/SoulCores/CarvedCunning": "idols",
+        "Metadata/Items/SoulCores/CarvedMajesty": "idols",
+        "Metadata/Items/SoulCores/CarvedMischief": "idols",
+        "Metadata/Items/SoulCores/CarvedTenacity": "idols",
+    }
+    assert {
+        item_id: poe2[item_id].category for item_id in expected_poe2_categories
+    } == expected_poe2_categories
+
+
+def test_confirmed_triskelions_are_available_in_poe2_expedition():
+    poe2 = exchange_catalog_by_id(POE2)
+    expected = {
+        "Metadata/Items/Currency/Expedition/ExpeditionPinnacleKeyShard": "砕けたトリスケリオン",
+        "Metadata/Items/Currency/Expedition/ExpeditionPinnacleKey": "再鍛造されたトリスケリオン",
+    }
+    assert {item_id: poe2[item_id].japanese_name for item_id in expected} == expected
+    assert {poe2[item_id].category for item_id in expected} == {"expedition"}
 
 
 def test_poe1_divination_cards_use_one_bundled_icon():
@@ -72,24 +135,32 @@ def test_poe1_divination_cards_use_one_bundled_icon():
 
 
 def test_current_unmapped_observed_items_are_explicit_and_not_catalog_items():
-    payload = json.loads((
-        ROOT / "data/poetore/currency_exchange/exchange_item_catalog.json"
-    ).read_text(encoding="utf-8"))
+    payload = json.loads(
+        (ROOT / "data/poetore/currency_exchange/exchange_item_catalog.json").read_text(
+            encoding="utf-8"
+        )
+    )
     missing = {
         version: {row["en"] for row in payload["realms"][version]["unmapped_observed"]}
         for version in (POE1, POE2)
     }
     assert missing[POE1] == {"Message in a Bottle"}
     assert missing[POE2] == {
-        "Raven's Reflection", "The Triskelion Reforged", "Shattered Triskelion",
-        "Helbrym's Hide", "Eonyr's Thunder", "Hawk Idol", "Panther Idol", "Stoat Idol",
+        "Raven's Reflection",
+        "Helbrym's Hide",
+        "Eonyr's Thunder",
+        "Hawk Idol",
+        "Panther Idol",
+        "Stoat Idol",
     }
 
 
 def test_catalog_sources_are_hash_pinned_official_static_endpoints():
-    payload = json.loads((
-        ROOT / "data/poetore/currency_exchange/exchange_item_catalog.json"
-    ).read_text(encoding="utf-8"))
+    payload = json.loads(
+        (ROOT / "data/poetore/currency_exchange/exchange_item_catalog.json").read_text(
+            encoding="utf-8"
+        )
+    )
     for version in (POE1, POE2):
         for language in ("en", "ja"):
             source = payload["sources"][version][language]

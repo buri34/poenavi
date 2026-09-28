@@ -33,7 +33,7 @@ from src.ui.exchange_rate_management_dialog import (
     RATE_PAIR_DRAG_MIME,
     ExchangeRateManagementDialog,
 )
-from src.utils.poe_version_data import POE1
+from src.utils.poe_version_data import POE1, POE2
 
 
 @pytest.fixture(scope="module")
@@ -60,8 +60,9 @@ def make_dialog(
     available_ids=None,
     available_item_ids_getter=None,
     config=None,
+    poe_version=POE1,
 ):
-    catalog = exchange_catalog_by_id(POE1)
+    catalog = exchange_catalog_by_id(poe_version)
     ids = list(catalog)
     if available_ids is None:
         available_ids = ids[:40]
@@ -80,7 +81,7 @@ def make_dialog(
     changed = Mock()
     dialog = ExchangeRateManagementDialog(
         None,
-        poe_version=POE1,
+        poe_version=poe_version,
         store=store,
         available_item_ids=available_ids,
         icon_cache=FakeIconCache(icon_path),
@@ -90,6 +91,14 @@ def make_dialog(
     dialog.show()
     qapp.processEvents()
     return dialog, store, saved, changed
+
+
+def candidate_ids(dialog):
+    return {
+        dialog.candidate_list.item(row).data(Qt.UserRole)
+        for row in range(dialog.candidate_list.count())
+        if dialog.candidate_list.item(row).data(Qt.UserRole) is not None
+    }
 
 
 def select_candidate(dialog, item_id):
@@ -137,6 +146,41 @@ def test_changing_category_clears_search_text(qapp, tmp_path):
         dialog.close()
 
 
+def test_poe2_corrected_categories_and_triskelions_are_visible(qapp, tmp_path):
+    expected_by_label = {
+        "アビス": {
+            "Metadata/Items/Currency/Abyss/AbyssPinnacleKey",
+            "Metadata/Items/Currency/OmenOnAbyssRerollOptions",
+            "Metadata/Items/Currency/OmenOnAbyssAddSuffixes",
+        },
+        "ブリーチ": {"Metadata/Items/Currency/Breach/BreachPinnacleKey"},
+        "フラグメント": {"Metadata/Items/Pinnacle/RitualPinnacleEffigyPiece"},
+        "アイドル": {
+            "Metadata/Items/SoulCores/CarvedCunning",
+            "Metadata/Items/SoulCores/CarvedTenacity",
+        },
+        "エクスペディション": {
+            "Metadata/Items/Currency/Expedition/ExpeditionPinnacleKeyShard",
+            "Metadata/Items/Currency/Expedition/ExpeditionPinnacleKey",
+        },
+    }
+    available_ids = set().union(*expected_by_label.values())
+    dialog, *_ = make_dialog(
+        qapp,
+        tmp_path,
+        available_ids=list(available_ids),
+        poe_version=POE2,
+    )
+    try:
+        for label, expected_ids in expected_by_label.items():
+            matches = dialog.category_list.findItems(label, Qt.MatchExactly)
+            assert len(matches) == 1
+            dialog.category_list.setCurrentItem(matches[0])
+            assert expected_ids <= candidate_ids(dialog)
+    finally:
+        dialog.close()
+
+
 def test_search_clear_button_clears_input(qapp, tmp_path):
     dialog, *_ = make_dialog(qapp, tmp_path)
     try:
@@ -163,7 +207,9 @@ def test_pair_editor_uses_two_labeled_cards_and_footer(qapp, tmp_path):
             for button in dialog.currency_buttons.values()
         )
         assert dialog.preview_label.objectName() == "ratePairPreview"
-        assert dialog.preview_label.geometry().top() > dialog.item_card.geometry().bottom()
+        assert (
+            dialog.preview_label.geometry().top() > dialog.item_card.geometry().bottom()
+        )
         assert dialog.preview_label.text() == "アイテムと通貨を選択してください"
     finally:
         dialog.close()
@@ -180,9 +226,7 @@ def test_registered_pair_name_uses_bidirectional_symbol(qapp, tmp_path):
         dialog.close()
 
 
-def test_management_dialog_uses_shared_poetore_theme_and_button_roles(
-    qapp, tmp_path
-):
+def test_management_dialog_uses_shared_poetore_theme_and_button_roles(qapp, tmp_path):
     dialog, *_ = make_dialog(qapp, tmp_path)
     try:
         assert dialog.property("dialogTheme") == "poetore"
@@ -218,14 +262,12 @@ def test_currency_choices_have_icons_and_preview_uses_bidirectional_symbol(
     dialog, *_ = make_dialog(qapp, tmp_path, available_ids=[target])
     try:
         assert all(
-            not button.icon().isNull()
-            for button in dialog.currency_buttons.values()
+            not button.icon().isNull() for button in dialog.currency_buttons.values()
         )
         select_candidate(dialog, target)
         dialog.currency_buttons[DIVINE_ORB_ID].setChecked(True)
         assert dialog.preview_label.text() == (
-            f"{catalog[target].japanese_name} ⇔ "
-            f"{catalog[DIVINE_ORB_ID].japanese_name}"
+            f"{catalog[target].japanese_name} ⇔ {catalog[DIVINE_ORB_ID].japanese_name}"
         )
         assert dialog.validation_label.text() == ""
         assert dialog.add_button.isEnabled()
@@ -236,7 +278,8 @@ def test_currency_choices_have_icons_and_preview_uses_bidirectional_symbol(
 def test_add_clears_selection_stays_open_and_saves_once(qapp, tmp_path):
     catalog = exchange_catalog_by_id(POE1)
     target = next(
-        item_id for item_id in catalog
+        item_id
+        for item_id in catalog
         if item_id not in {DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID}
     )
     dialog, store, saved, changed = make_dialog(qapp, tmp_path, available_ids=[target])
@@ -250,7 +293,9 @@ def test_add_clears_selection_stays_open_and_saves_once(qapp, tmp_path):
         assert len(saved) == 1
         changed.assert_called_once_with()
         assert dialog.candidate_list.currentRow() == -1
-        assert not any(button.isChecked() for button in dialog.currency_buttons.values())
+        assert not any(
+            button.isChecked() for button in dialog.currency_buttons.values()
+        )
     finally:
         dialog.close()
 
@@ -258,7 +303,8 @@ def test_add_clears_selection_stays_open_and_saves_once(qapp, tmp_path):
 def test_same_pair_same_currency_and_limit_have_nearby_reasons(qapp, tmp_path):
     catalog = exchange_catalog_by_id(POE1)
     extras = [
-        item_id for item_id in catalog
+        item_id
+        for item_id in catalog
         if item_id not in {DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID}
     ][:9]
     dialog, store, *_ = make_dialog(qapp, tmp_path, available_ids=extras)
@@ -282,7 +328,8 @@ def test_same_pair_same_currency_and_limit_have_nearby_reasons(qapp, tmp_path):
 def test_move_and_delete_save_once_and_refresh_main_once(qapp, tmp_path):
     catalog = exchange_catalog_by_id(POE1)
     target = next(
-        item_id for item_id in catalog
+        item_id
+        for item_id in catalog
         if item_id not in {DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID}
     )
     dialog, store, saved, changed = make_dialog(qapp, tmp_path, available_ids=[target])
@@ -296,9 +343,9 @@ def test_move_and_delete_save_once_and_refresh_main_once(qapp, tmp_path):
         first_down = dialog.registered_widget.findChildren(
             QPushButton, "ratePairMoveDown0"
         )[-1]
-        last_up = dialog.registered_widget.findChildren(
-            QPushButton, "ratePairMoveUp1"
-        )[-1]
+        last_up = dialog.registered_widget.findChildren(QPushButton, "ratePairMoveUp1")[
+            -1
+        ]
         last_down = dialog.registered_widget.findChildren(
             QPushButton, "ratePairMoveDown1"
         )[-1]
@@ -326,7 +373,8 @@ def test_move_and_delete_save_once_and_refresh_main_once(qapp, tmp_path):
 def test_dragging_registered_pair_to_bottom_reorders_and_saves_once(qapp, tmp_path):
     catalog = exchange_catalog_by_id(POE1)
     extras = tuple(
-        item_id for item_id in catalog
+        item_id
+        for item_id in catalog
         if item_id not in {DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID}
     )[:2]
     dialog, store, saved, changed = make_dialog(
@@ -363,7 +411,8 @@ def test_dragging_registered_pair_to_bottom_reorders_and_saves_once(qapp, tmp_pa
 def test_dragging_near_registered_list_edge_auto_scrolls(qapp, tmp_path):
     catalog = exchange_catalog_by_id(POE1)
     extras = [
-        item_id for item_id in catalog
+        item_id
+        for item_id in catalog
         if item_id not in {DIVINE_ORB_ID, CHAOS_ORB_ID, EXALTED_ORB_ID}
     ][:9]
     dialog, store, *_ = make_dialog(qapp, tmp_path, available_ids=list(extras))
@@ -400,9 +449,7 @@ def test_candidate_refresh_does_not_remove_registered_pair(qapp, tmp_path):
         dialog.close()
 
 
-def test_candidates_appear_when_background_market_table_becomes_ready(
-    qapp, tmp_path
-):
+def test_candidates_appear_when_background_market_table_becomes_ready(qapp, tmp_path):
     target = exchange_catalog_items(POE1)[0]
     live_ids = set()
     dialog, *_ = make_dialog(
@@ -465,9 +512,7 @@ def test_category_rows_are_compact_and_add_section_is_taller(qapp, tmp_path):
         assert dialog.minimumHeight() == DIALOG_MINIMUM_HEIGHT
         assert dialog.category_list.uniformItemSizes()
         heights = {
-            dialog.category_list.visualItemRect(
-                dialog.category_list.item(row)
-            ).height()
+            dialog.category_list.visualItemRect(dialog.category_list.item(row)).height()
             for row in range(dialog.category_list.count())
         }
         assert heights == {CATEGORY_ROW_HEIGHT}
