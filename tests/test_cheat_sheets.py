@@ -1,10 +1,18 @@
 from pathlib import Path
 
+import pytest
 from PySide6.QtCore import QRect
 from PySide6.QtGui import QColor, QImage
-from PySide6.QtWidgets import QApplication, QLabel
-import pytest
+from PySide6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QPushButton,
+    QSlider,
+)
 
+from src.ui.app_theme import POENAVI_THEME, POETORE_THEME
 from src.ui.cheat_sheets import (
     CheatSheetManagerDialog,
     CheatSheetOverlay,
@@ -12,7 +20,7 @@ from src.ui.cheat_sheets import (
     normalized_cheat_sheet_config,
     registered_image_path,
 )
-from src.ui.app_theme import POETORE_THEME
+from src.ui.dialog_theme import POENAVI_DIALOG_THEME, POETORE_DIALOG_THEME
 
 
 @pytest.fixture(scope="module")
@@ -129,14 +137,62 @@ def test_empty_overlay_guides_user_to_main_window_button(qapp):
     overlay.close()
 
 
-def test_poetore_theme_is_applied_to_manager_and_overlay(qapp):
-    manager = CheatSheetManagerDialog({"images": []}, theme=POETORE_THEME)
-    overlay = CheatSheetOverlay({"images": []}, theme=POETORE_THEME)
+@pytest.mark.parametrize(
+    ("app_theme", "dialog_theme"),
+    [
+        (POENAVI_THEME, POENAVI_DIALOG_THEME),
+        (POETORE_THEME, POETORE_DIALOG_THEME),
+    ],
+)
+def test_manager_uses_shared_theme_for_its_launch_source(qapp, app_theme, dialog_theme):
+    manager = CheatSheetManagerDialog({"images": []}, theme=app_theme)
     try:
-        assert POETORE_THEME.accent in manager.styleSheet()
-        assert POETORE_THEME.accent in overlay.styleSheet()
+        assert manager.theme is dialog_theme
+        assert manager.property("dialogTheme") == dialog_theme.name
+        assert dialog_theme.accent in manager.styleSheet()
+        assert dialog_theme.text in manager.styleSheet()
+        assert (
+            app_theme.text not in manager.styleSheet()
+            or app_theme.text == dialog_theme.text
+        )
+        assert manager.title_label.property("uiRole") == "title"
+        assert manager.hint_label.property("uiRole") == "muted"
+        assert manager.add_button.property("buttonRole") == "primary"
+        assert manager.remove_button.property("buttonRole") == "danger"
+        assert manager.cancel_button.property("buttonRole") == "secondary"
+        assert manager.save_button.property("buttonRole") == "primary"
+
+        for widget_type in (QLineEdit, QListWidget, QPushButton, QSlider):
+            assert all(
+                widget.styleSheet() == ""
+                for widget in manager.findChildren(widget_type)
+            )
     finally:
         manager.close()
+
+
+def test_manager_footer_places_cancel_before_primary_save(qapp):
+    manager = CheatSheetManagerDialog({"images": []})
+    try:
+        widgets = [
+            manager.footer_layout.itemAt(index).widget()
+            for index in range(manager.footer_layout.count())
+            if manager.footer_layout.itemAt(index).widget() is not None
+        ]
+        assert widgets[-2:] == [manager.cancel_button, manager.save_button]
+    finally:
+        manager.close()
+
+
+def test_overlay_keeps_its_protected_legacy_theme(qapp):
+    overlay = CheatSheetOverlay({"images": []}, theme=POETORE_THEME)
+    try:
+        assert overlay.property("dialogTheme") is None
+        assert 'QDialog[dialogTheme="poetore"]' not in overlay.styleSheet()
+        assert "QWidget#cheatSheetOverlay" in overlay.styleSheet()
+        assert POETORE_THEME.accent in overlay.styleSheet()
+        assert POETORE_THEME.text in overlay.styleSheet()
+    finally:
         overlay.close()
 
 
@@ -227,7 +283,9 @@ def test_first_display_is_top_center_of_poe_monitor(qapp, monkeypatch):
     available = target_screen.availableGeometry()
     monkeypatch.setattr(
         "src.ui.cheat_sheets.path_of_exile_client_rect",
-        lambda: QRect(available.left(), available.top(), available.width(), available.height()),
+        lambda: QRect(
+            available.left(), available.top(), available.width(), available.height()
+        ),
     )
 
     overlay = CheatSheetOverlay(
@@ -240,5 +298,7 @@ def test_first_display_is_top_center_of_poe_monitor(qapp, monkeypatch):
     )
 
     assert overlay.geometry().center().x() == available.center().x()
-    assert overlay.geometry().top() == available.top() + round(available.height() * 0.10)
+    assert overlay.geometry().top() == available.top() + round(
+        available.height() * 0.10
+    )
     overlay.close()

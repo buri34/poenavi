@@ -6,7 +6,17 @@ import shutil
 import uuid
 from pathlib import Path
 
-from PySide6.QtCore import QByteArray, QBuffer, QEvent, QIODevice, Qt, QPoint, QRect, QSize, Signal
+from PySide6.QtCore import (
+    QBuffer,
+    QByteArray,
+    QEvent,
+    QIODevice,
+    QPoint,
+    QRect,
+    QSize,
+    Qt,
+    Signal,
+)
 from PySide6.QtGui import QColor, QCursor, QKeyEvent, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
@@ -19,17 +29,22 @@ from PySide6.QtWidgets import (
     QListWidget,
     QMessageBox,
     QPushButton,
-    QSlider,
     QSizeGrip,
+    QSlider,
     QVBoxLayout,
     QWidget,
 )
 
-from src.ui.app_theme import POENAVI_THEME
-from src.ui.toolbar_icons import image_manager_icon
 from src.poetore.window_position import path_of_exile_client_rect
+from src.ui.app_theme import POENAVI_THEME, POETORE_THEME
+from src.ui.dialog_theme import (
+    POENAVI_DIALOG_THEME,
+    POETORE_DIALOG_THEME,
+    DialogTheme,
+    apply_dialog_theme,
+)
+from src.ui.toolbar_icons import image_manager_icon
 from src.utils.config_manager import ConfigManager
-
 
 SUPPORTED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}
 DEFAULT_CHEAT_SHEET_CONFIG = {
@@ -123,28 +138,10 @@ class CheatSheetManagerDialog(QDialog):
 
     def __init__(self, config: dict, parent=None, theme=POENAVI_THEME):
         super().__init__(parent)
+        self.theme = self._dialog_theme(theme)
         self.setWindowTitle("Cheat sheet画像の管理")
         self.resize(620, 430)
-        self.setStyleSheet(f"""
-            QDialog {{ background: {theme.background}; color: {theme.text}; }}
-            QLabel {{ color: {theme.text}; }}
-            QLineEdit, QListWidget {{
-                background: {theme.panel}; color: {theme.text};
-                border: 1px solid {theme.accent}; border-radius: 4px; padding: 5px;
-            }}
-            QPushButton {{
-                background: {theme.panel}; color: {theme.accent};
-                border: 1px solid {theme.accent}; border-radius: 5px;
-                padding: 6px 10px; font-weight: bold;
-            }}
-            QSlider::groove:horizontal {{
-                background: #555; height: 6px; border-radius: 3px;
-            }}
-            QSlider::handle:horizontal {{
-                background: {theme.accent}; width: 16px;
-                margin: -5px 0; border-radius: 8px;
-            }}
-        """)
+        apply_dialog_theme(self, self.theme)
         self.value = normalized_cheat_sheet_config(config)
         self._original_records = {
             item["id"]: dict(item) for item in self.value["images"]
@@ -153,12 +150,20 @@ class CheatSheetManagerDialog(QDialog):
         self._pending_deletions: list[dict] = []
 
         layout = QVBoxLayout(self)
-        hint = QLabel(
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
+
+        self.title_label = QLabel("Cheat sheet画像の管理")
+        self.title_label.setProperty("uiRole", "title")
+        layout.addWidget(self.title_label)
+
+        self.hint_label = QLabel(
             "画像はPoENaviのユーザーデータへコピーされます。"
             " Shift+Spaceは登録ではなく表示／非表示に使います。"
         )
-        hint.setWordWrap(True)
-        layout.addWidget(hint)
+        self.hint_label.setProperty("uiRole", "muted")
+        self.hint_label.setWordWrap(True)
+        layout.addWidget(self.hint_label)
 
         body = QHBoxLayout()
         self.list_widget = QListWidget()
@@ -172,22 +177,30 @@ class CheatSheetManagerDialog(QDialog):
         editor.addWidget(self.name_edit)
 
         self.add_button = QPushButton("画像を追加")
+        self.add_button.setProperty("buttonRole", "primary")
         self.add_button.clicked.connect(self._add_image)
         editor.addWidget(self.add_button)
         self.remove_button = QPushButton("削除")
+        self.remove_button.setProperty("buttonRole", "danger")
         self.remove_button.clicked.connect(self._remove_image)
         editor.addWidget(self.remove_button)
 
         order = QHBoxLayout()
-        self.up_button = QPushButton("↑")
-        self.down_button = QPushButton("↓")
+        self.up_button = QPushButton("上へ")
+        self.down_button = QPushButton("下へ")
+        self.up_button.setProperty("buttonRole", "secondary")
+        self.down_button.setProperty("buttonRole", "secondary")
+        self.up_button.setToolTip("選択中の画像を1つ上へ移動")
+        self.down_button.setToolTip("選択中の画像を1つ下へ移動")
         self.up_button.clicked.connect(lambda: self._move_current(-1))
         self.down_button.clicked.connect(lambda: self._move_current(1))
         order.addWidget(self.up_button)
         order.addWidget(self.down_button)
         editor.addLayout(order)
 
-        editor.addWidget(QLabel("透明率の調整"))
+        transparency_heading = QLabel("透明率の調整")
+        transparency_heading.setProperty("uiRole", "section")
+        editor.addWidget(transparency_heading)
         editor.addWidget(QLabel("画像の透明率"))
         opacity_row = QHBoxLayout()
         self.image_transparency_slider = QSlider(Qt.Horizontal)
@@ -225,16 +238,27 @@ class CheatSheetManagerDialog(QDialog):
         body.addLayout(editor, 1)
         layout.addLayout(body)
 
-        buttons = QHBoxLayout()
-        buttons.addStretch()
-        cancel = QPushButton("キャンセル")
-        cancel.clicked.connect(self.reject)
-        save = QPushButton("保存")
-        save.clicked.connect(self.accept)
-        buttons.addWidget(cancel)
-        buttons.addWidget(save)
-        layout.addLayout(buttons)
+        self.footer_layout = QHBoxLayout()
+        self.footer_layout.addStretch()
+        self.cancel_button = QPushButton("キャンセル")
+        self.cancel_button.setProperty("buttonRole", "secondary")
+        self.cancel_button.clicked.connect(self.reject)
+        self.save_button = QPushButton("保存")
+        self.save_button.setProperty("buttonRole", "primary")
+        self.save_button.clicked.connect(self.accept)
+        self.footer_layout.addWidget(self.cancel_button)
+        self.footer_layout.addWidget(self.save_button)
+        layout.addLayout(self.footer_layout)
         self._refresh_list()
+
+    @staticmethod
+    def _dialog_theme(theme) -> DialogTheme:
+        """起動元のAppThemeを管理ダイアログ用テーマへ対応付ける。"""
+        if isinstance(theme, DialogTheme):
+            return theme
+        if theme is POETORE_THEME or theme.accent == POETORE_THEME.accent:
+            return POETORE_DIALOG_THEME
+        return POENAVI_DIALOG_THEME
 
     def _refresh_list(self, row: int | None = None):
         current = self.list_widget.currentRow() if row is None else row
@@ -242,7 +266,9 @@ class CheatSheetManagerDialog(QDialog):
         for image in self.value["images"]:
             self.list_widget.addItem(image.get("name") or "名称未設定")
         if self.value["images"]:
-            self.list_widget.setCurrentRow(max(0, min(current, len(self.value["images"]) - 1)))
+            self.list_widget.setCurrentRow(
+                max(0, min(current, len(self.value["images"]) - 1))
+            )
         else:
             self._load_current(-1)
 
@@ -252,7 +278,9 @@ class CheatSheetManagerDialog(QDialog):
         self.remove_button.setEnabled(valid)
         self.up_button.setEnabled(valid and row > 0)
         self.down_button.setEnabled(valid and row < len(self.value["images"]) - 1)
-        self.name_edit.setText(self.value["images"][row].get("name", "") if valid else "")
+        self.name_edit.setText(
+            self.value["images"][row].get("name", "") if valid else ""
+        )
 
     def _rename_current(self, text: str):
         row = self.list_widget.currentRow()
@@ -294,7 +322,10 @@ class CheatSheetManagerDialog(QDialog):
     def _move_current(self, delta: int):
         row = self.list_widget.currentRow()
         target = row + delta
-        if not (0 <= row < len(self.value["images"]) and 0 <= target < len(self.value["images"])):
+        if not (
+            0 <= row < len(self.value["images"])
+            and 0 <= target < len(self.value["images"])
+        ):
             return
         self.value["images"].insert(target, self.value["images"].pop(row))
         self._refresh_list(target)
