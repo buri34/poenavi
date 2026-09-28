@@ -20,8 +20,8 @@ def test_main_header_shows_short_poe_version_four_pixels_smaller_than_title():
     app = QApplication.instance() or QApplication([])
 
     for poe_version, expected in (
-        (POE1, "PoE1"),
-        (POE2, "PoE2"),
+        (POE1, "（PoE1）"),
+        (POE2, "（PoE2）"),
     ):
         with patch(
             "src.ui.poetore_mode_window.ConfigManager.load_config",

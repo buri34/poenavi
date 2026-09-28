@@ -573,7 +573,7 @@ class PoetoreModeWindow(QMainWindow):
         self.title_label = QLabel("ぽえとれ")
         self.title_label.setStyleSheet(title_style)
         mode_name = "PoE2" if self.poe_version == POE2 else "PoE1"
-        self.mode_label = QLabel(mode_name)
+        self.mode_label = QLabel(f"（{mode_name}）")
         self.mode_label.setStyleSheet(
             f"color: {POETORE_ACCENT}; font-size: 22px; font-weight: bold;"
         )
