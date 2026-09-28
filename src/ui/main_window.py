@@ -87,6 +87,7 @@ from src.ui.window_flags import (
     _is_mini_always_on_top_enabled,
     _with_optional_always_on_top,
     _with_optional_mini_always_on_top,
+    mini_topmost_mode_from_config,
 )
 
 from src.ui.vendor_search_dialog import VendorSearchPresetDialog
@@ -4904,6 +4905,7 @@ class MainWindow(QMainWindow):
             # 設定保存
             previous_timer_size_setting = self.config.get("timer_size", "large")
             previous_always_on_top = self.config.get("always_on_top", True)
+            previous_mini_topmost_mode = mini_topmost_mode_from_config(self.config)
             new_settings = dialog.get_settings()
             self.config.update(new_settings)
             ConfigManager.save_config(self.config)
@@ -5031,10 +5033,7 @@ class MainWindow(QMainWindow):
             self._apply_bg_opacity(self.config.get("window_opacity", 100))
             self._apply_text_opacity(self.config.get("text_opacity", 100))
             self._apply_detached_panel_window_settings()
-            if hasattr(self, "mini_navi_overlay"):
-                self.mini_navi_overlay.apply_settings(refresh_window_flags=True)
-            if hasattr(self, "act4_checklist_window"):
-                self.act4_checklist_window.apply_settings(refresh_window_flags=True)
+            self._apply_mini_navi_related_settings(previous_mini_topmost_mode)
             # メモダイアログにも透過率を反映
             if hasattr(self, '_memo_dialog') and self._memo_dialog is not None and self._memo_dialog.isVisible():
                 self._memo_dialog.apply_opacity(
@@ -5052,6 +5051,20 @@ class MainWindow(QMainWindow):
             zone_id = self._get_zone_id(self.current_zone)
             visit_num = self.zone_visit_counts.get(self.current_zone, 1)
             self._update_guide_and_map(self.current_zone, zone_id, visit_num)
+
+    def _apply_mini_navi_related_settings(self, previous_topmost_mode: str):
+        """みになび系の設定を、必要な時だけネイティブ再生成して反映する。"""
+        refresh_window_flags = (
+            mini_topmost_mode_from_config(self.config) != previous_topmost_mode
+        )
+        if hasattr(self, "mini_navi_overlay"):
+            self.mini_navi_overlay.apply_settings(
+                refresh_window_flags=refresh_window_flags
+            )
+        if hasattr(self, "act4_checklist_window"):
+            self.act4_checklist_window.apply_settings(
+                refresh_window_flags=refresh_window_flags
+            )
 
     def _reset_guide_progress_from_settings(self, poe_version=None):
         """設定画面から、タイマーに触れずガイド進行だけを初期化する。"""
