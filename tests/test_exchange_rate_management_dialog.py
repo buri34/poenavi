@@ -169,6 +169,17 @@ def test_pair_editor_uses_two_labeled_cards_and_footer(qapp, tmp_path):
         dialog.close()
 
 
+def test_registered_pair_name_uses_bidirectional_symbol(qapp, tmp_path):
+    dialog, *_ = make_dialog(qapp, tmp_path)
+    try:
+        pair_name = dialog.findChild(QLabel, "ratePairName0")
+        assert pair_name is not None
+        assert " ⇔ " in pair_name.text()
+        assert " → " not in pair_name.text()
+    finally:
+        dialog.close()
+
+
 def test_management_dialog_uses_shared_poetore_theme_and_button_roles(
     qapp, tmp_path
 ):

@@ -653,7 +653,7 @@ class ExchangeRateManagementDialog(QDialog):
             row_layout = QHBoxLayout(row)
             row_layout.setContentsMargins(3, 2, 3, 2)
             name = QLabel(
-                f"{self.catalog[pair.left_item_id].japanese_name} → "
+                f"{self.catalog[pair.left_item_id].japanese_name} ⇔ "
                 f"{self.catalog[pair.right_item_id].japanese_name}"
             )
             name.setObjectName(f"ratePairName{index}")
