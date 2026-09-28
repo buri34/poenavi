@@ -189,8 +189,44 @@ def test_confirmed_observed_message_in_a_bottle_is_added_without_static_row():
     assert [
         (row["id"], row["en"], row["ja"], row["category"]) for row in result["items"]
     ] == [(item_id, "Message in a Bottle", "瓶の中の手紙", "allflame")]
-    assert result["items"][0]["icon"] == {"kind": "placeholder"}
+    assert result["items"][0]["icon"] == {
+        "kind": "bundled",
+        "filename": "MessageInABottle.png",
+    }
     assert result["unmapped_observed"] == []
+
+
+def test_official_static_message_in_a_bottle_icon_replaces_bundled_fallback():
+    item_id = "Metadata/Items/Deepwater/DeepwaterBottledItem"
+    names = {item_id: "Message in a Bottle"}
+    static_row = {
+        "id": "Currency",
+        "entries": [
+            {
+                "id": item_id,
+                "text": "Message in a Bottle",
+                "image": "/gen/image/message-in-a-bottle.png",
+            }
+        ],
+    }
+    japanese_row = {
+        "id": "Currency",
+        "entries": [{"id": item_id, "text": "瓶の中の手紙"}],
+    }
+
+    result = build_realm(
+        POE1,
+        names,
+        {"result": [static_row]},
+        {"result": [japanese_row]},
+        {item_id},
+        {},
+    )
+
+    assert result["items"][0]["icon"] == {
+        "kind": "remote",
+        "url": "https://web.poecdn.com/gen/image/message-in-a-bottle.png",
+    }
 
 
 def test_confirmed_observed_triskelions_are_added_without_static_rows():

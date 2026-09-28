@@ -9,7 +9,7 @@ from src.poetore.exchange_catalog import (
     divination_card_icon_path,
     exchange_catalog_by_id,
 )
-from src.poetore.exchange_icon_cache import IconResult
+from src.poetore.exchange_icon_cache import ExchangeIconCache, IconResult
 from src.poetore.exchange_rate_cache import ExchangeRateValueCache
 from src.poetore.exchange_rate_settings import (
     CHAOS_ORB_ID,
@@ -71,7 +71,9 @@ class FakeService:
         return True
 
 
-def make_panel(qapp, tmp_path, *, pairs=None, service=None, version=POE1):
+def make_panel(
+    qapp, tmp_path, *, pairs=None, service=None, version=POE1, icon_cache=None,
+):
     default_right = EXALTED_ORB_ID if version == POE2 else CHAOS_ORB_ID
     pairs = pairs if pairs is not None else [RatePair(DIVINE_ORB_ID, default_right)]
     config = {"poetore": {"exchange_rate_pairs": {
@@ -88,7 +90,7 @@ def make_panel(qapp, tmp_path, *, pairs=None, service=None, version=POE1):
         league_getter=lambda: "League",
         service=service or FakeService(),
         value_cache=ExchangeRateValueCache(tmp_path / "rates.json", clock=lambda: 1000),
-        icon_cache=FakeIconCache(icon),
+        icon_cache=icon_cache or FakeIconCache(icon),
         on_manage=lambda: None,
     )
     panel.show()
@@ -270,3 +272,29 @@ def test_names_use_heading_accent_and_cached_icons_render(qapp, tmp_path):
     finally:
         panel.stop()
         panel.close()
+
+
+def test_message_in_a_bottle_uses_bundled_icon_in_main_rate_row(qapp, tmp_path):
+    item_id = "Metadata/Items/Deepwater/DeepwaterBottledItem"
+    cache = ExchangeIconCache(
+        tmp_path / "icons",
+        fetcher=lambda _url: (_ for _ in ()).throw(
+            AssertionError("bundled icon must not fetch")
+        ),
+    )
+    panel, *_ = make_panel(
+        qapp,
+        tmp_path,
+        pairs=[RatePair(item_id, CHAOS_ORB_ID)],
+        icon_cache=cache,
+    )
+    try:
+        qapp.processEvents()
+        qapp.processEvents()
+        icon = panel.findChild(QLabel, f"customRateIcon-left-{item_id}")
+        assert icon is not None
+        assert icon.pixmap() is not None and not icon.pixmap().isNull()
+    finally:
+        panel.stop()
+        panel.close()
+        cache.close()

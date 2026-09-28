@@ -16,6 +16,7 @@ PLACEHOLDER_ICON = "CurrencyExchangePlaceholder.svg"
 BUNDLED_EXCHANGE_ICONS = frozenset({
     "TriskelionShattered.png",
     "TriskelionReforged.png",
+    "MessageInABottle.png",
 })
 
 

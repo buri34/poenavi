@@ -1,3 +1,4 @@
+import hashlib
 import json
 import struct
 from pathlib import Path
@@ -123,6 +124,19 @@ def test_confirmed_exception_categories_are_fixed():
         poe1["Metadata/Items/Deepwater/DeepwaterBottledItem"].japanese_name
         == "瓶の中の手紙"
     )
+    bottled = poe1["Metadata/Items/Deepwater/DeepwaterBottledItem"]
+    assert (bottled.icon_kind, bottled.icon_filename) == (
+        "bundled",
+        "MessageInABottle.png",
+    )
+    icon = bundled_exchange_icon_path(bottled.icon_filename)
+    assert icon is not None
+    content = icon.read_bytes()
+    assert content.startswith(b"\x89PNG\r\n\x1a\n")
+    assert struct.unpack(">II", content[16:24]) == (553, 547)
+    assert hashlib.sha256(content).hexdigest() == (
+        "bb501629aa70996180d4d058fa5510c49d18b83f7e9237724b5f4be5aecf0864"
+    )
     assert (
         poe2["Metadata/Items/Currency/CurrencyVerisiumMetal1"].category == "expedition"
     )
@@ -227,5 +241,9 @@ def test_distribution_includes_catalog_and_bundled_icons():
     placeholder = placeholder_icon_path()
     assert placeholder.is_file()
     assert "<svg" in placeholder.read_text(encoding="utf-8")
-    for filename in ("TriskelionShattered.png", "TriskelionReforged.png"):
+    for filename in (
+        "TriskelionShattered.png",
+        "TriskelionReforged.png",
+        "MessageInABottle.png",
+    ):
         assert filename in script

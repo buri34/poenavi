@@ -149,6 +149,7 @@ POE1_CONFIRMED_OBSERVED_ITEMS = {
         "ja": "瓶の中の手紙",
         "category": "allflame",
         "item_order": 40_000,
+        "icon_filename": "MessageInABottle.png",
     },
 }
 
@@ -341,7 +342,10 @@ def build_realm(
                 "category": category,
                 "category_order": category_order[category],
                 "item_order": confirmed["item_order"],
-                "icon": {"kind": "placeholder"},
+                "icon": {
+                    "kind": "bundled",
+                    "filename": confirmed["icon_filename"],
+                },
             }
     elif poe_version == POE2:
         for item_id, confirmed in POE2_CONFIRMED_OBSERVED_ITEMS.items():

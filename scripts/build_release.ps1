@@ -178,6 +178,7 @@ try {
         "ui-radio-checked.svg",
         "TriskelionShattered.png",
         "TriskelionReforged.png",
+        "MessageInABottle.png",
         "hideout_focus_notification.wav"
     )) {
         if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {

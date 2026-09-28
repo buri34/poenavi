@@ -182,7 +182,7 @@ def test_divination_card_uses_bundled_asset_without_network(tmp_path):
     assert result.path.is_file()
 
 
-def test_triskelions_use_their_bundled_assets_without_network(tmp_path):
+def test_confirmed_exchange_items_use_their_bundled_assets_without_network(tmp_path):
     cache = ExchangeIconCache(
         tmp_path / "icons",
         fetcher=lambda _url: (_ for _ in ()).throw(
@@ -190,7 +190,11 @@ def test_triskelions_use_their_bundled_assets_without_network(tmp_path):
         ),
     )
 
-    for filename in ("TriskelionShattered.png", "TriskelionReforged.png"):
+    for filename in (
+        "TriskelionShattered.png",
+        "TriskelionReforged.png",
+        "MessageInABottle.png",
+    ):
         result = cache.request("bundled", icon_filename=filename).result(timeout=1)
         assert result.source == "bundled"
         assert result.path == bundled_exchange_icon_path(filename)

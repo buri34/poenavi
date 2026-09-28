@@ -70,6 +70,7 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
         "ui-radio-checked.svg",
         "TriskelionShattered.png",
         "TriskelionReforged.png",
+        "MessageInABottle.png",
     ):
         assert required_ui_asset in script
     assert "dotnet publish tools\\ExpeditionWindowsOcr\\ExpeditionWindowsOcr.csproj" in script
