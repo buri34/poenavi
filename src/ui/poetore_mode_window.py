@@ -422,7 +422,7 @@ class PoetoreModeWindow(QMainWindow):
         self.resize(558, 360)
         self._build_ui()
         self._hideout_notification = None
-        self.focus_button.setText("集中 OFF")
+        self.focus_button.setText("隠れ家滞在通知\nOFF")
         self._apply_rate_panel_height()
         self._build_tray_icon()
         self._apply_window_settings()
@@ -546,6 +546,11 @@ class PoetoreModeWindow(QMainWindow):
                 border-color: {POETORE_ACCENT};
                 color: {POETORE_TEXT};
             }}
+            QPushButton#poetoreFocusButton {{
+                padding: 0;
+                font-size: 11px;
+                text-align: center;
+            }}
         """)
         root = QVBoxLayout(central)
         root.setContentsMargins(0, 0, 0, 0)
@@ -589,11 +594,11 @@ class PoetoreModeWindow(QMainWindow):
         header.addLayout(title_box)
         header.addStretch()
 
-        self.focus_button = QPushButton("集中 OFF")
+        self.focus_button = QPushButton("隠れ家滞在通知\nOFF")
         self.focus_button.setObjectName("poetoreFocusButton")
         self.focus_button.setFocusPolicy(Qt.NoFocus)
         self.focus_button.setToolTip("隠れ家滞在通知の集中モードを切り替える")
-        self.focus_button.setFixedSize(108, 35)
+        self.focus_button.setFixedSize(108, 46)
         self.focus_button.clicked.connect(self.toggle_focus_mode)
         header.addWidget(self.focus_button)
 

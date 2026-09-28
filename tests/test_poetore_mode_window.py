@@ -115,8 +115,10 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
         window.settings_button,
     )
     assert window.header_action_buttons == header_buttons
-    assert window.focus_button.text() == "集中 OFF"
+    assert window.focus_button.text() == "隠れ家滞在通知\nOFF"
     assert window.focus_button.size().width() == 108
+    assert window.focus_button.size().height() == 46
+    assert "text-align: center" in window.centralWidget().styleSheet()
     assert window._hideout_notification is None
     assert all(button.text() == "" for button in header_buttons)
     assert all(not button.icon().isNull() for button in header_buttons)

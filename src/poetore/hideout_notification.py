@@ -19,6 +19,7 @@ DEFAULT_HIDEOUT_NOTIFICATION_SETTINGS = {
 MIN_DURATION_SECONDS = 10
 MAX_DURATION_SECONDS = 60 * 60
 MAX_LOG_SCAN_BYTES = 128 * 1024 * 1024
+BUTTON_LABEL = "隠れ家滞在通知"
 
 _LOG_TIMESTAMP = re.compile(
     r"(?P<date>\d{4}/\d{2}/\d{2})\s+(?P<time>\d{2}:\d{2}:\d{2})"
@@ -225,12 +226,12 @@ class HideoutTimerState:
 
     def button_text(self, now: float) -> str:
         if not self.active:
-            return "集中 OFF"
+            return f"{BUTTON_LABEL}\nOFF"
         if not self.zone_known:
-            return "集中 ON（エリア待ち）"
+            return f"{BUTTON_LABEL}\nON（エリア待ち）"
         if not self.in_hideout:
-            return "集中 ON"
+            return f"{BUTTON_LABEL}\nON"
         elapsed = self.elapsed_seconds(now)
         minutes, seconds = divmod(elapsed, 60)
         suffix = " ✓" if self.notified and not self.repeat else ""
-        return f"集中 {minutes}:{seconds:02d}{suffix}"
+        return f"{BUTTON_LABEL}\n{minutes}:{seconds:02d}{suffix}"
