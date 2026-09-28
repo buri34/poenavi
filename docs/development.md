@@ -35,7 +35,12 @@ Mac正本からSMB変更不可スナップショットを経由するWindows実�
 
 config.json の構造変更・移行処理・設定保存まわりを検証するときは、普段使いの設定を汚さないように `run_dev.bat` から起動してください。
 
-`run_dev.bat` は起動中だけ以下を設定します。
+`run_dev.bat` は `%LOCALAPPDATA%\PoENavi\DevRuntime` に開発確認専用の
+Python仮想環境を作り、`requirements.txt`の内容が変わった時だけ依存関係を更新します。
+アプリは必ずこの隔離環境のPythonから起動するため、通常利用しているPython環境を変更しません。
+初回起動または依存更新時は、導入完了まで起動画面を閉じずに待ってください。
+
+また、起動中だけ以下を設定します。
 
 ```bat
 POENAVI_USER_DATA_DIR=%~dp0.dev-user-data

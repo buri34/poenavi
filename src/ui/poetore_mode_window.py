@@ -418,8 +418,8 @@ class PoetoreModeWindow(QMainWindow):
         self.setWindowTitle("ぽえとれ")
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setMinimumSize(620, 300)
-        self.resize(620, 360)
+        self.setMinimumSize(500, 300)
+        self.resize(558, 360)
         self._build_ui()
         self._hideout_notification = None
         self.focus_button.setText("集中 OFF")
@@ -566,14 +566,14 @@ class PoetoreModeWindow(QMainWindow):
         title_box.setSpacing(1)
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(0)
+        title_row.setSpacing(6)
         title_style = (
             f"color: {POETORE_ACCENT}; font-size: 26px; font-weight: bold;"
         )
         self.title_label = QLabel("ぽえとれ")
         self.title_label.setStyleSheet(title_style)
         mode_name = "PoE2" if self.poe_version == POE2 else "PoE1"
-        self.mode_label = QLabel(f"（{mode_name}モード）")
+        self.mode_label = QLabel(mode_name)
         self.mode_label.setStyleSheet(
             f"color: {POETORE_ACCENT}; font-size: 22px; font-weight: bold;"
         )

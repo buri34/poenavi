@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QGroupBox,
     QLabel,
+    QMessageBox,
     QPushButton,
     QRadioButton,
     QSlider,
@@ -125,6 +126,26 @@ def test_hideout_notification_duration_is_bounded_to_ten_seconds():
     assert settings["duration_seconds"] == 10
     assert dialog.hideout_volume_label.text() == "50（標準）"
     dialog.close()
+
+
+def test_hideout_audio_error_message_uses_dark_poetore_theme(monkeypatch):
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={"poe_version": POE1})
+    monkeypatch.setattr(QMessageBox, "exec", lambda self: QMessageBox.Ok)
+
+    result = dialog._show_hideout_audio_message(
+        QMessageBox.Warning,
+        "音声再生機能を読み込めませんでした。",
+    )
+
+    messages = dialog.findChildren(QMessageBox)
+    assert result == QMessageBox.Ok
+    assert len(messages) == 1
+    assert messages[0].property("dialogTheme") == "poetore"
+    assert POETORE_DIALOG_THEME.background in messages[0].styleSheet()
+    assert POETORE_DIALOG_THEME.text in messages[0].styleSheet()
+    dialog.close()
+
 
 def test_poetore_settings_contains_common_trade_and_window_controls():
     QApplication.instance() or QApplication([])

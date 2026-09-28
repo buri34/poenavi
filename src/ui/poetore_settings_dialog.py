@@ -769,7 +769,7 @@ class PoetoreSettingsDialog(QDialog):
         try:
             display_name, stored_name = copy_custom_audio(source)
         except (OSError, ValueError) as error:
-            QMessageBox.warning(self, "通知音声", str(error))
+            self._show_hideout_audio_message(QMessageBox.Warning, str(error))
             return
         self._hideout_audio_source = "custom"
         self._hideout_audio_display_name = display_name
@@ -793,10 +793,10 @@ class PoetoreSettingsDialog(QDialog):
         if self._hideout_preview_player is None:
             self._hideout_preview_player = NotificationAudioPlayer(self)
             self._hideout_preview_player.failed.connect(
-                lambda text: QMessageBox.warning(self, "通知音声", text)
+                self._show_hideout_audio_warning
             )
             self._hideout_preview_player.fallback_used.connect(
-                lambda text: QMessageBox.information(self, "通知音声", text)
+                self._show_hideout_audio_information
             )
         primary = bundled_audio_path()
         if self._hideout_audio_source == "custom":
@@ -804,6 +804,21 @@ class PoetoreSettingsDialog(QDialog):
         self._hideout_preview_player.play(
             primary, bundled_audio_path(), self.hideout_volume_slider.value()
         )
+
+    def _show_hideout_audio_warning(self, text):
+        self._show_hideout_audio_message(QMessageBox.Warning, text)
+
+    def _show_hideout_audio_information(self, text):
+        self._show_hideout_audio_message(QMessageBox.Information, text)
+
+    def _show_hideout_audio_message(self, icon, text):
+        message = QMessageBox(self)
+        message.setWindowTitle("通知音声")
+        message.setIcon(icon)
+        message.setText(str(text))
+        message.setStandardButtons(QMessageBox.Ok)
+        apply_dialog_theme(message, self.theme)
+        return message.exec()
 
     def done(self, result):
         if self._hideout_preview_player is not None:

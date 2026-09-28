@@ -1,4 +1,5 @@
 import hashlib
+import sys
 import wave
 from array import array
 from unittest.mock import MagicMock
@@ -50,6 +51,15 @@ def test_custom_audio_rejects_broken_supported_file(tmp_path):
     source = tmp_path / "broken.mp3"
     source.write_bytes(b"not an audio file")
     with pytest.raises(ValueError, match="音声ファイルを読み込めませんでした"):
+        copy_custom_audio(source)
+
+
+def test_custom_audio_reports_missing_playback_backend(monkeypatch, tmp_path):
+    source = tmp_path / "notice.wav"
+    source.write_bytes(bundled_audio_path().read_bytes())
+    monkeypatch.setitem(sys.modules, "miniaudio", None)
+
+    with pytest.raises(ValueError, match="音声再生機能を読み込めませんでした"):
         copy_custom_audio(source)
 
 

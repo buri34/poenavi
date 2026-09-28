@@ -48,7 +48,12 @@ def copy_custom_audio(source: str | Path) -> tuple[str, str]:
     # Reject corrupt or mislabeled files while the settings dialog can still
     # explain the problem. Playback keeps its own fallback for files that
     # become unreadable after they have been selected.
-    import miniaudio
+    try:
+        import miniaudio
+    except ImportError as error:
+        raise ValueError(
+            "音声再生機能を読み込めませんでした。アプリを再起動してください。"
+        ) from error
 
     try:
         miniaudio.decode_file(str(source_path))

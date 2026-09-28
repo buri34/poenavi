@@ -123,6 +123,10 @@ def test_recent_poetore_releases_use_poetore_scoped_tests():
     for test_file in (
         "tests/test_expedition_settings_dialog.py",
         "tests/test_global_hotkeys.py",
+        "tests/test_hideout_notification.py",
+        "tests/test_hideout_notification_controller.py",
+        "tests/test_notification_audio.py",
+        "tests/test_poe_process.py",
         "tests/test_win32_suppressed_hotkey.py",
     ):
         assert test_file in script
@@ -249,6 +253,16 @@ def test_root_windows_entry_points_are_limited_to_current_build_workflows():
         ROOT / "scripts" / "ensure_windows_build_tools.ps1",
     )
     assert all(not path.exists() for path in local_only_paths)
+
+
+def test_run_dev_uses_an_isolated_runtime_and_installs_current_requirements():
+    script = (ROOT / "run_dev.bat").read_text(encoding="utf-8")
+
+    assert "%LOCALAPPDATA%\\PoENavi\\DevRuntime" in script
+    assert 'python -m venv "%POENAVI_DEV_RUNTIME%"' in script
+    assert '-m pip install --disable-pip-version-check -r "%~dp0requirements.txt"' in script
+    assert 'import PySide6, miniaudio, pynput, urllib3' in script
+    assert '"%POENAVI_DEV_PYTHON%" -B main.py' in script
 
 
 def test_internal_work_records_are_not_part_of_public_source_tree():

@@ -16,12 +16,12 @@ from src.ui.poetore_mode_window import (
 from src.utils.poe_version_data import POE1, POE2
 
 
-def test_main_header_shows_current_poe_mode_four_pixels_smaller_than_title():
+def test_main_header_shows_short_poe_version_four_pixels_smaller_than_title():
     app = QApplication.instance() or QApplication([])
 
     for poe_version, expected in (
-        (POE1, "（PoE1モード）"),
-        (POE2, "（PoE2モード）"),
+        (POE1, "PoE1"),
+        (POE2, "PoE2"),
     ):
         with patch(
             "src.ui.poetore_mode_window.ConfigManager.load_config",
@@ -130,7 +130,8 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert window.memo_button.size().height() == 35
     assert window.divine_rate_value.text() == "最新データを取得できません"
     assert window.divine_rate_value.alignment() == Qt.AlignCenter
-    assert window.width() == 620
+    assert window.minimumWidth() == 500
+    assert window.width() == 558
     assert window.windowFlags() & Qt.FramelessWindowHint
     assert window.capture_hint.text() == (
         "アイテムにマウスオーバーして Alt + D 操作モード / "
