@@ -1,0 +1,4069 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-28T23:35:07.599696+00:00",
+  "status": "runtime_data",
+  "sources": {
+    "candidate_membership": {
+      "repository": "sokratis12GR/Curio-Tracker",
+      "commit": "5c1c23b7c54dad5ed687ca3b096257feec210118",
+      "file": "all_valid_heist_terms.csv",
+      "license": "not_declared_do_not_redistribute_source_csv",
+      "sha256": "fe0abce0e225332049d44383ad9531d9fdf155c0227264a7ad09c708db10c66a"
+    },
+    "official_trade_items_en": {
+      "sha256": "89b722ada424665e5d714cc431c504b00a936d2d19df5f21b6ba24109ac74ead"
+    },
+    "official_trade_items_ja": {
+      "sha256": "4bf853791d83d87c0d08cf73c34dde6fcc7de48c94dae1f829283396d949c1aa"
+    },
+    "official_trade_static_en": {
+      "sha256": "57c3c33751d95a1180d3d145b315dd1068fc5087e977bf69e4c700d520e7a382"
+    },
+    "official_trade_static_ja": {
+      "sha256": "65d275aa5cfa9730d5f86bdd7bf0ffb3324929c1084d4935c44f885ab746553a"
+    },
+    "poetore_exchange_catalog": {
+      "sha256": "a1ac16dcc8aa9c84dee52b61df8bd6621ff26a930302d1a1a8ae18953716cac8"
+    },
+    "observed_curio_candidates": {
+      "sha256": "3e5eb4c9836af05b6fbb1128c16dd00650e941b376f3c1d35e5bed5741db20a8",
+      "count": 1
+    }
+  },
+  "items": [
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyRerollUnique",
+      "category": "currency",
+      "name_en": "Ancient Orb",
+      "name_ja": "古代のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyRerollUnique",
+        "trade_static_id": "ancient-orb",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyRerollImplicit",
+      "category": "currency",
+      "name_en": "Blessed Orb",
+      "name_ja": "祝福のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyRerollImplicit",
+        "trade_static_id": "blessed",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyMapQuality",
+      "category": "currency",
+      "name_en": "Cartographer's Chisel",
+      "name_ja": "地図職人のチゼル",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyMapQuality",
+        "trade_static_id": "chisel",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyRerollRare",
+      "category": "currency",
+      "name_en": "Chaos Orb",
+      "name_ja": "カオスオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyRerollRare",
+        "trade_static_id": "chaos",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyModValues",
+      "category": "currency",
+      "name_en": "Divine Orb",
+      "name_ja": "神のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyModValues",
+        "trade_static_id": "divine",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyEnkindlingOrb",
+      "category": "currency",
+      "name_en": "Enkindling Orb",
+      "name_ja": "濃縮のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyEnkindlingOrb",
+        "trade_static_id": "enkindling-orb",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyAddModToRare",
+      "category": "currency",
+      "name_en": "Exalted Orb",
+      "name_ja": "高貴なオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyAddModToRare",
+        "trade_static_id": "exalted",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyGemQuality",
+      "category": "currency",
+      "name_en": "Gemcutter's Prism",
+      "name_ja": "宝石細工師のプリズム",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyGemQuality",
+        "trade_static_id": "gcp",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyInstillingOrb",
+      "category": "currency",
+      "name_en": "Instilling Orb",
+      "name_ja": "注入のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyInstillingOrb",
+        "trade_static_id": "instilling-orb",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyRerollSocketNumbers",
+      "category": "currency",
+      "name_en": "Jeweller's Orb",
+      "name_ja": "宝飾職人のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyRerollSocketNumbers",
+        "trade_static_id": "jewellers",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyDuplicate",
+      "category": "currency",
+      "name_en": "Mirror of Kalandra",
+      "name_ja": "カランドラの鏡",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyDuplicate",
+        "trade_static_id": "mirror",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyUpgradeToRare",
+      "category": "currency",
+      "name_en": "Orb of Alchemy",
+      "name_ja": "錬金術のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyUpgradeToRare",
+        "trade_static_id": "alch",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyRemoveMod",
+      "category": "currency",
+      "name_en": "Orb of Annulment",
+      "name_ja": "消去のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyRemoveMod",
+        "trade_static_id": "annul",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyUpgradeToRareAndSetSockets",
+      "category": "currency",
+      "name_en": "Orb of Binding",
+      "name_ja": "連結のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyUpgradeToRareAndSetSockets",
+        "trade_static_id": "orb-of-binding",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyRerollSocketLinks",
+      "category": "currency",
+      "name_en": "Orb of Fusing",
+      "name_ja": "結合のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyRerollSocketLinks",
+        "trade_static_id": "fusing",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyRerollMapType",
+      "category": "currency",
+      "name_en": "Orb of Horizons",
+      "name_ja": "地平のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyRerollMapType",
+        "trade_static_id": "orb-of-horizons",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyPassiveRefund",
+      "category": "currency",
+      "name_en": "Orb of Regret",
+      "name_ja": "後悔のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyPassiveRefund",
+        "trade_static_id": "regret",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyConvertToNormal",
+      "category": "currency",
+      "name_en": "Orb of Scouring",
+      "name_ja": "洗浄のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyConvertToNormal",
+        "trade_static_id": "scour",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyUpgradeMagicToRare",
+      "category": "currency",
+      "name_en": "Regal Orb",
+      "name_ja": "王者のオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyUpgradeMagicToRare",
+        "trade_static_id": "regal",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyRerollDefences",
+      "category": "currency",
+      "name_en": "Sacred Orb",
+      "name_ja": "聖なるオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyRerollDefences",
+        "trade_static_id": "sacred-orb",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/DivinationCards/DivinationCardDeck",
+      "category": "currency",
+      "name_en": "Stacked Deck",
+      "name_ja": "スタックデッキ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/DivinationCards/DivinationCardDeck",
+        "trade_static_id": "stacked-deck",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyHeistArmourEnchant",
+      "category": "currency",
+      "name_en": "Tailoring Orb",
+      "name_ja": "仕立てのオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyHeistArmourEnchant",
+        "trade_static_id": "tailoring-orb",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyHeistWeaponEnchant",
+      "category": "currency",
+      "name_en": "Tempering Orb",
+      "name_ja": "焼き戻しのオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyHeistWeaponEnchant",
+        "trade_static_id": "tempering-orb",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Currency/CurrencyCorrupt",
+      "category": "currency",
+      "name_en": "Vaal Orb",
+      "name_ja": "ヴァールオーブ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Currency/CurrencyCorrupt",
+        "trade_static_id": "vaal",
+        "static_group": "Currency"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:accumulator-wand:ed9b79d7109d8121",
+      "category": "experimental_base",
+      "name_en": "Accumulator Wand",
+      "name_ja": "蓄積のワンド",
+      "base_type_en": "Accumulator Wand",
+      "base_type_ja": "蓄積のワンド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Accumulator Wand",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:alternating-sceptre:b83be80a8b97a9e0",
+      "category": "experimental_base",
+      "name_en": "Alternating Sceptre",
+      "name_ja": "置換のセプター",
+      "base_type_en": "Alternating Sceptre",
+      "base_type_ja": "置換のセプター",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Alternating Sceptre",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:anarchic-spiritblade:5f42d019a1161f7d",
+      "category": "experimental_base",
+      "name_en": "Anarchic Spiritblade",
+      "name_ja": "無秩序な精霊の剣",
+      "base_type_en": "Anarchic Spiritblade",
+      "base_type_ja": "無秩序な精霊の剣",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Anarchic Spiritblade",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:apex-cleaver:e8b04e55efc1d9d1",
+      "category": "experimental_base",
+      "name_en": "Apex Cleaver",
+      "name_ja": "切っ先のクリーバー",
+      "base_type_en": "Apex Cleaver",
+      "base_type_ja": "切っ先のクリーバー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Apex Cleaver",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:astrolabe-amulet:c54a3df3313524d7",
+      "category": "experimental_base",
+      "name_en": "Astrolabe Amulet",
+      "name_ja": "アストロラーベアミュレット",
+      "base_type_en": "Astrolabe Amulet",
+      "base_type_ja": "アストロラーベアミュレット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Astrolabe Amulet",
+        "optional_item_level": true,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:banishing-blade:145e4cc8dac91c52",
+      "category": "experimental_base",
+      "name_en": "Banishing Blade",
+      "name_ja": "追放の刃",
+      "base_type_en": "Banishing Blade",
+      "base_type_ja": "追放の刃",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Banishing Blade",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:battery-staff:3ada3e5f9b8b4984",
+      "category": "experimental_base",
+      "name_en": "Battery Staff",
+      "name_ja": "バッテリースタッフ",
+      "base_type_en": "Battery Staff",
+      "base_type_ja": "バッテリースタッフ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Battery Staff",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:blasting-blade:2567fdf12cdd46f3",
+      "category": "experimental_base",
+      "name_en": "Blasting Blade",
+      "name_ja": "叱責の刃",
+      "base_type_en": "Blasting Blade",
+      "base_type_ja": "叱責の刃",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Blasting Blade",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:boom-mace:03b54be71397078d",
+      "category": "experimental_base",
+      "name_en": "Boom Mace",
+      "name_ja": "轟音のメイス",
+      "base_type_en": "Boom Mace",
+      "base_type_ja": "轟音のメイス",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Boom Mace",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:capricious-spiritblade:7974f48a95e460b3",
+      "category": "experimental_base",
+      "name_en": "Capricious Spiritblade",
+      "name_ja": "気まぐれな精霊の剣",
+      "base_type_en": "Capricious Spiritblade",
+      "base_type_ja": "気まぐれな精霊の剣",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Capricious Spiritblade",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:cogwork-ring:a09ac22de0800e85",
+      "category": "experimental_base",
+      "name_en": "Cogwork Ring",
+      "name_ja": "歯車の指輪",
+      "base_type_en": "Cogwork Ring",
+      "base_type_ja": "歯車の指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Cogwork Ring",
+        "optional_item_level": true,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:cold-attuned-buckler:891d658ac7d1fe1a",
+      "category": "experimental_base",
+      "name_en": "Cold-attuned Buckler",
+      "name_ja": "冷気を纏うバックラー",
+      "base_type_en": "Cold-attuned Buckler",
+      "base_type_ja": "冷気を纏うバックラー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Cold-attuned Buckler",
+        "optional_item_level": true,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:composite-ring:ddcc7641567cb859",
+      "category": "experimental_base",
+      "name_en": "Composite Ring",
+      "name_ja": "複合の指輪",
+      "base_type_en": "Composite Ring",
+      "base_type_ja": "複合の指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Composite Ring",
+        "optional_item_level": true,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:congregator-wand:ca94462e0dac48e5",
+      "category": "experimental_base",
+      "name_en": "Congregator Wand",
+      "name_ja": "収集のワンド",
+      "base_type_en": "Congregator Wand",
+      "base_type_ja": "収集のワンド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Congregator Wand",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:crack-mace:d380235b38511ee7",
+      "category": "experimental_base",
+      "name_en": "Crack Mace",
+      "name_ja": "爆音のメイス",
+      "base_type_en": "Crack Mace",
+      "base_type_ja": "爆音のメイス",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Crack Mace",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:crushing-force-magnifier:281fcb2b4ec829de",
+      "category": "experimental_base",
+      "name_en": "Crushing Force Magnifier",
+      "name_ja": "粉砕のマグニファイヤー",
+      "base_type_en": "Crushing Force Magnifier",
+      "base_type_ja": "粉砕のマグニファイヤー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Crushing Force Magnifier",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:devout-chainmail:c230fcdae82602a1",
+      "category": "experimental_base",
+      "name_en": "Devout Chainmail",
+      "name_ja": "信者のチェーンメイル",
+      "base_type_en": "Devout Chainmail",
+      "base_type_ja": "信者のチェーンメイル",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Devout Chainmail",
+        "optional_item_level": true,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:disapprobation-axe:57844d2e7d0c7b99",
+      "category": "experimental_base",
+      "name_en": "Disapprobation Axe",
+      "name_ja": "不服の斧",
+      "base_type_en": "Disapprobation Axe",
+      "base_type_ja": "不服の斧",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Disapprobation Axe",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:eventuality-rod:632ec6c911d2d2c5",
+      "category": "experimental_base",
+      "name_en": "Eventuality Rod",
+      "name_ja": "偶発性のロッド",
+      "base_type_en": "Eventuality Rod",
+      "base_type_ja": "偶発性のロッド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Eventuality Rod",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:flashfire-blade:7e715e37980d93fb",
+      "category": "experimental_base",
+      "name_en": "Flashfire Blade",
+      "name_ja": "閃光の刃",
+      "base_type_en": "Flashfire Blade",
+      "base_type_ja": "閃光の刃",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Flashfire Blade",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:focused-amulet:adfd3efb75b815cb",
+      "category": "experimental_base",
+      "name_en": "Focused Amulet",
+      "name_ja": "フォーカスアミュレット",
+      "base_type_en": "Focused Amulet",
+      "base_type_ja": "フォーカスアミュレット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Focused Amulet",
+        "optional_item_level": true,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:foundry-bow:15d866307e896aaa",
+      "category": "experimental_base",
+      "name_en": "Foundry Bow",
+      "name_ja": "ファウンドリーボウ",
+      "base_type_en": "Foundry Bow",
+      "base_type_ja": "ファウンドリーボウ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Foundry Bow",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:geodesic-ring:7fd2d0dce19aaf54",
+      "category": "experimental_base",
+      "name_en": "Geodesic Ring",
+      "name_ja": "測地線の指輪",
+      "base_type_en": "Geodesic Ring",
+      "base_type_ja": "測地線の指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Geodesic Ring",
+        "optional_item_level": true,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:heat-attuned-tower-shield:c97a07a8929721c6",
+      "category": "experimental_base",
+      "name_en": "Heat-attuned Tower Shield",
+      "name_ja": "熱調整のタワーシールド",
+      "base_type_en": "Heat-attuned Tower Shield",
+      "base_type_ja": "熱調整のタワーシールド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Heat-attuned Tower Shield",
+        "optional_item_level": true,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:helical-ring:f3d10c40a8aaea3a",
+      "category": "experimental_base",
+      "name_en": "Helical Ring",
+      "name_ja": "螺旋の指輪",
+      "base_type_en": "Helical Ring",
+      "base_type_ja": "螺旋の指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Helical Ring",
+        "optional_item_level": true,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:honed-cleaver:251a7d09dacec92e",
+      "category": "experimental_base",
+      "name_en": "Honed Cleaver",
+      "name_ja": "鋭利なクリーバー",
+      "base_type_en": "Honed Cleaver",
+      "base_type_ja": "鋭利なクリーバー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Honed Cleaver",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:impact-force-propagator:077fc506ef5d8e55",
+      "category": "experimental_base",
+      "name_en": "Impact Force Propagator",
+      "name_ja": "衝撃のプロパゲーター",
+      "base_type_en": "Impact Force Propagator",
+      "base_type_ja": "衝撃のプロパゲーター",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Impact Force Propagator",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:infernal-blade:75f099438b2c6d64",
+      "category": "experimental_base",
+      "name_en": "Infernal Blade",
+      "name_ja": "業火の刃",
+      "base_type_en": "Infernal Blade",
+      "base_type_ja": "業火の刃",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Infernal Blade",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:magmatic-tower-shield:30d158ac8497cdc2",
+      "category": "experimental_base",
+      "name_en": "Magmatic Tower Shield",
+      "name_ja": "マグマタワーシールド",
+      "base_type_en": "Magmatic Tower Shield",
+      "base_type_ja": "マグマタワーシールド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Magmatic Tower Shield",
+        "optional_item_level": true,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:malign-fangs:86a9b8e0db65d33b",
+      "category": "experimental_base",
+      "name_en": "Malign Fangs",
+      "name_ja": "マラインファング",
+      "base_type_en": "Malign Fangs",
+      "base_type_ja": "マラインファング",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Malign Fangs",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:manifold-ring:16f06c601928f87c",
+      "category": "experimental_base",
+      "name_en": "Manifold Ring",
+      "name_ja": "多様体の指輪",
+      "base_type_en": "Manifold Ring",
+      "base_type_ja": "多様体の指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Manifold Ring",
+        "optional_item_level": true,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:mechalarm-belt:f1e45f9069866fea",
+      "category": "experimental_base",
+      "name_en": "Mechalarm Belt",
+      "name_ja": "機械装置のベルト",
+      "base_type_en": "Mechalarm Belt",
+      "base_type_ja": "機械装置のベルト",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Mechalarm Belt",
+        "optional_item_level": true,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:mechanical-belt:f8484bdf25a4a777",
+      "category": "experimental_base",
+      "name_en": "Mechanical Belt",
+      "name_ja": "機械的なベルト",
+      "base_type_en": "Mechanical Belt",
+      "base_type_ja": "機械的なベルト",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Mechanical Belt",
+        "optional_item_level": true,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:micro-distillery-belt:59abe58bd8c6454b",
+      "category": "experimental_base",
+      "name_en": "Micro-Distillery Belt",
+      "name_ja": "小さな蒸留所のベルト",
+      "base_type_en": "Micro-Distillery Belt",
+      "base_type_ja": "小さな蒸留所のベルト",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Micro-Distillery Belt",
+        "optional_item_level": true,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:oscillating-sceptre:650a7266f3c77713",
+      "category": "experimental_base",
+      "name_en": "Oscillating Sceptre",
+      "name_ja": "振動のセプター",
+      "base_type_en": "Oscillating Sceptre",
+      "base_type_ja": "振動のセプター",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Oscillating Sceptre",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:pneumatic-dagger:e46c1921d5eb8323",
+      "category": "experimental_base",
+      "name_en": "Pneumatic Dagger",
+      "name_ja": "空圧のダガー",
+      "base_type_en": "Pneumatic Dagger",
+      "base_type_ja": "空圧のダガー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Pneumatic Dagger",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:polar-buckler:f09c9cb6dd309440",
+      "category": "experimental_base",
+      "name_en": "Polar Buckler",
+      "name_ja": "極地のバックラー",
+      "base_type_en": "Polar Buckler",
+      "base_type_ja": "極地のバックラー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Polar Buckler",
+        "optional_item_level": true,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:potentiality-rod:204454fb15fb0029",
+      "category": "experimental_base",
+      "name_en": "Potentiality Rod",
+      "name_ja": "潜在力のロッド",
+      "base_type_en": "Potentiality Rod",
+      "base_type_ja": "潜在力のロッド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Potentiality Rod",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:pressurised-dagger:a6436553ace89ab5",
+      "category": "experimental_base",
+      "name_en": "Pressurised Dagger",
+      "name_ja": "加圧のダガー",
+      "base_type_en": "Pressurised Dagger",
+      "base_type_ja": "加圧のダガー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Pressurised Dagger",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:psychotic-axe:bda89fe6e708af30",
+      "category": "experimental_base",
+      "name_en": "Psychotic Axe",
+      "name_ja": "精神病者の斧",
+      "base_type_en": "Psychotic Axe",
+      "base_type_ja": "精神病者の斧",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Psychotic Axe",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:ratcheting-ring:e27050148f4710fa",
+      "category": "experimental_base",
+      "name_en": "Ratcheting Ring",
+      "name_ja": "歯止めの指輪",
+      "base_type_en": "Ratcheting Ring",
+      "base_type_ja": "歯止めの指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Ratcheting Ring",
+        "optional_item_level": true,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:reciprocation-staff:c8797b67f92ecf14",
+      "category": "experimental_base",
+      "name_en": "Reciprocation Staff",
+      "name_ja": "相互変換のスタッフ",
+      "base_type_en": "Reciprocation Staff",
+      "base_type_ja": "相互変換のスタッフ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Reciprocation Staff",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:simplex-amulet:45aaa2cc88cf27b2",
+      "category": "experimental_base",
+      "name_en": "Simplex Amulet",
+      "name_ja": "シンプレックスアミュレット",
+      "base_type_en": "Simplex Amulet",
+      "base_type_ja": "シンプレックスアミュレット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Simplex Amulet",
+        "optional_item_level": true,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:solarine-bow:26ab7e7e53ca291a",
+      "category": "experimental_base",
+      "name_en": "Solarine Bow",
+      "name_ja": "ソラリンボウ",
+      "base_type_en": "Solarine Bow",
+      "base_type_ja": "ソラリンボウ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Solarine Bow",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:stabilising-sceptre:bbeb131989e7c7fc",
+      "category": "experimental_base",
+      "name_en": "Stabilising Sceptre",
+      "name_ja": "平衡のセプター",
+      "base_type_en": "Stabilising Sceptre",
+      "base_type_ja": "平衡のセプター",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Stabilising Sceptre",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:subsuming-spirit-shield:209c30a5c763f7f3",
+      "category": "experimental_base",
+      "name_en": "Subsuming Spirit Shield",
+      "name_ja": "包摂のスピリットシールド",
+      "base_type_en": "Subsuming Spirit Shield",
+      "base_type_ja": "包摂のスピリットシールド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Subsuming Spirit Shield",
+        "optional_item_level": true,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:transfer-attuned-spirit-shield:24663a5351cb272a",
+      "category": "experimental_base",
+      "name_en": "Transfer-attuned Spirit Shield",
+      "name_ja": "転嫁のスピリットシールド",
+      "base_type_en": "Transfer-attuned Spirit Shield",
+      "base_type_ja": "転嫁のスピリットシールド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Transfer-attuned Spirit Shield",
+        "optional_item_level": true,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:experimental_base:void-fangs:364abdb3be8083fe",
+      "category": "experimental_base",
+      "name_en": "Void Fangs",
+      "name_ja": "ヴォイドファング",
+      "base_type_en": "Void Fangs",
+      "base_type_ja": "ヴォイドファング",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Void Fangs",
+        "optional_item_level": true,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:actum:3cd6a3d9f3d8efb5",
+      "category": "replacement_unique",
+      "name_en": "Actum",
+      "name_ja": "アクトゥム",
+      "base_type_en": "Butcher Axe",
+      "base_type_ja": "屠殺の斧",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Actum",
+        "base_type_en": "Butcher Axe",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:crest-of-desire:0c8f9a947d79a03a",
+      "category": "replacement_unique",
+      "name_en": "Crest of Desire",
+      "name_ja": "欲望の紋章",
+      "base_type_en": "Fluted Bascinet",
+      "base_type_ja": "溝付きバシネット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Crest of Desire",
+        "base_type_en": "Fluted Bascinet",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:expedition-s-end:1b5be4aeb8a72824",
+      "category": "replacement_unique",
+      "name_en": "Expedition's End",
+      "name_ja": "遠征の終わり",
+      "base_type_en": "Sentinel Jacket",
+      "base_type_ja": "センチネルジャケット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Expedition's End",
+        "base_type_en": "Sentinel Jacket",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:fated-end:f8daa1fcbeb8346e",
+      "category": "replacement_unique",
+      "name_en": "Fated End",
+      "name_ja": "定められし終焉",
+      "base_type_en": "Paua Ring",
+      "base_type_ja": "パウア貝の指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Fated End",
+        "base_type_en": "Paua Ring",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:font-of-thunder:a129547a35169c7b",
+      "category": "replacement_unique",
+      "name_en": "Font of Thunder",
+      "name_ja": "雷の源",
+      "base_type_en": "Mirrored Spiked Shield",
+      "base_type_ja": "鏡面のスパイクシールド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Font of Thunder",
+        "base_type_en": "Mirrored Spiked Shield",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:shattershard:97e7149e8c49ecaf",
+      "category": "replacement_unique",
+      "name_en": "Shattershard",
+      "name_ja": "砕けた破片",
+      "base_type_en": "Crimson Round Shield",
+      "base_type_ja": "真紅のラウンドシールド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Shattershard",
+        "base_type_en": "Crimson Round Shield",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:the-fulcrum:78c3eb1310711ac3",
+      "category": "replacement_unique",
+      "name_en": "The Fulcrum",
+      "name_ja": "フルクラム",
+      "base_type_en": "Ezomyte Staff",
+      "base_type_ja": "エゾマイトスタッフ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "The Fulcrum",
+        "base_type_en": "Ezomyte Staff",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:the-hidden-blade:dd5503c1f589dec5",
+      "category": "replacement_unique",
+      "name_en": "The Hidden Blade",
+      "name_ja": "隠れた刃",
+      "base_type_en": "Ambusher",
+      "base_type_ja": "アンブッシャー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "The Hidden Blade",
+        "base_type_en": "Ambusher",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:the-iron-mass:fdb732513b804e9f",
+      "category": "replacement_unique",
+      "name_en": "The Iron Mass",
+      "name_ja": "鉄の塊",
+      "base_type_en": "Gladius",
+      "base_type_ja": "グラディウス",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "The Iron Mass",
+        "base_type_en": "Gladius",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-abyssus:6c92a8ca5ebe03f6",
+      "category": "replica_unique",
+      "name_en": "Replica Abyssus",
+      "name_ja": "アビサス（レプリカ）",
+      "base_type_en": "Ezomyte Burgonet",
+      "base_type_ja": "エゾマイトバーゴネット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Abyssus",
+        "base_type_en": "Ezomyte Burgonet",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-advancing-fortress:b9b8d99f5118dd70",
+      "category": "replica_unique",
+      "name_en": "Replica Advancing Fortress",
+      "name_ja": "前進する要塞（レプリカ）",
+      "base_type_en": "Gut Ripper",
+      "base_type_ja": "ガットリッパー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Advancing Fortress",
+        "base_type_en": "Gut Ripper",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-alberon-s-warpath:8402ddca75156bca",
+      "category": "replica_unique",
+      "name_en": "Replica Alberon's Warpath",
+      "name_ja": "アルベロンのウォーパス（レプリカ）",
+      "base_type_en": "Soldier Boots",
+      "base_type_ja": "兵士のブーツ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Alberon's Warpath",
+        "base_type_en": "Soldier Boots",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-allelopathy:edb1e8b30fea9809",
+      "category": "replica_unique",
+      "name_en": "Replica Allelopathy",
+      "name_ja": "アレロパシー（レプリカ）",
+      "base_type_en": "Satin Gloves",
+      "base_type_ja": "繻子のグローブ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Allelopathy",
+        "base_type_en": "Satin Gloves",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-allure:45f4351f3fac07bf",
+      "category": "replica_unique",
+      "name_en": "Replica Allure",
+      "name_ja": "魅惑（レプリカ）",
+      "base_type_en": "Vaal Claw",
+      "base_type_ja": "ヴァールクロー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Allure",
+        "base_type_en": "Vaal Claw",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-alpha-s-howl:d770fa9633c694b3",
+      "category": "replica_unique",
+      "name_en": "Replica Alpha's Howl",
+      "name_ja": "アルファの遠吠え（レプリカ）",
+      "base_type_en": "Sinner Tricorne",
+      "base_type_ja": "罪人の三角帽",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Alpha's Howl",
+        "base_type_en": "Sinner Tricorne",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-ambu-s-charge:f9cc1497f28f9dd8",
+      "category": "replica_unique",
+      "name_en": "Replica Ambu's Charge",
+      "name_ja": "アンブーの突撃（レプリカ）",
+      "base_type_en": "Crusader Chainmail",
+      "base_type_ja": "聖戦士のチェーンメイル",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Ambu's Charge",
+        "base_type_en": "Crusader Chainmail",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-atziri-s-acuity:abb7715575209210",
+      "category": "replica_unique",
+      "name_en": "Replica Atziri's Acuity",
+      "name_ja": "アッツィリの鋭敏さ（レプリカ）",
+      "base_type_en": "Vaal Gauntlets",
+      "base_type_ja": "ヴァールガントレット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Atziri's Acuity",
+        "base_type_en": "Vaal Gauntlets",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-atziri-s-foible:327240c323de1bbd",
+      "category": "replica_unique",
+      "name_en": "Replica Atziri's Foible",
+      "name_ja": "アッツィリの欠点（レプリカ）",
+      "base_type_en": "Paua Amulet",
+      "base_type_ja": "パウア貝のアミュレット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Atziri's Foible",
+        "base_type_en": "Paua Amulet",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-badge-of-the-brotherhood:55147d1ef36850c6",
+      "category": "replica_unique",
+      "name_en": "Replica Badge of the Brotherhood",
+      "name_ja": "一党の記章（レプリカ）",
+      "base_type_en": "Turquoise Amulet",
+      "base_type_ja": "ターコイズのアミュレット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Badge of the Brotherhood",
+        "base_type_en": "Turquoise Amulet",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-bated-breath:ff49d45d01ea19d9",
+      "category": "replica_unique",
+      "name_en": "Replica Bated Breath",
+      "name_ja": "殺した息（レプリカ）",
+      "base_type_en": "Chain Belt",
+      "base_type_ja": "チェーンベルト",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Bated Breath",
+        "base_type_en": "Chain Belt",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-bitterdream:b98f7a00c1b41d30",
+      "category": "replica_unique",
+      "name_en": "Replica Bitterdream",
+      "name_ja": "ビタードリーム（レプリカ）",
+      "base_type_en": "Shadow Sceptre",
+      "base_type_ja": "闇のセプター",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Bitterdream",
+        "base_type_en": "Shadow Sceptre",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-blood-thorn:ce6f2b091e9ffa77",
+      "category": "replica_unique",
+      "name_en": "Replica Blood Thorn",
+      "name_ja": "血の棘（レプリカ）",
+      "base_type_en": "Gnarled Branch",
+      "base_type_ja": "ねじれた枝",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Blood Thorn",
+        "base_type_en": "Gnarled Branch",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-bloodplay:61c494cfca2950a0",
+      "category": "replica_unique",
+      "name_en": "Replica Bloodplay",
+      "name_ja": "ブラッドプレイ（レプリカ）",
+      "base_type_en": "Stiletto",
+      "base_type_ja": "スティレット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Bloodplay",
+        "base_type_en": "Stiletto",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-bones-of-ullr:50b635afce165a46",
+      "category": "replica_unique",
+      "name_en": "Replica Bones of Ullr",
+      "name_ja": "ウルルの骨（レプリカ）",
+      "base_type_en": "Silk Slippers",
+      "base_type_ja": "シルクの履物",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Bones of Ullr",
+        "base_type_en": "Silk Slippers",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-cold-iron-point:12121b1580995cec",
+      "category": "replica_unique",
+      "name_en": "Replica Cold Iron Point",
+      "name_ja": "冷鉄の剣先（レプリカ）",
+      "base_type_en": "Ezomyte Dagger",
+      "base_type_ja": "エゾマイトダガー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Cold Iron Point",
+        "base_type_en": "Ezomyte Dagger",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-cortex:d9a0867f6b3f5769",
+      "category": "replica_unique",
+      "name_en": "Replica Cortex",
+      "name_ja": "コーテクス（レプリカ）",
+      "base_type_en": "Map",
+      "base_type_ja": "マップ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Cortex",
+        "base_type_en": "Map",
+        "optional_item_level": false,
+        "item_group": "map"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-covenant:34da59c40ef0a67e",
+      "category": "replica_unique",
+      "name_en": "Replica Covenant",
+      "name_ja": "契約（レプリカ）",
+      "base_type_en": "Spidersilk Robe",
+      "base_type_ja": "蜘蛛糸のローブ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Covenant",
+        "base_type_en": "Spidersilk Robe",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-doedre-s-damning:910f9ae9d98cc28d",
+      "category": "replica_unique",
+      "name_en": "Replica Doedre's Damning",
+      "name_ja": "ドードリの非難（レプリカ）",
+      "base_type_en": "Paua Ring",
+      "base_type_ja": "パウア貝の指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Doedre's Damning",
+        "base_type_en": "Paua Ring",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-dreamfeather:44604b299512cf40",
+      "category": "replica_unique",
+      "name_en": "Replica Dreamfeather",
+      "name_ja": "ドリームフェザー（レプリカ）",
+      "base_type_en": "Eternal Sword",
+      "base_type_ja": "永遠の剣",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Dreamfeather",
+        "base_type_en": "Eternal Sword",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-duskdawn:88f2199889635203",
+      "category": "replica_unique",
+      "name_en": "Replica Duskdawn",
+      "name_ja": "ダスクドーン（レプリカ）",
+      "base_type_en": "Maelström Staff",
+      "base_type_ja": "メールストロームスタッフ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Duskdawn",
+        "base_type_en": "Maelström Staff",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-earendel-s-embrace:2524b024a2b3d6c0",
+      "category": "replica_unique",
+      "name_en": "Replica Earendel's Embrace",
+      "name_ja": "イアレンデルの抱擁（レプリカ）",
+      "base_type_en": "Grinning Fetish",
+      "base_type_ja": "綻ぶ呪物",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Earendel's Embrace",
+        "base_type_en": "Grinning Fetish",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-emberwake:cef3024111eae978",
+      "category": "replica_unique",
+      "name_en": "Replica Emberwake",
+      "name_ja": "エンバーウェーク（レプリカ）",
+      "base_type_en": "Ruby Ring",
+      "base_type_ja": "ルビーの指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Emberwake",
+        "base_type_en": "Ruby Ring",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-eternity-shroud:ad553fe165f1fd66",
+      "category": "replica_unique",
+      "name_en": "Replica Eternity Shroud",
+      "name_ja": "永遠の覆い（レプリカ）",
+      "base_type_en": "Blood Raiment",
+      "base_type_ja": "血色の装束",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Eternity Shroud",
+        "base_type_en": "Blood Raiment",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-farrul-s-fur:bf1fc084ee0947cb",
+      "category": "replica_unique",
+      "name_en": "Replica Farrul's Fur",
+      "name_ja": "ファルウルの毛皮（レプリカ）",
+      "base_type_en": "Triumphant Lamellar",
+      "base_type_ja": "勝利のラメラー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Farrul's Fur",
+        "base_type_en": "Triumphant Lamellar",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-fencoil:40048b6b2854953c",
+      "category": "replica_unique",
+      "name_en": "Replica Fencoil",
+      "name_ja": "フェンコイル（レプリカ）",
+      "base_type_en": "Gnarled Branch",
+      "base_type_ja": "ねじれた枝",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Fencoil",
+        "base_type_en": "Gnarled Branch",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-fragility:e529378e5786a547",
+      "category": "replica_unique",
+      "name_en": "Replica Fragility",
+      "name_ja": "虚弱（レプリカ）",
+      "base_type_en": "Crimson Jewel",
+      "base_type_ja": "クリムゾンジュエル",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Fragility",
+        "base_type_en": "Crimson Jewel",
+        "optional_item_level": false,
+        "item_group": "jewel"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-frostbreath:e3d4a8da9ae0ae5d",
+      "category": "replica_unique",
+      "name_en": "Replica Frostbreath",
+      "name_ja": "フロストブレス（レプリカ）",
+      "base_type_en": "Ornate Mace",
+      "base_type_ja": "装飾メイス",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Frostbreath",
+        "base_type_en": "Ornate Mace",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-gifts-from-above:4da522dc15102e50",
+      "category": "replica_unique",
+      "name_en": "Replica Gifts from Above",
+      "name_ja": "天からの恩恵 (レプリカ)",
+      "base_type_en": "Diamond Ring",
+      "base_type_ja": "ダイヤモンドの指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Gifts from Above",
+        "base_type_en": "Diamond Ring",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-grip-of-the-council:b18fac9e0f0c7045",
+      "category": "replica_unique",
+      "name_en": "Replica Grip of the Council",
+      "name_ja": "評議会の支配（レプリカ）",
+      "base_type_en": "Arcanist Gloves",
+      "base_type_ja": "秘術師のグローブ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Grip of the Council",
+        "base_type_en": "Arcanist Gloves",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-harvest:e5a4e43b33c318e1",
+      "category": "replica_unique",
+      "name_en": "Replica Harvest",
+      "name_ja": "ハーベスト（レプリカ）",
+      "base_type_en": "Jasper Chopper",
+      "base_type_ja": "碧玉の大斧",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Harvest",
+        "base_type_en": "Jasper Chopper",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-headhunter:95284736b34bc362",
+      "category": "replica_unique",
+      "name_en": "Replica Headhunter",
+      "name_ja": "ヘッドハンター（レプリカ）",
+      "base_type_en": "Leather Belt",
+      "base_type_ja": "革のベルト",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Headhunter",
+        "base_type_en": "Leather Belt",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-heartbreaker:f5712720eece47e4",
+      "category": "replica_unique",
+      "name_en": "Replica Heartbreaker",
+      "name_ja": "ハートブレーカー（レプリカ）",
+      "base_type_en": "Royal Skean",
+      "base_type_ja": "ロイヤルスキーン",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Heartbreaker",
+        "base_type_en": "Royal Skean",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-heatshiver:8acab0ebc537e8bb",
+      "category": "replica_unique",
+      "name_en": "Replica Heatshiver",
+      "name_ja": "ヒートシヴァー（レプリカ）",
+      "base_type_en": "Leather Hood",
+      "base_type_ja": "皮のフード",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Heatshiver",
+        "base_type_en": "Leather Hood",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-hinekora-s-sight:f10eaf541a978cda",
+      "category": "replica_unique",
+      "name_en": "Replica Hinekora's Sight",
+      "name_ja": "ヒネコラの視界（レプリカ）",
+      "base_type_en": "Onyx Amulet",
+      "base_type_ja": "オニキスのアミュレット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Hinekora's Sight",
+        "base_type_en": "Onyx Amulet",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-hyrri-s-ire:7efc86f20bf68cd4",
+      "category": "replica_unique",
+      "name_en": "Replica Hyrri's Ire",
+      "name_ja": "ハイリの怒り（レプリカ）",
+      "base_type_en": "Zodiac Leather",
+      "base_type_ja": "ゾディアックレザー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Hyrri's Ire",
+        "base_type_en": "Zodiac Leather",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-hyrri-s-truth:040fab475ce598fa",
+      "category": "replica_unique",
+      "name_en": "Replica Hyrri's Truth",
+      "name_ja": "ハイリの真実（レプリカ）",
+      "base_type_en": "Jade Amulet",
+      "base_type_ja": "翡翠のアミュレット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Hyrri's Truth",
+        "base_type_en": "Jade Amulet",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-infractem:591b9d1c45a20c1f",
+      "category": "replica_unique",
+      "name_en": "Replica Infractem",
+      "name_ja": "インフラクテム（レプリカ）",
+      "base_type_en": "Decimation Bow",
+      "base_type_ja": "殺戮の弓",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Infractem",
+        "base_type_en": "Decimation Bow",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-innsbury-edge:65a20d11d5589a0b",
+      "category": "replica_unique",
+      "name_en": "Replica Innsbury Edge",
+      "name_ja": "インズブリーの刃（レプリカ）",
+      "base_type_en": "Elder Sword",
+      "base_type_ja": "長老の剣",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Innsbury Edge",
+        "base_type_en": "Elder Sword",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-inya-s-epiphany:8381eb457c623101",
+      "category": "replica_unique",
+      "name_en": "Replica Inya's Epiphany",
+      "name_ja": "イーニャの閃き（レプリカ）",
+      "base_type_en": "Arcanist Slippers",
+      "base_type_ja": "秘術師の履物",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Inya's Epiphany",
+        "base_type_en": "Arcanist Slippers",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-iron-commander:f5104bf5a4ea3942",
+      "category": "replica_unique",
+      "name_en": "Replica Iron Commander",
+      "name_ja": "鉄の司令官（レプリカ）",
+      "base_type_en": "Death Bow",
+      "base_type_ja": "死の弓",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Iron Commander",
+        "base_type_en": "Death Bow",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-kalisa-s-grace:a99d56a80eb4f183",
+      "category": "replica_unique",
+      "name_en": "Replica Kalisa's Grace",
+      "name_ja": "カリサの優美さ（レプリカ）",
+      "base_type_en": "Samite Gloves",
+      "base_type_ja": "絹織物のグローブ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Kalisa's Grace",
+        "base_type_en": "Samite Gloves",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-kaom-s-heart:94d188ebf7f0be4d",
+      "category": "replica_unique",
+      "name_en": "Replica Kaom's Heart",
+      "name_ja": "カオムの心臓（レプリカ）",
+      "base_type_en": "Glorious Plate",
+      "base_type_ja": "栄光のプレート",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Kaom's Heart",
+        "base_type_en": "Glorious Plate",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-karui-ward:1cc8c6cc4199207c",
+      "category": "replica_unique",
+      "name_en": "Replica Karui Ward",
+      "name_ja": "カルイの守り（レプリカ）",
+      "base_type_en": "Jade Amulet",
+      "base_type_ja": "翡翠のアミュレット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Karui Ward",
+        "base_type_en": "Jade Amulet",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-kongor-s-undying-rage:7395a913d2995803",
+      "category": "replica_unique",
+      "name_en": "Replica Kongor's Undying Rage",
+      "name_ja": "コンゴーの尽きぬ怒り（レプリカ）",
+      "base_type_en": "Terror Maul",
+      "base_type_ja": "畏怖の大鎚",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Kongor's Undying Rage",
+        "base_type_en": "Terror Maul",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-last-resort:f63a716b1b83be9f",
+      "category": "replica_unique",
+      "name_en": "Replica Last Resort",
+      "name_ja": "最後の手段（レプリカ）",
+      "base_type_en": "Nailed Fist",
+      "base_type_ja": "釘打ちの鉄拳",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Last Resort",
+        "base_type_en": "Nailed Fist",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-lavianga-s-spirit:becde0e2750b5db5",
+      "category": "replica_unique",
+      "name_en": "Replica Lavianga's Spirit",
+      "name_ja": "ラヴィアンガの心（レプリカ）",
+      "base_type_en": "Sanctified Mana Flask",
+      "base_type_ja": "聖別されたマナフラスコ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Lavianga's Spirit",
+        "base_type_en": "Sanctified Mana Flask",
+        "optional_item_level": false,
+        "item_group": "flask"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-leer-cast:bc18fd879d27e82e",
+      "category": "replica_unique",
+      "name_en": "Replica Leer Cast",
+      "name_ja": "リアーキャスト（レプリカ）",
+      "base_type_en": "Festival Mask",
+      "base_type_ja": "祭典の仮面",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Leer Cast",
+        "base_type_en": "Festival Mask",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-lioneye-s-paws:3d1eea5089991566",
+      "category": "replica_unique",
+      "name_en": "Replica Lioneye's Paws",
+      "name_ja": "ライオンアイの足（レプリカ）",
+      "base_type_en": "Bronzescale Boots",
+      "base_type_ja": "青銅鱗のブーツ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Lioneye's Paws",
+        "base_type_en": "Bronzescale Boots",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-loreweave:a37de454c67abc10",
+      "category": "replica_unique",
+      "name_en": "Replica Loreweave",
+      "name_ja": "ロアウィーヴ（レプリカ）",
+      "base_type_en": "Elegant Ringmail",
+      "base_type_ja": "上品なリングメイル",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Loreweave",
+        "base_type_en": "Elegant Ringmail",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-malachai-s-artifice:70338c0d6e3609ff",
+      "category": "replica_unique",
+      "name_en": "Replica Malachai's Artifice",
+      "name_ja": "マラカイの術策（レプリカ）",
+      "base_type_en": "Unset Ring",
+      "base_type_ja": "石なしの指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Malachai's Artifice",
+        "base_type_en": "Unset Ring",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-maloney-s-mechanism:3d89f803483344b4",
+      "category": "replica_unique",
+      "name_en": "Replica Maloney's Mechanism",
+      "name_ja": "マローニーの機械（レプリカ）",
+      "base_type_en": "Ornate Quiver",
+      "base_type_ja": "華美な矢筒",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Maloney's Mechanism",
+        "base_type_en": "Ornate Quiver",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-midnight-bargain:a867a9bb97187c73",
+      "category": "replica_unique",
+      "name_en": "Replica Midnight Bargain",
+      "name_ja": "真夜中の取引（レプリカ）",
+      "base_type_en": "Calling Wand",
+      "base_type_ja": "呼集のワンド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Midnight Bargain",
+        "base_type_en": "Calling Wand",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-mistwall:a281bf59005a4cf2",
+      "category": "replica_unique",
+      "name_en": "Replica Mistwall",
+      "name_ja": "ミストウォール（レプリカ）",
+      "base_type_en": "Lacquered Buckler",
+      "base_type_ja": "漆塗のバックラー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Mistwall",
+        "base_type_en": "Lacquered Buckler",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-nebulis:3f4a27ddc9c93f97",
+      "category": "replica_unique",
+      "name_en": "Replica Nebulis",
+      "name_ja": "ネビュリス（レプリカ）",
+      "base_type_en": "Void Sceptre",
+      "base_type_ja": "虚無のセプター",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Nebulis",
+        "base_type_en": "Void Sceptre",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-oro-s-sacrifice:db0b7f1cfdb102a2",
+      "category": "replica_unique",
+      "name_en": "Replica Oro's Sacrifice",
+      "name_ja": "オロの生贄（レプリカ）",
+      "base_type_en": "Infernal Sword",
+      "base_type_ja": "インファーナルソード",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Oro's Sacrifice",
+        "base_type_en": "Infernal Sword",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-pacifism:0fdcac95aa41dade",
+      "category": "replica_unique",
+      "name_en": "Replica Pacifism",
+      "name_ja": "平和主義（レプリカ）",
+      "base_type_en": "Viridian Jewel",
+      "base_type_ja": "ビリジアンジュエル",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Pacifism",
+        "base_type_en": "Viridian Jewel",
+        "optional_item_level": false,
+        "item_group": "jewel"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-paradoxica:ced36b338de3ec74",
+      "category": "replica_unique",
+      "name_en": "Replica Paradoxica",
+      "name_ja": "パラドクシカ（レプリカ）",
+      "base_type_en": "Vaal Rapier",
+      "base_type_ja": "ヴァールレイピア",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Paradoxica",
+        "base_type_en": "Vaal Rapier",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-perfect-form:870570cba835bbe6",
+      "category": "replica_unique",
+      "name_en": "Replica Perfect Form",
+      "name_ja": "完璧な姿（レプリカ）",
+      "base_type_en": "Zodiac Leather",
+      "base_type_ja": "ゾディアックレザー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Perfect Form",
+        "base_type_en": "Zodiac Leather",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-pillars-of-arun:4f43efa1fee91f3a",
+      "category": "replica_unique",
+      "name_en": "Replica Pillars of Arun",
+      "name_ja": "アルンの柱（レプリカ）",
+      "base_type_en": "Map",
+      "base_type_ja": "マップ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Pillars of Arun",
+        "base_type_en": "Map",
+        "optional_item_level": false,
+        "item_group": "map"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-poorjoy-s-asylum:28aeac9ffa88d7f0",
+      "category": "replica_unique",
+      "name_en": "Replica Poorjoy's Asylum",
+      "name_ja": "プアジョイの収容所（レプリカ）",
+      "base_type_en": "Map",
+      "base_type_ja": "マップ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Poorjoy's Asylum",
+        "base_type_en": "Map",
+        "optional_item_level": false,
+        "item_group": "map"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-powerlessness:9dcc49e7983d86e7",
+      "category": "replica_unique",
+      "name_en": "Replica Powerlessness",
+      "name_ja": "無力（レプリカ）",
+      "base_type_en": "Cobalt Jewel",
+      "base_type_ja": "コバルトジュエル",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Powerlessness",
+        "base_type_en": "Cobalt Jewel",
+        "optional_item_level": false,
+        "item_group": "jewel"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-primordial-might:b1fa3d4511ef331c",
+      "category": "replica_unique",
+      "name_en": "Replica Primordial Might",
+      "name_ja": "原初の力（レプリカ）",
+      "base_type_en": "Crimson Jewel",
+      "base_type_ja": "クリムゾンジュエル",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Primordial Might",
+        "base_type_en": "Crimson Jewel",
+        "optional_item_level": false,
+        "item_group": "jewel"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-prismweave:2e333c610922ca80",
+      "category": "replica_unique",
+      "name_en": "Replica Prismweave",
+      "name_ja": "プリズムウィーヴ（レプリカ）",
+      "base_type_en": "Rustic Sash",
+      "base_type_ja": "素朴な飾り帯",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Prismweave",
+        "base_type_en": "Rustic Sash",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-quill-rain:2fd3e6d87037f3f9",
+      "category": "replica_unique",
+      "name_en": "Replica Quill Rain",
+      "name_ja": "針の雨（レプリカ）",
+      "base_type_en": "Short Bow",
+      "base_type_ja": "ショートボウ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Quill Rain",
+        "base_type_en": "Short Bow",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-reckless-defence:f5af40c4da9a071d",
+      "category": "replica_unique",
+      "name_en": "Replica Reckless Defence",
+      "name_ja": "無謀な防御（レプリカ）",
+      "base_type_en": "Cobalt Jewel",
+      "base_type_ja": "コバルトジュエル",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Reckless Defence",
+        "base_type_en": "Cobalt Jewel",
+        "optional_item_level": false,
+        "item_group": "jewel"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-red-trail:0e5cae746b79db45",
+      "category": "replica_unique",
+      "name_en": "Replica Red Trail",
+      "name_ja": "赤い足跡（レプリカ）",
+      "base_type_en": "Titan Greaves",
+      "base_type_ja": "タイタングリーヴ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Red Trail",
+        "base_type_en": "Titan Greaves",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-restless-ward:e2b51a175cde1758",
+      "category": "replica_unique",
+      "name_en": "Replica Restless Ward",
+      "name_ja": "休まぬ守り（レプリカ）",
+      "base_type_en": "Carnal Armour",
+      "base_type_ja": "カーナルアーマー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Restless Ward",
+        "base_type_en": "Carnal Armour",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-rumi-s-concoction:0e7b89476aaddcd6",
+      "category": "replica_unique",
+      "name_en": "Replica Rumi's Concoction",
+      "name_ja": "ルミの調合薬（レプリカ）",
+      "base_type_en": "Granite Flask",
+      "base_type_ja": "花崗岩のフラスコ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Rumi's Concoction",
+        "base_type_en": "Granite Flask",
+        "optional_item_level": false,
+        "item_group": "flask"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-shroud-of-the-lightless:75f9365f2562eba2",
+      "category": "replica_unique",
+      "name_en": "Replica Shroud of the Lightless",
+      "name_ja": "光なき者の覆い（レプリカ）",
+      "base_type_en": "Carnal Armour",
+      "base_type_ja": "カーナルアーマー",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Shroud of the Lightless",
+        "base_type_en": "Carnal Armour",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-siegebreaker:32ed243c3c085250",
+      "category": "replica_unique",
+      "name_en": "Replica Siegebreaker",
+      "name_ja": "シージブレイカー（レプリカ）",
+      "base_type_en": "Heavy Belt",
+      "base_type_ja": "ヘビーベルト",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Siegebreaker",
+        "base_type_en": "Heavy Belt",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-sorrow-of-the-divine:dc6bc1cca77b12cd",
+      "category": "replica_unique",
+      "name_en": "Replica Sorrow of the Divine",
+      "name_ja": "神の嘆き（レプリカ）",
+      "base_type_en": "Sulphur Flask",
+      "base_type_ja": "硫黄のフラスコ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Sorrow of the Divine",
+        "base_type_en": "Sulphur Flask",
+        "optional_item_level": false,
+        "item_group": "flask"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-soul-strike:e2ca926604122893",
+      "category": "replica_unique",
+      "name_en": "Replica Soul Strike",
+      "name_ja": "ソウル・ストライク（レプリカ）",
+      "base_type_en": "Spike-Point Arrow Quiver",
+      "base_type_ja": "尖った矢筒",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Soul Strike",
+        "base_type_en": "Spike-Point Arrow Quiver",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-soul-tether:f834b27a42b0ffd8",
+      "category": "replica_unique",
+      "name_en": "Replica Soul Tether",
+      "name_ja": "魂を繋ぐ綱（レプリカ）",
+      "base_type_en": "Cloth Belt",
+      "base_type_ja": "布のベルト",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Soul Tether",
+        "base_type_en": "Cloth Belt",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-stampede:96f758dd5367544f",
+      "category": "replica_unique",
+      "name_en": "Replica Stampede",
+      "name_ja": "群れの暴走（レプリカ）",
+      "base_type_en": "Assassin's Boots",
+      "base_type_ja": "暗殺者のブーツ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Stampede",
+        "base_type_en": "Assassin's Boots",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-tasalio-s-sign:eb90627af2cc931c",
+      "category": "replica_unique",
+      "name_en": "Replica Tasalio's Sign",
+      "name_ja": "タサリオの印（レプリカ）",
+      "base_type_en": "Sapphire Ring",
+      "base_type_ja": "サファイアの指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Tasalio's Sign",
+        "base_type_en": "Sapphire Ring",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-tempestuous-steel:1519427764b44da0",
+      "category": "replica_unique",
+      "name_en": "Replica Tempestuous Steel",
+      "name_ja": "嵐の鋼（レプリカ）",
+      "base_type_en": "War Sword",
+      "base_type_ja": "ウォーソード",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Tempestuous Steel",
+        "base_type_en": "War Sword",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-three-step-assault:6bccd624dd39a7c5",
+      "category": "replica_unique",
+      "name_en": "Replica Three-step Assault",
+      "name_ja": "スリーステップアサルト（レプリカ）",
+      "base_type_en": "Shagreen Boots",
+      "base_type_ja": "粒起皮のブーツ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Three-step Assault",
+        "base_type_en": "Shagreen Boots",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-trypanon:a37d303ea4140dc4",
+      "category": "replica_unique",
+      "name_en": "Replica Trypanon",
+      "name_ja": "トライペーノン（レプリカ）",
+      "base_type_en": "Great Mallet",
+      "base_type_ja": "グレートマレット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Trypanon",
+        "base_type_en": "Great Mallet",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-tukohama-s-fortress:f09535dad74e4bb5",
+      "category": "replica_unique",
+      "name_en": "Replica Tukohama's Fortress",
+      "name_ja": "トゥコハマの要塞（レプリカ）",
+      "base_type_en": "Ebony Tower Shield",
+      "base_type_ja": "黒檀のタワーシールド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Tukohama's Fortress",
+        "base_type_en": "Ebony Tower Shield",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-tulfall:a694f17ca12884ce",
+      "category": "replica_unique",
+      "name_en": "Replica Tulfall",
+      "name_ja": "トゥルフォール（レプリカ）",
+      "base_type_en": "Opal Wand",
+      "base_type_ja": "オパールのワンド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Tulfall",
+        "base_type_en": "Opal Wand",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-twyzel:975a56b27a8404f4",
+      "category": "replica_unique",
+      "name_en": "Replica Twyzel",
+      "name_ja": "トウィズル（レプリカ）",
+      "base_type_en": "Blasting Wand",
+      "base_type_ja": "爆破のワンド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Twyzel",
+        "base_type_en": "Blasting Wand",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-ungil-s-gauche:802d4e974b743b08",
+      "category": "replica_unique",
+      "name_en": "Replica Ungil's Gauche",
+      "name_ja": "アンギルのゴーシュ（レプリカ）",
+      "base_type_en": "Boot Knife",
+      "base_type_ja": "ブーツナイフ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Ungil's Gauche",
+        "base_type_en": "Boot Knife",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-veil-of-the-night:f754408f75f35956",
+      "category": "replica_unique",
+      "name_en": "Replica Veil of the Night",
+      "name_ja": "夜の帳（レプリカ）",
+      "base_type_en": "Great Helmet",
+      "base_type_ja": "グレートヘルム",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Veil of the Night",
+        "base_type_en": "Great Helmet",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-victario-s-charity:229dc95b6e657e51",
+      "category": "replica_unique",
+      "name_en": "Replica Victario's Charity",
+      "name_ja": "ヴィクタリオの慈善（レプリカ）",
+      "base_type_en": "Laminated Kite Shield",
+      "base_type_ja": "薄板のカイトシールド",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Victario's Charity",
+        "base_type_en": "Laminated Kite Shield",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-voideye:c2807baf7cd1b9a6",
+      "category": "replica_unique",
+      "name_en": "Replica Voideye",
+      "name_ja": "ヴォイドアイ（レプリカ）",
+      "base_type_en": "Unset Ring",
+      "base_type_ja": "石なしの指輪",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Voideye",
+        "base_type_en": "Unset Ring",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-voidwalker:7c681315e409aaff",
+      "category": "replica_unique",
+      "name_en": "Replica Voidwalker",
+      "name_ja": "ヴォイドウォーカー（レプリカ）",
+      "base_type_en": "Murder Boots",
+      "base_type_ja": "殺人者のブーツ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Voidwalker",
+        "base_type_en": "Murder Boots",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-volkuur-s-guidance:6e63fc0e0f478e22",
+      "category": "replica_unique",
+      "name_en": "Replica Volkuur's Guidance",
+      "name_ja": "ヴォルカーの導き（レプリカ）",
+      "base_type_en": "Zealot Gloves",
+      "base_type_ja": "狂信者のグローブ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Volkuur's Guidance",
+        "base_type_en": "Zealot Gloves",
+        "optional_item_level": false,
+        "item_group": "armour"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-windripper:485d60d69fcad2c3",
+      "category": "replica_unique",
+      "name_en": "Replica Windripper",
+      "name_ja": "ウィンドリッパー（レプリカ）",
+      "base_type_en": "Imperial Bow",
+      "base_type_ja": "帝国の弓",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Windripper",
+        "base_type_en": "Imperial Bow",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-wings-of-entropy:4b13b1937290378a",
+      "category": "replica_unique",
+      "name_en": "Replica Wings of Entropy",
+      "name_ja": "エントロピーの翼（レプリカ）",
+      "base_type_en": "Ezomyte Axe",
+      "base_type_ja": "エゾマイトアックス",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Wings of Entropy",
+        "base_type_en": "Ezomyte Axe",
+        "optional_item_level": false,
+        "item_group": "weapon"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-winterheart:3afbb7839506e61e",
+      "category": "replica_unique",
+      "name_en": "Replica Winterheart",
+      "name_ja": "ウィンターハート（レプリカ）",
+      "base_type_en": "Gold Amulet",
+      "base_type_ja": "金のアミュレット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Winterheart",
+        "base_type_en": "Gold Amulet",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-witchfire-brew:10f24617ccb0c166",
+      "category": "replica_unique",
+      "name_en": "Replica Witchfire Brew",
+      "name_ja": "ウィッチファイヤーの醸造（レプリカ）",
+      "base_type_en": "Stibnite Flask",
+      "base_type_ja": "スティブナイトフラスコ",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": "Replica Witchfire Brew",
+        "base_type_en": "Stibnite Flask",
+        "optional_item_level": false,
+        "item_group": "flask"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabAbyssNew2",
+      "category": "scarab",
+      "name_en": "Abyss Scarab of Multitudes",
+      "name_ja": "多数のアビススカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabAbyssNew2",
+        "trade_static_id": "abyss-scarab-of-multitudes",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabStrongboxNew4",
+      "category": "scarab",
+      "name_en": "Ambush Scarab of Containment",
+      "name_ja": "格納のアンブッシュスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabStrongboxNew4",
+        "trade_static_id": "ambush-scarab-of-containment",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabStrongboxNew5",
+      "category": "scarab",
+      "name_en": "Ambush Scarab of Discernment",
+      "name_ja": "眼識のアンブッシュスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabStrongboxNew5",
+        "trade_static_id": "ambush-scarab-of-discernment",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabStrongboxNew2",
+      "category": "scarab",
+      "name_en": "Ambush Scarab of Hidden Compartments",
+      "name_ja": "隠し収納のアンブッシュスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabStrongboxNew2",
+        "trade_static_id": "ambush-scarab-of-hidden-compartments",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabStrongboxNew3",
+      "category": "scarab",
+      "name_en": "Ambush Scarab of Potency",
+      "name_ja": "有効性のアンブッシュスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabStrongboxNew3",
+        "trade_static_id": "ambush-scarab-of-potency",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabAnarchy2",
+      "category": "scarab",
+      "name_en": "Anarchy Scarab of Gigantification",
+      "name_ja": "巨大化のアナーキースカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabAnarchy2",
+        "trade_static_id": "anarchy-scarab-of-gigantification",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabAnarchy3",
+      "category": "scarab",
+      "name_en": "Anarchy Scarab of Partnership",
+      "name_ja": "協力関係のアナーキースカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabAnarchy3",
+        "trade_static_id": "anarchy-scarab-of-partnership",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBeastsNew3",
+      "category": "scarab",
+      "name_en": "Bestiary Scarab of Duplicating",
+      "name_ja": "複製のベスティアリースカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBeastsNew3",
+        "trade_static_id": "bestiary-scarab-of-duplicating",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBeastsNew2",
+      "category": "scarab",
+      "name_en": "Bestiary Scarab of the Herd",
+      "name_ja": "群れのベスティアリースカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBeastsNew2",
+        "trade_static_id": "bestiary-scarab-of-the-herd",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBeastsNew4",
+      "category": "scarab",
+      "name_en": "Bestiary Scarab of the Shadowed Crow",
+      "name_ja": "影の鴉のベスティアリースカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBeastsNew4",
+        "trade_static_id": "bestiary-scarab-of-the-shadowed-crow",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBetrayal3",
+      "category": "scarab",
+      "name_en": "Betrayal Scarab of Reinforcements",
+      "name_ja": "増援のビトレイアルスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBetrayal3",
+        "trade_static_id": "betrayal-scarab-of-reinforcements",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBetrayal2",
+      "category": "scarab",
+      "name_en": "Betrayal Scarab of the Allflame",
+      "name_ja": "オールフレイムのビトレイアルスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBetrayal2",
+        "trade_static_id": "betrayal-scarab-of-the-allflame",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBeyond2",
+      "category": "scarab",
+      "name_en": "Beyond Scarab of Corruption",
+      "name_ja": "穢れのビヨンドスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBeyond2",
+        "trade_static_id": "beyond-scarab-of-corruption",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBeyond3",
+      "category": "scarab",
+      "name_en": "Beyond Scarab of Haemophilia",
+      "name_ja": "血友病のビヨンドスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBeyond3",
+        "trade_static_id": "beyond-scarab-of-haemophilia",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBeyond4",
+      "category": "scarab",
+      "name_en": "Beyond Scarab of Resurgence",
+      "name_ja": "復活のビヨンドスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBeyond4",
+        "trade_static_id": "beyond-scarab-of-resurgence",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBeyond5",
+      "category": "scarab",
+      "name_en": "Beyond Scarab of the Invasion",
+      "name_ja": "侵略のビヨンドスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBeyond5",
+        "trade_static_id": "beyond-scarab-of-the-invasion",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBlightNew4",
+      "category": "scarab",
+      "name_en": "Blight Scarab of Blooming",
+      "name_ja": "開花のブライトスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBlightNew4",
+        "trade_static_id": "blight-scarab-of-blooming",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBlightNew2",
+      "category": "scarab",
+      "name_en": "Blight Scarab of Bounty",
+      "name_ja": "報奨のブライトスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBlightNew2",
+        "trade_static_id": "blight-scarab-of-bounty",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBlightNew5",
+      "category": "scarab",
+      "name_en": "Blight Scarab of Invigoration",
+      "name_ja": "活性化のブライトスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBlightNew5",
+        "trade_static_id": "blight-scarab-of-invigoration",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBlightNew3",
+      "category": "scarab",
+      "name_en": "Blight Scarab of the Blightheart",
+      "name_ja": "ブライトハートのブライトスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBlightNew3",
+        "trade_static_id": "blight-scarab-of-the-blightheart",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBreachNew6",
+      "category": "scarab",
+      "name_en": "Breach Scarab of Resonant Cascade",
+      "name_ja": "共鳴するカスケードのブリーチスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBreachNew6",
+        "trade_static_id": "breach-scarab-of-resonant-cascade",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabBreachNew2",
+      "category": "scarab",
+      "name_en": "Breach Scarab of the Dreamer",
+      "name_ja": "夢見人のブリーチスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabBreachNew2",
+        "trade_static_id": "breach-scarab-of-the-dreamer",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabMapsNew4",
+      "category": "scarab",
+      "name_en": "Cartography Scarab of Corruption",
+      "name_ja": "穢れの地図製作のスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabMapsNew4",
+        "trade_static_id": "cartography-scarab-of-corruption",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabMapsNew1",
+      "category": "scarab",
+      "name_en": "Cartography Scarab of Escalation",
+      "name_ja": "増大の地図製作のスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabMapsNew1",
+        "trade_static_id": "cartography-scarab-of-escalation",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabMapsNew2",
+      "category": "scarab",
+      "name_en": "Cartography Scarab of Risk",
+      "name_ja": "リスクの地図製作のスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabMapsNew2",
+        "trade_static_id": "cartography-scarab-of-risk",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabMapsNew3",
+      "category": "scarab",
+      "name_en": "Cartography Scarab of Singularity",
+      "name_ja": "特異点の地図製作のスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabMapsNew3",
+        "trade_static_id": "cartography-scarab-of-singularity",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabMapsNew5",
+      "category": "scarab",
+      "name_en": "Cartography Scarab of the Multitude",
+      "name_ja": "群衆の地図製作のスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabMapsNew5",
+        "trade_static_id": "cartography-scarab-of-the-multitude",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabDelirium5",
+      "category": "scarab",
+      "name_en": "Delirium Scarab of Delusions",
+      "name_ja": "妄想のデリリウムスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabDelirium5",
+        "trade_static_id": "delirium-scarab-of-delusions",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabDelirium2",
+      "category": "scarab",
+      "name_en": "Delirium Scarab of Mania",
+      "name_ja": "躁病のデリリウムスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabDelirium2",
+        "trade_static_id": "delirium-scarab-of-mania",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabDelirium4",
+      "category": "scarab",
+      "name_en": "Delirium Scarab of Neuroses",
+      "name_ja": "神経症のデリリウムスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabDelirium4",
+        "trade_static_id": "delirium-scarab-of-neuroses",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabDelirium3",
+      "category": "scarab",
+      "name_en": "Delirium Scarab of Paranoia",
+      "name_ja": "偏執症のデリリウムスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabDelirium3",
+        "trade_static_id": "delirium-scarab-of-paranoia",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabDivinationCardsNew3",
+      "category": "scarab",
+      "name_en": "Divination Scarab of Pilfering",
+      "name_ja": "窃盗の占いのスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabDivinationCardsNew3",
+        "trade_static_id": "divination-scarab-of-pilfering",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabDivinationCardsNew2",
+      "category": "scarab",
+      "name_en": "Divination Scarab of Plenty",
+      "name_ja": "豊富な占いのスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabDivinationCardsNew2",
+        "trade_static_id": "divination-scarab-of-plenty",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabDivinationCardsNew1",
+      "category": "scarab",
+      "name_en": "Divination Scarab of The Cloister",
+      "name_ja": "学院の占いのスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabDivinationCardsNew1",
+        "trade_static_id": "divination-scarab-of-the-cloister",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabDomination2",
+      "category": "scarab",
+      "name_en": "Domination Scarab of Apparitions",
+      "name_ja": "幻影のドミネーションスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabDomination2",
+        "trade_static_id": "domination-scarab-of-apparitions",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabDomination3",
+      "category": "scarab",
+      "name_en": "Domination Scarab of Evolution",
+      "name_ja": "進化のドミネーションスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabDomination3",
+        "trade_static_id": "domination-scarab-of-evolution",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabDomination4",
+      "category": "scarab",
+      "name_en": "Domination Scarab of Terrors",
+      "name_ja": "恐怖のドミネーションスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabDomination4",
+        "trade_static_id": "domination-scarab-of-terrors",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabEssence5",
+      "category": "scarab",
+      "name_en": "Essence Scarab of Adaptation",
+      "name_ja": "適応のエッセンススカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabEssence5",
+        "trade_static_id": "essence-scarab-of-adaptation",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabEssence2",
+      "category": "scarab",
+      "name_en": "Essence Scarab of Ascent",
+      "name_ja": "向上のエッセンススカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabEssence2",
+        "trade_static_id": "essence-scarab-of-ascent",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabEssence4",
+      "category": "scarab",
+      "name_en": "Essence Scarab of Calcification",
+      "name_ja": "硬化のエッセンススカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabEssence4",
+        "trade_static_id": "essence-scarab-of-calcification",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabEssence3",
+      "category": "scarab",
+      "name_en": "Essence Scarab of Stability",
+      "name_ja": "安定のエッセンススカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabEssence3",
+        "trade_static_id": "essence-scarab-of-stability",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabExpedition5",
+      "category": "scarab",
+      "name_en": "Expedition Scarab of Archaeology",
+      "name_ja": "考古学のエクスペディションスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabExpedition5",
+        "trade_static_id": "expedition-scarab-of-archaeology",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabExpedition2",
+      "category": "scarab",
+      "name_en": "Expedition Scarab of Runefinding",
+      "name_ja": "ルーン探索のエクスペディションスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabExpedition2",
+        "trade_static_id": "expedition-scarab-of-runefinding",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabExpedition3",
+      "category": "scarab",
+      "name_en": "Expedition Scarab of Verisium Powder",
+      "name_ja": "ヴェリシウム粉末のエクスペディションスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabExpedition3",
+        "trade_static_id": "expedition-scarab-of-verisium-powder",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabHarvest3",
+      "category": "scarab",
+      "name_en": "Harvest Scarab of Cornucopia",
+      "name_ja": "豊作のハーベストスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabHarvest3",
+        "trade_static_id": "harvest-scarab-of-cornucopia",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabHarvest2",
+      "category": "scarab",
+      "name_en": "Harvest Scarab of Doubling",
+      "name_ja": "倍増のハーベストスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabHarvest2",
+        "trade_static_id": "harvest-scarab-of-doubling",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUber4",
+      "category": "scarab",
+      "name_en": "Horned Scarab of Awakening",
+      "name_ja": "覚醒の角スカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUber4",
+        "trade_static_id": "horned-scarab-of-awakening",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUber1",
+      "category": "scarab",
+      "name_en": "Horned Scarab of Bloodlines",
+      "name_ja": "血統の角スカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUber1",
+        "trade_static_id": "horned-scarab-of-bloodlines",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUber6",
+      "category": "scarab",
+      "name_en": "Horned Scarab of Glittering",
+      "name_ja": "輝ける富の角スカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUber6",
+        "trade_static_id": "horned-scarab-of-glittering",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUber2",
+      "category": "scarab",
+      "name_en": "Horned Scarab of Nemeses",
+      "name_ja": "宿敵の角スカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUber2",
+        "trade_static_id": "horned-scarab-of-nemeses",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUber7",
+      "category": "scarab",
+      "name_en": "Horned Scarab of Pandemonium",
+      "name_ja": "伏魔殿の角スカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUber7",
+        "trade_static_id": "horned-scarab-of-pandemonium",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUber3",
+      "category": "scarab",
+      "name_en": "Horned Scarab of Preservation",
+      "name_ja": "保存の角スカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUber3",
+        "trade_static_id": "horned-scarab-of-preservation",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUber5",
+      "category": "scarab",
+      "name_en": "Horned Scarab of Tradition",
+      "name_ja": "伝統の角スカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUber5",
+        "trade_static_id": "horned-scarab-of-tradition",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabIncursion3",
+      "category": "scarab",
+      "name_en": "Incursion Scarab of Champions",
+      "name_ja": "王者のインカージョンスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabIncursion3",
+        "trade_static_id": "incursion-scarab-of-champions",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabIncursion2",
+      "category": "scarab",
+      "name_en": "Incursion Scarab of Invasion",
+      "name_ja": "侵入のインカージョンスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabIncursion2",
+        "trade_static_id": "incursion-scarab-of-invasion",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabIncursion4",
+      "category": "scarab",
+      "name_en": "Incursion Scarab of Timelines",
+      "name_ja": "世界線のインカージョンスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabIncursion4",
+        "trade_static_id": "incursion-scarab-of-timelines",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabInfluenceNew3",
+      "category": "scarab",
+      "name_en": "Influencing Scarab of Hordes",
+      "name_ja": "群れのインフルエンススカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabInfluenceNew3",
+        "trade_static_id": "influencing-scarab-of-hordes",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabInfluenceNew2",
+      "category": "scarab",
+      "name_en": "Influencing Scarab of the Elder",
+      "name_ja": "エルダーのインフルエンススカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabInfluenceNew2",
+        "trade_static_id": "influencing-scarab-of-the-elder",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabInfluenceNew1",
+      "category": "scarab",
+      "name_en": "Influencing Scarab of the Shaper",
+      "name_ja": "シェイパーのインフルエンススカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabInfluenceNew1",
+        "trade_static_id": "influencing-scarab-of-the-shaper",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabSettlers2",
+      "category": "scarab",
+      "name_en": "Kalguuran Scarab of Guarded Riches",
+      "name_ja": "守られた富のカルグールスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabSettlers2",
+        "trade_static_id": "kalguuran-scarab-of-guarded-riches",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabSettlers3",
+      "category": "scarab",
+      "name_en": "Kalguuran Scarab of Refinement",
+      "name_ja": "精錬のカルグールスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabSettlers3",
+        "trade_static_id": "kalguuran-scarab-of-refinement",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabLegionNew5",
+      "category": "scarab",
+      "name_en": "Legion Scarab of Eternal Conflict",
+      "name_ja": "悠久の紛争のリージョンスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabLegionNew5",
+        "trade_static_id": "legion-scarab-of-eternal-conflict",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabLegionNew2",
+      "category": "scarab",
+      "name_en": "Legion Scarab of Officers",
+      "name_ja": "将校のリージョンスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabLegionNew2",
+        "trade_static_id": "legion-scarab-of-officers",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabLegionNew4",
+      "category": "scarab",
+      "name_en": "Legion Scarab of The Sekhema",
+      "name_ja": "セケマのリージョンスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabLegionNew4",
+        "trade_static_id": "legion-scarab-of-the-sekhema",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabRitual3",
+      "category": "scarab",
+      "name_en": "Ritual Scarab of Abundance",
+      "name_ja": "豊富なリチュアルスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabRitual3",
+        "trade_static_id": "ritual-scarab-of-abundance",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabRitual1",
+      "category": "scarab",
+      "name_en": "Ritual Scarab of Selectiveness",
+      "name_ja": "選択性のリチュアルスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabRitual1",
+        "trade_static_id": "ritual-scarab-of-selectiveness",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabRitual2",
+      "category": "scarab",
+      "name_en": "Ritual Scarab of Wisps",
+      "name_ja": "ウィスプのリチュアルスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabRitual2",
+        "trade_static_id": "ritual-scarab-of-wisps",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabMisc2",
+      "category": "scarab",
+      "name_en": "Scarab of Adversaries",
+      "name_ja": "敵対者のスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabMisc2",
+        "trade_static_id": "scarab-of-adversaries",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabMisc3",
+      "category": "scarab",
+      "name_en": "Scarab of Divinity",
+      "name_ja": "神性のスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabMisc3",
+        "trade_static_id": "scarab-of-divinity",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabMisc4",
+      "category": "scarab",
+      "name_en": "Scarab of Hunted Traitors",
+      "name_ja": "追われている裏切り者のスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabMisc4",
+        "trade_static_id": "scarab-of-hunted-traitors",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabMisc1",
+      "category": "scarab",
+      "name_en": "Scarab of Monstrous Lineage",
+      "name_ja": "怪物の系譜のスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabMisc1",
+        "trade_static_id": "scarab-of-monstrous-lineage",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabMisc11",
+      "category": "scarab",
+      "name_en": "Scarab of Radiant Storms",
+      "name_ja": "輝く嵐のスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabMisc11",
+        "trade_static_id": "scarab-of-radiant-storms",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabMisc5",
+      "category": "scarab",
+      "name_en": "Scarab of Stability",
+      "name_ja": "安定のスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabMisc5",
+        "trade_static_id": "scarab-of-stability",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabMisc8",
+      "category": "scarab",
+      "name_en": "Scarab of Wisps",
+      "name_ja": "ウィスプのスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabMisc8",
+        "trade_static_id": "scarab-of-wisps",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabSulphiteNew3",
+      "category": "scarab",
+      "name_en": "Sulphite Scarab of Fumes",
+      "name_ja": "瘴気のサルファイトスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabSulphiteNew3",
+        "trade_static_id": "sulphite-scarab-of-fumes",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabSulphiteNew2",
+      "category": "scarab",
+      "name_en": "Sulphite Scarab of Greed",
+      "name_ja": "貪欲さのサルファイトスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabSulphiteNew2",
+        "trade_static_id": "sulphite-scarab-of-greed",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUniquesNew1",
+      "category": "scarab",
+      "name_en": "Titanic Scarab",
+      "name_ja": "タイタンのスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUniquesNew1",
+        "trade_static_id": "titanic-scarab",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUniquesNew3",
+      "category": "scarab",
+      "name_en": "Titanic Scarab of Legend",
+      "name_ja": "伝説のタイタンのスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUniquesNew3",
+        "trade_static_id": "titanic-scarab-of-legend",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUniquesNew2",
+      "category": "scarab",
+      "name_en": "Titanic Scarab of Treasures",
+      "name_ja": "財宝のタイタンのスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUniquesNew2",
+        "trade_static_id": "titanic-scarab-of-treasures",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabTormentNew2",
+      "category": "scarab",
+      "name_en": "Torment Scarab of Peculiarity",
+      "name_ja": "異様なトーメントスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabTormentNew2",
+        "trade_static_id": "torment-scarab-of-peculiarity",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabTormentNew4",
+      "category": "scarab",
+      "name_en": "Torment Scarab of Possession",
+      "name_ja": "憑依のトーメントスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabTormentNew4",
+        "trade_static_id": "torment-scarab-of-possession",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabTormentNew3",
+      "category": "scarab",
+      "name_en": "Torment Scarab of Release",
+      "name_ja": "解放のトーメントスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabTormentNew3",
+        "trade_static_id": "torment-scarab-of-release",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUltimatum2",
+      "category": "scarab",
+      "name_en": "Ultimatum Scarab of Bribing",
+      "name_ja": "賄賂のアルティメイタムスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUltimatum2",
+        "trade_static_id": "ultimatum-scarab-of-bribing",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUltimatum4",
+      "category": "scarab",
+      "name_en": "Ultimatum Scarab of Catalysing",
+      "name_ja": "触媒のアルティメイタムスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUltimatum4",
+        "trade_static_id": "ultimatum-scarab-of-catalysing",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUltimatum3",
+      "category": "scarab",
+      "name_en": "Ultimatum Scarab of Dueling",
+      "name_ja": "決闘のアルティメイタムスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUltimatum3",
+        "trade_static_id": "ultimatum-scarab-of-dueling",
+        "static_group": "Fragments"
+      }
+    },
+    {
+      "stable_id": "exchange-catalog:Metadata/Items/Scarabs/ScarabUltimatum5",
+      "category": "scarab",
+      "name_en": "Ultimatum Scarab of Inscription",
+      "name_ja": "刻印のアルティメイタムスカラベ",
+      "base_type_en": null,
+      "base_type_ja": null,
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "currency_exchange",
+        "item_id": "Metadata/Items/Scarabs/ScarabUltimatum5",
+        "trade_static_id": "ultimatum-scarab-of-inscription",
+        "static_group": "Fragments"
+      }
+    }
+  ]
+}

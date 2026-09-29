@@ -4661,6 +4661,37 @@ class PoetoreWindow(QWidget):
             return
         self.search_current_item()
 
+    def show_heist_curio_match(self, match, placement_context):
+        """Open one trusted Curio identity in the normal PoE1 price checker."""
+        from src.poetore.heist_curio import curio_item_text
+
+        item = match.item
+        copied_text = curio_item_text(item)
+        search = item.search
+        self._placement_context = placement_context
+        self._capture_auto_hide = False
+        self._trade_base_type = str(
+            search.get("base_type_en") or item.base_type_en or item.name_en
+        )
+        self._trade_item_name = (
+            str(search.get("name_en") or item.name_en)
+            if item.category in {"replica_unique", "replacement_unique"}
+            else None
+        )
+        self._heist_optional_item_level_key = (
+            copied_text if bool(search.get("optional_item_level")) else None
+        )
+        self._preset_item_key = None
+        self._reset_unique_candidates()
+        self.mod_filter_tree.clear()
+        self._clear_displayed_trade_result()
+        self._has_searched_current_item = False
+        self._search_dirty = False
+        self.input_edit.setPlainText(copied_text)
+        self.parse_current_text()
+        self.show_at_context(placement_context, activate=True)
+        self.search_current_item()
+
     def _should_defer_initial_trade_search(self, item) -> bool:
         """Match EE2's guarded first search for PoE2 rare equipment."""
         return (
@@ -5364,8 +5395,13 @@ class PoetoreWindow(QWidget):
                  or is_flask_category(item.category) or item.category == "tincture")
             and item.rarity.casefold() not in {"unique", "ユニーク"}
         )
-        has_item_level = item.item_level is not None and (
-            preset_filter is not None or optional_finished
+        heist_optional = (
+            getattr(self, "_heist_optional_item_level_key", None) == item.raw_text
+        )
+        has_item_level = heist_optional or (
+            item.item_level is not None and (
+                preset_filter is not None or optional_finished
+            )
         )
         self.item_level_tag.setVisible(has_item_level)
         self._set_item_level_filter_enabled(
@@ -5378,7 +5414,11 @@ class PoetoreWindow(QWidget):
         self.item_level_range_separator.setVisible(is_cluster)
         self.item_level_max_edit.setVisible(is_cluster)
         self.item_level_tag.setFixedWidth(157 if is_cluster else 104)
-        if preset_filter is not None:
+        if heist_optional:
+            self.item_level_edit.clear()
+            self.item_level_max_edit.clear()
+            self._set_item_level_filter_enabled(False)
+        elif preset_filter is not None:
             self.item_level_edit.setText(f"{preset_filter.min_value:g}")
             self.item_level_max_edit.setText(
                 f"{preset_filter.max_value:g}"

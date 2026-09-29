@@ -18,6 +18,8 @@
         "poetore_auto_hide": "ctrl+d",
         "expedition_reward_ocr": "alt+e",
         "desecration_tier_ocr": "alt+r",
+        "heist_curio_ocr": "alt+h",
+        "heist_curio_manual_ocr": "alt+shift+h",
         "map_check": "alt+f",
         "gem_shop_search": "F2",
         "cheat_sheets_toggle": "shift+space"

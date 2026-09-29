@@ -385,6 +385,8 @@ class PoetoreModeWindow(QMainWindow):
         "poetore_auto_hide": "ctrl+d",
         "expedition_reward_ocr": "alt+e",
         "desecration_tier_ocr": "alt+r",
+        "heist_curio_ocr": "alt+h",
+        "heist_curio_manual_ocr": "alt+shift+h",
         "map_check": "alt+f",
         "cheat_sheets_toggle": "shift+space",
     }
@@ -402,6 +404,7 @@ class PoetoreModeWindow(QMainWindow):
         self._memo_dialog = None
         self._expedition_reward_controller = None
         self._desecration_tier_controller = None
+        self._heist_curio_controller = None
         self._ndlocr_pack_controller = None
         self._screen_reading_coordinator = None
         self._rate_pair_store = ExchangeRatePairStore(
@@ -438,6 +441,8 @@ class PoetoreModeWindow(QMainWindow):
                 self._ensure_expedition_reward_controller().warm_up()
             if self._desecration_ready():
                 self._ensure_desecration_tier_controller().warm_up()
+        if sys.platform == "win32" and self.poe_version == POE1:
+            self._ensure_heist_curio_controller().warm_up()
 
         QTimer.singleShot(0, self.refresh_currency_rate)
         self._prepare_poetore_window()
@@ -1017,6 +1022,10 @@ class PoetoreModeWindow(QMainWindow):
             self.capture_expedition_rewards()
         elif command == "desecration_tier_ocr":
             self.capture_desecration_tiers()
+        elif command == "heist_curio_ocr":
+            self.capture_heist_curio()
+        elif command == "heist_curio_manual_ocr":
+            self.capture_heist_curio(manual=True)
         elif command == "map_check":
             self.capture_map_check_item()
         elif command == "map_check_released":
@@ -1092,6 +1101,42 @@ class PoetoreModeWindow(QMainWindow):
             from src.poetore.screen_reading import ScreenReadingCoordinator
             self._screen_reading_coordinator = ScreenReadingCoordinator()
         return self._screen_reading_coordinator
+
+    def _ensure_heist_curio_controller(self):
+        if self._heist_curio_controller is None:
+            from src.poetore.heist_curio import HeistCurioController
+
+            shared = self._ensure_screen_reading_coordinator()
+            controller = HeistCurioController(
+                self, ocr_server=shared, scan_coordinator=shared,
+            )
+            controller.status.connect(self._show_heist_curio_status)
+            controller.failed.connect(self._show_heist_curio_error)
+            controller.resolved.connect(self._show_heist_curio_result)
+            self._heist_curio_controller = controller
+        return self._heist_curio_controller
+
+    def capture_heist_curio(self, *, manual=False):
+        if self.poe_version != POE1:
+            return False
+        return self._ensure_heist_curio_controller().request_scan(manual=manual)
+
+    def _show_heist_curio_status(self, message):
+        self.rate_status.setText(message)
+
+    def _show_heist_curio_error(self, message):
+        self.rate_status.setText(f"ハイスト報酬読取失敗：{message}")
+        if QSystemTrayIcon.isSystemTrayAvailable():
+            self.tray_icon.showMessage(
+                "ハイスト報酬価格チェック", message, QSystemTrayIcon.Warning, 5000,
+            )
+
+    def _show_heist_curio_result(self, match, placement):
+        from src.poetore.ui import show_poetore_window
+
+        window = show_poetore_window(self, activate=False)
+        window.show_heist_curio_match(match, placement)
+        self.rate_status.setText(f"ハイスト報酬：{match.item.name_ja}")
 
     def _ensure_desecration_tier_controller(self):
         if self._desecration_tier_controller is None:
@@ -1267,6 +1312,9 @@ class PoetoreModeWindow(QMainWindow):
         return True
 
     def _shutdown_screen_reading(self):
+        if self._heist_curio_controller is not None:
+            self._heist_curio_controller.close()
+            self._heist_curio_controller = None
         if self._expedition_reward_controller is not None:
             self._expedition_reward_controller.close()
             self._expedition_reward_controller = None

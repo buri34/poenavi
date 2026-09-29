@@ -198,6 +198,12 @@ class PoetoreSettingsDialog(QDialog):
             hotkeys.get("poetore_auto_hide", "ctrl+d"), theme=self.theme
         )
         self.map_check_hotkey = HotkeyButton(hotkeys.get("map_check", "alt+f"))
+        self.heist_curio_hotkey = HotkeyButton(
+            hotkeys.get("heist_curio_ocr", "alt+h")
+        )
+        self.heist_curio_manual_hotkey = HotkeyButton(
+            hotkeys.get("heist_curio_manual_ocr", "alt+shift+h")
+        )
         self.cheat_hotkey = HotkeyButton(
             hotkeys.get("cheat_sheets_toggle", "shift+space")
         )
@@ -209,7 +215,8 @@ class PoetoreSettingsDialog(QDialog):
         )
         for button in (
             self.exit_hotkey, self.monastery_hotkey,
-            self.map_check_hotkey, self.cheat_hotkey,
+            self.map_check_hotkey, self.heist_curio_hotkey,
+            self.heist_curio_manual_hotkey, self.cheat_hotkey,
         ):
             # ぽえとれ画面の親スタイルを使い、操作だけぽえなびと共通化する。
             button.setStyleSheet("")
@@ -222,6 +229,12 @@ class PoetoreSettingsDialog(QDialog):
         hotkey_form.addRow("ぽえとれ検索（AUTO-HIDE）:", self.auto_hide_hotkey)
         self.map_check_label = QLabel("Map Modチェック:")
         hotkey_form.addRow(self.map_check_label, self.map_check_hotkey)
+        self.heist_curio_label = QLabel("ハイスト報酬読取:")
+        hotkey_form.addRow(self.heist_curio_label, self.heist_curio_hotkey)
+        self.heist_curio_manual_label = QLabel("ハイスト報酬手動読取:")
+        hotkey_form.addRow(
+            self.heist_curio_manual_label, self.heist_curio_manual_hotkey,
+        )
         hotkey_form.addRow("Cheat sheets表示:", self.cheat_hotkey)
         basic_layout.addWidget(hotkey_group)
 
@@ -684,6 +697,10 @@ class PoetoreSettingsDialog(QDialog):
         self.monastery_hotkey.setVisible(monastery_visible)
         self.map_check_label.setVisible(monastery_visible)
         self.map_check_hotkey.setVisible(monastery_visible)
+        self.heist_curio_label.setVisible(monastery_visible)
+        self.heist_curio_hotkey.setVisible(monastery_visible)
+        self.heist_curio_manual_label.setVisible(monastery_visible)
+        self.heist_curio_manual_hotkey.setVisible(monastery_visible)
 
     def _refresh_app_mode_availability(self):
         supported = is_feature_supported(POETORE, self.poe_version)
@@ -727,6 +744,8 @@ class PoetoreSettingsDialog(QDialog):
                 "poetore_auto_hide": self.auto_hide_hotkey.key_text,
                 "expedition_reward_ocr": self._expedition_hotkey,
                 "desecration_tier_ocr": self._desecration_hotkey,
+                "heist_curio_ocr": self.heist_curio_hotkey.key_text,
+                "heist_curio_manual_ocr": self.heist_curio_manual_hotkey.key_text,
                 "map_check": self.map_check_hotkey.key_text,
                 "cheat_sheets_toggle": self.cheat_hotkey.key_text,
             }
@@ -948,11 +967,15 @@ class PoetoreSettingsDialog(QDialog):
             "poetore_auto_hide": self.auto_hide_hotkey.key_text,
             "expedition_reward_ocr": self._expedition_hotkey,
             "desecration_tier_ocr": self._desecration_hotkey,
+            "heist_curio_ocr": self.heist_curio_hotkey.key_text,
+            "heist_curio_manual_ocr": self.heist_curio_manual_hotkey.key_text,
             "map_check": self.map_check_hotkey.key_text,
             "cheat_sheets_toggle": self.cheat_hotkey.key_text,
         }
         if self.poe_version == POE2:
             hotkeys.pop("map_check")
+            hotkeys.pop("heist_curio_ocr")
+            hotkeys.pop("heist_curio_manual_ocr")
         else:
             hotkeys.pop("expedition_reward_ocr")
             hotkeys.pop("desecration_tier_ocr")
@@ -967,6 +990,8 @@ class PoetoreSettingsDialog(QDialog):
                 "poetore_auto_hide": "ぽえとれ検索（AUTO-HIDE）",
                 "expedition_reward_ocr": "エクスペディション報酬読取",
                 "desecration_tier_ocr": "アビス冒涜Modティア読取",
+                "heist_curio_ocr": "ハイスト報酬読取",
+                "heist_curio_manual_ocr": "ハイスト報酬手動読取",
                 "map_check": "Map Modチェック",
                 "cheat_sheets_toggle": "Cheat sheets表示",
             }

@@ -88,6 +88,8 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
         "exit": "F5",
         "monastery": "F12",
         "poetore_auto_hide": "ctrl+d",
+        "heist_curio_ocr": "alt+h",
+        "heist_curio_manual_ocr": "alt+shift+h",
         "map_check": "alt+f",
         "cheat_sheets_toggle": "shift+space",
     }
@@ -372,6 +374,26 @@ def test_desecration_hotkey_dispatches_single_scan():
     window = MagicMock()
     PoetoreModeWindow.handle_hotkey(window, "desecration_tier_ocr")
     window.capture_desecration_tiers.assert_called_once_with()
+
+
+def test_heist_curio_hotkeys_dispatch_auto_and_manual_scans():
+    window = MagicMock()
+
+    PoetoreModeWindow.handle_hotkey(window, "heist_curio_ocr")
+    PoetoreModeWindow.handle_hotkey(window, "heist_curio_manual_ocr")
+
+    assert window.capture_heist_curio.call_args_list == [
+        call(),
+        call(manual=True),
+    ]
+
+
+def test_heist_curio_scan_is_poe1_only():
+    window = MagicMock()
+    window.poe_version = POE2
+
+    assert not PoetoreModeWindow.capture_heist_curio(window)
+    window._ensure_heist_curio_controller.assert_not_called()
 
 
 def test_shared_screen_reading_off_stops_both_features_and_keeps_regions():
