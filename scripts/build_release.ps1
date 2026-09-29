@@ -89,6 +89,7 @@ $appArgs = @(
     "--hidden-import", "pynput.keyboard._win32",
     "--hidden-import", "miniaudio",
     "--hidden-import", "_miniaudio",
+    "--hidden-import", "_cffi_backend",
     "main.py"
 )
 Invoke-Python @appArgs
@@ -113,6 +114,27 @@ if (-not (Test-Path dist\PoENavi\PoENavi.exe)) {
 }
 if (-not (Test-Path dist\PoENavi\PoENaviUpdater.exe)) {
     throw "PoENaviUpdater.exe was not built"
+}
+
+$audioSmokeResult = Join-Path $repo "build\audio-smoke-result.txt"
+Remove-Item $audioSmokeResult -ErrorAction SilentlyContinue
+$env:POENAVI_AUDIO_SMOKE_RESULT = $audioSmokeResult
+try {
+    $audioSmokeProcess = Start-Process `
+        -FilePath (Resolve-Path "dist\PoENavi\PoENavi.exe") `
+        -ArgumentList "--audio-smoke-test" `
+        -Wait -PassThru
+}
+finally {
+    Remove-Item Env:\POENAVI_AUDIO_SMOKE_RESULT -ErrorAction SilentlyContinue
+}
+$audioSmokeDetails = if (Test-Path $audioSmokeResult) {
+    (Get-Content $audioSmokeResult -Raw).Trim()
+} else {
+    "result file was not created"
+}
+if ($audioSmokeProcess.ExitCode -ne 0 -or $audioSmokeDetails -ne "OK") {
+    throw "Packaged audio runtime smoke test failed: $audioSmokeDetails"
 }
 
 $artifactBase = if ($Diagnostic) { "PoENavi-diagnostic" } else { "PoENavi" }
@@ -181,6 +203,7 @@ try {
         "TriskelionShattered.png",
         "TriskelionReforged.png",
         "MessageInABottle.png",
+        "_cffi_backend.pyd",
         "hideout_focus_notification.wav"
     )) {
         if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {

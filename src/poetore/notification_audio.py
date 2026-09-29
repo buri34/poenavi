@@ -6,6 +6,7 @@ import shutil
 import sys
 import threading
 import time
+from importlib import import_module
 from array import array
 from pathlib import Path
 
@@ -16,6 +17,15 @@ from src.utils.config_manager import ConfigManager
 BUNDLED_AUDIO_NAME = "hideout_focus_notification.wav"
 CUSTOM_AUDIO_STEM = "poetore-hideout-notification"
 SUPPORTED_AUDIO_SUFFIXES = {".wav", ".mp3"}
+
+
+def verify_audio_runtime():
+    """Import the packaged native backend and decode the bundled voice."""
+    import_module("_cffi_backend")
+    decoded = _decode_audio_file(bundled_audio_path())
+    if decoded.num_frames <= 0 or decoded.duration <= 0:
+        raise RuntimeError("標準通知音声をデコードできませんでした")
+    return decoded
 
 
 def bundled_audio_path() -> Path:

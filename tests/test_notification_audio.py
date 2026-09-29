@@ -12,6 +12,7 @@ from src.poetore.notification_audio import (
     bundled_audio_path,
     copy_custom_audio,
     scale_signed16,
+    verify_audio_runtime,
 )
 from src.utils.config_manager import ConfigManager
 
@@ -93,7 +94,18 @@ def test_windows_release_collects_audio_backend_and_audits_bundled_voice():
     ).read_text(encoding="utf-8")
     assert '"--hidden-import", "miniaudio"' in script
     assert '"--hidden-import", "_miniaudio"' in script
+    assert '"--hidden-import", "_cffi_backend"' in script
+    assert '"_cffi_backend.pyd"' in script
     assert '"hideout_focus_notification.wav"' in script
+    assert '"--audio-smoke-test"' in script
+    assert "POENAVI_AUDIO_SMOKE_RESULT" in script
+
+
+def test_audio_runtime_smoke_test_imports_backend_and_decodes_bundled_voice():
+    decoded = verify_audio_runtime()
+
+    assert decoded.num_frames > 0
+    assert decoded.duration > 3.0
 
 
 def test_custom_playback_failure_falls_back_without_rewriting_settings(qtbot, tmp_path):

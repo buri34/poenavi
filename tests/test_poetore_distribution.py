@@ -126,6 +126,7 @@ def test_recent_poetore_releases_use_poetore_scoped_tests():
     assert workflow.count('"v4.2.0"') == 2
     assert workflow.count('"v4.2.1"') == 2
     for test_file in (
+        "tests/test_app_mode.py",
         "tests/test_expedition_settings_dialog.py",
         "tests/test_heist_settings_dialog.py",
         "tests/test_global_hotkeys.py",

@@ -19,6 +19,7 @@ from src.utils.poe_version_data import POE1, POE2
 from src.version import APP_VERSION
 
 __version__ = APP_VERSION
+AUDIO_SMOKE_RESULT_ENV = "POENAVI_AUDIO_SMOKE_RESULT"
 
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QDialog, QMessageBox
@@ -33,6 +34,25 @@ from src.windows_autostart import (
     consume_windows_startup_poetore_argument,
     sync_windows_poetore_autostart_with_error,
 )
+
+
+def run_audio_smoke_test():
+    """Verify the audio runtime through the actual packaged executable."""
+    result_path = os.environ.get(AUDIO_SMOKE_RESULT_ENV, "")
+    try:
+        from src.poetore.notification_audio import verify_audio_runtime
+
+        verify_audio_runtime()
+    except Exception as error:
+        result = f"{type(error).__name__}: {error}"
+        if result_path:
+            with open(result_path, "w", encoding="utf-8") as output:
+                output.write(result)
+        return 1
+    if result_path:
+        with open(result_path, "w", encoding="utf-8") as output:
+            output.write("OK")
+    return 0
 
 
 def select_startup_options(config, force_poetore=False):
@@ -150,4 +170,6 @@ def run():
     return app.exec()
 
 if __name__ == "__main__":
+    if "--audio-smoke-test" in sys.argv:
+        sys.exit(run_audio_smoke_test())
     sys.exit(run())

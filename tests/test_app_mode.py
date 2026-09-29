@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -27,6 +29,36 @@ class AppModeTest(unittest.TestCase):
 
     def test_missing_startup_settings_show_selector_with_safe_default(self):
         self.assertEqual(startup_preferences({}), (POENAVI_MODE, True))
+
+    def test_audio_smoke_test_writes_success_result(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result_path = Path(temp_dir) / "audio-smoke-result.txt"
+            with patch.dict(
+                os.environ,
+                {"POENAVI_AUDIO_SMOKE_RESULT": str(result_path)},
+            ), patch(
+                "src.poetore.notification_audio.verify_audio_runtime"
+            ) as verify:
+                self.assertEqual(main.run_audio_smoke_test(), 0)
+            verify.assert_called_once_with()
+            self.assertEqual(result_path.read_text(encoding="utf-8"), "OK")
+
+    def test_audio_smoke_test_records_missing_cffi_backend(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result_path = Path(temp_dir) / "audio-smoke-result.txt"
+            error = ModuleNotFoundError("No module named '_cffi_backend'")
+            with patch.dict(
+                os.environ,
+                {"POENAVI_AUDIO_SMOKE_RESULT": str(result_path)},
+            ), patch(
+                "src.poetore.notification_audio.verify_audio_runtime",
+                side_effect=error,
+            ):
+                self.assertEqual(main.run_audio_smoke_test(), 1)
+            self.assertIn(
+                "No module named '_cffi_backend'",
+                result_path.read_text(encoding="utf-8"),
+            )
 
     def test_valid_saved_mode_can_skip_selector(self):
         config = {

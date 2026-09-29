@@ -4,6 +4,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $testFiles = @(
+    "tests/test_app_mode.py",
     "tests/test_cheat_sheets.py",
     "tests/test_config_manager.py",
     "tests/test_build_poetore_poe2_desecration_tiers.py",
