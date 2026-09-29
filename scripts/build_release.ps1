@@ -167,6 +167,8 @@ try {
         "ExpeditionWindowsOcr.exe",
         "expedition_region_example.png",
         "desecration_region_example.png",
+        "heist_curio_manual_selection_example.png",
+        "heist_curio_settings.png",
         "expedition_ocr_items.json",
         "desecration_tiers.json",
         "mod_metadata.json",

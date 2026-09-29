@@ -12,6 +12,7 @@ from src.poetore.exchange_catalog import exchange_catalog_by_id
 from src.ui.poetore_mode_window import (
     PoetoreModeWindow,
     _expedition_icon,
+    _heist_curio_icon,
 )
 from src.utils.poe_version_data import POE1, POE2
 
@@ -88,8 +89,6 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
         "exit": "F5",
         "monastery": "F12",
         "poetore_auto_hide": "ctrl+d",
-        "heist_curio_ocr": "alt+h",
-        "heist_curio_manual_ocr": "alt+shift+h",
         "map_check": "alt+f",
         "cheat_sheets_toggle": "shift+space",
     }
@@ -110,6 +109,7 @@ def test_poetore_mode_starts_only_common_and_poetore_services():
     assert "stash_tab_scroll" in window.active_service_names
     header_buttons = (
         window.memo_button,
+        window.heist_settings_button,
         window.expedition_settings_button,
         window.desecration_settings_button,
         window.map_mods_button,
@@ -182,6 +182,30 @@ def test_expedition_settings_button_is_immediately_right_of_memo_for_poe2():
     assert window.expedition_settings_button.toolTip() == (
         "エクスペ報酬チェック設定を開く"
     )
+    window.close()
+    app.processEvents()
+
+
+def test_heist_settings_button_is_immediately_right_of_memo_for_poe1():
+    app = QApplication.instance() or QApplication([])
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value={"poe_version": POE1, "hotkeys": {}},
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService",
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    window.show()
+    app.processEvents()
+    assert window.header_action_buttons[:2] == (
+        window.memo_button,
+        window.heist_settings_button,
+    )
+    assert window.heist_settings_button.isVisibleTo(window)
+    assert not window.heist_settings_button.icon().isNull()
+    assert window.heist_settings_button.toolTip() == "ハイスト報酬OCR設定を開く"
+    assert not _heist_curio_icon().isNull()
     window.close()
     app.processEvents()
 
@@ -287,6 +311,57 @@ def test_poe2_expedition_hotkey_starts_only_when_feature_is_enabled():
     app.processEvents()
 
 
+def test_poe1_heist_ocr_starts_only_when_feature_is_enabled():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "poe_version": POE1,
+        "hotkeys": {"heist_curio_ocr": "alt+shift+h"},
+        "poetore": {"heist_curio_ocr": {"enabled": True}},
+    }
+    controller = MagicMock()
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config", return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService",
+    ) as hotkey_class, patch(
+        "src.ui.poetore_mode_window.suppressed_hotkeys_supported", return_value=False,
+    ), patch(
+        "src.ui.poetore_mode_window.sys", platform="win32",
+    ), patch.object(
+        PoetoreModeWindow, "_ensure_heist_curio_controller", return_value=controller,
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    assert hotkey_class.call_args.args[0]["heist_curio_ocr"] == "alt+shift+h"
+    controller.warm_up.assert_called_once_with()
+    window.close()
+    app.processEvents()
+
+
+def test_poe1_heist_ocr_stays_stopped_when_feature_is_disabled():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "poe_version": POE1,
+        "hotkeys": {"heist_curio_ocr": "alt+shift+h"},
+        "poetore": {"heist_curio_ocr": {"enabled": False}},
+    }
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config", return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService"
+    ) as hotkey_class, patch(
+        "src.ui.poetore_mode_window.sys", platform="win32",
+    ), patch.object(
+        PoetoreModeWindow, "_ensure_heist_curio_controller"
+    ) as ensure_controller, patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    assert "heist_curio_ocr" not in hotkey_class.call_args.args[0]
+    ensure_controller.assert_not_called()
+    window.close()
+    app.processEvents()
+
+
 def test_separate_ocr_services_receive_multi_modifier_hotkeys():
     app = QApplication.instance() or QApplication([])
     config = {
@@ -376,24 +451,50 @@ def test_desecration_hotkey_dispatches_single_scan():
     window.capture_desecration_tiers.assert_called_once_with()
 
 
-def test_heist_curio_hotkeys_dispatch_auto_and_manual_scans():
+def test_heist_curio_hotkey_dispatches_manual_selection_scan():
     window = MagicMock()
 
     PoetoreModeWindow.handle_hotkey(window, "heist_curio_ocr")
-    PoetoreModeWindow.handle_hotkey(window, "heist_curio_manual_ocr")
 
-    assert window.capture_heist_curio.call_args_list == [
-        call(),
-        call(manual=True),
-    ]
+    window.capture_heist_curio.assert_called_once_with()
 
 
 def test_heist_curio_scan_is_poe1_only():
     window = MagicMock()
     window.poe_version = POE2
+    window._heist_curio_enabled.return_value = False
 
     assert not PoetoreModeWindow.capture_heist_curio(window)
     window._ensure_heist_curio_controller.assert_not_called()
+
+
+def test_heist_settings_save_enables_only_heist_reader_and_warms_ocr():
+    window = MagicMock()
+    window.poe_version = POE1
+    window.config = {
+        "hotkeys": {"heist_curio_ocr": "alt+shift+h"},
+        "poetore": {"heist_curio_ocr": {"enabled": False}},
+    }
+    window._heist_curio_enabled.return_value = False
+    controller = MagicMock()
+    window._ensure_heist_curio_controller.return_value = controller
+
+    with patch(
+        "src.ui.heist_settings_dialog.HeistSettingsDialog"
+    ) as dialog_class, patch(
+        "src.ui.poetore_mode_window.ConfigManager.save_config"
+    ) as save_config:
+        dialog = dialog_class.return_value
+        dialog.exec.return_value = True
+        dialog.settings.return_value = ("ctrl+shift+h", True)
+
+        PoetoreModeWindow.open_heist_settings(window)
+
+    assert window.config["hotkeys"]["heist_curio_ocr"] == "ctrl+shift+h"
+    assert window.config["poetore"]["heist_curio_ocr"] == {"enabled": True}
+    save_config.assert_called_once_with(window.config)
+    window._restart_hotkeys.assert_called_once_with()
+    controller.warm_up.assert_called_once_with()
 
 
 def test_shared_screen_reading_off_stops_both_features_and_keeps_regions():

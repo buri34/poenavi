@@ -1,9 +1,9 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from PySide6.QtCore import QPoint, QRect
 from PySide6.QtGui import QColor, QImage, QPainter, QPen
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QDialog
 
 from src.poetore.heist_curio import (
     CurioHeaderBand,
@@ -167,11 +167,61 @@ def test_controller_uses_ndlocr_only_after_windows_result_is_untrusted(qapp):
     controller._generation = 1
     placement = PlacementContext(QRect(0, 0, 1200, 700), QPoint(400, 200))
 
-    controller._process(b"image", placement, 1)
+    controller._process(b"image", placement, QRect(100, 100, 500, 100), 1)
 
     assert resolved[0][0].item.name_en == "Chaos Orb"
     assert resolved[0][1] == placement
     coordinator.finish.assert_called_once_with("heist_curio")
+
+
+def test_controller_scan_always_opens_manual_region_selector(qapp):
+    controller = HeistCurioController(
+        ocr_server=_WindowsOcr(),
+        ndl_ocr_server=_NdlOcr(),
+    )
+    selected = QRect(120, 180, 640, 110)
+    image = QImage(640, 110, QImage.Format.Format_RGBA8888)
+    image.fill(QColor("#202020"))
+
+    with patch(
+        "src.poetore.heist_curio.path_of_exile_client_rect",
+        return_value=QRect(0, 0, 1920, 1080),
+    ), patch(
+        "src.poetore.heist_curio.CurioRegionSelector"
+    ) as selector_class, patch.object(
+        controller, "_grab", return_value=image
+    ) as grab, patch(
+        "src.poetore.heist_curio.prepare_curio_ocr_image", return_value=b"image"
+    ), patch(
+        "src.poetore.heist_curio.threading.Thread"
+    ) as thread_class:
+        selector = selector_class.return_value
+        selector.exec.return_value = QDialog.Accepted
+        selector.selected_rect = selected
+
+        assert controller.request_scan()
+
+    selector_class.assert_called_once()
+    grab.assert_called_once_with(selected)
+    assert thread_class.call_args.kwargs["args"][2] == selected
+    thread_class.return_value.start.assert_called_once_with()
+
+
+def test_high_accuracy_status_explains_cold_start(qapp):
+    controller = HeistCurioController(
+        ocr_server=_WindowsOcr(),
+        ndl_ocr_server=_NdlOcr(),
+    )
+    overlay = Mock()
+    controller._high_accuracy_overlay = overlay
+    client_rect = QRect(0, 0, 1920, 1080)
+    capture_rect = QRect(400, 300, 700, 120)
+
+    controller._show_high_accuracy_status(True, client_rect, capture_rect)
+
+    lines = overlay.show_status.call_args.args[2]
+    assert "高精度OCRを準備しています…" in lines
+    assert "初回のみ10～15秒ほどかかります" in lines
 
 
 def test_experimental_base_opens_existing_search_with_empty_optional_ilvl(qapp):

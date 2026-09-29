@@ -26,7 +26,6 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import (
     QColor,
-    QCursor,
     QGuiApplication,
     QImage,
     QKeyEvent,
@@ -537,6 +536,8 @@ class HeistCurioController(QObject):
     status = Signal(str)
     failed = Signal(str)
     resolved = Signal(object, object)
+    high_accuracy_started = Signal(bool, object, object)
+    high_accuracy_finished = Signal()
 
     def __init__(
         self,
@@ -556,6 +557,9 @@ class HeistCurioController(QObject):
         self._items = tuple(items or load_curio_items())
         self._running = False
         self._generation = 0
+        self._high_accuracy_overlay = None
+        self.high_accuracy_started.connect(self._show_high_accuracy_status)
+        self.high_accuracy_finished.connect(self._hide_high_accuracy_status)
 
     @property
     def running(self) -> bool:
@@ -564,6 +568,7 @@ class HeistCurioController(QObject):
     def close(self) -> None:
         self._generation += 1
         self._running = False
+        self._hide_high_accuracy_status()
         if self._scan_coordinator is not None:
             self._scan_coordinator.finish("heist_curio")
         if self._owns_ocr:
@@ -582,7 +587,7 @@ class HeistCurioController(QObject):
         except Exception:  # noqa: BLE001 - a real scan retries and reports the error
             return
 
-    def request_scan(self, *, manual: bool = False) -> bool:
+    def request_scan(self) -> bool:
         if self._running:
             return False
         if self._scan_coordinator is not None and not self._scan_coordinator.try_begin(
@@ -594,34 +599,18 @@ class HeistCurioController(QObject):
         if client_rect is None:
             self._finish_error("Path of Exileのゲーム画面が見つかりませんでした。")
             return False
-        cursor = QCursor.pos()
         self._running = True
         self._generation += 1
         generation = self._generation
-        placement = PlacementContext(QRect(client_rect), QPoint(cursor))
-        if manual:
-            selector = CurioRegionSelector(client_rect)
-            if not selector.exec() or selector.selected_rect is None:
-                self._finish_cancelled()
-                return False
-            capture_rect = selector.selected_rect
-            selector.hide()
-            QGuiApplication.processEvents()
-            image = self._grab(capture_rect)
-        else:
-            image = self._grab(client_rect)
-            image_cursor = image_point_for_capture(cursor, client_rect, image)
-            bands = detect_header_bands(image)
-            band = select_header_band(bands, image_cursor)
-            if band is None:
-                self._finish_error(
-                    "カーソル下の展示パネルを特定できませんでした。"
-                    f"（画面 {client_rect.width()}x{client_rect.height()} / "
-                    f"画像 {image.width()}x{image.height()} / 候補 {len(bands)}）"
-                    "手動読取を使ってください。"
-                )
-                return False
-            image = crop_header(image, band)
+        selector = CurioRegionSelector(client_rect)
+        if not selector.exec() or selector.selected_rect is None:
+            self._finish_cancelled()
+            return False
+        capture_rect = selector.selected_rect
+        placement = PlacementContext(QRect(client_rect), capture_rect.center())
+        selector.hide()
+        QGuiApplication.processEvents()
+        image = self._grab(capture_rect)
         if image.isNull():
             self._finish_error("ゲーム画面をキャプチャできませんでした。")
             return False
@@ -633,7 +622,7 @@ class HeistCurioController(QObject):
         self.status.emit("ハイスト報酬を読み取っています…")
         threading.Thread(
             target=self._process,
-            args=(payload, placement, generation),
+            args=(payload, placement, capture_rect, generation),
             name="heist-curio-ocr",
             daemon=True,
         ).start()
@@ -651,19 +640,33 @@ class HeistCurioController(QObject):
         ).toImage()
 
     def _process(
-        self, payload: bytes, placement: PlacementContext, generation: int
+        self,
+        payload: bytes,
+        placement: PlacementContext,
+        capture_rect: QRect,
+        generation: int,
     ) -> None:
         try:
             self._ocr.start()
             raw_text = self._ocr.recognize([payload])[0]
             match = trusted_curio_match(raw_text, self._items)
             if match is None and getattr(self._ndl_ocr, "is_available", False):
-                results = self._ndl_ocr.recognize([payload])
-                ndl_text = results[0].text if results else ""
-                match = trusted_curio_match(ndl_text, self._items)
+                cold_start = getattr(self._ndl_ocr, "is_ready", False) is not True
+                self.high_accuracy_started.emit(
+                    cold_start,
+                    QRect(placement.target_rect),
+                    QRect(capture_rect),
+                )
+                try:
+                    results = self._ndl_ocr.recognize([payload])
+                    ndl_text = results[0].text if results else ""
+                    match = trusted_curio_match(ndl_text, self._items)
+                finally:
+                    self.high_accuracy_finished.emit()
             if match is None:
                 raise RuntimeError(
-                    "報酬名を安全に特定できませんでした。手動読取を試してください。"
+                    "報酬名を安全に特定できませんでした。"
+                    "範囲を変えてもう一度お試しください。"
                 )
             if generation == self._generation:
                 self.resolved.emit(match, placement)
@@ -686,3 +689,28 @@ class HeistCurioController(QObject):
         self._running = False
         if self._scan_coordinator is not None:
             self._scan_coordinator.finish("heist_curio")
+
+    def _show_high_accuracy_status(
+        self, cold_start: bool, client_rect: QRect, capture_rect: QRect
+    ) -> None:
+        if self._high_accuracy_overlay is None:
+            from src.poetore.poe2.desecration_overlay import (
+                HighAccuracyOcrStatusOverlay,
+            )
+
+            self._high_accuracy_overlay = HighAccuracyOcrStatusOverlay()
+        lines = [
+            "通常の読み取りで報酬名を確認できませんでした",
+            (
+                "高精度OCRを準備しています…"
+                if cold_start
+                else "高精度OCRで再確認しています…"
+            ),
+        ]
+        if cold_start:
+            lines.append("初回のみ10～15秒ほどかかります")
+        self._high_accuracy_overlay.show_status(client_rect, capture_rect, lines)
+
+    def _hide_high_accuracy_status(self) -> None:
+        if self._high_accuracy_overlay is not None:
+            self._high_accuracy_overlay.hide()

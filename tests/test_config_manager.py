@@ -45,7 +45,7 @@ class ConfigManagerTest(unittest.TestCase):
     def test_schema_v19_adds_distinct_exchange_rate_defaults(self):
         migrated = ConfigManager._migrate_config({"schemaVersion": 18})
 
-        assert migrated["schemaVersion"] == 20
+        assert migrated["schemaVersion"] == ConfigManager.CURRENT_SCHEMA_VERSION
         assert migrated["poetore"]["exchange_rate_pairs"] == {
             "poe1": [{
                 "left_item_id": "Metadata/Items/Currency/CurrencyModValues",
@@ -179,7 +179,9 @@ class ConfigManagerTest(unittest.TestCase):
             },
         })
 
-        self.assertEqual(migrated["schemaVersion"], 20)
+        self.assertEqual(
+            migrated["schemaVersion"], ConfigManager.CURRENT_SCHEMA_VERSION
+        )
         self.assertEqual(
             migrated["startup"],
             {
@@ -200,7 +202,7 @@ class ConfigManagerTest(unittest.TestCase):
                 },
             },
         })
-        assert migrated["schemaVersion"] == 20
+        assert migrated["schemaVersion"] == ConfigManager.CURRENT_SCHEMA_VERSION
         assert migrated["poetore"]["screen_reading"] == {"enabled": True}
         assert "enabled" not in migrated["poetore"]["expedition_reward_overlay"]
         assert migrated["poetore"]["desecration_tier_overlay"] == {}
@@ -212,8 +214,11 @@ class ConfigManagerTest(unittest.TestCase):
             "hotkeys": {"screen_reading_ocr": "ctrl+shift+r"},
         })
 
-        assert migrated["schemaVersion"] == 20
-        assert migrated["hotkeys"] == {"screen_reading_ocr": "ctrl+shift+r"}
+        assert migrated["schemaVersion"] == ConfigManager.CURRENT_SCHEMA_VERSION
+        assert migrated["hotkeys"] == {
+            "screen_reading_ocr": "ctrl+shift+r",
+            "heist_curio_ocr": "alt+shift+h",
+        }
 
     def test_v432_config_gets_separate_default_hotkeys_without_reverse_migration(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -237,7 +242,7 @@ class ConfigManagerTest(unittest.TestCase):
                  patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
                 loaded = ConfigManager.load_config()
 
-            assert loaded["schemaVersion"] == 20
+            assert loaded["schemaVersion"] == ConfigManager.CURRENT_SCHEMA_VERSION
             assert loaded["hotkeys"]["screen_reading_ocr"] == "ctrl+shift+r"
             assert loaded["hotkeys"]["expedition_reward_ocr"] == "alt+e"
             assert loaded["hotkeys"]["desecration_tier_ocr"] == "alt+r"
@@ -249,6 +254,21 @@ class ConfigManagerTest(unittest.TestCase):
         })
 
         self.assertTrue(migrated["startup"]["windows_autostart_poetore"])
+
+    def test_schema_v21_migrates_heist_to_manual_only_opt_in(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 20,
+            "hotkeys": {
+                "heist_curio_ocr": "alt+h",
+                "heist_curio_manual_ocr": "ctrl+shift+h",
+            },
+            "poetore": {},
+        })
+
+        assert migrated["schemaVersion"] == ConfigManager.CURRENT_SCHEMA_VERSION
+        assert migrated["hotkeys"]["heist_curio_ocr"] == "ctrl+shift+h"
+        assert "heist_curio_manual_ocr" not in migrated["hotkeys"]
+        assert migrated["poetore"]["heist_curio_ocr"] == {"enabled": False}
 
     def test_schema_v8_preserves_existing_startup_choice(self):
         migrated = ConfigManager._migrate_config({

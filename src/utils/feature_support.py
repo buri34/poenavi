@@ -26,7 +26,7 @@ FEATURE_HOTKEY_ACTIONS = {
     GEM_SHOP_SEARCH: frozenset({"gem_shop_search"}),
     EXPEDITION_REWARD_OVERLAY: frozenset({"expedition_reward_ocr"}),
     DESECRATION_TIER_OVERLAY: frozenset({"desecration_tier_ocr"}),
-    HEIST_CURIO_OCR: frozenset({"heist_curio_ocr", "heist_curio_manual_ocr"}),
+    HEIST_CURIO_OCR: frozenset({"heist_curio_ocr"}),
 }
 
 

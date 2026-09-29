@@ -102,6 +102,17 @@ def _memo_icon() -> QIcon:
     return _finish_icon(pixmap, painter)
 
 
+def _heist_curio_icon() -> QIcon:
+    """Return the approved mint Heist settings icon."""
+    path = (
+        Path(__file__).resolve().parents[2]
+        / "assets"
+        / "icons"
+        / "heist_curio_settings.png"
+    )
+    return QIcon(str(path))
+
+
 def _expedition_icon() -> QIcon:
     """Return the three-armed Expedition spiral emblem."""
     pixmap, painter = _icon_canvas()
@@ -385,8 +396,7 @@ class PoetoreModeWindow(QMainWindow):
         "poetore_auto_hide": "ctrl+d",
         "expedition_reward_ocr": "alt+e",
         "desecration_tier_ocr": "alt+r",
-        "heist_curio_ocr": "alt+h",
-        "heist_curio_manual_ocr": "alt+shift+h",
+        "heist_curio_ocr": "alt+shift+h",
         "map_check": "alt+f",
         "cheat_sheets_toggle": "shift+space",
     }
@@ -441,7 +451,7 @@ class PoetoreModeWindow(QMainWindow):
                 self._ensure_expedition_reward_controller().warm_up()
             if self._desecration_ready():
                 self._ensure_desecration_tier_controller().warm_up()
-        if sys.platform == "win32" and self.poe_version == POE1:
+        if sys.platform == "win32" and self._heist_curio_enabled():
             self._ensure_heist_curio_controller().warm_up()
 
         QTimer.singleShot(0, self.refresh_currency_rate)
@@ -610,6 +620,12 @@ class PoetoreModeWindow(QMainWindow):
         self.memo_button = self._header_button("", "共通メモを開く")
         self.memo_button.setIcon(_memo_icon())
         self.memo_button.setIconSize(QSize(24, 24))
+        self.heist_settings_button = self._header_button(
+            "", "ハイスト報酬OCR設定を開く"
+        )
+        self.heist_settings_button.setIcon(_heist_curio_icon())
+        self.heist_settings_button.setIconSize(QSize(24, 24))
+        self.heist_settings_button.setVisible(self.poe_version == POE1)
         self.expedition_settings_button = self._header_button(
             "", "エクスペ報酬チェック設定を開く"
         )
@@ -637,6 +653,7 @@ class PoetoreModeWindow(QMainWindow):
         self.settings_button.setIcon(_settings_icon())
         self.settings_button.setIconSize(QSize(24, 24))
         self.memo_button.clicked.connect(self.open_memo)
+        self.heist_settings_button.clicked.connect(self.open_heist_settings)
         self.expedition_settings_button.clicked.connect(
             self.open_expedition_settings
         )
@@ -646,10 +663,20 @@ class PoetoreModeWindow(QMainWindow):
         self.map_mods_button.clicked.connect(self.open_map_mod_manager)
         self.cheat_sheets_button.clicked.connect(self.open_cheat_sheet_manager)
         self.settings_button.clicked.connect(self.open_settings)
+        version_settings_buttons = (
+            (self.heist_settings_button,)
+            if self.poe_version == POE1
+            else (self.expedition_settings_button, self.desecration_settings_button)
+        )
+        hidden_version_buttons = (
+            (self.expedition_settings_button, self.desecration_settings_button)
+            if self.poe_version == POE1
+            else (self.heist_settings_button,)
+        )
         self.header_action_buttons = (
             self.memo_button,
-            self.expedition_settings_button,
-            self.desecration_settings_button,
+            *version_settings_buttons,
+            *hidden_version_buttons,
             self.map_mods_button,
             self.cheat_sheets_button,
             self.settings_button,
@@ -799,12 +826,15 @@ class PoetoreModeWindow(QMainWindow):
         capture_hotkey = mode_hotkeys.get("poetore_capture", "none")
         expedition_hotkey = mode_hotkeys.get("expedition_reward_ocr", "none")
         desecration_hotkey = mode_hotkeys.get("desecration_tier_ocr", "none")
+        heist_enabled = self._heist_curio_enabled()
         expedition_enabled = self._screen_reading_enabled() and self._expedition_ready()
         desecration_enabled = self._screen_reading_enabled() and self._desecration_ready()
         if not expedition_enabled:
             mode_hotkeys.pop("expedition_reward_ocr", None)
         if not desecration_enabled:
             mode_hotkeys.pop("desecration_tier_ocr", None)
+        if not heist_enabled:
+            mode_hotkeys.pop("heist_curio_ocr", None)
         use_suppression = suppressed_hotkeys_supported()
         if use_suppression:
             mode_hotkeys.pop("poetore_capture", None)
@@ -852,6 +882,13 @@ class PoetoreModeWindow(QMainWindow):
     def _screen_reading_enabled(self):
         return self.poe_version == POE2 and bool(
             self.config.get("poetore", {}).get("screen_reading", {}).get("enabled", False)
+        )
+
+    def _heist_curio_enabled(self):
+        return self.poe_version == POE1 and bool(
+            self.config.get("poetore", {}).get("heist_curio_ocr", {}).get(
+                "enabled", False
+            )
         )
 
     def _expedition_ready(self):
@@ -1024,8 +1061,6 @@ class PoetoreModeWindow(QMainWindow):
             self.capture_desecration_tiers()
         elif command == "heist_curio_ocr":
             self.capture_heist_curio()
-        elif command == "heist_curio_manual_ocr":
-            self.capture_heist_curio(manual=True)
         elif command == "map_check":
             self.capture_map_check_item()
         elif command == "map_check_released":
@@ -1116,10 +1151,10 @@ class PoetoreModeWindow(QMainWindow):
             self._heist_curio_controller = controller
         return self._heist_curio_controller
 
-    def capture_heist_curio(self, *, manual=False):
-        if self.poe_version != POE1:
+    def capture_heist_curio(self):
+        if not self._heist_curio_enabled():
             return False
-        return self._ensure_heist_curio_controller().request_scan(manual=manual)
+        return self._ensure_heist_curio_controller().request_scan()
 
     def _show_heist_curio_status(self, message):
         self.rate_status.setText(message)
@@ -1312,9 +1347,7 @@ class PoetoreModeWindow(QMainWindow):
         return True
 
     def _shutdown_screen_reading(self):
-        if self._heist_curio_controller is not None:
-            self._heist_curio_controller.close()
-            self._heist_curio_controller = None
+        self._shutdown_heist_curio()
         if self._expedition_reward_controller is not None:
             self._expedition_reward_controller.close()
             self._expedition_reward_controller = None
@@ -1324,6 +1357,95 @@ class PoetoreModeWindow(QMainWindow):
         if self._screen_reading_coordinator is not None:
             self._screen_reading_coordinator.close()
             self._screen_reading_coordinator = None
+
+    def _shutdown_heist_curio(self):
+        if self._heist_curio_controller is not None:
+            self._heist_curio_controller.close()
+            self._heist_curio_controller = None
+        if self.poe_version == POE1 and self._screen_reading_coordinator is not None:
+            self._screen_reading_coordinator.close()
+            self._screen_reading_coordinator = None
+
+    def open_heist_settings(self):
+        if self.poe_version != POE1:
+            return
+        from src.ui.heist_settings_dialog import HeistSettingsDialog
+
+        hotkeys = self.config.get("hotkeys", {})
+        hotkeys = hotkeys if isinstance(hotkeys, dict) else {}
+        dialog = HeistSettingsDialog(
+            self,
+            enabled=self._heist_curio_enabled(),
+            hotkey=hotkeys.get("heist_curio_ocr", "alt+shift+h"),
+        )
+        if not dialog.exec():
+            return
+        hotkey, enabled = dialog.settings()
+        if not PoetoreModeWindow._save_heist_curio_settings(
+            self, hotkey, enabled
+        ):
+            return
+        if enabled:
+            self._ensure_heist_curio_controller().warm_up()
+
+    def _save_heist_curio_settings(self, hotkey, enabled):
+        configured_hotkeys = self.config.get("hotkeys", {})
+        configured_hotkeys = (
+            configured_hotkeys if isinstance(configured_hotkeys, dict) else {}
+        )
+        active_hotkeys = {
+            name: configured_hotkeys.get(name, default)
+            for name, default in self.MODE_ACTION_DEFAULTS.items()
+            if is_feature_hotkey_supported(name, self.poe_version)
+        }
+        active_hotkeys["heist_curio_ocr"] = hotkey
+        active_hotkeys.update(
+            custom_command_hotkeys(self.config.get("custom_commands", []))
+        )
+        duplicate = next(
+            (
+                (key, actions)
+                for key, actions in find_duplicate_hotkeys(active_hotkeys).items()
+                if "heist_curio_ocr" in actions
+            ),
+            None,
+        )
+        if duplicate is not None:
+            key, actions = duplicate
+            labels = {
+                "exit": "キャラクター選択へ戻る",
+                "monastery": "修道院へ移動",
+                "poetore_capture": "ぽえとれ検索（操作モード）",
+                "poetore_auto_hide": "ぽえとれ検索（AUTO-HIDE）",
+                "heist_curio_ocr": "ハイスト報酬OCR",
+                "map_check": "Map Modチェック",
+                "cheat_sheets_toggle": "Cheat sheets表示",
+            }
+            others = "、".join(
+                labels.get(name, name)
+                for name in actions
+                if name != "heist_curio_ocr"
+            )
+            QMessageBox.warning(
+                self,
+                "ホットキー重複",
+                f"{key}は別の操作（{others}）にも設定されています。",
+            )
+            return False
+
+        poetore = self.config.get("poetore", {})
+        poetore = dict(poetore) if isinstance(poetore, dict) else {}
+        poetore["heist_curio_ocr"] = {"enabled": bool(enabled)}
+        saved_hotkeys = dict(configured_hotkeys)
+        saved_hotkeys["heist_curio_ocr"] = hotkey
+        saved_hotkeys.pop("heist_curio_manual_ocr", None)
+        self.config["poetore"] = poetore
+        self.config["hotkeys"] = saved_hotkeys
+        ConfigManager.save_config(self.config)
+        if not enabled:
+            self._shutdown_heist_curio()
+        self._restart_hotkeys()
+        return True
 
     def open_expedition_settings(self):
         if self.poe_version != POE2:

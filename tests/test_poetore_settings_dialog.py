@@ -31,32 +31,27 @@ def test_monastery_hotkey_is_visible_only_for_poe1():
     assert not dialog.monastery_hotkey.isVisibleTo(dialog)
     assert not dialog.map_check_label.isVisibleTo(dialog)
     assert not dialog.map_check_hotkey.isVisibleTo(dialog)
-    assert not dialog.heist_curio_label.isVisibleTo(dialog)
-    assert not dialog.heist_curio_hotkey.isVisibleTo(dialog)
-    assert not dialog.heist_curio_manual_label.isVisibleTo(dialog)
-    assert not dialog.heist_curio_manual_hotkey.isVisibleTo(dialog)
 
     dialog.poe_version_radios[POE1].setChecked(True)
     assert dialog.monastery_label.isVisibleTo(dialog)
     assert dialog.monastery_hotkey.isVisibleTo(dialog)
     assert dialog.map_check_label.isVisibleTo(dialog)
     assert dialog.map_check_hotkey.isVisibleTo(dialog)
-    assert dialog.heist_curio_label.isVisibleTo(dialog)
-    assert dialog.heist_curio_hotkey.isVisibleTo(dialog)
-    assert dialog.heist_curio_manual_label.isVisibleTo(dialog)
-    assert dialog.heist_curio_manual_hotkey.isVisibleTo(dialog)
     dialog.close()
 
 
-def test_heist_curio_hotkeys_default_and_persist_for_poe1():
+def test_heist_curio_hotkey_is_preserved_without_general_settings_control():
     QApplication.instance() or QApplication([])
-    dialog = PoetoreSettingsDialog(current_config={"poe_version": POE1})
+    dialog = PoetoreSettingsDialog(current_config={
+        "poe_version": POE1,
+        "hotkeys": {"heist_curio_ocr": "ctrl+h"},
+    })
     try:
-        assert dialog.heist_curio_hotkey.key_text == "alt+h"
-        assert dialog.heist_curio_manual_hotkey.key_text == "alt+shift+h"
+        assert not hasattr(dialog, "heist_curio_hotkey")
+        assert not hasattr(dialog, "heist_curio_manual_hotkey")
         settings = dialog.get_settings()
-        assert settings["hotkeys"]["heist_curio_ocr"] == "alt+h"
-        assert settings["hotkeys"]["heist_curio_manual_ocr"] == "alt+shift+h"
+        assert settings["hotkeys"]["heist_curio_ocr"] == "ctrl+h"
+        assert "heist_curio_manual_ocr" not in settings["hotkeys"]
     finally:
         dialog.close()
 

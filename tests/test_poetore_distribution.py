@@ -71,6 +71,8 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
         "TriskelionShattered.png",
         "TriskelionReforged.png",
         "MessageInABottle.png",
+        "heist_curio_settings.png",
+        "heist_curio_manual_selection_example.png",
     ):
         assert required_ui_asset in script
     assert "dotnet publish tools\\ExpeditionWindowsOcr\\ExpeditionWindowsOcr.csproj" in script
@@ -95,6 +97,8 @@ def test_release_build_includes_legal_notices_but_not_development_fixtures():
     assert "LICENCE_DEPENDENCIES.txt" in ocr_script
     assert "expedition_region_example.png" in script
     assert "desecration_region_example.png" in script
+    assert "heist_curio_manual_selection_example.png" in script
+    assert "heist_curio_settings.png" in script
     assert "expedition_ocr_items.json" in script
     assert "desecration_tiers.json" in script
     assert ".NET 8 runtime" in (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
@@ -123,6 +127,7 @@ def test_recent_poetore_releases_use_poetore_scoped_tests():
     assert workflow.count('"v4.2.1"') == 2
     for test_file in (
         "tests/test_expedition_settings_dialog.py",
+        "tests/test_heist_settings_dialog.py",
         "tests/test_global_hotkeys.py",
         "tests/test_hideout_notification.py",
         "tests/test_hideout_notification_controller.py",

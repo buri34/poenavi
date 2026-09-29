@@ -40,9 +40,8 @@ def test_poetore_hotkeys_follow_feature_support():
     assert is_feature_hotkey_supported("expedition_reward_ocr", POE2)
     assert not is_feature_hotkey_supported("desecration_tier_ocr", POE1)
     assert is_feature_hotkey_supported("desecration_tier_ocr", POE2)
-    for action in ("heist_curio_ocr", "heist_curio_manual_ocr"):
-        assert is_feature_hotkey_supported(action, POE1)
-        assert not is_feature_hotkey_supported(action, POE2)
+    assert is_feature_hotkey_supported("heist_curio_ocr", POE1)
+    assert not is_feature_hotkey_supported("heist_curio_ocr", POE2)
 
 
 def test_unknown_features_fail_closed():

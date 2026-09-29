@@ -21,8 +21,9 @@ class ConfigManager:
     # Schema 18 was published in v4.3.2. Keep the version monotonic even
     # though the shared OCR hotkey feature has been withdrawn. Schema 19 adds
     # the PoE-version-scoped Currency Exchange rate-pair lists. Schema 20 adds
-    # the opt-in PoETore hideout-stay notification settings.
-    CURRENT_SCHEMA_VERSION = 20
+    # the opt-in PoETore hideout-stay notification settings. Schema 21 replaces
+    # the two Heist OCR actions with one opt-in manual-selection action.
+    CURRENT_SCHEMA_VERSION = 21
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -539,6 +540,28 @@ class ConfigManager:
             if not isinstance(hotkeys, dict):
                 hotkeys = {}
             hotkeys.setdefault("desecration_tier_ocr", "alt+r")
+            migrated["hotkeys"] = hotkeys
+
+        if schema_version < 21:
+            poetore = migrated.get("poetore")
+            if not isinstance(poetore, dict):
+                poetore = {}
+            heist = poetore.get("heist_curio_ocr")
+            if not isinstance(heist, dict):
+                heist = {}
+            heist.setdefault("enabled", False)
+            poetore["heist_curio_ocr"] = heist
+            migrated["poetore"] = poetore
+
+            hotkeys = migrated.get("hotkeys")
+            if not isinstance(hotkeys, dict):
+                hotkeys = {}
+            manual_hotkey = hotkeys.pop("heist_curio_manual_ocr", None)
+            current_hotkey = str(hotkeys.get("heist_curio_ocr", "")).strip()
+            if manual_hotkey:
+                hotkeys["heist_curio_ocr"] = manual_hotkey
+            elif not current_hotkey or current_hotkey.lower() == "alt+h":
+                hotkeys["heist_curio_ocr"] = "alt+shift+h"
             migrated["hotkeys"] = hotkeys
 
         # Missing keys mean first use and receive the initial pair. Explicit
