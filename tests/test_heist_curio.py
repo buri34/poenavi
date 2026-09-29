@@ -10,6 +10,7 @@ from src.poetore.heist_curio import (
     HeistCurioController,
     curio_item_text,
     detect_header_bands,
+    image_point_for_capture,
     load_curio_items,
     rank_curio_matches,
     select_header_band,
@@ -115,6 +116,22 @@ def test_select_header_prefers_the_band_nearest_the_cursor_vertically():
     )
 
     assert select_header_band(bands, QPoint(300, 430)) == bands[1]
+
+
+def test_cursor_is_mapped_from_qt_logical_coordinates_to_capture_pixels():
+    capture_rect = QRect(200, 100, 1000, 500)
+    capture_image = QImage(2000, 1000, QImage.Format.Format_RGBA8888)
+
+    mapped = image_point_for_capture(
+        QPoint(700, 325),
+        capture_rect,
+        capture_image,
+    )
+
+    assert mapped == QPoint(1000, 450)
+    band = CurioHeaderBand(800, 1400, 400, 500, 3)
+    assert select_header_band((band,), mapped) == band
+    assert select_header_band((band,), QPoint(500, 225)) is None
 
 
 class _WindowsOcr:

@@ -378,6 +378,23 @@ def select_header_band(
     return best
 
 
+def image_point_for_capture(
+    global_point: QPoint,
+    capture_rect: QRect,
+    image: QImage,
+) -> QPoint:
+    """Map a Qt logical screen point into the captured image's pixel grid."""
+    if capture_rect.isEmpty() or image.isNull():
+        return QPoint()
+    local = global_point - capture_rect.topLeft()
+    scale_x = image.width() / capture_rect.width()
+    scale_y = image.height() / capture_rect.height()
+    return QPoint(
+        max(0, min(image.width() - 1, round(local.x() * scale_x))),
+        max(0, min(image.height() - 1, round(local.y() * scale_y))),
+    )
+
+
 def crop_header(image: QImage, band: CurioHeaderBand) -> QImage:
     margin_y = max(6, round(image.height() * 0.005))
     rect = QRect(
@@ -593,11 +610,15 @@ class HeistCurioController(QObject):
             image = self._grab(capture_rect)
         else:
             image = self._grab(client_rect)
-            local_cursor = cursor - client_rect.topLeft()
-            band = select_header_band(detect_header_bands(image), local_cursor)
+            image_cursor = image_point_for_capture(cursor, client_rect, image)
+            bands = detect_header_bands(image)
+            band = select_header_band(bands, image_cursor)
             if band is None:
                 self._finish_error(
-                    "カーソル下の展示パネルを特定できませんでした。手動読取を使ってください。"
+                    "カーソル下の展示パネルを特定できませんでした。"
+                    f"（画面 {client_rect.width()}x{client_rect.height()} / "
+                    f"画像 {image.width()}x{image.height()} / 候補 {len(bands)}）"
+                    "手動読取を使ってください。"
                 )
                 return False
             image = crop_header(image, band)
