@@ -70,6 +70,14 @@ class CurioMatch:
 
 
 @dataclass(frozen=True)
+class CurioUniqueModTemplate:
+    stable_id: str
+    status: str
+    source_mod_count: int
+    filters: tuple[dict[str, object], ...]
+
+
+@dataclass(frozen=True)
 class OrangeLine:
     left: int
     right: int
@@ -112,6 +120,17 @@ def curio_dictionary_path() -> Path:
     return _runtime_roots()[-1] / relative
 
 
+def curio_unique_mod_templates_path() -> Path:
+    relative = (
+        Path("data") / "poetore" / "poe1" / "heist_unique_mod_templates.json"
+    )
+    for root in _runtime_roots():
+        candidate = root / relative
+        if candidate.is_file():
+            return candidate
+    return _runtime_roots()[-1] / relative
+
+
 @lru_cache(maxsize=1)
 def load_curio_items(path: Path | None = None) -> tuple[CurioItem, ...]:
     source = path or curio_dictionary_path()
@@ -138,6 +157,53 @@ def load_curio_items(path: Path | None = None) -> tuple[CurioItem, ...]:
     if not items or len({item.stable_id for item in items}) != len(items):
         raise ValueError("ハイスト報酬辞書が空か、安定IDが重複しています。")
     return items
+
+
+@lru_cache(maxsize=1)
+def load_curio_unique_mod_templates(
+    path: Path | None = None,
+) -> dict[str, CurioUniqueModTemplate]:
+    source = path or curio_unique_mod_templates_path()
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    if payload.get("schema_version") != 1:
+        raise ValueError("未対応のハイストユニークMod辞書です。")
+    templates = {
+        str(row["stable_id"]): CurioUniqueModTemplate(
+            stable_id=str(row["stable_id"]),
+            status=str(row["status"]),
+            source_mod_count=int(row.get("source_mod_count", 0)),
+            filters=tuple(dict(value) for value in row.get("filters", ())),
+        )
+        for row in payload.get("items", ())
+    }
+    if len(templates) != 101:
+        raise ValueError("ハイストユニークMod辞書は101件である必要があります。")
+    return templates
+
+
+def curio_unique_mod_filters(stable_id: str):
+    """Return blank, disabled Trade filters for one identified Curio unique."""
+    from src.poetore.trade import TradeStatFilter
+
+    template = load_curio_unique_mod_templates().get(str(stable_id))
+    if template is None or template.status == "random_veiled":
+        return ()
+    return tuple(
+        TradeStatFilter(
+            stat_id=str(row["stat_id"]),
+            text=str(row["text_ja"]),
+            min_value=None,
+            kind="explicit",
+            enabled=False,
+            max_value=None,
+            ref=str(row.get("ref") or "") or None,
+            inverted=bool(row.get("inverted", False)),
+            better=(int(row["better"]) if row.get("better") is not None else None),
+            decimal=bool(row.get("decimal", False)),
+            selection_reason="ハイストユニーク固定Mod候補",
+        )
+        for row in template.filters
+    )
 
 
 def normalize_curio_text(text: str) -> str:

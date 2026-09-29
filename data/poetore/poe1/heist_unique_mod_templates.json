@@ -1,0 +1,4315 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-29T10:54:19.945692+00:00",
+  "sources": {
+    "poe_wiki": {
+      "api": "https://www.poewiki.net/w/api.php",
+      "usage": "unique name to internal Mod IDs"
+    },
+    "repoe": {
+      "revision": "8023a1d696dbddc836c05ac3fcedd072da1767d2",
+      "usage": "Mod and stat structures"
+    },
+    "poe_trade_metadata": {
+      "path": "data/poetore/mod_metadata.json"
+    }
+  },
+  "items": [
+    {
+      "stable_id": "poenavi-heist:replacement_unique:actum:3cd6a3d9f3d8efb5",
+      "category": "replacement_unique",
+      "name_en": "Actum",
+      "name_ja": "アクトゥム",
+      "status": "fixed",
+      "source_mod_count": 4,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1493091477",
+          "text_ja": "ソケットを持たない",
+          "ref": "Has no Sockets",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2706175703",
+          "text_ja": "知性が0になる",
+          "ref": "You have no Intelligence",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1672183492",
+          "text_ja": "この武器によるヒットのクリティカル率が#%になる",
+          "ref": "Critical Strike Chance is #% for Hits with this Weapon",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:crest-of-desire:0c8f9a947d79a03a",
+      "category": "replacement_unique",
+      "name_en": "Crest of Desire",
+      "name_ja": "欲望の紋章",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_4077843608",
+          "text_ja": "ソケットを1個持つ",
+          "ref": "Has 1 Socket",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2843100721",
+          "text_ja": "ソケットされたジェムのレベル +#",
+          "ref": "+# to Level of Socketed Gems",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3828613551",
+          "text_ja": "ソケットされたジェムの品質 +#%",
+          "ref": "+#% to Quality of Socketed Gems",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2132884933",
+          "text_ja": "ソケットされたスキルはダブルダメージを与える",
+          "ref": "Socketed Skills deal Double Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2451402625",
+          "text_ja": "アーマーおよび回避力が#%増加する (ローカル)",
+          "ref": "#% increased Armour and Evasion",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:expedition-s-end:1b5be4aeb8a72824",
+      "category": "replacement_unique",
+      "name_en": "Expedition's End",
+      "name_ja": "遠征の終わり",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1999113824",
+          "text_ja": "回避力およびエナジーシールドが#%増加する (ローカル)",
+          "ref": "#% increased Evasion and Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_983749596",
+          "text_ja": "最大ライフが#%増加する",
+          "ref": "#% increased maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4052117756",
+          "text_ja": "全てのダメージで凍結を付与できる",
+          "ref": "All Damage can Freeze",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4272678430",
+          "text_ja": "冷却状態の敵に対して#%上昇したダメージを与えたと仮定してその敵を凍結させる",
+          "ref": "Freeze Chilled Enemies as though dealing #% more Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:fated-end:f8daa1fcbeb8346e",
+      "category": "replacement_unique",
+      "name_en": "Fated End",
+      "name_ja": "定められし終焉",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_328541901",
+          "text_ja": "知性 +#",
+          "ref": "+# to Intelligence",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2378065031",
+          "text_ja": "呪いスキルのキャストスピードが#%増加する",
+          "ref": "Curse Skills have #% increased Cast Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3266609002",
+          "text_ja": "オーラでない呪術の効果が毎秒20%増加する",
+          "ref": "Non-Aura Hexes gain 20% increased Effect per second",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2417456003",
+          "text_ja": "オーラでない呪術は基礎効果の#%に達した時に消失する。",
+          "ref": "Non-Aura Hexes expire upon reaching #% of base Effect",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:font-of-thunder:a129547a35169c7b",
+      "category": "replacement_unique",
+      "name_en": "Font of Thunder",
+      "name_ja": "雷の源",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1999113824",
+          "text_ja": "回避力およびエナジーシールドが#%増加する (ローカル)",
+          "ref": "#% increased Evasion and Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_789117908",
+          "text_ja": "マナ自動回復レートが#%増加する",
+          "ref": "#% increased Mana Regeneration Rate",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3206652215",
+          "text_ja": "感電を付与される確率 +#%",
+          "ref": "+#% chance to be Shocked",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2881210047",
+          "text_ja": "冷気ダメージの#%を雷ダメージとして受ける",
+          "ref": "#% of Cold Damage taken as Lightning Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4142376596",
+          "text_ja": "火ダメージの#%を雷ダメージとして受ける",
+          "ref": "#% of Fire Damage taken as Lightning Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:shattershard:97e7149e8c49ecaf",
+      "category": "replacement_unique",
+      "name_en": "Shattershard",
+      "name_ja": "砕けた破片",
+      "status": "fixed",
+      "source_mod_count": 4,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_401685616",
+          "text_ja": "ブロック時にレベル#シールドシャッターをトリガーする",
+          "ref": "Trigger Level # Shield Shatter when you Block",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2451402625",
+          "text_ja": "アーマーおよび回避力が#%増加する (ローカル)",
+          "ref": "#% increased Armour and Evasion",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4253454700",
+          "text_ja": "ブロック率 +#% (盾)",
+          "ref": "+#% Chance to Block",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:the-fulcrum:78c3eb1310711ac3",
+      "category": "replacement_unique",
+      "name_en": "The Fulcrum",
+      "name_ja": "フルクラム",
+      "status": "fixed",
+      "source_mod_count": 8,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1533563525",
+          "text_ja": "物理ダメージの#%を火ダメージに変換する",
+          "ref": "#% of Physical Damage Converted to Fire Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2133341901",
+          "text_ja": "物理ダメージの#%を冷気ダメージに変換する",
+          "ref": "#% of Physical Damage Converted to Cold Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3240769289",
+          "text_ja": "物理ダメージの#%を雷ダメージに変換する",
+          "ref": "#% of Physical Damage Converted to Lightning Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1370804479",
+          "text_ja": "プレイヤーが付与した元素系状態異常はプレイヤーに反射される",
+          "ref": "Elemental Ailments you inflict are Reflected to you",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_888026555",
+          "text_ja": "感電中はヒットの元素ダメージが幸運になる",
+          "ref": "Elemental Damage with Hits is Lucky while you are Shocked",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1089858120",
+          "text_ja": "冷却中はダメージは#%の元素耐性を貫通する",
+          "ref": "Damage Penetrates #% Elemental Resistances while you are Chilled",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3595519743",
+          "text_ja": "発火中は物理ダメージの#%をランダムな元素属性の追加ダメージとして獲得する",
+          "ref": "Gain #% of Physical Damage as Extra Damage of a random Element while you are Ignited",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:the-hidden-blade:dd5503c1f589dec5",
+      "category": "replacement_unique",
+      "name_en": "The Hidden Blade",
+      "name_ja": "隠れた刃",
+      "status": "fixed",
+      "source_mod_count": 4,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3165215973",
+          "text_ja": "透明化中は0.5秒ごとにレベル#アンシーンストライクをトリガーする",
+          "ref": "Trigger Level # Unseen Strike every 0.5 seconds while Phasing",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3261801346",
+          "text_ja": "器用さ +#",
+          "ref": "+# to Dexterity",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2752264922",
+          "text_ja": "透明化中はアタックスピードが#%増加する",
+          "ref": "#% increased Attack Speed while Phasing",
+          "inverted": true,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replacement_unique:the-iron-mass:fdb732513b804e9f",
+      "category": "replacement_unique",
+      "name_en": "The Iron Mass",
+      "name_ja": "鉄の塊",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_210067635",
+          "text_ja": "アタックスピードが#%増加する (ローカル)",
+          "ref": "#% increased Attack Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1646760085",
+          "text_ja": "アンホーリーマイト",
+          "ref": "Unholy Might",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2646007123",
+          "text_ja": "メインハンドに増備時に召喚されたスケルトンウォーリアーおよびソルジャーはこの武器のコピーを装備する",
+          "ref": "Summoned Skeleton Warriors and Soldiers wield this Weapon while in your Main Hand",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_697059777",
+          "text_ja": "直近この武器でヒットを与えていれば\n召喚されたスケルトンウォーリアーおよびソルジャーはトリプルダメージを与える",
+          "ref": "Summoned Skeleton Warriors and Soldiers deal Triple Damage with this\nWeapon if you've Hit with this Weapon Recently",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-abyssus:6c92a8ca5ebe03f6",
+      "category": "replica_unique",
+      "name_en": "Replica Abyssus",
+      "name_ja": "アビサス（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 7,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1379411836",
+          "text_ja": "全ての能力値 +#",
+          "ref": "+# to all Attributes",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1573130764",
+          "text_ja": "#から#の火ダメージをアタックに追加する",
+          "ref": "Adds # to # Fire Damage to Attacks",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4067062424",
+          "text_ja": "#から#の冷気ダメージをアタックに追加する",
+          "ref": "Adds # to # Cold Damage to Attacks",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1754445556",
+          "text_ja": "#から#の雷ダメージをアタックに追加する",
+          "ref": "Adds # to # Lightning Damage to Attacks",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4237442815",
+          "text_ja": "近接クリティカルダメージ倍率 +#%",
+          "ref": "+#% to Melee Critical Strike Multiplier",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1062208444",
+          "text_ja": "アーマーが#%増加する (ローカル)",
+          "ref": "#% increased Armour",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2734809852",
+          "text_ja": "受ける元素ダメージが#%増加する",
+          "ref": "#% increased Elemental Damage taken",
+          "inverted": false,
+          "better": -1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-advancing-fortress:b9b8d99f5118dd70",
+      "category": "replica_unique",
+      "name_en": "Replica Advancing Fortress",
+      "name_ja": "前進する要塞（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3036440332",
+          "text_ja": "ソケットされたジェムはレベル#被ダメージ時キャストによりサポートされる",
+          "ref": "Socketed Gems are Supported by Level # Cast when Damage Taken",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2530372417",
+          "text_ja": "アタックブロック率が#%",
+          "ref": "#% Chance to Block Attack Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1215155013",
+          "text_ja": "装備中の盾から得られる防御力が#%増加する",
+          "ref": "#% increased Defences from Equipped Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3623716321",
+          "text_ja": "直近ブロックしていれば#から#の火ダメージを追加する",
+          "ref": "Adds # to # Fire Damage if you've Blocked Recently",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-alberon-s-warpath:8402ddca75156bca",
+      "category": "replica_unique",
+      "name_en": "Replica Alberon's Warpath",
+      "name_ja": "アルベロンのウォーパス（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_734614379",
+          "text_ja": "筋力が#%増加する",
+          "ref": "#% increased Strength",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3484657501",
+          "text_ja": "アーマー +# (ローカル)",
+          "ref": "+# to Armour",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2923486259",
+          "text_ja": "混沌耐性 +#%",
+          "ref": "+#% to Chaos Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2250533757",
+          "text_ja": "移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3180152291",
+          "text_ja": "混沌ダメージ以外のダメージを与えることができない",
+          "ref": "Cannot deal non-Chaos Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_117885424",
+          "text_ja": "筋力80ごとに#から#の混沌ダメージをアタックに追加する",
+          "ref": "Adds # to # Chaos Damage to Attacks per 80 Strength",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-allelopathy:edb1e8b30fea9809",
+      "category": "replica_unique",
+      "name_en": "Replica Allelopathy",
+      "name_ja": "アレロパシー（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1826753218",
+          "text_ja": "レベル#ウィンタータイドブランドスキルを付与する",
+          "ref": "Grants Level # Wintertide Brand Skill",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4015621042",
+          "text_ja": "エナジーシールドが#%増加する (ローカル)",
+          "ref": "#% increased Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_280731498",
+          "text_ja": "効果範囲が#%増加する",
+          "ref": "#% increased Area of Effect",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3510243006",
+          "text_ja": "冷却に対する完全無効化を獲得する",
+          "ref": "Immune to Chill",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1831757355",
+          "text_ja": "ウィンタータイドブランドの冷却の効果が#%増加する",
+          "ref": "Wintertide Brand has #% increased Chill Effect",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-allure:45f4351f3fac07bf",
+      "category": "replica_unique",
+      "name_en": "Replica Allure",
+      "name_ja": "魅惑（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1940865751",
+          "text_ja": "#から#の物理ダメージを追加する (ローカル)",
+          "ref": "Adds # to # Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_210067635",
+          "text_ja": "アタックスピードが#%増加する (ローカル)",
+          "ref": "#% increased Attack Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3726536628",
+          "text_ja": "プレイヤーが敵を挑発した時に+#のライフを獲得する",
+          "ref": "Gain +# Life when you Taunt an Enemy",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2580101523",
+          "text_ja": "挑発状態の敵を倒すとプレイヤーは猛攻を#秒間獲得する",
+          "ref": "You gain Onslaught for # seconds on Killing Taunted Enemies",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1282219780",
+          "text_ja": "プレイヤーにより挑発された敵が受けるダメージが#%増加する",
+          "ref": "Enemies Taunted by you take #% increased Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-alpha-s-howl:d770fa9633c694b3",
+      "category": "replica_unique",
+      "name_en": "Replica Alpha's Howl",
+      "name_ja": "アルファの遠吠え（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1344805487",
+          "text_ja": "ソケットされたヘラルドジェムのレベル +#",
+          "ref": "+# to Level of Socketed Herald Gems",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_124859000",
+          "text_ja": "回避力が#%増加する (ローカル)",
+          "ref": "#% increased Evasion Rating",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2923486259",
+          "text_ja": "混沌耐性 +#%",
+          "ref": "+#% to Chaos Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4053951709",
+          "text_ja": "#%の確率で毒を無効化する",
+          "ref": "#% chance to Avoid being Poisoned",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4237190083",
+          "text_ja": "スキルのマナリザーブ効率が#%増加する",
+          "ref": "#% increased Mana Reservation Efficiency of Skills",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_721014846",
+          "text_ja": "プレイヤーは阻害を受けることがない",
+          "ref": "You cannot be Hindered",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-ambu-s-charge:f9cc1497f28f9dd8",
+      "category": "replica_unique",
+      "name_en": "Replica Ambu's Charge",
+      "name_ja": "アンブーの突撃（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3321629045",
+          "text_ja": "アーマーおよびエナジーシールドが#%増加する (ローカル)",
+          "ref": "#% increased Armour and Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2901986750",
+          "text_ja": "全ての元素耐性 +#%",
+          "ref": "+#% to all Elemental Resistances",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1881314095",
+          "text_ja": "近くのパーティメンバーとエンデュランスチャージを共有する",
+          "ref": "Share Endurance Charges with nearby party members",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2325592140",
+          "text_ja": "直近ヒットを受けていれば毎秒ライフの#%を失う",
+          "ref": "Lose #% of Life per second if you have been Hit Recently",
+          "inverted": false,
+          "better": -1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-atziri-s-acuity:abb7715575209210",
+      "category": "replica_unique",
+      "name_en": "Replica Atziri's Acuity",
+      "name_ja": "アッツィリの鋭敏さ（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_328541901",
+          "text_ja": "知性 +#",
+          "ref": "+# to Intelligence",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1062208444",
+          "text_ja": "アーマーが#%増加する (ローカル)",
+          "ref": "#% increased Armour",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3058395672",
+          "text_ja": "直近プレイヤーがクリティカルストライクを与えていればパーフェクトアゴニーになる",
+          "ref": "You have Perfect Agony if you've dealt a Critical Strike recently",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-atziri-s-foible:327240c323de1bbd",
+      "category": "replica_unique",
+      "name_en": "Replica Atziri's Foible",
+      "name_ja": "アッツィリの欠点（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 3,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_44972811",
+          "text_ja": "ライフ自動回復レートが#%増加する",
+          "ref": "#% increased Life Regeneration rate",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_752930724",
+          "text_ja": "アイテムおよびジェムの要求能力値が#%増加する",
+          "ref": "Items and Gems have #% increased Attribute Requirements",
+          "inverted": true,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-badge-of-the-brotherhood:55147d1ef36850c6",
+      "category": "replica_unique",
+      "name_en": "Replica Badge of the Brotherhood",
+      "name_ja": "一党の記章（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3083201633",
+          "text_ja": "フレンジーチャージ1個ごとにトラベルスキルのクールダウン解消レートが#%増加する",
+          "ref": "#% increased Cooldown Recovery Rate of Travel Skills per Frenzy Charge",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_445906009",
+          "text_ja": "プレイヤーがトラベルスキルを使用した時に#%の確率でフレンジーチャージを1個失う",
+          "ref": "#% chance to lose a Frenzy Charge when you use a Travel Skill",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-bated-breath:ff49d45d01ea19d9",
+      "category": "replica_unique",
+      "name_en": "Replica Bated Breath",
+      "name_ja": "殺した息（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_328541901",
+          "text_ja": "知性 +#",
+          "ref": "+# to Intelligence",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2154246560",
+          "text_ja": "ダメージが#%増加する",
+          "ref": "#% increased Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1550221644",
+          "text_ja": "釣り場の消耗が#%減少する",
+          "ref": "#% reduced Fishing Pool Consumption",
+          "inverted": false,
+          "better": -1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_170497091",
+          "text_ja": "釣りの範囲が#%増加する",
+          "ref": "#% increased Fishing Range",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3310914132",
+          "text_ja": "捕まえる魚のレアリティが#%増加する",
+          "ref": "#% increased Rarity of Fish Caught",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-bitterdream:b98f7a00c1b41d30",
+      "category": "replica_unique",
+      "name_en": "Replica Bitterdream",
+      "name_ja": "ビタードリーム（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1994143317",
+          "text_ja": "ソケットされたジェムはレベル#元素耐性貫通によりサポートされる",
+          "ref": "Socketed Gems are Supported by Level # Elemental Penetration",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2420410470",
+          "text_ja": "ソケットされたジェムはレベル#火炙りによりサポートされる",
+          "ref": "Socketed Gems are Supported by Level # Immolate",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3699494172",
+          "text_ja": "ソケットされたジェムはレベル#状態異常解放によりサポートされる",
+          "ref": "Socketed Gems are Supported by Level # Unbound Ailments",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1384629003",
+          "text_ja": "ソケットされたジェムはレベル#アイスバイトによりサポートされる",
+          "ref": "Socketed Gems are Supported by Level # Ice Bite",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1106668565",
+          "text_ja": "ソケットされたジェムはレベル#イナーヴェイトによりサポートされる",
+          "ref": "Socketed Gems are Supported by Level # Innervate",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-blood-thorn:ce6f2b091e9ffa77",
+      "category": "replica_unique",
+      "name_en": "Replica Blood Thorn",
+      "name_ja": "血の棘（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3962278098",
+          "text_ja": "火ダメージが#%増加する",
+          "ref": "#% increased Fire Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_210067635",
+          "text_ja": "アタックスピードが#%増加する (ローカル)",
+          "ref": "#% increased Attack Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2776399916",
+          "text_ja": "ブロック時に敵をフラマビリティで呪う",
+          "ref": "Curse Enemies with Flammability on Block",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3815724042",
+          "text_ja": "ブロック時に#の火ダメージをアタックしてきた敵に反射する",
+          "ref": "Reflects # Fire Damage to Attackers on Block",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-bloodplay:61c494cfca2950a0",
+      "category": "replica_unique",
+      "name_en": "Replica Bloodplay",
+      "name_ja": "ブラッドプレイ（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_4080418644",
+          "text_ja": "筋力 +#",
+          "ref": "+# to Strength",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1940865751",
+          "text_ja": "#から#の物理ダメージを追加する (ローカル)",
+          "ref": "Adds # to # Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1519615863",
+          "text_ja": "ヒット時に#%の確率で出血を付与する",
+          "ref": "#% chance to cause Bleeding on Hit",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2282705842",
+          "text_ja": "出血状態の敵に対するクリティカル率が#%増加する",
+          "ref": "#% increased Critical Strike Chance against Bleeding Enemies",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3403461239",
+          "text_ja": "追加ゴア表現",
+          "ref": "Extra gore",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-bones-of-ullr:50b635afce165a46",
+      "category": "replica_unique",
+      "name_en": "Replica Bones of Ullr",
+      "name_ja": "ウルルの骨（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_4015621042",
+          "text_ja": "エナジーシールドが#%増加する (ローカル)",
+          "ref": "#% increased Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1050105434",
+          "text_ja": "最大マナ +#",
+          "ref": "+# to maximum Mana",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2250533757",
+          "text_ja": "移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-cold-iron-point:12121b1580995cec",
+      "category": "replica_unique",
+      "name_en": "Replica Cold Iron Point",
+      "name_ja": "冷鉄の剣先（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 2,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_2254480358",
+          "text_ja": "全ての冷気スペルスキルジェムのレベル +#",
+          "ref": "+# to Level of all Cold Spell Skill Gems",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_743677006",
+          "text_ja": "冷気ダメージを与えない",
+          "ref": "Deal no Cold Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-cortex:d9a0867f6b3f5769",
+      "category": "replica_unique",
+      "name_en": "Replica Cortex",
+      "name_ja": "コーテクス（レプリカ）",
+      "status": "no_searchable_filters",
+      "source_mod_count": 4,
+      "filters": []
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-covenant:34da59c40ef0a67e",
+      "category": "replica_unique",
+      "name_en": "Replica Covenant",
+      "name_ja": "契約（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_328541901",
+          "text_ja": "知性 +#",
+          "ref": "+# to Intelligence",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4015621042",
+          "text_ja": "エナジーシールドが#%増加する (ローカル)",
+          "ref": "#% increased Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_983749596",
+          "text_ja": "最大ライフが#%増加する",
+          "ref": "#% increased maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-doedre-s-damning:910f9ae9d98cc28d",
+      "category": "replica_unique",
+      "name_en": "Replica Doedre's Damning",
+      "name_ja": "ドードリの非難（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_328541901",
+          "text_ja": "知性 +#",
+          "ref": "+# to Intelligence",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2901986750",
+          "text_ja": "全ての元素耐性 +#%",
+          "ref": "+#% to all Elemental Resistances",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1368271171",
+          "text_ja": "倒した敵1体ごとに#のマナを獲得する",
+          "ref": "Gain # Mana per Enemy Killed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2353576063",
+          "text_ja": "呪いの効果が#%増加する",
+          "ref": "#% increased Effect of your Curses",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-dreamfeather:44604b299512cf40",
+      "category": "replica_unique",
+      "name_en": "Replica Dreamfeather",
+      "name_ja": "ドリームフェザー（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1940865751",
+          "text_ja": "#から#の物理ダメージを追加する (ローカル)",
+          "ref": "Adds # to # Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_210067635",
+          "text_ja": "アタックスピードが#%増加する (ローカル)",
+          "ref": "#% increased Attack Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2250533757",
+          "text_ja": "移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed",
+          "inverted": true,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_691932474",
+          "text_ja": "命中力 +# (ローカル)",
+          "ref": "+# to Accuracy Rating",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_192842973",
+          "text_ja": "アーマー450ごとにアタックダメージが#%増加する",
+          "ref": "#% increased Attack Damage per 450 Armour",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-duskdawn:88f2199889635203",
+      "category": "replica_unique",
+      "name_en": "Replica Duskdawn",
+      "name_ja": "ダスクドーン（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3495544060",
+          "text_ja": "元素ダメージの#%を追加混沌ダメージとして獲得する",
+          "ref": "Gain #% of Elemental Damage as Extra Chaos Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_956384511",
+          "text_ja": "アタックブロック率1%ごとにクリティカルダメージ倍率 +#%",
+          "ref": "+#% to Critical Strike Multiplier per 1% Chance to Block Attack Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1626712767",
+          "text_ja": "直近プレイヤーがクリティカルストライク以外のヒットを与えていればクリティカルダメージ倍率 +#%",
+          "ref": "+#% to Critical Strike Multiplier if you've dealt a Non-Critical Strike Recently",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2379781920",
+          "text_ja": "直近プレイヤーがクリティカルストライクを与えていれば元素ダメージが#%増加する",
+          "ref": "#% increased Elemental Damage if you've dealt a Critical Strike Recently",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-earendel-s-embrace:2524b024a2b3d6c0",
+      "category": "replica_unique",
+      "name_en": "Replica Earendel's Embrace",
+      "name_ja": "イアレンデルの抱擁（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1379411836",
+          "text_ja": "全ての能力値 +#",
+          "ref": "+# to all Attributes",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1589917703",
+          "text_ja": "ミニオンのダメージが#%増加する",
+          "ref": "Minions deal #% increased Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_613525808",
+          "text_ja": "蘇生したゾンビはヒット時に敵を灰まみれにする",
+          "ref": "Raised Zombies Cover Enemies in Ash on Hit",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3733496041",
+          "text_ja": "蘇生したゾンビは毎秒その最大ライフの#%を火ダメージとして受ける",
+          "ref": "Raised Zombies take #% of their Maximum Life per second as Fire Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1474437010",
+          "text_ja": "蘇生したゾンビはアバターオブファイヤーを持つ",
+          "ref": "Raised Zombies have Avatar of Fire",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-emberwake:cef3024111eae978",
+      "category": "replica_unique",
+      "name_en": "Replica Emberwake",
+      "name_ja": "エンバーウェーク（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3962278098",
+          "text_ja": "火ダメージが#%増加する",
+          "ref": "#% increased Fire Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2891184298",
+          "text_ja": "キャストスピードが#%増加する",
+          "ref": "#% increased Cast Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1086147743",
+          "text_ja": "敵に対する発火の持続時間が#%増加する",
+          "ref": "#% increased Ignite Duration on Enemies",
+          "inverted": true,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1335054179",
+          "text_ja": "#%の確率で敵を発火させる",
+          "ref": "#% chance to Ignite",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2443492284",
+          "text_ja": "プレイヤーが付与した発火がダメージを与える速度が#%速くなる",
+          "ref": "Ignites you inflict deal Damage #% faster",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-eternity-shroud:ad553fe165f1fd66",
+      "category": "replica_unique",
+      "name_en": "Replica Eternity Shroud",
+      "name_ja": "永遠の覆い（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_2603798371",
+          "text_ja": "ヒットを受けた時にレベル30シェードフォームをトリガーする",
+          "ref": "Trigger Level 30 Shade Form when Hit",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1999113824",
+          "text_ja": "回避力およびエナジーシールドが#%増加する (ローカル)",
+          "ref": "#% increased Evasion and Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2923486259",
+          "text_ja": "混沌耐性 +#%",
+          "ref": "+#% to Chaos Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1423002070",
+          "text_ja": "装備中のエルダーアイテム1個ごとに物理ダメージの#%を追加混沌ダメージとして獲得する",
+          "ref": "Gain #% of Physical Damage as Extra Chaos Damage per Elder Item Equipped",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_89314980",
+          "text_ja": "装備中のアイテムの全てがエルダーアイテムならヒットは敵モンスターの混沌耐性を無視する",
+          "ref": "Hits ignore Enemy Monster Chaos Resistance if all Equipped Items are Elder Items",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-farrul-s-fur:bf1fc084ee0947cb",
+      "category": "replica_unique",
+      "name_en": "Replica Farrul's Fur",
+      "name_ja": "ファルウルの毛皮（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_2451402625",
+          "text_ja": "アーマーおよび回避力が#%増加する (ローカル)",
+          "ref": "#% increased Armour and Evasion",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3686519528",
+          "text_ja": "猫の敏捷さの持続時間 +#秒",
+          "ref": "+# seconds to Cat's Agility Duration",
+          "inverted": false,
+          "better": 1,
+          "decimal": true
+        },
+        {
+          "stat_id": "explicit.stat_3850409117",
+          "text_ja": "猫のアスペクトのリザーブがなくなる",
+          "ref": "Aspect of the Cat has no Reservation",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_523966073",
+          "text_ja": "猫の敏捷さ獲得時にフレンジーチャージとエンデュランスチャージを最大数獲得する",
+          "ref": "Gain up to your maximum number of Frenzy and Endurance Charges when you gain Cat's Agility",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4274075490",
+          "text_ja": "猫の敏捷さがある時に猛攻を獲得する",
+          "ref": "You have Onslaught while you have Cat's Agility",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-fencoil:40048b6b2854953c",
+      "category": "replica_unique",
+      "name_en": "Replica Fencoil",
+      "name_ja": "フェンコイル（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 4,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_807186595",
+          "text_ja": "ソケットされたジェムはレベル#マルチトーテムによりサポートされる",
+          "ref": "Socketed Gems are Supported by Level # Multiple Totems",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_819529588",
+          "text_ja": "グローバルダメージが#%増加する",
+          "ref": "#% increased Global Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_983749596",
+          "text_ja": "最大ライフが#%増加する",
+          "ref": "#% increased maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2748665614",
+          "text_ja": "最大マナが#%増加する",
+          "ref": "#% increased maximum Mana",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-fragility:e529378e5786a547",
+      "category": "replica_unique",
+      "name_en": "Replica Fragility",
+      "name_ja": "虚弱（レプリカ）",
+      "status": "no_searchable_filters",
+      "source_mod_count": 1,
+      "filters": []
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-frostbreath:e3d4a8da9ae0ae5d",
+      "category": "replica_unique",
+      "name_en": "Replica Frostbreath",
+      "name_ja": "フロストブレス（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_2223678961",
+          "text_ja": "#から#の混沌ダメージを追加する (ローカル)",
+          "ref": "Adds # to # Chaos Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_210067635",
+          "text_ja": "アタックスピードが#%増加する (ローカル)",
+          "ref": "#% increased Attack Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2923486259",
+          "text_ja": "混沌耐性 +#%",
+          "ref": "+#% to Chaos Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3686066640",
+          "text_ja": "混沌ダメージは冷却を付与できる",
+          "ref": "Your Chaos Damage can Chill",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_625037258",
+          "text_ja": "この武器によるアタックは冷却状態の敵に対してダブルダメージを与える",
+          "ref": "Attacks with this Weapon deal Double Damage to Chilled Enemies",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-gifts-from-above:4da522dc15102e50",
+      "category": "replica_unique",
+      "name_en": "Replica Gifts from Above",
+      "name_ja": "天からの恩恵 (レプリカ)",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_899293871",
+          "text_ja": "プレイヤーがクリティカルストライクを与えた時にレベル#コンセクレートをトリガーする",
+          "ref": "Trigger Level # Consecrate when you deal a Critical Strike",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1263695895",
+          "text_ja": "光半径が#%増加する",
+          "ref": "#% increased Light Radius",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_21824003",
+          "text_ja": "クリティカルストライクにより倒された敵がドロップするアイテムのレアリティが#%増加する",
+          "ref": "#% increased Rarity of Items Dropped by Enemies killed with a Critical Strike",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-grip-of-the-council:b18fac9e0f0c7045",
+      "category": "replica_unique",
+      "name_en": "Replica Grip of the Council",
+      "name_ja": "評議会の支配（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_4080418644",
+          "text_ja": "筋力 +#",
+          "ref": "+# to Strength",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3372524247",
+          "text_ja": "火耐性 +#%",
+          "ref": "+#% to Fire Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_770672621",
+          "text_ja": "ミニオンの最大ライフが#%増加する",
+          "ref": "Minions have #% increased maximum Life",
+          "inverted": true,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1889350679",
+          "text_ja": "ミニオンの火耐性 +#%",
+          "ref": "Minions have +#% to Fire Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3217428772",
+          "text_ja": "ミニオンは物理ダメージの#%を追加火ダメージとして獲得する",
+          "ref": "Minions gain #% of Physical Damage as Extra Fire Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-harvest:e5a4e43b33c318e1",
+      "category": "replica_unique",
+      "name_en": "Replica Harvest",
+      "name_ja": "ハーベスト（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 4,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_958088871",
+          "text_ja": "クリティカル時にダメージの#%をライフとしてリーチする",
+          "ref": "#% of Damage Leeched as Life on Critical Strike",
+          "inverted": false,
+          "better": 1,
+          "decimal": true
+        },
+        {
+          "stat_id": "explicit.stat_3081076859",
+          "text_ja": "1レベルごとにグローバルクリティカル率が#%増加する",
+          "ref": "#% increased Global Critical Strike Chance per Level",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-headhunter:95284736b34bc362",
+      "category": "replica_unique",
+      "name_en": "Replica Headhunter",
+      "name_ja": "ヘッドハンター（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_4080418644",
+          "text_ja": "筋力 +#",
+          "ref": "+# to Strength",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3261801346",
+          "text_ja": "器用さ +#",
+          "ref": "+# to Dexterity",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1278047991",
+          "text_ja": "マジックモンスターに対するヒットダメージが#%増加する",
+          "ref": "#% increased Damage with Hits against Magic monsters",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-heartbreaker:f5712720eece47e4",
+      "category": "replica_unique",
+      "name_en": "Replica Heartbreaker",
+      "name_ja": "ハートブレーカー（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_2974417149",
+          "text_ja": "スペルダメージが#%増加する",
+          "ref": "#% increased Spell Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1782086450",
+          "text_ja": "エナジーシールドのリチャージが#%速く始まる",
+          "ref": "#% faster start of Energy Shield Recharge",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_298173317",
+          "text_ja": "串刺しの効果が#%増加する",
+          "ref": "#% increased Impale Effect",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3094222195",
+          "text_ja": "スペルによるヒット時に#%の確率で敵を串刺しにする",
+          "ref": "#% chance to Impale on Spell Hit",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-heatshiver:8acab0ebc537e8bb",
+      "category": "replica_unique",
+      "name_en": "Replica Heatshiver",
+      "name_ja": "ヒートシヴァー（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_124859000",
+          "text_ja": "回避力が#%増加する (ローカル)",
+          "ref": "#% increased Evasion Rating",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_789117908",
+          "text_ja": "マナ自動回復レートが#%増加する",
+          "ref": "#% increased Mana Regeneration Rate",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4220027924",
+          "text_ja": "冷気耐性 +#%",
+          "ref": "+#% to Cold Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-hinekora-s-sight:f10eaf541a978cda",
+      "category": "replica_unique",
+      "name_en": "Replica Hinekora's Sight",
+      "name_ja": "ヒネコラの視界（レプリカ）",
+      "status": "no_searchable_filters",
+      "source_mod_count": 4,
+      "filters": []
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-hyrri-s-ire:7efc86f20bf68cd4",
+      "category": "replica_unique",
+      "name_en": "Replica Hyrri's Ire",
+      "name_ja": "ハイリの怒り（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_124859000",
+          "text_ja": "回避力が#%増加する (ローカル)",
+          "ref": "#% increased Evasion Rating",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3680664274",
+          "text_ja": "スペルダメージ抑制確率 +#%",
+          "ref": "+#% chance to Suppress Spell Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-hyrri-s-truth:040fab475ce598fa",
+      "category": "replica_unique",
+      "name_en": "Replica Hyrri's Truth",
+      "name_ja": "ハイリの真実（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3261801346",
+          "text_ja": "器用さ +#",
+          "ref": "+# to Dexterity",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3556824919",
+          "text_ja": "グローバルクリティカルダメージ倍率 +#%",
+          "ref": "+#% to Global Critical Strike Multiplier",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4217693429",
+          "text_ja": "弓によるアタックはカリングストライクを持つ",
+          "ref": "Bow Attacks have Culling Strike",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2156140483",
+          "text_ja": "ヘイトレッドのマナリザーブ効率が#%増加する",
+          "ref": "Hatred has #% increased Mana Reservation Efficiency",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-infractem:591b9d1c45a20c1f",
+      "category": "replica_unique",
+      "name_en": "Replica Infractem",
+      "name_ja": "インフラクテム（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 8,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3261801346",
+          "text_ja": "器用さ +#",
+          "ref": "+# to Dexterity",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1940865751",
+          "text_ja": "#から#の物理ダメージを追加する (ローカル)",
+          "ref": "Adds # to # Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2250533757",
+          "text_ja": "移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_691932474",
+          "text_ja": "命中力 +# (ローカル)",
+          "ref": "+# to Accuracy Rating",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3769854701",
+          "text_ja": "ライフをリーチすることができない",
+          "ref": "Cannot Leech Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_396113830",
+          "text_ja": "アタックによる投射物は分岐する",
+          "ref": "Projectiles from Attacks Fork",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1643324992",
+          "text_ja": "アタックによる投射物は追加で#回分岐する",
+          "ref": "Projectiles from Attacks can Fork # additional time",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-innsbury-edge:65a20d11d5589a0b",
+      "category": "replica_unique",
+      "name_en": "Replica Innsbury Edge",
+      "name_ja": "インズブリーの刃（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_744082851",
+          "text_ja": "混沌ダメージの#%をライフとしてリーチする",
+          "ref": "#% of Chaos Damage Leeched as Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": true
+        },
+        {
+          "stat_id": "explicit.stat_490098963",
+          "text_ja": "物理ダメージの#%を混沌ダメージに変換する",
+          "ref": "#% of Physical Damage Converted to Chaos Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-inya-s-epiphany:8381eb457c623101",
+      "category": "replica_unique",
+      "name_en": "Replica Inya's Epiphany",
+      "name_ja": "イーニャの閃き（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3961213398",
+          "text_ja": "パワーチャージ1個ごとに毎秒ライフの#%を自動回復する",
+          "ref": "Regenerate #% of Life per second per Power Charge",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_656461285",
+          "text_ja": "知性が#%増加する",
+          "ref": "#% increased Intelligence",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2034658008",
+          "text_ja": "パワーチャージ1個ごとにダメージが#%増加する",
+          "ref": "#% increased Damage per Power Charge",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3774108776",
+          "text_ja": "パワーチャージ1個ごとに移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed per Power Charge",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-iron-commander:f5104bf5a4ea3942",
+      "category": "replica_unique",
+      "name_en": "Replica Iron Commander",
+      "name_ja": "鉄の司令官（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1940865751",
+          "text_ja": "#から#の物理ダメージを追加する (ローカル)",
+          "ref": "Adds # to # Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_210067635",
+          "text_ja": "アタックスピードが#%増加する (ローカル)",
+          "ref": "#% increased Attack Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_686254215",
+          "text_ja": "トーテムのライフが#%増加する",
+          "ref": "#% increased Totem Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3374165039",
+          "text_ja": "トーテム設置スピードが#%増加する",
+          "ref": "#% increased Totem Placement speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1124661381",
+          "text_ja": "筋力200ごとにシュラプネルバリスタのトーテム最大召喚数が+#される",
+          "ref": "Shrapnel Ballista has +# to maximum number of Summoned Totems per 200 Strength",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_787185456",
+          "text_ja": "筋力25ごとに#から#の物理ダメージをアタックに追加する",
+          "ref": "Adds # to # Physical Damage to Attacks per 25 Strength",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-kalisa-s-grace:a99d56a80eb4f183",
+      "category": "replica_unique",
+      "name_en": "Replica Kalisa's Grace",
+      "name_ja": "カリサの優美さ（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3356013982",
+          "text_ja": "ソケットされたジェムはレベル#アンリーシュによりサポートされる",
+          "ref": "Socketed Gems are Supported by Level # Unleash",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_328541901",
+          "text_ja": "知性 +#",
+          "ref": "+# to Intelligence",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4052037485",
+          "text_ja": "最大エナジーシールド +# (ローカル)",
+          "ref": "+# to maximum Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3591816140",
+          "text_ja": "マナを合計800消費した後に2秒間効果範囲が#%増加する",
+          "ref": "Gain #% increased Area of Effect for 2 seconds after Spending a total of 800 Mana",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-kaom-s-heart:94d188ebf7f0be4d",
+      "category": "replica_unique",
+      "name_en": "Replica Kaom's Heart",
+      "name_ja": "カオムの心臓（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 3,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1493091477",
+          "text_ja": "ソケットを持たない",
+          "ref": "Has no Sockets",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2231156303",
+          "text_ja": "雷ダメージが#%増加する",
+          "ref": "#% increased Lightning Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1050105434",
+          "text_ja": "最大マナ +#",
+          "ref": "+# to maximum Mana",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-karui-ward:1cc8c6cc4199207c",
+      "category": "replica_unique",
+      "name_en": "Replica Karui Ward",
+      "name_ja": "カルイの守り（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_328541901",
+          "text_ja": "知性 +#",
+          "ref": "+# to Intelligence",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2250533757",
+          "text_ja": "移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_280731498",
+          "text_ja": "効果範囲が#%増加する",
+          "ref": "#% increased Area of Effect",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4251717817",
+          "text_ja": "範囲ダメージが#%増加する",
+          "ref": "#% increased Area Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-kongor-s-undying-rage:7395a913d2995803",
+      "category": "replica_unique",
+      "name_en": "Replica Kongor's Undying Rage",
+      "name_ja": "コンゴーの尽きぬ怒り（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1940865751",
+          "text_ja": "#から#の物理ダメージを追加する (ローカル)",
+          "ref": "Adds # to # Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2901986750",
+          "text_ja": "全ての元素耐性 +#%",
+          "ref": "+#% to all Elemental Resistances",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4126210832",
+          "text_ja": "ヒットを回避されることがない",
+          "ref": "Hits can't be Evaded",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4058681894",
+          "text_ja": "プレイヤーのクリティカルストライクは追加ダメージを与えない",
+          "ref": "Your Critical Strikes do not deal extra Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_298613712",
+          "text_ja": "プレイヤーがこの武器で直近クリティカルストライクを与えていれば毎秒エナジーシールドの#%を自動回復する",
+          "ref": "Regenerate #% of Energy Shield per second if you've dealt a Critical Strike with this weapon Recently",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-last-resort:f63a716b1b83be9f",
+      "category": "replica_unique",
+      "name_en": "Replica Last Resort",
+      "name_ja": "最後の手段（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1921572790",
+          "text_ja": "低ライフ時にアタックスピードが#%増加する",
+          "ref": "#% increased Attack Speed when on Low Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_347697569",
+          "text_ja": "低ライフ時に命中力が#%増加する",
+          "ref": "#% increased Accuracy Rating when on Low Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1629782265",
+          "text_ja": "低ライフ時に鉤爪のダメージが#%増加する",
+          "ref": "#% increased Damage with Claws while on Low Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3716472556",
+          "text_ja": "低ライフでない時にダメージを与えない",
+          "ref": "Deal no Damage when not on Low Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-lavianga-s-spirit:becde0e2750b5db5",
+      "category": "replica_unique",
+      "name_en": "Replica Lavianga's Spirit",
+      "name_ja": "ラヴィアンガの心（レプリカ）",
+      "status": "no_searchable_filters",
+      "source_mod_count": 3,
+      "filters": []
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-leer-cast:bc18fd879d27e82e",
+      "category": "replica_unique",
+      "name_en": "Replica Leer Cast",
+      "name_ja": "リアーキャスト（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3261801346",
+          "text_ja": "器用さ +#",
+          "ref": "+# to Dexterity",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_789117908",
+          "text_ja": "マナ自動回復レートが#%増加する",
+          "ref": "#% increased Mana Regeneration Rate",
+          "inverted": true,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1050105434",
+          "text_ja": "最大マナ +#",
+          "ref": "+# to maximum Mana",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-lioneye-s-paws:3d1eea5089991566",
+      "category": "replica_unique",
+      "name_en": "Replica Lioneye's Paws",
+      "name_ja": "ライオンアイの足（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_767464019",
+          "text_ja": "プレイヤーが弓でアタックした時にレベル#トキシックレインをトリガーする",
+          "ref": "Trigger Level # Toxic Rain when you Attack with a Bow",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4080418644",
+          "text_ja": "筋力 +#",
+          "ref": "+# to Strength",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3261801346",
+          "text_ja": "器用さ +#",
+          "ref": "+# to Dexterity",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_674553446",
+          "text_ja": "#から#の混沌ダメージをアタックに追加する",
+          "ref": "Adds # to # Chaos Damage to Attacks",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2250533757",
+          "text_ja": "移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_649025131",
+          "text_ja": "低ライフ時に移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed when on Low Life",
+          "inverted": true,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-loreweave:a37de454c67abc10",
+      "category": "replica_unique",
+      "name_en": "Replica Loreweave",
+      "name_ja": "ロアウィーヴ（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 10,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1379411836",
+          "text_ja": "全ての能力値 +#",
+          "ref": "+# to all Attributes",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3032590688",
+          "text_ja": "#から#の物理ダメージをアタックに追加する",
+          "ref": "Adds # to # Physical Damage to Attacks",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4052037485",
+          "text_ja": "最大エナジーシールド +# (ローカル)",
+          "ref": "+# to maximum Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1050105434",
+          "text_ja": "最大マナ +#",
+          "ref": "+# to maximum Mana",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3917489142",
+          "text_ja": "見つかるアイテムのレアリティが#%増加する",
+          "ref": "#% increased Rarity of Items found",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3141070085",
+          "text_ja": "元素ダメージが#%増加する",
+          "ref": "#% increased Elemental Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_798767971",
+          "text_ja": "耐性の最大値は#%になる",
+          "ref": "Your Maximum Resistances are #%",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-malachai-s-artifice:70338c0d6e3609ff",
+      "category": "replica_unique",
+      "name_en": "Replica Malachai's Artifice",
+      "name_ja": "マラカイの術策（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_4051493629",
+          "text_ja": "ソケットされたジェムはシークレットオブサファリングを獲得する",
+          "ref": "Socketed Gems have Secrets of Suffering",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2901986750",
+          "text_ja": "全ての元素耐性 +#%",
+          "ref": "+#% to all Elemental Resistances",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3051845758",
+          "text_ja": "赤ジェムがソケットされた場合の火耐性 +#%",
+          "ref": "+#% to Fire Resistance when Socketed with a Red Gem",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1064331314",
+          "text_ja": "緑ジェムがソケットされた場合の冷気耐性 +#%",
+          "ref": "+#% to Cold Resistance when Socketed with a Green Gem",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_289814996",
+          "text_ja": "青ジェムがソケットされた場合の雷耐性 +#%",
+          "ref": "+#% to Lightning Resistance when Socketed with a Blue Gem",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_211836731",
+          "text_ja": "全てのソケットは白色である",
+          "ref": "All Sockets are White",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-maloney-s-mechanism:3d89f803483344b4",
+      "category": "replica_unique",
+      "name_en": "Replica Maloney's Mechanism",
+      "name_ja": "マローニーの機械（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_318953428",
+          "text_ja": "アタックによるヒット時に#%の確率で敵を盲目にする",
+          "ref": "#% chance to Blind Enemies on Hit with Attacks",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-midnight-bargain:a867a9bb97187c73",
+      "category": "replica_unique",
+      "name_en": "Replica Midnight Bargain",
+      "name_ja": "真夜中の取引（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_328541901",
+          "text_ja": "知性 +#",
+          "ref": "+# to Intelligence",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_174664100",
+          "text_ja": "ミニオンの移動スピードが#%増加する",
+          "ref": "Minions have #% increased Movement Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1589917703",
+          "text_ja": "ミニオンのダメージが#%増加する",
+          "ref": "Minions deal #% increased Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3143579606",
+          "text_ja": "レイジングスピリット最大数 +#",
+          "ref": "+# to maximum number of Raging Spirits",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_517587669",
+          "text_ja": "ファンタズム最大召喚数 +#",
+          "ref": "+# to maximum number of Summoned Phantasms",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-mistwall:a281bf59005a4cf2",
+      "category": "replica_unique",
+      "name_en": "Replica Mistwall",
+      "name_ja": "ミストウォール（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_124859000",
+          "text_ja": "回避力が#%増加する (ローカル)",
+          "ref": "#% increased Evasion Rating",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2250533757",
+          "text_ja": "移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2915988346",
+          "text_ja": "火および冷気耐性 +#%",
+          "ref": "+#% to Fire and Cold Resistances",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1817677817",
+          "text_ja": "直近ブロックをしていなければスペルブロック確率が最大値になる",
+          "ref": "You are at Maximum Chance to Block Spell Damage if you have not Blocked Recently",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2490633856",
+          "text_ja": "透明化中は#%の確率でヒットによる物理ダメージを無効化する",
+          "ref": "+#% chance to Avoid Physical Damage from Hits while Phasing",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3492654051",
+          "text_ja": "直近プレイヤーがブロックをしていれば透明化する",
+          "ref": "You have Phasing if you have Blocked Recently",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-nebulis:3f4a27ddc9c93f97",
+      "category": "replica_unique",
+      "name_en": "Replica Nebulis",
+      "name_ja": "ネビュリス（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 3,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_2891184298",
+          "text_ja": "キャストスピードが#%増加する",
+          "ref": "#% increased Cast Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-oro-s-sacrifice:db0b7f1cfdb102a2",
+      "category": "replica_unique",
+      "name_en": "Replica Oro's Sacrifice",
+      "name_ja": "オロの生贄（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 8,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1037193709",
+          "text_ja": "#から#の冷気ダメージを追加する (ローカル)",
+          "ref": "Adds # to # Cold Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_210067635",
+          "text_ja": "アタックスピードが#%増加する (ローカル)",
+          "ref": "#% increased Attack Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2309614417",
+          "text_ja": "#%の確率で敵を凍結させる",
+          "ref": "#% chance to Freeze",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3853018505",
+          "text_ja": "受ける物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage taken",
+          "inverted": false,
+          "better": -1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3303114033",
+          "text_ja": "受ける冷気ダメージが#%減少する",
+          "ref": "#% reduced Cold Damage taken",
+          "inverted": false,
+          "better": -1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_407576170",
+          "text_ja": "アタックで敵を凍結させた時にエンデュランスチャージを獲得する",
+          "ref": "Gain an Endurance Charge if an Attack Freezes an Enemy",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-pacifism:0fdcac95aa41dade",
+      "category": "replica_unique",
+      "name_en": "Replica Pacifism",
+      "name_ja": "平和主義（レプリカ）",
+      "status": "no_searchable_filters",
+      "source_mod_count": 1,
+      "filters": []
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-paradoxica:ced36b338de3ec74",
+      "category": "replica_unique",
+      "name_en": "Replica Paradoxica",
+      "name_ja": "パラドクシカ（レプリカ）",
+      "status": "random_veiled",
+      "source_mod_count": 2,
+      "filters": []
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-perfect-form:870570cba835bbe6",
+      "category": "replica_unique",
+      "name_en": "Replica Perfect Form",
+      "name_ja": "完璧な姿（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_124859000",
+          "text_ja": "回避力が#%増加する (ローカル)",
+          "ref": "#% increased Evasion Rating",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4220027924",
+          "text_ja": "冷気耐性 +#%",
+          "ref": "+#% to Cold Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2358015838",
+          "text_ja": "回避力は最大値を超過した冷気耐性により増加する",
+          "ref": "Evasion Rating is increased by Overcapped Cold Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_593845252",
+          "text_ja": "バーサタイルコンバタント",
+          "ref": "Versatile Combatant",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-pillars-of-arun:4f43efa1fee91f3a",
+      "category": "replica_unique",
+      "name_en": "Replica Pillars of Arun",
+      "name_ja": "アルンの柱（レプリカ）",
+      "status": "no_searchable_filters",
+      "source_mod_count": 6,
+      "filters": []
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-poorjoy-s-asylum:28aeac9ffa88d7f0",
+      "category": "replica_unique",
+      "name_en": "Replica Poorjoy's Asylum",
+      "name_ja": "プアジョイの収容所（レプリカ）",
+      "status": "no_searchable_filters",
+      "source_mod_count": 8,
+      "filters": []
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-powerlessness:9dcc49e7983d86e7",
+      "category": "replica_unique",
+      "name_en": "Replica Powerlessness",
+      "name_ja": "無力（レプリカ）",
+      "status": "no_searchable_filters",
+      "source_mod_count": 1,
+      "filters": []
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-primordial-might:b1fa3d4511ef331c",
+      "category": "replica_unique",
+      "name_en": "Replica Primordial Might",
+      "name_ja": "原初の力（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_2821079699",
+          "text_ja": "ゴーレム最大召喚数 +#",
+          "ref": "+# to maximum number of Summoned Golems",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3384291300",
+          "text_ja": "過去8秒間にプレイヤーがゴーレムを召喚していればダメージが#%増加する",
+          "ref": "#% increased Damage if you Summoned a Golem in the past 8 seconds",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2869193493",
+          "text_ja": "過去8秒間に召喚されたゴーレムのダメージが#%増加する",
+          "ref": "Golems Summoned in the past 8 seconds deal #% increased Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1750735210",
+          "text_ja": "ゴーレムの最大ライフが#%増加する",
+          "ref": "Golems have #% increased Maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1089165168",
+          "text_ja": "プリモーディアル",
+          "ref": "Primordial",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3630426972",
+          "text_ja": "召喚したゴーレムは攻撃的になる",
+          "ref": "Summoned Golems are Aggressive",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-prismweave:2e333c610922ca80",
+      "category": "replica_unique",
+      "name_en": "Replica Prismweave",
+      "name_ja": "プリズムウィーヴ（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1133016593",
+          "text_ja": "#から#の火ダメージをスペルに追加する",
+          "ref": "Adds # to # Fire Damage to Spells",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2469416729",
+          "text_ja": "#から#の冷気ダメージをスペルに追加する",
+          "ref": "Adds # to # Cold Damage to Spells",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2831165374",
+          "text_ja": "#から#の雷ダメージをスペルに追加する",
+          "ref": "Adds # to # Lightning Damage to Spells",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2901986750",
+          "text_ja": "全ての元素耐性 +#%",
+          "ref": "+#% to all Elemental Resistances",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3150967823",
+          "text_ja": "いずれかのフラスコ効果中は元素ダメージが#%増加する",
+          "ref": "#% increased Elemental Damage during any Flask Effect",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-quill-rain:2fd3e6d87037f3f9",
+      "category": "replica_unique",
+      "name_en": "Replica Quill Rain",
+      "name_ja": "針の雨（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 7,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1331336999",
+          "text_ja": "ソケットされたジェムはレベル#アローノヴァによりサポートされる",
+          "ref": "Socketed Gems are Supported by Level # Arrow Nova",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3261801346",
+          "text_ja": "器用さ +#",
+          "ref": "+# to Dexterity",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_210067635",
+          "text_ja": "アタックスピードが#%増加する (ローカル)",
+          "ref": "#% increased Attack Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_640052854",
+          "text_ja": "ヒットを与えた敵1体ごとに#のマナを付与する",
+          "ref": "Grants # Mana per Enemy Hit",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3759663284",
+          "text_ja": "投射物スピードが#%増加する",
+          "ref": "#% increased Projectile Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_691932474",
+          "text_ja": "命中力 +# (ローカル)",
+          "ref": "+# to Accuracy Rating",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-reckless-defence:f5af40c4da9a071d",
+      "category": "replica_unique",
+      "name_en": "Replica Reckless Defence",
+      "name_ja": "無謀な防御（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 3,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_19803471",
+          "text_ja": "スペルブロック率 +#%",
+          "ref": "+#% Chance to Block Spell Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1702195217",
+          "text_ja": "アタックブロック率 +#%",
+          "ref": "+#% Chance to Block Attack Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4245896836",
+          "text_ja": "凍結、感電および発火を付与される確率 +#%",
+          "ref": "+#% chance to be Frozen, Shocked and Ignited",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-red-trail:0e5cae746b79db45",
+      "category": "replica_unique",
+      "name_en": "Replica Red Trail",
+      "name_ja": "赤い足跡（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 7,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1062208444",
+          "text_ja": "アーマーが#%増加する (ローカル)",
+          "ref": "#% increased Armour",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2250533757",
+          "text_ja": "移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_779829642",
+          "text_ja": "静止中の混沌耐性 +#%",
+          "ref": "+#% to Chaos Resistance while stationary",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_214242256",
+          "text_ja": "ネクロティック足跡エフェクト",
+          "ref": "Necrotic Footprints",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2043747322",
+          "text_ja": "プレイヤーに対するスペルヒットは#%の確率で毒を付与する",
+          "ref": "#% chance for Spell Hits against you to inflict Poison",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-restless-ward:e2b51a175cde1758",
+      "category": "replica_unique",
+      "name_en": "Replica Restless Ward",
+      "name_ja": "休まぬ守り（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1999113824",
+          "text_ja": "回避力およびエナジーシールドが#%増加する (ローカル)",
+          "ref": "#% increased Evasion and Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1541516339",
+          "text_ja": "フレンジーチャージ1個ごとに移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed per Frenzy Charge",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1515657623",
+          "text_ja": "エンデュランスチャージの最大数 +#",
+          "ref": "+# to Maximum Endurance Charges",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4078695",
+          "text_ja": "フレンジーチャージの最大数 +#",
+          "ref": "+# to Maximum Frenzy Charges",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1898967950",
+          "text_ja": "エンデュランスチャージ1個ごとに毎秒#のライフを自動回復する",
+          "ref": "Regenerate # Life per second per Endurance Charge",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-rumi-s-concoction:0e7b89476aaddcd6",
+      "category": "replica_unique",
+      "name_en": "Replica Rumi's Concoction",
+      "name_ja": "ルミの調合薬（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3986030307",
+          "text_ja": "使用した時にエンデュランスチャージを#個獲得する",
+          "ref": "Gain # Endurance Charge on use",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1256719186",
+          "text_ja": "持続時間が#%増加する",
+          "ref": "#% increased Duration",
+          "inverted": true,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-shroud-of-the-lightless:75f9365f2562eba2",
+      "category": "replica_unique",
+      "name_en": "Replica Shroud of the Lightless",
+      "name_ja": "光なき者の覆い（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 1,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3527617737",
+          "text_ja": "アビスソケットを#個持つ",
+          "ref": "Has # Abyssal Sockets",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-siegebreaker:32ed243c3c085250",
+      "category": "replica_unique",
+      "name_en": "Replica Siegebreaker",
+      "name_ja": "シージブレイカー（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_2482852589",
+          "text_ja": "最大エナジーシールドが#%増加する",
+          "ref": "#% increased maximum Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_983749596",
+          "text_ja": "最大ライフが#%増加する",
+          "ref": "#% increased maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3372524247",
+          "text_ja": "火耐性 +#%",
+          "ref": "+#% to Fire Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4099989681",
+          "text_ja": "ミニオンは死亡時に燃焼領域を撒き、その毎秒最大ライフの#%を火ダメージとして与える",
+          "ref": "Your Minions spread Burning Ground on Death, dealing #% of their maximum Life as Fire Damage per second",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2138548436",
+          "text_ja": "ミニオンはアタックによるヒット時に#%の確率で敵に重傷を付与する",
+          "ref": "Minions have #% chance to Maim Enemies on Hit with Attacks",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-sorrow-of-the-divine:dc6bc1cca77b12cd",
+      "category": "replica_unique",
+      "name_en": "Replica Sorrow of the Divine",
+      "name_ja": "神の嘆き（レプリカ）",
+      "status": "no_searchable_filters",
+      "source_mod_count": 2,
+      "filters": []
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-soul-strike:e2ca926604122893",
+      "category": "replica_unique",
+      "name_en": "Replica Soul Strike",
+      "name_ja": "ソウル・ストライク（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3261801346",
+          "text_ja": "器用さ +#",
+          "ref": "+# to Dexterity",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3032590688",
+          "text_ja": "#から#の物理ダメージをアタックに追加する",
+          "ref": "Adds # to # Physical Damage to Attacks",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3101897388",
+          "text_ja": "ライフリーチインスタンスごとの最大回復量が#%増加する",
+          "ref": "#% increased Maximum Recovery per Life Leech",
+          "inverted": true,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4118987751",
+          "text_ja": "リーチによる秒間最大合計ライフ回復量が#%増加する",
+          "ref": "#% increased Maximum total Life Recovery per second from Leech",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-soul-tether:f834b27a42b0ffd8",
+      "category": "replica_unique",
+      "name_en": "Replica Soul Tether",
+      "name_ja": "魂を繋ぐ綱（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 3,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_4080418644",
+          "text_ja": "筋力 +#",
+          "ref": "+# to Strength",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_67280387",
+          "text_ja": "最大ライフの#%を追加の最大エナジーシールドとして獲得する",
+          "ref": "Gain #% of Maximum Life as Extra Maximum Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1911037487",
+          "text_ja": "コラプテッドソウル",
+          "ref": "Corrupted Soul",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-stampede:96f758dd5367544f",
+      "category": "replica_unique",
+      "name_en": "Replica Stampede",
+      "name_ja": "群れの暴走（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1999113824",
+          "text_ja": "回避力およびエナジーシールドが#%増加する (ローカル)",
+          "ref": "#% increased Evasion and Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2511217560",
+          "text_ja": "スタンおよびブロック復帰が#%増加する",
+          "ref": "#% increased Stun and Block Recovery",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1020412108",
+          "text_ja": "ソケットされたトラベルスキルのダメージが#%上昇する",
+          "ref": "Socketed Travel Skills deal #% more Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1327522346",
+          "text_ja": "移動中はマナ自動回復レートが#%増加する",
+          "ref": "#% increased Mana Regeneration Rate while moving",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3945685369",
+          "text_ja": "移動スピードが基礎値の#%になる",
+          "ref": "Your Movement Speed is #% of its base value",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-tasalio-s-sign:eb90627af2cc931c",
+      "category": "replica_unique",
+      "name_en": "Replica Tasalio's Sign",
+      "name_ja": "タサリオの印（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1662717006",
+          "text_ja": "#から#の冷気ダメージをスペルとアタックに追加する",
+          "ref": "Adds # to # Cold Damage to Spells and Attacks",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_220932154",
+          "text_ja": "冷気ダメージは凍結を付与できない",
+          "ref": "Your Cold Damage cannot Freeze",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3510243006",
+          "text_ja": "冷却に対する完全無効化を獲得する",
+          "ref": "Immune to Chill",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3734640451",
+          "text_ja": "冷却状態の敵に対して#から#の冷気ダメージを追加する",
+          "ref": "Adds # to # Cold Damage against Chilled Enemies",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-tempestuous-steel:1519427764b44da0",
+      "category": "replica_unique",
+      "name_en": "Replica Tempestuous Steel",
+      "name_ja": "嵐の鋼（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 7,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1940865751",
+          "text_ja": "#から#の物理ダメージを追加する (ローカル)",
+          "ref": "Adds # to # Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_210067635",
+          "text_ja": "アタックスピードが#%増加する (ローカル)",
+          "ref": "#% increased Attack Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_624954515",
+          "text_ja": "グローバル命中力が#%増加する",
+          "ref": "#% increased Global Accuracy Rating",
+          "inverted": true,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_670153687",
+          "text_ja": "片手近接武器のクリティカルダメージ倍率 +#%",
+          "ref": "+#% to Critical Strike Multiplier with One Handed Melee Weapons",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4064396395",
+          "text_ja": "この武器によるアタックは#%の元素耐性を貫通する",
+          "ref": "Attacks with this Weapon Penetrate #% Elemental Resistances",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_273476097",
+          "text_ja": "物理アタックダメージの#%を追加火ダメージとして獲得する",
+          "ref": "Gain #% of Physical Attack Damage as Extra Fire Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1096897481",
+          "text_ja": "物理アタックダメージの#%を追加雷ダメージとして獲得する",
+          "ref": "Gain #% of Physical Attack Damage as Extra Lightning Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-three-step-assault:6bccd624dd39a7c5",
+      "category": "replica_unique",
+      "name_en": "Replica Three-step Assault",
+      "name_ja": "スリーステップアサルト（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3261801346",
+          "text_ja": "器用さ +#",
+          "ref": "+# to Dexterity",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_124859000",
+          "text_ja": "回避力が#%増加する (ローカル)",
+          "ref": "#% increased Evasion Rating",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2250533757",
+          "text_ja": "移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_240857668",
+          "text_ja": "身躱しの効果が#%増加する",
+          "ref": "#% increased Elusive Effect",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3178542354",
+          "text_ja": "直近プレイヤーが敵をヒットしていれば移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed if you've Hit an Enemy Recently",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-trypanon:a37d303ea4140dc4",
+      "category": "replica_unique",
+      "name_en": "Replica Trypanon",
+      "name_ja": "トライペーノン（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 2,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1963540179",
+          "text_ja": "この武器のクリティカル率は100%である",
+          "ref": "This Weapon's Critical Strike Chance is 100%",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-tukohama-s-fortress:f09535dad74e4bb5",
+      "category": "replica_unique",
+      "name_en": "Replica Tukohama's Fortress",
+      "name_ja": "トゥコハマの要塞（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_708630863",
+          "text_ja": "キャストできるブランドが1個増える",
+          "ref": "You can Cast an additional Brand",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2409504914",
+          "text_ja": "ブランド1個ごとにクリティカル率が#%増加する",
+          "ref": "#% increased Critical Strike Chance per Brand",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1323465399",
+          "text_ja": "ブランドのダメージが#%増加する",
+          "ref": "#% increased Brand Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2801937280",
+          "text_ja": "ブラッドマジック",
+          "ref": "Blood Magic",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-tulfall:a694f17ca12884ce",
+      "category": "replica_unique",
+      "name_en": "Replica Tulfall",
+      "name_ja": "トゥルフォール（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_2891184298",
+          "text_ja": "キャストスピードが#%増加する",
+          "ref": "#% increased Cast Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2135899247",
+          "text_ja": "パワーチャージが最大数に達した時に全てのパワーチャージを失う",
+          "ref": "Lose all Power Charges on reaching Maximum Power Charges",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2732344760",
+          "text_ja": "パワーチャージが最大数に達した時にフレンジーチャージを1個獲得する",
+          "ref": "Gain a Frenzy Charge on reaching Maximum Power Charges",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_329974315",
+          "text_ja": "フレンジーチャージ1個ごとに冷気ダメージが#%増加する",
+          "ref": "#% increased Cold Damage per Frenzy Charge",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3664778308",
+          "text_ja": "パワーチャージが最大数に達すると#の冷気ダメージを受ける",
+          "ref": "Take # Cold Damage on reaching Maximum Power Charges",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-twyzel:975a56b27a8404f4",
+      "category": "replica_unique",
+      "name_en": "Replica Twyzel",
+      "name_ja": "トウィズル（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 4,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_210067635",
+          "text_ja": "アタックスピードが#%増加する (ローカル)",
+          "ref": "#% increased Attack Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1195705739",
+          "text_ja": "アタックは投射物を追加で1個放つ",
+          "ref": "Attacks fire an additional Projectile",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-ungil-s-gauche:802d4e974b743b08",
+      "category": "replica_unique",
+      "name_en": "Replica Ungil's Gauche",
+      "name_ja": "アンギルのゴーシュ（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_2166444903",
+          "text_ja": "二刀流中のアタックブロック率 +#%",
+          "ref": "+#% Chance to Block Attack Damage while Dual Wielding",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3261801346",
+          "text_ja": "器用さ +#",
+          "ref": "+# to Dexterity",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_210067635",
+          "text_ja": "アタックスピードが#%増加する (ローカル)",
+          "ref": "#% increased Attack Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-veil-of-the-night:f754408f75f35956",
+      "category": "replica_unique",
+      "name_en": "Replica Veil of the Night",
+      "name_ja": "夜の帳（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_2511217560",
+          "text_ja": "スタンおよびブロック復帰が#%増加する",
+          "ref": "#% increased Stun and Block Recovery",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1263695895",
+          "text_ja": "光半径が#%増加する",
+          "ref": "#% increased Light Radius",
+          "inverted": true,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_4271994824",
+          "text_ja": "防御力はゼロになる",
+          "ref": "Defences are Zero",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_76848920",
+          "text_ja": "元素耐性が#%減少する",
+          "ref": "#% reduced Elemental Resistances",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-victario-s-charity:229dc95b6e657e51",
+      "category": "replica_unique",
+      "name_en": "Replica Victario's Charity",
+      "name_ja": "ヴィクタリオの慈善（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1671376347",
+          "text_ja": "雷耐性 +#%",
+          "ref": "+#% to Lightning Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2923486259",
+          "text_ja": "混沌耐性 +#%",
+          "ref": "+#% to Chaos Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1880071428",
+          "text_ja": "スキルによる呪い以外のオーラの効果が#%増加する",
+          "ref": "#% increased effect of Non-Curse Auras from your Skills",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-voideye:c2807baf7cd1b9a6",
+      "category": "replica_unique",
+      "name_en": "Replica Voideye",
+      "name_ja": "ヴォイドアイ（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 1,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3828613551",
+          "text_ja": "ソケットされたジェムの品質 +#%",
+          "ref": "+#% to Quality of Socketed Gems",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-voidwalker:7c681315e409aaff",
+      "category": "replica_unique",
+      "name_en": "Replica Voidwalker",
+      "name_ja": "ヴォイドウォーカー（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 7,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3261801346",
+          "text_ja": "器用さ +#",
+          "ref": "+# to Dexterity",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1999113824",
+          "text_ja": "回避力およびエナジーシールドが#%増加する (ローカル)",
+          "ref": "#% increased Evasion and Energy Shield",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2250533757",
+          "text_ja": "移動スピードが#%増加する",
+          "ref": "#% increased Movement Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_146268648",
+          "text_ja": "透明化中は受けるダメージが#%増加する",
+          "ref": "#% increased Damage taken while Phasing",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3489372920",
+          "text_ja": "直近プレイヤーが敵を倒していれば透明化を獲得する",
+          "ref": "You have Phasing if you've Killed Recently",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_383509486",
+          "text_ja": "透明化中に投射物は+#回連鎖する",
+          "ref": "Projectiles Chain +# times while you have Phasing",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_50381303",
+          "text_ja": "天体の足跡エフェクト",
+          "ref": "Celestial Footprints",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-volkuur-s-guidance:6e63fc0e0f478e22",
+      "category": "replica_unique",
+      "name_en": "Replica Volkuur's Guidance",
+      "name_ja": "ヴォルカーの導き（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3299347043",
+          "text_ja": "最大ライフ +#",
+          "ref": "+# to maximum Life",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2923486259",
+          "text_ja": "混沌耐性 +#%",
+          "ref": "+#% to Chaos Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1139878780",
+          "text_ja": "混沌ダメージは発火を付与できる",
+          "ref": "Your Chaos Damage can Ignite",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3573128085",
+          "text_ja": "混沌スキルは#%の確率で発火を付与する",
+          "ref": "Chaos Skills have #% chance to Ignite",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2614885550",
+          "text_ja": "発火の持続時間が#%上昇する",
+          "ref": "#% more Ignite Duration",
+          "inverted": true,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-windripper:485d60d69fcad2c3",
+      "category": "replica_unique",
+      "name_en": "Replica Windripper",
+      "name_ja": "ウィンドリッパー（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_1037193709",
+          "text_ja": "#から#の冷気ダメージを追加する (ローカル)",
+          "ref": "Adds # to # Cold Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_3336890334",
+          "text_ja": "#から#の雷ダメージを追加する (ローカル)",
+          "ref": "Adds # to # Lightning Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_210067635",
+          "text_ja": "アタックスピードが#%増加する (ローカル)",
+          "ref": "#% increased Attack Speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_849085925",
+          "text_ja": "プレイヤーにより凍結させられた敵が受けるダメージが20%増加する",
+          "ref": "Enemies Frozen by you take 20% increased Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_347328113",
+          "text_ja": "感電状態の敵を倒した時に+#のエナジーシールドを獲得する",
+          "ref": "+# Energy Shield gained on Killing a Shocked Enemy",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-wings-of-entropy:4b13b1937290378a",
+      "category": "replica_unique",
+      "name_en": "Replica Wings of Entropy",
+      "name_ja": "エントロピーの翼（レプリカ）",
+      "status": "fixed",
+      "source_mod_count": 6,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_561307714",
+          "text_ja": "スペルブロック率が#%",
+          "ref": "#% Chance to Block Spell Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2166444903",
+          "text_ja": "二刀流中のアタックブロック率 +#%",
+          "ref": "+#% Chance to Block Attack Damage while Dual Wielding",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1509134228",
+          "text_ja": "物理ダメージが#%増加する",
+          "ref": "#% increased Physical Damage",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_2797075304",
+          "text_ja": "二刀流中とみなされる",
+          "ref": "Counts as Dual Wielding",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1757389331",
+          "text_ja": "オフハンドのクリティカル率 +#%",
+          "ref": "+#% to Off Hand Critical Strike Chance",
+          "inverted": false,
+          "better": 1,
+          "decimal": true
+        },
+        {
+          "stat_id": "explicit.stat_56401364",
+          "text_ja": "メインハンドのアタックスピードが#%上昇する",
+          "ref": "#% more Main Hand attack speed",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-winterheart:3afbb7839506e61e",
+      "category": "replica_unique",
+      "name_en": "Replica Winterheart",
+      "name_ja": "ウィンターハート（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 5,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_3261801346",
+          "text_ja": "器用さ +#",
+          "ref": "+# to Dexterity",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1671376347",
+          "text_ja": "雷耐性 +#%",
+          "ref": "+#% to Lightning Resistance",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1700808530",
+          "text_ja": "感電中は毎秒エナジーシールドの#%を自動回復する",
+          "ref": "Regenerate #% of Energy Shield per second while Shocked",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        },
+        {
+          "stat_id": "explicit.stat_1473289174",
+          "text_ja": "感電の影響を受けない",
+          "ref": "Unaffected by Shock",
+          "inverted": false,
+          "better": 1,
+          "decimal": false
+        }
+      ]
+    },
+    {
+      "stable_id": "poenavi-heist:replica_unique:replica-witchfire-brew:10f24617ccb0c166",
+      "category": "replica_unique",
+      "name_en": "Replica Witchfire Brew",
+      "name_ja": "ウィッチファイヤーの醸造（レプリカ）",
+      "status": "partial",
+      "source_mod_count": 2,
+      "filters": [
+        {
+          "stat_id": "explicit.stat_388617051",
+          "text_ja": "使用に必要なチャージ量が#%増加する",
+          "ref": "#% increased Charges per use",
+          "inverted": false,
+          "better": -1,
+          "decimal": false
+        }
+      ]
+    }
+  ]
+}

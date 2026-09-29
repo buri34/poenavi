@@ -12,6 +12,7 @@ from src.poetore.heist_curio import (
     detect_header_bands,
     image_point_for_capture,
     load_curio_items,
+    load_curio_unique_mod_templates,
     rank_curio_matches,
     select_header_band,
     trusted_curio_match,
@@ -42,6 +43,47 @@ def test_bundled_dictionary_has_the_verified_259_unique_items():
         "scarab": 86,
     }
     assert any(item.name_ja == "信者のチェーンメイル" for item in items)
+
+
+def test_bundled_unique_mod_templates_cover_all_101_heist_uniques():
+    templates = load_curio_unique_mod_templates()
+    unique_items = {
+        item.stable_id: item
+        for item in load_curio_items()
+        if item.category in {"replica_unique", "replacement_unique"}
+    }
+
+    assert templates.keys() == unique_items.keys()
+    assert (
+        sum(item.category == "replica_unique" for item in unique_items.values()) == 92
+    )
+    assert (
+        sum(item.category == "replacement_unique" for item in unique_items.values())
+        == 9
+    )
+
+    abyssus_id = next(
+        item.stable_id
+        for item in unique_items.values()
+        if item.name_en == "Replica Abyssus"
+    )
+    abyssus = templates[abyssus_id]
+    assert abyssus.status == "fixed"
+    assert len(abyssus.filters) == 7
+    assert {row["stat_id"] for row in abyssus.filters} >= {
+        "explicit.stat_1379411836",
+        "explicit.stat_1573130764",
+        "explicit.stat_1062208444",
+        "explicit.stat_2734809852",
+    }
+
+    paradoxica_id = next(
+        item.stable_id
+        for item in unique_items.values()
+        if item.name_en == "Replica Paradoxica"
+    )
+    assert templates[paradoxica_id].status == "random_veiled"
+    assert templates[paradoxica_id].filters == ()
 
 
 def test_dictionary_match_uses_name_and_base_and_keeps_verified_thresholds():
@@ -183,18 +225,16 @@ def test_controller_scan_always_opens_manual_region_selector(qapp):
     image = QImage(640, 110, QImage.Format.Format_RGBA8888)
     image.fill(QColor("#202020"))
 
-    with patch(
-        "src.poetore.heist_curio.path_of_exile_client_rect",
-        return_value=QRect(0, 0, 1920, 1080),
-    ), patch(
-        "src.poetore.heist_curio.CurioRegionSelector"
-    ) as selector_class, patch.object(
-        controller, "_grab", return_value=image
-    ) as grab, patch(
-        "src.poetore.heist_curio.prepare_curio_ocr_image", return_value=b"image"
-    ), patch(
-        "src.poetore.heist_curio.threading.Thread"
-    ) as thread_class:
+    with (
+        patch(
+            "src.poetore.heist_curio.path_of_exile_client_rect",
+            return_value=QRect(0, 0, 1920, 1080),
+        ),
+        patch("src.poetore.heist_curio.CurioRegionSelector") as selector_class,
+        patch.object(controller, "_grab", return_value=image) as grab,
+        patch("src.poetore.heist_curio.prepare_curio_ocr_image", return_value=b"image"),
+        patch("src.poetore.heist_curio.threading.Thread") as thread_class,
+    ):
         selector = selector_class.return_value
         selector.exec.return_value = QDialog.Accepted
         selector.selected_rect = selected
@@ -248,6 +288,34 @@ def test_experimental_base_opens_existing_search_with_empty_optional_ilvl(qapp):
         qapp.processEvents()
         assert window._item_level_filter_enabled
         assert window._selected_item_level_range() == (83, None)
+        window.search_current_item.assert_called_once_with()
+    finally:
+        window.close()
+
+
+def test_heist_unique_opens_fixed_mod_candidates_blank_and_disabled(qapp):
+    item = next(
+        item for item in load_curio_items() if item.name_en == "Replica Abyssus"
+    )
+    match = Mock(item=item)
+    placement = PlacementContext(QRect(0, 0, 1200, 700), QPoint(400, 200))
+    window = PoetoreWindow(app_config={"poe_version": "poe1"})
+    window.search_current_item = Mock()
+    window._queue_poe_ninja_price = Mock()
+    try:
+        window.show_heist_curio_match(match, placement)
+        qapp.processEvents()
+
+        filters = window._selected_stat_filters()
+        assert len(filters) == 7
+        assert all(row.kind == "explicit" for row in filters)
+        assert all(not row.enabled for row in filters)
+        assert all(row.min_value is None and row.max_value is None for row in filters)
+        assert all(
+            row.selection_reason == "ハイストユニーク固定Mod候補" for row in filters
+        )
+        window.parse_current_text()
+        assert len(window._selected_stat_filters()) == 7
         window.search_current_item.assert_called_once_with()
     finally:
         window.close()

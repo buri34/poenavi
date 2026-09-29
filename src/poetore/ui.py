@@ -1088,6 +1088,8 @@ class PoetoreWindow(QWidget):
         self._outside_click_listener = None
         self._passive_hotkey_display = False
         self._capture_auto_hide = False
+        self._heist_unique_mod_item_key: str | None = None
+        self._heist_unique_mod_stable_id: str | None = None
         self._capture_hotkey = str(
             self._app_config.get("hotkeys", {}).get("poetore_capture", "alt+d")
         )
@@ -3368,13 +3370,27 @@ class PoetoreWindow(QWidget):
                 poe2_rules=True,
                 preset=preset,
             )
-        return apply_search_range(
+        resolved = apply_search_range(
             resolve_trade_stat_filters(
                 item, preset, self._trade_base_type, self._trade_item_name,
             ),
             self._selected_search_range(),
             item,
         )
+        if (
+            item.raw_text == self._heist_unique_mod_item_key
+            and self._heist_unique_mod_stable_id
+        ):
+            from src.poetore.heist_curio import curio_unique_mod_filters
+
+            existing = {(row.stat_id, row.ref) for row in resolved}
+            generated = tuple(
+                row
+                for row in curio_unique_mod_filters(self._heist_unique_mod_stable_id)
+                if (row.stat_id, row.ref) not in existing
+            )
+            return (*resolved, *generated)
+        return resolved
 
     def _search_range_changed(self):
         value = self._selected_search_range()
@@ -4681,6 +4697,14 @@ class PoetoreWindow(QWidget):
         self._heist_optional_item_level_key = (
             copied_text if bool(search.get("optional_item_level")) else None
         )
+        self._heist_unique_mod_item_key = (
+            copied_text
+            if item.category in {"replica_unique", "replacement_unique"}
+            else None
+        )
+        self._heist_unique_mod_stable_id = (
+            item.stable_id if self._heist_unique_mod_item_key else None
+        )
         self._preset_item_key = None
         self._reset_unique_candidates()
         self.mod_filter_tree.clear()
@@ -4839,8 +4863,12 @@ class PoetoreWindow(QWidget):
         if trace is not None:
             trace.mark("ui_parse_started")
         self._parsed_item = None
+        current_text = self.input_edit.toPlainText()
+        if current_text != self._heist_unique_mod_item_key:
+            self._heist_unique_mod_item_key = None
+            self._heist_unique_mod_stable_id = None
         try:
-            item = self._parse_item_text(self.input_edit.toPlainText())
+            item = self._parse_item_text(current_text)
         except (ItemParseError, ValueError) as exc:
             if trace is not None:
                 trace.mark("ui_parse_failed")
