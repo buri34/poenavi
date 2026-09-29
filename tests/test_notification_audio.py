@@ -1,4 +1,5 @@
 import hashlib
+import re
 import sys
 import wave
 from array import array
@@ -95,7 +96,17 @@ def test_windows_release_collects_audio_backend_and_audits_bundled_voice():
     assert '"--hidden-import", "miniaudio"' in script
     assert '"--hidden-import", "_miniaudio"' in script
     assert '"--hidden-import", "_cffi_backend"' in script
-    assert '"_cffi_backend.pyd"' in script
+    assert '_cffi_backend(?:\\.[^/]+)?\\.pyd$' in script
+    assert '"_cffi_backend.pyd"' not in script
+    pattern = re.search(
+        r'\$_ -match "([^"]*_cffi_backend[^"]+)"', script
+    ).group(1)
+    assert re.search(pattern, "PoENavi/_internal/_cffi_backend.pyd")
+    assert re.search(
+        pattern,
+        "PoENavi/_internal/_cffi_backend.cp313-win_amd64.pyd",
+    )
+    assert not re.search(pattern, "PoENavi/_internal/_cffi_backend.py")
     assert '"hideout_focus_notification.wav"' in script
     assert '"--audio-smoke-test"' in script
     assert "POENAVI_AUDIO_SMOKE_RESULT" in script

@@ -203,12 +203,17 @@ try {
         "TriskelionShattered.png",
         "TriskelionReforged.png",
         "MessageInABottle.png",
-        "_cffi_backend.pyd",
         "hideout_focus_notification.wav"
     )) {
         if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {
             throw "Release audit failed: missing $requiredName"
         }
+    }
+    $cffiBackendEntries = @($entryNames | Where-Object {
+        $_ -match "(^|/)_cffi_backend(?:\.[^/]+)?\.pyd$"
+    })
+    if ($cffiBackendEntries.Count -lt 1) {
+        throw "Release audit failed: missing _cffi_backend Python extension"
     }
     $thirdPartyLicenseFiles = @($entryNames | Where-Object {
         $_ -match "(^|/)THIRD_PARTY_LICENSES/.+/(LICENSE|LICENCE|COPYING|NOTICE)"
