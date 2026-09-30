@@ -270,6 +270,24 @@ class ConfigManagerTest(unittest.TestCase):
         assert "heist_curio_manual_ocr" not in migrated["hotkeys"]
         assert migrated["poetore"]["heist_curio_ocr"] == {"enabled": False}
 
+    def test_schema_v22_replaces_only_unreleased_heist_default_hotkey(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 21,
+            "hotkeys": {"heist_curio_ocr": "alt+shift+h"},
+        })
+
+        assert migrated["schemaVersion"] == ConfigManager.CURRENT_SCHEMA_VERSION
+        assert migrated["hotkeys"]["heist_curio_ocr"] == "alt+e"
+
+    def test_schema_v22_preserves_custom_heist_hotkey(self):
+        migrated = ConfigManager._migrate_config({
+            "schemaVersion": 21,
+            "hotkeys": {"heist_curio_ocr": "ctrl+h"},
+        })
+
+        assert migrated["schemaVersion"] == ConfigManager.CURRENT_SCHEMA_VERSION
+        assert migrated["hotkeys"]["heist_curio_ocr"] == "ctrl+h"
+
     def test_schema_v8_preserves_existing_startup_choice(self):
         migrated = ConfigManager._migrate_config({
             "schemaVersion": 7,
