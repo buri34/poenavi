@@ -274,6 +274,7 @@ def test_mini_navi_act4_button_is_only_visible_in_act4(qapp):
     main.config = {"mini_guide_overlay": {"enabled": True}}
     main.is_act4_checklist_available_context = Mock(return_value=True)
     main.act4_checklist_window = Mock()
+    main.act4_checklist_window.winId.return_value = 0
     main.act4_checklist_window.isVisible.return_value = True
     main.toggle_act4_checklist = Mock()
     overlay = MiniNaviOverlay(main)

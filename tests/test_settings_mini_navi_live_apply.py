@@ -62,6 +62,7 @@ def test_medium_large_small_sequence_updates_both_windows_immediately():
             "topmost_mode": MINI_TOPMOST_POE_ONLY,
         }
     }
+    window.act4_checklist_window = None
     window.mini_navi_overlay = MiniNaviOverlay(window)
     window.act4_checklist_window = Act4ChecklistWindow(window)
 
