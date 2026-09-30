@@ -109,7 +109,7 @@ class HeistSettingsDialog(QDialog):
 
         usage_group, usage = self._section_group("3. 読み取り方法", "readMethodGroup")
         instruction = QLabel(
-            "ショートカットを押したら、展示パネルの報酬名とベースタイプが見える部分を"
+            "ショートカットを押したら、展示パネルの報酬名・ベースタイプ・青いMod全体を"
             "左上から右下へドラッグしてください。\n"
             "ドラッグを終えると自動で確定します。Escでキャンセルできます。"
         )
@@ -119,8 +119,8 @@ class HeistSettingsDialog(QDialog):
         usage.addWidget(instruction)
 
         warning = QLabel(
-            "アイテムの説明文や背景を広く含めず、下の例のように名前部分だけを囲むと"
-            "安定して読み取れます。"
+            "盗賊のトリンケットは青いModの末尾まで含めてください。その他の報酬は"
+            "名前とベースタイプが入っていれば読み取れます。"
         )
         warning.setObjectName("heistSelectionWarning")
         warning.setProperty("state", "warning")
@@ -193,10 +193,12 @@ class HeistSettingsDialog(QDialog):
     def _show_example_popup(self) -> None:
         popup = QDialog(self)
         popup.setWindowTitle("ハイスト報酬の範囲指定例")
-        popup.resize(1100, 360)
+        popup.resize(900, 520)
         apply_dialog_theme(popup, self.theme)
         layout = QVBoxLayout(popup)
-        guide = QLabel("このように、報酬名とベースタイプが表示された横長部分を囲みます。")
+        guide = QLabel(
+            "このように、報酬名・ベースタイプ・青いModの末尾までを囲みます。"
+        )
         guide.setProperty("uiRole", "muted")
         guide.setWordWrap(True)
         layout.addWidget(guide)
@@ -208,7 +210,7 @@ class HeistSettingsDialog(QDialog):
         else:
             image.setPixmap(
                 pixmap.scaled(
-                    QSize(1060, 240), Qt.KeepAspectRatio, Qt.SmoothTransformation
+                    QSize(850, 400), Qt.KeepAspectRatio, Qt.SmoothTransformation
                 )
             )
         layout.addWidget(image)

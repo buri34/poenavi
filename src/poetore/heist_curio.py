@@ -8,7 +8,7 @@ import sys
 import threading
 import unicodedata
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from difflib import SequenceMatcher
 from functools import lru_cache
 from pathlib import Path
@@ -42,6 +42,9 @@ from src.poetore.window_position import PlacementContext, path_of_exile_client_r
 CURIO_MIN_SCORE = 0.90
 CURIO_MIN_MARGIN = 0.15
 CURIO_OCR_SCALE = 3
+TRINKET_MIN_SCORE = 0.88
+TRINKET_CONFIRM_SCORE = 0.97
+TRINKET_CONFUSABLE_SIMILARITY = 0.90
 
 
 @dataclass(frozen=True)
@@ -63,6 +66,7 @@ class CurioMatch:
     margin: float
     name_score: float
     base_score: float
+    trinket_mods: tuple[TrinketModMatch, ...] = ()
 
     @property
     def trusted(self) -> bool:
@@ -75,6 +79,37 @@ class CurioUniqueModTemplate:
     status: str
     source_mod_count: int
     filters: tuple[dict[str, object], ...]
+
+
+@dataclass(frozen=True)
+class TrinketModDefinition:
+    stat_id: str
+    text_ja: str
+    valid_values: frozenset[int]
+    closest_similarity: float
+
+
+@dataclass(frozen=True)
+class TrinketModMatch:
+    definition: TrinketModDefinition
+    value: int
+    score: float
+    margin: float
+
+    @property
+    def valid(self) -> bool:
+        return (
+            self.score >= TRINKET_MIN_SCORE
+            and self.value in self.definition.valid_values
+        )
+
+    @property
+    def trusted_without_confirmation(self) -> bool:
+        return (
+            self.valid
+            and self.score >= TRINKET_CONFIRM_SCORE
+            and self.definition.closest_similarity < TRINKET_CONFUSABLE_SIMILARITY
+        )
 
 
 @dataclass(frozen=True)
@@ -131,6 +166,17 @@ def curio_unique_mod_templates_path() -> Path:
     return _runtime_roots()[-1] / relative
 
 
+def trinket_mod_dictionary_path() -> Path:
+    relative = (
+        Path("data") / "poetore" / "poe1" / "heist_trinket_mod_dictionary.json"
+    )
+    for root in _runtime_roots():
+        candidate = root / relative
+        if candidate.is_file():
+            return candidate
+    return _runtime_roots()[-1] / relative
+
+
 @lru_cache(maxsize=1)
 def load_curio_items(path: Path | None = None) -> tuple[CurioItem, ...]:
     source = path or curio_dictionary_path()
@@ -179,6 +225,145 @@ def load_curio_unique_mod_templates(
     if len(templates) != 101:
         raise ValueError("ハイストユニークMod辞書は101件である必要があります。")
     return templates
+
+
+def normalize_trinket_mod_text(text: str) -> str:
+    normalized = unicodedata.normalize("NFKC", str(text or "")).casefold()
+    compact = re.sub(r"\s+", "", normalized)
+    compact = re.sub(r"[+-]?\d+(?:\.\d+)?[%％]", "#%", compact)
+    return re.sub(r"[^#%0-9a-zぁ-んァ-ヶ一-龠々ー]+", "", compact)
+
+
+@lru_cache(maxsize=1)
+def load_trinket_mod_definitions(
+    path: Path | None = None,
+) -> tuple[TrinketModDefinition, ...]:
+    source = path or trinket_mod_dictionary_path()
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    if payload.get("schema_version") != 1:
+        raise ValueError("未対応の盗賊のトリンケットMod辞書です。")
+    rows = tuple(payload.get("mods", ()))
+    normalized = tuple(normalize_trinket_mod_text(row["text_ja"]) for row in rows)
+    definitions = tuple(
+        TrinketModDefinition(
+            stat_id=str(row["stat_id"]),
+            text_ja=str(row["text_ja"]),
+            valid_values=frozenset(int(value) for value in row["valid_values"]),
+            closest_similarity=max(
+                (
+                    SequenceMatcher(None, normalized[index], candidate).ratio()
+                    for other_index, candidate in enumerate(normalized)
+                    if other_index != index
+                ),
+                default=0.0,
+            ),
+        )
+        for index, row in enumerate(rows)
+    )
+    if len(definitions) != 39 or len({row.stat_id for row in definitions}) != 39:
+        raise ValueError("盗賊のトリンケットMod辞書は39種類である必要があります。")
+    if any(
+        not row.valid_values or not normalize_trinket_mod_text(row.text_ja)
+        for row in definitions
+    ):
+        raise ValueError("盗賊のトリンケットMod辞書に不完全な項目があります。")
+    return definitions
+
+
+def rank_trinket_mod_line(
+    line: str,
+    definitions: Sequence[TrinketModDefinition] | None = None,
+) -> TrinketModMatch | None:
+    normalized_source = unicodedata.normalize("NFKC", str(line or ""))
+    compact_source = re.sub(r"\s+", "", normalized_source)
+    value_match = re.search(r"(?<!\d)(\d{1,2})[%％]", compact_source)
+    normalized_line = normalize_trinket_mod_text(line)
+    if value_match is None or "#%" not in normalized_line:
+        return None
+    ranked = sorted(
+        (
+            (
+                SequenceMatcher(
+                    None,
+                    normalized_line,
+                    normalize_trinket_mod_text(definition.text_ja),
+                ).ratio(),
+                definition,
+            )
+            for definition in definitions or load_trinket_mod_definitions()
+        ),
+        key=lambda row: row[0],
+        reverse=True,
+    )
+    if not ranked:
+        return None
+    best_score, best = ranked[0]
+    runner_up = ranked[1][0] if len(ranked) > 1 else 0.0
+    return TrinketModMatch(
+        definition=best,
+        value=int(value_match.group(1)),
+        score=best_score,
+        margin=best_score - runner_up,
+    )
+
+
+def recognize_trinket_mods(
+    raw_text: str,
+    definitions: Sequence[TrinketModDefinition] | None = None,
+) -> tuple[TrinketModMatch, ...]:
+    best_by_stat: dict[str, TrinketModMatch] = {}
+    for line in str(raw_text or "").splitlines():
+        match = rank_trinket_mod_line(line, definitions)
+        if match is None or not match.valid:
+            continue
+        previous = best_by_stat.get(match.definition.stat_id)
+        if previous is None or match.score > previous.score:
+            best_by_stat[match.definition.stat_id] = match
+    return tuple(best_by_stat.values())
+
+
+def reconcile_trinket_mods(
+    primary: Sequence[TrinketModMatch],
+    secondary: Sequence[TrinketModMatch] = (),
+) -> tuple[TrinketModMatch, ...]:
+    secondary_by_key = {
+        (match.definition.stat_id, match.value): match
+        for match in secondary
+        if match.valid
+    }
+    accepted: dict[str, TrinketModMatch] = {}
+    for match in primary:
+        if not match.valid:
+            continue
+        key = (match.definition.stat_id, match.value)
+        if match.trusted_without_confirmation or key in secondary_by_key:
+            accepted[match.definition.stat_id] = match
+    for match in secondary:
+        if (
+            match.valid
+            and match.trusted_without_confirmation
+            and match.definition.stat_id not in accepted
+        ):
+            accepted[match.definition.stat_id] = match
+    return tuple(accepted.values())
+
+
+def trinket_mod_filters(matches: Sequence[TrinketModMatch]):
+    """Convert confirmed OCR matches to disabled filters with detected values."""
+    from src.poetore.trade import TradeStatFilter
+
+    return tuple(
+        TradeStatFilter(
+            stat_id=match.definition.stat_id,
+            text=match.definition.text_ja,
+            min_value=float(match.value),
+            kind="explicit",
+            enabled=False,
+            max_value=None,
+            selection_reason="盗賊のトリンケットOCR",
+        )
+        for match in matches
+    )
 
 
 def curio_unique_mod_filters(stable_id: str):
@@ -511,6 +696,11 @@ def curio_item_text(item: CurioItem) -> str:
         return f"アイテムクラス: マップフラグメント\nレアリティ: ノーマル\n{item.name_ja}\n--------"
     if item.category == "experimental_base":
         return f"アイテムクラス: {item_class}\nレアリティ: ノーマル\n{item.name_ja}\n--------"
+    if item.category == "trinket":
+        return (
+            "アイテムクラス: 盗賊のトリンケット\nレアリティ: レア\n"
+            f"{item.name_ja}\n{item.base_type_ja or item.name_ja}\n--------"
+        )
     return (
         f"アイテムクラス: {item_class}\nレアリティ: ユニーク\n"
         f"{item.name_ja}\n{item.base_type_ja or item.name_ja}\n--------"
@@ -572,7 +762,7 @@ class CurioRegionSelector(QDialog):
                 QMessageBox.warning(
                     self,
                     "範囲を確認してください",
-                    "報酬名を含む範囲を選択してください。",
+                    "報酬名・ベースタイプ・青いModを含む範囲を選択してください。",
                 )
                 return
             self.accept()
@@ -596,7 +786,8 @@ class CurioRegionSelector(QDialog):
         painter.drawText(
             self.rect().adjusted(20, 20, -20, -20),
             Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter,
-            "報酬名とベースタイプを囲んでください\nドラッグ終了: 確定 / Esc: キャンセル",
+            "報酬名・ベースタイプ・青いMod全体を囲んでください\n"
+            "ドラッグ終了: 確定 / Esc: キャンセル",
         )
 
 
@@ -718,7 +909,22 @@ class HeistCurioController(QObject):
             self._ocr.start()
             raw_text = self._ocr.recognize([payload])[0]
             match = trusted_curio_match(raw_text, self._items)
-            if match is None and getattr(self._ndl_ocr, "is_available", False):
+            primary_trinket_mods = recognize_trinket_mods(raw_text)
+            secondary_trinket_mods: tuple[TrinketModMatch, ...] = ()
+            trinket_needs_confirmation = bool(
+                match is not None
+                and match.item.category == "trinket"
+                and (
+                    not primary_trinket_mods
+                    or any(
+                        not row.trusted_without_confirmation
+                        for row in primary_trinket_mods
+                    )
+                )
+            )
+            if (
+                match is None or trinket_needs_confirmation
+            ) and getattr(self._ndl_ocr, "is_available", False):
                 cold_start = getattr(self._ndl_ocr, "is_ready", False) is not True
                 self.high_accuracy_started.emit(
                     cold_start,
@@ -728,13 +934,24 @@ class HeistCurioController(QObject):
                 try:
                     results = self._ndl_ocr.recognize([payload])
                     ndl_text = results[0].text if results else ""
-                    match = trusted_curio_match(ndl_text, self._items)
+                    ndl_match = trusted_curio_match(ndl_text, self._items)
+                    if match is None:
+                        match = ndl_match
+                    secondary_trinket_mods = recognize_trinket_mods(ndl_text)
                 finally:
                     self.high_accuracy_finished.emit()
             if match is None:
                 raise RuntimeError(
                     "報酬名を安全に特定できませんでした。"
                     "範囲を変えてもう一度お試しください。"
+                )
+            if match.item.category == "trinket":
+                match = replace(
+                    match,
+                    trinket_mods=reconcile_trinket_mods(
+                        primary_trinket_mods,
+                        secondary_trinket_mods,
+                    ),
                 )
             if generation == self._generation:
                 self.resolved.emit(match, placement)
@@ -768,7 +985,7 @@ class HeistCurioController(QObject):
 
             self._high_accuracy_overlay = HighAccuracyOcrStatusOverlay()
         lines = [
-            "通常の読み取りで報酬名を確認できませんでした",
+            "通常の読み取りだけでは報酬を安全に確認できませんでした",
             (
                 "高精度OCRを準備しています…"
                 if cold_start

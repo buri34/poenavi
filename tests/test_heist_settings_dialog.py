@@ -68,7 +68,10 @@ def test_heist_settings_shows_manual_selection_example():
     try:
         assert Path(DEFAULT_EXAMPLE_IMAGE_PATH).is_file()
         assert not dialog.example_thumbnail.pixmap().isNull()
-        assert "報酬名とベースタイプ" in dialog.findChild(
+        source = dialog.example_thumbnail.pixmap()
+        assert source.width() > 250
+        assert source.height() > 100
+        assert "報酬名・ベースタイプ・青いMod全体" in dialog.findChild(
             QLabel, "heistSelectionInstruction"
         ).text()
         assert "自動で確定" in dialog.findChild(

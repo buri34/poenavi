@@ -1090,6 +1090,8 @@ class PoetoreWindow(QWidget):
         self._capture_auto_hide = False
         self._heist_unique_mod_item_key: str | None = None
         self._heist_unique_mod_stable_id: str | None = None
+        self._heist_trinket_mod_item_key: str | None = None
+        self._heist_trinket_mod_filters = ()
         self._capture_hotkey = str(
             self._app_config.get("hotkeys", {}).get("poetore_capture", "alt+d")
         )
@@ -3377,6 +3379,7 @@ class PoetoreWindow(QWidget):
             self._selected_search_range(),
             item,
         )
+        generated = ()
         if (
             item.raw_text == self._heist_unique_mod_item_key
             and self._heist_unique_mod_stable_id
@@ -3389,8 +3392,17 @@ class PoetoreWindow(QWidget):
                 for row in curio_unique_mod_filters(self._heist_unique_mod_stable_id)
                 if (row.stat_id, row.ref) not in existing
             )
-            return (*resolved, *generated)
-        return resolved
+        if item.raw_text == self._heist_trinket_mod_item_key:
+            existing = {(row.stat_id, row.ref) for row in (*resolved, *generated)}
+            generated = (
+                *generated,
+                *(
+                    row
+                    for row in self._heist_trinket_mod_filters
+                    if (row.stat_id, row.ref) not in existing
+                ),
+            )
+        return (*resolved, *generated)
 
     def _search_range_changed(self):
         value = self._selected_search_range()
@@ -4679,7 +4691,7 @@ class PoetoreWindow(QWidget):
 
     def show_heist_curio_match(self, match, placement_context):
         """Open one trusted Curio identity in the normal PoE1 price checker."""
-        from src.poetore.heist_curio import curio_item_text
+        from src.poetore.heist_curio import curio_item_text, trinket_mod_filters
 
         item = match.item
         copied_text = curio_item_text(item)
@@ -4704,6 +4716,14 @@ class PoetoreWindow(QWidget):
         )
         self._heist_unique_mod_stable_id = (
             item.stable_id if self._heist_unique_mod_item_key else None
+        )
+        self._heist_trinket_mod_item_key = (
+            copied_text if item.category == "trinket" else None
+        )
+        self._heist_trinket_mod_filters = (
+            trinket_mod_filters(match.trinket_mods)
+            if self._heist_trinket_mod_item_key
+            else ()
         )
         self._preset_item_key = None
         self._reset_unique_candidates()
@@ -4867,6 +4887,9 @@ class PoetoreWindow(QWidget):
         if current_text != self._heist_unique_mod_item_key:
             self._heist_unique_mod_item_key = None
             self._heist_unique_mod_stable_id = None
+        if current_text != self._heist_trinket_mod_item_key:
+            self._heist_trinket_mod_item_key = None
+            self._heist_trinket_mod_filters = ()
         try:
             item = self._parse_item_text(current_text)
         except (ItemParseError, ValueError) as exc:

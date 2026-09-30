@@ -4064,6 +4064,22 @@
         "trade_static_id": "ultimatum-scarab-of-inscription",
         "static_group": "Fragments"
       }
+    },
+    {
+      "stable_id": "poenavi-heist:trinket:thiefs-trinket",
+      "category": "trinket",
+      "name_en": "Thief's Trinket",
+      "name_ja": "盗賊のトリンケット",
+      "base_type_en": "Thief's Trinket",
+      "base_type_ja": "盗賊のトリンケット",
+      "ocr_aliases_ja": [],
+      "search": {
+        "method": "item_search",
+        "name_en": null,
+        "base_type_en": "Thief's Trinket",
+        "optional_item_level": false,
+        "item_group": "accessory"
+      }
     }
   ]
 }

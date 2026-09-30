@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QApplication, QDialog
 
 from src.poetore.heist_curio import (
     CurioHeaderBand,
+    CurioMatch,
     CurioRegionSelector,
     HeistCurioController,
     curio_item_text,
@@ -14,7 +15,11 @@ from src.poetore.heist_curio import (
     image_point_for_capture,
     load_curio_items,
     load_curio_unique_mod_templates,
+    load_trinket_mod_definitions,
     rank_curio_matches,
+    rank_trinket_mod_line,
+    recognize_trinket_mods,
+    reconcile_trinket_mods,
     select_header_band,
     trusted_curio_match,
 )
@@ -28,11 +33,11 @@ def qapp():
     return QApplication.instance() or QApplication([])
 
 
-def test_bundled_dictionary_has_the_verified_259_unique_items():
+def test_bundled_dictionary_has_the_verified_260_items_including_trinket():
     items = load_curio_items()
 
-    assert len(items) == 259
-    assert len({item.stable_id for item in items}) == 259
+    assert len(items) == 260
+    assert len({item.stable_id for item in items}) == 260
     assert {
         category: sum(item.category == category for item in items)
         for category in {item.category for item in items}
@@ -42,8 +47,21 @@ def test_bundled_dictionary_has_the_verified_259_unique_items():
         "replacement_unique": 9,
         "replica_unique": 92,
         "scarab": 86,
+        "trinket": 1,
     }
     assert any(item.name_ja == "信者のチェーンメイル" for item in items)
+    assert any(item.name_ja == "盗賊のトリンケット" for item in items)
+
+
+def test_bundled_trinket_mod_dictionary_has_39_searchable_current_mods():
+    definitions = load_trinket_mod_definitions()
+
+    assert len(definitions) == 39
+    assert len({row.stat_id for row in definitions}) == 39
+    weapon = next(row for row in definitions if "追加の武器アイテム" in row.text_ja)
+    jewellery = next(row for row in definitions if "追加の宝飾品" in row.text_ja)
+    assert weapon.valid_values == frozenset(range(4, 11))
+    assert jewellery.valid_values == frozenset(range(4, 9))
 
 
 def test_bundled_unique_mod_templates_cover_all_101_heist_uniques():
@@ -120,6 +138,68 @@ def test_curio_item_text_parses_into_existing_poetore_categories():
     assert (
         parse_item_text(curio_item_text(items["replica_unique"])).rarity == "ユニーク"
     )
+    trinket = parse_item_text(curio_item_text(items["trinket"]))
+    assert trinket.category == "heist_equipment"
+    assert trinket.rarity == "レア"
+    assert trinket.base_type == "盗賊のトリンケット"
+
+
+def test_trinket_mod_recognition_handles_real_windows_ocr_typo_and_values():
+    raw_text = """勝利の欲望
+盗賊のトリンケット
+ハイストで報酬のチェストを開けた時に5%の確率で湟加の宝飾品を入手する
+ハイストで報酬のチェストを開けた時に5%の確率で追加の武器アイテムを入手する
+ハイスト中にドロップするアイテムの数量が9%増加する"""
+
+    matches = recognize_trinket_mods(raw_text)
+
+    assert [(row.value, row.definition.text_ja) for row in matches] == [
+        (5, "ハイストで報酬のチェストを開けた時に#%の確率で追加の宝飾品を入手する"),
+        (5, "ハイストで報酬のチェストを開けた時に#%の確率で追加の武器アイテムを入手する"),
+        (9, "ハイスト中にドロップするアイテムの数量が#%増加する"),
+    ]
+
+
+def test_trinket_mod_recognition_keeps_first_real_sample_as_regression():
+    raw_text = """ルーンの欲望
+盗賊のトリンケット
+ハイストで報酬のチェストを開けた時に5%の確率で追加の防具アイテムを入手する
+ハイスト中は9%の確率で増強のオーブの代わりに錬金術のオーブがドロップする
+ハイスト中にドロップするアイテムの数量が10%増加する"""
+
+    matches = recognize_trinket_mods(raw_text)
+
+    assert [(row.value, row.definition.stat_id) for row in matches] == [
+        (5, "explicit.stat_3835470471"),
+        (9, "explicit.stat_306037665"),
+        (10, "explicit.stat_3683643898"),
+    ]
+
+
+def test_trinket_mod_rejects_out_of_tier_value_and_confusable_single_ocr():
+    assert rank_trinket_mod_line(
+        "ハイストで報酬のチェストを開けた時に59%の確率で追加の武器アイテムを入手する"
+    ).valid is False
+
+    weapon = rank_trinket_mod_line(
+        "ハイストで報酬のチェストを開けた時に5%の確率で追加の武器アイテムを入手する"
+    )
+    assert weapon is not None
+    assert not weapon.trusted_without_confirmation
+    assert reconcile_trinket_mods((weapon,)) == ()
+    assert reconcile_trinket_mods((weapon,), (weapon,)) == (weapon,)
+
+
+def test_trinket_mod_confirmation_requires_same_stat_and_value():
+    weapon = rank_trinket_mod_line(
+        "ハイストで報酬のチェストを開けた時に5%の確率で追加の武器アイテムを入手する"
+    )
+    armour = rank_trinket_mod_line(
+        "ハイストで報酬のチェストを開けた時に5%の確率で追加の防具アイテムを入手する"
+    )
+
+    assert weapon is not None and armour is not None
+    assert reconcile_trinket_mods((weapon,), (armour,)) == ()
 
 
 def _synthetic_curio_image() -> QImage:
@@ -195,6 +275,32 @@ class _NdlOcr:
         return None
 
 
+_TRINKET_OCR_TEXT = """勝利の欲望
+盗賊のトリンケット
+ハイストで報酬のチェストを開けた時に5%の確率で追加の宝飾品を入手する
+ハイストで報酬のチェストを開けた時に5%の確率で追加の武器アイテムを入手する
+ハイスト中にドロップするアイテムの数量が9%増加する"""
+
+
+class _TrinketWindowsOcr:
+    def start(self):
+        return None
+
+    def recognize(self, _images):
+        return [_TRINKET_OCR_TEXT.replace("追加の宝飾品", "湟加の宝飾品")]
+
+
+class _TrinketNdlOcr:
+    is_available = True
+    is_ready = True
+
+    def recognize(self, _images):
+        return [Mock(text=_TRINKET_OCR_TEXT, confidence=0.9)]
+
+    def close(self):
+        return None
+
+
 def test_controller_uses_ndlocr_only_after_windows_result_is_untrusted(qapp):
     coordinator = Mock()
     controller = HeistCurioController(
@@ -214,6 +320,34 @@ def test_controller_uses_ndlocr_only_after_windows_result_is_untrusted(qapp):
 
     assert resolved[0][0].item.name_en == "Chaos Orb"
     assert resolved[0][1] == placement
+    coordinator.finish.assert_called_once_with("heist_curio")
+
+
+def test_controller_confirms_real_trinket_mods_with_ndlocr(qapp):
+    coordinator = Mock()
+    ndl = _TrinketNdlOcr()
+    controller = HeistCurioController(
+        ocr_server=_TrinketWindowsOcr(),
+        ndl_ocr_server=ndl,
+        scan_coordinator=coordinator,
+    )
+    resolved = []
+    controller.resolved.connect(
+        lambda match, placement: resolved.append((match, placement))
+    )
+    controller._running = True
+    controller._generation = 1
+    placement = PlacementContext(QRect(0, 0, 1200, 700), QPoint(400, 200))
+
+    controller._process(b"image", placement, QRect(100, 100, 500, 200), 1)
+
+    match = resolved[0][0]
+    assert match.item.category == "trinket"
+    assert [(row.value, row.definition.stat_id) for row in match.trinket_mods] == [
+        (5, "explicit.stat_1323476506"),
+        (5, "explicit.stat_953018841"),
+        (9, "explicit.stat_3683643898"),
+    ]
     coordinator.finish.assert_called_once_with("heist_curio")
 
 
@@ -352,6 +486,43 @@ def test_heist_unique_opens_fixed_mod_candidates_blank_and_disabled(qapp):
         )
         window.parse_current_text()
         assert len(window._selected_stat_filters()) == 7
+        window.search_current_item.assert_called_once_with()
+    finally:
+        window.close()
+
+
+def test_heist_trinket_opens_detected_mods_with_values_and_disabled(qapp):
+    item = next(item for item in load_curio_items() if item.category == "trinket")
+    recognized = recognize_trinket_mods(_TRINKET_OCR_TEXT)
+    match = CurioMatch(
+        item=item,
+        score=1.0,
+        margin=1.0,
+        name_score=1.0,
+        base_score=1.0,
+        trinket_mods=recognized,
+    )
+    placement = PlacementContext(QRect(0, 0, 1200, 700), QPoint(400, 200))
+    window = PoetoreWindow(app_config={"poe_version": "poe1"})
+    window.search_current_item = Mock()
+    window._queue_poe_ninja_price = Mock()
+    try:
+        window.show_heist_curio_match(match, placement)
+        qapp.processEvents()
+
+        assert window._parsed_item.category == "heist_equipment"
+        assert window._trade_base_type == "Thief's Trinket"
+        filters = [
+            row
+            for row in window._selected_stat_filters()
+            if row.selection_reason == "盗賊のトリンケットOCR"
+        ]
+        assert [(row.min_value, row.enabled) for row in filters] == [
+            (5.0, False),
+            (5.0, False),
+            (9.0, False),
+        ]
+        assert all(row.max_value is None for row in filters)
         window.search_current_item.assert_called_once_with()
     finally:
         window.close()
