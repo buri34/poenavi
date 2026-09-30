@@ -44,6 +44,43 @@ def test_custom_audio_is_copied_to_user_data(monkeypatch, tmp_path):
     assert (user_data / stored_name).read_bytes() == source.read_bytes()
 
 
+@pytest.mark.parametrize(
+    ("previous_suffix", "new_suffix", "new_sound_id"),
+    ((".wav", ".mp3", "standard_5"), (".mp3", ".wav", "standard_1")),
+)
+def test_custom_audio_removes_previous_file_with_other_extension(
+    monkeypatch, tmp_path, previous_suffix, new_suffix, new_sound_id
+):
+    user_data = tmp_path / "user"
+    user_data.mkdir()
+    previous = user_data / f"poetore-hideout-notification{previous_suffix}"
+    previous.write_bytes(bundled_audio_path().read_bytes())
+    source = tmp_path / f"new{new_suffix}"
+    source.write_bytes(bundled_audio_path(new_sound_id).read_bytes())
+    monkeypatch.setattr(ConfigManager, "get_user_data_dir", lambda: user_data)
+
+    _display_name, stored_name = copy_custom_audio(source)
+
+    assert stored_name == f"poetore-hideout-notification{new_suffix}"
+    assert (user_data / stored_name).read_bytes() == source.read_bytes()
+    assert not previous.exists()
+
+
+def test_invalid_replacement_keeps_previous_custom_audio(monkeypatch, tmp_path):
+    user_data = tmp_path / "user"
+    user_data.mkdir()
+    previous = user_data / "poetore-hideout-notification.wav"
+    previous.write_bytes(bundled_audio_path().read_bytes())
+    source = tmp_path / "broken.mp3"
+    source.write_bytes(b"not an audio file")
+    monkeypatch.setattr(ConfigManager, "get_user_data_dir", lambda: user_data)
+
+    with pytest.raises(ValueError, match="通知音ファイルを読み込めませんでした"):
+        copy_custom_audio(source)
+
+    assert previous.is_file()
+
+
 def test_audio_decode_supports_japanese_directories_on_windows(tmp_path):
     source = tmp_path / "日本語の共有フォルダ" / "通知音声.wav"
     source.parent.mkdir()

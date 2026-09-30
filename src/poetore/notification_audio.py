@@ -101,6 +101,8 @@ def copy_custom_audio(source: str | Path) -> tuple[str, str]:
     temporary = destination.with_suffix(destination.suffix + ".tmp")
     shutil.copy2(source_path, temporary)
     temporary.replace(destination)
+    for obsolete_suffix in SUPPORTED_AUDIO_SUFFIXES - {suffix}:
+        destination.with_suffix(obsolete_suffix).unlink(missing_ok=True)
     return source_path.name, destination.name
 
 
