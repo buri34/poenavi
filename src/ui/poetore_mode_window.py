@@ -1373,11 +1373,14 @@ class PoetoreModeWindow(QMainWindow):
 
         hotkeys = self.config.get("hotkeys", {})
         hotkeys = hotkeys if isinstance(hotkeys, dict) else {}
+        pack_controller = self._ensure_ndlocr_pack_controller()
         dialog = HeistSettingsDialog(
             self,
             enabled=self._heist_curio_enabled(),
             hotkey=hotkeys.get("heist_curio_ocr", "alt+e"),
+            ocr_pack_controller=pack_controller,
         )
+        pack_controller.ensure_started()
         if not dialog.exec():
             return
         hotkey, enabled = dialog.settings()

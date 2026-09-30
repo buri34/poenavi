@@ -478,6 +478,8 @@ def test_heist_settings_save_enables_only_heist_reader_and_warms_ocr():
     window._heist_curio_enabled.return_value = False
     controller = MagicMock()
     window._ensure_heist_curio_controller.return_value = controller
+    pack_controller = MagicMock()
+    window._ensure_ndlocr_pack_controller.return_value = pack_controller
 
     with patch(
         "src.ui.heist_settings_dialog.HeistSettingsDialog"
@@ -492,6 +494,8 @@ def test_heist_settings_save_enables_only_heist_reader_and_warms_ocr():
 
     assert window.config["hotkeys"]["heist_curio_ocr"] == "ctrl+shift+h"
     assert window.config["poetore"]["heist_curio_ocr"] == {"enabled": True}
+    assert dialog_class.call_args.kwargs["ocr_pack_controller"] is pack_controller
+    pack_controller.ensure_started.assert_called_once_with()
     save_config.assert_called_once_with(window.config)
     window._restart_hotkeys.assert_called_once_with()
     controller.warm_up.assert_called_once_with()

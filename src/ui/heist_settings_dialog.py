@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 
 from src.ui.dialog_theme import POETORE_DIALOG_THEME, apply_dialog_theme
 from src.ui.expedition_settings_dialog import ClickableImageLabel
+from src.ui.high_accuracy_ocr_pack_group import HighAccuracyOcrPackGroup
 from src.ui.settings_dialog import AutoHideHotkeyWidget
 
 DEFAULT_EXAMPLE_IMAGE_PATH = (
@@ -42,14 +43,16 @@ class HeistSettingsDialog(QDialog):
         enabled: bool = False,
         hotkey: str = "alt+e",
         example_image_path=None,
+        ocr_pack_controller=None,
     ):
         super().__init__(parent)
         self._example_image_path = Path(
             example_image_path or DEFAULT_EXAMPLE_IMAGE_PATH
         )
+        self._ocr_pack_controller = ocr_pack_controller
         self.theme = POETORE_DIALOG_THEME
         self.setWindowTitle("ハイスト報酬OCR設定")
-        self.setMinimumSize(620, 590)
+        self.setMinimumSize(620, 700)
         apply_dialog_theme(self, self.theme)
 
         root = QVBoxLayout(self)
@@ -98,7 +101,13 @@ class HeistSettingsDialog(QDialog):
         basic.addLayout(form)
         content.addWidget(basic_group)
 
-        usage_group, usage = self._section_group("2. 読み取り方法", "readMethodGroup")
+        pack_group = HighAccuracyOcrPackGroup(self._ocr_pack_controller, self)
+        self.ocr_pack_status = pack_group.status_label
+        self.ocr_pack_progress = pack_group.progress_bar
+        self.ocr_pack_retry = pack_group.retry_button
+        content.addWidget(pack_group)
+
+        usage_group, usage = self._section_group("3. 読み取り方法", "readMethodGroup")
         instruction = QLabel(
             "ショートカットを押したら、展示パネルの報酬名とベースタイプが見える部分を"
             "左上から右下へドラッグしてください。\n"
