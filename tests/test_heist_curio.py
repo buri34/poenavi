@@ -1,12 +1,13 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from PySide6.QtCore import QPoint, QRect
-from PySide6.QtGui import QColor, QImage, QPainter, QPen
+from PySide6.QtCore import QPoint, QPointF, QRect, Qt
+from PySide6.QtGui import QColor, QImage, QMouseEvent, QPainter, QPen
 from PySide6.QtWidgets import QApplication, QDialog
 
 from src.poetore.heist_curio import (
     CurioHeaderBand,
+    CurioRegionSelector,
     HeistCurioController,
     curio_item_text,
     detect_header_bands,
@@ -214,6 +215,41 @@ def test_controller_uses_ndlocr_only_after_windows_result_is_untrusted(qapp):
     assert resolved[0][0].item.name_en == "Chaos Orb"
     assert resolved[0][1] == placement
     coordinator.finish.assert_called_once_with("heist_curio")
+
+
+def _left_mouse_release(position: QPoint) -> QMouseEvent:
+    return QMouseEvent(
+        QMouseEvent.Type.MouseButtonRelease,
+        QPointF(position),
+        QPointF(position),
+        QPointF(position),
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.NoButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+
+
+def test_region_selector_accepts_valid_selection_on_mouse_release(qapp):
+    selector = CurioRegionSelector(QRect(100, 200, 1000, 800))
+    selector._origin = QPoint(10, 10)
+
+    selector.mouseReleaseEvent(_left_mouse_release(QPoint(210, 110)))
+
+    assert selector.result() == QDialog.DialogCode.Accepted
+    assert selector.selected_rect == QRect(110, 210, 201, 101)
+    selector.close()
+
+
+def test_region_selector_keeps_tiny_selection_open_for_retry(qapp):
+    selector = CurioRegionSelector(QRect(100, 200, 1000, 800))
+    selector._origin = QPoint(10, 10)
+
+    selector.mouseReleaseEvent(_left_mouse_release(QPoint(30, 20)))
+
+    assert selector.result() != QDialog.DialogCode.Accepted
+    assert selector.selected_rect is None
+    assert selector._origin is None
+    selector.close()
 
 
 def test_controller_scan_always_opens_manual_region_selector(qapp):

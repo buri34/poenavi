@@ -102,7 +102,7 @@ class HeistSettingsDialog(QDialog):
         instruction = QLabel(
             "ショートカットを押したら、展示パネルの報酬名とベースタイプが見える部分を"
             "左上から右下へドラッグしてください。\n"
-            "Enterで確定、Escでキャンセルします。"
+            "ドラッグを終えると自動で確定します。Escでキャンセルできます。"
         )
         instruction.setObjectName("heistSelectionInstruction")
         instruction.setProperty("uiRole", "muted")

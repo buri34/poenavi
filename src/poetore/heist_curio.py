@@ -563,6 +563,8 @@ class CurioRegionSelector(QDialog):
         if event.button() == Qt.MouseButton.LeftButton:
             self.mouseMoveEvent(event)
             self._origin = None
+            if self.selected_rect is not None:
+                self.accept()
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
@@ -594,7 +596,7 @@ class CurioRegionSelector(QDialog):
         painter.drawText(
             self.rect().adjusted(20, 20, -20, -20),
             Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter,
-            "報酬名とベースタイプを囲んでください\nEnter: 確定 / Esc: キャンセル",
+            "報酬名とベースタイプを囲んでください\nドラッグ終了: 確定 / Esc: キャンセル",
         )
 
 

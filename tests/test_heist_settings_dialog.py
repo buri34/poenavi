@@ -35,6 +35,12 @@ def test_heist_settings_shows_manual_selection_example():
         assert "報酬名とベースタイプ" in dialog.findChild(
             QLabel, "heistSelectionInstruction"
         ).text()
+        assert "自動で確定" in dialog.findChild(
+            QLabel, "heistSelectionInstruction"
+        ).text()
+        assert "Enter" not in dialog.findChild(
+            QLabel, "heistSelectionInstruction"
+        ).text()
         assert dialog.settings() == ("ctrl+h", True)
     finally:
         dialog.close()
