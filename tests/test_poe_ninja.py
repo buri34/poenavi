@@ -652,6 +652,79 @@ def test_poe2_unique_overview_supports_exalted_primary_without_rates():
     assert "/poe2/economy/forbiddenrites/" in price.url
 
 
+@pytest.mark.parametrize(("exalted_value", "expected"), (
+    (187.0, ("187", "exalted")),
+    (188.0, ("0.94", "divine")),
+))
+def test_poe2_unique_uses_exalted_value_and_switches_at_94_percent_divine(
+    exalted_value, expected,
+):
+    payload = _poe2_unique_payload()
+    payload["core"] = {
+        "items": [{"id": "exalted", "name": "Exalted Orb"}],
+        "rates": {},
+        "primary": "exalted",
+        "secondary": "divine",
+    }
+    payload["lines"][0]["primaryValue"] = exalted_value
+    conversion_core = {
+        "primary": "divine",
+        "rates": {"exalted": 200.0},
+    }
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
+
+    price = match_poe2_unique_price(
+        payload,
+        item,
+        "Forbidden Rites",
+        trade_name="Mageblood",
+        trade_base_type="Utility Belt",
+        conversion_core=conversion_core,
+    )
+
+    assert price is not None
+    assert price.display_price_parts() == expected
+
+
+def test_poe2_unique_converts_divine_primary_to_exalted_before_display_choice():
+    payload = _poe2_unique_payload()
+    payload["lines"][0]["primaryValue"] = 0.5
+    conversion_core = {
+        "primary": "divine",
+        "rates": {"exalted": 200.0},
+    }
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
+
+    price = match_poe2_unique_price(
+        payload,
+        item,
+        "Forbidden Rites",
+        trade_name="Mageblood",
+        trade_base_type="Utility Belt",
+        conversion_core=conversion_core,
+    )
+
+    assert price is not None
+    assert price.display_price_parts() == ("100", "exalted")
+
+
+def test_poe2_unique_keeps_original_quote_when_exalted_rate_is_unavailable():
+    payload = _poe2_unique_payload()
+    payload["lines"][0]["primaryValue"] = 0.5
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
+
+    price = match_poe2_unique_price(
+        payload,
+        item,
+        "Forbidden Rites",
+        trade_name="Mageblood",
+        trade_base_type="Utility Belt",
+    )
+
+    assert price is not None
+    assert price.display_price_parts() == ("0.5", "divine")
+
+
 def test_poe2_unique_hc_overview_uses_poe_ninja_suffix_slug():
     item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
     price = match_poe2_unique_price(
@@ -667,16 +740,62 @@ def test_poe2_unique_hc_overview_uses_poe_ninja_suffix_slug():
 
 def test_poe2_unique_service_uses_plural_overview_type_and_cache():
     calls = []
+    exchange_calls = []
 
     def poe2_fetcher(league, type_name):
         calls.append((league, type_name))
         return _poe2_unique_payload()
 
-    service = PoeNinjaPriceService(poe2_fetcher=poe2_fetcher)
+    def exchange_fetcher(league, type_name):
+        exchange_calls.append((league, type_name))
+        return _poe2_exchange_payload()
+
+    service = PoeNinjaPriceService(
+        poe2_fetcher=poe2_fetcher,
+        poe2_exchange_fetcher=exchange_fetcher,
+    )
     item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
-    assert service.lookup_poe2_unique(item, "Runes of Aldur") is not None
-    assert service.lookup_poe2_unique(item, "Runes of Aldur") is not None
+    first = service.lookup_poe2_unique(item, "Runes of Aldur")
+    second = service.lookup_poe2_unique(item, "Runes of Aldur")
+    assert first is not None
+    assert first.display_price_parts() == ("350", "divine")
+    assert second is not None
     assert calls == [("Runes of Aldur", "UniqueAccessories")]
+    assert exchange_calls == [("Runes of Aldur", "Currency")]
+
+
+def test_poe2_unique_service_displays_sub_threshold_divine_price_in_exalted():
+    payload = _poe2_unique_payload()
+    payload["lines"][0]["primaryValue"] = 0.5
+    service = PoeNinjaPriceService(
+        poe2_fetcher=lambda _league, _type: payload,
+        poe2_exchange_fetcher=lambda _league, _type: _poe2_exchange_payload(),
+    )
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
+
+    price = service.lookup_poe2_unique(item, "Runes of Aldur")
+
+    assert price is not None
+    assert price.display_price_parts() == ("182", "exalted")
+
+
+def test_poe2_unique_service_keeps_original_quote_when_currency_fetch_fails():
+    payload = _poe2_unique_payload()
+    payload["lines"][0]["primaryValue"] = 0.5
+
+    def fail_currency_fetch(_league, _type):
+        raise OSError("offline")
+
+    service = PoeNinjaPriceService(
+        poe2_fetcher=lambda _league, _type: payload,
+        poe2_exchange_fetcher=fail_currency_fetch,
+    )
+    item = ParsedItem("Belts", "Unique", "Mageblood", "Utility Belt", "belt")
+
+    price = service.lookup_poe2_unique(item, "Runes of Aldur")
+
+    assert price is not None
+    assert price.display_price_parts() == ("0.5", "divine")
 
 
 def _poe2_exchange_payload():
@@ -947,7 +1066,11 @@ def test_poe2_related_identities_use_pinned_categories_and_share_cache():
     )
     prices = service.lookup_poe2_identities(identities, "Runes of Aldur")
     assert [price is not None for price in prices] == [True, True, True, False]
-    assert exchange_calls == [("Runes of Aldur", "Fragments")]
+    assert prices[2].display_price_parts() == ("350", "divine")
+    assert exchange_calls == [
+        ("Runes of Aldur", "Fragments"),
+        ("Runes of Aldur", "Currency"),
+    ]
     assert unique_calls == [("Runes of Aldur", "UniqueJewels")]
 
 

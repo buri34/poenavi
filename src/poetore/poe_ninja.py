@@ -242,6 +242,22 @@ class PoeNinjaPriceService:
             self._poe2_cache.clear()
             self._poe2_exchange_cache.clear()
 
+    def _poe2_unique_conversion_core(self, payload: dict, league: str) -> dict:
+        """Return rates that can normalize a PoE2 unique price to Exalted."""
+        conversion_core = payload.get("core") or {}
+        primary_currency = str(conversion_core.get("primary", "")).casefold()
+        if (
+            _poe2_core_rate(conversion_core, primary_currency, "exalted") is not None
+            and _poe2_core_rate(conversion_core, "divine", "exalted") is not None
+        ):
+            return conversion_core
+        try:
+            currency_payload = self._poe2_exchange_payload(league, "Currency")
+            return currency_payload.get("core") or conversion_core
+        except Exception:
+            # 参考価格そのものは表示できるため、換算失敗時は元通貨を維持する。
+            return conversion_core
+
     def lookup_poe2_unique(
         self,
         item: ParsedItem,
@@ -256,6 +272,7 @@ class PoeNinjaPriceService:
         if type_name is None or item.rarity.casefold() not in {"unique", "ユニーク"}:
             return None
         payload = self._poe2_payload(league, type_name)
+        conversion_core = self._poe2_unique_conversion_core(payload, league)
         return match_poe2_unique_price(
             payload,
             item,
@@ -263,6 +280,7 @@ class PoeNinjaPriceService:
             trade_name=trade_name,
             trade_base_type=trade_base_type,
             source_type=type_name,
+            conversion_core=conversion_core,
         )
 
     def lookup_poe2_exchange(
@@ -306,8 +324,16 @@ class PoeNinjaPriceService:
             try:
                 if namespace.upper() == "UNIQUE":
                     payload = self._poe2_payload(league, type_name)
+                    conversion_core = self._poe2_unique_conversion_core(
+                        payload, league,
+                    )
                     results.append(match_poe2_unique_identity(
-                        payload, name, variant, league, type_name,
+                        payload,
+                        name,
+                        variant,
+                        league,
+                        type_name,
+                        conversion_core=conversion_core,
                     ))
                 else:
                     payload = self._poe2_exchange_payload(league, type_name)
@@ -976,6 +1002,7 @@ def match_poe2_unique_price(
     trade_base_type: str | None = None,
     source_type: str = "UniqueAccessories",
     include_corrupted: bool = False,
+    conversion_core: dict | None = None,
 ) -> PoeNinjaPrice | None:
     name = str(trade_name or item.name or "").strip()
     base_type = str(trade_base_type or item.base_type or "").strip()
@@ -995,6 +1022,21 @@ def match_poe2_unique_price(
         return None
     primary_chaos_rate = _poe2_core_rate(core, primary_currency, "chaos")
     divine_in_chaos = _poe2_core_rate(core, "divine", "chaos")
+    rates = conversion_core or core
+    primary_exalted_rate = _poe2_core_rate(
+        rates, primary_currency, "exalted"
+    )
+    divine_exalted_rate = _poe2_core_rate(rates, "divine", "exalted")
+    quote_amount = primary
+    quote_currency = primary_currency
+    if primary_exalted_rate is not None and divine_exalted_rate is not None:
+        exalted_amount = primary * primary_exalted_rate
+        if exalted_amount >= divine_exalted_rate * 0.94:
+            quote_amount = exalted_amount / divine_exalted_rate
+            quote_currency = "divine"
+        else:
+            quote_amount = exalted_amount
+            quote_currency = "exalted"
     sparkline = line.get("sparkLine") or {}
     details_id = str(line.get("detailsId", ""))
     return PoeNinjaPrice(
@@ -1008,8 +1050,8 @@ def match_poe2_unique_price(
         float(sparkline["totalChange"])
         if sparkline.get("totalChange") is not None else None,
         source_type,
-        primary,
-        primary_currency,
+        quote_amount,
+        quote_currency,
     )
 
 
@@ -1023,12 +1065,19 @@ def match_poe2_exchange_identity(
 
 
 def match_poe2_unique_identity(
-    payload: dict, name: str, base_type: str | None, league: str, source_type: str,
+    payload: dict,
+    name: str,
+    base_type: str | None,
+    league: str,
+    source_type: str,
+    *,
+    conversion_core: dict | None = None,
 ) -> PoeNinjaPrice | None:
     item = ParsedItem("", "Unique", name, str(base_type or ""), "")
     return match_poe2_unique_price(
         payload, item, league, trade_name=name, trade_base_type=base_type,
         source_type=source_type, include_corrupted=True,
+        conversion_core=conversion_core,
     )
 
 
