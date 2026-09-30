@@ -40,7 +40,7 @@ class HeistSettingsDialog(QDialog):
         parent=None,
         *,
         enabled: bool = False,
-        hotkey: str = "alt+shift+h",
+        hotkey: str = "alt+e",
         example_image_path=None,
     ):
         super().__init__(parent)

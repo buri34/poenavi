@@ -201,7 +201,7 @@ class PoetoreSettingsDialog(QDialog):
         )
         self.map_check_hotkey = HotkeyButton(hotkeys.get("map_check", "alt+f"))
         self._heist_curio_hotkey = str(
-            hotkeys.get("heist_curio_ocr", "alt+shift+h")
+            hotkeys.get("heist_curio_ocr", "alt+e")
         )
         self.cheat_hotkey = HotkeyButton(
             hotkeys.get("cheat_sheets_toggle", "shift+space")

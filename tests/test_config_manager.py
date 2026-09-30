@@ -217,7 +217,7 @@ class ConfigManagerTest(unittest.TestCase):
         assert migrated["schemaVersion"] == ConfigManager.CURRENT_SCHEMA_VERSION
         assert migrated["hotkeys"] == {
             "screen_reading_ocr": "ctrl+shift+r",
-            "heist_curio_ocr": "alt+shift+h",
+            "heist_curio_ocr": "alt+e",
         }
 
     def test_v432_config_gets_separate_default_hotkeys_without_reverse_migration(self):

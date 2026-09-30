@@ -396,7 +396,7 @@ class PoetoreModeWindow(QMainWindow):
         "poetore_auto_hide": "ctrl+d",
         "expedition_reward_ocr": "alt+e",
         "desecration_tier_ocr": "alt+r",
-        "heist_curio_ocr": "alt+shift+h",
+        "heist_curio_ocr": "alt+e",
         "map_check": "alt+f",
         "cheat_sheets_toggle": "shift+space",
     }
@@ -1376,7 +1376,7 @@ class PoetoreModeWindow(QMainWindow):
         dialog = HeistSettingsDialog(
             self,
             enabled=self._heist_curio_enabled(),
-            hotkey=hotkeys.get("heist_curio_ocr", "alt+shift+h"),
+            hotkey=hotkeys.get("heist_curio_ocr", "alt+e"),
         )
         if not dialog.exec():
             return

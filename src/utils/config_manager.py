@@ -561,7 +561,7 @@ class ConfigManager:
             if manual_hotkey:
                 hotkeys["heist_curio_ocr"] = manual_hotkey
             elif not current_hotkey or current_hotkey.lower() == "alt+h":
-                hotkeys["heist_curio_ocr"] = "alt+shift+h"
+                hotkeys["heist_curio_ocr"] = "alt+e"
             migrated["hotkeys"] = hotkeys
 
         # Missing keys mean first use and receive the initial pair. Explicit

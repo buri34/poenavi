@@ -16,8 +16,8 @@ def test_heist_settings_reuses_poetore_dialog_structure_and_defaults():
         assert dialog.windowTitle() == "ハイスト報酬OCR設定"
         assert dialog.theme == POETORE_DIALOG_THEME
         assert not dialog.enabled_checkbox.isChecked()
-        assert dialog.hotkey_widget.key_text == "alt+shift+h"
-        assert dialog.settings() == ("alt+shift+h", False)
+        assert dialog.hotkey_widget.key_text == "alt+e"
+        assert dialog.settings() == ("alt+e", False)
         assert dialog.findChild(QGroupBox, "basicSettingsGroup") is not None
         assert dialog.findChild(QGroupBox, "readMethodGroup") is not None
         assert dialog.cancel_button.property("buttonRole") == "secondary"
