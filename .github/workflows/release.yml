@@ -156,12 +156,16 @@ jobs:
             throw "Release notes file was not found: $notesFile"
           }
           $releaseView = @(gh release view $env:GITHUB_REF_NAME 2>&1)
+          $prereleaseArgs = @()
+          if ($env:GITHUB_REF_NAME -eq "v4.5.0") {
+            $prereleaseArgs = @("--prerelease")
+          }
           if ($LASTEXITCODE -eq 0) {
             gh release upload $env:GITHUB_REF_NAME PoENavi.zip PoENavi.zip.sha256 --clobber
-            gh release edit $env:GITHUB_REF_NAME --notes-file $notesFile --title "PoENavi $env:GITHUB_REF_NAME"
+            gh release edit $env:GITHUB_REF_NAME --notes-file $notesFile --title "PoENavi $env:GITHUB_REF_NAME" @prereleaseArgs
           }
           elseif (($releaseView -join "`n") -match "release not found") {
-            gh release create $env:GITHUB_REF_NAME PoENavi.zip PoENavi.zip.sha256 --verify-tag --notes-file $notesFile --title "PoENavi $env:GITHUB_REF_NAME"
+            gh release create $env:GITHUB_REF_NAME PoENavi.zip PoENavi.zip.sha256 --verify-tag --notes-file $notesFile --title "PoENavi $env:GITHUB_REF_NAME" @prereleaseArgs
           }
           else {
             throw "Unable to inspect existing GitHub Release: $($releaseView -join ' ')"
