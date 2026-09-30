@@ -6,39 +6,52 @@ import shutil
 import sys
 import threading
 import time
-from importlib import import_module
 from array import array
+from importlib import import_module
 from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal
 
+from src.poetore.hideout_notification import (
+    BUNDLED_SOUND_OPTIONS,
+    DEFAULT_BUNDLED_SOUND_ID,
+)
 from src.utils.config_manager import ConfigManager
 
-BUNDLED_AUDIO_NAME = "hideout_focus_notification.wav"
 CUSTOM_AUDIO_STEM = "poetore-hideout-notification"
 SUPPORTED_AUDIO_SUFFIXES = {".wav", ".mp3"}
+_BUNDLED_SOUND_FILES = {
+    sound_id: filename for sound_id, _label, filename in BUNDLED_SOUND_OPTIONS
+}
 
 
 def verify_audio_runtime():
-    """Import the packaged native backend and decode the bundled voice."""
+    """Import the packaged backend and decode every bundled sound."""
     import_module("_cffi_backend")
-    decoded = _decode_audio_file(bundled_audio_path())
-    if decoded.num_frames <= 0 or decoded.duration <= 0:
-        raise RuntimeError("標準通知音声をデコードできませんでした")
-    return decoded
+    first_decoded = None
+    for sound_id, label, _filename in BUNDLED_SOUND_OPTIONS:
+        decoded = _decode_audio_file(bundled_audio_path(sound_id))
+        if decoded.num_frames <= 0 or decoded.duration <= 0:
+            raise RuntimeError(f"{label}をデコードできませんでした")
+        if first_decoded is None:
+            first_decoded = decoded
+    return first_decoded
 
 
-def bundled_audio_path() -> Path:
+def bundled_audio_path(sound_id: str = DEFAULT_BUNDLED_SOUND_ID) -> Path:
+    filename = _BUNDLED_SOUND_FILES.get(
+        str(sound_id), _BUNDLED_SOUND_FILES[DEFAULT_BUNDLED_SOUND_ID]
+    )
     roots = []
     if getattr(sys, "frozen", False):
         roots.append(Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent)))
         roots.append(Path(sys.executable).parent)
     roots.append(Path(__file__).resolve().parents[2])
     for root in roots:
-        candidate = root / "assets" / "audio" / BUNDLED_AUDIO_NAME
+        candidate = root / "assets" / "audio" / filename
         if candidate.is_file():
             return candidate
-    return roots[0] / "assets" / "audio" / BUNDLED_AUDIO_NAME
+    return roots[0] / "assets" / "audio" / filename
 
 
 def custom_audio_path(filename: str) -> Path:
@@ -74,14 +87,14 @@ def copy_custom_audio(source: str | Path) -> tuple[str, str]:
         import miniaudio
     except ImportError as error:
         raise ValueError(
-            "音声再生機能を読み込めませんでした。アプリを再起動してください。"
+            "通知音の再生機能を読み込めませんでした。アプリを再起動してください。"
         ) from error
 
     try:
         _decode_audio_file(source_path)
     except miniaudio.MiniaudioError as error:
         raise ValueError(
-            "音声ファイルを読み込めませんでした。別のWAVまたはMP3を選択してください。"
+            "通知音ファイルを読み込めませんでした。別のWAVまたはMP3を選択してください。"
         ) from error
     destination = ConfigManager.get_user_data_dir() / f"{CUSTOM_AUDIO_STEM}{suffix}"
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -156,11 +169,11 @@ class NotificationAudioPlayer(QObject):
                 if primary == fallback:
                     raise
                 self.fallback_used.emit(
-                    "設定した音声を再生できなかったため、標準音声を使用しました"
+                    "設定した音を再生できなかったため、標準音1を使用しました"
                 )
                 self._play_file(fallback, volume)
         except Exception as error:  # keep audio/backend failures outside the UI thread
-            self.failed.emit(f"通知音声を再生できませんでした: {error}")
+            self.failed.emit(f"通知音を再生できませんでした: {error}")
         finally:
             with self._lock:
                 self._playing = False

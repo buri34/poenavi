@@ -144,6 +144,32 @@ def test_notification_is_suppressed_when_original_process_has_ended(qtbot, tmp_p
     assert not controller.state.zone_known
 
 
+def test_selected_bundled_sound_is_used_for_notification(qtbot, tmp_path):
+    log = tmp_path / "Client.txt"
+    log.write_text(
+        "2026/09/28 16:00:01 [SCENE] Set Source [Coastal Hideout]\n",
+        encoding="utf-8",
+    )
+    config = _config(log)
+    config["poetore"]["hideout_notification"]["bundled_sound_id"] = "standard_4"
+    now = [0.0]
+    audio = FakeAudio()
+    controller = HideoutNotificationController(
+        config, "poe1", lambda value: None,
+        process_finder=lambda path: FakeProcess(),
+        watcher_factory=FakeWatcher,
+        audio_player=audio,
+        monotonic=lambda: now[0],
+    )
+
+    assert controller.enable()
+    now[0] = 10.0
+    controller._tick()
+
+    assert audio.calls[0][0].name == "hideout_notification_4.wav"
+    assert audio.calls[0][1].name == "hideout_focus_notification.wav"
+
+
 def test_invalid_saved_log_path_is_replaced_by_auto_detected_path(
     qtbot, monkeypatch, tmp_path
 ):

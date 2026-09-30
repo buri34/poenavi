@@ -203,7 +203,11 @@ try {
         "TriskelionShattered.png",
         "TriskelionReforged.png",
         "MessageInABottle.png",
-        "hideout_focus_notification.wav"
+        "hideout_focus_notification.wav",
+        "hideout_notification_2.wav",
+        "hideout_notification_3.wav",
+        "hideout_notification_4.wav",
+        "hideout_notification_5.mp3"
     )) {
         if (-not ($entryNames | Where-Object { $_ -match "(^|/)$([regex]::Escape($requiredName))$" })) {
             throw "Release audit failed: missing $requiredName"

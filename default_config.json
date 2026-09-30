@@ -80,6 +80,7 @@
             "duration_seconds": 60,
             "repeat": false,
             "audio_source": "bundled",
+            "bundled_sound_id": "standard_1",
             "custom_audio_display_name": "",
             "custom_audio_file": "",
             "volume": 50

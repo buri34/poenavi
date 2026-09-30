@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from src.poetore.hideout_notification import (
+    BUNDLED_SOUND_OPTIONS,
     HideoutTimerState,
     is_hideout_zone,
     latest_zone_since_process_start,
@@ -15,6 +16,7 @@ def test_hideout_settings_are_complete_and_bounded():
         "duration_seconds": 60,
         "repeat": False,
         "audio_source": "bundled",
+        "bundled_sound_id": "standard_1",
         "custom_audio_display_name": "",
         "custom_audio_file": "",
         "volume": 50,
@@ -23,6 +25,7 @@ def test_hideout_settings_are_complete_and_bounded():
         "duration_seconds": 1,
         "repeat": 1,
         "audio_source": "custom",
+        "bundled_sound_id": "standard_1",
         "custom_audio_display_name": "notice.mp3",
         "custom_audio_file": "../custom.mp3",
         "volume": 400,
@@ -30,10 +33,25 @@ def test_hideout_settings_are_complete_and_bounded():
         "duration_seconds": 10,
         "repeat": True,
         "audio_source": "custom",
+        "bundled_sound_id": "standard_1",
         "custom_audio_display_name": "notice.mp3",
         "custom_audio_file": "custom.mp3",
         "volume": 100,
     }
+
+    assert normalize_hideout_notification_settings({
+        "bundled_sound_id": "standard_5",
+    })["bundled_sound_id"] == "standard_5"
+    assert normalize_hideout_notification_settings({
+        "bundled_sound_id": "unknown",
+    })["bundled_sound_id"] == "standard_1"
+    assert [sound_id for sound_id, _label, _filename in BUNDLED_SOUND_OPTIONS] == [
+        "standard_1",
+        "standard_2",
+        "standard_3",
+        "standard_4",
+        "standard_5",
+    ]
 
 
 def test_hideout_zone_supports_japanese_and_case_insensitive_english():

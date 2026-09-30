@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from src.poetore.hideout_notification import BUNDLED_SOUND_OPTIONS
 from src.poetore.notification_audio import (
     NotificationAudioPlayer,
     _decode_audio_file,
@@ -64,7 +65,7 @@ def test_custom_audio_rejects_unsupported_extension(tmp_path):
 def test_custom_audio_rejects_broken_supported_file(tmp_path):
     source = tmp_path / "broken.mp3"
     source.write_bytes(b"not an audio file")
-    with pytest.raises(ValueError, match="音声ファイルを読み込めませんでした"):
+    with pytest.raises(ValueError, match="通知音ファイルを読み込めませんでした"):
         copy_custom_audio(source)
 
 
@@ -73,15 +74,27 @@ def test_custom_audio_reports_missing_playback_backend(monkeypatch, tmp_path):
     source.write_bytes(bundled_audio_path().read_bytes())
     monkeypatch.setitem(sys.modules, "miniaudio", None)
 
-    with pytest.raises(ValueError, match="音声再生機能を読み込めませんでした"):
+    with pytest.raises(ValueError, match="通知音の再生機能を読み込めませんでした"):
         copy_custom_audio(source)
 
 
-def test_bundled_zundamon_audio_is_the_verified_source_asset():
-    path = bundled_audio_path()
-    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
-        "07214ce09a4529be899f46ba2483e8d34c6ae22179c510f0c39b09f33d2a1e3e"
-    )
+@pytest.mark.parametrize(("sound_id", "expected_hash"), (
+    ("standard_1", "07214ce09a4529be899f46ba2483e8d34c6ae22179c510f0c39b09f33d2a1e3e"),
+    ("standard_2", "d77a67fc131024701a6ee2afb433758c35ad067e1d225122b5ed9dd25d87d89c"),
+    ("standard_3", "bb1cf1a115834bebfd0c8f91866069a26771548ec0bc6107e817331e5dfd638f"),
+    ("standard_4", "a8038f47c00a49fb562845d005ab6b402250a25eb2e2bb03e4b07f00f50e2f9f"),
+    ("standard_5", "d5044f773f2a0a5b02c001b6e1e648a4872b95583837cfc81899c93ec9bfca82"),
+))
+def test_bundled_sounds_are_verified_and_decodable(sound_id, expected_hash):
+    path = bundled_audio_path(sound_id)
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == expected_hash
+    decoded = _decode_audio_file(path)
+    assert decoded.num_frames > 0
+    assert decoded.duration > 0.5
+
+
+def test_bundled_standard_1_keeps_original_voice_format():
+    path = bundled_audio_path("standard_1")
     with wave.open(str(path), "rb") as audio:
         assert audio.getnchannels() == 1
         assert audio.getsampwidth() == 2
@@ -108,6 +121,8 @@ def test_windows_release_collects_audio_backend_and_audits_bundled_voice():
     )
     assert not re.search(pattern, "PoENavi/_internal/_cffi_backend.py")
     assert '"hideout_focus_notification.wav"' in script
+    for _sound_id, _label, filename in BUNDLED_SOUND_OPTIONS:
+        assert f'"{filename}"' in script
     assert '"--audio-smoke-test"' in script
     assert "POENAVI_AUDIO_SMOKE_RESULT" in script
 
@@ -135,6 +150,6 @@ def test_custom_playback_failure_falls_back_without_rewriting_settings(qtbot, tm
     assert player._play_file.call_args_list[0].args == (primary, 50)
     assert player._play_file.call_args_list[1].args == (fallback, 50)
     assert fallback_messages == [
-        "設定した音声を再生できなかったため、標準音声を使用しました"
+        "設定した音を再生できなかったため、標準音1を使用しました"
     ]
     assert failures == []

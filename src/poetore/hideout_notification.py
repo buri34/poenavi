@@ -7,10 +7,21 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+BUNDLED_SOUND_OPTIONS = (
+    ("standard_1", "標準音1", "hideout_focus_notification.wav"),
+    ("standard_2", "標準音2", "hideout_notification_2.wav"),
+    ("standard_3", "標準音3", "hideout_notification_3.wav"),
+    ("standard_4", "標準音4", "hideout_notification_4.wav"),
+    ("standard_5", "標準音5", "hideout_notification_5.mp3"),
+)
+DEFAULT_BUNDLED_SOUND_ID = BUNDLED_SOUND_OPTIONS[0][0]
+_BUNDLED_SOUND_IDS = frozenset(option[0] for option in BUNDLED_SOUND_OPTIONS)
+
 DEFAULT_HIDEOUT_NOTIFICATION_SETTINGS = {
     "duration_seconds": 60,
     "repeat": False,
     "audio_source": "bundled",
+    "bundled_sound_id": DEFAULT_BUNDLED_SOUND_ID,
     "custom_audio_display_name": "",
     "custom_audio_file": "",
     "volume": 50,
@@ -44,6 +55,12 @@ def normalize_hideout_notification_settings(value) -> dict:
     normalized["repeat"] = bool(source.get("repeat", False))
     normalized["audio_source"] = (
         "custom" if source.get("audio_source") == "custom" else "bundled"
+    )
+    bundled_sound_id = str(source.get("bundled_sound_id", "") or "")
+    normalized["bundled_sound_id"] = (
+        bundled_sound_id
+        if bundled_sound_id in _BUNDLED_SOUND_IDS
+        else DEFAULT_BUNDLED_SOUND_ID
     )
     normalized["custom_audio_display_name"] = str(
         source.get("custom_audio_display_name", "") or ""

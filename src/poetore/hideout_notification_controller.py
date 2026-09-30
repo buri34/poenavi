@@ -198,7 +198,7 @@ class HideoutNotificationController(QObject):
                     self._process = None
                 self.state.reset_to_unknown()
             else:
-                primary = bundled_audio_path()
+                primary = bundled_audio_path(self.settings["bundled_sound_id"])
                 if self.settings["audio_source"] == "custom":
                     primary = custom_audio_path(self.settings["custom_audio_file"])
                 if self._audio.play(

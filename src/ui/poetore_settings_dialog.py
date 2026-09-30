@@ -30,6 +30,8 @@ from PySide6.QtWidgets import (
 
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 from src.poetore.hideout_notification import (
+    BUNDLED_SOUND_OPTIONS,
+    DEFAULT_BUNDLED_SOUND_ID,
     MAX_DURATION_SECONDS,
     MIN_DURATION_SECONDS,
     normalize_hideout_notification_settings,
@@ -303,25 +305,27 @@ class PoetoreSettingsDialog(QDialog):
         self.hideout_repeat_cb.setChecked(hideout_settings["repeat"])
         hideout_form.addRow("", self.hideout_repeat_cb)
         self._hideout_audio_source = hideout_settings["audio_source"]
+        self._hideout_bundled_sound_id = hideout_settings["bundled_sound_id"]
         self._hideout_audio_file = hideout_settings["custom_audio_file"]
         self._hideout_audio_display_name = hideout_settings[
             "custom_audio_display_name"
         ]
-        self.hideout_audio_name = QLabel()
-        self._refresh_hideout_audio_name()
-        audio_row = QHBoxLayout()
-        audio_row.addWidget(self.hideout_audio_name, 1)
+        self.hideout_sound_combo = QComboBox()
+        self._refresh_hideout_sound_combo()
+        self.hideout_sound_combo.currentIndexChanged.connect(
+            self._on_hideout_sound_changed
+        )
+        hideout_form.addRow("通知音:", self.hideout_sound_combo)
+        custom_sound_row = QHBoxLayout()
+        self.hideout_custom_sound_name = QLabel()
+        self._refresh_hideout_custom_sound_name()
+        custom_sound_row.addWidget(self.hideout_custom_sound_name, 1)
         self.hideout_audio_select_button = QPushButton("選択")
         self.hideout_audio_select_button.clicked.connect(
             self._select_hideout_audio
         )
-        audio_row.addWidget(self.hideout_audio_select_button)
-        self.hideout_audio_reset_button = QPushButton("標準に戻す")
-        self.hideout_audio_reset_button.clicked.connect(
-            self._reset_hideout_audio
-        )
-        audio_row.addWidget(self.hideout_audio_reset_button)
-        hideout_form.addRow("通知音声:", audio_row)
+        custom_sound_row.addWidget(self.hideout_audio_select_button)
+        hideout_form.addRow("カスタム音:", custom_sound_row)
         volume_row = QHBoxLayout()
         self.hideout_volume_slider = QSlider(Qt.Horizontal)
         self.hideout_volume_slider.setRange(0, 100)
@@ -353,9 +357,10 @@ class PoetoreSettingsDialog(QDialog):
         self.hideout_preview_button.clicked.connect(self._preview_hideout_audio)
         hideout_layout.addWidget(self.hideout_preview_button)
         self.hideout_note = QLabel(
-            "集中モード中、隠れ家に設定時間滞在すると音声でお知らせします。\n"
-            "音声ファイルは、選択ボタンから任意のwavまたはmp3ファイルに変更可能です。\n"
-            "音量50が音声本来の大きさで、50より上は増幅します。"
+            "集中モード中、隠れ家に設定時間滞在すると通知音でお知らせします。\n"
+            "通知音は、同梱音から選択できます。\n"
+            "選択ボタンから任意のWAVまたはMP3ファイルにも変更可能です。\n"
+            "音量50が音本来の大きさで、50より上は増幅します。"
         )
         self.hideout_note.setProperty("uiRole", "muted")
         self.hideout_note.setWordWrap(True)
@@ -750,6 +755,7 @@ class PoetoreSettingsDialog(QDialog):
             ),
             "repeat": self.hideout_repeat_cb.isChecked(),
             "audio_source": self._hideout_audio_source,
+            "bundled_sound_id": self._hideout_bundled_sound_id,
             "custom_audio_display_name": self._hideout_audio_display_name,
             "custom_audio_file": self._hideout_audio_file,
             "volume": self.hideout_volume_slider.value(),
@@ -864,18 +870,43 @@ class PoetoreSettingsDialog(QDialog):
             f"{value}（標準）" if value == 50 else str(value)
         )
 
-    def _refresh_hideout_audio_name(self):
-        name = (
-            self._hideout_audio_display_name
+    def _refresh_hideout_sound_combo(self):
+        self.hideout_sound_combo.blockSignals(True)
+        self.hideout_sound_combo.clear()
+        for sound_id, label, _filename in BUNDLED_SOUND_OPTIONS:
+            self.hideout_sound_combo.addItem(label, sound_id)
+        if self._hideout_audio_file:
+            self.hideout_sound_combo.addItem(
+                f"カスタム音：{self._hideout_audio_display_name}", "custom"
+            )
+        selected = (
+            "custom"
             if self._hideout_audio_source == "custom"
-            else "標準（ずんだもん）"
+            else self._hideout_bundled_sound_id
         )
-        self.hideout_audio_name.setText(name)
-        self.hideout_audio_name.setToolTip(name)
+        index = self.hideout_sound_combo.findData(selected)
+        if index < 0:
+            index = self.hideout_sound_combo.findData(DEFAULT_BUNDLED_SOUND_ID)
+        self.hideout_sound_combo.setCurrentIndex(index)
+        self.hideout_sound_combo.blockSignals(False)
+
+    def _refresh_hideout_custom_sound_name(self):
+        name = self._hideout_audio_display_name or "未選択"
+        self.hideout_custom_sound_name.setText(name)
+        self.hideout_custom_sound_name.setToolTip(name)
+
+    def _on_hideout_sound_changed(self, index):
+        selected = self.hideout_sound_combo.itemData(index)
+        if selected == "custom" and self._hideout_audio_file:
+            self._hideout_audio_source = "custom"
+            return
+        if any(selected == option[0] for option in BUNDLED_SOUND_OPTIONS):
+            self._hideout_audio_source = "bundled"
+            self._hideout_bundled_sound_id = selected
 
     def _select_hideout_audio(self):
         source, _selected_filter = QFileDialog.getOpenFileName(
-            self, "通知音声を選択", "", "音声ファイル (*.wav *.mp3)"
+            self, "通知音を選択", "", "音ファイル (*.wav *.mp3)"
         )
         if not source:
             return
@@ -887,7 +918,8 @@ class PoetoreSettingsDialog(QDialog):
         self._hideout_audio_source = "custom"
         self._hideout_audio_display_name = display_name
         self._hideout_audio_file = stored_name
-        self._refresh_hideout_audio_name()
+        self._refresh_hideout_custom_sound_name()
+        self._refresh_hideout_sound_combo()
 
     def _select_hideout_log_path(self):
         source, _selected_filter = QFileDialog.getOpenFileName(
@@ -895,12 +927,6 @@ class PoetoreSettingsDialog(QDialog):
         )
         if source:
             self.hideout_log_path_edit.setText(source)
-
-    def _reset_hideout_audio(self):
-        self._hideout_audio_source = "bundled"
-        self._hideout_audio_display_name = ""
-        self._hideout_audio_file = ""
-        self._refresh_hideout_audio_name()
 
     def _preview_hideout_audio(self):
         if self._hideout_preview_player is None:
@@ -911,7 +937,7 @@ class PoetoreSettingsDialog(QDialog):
             self._hideout_preview_player.fallback_used.connect(
                 self._show_hideout_audio_information
             )
-        primary = bundled_audio_path()
+        primary = bundled_audio_path(self._hideout_bundled_sound_id)
         if self._hideout_audio_source == "custom":
             primary = custom_audio_path(self._hideout_audio_file)
         self._hideout_preview_player.play(
@@ -926,7 +952,7 @@ class PoetoreSettingsDialog(QDialog):
 
     def _show_hideout_audio_message(self, icon, text):
         message = QMessageBox(self)
-        message.setWindowTitle("通知音声")
+        message.setWindowTitle("通知音")
         message.setIcon(icon)
         message.setText(str(text))
         message.setStandardButtons(QMessageBox.Ok)

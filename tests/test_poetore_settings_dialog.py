@@ -105,6 +105,7 @@ def test_hideout_notification_controls_load_and_save_seconds_and_volume():
                 "duration_seconds": 125,
                 "repeat": True,
                 "audio_source": "custom",
+                "bundled_sound_id": "standard_4",
                 "custom_audio_display_name": "声.mp3",
                 "custom_audio_file": "poetore-hideout-notification.mp3",
                 "volume": 75,
@@ -114,19 +115,33 @@ def test_hideout_notification_controls_load_and_save_seconds_and_volume():
     assert dialog.hideout_minutes_spin.value() == 2
     assert dialog.hideout_seconds_spin.value() == 5
     assert dialog.hideout_repeat_cb.isChecked()
-    assert dialog.hideout_audio_name.text() == "声.mp3"
+    assert [
+        dialog.hideout_sound_combo.itemText(index)
+        for index in range(dialog.hideout_sound_combo.count())
+    ] == [
+        "標準音1",
+        "標準音2",
+        "標準音3",
+        "標準音4",
+        "標準音5",
+        "カスタム音：声.mp3",
+    ]
+    assert dialog.hideout_sound_combo.currentText() == "カスタム音：声.mp3"
+    assert dialog.hideout_custom_sound_name.text() == "声.mp3"
     assert dialog.hideout_log_path_edit.text() == r"C:\PoE\logs\Client.txt"
     assert dialog.hideout_volume_label.text() == "75"
     assert dialog.hideout_note.text().splitlines() == [
-        "集中モード中、隠れ家に設定時間滞在すると音声でお知らせします。",
-        "音声ファイルは、選択ボタンから任意のwavまたはmp3ファイルに変更可能です。",
-        "音量50が音声本来の大きさで、50より上は増幅します。",
+        "集中モード中、隠れ家に設定時間滞在すると通知音でお知らせします。",
+        "通知音は、同梱音から選択できます。",
+        "選択ボタンから任意のWAVまたはMP3ファイルにも変更可能です。",
+        "音量50が音本来の大きさで、50より上は増幅します。",
     ]
     settings = dialog.get_settings()["poetore"]["hideout_notification"]
     assert settings == {
         "duration_seconds": 125,
         "repeat": True,
         "audio_source": "custom",
+        "bundled_sound_id": "standard_4",
         "custom_audio_display_name": "声.mp3",
         "custom_audio_file": "poetore-hideout-notification.mp3",
         "volume": 75,
@@ -134,6 +149,29 @@ def test_hideout_notification_controls_load_and_save_seconds_and_volume():
     assert dialog.get_settings()["client_log_paths"]["poe1"] == (
         r"C:\PoE\logs\Client.txt"
     )
+    dialog.close()
+
+
+def test_hideout_bundled_sound_selection_preserves_custom_sound():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "poe_version": POE1,
+        "poetore": {
+            "hideout_notification": {
+                "audio_source": "custom",
+                "custom_audio_display_name": "声.mp3",
+                "custom_audio_file": "poetore-hideout-notification.mp3",
+            }
+        },
+    })
+
+    dialog.hideout_sound_combo.setCurrentIndex(2)
+    settings = dialog.get_settings()["poetore"]["hideout_notification"]
+
+    assert settings["audio_source"] == "bundled"
+    assert settings["bundled_sound_id"] == "standard_3"
+    assert settings["custom_audio_display_name"] == "声.mp3"
+    assert settings["custom_audio_file"] == "poetore-hideout-notification.mp3"
     dialog.close()
 
 
@@ -213,7 +251,7 @@ def test_hideout_audio_error_message_uses_dark_poetore_theme(monkeypatch):
 
     result = dialog._show_hideout_audio_message(
         QMessageBox.Warning,
-        "音声再生機能を読み込めませんでした。",
+        "通知音の再生機能を読み込めませんでした。",
     )
 
     messages = dialog.findChildren(QMessageBox)
