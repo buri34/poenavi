@@ -867,6 +867,31 @@ class ConfigManagerTest(unittest.TestCase):
 
             write_json.assert_not_called()
 
+    def test_interrupted_json_write_preserves_last_complete_config(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = Path(tmp) / ConfigManager.CONFIG_FILE
+            previous = {"schemaVersion": 22, "marker": "previous"}
+            config_path.write_text(json.dumps(previous), encoding="utf-8")
+
+            def interrupted_dump(_value, file_obj, *_args, **_kwargs):
+                file_obj.write('{"schemaVersion": 22, "marker": ')
+                file_obj.flush()
+                raise RuntimeError("simulated process interruption")
+
+            with patch("src.utils.config_manager.json.dump", interrupted_dump):
+                with self.assertRaisesRegex(
+                    RuntimeError, "simulated process interruption"
+                ):
+                    ConfigManager._write_json(
+                        config_path,
+                        {"schemaVersion": 22, "marker": "new"},
+                    )
+
+            self.assertEqual(
+                json.loads(config_path.read_text(encoding="utf-8")), previous
+            )
+            self.assertEqual(list(config_path.parent.glob(".config.json.*.tmp")), [])
+
 
 if __name__ == "__main__":
     unittest.main()

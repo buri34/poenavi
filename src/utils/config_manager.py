@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -305,8 +306,22 @@ class ConfigManager:
     def _write_json(cls, path, config):
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(config, f, ensure_ascii=False, indent=4)
+        # 同じフォルダの一時ファイルへ完全に書いてから置換する。
+        # 保存中に終了・例外が起きても、直前の正常なJSONを途中内容で
+        # 上書きしない。Windowsでも閉じたファイルだけを置換する。
+        descriptor, temp_name = tempfile.mkstemp(
+            prefix=f".{path.name}.", suffix=".tmp", dir=path.parent,
+        )
+        temp_path = Path(temp_name)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as f:
+                json.dump(config, f, ensure_ascii=False, indent=4)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temp_path, path)
+        except Exception:
+            temp_path.unlink(missing_ok=True)
+            raise
 
     @classmethod
     def _backup_config(cls, source_path, reason="migration"):
