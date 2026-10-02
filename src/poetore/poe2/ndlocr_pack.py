@@ -22,6 +22,7 @@ from src.update.artifacts import (
     parse_checksum,
     verify_sha256,
 )
+
 PACK_VERSION = "1.3.1"
 PACK_RELEASE_TAG = "ndlocr-pack-v1.3.1-r1"
 PACK_RELEASE_ARCHIVE_SHA256 = (
@@ -262,6 +263,7 @@ class NdlOcrPackController(QObject):
         self._cancel.clear()
 
         def run():
+            outcome = PackStatus("ready")
             try:
                 self._worker(
                     progress=lambda done, total: self._publish(
@@ -270,14 +272,23 @@ class NdlOcrPackController(QObject):
                     phase=lambda value: self._publish(value),
                     cancelled=self._cancel.is_set,
                 )
-                self._publish("ready")
             except DownloadCancelled:
-                self._publish("idle")
+                outcome = PackStatus("idle")
             except Exception as exc:  # noqa: BLE001 - worker boundary
-                self._publish("error", str(exc))
+                outcome = PackStatus("error", str(exc))
             finally:
                 with self._lock:
                     self._running = False
+                # Publish the terminal state only after the controller accepts
+                # another start request.  The retry button is driven by this
+                # signal, so exposing ``error`` while ``_running`` is still
+                # true creates a short window where an immediate retry is lost.
+                self._publish(
+                    outcome.state,
+                    outcome.detail,
+                    outcome.done,
+                    outcome.total,
+                )
 
         threading.Thread(
             target=run,
