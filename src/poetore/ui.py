@@ -1947,6 +1947,8 @@ class PoetoreWindow(QWidget):
         self._trade_base_type = None
         self._trade_item_name = None
         self._parsed_item = None
+        self._parsed_item_source_text: str | None = None
+        self._parsed_item_poe_version: str | None = None
         self._preset_item_key = None
         self._state_item_key = None
         self._base_scope_item_key = None
@@ -4635,6 +4637,13 @@ class PoetoreWindow(QWidget):
         copied_text = read_item_clipboard(QApplication.clipboard())
         if trace is not None:
             trace.mark("clipboard_read", characters=len(copied_text))
+        # Invalidate an older asynchronous search before parsing the new copy.
+        # Otherwise an old result can arrive during a slower PoE2 parse and be
+        # painted briefly for the newly captured item.
+        self._search_generation += 1
+        self._parsed_item = None
+        self._parsed_item_source_text = None
+        self._parsed_item_poe_version = None
         try:
             item = self._parse_item_text(copied_text)
         except (ItemParseError, ValueError) as error:
@@ -4672,7 +4681,10 @@ class PoetoreWindow(QWidget):
         self._has_searched_current_item = False
         self._search_dirty = False
         self.input_edit.setPlainText(copied_text)
-        self.parse_current_text()
+        self.parse_current_text(
+            parsed_item=item,
+            search_cycle_already_invalidated=True,
+        )
         if trace is not None:
             trace.mark("capture_ui_populated")
         self.show_at_context(
@@ -4695,6 +4707,7 @@ class PoetoreWindow(QWidget):
 
         item = match.item
         copied_text = curio_item_text(item)
+        self._search_generation += 1
         search = item.search
         self._placement_context = placement_context
         self._capture_auto_hide = False
@@ -4732,7 +4745,10 @@ class PoetoreWindow(QWidget):
         self._has_searched_current_item = False
         self._search_dirty = False
         self.input_edit.setPlainText(copied_text)
-        self.parse_current_text()
+        # CurioItem is catalog metadata, not the ParsedItem consumed by the
+        # shared price-check UI.  Keep the established synthetic-copy parse
+        # path while retaining the generation invalidation above.
+        self.parse_current_text(search_cycle_already_invalidated=True)
         self.show_at_context(placement_context, activate=True)
         self.search_current_item()
 
@@ -4878,11 +4894,19 @@ class PoetoreWindow(QWidget):
             and popup.window().frameGeometry().contains(point)
         )
 
-    def parse_current_text(self, *, preserve_virtual_augment_selection: bool = False):
+    def parse_current_text(
+        self,
+        *,
+        preserve_virtual_augment_selection: bool = False,
+        parsed_item=None,
+        search_cycle_already_invalidated: bool = False,
+    ):
         trace = self._current_performance_trace or self._pending_performance_trace
         if trace is not None:
             trace.mark("ui_parse_started")
         self._parsed_item = None
+        self._parsed_item_source_text = None
+        self._parsed_item_poe_version = None
         current_text = self.input_edit.toPlainText()
         if current_text != self._heist_unique_mod_item_key:
             self._heist_unique_mod_item_key = None
@@ -4891,7 +4915,7 @@ class PoetoreWindow(QWidget):
             self._heist_trinket_mod_item_key = None
             self._heist_trinket_mod_filters = ()
         try:
-            item = self._parse_item_text(current_text)
+            item = parsed_item or self._parse_item_text(current_text)
         except (ItemParseError, ValueError) as exc:
             if trace is not None:
                 trace.mark("ui_parse_failed")
@@ -4904,7 +4928,8 @@ class PoetoreWindow(QWidget):
             self._active_item_key = item.raw_text
             self._has_searched_current_item = False
             self._search_dirty = False
-            self._search_generation += 1
+            if not search_cycle_already_invalidated:
+                self._search_generation += 1
             if not self._remember_trade_options:
                 self._reset_trade_options_to_defaults()
         if item.raw_text != self._unique_selector_item_key:
@@ -4942,6 +4967,8 @@ class PoetoreWindow(QWidget):
         self.result_tree.expandAll()
         self.result_tree.scrollToTop()
         self._parsed_item = item
+        self._parsed_item_source_text = current_text
+        self._parsed_item_poe_version = self.poe_version
         self._update_disenchant_dust(item)
         if self.mod_filter_tree.topLevelItemCount() == 0:
             preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
@@ -5032,7 +5059,16 @@ class PoetoreWindow(QWidget):
         # 前回のUniqueで隠し候補を開いたまま次を検索すると、通常候補が
         # 空に見えて誤解を招く。チェック状態は検索へ残し、表示だけ戻す。
         self.hidden_mods_toggle.setChecked(False)
-        self.parse_current_text(preserve_virtual_augment_selection=True)
+        current_text = self.input_edit.toPlainText()
+        can_reuse_parsed_item = (
+            getattr(self, "_parsed_item", None) is not None
+            and self._parsed_item_source_text == current_text
+            and self._parsed_item_poe_version == self.poe_version
+        )
+        if can_reuse_parsed_item:
+            trace.mark("search_parse_reused")
+        else:
+            self.parse_current_text(preserve_virtual_augment_selection=True)
         item = getattr(self, "_parsed_item", None)
         if item is None:
             trace.mark("search_parse_failed")
@@ -6951,6 +6987,14 @@ def prepare_poetore_window(owner):
             owner._poetore_result_hwnd = int(window.winId())
         except (RuntimeError, TypeError, ValueError):
             owner._poetore_result_hwnd = None
+    from src.poetore.prewarm import start_search_metadata_prewarm
+
+    app_config = getattr(owner, "config", None)
+    preferred_version = (
+        str(app_config.get("poe_version", POE1))
+        if isinstance(app_config, dict) else POE1
+    )
+    start_search_metadata_prewarm(preferred_version)
     return window
 
 

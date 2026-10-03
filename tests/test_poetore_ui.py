@@ -758,10 +758,119 @@ def test_329_single_copy_is_parsed_without_normal_and_detailed_merge(qapp):
         assert window.input_edit.toPlainText() == copied
         assert window._trade_base_type == "Mesh Boots"
         assert window._trade_item_name == "Wake of Destruction"
-        parse.assert_called_once_with()
+        parse.assert_called_once_with(
+            parsed_item=parsed,
+            search_cycle_already_invalidated=True,
+        )
         show.assert_called_once_with(window._placement_context, activate=True)
         search.assert_called_once_with()
         assert not hasattr(window, "_normal_copy_text")
+    finally:
+        window.close()
+
+
+def test_search_reuses_item_parsed_for_same_text_and_mode(qapp):
+    copied = "アイテムクラス: カレンシー\nレアリティ: カレンシー\nChaos Orb\n"
+    item = ParsedItem(
+        "Currency", "Currency", "Chaos Orb", "Chaos Orb", "currency",
+        raw_text=copied,
+    )
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.input_edit.setPlainText(copied)
+        window._parsed_item = item
+        window._parsed_item_source_text = copied
+        window._parsed_item_poe_version = "poe2"
+        with patch.object(window, "parse_current_text") as parse, patch(
+            "src.poetore.ui._is_poe2_exchange_price_item",
+            return_value=True,
+        ):
+            window.search_current_item()
+
+        parse.assert_not_called()
+        assert window._parsed_item is item
+    finally:
+        window.close()
+
+
+def test_poe2_rare_capture_parses_source_text_once(qapp):
+    copied = "アイテムクラス: 槍\nレアリティ: レア\n試験の槍\n鋭い槍\n"
+    item = ParsedItem(
+        "槍", "レア", "試験の槍", "鋭い槍", "weapon",
+        raw_text=copied,
+    )
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    window._placement_context = PlacementContext(
+        QRect(0, 0, 1920, 1080), QPoint(100, 100),
+    )
+    try:
+        with patch(
+            "src.poetore.ui.read_item_clipboard",
+            return_value=copied,
+        ), patch.object(
+            window,
+            "_parse_item_text",
+            return_value=item,
+        ) as parse, patch.object(window, "show_at_context"):
+            window._capture_item_copy()
+
+        parse.assert_called_once_with(copied)
+        assert window._parsed_item is item
+        assert window._parsed_item_source_text == copied
+        assert window._parsed_item_poe_version == "poe2"
+    finally:
+        window.close()
+
+
+def test_search_does_not_reuse_item_parsed_for_another_mode(qapp):
+    copied = "アイテムクラス: カレンシー\nレアリティ: カレンシー\nChaos Orb\n"
+    item = ParsedItem(
+        "Currency", "Currency", "Chaos Orb", "Chaos Orb", "currency",
+        raw_text=copied,
+    )
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.input_edit.setPlainText(copied)
+        window._parsed_item = item
+        window._parsed_item_source_text = copied
+        window._parsed_item_poe_version = "poe1"
+
+        def clear_stale_item(**_kwargs):
+            window._parsed_item = None
+
+        with patch.object(
+            window,
+            "parse_current_text",
+            side_effect=clear_stale_item,
+        ) as parse:
+            window.search_current_item()
+
+        parse.assert_called_once_with(preserve_virtual_augment_selection=True)
+    finally:
+        window.close()
+
+
+def test_new_capture_invalidates_older_search_before_parse_finishes(qapp):
+    window = PoetoreWindow()
+    window._search_generation = 8
+    window._parsed_item = Mock()
+    window._parsed_item_source_text = "old"
+    window._parsed_item_poe_version = "poe1"
+    try:
+        with patch(
+            "src.poetore.ui.read_item_clipboard",
+            return_value="not an item",
+        ), patch.object(
+            window,
+            "_parse_item_text",
+            side_effect=ValueError("invalid"),
+        ):
+            window._capture_item_copy()
+
+        assert window._search_generation == 9
+        assert window._parsed_item is None
+        assert window._parsed_item_source_text is None
+        assert window._parsed_item_poe_version is None
     finally:
         window.close()
 
