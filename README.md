@@ -16,7 +16,7 @@ Path of Exile 1 / Path of Exile 2向けの、Windows用プレイ支援ツール�
 - VOICEVOXによるみになびの音声案内（PoE2）
 - PoBからのジェム取得リスト作成（PoE1）
 - エリアメモ、ガイド編集、切り離し可能な補助パネル
-<img width="2168" height="1119" alt="poenavi" src="https://github.com/user-attachments/assets/dbc61c25-9e61-4fde-9311-3ac362e8d027" />
+<img width="2314" height="1219" alt="poenavi2" src="https://github.com/user-attachments/assets/fa1232cb-707c-432d-b4cd-d08e8611ea9f" />
 
 ## ぽえとれの主な機能
 
