@@ -16,6 +16,7 @@ Path of Exile 1 / Path of Exile 2向けの、Windows用プレイ支援ツール�
 - VOICEVOXによるみになびの音声案内（PoE2）
 - PoBからのジェム取得リスト作成（PoE1）
 - エリアメモ、ガイド編集、切り離し可能な補助パネル
+<img width="2168" height="1119" alt="poenavi" src="https://github.com/user-attachments/assets/dbc61c25-9e61-4fde-9311-3ac362e8d027" />
 
 ## ぽえとれの主な機能
 
@@ -26,6 +27,7 @@ Path of Exile 1 / Path of Exile 2向けの、Windows用プレイ支援ツール�
 - Map Modチェック、メモ、画像管理、Cheat sheets
 - OBS配信用の専用検索結果ウィンドウ
 - PoE2のエクスペディション報酬を読み取り、poe.ninja価格を高貴なオーブ換算で表示
+<img width="2384" height="1291" alt="poetore" src="https://github.com/user-attachments/assets/683363f3-3ee5-44bd-bac8-e59773420f98" />
 
 ## 共通機能
 
@@ -51,12 +53,13 @@ Pythonのインストールは不要です。設定やメモは`%APPDATA%\PoENav
 >
 > SmartScreenが表示された場合は、発行元とダウンロード元がこのリポジトリであることを確認したうえで、「詳細情報」から実行できます。不安な場合は実行せず、公開ソースから直接起動してください。
 
-### 配布ファイルの検査
+### 配布ファイルのウイルス検査
 
 各リリースの`PoENavi.zip`はVirusTotalでスキャンし、
 検査結果URLとSHA-256を該当するReleaseページへ掲載しています。
 
-VirusTotalでは、複数のセキュリティ製品による検査結果を確認できます。
+VirusTotalは、Microsoftなど複数のセキュリティ製品で同じファイルを検査し、その判定をまとめて確認できる第三者サービスです。
+<img width="2168" height="1119" alt="poenavi" src="https://github.com/user-attachments/assets/e272273b-1273-4a7e-b7a1-a1daa59e33de" />
 SHA-256が一致することで、検査対象と配布ファイルが同一であることも確認できます。
 
 VirusTotalの結果は安全性を完全に保証するものではありませんが、
