@@ -51,6 +51,19 @@ Pythonのインストールは不要です。設定やメモは`%APPDATA%\PoENav
 >
 > SmartScreenが表示された場合は、発行元とダウンロード元がこのリポジトリであることを確認したうえで、「詳細情報」から実行できます。不安な場合は実行せず、公開ソースから直接起動してください。
 
+### 配布ファイルの検査
+
+各リリースの`PoENavi.zip`はVirusTotalでスキャンし、
+検査結果URLとSHA-256を該当するReleaseページへ掲載しています。
+
+VirusTotalでは、複数のセキュリティ製品による検査結果を確認できます。
+SHA-256が一致することで、検査対象と配布ファイルが同一であることも確認できます。
+
+VirusTotalの結果は安全性を完全に保証するものではありませんが、
+第三者サービスによる確認材料として公開しています。
+
+最新版の結果は[Releases](../../releases)から確認してください。
+
 ### コード署名
 
 Free code signing provided by [SignPath.io](https://signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
