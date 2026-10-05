@@ -15,7 +15,7 @@ Path of Exile 1 / Path of Exile 2向けの、Windows用プレイ支援ツール�
 - 小型オーバーレイ「みになび」（PoE1 / PoE2）
 - VOICEVOXによるみになびの音声案内（PoE2）
 - PoBからのジェム取得リスト作成（PoE1）
-- エリアメモ、ガイド編集、切り離し可能な補助パネル
+- エリアメモ、切り離し可能な補助パネル
 <img width="2314" height="1219" alt="poenavi2" src="https://github.com/user-attachments/assets/fa1232cb-707c-432d-b4cd-d08e8611ea9f" />
 
 ## ぽえとれの主な機能
@@ -24,9 +24,11 @@ Path of Exile 1 / Path of Exile 2向けの、Windows用プレイ支援ツール�
 - MOD・数値範囲・アイテム状態・検索プリセットを画面上で調整
 - 価格一覧、価格推移、関連アイテムの参考価格を表示
 - 操作モードとAUTO-HIDEに対応した変更可能な検索ホットキー
-- Map Modチェック、メモ、画像管理、Cheat sheets
+- メモ、画像管理、Cheat sheets
 - OBS配信用の専用検索結果ウィンドウ
-- PoE2のエクスペディション報酬を読み取り、poe.ninja価格を高貴なオーブ換算で表示
+- Map Modチェック（PoE1）
+- エクスペディション報酬を読み取り、poe.ninja価格を高貴なオーブ換算で表示（PoE2）
+- アビス冒涜modのUnveil画面を読み取り、modのティアを表示（PoE2）
 <img width="2090" height="1319" alt="poetore2" src="https://github.com/user-attachments/assets/9f3f0da0-d9be-42e8-831b-9eaf921207fa" />
 
 
