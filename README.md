@@ -27,7 +27,8 @@ Path of Exile 1 / Path of Exile 2向けの、Windows用プレイ支援ツール�
 - Map Modチェック、メモ、画像管理、Cheat sheets
 - OBS配信用の専用検索結果ウィンドウ
 - PoE2のエクスペディション報酬を読み取り、poe.ninja価格を高貴なオーブ換算で表示
-<img width="2384" height="1291" alt="poetore" src="https://github.com/user-attachments/assets/683363f3-3ee5-44bd-bac8-e59773420f98" />
+<img width="2090" height="1319" alt="poetore2" src="https://github.com/user-attachments/assets/9f3f0da0-d9be-42e8-831b-9eaf921207fa" />
+
 
 ## 共通機能
 
