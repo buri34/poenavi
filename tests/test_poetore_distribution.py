@@ -233,6 +233,20 @@ def test_windows_build_verifies_executable_product_and_version_metadata():
     assert "PoENavi.exe" in workflow and "PoENaviUpdater.exe" in workflow
 
 
+def test_windows_build_has_isolated_signpath_test_signing():
+    workflow = (ROOT / ".github" / "workflows" / "windows-build.yml").read_text(encoding="utf-8")
+
+    assert "actions: read" in workflow
+    assert "SIGNPATH_API_TOKEN" in workflow
+    assert "SIGNPATH_ORGANIZATION_ID" in workflow
+    assert "signing-policy-slug: test-signing" in workflow
+    assert "signing-policy-slug: release-signing" not in workflow
+    assert "archive: false" in workflow
+    assert "skip-decompress: true" in workflow
+    assert "Get-AuthenticodeSignature" in workflow
+    assert "github.head_ref == 'chore/signpath-test'" in workflow
+
+
 def test_root_windows_entry_points_are_limited_to_current_build_workflows():
     expected = {
         "build_diagnostic_exe.bat",
