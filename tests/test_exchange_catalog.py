@@ -22,7 +22,6 @@ def test_catalog_uses_confirmed_in_game_category_labels_and_order():
         "カレンシー",
         "エッセンス",
         "デルブ",
-        "スカラベ",
         "占いカード",
         "デリリウムオーブ",
         "リージョン",
@@ -83,6 +82,48 @@ def test_golden_currency_ids_resolve_in_both_realms():
         assert catalog[CHAOS].japanese_name == "カオスオーブ"
         assert catalog[DIVINE].japanese_name == "神のオーブ"
         assert catalog[EXALTED].japanese_name == "高貴なオーブ"
+
+
+def test_poe1_330_exchange_items_are_pinned_and_scarabs_are_absent():
+    catalog = exchange_catalog_by_id(POE1)
+    expected = {
+        "Metadata/Items/MapFragments/CurrencyFaridunBossKey": (
+            "The Black Barya",
+            "黒きバリャ",
+            "fragments",
+        ),
+        "Metadata/Items/Currency/CurrencyJewelleryQualitySuffix": (
+            "Dextral Catalyst",
+            "右側のカタリスト",
+            "catalysts",
+        ),
+        "Metadata/Items/Currency/CurrencyEssenceFaridun1": (
+            "Essence of Desolation",
+            "荒廃のエッセンス",
+            "essences",
+        ),
+        "Metadata/Items/Currency/CurrencyAfflictionRerollClusterEnchant": (
+            "Refracting Fog",
+            "屈折する霧",
+            "currency",
+        ),
+        "Metadata/Items/Currency/CurrencyJewelleryQualityPrefix": (
+            "Sinistral Catalyst",
+            "左側のカタリスト",
+            "catalysts",
+        ),
+    }
+
+    assert {
+        item_id: (
+            catalog[item_id].english_name,
+            catalog[item_id].japanese_name,
+            catalog[item_id].category,
+        )
+        for item_id in expected
+    } == expected
+    assert all(item.category != "scarabs" for item in catalog.values())
+    assert all("/Scarabs/" not in item_id for item_id in catalog)
 
 
 def test_confirmed_exception_categories_are_fixed():

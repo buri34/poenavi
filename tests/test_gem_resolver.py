@@ -1,4 +1,41 @@
-from src.utils.gem_resolver import resolve_gem_acquisition
+from src.utils.gem_resolver import load_gems_db, resolve_gem_acquisition
+
+
+def _arcane_link_entry(char_class):
+    plan = resolve_gem_acquisition(
+        ["arcane link"],
+        char_class,
+        library_route=True,
+        gems_db=load_gems_db(),
+    )
+    assert len(plan) == 1
+    return plan[0], plan[0]["gems"][0]
+
+
+def test_arcane_link_is_a_scion_reward_and_available_from_act4_vendors():
+    entry, gem = _arcane_link_entry("scion")
+
+    assert (entry["act"], entry["quest"]) == (4, "breaking the seal")
+    assert gem["type"] == "quest"
+    assert gem["name_ja"] == "アーケインリンク"
+
+    for char_class in ("marauder", "duelist", "templar"):
+        entry, gem = _arcane_link_entry(char_class)
+        assert (entry["act"], entry["quest"], gem["type"]) == (
+            4,
+            "breaking the seal",
+            "vendor",
+        )
+
+
+def test_arcane_link_is_not_offered_early_to_other_classes():
+    for char_class in ("ranger", "shadow", "witch"):
+        entry, gem = _arcane_link_entry(char_class)
+        assert (entry["act"], entry["quest"], gem["type"]) == (
+            6,
+            "fallen from grace",
+            "lilly",
+        )
 
 
 def test_breaking_some_eggs_reward_appears_before_vendor():

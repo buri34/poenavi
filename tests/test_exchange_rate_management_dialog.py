@@ -215,6 +215,46 @@ def test_poe1_corrected_categories_are_visible(qapp, tmp_path):
         dialog.close()
 
 
+def test_poe1_330_items_follow_market_visibility_and_scarabs_stay_hidden(
+    qapp, tmp_path
+):
+    expected_by_label = {
+        "カレンシー": {
+            "Metadata/Items/Currency/CurrencyAfflictionRerollClusterEnchant"
+        },
+        "エッセンス": {"Metadata/Items/Currency/CurrencyEssenceFaridun1"},
+        "フラグメント": {"Metadata/Items/MapFragments/CurrencyFaridunBossKey"},
+        "カタリスト": {
+            "Metadata/Items/Currency/CurrencyJewelleryQualityPrefix",
+            "Metadata/Items/Currency/CurrencyJewelleryQualitySuffix",
+        },
+    }
+    available_ids = set().union(*expected_by_label.values())
+    available_ids.add("Metadata/Items/Scarabs/Example")
+    dialog, *_ = make_dialog(qapp, tmp_path, available_ids=list(available_ids))
+    try:
+        assert not dialog.category_list.findItems("スカラベ", Qt.MatchExactly)
+        for label, expected_ids in expected_by_label.items():
+            matches = dialog.category_list.findItems(label, Qt.MatchExactly)
+            assert len(matches) == 1
+            dialog.category_list.setCurrentItem(matches[0])
+            assert expected_ids <= candidate_ids(dialog)
+        assert "Metadata/Items/Scarabs/Example" not in candidate_ids(dialog)
+    finally:
+        dialog.close()
+
+
+def test_unobserved_poe1_330_item_is_not_a_candidate(qapp, tmp_path):
+    observed = "Metadata/Items/Currency/CurrencyJewelleryQualityPrefix"
+    unobserved = "Metadata/Items/Currency/CurrencyJewelleryQualitySuffix"
+    dialog, *_ = make_dialog(qapp, tmp_path, available_ids=[observed])
+    try:
+        assert observed in candidate_ids(dialog)
+        assert unobserved not in candidate_ids(dialog)
+    finally:
+        dialog.close()
+
+
 def test_search_clear_button_clears_input(qapp, tmp_path):
     dialog, *_ = make_dialog(qapp, tmp_path)
     try:

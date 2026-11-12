@@ -67,7 +67,6 @@ CATEGORIES = {
         ("currency", "カレンシー"),
         ("essences", "エッセンス"),
         ("delve", "デルブ"),
-        ("scarabs", "スカラベ"),
         ("cards", "占いカード"),
         ("delirium", "デリリウムオーブ"),
         ("legion", "リージョン"),
@@ -217,8 +216,6 @@ def _category(poe_version: str, group: str, item_id: str, english: str) -> str:
     if poe_version == POE1:
         if group == "Currency" and "HarvestSeed" in item_id:
             return "harvest"
-        if group == "Fragments" and "/Scarabs/" in item_id:
-            return "scarabs"
         if group == "Fragments" and "Legion" in item_id:
             return "legion"
         if group == "Ancestor":
@@ -229,6 +226,11 @@ def _category(poe_version: str, group: str, item_id: str, english: str) -> str:
         if group == "Ritual" and "/SoulCores/" in item_id:
             return "idols"
     return category
+
+
+def _is_removed_exchange_item(poe_version: str, item_id: str) -> bool:
+    """Exclude item families removed from the current realm's exchange UI."""
+    return poe_version == POE1 and "/Scarabs/" in item_id
 
 
 def _static_rows(
@@ -282,6 +284,8 @@ def build_realm(
             unresolved.append({"group": group, "english": english, "ids": selected})
             continue
         item_id = selected[0]
+        if _is_removed_exchange_item(poe_version, item_id):
+            continue
         japanese = str(ja.get("text", "")).strip()
         if group == "Cards":
             japanese = japanese or card_names.get(normalize_name(english), "")
@@ -374,6 +378,7 @@ def build_realm(
     unmapped_observed = [
         {"id": item_id, "en": names.get(item_id, "")}
         for item_id in sorted(active_ids - known)
+        if not _is_removed_exchange_item(poe_version, item_id)
     ]
     return {
         "categories": [

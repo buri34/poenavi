@@ -55,8 +55,10 @@ class FakeService:
         self.ids = frozenset(ids)
         self.state = ExchangeSyncState(POE1, "League", None, 0, None, False, False)
         self.queued = []
+        self.direct_calls = []
 
     def direct_pair(self, _version, _league, left, right):
+        self.direct_calls.append((left, right))
         return self.results.get(
             (left, right), DirectPairPrice("unavailable", left, right, None, None)
         )
@@ -233,6 +235,25 @@ def test_delete_including_default_is_immediate_and_confirmation_free(qapp, tmp_p
         assert store.pairs(POE1) == ()
         assert len(saved) == 1
         assert panel.add_button is not None
+    finally:
+        panel.stop()
+        panel.close()
+
+
+def test_removed_scarab_pair_is_not_rendered_or_queried(qapp, tmp_path):
+    scarab_id = "Metadata/Items/Scarabs/Example"
+    service = FakeService()
+    panel, store, saved = make_panel(
+        qapp,
+        tmp_path,
+        pairs=[RatePair(scarab_id, CHAOS_ORB_ID)],
+        service=service,
+    )
+    try:
+        assert store.pairs(POE1) == ()
+        assert panel.row_widgets == []
+        assert service.direct_calls == []
+        assert saved == []
     finally:
         panel.stop()
         panel.close()

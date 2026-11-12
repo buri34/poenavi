@@ -483,6 +483,8 @@ class GemShopSearchTest(unittest.TestCase):
         self.assertEqual(terms["spectral throw"], "ラルスロ")
         self.assertEqual(terms["chance to bleed support"], "出血付与")
         self.assertEqual(terms["frostblink"], "ストブリ")
+        self.assertIn("arcane link", terms)
+        self.assertIn(terms["arcane link"], "アーケインリンク")
         for key, term in terms.items():
             self.assertEqual(
                 sum(term in name for name in load_gem_names_ja().values()),
