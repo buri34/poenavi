@@ -276,9 +276,15 @@ def rank_trinket_mod_line(
 ) -> TrinketModMatch | None:
     normalized_source = unicodedata.normalize("NFKC", str(line or ""))
     compact_source = re.sub(r"\s+", "", normalized_source)
-    value_match = re.search(r"(?<!\d)(\d{1,2})[%％]", compact_source)
+    # Every current trinket mod has exactly one unsigned integer percentage.
+    # Be deliberately strict here: OCR punctuation such as ``5.9%`` must not
+    # be reinterpreted as ``9%``, and a stray sign must not silently disappear.
+    value_matches = re.findall(
+        r"(?<![\d.+-])(\d{1,2})[%％](?!\d)",
+        compact_source,
+    )
     normalized_line = normalize_trinket_mod_text(line)
-    if value_match is None or "#%" not in normalized_line:
+    if len(value_matches) != 1 or "#%" not in normalized_line:
         return None
     ranked = sorted(
         (
@@ -301,7 +307,7 @@ def rank_trinket_mod_line(
     runner_up = ranked[1][0] if len(ranked) > 1 else 0.0
     return TrinketModMatch(
         definition=best,
-        value=int(value_match.group(1)),
+        value=int(value_matches[0]),
         score=best_score,
         margin=best_score - runner_up,
     )
@@ -312,14 +318,22 @@ def recognize_trinket_mods(
     definitions: Sequence[TrinketModDefinition] | None = None,
 ) -> tuple[TrinketModMatch, ...]:
     best_by_stat: dict[str, TrinketModMatch] = {}
+    conflicting_stats: set[str] = set()
     for line in str(raw_text or "").splitlines():
         match = rank_trinket_mod_line(line, definitions)
         if match is None or not match.valid:
             continue
         previous = best_by_stat.get(match.definition.stat_id)
+        if previous is not None and previous.value != match.value:
+            conflicting_stats.add(match.definition.stat_id)
+            continue
         if previous is None or match.score > previous.score:
             best_by_stat[match.definition.stat_id] = match
-    return tuple(best_by_stat.values())
+    return tuple(
+        match
+        for stat_id, match in best_by_stat.items()
+        if stat_id not in conflicting_stats
+    )
 
 
 def reconcile_trinket_mods(
@@ -462,7 +476,26 @@ def trusted_curio_match(
     items: Sequence[CurioItem] | None = None,
 ) -> CurioMatch | None:
     ranked = rank_curio_matches(raw_text, items)
-    return ranked[0] if ranked and ranked[0].trusted else None
+    if not ranked or not ranked[0].trusted:
+        return None
+    best = ranked[0]
+    if best.item.base_type_ja:
+        expected_base = normalize_curio_text(best.item.base_type_ja)
+        known_bases = {
+            normalized
+            for item in items or load_curio_items()
+            if item.base_type_ja
+            if (normalized := normalize_curio_text(item.base_type_ja))
+        }
+        exact_lines = {
+            normalized
+            for line in str(raw_text or "").splitlines()
+            if (normalized := normalize_curio_text(line))
+        }
+        conflicting_bases = (exact_lines & known_bases) - {expected_base}
+        if conflicting_bases:
+            return None
+    return best
 
 
 def _is_orange(r: int, g: int, b: int) -> bool:

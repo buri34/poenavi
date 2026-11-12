@@ -7,7 +7,7 @@ import time
 from collections.abc import Callable
 from decimal import ROUND_HALF_UP, Decimal
 
-from PySide6.QtCore import QObject, QSize, Qt, QTimer, Signal
+from PySide6.QtCore import QObject, QPoint, QRect, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QIcon, QPainter
 from PySide6.QtWidgets import (
     QFrame,
@@ -33,12 +33,14 @@ OFFICIAL_DATA_TOOLTIP = (
 )
 
 
-def format_significant_rate(value: float) -> str:
-    """Round to four significant digits and strip fractional trailing zeroes."""
+def format_display_rate(value: float) -> str:
+    """Format readable rates without discarding meaningful sub-unit precision."""
     if not math.isfinite(value) or value <= 0:
         raise ValueError("rate must be finite and positive")
     decimal = Decimal(str(value))
-    quantum = Decimal(1).scaleb(decimal.adjusted() - 3)
+    quantum = Decimal("0.1") if decimal >= 1 else Decimal(1).scaleb(
+        decimal.adjusted() - 3
+    )
     rounded = decimal.quantize(quantum, rounding=ROUND_HALF_UP)
     text = format(rounded, "f")
     if "." in text:
@@ -62,6 +64,85 @@ class ElidedLabel(QLabel):
         text = self.fontMetrics().elidedText(self.text(), Qt.ElideRight, self.width())
         painter.setPen(self.palette().color(self.foregroundRole()))
         painter.drawText(self.rect(), int(self.alignment()), text)
+        painter.end()
+
+
+class DecimalAlignedRateLabel(QLabel):
+    """Paint rate components in fixed columns so units and decimals align."""
+
+    PREFIX = "1 ＝ "
+    INTEGER_SAMPLE = "999,999"
+    FRACTION_SAMPLE = ".000000"
+    HORIZONTAL_MARGIN = 2
+
+    def _rate_parts(self) -> tuple[str, str] | None:
+        text = self.text()
+        if not text.startswith(self.PREFIX):
+            return None
+        integer, separator, fraction = text.removeprefix(self.PREFIX).partition(".")
+        return integer, separator + fraction if separator else ""
+
+    def _column_rects(self) -> tuple[QRect, QRect, QRect]:
+        rect = self.contentsRect()
+        metrics = self.fontMetrics()
+        margin = self.HORIZONTAL_MARGIN
+        prefix_width = metrics.horizontalAdvance(self.PREFIX.rstrip())
+        gap = metrics.horizontalAdvance(" ")
+        integer_width = metrics.horizontalAdvance(self.INTEGER_SAMPLE)
+        fraction_width = metrics.horizontalAdvance(self.FRACTION_SAMPLE)
+        content_width = prefix_width + gap + integer_width + fraction_width
+        prefix_left = rect.left() + max(margin, (rect.width() - content_width) // 2)
+        prefix_rect = QRect(prefix_left, rect.top(), prefix_width, rect.height())
+        integer_left = prefix_rect.right() + 1 + gap
+        anchor = integer_left + integer_width
+        integer_rect = QRect(
+            integer_left,
+            rect.top(),
+            integer_width,
+            rect.height(),
+        )
+        fraction_rect = QRect(
+            anchor,
+            rect.top(),
+            fraction_width,
+            rect.height(),
+        )
+        return prefix_rect, integer_rect, fraction_rect
+
+    def minimum_rate_width(self) -> int:
+        """Return the width required by the fixed alignment columns."""
+        metrics = self.fontMetrics()
+        return (
+            self.HORIZONTAL_MARGIN * 2
+            + metrics.horizontalAdvance(self.PREFIX.rstrip())
+            + metrics.horizontalAdvance(" ")
+            + metrics.horizontalAdvance(self.INTEGER_SAMPLE)
+            + metrics.horizontalAdvance(self.FRACTION_SAMPLE)
+        )
+
+    def decimal_anchor(self) -> QPoint:
+        """Return the local point shared by the units and decimal boundary."""
+        _prefix, _integer, fraction = self._column_rects()
+        return QPoint(fraction.left(), self.contentsRect().center().y())
+
+    def integer_rect(self) -> QRect:
+        """Expose the integer column geometry for layout regression tests."""
+        return self._column_rects()[1]
+
+    def paintEvent(self, event) -> None:
+        parts = self._rate_parts()
+        if parts is None:
+            super().paintEvent(event)
+            return
+        integer, fraction = parts
+        prefix_rect, integer_rect, fraction_rect = self._column_rects()
+        painter = QPainter(self)
+        painter.setPen(self.palette().color(self.foregroundRole()))
+        painter.setFont(self.font())
+        vertical = Qt.AlignVCenter
+        painter.drawText(prefix_rect, vertical | Qt.AlignLeft, self.PREFIX.rstrip())
+        painter.drawText(integer_rect, vertical | Qt.AlignRight, integer)
+        painter.drawText(fraction_rect, vertical | Qt.AlignLeft, fraction)
         painter.end()
 
 
@@ -179,7 +260,7 @@ class CustomExchangeRatePanel(QWidget):
                 self.poe_version, league, pair.left_item_id, pair.right_item_id
             )
             if result.status == "available" and result.price is not None:
-                display = format_significant_rate(result.price)
+                display = format_display_rate(result.price)
                 display_is_rate = True
                 self.value_cache.put(
                     self.poe_version,
@@ -198,7 +279,7 @@ class CustomExchangeRatePanel(QWidget):
                     self.poe_version, league, pair.left_item_id, pair.right_item_id
                 )
                 if cached is not None:
-                    display = format_significant_rate(cached.price)
+                    display = format_display_rate(cached.price)
                     display_is_rate = True
                     latest_cached_at = max(latest_cached_at or 0, cached.confirmed_at)
                 else:
@@ -272,7 +353,11 @@ class CustomExchangeRatePanel(QWidget):
         )
         layout.addWidget(left_name)
         value_text = f"1 ＝ {display}" if display_is_rate else display
-        value = QLabel(value_text)
+        value = (
+            DecimalAlignedRateLabel(value_text)
+            if display_is_rate
+            else QLabel(value_text)
+        )
         value.setObjectName(f"customRateValue{index}")
         value.setAlignment(Qt.AlignCenter)
         value.setToolTip(value_text)
@@ -281,6 +366,8 @@ class CustomExchangeRatePanel(QWidget):
             f"color: {POETORE_THEME.text}; font-size: {value_font_size}px; "
             "font-weight: bold;"
         )
+        if isinstance(value, DecimalAlignedRateLabel):
+            value.setMinimumWidth(value.minimum_rate_width())
         layout.addWidget(value, 1)
         right_icon = self._icon_label(right_id, "right")
         layout.addWidget(right_icon)

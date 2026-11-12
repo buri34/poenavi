@@ -7,6 +7,7 @@ import math
 import os
 from pathlib import Path
 import re
+import threading
 from typing import Iterable
 
 
@@ -424,11 +425,16 @@ class MetadataIndex:
 
 
 _DEFAULT_INDEX: MetadataIndex | None = None
+_DEFAULT_INDEX_LOCK = threading.Lock()
 
 
 def default_metadata_index() -> MetadataIndex:
     global _DEFAULT_INDEX
     if _DEFAULT_INDEX is None:
-        override = os.environ.get("POETORE_METADATA_PATH")
-        _DEFAULT_INDEX = MetadataIndex.load(Path(override) if override else INDEX_PATH)
+        with _DEFAULT_INDEX_LOCK:
+            if _DEFAULT_INDEX is None:
+                override = os.environ.get("POETORE_METADATA_PATH")
+                _DEFAULT_INDEX = MetadataIndex.load(
+                    Path(override) if override else INDEX_PATH
+                )
     return _DEFAULT_INDEX

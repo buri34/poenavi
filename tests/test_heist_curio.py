@@ -1,3 +1,4 @@
+from dataclasses import replace
 from unittest.mock import Mock, patch
 
 import pytest
@@ -21,9 +22,11 @@ from src.poetore.heist_curio import (
     recognize_trinket_mods,
     reconcile_trinket_mods,
     select_header_band,
+    trinket_mod_filters,
     trusted_curio_match,
 )
 from src.poetore.parser import parse_item_text
+from src.poetore.trade import build_search_query
 from src.poetore.ui import PoetoreWindow
 from src.poetore.window_position import PlacementContext
 
@@ -202,6 +205,76 @@ def test_trinket_mod_confirmation_requires_same_stat_and_value():
     assert reconcile_trinket_mods((weapon,), (armour,)) == ()
 
 
+@pytest.mark.parametrize(
+    "text",
+    (
+        "ハイスト中にドロップするアイテムの数量が5.9%増加する",
+        "ハイスト中にドロップするアイテムの数量が-5%増加する",
+        "ハイスト中にドロップするアイテムの数量が+5%増加する",
+    ),
+)
+def test_trinket_mod_rejects_non_integer_unsigned_values(text):
+    """OCR punctuation must not silently change the detected numeric value."""
+    match = rank_trinket_mod_line(text)
+
+    assert match is None
+
+
+def test_trinket_mod_rejects_conflicting_duplicate_values():
+    raw_text = """盗賊のトリンケット
+ハイスト中にドロップするアイテムの数量が5%増加する
+ハイスト中にドロップするアイテムの数量が10%増加する"""
+
+    assert recognize_trinket_mods(raw_text) == ()
+
+
+@pytest.mark.parametrize(
+    ("name", "wrong_base"),
+    (
+        ("群れの暴走（レプリカ）", "殺人者のブーツ"),
+        ("ハイリの真実（レプリカ）", "金のアミュレット"),
+        ("魂を繋ぐ綱（レプリカ）", "革のベルト"),
+    ),
+)
+def test_unique_name_with_another_known_base_is_rejected(name, wrong_base):
+    """Adjacent-panel text must not combine one item's name with another base."""
+    assert trusted_curio_match(f"{name}\n{wrong_base}") is None
+
+
+@pytest.mark.parametrize(
+    "raw_text",
+    (
+        "",
+        "Rare Item\nThief's Trinket",
+        "栄光の欲望\n革のベルト\n最大ライフ +100",
+        "カオスオープ",
+        "未知の報酬\n未知のベースタイプ",
+    ),
+)
+def test_unknown_or_out_of_scope_rewards_are_safely_rejected(raw_text):
+    assert trusted_curio_match(raw_text) is None
+
+
+@pytest.mark.parametrize(
+    "category",
+    (
+        "replica_unique",
+        "replacement_unique",
+        "experimental_base",
+        "currency",
+        "scarab",
+        "trinket",
+    ),
+)
+def test_each_supported_reward_category_accepts_canonical_text(category):
+    item = next(row for row in load_curio_items() if row.category == category)
+
+    match = trusted_curio_match(curio_item_text(item))
+
+    assert match is not None
+    assert match.item.stable_id == item.stable_id
+
+
 def _synthetic_curio_image() -> QImage:
     image = QImage(1200, 700, QImage.Format.Format_RGBA8888)
     image.fill(QColor("#101010"))
@@ -351,6 +424,61 @@ def test_controller_confirms_real_trinket_mods_with_ndlocr(qapp):
     coordinator.finish.assert_called_once_with("heist_curio")
 
 
+def test_controller_close_suppresses_late_ocr_result(qapp):
+    coordinator = Mock()
+    controller = HeistCurioController(
+        ocr_server=_WindowsOcr(),
+        ndl_ocr_server=_NdlOcr(),
+        scan_coordinator=coordinator,
+    )
+    resolved = Mock()
+    failed = Mock()
+    controller.resolved.connect(resolved)
+    controller.failed.connect(failed)
+    controller._running = True
+    controller._generation = 7
+    placement = PlacementContext(QRect(0, 0, 1200, 700), QPoint(400, 200))
+
+    controller.close()
+    controller._process(b"image", placement, QRect(100, 100, 500, 100), 7)
+
+    resolved.assert_not_called()
+    failed.assert_not_called()
+    assert not controller.running
+
+
+def test_trinket_filters_send_only_explicitly_enabled_conditions():
+    item = next(row for row in load_curio_items() if row.category == "trinket")
+    parsed = parse_item_text(curio_item_text(item))
+    rows = trinket_mod_filters(recognize_trinket_mods(_TRINKET_OCR_TEXT))
+
+    disabled_query = build_search_query(
+        parsed,
+        "Thief's Trinket",
+        rows,
+    )["query"]
+    disabled_ids = {
+        row["id"]
+        for group in disabled_query["stats"]
+        for row in group["filters"]
+    }
+    assert not (disabled_ids & {row.stat_id for row in rows})
+
+    selected = (replace(rows[0], enabled=True), *rows[1:])
+    selected_query = build_search_query(
+        parsed,
+        "Thief's Trinket",
+        selected,
+    )["query"]
+    selected_filters = {
+        row["id"]: row.get("value", {})
+        for group in selected_query["stats"]
+        for row in group["filters"]
+    }
+    assert selected_filters[rows[0].stat_id] == {"min": rows[0].min_value}
+    assert not ({row.stat_id for row in rows[1:]} & selected_filters.keys())
+
+
 def _left_mouse_release(position: QPoint) -> QMouseEvent:
     return QMouseEvent(
         QMouseEvent.Type.MouseButtonRelease,
@@ -383,6 +511,45 @@ def test_region_selector_keeps_tiny_selection_open_for_retry(qapp):
     assert selector.result() != QDialog.DialogCode.Accepted
     assert selector.selected_rect is None
     assert selector._origin is None
+    selector.close()
+
+
+@pytest.mark.parametrize(
+    ("release", "accepted"),
+    (
+        (QPoint(89, 33), True),   # inclusive QRect: exactly 80 x 24
+        (QPoint(88, 33), False),  # 79 x 24
+        (QPoint(89, 32), False),  # 80 x 23
+        (QPoint(5000, 5000), True),  # drag outside clamps to client edge
+    ),
+)
+def test_region_selector_adversarial_boundaries(qapp, release, accepted):
+    selector = CurioRegionSelector(QRect(100, 200, 1000, 800))
+    selector._origin = QPoint(10, 10)
+
+    selector.mouseReleaseEvent(_left_mouse_release(release))
+
+    assert (selector.result() == QDialog.DialogCode.Accepted) is accepted
+    if accepted:
+        assert selector.selected_rect is not None
+        assert selector.client_rect.contains(selector.selected_rect)
+    else:
+        assert selector.selected_rect is None
+        assert selector._origin is None
+    selector.close()
+
+
+def test_region_selector_accepts_reverse_drag_and_clamps_to_client(qapp):
+    selector = CurioRegionSelector(QRect(100, 200, 1000, 800))
+    selector._origin = QPoint(210, 110)
+
+    selector.mouseReleaseEvent(_left_mouse_release(QPoint(-500, -500)))
+
+    assert selector.result() == QDialog.DialogCode.Accepted
+    assert selector.selected_rect is not None
+    assert selector.client_rect.contains(selector.selected_rect)
+    assert selector.selected_rect.width() >= 200
+    assert selector.selected_rect.height() >= 100
     selector.close()
 
 
@@ -491,6 +658,27 @@ def test_heist_unique_opens_fixed_mod_candidates_blank_and_disabled(qapp):
         window.close()
 
 
+def test_replica_paradoxica_does_not_invent_fixed_mod_candidates(qapp):
+    item = next(
+        row for row in load_curio_items() if row.name_en == "Replica Paradoxica"
+    )
+    match = Mock(item=item)
+    placement = PlacementContext(QRect(0, 0, 1200, 700), QPoint(400, 200))
+    window = PoetoreWindow(app_config={"poe_version": "poe1"})
+    window.search_current_item = Mock()
+    window._queue_poe_ninja_price = Mock()
+    try:
+        window.show_heist_curio_match(match, placement)
+        qapp.processEvents()
+
+        assert not any(
+            row.selection_reason == "ハイストユニーク固定Mod候補"
+            for row in window._selected_stat_filters()
+        )
+    finally:
+        window.close()
+
+
 def test_heist_trinket_opens_detected_mods_with_values_and_disabled(qapp):
     item = next(item for item in load_curio_items() if item.category == "trinket")
     recognized = recognize_trinket_mods(_TRINKET_OCR_TEXT)
@@ -524,5 +712,44 @@ def test_heist_trinket_opens_detected_mods_with_values_and_disabled(qapp):
         ]
         assert all(row.max_value is None for row in filters)
         window.search_current_item.assert_called_once_with()
+    finally:
+        window.close()
+
+
+def test_repeated_trinket_scan_replaces_previous_detected_mods(qapp):
+    item = next(row for row in load_curio_items() if row.category == "trinket")
+    definitions = load_trinket_mod_definitions()
+    first = rank_trinket_mod_line(
+        "ハイスト中にドロップするアイテムの数量が9%増加する",
+        definitions,
+    )
+    second = rank_trinket_mod_line(
+        "ハイスト中にドロップするアイテムのレアリティが8%増加する",
+        definitions,
+    )
+    assert first is not None and second is not None
+    placement = PlacementContext(QRect(0, 0, 1200, 700), QPoint(400, 200))
+    window = PoetoreWindow(app_config={"poe_version": "poe1"})
+    window.search_current_item = Mock()
+    window._queue_poe_ninja_price = Mock()
+    try:
+        window.show_heist_curio_match(
+            CurioMatch(item, 1.0, 1.0, 1.0, 1.0, (first,)),
+            placement,
+        )
+        window.show_heist_curio_match(
+            CurioMatch(item, 1.0, 1.0, 1.0, 1.0, (second,)),
+            placement,
+        )
+        qapp.processEvents()
+
+        filters = [
+            row
+            for row in window._selected_stat_filters()
+            if row.selection_reason == "盗賊のトリンケットOCR"
+        ]
+        assert [(row.stat_id, row.min_value) for row in filters] == [
+            (second.definition.stat_id, float(second.value)),
+        ]
     finally:
         window.close()

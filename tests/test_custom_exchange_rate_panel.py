@@ -28,7 +28,8 @@ from src.ui.custom_exchange_rate_panel import (
     OFFICIAL_DATA_TOOLTIP,
     RATE_CHECK_INTERVAL_MSEC,
     CustomExchangeRatePanel,
-    format_significant_rate,
+    DecimalAlignedRateLabel,
+    format_display_rate,
 )
 from src.utils.poe_version_data import POE1, POE2
 
@@ -98,18 +99,63 @@ def make_panel(
     return panel, store, saved
 
 
-@pytest.mark.parametrize(("value", "expected"), [
-    (174.36, "174.4"),
-    (12.345, "12.35"),
-    (1.2345, "1.235"),
-    (0.005735260, "0.005735"),
-    (12345, "12,350"),
-    (1.5000, "1.5"),
-    (372.5, "372.5"),
-    (372.8, "372.8"),
-])
-def test_four_significant_digits_and_trailing_zeroes(value, expected):
-    assert format_significant_rate(value) == expected
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (174.36, "174.4"),
+        (12.345, "12.3"),
+        (1.25, "1.3"),
+        (1.04, "1"),
+        (0.99994, "0.9999"),
+        (0.005735260, "0.005735"),
+        (12345, "12,345"),
+        (1.5000, "1.5"),
+        (372.5, "372.5"),
+        (372.8, "372.8"),
+    ],
+)
+def test_rates_use_one_decimal_at_or_above_one_and_significant_digits_below_one(
+    value,
+    expected,
+):
+    assert format_display_rate(value) == expected
+
+
+def test_rate_rows_share_the_same_units_and_decimal_anchor(qapp, tmp_path):
+    ids = list(exchange_catalog_by_id(POE1))[:4]
+    pairs = [RatePair(ids[0], ids[2]), RatePair(ids[1], ids[3])]
+    results = {
+        (pairs[0].left_item_id, pairs[0].right_item_id): DirectPairPrice(
+            "available", pairs[0].left_item_id, pairs[0].right_item_id, 681, 720
+        ),
+        (pairs[1].left_item_id, pairs[1].right_item_id): DirectPairPrice(
+            "available", pairs[1].left_item_id, pairs[1].right_item_id, 7.398, 720
+        ),
+    }
+    panel, *_ = make_panel(qapp, tmp_path, pairs=pairs, service=FakeService(results))
+    try:
+        values = [
+            panel.findChild(DecimalAlignedRateLabel, f"customRateValue{index}")
+            for index in range(2)
+        ]
+        assert [value.text() for value in values] == ["1 ＝ 681", "1 ＝ 7.4"]
+        anchors = [value.mapTo(panel, value.decimal_anchor()).x() for value in values]
+        assert anchors[0] == anchors[1]
+        assert all(
+            value.integer_rect().right() + 1 == value.decimal_anchor().x()
+            for value in values
+        )
+        cached = panel.value_cache.get(
+            POE1,
+            "League",
+            pairs[1].left_item_id,
+            pairs[1].right_item_id,
+        )
+        assert cached is not None
+        assert cached.price == 7.398
+    finally:
+        panel.stop()
+        panel.close()
 
 
 @pytest.mark.parametrize("count", (0, 1, 9, 10))

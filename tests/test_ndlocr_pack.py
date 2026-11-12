@@ -1,6 +1,8 @@
 import hashlib
 import json
 import shutil
+import threading
+import time
 import zipfile
 
 import pytest
@@ -12,6 +14,7 @@ from src.poetore.poe2.ndlocr_pack import (
     PACK_RELEASE_TAG,
     PACK_VERSION,
     REQUIRED_MODELS,
+    NdlOcrPackController,
     PackStatus,
     download_and_install_pack,
     install_pack_archive,
@@ -19,6 +22,7 @@ from src.poetore.poe2.ndlocr_pack import (
     pack_asset_urls,
     pack_is_installed,
 )
+from src.update.artifacts import DownloadCancelled
 
 
 def make_pack(path, *, unsafe_name=None):
@@ -189,3 +193,33 @@ def test_download_checks_checksum_and_installs_into_user_data(tmp_path, monkeypa
 
 def test_pack_status_is_plain_immutable_state():
     assert PackStatus("downloading", done=1, total=4).state == "downloading"
+
+
+def test_pack_controller_accepts_immediate_retry_after_error(monkeypatch):
+    monkeypatch.setattr(
+        "src.poetore.poe2.ndlocr_pack.pack_is_installed", lambda: False
+    )
+    attempts = []
+    second_started = threading.Event()
+
+    def worker(*, cancelled, **_kwargs):
+        attempts.append(1)
+        if len(attempts) == 1:
+            raise OSError("network disconnected")
+        second_started.set()
+        while not cancelled():
+            time.sleep(0.005)
+        raise DownloadCancelled()
+
+    controller = NdlOcrPackController(worker=worker)
+
+    controller.ensure_started()
+    deadline = time.monotonic() + 2
+    while controller.status.state != "error" and time.monotonic() < deadline:
+        time.sleep(0.005)
+    assert controller.status.state == "error"
+    controller.retry()
+
+    assert second_started.wait(2)
+    assert len(attempts) == 2
+    controller.close()

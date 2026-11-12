@@ -3,6 +3,7 @@ from dataclasses import replace
 from datetime import datetime, timezone
 import csv
 import math
+import threading
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt, QTimer
@@ -758,10 +759,120 @@ def test_329_single_copy_is_parsed_without_normal_and_detailed_merge(qapp):
         assert window.input_edit.toPlainText() == copied
         assert window._trade_base_type == "Mesh Boots"
         assert window._trade_item_name == "Wake of Destruction"
-        parse.assert_called_once_with()
+        parse.assert_called_once_with(
+            parsed_item=parsed,
+            search_cycle_already_invalidated=True,
+            start_initial_trade_search=True,
+        )
         show.assert_called_once_with(window._placement_context, activate=True)
-        search.assert_called_once_with()
+        search.assert_not_called()
         assert not hasattr(window, "_normal_copy_text")
+    finally:
+        window.close()
+
+
+def test_search_reuses_item_parsed_for_same_text_and_mode(qapp):
+    copied = "アイテムクラス: カレンシー\nレアリティ: カレンシー\nChaos Orb\n"
+    item = ParsedItem(
+        "Currency", "Currency", "Chaos Orb", "Chaos Orb", "currency",
+        raw_text=copied,
+    )
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.input_edit.setPlainText(copied)
+        window._parsed_item = item
+        window._parsed_item_source_text = copied
+        window._parsed_item_poe_version = "poe2"
+        with patch.object(window, "parse_current_text") as parse, patch(
+            "src.poetore.ui._is_poe2_exchange_price_item",
+            return_value=True,
+        ):
+            window.search_current_item()
+
+        parse.assert_not_called()
+        assert window._parsed_item is item
+    finally:
+        window.close()
+
+
+def test_poe2_rare_capture_parses_source_text_once(qapp):
+    copied = "アイテムクラス: 槍\nレアリティ: レア\n試験の槍\n鋭い槍\n"
+    item = ParsedItem(
+        "槍", "レア", "試験の槍", "鋭い槍", "weapon",
+        raw_text=copied,
+    )
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    window._placement_context = PlacementContext(
+        QRect(0, 0, 1920, 1080), QPoint(100, 100),
+    )
+    try:
+        with patch(
+            "src.poetore.ui.read_item_clipboard",
+            return_value=copied,
+        ), patch.object(
+            window,
+            "_parse_item_text",
+            return_value=item,
+        ) as parse, patch.object(window, "show_at_context"):
+            window._capture_item_copy()
+
+        parse.assert_called_once_with(copied)
+        assert window._parsed_item is item
+        assert window._parsed_item_source_text == copied
+        assert window._parsed_item_poe_version == "poe2"
+    finally:
+        window.close()
+
+
+def test_search_does_not_reuse_item_parsed_for_another_mode(qapp):
+    copied = "アイテムクラス: カレンシー\nレアリティ: カレンシー\nChaos Orb\n"
+    item = ParsedItem(
+        "Currency", "Currency", "Chaos Orb", "Chaos Orb", "currency",
+        raw_text=copied,
+    )
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    try:
+        window.input_edit.setPlainText(copied)
+        window._parsed_item = item
+        window._parsed_item_source_text = copied
+        window._parsed_item_poe_version = "poe1"
+
+        def clear_stale_item(**_kwargs):
+            window._parsed_item = None
+
+        with patch.object(
+            window,
+            "parse_current_text",
+            side_effect=clear_stale_item,
+        ) as parse:
+            window.search_current_item()
+
+        parse.assert_called_once_with(preserve_virtual_augment_selection=True)
+    finally:
+        window.close()
+
+
+def test_new_capture_invalidates_older_search_before_parse_finishes(qapp):
+    window = PoetoreWindow()
+    window._search_generation = 8
+    window._parsed_item = Mock()
+    window._parsed_item_source_text = "old"
+    window._parsed_item_poe_version = "poe1"
+    try:
+        with patch(
+            "src.poetore.ui.read_item_clipboard",
+            return_value="not an item",
+        ), patch.object(
+            window,
+            "_parse_item_text",
+            side_effect=ValueError("invalid"),
+        ):
+            window._capture_item_copy()
+
+        assert window._search_generation == 9
+        assert window._parsed_item is None
+        assert window._parsed_item_source_text is None
+        assert window._parsed_item_poe_version is None
     finally:
         window.close()
 
@@ -799,12 +910,13 @@ def test_only_poe2_rare_equipment_defers_hotkey_initial_search(
             window, "_parse_item_text", return_value=item,
         ), patch.object(
             window, "parse_current_text",
-        ), patch.object(
+        ) as parse, patch.object(
             window, "show_at_context",
         ), patch.object(window, "search_current_item") as search:
             window._capture_item_copy()
 
         if deferred:
+            assert parse.call_args.kwargs["start_initial_trade_search"] is False
             search.assert_not_called()
             assert window.price_status.text() == "検索条件を確認して「検索」を押してください。"
             assert window.price_button.isEnabled()
@@ -814,7 +926,207 @@ def test_only_poe2_rare_equipment_defers_hotkey_initial_search(
             assert not window.trade_url_button.isEnabled()
             assert window.additional_results_button.isHidden()
         else:
-            search.assert_called_once_with()
+            if poe_version == "poe2" and category == "currency":
+                assert parse.call_args.kwargs["start_initial_trade_search"] is False
+                search.assert_called_once_with()
+            else:
+                assert parse.call_args.kwargs["start_initial_trade_search"] is True
+                search.assert_not_called()
+    finally:
+        window.close()
+
+
+def test_poe2_nonrare_capture_starts_trade_before_filter_ui_finishes(qapp):
+    copied = "アイテムクラス: ベルト\nレアリティ: ユニーク\n試験の帯\n重厚なベルト\n"
+    item = ParsedItem(
+        "Belts", "Unique", "Test Belt", "Heavy Belt", "belt",
+        raw_text=copied,
+    )
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    window._placement_context = PlacementContext(
+        QRect(0, 0, 1920, 1080), QPoint(100, 100),
+    )
+    trade_started = threading.Event()
+    populate_finished = threading.Event()
+
+    def search_prices(*_args, **_kwargs):
+        trade_started.set()
+        assert not populate_finished.is_set()
+        return PriceResult("Mirage", "query", 0, ())
+
+    original_populate = window._populate_stat_filters
+
+    def populate(filters):
+        assert trade_started.wait(1.0)
+        original_populate(filters)
+        populate_finished.set()
+
+    try:
+        with patch(
+            "src.poetore.ui.read_item_clipboard", return_value=copied,
+        ), patch.object(
+            window, "_parse_item_text", return_value=item,
+        ), patch.object(
+            window, "_populate_stat_filters", side_effect=populate,
+        ) as populate_mock, patch(
+            "src.poetore.poe2.trade.search_prices", side_effect=search_prices,
+        ), patch.object(window, "show_at_context"):
+            window._capture_item_copy()
+
+        assert trade_started.is_set()
+        assert populate_finished.is_set()
+        qapp.processEvents()
+        assert populate_mock.call_count == 1
+    finally:
+        window.close()
+
+
+def test_poe1_capture_starts_trade_before_filter_ui_finishes(qapp):
+    copied = "アイテムクラス: ブーツ\nレアリティ: レア\n試験の靴\nメッシュブーツ\n"
+    item = ParsedItem(
+        "Boots", "Rare", "Test Boots", "Mesh Boots", "boots",
+        raw_text=copied,
+    )
+    window = PoetoreWindow(app_config={"poe_version": "poe1"})
+    window._placement_context = PlacementContext(
+        QRect(0, 0, 1920, 1080), QPoint(100, 100),
+    )
+    trade_started = threading.Event()
+    populate_finished = threading.Event()
+
+    def search_prices(*_args, **_kwargs):
+        trade_started.set()
+        assert not populate_finished.is_set()
+        return PriceResult("Mirage", "query", 0, ())
+
+    original_populate = window._populate_stat_filters
+
+    def populate(filters):
+        assert trade_started.wait(1.0)
+        original_populate(filters)
+        populate_finished.set()
+
+    try:
+        with patch(
+            "src.poetore.ui.read_item_clipboard", return_value=copied,
+        ), patch.object(
+            window, "_parse_item_text", return_value=item,
+        ), patch(
+            "src.poetore.ui.english_trade_identity",
+            return_value=("Mesh Boots", None),
+        ), patch.object(
+            window, "_resolved_trade_filters", return_value=(),
+        ), patch.object(
+            window, "_populate_stat_filters", side_effect=populate,
+        ) as populate_mock, patch(
+            "src.poetore.ui.search_prices", side_effect=search_prices,
+        ), patch.object(window, "show_at_context"):
+            window._capture_item_copy()
+
+        assert trade_started.is_set()
+        assert populate_finished.is_set()
+        qapp.processEvents()
+        assert populate_mock.call_count == 1
+    finally:
+        window.close()
+
+
+def test_early_and_post_ui_poe2_search_send_identical_request(qapp):
+    copied = "アイテムクラス: ベルト\nレアリティ: ユニーク\n試験の帯\n重厚なベルト\n"
+    item = ParsedItem(
+        "Belts", "Unique", "Test Belt", "Heavy Belt", "belt",
+        raw_text=copied,
+    )
+    initial_filters = (
+        TradeStatFilter(
+            "explicit.stat_test", "火耐性 +32%", 25, "explicit", True,
+        ),
+    )
+
+    def request(*, early):
+        window = PoetoreWindow(app_config={"poe_version": "poe2"})
+        window._placement_context = PlacementContext(
+            QRect(0, 0, 1920, 1080), QPoint(100, 100),
+        )
+        called = threading.Event()
+        captured = []
+
+        def search_prices(*args, **kwargs):
+            captured.append((args, kwargs))
+            called.set()
+            return PriceResult("Mirage", "query", 0, ())
+
+        try:
+            with patch.object(
+                window, "_resolved_trade_filters", return_value=initial_filters,
+            ), patch(
+                "src.poetore.poe2.trade.search_prices", side_effect=search_prices,
+            ), patch.object(window, "show_at_context"):
+                if early:
+                    with patch(
+                        "src.poetore.ui.read_item_clipboard", return_value=copied,
+                    ), patch.object(
+                        window, "_parse_item_text", return_value=item,
+                    ):
+                        window._capture_item_copy()
+                else:
+                    window._trade_base_type = item.base_type
+                    window._trade_item_name = item.name
+                    window.input_edit.setPlainText(copied)
+                    window.parse_current_text(parsed_item=item)
+                    window.search_current_item()
+            assert called.wait(1.0)
+            return captured[0]
+        finally:
+            qapp.processEvents()
+            window.close()
+
+    early_args, early_kwargs = request(early=True)
+    normal_args, normal_kwargs = request(early=False)
+
+    assert early_args == normal_args
+    assert callable(early_kwargs.pop("partial_result_callback"))
+    assert callable(normal_kwargs.pop("partial_result_callback"))
+    assert early_kwargs == normal_kwargs
+
+
+def test_poe2_rare_capture_does_not_start_trade_before_confirmation(qapp):
+    copied = "アイテムクラス: 槍\nレアリティ: レア\n試験の槍\n鋭い槍\n"
+    item = ParsedItem(
+        "Spears", "Rare", "Test Spear", "Sharp Spear", "weapon",
+        raw_text=copied,
+    )
+    window = PoetoreWindow(app_config={"poe_version": "poe2"})
+    window._placement_context = PlacementContext(
+        QRect(0, 0, 1920, 1080), QPoint(100, 100),
+    )
+    try:
+        with patch(
+            "src.poetore.ui.read_item_clipboard", return_value=copied,
+        ), patch.object(
+            window, "_parse_item_text", return_value=item,
+        ), patch(
+            "src.poetore.poe2.trade.search_prices",
+        ) as search, patch.object(window, "show_at_context"):
+            window._capture_item_copy()
+
+        search.assert_not_called()
+        assert window.price_status.text() == "検索条件を確認して「検索」を押してください。"
+    finally:
+        window.close()
+
+
+def test_old_unique_resolution_cannot_replace_newer_item_ui(qapp):
+    window = PoetoreWindow()
+    window._search_generation = 12
+    try:
+        window._show_unique_candidates(("Old Unique A", "Old Unique B"), 11)
+        window._show_unique_variants((("Old variant", "old"),), 11)
+
+        assert not window.unique_name_group.buttons()
+        assert window.unique_variant_combo.count() == 0
+        assert window.unique_name_container.isHidden()
+        assert window.unique_variant_combo.isHidden()
     finally:
         window.close()
 

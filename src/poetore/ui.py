@@ -92,8 +92,8 @@ class _TradeSignals(QObject):
     additional_completed = Signal(object, int)
     additional_failed = Signal(str, int)
     failed = Signal(str, int)
-    unique_candidates_ready = Signal(object)
-    unique_variants_ready = Signal(object)
+    unique_candidates_ready = Signal(object, int)
+    unique_variants_ready = Signal(object, int)
     leagues_ready = Signal(object)
     poe_ninja_ready = Signal(object, object)
     reference_price_ready = Signal(object, object, object, bool)
@@ -1947,6 +1947,8 @@ class PoetoreWindow(QWidget):
         self._trade_base_type = None
         self._trade_item_name = None
         self._parsed_item = None
+        self._parsed_item_source_text: str | None = None
+        self._parsed_item_poe_version: str | None = None
         self._preset_item_key = None
         self._state_item_key = None
         self._base_scope_item_key = None
@@ -4635,6 +4637,13 @@ class PoetoreWindow(QWidget):
         copied_text = read_item_clipboard(QApplication.clipboard())
         if trace is not None:
             trace.mark("clipboard_read", characters=len(copied_text))
+        # Invalidate an older asynchronous search before parsing the new copy.
+        # Otherwise an old result can arrive during a slower PoE2 parse and be
+        # painted briefly for the newly captured item.
+        self._search_generation += 1
+        self._parsed_item = None
+        self._parsed_item_source_text = None
+        self._parsed_item_poe_version = None
         try:
             item = self._parse_item_text(copied_text)
         except (ItemParseError, ValueError) as error:
@@ -4672,7 +4681,16 @@ class PoetoreWindow(QWidget):
         self._has_searched_current_item = False
         self._search_dirty = False
         self.input_edit.setPlainText(copied_text)
-        self.parse_current_text()
+        defer_initial_search = self._should_defer_initial_trade_search(item)
+        start_initial_search_early = (
+            not defer_initial_search
+            and not _is_poe2_exchange_price_item(item, self.poe_version)
+        )
+        self.parse_current_text(
+            parsed_item=item,
+            search_cycle_already_invalidated=True,
+            start_initial_trade_search=start_initial_search_early,
+        )
         if trace is not None:
             trace.mark("capture_ui_populated")
         self.show_at_context(
@@ -4680,14 +4698,18 @@ class PoetoreWindow(QWidget):
         )
         if trace is not None:
             trace.mark("window_shown")
-        if self._should_defer_initial_trade_search(item):
+        if defer_initial_search:
             if trace is not None:
                 trace.mark("initial_search_deferred")
             self._pending_performance_trace = None
             self._set_price_status("検索条件を確認して「検索」を押してください。")
             self.price_button.setEnabled(True)
             return
-        self.search_current_item()
+        if not start_initial_search_early:
+            # Currency Exchange items intentionally stay on their dedicated
+            # price path.  Let the established search entry point render its
+            # explanatory state without starting a normal Trade request.
+            self.search_current_item()
 
     def show_heist_curio_match(self, match, placement_context):
         """Open one trusted Curio identity in the normal PoE1 price checker."""
@@ -4695,6 +4717,7 @@ class PoetoreWindow(QWidget):
 
         item = match.item
         copied_text = curio_item_text(item)
+        self._search_generation += 1
         search = item.search
         self._placement_context = placement_context
         self._capture_auto_hide = False
@@ -4732,7 +4755,10 @@ class PoetoreWindow(QWidget):
         self._has_searched_current_item = False
         self._search_dirty = False
         self.input_edit.setPlainText(copied_text)
-        self.parse_current_text()
+        # CurioItem is catalog metadata, not the ParsedItem consumed by the
+        # shared price-check UI.  Keep the established synthetic-copy parse
+        # path while retaining the generation invalidation above.
+        self.parse_current_text(search_cycle_already_invalidated=True)
         self.show_at_context(placement_context, activate=True)
         self.search_current_item()
 
@@ -4878,11 +4904,20 @@ class PoetoreWindow(QWidget):
             and popup.window().frameGeometry().contains(point)
         )
 
-    def parse_current_text(self, *, preserve_virtual_augment_selection: bool = False):
+    def parse_current_text(
+        self,
+        *,
+        preserve_virtual_augment_selection: bool = False,
+        parsed_item=None,
+        search_cycle_already_invalidated: bool = False,
+        start_initial_trade_search: bool = False,
+    ):
         trace = self._current_performance_trace or self._pending_performance_trace
         if trace is not None:
             trace.mark("ui_parse_started")
         self._parsed_item = None
+        self._parsed_item_source_text = None
+        self._parsed_item_poe_version = None
         current_text = self.input_edit.toPlainText()
         if current_text != self._heist_unique_mod_item_key:
             self._heist_unique_mod_item_key = None
@@ -4891,7 +4926,7 @@ class PoetoreWindow(QWidget):
             self._heist_trinket_mod_item_key = None
             self._heist_trinket_mod_filters = ()
         try:
-            item = self._parse_item_text(current_text)
+            item = parsed_item or self._parse_item_text(current_text)
         except (ItemParseError, ValueError) as exc:
             if trace is not None:
                 trace.mark("ui_parse_failed")
@@ -4904,7 +4939,8 @@ class PoetoreWindow(QWidget):
             self._active_item_key = item.raw_text
             self._has_searched_current_item = False
             self._search_dirty = False
-            self._search_generation += 1
+            if not search_cycle_already_invalidated:
+                self._search_generation += 1
             if not self._remember_trade_options:
                 self._reset_trade_options_to_defaults()
         if item.raw_text != self._unique_selector_item_key:
@@ -4924,6 +4960,23 @@ class PoetoreWindow(QWidget):
             preserve_selection=preserve_virtual_augment_selection,
         )
         self._update_item_header(item)
+        self._parsed_item = item
+        self._parsed_item_source_text = current_text
+        self._parsed_item_poe_version = self.poe_version
+        initial_filters = None
+        if self.mod_filter_tree.topLevelItemCount() == 0:
+            preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
+            if trace is not None:
+                trace.mark("initial_filter_resolution_started")
+            initial_filters = self._resolved_trade_filters(item, preset)
+            if trace is not None:
+                trace.mark(
+                    "initial_filter_resolution_completed", filters=len(initial_filters),
+                )
+        if start_initial_trade_search:
+            if trace is not None:
+                trace.mark("initial_trade_search_starting_early")
+            self.search_current_item(initial_filters=initial_filters or ())
         self.result_tree.clear()
         for label, value in (
             ("アイテムクラス", item.item_class), ("レアリティ", item.rarity),
@@ -4941,17 +4994,8 @@ class PoetoreWindow(QWidget):
             QTreeWidgetItem(modifiers, [mod.kind, f"{mod.text}" + (f"  [{values}]" if values else "")])
         self.result_tree.expandAll()
         self.result_tree.scrollToTop()
-        self._parsed_item = item
         self._update_disenchant_dust(item)
-        if self.mod_filter_tree.topLevelItemCount() == 0:
-            preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
-            if trace is not None:
-                trace.mark("initial_filter_resolution_started")
-            initial_filters = self._resolved_trade_filters(item, preset)
-            if trace is not None:
-                trace.mark(
-                    "initial_filter_resolution_completed", filters=len(initial_filters),
-                )
+        if initial_filters is not None:
             self._populate_stat_filters(initial_filters)
         if is_new_item:
             self._reset_mod_conditions_for_item()
@@ -5024,7 +5068,9 @@ class PoetoreWindow(QWidget):
             self.mod_warning.clear()
             self.mod_warning.hide()
 
-    def search_current_item(self):
+    def search_current_item(
+        self, *, initial_filters: tuple[TradeStatFilter, ...] | None = None,
+    ):
         trace = self._pending_performance_trace or start_search_trace("manual_search")
         self._pending_performance_trace = None
         self._current_performance_trace = trace
@@ -5032,7 +5078,16 @@ class PoetoreWindow(QWidget):
         # 前回のUniqueで隠し候補を開いたまま次を検索すると、通常候補が
         # 空に見えて誤解を招く。チェック状態は検索へ残し、表示だけ戻す。
         self.hidden_mods_toggle.setChecked(False)
-        self.parse_current_text(preserve_virtual_augment_selection=True)
+        current_text = self.input_edit.toPlainText()
+        can_reuse_parsed_item = (
+            getattr(self, "_parsed_item", None) is not None
+            and self._parsed_item_source_text == current_text
+            and self._parsed_item_poe_version == self.poe_version
+        )
+        if can_reuse_parsed_item:
+            trace.mark("search_parse_reused")
+        else:
+            self.parse_current_text(preserve_virtual_augment_selection=True)
         item = getattr(self, "_parsed_item", None)
         if item is None:
             trace.mark("search_parse_failed")
@@ -5119,7 +5174,9 @@ class PoetoreWindow(QWidget):
             f"{trade_currency_label} / {listed_within_label}」を検索中…"
         )
         filters = self._selected_stat_filters()
-        needs_initial_filters = self.mod_filter_tree.topLevelItemCount() == 0
+        needs_initial_filters = initial_filters is not None or (
+            self.mod_filter_tree.topLevelItemCount() == 0
+        )
         selected_button = self.unique_name_group.checkedButton()
         selected_unique_name = (
             selected_button.property("uniqueName")
@@ -5132,14 +5189,25 @@ class PoetoreWindow(QWidget):
         )
         exact_base_type = self._searches_exact_base_type(item)
         chart_area_exact = self._searches_exact_chart_area(item)
+        poe_version = self.poe_version
+        trade_base_type = self._trade_base_type
+        unique_variant_selector_visible = self.unique_variant_combo.isVisible()
+        poe2_search_item = self._poe2_search_item(item) if poe_version == POE2 else None
+
+        # Resolve an empty tree on the GUI thread.  Besides allowing the worker
+        # to start before the expensive result/mod widgets finish building,
+        # this prevents the worker from reading mutable Qt controls.
+        resolved_initial_filters = initial_filters
+        if needs_initial_filters and resolved_initial_filters is None:
+            resolved_initial_filters = self._resolved_trade_filters(item, preset)
+        resolved_initial_filters = tuple(resolved_initial_filters or ())
 
         def run():
             try:
                 trace.mark("filter_resolution_started")
-                initial_filters = self._resolved_trade_filters(
-                    item, preset,
-                ) if needs_initial_filters else ()
-                effective_filters = initial_filters if needs_initial_filters else filters
+                effective_filters = (
+                    resolved_initial_filters if needs_initial_filters else filters
+                )
                 # ilvlは上部の共通チップだけを正本にする。Mod一覧が空の専用検索では
                 # 初期フィルターのproperty.item_levelが復活し、チップOFFでも送信
                 # されていたため、最終送信前に必ず除外する。
@@ -5168,13 +5236,15 @@ class PoetoreWindow(QWidget):
                     "filter_resolution_completed", filters=len(effective_filters),
                 )
                 if (
-                    self.poe_version != POE2
+                    poe_version != POE2
                     and item.rarity.casefold() in {"unique", "ユニーク"}
                     and "unidentified" in item.flags and not trade_name
                 ):
-                    candidates = unique_candidate_details(self._trade_base_type or item.base_type)
+                    candidates = unique_candidate_details(trade_base_type or item.base_type)
                     if len(candidates) > 1:
-                        self._trade_signals.unique_candidates_ready.emit(candidates)
+                        self._trade_signals.unique_candidates_ready.emit(
+                            candidates, search_generation,
+                        )
                         return
                     if not candidates:
                         raise TradeApiError("未鑑定ユニークの候補を公式データから特定できませんでした。")
@@ -5182,19 +5252,20 @@ class PoetoreWindow(QWidget):
                 else:
                     resolved_trade_name = trade_name
                 if (
-                    self.poe_version != POE2
+                    poe_version != POE2
                     and resolved_trade_name
                     and item.rarity.casefold() in {"unique", "ユニーク"}
                 ):
-                    variants = unique_variants(resolved_trade_name, self._trade_base_type or item.base_type)
-                    if len(variants) > 1 and not self.unique_variant_combo.isVisible():
-                        self._trade_signals.unique_variants_ready.emit(variants)
+                    variants = unique_variants(resolved_trade_name, trade_base_type or item.base_type)
+                    if len(variants) > 1 and not unique_variant_selector_visible:
+                        self._trade_signals.unique_variants_ready.emit(
+                            variants, search_generation,
+                        )
                         return
-                if self.poe_version == POE2:
+                if poe_version == POE2:
                     from .poe2.trade import search_prices as search_poe2_prices
-                    search_item = self._poe2_search_item(item)
                     result = search_poe2_prices(
-                        search_item, league,
+                        poe2_search_item, league,
                         status=trade_status,
                         stat_filters=effective_filters,
                         quality_min=quality_min,
@@ -5218,7 +5289,7 @@ class PoetoreWindow(QWidget):
                     )
                 else:
                     result = search_prices(
-                        item, self._trade_base_type, league=league, stat_filters=effective_filters,
+                        item, trade_base_type, league=league, stat_filters=effective_filters,
                         trade_status=trade_status, trade_name=resolved_trade_name,
                         preset=preset,
                         trade_currency=trade_currency,
@@ -5252,7 +5323,14 @@ class PoetoreWindow(QWidget):
                 self._trade_signals.failed.emit(str(exc), search_generation)
             else:
                 trace.mark("search_result_signal_emitted")
-                self._trade_signals.completed.emit(result, initial_filters, search_generation)
+                # Early auto-search already populates the same filters while
+                # this worker runs, so completion must not rebuild the widgets.
+                filters_for_ui = (
+                    () if initial_filters is not None else resolved_initial_filters
+                )
+                self._trade_signals.completed.emit(
+                    result, filters_for_ui, search_generation,
+                )
 
         threading.Thread(target=run, daemon=True).start()
         self._current_performance_trace = None
@@ -6050,7 +6128,12 @@ class PoetoreWindow(QWidget):
         self.disenchant_dust_value.setToolTip(tooltip)
         self.disenchant_dust_panel.show()
 
-    def _show_unique_candidates(self, candidates):
+    def _show_unique_candidates(self, candidates, search_generation: int | None = None):
+        if (
+            search_generation is not None
+            and search_generation != self._search_generation
+        ):
+            return
         self.price_button.setEnabled(True)
         self._reset_unique_candidates()
         for candidate in candidates:
@@ -6129,7 +6212,12 @@ class PoetoreWindow(QWidget):
         finally:
             reply.deleteLater()
 
-    def _show_unique_variants(self, variants):
+    def _show_unique_variants(self, variants, search_generation: int | None = None):
+        if (
+            search_generation is not None
+            and search_generation != self._search_generation
+        ):
+            return
         self.price_button.setEnabled(True)
         self.unique_variant_combo.clear()
         for label, discriminator in variants:
@@ -6951,6 +7039,14 @@ def prepare_poetore_window(owner):
             owner._poetore_result_hwnd = int(window.winId())
         except (RuntimeError, TypeError, ValueError):
             owner._poetore_result_hwnd = None
+    from src.poetore.prewarm import start_search_metadata_prewarm
+
+    app_config = getattr(owner, "config", None)
+    preferred_version = (
+        str(app_config.get("poe_version", POE1))
+        if isinstance(app_config, dict) else POE1
+    )
+    start_search_metadata_prewarm(preferred_version)
     return window
 
 

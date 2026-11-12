@@ -4,6 +4,7 @@ from functools import lru_cache
 import json
 from pathlib import Path
 import re
+import threading
 
 
 IDENTITY_PATH = (
@@ -16,6 +17,17 @@ RELATED_ITEMS_PATH = IDENTITY_PATH.with_name("related_item_groups.json")
 _STAT_SCOPE_SUFFIXES = {
     "jewel": ("Jewel", "ジュエル"),
 }
+
+_MATCHER_BUILD_LOCK = threading.RLock()
+_STAT_MATCHERS: tuple[tuple[dict, re.Pattern], ...] | None = None
+_STAT_MATCHER_INDEX: dict[str, tuple[tuple[dict, re.Pattern], ...]] | None = None
+_LOCAL_STAT_MATCHERS: tuple[tuple[dict, re.Pattern], ...] | None = None
+_LOCAL_STAT_MATCHER_INDEX: dict[str, tuple[tuple[dict, re.Pattern], ...]] | None = None
+_SCOPED_STAT_MATCHERS: dict[str, tuple[tuple[dict, re.Pattern], ...]] = {}
+_SCOPED_STAT_MATCHER_INDEXES: dict[
+    str, dict[str, tuple[tuple[dict, re.Pattern], ...]]
+] = {}
+_NUMBER_TOKEN = re.compile(r"(?<![A-Za-z])[-+]?\d+(?:\.\d+)?")
 
 
 @lru_cache(maxsize=1)
@@ -138,17 +150,49 @@ def _template_pattern(template: str) -> re.Pattern:
     return re.compile(rf"^{escaped}$", re.IGNORECASE)
 
 
-@lru_cache(maxsize=1)
+def _stat_shape(text: str) -> str:
+    """Return a cheap exact-shape key while leaving regex as final authority."""
+    shape = _NUMBER_TOKEN.sub("#", str(text))
+    # A bare ``#`` Trade template accepts signed values.  Removing a sign from
+    # the lookup key may add candidates, but the original regex still rejects
+    # candidates whose sign is not valid for a stricter ``+#`` template.
+    shape = re.sub(r"[+-](?=#)", "", shape)
+    return re.sub(r"\s+", " ", shape).strip().casefold()
+
+
+def _freeze_matcher_index(
+    index: dict[str, list[tuple[dict, re.Pattern]]],
+) -> dict[str, tuple[tuple[dict, re.Pattern], ...]]:
+    return {key: tuple(value) for key, value in index.items()}
+
+
 def stat_matchers() -> tuple[tuple[dict, re.Pattern], ...]:
-    payload = json.loads(STAT_PATH.read_text(encoding="utf-8"))
-    rows = []
-    for entry in payload.get("entries", ()):
-        if entry.get("type") == "pseudo":
-            continue
-        for text in (entry.get("text") or {}).values():
-            if text:
-                rows.append((entry, _template_pattern(str(text))))
-    return tuple(rows)
+    global _STAT_MATCHERS, _STAT_MATCHER_INDEX
+    if _STAT_MATCHERS is not None:
+        return _STAT_MATCHERS
+    with _MATCHER_BUILD_LOCK:
+        if _STAT_MATCHERS is None:
+            payload = json.loads(STAT_PATH.read_text(encoding="utf-8"))
+            rows = []
+            index: dict[str, list[tuple[dict, re.Pattern]]] = {}
+            for entry in payload.get("entries", ()):
+                if entry.get("type") == "pseudo":
+                    continue
+                for text in (entry.get("text") or {}).values():
+                    if text:
+                        row = (entry, _template_pattern(str(text)))
+                        rows.append(row)
+                        index.setdefault(_stat_shape(str(text)), []).append(row)
+            _STAT_MATCHER_INDEX = _freeze_matcher_index(index)
+            # Publish the matcher tuple last.  Readers use it as the ready
+            # flag, so they can never observe matchers without their index.
+            _STAT_MATCHERS = tuple(rows)
+    return _STAT_MATCHERS
+
+
+def stat_matcher_index() -> dict[str, tuple[tuple[dict, re.Pattern], ...]]:
+    stat_matchers()
+    return _STAT_MATCHER_INDEX or {}
 
 
 @lru_cache(maxsize=1)
@@ -168,37 +212,77 @@ def explicit_variant_id(stat_id: str | None) -> str | None:
     return candidate if candidate in stat_ids() else None
 
 
-@lru_cache(maxsize=1)
 def local_stat_matchers() -> tuple[tuple[dict, re.Pattern], ...]:
-    rows = []
-    for entry, _pattern in stat_matchers():
-        for template in (entry.get("text") or {}).values():
-            template = str(template)
-            local_template = re.sub(
-                r"\s*\((?:Local|ローカル)\)\s*$", "", template,
-                flags=re.IGNORECASE,
-            )
-            if local_template != template:
-                rows.append((entry, _template_pattern(local_template)))
-    return tuple(rows)
+    global _LOCAL_STAT_MATCHERS, _LOCAL_STAT_MATCHER_INDEX
+    if _LOCAL_STAT_MATCHERS is not None:
+        return _LOCAL_STAT_MATCHERS
+    with _MATCHER_BUILD_LOCK:
+        if _LOCAL_STAT_MATCHERS is None:
+            rows = []
+            index: dict[str, list[tuple[dict, re.Pattern]]] = {}
+            for entry, _pattern in stat_matchers():
+                for template in (entry.get("text") or {}).values():
+                    template = str(template)
+                    local_template = re.sub(
+                        r"\s*\((?:Local|ローカル)\)\s*$", "", template,
+                        flags=re.IGNORECASE,
+                    )
+                    if local_template != template:
+                        row = (entry, _template_pattern(local_template))
+                        rows.append(row)
+                        index.setdefault(_stat_shape(local_template), []).append(row)
+            _LOCAL_STAT_MATCHER_INDEX = _freeze_matcher_index(index)
+            _LOCAL_STAT_MATCHERS = tuple(rows)
+    return _LOCAL_STAT_MATCHERS
 
 
-@lru_cache(maxsize=32)
+def local_stat_matcher_index() -> dict[str, tuple[tuple[dict, re.Pattern], ...]]:
+    local_stat_matchers()
+    return _LOCAL_STAT_MATCHER_INDEX or {}
+
+
 def scoped_stat_matchers(category: str) -> tuple[tuple[dict, re.Pattern], ...]:
-    suffixes = _STAT_SCOPE_SUFFIXES.get(category, ())
-    rows = []
-    for entry, _pattern in stat_matchers():
-        for template in (entry.get("text") or {}).values():
-            template = str(template)
-            scoped_template = template
-            for suffix in suffixes:
-                scoped_template = re.sub(
-                    rf"\s*\({re.escape(suffix)}\)\s*$", "", scoped_template,
-                    flags=re.IGNORECASE,
-                )
-            if scoped_template != template:
-                rows.append((entry, _template_pattern(scoped_template)))
-    return tuple(rows)
+    if category in _SCOPED_STAT_MATCHERS:
+        return _SCOPED_STAT_MATCHERS[category]
+    with _MATCHER_BUILD_LOCK:
+        if category not in _SCOPED_STAT_MATCHERS:
+            suffixes = _STAT_SCOPE_SUFFIXES.get(category, ())
+            rows = []
+            index: dict[str, list[tuple[dict, re.Pattern]]] = {}
+            for entry, _pattern in stat_matchers():
+                for template in (entry.get("text") or {}).values():
+                    template = str(template)
+                    scoped_template = template
+                    for suffix in suffixes:
+                        scoped_template = re.sub(
+                            rf"\s*\({re.escape(suffix)}\)\s*$", "", scoped_template,
+                            flags=re.IGNORECASE,
+                        )
+                    if scoped_template != template:
+                        row = (entry, _template_pattern(scoped_template))
+                        rows.append(row)
+                        index.setdefault(_stat_shape(scoped_template), []).append(row)
+            _SCOPED_STAT_MATCHER_INDEXES[category] = _freeze_matcher_index(index)
+            _SCOPED_STAT_MATCHERS[category] = tuple(rows)
+    return _SCOPED_STAT_MATCHERS[category]
+
+
+def scoped_stat_matcher_index(
+    category: str,
+) -> dict[str, tuple[tuple[dict, re.Pattern], ...]]:
+    scoped_stat_matchers(category)
+    return _SCOPED_STAT_MATCHER_INDEXES.get(category, {})
+
+
+def prewarm_metadata() -> None:
+    """Build every local immutable lookup used by the PoE2 parser."""
+    identity_index()
+    stat_matchers()
+    local_stat_matchers()
+    for category in _STAT_SCOPE_SUFFIXES:
+        scoped_stat_matchers(category)
+    stat_ids()
+    augment_entries()
 
 
 def resolve_stat_line(
@@ -210,6 +294,7 @@ def resolve_stat_line(
     return candidates[0] if candidates else None
 
 
+@lru_cache(maxsize=4096)
 def resolve_stat_line_candidates(
     text: str,
     preferred_type: str | None = None,
@@ -256,37 +341,42 @@ def resolve_stat_line_candidates(
         "冒涜するとこのアイテムは不安定になる",
         "冒涜化によりこのアイテムは不安定になる",
     )
-    matchers = stat_matchers()
-    if preferred_type:
-        matchers = tuple(
-            row for row in matchers if row[0].get("type") == preferred_type
+    def ordered(rows):
+        if not preferred_type:
+            return tuple(rows)
+        return tuple(
+            row for row in rows if row[0].get("type") == preferred_type
         ) + tuple(
-            row for row in matchers if row[0].get("type") != preferred_type
+            row for row in rows if row[0].get("type") != preferred_type
         )
-    candidate_matchers = []
+
+    matcher_groups = []
     if item_category:
-        scoped_matchers = scoped_stat_matchers(item_category)
-        if preferred_type:
-            scoped_matchers = tuple(
-                row for row in scoped_matchers if row[0].get("type") == preferred_type
-            ) + tuple(
-                row for row in scoped_matchers if row[0].get("type") != preferred_type
-            )
-        candidate_matchers.extend(scoped_matchers)
+        matcher_groups.append((
+            ordered(scoped_stat_matchers(item_category)),
+            scoped_stat_matcher_index(item_category),
+        ))
     if include_local_variants:
-        local_matchers = local_stat_matchers()
-        if preferred_type:
-            local_matchers = tuple(
-                row for row in local_matchers if row[0].get("type") == preferred_type
-            ) + tuple(
-                row for row in local_matchers if row[0].get("type") != preferred_type
-            )
-        candidate_matchers.extend(local_matchers)
-    candidate_matchers.extend(matchers)
+        matcher_groups.append((
+            ordered(local_stat_matchers()), local_stat_matcher_index(),
+        ))
+    matcher_groups.append((ordered(stat_matchers()), stat_matcher_index()))
+    full_candidate_matchers = tuple(
+        row for rows, _index in matcher_groups for row in rows
+    )
+
+    def indexed_matchers(candidate: str):
+        shape = _stat_shape(candidate)
+        selected = []
+        for _rows, index in matcher_groups:
+            selected.extend(ordered(index.get(shape, ())))
+        return tuple(selected) or full_candidate_matchers
+
     def collect(candidate: str, value_multiplier: float = 1.0):
         matches = []
         seen_ids = set()
-        for entry, pattern in candidate_matchers:
+        candidates = indexed_matchers(candidate)
+        for entry, pattern in candidates:
             match = pattern.fullmatch(candidate)
             entry_id = str(entry.get("id", ""))
             if match and entry_id not in seen_ids:
@@ -295,6 +385,21 @@ def resolve_stat_line_candidates(
                     entry,
                     tuple(float(value) * value_multiplier for value in match.groups()),
                 ))
+        # The shape index is an optimization only.  Any unforeseen wording or
+        # normalization mismatch must retain the legacy full-scan behavior.
+        if not matches and candidates is not full_candidate_matchers:
+            for entry, pattern in full_candidate_matchers:
+                match = pattern.fullmatch(candidate)
+                entry_id = str(entry.get("id", ""))
+                if match and entry_id not in seen_ids:
+                    seen_ids.add(entry_id)
+                    matches.append((
+                        entry,
+                        tuple(
+                            float(value) * value_multiplier
+                            for value in match.groups()
+                        ),
+                    ))
         return matches
 
     resolved = collect(comparable)

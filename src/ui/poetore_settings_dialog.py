@@ -99,6 +99,10 @@ class PoetoreSettingsDialog(QDialog):
         super().__init__(parent)
         self.current_config = current_config or {}
         self.poe_version = str(self.current_config.get("poe_version", POE1))
+        configured_log_paths = self.current_config.get("client_log_paths")
+        self._client_log_paths = dict(
+            configured_log_paths if isinstance(configured_log_paths, dict) else {}
+        )
         self.update_check_callback = update_check_callback
         self._league_refresh_started = False
         self._league_signals = _LeagueSignals(self)
@@ -338,11 +342,12 @@ class PoetoreSettingsDialog(QDialog):
         volume_row.addWidget(self.hideout_volume_slider, 1)
         volume_row.addWidget(self.hideout_volume_label)
         hideout_form.addRow("音量:", volume_row)
-        log_paths = self.current_config.get("client_log_paths")
-        log_paths = log_paths if isinstance(log_paths, dict) else {}
+        self.hideout_preview_button = QPushButton("試聴")
+        self.hideout_preview_button.clicked.connect(self._preview_hideout_audio)
+        hideout_form.addRow(self.hideout_preview_button)
         log_row = QHBoxLayout()
         self.hideout_log_path_edit = QLineEdit(
-            str(log_paths.get(self.poe_version, "") or "")
+            str(self._client_log_paths.get(self.poe_version, "") or "")
         )
         self.hideout_log_path_edit.setPlaceholderText("Client.txtを選択")
         log_row.addWidget(self.hideout_log_path_edit, 1)
@@ -353,9 +358,6 @@ class PoetoreSettingsDialog(QDialog):
         log_row.addWidget(self.hideout_log_path_button)
         hideout_form.addRow("Client.txt:", log_row)
         hideout_layout.addLayout(hideout_form)
-        self.hideout_preview_button = QPushButton("試聴")
-        self.hideout_preview_button.clicked.connect(self._preview_hideout_audio)
-        hideout_layout.addWidget(self.hideout_preview_button)
         self.hideout_note = QLabel(
             "集中モード中、隠れ家に設定時間滞在すると通知音でお知らせします。\n"
             "通知音は、同梱音から選択できます。\n"
@@ -681,7 +683,15 @@ class PoetoreSettingsDialog(QDialog):
     def _on_poe_version_changed(self, poe_version, checked):
         if not checked:
             return
+        if hasattr(self, "hideout_log_path_edit"):
+            self._client_log_paths[self.poe_version] = (
+                self.hideout_log_path_edit.text().strip()
+            )
         self.poe_version = poe_version
+        if hasattr(self, "hideout_log_path_edit"):
+            self.hideout_log_path_edit.setText(
+                str(self._client_log_paths.get(self.poe_version, "") or "")
+            )
         self._refresh_app_mode_availability()
         self._refresh_version_specific_controls()
 
@@ -703,6 +713,9 @@ class PoetoreSettingsDialog(QDialog):
                 self.app_mode_radios[POENAVI_MODE].setChecked(True)
 
     def get_settings(self):
+        self._client_log_paths[self.poe_version] = (
+            self.hideout_log_path_edit.text().strip()
+        )
         selected_poe_version = next(
             (
                 version for version, radio in self.poe_version_radios.items()
@@ -775,10 +788,7 @@ class PoetoreSettingsDialog(QDialog):
             "custom_commands": self.custom_commands_widget.commands(),
             "stash_tab_scroll_enabled": self.stash_tab_scroll_cb.isChecked(),
             "poetore": poetore,
-            "client_log_paths": {
-                **dict(self.current_config.get("client_log_paths", {})),
-                self.poe_version: self.hideout_log_path_edit.text().strip(),
-            },
+            "client_log_paths": dict(self._client_log_paths),
             "poe_version": selected_poe_version,
             "poe_version_mode": selected_poe_version if skip_selector else "ask",
             "window_opacity": self.opacity_slider.value(),
