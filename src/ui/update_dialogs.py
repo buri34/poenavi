@@ -3,14 +3,79 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QLabel,
+    QMessageBox,
     QProgressBar,
     QPushButton,
     QTextBrowser,
     QVBoxLayout,
 )
 
+from src.ui.dialog_theme import POENAVI_DIALOG_THEME, POETORE_DIALOG_THEME
 from src.ui.styles import Styles
 from src.update.release_client import ReleaseInfo
+
+
+def _update_message_theme(parent):
+    """更新メッセージを呼び出した設定画面のテーマへ合わせる。"""
+    widget = parent
+    while widget is not None:
+        if widget.property("dialogTheme") == POETORE_DIALOG_THEME.name:
+            return POETORE_DIALOG_THEME
+        if widget.property("dialogTheme") == POENAVI_DIALOG_THEME.name:
+            return POENAVI_DIALOG_THEME
+        widget = widget.parentWidget()
+    return POENAVI_DIALOG_THEME
+
+
+def build_update_message_box(
+    parent,
+    icon: QMessageBox.Icon,
+    title: str,
+    text: str,
+    buttons: QMessageBox.StandardButtons = QMessageBox.Ok,
+    default_button: QMessageBox.StandardButton = QMessageBox.NoButton,
+) -> QMessageBox:
+    """親画面のQSSに影響されず読める更新メッセージを構築する。"""
+    theme = _update_message_theme(parent)
+    message = QMessageBox(parent)
+    message.setWindowTitle(title)
+    message.setIcon(icon)
+    message.setText(text)
+    message.setStandardButtons(buttons)
+    if default_button != QMessageBox.NoButton:
+        message.setDefaultButton(default_button)
+    message.setStyleSheet(
+        f"""
+        QMessageBox {{
+            background-color: {theme.background};
+        }}
+        QMessageBox QLabel {{
+            background-color: transparent;
+            color: {theme.text};
+        }}
+        QMessageBox QPushButton {{
+            min-width: 72px;
+            padding: 5px 12px;
+            background-color: {theme.control};
+            color: {theme.text};
+            border: 1px solid {theme.border_strong};
+            border-radius: 4px;
+        }}
+        QMessageBox QPushButton:hover {{
+            background-color: {theme.surface};
+            border-color: {theme.accent};
+        }}
+        QMessageBox QPushButton:pressed {{
+            background-color: {theme.background};
+        }}
+        """
+    )
+    return message
+
+
+def show_update_message(*args, **kwargs) -> int:
+    """可読性を固定した更新メッセージを表示する。"""
+    return build_update_message_box(*args, **kwargs).exec()
 
 
 class UpdateAvailableDialog(QDialog):
