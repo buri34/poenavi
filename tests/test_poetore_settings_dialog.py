@@ -152,6 +152,51 @@ def test_hideout_notification_controls_load_and_save_seconds_and_volume():
     dialog.close()
 
 
+def test_hideout_preview_button_is_above_client_log_path(qtbot):
+    dialog = PoetoreSettingsDialog(current_config={"poe_version": POE1})
+    qtbot.addWidget(dialog)
+    dialog.show()
+    QApplication.processEvents()
+
+    preview_y = dialog.hideout_preview_button.mapTo(
+        dialog, dialog.hideout_preview_button.rect().topLeft()
+    ).y()
+    log_path_y = dialog.hideout_log_path_edit.mapTo(
+        dialog, dialog.hideout_log_path_edit.rect().topLeft()
+    ).y()
+
+    assert preview_y < log_path_y
+    dialog.close()
+
+
+def test_hideout_log_path_follows_selected_poe_version_without_cross_writing():
+    QApplication.instance() or QApplication([])
+    dialog = PoetoreSettingsDialog(current_config={
+        "poe_version": POE2,
+        "client_log_paths": {
+            POE1: r"C:\PoE1\logs\Client.txt",
+            POE2: r"C:\PoE2\logs\Client.txt",
+        },
+    })
+
+    assert dialog.hideout_log_path_edit.text() == r"C:\PoE2\logs\Client.txt"
+
+    dialog.poe_version_radios[POE1].setChecked(True)
+    assert dialog.hideout_log_path_edit.text() == r"C:\PoE1\logs\Client.txt"
+    dialog.hideout_log_path_edit.setText(r"D:\PoE1\logs\Client.txt")
+
+    dialog.poe_version_radios[POE2].setChecked(True)
+    assert dialog.hideout_log_path_edit.text() == r"C:\PoE2\logs\Client.txt"
+    dialog.hideout_log_path_edit.setText(r"D:\PoE2\logs\Client.txt")
+
+    settings = dialog.get_settings()
+    assert settings["client_log_paths"] == {
+        POE1: r"D:\PoE1\logs\Client.txt",
+        POE2: r"D:\PoE2\logs\Client.txt",
+    }
+    dialog.close()
+
+
 def test_hideout_bundled_sound_selection_preserves_custom_sound():
     QApplication.instance() or QApplication([])
     dialog = PoetoreSettingsDialog(current_config={

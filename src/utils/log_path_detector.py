@@ -8,6 +8,17 @@ from pathlib import Path
 POE_GAME_DIRS = {"poe1": "Path of Exile", "poe2": "Path of Exile 2"}
 
 
+def _known_install_version(client_log_path: str) -> str | None:
+    """Identify official/Steam install directory names without guessing custom paths."""
+    for part in re.split(r"[\\/]+", str(client_log_path or "")):
+        compact = re.sub(r"[\s_-]+", "", part).casefold()
+        if compact == "pathofexile2":
+            return "poe2"
+        if compact == "pathofexile":
+            return "poe1"
+    return None
+
+
 def steam_library_roots() -> list[Path]:
     program_files_x86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
     steam_root = Path(program_files_x86) / "Steam"
@@ -52,9 +63,15 @@ def detect_client_log_paths() -> dict[str, str]:
 
 def fill_missing_client_log_paths(config: dict) -> bool:
     paths = config.setdefault("client_log_paths", {})
+    detected_paths = detect_client_log_paths()
     changed = False
-    for version, detected_path in detect_client_log_paths().items():
-        if not paths.get(version) and detected_path:
+    for version, detected_path in detected_paths.items():
+        configured_path = str(paths.get(version, "") or "")
+        configured_version = _known_install_version(configured_path)
+        is_cross_saved = (
+            configured_version is not None and configured_version != version
+        )
+        if detected_path and (not configured_path or is_cross_saved):
             paths[version] = detected_path
             changed = True
     return changed

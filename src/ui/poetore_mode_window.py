@@ -57,6 +57,7 @@ from src.utils.global_hotkeys import (
     is_hotkey_action_allowed,
     suppressed_hotkeys_supported,
 )
+from src.utils.log_path_detector import fill_missing_client_log_paths
 from src.utils.poe_version_data import POE1, POE2
 from src.utils.stash_tab_scroll import StashTabScrollController
 
@@ -404,6 +405,8 @@ class PoetoreModeWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.config = ConfigManager.load_config()
+        if fill_missing_client_log_paths(self.config):
+            ConfigManager.save_config(self.config)
         ensure_rate_pair_config(self.config)
         poe_version = self.config.get("poe_version", POE1)
         self.poe_version = poe_version
