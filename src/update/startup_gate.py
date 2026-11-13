@@ -6,7 +6,11 @@ from PySide6.QtCore import QEventLoop, QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QMessageBox
 
-from src.ui.update_dialogs import UpdateAvailableDialog, UpdateProgressDialog
+from src.ui.update_dialogs import (
+    UpdateAvailableDialog,
+    UpdateProgressDialog,
+    show_update_message,
+)
 from src.update.qt_controller import UpdateController
 from src.utils.config_manager import ConfigManager
 
@@ -36,14 +40,16 @@ def _run_update_gate(config: dict, parent=None, manual: bool = False) -> bool:
     if release is None:
         if manual:
             if result["error"]:
-                QMessageBox.warning(
+                show_update_message(
                     parent,
+                    QMessageBox.Warning,
                     "アップデート",
                     f"更新を確認できませんでした。\n{result['error']}",
                 )
             else:
-                QMessageBox.information(
+                show_update_message(
                     parent,
+                    QMessageBox.Information,
                     "アップデート",
                     "最新バージョンです。",
                 )
@@ -96,15 +102,17 @@ def _run_update_gate(config: dict, parent=None, manual: bool = False) -> bool:
     if download_result["cancelled"]:
         return True
     if download_result["error"]:
-        QMessageBox.warning(
+        show_update_message(
             parent,
+            QMessageBox.Warning,
             "アップデート",
             f"更新をダウンロードできませんでした。\n{download_result['error']}",
         )
         return True
 
-    answer = QMessageBox.question(
+    answer = show_update_message(
         parent,
+        QMessageBox.Question,
         "アップデートを適用",
         f"v{release.version} の検証が完了しました。\n"
         "アプリを終了して更新しますか？",
@@ -116,7 +124,12 @@ def _run_update_gate(config: dict, parent=None, manual: bool = False) -> bool:
     try:
         controller.launch_updater(download_result["archive"])
     except Exception as exc:
-        QMessageBox.critical(parent, "アップデート", str(exc))
+        show_update_message(
+            parent,
+            QMessageBox.Critical,
+            "アップデート",
+            str(exc),
+        )
         return True
     return False
 

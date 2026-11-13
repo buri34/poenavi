@@ -71,7 +71,11 @@ from src.utils.poelab_links import POELAB_HOME
 from src.utils.voicevox_tts import VoicevoxTtsService, guide_to_speech_text
 from src.utils.area_notes import get_area_note, set_area_note
 from src.ui.gem_tracker_widget import GemTrackerWidget, PoBImportDialog, PoBSkillSetSelectionDialog
-from src.ui.update_dialogs import UpdateAvailableDialog, UpdateProgressDialog
+from src.ui.update_dialogs import (
+    UpdateAvailableDialog,
+    UpdateProgressDialog,
+    show_update_message,
+)
 from src.update.qt_controller import UpdateController
 from PySide6.QtWidgets import QComboBox, QDialog, QFormLayout
 
@@ -830,15 +834,17 @@ class MainWindow(QMainWindow):
         if download_result["cancelled"]:
             return True
         if download_result["error"]:
-            QMessageBox.warning(
+            show_update_message(
                 self,
+                QMessageBox.Warning,
                 "アップデート",
                 f"更新をダウンロードできませんでした。\n{download_result['error']}",
             )
             return True
 
-        answer = QMessageBox.question(
+        answer = show_update_message(
             self,
+            QMessageBox.Question,
             "アップデートを適用",
             f"v{release.version} の検証が完了しました。\n"
             "ぽえなびを終了して更新しますか？",
@@ -850,7 +856,12 @@ class MainWindow(QMainWindow):
         try:
             self.update_controller.launch_updater(download_result["archive"])
         except Exception as exc:
-            QMessageBox.critical(self, "アップデート", str(exc))
+            show_update_message(
+                self,
+                QMessageBox.Critical,
+                "アップデート",
+                str(exc),
+            )
             return True
         return False
         
@@ -874,7 +885,12 @@ class MainWindow(QMainWindow):
     def _on_update_check_finished(self, release, manual):
         if release is None:
             if manual:
-                QMessageBox.information(self, "アップデート", "最新バージョンです。")
+                show_update_message(
+                    self,
+                    QMessageBox.Information,
+                    "アップデート",
+                    "最新バージョンです。",
+                )
             return
         if not manual and self.config.get("notified_update_version") == release.version:
             return
@@ -882,8 +898,9 @@ class MainWindow(QMainWindow):
 
     def _on_update_check_failed(self, message, manual):
         if manual:
-            QMessageBox.warning(
+            show_update_message(
                 self,
+                QMessageBox.Warning,
                 "アップデート",
                 f"更新を確認できませんでした。\n{message}",
             )
@@ -923,8 +940,9 @@ class MainWindow(QMainWindow):
 
     def _on_update_download_failed(self, message):
         self._on_update_download_cancelled()
-        QMessageBox.warning(
+        show_update_message(
             self,
+            QMessageBox.Warning,
             "アップデート",
             f"更新をダウンロードできませんでした。\n{message}",
         )
@@ -933,8 +951,9 @@ class MainWindow(QMainWindow):
         if self._update_progress_dialog:
             self._update_progress_dialog.accept()
             self._update_progress_dialog = None
-        answer = QMessageBox.question(
+        answer = show_update_message(
             self,
+            QMessageBox.Question,
             "アップデートを適用",
             f"v{release.version} の検証が完了しました。\n"
             "ぽえなびを終了して更新しますか？",
@@ -946,7 +965,12 @@ class MainWindow(QMainWindow):
         try:
             self.update_controller.launch_updater(archive)
         except Exception as exc:
-            QMessageBox.critical(self, "アップデート", str(exc))
+            show_update_message(
+                self,
+                QMessageBox.Critical,
+                "アップデート",
+                str(exc),
+            )
             return
         QApplication.instance().quit()
     

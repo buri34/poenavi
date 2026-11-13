@@ -65,15 +65,6 @@ def test_confirmed_path_based_subcategories_are_deterministic():
     assert (
         _category(
             POE1,
-            "Fragments",
-            "Metadata/Items/Scarabs/Example",
-            "Example Scarab",
-        )
-        == "scarabs"
-    )
-    assert (
-        _category(
-            POE1,
             "Ancestor",
             "Metadata/Items/Currency/OmenExample",
             "Omen of Testing",
@@ -98,6 +89,19 @@ def test_confirmed_path_based_subcategories_are_deterministic():
         )
         == "idols"
     )
+
+
+def test_build_realm_excludes_removed_poe1_scarabs_but_not_poe2_items():
+    item_id = "Metadata/Items/Scarabs/Example"
+    en, ja = _static("Fragments", "example", "Example Scarab", "スカラベ例")
+
+    poe1 = build_realm(POE1, {item_id: "Example Scarab"}, en, ja, {item_id}, {})
+    poe2 = build_realm(POE2, {item_id: "Example Scarab"}, en, ja, {item_id}, {})
+
+    assert poe1["items"] == []
+    assert poe1["unmapped_observed"] == []
+    assert all(category["id"] != "scarabs" for category in poe1["categories"])
+    assert [row["id"] for row in poe2["items"]] == [item_id]
 
 
 def test_confirmed_poe2_in_game_category_overrides_are_deterministic():

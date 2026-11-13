@@ -390,6 +390,22 @@
       }
     }
   },
+  "arcane link": {
+    "attribute": 3,
+    "level": 34,
+    "quests": {
+      "breaking the seal": {
+        "quest": [
+          "scion"
+        ],
+        "vendor": [
+          "marauder",
+          "duelist",
+          "templar"
+        ]
+      }
+    }
+  },
   "arcane surge support": {
     "attribute": 3,
     "level": 1,

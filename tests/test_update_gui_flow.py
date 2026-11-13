@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 pytest.importorskip("PySide6")
-from PySide6.QtWidgets import QApplication, QMessageBox, QMainWindow
+from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 from src.ui.main_window import MainWindow
 from src.update.qt_controller import UpdateController
@@ -101,9 +101,14 @@ def test_manual_check_shows_same_release_again():
 
 def test_manual_check_without_release_reports_latest():
     window = MainWindow.__new__(MainWindow)
-    with patch("src.ui.main_window.QMessageBox.information") as information:
+    with patch("src.ui.main_window.show_update_message") as show_message:
         window._on_update_check_finished(None, True)
-    information.assert_called_once()
+    show_message.assert_called_once_with(
+        window,
+        QMessageBox.Information,
+        "アップデート",
+        "最新バージョンです。",
+    )
 
 
 def test_declining_apply_keeps_verified_download():
@@ -112,7 +117,7 @@ def test_declining_apply_keeps_verified_download():
     window.update_controller = Mock()
 
     with patch(
-        "src.ui.main_window.QMessageBox.question",
+        "src.ui.main_window.show_update_message",
         return_value=QMessageBox.No,
     ):
         window._on_update_download_ready(Path("PoENavi.zip"), release_info())
