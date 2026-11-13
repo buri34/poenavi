@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
 
 jobs:
@@ -48,6 +49,89 @@ jobs:
               throw "$path has unexpected FileVersion: $($metadata.FileVersion)"
             }
           }
+
+      - name: Verify SignPath organization configuration
+        if: github.event_name == 'pull_request' && github.head_ref == 'chore/signpath-test'
+        shell: pwsh
+        env:
+          SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:SIGNPATH_ORGANIZATION_ID)) {
+            throw "Repository variable SIGNPATH_ORGANIZATION_ID is not configured"
+          }
+
+      - name: Record unsigned executable hash
+        if: github.event_name == 'pull_request' && github.head_ref == 'chore/signpath-test'
+        id: unsigned-executable
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash "dist\PoENavi\PoENavi.exe" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "sha256=$hash" >> $env:GITHUB_OUTPUT
+
+      - name: Upload unsigned executable for SignPath
+        if: github.event_name == 'pull_request' && github.head_ref == 'chore/signpath-test'
+        id: upload-signpath-input
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          path: dist/PoENavi/PoENavi.exe
+          archive: false
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Submit SignPath test signing request
+        if: github.event_name == 'pull_request' && github.head_ref == 'chore/signpath-test'
+        id: signpath-test
+        uses: SignPath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: poenavi
+          signing-policy-slug: test-signing
+          github-artifact-id: ${{ steps.upload-signpath-input.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: dist/signed
+          skip-decompress: true
+
+      - name: Verify SignPath test signature
+        if: github.event_name == 'pull_request' && github.head_ref == 'chore/signpath-test'
+        shell: pwsh
+        env:
+          UNSIGNED_SHA256: ${{ steps.unsigned-executable.outputs.sha256 }}
+          SIGNING_REQUEST_URL: ${{ steps.signpath-test.outputs.signing-request-web-url }}
+        run: |
+          $signedPath = "dist\signed\PoENavi.exe"
+          if (-not (Test-Path $signedPath -PathType Leaf)) {
+            Get-ChildItem "dist\signed" -Recurse -Force | Select-Object FullName, Length
+            throw "Signed PoENavi.exe was not downloaded"
+          }
+
+          $signedHash = (Get-FileHash $signedPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($signedHash -eq $env:UNSIGNED_SHA256) {
+            throw "Signed executable hash is identical to the unsigned input"
+          }
+
+          $signature = Get-AuthenticodeSignature $signedPath
+          if ($null -eq $signature.SignerCertificate -or $signature.SignatureType -ne "Authenticode") {
+            throw "Signed PoENavi.exe does not contain an Authenticode signer certificate"
+          }
+
+          @(
+            "## SignPath test signing"
+            ""
+            "- Request: $env:SIGNING_REQUEST_URL"
+            "- Signature status: $($signature.Status)"
+            "- Signer: $($signature.SignerCertificate.Subject)"
+            "- Thumbprint: $($signature.SignerCertificate.Thumbprint)"
+          ) | Add-Content $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload SignPath-signed executable
+        if: github.event_name == 'pull_request' && github.head_ref == 'chore/signpath-test'
+        uses: actions/upload-artifact@v6
+        with:
+          name: PoENavi-test-signed-executable
+          path: dist/signed/PoENavi.exe
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Upload verification artifact
         uses: actions/upload-artifact@v6
