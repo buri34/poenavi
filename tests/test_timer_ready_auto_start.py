@@ -86,6 +86,31 @@ def test_ready_button_stays_enabled_with_existing_record_for_warning():
     assert window._can_use_ready_button() is True
 
 
+def test_reset_timer_clears_record_order_and_allows_ready():
+    window = make_window()
+    window.lap_record_order = [1, 2]
+    window.config = {"confirm_reset": False}
+    window.update_text = Mock()
+    window._clear_saved_timer = Mock()
+    window.segment_recorder.reset = Mock()
+    window.update_lap_display = Mock()
+    window._set_part2 = Mock()
+    window.zone_visit_counts = {"The Coast": 1}
+    window.visit_override = 2
+    window._update_visit_btn = Mock()
+    window.map_thumbnail = Mock()
+
+    window.reset_timer()
+
+    assert window.lap_record_order == []
+    assert window._has_timer_record() is False
+    assert window._can_set_timer_ready() is True
+    window.update_text.assert_called_once_with(0.0)
+    window._clear_saved_timer.assert_called_once_with()
+    window.segment_recorder.reset.assert_called_once_with()
+    window.map_thumbnail.clear.assert_called_once_with()
+
+
 def test_actual_twilight_strand_entry_starts_once_and_clears_ready():
     window = make_window()
     window.toggle_timer_ready()
