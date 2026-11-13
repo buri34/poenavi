@@ -487,7 +487,8 @@ class OfficialExchangeShadowService:
                         callbacks.append(on_checked)
                 return False
             current = self._tables.get(key)
-            if current is not None and current.end_hour >= latest_completed_hour(self._clock()):
+            latest_hour = latest_completed_hour(self._clock())
+            if current is not None and current.end_hour >= latest_hour:
                 no_new_result = SyncCheckResult(
                     "no_new_data", poe_version, league, current.end_hour,
                 )
@@ -531,15 +532,18 @@ class OfficialExchangeShadowService:
                     callbacks = tuple(self._sync_callbacks.pop(key, ()))
                     check_callbacks = tuple(self._check_callbacks.pop(key, ()))
             if result is not None:
+                table_ready = result["event"] == "sync_completed"
                 check_result = SyncCheckResult(
-                    "updated" if previous_end_hour != result["end_hour"] else "no_new_data",
-                    poe_version,
-                    league,
-                    result["end_hour"],
+                    (
+                        "updated" if previous_end_hour != result["end_hour"]
+                        else "no_new_data"
+                    ) if table_ready else "no_market_data",
+                    poe_version, league, result["end_hour"],
                     fetched=result["fetched"],
                 )
-                for callback in callbacks:
-                    self._notify_completion_callback(callback, result)
+                if table_ready:
+                    for callback in callbacks:
+                        self._notify_completion_callback(callback, result)
             if check_result is not None:
                 for callback in check_callbacks:
                     self._notify_check_callback(callback, check_result)
@@ -588,10 +592,6 @@ class OfficialExchangeShadowService:
                 market for market in payload.get("markets", ())
                 if market.get("league") == league
             ]
-            if not markets:
-                raise RuntimeError(
-                    f"No Currency Exchange markets for {profile.realm}/{league} at {hour}"
-                )
             _atomic_gzip_json(self._snapshot_path(folder, hour), {
                 "schema": 1,
                 "realm": profile.realm,
@@ -601,21 +601,59 @@ class OfficialExchangeShadowService:
             })
             fetched += 1
 
-        required = set(required_hours)
-        pruned = 0
-        for path in folder.glob("*.json.gz"):
-            try:
-                hour = int(path.name.removesuffix(".json.gz"))
-            except ValueError:
-                continue
-            if hour not in required:
-                path.unlink()
-                pruned += 1
-
         paths = [self._snapshot_path(folder, hour) for hour in required_hours]
         if not all(path.exists() for path in paths):
             raise RuntimeError("Currency Exchange 24-hour cache is incomplete")
-        table = self._build_table(profile, league, end_hour, paths)
+        snapshots = [_read_gzip_json(path) for path in paths]
+        market_indexes = [
+            index for index, snapshot in enumerate(snapshots)
+            if snapshot.get("markets")
+        ]
+        if not market_indexes:
+            pruned = self._prune_snapshots(folder, set(required_hours))
+            paths[-1].unlink(missing_ok=True)
+            result = {
+                "event": "sync_pending",
+                "poe_version": poe_version,
+                "realm": profile.realm,
+                "league": league,
+                "end_hour": end_hour,
+                "window_hours": WINDOW_HOURS,
+                "active_window_hours": 0,
+                "missing_before": len(missing),
+                "fetched": fetched,
+                "pruned": pruned,
+                "items": 0,
+                "missing_ids": 0,
+                "ambiguous_names": 0,
+                "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
+            }
+            self._append_log(result)
+            return result
+
+        first_market_index = market_indexes[0]
+        last_market_index = market_indexes[-1]
+        gap_indexes = [
+            index for index in range(first_market_index, last_market_index + 1)
+            if not snapshots[index].get("markets")
+        ]
+        if gap_indexes:
+            for index in gap_indexes:
+                paths[index].unlink(missing_ok=True)
+            gap_hours = ", ".join(str(required_hours[index]) for index in gap_indexes)
+            raise RuntimeError(
+                f"Currency Exchange market data has gaps for "
+                f"{profile.realm}/{league}: {gap_hours}"
+            )
+
+        active_paths = paths[first_market_index:last_market_index + 1]
+        table_end_hour = required_hours[last_market_index]
+        for path in paths[last_market_index + 1:]:
+            path.unlink(missing_ok=True)
+
+        required = set(required_hours)
+        pruned = self._prune_snapshots(folder, required)
+        table = self._build_table(profile, league, table_end_hour, active_paths)
         with self._lock:
             self._tables[(poe_version, league)] = table
 
@@ -624,8 +662,9 @@ class OfficialExchangeShadowService:
             "poe_version": poe_version,
             "realm": profile.realm,
             "league": league,
-            "end_hour": end_hour,
+            "end_hour": table_end_hour,
             "window_hours": WINDOW_HOURS,
+            "active_window_hours": len(active_paths),
             "missing_before": len(missing),
             "fetched": fetched,
             "pruned": pruned,
@@ -636,6 +675,19 @@ class OfficialExchangeShadowService:
         }
         self._append_log(result)
         return result
+
+    @staticmethod
+    def _prune_snapshots(folder: Path, required_hours: set[int]) -> int:
+        pruned = 0
+        for path in folder.glob("*.json.gz"):
+            try:
+                hour = int(path.name.removesuffix(".json.gz"))
+            except ValueError:
+                continue
+            if hour not in required_hours:
+                path.unlink()
+                pruned += 1
+        return pruned
 
     def lookup(
         self,

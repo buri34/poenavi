@@ -516,7 +516,9 @@ def test_candidate_refresh_does_not_remove_registered_pair(qapp, tmp_path):
     try:
         dialog.update_available_item_ids([])
         assert dialog.candidate_list.count() == 1
-        assert dialog.candidate_list.item(0).text() == "候補データを取得中…"
+        assert dialog.candidate_list.item(0).text() == (
+            "このリーグの取引データはまだありません（自動確認中）"
+        )
         assert not dialog.candidate_list.item(0).flags() & Qt.ItemIsEnabled
         assert store.pairs(POE1) == before
     finally:
@@ -534,7 +536,9 @@ def test_candidates_appear_when_background_market_table_becomes_ready(qapp, tmp_
     )
     try:
         assert dialog._availability_timer.isActive()
-        assert dialog.candidate_list.item(0).text() == "候補データを取得中…"
+        assert dialog.candidate_list.item(0).text() == (
+            "このリーグの取引データはまだありません（自動確認中）"
+        )
 
         live_ids.add(target.item_id)
         dialog._refresh_available_item_ids()

@@ -435,6 +435,144 @@ def test_next_hour_fetches_only_delta_and_keeps_cache_bounded(tmp_path):
     assert service.cache_file_count(POE1, "Test League") == WINDOW_HOURS
 
 
+def test_new_league_builds_from_first_contiguous_market_hour(tmp_path):
+    now = [100 * HOUR_SECONDS + 1]
+    start_hour = 99 * HOUR_SECONDS
+    calls = []
+
+    def fetcher(profile, hour):
+        calls.append(hour)
+        if hour < start_hour:
+            return {"markets": [
+                market("Old League", ITEM, profile.base_currency, 1, 999),
+            ]}
+        return payload("New League", profile, hour)
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=fetcher,
+        clock=lambda: now[0],
+    )
+
+    first = service.sync(POE1, "New League")
+    assert first["active_window_hours"] == 1
+    assert service.sync_state(POE1, "New League").available
+    assert ITEM in service.exchange_item_ids(POE1, "New League")
+
+    calls.clear()
+    now[0] += HOUR_SECONDS
+    second = service.sync(POE1, "New League")
+    assert second["active_window_hours"] == 2
+    assert second["fetched"] == 1
+    assert calls == [100 * HOUR_SECONDS]
+
+
+def test_new_league_without_market_data_retries_latest_hour(tmp_path):
+    calls = []
+
+    def fetcher(_profile, hour):
+        calls.append(hour)
+        return {"markets": []}
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=fetcher,
+        clock=lambda: 100 * HOUR_SECONDS + 1,
+    )
+
+    summary = service.sync(POE1, "New League")
+    assert summary["event"] == "sync_pending"
+    assert summary["active_window_hours"] == 0
+    assert not service.sync_state(POE1, "New League").available
+    assert service.exchange_item_ids(POE1, "New League") == frozenset()
+
+    calls.clear()
+    retried = service.sync(POE1, "New League")
+    assert retried["event"] == "sync_pending"
+    assert calls == [99 * HOUR_SECONDS]
+
+
+def test_pending_queue_reports_no_market_data_without_table_callback(tmp_path):
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=lambda _profile, _hour: {"markets": []},
+        clock=lambda: 100 * HOUR_SECONDS + 1,
+    )
+    checked = []
+    completed = []
+    notified = threading.Event()
+
+    def on_checked(result):
+        checked.append(result)
+        notified.set()
+
+    assert service.queue_sync(
+        POE1, "New League", on_complete=completed.append, on_checked=on_checked,
+    )
+    assert notified.wait(timeout=2)
+    assert checked[0].status == "no_market_data"
+    assert completed == []
+
+
+def test_unpublished_trailing_hour_uses_latest_contiguous_table(tmp_path):
+    def fetcher(profile, hour):
+        if hour == 99 * HOUR_SECONDS:
+            return payload("New League", profile, hour)
+        return {"markets": []}
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=fetcher,
+        clock=lambda: 101 * HOUR_SECONDS + 1,
+    )
+
+    summary = service.sync(POE1, "New League")
+    assert summary["end_hour"] == 99 * HOUR_SECONDS
+    assert summary["active_window_hours"] == 1
+    state = service.sync_state(POE1, "New League")
+    assert state.available
+    assert state.lag_hours == 1
+    assert ITEM in service.exchange_item_ids(POE1, "New League")
+
+
+def test_market_gap_keeps_previous_table_and_retries_missing_hour(tmp_path):
+    now = [100 * HOUR_SECONDS + 1]
+    missing_hours = set()
+    calls = []
+
+    def fetcher(profile, hour):
+        calls.append(hour)
+        if hour in missing_hours:
+            return {"markets": []}
+        return payload("Test League", profile, hour)
+
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+        fetcher=fetcher,
+        clock=lambda: now[0],
+    )
+    service.sync(POE1, "Test League")
+    previous = service.direct_pair(POE1, "Test League", ITEM, CHAOS)
+
+    now[0] += 2 * HOUR_SECONDS
+    missing_hours.add(100 * HOUR_SECONDS)
+    with pytest.raises(RuntimeError, match="market data has gaps"):
+        service.sync(POE1, "Test League")
+    preserved = service.direct_pair(POE1, "Test League", ITEM, CHAOS)
+    assert preserved.end_hour == previous.end_hour
+
+    missing_hours.clear()
+    calls.clear()
+    recovered = service.sync(POE1, "Test League")
+    assert recovered["end_hour"] == 101 * HOUR_SECONDS
+    assert calls == [100 * HOUR_SECONDS]
+
+
 def test_restart_rebuilds_memory_table_from_disk_without_refetching_24_hours(tmp_path):
     service, calls = make_service(tmp_path)
     service.sync(POE1, "Test League")
