@@ -1557,6 +1557,11 @@ class PoetoreWindow(QWidget):
             (("Foil Unique", True, False), ("通常Unique", False, False)),
         )
         self.foil_chip.hide()
+        self.map_area_chip = QPushButton()
+        self.map_area_chip.setObjectName("readonlyFilterChip")
+        self.map_area_chip.setEnabled(False)
+        self.map_area_chip.setToolTip("コピー元から判定した検索対象のマップエリア")
+        self.map_area_chip.hide()
         self.map_tier_chip = _NumericFilterChip("Tier", 1, 17)
         self.map_tier_chip.setFixedWidth(116)
         self.nightmare_map_chip = QPushButton("ナイトメア")
@@ -1625,6 +1630,7 @@ class PoetoreWindow(QWidget):
         self.sanctified_combo.setToolTip("クリックするたびに聖別化条件を切り替えます")
         self.sanctified_combo.hide()
         self._filter_chips = (
+            ("map_area", self.map_area_chip),
             ("links", self.links_tag),
             ("nightmare_map", self.nightmare_map_chip),
             ("map_tier", self.map_tier_chip),
@@ -5895,6 +5901,14 @@ class PoetoreWindow(QWidget):
             self.gem_variant_chip.setText(f"Variant：{variant}")
 
         self._configure_logbook_areas(item)
+
+        map_area = str(
+            item.properties.get("マップエリア")
+            or item.properties.get("Map Area")
+            or ""
+        ).strip()
+        self.map_area_chip.setVisible(item.category == "map" and bool(map_area))
+        self.map_area_chip.setText(f"マップ：{map_area}" if map_area else "")
 
         map_identity = " ".join(filter(None, (
             item.name, item.base_type, self._trade_base_type,

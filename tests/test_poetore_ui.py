@@ -5069,6 +5069,44 @@ Blighted Map (Tier 16)
         window.close()
 
 
+def test_localized_blighted_map_shows_readonly_map_area_as_first_condition(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: マップ
+レアリティ: ノーマル
+ブライトに覆われたマップ (ティア 3)
+--------
+マップエリア: 熱帯の島
+アイテムレベル: 72
+--------
+モンスターレベル：70
+--------
+{ 暗黙モッド }
+エリアは成長する真菌に寄生されている
+最大3回アノイントできる — スケールできない値
+このエリアに元々生息していた生物はいなくなる — スケールできない値
+""")
+        window.parse_current_text()
+
+        assert window.item_name_label.text() == "ブライトに覆われたマップ (ティア 3)"
+        assert not window.map_area_chip.isHidden()
+        assert window.map_area_chip.text() == "マップ：熱帯の島"
+        assert not window.map_area_chip.isEnabled()
+        visible_names = tuple(
+            name for name, chip in window._filter_chips if not chip.isHidden()
+        )
+        assert visible_names[:3] == ("map_area", "map_tier", "blighted")
+
+        window.input_edit.setPlainText("""アイテムクラス: スタック可能カレンシー
+レアリティ: カレンシー
+混沌のオーブ
+""")
+        window.parse_current_text()
+        assert window.map_area_chip.isHidden()
+    finally:
+        window.close()
+
+
 def test_inscribed_ultimatum_shows_unsupported_condition_notice(qapp):
     window = PoetoreWindow()
     try:
@@ -6785,7 +6823,7 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
     window = PoetoreWindow()
     try:
         assert tuple(name for name, _widget in window._filter_chips) == (
-            "links", "nightmare_map", "map_tier", "completion_reward", "area_level", "heist_wings",
+            "map_area", "links", "nightmare_map", "map_tier", "completion_reward", "area_level", "heist_wings",
             "heist_job", "heist_target", "cluster_enchant",
             "cluster_passives", "cluster_sockets", "blighted", "item_level",
             "base_percentile", "gem_variant", "gem_level", "quality", "runemastered",
