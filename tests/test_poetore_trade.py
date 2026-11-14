@@ -386,6 +386,109 @@ def test_329_japanese_copy_resolves_unique_name_and_base_type():
         ) == ("Mesh Boots", "Wake of Destruction")
 
 
+def _trade_item_catalog_payload(type_name="", unique_name=""):
+    entries = []
+    if type_name:
+        entry = {"type": type_name}
+        if unique_name:
+            entry.update({"name": unique_name, "flags": {"unique": True}})
+        entries.append(entry)
+    return {"result": [{"id": "armour", "entries": entries}]}
+
+
+def _storm_sail_item():
+    return ParsedItem(
+        "盾", "ユニーク", "ストームセールの舵輪", "腐ったラウンドシールド", "armour",
+    )
+
+
+def test_japanese_identity_refreshes_stale_catalog_once_and_reaches_search():
+    _trade_response_cache.clear()
+    stale = _trade_item_catalog_payload()
+    fresh_en = _trade_item_catalog_payload("Rotted Round Shield", "Wheel of the Stormsail")
+    fresh_ja = _trade_item_catalog_payload("腐ったラウンドシールド", "ストームセールの舵輪")
+    responses = {
+        "https://www.pathofexile.com/api/trade/data/items": [stale, fresh_en],
+        "https://jp.pathofexile.com/api/trade/data/items": [stale, fresh_ja],
+        "https://www.pathofexile.com/api/trade/search/Covens": [
+            {"id": "qid", "result": [], "total": 0},
+        ],
+    }
+
+    def request_json(url, _payload=None):
+        return responses[url].pop(0), {}
+
+    with patch("src.poetore.trade._item_entries_cache", None), patch(
+        "src.poetore.trade._jp_item_entries_cache", None,
+    ), patch("src.poetore.trade._item_groups_cache", None), patch(
+        "src.poetore.trade._jp_item_groups_cache", None,
+    ), patch("src.poetore.trade._request_json", side_effect=request_json) as request:
+        result = search_prices(
+            _storm_sail_item(), "腐ったラウンドシールド", "Covens",
+            trade_name="ストームセールの舵輪",
+        )
+
+    search_call = next(
+        call for call in request.call_args_list if "/search/Covens" in call.args[0]
+    )
+    assert search_call.args[1]["query"]["type"] == "Rotted Round Shield"
+    assert search_call.args[1]["query"]["name"] == "Wheel of the Stormsail"
+    assert result.query_id == "qid"
+    assert request.call_count == 5
+    assert not any(responses.values())
+
+
+def test_japanese_identity_stops_after_one_failed_catalog_refresh():
+    stale = _trade_item_catalog_payload()
+    responses = {
+        "https://www.pathofexile.com/api/trade/data/items": [stale, stale],
+        "https://jp.pathofexile.com/api/trade/data/items": [stale, stale],
+    }
+
+    def request_json(url):
+        return responses[url].pop(0), {}
+
+    with patch("src.poetore.trade._item_entries_cache", None), patch(
+        "src.poetore.trade._jp_item_entries_cache", None,
+    ), patch("src.poetore.trade._item_groups_cache", None), patch(
+        "src.poetore.trade._jp_item_groups_cache", None,
+    ), patch("src.poetore.trade._request_json", side_effect=request_json) as request:
+        identity = english_trade_identity(
+            _storm_sail_item(), "腐ったラウンドシールド", "ストームセールの舵輪",
+        )
+
+    assert identity == ("腐ったラウンドシールド", "ストームセールの舵輪")
+    assert request.call_count == 4
+    assert not any(responses.values())
+
+
+def test_japanese_identity_does_not_refresh_a_complete_item_catalog():
+    responses = {
+        "https://www.pathofexile.com/api/trade/data/items": [
+            _trade_item_catalog_payload("Rotted Round Shield", "Wheel of the Stormsail"),
+        ],
+        "https://jp.pathofexile.com/api/trade/data/items": [
+            _trade_item_catalog_payload("腐ったラウンドシールド", "ストームセールの舵輪"),
+        ],
+    }
+
+    def request_json(url):
+        return responses[url].pop(0), {}
+
+    with patch("src.poetore.trade._item_entries_cache", None), patch(
+        "src.poetore.trade._jp_item_entries_cache", None,
+    ), patch("src.poetore.trade._item_groups_cache", None), patch(
+        "src.poetore.trade._jp_item_groups_cache", None,
+    ), patch("src.poetore.trade._request_json", side_effect=request_json) as request:
+        identity = english_trade_identity(
+            _storm_sail_item(), "腐ったラウンドシールド", "ストームセールの舵輪",
+        )
+
+    assert identity == ("Rotted Round Shield", "Wheel of the Stormsail")
+    assert request.call_count == 2
+    assert not any(responses.values())
+
+
 def test_329_japanese_magic_one_line_name_resolves_contained_base_type():
     english = (("flask", ({"type": "Jade Flask"}, {"type": "Blood Sap Tincture"})),)
     japanese = (("flask", ({"type": "翡翠のフラスコ"}, {"type": "血の樹液のチンキ"})),)
@@ -756,14 +859,20 @@ def test_normal_search_rejects_japanese_identity_before_api_request():
     item = parse_item_text(ITEM)
     with patch(
         "src.poetore.trade._english_trade_item_type", return_value=None,
-    ), patch("src.poetore.trade._cached_request_json") as request_json:
-        with pytest.raises(TradeApiError, match="英語のアイテム名またはベースタイプ"):
-            search_prices(
-                item, "上質な エゾマイトの刃", league="Standard",
-                stat_filters=(TradeStatFilter(
-                    "property.physical_dps", "物理DPS", 139.9, "property", True,
-                ),),
-            )
+    ), patch(
+        "src.poetore.trade._clear_trade_item_catalog_cache",
+    ) as refresh_catalog, patch(
+        "src.poetore.trade._cached_request_json",
+    ) as request_json, pytest.raises(
+        TradeApiError, match="英語のアイテム名またはベースタイプ",
+    ):
+        search_prices(
+            item, "上質な エゾマイトの刃", league="Standard",
+            stat_filters=(TradeStatFilter(
+                "property.physical_dps", "物理DPS", 139.9, "property", True,
+            ),),
+        )
+    refresh_catalog.assert_called_once_with()
     request_json.assert_not_called()
 
 
@@ -1028,6 +1137,65 @@ def test_high_item_level_unfinished_rare_has_finished_and_base_presets():
     assert not by_id["property.aps"].enabled
 
 
+def test_corrupted_japanese_claw_can_search_uncorrupted_base_item():
+    item = parse_item_text("""アイテムクラス: 鉤爪
+レアリティ: レア
+枯れた棘
+帝国の鉤爪
+--------
+鉤爪
+物理ダメージ: 25-65
+元素ダメージ: 8-15 (augmented)
+クリティカル率: 8.89% (augmented)
+秒間アタック回数: 1.94 (augmented)
+武器攻撃距離：1.1 メートル
+--------
+装備要求:
+レベル: 68
+器用さ: 131
+知性: 95
+--------
+ソケット: W-G W
+--------
+アイテムレベル: 84
+--------
+{ 暗黙モッド — ライフ, アタック }
+ヒットを与えた敵1体ごとに46のライフを付与する
+--------
+{ プレフィックスモッド「燻る」 (ティア: 9) — ダメージ, 元素, 火, アタック }
+8(8-10)から15(15-18)の火ダメージを追加する
+{ サフィックスモッド 「名声の」 (ティア: 3) — アタック, スピード }
+アタックスピードが21(20-22)%増加する
+{ サフィックスモッド 「刺突の」 (ティア: 3) — アタック, クリティカル }
+クリティカル率が27(25-29)%増加する
+{ サフィックスモッド 「陶酔の」 (ティア: 2) — マナ }
+マナ自動回復レートが55(50-59)%増加する
+--------
+コラプト状態
+""")
+
+    assert item.category == "weapon"
+    assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BASE)
+    filters = resolve_trade_stat_filters(item, PRESET_BASE, "Imperial Claw")
+    query = build_search_query(
+        item, "Imperial Claw", filters, preset=PRESET_BASE,
+        # コピー元の状態が渡されても、クラフト用ベースは非コラプトに固定する。
+        include_corrupted="only", item_level_min=84,
+    )["query"]
+
+    assert query["type"] == "Imperial Claw"
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "nonunique",
+    }
+    misc = query["filters"]["misc_filters"]["filters"]
+    assert misc["ilvl"] == {"min": 84}
+    assert misc["corrupted"] == {"option": "false"}
+    assert query["stats"][0]["filters"] == [{
+        "id": "implicit.stat_821021828",
+        "value": {"min": 46.0},
+    }]
+
+
 def test_base_preset_uses_exact_base_nonunique_ilvl_and_craftable_state():
     item = parse_item_text(ITEM.replace("Item Level: 67", "Item Level: 88"))
     filters = resolve_trade_stat_filters(item, PRESET_BASE)
@@ -1055,8 +1223,9 @@ def test_finished_or_low_level_items_do_not_offer_base_preset():
     corrupted = parse_item_text(ITEM.replace("Item Level: 67", "Item Level: 85").replace(
         "74% increased Physical Damage", "74% increased Physical Damage\nCorrupted",
     ))
-    for item in (low_level, crafted, quality_20, corrupted):
+    for item in (low_level, crafted, quality_20):
         assert available_trade_presets(item) == (PRESET_FINISHED,)
+    assert available_trade_presets(corrupted) == (PRESET_FINISHED, PRESET_BASE)
 
 
 def test_fractured_item_can_offer_base_preset_below_ilvl_82():
@@ -1152,7 +1321,11 @@ def test_unmodifiable_fractured_item_does_not_offer_base_preset(blocked_flag):
         ),
     )
 
-    assert available_trade_presets(item) == (PRESET_FINISHED,)
+    expected = (
+        (PRESET_FINISHED, PRESET_BASE)
+        if blocked_flag == "corrupted" else (PRESET_FINISHED,)
+    )
+    assert available_trade_presets(item) == expected
 
 
 @pytest.mark.parametrize("strong_flag", ("synthesised", "influence:elder"))
@@ -3301,6 +3474,209 @@ Unidentified
         item, "Gold Amulet", trade_name="The Example", include_unidentified=False,
     )["query"]
     assert "identified" not in relaxed.get("filters", {}).get("misc_filters", {}).get("filters", {})
+
+
+def test_330_unidentified_item_tier_is_sent_as_an_exact_misc_filter():
+    item = parse_item_text("""アイテムクラス: セプター
+レアリティ: マジック
+ヴァールセプター
+--------
+セプター
+物理ダメージ: 37-70
+クリティカル率: 7.00%
+秒間アタック回数: 1.40
+武器攻撃距離：1.1 メートル
+--------
+装備要求:
+筋力: 113
+知性: 113
+--------
+ソケット: W-W-W
+--------
+アイテムレベル: 78
+--------
+{ 暗黙モッド — ダメージ, 元素 }
+元素ダメージが32%増加する
+--------
+未鑑定 (Tier 5)
+""")
+
+    assert item.unidentified_tier == 5
+    assert "unidentified" in item.flags
+    query = build_search_query(item, "Vaal Sceptre")["query"]
+    misc = query["filters"]["misc_filters"]["filters"]
+    assert misc["identified"] == {"option": "false"}
+    assert misc["unidentified_tier"] == {"min": 5, "max": 5}
+
+    query_with_relaxed_ui_state = build_search_query(
+        item, "Vaal Sceptre", include_unidentified=False,
+    )["query"]
+    assert query_with_relaxed_ui_state["filters"]["misc_filters"]["filters"] == misc
+
+
+VISCERA_JP = """アイテムクラス: 臓器
+テンプラーの旗 (上級)
+--------
+胴体
+--------
+アイテムレベル: 83
+--------
+{ 暗黙モッド }
+パワーチャージ1個ごとに雷ダメージの1%を追加混沌ダメージとして獲得する
+--------
+これを街または隠れ家にいるウィッカーマンのもとに持っていくと、取り付けることができる。
+"""
+
+VISCERA_LESSER_JP = """アイテムクラス: 臓器
+彫刻された臀部 (低級)
+--------
+足
+--------
+アイテムレベル: 37
+--------
+{ 暗黙モッド }
+トーテム設置スピードが13(10-15)%増加する
+--------
+これを街または隠れ家にいるウィッカーマンのもとに持っていくと、取り付けることができる。
+"""
+
+
+def test_viscera_query_uses_slot_and_grade_specific_implicit_exactly():
+    item = parse_item_text(VISCERA_JP)
+    entries = ({
+        "id": "implicit.stat_3115319277",
+        "text": "パワーチャージ1個ごとに雷ダメージの#%を追加混沌ダメージとして獲得する",
+        "type": "implicit",
+    },)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item)
+
+    assert len(filters) == 1
+    assert filters[0].stat_id == "implicit.stat_3115319277"
+    assert filters[0].enabled
+    assert filters[0].exact
+    assert filters[0].min_value == filters[0].max_value == 1.0
+    assert filters[0].selection_reason == "臓器の等級固有Implicitを完全一致"
+
+    query = build_search_query(item, item.base_type, filters)["query"]
+    assert query["type"] == "テンプラーの旗"
+    assert query["filters"]["type_filters"]["filters"]["category"] == {
+        "option": "viscera.body",
+    }
+    assert query["stats"] == [{
+        "type": "and",
+        "filters": [{
+            "id": "implicit.stat_3115319277",
+            "value": {"min": 1.0, "max": 1.0},
+        }],
+    }]
+    assert "misc_filters" not in query["filters"]
+
+
+def test_lesser_viscera_query_strips_grade_from_official_base_type():
+    item = parse_item_text(VISCERA_LESSER_JP)
+    entries = ({
+        "id": "implicit.stat_3374165039",
+        "text": "トーテム設置スピードが#%増加する",
+        "type": "implicit",
+    },)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item)
+
+    query = build_search_query(item, item.base_type, filters)["query"]
+
+    assert item.properties["臓器等級"] == "低級"
+    assert query["type"] == "彫刻された臀部"
+    assert query["filters"]["type_filters"]["filters"]["category"] == {
+        "option": "viscera.leg",
+    }
+    assert query["stats"][0]["filters"] == [{
+        "id": "implicit.stat_3374165039",
+        "value": {"min": 13.0, "max": 13.0},
+    }]
+
+
+def test_lesser_viscera_search_keeps_only_lesser_fetch_rows():
+    item = parse_item_text(VISCERA_LESSER_JP)
+    grade_filter = TradeStatFilter(
+        "implicit.stat_3374165039", "低級固有Implicit", 13.0, "implicit",
+        enabled=True, max_value=13.0, read_value=13.0, exact=True,
+    )
+    search = ({"id": "viscera-query", "result": ["lesser", "greater"]}, {})
+    fetch = ({"result": [
+        {
+            "listing": {
+                "price": {"amount": 2, "currency": "chaos"},
+                "account": {"name": "lesser-seller"},
+            },
+            "item": {"baseType": "彫刻された臀部 (低級)"},
+        },
+        {
+            "listing": {
+                "price": {"amount": 9, "currency": "chaos"},
+                "account": {"name": "greater-seller"},
+            },
+            "item": {"baseType": "彫刻された臀部 (上級)"},
+        },
+    ]}, {})
+
+    _trade_response_cache.clear()
+    with patch("src.poetore.trade._request_json", side_effect=[search, fetch]):
+        result = search_prices(
+            item, item.base_type, "Covens", stat_filters=(grade_filter,),
+        )
+
+    assert [(row.account, row.base_type, row.amount) for row in result.listings] == [
+        ("lesser-seller", "彫刻された臀部 (低級)", 2.0),
+    ]
+
+
+def test_viscera_search_uses_japanese_api_and_discards_other_grade():
+    item = parse_item_text(VISCERA_JP)
+    grade_filter = TradeStatFilter(
+        "implicit.stat_3115319277", "上級固有Implicit", 1.0, "implicit",
+        enabled=True, max_value=1.0, read_value=1.0, exact=True,
+    )
+    search = ({"id": "viscera-query", "result": ["lesser", "greater"]}, {})
+    fetch = ({"result": [
+        {
+            "listing": {
+                "price": {"amount": 1, "currency": "chaos"},
+                "account": {"name": "lesser-seller"},
+            },
+            "item": {"baseType": "テンプラーの旗 (下級)"},
+        },
+        {
+            "listing": {
+                "price": {"amount": 8, "currency": "chaos"},
+                "account": {"name": "greater-seller"},
+            },
+            "item": {"baseType": "テンプラーの旗 (上級)"},
+        },
+    ]}, {})
+
+    _trade_response_cache.clear()
+    with patch(
+        "src.poetore.trade._request_json", side_effect=[search, fetch],
+    ) as request, patch(
+        "src.poetore.trade.english_trade_identity",
+    ) as english_identity:
+        result = search_prices(
+            item, item.base_type, "Covens", stat_filters=(grade_filter,),
+        )
+
+    english_identity.assert_not_called()
+    assert request.call_count == 2
+    assert request.call_args_list[0].args[0] == (
+        "https://jp.pathofexile.com/api/trade/search/Covens"
+    )
+    assert request.call_args_list[1].args[0].startswith(
+        "https://jp.pathofexile.com/api/trade/fetch/lesser,greater?query="
+    )
+    assert result.total == 2
+    assert [(row.account, row.base_type, row.amount) for row in result.listings] == [
+        ("greater-seller", "テンプラーの旗 (上級)", 8.0),
+    ]
 
 
 def test_unique_candidates_come_from_official_item_data():
@@ -5477,6 +5853,64 @@ Blighted Map (Tier 16)
     assert unresolved_modifier_warnings(item, filters) == ()
 
 
+def test_330_japanese_blighted_map_uses_area_variant_and_true_filter():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: ノーマル
+ブライトに覆われたマップ (ティア 3)
+--------
+マップエリア: 熱帯の島
+--------
+アイテムレベル: 72
+--------
+モンスターレベル：70
+--------
+{ 暗黙モッド }
+エリアは成長する真菌に寄生されている
+最大3回アノイントできる — スケールできない値
+このエリアに元々生息していた生物はいなくなる — スケールできない値
+--------
+自身のマップデバイスで使用することでこのティアまたはそれよりティアの低いマップに移動する。マップは一度のみ使用できる。""")
+    aligned = ((
+        {"type": "5647", "text": "Blighted Map (Tropical Island)", "disc": "blighted"},
+        {"type": "5647", "text": "ブライトマップ (熱帯の島)", "disc": "blighted"},
+    ),)
+
+    with patch(
+        "src.poetore.trade._aligned_trade_item_pairs",
+        side_effect=lambda: iter(aligned),
+    ):
+        trade_type, trade_name = english_trade_identity(item)
+        filters = resolve_trade_stat_filters(item)
+        query = build_search_query(item, trade_type, filters)["query"]
+
+    assert trade_type == "5647"
+    assert trade_name is None
+    assert {row.stat_id for row in filters} == {
+        "property.map_tier", "property.map_blighted",
+    }
+    assert query["type"] == {"option": "5647", "discriminator": "blighted"}
+    map_filters = query["filters"]["map_filters"]["filters"]
+    assert map_filters["map_tier"] == {"min": 3.0}
+    assert map_filters["map_blighted"] == {"option": "true"}
+    assert "map_uberblighted" not in map_filters
+
+    with patch(
+        "src.poetore.trade._aligned_trade_item_pairs",
+        side_effect=lambda: iter(()),
+    ):
+        fallback_type, fallback_name = english_trade_identity(item)
+        fallback_query = build_search_query(
+            item, fallback_type, filters, trade_name=fallback_name,
+        )["query"]
+
+    assert fallback_type is None
+    assert fallback_name is None
+    assert "type" not in fallback_query
+    assert fallback_query["filters"]["map_filters"]["filters"]["map_blighted"] == {
+        "option": "true",
+    }
+
+
 def test_valdo_reward_and_multiline_mods_use_official_exact_filters():
     item = parse_item_text("""アイテムクラス: マップ
 レアリティ: レア
@@ -5613,6 +6047,104 @@ def test_veritania_citadel_full_japanese_copy_has_no_unresolved_warning():
 
     assert any(row.stat_id == stat_id and row.enabled for row in filters)
     assert unresolved_modifier_warnings(item, filters) == ()
+
+
+GUARDIAN_MAP_STATS = (
+    {
+        "id": "implicit.stat_1792283443|1",
+        "text": "エリアはシェイパーのインフルエンスを受けている",
+        "type": "implicit",
+    },
+    {
+        "id": "implicit.stat_1792283443|2",
+        "text": "エリアはエルダーのインフルエンスを受けている",
+        "type": "implicit",
+    },
+    *(
+        {
+            "id": f"implicit.stat_3624393862|{option}",
+            "text": f"マップは{name}に支配されている",
+            "type": "implicit",
+        }
+        for option, name in enumerate((
+            "エンスレイバー", "エラディケイター", "コンストリクター", "プリファイヤー",
+        ), start=1)
+    ),
+)
+
+
+def test_shaper_guardian_map_enables_influence_identity_implicit():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+災いの召喚
+シェイパーガーディアンマップ
+--------
+アイテムレベル: 83
+--------
+モンスターレベル：83
+--------
+{ 暗黙モッド }
+エリアはシェイパーのインフルエンスを受けている — スケールできない値
+--------
+""")
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=GUARDIAN_MAP_STATS):
+        filters = resolve_trade_stat_filters(item)
+
+    influence = next(
+        row for row in filters if row.stat_id == "implicit.stat_1792283443|1"
+    )
+    assert influence.enabled is True
+    assert influence.selection_reason == "Guardian Map固有の暗黙条件"
+    assert unresolved_modifier_warnings(item, filters) == ()
+    query_filters = {
+        row["id"]: row
+        for group in build_search_query(item, stat_filters=filters)["query"]["stats"]
+        for row in group["filters"]
+    }
+    assert query_filters[influence.stat_id]["value"] == {}
+
+
+@pytest.mark.parametrize(("guardian", "option", "copied_suffix"), (
+    ("エンスレイバー", 1, ""),
+    ("エラディケイター", 2, "(...)"),
+    ("コンストリクター", 3, ""),
+    ("プリファイヤー", 4, ""),
+))
+def test_elder_guardian_map_enables_influence_and_occupied_implicits(
+    guardian, option, copied_suffix,
+):
+    item = parse_item_text(f"""アイテムクラス: マップ
+レアリティ: レア
+古臭い辺境
+マップ (ティア 16)
+--------
+アイテムレベル: 83
+--------
+モンスターレベル：83
+--------
+{{ 暗黙モッド }}
+エリアはエルダーのインフルエンスを受けている — スケールできない値
+マップは{guardian}{copied_suffix}に支配されている — スケールできない値
+--------
+""")
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=GUARDIAN_MAP_STATS):
+        filters = resolve_trade_stat_filters(item)
+
+    expected_ids = {
+        "implicit.stat_1792283443|2",
+        f"implicit.stat_3624393862|{option}",
+    }
+    selected = {row.stat_id for row in filters if row.enabled}
+    assert expected_ids <= selected
+    assert unresolved_modifier_warnings(item, filters) == ()
+    query_filters = {
+        row["id"]: row
+        for group in build_search_query(item, stat_filters=filters)["query"]["stats"]
+        for row in group["filters"]
+    }
+    assert all(query_filters[stat_id]["value"] == {} for stat_id in expected_ids)
 
 
 def test_valdo_reward_uses_english_api_value_and_japanese_web_value():

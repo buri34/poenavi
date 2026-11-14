@@ -2897,6 +2897,7 @@ class MainWindow(QMainWindow):
         """全ラップをリセット"""
         self.lap_labels = get_lap_labels(self.poe_version)
         self.lap_times = [None] * len(self.lap_labels)
+        self.lap_record_order = []
         self.segment_recorder.reset()
         self.current_act = 1
         self.update_lap_display()

@@ -297,6 +297,23 @@ def test_official_hourly_explanation_is_exact(qapp, tmp_path):
         panel.close()
 
 
+def test_pending_new_league_status_explains_automatic_retry(qapp, tmp_path):
+    service = FakeService()
+    panel, *_ = make_panel(qapp, tmp_path, service=service)
+    try:
+        panel.refresh()
+        callback = service.queued[-1][3]
+        callback(SyncCheckResult("no_market_data", POE1, "League", 720))
+        qapp.processEvents()
+        assert panel.status_label.text() == (
+            "このリーグの取引データはまだありません（自動確認中）"
+        )
+        assert panel.check_timer.isActive()
+    finally:
+        panel.stop()
+        panel.close()
+
+
 def test_tooltips_use_high_contrast_dark_theme(qapp, tmp_path):
     panel, *_ = make_panel(qapp, tmp_path)
     try:

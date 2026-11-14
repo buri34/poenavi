@@ -497,7 +497,9 @@ class ExchangeRateManagementDialog(QDialog):
         }
         filtered_items = self._filtered_items()
         if not filtered_items and not self._available_item_ids:
-            row = QListWidgetItem("候補データを取得中…")
+            row = QListWidgetItem(
+                "このリーグの取引データはまだありません（自動確認中）"
+            )
             row.setFlags(Qt.NoItemFlags)
             row.setSizeHint(QSize(0, CANDIDATE_ROW_HEIGHT))
             self.candidate_list.addItem(row)

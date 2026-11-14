@@ -887,6 +887,51 @@ class _NumericFilterChip(QFrame):
         return self._active
 
 
+class _RequiredNumericFilterChip(QFrame):
+    """常に有効で、値だけを編集できる単一数値の検索チップ。"""
+
+    def __init__(self, label: str, minimum: int, maximum: int, parent=None):
+        super().__init__(parent)
+        self.setObjectName("numericFilterTag")
+        self.setProperty("active", True)
+        self._minimum = minimum
+        self._maximum = maximum
+        self._last_valid_value = minimum
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 2, 6, 2)
+        layout.setSpacing(1)
+        label_widget = QLabel(f"{label}：")
+        label_widget.setObjectName("numericFilterLabel")
+        layout.addWidget(label_widget)
+        self.value_edit = QLineEdit()
+        self.value_edit.setObjectName("numericFilterEdit")
+        self.value_edit.setValidator(QIntValidator(minimum, maximum, self.value_edit))
+        self.value_edit.setProperty("wheelStepNumeric", True)
+        self.value_edit.setAlignment(Qt.AlignCenter)
+        self.value_edit.setFixedWidth(30)
+        self.value_edit.editingFinished.connect(self._restore_valid_value)
+        layout.addWidget(self.value_edit)
+
+    def setValue(self, value: int):
+        self._last_valid_value = int(value)
+        self.value_edit.setText(str(value))
+
+    def value(self) -> int:
+        text = self.value_edit.text().strip()
+        try:
+            value = int(text)
+        except ValueError:
+            value = self._last_valid_value
+        if not self._minimum <= value <= self._maximum:
+            value = self._last_valid_value
+        return value
+
+    def _restore_valid_value(self):
+        value = self.value()
+        self._last_valid_value = value
+        self.value_edit.setText(str(value))
+
+
 class _SparklineWidget(QWidget):
     """poe.ninjaの7日変動率を追加依存なしで描画する。"""
 
@@ -1549,6 +1594,21 @@ class PoetoreWindow(QWidget):
             (("未鑑定のみ", True, False), ("未鑑定を含む", False, False)),
         )
         self.unidentified_chip.hide()
+        self.unidentified_tier_chip = _RequiredNumericFilterChip(
+            "未鑑定Tier", 1, 99,
+        )
+        self.unidentified_tier_chip.setToolTip(
+            "コピー元のTierを初期値にして、検索するTierを変更できます"
+        )
+        self.unidentified_tier_chip.hide()
+        self.viscera_slot_chip = QPushButton()
+        self.viscera_slot_chip.setObjectName("readonlyFilterChip")
+        self.viscera_slot_chip.setEnabled(False)
+        self.viscera_slot_chip.hide()
+        self.viscera_grade_chip = QPushButton()
+        self.viscera_grade_chip.setObjectName("readonlyFilterChip")
+        self.viscera_grade_chip.setEnabled(False)
+        self.viscera_grade_chip.hide()
         self.veiled_chip = _CycleButton(
             (("同一Veiled Modあり", True, False), ("Veiled指定なし", False, False)),
         )
@@ -1557,6 +1617,11 @@ class PoetoreWindow(QWidget):
             (("Foil Unique", True, False), ("通常Unique", False, False)),
         )
         self.foil_chip.hide()
+        self.map_area_chip = QPushButton()
+        self.map_area_chip.setObjectName("readonlyFilterChip")
+        self.map_area_chip.setEnabled(False)
+        self.map_area_chip.setToolTip("コピー元から判定した検索対象のマップエリア")
+        self.map_area_chip.hide()
         self.map_tier_chip = _NumericFilterChip("Tier", 1, 17)
         self.map_tier_chip.setFixedWidth(116)
         self.nightmare_map_chip = QPushButton("ナイトメア")
@@ -1625,6 +1690,9 @@ class PoetoreWindow(QWidget):
         self.sanctified_combo.setToolTip("クリックするたびに聖別化条件を切り替えます")
         self.sanctified_combo.hide()
         self._filter_chips = (
+            ("map_area", self.map_area_chip),
+            ("viscera_slot", self.viscera_slot_chip),
+            ("viscera_grade", self.viscera_grade_chip),
             ("links", self.links_tag),
             ("nightmare_map", self.nightmare_map_chip),
             ("map_tier", self.map_tier_chip),
@@ -1649,6 +1717,7 @@ class PoetoreWindow(QWidget):
             ("magic_rarity", self.magic_rarity_toggle),
             ("tablet_rarity", self.tablet_rarity_combo),
             ("unidentified", self.unidentified_chip),
+            ("unidentified_tier", self.unidentified_tier_chip),
             ("veiled", self.veiled_chip),
             ("foil", self.foil_chip),
             ("mirrored", self.mirrored_combo),
@@ -2935,6 +3004,11 @@ class PoetoreWindow(QWidget):
 
     def _display_item_name(self, item) -> str:
         """検索identityは変えず、コピー元に対応する日本語表示名を返す。"""
+        if item.category == "viscera":
+            grade = str(item.properties.get("臓器等級") or "").strip()
+            identity = str(item.base_type or item.name or "").strip()
+            return f"{identity} ({grade})" if grade else identity
+
         if item.category == "currency" and item.base_type in {"透視のオーブ", "Scrying Orb"}:
             area = str(
                 item.properties.get("マップエリア")
@@ -4660,7 +4734,11 @@ class PoetoreWindow(QWidget):
                 "clipboard_parsed", category=item.category, modifiers=len(item.modifiers),
             )
         copied_name = item.name if item.rarity.casefold() in {"unique", "ユニーク"} else None
-        if self.poe_version == POE2:
+        if item.category == "viscera":
+            # 日英itemsは臓器だけ件数が一致せず共通IDもない。日本語公式名を
+            # jp Trade APIへ直接送るため、英語への位置対応変換を行わない。
+            self._trade_base_type, self._trade_item_name = item.base_type, None
+        elif self.poe_version == POE2:
             self._trade_base_type, self._trade_item_name = item.base_type, copied_name
         else:
             try:
@@ -5158,6 +5236,10 @@ class PoetoreWindow(QWidget):
             bool(self.unidentified_chip.currentData())
             if not self.unidentified_chip.isHidden() else None
         )
+        if not self.unidentified_tier_chip.isHidden():
+            selected_unidentified_tier = self.unidentified_tier_chip.value()
+            if selected_unidentified_tier != item.unidentified_tier:
+                item = replace(item, unidentified_tier=selected_unidentified_tier)
         include_veiled = bool(self.veiled_chip.currentData()) if not self.veiled_chip.isHidden() else None
         include_foil = bool(self.foil_chip.currentData()) if not self.foil_chip.isHidden() else None
         magic_exact = bool(
@@ -5467,7 +5549,9 @@ class PoetoreWindow(QWidget):
         craftable = (
             rarity not in {"unique", "ユニーク"}
             and not is_flask_category(item.category)
-            and item.category not in {"gem", "currency", "divination_card", "captured_beast"}
+            and item.category not in {
+                "gem", "currency", "divination_card", "captured_beast", "viscera",
+            }
         )
         has_special_state = (
             "corrupted" in item.flags
@@ -5872,7 +5956,27 @@ class PoetoreWindow(QWidget):
 
         self.unidentified_chip.setVisible("unidentified" in item.flags)
         self.unidentified_chip.setCurrentIndex(
-            0 if item.rarity.casefold() in {"unique", "ユニーク"} else 1
+            0 if (
+                item.rarity.casefold() in {"unique", "ユニーク"}
+                or item.unidentified_tier is not None
+            ) else 1
+        )
+        self.unidentified_tier_chip.setVisible(item.unidentified_tier is not None)
+        if item.unidentified_tier is not None:
+            self.unidentified_tier_chip.setValue(item.unidentified_tier)
+        viscera_slot = str(item.properties.get("臓器部位") or "").strip()
+        viscera_grade = str(item.properties.get("臓器等級") or "").strip()
+        self.viscera_slot_chip.setVisible(
+            item.category == "viscera" and bool(viscera_slot)
+        )
+        self.viscera_slot_chip.setText(
+            f"臓器：{viscera_slot}" if viscera_slot else ""
+        )
+        self.viscera_grade_chip.setVisible(
+            item.category == "viscera" and bool(viscera_grade)
+        )
+        self.viscera_grade_chip.setText(
+            f"等級：{viscera_grade}" if viscera_grade else ""
         )
         self.veiled_chip.setVisible("veiled" in item.flags)
         self.veiled_chip.setCurrentIndex(0)
@@ -5895,6 +5999,14 @@ class PoetoreWindow(QWidget):
             self.gem_variant_chip.setText(f"Variant：{variant}")
 
         self._configure_logbook_areas(item)
+
+        map_area = str(
+            item.properties.get("マップエリア")
+            or item.properties.get("Map Area")
+            or ""
+        ).strip()
+        self.map_area_chip.setVisible(item.category == "map" and bool(map_area))
+        self.map_area_chip.setText(f"マップ：{map_area}" if map_area else "")
 
         map_identity = " ".join(filter(None, (
             item.name, item.base_type, self._trade_base_type,
@@ -6062,6 +6174,17 @@ class PoetoreWindow(QWidget):
         self.price_list.clear()
         preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
         item = getattr(self, "_parsed_item", None)
+        if item is not None and not self.corrupted_combo.isHidden():
+            if preset == PRESET_BASE:
+                # ベース検索はコピー元のコラプト状態を引き継がず、
+                # 加工可能な非コラプト品に固定する。
+                self.corrupted_combo.setCurrentIndex(1)
+                self.corrupted_combo.setEnabled(False)
+            else:
+                self.corrupted_combo.setEnabled(True)
+                self.corrupted_combo.setCurrentIndex(
+                    0 if "corrupted" in item.flags else 1
+                )
         self._configure_magic_rarity_toggle(item)
         if item is not None:
             self._refresh_hidden_split_default(item)

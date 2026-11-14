@@ -57,5 +57,7 @@ class ParsedItem:
     modifiers: tuple[ItemModifier, ...] = ()
     flags: tuple[str, ...] = ()
     raw_text: str = ""
+    # PoE1 3.30で追加された、未鑑定装備に表示されるItem Tier。
+    unidentified_tier: int | None = None
     # PoE2のRune/Soul Coreセクション数。複数行効果を複数ソケットと誤認しない。
     augment_count: int = 0

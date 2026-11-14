@@ -29,6 +29,95 @@ RARE_JP = """アイテムクラス: 指輪
 
 
 class PoetoreParserTest(unittest.TestCase):
+    def test_japanese_claw_item_class_is_weapon(self):
+        item = parse_item_text("""アイテムクラス: 鉤爪
+レアリティ: レア
+枯れた棘
+帝国の鉤爪
+--------
+アイテムレベル: 84
+--------
+コラプト状態
+""")
+
+        self.assertEqual(item.item_class, "鉤爪")
+        self.assertEqual(item.base_type, "帝国の鉤爪")
+        self.assertEqual(item.category, "weapon")
+        self.assertIn("corrupted", item.flags)
+
+    def test_parses_japanese_viscera_without_rarity(self):
+        item = parse_item_text("""アイテムクラス: 臓器
+テンプラーの旗 (上級)
+--------
+胴体
+--------
+アイテムレベル: 83
+--------
+{ 暗黙モッド }
+パワーチャージ1個ごとに雷ダメージの1%を追加混沌ダメージとして獲得する
+--------
+これを街または隠れ家にいるウィッカーマンのもとに持っていくと、取り付けることができる。
+""")
+
+        self.assertEqual(item.category, "viscera")
+        self.assertEqual(item.rarity, "")
+        self.assertEqual(item.name, "テンプラーの旗")
+        self.assertEqual(item.base_type, "テンプラーの旗")
+        self.assertEqual(item.item_level, 83)
+        self.assertEqual(item.properties["臓器部位"], "胴体")
+        self.assertEqual(item.properties["臓器等級"], "上級")
+        self.assertEqual(len(item.modifiers), 1)
+        self.assertEqual(item.modifiers[0].kind, "implicit")
+
+    def test_parses_english_viscera_grade_and_slot_case_insensitively(self):
+        item = parse_item_text("""Item Class: Viscera
+GREATER Templar Banner
+--------
+Torso
+--------
+Item Level: 83
+--------
+{ Implicit Modifier }
+Gain 1% of Lightning Damage as Extra Chaos Damage per Power Charge
+""")
+
+        self.assertEqual(item.name, "Templar Banner")
+        self.assertEqual(item.base_type, "Templar Banner")
+        self.assertEqual(item.properties["臓器部位"], "胴体")
+        self.assertEqual(item.properties["臓器等級"], "上級")
+
+    def test_parses_japanese_lesser_viscera_grade_without_polluting_base_type(self):
+        item = parse_item_text("""アイテムクラス: 臓器
+彫刻された臀部 (低級)
+--------
+足
+--------
+アイテムレベル: 37
+--------
+{ 暗黙モッド }
+トーテム設置スピードが13(10-15)%増加する
+""")
+
+        self.assertEqual(item.name, "彫刻された臀部")
+        self.assertEqual(item.base_type, "彫刻された臀部")
+        self.assertEqual(item.properties["臓器部位"], "脚")
+        self.assertEqual(item.properties["臓器等級"], "低級")
+
+    def test_parses_unidentified_item_tier_state_lines(self):
+        for state_line in ("未鑑定 (Tier 5)", "Unidentified (Tier: 5)"):
+            with self.subTest(state_line=state_line):
+                item = parse_item_text(f"""Item Class: Sceptres
+Rarity: Magic
+Vaal Sceptre
+--------
+Item Level: 78
+--------
+{state_line}
+""")
+                self.assertEqual(item.flags, ("unidentified",))
+                self.assertEqual(item.unidentified_tier, 5)
+                self.assertEqual(item.modifiers, ())
+
     def test_single_placeholder_ignores_fixed_number_before_roll(self):
         item = parse_item_text("""アイテムクラス: 靴
 レアリティ: レア

@@ -86,6 +86,7 @@ _ITEM_CLASS_TRADE_CATEGORIES = {
     "Quarterstaves": "weapon.warstaff", "クォータースタッフ": "weapon.warstaff",
     "Foci": "armour.focus", "Focus": "armour.focus", "フォーカス": "armour.focus",
     "Bucklers": "armour.buckler", "バックラー": "armour.buckler",
+    "Viscera": "viscera", "臓器": "viscera",
 }
 
 
@@ -97,10 +98,12 @@ CONSUMABLE_CRAFTABLE_CATEGORIES = {
 }
 NON_CRAFTABLE_CATEGORIES = {
     "gem", "flask", "currency", "divination_card", "corpse", "incubator",
+    "viscera",
 }
 DEDICATED_EXACT_CATEGORIES = {
     "gem", "captured_beast", "map", "chart", "memory_line", "invitation",
     "heist_contract", "heist_blueprint", "charm", "corpse", "incubator",
+    "viscera",
 }
 PRESET_FINISHED = "finished"
 PRESET_BASE = "base"
@@ -1318,7 +1321,10 @@ def available_trade_presets(
         )
             and _memory_strands(item) is None)
     )
-    is_unmodifiable = "corrupted" in item.flags or "mirrored" in item.flags
+    # コラプト済みの現物自体は加工できないが、「ベースアイテム」は元の
+    # ベースタイプを非コラプト状態で探す比較機能なので候補から外さない。
+    # Mirrored品は複製元のクラフト状態を復元できないため従来どおり除外する。
+    is_mirrored = "mirrored" in item.flags
     has_strong_crafting_value = (
         any(modifier.kind == "fractured" for modifier in item.modifiers)
         or "synthesised" in item.flags
@@ -1331,7 +1337,7 @@ def available_trade_presets(
         and item.item_level is not None
         and item.item_level >= 82
     )
-    if is_unmodifiable:
+    if is_mirrored:
         return (PRESET_FINISHED,)
     if allow_low_level_magic and rarity in {"magic", "マジック"} and not likely_finished:
         return (PRESET_FINISHED, PRESET_BASE)
@@ -1364,6 +1370,37 @@ def is_inscribed_ultimatum(item: ParsedItem) -> bool:
         value.strip().casefold() in _INSCRIBED_ULTIMATUM_NAMES
         for value in (item.name, item.base_type)
     )
+
+
+def _viscera_trade_category(item: ParsedItem) -> str | None:
+    if item.category != "viscera":
+        return None
+    slot = str(item.properties.get("臓器部位") or "").strip()
+    return {
+        "頭部": "viscera.head", "腕": "viscera.arm",
+        "胴体": "viscera.body", "脚": "viscera.leg",
+    }.get(slot, "viscera")
+
+
+def _viscera_grade_matches(item: ParsedItem, fetched_item: dict) -> bool:
+    """コピー元の等級と、公式fetchが返す派生typeが一致するか確認する。"""
+    if item.category != "viscera":
+        return True
+    grade = str(item.properties.get("臓器等級") or "").strip()
+    if not grade:
+        return True
+    fetched_type = str(
+        fetched_item.get("baseType") or fetched_item.get("typeLine") or ""
+    ).strip()
+    if grade == "上級":
+        return fetched_type.casefold().startswith("greater ") or fetched_type.endswith("(上級)")
+    if grade in {"低級", "下級"}:
+        return (
+            fetched_type.casefold().startswith("lesser ")
+            or fetched_type.endswith("(低級)")
+            or fetched_type.endswith("(下級)")
+        )
+    return False
 
 
 def _apply_dedicated_exact_rules(
@@ -1438,6 +1475,11 @@ def _apply_dedicated_exact_rules(
             # Map/Chartも通常のExact規則へ統一し、Pseudoは候補表示だけにする。
             if item.category == "map" and row.kind == "map pseudo":
                 enabled = False
+            if (
+                item.category == "map"
+                and row.stat_id in _GUARDIAN_MAP_IDENTITY_STAT_IDS
+            ):
+                enabled = True
             if item.category == "invitation" and row.kind in {
                 "prefix", "suffix", "explicit", "map", "map pseudo",
             }:
@@ -1457,7 +1499,25 @@ def _apply_dedicated_exact_rules(
                 enabled = row.selection_reason == f"logbook-area:{first_logbook_group}"
             if row.hidden_reason:
                 enabled = False
-            result.append(replace(row, enabled=enabled))
+            if item.category == "viscera" and row.kind == "implicit":
+                # 臓器の上級／下級は独立したAPI filterを持たず、等級固有の
+                # implicitで区別される。コピー値の完全一致を初期条件にする。
+                value = row.read_value if row.read_value is not None else row.min_value
+                result.append(replace(
+                    row, enabled=True, min_value=value, max_value=value, exact=True,
+                    selection_reason="臓器の等級固有Implicitを完全一致",
+                ))
+            else:
+                result.append(replace(
+                    row,
+                    enabled=enabled,
+                    selection_reason=(
+                        "Guardian Map固有の暗黙条件"
+                        if item.category == "map"
+                        and row.stat_id in _GUARDIAN_MAP_IDENTITY_STAT_IDS
+                        else row.selection_reason
+                    ),
+                ))
         elif row.stat_id in property_ids:
             if item.category == "armour" and row.stat_id in {
                 "property.armour", "property.evasion", "property.energy_shield",
@@ -1476,7 +1536,7 @@ def _dedicated_exact_identity_filters(item: ParsedItem) -> tuple[TradeStatFilter
     filters: list[TradeStatFilter] = []
     excluded_ilvl = {
         "map", "chart", "jewel", "heist_blueprint", "heist_contract", "memory_line",
-        "sanctum_relic", "charm", "idol", "expedition_logbook",
+        "sanctum_relic", "charm", "idol", "expedition_logbook", "viscera",
     }
     if (item.item_level is not None and not _is_unique(item)
             and item.category not in excluded_ilvl):
@@ -1686,15 +1746,28 @@ def _map_blight_state(item: ParsedItem) -> str | None:
         return None
     raw = item.raw_text.casefold()
     identity = f"{item.name}\n{item.base_type}".casefold()
-    if "blight-ravaged map" in identity or "blight-ravaged" in raw or "ブライトに破壊" in item.raw_text:
+    if (
+        "blight-ravaged map" in identity
+        or "blight-ravaged" in raw
+        or "ブライトに破壊" in item.raw_text
+        or "ブライトに蹂躙されたマップ" in item.raw_text
+        or "ブライト荒廃マップ" in item.raw_text
+    ):
         return "ravaged"
     if (
         "blighted map" in identity
         or "blighted map" in raw
         or "ブライトマップ" in item.raw_text
+        or "ブライトに覆われたマップ" in item.raw_text
         or (
-            "エリアは真菌に覆われている" in item.raw_text
-            and "3回アノイントすることができる" in item.raw_text
+            (
+                "エリアは真菌に覆われている" in item.raw_text
+                or "エリアは成長する真菌に寄生されている" in item.raw_text
+            )
+            and (
+                "3回アノイントすることができる" in item.raw_text
+                or "最大3回アノイントできる" in item.raw_text
+            )
         )
     ):
         return "blighted"
@@ -2450,7 +2523,21 @@ _item_groups_cache: tuple[tuple[str, tuple[dict, ...]], ...] | None = None
 _jp_item_groups_cache: tuple[tuple[str, tuple[dict, ...]], ...] | None = None
 
 
+def _clear_trade_item_catalog_cache() -> None:
+    """Discard both locale views so the next identity lookup fetches one fresh pair."""
+    global _item_entries_cache, _jp_item_entries_cache
+    global _item_groups_cache, _jp_item_groups_cache
+    _item_entries_cache = None
+    _jp_item_entries_cache = None
+    _item_groups_cache = None
+    _jp_item_groups_cache = None
+
+
 def _normalized_stat_text(text: str) -> str:
+    # 3.30の詳細コピーは一部の固定Map暗黙Modへ ``(...)`` を挿入するが、
+    # 公式Trade stat本文にはこの省略記号がない。値や選択肢ではないため、
+    # 照合時だけ除去し、UIに表示するコピー原文は維持する。
+    text = re.sub(r"[（(]\s*(?:\.{3}|…)\s*[）)]", "", text)
     text = re.sub(r"\([^)]*(?:\d|implicit|crafted|enchant)[^)]*\)", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\d+(?:\.\d+)?", "#", text)
     return re.sub(r"\s+", " ", text).strip()
@@ -2535,6 +2622,14 @@ def _trade_stat_entry_indexes(entries: tuple[dict, ...]):
 
 _CONQUEROR_CITADEL_STAT_IDS = {
     f"implicit.stat_2563183002|{option}" for option in range(1, 5)
+}
+
+# Guardian MapをGuardian Mapたらしめる固定暗黙Mod。通常Mapのrolled
+# Prefix/Suffixとは異なり個体の種類を表すため、コピーされていれば初期選択する。
+_GUARDIAN_MAP_IDENTITY_STAT_IDS = {
+    "implicit.stat_1792283443|1",  # Shaper influence
+    "implicit.stat_1792283443|2",  # Elder influence
+    *(f"implicit.stat_3624393862|{option}" for option in range(1, 5)),
 }
 
 
@@ -2808,6 +2903,33 @@ def _scrying_orb_trade_identity(item: ParsedItem) -> tuple[str, str] | None:
     return None
 
 
+def _blighted_map_trade_identity(item: ParsedItem) -> tuple[str, str] | None:
+    """Blighted Mapをマップエリア別の公式Trade identityへ解決する。"""
+    state = _map_blight_state(item)
+    if state is None:
+        return None
+    area = str(
+        item.properties.get("マップエリア")
+        or item.properties.get("Map Area")
+        or ""
+    ).strip()
+    if not area:
+        return None
+    discriminator = "uberblighted" if state == "ravaged" else "blighted"
+    area_suffix = f"({area})"
+    for english, japanese in _aligned_trade_item_pairs():
+        if (
+            str(japanese.get("disc", "")).strip() != discriminator
+            or str(english.get("disc", "")).strip() != discriminator
+            or not str(japanese.get("text", "")).strip().endswith(area_suffix)
+        ):
+            continue
+        option = str(english.get("type", "")).strip()
+        if option:
+            return option, discriminator
+    return None
+
+
 def _mercenary_warrant_trade_identity(item: ParsedItem) -> tuple[str, str] | None:
     if item.name.strip() not in {"傭兵の召喚状", "Mercenary's Warrant", "Mercenary Warrant"}:
         return None
@@ -2883,6 +3005,10 @@ def _localized_web_trade_type(item: ParsedItem, web_query: dict) -> str:
     localized = _normalize_trade_base_type(
         item.base_type if item.category == "gem" else (query_type_value or item.base_type)
     )
+    if item.category == "viscera":
+        # 日本語名をjp APIへ直接送るカテゴリなので、日英itemsの位置対応へ
+        # 戻さず、そのまま日本語Trade画面にも渡す。
+        return localized
     if item.category == "divination_card":
         return _japanese_divination_card_type(localized) or localized
     if item.category != "gem":
@@ -4139,7 +4265,10 @@ def build_search_query(
         raise ValueError(f"未対応のコラプト条件です: {include_corrupted}")
     craftable = (
         not _is_unique(item)
-        and item.category not in {"gem", "flask", "currency", "divination_card", "captured_beast"}
+        and item.category not in {
+            "gem", "flask", "currency", "divination_card", "captured_beast",
+            "viscera",
+        }
     )
     if include_split is None:
         has_special_state = (
@@ -4158,6 +4287,7 @@ def build_search_query(
     gem_info = gem_metadata(base_type) if item.category == "gem" else {}
     query_type: str | dict = str(gem_info.get("trade_type") or base_type)
     scrying_identity = _scrying_orb_trade_identity(item)
+    blighted_map_state = _map_blight_state(item)
     mercenary_identity = _mercenary_warrant_trade_identity(item)
     if item.name.strip() in {"傭兵の召喚状", "Mercenary's Warrant", "Mercenary Warrant"} and not mercenary_identity:
         raise ValueError("傭兵の召喚状のビルドを公式Tradeデータで解決できませんでした。")
@@ -4170,6 +4300,13 @@ def build_search_query(
         query_type = {
             "option": scrying_identity[0],
             "discriminator": scrying_identity[1],
+        }
+    elif blighted_map_state is not None and base_type.isdecimal():
+        query_type = {
+            "option": base_type,
+            "discriminator": (
+                "uberblighted" if blighted_map_state == "ravaged" else "blighted"
+            ),
         }
     elif gem_info.get("discriminator"):
         query_type = {"option": query_type, "discriminator": gem_info["discriminator"]}
@@ -4225,8 +4362,18 @@ def build_search_query(
         )
     if include_unidentified is None:
         include_unidentified = _is_unique(item) and "unidentified" in item.flags
+    if item.unidentified_tier is not None:
+        if item.unidentified_tier < 1:
+            raise ValueError("未鑑定Tierは1以上で指定してください。")
+        include_unidentified = True
     if include_unidentified:
-        query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]["identified"] = {"option": "false"}
+        misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
+        misc["identified"] = {"option": "false"}
+        if item.unidentified_tier is not None:
+            misc["unidentified_tier"] = {
+                "min": item.unidentified_tier,
+                "max": item.unidentified_tier,
+            }
     if include_veiled is None:
         include_veiled = "veiled" in item.flags
     if item.category == "gem" and include_corrupted != True:
@@ -4271,6 +4418,12 @@ def build_search_query(
         rarity_option = "uniquefoil"
     if rarity_option and item.category != "captured_beast":
         query["filters"]["type_filters"] = {"filters": {"rarity": {"option": rarity_option}}}
+    viscera_category = _viscera_trade_category(item)
+    if viscera_category:
+        type_filters = query["filters"].setdefault(
+            "type_filters", {"filters": {}},
+        )["filters"]
+        type_filters["category"] = {"option": viscera_category}
     if not exact_base_type and (item.category != "chart" or not chart_area_exact):
         category = (
             "chart" if item.category == "chart"
@@ -4282,10 +4435,9 @@ def build_search_query(
         type_filters["category"] = {"option": category}
     if preset == PRESET_BASE:
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
-        if include_corrupted != True:
-            misc["corrupted"] = {
-                "option": "true" if include_corrupted == "only" else "false"
-            }
+        # コピー元がコラプト済みでも、ベース検索の対象は加工可能な
+        # 非コラプト品。UIの古い状態や直接呼び出しから値が渡っても固定する。
+        misc["corrupted"] = {"option": "false"}
         misc["mirrored"] = {"option": "false"}
         misc["fractured_item"] = {"option": "true" if any(
             modifier.kind == "fractured" for modifier in item.modifiers
@@ -4300,6 +4452,7 @@ def build_search_query(
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
         stateful = item.category not in {
             "gem", "captured_beast", "currency", "divination_card", "invitation",
+            "viscera",
         }
         if stateful and include_corrupted != True:
             misc["corrupted"] = {
@@ -4331,7 +4484,8 @@ def build_search_query(
             and not any(modifier.kind == "fractured" for modifier in item.modifiers)):
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
         misc["fractured_item"] = {"option": "false"}
-    if corruption_mode_explicit and include_corrupted != True:
+    if (preset != PRESET_BASE
+            and corruption_mode_explicit and include_corrupted != True):
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
         misc["corrupted"] = {
             "option": "true" if include_corrupted == "only" else "false"
@@ -4505,17 +4659,22 @@ def _contains_japanese_text(value: object) -> bool:
     return bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", str(value)))
 
 
-def english_trade_identity(
+def _english_trade_identity_once(
     item: ParsedItem,
     base_type: str | None = None,
     name: str | None = None,
 ) -> tuple[str | None, str | None]:
-    """3.29以降のローカライズ済み詳細コピーを英語Trade検索用IDへ変換する。"""
     scrying_identity = _scrying_orb_trade_identity(item)
+    blighted_map_identity = _blighted_map_trade_identity(item)
     resolved_type = (
         scrying_identity[0] if scrying_identity
+        else blighted_map_identity[0] if blighted_map_identity
         else str(base_type or item.base_type or "").strip() or None
     )
+    if resolved_type and _is_generic_map_copy_type(item, resolved_type):
+        # 汎用タイトルを部分一致でGem等へ誤変換しない。エリア別identityを
+        # 解決できない場合も、typeを省略してBlighted条件だけで安全に検索する。
+        resolved_type = None
     if resolved_type and _contains_japanese_text(resolved_type):
         resolved_type = (
             _english_trade_item_type(resolved_type, item.category) or resolved_type
@@ -4531,6 +4690,34 @@ def english_trade_identity(
     ):
         resolved_name = _english_trade_item_name(resolved_name) or resolved_name
     return resolved_type, resolved_name
+
+
+def english_trade_identity(
+    item: ParsedItem,
+    base_type: str | None = None,
+    name: str | None = None,
+) -> tuple[str | None, str | None]:
+    """3.29以降のローカライズ済み詳細コピーを英語Trade検索用IDへ変換する。
+
+    リーグ開始時は公式の日英itemsカタログが時間差で更新されることがある。
+    初回結果に検索へ送れない日本語identityが残った場合だけ両言語を再取得し、
+    同じ入力を一度だけ解決し直す。再取得後も未解決なら呼び出し側の通常エラーへ
+    委ね、ここでは繰り返さない。
+    """
+    resolved = _english_trade_identity_once(item, base_type, name)
+    unresolved_type, unresolved_name = resolved
+    needs_refresh = bool(
+        unresolved_type and _contains_japanese_text(unresolved_type)
+    ) or bool(
+        _is_unique(item)
+        and unresolved_name
+        and _contains_japanese_text(unresolved_name)
+    )
+    if not needs_refresh:
+        return resolved
+
+    _clear_trade_item_catalog_cache()
+    return _english_trade_identity_once(item, base_type, name)
 
 
 def _require_english_search_identity(payload: dict) -> None:
@@ -4582,9 +4769,17 @@ def search_prices(
     if performance_trace is not None:
         performance_trace.mark("trade_worker_started")
     league = league or active_pc_league()
-    trade_base_type, trade_name = english_trade_identity(
-        item, trade_base_type, trade_name,
+    localized_viscera_search = bool(
+        item.category == "viscera"
+        and _contains_japanese_text(str(item.base_type or ""))
     )
+    api_root = JP_API_ROOT if localized_viscera_search else API_ROOT
+    if localized_viscera_search:
+        trade_base_type, trade_name = item.base_type, None
+    else:
+        trade_base_type, trade_name = english_trade_identity(
+            item, trade_base_type, trade_name,
+        )
     if performance_trace is not None:
         performance_trace.mark("trade_identity_resolved", league=league)
     if (item.rarity.casefold() in {"magic", "マジック"}
@@ -4607,8 +4802,9 @@ def search_prices(
         performance_trace.mark(
             "trade_query_built", stat_filters=len(stat_filters), preset=preset,
         )
-    _require_english_search_identity(payload)
-    search_url = f"{API_ROOT}/search/{quote(league, safe='')}"
+    if not localized_viscera_search:
+        _require_english_search_identity(payload)
+    search_url = f"{api_root}/search/{quote(league, safe='')}"
     _trade_log(
         f"search: league={league!r} preset={preset!r} trade_status={trade_status!r} "
         f"api_status={TRADE_STATUS_OPTIONS[trade_status]!r} "
@@ -4640,7 +4836,7 @@ def search_prices(
     while fetched_count < min(len(ids), 20):
         block_number = fetched_count // 10 + 1
         fetch_ids = ",".join(ids[fetched_count:fetched_count + 10])
-        fetch_url = f"{API_ROOT}/fetch/{fetch_ids}?query={quote(query_id)}"
+        fetch_url = f"{api_root}/fetch/{fetch_ids}?query={quote(query_id)}"
         _trade_log(
             f"request: GET {fetch_url} "
             f"(candidates {fetched_count + 1}-{min(fetched_count + 10, len(ids))})"
@@ -4663,6 +4859,8 @@ def search_prices(
         for row in fetched.get("result", ()):
             listing = row.get("listing", {})
             fetched_item = row.get("item", {})
+            if not _viscera_grade_matches(item, fetched_item):
+                continue
             price = listing.get("price") or {}
             has_price = (
                 price.get("amount") is not None

@@ -446,6 +446,10 @@ class CustomExchangeRatePanel(QWidget):
         self.render_rows()
         if result.status == "updated":
             self.status_label.setText("最新の公式データへ更新しました")
+        elif result.status == "no_market_data":
+            self.status_label.setText(
+                "このリーグの取引データはまだありません（自動確認中）"
+            )
         elif result.status == "no_new_data" and manual:
             self.status_label.setText("新しい公式データはまだありません")
         elif result.status == "failed":

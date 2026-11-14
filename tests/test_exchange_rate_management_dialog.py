@@ -215,6 +215,55 @@ def test_poe1_corrected_categories_are_visible(qapp, tmp_path):
         dialog.close()
 
 
+def test_poe1_threads_match_the_in_game_category_and_item_order(qapp, tmp_path):
+    expected_ids = [
+        "Metadata/Items/Threads/ThreadExpedition",
+        "Metadata/Items/Threads/ThreadAbyss",
+        "Metadata/Items/Threads/ThreadBreach",
+        "Metadata/Items/Threads/ThreadRitual",
+        "Metadata/Items/Threads/ThreadUltimatum",
+        "Metadata/Items/Threads/ThreadLegion",
+        "Metadata/Items/Threads/ThreadBlight",
+        "Metadata/Items/Threads/ThreadBestiary",
+        "Metadata/Items/Threads/ThreadBetrayal",
+        "Metadata/Items/Threads/ThreadIncursion",
+    ]
+    expected_names = [
+        "エクスペディションスレッド",
+        "アビススレッド",
+        "ブリーチスレッド",
+        "リチュアルスレッド",
+        "アルティメイタムスレッド",
+        "リージョンスレッド",
+        "ブライトスレッド",
+        "ベスティアリースレッド",
+        "ビトレイアルスレッド",
+        "インカージョンスレッド",
+    ]
+    dialog, *_ = make_dialog(qapp, tmp_path, available_ids=expected_ids.copy())
+    try:
+        labels = [
+            dialog.category_list.item(row).text()
+            for row in range(dialog.category_list.count())
+        ]
+        assert labels[labels.index("デルブ") + 1] == "スレッド"
+        assert labels[labels.index("スレッド") + 1] == "占いカード"
+
+        matches = dialog.category_list.findItems("スレッド", Qt.MatchExactly)
+        assert len(matches) == 1
+        dialog.category_list.setCurrentItem(matches[0])
+        assert [
+            dialog.candidate_list.item(row).data(Qt.UserRole)
+            for row in range(dialog.candidate_list.count())
+        ] == expected_ids
+        assert [
+            dialog.candidate_list.item(row).text()
+            for row in range(dialog.candidate_list.count())
+        ] == expected_names
+    finally:
+        dialog.close()
+
+
 def test_poe1_330_items_follow_market_visibility_and_scarabs_stay_hidden(
     qapp, tmp_path
 ):
@@ -516,7 +565,9 @@ def test_candidate_refresh_does_not_remove_registered_pair(qapp, tmp_path):
     try:
         dialog.update_available_item_ids([])
         assert dialog.candidate_list.count() == 1
-        assert dialog.candidate_list.item(0).text() == "候補データを取得中…"
+        assert dialog.candidate_list.item(0).text() == (
+            "このリーグの取引データはまだありません（自動確認中）"
+        )
         assert not dialog.candidate_list.item(0).flags() & Qt.ItemIsEnabled
         assert store.pairs(POE1) == before
     finally:
@@ -534,7 +585,9 @@ def test_candidates_appear_when_background_market_table_becomes_ready(qapp, tmp_
     )
     try:
         assert dialog._availability_timer.isActive()
-        assert dialog.candidate_list.item(0).text() == "候補データを取得中…"
+        assert dialog.candidate_list.item(0).text() == (
+            "このリーグの取引データはまだありません（自動確認中）"
+        )
 
         live_ids.add(target.item_id)
         dialog._refresh_available_item_ids()

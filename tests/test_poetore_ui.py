@@ -4585,6 +4585,67 @@ def test_mod_condition_toggle_shows_clear_when_partially_checked(qapp):
         window.close()
 
 
+@pytest.mark.parametrize(("base_type", "implicit_lines", "expected_ids"), (
+    (
+        "シェイパーガーディアンマップ",
+        "エリアはシェイパーのインフルエンスを受けている — スケールできない値",
+        {"implicit.stat_1792283443|1"},
+    ),
+    (
+        "マップ (ティア 16)",
+        (
+            "エリアはエルダーのインフルエンスを受けている — スケールできない値\n"
+            "マップはエラディケイター(...)に支配されている — スケールできない値"
+        ),
+        {"implicit.stat_1792283443|2", "implicit.stat_3624393862|2"},
+    ),
+))
+def test_guardian_map_identity_implicits_start_checked_without_warning(
+    qapp, base_type, implicit_lines, expected_ids,
+):
+    entries = (
+        {
+            "id": "implicit.stat_1792283443|1",
+            "text": "エリアはシェイパーのインフルエンスを受けている",
+            "type": "implicit",
+        },
+        {
+            "id": "implicit.stat_1792283443|2",
+            "text": "エリアはエルダーのインフルエンスを受けている",
+            "type": "implicit",
+        },
+        {
+            "id": "implicit.stat_3624393862|2",
+            "text": "マップはエラディケイターに支配されている",
+            "type": "implicit",
+        },
+    )
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText(f"""アイテムクラス: マップ
+レアリティ: レア
+古臭い辺境
+{base_type}
+--------
+アイテムレベル: 83
+--------
+モンスターレベル：83
+--------
+{{ 暗黙モッド }}
+{implicit_lines}
+--------
+""")
+        with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+            window.parse_current_text()
+
+        filters = {row.stat_id: row for row in window._selected_stat_filters()}
+        assert expected_ids <= filters.keys()
+        assert all(filters[stat_id].enabled for stat_id in expected_ids)
+        assert window.mod_warning.isHidden()
+    finally:
+        window.close()
+
+
 def test_unresolved_modifiers_are_shown_as_warning(qapp):
     window = PoetoreWindow()
     try:
@@ -5069,6 +5130,180 @@ Blighted Map (Tier 16)
         window.close()
 
 
+def test_localized_blighted_map_shows_readonly_map_area_as_first_condition(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: マップ
+レアリティ: ノーマル
+ブライトに覆われたマップ (ティア 3)
+--------
+マップエリア: 熱帯の島
+アイテムレベル: 72
+--------
+モンスターレベル：70
+--------
+{ 暗黙モッド }
+エリアは成長する真菌に寄生されている
+最大3回アノイントできる — スケールできない値
+このエリアに元々生息していた生物はいなくなる — スケールできない値
+""")
+        window.parse_current_text()
+
+        assert window.item_name_label.text() == "ブライトに覆われたマップ (ティア 3)"
+        assert not window.map_area_chip.isHidden()
+        assert window.map_area_chip.text() == "マップ：熱帯の島"
+        assert not window.map_area_chip.isEnabled()
+        visible_names = tuple(
+            name for name, chip in window._filter_chips if not chip.isHidden()
+        )
+        assert visible_names[:3] == ("map_area", "map_tier", "blighted")
+
+        window.input_edit.setPlainText("""アイテムクラス: スタック可能カレンシー
+レアリティ: カレンシー
+混沌のオーブ
+""")
+        window.parse_current_text()
+        assert window.map_area_chip.isHidden()
+    finally:
+        window.close()
+
+
+def test_unidentified_item_tier_is_editable_and_used_for_search(qapp):
+    window = PoetoreWindow()
+    called = threading.Event()
+    captured_items = []
+
+    def search_prices(item, *_args, **_kwargs):
+        captured_items.append(item)
+        called.set()
+        return PriceResult("Covens", "query", 0, ())
+
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: セプター
+レアリティ: マジック
+ヴァールセプター
+--------
+セプター
+物理ダメージ: 37-70
+クリティカル率: 7.00%
+秒間アタック回数: 1.40
+武器攻撃距離：1.1 メートル
+--------
+装備要求:
+筋力: 113
+知性: 113
+--------
+ソケット: W-W-W
+--------
+アイテムレベル: 78
+--------
+{ 暗黙モッド — ダメージ, 元素 }
+元素ダメージが32%増加する
+--------
+未鑑定 (Tier 5)
+""")
+        window.parse_current_text()
+
+        assert not window.unidentified_chip.isHidden()
+        assert window.unidentified_chip.currentData() is True
+        assert not window.unidentified_tier_chip.isHidden()
+        assert window.unidentified_tier_chip.value_edit.text() == "5"
+        assert window.unidentified_tier_chip.value_edit.isEnabled()
+
+        window.unidentified_tier_chip.value_edit.setText("3")
+        with patch("src.poetore.ui.search_prices", side_effect=search_prices):
+            window.search_current_item()
+            assert called.wait(1.0)
+        assert captured_items[0].unidentified_tier == 3
+        misc = build_search_query(
+            captured_items[0], "Vaal Sceptre",
+        )["query"]["filters"]["misc_filters"]["filters"]
+        assert misc["identified"] == {"option": "false"}
+        assert misc["unidentified_tier"] == {"min": 3, "max": 3}
+
+        window.input_edit.setPlainText("""アイテムクラス: スタック可能カレンシー
+レアリティ: カレンシー
+混沌のオーブ
+""")
+        window.parse_current_text()
+        assert window.unidentified_tier_chip.isHidden()
+    finally:
+        window.close()
+
+
+def test_viscera_shows_slot_and_grade_and_keeps_japanese_identity(qapp):
+    window = PoetoreWindow()
+    implicit = TradeStatFilter(
+        "implicit.stat_3115319277", "上級固有Implicit", 1.0, "implicit",
+        enabled=True, max_value=1.0, read_value=1.0, exact=True,
+    )
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 臓器
+テンプラーの旗 (上級)
+--------
+胴体
+--------
+アイテムレベル: 83
+--------
+{ 暗黙モッド }
+パワーチャージ1個ごとに雷ダメージの1%を追加混沌ダメージとして獲得する
+""")
+        with patch(
+            "src.poetore.ui.resolve_trade_stat_filters", return_value=(implicit,),
+        ):
+            window.parse_current_text()
+
+        assert window.item_name_label.text() == "テンプラーの旗 (上級)"
+        assert not window.viscera_slot_chip.isHidden()
+        assert window.viscera_slot_chip.text() == "臓器：胴体"
+        assert not window.viscera_grade_chip.isHidden()
+        assert window.viscera_grade_chip.text() == "等級：上級"
+
+        window.input_edit.setPlainText("""Item Class: Currency
+Rarity: Currency
+Chaos Orb
+""")
+        with patch("src.poetore.ui.resolve_trade_stat_filters", return_value=()):
+            window.parse_current_text()
+        assert window.viscera_slot_chip.isHidden()
+        assert window.viscera_grade_chip.isHidden()
+    finally:
+        window.close()
+
+
+def test_viscera_capture_keeps_japanese_trade_identity(qapp):
+    copied = """アイテムクラス: 臓器
+テンプラーの旗 (上級)
+--------
+胴体
+--------
+アイテムレベル: 83
+"""
+    item = parse_item_text(copied)
+    window = PoetoreWindow()
+    try:
+        with patch(
+            "src.poetore.ui.read_item_clipboard", return_value=copied,
+        ), patch.object(
+            window, "_parse_item_text", return_value=item,
+        ), patch(
+            "src.poetore.ui.english_trade_identity",
+        ) as english_identity, patch.object(
+            window, "parse_current_text",
+        ), patch.object(
+            window, "show_at_context",
+        ), patch.object(
+            window, "search_current_item",
+        ):
+            window._capture_item_copy()
+
+        english_identity.assert_not_called()
+        assert window._trade_base_type == "テンプラーの旗"
+        assert window._trade_item_name is None
+    finally:
+        window.close()
+
+
 def test_inscribed_ultimatum_shows_unsupported_condition_notice(qapp):
     window = PoetoreWindow()
     try:
@@ -5530,6 +5765,54 @@ Item Level: 85
         assert not window.trade_preset_combo.isHidden()
         assert window.trade_preset_placeholder.isHidden()
         assert not window.trade_preset_combo._empty_segment.isVisible()
+    finally:
+        window.close()
+
+
+def test_corrupted_japanese_claw_base_search_shows_noncorrupted_state(qapp):
+    window = PoetoreWindow()
+    called = threading.Event()
+    captured = {}
+
+    def search_prices(*args, **kwargs):
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        called.set()
+        return PriceResult("Covens", "query", 0, ())
+
+    try:
+        window._trade_base_type = "Imperial Claw"
+        window.input_edit.setPlainText("""アイテムクラス: 鉤爪
+レアリティ: レア
+枯れた棘
+帝国の鉤爪
+--------
+アイテムレベル: 84
+--------
+{ 暗黙モッド — ライフ, アタック }
+ヒットを与えた敵1体ごとに46のライフを付与する
+--------
+コラプト状態
+""")
+        with patch("src.poetore.ui.resolve_trade_stat_filters", return_value=()):
+            window.parse_current_text()
+            assert window.trade_preset_combo.count() == 2
+
+            window.trade_preset_combo.setCurrentIndex(1)
+
+        assert window.trade_preset_combo.currentData() == PRESET_BASE
+        assert window.corrupted_combo.currentData() is False
+        assert not window.corrupted_combo.isEnabled()
+        assert "ベースアイテム" in window.price_status.text()
+
+        with patch("src.poetore.ui.search_prices", side_effect=search_prices):
+            window.search_current_item()
+            assert called.wait(1.0)
+
+        assert captured["args"][1] == "Imperial Claw"
+        assert captured["kwargs"]["preset"] == PRESET_BASE
+        assert captured["kwargs"]["include_corrupted"] is False
+        assert captured["kwargs"]["item_level_min"] == 84
     finally:
         window.close()
 
@@ -6785,7 +7068,7 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
     window = PoetoreWindow()
     try:
         assert tuple(name for name, _widget in window._filter_chips) == (
-            "links", "nightmare_map", "map_tier", "completion_reward", "area_level", "heist_wings",
+            "map_area", "viscera_slot", "viscera_grade", "links", "nightmare_map", "map_tier", "completion_reward", "area_level", "heist_wings",
             "heist_job", "heist_target", "cluster_enchant",
             "cluster_passives", "cluster_sockets", "blighted", "item_level",
             "base_percentile", "gem_variant", "gem_level", "quality", "runemastered",
@@ -6793,7 +7076,8 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
             "influence_shaper", "influence_elder", "influence_crusader",
             "influence_hunter", "influence_redeemer", "influence_warlord",
             "influence_eater", "influence_exarch",
-            "rarity", "magic_rarity", "tablet_rarity", "unidentified", "veiled", "foil",
+            "rarity", "magic_rarity", "tablet_rarity", "unidentified",
+            "unidentified_tier", "veiled", "foil",
             "mirrored", "sanctified", "split",
         )
         assert window.filter_chip_layout.ordered_widgets() == tuple(
