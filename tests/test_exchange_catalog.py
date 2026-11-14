@@ -22,6 +22,7 @@ def test_catalog_uses_confirmed_in_game_category_labels_and_order():
         "カレンシー",
         "エッセンス",
         "デルブ",
+        "スレッド",
         "占いカード",
         "デリリウムオーブ",
         "リージョン",
@@ -124,6 +125,71 @@ def test_poe1_330_exchange_items_are_pinned_and_scarabs_are_absent():
     } == expected
     assert all(item.category != "scarabs" for item in catalog.values())
     assert all("/Scarabs/" not in item_id for item_id in catalog)
+
+
+def test_poe1_threads_follow_the_confirmed_in_game_order():
+    threads = [
+        item for item in exchange_catalog_items(POE1) if item.category == "threads"
+    ]
+    assert [
+        (item.item_id, item.english_name, item.japanese_name)
+        for item in threads
+    ] == [
+        (
+            "Metadata/Items/Threads/ThreadExpedition",
+            "Expedition Thread",
+            "エクスペディションスレッド",
+        ),
+        (
+            "Metadata/Items/Threads/ThreadAbyss",
+            "Abyss Thread",
+            "アビススレッド",
+        ),
+        (
+            "Metadata/Items/Threads/ThreadBreach",
+            "Breach Thread",
+            "ブリーチスレッド",
+        ),
+        (
+            "Metadata/Items/Threads/ThreadRitual",
+            "Ritual Thread",
+            "リチュアルスレッド",
+        ),
+        (
+            "Metadata/Items/Threads/ThreadUltimatum",
+            "Ultimatum Thread",
+            "アルティメイタムスレッド",
+        ),
+        (
+            "Metadata/Items/Threads/ThreadLegion",
+            "Legion Thread",
+            "リージョンスレッド",
+        ),
+        (
+            "Metadata/Items/Threads/ThreadBlight",
+            "Blight Thread",
+            "ブライトスレッド",
+        ),
+        (
+            "Metadata/Items/Threads/ThreadBestiary",
+            "Bestiary Thread",
+            "ベスティアリースレッド",
+        ),
+        (
+            "Metadata/Items/Threads/ThreadBetrayal",
+            "Betrayal Thread",
+            "ビトレイアルスレッド",
+        ),
+        (
+            "Metadata/Items/Threads/ThreadIncursion",
+            "Incursion Thread",
+            "インカージョンスレッド",
+        ),
+    ]
+    assert [item.item_order for item in threads] == sorted(
+        item.item_order for item in threads
+    )
+    assert all(item.icon_kind == "remote" for item in threads)
 
 
 def test_confirmed_exception_categories_are_fixed():

@@ -215,6 +215,55 @@ def test_poe1_corrected_categories_are_visible(qapp, tmp_path):
         dialog.close()
 
 
+def test_poe1_threads_match_the_in_game_category_and_item_order(qapp, tmp_path):
+    expected_ids = [
+        "Metadata/Items/Threads/ThreadExpedition",
+        "Metadata/Items/Threads/ThreadAbyss",
+        "Metadata/Items/Threads/ThreadBreach",
+        "Metadata/Items/Threads/ThreadRitual",
+        "Metadata/Items/Threads/ThreadUltimatum",
+        "Metadata/Items/Threads/ThreadLegion",
+        "Metadata/Items/Threads/ThreadBlight",
+        "Metadata/Items/Threads/ThreadBestiary",
+        "Metadata/Items/Threads/ThreadBetrayal",
+        "Metadata/Items/Threads/ThreadIncursion",
+    ]
+    expected_names = [
+        "エクスペディションスレッド",
+        "アビススレッド",
+        "ブリーチスレッド",
+        "リチュアルスレッド",
+        "アルティメイタムスレッド",
+        "リージョンスレッド",
+        "ブライトスレッド",
+        "ベスティアリースレッド",
+        "ビトレイアルスレッド",
+        "インカージョンスレッド",
+    ]
+    dialog, *_ = make_dialog(qapp, tmp_path, available_ids=expected_ids.copy())
+    try:
+        labels = [
+            dialog.category_list.item(row).text()
+            for row in range(dialog.category_list.count())
+        ]
+        assert labels[labels.index("デルブ") + 1] == "スレッド"
+        assert labels[labels.index("スレッド") + 1] == "占いカード"
+
+        matches = dialog.category_list.findItems("スレッド", Qt.MatchExactly)
+        assert len(matches) == 1
+        dialog.category_list.setCurrentItem(matches[0])
+        assert [
+            dialog.candidate_list.item(row).data(Qt.UserRole)
+            for row in range(dialog.candidate_list.count())
+        ] == expected_ids
+        assert [
+            dialog.candidate_list.item(row).text()
+            for row in range(dialog.candidate_list.count())
+        ] == expected_names
+    finally:
+        dialog.close()
+
+
 def test_poe1_330_items_follow_market_visibility_and_scarabs_stay_hidden(
     qapp, tmp_path
 ):

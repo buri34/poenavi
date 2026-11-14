@@ -16,9 +16,12 @@ from src.poetore.official_exchange import CHAOS, DIVINE, EXALTED, normalize_name
 
 
 def load_source(path: Path) -> dict[str, str]:
-    opener = gzip.open if path.suffix == ".gz" else path.open
-    with opener(path, "rt", encoding="utf-8") as source:
-        payload = json.load(source)
+    if path.suffix == ".gz":
+        with gzip.open(path, "rt", encoding="utf-8") as source:
+            payload = json.load(source)
+    else:
+        with path.open(encoding="utf-8") as source:
+            payload = json.load(source)
     if not isinstance(payload, dict):
         raise TypeError(f"Expected object in {path}")
     return {
