@@ -2450,6 +2450,16 @@ _item_groups_cache: tuple[tuple[str, tuple[dict, ...]], ...] | None = None
 _jp_item_groups_cache: tuple[tuple[str, tuple[dict, ...]], ...] | None = None
 
 
+def _clear_trade_item_catalog_cache() -> None:
+    """Discard both locale views so the next identity lookup fetches one fresh pair."""
+    global _item_entries_cache, _jp_item_entries_cache
+    global _item_groups_cache, _jp_item_groups_cache
+    _item_entries_cache = None
+    _jp_item_entries_cache = None
+    _item_groups_cache = None
+    _jp_item_groups_cache = None
+
+
 def _normalized_stat_text(text: str) -> str:
     text = re.sub(r"\([^)]*(?:\d|implicit|crafted|enchant)[^)]*\)", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\d+(?:\.\d+)?", "#", text)
@@ -4505,12 +4515,11 @@ def _contains_japanese_text(value: object) -> bool:
     return bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", str(value)))
 
 
-def english_trade_identity(
+def _english_trade_identity_once(
     item: ParsedItem,
     base_type: str | None = None,
     name: str | None = None,
 ) -> tuple[str | None, str | None]:
-    """3.29以降のローカライズ済み詳細コピーを英語Trade検索用IDへ変換する。"""
     scrying_identity = _scrying_orb_trade_identity(item)
     resolved_type = (
         scrying_identity[0] if scrying_identity
@@ -4531,6 +4540,34 @@ def english_trade_identity(
     ):
         resolved_name = _english_trade_item_name(resolved_name) or resolved_name
     return resolved_type, resolved_name
+
+
+def english_trade_identity(
+    item: ParsedItem,
+    base_type: str | None = None,
+    name: str | None = None,
+) -> tuple[str | None, str | None]:
+    """3.29以降のローカライズ済み詳細コピーを英語Trade検索用IDへ変換する。
+
+    リーグ開始時は公式の日英itemsカタログが時間差で更新されることがある。
+    初回結果に検索へ送れない日本語identityが残った場合だけ両言語を再取得し、
+    同じ入力を一度だけ解決し直す。再取得後も未解決なら呼び出し側の通常エラーへ
+    委ね、ここでは繰り返さない。
+    """
+    resolved = _english_trade_identity_once(item, base_type, name)
+    unresolved_type, unresolved_name = resolved
+    needs_refresh = bool(
+        unresolved_type and _contains_japanese_text(unresolved_type)
+    ) or bool(
+        _is_unique(item)
+        and unresolved_name
+        and _contains_japanese_text(unresolved_name)
+    )
+    if not needs_refresh:
+        return resolved
+
+    _clear_trade_item_catalog_cache()
+    return _english_trade_identity_once(item, base_type, name)
 
 
 def _require_english_search_identity(payload: dict) -> None:

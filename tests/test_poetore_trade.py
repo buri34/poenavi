@@ -386,6 +386,109 @@ def test_329_japanese_copy_resolves_unique_name_and_base_type():
         ) == ("Mesh Boots", "Wake of Destruction")
 
 
+def _trade_item_catalog_payload(type_name="", unique_name=""):
+    entries = []
+    if type_name:
+        entry = {"type": type_name}
+        if unique_name:
+            entry.update({"name": unique_name, "flags": {"unique": True}})
+        entries.append(entry)
+    return {"result": [{"id": "armour", "entries": entries}]}
+
+
+def _storm_sail_item():
+    return ParsedItem(
+        "盾", "ユニーク", "ストームセールの舵輪", "腐ったラウンドシールド", "armour",
+    )
+
+
+def test_japanese_identity_refreshes_stale_catalog_once_and_reaches_search():
+    _trade_response_cache.clear()
+    stale = _trade_item_catalog_payload()
+    fresh_en = _trade_item_catalog_payload("Rotted Round Shield", "Wheel of the Stormsail")
+    fresh_ja = _trade_item_catalog_payload("腐ったラウンドシールド", "ストームセールの舵輪")
+    responses = {
+        "https://www.pathofexile.com/api/trade/data/items": [stale, fresh_en],
+        "https://jp.pathofexile.com/api/trade/data/items": [stale, fresh_ja],
+        "https://www.pathofexile.com/api/trade/search/Covens": [
+            {"id": "qid", "result": [], "total": 0},
+        ],
+    }
+
+    def request_json(url, _payload=None):
+        return responses[url].pop(0), {}
+
+    with patch("src.poetore.trade._item_entries_cache", None), patch(
+        "src.poetore.trade._jp_item_entries_cache", None,
+    ), patch("src.poetore.trade._item_groups_cache", None), patch(
+        "src.poetore.trade._jp_item_groups_cache", None,
+    ), patch("src.poetore.trade._request_json", side_effect=request_json) as request:
+        result = search_prices(
+            _storm_sail_item(), "腐ったラウンドシールド", "Covens",
+            trade_name="ストームセールの舵輪",
+        )
+
+    search_call = next(
+        call for call in request.call_args_list if "/search/Covens" in call.args[0]
+    )
+    assert search_call.args[1]["query"]["type"] == "Rotted Round Shield"
+    assert search_call.args[1]["query"]["name"] == "Wheel of the Stormsail"
+    assert result.query_id == "qid"
+    assert request.call_count == 5
+    assert not any(responses.values())
+
+
+def test_japanese_identity_stops_after_one_failed_catalog_refresh():
+    stale = _trade_item_catalog_payload()
+    responses = {
+        "https://www.pathofexile.com/api/trade/data/items": [stale, stale],
+        "https://jp.pathofexile.com/api/trade/data/items": [stale, stale],
+    }
+
+    def request_json(url):
+        return responses[url].pop(0), {}
+
+    with patch("src.poetore.trade._item_entries_cache", None), patch(
+        "src.poetore.trade._jp_item_entries_cache", None,
+    ), patch("src.poetore.trade._item_groups_cache", None), patch(
+        "src.poetore.trade._jp_item_groups_cache", None,
+    ), patch("src.poetore.trade._request_json", side_effect=request_json) as request:
+        identity = english_trade_identity(
+            _storm_sail_item(), "腐ったラウンドシールド", "ストームセールの舵輪",
+        )
+
+    assert identity == ("腐ったラウンドシールド", "ストームセールの舵輪")
+    assert request.call_count == 4
+    assert not any(responses.values())
+
+
+def test_japanese_identity_does_not_refresh_a_complete_item_catalog():
+    responses = {
+        "https://www.pathofexile.com/api/trade/data/items": [
+            _trade_item_catalog_payload("Rotted Round Shield", "Wheel of the Stormsail"),
+        ],
+        "https://jp.pathofexile.com/api/trade/data/items": [
+            _trade_item_catalog_payload("腐ったラウンドシールド", "ストームセールの舵輪"),
+        ],
+    }
+
+    def request_json(url):
+        return responses[url].pop(0), {}
+
+    with patch("src.poetore.trade._item_entries_cache", None), patch(
+        "src.poetore.trade._jp_item_entries_cache", None,
+    ), patch("src.poetore.trade._item_groups_cache", None), patch(
+        "src.poetore.trade._jp_item_groups_cache", None,
+    ), patch("src.poetore.trade._request_json", side_effect=request_json) as request:
+        identity = english_trade_identity(
+            _storm_sail_item(), "腐ったラウンドシールド", "ストームセールの舵輪",
+        )
+
+    assert identity == ("Rotted Round Shield", "Wheel of the Stormsail")
+    assert request.call_count == 2
+    assert not any(responses.values())
+
+
 def test_329_japanese_magic_one_line_name_resolves_contained_base_type():
     english = (("flask", ({"type": "Jade Flask"}, {"type": "Blood Sap Tincture"})),)
     japanese = (("flask", ({"type": "翡翠のフラスコ"}, {"type": "血の樹液のチンキ"})),)
@@ -756,14 +859,20 @@ def test_normal_search_rejects_japanese_identity_before_api_request():
     item = parse_item_text(ITEM)
     with patch(
         "src.poetore.trade._english_trade_item_type", return_value=None,
-    ), patch("src.poetore.trade._cached_request_json") as request_json:
-        with pytest.raises(TradeApiError, match="英語のアイテム名またはベースタイプ"):
-            search_prices(
-                item, "上質な エゾマイトの刃", league="Standard",
-                stat_filters=(TradeStatFilter(
-                    "property.physical_dps", "物理DPS", 139.9, "property", True,
-                ),),
-            )
+    ), patch(
+        "src.poetore.trade._clear_trade_item_catalog_cache",
+    ) as refresh_catalog, patch(
+        "src.poetore.trade._cached_request_json",
+    ) as request_json, pytest.raises(
+        TradeApiError, match="英語のアイテム名またはベースタイプ",
+    ):
+        search_prices(
+            item, "上質な エゾマイトの刃", league="Standard",
+            stat_filters=(TradeStatFilter(
+                "property.physical_dps", "物理DPS", 139.9, "property", True,
+            ),),
+        )
+    refresh_catalog.assert_called_once_with()
     request_json.assert_not_called()
 
 
