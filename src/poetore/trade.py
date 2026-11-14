@@ -1686,15 +1686,28 @@ def _map_blight_state(item: ParsedItem) -> str | None:
         return None
     raw = item.raw_text.casefold()
     identity = f"{item.name}\n{item.base_type}".casefold()
-    if "blight-ravaged map" in identity or "blight-ravaged" in raw or "ブライトに破壊" in item.raw_text:
+    if (
+        "blight-ravaged map" in identity
+        or "blight-ravaged" in raw
+        or "ブライトに破壊" in item.raw_text
+        or "ブライトに蹂躙されたマップ" in item.raw_text
+        or "ブライト荒廃マップ" in item.raw_text
+    ):
         return "ravaged"
     if (
         "blighted map" in identity
         or "blighted map" in raw
         or "ブライトマップ" in item.raw_text
+        or "ブライトに覆われたマップ" in item.raw_text
         or (
-            "エリアは真菌に覆われている" in item.raw_text
-            and "3回アノイントすることができる" in item.raw_text
+            (
+                "エリアは真菌に覆われている" in item.raw_text
+                or "エリアは成長する真菌に寄生されている" in item.raw_text
+            )
+            and (
+                "3回アノイントすることができる" in item.raw_text
+                or "最大3回アノイントできる" in item.raw_text
+            )
         )
     ):
         return "blighted"
@@ -2815,6 +2828,33 @@ def _scrying_orb_trade_identity(item: ParsedItem) -> tuple[str, str] | None:
             discriminator = str(english.get("disc", "")).strip()
             if option and discriminator:
                 return option, discriminator
+    return None
+
+
+def _blighted_map_trade_identity(item: ParsedItem) -> tuple[str, str] | None:
+    """Blighted Mapをマップエリア別の公式Trade identityへ解決する。"""
+    state = _map_blight_state(item)
+    if state is None:
+        return None
+    area = str(
+        item.properties.get("マップエリア")
+        or item.properties.get("Map Area")
+        or ""
+    ).strip()
+    if not area:
+        return None
+    discriminator = "uberblighted" if state == "ravaged" else "blighted"
+    area_suffix = f"({area})"
+    for english, japanese in _aligned_trade_item_pairs():
+        if (
+            str(japanese.get("disc", "")).strip() != discriminator
+            or str(english.get("disc", "")).strip() != discriminator
+            or not str(japanese.get("text", "")).strip().endswith(area_suffix)
+        ):
+            continue
+        option = str(english.get("type", "")).strip()
+        if option:
+            return option, discriminator
     return None
 
 
@@ -4168,6 +4208,7 @@ def build_search_query(
     gem_info = gem_metadata(base_type) if item.category == "gem" else {}
     query_type: str | dict = str(gem_info.get("trade_type") or base_type)
     scrying_identity = _scrying_orb_trade_identity(item)
+    blighted_map_state = _map_blight_state(item)
     mercenary_identity = _mercenary_warrant_trade_identity(item)
     if item.name.strip() in {"傭兵の召喚状", "Mercenary's Warrant", "Mercenary Warrant"} and not mercenary_identity:
         raise ValueError("傭兵の召喚状のビルドを公式Tradeデータで解決できませんでした。")
@@ -4180,6 +4221,13 @@ def build_search_query(
         query_type = {
             "option": scrying_identity[0],
             "discriminator": scrying_identity[1],
+        }
+    elif blighted_map_state is not None and base_type.isdecimal():
+        query_type = {
+            "option": base_type,
+            "discriminator": (
+                "uberblighted" if blighted_map_state == "ravaged" else "blighted"
+            ),
         }
     elif gem_info.get("discriminator"):
         query_type = {"option": query_type, "discriminator": gem_info["discriminator"]}
@@ -4521,10 +4569,16 @@ def _english_trade_identity_once(
     name: str | None = None,
 ) -> tuple[str | None, str | None]:
     scrying_identity = _scrying_orb_trade_identity(item)
+    blighted_map_identity = _blighted_map_trade_identity(item)
     resolved_type = (
         scrying_identity[0] if scrying_identity
+        else blighted_map_identity[0] if blighted_map_identity
         else str(base_type or item.base_type or "").strip() or None
     )
+    if resolved_type and _is_generic_map_copy_type(item, resolved_type):
+        # 汎用タイトルを部分一致でGem等へ誤変換しない。エリア別identityを
+        # 解決できない場合も、typeを省略してBlighted条件だけで安全に検索する。
+        resolved_type = None
     if resolved_type and _contains_japanese_text(resolved_type):
         resolved_type = (
             _english_trade_item_type(resolved_type, item.category) or resolved_type

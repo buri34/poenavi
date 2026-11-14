@@ -5586,6 +5586,64 @@ Blighted Map (Tier 16)
     assert unresolved_modifier_warnings(item, filters) == ()
 
 
+def test_330_japanese_blighted_map_uses_area_variant_and_true_filter():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: ノーマル
+ブライトに覆われたマップ (ティア 3)
+--------
+マップエリア: 熱帯の島
+--------
+アイテムレベル: 72
+--------
+モンスターレベル：70
+--------
+{ 暗黙モッド }
+エリアは成長する真菌に寄生されている
+最大3回アノイントできる — スケールできない値
+このエリアに元々生息していた生物はいなくなる — スケールできない値
+--------
+自身のマップデバイスで使用することでこのティアまたはそれよりティアの低いマップに移動する。マップは一度のみ使用できる。""")
+    aligned = ((
+        {"type": "5647", "text": "Blighted Map (Tropical Island)", "disc": "blighted"},
+        {"type": "5647", "text": "ブライトマップ (熱帯の島)", "disc": "blighted"},
+    ),)
+
+    with patch(
+        "src.poetore.trade._aligned_trade_item_pairs",
+        side_effect=lambda: iter(aligned),
+    ):
+        trade_type, trade_name = english_trade_identity(item)
+        filters = resolve_trade_stat_filters(item)
+        query = build_search_query(item, trade_type, filters)["query"]
+
+    assert trade_type == "5647"
+    assert trade_name is None
+    assert {row.stat_id for row in filters} == {
+        "property.map_tier", "property.map_blighted",
+    }
+    assert query["type"] == {"option": "5647", "discriminator": "blighted"}
+    map_filters = query["filters"]["map_filters"]["filters"]
+    assert map_filters["map_tier"] == {"min": 3.0}
+    assert map_filters["map_blighted"] == {"option": "true"}
+    assert "map_uberblighted" not in map_filters
+
+    with patch(
+        "src.poetore.trade._aligned_trade_item_pairs",
+        side_effect=lambda: iter(()),
+    ):
+        fallback_type, fallback_name = english_trade_identity(item)
+        fallback_query = build_search_query(
+            item, fallback_type, filters, trade_name=fallback_name,
+        )["query"]
+
+    assert fallback_type is None
+    assert fallback_name is None
+    assert "type" not in fallback_query
+    assert fallback_query["filters"]["map_filters"]["filters"]["map_blighted"] == {
+        "option": "true",
+    }
+
+
 def test_valdo_reward_and_multiline_mods_use_official_exact_filters():
     item = parse_item_text("""アイテムクラス: マップ
 レアリティ: レア
