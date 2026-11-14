@@ -5107,8 +5107,16 @@ def test_localized_blighted_map_shows_readonly_map_area_as_first_condition(qapp)
         window.close()
 
 
-def test_unidentified_item_tier_is_shown_as_readonly_search_condition(qapp):
+def test_unidentified_item_tier_is_editable_and_used_for_search(qapp):
     window = PoetoreWindow()
+    called = threading.Event()
+    captured_items = []
+
+    def search_prices(item, *_args, **_kwargs):
+        captured_items.append(item)
+        called.set()
+        return PriceResult("Covens", "query", 0, ())
+
     try:
         window.input_edit.setPlainText("""アイテムクラス: セプター
 レアリティ: マジック
@@ -5138,8 +5146,19 @@ def test_unidentified_item_tier_is_shown_as_readonly_search_condition(qapp):
         assert not window.unidentified_chip.isHidden()
         assert window.unidentified_chip.currentData() is True
         assert not window.unidentified_tier_chip.isHidden()
-        assert window.unidentified_tier_chip.text() == "未鑑定Tier：5"
-        assert not window.unidentified_tier_chip.isEnabled()
+        assert window.unidentified_tier_chip.value_edit.text() == "5"
+        assert window.unidentified_tier_chip.value_edit.isEnabled()
+
+        window.unidentified_tier_chip.value_edit.setText("3")
+        with patch("src.poetore.ui.search_prices", side_effect=search_prices):
+            window.search_current_item()
+            assert called.wait(1.0)
+        assert captured_items[0].unidentified_tier == 3
+        misc = build_search_query(
+            captured_items[0], "Vaal Sceptre",
+        )["query"]["filters"]["misc_filters"]["filters"]
+        assert misc["identified"] == {"option": "false"}
+        assert misc["unidentified_tier"] == {"min": 3, "max": 3}
 
         window.input_edit.setPlainText("""アイテムクラス: スタック可能カレンシー
 レアリティ: カレンシー

@@ -887,6 +887,51 @@ class _NumericFilterChip(QFrame):
         return self._active
 
 
+class _RequiredNumericFilterChip(QFrame):
+    """常に有効で、値だけを編集できる単一数値の検索チップ。"""
+
+    def __init__(self, label: str, minimum: int, maximum: int, parent=None):
+        super().__init__(parent)
+        self.setObjectName("numericFilterTag")
+        self.setProperty("active", True)
+        self._minimum = minimum
+        self._maximum = maximum
+        self._last_valid_value = minimum
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 2, 6, 2)
+        layout.setSpacing(1)
+        label_widget = QLabel(f"{label}：")
+        label_widget.setObjectName("numericFilterLabel")
+        layout.addWidget(label_widget)
+        self.value_edit = QLineEdit()
+        self.value_edit.setObjectName("numericFilterEdit")
+        self.value_edit.setValidator(QIntValidator(minimum, maximum, self.value_edit))
+        self.value_edit.setProperty("wheelStepNumeric", True)
+        self.value_edit.setAlignment(Qt.AlignCenter)
+        self.value_edit.setFixedWidth(30)
+        self.value_edit.editingFinished.connect(self._restore_valid_value)
+        layout.addWidget(self.value_edit)
+
+    def setValue(self, value: int):
+        self._last_valid_value = int(value)
+        self.value_edit.setText(str(value))
+
+    def value(self) -> int:
+        text = self.value_edit.text().strip()
+        try:
+            value = int(text)
+        except ValueError:
+            value = self._last_valid_value
+        if not self._minimum <= value <= self._maximum:
+            value = self._last_valid_value
+        return value
+
+    def _restore_valid_value(self):
+        value = self.value()
+        self._last_valid_value = value
+        self.value_edit.setText(str(value))
+
+
 class _SparklineWidget(QWidget):
     """poe.ninjaの7日変動率を追加依存なしで描画する。"""
 
@@ -1549,10 +1594,12 @@ class PoetoreWindow(QWidget):
             (("未鑑定のみ", True, False), ("未鑑定を含む", False, False)),
         )
         self.unidentified_chip.hide()
-        self.unidentified_tier_chip = QPushButton()
-        self.unidentified_tier_chip.setObjectName("readonlyFilterChip")
-        self.unidentified_tier_chip.setEnabled(False)
-        self.unidentified_tier_chip.setToolTip("コピー元から判定した未鑑定アイテムのTier")
+        self.unidentified_tier_chip = _RequiredNumericFilterChip(
+            "未鑑定Tier", 1, 99,
+        )
+        self.unidentified_tier_chip.setToolTip(
+            "コピー元のTierを初期値にして、検索するTierを変更できます"
+        )
         self.unidentified_tier_chip.hide()
         self.veiled_chip = _CycleButton(
             (("同一Veiled Modあり", True, False), ("Veiled指定なし", False, False)),
@@ -5170,6 +5217,10 @@ class PoetoreWindow(QWidget):
             bool(self.unidentified_chip.currentData())
             if not self.unidentified_chip.isHidden() else None
         )
+        if not self.unidentified_tier_chip.isHidden():
+            selected_unidentified_tier = self.unidentified_tier_chip.value()
+            if selected_unidentified_tier != item.unidentified_tier:
+                item = replace(item, unidentified_tier=selected_unidentified_tier)
         include_veiled = bool(self.veiled_chip.currentData()) if not self.veiled_chip.isHidden() else None
         include_foil = bool(self.foil_chip.currentData()) if not self.foil_chip.isHidden() else None
         magic_exact = bool(
@@ -5890,10 +5941,8 @@ class PoetoreWindow(QWidget):
             ) else 1
         )
         self.unidentified_tier_chip.setVisible(item.unidentified_tier is not None)
-        self.unidentified_tier_chip.setText(
-            f"未鑑定Tier：{item.unidentified_tier}"
-            if item.unidentified_tier is not None else ""
-        )
+        if item.unidentified_tier is not None:
+            self.unidentified_tier_chip.setValue(item.unidentified_tier)
         self.veiled_chip.setVisible("veiled" in item.flags)
         self.veiled_chip.setCurrentIndex(0)
         self.foil_chip.setVisible("foil" in item.flags)
