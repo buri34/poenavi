@@ -186,12 +186,15 @@ _MERCENARY_SUPPORT_TIER = re.compile(
     r"\s*[（(](?:ティア|Tier)\s*[:：]\s*(\d+)[）)]\s*$", re.IGNORECASE,
 )
 _VISCERA_GRADE_SUFFIX = re.compile(
-    r"^(?P<base>.+?)\s*[（(](?P<grade>上級|下級)[）)]$",
+    r"^(?P<base>.+?)\s*[（(](?P<grade>上級|低級|下級)[）)]$",
 )
 _VISCERA_GRADE_PREFIX = re.compile(
     r"^(?P<grade>Greater|Lesser)\s+(?P<base>.+)$", re.IGNORECASE,
 )
-_VISCERA_GRADE_LABELS = {"greater": "上級", "lesser": "下級"}
+_VISCERA_GRADE_LABELS = {
+    "greater": "上級", "lesser": "低級",
+    "上級": "上級", "低級": "低級", "下級": "低級",
+}
 _VISCERA_SLOTS = {
     "頭部": "頭部", "頭": "頭部", "Head": "頭部",
     "腕": "腕", "Arm": "腕",
@@ -880,7 +883,9 @@ def parse_item_text(text: str) -> ParsedItem:
         grade_match = _VISCERA_GRADE_SUFFIX.fullmatch(base_type.strip())
         if grade_match:
             base_type = name = grade_match.group("base").strip()
-            properties["臓器等級"] = grade_match.group("grade")
+            properties["臓器等級"] = _VISCERA_GRADE_LABELS[
+                grade_match.group("grade").casefold()
+            ]
         else:
             grade_match = _VISCERA_GRADE_PREFIX.fullmatch(base_type.strip())
             if grade_match:

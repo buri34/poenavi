@@ -86,6 +86,23 @@ Gain 1% of Lightning Damage as Extra Chaos Damage per Power Charge
         self.assertEqual(item.properties["臓器部位"], "胴体")
         self.assertEqual(item.properties["臓器等級"], "上級")
 
+    def test_parses_japanese_lesser_viscera_grade_without_polluting_base_type(self):
+        item = parse_item_text("""アイテムクラス: 臓器
+彫刻された臀部 (低級)
+--------
+足
+--------
+アイテムレベル: 37
+--------
+{ 暗黙モッド }
+トーテム設置スピードが13(10-15)%増加する
+""")
+
+        self.assertEqual(item.name, "彫刻された臀部")
+        self.assertEqual(item.base_type, "彫刻された臀部")
+        self.assertEqual(item.properties["臓器部位"], "脚")
+        self.assertEqual(item.properties["臓器等級"], "低級")
+
     def test_parses_unidentified_item_tier_state_lines(self):
         for state_line in ("未鑑定 (Tier 5)", "Unidentified (Tier: 5)"):
             with self.subTest(state_line=state_line):

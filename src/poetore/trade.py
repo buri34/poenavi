@@ -1394,8 +1394,12 @@ def _viscera_grade_matches(item: ParsedItem, fetched_item: dict) -> bool:
     ).strip()
     if grade == "上級":
         return fetched_type.casefold().startswith("greater ") or fetched_type.endswith("(上級)")
-    if grade == "下級":
-        return fetched_type.casefold().startswith("lesser ") or fetched_type.endswith("(下級)")
+    if grade in {"低級", "下級"}:
+        return (
+            fetched_type.casefold().startswith("lesser ")
+            or fetched_type.endswith("(低級)")
+            or fetched_type.endswith("(下級)")
+        )
     return False
 
 

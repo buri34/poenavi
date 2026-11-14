@@ -3527,6 +3527,19 @@ VISCERA_JP = """アイテムクラス: 臓器
 これを街または隠れ家にいるウィッカーマンのもとに持っていくと、取り付けることができる。
 """
 
+VISCERA_LESSER_JP = """アイテムクラス: 臓器
+彫刻された臀部 (低級)
+--------
+足
+--------
+アイテムレベル: 37
+--------
+{ 暗黙モッド }
+トーテム設置スピードが13(10-15)%増加する
+--------
+これを街または隠れ家にいるウィッカーマンのもとに持っていくと、取り付けることができる。
+"""
+
 
 def test_viscera_query_uses_slot_and_grade_specific_implicit_exactly():
     item = parse_item_text(VISCERA_JP)
@@ -3558,6 +3571,64 @@ def test_viscera_query_uses_slot_and_grade_specific_implicit_exactly():
         }],
     }]
     assert "misc_filters" not in query["filters"]
+
+
+def test_lesser_viscera_query_strips_grade_from_official_base_type():
+    item = parse_item_text(VISCERA_LESSER_JP)
+    entries = ({
+        "id": "implicit.stat_3374165039",
+        "text": "トーテム設置スピードが#%増加する",
+        "type": "implicit",
+    },)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item)
+
+    query = build_search_query(item, item.base_type, filters)["query"]
+
+    assert item.properties["臓器等級"] == "低級"
+    assert query["type"] == "彫刻された臀部"
+    assert query["filters"]["type_filters"]["filters"]["category"] == {
+        "option": "viscera.leg",
+    }
+    assert query["stats"][0]["filters"] == [{
+        "id": "implicit.stat_3374165039",
+        "value": {"min": 13.0, "max": 13.0},
+    }]
+
+
+def test_lesser_viscera_search_keeps_only_lesser_fetch_rows():
+    item = parse_item_text(VISCERA_LESSER_JP)
+    grade_filter = TradeStatFilter(
+        "implicit.stat_3374165039", "低級固有Implicit", 13.0, "implicit",
+        enabled=True, max_value=13.0, read_value=13.0, exact=True,
+    )
+    search = ({"id": "viscera-query", "result": ["lesser", "greater"]}, {})
+    fetch = ({"result": [
+        {
+            "listing": {
+                "price": {"amount": 2, "currency": "chaos"},
+                "account": {"name": "lesser-seller"},
+            },
+            "item": {"baseType": "彫刻された臀部 (低級)"},
+        },
+        {
+            "listing": {
+                "price": {"amount": 9, "currency": "chaos"},
+                "account": {"name": "greater-seller"},
+            },
+            "item": {"baseType": "彫刻された臀部 (上級)"},
+        },
+    ]}, {})
+
+    _trade_response_cache.clear()
+    with patch("src.poetore.trade._request_json", side_effect=[search, fetch]):
+        result = search_prices(
+            item, item.base_type, "Covens", stat_filters=(grade_filter,),
+        )
+
+    assert [(row.account, row.base_type, row.amount) for row in result.listings] == [
+        ("lesser-seller", "彫刻された臀部 (低級)", 2.0),
+    ]
 
 
 def test_viscera_search_uses_japanese_api_and_discards_other_grade():
