@@ -1321,7 +1321,10 @@ def available_trade_presets(
         )
             and _memory_strands(item) is None)
     )
-    is_unmodifiable = "corrupted" in item.flags or "mirrored" in item.flags
+    # コラプト済みの現物自体は加工できないが、「ベースアイテム」は元の
+    # ベースタイプを非コラプト状態で探す比較機能なので候補から外さない。
+    # Mirrored品は複製元のクラフト状態を復元できないため従来どおり除外する。
+    is_mirrored = "mirrored" in item.flags
     has_strong_crafting_value = (
         any(modifier.kind == "fractured" for modifier in item.modifiers)
         or "synthesised" in item.flags
@@ -1334,7 +1337,7 @@ def available_trade_presets(
         and item.item_level is not None
         and item.item_level >= 82
     )
-    if is_unmodifiable:
+    if is_mirrored:
         return (PRESET_FINISHED,)
     if allow_low_level_magic and rarity in {"magic", "マジック"} and not likely_finished:
         return (PRESET_FINISHED, PRESET_BASE)
@@ -4402,10 +4405,9 @@ def build_search_query(
         type_filters["category"] = {"option": category}
     if preset == PRESET_BASE:
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
-        if include_corrupted != True:
-            misc["corrupted"] = {
-                "option": "true" if include_corrupted == "only" else "false"
-            }
+        # コピー元がコラプト済みでも、ベース検索の対象は加工可能な
+        # 非コラプト品。UIの古い状態や直接呼び出しから値が渡っても固定する。
+        misc["corrupted"] = {"option": "false"}
         misc["mirrored"] = {"option": "false"}
         misc["fractured_item"] = {"option": "true" if any(
             modifier.kind == "fractured" for modifier in item.modifiers
@@ -4452,7 +4454,8 @@ def build_search_query(
             and not any(modifier.kind == "fractured" for modifier in item.modifiers)):
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
         misc["fractured_item"] = {"option": "false"}
-    if corruption_mode_explicit and include_corrupted != True:
+    if (preset != PRESET_BASE
+            and corruption_mode_explicit and include_corrupted != True):
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
         misc["corrupted"] = {
             "option": "true" if include_corrupted == "only" else "false"

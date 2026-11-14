@@ -6174,6 +6174,17 @@ class PoetoreWindow(QWidget):
         self.price_list.clear()
         preset = str(self.trade_preset_combo.currentData() or PRESET_FINISHED)
         item = getattr(self, "_parsed_item", None)
+        if item is not None and not self.corrupted_combo.isHidden():
+            if preset == PRESET_BASE:
+                # ベース検索はコピー元のコラプト状態を引き継がず、
+                # 加工可能な非コラプト品に固定する。
+                self.corrupted_combo.setCurrentIndex(1)
+                self.corrupted_combo.setEnabled(False)
+            else:
+                self.corrupted_combo.setEnabled(True)
+                self.corrupted_combo.setCurrentIndex(
+                    0 if "corrupted" in item.flags else 1
+                )
         self._configure_magic_rarity_toggle(item)
         if item is not None:
             self._refresh_hidden_split_default(item)

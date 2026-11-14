@@ -29,6 +29,22 @@ RARE_JP = """アイテムクラス: 指輪
 
 
 class PoetoreParserTest(unittest.TestCase):
+    def test_japanese_claw_item_class_is_weapon(self):
+        item = parse_item_text("""アイテムクラス: 鉤爪
+レアリティ: レア
+枯れた棘
+帝国の鉤爪
+--------
+アイテムレベル: 84
+--------
+コラプト状態
+""")
+
+        self.assertEqual(item.item_class, "鉤爪")
+        self.assertEqual(item.base_type, "帝国の鉤爪")
+        self.assertEqual(item.category, "weapon")
+        self.assertIn("corrupted", item.flags)
+
     def test_parses_japanese_viscera_without_rarity(self):
         item = parse_item_text("""アイテムクラス: 臓器
 テンプラーの旗 (上級)

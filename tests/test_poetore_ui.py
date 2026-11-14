@@ -5708,6 +5708,54 @@ Item Level: 85
         window.close()
 
 
+def test_corrupted_japanese_claw_base_search_shows_noncorrupted_state(qapp):
+    window = PoetoreWindow()
+    called = threading.Event()
+    captured = {}
+
+    def search_prices(*args, **kwargs):
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        called.set()
+        return PriceResult("Covens", "query", 0, ())
+
+    try:
+        window._trade_base_type = "Imperial Claw"
+        window.input_edit.setPlainText("""アイテムクラス: 鉤爪
+レアリティ: レア
+枯れた棘
+帝国の鉤爪
+--------
+アイテムレベル: 84
+--------
+{ 暗黙モッド — ライフ, アタック }
+ヒットを与えた敵1体ごとに46のライフを付与する
+--------
+コラプト状態
+""")
+        with patch("src.poetore.ui.resolve_trade_stat_filters", return_value=()):
+            window.parse_current_text()
+            assert window.trade_preset_combo.count() == 2
+
+            window.trade_preset_combo.setCurrentIndex(1)
+
+        assert window.trade_preset_combo.currentData() == PRESET_BASE
+        assert window.corrupted_combo.currentData() is False
+        assert not window.corrupted_combo.isEnabled()
+        assert "ベースアイテム" in window.price_status.text()
+
+        with patch("src.poetore.ui.search_prices", side_effect=search_prices):
+            window.search_current_item()
+            assert called.wait(1.0)
+
+        assert captured["args"][1] == "Imperial Claw"
+        assert captured["kwargs"]["preset"] == PRESET_BASE
+        assert captured["kwargs"]["include_corrupted"] is False
+        assert captured["kwargs"]["item_level_min"] == 84
+    finally:
+        window.close()
+
+
 def test_dedicated_exact_preset_is_labeled_as_dedicated_search_and_restores_finished(qapp):
     window = PoetoreWindow()
     try:

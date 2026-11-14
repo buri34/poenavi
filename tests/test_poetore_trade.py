@@ -1137,6 +1137,65 @@ def test_high_item_level_unfinished_rare_has_finished_and_base_presets():
     assert not by_id["property.aps"].enabled
 
 
+def test_corrupted_japanese_claw_can_search_uncorrupted_base_item():
+    item = parse_item_text("""アイテムクラス: 鉤爪
+レアリティ: レア
+枯れた棘
+帝国の鉤爪
+--------
+鉤爪
+物理ダメージ: 25-65
+元素ダメージ: 8-15 (augmented)
+クリティカル率: 8.89% (augmented)
+秒間アタック回数: 1.94 (augmented)
+武器攻撃距離：1.1 メートル
+--------
+装備要求:
+レベル: 68
+器用さ: 131
+知性: 95
+--------
+ソケット: W-G W
+--------
+アイテムレベル: 84
+--------
+{ 暗黙モッド — ライフ, アタック }
+ヒットを与えた敵1体ごとに46のライフを付与する
+--------
+{ プレフィックスモッド「燻る」 (ティア: 9) — ダメージ, 元素, 火, アタック }
+8(8-10)から15(15-18)の火ダメージを追加する
+{ サフィックスモッド 「名声の」 (ティア: 3) — アタック, スピード }
+アタックスピードが21(20-22)%増加する
+{ サフィックスモッド 「刺突の」 (ティア: 3) — アタック, クリティカル }
+クリティカル率が27(25-29)%増加する
+{ サフィックスモッド 「陶酔の」 (ティア: 2) — マナ }
+マナ自動回復レートが55(50-59)%増加する
+--------
+コラプト状態
+""")
+
+    assert item.category == "weapon"
+    assert available_trade_presets(item) == (PRESET_FINISHED, PRESET_BASE)
+    filters = resolve_trade_stat_filters(item, PRESET_BASE, "Imperial Claw")
+    query = build_search_query(
+        item, "Imperial Claw", filters, preset=PRESET_BASE,
+        # コピー元の状態が渡されても、クラフト用ベースは非コラプトに固定する。
+        include_corrupted="only", item_level_min=84,
+    )["query"]
+
+    assert query["type"] == "Imperial Claw"
+    assert query["filters"]["type_filters"]["filters"]["rarity"] == {
+        "option": "nonunique",
+    }
+    misc = query["filters"]["misc_filters"]["filters"]
+    assert misc["ilvl"] == {"min": 84}
+    assert misc["corrupted"] == {"option": "false"}
+    assert query["stats"][0]["filters"] == [{
+        "id": "implicit.stat_821021828",
+        "value": {"min": 46.0},
+    }]
+
+
 def test_base_preset_uses_exact_base_nonunique_ilvl_and_craftable_state():
     item = parse_item_text(ITEM.replace("Item Level: 67", "Item Level: 88"))
     filters = resolve_trade_stat_filters(item, PRESET_BASE)
@@ -1164,8 +1223,9 @@ def test_finished_or_low_level_items_do_not_offer_base_preset():
     corrupted = parse_item_text(ITEM.replace("Item Level: 67", "Item Level: 85").replace(
         "74% increased Physical Damage", "74% increased Physical Damage\nCorrupted",
     ))
-    for item in (low_level, crafted, quality_20, corrupted):
+    for item in (low_level, crafted, quality_20):
         assert available_trade_presets(item) == (PRESET_FINISHED,)
+    assert available_trade_presets(corrupted) == (PRESET_FINISHED, PRESET_BASE)
 
 
 def test_fractured_item_can_offer_base_preset_below_ilvl_82():
@@ -1261,7 +1321,11 @@ def test_unmodifiable_fractured_item_does_not_offer_base_preset(blocked_flag):
         ),
     )
 
-    assert available_trade_presets(item) == (PRESET_FINISHED,)
+    expected = (
+        (PRESET_FINISHED, PRESET_BASE)
+        if blocked_flag == "corrupted" else (PRESET_FINISHED,)
+    )
+    assert available_trade_presets(item) == expected
 
 
 @pytest.mark.parametrize("strong_flag", ("synthesised", "influence:elder"))

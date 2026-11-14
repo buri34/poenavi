@@ -86,7 +86,7 @@ _CATEGORY_WORDS = (
     (("Corpse", "死体"), "corpse"),
     (("武器", "Weapon", "弓", "Bow", "ワンド", "Wand", "剣", "Sword", "斧", "Axe",
       "メイス", "Mace", "セプター", "Sceptre", "スタッフ", "Staff", "ダガー", "Dagger",
-      "クロー", "Claw", "釣り竿", "Fishing Rod"), "weapon"),
+      "クロー", "鉤爪", "Claw", "釣り竿", "Fishing Rod"), "weapon"),
     (("防具", "Armour", "ヘルメット", "Helmet", "兜", "グローブ", "Gloves", "手袋",
       "ブーツ", "Boots", "靴", "鎧", "胴体防具", "Body Armour", "盾", "Shield"), "armour"),
     (("アクセサリー", "Accessory", "指輪", "Ring", "アミュレット", "Amulet", "ベルト", "Belt",
