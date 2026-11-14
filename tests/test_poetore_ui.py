@@ -4585,6 +4585,67 @@ def test_mod_condition_toggle_shows_clear_when_partially_checked(qapp):
         window.close()
 
 
+@pytest.mark.parametrize(("base_type", "implicit_lines", "expected_ids"), (
+    (
+        "シェイパーガーディアンマップ",
+        "エリアはシェイパーのインフルエンスを受けている — スケールできない値",
+        {"implicit.stat_1792283443|1"},
+    ),
+    (
+        "マップ (ティア 16)",
+        (
+            "エリアはエルダーのインフルエンスを受けている — スケールできない値\n"
+            "マップはエラディケイター(...)に支配されている — スケールできない値"
+        ),
+        {"implicit.stat_1792283443|2", "implicit.stat_3624393862|2"},
+    ),
+))
+def test_guardian_map_identity_implicits_start_checked_without_warning(
+    qapp, base_type, implicit_lines, expected_ids,
+):
+    entries = (
+        {
+            "id": "implicit.stat_1792283443|1",
+            "text": "エリアはシェイパーのインフルエンスを受けている",
+            "type": "implicit",
+        },
+        {
+            "id": "implicit.stat_1792283443|2",
+            "text": "エリアはエルダーのインフルエンスを受けている",
+            "type": "implicit",
+        },
+        {
+            "id": "implicit.stat_3624393862|2",
+            "text": "マップはエラディケイターに支配されている",
+            "type": "implicit",
+        },
+    )
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText(f"""アイテムクラス: マップ
+レアリティ: レア
+古臭い辺境
+{base_type}
+--------
+アイテムレベル: 83
+--------
+モンスターレベル：83
+--------
+{{ 暗黙モッド }}
+{implicit_lines}
+--------
+""")
+        with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+            window.parse_current_text()
+
+        filters = {row.stat_id: row for row in window._selected_stat_filters()}
+        assert expected_ids <= filters.keys()
+        assert all(filters[stat_id].enabled for stat_id in expected_ids)
+        assert window.mod_warning.isHidden()
+    finally:
+        window.close()
+
+
 def test_unresolved_modifiers_are_shown_as_warning(qapp):
     window = PoetoreWindow()
     try:

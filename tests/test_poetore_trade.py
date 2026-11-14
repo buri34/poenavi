@@ -5978,6 +5978,104 @@ def test_veritania_citadel_full_japanese_copy_has_no_unresolved_warning():
     assert unresolved_modifier_warnings(item, filters) == ()
 
 
+GUARDIAN_MAP_STATS = (
+    {
+        "id": "implicit.stat_1792283443|1",
+        "text": "エリアはシェイパーのインフルエンスを受けている",
+        "type": "implicit",
+    },
+    {
+        "id": "implicit.stat_1792283443|2",
+        "text": "エリアはエルダーのインフルエンスを受けている",
+        "type": "implicit",
+    },
+    *(
+        {
+            "id": f"implicit.stat_3624393862|{option}",
+            "text": f"マップは{name}に支配されている",
+            "type": "implicit",
+        }
+        for option, name in enumerate((
+            "エンスレイバー", "エラディケイター", "コンストリクター", "プリファイヤー",
+        ), start=1)
+    ),
+)
+
+
+def test_shaper_guardian_map_enables_influence_identity_implicit():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+災いの召喚
+シェイパーガーディアンマップ
+--------
+アイテムレベル: 83
+--------
+モンスターレベル：83
+--------
+{ 暗黙モッド }
+エリアはシェイパーのインフルエンスを受けている — スケールできない値
+--------
+""")
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=GUARDIAN_MAP_STATS):
+        filters = resolve_trade_stat_filters(item)
+
+    influence = next(
+        row for row in filters if row.stat_id == "implicit.stat_1792283443|1"
+    )
+    assert influence.enabled is True
+    assert influence.selection_reason == "Guardian Map固有の暗黙条件"
+    assert unresolved_modifier_warnings(item, filters) == ()
+    query_filters = {
+        row["id"]: row
+        for group in build_search_query(item, stat_filters=filters)["query"]["stats"]
+        for row in group["filters"]
+    }
+    assert query_filters[influence.stat_id]["value"] == {}
+
+
+@pytest.mark.parametrize(("guardian", "option", "copied_suffix"), (
+    ("エンスレイバー", 1, ""),
+    ("エラディケイター", 2, "(...)"),
+    ("コンストリクター", 3, ""),
+    ("プリファイヤー", 4, ""),
+))
+def test_elder_guardian_map_enables_influence_and_occupied_implicits(
+    guardian, option, copied_suffix,
+):
+    item = parse_item_text(f"""アイテムクラス: マップ
+レアリティ: レア
+古臭い辺境
+マップ (ティア 16)
+--------
+アイテムレベル: 83
+--------
+モンスターレベル：83
+--------
+{{ 暗黙モッド }}
+エリアはエルダーのインフルエンスを受けている — スケールできない値
+マップは{guardian}{copied_suffix}に支配されている — スケールできない値
+--------
+""")
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=GUARDIAN_MAP_STATS):
+        filters = resolve_trade_stat_filters(item)
+
+    expected_ids = {
+        "implicit.stat_1792283443|2",
+        f"implicit.stat_3624393862|{option}",
+    }
+    selected = {row.stat_id for row in filters if row.enabled}
+    assert expected_ids <= selected
+    assert unresolved_modifier_warnings(item, filters) == ()
+    query_filters = {
+        row["id"]: row
+        for group in build_search_query(item, stat_filters=filters)["query"]["stats"]
+        for row in group["filters"]
+    }
+    assert all(query_filters[stat_id]["value"] == {} for stat_id in expected_ids)
+
+
 def test_valdo_reward_uses_english_api_value_and_japanese_web_value():
     item = parse_item_text("""アイテムクラス: マップ
 レアリティ: レア

@@ -1471,6 +1471,11 @@ def _apply_dedicated_exact_rules(
             # Map/Chartも通常のExact規則へ統一し、Pseudoは候補表示だけにする。
             if item.category == "map" and row.kind == "map pseudo":
                 enabled = False
+            if (
+                item.category == "map"
+                and row.stat_id in _GUARDIAN_MAP_IDENTITY_STAT_IDS
+            ):
+                enabled = True
             if item.category == "invitation" and row.kind in {
                 "prefix", "suffix", "explicit", "map", "map pseudo",
             }:
@@ -1499,7 +1504,16 @@ def _apply_dedicated_exact_rules(
                     selection_reason="臓器の等級固有Implicitを完全一致",
                 ))
             else:
-                result.append(replace(row, enabled=enabled))
+                result.append(replace(
+                    row,
+                    enabled=enabled,
+                    selection_reason=(
+                        "Guardian Map固有の暗黙条件"
+                        if item.category == "map"
+                        and row.stat_id in _GUARDIAN_MAP_IDENTITY_STAT_IDS
+                        else row.selection_reason
+                    ),
+                ))
         elif row.stat_id in property_ids:
             if item.category == "armour" and row.stat_id in {
                 "property.armour", "property.evasion", "property.energy_shield",
@@ -2516,6 +2530,10 @@ def _clear_trade_item_catalog_cache() -> None:
 
 
 def _normalized_stat_text(text: str) -> str:
+    # 3.30の詳細コピーは一部の固定Map暗黙Modへ ``(...)`` を挿入するが、
+    # 公式Trade stat本文にはこの省略記号がない。値や選択肢ではないため、
+    # 照合時だけ除去し、UIに表示するコピー原文は維持する。
+    text = re.sub(r"[（(]\s*(?:\.{3}|…)\s*[）)]", "", text)
     text = re.sub(r"\([^)]*(?:\d|implicit|crafted|enchant)[^)]*\)", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\d+(?:\.\d+)?", "#", text)
     return re.sub(r"\s+", " ", text).strip()
@@ -2600,6 +2618,14 @@ def _trade_stat_entry_indexes(entries: tuple[dict, ...]):
 
 _CONQUEROR_CITADEL_STAT_IDS = {
     f"implicit.stat_2563183002|{option}" for option in range(1, 5)
+}
+
+# Guardian MapをGuardian Mapたらしめる固定暗黙Mod。通常Mapのrolled
+# Prefix/Suffixとは異なり個体の種類を表すため、コピーされていれば初期選択する。
+_GUARDIAN_MAP_IDENTITY_STAT_IDS = {
+    "implicit.stat_1792283443|1",  # Shaper influence
+    "implicit.stat_1792283443|2",  # Elder influence
+    *(f"implicit.stat_3624393862|{option}" for option in range(1, 5)),
 }
 
 
