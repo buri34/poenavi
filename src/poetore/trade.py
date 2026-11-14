@@ -86,6 +86,7 @@ _ITEM_CLASS_TRADE_CATEGORIES = {
     "Quarterstaves": "weapon.warstaff", "クォータースタッフ": "weapon.warstaff",
     "Foci": "armour.focus", "Focus": "armour.focus", "フォーカス": "armour.focus",
     "Bucklers": "armour.buckler", "バックラー": "armour.buckler",
+    "Viscera": "viscera", "臓器": "viscera",
 }
 
 
@@ -97,10 +98,12 @@ CONSUMABLE_CRAFTABLE_CATEGORIES = {
 }
 NON_CRAFTABLE_CATEGORIES = {
     "gem", "flask", "currency", "divination_card", "corpse", "incubator",
+    "viscera",
 }
 DEDICATED_EXACT_CATEGORIES = {
     "gem", "captured_beast", "map", "chart", "memory_line", "invitation",
     "heist_contract", "heist_blueprint", "charm", "corpse", "incubator",
+    "viscera",
 }
 PRESET_FINISHED = "finished"
 PRESET_BASE = "base"
@@ -1366,6 +1369,33 @@ def is_inscribed_ultimatum(item: ParsedItem) -> bool:
     )
 
 
+def _viscera_trade_category(item: ParsedItem) -> str | None:
+    if item.category != "viscera":
+        return None
+    slot = str(item.properties.get("臓器部位") or "").strip()
+    return {
+        "頭部": "viscera.head", "腕": "viscera.arm",
+        "胴体": "viscera.body", "脚": "viscera.leg",
+    }.get(slot, "viscera")
+
+
+def _viscera_grade_matches(item: ParsedItem, fetched_item: dict) -> bool:
+    """コピー元の等級と、公式fetchが返す派生typeが一致するか確認する。"""
+    if item.category != "viscera":
+        return True
+    grade = str(item.properties.get("臓器等級") or "").strip()
+    if not grade:
+        return True
+    fetched_type = str(
+        fetched_item.get("baseType") or fetched_item.get("typeLine") or ""
+    ).strip()
+    if grade == "上級":
+        return fetched_type.casefold().startswith("greater ") or fetched_type.endswith("(上級)")
+    if grade == "下級":
+        return fetched_type.casefold().startswith("lesser ") or fetched_type.endswith("(下級)")
+    return False
+
+
 def _apply_dedicated_exact_rules(
     item: ParsedItem, filters: tuple[TradeStatFilter, ...],
 ) -> tuple[TradeStatFilter, ...]:
@@ -1457,7 +1487,16 @@ def _apply_dedicated_exact_rules(
                 enabled = row.selection_reason == f"logbook-area:{first_logbook_group}"
             if row.hidden_reason:
                 enabled = False
-            result.append(replace(row, enabled=enabled))
+            if item.category == "viscera" and row.kind == "implicit":
+                # 臓器の上級／下級は独立したAPI filterを持たず、等級固有の
+                # implicitで区別される。コピー値の完全一致を初期条件にする。
+                value = row.read_value if row.read_value is not None else row.min_value
+                result.append(replace(
+                    row, enabled=True, min_value=value, max_value=value, exact=True,
+                    selection_reason="臓器の等級固有Implicitを完全一致",
+                ))
+            else:
+                result.append(replace(row, enabled=enabled))
         elif row.stat_id in property_ids:
             if item.category == "armour" and row.stat_id in {
                 "property.armour", "property.evasion", "property.energy_shield",
@@ -1476,7 +1515,7 @@ def _dedicated_exact_identity_filters(item: ParsedItem) -> tuple[TradeStatFilter
     filters: list[TradeStatFilter] = []
     excluded_ilvl = {
         "map", "chart", "jewel", "heist_blueprint", "heist_contract", "memory_line",
-        "sanctum_relic", "charm", "idol", "expedition_logbook",
+        "sanctum_relic", "charm", "idol", "expedition_logbook", "viscera",
     }
     if (item.item_level is not None and not _is_unique(item)
             and item.category not in excluded_ilvl):
@@ -2933,6 +2972,10 @@ def _localized_web_trade_type(item: ParsedItem, web_query: dict) -> str:
     localized = _normalize_trade_base_type(
         item.base_type if item.category == "gem" else (query_type_value or item.base_type)
     )
+    if item.category == "viscera":
+        # 日本語名をjp APIへ直接送るカテゴリなので、日英itemsの位置対応へ
+        # 戻さず、そのまま日本語Trade画面にも渡す。
+        return localized
     if item.category == "divination_card":
         return _japanese_divination_card_type(localized) or localized
     if item.category != "gem":
@@ -4189,7 +4232,10 @@ def build_search_query(
         raise ValueError(f"未対応のコラプト条件です: {include_corrupted}")
     craftable = (
         not _is_unique(item)
-        and item.category not in {"gem", "flask", "currency", "divination_card", "captured_beast"}
+        and item.category not in {
+            "gem", "flask", "currency", "divination_card", "captured_beast",
+            "viscera",
+        }
     )
     if include_split is None:
         has_special_state = (
@@ -4339,6 +4385,12 @@ def build_search_query(
         rarity_option = "uniquefoil"
     if rarity_option and item.category != "captured_beast":
         query["filters"]["type_filters"] = {"filters": {"rarity": {"option": rarity_option}}}
+    viscera_category = _viscera_trade_category(item)
+    if viscera_category:
+        type_filters = query["filters"].setdefault(
+            "type_filters", {"filters": {}},
+        )["filters"]
+        type_filters["category"] = {"option": viscera_category}
     if not exact_base_type and (item.category != "chart" or not chart_area_exact):
         category = (
             "chart" if item.category == "chart"
@@ -4368,6 +4420,7 @@ def build_search_query(
         misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
         stateful = item.category not in {
             "gem", "captured_beast", "currency", "divination_card", "invitation",
+            "viscera",
         }
         if stateful and include_corrupted != True:
             misc["corrupted"] = {
@@ -4683,9 +4736,17 @@ def search_prices(
     if performance_trace is not None:
         performance_trace.mark("trade_worker_started")
     league = league or active_pc_league()
-    trade_base_type, trade_name = english_trade_identity(
-        item, trade_base_type, trade_name,
+    localized_viscera_search = bool(
+        item.category == "viscera"
+        and _contains_japanese_text(str(item.base_type or ""))
     )
+    api_root = JP_API_ROOT if localized_viscera_search else API_ROOT
+    if localized_viscera_search:
+        trade_base_type, trade_name = item.base_type, None
+    else:
+        trade_base_type, trade_name = english_trade_identity(
+            item, trade_base_type, trade_name,
+        )
     if performance_trace is not None:
         performance_trace.mark("trade_identity_resolved", league=league)
     if (item.rarity.casefold() in {"magic", "マジック"}
@@ -4708,8 +4769,9 @@ def search_prices(
         performance_trace.mark(
             "trade_query_built", stat_filters=len(stat_filters), preset=preset,
         )
-    _require_english_search_identity(payload)
-    search_url = f"{API_ROOT}/search/{quote(league, safe='')}"
+    if not localized_viscera_search:
+        _require_english_search_identity(payload)
+    search_url = f"{api_root}/search/{quote(league, safe='')}"
     _trade_log(
         f"search: league={league!r} preset={preset!r} trade_status={trade_status!r} "
         f"api_status={TRADE_STATUS_OPTIONS[trade_status]!r} "
@@ -4741,7 +4803,7 @@ def search_prices(
     while fetched_count < min(len(ids), 20):
         block_number = fetched_count // 10 + 1
         fetch_ids = ",".join(ids[fetched_count:fetched_count + 10])
-        fetch_url = f"{API_ROOT}/fetch/{fetch_ids}?query={quote(query_id)}"
+        fetch_url = f"{api_root}/fetch/{fetch_ids}?query={quote(query_id)}"
         _trade_log(
             f"request: GET {fetch_url} "
             f"(candidates {fetched_count + 1}-{min(fetched_count + 10, len(ids))})"
@@ -4764,6 +4826,8 @@ def search_prices(
         for row in fetched.get("result", ()):
             listing = row.get("listing", {})
             fetched_item = row.get("item", {})
+            if not _viscera_grade_matches(item, fetched_item):
+                continue
             price = listing.get("price") or {}
             has_price = (
                 price.get("amount") is not None

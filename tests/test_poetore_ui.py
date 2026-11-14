@@ -5170,6 +5170,79 @@ def test_unidentified_item_tier_is_editable_and_used_for_search(qapp):
         window.close()
 
 
+def test_viscera_shows_slot_and_grade_and_keeps_japanese_identity(qapp):
+    window = PoetoreWindow()
+    implicit = TradeStatFilter(
+        "implicit.stat_3115319277", "上級固有Implicit", 1.0, "implicit",
+        enabled=True, max_value=1.0, read_value=1.0, exact=True,
+    )
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: 臓器
+テンプラーの旗 (上級)
+--------
+胴体
+--------
+アイテムレベル: 83
+--------
+{ 暗黙モッド }
+パワーチャージ1個ごとに雷ダメージの1%を追加混沌ダメージとして獲得する
+""")
+        with patch(
+            "src.poetore.ui.resolve_trade_stat_filters", return_value=(implicit,),
+        ):
+            window.parse_current_text()
+
+        assert window.item_name_label.text() == "テンプラーの旗 (上級)"
+        assert not window.viscera_slot_chip.isHidden()
+        assert window.viscera_slot_chip.text() == "臓器：胴体"
+        assert not window.viscera_grade_chip.isHidden()
+        assert window.viscera_grade_chip.text() == "等級：上級"
+
+        window.input_edit.setPlainText("""Item Class: Currency
+Rarity: Currency
+Chaos Orb
+""")
+        with patch("src.poetore.ui.resolve_trade_stat_filters", return_value=()):
+            window.parse_current_text()
+        assert window.viscera_slot_chip.isHidden()
+        assert window.viscera_grade_chip.isHidden()
+    finally:
+        window.close()
+
+
+def test_viscera_capture_keeps_japanese_trade_identity(qapp):
+    copied = """アイテムクラス: 臓器
+テンプラーの旗 (上級)
+--------
+胴体
+--------
+アイテムレベル: 83
+"""
+    item = parse_item_text(copied)
+    window = PoetoreWindow()
+    try:
+        with patch(
+            "src.poetore.ui.read_item_clipboard", return_value=copied,
+        ), patch.object(
+            window, "_parse_item_text", return_value=item,
+        ), patch(
+            "src.poetore.ui.english_trade_identity",
+        ) as english_identity, patch.object(
+            window, "parse_current_text",
+        ), patch.object(
+            window, "show_at_context",
+        ), patch.object(
+            window, "search_current_item",
+        ):
+            window._capture_item_copy()
+
+        english_identity.assert_not_called()
+        assert window._trade_base_type == "テンプラーの旗"
+        assert window._trade_item_name is None
+    finally:
+        window.close()
+
+
 def test_inscribed_ultimatum_shows_unsupported_condition_notice(qapp):
     window = PoetoreWindow()
     try:
@@ -6886,7 +6959,7 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
     window = PoetoreWindow()
     try:
         assert tuple(name for name, _widget in window._filter_chips) == (
-            "map_area", "links", "nightmare_map", "map_tier", "completion_reward", "area_level", "heist_wings",
+            "map_area", "viscera_slot", "viscera_grade", "links", "nightmare_map", "map_tier", "completion_reward", "area_level", "heist_wings",
             "heist_job", "heist_target", "cluster_enchant",
             "cluster_passives", "cluster_sockets", "blighted", "item_level",
             "base_percentile", "gem_variant", "gem_level", "quality", "runemastered",

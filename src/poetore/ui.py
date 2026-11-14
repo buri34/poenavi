@@ -1601,6 +1601,14 @@ class PoetoreWindow(QWidget):
             "コピー元のTierを初期値にして、検索するTierを変更できます"
         )
         self.unidentified_tier_chip.hide()
+        self.viscera_slot_chip = QPushButton()
+        self.viscera_slot_chip.setObjectName("readonlyFilterChip")
+        self.viscera_slot_chip.setEnabled(False)
+        self.viscera_slot_chip.hide()
+        self.viscera_grade_chip = QPushButton()
+        self.viscera_grade_chip.setObjectName("readonlyFilterChip")
+        self.viscera_grade_chip.setEnabled(False)
+        self.viscera_grade_chip.hide()
         self.veiled_chip = _CycleButton(
             (("同一Veiled Modあり", True, False), ("Veiled指定なし", False, False)),
         )
@@ -1683,6 +1691,8 @@ class PoetoreWindow(QWidget):
         self.sanctified_combo.hide()
         self._filter_chips = (
             ("map_area", self.map_area_chip),
+            ("viscera_slot", self.viscera_slot_chip),
+            ("viscera_grade", self.viscera_grade_chip),
             ("links", self.links_tag),
             ("nightmare_map", self.nightmare_map_chip),
             ("map_tier", self.map_tier_chip),
@@ -2994,6 +3004,11 @@ class PoetoreWindow(QWidget):
 
     def _display_item_name(self, item) -> str:
         """検索identityは変えず、コピー元に対応する日本語表示名を返す。"""
+        if item.category == "viscera":
+            grade = str(item.properties.get("臓器等級") or "").strip()
+            identity = str(item.base_type or item.name or "").strip()
+            return f"{identity} ({grade})" if grade else identity
+
         if item.category == "currency" and item.base_type in {"透視のオーブ", "Scrying Orb"}:
             area = str(
                 item.properties.get("マップエリア")
@@ -4719,7 +4734,11 @@ class PoetoreWindow(QWidget):
                 "clipboard_parsed", category=item.category, modifiers=len(item.modifiers),
             )
         copied_name = item.name if item.rarity.casefold() in {"unique", "ユニーク"} else None
-        if self.poe_version == POE2:
+        if item.category == "viscera":
+            # 日英itemsは臓器だけ件数が一致せず共通IDもない。日本語公式名を
+            # jp Trade APIへ直接送るため、英語への位置対応変換を行わない。
+            self._trade_base_type, self._trade_item_name = item.base_type, None
+        elif self.poe_version == POE2:
             self._trade_base_type, self._trade_item_name = item.base_type, copied_name
         else:
             try:
@@ -5530,7 +5549,9 @@ class PoetoreWindow(QWidget):
         craftable = (
             rarity not in {"unique", "ユニーク"}
             and not is_flask_category(item.category)
-            and item.category not in {"gem", "currency", "divination_card", "captured_beast"}
+            and item.category not in {
+                "gem", "currency", "divination_card", "captured_beast", "viscera",
+            }
         )
         has_special_state = (
             "corrupted" in item.flags
@@ -5943,6 +5964,20 @@ class PoetoreWindow(QWidget):
         self.unidentified_tier_chip.setVisible(item.unidentified_tier is not None)
         if item.unidentified_tier is not None:
             self.unidentified_tier_chip.setValue(item.unidentified_tier)
+        viscera_slot = str(item.properties.get("臓器部位") or "").strip()
+        viscera_grade = str(item.properties.get("臓器等級") or "").strip()
+        self.viscera_slot_chip.setVisible(
+            item.category == "viscera" and bool(viscera_slot)
+        )
+        self.viscera_slot_chip.setText(
+            f"臓器：{viscera_slot}" if viscera_slot else ""
+        )
+        self.viscera_grade_chip.setVisible(
+            item.category == "viscera" and bool(viscera_grade)
+        )
+        self.viscera_grade_chip.setText(
+            f"等級：{viscera_grade}" if viscera_grade else ""
+        )
         self.veiled_chip.setVisible("veiled" in item.flags)
         self.veiled_chip.setCurrentIndex(0)
         self.foil_chip.setVisible("foil" in item.flags)

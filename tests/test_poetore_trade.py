@@ -3450,6 +3450,100 @@ def test_330_unidentified_item_tier_is_sent_as_an_exact_misc_filter():
     assert query_with_relaxed_ui_state["filters"]["misc_filters"]["filters"] == misc
 
 
+VISCERA_JP = """アイテムクラス: 臓器
+テンプラーの旗 (上級)
+--------
+胴体
+--------
+アイテムレベル: 83
+--------
+{ 暗黙モッド }
+パワーチャージ1個ごとに雷ダメージの1%を追加混沌ダメージとして獲得する
+--------
+これを街または隠れ家にいるウィッカーマンのもとに持っていくと、取り付けることができる。
+"""
+
+
+def test_viscera_query_uses_slot_and_grade_specific_implicit_exactly():
+    item = parse_item_text(VISCERA_JP)
+    entries = ({
+        "id": "implicit.stat_3115319277",
+        "text": "パワーチャージ1個ごとに雷ダメージの#%を追加混沌ダメージとして獲得する",
+        "type": "implicit",
+    },)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item)
+
+    assert len(filters) == 1
+    assert filters[0].stat_id == "implicit.stat_3115319277"
+    assert filters[0].enabled
+    assert filters[0].exact
+    assert filters[0].min_value == filters[0].max_value == 1.0
+    assert filters[0].selection_reason == "臓器の等級固有Implicitを完全一致"
+
+    query = build_search_query(item, item.base_type, filters)["query"]
+    assert query["type"] == "テンプラーの旗"
+    assert query["filters"]["type_filters"]["filters"]["category"] == {
+        "option": "viscera.body",
+    }
+    assert query["stats"] == [{
+        "type": "and",
+        "filters": [{
+            "id": "implicit.stat_3115319277",
+            "value": {"min": 1.0, "max": 1.0},
+        }],
+    }]
+    assert "misc_filters" not in query["filters"]
+
+
+def test_viscera_search_uses_japanese_api_and_discards_other_grade():
+    item = parse_item_text(VISCERA_JP)
+    grade_filter = TradeStatFilter(
+        "implicit.stat_3115319277", "上級固有Implicit", 1.0, "implicit",
+        enabled=True, max_value=1.0, read_value=1.0, exact=True,
+    )
+    search = ({"id": "viscera-query", "result": ["lesser", "greater"]}, {})
+    fetch = ({"result": [
+        {
+            "listing": {
+                "price": {"amount": 1, "currency": "chaos"},
+                "account": {"name": "lesser-seller"},
+            },
+            "item": {"baseType": "テンプラーの旗 (下級)"},
+        },
+        {
+            "listing": {
+                "price": {"amount": 8, "currency": "chaos"},
+                "account": {"name": "greater-seller"},
+            },
+            "item": {"baseType": "テンプラーの旗 (上級)"},
+        },
+    ]}, {})
+
+    _trade_response_cache.clear()
+    with patch(
+        "src.poetore.trade._request_json", side_effect=[search, fetch],
+    ) as request, patch(
+        "src.poetore.trade.english_trade_identity",
+    ) as english_identity:
+        result = search_prices(
+            item, item.base_type, "Covens", stat_filters=(grade_filter,),
+        )
+
+    english_identity.assert_not_called()
+    assert request.call_count == 2
+    assert request.call_args_list[0].args[0] == (
+        "https://jp.pathofexile.com/api/trade/search/Covens"
+    )
+    assert request.call_args_list[1].args[0].startswith(
+        "https://jp.pathofexile.com/api/trade/fetch/lesser,greater?query="
+    )
+    assert result.total == 2
+    assert [(row.account, row.base_type, row.amount) for row in result.listings] == [
+        ("greater-seller", "テンプラーの旗 (上級)", 8.0),
+    ]
+
+
 def test_unique_candidates_come_from_official_item_data():
     payload = {"result": [{"entries": [
         {"name": "The Example", "type": "Gold Amulet", "flags": {"unique": True}},

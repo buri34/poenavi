@@ -111,6 +111,7 @@ _CATEGORY_WORDS = (
     (("チャーム", "Charm"), "charm"),
     (("アイドル", "Idol"), "idol"),
     (("グラフト", "Graft"), "graft"),
+    (("臓器", "Viscera"), "viscera"),
     (("センチネル", "Sentinel"), "sentinel"),
     (("母胎ギフト",), "incubator"),
     (("カレンシー", "Currency"), "currency"),
@@ -184,6 +185,19 @@ _MERCENARY_WARRANT_NAMES = {
 _MERCENARY_SUPPORT_TIER = re.compile(
     r"\s*[（(](?:ティア|Tier)\s*[:：]\s*(\d+)[）)]\s*$", re.IGNORECASE,
 )
+_VISCERA_GRADE_SUFFIX = re.compile(
+    r"^(?P<base>.+?)\s*[（(](?P<grade>上級|下級)[）)]$",
+)
+_VISCERA_GRADE_PREFIX = re.compile(
+    r"^(?P<grade>Greater|Lesser)\s+(?P<base>.+)$", re.IGNORECASE,
+)
+_VISCERA_GRADE_LABELS = {"greater": "上級", "lesser": "下級"}
+_VISCERA_SLOTS = {
+    "頭部": "頭部", "頭": "頭部", "Head": "頭部",
+    "腕": "腕", "Arm": "腕",
+    "胴体": "胴体", "Torso": "胴体", "Body": "胴体",
+    "脚": "脚", "足": "脚", "Leg": "脚",
+}
 _CATEGORY_HELP_LINES = {
     "flask": {
         "右クリックして飲む。腰につけているときだけチャージを貯めることができる。モンスターを倒すことで充填される。",
@@ -846,10 +860,11 @@ def parse_item_text(text: str) -> ParsedItem:
         ]
         if name_lines:
             sections = [sections[0], *sections[2:]]
-    if not header.get("rarity") or not name_lines:
+    header_category = _category(header.get("item_class", ""))
+    if (not header.get("rarity") and header_category != "viscera") or not name_lines:
         raise ItemParseError("レアリティまたはアイテム名を取得できませんでした。")
 
-    rarity = header["rarity"]
+    rarity = header.get("rarity", "")
     # Rare/Uniqueは固有名とベースを分ける。日英併記なら日本語の組を表示に使う。
     name, base_type = _localized_name_lines(name_lines, rarity)
     vestigial_base = (
@@ -861,6 +876,18 @@ def parse_item_text(text: str) -> ParsedItem:
         # 通常Unique名・通常ベースで検索し、専用Implicitと状態条件で個体を絞る。
         base_type = vestigial_base.group(1).strip()
     properties: dict[str, str] = {}
+    if header_category == "viscera":
+        grade_match = _VISCERA_GRADE_SUFFIX.fullmatch(base_type.strip())
+        if grade_match:
+            base_type = name = grade_match.group("base").strip()
+            properties["臓器等級"] = grade_match.group("grade")
+        else:
+            grade_match = _VISCERA_GRADE_PREFIX.fullmatch(base_type.strip())
+            if grade_match:
+                base_type = name = grade_match.group("base").strip()
+                properties["臓器等級"] = _VISCERA_GRADE_LABELS[
+                    grade_match.group("grade").casefold()
+                ]
     flags: list[str] = ["vestigial"] if vestigial_base else []
     modifiers: list[ItemModifier] = []
     item_level = None
@@ -961,6 +988,9 @@ def parse_item_text(text: str) -> ParsedItem:
                         reached_item_level = True
                     continue
             if metadata_section:
+                if item_category == "viscera" and line in _VISCERA_SLOTS:
+                    properties["臓器部位"] = _VISCERA_SLOTS[line]
+                    continue
                 # 「Bow」「両手剣」のような値を持たない性能区画の見出しも保持する。
                 properties.setdefault(line, "")
                 continue
