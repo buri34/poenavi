@@ -4283,8 +4283,18 @@ def build_search_query(
         )
     if include_unidentified is None:
         include_unidentified = _is_unique(item) and "unidentified" in item.flags
+    if item.unidentified_tier is not None:
+        if item.unidentified_tier < 1:
+            raise ValueError("未鑑定Tierは1以上で指定してください。")
+        include_unidentified = True
     if include_unidentified:
-        query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]["identified"] = {"option": "false"}
+        misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
+        misc["identified"] = {"option": "false"}
+        if item.unidentified_tier is not None:
+            misc["unidentified_tier"] = {
+                "min": item.unidentified_tier,
+                "max": item.unidentified_tier,
+            }
     if include_veiled is None:
         include_veiled = "veiled" in item.flags
     if item.category == "gem" and include_corrupted != True:

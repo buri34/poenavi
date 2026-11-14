@@ -29,6 +29,21 @@ RARE_JP = """アイテムクラス: 指輪
 
 
 class PoetoreParserTest(unittest.TestCase):
+    def test_parses_unidentified_item_tier_state_lines(self):
+        for state_line in ("未鑑定 (Tier 5)", "Unidentified (Tier: 5)"):
+            with self.subTest(state_line=state_line):
+                item = parse_item_text(f"""Item Class: Sceptres
+Rarity: Magic
+Vaal Sceptre
+--------
+Item Level: 78
+--------
+{state_line}
+""")
+                self.assertEqual(item.flags, ("unidentified",))
+                self.assertEqual(item.unidentified_tier, 5)
+                self.assertEqual(item.modifiers, ())
+
     def test_single_placeholder_ignores_fixed_number_before_roll(self):
         item = parse_item_text("""アイテムクラス: 靴
 レアリティ: レア

@@ -3412,6 +3412,44 @@ Unidentified
     assert "identified" not in relaxed.get("filters", {}).get("misc_filters", {}).get("filters", {})
 
 
+def test_330_unidentified_item_tier_is_sent_as_an_exact_misc_filter():
+    item = parse_item_text("""アイテムクラス: セプター
+レアリティ: マジック
+ヴァールセプター
+--------
+セプター
+物理ダメージ: 37-70
+クリティカル率: 7.00%
+秒間アタック回数: 1.40
+武器攻撃距離：1.1 メートル
+--------
+装備要求:
+筋力: 113
+知性: 113
+--------
+ソケット: W-W-W
+--------
+アイテムレベル: 78
+--------
+{ 暗黙モッド — ダメージ, 元素 }
+元素ダメージが32%増加する
+--------
+未鑑定 (Tier 5)
+""")
+
+    assert item.unidentified_tier == 5
+    assert "unidentified" in item.flags
+    query = build_search_query(item, "Vaal Sceptre")["query"]
+    misc = query["filters"]["misc_filters"]["filters"]
+    assert misc["identified"] == {"option": "false"}
+    assert misc["unidentified_tier"] == {"min": 5, "max": 5}
+
+    query_with_relaxed_ui_state = build_search_query(
+        item, "Vaal Sceptre", include_unidentified=False,
+    )["query"]
+    assert query_with_relaxed_ui_state["filters"]["misc_filters"]["filters"] == misc
+
+
 def test_unique_candidates_come_from_official_item_data():
     payload = {"result": [{"entries": [
         {"name": "The Example", "type": "Gold Amulet", "flags": {"unique": True}},

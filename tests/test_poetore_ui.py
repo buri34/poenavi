@@ -5107,6 +5107,50 @@ def test_localized_blighted_map_shows_readonly_map_area_as_first_condition(qapp)
         window.close()
 
 
+def test_unidentified_item_tier_is_shown_as_readonly_search_condition(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: セプター
+レアリティ: マジック
+ヴァールセプター
+--------
+セプター
+物理ダメージ: 37-70
+クリティカル率: 7.00%
+秒間アタック回数: 1.40
+武器攻撃距離：1.1 メートル
+--------
+装備要求:
+筋力: 113
+知性: 113
+--------
+ソケット: W-W-W
+--------
+アイテムレベル: 78
+--------
+{ 暗黙モッド — ダメージ, 元素 }
+元素ダメージが32%増加する
+--------
+未鑑定 (Tier 5)
+""")
+        window.parse_current_text()
+
+        assert not window.unidentified_chip.isHidden()
+        assert window.unidentified_chip.currentData() is True
+        assert not window.unidentified_tier_chip.isHidden()
+        assert window.unidentified_tier_chip.text() == "未鑑定Tier：5"
+        assert not window.unidentified_tier_chip.isEnabled()
+
+        window.input_edit.setPlainText("""アイテムクラス: スタック可能カレンシー
+レアリティ: カレンシー
+混沌のオーブ
+""")
+        window.parse_current_text()
+        assert window.unidentified_tier_chip.isHidden()
+    finally:
+        window.close()
+
+
 def test_inscribed_ultimatum_shows_unsupported_condition_notice(qapp):
     window = PoetoreWindow()
     try:
@@ -6831,7 +6875,8 @@ def test_filter_chips_follow_awakened_order_in_shared_flow_layout(qapp):
             "influence_shaper", "influence_elder", "influence_crusader",
             "influence_hunter", "influence_redeemer", "influence_warlord",
             "influence_eater", "influence_exarch",
-            "rarity", "magic_rarity", "tablet_rarity", "unidentified", "veiled", "foil",
+            "rarity", "magic_rarity", "tablet_rarity", "unidentified",
+            "unidentified_tier", "veiled", "foil",
             "mirrored", "sanctified", "split",
         )
         assert window.filter_chip_layout.ordered_widgets() == tuple(

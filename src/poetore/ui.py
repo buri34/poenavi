@@ -1549,6 +1549,11 @@ class PoetoreWindow(QWidget):
             (("未鑑定のみ", True, False), ("未鑑定を含む", False, False)),
         )
         self.unidentified_chip.hide()
+        self.unidentified_tier_chip = QPushButton()
+        self.unidentified_tier_chip.setObjectName("readonlyFilterChip")
+        self.unidentified_tier_chip.setEnabled(False)
+        self.unidentified_tier_chip.setToolTip("コピー元から判定した未鑑定アイテムのTier")
+        self.unidentified_tier_chip.hide()
         self.veiled_chip = _CycleButton(
             (("同一Veiled Modあり", True, False), ("Veiled指定なし", False, False)),
         )
@@ -1655,6 +1660,7 @@ class PoetoreWindow(QWidget):
             ("magic_rarity", self.magic_rarity_toggle),
             ("tablet_rarity", self.tablet_rarity_combo),
             ("unidentified", self.unidentified_chip),
+            ("unidentified_tier", self.unidentified_tier_chip),
             ("veiled", self.veiled_chip),
             ("foil", self.foil_chip),
             ("mirrored", self.mirrored_combo),
@@ -5878,7 +5884,15 @@ class PoetoreWindow(QWidget):
 
         self.unidentified_chip.setVisible("unidentified" in item.flags)
         self.unidentified_chip.setCurrentIndex(
-            0 if item.rarity.casefold() in {"unique", "ユニーク"} else 1
+            0 if (
+                item.rarity.casefold() in {"unique", "ユニーク"}
+                or item.unidentified_tier is not None
+            ) else 1
+        )
+        self.unidentified_tier_chip.setVisible(item.unidentified_tier is not None)
+        self.unidentified_tier_chip.setText(
+            f"未鑑定Tier：{item.unidentified_tier}"
+            if item.unidentified_tier is not None else ""
         )
         self.veiled_chip.setVisible("veiled" in item.flags)
         self.veiled_chip.setCurrentIndex(0)

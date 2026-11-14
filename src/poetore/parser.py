@@ -77,6 +77,10 @@ _FLAG_LINES = {
     "Fractured Item": "fractured", "フラクチャーアイテム": "fractured",
     "Unmodifiable": "unmodifiable", "変更不可": "unmodifiable",
 }
+_UNIDENTIFIED_TIER_LINE = re.compile(
+    r"^(?:未鑑定|Unidentified)\s*[（(]\s*(?:Tier|ティア)\s*[:：]?\s*(\d+)\s*[）)]$",
+    re.IGNORECASE,
+)
 _CATEGORY_WORDS = (
     (("Captured Beast", "捕獲したビースト", "捕獲済みビースト"), "captured_beast"),
     (("Corpse", "死体"), "corpse"),
@@ -902,6 +906,7 @@ def parse_item_text(text: str) -> ParsedItem:
                 if _split_label(first) is None:
                     properties["マップエリア"] = first
                 break
+    unidentified_tier = None
     for section_index, section in enumerate(sections[1:], start=1):
         # Mod見出しの効果範囲は同一区画内だけ。次の区切り以降へ持ち越さない。
         current_header_kind = None
@@ -923,6 +928,11 @@ def parse_item_text(text: str) -> ParsedItem:
         # 装備性能・装備条件など、item levelより前の区画は検索Modではない。
         metadata_section = not reached_item_level
         for line in section:
+            unidentified_tier_match = _UNIDENTIFIED_TIER_LINE.fullmatch(line)
+            if unidentified_tier_match:
+                flags.append("unidentified")
+                unidentified_tier = int(unidentified_tier_match.group(1))
+                continue
             if line in _FLAG_LINES:
                 flags.append(_FLAG_LINES[line])
                 continue
@@ -1239,5 +1249,5 @@ def parse_item_text(text: str) -> ParsedItem:
         flags=tuple(dict.fromkeys(flags + (["veiled"] if any(
             modifier.kind == "veiled" or modifier.generation == "veiled"
             for modifier in modifiers
-        ) else []))), raw_text=text,
+        ) else []))), raw_text=text, unidentified_tier=unidentified_tier,
     )
