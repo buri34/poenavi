@@ -42,6 +42,8 @@ from src.ui.custom_command_settings import (
     custom_command_hotkeys,
     normalized_custom_commands,
 )
+from src.update.qt_controller import UpdateController
+from src.update.release_client import parse_version
 from src.utils.chat_command import send_chat_command
 from src.utils.config_manager import ConfigManager
 from src.utils.feature_support import (
@@ -60,9 +62,11 @@ from src.utils.global_hotkeys import (
 from src.utils.log_path_detector import fill_missing_client_log_paths
 from src.utils.poe_version_data import POE1, POE2
 from src.utils.stash_tab_scroll import StashTabScrollController
+from src.version import APP_VERSION
 
 POETORE_ACCENT = POETORE_THEME.accent
 POETORE_TEXT = POETORE_THEME.text
+UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000
 
 
 def _icon_canvas():
@@ -437,6 +441,20 @@ class PoetoreModeWindow(QMainWindow):
         self.setMinimumSize(500, 300)
         self.resize(558, 360)
         self._build_ui()
+        self._background_update_controller = UpdateController(self)
+        self._background_update_controller.check_finished.connect(
+            self._handle_background_update_result
+        )
+        self._background_update_controller.check_failed.connect(
+            self._handle_background_update_failure
+        )
+        self._update_check_timer = QTimer(self)
+        self._update_check_timer.setInterval(UPDATE_CHECK_INTERVAL_MS)
+        self._update_check_timer.timeout.connect(
+            self._check_for_updates_in_background
+        )
+        self._sync_update_button_from_config()
+        self._update_check_timer.start()
         self._hideout_notification = None
         self.focus_button.setText("隠れ家滞在通知\nOFF")
         self._apply_rate_panel_height()
@@ -568,6 +586,23 @@ class PoetoreModeWindow(QMainWindow):
                 padding: 0;
                 font-size: 11px;
                 text-align: center;
+            }}
+            QPushButton#poetoreUpdateButton {{
+                background: #5B4018;
+                color: #FFE7B3;
+                border: 1px solid #D99A35;
+                border-radius: 7px;
+                padding: 7px 12px;
+                font-size: 13px;
+                font-weight: bold;
+            }}
+            QPushButton#poetoreUpdateButton:hover {{
+                background: #72521F;
+                border-color: #F2B84B;
+                color: #FFF4D8;
+            }}
+            QPushButton#poetoreUpdateButton:pressed {{
+                background: #473111;
             }}
         """)
         root = QVBoxLayout(central)
@@ -728,6 +763,17 @@ class PoetoreModeWindow(QMainWindow):
             f"color: {POETORE_THEME.muted_text}; font-size: 12px;"
         )
         body_layout.addWidget(self.capture_hint)
+
+        self.update_button = QPushButton()
+        self.update_button.setObjectName("poetoreUpdateButton")
+        self.update_button.setFocusPolicy(Qt.NoFocus)
+        self.update_button.setMinimumHeight(40)
+        self.update_button.setToolTip(
+            "新しいバージョンの内容を確認してアップデートする"
+        )
+        self.update_button.clicked.connect(self._check_for_updates)
+        self.update_button.hide()
+        body_layout.addWidget(self.update_button)
         root.addWidget(body, 1)
         self.setCentralWidget(central)
         self._update_capture_hint()
@@ -1560,9 +1606,43 @@ class PoetoreModeWindow(QMainWindow):
         """アプリ情報タブから、通知済みバージョンも含めて手動確認する。"""
         from src.update.startup_gate import run_manual_update_check
 
+        self._update_check_timer.stop()
         self.config = ConfigManager.load_config()
         if not run_manual_update_check(self.config, parent or self):
             QApplication.instance().quit()
+            return
+        self._sync_update_button_from_config()
+        self._update_check_timer.start()
+
+    def _sync_update_button_from_config(self):
+        version = str(self.config.get("notified_update_version", "")).strip()
+        try:
+            is_newer = parse_version(version) > parse_version(APP_VERSION)
+        except ValueError:
+            is_newer = False
+        if not is_newer:
+            self.update_button.hide()
+            return
+        self.update_button.setText(
+            f"↑ v{version} アップデートあり　更新する"
+        )
+        self.update_button.show()
+
+    def _check_for_updates_in_background(self):
+        """常駐中はダイアログを出さずに最新版だけ確認する。"""
+        self._background_update_controller.check(False)
+
+    def _handle_background_update_result(self, release, _manual):
+        if release is None:
+            return
+        if self.config.get("notified_update_version") != release.version:
+            self.config["notified_update_version"] = release.version
+            ConfigManager.save_config(self.config)
+        self._sync_update_button_from_config()
+
+    def _handle_background_update_failure(self, _message, _manual):
+        """一時的な通信失敗は通知せず、次の定期確認へ委ねる。"""
+        return
 
     def _ensure_cheat_sheet_overlay(self):
         from src.ui.cheat_sheets import CheatSheetOverlay
@@ -1605,6 +1685,7 @@ class PoetoreModeWindow(QMainWindow):
         send_chat_command(command)
 
     def closeEvent(self, event):
+        self._update_check_timer.stop()
         self.tray_icon.hide()
         if self._hideout_notification is not None:
             self._hideout_notification.close()
