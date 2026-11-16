@@ -118,19 +118,82 @@ POE1_CONFIRMED_CATEGORY_OVERRIDES = {
     "Metadata/Items/Threads/ThreadBestiary": "threads",
     "Metadata/Items/Threads/ThreadBetrayal": "threads",
     "Metadata/Items/Threads/ThreadIncursion": "threads",
-    "Metadata/Items/Currency/AstrolabeGeneric": "currency",
-    "Metadata/Items/Currency/AstrolabeHarvest": "currency",
+    "Metadata/Items/Currency/StackedAstrolabe": "currency",
     "Metadata/Items/Currency/AstrolabeAbyss": "currency",
     "Metadata/Items/Currency/AstrolabeBreach": "currency",
     "Metadata/Items/Currency/AstrolabeRitual": "currency",
     "Metadata/Items/Currency/AstrolabeBlight": "currency",
     "Metadata/Items/Currency/AstrolabeUltimatum": "currency",
-    "Metadata/Items/Currency/AstrolabeDelirium": "currency",
     "Metadata/Items/Currency/AstrolabeLegion": "currency",
     "Metadata/Items/Currency/AstrolabeExpedition": "currency",
+    "Metadata/Items/Currency/AstrolabeBestiary": "currency",
+    "Metadata/Items/Currency/AstrolabeBetrayal": "currency",
+    "Metadata/Items/Currency/AstrolabeIncursion": "currency",
     "Metadata/Items/MapFragments/CurrencyAfflictionFragment": "delirium",
     "Metadata/Items/Currency/CurrencyAfflictionShard": "delirium",
     "Metadata/Items/Currency/CurrencyDeepwater": "allflame",
+    "Metadata/Items/MapFragments/AtlasAllflamePack": "allflame",
+    "Metadata/Items/MapFragments/CloisterAllflamePack": "allflame",
+    "Metadata/Items/MapFragments/PantheonAllflamePack": "allflame",
+}
+
+# The Currency Exchange market feed identifies these items by game metadata ID,
+# while the official Trade static endpoint identifies the same rows by trade
+# tag.  The current RePoE name export still contains the former Coin names (or
+# no row at all), so name-based joining cannot connect the two official feeds.
+# Keep the verified one-to-one bridge on stable machine IDs and let the static
+# endpoint remain authoritative for the localized names and icons.
+POE1_CONFIRMED_STATIC_ID_TO_ITEM_ID = {
+    "frayed-thread": "Metadata/Items/Currency/CurrencyStackedThread",
+    "mavens-chisel-of-threads": "Metadata/Items/Currency/CurrencyMapQualityScarabs",
+    "cryptic-astrolabe": "Metadata/Items/Currency/StackedAstrolabe",
+    "threaded-delirium-orb": "Metadata/Items/Currency/CurrencyAfflictionOrbScarabs",
+    "immortal-astrolabe": "Metadata/Items/Currency/AstrolabeBetrayal",
+    "feral-astrolabe": "Metadata/Items/Currency/AstrolabeBestiary",
+    "royal-astrolabe": "Metadata/Items/Currency/AstrolabeIncursion",
+    "soul-core-of-instability": "Metadata/Items/Currency/CurrencyWishSupportGem",
+    "soul-core-of-intellect": "Metadata/Items/Currency/CurrencyWishSupportGemBlue",
+    "soul-core-of-finesse": "Metadata/Items/Currency/CurrencyWishSupportGemGreen",
+    "soul-core-of-might": "Metadata/Items/Currency/CurrencyWishSupportGemRed",
+    "essence-of-trickery": "Metadata/Items/Currency/CurrencyEssenceUber1",
+    "afarud-enshrouding-crystal": "Metadata/Items/Currency/LegionCocoonQuiver",
+    "allflame-ember-of-the-cloister": "Metadata/Items/MapFragments/CloisterAllflamePack",
+    "allflame-ember-of-the-multitude": "Metadata/Items/MapFragments/AtlasAllflamePack",
+    "allflame-ember-of-the-divine": "Metadata/Items/MapFragments/PantheonAllflamePack",
+    "cursed-poppet": "Metadata/Items/MapFragments/CurrencyAuguryBossKey",
+    "royal-visage": "Metadata/Items/MapFragments/CurrencyIncursionUberFragment",
+}
+
+# These stable metadata IDs belonged to exchange rows that 3.30 either removed
+# from the game or explicitly disabled.  Keep the denylist on machine IDs so a
+# localized rename cannot accidentally restore a retired row.  Scarabs are an
+# entire removed family and remain covered by the path check below.
+POE1_REMOVED_EXCHANGE_ITEM_IDS = {
+    "Metadata/Items/Currency/CurrencyStackedScarab",
+    "Metadata/Items/Currency/AstrolabeGeneric",
+    "Metadata/Items/Currency/AstrolabeHarvest",
+    "Metadata/Items/Currency/AstrolabeDelirium",
+    "Metadata/Items/MapFragments/CurrencyVaalFragment1_1",
+    "Metadata/Items/MapFragments/CurrencyVaalFragment1_2",
+    "Metadata/Items/MapFragments/CurrencyVaalFragment1_3",
+    "Metadata/Items/MapFragments/CurrencyVaalFragment1_4",
+    "Metadata/Items/MapFragments/CurrencyVaalFragment2_1",
+    "Metadata/Items/MapFragments/CurrencyVaalFragment2_2",
+    "Metadata/Items/MapFragments/CurrencyVaalFragment2_3",
+    "Metadata/Items/MapFragments/CurrencyVaalFragment2_4",
+    "Metadata/Items/MapFragments/CurrencyVaalFragments1Complete",
+    "Metadata/Items/MapFragments/CurrencyVaalFragments2Complete",
+    "Metadata/Items/DivinationCards/DivinationCardHerMask",
+    "Metadata/Items/DivinationCards/DivinationCardLastHope",
+    "Metadata/Items/DivinationCards/DivinationCardSambodhisVow",
+    "Metadata/Items/DivinationCards/DivinationCardBuriedTreasure",
+    "Metadata/Items/DivinationCards/DivinationCardCameriasCut",
+    "Metadata/Items/DivinationCards/DivinationCardManWithBear",
+    "Metadata/Items/DivinationCards/DivinationCardMoreIsNeverEnough",
+    "Metadata/Items/DivinationCards/DivinationCardTheCardSharp",
+    "Metadata/Items/DivinationCards/DivinationCardTheDeal",
+    "Metadata/Items/DivinationCards/DivinationCardTheRabbitsFoot",
+    "Metadata/Items/DivinationCards/DivinationCardTheSillyBoy",
 }
 
 POE2_CONFIRMED_CATEGORY_OVERRIDES = {
@@ -241,7 +304,9 @@ def _category(poe_version: str, group: str, item_id: str, english: str) -> str:
 
 def _is_removed_exchange_item(poe_version: str, item_id: str) -> bool:
     """Exclude item families removed from the current realm's exchange UI."""
-    return poe_version == POE1 and "/Scarabs/" in item_id
+    return poe_version == POE1 and (
+        "/Scarabs/" in item_id or item_id in POE1_REMOVED_EXCHANGE_ITEM_IDS
+    )
 
 
 def _static_rows(
@@ -288,9 +353,16 @@ def build_realm(
         english = str(en.get("text", "")).strip()
         if not english:
             continue
+        confirmed_item_id = (
+            POE1_CONFIRMED_STATIC_ID_TO_ITEM_ID.get(str(en.get("id", "")))
+            if poe_version == POE1
+            else None
+        )
         candidates = ids_by_name.get(normalize_name(english), [])
         active = [item_id for item_id in candidates if item_id in active_ids]
-        selected = active if len(active) == 1 else candidates
+        selected = [confirmed_item_id] if confirmed_item_id else (
+            active if len(active) == 1 else candidates
+        )
         if len(selected) != 1:
             unresolved.append({"group": group, "english": english, "ids": selected})
             continue
@@ -326,6 +398,8 @@ def build_realm(
     if poe_version == POE1:
         next_card_order = 999_999
         for item_id in sorted(active_ids - set(items)):
+            if _is_removed_exchange_item(poe_version, item_id):
+                continue
             english = names.get(item_id, "").strip()
             japanese = card_names.get(normalize_name(english), "")
             if "/DivinationCards/" not in item_id or not japanese:

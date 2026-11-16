@@ -186,16 +186,25 @@ def test_poe1_corrected_categories_are_visible(qapp, tmp_path):
         "カレンシー": {
             "Metadata/Items/MapFragments/CurrencyFragmentPantheonFlask",
             "Metadata/Items/MapFragments/VoidbornVaultKey",
-            "Metadata/Items/Currency/AstrolabeGeneric",
+                "Metadata/Items/Currency/StackedAstrolabe",
             "Metadata/Items/Currency/AstrolabeLegion",
+            "Metadata/Items/Currency/AstrolabeBestiary",
+            "Metadata/Items/Currency/CurrencyWishSupportGemBlue",
         },
+        "エッセンス": {"Metadata/Items/Currency/CurrencyEssenceUber1"},
         "デリリウムオーブ": {
             "Metadata/Items/MapFragments/CurrencyAfflictionFragment",
             "Metadata/Items/Currency/CurrencyAfflictionShard",
         },
+        "リージョン": {"Metadata/Items/Currency/LegionCocoonQuiver"},
+        "フラグメント": {
+            "Metadata/Items/MapFragments/CurrencyAuguryBossKey",
+            "Metadata/Items/MapFragments/CurrencyIncursionUberFragment",
+        },
         "オールフレイム": {
             "Metadata/Items/Currency/CurrencyDeepwater",
             "Metadata/Items/Deepwater/DeepwaterBottledItem",
+            "Metadata/Items/MapFragments/AtlasAllflamePack",
         },
     }
     available_ids = set().union(*expected_by_label.values())

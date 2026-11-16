@@ -1,4 +1,8 @@
-from scripts.build_exchange_item_catalog import _category, build_realm
+from scripts.build_exchange_item_catalog import (
+    POE1_REMOVED_EXCHANGE_ITEM_IDS,
+    _category,
+    build_realm,
+)
 from src.utils.poe_version_data import POE1, POE2
 
 
@@ -91,17 +95,61 @@ def test_confirmed_path_based_subcategories_are_deterministic():
     )
 
 
-def test_build_realm_excludes_removed_poe1_scarabs_but_not_poe2_items():
-    item_id = "Metadata/Items/Scarabs/Example"
-    en, ja = _static("Fragments", "example", "Example Scarab", "スカラベ例")
+def test_build_realm_excludes_removed_poe1_rows_but_not_poe2_items():
+    item_ids = {
+        "Metadata/Items/Scarabs/Example",
+        "Metadata/Items/Currency/CurrencyStackedScarab",
+        "Metadata/Items/Currency/AstrolabeGeneric",
+        "Metadata/Items/MapFragments/CurrencyVaalFragment1_1",
+        "Metadata/Items/DivinationCards/DivinationCardHerMask",
+    }
+    names = {item_id: f"Example {index}" for index, item_id in enumerate(item_ids)}
+    en = {
+        "result": [
+            {
+                "id": "Fragments",
+                "entries": [
+                    {"id": str(index), "text": names[item_id]}
+                    for index, item_id in enumerate(item_ids)
+                ],
+            }
+        ]
+    }
+    ja = {
+        "result": [
+            {
+                "id": "Fragments",
+                "entries": [
+                    {"id": str(index), "text": f"例 {index}"}
+                    for index, _item_id in enumerate(item_ids)
+                ],
+            }
+        ]
+    }
 
-    poe1 = build_realm(POE1, {item_id: "Example Scarab"}, en, ja, {item_id}, {})
-    poe2 = build_realm(POE2, {item_id: "Example Scarab"}, en, ja, {item_id}, {})
+    poe1 = build_realm(POE1, names, en, ja, item_ids, {})
+    poe2 = build_realm(POE2, names, en, ja, item_ids, {})
 
     assert poe1["items"] == []
     assert poe1["unmapped_observed"] == []
     assert all(category["id"] != "scarabs" for category in poe1["categories"])
-    assert [row["id"] for row in poe2["items"]] == [item_id]
+    assert {row["id"] for row in poe2["items"]} == item_ids
+
+
+def test_removed_card_cannot_return_through_active_card_fallback():
+    item_id = "Metadata/Items/DivinationCards/DivinationCardHerMask"
+    result = build_realm(
+        POE1,
+        {item_id: "Her Mask"},
+        {"result": []},
+        {"result": []},
+        {item_id},
+        {"her mask": "彼女の仮面"},
+    )
+
+    assert item_id in POE1_REMOVED_EXCHANGE_ITEM_IDS
+    assert result["items"] == []
+    assert result["unmapped_observed"] == []
 
 
 def test_confirmed_poe2_in_game_category_overrides_are_deterministic():
@@ -159,16 +207,17 @@ def test_confirmed_poe1_in_game_category_overrides_are_deterministic():
         "Metadata/Items/Currency/FearMemoryThread": "currency",
         "Metadata/Items/Currency/BenevolenceMemoryThread": "currency",
         "Metadata/Items/Currency/IgnoranceMemoryThread": "currency",
-        "Metadata/Items/Currency/AstrolabeGeneric": "currency",
-        "Metadata/Items/Currency/AstrolabeHarvest": "currency",
+        "Metadata/Items/Currency/StackedAstrolabe": "currency",
         "Metadata/Items/Currency/AstrolabeAbyss": "currency",
         "Metadata/Items/Currency/AstrolabeBreach": "currency",
         "Metadata/Items/Currency/AstrolabeRitual": "currency",
         "Metadata/Items/Currency/AstrolabeBlight": "currency",
         "Metadata/Items/Currency/AstrolabeUltimatum": "currency",
-        "Metadata/Items/Currency/AstrolabeDelirium": "currency",
         "Metadata/Items/Currency/AstrolabeLegion": "currency",
         "Metadata/Items/Currency/AstrolabeExpedition": "currency",
+        "Metadata/Items/Currency/AstrolabeBestiary": "currency",
+        "Metadata/Items/Currency/AstrolabeBetrayal": "currency",
+        "Metadata/Items/Currency/AstrolabeIncursion": "currency",
         "Metadata/Items/Threads/ThreadExpedition": "threads",
         "Metadata/Items/Threads/ThreadAbyss": "threads",
         "Metadata/Items/Threads/ThreadBreach": "threads",
@@ -182,11 +231,109 @@ def test_confirmed_poe1_in_game_category_overrides_are_deterministic():
         "Metadata/Items/MapFragments/CurrencyAfflictionFragment": "delirium",
         "Metadata/Items/Currency/CurrencyAfflictionShard": "delirium",
         "Metadata/Items/Currency/CurrencyDeepwater": "allflame",
+        "Metadata/Items/MapFragments/AtlasAllflamePack": "allflame",
+        "Metadata/Items/MapFragments/CloisterAllflamePack": "allflame",
+        "Metadata/Items/MapFragments/PantheonAllflamePack": "allflame",
     }
     assert {
         item_id: _category(POE1, "Fragments", item_id, "Example")
         for item_id in expected
     } == expected
+
+
+def test_confirmed_poe1_330_static_ids_bridge_market_ids_to_localized_rows():
+    rows = [
+        (
+            "Currency",
+            "frayed-thread",
+            "Frayed Thread",
+            "謎のスレッド",
+            "Metadata/Items/Currency/CurrencyStackedThread",
+            "currency",
+        ),
+        (
+            "Currency",
+            "mavens-chisel-of-threads",
+            "Maven's Chisel of Threads",
+            "メイヴェンのスレッドのチゼル",
+            "Metadata/Items/Currency/CurrencyMapQualityScarabs",
+            "currency",
+        ),
+        (
+            "Fragments",
+            "cryptic-astrolabe",
+            "Cryptic Astrolabe",
+            "謎のアストロラーベ",
+            "Metadata/Items/Currency/StackedAstrolabe",
+            "currency",
+        ),
+        (
+            "DeliriumOrbs",
+            "threaded-delirium-orb",
+            "Threaded Delirium Orb",
+            "スレッドのデリリウムオーブ",
+            "Metadata/Items/Currency/CurrencyAfflictionOrbScarabs",
+            "delirium",
+        ),
+        (
+            "Fragments",
+            "immortal-astrolabe",
+            "Immortal Astrolabe",
+            "不死のアストロラーベ",
+            "Metadata/Items/Currency/AstrolabeBetrayal",
+            "currency",
+        ),
+        (
+            "Currency",
+            "soul-core-of-intellect",
+            "Soul Core of Intellect",
+            "知識のソウルコア",
+            "Metadata/Items/Currency/CurrencyWishSupportGemBlue",
+            "currency",
+        ),
+        (
+            "Fragments",
+            "allflame-ember-of-the-divine",
+            "Allflame Ember of the Divine",
+            "神性のオールフレイムの残り火",
+            "Metadata/Items/MapFragments/PantheonAllflamePack",
+            "allflame",
+        ),
+    ]
+    en_groups = {}
+    ja_groups = {}
+    for group, trade_id, english, japanese, _item_id, _expected_category in rows:
+        en_groups.setdefault(group, []).append(
+            {"id": trade_id, "text": english, "image": "/gen/example.png"}
+        )
+        ja_groups.setdefault(group, []).append(
+            {"id": trade_id, "text": japanese}
+        )
+    en = {"result": [
+        {"id": group, "entries": entries} for group, entries in en_groups.items()
+    ]}
+    ja = {"result": [
+        {"id": group, "entries": entries} for group, entries in ja_groups.items()
+    ]}
+
+    result = build_realm(
+        POE1,
+        {},
+        en,
+        ja,
+        {row[4] for row in rows},
+        {},
+    )
+
+    by_id = {row["id"]: row for row in result["items"]}
+    assert {
+        item_id: (by_id[item_id]["en"], by_id[item_id]["ja"], by_id[item_id]["category"])
+        for _group, _trade_id, english, japanese, item_id, category in rows
+    } == {
+        item_id: (english, japanese, category)
+        for _group, _trade_id, english, japanese, item_id, category in rows
+    }
+    assert result["unmapped_observed"] == []
 
 
 def test_confirmed_observed_message_in_a_bottle_is_added_without_static_row():

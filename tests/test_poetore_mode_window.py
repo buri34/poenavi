@@ -14,7 +14,9 @@ from src.ui.poetore_mode_window import (
     _expedition_icon,
     _heist_curio_icon,
 )
+from src.update.release_client import ReleaseInfo
 from src.utils.poe_version_data import POE1, POE2
+from src.version import APP_VERSION
 
 
 def test_main_header_shows_short_poe_version_four_pixels_smaller_than_title():
@@ -48,6 +50,91 @@ def test_main_header_shows_short_poe_version_four_pixels_smaller_than_title():
         )
         window.close()
         app.processEvents()
+
+
+def test_poetore_update_banner_uses_notified_version_and_hourly_check():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "poe_version": POE1,
+        "hotkeys": {},
+        "notified_update_version": "9.9.9",
+    }
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService",
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    window.show()
+    app.processEvents()
+    assert window.update_button.isVisible()
+    assert window.update_button.text() == "↑ v9.9.9 アップデートあり　更新する"
+    assert window.update_button.objectName() == "poetoreUpdateButton"
+    assert window.update_button.minimumHeight() == 40
+    body_layout = window.update_button.parentWidget().layout()
+    assert body_layout.indexOf(window.capture_hint) < body_layout.indexOf(
+        window.update_button
+    )
+    assert window._update_check_timer.interval() == 60 * 60 * 1000
+    assert window._update_check_timer.isActive()
+
+    with patch.object(window._background_update_controller, "check") as check:
+        window._update_check_timer.timeout.emit()
+    check.assert_called_once_with(False)
+
+    with patch(
+        "src.update.startup_gate.run_manual_update_check",
+        return_value=True,
+    ) as manual_check:
+        window.update_button.click()
+    manual_check.assert_called_once_with(window.config, window)
+    assert window._update_check_timer.isActive()
+
+    window.close()
+    app.processEvents()
+
+
+def test_poetore_update_banner_appears_when_periodic_check_finds_release():
+    app = QApplication.instance() or QApplication([])
+    config = {
+        "poe_version": POE1,
+        "hotkeys": {},
+        "notified_update_version": APP_VERSION,
+    }
+
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.load_config",
+        return_value=config,
+    ), patch(
+        "src.ui.poetore_mode_window.GlobalHotkeyService",
+    ), patch.object(PoetoreModeWindow, "refresh_currency_rate"):
+        window = PoetoreModeWindow()
+
+    assert window.update_button.isHidden()
+    release = ReleaseInfo(
+        version="9.9.9",
+        notes="test",
+        page_url="https://example.com/release",
+        zip_url="https://example.com/PoENavi.zip",
+        checksum_url="https://example.com/PoENavi.zip.sha256",
+    )
+    with patch(
+        "src.ui.poetore_mode_window.ConfigManager.save_config"
+    ) as save_config:
+        window._handle_background_update_result(release, False)
+
+    assert config["notified_update_version"] == "9.9.9"
+    save_config.assert_called_once_with(config)
+    assert not window.update_button.isHidden()
+    assert "v9.9.9" in window.update_button.text()
+    window._handle_background_update_failure("offline", False)
+    assert not window.update_button.isHidden()
+
+    window.close()
+    app.processEvents()
 
 
 def test_poetore_mode_starts_only_common_and_poetore_services():
