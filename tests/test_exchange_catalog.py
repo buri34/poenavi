@@ -127,6 +127,63 @@ def test_poe1_330_exchange_items_are_pinned_and_scarabs_are_absent():
     assert all("/Scarabs/" not in item_id for item_id in catalog)
 
 
+def test_poe1_330_removed_rows_are_absent_and_replacements_are_pinned():
+    catalog = exchange_catalog_by_id(POE1)
+    removed = {
+        "Metadata/Items/Currency/CurrencyStackedScarab",
+        "Metadata/Items/Currency/AstrolabeGeneric",
+        "Metadata/Items/Currency/AstrolabeHarvest",
+        "Metadata/Items/Currency/AstrolabeDelirium",
+        *(f"Metadata/Items/MapFragments/CurrencyVaalFragment1_{index}" for index in range(1, 5)),
+        *(f"Metadata/Items/MapFragments/CurrencyVaalFragment2_{index}" for index in range(1, 5)),
+        "Metadata/Items/MapFragments/CurrencyVaalFragments1Complete",
+        "Metadata/Items/MapFragments/CurrencyVaalFragments2Complete",
+        "Metadata/Items/DivinationCards/DivinationCardHerMask",
+        "Metadata/Items/DivinationCards/DivinationCardLastHope",
+        "Metadata/Items/DivinationCards/DivinationCardSambodhisVow",
+        "Metadata/Items/DivinationCards/DivinationCardBuriedTreasure",
+        "Metadata/Items/DivinationCards/DivinationCardCameriasCut",
+        "Metadata/Items/DivinationCards/DivinationCardManWithBear",
+        "Metadata/Items/DivinationCards/DivinationCardMoreIsNeverEnough",
+        "Metadata/Items/DivinationCards/DivinationCardTheCardSharp",
+        "Metadata/Items/DivinationCards/DivinationCardTheDeal",
+        "Metadata/Items/DivinationCards/DivinationCardTheRabbitsFoot",
+        "Metadata/Items/DivinationCards/DivinationCardTheSillyBoy",
+    }
+    expected = {
+        "Metadata/Items/Currency/CurrencyStackedThread": (
+            "Frayed Thread",
+            "謎のスレッド",
+            "currency",
+        ),
+        "Metadata/Items/Currency/StackedAstrolabe": (
+            "Cryptic Astrolabe",
+            "謎のアストロラーベ",
+            "currency",
+        ),
+        "Metadata/Items/Currency/CurrencyMapQualityScarabs": (
+            "Maven's Chisel of Threads",
+            "メイヴェンのスレッドのチゼル",
+            "currency",
+        ),
+        "Metadata/Items/Currency/CurrencyAfflictionOrbScarabs": (
+            "Threaded Delirium Orb",
+            "スレッドのデリリウムオーブ",
+            "delirium",
+        ),
+    }
+
+    assert removed.isdisjoint(catalog)
+    assert {
+        item_id: (
+            catalog[item_id].english_name,
+            catalog[item_id].japanese_name,
+            catalog[item_id].category,
+        )
+        for item_id in expected
+    } == expected
+
+
 def test_poe1_threads_follow_the_confirmed_in_game_order():
     threads = [
         item for item in exchange_catalog_items(POE1) if item.category == "threads"
@@ -275,14 +332,12 @@ def test_confirmed_exception_categories_are_fixed():
         "Metadata/Items/Currency/FearMemoryThread": "currency",
         "Metadata/Items/Currency/BenevolenceMemoryThread": "currency",
         "Metadata/Items/Currency/IgnoranceMemoryThread": "currency",
-        "Metadata/Items/Currency/AstrolabeGeneric": "currency",
-        "Metadata/Items/Currency/AstrolabeHarvest": "currency",
+        "Metadata/Items/Currency/StackedAstrolabe": "currency",
         "Metadata/Items/Currency/AstrolabeAbyss": "currency",
         "Metadata/Items/Currency/AstrolabeBreach": "currency",
         "Metadata/Items/Currency/AstrolabeRitual": "currency",
         "Metadata/Items/Currency/AstrolabeBlight": "currency",
         "Metadata/Items/Currency/AstrolabeUltimatum": "currency",
-        "Metadata/Items/Currency/AstrolabeDelirium": "currency",
         "Metadata/Items/Currency/AstrolabeLegion": "currency",
         "Metadata/Items/Currency/AstrolabeExpedition": "currency",
         "Metadata/Items/MapFragments/CurrencyAfflictionFragment": "delirium",
