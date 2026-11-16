@@ -192,6 +192,72 @@ def test_poe1_threads_follow_the_confirmed_in_game_order():
     assert all(item.icon_kind == "remote" for item in threads)
 
 
+def test_poe1_late_330_exchange_additions_are_pinned():
+    catalog = exchange_catalog_by_id(POE1)
+    expected = {
+        "Metadata/Items/Currency/AstrolabeBestiary": (
+            "Feral Astrolabe", "野生のアストロラーベ", "currency"
+        ),
+        "Metadata/Items/Currency/AstrolabeBetrayal": (
+            "Immortal Astrolabe", "不死のアストロラーベ", "currency"
+        ),
+        "Metadata/Items/Currency/AstrolabeIncursion": (
+            "Royal Astrolabe", "王家のアストロラーベ", "currency"
+        ),
+        "Metadata/Items/Currency/CurrencyEssenceUber1": (
+            "Essence of Trickery", "欺瞞のエッセンス", "essences"
+        ),
+        "Metadata/Items/Currency/CurrencyWishSupportGem": (
+            "Soul Core of Instability", "不安定のソウルコア", "currency"
+        ),
+        "Metadata/Items/Currency/CurrencyWishSupportGemBlue": (
+            "Soul Core of Intellect", "知識のソウルコア", "currency"
+        ),
+        "Metadata/Items/Currency/CurrencyWishSupportGemGreen": (
+            "Soul Core of Finesse", "技のソウルコア", "currency"
+        ),
+        "Metadata/Items/Currency/CurrencyWishSupportGemRed": (
+            "Soul Core of Might", "力のソウルコア", "currency"
+        ),
+        "Metadata/Items/Currency/LegionCocoonQuiver": (
+            "Afarud Enshrouding Crystal",
+            "アファルドのエンシュラウドクリスタル",
+            "legion",
+        ),
+        "Metadata/Items/MapFragments/AtlasAllflamePack": (
+            "Allflame Ember of the Multitude",
+            "群衆のオールフレイムの残り火",
+            "allflame",
+        ),
+        "Metadata/Items/MapFragments/CloisterAllflamePack": (
+            "Allflame Ember of the Cloister",
+            "学園のオールフレイムの残り火",
+            "allflame",
+        ),
+        "Metadata/Items/MapFragments/CurrencyAuguryBossKey": (
+            "Cursed Poppet", "呪いの人形", "fragments"
+        ),
+        "Metadata/Items/MapFragments/CurrencyIncursionUberFragment": (
+            "Royal Visage", "王家の仮面", "fragments"
+        ),
+        "Metadata/Items/MapFragments/PantheonAllflamePack": (
+            "Allflame Ember of the Divine",
+            "神性のオールフレイムの残り火",
+            "allflame",
+        ),
+    }
+
+    assert {
+        item_id: (
+            catalog[item_id].english_name,
+            catalog[item_id].japanese_name,
+            catalog[item_id].category,
+        )
+        for item_id in expected
+    } == expected
+    assert all(catalog[item_id].icon_kind == "remote" for item_id in expected)
+
+
 def test_confirmed_exception_categories_are_fixed():
     poe1 = exchange_catalog_by_id(POE1)
     poe2 = exchange_catalog_by_id(POE2)

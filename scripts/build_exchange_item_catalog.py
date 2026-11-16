@@ -128,9 +128,38 @@ POE1_CONFIRMED_CATEGORY_OVERRIDES = {
     "Metadata/Items/Currency/AstrolabeDelirium": "currency",
     "Metadata/Items/Currency/AstrolabeLegion": "currency",
     "Metadata/Items/Currency/AstrolabeExpedition": "currency",
+    "Metadata/Items/Currency/AstrolabeBestiary": "currency",
+    "Metadata/Items/Currency/AstrolabeBetrayal": "currency",
+    "Metadata/Items/Currency/AstrolabeIncursion": "currency",
     "Metadata/Items/MapFragments/CurrencyAfflictionFragment": "delirium",
     "Metadata/Items/Currency/CurrencyAfflictionShard": "delirium",
     "Metadata/Items/Currency/CurrencyDeepwater": "allflame",
+    "Metadata/Items/MapFragments/AtlasAllflamePack": "allflame",
+    "Metadata/Items/MapFragments/CloisterAllflamePack": "allflame",
+    "Metadata/Items/MapFragments/PantheonAllflamePack": "allflame",
+}
+
+# The Currency Exchange market feed identifies these items by game metadata ID,
+# while the official Trade static endpoint identifies the same rows by trade
+# tag.  The current RePoE name export still contains the former Coin names (or
+# no row at all), so name-based joining cannot connect the two official feeds.
+# Keep the verified one-to-one bridge on stable machine IDs and let the static
+# endpoint remain authoritative for the localized names and icons.
+POE1_CONFIRMED_STATIC_ID_TO_ITEM_ID = {
+    "immortal-astrolabe": "Metadata/Items/Currency/AstrolabeBetrayal",
+    "feral-astrolabe": "Metadata/Items/Currency/AstrolabeBestiary",
+    "royal-astrolabe": "Metadata/Items/Currency/AstrolabeIncursion",
+    "soul-core-of-instability": "Metadata/Items/Currency/CurrencyWishSupportGem",
+    "soul-core-of-intellect": "Metadata/Items/Currency/CurrencyWishSupportGemBlue",
+    "soul-core-of-finesse": "Metadata/Items/Currency/CurrencyWishSupportGemGreen",
+    "soul-core-of-might": "Metadata/Items/Currency/CurrencyWishSupportGemRed",
+    "essence-of-trickery": "Metadata/Items/Currency/CurrencyEssenceUber1",
+    "afarud-enshrouding-crystal": "Metadata/Items/Currency/LegionCocoonQuiver",
+    "allflame-ember-of-the-cloister": "Metadata/Items/MapFragments/CloisterAllflamePack",
+    "allflame-ember-of-the-multitude": "Metadata/Items/MapFragments/AtlasAllflamePack",
+    "allflame-ember-of-the-divine": "Metadata/Items/MapFragments/PantheonAllflamePack",
+    "cursed-poppet": "Metadata/Items/MapFragments/CurrencyAuguryBossKey",
+    "royal-visage": "Metadata/Items/MapFragments/CurrencyIncursionUberFragment",
 }
 
 POE2_CONFIRMED_CATEGORY_OVERRIDES = {
@@ -288,9 +317,16 @@ def build_realm(
         english = str(en.get("text", "")).strip()
         if not english:
             continue
+        confirmed_item_id = (
+            POE1_CONFIRMED_STATIC_ID_TO_ITEM_ID.get(str(en.get("id", "")))
+            if poe_version == POE1
+            else None
+        )
         candidates = ids_by_name.get(normalize_name(english), [])
         active = [item_id for item_id in candidates if item_id in active_ids]
-        selected = active if len(active) == 1 else candidates
+        selected = [confirmed_item_id] if confirmed_item_id else (
+            active if len(active) == 1 else candidates
+        )
         if len(selected) != 1:
             unresolved.append({"group": group, "english": english, "ids": selected})
             continue

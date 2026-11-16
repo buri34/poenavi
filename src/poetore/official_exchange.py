@@ -967,10 +967,20 @@ class OfficialExchangeShadowService:
             payload = json.load(source)
         if not isinstance(payload, dict):
             raise TypeError(f"Invalid bundled exchange metadata: {path}")
-        return {
+        names = {
             str(item_id): str(name).strip()
             for item_id, name in payload.items() if str(name).strip()
         }
+        # The generated exchange catalog joins the official market metadata IDs
+        # to the localized Trade static rows.  Prefer its current English names
+        # over lagging RePoE exports (for example the 3.30 Soul Core renames),
+        # while leaving the golden IDs untouched so corruption is still caught.
+        from src.poetore.exchange_catalog import exchange_catalog_items
+
+        for item in exchange_catalog_items(profile.realm):
+            if item.item_id not in {CHAOS, DIVINE, EXALTED}:
+                names[item.item_id] = item.english_name
+        return names
 
     def _build_table(
         self,

@@ -169,6 +169,9 @@ def test_confirmed_poe1_in_game_category_overrides_are_deterministic():
         "Metadata/Items/Currency/AstrolabeDelirium": "currency",
         "Metadata/Items/Currency/AstrolabeLegion": "currency",
         "Metadata/Items/Currency/AstrolabeExpedition": "currency",
+        "Metadata/Items/Currency/AstrolabeBestiary": "currency",
+        "Metadata/Items/Currency/AstrolabeBetrayal": "currency",
+        "Metadata/Items/Currency/AstrolabeIncursion": "currency",
         "Metadata/Items/Threads/ThreadExpedition": "threads",
         "Metadata/Items/Threads/ThreadAbyss": "threads",
         "Metadata/Items/Threads/ThreadBreach": "threads",
@@ -182,11 +185,77 @@ def test_confirmed_poe1_in_game_category_overrides_are_deterministic():
         "Metadata/Items/MapFragments/CurrencyAfflictionFragment": "delirium",
         "Metadata/Items/Currency/CurrencyAfflictionShard": "delirium",
         "Metadata/Items/Currency/CurrencyDeepwater": "allflame",
+        "Metadata/Items/MapFragments/AtlasAllflamePack": "allflame",
+        "Metadata/Items/MapFragments/CloisterAllflamePack": "allflame",
+        "Metadata/Items/MapFragments/PantheonAllflamePack": "allflame",
     }
     assert {
         item_id: _category(POE1, "Fragments", item_id, "Example")
         for item_id in expected
     } == expected
+
+
+def test_confirmed_poe1_330_static_ids_bridge_market_ids_to_localized_rows():
+    rows = [
+        (
+            "Fragments",
+            "immortal-astrolabe",
+            "Immortal Astrolabe",
+            "不死のアストロラーベ",
+            "Metadata/Items/Currency/AstrolabeBetrayal",
+            "currency",
+        ),
+        (
+            "Currency",
+            "soul-core-of-intellect",
+            "Soul Core of Intellect",
+            "知識のソウルコア",
+            "Metadata/Items/Currency/CurrencyWishSupportGemBlue",
+            "currency",
+        ),
+        (
+            "Fragments",
+            "allflame-ember-of-the-divine",
+            "Allflame Ember of the Divine",
+            "神性のオールフレイムの残り火",
+            "Metadata/Items/MapFragments/PantheonAllflamePack",
+            "allflame",
+        ),
+    ]
+    en_groups = {}
+    ja_groups = {}
+    for group, trade_id, english, japanese, _item_id, _expected_category in rows:
+        en_groups.setdefault(group, []).append(
+            {"id": trade_id, "text": english, "image": "/gen/example.png"}
+        )
+        ja_groups.setdefault(group, []).append(
+            {"id": trade_id, "text": japanese}
+        )
+    en = {"result": [
+        {"id": group, "entries": entries} for group, entries in en_groups.items()
+    ]}
+    ja = {"result": [
+        {"id": group, "entries": entries} for group, entries in ja_groups.items()
+    ]}
+
+    result = build_realm(
+        POE1,
+        {},
+        en,
+        ja,
+        {row[4] for row in rows},
+        {},
+    )
+
+    by_id = {row["id"]: row for row in result["items"]}
+    assert {
+        item_id: (by_id[item_id]["en"], by_id[item_id]["ja"], by_id[item_id]["category"])
+        for _group, _trade_id, english, japanese, item_id, category in rows
+    } == {
+        item_id: (english, japanese, category)
+        for _group, _trade_id, english, japanese, item_id, category in rows
+    }
+    assert result["unmapped_observed"] == []
 
 
 def test_confirmed_observed_message_in_a_bottle_is_added_without_static_row():

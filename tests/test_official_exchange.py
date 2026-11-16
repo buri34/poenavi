@@ -10,6 +10,7 @@ from src.poetore.official_exchange import (
     DIVINE,
     EXALTED,
     HOUR_SECONDS,
+    PROFILES,
     WINDOW_HOURS,
     HourlySample,
     OfficialExchangeShadowService,
@@ -102,6 +103,23 @@ def test_default_metadata_root_uses_pyinstaller_bundle(tmp_path, monkeypatch):
     service = OfficialExchangeShadowService(cache_root=tmp_path / "cache")
 
     assert service.metadata_root == expected
+
+
+def test_exchange_catalog_names_override_lagging_repoe_names(tmp_path):
+    metadata = metadata_root(tmp_path)
+    path = metadata / "poe1_item_names.json"
+    names = json.loads(path.read_text(encoding="utf-8"))
+    item_id = "Metadata/Items/Currency/CurrencyWishSupportGemBlue"
+    names[item_id] = "Coin of Knowledge"
+    path.write_text(json.dumps(names), encoding="utf-8")
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata,
+    )
+
+    loaded = service._load_names(PROFILES[POE1])
+
+    assert loaded[item_id] == "Soul Core of Intellect"
 
 
 def test_single_real_trade_uses_reference_only_as_anomaly_detection():
