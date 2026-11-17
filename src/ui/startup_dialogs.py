@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from src.ui.appearance import theme_color, theme_font_size, theme_rgba
 from src.ui.styles import Styles
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 from src.ui.app_theme import theme_for_mode
@@ -45,7 +46,7 @@ class StartupSelectionDialog(QDialog):
         layout.setSpacing(14)
 
         title = QLabel("起動するPoEバージョンと機能を選んでください")
-        title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 20px; font-weight: bold;")
+        title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(20)}px; font-weight: bold;")
         layout.addWidget(title)
 
         self.version_group = QButtonGroup(self)
@@ -60,7 +61,7 @@ class StartupSelectionDialog(QDialog):
         layout.addLayout(version_cards)
 
         feature_title = QLabel("使う機能を選んでください")
-        feature_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 18px; font-weight: bold;")
+        feature_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(18)}px; font-weight: bold;")
         layout.addWidget(feature_title)
 
         self.group = QButtonGroup(self)
@@ -92,17 +93,17 @@ class StartupSelectionDialog(QDialog):
             "※デフォルトでは起動時に毎回確認します。以下のチェックボックスをONにすると固定にもできます。設定画面からも変更可能です。"
         )
         notice.setWordWrap(True)
-        notice.setStyleSheet("color: rgba(176, 255, 123, 0.78); font-size: 13px;")
+        notice.setStyleSheet(f"color: {theme_rgba('accent', 176, 255, 123, 0.78)}; font-size: {theme_font_size(13)}px;")
         layout.addWidget(notice)
 
         self.skip_selector_checkbox = QCheckBox("次回からこの設定で直接起動")
         self.skip_selector_checkbox.setChecked(False)
         self.skip_selector_checkbox.setStyleSheet(
             f"""
-            QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: 13px; spacing: 8px; }}
+            QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(13)}px; spacing: 8px; }}
             QCheckBox::indicator {{
-                width: 17px; height: 17px; background: #101310;
-                border: 2px solid #9eaaa0; border-radius: 3px;
+                width: 17px; height: 17px; background: {theme_color('surface', '#101310')};
+                border: 2px solid {theme_color('border', '#9eaaa0')}; border-radius: 3px;
             }}
             QCheckBox::indicator:hover {{ border-color: {Styles.TEXT_COLOR}; }}
             QCheckBox::indicator:checked {{
@@ -155,25 +156,25 @@ class StartupSelectionDialog(QDialog):
         button.setStyleSheet(f"""
             QToolButton {{
                 color: {accent};
-                background-color: rgba(15, 18, 17, 245);
-                border: 1px solid rgba(190, 200, 190, 0.28);
+                background-color: {theme_rgba('control', 15, 18, 17, 245)};
+                border: 1px solid {theme_rgba('border', 190, 200, 190, 0.28)};
                 border-radius: 14px;
                 padding: 12px 18px 16px 18px;
-                font-size: 17px;
+                font-size: {theme_font_size(17)}px;
                 font-weight: bold;
             }}
             QToolButton:hover {{
                 border: 2px solid {accent};
-                background-color: rgba(30, 34, 32, 250);
+                background-color: {theme_rgba('surface', 30, 34, 32, 250)};
             }}
             QToolButton:checked {{
                 border: 3px solid {accent};
-                background-color: rgba(42, 46, 43, 250);
+                background-color: {theme_rgba('surface', 42, 46, 43, 250)};
             }}
             QToolButton:disabled {{
-                color: rgba(176, 255, 123, 0.38);
-                border-color: rgba(190, 200, 190, 0.16);
-                background-color: rgba(15, 18, 17, 170);
+                color: {theme_rgba('disabled', 176, 255, 123, 0.38)};
+                border-color: {theme_rgba('border', 190, 200, 190, 0.16)};
+                background-color: {theme_rgba('surface', 15, 18, 17, 170)};
             }}
         """)
         self.group.addButton(button)
@@ -229,16 +230,16 @@ class StartupSelectionDialog(QDialog):
         button.setStyleSheet(f"""
             QToolButton {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 rgba(26, 35, 24, 235), stop:1 rgba(5, 8, 6, 245));
-                color: {Styles.TEXT_COLOR}; border: 1px solid rgba(176, 255, 123, 0.28);
+                    stop:0 {theme_rgba('control', 26, 35, 24, 235)}, stop:1 {theme_rgba('control', 5, 8, 6, 245)});
+                color: {Styles.TEXT_COLOR}; border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.28)};
                 border-radius: 12px; padding: 8px 12px 10px 12px;
-                font-size: 26px; font-weight: bold;
+                font-size: {theme_font_size(26)}px; font-weight: bold;
             }}
-            QToolButton:hover {{ border: 2px solid rgba(176, 255, 123, 0.72); }}
+            QToolButton:hover {{ border: 2px solid {theme_rgba('accent', 176, 255, 123, 0.72)}; }}
             QToolButton:checked {{
                 border: 3px solid {Styles.TEXT_COLOR};
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 rgba(73, 110, 50, 245), stop:1 rgba(15, 27, 16, 250));
+                    stop:0 {theme_rgba('accent_soft', 73, 110, 50, 245)}, stop:1 {theme_rgba('surface', 15, 27, 16, 250)});
             }}
         """)
         icon_path = self._version_icon_path(version)
@@ -277,23 +278,23 @@ class RouteSelectionDialog(QDialog):
         layout.setSpacing(12)
 
         desc = QLabel("攻略ルートを選択してください。後から設定画面で変更できます。")
-        desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px;")
+        desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(13)}px;")
         desc.setWordWrap(True)
         layout.addWidget(desc)
 
         combo_style = f"""
             QComboBox {{
-                background-color: #2a2a2a; color: {Styles.TEXT_COLOR};
-                border: 1px solid #555; border-radius: 4px;
-                padding: 4px 8px; font-size: 12px;
+                background-color: {theme_color('control', '#2a2a2a')}; color: {Styles.TEXT_COLOR};
+                border: 1px solid {theme_color('border', '#555')}; border-radius: 4px;
+                padding: 4px 8px; font-size: {theme_font_size(12)}px;
             }}
             QComboBox::drop-down {{ border: none; }}
             QComboBox QAbstractItemView {{
-                background-color: #2a2a2a; color: {Styles.TEXT_COLOR};
-                selection-background-color: #444;
+                background-color: {theme_color('control', '#2a2a2a')}; color: {Styles.TEXT_COLOR};
+                selection-background-color: {theme_color('accent_soft', '#444')};
             }}
         """
-        label_style = f"color: {Styles.TEXT_COLOR}; font-size: 12px;"
+        label_style = f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(12)}px;"
 
         form = QFormLayout()
 
@@ -325,7 +326,7 @@ class RouteSelectionDialog(QDialog):
         layout.addStretch()
 
         tip = QLabel("あまり経験のない方は、Act3ルートは「図書館寄り道ルート」、\nAct8ルートは「通常ルート」を選択するのがおすすめです。")
-        tip.setStyleSheet(f"color: #aaaaaa; font-size: 13px;")
+        tip.setStyleSheet(f"color: {theme_color('muted_text', '#aaaaaa')}; font-size: {theme_font_size(13)}px;")
         tip.setWordWrap(True)
         layout.addWidget(tip)
 

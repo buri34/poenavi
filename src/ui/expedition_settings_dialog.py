@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import resolve_dialog_theme, theme_font_size
 from src.poetore.window_position import path_of_exile_client_rect
 from src.ui.dialog_theme import (
     POETORE_DIALOG_THEME,
@@ -92,10 +93,10 @@ class ExpeditionRegionSelector(QDialog):
         self._origin: QPoint | None = None
         self._selection = QRect()
         guide_font = self.font()
-        guide_font.setPixelSize(36)
+        guide_font.setPixelSize(theme_font_size(36))
         guide_font.setBold(True)
         self.setFont(guide_font)
-        self.setStyleSheet("font-size: 36px; font-weight: bold;")
+        self.setStyleSheet(f"font-size: {theme_font_size(36)}px; font-weight: bold;")
         self.setWindowTitle("エクスペ報酬の読取範囲を指定")
         self.setWindowFlags(
             Qt.Dialog | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool
@@ -167,9 +168,9 @@ class ExpeditionRegionSelector(QDialog):
 
 
 class RegionPreview(QWidget):
-    def __init__(self, parent=None, *, theme: DialogTheme = POETORE_DIALOG_THEME):
+    def __init__(self, parent=None, *, theme: DialogTheme | None = None):
         super().__init__(parent)
-        self.theme = theme
+        self.theme = theme or resolve_dialog_theme(POETORE_DIALOG_THEME)
         self._region = None
         self.setObjectName("expeditionRegionPreview")
         self.setMinimumHeight(120)
@@ -226,7 +227,7 @@ class ExpeditionSettingsDialog(QDialog):
         )
         self.setWindowTitle("エクスペ報酬チェック設定")
         self.setMinimumSize(620, 820)
-        self.theme = POETORE_DIALOG_THEME
+        self.theme = resolve_dialog_theme(POETORE_DIALOG_THEME)
         apply_dialog_theme(self, self.theme)
 
         root = QVBoxLayout(self)
@@ -470,7 +471,7 @@ class ExpeditionSettingsDialog(QDialog):
 
     @staticmethod
     def _style_sheet():
-        return build_dialog_stylesheet(POETORE_DIALOG_THEME)
+        return build_dialog_stylesheet(resolve_dialog_theme(POETORE_DIALOG_THEME))
 
     @staticmethod
     def _set_label_state(label: QLabel, state: str) -> None:

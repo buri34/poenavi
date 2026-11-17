@@ -17,6 +17,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import (
+    fit_theme_fixed_geometry, has_custom_theme_font, suspend_theme_fixed_geometry,
+    theme_color, theme_font_size, theme_rgba,
+)
 from src.poetore.performance import record_mini_navi_topmost_event
 from src.ui.window_flags import (
     MINI_TOPMOST_ALWAYS,
@@ -53,19 +57,19 @@ class MiniNaviLockButtonWindow(QWidget):
         self.restore_button.setFixedSize(44, 28)
         self.restore_button.setCursor(QCursor(Qt.PointingHandCursor))
         self.restore_button.setToolTip("ぽえなび本体の表示／非表示を切り替えます")
-        self.restore_button.setStyleSheet("""
-            QPushButton {
-                background: rgba(10, 10, 10, 220);
-                color: #ffffff;
-                border: 1px solid rgba(176, 255, 123, 140);
+        self.restore_button.setStyleSheet(f"""
+            QPushButton {{
+                background: {theme_rgba('overlay_bg', 10, 10, 10, 220)};
+                color: {theme_color('overlay_text', '#ffffff')};
+                border: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 140)};
                 border-radius: 6px;
-                font-size: 12px;
+                font-size: {theme_font_size(12)}px;
                 font-weight: bold;
-            }
-            QPushButton:hover {
-                background: rgba(73, 110, 50, 230);
-                border-color: rgba(176, 255, 123, 220);
-            }
+            }}
+            QPushButton:hover {{
+                background: {theme_rgba('accent_soft', 73, 110, 50, 230)};
+                border-color: {theme_rgba('overlay_border', 176, 255, 123, 220)};
+            }}
         """)
         self.restore_button.clicked.connect(self.overlay.toggle_main_window)
         layout.addWidget(self.restore_button)
@@ -75,23 +79,23 @@ class MiniNaviLockButtonWindow(QWidget):
         self.act4_button.setFixedSize(52, 28)
         self.act4_button.setCursor(QCursor(Qt.PointingHandCursor))
         self.act4_button.setToolTip("Act4攻略チェックの表示／非表示を切り替えます")
-        self.act4_button.setStyleSheet("""
-            QPushButton {
-                background: rgba(10, 10, 10, 220);
-                color: #ffffff;
-                border: 1px solid rgba(176, 255, 123, 140);
+        self.act4_button.setStyleSheet(f"""
+            QPushButton {{
+                background: {theme_rgba('overlay_bg', 10, 10, 10, 220)};
+                color: {theme_color('overlay_text', '#ffffff')};
+                border: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 140)};
                 border-radius: 6px;
-                font-size: 12px;
+                font-size: {theme_font_size(12)}px;
                 font-weight: bold;
-            }
-            QPushButton:hover, QPushButton:focus {
-                background: rgba(73, 110, 50, 230);
-                border-color: rgba(176, 255, 123, 220);
-            }
-            QPushButton:checked {
-                background: rgba(73, 110, 50, 245);
-                border: 2px solid rgba(176, 255, 123, 240);
-            }
+            }}
+            QPushButton:hover, QPushButton:focus {{
+                background: {theme_rgba('accent_soft', 73, 110, 50, 230)};
+                border-color: {theme_rgba('overlay_border', 176, 255, 123, 220)};
+            }}
+            QPushButton:checked {{
+                background: {theme_rgba('accent_soft', 73, 110, 50, 245)};
+                border: 2px solid {theme_rgba('overlay_border', 176, 255, 123, 240)};
+            }}
         """)
         self.act4_button.clicked.connect(self._toggle_act4_checklist)
         layout.addWidget(self.act4_button)
@@ -99,21 +103,22 @@ class MiniNaviLockButtonWindow(QWidget):
         self.button = QPushButton("🔒")
         self.button.setFixedSize(30, 28)
         self.button.setCursor(QCursor(Qt.PointingHandCursor))
-        self.button.setStyleSheet("""
-            QPushButton {
-                background: rgba(10, 10, 10, 220);
-                color: #ffffff;
-                border: 1px solid rgba(176, 255, 123, 140);
+        self.button.setStyleSheet(f"""
+            QPushButton {{
+                background: {theme_rgba('overlay_bg', 10, 10, 10, 220)};
+                color: {theme_color('overlay_text', '#ffffff')};
+                border: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 140)};
                 border-radius: 6px;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background: rgba(73, 110, 50, 230);
-                border-color: rgba(176, 255, 123, 220);
-            }
+                font-size: {theme_font_size(15)}px;
+            }}
+            QPushButton:hover {{
+                background: {theme_rgba('accent_soft', 73, 110, 50, 230)};
+                border-color: {theme_rgba('overlay_border', 176, 255, 123, 220)};
+            }}
         """)
         self.button.clicked.connect(self.overlay.toggle_locked)
         layout.addWidget(self.button)
+        fit_theme_fixed_geometry(self)
 
     def sync_from_overlay(self):
         cfg = self.overlay.config()
@@ -284,8 +289,7 @@ class MiniNaviOverlay(QWidget):
         self.area_note_badge = QLabel("エリアメモあり")
         self.area_note_badge.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.area_note_badge.setStyleSheet(
-            "color: #f0c674; font-size: 12px; font-weight: bold; "
-            "padding-right: 54px; background: transparent;"
+            f"color: {theme_color('warning', '#f0c674')}; font-size: {theme_font_size(12)}px; font-weight: bold; padding-right: 54px; background: transparent;"
         )
         self.area_note_badge.installEventFilter(self)
         self.area_note_badge.hide()
@@ -344,8 +348,8 @@ class MiniNaviOverlay(QWidget):
         border_alpha = int(window_opacity_pct / 100.0 * 140)
         self.outer.setStyleSheet(f"""
             #miniNaviOuter {{
-                background-color: rgba(10, 10, 10, {bg_alpha});
-                border: 1px solid rgba(176, 255, 123, {border_alpha});
+                background-color: {theme_rgba('overlay_bg', 10, 10, 10, bg_alpha)};
+                border: 1px solid {theme_rgba('overlay_border', 176, 255, 123, border_alpha)};
                 border-radius: 8px;
             }}
         """)
@@ -355,16 +359,17 @@ class MiniNaviOverlay(QWidget):
             self.arrow_label.setFixedSize(40, 24)
             self.exp_label.setFixedWidth(40)
             self.arrow_label.setStyleSheet("color: #FF69B4; font-size: 24px; font-weight: bold; line-height: 100%; background: transparent;")
-            self.exp_label.setStyleSheet("color: #ffffff; font-size: 10px; line-height: 110%; background: transparent;")
+            self.exp_label.setStyleSheet(f"color: {theme_color('overlay_text', '#ffffff')}; font-size: {theme_font_size(10)}px; line-height: 110%; background: transparent;")
         else:
             self.outer.layout().setContentsMargins(10, 8, 12, 8)
             self.outer.layout().setSpacing(8)
             self.arrow_label.setFixedSize(118, 30)
             self.exp_label.setFixedWidth(118)
             self.arrow_label.setStyleSheet("color: #FF69B4; font-size: 36px; font-weight: bold; line-height: 100%; background: transparent;")
-            self.exp_label.setStyleSheet("color: #ffffff; font-size: 15px; line-height: 110%; background: transparent;")
-        text_color = "#999999" if self._muted_content else "#ffffff"
-        self.text_label.setStyleSheet(f"color: {text_color}; font-size: {font_size}px; line-height: 120%; background: transparent;")
+            self.exp_label.setStyleSheet(f"color: {theme_color('overlay_text', '#ffffff')}; font-size: {theme_font_size(15)}px; line-height: 110%; background: transparent;")
+        text_color = theme_color("muted_text", "#999999") if self._muted_content else theme_color("overlay_text", "#ffffff")
+        self.text_label.setStyleSheet(f"color: {text_color}; font-size: {theme_font_size(font_size)}px; line-height: 120%; background: transparent;")
+        fit_theme_fixed_geometry(self.outer)
         self._apply_text_opacity(int(cfg.get("text_opacity", 100)))
         self.size_grip.setVisible(not bool(cfg.get("locked", True)))
         self._apply_click_through()
@@ -415,6 +420,7 @@ class MiniNaviOverlay(QWidget):
         self.arrow_label.setText(arrow)
         self.arrow_label.setVisible(bool(arrow))
         self.exp_label.setText(self._render_exp_guide(exp_guide))
+        fit_theme_fixed_geometry(self.exp_label)
         self.exp_label.setVisible(bool(exp_guide) and not self.is_compact_mode())
         self.text_label.setAlignment(Qt.AlignCenter if muted else Qt.AlignVCenter | Qt.AlignLeft)
         self.text_label.setText("<br>".join(self._render_line(line) for line in lines))
@@ -434,6 +440,7 @@ class MiniNaviOverlay(QWidget):
     def collapse_for_obs(self):
         """同じネイティブウィンドウを維持したまま、画面端へ極小透明で収納する。"""
         self._fade_timer.stop()
+        suspend_theme_fixed_geometry(self, True)
         self._obs_waiting = True
         self.lock_button_window.hide()
         self.outer.hide()
@@ -452,6 +459,7 @@ class MiniNaviOverlay(QWidget):
         self._obs_waiting = False
         self.setMaximumSize(16777215, 16777215)
         self.setMinimumSize(220, 70)
+        suspend_theme_fixed_geometry(self, False)
 
     def show_waiting_for_area(self):
         """街エリアでは、起動済みと分かる待機メッセージを表示する。"""
@@ -868,6 +876,12 @@ class MiniNaviOverlay(QWidget):
     def _update_text_width_for_current_size(self):
         """ウィンドウ幅に合わせて本文ラベル幅を更新する。"""
         if not hasattr(self, "text_label") or not hasattr(self, "arrow_label"):
+            return
+        if has_custom_theme_font():
+            # The experience column can grow wider than the arrow for a
+            # selected font. Let the layout allocate the remaining width.
+            self.text_label.setMinimumWidth(150)
+            self.text_label.setMaximumWidth(16777215)
             return
         if not self.is_compact_mode():
             self.text_label.setFixedWidth(max(150, self.width() - self.arrow_label.width() - 72))

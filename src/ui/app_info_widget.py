@@ -5,6 +5,7 @@ import webbrowser
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QVBoxLayout, QWidget
 
+from src.ui.appearance import theme_color, theme_font_size
 from src.ui.app_theme import AppTheme
 from src.ui.dialog_theme import DialogTheme
 
@@ -35,7 +36,7 @@ class AppInfoWidget(QWidget):
             version_label.setProperty("uiRole", "title")
         else:
             version_label.setStyleSheet(
-                f"color: {theme.text}; font-size: 18px; font-weight: bold;"
+                f"color: {theme.text}; font-size: {theme_font_size(18)}px; font-weight: bold;"
             )
         layout.addWidget(version_label)
         self.update_button = QPushButton("アップデートを確認")
@@ -44,9 +45,7 @@ class AppInfoWidget(QWidget):
             self.update_button.setProperty("buttonRole", "primary")
         else:
             self.update_button.setStyleSheet(
-                f"QPushButton {{ background: {theme.accent}; color: #101010; "
-                "border: none; border-radius: 6px; padding: 10px 20px; "
-                "font-size: 13px; font-weight: bold; }"
+                f"QPushButton {{ background: {theme.accent}; color: {theme_color('background', '#101010')}; border: none; border-radius: 6px; padding: 10px 20px; font-size: {theme_font_size(13)}px; font-weight: bold; }}"
             )
         self.update_button.setCursor(Qt.PointingHandCursor)
         self.update_button.setEnabled(update_check_callback is not None)
@@ -72,7 +71,7 @@ class AppInfoWidget(QWidget):
             support_title.setProperty("uiRole", "section")
         else:
             support_title.setStyleSheet(
-                f"color: {theme.text}; font-size: 16px; font-weight: bold;"
+                f"color: {theme.text}; font-size: {theme_font_size(16)}px; font-weight: bold;"
             )
         layout.addWidget(support_title)
         support_desc = QLabel(
@@ -80,7 +79,7 @@ class AppInfoWidget(QWidget):
             "いただいたサポートは、開発環境の維持・改善に充てさせていただきます。"
         )
         if not shared_dialog_theme:
-            support_desc.setStyleSheet(f"color: {theme.text}; font-size: 13px;")
+            support_desc.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(13)}px;")
         support_desc.setWordWrap(True)
         layout.addWidget(support_desc)
 
@@ -103,7 +102,7 @@ class AppInfoWidget(QWidget):
                     url,
                     None
                     if shared_dialog_theme
-                    else (f"background: {color}; color: white; border: none;"),
+                    else (f"background: {color}; color: {theme_color('text', 'white')}; border: none;"),
                 )
             )
 
@@ -111,7 +110,7 @@ class AppInfoWidget(QWidget):
         if shared_dialog_theme:
             support_note.setProperty("uiRole", "muted")
         else:
-            support_note.setStyleSheet(f"color: {theme.muted_text}; font-size: 11px;")
+            support_note.setStyleSheet(f"color: {theme.muted_text}; font-size: {theme_font_size(11)}px;")
         layout.addWidget(support_note)
         layout.addWidget(self._separator(theme))
 
@@ -125,7 +124,7 @@ class AppInfoWidget(QWidget):
             self.disclaimer_label.setProperty("uiRole", "muted")
         else:
             self.disclaimer_label.setStyleSheet(
-                f"color: {theme.muted_text}; font-size: 12px;"
+                f"color: {theme.muted_text}; font-size: {theme_font_size(12)}px;"
             )
         layout.addWidget(self.disclaimer_label)
 
@@ -139,7 +138,7 @@ class AppInfoWidget(QWidget):
             self.ndlocr_license_label.setProperty("uiRole", "muted")
         else:
             self.ndlocr_license_label.setStyleSheet(
-                f"color: {theme.muted_text}; font-size: 11px;"
+                f"color: {theme.muted_text}; font-size: {theme_font_size(11)}px;"
             )
         layout.addWidget(self.ndlocr_license_label)
         layout.addStretch()
@@ -156,8 +155,7 @@ class AppInfoWidget(QWidget):
         button = QPushButton(text)
         if colors is not None:
             button.setStyleSheet(
-                f"QPushButton {{ {colors} border-radius: 6px; padding: 10px 20px; "
-                "font-size: 13px; font-weight: bold; }"
+                f"QPushButton {{ {colors} border-radius: 6px; padding: 10px 20px; font-size: {theme_font_size(13)}px; font-weight: bold; }}"
             )
         button.setCursor(Qt.PointingHandCursor)
         button.clicked.connect(lambda: webbrowser.open(url))

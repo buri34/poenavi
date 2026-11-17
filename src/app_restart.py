@@ -7,6 +7,7 @@ import sys
 from PySide6.QtCore import QProcess
 from PySide6.QtWidgets import QApplication, QMessageBox
 
+from src.ui.appearance import normalize_appearance, requested_appearance, resolve_app_theme, theme_color
 from src.app_mode import POETORE_MODE, normalize_app_mode, startup_preferences
 from src.single_instance import RESTART_PID_PREFIX
 from src.ui.app_theme import POETORE_THEME
@@ -42,26 +43,26 @@ def restart_application():
 def _poetore_message_box_style():
     return f"""
         QMessageBox {{
-            background-color: {POETORE_THEME.background};
+            background-color: {resolve_app_theme(POETORE_THEME).background};
         }}
         QMessageBox QLabel {{
             background-color: transparent;
-            color: {POETORE_THEME.text};
+            color: {resolve_app_theme(POETORE_THEME).text};
         }}
         QMessageBox QPushButton {{
             min-width: 72px;
             padding: 5px 12px;
-            background-color: {POETORE_THEME.panel};
-            color: {POETORE_THEME.text};
-            border: 1px solid #3A4245;
+            background-color: {resolve_app_theme(POETORE_THEME).panel};
+            color: {resolve_app_theme(POETORE_THEME).text};
+            border: 1px solid {theme_color('border', '#3A4245')};
             border-radius: 4px;
         }}
         QMessageBox QPushButton:hover {{
-            background-color: #25332F;
-            border-color: {POETORE_THEME.accent};
+            background-color: {theme_color('control', '#25332F')};
+            border-color: {resolve_app_theme(POETORE_THEME).accent};
         }}
         QMessageBox QPushButton:pressed {{
-            background-color: #276B5A;
+            background-color: {theme_color('accent_soft', '#276B5A')};
         }}
     """
 
@@ -100,7 +101,8 @@ def confirm_mode_switch_restart(parent, config, current_poe_version=None):
         and requested_poe_version != current_poe_version
     )
     mode_changed = preferred_mode != current_mode
-    if not mode_changed and not poe_version_changed:
+    appearance_changed = normalize_appearance((config or {}).get("appearance")) != requested_appearance()
+    if not mode_changed and not poe_version_changed and not appearance_changed:
         return False
 
     changes = []
@@ -111,11 +113,15 @@ def confirm_mode_switch_restart(parent, config, current_poe_version=None):
         )
     if mode_changed:
         changes.append("起動モード")
+    if appearance_changed:
+        changes.append("外観（色・フォント）")
     change_summary = "\n".join(changes)
     if show_selector:
         next_step = "再起動後に、起動する設定をもう一度選択します。"
     else:
         next_step = "再起動後に、選択した設定へ切り替わります。"
+    if appearance_changed:
+        next_step += "\n新しい外観は再起動後に反映されます。"
     message = (
         f"次の変更を保存しました。\n{change_summary}\n\n"
         "設定を安全に切り替えるため、今すぐ再起動しますか？\n\n"

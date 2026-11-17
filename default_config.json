@@ -1,4 +1,8 @@
 {
+    "appearance": {
+        "preset": "default",
+        "overrides": {}
+    },
     "startup": {
         "preferred_mode": "poenavi",
         "show_mode_selector": true,
@@ -29,7 +33,6 @@
     "gem_shop_search_hold_seconds": 0.4,
     "gem_shop_search_term_overrides": {},
     "poe_version_mode": "",
-    "text_color": "#e9ffbd",
     "guide_expanded": true,
     "guide_font_size": 18,
     "area_note_migration_notice_shown": true,

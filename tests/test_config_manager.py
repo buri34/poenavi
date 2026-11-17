@@ -547,7 +547,7 @@ class ConfigManagerTest(unittest.TestCase):
 
                 config_path = user_dir / ConfigManager.CONFIG_FILE
                 self.assertTrue(config_path.exists())
-                self.assertEqual(ConfigManager.load_config()["text_color"], "#ffffff")
+                self.assertEqual(ConfigManager.load_config()["appearance"]["overrides"]["overlay_text"], "#FFFFFF")
                 self.assertEqual(ConfigManager.load_config()["schemaVersion"], ConfigManager.CURRENT_SCHEMA_VERSION)
                 self.assertEqual(ConfigManager.load_config()["hotkeys"]["reset"], "F2")
 
@@ -571,7 +571,7 @@ class ConfigManagerTest(unittest.TestCase):
 
                 self.assertEqual(loaded["hotkeys"]["start_stop"], "F7")
                 self.assertEqual(loaded["hotkeys"]["reset"], "F2")
-                self.assertEqual(loaded["text_color"], "#abcdef")
+                self.assertEqual(loaded["appearance"]["overrides"]["overlay_text"], "#ABCDEF")
                 self.assertTrue(loaded["always_on_top"])
                 self.assertEqual(loaded["notified_update_version"], "")
                 self.assertEqual(loaded["schemaVersion"], ConfigManager.CURRENT_SCHEMA_VERSION)
@@ -587,17 +587,17 @@ class ConfigManagerTest(unittest.TestCase):
             user_dir.mkdir()
             write_default_config(app_dir)
             (app_dir / ConfigManager.CONFIG_FILE).write_text(
-                json.dumps({"text_color": "#legacy"}), encoding="utf-8"
+                json.dumps({"text_color": "#123456"}), encoding="utf-8"
             )
             (user_dir / ConfigManager.CONFIG_FILE).write_text(
-                json.dumps({"text_color": "#user"}), encoding="utf-8"
+                json.dumps({"text_color": "#654321"}), encoding="utf-8"
             )
 
             with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}), \
                  patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
                 loaded = ConfigManager.load_config()
 
-                self.assertEqual(loaded["text_color"], "#user")
+                self.assertEqual(loaded["appearance"]["overrides"]["overlay_text"], "#654321")
                 self.assertEqual(loaded["hotkeys"]["reset"], "F2")
                 self.assertFalse((app_dir / ConfigManager.CONFIG_FILE).exists())
                 self.assertEqual(len(list(user_dir.glob("config.backup-legacy-*.json"))), 0)
@@ -619,7 +619,7 @@ class ConfigManagerTest(unittest.TestCase):
 
                 self.assertEqual(loaded["hotkeys"]["start_stop"], "F12")
                 self.assertEqual(loaded["hotkeys"]["reset"], "F2")
-                self.assertEqual(loaded["text_color"], "#123456")
+                self.assertEqual(loaded["appearance"]["overrides"]["overlay_text"], "#123456")
                 self.assertEqual(loaded["schemaVersion"], ConfigManager.CURRENT_SCHEMA_VERSION)
                 self.assertTrue((user_dir / ConfigManager.CONFIG_FILE).exists())
 
@@ -628,16 +628,16 @@ class ConfigManagerTest(unittest.TestCase):
             app_dir = Path(tmp) / "app"
             user_dir = Path(tmp) / "user-data"
             app_dir.mkdir()
-            write_default_config(app_dir, {"text_color": "#default"})
+            write_default_config(app_dir, {"text_color": "#112233"})
             (app_dir / ConfigManager.CONFIG_FILE).write_text(
-                json.dumps({"text_color": "#legacy"}), encoding="utf-8"
+                json.dumps({"text_color": "#123456"}), encoding="utf-8"
             )
 
             with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}), \
                  patch.object(ConfigManager, "get_app_dir", return_value=app_dir):
                 loaded = ConfigManager.load_config()
 
-                self.assertEqual(loaded["text_color"], "#legacy")
+                self.assertEqual(loaded["appearance"]["overrides"]["overlay_text"], "#123456")
                 self.assertFalse((app_dir / ConfigManager.CONFIG_FILE).exists())
                 self.assertEqual(len(list(user_dir.glob("config.backup-legacy-*.json"))), 1)
 

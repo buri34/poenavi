@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import resolve_dialog_theme, theme_color, theme_font_size
 from src.poetore.exchange_catalog import (
     ExchangeCatalogItem,
     category_labels,
@@ -205,7 +206,7 @@ class _RegisteredPairsWidget(QWidget):
             border = "border-top"
         row.setStyleSheet(
             f"QWidget#{row.objectName()} {{ {border}: 2px solid "
-            f"{POETORE_DIALOG_THEME.accent}; }}"
+            f"{resolve_dialog_theme(POETORE_DIALOG_THEME).accent}; }}"
         )
 
     def _clear_drop_indicator(self) -> None:
@@ -264,7 +265,7 @@ class ExchangeRateManagementDialog(QDialog):
         return tuple(zip(categories, labels, strict=True))
 
     def _build_ui(self) -> None:
-        theme = POETORE_DIALOG_THEME
+        theme = resolve_dialog_theme(POETORE_DIALOG_THEME)
         self.setProperty("density", "compact")
         apply_dialog_theme(self, theme)
         self.setStyleSheet(
@@ -391,7 +392,7 @@ class ExchangeRateManagementDialog(QDialog):
         self.exchange_symbol.setAlignment(Qt.AlignCenter)
         self.exchange_symbol.setFixedWidth(34)
         self.exchange_symbol.setStyleSheet(
-            f"color: {theme.accent}; font-size: 22px; font-weight: bold;"
+            f"color: {theme.accent}; font-size: {theme_font_size(22)}px; font-weight: bold;"
         )
         selection_row.addWidget(self.exchange_symbol)
 
@@ -643,7 +644,7 @@ class ExchangeRateManagementDialog(QDialog):
         if not pairs:
             empty = QLabel("登録済みのレートはありません")
             empty.setAlignment(Qt.AlignCenter)
-            empty.setStyleSheet("color: #98A39F; padding: 12px;")
+            empty.setStyleSheet(f"color: {theme_color('muted_text', '#98A39F')}; padding: 12px;")
             self.registered_layout.addWidget(empty)
         registered_rows: list[_RegisteredPairRow] = []
         for index, pair in enumerate(pairs):
@@ -662,7 +663,7 @@ class ExchangeRateManagementDialog(QDialog):
             )
             name.setObjectName(f"ratePairName{index}")
             name.setToolTip(name.text())
-            name.setStyleSheet(f"color: {POETORE_DIALOG_THEME.text};")
+            name.setStyleSheet(f"color: {resolve_dialog_theme(POETORE_DIALOG_THEME).text};")
             row_layout.addWidget(name, 1)
             up = self._move_button("↑", "上へ移動")
             down = self._move_button("↓", "下へ移動")
@@ -706,14 +707,14 @@ class ExchangeRateManagementDialog(QDialog):
         button.setFixedSize(34, 34)
         button.setToolTip(label)
         button.setAccessibleName(label)
-        button.setStyleSheet("""
-            QPushButton {
-                color: #FFFFFF;
-                font-size: 20px;
+        button.setStyleSheet(f"""
+            QPushButton {{
+                color: {theme_color('text', '#FFFFFF')};
+                font-size: {theme_font_size(20)}px;
                 font-weight: bold;
                 padding: 0;
-            }
-            QPushButton:disabled { color: #000000; }
+            }}
+            QPushButton:disabled {{ color: {theme_color('disabled', '#000000')}; }}
         """)
         return button
 

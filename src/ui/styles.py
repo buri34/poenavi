@@ -1,128 +1,130 @@
-class Styles:
-    TEXT_COLOR = "#b0ff7b"
+from src.ui.appearance import theme_color, theme_font_family, theme_font_size, theme_rgba
+
+
+class _Styles:
+    @property
+    def TEXT_COLOR(self):
+        return theme_color("overlay_text", "#b0ff7b")
     # 背景を半透明の黒にする (RGBA)
-    BACKGROUND_COLOR = "rgba(0, 0, 0, 180)" 
-    
-    MAIN_WINDOW = f"""
+    @property
+    def BACKGROUND_COLOR(self):
+        return theme_rgba("overlay_bg", 0, 0, 0, 180)
+
+    @property
+    def MAIN_WINDOW(self):
+        return f"""
         QMainWindow {{
-            background-color: {BACKGROUND_COLOR};
-            color: {TEXT_COLOR};
-            border: 1px solid {TEXT_COLOR};
+            background-color: {self.BACKGROUND_COLOR};
+            color: {self.TEXT_COLOR};
+            border: 1px solid {theme_color("overlay_border", "#b0ff7b")};
             border-radius: 10px;
         }}
         QWidget {{
             background-color: transparent;
-            color: {TEXT_COLOR};
+            color: {self.TEXT_COLOR};
         }}
         QMenu {{
-            background-color: #222222;
-            color: {TEXT_COLOR};
-            border: 1px solid {TEXT_COLOR};
+            background-color: {theme_color('background', '#222222')};
+            color: {self.TEXT_COLOR};
+            border: 1px solid {theme_color("overlay_border", "#b0ff7b")};
         }}
         QMenu::item:selected {{
-            background-color: #444444;
+            background-color: {theme_color('accent_soft', '#444444')};
         }}
     """
-    
-    TIMER_LABEL = f"""
+
+    @property
+    def TIMER_LABEL(self):
+        return f"""
         QLabel {{
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 96px;
+            font-family:  "{theme_font_family('Consolas')}";
+            font-size: {theme_font_size(96)}px;
             font-weight: bold;
-            color: {TEXT_COLOR};
+            color: {self.TEXT_COLOR};
         }}
     """
-    
-    BUTTON = f"""
+
+    @property
+    def BUTTON(self):
+        return f"""
         QPushButton {{
-            background-color: rgba(26, 26, 26, 200);
-            color: {TEXT_COLOR};
-            border: 1px solid {TEXT_COLOR};
+            background-color: {theme_rgba('control', 26, 26, 26, 200)};
+            color: {self.TEXT_COLOR};
+            border: 1px solid {theme_color("overlay_border", "#b0ff7b")};
             border-radius: 4px;
             padding: 5px 10px;
-            font-family: 'Noto Sans JP', sans-serif;
+            font-family:  "{theme_font_family('Noto Sans JP')}";
             font-weight: bold;
         }}
         QPushButton:hover {{
-            background-color: rgba(42, 42, 42, 200);
-            border: 1px solid #ffffff;
+            background-color: {theme_rgba('control', 42, 42, 42, 200)};
+            border: 1px solid {theme_color('border_strong', '#ffffff')};
         }}
         QPushButton:pressed {{
-            background-color: #000000;
+            background-color: {theme_color('control', '#000000')};
         }}
     """
-    
+
     # ラップタイム表示用スタイル
-    LAP_ITEM_BASE = f"""
+    @property
+    def LAP_ITEM_BASE(self):
+        return f"""
         QLabel {{
-            font-family: 'Noto Sans JP', sans-serif;
-            font-size: 14px;
+            font-family:  "{theme_font_family('Noto Sans JP')}";
+            font-size: {theme_font_size(14)}px;
             padding: 2px 8px;
         }}
     """
-    
-    LAP_ITEM_COMPLETED = f"""
+
+    @property
+    def LAP_ITEM_COMPLETED(self):
+        return f"""
         QLabel {{
-            font-family: 'Noto Sans JP', sans-serif;
-            font-size: 14px;
+            font-family:  "{theme_font_family('Noto Sans JP')}";
+            font-size: {theme_font_size(14)}px;
             padding: 2px 8px;
             color: rgba(176, 255, 123, 0.7);
         }}
     """
-    
-    LAP_ITEM_CURRENT = f"""
+
+    @property
+    def LAP_ITEM_CURRENT(self):
+        return f"""
         QLabel {{
-            font-family: 'Noto Sans JP', sans-serif;
-            font-size: 14px;
+            font-family:  "{theme_font_family('Noto Sans JP')}";
+            font-size: {theme_font_size(14)}px;
             font-weight: bold;
             padding: 2px 8px;
-            color: {TEXT_COLOR};
+            color: #b0ff7b;
         }}
     """
-    
-    CHECKBOX = f"""
-        QCheckBox {{
-            color: {TEXT_COLOR}; font-size: 12px; spacing: 8px;
-        }}
-        QCheckBox::indicator {{
-            width: 18px; height: 18px;
-            border: 2px solid #888888;
-            border-radius: 3px;
-            background: transparent;
-        }}
-        QCheckBox::indicator:checked {{
-            background: #4488ff;
-            border: 2px solid #4488ff;
-            image: none;
-        }}
-        QCheckBox::indicator:checked::after {{
-            content: "";
-        }}
-    """
-    
+
+
     # Final version with checkmark via unicode trick won't work in Qt.
     # We rely on the contrasting background color to indicate checked state,
     # plus we'll programmatically create a checkmark icon at runtime.
     # For stylesheet-only approach, the blue background is clear enough.
-    CHECKBOX = f"""
+    @property
+    def CHECKBOX(self):
+        return f"""
         QCheckBox {{
-            color: {TEXT_COLOR}; font-size: 12px; spacing: 8px;
+            color: {self.TEXT_COLOR}; font-size: {theme_font_size(12)}px; spacing: 8px;
         }}
         QCheckBox::indicator {{
             width: 18px; height: 18px;
-            border: 2px solid #888888;
+            border: 2px solid {theme_color('border', '#888888')};
             border-radius: 3px;
             background: transparent;
         }}
         QCheckBox::indicator:checked {{
-            background: #4488ff;
-            border: 2px solid #4488ff;
+            background: {theme_color('selection_control', '#4488ff')};
+            border: 2px solid {theme_color('border', '#4488ff')};
         }}
         QCheckBox::indicator:unchecked:hover {{
-            border: 2px solid {TEXT_COLOR};
+            border: 2px solid {self.TEXT_COLOR};
         }}
     """
-    
+
     @staticmethod
     def apply_checkbox_style(
         checkbox, checked_color="#4488ff", *, match_native_indicator=False,
@@ -150,13 +152,14 @@ class Styles:
 
         # Create checkmark pixmap
         pixmap = QPixmap(indicator_width, indicator_height)
-        checked_qcolor = QColor(checked_color)
+        checked_qcolor = QColor(theme_color("selection_control", checked_color))
         pixmap.fill(checked_qcolor)
         painter = QPainter(pixmap)
         pen_width = 2.5
         if match_native_indicator:
             pen_width = max(1.5, min(indicator_width, indicator_height) * 0.16)
-        pen = QPen(QColor("white"), pen_width)
+        check_ink = QColor(theme_color("background", "#ffffff"))
+        pen = QPen(check_ink, pen_width)
         pen.setCapStyle(Qt.RoundCap)
         pen.setJoinStyle(Qt.RoundJoin)
         painter.setPen(pen)
@@ -175,22 +178,24 @@ class Styles:
             painter.drawLine(4, 9, 7, 13)
             painter.drawLine(7, 13, 14, 5)
         painter.end()
-        
+
         # Unchecked pixmap (transparent with border - handled by stylesheet)
         unchecked = QPixmap(indicator_width, indicator_height)
         unchecked.fill(QColor(0, 0, 0, 0))
-        
+
         icon = QIcon()
         icon.addPixmap(pixmap, QIcon.Normal, QIcon.On)
         icon.addPixmap(unchecked, QIcon.Normal, QIcon.Off)
         checkbox.setIcon(icon)
         checkbox.setIconSize(QSize(0, 0))  # Hide icon, we use it only for indicator
-        
+
         # Use stylesheet with image approach
         import os
         import tempfile
         tmp_dir = tempfile.gettempdir()
         color_key = checked_qcolor.name().removeprefix("#")
+        if check_ink != QColor("white"):
+            color_key += "_" + check_ink.name().removeprefix("#")
         size_suffix = (
             f"_{indicator_width}x{indicator_height}"
             if match_native_indicator else ""
@@ -199,14 +204,14 @@ class Styles:
             tmp_dir, f"poenavi_check_{color_key}{size_suffix}.png",
         )
         pixmap.save(check_path)
-        
+
         checkbox.setStyleSheet(f"""
             QCheckBox {{
-                color: {Styles.TEXT_COLOR}; font-size: 12px; spacing: 8px;
+                color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(12)}px; spacing: 8px;
             }}
             QCheckBox::indicator {{
                 width: {indicator_width}px; height: {indicator_height}px;
-                border: {border_width}px solid #888888;
+                border: {border_width}px solid {theme_color('border', '#888888')};
                 border-radius: 3px;
                 background: transparent;
             }}
@@ -219,12 +224,17 @@ class Styles:
             }}
         """)
 
-    LAP_ITEM_PENDING = f"""
+    @property
+    def LAP_ITEM_PENDING(self):
+        return f"""
         QLabel {{
-            font-family: 'Noto Sans JP', sans-serif;
-            font-size: 14px;
+            font-family:  "{theme_font_family('Noto Sans JP')}";
+            font-size: {theme_font_size(14)}px;
             padding: 2px 8px;
             color: rgba(128, 128, 128, 0.6);
         }}
     """
 
+
+
+Styles = _Styles()

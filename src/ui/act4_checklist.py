@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import theme_color, theme_font_size, theme_rgba
 from src.ui.dialog_theme import theme_asset_path
 from src.ui.window_flags import _with_optional_mini_always_on_top
 
@@ -293,7 +294,7 @@ class Act4ChecklistWindow(QWidget):
 
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
-        separator.setStyleSheet("color: rgba(176,255,123,90); margin-top: 5px;")
+        separator.setStyleSheet(f"color: {theme_rgba('accent', 176, 255, 123, 90)}; margin-top: 5px;")
         self.outer_layout.addWidget(separator)
         self.optional_frame = QFrame()
         self.optional_frame.setObjectName("act4OptionalFrame")
@@ -368,51 +369,51 @@ class Act4ChecklistWindow(QWidget):
         )
         self.outer.setStyleSheet(f"""
             #act4ChecklistOuter {{
-                background-color: rgba(10, 10, 10, 242);
-                border: 1px solid rgba(176, 255, 123, 165);
+                background-color: {theme_rgba('overlay_bg', 10, 10, 10, 242)};
+                border: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 165)};
                 border-radius: 8px;
             }}
-            QLabel {{ color: #ffffff; background: transparent; }}
+            QLabel {{ color: {theme_color('overlay_text', '#ffffff')}; background: transparent; }}
             #act4ChecklistTitle {{
-                color: #b0ff7b; font-size: {profile["title"]}px; font-weight: bold;
+                color: {theme_color('accent', '#b0ff7b')}; font-size: {theme_font_size(profile['title'])}px; font-weight: bold;
             }}
             #act4ChecklistProgress {{
-                color: #dddddd; font-size: {profile["auxiliary"]}px; font-weight: bold;
+                color: {theme_color('overlay_text', '#dddddd')}; font-size: {theme_font_size(profile['auxiliary'])}px; font-weight: bold;
             }}
             QCheckBox {{
-                color: #f0f0f0; font-size: {profile["body"]}px; spacing: 8px;
-                min-height: {profile["row_height"]}px; background: transparent;
+                color: {theme_color('overlay_text', '#f0f0f0')}; font-size: {theme_font_size(profile['body'])}px; spacing: 8px;
+                min-height: {profile['row_height']}px; background: transparent;
             }}
             QCheckBox:focus {{
-                border: 1px solid rgba(176, 255, 123, 210); border-radius: 3px;
+                border: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 210)}; border-radius: 3px;
             }}
             QCheckBox::indicator {{
-                width: 18px; height: 18px; border: 2px solid #888888;
+                width: 18px; height: 18px; border: 2px solid {theme_color('overlay_border', '#888888')};
                 border-radius: 4px; background: transparent;
             }}
             QCheckBox::indicator:checked {{
-                image: url("{checked_asset}"); background: #4488ff;
-                border: 2px solid #4488ff;
+                image: url("{checked_asset}"); background: {theme_color('accent_soft', '#4488ff')};
+                border: 2px solid {theme_color('overlay_border', '#4488ff')};
             }}
-            QCheckBox::indicator:unchecked:hover {{ border-color: #ffffff; }}
+            QCheckBox::indicator:unchecked:hover {{ border-color: {theme_color('overlay_border', '#ffffff')}; }}
             #act4ChecklistComplete {{
-                color: #b0ff7b; font-size: {profile["auxiliary"]}px; font-weight: bold;
-                padding: 6px; border: 1px solid rgba(176,255,123,120); border-radius: 4px;
+                color: #b0ff7b; font-size: {theme_font_size(profile['auxiliary'])}px; font-weight: bold;
+                padding: 6px; border: 1px solid rgba(176, 255, 123, 120); border-radius: 4px;
             }}
             #act4OptionalTitle {{
-                color: #f0c674; font-size: {profile["auxiliary"]}px; font-weight: bold;
+                color: #f0c674; font-size: {theme_font_size(profile['auxiliary'])}px; font-weight: bold;
             }}
             #act4OptionalNote {{
-                color: #bbbbbb; font-size: {profile["caption"]}px; padding-left: 25px;
+                color: {theme_color('muted_text', '#bbbbbb')}; font-size: {theme_font_size(profile['caption'])}px; padding-left: 25px;
             }}
             QPushButton {{
-                color: #ffffff; background: #252525; border: 1px solid #777777;
-                border-radius: 5px; font-size: {profile["title"] + 3}px; font-weight: bold;
+                color: {theme_color('overlay_text', '#ffffff')}; background: {theme_color('overlay_bg', '#252525')}; border: 1px solid {theme_color('overlay_border', '#777777')};
+                border-radius: 5px; font-size: {theme_font_size(profile['title'] + 3)}px; font-weight: bold;
             }}
             QPushButton:hover, QPushButton:focus {{
-                background: #743838; border-color: #ff9999;
+                background: {theme_color('accent_soft', '#743838')}; border-color: {theme_color('overlay_border', '#ff9999')};
             }}
-            QPushButton:pressed {{ background: #552828; }}
+            QPushButton:pressed {{ background: {theme_color('accent_soft', '#552828')}; }}
         """)
         self.adjustSize()
         self.resize(self.sizeHint())
@@ -443,13 +444,13 @@ class Act4ChecklistWindow(QWidget):
         """開始条件確定後に、利用期間中だけ強調できる公開口。"""
         if available:
             style = (
-                "#act4OptionalFrame { background: rgba(98,72,22,150); "
+                "#act4OptionalFrame { background: rgba(98, 72, 22, 150); "
                 "border: 1px solid #f0c674; border-radius: 5px; }"
             )
         else:
             style = (
-                "#act4OptionalFrame { background: rgba(35,35,35,145); "
-                "border: 1px solid rgba(240,198,116,70); border-radius: 5px; }"
+                "#act4OptionalFrame { background: rgba(35, 35, 35, 145); "
+                "border: 1px solid rgba(240, 198, 116, 70); border-radius: 5px; }"
             )
         self.optional_frame.setStyleSheet(style)
 

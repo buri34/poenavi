@@ -30,6 +30,7 @@ from src.single_instance import (
     wait_for_previous_instance,
 )
 from src.app_font import apply_bundled_ui_font
+from src.ui.appearance import apply_application_appearance
 from src.windows_autostart import (
     consume_windows_startup_poetore_argument,
     sync_windows_poetore_autostart_with_error,
@@ -126,6 +127,7 @@ def run():
         )
         return 0
     config = ConfigManager.load_config()
+    apply_application_appearance(app, config)
     autostart_error = sync_windows_poetore_autostart_with_error(config)
     if autostart_error:
         print(

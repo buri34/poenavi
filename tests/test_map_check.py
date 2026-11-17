@@ -564,7 +564,13 @@ def test_non_map_clipboard_is_rejected_without_trade_search():
 アイテムレベル: 1
 """)
     window = MapCheckWindow(default_map_check_config())
-    with patch("src.ui.map_check.QMessageBox.information") as information:
+    # The offscreen Qt clipboard is separate from CF_UNICODETEXT. Keep this
+    # UI rejection test independent of whatever is on the Windows clipboard.
+    with (
+        patch("src.poetore.clipboard._read_windows_unicode_text", return_value=""),
+        patch("src.ui.map_check.QMessageBox.information") as information,
+        patch("src.ui.map_check.QMessageBox.warning", side_effect=AssertionError("Ring fixture must parse")),
+    ):
         window._consume_clipboard()
     information.assert_called_once()
     assert "Map系アイテムではありません" in information.call_args.args[2]

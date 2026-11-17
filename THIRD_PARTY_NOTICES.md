@@ -179,3 +179,75 @@ The complete license text is included in
 <https://github.com/google/fonts/tree/main/ofl/notosansjp>
 
 Exact versions used for an official release are pinned in `requirements.txt` and `requirements-build.txt`, and are recorded in the public GitHub Actions build log.
+
+## Tokyo Night appearance preset
+
+The Tokyo Night preset adapts workbench colours from the standard dark
+`themes/tokyo-night-color-theme.json` at commit
+`7c0f11eaef322f293621ca7befe462214b7ea468` (version 1.1.2).
+The upstream repository moved from `enkia/tokyo-night-vscode-theme` to
+`tokyo-night/tokyo-night-vscode-theme`.
+PoENavi maps these colours to its existing UI roles and uses brighter colours
+from the same palette for readable text and indicators. Fonts are unchanged.
+
+<https://github.com/tokyo-night/tokyo-night-vscode-theme/blob/7c0f11eaef322f293621ca7befe462214b7ea468/themes/tokyo-night-color-theme.json>
+
+Upstream license: <https://github.com/tokyo-night/tokyo-night-vscode-theme/blob/7c0f11eaef322f293621ca7befe462214b7ea468/LICENSE.txt>
+
+The MIT License (MIT)
+
+Copyright (c) 2018-present Enkia
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## VS Code Dark 2026 appearance preset
+
+The VS Code Dark 2026 preset adapts workbench colours explicitly defined in
+`extensions/theme-defaults/themes/2026-dark.json` at commit
+`fde6187a02fc9e24a94947feadc1c2c38f04be22`.
+PoENavi maps these colours to its existing UI roles, using the link colour
+for accent text and primary buttons and an opaque info border for indicators.
+Fonts are unchanged.
+
+<https://github.com/microsoft/vscode/blob/fde6187a02fc9e24a94947feadc1c2c38f04be22/extensions/theme-defaults/themes/2026-dark.json>
+
+Upstream license: <https://github.com/microsoft/vscode/blob/fde6187a02fc9e24a94947feadc1c2c38f04be22/LICENSE.txt>
+
+MIT License
+
+Copyright (c) 2015 - present Microsoft Corporation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

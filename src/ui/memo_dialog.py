@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import resolve_app_theme, theme_color, theme_font_family, theme_font_size, theme_rgba
 from src.ui.app_theme import POENAVI_THEME
 from src.ui.styles import Styles
 from src.ui.window_flags import _with_optional_always_on_top
@@ -26,9 +27,9 @@ class MemoDialog(QDialog):
         ("#44cc44", "緑"), ("#dddd44", "黄"), ("#dd66ff", "紫"), ("#ffffff", "白"),
     ]
 
-    def __init__(self, parent=None, notes_path: str = "", theme=POENAVI_THEME):
+    def __init__(self, parent=None, notes_path: str = "", theme=None):
         super().__init__(parent)
-        self.theme = theme
+        self.theme = theme = theme or resolve_app_theme(POENAVI_THEME)
         self.setWindowFlags(_with_optional_always_on_top(Qt.Window | Qt.FramelessWindowHint, parent))
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.resize(350, 300)
@@ -45,7 +46,7 @@ class MemoDialog(QDialog):
         self._default_bg_alpha = 230
         container.setStyleSheet(f"""
             QWidget {{
-                background: rgba(20, 20, 20, 230);
+                background: {theme_rgba('surface', 20, 20, 20, 230)};
                 border: 1px solid {theme.accent};
                 border-radius: 6px;
             }}
@@ -63,15 +64,15 @@ class MemoDialog(QDialog):
         title_layout.setContentsMargins(4, 0, 4, 0)
 
         title_label = QLabel("📝 共通メモ")
-        title_label.setStyleSheet(f"color: {theme.text}; font-size: 15px; font-weight: bold; border: none;")
+        title_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(15)}px; font-weight: bold; border: none;")
         title_layout.addWidget(title_label)
         title_layout.addStretch()
 
         close_btn = QPushButton("✕")
         close_btn.setFixedSize(22, 22)
         close_btn.setStyleSheet(f"""
-            QPushButton {{ background: transparent; color: #888; border: none; font-size: 14px; }}
-            QPushButton:hover {{ color: #ff6666; }}
+            QPushButton {{ background: transparent; color: {theme_color('muted_text', '#888')}; border: none; font-size: {theme_font_size(14)}px; }}
+            QPushButton:hover {{ color: {theme_color('danger', '#ff6666')}; }}
         """)
         close_btn.clicked.connect(self.close)
         title_layout.addWidget(close_btn)
@@ -79,10 +80,10 @@ class MemoDialog(QDialog):
 
         text_style = f"""
             QTextEdit {{ 
-                background: rgba(26,26,26,200); color: {theme.text};
+                background: {theme_rgba('control', 26, 26, 26, 200)}; color: {theme.text};
                 border: 1px solid {theme.accent}; border-radius: 4px;
-                padding: 5px; font-size: 13px;
-                font-family: "MS Gothic", "Yu Gothic", "Meiryo", monospace;
+                padding: 5px; font-size: {theme_font_size(13)}px;
+                font-family:  "{theme_font_family('MS Gothic')}";
             }}
         """
 
@@ -98,8 +99,8 @@ class MemoDialog(QDialog):
             cbtn.setFixedSize(18, 18)
             cbtn.setToolTip(f"{color_name}")
             cbtn.setStyleSheet(f"""
-                QPushButton {{ background: {color_code}; border: 1px solid rgba(255,255,255,0.3); border-radius: 2px; }}
-                QPushButton:hover {{ border: 2px solid #ffffff; }}
+                QPushButton {{ background: {color_code}; border: 1px solid {theme_rgba('border', 255, 255, 255, 0.3)}; border-radius: 2px; }}
+                QPushButton:hover {{ border: 2px solid {theme_color('border', '#ffffff')}; }}
             """)
             cbtn.clicked.connect(lambda checked, c=color_code: self._set_color(c))
             toolbar.addWidget(cbtn)
@@ -108,9 +109,9 @@ class MemoDialog(QDialog):
         reset_btn.setFixedSize(18, 18)
         reset_btn.setToolTip("色をリセット")
         reset_btn.setStyleSheet(f"""
-            QPushButton {{ background: rgba(40,40,40,200); color: #888; 
-                border: 1px solid {theme.accent}; border-radius: 2px; font-size: 10px; }}
-            QPushButton:hover {{ background: rgba(80,80,80,200); }}
+            QPushButton {{ background: {theme_rgba('control', 40, 40, 40, 200)}; color: {theme_color('muted_text', '#888')};
+                border: 1px solid {theme.accent}; border-radius: 2px; font-size: {theme_font_size(10)}px; }}
+            QPushButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
         """)
         reset_btn.clicked.connect(self._reset_color)
         toolbar.addWidget(reset_btn)
@@ -136,17 +137,17 @@ class MemoDialog(QDialog):
         te_alpha = int(bg_opacity_pct / 100.0 * 200)  # テキストエディタ背景(元: rgba(26,26,26,200))
         self._container.setStyleSheet(f"""
             QWidget {{
-                background: rgba(20, 20, 20, {alpha});
+                background: {theme_rgba('surface', 20, 20, 20, alpha)};
                 border: 1px solid {self.theme.accent};
                 border-radius: 6px;
             }}
         """)
         self.text_edit.setStyleSheet(f"""
             QTextEdit {{ 
-                background: rgba(26, 26, 26, {te_alpha}); color: {self.theme.text};
+                background: {theme_rgba('control', 26, 26, 26, te_alpha)}; color: {self.theme.text};
                 border: 1px solid {self.theme.accent}; border-radius: 4px;
-                padding: 5px; font-size: 13px;
-                font-family: "MS Gothic", "Yu Gothic", "Meiryo", monospace;
+                padding: 5px; font-size: {theme_font_size(13)}px;
+                font-family:  "{theme_font_family('MS Gothic')}";
             }}
         """)
         # 文字透過率（テキストエディタ・タイトル・ツールバーに適用）

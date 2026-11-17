@@ -236,7 +236,8 @@ def test_general_settings_save_note_is_at_bottom(qapp):
     note = dialog.findChild(QLabel, "generalSettingsSaveNote")
     layout = note.parentWidget().layout()
 
-    assert "変更は保存後すぐ反映されます" in note.text()
+    assert "外観は再起動後" in note.text()
+    assert "その他の変更は保存後" in note.text()
     assert "保存後に再起動を確認します" in note.text()
     assert layout.indexOf(note) == layout.count() - 2
     assert layout.itemAt(layout.count() - 1).spacerItem() is not None

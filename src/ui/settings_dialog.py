@@ -10,7 +10,17 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                QHeaderView, QAbstractItemView)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QKeySequence
+from src.ui.appearance import (
+    fit_theme_fixed_geometry,
+    resolve_app_theme,
+    resolve_dialog_theme,
+    theme_color,
+    theme_font_family,
+    theme_font_size,
+    theme_rgba,
+)
 from src.ui.styles import Styles
+from src.ui.appearance_settings import AppearanceSettingsWidget
 from src.ui.app_info_widget import AppInfoWidget
 from src.ui.app_theme import POENAVI_THEME, POETORE_THEME
 from src.ui.dialog_theme import (
@@ -83,7 +93,7 @@ def _apply_poENavi_editor_theme(
     muted_labels=(),
 ):
     """ガイド／メモ編集画面の標準部品だけを共通テーマへ移行する。"""
-    dialog.theme = POENAVI_DIALOG_THEME
+    dialog.theme = resolve_dialog_theme(POENAVI_DIALOG_THEME)
     apply_dialog_theme(dialog, dialog.theme)
 
     for widget_type in (
@@ -123,19 +133,19 @@ def _spinbox_style(width=55, height=28):
     """SpinBox共通スタイル（ボタン押しやすい版）"""
     return f"""
         QSpinBox, QDoubleSpinBox {{
-            background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
-            border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; 
+            background: {theme_rgba('control', 26, 26, 26, 200)}; color: {Styles.TEXT_COLOR};
+            border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 3px;
             padding: 2px; padding-right: 22px;
             min-width: {width}px; min-height: {height}px;
         }}
         QSpinBox::up-button, QDoubleSpinBox::up-button {{
             subcontrol-origin: border; subcontrol-position: top right;
             width: 20px; height: 13px;
-            background: rgba(80,80,80,220);
-            border: 1px solid rgba(176,255,123,0.3);
+            background: {theme_rgba('surface', 80, 80, 80, 220)};
+            border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)};
             border-radius: 0 3px 0 0;
         }}
-        QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {{ background: rgba(120,120,120,220); }}
+        QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {{ background: {theme_rgba('control', 120, 120, 120, 220)}; }}
         QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
             image: none; border-left: 4px solid transparent; border-right: 4px solid transparent;
             border-bottom: 4px solid {Styles.TEXT_COLOR}; width: 0; height: 0;
@@ -143,11 +153,11 @@ def _spinbox_style(width=55, height=28):
         QSpinBox::down-button, QDoubleSpinBox::down-button {{
             subcontrol-origin: border; subcontrol-position: bottom right;
             width: 20px; height: 13px;
-            background: rgba(80,80,80,220);
-            border: 1px solid rgba(176,255,123,0.3);
+            background: {theme_rgba('surface', 80, 80, 80, 220)};
+            border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)};
             border-radius: 0 0 3px 0;
         }}
-        QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{ background: rgba(120,120,120,220); }}
+        QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{ background: {theme_rgba('surface', 120, 120, 120, 220)}; }}
         QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{
             image: none; border-left: 4px solid transparent; border-right: 4px solid transparent;
             border-top: 4px solid {Styles.TEXT_COLOR}; width: 0; height: 0;
@@ -257,11 +267,12 @@ class AutoHideHotkeyWidget(QWidget):
     INPUT_WIDTH = 275
 
     def __init__(
-        self, hotkey="ctrl+d", parent=None, theme=POETORE_THEME,
+        self, hotkey="ctrl+d", parent=None, theme=None,
         allow_no_modifier=False, allow_multiple_modifiers=False,
         allow_shift=False,
     ):
         super().__init__(parent)
+        theme = theme or resolve_app_theme(POETORE_THEME)
         self.allow_no_modifier = allow_no_modifier
         self.allow_multiple_modifiers = allow_multiple_modifiers
         self.allow_shift = allow_shift
@@ -470,7 +481,7 @@ class AreaNoteDialog(QDialog):
         layout = QVBoxLayout(self)
         self.title_label = QLabel(f"📝 {zone_name} のエリアメモ")
         self.title_label.setStyleSheet(
-            f"color: {Styles.TEXT_COLOR}; font-size: 14px; font-weight: bold;"
+            f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(14)}px; font-weight: bold;"
         )
         layout.addWidget(self.title_label)
 
@@ -481,22 +492,20 @@ class AreaNoteDialog(QDialog):
             button.setFixedSize(22, 22)
             button.setToolTip(color_name)
             button.setStyleSheet(
-                f"QPushButton {{ background: {color_code}; border: 1px solid #777; "
-                "border-radius: 3px; } QPushButton:hover { border: 2px solid white; }"
+                f"QPushButton {{ background: {color_code}; border: 1px solid {theme_color('border', '#777')}; border-radius: 3px; }} QPushButton:hover {{ border: 2px solid {theme_color('border', 'white')}; }}"
             )
             button.clicked.connect(lambda checked=False, color=color_code: self._set_color(color))
             toolbar.addWidget(button)
         reset_button = QPushButton("標準色")
         reset_button.setToolTip("選択範囲の文字色を標準色へ戻します")
-        reset_button.clicked.connect(lambda: self._set_color(POENAVI_DIALOG_THEME.text))
+        reset_button.clicked.connect(lambda: self._set_color(resolve_dialog_theme(POENAVI_DIALOG_THEME).text))
         toolbar.addWidget(reset_button)
         toolbar.addStretch()
         layout.addLayout(toolbar)
 
         self.text_edit = RichTextEdit()
         self.text_edit.setStyleSheet(
-            f"QTextEdit {{ background: #1a1a1a; color: {Styles.TEXT_COLOR}; "
-            "border: 1px solid #4b6b3b; padding: 7px; font-size: 13px; }"
+            f"QTextEdit {{ background: {theme_color('control', '#1a1a1a')}; color: {Styles.TEXT_COLOR}; border: 1px solid {theme_color('accent', '#4b6b3b')}; padding: 7px; font-size: {theme_font_size(13)}px; }}"
         )
         self.text_edit.set_from_html(content)
         layout.addWidget(self.text_edit)
@@ -569,38 +578,38 @@ class GuideEditorDialog(QDialog):
         # スクロール対応
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("""
-            QScrollArea { border: none; }
-            QScrollBar:vertical { width: 6px; background: transparent; }
-            QScrollBar::handle:vertical { background: rgba(176,255,123,0.3); border-radius: 3px; }
+        scroll.setStyleSheet(f"""
+            QScrollArea {{ border: none; }}
+            QScrollBar:vertical {{ width: 6px; background: transparent; }}
+            QScrollBar::handle:vertical {{ background: {theme_color('muted_text', 'rgba(176, 255, 123, 0.3)')}; border-radius: 3px; }}
         """)
         scroll_widget = QWidget()
         layout = QVBoxLayout(scroll_widget)
         
         text_style = f"""
             QTextEdit {{ 
-                background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR}; 
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 4px; 
-                padding: 5px; font-size: 12px;
-                font-family: "MS Gothic", "Yu Gothic", "Meiryo", monospace;
+                background: {theme_rgba('control', 26, 26, 26, 200)}; color: {Styles.TEXT_COLOR};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 4px;
+                padding: 5px; font-size: {theme_font_size(12)}px;
+                font-family:  "{theme_font_family('MS Gothic')}";
             }}
         """
-        label_style = f"color: {Styles.TEXT_COLOR}; font-size: 12px; font-weight: bold;"
+        label_style = f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(12)}px; font-weight: bold;"
         radio_style = f"""
             QRadioButton {{ 
-                color: {Styles.TEXT_COLOR}; font-size: 20px; 
+                color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(20)}px;
                 padding: 6px 10px;
-                background: rgba(40,40,40,180);
-                border: 1px solid rgba(176,255,123,0.2);
+                background: {theme_rgba('surface', 40, 40, 40, 180)};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.2)};
                 border-radius: 4px;
                 min-width: 36px; min-height: 28px;
             }}
             QRadioButton:checked {{ 
-                background: rgba(176,255,123,0.2);
+                background: {theme_rgba('accent_soft', 176, 255, 123, 0.2)};
                 border: 2px solid {Styles.TEXT_COLOR};
             }}
             QRadioButton:hover {{ 
-                background: rgba(80,80,80,200);
+                background: {theme_rgba('control', 80, 80, 80, 200)};
             }}
             QRadioButton::indicator {{ width: 0; height: 0; }}
         """
@@ -611,8 +620,8 @@ class GuideEditorDialog(QDialog):
             # ── 基本方向 ──
             dir_group_box = QGroupBox("🧭 基本方向（シンプルなマップ向け）")
             dir_group_box.setStyleSheet(f"""
-                QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid rgba(176,255,123,0.3); 
-                    border-radius: 4px; margin-top: 8px; font-size: 11px; font-weight: bold; }}
+                QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)};
+                    border-radius: 4px; margin-top: 8px; font-size: {theme_font_size(11)}px; font-weight: bold; }}
                 QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top left; padding: 0 5px; }}
             """)
             dir_layout = QGridLayout(dir_group_box)
@@ -637,7 +646,7 @@ class GuideEditorDialog(QDialog):
                 dir_layout.addWidget(rb, row, col, Qt.AlignCenter)
             
             dir_desc = QLabel("中央「—」= 該当なし（複雑なマップ → ガイド参照を表示）")
-            dir_desc.setStyleSheet("color: #888888; font-size: 10px;")
+            dir_desc.setStyleSheet(f"color: {theme_color('muted_text', '#888888')}; font-size: {theme_font_size(10)}px;")
             dir_desc.setWordWrap(True)
             dir_layout.addWidget(dir_desc, 3, 0, 1, 3)
             
@@ -668,10 +677,10 @@ class GuideEditorDialog(QDialog):
             cbtn.setStyleSheet(f"""
                 QPushButton {{ 
                     background: {color_code}; 
-                    border: 2px solid rgba(255,255,255,0.3); 
+                    border: 2px solid {theme_rgba('border', 255, 255, 255, 0.3)};
                     border-radius: 3px;
                 }}
-                QPushButton:hover {{ border: 2px solid #ffffff; }}
+                QPushButton:hover {{ border: 2px solid {theme_color('border', '#ffffff')}; }}
             """)
             cbtn.clicked.connect(lambda checked, c=color_code: self._set_color(c))
             toolbar.addWidget(cbtn)
@@ -682,10 +691,10 @@ class GuideEditorDialog(QDialog):
         reset_color_btn.setToolTip("色をリセット")
         reset_color_btn.setStyleSheet(f"""
             QPushButton {{ 
-                background: rgba(40,40,40,200); color: #888; 
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; font-size: 11px;
+                background: {theme_rgba('control', 40, 40, 40, 200)}; color: {theme_color('muted_text', '#888')};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 3px; font-size: {theme_font_size(11)}px;
             }}
-            QPushButton:hover {{ background: rgba(80,80,80,200); }}
+            QPushButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
         """)
         reset_color_btn.clicked.connect(self._reset_color)
         toolbar.addWidget(reset_color_btn)
@@ -713,10 +722,10 @@ class GuideEditorDialog(QDialog):
             cbtn.setStyleSheet(f"""
                 QPushButton {{ 
                     background: {color_code}; 
-                    border: 2px solid rgba(255,255,255,0.3); 
+                    border: 2px solid {theme_rgba('border', 255, 255, 255, 0.3)};
                     border-radius: 3px;
                 }}
-                QPushButton:hover {{ border: 2px solid #ffffff; }}
+                QPushButton:hover {{ border: 2px solid {theme_color('border', '#ffffff')}; }}
             """)
             cbtn.clicked.connect(lambda checked, c=color_code: self._set_color_tips(c))
             tips_toolbar.addWidget(cbtn)
@@ -725,10 +734,10 @@ class GuideEditorDialog(QDialog):
         reset_tips_color_btn.setToolTip("色をリセット")
         reset_tips_color_btn.setStyleSheet(f"""
             QPushButton {{ 
-                background: rgba(40,40,40,200); color: #888; 
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; font-size: 11px;
+                background: {theme_rgba('control', 40, 40, 40, 200)}; color: {theme_color('muted_text', '#888')};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 3px; font-size: {theme_font_size(11)}px;
             }}
-            QPushButton:hover {{ background: rgba(80,80,80,200); }}
+            QPushButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
         """)
         reset_tips_color_btn.clicked.connect(self._reset_color_tips)
         tips_toolbar.addWidget(reset_tips_color_btn)
@@ -743,7 +752,7 @@ class GuideEditorDialog(QDialog):
         # ── 2回目の訪問ガイド ──
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
-        separator.setStyleSheet("color: rgba(176,255,123,0.3);")
+        separator.setStyleSheet(f"color: {theme_rgba('accent', 176, 255, 123, 0.3)};")
         layout.addWidget(separator)
         
         # zone_idからPoE1/PoE2に応じた補助ガイド説明を動的生成
@@ -762,8 +771,8 @@ class GuideEditorDialog(QDialog):
         self.v2_toggle_btn = QPushButton(v2_label_open if self.guide_v2 else v2_label_closed)
         self.v2_toggle_btn.setStyleSheet(f"""
             QPushButton {{ background: transparent; color: {Styles.TEXT_COLOR}; border: none; 
-                font-size: 11px; font-weight: bold; text-align: left; padding: 2px; }}
-            QPushButton:hover {{ color: #ffffff; }}
+                font-size: {theme_font_size(11)}px; font-weight: bold; text-align: left; padding: 2px; }}
+            QPushButton:hover {{ color: {theme_color('text', '#ffffff')}; }}
         """)
         self.v2_toggle_btn.clicked.connect(self._toggle_v2)
         layout.addWidget(self.v2_toggle_btn)
@@ -778,8 +787,8 @@ class GuideEditorDialog(QDialog):
             # 基本方向（2回目）
             v2_dir_group_box = QGroupBox("🧭 基本方向（2回目）")
             v2_dir_group_box.setStyleSheet(f"""
-                QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid rgba(176,255,123,0.3); 
-                    border-radius: 4px; margin-top: 8px; font-size: 11px; font-weight: bold; }}
+                QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)};
+                    border-radius: 4px; margin-top: 8px; font-size: {theme_font_size(11)}px; font-weight: bold; }}
                 QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top left; padding: 0 5px; }}
             """)
             v2_dir_layout = QGridLayout(v2_dir_group_box)
@@ -798,13 +807,13 @@ class GuideEditorDialog(QDialog):
                 rb = QRadioButton(label)
                 rb.setStyleSheet(radio_style if label != "同上" else f"""
                     QRadioButton {{ 
-                        color: {Styles.TEXT_COLOR}; font-size: 11px; 
-                        padding: 6px 8px; background: rgba(40,40,40,180);
-                        border: 1px solid rgba(176,255,123,0.2); border-radius: 4px;
+                        color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(11)}px;
+                        padding: 6px 8px; background: {theme_rgba('surface', 40, 40, 40, 180)};
+                        border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.2)}; border-radius: 4px;
                         min-width: 36px; min-height: 28px;
                     }}
-                    QRadioButton:checked {{ background: rgba(176,255,123,0.2); border: 2px solid {Styles.TEXT_COLOR}; }}
-                    QRadioButton:hover {{ background: rgba(80,80,80,200); }}
+                    QRadioButton:checked {{ background: {theme_rgba('accent_soft', 176, 255, 123, 0.2)}; border: 2px solid {Styles.TEXT_COLOR}; }}
+                    QRadioButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
                     QRadioButton::indicator {{ width: 0; height: 0; }}
                 """)
                 rb.setProperty("dir_value", value)
@@ -814,7 +823,7 @@ class GuideEditorDialog(QDialog):
                 v2_dir_layout.addWidget(rb, row, col, Qt.AlignCenter)
             
             v2_dir_desc = QLabel("「同上」= 1回目と同じ方向を使用")
-            v2_dir_desc.setStyleSheet("color: #888888; font-size: 10px;")
+            v2_dir_desc.setStyleSheet(f"color: {theme_color('muted_text', '#888888')}; font-size: {theme_font_size(10)}px;")
             v2_dir_layout.addWidget(v2_dir_desc, 3, 0, 1, 4)
             
             v2_layout.addWidget(v2_dir_group_box)
@@ -840,10 +849,10 @@ class GuideEditorDialog(QDialog):
             cbtn.setStyleSheet(f"""
                 QPushButton {{ 
                     background: {color_code}; 
-                    border: 2px solid rgba(255,255,255,0.3); 
+                    border: 2px solid {theme_rgba('border', 255, 255, 255, 0.3)};
                     border-radius: 3px;
                 }}
-                QPushButton:hover {{ border: 2px solid #ffffff; }}
+                QPushButton:hover {{ border: 2px solid {theme_color('border', '#ffffff')}; }}
             """)
             cbtn.clicked.connect(lambda checked, c=color_code: self._set_color_v2(c))
             v2_toolbar.addWidget(cbtn)
@@ -852,10 +861,10 @@ class GuideEditorDialog(QDialog):
         v2_reset_btn.setToolTip("色をリセット")
         v2_reset_btn.setStyleSheet(f"""
             QPushButton {{ 
-                background: rgba(40,40,40,200); color: #888; 
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; font-size: 11px;
+                background: {theme_rgba('control', 40, 40, 40, 200)}; color: {theme_color('muted_text', '#888')};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 3px; font-size: {theme_font_size(11)}px;
             }}
-            QPushButton:hover {{ background: rgba(80,80,80,200); }}
+            QPushButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
         """)
         v2_reset_btn.clicked.connect(self._reset_color_v2)
         v2_toolbar.addWidget(v2_reset_btn)
@@ -879,10 +888,10 @@ class GuideEditorDialog(QDialog):
             cbtn.setStyleSheet(f"""
                 QPushButton {{ 
                     background: {color_code}; 
-                    border: 2px solid rgba(255,255,255,0.3); 
+                    border: 2px solid {theme_rgba('border', 255, 255, 255, 0.3)};
                     border-radius: 3px;
                 }}
-                QPushButton:hover {{ border: 2px solid #ffffff; }}
+                QPushButton:hover {{ border: 2px solid {theme_color('border', '#ffffff')}; }}
             """)
             cbtn.clicked.connect(lambda checked, c=color_code: self._set_color_v2_tips(c))
             tips_toolbar_v2.addWidget(cbtn)
@@ -891,10 +900,10 @@ class GuideEditorDialog(QDialog):
         reset_v2_tips_color_btn.setToolTip("色をリセット")
         reset_v2_tips_color_btn.setStyleSheet(f"""
             QPushButton {{ 
-                background: rgba(40,40,40,200); color: #888; 
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; font-size: 11px;
+                background: {theme_rgba('control', 40, 40, 40, 200)}; color: {theme_color('muted_text', '#888')};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 3px; font-size: {theme_font_size(11)}px;
             }}
-            QPushButton:hover {{ background: rgba(80,80,80,200); }}
+            QPushButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
         """)
         reset_v2_tips_color_btn.clicked.connect(self._reset_color_v2_tips)
         tips_toolbar_v2.addWidget(reset_v2_tips_color_btn)
@@ -914,18 +923,18 @@ class GuideEditorDialog(QDialog):
         if self.flag_guides and not self.is_poe2_zone:
             flag_separator = QFrame()
             flag_separator.setFrameShape(QFrame.HLine)
-            flag_separator.setStyleSheet("color: rgba(176,255,123,0.5);")
+            flag_separator.setStyleSheet(f"color: {theme_rgba('accent', 176, 255, 123, 0.5)};")
             layout.addWidget(flag_separator)
 
             flag_header = QLabel(_flag_guide_header(self.zone_id))
-            flag_header.setStyleSheet(f"color: #ffc832; font-size: 13px; font-weight: bold;")
+            flag_header.setStyleSheet(f"color: {theme_color('warning', '#ffc832')}; font-size: {theme_font_size(13)}px; font-weight: bold;")
             layout.addWidget(flag_header)
 
             for flag_key, fguide in sorted(self.flag_guides.items()):
                 fg_box = QGroupBox(flag_key)
                 fg_box.setStyleSheet(f"""
-                    QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid rgba(176,255,123,0.3);
-                        border-radius: 4px; margin-top: 8px; font-size: 11px; font-weight: bold; }}
+                    QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)};
+                        border-radius: 4px; margin-top: 8px; font-size: {theme_font_size(11)}px; font-weight: bold; }}
                     QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top left; padding: 0 5px; }}
                 """)
                 fg_layout = QVBoxLayout(fg_box)
@@ -948,13 +957,13 @@ class GuideEditorDialog(QDialog):
                     f_rb = QRadioButton(f_label)
                     f_rb.setStyleSheet(radio_style if f_label != "同上" else f"""
                         QRadioButton {{
-                            color: {Styles.TEXT_COLOR}; font-size: 11px;
-                            padding: 6px 8px; background: rgba(40,40,40,180);
-                            border: 1px solid rgba(176,255,123,0.2); border-radius: 4px;
+                            color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(11)}px;
+                            padding: 6px 8px; background: {theme_rgba('surface', 40, 40, 40, 180)};
+                            border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.2)}; border-radius: 4px;
                             min-width: 36px; min-height: 28px;
                         }}
-                        QRadioButton:checked {{ background: rgba(176,255,123,0.2); border: 2px solid {Styles.TEXT_COLOR}; }}
-                        QRadioButton:hover {{ background: rgba(80,80,80,200); }}
+                        QRadioButton:checked {{ background: {theme_rgba('accent_soft', 176, 255, 123, 0.2)}; border: 2px solid {Styles.TEXT_COLOR}; }}
+                        QRadioButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
                         QRadioButton::indicator {{ width: 0; height: 0; }}
                     """)
                     f_rb.setProperty("dir_value", f_value)
@@ -998,11 +1007,11 @@ class GuideEditorDialog(QDialog):
         if self.route_guides:
             route_separator = QFrame()
             route_separator.setFrameShape(QFrame.HLine)
-            route_separator.setStyleSheet("color: rgba(176,255,123,0.5);")
+            route_separator.setStyleSheet(f"color: {theme_rgba('accent', 176, 255, 123, 0.5)};")
             layout.addWidget(route_separator)
             
             route_header = QLabel("📍 ルート別ガイド")
-            route_header.setStyleSheet(f"color: #ffc832; font-size: 13px; font-weight: bold;")
+            route_header.setStyleSheet(f"color: {theme_color('warning', '#ffc832')}; font-size: {theme_font_size(13)}px; font-weight: bold;")
             layout.addWidget(route_header)
             
             # ルート名の表示マッピング
@@ -1017,8 +1026,8 @@ class GuideEditorDialog(QDialog):
                 display = route_display.get(suffix, suffix)
                 rg_box = QGroupBox(display)
                 rg_box.setStyleSheet(f"""
-                    QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid rgba(176,255,123,0.3); 
-                        border-radius: 4px; margin-top: 8px; font-size: 11px; font-weight: bold; }}
+                    QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)};
+                        border-radius: 4px; margin-top: 8px; font-size: {theme_font_size(11)}px; font-weight: bold; }}
                     QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top left; padding: 0 5px; }}
                 """)
                 rg_layout = QVBoxLayout(rg_box)
@@ -1077,8 +1086,8 @@ class GuideEditorDialog(QDialog):
                         continue
                     rf_box = QGroupBox(f"🚩 条件分岐: {flag_key}")
                     rf_box.setStyleSheet(f"""
-                        QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid rgba(255,200,50,0.35);
-                            border-radius: 4px; margin-top: 8px; font-size: 11px; font-weight: bold; }}
+                        QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid {theme_rgba('border', 255, 200, 50, 0.35)};
+                            border-radius: 4px; margin-top: 8px; font-size: {theme_font_size(11)}px; font-weight: bold; }}
                         QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top left; padding: 0 5px; }}
                     """)
                     rf_layout = QVBoxLayout(rf_box)
@@ -1124,11 +1133,11 @@ class GuideEditorDialog(QDialog):
                     for rf_row, rf_col, rf_label, rf_value in rf_directions:
                         rf_rb = QRadioButton(rf_label)
                         rf_rb.setStyleSheet(radio_style if rf_label != "同上" else f"""
-                            QRadioButton {{ color: {Styles.TEXT_COLOR}; font-size: 11px; padding: 6px 8px;
-                                background: rgba(40,40,40,180); border: 1px solid rgba(176,255,123,0.2);
+                            QRadioButton {{ color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(11)}px; padding: 6px 8px;
+                                background: {theme_rgba('surface', 40, 40, 40, 180)}; border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.2)};
                                 border-radius: 4px; min-width: 36px; min-height: 28px; }}
-                            QRadioButton:checked {{ background: rgba(176,255,123,0.2); border: 2px solid {Styles.TEXT_COLOR}; }}
-                            QRadioButton:hover {{ background: rgba(80,80,80,200); }}
+                            QRadioButton:checked {{ background: {theme_rgba('accent_soft', 176, 255, 123, 0.2)}; border: 2px solid {Styles.TEXT_COLOR}; }}
+                            QRadioButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
                             QRadioButton::indicator {{ width: 0; height: 0; }}
                         """)
                         rf_rb.setProperty("dir_value", rf_value)
@@ -1197,7 +1206,7 @@ class GuideEditorDialog(QDialog):
         if not cursor.hasSelection():
             return
         fmt = QTextCharFormat()
-        fmt.setForeground(QColor(POENAVI_DIALOG_THEME.text))
+        fmt.setForeground(QColor(resolve_dialog_theme(POENAVI_DIALOG_THEME).text))
         cursor.mergeCharFormat(fmt)
     
     def _set_color(self, color: str):
@@ -1367,19 +1376,19 @@ class GuideSummaryEditorDialog(QDialog):
         main_layout.addWidget(self.title_label)
 
         self.hint_label = QLabel("中級者向け表示で使う要点だけを書きます。未入力の場合は通常ガイドを表示します。")
-        self.hint_label.setStyleSheet("color: #888888; font-size: 11px;")
+        self.hint_label.setStyleSheet(f"color: {theme_color('muted_text', '#888888')}; font-size: {theme_font_size(11)}px;")
         self.hint_label.setWordWrap(True)
         main_layout.addWidget(self.hint_label)
 
         text_style = f"""
             QTextEdit {{
-                background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR};
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 4px;
-                padding: 6px; font-size: 12px;
-                font-family: "MS Gothic", "Yu Gothic", "Meiryo", monospace;
+                background: {theme_rgba('control', 26, 26, 26, 200)}; color: {Styles.TEXT_COLOR};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 4px;
+                padding: 6px; font-size: {theme_font_size(12)}px;
+                font-family:  "{theme_font_family('MS Gothic')}";
             }}
         """
-        label_style = f"color: {Styles.TEXT_COLOR}; font-size: 12px; font-weight: bold;"
+        label_style = f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(12)}px; font-weight: bold;"
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -1446,7 +1455,7 @@ class GuideSummaryEditorDialog(QDialog):
         header.addWidget(title_label)
         header.addStretch()
         count_label = QLabel("0文字")
-        count_label.setStyleSheet("color: #aaaaaa; font-size: 11px;")
+        count_label.setStyleSheet(f"color: {theme_color('muted_text', '#aaaaaa')}; font-size: {theme_font_size(11)}px;")
         header.addWidget(count_label)
         self.summary_count_labels[key] = count_label
         return header
@@ -1457,13 +1466,13 @@ class GuideSummaryEditorDialog(QDialog):
             return
         count = len(editor.toPlainText())
         if count <= 80:
-            color = "#aaaaaa"
+            color = theme_color("muted_text", "#aaaaaa")
         elif count <= 140:
-            color = "#dddd44"
+            color = theme_color("warning", "#dddd44")
         else:
-            color = "#ff8888"
+            color = theme_color("danger", "#ff8888")
         label.setText(f"{count}文字")
-        label.setStyleSheet(f"color: {color}; font-size: 11px; font-weight: {'bold' if count > 140 else 'normal'};")
+        label.setStyleSheet(f"color: {color}; font-size: {theme_font_size(11)}px; font-weight: {'bold' if count > 140 else 'normal'};")
 
     def _build_color_toolbar(self, editor):
         toolbar = QHBoxLayout()
@@ -1475,10 +1484,10 @@ class GuideSummaryEditorDialog(QDialog):
             cbtn.setStyleSheet(f"""
                 QPushButton {{
                     background: {color_code};
-                    border: 2px solid rgba(255,255,255,0.3);
+                    border: 2px solid {theme_rgba('border', 255, 255, 255, 0.3)};
                     border-radius: 3px;
                 }}
-                QPushButton:hover {{ border: 2px solid #ffffff; }}
+                QPushButton:hover {{ border: 2px solid {theme_color('border', '#ffffff')}; }}
             """)
             cbtn.clicked.connect(lambda checked, e=editor, c=color_code: self._apply_color_to(e, c))
             toolbar.addWidget(cbtn)
@@ -1488,10 +1497,10 @@ class GuideSummaryEditorDialog(QDialog):
         reset_color_btn.setToolTip("色をリセット")
         reset_color_btn.setStyleSheet(f"""
             QPushButton {{
-                background: rgba(40,40,40,200); color: #888;
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; font-size: 11px;
+                background: {theme_rgba('control', 40, 40, 40, 200)}; color: {theme_color('muted_text', '#888')};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 3px; font-size: {theme_font_size(11)}px;
             }}
-            QPushButton:hover {{ background: rgba(80,80,80,200); }}
+            QPushButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
         """)
         reset_color_btn.clicked.connect(lambda checked, e=editor: self._reset_color(e))
         toolbar.addWidget(reset_color_btn)
@@ -1513,7 +1522,7 @@ class GuideSummaryEditorDialog(QDialog):
         if not cursor.hasSelection():
             return
         fmt = QTextCharFormat()
-        fmt.setForeground(QColor(POENAVI_DIALOG_THEME.text))
+        fmt.setForeground(QColor(resolve_dialog_theme(POENAVI_DIALOG_THEME).text))
         cursor.mergeCharFormat(fmt)
 
     def apply_to_entry(self, entry: dict) -> dict:
@@ -1558,27 +1567,27 @@ class MiniNaviEditorDialog(QDialog):
 
         text_style = f"""
             QTextEdit {{
-                background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR};
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 4px;
-                padding: 6px; font-size: 12px;
-                font-family: "MS Gothic", "Yu Gothic", "Meiryo", monospace;
+                background: {theme_rgba('control', 26, 26, 26, 200)}; color: {Styles.TEXT_COLOR};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 4px;
+                padding: 6px; font-size: {theme_font_size(12)}px;
+                font-family:  "{theme_font_family('MS Gothic')}";
             }}
         """
-        label_style = f"color: {Styles.TEXT_COLOR}; font-size: 12px; font-weight: bold;"
+        label_style = f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(12)}px; font-weight: bold;"
         radio_style = f"""
             QRadioButton {{
-                color: {Styles.TEXT_COLOR}; font-size: 20px;
+                color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(20)}px;
                 padding: 6px 10px;
-                background: rgba(40,40,40,180);
-                border: 1px solid rgba(176,255,123,0.2);
+                background: {theme_rgba('surface', 40, 40, 40, 180)};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.2)};
                 border-radius: 4px;
                 min-width: 36px; min-height: 28px;
             }}
             QRadioButton:checked {{
-                background: rgba(176,255,123,0.2);
+                background: {theme_rgba('accent_soft', 176, 255, 123, 0.2)};
                 border: 2px solid {Styles.TEXT_COLOR};
             }}
-            QRadioButton:hover {{ background: rgba(80,80,80,200); }}
+            QRadioButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
             QRadioButton::indicator {{ width: 0; height: 0; }}
         """
 
@@ -1592,8 +1601,8 @@ class MiniNaviEditorDialog(QDialog):
         for section in self.sections:
             box = QGroupBox(section["title"])
             box.setStyleSheet(f"""
-                QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid rgba(176,255,123,0.3);
-                    border-radius: 4px; margin-top: 8px; font-size: 11px; font-weight: bold; }}
+                QGroupBox {{ color: {Styles.TEXT_COLOR}; border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)};
+                    border-radius: 4px; margin-top: 8px; font-size: {theme_font_size(11)}px; font-weight: bold; }}
                 QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top left; padding: 0 5px; }}
             """)
             layout = QVBoxLayout(box)
@@ -1631,11 +1640,11 @@ class MiniNaviEditorDialog(QDialog):
                 for row, col, label, value in directions:
                     rb = QRadioButton(label)
                     rb.setStyleSheet(radio_style if label != "同上" else f"""
-                        QRadioButton {{ color: {Styles.TEXT_COLOR}; font-size: 11px; padding: 6px 8px;
-                            background: rgba(40,40,40,180); border: 1px solid rgba(176,255,123,0.2);
+                        QRadioButton {{ color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(11)}px; padding: 6px 8px;
+                            background: {theme_rgba('surface', 40, 40, 40, 180)}; border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.2)};
                             border-radius: 4px; min-width: 36px; min-height: 28px; }}
-                        QRadioButton:checked {{ background: rgba(176,255,123,0.2); border: 2px solid {Styles.TEXT_COLOR}; }}
-                        QRadioButton:hover {{ background: rgba(80,80,80,200); }}
+                        QRadioButton:checked {{ background: {theme_rgba('accent_soft', 176, 255, 123, 0.2)}; border: 2px solid {Styles.TEXT_COLOR}; }}
+                        QRadioButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
                         QRadioButton::indicator {{ width: 0; height: 0; }}
                     """)
                     rb.setProperty("dir_value", value)
@@ -1651,7 +1660,7 @@ class MiniNaviEditorDialog(QDialog):
             text_header.addWidget(text_label)
             text_header.addStretch()
             count_label = QLabel("0文字")
-            count_label.setStyleSheet("color: #aaaaaa; font-size: 11px;")
+            count_label.setStyleSheet(f"color: {theme_color('muted_text', '#aaaaaa')}; font-size: {theme_font_size(11)}px;")
             text_header.addWidget(count_label)
             layout.addLayout(text_header)
 
@@ -1690,13 +1699,13 @@ class MiniNaviEditorDialog(QDialog):
     def _update_count(self, editor, label):
         count = len(editor.toPlainText())
         if count <= 80:
-            color = "#aaaaaa"
+            color = theme_color("muted_text", "#aaaaaa")
         elif count <= 140:
-            color = "#dddd44"
+            color = theme_color("warning", "#dddd44")
         else:
-            color = "#ff8888"
+            color = theme_color("danger", "#ff8888")
         label.setText(f"{count}文字")
-        label.setStyleSheet(f"color: {color}; font-size: 11px; font-weight: {'bold' if count > 140 else 'normal'};")
+        label.setStyleSheet(f"color: {color}; font-size: {theme_font_size(11)}px; font-weight: {'bold' if count > 140 else 'normal'};")
 
     def _build_color_toolbar(self, editor):
         toolbar = QHBoxLayout()
@@ -1706,8 +1715,8 @@ class MiniNaviEditorDialog(QDialog):
             cbtn.setFixedSize(22, 22)
             cbtn.setToolTip(f"{color_name} ({color_code})")
             cbtn.setStyleSheet(f"""
-                QPushButton {{ background: {color_code}; border: 2px solid rgba(255,255,255,0.3); border-radius: 3px; }}
-                QPushButton:hover {{ border: 2px solid #ffffff; }}
+                QPushButton {{ background: {color_code}; border: 2px solid {theme_rgba('border', 255, 255, 255, 0.3)}; border-radius: 3px; }}
+                QPushButton:hover {{ border: 2px solid {theme_color('border', '#ffffff')}; }}
             """)
             cbtn.clicked.connect(lambda checked, e=editor, c=color_code: self._apply_color_to(e, c))
             toolbar.addWidget(cbtn)
@@ -1715,9 +1724,9 @@ class MiniNaviEditorDialog(QDialog):
         reset_btn.setFixedSize(22, 22)
         reset_btn.setToolTip("色をリセット")
         reset_btn.setStyleSheet(f"""
-            QPushButton {{ background: rgba(40,40,40,200); color: #888;
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; font-size: 11px; }}
-            QPushButton:hover {{ background: rgba(80,80,80,200); }}
+            QPushButton {{ background: {theme_rgba('control', 40, 40, 40, 200)}; color: {theme_color('muted_text', '#888')};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 3px; font-size: {theme_font_size(11)}px; }}
+            QPushButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
         """)
         reset_btn.clicked.connect(lambda checked, e=editor: self._reset_color(e))
         toolbar.addWidget(reset_btn)
@@ -1816,7 +1825,7 @@ class GemShopSearchTermOverridesDialog(QWidget):
         if self.theme is not None:
             hint.setProperty("uiRole", "muted")
         else:
-            hint.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 11px;")
+            hint.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(11)}px;")
         layout.addWidget(hint)
 
         filters = QHBoxLayout()
@@ -1848,11 +1857,11 @@ class GemShopSearchTermOverridesDialog(QWidget):
         table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
         table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Interactive)
         if self.theme is None:
-            table.setStyleSheet("""
-                QTableWidget { background: #1a1a1a; color: #e9ffbd; gridline-color: #454545; }
-                QTableWidget::item { padding: 4px; }
-                QTableWidget::item:alternate { background: #202020; }
-                QHeaderView::section { background: #29351e; color: #b0ff7b; padding: 5px; border: 1px solid #537336; }
+            table.setStyleSheet(f"""
+                QTableWidget {{ background: {theme_color('surface', '#1a1a1a')}; color: {theme_color('accent', '#e9ffbd')}; gridline-color: {theme_color('border', '#454545')}; }}
+                QTableWidget::item {{ padding: 4px; }}
+                QTableWidget::item:alternate {{ background: {theme_color('surface', '#202020')}; }}
+                QHeaderView::section {{ background: {theme_color('surface', '#29351e')}; color: {theme_color('accent', '#b0ff7b')}; padding: 5px; border: 1px solid {theme_color('accent', '#537336')}; }}
             """)
         self._table = table
 
@@ -1940,7 +1949,7 @@ class GemShopSearchTermOverridesDialog(QWidget):
 class SettingsDialog(QDialog):
     @staticmethod
     def _style_sheet():
-        return build_dialog_stylesheet(POENAVI_DIALOG_THEME)
+        return build_dialog_stylesheet(resolve_dialog_theme(POENAVI_DIALOG_THEME))
 
     def __init__(
         self,
@@ -1953,7 +1962,7 @@ class SettingsDialog(QDialog):
         self.setWindowTitle("設定")
         self.resize(630, 600)
         self.setObjectName("settingsDialog")
-        self.theme = POENAVI_DIALOG_THEME
+        self.theme = resolve_dialog_theme(POENAVI_DIALOG_THEME)
         apply_dialog_theme(self, self.theme)
         
         self.current_config = current_config or {}
@@ -1990,6 +1999,7 @@ class SettingsDialog(QDialog):
         self.setup_ui()
         if _guide_dev_editor_enabled(self.poe_version, "poe2_"):
             self.resize(700, 600)
+        fit_theme_fixed_geometry(self)
         
     def setup_ui(self):
         theme = self.theme
@@ -2028,14 +2038,14 @@ class SettingsDialog(QDialog):
         for version, label_text in ((POE1, "PoE1ログファイル:"), (POE2, "PoE2ログファイル:")):
             row = QHBoxLayout()
             label = QLabel(label_text)
-            label.setStyleSheet(f"color: {theme.text}; font-size: 13px;")
+            label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(13)}px;")
             row.addWidget(label)
             edit = self.log_path_edits[version]
             edit.setPlaceholderText("C:\\Program Files (x86)\\...\\logs\\Client.txt")
             edit.setStyleSheet(f"""
                 QLineEdit {{ 
-                    background: #151A15; color: {theme.text};
-                    border: 1px solid #596359; border-radius: 4px; padding: 5px; font-size: 13px;
+                    background: {theme_color('control', '#151A15')}; color: {theme.text};
+                    border: 1px solid {theme_color('border', '#596359')}; border-radius: 4px; padding: 5px; font-size: {theme_font_size(13)}px;
                 }}
             """)
             row.addWidget(edit)
@@ -2053,7 +2063,7 @@ class SettingsDialog(QDialog):
         startup_layout = QVBoxLayout(startup_group)
 
         version_label = QLabel("PoEバージョン")
-        version_label.setStyleSheet(f"color: {theme.text}; font-size: 13px; font-weight: 600;")
+        version_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(13)}px; font-weight: 600;")
         startup_layout.addWidget(version_label)
 
         self.poe_version_group = QButtonGroup(self)
@@ -2069,7 +2079,7 @@ class SettingsDialog(QDialog):
             self.poe_version_radios[version] = radio
 
         app_mode_label = QLabel("起動モード")
-        app_mode_label.setStyleSheet(f"color: {theme.text}; font-size: 13px; font-weight: 600;")
+        app_mode_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(13)}px; font-weight: 600;")
         startup_layout.addWidget(app_mode_label)
         startup_config = self.current_config.get("startup")
         if not isinstance(startup_config, dict):
@@ -2102,7 +2112,7 @@ class SettingsDialog(QDialog):
         )
         self.startup_change_note.setWordWrap(True)
         self.startup_change_note.setStyleSheet(
-            f"color: {theme.muted_text}; font-size: 13px;"
+            f"color: {theme.muted_text}; font-size: {theme_font_size(13)}px;"
         )
         startup_layout.addWidget(self.startup_change_note)
         general_layout.addWidget(startup_group)
@@ -2114,7 +2124,7 @@ class SettingsDialog(QDialog):
         group_layout = QVBoxLayout(group)
         
         hotkey_hint = QLabel("※ DeleteまたはBackspaceで解除できます")
-        hotkey_hint.setStyleSheet(f"color: {theme.muted_text}; font-size: 13px;")
+        hotkey_hint.setStyleSheet(f"color: {theme.muted_text}; font-size: {theme_font_size(13)}px;")
         group_layout.addWidget(hotkey_hint)
         
         h_layout1 = QHBoxLayout()
@@ -2177,7 +2187,7 @@ class SettingsDialog(QDialog):
         h_layout10.addWidget(QLabel("ぽえとれ検索（操作モード）:"))
         self.poetore_capture_btn = AutoHideHotkeyWidget(
             self.hotkeys.get("poetore_capture", "alt+d"),
-            theme=POENAVI_THEME,
+            theme=resolve_app_theme(POENAVI_THEME),
             allow_no_modifier=True,
         )
         h_layout10.addWidget(self.poetore_capture_btn)
@@ -2187,7 +2197,7 @@ class SettingsDialog(QDialog):
         poetore_auto_hide_layout.addWidget(QLabel("ぽえとれ検索（AUTO-HIDE）:"))
         self.poetore_auto_hide_btn = AutoHideHotkeyWidget(
             self.hotkeys.get("poetore_auto_hide", "ctrl+d"),
-            theme=POENAVI_THEME,
+            theme=resolve_app_theme(POENAVI_THEME),
         )
         poetore_auto_hide_layout.addWidget(self.poetore_auto_hide_btn)
         group_layout.addLayout(poetore_auto_hide_layout)
@@ -2269,7 +2279,7 @@ class SettingsDialog(QDialog):
         # タイマーサイズ
         timer_size_row = QHBoxLayout()
         timer_size_label = QLabel("タイマーサイズ:")
-        timer_size_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        timer_size_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         timer_size_row.addWidget(timer_size_label)
         
         self.timer_size_combo = QComboBox()
@@ -2302,7 +2312,7 @@ class SettingsDialog(QDialog):
         
         font_row = QHBoxLayout()
         font_label = QLabel("フォントサイズ:")
-        font_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        font_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         font_row.addWidget(font_label)
         
         self.guide_font_spin = QSpinBox()
@@ -2316,22 +2326,22 @@ class SettingsDialog(QDialog):
         font_group_layout.addLayout(font_row)
         
         # ルート選択
-        poe1_only_tag_style = """
-            QLabel {
-                color: #111111;
-                background: #b0ff7b;
+        poe1_only_tag_style = f"""
+            QLabel {{
+                color: {theme_color('background', '#111111')};
+                background: {theme_color('accent_soft', '#b0ff7b')};
                 border-radius: 4px;
                 padding: 2px 6px;
-                font-size: 10px;
+                font-size: {theme_font_size(10)}px;
                 font-weight: bold;
-            }
+            }}
         """
         poe1_route_act3_row = QHBoxLayout()
         route_poe1_tag = QLabel("PoE1専用")
         route_poe1_tag.setStyleSheet(poe1_only_tag_style)
         poe1_route_act3_row.addWidget(route_poe1_tag)
         poe1_route_act3_label = QLabel("Act3 ルート:")
-        poe1_route_act3_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        poe1_route_act3_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         poe1_route_act3_row.addWidget(poe1_route_act3_label)
         self.poe1_route_act3_combo = QComboBox()
         self.poe1_route_act3_combo.addItem("通常ルート（図書館スキップ）", "standard")
@@ -2350,7 +2360,7 @@ class SettingsDialog(QDialog):
         route_poe1_tag2.setStyleSheet(poe1_only_tag_style)
         poe1_route_act8_row.addWidget(route_poe1_tag2)
         poe1_route_act8_label = QLabel("Act8 ルート:")
-        poe1_route_act8_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        poe1_route_act8_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         poe1_route_act8_row.addWidget(poe1_route_act8_label)
         self.poe1_route_act8_combo = QComboBox()
         self.poe1_route_act8_combo.addItem("通常ルート", "standard")
@@ -2421,7 +2431,7 @@ class SettingsDialog(QDialog):
         ):
             row = QHBoxLayout()
             label = QLabel(label_text)
-            label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+            label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
             row.addWidget(label)
             spin = QDoubleSpinBox()
             spin.setRange(minimum, maximum)
@@ -2436,7 +2446,7 @@ class SettingsDialog(QDialog):
             voicevox_layout.addLayout(row)
         note = QLabel("VOICEVOXを起動してから使用してください。接続できない場合、読み上げだけをスキップします。")
         note.setWordWrap(True)
-        note.setStyleSheet(f"color: {theme.muted_text}; font-size: 13px;")
+        note.setStyleSheet(f"color: {theme.muted_text}; font-size: {theme_font_size(13)}px;")
         voicevox_layout.addWidget(note)
         self.voicevox_group.setVisible(self.poe_version == POE2)
         general_layout.addWidget(self.voicevox_group)
@@ -2450,7 +2460,7 @@ class SettingsDialog(QDialog):
         # 透過率
         opacity_row = QHBoxLayout()
         opacity_label = QLabel("透過率:")
-        opacity_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        opacity_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         opacity_row.addWidget(opacity_label)
 
         from PySide6.QtWidgets import QSlider
@@ -2459,13 +2469,13 @@ class SettingsDialog(QDialog):
         self.opacity_slider.setValue(self.current_config.get("window_opacity", 100))
         self.opacity_slider.setFixedWidth(200)
         self.opacity_slider.setStyleSheet(f"""
-            QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
+            QSlider::groove:horizontal {{ background: {theme_color('surface', '#555')}; height: 6px; border-radius: 3px; }}
             QSlider::handle:horizontal {{ background: {theme.accent}; width: 16px; margin: -5px 0; border-radius: 8px; }}
         """)
         opacity_row.addWidget(self.opacity_slider)
 
         self.opacity_value_label = QLabel(f"{self.opacity_slider.value()}%")
-        self.opacity_value_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        self.opacity_value_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         self.opacity_value_label.setFixedWidth(40)
         opacity_row.addWidget(self.opacity_value_label)
         self.opacity_slider.valueChanged.connect(lambda v: self.opacity_value_label.setText(f"{v}%"))
@@ -2475,7 +2485,7 @@ class SettingsDialog(QDialog):
         # 文字透過率
         text_opacity_row = QHBoxLayout()
         text_opacity_label = QLabel("文字透過率:")
-        text_opacity_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        text_opacity_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         text_opacity_row.addWidget(text_opacity_label)
 
         from PySide6.QtWidgets import QSlider as _QSlider
@@ -2484,13 +2494,13 @@ class SettingsDialog(QDialog):
         self.text_opacity_slider.setValue(self.current_config.get("text_opacity", 100))
         self.text_opacity_slider.setFixedWidth(200)
         self.text_opacity_slider.setStyleSheet(f"""
-            QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
+            QSlider::groove:horizontal {{ background: {theme_color('surface', '#555')}; height: 6px; border-radius: 3px; }}
             QSlider::handle:horizontal {{ background: {theme.accent}; width: 16px; margin: -5px 0; border-radius: 8px; }}
         """)
         text_opacity_row.addWidget(self.text_opacity_slider)
 
         self.text_opacity_value_label = QLabel(f"{self.text_opacity_slider.value()}%")
-        self.text_opacity_value_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        self.text_opacity_value_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         self.text_opacity_value_label.setFixedWidth(40)
         text_opacity_row.addWidget(self.text_opacity_value_label)
         self.text_opacity_slider.valueChanged.connect(lambda v: self.text_opacity_value_label.setText(f"{v}%"))
@@ -2518,7 +2528,7 @@ class SettingsDialog(QDialog):
         # モニター選択
         monitor_row = QHBoxLayout()
         monitor_label = QLabel("起動時の配置先:")
-        monitor_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        monitor_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         monitor_row.addWidget(monitor_label)
         self.monitor_combo = QComboBox()
         self.monitor_combo.setStyleSheet(combo_style)
@@ -2542,8 +2552,8 @@ class SettingsDialog(QDialog):
         def _update_monitor_enabled(checked):
             self.monitor_combo.setEnabled(checked)
             self._monitor_label.setStyleSheet(
-                f"color: {self.theme.text}; font-size: 12px;" if checked
-                else "color: #555555; font-size: 12px;"
+                f"color: {self.theme.text}; font-size: {theme_font_size(12)}px;" if checked
+                else f"color: {theme_color('muted_text', '#555555')}; font-size: {theme_font_size(12)}px;"
             )
         _update_monitor_enabled(self.snap_right_edge_cb.isChecked())
         self.snap_right_edge_cb.toggled.connect(_update_monitor_enabled)
@@ -2559,7 +2569,7 @@ class SettingsDialog(QDialog):
         mini_navi_config = self.current_config.get("mini_guide_overlay", {})
         mini_navi_display_mode_row = QHBoxLayout()
         mini_navi_display_mode_label = QLabel("表示形式:")
-        mini_navi_display_mode_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        mini_navi_display_mode_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         mini_navi_display_mode_row.addWidget(mini_navi_display_mode_label)
         self.mini_navi_display_mode_combo = QComboBox()
         self.mini_navi_display_mode_combo.addItem("標準", "standard")
@@ -2577,7 +2587,7 @@ class SettingsDialog(QDialog):
         mini_navi_font_size = int(mini_navi_config.get("font_size", 15)) if isinstance(mini_navi_config, dict) else 15
         mini_navi_font_row = QHBoxLayout()
         mini_navi_font_label = QLabel("フォントサイズ:")
-        mini_navi_font_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        mini_navi_font_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         mini_navi_font_row.addWidget(mini_navi_font_label)
         self.mini_navi_font_size_combo = QComboBox()
         self.mini_navi_font_size_combo.addItem("小", 15)
@@ -2598,19 +2608,19 @@ class SettingsDialog(QDialog):
         # みになび専用のウィンドウ透過率
         mini_navi_window_opacity_row = QHBoxLayout()
         mini_navi_window_opacity_label = QLabel("ウィンドウ透過率:")
-        mini_navi_window_opacity_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        mini_navi_window_opacity_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         mini_navi_window_opacity_row.addWidget(mini_navi_window_opacity_label)
         self.mini_navi_window_opacity_slider = QSlider(Qt.Horizontal)
         self.mini_navi_window_opacity_slider.setRange(5, 100)
         self.mini_navi_window_opacity_slider.setValue(int(mini_navi_config.get("window_opacity", 100)) if isinstance(mini_navi_config, dict) else 100)
         self.mini_navi_window_opacity_slider.setFixedWidth(200)
         self.mini_navi_window_opacity_slider.setStyleSheet(f"""
-            QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
+            QSlider::groove:horizontal {{ background: {theme_color('surface', '#555')}; height: 6px; border-radius: 3px; }}
             QSlider::handle:horizontal {{ background: {theme.accent}; width: 16px; margin: -5px 0; border-radius: 8px; }}
         """)
         mini_navi_window_opacity_row.addWidget(self.mini_navi_window_opacity_slider)
         self.mini_navi_window_opacity_value_label = QLabel(f"{self.mini_navi_window_opacity_slider.value()}%")
-        self.mini_navi_window_opacity_value_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        self.mini_navi_window_opacity_value_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         self.mini_navi_window_opacity_value_label.setFixedWidth(40)
         mini_navi_window_opacity_row.addWidget(self.mini_navi_window_opacity_value_label)
         self.mini_navi_window_opacity_slider.valueChanged.connect(lambda v: self.mini_navi_window_opacity_value_label.setText(f"{v}%"))
@@ -2620,19 +2630,19 @@ class SettingsDialog(QDialog):
         # みになび専用の文字透過率
         mini_navi_text_opacity_row = QHBoxLayout()
         mini_navi_text_opacity_label = QLabel("文字透過率:")
-        mini_navi_text_opacity_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        mini_navi_text_opacity_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         mini_navi_text_opacity_row.addWidget(mini_navi_text_opacity_label)
         self.mini_navi_text_opacity_slider = QSlider(Qt.Horizontal)
         self.mini_navi_text_opacity_slider.setRange(0, 100)
         self.mini_navi_text_opacity_slider.setValue(int(mini_navi_config.get("text_opacity", 100)) if isinstance(mini_navi_config, dict) else 100)
         self.mini_navi_text_opacity_slider.setFixedWidth(200)
         self.mini_navi_text_opacity_slider.setStyleSheet(f"""
-            QSlider::groove:horizontal {{ background: #555; height: 6px; border-radius: 3px; }}
+            QSlider::groove:horizontal {{ background: {theme_color('surface', '#555')}; height: 6px; border-radius: 3px; }}
             QSlider::handle:horizontal {{ background: {theme.accent}; width: 16px; margin: -5px 0; border-radius: 8px; }}
         """)
         mini_navi_text_opacity_row.addWidget(self.mini_navi_text_opacity_slider)
         self.mini_navi_text_opacity_value_label = QLabel(f"{self.mini_navi_text_opacity_slider.value()}%")
-        self.mini_navi_text_opacity_value_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        self.mini_navi_text_opacity_value_label.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         self.mini_navi_text_opacity_value_label.setFixedWidth(40)
         mini_navi_text_opacity_row.addWidget(self.mini_navi_text_opacity_value_label)
         self.mini_navi_text_opacity_slider.valueChanged.connect(lambda v: self.mini_navi_text_opacity_value_label.setText(f"{v}%"))
@@ -2642,7 +2652,7 @@ class SettingsDialog(QDialog):
         mini_navi_topmost_row = QHBoxLayout()
         mini_navi_topmost_label = QLabel("前面表示:")
         mini_navi_topmost_label.setStyleSheet(
-            f"color: {theme.text}; font-size: 12px;"
+            f"color: {theme.text}; font-size: {theme_font_size(12)}px;"
         )
         mini_navi_topmost_row.addWidget(mini_navi_topmost_label)
         self.mini_navi_topmost_mode_combo = QComboBox()
@@ -2673,7 +2683,7 @@ class SettingsDialog(QDialog):
         town_layout = QVBoxLayout(town_group)
         
         town_desc = QLabel("ここに登録したエリアに入った時、攻略ガイドは更新されません（前のエリアのガイドを維持）")
-        town_desc.setStyleSheet(f"color: {theme.muted_text}; font-size: 13px;")
+        town_desc.setStyleSheet(f"color: {theme.muted_text}; font-size: {theme_font_size(13)}px;")
         town_desc.setWordWrap(True)
         town_layout.addWidget(town_desc)
         
@@ -2685,9 +2695,9 @@ class SettingsDialog(QDialog):
         self.town_zones_edit.setFixedHeight(100)
         self.town_zones_edit.setStyleSheet(f"""
             QTextEdit {{ 
-                background: rgba(26,26,26,200); color: {theme.text};
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 4px; 
-                padding: 5px; font-size: 11px;
+                background: {theme_rgba('control', 26, 26, 26, 200)}; color: {theme.text};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 4px;
+                padding: 5px; font-size: {theme_font_size(11)}px;
             }}
         """)
         town_layout.addWidget(self.town_zones_edit)
@@ -2695,16 +2705,18 @@ class SettingsDialog(QDialog):
         town_group.setVisible(False)  # 一般ユーザーには非表示（機能は残す）
         general_layout.addWidget(town_group)
         settings_note = QLabel(
-            "変更は保存後すぐ反映されます。起動モードを変更した場合は、"
+            "外観は再起動後、その他の変更は保存後に反映されます。起動モード・外観を変更した場合は、"
             "保存後に再起動を確認します。"
         )
         settings_note.setObjectName("generalSettingsSaveNote")
-        settings_note.setStyleSheet(f"color: {theme.muted_text}; font-size: 13px;")
+        settings_note.setStyleSheet(f"color: {theme.muted_text}; font-size: {theme_font_size(13)}px;")
         settings_note.setWordWrap(True)
         general_layout.addWidget(settings_note)
         general_layout.addStretch()
         
         tabs.addTab(general_tab, "基本設定")
+        self.appearance_widget = AppearanceSettingsWidget(self.current_config.get("appearance"))
+        tabs.addTab(self.appearance_widget, "外観")
         from src.ui.custom_command_settings import CustomCommandSettingsWidget
         self.custom_commands_widget = CustomCommandSettingsWidget(
             self.current_config.get("custom_commands", []), theme=self.theme
@@ -2717,10 +2729,10 @@ class SettingsDialog(QDialog):
 
         self.zone_scroll = QScrollArea()
         self.zone_scroll.setWidgetResizable(True)
-        self.zone_scroll.setStyleSheet("""
-            QScrollArea { border: none; }
-            QScrollBar:vertical { width: 8px; background: #222; }
-            QScrollBar::handle:vertical { background: #555; border-radius: 4px; }
+        self.zone_scroll.setStyleSheet(f"""
+            QScrollArea {{ border: none; }}
+            QScrollBar:vertical {{ width: 8px; background: {theme_color('surface', '#222')}; }}
+            QScrollBar::handle:vertical {{ background: {theme_color('muted_text', '#555')}; border-radius: 4px; }}
         """)
 
         self.zone_scroll_widget = QWidget()
@@ -2745,7 +2757,7 @@ class SettingsDialog(QDialog):
         self.guide_reset_description = QLabel()
         self.guide_reset_description.setObjectName("guideProgressResetDescription")
         self.guide_reset_description.setWordWrap(True)
-        self.guide_reset_description.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
+        self.guide_reset_description.setStyleSheet(f"color: {theme.text}; font-size: {theme_font_size(12)}px;")
         self._update_guide_reset_description()
         guide_reset_layout.addWidget(self.guide_reset_description)
 
@@ -2883,11 +2895,11 @@ class SettingsDialog(QDialog):
         btn.setToolTip(tooltip)
         btn.setStyleSheet(f"""
             QPushButton {{
-                background: rgba(40,40,40,200); color: {self.theme.text};
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 3px;
-                font-size: 11px; font-weight: bold;
+                background: {theme_rgba('control', 40, 40, 40, 200)}; color: {self.theme.text};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 3px;
+                font-size: {theme_font_size(11)}px; font-weight: bold;
             }}
-            QPushButton:hover {{ background: rgba(80,80,80,200); }}
+            QPushButton:hover {{ background: {theme_rgba('control', 80, 80, 80, 200)}; }}
         """)
         return btn
 
@@ -3077,9 +3089,9 @@ class SettingsDialog(QDialog):
         name_edit.setPlaceholderText("エリア名")
         name_edit.setStyleSheet(f"""
             QLineEdit {{ 
-                background: rgba(26,26,26,200); color: {self.theme.text};
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; 
-                padding: 3px 5px; font-size: 11px;
+                background: {theme_rgba('control', 26, 26, 26, 200)}; color: {self.theme.text};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 3px;
+                padding: 3px 5px; font-size: {theme_font_size(11)}px;
             }}
         """)
         row.addWidget(name_edit)
@@ -3268,7 +3280,7 @@ class SettingsDialog(QDialog):
             act_group.setStyleSheet(f"""
                 QGroupBox {{ 
                     color: {self.theme.text};
-                    border: 1px solid rgba(176,255,123,0.3); 
+                    border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)};
                     border-radius: 4px; 
                     margin-top: 8px; 
                     font-weight: bold;
@@ -3304,9 +3316,9 @@ class SettingsDialog(QDialog):
                 name_edit.setToolTip("エリアレベルは訪問順で変動" if level == 0 else f"推奨エリアレベル: {level}")
                 name_edit.setStyleSheet(f"""
                     QLineEdit {{ 
-                        background: rgba(26,26,26,200); color: {self.theme.text};
-                        border: 1px solid rgba(176,255,123,0.3); border-radius: 3px; 
-                        padding: 3px 5px; font-size: 11px;
+                        background: {theme_rgba('control', 26, 26, 26, 200)}; color: {self.theme.text};
+                        border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 3px;
+                        padding: 3px 5px; font-size: {theme_font_size(11)}px;
                     }}
                 """)
                 row.addWidget(name_edit)
@@ -3352,9 +3364,9 @@ class SettingsDialog(QDialog):
             add_btn.setFixedWidth(120)
             add_btn.setStyleSheet(f"""
                 QPushButton {{ 
-                    background: transparent; color: rgba(176,255,123,0.6); 
-                    border: 1px dashed rgba(176,255,123,0.3); border-radius: 3px; 
-                    padding: 3px; font-size: 10px;
+                    background: transparent; color: {theme_rgba('accent', 176, 255, 123, 0.6)};
+                    border: 1px dashed {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 3px;
+                    padding: 3px; font-size: {theme_font_size(10)}px;
                 }}
                 QPushButton:hover {{ color: {self.theme.text}; }}
             """)
@@ -3369,6 +3381,7 @@ class SettingsDialog(QDialog):
         self.zone_scroll_inner.addStretch()
         if hasattr(self, "theme"):
             self._clear_legacy_control_styles(self.zone_scroll_widget)
+        fit_theme_fixed_geometry(self.zone_scroll_widget)
 
     def _open_area_note_editor(self, zone_id: str, zone_name: str):
         """設定画面から任意エリアのエリアメモを編集して即時保存する。"""
@@ -3517,6 +3530,7 @@ class SettingsDialog(QDialog):
 
         return {
             "startup": startup_config,
+            "appearance": self.appearance_widget.settings(),
             "hotkeys": {
                 "start_stop": self.start_stop_btn.key_text,
                 "reset": self.reset_btn.key_text,

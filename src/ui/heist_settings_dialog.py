@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import resolve_dialog_theme
 from src.ui.dialog_theme import POETORE_DIALOG_THEME, apply_dialog_theme
 from src.ui.expedition_settings_dialog import ClickableImageLabel
 from src.ui.high_accuracy_ocr_pack_group import HighAccuracyOcrPackGroup
@@ -50,7 +51,7 @@ class HeistSettingsDialog(QDialog):
             example_image_path or DEFAULT_EXAMPLE_IMAGE_PATH
         )
         self._ocr_pack_controller = ocr_pack_controller
-        self.theme = POETORE_DIALOG_THEME
+        self.theme = resolve_dialog_theme(POETORE_DIALOG_THEME)
         self.setWindowTitle("ハイスト報酬OCR設定")
         self.setMinimumSize(620, 700)
         apply_dialog_theme(self, self.theme)

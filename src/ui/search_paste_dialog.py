@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from src.ui.appearance import theme_color, theme_font_size
 from src.ui.styles import Styles
 from src.ui.window_flags import _with_optional_always_on_top
 from src.utils.search_query_patterns import join_query_patterns, split_query_patterns
@@ -41,11 +42,11 @@ class SearchStringPasteTestDialog(QDialog):
         layout.setSpacing(8)
 
         title = QLabel("🔍 店売り・スタッシュ検索")
-        title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px; font-weight: bold;")
+        title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(13)}px; font-weight: bold;")
         layout.addWidget(title)
 
         hint = QLabel("選択後、ホットキー時点のウィンドウへ戻して Ctrl+F → 貼り付けます。")
-        hint.setStyleSheet("color: #cccccc; font-size: 10px;")
+        hint.setStyleSheet(f"color: {theme_color('text', '#cccccc')}; font-size: {theme_font_size(10)}px;")
         hint.setWordWrap(True)
         layout.addWidget(hint)
 

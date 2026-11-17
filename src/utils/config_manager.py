@@ -7,6 +7,8 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
+from src.ui.appearance import normalize_appearance
+
 from src.poetore.exchange_rate_settings import ensure_rate_pair_config
 from src.poetore.hideout_notification import (
     normalize_hideout_notification_settings,
@@ -24,7 +26,7 @@ class ConfigManager:
     # the PoE-version-scoped Currency Exchange rate-pair lists. Schema 20 adds
     # the opt-in PoETore hideout-stay notification settings. Schema 21 replaces
     # the two Heist OCR actions with one opt-in manual-selection action.
-    CURRENT_SCHEMA_VERSION = 22
+    CURRENT_SCHEMA_VERSION = 23
     POE1_ROUTE_ACT3_DEFAULT = "library_detour"
     POE1_ROUTE_ACT8_DEFAULT = "standard"
     POE1_ROUTE_ACT3_OLD_DEFAULT = "library_detour"
@@ -606,6 +608,9 @@ class ConfigManager:
         if "poe1_route_selected" not in migrated:
             migrated["poe1_route_selected"] = cls._infer_poe1_route_selected(config)
 
+        migrated["appearance"] = normalize_appearance(
+            migrated.get("appearance"), migrated.pop("text_color", None),
+        )
         migrated["schemaVersion"] = cls.CURRENT_SCHEMA_VERSION
         return migrated
 
@@ -628,7 +633,7 @@ class ConfigManager:
 
     @classmethod
     def _load_from_path(cls, config_path):
-        raw_config = cls._read_json(config_path)
+        raw_config = cls._normalize_appearance_fields(cls._read_json(config_path))
         default_config = cls._load_default_config_template()
         migrated = cls._migrate_config(cls._deep_merge(default_config, raw_config))
         if isinstance(raw_config, dict) and "area_note_migration_notice_shown" not in raw_config:
@@ -696,6 +701,7 @@ class ConfigManager:
 
     @classmethod
     def save_config(cls, config):
+        config = cls._normalize_appearance_fields(config)
         default_config = cls._load_default_config_template()
         config = cls._migrate_config(cls._deep_merge(default_config, config))
         config = cls.migrate_pob_import_data_from_config(config)
@@ -707,3 +713,14 @@ class ConfigManager:
             except Exception:
                 pass
         cls._write_json(config_path, config)
+
+    @staticmethod
+    def _normalize_appearance_fields(config):
+        # Migrate before merging defaults: a saved legacy choice must win over
+        # a template colour, while an explicit new override takes precedence.
+        config = copy.deepcopy(config)
+        if "appearance" in config or "text_color" in config:
+            config["appearance"] = normalize_appearance(
+                config.get("appearance"), config.pop("text_color", None),
+            )
+        return config

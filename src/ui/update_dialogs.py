@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from src.ui.appearance import resolve_dialog_theme
 from src.ui.dialog_theme import POENAVI_DIALOG_THEME, POETORE_DIALOG_THEME
 from src.ui.styles import Styles
 from src.update.release_client import ReleaseInfo
@@ -19,12 +20,12 @@ def _update_message_theme(parent):
     """更新メッセージを呼び出した設定画面のテーマへ合わせる。"""
     widget = parent
     while widget is not None:
-        if widget.property("dialogTheme") == POETORE_DIALOG_THEME.name:
-            return POETORE_DIALOG_THEME
-        if widget.property("dialogTheme") == POENAVI_DIALOG_THEME.name:
-            return POENAVI_DIALOG_THEME
+        if widget.property("dialogTheme") == resolve_dialog_theme(POETORE_DIALOG_THEME).name:
+            return resolve_dialog_theme(POETORE_DIALOG_THEME)
+        if widget.property("dialogTheme") == resolve_dialog_theme(POENAVI_DIALOG_THEME).name:
+            return resolve_dialog_theme(POENAVI_DIALOG_THEME)
         widget = widget.parentWidget()
-    return POENAVI_DIALOG_THEME
+    return resolve_dialog_theme(POENAVI_DIALOG_THEME)
 
 
 def build_update_message_box(

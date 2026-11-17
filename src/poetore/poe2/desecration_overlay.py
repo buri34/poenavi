@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import threading
+import math
 
-from PySide6.QtCore import QObject, QPoint, QRect, QRectF, Qt, QTimer, Signal
+from PySide6.QtCore import QObject, QPoint, QRect, QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import (
     QBrush,
     QColor,
@@ -24,6 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import has_custom_theme_font, theme_color, theme_font_size, theme_qcolor, theme_rgba
 from src.poetore.expedition_ocr_probe import WindowsOcrServer
 from src.poetore.performance import record_ndlocr_event
 from src.poetore.poe2.desecration_ocr import (
@@ -171,8 +173,13 @@ class DesecrationTierOverlay(QWidget):
             rect = QRectF(right_edge - badge_width, y - 15, badge_width, 30)
             font = QFont(self.font())
             font.setBold(True)
-            font.setPixelSize(16)
+            font.setPixelSize(theme_font_size(16))
             painter.setFont(font)
+            if has_custom_theme_font():
+                metrics = painter.fontMetrics()
+                badge_width = max(badge_width, metrics.horizontalAdvance(label) + 16)
+                height = max(30, metrics.size(Qt.TextSingleLine, label).height() + 8)
+                rect = QRectF(right_edge - badge_width, y - height / 2, badge_width, height)
             if tier == 1:
                 painter.setBrush(QColor("#C9A227")); painter.setPen(QPen(QColor("#F4D76A"), 2))
                 text_color = QColor("#111111")
@@ -217,12 +224,14 @@ class DesecrationTierOverlay(QWidget):
     ):
         font = QFont(self.font())
         font.setBold(True)
-        font.setPixelSize(12)
+        font.setPixelSize(theme_font_size(12))
         painter.setFont(font)
         rows = self._affix_display_labels(options)
         metrics = painter.fontMetrics()
         width = max(110, max(metrics.horizontalAdvance(label) for label, _ranges in rows) + 16)
         row_height = 24
+        if has_custom_theme_font():
+            row_height = max(row_height, max(metrics.size(Qt.TextSingleLine, label).height() for label, _ in rows) + 8)
         gap = 4
         total_height = len(rows) * row_height + (len(rows) - 1) * gap
         top = center_y - total_height / 2
@@ -250,25 +259,38 @@ class DesecrationTierOverlay(QWidget):
     def _draw_ranges(self, painter: QPainter, center_y: int, labels: tuple[str, ...]):
         range_font = QFont(self.font())
         range_font.setBold(True)
-        range_font.setPixelSize(13)
+        range_font.setPixelSize(theme_font_size(13))
         painter.setFont(range_font)
         metrics = painter.fontMetrics()
         desired_width = max(metrics.horizontalAdvance(label) for label in labels) + 14
         x = self._capture_offset.x() + self._capture_size[0] + 8
         available = self.width() - x - 6
+        if has_custom_theme_font() and available < desired_width:
+            x = max(6, min(x, self.width() - desired_width - 6))
+            available = self.width() - x - 6
         if available < 36:
             return
         width = min(max(54, desired_width), available)
         line_height = 18
+        if has_custom_theme_font():
+            line_height = max(line_height, metrics.height() + 2)
+            # The capture may touch the screen edge. Keep full range text on
+            # screen and wrap it rather than clipping the enlarged glyphs.
+            flags = Qt.AlignCenter | Qt.TextWrapAnywhere
+            line_height = max(line_height, max(
+                metrics.boundingRect(QRect(0, 0, round(width) - 8, 10000), flags, label).height() + 2
+                for label in labels
+            ))
         height = line_height * len(labels) + 6
         rect = QRectF(x, center_y - height / 2, width, height)
-        painter.setBrush(QColor(10, 13, 12, 218))
-        painter.setPen(QPen(QColor("#7E8B87"), 1))
+        painter.setBrush(theme_qcolor("overlay_bg", 10, 13, 12, 218))
+        painter.setPen(QPen(QColor(theme_color("overlay_border", "#7E8B87")), 1))
         painter.drawRoundedRect(rect, 5, 5)
-        painter.setPen(QColor("#F0F4F2"))
+        painter.setPen(QColor(theme_color("overlay_text", "#F0F4F2")))
         for index, label in enumerate(labels):
             line = QRectF(x, rect.top() + 3 + index * line_height, width, line_height)
-            painter.drawText(line, Qt.AlignCenter, label)
+            flags = Qt.AlignCenter | Qt.TextWrapAnywhere if has_custom_theme_font() else Qt.AlignCenter
+            painter.drawText(line, flags, label)
 
 
 class CategoryChoiceOverlay(QWidget):
@@ -279,7 +301,7 @@ class CategoryChoiceOverlay(QWidget):
         super().__init__(None)
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowDoesNotAcceptFocus)
         self.setAttribute(Qt.WA_ShowWithoutActivating)
-        self.setStyleSheet("QWidget { background:#111715; color:#E8F1EE; } QPushButton { padding:6px 10px; border:1px solid #63E6C5; border-radius:5px; color:#E8F1EE; } QPushButton:hover { background:#25463E; }")
+        self.setStyleSheet(f"QWidget {{ background:{theme_color('overlay_bg', '#111715')}; color:{theme_color('overlay_text', '#E8F1EE')}; }} QPushButton {{ padding:6px 10px; border:1px solid {theme_color('overlay_border', '#63E6C5')}; border-radius:5px; color:{theme_color('overlay_text', '#E8F1EE')}; }} QPushButton:hover {{ background:{theme_color('accent_soft', '#25463E')}; }}")
         root = QVBoxLayout(self)
         root.setContentsMargins(10, 8, 10, 8)
         root.addWidget(QLabel("装備の種類を選択してください"))
@@ -325,25 +347,43 @@ class OutlinedLabel(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.outline_color = QColor(0, 0, 0, 245)
-        self.text_color = QColor("#F7FAF8")
+        self.text_color = QColor(theme_color("overlay_text", "#F7FAF8"))
         # A 2px centered pen extends roughly 1px outside each glyph.
         self.outline_pen_width = 2.0
         self.setContentsMargins(2, 2, 2, 2)
 
-    def paintEvent(self, _event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
+    def _text_path(self):
         metrics = self.fontMetrics()
         margins = self.contentsMargins()
         baseline = margins.top() + metrics.ascent()
         path = QPainterPath()
-        for index, line in enumerate(self.text().splitlines() or ("",)):
+        lines = self.text().splitlines() or ("",)
+        spacing = metrics.lineSpacing()
+        if has_custom_theme_font():
+            spacing = max(spacing, max(metrics.boundingRect(line).height() for line in lines))
+        for index, line in enumerate(lines):
             path.addText(
                 margins.left(),
-                baseline + index * metrics.lineSpacing(),
+                baseline + index * spacing,
                 self.font(),
                 line,
             )
+        if has_custom_theme_font():
+            bounds = path.boundingRect()
+            path.translate(max(0, margins.left() - bounds.left()), max(0, margins.top() - bounds.top()))
+        return path
+
+    def sizeHint(self):
+        if not has_custom_theme_font():
+            return super().sizeHint()
+        bounds = self._text_path().boundingRect()
+        margins = self.contentsMargins()
+        return QSize(math.ceil(bounds.right() + margins.right()), math.ceil(bounds.bottom() + margins.bottom()))
+
+    def paintEvent(self, _event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        path = self._text_path()
         pen = QPen(self.outline_color)
         pen.setWidthF(self.outline_pen_width)
         pen.setJoinStyle(Qt.RoundJoin)
@@ -371,9 +411,7 @@ class HighAccuracyOcrStatusOverlay(QWidget):
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WA_ShowWithoutActivating)
         self.setStyleSheet(
-            "QWidget#ocrStatus { background: rgba(10, 13, 12, 222); "
-            "border: 1px solid #7E8B87; border-radius: 7px; }"
-            "QLabel { color: #F0F4F2; background: transparent; border: none; }"
+            f"QWidget#ocrStatus {{ background: {theme_rgba('overlay_bg', 10, 13, 12, 222)}; border: 1px solid {theme_color('overlay_border', '#7E8B87')}; border-radius: 7px; }}QLabel {{ color: {theme_color('overlay_text', '#F0F4F2')}; background: transparent; border: none; }}"
         )
         self.setObjectName("ocrStatus")
         layout = QHBoxLayout(self)
@@ -381,13 +419,13 @@ class HighAccuracyOcrStatusOverlay(QWidget):
         layout.setSpacing(9)
         self._spinner = QLabel(self._spinner_frames[0])
         spinner_font = QFont(self.font())
-        spinner_font.setPixelSize(21)
+        spinner_font.setPixelSize(theme_font_size(21))
         self._spinner.setFont(spinner_font)
-        self._spinner.setStyleSheet("color: #63E6C5;")
+        self._spinner.setStyleSheet(f"color: {theme_color('accent', '#63E6C5')};")
         layout.addWidget(self._spinner, 0, Qt.AlignVCenter)
         self._message = OutlinedLabel()
         message_font = QFont(self.font())
-        message_font.setPixelSize(16)
+        message_font.setPixelSize(theme_font_size(16))
         message_font.setWeight(QFont.DemiBold)
         self._message.setFont(message_font)
         self._message.setTextFormat(Qt.PlainText)
@@ -406,9 +444,26 @@ class HighAccuracyOcrStatusOverlay(QWidget):
         self._spinner.setText(self._spinner_frames[self._spinner_index])
 
     def show_status(self, client_rect: QRect, capture_rect: QRect, lines) -> None:
+        if has_custom_theme_font():
+            # OutlinedLabel paints explicit lines; reflow to the available
+            # game-client width before measuring, including spinner/margins.
+            available = max(1, client_rect.width() - self._spinner.sizeHint().width() - 50)
+            metrics = self._message.fontMetrics()
+            wrapped = []
+            for line in lines:
+                current = ""
+                for char in line:
+                    if current and metrics.horizontalAdvance(current + char) > available:
+                        wrapped.append(current)
+                        current = ""
+                    current += char
+                wrapped.append(current)
+            lines = wrapped
         self._message.setText("\n".join(lines))
         self.adjustSize()
         width = min(max(self.width(), 390), min(520, client_rect.width()))
+        if has_custom_theme_font():
+            width = min(max(self.sizeHint().width(), 390), client_rect.width())
         height = self.height()
         x = capture_rect.right() - width // 4
         x = min(max(client_rect.left(), x), client_rect.right() - width + 1)

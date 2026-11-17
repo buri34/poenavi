@@ -13,6 +13,10 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QStyle, QSystemTrayIcon, QToolTip)
 from PySide6.QtCore import QObject, Qt, QTimer, Signal, QRect, QEvent, QEventLoop, QPoint, QSize, QUrl
 from PySide6.QtGui import QAction, QCursor, QMouseEvent, QIcon, QDesktopServices, QKeySequence
+from src.ui.appearance import (
+    fit_theme_fixed_geometry, has_custom_theme_font, theme_color,
+    theme_font_family, theme_font_size, theme_rgba,
+)
 from src.ui.styles import Styles
 from src.ui.detached_panel import DetachedPanelWindow
 from src.ui.settings_dialog import AreaNoteDialog, SettingsDialog
@@ -983,7 +987,7 @@ class MainWindow(QMainWindow):
         if not log_path:
             # 初回または、選択中バージョンのログファイルが未設定なら案内を出す
             msg = QMessageBox(self)
-            msg.setStyleSheet("QMessageBox { font-size: 14px; } QMessageBox QLabel { font-size: 14px; }")
+            msg.setStyleSheet(f"QMessageBox {{ font-size: {theme_font_size(14)}px; }} QMessageBox QLabel {{ font-size: {theme_font_size(14)}px; }}")
             msg.setWindowTitle("⚙️ ログファイル設定")
             msg.setIcon(QMessageBox.Icon.Information)
             msg.setText(
@@ -1021,7 +1025,7 @@ class MainWindow(QMainWindow):
             return
 
         msg = QMessageBox(self)
-        msg.setStyleSheet("QMessageBox { font-size: 14px; } QMessageBox QLabel { font-size: 14px; }")
+        msg.setStyleSheet(f"QMessageBox {{ font-size: {theme_font_size(14)}px; }} QMessageBox QLabel {{ font-size: {theme_font_size(14)}px; }}")
         msg.setWindowTitle("📝 エリアメモ機能について")
         msg.setIcon(QMessageBox.Icon.Information)
         msg.setText(
@@ -1143,15 +1147,15 @@ class MainWindow(QMainWindow):
         alpha = int(opacity_pct / 100.0 * 255)
         # メイン背景
         self.centralWidget().setStyleSheet(
-            f"#centralWidget {{ background-color: rgba(0, 0, 0, {alpha}); border-radius: 10px; }}"
+            f"#centralWidget {{ background-color: {theme_rgba('overlay_bg', 0, 0, 0, alpha)}; border-radius: 10px; }}"
         )
         # ガイドテキストフレーム
         guide_alpha = int(alpha * 0.63)  # 元: 160/255 ≈ 63%の比率を維持
         if hasattr(self, 'guide_text_frame'):
             self.guide_text_frame.setStyleSheet(f"""
                 QFrame {{
-                    background-color: rgba(0, 0, 0, {guide_alpha});
-                    border: 1px solid rgba(176, 255, 123, 0.2);
+                    background-color: {theme_rgba('overlay_bg', 0, 0, 0, guide_alpha)};
+                    border: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 0.2)};
                     border-radius: 6px;
                 }}
             """)
@@ -1159,7 +1163,7 @@ class MainWindow(QMainWindow):
         container_alpha = int(alpha * 0.55)  # 元: 140/255
         if hasattr(self, 'guide_container'):
             self.guide_container.setStyleSheet(
-                f"#guideContainer {{ background-color: rgba(20, 30, 20, {container_alpha}); border-radius: 6px; }}"
+                f"#guideContainer {{ background-color: {theme_rgba('overlay_bg', 20, 30, 20, container_alpha)}; border-radius: 6px; }}"
             )
 
     def _apply_text_opacity(self, opacity_pct: int):
@@ -1189,6 +1193,24 @@ class MainWindow(QMainWindow):
         self.reset_btn.setVisible(expanded)
         self.ready_btn.setVisible(expanded)
         self.timer_toggle_btn.setText("▼ タイマー" if expanded else "▶ タイマー")
+        self._fit_custom_font_timer_height()
+
+    def _fit_custom_font_timer_height(self):
+        if not has_custom_theme_font():
+            return
+        # Reserve the measured content through each enclosing timer widget;
+        # a fixed size policy alone still allows cached layouts to clip rows.
+        for widget in (self.lap_content, self.timer_content, self.timer_container):
+            widget.setMinimumHeight(0)
+            for layout in reversed(widget.findChildren(QVBoxLayout)):
+                layout.invalidate()
+            widget.layout().invalidate()
+            widget.setMinimumHeight(widget.layout().minimumSize().height())
+        panel = self.panel_registry.get("timer", {}).get("content")
+        if panel is not None:
+            panel.setMinimumHeight(0)
+            panel.layout().invalidate()
+            panel.setMinimumHeight(panel.layout().minimumSize().height())
 
     def _apply_timer_size(self):
         """タイマーの表示サイズを適用する"""
@@ -1199,14 +1221,14 @@ class MainWindow(QMainWindow):
         
         base_style = Styles.TIMER_LABEL
         # フォントサイズを差し替え
-        base_style = re.sub(r"font-size:.*?;", f"font-size: {main_px}px;", base_style)
+        base_style = re.sub(r"font-size:.*?;", f"font-size: {theme_font_size(main_px)}px;", base_style)
         if self._custom_font_family:
-            base_style = re.sub(r"font-family:.*?;", f"font-family: '{self._custom_font_family}';", base_style)
+            base_style = re.sub(r"font-family:.*?;", f"font-family: '{theme_font_family(self._custom_font_family)}';", base_style)
         
         ms_style = Styles.TIMER_LABEL
-        ms_style = re.sub(r"font-size:.*?;", f"font-size: {ms_px}px;", ms_style)
+        ms_style = re.sub(r"font-size:.*?;", f"font-size: {theme_font_size(ms_px)}px;", ms_style)
         if self._custom_font_family:
-            ms_style = re.sub(r"font-family:.*?;", f"font-family: '{self._custom_font_family}';", ms_style)
+            ms_style = re.sub(r"font-family:.*?;", f"font-family: '{theme_font_family(self._custom_font_family)}';", ms_style)
         
         self.lbl_hours.setStyleSheet(base_style)
         self.lbl_c1.setStyleSheet(base_style)
@@ -1246,18 +1268,18 @@ class MainWindow(QMainWindow):
         btn_style = f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
-                border: none; font-size: 14px; font-weight: bold;
+                border: none; font-size: {theme_font_size(14)}px; font-weight: bold;
                 padding: 2px 8px;
             }}
-            QPushButton:hover {{ background: rgba(255,255,255,0.15); border-radius: 3px; }}
+            QPushButton:hover {{ background: {theme_rgba('overlay_bg', 255, 255, 255, 0.15)}; border-radius: 3px; }}
         """
         close_btn_style = f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
-                border: none; font-size: 14px; font-weight: bold;
+                border: none; font-size: {theme_font_size(14)}px; font-weight: bold;
                 padding: 2px 8px;
             }}
-            QPushButton:hover {{ background: rgba(255,60,60,0.8); border-radius: 3px; color: #ffffff; }}
+            QPushButton:hover {{ background: {theme_rgba('accent_soft', 255, 60, 60, 0.8)}; border-radius: 3px; color: {theme_color('overlay_text', '#ffffff')}; }}
         """
         
         minimize_btn = QPushButton("─")
@@ -1285,10 +1307,10 @@ class MainWindow(QMainWindow):
         self.timer_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
-                border: none; font-size: 12px; font-weight: bold;
+                border: none; font-size: {theme_font_size(12)}px; font-weight: bold;
                 text-align: left; padding: 2px 5px;
             }}
-            QPushButton:hover {{ color: #ffffff; }}
+            QPushButton:hover {{ color: {theme_color('overlay_text', '#ffffff')}; }}
         """)
         self.timer_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.timer_toggle_btn.clicked.connect(self.toggle_timer)
@@ -1347,7 +1369,7 @@ class MainWindow(QMainWindow):
         self.segment_summary_label.setAlignment(Qt.AlignCenter)
         self.segment_summary_label.setWordWrap(True)
         self.segment_summary_label.setStyleSheet(
-            f"color: {Styles.TEXT_COLOR}; font-size: 14px; padding: 2px 0;"
+            f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(14)}px; padding: 2px 0;"
         )
         self._configure_segment_summary_label()
 
@@ -1365,10 +1387,10 @@ class MainWindow(QMainWindow):
         self.lap_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
-                border: none; font-size: 11px; font-weight: bold;
+                border: none; font-size: {theme_font_size(11)}px; font-weight: bold;
                 text-align: left; padding: 2px 5px;
             }}
-            QPushButton:hover {{ color: #ffffff; }}
+            QPushButton:hover {{ color: {theme_color('overlay_text', '#ffffff')}; }}
         """)
         self.lap_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.lap_toggle_btn.clicked.connect(self.toggle_lap)
@@ -1514,8 +1536,8 @@ class MainWindow(QMainWindow):
         # ガイド部分は左右にパディング
         self.guide_container = QWidget()
         self.guide_container.setObjectName("guideContainer")
-        self.guide_container.setStyleSheet("""
-            #guideContainer { background-color: rgba(20, 30, 20, 140); border-radius: 6px; }
+        self.guide_container.setStyleSheet(f"""
+            #guideContainer {{ background-color: {theme_rgba('overlay_bg', 20, 30, 20, 140)}; border-radius: 6px; }}
         """)
         guide_container_layout = QVBoxLayout(self.guide_container)
         guide_container_layout.setContentsMargins(20, 5, 20, 0)
@@ -1545,10 +1567,10 @@ class MainWindow(QMainWindow):
         self.guide_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
-                border: none; font-size: 12px; font-weight: bold;
+                border: none; font-size: {theme_font_size(12)}px; font-weight: bold;
                 text-align: left; padding: 2px 5px;
             }}
-            QPushButton:hover {{ color: #ffffff; }}
+            QPushButton:hover {{ color: {theme_color('overlay_text', '#ffffff')}; }}
         """)
         self.guide_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.guide_toggle_btn.clicked.connect(self.toggle_guide)
@@ -1559,7 +1581,7 @@ class MainWindow(QMainWindow):
         guide_frame = QFrame()
         guide_frame.setStyleSheet(f"""
             QFrame {{
-                border: 1px solid rgba(176, 255, 123, 0.3);
+                border: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 0.3)};
                 border-radius: 6px;
                 padding: 5px;
             }}
@@ -1571,19 +1593,19 @@ class MainWindow(QMainWindow):
         # ゾーン名 + レベル表示
         zone_info_layout = QHBoxLayout()
         self.zone_label = QLabel("📍 エリア: ---")
-        self.zone_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px; font-weight: bold;")
+        self.zone_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(13)}px; font-weight: bold;")
         zone_info_layout.addWidget(self.zone_label)
         
         zone_info_layout.addStretch()
         
         self.level_label = QLabel("キャラLv. 1")
-        self.level_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px; font-weight: bold;")
+        self.level_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(13)}px; font-weight: bold;")
         zone_info_layout.addWidget(self.level_label)
         guide_layout.addLayout(zone_info_layout)
         
         # アドバイスメッセージ
         self.advice_label = QLabel("ログ監視待機中...")
-        self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
+        self.advice_label.setStyleSheet(f"color: {theme_color('muted_text', '#888888')}; font-size: {theme_font_size(12)}px;")
         self.advice_label.setWordWrap(True)
         guide_layout.addWidget(self.advice_label)
         
@@ -1594,10 +1616,10 @@ class MainWindow(QMainWindow):
         self.zone_header_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
-                border: none; font-size: 11px; font-weight: bold;
+                border: none; font-size: {theme_font_size(11)}px; font-weight: bold;
                 text-align: left; padding: 2px 5px;
             }}
-            QPushButton:hover {{ color: #ffffff; }}
+            QPushButton:hover {{ color: {theme_color('overlay_text', '#ffffff')}; }}
         """)
         self.zone_header_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.zone_header_toggle_btn.clicked.connect(self.toggle_zone_header)
@@ -1611,10 +1633,10 @@ class MainWindow(QMainWindow):
         self.guide_text_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
-                border: none; font-size: 11px; font-weight: bold;
+                border: none; font-size: {theme_font_size(11)}px; font-weight: bold;
                 text-align: left; padding: 2px 5px;
             }}
-            QPushButton:hover {{ color: #ffffff; }}
+            QPushButton:hover {{ color: {theme_color('overlay_text', '#ffffff')}; }}
         """)
         self.guide_text_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.guide_text_toggle_btn.clicked.connect(self.toggle_guide_text)
@@ -1632,16 +1654,16 @@ class MainWindow(QMainWindow):
         self.area_note_edit_button.setToolTip("現在のエリアのエリアメモを編集します")
         self.area_note_edit_button.setStyleSheet(f"""
             QPushButton {{
-                background: rgba(20, 30, 20, 160);
+                background: {theme_rgba('overlay_bg', 20, 30, 20, 160)};
                 color: {Styles.TEXT_COLOR};
-                border: 1px solid rgba(176, 255, 123, 0.75);
+                border: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 0.75)};
                 border-radius: 5px;
                 padding: 3px 9px;
-                font-size: 11px;
+                font-size: {theme_font_size(11)}px;
                 font-weight: bold;
             }}
-            QPushButton:hover {{ background: rgba(73, 110, 50, 180); color: #ffffff; }}
-            QPushButton:disabled {{ color: #666666; border-color: #555555; }}
+            QPushButton:hover {{ background: {theme_rgba('accent_soft', 73, 110, 50, 180)}; color: {theme_color('overlay_text', '#ffffff')}; }}
+            QPushButton:disabled {{ color: {theme_color('disabled', '#666666')}; border-color: {theme_color('overlay_border', '#555555')}; }}
         """)
         self.area_note_edit_button.clicked.connect(self.open_area_note_editor)
         self.area_note_edit_button.setEnabled(False)
@@ -1653,17 +1675,17 @@ class MainWindow(QMainWindow):
         self.mini_navi_toggle_btn.setToolTip("ボタンに表示された動作でみになびを切り替えます。ロック操作はみになび側の鍵ボタンで行えます。")
         self.mini_navi_toggle_btn.setStyleSheet(f"""
             QPushButton {{
-                background: rgba(20, 30, 20, 160);
+                background: {theme_rgba('overlay_bg', 20, 30, 20, 160)};
                 color: {Styles.TEXT_COLOR};
-                border: 1px solid rgba(176, 255, 123, 0.75);
+                border: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 0.75)};
                 border-radius: 5px;
                 padding: 3px 9px;
-                font-size: 11px;
+                font-size: {theme_font_size(11)}px;
                 font-weight: bold;
             }}
             QPushButton:hover {{
-                background: rgba(73, 110, 50, 180);
-                color: #ffffff;
+                background: {theme_rgba('accent_soft', 73, 110, 50, 180)};
+                color: {theme_color('overlay_text', '#ffffff')};
             }}
         """)
         self.mini_navi_toggle_btn.clicked.connect(self.toggle_mini_navi_overlay)
@@ -1674,30 +1696,30 @@ class MainWindow(QMainWindow):
         
         # ── 攻略ガイド表示エリア（本体） ──
         guide_text_frame = QFrame()
-        guide_text_frame.setStyleSheet("""
-            QFrame {
-                background-color: rgba(0, 0, 0, 160);
-                border: 1px solid rgba(176, 255, 123, 0.2);
+        guide_text_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {theme_rgba('overlay_bg', 0, 0, 0, 160)};
+                border: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 0.2)};
                 border-radius: 6px;
-            }
+            }}
         """)
         guide_text_layout = QVBoxLayout(guide_text_frame)
         guide_text_layout.setContentsMargins(10, 8, 10, 8)
 
         self.area_note_frame = QFrame()
-        self.area_note_frame.setStyleSheet("""
-            QFrame {
-                background: rgba(55, 45, 15, 190);
-                border: 1px solid rgba(255, 210, 80, 150);
+        self.area_note_frame.setStyleSheet(f"""
+            QFrame {{
+                background: {theme_rgba('accent_soft', 55, 45, 15, 190)};
+                border: 1px solid {theme_rgba('overlay_border', 255, 210, 80, 150)};
                 border-radius: 5px;
-            }
+            }}
         """)
         area_note_layout = QVBoxLayout(self.area_note_frame)
         area_note_layout.setContentsMargins(9, 6, 9, 6)
         area_note_layout.setSpacing(3)
         area_note_title = QLabel("📝 エリアメモ")
         area_note_title.setStyleSheet(
-            "color: #ffd86b; font-size: 11px; font-weight: bold; border: none; background: transparent;"
+            f"color: {theme_color('warning', '#ffd86b')}; font-size: {theme_font_size(11)}px; font-weight: bold; border: none; background: transparent;"
         )
         area_note_layout.addWidget(area_note_title)
         self.area_note_label = QLabel()
@@ -1705,7 +1727,7 @@ class MainWindow(QMainWindow):
         self.area_note_label.setWordWrap(True)
         self.area_note_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.area_note_label.setStyleSheet(
-            f"color: {Styles.TEXT_COLOR}; font-size: {self.guide_font_size}px; border: none; background: transparent;"
+            f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(self.guide_font_size)}px; border: none; background: transparent;"
         )
         area_note_layout.addWidget(self.area_note_label)
         self.area_note_frame.hide()
@@ -1717,21 +1739,21 @@ class MainWindow(QMainWindow):
         self.poelab_link_button.setCursor(QCursor(Qt.PointingHandCursor))
         self.poelab_link_button.setToolTip("PoELabトップページを標準ブラウザで開きます")
         self.poelab_link_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self.poelab_link_button.setStyleSheet("""
-            QPushButton {
-                background: rgba(150, 30, 30, 210);
-                color: #ffffff;
-                border: 1px solid rgba(255, 115, 105, 230);
+        self.poelab_link_button.setStyleSheet(f"""
+            QPushButton {{
+                background: {theme_rgba('accent_soft', 150, 30, 30, 210)};
+                color: {theme_color('overlay_text', '#ffffff')};
+                border: 1px solid {theme_rgba('overlay_border', 255, 115, 105, 230)};
                 border-radius: 4px;
                 padding: 4px 10px;
                 font-weight: bold;
-            }
-            QPushButton:hover {
-                background: rgba(205, 45, 40, 235);
-                border-color: #ffaaa2;
-            }
-            QPushButton:pressed { background: rgba(115, 20, 20, 235); }
-            QPushButton:disabled { color: #777777; border-color: #555555; }
+            }}
+            QPushButton:hover {{
+                background: {theme_rgba('accent_soft', 205, 45, 40, 235)};
+                border-color: {theme_color('overlay_border', '#ffaaa2')};
+            }}
+            QPushButton:pressed {{ background: {theme_rgba('accent_soft', 115, 20, 20, 235)}; }}
+            QPushButton:disabled {{ color: {theme_color('disabled', '#777777')}; border-color: {theme_color('overlay_border', '#555555')}; }}
         """)
         self.poelab_link_button.clicked.connect(self.open_daily_poelab)
         self.poelab_link_button.hide()
@@ -1741,26 +1763,26 @@ class MainWindow(QMainWindow):
         
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("""
-            QScrollArea { border: none; background: transparent; }
-            QScrollBar:vertical {
+        scroll.setStyleSheet(f"""
+            QScrollArea {{ border: none; background: transparent; }}
+            QScrollBar:vertical {{
                 width: 16px;
-                background: rgba(176,255,123,0.08);
+                background: {theme_rgba('accent_soft', 176, 255, 123, 0.08)};
                 border-radius: 7px;
                 margin: 0 2px;
-            }
-            QScrollBar::handle:vertical {
+            }}
+            QScrollBar::handle:vertical {{
                 min-height: 36px;
-                background: rgba(176,255,123,0.55);
+                background: {theme_color('muted_text', 'rgba(176, 255, 123, 0.55)')};
                 border-radius: 7px;
-            }
-            QScrollBar::handle:vertical:hover { background: rgba(176,255,123,0.85); }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { width: 0; height: 0; }
-            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
+            }}
+            QScrollBar::handle:vertical:hover {{ background: {theme_color('accent', 'rgba(176, 255, 123, 0.85)')}; }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ width: 0; height: 0; }}
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: transparent; }}
         """)
         
         self.guide_text_label = QLabel("エリアに入場すると攻略ガイドが表示されます")
-        self.guide_text_label.setStyleSheet(f"color: #888888; font-size: {self.guide_font_size}px; background: transparent;")
+        self.guide_text_label.setStyleSheet(f"color: {theme_color('muted_text', '#888888')}; font-size: {theme_font_size(self.guide_font_size)}px; background: transparent;")
         self.guide_text_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.guide_text_label.setWordWrap(True)
         self.guide_text_label.setTextFormat(Qt.RichText)
@@ -1778,13 +1800,13 @@ class MainWindow(QMainWindow):
         self.guide_body_splitter.setHandleWidth(8)
         self.guide_body_splitter.setStyleSheet(f"""
             QSplitter::handle:vertical {{
-                background: rgba(176, 255, 123, 0.12);
-                border-top: 1px solid rgba(176, 255, 123, 0.28);
-                border-bottom: 1px solid rgba(176, 255, 123, 0.28);
+                background: {theme_rgba('accent_soft', 176, 255, 123, 0.12)};
+                border-top: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 0.28)};
+                border-bottom: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 0.28)};
                 margin: 1px 0;
             }}
             QSplitter::handle:vertical:hover {{
-                background: rgba(176, 255, 123, 0.30);
+                background: {theme_rgba('accent_soft', 176, 255, 123, 0.30)};
             }}
         """)
         self.guide_body_splitter.addWidget(self.guide_text_frame)
@@ -1805,10 +1827,10 @@ class MainWindow(QMainWindow):
         self.map_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
-                border: none; font-size: 11px; font-weight: bold;
+                border: none; font-size: {theme_font_size(11)}px; font-weight: bold;
                 text-align: left; padding: 2px 5px;
             }}
-            QPushButton:hover {{ color: #ffffff; }}
+            QPushButton:hover {{ color: {theme_color('overlay_text', '#ffffff')}; }}
         """)
         self.map_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.map_toggle_btn.clicked.connect(self.toggle_map_section)
@@ -1827,10 +1849,10 @@ class MainWindow(QMainWindow):
         self.gem_tracker_toggle_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
-                border: none; font-size: 11px; font-weight: bold;
+                border: none; font-size: {theme_font_size(11)}px; font-weight: bold;
                 text-align: left; padding: 2px 5px;
             }}
-            QPushButton:hover {{ color: #ffffff; }}
+            QPushButton:hover {{ color: {theme_color('overlay_text', '#ffffff')}; }}
         """)
         self.gem_tracker_toggle_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.gem_tracker_toggle_btn.clicked.connect(self.toggle_gem_tracker)
@@ -1839,12 +1861,12 @@ class MainWindow(QMainWindow):
         
         # ジェムトラッカーコンテナ
         self.gem_tracker_frame = QFrame()
-        self.gem_tracker_frame.setStyleSheet("""
-            QFrame {
-                background-color: rgba(0, 0, 0, 160);
-                border: 1px solid rgba(176, 255, 123, 0.2);
+        self.gem_tracker_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {theme_rgba('overlay_bg', 0, 0, 0, 160)};
+                border: 1px solid {theme_rgba('overlay_border', 176, 255, 123, 0.2)};
                 border-radius: 6px;
-            }
+            }}
         """)
         gem_tracker_layout = QVBoxLayout(self.gem_tracker_frame)
         gem_tracker_layout.setContentsMargins(8, 4, 8, 4)
@@ -1857,11 +1879,11 @@ class MainWindow(QMainWindow):
         self.pob_import_btn = QPushButton("📥 PoBインポート")
         self.pob_import_btn.setStyleSheet(f"""
             QPushButton {{
-                background: rgba(68,136,255,0.2); color: #4488ff;
-                border: 1px solid rgba(68,136,255,0.5); border-radius: 3px;
-                padding: 3px 10px; font-size: 11px; font-weight: bold;
+                background: {theme_rgba('accent_soft', 68, 136, 255, 0.2)}; color: {theme_color('accent', '#4488ff')};
+                border: 1px solid {theme_rgba('overlay_border', 68, 136, 255, 0.5)}; border-radius: 3px;
+                padding: 3px 10px; font-size: {theme_font_size(11)}px; font-weight: bold;
             }}
-            QPushButton:hover {{ background: rgba(68,136,255,0.35); }}
+            QPushButton:hover {{ background: {theme_rgba('accent_soft', 68, 136, 255, 0.35)}; }}
         """)
         self.pob_import_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.pob_import_btn.clicked.connect(self._on_pob_import)
@@ -1872,11 +1894,11 @@ class MainWindow(QMainWindow):
         self.pob_clear_btn.setMinimumHeight(22)
         self.pob_clear_btn.setStyleSheet(f"""
             QPushButton {{
-                background: rgba(255,102,102,0.10); color: #ff8888;
-                border: 1px solid rgba(255,102,102,0.45); border-radius: 3px;
-                padding: 3px 8px; font-size: 11px; font-weight: bold;
+                background: {theme_rgba('accent_soft', 255, 102, 102, 0.10)}; color: {theme_color('danger', '#ff8888')};
+                border: 1px solid {theme_rgba('overlay_border', 255, 102, 102, 0.45)}; border-radius: 3px;
+                padding: 3px 8px; font-size: {theme_font_size(11)}px; font-weight: bold;
             }}
-            QPushButton:hover {{ background: rgba(255,102,102,0.22); color: #ffaaaa; }}
+            QPushButton:hover {{ background: {theme_rgba('accent_soft', 255, 102, 102, 0.22)}; color: {theme_color('danger', '#ffaaaa')}; }}
         """)
         self.pob_clear_btn.setToolTip("PoBデータをクリア")
         self.pob_clear_btn.clicked.connect(self._on_pob_clear)
@@ -1888,7 +1910,7 @@ class MainWindow(QMainWindow):
         gem_search_preview_layout = QHBoxLayout()
         gem_search_preview_layout.setSpacing(6)
         self.gem_shop_search_preview_label = QLabel()
-        self.gem_shop_search_preview_label.setStyleSheet("color: #88aacc; font-size: 10px;")
+        self.gem_shop_search_preview_label.setStyleSheet(f"color: {theme_color('accent', '#88aacc')}; font-size: {theme_font_size(10)}px;")
         self.gem_shop_search_preview_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.gem_shop_search_preview_label.setWordWrap(True)
         gem_search_preview_layout.addWidget(self.gem_shop_search_preview_label, stretch=1)
@@ -1959,6 +1981,8 @@ class MainWindow(QMainWindow):
                 border: none;
             }
         """)
+        fit_theme_fixed_geometry(self.centralWidget())
+        self._fit_custom_font_timer_height()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -2055,18 +2079,18 @@ class MainWindow(QMainWindow):
         if self.part2_mode:
             return f"""
                 QPushButton {{
-                    background: rgba(176,255,123,0.2); color: {Styles.TEXT_COLOR};
+                    background: {theme_rgba('accent_soft', 176, 255, 123, 0.2)}; color: {Styles.TEXT_COLOR};
                     border: 1px solid {Styles.TEXT_COLOR}; border-radius: 3px;
-                    padding: 2px 8px; font-size: 10px; font-weight: bold;
+                    padding: 2px 8px; font-size: {theme_font_size(10)}px; font-weight: bold;
                 }}
-                QPushButton:hover {{ background: rgba(176,255,123,0.35); }}
+                QPushButton:hover {{ background: {theme_rgba('accent_soft', 176, 255, 123, 0.35)}; }}
             """
         else:
             return f"""
                 QPushButton {{
-                    background: transparent; color: #888888;
-                    border: 1px solid #555555; border-radius: 3px;
-                    padding: 2px 8px; font-size: 10px;
+                    background: transparent; color: {theme_color('muted_text', '#888888')};
+                    border: 1px solid {theme_color('overlay_border', '#555555')}; border-radius: 3px;
+                    padding: 2px 8px; font-size: {theme_font_size(10)}px;
                 }}
                 QPushButton:hover {{ color: {Styles.TEXT_COLOR}; border-color: {Styles.TEXT_COLOR}; }}
             """
@@ -2075,18 +2099,18 @@ class MainWindow(QMainWindow):
         if self.visit_override is not None:
             return f"""
                 QPushButton {{
-                    background: rgba(255,200,50,0.25); color: #ffc832;
-                    border: 1px solid #ffc832; border-radius: 3px;
-                    padding: 2px 6px; font-size: 10px; font-weight: bold;
+                    background: {theme_rgba('accent_soft', 255, 200, 50, 0.25)}; color: {theme_color('warning', '#ffc832')};
+                    border: 1px solid {theme_color('overlay_border', '#ffc832')}; border-radius: 3px;
+                    padding: 2px 6px; font-size: {theme_font_size(10)}px; font-weight: bold;
                 }}
-                QPushButton:hover {{ background: rgba(255,200,50,0.4); }}
+                QPushButton:hover {{ background: {theme_rgba('accent_soft', 255, 200, 50, 0.4)}; }}
             """
         else:
             return f"""
                 QPushButton {{
-                    background: transparent; color: #888888;
-                    border: 1px solid #555555; border-radius: 3px;
-                    padding: 2px 6px; font-size: 10px;
+                    background: transparent; color: {theme_color('muted_text', '#888888')};
+                    border: 1px solid {theme_color('overlay_border', '#555555')}; border-radius: 3px;
+                    padding: 2px 6px; font-size: {theme_font_size(10)}px;
                 }}
                 QPushButton:hover {{ color: {Styles.TEXT_COLOR}; border-color: {Styles.TEXT_COLOR}; }}
             """
@@ -2097,18 +2121,18 @@ class MainWindow(QMainWindow):
         if self.auto_lap:
             return f"""
                 QPushButton {{
-                    background: rgba(100,200,255,0.25); color: #64c8ff;
-                    border: 1px solid #64c8ff; border-radius: 3px;
-                    padding: 2px 6px; font-size: 10px; font-weight: bold;
+                    background: {theme_rgba('accent_soft', 100, 200, 255, 0.25)}; color: {theme_color('accent', '#64c8ff')};
+                    border: 1px solid {theme_color('overlay_border', '#64c8ff')}; border-radius: 3px;
+                    padding: 2px 6px; font-size: {theme_font_size(10)}px; font-weight: bold;
                 }}
-                QPushButton:hover {{ background: rgba(100,200,255,0.4); }}
+                QPushButton:hover {{ background: {theme_rgba('accent_soft', 100, 200, 255, 0.4)}; }}
             """
         else:
             return f"""
                 QPushButton {{
-                    background: transparent; color: #888888;
-                    border: 1px solid #555555; border-radius: 3px;
-                    padding: 2px 6px; font-size: 10px;
+                    background: transparent; color: {theme_color('muted_text', '#888888')};
+                    border: 1px solid {theme_color('overlay_border', '#555555')}; border-radius: 3px;
+                    padding: 2px 6px; font-size: {theme_font_size(10)}px;
                 }}
                 QPushButton:hover {{ color: {Styles.TEXT_COLOR}; border-color: {Styles.TEXT_COLOR}; }}
             """
@@ -2187,7 +2211,7 @@ class MainWindow(QMainWindow):
                 if clear_html:
                     self.guide_text_label.setText(clear_html)
                     self.guide_text_label.setStyleSheet(
-                        f"color: #e0e0e0; font-size: {self.guide_font_size}px; background: transparent;"
+                        f"color: {theme_color('overlay_text', '#e0e0e0')}; font-size: {theme_font_size(self.guide_font_size)}px; background: transparent;"
                     )
                     self.map_thumbnail.load_maps("", part2=False)
             return
@@ -2275,6 +2299,7 @@ class MainWindow(QMainWindow):
         self.lap_expanded = not self.lap_expanded
         self.lap_content.setVisible(self.lap_expanded)
         self.lap_toggle_btn.setText("▼ ラップタイム" if self.lap_expanded else "▶ ラップタイム")
+        self._fit_custom_font_timer_height()
         self.config["lap_expanded"] = self.lap_expanded
         ConfigManager.save_config(self.config)
         if not self._is_panel_detached("timer"):
@@ -2733,8 +2758,8 @@ class MainWindow(QMainWindow):
             self.guide_text_toggle_btn.setVisible(False)
         # 背景も連動
         if self.guide_expanded:
-            self.guide_container.setStyleSheet("""
-                #guideContainer { background-color: rgba(20, 30, 20, 140); border-radius: 6px; }
+            self.guide_container.setStyleSheet(f"""
+                #guideContainer {{ background-color: {theme_rgba('overlay_bg', 20, 30, 20, 140)}; border-radius: 6px; }}
             """)
         else:
             self.guide_container.setStyleSheet("""
@@ -2771,7 +2796,7 @@ class MainWindow(QMainWindow):
             has_data = self.accumulated_time > 0 or self.is_running or any(t is not None for t in self.lap_times)
             if has_data:
                 msg = QMessageBox(self)
-                msg.setStyleSheet("QMessageBox { font-size: 14px; } QMessageBox QLabel { font-size: 14px; }")
+                msg.setStyleSheet(f"QMessageBox {{ font-size: {theme_font_size(14)}px; }} QMessageBox QLabel {{ font-size: {theme_font_size(14)}px; }}")
                 msg.setWindowTitle("リセット確認")
                 msg.setIcon(QMessageBox.Icon.Warning)
                 msg.setText("タイマーとラップをリセットしますか？")
@@ -2824,16 +2849,16 @@ class MainWindow(QMainWindow):
 
     def _ready_button_style(self):
         if self.timer_ready:
-            return """
-                QPushButton {
-                    background-color: #2e7d32;
-                    color: white;
-                    border: 1px solid #66bb6a;
+            return f"""
+                QPushButton {{
+                    background-color: {theme_color('accent_soft', '#2e7d32')};
+                    color: {theme_color('overlay_text', 'white')};
+                    border: 1px solid {theme_color('overlay_border', '#66bb6a')};
                     border-radius: 4px;
                     padding: 5px 12px;
                     font-weight: bold;
-                }
-                QPushButton:hover { background-color: #388e3c; }
+                }}
+                QPushButton:hover {{ background-color: {theme_color('accent_soft', '#388e3c')}; }}
             """
         return Styles.BUTTON
 
@@ -3136,6 +3161,8 @@ class MainWindow(QMainWindow):
 
     def _configure_segment_summary_label(self):
         """2行の区間サマリーが縦方向に圧縮されないようにする。"""
+        if has_custom_theme_font():
+            self.segment_summary_label.ensurePolished()
         line_height = self.segment_summary_label.fontMetrics().lineSpacing()
         vertical_padding = 4
         self.segment_summary_label.setMinimumHeight(line_height * 2 + vertical_padding)
@@ -3183,6 +3210,17 @@ class MainWindow(QMainWindow):
                 act_lbl.setStyleSheet(Styles.LAP_ITEM_PENDING)
                 time_lbl.setStyleSheet(Styles.LAP_ITEM_PENDING)
                 split_lbl.setStyleSheet(Styles.LAP_ITEM_PENDING)
+            for label in (act_lbl, time_lbl, split_lbl):
+                fit_theme_fixed_geometry(label)
+        if has_custom_theme_font():
+            # The wrapping summary's height-for-width can otherwise let the
+            # enclosing lap panel shrink below its enlarged rows.
+            for index in range(self.lap_content_layout.count()):
+                row_layout = self.lap_content_layout.itemAt(index).layout()
+                if row_layout is not None:
+                    row_layout.invalidate()
+            self.lap_content_layout.invalidate()
+            self._fit_custom_font_timer_height()
 
     def update_display(self):
         current_time = time.time()
@@ -3822,10 +3860,10 @@ class MainWindow(QMainWindow):
         hotkey = self.config.get('hotkeys', {}).get('click_through', DEFAULT_CLICK_THROUGH_HOTKEY)
         if getattr(self, 'click_through', False):
             self.click_through_label.setText(f"🔓 クリックスルーON（{hotkey}で解除）")
-            self.click_through_label.setStyleSheet("color: #ff9944; font-size: 14px; font-weight: bold;")
+            self.click_through_label.setStyleSheet(f"color: {theme_color('danger', '#ff9944')}; font-size: {theme_font_size(14)}px; font-weight: bold;")
         else:
             self.click_through_label.setText(f"クリックスルーOFF（{hotkey}でON）")
-            self.click_through_label.setStyleSheet("color: rgba(176, 255, 123, 0.45); font-size: 12px; font-weight: normal;")
+            self.click_through_label.setStyleSheet(f"color: {theme_rgba('accent', 176, 255, 123, 0.45)}; font-size: {theme_font_size(12)}px; font-weight: normal;")
         self.click_through_label.setVisible(True)
 
     # --- レベルガイド ---
@@ -4035,7 +4073,7 @@ class MainWindow(QMainWindow):
                 self._visited_town = True
             self.zone_label.setText(f"🏠 {display_zone_name}")
             self.advice_label.setText("")
-            self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
+            self.advice_label.setStyleSheet(f"color: #888888; font-size: {theme_font_size(12)}px;")
             return
 
         # 街エリアの場合はゾーン名表示のみ更新、ガイド・マップは前のまま維持
@@ -4057,7 +4095,7 @@ class MainWindow(QMainWindow):
             if actual_entry and self._in_lab and self._lab_zone_id:
                 self._in_lab = False
                 self.advice_label.setText("🏛️ Labクリア — 次のガイドを表示中")
-                self.advice_label.setStyleSheet("color: #ffc832; font-size: 12px;")
+                self.advice_label.setStyleSheet(f"color: #ffc832; font-size: {theme_font_size(12)}px;")
                 # 志す者の広場のvisitカウントを増やす
                 self.zone_visit_counts[self._lab_zone_id] = self.zone_visit_counts.get(self._lab_zone_id, 1) + 1
                 visit_num = self.zone_visit_counts[self._lab_zone_id]
@@ -4066,7 +4104,7 @@ class MainWindow(QMainWindow):
                 self._lab_zone_id = None
             else:
                 self.advice_label.setText("（街エリア — ガイドは前のエリアを表示中）")
-                self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
+                self.advice_label.setStyleSheet(f"color: #888888; font-size: {theme_font_size(12)}px;")
             return
         
         # 訪問回数オーバーライドをリセット（街以外のゾーン移動で自動に戻る）
@@ -4098,7 +4136,7 @@ class MainWindow(QMainWindow):
             # Lab中に未知のエリア（Lab内部）→ ガイド更新スキップ
             self.zone_label.setText(f"📍 {display_zone_name}")
             self.advice_label.setText("🏛️ Lab — ガイドは前のエリアを表示中")
-            self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
+            self.advice_label.setStyleSheet(f"color: #888888; font-size: {theme_font_size(12)}px;")
             return
         
         # monster_levels.jsonからデータ取得
@@ -4111,7 +4149,7 @@ class MainWindow(QMainWindow):
                 # 街扱い — 既存の街処理と同じ
                 self.zone_label.setText(f"🏠 {display_zone_name}")
                 self.advice_label.setText("（街エリア — ガイドは前のエリアを表示中）")
-                self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
+                self.advice_label.setStyleSheet(f"color: #888888; font-size: {theme_font_size(12)}px;")
                 return
             elif exclude_type == "boss":
                 # ボスエリア — ペナルティ判定スキップ
@@ -4120,7 +4158,7 @@ class MainWindow(QMainWindow):
                 act_prefix = f"{act_name} — " if act_name else ""
                 self.zone_label.setText(f"📍 {act_prefix}{display_zone_name}")
                 self.advice_label.setText("⚔️ ボスエリア")
-                self.advice_label.setStyleSheet("color: #ff9944; font-size: 12px;")
+                self.advice_label.setStyleSheet(f"color: #ff9944; font-size: {theme_font_size(12)}px;")
                 # ガイド・マップ更新は続行
                 self._update_guide_and_map(zone_name, zone_id, 1, zone_changed=actual_entry)
                 return
@@ -4131,7 +4169,7 @@ class MainWindow(QMainWindow):
                 act_prefix = f"{act_name} — " if act_name else ""
                 self.zone_label.setText(f"📍 {act_prefix}{display_zone_name}")
                 self.advice_label.setText("🏛️ 非戦闘エリア")
-                self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
+                self.advice_label.setStyleSheet(f"color: #888888; font-size: {theme_font_size(12)}px;")
                 self._update_guide_and_map(zone_name, zone_id, 1, zone_changed=actual_entry)
                 return
         
@@ -4287,21 +4325,21 @@ class MainWindow(QMainWindow):
         if is_town_zone:
             self.zone_label.setText(f"📍 {display_zone_name}")
             self.advice_label.setText("")
-            self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
+            self.advice_label.setStyleSheet(f"color: #888888; font-size: {theme_font_size(12)}px;")
         elif act_name and display_lv:
             visit_label = ""
             lv_prefix = "MLv" if monster_lv else "Lv"
             self.zone_label.setText(f"📍 {act_name} — {display_zone_name} ({lv_prefix}.{display_lv}){visit_label}")
             msg, color = get_level_advice(self.player_level, display_lv)
             self.advice_label.setText(msg)
-            self.advice_label.setStyleSheet(f"color: {color}; font-size: 12px;")
+            self.advice_label.setStyleSheet(f"color: {color}; font-size: {theme_font_size(12)}px;")
         else:
             self.zone_label.setText(f"📍 {display_zone_name}")
             if act_name:
                 self.advice_label.setText("（エリアレベルは攻略順で変動するため固定表示なし）")
             else:
                 self.advice_label.setText("（適正レベル未登録エリア）")
-            self.advice_label.setStyleSheet("color: #888888; font-size: 12px;")
+            self.advice_label.setStyleSheet(f"color: #888888; font-size: {theme_font_size(12)}px;")
         
         # 攻略ガイド・マップ更新
         self._update_guide_and_map(zone_name, zone_id, visit_num, zone_changed=actual_entry, exp_level=display_lv)
@@ -4413,7 +4451,7 @@ class MainWindow(QMainWindow):
                 show_direction=(self.poe_version == POE1),
             )
             self.guide_text_label.setText(html)
-            self.guide_text_label.setStyleSheet(f"color: #dddddd; font-size: {self.guide_font_size}px; background: transparent;")
+            self.guide_text_label.setStyleSheet(f"color: {theme_color('overlay_text', '#dddddd')}; font-size: {theme_font_size(self.guide_font_size)}px; background: transparent;")
             if (
                 not self._restoring
                 and (zone_changed or voice_text_changed)
@@ -4435,7 +4473,7 @@ class MainWindow(QMainWindow):
                     self.mini_navi_overlay.hide()
         else:
             self.guide_text_label.setText(f"「{zone_name}」のガイドデータはありません")
-            self.guide_text_label.setStyleSheet(f"color: #666666; font-size: {self.guide_font_size}px; background: transparent;")
+            self.guide_text_label.setStyleSheet(f"color: {theme_color('muted_text', '#666666')}; font-size: {theme_font_size(self.guide_font_size)}px; background: transparent;")
             if hasattr(self, "mini_navi_overlay"):
                 if self._is_mini_navi_available():
                     self.mini_navi_overlay.collapse_for_obs()
@@ -4492,7 +4530,7 @@ class MainWindow(QMainWindow):
         self.current_zone = zone_name
         self.zone_label.setText("📍 Act 10 — 渇望の祭壇")
         self.advice_label.setText("🎉 Act10クリア — クリア後ガイドを表示中")
-        self.advice_label.setStyleSheet("color: #ffd700; font-size: 12px;")
+        self.advice_label.setStyleSheet(f"color: #ffd700; font-size: {theme_font_size(12)}px;")
         self._update_guide_and_map(zone_name, zone_id, 1, zone_changed=True)
 
     def on_poe2_act4_cleared(self):

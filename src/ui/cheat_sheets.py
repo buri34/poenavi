@@ -35,6 +35,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import (
+    resolve_app_theme,
+    resolve_dialog_theme,
+    theme_color,
+    theme_font_size,
+    theme_qcolor,
+    theme_rgba,
+)
 from src.poetore.window_position import path_of_exile_client_rect
 from src.ui.app_theme import POENAVI_THEME, POETORE_THEME
 from src.ui.dialog_theme import (
@@ -136,9 +144,9 @@ def normalized_cheat_sheet_config(config: dict | None) -> dict:
 class CheatSheetManagerDialog(QDialog):
     """画像の登録・名称変更・順序変更を行う管理画面。"""
 
-    def __init__(self, config: dict, parent=None, theme=POENAVI_THEME):
+    def __init__(self, config: dict, parent=None, theme=None):
         super().__init__(parent)
-        self.theme = self._dialog_theme(theme)
+        self.theme = self._dialog_theme(theme or resolve_app_theme(POENAVI_THEME))
         self.setWindowTitle("Cheat sheet画像の管理")
         self.resize(620, 430)
         apply_dialog_theme(self, self.theme)
@@ -256,9 +264,9 @@ class CheatSheetManagerDialog(QDialog):
         """起動元のAppThemeを管理ダイアログ用テーマへ対応付ける。"""
         if isinstance(theme, DialogTheme):
             return theme
-        if theme is POETORE_THEME or theme.accent == POETORE_THEME.accent:
-            return POETORE_DIALOG_THEME
-        return POENAVI_DIALOG_THEME
+        if theme is resolve_app_theme(POETORE_THEME) or theme.accent == resolve_app_theme(POETORE_THEME).accent:
+            return resolve_dialog_theme(POETORE_DIALOG_THEME)
+        return resolve_dialog_theme(POENAVI_DIALOG_THEME)
 
     def _refresh_list(self, row: int | None = None):
         current = self.list_widget.currentRow() if row is None else row
@@ -357,8 +365,9 @@ class CheatSheetOverlay(QWidget):
     config_changed = Signal(dict)
     manage_requested = Signal()
 
-    def __init__(self, config: dict, parent=None, theme=POENAVI_THEME):
+    def __init__(self, config: dict, parent=None, theme=None):
         super().__init__(None)
+        theme = theme or resolve_app_theme(POENAVI_THEME)
         self.owner = parent
         self._theme = theme
         self.config = normalized_cheat_sheet_config(config)
@@ -377,17 +386,12 @@ class CheatSheetOverlay(QWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(5)
         self.setStyleSheet(
-            f"QWidget {{ background: rgba(12, 12, 12, 235); color: {theme.text}; "
-            f"border: 1px solid {theme.accent}; border-radius: 6px; }}"
-            "QLabel { border: none; background: transparent; }"
-            f"QPushButton {{ background:{theme.panel}; color:{theme.text}; border:1px solid #666; "
-            "border-radius:4px; padding:4px 8px; }"
-            f"QPushButton:hover {{ border-color:{theme.accent}; }}"
+            f"QWidget {{ background: {theme_rgba('surface', 12, 12, 12, 235)}; color: {theme.text}; border: 1px solid {theme.accent}; border-radius: 6px; }}QLabel {{ border: none; background: transparent; }}QPushButton {{ background:{theme.panel}; color:{theme.text}; border:1px solid {theme_color('border', '#666')}; border-radius:4px; padding:4px 8px; }}QPushButton:hover {{ border-color:{theme.accent}; }}"
         )
 
         title_row = QHBoxLayout()
         self.title_label = QLabel("")
-        self.title_label.setStyleSheet("font-weight:bold; font-size:14px;")
+        self.title_label.setStyleSheet(f"font-weight:bold; font-size:{theme_font_size(14)}px;")
         self.title_label.setCursor(QCursor(Qt.SizeAllCursor))
         self.title_label.installEventFilter(self)
         title_row.addWidget(self.title_label)
@@ -456,18 +460,14 @@ class CheatSheetOverlay(QWidget):
         )
         self._background_alpha = round(255 * transparency_pct / 100)
         self.setStyleSheet(
-            f"QWidget#cheatSheetOverlay {{ background: transparent; color: {self._theme.text}; }}"
-            "QLabel { border: none; background: transparent; }"
-            f"QPushButton {{ background:{self._theme.panel}; color:{self._theme.text}; "
-            "border:1px solid #666; border-radius:4px; padding:4px 8px; }"
-            f"QPushButton:hover {{ border-color:{self._theme.accent}; }}"
+            f"QWidget#cheatSheetOverlay {{ background: transparent; color: {self._theme.text}; }}QLabel {{ border: none; background: transparent; }}QPushButton {{ background:{self._theme.panel}; color:{self._theme.text}; border:1px solid {theme_color('border', '#666')}; border-radius:4px; padding:4px 8px; }}QPushButton:hover {{ border-color:{self._theme.accent}; }}"
         )
         self.update()
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setBrush(QColor(12, 12, 12, self._background_alpha))
+        painter.setBrush(theme_qcolor("overlay_bg", 12, 12, 12, self._background_alpha))
         painter.setPen(QPen(QColor(self._theme.accent), 1))
         painter.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 6, 6)
         super().paintEvent(event)
@@ -485,15 +485,7 @@ class CheatSheetOverlay(QWidget):
             self._image_opacity_effect.setOpacity(1.0)
             self.title_label.setText("Cheat sheets（画像タイトルをドラッグで移動）")
             self.image_label.setStyleSheet(
-                "QLabel {"
-                " background: rgba(0, 0, 0, 205);"
-                " color: white;"
-                " border: 1px solid rgba(255, 255, 255, 110);"
-                " border-radius: 10px;"
-                " padding: 28px;"
-                " font-size: 20px;"
-                " font-weight: bold;"
-                "}"
+                f"QLabel {{ background: {theme_rgba('surface', 0, 0, 0, 205)}; color: {theme_color('text', 'white')}; border: 1px solid {theme_rgba('border', 255, 255, 255, 110)}; border-radius: 10px; padding: 28px; font-size: {theme_font_size(20)}px; font-weight: bold;}}"
             )
             self.image_label.setText(
                 "<div>画像が登録されていません</div>"
@@ -514,15 +506,7 @@ class CheatSheetOverlay(QWidget):
         if self._pixmap.isNull():
             self._image_opacity_effect.setOpacity(1.0)
             self.image_label.setStyleSheet(
-                "QLabel {"
-                " background: rgba(0, 0, 0, 205);"
-                " color: white;"
-                " border: 1px solid rgba(255, 255, 255, 110);"
-                " border-radius: 10px;"
-                " padding: 28px;"
-                " font-size: 20px;"
-                " font-weight: bold;"
-                "}"
+                f"QLabel {{ background: {theme_rgba('surface', 0, 0, 0, 205)}; color: {theme_color('text', 'white')}; border: 1px solid {theme_rgba('border', 255, 255, 255, 110)}; border-radius: 10px; padding: 28px; font-size: {theme_font_size(20)}px; font-weight: bold;}}"
             )
             self.image_label.setText("画像ファイルが見つかりません")
         else:

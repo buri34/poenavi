@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+
+from src.ui.appearance import POENAVI_TOKENS, POETORE_TOKENS, resolve_app_theme
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 
 
@@ -15,24 +17,24 @@ class AppTheme:
 
 
 POENAVI_THEME = AppTheme(
-    accent="#B0FF7B",
-    text="#E9FFBD",
-    muted_text="#C9D4C2",
-    background="#101310",
-    panel="#1E241E",
+    accent=POENAVI_TOKENS.accent,
+    text=POENAVI_TOKENS.text,
+    muted_text=POENAVI_TOKENS.muted_text,
+    background=POENAVI_TOKENS.background,
+    panel=POENAVI_TOKENS.control,
 )
 
 # 設定画面はアプリモードにかかわらず、長文を読みやすい共通テーマにする。
 SETTINGS_THEME = POENAVI_THEME
 
 POETORE_THEME = AppTheme(
-    accent="#65FFCA",
-    text="#E6ECEA",
-    muted_text="#98A39F",
-    background="#111416",
-    panel="#1A1F21",
+    accent=POETORE_TOKENS.accent,
+    text=POETORE_TOKENS.text,
+    muted_text=POETORE_TOKENS.muted_text,
+    background=POETORE_TOKENS.background,
+    panel=POETORE_TOKENS.control,
 )
 
 
 def theme_for_mode(mode: str) -> AppTheme:
-    return POETORE_THEME if normalize_app_mode(mode) == POETORE_MODE else POENAVI_THEME
+    return resolve_app_theme(POETORE_THEME if normalize_app_mode(mode) == POETORE_MODE else POENAVI_THEME)

@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import resolve_dialog_theme, theme_color, theme_font_size, theme_rgba
 from src.ui.dialog_theme import POENAVI_DIALOG_THEME, apply_dialog_theme
 from src.ui.styles import Styles
 from src.ui.window_flags import _with_optional_always_on_top
@@ -73,7 +74,7 @@ class VendorSearchPresetDialog(QDialog):
         self._last_poe1_generated_patterns = set()
         self._last_poe1_selected_labels = set()
         self._saved_snapshot = []
-        self.theme = POENAVI_DIALOG_THEME
+        self.theme = resolve_dialog_theme(POENAVI_DIALOG_THEME)
         self.setWindowFlags(_with_optional_always_on_top(Qt.Window | Qt.FramelessWindowHint, parent))
         self.setAttribute(Qt.WA_TranslucentBackground)
         # 初期表示は従来どおり広めに開く。小さいモニターでは手動リサイズ + REGEX欄スクロールで対応。
@@ -87,12 +88,12 @@ class VendorSearchPresetDialog(QDialog):
         container = QWidget(self)
         self._container = container
         self._default_bg_alpha = 230
-        container.setStyleSheet("""
-            QWidget {
-                background: rgba(20, 20, 20, 230);
-                border: 1px solid rgba(176,255,123,0.4);
+        container.setStyleSheet(f"""
+            QWidget {{
+                background: {theme_rgba('surface', 20, 20, 20, 230)};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.4)};
                 border-radius: 6px;
-            }
+            }}
         """)
         container_layout = QVBoxLayout(container)
         container_layout.setContentsMargins(8, 4, 8, 8)
@@ -107,14 +108,14 @@ class VendorSearchPresetDialog(QDialog):
         self.title_label = QLabel(
             "🔍 PoE1 店売り検索プリセット" if self.poe_version == POE1 else "🔍 PoE2 店売り・スタッシュ検索プリセット"
         )
-        self.title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none;")
+        self.title_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(15)}px; font-weight: bold; border: none;")
         title_layout.addWidget(self.title_label)
         title_layout.addStretch()
         self.close_button = QPushButton("✕")
         self.close_button.setFixedSize(22, 22)
-        self.close_button.setStyleSheet("""
-            QPushButton { background: transparent; color: #888; border: none; font-size: 14px; }
-            QPushButton:hover { color: #ff6666; }
+        self.close_button.setStyleSheet(f"""
+            QPushButton {{ background: transparent; color: {theme_color('muted_text', '#888')}; border: none; font-size: {theme_font_size(14)}px; }}
+            QPushButton:hover {{ color: {theme_color('danger', '#ff6666')}; }}
         """)
         self.close_button.clicked.connect(self.close)
         title_layout.addWidget(self.close_button)
@@ -124,7 +125,7 @@ class VendorSearchPresetDialog(QDialog):
         if self.poe_version == POE1:
             hint_text += " PoE1ではAct中の3リンク装備購入など、ベンダー検索向けのプリセットを管理します。"
         self.hint_label = QLabel(hint_text)
-        self.hint_label.setStyleSheet("color: #aaaaaa; font-size: 13px; border: none;")
+        self.hint_label.setStyleSheet(f"color: {theme_color('muted_text', '#aaaaaa')}; font-size: {theme_font_size(13)}px; border: none;")
         self.hint_label.setWordWrap(True)
         container_layout.addWidget(self.hint_label)
 
@@ -148,21 +149,21 @@ class VendorSearchPresetDialog(QDialog):
         self.table.setAlternatingRowColors(True)
         self.table.setStyleSheet(f"""
             QTableWidget {{
-                background: rgba(26,26,26,200); color: {Styles.TEXT_COLOR};
-                alternate-background-color: rgba(45, 55, 40, 120);
-                border: 1px solid rgba(176,255,123,0.3); border-radius: 4px;
-                gridline-color: rgba(176,255,123,0.15); font-size: 14px;
-                selection-background-color: rgba(176,255,123,0.35);
-                selection-color: #ffffff;
+                background: {theme_rgba('surface', 26, 26, 26, 200)}; color: {Styles.TEXT_COLOR};
+                alternate-background-color: {theme_rgba('surface', 45, 55, 40, 120)};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)}; border-radius: 4px;
+                gridline-color: {theme_rgba('accent', 176, 255, 123, 0.15)}; font-size: {theme_font_size(14)}px;
+                selection-background-color: {theme_rgba('accent_soft', 176, 255, 123, 0.35)};
+                selection-color: {theme_color('text', '#ffffff')};
             }}
             QTableWidget::item:selected {{
-                background: rgba(176,255,123,0.35);
-                color: #ffffff;
+                background: {theme_rgba('accent_soft', 176, 255, 123, 0.35)};
+                color: {theme_color('text', '#ffffff')};
             }}
-            QTableWidget::item:focus {{ border: 1px solid #b0ff7b; }}
+            QTableWidget::item:focus {{ border: 1px solid {theme_color('accent', '#b0ff7b')}; }}
             QHeaderView::section {{
-                background: rgba(40,40,40,230); color: {Styles.TEXT_COLOR};
-                border: 1px solid rgba(176,255,123,0.25); padding: 6px;
+                background: {theme_rgba('surface', 40, 40, 40, 230)}; color: {Styles.TEXT_COLOR};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.25)}; padding: 6px;
             }}
         """)
         self.table.verticalHeader().setVisible(False)
@@ -193,22 +194,22 @@ class VendorSearchPresetDialog(QDialog):
         # 右: 編集欄 + regex支援チェックボックス
         right_panel = QWidget()
         self.right_panel = right_panel
-        right_panel.setStyleSheet("background: rgba(10,10,10,120); border: 1px solid rgba(176,255,123,0.25); border-radius: 5px;")
+        right_panel.setStyleSheet(f"background: {theme_rgba('surface', 10, 10, 10, 120)}; border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.25)}; border-radius: 5px;")
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(10, 8, 10, 8)
         right_layout.setSpacing(8)
         body_layout.addWidget(right_panel, stretch=16)
 
         self.editor_title = QLabel("編集")
-        self.editor_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 16px; font-weight: bold; border: none;")
+        self.editor_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(16)}px; font-weight: bold; border: none;")
         right_layout.addWidget(self.editor_title)
 
-        label_style = f"color: {Styles.TEXT_COLOR}; font-size: 13px; border: none;"
+        label_style = f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(13)}px; border: none;"
         input_style = f"""
             QLineEdit, QTextEdit {{
-                background: rgba(26,26,26,220); color: {Styles.TEXT_COLOR};
-                border: 1px solid rgba(176,255,123,0.35); border-radius: 4px;
-                padding: 7px; font-size: 14px;
+                background: {theme_rgba('control', 26, 26, 26, 220)}; color: {Styles.TEXT_COLOR};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.35)}; border-radius: 4px;
+                padding: 7px; font-size: {theme_font_size(14)}px;
             }}
         """
 
@@ -245,7 +246,7 @@ class VendorSearchPresetDialog(QDialog):
             query_header.addWidget(self.all_act_gem_shop_query_btn)
         query_header.addStretch()
         self.query_length_label = QLabel(f"0/{self.MAX_SEARCH_QUERY_LENGTH}")
-        self.query_length_label.setStyleSheet("color: #aaaaaa; font-size: 12px; border: none;")
+        self.query_length_label.setStyleSheet(f"color: {theme_color('muted_text', '#aaaaaa')}; font-size: {theme_font_size(12)}px; border: none;")
         query_header.addWidget(self.query_length_label)
         right_layout.addLayout(query_header)
         self.query_edit = QTextEdit()
@@ -266,11 +267,11 @@ class VendorSearchPresetDialog(QDialog):
         if self.poe_version != POE1:
             limit_note = "PoE2の検索窓は250文字が上限です。超過すると貼り付けができません。"
             self.query_limit_note = QLabel(limit_note)
-            self.query_limit_note.setStyleSheet("color: #aaaaaa; font-size: 12px; border: none;")
+            self.query_limit_note.setStyleSheet(f"color: {theme_color('muted_text', '#aaaaaa')}; font-size: {theme_font_size(12)}px; border: none;")
             right_layout.addWidget(self.query_limit_note)
 
         self.helper_title = QLabel("PoE1検索作成支援（チェックすると検索文字列に追加）" if self.poe_version == POE1 else "正規表現の作成支援（チェックすると検索文字列に追加）")
-        self.helper_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 15px; font-weight: bold; border: none; margin-top: 4px;")
+        self.helper_title.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(15)}px; font-weight: bold; border: none; margin-top: 4px;")
         right_layout.addWidget(self.helper_title)
 
         # REGEX候補は項目が多いため、小さいモニターでも編集欄全体を見失わないよう
@@ -281,8 +282,8 @@ class VendorSearchPresetDialog(QDialog):
         helper_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         helper_scroll.setStyleSheet(f"""
             QScrollArea {{
-                background: rgba(10,10,10,80);
-                border: 1px solid rgba(176,255,123,0.18);
+                background: {theme_rgba('background', 10, 10, 10, 80)};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.18)};
                 border-radius: 4px;
             }}
             QScrollArea > QWidget > QWidget {{
@@ -290,18 +291,18 @@ class VendorSearchPresetDialog(QDialog):
                 border: none;
             }}
             QScrollBar:vertical, QScrollBar:horizontal {{
-                background: rgba(30,30,30,150);
+                background: {theme_rgba('surface', 30, 30, 30, 150)};
                 border: none;
                 margin: 0;
             }}
             QScrollBar::handle:vertical, QScrollBar::handle:horizontal {{
-                background: rgba(176,255,123,0.45);
+                background: {theme_color('muted_text', 'rgba(176, 255, 123, 0.45)')};
                 border-radius: 4px;
                 min-height: 24px;
                 min-width: 24px;
             }}
             QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {{
-                background: rgba(176,255,123,0.70);
+                background: {theme_color('accent', 'rgba(176, 255, 123, 0.70)')};
             }}
             QScrollBar::add-line, QScrollBar::sub-line {{
                 width: 0;
@@ -393,12 +394,12 @@ class VendorSearchPresetDialog(QDialog):
             return
         length = len(self._query_text()) if hasattr(self, "query_edit") else 0
         over_limit = length > self.MAX_SEARCH_QUERY_LENGTH
-        color = "#ff6666" if over_limit else "#aaaaaa"
+        color = theme_color("danger", "#ff6666") if over_limit else theme_color("muted_text", "#aaaaaa")
         self.query_length_label.setText(f"{length}/{self.MAX_SEARCH_QUERY_LENGTH}")
-        self.query_length_label.setStyleSheet(f"color: {color}; font-size: 12px; border: none; font-weight: {'bold' if over_limit else 'normal'};")
+        self.query_length_label.setStyleSheet(f"color: {color}; font-size: {theme_font_size(12)}px; border: none; font-weight: {'bold' if over_limit else 'normal'};")
         if hasattr(self, "query_limit_note"):
-            note_color = "#ffaaaa" if over_limit else "#aaaaaa"
-            self.query_limit_note.setStyleSheet(f"color: {note_color}; font-size: 12px; border: none;")
+            note_color = theme_color("danger", "#ffaaaa") if over_limit else theme_color("muted_text", "#aaaaaa")
+            self.query_limit_note.setStyleSheet(f"color: {note_color}; font-size: {theme_font_size(12)}px; border: none;")
 
     def _capture_saved_snapshot(self):
         self._saved_snapshot = self.presets()
@@ -640,24 +641,24 @@ class VendorSearchPresetDialog(QDialog):
             assets_dir = os.path.join(getattr(sys, "_MEIPASS", ConfigManager._get_base_dir()), "assets")
         checkmark_path = os.path.join(assets_dir, "checkmark_lime.svg").replace("\\", "/")
         checkbox_style = f"""
-            QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: 14px; spacing: 8px; border: none; }}
+            QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(14)}px; spacing: 8px; border: none; }}
             QCheckBox::indicator {{
                 width: 16px; height: 16px;
-                border: 1px solid rgba(176,255,123,0.75);
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.75)};
                 border-radius: 2px;
-                background: rgba(230,230,230,0.18);
+                background: {theme_rgba('surface', 230, 230, 230, 0.18)};
             }}
             QCheckBox::indicator:hover {{
-                border: 1px solid #b0ff7b;
-                background: rgba(176,255,123,0.18);
+                border: 1px solid {theme_color('accent', '#b0ff7b')};
+                background: {theme_rgba('accent_soft', 176, 255, 123, 0.18)};
             }}
             QCheckBox::indicator:checked {{
-                background: rgba(20, 28, 20, 220);
-                border: 1px solid #b0ff7b;
+                background: {theme_rgba('selection_control', 20, 28, 20, 220)};
+                border: 1px solid {theme_color('accent', '#b0ff7b')};
                 image: url("{checkmark_path}");
             }}
         """
-        section_style = "color: #44cc66; font-size: 16px; font-weight: bold; border: none; margin-top: 6px;"
+        section_style = f"color: {theme_color('accent', '#44cc66')}; font-size: {theme_font_size(16)}px; font-weight: bold; border: none; margin-top: 6px;"
         self.option_checkboxes = []
         self.helper_categories = {}
         if self.poe_version == POE1:
@@ -666,7 +667,7 @@ class VendorSearchPresetDialog(QDialog):
         groups = self._load_regex_helper_groups()
         if not groups:
             note = QLabel("REGEX支援候補が空です。")
-            note.setStyleSheet("color: #ffaaaa; font-size: 13px; border: none;")
+            note.setStyleSheet(f"color: {theme_color('danger', '#ffaaaa')}; font-size: {theme_font_size(13)}px; border: none;")
             parent_layout.addWidget(note)
             return
         for group_title, options in groups:
@@ -856,38 +857,38 @@ class VendorSearchPresetDialog(QDialog):
 
         spin_style = f"""
             QSpinBox {{
-                background: rgba(245,245,245,230); color: #111;
-                border: 1px solid rgba(176,255,123,0.45); border-radius: 3px;
-                padding: 4px 20px 4px 6px; font-size: 14px;
+                background: {theme_rgba('control', 245, 245, 245, 230)}; color: {theme_color('muted_text', '#111')};
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.45)}; border-radius: 3px;
+                padding: 4px 20px 4px 6px; font-size: {theme_font_size(14)}px;
             }}
             QSpinBox::up-button {{
                 subcontrol-origin: border;
                 subcontrol-position: top right;
                 width: 16px;
                 height: 14px;
-                border-left: 1px solid rgba(0,0,0,0.35);
-                border-bottom: 1px solid rgba(0,0,0,0.25);
-                background: rgba(235,235,235,245);
+                border-left: 1px solid {theme_rgba('border', 0, 0, 0, 0.35)};
+                border-bottom: 1px solid {theme_rgba('border', 0, 0, 0, 0.25)};
+                background: {theme_rgba('surface', 235, 235, 235, 245)};
             }}
             QSpinBox::down-button {{
                 subcontrol-origin: border;
                 subcontrol-position: bottom right;
                 width: 16px;
                 height: 14px;
-                border-left: 1px solid rgba(0,0,0,0.35);
-                background: rgba(225,225,225,245);
+                border-left: 1px solid {theme_rgba('border', 0, 0, 0, 0.35)};
+                background: {theme_rgba('surface', 225, 225, 225, 245)};
             }}
             QSpinBox::up-arrow {{
                 width: 0px; height: 0px;
                 border-left: 4px solid transparent;
                 border-right: 4px solid transparent;
-                border-bottom: 5px solid #111;
+                border-bottom: 5px solid {theme_color('border', '#111')};
             }}
             QSpinBox::down-arrow {{
                 width: 0px; height: 0px;
                 border-left: 4px solid transparent;
                 border-right: 4px solid transparent;
-                border-top: 5px solid #111;
+                border-top: 5px solid {theme_color('border', '#111')};
             }}
         """
         color_row = QHBoxLayout()
@@ -905,7 +906,7 @@ class VendorSearchPresetDialog(QDialog):
             self._poe1_other_link_spins[key] = spin
             color_row.addWidget(spin)
             label = QLabel(key.lower())
-            label.setStyleSheet(f"color: {color}; font-size: 16px; font-weight: bold; border: none;")
+            label.setStyleSheet(f"color: {color}; font-size: {theme_font_size(16)}px; font-weight: bold; border: none;")
             color_row.addWidget(label)
         color_row.addStretch()
         parent_layout.addLayout(color_row)

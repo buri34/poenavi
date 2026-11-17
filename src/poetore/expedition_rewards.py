@@ -25,6 +25,8 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QWidget
 
+from src.ui.appearance import theme_color, theme_font_family, theme_font_size, theme_qcolor
+
 from src.poetore.expedition_ocr_probe import (
     PreparedOcrFrame,
     RowBand,
@@ -530,7 +532,7 @@ class ExpeditionPriceOverlay(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
-        font = QFont("Yu Gothic UI", EXPEDITION_PRICE_FONT_SIZE)
+        font = QFont(theme_font_family("Yu Gothic UI"), theme_font_size(EXPEDITION_PRICE_FONT_SIZE))
         font.setBold(True)
         painter.setFont(font)
         x = price_label_x(self.width(), self._source_width, self._panel_width)
@@ -549,7 +551,7 @@ class ExpeditionPriceOverlay(QWidget):
             plate = QRectF(x, y - plate_height / 2, plate_width, plate_height)
 
             painter.setPen(Qt.NoPen)
-            painter.setBrush(EXPEDITION_PRICE_BACKGROUND)
+            painter.setBrush(theme_qcolor("overlay_bg", 0, 0, 0, EXPEDITION_PRICE_BACKGROUND.alpha()))
             painter.drawRoundedRect(
                 plate,
                 EXPEDITION_PRICE_CORNER_RADIUS,

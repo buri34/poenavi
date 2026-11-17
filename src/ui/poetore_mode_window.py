@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import resolve_app_theme, theme_color, theme_font_size, theme_rgba
 from src.poetore.exchange_icon_cache import ExchangeIconCache
 from src.poetore.exchange_rate_cache import ExchangeRateValueCache
 from src.poetore.exchange_rate_settings import (
@@ -64,8 +65,7 @@ from src.utils.poe_version_data import POE1, POE2
 from src.utils.stash_tab_scroll import StashTabScrollController
 from src.version import APP_VERSION
 
-POETORE_ACCENT = POETORE_THEME.accent
-POETORE_TEXT = POETORE_THEME.text
+
 UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000
 
 
@@ -87,7 +87,7 @@ def _finish_icon(pixmap, painter) -> QIcon:
 def _memo_icon() -> QIcon:
     """Return a compact note page with a folded corner."""
     pixmap, painter = _icon_canvas()
-    accent = QColor(POETORE_ACCENT)
+    accent = QColor(resolve_app_theme(POETORE_THEME).accent)
     dark = QColor("#15201D")
     page = QPainterPath(QPointF(5.0, 2.8))
     page.lineTo(15.8, 2.8)
@@ -121,7 +121,7 @@ def _heist_curio_icon() -> QIcon:
 def _expedition_icon() -> QIcon:
     """Return the three-armed Expedition spiral emblem."""
     pixmap, painter = _icon_canvas()
-    accent = QColor(POETORE_ACCENT)
+    accent = QColor(resolve_app_theme(POETORE_THEME).accent)
     dark = QColor("#15201D")
 
     # Match the in-game emblem: two curls above and one curl below.
@@ -161,7 +161,7 @@ def _expedition_icon() -> QIcon:
 def _abyss_desecration_icon() -> QIcon:
     """Return the approved green stone-and-concentric-eye Abyss emblem."""
     pixmap, painter = _icon_canvas()
-    accent = QColor(POETORE_ACCENT)
+    accent = QColor(resolve_app_theme(POETORE_THEME).accent)
     stone = QColor("#34423F")
     edge = QColor("#82918B")
     dark = QColor("#121A18")
@@ -210,7 +210,7 @@ def _abyss_desecration_icon() -> QIcon:
 def _image_manager_icon() -> QIcon:
     """Return stacked picture cards to convey image management."""
     pixmap, painter = _icon_canvas()
-    accent = QColor(POETORE_ACCENT)
+    accent = QColor(resolve_app_theme(POETORE_THEME).accent)
     painter.setPen(QPen(QColor(61, 143, 123), 1.3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
     painter.setBrush(QColor(24, 49, 43))
     painter.drawRoundedRect(2.8, 3.2, 15.5, 14.5, 2.0, 2.0)
@@ -241,7 +241,7 @@ def _draw_gear(
 ):
     dark = QColor("#15201D")
     stroke = QColor(stroke_color) if stroke_color else dark
-    fill = QColor(fill_color) if fill_color else QColor(POETORE_ACCENT)
+    fill = QColor(fill_color) if fill_color else QColor(resolve_app_theme(POETORE_THEME).accent)
     cx, cy = center.x(), center.y()
     painter.setPen(QPen(stroke, 2.6, Qt.SolidLine, Qt.RoundCap))
     diagonal = tooth_length * 0.72
@@ -271,7 +271,7 @@ def _settings_icon() -> QIcon:
         QPointF(12.0, 12.0),
         radius=5.5,
         tooth_length=2.4,
-        stroke_color=POETORE_ACCENT,
+        stroke_color=resolve_app_theme(POETORE_THEME).accent,
         fill_color="#20483E",
     )
     return _finish_icon(pixmap, painter)
@@ -290,7 +290,7 @@ def _map_mod_manager_icon() -> QIcon:
     map_path.lineTo(8.5, 16.5)
     map_path.lineTo(2.5, 18.5)
     map_path.closeSubpath()
-    painter.setPen(QPen(QColor(POETORE_ACCENT), 1.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+    painter.setPen(QPen(QColor(resolve_app_theme(POETORE_THEME).accent), 1.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
     painter.setBrush(QColor(32, 72, 62))
     painter.drawPath(map_path)
     painter.drawLine(QPointF(8.5, 2.8), QPointF(8.5, 16.2))
@@ -323,30 +323,30 @@ class _PoetoreModeTitleBar(QWidget):
         button_style = f"""
             QPushButton {{
                 background: transparent;
-                color: {POETORE_TEXT};
+                color: {resolve_app_theme(POETORE_THEME).text};
                 border: none;
-                font-size: 14px;
+                font-size: {theme_font_size(14)}px;
                 font-weight: bold;
                 padding: 2px 8px;
             }}
             QPushButton:hover {{
-                background: rgba(101, 255, 202, 0.20);
+                background: {theme_rgba('accent_soft', 101, 255, 202, 0.20)};
                 border-radius: 3px;
             }}
         """
         close_style = f"""
             QPushButton {{
                 background: transparent;
-                color: {POETORE_TEXT};
+                color: {resolve_app_theme(POETORE_THEME).text};
                 border: none;
-                font-size: 14px;
+                font-size: {theme_font_size(14)}px;
                 font-weight: bold;
                 padding: 2px 8px;
             }}
             QPushButton:hover {{
-                background: rgba(255, 60, 60, 0.8);
+                background: {theme_rgba('accent_soft', 255, 60, 60, 0.8)};
                 border-radius: 3px;
-                color: #ffffff;
+                color: {theme_color('text', '#ffffff')};
             }}
         """
 
@@ -556,53 +556,53 @@ class PoetoreModeWindow(QMainWindow):
         central.setObjectName("poetoreModeRoot")
         central.setStyleSheet(f"""
             QWidget#poetoreModeRoot {{
-                background: {POETORE_THEME.background};
-                color: {POETORE_TEXT};
-                border: 1px solid #343B3E;
+                background: {resolve_app_theme(POETORE_THEME).background};
+                color: {resolve_app_theme(POETORE_THEME).text};
+                border: 1px solid {theme_color('border', '#343B3E')};
                 border-radius: 10px;
             }}
             QWidget#poetoreModeTitleBar {{ border: none; background: transparent; }}
             QFrame#rateCard {{
-                background: {POETORE_THEME.panel};
-                border: 1px solid #343B3E;
+                background: {resolve_app_theme(POETORE_THEME).panel};
+                border: 1px solid {theme_color('border', '#343B3E')};
                 border-radius: 10px;
             }}
             QPushButton {{
-                background: #1A1F21;
-                color: {POETORE_TEXT};
-                border: 1px solid #3A4245;
+                background: {theme_color('control', '#1A1F21')};
+                color: {resolve_app_theme(POETORE_THEME).text};
+                border: 1px solid {theme_color('border', '#3A4245')};
                 border-radius: 7px;
                 padding: 7px 12px;
                 font-weight: bold;
             }}
-            QPushButton:hover {{ background: #25332F; border-color: {POETORE_ACCENT}; }}
-            QPushButton:pressed {{ background: #276B5A; }}
+            QPushButton:hover {{ background: {theme_color('control', '#25332F')}; border-color: {resolve_app_theme(POETORE_THEME).accent}; }}
+            QPushButton:pressed {{ background: {theme_color('accent_soft', '#276B5A')}; }}
             QPushButton#poetoreFocusButton[focusActive="true"] {{
-                background: #204C40;
-                border-color: {POETORE_ACCENT};
-                color: {POETORE_TEXT};
+                background: {theme_color('accent_soft', '#204C40')};
+                border-color: {resolve_app_theme(POETORE_THEME).accent};
+                color: {resolve_app_theme(POETORE_THEME).text};
             }}
             QPushButton#poetoreFocusButton {{
                 padding: 0;
-                font-size: 11px;
+                font-size: {theme_font_size(11)}px;
                 text-align: center;
             }}
             QPushButton#poetoreUpdateButton {{
-                background: #5B4018;
-                color: #FFE7B3;
-                border: 1px solid #D99A35;
+                background: {theme_color('accent_soft', '#5B4018')};
+                color: {theme_color('warning', '#FFE7B3')};
+                border: 1px solid {theme_color('border', '#D99A35')};
                 border-radius: 7px;
                 padding: 7px 12px;
-                font-size: 13px;
+                font-size: {theme_font_size(13)}px;
                 font-weight: bold;
             }}
             QPushButton#poetoreUpdateButton:hover {{
-                background: #72521F;
-                border-color: #F2B84B;
-                color: #FFF4D8;
+                background: {theme_color('accent_soft', '#72521F')};
+                border-color: {theme_color('border', '#F2B84B')};
+                color: {theme_color('text', '#FFF4D8')};
             }}
             QPushButton#poetoreUpdateButton:pressed {{
-                background: #473111;
+                background: {theme_color('accent_soft', '#473111')};
             }}
         """)
         root = QVBoxLayout(central)
@@ -626,21 +626,21 @@ class PoetoreModeWindow(QMainWindow):
         title_row.setContentsMargins(0, 0, 0, 0)
         title_row.setSpacing(6)
         title_style = (
-            f"color: {POETORE_ACCENT}; font-size: 26px; font-weight: bold;"
+            f"color: {resolve_app_theme(POETORE_THEME).accent}; font-size: {theme_font_size(26)}px; font-weight: bold;"
         )
         self.title_label = QLabel("ぽえとれ")
         self.title_label.setStyleSheet(title_style)
         mode_name = "PoE2" if self.poe_version == POE2 else "PoE1"
         self.mode_label = QLabel(f"（{mode_name}）")
         self.mode_label.setStyleSheet(
-            f"color: {POETORE_ACCENT}; font-size: 22px; font-weight: bold;"
+            f"color: {resolve_app_theme(POETORE_THEME).accent}; font-size: {theme_font_size(22)}px; font-weight: bold;"
         )
         self.mode_label.setMinimumWidth(self.mode_label.sizeHint().width())
         title_row.addWidget(self.title_label)
         title_row.addWidget(self.mode_label)
         subtitle = QLabel("価格チェック・トレード支援")
         subtitle.setStyleSheet(
-            f"color: {POETORE_THEME.muted_text}; font-size: 12px;"
+            f"color: {resolve_app_theme(POETORE_THEME).muted_text}; font-size: {theme_font_size(12)}px;"
         )
         title_box.addLayout(title_row)
         title_box.addWidget(subtitle)
@@ -726,7 +726,7 @@ class PoetoreModeWindow(QMainWindow):
         self.focus_message_label = QLabel("")
         self.focus_message_label.setObjectName("focusMessageLabel")
         self.focus_message_label.setStyleSheet(
-            f"color: {POETORE_ACCENT}; font-size: 12px;"
+            f"color: {resolve_app_theme(POETORE_THEME).accent}; font-size: {theme_font_size(12)}px;"
         )
         self.focus_message_label.setWordWrap(True)
         self.focus_message_label.hide()
@@ -760,7 +760,7 @@ class PoetoreModeWindow(QMainWindow):
         self.capture_hint.setAlignment(Qt.AlignCenter)
         self.capture_hint.setWordWrap(True)
         self.capture_hint.setStyleSheet(
-            f"color: {POETORE_THEME.muted_text}; font-size: 12px;"
+            f"color: {resolve_app_theme(POETORE_THEME).muted_text}; font-size: {theme_font_size(12)}px;"
         )
         body_layout.addWidget(self.capture_hint)
 
@@ -840,7 +840,7 @@ class PoetoreModeWindow(QMainWindow):
 
     def _flash_focus_button(self):
         self.focus_button.setStyleSheet(
-            f"background: {POETORE_ACCENT}; color: #101614;"
+            f"background: {resolve_app_theme(POETORE_THEME).accent}; color: {theme_color('background', '#101614')};"
         )
         QTimer.singleShot(1800, lambda: self.focus_button.setStyleSheet(""))
 
@@ -1337,7 +1337,7 @@ class PoetoreModeWindow(QMainWindow):
         poe_version = self.poe_version
         filename = "notes_poe2.json" if poe_version == POE2 else "notes_poe1.json"
         notes_path = str(ConfigManager.get_user_data_path(filename))
-        self._memo_dialog = MemoDialog(self, notes_path=notes_path, theme=POETORE_THEME)
+        self._memo_dialog = MemoDialog(self, notes_path=notes_path, theme=resolve_app_theme(POETORE_THEME))
         self._memo_dialog.apply_opacity(
             self.config.get("window_opacity", 100),
             self.config.get("text_opacity", 100),
@@ -1649,7 +1649,7 @@ class PoetoreModeWindow(QMainWindow):
 
         if self._cheat_sheet_overlay is None:
             overlay = CheatSheetOverlay(
-                self.config.get("cheat_sheets", {}), self, theme=POETORE_THEME
+                self.config.get("cheat_sheets", {}), self, theme=resolve_app_theme(POETORE_THEME)
             )
             overlay.config_changed.connect(self._save_cheat_sheet_config)
             overlay.manage_requested.connect(self.open_cheat_sheet_manager)
@@ -1671,7 +1671,7 @@ class PoetoreModeWindow(QMainWindow):
         if was_visible:
             overlay.hide_and_save()
         dialog = CheatSheetManagerDialog(
-            self.config.get("cheat_sheets", {}), self, theme=POETORE_THEME
+            self.config.get("cheat_sheets", {}), self, theme=resolve_app_theme(POETORE_THEME)
         )
         if dialog.exec():
             self._save_cheat_sheet_config(dialog.result_config())

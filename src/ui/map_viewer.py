@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QSize, Signal, QPoint, QRect, QTimer
 from PySide6.QtGui import QPixmap, QCursor, QPainter
+from src.ui.appearance import theme_color, theme_font_size, theme_rgba
 
 
 # サポートする画像拡張子
@@ -113,15 +114,15 @@ class ClickableThumb(QLabel):
         self.image_path = image_path
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.setFixedSize(THUMB_WIDTH, THUMB_HEIGHT)
-        self.setStyleSheet("""
-            QLabel {
-                border: 1px solid rgba(176, 255, 123, 0.3);
+        self.setStyleSheet(f"""
+            QLabel {{
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.3)};
                 border-radius: 4px;
-                background: rgba(0, 0, 0, 100);
-            }
-            QLabel:hover {
-                border: 1px solid rgba(176, 255, 123, 0.7);
-            }
+                background: {theme_rgba('surface', 0, 0, 0, 100)};
+            }}
+            QLabel:hover {{
+                border: 1px solid {theme_rgba('accent', 176, 255, 123, 0.7)};
+            }}
         """)
         self.setAlignment(Qt.AlignCenter)
         
@@ -160,7 +161,7 @@ class MapImageDialog(QDialog):
         if ConfigManager.load_config().get("always_on_top", True):
             flags |= Qt.WindowStaysOnTopHint
         self.setWindowFlags(flags)
-        self.setStyleSheet("background: #111122;")
+        self.setStyleSheet(f"background: {theme_color('surface', '#111122')};")
         self.setMinimumSize(200, 150)
         
         layout = QVBoxLayout(self)
@@ -171,7 +172,7 @@ class MapImageDialog(QDialog):
         )
         self.notice_label.setWordWrap(True)
         self.notice_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.notice_label.setStyleSheet("color: #ffc832; font-size: 13px; padding: 4px 6px;")
+        self.notice_label.setStyleSheet(f"color: {theme_color('warning', '#ffc832')}; font-size: {theme_font_size(13)}px; padding: 4px 6px;")
         self.notice_label.setVisible(self.poe_version == "PoE2")
         layout.addWidget(self.notice_label)
 
@@ -184,7 +185,7 @@ class MapImageDialog(QDialog):
         # ファイル名 + ナビ表示
         self.info_label = QLabel()
         self.info_label.setAlignment(Qt.AlignCenter)
-        self.info_label.setStyleSheet("color: #888888; font-size: 13px; margin-top: 5px;")
+        self.info_label.setStyleSheet(f"color: {theme_color('muted_text', '#888888')}; font-size: {theme_font_size(13)}px; margin-top: 5px;")
         layout.addWidget(self.info_label)
         
         # 保存されたサイズを復元
@@ -322,7 +323,7 @@ class MapThumbnailWidget(QWidget):
         # ヘッダ
         self.header_label = QLabel("🗺 マップレイアウト")
         self.header_label.setStyleSheet(
-            "color: rgba(176, 255, 123, 0.7); font-size: 11px; font-weight: bold;"
+            f"color: {theme_rgba('accent', 176, 255, 123, 0.7)}; font-size: {theme_font_size(11)}px; font-weight: bold;"
         )
         main_layout.addWidget(self.header_label)
         
@@ -334,22 +335,22 @@ class MapThumbnailWidget(QWidget):
         self.thumb_scroll.setFrameShape(QScrollArea.NoFrame)
         self.thumb_scroll.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
         self.thumb_scroll.setMinimumWidth(0)
-        self.thumb_scroll.setStyleSheet("""
-            QScrollArea { border: none; background: transparent; }
-            QScrollBar:horizontal {
+        self.thumb_scroll.setStyleSheet(f"""
+            QScrollArea {{ border: none; background: transparent; }}
+            QScrollBar:horizontal {{
                 height: 16px;
-                background: rgba(176,255,123,0.08);
+                background: {theme_rgba('accent_soft', 176, 255, 123, 0.08)};
                 border-radius: 7px;
                 margin: 2px 0;
-            }
-            QScrollBar::handle:horizontal {
+            }}
+            QScrollBar::handle:horizontal {{
                 min-width: 36px;
-                background: rgba(176,255,123,0.55);
+                background: {theme_color('muted_text', 'rgba(176, 255, 123, 0.55)')};
                 border-radius: 7px;
-            }
-            QScrollBar::handle:horizontal:hover { background: rgba(176,255,123,0.85); }
-            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; height: 0; }
-            QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: transparent; }
+            }}
+            QScrollBar::handle:horizontal:hover {{ background: {theme_color('accent', 'rgba(176, 255, 123, 0.85)')}; }}
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{ width: 0; height: 0; }}
+            QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{ background: transparent; }}
         """)
 
         self.thumb_container = QWidget()

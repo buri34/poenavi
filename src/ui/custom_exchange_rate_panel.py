@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import resolve_app_theme, theme_color, theme_font_size
 from src.poetore.exchange_catalog import exchange_catalog_by_id
 from src.poetore.exchange_icon_cache import ExchangeIconCache
 from src.poetore.exchange_rate_cache import ExchangeRateValueCache
@@ -192,9 +193,9 @@ class CustomExchangeRatePanel(QWidget):
     def _build_ui(self) -> None:
         self.setStyleSheet(f"""
             QToolTip {{
-                color: {POETORE_THEME.text};
-                background-color: {POETORE_THEME.background};
-                border: 1px solid #66706C;
+                color: {resolve_app_theme(POETORE_THEME).text};
+                background-color: {resolve_app_theme(POETORE_THEME).background};
+                border: 1px solid {theme_color('border', '#66706C')};
                 padding: 5px;
             }}
         """)
@@ -204,7 +205,7 @@ class CustomExchangeRatePanel(QWidget):
         title_row = QHBoxLayout()
         self.title_label = QLabel("カレンシー交換レート")
         self.title_label.setStyleSheet(
-            f"color: {POETORE_THEME.accent}; font-size: 15px; font-weight: bold;"
+            f"color: {resolve_app_theme(POETORE_THEME).accent}; font-size: {theme_font_size(15)}px; font-weight: bold;"
         )
         self.title_label.setToolTip(OFFICIAL_DATA_TOOLTIP)
         title_row.addWidget(self.title_label)
@@ -220,7 +221,7 @@ class CustomExchangeRatePanel(QWidget):
         self.card.setObjectName("customExchangeRateCard")
         self.card.setStyleSheet(f"""
             QFrame#customExchangeRateCard {{
-                background: {POETORE_THEME.panel}; border: 1px solid #343B3E;
+                background: {resolve_app_theme(POETORE_THEME).panel}; border: 1px solid {theme_color('border', '#343B3E')};
                 border-radius: 10px;
             }}
         """)
@@ -231,7 +232,7 @@ class CustomExchangeRatePanel(QWidget):
 
         footer = QHBoxLayout()
         self.status_label = QLabel("最新データを確認中…")
-        self.status_label.setStyleSheet("color: #98A39F; font-size: 11px;")
+        self.status_label.setStyleSheet(f"color: {theme_color('muted_text', '#98A39F')}; font-size: {theme_font_size(11)}px;")
         self.status_label.setWordWrap(True)
         self.status_label.setToolTip(OFFICIAL_DATA_TOOLTIP)
         footer.addWidget(self.status_label, 1)
@@ -305,10 +306,7 @@ class CustomExchangeRatePanel(QWidget):
             self.add_button.setToolTip("レート表示の管理を開く")
             self.add_button.setFixedHeight(30 if pairs else 54)
             self.add_button.setStyleSheet(
-                "QPushButton { color: #68716E; background: transparent; "
-                "border: 1px dashed #3A4245; font-size: 21px; }"
-                f"QPushButton:hover, QPushButton:focus {{ color: {POETORE_THEME.accent}; "
-                f"border-color: {POETORE_THEME.accent}; }}"
+                f"QPushButton {{ color: {theme_color('muted_text', '#68716E')}; background: transparent; border: 1px dashed {theme_color('border', '#3A4245')}; font-size: {theme_font_size(21)}px; }}QPushButton:hover, QPushButton:focus {{ color: {resolve_app_theme(POETORE_THEME).accent}; border-color: {resolve_app_theme(POETORE_THEME).accent}; }}"
             )
             self.add_button.clicked.connect(self.on_manage)
             self.rows_layout.addWidget(self.add_button)
@@ -349,7 +347,7 @@ class CustomExchangeRatePanel(QWidget):
         left_name.setAccessibleName(left_name.text())
         left_name.setFixedWidth(125)
         left_name.setStyleSheet(
-            f"color: {POETORE_THEME.accent}; font-size: 13px;"
+            f"color: {resolve_app_theme(POETORE_THEME).accent}; font-size: {theme_font_size(13)}px;"
         )
         layout.addWidget(left_name)
         value_text = f"1 ＝ {display}" if display_is_rate else display
@@ -363,8 +361,7 @@ class CustomExchangeRatePanel(QWidget):
         value.setToolTip(value_text)
         value_font_size = 15 if display_is_rate else 12
         value.setStyleSheet(
-            f"color: {POETORE_THEME.text}; font-size: {value_font_size}px; "
-            "font-weight: bold;"
+            f"color: {resolve_app_theme(POETORE_THEME).text}; font-size: {theme_font_size(value_font_size)}px; font-weight: bold;"
         )
         if isinstance(value, DecimalAlignedRateLabel):
             value.setMinimumWidth(value.minimum_rate_width())
@@ -377,7 +374,7 @@ class CustomExchangeRatePanel(QWidget):
         right_name.setAccessibleName(right_name.text())
         right_name.setFixedWidth(88)
         right_name.setStyleSheet(
-            f"color: {POETORE_THEME.accent}; font-size: 13px;"
+            f"color: {resolve_app_theme(POETORE_THEME).accent}; font-size: {theme_font_size(13)}px;"
         )
         layout.addWidget(right_name)
         delete = QPushButton()

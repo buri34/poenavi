@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import resolve_dialog_theme
 from src.poetore.window_position import path_of_exile_client_rect
 from src.ui.dialog_theme import (
     POETORE_DIALOG_THEME,
@@ -85,7 +86,7 @@ class DesecrationSettingsDialog(QDialog):
         self._section_widgets = {}
         self.setWindowTitle("アビス冒涜Modティアチェック設定")
         self.setMinimumSize(620, 820)
-        self.theme = POETORE_DIALOG_THEME
+        self.theme = resolve_dialog_theme(POETORE_DIALOG_THEME)
         apply_dialog_theme(self, self.theme)
 
         root = QVBoxLayout(self)
@@ -379,7 +380,7 @@ class DesecrationSettingsDialog(QDialog):
 
     @staticmethod
     def _style_sheet():
-        return build_dialog_stylesheet(POETORE_DIALOG_THEME)
+        return build_dialog_stylesheet(resolve_dialog_theme(POETORE_DIALOG_THEME))
 
     @staticmethod
     def _set_label_state(label: QLabel, state: str) -> None:

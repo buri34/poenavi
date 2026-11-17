@@ -6,6 +6,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from src.ui.appearance import LEGACY_DIALOG_TOKENS, POENAVI_TOKENS, POETORE_TOKENS, resolve_dialog_theme
 from src.app_mode import POETORE_MODE, normalize_app_mode
 
 
@@ -16,19 +17,19 @@ class DialogTheme:
     name: str
     accent: str
     accent_soft: str
-    text: str = "#E6ECEA"
-    muted_text: str = "#98A39F"
-    background: str = "#111416"
-    surface: str = "#171B1D"
-    control: str = "#1A1F21"
-    border: str = "#3B4441"
-    border_strong: str = "#59635F"
-    selection_control: str = "#4488FF"
-    success: str = "#5ED38A"
-    warning: str = "#F6C85F"
-    danger: str = "#FF6B6B"
-    disabled: str = "#66706C"
-    font_family: str = "Noto Sans JP"
+    text: str = LEGACY_DIALOG_TOKENS.text
+    muted_text: str = LEGACY_DIALOG_TOKENS.muted_text
+    background: str = LEGACY_DIALOG_TOKENS.background
+    surface: str = LEGACY_DIALOG_TOKENS.surface
+    control: str = LEGACY_DIALOG_TOKENS.control
+    border: str = POENAVI_TOKENS.border
+    border_strong: str = POENAVI_TOKENS.border_strong
+    selection_control: str = POENAVI_TOKENS.selection_control
+    success: str = POENAVI_TOKENS.success
+    warning: str = POENAVI_TOKENS.warning
+    danger: str = POENAVI_TOKENS.danger
+    disabled: str = POENAVI_TOKENS.disabled
+    font_family: str = POENAVI_TOKENS.font_family
     title_size: int = 20
     section_size: int = 15
     body_size: int = 13
@@ -48,20 +49,20 @@ class DialogTheme:
 
 POENAVI_DIALOG_THEME = DialogTheme(
     name="poenavi",
-    accent="#B0FF7B",
-    accent_soft="#22321D",
+    accent=POENAVI_TOKENS.accent,
+    accent_soft=POENAVI_TOKENS.accent_soft,
 )
 
 POETORE_DIALOG_THEME = DialogTheme(
     name="poetore",
-    accent="#65FFCA",
-    accent_soft="#17332B",
+    accent=POETORE_TOKENS.accent,
+    accent_soft=POETORE_TOKENS.accent_soft,
 )
 
 
 def dialog_theme_for_mode(mode: str) -> DialogTheme:
     """起動モードに対応する対象ダイアログ用テーマを返す。"""
-    return (
+    return resolve_dialog_theme(
         POETORE_DIALOG_THEME
         if normalize_app_mode(mode) == POETORE_MODE
         else POENAVI_DIALOG_THEME
@@ -90,6 +91,8 @@ def _qss_url(filename: str) -> str:
 
 def build_dialog_stylesheet(theme: DialogTheme) -> str:
     """対象ダイアログへ明示適用する、スコープ済み共通QSSを生成する。"""
+    if theme is POENAVI_DIALOG_THEME or theme is POETORE_DIALOG_THEME:
+        theme = resolve_dialog_theme(theme)
     root = f'QDialog[dialogTheme="{theme.name}"]'
     checkbox_asset = _qss_url("ui-checkbox-checked.svg")
     radio_asset = _qss_url("ui-radio-checked.svg")
@@ -463,6 +466,8 @@ QToolTip {{
 
 def apply_dialog_theme(dialog, theme: DialogTheme) -> None:
     """対象ダイアログへ共通テーマを明示適用する。"""
+    if theme is POENAVI_DIALOG_THEME or theme is POETORE_DIALOG_THEME:
+        theme = resolve_dialog_theme(theme)
     dialog.setProperty("dialogTheme", theme.name)
     dialog.setProperty("dialogAccent", theme.accent)
     dialog.setStyleSheet(build_dialog_stylesheet(theme))

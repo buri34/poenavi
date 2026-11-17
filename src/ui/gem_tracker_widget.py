@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QCursor
 
+from src.ui.appearance import theme_color, theme_font_family, theme_font_size, theme_rgba
 from src.ui.styles import Styles
 
 
@@ -50,7 +51,7 @@ class PoBImportDialog(QDialog):
         self.setFixedSize(500, 350)
         self.setStyleSheet(f"""
             QDialog {{
-                background: #1a1a2e;
+                background: {theme_color('background', '#1a1a2e')};
                 color: {Styles.TEXT_COLOR};
             }}
         """)
@@ -64,7 +65,7 @@ class PoBImportDialog(QDialog):
             "Path of Building のエクスポートコードを貼り付けてください。\n"
             "PoBで「Export」→「Copy」でクリップボードにコピーできます。"
         )
-        desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px;")
+        desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(13)}px;")
         desc.setWordWrap(True)
         layout.addWidget(desc)
         
@@ -73,13 +74,13 @@ class PoBImportDialog(QDialog):
         self.text_edit.setPlaceholderText("PoBコード（Base64）をここに貼り付け...")
         self.text_edit.setStyleSheet(f"""
             QTextEdit {{
-                background: #2a2a2a;
+                background: {theme_color('control', '#2a2a2a')};
                 color: {Styles.TEXT_COLOR};
-                border: 1px solid #555;
+                border: 1px solid {theme_color('border', '#555')};
                 border-radius: 4px;
                 padding: 8px;
-                font-family: 'Consolas', monospace;
-                font-size: 12px;
+                font-family:  "{theme_font_family('Consolas')}";
+                font-size: {theme_font_size(12)}px;
             }}
         """)
         layout.addWidget(self.text_edit, stretch=1)
@@ -91,11 +92,11 @@ class PoBImportDialog(QDialog):
         cancel_btn = QPushButton("キャンセル")
         cancel_btn.setStyleSheet(f"""
             QPushButton {{
-                background: transparent; color: #888;
-                border: 1px solid #555; border-radius: 4px;
-                padding: 6px 16px; font-size: 13px;
+                background: transparent; color: {theme_color('muted_text', '#888')};
+                border: 1px solid {theme_color('border', '#555')}; border-radius: 4px;
+                padding: 6px 16px; font-size: {theme_font_size(13)}px;
             }}
-            QPushButton:hover {{ background: rgba(255,255,255,0.1); }}
+            QPushButton:hover {{ background: {theme_rgba('control', 255, 255, 255, 0.1)}; }}
         """)
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(cancel_btn)
@@ -103,11 +104,11 @@ class PoBImportDialog(QDialog):
         import_btn = QPushButton("インポート")
         import_btn.setStyleSheet(f"""
             QPushButton {{
-                background: #4488ff; color: #ffffff;
+                background: {theme_color('accent_soft', '#4488ff')}; color: {theme_color('text', '#ffffff')};
                 border: none; border-radius: 4px;
-                padding: 6px 16px; font-size: 13px; font-weight: bold;
+                padding: 6px 16px; font-size: {theme_font_size(13)}px; font-weight: bold;
             }}
-            QPushButton:hover {{ background: #5599ff; }}
+            QPushButton:hover {{ background: {theme_color('accent_soft', '#5599ff')}; }}
         """)
         import_btn.clicked.connect(self.accept)
         btn_layout.addWidget(import_btn)
@@ -128,7 +129,7 @@ class PoBSkillSetSelectionDialog(QDialog):
         self._checkboxes = []
         self.setStyleSheet(f"""
             QDialog {{
-                background: #1a1a2e;
+                background: {theme_color('background', '#1a1a2e')};
                 color: {Styles.TEXT_COLOR};
             }}
         """)
@@ -141,13 +142,13 @@ class PoBSkillSetSelectionDialog(QDialog):
             "ジェム取得支援に取り込むSkill setを選んでください。\n"
             "Act中に不要なEndgame用セットなどはチェックを外せます。"
         )
-        desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 13px;")
+        desc.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(13)}px;")
         desc.setWordWrap(True)
         layout.addWidget(desc)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: 1px solid #444; background: #202035; }")
+        scroll.setStyleSheet(f"QScrollArea {{ border: 1px solid {theme_color('border', '#444')}; background: {theme_color('background', '#202035')}; }}")
         content = QWidget()
         content_layout = QVBoxLayout(content)
         content_layout.setContentsMargins(10, 8, 10, 8)
@@ -162,7 +163,7 @@ class PoBSkillSetSelectionDialog(QDialog):
             cb.setChecked(True)
             cb.setProperty("skill_set_id", str(skill_set.get("id", "")))
             cb.setStyleSheet(f"""
-                QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: 13px; padding: 2px; }}
+                QCheckBox {{ color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(13)}px; padding: 2px; }}
                 QCheckBox::indicator {{ width: 15px; height: 15px; }}
             """)
             content_layout.addWidget(cb)
@@ -236,33 +237,33 @@ class PoBSkillSetSelectionDialog(QDialog):
         self.accept()
 
     def _small_btn_style(self):
-        return """
-            QPushButton {
-                background: transparent; color: #bbbbbb;
-                border: 1px solid #555; border-radius: 4px;
-                padding: 4px 8px; font-size: 12px;
-            }
-            QPushButton:hover { background: rgba(255,255,255,0.1); }
+        return f"""
+            QPushButton {{
+                background: transparent; color: {theme_color('muted_text', '#bbbbbb')};
+                border: 1px solid {theme_color('border', '#555')}; border-radius: 4px;
+                padding: 4px 8px; font-size: {theme_font_size(12)}px;
+            }}
+            QPushButton:hover {{ background: {theme_rgba('control', 255, 255, 255, 0.1)}; }}
         """
 
     def _cancel_btn_style(self):
-        return """
-            QPushButton {
-                background: transparent; color: #888;
-                border: 1px solid #555; border-radius: 4px;
-                padding: 6px 16px; font-size: 13px;
-            }
-            QPushButton:hover { background: rgba(255,255,255,0.1); }
+        return f"""
+            QPushButton {{
+                background: transparent; color: {theme_color('muted_text', '#888')};
+                border: 1px solid {theme_color('border', '#555')}; border-radius: 4px;
+                padding: 6px 16px; font-size: {theme_font_size(13)}px;
+            }}
+            QPushButton:hover {{ background: {theme_rgba('control', 255, 255, 255, 0.1)}; }}
         """
 
     def _primary_btn_style(self):
-        return """
-            QPushButton {
-                background: #4488ff; color: #ffffff;
+        return f"""
+            QPushButton {{
+                background: {theme_color('accent_soft', '#4488ff')}; color: {theme_color('text', '#ffffff')};
                 border: none; border-radius: 4px;
-                padding: 6px 16px; font-size: 13px; font-weight: bold;
-            }
-            QPushButton:hover { background: #5599ff; }
+                padding: 6px 16px; font-size: {theme_font_size(13)}px; font-weight: bold;
+            }}
+            QPushButton:hover {{ background: {theme_color('accent_soft', '#5599ff')}; }}
         """
 
 
@@ -300,7 +301,7 @@ class GemTrackerWidget(QWidget):
         
         # クラス表示
         self._class_label = QLabel("")
-        self._class_label.setStyleSheet("color: #888; font-size: 11px;")
+        self._class_label.setStyleSheet(f"color: {theme_color('muted_text', '#888')}; font-size: {theme_font_size(11)}px;")
         header.addWidget(self._class_label)
         
         # Act切り替えボタン
@@ -311,7 +312,7 @@ class GemTrackerWidget(QWidget):
         header.addWidget(self._prev_act_btn)
         
         self._act_label = QLabel("Act 1")
-        self._act_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 11px; font-weight: bold;")
+        self._act_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(11)}px; font-weight: bold;")
         self._act_label.setAlignment(Qt.AlignCenter)
         self._act_label.setFixedWidth(45)
         header.addWidget(self._act_label)
@@ -327,22 +328,22 @@ class GemTrackerWidget(QWidget):
         # ジェムリストエリア（スクロール）
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
-        self._scroll.setStyleSheet("""
-            QScrollArea { border: none; background: transparent; }
-            QScrollBar:vertical {
+        self._scroll.setStyleSheet(f"""
+            QScrollArea {{ border: none; background: transparent; }}
+            QScrollBar:vertical {{
                 width: 16px;
-                background: rgba(176,255,123,0.08);
+                background: {theme_rgba('accent_soft', 176, 255, 123, 0.08)};
                 border-radius: 7px;
                 margin: 0 2px;
-            }
-            QScrollBar::handle:vertical {
+            }}
+            QScrollBar::handle:vertical {{
                 min-height: 36px;
-                background: rgba(176,255,123,0.55);
+                background: {theme_color('muted_text', 'rgba(176, 255, 123, 0.55)')};
                 border-radius: 7px;
-            }
-            QScrollBar::handle:vertical:hover { background: rgba(176,255,123,0.85); }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { width: 0; height: 0; }
-            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
+            }}
+            QScrollBar::handle:vertical:hover {{ background: {theme_color('accent', 'rgba(176, 255, 123, 0.85)')}; }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ width: 0; height: 0; }}
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: transparent; }}
         """)
         
         self._gem_list_widget = QWidget()
@@ -358,7 +359,7 @@ class GemTrackerWidget(QWidget):
         self._empty_label = QLabel(
             "PoBコードをインポートすると\nジェム取得タイミングが表示されます"
         )
-        self._empty_label.setStyleSheet("color: #666; font-size: 11px;")
+        self._empty_label.setStyleSheet(f"color: {theme_color('muted_text', '#666')}; font-size: {theme_font_size(11)}px;")
         self._empty_label.setAlignment(Qt.AlignCenter)
         self._empty_label.setWordWrap(True)
         layout.addWidget(self._empty_label)
@@ -372,10 +373,10 @@ class GemTrackerWidget(QWidget):
         return f"""
             QPushButton {{
                 background: transparent; color: {Styles.TEXT_COLOR};
-                border: 1px solid #555; border-radius: 3px;
-                font-size: 10px;
+                border: 1px solid {theme_color('border', '#555')}; border-radius: 3px;
+                font-size: {theme_font_size(10)}px;
             }}
-            QPushButton:hover {{ background: rgba(176,255,123,0.2); border-color: {Styles.TEXT_COLOR}; }}
+            QPushButton:hover {{ background: {theme_rgba('accent_soft', 176, 255, 123, 0.2)}; border-color: {Styles.TEXT_COLOR}; }}
         """
     
 
@@ -461,7 +462,7 @@ class GemTrackerWidget(QWidget):
         
         if not act_entries:
             no_gem_label = QLabel("このActで取得するジェムはありません")
-            no_gem_label.setStyleSheet("color: #666; font-size: 11px;")
+            no_gem_label.setStyleSheet(f"color: {theme_color('muted_text', '#666')}; font-size: {theme_font_size(11)}px;")
             no_gem_label.setAlignment(Qt.AlignCenter)
             self._gem_list_layout.addWidget(no_gem_label)
             self._gem_list_layout.addStretch()
@@ -480,27 +481,27 @@ class GemTrackerWidget(QWidget):
             
             # ヘッダーフレーム
             header_frame = QFrame()
-            header_frame.setStyleSheet("""
-                QFrame {
-                    background: rgba(176,255,123,0.08);
+            header_frame.setStyleSheet(f"""
+                QFrame {{
+                    background: {theme_rgba('accent_soft', 176, 255, 123, 0.08)};
                     border: none;
                     border-radius: 3px;
                     padding: 2px;
-                }
+                }}
             """)
             header_layout = QHBoxLayout(header_frame)
             header_layout.setContentsMargins(6, 2, 6, 2)
             header_layout.setSpacing(4)
             
             quest_label = QLabel(f"📜 {quest_display}")
-            quest_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: 11px; font-weight: bold;")
+            quest_label.setStyleSheet(f"color: {Styles.TEXT_COLOR}; font-size: {theme_font_size(11)}px; font-weight: bold;")
             header_layout.addWidget(quest_label)
             
             header_layout.addStretch()
             
             if npc_ja:
                 npc_label = QLabel(f"NPC: {npc_ja}")
-                npc_label.setStyleSheet("color: #aaa; font-size: 10px;")
+                npc_label.setStyleSheet(f"color: {theme_color('muted_text', '#aaa')}; font-size: {theme_font_size(10)}px;")
                 header_layout.addWidget(npc_label)
             
             self._gem_list_layout.addWidget(header_frame)
@@ -533,7 +534,7 @@ class GemTrackerWidget(QWidget):
                 type_label_widget = QLabel(type_label)
                 type_label_widget.setFixedWidth(28)
                 type_color = "#ffcc44" if gem.get("type") == "quest" else "#88aacc"
-                type_label_widget.setStyleSheet(f"font-size: 9px; color: {type_color};")
+                type_label_widget.setStyleSheet(f"font-size: {theme_font_size(9)}px; color: {type_color};")
                 row_layout.addWidget(type_label_widget)
                 
                 # ジェム名（色分け）
@@ -542,7 +543,7 @@ class GemTrackerWidget(QWidget):
                 name_label.setToolTip("クリックでPoE検索欄へ入力")
                 name_label.setCursor(Qt.PointingHandCursor)
                 name_label.setStyleSheet(
-                    f"color: {attr_color}; font-size: 12px; {checked_style}"
+                    f"color: {attr_color}; font-size: {theme_font_size(12)}px; {checked_style}"
                 )
                 name_label.mousePressEvent = lambda _event, text=gem_name.title(): self.gem_search_requested.emit(text)
                 row_layout.addWidget(name_label)
@@ -554,7 +555,7 @@ class GemTrackerWidget(QWidget):
                     en_label = QLabel(gem_name.title())
                     en_label.setToolTip("クリックでPoE検索欄へ入力")
                     en_label.setCursor(Qt.PointingHandCursor)
-                    en_label.setStyleSheet("color: #666; font-size: 9px;")
+                    en_label.setStyleSheet(f"color: {theme_color('muted_text', '#666')}; font-size: {theme_font_size(9)}px;")
                     en_label.mousePressEvent = lambda _event, text=gem_name.title(): self.gem_search_requested.emit(text)
                     row_layout.addWidget(en_label)
                 

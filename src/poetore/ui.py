@@ -11,7 +11,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRect, QSize, Qt, QTimer, Signal, QUrl
 from PySide6.QtGui import (
-    QBrush, QColor, QCursor, QDesktopServices, QFontMetrics, QIcon, QIntValidator, QLinearGradient, QPainter,
+    QBrush, QColor, QCursor, QDesktopServices, QFont, QFontMetrics, QIcon, QIntValidator, QLinearGradient, QPainter,
     QKeySequence, QPalette, QPen, QPixmap, QPolygonF,
 )
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
@@ -23,6 +23,10 @@ from PySide6.QtWidgets import (
     QHeaderView, QWidgetAction,
 )
 
+from src.ui.appearance import (
+    fit_theme_fixed_geometry, has_custom_theme_font, suspend_theme_fixed_geometry, theme_color,
+    theme_font_family, theme_font_size, theme_rgba,
+)
 from src.ui.styles import Styles
 from src.utils.window_focus import (
     focus_window, get_foreground_window, is_path_of_exile_window,
@@ -340,8 +344,8 @@ class _UniqueRollSlider(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         rect = self.rect().adjusted(0, 3, -1, -3)
-        painter.setPen(QPen(QColor("#46504D"), 1))
-        painter.setBrush(QColor("#202628"))
+        painter.setPen(QPen(QColor(theme_color("border", "#46504D")), 1))
+        painter.setBrush(QColor(theme_color("control", "#202628")))
         painter.drawRoundedRect(rect, 3, 3)
 
         active = self._preview
@@ -358,23 +362,23 @@ class _UniqueRollSlider(QWidget):
             painter.setPen(Qt.NoPen)
             gradient = QLinearGradient(fill.left(), 0, fill.right(), 0)
             if self._better > 0:
-                gradient.setColorAt(0.0, QColor("#7f8781"))
-                gradient.setColorAt(1.0, QColor("#eef1ed"))
+                gradient.setColorAt(0.0, QColor(theme_color("muted_text", "#7f8781")))
+                gradient.setColorAt(1.0, QColor(theme_color("text", "#eef1ed")))
             else:
-                gradient.setColorAt(0.0, QColor("#eef1ed"))
-                gradient.setColorAt(1.0, QColor("#7f8781"))
+                gradient.setColorAt(0.0, QColor(theme_color("text", "#eef1ed")))
+                gradient.setColorAt(1.0, QColor(theme_color("muted_text", "#7f8781")))
             painter.setBrush(gradient)
             painter.drawRoundedRect(fill, 3, 3)
 
         roll_x = int(self._position(self._roll))
-        painter.setPen(QPen(QColor("#111111"), 2))
+        painter.setPen(QPen(QColor(theme_color("background", "#111111")), 2))
         painter.drawLine(roll_x, rect.top(), roll_x, rect.bottom())
 
-        painter.setPen(QColor("#c6cec1"))
+        painter.setPen(QColor(theme_color("text", "#c6cec1")))
         painter.drawText(rect.adjusted(4, 0, -4, 0), Qt.AlignLeft | Qt.AlignVCenter, self._format(self._low))
         painter.drawText(rect.adjusted(4, 0, -4, 0), Qt.AlignRight | Qt.AlignVCenter, self._format(self._high))
         if self._dragging and self._preview is not None:
-            painter.setPen(QColor("#ffffff"))
+            painter.setPen(QColor(theme_color("text", "#ffffff")))
             painter.drawText(rect, Qt.AlignCenter, self._format(self._preview))
 
 
@@ -486,7 +490,7 @@ def _influence_chip_icon(label: str, active: bool) -> QIcon:
     result.fill(Qt.transparent)
     painter = QPainter(result)
     painter.setRenderHint(QPainter.Antialiasing)
-    painter.setPen(QColor("#E6ECEA" if active else "#737D79"))
+    painter.setPen(QColor(theme_color("text", "#E6ECEA") if active else theme_color("muted_text", "#737D79")))
     painter.drawText(QRect(0, 0, 16, 20), Qt.AlignCenter, "☑" if active else "☐")
     icon_path = Path(__file__).resolve().parents[2] / "assets" / "icons" / f"{label}.png"
     influence = QPixmap(str(icon_path))
@@ -871,6 +875,7 @@ class _NumericFilterChip(QFrame):
     def setRangeVisible(self, visible: bool):
         self.separator.setVisible(visible)
         self.maximum_edit.setVisible(visible)
+        fit_theme_fixed_geometry(self)
 
     def setActive(self, active: bool):
         self._active = bool(active)
@@ -949,7 +954,7 @@ class _SparklineWidget(QWidget):
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(QPen(QColor("#56615D"), 1, Qt.DashLine))
+        painter.setPen(QPen(QColor(theme_color("border", "#56615D")), 1, Qt.DashLine))
         middle = self.height() / 2
         painter.drawLine(0, round(middle), self.width(), round(middle))
         if len(self._points) < 2:
@@ -1864,12 +1869,12 @@ class PoetoreWindow(QWidget):
         self.mercenary_supports_actions_layout = mercenary_supports_actions
         self.mod_warning = QLabel("")
         self.mod_warning.setWordWrap(True)
-        self.mod_warning.setStyleSheet("color: #d6a84b;")
+        self.mod_warning.setStyleSheet(f"color: {theme_color('warning', '#d6a84b')};")
         self.mod_warning.hide()
         content_layout.addWidget(self.mod_warning)
         self.search_scope_notice = QLabel("")
         self.search_scope_notice.setWordWrap(True)
-        self.search_scope_notice.setStyleSheet("color: #d6a84b;")
+        self.search_scope_notice.setStyleSheet(f"color: {theme_color('warning', '#d6a84b')};")
         self.search_scope_notice.hide()
         content_layout.addWidget(self.search_scope_notice)
 
@@ -1899,7 +1904,7 @@ class PoetoreWindow(QWidget):
         )
         self.remember_trade_options_checkbox.setStyleSheet(
             self.remember_trade_options_checkbox.styleSheet()
-            + "QCheckBox#rememberTradeOptionsCheckbox { color: #E6ECEA; }"
+            + f"QCheckBox#rememberTradeOptionsCheckbox {{ color: {theme_color('text', '#E6ECEA')}; }}"
         )
         self.remember_trade_options_checkbox.setChecked(
             self._remember_trade_options
@@ -2164,335 +2169,335 @@ class PoetoreWindow(QWidget):
     def _apply_poetore_style(self):
         """情報はニュートラル面に載せ、選択・操作だけ青緑で示す。"""
         profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
-        style = """
-            QWidget {
-                color: #E6ECEA;
-                font-family: "Noto Sans JP", sans-serif;
+        style = f"""
+            QWidget {{
+                color: {theme_color('text', '#E6ECEA')};
+                font-family:  "{theme_font_family('Noto Sans JP')}";
                 font-size: 12px;
-            }
-            QFrame#poetorePanel {
-                background: rgba(17, 20, 22, 246);
-                border: 1px solid #343B3E;
+            }}
+            QFrame#poetorePanel {{
+                background: {theme_rgba('surface', 17, 20, 22, 246)};
+                border: 1px solid {theme_color('border', '#343B3E')};
                 border-radius: 5px;
-            }
-            QFrame#itemHeader {
-                background: rgba(20, 24, 26, 220);
+            }}
+            QFrame#itemHeader {{
+                background: {theme_rgba('surface', 20, 24, 26, 220)};
                 border: none;
                 border-radius: 4px;
-            }
-            QFrame#poeNinjaPricePanel {
-                background: rgba(26, 31, 33, 220);
+            }}
+            QFrame#poeNinjaPricePanel {{
+                background: {theme_rgba('surface', 26, 31, 33, 220)};
                 border: none;
                 border-radius: 4px;
-            }
-            QFrame#disenchantDustPanel {
-                background: rgba(26, 31, 33, 220);
+            }}
+            QFrame#disenchantDustPanel {{
+                background: {theme_rgba('surface', 26, 31, 33, 220)};
                 border: none;
                 border-radius: 4px;
-            }
-            QLabel#disenchantDustLabel { color: #98A39F; font-weight: 700; }
-            QLabel#disenchantDustValue { color: #E6ECEA; font-size: 14px; font-weight: 700; }
-            QLabel#poeNinjaPriceLabel { color: #98A39F; font-weight: 700; }
-            QLabel#poeNinjaPriceValue { color: #E6ECEA; font-size: 14px; font-weight: 700; }
-            QLabel#poeNinjaPriceMultiplier { color: #E6ECEA; font-size: 13px; }
-            QLabel#poeNinjaTrendLabel { color: #98A39F; font-size: 10px; }
-            QPushButton#poeNinjaOpenButton { padding: 3px 7px; }
-            QPushButton#divineRateButton {
-                color: #E6ECEA;
+            }}
+            QLabel#disenchantDustLabel {{ color: {theme_color('muted_text', '#98A39F')}; font-weight: 700; }}
+            QLabel#disenchantDustValue {{ color: {theme_color('text', '#E6ECEA')}; font-size: 14px; font-weight: 700; }}
+            QLabel#poeNinjaPriceLabel {{ color: {theme_color('muted_text', '#98A39F')}; font-weight: 700; }}
+            QLabel#poeNinjaPriceValue {{ color: {theme_color('text', '#E6ECEA')}; font-size: 14px; font-weight: 700; }}
+            QLabel#poeNinjaPriceMultiplier {{ color: {theme_color('text', '#E6ECEA')}; font-size: 13px; }}
+            QLabel#poeNinjaTrendLabel {{ color: {theme_color('muted_text', '#98A39F')}; font-size: 10px; }}
+            QPushButton#poeNinjaOpenButton {{ padding: 3px 7px; }}
+            QPushButton#divineRateButton {{
+                color: {theme_color('text', '#E6ECEA')};
                 padding: 2px 7px;
                 font-weight: 700;
                 border: none;
-            }
-            QMenu#divineRateMenu {
-                background: #1A1F21;
-                color: #E6ECEA;
-                border: 1px solid #3A4245;
+            }}
+            QMenu#divineRateMenu {{
+                background: {theme_color('background', '#1A1F21')};
+                color: {theme_color('text', '#E6ECEA')};
+                border: 1px solid {theme_color('border', '#3A4245')};
                 padding: 4px;
-            }
-            QMenu#divineRateMenu::item { padding: 4px 18px 4px 10px; }
-            QMenu#divineRateMenu::item:selected { background: rgba(101, 255, 202, 45); }
-            QPushButton#leaguePopupButton {
-                color: #D8E3DF;
+            }}
+            QMenu#divineRateMenu::item {{ padding: 4px 18px 4px 10px; }}
+            QMenu#divineRateMenu::item:selected {{ background: {theme_rgba('accent_soft', 101, 255, 202, 45)}; }}
+            QPushButton#leaguePopupButton {{
+                color: {theme_color('text', '#D8E3DF')};
                 padding: 0;
                 font-size: 11px;
                 border: none;
-            }
-            QPushButton#leagueRefreshButton {
-                color: #D8E3DF;
-                background: #202629;
-                border: 1px solid #3A4245;
+            }}
+            QPushButton#leagueRefreshButton {{
+                color: {theme_color('text', '#D8E3DF')};
+                background: {theme_color('surface', '#202629')};
+                border: 1px solid {theme_color('border', '#3A4245')};
                 border-radius: 4px;
                 padding: 0 6px;
                 font-size: 11px;
-            }
+            }}
             QPushButton#leagueRefreshButton:hover,
-            QPushButton#leagueRefreshButton:focus { border-color: #65FFCA; }
-            QPushButton#leagueRefreshButton:disabled { color: #66706D; }
-            QLabel#itemName {
-                color: #D8E3DF;
+            QPushButton#leagueRefreshButton:focus {{ border-color: {theme_color('accent', '#65FFCA')}; }}
+            QPushButton#leagueRefreshButton:disabled {{ color: {theme_color('disabled', '#66706D')}; }}
+            QLabel#itemName {{
+                color: {theme_color('text', '#D8E3DF')};
                 font-size: 15px;
                 font-weight: 700;
-            }
-            QLabel#itemBase { color: #98A39F; font-size: 11px; }
-            QLabel#sectionTitle {
-                color: #65FFCA;
+            }}
+            QLabel#itemBase {{ color: {theme_color('muted_text', '#98A39F')}; font-size: 11px; }}
+            QLabel#sectionTitle {{
+                color: {theme_color('accent', '#65FFCA')};
                 font-weight: 700;
-                border-bottom: 1px solid rgba(101, 255, 202, 70);
+                border-bottom: 1px solid {theme_rgba('accent', 101, 255, 202, 70)};
                 padding: 4px 2px;
-            }
-            QLabel#weaponDpsSummary {
-                color: #E6ECEA;
+            }}
+            QLabel#weaponDpsSummary {{
+                color: {theme_color('text', '#E6ECEA')};
                 padding: 4px 2px;
-            }
-            QLabel#priceStatus { color: #98A39F; padding: 1px 0; }
-            QPushButton {
-                background: rgba(26, 31, 33, 225);
-                color: #E6ECEA;
+            }}
+            QLabel#priceStatus {{ color: {theme_color('muted_text', '#98A39F')}; padding: 1px 0; }}
+            QPushButton {{
+                background: {theme_rgba('control', 26, 31, 33, 225)};
+                color: {theme_color('text', '#E6ECEA')};
                 border: none;
                 border-radius: 3px;
                 padding: 5px 9px;
-            }
-            QPushButton:hover { background: rgba(37, 51, 47, 230); }
-            QPushButton:pressed { background: #111; }
-            QPushButton:disabled { color: #66706C; background: rgba(23, 27, 29, 180); }
+            }}
+            QPushButton:hover {{ background: {theme_rgba('control', 37, 51, 47, 230)}; }}
+            QPushButton:pressed {{ background: {theme_color('control', '#111')}; }}
+            QPushButton:disabled {{ color: {theme_color('disabled', '#66706C')}; background: {theme_rgba('control', 23, 27, 29, 180)}; }}
             QPushButton#secondaryActionButton,
-            QPushButton#filterActionButton {
-                border: 1px solid #465154;
-            }
+            QPushButton#filterActionButton {{
+                border: 1px solid {theme_color('border', '#465154')};
+            }}
             QPushButton#secondaryActionButton:hover,
-            QPushButton#filterActionButton:hover {
-                border-color: #65FFCA;
-            }
-            QPushButton#secondaryActionButton:checked {
-                background: rgba(37, 122, 100, 135);
-                border-color: #65FFCA;
-            }
-            QPushButton#filterActionButton:disabled {
-                border-color: #343B3E;
-            }
-            QPushButton#binaryToggle {
-                border: 1px solid #465154;
+            QPushButton#filterActionButton:hover {{
+                border-color: {theme_color('accent', '#65FFCA')};
+            }}
+            QPushButton#secondaryActionButton:checked {{
+                background: {theme_rgba('accent_soft', 37, 122, 100, 135)};
+                border-color: {theme_color('accent', '#65FFCA')};
+            }}
+            QPushButton#filterActionButton:disabled {{
+                border-color: {theme_color('border', '#343B3E')};
+            }}
+            QPushButton#binaryToggle {{
+                border: 1px solid {theme_color('border', '#465154')};
                 border-radius: 0;
                 padding: 4px 7px;
-            }
-            QPushButton#binaryToggle:hover {
-                border-color: #65FFCA;
-            }
-            QPushButton#binaryToggle:first-child { border-radius: 3px 0 0 3px; }
-            QPushButton#binaryToggle:last-child { border-radius: 0 3px 3px 0; }
-            QPushButton#binaryToggle:checked {
-                background: rgba(37, 122, 100, 225);
-                border-color: #65FFCA;
-                color: #E6ECEA;
+            }}
+            QPushButton#binaryToggle:hover {{
+                border-color: {theme_color('accent', '#65FFCA')};
+            }}
+            QPushButton#binaryToggle:first-child {{ border-radius: 3px 0 0 3px; }}
+            QPushButton#binaryToggle:last-child {{ border-radius: 0 3px 3px 0; }}
+            QPushButton#binaryToggle:checked {{
+                background: {theme_rgba('accent_soft', 37, 122, 100, 225)};
+                border-color: {theme_color('accent', '#65FFCA')};
+                color: {theme_color('text', '#E6ECEA')};
                 font-weight: 700;
-            }
-            QPushButton#cycleToggle {
-                background: rgba(28, 83, 73, 210);
-                color: #E6ECEA;
-                border: 1px solid #65FFCA;
+            }}
+            QPushButton#cycleToggle {{
+                background: {theme_rgba('accent_soft', 28, 83, 73, 210)};
+                color: {theme_color('text', '#E6ECEA')};
+                border: 1px solid {theme_color('accent', '#65FFCA')};
                 padding: 3px 7px;
                 min-height: __FILTER_CHIP_MIN_HEIGHT__px;
                 font-weight: 700;
-            }
-            QPushButton#cycleToggle[alert="true"] { color: #ff5757; }
-            QPushButton#influenceChip {
-                background: rgba(20, 20, 20, 180);
-                color: #737D79;
+            }}
+            QPushButton#cycleToggle[alert="true"] {{ color: #ff5757; }}
+            QPushButton#influenceChip {{
+                background: {theme_rgba('control', 20, 20, 20, 180)};
+                color: {theme_color('muted_text', '#737D79')};
                 border: none;
                 padding: 3px 7px;
                 font-weight: 700;
-            }
-            QPushButton#influenceChip[active="true"] {
-                background: rgba(28, 83, 73, 210);
-                color: #E6ECEA;
-                border: 1px solid #65FFCA;
-            }
-            QFrame#numericFilterTag {
-                background: rgba(28, 83, 73, 210);
-                border: 1px solid #65FFCA;
+            }}
+            QPushButton#influenceChip[active="true"] {{
+                background: {theme_rgba('accent_soft', 28, 83, 73, 210)};
+                color: {theme_color('text', '#E6ECEA')};
+                border: 1px solid {theme_color('accent', '#65FFCA')};
+            }}
+            QFrame#numericFilterTag {{
+                background: {theme_rgba('accent_soft', 28, 83, 73, 210)};
+                border: 1px solid {theme_color('accent', '#65FFCA')};
                 border-radius: 3px;
-            }
-            QFrame#numericFilterTag[active="false"] {
-                background: rgba(20, 20, 20, 180);
+            }}
+            QFrame#numericFilterTag[active="false"] {{
+                background: {theme_rgba('surface', 20, 20, 20, 180)};
                 border: none;
-            }
-            QPushButton#numericFilterToggle, QLineEdit#numericFilterEdit {
+            }}
+            QPushButton#numericFilterToggle, QLineEdit#numericFilterEdit {{
                 background: transparent;
-                color: #E6ECEA;
+                color: {theme_color('text', '#E6ECEA')};
                 border: none;
                 padding: 0;
                 font-weight: 700;
-            }
+            }}
             QFrame#numericFilterTag[active="false"] QPushButton,
             QFrame#numericFilterTag[active="false"] QLineEdit,
-            QFrame#numericFilterTag[active="false"] QLabel { color: #737D79; }
-            QPushButton#readonlyFilterChip {
-                background: rgba(28, 83, 73, 210);
-                color: #E6ECEA;
-                border: 1px solid #65FFCA;
+            QFrame#numericFilterTag[active="false"] QLabel {{ color: {theme_color('muted_text', '#737D79')}; }}
+            QPushButton#readonlyFilterChip {{
+                background: {theme_rgba('accent_soft', 28, 83, 73, 210)};
+                color: {theme_color('text', '#E6ECEA')};
+                border: 1px solid {theme_color('accent', '#65FFCA')};
                 padding: 3px 7px;
                 font-weight: 700;
-            }
-            QFrame#itemLevelTag {
-                background: rgba(28, 83, 73, 210);
-                border: 1px solid #65FFCA;
+            }}
+            QFrame#itemLevelTag {{
+                background: {theme_rgba('accent_soft', 28, 83, 73, 210)};
+                border: 1px solid {theme_color('accent', '#65FFCA')};
                 border-radius: 3px;
-            }
-            QFrame#gemLevelTag {
-                background: rgba(28, 83, 73, 210);
-                border: 1px solid #65FFCA;
+            }}
+            QFrame#gemLevelTag {{
+                background: {theme_rgba('accent_soft', 28, 83, 73, 210)};
+                border: 1px solid {theme_color('accent', '#65FFCA')};
                 border-radius: 3px;
-            }
-            QFrame#gemQualityTag, QFrame#runemasteredTag, QFrame#gemSocketTag {
-                background: rgba(28, 83, 73, 210);
-                border: 1px solid #65FFCA;
+            }}
+            QFrame#gemQualityTag, QFrame#runemasteredTag, QFrame#gemSocketTag {{
+                background: {theme_rgba('accent_soft', 28, 83, 73, 210)};
+                border: 1px solid {theme_color('accent', '#65FFCA')};
                 border-radius: 3px;
-            }
-            QFrame#linksTag {
-                background: rgba(28, 83, 73, 210);
-                border: 1px solid #65FFCA;
+            }}
+            QFrame#linksTag {{
+                background: {theme_rgba('accent_soft', 28, 83, 73, 210)};
+                border: 1px solid {theme_color('accent', '#65FFCA')};
                 border-radius: 3px;
-            }
-            QFrame#itemLevelTag QLabel {
-                color: #E6ECEA;
+            }}
+            QFrame#itemLevelTag QLabel {{
+                color: {theme_color('text', '#E6ECEA')};
                 font-weight: 700;
-            }
-            QPushButton#itemLevelToggle, QPushButton#gemLevelToggle, QPushButton#gemQualityToggle, QPushButton#runemasteredToggle, QPushButton#gemSocketToggle, QPushButton#linksToggle {
+            }}
+            QPushButton#itemLevelToggle, QPushButton#gemLevelToggle, QPushButton#gemQualityToggle, QPushButton#runemasteredToggle, QPushButton#gemSocketToggle, QPushButton#linksToggle {{
                 background: transparent;
-                color: #E6ECEA;
+                color: {theme_color('text', '#E6ECEA')};
                 border: none;
                 padding: 0;
                 font-weight: 700;
-            }
-            QLineEdit#itemLevelEdit, QLineEdit#itemLevelMaxEdit, QLineEdit#gemLevelEdit, QLineEdit#gemQualityEdit, QLineEdit#gemSocketEdit, QLineEdit#linksEdit {
+            }}
+            QLineEdit#itemLevelEdit, QLineEdit#itemLevelMaxEdit, QLineEdit#gemLevelEdit, QLineEdit#gemQualityEdit, QLineEdit#gemSocketEdit, QLineEdit#linksEdit {{
                 background: transparent;
-                color: #E6ECEA;
+                color: {theme_color('text', '#E6ECEA')};
                 border: none;
                 padding: 0;
                 min-height: 20px;
                 font-weight: 700;
-            }
-            QLineEdit#itemLevelEdit:focus, QLineEdit#itemLevelMaxEdit:focus, QLineEdit#gemLevelEdit:focus, QLineEdit#gemQualityEdit:focus, QLineEdit#gemSocketEdit:focus, QLineEdit#linksEdit:focus {
+            }}
+            QLineEdit#itemLevelEdit:focus, QLineEdit#itemLevelMaxEdit:focus, QLineEdit#gemLevelEdit:focus, QLineEdit#gemQualityEdit:focus, QLineEdit#gemSocketEdit:focus, QLineEdit#linksEdit:focus {{
                 border: none;
-                color: #D8E3DF;
-            }
-            QFrame#itemLevelTag[active="false"] {
+                color: {theme_color('text', '#D8E3DF')};
+            }}
+            QFrame#itemLevelTag[active="false"] {{
                 border: none;
-                background: rgba(20, 20, 20, 180);
-            }
-            QFrame#gemLevelTag[active="false"] {
+                background: {theme_rgba('surface', 20, 20, 20, 180)};
+            }}
+            QFrame#gemLevelTag[active="false"] {{
                 border: none;
-                background: rgba(20, 20, 20, 180);
-            }
-            QFrame#gemQualityTag[active="false"], QFrame#runemasteredTag[active="false"], QFrame#gemSocketTag[active="false"] {
+                background: {theme_rgba('surface', 20, 20, 20, 180)};
+            }}
+            QFrame#gemQualityTag[active="false"], QFrame#runemasteredTag[active="false"], QFrame#gemSocketTag[active="false"] {{
                 border: none;
-                background: rgba(20, 20, 20, 180);
-            }
-            QFrame#linksTag[active="false"] {
+                background: {theme_rgba('surface', 20, 20, 20, 180)};
+            }}
+            QFrame#linksTag[active="false"] {{
                 border: none;
-                background: rgba(20, 20, 20, 180);
-            }
+                background: {theme_rgba('surface', 20, 20, 20, 180)};
+            }}
             QFrame#itemLevelTag[active="false"] QPushButton,
             QFrame#itemLevelTag[active="false"] QLineEdit,
-            QFrame#itemLevelTag[active="false"] QLabel {
-                color: #737D79;
-            }
+            QFrame#itemLevelTag[active="false"] QLabel {{
+                color: {theme_color('muted_text', '#737D79')};
+            }}
             QFrame#gemLevelTag[active="false"] QPushButton,
-            QFrame#gemLevelTag[active="false"] QLineEdit {
-                color: #737D79;
-            }
+            QFrame#gemLevelTag[active="false"] QLineEdit {{
+                color: {theme_color('muted_text', '#737D79')};
+            }}
             QFrame#gemQualityTag[active="false"] QPushButton,
-            QFrame#gemQualityTag[active="false"] QLineEdit {
-                color: #737D79;
-            }
-            QFrame#runemasteredTag[active="false"] QPushButton {
-                color: #737D79;
-            }
+            QFrame#gemQualityTag[active="false"] QLineEdit {{
+                color: {theme_color('muted_text', '#737D79')};
+            }}
+            QFrame#runemasteredTag[active="false"] QPushButton {{
+                color: {theme_color('muted_text', '#737D79')};
+            }}
             QFrame#gemSocketTag[active="false"] QPushButton,
-            QFrame#gemSocketTag[active="false"] QLineEdit {
-                color: #766a79;
-            }
+            QFrame#gemSocketTag[active="false"] QLineEdit {{
+                color: {theme_color('muted_text', '#766a79')};
+            }}
             QFrame#linksTag[active="false"] QPushButton,
-            QFrame#linksTag[active="false"] QLineEdit {
-                color: #737D79;
-            }
-            QPushButton#primaryButton {
-                background: rgba(37, 122, 100, 225);
-                color: #E6ECEA;
+            QFrame#linksTag[active="false"] QLineEdit {{
+                color: {theme_color('muted_text', '#737D79')};
+            }}
+            QPushButton#primaryButton {{
+                background: {theme_rgba('accent_soft', 37, 122, 100, 225)};
+                color: {theme_color('text', '#E6ECEA')};
                 font-weight: 700;
                 min-width: 0;
-            }
-            QComboBox, QLineEdit {
-                background: rgba(26, 31, 33, 235);
-                color: #D8E3DF;
+            }}
+            QComboBox, QLineEdit {{
+                background: {theme_rgba('control', 26, 31, 33, 235)};
+                color: {theme_color('text', '#D8E3DF')};
                 border: 1px solid transparent;
                 border-radius: 3px;
                 padding: 4px 6px;
                 min-height: 20px;
-                selection-background-color: rgba(37, 122, 100, 220);
-            }
-            QComboBox:hover, QLineEdit:focus { border-color: #65FFCA; }
-            QComboBox#filterControl {
-                border: 1px solid #465154;
-            }
+                selection-background-color: {theme_rgba('accent_soft', 37, 122, 100, 220)};
+            }}
+            QComboBox:hover, QLineEdit:focus {{ border-color: {theme_color('accent', '#65FFCA')}; }}
+            QComboBox#filterControl {{
+                border: 1px solid {theme_color('border', '#465154')};
+            }}
             QComboBox#filterControl:hover,
-            QComboBox#filterControl:on {
-                border-color: #65FFCA;
-            }
-            QComboBox#filterControl[compactAction="true"] {
+            QComboBox#filterControl:on {{
+                border-color: {theme_color('accent', '#65FFCA')};
+            }}
+            QComboBox#filterControl[compactAction="true"] {{
                 font-size: __COMPACT_ACTION_FONT__px;
                 padding: 2px 1px;
                 min-height: 18px;
-            }
-            QComboBox#filterControl[compactAction="true"]::drop-down {
+            }}
+            QComboBox#filterControl[compactAction="true"]::drop-down {{
                 width: 8px;
-            }
-            QPushButton#filterActionButton[compactAction="true"] {
+            }}
+            QPushButton#filterActionButton[compactAction="true"] {{
                 font-size: __COMPACT_ACTION_FONT__px;
                 padding: 3px 5px;
-            }
+            }}
             QPushButton[mutedText="true"],
-            QComboBox[mutedText="true"] {
-                color: #98A39F;
-            }
-            QComboBox::drop-down { border: none; width: 18px; }
-            QComboBox QAbstractItemView {
-                background: #1b1b1b;
-                color: #D8E3DF;
-                border: 1px solid #3D8F7B;
-                selection-background-color: #286C5D;
-            }
-            QTreeWidget {
-                background: rgba(17, 20, 22, 235);
-                alternate-background-color: rgba(25, 30, 32, 205);
-                color: #D5DDDA;
+            QComboBox[mutedText="true"] {{
+                color: {theme_color('muted_text', '#98A39F')};
+            }}
+            QComboBox::drop-down {{ border: none; width: 18px; }}
+            QComboBox QAbstractItemView {{
+                background: {theme_color('control', '#1b1b1b')};
+                color: {theme_color('text', '#D8E3DF')};
+                border: 1px solid {theme_color('accent', '#3D8F7B')};
+                selection-background-color: {theme_color('accent_soft', '#286C5D')};
+            }}
+            QTreeWidget {{
+                background: {theme_rgba('surface', 17, 20, 22, 235)};
+                alternate-background-color: {theme_rgba('surface', 25, 30, 32, 205)};
+                color: {theme_color('text', '#D5DDDA')};
                 border: none;
                 border-radius: 3px;
-                gridline-color: #2A3033;
+                gridline-color: {theme_color('border', '#2A3033')};
                 outline: none;
-            }
-            QTreeWidget::item { padding: 4px 2px; border-bottom: 1px solid #272D30; }
-            QTreeWidget::item:selected { background: rgba(37, 122, 100, 125); color: white; }
-            QTreeWidget#priceList::item { padding: 4px 7px; }
+            }}
+            QTreeWidget::item {{ padding: 4px 2px; border-bottom: 1px solid {theme_color('border', '#272D30')}; }}
+            QTreeWidget::item:selected {{ background: {theme_rgba('accent_soft', 37, 122, 100, 125)}; color: {theme_color('text', 'white')}; }}
+            QTreeWidget#priceList::item {{ padding: 4px 7px; }}
             QScrollArea#uniqueCandidateScroll,
             QScrollArea#uniqueCandidateScroll > QWidget > QWidget,
-            QWidget#uniqueCandidateContainer {
-                background: #111416;
-            }
-            QHeaderView::section {
-                background: rgba(28, 34, 36, 245);
-                color: #D5DDDA;
+            QWidget#uniqueCandidateContainer {{
+                background: {theme_color('background', '#111416')};
+            }}
+            QHeaderView::section {{
+                background: {theme_rgba('surface', 28, 34, 36, 245)};
+                color: {theme_color('text', '#D5DDDA')};
                 border: none;
                 border-right: none;
-                border-bottom: 1px solid #343B3E;
+                border-bottom: 1px solid {theme_color('border', '#343B3E')};
                 padding: 5px 4px;
                 font-weight: 600;
-            }
-            QTreeWidget#priceList QHeaderView::section { padding: 5px 7px; }
-            QScrollBar:vertical { background: #15191B; width: 10px; margin: 0; }
-            QScrollBar::handle:vertical { background: rgba(101, 255, 202, 125); min-height: 26px; border-radius: 4px; }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-            QSizeGrip { background: transparent; }
+            }}
+            QTreeWidget#priceList QHeaderView::section {{ padding: 5px 7px; }}
+            QScrollBar:vertical {{ background: {theme_color('surface', '#15191B')}; width: 10px; margin: 0; }}
+            QScrollBar::handle:vertical {{ background: {theme_color('muted_text', 'rgba(101, 255, 202, 125)')}; min-height: 26px; border-radius: 4px; }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
+            QSizeGrip {{ background: transparent; }}
         """
         font = profile["font"]
         font_sizes = {
@@ -2505,7 +2510,7 @@ class PoetoreWindow(QWidget):
         }
         style = re.sub(
             r"font-size: (10|11|12|13|14|15)px;",
-            lambda match: f"font-size: {font_sizes[int(match.group(1))]}px;",
+            lambda match: f"font-size: {theme_font_size(font_sizes[int(match.group(1))])}px;",
             style,
         )
         style = style.replace(
@@ -2513,11 +2518,14 @@ class PoetoreWindow(QWidget):
             f"padding: {profile['button_v_padding']}px "
             f"{profile['button_h_padding']}px;",
         )
+        chip_font = QFont(theme_font_family("Noto Sans JP"))
+        chip_font.setPixelSize(theme_font_size(profile["font"]))
+        chip_content_height = profile["font"] + 3
+        if has_custom_theme_font():
+            chip_content_height = max(chip_content_height, QFontMetrics(chip_font).height())
+        style = style.replace("__FILTER_CHIP_MIN_HEIGHT__", str(chip_content_height))
         style = style.replace(
-            "__FILTER_CHIP_MIN_HEIGHT__", str(profile["font"] + 3)
-        )
-        style = style.replace(
-            "__COMPACT_ACTION_FONT__", str(profile["mod_value_font"])
+            "__COMPACT_ACTION_FONT__", str(theme_font_size(profile["mod_value_font"]))
         )
         self.setStyleSheet(style)
 
@@ -2527,27 +2535,59 @@ class PoetoreWindow(QWidget):
     def _scaled_display_value(self, value: int) -> int:
         return round(value * self._display_scale())
 
+    def _mod_value_editor_size(self) -> QSize:
+        profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
+        legacy_size = QSize(
+            self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH),
+            profile["mod_value_height"],
+        )
+        family = theme_font_family("Noto Sans JP")
+        font_size = theme_font_size(profile["mod_value_font"])
+        # Keep the default geometry even before the bundled font is registered.
+        if family == "Noto Sans JP" and font_size == profile["mod_value_font"]:
+            return legacy_size
+        font = QFont(family)
+        font.setPixelSize(font_size)
+        metrics = QFontMetrics(font)
+        # Preserve legacy sizes, with room for decimals, a sign and the caret
+        # when either the application font or the panel size changes.
+        width = max(
+            legacy_size.width(),
+            theme_font_size(legacy_size.width()),
+            metrics.horizontalAdvance("-123.5") + 14,
+        )
+        height = max(
+            legacy_size.height(),
+            theme_font_size(legacy_size.height()),
+            metrics.height() + 4,
+        )
+        return QSize(width, height)
+
+    def _mod_row_height(self) -> int:
+        return max(
+            self._scaled_display_value(_MOD_ROW_HEIGHT),
+            self._mod_value_editor_size().height() + 6,
+        )
+
     def _apply_mod_value_editor_size(
         self, editor: QLineEdit, *, leading_gap: bool = False,
     ):
         profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
-        editor_height = profile["mod_value_height"]
-        content_height = max(0, editor_height - 4)  # padding上下＋border上下
-        editor.setFixedWidth(self._scaled_display_value(_MOD_VALUE_EDITOR_WIDTH))
+        size = self._mod_value_editor_size()
+        content_height = max(0, size.height() - 4)  # padding上下＋border上下
+        editor.setFixedWidth(size.width())
         editor.setStyleSheet(
-            f"font-size: {profile['mod_value_font']}px;"
-            " padding: 1px 4px;"
-            f" min-height: {content_height}px; max-height: {content_height}px;"
+            f"font-size: {theme_font_size(profile['mod_value_font'])}px; padding: 1px 4px; min-height: {content_height}px; max-height: {content_height}px;"
         )
 
     def _apply_mod_kind_font_size(self, row: QTreeWidgetItem):
         """種別列を、コンパクトな最小・最大入力欄と同じ文字サイズにする。"""
         font = row.font(_MOD_COLUMN_KIND)
         font.setPixelSize(
-            _DISPLAY_SIZE_PROFILES[self._result_font_size]["mod_value_font"]
+            theme_font_size(_DISPLAY_SIZE_PROFILES[self._result_font_size]["mod_value_font"])
         )
         row.setFont(_MOD_COLUMN_KIND, font)
-        row.setForeground(_MOD_COLUMN_KIND, QBrush(QColor("#98A39F")))
+        row.setForeground(_MOD_COLUMN_KIND, QBrush(QColor(theme_color("muted_text", "#98A39F"))))
 
     def _fit_mod_kind_column(self):
         if self.poe_version != POE2:
@@ -2555,7 +2595,7 @@ class PoetoreWindow(QWidget):
         content_width = self.mod_filter_tree.sizeHintForColumn(_MOD_COLUMN_KIND)
         self.mod_filter_tree.setColumnWidth(
             _MOD_COLUMN_KIND,
-            min(content_width, self._scaled_display_value(_MOD_KIND_COLUMN_MAX_WIDTH)),
+            min(content_width, theme_font_size(self._scaled_display_value(_MOD_KIND_COLUMN_MAX_WIDTH))),
         )
 
     def _make_mod_value_cell(
@@ -2584,7 +2624,7 @@ class PoetoreWindow(QWidget):
         """Mod数値コンボを全選択肢が収まる内容幅へ詰める。"""
         profile = _DISPLAY_SIZE_PROFILES[self._result_font_size]
         font = self.search_range_combo.font()
-        font.setPixelSize(profile["font"])
+        font.setPixelSize(theme_font_size(profile["font"]))
         metrics = QFontMetrics(font)
         text_width = max(
             (metrics.horizontalAdvance(self.search_range_combo.itemText(index))
@@ -2602,7 +2642,7 @@ class PoetoreWindow(QWidget):
             self.listed_within_combo,
         ):
             font = combo.font()
-            font.setPixelSize(profile["mod_value_font"])
+            font.setPixelSize(theme_font_size(profile["mod_value_font"]))
             metrics = QFontMetrics(font)
             text_width = metrics.horizontalAdvance(combo.currentText())
             # コンパクト操作列用の左右パディング、矢印、境界分を確保する。
@@ -2621,11 +2661,34 @@ class PoetoreWindow(QWidget):
                 combo.view().setMinimumWidth(popup_text_width + 24)
 
         button_font = self.trade_url_button.font()
-        button_font.setPixelSize(profile["mod_value_font"])
+        button_font.setPixelSize(theme_font_size(profile["mod_value_font"]))
         button_metrics = QFontMetrics(button_font)
         self.trade_url_button.setFixedWidth(
             button_metrics.horizontalAdvance(self.trade_url_button.text()) + 12
         )
+        self._fit_custom_font_window_width()
+
+    def _fit_custom_font_window_width(self):
+        if not has_custom_theme_font() or self.layout() is None:
+            return
+        for layout in (self.mod_conditions_actions_layout, self.trade_action_layout, self.price_status_layout):
+            for index in range(layout.count()):
+                widget = layout.itemAt(index).widget()
+                if widget is not None:
+                    widget.ensurePolished()
+                    widget.updateGeometry()
+            layout.invalidate()
+        # Intermediate content/action layouts cache their minimum before QSS
+        # applies the profile's scaled type. Invalidate from the leaves upward.
+        for layout in reversed(self.findChildren(QLayout)):
+            layout.invalidate()
+        self.layout().invalidate()
+        width = max(self.minimumWidth(), self.layout().minimumSize().width())
+        self.setMinimumWidth(width)
+        if getattr(self, "_obs_collapsed", False):
+            self._obs_expanded_size.setWidth(max(self._obs_expanded_size.width(), width))
+        else:
+            self.resize(max(self.width(), width), self.height())
 
     def _update_trade_currency_tooltip(self, *_args):
         """省略表示した通貨条件の正式な意味をホバーで示す。"""
@@ -2672,12 +2735,12 @@ class PoetoreWindow(QWidget):
             _MOD_COLUMN_CHECK, self._scaled_display_value(_MOD_CHECK_COLUMN_WIDTH)
         )
         self.mod_filter_tree.setColumnWidth(
-            _MOD_COLUMN_TIER, self._scaled_display_value(_MOD_TIER_COLUMN_WIDTH)
+            _MOD_COLUMN_TIER, theme_font_size(self._scaled_display_value(_MOD_TIER_COLUMN_WIDTH))
         )
         for index in range(self.mod_filter_tree.topLevelItemCount()):
-            self._apply_mod_kind_font_size(
-                self.mod_filter_tree.topLevelItem(index)
-            )
+            row = self.mod_filter_tree.topLevelItem(index)
+            self._apply_mod_kind_font_size(row)
+            row.setSizeHint(_MOD_COLUMN_TEXT, QSize(0, self._mod_row_height()))
         self._fit_mod_kind_column()
         for column in (_MOD_COLUMN_MIN, _MOD_COLUMN_MAX):
             for index in range(self.mod_filter_tree.topLevelItemCount()):
@@ -2697,6 +2760,10 @@ class PoetoreWindow(QWidget):
         # チップと操作可能な状態チップのsizeHintがずれる。表示サイズごとの
         # 基準高を明示し、Windowsを含む全環境で同じ行高に揃える。
         filter_chip_height = profile["font"] + 11
+        chip_font = QFont(theme_font_family("Noto Sans JP"))
+        chip_font.setPixelSize(theme_font_size(profile["font"]))
+        if has_custom_theme_font():
+            filter_chip_height = max(filter_chip_height, QFontMetrics(chip_font).height() + 8)
         for _name, chip in self._filter_chips:
             if isinstance(chip, QPushButton) and chip.objectName() in {
                 "readonlyFilterChip", "cycleToggle",
@@ -2707,6 +2774,13 @@ class PoetoreWindow(QWidget):
         self.runemastered_tag.setFixedHeight(self.gem_quality_tag.sizeHint().height())
         # スタイルのmin-width適用後に固定し、レイアウトによる再拡張を防ぐ。
         search_button_width = profile["search_button_width"]
+        if has_custom_theme_font():
+            self.price_button.ensurePolished()
+            search_button_width = max(
+                search_button_width,
+                self.price_button.fontMetrics().horizontalAdvance(self.price_button.text())
+                + 2 * profile["button_h_padding"] + 2,
+            )
         search_button_content_width = max(
             1, search_button_width - 2 * profile["button_h_padding"]
         )
@@ -2714,7 +2788,32 @@ class PoetoreWindow(QWidget):
             f"min-width: {search_button_content_width}px;"
             f" max-width: {search_button_content_width}px;"
         )
+        fit_theme_fixed_geometry(self)
+        self._fit_mod_cell_rows()
+        self._fit_custom_font_window_width()
         self._adjust_window_height_to_mod_rows()
+
+    def _fit_mod_cell_rows(self):
+        """Include source details and painted roll values in custom-font rows."""
+        if not has_custom_theme_font():
+            return
+        for index in range(self.mod_filter_tree.topLevelItemCount()):
+            row = self.mod_filter_tree.topLevelItem(index)
+            cells = [(row, _MOD_COLUMN_TEXT)] + [
+                (row.child(child), 0) for child in range(row.childCount())
+            ]
+            for item, column in cells:
+                cell = self.mod_filter_tree.itemWidget(item, column)
+                if cell is None:
+                    continue
+                cell.ensurePolished()
+                slider = cell.findChild(_UniqueRollSlider)
+                if slider is not None:
+                    slider.setMinimumHeight(max(24, slider.fontMetrics().height() + 6))
+                # QTreeWidget item padding and the bottom border take 9px.
+                height = cell.minimumSizeHint().height() + 9
+                item.setSizeHint(column, QSize(0, max(item.sizeHint(column).height(), height)))
+
     def _toggle_mod_conditions(self):
         collapsed = self.mod_filter_tree.isVisible()
         self._set_mod_conditions_collapsed(collapsed)
@@ -2811,7 +2910,7 @@ class PoetoreWindow(QWidget):
         if self.mod_filter_tree.isHidden():
             return 0
         height = self.mod_filter_tree.frameWidth() * 2 + 4
-        default_row_height = self._scaled_display_value(_MOD_ROW_HEIGHT)
+        default_row_height = self._mod_row_height()
         for index in range(self.mod_filter_tree.topLevelItemCount()):
             row = self.mod_filter_tree.topLevelItem(index)
             if row.isHidden():
@@ -2881,7 +2980,7 @@ class PoetoreWindow(QWidget):
             # 画面高が足りない時だけ、末尾に半端な行を見せず一覧内スクロールへ
             # 切り替える。セルWidgetが直下の操作ボタンへ重なって見えるのを防ぐ。
             frame_height = self.mod_filter_tree.frameWidth() * 2 + 4
-            row_height = self._scaled_display_value(_MOD_ROW_HEIGHT)
+            row_height = self._mod_row_height()
             visible_rows = max(2, (mod_height - frame_height) // row_height)
             mod_height = frame_height + visible_rows * row_height
         self.mod_filter_tree.setMinimumHeight(mod_height)
@@ -4101,7 +4200,7 @@ class PoetoreWindow(QWidget):
                     ))
                     layout.addWidget(icon)
                 label = QLabel(text)
-                label.setStyleSheet("color: #E6ECEA; background: transparent;")
+                label.setStyleSheet(f"color: {theme_color('text', '#E6ECEA')}; background: transparent;")
                 layout.addWidget(label)
             action.setDefaultWidget(row)
             self.divine_rate_menu.addAction(action)
@@ -4416,6 +4515,8 @@ class PoetoreWindow(QWidget):
             self._obs_content.show()
             self._panel.layout().setContentsMargins(10, 5, 10, 9)
             self.setMaximumHeight(16777215)
+            suspend_theme_fixed_geometry(self, False)
+            fit_theme_fixed_geometry(self)
             self.hide()
             self.setWindowFlags(
                 Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
@@ -4430,6 +4531,7 @@ class PoetoreWindow(QWidget):
             self.isVisible() or not hasattr(self, "_obs_expanded_size")
         ):
             self._obs_expanded_size = self.size()
+        suspend_theme_fixed_geometry(self, True)
         self._obs_collapsed = True
         self._obs_content.hide()
         self._title_bar.set_obs_collapsed(True)
@@ -4456,6 +4558,8 @@ class PoetoreWindow(QWidget):
         self._obs_content.show()
         self._panel.layout().setContentsMargins(10, 5, 10, 9)
         self.setMaximumHeight(16777215)
+        suspend_theme_fixed_geometry(self, False)
+        fit_theme_fixed_geometry(self)
         target = getattr(self, "_obs_expanded_size", None)
         if target is not None:
             self.resize(target)
@@ -4670,33 +4774,33 @@ class PoetoreWindow(QWidget):
             message.setDetailedText(f"解析エラー: {parse_error}")
         # QMessageBox may reset an empty application title while configuring its buttons.
         message.setWindowTitle("取り込めませんでした")
-        message.setStyleSheet("""
-            QMessageBox {
-                background-color: #111111;
-                color: #E6ECEA;
-            }
-            QMessageBox QLabel {
+        message.setStyleSheet(f"""
+            QMessageBox {{
+                background-color: {theme_color('surface', '#111111')};
+                color: {theme_color('text', '#E6ECEA')};
+            }}
+            QMessageBox QLabel {{
                 background-color: transparent;
-                color: #E6ECEA;
-                font-family: "Noto Sans JP", sans-serif;
-                font-size: 12px;
-            }
-            QMessageBox QPushButton {
+                color: {theme_color('text', '#E6ECEA')};
+                font-family:  "{theme_font_family('Noto Sans JP')}";
+                font-size: {theme_font_size(12)}px;
+            }}
+            QMessageBox QPushButton {{
                 min-width: 54px;
                 padding: 5px 12px;
-                background-color: #1a1a1a;
-                color: #65FFCA;
-                border: 1px solid #65FFCA;
+                background-color: {theme_color('surface', '#1a1a1a')};
+                color: {theme_color('accent', '#65FFCA')};
+                border: 1px solid {theme_color('accent', '#65FFCA')};
                 border-radius: 3px;
                 font-weight: 700;
-            }
-            QMessageBox QPushButton:hover {
-                background-color: #2a2a2a;
-                border-color: #ffffff;
-            }
-            QMessageBox QPushButton:pressed {
-                background-color: #000000;
-            }
+            }}
+            QMessageBox QPushButton:hover {{
+                background-color: {theme_color('control', '#2a2a2a')};
+                border-color: {theme_color('border', '#ffffff')};
+            }}
+            QMessageBox QPushButton:pressed {{
+                background-color: {theme_color('control', '#000000')};
+            }}
         """)
         return message
 
@@ -5640,6 +5744,7 @@ class PoetoreWindow(QWidget):
         else:
             self.item_level_edit.setText(str(item.item_level) if has_item_level else "")
             self.item_level_max_edit.clear()
+        fit_theme_fixed_geometry(self.item_level_tag)
 
     def _selected_item_level(self) -> int | None:
         return self._selected_item_level_range()[0]
@@ -6284,13 +6389,7 @@ class PoetoreWindow(QWidget):
                 )
             )
             button.setStyleSheet(
-                "QPushButton#uniqueCandidateButton {"
-                " text-align: left; padding: 6px; border: 1px solid #555; border-radius: 4px;"
-                "}"
-                "QPushButton#uniqueCandidateButton:hover { border-color: #65FFCA; }"
-                "QPushButton#uniqueCandidateButton:checked {"
-                " border: 2px solid #65FFCA; background: #183B34;"
-                "}"
+                f"QPushButton#uniqueCandidateButton {{ text-align: left; padding: 6px; border: 1px solid {theme_color('border', '#555')}; border-radius: 4px;}}QPushButton#uniqueCandidateButton:hover {{ border-color: {theme_color('accent', '#65FFCA')}; }}QPushButton#uniqueCandidateButton:checked {{ border: 2px solid {theme_color('accent', '#65FFCA')}; background: {theme_color('accent_soft', '#183B34')};}}"
             )
             self.unique_name_group.addButton(button)
             self.unique_name_layout.addWidget(button)
@@ -6479,7 +6578,7 @@ class PoetoreWindow(QWidget):
             row.setToolTip(_MOD_COLUMN_KIND, row.text(_MOD_COLUMN_KIND))
             row.setSizeHint(
                 _MOD_COLUMN_TEXT,
-                QSize(0, self._scaled_display_value(_MOD_ROW_HEIGHT)),
+                QSize(0, self._mod_row_height()),
             )
             self._apply_mod_kind_font_size(row)
             self.mod_filter_tree.addTopLevelItem(row)
@@ -6492,11 +6591,7 @@ class PoetoreWindow(QWidget):
                 source_layout.setContentsMargins(12, 6, 12, 8)
                 source_layout.setSpacing(2)
                 source_widget.setStyleSheet(
-                    "QWidget#modSourceDetails {"
-                    " color: #B8C2BE;"
-                    " background: rgba(31, 23, 34, 220);"
-                    " border-left: 2px solid rgba(101, 255, 202, 90);"
-                    "}"
+                    f"QWidget#modSourceDetails {{ color: {theme_color('text', '#B8C2BE')}; background: {theme_rgba('surface', 31, 23, 34, 220)}; border-left: 2px solid {theme_rgba('accent', 101, 255, 202, 90)};}}"
                 )
                 for source_index, source_text in enumerate(stat_filter.source_texts):
                     heading = QLabel(
@@ -6505,7 +6600,7 @@ class PoetoreWindow(QWidget):
                         else "元Mod"
                     )
                     heading.setStyleSheet(
-                        "color: #7F8A86; font-style: italic;"
+                        f"color: {theme_color('muted_text', '#7F8A86')}; font-style: italic;"
                     )
                     source_layout.addWidget(heading)
                     source_label = QLabel(source_text)
@@ -6553,13 +6648,11 @@ class PoetoreWindow(QWidget):
                     tag.setAlignment(Qt.AlignCenter)
                     if tier == 1:
                         tag.setStyleSheet(
-                            "background: #D8C47A; color: #292416; border-radius: 3px;"
-                            " padding: 1px 4px; font-weight: 600;"
+                            "background: #D8C47A; color: #292416; border-radius: 3px; padding: 1px 4px; font-weight: 600;"
                         )
                     else:
                         tag.setStyleSheet(
-                            "color: #CDBB78; border: 1px solid #9F9162; border-radius: 3px;"
-                            " padding: 0px 2px; font-weight: 600;"
+                            "color: #CDBB78; border: 1px solid #9F9162; border-radius: 3px; padding: 0px 2px; font-weight: 600;"
                         )
                     tier_layout.addWidget(tag)
                 tier_layout.addStretch(1)
@@ -6604,13 +6697,10 @@ class PoetoreWindow(QWidget):
                 # item text is painted through it and appears as a duplicate.
                 text_widget.setAutoFillBackground(True)
                 text_palette = text_widget.palette()
-                text_palette.setColor(QPalette.Window, QColor("#121212"))
+                text_palette.setColor(QPalette.Window, QColor(theme_color("surface", "#121212")))
                 text_widget.setPalette(text_palette)
                 text_widget.setStyleSheet(
-                    "QWidget#uniqueRollCell { background-color: #121212; }"
-                    "QWidget#uniqueRollCell QLabel {"
-                    " background-color: #121212; color: #d8ded4;"
-                    "}"
+                    f"QWidget#uniqueRollCell {{ background-color: {theme_color('surface', '#121212')}; }}QWidget#uniqueRollCell QLabel {{ background-color: {theme_color('surface', '#121212')}; color: {theme_color('text', '#d8ded4')};}}"
                 )
                 text_layout = QVBoxLayout(text_widget)
                 text_layout.setContentsMargins(2, 3, 2, 3)
@@ -6672,6 +6762,7 @@ class PoetoreWindow(QWidget):
         self._fit_mod_kind_column()
         self._refresh_hidden_mods_toggle_visibility()
         self._update_all_mod_conditions_button()
+        self._fit_mod_cell_rows()
         self._adjust_window_height_to_mod_rows()
 
     def _search_completed(self, result: PriceResult, initial_filters, search_generation: int):

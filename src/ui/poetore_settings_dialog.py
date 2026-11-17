@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import resolve_dialog_theme
 from src.app_mode import POENAVI_MODE, POETORE_MODE, normalize_app_mode
 from src.poetore.hideout_notification import (
     BUNDLED_SOUND_OPTIONS,
@@ -47,6 +48,7 @@ from src.poetore.trade import (
     default_pc_league,
 )
 from src.ui.app_info_widget import AppInfoWidget
+from src.ui.appearance_settings import AppearanceSettingsWidget
 from src.ui.custom_command_settings import CustomCommandSettingsWidget
 from src.ui.dialog_theme import (
     POETORE_DIALOG_THEME,
@@ -88,7 +90,7 @@ def _duration_step_icon(direction, theme):
 class PoetoreSettingsDialog(QDialog):
     @staticmethod
     def _style_sheet():
-        return build_dialog_stylesheet(POETORE_DIALOG_THEME)
+        return build_dialog_stylesheet(resolve_dialog_theme(POETORE_DIALOG_THEME))
 
     def __init__(
         self,
@@ -111,7 +113,7 @@ class PoetoreSettingsDialog(QDialog):
         self.setObjectName("poetoreSettingsDialog")
         self.setMinimumSize(540, 620)
         self.resize(560, 760)
-        self.theme = POETORE_DIALOG_THEME
+        self.theme = resolve_dialog_theme(POETORE_DIALOG_THEME)
         apply_dialog_theme(self, self.theme)
 
         root = QVBoxLayout(self)
@@ -545,6 +547,10 @@ class PoetoreSettingsDialog(QDialog):
         basic_scroll.setFrameShape(QScrollArea.NoFrame)
         basic_scroll.setWidget(basic_tab)
         tabs.addTab(basic_scroll, "基本設定")
+        self.appearance_widget = AppearanceSettingsWidget(
+            self.current_config.get("appearance"), mode=POETORE_MODE,
+        )
+        tabs.addTab(self.appearance_widget, "外観")
         self.custom_commands_widget = CustomCommandSettingsWidget(
             self.current_config.get("custom_commands", []), theme=self.theme
         )
@@ -788,6 +794,7 @@ class PoetoreSettingsDialog(QDialog):
             "custom_commands": self.custom_commands_widget.commands(),
             "stash_tab_scroll_enabled": self.stash_tab_scroll_cb.isChecked(),
             "poetore": poetore,
+            "appearance": self.appearance_widget.settings(),
             "client_log_paths": dict(self._client_log_paths),
             "poe_version": selected_poe_version,
             "poe_version_mode": selected_poe_version if skip_selector else "ask",

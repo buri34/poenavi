@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import resolve_dialog_theme, theme_color, theme_font_size
 from src.poetore.clipboard import clipboard_change_token, read_item_clipboard
 from src.poetore.map_check import (
     DEFAULT_DECISIONS_BY_REF,
@@ -64,15 +65,15 @@ class MapModManagerDialog(QDialog):
         self.setWindowTitle("Map Mod管理")
         self.resize(820, 680)
         self.setProperty("density", "compact")
-        apply_dialog_theme(self, POETORE_DIALOG_THEME)
+        apply_dialog_theme(self, resolve_dialog_theme(POETORE_DIALOG_THEME))
         self.setStyleSheet(
             self.styleSheet()
             + f"""
             QDialog[dialogTheme="poetore"] QTableCornerButton::section {{
-                background-color: {POETORE_DIALOG_THEME.surface};
+                background-color: {resolve_dialog_theme(POETORE_DIALOG_THEME).surface};
                 border: none;
-                border-right: 1px solid {POETORE_DIALOG_THEME.border};
-                border-bottom: 1px solid {POETORE_DIALOG_THEME.border};
+                border-right: 1px solid {resolve_dialog_theme(POETORE_DIALOG_THEME).border};
+                border-bottom: 1px solid {resolve_dialog_theme(POETORE_DIALOG_THEME).border};
             }}
             """
         )
@@ -218,16 +219,13 @@ class MapCheckWindow(QDialog):
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.resize(self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT)
         self.setStyleSheet(
-            "QDialog,QWidget{background:#111416;color:#E6ECEA;}"
-            "QPushButton{padding:7px;background:#1A1F21;color:#E6ECEA;border:1px solid #3A4245;}"
-            "QPushButton:hover{border-color:#65FFCA;}"
-            "QPushButton:checked{border:2px solid #65FFCA;}"
+            f"QDialog,QWidget{{background:{theme_color('background', '#111416')};color:{theme_color('text', '#E6ECEA')};}}QPushButton{{padding:7px;background:{theme_color('control', '#1A1F21')};color:{theme_color('text', '#E6ECEA')};border:1px solid {theme_color('border', '#3A4245')};}}QPushButton:hover{{border-color:{theme_color('accent', '#65FFCA')};}}QPushButton:checked{{border:2px solid {theme_color('accent', '#65FFCA')};}}"
         )
         self._apply_font_size()
         self.root = QVBoxLayout(self)
         header = QHBoxLayout()
         self.title = QLabel("Map Check")
-        self.title.setStyleSheet("font-size:15px;font-weight:bold;")
+        self.title.setStyleSheet(f"font-size:{theme_font_size(15)}px;font-weight:bold;")
         header.addWidget(self.title, 1)
         header.addWidget(QLabel("プロファイル:"))
         self.profile_buttons = []
@@ -261,7 +259,7 @@ class MapCheckWindow(QDialog):
     def _apply_font_size(self):
         size = _FONT_SIZES.get(self._font_size_name, _FONT_SIZES["medium"])
         self.setStyleSheet(
-            self.styleSheet() + f"QLabel,QPushButton{{font-size:{size}px;}}"
+            self.styleSheet() + f"QLabel,QPushButton{{font-size:{theme_font_size(size)}px;}}"
         )
 
     def capture_from_poe(self):

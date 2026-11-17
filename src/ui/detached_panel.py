@@ -1,9 +1,11 @@
 """切り離しパネル用の独立ウィンドウ。"""
 
+
 from PySide6.QtCore import QEvent, QPoint, QRect, Qt
 from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import QGraphicsOpacityEffect, QHBoxLayout, QLabel, QPushButton, QSizeGrip, QSizePolicy, QVBoxLayout, QWidget
 
+from src.ui.appearance import theme_rgba
 from src.ui.styles import Styles
 
 
@@ -40,7 +42,7 @@ class DetachedPanelWindow(QWidget):
         self.header.setAttribute(Qt.WA_StyledBackground, True)
         self.header.setCursor(QCursor(Qt.OpenHandCursor))
         self.header.setStyleSheet(
-            f"background-color: {Styles.BACKGROUND_COLOR}; border-bottom: 1px solid rgba(176, 255, 123, 0.35);"
+            f"background-color: {Styles.BACKGROUND_COLOR}; border-bottom: 1px solid {theme_rgba('accent', 176, 255, 123, 0.35)};"
         )
         self.header.installEventFilter(self)
         header_layout = QHBoxLayout(self.header)

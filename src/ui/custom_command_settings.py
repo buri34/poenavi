@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.appearance import resolve_app_theme
 from src.ui.app_theme import POENAVI_THEME
 from src.ui.dialog_theme import DialogTheme
 from src.ui.settings_dialog import HotkeyButton
@@ -51,7 +52,7 @@ class CustomCommandSettingsWidget(QWidget):
 
     def __init__(self, commands=None, parent=None, theme=None):
         super().__init__(parent)
-        self.theme = theme or POENAVI_THEME
+        self.theme = theme or resolve_app_theme(POENAVI_THEME)
         self._shared_dialog_theme = isinstance(self.theme, DialogTheme)
         if self._shared_dialog_theme:
             self.setProperty("density", "compact")
