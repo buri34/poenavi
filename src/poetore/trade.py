@@ -1777,6 +1777,13 @@ def _map_blight_state(item: ParsedItem) -> str | None:
 def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
     filters: list[TradeStatFilter] = []
     area_level = _property_value(item, "エリアレベル", "Area Level")
+    atzoatl_chronicle = _is_atzoatl_chronicle(item)
+    if atzoatl_chronicle and area_level is not None:
+        filters.append(TradeStatFilter(
+            "property.area_level", "エリアレベル",
+            _floor_bracket(area_level, (1, 68, 73, 75, 78, 80)),
+            "special", True,
+        ))
     if item.category == "cluster_jewel" and item.item_level is not None:
         minimum = max(value for value in (1, 50, 68, 75, 84) if value <= item.item_level)
         maximum = next((value for value in (49, 67, 74) if value >= item.item_level), None)
@@ -1934,10 +1941,8 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                 "property.heist_objective_value", "依頼書目標: プライスレス", None, "heist", True,
                 option_value="priceless",
             ))
-    elif area_level is not None:
+    elif area_level is not None and not atzoatl_chronicle:
         name = f"{item.name} {item.base_type}".casefold()
-        if "chronicle of atzoatl" in name or "アトゾアトルの年代記" in name:
-            area_level = _floor_bracket(area_level, (1, 68, 73, 75, 78, 80))
         maximum = None
         if (("forbidden tome" in name or "禁断の書" in name or "禁じられた書" in name)
                 and area_level < 83):
@@ -2254,42 +2259,173 @@ _ATZOATL_EXPLOSIVES_ROOMS = frozenset({
     "Has Room: Shrine of Unmaking (Tier 3)",
 })
 
+_ATZOATL_NAMES = frozenset({
+    "chronicle of atzoatl",
+    "アトゾアトルの年代記",
+    "アッツォアトルの年代記",
+    "アトゾアトルの歴史書",
+    "アッツォアトルの歴史書",
+})
+
+_ATZOATL_REMOVE_ROOM_IDS = frozenset(
+    f"pseudo.pseudo_temple_{suffix}" for suffix in (
+        "banquet_hall", "antechamber", "passageways", "cloister", "tunnels",
+        "cellar", "chasm_room", "halls", "tombs", "the_pits",
+        "empowering_room_1", "empowering_room_2", "empowering_room_3",
+        "explosives_room_1", "explosives_room_2", "explosives_room_3",
+        "corruption_room_1", "corruption_room_2",
+        "gem_room_1", "gem_room_2",
+        "sacrifice_room_1", "sacrifice_room_2",
+        "chests_1", "breeding_room_1", "workshop_1", "queens_chambers_1",
+        "torment_1", "strongbox_1", "trinket_room_1", "breach_room_1",
+        "storm_room_1", "storm_room_2", "armour_room_1", "armour_room_2",
+        "weapon_room_1", "weapon_room_2", "poison_room_1", "poison_room_2",
+        "boss_minions_1", "boss_minions_2", "trap_room_1", "trap_room_2",
+        "boss_fire_1", "boss_fire_2", "boss_lightning_1", "boss_lightning_2",
+        "healing_room_1", "healing_room_2",
+    )
+)
+
+_ATZOATL_HIDDEN_ROOM_IDS = frozenset(
+    f"pseudo.pseudo_temple_{suffix}" for suffix in (
+        "currency_vault_1", "cartography_room_1", "legion_1",
+        "chests_2", "breeding_room_2", "workshop_2", "queens_chambers_2",
+        "torment_2", "strongbox_2", "trinket_room_2", "breach_room_2",
+        "storm_room_3", "armour_room_3", "weapon_room_3", "poison_room_3",
+        "boss_minions_3", "trap_room_3", "boss_fire_3",
+        "boss_lightning_3", "healing_room_3",
+    )
+)
+
+_ATZOATL_ENABLED_ROOM_IDS = frozenset({
+    "pseudo.pseudo_temple_apex",
+    "pseudo.pseudo_temple_corruption_room_3",
+    "pseudo.pseudo_temple_gem_room_3",
+    "pseudo.pseudo_temple_sacrifice_room_3",
+    "pseudo.pseudo_temple_currency_vault_3",
+})
+
+_ATZOATL_EXPLOSIVES_ROOM_IDS = frozenset({
+    "pseudo.pseudo_temple_explosives_room_1",
+    "pseudo.pseudo_temple_explosives_room_2",
+    "pseudo.pseudo_temple_explosives_room_3",
+})
+
+# 3.30のゲーム内日本語と公式Trade APIの日本語に差がある部屋。
+_ATZOATL_ROOM_STAT_ALIASES = {
+    "王家の鍛造場 (ティア2)": "pseudo.pseudo_temple_trinket_room_2",
+}
+
+
+def _is_atzoatl_chronicle(item: ParsedItem) -> bool:
+    name = f"{item.name} {item.base_type}".casefold()
+    return any(candidate in name for candidate in _ATZOATL_NAMES)
+
+
+def _atzoatl_room_filters(
+    item: ParsedItem, entries: tuple[dict, ...],
+) -> tuple[TradeStatFilter, ...]:
+    """現行コピーの開放／塞がれた部屋を公式Trade statへ変換する。"""
+    if not _is_atzoatl_chronicle(item):
+        return ()
+
+    by_room: dict[str, dict] = {}
+    by_id: dict[str, dict] = {}
+    for entry in entries:
+        stat_id = str(entry.get("id", ""))
+        text = str(entry.get("text", ""))
+        if not stat_id.startswith("pseudo.pseudo_temple_") or ":" not in text:
+            continue
+        room = text.split(":", 1)[1].strip()
+        by_room[re.sub(r"\s+", " ", room).casefold()] = entry
+        by_id[stat_id] = entry
+
+    opened_headers = {"開放された部屋:", "Open Rooms:", "Opened Rooms:"}
+    obstructed_headers = {"塞がれた部屋:", "Obstructed Rooms:", "Blocked Rooms:"}
+    state: int | None = None
+    result = []
+    for raw_line in item.raw_text.splitlines():
+        line = raw_line.strip()
+        if line in opened_headers:
+            state = 1
+            continue
+        if line in obstructed_headers:
+            state = 2
+            continue
+        if state is None:
+            continue
+        if line == "--------":
+            break
+        if not line:
+            continue
+        entry = by_room.get(re.sub(r"\s+", " ", line).casefold())
+        if entry is None:
+            alias_id = _ATZOATL_ROOM_STAT_ALIASES.get(line)
+            entry = by_id.get(alias_id or "")
+        if entry is None:
+            continue
+        result.append(TradeStatFilter(
+            str(entry["id"]), line, None, "pseudo", True,
+            option_value=state,
+            option_text="空いた部屋" if state == 1 else "閉じた部屋",
+            selection_reason="Atzoatlの開放部屋" if state == 1 else "Atzoatlの塞がれた部屋",
+        ))
+    return tuple(result)
+
+
+def _atzoatl_room_matches(
+    row: TradeStatFilter, refs: frozenset[str], stat_ids: frozenset[str],
+) -> bool:
+    return row.ref in refs or row.stat_id in stat_ids
+
 
 def _apply_atzoatl_room_rules(
     filters: list[TradeStatFilter],
 ) -> list[TradeStatFilter]:
     """AwakenedのChronicle of Atzoatl全Room規則を適用する。"""
-    room_filters = [
-        row for row in filters
-        if row.ref and row.ref.startswith("Has Room:")
-    ]
+    room_filters = [row for row in filters if (
+        (row.ref and row.ref.startswith("Has Room:"))
+        or row.stat_id.startswith("pseudo.pseudo_temple_")
+    )]
     has_open_explosives = any(
-        row.ref in _ATZOATL_EXPLOSIVES_ROOMS and row.option_value == 1
+        _atzoatl_room_matches(
+            row, _ATZOATL_EXPLOSIVES_ROOMS, _ATZOATL_EXPLOSIVES_ROOM_IDS,
+        ) and row.option_value == 1
         for row in room_filters
     )
     adjusted = []
     for row in filters:
-        if not row.ref or not row.ref.startswith("Has Room:"):
+        if not (
+            (row.ref and row.ref.startswith("Has Room:"))
+            or row.stat_id.startswith("pseudo.pseudo_temple_")
+        ):
             adjusted.append(row)
             continue
         obstructed = row.option_value == 2
-        if row.ref in _ATZOATL_REMOVE_ROOMS or (
+        if _atzoatl_room_matches(
+            row, _ATZOATL_REMOVE_ROOMS, _ATZOATL_REMOVE_ROOM_IDS,
+        ) or (
             obstructed and not has_open_explosives
         ):
             continue
         hidden_reason = (
             "Awakened: 低優先度のAtzoatl部屋を非表示"
-            if row.ref in _ATZOATL_HIDDEN_ROOMS else ""
+            if _atzoatl_room_matches(
+                row, _ATZOATL_HIDDEN_ROOMS, _ATZOATL_HIDDEN_ROOM_IDS,
+            ) else ""
         )
+        enabled = _atzoatl_room_matches(
+            row, _ATZOATL_ENABLED_ROOMS, _ATZOATL_ENABLED_ROOM_IDS,
+        ) and not hidden_reason
         adjusted.append(replace(
             row,
-            enabled=row.ref in _ATZOATL_ENABLED_ROOMS and not hidden_reason,
+            enabled=enabled,
             option_value=None if obstructed else row.option_value,
             option_text=None if obstructed else row.option_text,
             hidden_reason=hidden_reason,
             selection_reason=(
                 "Atzoatlの主要部屋"
-                if row.ref in _ATZOATL_ENABLED_ROOMS else row.selection_reason
+                if enabled else row.selection_reason
             ),
         ))
     return adjusted
@@ -3932,6 +4068,15 @@ def resolve_trade_stat_filters(
         + _special_content_filters(item)
     )
     decorated = list(_decorate_filters(item, filters))
+    if _is_atzoatl_chronicle(item):
+        existing_rooms = {
+            (row.stat_id, row.option_value) for row in decorated
+            if row.stat_id.startswith("pseudo.pseudo_temple_")
+        }
+        decorated.extend(
+            row for row in _atzoatl_room_filters(item, entries)
+            if (row.stat_id, row.option_value) not in existing_rooms
+        )
     if item.category == "weapon":
         gem_level_markers = (
             "level of all", "level of socketed", "skill gems", "gemのレベル",
@@ -4138,7 +4283,7 @@ def resolve_trade_stat_filters(
                 selection_reason="Charge Recovery単独品を検索",
             ))
     special_name = f"{item.name} {item.base_type}".casefold()
-    if "chronicle of atzoatl" in special_name or "アトゾアトルの年代記" in special_name:
+    if _is_atzoatl_chronicle(item):
         decorated = _apply_atzoatl_room_rules(decorated)
     if "mirrored tablet" in special_name or "ミラーされたタブレット" in special_name:
         premium = ("Reflection of Kalandra", "Reflection of the Sun", "Reflection of Paradise", "Reflection of Angling")

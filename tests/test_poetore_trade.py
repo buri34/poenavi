@@ -6802,6 +6802,84 @@ def test_atzoatl_room_rules_match_awakened_priorities_and_visibility():
     assert by_ref["Has Room: Vault (Tier 1)"].hidden_reason
     assert by_ref["Has Room: Storm of Corruption (Tier 3)"].hidden_reason
 
+    current_api_room = TradeStatFilter(
+        "pseudo.pseudo_temple_corruption_room_3",
+        "腐敗の根源 (ティア3)", None, "pseudo", True,
+        option_value=1,
+    )
+    [current_api_room] = _apply_atzoatl_room_rules([current_api_room])
+    assert current_api_room.enabled
+    assert current_api_room.selection_reason == "Atzoatlの主要部屋"
+
+
+def test_current_japanese_atzoatl_chronicle_resolves_rooms_and_area_level():
+    chronicle = parse_item_text("""アイテムクラス: その他マップアイテム
+レアリティ: カレンシー
+アッツォアトルの歴史書
+--------
+エリアレベル: 76
+--------
+開放された部屋:
+生贄の間 (ティア1)
+毒性の木立 (ティア3)
+王者の広間 (ティア3)
+宝石細工師の工房 (ティア1)
+鎧工房 (ティア1)
+強化の祭壇 (ティア1)
+廊下
+罠の工房 (ティア1)
+王家の鍛造場 (ティア2)
+工房 (ティア1)
+控えの間
+塞がれた部屋:
+アッツォアトルの頂点
+--------
+右クリックでアッツォアトル寺院を見ることができます。
+""")
+    entries = (
+        {"id": "pseudo.pseudo_temple_sacrifice_room_1", "type": "pseudo",
+         "text": "次の部屋を持つ : 生贄の間 (ティア1)"},
+        {"id": "pseudo.pseudo_temple_poison_room_3", "type": "pseudo",
+         "text": "次の部屋を持つ : 毒性の木立 (ティア3)"},
+        {"id": "pseudo.pseudo_temple_weapon_room_3", "type": "pseudo",
+         "text": "次の部屋を持つ : 王者の広間 (ティア3)"},
+        {"id": "pseudo.pseudo_temple_gem_room_1", "type": "pseudo",
+         "text": "次の部屋を持つ : 宝石細工師の工房 (ティア1)"},
+        {"id": "pseudo.pseudo_temple_armour_room_1", "type": "pseudo",
+         "text": "次の部屋を持つ : 鎧工房 (ティア1)"},
+        {"id": "pseudo.pseudo_temple_empowering_room_1", "type": "pseudo",
+         "text": "次の部屋を持つ : 強化の祭壇 (ティア1)"},
+        {"id": "pseudo.pseudo_temple_passageways", "type": "pseudo",
+         "text": "次の部屋を持つ : 廊下"},
+        {"id": "pseudo.pseudo_temple_trap_room_1", "type": "pseudo",
+         "text": "次の部屋を持つ : 罠の工房 (ティア1)"},
+        {"id": "pseudo.pseudo_temple_trinket_room_2", "type": "pseudo",
+         "text": "次の部屋を持つ : 宝飾鍛造場 (ティア2)"},
+        {"id": "pseudo.pseudo_temple_workshop_1", "type": "pseudo",
+         "text": "次の部屋を持つ : 工房 (ティア1)"},
+        {"id": "pseudo.pseudo_temple_antechamber", "type": "pseudo",
+         "text": "次の部屋を持つ : 控えの間"},
+        {"id": "pseudo.pseudo_temple_apex", "type": "pseudo",
+         "text": "次の部屋を持つ : アッツォアトルの頂点"},
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(chronicle)
+
+    area = next(row for row in filters if row.stat_id == "property.area_level")
+    assert (area.min_value, area.enabled) == (75, True)
+    rooms = {
+        row.stat_id: row for row in filters
+        if row.stat_id.startswith("pseudo.pseudo_temple_")
+    }
+    assert set(rooms) == {
+        "pseudo.pseudo_temple_poison_room_3",
+        "pseudo.pseudo_temple_weapon_room_3",
+        "pseudo.pseudo_temple_trinket_room_2",
+    }
+    assert rooms["pseudo.pseudo_temple_trinket_room_2"].text == "王家の鍛造場 (ティア2)"
+    assert all(row.option_value == 1 for row in rooms.values())
+    assert all(row.hidden_reason for row in rooms.values())
+
 
 def test_atzoatl_obstructed_room_requires_open_explosives():
     def room(ref, option):
