@@ -2171,78 +2171,12 @@ def _initial_property_filters(
     return filters
 
 
-_ATZOATL_REMOVE_ROOMS = frozenset({
-    "Has Room: Banquet Hall",
-    "Has Room: Antechamber",
-    "Has Room: Passageways",
-    "Has Room: Cloister",
-    "Has Room: Tunnels",
-    "Has Room: Cellar",
-    "Has Room: Chasm",
-    "Has Room: Halls",
-    "Has Room: Tombs",
-    "Has Room: Pits",
-    "Has Room: Shrine of Empowerment (Tier 1)",
-    "Has Room: Sanctum of Unity (Tier 2)",
-    "Has Room: Temple Nexus (Tier 3)",
-    "Has Room: Explosives Room (Tier 1)",
-    "Has Room: Demolition Lab (Tier 2)",
-    "Has Room: Shrine of Unmaking (Tier 3)",
-    "Has Room: Corruption Chamber (Tier 1)",
-    "Has Room: Catalyst of Corruption (Tier 2)",
-    "Has Room: Gemcutter's Workshop (Tier 1)",
-    "Has Room: Department of Thaumaturgy (Tier 2)",
-    "Has Room: Sacrificial Chamber (Tier 1)",
-    "Has Room: Hall of Offerings (Tier 2)",
-    "Has Room: Storage Room (Tier 1)",
-    "Has Room: Guardhouse (Tier 1)",
-    "Has Room: Workshop (Tier 1)",
-    "Has Room: Royal Meeting Room (Tier 1)",
-    "Has Room: Torment Cells (Tier 1)",
-    "Has Room: Strongbox Chamber (Tier 1)",
-    "Has Room: Jeweller's Workshop (Tier 1)",
-    "Has Room: Splinter Research Lab (Tier 1)",
-    "Has Room: Tempest Generator (Tier 1)",
-    "Has Room: Hurricane Engine (Tier 2)",
-    "Has Room: Armourer's Workshop (Tier 1)",
-    "Has Room: Armoury (Tier 2)",
-    "Has Room: Sparring Room (Tier 1)",
-    "Has Room: Arena of Valour (Tier 2)",
-    "Has Room: Poison Garden (Tier 1)",
-    "Has Room: Cultivar Chamber (Tier 2)",
-    "Has Room: Hatchery (Tier 1)",
-    "Has Room: Automaton Lab (Tier 2)",
-    "Has Room: Trap Workshop (Tier 1)",
-    "Has Room: Temple Defense Workshop (Tier 2)",
-    "Has Room: Flame Workshop (Tier 1)",
-    "Has Room: Omnitect Forge (Tier 2)",
-    "Has Room: Lightning Workshop (Tier 1)",
-    "Has Room: Omnitect Reactor Plant (Tier 2)",
-    "Has Room: Pools of Restoration (Tier 1)",
-    "Has Room: Sanctum of Vitality (Tier 2)",
-})
-
-_ATZOATL_HIDDEN_ROOMS = frozenset({
-    "Has Room: Vault (Tier 1)",
-    "Has Room: Surveyor's Study (Tier 1)",
-    "Has Room: Hall of Mettle (Tier 1)",
-    "Has Room: Warehouses (Tier 2)",
-    "Has Room: Barracks (Tier 2)",
-    "Has Room: Engineering Department (Tier 2)",
-    "Has Room: Hall of Lords (Tier 2)",
-    "Has Room: Torture Cages (Tier 2)",
-    "Has Room: Hall of Locks (Tier 2)",
-    "Has Room: Jewellery Forge (Tier 2)",
-    "Has Room: Breach Containment Chamber (Tier 2)",
-    "Has Room: Storm of Corruption (Tier 3)",
-    "Has Room: Chamber of Iron (Tier 3)",
-    "Has Room: Hall of Champions (Tier 3)",
-    "Has Room: Toxic Grove (Tier 3)",
-    "Has Room: Hybridisation Chamber (Tier 3)",
-    "Has Room: Defense Research Lab (Tier 3)",
-    "Has Room: Crucible of Flame (Tier 3)",
-    "Has Room: Conduit of Lightning (Tier 3)",
-    "Has Room: Sanctum of Immortality (Tier 3)",
+_ATZOATL_NAMES = frozenset({
+    "chronicle of atzoatl",
+    "アトゾアトルの年代記",
+    "アッツォアトルの年代記",
+    "アトゾアトルの歴史書",
+    "アッツォアトルの歴史書",
 })
 
 _ATZOATL_ENABLED_ROOMS = frozenset({
@@ -2253,62 +2187,12 @@ _ATZOATL_ENABLED_ROOMS = frozenset({
     "Has Room: Wealth of the Vaal (Tier 3)",
 })
 
-_ATZOATL_EXPLOSIVES_ROOMS = frozenset({
-    "Has Room: Explosives Room (Tier 1)",
-    "Has Room: Demolition Lab (Tier 2)",
-    "Has Room: Shrine of Unmaking (Tier 3)",
-})
-
-_ATZOATL_NAMES = frozenset({
-    "chronicle of atzoatl",
-    "アトゾアトルの年代記",
-    "アッツォアトルの年代記",
-    "アトゾアトルの歴史書",
-    "アッツォアトルの歴史書",
-})
-
-_ATZOATL_REMOVE_ROOM_IDS = frozenset(
-    f"pseudo.pseudo_temple_{suffix}" for suffix in (
-        "banquet_hall", "antechamber", "passageways", "cloister", "tunnels",
-        "cellar", "chasm_room", "halls", "tombs", "the_pits",
-        "empowering_room_1", "empowering_room_2", "empowering_room_3",
-        "explosives_room_1", "explosives_room_2", "explosives_room_3",
-        "corruption_room_1", "corruption_room_2",
-        "gem_room_1", "gem_room_2",
-        "sacrifice_room_1", "sacrifice_room_2",
-        "chests_1", "breeding_room_1", "workshop_1", "queens_chambers_1",
-        "torment_1", "strongbox_1", "trinket_room_1", "breach_room_1",
-        "storm_room_1", "storm_room_2", "armour_room_1", "armour_room_2",
-        "weapon_room_1", "weapon_room_2", "poison_room_1", "poison_room_2",
-        "boss_minions_1", "boss_minions_2", "trap_room_1", "trap_room_2",
-        "boss_fire_1", "boss_fire_2", "boss_lightning_1", "boss_lightning_2",
-        "healing_room_1", "healing_room_2",
-    )
-)
-
-_ATZOATL_HIDDEN_ROOM_IDS = frozenset(
-    f"pseudo.pseudo_temple_{suffix}" for suffix in (
-        "currency_vault_1", "cartography_room_1", "legion_1",
-        "chests_2", "breeding_room_2", "workshop_2", "queens_chambers_2",
-        "torment_2", "strongbox_2", "trinket_room_2", "breach_room_2",
-        "storm_room_3", "armour_room_3", "weapon_room_3", "poison_room_3",
-        "boss_minions_3", "trap_room_3", "boss_fire_3",
-        "boss_lightning_3", "healing_room_3",
-    )
-)
-
 _ATZOATL_ENABLED_ROOM_IDS = frozenset({
     "pseudo.pseudo_temple_apex",
     "pseudo.pseudo_temple_corruption_room_3",
     "pseudo.pseudo_temple_gem_room_3",
     "pseudo.pseudo_temple_sacrifice_room_3",
     "pseudo.pseudo_temple_currency_vault_3",
-})
-
-_ATZOATL_EXPLOSIVES_ROOM_IDS = frozenset({
-    "pseudo.pseudo_temple_explosives_room_1",
-    "pseudo.pseudo_temple_explosives_room_2",
-    "pseudo.pseudo_temple_explosives_room_3",
 })
 
 # 3.30のゲーム内日本語と公式Trade APIの日本語に差がある部屋。
@@ -2342,17 +2226,15 @@ def _atzoatl_room_filters(
 
     opened_headers = {"開放された部屋:", "Open Rooms:", "Opened Rooms:"}
     obstructed_headers = {"塞がれた部屋:", "Obstructed Rooms:", "Blocked Rooms:"}
-    state: int | None = None
+    room_headers = opened_headers | obstructed_headers
+    inside_rooms = False
     result = []
     for raw_line in item.raw_text.splitlines():
         line = raw_line.strip()
-        if line in opened_headers:
-            state = 1
+        if line in room_headers:
+            inside_rooms = True
             continue
-        if line in obstructed_headers:
-            state = 2
-            continue
-        if state is None:
+        if not inside_rooms:
             continue
         if line == "--------":
             break
@@ -2366,33 +2248,15 @@ def _atzoatl_room_filters(
             continue
         result.append(TradeStatFilter(
             str(entry["id"]), line, None, "pseudo", True,
-            option_value=state,
-            option_text="空いた部屋" if state == 1 else "閉じた部屋",
-            selection_reason="Atzoatlの開放部屋" if state == 1 else "Atzoatlの塞がれた部屋",
+            selection_reason="Atzoatlの部屋",
         ))
     return tuple(result)
-
-
-def _atzoatl_room_matches(
-    row: TradeStatFilter, refs: frozenset[str], stat_ids: frozenset[str],
-) -> bool:
-    return row.ref in refs or row.stat_id in stat_ids
 
 
 def _apply_atzoatl_room_rules(
     filters: list[TradeStatFilter],
 ) -> list[TradeStatFilter]:
-    """AwakenedのChronicle of Atzoatl全Room規則を適用する。"""
-    room_filters = [row for row in filters if (
-        (row.ref and row.ref.startswith("Has Room:"))
-        or row.stat_id.startswith("pseudo.pseudo_temple_")
-    )]
-    has_open_explosives = any(
-        _atzoatl_room_matches(
-            row, _ATZOATL_EXPLOSIVES_ROOMS, _ATZOATL_EXPLOSIVES_ROOM_IDS,
-        ) and row.option_value == 1
-        for row in room_filters
-    )
+    """全Atzoatl部屋を状態指定なしの検索条件として表示する。"""
     adjusted = []
     for row in filters:
         if not (
@@ -2401,31 +2265,18 @@ def _apply_atzoatl_room_rules(
         ):
             adjusted.append(row)
             continue
-        obstructed = row.option_value == 2
-        if _atzoatl_room_matches(
-            row, _ATZOATL_REMOVE_ROOMS, _ATZOATL_REMOVE_ROOM_IDS,
-        ) or (
-            obstructed and not has_open_explosives
-        ):
-            continue
-        hidden_reason = (
-            "Awakened: 低優先度のAtzoatl部屋を非表示"
-            if _atzoatl_room_matches(
-                row, _ATZOATL_HIDDEN_ROOMS, _ATZOATL_HIDDEN_ROOM_IDS,
-            ) else ""
+        enabled = (
+            row.ref in _ATZOATL_ENABLED_ROOMS
+            or row.stat_id in _ATZOATL_ENABLED_ROOM_IDS
         )
-        enabled = _atzoatl_room_matches(
-            row, _ATZOATL_ENABLED_ROOMS, _ATZOATL_ENABLED_ROOM_IDS,
-        ) and not hidden_reason
         adjusted.append(replace(
             row,
             enabled=enabled,
-            option_value=None if obstructed else row.option_value,
-            option_text=None if obstructed else row.option_text,
-            hidden_reason=hidden_reason,
+            option_value=None,
+            option_text=None,
+            hidden_reason="",
             selection_reason=(
-                "Atzoatlの主要部屋"
-                if enabled else row.selection_reason
+                "Atzoatlの主要部屋" if enabled else "Atzoatlの部屋候補"
             ),
         ))
     return adjusted

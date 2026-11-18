@@ -6771,7 +6771,7 @@ Item Level: 72
     assert next(row for row in filters if row.stat_id == "property.area_level").min_value == 78
 
 
-def test_atzoatl_room_rules_match_awakened_priorities_and_visibility():
+def test_atzoatl_room_rules_show_every_room_and_ignore_open_state():
     def room(ref, option=1):
         return TradeStatFilter(
             f"pseudo.{ref}", ref, None, "pseudo", True,
@@ -6794,13 +6794,15 @@ def test_atzoatl_room_rules_match_awakened_priorities_and_visibility():
     by_ref = {row.ref: row for row in rows if row.ref}
 
     assert area in rows
-    assert "Has Room: Banquet Hall" not in by_ref
-    assert "Has Room: Corruption Chamber (Tier 1)" not in by_ref
+    assert not by_ref["Has Room: Banquet Hall"].enabled
+    assert not by_ref["Has Room: Corruption Chamber (Tier 1)"].enabled
     assert by_ref["Has Room: Locus of Corruption (Tier 3)"].enabled
     assert by_ref["Has Room: Wealth of the Vaal (Tier 3)"].enabled
     assert not by_ref["Has Room: Treasury (Tier 2)"].enabled
-    assert by_ref["Has Room: Vault (Tier 1)"].hidden_reason
-    assert by_ref["Has Room: Storm of Corruption (Tier 3)"].hidden_reason
+    assert not by_ref["Has Room: Vault (Tier 1)"].enabled
+    assert not by_ref["Has Room: Storm of Corruption (Tier 3)"].enabled
+    assert all(row.option_value is None for row in by_ref.values())
+    assert all(not row.hidden_reason for row in by_ref.values())
 
     current_api_room = TradeStatFilter(
         "pseudo.pseudo_temple_corruption_room_3",
@@ -6872,28 +6874,67 @@ def test_current_japanese_atzoatl_chronicle_resolves_rooms_and_area_level():
         if row.stat_id.startswith("pseudo.pseudo_temple_")
     }
     assert set(rooms) == {
+        "pseudo.pseudo_temple_sacrifice_room_1",
         "pseudo.pseudo_temple_poison_room_3",
         "pseudo.pseudo_temple_weapon_room_3",
+        "pseudo.pseudo_temple_gem_room_1",
+        "pseudo.pseudo_temple_armour_room_1",
+        "pseudo.pseudo_temple_empowering_room_1",
+        "pseudo.pseudo_temple_passageways",
+        "pseudo.pseudo_temple_trap_room_1",
         "pseudo.pseudo_temple_trinket_room_2",
+        "pseudo.pseudo_temple_workshop_1",
+        "pseudo.pseudo_temple_antechamber",
+        "pseudo.pseudo_temple_apex",
     }
     assert rooms["pseudo.pseudo_temple_trinket_room_2"].text == "王家の鍛造場 (ティア2)"
-    assert all(row.option_value == 1 for row in rooms.values())
-    assert all(row.hidden_reason for row in rooms.values())
+    assert all(row.option_value is None for row in rooms.values())
+    assert all(not row.hidden_reason for row in rooms.values())
+    assert {
+        row.stat_id for row in rooms.values() if row.enabled
+    } == {"pseudo.pseudo_temple_apex"}
+
+    query = build_search_query(
+        chronicle, "Chronicle of Atzoatl", tuple(filters),
+    )["query"]
+    sent_rooms = {
+        row["id"]: row["value"]
+        for group in query["stats"]
+        for row in group["filters"]
+        if row["id"].startswith("pseudo.pseudo_temple_")
+    }
+    assert set(sent_rooms) == {"pseudo.pseudo_temple_apex"}
+    assert all(value == {} for value in sent_rooms.values())
+
+    poison_only = tuple(
+        replace(row, enabled=row.stat_id == "pseudo.pseudo_temple_poison_room_3")
+        if row.stat_id.startswith("pseudo.pseudo_temple_") else row
+        for row in filters
+    )
+    poison_query = build_search_query(
+        chronicle, "Chronicle of Atzoatl", poison_only,
+    )["query"]
+    sent_poison = [
+        row
+        for group in poison_query["stats"]
+        for row in group["filters"]
+        if row["id"].startswith("pseudo.pseudo_temple_")
+    ]
+    assert sent_poison == [{
+        "id": "pseudo.pseudo_temple_poison_room_3",
+        "value": {},
+    }]
 
 
-def test_atzoatl_obstructed_room_requires_open_explosives():
+def test_atzoatl_obstructed_room_is_searchable_without_open_state():
     def room(ref, option):
         return TradeStatFilter(
             f"pseudo.{ref}", ref, None, "pseudo", True,
             ref=ref, option_value=option,
         )
 
-    obstructed = room("Has Room: Treasury (Tier 2)", 2)
-    assert _apply_atzoatl_room_rules([obstructed]) == []
-
     rows = _apply_atzoatl_room_rules([
-        room("Has Room: Explosives Room (Tier 1)", 1),
-        obstructed,
+        room("Has Room: Treasury (Tier 2)", 2),
     ])
     assert len(rows) == 1
     assert rows[0].ref == "Has Room: Treasury (Tier 2)"
