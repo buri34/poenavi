@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 pytest.importorskip("PySide6")
+from PySide6.QtCore import QPoint, QPointF, QRect, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 from src.ui.main_window import MainWindow
@@ -77,6 +78,101 @@ def test_show_event_is_noop_before_main_window_initialization():
         window.showEvent(Mock())
 
     assert window._main_window_initialized is False
+
+
+def test_show_event_startup_reset_ignores_saved_geometry():
+    window = MainWindow.__new__(MainWindow)
+    QMainWindow.__init__(window)
+    window._main_window_initialized = True
+    window._initial_positioned = False
+    window._pending_initial_map_auto_open = False
+    window.config = {
+        "reset_window_position_on_startup": True,
+        "window_geometry": {
+            "x": 5000,
+            "y": 3000,
+            "width": 900,
+            "height": 700,
+        },
+    }
+    window._position_right_edge = Mock()
+
+    with patch.object(QMainWindow, "showEvent"):
+        window.showEvent(Mock())
+
+    window._position_right_edge.assert_called_once_with(
+        reset_position_only=True,
+        saved_geometry=window.config["window_geometry"],
+    )
+
+
+def test_startup_reset_preserves_saved_size_at_target_screen_top_right():
+    window = MainWindow.__new__(MainWindow)
+    QMainWindow.__init__(window)
+    window.setGeometry(0, 0, 420, 1200)
+    window._main_window_min_height = Mock(return_value=120)
+    screen = Mock()
+    screen.availableGeometry.return_value = QRect(1920, 0, 2560, 1440)
+    window._target_display_screen = Mock(return_value=screen)
+
+    window._position_right_edge(
+        reset_position_only=True,
+        saved_geometry={
+            "x": 5000,
+            "y": 3000,
+            "width": 635,
+            "height": 867,
+        },
+    )
+
+    assert window.geometry() == QRect(3845, 0, 635, 867)
+
+
+def test_main_window_drag_prefers_qt_system_move():
+    window = MainWindow.__new__(MainWindow)
+    QMainWindow.__init__(window)
+    window.window_locked = False
+    window.drag_position = QPoint(1, 1)
+    window.resize_edge = None
+    window.resize_start_geo = None
+    window.resize_start_pos = None
+    window._detect_edge = Mock(return_value=None)
+    handle = Mock()
+    handle.startSystemMove.return_value = True
+    event = Mock()
+    event.button.return_value = Qt.LeftButton
+    event.position.return_value = QPointF(10, 10)
+    event.globalPosition.return_value = QPointF(100, 100)
+
+    with patch.object(MainWindow, "windowHandle", return_value=handle):
+        window.mousePressEvent(event)
+
+    handle.startSystemMove.assert_called_once_with()
+    assert window.drag_position is None
+    event.accept.assert_called_once_with()
+
+
+def test_main_window_drag_falls_back_when_system_move_is_unavailable():
+    window = MainWindow.__new__(MainWindow)
+    QMainWindow.__init__(window)
+    window.setGeometry(20, 30, 400, 600)
+    window.window_locked = False
+    window.drag_position = None
+    window.resize_edge = None
+    window.resize_start_geo = None
+    window.resize_start_pos = None
+    window._detect_edge = Mock(return_value=None)
+    handle = Mock()
+    handle.startSystemMove.return_value = False
+    event = Mock()
+    event.button.return_value = Qt.LeftButton
+    event.position.return_value = QPointF(10, 10)
+    event.globalPosition.return_value = QPointF(100, 100)
+
+    with patch.object(MainWindow, "windowHandle", return_value=handle):
+        window.mousePressEvent(event)
+
+    assert window.drag_position == QPoint(80, 70)
 
 
 def test_startup_check_skips_already_notified_release():

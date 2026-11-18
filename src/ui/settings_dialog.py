@@ -2514,6 +2514,18 @@ class SettingsDialog(QDialog):
         self.snap_right_edge_cb.setChecked(self.current_config.get("snap_to_right_edge", False))
         Styles.apply_checkbox_style(self.snap_right_edge_cb)
         window_layout.addWidget(self.snap_right_edge_cb)
+
+        self.reset_window_position_on_startup_cb = QCheckBox(
+            "起動時にウィンドウ位置を毎回初期化する"
+        )
+        self.reset_window_position_on_startup_cb.setChecked(
+            self.current_config.get("reset_window_position_on_startup", False)
+        )
+        self.reset_window_position_on_startup_cb.setToolTip(
+            "保存済みのサイズを維持し、起動するたびに指定モニターの右上へ戻します。"
+        )
+        Styles.apply_checkbox_style(self.reset_window_position_on_startup_cb)
+        window_layout.addWidget(self.reset_window_position_on_startup_cb)
         
         # モニター選択
         monitor_row = QHBoxLayout()
@@ -2539,14 +2551,21 @@ class SettingsDialog(QDialog):
         
         # チェックボックスとモニター選択の連動
         self._monitor_label = monitor_label
-        def _update_monitor_enabled(checked):
-            self.monitor_combo.setEnabled(checked)
+        def _update_monitor_enabled(_checked=False):
+            enabled = (
+                self.snap_right_edge_cb.isChecked()
+                or self.reset_window_position_on_startup_cb.isChecked()
+            )
+            self.monitor_combo.setEnabled(enabled)
             self._monitor_label.setStyleSheet(
-                f"color: {self.theme.text}; font-size: 12px;" if checked
+                f"color: {self.theme.text}; font-size: 12px;" if enabled
                 else "color: #555555; font-size: 12px;"
             )
-        _update_monitor_enabled(self.snap_right_edge_cb.isChecked())
+        _update_monitor_enabled()
         self.snap_right_edge_cb.toggled.connect(_update_monitor_enabled)
+        self.reset_window_position_on_startup_cb.toggled.connect(
+            _update_monitor_enabled
+        )
         
         general_layout.addWidget(window_group)
 
@@ -3556,6 +3575,9 @@ class SettingsDialog(QDialog):
             "always_on_top": self.always_on_top_check.isChecked(),
             "display_monitor": self.monitor_combo.currentData(),
             "snap_to_right_edge": self.snap_right_edge_cb.isChecked(),
+            "reset_window_position_on_startup": (
+                self.reset_window_position_on_startup_cb.isChecked()
+            ),
             "auto_open_map": self.auto_open_map_check.isChecked(),
             "auto_position_map": self.auto_position_map_check.isChecked(),
             "poe1_route_act3": self.poe1_route_act3_combo.currentData(),

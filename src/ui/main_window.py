@@ -95,6 +95,10 @@ from src.ui.window_flags import (
     _with_optional_mini_always_on_top,
     mini_topmost_mode_from_config,
 )
+from src.ui.window_geometry import (
+    fit_saved_window_geometry,
+    fit_saved_window_size,
+)
 
 from src.ui.vendor_search_dialog import VendorSearchPresetDialog
 from src.ui.toolbar_icons import (
@@ -4711,7 +4715,14 @@ class MainWindow(QMainWindow):
                 self.resize_start_geo = self.geometry()
                 self.resize_start_pos = event.globalPosition().toPoint()
             else:
-                self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+                window_handle = self.windowHandle()
+                if window_handle is not None and window_handle.startSystemMove():
+                    self.drag_position = None
+                else:
+                    self.drag_position = (
+                        event.globalPosition().toPoint()
+                        - self.frameGeometry().topLeft()
+                    )
             event.accept()
 
     def mouseMoveEvent(self, event):
@@ -5347,55 +5358,55 @@ class MainWindow(QMainWindow):
             from PySide6.QtWidgets import QApplication
             
             snap_to_right = self.config.get("snap_to_right_edge", False)
+            reset_on_startup = self.config.get(
+                "reset_window_position_on_startup", False
+            )
             saved_geo = self.config.get("window_geometry")
-            
-            if snap_to_right:
+
+            if reset_on_startup:
+                self._position_right_edge(
+                    reset_position_only=True,
+                    saved_geometry=saved_geo,
+                )
+            elif snap_to_right:
                 # モニター右端配置ON:
                 # 保存済みの幅・高さ・Y位置を尊重し、Xだけ対象モニターの右端に合わせる。
                 # Yは画面外にはみ出す場合のみ表示可能範囲内に補正する。
                 if saved_geo:
-                    screens = QApplication.screens()
-                    idx = self._display_monitor_index
-                    if screens and 0 <= idx < len(screens):
-                        target_screen = screens[idx]
-                    elif screens:
-                        target_screen = screens[0]
-                    else:
+                    target_screen = self._target_display_screen()
+                    if target_screen is None:
                         return
                     screen_geo = target_screen.availableGeometry()
-                    w = saved_geo.get("width", 420)
-                    h = saved_geo.get("height", 1200)
-                    saved_y = saved_geo.get("y", screen_geo.top())
-                    x = screen_geo.left() + screen_geo.width() - w
-                    max_y = screen_geo.top() + screen_geo.height() - h
-                    if max_y < screen_geo.top():
-                        y = screen_geo.top()
+                    fitted = fit_saved_window_geometry(
+                        saved_geo,
+                        [screen_geo],
+                        minimum_height=self._main_window_min_height(),
+                    )
+                    if fitted is None:
+                        self._position_right_edge()
                     else:
-                        y = max(screen_geo.top(), min(saved_y, max_y))
-                    self.setGeometry(x, y, w, h)
+                        fitted.moveLeft(
+                            screen_geo.x() + screen_geo.width() - fitted.width()
+                        )
+                        self.setGeometry(fitted)
                 else:
                     # 初回など保存済みジオメトリがない場合は従来どおり右端フル高さ
                     self._position_right_edge()
             elif saved_geo:
                 # 保存済みジオメトリを復元
-                x = saved_geo.get("x", 0)
-                y = saved_geo.get("y", 0)
-                w = saved_geo.get("width", 420)
-                h = saved_geo.get("height", 1200)
-                # 画面外チェック: 全スクリーンのunionに収まるか
                 screens = QApplication.screens()
                 if screens:
-                    union = screens[0].availableGeometry()
-                    for s in screens[1:]:
-                        union = union.united(s.availableGeometry())
-                    window_rect = QRect(x, y, w, h)
-                    if union.intersects(window_rect):
-                        self.setGeometry(x, y, w, h)
-                    else:
-                        # 画面外 → デフォルト（右端配置）
+                    fitted = fit_saved_window_geometry(
+                        saved_geo,
+                        [screen.availableGeometry() for screen in screens],
+                        minimum_height=self._main_window_min_height(),
+                    )
+                    if fitted is None:
                         self._position_right_edge()
+                    else:
+                        self.setGeometry(fitted)
                 else:
-                    self.setGeometry(x, y, w, h)
+                    self._position_right_edge()
             else:
                 # デフォルト: 右端配置
                 self._position_right_edge()
@@ -5404,18 +5415,49 @@ class MainWindow(QMainWindow):
                 self._pending_initial_map_auto_open = False
                 QTimer.singleShot(50, self.map_thumbnail.open_first_map)
     
-    def _position_right_edge(self):
-        """デフォルトの右端配置"""
+    def _target_display_screen(self):
+        """Return the configured screen, falling back to the primary screen."""
         from PySide6.QtWidgets import QApplication
         screens = QApplication.screens()
         if not screens:
+            return None
+        idx = self._display_monitor_index
+        if 0 <= idx < len(screens):
+            return screens[idx]
+        return QApplication.primaryScreen() or screens[0]
+
+    def _position_right_edge(
+        self,
+        *,
+        reset_position_only=False,
+        saved_geometry=None,
+    ):
+        """デフォルトの右端配置"""
+        target_screen = self._target_display_screen()
+        if target_screen is None:
             return
-        target_screen = screens[0]
         geo = target_screen.availableGeometry()
-        actual_w = self.frameGeometry().width()
-        win_h = geo.height()
-        self.resize(self.width(), win_h)
-        x = geo.left() + geo.width() - actual_w
+        if reset_position_only:
+            saved_size = fit_saved_window_size(
+                saved_geometry,
+                geo,
+                minimum_height=self._main_window_min_height(),
+            )
+            width = (
+                saved_size.width()
+                if saved_size
+                else min(self.width(), geo.width())
+            )
+            height = (
+                saved_size.height()
+                if saved_size
+                else min(self.height(), geo.height())
+            )
+        else:
+            width = min(self.width(), geo.width())
+            height = geo.height()
+        self.resize(width, height)
+        x = geo.left() + geo.width() - width
         y = geo.top()
         self.move(x, y)
 

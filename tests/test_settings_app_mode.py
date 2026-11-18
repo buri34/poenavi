@@ -144,6 +144,24 @@ def test_general_group_titles_use_shared_left_aligned_style(qapp):
     dialog.close()
 
 
+def test_startup_position_reset_is_saved_and_enables_monitor_choice(qapp):
+    dialog = SettingsDialog(current_config={
+        "snap_to_right_edge": False,
+        "reset_window_position_on_startup": True,
+    })
+    try:
+        assert dialog.reset_window_position_on_startup_cb.isChecked()
+        assert dialog.monitor_combo.isEnabled()
+        assert (
+            dialog.get_settings()["reset_window_position_on_startup"] is True
+        )
+
+        dialog.reset_window_position_on_startup_cb.setChecked(False)
+        assert not dialog.monitor_combo.isEnabled()
+    finally:
+        dialog.close()
+
+
 def test_poe_version_and_app_mode_are_in_one_startup_group(qapp):
     dialog = SettingsDialog(current_config={})
     groups = [group for group in dialog.findChildren(QGroupBox) if group.title() == "起動設定"]
