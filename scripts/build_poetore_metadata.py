@@ -131,10 +131,11 @@ def main() -> int:
         payload["related_item_groups"] = build_related_item_groups(
             item_blob.decode("utf-8").splitlines(), json.loads(drop_blob),
         )
-        payload.setdefault("sources", {})["awakened_item_drops"] = {
-            key: value for key, value in source_rows["awakened_item_drops"].items()
-            if key in {"url", "revision", "version", "sha256"}
-        }
+        for name in ("awakened_items", "awakened_item_drops"):
+            payload.setdefault("sources", {})[name] = {
+                key: value for key, value in source_rows[name].items()
+                if key in {"url", "revision", "version", "sha256"}
+            }
         args.output.write_bytes(_serialized(payload))
         print(
             f"applied {len(payload['related_item_groups'])} related item groups: "

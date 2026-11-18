@@ -6771,7 +6771,7 @@ Item Level: 72
     assert next(row for row in filters if row.stat_id == "property.area_level").min_value == 78
 
 
-def test_atzoatl_room_rules_match_awakened_priorities_and_visibility():
+def test_atzoatl_room_rules_show_every_room_and_ignore_open_state():
     def room(ref, option=1):
         return TradeStatFilter(
             f"pseudo.{ref}", ref, None, "pseudo", True,
@@ -6794,28 +6794,213 @@ def test_atzoatl_room_rules_match_awakened_priorities_and_visibility():
     by_ref = {row.ref: row for row in rows if row.ref}
 
     assert area in rows
-    assert "Has Room: Banquet Hall" not in by_ref
-    assert "Has Room: Corruption Chamber (Tier 1)" not in by_ref
+    assert not by_ref["Has Room: Banquet Hall"].enabled
+    assert not by_ref["Has Room: Corruption Chamber (Tier 1)"].enabled
     assert by_ref["Has Room: Locus of Corruption (Tier 3)"].enabled
     assert by_ref["Has Room: Wealth of the Vaal (Tier 3)"].enabled
     assert not by_ref["Has Room: Treasury (Tier 2)"].enabled
-    assert by_ref["Has Room: Vault (Tier 1)"].hidden_reason
-    assert by_ref["Has Room: Storm of Corruption (Tier 3)"].hidden_reason
+    assert not by_ref["Has Room: Vault (Tier 1)"].enabled
+    assert not by_ref["Has Room: Storm of Corruption (Tier 3)"].enabled
+    assert all(row.option_value is None for row in by_ref.values())
+    assert all(not row.hidden_reason for row in by_ref.values())
+
+    current_api_room = TradeStatFilter(
+        "pseudo.pseudo_temple_corruption_room_3",
+        "腐敗の根源 (ティア3)", None, "pseudo", True,
+        option_value=1,
+    )
+    [current_api_room] = _apply_atzoatl_room_rules([current_api_room])
+    assert current_api_room.enabled
+    assert current_api_room.selection_reason == "Atzoatlの主要部屋"
 
 
-def test_atzoatl_obstructed_room_requires_open_explosives():
+def test_current_japanese_atzoatl_chronicle_resolves_rooms_and_area_level():
+    chronicle = parse_item_text("""アイテムクラス: その他マップアイテム
+レアリティ: カレンシー
+アッツォアトルの歴史書
+--------
+エリアレベル: 76
+--------
+開放された部屋:
+生贄の間 (ティア1)
+毒性の木立 (ティア3)
+王者の広間 (ティア3)
+宝石細工師の工房 (ティア1)
+鎧工房 (ティア1)
+強化の祭壇 (ティア1)
+廊下
+罠の工房 (ティア1)
+王家の鍛造場 (ティア2)
+工房 (ティア1)
+控えの間
+塞がれた部屋:
+アッツォアトルの頂点
+--------
+右クリックでアッツォアトル寺院を見ることができます。
+""")
+    entries = (
+        {"id": "pseudo.pseudo_temple_sacrifice_room_1", "type": "pseudo",
+         "text": "次の部屋を持つ : 生贄の間 (ティア1)"},
+        {"id": "pseudo.pseudo_temple_poison_room_3", "type": "pseudo",
+         "text": "次の部屋を持つ : 毒性の木立 (ティア3)"},
+        {"id": "pseudo.pseudo_temple_weapon_room_3", "type": "pseudo",
+         "text": "次の部屋を持つ : 王者の広間 (ティア3)"},
+        {"id": "pseudo.pseudo_temple_gem_room_1", "type": "pseudo",
+         "text": "次の部屋を持つ : 宝石細工師の工房 (ティア1)"},
+        {"id": "pseudo.pseudo_temple_armour_room_1", "type": "pseudo",
+         "text": "次の部屋を持つ : 鎧工房 (ティア1)"},
+        {"id": "pseudo.pseudo_temple_empowering_room_1", "type": "pseudo",
+         "text": "次の部屋を持つ : 強化の祭壇 (ティア1)"},
+        {"id": "pseudo.pseudo_temple_passageways", "type": "pseudo",
+         "text": "次の部屋を持つ : 廊下"},
+        {"id": "pseudo.pseudo_temple_trap_room_1", "type": "pseudo",
+         "text": "次の部屋を持つ : 罠の工房 (ティア1)"},
+        {"id": "pseudo.pseudo_temple_boss_fire_2", "type": "pseudo",
+         "text": "次の部屋を持つ : オムニテクト鍛造場 (ティア2)"},
+        {"id": "pseudo.pseudo_temple_workshop_1", "type": "pseudo",
+         "text": "次の部屋を持つ : 工房 (ティア1)"},
+        {"id": "pseudo.pseudo_temple_antechamber", "type": "pseudo",
+         "text": "次の部屋を持つ : 控えの間"},
+        {"id": "pseudo.pseudo_temple_apex", "type": "pseudo",
+         "text": "次の部屋を持つ : アッツォアトルの頂点"},
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(chronicle)
+
+    area = next(row for row in filters if row.stat_id == "property.area_level")
+    assert (area.min_value, area.enabled) == (75, True)
+    rooms = {
+        row.stat_id: row for row in filters
+        if row.stat_id.startswith("pseudo.pseudo_temple_")
+    }
+    assert set(rooms) == {
+        "pseudo.pseudo_temple_sacrifice_room_1",
+        "pseudo.pseudo_temple_poison_room_3",
+        "pseudo.pseudo_temple_weapon_room_3",
+        "pseudo.pseudo_temple_gem_room_1",
+        "pseudo.pseudo_temple_armour_room_1",
+        "pseudo.pseudo_temple_empowering_room_1",
+        "pseudo.pseudo_temple_passageways",
+        "pseudo.pseudo_temple_trap_room_1",
+        "pseudo.pseudo_temple_boss_fire_2",
+        "pseudo.pseudo_temple_workshop_1",
+        "pseudo.pseudo_temple_antechamber",
+        "pseudo.pseudo_temple_apex",
+    }
+    assert rooms["pseudo.pseudo_temple_boss_fire_2"].text == "王家の鍛造場 (ティア2)"
+    assert all(row.option_value is None for row in rooms.values())
+    assert all(not row.hidden_reason for row in rooms.values())
+    assert {
+        row.stat_id for row in rooms.values() if row.enabled
+    } == {"pseudo.pseudo_temple_apex"}
+
+    query = build_search_query(
+        chronicle, "Chronicle of Atzoatl", tuple(filters),
+    )["query"]
+    sent_rooms = {
+        row["id"]: row["value"]
+        for group in query["stats"]
+        for row in group["filters"]
+        if row["id"].startswith("pseudo.pseudo_temple_")
+    }
+    assert set(sent_rooms) == {"pseudo.pseudo_temple_apex"}
+    assert all(value == {} for value in sent_rooms.values())
+
+    poison_only = tuple(
+        replace(row, enabled=row.stat_id == "pseudo.pseudo_temple_poison_room_3")
+        if row.stat_id.startswith("pseudo.pseudo_temple_") else row
+        for row in filters
+    )
+    poison_query = build_search_query(
+        chronicle, "Chronicle of Atzoatl", poison_only,
+    )["query"]
+    sent_poison = [
+        row
+        for group in poison_query["stats"]
+        for row in group["filters"]
+        if row["id"].startswith("pseudo.pseudo_temple_")
+    ]
+    assert sent_poison == [{
+        "id": "pseudo.pseudo_temple_poison_room_3",
+        "value": {},
+    }]
+
+
+def test_current_japanese_atzoatl_room_aliases_resolve_to_correct_trade_stats():
+    aliases = (
+        ("創造の揺りかご (ティア1)",
+         "pseudo.pseudo_temple_queens_chambers_1", "謁見の間 (ティア1)"),
+        ("アノマリー研究ラボ (ティア1)",
+         "pseudo.pseudo_temple_breach_room_1", "ブリーチ研究所 (ティア1)"),
+        ("創造の揺りかご (ティア2)",
+         "pseudo.pseudo_temple_queens_chambers_2", "君主の間 (ティア2)"),
+        ("武器庫 (ティア2)",
+         "pseudo.pseudo_temple_armour_room_2", "造兵廠 (ティア2)"),
+        ("王家の鍛造場 (ティア2)",
+         "pseudo.pseudo_temple_boss_fire_2", "オムニテクト鍛造場 (ティア2)"),
+        ("大規模動力室 (ティア2)",
+         "pseudo.pseudo_temple_boss_lightning_2", "オムニテクト動力室 (ティア2)"),
+        ("創造の揺りかご (ティア3)",
+         "pseudo.pseudo_temple_queens_chambers_3", "アトジリの玉座 (ティア3)"),
+    )
+    entries = tuple({
+        "id": stat_id,
+        "type": "pseudo",
+        "text": f"次の部屋を持つ : {trade_name}",
+    } for _, stat_id, trade_name in aliases)
+    raw_rooms = "\n".join(game_name for game_name, _, _ in aliases)
+    chronicle = parse_item_text(f"""アイテムクラス: その他マップアイテム
+レアリティ: カレンシー
+アッツォアトルの歴史書
+--------
+エリアレベル: 83
+--------
+開放された部屋:
+{raw_rooms}
+--------
+右クリックでアッツォアトル寺院を見ることができます。
+""")
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(chronicle)
+
+    rooms = {
+        row.stat_id: row for row in filters
+        if row.stat_id.startswith("pseudo.pseudo_temple_")
+    }
+    assert set(rooms) == {stat_id for _, stat_id, _ in aliases}
+    assert {
+        (row.text, row.stat_id) for row in rooms.values()
+    } == {
+        (game_name, stat_id) for game_name, stat_id, _ in aliases
+    }
+    for _, stat_id, _ in aliases:
+        selected = tuple(
+            replace(row, enabled=row.stat_id == stat_id)
+            if row.stat_id.startswith("pseudo.pseudo_temple_") else row
+            for row in filters
+        )
+        query = build_search_query(
+            chronicle, "Chronicle of Atzoatl", selected,
+        )["query"]
+        sent_rooms = [
+            row
+            for group in query["stats"]
+            for row in group["filters"]
+            if row["id"].startswith("pseudo.pseudo_temple_")
+        ]
+        assert sent_rooms == [{"id": stat_id, "value": {}}]
+
+
+def test_atzoatl_obstructed_room_is_searchable_without_open_state():
     def room(ref, option):
         return TradeStatFilter(
             f"pseudo.{ref}", ref, None, "pseudo", True,
             ref=ref, option_value=option,
         )
 
-    obstructed = room("Has Room: Treasury (Tier 2)", 2)
-    assert _apply_atzoatl_room_rules([obstructed]) == []
-
     rows = _apply_atzoatl_room_rules([
-        room("Has Room: Explosives Room (Tier 1)", 1),
-        obstructed,
+        room("Has Room: Treasury (Tier 2)", 2),
     ])
     assert len(rows) == 1
     assert rows[0].ref == "Has Room: Treasury (Tier 2)"
