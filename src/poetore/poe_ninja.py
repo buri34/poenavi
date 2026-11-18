@@ -30,7 +30,8 @@ _UNIQUE_TYPES = {
 _EXACT_TYPES_BY_CATEGORY = {
     "currency": {"Currency", "Fragment", "Essence", "Fossil", "Resonator", "Scarab", "Oil",
                  "DeliriumOrb", "Artifact", "Tattoo", "Omen", "Vial", "Incubator", "Runegraft",
-                 "DjinnCoin", "Astrolabe", "Ducat", "EnshroudingCrystal", "AllflameEmber"},
+                 "DjinnCoin", "Astrolabe", "Ducat", "EnshroudingCrystal", "AllflameEmber",
+                 "Thread"},
     "divination_card": {"DivinationCard"},
     "captured_beast": {"Beast"},
     "invitation": {"Invitation"},
@@ -199,6 +200,7 @@ _URL_BY_TYPE = {
     "Artifact": "artifacts", "Tattoo": "tattoos", "Omen": "omens", "Vial": "vials",
     "Incubator": "incubators", "Runegraft": "runegrafts", "DjinnCoin": "djinn-coins",
     "Astrolabe": "astrolabes", "Ducat": "ducats",
+    "Thread": "threads",
     "Corpse": "corpses",
     "EnshroudingCrystal": "enshrouding-crystals", "AllflameEmber": "allflame-embers", "Beast": "beasts",
     "Invitation": "invitations", "Map": "maps", "BlightedMap": "blighted-maps",

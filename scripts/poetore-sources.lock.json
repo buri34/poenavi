@@ -8,14 +8,14 @@
       "sha256": "16fe7b84549d5570a734ef441e4722d589a6d17ecd3f834ecf867736855af719"
     },
     "awakened_items": {
-      "url": "https://raw.githubusercontent.com/SnosMe/awakened-poe-trade/543423aba68db81d965f42bfbe7af47bf435fe13/renderer/public/data/en/items.ndjson",
-      "revision": "543423aba68db81d965f42bfbe7af47bf435fe13",
-      "sha256": "af8391e58698dacbd393361eea12e304d1abed83f50453dac4e5804de8775c6f"
+      "url": "https://raw.githubusercontent.com/SnosMe/awakened-poe-trade/8a058baab5e4fff33c748e979d3bf6406ea95f6c/renderer/public/data/en/items.ndjson",
+      "revision": "8a058baab5e4fff33c748e979d3bf6406ea95f6c",
+      "sha256": "64d6c04995c6a6ce9fc9c051316f102da7bd6a7797321eb984977461acf8afe9"
     },
     "awakened_item_drops": {
-      "url": "https://raw.githubusercontent.com/SnosMe/awakened-poe-trade/543423aba68db81d965f42bfbe7af47bf435fe13/renderer/public/data/item-drop.json",
-      "revision": "543423aba68db81d965f42bfbe7af47bf435fe13",
-      "sha256": "b73cc22ece0311441aa11793a5857e94462b2ed9a2dde573a35a0e5727b5aaf5"
+      "url": "https://raw.githubusercontent.com/SnosMe/awakened-poe-trade/8a058baab5e4fff33c748e979d3bf6406ea95f6c/renderer/public/data/item-drop.json",
+      "revision": "8a058baab5e4fff33c748e979d3bf6406ea95f6c",
+      "sha256": "8cac010d2ae5d353ea79684ca12565eb98c868fa4456bdb987bf95884796ffc0"
     },
     "jp_trade_api": {
       "url": "https://jp.pathofexile.com/api/trade/data/stats",

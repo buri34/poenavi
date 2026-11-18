@@ -974,6 +974,30 @@ def test_builder_excludes_removed_shadowed_crow_scarab_only():
     ]
 
 
+def test_builder_keeps_replacement_bestiary_thread():
+    groups = build_related_item_groups([
+        json.dumps({
+            "namespace": "ITEM",
+            "refName": "Bestiary Thread",
+            "icon": "https://example.test/BestiaryThread.png",
+        }),
+    ], [{
+        "query": [
+            "ITEM::Orb of Fusing",
+            "ITEM::Bestiary Thread",
+            "CAPTURED_BEAST::Black Mórrigan",
+        ],
+        "items": [],
+    }])
+
+    thread = next(
+        row for row in groups[0]["query"]
+        if row["id"] == "ITEM::Bestiary Thread"
+    )
+    assert thread["name"] == "Bestiary Thread"
+    assert thread["icon"] == "https://example.test/BestiaryThread.png"
+
+
 def test_builder_excludes_bestiary_armour_comparison_groups():
     groups = build_related_item_groups([], [
         {

@@ -407,6 +407,10 @@ def test_new_awakened_currency_categories_are_supported():
                 "name": "Imperial Enshrouding Crystal", "chaos": 1.12,
                 "graph": [], "sparkLine": {"totalChange": -1},
             }]},
+            {"type": "Thread", "lines": [{
+                "name": "Bestiary Thread", "chaos": 0.7583,
+                "graph": [], "sparkLine": {"totalChange": 3},
+            }]},
         ],
     }
 
@@ -416,6 +420,7 @@ def test_new_awakened_currency_categories_are_supported():
             "Imperial Enshrouding Crystal", "EnshroudingCrystal", 1.12,
             "/enshrouding-crystals/imperial-enshrouding-crystal",
         ),
+        ("Bestiary Thread", "Thread", 0.7583, "/threads/bestiary-thread"),
     )
     for name, source_type, chaos, url_path in cases:
         item = ParsedItem("Stackable Currency", "Currency", name, name, "currency")
