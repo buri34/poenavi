@@ -2522,7 +2522,7 @@ class SettingsDialog(QDialog):
             self.current_config.get("reset_window_position_on_startup", False)
         )
         self.reset_window_position_on_startup_cb.setToolTip(
-            "保存済みの位置とサイズを使わず、起動するたびに指定モニターの右端へ戻します。"
+            "保存済みのサイズを維持し、起動するたびに指定モニターの右上へ戻します。"
         )
         Styles.apply_checkbox_style(self.reset_window_position_on_startup_cb)
         window_layout.addWidget(self.reset_window_position_on_startup_cb)

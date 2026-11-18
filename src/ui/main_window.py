@@ -95,7 +95,10 @@ from src.ui.window_flags import (
     _with_optional_mini_always_on_top,
     mini_topmost_mode_from_config,
 )
-from src.ui.window_geometry import fit_saved_window_geometry
+from src.ui.window_geometry import (
+    fit_saved_window_geometry,
+    fit_saved_window_size,
+)
 
 from src.ui.vendor_search_dialog import VendorSearchPresetDialog
 from src.ui.toolbar_icons import (
@@ -5361,7 +5364,10 @@ class MainWindow(QMainWindow):
             saved_geo = self.config.get("window_geometry")
 
             if reset_on_startup:
-                self._position_right_edge(reset_size=True)
+                self._position_right_edge(
+                    reset_position_only=True,
+                    saved_geometry=saved_geo,
+                )
             elif snap_to_right:
                 # モニター右端配置ON:
                 # 保存済みの幅・高さ・Y位置を尊重し、Xだけ対象モニターの右端に合わせる。
@@ -5420,19 +5426,37 @@ class MainWindow(QMainWindow):
             return screens[idx]
         return QApplication.primaryScreen() or screens[0]
 
-    def _position_right_edge(self, *, reset_size=False):
+    def _position_right_edge(
+        self,
+        *,
+        reset_position_only=False,
+        saved_geometry=None,
+    ):
         """デフォルトの右端配置"""
         target_screen = self._target_display_screen()
         if target_screen is None:
             return
         geo = target_screen.availableGeometry()
-        width = (
-            min(420, geo.width())
-            if reset_size
-            else min(self.width(), geo.width())
-        )
-        win_h = geo.height()
-        self.resize(width, win_h)
+        if reset_position_only:
+            saved_size = fit_saved_window_size(
+                saved_geometry,
+                geo,
+                minimum_height=self._main_window_min_height(),
+            )
+            width = (
+                saved_size.width()
+                if saved_size
+                else min(self.width(), geo.width())
+            )
+            height = (
+                saved_size.height()
+                if saved_size
+                else min(self.height(), geo.height())
+            )
+        else:
+            width = min(self.width(), geo.width())
+            height = geo.height()
+        self.resize(width, height)
         x = geo.left() + geo.width() - width
         y = geo.top()
         self.move(x, y)

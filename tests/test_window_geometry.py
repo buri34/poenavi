@@ -1,6 +1,9 @@
 from PySide6.QtCore import QRect
 
-from src.ui.window_geometry import fit_saved_window_geometry
+from src.ui.window_geometry import (
+    fit_saved_window_geometry,
+    fit_saved_window_size,
+)
 
 
 def test_geometry_in_monitor_layout_gap_uses_caller_fallback():
@@ -36,3 +39,13 @@ def test_malformed_geometry_uses_caller_fallback():
         {"x": 10, "y": 20, "width": -1, "height": 500},
         [QRect(0, 0, 1920, 1080)],
     ) is None
+
+
+def test_saved_size_can_be_reused_without_reusing_offscreen_position():
+    size = fit_saved_window_size(
+        {"x": 5000, "y": 3000, "width": 635, "height": 867},
+        QRect(0, 0, 1920, 1080),
+    )
+
+    assert size.width() == 635
+    assert size.height() == 867

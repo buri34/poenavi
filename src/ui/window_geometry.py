@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from numbers import Real
 
-from PySide6.QtCore import QRect
+from PySide6.QtCore import QRect, QSize
 
 
 def _geometry_number(value) -> int | None:
@@ -68,10 +68,33 @@ def fit_saved_window_geometry(
     intersection_area, target = max(intersections, key=lambda item: item[0])
     if intersection_area <= 0:
         return None
-    width = min(max(saved_rect.width(), minimum_width), target.width())
-    height = min(max(saved_rect.height(), minimum_height), target.height())
+    size = fit_saved_window_size(
+        saved_geometry,
+        target,
+        minimum_width=minimum_width,
+        minimum_height=minimum_height,
+    )
+    width = size.width()
+    height = size.height()
     max_x = target.x() + target.width() - width
     max_y = target.y() + target.height() - height
     x = max(target.x(), min(saved_rect.x(), max_x))
     y = max(target.y(), min(saved_rect.y(), max_y))
     return QRect(x, y, width, height)
+
+
+def fit_saved_window_size(
+    saved_geometry,
+    available_geometry: QRect,
+    *,
+    minimum_width: int = 300,
+    minimum_height: int = 120,
+) -> QSize | None:
+    """Return a valid saved size without reusing its screen coordinates."""
+    saved_rect = _saved_rect(saved_geometry)
+    if saved_rect is None or available_geometry.isEmpty():
+        return None
+    return QSize(
+        min(max(saved_rect.width(), minimum_width), available_geometry.width()),
+        min(max(saved_rect.height(), minimum_height), available_geometry.height()),
+    )

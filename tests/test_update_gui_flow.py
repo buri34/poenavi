@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 pytest.importorskip("PySide6")
-from PySide6.QtCore import QPoint, QPointF, Qt
+from PySide6.QtCore import QPoint, QPointF, QRect, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 from src.ui.main_window import MainWindow
@@ -100,7 +100,32 @@ def test_show_event_startup_reset_ignores_saved_geometry():
     with patch.object(QMainWindow, "showEvent"):
         window.showEvent(Mock())
 
-    window._position_right_edge.assert_called_once_with(reset_size=True)
+    window._position_right_edge.assert_called_once_with(
+        reset_position_only=True,
+        saved_geometry=window.config["window_geometry"],
+    )
+
+
+def test_startup_reset_preserves_saved_size_at_target_screen_top_right():
+    window = MainWindow.__new__(MainWindow)
+    QMainWindow.__init__(window)
+    window.setGeometry(0, 0, 420, 1200)
+    window._main_window_min_height = Mock(return_value=120)
+    screen = Mock()
+    screen.availableGeometry.return_value = QRect(1920, 0, 2560, 1440)
+    window._target_display_screen = Mock(return_value=screen)
+
+    window._position_right_edge(
+        reset_position_only=True,
+        saved_geometry={
+            "x": 5000,
+            "y": 3000,
+            "width": 635,
+            "height": 867,
+        },
+    )
+
+    assert window.geometry() == QRect(3845, 0, 635, 867)
 
 
 def test_main_window_drag_prefers_qt_system_move():
