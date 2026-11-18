@@ -6855,8 +6855,8 @@ def test_current_japanese_atzoatl_chronicle_resolves_rooms_and_area_level():
          "text": "次の部屋を持つ : 廊下"},
         {"id": "pseudo.pseudo_temple_trap_room_1", "type": "pseudo",
          "text": "次の部屋を持つ : 罠の工房 (ティア1)"},
-        {"id": "pseudo.pseudo_temple_trinket_room_2", "type": "pseudo",
-         "text": "次の部屋を持つ : 宝飾鍛造場 (ティア2)"},
+        {"id": "pseudo.pseudo_temple_boss_fire_2", "type": "pseudo",
+         "text": "次の部屋を持つ : オムニテクト鍛造場 (ティア2)"},
         {"id": "pseudo.pseudo_temple_workshop_1", "type": "pseudo",
          "text": "次の部屋を持つ : 工房 (ティア1)"},
         {"id": "pseudo.pseudo_temple_antechamber", "type": "pseudo",
@@ -6882,12 +6882,12 @@ def test_current_japanese_atzoatl_chronicle_resolves_rooms_and_area_level():
         "pseudo.pseudo_temple_empowering_room_1",
         "pseudo.pseudo_temple_passageways",
         "pseudo.pseudo_temple_trap_room_1",
-        "pseudo.pseudo_temple_trinket_room_2",
+        "pseudo.pseudo_temple_boss_fire_2",
         "pseudo.pseudo_temple_workshop_1",
         "pseudo.pseudo_temple_antechamber",
         "pseudo.pseudo_temple_apex",
     }
-    assert rooms["pseudo.pseudo_temple_trinket_room_2"].text == "王家の鍛造場 (ティア2)"
+    assert rooms["pseudo.pseudo_temple_boss_fire_2"].text == "王家の鍛造場 (ティア2)"
     assert all(row.option_value is None for row in rooms.values())
     assert all(not row.hidden_reason for row in rooms.values())
     assert {
@@ -6924,6 +6924,72 @@ def test_current_japanese_atzoatl_chronicle_resolves_rooms_and_area_level():
         "id": "pseudo.pseudo_temple_poison_room_3",
         "value": {},
     }]
+
+
+def test_current_japanese_atzoatl_room_aliases_resolve_to_correct_trade_stats():
+    aliases = (
+        ("創造の揺りかご (ティア1)",
+         "pseudo.pseudo_temple_queens_chambers_1", "謁見の間 (ティア1)"),
+        ("アノマリー研究ラボ (ティア1)",
+         "pseudo.pseudo_temple_breach_room_1", "ブリーチ研究所 (ティア1)"),
+        ("創造の揺りかご (ティア2)",
+         "pseudo.pseudo_temple_queens_chambers_2", "君主の間 (ティア2)"),
+        ("武器庫 (ティア2)",
+         "pseudo.pseudo_temple_armour_room_2", "造兵廠 (ティア2)"),
+        ("王家の鍛造場 (ティア2)",
+         "pseudo.pseudo_temple_boss_fire_2", "オムニテクト鍛造場 (ティア2)"),
+        ("大規模動力室 (ティア2)",
+         "pseudo.pseudo_temple_boss_lightning_2", "オムニテクト動力室 (ティア2)"),
+        ("創造の揺りかご (ティア3)",
+         "pseudo.pseudo_temple_queens_chambers_3", "アトジリの玉座 (ティア3)"),
+    )
+    entries = tuple({
+        "id": stat_id,
+        "type": "pseudo",
+        "text": f"次の部屋を持つ : {trade_name}",
+    } for _, stat_id, trade_name in aliases)
+    raw_rooms = "\n".join(game_name for game_name, _, _ in aliases)
+    chronicle = parse_item_text(f"""アイテムクラス: その他マップアイテム
+レアリティ: カレンシー
+アッツォアトルの歴史書
+--------
+エリアレベル: 83
+--------
+開放された部屋:
+{raw_rooms}
+--------
+右クリックでアッツォアトル寺院を見ることができます。
+""")
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(chronicle)
+
+    rooms = {
+        row.stat_id: row for row in filters
+        if row.stat_id.startswith("pseudo.pseudo_temple_")
+    }
+    assert set(rooms) == {stat_id for _, stat_id, _ in aliases}
+    assert {
+        (row.text, row.stat_id) for row in rooms.values()
+    } == {
+        (game_name, stat_id) for game_name, stat_id, _ in aliases
+    }
+    for _, stat_id, _ in aliases:
+        selected = tuple(
+            replace(row, enabled=row.stat_id == stat_id)
+            if row.stat_id.startswith("pseudo.pseudo_temple_") else row
+            for row in filters
+        )
+        query = build_search_query(
+            chronicle, "Chronicle of Atzoatl", selected,
+        )["query"]
+        sent_rooms = [
+            row
+            for group in query["stats"]
+            for row in group["filters"]
+            if row["id"].startswith("pseudo.pseudo_temple_")
+        ]
+        assert sent_rooms == [{"id": stat_id, "value": {}}]
 
 
 def test_atzoatl_obstructed_room_is_searchable_without_open_state():

@@ -2195,9 +2195,15 @@ _ATZOATL_ENABLED_ROOM_IDS = frozenset({
     "pseudo.pseudo_temple_currency_vault_3",
 })
 
-# 3.30のゲーム内日本語と公式Trade APIの日本語に差がある部屋。
+# ゲーム内日本語と公式Trade APIの日本語に差がある部屋。
 _ATZOATL_ROOM_STAT_ALIASES = {
-    "王家の鍛造場 (ティア2)": "pseudo.pseudo_temple_trinket_room_2",
+    "創造の揺りかご (ティア1)": "pseudo.pseudo_temple_queens_chambers_1",
+    "アノマリー研究ラボ (ティア1)": "pseudo.pseudo_temple_breach_room_1",
+    "創造の揺りかご (ティア2)": "pseudo.pseudo_temple_queens_chambers_2",
+    "武器庫 (ティア2)": "pseudo.pseudo_temple_armour_room_2",
+    "王家の鍛造場 (ティア2)": "pseudo.pseudo_temple_boss_fire_2",
+    "大規模動力室 (ティア2)": "pseudo.pseudo_temple_boss_lightning_2",
+    "創造の揺りかご (ティア3)": "pseudo.pseudo_temple_queens_chambers_3",
 }
 
 
