@@ -58,7 +58,20 @@ def test_hideout_zone_supports_japanese_and_case_insensitive_english():
     assert is_hideout_zone("夕暮れの隠れ家")
     assert is_hideout_zone("Coastal Hideout")
     assert is_hideout_zone("COASTAL HIDEOUT")
+    assert is_hideout_zone("ローグハーバー")
+    assert is_hideout_zone("Rogue Harbour")
+    assert is_hideout_zone("The Rogue Harbour")
+    assert is_hideout_zone("THE ROGUE HARBOUR")
     assert not is_hideout_zone("Kingsmarch")
+
+
+def test_timer_starts_in_rogue_harbour():
+    state = HideoutTimerState(duration_seconds=10)
+    state.enable("ローグハーバー", now=100.0)
+
+    assert state.button_text(105.0) == "隠れ家滞在通知\n0:05"
+    assert state.consume_due_notification(109.9) is None
+    assert state.consume_due_notification(110.0) == 1
 
 
 def test_zone_and_timestamp_parsers_accept_realistic_lines():

@@ -39,6 +39,11 @@ _ZONE_JA = re.compile(r"あなたは(.+?)に入場しました。")
 _ZONE_EN = re.compile(r": You have entered (.+?)\.")
 _SET_SOURCE = re.compile(r"\[SCENE\] Set Source \[(.+?)\]")
 _CHAPTER_ONLY = re.compile(r"(?:アクト\d+|Act\s*\d+)", re.IGNORECASE)
+_HIDEOUT_EQUIVALENT_ZONES = frozenset({
+    "ローグハーバー",
+    "rogue harbour",
+    "the rogue harbour",
+})
 
 
 def normalize_hideout_notification_settings(value) -> dict:
@@ -78,8 +83,13 @@ def normalize_hideout_notification_settings(value) -> dict:
 
 
 def is_hideout_zone(zone_name: str | None) -> bool:
-    value = str(zone_name or "")
-    return "隠れ家" in value or "hideout" in value.casefold()
+    value = str(zone_name or "").strip()
+    folded = value.casefold()
+    return (
+        "隠れ家" in value
+        or "hideout" in folded
+        or folded in _HIDEOUT_EQUIVALENT_ZONES
+    )
 
 
 def zone_from_log_line(line: str) -> str | None:
