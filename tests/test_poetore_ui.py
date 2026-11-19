@@ -3929,6 +3929,7 @@ def test_mod_filter_ui_keeps_diagnostics_internal_and_tooltip_simple(qapp):
     ("volatile", "ヴォラタイル・ヴァール"),
     ("reflecting", "リフレクティング・ミスト"),
     ("corrupted", "コラプト"),
+    ("rareonly", "レアのみ"),
 ])
 def test_mod_filter_ui_shows_provenance_in_kind_column(qapp, provenance, label):
     window = PoetoreWindow()
@@ -8665,6 +8666,25 @@ Corrupted
         assert window.corrupted_combo.currentText() == "コラプトのみ"
         assert window.corrupted_combo.currentData() == "only"
         assert window.corrupted_combo.property("alert") is True
+    finally:
+        window.close()
+
+
+def test_twice_corrupted_item_is_identified_in_state_filter(qapp):
+    item = parse_item_text("""アイテムクラス: 靴
+レアリティ: レア
+勝利の要請
+カーナルブーツ
+--------
+アイテムレベル: 69
+--------
+二重コラプト
+""")
+    window = PoetoreWindow()
+    try:
+        window._configure_item_state_filters(item)
+        assert window.corrupted_combo.currentText() == "二重コラプト"
+        assert window.corrupted_combo.currentData() == "only"
     finally:
         window.close()
 

@@ -206,6 +206,7 @@ _PROPERTY_FILTERS = {
     "property.links": ("socket_filters", "links"),
     "property.map_tier": ("map_filters", "map_tier"),
     "property.map_quantity": ("map_filters", "map_iiq"),
+    "property.map_bonus": ("map_filters", "map_bonus"),
     "property.map_rarity": ("map_filters", "map_iir"),
     "property.map_pack_size": ("map_filters", "map_packsize"),
     "property.area_level": ("map_filters", "area_level"),
@@ -1408,7 +1409,7 @@ def _apply_dedicated_exact_rules(
 ) -> tuple[TradeStatFilter, ...]:
     """汎用完成品候補からAwakenedのcreateExactStatFilters相当だけを残す。"""
     keep_modifier_kinds = {
-        "pseudo", "fractured", "enchant", "necropolis", "imbued", "craft",
+        "pseudo", "fractured", "rareonly", "enchant", "necropolis", "imbued", "craft",
         "mercenary",
     }
     if (not any(flag.startswith("influence:") for flag in item.flags)
@@ -1475,6 +1476,13 @@ def _apply_dedicated_exact_rules(
             # Map/Chartも通常のExact規則へ統一し、Pseudoは候補表示だけにする。
             if item.category == "map" and row.kind == "map pseudo":
                 enabled = False
+                if (
+                    row.stat_id == "pseudo.pseudo_number_of_affix_mods"
+                    or row.text == "スレッド量"
+                ):
+                    enabled = True
+            if row.kind == "rareonly":
+                enabled = True
             if (
                 item.category == "map"
                 and row.stat_id in _GUARDIAN_MAP_IDENTITY_STAT_IDS
@@ -1602,7 +1610,11 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
             exact_modifiers.append(modifier)
     entries = _trade_stat_entries() if exact_modifiers else ()
     for modifier in exact_modifiers:
-        api_kind = "explicit" if modifier.kind in {"prefix", "suffix"} else modifier.kind
+        api_kind = (
+            "explicit"
+            if modifier.kind in {"prefix", "suffix", "rareonly"}
+            else modifier.kind
+        )
         source = _normalized_stat_text(modifier.text)
         # 3.29の詳細コピー本文には、Trade APIの表示用補足
         # 「(ローカル)」が付かない。パーサーが確定したstat IDを優先し、
@@ -1801,7 +1813,6 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         more_drop_rows = []
         for stat_id, label, labels in (
             ("pseudo.pseudo_map_more_map_drops", "マップ量", ("追加マップ", "マップ量が上昇", "More Maps")),
-            ("pseudo.pseudo_map_more_scarab_drops", "スカラベ量", ("追加スカラベ", "スカラベ量が上昇", "More Scarabs")),
             (
                 "pseudo.pseudo_map_more_currency_drops", "カレンシー量",
                 ("追加カレンシー", "カレンシー量が上昇", "More Currency"),
@@ -1816,6 +1827,17 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                 more_drop_rows.append(TradeStatFilter(
                     stat_id, label, value, "map pseudo", True,
                 ))
+        thread_value = _property_value(item, "スレッド量が上昇", "More Threads")
+        scarab_value = _property_value(
+            item, "追加スカラベ", "スカラベ量が上昇", "More Scarabs",
+        )
+        if thread_value is not None or scarab_value is not None:
+            more_drop_rows.append(TradeStatFilter(
+                "pseudo.pseudo_map_more_scarab_drops",
+                "スレッド量" if thread_value is not None else "スカラベ量",
+                thread_value if thread_value is not None else scarab_value,
+                "map pseudo", True,
+            ))
         blight_state = _map_blight_state(item)
         if blight_state == "ravaged":
             filters.append(TradeStatFilter("property.map_uberblighted", "ブライトに破壊されたマップ", None, "map", True))
@@ -1851,6 +1873,10 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                     _property_value(item, "アイテム数量", "Item Quantity"), True,
                 ),
                 (
+                    "property.map_bonus", "アトラスドロップ",
+                    _property_value(item, "アトラスドロップ", "Atlas Drops"), True,
+                ),
+                (
                     "property.map_rarity", "アイテムレアリティ",
                     _property_value(item, "アイテムレアリティ", "Item Rarity"),
                     not more_drop_rows,
@@ -1867,13 +1893,20 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
             filters.extend(more_drop_rows)
             explicit_mods = [
                 modifier for modifier in item.modifiers
-                if modifier.kind in {"prefix", "suffix"}
+                if modifier.kind in {
+                    "prefix", "suffix", "explicit", "fractured", "rareonly",
+                }
             ]
-            if len(explicit_mods) == 8 and not more_drop_rows:
+            explicit_mod_count = len({
+                ("group", modifier.group)
+                if modifier.group is not None else ("row", index)
+                for index, modifier in enumerate(explicit_mods)
+            })
+            if explicit_mod_count >= 8:
                 filters.append(TradeStatFilter(
-                    "pseudo.pseudo_number_of_affix_mods", "Mod数", 8.0,
-                    "map pseudo", True, max_value=8.0,
-                    selection_reason="Awakenedの8 Mod Map条件",
+                    "pseudo.pseudo_number_of_affix_mods", "Mod数",
+                    float(explicit_mod_count), "map pseudo", True,
+                    selection_reason="Awakenedの8～9 Mod Map条件",
                 ))
     elif item.category == "chart" and area_level is not None:
         filters.append(TradeStatFilter(
@@ -1961,6 +1994,22 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
             value = _property_value(item, *labels)
             if value is not None:
                 filters.append(TradeStatFilter(stat_id, labels[0], value, "sanctum", True))
+    catalyst_slots = ("ring", "amulet", "belt", "指輪", "アミュレット", "ベルト")
+    accessory_identity = f"{item.item_class} {item.base_type}".casefold()
+    has_quality = any(
+        re.fullmatch(r"(?:品質|quality)(?:\s*\([^)]*\))?", label, re.IGNORECASE)
+        for label in item.properties
+    )
+    if (
+        item.category == "accessory"
+        and any(slot in accessory_identity for slot in catalyst_slots)
+        and not has_quality
+    ):
+        filters.append(TradeStatFilter(
+            "property.quality", "未Catalyst", None, "special", True,
+            max_value=0.0,
+            selection_reason="品質表示がないアクセサリーをCatalyst未使用に限定",
+        ))
     return tuple(filters)
 
 
@@ -3668,7 +3717,11 @@ def resolve_trade_stat_filters(
                 # Awakened準拠: 常設Modでも可変ロールがあれば候補へ残す。
                 # 固定Modも「隠された候補」から確認できるよう保持する。
                 hidden_reason = "ユニーク固定値のため初期非表示"
-        api_kind = "explicit" if modifier.kind in {"prefix", "suffix"} else modifier.kind
+        api_kind = (
+            "explicit"
+            if modifier.kind in {"prefix", "suffix", "rareonly"}
+            else modifier.kind
+        )
         source = _indexed_stat_text(modifier.text, api_kind)
         indexed_candidates = list(entries_by_text.get((api_kind, source), ()))
         if modifier.stat_id:
@@ -4492,6 +4545,15 @@ def build_search_query(
         misc["corrupted"] = {
             "option": "true" if include_corrupted == "only" else "false"
         }
+    if (
+        preset != PRESET_BASE
+        and include_corrupted == "only"
+        and "twice_corrupted" not in item.flags
+    ):
+        misc = query["filters"].setdefault(
+            "misc_filters", {"filters": {}},
+        )["filters"]
+        misc["twice_corrupted"] = {"option": "false"}
     misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
     if include_searing:
         misc["searing_item"] = {"option": "true"}

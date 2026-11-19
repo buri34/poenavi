@@ -37,6 +37,7 @@ _PROPERTY_LABELS = {
     "ブロック率", "Chance to Block", "移動速度", "Movement Speed",
     "ルーンソケット", "Rune Sockets",
     "アイテム数量", "Item Quantity", "アイテムレアリティ", "Item Rarity",
+    "アトラスドロップ", "Atlas Drops",
     "モンスターパックサイズ", "Monster Pack Size", "モンスターレベル", "Monster Level",
     "エリアレベル", "Area Level", "死人の硫黄", "Dead Man's Sulphur",
     "情報を聞いた区画", "情報を聞いた区画数", "Wings Revealed",
@@ -47,6 +48,7 @@ _PROPERTY_LABELS = {
     "アウレウス", "Aureus", "マップ完了報酬", "Map Completion Reward",
     "追加マップ", "マップ量が上昇", "More Maps",
     "追加スカラベ", "スカラベ量が上昇", "More Scarabs",
+    "スレッド量が上昇", "More Threads",
     "追加カレンシー", "カレンシー量が上昇", "More Currency",
     "追加占いカード", "占いカード増加", "More Divination Cards",
     "マップエリア", "Map Area",
@@ -54,6 +56,7 @@ _PROPERTY_LABELS = {
 _FLAG_LINES = {
     "未鑑定": "unidentified", "Unidentified": "unidentified",
     "コラプト状態": "corrupted", "Corrupted": "corrupted",
+    "二重コラプト": "twice_corrupted", "Twice Corrupted": "twice_corrupted",
     "ミラー品": "mirrored", "ミラー状態": "mirrored", "Mirrored": "mirrored",
     "分割": "split", "スプリット": "split", "Split": "split",
     "Synthesised Item": "synthesised", "Synthesised": "synthesised",
@@ -121,6 +124,7 @@ _NUMBER = re.compile(r"(?<![A-Za-z])[-+]?\d+(?:\.\d+)?")
 _JAPANESE_TEXT = re.compile(r"[\u3040-\u30ff\u3400-\u9fff]")
 _MODIFIER_HEADER = re.compile(r"^\{(?P<body>.*)\}$")
 _MODIFIER_KINDS = (
+    (("Rare-only", "レアのみ"), "rareonly"),
     (("Crafted", "クラフト"), "crafted"),
     (("Fractured", "フラクチャー"), "fractured"),
     (("Desecrated", "冒涜"), "desecrated"),
@@ -324,6 +328,14 @@ _MAP_CHECK_EXACT_STATS = {
     normalize_stat_text("モンスターによるヒット時に衰弱を2秒間付与する"): {
         "stat_id": "nightmare.stat_monsters_inflict_withered_on_hit",
         "ref": "Monsters inflict Withered for 2 seconds on Hit",
+    },
+    normalize_stat_text("エリアにデリリウムの鏡が出現する"): {
+        "stat_id": "explicit.stat_2398157267",
+        "ref": "Area contains a Mirror of Delirium",
+    },
+    normalize_stat_text("エリアにミラージュが出現する"): {
+        "stat_id": "explicit.stat_2436559047",
+        "ref": "Area contains a Mirage",
     },
 }
 # 固定文言中にも数値がある場合、検索値に対応する数値の位置を明示する。
@@ -534,7 +546,8 @@ def _modifier_header_kind(line: str) -> str | None:
     match = _MODIFIER_HEADER.match(line)
     if not match:
         return None
-    body = match.group("body").lower()
+    # 固有Mod名（例: 「冒涜的な」）は種別ラベルではないため分類から除外する。
+    body = re.sub(r'"[^"]*"|「[^」]*」', "", match.group("body")).lower()
     for labels, kind in _MODIFIER_KINDS:
         if any(label.lower() in body for label in labels):
             return kind
@@ -603,7 +616,7 @@ def _combine_multiline_modifiers(
                 result.append(first)
                 index += 1
             continue
-        if first.group is None or first.kind not in {"prefix", "suffix", "explicit"}:
+        if first.group is None or first.kind not in {"prefix", "suffix", "explicit", "rareonly"}:
             result.append(first)
             index += 1
             continue
@@ -618,7 +631,7 @@ def _combine_multiline_modifiers(
             group = modifiers[index:index + size]
             text = "\n".join(row.text for row in group)
             metadata, option, confidence = metadata_index.match_with_option(
-                text, first.kind,
+                text, "explicit" if first.kind == "rareonly" else first.kind,
             )
             if metadata is None:
                 aliased_text = text
@@ -675,14 +688,16 @@ def _modifier_header_details(
     if kind is None:
         return None
     body = _MODIFIER_HEADER.match(line).group("body")
+    type_body = re.sub(r'"[^"]*"|「[^」]*」', "", body)
     tier_match = re.search(r"(?:Tier|ティア)\s*:\s*(\d+)", body, re.IGNORECASE)
-    lowered = body.lower()
-    if "prefix" in lowered or "プレフィックス" in body:
+    lowered = type_body.lower()
+    if "prefix" in lowered or "プレフィックス" in type_body:
         affix = "prefix"
-    elif "suffix" in lowered or "サフィックス" in body:
+    elif "suffix" in lowered or "サフィックス" in type_body:
         affix = "suffix"
     else:
         affix = kind if kind in {"prefix", "suffix"} else None
+    original_lowered = body.lower()
     generation = next((value for labels, value in (
         (("corrupted implicit", "コラプト暗黙"), "corrupted"),
         (("vestigial implicit", "痕跡暗黙"), "vestigial"),
@@ -702,7 +717,11 @@ def _modifier_header_details(
         (("delve", "デルヴ"), "delve"),
         (("of the essence", "essences", "エッセンス"), "essence"),
         (("of infamy", "infamous", "悪名"), "infamous"),
-    ) if any(label in lowered or label in body for label in labels)), None)
+    ) if any(
+        label in (lowered if value == "desecrated" else original_lowered)
+        or label in (type_body if value == "desecrated" else body)
+        for label in labels
+    )), None)
     name_match = re.search(r'"([^"]*)"|「([^」]*)」', body)
     name = (
         next((value for value in name_match.groups() if value is not None), None)
@@ -966,7 +985,10 @@ def parse_item_text(text: str) -> ParsedItem:
                 unidentified_tier = int(unidentified_tier_match.group(1))
                 continue
             if line in _FLAG_LINES:
-                flags.append(_FLAG_LINES[line])
+                flag = _FLAG_LINES[line]
+                flags.append(flag)
+                if flag == "twice_corrupted":
+                    flags.append("corrupted")
                 continue
             if _FOIL_VARIANT_LINE.fullmatch(line):
                 flags.append("foil")
@@ -1067,6 +1089,12 @@ def parse_item_text(text: str) -> ParsedItem:
                     "foulborn" if is_mutated else None
                 ),
             )
+            if metadata is None and kind == "rareonly":
+                metadata, option, confidence = (
+                    default_metadata_index().match_for_item_category(
+                        metadata_text, "explicit", item_category,
+                    )
+                )
             if metadata is None and (
                 "盾" in header.get("item_class", "")
                 or "shield" in header.get("item_class", "").casefold()
@@ -1241,7 +1269,7 @@ def parse_item_text(text: str) -> ParsedItem:
                 inverted=(metadata.inverted ^ (
                     direction_inverted if direction_inverted else matcher_negated
                 )) if metadata else False,
-                generation=(kind if kind == "veiled" else current_header_generation)
+                generation=(kind if kind in {"veiled", "rareonly"} else current_header_generation)
                 if from_header else ("foulborn" if is_mutated else kind),
                 option_value=option.value if option else None,
                 option_text=option.japanese if option else None,

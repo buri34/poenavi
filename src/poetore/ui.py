@@ -403,6 +403,7 @@ _FILTER_KIND_LABELS = {
     "vestigial": "痕跡",
     "essence": "エッセンス",
     "infamous": "悪名高い",
+    "rareonly": "レアのみ",
     "corrupted": "コラプト",
     "catalyst": "カタリスト",
     "volatile": "ヴォラタイル・ヴァール",
@@ -444,7 +445,7 @@ def _filter_kind_label(stat_filter: TradeStatFilter) -> str:
         for provenance in stat_filter.provenance_tags
         if provenance in {
             "crafted", "fractured", "desecrated", "catalyst", "volatile",
-            "reflecting", "corrupted",
+            "reflecting", "corrupted", "rareonly",
         }
     )
     kind = (
@@ -5528,6 +5529,14 @@ class PoetoreWindow(QWidget):
         if key == self._state_item_key:
             return
         self._state_item_key = key
+        self.corrupted_combo.setOptions((
+            (
+                "二重コラプト" if "twice_corrupted" in item.flags else "コラプトのみ",
+                "only", True,
+            ),
+            ("非コラプトのみ", False, False),
+            ("コラプト品含む", True, False),
+        ))
         self.corrupted_combo.setCurrentIndex(0 if "corrupted" in item.flags else 1)
         is_split = "split" in item.flags
         self.split_combo.setCurrentIndex(0)

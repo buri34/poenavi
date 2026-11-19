@@ -3256,8 +3256,11 @@ Item Level: 70
     )
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         filters = resolve_trade_stat_filters(item)
-    assert len(filters) == 4
-    assert not any(row.enabled for row in filters)
+    assert len(filters) == 5
+    assert all(
+        row.enabled == (row.stat_id == "property.quality")
+        for row in filters
+    )
 
 
 def test_unique_pseudo_requires_two_explicit_sources_and_starts_off():
@@ -4033,6 +4036,7 @@ Onyx Amulet
         "explicit.stat_2901986750",
         "explicit.stat_2587176568",
         "explicit.stat_752930724",
+        "property.quality",
     }
     assert by_id["explicit.stat_2587176568"].text.startswith("スキルのリザーブ効率")
     requirements = by_id["explicit.stat_752930724"]
@@ -5402,10 +5406,14 @@ def test_modifiable_amulet_shows_anointments_using_valuable_oils(
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         filters = resolve_trade_stat_filters(item)
 
-    assert bool(filters) is expected_visible
+    enchant_rows = tuple(
+        row for row in filters if row.stat_id == "enchant.allocates"
+    )
+    assert bool(enchant_rows) is expected_visible
+    assert any(row.stat_id == "property.quality" for row in filters)
     if expected_visible:
-        assert filters[0].oils == oils
-        assert filters[0].enabled is False
+        assert enchant_rows[0].oils == oils
+        assert enchant_rows[0].enabled is False
 
 
 def test_query_supports_option_not_count_and_special_item_states():
@@ -7275,13 +7283,14 @@ def test_japanese_map_new_currency_and_divination_card_drop_labels_resolve():
     assert selected_rows["pseudo.pseudo_map_more_currency_drops"] == {"min": 139.0}
 
 
-def test_corrupted_eight_mod_map_keeps_modifier_count_pseudo_off_by_default():
+@pytest.mark.parametrize("modifier_count", (8, 9))
+def test_corrupted_eight_or_nine_mod_map_enables_modifier_count_pseudo(modifier_count):
     modifiers = tuple(
         ItemModifier(
             f"Map modifier {index}", (index,),
-            kind="prefix" if index < 4 else "suffix",
+            kind="fractured" if index == 0 else "prefix" if index < 5 else "suffix",
         )
-        for index in range(8)
+        for index in range(modifier_count)
     )
     item = ParsedItem(
         "Maps", "Rare", "Test", "Cemetery Map", "map",
@@ -7294,13 +7303,185 @@ def test_corrupted_eight_mod_map_keeps_modifier_count_pseudo_off_by_default():
         row for row in rows
         if row.stat_id == "pseudo.pseudo_number_of_affix_mods"
     )
-    assert count.enabled is False
-    assert count.min_value == 8
-    assert count.max_value == 8
+    assert count.enabled is True
+    assert count.min_value == modifier_count
+    assert count.max_value is None
     query = build_search_query(
         item, "Cemetery Map", rows, preset=PRESET_FINISHED,
     )["query"]
-    assert query["stats"][0]["filters"] == []
+    assert query["stats"][0]["filters"] == [{
+        "id": "pseudo.pseudo_number_of_affix_mods",
+        "value": {"min": float(modifier_count)},
+    }]
+
+
+def test_reworked_map_atlas_drops_threads_and_rare_only_are_searchable():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+穢れた道
+マップ (ティア 16)
+--------
+アトラスドロップ: +113% (augmented)
+アイテムレアリティ: +113% (augmented)
+モンスターパックサイズ: +43% (augmented)
+マップ量が上昇: +35% (augmented)
+スレッド量が上昇: +35% (augmented)
+--------
+アイテムレベル: 85
+--------
+モンスターレベル：83
+--------
+{ プレフィックスモッド「保護された」 (ティア: 1) }
+モンスターは最大ライフの77(70-80)%を追加最大エナジーシールドとして獲得する
+{ プレフィックスモッド「タイタンの」 — ライフ }
+ユニークボスのライフが35%増加する
+ユニークボスの効果範囲が70%増加する
+{ プレフィックスモッド「拡大する」 (ティア: 1) }
+モンスターの効果範囲が100%増加する
+モンスターは投射物を追加で2個放つ
+{ プレフィックスモッド「串刺す」 }
+モンスターアタックはヒット時に60%の確率で串刺しを付与する
+{ サフィックスモッド 「ぬかるみの」 (ティア: 1) }
+プレイヤーの防御力が30(30-25)%低下する
+{ サフィックスモッド 「時の鎖の」 — キャスター, 呪い }
+プレイヤーはテンポラルチェーンの呪いを受ける
+{ レアのみ }
+エリアにデリリウムの鏡が出現する — スケールできない値
+{ サフィックスモッド 「不正確さの」 }
+全てのプレイヤーの命中力が25%低下する
+--------
+コラプト状態
+""")
+
+    rare_only = next(
+        modifier for modifier in item.modifiers
+        if modifier.text == "エリアにデリリウムの鏡が出現する"
+    )
+    assert rare_only.kind == "rareonly"
+    assert rare_only.stat_id == "explicit.stat_2398157267"
+    assert rare_only.generation == "rareonly"
+
+    entries = ({
+        "id": "explicit.stat_2398157267",
+        "text": "エリアにデリリウムの鏡が出現する",
+        "type": "explicit",
+    },)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        rows = resolve_trade_stat_filters(item)
+    by_id = {row.stat_id: row for row in rows}
+    assert by_id["property.map_bonus"].min_value == 113
+    assert by_id["property.map_bonus"].enabled is True
+    assert by_id["pseudo.pseudo_map_more_scarab_drops"].text == "スレッド量"
+    assert by_id["pseudo.pseudo_map_more_scarab_drops"].min_value == 35
+    assert by_id["pseudo.pseudo_map_more_scarab_drops"].enabled is True
+    assert by_id["explicit.stat_2398157267"].enabled is True
+    count = by_id["pseudo.pseudo_number_of_affix_mods"]
+    assert count.enabled is True
+    assert count.min_value == 8
+    assert count.max_value is None
+
+    query = build_search_query(item, item.base_type, rows)["query"]
+    assert query["filters"]["map_filters"]["filters"]["map_bonus"] == {"min": 113.0}
+    api_rows = {
+        row["id"]: row.get("value", {})
+        for group in query["stats"] for row in group["filters"]
+    }
+    assert api_rows["pseudo.pseudo_map_more_scarab_drops"] == {"min": 35.0}
+    assert api_rows["pseudo.pseudo_number_of_affix_mods"] == {"min": 8.0}
+    assert "explicit.stat_2398157267" in api_rows
+
+
+def test_rare_only_header_does_not_misclassify_named_prefix_as_desecrated():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+夕暮れの長旅
+マップ (ティア 16)
+--------
+アトラスドロップ: +111% (augmented)
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「冒涜的な」 (ティア: 1) — ダメージ, 物理, 混沌 }
+モンスターはその物理ダメージの31(31-35)%を追加混沌ダメージとして獲得する
+モンスターによるヒット時に衰弱を2秒間付与する
+{ レアのみ (ティア: 1) }
+エリアにミラージュが出現する
+--------
+二重コラプト
+""")
+
+    prefix = item.modifiers[0]
+    assert prefix.kind == "prefix"
+    assert prefix.generation is None
+    mirage = next(modifier for modifier in item.modifiers if "ミラージュ" in modifier.text)
+    assert mirage.kind == "rareonly"
+    assert mirage.stat_id == "explicit.stat_2436559047"
+
+
+def test_twice_corrupted_state_and_normal_corrupted_exclusion_are_distinct():
+    base = """アイテムクラス: 靴
+レアリティ: レア
+勝利の要請
+カーナルブーツ
+--------
+アイテムレベル: 69
+--------
+{{ コラプト暗黙モッド — ジェム }}
+ソケットされたウォークライジェムのレベル +2
+--------
+{state}
+"""
+    twice = parse_item_text(base.format(state="二重コラプト"))
+    normal = parse_item_text(base.format(state="コラプト状態"))
+
+    assert {"corrupted", "twice_corrupted"}.issubset(twice.flags)
+    assert normal.flags == ("corrupted",)
+    twice_misc = build_search_query(
+        twice, twice.base_type, include_corrupted="only",
+    )["query"]["filters"]["misc_filters"]["filters"]
+    normal_misc = build_search_query(
+        normal, normal.base_type, include_corrupted="only",
+    )["query"]["filters"]["misc_filters"]["filters"]
+    assert "twice_corrupted" not in twice_misc
+    assert normal_misc["twice_corrupted"] == {"option": "false"}
+
+
+def test_not_catalysed_ring_filter_defaults_on_but_quality_ring_does_not_get_it():
+    no_quality = parse_item_text("""アイテムクラス: 指輪
+レアリティ: レア
+獣の螺層
+パウア貝の指輪
+--------
+装備要求:
+レベル: 16
+--------
+アイテムレベル: 57
+--------
+{ 暗黙モッド — マナ }
+最大マナ +23(20-30)
+""")
+    catalysed = parse_item_text("""アイテムクラス: 指輪
+レアリティ: レア
+妖精の螺層
+二つ石の指輪
+--------
+品質 (キャスターモッド): +20% (augmented)
+--------
+アイテムレベル: 73
+""")
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        plain_rows = resolve_trade_stat_filters(no_quality)
+        quality_rows = resolve_trade_stat_filters(catalysed)
+    no_catalyst = next(row for row in plain_rows if row.stat_id == "property.quality")
+    assert no_catalyst.text == "未Catalyst"
+    assert no_catalyst.enabled is True
+    assert no_catalyst.min_value is None
+    assert no_catalyst.max_value == 0
+    assert not any(row.text == "未Catalyst" for row in quality_rows)
+
+    query = build_search_query(no_quality, no_quality.base_type, plain_rows)["query"]
+    assert query["filters"]["misc_filters"]["filters"]["quality"] == {"max": 0}
 
 
 def test_japanese_elegant_hubris_advanced_copy_uses_exact_caspiro_seed():
