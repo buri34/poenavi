@@ -107,20 +107,22 @@ class HeistSettingsDialog(QDialog):
         self.ocr_pack_progress = pack_group.progress_bar
         self.ocr_pack_retry = pack_group.retry_button
         self.keep_high_accuracy_checkbox = QCheckBox(
-            "高精度OCRを常に起動しておく"
+            "高精度OCRをあらかじめ起動しておく"
         )
         self.keep_high_accuracy_checkbox.setObjectName("keepHighAccuracyOcrReady")
         self.keep_high_accuracy_checkbox.setChecked(bool(keep_high_accuracy_ready))
         pack_group.layout().addWidget(self.keep_high_accuracy_checkbox)
         self.keep_high_accuracy_hint = QLabel(
-            "読み取り時の起動待ちをなくします（メモリを約0.8GB使用します）"
+            "ON：高精度OCRを待機させ、読み取りをすぐに開始できます"
+            "（待機中もメモリを約1GB使用します）。"
         )
         self.keep_high_accuracy_hint.setObjectName("keepHighAccuracyOcrHint")
         self.keep_high_accuracy_hint.setProperty("uiRole", "muted")
         self.keep_high_accuracy_hint.setWordWrap(True)
         pack_group.layout().addWidget(self.keep_high_accuracy_hint)
         self.keep_high_accuracy_off_hint = QLabel(
-            "OFFの場合は今までどおり必要なときだけ起動し、未使用180秒で終了します。"
+            "OFF：必要なときだけ起動するため、使わない間のメモリ消費を抑えられます。"
+            "起動時は10～15秒ほど待つ場合があり、最後の使用から180秒後に自動終了します。"
         )
         self.keep_high_accuracy_off_hint.setObjectName("keepHighAccuracyOcrOffHint")
         self.keep_high_accuracy_off_hint.setProperty("uiRole", "muted")

@@ -95,8 +95,16 @@ def test_heist_settings_can_keep_high_accuracy_ocr_ready():
     )
     try:
         assert dialog.keep_high_accuracy_checkbox.isChecked()
-        assert "約0.8GB" in dialog.keep_high_accuracy_hint.text()
+        assert dialog.keep_high_accuracy_checkbox.text() == (
+            "高精度OCRをあらかじめ起動しておく"
+        )
+        assert "約1GB" in dialog.keep_high_accuracy_hint.text()
+        assert "すぐに開始" in dialog.keep_high_accuracy_hint.text()
         assert "必要なときだけ起動" in dialog.keep_high_accuracy_off_hint.text()
+        assert "メモリ消費を抑えられます" in dialog.keep_high_accuracy_off_hint.text()
+        assert "10～15秒" in dialog.keep_high_accuracy_off_hint.text()
+        assert "180秒後に自動終了" in dialog.keep_high_accuracy_off_hint.text()
+        assert "今までどおり" not in dialog.keep_high_accuracy_off_hint.text()
         assert dialog.settings() == ("ctrl+h", True, True)
     finally:
         dialog.close()
