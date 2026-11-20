@@ -940,6 +940,11 @@ class PoetoreModeWindow(QMainWindow):
             )
         )
 
+    def _heist_keep_high_accuracy_ready(self):
+        feature = self.config.get("poetore", {}).get("heist_curio_ocr", {})
+        feature = feature if isinstance(feature, dict) else {}
+        return bool(feature.get("keep_high_accuracy_ready", False))
+
     def _expedition_ready(self):
         return bool(self.config.get("poetore", {}).get("expedition_reward_overlay", {}).get("region"))
 
@@ -1192,7 +1197,12 @@ class PoetoreModeWindow(QMainWindow):
 
             shared = self._ensure_screen_reading_coordinator()
             controller = HeistCurioController(
-                self, ocr_server=shared, scan_coordinator=shared,
+                self,
+                ocr_server=shared,
+                scan_coordinator=shared,
+                keep_high_accuracy_ready=(
+                    PoetoreModeWindow._heist_keep_high_accuracy_ready(self)
+                ),
             )
             controller.status.connect(self._show_heist_curio_status)
             controller.failed.connect(self._show_heist_curio_error)
@@ -1244,7 +1254,18 @@ class PoetoreModeWindow(QMainWindow):
             from src.poetore.poe2.ndlocr_pack import NdlOcrPackController
 
             self._ndlocr_pack_controller = NdlOcrPackController(self)
+            self._ndlocr_pack_controller.status_changed.connect(
+                self._handle_ndlocr_pack_status
+            )
         return self._ndlocr_pack_controller
+
+    def _handle_ndlocr_pack_status(self, status):
+        if (
+            getattr(status, "state", "") == "ready"
+            and self._heist_curio_enabled()
+            and self._heist_keep_high_accuracy_ready()
+        ):
+            self._ensure_heist_curio_controller().warm_up_high_accuracy()
 
     def capture_desecration_tiers(self):
         if not self._screen_reading_enabled() or not self._desecration_ready():
@@ -1427,20 +1448,27 @@ class PoetoreModeWindow(QMainWindow):
             self,
             enabled=self._heist_curio_enabled(),
             hotkey=hotkeys.get("heist_curio_ocr", "alt+e"),
+            keep_high_accuracy_ready=PoetoreModeWindow._heist_keep_high_accuracy_ready(
+                self
+            ),
             ocr_pack_controller=pack_controller,
         )
         pack_controller.ensure_started()
         if not dialog.exec():
             return
-        hotkey, enabled = dialog.settings()
+        hotkey, enabled, keep_high_accuracy_ready = dialog.settings()
         if not PoetoreModeWindow._save_heist_curio_settings(
-            self, hotkey, enabled
+            self, hotkey, enabled, keep_high_accuracy_ready
         ):
             return
         if enabled:
-            self._ensure_heist_curio_controller().warm_up()
+            controller = self._ensure_heist_curio_controller()
+            controller.set_keep_high_accuracy_ready(keep_high_accuracy_ready)
+            controller.warm_up()
 
-    def _save_heist_curio_settings(self, hotkey, enabled):
+    def _save_heist_curio_settings(
+        self, hotkey, enabled, keep_high_accuracy_ready=False
+    ):
         configured_hotkeys = self.config.get("hotkeys", {})
         configured_hotkeys = (
             configured_hotkeys if isinstance(configured_hotkeys, dict) else {}
@@ -1487,7 +1515,10 @@ class PoetoreModeWindow(QMainWindow):
 
         poetore = self.config.get("poetore", {})
         poetore = dict(poetore) if isinstance(poetore, dict) else {}
-        poetore["heist_curio_ocr"] = {"enabled": bool(enabled)}
+        poetore["heist_curio_ocr"] = {
+            "enabled": bool(enabled),
+            "keep_high_accuracy_ready": bool(keep_high_accuracy_ready),
+        }
         saved_hotkeys = dict(configured_hotkeys)
         saved_hotkeys["heist_curio_ocr"] = hotkey
         saved_hotkeys.pop("heist_curio_manual_ocr", None)

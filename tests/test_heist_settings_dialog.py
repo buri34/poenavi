@@ -31,7 +31,8 @@ def test_heist_settings_reuses_poetore_dialog_structure_and_defaults():
         assert dialog.theme == POETORE_DIALOG_THEME
         assert not dialog.enabled_checkbox.isChecked()
         assert dialog.hotkey_widget.key_text == "alt+e"
-        assert dialog.settings() == ("alt+e", False)
+        assert not dialog.keep_high_accuracy_checkbox.isChecked()
+        assert dialog.settings() == ("alt+e", False, False)
         assert dialog.findChild(QGroupBox, "basicSettingsGroup") is not None
         assert dialog.findChild(QGroupBox, "highAccuracyOcrGroup") is not None
         assert dialog.findChild(QGroupBox, "readMethodGroup") is not None
@@ -80,6 +81,22 @@ def test_heist_settings_shows_manual_selection_example():
         assert "Enter" not in dialog.findChild(
             QLabel, "heistSelectionInstruction"
         ).text()
-        assert dialog.settings() == ("ctrl+h", True)
+        assert dialog.settings() == ("ctrl+h", True, False)
+    finally:
+        dialog.close()
+
+
+def test_heist_settings_can_keep_high_accuracy_ocr_ready():
+    QApplication.instance() or QApplication([])
+    dialog = HeistSettingsDialog(
+        enabled=True,
+        hotkey="ctrl+h",
+        keep_high_accuracy_ready=True,
+    )
+    try:
+        assert dialog.keep_high_accuracy_checkbox.isChecked()
+        assert "約0.8GB" in dialog.keep_high_accuracy_hint.text()
+        assert "必要なときだけ起動" in dialog.keep_high_accuracy_off_hint.text()
+        assert dialog.settings() == ("ctrl+h", True, True)
     finally:
         dialog.close()

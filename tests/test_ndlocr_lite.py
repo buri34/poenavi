@@ -217,6 +217,56 @@ def test_server_idle_timer_is_refreshed_by_touch_and_stops_after_180_seconds(tmp
     assert ("ndl_resident_stopped", {"reason": "idle_timeout"}) in events
 
 
+def test_server_keep_alive_warms_up_without_idle_timer_until_disabled(tmp_path):
+    FakeTimer.created = []
+    helper = tmp_path / "PoENaviNdlOcr.exe"
+    helper.write_bytes(b"placeholder")
+    process = FakePersistentProcess([str(helper)])
+    server = NdlOcrLiteServer(
+        helper=helper,
+        timeout=1,
+        idle_timeout=180,
+        process_factory=lambda *_args, **_kwargs: process,
+        timer_factory=FakeTimer,
+    )
+
+    server.set_keep_alive(True)
+    assert server.warm_up() is True
+    assert server.is_ready
+    assert FakeTimer.created == []
+
+    server.recognize([b"image"])
+    assert server.is_ready
+    assert FakeTimer.created == []
+
+    server.set_keep_alive(False)
+    assert len(FakeTimer.created) == 1
+    assert FakeTimer.created[0].interval == 180
+    FakeTimer.created[0].fire()
+    assert not server.is_ready
+
+
+def test_enabling_keep_alive_ignores_an_already_firing_idle_callback(tmp_path):
+    FakeTimer.created = []
+    helper = tmp_path / "PoENaviNdlOcr.exe"
+    helper.write_bytes(b"placeholder")
+    process = FakePersistentProcess([str(helper)])
+    server = NdlOcrLiteServer(
+        helper=helper,
+        timeout=1,
+        process_factory=lambda *_args, **_kwargs: process,
+        timer_factory=FakeTimer,
+    )
+    server.recognize([b"image"])
+    old_timer = FakeTimer.created[-1]
+
+    server.set_keep_alive(True)
+    old_timer.callback()
+
+    assert server.is_ready
+    server.close()
+
+
 def test_server_touch_does_not_start_a_stopped_helper(tmp_path):
     FakeTimer.created = []
     helper = tmp_path / "PoENaviNdlOcr.exe"

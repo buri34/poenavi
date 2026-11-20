@@ -90,7 +90,8 @@
             "enabled": false
         },
         "heist_curio_ocr": {
-            "enabled": false
+            "enabled": false,
+            "keep_high_accuracy_ready": false
         },
         "expedition_reward_overlay": {},
         "desecration_tier_overlay": {

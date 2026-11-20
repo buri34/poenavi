@@ -42,6 +42,7 @@ class HeistSettingsDialog(QDialog):
         *,
         enabled: bool = False,
         hotkey: str = "alt+e",
+        keep_high_accuracy_ready: bool = False,
         example_image_path=None,
         ocr_pack_controller=None,
     ):
@@ -105,6 +106,26 @@ class HeistSettingsDialog(QDialog):
         self.ocr_pack_status = pack_group.status_label
         self.ocr_pack_progress = pack_group.progress_bar
         self.ocr_pack_retry = pack_group.retry_button
+        self.keep_high_accuracy_checkbox = QCheckBox(
+            "高精度OCRを常に起動しておく"
+        )
+        self.keep_high_accuracy_checkbox.setObjectName("keepHighAccuracyOcrReady")
+        self.keep_high_accuracy_checkbox.setChecked(bool(keep_high_accuracy_ready))
+        pack_group.layout().addWidget(self.keep_high_accuracy_checkbox)
+        self.keep_high_accuracy_hint = QLabel(
+            "読み取り時の起動待ちをなくします（メモリを約0.8GB使用します）"
+        )
+        self.keep_high_accuracy_hint.setObjectName("keepHighAccuracyOcrHint")
+        self.keep_high_accuracy_hint.setProperty("uiRole", "muted")
+        self.keep_high_accuracy_hint.setWordWrap(True)
+        pack_group.layout().addWidget(self.keep_high_accuracy_hint)
+        self.keep_high_accuracy_off_hint = QLabel(
+            "OFFの場合は今までどおり必要なときだけ起動し、未使用180秒で終了します。"
+        )
+        self.keep_high_accuracy_off_hint.setObjectName("keepHighAccuracyOcrOffHint")
+        self.keep_high_accuracy_off_hint.setProperty("uiRole", "muted")
+        self.keep_high_accuracy_off_hint.setWordWrap(True)
+        pack_group.layout().addWidget(self.keep_high_accuracy_off_hint)
         content.addWidget(pack_group)
 
         usage_group, usage = self._section_group("3. 読み取り方法", "readMethodGroup")
@@ -177,8 +198,12 @@ class HeistSettingsDialog(QDialog):
         layout.setSpacing(8)
         return group, layout
 
-    def settings(self) -> tuple[str, bool]:
-        return self.hotkey_widget.key_text, self.enabled_checkbox.isChecked()
+    def settings(self) -> tuple[str, bool, bool]:
+        return (
+            self.hotkey_widget.key_text,
+            self.enabled_checkbox.isChecked(),
+            self.keep_high_accuracy_checkbox.isChecked(),
+        )
 
     def _load_example_thumbnail(self) -> None:
         pixmap = QPixmap(str(self._example_image_path))

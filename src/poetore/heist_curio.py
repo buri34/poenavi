@@ -839,12 +839,15 @@ class HeistCurioController(QObject):
         ndl_ocr_server=None,
         scan_coordinator=None,
         items: Sequence[CurioItem] | None = None,
+        keep_high_accuracy_ready: bool = False,
     ):
         super().__init__(parent)
         self._ocr = ocr_server or WindowsOcrServer()
         self._owns_ocr = ocr_server is None
         self._ndl_ocr = ndl_ocr_server or NdlOcrLiteServer()
         self._owns_ndl_ocr = ndl_ocr_server is None
+        self._keep_high_accuracy_ready = bool(keep_high_accuracy_ready)
+        self._ndl_ocr.set_keep_alive(self._keep_high_accuracy_ready)
         self._scan_coordinator = scan_coordinator
         self._items = tuple(items or load_curio_items())
         self._running = False
@@ -873,9 +876,31 @@ class HeistCurioController(QObject):
             target=self._safe_start, name="heist-curio-warmup", daemon=True
         ).start()
 
+    def set_keep_high_accuracy_ready(self, enabled: bool) -> None:
+        self._keep_high_accuracy_ready = bool(enabled)
+        self._ndl_ocr.set_keep_alive(self._keep_high_accuracy_ready)
+
+    def warm_up_high_accuracy(self) -> None:
+        if not self._keep_high_accuracy_ready:
+            return
+        threading.Thread(
+            target=self._safe_start_high_accuracy,
+            name="heist-high-accuracy-warmup",
+            daemon=True,
+        ).start()
+
     def _safe_start(self) -> None:
         try:
             self._ocr.start()
+        except Exception:  # noqa: BLE001, S110 - a real scan retries later
+            pass
+        self._safe_start_high_accuracy()
+
+    def _safe_start_high_accuracy(self) -> None:
+        if not self._keep_high_accuracy_ready:
+            return
+        try:
+            self._ndl_ocr.warm_up()
         except Exception:  # noqa: BLE001 - a real scan retries and reports the error
             return
 
