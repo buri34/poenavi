@@ -53,9 +53,9 @@ class UpdateController(QObject):
             if path.is_dir():
                 shutil.rmtree(path, ignore_errors=True)
 
-    def check(self, manual: bool) -> None:
+    def check(self, manual: bool) -> bool:
         if self._checking:
-            return
+            return False
         self._checking = True
 
         def work():
@@ -70,14 +70,15 @@ class UpdateController(QObject):
                 self._checking = False
 
         self._thread_factory(work).start()
+        return True
 
-    def download(self, release: ReleaseInfo) -> None:
+    def download(self, release: ReleaseInfo) -> bool:
         if self._downloading:
-            return
+            return False
         cached = self.ready_archive(release.version)
         if cached is not None:
             self.download_ready.emit(cached, release)
-            return
+            return True
         if self._work_dir is not None:
             self.discard_download()
         self._downloading = True
@@ -124,6 +125,7 @@ class UpdateController(QObject):
                     self._work_dir = None
 
         self._thread_factory(work).start()
+        return True
 
     def cancel_download(self) -> None:
         self._cancel.set()
