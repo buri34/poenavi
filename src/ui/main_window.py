@@ -2749,22 +2749,20 @@ class MainWindow(QMainWindow):
     def start_timer(self):
         self._set_timer_ready(False)
         if not self.is_running:
-            self.start_time = time.time()
+            self.start_time = time.monotonic()
             self.timer.start(10)
             self.is_running = True
             if self.current_zone:
-                self.segment_recorder.record_entry(
+                self._record_zone_segment(
                     self._get_zone_id(self.current_zone) or self.current_zone,
                     self.current_zone,
-                    self.get_elapsed_time(),
                 )
-                self._update_segment_summary()
         self._refresh_ready_button()
             
     def stop_timer(self):
         if self.is_running:
             self.timer.stop()
-            self.accumulated_time += time.time() - self.start_time
+            self.accumulated_time += time.monotonic() - self.start_time
             self.is_running = False
             self._save_timer_state()
         self._refresh_ready_button()
@@ -2917,7 +2915,7 @@ class MainWindow(QMainWindow):
     def get_elapsed_time(self):
         """現在の経過時間を取得"""
         if self.is_running:
-            return self.accumulated_time + (time.time() - self.start_time)
+            return self.accumulated_time + (time.monotonic() - self.start_time)
         return self.accumulated_time
     
     def _timer_state_key(self):
@@ -2929,7 +2927,7 @@ class MainWindow(QMainWindow):
 
     def _timer_state_payload(self):
         return {
-            "accumulated_time": self.accumulated_time,
+            "accumulated_time": self.get_elapsed_time(),
             "lap_times": self.lap_times,
             "lap_record_order": self.lap_record_order,
             "current_act": self.current_act,
@@ -2939,8 +2937,16 @@ class MainWindow(QMainWindow):
     def _save_timer_state_payload(self, payload):
         path = self._timer_state_path()
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False, indent=2)
+        temp_path = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+        try:
+            with open(temp_path, "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temp_path, path)
+        finally:
+            if temp_path.exists():
+                temp_path.unlink()
         return path
 
     def _load_timer_state_payload(self):
@@ -2972,8 +2978,9 @@ class MainWindow(QMainWindow):
 
     def _save_timer_state(self):
         """タイマー状態をPoEバージョン別のtimer_poe*.jsonへ保存"""
-        self._save_timer_state_payload(self._timer_state_payload())
-        print(f"[INFO] タイマー状態を保存しました [{self.poe_version}] (経過: {self.accumulated_time:.1f}秒, Act{self.current_act})")
+        payload = self._timer_state_payload()
+        self._save_timer_state_payload(payload)
+        print(f"[INFO] タイマー状態を保存しました [{self.poe_version}] (経過: {payload['accumulated_time']:.1f}秒, Act{self.current_act})")
     
     def _clear_saved_timer(self):
         """現在のPoEバージョンの保存済みタイマー状態をクリア"""
@@ -2993,6 +3000,8 @@ class MainWindow(QMainWindow):
         saved = self._load_timer_state_payload() or self._migrate_legacy_timer_state_from_config()
         if not saved:
             return
+        self.is_running = False
+        self.start_time = 0.0
         self.accumulated_time = saved.get("accumulated_time", 0.0)
         self.lap_labels = get_lap_labels(self.poe_version)
         self.lap_times = saved.get("lap_times", [None] * len(self.lap_labels))
@@ -3065,6 +3074,7 @@ class MainWindow(QMainWindow):
             LapRecorder.save_run(self.lap_times, elapsed, segments=self.segment_recorder.segments)
         
         self.update_lap_display()
+        self._save_timer_state()
         # ジェムトラッカーをAct変更に連動
         if self._has_pob_import_data():
             self._update_gem_tracker()
@@ -3084,11 +3094,13 @@ class MainWindow(QMainWindow):
         else:
             self._refresh_current_lap_index()
         self.update_lap_display()
+        self._save_timer_state()
         if self._has_pob_import_data():
             self._update_gem_tracker()
     
     def undo_lap(self):
         """直前のラップを取り消し"""
+        changed = False
         if self.current_act > 1 and self.lap_times[self.current_act - 2] is not None:
             lap_num = self.current_act - 1
             self.lap_times[self.current_act - 2] = None
@@ -3096,11 +3108,26 @@ class MainWindow(QMainWindow):
                 self.lap_record_order.remove(lap_num)
             self.current_act -= 1
             self.update_lap_display()
+            changed = True
         elif self.current_act == 1 and self.lap_times[0] is not None:
             self.lap_times[0] = None
             if 1 in self.lap_record_order:
                 self.lap_record_order.remove(1)
             self.update_lap_display()
+            changed = True
+        if changed:
+            self._save_timer_state()
+
+    def _record_zone_segment(self, zone_id: str, zone_name: str):
+        completed = self.segment_recorder.record_entry(
+            zone_id,
+            zone_name,
+            self.get_elapsed_time(),
+        )
+        self._update_segment_summary()
+        if completed is not None:
+            self._save_timer_state()
+        return completed
     
     def format_lap_time(self, seconds):
         """ラップタイムをフォーマット"""
@@ -3189,9 +3216,7 @@ class MainWindow(QMainWindow):
                 split_lbl.setStyleSheet(Styles.LAP_ITEM_PENDING)
 
     def update_display(self):
-        current_time = time.time()
-        elapsed = self.accumulated_time + (current_time - self.start_time)
-        self.update_text(elapsed)
+        self.update_text(self.get_elapsed_time())
 
     def update_text(self, elapsed_seconds):
         minutes = int(elapsed_seconds // 60)
@@ -4017,12 +4042,10 @@ class MainWindow(QMainWindow):
             self._track_live_new_character_candidate(zone_name)
             self._record_last_non_town_zone(zone_name)
         if actual_entry and self.is_running and not self._restoring:
-            self.segment_recorder.record_entry(
+            self._record_zone_segment(
                 self._get_zone_id(zone_name) or zone_name,
                 zone_name,
-                self.get_elapsed_time(),
             )
-            self._update_segment_summary()
         if actual_entry and self.poe_version == POE2 and zone_name in ("川岸", "The Riverbank") and not self._restoring:
             self.clear_progress_flags()
             self.player_level = 1
@@ -5502,6 +5525,12 @@ class MainWindow(QMainWindow):
             }
             ConfigManager.save_config(config)
             self.config = config
+
+        if (
+            hasattr(self, "accumulated_time")
+            and (getattr(self, "is_running", False) or self._has_timer_record())
+        ):
+            self._save_timer_state()
 
         tray_icon = getattr(self, "tray_icon", None)
         if tray_icon is not None:
