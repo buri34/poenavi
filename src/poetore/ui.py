@@ -5,6 +5,7 @@ import re
 import sys
 import threading
 import time
+from collections import deque
 from datetime import datetime, timezone
 from dataclasses import replace
 from pathlib import Path
@@ -75,6 +76,9 @@ from .poe2.metadata import (
     resolve_identity as resolve_poe2_identity,
 )
 from .performance import SearchPerformanceTrace, start_search_trace
+
+
+_MAX_UNIQUE_ICON_REQUESTS = 6
 
 
 def _compact_dust_amount(value: int) -> str:
@@ -1078,7 +1082,8 @@ class PoetoreWindow(QWidget):
         self._auto_search_queued = False
         self._unique_icon_manager = QNetworkAccessManager(self)
         self._unique_icon_manager.finished.connect(self._unique_icon_downloaded)
-        self._unique_icon_requests: dict[QNetworkReply, tuple[int, str]] = {}
+        self._unique_icon_requests: dict[QNetworkReply, tuple[QPushButton, str]] = {}
+        self._unique_icon_queue: deque[tuple[QPushButton, str]] = deque()
         self._unique_icon_cache: dict[str, QIcon] = {}
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         # PoENavi本体には入力透過（クリックスルー）機能があるため、
@@ -4387,6 +4392,7 @@ class PoetoreWindow(QWidget):
         self._passive_hotkey_display = False
         self._auto_hide_interactive = False
         self._stop_outside_click_listener()
+        self._cancel_unique_icon_requests()
         if self._focus_signal_connected:
             QApplication.instance().focusChanged.disconnect(self._close_when_focus_leaves_panel)
             self._focus_signal_connected = False
@@ -6216,6 +6222,7 @@ class PoetoreWindow(QWidget):
             self._set_price_status("完成品として、実際の性能を中心に検索します。")
 
     def _reset_unique_candidates(self):
+        self._cancel_unique_icon_requests()
         while self.unique_name_layout.count():
             item = self.unique_name_layout.takeAt(0)
             widget = item.widget()
@@ -6308,8 +6315,8 @@ class PoetoreWindow(QWidget):
                 if cached is not None:
                     button.setIcon(cached)
                 else:
-                    reply = self._unique_icon_manager.get(QNetworkRequest(QUrl(icon_url)))
-                    self._unique_icon_requests[reply] = (button, icon_url)
+                    self._unique_icon_queue.append((button, icon_url))
+        self._start_unique_icon_requests()
         first_button = next(iter(self.unique_name_group.buttons()), None)
         if first_button is not None:
             first_button.setChecked(True)
@@ -6327,6 +6334,32 @@ class PoetoreWindow(QWidget):
             f"同じベースの未鑑定ユニークが{len(candidates)}種類あります。候補を選んで「価格を検索」を押してください。"
         )
 
+    def _start_unique_icon_requests(self):
+        while (
+            self._unique_icon_queue
+            and len(self._unique_icon_requests) < _MAX_UNIQUE_ICON_REQUESTS
+        ):
+            button, icon_url = self._unique_icon_queue.popleft()
+            if (
+                button not in self.unique_name_group.buttons()
+                or button.property("iconUrl") != icon_url
+            ):
+                continue
+            cached = self._unique_icon_cache.get(icon_url)
+            if cached is not None:
+                button.setIcon(cached)
+                continue
+            reply = self._unique_icon_manager.get(QNetworkRequest(QUrl(icon_url)))
+            self._unique_icon_requests[reply] = (button, icon_url)
+
+    def _cancel_unique_icon_requests(self):
+        self._unique_icon_queue.clear()
+        replies = tuple(self._unique_icon_requests)
+        self._unique_icon_requests.clear()
+        for reply in replies:
+            reply.abort()
+            reply.deleteLater()
+
     def _unique_icon_downloaded(self, reply: QNetworkReply):
         request = self._unique_icon_requests.pop(reply, None)
         try:
@@ -6343,6 +6376,7 @@ class PoetoreWindow(QWidget):
                 button.setIcon(icon)
         finally:
             reply.deleteLater()
+            self._start_unique_icon_requests()
 
     def _show_unique_variants(self, variants, search_generation: int | None = None):
         if (

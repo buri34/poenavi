@@ -3759,7 +3759,7 @@ def test_unique_candidate_details_include_official_icon_urls():
         )
 
 
-def test_unique_candidate_details_fall_back_to_wiki_icon_and_english_name():
+def test_unique_candidate_details_keep_missing_official_icon_empty():
     payload = {"result": [{"entries": [
         {"name": "The Example", "type": "Gold Amulet", "flags": {"unique": True}},
     ]}]}
@@ -3773,8 +3773,7 @@ def test_unique_candidate_details_fall_back_to_wiki_icon_and_english_name():
         assert unique_candidate_details("Gold Amulet") == (
             UniqueCandidate(
                 "The Example",
-                "https://www.poewiki.net/wiki/Special:Redirect/file/"
-                "The_Example_inventory_icon.png",
+                None,
                 "The Example",
             ),
         )

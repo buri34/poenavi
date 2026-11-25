@@ -8,6 +8,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QFontMetrics, QKeyEvent, QMouseEvent, QPalette, QPixmap, QWheelEvent
+from PySide6.QtNetwork import QNetworkReply
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QAbstractItemView, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QTreeWidgetItem, QWidget
 import pytest
@@ -5656,6 +5657,44 @@ def test_many_unidentified_unique_candidates_are_scrollable(qapp):
         assert window.unique_name_scroll.viewport().palette().color(
             window.unique_name_scroll.viewport().backgroundRole()
         ).name() == "#111416"
+    finally:
+        window.close()
+
+
+def test_unique_candidate_icons_limit_parallel_requests_and_cancel_on_reset(qapp):
+    from src.poetore.trade import UniqueCandidate
+
+    window = PoetoreWindow()
+    replies = [Mock() for _ in range(10)]
+    try:
+        candidates = tuple(
+            UniqueCandidate(f"Candidate {index}", f"https://web.poecdn.com/{index}.png")
+            for index in range(10)
+        )
+        with patch.object(
+            window._unique_icon_manager, "get", side_effect=replies,
+        ) as get:
+            window._show_unique_candidates(candidates)
+
+            assert get.call_count == 6
+            assert len(window._unique_icon_requests) == 6
+            assert len(window._unique_icon_queue) == 4
+
+            first_reply = replies[0]
+            first_reply.error.return_value = QNetworkReply.OperationCanceledError
+            window._unique_icon_downloaded(first_reply)
+
+            assert get.call_count == 7
+            assert len(window._unique_icon_requests) == 6
+            assert len(window._unique_icon_queue) == 3
+
+            active_replies = tuple(window._unique_icon_requests)
+            window._reset_unique_candidates()
+
+        assert not window._unique_icon_requests
+        assert not window._unique_icon_queue
+        for reply in active_replies:
+            reply.abort.assert_called_once_with()
     finally:
         window.close()
 
