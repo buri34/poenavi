@@ -623,6 +623,63 @@ class ConfigManagerTest(unittest.TestCase):
                 self.assertEqual(loaded["schemaVersion"], ConfigManager.CURRENT_SCHEMA_VERSION)
                 self.assertTrue((user_dir / ConfigManager.CONFIG_FILE).exists())
 
+    def test_broken_config_recovery_notice_is_consumed_once(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp) / "app"
+            user_dir = Path(tmp) / "user-data"
+            app_dir.mkdir()
+            user_dir.mkdir()
+            write_default_config(app_dir, {"text_color": "#default"})
+            config_path = user_dir / ConfigManager.CONFIG_FILE
+            config_path.write_text("{broken", encoding="utf-8")
+
+            with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}), \
+                 patch.object(ConfigManager, "get_app_dir", return_value=app_dir), \
+                 patch.object(ConfigManager, "_recovery_notice", None):
+                loaded = ConfigManager.load_config()
+                notice = ConfigManager.consume_recovery_notice()
+
+                self.assertEqual(loaded["text_color"], "#default")
+                self.assertIsNotNone(notice)
+                backup_path = Path(notice["backup_path"])
+                self.assertTrue(backup_path.exists())
+                self.assertEqual(backup_path.read_text(encoding="utf-8"), "{broken")
+                self.assertIsNone(ConfigManager.consume_recovery_notice())
+
+    def test_failed_broken_config_recovery_does_not_report_success(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp) / "app"
+            user_dir = Path(tmp) / "user-data"
+            app_dir.mkdir()
+            user_dir.mkdir()
+            write_default_config(app_dir)
+            (user_dir / ConfigManager.CONFIG_FILE).write_text("{broken", encoding="utf-8")
+
+            with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}), \
+                 patch.object(ConfigManager, "get_app_dir", return_value=app_dir), \
+                 patch.object(ConfigManager, "_recovery_notice", None), \
+                 patch.object(ConfigManager, "_backup_config", side_effect=OSError("backup failed")):
+                with self.assertRaises(OSError):
+                    ConfigManager.load_config()
+                self.assertIsNone(ConfigManager.consume_recovery_notice())
+
+    def test_failed_default_write_does_not_report_recovery_success(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app_dir = Path(tmp) / "app"
+            user_dir = Path(tmp) / "user-data"
+            app_dir.mkdir()
+            user_dir.mkdir()
+            write_default_config(app_dir)
+            (user_dir / ConfigManager.CONFIG_FILE).write_text("{broken", encoding="utf-8")
+
+            with patch.dict(os.environ, {ConfigManager.ENV_USER_DATA_DIR: str(user_dir)}), \
+                 patch.object(ConfigManager, "get_app_dir", return_value=app_dir), \
+                 patch.object(ConfigManager, "_recovery_notice", None), \
+                 patch.object(ConfigManager, "_write_json", side_effect=OSError("write failed")):
+                with self.assertRaises(OSError):
+                    ConfigManager.load_config()
+                self.assertIsNone(ConfigManager.consume_recovery_notice())
+
     def test_legacy_config_wins_over_default_config_template(self):
         with tempfile.TemporaryDirectory() as tmp:
             app_dir = Path(tmp) / "app"

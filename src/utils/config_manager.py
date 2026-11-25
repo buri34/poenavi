@@ -42,6 +42,13 @@ class ConfigManager:
         "timer_poe2.json",
         "pob_import_data.json",
     ]
+    _recovery_notice = None
+
+    @classmethod
+    def consume_recovery_notice(cls):
+        notice = cls._recovery_notice
+        cls._recovery_notice = None
+        return notice
 
     @classmethod
     def _get_base_dir(cls):
@@ -687,11 +694,15 @@ class ConfigManager:
             cls._write_json(config_path, config)
             cls.migrate_startup_legacy_user_files()
             return config
-        except Exception:
-            cls._backup_config(config_path, reason="broken")
+        except Exception as error:
+            backup_path = cls._backup_config(config_path, reason="broken")
             config = cls._load_default_config_template()
             cls._write_json(config_path, config)
             cls.migrate_startup_legacy_user_files()
+            cls._recovery_notice = {
+                "backup_path": str(backup_path),
+                "error": f"{type(error).__name__}: {error}",
+            }
             return config
 
     @classmethod

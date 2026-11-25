@@ -109,6 +109,22 @@ def select_startup_options(config, force_poetore=False):
     return updated, selected_mode
 
 
+def show_config_recovery_notice():
+    notice = ConfigManager.consume_recovery_notice()
+    if notice is None:
+        return False
+    QMessageBox.warning(
+        None,
+        "設定ファイルを復旧しました",
+        "設定ファイルを読み込めなかったため、初期設定で起動します。\n"
+        "壊れた設定ファイルは次の場所へバックアップしました。\n\n"
+        f"{notice['backup_path']}\n\n"
+        "同じ問題が繰り返す場合は、このバックアップファイルと状況を"
+        "不具合報告へ添付してください。",
+    )
+    return True
+
+
 def run():
     started_at = perf_counter()
     force_poetore = consume_windows_startup_poetore_argument(sys.argv)
@@ -126,6 +142,7 @@ def run():
         )
         return 0
     config = ConfigManager.load_config()
+    show_config_recovery_notice()
     autostart_error = sync_windows_poetore_autostart_with_error(config)
     if autostart_error:
         print(

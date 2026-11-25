@@ -302,6 +302,24 @@ class AppModeTest(unittest.TestCase):
         single_instance.set_window.assert_called_once_with(window)
         window.show.assert_called_once_with()
 
+    def test_config_recovery_notice_explains_backup_and_is_shown_once(self):
+        notice = {"backup_path": r"C:\\Users\\test\\config.backup-broken.json"}
+        with patch.object(
+            main.ConfigManager,
+            "consume_recovery_notice",
+            side_effect=[notice, None],
+        ), patch.object(main.QMessageBox, "warning") as warning:
+            self.assertTrue(main.show_config_recovery_notice())
+            self.assertFalse(main.show_config_recovery_notice())
+
+        warning.assert_called_once()
+        title = warning.call_args.args[1]
+        message = warning.call_args.args[2]
+        self.assertEqual(title, "設定ファイルを復旧しました")
+        self.assertIn("初期設定で起動", message)
+        self.assertIn(notice["backup_path"], message)
+        self.assertIn("不具合報告", message)
+
     def test_second_instance_exits_before_loading_config(self):
         app = MagicMock()
         single_instance = MagicMock()
