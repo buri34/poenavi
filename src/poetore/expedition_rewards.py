@@ -689,7 +689,7 @@ class ExpeditionRewardController(QObject):
         self._captures = []
         self.warm_up()
         self.status.emit("エクスペディション報酬を読み取っています…")
-        self._capture_frame()
+        self._capture_frame(self._active_generation)
         return True
 
     def _grab_game(self) -> QImage:
@@ -703,8 +703,12 @@ class ExpeditionRewardController(QObject):
             0, rect.x(), rect.y(), rect.width(), rect.height()
         ).toImage()
 
-    def _capture_frame(self) -> None:
-        if not self._running:
+    def _capture_frame(self, generation: int) -> None:
+        if (
+            not self._running
+            or generation != self._scan_generation
+            or generation != self._active_generation
+        ):
             return
         image = self._grab_game()
         if image.isNull():
@@ -713,7 +717,10 @@ class ExpeditionRewardController(QObject):
             return
         self._captures.append(image)
         if len(self._captures) < 3:
-            QTimer.singleShot(220, self._capture_frame)
+            QTimer.singleShot(
+                220,
+                lambda generation=generation: self._capture_frame(generation),
+            )
             return
         self._trace("✅ 2. 画面キャプチャ: 3/3枚")
         images = list(self._captures)
@@ -721,7 +728,7 @@ class ExpeditionRewardController(QObject):
         capture_rect = QRect(self._capture_rect)
         threading.Thread(
             target=self._process,
-            args=(images, client_rect, capture_rect, self._active_generation),
+            args=(images, client_rect, capture_rect, generation),
             daemon=True,
         ).start()
 
