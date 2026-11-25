@@ -2365,6 +2365,39 @@ Item Level: 83
         window.close()
 
 
+def test_poe1_physical_wand_shows_pdps_condition_initially_disabled(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: ワンド
+レアリティ: レア
+狂喜の歌
+前兆のワンド
+--------
+ワンド
+物理ダメージ: 124-230 (augmented)
+クリティカル率: 8.70%
+秒間アタック回数: 1.75 (augmented)
+--------
+アイテムレベル: 76
+""")
+        window.parse_current_text()
+
+        pdps_item = next(
+            window.mod_filter_tree.topLevelItem(index)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+            if window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole)
+            == "property.physical_dps"
+        )
+        checkbox = window.mod_filter_tree.itemWidget(
+            pdps_item, _MOD_COLUMN_CHECK
+        ).findChild(QCheckBox, "modFilterCheckbox")
+
+        assert pdps_item.text(_MOD_COLUMN_TEXT) == "物理DPS"
+        assert checkbox.isChecked() is False
+    finally:
+        window.close()
+
+
 def test_poe1_armour_property_rows_show_quality_20_conversion(qapp):
     window = PoetoreWindow()
     try:

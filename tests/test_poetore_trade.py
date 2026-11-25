@@ -1866,11 +1866,54 @@ def test_weapon_base_preset_shows_performance_properties_but_keeps_them_off():
     assert not any(row.enabled for row in properties)
 
 
-def test_non_physical_weapon_does_not_enable_pdps():
+def test_non_pdps_priority_weapon_shows_pdps_but_keeps_it_disabled():
     item = parse_item_text(ITEM.replace("Two Hand Swords", "Wands"))
     with patch("src.poetore.trade._trade_stat_entries", return_value=()):
         filters = resolve_trade_stat_filters(item)
-    assert not any(row.stat_id == "property.physical_dps" and row.enabled for row in filters)
+    pdps = next(row for row in filters if row.stat_id == "property.physical_dps")
+    assert pdps.enabled is False
+
+
+def test_physical_wand_keeps_pdps_after_local_physical_mods_are_aggregated():
+    item = parse_item_text("""アイテムクラス: ワンド
+レアリティ: レア
+狂喜の歌
+前兆のワンド
+--------
+ワンド
+物理ダメージ: 124-230 (augmented)
+クリティカル率: 8.70%
+秒間アタック回数: 1.75 (augmented)
+--------
+アイテムレベル: 76
+--------
+明示物理モッドの強さが8%増加する (enchant)
+--------
+スペルダメージが31(27-31)%増加する
+--------
+17(13-18)から31(27-31)の物理ダメージを追加する
+物理ダメージが29(25-34)%増加する
+命中力 +66(47-72)
+物理ダメージが152(135-154)%増加する
+アタックスピードが17(17-19)%増加する
+    """)
+    entries = (
+        {"id": "explicit.stat_1940865751", "text": "#から#の物理ダメージを追加する", "type": "explicit"},
+        {"id": "explicit.stat_1509134228", "text": "物理ダメージが#%増加する", "type": "explicit"},
+        {"id": "explicit.accuracy", "text": "命中力 +#", "type": "explicit"},
+        {"id": "explicit.stat_210067635", "text": "アタックスピードが#%増加する", "type": "explicit"},
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item)
+
+    pdps = next(row for row in filters if row.stat_id == "property.physical_dps")
+    assert pdps.read_value == pytest.approx(371.7)
+    assert pdps.enabled is False
+    assert not any(
+        row.stat_id in {"explicit.stat_1940865751", "explicit.stat_1509134228"}
+        for row in filters
+    )
+    assert any(row.stat_id == "explicit.accuracy" for row in filters)
 
 
 def test_single_and_hybrid_armour_enable_every_present_defence():

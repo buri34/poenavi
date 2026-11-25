@@ -2150,9 +2150,12 @@ def _initial_property_filters(
             filters.append(TradeStatFilter(
                 "property.total_dps", "合計DPS", _relaxed(total), "property", True,
             ))
-        if pdps and _physical_dps_is_important(item) and (not total or pdps / total >= 0.67):
+        if pdps:
             filters.append(TradeStatFilter(
-                "property.physical_dps", "物理DPS", _relaxed(pdps), "property", True,
+                "property.physical_dps", "物理DPS", _relaxed(pdps), "property",
+                _physical_dps_is_important(item) and (
+                    not total or pdps / total >= 0.67
+                ),
             ))
         if edps and (not total or edps / total >= 0.67):
             filters.append(TradeStatFilter(
