@@ -144,6 +144,8 @@ POE1_CONFIRMED_CATEGORY_OVERRIDES = {
 # Keep the verified one-to-one bridge on stable machine IDs and let the static
 # endpoint remain authoritative for the localized names and icons.
 POE1_CONFIRMED_STATIC_ID_TO_ITEM_ID = {
+    "primordial-exalted-orb": "Metadata/Items/Currency/CurrencyStackedExalt",
+    "originators-exalted-orb": "Metadata/Items/Currency/CurrencyAddModToRareOriginator",
     "frayed-thread": "Metadata/Items/Currency/CurrencyStackedThread",
     "mavens-chisel-of-threads": "Metadata/Items/Currency/CurrencyMapQualityScarabs",
     "cryptic-astrolabe": "Metadata/Items/Currency/StackedAstrolabe",
@@ -162,6 +164,16 @@ POE1_CONFIRMED_STATIC_ID_TO_ITEM_ID = {
     "allflame-ember-of-the-divine": "Metadata/Items/MapFragments/PantheonAllflamePack",
     "cursed-poppet": "Metadata/Items/MapFragments/CurrencyAuguryBossKey",
     "royal-visage": "Metadata/Items/MapFragments/CurrencyIncursionUberFragment",
+}
+
+# The Japanese Trade static endpoint still exposes these newly released rows
+# in English.  Their Japanese names are confirmed by the official 3.30.0d
+# patch notes, so keep the display override attached to the stable market ID.
+POE1_CONFIRMED_JAPANESE_NAMES = {
+    "Metadata/Items/Currency/CurrencyStackedExalt": "原初の高貴なオーブ",
+    "Metadata/Items/Currency/CurrencyAddModToRareOriginator": (
+        "オリジネーターの高貴なオーブ"
+    ),
 }
 
 # These stable metadata IDs belonged to exchange rows that 3.30 either removed
@@ -369,7 +381,9 @@ def build_realm(
         item_id = selected[0]
         if _is_removed_exchange_item(poe_version, item_id):
             continue
-        japanese = str(ja.get("text", "")).strip()
+        japanese = POE1_CONFIRMED_JAPANESE_NAMES.get(
+            item_id, str(ja.get("text", "")).strip()
+        ) if poe_version == POE1 else str(ja.get("text", "")).strip()
         if group == "Cards":
             japanese = japanese or card_names.get(normalize_name(english), "")
         if not japanese:

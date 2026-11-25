@@ -6821,10 +6821,10 @@ Item Level: 72
     assert next(row for row in filters if row.stat_id == "property.area_level").min_value == 78
 
 
-def test_atzoatl_room_rules_show_every_room_and_ignore_open_state():
-    def room(ref, option=1):
+def test_atzoatl_room_rules_apply_value_classes_and_ignore_open_state():
+    def room(stat_id, ref, option=1):
         return TradeStatFilter(
-            f"pseudo.{ref}", ref, None, "pseudo", True,
+            stat_id, ref, None, "pseudo", True,
             ref=ref, option_value=option,
         )
 
@@ -6833,26 +6833,32 @@ def test_atzoatl_room_rules_show_every_room_and_ignore_open_state():
     )
     rows = _apply_atzoatl_room_rules([
         area,
-        room("Has Room: Banquet Hall"),
-        room("Has Room: Corruption Chamber (Tier 1)"),
-        room("Has Room: Locus of Corruption (Tier 3)"),
-        room("Has Room: Wealth of the Vaal (Tier 3)"),
-        room("Has Room: Treasury (Tier 2)"),
-        room("Has Room: Vault (Tier 1)"),
-        room("Has Room: Storm of Corruption (Tier 3)"),
+        room("pseudo.pseudo_temple_banquet_hall", "Has Room: Banquet Hall"),
+        room("pseudo.pseudo_temple_corruption_room_1", "Has Room: Corruption Chamber (Tier 1)"),
+        room("pseudo.pseudo_temple_corruption_room_3", "Has Room: Locus of Corruption (Tier 3)"),
+        room("pseudo.pseudo_temple_queens_chambers_3", "Has Room: Cradle of Creation (Tier 3)"),
+        room("pseudo.pseudo_temple_currency_vault_3", "Has Room: Wealth of the Vaal (Tier 3)"),
+        room("pseudo.pseudo_temple_cartography_room_3", "Has Room: Atlas of Worlds (Tier 3)"),
+        room("pseudo.pseudo_temple_currency_vault_2", "Has Room: Treasury (Tier 2)"),
+        room("pseudo.pseudo_temple_currency_vault_1", "Has Room: Vault (Tier 1)"),
+        room("pseudo.pseudo_temple_storm_room_3", "Has Room: Storm of Corruption (Tier 3)"),
     ])
     by_ref = {row.ref: row for row in rows if row.ref}
 
     assert area in rows
-    assert not by_ref["Has Room: Banquet Hall"].enabled
-    assert not by_ref["Has Room: Corruption Chamber (Tier 1)"].enabled
+    assert "Has Room: Banquet Hall" not in by_ref
+    assert "Has Room: Corruption Chamber (Tier 1)" not in by_ref
     assert by_ref["Has Room: Locus of Corruption (Tier 3)"].enabled
+    assert by_ref["Has Room: Cradle of Creation (Tier 3)"].enabled
     assert by_ref["Has Room: Wealth of the Vaal (Tier 3)"].enabled
+    assert by_ref["Has Room: Atlas of Worlds (Tier 3)"].enabled
     assert not by_ref["Has Room: Treasury (Tier 2)"].enabled
     assert not by_ref["Has Room: Vault (Tier 1)"].enabled
     assert not by_ref["Has Room: Storm of Corruption (Tier 3)"].enabled
     assert all(row.option_value is None for row in by_ref.values())
-    assert all(not row.hidden_reason for row in by_ref.values())
+    assert not by_ref["Has Room: Treasury (Tier 2)"].hidden_reason
+    assert by_ref["Has Room: Vault (Tier 1)"].hidden_reason
+    assert by_ref["Has Room: Storm of Corruption (Tier 3)"].hidden_reason
 
     current_api_room = TradeStatFilter(
         "pseudo.pseudo_temple_corruption_room_3",
@@ -6924,22 +6930,14 @@ def test_current_japanese_atzoatl_chronicle_resolves_rooms_and_area_level():
         if row.stat_id.startswith("pseudo.pseudo_temple_")
     }
     assert set(rooms) == {
-        "pseudo.pseudo_temple_sacrifice_room_1",
         "pseudo.pseudo_temple_poison_room_3",
         "pseudo.pseudo_temple_weapon_room_3",
-        "pseudo.pseudo_temple_gem_room_1",
-        "pseudo.pseudo_temple_armour_room_1",
-        "pseudo.pseudo_temple_empowering_room_1",
-        "pseudo.pseudo_temple_passageways",
-        "pseudo.pseudo_temple_trap_room_1",
-        "pseudo.pseudo_temple_boss_fire_2",
-        "pseudo.pseudo_temple_workshop_1",
-        "pseudo.pseudo_temple_antechamber",
         "pseudo.pseudo_temple_apex",
     }
-    assert rooms["pseudo.pseudo_temple_boss_fire_2"].text == "王家の鍛造場 (ティア2)"
     assert all(row.option_value is None for row in rooms.values())
-    assert all(not row.hidden_reason for row in rooms.values())
+    assert rooms["pseudo.pseudo_temple_poison_room_3"].hidden_reason
+    assert rooms["pseudo.pseudo_temple_weapon_room_3"].hidden_reason
+    assert not rooms["pseudo.pseudo_temple_apex"].hidden_reason
     assert {
         row.stat_id for row in rooms.values() if row.enabled
     } == {"pseudo.pseudo_temple_apex"}
@@ -7018,13 +7016,21 @@ def test_current_japanese_atzoatl_room_aliases_resolve_to_correct_trade_stats():
         row.stat_id: row for row in filters
         if row.stat_id.startswith("pseudo.pseudo_temple_")
     }
-    assert set(rooms) == {stat_id for _, stat_id, _ in aliases}
+    assert set(rooms) == {
+        "pseudo.pseudo_temple_queens_chambers_1",
+        "pseudo.pseudo_temple_queens_chambers_2",
+        "pseudo.pseudo_temple_queens_chambers_3",
+    }
     assert {
         (row.text, row.stat_id) for row in rooms.values()
     } == {
         (game_name, stat_id) for game_name, stat_id, _ in aliases
+        if stat_id in rooms
     }
+    assert rooms["pseudo.pseudo_temple_queens_chambers_3"].enabled
     for _, stat_id, _ in aliases:
+        if stat_id not in rooms:
+            continue
         selected = tuple(
             replace(row, enabled=row.stat_id == stat_id)
             if row.stat_id.startswith("pseudo.pseudo_temple_") else row
@@ -7056,6 +7062,23 @@ def test_atzoatl_obstructed_room_is_searchable_without_open_state():
     assert rows[0].ref == "Has Room: Treasury (Tier 2)"
     assert rows[0].option_value is None
     assert rows[0].enabled is False
+
+
+@pytest.mark.parametrize(("japanese", "english"), (
+    ("オリジネーターの高貴なオーブ", "Originator's Exalted Orb"),
+    ("原初の高貴なオーブ", "Primordial Exalted Orb"),
+))
+def test_new_exalted_orbs_use_exact_trade_identity(japanese, english):
+    item = parse_item_text(f"""アイテムクラス: スタック可能カレンシー
+レアリティ: カレンシー
+{japanese}
+--------
+スタック数: 1/20
+""")
+
+    assert item.category == "currency"
+    assert _english_trade_item_type(japanese, "currency") == english
+    assert english_trade_identity(item) == (english, None)
 
 
 def test_cluster_uses_finished_and_base_presets_and_flask_tincture_ilvl_is_disabled():

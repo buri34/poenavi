@@ -2233,19 +2233,100 @@ _ATZOATL_NAMES = frozenset({
 
 _ATZOATL_ENABLED_ROOMS = frozenset({
     "Has Room: Apex of Atzoatl",
+    "Has Room: Cradle of Creation (Tier 3)",
     "Has Room: Locus of Corruption (Tier 3)",
     "Has Room: Doryani's Institute (Tier 3)",
     "Has Room: Apex of Ascension (Tier 3)",
     "Has Room: Wealth of the Vaal (Tier 3)",
+    "Has Room: Atlas of Worlds (Tier 3)",
 })
 
 _ATZOATL_ENABLED_ROOM_IDS = frozenset({
     "pseudo.pseudo_temple_apex",
+    "pseudo.pseudo_temple_queens_chambers_3",
     "pseudo.pseudo_temple_corruption_room_3",
     "pseudo.pseudo_temple_gem_room_3",
     "pseudo.pseudo_temple_sacrifice_room_3",
     "pseudo.pseudo_temple_currency_vault_3",
+    "pseudo.pseudo_temple_cartography_room_3",
 })
+
+
+def _atzoatl_room_ids(*suffixes: str) -> frozenset[str]:
+    return frozenset(f"pseudo.pseudo_temple_{suffix}" for suffix in suffixes)
+
+
+_ATZOATL_HIDDEN_ROOM_IDS = _atzoatl_room_ids(
+    "currency_vault_1",
+    "cartography_room_1",
+    "legion_1",
+    "chests_2",
+    "breeding_room_2",
+    "workshop_2",
+    "torment_2",
+    "strongbox_2",
+    "trinket_room_2",
+    "breach_room_2",
+    "storm_room_3",
+    "armour_room_3",
+    "weapon_room_3",
+    "poison_room_3",
+    "boss_minions_3",
+    "trap_room_3",
+    "boss_fire_3",
+    "boss_lightning_3",
+    "healing_room_3",
+)
+
+_ATZOATL_REMOVE_ROOM_IDS = _atzoatl_room_ids(
+    "banquet_hall",
+    "antechamber",
+    "passageways",
+    "cloister",
+    "tunnels",
+    "cellar",
+    "chasm_room",
+    "halls",
+    "tombs",
+    "the_pits",
+    "empowering_room_1",
+    "empowering_room_2",
+    "empowering_room_3",
+    "explosives_room_1",
+    "explosives_room_2",
+    "explosives_room_3",
+    "corruption_room_1",
+    "corruption_room_2",
+    "gem_room_1",
+    "gem_room_2",
+    "sacrifice_room_1",
+    "sacrifice_room_2",
+    "chests_1",
+    "breeding_room_1",
+    "workshop_1",
+    "torment_1",
+    "strongbox_1",
+    "trinket_room_1",
+    "breach_room_1",
+    "storm_room_1",
+    "storm_room_2",
+    "armour_room_1",
+    "armour_room_2",
+    "weapon_room_1",
+    "weapon_room_2",
+    "poison_room_1",
+    "poison_room_2",
+    "boss_minions_1",
+    "boss_minions_2",
+    "trap_room_1",
+    "trap_room_2",
+    "boss_fire_1",
+    "boss_fire_2",
+    "boss_lightning_1",
+    "boss_lightning_2",
+    "healing_room_1",
+    "healing_room_2",
+)
 
 # ゲーム内日本語と公式Trade APIの日本語に差がある部屋。
 _ATZOATL_ROOM_STAT_ALIASES = {
@@ -2314,7 +2395,7 @@ def _atzoatl_room_filters(
 def _apply_atzoatl_room_rules(
     filters: list[TradeStatFilter],
 ) -> list[TradeStatFilter]:
-    """全Atzoatl部屋を状態指定なしの検索条件として表示する。"""
+    """Atzoatl部屋を価値別に整理し、開放状態に依存せず検索する。"""
     adjusted = []
     for row in filters:
         if not (
@@ -2323,16 +2404,21 @@ def _apply_atzoatl_room_rules(
         ):
             adjusted.append(row)
             continue
+        if row.stat_id in _ATZOATL_REMOVE_ROOM_IDS:
+            continue
+        hidden = row.stat_id in _ATZOATL_HIDDEN_ROOM_IDS
         enabled = (
             row.ref in _ATZOATL_ENABLED_ROOMS
             or row.stat_id in _ATZOATL_ENABLED_ROOM_IDS
-        )
+        ) and not hidden
         adjusted.append(replace(
             row,
             enabled=enabled,
             option_value=None,
             option_text=None,
-            hidden_reason="",
+            hidden_reason=(
+                "Awakened: 低優先度のAtzoatl部屋を非表示" if hidden else ""
+            ),
             selection_reason=(
                 "Atzoatlの主要部屋" if enabled else "Atzoatlの部屋候補"
             ),
@@ -2854,6 +2940,8 @@ _CONFIRMED_ENGLISH_TRADE_TYPE_OVERRIDES = {
     ("accessory", "羽根付きの矢筒"): "Feathered Arrow Quiver",
     ("accessory", "灼熱の矢筒"): "Blazing Arrow Quiver",
     ("divination_card", "狂犬病のロア"): "The Rabid Rhoa",
+    ("currency", "オリジネーターの高貴なオーブ"): "Originator's Exalted Orb",
+    ("currency", "原初の高貴なオーブ"): "Primordial Exalted Orb",
 }
 
 

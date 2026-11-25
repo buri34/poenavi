@@ -122,6 +122,22 @@ def test_exchange_catalog_names_override_lagging_repoe_names(tmp_path):
     assert loaded[item_id] == "Soul Core of Intellect"
 
 
+def test_exchange_catalog_supplies_new_exalted_orb_market_names(tmp_path):
+    service = OfficialExchangeShadowService(
+        cache_root=tmp_path / "cache",
+        metadata_root=metadata_root(tmp_path),
+    )
+
+    loaded = service._load_names(PROFILES[POE1])
+
+    assert loaded["Metadata/Items/Currency/CurrencyStackedExalt"] == (
+        "Primordial Exalted Orb"
+    )
+    assert loaded["Metadata/Items/Currency/CurrencyAddModToRareOriginator"] == (
+        "Originator's Exalted Orb"
+    )
+
+
 def test_single_real_trade_uses_reference_only_as_anomaly_detection():
     confirmed = evaluate_route([HourlySample(1, 80, 1)], 75)
     conflict = evaluate_route([HourlySample(1, 80, 1)], 2)
