@@ -7774,6 +7774,101 @@ def test_stale_divine_rate_result_does_not_replace_current_league(qapp):
         window.close()
 
 
+def test_divine_rate_timeout_releases_infinite_retry_lock(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.threading.Thread"):
+            window._queue_divine_rate("Standard")
+
+        assert window._divine_rate_retry_after == float("inf")
+        with patch("src.poetore.ui.time.monotonic", return_value=100.0):
+            window._divine_rate_request_timed_out()
+
+        assert window._divine_rate_pending_generation is None
+        assert window._divine_rate_retry_after == 340.0
+        assert window.divine_rate_button.isHidden()
+    finally:
+        window.close()
+
+
+def test_divine_rate_can_retry_after_timeout_interval(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.threading.Thread"):
+            window._queue_divine_rate("Standard")
+        with patch("src.poetore.ui.time.monotonic", return_value=100.0):
+            window._divine_rate_request_timed_out()
+
+        with patch(
+            "src.poetore.ui.time.monotonic",
+            return_value=341.0,
+        ), patch("src.poetore.ui.threading.Thread") as thread:
+            window._queue_divine_rate("Standard")
+
+        thread.assert_called_once()
+        thread.return_value.start.assert_called_once_with()
+        assert window._divine_rate_pending_generation is not None
+        assert window._divine_rate_retry_after == float("inf")
+    finally:
+        window.close()
+
+
+def test_old_divine_rate_result_is_ignored_after_same_league_retry(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.threading.Thread"):
+            window._queue_divine_rate("Standard")
+        old_generation = window._divine_rate_pending_generation
+        with patch("src.poetore.ui.time.monotonic", return_value=100.0):
+            window._divine_rate_request_timed_out()
+        with patch(
+            "src.poetore.ui.time.monotonic",
+            return_value=341.0,
+        ), patch("src.poetore.ui.threading.Thread"):
+            window._queue_divine_rate("Standard")
+
+        window._accept_divine_rate_result("Standard", old_generation, 200)
+
+        assert window.divine_rate_button.text() != "⇄ 200"
+        assert window._divine_rate_pending_generation != old_generation
+    finally:
+        window.close()
+
+
+def test_old_divine_rate_result_is_ignored_after_league_switch(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.threading.Thread"):
+            window._queue_divine_rate("Old League")
+            old_generation = window._divine_rate_pending_generation
+            window._queue_divine_rate("New League")
+
+        window._accept_divine_rate_result("Old League", old_generation, 200)
+
+        assert window._divine_rate_key == "New League"
+        assert window.divine_rate_button.text() != "⇄ 200"
+    finally:
+        window.close()
+
+
+def test_divine_rate_request_settles_only_once(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.threading.Thread"):
+            window._queue_divine_rate("Standard")
+        generation = window._divine_rate_pending_generation
+
+        window._accept_divine_rate_result("Standard", generation, 174.4)
+        window._reject_divine_rate_result("Standard", generation)
+
+        assert window.divine_rate_button.text() == "⇄ 174"
+        assert window.divine_rate_button.isEnabled()
+        assert window._divine_rate_pending_generation is None
+        assert not window._divine_rate_watchdog.isActive()
+    finally:
+        window.close()
+
+
 @pytest.mark.parametrize(("item_level", "minimum", "maximum"), [
     (49, "1", "49"),
     (50, "50", "67"),

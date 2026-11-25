@@ -79,6 +79,8 @@ from .performance import SearchPerformanceTrace, start_search_trace
 
 
 _MAX_UNIQUE_ICON_REQUESTS = 6
+DIVINE_RATE_TIMEOUT_MS = 45_000
+DIVINE_RATE_RETRY_SECONDS = 4 * 60
 
 
 def _compact_dust_amount(value: int) -> str:
@@ -105,8 +107,8 @@ class _TradeSignals(QObject):
     poe_ninja_failed = Signal(object)
     related_items_ready = Signal(object, object)
     related_items_failed = Signal(object)
-    divine_rate_ready = Signal(object, object)
-    divine_rate_failed = Signal(object)
+    divine_rate_ready = Signal(object, int, object)
+    divine_rate_failed = Signal(object, int)
     augment_values_ready = Signal(object, int)
     global_mouse_pressed = Signal(int, int)
     global_mouse_moved = Signal(int, int)
@@ -2014,8 +2016,12 @@ class PoetoreWindow(QWidget):
         self._trade_signals.poe_ninja_failed.connect(self._hide_poe_ninja_price)
         self._trade_signals.related_items_ready.connect(self._show_related_items)
         self._trade_signals.related_items_failed.connect(self._hide_related_items)
-        self._trade_signals.divine_rate_ready.connect(self._show_divine_rate)
-        self._trade_signals.divine_rate_failed.connect(self._hide_divine_rate)
+        self._trade_signals.divine_rate_ready.connect(
+            self._accept_divine_rate_result
+        )
+        self._trade_signals.divine_rate_failed.connect(
+            self._reject_divine_rate_result
+        )
         self._trade_signals.augment_values_ready.connect(self._show_augment_values)
         self._trade_signals.global_mouse_pressed.connect(self._handle_global_mouse_press)
         self._trade_signals.global_mouse_moved.connect(self._handle_global_mouse_move)
@@ -2039,6 +2045,13 @@ class PoetoreWindow(QWidget):
         self._search_performance_traces = {}
         self._divine_rate_key = None
         self._divine_rate_retry_after = 0.0
+        self._divine_rate_generation = 0
+        self._divine_rate_pending_generation = None
+        self._divine_rate_watchdog = QTimer(self)
+        self._divine_rate_watchdog.setSingleShot(True)
+        self._divine_rate_watchdog.timeout.connect(
+            self._divine_rate_request_timed_out
+        )
         self._official_exchange_timer = QTimer(self)
         self._official_exchange_timer.setInterval(60 * 60 * 1000)
         self._official_exchange_timer.timeout.connect(
@@ -3792,7 +3805,7 @@ class PoetoreWindow(QWidget):
         if item is None:
             return
         self._poe_ninja_item_key = None
-        self._divine_rate_key = None
+        self._invalidate_divine_rate_request()
         self._queue_poe_ninja_price(item)
 
     def _record_official_exchange_shadow(
@@ -4028,14 +4041,21 @@ class PoetoreWindow(QWidget):
             and (self.divine_rate_button.isEnabled() or time.monotonic() < self._divine_rate_retry_after)
         ):
             return
+        self._divine_rate_generation += 1
+        generation = self._divine_rate_generation
         self._divine_rate_key = key
+        self._divine_rate_pending_generation = generation
         self._divine_rate_retry_after = float("inf")
         self.divine_rate_button.setText("⇄ …")
         self.divine_rate_button.setEnabled(False)
         self.divine_rate_button.setVisible(bool(league))
         self.divine_rate_menu.clear()
         if not league:
+            self._divine_rate_pending_generation = None
+            self._divine_rate_retry_after = 0.0
+            self._divine_rate_watchdog.stop()
             return
+        self._divine_rate_watchdog.start(DIVINE_RATE_TIMEOUT_MS)
 
         def run():
             try:
@@ -4053,14 +4073,49 @@ class PoetoreWindow(QWidget):
                         self.poe_version, league, ninja_rate,
                     )
             except Exception:
-                self._trade_signals.divine_rate_failed.emit(key)
+                self._trade_signals.divine_rate_failed.emit(key, generation)
             else:
                 if rate is None:
-                    self._trade_signals.divine_rate_failed.emit(key)
+                    self._trade_signals.divine_rate_failed.emit(key, generation)
                 else:
-                    self._trade_signals.divine_rate_ready.emit(key, rate)
+                    self._trade_signals.divine_rate_ready.emit(
+                        key, generation, rate,
+                    )
 
         threading.Thread(target=run, daemon=True).start()
+
+    def _accept_divine_rate_result(self, key, generation, rate):
+        if (
+            key != self._divine_rate_key
+            or generation != self._divine_rate_pending_generation
+        ):
+            return
+        self._divine_rate_pending_generation = None
+        self._divine_rate_watchdog.stop()
+        self._show_divine_rate(key, rate)
+
+    def _reject_divine_rate_result(self, key, generation):
+        if (
+            key != self._divine_rate_key
+            or generation != self._divine_rate_pending_generation
+        ):
+            return
+        self._divine_rate_pending_generation = None
+        self._divine_rate_watchdog.stop()
+        self._hide_divine_rate(key)
+
+    def _divine_rate_request_timed_out(self):
+        generation = self._divine_rate_pending_generation
+        if generation is None:
+            return
+        self._reject_divine_rate_result(self._divine_rate_key, generation)
+
+    def _invalidate_divine_rate_request(self):
+        self._divine_rate_generation += 1
+        self._divine_rate_pending_generation = None
+        self._divine_rate_watchdog.stop()
+        self._divine_rate_key = None
+        self._divine_rate_retry_after = 0.0
 
     @staticmethod
     def _awakened_round(value: float) -> int:
@@ -4073,6 +4128,7 @@ class PoetoreWindow(QWidget):
         rate_value = float(getattr(rate, "base_amount", rate))
         self.divine_rate_button.setText(f"⇄ {self._awakened_round(rate_value)}")
         self.divine_rate_button.setEnabled(True)
+        self._divine_rate_retry_after = 0.0
         self.divine_rate_button.show()
         self.divine_rate_menu.clear()
         divine_icon_path = _asset_icon_path(
@@ -4126,7 +4182,9 @@ class PoetoreWindow(QWidget):
         self.divine_rate_button.hide()
         self.divine_rate_button.setEnabled(False)
         self.divine_rate_menu.clear()
-        self._divine_rate_retry_after = time.monotonic() + 4 * 60
+        self._divine_rate_retry_after = (
+            time.monotonic() + DIVINE_RATE_RETRY_SECONDS
+        )
 
     def _show_poe_ninja_price(self, key, price: PoeNinjaPrice):
         if key != self._poe_ninja_item_key:
