@@ -41,9 +41,16 @@ def test_check_emits_release_and_manual_flag(monkeypatch):
         lambda _version: release,
     )
 
-    controller.check(True)
+    assert controller.check(True) is True
 
     assert received == [(release, True)]
+
+
+def test_check_reports_busy_without_starting_another_worker():
+    controller = UpdateController(thread_factory=ImmediateThread)
+    controller._checking = True
+
+    assert controller.check(False) is False
 
 
 def test_launch_updater_copies_executable_archive_and_uses_argument_list(
@@ -126,10 +133,24 @@ def test_download_reuses_verified_archive(tmp_path):
         )
     )
 
-    controller.download(release)
+    assert controller.download(release) is True
 
     assert received == [(archive, release)]
     assert archive.is_file()
+
+
+def test_download_reports_busy_without_touching_existing_work():
+    release = ReleaseInfo(
+        "2.5.0",
+        "notes",
+        "https://github.com/page",
+        "https://github.com/a.zip",
+        "https://github.com/a.sha256",
+    )
+    controller = UpdateController(thread_factory=ImmediateThread)
+    controller._downloading = True
+
+    assert controller.download(release) is False
 
 
 def test_ready_archive_discards_different_version(tmp_path):

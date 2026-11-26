@@ -575,17 +575,90 @@ def test_heist_settings_save_enables_only_heist_reader_and_warms_ocr():
     ) as save_config:
         dialog = dialog_class.return_value
         dialog.exec.return_value = True
-        dialog.settings.return_value = ("ctrl+shift+h", True)
+        dialog.settings.return_value = ("ctrl+shift+h", True, True)
 
         PoetoreModeWindow.open_heist_settings(window)
 
     assert window.config["hotkeys"]["heist_curio_ocr"] == "ctrl+shift+h"
-    assert window.config["poetore"]["heist_curio_ocr"] == {"enabled": True}
+    assert window.config["poetore"]["heist_curio_ocr"] == {
+        "enabled": True,
+        "keep_high_accuracy_ready": True,
+    }
     assert dialog_class.call_args.kwargs["ocr_pack_controller"] is pack_controller
+    assert dialog_class.call_args.kwargs["keep_high_accuracy_ready"] is False
     pack_controller.ensure_started.assert_called_once_with()
     save_config.assert_called_once_with(window.config)
     window._restart_hotkeys.assert_called_once_with()
     controller.warm_up.assert_called_once_with()
+
+
+def test_heist_settings_disabling_keep_alive_restores_on_demand_lifecycle():
+    window = MagicMock()
+    window.poe_version = POE1
+    window.config = {
+        "hotkeys": {"heist_curio_ocr": "alt+e"},
+        "poetore": {
+            "heist_curio_ocr": {
+                "enabled": True,
+                "keep_high_accuracy_ready": True,
+            }
+        },
+    }
+    controller = MagicMock()
+    window._ensure_heist_curio_controller.return_value = controller
+    pack_controller = MagicMock()
+    window._ensure_ndlocr_pack_controller.return_value = pack_controller
+
+    with patch(
+        "src.ui.heist_settings_dialog.HeistSettingsDialog"
+    ) as dialog_class, patch(
+        "src.ui.poetore_mode_window.ConfigManager.save_config"
+    ):
+        dialog = dialog_class.return_value
+        dialog.exec.return_value = True
+        dialog.settings.return_value = ("alt+e", True, False)
+
+        PoetoreModeWindow.open_heist_settings(window)
+
+    assert window.config["poetore"]["heist_curio_ocr"] == {
+        "enabled": True,
+        "keep_high_accuracy_ready": False,
+    }
+    controller.set_keep_high_accuracy_ready.assert_called_once_with(False)
+    controller.warm_up.assert_called_once_with()
+
+
+def test_heist_controller_receives_saved_keep_high_accuracy_setting():
+    window = MagicMock()
+    window._heist_curio_controller = None
+    window.config = {
+        "poetore": {
+            "heist_curio_ocr": {
+                "enabled": True,
+                "keep_high_accuracy_ready": True,
+            }
+        }
+    }
+    shared = MagicMock()
+    window._ensure_screen_reading_coordinator.return_value = shared
+
+    with patch("src.poetore.heist_curio.HeistCurioController") as controller_class:
+        controller = PoetoreModeWindow._ensure_heist_curio_controller(window)
+
+    assert controller is controller_class.return_value
+    assert controller_class.call_args.kwargs["keep_high_accuracy_ready"] is True
+
+
+def test_installed_pack_warms_saved_keep_alive_controller():
+    window = MagicMock()
+    window._heist_curio_enabled.return_value = True
+    window._heist_keep_high_accuracy_ready.return_value = True
+    controller = window._ensure_heist_curio_controller.return_value
+    status = MagicMock(state="ready")
+
+    PoetoreModeWindow._handle_ndlocr_pack_status(window, status)
+
+    controller.warm_up_high_accuracy.assert_called_once_with()
 
 
 def test_shared_screen_reading_off_stops_both_features_and_keeps_regions():

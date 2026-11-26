@@ -5,6 +5,7 @@ import re
 import sys
 import threading
 import time
+from collections import deque
 from datetime import datetime, timezone
 from dataclasses import replace
 from pathlib import Path
@@ -77,6 +78,11 @@ from .poe2.metadata import (
 from .performance import SearchPerformanceTrace, start_search_trace
 
 
+_MAX_UNIQUE_ICON_REQUESTS = 6
+DIVINE_RATE_TIMEOUT_MS = 45_000
+DIVINE_RATE_RETRY_SECONDS = 4 * 60
+
+
 def _compact_dust_amount(value: int) -> str:
     """Fit an estimated dust amount in the compact search-condition header."""
     if value >= 1_000_000:
@@ -101,8 +107,8 @@ class _TradeSignals(QObject):
     poe_ninja_failed = Signal(object)
     related_items_ready = Signal(object, object)
     related_items_failed = Signal(object)
-    divine_rate_ready = Signal(object, object)
-    divine_rate_failed = Signal(object)
+    divine_rate_ready = Signal(object, int, object)
+    divine_rate_failed = Signal(object, int)
     augment_values_ready = Signal(object, int)
     global_mouse_pressed = Signal(int, int)
     global_mouse_moved = Signal(int, int)
@@ -403,6 +409,7 @@ _FILTER_KIND_LABELS = {
     "vestigial": "痕跡",
     "essence": "エッセンス",
     "infamous": "悪名高い",
+    "rareonly": "レアのみ",
     "corrupted": "コラプト",
     "catalyst": "カタリスト",
     "volatile": "ヴォラタイル・ヴァール",
@@ -444,7 +451,7 @@ def _filter_kind_label(stat_filter: TradeStatFilter) -> str:
         for provenance in stat_filter.provenance_tags
         if provenance in {
             "crafted", "fractured", "desecrated", "catalyst", "volatile",
-            "reflecting", "corrupted",
+            "reflecting", "corrupted", "rareonly",
         }
     )
     kind = (
@@ -1077,7 +1084,8 @@ class PoetoreWindow(QWidget):
         self._auto_search_queued = False
         self._unique_icon_manager = QNetworkAccessManager(self)
         self._unique_icon_manager.finished.connect(self._unique_icon_downloaded)
-        self._unique_icon_requests: dict[QNetworkReply, tuple[int, str]] = {}
+        self._unique_icon_requests: dict[QNetworkReply, tuple[QPushButton, str]] = {}
+        self._unique_icon_queue: deque[tuple[QPushButton, str]] = deque()
         self._unique_icon_cache: dict[str, QIcon] = {}
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         # PoENavi本体には入力透過（クリックスルー）機能があるため、
@@ -2008,8 +2016,12 @@ class PoetoreWindow(QWidget):
         self._trade_signals.poe_ninja_failed.connect(self._hide_poe_ninja_price)
         self._trade_signals.related_items_ready.connect(self._show_related_items)
         self._trade_signals.related_items_failed.connect(self._hide_related_items)
-        self._trade_signals.divine_rate_ready.connect(self._show_divine_rate)
-        self._trade_signals.divine_rate_failed.connect(self._hide_divine_rate)
+        self._trade_signals.divine_rate_ready.connect(
+            self._accept_divine_rate_result
+        )
+        self._trade_signals.divine_rate_failed.connect(
+            self._reject_divine_rate_result
+        )
         self._trade_signals.augment_values_ready.connect(self._show_augment_values)
         self._trade_signals.global_mouse_pressed.connect(self._handle_global_mouse_press)
         self._trade_signals.global_mouse_moved.connect(self._handle_global_mouse_move)
@@ -2033,6 +2045,13 @@ class PoetoreWindow(QWidget):
         self._search_performance_traces = {}
         self._divine_rate_key = None
         self._divine_rate_retry_after = 0.0
+        self._divine_rate_generation = 0
+        self._divine_rate_pending_generation = None
+        self._divine_rate_watchdog = QTimer(self)
+        self._divine_rate_watchdog.setSingleShot(True)
+        self._divine_rate_watchdog.timeout.connect(
+            self._divine_rate_request_timed_out
+        )
         self._official_exchange_timer = QTimer(self)
         self._official_exchange_timer.setInterval(60 * 60 * 1000)
         self._official_exchange_timer.timeout.connect(
@@ -3786,7 +3805,7 @@ class PoetoreWindow(QWidget):
         if item is None:
             return
         self._poe_ninja_item_key = None
-        self._divine_rate_key = None
+        self._invalidate_divine_rate_request()
         self._queue_poe_ninja_price(item)
 
     def _record_official_exchange_shadow(
@@ -4022,14 +4041,21 @@ class PoetoreWindow(QWidget):
             and (self.divine_rate_button.isEnabled() or time.monotonic() < self._divine_rate_retry_after)
         ):
             return
+        self._divine_rate_generation += 1
+        generation = self._divine_rate_generation
         self._divine_rate_key = key
+        self._divine_rate_pending_generation = generation
         self._divine_rate_retry_after = float("inf")
         self.divine_rate_button.setText("⇄ …")
         self.divine_rate_button.setEnabled(False)
         self.divine_rate_button.setVisible(bool(league))
         self.divine_rate_menu.clear()
         if not league:
+            self._divine_rate_pending_generation = None
+            self._divine_rate_retry_after = 0.0
+            self._divine_rate_watchdog.stop()
             return
+        self._divine_rate_watchdog.start(DIVINE_RATE_TIMEOUT_MS)
 
         def run():
             try:
@@ -4047,14 +4073,49 @@ class PoetoreWindow(QWidget):
                         self.poe_version, league, ninja_rate,
                     )
             except Exception:
-                self._trade_signals.divine_rate_failed.emit(key)
+                self._trade_signals.divine_rate_failed.emit(key, generation)
             else:
                 if rate is None:
-                    self._trade_signals.divine_rate_failed.emit(key)
+                    self._trade_signals.divine_rate_failed.emit(key, generation)
                 else:
-                    self._trade_signals.divine_rate_ready.emit(key, rate)
+                    self._trade_signals.divine_rate_ready.emit(
+                        key, generation, rate,
+                    )
 
         threading.Thread(target=run, daemon=True).start()
+
+    def _accept_divine_rate_result(self, key, generation, rate):
+        if (
+            key != self._divine_rate_key
+            or generation != self._divine_rate_pending_generation
+        ):
+            return
+        self._divine_rate_pending_generation = None
+        self._divine_rate_watchdog.stop()
+        self._show_divine_rate(key, rate)
+
+    def _reject_divine_rate_result(self, key, generation):
+        if (
+            key != self._divine_rate_key
+            or generation != self._divine_rate_pending_generation
+        ):
+            return
+        self._divine_rate_pending_generation = None
+        self._divine_rate_watchdog.stop()
+        self._hide_divine_rate(key)
+
+    def _divine_rate_request_timed_out(self):
+        generation = self._divine_rate_pending_generation
+        if generation is None:
+            return
+        self._reject_divine_rate_result(self._divine_rate_key, generation)
+
+    def _invalidate_divine_rate_request(self):
+        self._divine_rate_generation += 1
+        self._divine_rate_pending_generation = None
+        self._divine_rate_watchdog.stop()
+        self._divine_rate_key = None
+        self._divine_rate_retry_after = 0.0
 
     @staticmethod
     def _awakened_round(value: float) -> int:
@@ -4067,6 +4128,7 @@ class PoetoreWindow(QWidget):
         rate_value = float(getattr(rate, "base_amount", rate))
         self.divine_rate_button.setText(f"⇄ {self._awakened_round(rate_value)}")
         self.divine_rate_button.setEnabled(True)
+        self._divine_rate_retry_after = 0.0
         self.divine_rate_button.show()
         self.divine_rate_menu.clear()
         divine_icon_path = _asset_icon_path(
@@ -4120,7 +4182,9 @@ class PoetoreWindow(QWidget):
         self.divine_rate_button.hide()
         self.divine_rate_button.setEnabled(False)
         self.divine_rate_menu.clear()
-        self._divine_rate_retry_after = time.monotonic() + 4 * 60
+        self._divine_rate_retry_after = (
+            time.monotonic() + DIVINE_RATE_RETRY_SECONDS
+        )
 
     def _show_poe_ninja_price(self, key, price: PoeNinjaPrice):
         if key != self._poe_ninja_item_key:
@@ -4386,6 +4450,7 @@ class PoetoreWindow(QWidget):
         self._passive_hotkey_display = False
         self._auto_hide_interactive = False
         self._stop_outside_click_listener()
+        self._cancel_unique_icon_requests()
         if self._focus_signal_connected:
             QApplication.instance().focusChanged.disconnect(self._close_when_focus_leaves_panel)
             self._focus_signal_connected = False
@@ -5528,6 +5593,14 @@ class PoetoreWindow(QWidget):
         if key == self._state_item_key:
             return
         self._state_item_key = key
+        self.corrupted_combo.setOptions((
+            (
+                "二重コラプト" if "twice_corrupted" in item.flags else "コラプトのみ",
+                "only", True,
+            ),
+            ("非コラプトのみ", False, False),
+            ("コラプト品含む", True, False),
+        ))
         self.corrupted_combo.setCurrentIndex(0 if "corrupted" in item.flags else 1)
         is_split = "split" in item.flags
         self.split_combo.setCurrentIndex(0)
@@ -6207,6 +6280,7 @@ class PoetoreWindow(QWidget):
             self._set_price_status("完成品として、実際の性能を中心に検索します。")
 
     def _reset_unique_candidates(self):
+        self._cancel_unique_icon_requests()
         while self.unique_name_layout.count():
             item = self.unique_name_layout.takeAt(0)
             widget = item.widget()
@@ -6299,8 +6373,8 @@ class PoetoreWindow(QWidget):
                 if cached is not None:
                     button.setIcon(cached)
                 else:
-                    reply = self._unique_icon_manager.get(QNetworkRequest(QUrl(icon_url)))
-                    self._unique_icon_requests[reply] = (button, icon_url)
+                    self._unique_icon_queue.append((button, icon_url))
+        self._start_unique_icon_requests()
         first_button = next(iter(self.unique_name_group.buttons()), None)
         if first_button is not None:
             first_button.setChecked(True)
@@ -6318,6 +6392,32 @@ class PoetoreWindow(QWidget):
             f"同じベースの未鑑定ユニークが{len(candidates)}種類あります。候補を選んで「価格を検索」を押してください。"
         )
 
+    def _start_unique_icon_requests(self):
+        while (
+            self._unique_icon_queue
+            and len(self._unique_icon_requests) < _MAX_UNIQUE_ICON_REQUESTS
+        ):
+            button, icon_url = self._unique_icon_queue.popleft()
+            if (
+                button not in self.unique_name_group.buttons()
+                or button.property("iconUrl") != icon_url
+            ):
+                continue
+            cached = self._unique_icon_cache.get(icon_url)
+            if cached is not None:
+                button.setIcon(cached)
+                continue
+            reply = self._unique_icon_manager.get(QNetworkRequest(QUrl(icon_url)))
+            self._unique_icon_requests[reply] = (button, icon_url)
+
+    def _cancel_unique_icon_requests(self):
+        self._unique_icon_queue.clear()
+        replies = tuple(self._unique_icon_requests)
+        self._unique_icon_requests.clear()
+        for reply in replies:
+            reply.abort()
+            reply.deleteLater()
+
     def _unique_icon_downloaded(self, reply: QNetworkReply):
         request = self._unique_icon_requests.pop(reply, None)
         try:
@@ -6334,6 +6434,7 @@ class PoetoreWindow(QWidget):
                 button.setIcon(icon)
         finally:
             reply.deleteLater()
+            self._start_unique_icon_requests()
 
     def _show_unique_variants(self, variants, search_generation: int | None = None):
         if (

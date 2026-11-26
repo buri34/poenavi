@@ -336,6 +336,46 @@ def test_confirmed_poe1_330_static_ids_bridge_market_ids_to_localized_rows():
     assert result["unmapped_observed"] == []
 
 
+def test_new_exalted_orbs_use_market_ids_and_confirmed_japanese_names():
+    rows = (
+        (
+            "primordial-exalted-orb",
+            "Primordial Exalted Orb",
+            "Metadata/Items/Currency/CurrencyStackedExalt",
+            "原初の高貴なオーブ",
+        ),
+        (
+            "originators-exalted-orb",
+            "Originator's Exalted Orb",
+            "Metadata/Items/Currency/CurrencyAddModToRareOriginator",
+            "オリジネーターの高貴なオーブ",
+        ),
+    )
+    en = {"result": [{"id": "Currency", "entries": [
+        {"id": trade_id, "text": english, "image": f"/gen/{trade_id}.png"}
+        for trade_id, english, _item_id, _japanese in rows
+    ]}]}
+    ja = {"result": [{"id": "Currency", "entries": [
+        {"id": trade_id, "text": english}
+        for trade_id, english, _item_id, _japanese in rows
+    ]}]}
+
+    result = build_realm(
+        POE1, {}, en, ja, {item_id for _, _, item_id, _ in rows}, {},
+    )
+    by_id = {row["id"]: row for row in result["items"]}
+
+    assert {
+        item_id: (by_id[item_id]["en"], by_id[item_id]["ja"], by_id[item_id]["category"])
+        for _trade_id, _english, item_id, _japanese in rows
+    } == {
+        item_id: (english, japanese, "currency")
+        for _trade_id, english, item_id, japanese in rows
+    }
+    assert all(row["icon"]["kind"] == "remote" for row in by_id.values())
+    assert result["unmapped_observed"] == []
+
+
 def test_confirmed_observed_message_in_a_bottle_is_added_without_static_row():
     item_id = "Metadata/Items/Deepwater/DeepwaterBottledItem"
     result = build_realm(

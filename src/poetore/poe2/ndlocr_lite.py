@@ -107,6 +107,7 @@ class NdlOcrLiteServer:
         self._session_dir: Path | None = None
         self._request_number = 0
         self._ready = False
+        self._keep_alive = False
         self.last_metrics: NdlOcrRequestMetrics | None = None
 
     @property
@@ -130,6 +131,34 @@ class NdlOcrLiteServer:
     def session_dir(self) -> Path | None:
         with self._state_lock:
             return self._session_dir
+
+    @property
+    def keep_alive(self) -> bool:
+        with self._state_lock:
+            return self._keep_alive
+
+    def set_keep_alive(self, enabled: bool) -> None:
+        """Keep the loaded model resident, or restore normal idle expiry."""
+
+        enabled = bool(enabled)
+        with self._state_lock:
+            self._keep_alive = enabled
+            timer = self._timer if enabled else None
+            if enabled:
+                self._timer = None
+                self._timer_generation += 1
+        if timer is not None:
+            timer.cancel()
+        if not enabled and self.is_ready:
+            self._schedule_idle_stop()
+
+    def warm_up(self) -> bool:
+        """Load the helper without running inference and return cold-start state."""
+
+        with self._operation_lock:
+            cold_start = self._start_if_needed()
+            self._schedule_idle_stop()
+            return cold_start
 
     def _emit(self, event: str, **details: object) -> None:
         if self._event_callback is None:
@@ -357,7 +386,10 @@ class NdlOcrLiteServer:
                 return
             if self._timer is not None:
                 self._timer.cancel()
+                self._timer = None
             self._timer_generation += 1
+            if self._keep_alive:
+                return
             generation = self._timer_generation
             timer = self._timer_factory(
                 self.idle_timeout,
@@ -378,7 +410,7 @@ class NdlOcrLiteServer:
 
     def _idle_stop(self, generation: int) -> None:
         with self._state_lock:
-            if generation != self._timer_generation:
+            if generation != self._timer_generation or self._keep_alive:
                 return
         self._stop(reason="idle_timeout")
 
@@ -410,6 +442,8 @@ class NdlOcrLiteServer:
     def _stop(self, *, reason: str) -> None:
         with self._operation_lock:
             with self._state_lock:
+                if reason == "idle_timeout" and self._keep_alive:
+                    return
                 timer = self._timer
                 self._timer = None
                 self._timer_generation += 1

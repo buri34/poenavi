@@ -186,10 +186,12 @@ def test_poe1_corrected_categories_are_visible(qapp, tmp_path):
         "カレンシー": {
             "Metadata/Items/MapFragments/CurrencyFragmentPantheonFlask",
             "Metadata/Items/MapFragments/VoidbornVaultKey",
-                "Metadata/Items/Currency/StackedAstrolabe",
+            "Metadata/Items/Currency/StackedAstrolabe",
             "Metadata/Items/Currency/AstrolabeLegion",
             "Metadata/Items/Currency/AstrolabeBestiary",
             "Metadata/Items/Currency/CurrencyWishSupportGemBlue",
+            "Metadata/Items/Currency/CurrencyStackedExalt",
+            "Metadata/Items/Currency/CurrencyAddModToRareOriginator",
         },
         "エッセンス": {"Metadata/Items/Currency/CurrencyEssenceUber1"},
         "デリリウムオーブ": {

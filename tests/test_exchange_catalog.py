@@ -315,6 +315,30 @@ def test_poe1_late_330_exchange_additions_are_pinned():
     assert all(catalog[item_id].icon_kind == "remote" for item_id in expected)
 
 
+def test_poe1_new_exalted_orbs_are_pinned_to_market_ids():
+    catalog = exchange_catalog_by_id(POE1)
+    expected = {
+        "Metadata/Items/Currency/CurrencyStackedExalt": (
+            "Primordial Exalted Orb", "原初の高貴なオーブ", "currency",
+        ),
+        "Metadata/Items/Currency/CurrencyAddModToRareOriginator": (
+            "Originator's Exalted Orb",
+            "オリジネーターの高貴なオーブ",
+            "currency",
+        ),
+    }
+
+    assert {
+        item_id: (
+            catalog[item_id].english_name,
+            catalog[item_id].japanese_name,
+            catalog[item_id].category,
+        )
+        for item_id in expected
+    } == expected
+    assert all(catalog[item_id].icon_kind == "remote" for item_id in expected)
+
+
 def test_confirmed_exception_categories_are_fixed():
     poe1 = exchange_catalog_by_id(POE1)
     poe2 = exchange_catalog_by_id(POE2)

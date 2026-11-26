@@ -717,3 +717,80 @@ def test_controller_hides_only_after_two_consecutive_structure_misses():
 
     overlay.hide.assert_called_once_with()
     assert statuses == ["エクスペディション報酬画面を閉じたため表示を消しました。"]
+
+
+def _capture_ready_controller():
+    with patch(
+        "src.poetore.expedition_rewards.QCoreApplication.instance",
+        return_value=None,
+    ), patch("src.poetore.expedition_rewards.ExpeditionPriceOverlay"):
+        controller = ExpeditionRewardController(
+            lambda: "Test League",
+            ocr_server=Mock(),
+        )
+    controller._running = True
+    controller._scan_generation = 1
+    controller._active_generation = 1
+    controller._client_rect = QRect(0, 0, 1920, 1080)
+    controller._capture_rect = QRect(100, 200, 400, 300)
+    image = QImage(10, 10, QImage.Format.Format_RGB888)
+    image.fill(QColor(20, 20, 20))
+    controller._grab_game = Mock(return_value=image)
+    return controller
+
+
+def test_stale_capture_callback_cannot_mutate_a_later_scan():
+    controller = _capture_ready_controller()
+    callbacks = []
+
+    with patch(
+        "src.poetore.expedition_rewards.QTimer.singleShot",
+        side_effect=lambda _delay, callback: callbacks.append(callback),
+    ):
+        controller._capture_frame(1)
+
+    assert len(callbacks) == 1
+    assert len(controller._captures) == 1
+
+    controller.close()
+    controller._running = True
+    controller._scan_generation += 1
+    controller._active_generation = controller._scan_generation
+    controller._captures = []
+    controller._grab_game.reset_mock()
+
+    callbacks[0]()
+
+    assert controller._captures == []
+    controller._grab_game.assert_not_called()
+
+
+def test_same_generation_captures_three_frames_and_starts_worker_once():
+    controller = _capture_ready_controller()
+    thread = Mock()
+
+    with patch(
+        "src.poetore.expedition_rewards.QTimer.singleShot",
+        side_effect=lambda _delay, callback: callback(),
+    ), patch(
+        "src.poetore.expedition_rewards.threading.Thread",
+        return_value=thread,
+    ) as thread_class:
+        controller._capture_frame(1)
+
+    assert controller._grab_game.call_count == 3
+    assert len(controller._captures) == 3
+    thread_class.assert_called_once()
+    assert thread_class.call_args.kwargs["args"][-1] == 1
+    thread.start.assert_called_once_with()
+
+
+def test_capture_callback_after_close_does_not_grab_or_start_worker():
+    controller = _capture_ready_controller()
+    controller.close()
+
+    with patch("src.poetore.expedition_rewards.threading.Thread") as thread_class:
+        controller._capture_frame(1)
+
+    controller._grab_game.assert_not_called()
+    thread_class.assert_not_called()

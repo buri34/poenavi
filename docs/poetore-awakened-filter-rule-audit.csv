@@ -88,7 +88,7 @@ R04,Property,Base Percentile,50以上ON・50未満OFF,完成品・ベースと�
 R05,Property,Memory Strands完成品,完成品プリセットでは非表示・常時OFF,完成品プリセットでは非表示・常時OFF,準拠,維持,,create-stat-filters.ts:160-167,tests:test_finished_preset_hides_memory_strands_even_above_threshold
 R06,Property,Memory Strandsベース/Exact,60以上ON・59以下OFF,同じ,準拠,維持,,item-property.ts:30-40,tests:test_base_preset_uses_awakened_memory_strands_threshold
 R07,Property,武器混合DPS,混合ならTotal DPSをON。支配成分67%以上だけpDPS/eDPSを表示・ON,pDPS/eDPSとTotal DPSを同じ67%規則で処理,準拠,維持,,item-property.ts:141-197,trade.py:_initial_property_filters
-R08,Property,pDPS重要武器,Axe・Sword・Bow・WarstaffだけpDPSを優先,同じカテゴリ判断,準拠,維持,,item-property.ts:245-256,trade.py:_physical_dps_is_important
+R08,Property,pDPS重要武器,物理DPS行は物理値を持つ全武器に表示し、Axe・Sword・Bow・Warstaffだけ初期ON,同じ表示・カテゴリ判断,準拠,維持,,item-property.ts:245-256,trade.py:_physical_dps_is_important
 R09,Property,APS・Crit,表示するが初期OFF,同じ,準拠,維持,,item-property.ts:200-219,trade.py:_initial_property_filters
 R10,Property,品質20換算,武器DPS・防御値を最低品質20へ換算,同じ,準拠,維持,,item-property.ts:55-219,trade.py:_defence_at_20_quality・physical_dps_at_20_quality
 R11,Pseudo,最大ライフ合計,明示最大ライフModがある時だけ生成し筋力換算分を加算。カテゴリ制限なし,同じ。筋力だけでは生成せず明示ライフがあれば筋力分も加算して初期ON,準拠,維持,,pseudo/index.ts:117-125,tests:test_attributes_alone_do_not_create_life_or_mana_pseudos

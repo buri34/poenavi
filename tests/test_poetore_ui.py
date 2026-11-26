@@ -8,6 +8,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QFontMetrics, QKeyEvent, QMouseEvent, QPalette, QPixmap, QWheelEvent
+from PySide6.QtNetwork import QNetworkReply
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QAbstractItemView, QCheckBox, QComboBox, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton, QTreeWidgetItem, QWidget
 import pytest
@@ -2365,6 +2366,39 @@ Item Level: 83
         window.close()
 
 
+def test_poe1_physical_wand_shows_pdps_condition_initially_disabled(qapp):
+    window = PoetoreWindow()
+    try:
+        window.input_edit.setPlainText("""アイテムクラス: ワンド
+レアリティ: レア
+狂喜の歌
+前兆のワンド
+--------
+ワンド
+物理ダメージ: 124-230 (augmented)
+クリティカル率: 8.70%
+秒間アタック回数: 1.75 (augmented)
+--------
+アイテムレベル: 76
+""")
+        window.parse_current_text()
+
+        pdps_item = next(
+            window.mod_filter_tree.topLevelItem(index)
+            for index in range(window.mod_filter_tree.topLevelItemCount())
+            if window.mod_filter_tree.topLevelItem(index).data(0, Qt.UserRole)
+            == "property.physical_dps"
+        )
+        checkbox = window.mod_filter_tree.itemWidget(
+            pdps_item, _MOD_COLUMN_CHECK
+        ).findChild(QCheckBox, "modFilterCheckbox")
+
+        assert pdps_item.text(_MOD_COLUMN_TEXT) == "物理DPS"
+        assert checkbox.isChecked() is False
+    finally:
+        window.close()
+
+
 def test_poe1_armour_property_rows_show_quality_20_conversion(qapp):
     window = PoetoreWindow()
     try:
@@ -3929,6 +3963,7 @@ def test_mod_filter_ui_keeps_diagnostics_internal_and_tooltip_simple(qapp):
     ("volatile", "ヴォラタイル・ヴァール"),
     ("reflecting", "リフレクティング・ミスト"),
     ("corrupted", "コラプト"),
+    ("rareonly", "レアのみ"),
 ])
 def test_mod_filter_ui_shows_provenance_in_kind_column(qapp, provenance, label):
     window = PoetoreWindow()
@@ -5622,6 +5657,44 @@ def test_many_unidentified_unique_candidates_are_scrollable(qapp):
         assert window.unique_name_scroll.viewport().palette().color(
             window.unique_name_scroll.viewport().backgroundRole()
         ).name() == "#111416"
+    finally:
+        window.close()
+
+
+def test_unique_candidate_icons_limit_parallel_requests_and_cancel_on_reset(qapp):
+    from src.poetore.trade import UniqueCandidate
+
+    window = PoetoreWindow()
+    replies = [Mock() for _ in range(10)]
+    try:
+        candidates = tuple(
+            UniqueCandidate(f"Candidate {index}", f"https://web.poecdn.com/{index}.png")
+            for index in range(10)
+        )
+        with patch.object(
+            window._unique_icon_manager, "get", side_effect=replies,
+        ) as get:
+            window._show_unique_candidates(candidates)
+
+            assert get.call_count == 6
+            assert len(window._unique_icon_requests) == 6
+            assert len(window._unique_icon_queue) == 4
+
+            first_reply = replies[0]
+            first_reply.error.return_value = QNetworkReply.OperationCanceledError
+            window._unique_icon_downloaded(first_reply)
+
+            assert get.call_count == 7
+            assert len(window._unique_icon_requests) == 6
+            assert len(window._unique_icon_queue) == 3
+
+            active_replies = tuple(window._unique_icon_requests)
+            window._reset_unique_candidates()
+
+        assert not window._unique_icon_requests
+        assert not window._unique_icon_queue
+        for reply in active_replies:
+            reply.abort.assert_called_once_with()
     finally:
         window.close()
 
@@ -7701,6 +7774,101 @@ def test_stale_divine_rate_result_does_not_replace_current_league(qapp):
         window.close()
 
 
+def test_divine_rate_timeout_releases_infinite_retry_lock(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.threading.Thread"):
+            window._queue_divine_rate("Standard")
+
+        assert window._divine_rate_retry_after == float("inf")
+        with patch("src.poetore.ui.time.monotonic", return_value=100.0):
+            window._divine_rate_request_timed_out()
+
+        assert window._divine_rate_pending_generation is None
+        assert window._divine_rate_retry_after == 340.0
+        assert window.divine_rate_button.isHidden()
+    finally:
+        window.close()
+
+
+def test_divine_rate_can_retry_after_timeout_interval(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.threading.Thread"):
+            window._queue_divine_rate("Standard")
+        with patch("src.poetore.ui.time.monotonic", return_value=100.0):
+            window._divine_rate_request_timed_out()
+
+        with patch(
+            "src.poetore.ui.time.monotonic",
+            return_value=341.0,
+        ), patch("src.poetore.ui.threading.Thread") as thread:
+            window._queue_divine_rate("Standard")
+
+        thread.assert_called_once()
+        thread.return_value.start.assert_called_once_with()
+        assert window._divine_rate_pending_generation is not None
+        assert window._divine_rate_retry_after == float("inf")
+    finally:
+        window.close()
+
+
+def test_old_divine_rate_result_is_ignored_after_same_league_retry(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.threading.Thread"):
+            window._queue_divine_rate("Standard")
+        old_generation = window._divine_rate_pending_generation
+        with patch("src.poetore.ui.time.monotonic", return_value=100.0):
+            window._divine_rate_request_timed_out()
+        with patch(
+            "src.poetore.ui.time.monotonic",
+            return_value=341.0,
+        ), patch("src.poetore.ui.threading.Thread"):
+            window._queue_divine_rate("Standard")
+
+        window._accept_divine_rate_result("Standard", old_generation, 200)
+
+        assert window.divine_rate_button.text() != "⇄ 200"
+        assert window._divine_rate_pending_generation != old_generation
+    finally:
+        window.close()
+
+
+def test_old_divine_rate_result_is_ignored_after_league_switch(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.threading.Thread"):
+            window._queue_divine_rate("Old League")
+            old_generation = window._divine_rate_pending_generation
+            window._queue_divine_rate("New League")
+
+        window._accept_divine_rate_result("Old League", old_generation, 200)
+
+        assert window._divine_rate_key == "New League"
+        assert window.divine_rate_button.text() != "⇄ 200"
+    finally:
+        window.close()
+
+
+def test_divine_rate_request_settles_only_once(qapp):
+    window = PoetoreWindow()
+    try:
+        with patch("src.poetore.ui.threading.Thread"):
+            window._queue_divine_rate("Standard")
+        generation = window._divine_rate_pending_generation
+
+        window._accept_divine_rate_result("Standard", generation, 174.4)
+        window._reject_divine_rate_result("Standard", generation)
+
+        assert window.divine_rate_button.text() == "⇄ 174"
+        assert window.divine_rate_button.isEnabled()
+        assert window._divine_rate_pending_generation is None
+        assert not window._divine_rate_watchdog.isActive()
+    finally:
+        window.close()
+
+
 @pytest.mark.parametrize(("item_level", "minimum", "maximum"), [
     (49, "1", "49"),
     (50, "50", "67"),
@@ -8665,6 +8833,25 @@ Corrupted
         assert window.corrupted_combo.currentText() == "コラプトのみ"
         assert window.corrupted_combo.currentData() == "only"
         assert window.corrupted_combo.property("alert") is True
+    finally:
+        window.close()
+
+
+def test_twice_corrupted_item_is_identified_in_state_filter(qapp):
+    item = parse_item_text("""アイテムクラス: 靴
+レアリティ: レア
+勝利の要請
+カーナルブーツ
+--------
+アイテムレベル: 69
+--------
+二重コラプト
+""")
+    window = PoetoreWindow()
+    try:
+        window._configure_item_state_filters(item)
+        assert window.corrupted_combo.currentText() == "二重コラプト"
+        assert window.corrupted_combo.currentData() == "only"
     finally:
         window.close()
 

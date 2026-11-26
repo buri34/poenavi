@@ -206,6 +206,7 @@ _PROPERTY_FILTERS = {
     "property.links": ("socket_filters", "links"),
     "property.map_tier": ("map_filters", "map_tier"),
     "property.map_quantity": ("map_filters", "map_iiq"),
+    "property.map_bonus": ("map_filters", "map_bonus"),
     "property.map_rarity": ("map_filters", "map_iir"),
     "property.map_pack_size": ("map_filters", "map_packsize"),
     "property.area_level": ("map_filters", "area_level"),
@@ -1408,7 +1409,7 @@ def _apply_dedicated_exact_rules(
 ) -> tuple[TradeStatFilter, ...]:
     """汎用完成品候補からAwakenedのcreateExactStatFilters相当だけを残す。"""
     keep_modifier_kinds = {
-        "pseudo", "fractured", "enchant", "necropolis", "imbued", "craft",
+        "pseudo", "fractured", "rareonly", "enchant", "necropolis", "imbued", "craft",
         "mercenary",
     }
     if (not any(flag.startswith("influence:") for flag in item.flags)
@@ -1475,6 +1476,13 @@ def _apply_dedicated_exact_rules(
             # Map/Chartも通常のExact規則へ統一し、Pseudoは候補表示だけにする。
             if item.category == "map" and row.kind == "map pseudo":
                 enabled = False
+                if (
+                    row.stat_id == "pseudo.pseudo_number_of_affix_mods"
+                    or row.text == "スレッド量"
+                ):
+                    enabled = True
+            if row.kind == "rareonly":
+                enabled = True
             if (
                 item.category == "map"
                 and row.stat_id in _GUARDIAN_MAP_IDENTITY_STAT_IDS
@@ -1602,7 +1610,11 @@ def _base_item_filters(item: ParsedItem, trade_base_type: str | None = None) -> 
             exact_modifiers.append(modifier)
     entries = _trade_stat_entries() if exact_modifiers else ()
     for modifier in exact_modifiers:
-        api_kind = "explicit" if modifier.kind in {"prefix", "suffix"} else modifier.kind
+        api_kind = (
+            "explicit"
+            if modifier.kind in {"prefix", "suffix", "rareonly"}
+            else modifier.kind
+        )
         source = _normalized_stat_text(modifier.text)
         # 3.29の詳細コピー本文には、Trade APIの表示用補足
         # 「(ローカル)」が付かない。パーサーが確定したstat IDを優先し、
@@ -1801,7 +1813,6 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
         more_drop_rows = []
         for stat_id, label, labels in (
             ("pseudo.pseudo_map_more_map_drops", "マップ量", ("追加マップ", "マップ量が上昇", "More Maps")),
-            ("pseudo.pseudo_map_more_scarab_drops", "スカラベ量", ("追加スカラベ", "スカラベ量が上昇", "More Scarabs")),
             (
                 "pseudo.pseudo_map_more_currency_drops", "カレンシー量",
                 ("追加カレンシー", "カレンシー量が上昇", "More Currency"),
@@ -1816,6 +1827,17 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                 more_drop_rows.append(TradeStatFilter(
                     stat_id, label, value, "map pseudo", True,
                 ))
+        thread_value = _property_value(item, "スレッド量が上昇", "More Threads")
+        scarab_value = _property_value(
+            item, "追加スカラベ", "スカラベ量が上昇", "More Scarabs",
+        )
+        if thread_value is not None or scarab_value is not None:
+            more_drop_rows.append(TradeStatFilter(
+                "pseudo.pseudo_map_more_scarab_drops",
+                "スレッド量" if thread_value is not None else "スカラベ量",
+                thread_value if thread_value is not None else scarab_value,
+                "map pseudo", True,
+            ))
         blight_state = _map_blight_state(item)
         if blight_state == "ravaged":
             filters.append(TradeStatFilter("property.map_uberblighted", "ブライトに破壊されたマップ", None, "map", True))
@@ -1851,6 +1873,10 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
                     _property_value(item, "アイテム数量", "Item Quantity"), True,
                 ),
                 (
+                    "property.map_bonus", "アトラスドロップ",
+                    _property_value(item, "アトラスドロップ", "Atlas Drops"), True,
+                ),
+                (
                     "property.map_rarity", "アイテムレアリティ",
                     _property_value(item, "アイテムレアリティ", "Item Rarity"),
                     not more_drop_rows,
@@ -1867,13 +1893,20 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
             filters.extend(more_drop_rows)
             explicit_mods = [
                 modifier for modifier in item.modifiers
-                if modifier.kind in {"prefix", "suffix"}
+                if modifier.kind in {
+                    "prefix", "suffix", "explicit", "fractured", "rareonly",
+                }
             ]
-            if len(explicit_mods) == 8 and not more_drop_rows:
+            explicit_mod_count = len({
+                ("group", modifier.group)
+                if modifier.group is not None else ("row", index)
+                for index, modifier in enumerate(explicit_mods)
+            })
+            if explicit_mod_count >= 8:
                 filters.append(TradeStatFilter(
-                    "pseudo.pseudo_number_of_affix_mods", "Mod数", 8.0,
-                    "map pseudo", True, max_value=8.0,
-                    selection_reason="Awakenedの8 Mod Map条件",
+                    "pseudo.pseudo_number_of_affix_mods", "Mod数",
+                    float(explicit_mod_count), "map pseudo", True,
+                    selection_reason="Awakenedの8～9 Mod Map条件",
                 ))
     elif item.category == "chart" and area_level is not None:
         filters.append(TradeStatFilter(
@@ -1961,6 +1994,22 @@ def _special_content_filters(item: ParsedItem) -> tuple[TradeStatFilter, ...]:
             value = _property_value(item, *labels)
             if value is not None:
                 filters.append(TradeStatFilter(stat_id, labels[0], value, "sanctum", True))
+    catalyst_slots = ("ring", "amulet", "belt", "指輪", "アミュレット", "ベルト")
+    accessory_identity = f"{item.item_class} {item.base_type}".casefold()
+    has_quality = any(
+        re.fullmatch(r"(?:品質|quality)(?:\s*\([^)]*\))?", label, re.IGNORECASE)
+        for label in item.properties
+    )
+    if (
+        item.category == "accessory"
+        and any(slot in accessory_identity for slot in catalyst_slots)
+        and not has_quality
+    ):
+        filters.append(TradeStatFilter(
+            "property.quality", "未Catalyst", None, "special", True,
+            max_value=0.0,
+            selection_reason="品質表示がないアクセサリーをCatalyst未使用に限定",
+        ))
     return tuple(filters)
 
 
@@ -2101,9 +2150,12 @@ def _initial_property_filters(
             filters.append(TradeStatFilter(
                 "property.total_dps", "合計DPS", _relaxed(total), "property", True,
             ))
-        if pdps and _physical_dps_is_important(item) and (not total or pdps / total >= 0.67):
+        if pdps:
             filters.append(TradeStatFilter(
-                "property.physical_dps", "物理DPS", _relaxed(pdps), "property", True,
+                "property.physical_dps", "物理DPS", _relaxed(pdps), "property",
+                _physical_dps_is_important(item) and (
+                    not total or pdps / total >= 0.67
+                ),
             ))
         if edps and (not total or edps / total >= 0.67):
             filters.append(TradeStatFilter(
@@ -2181,19 +2233,100 @@ _ATZOATL_NAMES = frozenset({
 
 _ATZOATL_ENABLED_ROOMS = frozenset({
     "Has Room: Apex of Atzoatl",
+    "Has Room: Cradle of Creation (Tier 3)",
     "Has Room: Locus of Corruption (Tier 3)",
     "Has Room: Doryani's Institute (Tier 3)",
     "Has Room: Apex of Ascension (Tier 3)",
     "Has Room: Wealth of the Vaal (Tier 3)",
+    "Has Room: Atlas of Worlds (Tier 3)",
 })
 
 _ATZOATL_ENABLED_ROOM_IDS = frozenset({
     "pseudo.pseudo_temple_apex",
+    "pseudo.pseudo_temple_queens_chambers_3",
     "pseudo.pseudo_temple_corruption_room_3",
     "pseudo.pseudo_temple_gem_room_3",
     "pseudo.pseudo_temple_sacrifice_room_3",
     "pseudo.pseudo_temple_currency_vault_3",
+    "pseudo.pseudo_temple_cartography_room_3",
 })
+
+
+def _atzoatl_room_ids(*suffixes: str) -> frozenset[str]:
+    return frozenset(f"pseudo.pseudo_temple_{suffix}" for suffix in suffixes)
+
+
+_ATZOATL_HIDDEN_ROOM_IDS = _atzoatl_room_ids(
+    "currency_vault_1",
+    "cartography_room_1",
+    "legion_1",
+    "chests_2",
+    "breeding_room_2",
+    "workshop_2",
+    "torment_2",
+    "strongbox_2",
+    "trinket_room_2",
+    "breach_room_2",
+    "storm_room_3",
+    "armour_room_3",
+    "weapon_room_3",
+    "poison_room_3",
+    "boss_minions_3",
+    "trap_room_3",
+    "boss_fire_3",
+    "boss_lightning_3",
+    "healing_room_3",
+)
+
+_ATZOATL_REMOVE_ROOM_IDS = _atzoatl_room_ids(
+    "banquet_hall",
+    "antechamber",
+    "passageways",
+    "cloister",
+    "tunnels",
+    "cellar",
+    "chasm_room",
+    "halls",
+    "tombs",
+    "the_pits",
+    "empowering_room_1",
+    "empowering_room_2",
+    "empowering_room_3",
+    "explosives_room_1",
+    "explosives_room_2",
+    "explosives_room_3",
+    "corruption_room_1",
+    "corruption_room_2",
+    "gem_room_1",
+    "gem_room_2",
+    "sacrifice_room_1",
+    "sacrifice_room_2",
+    "chests_1",
+    "breeding_room_1",
+    "workshop_1",
+    "torment_1",
+    "strongbox_1",
+    "trinket_room_1",
+    "breach_room_1",
+    "storm_room_1",
+    "storm_room_2",
+    "armour_room_1",
+    "armour_room_2",
+    "weapon_room_1",
+    "weapon_room_2",
+    "poison_room_1",
+    "poison_room_2",
+    "boss_minions_1",
+    "boss_minions_2",
+    "trap_room_1",
+    "trap_room_2",
+    "boss_fire_1",
+    "boss_fire_2",
+    "boss_lightning_1",
+    "boss_lightning_2",
+    "healing_room_1",
+    "healing_room_2",
+)
 
 # ゲーム内日本語と公式Trade APIの日本語に差がある部屋。
 _ATZOATL_ROOM_STAT_ALIASES = {
@@ -2262,7 +2395,7 @@ def _atzoatl_room_filters(
 def _apply_atzoatl_room_rules(
     filters: list[TradeStatFilter],
 ) -> list[TradeStatFilter]:
-    """全Atzoatl部屋を状態指定なしの検索条件として表示する。"""
+    """Atzoatl部屋を価値別に整理し、開放状態に依存せず検索する。"""
     adjusted = []
     for row in filters:
         if not (
@@ -2271,16 +2404,21 @@ def _apply_atzoatl_room_rules(
         ):
             adjusted.append(row)
             continue
+        if row.stat_id in _ATZOATL_REMOVE_ROOM_IDS:
+            continue
+        hidden = row.stat_id in _ATZOATL_HIDDEN_ROOM_IDS
         enabled = (
             row.ref in _ATZOATL_ENABLED_ROOMS
             or row.stat_id in _ATZOATL_ENABLED_ROOM_IDS
-        )
+        ) and not hidden
         adjusted.append(replace(
             row,
             enabled=enabled,
             option_value=None,
             option_text=None,
-            hidden_reason="",
+            hidden_reason=(
+                "Awakened: 低優先度のAtzoatl部屋を非表示" if hidden else ""
+            ),
             selection_reason=(
                 "Atzoatlの主要部屋" if enabled else "Atzoatlの部屋候補"
             ),
@@ -2802,6 +2940,8 @@ _CONFIRMED_ENGLISH_TRADE_TYPE_OVERRIDES = {
     ("accessory", "羽根付きの矢筒"): "Feathered Arrow Quiver",
     ("accessory", "灼熱の矢筒"): "Blazing Arrow Quiver",
     ("divination_card", "狂犬病のロア"): "The Rabid Rhoa",
+    ("currency", "オリジネーターの高貴なオーブ"): "Originator's Exalted Orb",
+    ("currency", "原初の高貴なオーブ"): "Primordial Exalted Orb",
 }
 
 
@@ -3079,19 +3219,10 @@ def unique_candidate_details(base_type: str) -> tuple[UniqueCandidate, ...]:
     return tuple(
         UniqueCandidate(
             name,
-            unique_icon_url(name) or _poewiki_unique_icon_url(name),
+            unique_icon_url(name),
             _japanese_trade_item_name(name) or name,
         )
         for name in unique_candidates(base_type)
-    )
-
-
-def _poewiki_unique_icon_url(name: str) -> str:
-    """現行Awakenedデータから消えた旧Uniqueの画像をPoE Wikiから補う。"""
-    filename = f"{name.strip()} inventory icon.png".replace(" ", "_")
-    return (
-        "https://www.poewiki.net/wiki/Special:Redirect/file/"
-        + quote(filename, safe="_")
     )
 
 
@@ -3668,7 +3799,11 @@ def resolve_trade_stat_filters(
                 # Awakened準拠: 常設Modでも可変ロールがあれば候補へ残す。
                 # 固定Modも「隠された候補」から確認できるよう保持する。
                 hidden_reason = "ユニーク固定値のため初期非表示"
-        api_kind = "explicit" if modifier.kind in {"prefix", "suffix"} else modifier.kind
+        api_kind = (
+            "explicit"
+            if modifier.kind in {"prefix", "suffix", "rareonly"}
+            else modifier.kind
+        )
         source = _indexed_stat_text(modifier.text, api_kind)
         indexed_candidates = list(entries_by_text.get((api_kind, source), ()))
         if modifier.stat_id:
@@ -4492,6 +4627,15 @@ def build_search_query(
         misc["corrupted"] = {
             "option": "true" if include_corrupted == "only" else "false"
         }
+    if (
+        preset != PRESET_BASE
+        and include_corrupted == "only"
+        and "twice_corrupted" not in item.flags
+    ):
+        misc = query["filters"].setdefault(
+            "misc_filters", {"filters": {}},
+        )["filters"]
+        misc["twice_corrupted"] = {"option": "false"}
     misc = query["filters"].setdefault("misc_filters", {"filters": {}})["filters"]
     if include_searing:
         misc["searing_item"] = {"option": "true"}

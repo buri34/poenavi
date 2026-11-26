@@ -341,6 +341,12 @@ class _WindowsOcr:
 class _NdlOcr:
     is_available = True
 
+    def set_keep_alive(self, _enabled):
+        return None
+
+    def warm_up(self):
+        return None
+
     def recognize(self, _images):
         return [Mock(text="カオスオーブ", confidence=0.9)]
 
@@ -366,6 +372,12 @@ class _TrinketWindowsOcr:
 class _TrinketNdlOcr:
     is_available = True
     is_ready = True
+
+    def set_keep_alive(self, _enabled):
+        return None
+
+    def warm_up(self):
+        return None
 
     def recognize(self, _images):
         return [Mock(text=_TRINKET_OCR_TEXT, confidence=0.9)]
@@ -599,6 +611,26 @@ def test_high_accuracy_status_explains_cold_start(qapp):
     lines = overlay.show_status.call_args.args[2]
     assert "高精度OCRを準備しています…" in lines
     assert "初回のみ10～15秒ほどかかります" in lines
+
+
+def test_controller_preloads_high_accuracy_ocr_only_when_keep_ready_is_enabled():
+    windows_ocr = Mock()
+    ndl_ocr = Mock(is_available=True, is_ready=False)
+    controller = HeistCurioController(
+        ocr_server=windows_ocr,
+        ndl_ocr_server=ndl_ocr,
+        keep_high_accuracy_ready=True,
+    )
+
+    controller._safe_start()
+
+    ndl_ocr.set_keep_alive.assert_called_once_with(True)
+    ndl_ocr.warm_up.assert_called_once_with()
+
+    controller.set_keep_high_accuracy_ready(False)
+    ndl_ocr.set_keep_alive.assert_called_with(False)
+    controller._safe_start_high_accuracy()
+    assert ndl_ocr.warm_up.call_count == 1
 
 
 def test_experimental_base_opens_existing_search_with_empty_optional_ilvl(qapp):

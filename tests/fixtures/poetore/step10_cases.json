@@ -63,7 +63,7 @@
     "group": "装飾品/ライフ+耐性+能力値",
     "trade_base": "Ruby Ring",
     "text": "アイテムクラス: 指輪\nレアリティ: レア\n生命の輪\nルビーの指輪\n--------\nアイテムレベル: 85\n--------\n最大ライフ +70\n火耐性 +30%\n冷気および雷耐性 +20%\n混沌耐性 +10%\n全ての能力値 +20\n",
-    "expected_enabled": {"pseudo.pseudo_total_life": 72.0, "pseudo.pseudo_total_elemental_resistance": 63.0, "pseudo.pseudo_total_chaos_resistance": 9.0},
+    "expected_enabled": {"pseudo.pseudo_total_life": 72.0, "pseudo.pseudo_total_elemental_resistance": 63.0, "pseudo.pseudo_total_chaos_resistance": 9.0, "property.quality": null},
     "expected_visible": ["pseudo.pseudo_total_elemental_resistance"],
     "expected_misc": {"corrupted": "false", "split": "false"}
   },
@@ -74,7 +74,7 @@
     "trade_name": "The Ignomon",
     "stat_entries": [{"id": "explicit.life", "text": "最大ライフ +#", "type": "explicit"}],
     "text": "アイテムクラス: アミュレット\nレアリティ: ユニーク\nイグノモン\nゴールドアミュレット\n--------\nアイテムレベル: 70\n--------\n最大ライフ +40(30-50)\n火耐性 +10%\n",
-    "expected_enabled": {"explicit.life": 38.0},
+    "expected_enabled": {"explicit.life": 38.0, "property.quality": null},
     "expected_misc": {"corrupted": "false"}
   },
   {
@@ -86,7 +86,7 @@
       {"id": "crafted.stat_3299347043", "text": "最大ライフ +#", "type": "crafted"}
     ],
     "text": "アイテムクラス: 指輪\nレアリティ: レア\n割れた環\nルビーの指輪\n--------\nアイテムレベル: 86\n--------\n{ フラクチャー サフィックスモッド「火炎の」 (ティア: 1) }\n火耐性 +40(36-41)%\n{ マスタークラフト プレフィックスモッド「製作の」 }\n最大ライフ +55\n",
-    "expected_enabled": {"pseudo.pseudo_total_life": 49.0, "pseudo.pseudo_total_elemental_resistance": 36.0},
+    "expected_enabled": {"pseudo.pseudo_total_life": 49.0, "pseudo.pseudo_total_elemental_resistance": 36.0, "property.quality": null},
     "expected_visible": ["fractured.stat_3372524247", "crafted.stat_3299347043"],
     "expected_misc": {"corrupted": "false"}
   },
@@ -107,7 +107,7 @@
     "trade_base": "Chain Belt",
     "trade_name": "Auxium",
     "text": "アイテムクラス: ベルト\nレアリティ: ユニーク\nオーキシウム\nチェインベルト\n--------\nアイテムレベル: 70\n--------\nフォイル\nミラー品\n",
-    "expected_enabled": {},
+    "expected_enabled": {"property.quality": null},
     "expected_misc": {"corrupted": "false", "foulborn_item": "false"},
     "expected_rarity": "uniquefoil"
   }

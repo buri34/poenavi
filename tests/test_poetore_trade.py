@@ -1866,11 +1866,54 @@ def test_weapon_base_preset_shows_performance_properties_but_keeps_them_off():
     assert not any(row.enabled for row in properties)
 
 
-def test_non_physical_weapon_does_not_enable_pdps():
+def test_non_pdps_priority_weapon_shows_pdps_but_keeps_it_disabled():
     item = parse_item_text(ITEM.replace("Two Hand Swords", "Wands"))
     with patch("src.poetore.trade._trade_stat_entries", return_value=()):
         filters = resolve_trade_stat_filters(item)
-    assert not any(row.stat_id == "property.physical_dps" and row.enabled for row in filters)
+    pdps = next(row for row in filters if row.stat_id == "property.physical_dps")
+    assert pdps.enabled is False
+
+
+def test_physical_wand_keeps_pdps_after_local_physical_mods_are_aggregated():
+    item = parse_item_text("""アイテムクラス: ワンド
+レアリティ: レア
+狂喜の歌
+前兆のワンド
+--------
+ワンド
+物理ダメージ: 124-230 (augmented)
+クリティカル率: 8.70%
+秒間アタック回数: 1.75 (augmented)
+--------
+アイテムレベル: 76
+--------
+明示物理モッドの強さが8%増加する (enchant)
+--------
+スペルダメージが31(27-31)%増加する
+--------
+17(13-18)から31(27-31)の物理ダメージを追加する
+物理ダメージが29(25-34)%増加する
+命中力 +66(47-72)
+物理ダメージが152(135-154)%増加する
+アタックスピードが17(17-19)%増加する
+    """)
+    entries = (
+        {"id": "explicit.stat_1940865751", "text": "#から#の物理ダメージを追加する", "type": "explicit"},
+        {"id": "explicit.stat_1509134228", "text": "物理ダメージが#%増加する", "type": "explicit"},
+        {"id": "explicit.accuracy", "text": "命中力 +#", "type": "explicit"},
+        {"id": "explicit.stat_210067635", "text": "アタックスピードが#%増加する", "type": "explicit"},
+    )
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        filters = resolve_trade_stat_filters(item)
+
+    pdps = next(row for row in filters if row.stat_id == "property.physical_dps")
+    assert pdps.read_value == pytest.approx(371.7)
+    assert pdps.enabled is False
+    assert not any(
+        row.stat_id in {"explicit.stat_1940865751", "explicit.stat_1509134228"}
+        for row in filters
+    )
+    assert any(row.stat_id == "explicit.accuracy" for row in filters)
 
 
 def test_single_and_hybrid_armour_enable_every_present_defence():
@@ -3256,8 +3299,11 @@ Item Level: 70
     )
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         filters = resolve_trade_stat_filters(item)
-    assert len(filters) == 4
-    assert not any(row.enabled for row in filters)
+    assert len(filters) == 5
+    assert all(
+        row.enabled == (row.stat_id == "property.quality")
+        for row in filters
+    )
 
 
 def test_unique_pseudo_requires_two_explicit_sources_and_starts_off():
@@ -3713,7 +3759,7 @@ def test_unique_candidate_details_include_official_icon_urls():
         )
 
 
-def test_unique_candidate_details_fall_back_to_wiki_icon_and_english_name():
+def test_unique_candidate_details_keep_missing_official_icon_empty():
     payload = {"result": [{"entries": [
         {"name": "The Example", "type": "Gold Amulet", "flags": {"unique": True}},
     ]}]}
@@ -3727,8 +3773,7 @@ def test_unique_candidate_details_fall_back_to_wiki_icon_and_english_name():
         assert unique_candidate_details("Gold Amulet") == (
             UniqueCandidate(
                 "The Example",
-                "https://www.poewiki.net/wiki/Special:Redirect/file/"
-                "The_Example_inventory_icon.png",
+                None,
                 "The Example",
             ),
         )
@@ -4033,6 +4078,7 @@ Onyx Amulet
         "explicit.stat_2901986750",
         "explicit.stat_2587176568",
         "explicit.stat_752930724",
+        "property.quality",
     }
     assert by_id["explicit.stat_2587176568"].text.startswith("スキルのリザーブ効率")
     requirements = by_id["explicit.stat_752930724"]
@@ -5402,10 +5448,14 @@ def test_modifiable_amulet_shows_anointments_using_valuable_oils(
     with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
         filters = resolve_trade_stat_filters(item)
 
-    assert bool(filters) is expected_visible
+    enchant_rows = tuple(
+        row for row in filters if row.stat_id == "enchant.allocates"
+    )
+    assert bool(enchant_rows) is expected_visible
+    assert any(row.stat_id == "property.quality" for row in filters)
     if expected_visible:
-        assert filters[0].oils == oils
-        assert filters[0].enabled is False
+        assert enchant_rows[0].oils == oils
+        assert enchant_rows[0].enabled is False
 
 
 def test_query_supports_option_not_count_and_special_item_states():
@@ -6771,10 +6821,10 @@ Item Level: 72
     assert next(row for row in filters if row.stat_id == "property.area_level").min_value == 78
 
 
-def test_atzoatl_room_rules_show_every_room_and_ignore_open_state():
-    def room(ref, option=1):
+def test_atzoatl_room_rules_apply_value_classes_and_ignore_open_state():
+    def room(stat_id, ref, option=1):
         return TradeStatFilter(
-            f"pseudo.{ref}", ref, None, "pseudo", True,
+            stat_id, ref, None, "pseudo", True,
             ref=ref, option_value=option,
         )
 
@@ -6783,26 +6833,32 @@ def test_atzoatl_room_rules_show_every_room_and_ignore_open_state():
     )
     rows = _apply_atzoatl_room_rules([
         area,
-        room("Has Room: Banquet Hall"),
-        room("Has Room: Corruption Chamber (Tier 1)"),
-        room("Has Room: Locus of Corruption (Tier 3)"),
-        room("Has Room: Wealth of the Vaal (Tier 3)"),
-        room("Has Room: Treasury (Tier 2)"),
-        room("Has Room: Vault (Tier 1)"),
-        room("Has Room: Storm of Corruption (Tier 3)"),
+        room("pseudo.pseudo_temple_banquet_hall", "Has Room: Banquet Hall"),
+        room("pseudo.pseudo_temple_corruption_room_1", "Has Room: Corruption Chamber (Tier 1)"),
+        room("pseudo.pseudo_temple_corruption_room_3", "Has Room: Locus of Corruption (Tier 3)"),
+        room("pseudo.pseudo_temple_queens_chambers_3", "Has Room: Cradle of Creation (Tier 3)"),
+        room("pseudo.pseudo_temple_currency_vault_3", "Has Room: Wealth of the Vaal (Tier 3)"),
+        room("pseudo.pseudo_temple_cartography_room_3", "Has Room: Atlas of Worlds (Tier 3)"),
+        room("pseudo.pseudo_temple_currency_vault_2", "Has Room: Treasury (Tier 2)"),
+        room("pseudo.pseudo_temple_currency_vault_1", "Has Room: Vault (Tier 1)"),
+        room("pseudo.pseudo_temple_storm_room_3", "Has Room: Storm of Corruption (Tier 3)"),
     ])
     by_ref = {row.ref: row for row in rows if row.ref}
 
     assert area in rows
-    assert not by_ref["Has Room: Banquet Hall"].enabled
-    assert not by_ref["Has Room: Corruption Chamber (Tier 1)"].enabled
+    assert "Has Room: Banquet Hall" not in by_ref
+    assert "Has Room: Corruption Chamber (Tier 1)" not in by_ref
     assert by_ref["Has Room: Locus of Corruption (Tier 3)"].enabled
+    assert by_ref["Has Room: Cradle of Creation (Tier 3)"].enabled
     assert by_ref["Has Room: Wealth of the Vaal (Tier 3)"].enabled
+    assert by_ref["Has Room: Atlas of Worlds (Tier 3)"].enabled
     assert not by_ref["Has Room: Treasury (Tier 2)"].enabled
     assert not by_ref["Has Room: Vault (Tier 1)"].enabled
     assert not by_ref["Has Room: Storm of Corruption (Tier 3)"].enabled
     assert all(row.option_value is None for row in by_ref.values())
-    assert all(not row.hidden_reason for row in by_ref.values())
+    assert not by_ref["Has Room: Treasury (Tier 2)"].hidden_reason
+    assert by_ref["Has Room: Vault (Tier 1)"].hidden_reason
+    assert by_ref["Has Room: Storm of Corruption (Tier 3)"].hidden_reason
 
     current_api_room = TradeStatFilter(
         "pseudo.pseudo_temple_corruption_room_3",
@@ -6874,22 +6930,14 @@ def test_current_japanese_atzoatl_chronicle_resolves_rooms_and_area_level():
         if row.stat_id.startswith("pseudo.pseudo_temple_")
     }
     assert set(rooms) == {
-        "pseudo.pseudo_temple_sacrifice_room_1",
         "pseudo.pseudo_temple_poison_room_3",
         "pseudo.pseudo_temple_weapon_room_3",
-        "pseudo.pseudo_temple_gem_room_1",
-        "pseudo.pseudo_temple_armour_room_1",
-        "pseudo.pseudo_temple_empowering_room_1",
-        "pseudo.pseudo_temple_passageways",
-        "pseudo.pseudo_temple_trap_room_1",
-        "pseudo.pseudo_temple_boss_fire_2",
-        "pseudo.pseudo_temple_workshop_1",
-        "pseudo.pseudo_temple_antechamber",
         "pseudo.pseudo_temple_apex",
     }
-    assert rooms["pseudo.pseudo_temple_boss_fire_2"].text == "王家の鍛造場 (ティア2)"
     assert all(row.option_value is None for row in rooms.values())
-    assert all(not row.hidden_reason for row in rooms.values())
+    assert rooms["pseudo.pseudo_temple_poison_room_3"].hidden_reason
+    assert rooms["pseudo.pseudo_temple_weapon_room_3"].hidden_reason
+    assert not rooms["pseudo.pseudo_temple_apex"].hidden_reason
     assert {
         row.stat_id for row in rooms.values() if row.enabled
     } == {"pseudo.pseudo_temple_apex"}
@@ -6968,13 +7016,21 @@ def test_current_japanese_atzoatl_room_aliases_resolve_to_correct_trade_stats():
         row.stat_id: row for row in filters
         if row.stat_id.startswith("pseudo.pseudo_temple_")
     }
-    assert set(rooms) == {stat_id for _, stat_id, _ in aliases}
+    assert set(rooms) == {
+        "pseudo.pseudo_temple_queens_chambers_1",
+        "pseudo.pseudo_temple_queens_chambers_2",
+        "pseudo.pseudo_temple_queens_chambers_3",
+    }
     assert {
         (row.text, row.stat_id) for row in rooms.values()
     } == {
         (game_name, stat_id) for game_name, stat_id, _ in aliases
+        if stat_id in rooms
     }
+    assert rooms["pseudo.pseudo_temple_queens_chambers_3"].enabled
     for _, stat_id, _ in aliases:
+        if stat_id not in rooms:
+            continue
         selected = tuple(
             replace(row, enabled=row.stat_id == stat_id)
             if row.stat_id.startswith("pseudo.pseudo_temple_") else row
@@ -7006,6 +7062,23 @@ def test_atzoatl_obstructed_room_is_searchable_without_open_state():
     assert rows[0].ref == "Has Room: Treasury (Tier 2)"
     assert rows[0].option_value is None
     assert rows[0].enabled is False
+
+
+@pytest.mark.parametrize(("japanese", "english"), (
+    ("オリジネーターの高貴なオーブ", "Originator's Exalted Orb"),
+    ("原初の高貴なオーブ", "Primordial Exalted Orb"),
+))
+def test_new_exalted_orbs_use_exact_trade_identity(japanese, english):
+    item = parse_item_text(f"""アイテムクラス: スタック可能カレンシー
+レアリティ: カレンシー
+{japanese}
+--------
+スタック数: 1/20
+""")
+
+    assert item.category == "currency"
+    assert _english_trade_item_type(japanese, "currency") == english
+    assert english_trade_identity(item) == (english, None)
 
 
 def test_cluster_uses_finished_and_base_presets_and_flask_tincture_ilvl_is_disabled():
@@ -7275,13 +7348,14 @@ def test_japanese_map_new_currency_and_divination_card_drop_labels_resolve():
     assert selected_rows["pseudo.pseudo_map_more_currency_drops"] == {"min": 139.0}
 
 
-def test_corrupted_eight_mod_map_keeps_modifier_count_pseudo_off_by_default():
+@pytest.mark.parametrize("modifier_count", (8, 9))
+def test_corrupted_eight_or_nine_mod_map_enables_modifier_count_pseudo(modifier_count):
     modifiers = tuple(
         ItemModifier(
             f"Map modifier {index}", (index,),
-            kind="prefix" if index < 4 else "suffix",
+            kind="fractured" if index == 0 else "prefix" if index < 5 else "suffix",
         )
-        for index in range(8)
+        for index in range(modifier_count)
     )
     item = ParsedItem(
         "Maps", "Rare", "Test", "Cemetery Map", "map",
@@ -7294,13 +7368,185 @@ def test_corrupted_eight_mod_map_keeps_modifier_count_pseudo_off_by_default():
         row for row in rows
         if row.stat_id == "pseudo.pseudo_number_of_affix_mods"
     )
-    assert count.enabled is False
-    assert count.min_value == 8
-    assert count.max_value == 8
+    assert count.enabled is True
+    assert count.min_value == modifier_count
+    assert count.max_value is None
     query = build_search_query(
         item, "Cemetery Map", rows, preset=PRESET_FINISHED,
     )["query"]
-    assert query["stats"][0]["filters"] == []
+    assert query["stats"][0]["filters"] == [{
+        "id": "pseudo.pseudo_number_of_affix_mods",
+        "value": {"min": float(modifier_count)},
+    }]
+
+
+def test_reworked_map_atlas_drops_threads_and_rare_only_are_searchable():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+穢れた道
+マップ (ティア 16)
+--------
+アトラスドロップ: +113% (augmented)
+アイテムレアリティ: +113% (augmented)
+モンスターパックサイズ: +43% (augmented)
+マップ量が上昇: +35% (augmented)
+スレッド量が上昇: +35% (augmented)
+--------
+アイテムレベル: 85
+--------
+モンスターレベル：83
+--------
+{ プレフィックスモッド「保護された」 (ティア: 1) }
+モンスターは最大ライフの77(70-80)%を追加最大エナジーシールドとして獲得する
+{ プレフィックスモッド「タイタンの」 — ライフ }
+ユニークボスのライフが35%増加する
+ユニークボスの効果範囲が70%増加する
+{ プレフィックスモッド「拡大する」 (ティア: 1) }
+モンスターの効果範囲が100%増加する
+モンスターは投射物を追加で2個放つ
+{ プレフィックスモッド「串刺す」 }
+モンスターアタックはヒット時に60%の確率で串刺しを付与する
+{ サフィックスモッド 「ぬかるみの」 (ティア: 1) }
+プレイヤーの防御力が30(30-25)%低下する
+{ サフィックスモッド 「時の鎖の」 — キャスター, 呪い }
+プレイヤーはテンポラルチェーンの呪いを受ける
+{ レアのみ }
+エリアにデリリウムの鏡が出現する — スケールできない値
+{ サフィックスモッド 「不正確さの」 }
+全てのプレイヤーの命中力が25%低下する
+--------
+コラプト状態
+""")
+
+    rare_only = next(
+        modifier for modifier in item.modifiers
+        if modifier.text == "エリアにデリリウムの鏡が出現する"
+    )
+    assert rare_only.kind == "rareonly"
+    assert rare_only.stat_id == "explicit.stat_2398157267"
+    assert rare_only.generation == "rareonly"
+
+    entries = ({
+        "id": "explicit.stat_2398157267",
+        "text": "エリアにデリリウムの鏡が出現する",
+        "type": "explicit",
+    },)
+    with patch("src.poetore.trade._trade_stat_entries", return_value=entries):
+        rows = resolve_trade_stat_filters(item)
+    by_id = {row.stat_id: row for row in rows}
+    assert by_id["property.map_bonus"].min_value == 113
+    assert by_id["property.map_bonus"].enabled is True
+    assert by_id["pseudo.pseudo_map_more_scarab_drops"].text == "スレッド量"
+    assert by_id["pseudo.pseudo_map_more_scarab_drops"].min_value == 35
+    assert by_id["pseudo.pseudo_map_more_scarab_drops"].enabled is True
+    assert by_id["explicit.stat_2398157267"].enabled is True
+    count = by_id["pseudo.pseudo_number_of_affix_mods"]
+    assert count.enabled is True
+    assert count.min_value == 8
+    assert count.max_value is None
+
+    query = build_search_query(item, item.base_type, rows)["query"]
+    assert query["filters"]["map_filters"]["filters"]["map_bonus"] == {"min": 113.0}
+    api_rows = {
+        row["id"]: row.get("value", {})
+        for group in query["stats"] for row in group["filters"]
+    }
+    assert api_rows["pseudo.pseudo_map_more_scarab_drops"] == {"min": 35.0}
+    assert api_rows["pseudo.pseudo_number_of_affix_mods"] == {"min": 8.0}
+    assert "explicit.stat_2398157267" in api_rows
+
+
+def test_rare_only_header_does_not_misclassify_named_prefix_as_desecrated():
+    item = parse_item_text("""アイテムクラス: マップ
+レアリティ: レア
+夕暮れの長旅
+マップ (ティア 16)
+--------
+アトラスドロップ: +111% (augmented)
+--------
+アイテムレベル: 85
+--------
+{ プレフィックスモッド「冒涜的な」 (ティア: 1) — ダメージ, 物理, 混沌 }
+モンスターはその物理ダメージの31(31-35)%を追加混沌ダメージとして獲得する
+モンスターによるヒット時に衰弱を2秒間付与する
+{ レアのみ (ティア: 1) }
+エリアにミラージュが出現する
+--------
+二重コラプト
+""")
+
+    prefix = item.modifiers[0]
+    assert prefix.kind == "prefix"
+    assert prefix.generation is None
+    mirage = next(modifier for modifier in item.modifiers if "ミラージュ" in modifier.text)
+    assert mirage.kind == "rareonly"
+    assert mirage.stat_id == "explicit.stat_2436559047"
+
+
+def test_twice_corrupted_state_and_normal_corrupted_exclusion_are_distinct():
+    base = """アイテムクラス: 靴
+レアリティ: レア
+勝利の要請
+カーナルブーツ
+--------
+アイテムレベル: 69
+--------
+{{ コラプト暗黙モッド — ジェム }}
+ソケットされたウォークライジェムのレベル +2
+--------
+{state}
+"""
+    twice = parse_item_text(base.format(state="二重コラプト"))
+    normal = parse_item_text(base.format(state="コラプト状態"))
+
+    assert {"corrupted", "twice_corrupted"}.issubset(twice.flags)
+    assert normal.flags == ("corrupted",)
+    twice_misc = build_search_query(
+        twice, twice.base_type, include_corrupted="only",
+    )["query"]["filters"]["misc_filters"]["filters"]
+    normal_misc = build_search_query(
+        normal, normal.base_type, include_corrupted="only",
+    )["query"]["filters"]["misc_filters"]["filters"]
+    assert "twice_corrupted" not in twice_misc
+    assert normal_misc["twice_corrupted"] == {"option": "false"}
+
+
+def test_not_catalysed_ring_filter_defaults_on_but_quality_ring_does_not_get_it():
+    no_quality = parse_item_text("""アイテムクラス: 指輪
+レアリティ: レア
+獣の螺層
+パウア貝の指輪
+--------
+装備要求:
+レベル: 16
+--------
+アイテムレベル: 57
+--------
+{ 暗黙モッド — マナ }
+最大マナ +23(20-30)
+""")
+    catalysed = parse_item_text("""アイテムクラス: 指輪
+レアリティ: レア
+妖精の螺層
+二つ石の指輪
+--------
+品質 (キャスターモッド): +20% (augmented)
+--------
+アイテムレベル: 73
+""")
+
+    with patch("src.poetore.trade._trade_stat_entries", return_value=()):
+        plain_rows = resolve_trade_stat_filters(no_quality)
+        quality_rows = resolve_trade_stat_filters(catalysed)
+    no_catalyst = next(row for row in plain_rows if row.stat_id == "property.quality")
+    assert no_catalyst.text == "未Catalyst"
+    assert no_catalyst.enabled is True
+    assert no_catalyst.min_value is None
+    assert no_catalyst.max_value == 0
+    assert not any(row.text == "未Catalyst" for row in quality_rows)
+
+    query = build_search_query(no_quality, no_quality.base_type, plain_rows)["query"]
+    assert query["filters"]["misc_filters"]["filters"]["quality"] == {"max": 0}
 
 
 def test_japanese_elegant_hubris_advanced_copy_uses_exact_caspiro_seed():
